@@ -25,6 +25,7 @@ Todo documento deste diretório segue a mesma estrutura:
 |---|---|
 | [10](10-api-e-afinidade.md) | API REST + motor de afinidade (onde cada cálculo roda) |
 | [20](20-crawler-noticias.md) | Crawler de notícias — quais páginas, qual linguagem |
+| [30](30-pagina-do-parlamentar.md) | **Página do parlamentar** — o perfil da "rede social" |
 
 ---
 

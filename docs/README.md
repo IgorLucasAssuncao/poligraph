@@ -26,7 +26,7 @@ flowchart LR
 
 | Doc | Conteúdo |
 |---|---|
-| [00-discovery.md](00-discovery.md) | **Documento central.** Escopo, fontes, riscos, decisões, roadmap. Contém os 12 achados de exploração |
+| [00-discovery.md](00-discovery.md) | **Documento central.** Título do TCC, escopo, fontes, riscos, decisões, roadmap. Contém os 18 achados |
 | [03-requisitos.md](03-requisitos.md) | Requisitos funcionais e não funcionais, regras de negócio, restrições |
 
 ### Contexto institucional — *como o Brasil legisla*
@@ -51,48 +51,74 @@ flowchart LR
 |---|---|
 | [arq/README.md](arq/README.md) | Índice + como escolher entre os cenários |
 | [arq/01-cenario-a-so-camara.md](arq/01-cenario-a-so-camara.md) | Mínimo viável — 1 base |
-| [arq/02-cenario-b-camara-tse.md](arq/02-cenario-b-camara-tse.md) | ⭐ **Recomendado** — 2 bases |
-| [arq/03-cenario-c-tres-bases.md](arq/03-cenario-c-tres-bases.md) | Completo — 3 bases |
+| [arq/02-cenario-b-camara-tse.md](arq/02-cenario-b-camara-tse.md) | 2 bases — não escolhido |
+| [arq/03-cenario-c-tres-bases.md](arq/03-cenario-c-tres-bases.md) | ✅ **DECIDIDO** — 3 bases, dois grafos independentes |
 | [arq/10-api-e-afinidade.md](arq/10-api-e-afinidade.md) | API REST + motor de afinidade |
 | [arq/20-crawler-noticias.md](arq/20-crawler-noticias.md) | Crawler — quais feeds, qual linguagem |
+| [arq/30-pagina-do-parlamentar.md](arq/30-pagina-do-parlamentar.md) | Página do parlamentar — perfil da "rede social" |
 
 ---
 
-## Os 12 achados de exploração
+## Os 18 achados de exploração
 
 Resumo do que a investigação nas APIs revelou. Detalhes no
 [discovery](00-discovery.md).
 
 | # | Achado | Impacto |
 |---|---|---|
-| 1 | 📊 Só **3,5%** das votações são nominais (526 de 15.037 em 2025) | Dimensiona o projeto |
+| 1 | 📊 Só **3,5%** das votações da Câmara são nominais | Dimensiona o projeto |
 | 2 | `/votos` rejeita o parâmetro `itens` (HTTP 400) | Implementação |
 | 3 | `idVotacao` é string composta, não inteiro | Modelagem |
 | 4 | Endpoint de votações do Senado está **depreciado** | Evita quebra futura |
 | 5 | TSE bloqueia acesso automatizado (**403**) | Muda a arquitetura |
-| 6 | ✅ Existem **CSVs consolidados por ano** | Elimina o problema N+1 |
-| 7 | ⚠️ **As duas casas não compartilham votações** | Define o escopo |
+| 6 | ✅ Existem **CSVs consolidados por ano** (2001–2026) | Elimina o problema N+1 |
+| 7 | ⚠️ **As duas casas não compartilham votações** | Dois grafos, não um |
 | 8 | `uriProposicaoCitada` aponta para parecer, não para o projeto | Evita questionário inútil |
 | 9 | ✅ O **prefixo do `idVotacao` é o id da proposição** (30/30) | Simplifica o join |
 | 10 | ✅ Existe **classificação temática oficial** (96% de cobertura) | Elimina trabalho manual |
 | 11 | ⚠️ **58%** das votações nominais são procedimentais | Filtro do questionário |
 | 12 | ⚠️ **A polaridade de "Sim" não é constante** (14% invertidas) | Corrige erro silencioso |
+| 13 | ⛔ **Frentes são inúteis como aresta** — 317 de 320 para um deputado | Grafo usa comissão |
+| 14 | ⚠️ O ponto cego se repete **dentro** da comissão | Limita a cobertura |
+| 15 | ⚠️ Votações de comissão **não** entram na matriz — 3× mais consensuais | Evita bloco falso |
+| 16 | ⭐ **Relatoria** é o melhor sinal não-votação (mediana 7/deputado) | Perfil temático |
+| 17 | 🔴 **56% das votações do Senado são secretas** | Senado tem 182, não 421 |
+| 18 | ⭐ **41 dos 81 senadores já foram deputados** | Ponte temporal entre grafos |
 
 ---
 
-## Números de referência (medidos em 2025)
+## Números de referência
+
+**Por legislatura (57ª — 2023 a agosto/2026):**
+
+| Métrica | Câmara | Senado |
+|---|---|---|
+| Votações nominais | **1.570** | 421 |
+| **Votações utilizáveis** | **1.103** (plenário) | **182** (abertas) |
+| Registros de voto | ~463.000 | — |
+| Série disponível | **2001–2026** | 2019–2026 testados |
+
+**Em 2025, isoladamente:**
 
 | Métrica | Câmara | Senado |
 |---|---|---|
 | Votações totais | 15.037 | — |
-| Votações nominais | **526** | **128** |
-| Parlamentares distintos que votaram | 552 | 84 |
+| Votações nominais | 526 (410 no plenário) | 128 (56 abertas) |
+| Parlamentares distintos | 552 | 84 |
 | Registros de voto | ~167.000 | ~10.400 |
-| Votações substantivas | 145 | a medir |
-| Proposições distintas (substantivas) | 100 | a medir |
+| Votações substantivas | 145 (sobre 100 proposições) | a medir |
 | Comissões permanentes | 30 | 16 |
-| Trocas de partido no ano | 14 | a medir |
-| Tamanho da matriz de votos | **290 KB** | 11 KB |
+| Trocas de partido | 14 | a medir |
+
+**Qualidade do dado:**
+
+| | Câmara | Senado |
+|---|---|---|
+| Registros que são posição de voto | **99,3 %** | **34 %** |
+| CPF disponível | ✅ **100 %** dos ativos | ⛔ Não expõe |
+| Orientação de bancada | ✅ Sim | ⛔ Não existe |
+| Redes sociais | 🟡 64 % | ⛔ Não expõe |
+| Estabilidade das posições na legislatura | **r = 0,86** | a medir |
 
 ---
 
