@@ -1,0 +1,1057 @@
+# Poligraph — Documento de Discovery
+
+> **Status:** rascunho (v0.8)
+> **Data:** 2026-08-22
+> **Mudanças na v0.2:** volume real medido (seção 4.1.1); achado #6 (CSVs consolidados,
+> resolve R4); achado #7 (as duas casas não são comparáveis, seção 4.5); decisão D3
+> reescrita — a justificativa da v0.1 estava errada; Senado subiu de F8 para F6.
+> **v0.3:** seção 6.1 — rotatividade não exige tabela de mandatos nem base externa;
+> partido/UF ficam desnormalizados no voto; R8 rebaixado para Baixo.
+> **v0.4:** seções 4.1.2 e 4.1.3 — como chegar na matéria votada (achados #8 a #12);
+> 58% das votações nominais são procedimentais; polaridade de "Sim" não é constante;
+> seção 7.2 reescrita com o funil real. Documentos institucionais em `01-` e `02-`.
+> **v0.5:** seção 7.4 — viés de seleção das votações nominais (a pergunta mais provável
+> da banca); votações simbólicas não trazem nem contagem agregada.
+> **v0.6:** seção 4.1.4 — dados de comissão (achado #14: o ponto cego se repete dentro
+> da comissão); achado #13 — frentes saem do grafo, comissão em comum entra.
+> **v0.7:** achado #15 (seção 4.1.5) — votações de comissão **não** servem como reserva:
+> mediana de 29 votos e confundimento com partido. Corrige afirmação da v0.2.
+> **v0.8:** seção 4.1.6 — insumos aproveitáveis das comissões; achado #16: **relatoria**
+> (4.694 designações, 455 deputados, mediana 7) é o melhor sinal não-votação disponível.
+> **Objetivo deste documento:** registrar o entendimento do problema, o escopo, as
+> fontes de dados (já validadas) e as decisões em aberto, para servir de contexto
+> permanente do TCC.
+
+---
+
+## 1. Visão geral
+
+**Poligraph** é uma plataforma que transforma dados públicos do legislativo brasileiro
+em uma **rede de relações entre políticos** e permite que um cidadão descubra
+**com quais parlamentares ele mais concorda**, com base em votações reais — não em
+opinião ou autodeclaração ideológica.
+
+Em uma frase:
+
+> *"Um mapa de afinidade política construído a partir do comportamento real de voto
+> de deputados e senadores."*
+
+### Perguntas que o produto responde
+
+| Pergunta | Entregável |
+|---|---|
+| Com qual político eu mais me pareço? | Questionário de votações reais + ranking de afinidade |
+| Quais políticos votam parecido entre si? | Grafo de similaridade + detecção de comunidades |
+| O partido explica o voto? | Comparação entre comunidades detectadas e filiação partidária |
+| O que estão falando sobre o político X? | Agregador de notícias (crawler) na ficha do parlamentar |
+
+---
+
+## 2. Objetivos
+
+### Objetivo geral
+
+Construir uma plataforma de dados que integre múltiplas fontes públicas do sistema
+político brasileiro e derive, a partir do comportamento de voto nominal, medidas de
+similaridade entre parlamentares e entre parlamentares e cidadãos.
+
+### Objetivos específicos
+
+1. Projetar e implementar um **pipeline ETL** capaz de ingerir e reconciliar dados de
+   três fontes heterogêneas (TSE, Câmara, Senado).
+2. Resolver o problema de **entity resolution**: identificar que o mesmo indivíduo
+   aparece nas três bases com identificadores diferentes.
+3. Modelar o legislativo como um **grafo** com múltiplos tipos de aresta.
+4. Implementar e avaliar um **algoritmo de afinidade** entre um vetor de preferências
+   do usuário e o histórico de votos dos parlamentares.
+5. Coletar, via **crawler**, referências noticiosas associadas a cada parlamentar.
+6. Expor tudo em uma aplicação web consultável.
+
+---
+
+## 3. Escopo
+
+### Dentro do MVP
+
+- Câmara dos Deputados como fonte primária (57ª legislatura, 2023–2026).
+- Votações **nominais** de plenário.
+- Cálculo de similaridade parlamentar ↔ parlamentar.
+- Questionário de afinidade cidadão ↔ parlamentar.
+- Grafo com layout e comunidades.
+- Ficha individual do parlamentar.
+
+### Fora do MVP (fases posteriores)
+
+- Senado — **não por custo de ETL** (é a fonte mais barata das três), mas porque
+  deputados e senadores não são comparáveis entre si. Ver achado #7 e nota da D3.
+- TSE (enriquecimento: bens declarados, histórico de candidaturas, votação recebida).
+- Crawler de notícias.
+- Análise de despesas (cota parlamentar).
+- Assembleias estaduais / câmaras municipais.
+
+### Explicitamente fora
+
+- Qualquer juízo de valor sobre parlamentares ("bom"/"ruim", ranking de qualidade).
+- Recomendação de voto. **Ver risco R7.**
+
+---
+
+## 4. Fontes de dados
+
+> Todos os endpoints abaixo foram testados em **2026-08-22**. Os achados marcados com
+> ⚠️ são armadilhas reais já observadas, não hipóteses.
+
+### 4.1 Câmara dos Deputados — `https://dadosabertos.camara.leg.br/api/v2`
+
+REST, JSON, sem autenticação, paginação por `?pagina=&itens=` com `links[rel=next|last]`.
+É a fonte **mais rica e mais confiável** das três.
+
+| Endpoint | Uso no projeto |
+|---|---|
+| `/deputados?siglaUf=&idLegislatura=` | Lista de parlamentares |
+| `/deputados/{id}` | Detalhe: **`cpf`**, `nomeCivil`, `dataNascimento`, `redeSocial[]` |
+| `/votacoes?dataInicio=&dataFim=` | Lista de votações |
+| `/votacoes/{id}/votos` | Voto individual de cada deputado |
+| `/proposicoes/{id}/autores` | Aresta de **coautoria** |
+| `/deputados/{id}/frentes` | Aresta de **frente parlamentar em comum** |
+| `/deputados/{id}/ocupacoes` | Histórico profissional |
+| `/deputados/{id}/despesas?ano=&mes=` | Cota parlamentar (fase futura) |
+
+**Formato do voto:**
+
+```json
+{
+  "tipoVoto": "Sim",
+  "dataRegistroVoto": "2025-04-29T21:27:59",
+  "deputado_": { "id": 223128, "siglaPartido": "PSD", "siglaUf": "PR" }
+}
+```
+
+Domínio observado de `tipoVoto`: `Sim`, `Não`, `Abstenção`, `Obstrução`, `Artigo 17`.
+
+⚠️ **Achado crítico #1 — votações simbólicas.** A maioria das votações **não tem voto
+nominal**. `/votacoes/{id}/votos` retorna `{"dados": []}` para elas. Em uma amostra de
+40 votações (mar–abr/2025), apenas ~5 eram nominais; as nominais têm 350–400 votos.
+*Consequência:* o volume útil é muito menor do que a lista de votações sugere. O ETL
+precisa filtrar, e o tamanho do questionário depende disso.
+
+⚠️ **Achado crítico #2** — `/votacoes/{id}/votos` **não aceita o parâmetro `itens`**
+(retorna HTTP 400). Devolve a lista completa de uma vez.
+
+⚠️ **Achado #3** — o `id` de votação é uma string composta (`"2456731-84"`), não um
+inteiro. Modelar como `varchar`.
+
+✅ **Achado #6 — existem arquivos CSV consolidados por ano.** Este achado **elimina a
+necessidade de varrer a API votação por votação** (o problema N+1 que motivava o risco
+R4):
+
+```
+https://dadosabertos.camara.leg.br/arquivos/{dataset}/csv/{dataset}-{ano}.csv
+```
+
+Datasets confirmados: `votacoes`, `votacoesVotos`, `votacoesObjetos`, `proposicoes`.
+O `votacoesVotos-2025.csv` tem ~58 MB e já vem no formato exato da tabela `voto`:
+
+```
+"idVotacao";"uriVotacao";"dataHoraVoto";"voto";"deputado_id";"deputado_nome";
+"deputado_siglaPartido";"deputado_siglaUf";"deputado_idLegislatura";...
+```
+
+**Consequência para a arquitetura:** o extrator da Câmara deve usar **CSV anual como
+carga base** e a **API só para o ano corrente / incremental**. Isso derruba o tempo de
+ingestão de horas para minutos.
+
+### 4.1.1 Volume real medido (ano de 2025)
+
+| Métrica | Câmara | Senado |
+|---|---|---|
+| Votações **totais** no ano | 15.037 | — |
+| Votações **nominais** (com voto individual) | **526** | **128** |
+| Taxa de nominais | **3,5 %** | — |
+| Parlamentares distintos que votaram | 552 * | 84 * |
+| Registros de voto individual | ~167.000 | ~10.400 |
+
+\* Acima de 513 e de 81 por causa de suplentes, licenças e substituições ao longo do ano
+— evidência concreta do risco R8.
+
+Distribuição das 526 votações nominais da Câmara por órgão:
+**PLEN 410**, CCJC 49, CSPCCO 18, CE 18, CMADS 9, CFT 5, demais comissões ~17.
+
+→ Isso **quantifica o risco R1**: apenas 3,5% das votações são nominais. Ainda assim,
+**410 votações de plenário** em um único ano é volume mais que suficiente para a matriz.
+
+⚠️ As 116 votações de comissão **não** servem como reserva — ver achado #15 na seção
+4.1.5.
+
+**Domínio real de `voto` medido no CSV de 2025:**
+
+| Valor | Ocorrências |
+|---|---|
+| `Sim` | 96.839 |
+| `Não` | 68.923 |
+| *(vazio)* | 421 |
+| `Artigo 17` | 401 |
+| `Obstrução` | 375 |
+| `Abstenção` | 336 |
+
+⚠️ Note a assimetria: `Sim` + `Não` são 99,3% dos registros. Abstenção, obstrução e
+Artigo 17 são estatisticamente irrelevantes — o que **simplifica muito** a decisão de
+normalização da seção 6. Tratá-los como `null` (fora do cálculo) muda quase nada no
+resultado e é a escolha mais fácil de defender.
+
+⚠️ Note também o valor **vazio** (421 casos), não documentado. Tratar como `null`.
+
+### 4.1.2 O que está sendo votado — como chegar na matéria
+
+Sim, dá para saber. Mas o caminho óbvio é uma armadilha.
+
+**Como a votação se liga à matéria** — `GET /api/v2/votacoes/{id}` traz três campos
+relevantes, e eles **não** são equivalentes:
+
+| Campo | O que é | Serve? |
+|---|---|---|
+| `proposicoesAfetadas` | A proposição de verdade (o PL/PEC em questão) | ✅ **É este** |
+| `objetosPossiveis` | Tudo que estava em pauta, incluindo requerimentos | ⚠️ Ruidoso, N por votação |
+| `ultimaApresentacaoProposicao.uriProposicaoCitada` | O último ato processual | ⛔ **Armadilha** |
+
+⚠️ **Achado #8 — `uriProposicaoCitada` não aponta para o projeto.** No exemplo testado
+(votação `2456731-84`), esse campo levava à proposição `2499908`, que é um **PPP —
+"Parecer Proferido em Plenário"**, com `ementa` sendo o texto burocrático da leitura do
+parecer e `keywords: null`. O projeto real (PL 3469/2024, sobre incêndios florestais e
+Código Brasileiro de Aeronáutica) só aparece em `proposicoesAfetadas`. Quem seguir o
+link mais óbvio monta um questionário de pareceres.
+
+✅ **Achado #9 — o prefixo do `idVotacao` é o id da proposição.** O id `2456731-84`
+decompõe em proposição `2456731` + sequencial `84`. Testado em amostra de 30 prefixos
+distintos: **30/30 resolveram** para uma proposição real, com tipos
+PL (23), PLP (3), PEC (3), REQ (1). Isso permite ligar votação → matéria **sem
+chamada extra à API**, direto do CSV.
+
+✅ **Achado #10 — existe classificação temática oficial.** `GET /proposicoes/{id}/temas`
+retorna vocabulário controlado. Cobertura medida em 25 proposições: **24 têm ao menos um
+tema** (12 com 1, 9 com 2, 3 com 3). Vocabulário observado: *Educação, Administração
+Pública, Direitos Humanos e Minorias, Previdência e Assistência Social, Direito Penal e
+Processual Penal, Defesa e Segurança, Trabalho e Emprego, Saúde, Meio Ambiente,
+Economia, Finanças Públicas e Orçamento, Relações Internacionais, Comunicações,
+Agricultura...*
+
+→ Isso resolve de graça o critério de **cobertura temática** da seção 7.2, que eu havia
+proposto fazer na mão. Não precisa classificar nada: o dado já vem classificado.
+
+O CSV `votacoesObjetos-2025.csv` (45 MB) traz `proposicao_ementa`, `proposicao_titulo`,
+`siglaTipo`, `numero`, `ano` — mas é o equivalente de `objetosPossiveis`: **várias linhas
+por votação**, muitas delas requerimentos de urgência e de retirada de pauta. Útil, desde
+que filtrado.
+
+### 4.1.3 ⚠️ Achado crítico #11 — a maioria das votações nominais é procedimental
+
+Classificando as **526 votações nominais de 2025** pela `descricao`:
+
+| Categoria | Qtd | % |
+|---|---|---|
+| **Requerimentos e incidentes processuais** (urgência, retirada de pauta, adiamento, recurso, preferência) | **307** | 58,4 % |
+| **Destaques** ("Mantido o texto" / "Suprimido o texto") | 74 | 14,1 % |
+| **Substantivas** (projeto, substitutivo, emenda, parecer, MP, turnos) | **145** | 27,6 % |
+
+As 145 substantivas cobrem **100 proposições distintas** em 2025.
+
+**Duas consequências, e elas apontam para lados opostos:**
+
+1. **Para o questionário (7.2): filtro obrigatório.** Perguntar a um cidadão se ele
+   aprova o "Requerimento de Retirada de Matéria da Pauta do PL 3469/2024" é inútil. O
+   pool real não é 526 — é ~145 votações sobre ~100 matérias por ano. Na legislatura
+   inteira (2023–2026), algo entre 300 e 400 matérias. **Continua sobrando muito** para
+   um questionário de 15–25 perguntas.
+
+2. **Para a matriz de similaridade (7.1): NÃO filtrar.** Requerimento de urgência é um
+   dos sinais **mais limpos** de alinhamento governo × oposição que existe — quem quer
+   pautar e quem quer travar. Jogar 58% dos dados fora empobreceria a matriz.
+
+→ **Regra:** são dois recortes diferentes sobre a mesma tabela. `voto` guarda tudo;
+`votacao` ganha uma coluna `categoria` (`PROCEDIMENTAL` | `DESTAQUE` | `SUBSTANTIVA`)
+derivada por regex na `descricao` no estágio silver. O questionário filtra por ela; a
+matriz de similaridade, não.
+
+⚠️ **Achado #12 — a polaridade de `Sim` não é constante.** Nos 74 destaques, a descrição
+é *"Mantido o texto"*: votar **Sim mantém o dispositivo**, ou seja, **rejeita** o
+destaque que queria removê-lo. O sentido político de "Sim" se inverte em relação à
+intenção de quem apresentou o destaque. O mesmo vale para requerimentos de retirada de
+pauta. → Cada votação usada no questionário precisa de um campo
+**`polaridade` atribuído manualmente** (+1/−1), mapeando "Sim" para "a favor da medida".
+Sem isso o ranking de afinidade fica silenciosamente errado em ~14% dos casos.
+
+### 4.2 Senado Federal — `https://legis.senado.leg.br/dadosabertos`
+
+JSON disponível, mas com **estrutura herdada de XML** (envelopes aninhados como
+`ListaParlamentarEmExercicio.Parlamentares.Parlamentar[]`) — desserialização mais chata
+que a da Câmara.
+
+| Endpoint | Situação |
+|---|---|
+| `/senador/lista/atual` | ✅ Funciona. Envelope aninhado. |
+| `/votacao?dataInicio=YYYY-MM-DD&dataFim=YYYY-MM-DD` | ✅ **Usar este.** Array plano. |
+| `/plenario/lista/votacao/{AAAAMMDD}` | ⛔ **Depreciado** — desativação anunciada para 2026-02-01. |
+
+⚠️ **Achado crítico #4.** O endpoint antigo de votações do Senado está formalmente
+depreciado (o próprio payload traz um bloco `Descontinuacao` apontando o substituto).
+Boa parte dos tutoriais e trabalhos anteriores na internet ainda usa o endpoint velho.
+**Usar `/votacao`.**
+
+O `/votacao` novo retorna linhas achatadas — uma linha por parlamentar por votação —
+com `codigoParlamentar`, `nomeParlamentar`, `siglaVotoParlamentar`,
+`siglaPartidoParlamentar`, `codigoMateria`, `descricaoVotacao`, `resultadoVotacao`.
+Formato conveniente: já é praticamente a tabela final do ETL.
+
+### 4.3 TSE — `https://dadosabertos.tse.jus.br` / `https://cdn.tse.jus.br`
+
+Não é API: são **arquivos CSV em ZIP**, por ano e por UF. Datasets relevantes:
+`consulta_cand` (candidaturas), `bem_candidato` (patrimônio declarado),
+`votacao_candidato_munzona` (votos recebidos), prestação de contas.
+
+⚠️ **Achado crítico #5 — bloqueio de acesso automatizado.** Tanto o portal quanto o CDN
+retornaram **HTTP 403** para requisições via `curl`, inclusive com User-Agent de
+navegador. O download precisará ser feito manualmente pelo navegador (ou por um cliente
+que replique sessão/headers). *Consequência:* o TSE **não pode ser tratado como fonte
+incremental automatizada** no MVP. Planejar como **carga manual versionada**: baixar uma
+vez, versionar o arquivo bruto, e o ETL lê do disco.
+
+Características dos CSVs do TSE: encoding **Latin-1 (ISO-8859-1)**, separador `;`,
+campos entre aspas, datas em `dd/MM/yyyy`, arquivos de centenas de MB.
+
+### 4.4 Chave de integração entre as fontes
+
+Este é **o problema técnico central do ETL** e um bom ponto de argumentação no TCC.
+
+```
+TSE (NR_CPF_CANDIDATO) ──── CPF ────> Câmara (/deputados/{id}.cpf)      chave forte
+TSE (NM_CANDIDATO + DT_NASCIMENTO + SG_UF) ── fuzzy ──> Senado          chave fraca
+```
+
+- A Câmara **expõe o CPF** no detalhe do deputado → join determinístico com o TSE.
+- O Senado **não expõe CPF** com facilidade → fallback por `NomeCompletoParlamentar`
+  normalizado + UF + data de nascimento, com verificação manual dos casos ambíguos
+  (são só ~81 senadores; é viável conciliar à mão).
+- Nomes de urna são instáveis entre eleições ("Tiririca", "Professor X") — nunca usar
+  nome de urna como chave.
+- **Decisão:** criar uma tabela `pessoa` com **ID sintético próprio** e uma tabela
+  `pessoa_fonte_id` mapeando `(pessoa_id, fonte, id_externo)`. Todas as demais tabelas
+  referenciam o ID interno, nunca o ID da fonte.
+
+### 4.1.4 Dados de comissão — o que existe e o que não existe
+
+Como decisões em **caráter conclusivo** viram lei sem passar pelo plenário (ver
+[01-camara §5.2](01-camara-dos-deputados.md)), é legítimo perguntar se a base cobre isso.
+Verificação:
+
+| O que | Disponível? | Detalhe |
+|---|---|---|
+| Cadastro das comissões | ✅ | `/orgaos?codTipoOrgao=2` — 30 permanentes; `orgaos.csv` em massa |
+| **Composição, com vigência** | ✅ | `/orgaos/{id}/membros` → `titulo` (Titular/Suplente), `dataInicio`, `dataFim` |
+| Órgãos de um deputado | ✅ | `/deputados/{id}/orgaos` |
+| **Votações nominais de comissão** | ✅ | 📊 **116 em 2025** — já estão no mesmo `votacoesVotos.csv`, basta filtrar `siglaOrgao ≠ PLEN` |
+| Tramitação completa | ✅ | `proposicoesTramitacoes-{ano}.csv` — 📊 169 mil linhas em 2025, com `siglaOrgao`, `regime`, `descricaoTramitacao`, `despacho` |
+| **Quais proposições seguem o rito conclusivo** | ✅ | 📊 **703 despachos** em 2025 mencionam "apreciação conclusiva" |
+| **Quem votou o quê nas decisões conclusivas** | ⛔ **Na maioria, não** | Ver abaixo |
+
+⚠️ **Achado #14 — o ponto cego se repete dentro da comissão.** Comissão também decide por
+**votação simbólica**. Das decisões de comissão em 2025, apenas **116 foram nominais**
+(CCJC 49, CSPCCO 18, CE 18, CMADS 9, CFT 5, demais ~17). Para as outras, sabe-se **que** a
+comissão aprovou, não **quem** votou.
+
+⚠️ E a aprovação conclusiva **não tem rótulo próprio** na tramitação: não existe
+`descricaoTramitacao = "Aprovado em caráter conclusivo"`. As 703 ocorrências de
+"apreciação conclusiva" estão no campo `despacho` — são o **despacho de distribuição** que
+autoriza o rito, não o registro da decisão. Reconstruir o evento exigiria inferir pela
+sequência de tramitações. Marcador auxiliar: só **26** "Apresentação de Recurso" em 2025
+(recurso ao plenário é a contrapartida do rito conclusivo).
+
+→ **Conclusão parcial:** dá para **detectar que uma proposição seguiu o caminho
+conclusivo**. Não dá para recuperar o voto individual da maioria dessas decisões. A
+limitação da seção 7.4 continua valendo.
+
+### 4.1.5 ⚠️ Achado #15 — as votações de comissão NÃO servem como reserva
+
+⚠️ **Correção de uma afirmação anterior deste documento.** A v0.2 dizia que "sobram ~116
+votações de comissão como reserva" para engordar a matriz. **A medição desmente isso.**
+
+| | Votações | Votos por votação (mediana) | Mín–Máx |
+|---|---|---|---|
+| **Plenário** | 410 | **405** | 127–494 |
+| **Comissões** | 116 | **29** | 10–66 |
+
+Uma votação de comissão registra o voto de **~29 deputados**, não de 400 — porque só os
+**membros daquela comissão** votam. Ao todo, 345 dos 552 deputados aparecem em ao menos
+uma votação de comissão.
+
+**Por que isso é um problema, e não apenas "menos dado":**
+
+1. **Esparsidade extrema.** Para uma votação de comissão, ~520 dos 552 deputados têm
+   `null`. Ela não é uma coluna a mais na matriz — é uma coluna quase vazia.
+2. 🔴 **Confundimento estrutural.** Dois deputados da mesma comissão ganham dezenas de
+   votações em comum; dois de comissões diferentes ganham **zero**. Como a composição das
+   comissões é **distribuída pelos líderes por proporcionalidade partidária**, participar
+   da mesma comissão é fortemente correlacionado com ser do mesmo partido.
+
+   → Incluir votações de comissão **infla a similaridade entre correligionários por um
+   mecanismo que não é o voto**. Isso contamina exatamente a pergunta central do trabalho
+   — *"o partido explica o voto?"* (RF-20). Seria criar artificialmente o resultado que se
+   pretende medir.
+3. **Também não ajudam o questionário.** Uma pergunta derivada de votação de comissão só
+   permite comparar o cidadão com os ~29 deputados que votaram. Os outros 523 ficam de
+   fora daquela pergunta.
+
+→ **Decisão: votações de comissão ficam FORA da matriz principal de similaridade.**
+
+**Usos legítimos, em outro escopo:**
+
+| Uso | Vale a pena? |
+|---|---|
+| Similaridade **dentro** de uma comissão (matriz própria, 29 × 49) | ✅ Sim — análise à parte, comparável entre comissões |
+| Medir participação/assiduidade em comissão | ✅ Sim — atributo do nó |
+| Aresta "comissão em comum" | ✅ Sim — mas como **co-participação**, não como voto |
+| Engordar a matriz principal | ⛔ **Não** — confundimento |
+
+→ **Consequência para o R1:** a base real da matriz principal é **410 votações de
+plenário** por ano, não 526. Continua sendo volume confortável (mediana de 329 votos por
+deputado já foi medida sobre esse universo), mas a "reserva" de 116 não existe.
+
+### 4.1.6 ⭐ O que as comissões oferecem de aproveitável
+
+O achado #15 descartou apenas **um** uso das comissões — o voto na matriz principal. As
+comissões continuam sendo uma das fontes mais ricas do projeto, por outras vias.
+
+| # | Insumo | Como se obtém | Valor |
+|---|---|---|---|
+| 1 | **Relatoria** | `proposicoesTramitacoes` → `descricaoTramitacao = "Designação de Relator(a)"` | ⭐⭐ **O melhor** |
+| 2 | Aresta comissão em comum | `/orgaos/{id}/membros` | ⭐⭐ Substitui frentes |
+| 3 | Cargo na mesa da comissão | `titulo` em `/orgaos/{id}/membros` | ⭐ Poder e senioridade |
+| 4 | Especialização temática | comissões do deputado → temas | ⭐ Atributo do nó |
+| 5 | Similaridade **intra**-comissão | matriz própria por comissão | ⭐ Análise à parte |
+| 6 | Participação em comissão | votos de comissão / votações da comissão | 🟡 Engajamento |
+| 7 | Rito conclusivo | 703 despachos em 2025 | 🟡 Cobertura |
+| 8 | Comissões especiais de PEC/PL, CPIs | `siglaOrgao` padrão `PEC…`/`PL…`; `codTipoOrgao=4` | 🟡 Engajamento por tema |
+
+#### ⭐ Achado #16 — relatoria é o melhor sinal não-votação disponível
+
+**Medido em 2025:** 4.694 designações de relator, distribuídas entre **455 deputados**.
+
+| Estatística | Relatorias por deputado |
+|---|---|
+| Mediana | **7** |
+| Média | 10 |
+| Máximo | 133 |
+
+Compare com frentes (mediana perto da saturação, 99% para um deputado): **relatoria
+discrimina**. É trabalho atribuído, não assinatura de cortesia.
+
+**Formato do dado** — o nome vem no campo `despacho`, parseável por regex:
+
+```
+descricaoTramitacao = "Designação de Relator(a)"
+siglaOrgao          = "CDHMIR"
+despacho            = "Designado Relator, Dep. Tadeu Veneri (PT-PR)"
+uriProposicao       = ".../proposicoes/105012"
+```
+
+⚠️ O nome vem como **texto livre** (`Dep. Nome (PARTIDO-UF)`), não como id. É preciso
+casar com `deputado_id` — mas nome + partido + UF resolve com boa precisão, e a fila de
+exceção pega o resto.
+
+⚠️ `/proposicoes/{id}/relatores` **não existe** (HTTP 405). O caminho é pela tramitação.
+Alternativa parcial: `ultimoStatus_uriRelator` no `proposicoes-{ano}.csv` — mas cobre só o
+relator **atual** (13.792 de 114.906 proposições ≈ 12%), sem histórico.
+
+**Por que relatoria vale tanto:**
+
+1. **Perfil temático revelado.** `relatoria → proposição → /temas` dá a especialização de
+   cada deputado a partir do que ele **efetivamente trabalhou** — independente do voto e
+   independente de autodeclaração. É a única fonte desse tipo no projeto.
+2. **Sinal de confiança da liderança.** Relator é designado pelo presidente da comissão. É
+   um cargo de poder real — o relator reescreve o texto. Quem relata muito, e sobre o quê,
+   é informação política densa.
+3. **Validação independente dos eixos do SVD.** Se o eixo 1 do SVD separar parlamentares
+   que relatam matérias de meio ambiente dos que relatam segurança pública, você tem
+   **corroboração por fonte independente** — o tipo de checagem que fortalece muito a
+   seção de resultados.
+4. **Contexto para o questionário.** Mostrar "relatado por Dep. X" ao lado da pergunta
+   enriquece sem custo.
+
+#### Cargos na mesa da comissão
+
+`/orgaos/{id}/membros` traz `titulo` com hierarquia real. Medido na CCJC:
+
+| Título | Qtd |
+|---|---|
+| Titular | 48 |
+| Suplente | 48 |
+| Presidente | 1 |
+| 1º / 2º / 3º Vice-Presidente | 1 cada |
+
+→ Presidir a CCJC ou a CFT é das posições mais disputadas da casa. Como atributo de nó
+(senioridade / poder), é barato de extrair e informativo.
+
+#### Similaridade intra-comissão
+
+As votações de comissão **não** servem na matriz principal (achado #15), mas servem em
+**matriz própria, por comissão**: dentro da CCJC, todos os 96 membros votam as mesmas 49
+votações — não há esparsidade nem confundimento, porque a população é fechada.
+
+→ Permite perguntar *"qual comissão é a mais polarizada?"* e comparar coesão entre
+comissões. É uma análise pequena e autocontida — boa candidata a seção extra se sobrar
+tempo.
+
+### 4.5 ⚠️ Achado crítico #7 — as duas casas não são comparáveis entre si
+
+Este é o achado que mais afeta o desenho do produto, e o motivo real da decisão D3.
+
+**Deputados e senadores não votam as mesmas votações.** Cada casa vota suas próprias
+matérias, em textos e momentos diferentes. Verificações:
+
+- No CSV da Câmara de 2025, o campo `siglaOrgao` das votações nominais contém apenas
+  plenário da Câmara e comissões da Câmara. **Nenhuma ocorrência de `CN`**
+  (Congresso Nacional).
+- No `/votacao` do Senado em 2025, `casaSessao` é **`SF` em 100% das 128 votações**.
+  Nenhuma sessão conjunta.
+
+→ Ou seja: **as sessões conjuntas do Congresso Nacional (vetos, orçamento), que seriam
+a única ponte natural entre as casas, não aparecem em nenhuma das duas fontes.**
+
+**Consequências diretas:**
+
+1. Não existe uma matriz `P × V` única. A similaridade só é calculável **dentro** de
+   cada casa.
+2. O grafo tem **dois componentes desconexos** — deputados de um lado, senadores do
+   outro. Não é um grafo do "Congresso"; são dois grafos.
+3. O questionário do cidadão precisaria ser **dois questionários** (um por casa), ou
+   dar match contra apenas uma das casas.
+
+**Alternativas para ligar as casas** (nenhuma no MVP):
+
+| Abordagem | Viabilidade |
+|---|---|
+| Casar a mesma proposição votada nas duas casas (PL aprovado na Câmara e depois no Senado) | Possível, mas os textos votados diferem (emendas, substitutivos) e as datas são distantes. Comparação frágil |
+| Buscar as votações de veto do Congresso Nacional em outra fonte | A investigar. Volume baixo, mas seria a ponte metodologicamente correta |
+| Assumir os dois grafos como resultado e **comparar** as duas casas | Barato e honesto. É o que recomendo |
+
+---
+
+## 5. Arquitetura proposta
+
+```
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│ API Câmara   │  │ API Senado   │  │ CSVs TSE     │
+└──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+       └─────────────────┼─────────────────┘
+                         ▼
+              ┌─────────────────────┐
+              │  EXTRACT — bronze   │  JSON/CSV cru, imutável,
+              │                     │  particionado por data de coleta
+              └──────────┬──────────┘
+                         ▼
+              ┌─────────────────────┐
+              │  TRANSFORM — silver │  normalização, tipagem,
+              │                     │  entity resolution → pessoa_id
+              └──────────┬──────────┘
+                         ▼
+              ┌─────────────────────┐
+              │  LOAD — gold        │  matriz de votos, arestas do grafo,
+              │                     │  métricas pré-calculadas
+              └──────────┬──────────┘
+                         ▼
+         ┌───────────────┼───────────────┐
+         ▼               ▼               ▼
+    ┌─────────┐    ┌──────────┐    ┌──────────┐
+    │ API     │    │ Grafo    │    │ Crawler  │
+    │ REST    │    │ (job)    │    │ notícias │
+    └────┬────┘    └──────────┘    └──────────┘
+         ▼
+    ┌─────────┐
+    │ Web app │
+    └─────────┘
+```
+
+**Princípio:** a camada bronze é imutável e reprocessável. Se o algoritmo de afinidade
+mudar, não é preciso rebaixar as APIs de novo — basta reprocessar silver→gold. Isso
+importa porque a varredura completa de votos da Câmara é lenta (uma chamada por
+votação).
+
+### Stack sugerida
+
+O `.gitignore` do repositório já é o de **.NET**, então assumo C#/.NET como stack
+principal.
+
+| Camada | Escolha | Observação |
+|---|---|---|
+| ETL / Workers | .NET 9 (`BackgroundService` ou Hangfire) | um job por fonte |
+| Banco | **PostgreSQL** | ver decisão D2 |
+| API | ASP.NET Core Minimal API | |
+| Front | Blazor ou React + Cytoscape.js / D3 | o grafo exige lib JS |
+| Crawler | .NET + AngleSharp, ou Python + Scrapy | ver D1 |
+| Análise (SVD, Louvain) | ver decisão D1 | ponto de atrito do .NET |
+
+---
+
+## 6. Modelo de dados (núcleo)
+
+```
+pessoa(id, nome_civil, nome_urna, data_nascimento, sexo, cpf_hash)
+pessoa_fonte_id(pessoa_id, fonte, id_externo)        -- 'CAMARA' | 'SENADO' | 'TSE'
+mandato(id, pessoa_id, casa, uf, partido_sigla, legislatura, inicio, fim, situacao)
+partido(sigla, nome, numero)
+
+votacao(id, casa, data, orgao, descricao, proposicao_id, resultado, nominal)
+voto(votacao_id, pessoa_id, valor,                   -- domínio normalizado
+     partido_no_voto, uf_no_voto)                    -- ver 6.1: NÃO normalizar isto
+proposicao(id, sigla_tipo, numero, ano, ementa, tema)
+autoria(proposicao_id, pessoa_id, ordem, proponente)
+frente(id, titulo, legislatura)
+frente_membro(frente_id, pessoa_id)
+
+similaridade(pessoa_a, pessoa_b, metrica, valor, n_votacoes_comuns, calculado_em)
+noticia(id, pessoa_id, url, titulo, veiculo, publicado_em, trecho, coletado_em)
+```
+
+**Normalização do voto** (decisão que afeta diretamente o algoritmo):
+
+| Origem | Valor interno | Entra no cálculo? |
+|---|---|---|
+| `Sim` | `+1` | sim |
+| `Não` | `-1` | sim |
+| `Abstenção` | `0` | sim, com peso menor |
+| `Obstrução` | `-1` * | ver nota |
+| `Artigo 17` (presidente da Mesa) | `null` | não |
+| Ausente (não aparece na lista) | `null` | não |
+
+\* Obstrução é manobra regimental de oposição, não posição de mérito sobre o texto.
+Tratar como `-1` seria uma simplificação discutível — **mas a medição da seção 4.1.1
+mostrou que isso não importa**: `Sim` + `Não` são 99,3% dos registros. Obstrução (375),
+abstenção (336) e Artigo 17 (401) somam 0,7%. Decisão: mandar todos para `null` (fora do
+cálculo). É a opção mais simples e a mais fácil de defender, e o impacto no resultado é
+desprezível por construção.
+
+### 6.1 Rotatividade: por que NÃO existe uma tabela `mandato` no MVP
+
+Apareceram **552 deputados distintos** votando em 2025, contra 513 cadeiras. A pergunta
+natural é se isso obriga a manter uma base externa com todos os políticos e seus
+períodos de mandato. **Não obriga.**
+
+**O dado de voto já é *event-sourced*.** Cada linha do `votacaoVotos.csv` carrega
+`deputado_siglaPartido` e `deputado_siglaUf` **no instante daquele voto**. Se um
+deputado troca de partido, as linhas anteriores mantêm o partido antigo e as posteriores
+trazem o novo. Medido em 2025: **14 deputados trocaram de partido** e o CSV registra
+corretamente os dois:
+
+```
+204395  Pedro Lupion       PP    → REPUBLICANOS
+204455  Luiz Lima          NOVO  → PL
+160976  Tiririca           PL    → PSD
+204376  Coronel Armando    PL    → PP
+```
+
+→ **Regra:** guardar `partido_no_voto` e `uf_no_voto` **desnormalizados na tabela
+`voto`**. Isso não é redundância a ser eliminada — é o registro histórico. Normalizar
+para um FK de `pessoa.partido_atual` **destruiria** a informação temporal.
+
+Para exibir o partido *atual* na ficha do parlamentar, usar `ultimoStatus.siglaPartido`
+de `/deputados/{id}`. São dois conceitos diferentes e ambos são necessários.
+
+**O algoritmo de similaridade não precisa de mandato nenhum.** A comparação *pairwise*
+da seção 7.1 já resolve: só entram as votações em que os dois votaram. Um suplente que
+votou 30 vezes é comparado ao titular nessas 30. Não há o que corrigir.
+
+**A cauda de suplentes é pequena** — distribuição medida de votos por deputado em 2025
+(sobre 526 votações nominais):
+
+| Estatística | Votações |
+|---|---|
+| mínimo | 1 |
+| p10 | 164 |
+| **mediana** | **329** |
+| p90 | 392 |
+| máximo | 456 |
+
+Com o corte de ≥ 20 votações em comum da seção 7.1, ficam de fora **14 deputados
+(2,5%)**. O problema se resolve sozinho com uma cláusula `HAVING`.
+
+**Se um dia precisar do histórico oficial de mandato**, ele existe:
+`GET /api/v2/deputados/{id}/historico` retorna as mudanças de status com `dataHora`,
+`situacao`, `siglaPartido` e `condicaoEleitoral`. São 552 chamadas, executáveis uma vez.
+Mas isso é **F7+, não MVP** — só faz sentido se alguma pergunta de pesquisa exigir
+recortar votos por período de exercício.
+
+---
+
+## 7. Algoritmo de afinidade
+
+### 7.1 Parlamentar ↔ parlamentar
+
+Matriz esparsa `P × V` (parlamentares × votações nominais).
+
+Similaridade entre A e B calculada **apenas sobre as votações em que ambos votaram**
+(tratamento *pairwise* de dados faltantes — não imputar zero, isso enviesa a favor de
+quem falta muito):
+
+```
+concordancia(A,B) = |{ v : voto_A(v) == voto_B(v) }| / |{ v : ambos votaram }|
+```
+
+Complementar com **cosseno** sobre os vetores em {-1, 0, +1} e comparar as duas
+métricas no TCC.
+
+⚠️ Aplicar um **corte mínimo de votações em comum** (ex.: ≥ 20). Sem isso, um suplente
+que votou 3 vezes aparece com 100% de afinidade com meio Congresso — artefato clássico
+desse tipo de análise.
+
+### 7.2 Cidadão ↔ parlamentar
+
+1. Selecionar **N votações para o questionário** (sugestão: 15–25). Funil medido sobre
+   2025 (ver 4.1.2 e 4.1.3):
+
+   ```
+   15.037 votações no ano
+      526 nominais                        (3,5%)
+      145 substantivas                    (filtra requerimento e destaque)
+      100 proposições distintas
+        ~ ?  após descartar unanimidades  ← a medir na F4
+       15–25 perguntas finais
+   ```
+
+   Na legislatura inteira (2023–2026) isso escala para ~300–400 matérias. Folga
+   suficiente.
+
+   Critérios de seleção:
+   - **filtrar por `categoria = SUBSTANTIVA`** (achado #11) — requerimento de urgência
+     não é pergunta para cidadão;
+   - **descartar unanimidades** (votações com >85% de um lado não discriminam nada);
+   - preferir votações com divisão entre 30% e 70%;
+   - garantir **cobertura temática** usando `/proposicoes/{id}/temas` (achado #10) — o
+     vocabulário já é oficial e controlado, não precisa classificar na mão;
+   - obter a ementa real via `proposicoesAfetadas` ou pelo prefixo do `idVotacao`
+     (achado #9), **nunca** por `uriProposicaoCitada` (achado #8);
+   - **atribuir `polaridade` manualmente** a cada votação escolhida (achado #12): mapear
+     "Sim" para "a favor da medida". Em destaques e requerimentos de retirada de pauta o
+     sinal se inverte;
+   - reescrever a ementa em linguagem simples. A `descricao` da API é resultado
+     (*"Mantido o texto. Sim: 266; Não: 118"*), não conteúdo. Documentar essa reescrita
+     como parte do método — é o passo mais subjetivo do trabalho e o mais atacável na
+     banca.
+2. Usuário responde **Sim / Não / Não sei** (`null`, ignorada no cálculo).
+3. Aplicar a mesma métrica *pairwise* da seção 7.1.
+4. Exibir **também os mais distantes** — é mais informativo e reduz a leitura de
+   "endosso" ao topo do ranking.
+
+### 7.3 Eixos ideológicos (opcional, alto valor acadêmico)
+
+Aplicar **SVD/PCA** à matriz de votos e projetar os parlamentares em 2 dimensões.
+Esta é a base da literatura clássica de *roll-call analysis* (**NOMINATE**, Poole &
+Rosenthal; **W-NOMINATE**; **IDEAL**, Clinton–Jackman–Rivers). Citar essa literatura
+ancora o TCC em base teórica consolidada, em vez de o algoritmo parecer heurística
+inventada — **recomendo fortemente incluir**.
+
+Resultado esperado: no Brasil o 1º componente normalmente captura o eixo
+**governo × oposição** mais do que esquerda × direita. Se isso se confirmar, é um
+achado interessante para discutir.
+
+### 7.4 ⚠️ Limitação metodológica: o viés de seleção das votações nominais
+
+**Esta é a pergunta mais previsível que a banca vai fazer.** Convém ter a resposta pronta
+e escrita, não improvisada.
+
+**A pergunta:** se 96,5% das votações ficam de fora, a similaridade calculada sobre os
+3,5% restantes representa mesmo o comportamento do parlamentar?
+
+**Primeiro, o vocabulário** — a confusão aqui é fácil e o nome não ajuda:
+
+| Termo | Significa | Tem voto individual? | Quantas em 2025 |
+|---|---|---|---|
+| **Nominal** | "com o **nome** de cada um" | ✅ **Sim** | **526 (3,5%)** |
+| **Simbólica** | Presidente observa o plenário e anuncia | ❌ **Não** | ~14.500 (96,5%) |
+
+Os 3,5% são a **parte boa** — são justamente as votações que temos.
+
+**Segundo, o viés não é aleatório, e não dá para medi-lo.** Verificamos: as votações
+simbólicas **não trazem nem a contagem agregada** de votos. Das ~16.900 linhas
+não-nominais do CSV de 2025, apenas 26 têm `votosSim`/`votosNao` preenchidos — todas as
+demais vêm zeradas.
+
+→ Ou seja: dos 96,5% excluídos não se sabe nem **quão dividida** foi a decisão. Não é
+possível comparar a distribuição de margens entre nominais e simbólicas para estimar o
+viés empiricamente. **Assuma isso no texto** em vez de tentar contornar.
+
+**Terceiro, a direção do viés é conhecida por raciocínio institucional.** A votação
+nominal precisa ser **requerida** — tipicamente por um líder que quer registrar a posição
+de cada um. Isso acontece quando:
+
+- há disputa real sobre a matéria;
+- um lado quer **expor** o voto do outro;
+- a Constituição obriga (PEC, PLP).
+
+Consenso não gera pedido de votação nominal — ninguém pede registro para aprovar
+homenagem a data comemorativa.
+
+→ **A amostra é enviesada na direção das matérias controversas.**
+
+**Quarto, e é aqui que a limitação vira vantagem:** para *medir diferença entre
+parlamentares*, votação consensual não serve para nada. Se todos votam igual, a votação
+não discrimina ninguém — é exatamente por isso que a RN-05 já descarta votações com mais
+de 85% de um lado. **Mesmo que os 96,5% estivessem disponíveis, a maior parte seria
+descartada pelo mesmo critério.**
+
+O viés que parece ameaçar o método está, na prática, alinhado com ele.
+
+**Quinto — o que NÃO se pode afirmar.** A limitação é real e restringe o vocabulário do
+trabalho:
+
+| ❌ Não afirmar | ✅ Afirmar |
+|---|---|
+| "Os deputados A e B concordam em 80% das votações" | "…em 80% das **votações nominais**" |
+| "…concordam em 80% da produção legislativa" | "…em 80% das **matérias controversas** submetidas a registro individual" |
+| "O deputado X vota com o governo em 90% dos casos" | "…em 90% das votações **em que houve registro nominal**" |
+
+E há um efeito adicional a declarar: como decisões em **caráter conclusivo** podem virar
+lei sem passar pelo plenário (ver [01-camara §5.2](01-camara-dos-deputados.md)), **nem
+toda lei aprovada aparece na base**. A cobertura é de *comportamento em votação
+registrada*, não de *produção legislativa*.
+
+**Resumo defensável para a banca:**
+
+> A base cobre 526 votações nominais em 2025, com mediana de 329 votos por deputado. A
+> exclusão das votações simbólicas não é aleatória: concentra-se em matérias consensuais,
+> que por construção não discriminam parlamentares e seriam descartadas pelo filtro de
+> unanimidade. O trabalho mede, portanto, alinhamento em **matérias controversas** — que é
+> precisamente o objeto de interesse.
+
+---
+
+## 8. O grafo ("rede social de políticos")
+
+⚠️ Por causa do achado #7 (seção 4.5), **é um grafo por casa**, não um grafo do
+Congresso. Evitar prometer "a rede do Congresso Nacional" no título e no texto.
+
+**Nós:** parlamentares de uma mesma casa.
+**Arestas** (múltiplos tipos, ponderadas):
+
+| Tipo | Fonte | Sinal capturado | Qualidade |
+|---|---|---|---|
+| Similaridade de voto | matriz de votos | comportamento revelado | ✅ Ótima |
+| **Comissão em comum** | `/deputados/{id}/orgaos` | convivência e especialização | ✅ **Boa** |
+| Coautoria de proposição | `/proposicoes/{id}/autores` | colaboração explícita | ✅ Boa |
+| Mesmo partido / bancada | cadastro | linha de base | 🟡 Trivial |
+| ~~Frente parlamentar~~ | `/deputados/{id}/frentes` | ~~afinidade temática~~ | ⛔ **Inútil — ver #13** |
+
+**Atributos de nó** (não são arestas, mas alimentam a visualização e a interpretação):
+
+| Atributo | Fonte | Uso |
+|---|---|---|
+| **Perfil temático por relatoria** | achado #16 | ⭐ Validação independente dos eixos do SVD |
+| Cargo em comissão (Presidente/Vice) | `titulo` em `/orgaos/{id}/membros` | Senioridade / poder |
+| Governismo e disciplina partidária | voto × `/orientacoes` | Coloração do grafo |
+| Escolaridade, ocupação, patrimônio | TSE (cenários B/C) | Ficha e correlações |
+
+⚠️ **Achado #13 — frente parlamentar não serve como aresta.** A medição é conclusiva:
+
+**Existem 320 frentes na 57ª legislatura.** E:
+
+| Deputado | Frentes | % das frentes existentes | Comissões |
+|---|---|---|---|
+| 204455 | **317** | **99 %** | — |
+| 204528 | **273** | 85 % | 12 |
+| 221328 | **102** | 32 % | — |
+
+Um deputado está em **99% de todas as frentes que existem**. Registrar uma frente exige
+171 assinaturas, então assina-se por cortesia e sem custo. Como aresta de grafo, isso
+produz um **grafo quase completo**: densidade próxima de 1, poder discriminante nulo.
+Ponderar pelo tamanho da frente não salva — o problema não é o peso, é que a informação
+não existe.
+
+→ **Decisão: frentes saem do grafo.** Podem virar atributo do nó (ex.: "pertence à Frente
+da Agropecuária"), nunca aresta.
+
+→ **Substituto: comissão em comum.** É o oposto — escassa (6 comissões permanentes para o
+mesmo deputado), disputada, e com **vigência temporal** (`dataInicio`/`dataFim`/`titulo` em
+`/orgaos/{id}/membros`). Sinal muito mais informativo.
+
+**Análises previstas:**
+
+- Detecção de comunidades (**Louvain** / Leiden) sobre a rede de similaridade de voto.
+- Comparar comunidades detectadas × partidos reais → *o partido prevê o voto?*
+  (métrica: *adjusted rand index*, ou modularidade da partição partidária).
+- Centralidade de intermediação (*betweenness*) → parlamentares "ponte" entre blocos.
+- Visualização com layout *force-directed*.
+
+⚠️ 513 nós geram até ~131 mil arestas. **Filtrar por limiar** de similaridade antes de
+renderizar, senão o grafo vira uma bola de pelos ilegível.
+
+---
+
+## 9. Crawler de notícias
+
+**Escopo:** para cada parlamentar, coletar referências noticiosas recentes.
+
+**Abordagem recomendada, nesta ordem de preferência:**
+
+1. **RSS / Google News RSS** por nome do parlamentar — barato, estável, legítimo.
+2. **Sitemaps** dos veículos.
+3. Scraping de HTML direto — só como último recurso.
+
+**Regras não negociáveis:**
+
+- Respeitar `robots.txt` e `Crawl-delay`.
+- *Rate limiting* e `User-Agent` identificável, com contato.
+- **Armazenar apenas URL, título, veículo, data e um trecho curto** — nunca o texto
+  integral. Isso mantém o projeto do lado certo do direito autoral e é defensável na
+  banca.
+- Nunca contornar paywall.
+
+**Riscos:** fragilidade a mudanças de layout; deduplicação (a mesma notícia replicada
+em N portais); desambiguação de homônimos (nomes comuns geram falso positivo — usar
+nome + cargo/UF na query).
+
+---
+
+## 10. Riscos e mitigações
+
+| # | Risco | Impacto | Mitigação |
+|---|---|---|---|
+| R1 | Poucas votações nominais úteis (achado #1) | ~~Alto~~ **Baixo** | **Medido:** só 3,5% são nominais, mas isso dá **410 votações de plenário**/ano — mediana de 329 votos por deputado. ⚠️ Sem reserva: comissão não serve (achado #15) |
+| R2 | TSE bloqueia acesso automatizado (achado #5) | Médio | Carga manual versionada; TSE fica fora do caminho crítico |
+| R3 | Entity resolution falha no Senado (sem CPF) | Médio | MVP só com Câmara; conciliação manual dos ~81 senadores é viável |
+| R4 | ~~Varredura completa da API da Câmara é lenta~~ | ~~Médio~~ **Resolvido** | **Achado #6:** existem CSVs consolidados por ano. Carga base via CSV, API só para o incremental |
+| R9 | Câmara e Senado não compartilham votações (achado #7) | Alto | Assumir duas análises paralelas; não prometer um "grafo do Congresso" |
+| R5 | Endpoint do Senado depreciado (achado #4) | Baixo | Já migrado para `/votacao` neste documento |
+| R6 | Ausências tratadas como discordância enviesam o resultado | Alto | Comparação *pairwise*, nunca imputação por zero |
+| R7 | **Contexto eleitoral (out/2026)** | **Alto** | ver abaixo |
+| R8 | Rotatividade (suplentes, licenças, troca de partido) | ~~Médio~~ **Baixo** | O dado de voto já é *event-sourced*: partido e UF vêm em cada linha de voto. Ver seção 6.1 |
+
+**Sobre R7 — atenção real, não formalidade.** As eleições gerais são em outubro de 2026.
+Uma ferramenta pública do tipo "descubra seu político" pode ser lida como propaganda
+eleitoral ou como pesquisa de intenção de voto, ambas reguladas pela legislação
+eleitoral. Recomendações:
+
+- manter o projeto **não publicado / de acesso restrito** durante o período eleitoral,
+  ou publicar apenas depois;
+- exibir *disclaimer* explícito: ferramenta acadêmica, não recomendação de voto;
+- **não coletar nem armazenar dado pessoal identificável** de quem responde o
+  questionário — só o vetor de respostas anônimo. Isso também resolve o lado LGPD.
+
+---
+
+## 11. Decisões em aberto
+
+| # | Decisão | Opções | Recomendação |
+|---|---|---|---|
+| D1 | Linguagem do ETL/análise | (a) tudo .NET; (b) .NET + Python para SVD/Louvain | **(b)**: `numpy`/`scipy`/`networkx` resolvem em poucas linhas o que em C# dá trabalho. Defender como escolha arquitetural (poliglota por adequação), não como gambiarra |
+| D2 | Banco | (a) PostgreSQL; (b) Neo4j; (c) ambos | **(a)** no MVP. O grafo tem ~500 nós — cabe folgado em tabela relacional. Neo4j só se a pergunta de pesquisa exigir travessia de caminhos |
+| D3 | Escopo do MVP | (a) só Câmara; (b) Câmara + Senado como universos paralelos; (c) tentar unificar as casas | **(b), em duas etapas** — ver nota abaixo |
+| D4 | Base da afinidade | (a) votações reais; (b) questionário ideológico tipo Likert | **(a)** — é o diferencial do trabalho; (b) é o que todo mundo já faz |
+| D5 | Front-end | Blazor vs React | Decidir depois da API estar de pé |
+
+### Nota sobre D3 — por que o Senado entra, mas depois
+
+A versão v0.1 deste documento justificava "só Câmara" com o argumento de que *"o Senado
+dobra o esforço de ETL"*. **Esse argumento está errado** e foi corrigido após a medição
+da seção 4.1.1.
+
+O Senado é, na verdade, **a fonte mais barata de ingerir das três**:
+
+- uma única chamada `/votacao?dataInicio=&dataFim=` traz o ano inteiro (2,4 MB);
+- o retorno já vem achatado — uma linha por parlamentar por votação, sem N+1;
+- são 84 pessoas para conciliar manualmente, não 552.
+
+O motivo real de o Senado **não** entrar no MVP é o **achado #7** (seção 4.5): não dá
+para comparar deputado com senador, então o Senado não amplia a análise — ele **duplica**
+a análise em uma população disjunta. Não é mais dado no mesmo problema; é um segundo
+problema com a mesma forma.
+
+**Estratégia adotada:**
+
+1. Fechar a fatia vertical completa com a Câmara (F1→F5). O algoritmo, o grafo e o
+   questionário nascem em cima de 526 votações e 552 pessoas.
+2. Adicionar o Senado logo depois (F6), **reusando o mesmo pipeline e o mesmo
+   algoritmo**, produzindo um segundo grafo e um segundo questionário.
+
+Essa ordem tem uma vantagem para o texto do TCC: rodar o **mesmo método em duas casas
+diferentes** vira um resultado por si só — dá para comparar coesão partidária,
+polarização e modularidade entre Câmara e Senado. É mais interessante do que só ter
+mais parlamentares no banco.
+
+**Sobre o objetivo específico #1 ("integrar fontes heterogêneas"):** ele não depende do
+Senado. Câmara (API REST + CSV) e TSE (arquivo CSV Latin-1, sem API, com entity
+resolution por CPF) já são fontes genuinamente heterogêneas — e mais heterogêneas entre
+si do que Câmara e Senado, que são duas APIs legislativas parecidas.
+
+---
+
+## 12. Roadmap
+
+| Fase | Entrega | Depende de |
+|---|---|---|
+| **F0** | Discovery (este documento) | — |
+| **F1** | Ingestão Câmara: CSV anual (base) + API (incremental) → bronze | D1, D2 |
+| **F2** | Modelo silver/gold + matriz de votos | F1 |
+| **F3** | Similaridade + grafo + comunidades | F2 |
+| **F4** | Curadoria do questionário + API de afinidade | F3 |
+| **F5** | Web app (ficha do parlamentar + grafo + questionário) | F4, D5 |
+| **F6** | **Senado** — mesmo pipeline, segundo grafo + comparação entre casas | F3 |
+| **F7** | Enriquecimento TSE (bens, histórico eleitoral) | F2 |
+| **F8** | Crawler de notícias | F5 |
+
+Fatiamento pensado para que o TCC tenha resultado defensável já em **F4**, mesmo que
+F6–F8 não sejam concluídas.
+
+O Senado subiu de F8 para **F6** em relação à v0.1: a ingestão é barata (uma chamada) e
+a comparação entre as duas casas é um resultado analítico, não só mais dado. O crawler
+desceu para F8 por ser a parte mais frágil e a menos essencial ao argumento.
+
+---
+
+## 13. Referências
+
+**Dados**
+
+- Câmara — Dados Abertos: <https://dadosabertos.camara.leg.br/swagger/api.html>
+- Senado — Dados Abertos: <https://legis.senado.leg.br/dadosabertos/docs/>
+- TSE — Dados Abertos: <https://dadosabertos.tse.jus.br/>
+
+**Teoria (roll-call analysis)**
+
+- Poole, K. & Rosenthal, H. *Congress: A Political-Economic History of Roll Call Voting.*
+- Clinton, J., Jackman, S. & Rivers, D. *The Statistical Analysis of Roll Call Data.* APSR, 2004.
+- Blondel et al. *Fast unfolding of communities in large networks* (Louvain), 2008.
+
+**Trabalhos correlatos** (mapear antes de escrever a revisão bibliográfica)
+
+- Basômetro (Estadão), Ranking dos Políticos, Radar do Congresso,
+  VoteWatch Europe, Wahl-O-Mat (DE), StemWijzer (NL).
+
+---
+
+## Anexo A — Achados da exploração técnica (2026-08-22)
+
+Verificações executadas contra as APIs reais:
+
+| Verificação | Resultado |
+|---|---|
+| `GET /api/v2/deputados?siglaUf=SP&itens=2` | ✅ 200, paginado |
+| `GET /api/v2/deputados/204528` | ✅ expõe `cpf`, `nomeCivil`, `redeSocial[]` |
+| `GET /api/v2/votacoes?dataInicio=2025-03-01&dataFim=2025-03-31` | ✅ 200 |
+| `GET /api/v2/votacoes/2442848-52/votos` | ⚠️ `dados: []` (votação simbólica) |
+| `GET /api/v2/votacoes/2456731-84/votos` | ✅ 389 votos nominais |
+| `GET /api/v2/votacoes/{id}/votos?itens=2` | ⛔ HTTP 400 — parâmetro não suportado |
+| `GET /api/v2/deputados/204528/frentes` | ✅ 200 |
+| `GET /api/v2/deputados/204528/ocupacoes` | ✅ 200 |
+| `GET /dadosabertos/senador/lista/atual` | ✅ 200, envelope aninhado |
+| `GET /dadosabertos/plenario/lista/votacao/20250429` | ⚠️ 200, mas **depreciado** |
+| `GET /dadosabertos/votacao?dataInicio=&dataFim=` | ✅ 200, array plano, voto por parlamentar |
+| `GET https://cdn.tse.jus.br/.../consulta_cand_2022.zip` | ⛔ HTTP 403, inclusive com UA de navegador |
+
+Segunda rodada — medição de volume:
+
+| Verificação | Resultado |
+|---|---|
+| `GET /arquivos/votacoes/csv/votacoes-2025.csv` | ✅ 8,7 MB — 15.037 votações |
+| `GET /arquivos/votacoesVotos/csv/votacoesVotos-2025.csv` | ✅ 58 MB — 167 mil votos, 526 votações nominais, 552 deputados |
+| `GET /arquivos/votacoesObjetos/csv/...` e `/proposicoes/csv/...` | ✅ existem |
+| `GET /dadosabertos/votacao?dataInicio=2025-01-01&dataFim=2025-12-31` | ✅ 2,4 MB — 128 votações, 84 senadores, ~10,4 mil votos |
+| `casaSessao` nas 128 votações do Senado em 2025 | `SF` em 100% — **nenhuma sessão do Congresso Nacional** |
+| `siglaOrgao` nas 526 votações nominais da Câmara | PLEN 410, CCJC 49, CSPCCO 18, CE 18, … — **nenhum `CN`** |
