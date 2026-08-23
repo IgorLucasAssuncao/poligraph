@@ -138,18 +138,36 @@ texto interpretativo. Deixar o leitor concluir.
 
 ---
 
-## 6. Onde a "recomendação de notícias" aparece
+## 6. ⭐ Seguir — o que torna isto uma rede social
 
-A página do parlamentar é **um dos dois lugares** onde a metade "Recomendação de Notícias"
-do título se materializa:
+A página do parlamentar não é só consulta: é onde o usuário **segue** (RF-42) e passa a
+receber notícias daquele parlamentar no feed (RF-43).
 
-| Contexto | Tipo de recomendação |
+```mermaid
+flowchart LR
+    Q["Questionário<br/>de afinidade"] -->|"sugere quem seguir<br/>(RF-44)"| P["Página do<br/>parlamentar"]
+    P -->|"botão Seguir"| L[("localStorage<br/>do navegador")]
+    L --> F["Feed pessoal<br/>notícias de quem você segue"]
+    C["Crawler RSS"] --> API["API pública:<br/>notícias por parlamentar"]
+    API --> F
+    style L fill:#238636,color:#fff
+```
+
+🔴 **O follow NÃO vai para o servidor.** A lista de seguidos vive no `localStorage`; a API
+serve apenas *"notícias recentes do parlamentar 204528"* — informação pública — e o
+**cliente filtra**. Ver [03-requisitos §2.7.2](../03-requisitos.md): uma base de
+"quem segue quem" é base de **convicção política**, que a LGPD trata como dado sensível.
+
+**Três lugares onde a recomendação aparece**, com naturezas diferentes:
+
+| Contexto | Natureza |
 |---|---|
-| **Página do parlamentar** | Notícias **sobre aquele parlamentar** — filtro simples, sem personalização |
-| **Resultado do questionário** | Notícias **personalizadas** pelo perfil de afinidade e temas do usuário |
+| Página do parlamentar | Notícias daquele parlamentar — **filtro**, sem personalização |
+| **Feed de seguidos** | **Recomendação por escolha explícita** do usuário |
+| Resultado do questionário | **Recomendação inferida** — sugere quem seguir por afinidade e tema |
 
-⚠️ Só o segundo é **recomendação** no sentido forte. O primeiro é filtragem. O TCC precisa
-dos dois, mas é o segundo que sustenta a palavra do título.
+⚠️ Só os dois últimos são recomendação no sentido forte. É o **feed** que sustenta a
+palavra do título, e é ele que exige o crawler no caminho crítico — não em F8.
 
 ---
 

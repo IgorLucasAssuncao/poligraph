@@ -1,6 +1,8 @@
 # Requisitos — funcionais e não funcionais
 
-> **Status:** v1.0 — 2026-08-22
+> **Status:** v1.1 — 2026-08-23
+> **v1.1:** §2.7 — seguir parlamentar e receber notícias (RF-42 a RF-46), com a tensão
+> LGPD e as três formas de atender; crawler promovido ao caminho crítico (F5b).
 > Deriva do [00-discovery.md](00-discovery.md). Regras de negócio marcadas com 📊 vêm de
 > **medição real** nos dados, não de suposição.
 
@@ -65,8 +67,13 @@ flowchart LR
     S1[["🤖 Fontes oficiais"]] --> UC5
 ```
 
-⚠️ **Não existe ator "usuário cadastrado".** É decisão de projeto, não omissão — ver
-RNF-12 e o risco R7.
+⚠️ **Não existe ator "usuário cadastrado"** — e isso é decisão de projeto, não omissão.
+O cidadão **segue parlamentares e recebe um feed** (RF-42, RF-43), mas essa preferência
+vive **no navegador dele**, não em uma conta no servidor. Ver §2.7.2 e RNF-12.
+
+> A pergunta que orientou o desenho: *o produto precisa saber quem é a pessoa, ou só
+> precisa que **o navegador dela** lembre?* Para seguir e receber feed, o segundo basta —
+> e evita construir uma base de convicções políticas.
 
 ---
 
@@ -138,10 +145,78 @@ RNF-12 e o risco R7.
 
 | ID | Requisito | Prioridade |
 |---|---|---|
-| **RF-37** | Coletar referências noticiosas via **RSS**, priorizando busca por nome | 🟢 Desejável |
-| **RF-38** | Armazenar **apenas** URL, título, veículo, data e trecho curto | 🔴 Essencial *(se RF-37)* |
-| **RF-39** | Deduplicar notícias replicadas | 🟢 Desejável |
-| **RF-40** | Marcar grau de confiança da associação e ocultar abaixo do limiar | 🟢 Desejável |
+| **RF-37** | Coletar referências noticiosas via **RSS**, priorizando busca por nome | 🔴 **Essencial** — sustenta o RF-43 |
+| **RF-38** | Armazenar **apenas** URL, título, veículo, data e trecho curto | 🔴 Essencial |
+| **RF-39** | Deduplicar notícias replicadas | 🟡 Importante — feed repetido é feed ruim |
+| **RF-40** | Marcar grau de confiança da associação e ocultar abaixo do limiar | 🔴 **Essencial** — notícia errada no feed de quem seguiu é falha visível |
+
+⚠️ **Estes quatro requisitos subiram de prioridade.** Eram "desejáveis" quando notícia era
+enfeite da ficha. Com o feed de seguidos (§2.7), o crawler passa a sustentar um requisito
+essencial — e a **coleta precisa ser diária e cobrir os 594 parlamentares**, não sob
+demanda.
+
+### 2.7 ⭐ Seguir parlamentares e receber notícias
+
+Requisito declarado: **o usuário pode seguir um parlamentar e receber notícias dele.**
+É o que fecha o arco do título — *"Recomendação de Notícias em Redes Sociais"* — e o que
+transforma o produto de consulta pontual em algo com retorno.
+
+| ID | Requisito | Prioridade |
+|---|---|---|
+| **RF-42** | Permitir **seguir** e deixar de seguir um parlamentar a partir da página dele | 🔴 Essencial |
+| **RF-43** | Exibir um **feed** com notícias dos parlamentares seguidos, mais recentes primeiro | 🔴 Essencial |
+| **RF-44** | Sugerir a quem seguir a partir do **resultado do questionário** (afinidade + temas) | 🟡 Importante |
+| **RF-45** | Permitir seguir **tema** além de parlamentar (ex.: "Meio Ambiente") | 🟢 Desejável |
+| **RF-46** | Indicar no feed **por que** cada notícia apareceu ("porque você segue X") | 🟡 Importante |
+
+⚠️ **Consequência de arquitetura:** isto **promove o crawler de F8 para o caminho
+crítico**. Sem notícias coletadas, não há o que entregar a quem segue. O crawler deixa de
+ser "a parte mais frágil e menos essencial" e passa a sustentar um requisito essencial.
+
+### 2.7.1 🔴 Tensão com o RNF-12 — e ela é séria
+
+**"Seguir" exige lembrar quem é o usuário entre sessões.** Isso colide de frente com o
+RNF-12, que dizia *"não persistir respostas identificáveis: sem login, sem IP, sem cookie
+de sessão"*.
+
+E o problema é maior do que uma preferência de projeto:
+
+> **Uma base que registra "usuário X segue os políticos A, B e C" é uma base de
+> convicções políticas.** A LGPD (art. 5º, II) classifica **opinião política** como
+> **dado pessoal sensível**, com exigências mais rígidas que dado comum.
+
+Somando ao risco R7 (contexto eleitoral de outubro de 2026), guardar essa base em servidor
+é a decisão de maior consequência jurídica do projeto inteiro.
+
+### 2.7.2 Três formas de atender ao requisito
+
+| | **A — Local no navegador** ⭐ | **B — Conta anônima** | **C — Conta com login** |
+|---|---|---|---|
+| Onde fica quem você segue | `localStorage` do dispositivo | Servidor, ID aleatório | Servidor, vinculado a e-mail |
+| Feed ao voltar no site | ✅ Sim | ✅ Sim | ✅ Sim |
+| Notificação por e-mail/push | ⛔ Não | ⛔ Não | ✅ Sim |
+| Funciona em outro dispositivo | ⛔ Não | ⛔ Não | ✅ Sim |
+| **Dado sensível no servidor** | ✅ **Nenhum** | 🔴 Sim (não identificado) | 🔴 Sim (identificado) |
+| Exposição LGPD | ✅ Praticamente nula | 🟡 Média | 🔴 Alta |
+| Esforço | 🟢 Baixo | 🟡 Médio | 🔴 Alto |
+
+**Recomendação: opção A.**
+
+O feed é montado **no cliente**: a lista de seguidos fica no navegador, a API serve
+notícias públicas por parlamentar, e o front filtra. O servidor **nunca sabe** quem segue
+quem — ele só responde "quais as notícias recentes do parlamentar 204528", que é
+informação pública.
+
+Isso atende RF-42, RF-43, RF-44 e RF-46 **por inteiro**. O que se perde é só notificação
+ativa (e-mail/push) e sincronização entre dispositivos.
+
+⚠️ **Se notificação por e-mail for inegociável**, então é opção C, e o projeto precisa de:
+consentimento específico e destacado para dado sensível, política de privacidade,
+mecanismo de exclusão, e — dado o R7 — provavelmente adiar a publicação para depois de
+outubro de 2026.
+
+**Pendência RQ9:** decidir entre A, B e C. Enquanto não decidido, **implementar A** — é o
+único caminho que não cria passivo e não fecha portas.
 
 ---
 
@@ -172,7 +247,9 @@ RNF-12 e o risco R7.
 
 | ID | Requisito | Origem |
 |---|---|---|
-| **RNF-12** | **Não persistir respostas identificáveis** do questionário: sem login, sem IP, sem cookie de sessão | R7 / LGPD |
+| **RNF-12** | **Não persistir no servidor** nem respostas do questionário nem lista de seguidos. Estado do usuário fica **no dispositivo** (`localStorage`) — ver §2.7.2 | R7 / LGPD |
+| **RNF-12a** | A API **nunca recebe** a lista de quem o usuário segue. O feed é filtrado no cliente sobre endpoints públicos por parlamentar | §2.7.2 |
+| **RNF-12b** | Se a opção B ou C for adotada (RQ9), tratar a lista de seguidos como **dado pessoal sensível** (LGPD art. 5º, II — opinião política): consentimento específico, política de privacidade e exclusão sob demanda | LGPD |
 | **RNF-13** | **Não republicar CPF**. Uso interno como chave; persistir apenas hash | LGPD |
 | **RNF-14** | Exibir *disclaimer* em toda tela de resultado: ferramenta acadêmica, **não** recomendação de voto | R7 |
 | **RNF-15** | Não exibir dado de candidatos **não eleitos** | 12-fonte-tse §5 |
@@ -311,11 +388,13 @@ flowchart LR
     F2 --> F3["F3<br/>Similaridade + grafo"]
     F3 --> F4["F4<br/>Questionário + API"]
     F4 --> F5["F5<br/>Web app"]
+    F5 --> F5b["F5b 🔴<br/>Crawler + seguir + feed"]
     F3 --> F6["F6<br/>Senado"]
     F2 --> F7["F7<br/>TSE"]
-    F5 --> F8["F8<br/>Crawler"]
+    F6 --> F9["F9<br/>Ponte dep→sen"]
+    F7 --> F9
 
-    style F4 fill:#238636,color:#fff
+    style F5b fill:#8b1a1a,color:#fff
 ```
 
 | Fase | Requisitos | Entrega defensável? |
@@ -325,12 +404,14 @@ flowchart LR
 | **F3** | RF-17→22 | Parcial |
 | **F4** | RF-24→30, RF-36 | ✅ **Sim — corte mínimo do TCC** |
 | **F5** | RF-31, RF-33, RF-34 | ✅ Produto completo |
+| **F5b** | RF-37→40, RF-42→46 | 🔴 **Essencial** — sustenta "Recomendação de Notícias" do título |
 | **F6** | RF-07, RF-13, RF-23 | Incremento |
 | **F7** | RF-06, RF-12, RF-32 | Incremento |
-| **F8** | RF-37→40 | Incremento |
+| **F9** | Ponte deputado→senador (achado #18) | Trabalho futuro |
 
-**F4 é a linha de corte.** Tudo antes é infraestrutura sem resultado; a partir dali, o
-trabalho já sustenta uma defesa mesmo que F6–F8 não sejam concluídas.
+**F5b é a linha de corte real.** F4 já dá um resultado defensável, mas só em **F5b** os
+quatro elementos do título estão entregues — ETL, grafo, afinidade **e recomendação de
+notícias**. F6, F7 e F9 são incrementos.
 
 ---
 

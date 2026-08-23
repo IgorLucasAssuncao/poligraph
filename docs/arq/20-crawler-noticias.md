@@ -1,8 +1,15 @@
 # Crawler de notícias — quais páginas, qual linguagem
 
-> **Status:** v1.0 — feeds testados ao vivo em **2026-08-22**.
-> Fase **F8** — a última do roadmap, e a mais frágil. Deliberadamente fora do caminho
-> crítico do TCC.
+> **Status:** v1.2 — feeds testados ao vivo em **2026-08-22**.
+> **v1.2:** §10 — escopo decidido: coleta simples de poucos feeds fixos, sem busca por
+> parlamentar. Cobertura medida: 9 de 690 parlamentares por coleta, enviesada para
+> lideranças. N2 deixa de se aplicar.
+> 🔴 **PROMOVIDO AO CAMINHO CRÍTICO — 2026-08-22.** Este documento foi escrito quando o
+> crawler era a F8, "a mais frágil e a menos essencial ao argumento". **Isso mudou duas
+> vezes:** o título do TCC traz *"Recomendação de Notícias"* como um de quatro elementos, e
+> o requisito de **seguir parlamentar e receber notícias** (RF-42/RF-43) depende
+> inteiramente daqui. **Sem crawler, não há o que entregar a quem segue.**
+> A prioridade sobe; o escopo também — ver §10.
 
 ---
 
@@ -192,13 +199,90 @@ pessoas diferentes. Mitigações, em ordem:
   manchete parecida).
 - 🟢 Custo computacional irrisório: ~550 requests/dia.
 
+## 10. ✅ Escopo decidido: coleta simples de poucos feeds
+
+**Decisão do autor, 2026-08-22:** *"não deve ser tão complicado — algumas páginas,
+coletamos delas, o que vier é isso, sem busca profunda."*
+
+Isso **descarta a busca por parlamentar** (uma consulta ao Google News por nome) e adota
+**varredura de poucos feeds fixos**. As duas abordagens são legítimas e têm perfis opostos:
+
+| | **Busca por parlamentar** | **Feeds fixos** ⭐ escolhido |
+|---|---|---|
+| Requisições/dia | ~594 | **~5** |
+| Risco de *rate limit* | 🔴 Real (N2) | ✅ Nenhum |
+| Complexidade | Query por pessoa, backoff | ✅ Trivial |
+| Cobertura | Ampla, quase todos | 🟡 **Enviesada — ver §10.1** |
+| Dependência de terceiro | Google News (sem contrato) | Veículos com RSS próprio |
+
+→ **Efeito colateral bom:** a pendência **N2 deixa de existir**. Com ~5 requisições
+diárias, não há limite a medir. E a **N1** (feed da Agência Câmara) deixa de ser bloqueante
+— vira só uma fonte a menos.
+
+### 10.1 📊 O que a abordagem simples entrega — medido
+
+Coleta única dos três feeds que funcionam (Congresso em Foco, Poder360, Agência Senado):
+
+| | |
+|---|---|
+| Linhas de texto coletadas | 95 |
+| Parlamentares no roster | 690 |
+| **Parlamentares citados** | **9** |
+
+Citados: Davi Alcolumbre, Flávio Bolsonaro, Damares Alves, Cid Gomes, Omar Aziz,
+Paulo Paim, Cleitinho, Domingos Sávio, Rogério Carvalho.
+
+⚠️ **Note quem são:** presidente do Senado e figuras de alta projeção nacional. **A
+cobertura é enviesada para a liderança e para quem já é notícia** — o "baixo clero"
+([01-camara §4.5](../01-camara-dos-deputados.md)) praticamente não aparece.
+
+**Estimativa:** ~9 parlamentares por coleta, com forte repetição dos mesmos nomes. Ao longo
+de um mês, algo entre 100 e 200 parlamentares distintos com ao menos uma menção — de 594.
+**Boa parte do Congresso nunca terá notícia no sistema.**
+
+### 10.2 ⚠️ A consequência que precisa ser tratada no produto
+
+Isso interage mal com o requisito de seguir (RF-42/43):
+
+> Se o usuário seguir um deputado de baixa projeção, **o feed dele fica vazio** — e a
+> funcionalidade parece quebrada, quando na verdade está funcionando como projetada.
+
+**Mitigações, em ordem de simplicidade:**
+
+1. ✅ **Dizer a verdade na interface.** Na página: *"Ainda não encontramos notícias
+   recentes sobre este parlamentar."* Na sugestão de seguir: indicar quem **tem** cobertura.
+2. ✅ **Feed misto.** Além de quem o usuário segue, incluir notícias dos **temas** que ele
+   valoriza (RF-45) — assim o feed nunca fica vazio.
+3. 🟡 **Fallback por busca** só para os seguidos sem cobertura. Reintroduz parte da
+   complexidade descartada, mas apenas para uma minoria de casos.
+
+→ **Recomendação: 1 + 2.** Mantêm o escopo simples e resolvem o feed vazio.
+
+⚠️ **Isto precisa estar no texto do TCC como limitação declarada**, não descoberto pela
+banca: *"a cobertura noticiosa é enviesada para parlamentares de alta projeção, por
+consequência direta da estratégia de coleta adotada."*
+
+### 10.3 O que continua valendo
+
+- **A lista de seguidos não é do crawler nem da API.** Vive no navegador
+  ([03-requisitos §2.7.2](../03-requisitos.md)). O crawler grava notícia **por
+  parlamentar**, a API expõe **por parlamentar**, e o cliente monta o feed. O servidor
+  nunca sabe quem segue quem.
+- **Coleta diária**, não sob demanda — o feed precisa ter o que mostrar.
+- **Precisão da associação continua importante** (RF-40): notícia errada no feed de quem
+  escolheu seguir é falha visível. Mas com feeds fixos o risco é menor que na busca, porque
+  o universo de texto é pequeno e conhecido.
+
 ## 9. Pendências
 
 | # | Pendência | Prioridade |
 |---|---|---|
-| **N1** | **Descobrir o feed real da Agência Câmara** — investigar o HTTP 405, procurar na documentação do portal ou considerar a API de notícias, se houver | 🔴 Alta |
-| **N2** | Medir o *rate limit* efetivo do Google News RSS antes de rodar para 552 parlamentares | 🔴 Alta |
-| **N3** | Definir a regra de desambiguação de homônimos e **medir a taxa de erro** em amostra manual | 🔴 Alta |
+| **N1** | Descobrir o feed real da Agência Câmara (HTTP 405 nos caminhos óbvios) | 🟡 **Rebaixada** — com feeds fixos, é só uma fonte a menos |
+| ~~N2~~ | ~~Medir o *rate limit* do Google News~~ | ✅ **Não se aplica** — busca por parlamentar foi descartada (§10) |
+| **N3** | Definir a regra de casamento nome→parlamentar e medir a taxa de erro | 🟡 Menor risco com feeds fixos, mas ainda necessária |
+| **N9** | Definir o texto de estado vazio no feed e na página (§10.2) | 🔴 Alta |
+| **N10** | Decidir se o feed inclui notícias por **tema** além de por parlamentar (RF-45) — é o que evita feed vazio | 🔴 Alta |
+| **N11** | Escolher a lista final de feeds e verificar termos de uso de cada um | 🟡 Média |
 | **N4** | Verificar `robots.txt` de cada veículo que entrar na lista | 🟡 Média |
 | **N5** | Definir o limiar de similaridade de título para dedup | 🟡 Média |
 | **N6** | Confirmar se Agência Senado cobre senadores nominalmente ou só pauta institucional | 🟡 Média |

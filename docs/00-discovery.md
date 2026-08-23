@@ -1396,17 +1396,24 @@ si do que Câmara e Senado, que são duas APIs legislativas parecidas.
 | **F2** | Modelo silver/gold + matriz de votos | F1 |
 | **F3** | Similaridade + grafo + comunidades | F2 |
 | **F4** | Curadoria do questionário + API de afinidade | F3 |
-| **F5** | Web app (ficha do parlamentar + grafo + questionário) | F4, D5 |
+| **F5** | Web app: página do parlamentar + grafo + questionário | F4, D5 |
+| **F5b** | 🔴 **Crawler + seguir + feed** — sustenta metade do título e o RF-42/43 | F1 |
 | **F6** | **Senado** — mesmo pipeline, segundo grafo + comparação entre casas | F3 |
 | **F7** | Enriquecimento TSE (bens, histórico eleitoral) | F2 |
-| **F8** | Crawler de notícias | F5 |
+| **F9** | Ponte deputado→senador (achado #18) — exige legislaturas 55/56 | F6, F7 |
 
-Fatiamento pensado para que o TCC tenha resultado defensável já em **F4**, mesmo que
-F6–F8 não sejam concluídas.
+**Corte mínimo defensável: F5b.** O TCC precisa chegar até ali, porque só então os quatro
+elementos do título estão entregues — ETL, grafo, afinidade **e recomendação de notícias**.
+F6, F7 e F9 são incrementos.
 
-O Senado subiu de F8 para **F6** em relação à v0.1: a ingestão é barata (uma chamada) e
-a comparação entre as duas casas é um resultado analítico, não só mais dado. O crawler
-desceu para F8 por ser a parte mais frágil e a menos essencial ao argumento.
+**Duas repriorizações em relação à v0.1:**
+
+- **O Senado subiu de F8 para F6** — ingestão barata e a comparação entre casas é resultado
+  analítico, não só mais dado. Decidido na D3 (§11.1).
+- 🔴 **O crawler subiu de F8 para F5b.** Estava descrito como "a parte mais frágil e a
+  menos essencial ao argumento" — o que era um erro de leitura do escopo. O título traz
+  *"Recomendação de Notícias"* e o requisito de **seguir parlamentar e receber notícias**
+  (RF-42/43) depende inteiramente dele. Sem crawler, não há o que entregar a quem segue.
 
 ---
 
