@@ -70,7 +70,8 @@ flowchart LR
 ```
 
 ⚠️ **Não existe ator "usuário cadastrado"** — e isso é decisão de projeto, não omissão.
-O cidadão **segue parlamentares e recebe um feed** (RF-42, RF-43), mas essa preferência
+O cidadão **segue parlamentares** (RF-42) e, se o feed agregado existir, o recebe (RF-43,
+condicional) — mas essa preferência
 vive **no navegador dele**, não em uma conta no servidor. Ver §2.7.2 e RNF-12.
 
 > A pergunta que orientou o desenho: *o produto precisa saber quem é a pessoa, ou só
@@ -140,17 +141,17 @@ vive **no navegador dele**, não em uma conta no servidor. Ver §2.7.2 e RNF-12.
 | **RF-32** | Enriquecer a ficha com dados do TSE | 🟢 Desejável |
 | **RF-33** | Visualizar o grafo com layout *force-directed*, filtro por limiar e coloração por comunidade/partido | 🔴 Essencial |
 | **RF-34** | Buscar parlamentar por nome, partido e UF | 🟡 Importante |
-| **RF-35** | Exibir notícias recentes associadas ao parlamentar | 🟢 Desejável |
+| **RF-35** | Exibir notícias recentes na **página do parlamentar** | 🔴 **Essencial** — destino comprometido da coleta |
 | **RF-36** | Expor API REST pública documentada (OpenAPI) | 🟡 Importante |
 
 ### 2.6 Notícias
 
 | ID | Requisito | Prioridade |
 |---|---|---|
-| **RF-37** | Coletar referências noticiosas de **poucos feeds RSS fixos**, diariamente, e associar às menções de parlamentares | 🔴 **Essencial** — sustenta o RF-43 |
+| **RF-37** | Coletar de **poucos feeds RSS fixos**, diariamente, e associar às menções de parlamentares | 🔴 **Essencial** — o título exige, mesmo sem o RF-43 |
 | **RF-38** | Armazenar **apenas** URL, título, veículo, data e trecho curto | 🔴 Essencial |
 | **RF-39** | Deduplicar notícias replicadas | 🟡 Importante — feed repetido é feed ruim |
-| **RF-40** | Marcar grau de confiança da associação e ocultar abaixo do limiar | 🔴 **Essencial** — notícia errada no feed de quem seguiu é falha visível |
+| **RF-40** | Marcar grau de confiança da associação e ocultar abaixo do limiar | 🔴 **Essencial** — notícia errada na página de quem a pessoa segue é falha visível |
 
 ⚠️ **Estes requisitos subiram de prioridade.** Eram "desejáveis" quando notícia era enfeite
 da ficha. Com o feed de seguidos (§2.7), o crawler passa a sustentar um requisito essencial
