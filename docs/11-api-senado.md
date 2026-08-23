@@ -1,6 +1,9 @@
 # API de Dados Abertos do Senado Federal — referência
 
-> **Status:** v1.0 — payloads capturados ao vivo em **2026-08-22**.
+> **Status:** v1.1 — payloads capturados ao vivo em **2026-08-22**.
+> **v1.1:** corrige a estrutura do `/votacao` (é **aninhada**, não plana — a v1.0 estava
+> errada); achado #17 — **56% das votações do Senado são secretas**; pendências P1 e P3
+> resolvidas; endpoints por parlamentar (relatoria, lideranças) documentados.
 > Ver também: [02-senado-federal.md](02-senado-federal.md),
 > [13-correlacao-entre-fontes.md](13-correlacao-entre-fontes.md).
 
@@ -68,8 +71,8 @@ antigo. **Não copie código de exemplo sem verificar isso.**
 
 ## 2. `GET /votacao` — ⭐ o endpoint principal
 
-O melhor endpoint das três fontes do projeto: traz o ano inteiro em uma chamada, já
-achatado.
+Traz o ano inteiro em **uma chamada** — ingestão barata. ⚠️ Mas leia o achado #17 (§2.3)
+antes de dimensionar o que dá para fazer com esse dado: **mais da metade é inaproveitável**.
 
 **Entrada**
 
@@ -89,7 +92,30 @@ senadores, ~10.400 registros de voto.
 ⚠️ `?data=YYYYMMDD` também retorna 200, mas devolveu **dados de outra data** no teste
 (pedimos 2025-04-29 e veio uma sessão de 2025-09-02). **Use `dataInicio`/`dataFim`.**
 
-**Retorno** — array plano, **uma linha por parlamentar por votação**, sem envelope:
+⚠️ **CORREÇÃO da v1.0 deste documento.** A versão anterior afirmava que o retorno era um
+*"array plano, uma linha por parlamentar por votação"*. **Está errado.** O retorno é um
+array de **128 objetos de votação**, cada um com um array aninhado `votos[]`. Contagem no
+arquivo de 2025: 128 `codigoSessaoVotacao`, 128 `votos`, **10.368** `siglaVotoParlamentar`.
+
+**Estrutura real:**
+
+```json
+[{
+  "codigoSessaoVotacao": 6918,
+  "descricaoVotacao": "Votação nominal da Emenda nº 1 (Substitutivo) ao PLP nº 22/2025…",
+  "ementa": "Dispõe sobre prazo para liquidação de restos a pagar…",
+  "identificacao": "PLP 22/2025",
+  "votacaoSecreta": "N",                    ← ⭐ campo decisivo, ver §2.3
+  "totalVotosSim": null, "totalVotosNao": null, "totalVotosAbstencao": null,
+  "votos": [
+    { "codigoParlamentar": 5672, "nomeParlamentar": "Alan Rick",
+      "siglaPartidoParlamentar": "UNIÃO", "siglaUFParlamentar": "AC",
+      "siglaVotoParlamentar": "Sim", "descricaoVotoParlamentar": null }
+  ]
+}]
+```
+
+**Campos de votação** (nível externo):
 
 ```json
 [{
@@ -126,17 +152,79 @@ senadores, ~10.400 registros de voto.
 }]
 ```
 
-### 2.1 Por que este formato é melhor que o da Câmara
+### 2.3 🔴 Achado crítico #17 — 56% das votações do Senado são SECRETAS
+
+**Este é o achado mais grave sobre o Senado.** Medido nas 128 votações nominais de 2025:
+
+| `votacaoSecreta` | Votações | Registros `Sim`/`Não` | Registros `"Votou"` |
+|---|---|---|---|
+| **`"S"` (secreta)** | **72 (56 %)** | **0** | 3.774 |
+| `"N"` (aberta) | 56 (44 %) | 3.572 | 0 |
+
+Em votação secreta, `siglaVotoParlamentar` registra literalmente **`"Votou"`** — informa
+que o senador votou, **não como votou**. É informação de presença, não de posição.
+
+**Consequência direta:** o Senado não tem 128 votações aproveitáveis por ano. Tem **56**.
+
+| | Votações utilizáveis / ano |
+|---|---|
+| Câmara (plenário) | **410** |
+| Senado (abertas) | **56** |
+
+Sete vezes menos. Isso **não invalida** a análise do Senado — 56 votações sobre 81
+senadores ainda formam uma matriz —, mas a torna **bem mais frágil** do que este documento
+sugeria, e o corte mínimo de 20 votações em comum passa a ser restritivo de verdade.
+
+⚠️ **Por que tantas secretas:** o Senado aprova autoridades por escrutínio secreto
+(sabatinas de ministros do STF, diretores do Banco Central, embaixadores — art. 52 da CF).
+Como essa é uma competência privativa e frequente, as sabatinas dominam as votações
+nominais da casa. Ver [02-senado-federal.md §3](02-senado-federal.md).
+
+→ **Regra de ETL:** filtrar `votacaoSecreta == "S"` **antes** de montar a matriz. E tratar
+`"Votou"` como `null` de posição — nunca como voto.
+
+### 2.4 ✅ Pendência P1 resolvida — domínio de `siglaVotoParlamentar`
+
+Medido nos 10.368 registros de 2025. **Muito mais sujo que o da Câmara:**
+
+| Valor | Ocorrências | Significado | Entra no cálculo? |
+|---|---|---|---|
+| `Votou` | 3.774 | Votação **secreta** — posição não revelada | ⛔ Não |
+| `Sim` | 3.023 | Voto favorável | ✅ |
+| `P-NRV` | 1.544 | Presente, não registrou voto | ⛔ |
+| `AP` | 761 | Ausência justificada / atividade parlamentar | ⛔ |
+| `Não` | 549 | Voto contrário | ✅ |
+| `MIS` | 251 | Em missão oficial | ⛔ |
+| `LS` | 251 | Licença saúde | ⛔ |
+| `LP` | 89 | Licença particular | ⛔ |
+| `Presidente (art. 51 RISF)` | 59 | Presidente da sessão | ⛔ |
+| `NCom` | 37 | Não compareceu | ⛔ |
+| `NA` | 15 | Não aplicável | ⛔ |
+| `Abstenção` | 15 | Absteve-se | 🟡 peso menor |
+
+⚠️ **Só 3.572 de 10.368 registros (34%) são posição de voto utilizável.** O restante é
+presença, ausência ou sigilo.
+
+⚠️ Contraste com a Câmara, onde `Sim`+`Não` são **99,3%** dos registros. **As duas casas
+exigem normalizações completamente diferentes** — não reaproveite o mapeamento.
+
+### 2.1 Ingestão fácil, dado escasso
 
 | Aspecto | Câmara | Senado |
 |---|---|---|
-| Chamadas para um ano | 1 CSV de 58 MB (ou N+1 na API) | **1 requisição de 2,4 MB** |
+| Chamadas para um ano | 1 CSV de 58 MB (ou N+1 na API) | ✅ **1 requisição de 2,4 MB** |
 | Ementa da matéria | Exige join com `proposicoes` | ✅ **Já vem em `ementa`** |
 | Identificação legível | Exige montar | ✅ **`identificacao: "PLP 22/2025"`** |
 | Contexto da sessão | Ausente | ✅ `informeLegislativo.texto` |
+| **Votações utilizáveis/ano** | **410** | 🔴 **56** (achado #17) |
+| **Registros que são posição de voto** | **99,3 %** | 🔴 **34 %** (§2.4) |
 
-→ **Consequência prática:** o extrator do Senado é significativamente mais simples que o
-da Câmara. É o argumento que derrubou a justificativa original da decisão D3.
+→ **Duas conclusões que puxam em direções opostas, e as duas valem:**
+
+1. **Ingerir o Senado é barato** — uma chamada, ementa inclusa. É o argumento que derrubou
+   a justificativa original da decisão D3 ("o Senado dobra o esforço de ETL").
+2. **Mas o que sobra depois de filtrar é pouco.** 56 votações contra 410 da Câmara. A
+   facilidade de ingestão não se traduz em riqueza analítica.
 
 ### 2.2 Campos-chave
 
@@ -202,6 +290,87 @@ manual é viável e defensável como método.
 
 ---
 
+## 4.1 ⭐ Insumos por parlamentar — o Senado é melhor que a Câmara aqui
+
+Endpoints por senador que **não têm equivalente direto na Câmara**. Todos retornaram 200:
+
+| Endpoint | Tamanho (senador 5672) | Conteúdo |
+|---|---|---|
+| `/senador/{id}/relatorias` | 61 KB | ⚠️ Depreciado → usar `/processo/relatoria` |
+| `/senador/{id}/autorias` | 155 KB | Matérias de autoria |
+| `/senador/{id}/comissoes` | 20 KB | Participação com `DescricaoParticipacao` |
+| `/senador/{id}/votacoes` | **905 KB** | Histórico completo de votos |
+| `/senador/{id}/liderancas` | 1,5 KB | ⭐ Cargos de liderança |
+
+### 4.1.1 ⭐ Relatoria — estruturada, e melhor que a da Câmara
+
+`GET /processo/relatoria?codigoParlamentar={id}` — array **plano**:
+
+```json
+[{ "id":9285682, "idProcesso":8257786,
+   "codigoParlamentar":5672, "nomeParlamentar":"Alan Rick",
+   "identificacaoProcesso":"SUG 5/2022",
+   "ementaProcesso":"Torna obrigatória a reposição inflacionária anual do salário…",
+   "codigoColegiado":834,
+   "nomeColegiado":"Comissão de Direitos Humanos e Legislação Participativa",
+   "descricaoTipoRelator":"Relator", "idTipoRelator":1,
+   "dataDesignacao":"2023-03-14 12:08:16",
+   "dataDestituicao":"2023-03-15 14:38:24",
+   "descricaoTipoEncerramento":"Alteração na composição da comissão" }]
+```
+
+**Vantagem sobre a Câmara:** lá a relatoria só existe como **texto livre** no campo
+`despacho` (`"Designado Relator, Dep. Fulano (PT-SP)"`), exigindo regex e casamento por
+nome. Aqui vem **estruturada**, com `codigoParlamentar`, colegiado, ementa e **datas de
+designação e destituição**.
+
+📊 Volume: **83 relatorias** para um único senador, contra mediana de **7** por deputado.
+Faz sentido — 81 senadores absorvem um fluxo de matérias comparável ao de 513 deputados.
+
+⚠️ `/senador/{id}/relatorias` traz bloco `Descontinuacao` (depreciado em 2025-03-18,
+desativação anunciada para 2026-02-01). **Usar `/processo/relatoria`.**
+
+### 4.1.2 ⭐ Lideranças — sem equivalente na Câmara
+
+```json
+{"Liderancas":{"Lideranca":[
+  { "UnidadeLideranca":"Liderança de Partido na CMO",
+    "Partido":{"CodigoPartido":"521","SiglaPartido":"REPUBLICANOS"},
+    "SiglaCasaLideranca":"CN",
+    "DescricaoTipoLideranca":"Líder do Congresso Nacional" },
+  { "UnidadeLideranca":"Liderança de Partido no Senado Federal",
+    "SiglaCasaLideranca":"SF", … }]}}
+```
+
+Dá **poder formal por parlamentar** de graça: quem é líder, de que partido, em qual casa
+(`SF` ou `CN`). Excelente atributo de nó — e o líder é justamente quem orienta a bancada.
+
+### 4.1.3 Participação em comissões
+
+`/senador/{id}/comissoes` traz `DescricaoParticipacao` (`Titular` | `Suplente`) e sigla do
+colegiado. Para o senador testado: 35 registros como Titular, 47 como Suplente, em CCJ,
+CAS, CDR, CE, CRA, CAE, CI e CMO.
+
+⚠️ São **registros de participação ao longo do tempo**, não comissões distintas — a mesma
+comissão aparece várias vezes conforme a composição muda. Deduplicar por colegiado.
+
+### 4.2 ⛔ Pendência P3 resolvida (negativamente) — não há orientação de bancada
+
+Testados e todos **HTTP 404**: `/orientacao`, `/votacao/orientacao`,
+`/processo/orientacao`. O payload de `/votacao` também não traz nenhum campo de
+orientação.
+
+→ **Conclusão: o Senado não expõe orientação de bancada.** O equivalente da Câmara
+(`/votacoes/{id}/orientacoes`, que entrega os rótulos `Governo`/`Oposição`/`Maioria`/
+`Minoria` prontos) **não existe aqui**.
+
+**Consequência:** a comparação entre casas **não é simétrica**. Disciplina partidária e
+governismo são calculáveis diretamente na Câmara e **não** no Senado.
+
+*Mitigação parcial:* `/senador/{id}/liderancas` identifica os líderes, e a posição de
+governo pode ser inferida a partir do voto do líder de cada bancada — mas isso é
+**inferência do pesquisador**, não rótulo oficial, e precisa ser declarado como tal.
+
 ## 5. `GET /comissao/lista/permanente`
 
 ```json
@@ -262,9 +431,9 @@ Detalhes em [13-correlacao-entre-fontes.md](13-correlacao-entre-fontes.md).
 
 | # | Pendência | Impacto |
 |---|---|---|
-| **P1** | Mapear o **domínio completo de `siglaVotoParlamentar`** (equivalente ao `tipoVoto` da Câmara). Ainda não medido | Normalização do voto no Senado |
+| ~~P1~~ | ✅ **RESOLVIDA** — domínio medido, ver §2.4. Só 34% dos registros são posição de voto | — |
 | **P2** | Confirmar se `/votacao` cobre **votações de comissão** ou só plenário | Volume disponível |
-| **P3** | Verificar se existe endpoint de **orientação de bancada** no Senado (equivalente ao `/orientacoes` da Câmara) | Sem ele, não há rótulo governo/oposição no Senado |
+| ~~P3~~ | ✅ **RESOLVIDA (negativamente)** — não existe, ver §4.2. A comparação entre casas fica assimétrica | — |
 | **P4** | Descobrir a **janela máxima** aceita por `dataInicio`/`dataFim` | Estratégia de particionamento |
 | **P5** | Verificar se há **arquivos consolidados** por ano, como na Câmara | Provavelmente desnecessário — 2,4 MB/ano já é trivial |
 | **P6** | Confirmar cobertura histórica: `/votacao` funciona para 2023 e 2024? | Tamanho da matriz do Senado |

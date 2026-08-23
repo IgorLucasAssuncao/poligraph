@@ -157,13 +157,17 @@ interpretação dos resultados, não para o questionário.
   mais para justificar.
 - 🟡 **Envelopes XML→JSON** do Senado: listas de um elemento vêm como objeto, tudo é
   string, campos com espaço à direita. Parser precisa ser defensivo.
-- 🟡 **Não há `/orientacoes` confirmado no Senado** (pendência P3 do
-  [11-api-senado.md](../11-api-senado.md)). Sem ele, a análise de disciplina partidária
-  **não é simétrica** entre as casas — o que enfraquece justamente a comparação que
-  motiva o cenário.
-- 🟡 **Domínio de `siglaVotoParlamentar` ainda não medido** — a normalização do voto no
-  Senado é uma incógnita.
-- 🟢 Volume irrisório: 10.400 votos/ano contra 167 mil da Câmara.
+- 🔴 **CONFIRMADO: não existe orientação de bancada no Senado** (P3 resolvida
+  negativamente — `/orientacao`, `/votacao/orientacao` e `/processo/orientacao` retornam
+  404). A disciplina partidária e o governismo são calculáveis na Câmara e **não** no
+  Senado. Isso **enfraquece diretamente a comparação que motiva este cenário**.
+- 🔴 **CONFIRMADO: 56% das votações do Senado são secretas** (achado #17). Registram
+  `"Votou"` — presença, não posição. Sobram **56 votações utilizáveis por ano**, contra
+  410 da Câmara. E só **34%** dos registros de voto são posição utilizável, contra 99,3%
+  na Câmara.
+- 🟡 O domínio de `siglaVotoParlamentar` tem **12 valores** (`Votou`, `P-NRV`, `AP`, `MIS`,
+  `LS`, `LP`, `NCom`, `NA`…), exigindo normalização **completamente diferente** da Câmara.
+- 🟢 Volume de ingestão irrisório: 2,4 MB/ano.
 
 ---
 

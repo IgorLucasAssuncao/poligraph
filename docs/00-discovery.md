@@ -1,6 +1,13 @@
 # Poligraph — Documento de Discovery
 
-> **Status:** rascunho (v0.10)
+> ## Título do TCC
+>
+> **Arquitetura ETL e Modelagem em Grafos para Recomendação de Notícias e Mensuração de
+> Afinidade Política em Redes Sociais**
+>
+> ⚠️ **O título tem consequências que este documento ainda não refletia** — ver §2.1.
+
+> **Status:** rascunho (v0.11)
 > **Data:** 2026-08-22
 > **Mudanças na v0.2:** volume real medido (seção 4.1.1); achado #6 (CSVs consolidados,
 > resolve R4); achado #7 (as duas casas não são comparáveis, seção 4.5); decisão D3
@@ -24,6 +31,8 @@
 > **v0.10:** seção 7.4 — ponderação: soma ponderada não resolve o problema das comissões
 > (é estrutural, não de magnitude); a versão hierárquica funciona; peso por divisividade
 > é onde a ponderação realmente agrega. Antiga 7.4 renumerada para 7.5.
+> **v0.11:** título do TCC registrado; seções 2.1 e 2.2 — "Recomendação de Notícias" é
+> metade do título mas estava em F8; achado #17 no Senado: 56% das votações são secretas.
 > **Objetivo deste documento:** registrar o entendimento do problema, o escopo, as
 > fontes de dados (já validadas) e as decisões em aberto, para servir de contexto
 > permanente do TCC.
@@ -72,6 +81,71 @@ similaridade entre parlamentares e entre parlamentares e cidadãos.
    do usuário e o histórico de votos dos parlamentares.
 5. Coletar, via **crawler**, referências noticiosas associadas a cada parlamentar.
 6. Expor tudo em uma aplicação web consultável.
+
+### 2.1 ⚠️ O que o título exige e o roadmap não entregava
+
+O título define quatro entregas de peso igual. Confrontando com o que este documento
+planejava:
+
+| Elemento do título | Situação no roadmap | Veredito |
+|---|---|---|
+| **Arquitetura ETL** | F1–F2, núcleo do trabalho | ✅ Alinhado |
+| **Modelagem em Grafos** | F3, núcleo | ✅ Alinhado |
+| **Mensuração de Afinidade Política** | F4, núcleo | ✅ Alinhado |
+| **Recomendação de Notícias** | **F8 — última fase, "a mais frágil e a menos essencial ao argumento"** | 🔴 **Desalinhado** |
+
+**O crawler estava tratado como enfeite opcional e é metade do título.**
+
+Duas correções decorrem disso:
+
+**1. Prioridade.** Recomendação de notícias precisa subir no roadmap e deixar de ser
+"se sobrar tempo". Um TCC que entrega três dos quatro elementos do próprio título tem um
+problema difícil de contornar na defesa.
+
+**2. Escopo — "recomendação" ≠ "agregação".** O documento
+[arq/20-crawler-noticias.md](arq/20-crawler-noticias.md) descreve explicitamente um
+**agregador**: *"não é análise de sentimento… o valor entregue é modesto: uma lista de
+links"*. Isso **não é um sistema de recomendação**. Recomendar implica personalizar: usar
+o perfil do usuário para escolher o que mostrar.
+
+→ **A boa notícia é que as duas metades do título se encaixam naturalmente**, e o dado
+para isso já existe:
+
+```mermaid
+flowchart LR
+    A["Cidadão responde<br/>o questionário"] --> B["Perfil de afinidade:<br/>parlamentares próximos<br/>+ temas que ele valoriza"]
+    B --> C["Recomendação<br/>de notícias"]
+    D["/proposicoes/{id}/temas<br/>96% de cobertura"] --> B
+    E["Crawler RSS<br/>por parlamentar"] --> C
+    style C fill:#238636,color:#fff
+```
+
+Cada pergunta do questionário já carrega **temas oficiais** (achado #10). As respostas do
+usuário, portanto, revelam não só *com quem* ele concorda, mas *sobre o que* ele se
+importa. Isso é exatamente o insumo de um recomendador — e fecha o arco entre "Afinidade"
+e "Recomendação de Notícias" que o título propõe.
+
+⚠️ **Pendência nova (RQ7):** definir o mecanismo de recomendação — por parlamentar afim,
+por tema de interesse, ou híbrido — e como avaliá-lo. Sem métrica de avaliação, "recomendação"
+vira "listagem filtrada".
+
+### 2.2 "Redes Sociais" — ambiguidade a resolver
+
+O título termina em *"em Redes Sociais"*, e o termo é ambíguo em português:
+
+| Leitura | Significa | Consistência com o resto |
+|---|---|---|
+| **Rede social como grafo** (análise de redes) | A rede de parlamentares que o projeto modela | ✅ Coerente com "Modelagem em Grafos" e com o pedido original ("rede social de políticos") |
+| **Rede social como plataforma** (X, Instagram…) | Coletar e analisar posts de parlamentares | ⛔ Fora de tudo que foi planejado; APIs fechadas/pagas |
+
+**Assumo a primeira leitura** — é a única compatível com o restante do título e com o
+escopo levantado. ⚠️ **Confirmar com o orientador antes de escrever a introdução**
+(pendência RQ8): se a intenção for a segunda, o projeto muda de fonte de dados e o
+levantamento inteiro precisa ser refeito.
+
+*(Nota: a API da Câmara expõe `redeSocial[]` por deputado — perfis oficiais de X, Facebook,
+Instagram e YouTube. Isso permitiria **linkar** para os perfis sem coletar conteúdo, o que
+seria um meio-termo barato.)*
 
 ---
 
