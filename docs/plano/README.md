@@ -13,6 +13,7 @@
 | [01-arquitetura.md](01-arquitetura.md) | Desenho macro, hospedagem, Aspire, Cloudflare, ordem de construção |
 | [02-autenticacao-e-metricas.md](02-autenticacao-e-metricas.md) | 🔴 Login Google × LGPD · Clarity e GA4 |
 | [03-questionario.md](03-questionario.md) | Que perguntas, dinâmicas?, conteúdo das propostas |
+| [04-esqueleto.md](04-esqueleto.md) | ⭐ **AppHost, schema SQL e estrutura do ETL** — artefatos do passo 1 |
 
 ---
 
