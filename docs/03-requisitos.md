@@ -1,6 +1,8 @@
 # Requisitos — funcionais e não funcionais
 
-> **Status:** v1.1 — 2026-08-23
+> **Status:** v1.2 — 2026-08-23
+> **v1.2:** §2.7.3 — feed agregado é **condicional**; se existir, é misto (seguidos +
+> temas). "Seguir" segue comprometido. RF-48 classifica notícia por tema desde já.
 > **v1.1:** §2.7 — seguir parlamentar e receber notícias (RF-42 a RF-46), com a tensão
 > LGPD e as três formas de atender; crawler promovido ao caminho crítico (F5b).
 > Deriva do [00-discovery.md](00-discovery.md). Regras de negócio marcadas com 📊 vêm de
@@ -161,8 +163,8 @@ concentrados em lideranças. **A maior parte do Congresso não terá notícia.**
 
 | ID | Requisito derivado dessa limitação | Prioridade |
 |---|---|---|
-| **RF-47** | Exibir estado vazio honesto quando não há notícia do parlamentar seguido | 🔴 Essencial |
-| **RF-48** | Complementar o feed com notícias por **tema** de interesse, para que não fique vazio | 🔴 Essencial |
+| **RF-47** | Exibir estado vazio honesto quando não há notícia do parlamentar | 🔴 Essencial |
+| **RF-48** | Classificar cada notícia coletada **por tema**, além de por parlamentar | 🔴 Essencial — habilita o RF-43 sem custo extra de coleta |
 
 ### 2.7 ⭐ Seguir parlamentares e receber notícias
 
@@ -173,13 +175,62 @@ transforma o produto de consulta pontual em algo com retorno.
 | ID | Requisito | Prioridade |
 |---|---|---|
 | **RF-42** | Permitir **seguir** e deixar de seguir um parlamentar a partir da página dele | 🔴 Essencial |
-| **RF-43** | Exibir um **feed** com notícias dos parlamentares seguidos, mais recentes primeiro | 🔴 Essencial |
+| **RF-42a** | Listar "meus parlamentares" — os seguidos, com acesso rápido à página de cada um | 🔴 Essencial |
+| **RF-43** | Exibir um **feed agregado** de notícias dos seguidos | 🔶 **Condicional** — ver §2.7.3 |
 | **RF-44** | Sugerir a quem seguir a partir do **resultado do questionário** (afinidade + temas) | 🟡 Importante |
-| **RF-45** | Permitir seguir **tema** além de parlamentar (ex.: "Meio Ambiente") | 🟢 Desejável |
-| **RF-46** | Indicar no feed **por que** cada notícia apareceu ("porque você segue X") | 🟡 Importante |
+| **RF-45** | Permitir seguir **tema** além de parlamentar | 🟢 Desejável |
+| **RF-46** | Indicar **por que** cada notícia apareceu ("porque você segue X") | 🟡 Importante *(se RF-43)* |
+
+### 2.7.3 🔶 O feed agregado é condicional — e se existir, é misto
+
+**Posição do autor, 2026-08-23:** *"não sei dizer se teremos feed, mas se for, é o feed
+misto."*
+
+Isso separa duas coisas que estavam agrupadas:
+
+| | Situação |
+|---|---|
+| **Seguir** (RF-42, RF-42a) | ✅ **Comprometido.** A pessoa marca parlamentares e tem sua lista |
+| **Feed agregado** (RF-43) | 🔶 **Em aberto.** Pode não existir |
+
+Sem feed, "seguir" continua fazendo sentido: é uma **lista de acompanhamento** — o usuário
+abre "meus parlamentares" e vê as páginas de cada um, com as notícias dele ali. O que muda
+é só não haver uma timeline unificada.
+
+**Se o feed for construído, o desenho está decidido: misto.**
+
+```mermaid
+flowchart LR
+    A["Parlamentares<br/>que você segue"] --> F["Feed"]
+    B["Temas que suas respostas<br/>revelaram interesse"] --> F
+    F --> G["Nunca fica vazio"]
+    style F fill:#238636,color:#fff
+```
+
+O componente de tema resolve o problema medido em
+[arq/20-crawler §10.1](arq/20-crawler-noticias.md): a cobertura é enviesada para
+lideranças, então seguir um parlamentar de baixa projeção renderia timeline vazia. Como as
+respostas do questionário já carregam **temas oficiais** (achado #10), o interesse temático
+sai de graça — sem pergunta adicional.
+
+⚠️ **Consequência para o crawler:** a coleta por **tema** (não só por parlamentar) passa a
+ser necessária se o RF-43 for adiante. Como os feeds fixos são varridos inteiros de todo
+jeito, isso **não adiciona requisições** — só um segundo eixo de classificação sobre o
+mesmo texto coletado.
+
+**Pendência RQ10:** decidir se o RF-43 entra. Recomendação: **decidir tarde**. Coletar e
+classificar por parlamentar **e** por tema desde o início (custo marginal zero) deixa a
+porta aberta; o feed é só uma tela a mais sobre dado que já existe.
 
 ⚠️ **Consequência de arquitetura:** isto **promove o crawler de F8 para o caminho
-crítico**. Sem notícias coletadas, não há o que entregar a quem segue. O crawler deixa de
+crítico** — mas por dois motivos independentes, e vale separá-los:
+
+1. **O título exige.** *"Recomendação de Notícias"* é um dos quatro elementos. Isso vale
+   **mesmo que o feed agregado (RF-43) não seja construído**.
+2. **O seguir consome.** Sem notícia coletada, "meus parlamentares" vira lista sem
+   conteúdo.
+
+→ A **coleta** é inegociável; o **feed agregado** é a superfície opcional sobre ela (§2.7.3). O crawler deixa de
 ser "a parte mais frágil e menos essencial" e passa a sustentar um requisito essencial.
 
 ### 2.7.1 🔴 Tensão com o RNF-12 — e ela é séria

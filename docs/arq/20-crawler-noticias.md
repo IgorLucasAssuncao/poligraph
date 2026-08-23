@@ -1,23 +1,34 @@
 # Crawler de notícias — quais páginas, qual linguagem
 
-> **Status:** v1.2 — feeds testados ao vivo em **2026-08-22**.
+> **Status:** v1.3 — feeds testados ao vivo em **2026-08-22**.
+> **v1.3:** feed agregado é condicional; se existir, é misto (seguidos + temas). Coleta
+> passa a classificar em dois eixos — parlamentar e tema (RF-48), sem custo extra.
 > **v1.2:** §10 — escopo decidido: coleta simples de poucos feeds fixos, sem busca por
 > parlamentar. Cobertura medida: 9 de 690 parlamentares por coleta, enviesada para
 > lideranças. N2 deixa de se aplicar.
 > 🔴 **PROMOVIDO AO CAMINHO CRÍTICO — 2026-08-22.** Este documento foi escrito quando o
 > crawler era a F8, "a mais frágil e a menos essencial ao argumento". **Isso mudou duas
 > vezes:** o título do TCC traz *"Recomendação de Notícias"* como um de quatro elementos, e
-> o requisito de **seguir parlamentar e receber notícias** (RF-42/RF-43) depende
-> inteiramente daqui. **Sem crawler, não há o que entregar a quem segue.**
+> o requisito de **seguir parlamentar** (RF-42) depende
+> inteiramente daqui. **Sem crawler, não há o que entregar a quem segue.** O *feed*
+> agregado (RF-43) é condicional, mas a **coleta** não é.
 > A prioridade sobe; o escopo também — ver §10.
 
 ---
 
 ## 1. O objetivo, e o que ele NÃO é
 
-**Objetivo:** coletar notícias de poucos feeds fixos, associá-las aos parlamentares
-citados, e alimentar (a) a página do parlamentar e (b) **o feed de quem o segue**
-(RF-42/43).
+**Objetivo:** coletar notícias de poucos feeds fixos e classificá-las em **dois eixos** —
+parlamentares citados e temas —, alimentando:
+
+| Destino | Situação |
+|---|---|
+| Página do parlamentar | ✅ Comprometido |
+| Lista "meus parlamentares" (seguidos) | ✅ Comprometido |
+| **Feed agregado misto** | 🔶 **Condicional** — [03-requisitos §2.7.3](../03-requisitos.md) |
+
+⚠️ **A coleta é inegociável mesmo se o feed não for construído**: *"Recomendação de
+Notícias"* está no título do TCC.
 
 **O que não é:**
 
@@ -147,8 +158,10 @@ banca**. Um TCC que armazena texto integral de jornal tem um problema real.
 ## 6. Modelo e pipeline
 
 ```
-noticia(id, pessoa_id, url, url_canonica, titulo, veiculo,
+noticia(id, url, url_canonica, titulo, veiculo,
         publicado_em, trecho, hash_dedup, coletado_em, fonte_feed)
+noticia_pessoa(noticia_id, pessoa_id, confianca)      -- N:N, uma notícia cita vários
+noticia_tema(noticia_id, tema, confianca)             -- RF-48: habilita o feed misto
 ```
 
 ```mermaid
@@ -157,9 +170,15 @@ flowchart LR
     C --> D{"Dedup por<br/>hash(url_canonica)<br/>+ similaridade de título"}
     D -->|repetido| X["descarta"]
     D -->|novo| E["Casa menções<br/>título/resumo × roster"]
-    E -->|"confiança ≥ limiar"| F[("noticia")]
-    E -->|"abaixo"| Y["descarta"]
+    D -->|novo| T["Classifica<br/>por tema (RF-48)"]
+    E -->|"confiança ≥ limiar"| F[("noticia<br/>+ noticia_pessoa")]
+    E -->|"abaixo"| Y["descarta associação"]
+    T --> F2[("noticia_tema")]
 ```
+
+⚠️ **Note que a classificação por tema é um ramo paralelo, não sequencial.** Uma notícia
+pode não citar nenhum parlamentar reconhecido e ainda assim ter tema — e continua útil,
+porque alimenta o componente temático do feed misto (RF-43/48).
 
 ⚠️ **A direção do casamento inverteu** em relação à v1.0. Antes: *para cada parlamentar,
 buscar notícias*. Agora: **para cada notícia, procurar quais parlamentares são citados**.
@@ -259,16 +278,22 @@ Isso interage mal com o requisito de seguir (RF-42/43):
 > Se o usuário seguir um deputado de baixa projeção, **o feed dele fica vazio** — e a
 > funcionalidade parece quebrada, quando na verdade está funcionando como projetada.
 
-**Mitigações, em ordem de simplicidade:**
+**Mitigações:**
 
-1. ✅ **Dizer a verdade na interface.** Na página: *"Ainda não encontramos notícias
-   recentes sobre este parlamentar."* Na sugestão de seguir: indicar quem **tem** cobertura.
-2. ✅ **Feed misto.** Além de quem o usuário segue, incluir notícias dos **temas** que ele
-   valoriza (RF-45) — assim o feed nunca fica vazio.
-3. 🟡 **Fallback por busca** só para os seguidos sem cobertura. Reintroduz parte da
-   complexidade descartada, mas apenas para uma minoria de casos.
+1. ✅ **ADOTADA — dizer a verdade na interface.** Na página: *"Ainda não encontramos
+   notícias recentes sobre este parlamentar."* Na sugestão de seguir: indicar quem **tem**
+   cobertura. (RF-47)
+2. ✅ **ADOTADA se houver feed — feed misto.** Decisão do autor, 2026-08-23: *"não sei se
+   teremos feed, mas se for, é o misto"*. Além dos seguidos, o feed inclui notícias dos
+   **temas** que as respostas do questionário revelaram — assim nunca fica vazio.
+   Ver [03-requisitos §2.7.3](../03-requisitos.md).
+3. ⛔ **Descartada — fallback por busca** só para seguidos sem cobertura. Reintroduziria a
+   complexidade que a decisão de escopo eliminou.
 
-→ **Recomendação: 1 + 2.** Mantêm o escopo simples e resolvem o feed vazio.
+⚠️ **Consequência para este documento:** o crawler precisa classificar cada notícia
+**por tema além de por parlamentar** (RF-48). Como os feeds são varridos inteiros de todo
+jeito, **isso não adiciona nenhuma requisição** — é um segundo eixo de classificação sobre
+o mesmo texto. Fazer desde o início mantém a porta do feed aberta a custo zero.
 
 ⚠️ **Isto precisa estar no texto do TCC como limitação declarada**, não descoberto pela
 banca: *"a cobertura noticiosa é enviesada para parlamentares de alta projeção, por
