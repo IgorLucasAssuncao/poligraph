@@ -1,13 +1,44 @@
 # Contratos — entradas, saídas e uso
 
-> **Status:** v1.2 — 2026-08-23
+> **Status:** v1.3 — 2026-08-23
 > **v1.1:** §7.1–7.3 — o suplente é tratado de forma diferente em cada casa; §9 — contrato
 > do grafo especificado (kNN k=10, limiar global descartado por medição).
+> **v1.3:** §5.1 — `bem_candidato` validado (CT1); §9.5 — contrato da API REST (C13);
+> regra metodológica anti-generalização no topo.
 > **v1.2:** §6.1 — domínio de `voto` medido nos 4 anos; obstrução cai 35× na legislatura.
 > CT5 e CT6 resolvidas.
 > **Regra deste documento: nada aqui é suposição.** Todo formato, cardinalidade e domínio
 > foi medido contra o dado real. Onde algo não pôde ser validado, está marcado
 > ⛔ **NÃO VALIDADO**.
+
+---
+
+## ⚠️ Regra metodológica — a lição mais cara deste projeto
+
+> **Medir um ano e generalizar foi a origem de quase todos os erros cometidos aqui.**
+
+Cinco afirmações erradas, todas pelo mesmo motivo:
+
+| Afirmação | Base | Realidade |
+|---|---|---|
+| "15.037 votações em 2025" | `cut` linha-a-linha | **13.825** — multilinha |
+| "Obstrução é 0,2%, irrelevante" | só 2025 | **2,50% em 2023** |
+| "O Senado tem 56 votações" | só 2025 | **182** na legislatura |
+| "CPF a 100% no `deputados.csv`" | índice de coluna quebrado | **0 de 7.889** |
+| "O grafo tem ~500 nós" | nº de cadeiras | **644** |
+
+**Três hábitos que teriam evitado todos:**
+
+1. **Medir ≥ 2 períodos antes de afirmar uma proporção.** Se os dois divergem, o número é
+   por ano, não do projeto.
+2. **Conferir toda contagem por dois caminhos independentes.** Foi a discordância entre
+   `itens=1000` e paginação que revelou o achado #20.
+3. **Desconfiar de 100% e de 0%.** Ambos costumam ser bug de extração, não propriedade do
+   dado.
+
+⚠️ **Para o TCC:** todo número no texto final precisa dizer **sobre qual recorte** foi
+medido. "3,8% das votações são nominais" sem dizer "em 2025" é a mesma armadilha, escrita
+na dissertação.
 
 ---
 
@@ -35,7 +66,8 @@ flowchart LR
 | C10 | Matriz de votos | ✅ dimensionado |
 | C11 | Similaridade | ✅ dimensionado |
 | C12 | Grafo | ✅ **kNN k=10, medido** |
-| C13 | API REST pública | ⛔ proposto |
+| C13 | API REST pública | 🔶 **especificada**, não implementada |
+| C7b | TSE: `bem_candidato` | ✅ |
 | C14 | Fronteira Python ↔ Postgres | ⛔ proposto |
 
 ---
@@ -318,6 +350,60 @@ Upgrade-Insecure-Requests: 1
 
 **Arquivos necessários:** `consulta_cand_2022` (Câmara + 27 senadores) **e**
 `consulta_cand_2018` (os outros **54 senadores** — renovação escalonada).
+
+---
+
+### 5.1 ✅ C7b · `bem_candidato` — validado (CT1)
+
+```
+DT_GERACAO;HH_GERACAO;ANO_ELEICAO;CD_TIPO_ELEICAO;NM_TIPO_ELEICAO;CD_ELEICAO;
+DS_ELEICAO;DT_ELEICAO;SG_UF;SG_UE;NM_UE;SQ_CANDIDATO;NR_ORDEM_BEM_CANDIDATO;
+CD_TIPO_BEM_CANDIDATO;DS_TIPO_BEM_CANDIDATO;DS_BEM_CANDIDATO;VR_BEM_CANDIDATO;
+DT_ULT_ATUAL_BEM_CANDIDATO;HH_ULT_ATUAL_BEM_CANDIDATO
+```
+
+| Aspecto | Valor medido (2022) |
+|---|---|
+| ZIP | 5,1 MB → 47 MB · 30 arquivos |
+| Campos | **19** |
+| Registros (BRASIL) | **96.223** — um por **bem** |
+| Candidatos com bem declarado | **19.589** de 29.323 (**67 %**) |
+| Encoding | ISO-8859-1 · `;` |
+| `VR_BEM_CANDIDATO` | ⚠️ **vírgula decimal** — `395122,26` |
+
+🔴 **`bem_candidato` NÃO tem CPF.** A chave é **`SQ_CANDIDATO`** — ou seja, o join é de
+**dois saltos**:
+
+```
+CPF ──► consulta_cand.SQ_CANDIDATO ──► bem_candidato.SQ_CANDIDATO
+```
+
+⚠️ **E `SQ_CANDIDATO` muda a cada eleição.** Para a *evolução* do patrimônio (o uso mais
+interessante), o caminho é:
+
+```
+CPF → todas as candidaturas da pessoa → um SQ_CANDIDATO por eleição
+    → somar bens de cada SQ separadamente → série temporal
+```
+
+**Teste real** (deputado federal eleito, `SQ_CANDIDATO=20001614181`):
+
+```
+Quotas ou quinhões de capital      R$  10.000,00
+Quotas ou quinhões de capital      R$  10.000,00
+Apartamento                        R$ 300.000,00
+Depósito bancário em conta corrente R$     536,68
+→ 4 bens · total R$ 320.536,68
+```
+
+⚠️ **Um mesmo tipo de bem aparece repetido** (duas linhas de "Quotas"). Agregar por
+`SQ_CANDIDATO`, nunca supor unicidade por tipo.
+
+⚠️ **33% dos candidatos não declararam bem algum** — ausência ≠ patrimônio zero. Na
+ficha, isso é "não declarou", não "R$ 0,00" (RNF-31, degradação graciosa).
+
+**Tipos mais frequentes:** veículo (17.315) · terreno (9.180) · casa (8.863) · depósito
+bancário (8.506) · apartamento (6.869) · quotas de capital (6.094).
 
 ---
 
@@ -608,7 +694,98 @@ mas vale `gzip` e considerar omitir `n` por aresta se apertar.
 
 ---
 
-## 9.4 C13–C15 · ⛔ Contratos ainda não validados
+## 9.5 C13 · API REST pública — especificada
+
+> ⚠️ **Especificada, não implementada.** O contrato abaixo é decisão de projeto; a
+> validação só acontece contra código.
+
+### Princípios que o contrato precisa respeitar
+
+| Origem | Regra |
+|---|---|
+| RNF-28 | **Nenhum parâmetro `casa`** onde o usuário decide — só onde o cliente já sabe |
+| RNF-29 | Nenhum jargão no payload (`q1`, não `2456731-84`) |
+| RNF-30 | Resultado contável (`concordaram`/`de`), nunca percentual solto |
+| RNF-12a | A API **nunca recebe** a lista de seguidos |
+| I1 (§9.3) | Nunca retornar aresta entre casas |
+
+### Endpoints
+
+| Método | Rota | Uso |
+|---|---|---|
+| `GET` | `/api/parlamentares?casa=&uf=&partido=&q=` | Busca e listagem (RF-34) |
+| `GET` | `/api/parlamentares/{id}` | Ficha completa (RF-31) |
+| `GET` | `/api/parlamentares/{id}/similares?limite=10` | Próximos e distantes (RF-28) |
+| `GET` | `/api/parlamentares/{id}/noticias?limite=20` | 🔑 **Base do "seguir"** (RF-35) |
+| `GET` | `/api/grafo?casa=CAMARA&legislatura=57` | Nós + arestas (RF-33) |
+| `GET` | `/api/questionario` | Sem `casa` (RNF-28) |
+| `POST` | `/api/afinidade` | Ranking (RF-27) |
+| `GET` | `/api/noticias?temas=&limite=` | Componente temático do feed (RF-48) |
+| `GET` | `/api/estatisticas` | Home |
+
+⚠️ **Note o que NÃO existe:** não há `/api/feed`, `/api/seguir` nem `/api/usuarios`. O
+feed é **montado no cliente** a partir de `/parlamentares/{id}/noticias` e
+`/noticias?temas=`. É isso que mantém o RNF-12a — o servidor nunca sabe quem segue quem.
+
+### Contratos de resposta
+
+**`GET /api/parlamentares/{id}/noticias`** — o endpoint que sustenta o "seguir":
+
+```json
+{ "pessoaId": 204528,
+  "noticias": [
+    { "titulo": "…", "veiculo": "Congresso em Foco",
+      "url": "https://…", "publicadoEm": "2026-08-22T14:30:00Z",
+      "trecho": "…", "confianca": 0.93 } ],
+  "total": 7 }
+```
+
+⚠️ **`total: 0` é resposta válida e esperada** — a cobertura é enviesada e a maior parte
+do Congresso não terá notícia ([arq/20 §10.1](arq/20-crawler-noticias.md)). O cliente
+renderiza o estado vazio do RF-47, **não** um erro.
+
+**`POST /api/afinidade`**
+
+```json
+→ { "respostas":[ {"id":"q1","resposta":"SIM"}, {"id":"q2","resposta":"NAO_SEI"} ] }
+
+← { "respondidas":18, "ignoradas":2,
+    "deputados":{ "maisProximos":[ {"pessoaId":204528,"nome":"…","partido":"NOVO",
+                                    "uf":"SP","concordaram":15,"de":18} ],
+                  "maisDistantes":[…] },
+    "senadores":{ "maisProximos":[…], "maisDistantes":[…] },
+    "aviso":"Ferramenta acadêmica. Não constitui recomendação de voto." }
+```
+
+⚠️ **`concordaram`/`de` em vez de percentual** (RF-29). E o `de` **difere entre deputados
+e senadores** — o cidadão respondeu perguntas das duas casas, mas cada parlamentar só é
+comparável nas da sua. Isso precisa ficar visível, não escondido.
+
+### Códigos de erro
+
+| Código | Quando |
+|---|---|
+| `400` | Corpo inválido, `id` de pergunta desconhecido |
+| `404` | Parlamentar inexistente |
+| `422` | **Menos de 5 perguntas respondidas** — resultado sem significado |
+| `503` | Matriz ainda não carregada (janela de *startup*) |
+
+⚠️ **O `422` é decisão de produto, não técnica.** Com 3 respostas, "concordaram em 3 de 3"
+é matematicamente verdadeiro e comunicativamente falso. O limite mínimo precisa ser
+definido — **pendência CT7**.
+
+### Cache e versionamento
+
+| Recurso | Estratégia |
+|---|---|
+| `/grafo`, `/questionario` | `ETag` pela versão da carga; muda no máximo 1×/dia |
+| `/parlamentares/{id}` | `Cache-Control: max-age=3600` |
+| `/noticias` | `max-age=900` |
+| `/afinidade` | `no-store` — não persiste, não cacheia |
+
+---
+
+## 9.6 C14–C15 · ⛔ Contratos ainda não validados
 
 | # | Contrato | O que falta |
 |---|---|---|
@@ -652,7 +829,8 @@ job analítico **por evento**, não por agenda.
 
 | # | Pendência |
 |---|---|
-| **CT1** | Validar layout de `bem_candidato` e `votacao_candidato_munzona` (P3) |
+| ~~CT1~~ | ✅ **PARCIAL — 2026-08-23.** `bem_candidato` validado (§5.1): 19 campos, 96.223 registros, join 2-hop por `SQ_CANDIDATO`. Falta `votacao_candidato_munzona` |
+| **CT7** | Definir o mínimo de perguntas respondidas para o resultado ter significado (o `422` de §9.5) |
 | ~~CT2~~ | ✅ **RESOLVIDA** — C12 especificado em §9: kNN k=10, contrato de nó/aresta, 5 invariantes |
 | **CT3** | Escrever o OpenAPI da C13 e validar contra o front |
 | **CT4** | Definir o formato de troca Python ↔ Postgres (C14) |
