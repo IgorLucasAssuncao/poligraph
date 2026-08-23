@@ -939,8 +939,9 @@ noticia(id, pessoa_id, url, titulo, veiculo, publicado_em, trecho, coletado_em)
 
 \* Obstrução é manobra regimental de oposição, não posição de mérito sobre o texto.
 Tratar como `-1` seria uma simplificação discutível — **mas a medição da seção 4.1.1
-mostrou que isso não importa**: `Sim` + `Não` são 99,3% dos registros. Obstrução (375),
-abstenção (336) e Artigo 17 (401) somam 0,7%. Decisão: mandar todos para `null` (fora do
+mostrou que isso quase não importa**: na legislatura 57, `Sim`+`Não` são **98,7%** dos
+votos. ⚠️ Mas o número varia por ano — obstrução foi **2,50% em 2023** e **0,07% em 2026**
+(queda de 35×, ver [04-contratos §6.1](04-contratos.md)). Decisão: mandar todos para `null` (fora do
 cálculo). É a opção mais simples e a mais fácil de defender, e o impacto no resultado é
 desprezível por construção.
 

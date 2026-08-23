@@ -1,8 +1,10 @@
 # Contratos — entradas, saídas e uso
 
-> **Status:** v1.1 — 2026-08-23
+> **Status:** v1.2 — 2026-08-23
 > **v1.1:** §7.1–7.3 — o suplente é tratado de forma diferente em cada casa; §9 — contrato
 > do grafo especificado (kNN k=10, limiar global descartado por medição).
+> **v1.2:** §6.1 — domínio de `voto` medido nos 4 anos; obstrução cai 35× na legislatura.
+> CT5 e CT6 resolvidas.
 > **Regra deste documento: nada aqui é suposição.** Todo formato, cardinalidade e domínio
 > foi medido contra o dado real. Onde algo não pôde ser validado, está marcado
 > ⛔ **NÃO VALIDADO**.
@@ -328,7 +330,43 @@ Upgrade-Insecure-Requests: 1
 | `Abstenção` | `0` | | `Abstenção` | `0` |
 | `Obstrução`, `Artigo 17`, *vazio* | `null` | | os outros 9 valores | `null` |
 
-**Justificativa medida:** na Câmara, `Sim`+`Não` = **99,3%**; os descartados somam 0,7%.
+### 6.1 ⚠️ O domínio varia por ano — medido nos 4 anos da legislatura
+
+A justificativa anterior (*"os descartados somam 0,7%"*) vinha **só de 2025**. Medindo
+todos os anos:
+
+| Ano | `Sim` | `Não` | `Obstrução` | `Abstenção` | `Artigo 17` | *(vazio)* |
+|---|---|---|---|---|---|---|
+| 2023 | 74.884 | 49.937 | **3.222** | 359 | 277 | — |
+| 2024 | 67.580 | 46.630 | **1.640** | 294 | 256 | — |
+| 2025 | 96.839 | 68.923 | 375 | 336 | 401 | **422** |
+| 2026* | 32.020 | 18.312 | 35 | 127 | 87 | — |
+
+🔴 **`Obstrução` cai 35× ao longo da legislatura:**
+
+| Ano | % dos votos |
+|---|---|
+| **2023** | **2,50 %** |
+| 2024 | 1,41 % |
+| 2025 | 0,22 % |
+| 2026 | 0,07 % |
+
+→ **Correção do número:** na legislatura inteira, obstrução são **5.272 de ~463.000
+(1,1 %)** — não 0,2%. A conclusão (mandar para `null`) **não muda**, mas o argumento
+precisa ser feito sobre a legislatura, não sobre 2025.
+
+⚠️ **Quem analisar 2023 isoladamente encontra 2,5%** — dez vezes o de 2025. Se o recorte
+temporal mudar, revisar esta decisão.
+
+⭐ **A queda em si é um achado potencial para o TCC.** Obstrução é tática de oposição
+([01-camara §9.2](01-camara-dos-deputados.md)). Um colapso de 2,50% para 0,07% em quatro
+anos sugere mudança de estratégia da oposição ou da correlação de forças — vale um
+parágrafo na discussão, com a ressalva de que a causa não é demonstrável só com este dado.
+
+⚠️ **O valor vazio só existe em 2025** (422 ocorrências). Não aparece em 2023, 2024 nem
+2026. Anomalia não explicada — tratar como `null` e registrar.
+
+**Justificativa consolidada:** `Sim`+`Não` = **98,7%** dos votos da legislatura 57.
 
 ---
 
@@ -618,5 +656,5 @@ job analítico **por evento**, não por agenda.
 | ~~CT2~~ | ✅ **RESOLVIDA** — C12 especificado em §9: kNN k=10, contrato de nó/aresta, 5 invariantes |
 | **CT3** | Escrever o OpenAPI da C13 e validar contra o front |
 | **CT4** | Definir o formato de troca Python ↔ Postgres (C14) |
-| **CT5** | Medir o domínio de `voto` nos anos 2023, 2024 e 2026 — só 2025 foi medido |
-| **CT6** | Verificar se `proposicoesTramitacoes` e `proposicoesAutores` também têm multilinha |
+| ~~CT5~~ | ✅ **RESOLVIDA — 2026-08-23.** Medido nos 4 anos (§6.1). Obstrução cai 35×: 2,50% em 2023 → 0,07% em 2026. Total da legislatura: 1,1%, não 0,2% |
+| ~~CT6~~ | ✅ **RESOLVIDA** — `proposicoesAutores` tem **2 registros** multilinha; `proposicoesTemas` tem **0**. Raro, mas o parser RFC 4180 (§1) segue obrigatório |
