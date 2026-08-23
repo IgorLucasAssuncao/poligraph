@@ -14,6 +14,7 @@
 | [02-autenticacao-e-metricas.md](02-autenticacao-e-metricas.md) | 🔴 Login Google × LGPD · Clarity e GA4 |
 | [03-questionario.md](03-questionario.md) | Que perguntas, dinâmicas?, conteúdo das propostas |
 | [04-esqueleto.md](04-esqueleto.md) | ⭐ **AppHost, schema SQL e estrutura do ETL** — artefatos do passo 1 |
+| [05-cicd-e-deploy.md](05-cicd-e-deploy.md) | Workflows, deploy, secrets, custo — fecha a infra |
 
 ---
 
