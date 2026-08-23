@@ -1,6 +1,8 @@
 # Contratos — entradas, saídas e uso
 
-> **Status:** v1.3 — 2026-08-23
+> **Status:** v1.4 — 2026-08-23
+> **v1.4:** §5.2 — `votacao_candidato_munzona` medido (609 MB, fora de escopo); §9.6 —
+> fronteira Python↔Postgres (C14). CT1, CT4 e API6 resolvidas.
 > **v1.3:** §5.1 — `bem_candidato` validado (CT1); §9.5 — contrato da API REST (C13);
 > regra metodológica anti-generalização no topo.
 > **v1.2:** §6.1 — domínio de `voto` medido nos 4 anos; obstrução cai 35× na legislatura.
@@ -67,8 +69,9 @@ flowchart LR
 | C11 | Similaridade | ✅ dimensionado |
 | C12 | Grafo | ✅ **kNN k=10, medido** |
 | C7b | TSE: `bem_candidato` | ✅ |
+| C7c | TSE: `votacao_candidato_munzona` | ✅ medido — **fora de escopo** |
 | C13 | API REST pública | 🔶 **especificada**, não implementada |
-| C14 | Fronteira Python ↔ Postgres | ⛔ proposto |
+| C14 | Fronteira Python ↔ Postgres | 🔶 **especificada** |
 
 ---
 
@@ -404,6 +407,51 @@ ficha, isso é "não declarou", não "R$ 0,00" (RNF-31, degradação graciosa).
 
 **Tipos mais frequentes:** veículo (17.315) · terreno (9.180) · casa (8.863) · depósito
 bancário (8.506) · apartamento (6.869) · quotas de capital (6.094).
+
+---
+
+### 5.2 🔴 C7c · `votacao_candidato_munzona` — **medido, e recomendo NÃO usar**
+
+| Aspecto | Valor medido |
+|---|---|
+| Tamanho do ZIP | 🔴 **609,2 MB** |
+| Variante por UF | ⛔ **Não existe** (404 em `_2022_SP.zip`, `_2022_AC.zip`) |
+
+**Comparação que decide:**
+
+| Arquivo | Tamanho |
+|---|---|
+| `consulta_cand_2022` | 4,2 MB |
+| `consulta_cand_2018` | 4,5 MB |
+| `bem_candidato_2022` | 5,1 MB |
+| **Subtotal — tudo que o projeto usa** | **13,8 MB** |
+| `votacao_candidato_munzona_2022` | **609,2 MB** |
+
+> **Este único arquivo é 44× maior que todos os outros somados.**
+
+⚠️ **Aqui está a origem do meu erro anterior.** Este documento afirmava que os arquivos do
+TSE tinham "centenas de MB". Estava errado para `consulta_cand` e `bem_candidato` — e
+**certo para este**. A generalização foi feita a partir do arquivo errado.
+
+**O que ele entrega:** votos recebidos por município e zona eleitoral — a "distribuição
+geográfica" da ficha do parlamentar.
+
+**Custo × benefício:**
+
+| | |
+|---|---|
+| Custo | 609 MB de download, sem opção de recorte por UF |
+| Benefício | Um mapa na ficha do parlamentar |
+| Bloqueia algo? | ⛔ Não — nenhuma entrega do título depende |
+| Conflito | ⚠️ O uso mais atraente (recomendar "políticos da sua região") esbarra no **RNF-12** |
+
+> 🔑 **Recomendação: fora do escopo.** O ganho é um enfeite da ficha; o custo é 44× o
+> resto do TSE, sem possibilidade de carga parcial. Se um dia entrar, que seja como fase
+> própria e isolada.
+
+⚠️ **Para o texto do TCC:** isto é exemplo de decisão de engenharia orientada a dado —
+o arquivo foi medido, o custo comparado, e a exclusão justificada. Melhor do que omitir
+em silêncio.
 
 ---
 
@@ -785,7 +833,93 @@ definido — **pendência CT7**.
 
 ---
 
-## 9.6 C14–C15 · ⛔ Contratos ainda não validados
+## 9.6 C14 · Fronteira Python ↔ Postgres — especificada
+
+A decisão D1 adota stack poliglota: **.NET** para ETL e API, **Python** para álgebra
+linear e grafos. Isso cria uma fronteira, e **o contrato dela é o que impede o
+poliglotismo de virar acoplamento**.
+
+### Princípio: a fronteira é o banco, não uma chamada
+
+```mermaid
+flowchart LR
+    ETL[".NET · ETL"] -->|"escreve"| G[("gold")]
+    G -->|"lê"| PY["Python · job analítico"]
+    PY -->|"escreve"| R[("resultado")]
+    R -->|"lê"| API[".NET · API"]
+    style G fill:#1f6feb,color:#fff
+    style R fill:#238636,color:#fff
+```
+
+| Regra | Por quê |
+|---|---|
+| ⛔ **Sem RPC, sem HTTP, sem fila entre os dois** | Nenhum acoplamento em tempo de execução |
+| ✅ Python **lê** de `gold`, **escreve** em tabelas de resultado | Fronteira declarativa |
+| ✅ Se o job Python cair, **a API continua servindo** | Degradação graciosa (RNF-06) |
+| ✅ O job é **idempotente** e reexecutável | RF-09 |
+
+### Tabelas de fronteira
+
+```sql
+-- ENTRADA do Python (escrita pelo .NET)
+voto(votacao_id, pessoa_id, valor, partido_no_voto, uf_no_voto)
+votacao(id, casa, data, orgao, categoria, legislatura, nominal)
+
+-- SAÍDA do Python (lida pelo .NET)
+similaridade(pessoa_a, pessoa_b, metrica, valor, n_votacoes_comuns, execucao_id)
+aresta_grafo(pessoa_a, pessoa_b, tipo, peso, execucao_id)
+no_metrica(pessoa_id, comunidade, eixo_x, eixo_y, execucao_id)
+execucao(id, casa, legislatura, k, iniciada_em, concluida_em, status, versao_carga)
+```
+
+### 🔑 `execucao_id` — o que torna a troca segura
+
+Sem ele, o job Python teria de **apagar e reinserir**, e a API leria tabela vazia no meio.
+
+```
+1. Python cria execucao(status='EM_ANDAMENTO')
+2. Escreve TODOS os resultados com aquele execucao_id
+3. Marca status='CONCLUIDA'
+4. A API só lê da última execução CONCLUIDA
+```
+
+| Ganho | |
+|---|---|
+| **Zero downtime** | A API nunca vê resultado parcial |
+| **Rollback trivial** | Basta apontar para a execução anterior |
+| **Comparabilidade** | Rodar k=5, 10 e 20 gera 3 execuções coexistentes — é o que viabiliza a análise de sensibilidade do §9.2 |
+| **Auditoria** | `versao_carga` amarra o resultado ao dado que o gerou |
+
+⚠️ **Retenção:** guardar as N últimas execuções e descartar as antigas, senão
+`similaridade` cresce 207 mil linhas por execução. Com 10 execuções são ~2 milhões de
+linhas — ainda trivial, mas precisa de política.
+
+### Como o job é disparado
+
+Da §5.2 do [discovery](00-discovery.md): **por evento, não por agenda.**
+
+```
+carga concluiu → trouxe votações novas? → sim: dispara job
+                                        → não: não faz nada
+```
+
+⚠️ **Em julho o job não roda nenhuma vez** (recesso), e isso é o comportamento correto.
+O monitoramento precisa conhecer o calendário legislativo, senão dispara falso todo
+recesso ou fica mudo quando a coleta quebrar de verdade.
+
+### Formato de troca
+
+| Volume | Estratégia |
+|---|---|
+| Leitura da matriz (~463 mil votos) | `COPY ... TO STDOUT` → `pandas.read_csv` |
+| Escrita de 207 mil similaridades | `COPY ... FROM STDIN` — **não** `INSERT` linha a linha |
+
+⚠️ **`psycopg` com `INSERT` individual em 207 mil linhas leva minutos; `COPY` leva
+segundos.** É a diferença entre o job caber na janela noturna ou não.
+
+---
+
+## 9.7 C15 · ⛔ Contrato ainda não definido
 
 | # | Contrato | O que falta |
 |---|---|---|
@@ -829,10 +963,10 @@ job analítico **por evento**, não por agenda.
 
 | # | Pendência |
 |---|---|
-| ~~CT1~~ | ✅ **PARCIAL — 2026-08-23.** `bem_candidato` validado (§5.1): 19 campos, 96.223 registros, join 2-hop por `SQ_CANDIDATO`. Falta `votacao_candidato_munzona` |
+| ~~CT1~~ | ✅ **RESOLVIDA — 2026-08-23.** `bem_candidato` validado (§5.1); `votacao_candidato_munzona` medido em **609 MB** e recomendado **fora de escopo** (§5.2) |
 | **CT7** | Definir o mínimo de perguntas respondidas para o resultado ter significado (o `422` de §9.5) |
 | ~~CT2~~ | ✅ **RESOLVIDA** — C12 especificado em §9: kNN k=10, contrato de nó/aresta, 5 invariantes |
 | **CT3** | Escrever o OpenAPI da C13 e validar contra o front |
-| **CT4** | Definir o formato de troca Python ↔ Postgres (C14) |
+| ~~CT4~~ | ✅ **RESOLVIDA** — C14 especificado em §9.6: fronteira é o banco, `execucao_id` para troca atômica, `COPY` em vez de `INSERT` |
 | ~~CT5~~ | ✅ **RESOLVIDA — 2026-08-23.** Medido nos 4 anos (§6.1). Obstrução cai 35×: 2,50% em 2023 → 0,07% em 2026. Total da legislatura: 1,1%, não 0,2% |
 | ~~CT6~~ | ✅ **RESOLVIDA** — `proposicoesAutores` tem **2 registros** multilinha; `proposicoesTemas` tem **0**. Raro, mas o parser RFC 4180 (§1) segue obrigatório |
