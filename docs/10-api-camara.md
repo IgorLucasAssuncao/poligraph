@@ -218,9 +218,58 @@ comissões.
 gasto, não comportamento de voto**. Sem votação nominal, nada do método deste trabalho —
 matriz, similaridade, grafo, afinidade — é aplicável a deputados estaduais.
 
-✅ **Isso confirma a decisão PP1** ([arq/30 §2](arq/30-pagina-do-parlamentar.md)): o escopo
-estadual não foi cortado só por prazo. **Ele é inviável com o dado que existe hoje**, e é
-assim que deve ser justificado no texto do TCC.
+#### 3.0.2 📊 E no nível municipal? — também investigado
+
+Escala do problema: **5.570 municípios, ~58 mil vereadores**, sem nenhum órgão central que
+padronize publicação. Testado em 2026-08-23:
+
+| Câmara | Resultado |
+|---|---|
+| **São Paulo** — `splegisws.saopaulo.sp.leg.br/ws/ws2.asmx` | ✅ **Web service SOAP/JSON ativo, 48 métodos** |
+| Rio de Janeiro, Belo Horizonte | ⛔ Sem resposta |
+| Curitiba | ⛔ 403 |
+| Porto Alegre | ⛔ 404 |
+
+**São Paulo é o melhor caso do país — e serve de teste decisivo.** Os 48 métodos cobrem:
+
+```
+VereadoresCMSP · ComissoesCMSP · ProjetosPorAno · ProjetosAutores
+ProjetosComissoesDesignadas · ProjetosEmTramitacaoPorPromovente
+ProjetosEncerrados · ProjetosVetadosPorPromovente · LeisAprovadasPorPromovente
+AudienciasPublicas · PautasSessoesPlenarias · PautaEstendidaSessaoPlenaria
+FasesDeDeliberacao · CatalogoDeAssuntos · TiposDeMateria · OcupacaoGabinete …
+```
+
+🔴 **Nenhum método de votação.** Confirmado também no WSDL: existem os tipos `Vereador` e
+`Sessao`, **não existe `Voto` nem `Votacao`**.
+
+⚠️ Note o que existe e o que falta: `PautasSessoesPlenarias` diz **o que será votado**;
+não há nada que diga **como cada um votou**. É agenda, não resultado nominal.
+
+→ **Se a maior e mais bem equipada câmara municipal do Brasil não publica voto nominal, o
+resto não publica.** O nível municipal está fora não por falta de tempo, mas por ausência
+total de matéria-prima.
+
+#### 3.0.3 Conclusão sobre escopo subnacional
+
+| Nível | Cadastro | **Voto nominal** | Fonte de resultado eleitoral |
+|---|---|---|---|
+| **Federal** | ✅ Completo | ✅ **Sim** | TSE |
+| Estadual | 🟡 2 de 27 assembleias | ⛔ **Nenhuma** | TSE (`CD_CARGO` 7) |
+| Municipal | 🟡 Raríssimo (SP) | ⛔ **Nenhuma** | TSE (`CD_CARGO` 13) |
+
+✅ **Isso confirma a decisão PP1** ([arq/30 §2](arq/30-pagina-do-parlamentar.md)) e a
+fortalece: o escopo subnacional não foi cortado só por prazo. **É inviável com o dado que
+existe hoje** — e é assim que deve ser justificado no texto do TCC.
+
+> **Frase pronta para a defesa:** *"A análise depende de voto nominal registrado. Essa
+> informação existe de forma estruturada apenas no Congresso Nacional; nenhuma assembleia
+> estadual ou câmara municipal testada a publica, incluindo as de maior porte e melhor
+> transparência."*
+
+⚠️ **Efeito colateral positivo:** isso é, em si, um **achado do trabalho**. Um TCC sobre
+transparência legislativa que documenta *onde a transparência não chega* tem material para
+uma seção de discussão — e é uma contribuição de mapeamento que não estava planejada.
 
 ### 3.1 `GET /deputados` — lista
 

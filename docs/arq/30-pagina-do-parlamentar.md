@@ -49,7 +49,7 @@ pessoas"*.
 
 ✅ **PP1 DECIDIDA (2026-08-23): o escopo fica no Congresso federal.** 513 deputados
 federais + 81 senadores. **Sem** governadores, deputados estaduais, prefeitos ou vereadores
-— decisão de prazo, **e também de viabilidade**: nenhuma assembleia estadual publica votação nominal (investigado em [10-api-camara §3.0.1](../10-api-camara.md)).
+— decisão de prazo, **e também de viabilidade**: nenhuma assembleia estadual nem câmara municipal publica votação nominal (investigado em [10-api-camara §3.0.1 e §3.0.2](../10-api-camara.md)).
 
 Isso mantém o TSE no papel de enriquecimento. *Se um dia o escopo se ampliar*, o TSE
 passaria a ser a **única base possível** para esses cargos, porque não existe API
