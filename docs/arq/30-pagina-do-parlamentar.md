@@ -119,7 +119,7 @@ flowchart TD
 | **Trajetória eleitoral** — candidaturas, partidos, votos recebidos | **TSE** | 🔶 Depende de carga manual |
 | **Escolaridade, ocupação, cor/raça, idade** | **TSE** | 🔶 idem |
 | **Patrimônio declarado** | **TSE** | 🔶 idem |
-| **Notícias recentes** | Crawler RSS | 🔶 F8 |
+| **Notícias recentes** | Crawler RSS | ✅ F5b — cobertura enviesada, ver RF-47 |
 
 ⚠️ **Nenhuma seção de TSE é bloqueante.** A página funciona inteira sem ele — só fica menos
 rica. Isso é proposital: a tela mais visível não pode depender da fonte mais frágil.
@@ -148,13 +148,15 @@ texto interpretativo. Deixar o leitor concluir.
 ## 6. ⭐ Seguir — o que torna isto uma rede social
 
 A página do parlamentar não é só consulta: é onde o usuário **segue** (RF-42) e passa a
-receber notícias daquele parlamentar no feed (RF-43).
+acompanhar aquele parlamentar. O **feed agregado** (RF-43) é condicional — ver
+[03-requisitos §2.7.3](../03-requisitos.md); sem ele, "seguir" continua valendo como lista
+de acompanhamento.
 
 ```mermaid
 flowchart LR
     Q["Questionário<br/>de afinidade"] -->|"sugere quem seguir<br/>(RF-44)"| P["Página do<br/>parlamentar"]
     P -->|"botão Seguir"| L[("localStorage<br/>do navegador")]
-    L --> F["Feed pessoal<br/>notícias de quem você segue"]
+    L --> F["Meus parlamentares<br/>(feed agregado: condicional)"]
     C["Crawler RSS"] --> API["API pública:<br/>notícias por parlamentar"]
     API --> F
     style L fill:#238636,color:#fff
@@ -170,10 +172,10 @@ serve apenas *"notícias recentes do parlamentar 204528"* — informação públ
 | Contexto | Natureza |
 |---|---|
 | Página do parlamentar | Notícias daquele parlamentar — **filtro**, sem personalização |
-| **Feed de seguidos** | **Recomendação por escolha explícita** do usuário |
+| **Feed de seguidos** 🔶 | **Recomendação por escolha explícita** — se o RF-43 entrar |
 | Resultado do questionário | **Recomendação inferida** — sugere quem seguir por afinidade e tema |
 
-⚠️ Só os dois últimos são recomendação no sentido forte. É o **feed** que sustenta a
+⚠️ Só os dois últimos são recomendação no sentido forte. É a **coleta** que sustenta a
 palavra do título, e é ele que exige o crawler no caminho crítico (F5b).
 
 ---
