@@ -1402,7 +1402,6 @@ eleitoral. Recomendações:
 | ~~D3~~ | ✅ **DECIDIDO — 2026-08-22** | Escopo: **Câmara + Senado, como dois grafos independentes** | Ver §11.1 |
 | D4 | Base da afinidade | (a) votações reais; (b) questionário ideológico tipo Likert | **(a)** — é o diferencial do trabalho; (b) é o que todo mundo já faz |
 | ~~D5~~ | ✅ **DECIDIDA — 2026-08-23** | Front-end: **React + Vite**, no Cloudflare Pages | [plano/01](plano/01-arquitetura.md) |
-| ~~D1~~ | 🔄 **REVISADA — 2026-08-23** | ETL **inteiro em Python** (não só a análise) — `pandas` resolve as armadilhas medidas do CSV | [plano/01 §7](plano/01-arquitetura.md) |
 
 ### 11.1 ✅ D3 decidida — o Senado entra, como grafo independente
 
