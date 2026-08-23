@@ -1,6 +1,7 @@
 # Página do parlamentar — o perfil da "rede social"
 
-> **Status:** v1.0 — 2026-08-22
+> **Status:** v1.1 — 2026-08-23
+> **v1.1:** PP1 decidida — escopo fica no Congresso federal.
 > Coberturas medidas ao vivo. Ver [00-discovery](../00-discovery.md),
 > [12-fonte-tse](../12-fonte-tse.md).
 
@@ -46,9 +47,15 @@ Três motivos:
 não a definição de quem está nele. Ele responde *"quem é esta pessoa"*, não *"quem são as
 pessoas"*.
 
-⚠️ **Exceção que mudaria isso:** se o escopo passar a incluir políticos **fora do Congresso
-federal** — governadores, deputados estaduais, prefeitos — aí o TSE passa a ser sim a única
-base possível, porque não existe API equivalente para eles. **Pendência PP1.**
+✅ **PP1 DECIDIDA (2026-08-23): o escopo fica no Congresso federal.** 513 deputados
+federais + 81 senadores. **Sem** governadores, deputados estaduais, prefeitos ou vereadores
+— decisão de prazo.
+
+Isso mantém o TSE no papel de enriquecimento. *Se um dia o escopo se ampliar*, o TSE
+passaria a ser a **única base possível** para esses cargos, porque não existe API
+equivalente a eles (ver [10-api-camara §3.0](../10-api-camara.md)) — mas aí o levantamento
+inteiro precisaria ser refeito, e nada do que foi medido sobre votações se aplicaria: **não
+existe base pública de como um deputado estadual votou.**
 
 ---
 
@@ -167,7 +174,7 @@ serve apenas *"notícias recentes do parlamentar 204528"* — informação públ
 | Resultado do questionário | **Recomendação inferida** — sugere quem seguir por afinidade e tema |
 
 ⚠️ Só os dois últimos são recomendação no sentido forte. É o **feed** que sustenta a
-palavra do título, e é ele que exige o crawler no caminho crítico — não em F8.
+palavra do título, e é ele que exige o crawler no caminho crítico (F5b).
 
 ---
 
@@ -197,7 +204,7 @@ palavra do título, e é ele que exige o crawler no caminho crítico — não em
 
 | # | Pendência | Prioridade |
 |---|---|---|
-| **PP1** | Decidir se o escopo inclui políticos **fora do Congresso federal** (governadores, deputados estaduais). Se sim, o TSE **vira** a base do roster e o levantamento muda | 🔴 Alta |
+| ~~PP1~~ | ✅ **RESOLVIDA — 2026-08-23.** Escopo fica no **Congresso federal**: 513 deputados federais + 81 senadores. Sem cargos estaduais ou municipais | — |
 | **PP2** | Definir como compensar a assimetria da página de senador — ou assumi-la e explicá-la na interface | 🔴 Alta |
 | **PP3** | Definir a apresentação de patrimônio (série por eleição? variação absoluta? nenhuma?) | 🟡 Média |
 | **PP4** | Decidir se linka para os perfis de rede social ou apenas os lista | 🟡 Média |

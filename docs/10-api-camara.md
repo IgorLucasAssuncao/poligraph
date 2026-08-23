@@ -1,6 +1,6 @@
 # API de Dados Abertos da Câmara dos Deputados — referência
 
-> **Status:** v1.0 — todos os payloads deste documento foram **capturados ao vivo em
+> **Status:** v1.1 — todos os payloads deste documento foram **capturados ao vivo em
 > 2026-08-22**, não copiados da documentação oficial. Onde o payload foi abreviado, está
 > marcado com `…`.
 > Ver também: [01-camara-dos-deputados.md](01-camara-dos-deputados.md) (o que os campos
@@ -168,7 +168,63 @@ urlWebsite;urlDocumento;coordenador_id;…
 
 ## 3. Endpoints REST
 
+### 3.0 ⚠️ Qual "deputado" esta API cobre
+
+Pergunta recorrente, porque "deputado" em português é ambíguo:
+
+| Cargo | Onde atua | Quantos | Esta API cobre? |
+|---|---|---|---|
+| **Deputado federal** | Câmara dos Deputados, Brasília | 513 | ✅ **Sim — só estes** |
+| Deputado estadual | Assembleia Legislativa do estado (ALESP, ALERJ…) | ~1.059 no país | ⛔ Não |
+| Deputado distrital | Câmara Legislativa do DF | 24 | ⛔ Não |
+| Vereador | Câmara Municipal | ~58 mil | ⛔ Não |
+
+**`dadosabertos.camara.leg.br` é a Câmara dos Deputados — federal, e só.** Não há nenhum
+conceito de deputado estadual na API: verificado nas tabelas de referência
+(`situacoesDeputado`, `codSituacao`, `codTipoAutor`), nenhuma menciona *estadual* ou
+*assembleia*.
+
+→ Deputados estaduais e vereadores **não têm API equivalente**. A única fonte federada para
+eles é o **TSE** (`CD_CARGO` 7 = deputado estadual), que traz candidatura e resultado —
+**mas nenhum dado de votação**. Não existe base pública consolidada de como um deputado
+estadual votou.
+
 ### 3.1 `GET /deputados` — lista
+
+⚠️ **Achado #20 — este endpoint devolve linhas duplicadas, e não são histórico.**
+
+Medido para `idLegislatura=57`:
+
+| | |
+|---|---|
+| Registros retornados | **878** |
+| Deputados **distintos** | **647** |
+| Máximo de repetições de um mesmo `id` | **4** |
+
+E o motivo é pior que duplicação simples. O deputado 233598 aparece assim:
+
+```json
+{"id":233598,"nome":"Samuel dos Santos","siglaPartido":"PSC", "siglaUf":"GO"}
+{"id":233598,"nome":"Samuel dos Santos","siglaPartido":"PODE","siglaUf":"GO"}
+{"id":233598,"nome":"Samuel Santos",    "siglaPartido":"PSC", "siglaUf":"GO"}
+{"id":233598,"nome":"Samuel Santos",    "siglaPartido":"PODE","siglaUf":"GO"}
+```
+
+São **2 variações de nome × 2 partidos = 4 linhas**: um **produto cartesiano** dos valores
+distintos de cada atributo, não os estados reais pelos quais a pessoa passou.
+
+🔴 **A combinação "Samuel dos Santos + PODE" pode nunca ter existido.** Portanto:
+
+1. **Deduplique por `id`.** Um ETL ingênuo grava 878 pessoas onde há 647.
+2. **Nunca use estas linhas como histórico de mandato ou de partido.** Não são eventos.
+   Para partido histórico, use `partido_no_voto` da linha de voto (§6.1 do discovery); para
+   o atual, `ultimoStatus.siglaPartido` de `/deputados/{id}`.
+
+⚠️ **`links[rel=last]` também engana.** Com `itens=1`, ele aponta `pagina=878` — o total de
+**linhas**, não de pessoas. Não use para estimar cardinalidade.
+
+📊 Para calibrar: dos **647** deputados registrados na legislatura 57, **644 votaram ao
+menos uma vez** (99,5%). Os nós do grafo são os 644.
 
 **Entrada**
 
