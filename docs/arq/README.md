@@ -70,7 +70,7 @@ Independente da escolha, estes elementos não mudam:
 | Elemento | Decisão | Origem |
 |---|---|---|
 | Camadas **bronze → silver → gold** | Bronze imutável e reprocessável | Discovery §5 |
-| **PostgreSQL** | Grafo tem ~500 nós; cabe em relacional | D2 |
+| **PostgreSQL** | 📊 Grafo tem **644 nós** (Câmara) e ~90 (Senado); cabe em relacional | D2 |
 | **Carga base por CSV**, API só incremental | Achado #6 | 10-api-camara §2 |
 | `partido_no_voto` **desnormalizado** no voto | Achado da rotatividade | Discovery §6.1 |
 | `pessoa` com **ID sintético** + `pessoa_fonte_id` | Nunca usar id de fonte como PK | 13-correlacao §3 |

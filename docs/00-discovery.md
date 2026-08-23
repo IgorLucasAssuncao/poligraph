@@ -7,7 +7,7 @@
 >
 > ⚠️ **O título tem consequências que este documento ainda não refletia** — ver §2.1.
 
-> **Status:** rascunho (v0.13)
+> **Status:** rascunho (v0.14)
 > **Data:** 2026-08-22
 > **Mudanças na v0.2:** volume real medido (seção 4.1.1); achado #6 (CSVs consolidados,
 > resolve R4); achado #7 (as duas casas não são comparáveis, seção 4.5); decisão D3
@@ -39,6 +39,9 @@
 > votações de plenário e 182 abertas no Senado, o triplo do que eu media com um ano só.
 > Achado #18 — 41 dos 81 senadores já foram deputados (ponte temporal entre os grafos).
 > §7.4.1 — posições são estáveis na legislatura (r=0,86): não ponderar por recência.
+> **v0.14:** §5.1 corrige o número de nós (644, não ~500); §5.2 define a cadência de
+> coleta e o achado #19 (CSVs reconstruídos toda madrugada); RQ8 resolvida — "Redes
+> Sociais" é o grafo.
 > **Objetivo deste documento:** registrar o entendimento do problema, o escopo, as
 > fontes de dados (já validadas) e as decisões em aberto, para servir de contexto
 > permanente do TCC.
@@ -144,14 +147,21 @@ O título termina em *"em Redes Sociais"*, e o termo é ambíguo em português:
 | **Rede social como grafo** (análise de redes) | A rede de parlamentares que o projeto modela | ✅ Coerente com "Modelagem em Grafos" e com o pedido original ("rede social de políticos") |
 | **Rede social como plataforma** (X, Instagram…) | Coletar e analisar posts de parlamentares | ⛔ Fora de tudo que foi planejado; APIs fechadas/pagas |
 
-**Assumo a primeira leitura** — é a única compatível com o restante do título e com o
-escopo levantado. ⚠️ **Confirmar com o orientador antes de escrever a introdução**
-(pendência RQ8): se a intenção for a segunda, o projeto muda de fonte de dados e o
-levantamento inteiro precisa ser refeito.
+✅ **RESOLVIDO — 2026-08-23 (RQ8).** Confirmado pelo autor: **é o grafo**. O projeto **não**
+coleta nem analisa conteúdo de plataformas.
 
-*(Nota: a API da Câmara expõe `redeSocial[]` por deputado — perfis oficiais de X, Facebook,
-Instagram e YouTube. Isso permitiria **linkar** para os perfis sem coletar conteúdo, o que
-seria um meio-termo barato.)*
+E o sentido é duplo, o que reforça a escolha:
+
+1. **Rede social como estrutura analítica** — o grafo de similaridade entre parlamentares.
+2. **Rede social como produto** — páginas por político, com a possibilidade de **seguir**
+   (RF-42) e acompanhar notícias. Ver
+   [arq/30-pagina-do-parlamentar.md](arq/30-pagina-do-parlamentar.md).
+
+→ As duas leituras convergem, e nenhuma delas envolve X, Instagram ou Facebook como fonte.
+
+*(Nota: a API da Câmara expõe `redeSocial[]` por deputado — perfis oficiais, com 64% de
+cobertura. Serve no máximo para **linkar** a partir da ficha, nunca como fonte de dado.
+O Senado não expõe nada equivalente.)*
 
 ---
 
@@ -809,6 +819,77 @@ mudar, não é preciso rebaixar as APIs de novo — basta reprocessar silver→g
 importa porque a varredura completa de votos da Câmara é lenta (uma chamada por
 votação).
 
+### 5.1 ⚠️ Correção — o grafo não tem "~500 nós"
+
+Este documento vinha justificando a escolha do PostgreSQL com *"o grafo tem ~500 nós"*.
+Esse número era o das **cadeiras** (513), não o dos **nós**. Medido:
+
+| Ano | Deputados distintos que votaram |
+|---|---|
+| 2023 | 555 |
+| 2024 | 572 |
+| 2025 | 552 |
+| 2026 (parcial) | 566 |
+| **Legislatura 57 — distintos** | **644** |
+
+São **644**, não 500 — a rotatividade acumula ao longo dos quatro anos (suplentes,
+licenças, ministérios). Somando o Senado, os dois grafos têm ~644 e ~90 nós.
+
+→ **A conclusão não muda:** 644 nós geram 207 mil pares, e a matriz `644 × 1.103` ocupa
+~710 KB. Continua trivial para PostgreSQL, e continua sem justificar banco de grafos (D2).
+Mas o número certo é 644.
+
+### 5.2 ⭐ Cadência: de quanto em quanto tempo bater nas fontes
+
+Medido em 2026-08-22 — `Last-Modified` dos CSVs da Câmara:
+
+| Arquivo | Última atualização |
+|---|---|
+| `votacoesVotos-2026.csv` | Sat, 22 Aug 2026 **06:56** GMT |
+| `votacoes-2026.csv` | 22 Aug 2026 **06:50** GMT |
+| `proposicoes-2026.csv` | 22 Aug 2026 **04:33** GMT |
+| `deputados.csv` | 22 Aug 2026 **04:00** GMT |
+
+E, checando **ano a ano**, `votacoesVotos` de 2022, 2023, 2024, 2025 e 2026 foram **todos
+reconstruídos na mesma madrugada**, entre 06:56 e 07:01 GMT.
+
+**Duas conclusões:**
+
+✅ **Achado #19 — a Câmara reconstrói os CSVs anuais todas as madrugadas**, inclusive os de
+anos passados. Isso **simplifica a arquitetura**: para o ano corrente, basta rebaixar o CSV
+diariamente. A API deixa de ser necessária para o incremental — vira recurso para o mesmo
+dia e para endpoints sem equivalente em arquivo (ex.: detalhe de votação).
+
+⚠️ **Efeito colateral: `Last-Modified` não serve para detectar mudança real.** Como todos os
+arquivos mudam toda noite, o carimbo sempre estará "novo". Para saber se o **conteúdo**
+mudou, compare **hash do arquivo** ou a contagem de registros — não a data.
+
+**Cadência proposta:**
+
+| O quê | Frequência | Justificativa |
+|---|---|---|
+| CSV do **ano corrente** (Câmara) | **Diária**, após 09:00 GMT | Reconstruído ~07:00 GMT; margem de segurança |
+| CSVs de **anos anteriores** | **Mensal** ou sob demanda | Só mudam por correção retroativa |
+| Cadastro (`deputados.csv`, `orgaos.csv`) | **Semanal** | Troca de partido e recomposição de comissão não são diárias |
+| **Senado** `/votacao` (ano corrente) | **Diária** — 2,4 MB | ⚠️ `cache-control: max-age=600` — não adianta bater mais que a cada 10 min |
+| **Crawler** de notícias | **Diária** | RF-37 |
+| **TSE** | **Uma vez por eleição**, manual | Dado imutável após diplomação |
+| **Job analítico** (similaridade, SVD, Louvain) | 🔄 **Por evento, não por agenda** | Ver abaixo |
+
+#### Por que o job analítico deve ser por evento
+
+Recalcular 207 mil pares todo dia é desperdício: **votação só acontece em dia de sessão
+deliberativa** — tipicamente terça a quinta, e **nunca durante o recesso** (18–31 de julho
+e 23/12 a 1º/02).
+
+→ **Regra:** o job de análise roda **somente se a carga trouxe votações novas**. Em julho,
+ele não roda nenhuma vez — e isso é o comportamento correto.
+
+⚠️ **Consequência para monitoramento:** "zero votações novas" é **normal em julho** e
+**suspeito em maio**. O alarme precisa considerar o calendário legislativo
+([01-camara §3](01-camara-dos-deputados.md)), senão ou dispara falso todo recesso, ou
+fica mudo quando a coleta quebrar de verdade.
+
 ### Stack sugerida
 
 O `.gitignore` do repositório já é o de **.NET**, então assumo C#/.NET como stack
@@ -1314,7 +1395,7 @@ eleitoral. Recomendações:
 | # | Decisão | Opções | Recomendação |
 |---|---|---|---|
 | D1 | Linguagem do ETL/análise | (a) tudo .NET; (b) .NET + Python para SVD/Louvain | **(b)**: `numpy`/`scipy`/`networkx` resolvem em poucas linhas o que em C# dá trabalho. Defender como escolha arquitetural (poliglota por adequação), não como gambiarra |
-| D2 | Banco | (a) PostgreSQL; (b) Neo4j; (c) ambos | **(a)** no MVP. O grafo tem ~500 nós — cabe folgado em tabela relacional. Neo4j só se a pergunta de pesquisa exigir travessia de caminhos |
+| D2 | Banco | (a) PostgreSQL; (b) Neo4j; (c) ambos | **(a)** no MVP. 📊 O grafo tem **644 nós** (medido, §5.1) — 207 mil pares, cabe folgado em tabela relacional. Neo4j só se a pergunta de pesquisa exigir travessia de caminhos |
 | ~~D3~~ | ✅ **DECIDIDO — 2026-08-22** | Escopo: **Câmara + Senado, como dois grafos independentes** | Ver §11.1 |
 | D4 | Base da afinidade | (a) votações reais; (b) questionário ideológico tipo Likert | **(a)** — é o diferencial do trabalho; (b) é o que todo mundo já faz |
 | D5 | Front-end | Blazor vs React | Decidir depois da API estar de pé |

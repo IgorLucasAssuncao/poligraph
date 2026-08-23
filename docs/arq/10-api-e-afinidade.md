@@ -1,6 +1,7 @@
 # API REST + motor de afinidade
 
-> **Status:** v1.0 — 2026-08-22
+> **Status:** v1.1 — 2026-08-23
+> **v1.1:** números redimensionados para a legislatura inteira (644 × 1.103), não um ano.
 > Vale para qualquer um dos cenários A/B/C. A pergunta central: **onde cada cálculo roda**.
 
 ---
@@ -10,15 +11,19 @@
 Antes de escolher arquitetura, vale dimensionar. Muita complexidade some quando os
 números aparecem:
 
+⚠️ **Números corrigidos para a legislatura inteira.** A v1.0 deste documento dimensionava
+sobre **um ano** (552 × 526). Com a matriz por legislatura (RN-12) e a cobertura histórica
+confirmada, os valores reais são:
+
 | Estrutura | Dimensão real (medida) | Memória |
 |---|---|---|
-| Matriz de votos da Câmara | 552 × 526 | **~290 KB** como `sbyte[,]` |
-| Matriz do Senado | 84 × 128 | ~11 KB |
-| Pares parlamentar × parlamentar | 552 × 551 / 2 = **152.076** | ~2 MB |
-| Comparações para a matriz completa | ~80 milhões de células | segundos |
-| Comparações para **um** cidadão | 20 respostas × 552 = **11.040** | microssegundos |
+| Matriz de votos da Câmara | **644 × 1.103** | **~710 KB** como `sbyte[,]` |
+| Matriz do Senado | ~90 × 182 | ~16 KB |
+| Pares parlamentar × parlamentar (Câmara) | 644 × 643 / 2 = **207.046** | ~3 MB |
+| Comparações para a matriz completa | ~228 milhões de células | dezenas de segundos |
+| Comparações para **um** cidadão | 20 respostas × 644 = **12.880** | microssegundos |
 
-> **A matriz de votos inteira cabe em 290 KB.** Não há problema de escala aqui, e
+> **As duas matrizes juntas cabem em menos de 1 MB.** Não há problema de escala aqui, e
 > qualquer arquitetura distribuída seria over-engineering — o que, aliás, é uma
 > observação defensável no texto do TCC.
 
@@ -40,13 +45,13 @@ flowchart TD
     PG[("PostgreSQL<br/>gold")]
 
     subgraph BATCH["Offline — roda após cada carga"]
-        J1["Similaridade<br/>152k pares"]
+        J1["Similaridade<br/>207k pares"]
         J2["SVD → eixos 2D"]
         J3["Louvain → comunidades"]
     end
 
     subgraph ONLINE["API ASP.NET Core"]
-        CACHE["Matriz de votos<br/>em memória (290 KB)<br/>IMemoryCache"]
+        CACHE["Matriz de votos<br/>em memória (~726 KB)<br/>IMemoryCache"]
         AFF["Motor de afinidade<br/>pairwise + polaridade"]
         EP["Minimal API"]
         CACHE --> AFF --> EP
@@ -83,7 +88,7 @@ flowchart TD
 - **Offline em Python:** `numpy` + `scipy` + `networkx` resolvem similaridade, SVD e
   Louvain em poucas dezenas de linhas. Em C#, Louvain teria que ser implementado do zero.
 - **Online em .NET:** a afinidade do cidadão é aritmética trivial sobre uma matriz de
-  290 KB. Não justifica um serviço separado, nem chamada entre processos.
+  ~710 KB. Não justifica um serviço separado, nem chamada entre processos.
 
 ⚠️ **Como defender o poliglotismo na banca:** não é gambiarra, é adequação. .NET faz o que
 faz bem (API, ETL tipado, concorrência); Python faz o que faz bem (álgebra linear, grafos).
@@ -100,7 +105,7 @@ continua servindo.
 ```
 Para cada par (A, B):
     comuns = { v : voto_A(v) ≠ null  E  voto_B(v) ≠ null }
-    se |comuns| < 20:  descartar par        ← corte medido: exclui 14 de 552 (2,5%)
+    se |comuns| < 20:  descartar par        ← corte medido: exclui 2,5% dos deputados
     concordancia = |{ v ∈ comuns : voto_A(v) == voto_B(v) }| / |comuns|
     cosseno      = (a · b) / (‖a‖ ‖b‖)      sobre {-1, 0, +1} restrito a comuns
 ```
@@ -143,7 +148,7 @@ sequenceDiagram
     API-->>U: 20 perguntas (ementa reescrita)
     Note over U: responde no navegador
     U->>API: POST /api/afinidade { respostas }
-    API->>M: compara contra 552 vetores
+    API->>M: compara contra 644 vetores
     M-->>API: ranking (~microssegundos)
     API-->>U: mais próximos + mais distantes
     Note over API: NADA é persistido
@@ -221,7 +226,7 @@ escolheu casa — ele apenas recebe duas listas autoexplicativas.
 
 | Item | Estratégia |
 |---|---|
-| Matriz de votos | Carregada no startup em `IMemoryCache`; 290 KB |
+| Matriz de votos | Carregada no startup em `IMemoryCache`; ~726 KB (as duas casas) |
 | Invalidação | Tabela `carga(id, fonte, versao, concluida_em)`; a API compara a versão e recarrega |
 | Grafo | Materializado no gold; servido direto |
 | Questionário | Estático entre curadorias; `ETag` pela `versao` |
@@ -233,7 +238,7 @@ mais sofisticada é desnecessária.
 
 ## 7. Pontos fortes
 
-- ✅ **Dimensionamento honesto:** 290 KB de matriz elimina toda discussão de escala.
+- ✅ **Dimensionamento honesto:** menos de 1 MB de matriz elimina toda discussão de escala.
 - ✅ **Separação limpa** entre batch (analítico, Python) e online (API, .NET), acopladas só
   pelo banco.
 - ✅ **API sem estado de usuário** — resolve R7 e LGPD por construção, não por política.
@@ -263,4 +268,4 @@ mais sofisticada é desnecessária.
 | **API4** | Definir se a métrica exibida ao usuário é concordância simples ou cosseno (ou ambas) | 🟡 Média |
 | **API5** | Decidir se as respostas anônimas serão coletadas para análise agregada — e como declarar isso | 🟡 Média |
 | **API6** | Definir o formato de troca do job Python ↔ banco (tabela própria vs `COPY`) | 🟡 Média |
-| **API7** | Medir quanto tempo o job de 152k pares leva de fato | 🟢 Baixa |
+| **API7** | Medir quanto tempo o job de 207k pares leva de fato | 🟢 Baixa |

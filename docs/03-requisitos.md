@@ -289,7 +289,7 @@ outubro de 2026.
 |---|---|---|---|
 | **RNF-01** | Cálculo de afinidade do cidadão | **< 200 ms** (p95) | 📊 20 respostas × 552 = 11 mil comparações |
 | **RNF-02** | Carga completa de um ano da Câmara | < 10 min | 📊 167 mil linhas via `COPY` |
-| **RNF-03** | Job de similaridade (152 mil pares) | < 15 min | 📊 ~80 M comparações |
+| **RNF-03** | Job de similaridade (207 mil pares) | < 15 min | 📊 ~228 M comparações |
 | **RNF-04** | Resposta de consulta (ficha, busca) | < 500 ms (p95) | — |
 | **RNF-05** | Carga do Senado (ano inteiro) | < 1 min | 📊 uma chamada de 2,4 MB |
 
@@ -396,7 +396,7 @@ de escondido numa nota de rodapé.
 
 | ID | Requisito |
 |---|---|
-| **RNF-23** | Executável em máquina única de desenvolvimento — 📊 a matriz inteira ocupa **290 KB** |
+| **RNF-23** | Executável em máquina única de desenvolvimento — 📊 as duas matrizes ocupam **menos de 1 MB** |
 | **RNF-24** | Banco em PostgreSQL, sem extensões proprietárias |
 | **RNF-25** | Ambiente reproduzível por script, exceto a carga manual do TSE (RNF-22) |
 | **RNF-26** | Interface responsiva; o grafo deve degradar de forma graciosa em tela pequena |
@@ -487,6 +487,6 @@ notícias**. F6, F7 e F9 são incrementos.
 | **RQ5** | Decidir a forma de **RNF-17** (acesso restrito): autenticação simples, ambiente local, ou adiar publicação | RNF-17 |
 | **RQ6** | Definir critérios de aceitação mensuráveis para os RF essenciais | Validação |
 | **RQ7** | Definir o **mecanismo de recomendação** — por parlamentar afim, por tema, ou híbrido — e como avaliá-lo | Sem métrica, "recomendação" vira "listagem filtrada" |
-| **RQ8** | 🔴 **Confirmar com o orientador** o sentido de *"em Redes Sociais"* no título — grafo (assumido) ou plataformas | Muda a fonte de dados e o levantamento inteiro |
+| ~~RQ8~~ | ✅ **RESOLVIDA — 2026-08-23.** *"em Redes Sociais"* = **o grafo**, confirmado pelo autor. Não envolve plataformas (X, Instagram) | — |
 | **RQ9** | Escolher entre **A / B / C** para onde vive a lista de seguidos (§2.7.2). Enquanto isso, implementar **A** | LGPD e R7 |
 | **RQ10** | Decidir se o **feed agregado** (RF-43) entra. Recomendação: decidir tarde — classificar por tema desde já mantém a porta aberta a custo zero | §2.7.3 |
