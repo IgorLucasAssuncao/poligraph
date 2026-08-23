@@ -1,6 +1,6 @@
 # Poligraph — Documento de Discovery
 
-> **Status:** rascunho (v0.8)
+> **Status:** rascunho (v0.9)
 > **Data:** 2026-08-22
 > **Mudanças na v0.2:** volume real medido (seção 4.1.1); achado #6 (CSVs consolidados,
 > resolve R4); achado #7 (as duas casas não são comparáveis, seção 4.5); decisão D3
@@ -18,6 +18,9 @@
 > mediana de 29 votos e confundimento com partido. Corrige afirmação da v0.2.
 > **v0.8:** seção 4.1.6 — insumos aproveitáveis das comissões; achado #16: **relatoria**
 > (4.694 designações, 455 deputados, mediana 7) é o melhor sinal não-votação disponível.
+> **v0.9:** achado #15 reescrito — a justificativa da v0.7 ("confundimento com partido")
+> estava ERRADA: comissões espelham a casa. O motivo real é que votações de comissão são
+> 3x mais consensuais (39% quase-unânimes vs 12%), inflando seletivamente quem as tem.
 > **Objetivo deste documento:** registrar o entendimento do problema, o escopo, as
 > fontes de dados (já validadas) e as decisões em aberto, para servir de contexto
 > permanente do TCC.
@@ -383,20 +386,56 @@ Uma votação de comissão registra o voto de **~29 deputados**, não de 400 —
 **membros daquela comissão** votam. Ao todo, 345 dos 552 deputados aparecem em ao menos
 uma votação de comissão.
 
-**Por que isso é um problema, e não apenas "menos dado":**
+**Sim, eles votam de verdade nas comissões.** O voto é real e registrado. O problema não é
+a legitimidade do voto — é o que acontece ao **misturá-lo na mesma matriz** dos votos de
+plenário.
+
+⚠️ **Correção de uma afirmação anterior.** Uma versão deste documento dizia que o problema
+era *"confundimento com partido: participar da mesma comissão é correlacionado com ser do
+mesmo partido"*. **Isso está errado.** A composição das comissões é distribuída por
+**proporcionalidade partidária**, o que faz cada comissão ser um **espelho da casa**, não
+um agrupamento partidário. Medido na CCJC:
+
+| Partido | CCJC | Câmara |
+|---|---|---|
+| PL | 19 % | 17 % |
+| PT | 15 % | 12 % |
+| UNIÃO | 14 % | 12 % |
+| PP | 10 % | 10 % |
+
+Distribuição praticamente idêntica. **Co-participação em comissão não prediz partido.**
+
+**O problema real é outro — e a medição o revela:**
+
+📊 **Votações de comissão são muito mais consensuais que as de plenário:**
+
+| | Maioria média | >85% de um lado | >95% de um lado |
+|---|---|---|---|
+| **Plenário** (409) | 56,9 % | 12 % | 8 % |
+| **Comissões** (116) | **68,8 %** | **39 %** | **24 %** |
+
+Quase **quatro em cada dez** votações de comissão são praticamente unânimes, contra pouco
+mais de uma em dez no plenário. Faz sentido institucionalmente: comissão é trabalho
+técnico, conduzido pelo relator, com muito menos disputa aberta.
+
+**Por que isso quebra a matriz:**
 
 1. **Esparsidade extrema.** Para uma votação de comissão, ~520 dos 552 deputados têm
-   `null`. Ela não é uma coluna a mais na matriz — é uma coluna quase vazia.
-2. 🔴 **Confundimento estrutural.** Dois deputados da mesma comissão ganham dezenas de
-   votações em comum; dois de comissões diferentes ganham **zero**. Como a composição das
-   comissões é **distribuída pelos líderes por proporcionalidade partidária**, participar
-   da mesma comissão é fortemente correlacionado com ser do mesmo partido.
+   `null`. Não é uma coluna a mais — é uma coluna quase vazia.
+2. 🔴 **Inflação seletiva de similaridade.** Dois deputados da mesma comissão ganham dezenas
+   de votações em comum, e essas votações **concordam entre si com muito mais frequência**.
+   Dois deputados de comissões diferentes ganham **zero**.
 
-   → Incluir votações de comissão **infla a similaridade entre correligionários por um
-   mecanismo que não é o voto**. Isso contamina exatamente a pergunta central do trabalho
-   — *"o partido explica o voto?"* (RF-20). Seria criar artificialmente o resultado que se
-   pretende medir.
-3. **Também não ajudam o questionário.** Uma pergunta derivada de votação de comissão só
+   → A similaridade de quem compartilha comissão sobe **por um mecanismo administrativo**,
+   não político. Quem senta na CCJC (49 votações no ano) recebe um empurrão grande; quem
+   senta na CFT (5 votações) quase nada. **O artefato é por deputado**, e depende de qual
+   comissão calhou de ele ocupar e de quão movimentada ela foi.
+3. 🔴 **No grafo, isso vira um bloco falso.** Os membros da CCJC apareceriam como um
+   agrupamento coeso — e alguém interpretaria isso como bloco político. Não é: é resíduo
+   de composição de comissão. Como as comissões espelham a casa em partido, esse falso
+   bloco seria **transpartidário**, ou seja, contaminaria justamente a análise de
+   comunidades × partido (RF-20) na direção de *"o partido não explica o voto"*.
+4. **Também não ajudam o questionário.** Uma pergunta vinda de votação de comissão só
    permite comparar o cidadão com os ~29 deputados que votaram. Os outros 523 ficam de
    fora daquela pergunta.
 
@@ -493,8 +532,12 @@ relator **atual** (13.792 de 114.906 proposições ≈ 12%), sem histórico.
 #### Similaridade intra-comissão
 
 As votações de comissão **não** servem na matriz principal (achado #15), mas servem em
-**matriz própria, por comissão**: dentro da CCJC, todos os 96 membros votam as mesmas 49
-votações — não há esparsidade nem confundimento, porque a população é fechada.
+**matriz própria, por comissão**: dentro da CCJC, todos os 96 membros enfrentam as mesmas
+49 votações — não há esparsidade nem inflação seletiva, porque a população é fechada e
+todo mundo recebe o mesmo tratamento.
+
+→ É a mesma medida aplicada a um universo homogêneo. O que invalida a mistura (uns ganham
+votações extras, outros não) desaparece quando o recorte é a própria comissão.
 
 → Permite perguntar *"qual comissão é a mais polarizada?"* e comparar coesão entre
 comissões. É uma análise pequena e autocontida — boa candidata a seção extra se sobrar

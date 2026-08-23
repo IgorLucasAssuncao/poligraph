@@ -282,12 +282,16 @@ caráter conclusivo**, sem que ele passe pelo plenário (art. 24, II do Regiment
 → *Consequência:* **nem toda lei aprovada aparece em votação de plenário.** Analisando só
 `siglaOrgao = PLEN`, perde-se parte da produção legislativa.
 
-⚠️ **E não há como compensar isso com as votações de comissão.** Elas existem (116
-nominais em 2025), mas registram a mediana de **29 votos** — só os membros daquela
-comissão. Como a composição das comissões é distribuída pelos líderes por
-proporcionalidade partidária, incluí-las na matriz **inflaria a similaridade entre
-correligionários por um mecanismo que não é o voto**, contaminando a pergunta central do
-trabalho. Ver achado #15, seção 4.1.5 do discovery.
+⚠️ **E não há como compensar isso com as votações de comissão.** Elas existem e são votos
+legítimos (116 nominais em 2025), mas registram a mediana de **29 votos** — só os membros
+daquela comissão — e são **muito mais consensuais** que as de plenário: 39% têm mais de
+85% de um lado, contra 12% no plenário.
+
+Misturá-las na matriz principal **inflaria a similaridade apenas de quem compartilha
+comissão**, e de forma desigual — quem senta na CCJC (49 votações no ano) ganha um empurrão
+grande; quem senta na CFT (5 votações) quase nenhum. O resultado seria um bloco aparente de
+membros da CCJC no grafo, que não é político: é resíduo de composição de comissão. Ver
+achado #15, seção 4.1.5 do discovery.
 
 → A cobertura é de **comportamento em votação de plenário registrada**, e essa limitação
 é declarada, não contornada.
