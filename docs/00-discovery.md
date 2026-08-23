@@ -771,6 +771,56 @@ para ter os votos da fase de deputado. Isso é viável — os CSVs existem (§4.
 depende de F1–F6 estarem fechadas e de ingestão histórica adicional. Não colocar no
 caminho crítico.
 
+#### ⭐ Achado #21 — a CPMI **é** votação compartilhada, mas ninguém publica
+
+Levantamento correto e importante: uma **Comissão Parlamentar Mista de Inquérito** reúne
+deputados **e** senadores, que votam **juntos, na mesma matéria** — requerimentos de
+convocação, quebras de sigilo, relatório final. Institucionalmente, **é exatamente a ponte
+que o achado #7 diz não existir.**
+
+Fui verificar. Resultado em 2026-08-23:
+
+| Verificação | Resultado |
+|---|---|
+| CPMI existe como órgão na API da Câmara? | ✅ **Sim** — `CPMI8JAN`, id 102648, `codTipoOrgao=20` |
+| Quantas votações a API retorna para ela? | ⛔ **0** (`/votacoes?idOrgao=102648`) |
+| CPMI aparece nos CSVs de votação? | ⛔ **0 linhas** em 2023 e 2025 |
+| Senado publica sessão mista? | ⛔ `casaSessao` = **`SF` em 100%**, nos 4 anos |
+
+**Todos os órgãos com votação nominal na Câmara (2023 + 2025):**
+
+```
+PLEN 710 · CCJC 154 · CE 23 · CSPCCO 20 · CPIMST 9 · CPASF 9 · CMADS 9
+CFT 7 · CPIFUTE 5 · CMULHER 4 · CAPADR 4 · CDC 3 · CCULT 3 · CICS 2
+```
+
+⚠️ **`CPIMST` e `CPIFUTE` enganam pela sigla.** Confirmado na API: são
+*"Comissão Parlamentar de **Inquérito**"* — **CPI, de uma casa só**. Não são mistas.
+
+→ **Nenhum registro de votação de CPMI existe em nenhuma das duas fontes.**
+
+#### Por que isso torna o achado #7 mais forte, não mais fraco
+
+Antes, o argumento era institucional: nas sessões de veto os votos são **apurados
+separadamente por casa**, então nem lá existe colégio único. Agora há um segundo caso, de
+natureza diferente:
+
+| Caso | O colégio é único? | O dado existe? |
+|---|---|---|
+| Sessão conjunta (veto, orçamento) | ⛔ Não — apuração por casa | ⛔ Não publicado |
+| **CPMI** | ✅ **Sim — votam juntos de verdade** | ⛔ **Não publicado** |
+
+> 🔑 **A ponte existe na instituição e não existe no dado.** Não é limitação conceitual —
+> é lacuna de transparência.
+
+⭐ **Isso é material direto para a seção de discussão do TCC**, e reforça o mapeamento de
+§3.0.2 do [10-api-camara](10-api-camara.md): há um lugar onde deputados e senadores
+efetivamente votam o mesmo, e **o registro nominal simplesmente não é publicado**.
+
+⚠️ **Se algum dia for publicado**, é por ali que a unificação dos dois grafos passaria a
+ser possível — e o volume seria pequeno (poucas dezenas de votações por CPMI), mas
+suficiente para uma ponte real. **Vale reverificar antes de escrever a conclusão.**
+
 **Alternativas para ligar as casas** (nenhuma no MVP):
 
 | Abordagem | Viabilidade |

@@ -501,7 +501,7 @@ Detalhes em [13-correlacao-entre-fontes.md](13-correlacao-entre-fontes.md).
 | # | Pendência | Impacto |
 |---|---|---|
 | ~~SE1~~ | ✅ **RESOLVIDA** — domínio medido, ver §2.4. Só 34% dos registros são posição de voto | — |
-| **SE2** | Confirmar se `/votacao` cobre **votações de comissão** ou só plenário | Volume disponível |
+| ~~SE2~~ | ✅ RESOLVIDA 2026-08-23 — cobre comissão, mas o volume é irrisório: 1 votação de CCJ em 2023 e nenhuma em 2025, contra 138 e 126 de plenário | Volume disponível |
 | ~~SE3~~ | ✅ **RESOLVIDA (negativamente)** — não existe, ver §4.2. A comparação entre casas fica assimétrica | — |
 | ~~SE4~~ | ✅ **RESOLVIDA — 2026-08-23.** Janela de um ano inteiro funciona (2,4 MB); nao ha limite pratico | Estratégia de particionamento |
 | ~~SE5~~ | ✅ **RESOLVIDA — 2026-08-23.** Desnecessario — 2,4 MB por ano ja e trivial | Provavelmente desnecessário — 2,4 MB/ano já é trivial |

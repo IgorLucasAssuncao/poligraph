@@ -200,9 +200,9 @@ trabalhos futuros — que é um lugar perfeitamente respeitável para ele.
 | ~~C1~~ | ✅ **RESOLVIDA** — 12 valores; só 34% dos registros são posição de voto ([11-api-senado §2.4](../11-api-senado.md)) | — | — |
 | ~~C2~~ | ✅ **RESOLVIDA (negativamente)** — não existe orientação de bancada no Senado (§4.2) | — | — |
 | ~~C3~~ | ✅ **RESOLVIDA** — cobre 2019–2026. Legislatura 57 = **182 votações abertas** | — | — |
-| **C4** | Confirmar se `/votacao` traz **votações de comissão** ou só plenário | Volume | 🟡 Média |
+| ~~C4~~ | ✅ RESOLVIDA — cobre, mas o volume é irrisório: 1 votação de comissão em 2 anos | — | — |
 | **C5** | Escolher e calibrar o algoritmo de *fuzzy match* | Conciliação | 🟡 Média |
 | ~~C6~~ | ✅ **RESOLVIDA — 2026-08-23.** Camara 2022; Senado 2018 e 2022 (renovacao escalonada) | Join TSE↔Senado | 🟡 Média |
 | **C7** | Definir as métricas formais de comparação entre casas (modularidade, ARI, índice de Rice) | Resultado do TCC | 🟡 Média |
-| **C8** | Investigar se as **sessões do Congresso Nacional** existem em alguma terceira fonte | Poderia criar a ponte entre casas | 🟢 Baixa |
+| ~~C8~~ | ✅ RESOLVIDA 2026-08-23 — nem sessão conjunta nem CPMI são publicadas. Achado #21 | — | — |
 | — | Herda **A1–A4** e **B1–B7** | | |
