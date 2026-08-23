@@ -161,10 +161,11 @@ interpretação dos resultados, não para o questionário.
   negativamente — `/orientacao`, `/votacao/orientacao` e `/processo/orientacao` retornam
   404). A disciplina partidária e o governismo são calculáveis na Câmara e **não** no
   Senado. Isso **enfraquece diretamente a comparação que motiva este cenário**.
-- 🔴 **CONFIRMADO: 56% das votações do Senado são secretas** (achado #17). Registram
-  `"Votou"` — presença, não posição. Sobram **56 votações utilizáveis por ano**, contra
-  410 da Câmara. E só **34%** dos registros de voto são posição utilizável, contra 99,3%
-  na Câmara.
+- 🟡 **56% das votações do Senado são secretas** (achado #17). Sobram **56 votações
+  utilizáveis por ano**, contra 410 da Câmara. **Mas a matriz continua viável:** medido,
+  88% dos pares de senadores têm ≥20 votações em comum, com média de 33. O custo é de
+  **precisão** (IC de ±17 pp contra ±5,5 pp na Câmara), não de viabilidade — comunidades e
+  eixos do SVD continuam calculáveis. Ver §2.5 do [11-api-senado.md](../11-api-senado.md).
 - 🟡 O domínio de `siglaVotoParlamentar` tem **12 valores** (`Votou`, `P-NRV`, `AP`, `MIS`,
   `LS`, `LP`, `NCom`, `NA`…), exigindo normalização **completamente diferente** da Câmara.
 - 🟢 Volume de ingestão irrisório: 2,4 MB/ano.

@@ -1,9 +1,11 @@
 # API de Dados Abertos do Senado Federal — referência
 
-> **Status:** v1.1 — payloads capturados ao vivo em **2026-08-22**.
+> **Status:** v1.2 — payloads capturados ao vivo em **2026-08-22**.
 > **v1.1:** corrige a estrutura do `/votacao` (é **aninhada**, não plana — a v1.0 estava
 > errada); achado #17 — **56% das votações do Senado são secretas**; pendências P1 e P3
 > resolvidas; endpoints por parlamentar (relatoria, lideranças) documentados.
+> **v1.2:** §2.5 — a matriz do Senado É viável apesar da escassez: 88% dos pares têm
+> ≥20 votações em comum (média 33). O custo é precisão (IC ±17pp), não viabilidade.
 > Ver também: [02-senado-federal.md](02-senado-federal.md),
 > [13-correlacao-entre-fontes.md](13-correlacao-entre-fontes.md).
 
@@ -207,6 +209,73 @@ presença, ausência ou sigilo.
 
 ⚠️ Contraste com a Câmara, onde `Sim`+`Não` são **99,3%** dos registros. **As duas casas
 exigem normalizações completamente diferentes** — não reaproveite o mapeamento.
+
+### 2.5 ✅ "Ainda dá para usar?" — sim. Medido.
+
+O achado #17 é ruim, mas **escassez não é inviabilidade**. A pergunta certa não é *"o
+Senado tem menos dado que a Câmara?"* (tem), e sim *"o que sobra sustenta a análise?"*.
+
+Matriz construída com as **56 votações abertas** de 2025:
+
+| | Valor |
+|---|---|
+| Votações abertas | 56 |
+| Senadores distintos | 83 |
+| Registros `Sim`/`Não` | 3.572 |
+| Senadores votando por votação | mediana **64** de 81 |
+
+**Sobreposição entre pares** — o número que de fato decide (3.403 pares):
+
+| Métrica | Valor |
+|---|---|
+| Sobreposição média | **33 votações** |
+| Mínimo / máximo | 3 / 54 |
+| Pares com **≥ 20** em comum (corte da RN-02) | **2.980 — 88 %** |
+| Pares com ≥ 30 | 2.296 — 67 % |
+| Pares com ≥ 40 | 1.100 — 32 % |
+
+→ **88% dos pares sobrevivem ao corte**, com média de 33 votações em comum. A matriz do
+Senado é **utilizável**.
+
+#### O que muda: a precisão, não a viabilidade
+
+O custo da escassez é **estatístico**, e é quantificável. Erro-padrão de uma proporção de
+concordância, no pior caso (p = 0,5):
+
+| Casa | n típico por par | Erro-padrão | IC 95% aprox. |
+|---|---|---|---|
+| Câmara | 329 | ± 2,8 pp | **± 5,5 pp** |
+| **Senado** | **33** | **± 8,7 pp** | **± 17 pp** |
+
+**Tradução prática:**
+
+| Afirmação | Câmara | Senado |
+|---|---|---|
+| "A concorda mais com B do que com C" (diferença grande, >20 pp) | ✅ | ✅ |
+| "A e B concordam em ~70%" | ✅ | 🟡 com IC declarado |
+| "A está 3 pp mais próximo de B que de C" | 🟡 | ⛔ **Não afirmar** |
+
+- **Detecção de comunidades:** ✅ funciona. Louvain usa ordenação relativa de pesos, e o
+  sinal forte (blocos de governo e oposição) sobrevive a ±17 pp.
+- **Projeção em 2 eixos (SVD):** ✅ funciona. Uma matriz 83 × 56 com 3.572 observações para
+  estimar ~278 parâmetros é uma razão confortável. Análises de *roll-call* na literatura
+  rodam em câmaras deste porte rotineiramente.
+- **Gradações finas entre parlamentares:** ⛔ não sustentadas.
+
+#### Regra: declarar a precisão em vez de esconder a escassez
+
+**Trabalhar com dado incompleto e declarar o limite é método, não concessão.** Nenhuma
+fonte real entrega tudo — a diferença entre um trabalho sério e um frágil não é ter o dado
+completo, é saber e dizer o que o dado suporta.
+
+→ **Requisito derivado:** onde a similaridade do Senado for exibida ou usada em conclusão,
+acompanhar do **n** e do intervalo de confiança. Combina com o RF-29 já definido
+("concordaram em X de Y"), que expõe o denominador por construção.
+
+⚠️ **O que continua não sendo contornável** não é a escassez, e sim a **ausência de
+orientação de bancada** (§4.2). Isso não é questão de precisão — é uma variável que
+simplesmente não existe no Senado. Disciplina partidária e governismo permanecem
+calculáveis só na Câmara.
 
 ### 2.1 Ingestão fácil, dado escasso
 
