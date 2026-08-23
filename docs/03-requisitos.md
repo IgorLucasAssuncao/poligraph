@@ -480,7 +480,7 @@ notícias**. F6, F7 e F9 são incrementos.
 
 | # | Pendência | Bloqueia |
 |---|---|---|
-| **RQ1** | Definir o **limiar de similaridade** para renderização do grafo | RF-33 |
+| ~~RQ1~~ | ✅ **RESOLVIDA — 2026-08-23.** Limiar global descartado (densidade 11,6% mesmo a 0,90). Adotado **kNN com k=10** — ver [04-contratos §9](04-contratos.md) | — |
 | **RQ2** | Definir a métrica formal de comparação comunidade × partido (ARI? modularidade?) | RF-20 |
 | **RQ3** | Definir o **N final** de perguntas do questionário | RF-24 |
 | **RQ4** | Confirmar se existe orientação de bancada no Senado | RF-22 no Senado |

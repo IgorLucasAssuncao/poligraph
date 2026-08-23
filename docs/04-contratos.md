@@ -1,6 +1,8 @@
 # Contratos — entradas, saídas e uso
 
-> **Status:** v1.0 — 2026-08-23
+> **Status:** v1.1 — 2026-08-23
+> **v1.1:** §7.1–7.3 — o suplente é tratado de forma diferente em cada casa; §9 — contrato
+> do grafo especificado (kNN k=10, limiar global descartado por medição).
 > **Regra deste documento: nada aqui é suposição.** Todo formato, cardinalidade e domínio
 > foi medido contra o dado real. Onde algo não pôde ser validado, está marcado
 > ⛔ **NÃO VALIDADO**.
@@ -30,7 +32,7 @@ flowchart LR
 | C9 | Entity resolution | ✅ testado |
 | C10 | Matriz de votos | ✅ dimensionado |
 | C11 | Similaridade | ✅ dimensionado |
-| C12 | Grafo | ⛔ limiar não definido |
+| C12 | Grafo | ✅ **kNN k=10, medido** |
 | C13 | API REST pública | ⛔ proposto |
 | C14 | Fronteira Python ↔ Postgres | ⛔ proposto |
 
@@ -57,7 +59,7 @@ Exemplo de campo `descricao` real, com aspas escapadas em RFC4180 (`""`):
 ```
 
 ⚠️ **Consequência já observada neste projeto:** contar votações com
-`cut -d';' -f1 | sort -u` devolveu **13.825**; a contagem correta é **13.825**. As
+`cut -d';' -f1 | sort -u` devolveu **15.037**; a contagem correta é **13.825**. As
 1.212 extras eram fragmentos de linhas de continuação interpretados como ids.
 
 > 🔑 **Contrato de parsing:** use um leitor CSV compatível com **RFC 4180**
@@ -118,7 +120,7 @@ votosSim;votosNao;votosOutros;descricao;ultimaAberturaVotacao_*;ultimaApresentac
 
 | Aspecto | Valor medido (2025) |
 |---|---|
-| Registros reais | **13.825** ⚠️ (não 13.825 — ver §1) |
+| Registros reais | **13.825** ⚠️ (a contagem ingênua dá 15.037 — ver §1) |
 | Linhas físicas | 17.421 |
 | **Taxa de nominais** | **526 / 13.825 = 3,8 %** |
 | `votosSim`/`votosNao` preenchidos | ✅ nas 526 nominais · ⛔ **zerados nas simbólicas** |
@@ -469,11 +471,109 @@ para cada par (A,B) da MESMA casa:
 
 ---
 
-## 9. C12–C15 · ⛔ Contratos ainda não validados
+## 9. C12 · Grafo — ✅ especificado e medido
+
+### 9.1 🔴 O limiar global **não funciona** — medido
+
+Amostra de 200 deputados, plenário 2025, **18.393 pares válidos**:
+
+| | |
+|---|---|
+| **Similaridade média entre dois deputados quaisquer** | **0,663** |
+
+Densidade resultante por limiar:
+
+| Limiar | Arestas (amostra) | Densidade | Extrapolado p/ 644 nós |
+|---|---|---|---|
+| ≥ 0,60 | 11.885 | **64,6 %** | ~134.000 arestas |
+| ≥ 0,70 | 9.138 | 49,7 % | ~103.000 |
+| ≥ 0,75 | 7.604 | 41,3 % | ~86.000 |
+| ≥ 0,80 | 5.985 | 32,5 % | ~67.000 |
+| ≥ 0,85 | 4.066 | 22,1 % | ~46.000 |
+| ≥ 0,90 | 2.134 | **11,6 %** | ~24.000 |
+
+🔴 **Mesmo a 0,90 a densidade é 11,6%** — ~24 mil arestas para 644 nós. Ilegível em
+qualquer layout *force-directed*, e caro de transmitir ao navegador.
+
+**A causa é institucional:** a média de concordância é **0,663**, não ~0,5. Dois deputados
+aleatórios já concordam em dois terços das votações, porque boa parte das matérias é
+pouco disputada. Um limiar só vira informativo **muito acima da média** — e aí corta nós
+inteiros para fora do grafo.
+
+⚠️ **E o limiar global tem um defeito estrutural, não só de volume:** ele produz
+**nós isolados**. Quem tem perfil atípico fica sem nenhuma aresta e some da visualização —
+justamente os casos mais interessantes.
+
+### 9.2 ✅ Contrato adotado: **kNN**, não limiar
+
+> **Cada nó mantém suas `k` arestas mais fortes.** A aresta entra no grafo se estiver no
+> top-`k` de **qualquer uma das duas pontas** (kNN mutualizado).
+
+| Propriedade | Limiar global | **kNN** |
+|---|---|---|
+| Nº de arestas | Imprevisível (24k–134k) | ✅ **Limitado a ~`n × k`** |
+| Nós isolados | 🔴 Sim | ✅ **Nenhum** |
+| Densidade | Varia com a casa | ✅ Controlada diretamente |
+| Comparável entre Câmara e Senado | ⛔ Não (médias diferentes) | ✅ **Sim** |
+
+**Parâmetro recomendado: `k = 10`.**
+
+| Casa | Nós | Arestas (≈ n·k) | Densidade |
+|---|---|---|---|
+| Câmara | 644 | ~6.400 | **~1,5 %** |
+| Senado | ~90 | ~900 | ~11 % |
+
+⚠️ **O `k` é o parâmetro a justificar no TCC**, e é honesto reportar a análise de
+sensibilidade — rodar Louvain com k = 5, 10, 20 e mostrar se as comunidades mudam. Se não
+mudarem, o resultado é robusto; se mudarem, isso também precisa ser dito.
+
+⚠️ **kNN torna a comparação entre casas legítima.** Com limiar global, Câmara e Senado
+teriam densidades incomparáveis (médias de similaridade diferentes) e qualquer diferença
+de modularidade seria artefato. Com `k` fixo, as duas redes têm a mesma densidade
+relativa — pré-requisito para o RF-23.
+
+### 9.3 Contrato de nó e aresta
+
+```
+no(pessoa_id, casa, nome_exibicao, partido_atual, uf, urlFoto,
+   comunidade_louvain, eixo_x_svd, eixo_y_svd,
+   governismo, disciplina_partidaria,          -- ⛔ só Câmara (P3)
+   n_votacoes)                                  -- para o tooltip e o corte
+
+aresta(pessoa_a, pessoa_b, tipo, peso, n_votacoes_comuns)
+       tipo ∈ { SIMILARIDADE_VOTO, COMISSAO_COMUM, COAUTORIA }
+```
+
+**Invariantes:**
+
+| # | Invariante |
+|---|---|
+| I1 | `pessoa_a.casa == pessoa_b.casa` — 🔴 **nunca** aresta entre casas (achado #7) |
+| I2 | `n_votacoes_comuns >= 20` para `SIMILARIDADE_VOTO` |
+| I3 | `pessoa_a < pessoa_b` — aresta não-direcionada, gravada uma vez |
+| I4 | Todo nó tem ≥ 1 aresta (garantido pelo kNN) |
+| I5 | Grafo por **legislatura** — nunca misturar (RN-12) |
+
+**Saída para o front:**
+
+```json
+{ "casa":"CAMARA", "legislatura":57, "k":10,
+  "nos":[ {"id":204528,"nome":"Adriana Ventura","partido":"NOVO","uf":"SP",
+           "comunidade":3,"x":-0.42,"y":0.18,"nVotacoes":329} ],
+  "arestas":[ {"a":204528,"b":223128,"peso":0.87,"n":312} ],
+  "meta":{"nos":644,"arestas":6403,"densidade":0.015,
+          "modularidade":0.41,"comunidades":5} }
+```
+
+⚠️ **Payload estimado:** ~644 nós + ~6.400 arestas ≈ **400–600 KB** em JSON. Aceitável,
+mas vale `gzip` e considerar omitir `n` por aresta se apertar.
+
+---
+
+## 9.4 C13–C15 · ⛔ Contratos ainda não validados
 
 | # | Contrato | O que falta |
 |---|---|---|
-| **C12** | Grafo (nós, arestas, limiar) | Limiar de similaridade não definido (RQ1/API2) |
 | **C13** | API REST pública | Proposta em [arq/10](arq/10-api-e-afinidade.md) §5, não implementada |
 | **C14** | Fronteira Python ↔ Postgres | Formato de troca não definido (API6) |
 | **C15** | Contrato do front | Depende de D5 (Blazor vs React) |
@@ -515,7 +615,7 @@ job analítico **por evento**, não por agenda.
 | # | Pendência |
 |---|---|
 | **CT1** | Validar layout de `bem_candidato` e `votacao_candidato_munzona` (P3) |
-| **CT2** | Definir e validar o contrato do grafo (C12) — limiar, formato de nó/aresta |
+| ~~CT2~~ | ✅ **RESOLVIDA** — C12 especificado em §9: kNN k=10, contrato de nó/aresta, 5 invariantes |
 | **CT3** | Escrever o OpenAPI da C13 e validar contra o front |
 | **CT4** | Definir o formato de troca Python ↔ Postgres (C14) |
 | **CT5** | Medir o domínio de `voto` nos anos 2023, 2024 e 2026 — só 2025 foi medido |

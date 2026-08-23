@@ -263,7 +263,7 @@ mais sofisticada é desnecessária.
 | # | Pendência | Prioridade |
 |---|---|---|
 | **API1** | Decidir **D5** (Blazor vs React) — afeta se o grafo é renderizado com Cytoscape.js | 🔴 Alta |
-| **API2** | Definir o **limiar de similaridade** para renderizar o grafo (513 nós ⇒ até 131k arestas) | 🔴 Alta |
+| ~~API2~~ | ✅ **RESOLVIDA — 2026-08-23.** Limiar global descartado: mesmo a 0,90 a densidade é 11,6% (~24k arestas). Adotado **kNN com k=10** — [04-contratos §9](../04-contratos.md) | — |
 | **API3** | Escrever o teste de regressão da **polaridade** | 🔴 Alta |
 | **API4** | Definir se a métrica exibida ao usuário é concordância simples ou cosseno (ou ambas) | 🟡 Média |
 | **API5** | Decidir se as respostas anônimas serão coletadas para análise agregada — e como declarar isso | 🟡 Média |
