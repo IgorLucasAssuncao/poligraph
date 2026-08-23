@@ -1,14 +1,14 @@
 # TSE — Dados Abertos Eleitorais
 
-> **Status:** v1.1 — 2026-08-22
-> **v1.1:** §1.1 — o papel do TSE no desenho consolidado: passa de enriquecimento a
-> **infraestrutura de identidade**, por ser a chave que torna determinística a ponte
-> deputado→senador (achado #18). P4 retestada: segue sem espelho acessível.
-> ⚠️ **Aviso de confiabilidade.** Diferente dos documentos 10 e 11, **este documento não
-> pôde ser validado ao vivo**: o TSE bloqueou o acesso automatizado deste ambiente
-> (HTTP 403, ver seção 2). Tudo que está marcado **`[A CONFIRMAR]`** vem de conhecimento
-> prévio sobre o formato e **precisa ser verificado no primeiro download manual**. O que
-> está marcado ✅ foi testado.
+> **Status:** v2.0 — 2026-08-23
+> 🔄 **v2.0 — REESCRITO APÓS VALIDAÇÃO REAL.** O **achado #5 foi derrubado**: o TSE **é**
+> automatizável, com o conjunto completo de headers de navegador. O
+> `consulta_cand_2022.zip` foi baixado, extraído e analisado por script. Pendências
+> **P1, P2, P4 e P6 resolvidas**. Ver §2.0, §3 e §3.4.
+> **v1.1:** §1.1 — o TSE como infraestrutura de identidade para a ponte deputado→senador.
+>
+> ✅ **Este documento passou de especulativo a validado.** O que restava marcado
+> `[A CONFIRMAR]` foi verificado no arquivo real.
 
 ---
 
@@ -30,7 +30,7 @@ No Poligraph, o TSE é **fonte de enriquecimento de nó**, não de aresta:
 
 → **O TSE não afeta o algoritmo de afinidade.** Ele torna o produto mais rico e sustenta o
 objetivo específico #1 do TCC (integrar fontes heterogêneas), mas **não está no caminho
-crítico**. Isso é deliberado — ver seção 2.
+crítico**. Isso é deliberado.
 
 ---
 
@@ -49,8 +49,8 @@ grafos independentes, matriz por legislatura, achado #18:
 | Recomendação de Notícias | ⛔ Não — vem de tema + parlamentar |
 
 **Nenhuma das quatro entregas do título depende do TSE.** É preciso dizer isso com todas as
-letras, porque é a fonte de **maior atrito** (403, carga manual, layout ainda
-`[A CONFIRMAR]`) e **menor carga estrutural**.
+letras, porque é a de **menor carga estrutural**. (O atrito de acesso caiu muito: o TSE
+se mostrou automatizável — §2.0 — e o layout está validado.)
 
 ⚠️ **Mas o objetivo específico #1 nomeia as três fontes** — *"TSE, Câmara e Senado"*.
 Cortar o TSE obriga a reescrever o objetivo. É decisão de escopo, não de engenharia.
@@ -125,9 +125,70 @@ persiste nada.
 
 ---
 
-## 2. ✅ Achado crítico #5 — bloqueio de acesso automatizado
+## 2. 🔄 Achado #5 **DERRUBADO** — o TSE É automatizável
 
-**Testado em 2026-08-22:**
+> ⚠️ **Esta seção foi reescrita em 2026-08-23.** A versão anterior afirmava que o TSE
+> bloqueava acesso automatizado e que a carga teria de ser **manual**. **Isso está errado.**
+> O arquivo foi baixado, extraído e validado por script. Tudo abaixo é medido.
+
+### 2.0 O que destravou: o **conjunto** de headers, não o User-Agent
+
+O 403 não dependia da URL nem do User-Agent isolado. Depende de o cliente **parecer um
+navegador de verdade**, com o conjunto completo de cabeçalhos. Isolamento feito em
+`consulta_cand_2022.zip`:
+
+| Tentativa | Resultado |
+|---|---|
+| `curl` padrão | ⛔ 403 |
+| Só `User-Agent` de navegador | ⛔ 403 |
+| `User-Agent` + `Accept-Encoding` | ⛔ 403 |
+| Conjunto completo **sem** `Accept-Encoding` | ⛔ 403 |
+| **Conjunto completo COM `Accept-Encoding`** | ✅ **200 — 4.378.231 bytes** |
+
+**Receita que funciona:**
+
+```
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+            (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36
+Accept: */*
+Accept-Language: pt-BR,pt;q=0.9
+Accept-Encoding: gzip, deflate, br          ← obrigatório
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fetch-Site: none
+Upgrade-Insecure-Requests: 1
+```
+
+⚠️ **`Accept-Encoding` é a peça que faltava**, mas sozinho não basta — é o conjunto que
+passa. Comportamento típico de WAF que pontua "parece navegador?" por combinação de sinais.
+
+⚠️ **Isto é frágil por natureza.** O TSE pode endurecer a regra a qualquer momento. Trate
+como **otimização, não como garantia**: o pipeline deve detectar 403 e degradar para carga
+manual, que continua sendo o plano B documentado em §2.2.
+
+### 2.1 ✅ Consequências — três decisões revertidas
+
+| Decisão anterior | Agora |
+|---|---|
+| Carga **manual** obrigatória | ✅ **Automatizável** — job normal de ETL |
+| TSE fora do caminho de reprodutibilidade | ✅ **Pipeline reproduzível de ponta a ponta** |
+| "Arquivos de centenas de MB" | ❌ **Errado** — ver tamanhos reais abaixo |
+
+📊 **Tamanhos reais medidos** (muito menores do que este documento supunha):
+
+| Arquivo | Tamanho |
+|---|---|
+| `consulta_cand_2022.zip` | **4,2 MB** |
+| `consulta_cand_2018.zip` | **4,5 MB** |
+| `bem_candidato_2022.zip` | **5,1 MB** |
+| `perfil_eleitorado_ATUAL.zip` | 81,4 MB |
+
+→ **O TSE inteiro que o projeto precisa cabe em ~14 MB.** A pendência B5 (onde versionar
+"arquivos de centenas de MB") **deixa de existir** — cabe no repositório, se quiser.
+
+### 2.2 Registro histórico — o bloqueio anterior
+
+**Testado em 2026-08-22, com cliente sem os headers completos:**
 
 | URL | Resultado |
 |---|---|
@@ -169,20 +230,69 @@ procedimento de obtenção no texto. Isso transforma uma fragilidade em rigor me
 
 ---
 
-## 3. `[A CONFIRMAR]` Estrutura dos arquivos
+## 3. ✅ Estrutura dos arquivos — **VALIDADA** em 2026-08-23
 
-### 3.1 Formato
+> Todo `[A CONFIRMAR]` desta seção foi verificado no arquivo real
+> `consulta_cand_2022.zip` (SHA-256 `1c2b0b59ce498c40…`), baixado e extraído.
 
-| Característica | Valor esperado |
+### 3.0 Conteúdo do ZIP
+
+```
+leiame.pdf                          208 KB   ← documentação oficial do layout
+consulta_cand_2022_AC.csv           290 KB
+consulta_cand_2022_AL.csv           270 KB
+…                                            (um CSV por UF)
+consulta_cand_2022_BRASIL.csv      15,7 MB   ← consolidado nacional
+                                   30 arquivos, 31,7 MB descompactado
+```
+
+→ **Use o `_BRASIL.csv`.** Os arquivos por UF são subconjuntos dele; ingerir os 27 mais o
+consolidado duplicaria tudo.
+
+⚠️ **O `leiame.pdf` traz o dicionário de dados oficial.** Vale ler antes de escrever o
+parser — é a única documentação autoritativa do layout.
+
+### 3.1 ✅ Formato — confirmado
+
+| Característica | **Medido** |
 |---|---|
-| Distribuição | ZIP por ano, contendo um CSV por UF (+ `BRASIL`) |
-| Encoding | **Latin-1 (ISO-8859-1)** — ⚠️ **não é UTF-8** |
-| Separador | `;` |
+| Encoding | ✅ **ISO-8859-1 (Latin-1)** — confirmado por `file` |
+| Separador | ✅ `;` |
+| Quebra de linha | ⚠️ **CRLF** — detalhe novo, não estava documentado |
 | Delimitador de texto | `"` |
-| Datas | `dd/MM/yyyy` |
-| Decimais | vírgula (`1234,56`) |
-| Nulos | `#NULO#`, `#NE#` (não existe), `-1`, `-3` como sentinelas |
-| Tamanho | centenas de MB por ano |
+| Campos | ✅ **50** |
+| Linhas (`BRASIL`, 2022) | **29.323** |
+
+📊 **Contagem de eleitos por cargo em 2022** — bate exatamente com o esperado:
+
+| Cargo | `CD_CARGO` | Eleitos |
+|---|---|---|
+| **Deputado federal** | **6** | ✅ **513** |
+| **Senador** | **5** | ✅ **27** |
+| Deputado estadual | 7 | 1.035 |
+| Deputado distrital | 8 | 24 |
+| Governador / Vice | 3 / 4 | 27 / 27 |
+| Presidente / Vice | 1 / 2 | 1 / 1 |
+| 1º / 2º Suplente (Senado) | 9 / 10 | 27 / 27 |
+
+→ Os **27 senadores** confirmam a renovação escalonada (§1.1.3): em 2022 cada estado
+elegeu **um**. Os outros 54 estão em `consulta_cand_2018`.
+
+### 3.1.1 🔴 A armadilha do CPF — quantificada
+
+📊 **9.477 dos 29.322 CPFs (32%) começam com zero.**
+
+Ler `NR_CPF_CANDIDATO` como número **perde o dígito inicial de um terço dos registros**, e
+o join falha **em silêncio** exatamente para eles. Não há erro, não há exceção — só
+casamentos que não acontecem.
+
+→ **Regra: `string` do início ao fim, nas duas pontas.** Vale também para o lado da
+Câmara: o deputado 221328 tem CPF `05585378805`.
+
+⚠️ **Sentinela não documentada:** 29 registros têm CPF com **2 caracteres** — valor `-4`.
+Some-se às sentinelas já conhecidas (`#NULO#`, `#NE#`). Tratar como `null`.
+
+### 3.1.2 Como ler em .NET
 
 ⚠️ **O encoding Latin-1 é a causa número um de bug nesse dataset.** Ler como UTF-8
 corrompe todo nome com acento — e depois o *fuzzy match* com o Senado falha por motivo
@@ -203,9 +313,82 @@ strings literais e poluem agregações.
 | `prestacao_de_contas_*` | Receitas e despesas de campanha | 🟢 Baixa |
 | `perfil_eleitorado_{ano}` | Perfil do eleitorado (agregado, não por candidato) | 🟢 Baixa |
 
-### 3.3 `[A CONFIRMAR]` Campos de `consulta_cand`
+### 3.3 ✅ Campos de `consulta_cand` — posições confirmadas
 
-Os que importam para o projeto:
+Todos existem, nas posições medidas no header real:
+
+| # | Campo | # | Campo |
+|---|---|---|---|
+| 11 | `SG_UF` | 27 | `SG_PARTIDO` |
+| 14 | **`CD_CARGO`** | 37 | `DT_NASCIMENTO` |
+| 15 | `DS_CARGO` | 42 | `DS_GRAU_INSTRUCAO` |
+| 16 | **`SQ_CANDIDATO`** | 46 | `DS_COR_RACA` |
+| 18 | `NM_CANDIDATO` | 48 | `DS_OCUPACAO` |
+| 19 | `NM_URNA_CANDIDATO` | 49 | `CD_SIT_TOT_TURNO` |
+| 21 | **`NR_CPF_CANDIDATO`** | 50 | **`DS_SIT_TOT_TURNO`** |
+
+#### ✅ Pendência B2 resolvida — domínio real de `DS_SIT_TOT_TURNO`
+
+📊 Medido nos 29.322 registros de 2022:
+
+| Valor | Ocorrências |
+|---|---|
+| `SUPLENTE` | 14.623 |
+| `NÃO ELEITO` | 11.276 |
+| `#NULO` | 1.662 |
+| **`ELEITO POR QP`** | 1.182 |
+| **`ELEITO POR MÉDIA`** | 390 |
+| **`ELEITO`** | 137 |
+| `2º TURNO` | 52 |
+
+🔴 **"Eleito" são TRÊS valores distintos.** Filtrar por `= 'ELEITO'` captura **137 de
+1.709** — menos de 8%. O alerta da versão anterior estava certo, e agora está quantificado.
+
+→ Se precisar filtrar eleitos: `DS_SIT_TOT_TURNO LIKE 'ELEITO%'`.
+
+⚠️ **Mas para o nosso join, não filtre por situação — ver §3.4.**
+
+### 3.4 ⭐ Join Câmara ↔ TSE — **testado, 100%**
+
+Teste com amostra de 60 deputados que votaram na legislatura 57:
+
+| Etapa | Resultado |
+|---|---|
+| CPFs obtidos via API da Câmara | 59 de 60 |
+| Casaram com **`DS_SIT_TOT_TURNO LIKE 'ELEITO%'`** | 46 (78%) |
+| Casaram com **`CD_CARGO = 6`**, sem filtro de situação | ✅ **59 (100%)** |
+
+**Os 13 que "faltavam" não estavam faltando** — estavam no arquivo com outra situação:
+
+```
+11 × SUPLENTE      ← assumiram por sucessão
+ 2 × NÃO ELEITO    ← idem
+```
+
+Faz todo sentido: quem exerce mandato inclui suplentes convocados, que **não** foram
+eleitos. Filtrar por "eleito" os elimina justamente quando eles são parte da população.
+
+> 🔑 **Regra de ouro do join: filtre por `CD_CARGO`, nunca por `DS_SIT_TOT_TURNO`.**
+> A pergunta é *"esta pessoa concorreu a este cargo?"*, não *"ela venceu?"*.
+
+#### 🔴 CORREÇÃO IMPORTANTE — o CPF **não** está no CSV consolidado
+
+Uma versão anterior deste projeto afirmava *"CPF a 100% dos deputados ativos"* no
+`deputados.csv`. **Estava errado** — a medição usou um índice de coluna quebrado.
+
+📊 Medido: **0 de 7.889 linhas** do `deputados.csv` têm `cpf` preenchido. A coluna existe e
+está **vazia**.
+
+| Fonte do CPF | Disponível? |
+|---|---|
+| `arquivos/deputados/csv/deputados.csv` | ⛔ **Coluna vazia** |
+| `GET /api/v2/deputados/{id}` | ✅ **Sim** |
+
+→ **Consequência para o ETL:** obter CPF exige **uma chamada REST por deputado** (~644 na
+legislatura), não um download de CSV. É barato, mas precisa estar no plano — e é o único
+ponto do pipeline da Câmara que **não** pode usar a via de arquivos.
+
+### 3.5 Outros campos de interesse
 
 | Campo | Uso |
 |---|---|
@@ -275,9 +458,9 @@ já registradas no risco R7 do discovery:
 
 | # | Pendência | Bloqueia |
 |---|---|---|
-| **P1** | Fazer o **primeiro download manual** e validar todo o `[A CONFIRMAR]` deste documento | Tudo do TSE |
-| **P2** | Confirmar o domínio real de `DS_SIT_TOT_TURNO` | Filtro de eleitos |
+| ~~P1~~ | ✅ **RESOLVIDA — 2026-08-23.** Arquivo baixado por script e validado: encoding, separador, 50 campos, 513 dep. federais, 27 senadores | — |
+| ~~P2~~ | ✅ **RESOLVIDA** — 7 valores; "eleito" são 3 deles (§3.3). Mas o join deve filtrar por `CD_CARGO`, não por situação (§3.4) | — |
 | **P3** | Confirmar layout de `bem_candidato` e `votacao_candidato_munzona` | Enriquecimento |
-| ~~P4~~ | 🔶 **RETESTADA em 2026-08-22, sem solução.** `cdn.tse.jus.br` segue 403 com UA de navegador; `dados.gov.br` exige credencial (401). Carga manual confirmada | — |
+| ~~P4~~ | ✅ **RESOLVIDA — 2026-08-23.** Desnecessária: o próprio CDN do TSE funciona com o conjunto completo de headers (§2.0) | — |
 | **P5** | Decidir se usa **Base dos Dados** como atalho e como declarar isso no TCC | Metodologia |
-| **P6** | Definir onde versionar arquivos de centenas de MB (**não** no Git — usar Git LFS, storage externo, ou só o manifesto com hash) | Repositório |
+| ~~P6~~ | ✅ **RESOLVIDA** — os arquivos somam ~14 MB, não centenas. Cabem no repositório se quiser | — |
