@@ -263,9 +263,9 @@ ingestão de horas para minutos.
 
 | Métrica | Câmara | Senado |
 |---|---|---|
-| Votações **totais** no ano | 15.037 | — |
+| Votações **totais** no ano | 13.825 | — |
 | Votações **nominais** (com voto individual) | **526** | **128** |
-| Taxa de nominais | **3,5 %** | — |
+| Taxa de nominais | **3,8 %** | — |
 | Parlamentares distintos que votaram | 552 * | 84 * |
 | Registros de voto individual | ~167.000 | ~10.400 |
 
@@ -275,7 +275,7 @@ ingestão de horas para minutos.
 Distribuição das 526 votações nominais da Câmara por órgão:
 **PLEN 410**, CCJC 49, CSPCCO 18, CE 18, CMADS 9, CFT 5, demais comissões ~17.
 
-→ Isso **quantifica o risco R1**: apenas 3,5% das votações são nominais. Ainda assim,
+→ Isso **quantifica o risco R1**: apenas 3,8% das votações são nominais. Ainda assim,
 **410 votações de plenário** em um único ano é volume mais que suficiente para a matriz.
 
 ⚠️ As 116 votações de comissão **não** servem como reserva — ver achado #15 na seção
@@ -1023,8 +1023,8 @@ desse tipo de análise.
    2025 (ver 4.1.2 e 4.1.3):
 
    ```
-   15.037 votações no ano
-      526 nominais                        (3,5%)
+   13.825 votações no ano
+      526 nominais                        (3,8%)
       145 substantivas                    (filtra requerimento e destaque)
       100 proposições distintas
         ~ ?  após descartar unanimidades  ← a medir na F4
@@ -1212,16 +1212,16 @@ reportável, e sustenta a validade de agregar os quatro anos numa matriz só.
 e escrita, não improvisada.
 
 **A pergunta:** se 96,5% das votações ficam de fora, a similaridade calculada sobre os
-3,5% restantes representa mesmo o comportamento do parlamentar?
+3,8% restantes representa mesmo o comportamento do parlamentar?
 
 **Primeiro, o vocabulário** — a confusão aqui é fácil e o nome não ajuda:
 
 | Termo | Significa | Tem voto individual? | Quantas em 2025 |
 |---|---|---|---|
-| **Nominal** | "com o **nome** de cada um" | ✅ **Sim** | **526 (3,5%)** |
+| **Nominal** | "com o **nome** de cada um" | ✅ **Sim** | **526 (3,8%)** |
 | **Simbólica** | Presidente observa o plenário e anuncia | ❌ **Não** | ~14.500 (96,5%) |
 
-Os 3,5% são a **parte boa** — são justamente as votações que temos.
+Os 3,8% são a **parte boa** — são justamente as votações que temos.
 
 **Segundo, o viés não é aleatório, e não dá para medi-lo.** Verificamos: as votações
 simbólicas **não trazem nem a contagem agregada** de votos. Das ~16.900 linhas
@@ -1367,7 +1367,7 @@ nome + cargo/UF na query).
 
 | # | Risco | Impacto | Mitigação |
 |---|---|---|---|
-| R1 | Poucas votações nominais úteis (achado #1) | ~~Alto~~ **Baixo** | **Medido:** só 3,5% são nominais, mas isso dá **410 votações de plenário**/ano — mediana de 329 votos por deputado. ⚠️ Sem reserva: comissão não serve (achado #15) |
+| R1 | Poucas votações nominais úteis (achado #1) | ~~Alto~~ **Baixo** | **Medido:** só 3,8% são nominais, mas isso dá **410 votações de plenário**/ano — mediana de 329 votos por deputado. ⚠️ Sem reserva: comissão não serve (achado #15) |
 | R2 | TSE bloqueia acesso automatizado (achado #5) | Médio | Carga manual versionada; TSE fica fora do caminho crítico |
 | R3 | Entity resolution falha no Senado (sem CPF) | Médio | MVP só com Câmara; conciliação manual dos ~81 senadores é viável |
 | R4 | ~~Varredura completa da API da Câmara é lenta~~ | ~~Médio~~ **Resolvido** | **Achado #6:** existem CSVs consolidados por ano. Carga base via CSV, API só para o incremental |
@@ -1542,7 +1542,7 @@ Segunda rodada — medição de volume:
 
 | Verificação | Resultado |
 |---|---|
-| `GET /arquivos/votacoes/csv/votacoes-2025.csv` | ✅ 8,7 MB — 15.037 votações |
+| `GET /arquivos/votacoes/csv/votacoes-2025.csv` | ✅ 8,7 MB — 13.825 votações |
 | `GET /arquivos/votacoesVotos/csv/votacoesVotos-2025.csv` | ✅ 58 MB — 167 mil votos, 526 votações nominais, 552 deputados |
 | `GET /arquivos/votacoesObjetos/csv/...` e `/proposicoes/csv/...` | ✅ existem |
 | `GET /dadosabertos/votacao?dataInicio=2025-01-01&dataFim=2025-12-31` | ✅ 2,4 MB — 128 votações, 84 senadores, ~10,4 mil votos |

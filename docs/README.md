@@ -28,6 +28,7 @@ flowchart LR
 |---|---|
 | [00-discovery.md](00-discovery.md) | **Documento central.** Título do TCC, escopo, fontes, riscos, decisões, roadmap. Contém os 18 achados |
 | [03-requisitos.md](03-requisitos.md) | Requisitos funcionais e não funcionais, regras de negócio, restrições |
+| [04-contratos.md](04-contratos.md) | **Contratos** — entradas, saídas e uso, com cardinalidades medidas |
 
 ### Contexto institucional — *como o Brasil legisla*
 
@@ -66,7 +67,7 @@ Resumo do que a investigação nas APIs revelou. Detalhes no
 
 | # | Achado | Impacto |
 |---|---|---|
-| 1 | 📊 Só **3,5%** das votações da Câmara são nominais | Dimensiona o projeto |
+| 1 | 📊 Só **3,8%** das votações da Câmara são nominais | Dimensiona o projeto |
 | 2 | `/votos` rejeita o parâmetro `itens` (HTTP 400) | Implementação |
 | 3 | `idVotacao` é string composta, não inteiro | Modelagem |
 | 4 | Endpoint de votações do Senado está **depreciado** | Evita quebra futura |
@@ -102,7 +103,7 @@ Resumo do que a investigação nas APIs revelou. Detalhes no
 
 | Métrica | Câmara | Senado |
 |---|---|---|
-| Votações totais | 15.037 | — |
+| Votações totais | 13.825 | — |
 | Votações nominais | 526 (410 no plenário) | 128 (56 abertas) |
 | Parlamentares distintos | 552 | 84 |
 | Registros de voto | ~167.000 | ~10.400 |

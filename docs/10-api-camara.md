@@ -86,14 +86,14 @@ vem como `﻿"idVotacao"` — remova o BOM ou o nome da primeira coluna virá er
 
 | Dataset | Tamanho (2025) | Cardinalidade |
 |---|---|---|
-| `votacoes` | 8,7 MB | 15.037 votações |
+| `votacoes` | 8,7 MB | 13.825 votações |
 | `votacoesVotos` | **58 MB** | 167 mil votos, 526 votações nominais |
 | `votacoesObjetos` | 45 MB | N linhas por votação |
 | `votacoesOrientacoes` | — | Orientação por bancada |
 | `proposicoes` | — | Proposições apresentadas no ano |
 | `proposicoesAutores` | — | Autoria (aresta do grafo) |
 | `proposicoesTemas` | — | Classificação temática |
-| `deputados` | — | Cadastro completo, **com CPF** |
+| `deputados` | — | Cadastro ⚠️ **coluna `cpf` VAZIA** — 0 de 7.889 |
 | `frentes` | — | Frentes parlamentares |
 
 ### 2.2 Layouts (headers reais)
@@ -116,9 +116,10 @@ ultimaApresentacaoProposicao_descricao;ultimaApresentacaoProposicao_idProposicao
 ultimaApresentacaoProposicao_uriProposicao
 ```
 
-⚠️ **`descricao` contém `;`** (ex.: `"Mantido o texto. Sim: 266; Não: 118; Total: 384."`).
-Use um parser CSV de verdade (`CsvHelper` no .NET, `csv`/`pandas` no Python). `split(';')`
-vai quebrar.
+🔴 **`descricao` contém `;`, aspas escapadas `""` E QUEBRAS DE LINHA.** Medido:
+`votacoes-2025.csv` tem 17.421 linhas físicas para **13.825 registros reais**. Contar com
+`cut`+`sort -u` devolveu 15.037 — inflado em 1.212 fragmentos. **Parser RFC 4180
+obrigatório** (`CsvHelper` no .NET, `csv`/`pandas` no Python).
 
 **`votacoesOrientacoes-{ano}.csv`** — ⭐ rótulo governo/oposição:
 
@@ -126,7 +127,7 @@ vai quebrar.
 idVotacao;uriVotacao;siglaOrgao;descricao;siglaBancada;uriBancada;orientacao
 ```
 
-**`deputados.csv`** — ⭐ contém o CPF, chave de ligação com o TSE:
+**`deputados.csv`** — ⚠️ a coluna `cpf` existe mas está **vazia** (0 de 7.889). O CPF só vem da API REST:
 
 ```
 uri;nome;idLegislaturaInicial;idLegislaturaFinal;nomeCivil;cpf;siglaSexo;urlRedeSocial;
@@ -440,7 +441,7 @@ lista inteira de uma vez (350–400 registros).
 ⚠️ Note o nome do campo: **`deputado_`**, com underscore final. Não é erro de transcrição.
 
 ⚠️ **Votação simbólica devolve `{"dados": []}`** — não é erro. É a regra, não a exceção:
-só 3,5% das votações são nominais.
+só 3,8% das votações são nominais.
 
 **Domínio de `tipoVoto`** (medido em 167 mil registros de 2025):
 

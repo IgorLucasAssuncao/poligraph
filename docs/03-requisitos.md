@@ -431,7 +431,7 @@ de escondido numa nota de rodapé.
 | ID | Restrição | Natureza |
 |---|---|---|
 | **RE-01** | 📊 O TSE bloqueia acesso automatizado (HTTP 403) → carga manual obrigatória | Externa, sem contorno |
-| **RE-02** | 📊 Apenas **3,5%** das votações da Câmara são nominais | Institucional |
+| **RE-02** | 📊 Apenas **3,8%** das votações da Câmara são nominais | Institucional |
 | **RE-03** | 📊 As duas casas não compartilham votações | Institucional |
 | **RE-04** | 📊 O Senado não expõe CPF | Externa |
 | **RE-05** | 📊 `/plenario/lista/votacao` do Senado está depreciado | Externa |

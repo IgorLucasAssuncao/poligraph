@@ -389,7 +389,7 @@ que existe).
 
 ---
 
-## 9. Como se vota — e por que só 3,5% das votações têm nome
+## 9. Como se vota — e por que só 3,8% das votações têm nome
 
 ### 9.1 Simbólica × nominal
 
@@ -401,8 +401,8 @@ que existe).
 A votação nominal é obrigatória em alguns casos (PEC, PLP) e, fora deles, **precisa ser
 requerida** — por um líder ou por um percentual da casa.
 
-→ **Isto é a explicação institucional do achado #1**: das 15.037 votações de 2025, só
-**526 (3,5%)** foram nominais. Não é falha da API. A casa simplesmente decide a maior
+→ **Isto é a explicação institucional do achado #1**: das 13.825 votações de 2025, só
+**526 (3,8%)** foram nominais. Não é falha da API. A casa simplesmente decide a maior
 parte das coisas sem registrar quem votou o quê — o que, aliás, é em si um achado
 defensável no TCC.
 
@@ -482,7 +482,7 @@ segundo turno") e considerar deduplicar, ou ao menos reportar o efeito.
 
 | Estranheza no dado | Causa institucional | Seção |
 |---|---|---|
-| Só 3,5% das votações são nominais | Votação simbólica é o padrão | 9.1 |
+| Só 3,8% das votações são nominais | Votação simbólica é o padrão | 9.1 |
 | 58% das nominais são requerimentos | Requerimento de urgência é o instrumento central | 8 |
 | "Sim" às vezes significa rejeitar | Destaque: "Mantido o texto" | 9.3 |
 | Existe voto `"Obstrução"` | Tática regimental da minoria | 9.2 |
