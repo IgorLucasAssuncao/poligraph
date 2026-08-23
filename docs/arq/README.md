@@ -48,10 +48,17 @@ flowchart TD
 reconciliar dados de três fontes heterogêneas"*. O Cenário A **não sustenta essa
 afirmação**: uma fonte só não é integração. Seria preciso reescrever o objetivo.
 
-**Recomendação: Cenário B**, evoluindo para C se o cronograma permitir. Motivo: Câmara
-(API REST, JSON, automatizável) e TSE (CSV Latin-1, sem API, carga manual, join por CPF)
-são **genuinamente heterogêneas** — mais do que Câmara e Senado, que são duas APIs
-legislativas parecidas. B entrega o argumento metodológico com metade do esforço de C.
+~~**Recomendação: Cenário B**, evoluindo para C se o cronograma permitir.~~
+
+> ✅ **DECIDIDO (2026-08-22): Cenário C.** O autor optou por incluir o Senado como grafo
+> independente, mesmo com dado escasso. A medição sustenta: 88% dos pares de senadores
+> têm ≥20 votações em comum. Mantém-se o **sequenciamento** — fechar a Câmara antes de
+> abrir o Senado.
+
+*Justificativa original da recomendação B, mantida como registro:* Câmara (API REST, JSON,
+automatizável) e TSE (CSV Latin-1, sem API, carga manual, join por CPF) são
+**genuinamente heterogêneas** — mais do que Câmara e Senado, que são duas APIs
+legislativas parecidas. B entregaria o argumento metodológico com metade do esforço de C.
 
 ---
 

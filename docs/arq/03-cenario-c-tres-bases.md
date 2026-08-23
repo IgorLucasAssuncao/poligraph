@@ -3,7 +3,9 @@
 > **Bases:** Câmara + TSE + Senado
 > **Custo:** 🔴 Alto — mas **não pelo motivo que parece**. Ver §1.
 > **Prazo estimado:** ~10–13 semanas
-> **Veredito:** escolher só se o cronograma estiver folgado. O ganho é analítico, não de volume.
+> ✅ **ESCOLHIDO — 2026-08-22.** O Senado entra como **grafo independente**, mesmo com
+> poucos dados: 56 votações abertas/ano, mas 88% dos pares com ≥20 em comum. Ver §11.1 do
+> [discovery](../00-discovery.md).
 
 ---
 
@@ -16,7 +18,7 @@ barata das três.**
 |---|---|
 | Câmara | CSV de 58 MB/ano + parser robusto + join votação→proposição |
 | TSE | Download manual + Latin-1 + sentinelas + arquivos de centenas de MB |
-| **Senado** | **Uma chamada HTTP. 2,4 MB. Retorno já achatado, com ementa inclusa.** |
+| **Senado** | **Uma chamada HTTP. 2,4 MB, com ementa inclusa.** ⚠️ Retorno aninhado, não plano |
 
 **O custo real do Cenário C é analítico e de produto, não de ETL:**
 
@@ -51,7 +53,7 @@ flowchart TD
 
     subgraph ANL["Análise — MESMO método, DUAS execuções"]
         M1["Matriz Câmara<br/>552 × 526"]
-        M2["Matriz Senado<br/>84 × 128"]
+        M2["Matriz Senado<br/>83 × 56 (só abertas)"]
         CMP["⭐ Comparação entre casas<br/>coesão · polarização · modularidade"]
         M1 --> CMP
         M2 --> CMP
@@ -89,7 +91,7 @@ uma matriz só.
 
 ## 4. O que se ganha: comparação entre casas
 
-Este é o **único motivo real** para escolher C. Rodar o mesmo método em duas instituições
+Rodar o mesmo método em duas instituições
 com desenhos diferentes é um resultado por si só:
 
 | Hipótese testável | Por que é plausível |
@@ -133,7 +135,7 @@ interpretação dos resultados, não para o questionário.
 
 ## 5. Pontos fortes
 
-- ✅ **O ETL do Senado é trivial** — uma chamada, retorno achatado, com `ementa` e
+- ✅ **O ETL do Senado é barato** — uma chamada por ano, com `ementa` e
   `identificacao` já inclusos. Mais simples que o da Câmara.
 - ✅ **Cobertura institucional completa** do Congresso Nacional no produto.
 - ✅ **A comparação entre casas é um resultado original**, não apenas mais dado.

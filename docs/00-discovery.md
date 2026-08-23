@@ -7,7 +7,7 @@
 >
 > ⚠️ **O título tem consequências que este documento ainda não refletia** — ver §2.1.
 
-> **Status:** rascunho (v0.11)
+> **Status:** rascunho (v0.12)
 > **Data:** 2026-08-22
 > **Mudanças na v0.2:** volume real medido (seção 4.1.1); achado #6 (CSVs consolidados,
 > resolve R4); achado #7 (as duas casas não são comparáveis, seção 4.5); decisão D3
@@ -33,6 +33,8 @@
 > é onde a ponderação realmente agrega. Antiga 7.4 renumerada para 7.5.
 > **v0.11:** título do TCC registrado; seções 2.1 e 2.2 — "Recomendação de Notícias" é
 > metade do título mas estava em F8; achado #17 no Senado: 56% das votações são secretas.
+> **v0.12:** ✅ **D3 DECIDIDA** (§11.1) — o Senado entra como grafo independente. Cenário C
+> escolhido. Senado sai de "fora do MVP" e vira escopo confirmado na F6.
 > **Objetivo deste documento:** registrar o entendimento do problema, o escopo, as
 > fontes de dados (já validadas) e as decisões em aberto, para servir de contexto
 > permanente do TCC.
@@ -160,10 +162,12 @@ seria um meio-termo barato.)*
 - Grafo com layout e comunidades.
 - Ficha individual do parlamentar.
 
+- **Senado Federal** — ✅ **decidido em 2026-08-22 (D3)**: entra como **grafo
+  independente**, com as 56 votações abertas por ano. Ver §11.1. Entregue na F6, depois
+  de a fatia da Câmara estar fechada.
+
 ### Fora do MVP (fases posteriores)
 
-- Senado — **não por custo de ETL** (é a fonte mais barata das três), mas porque
-  deputados e senadores não são comparáveis entre si. Ver achado #7 e nota da D3.
 - TSE (enriquecimento: bens declarados, histórico de candidaturas, votação recebida).
 - Crawler de notícias.
 - Análise de despesas (cota parlamentar).
@@ -1160,11 +1164,43 @@ eleitoral. Recomendações:
 |---|---|---|---|
 | D1 | Linguagem do ETL/análise | (a) tudo .NET; (b) .NET + Python para SVD/Louvain | **(b)**: `numpy`/`scipy`/`networkx` resolvem em poucas linhas o que em C# dá trabalho. Defender como escolha arquitetural (poliglota por adequação), não como gambiarra |
 | D2 | Banco | (a) PostgreSQL; (b) Neo4j; (c) ambos | **(a)** no MVP. O grafo tem ~500 nós — cabe folgado em tabela relacional. Neo4j só se a pergunta de pesquisa exigir travessia de caminhos |
-| D3 | Escopo do MVP | (a) só Câmara; (b) Câmara + Senado como universos paralelos; (c) tentar unificar as casas | **(b), em duas etapas** — ver nota abaixo |
+| ~~D3~~ | ✅ **DECIDIDO — 2026-08-22** | Escopo: **Câmara + Senado, como dois grafos independentes** | Ver §11.1 |
 | D4 | Base da afinidade | (a) votações reais; (b) questionário ideológico tipo Likert | **(a)** — é o diferencial do trabalho; (b) é o que todo mundo já faz |
 | D5 | Front-end | Blazor vs React | Decidir depois da API estar de pé |
 
-### Nota sobre D3 — por que o Senado entra, mas depois
+### 11.1 ✅ D3 decidida — o Senado entra, como grafo independente
+
+**Decisão do autor, 2026-08-22:** incluir o Senado, **mesmo com poucos dados**, tratado
+como **grafo independente**.
+
+A decisão é consistente com tudo que foi medido:
+
+| Evidência | Sustenta a decisão? |
+|---|---|
+| Achado #7 — as casas não compartilham votações | ✅ Por isso **independente**, não unificado |
+| Achado #17 — 56% das votações são secretas; sobram 56/ano | 🟡 É pouco, mas… |
+| §2.5 do [11-api-senado](11-api-senado.md) — 88% dos pares têm ≥20 votações em comum, média 33 | ✅ **A matriz é viável** |
+| Ingestão: uma chamada, 2,4 MB | ✅ Custo de ETL baixo |
+| Relatoria estruturada + lideranças | ✅ Insumos que a Câmara não tem |
+
+**O que a decisão implica assumir, explicitamente:**
+
+1. **Dois grafos, nunca um.** Não existe aresta entre um deputado e um senador. O produto
+   apresenta duas redes; o usuário não escolhe entre elas (RNF-28) — recebe as duas.
+2. **Precisão menor no Senado, declarada.** IC de ±17 pp contra ±5,5 pp da Câmara. Vale
+   para detecção de comunidades e eixos do SVD; **não** vale para gradações finas.
+3. **Assimetria em disciplina partidária.** Sem orientação de bancada no Senado (P3), essa
+   métrica existe só para a Câmara. A comparação entre casas fica **parcial** — cobre
+   coesão e polarização, não governismo.
+4. **A Câmara continua sendo a espinha dorsal.** O Senado é uma segunda análise completa,
+   não meia análise.
+
+⚠️ **Risco que permanece (R10):** o Senado é a parte mais fácil de ingerir e a mais difícil
+de concluir bem. Mantém-se a recomendação de **sequenciamento**: fechar a fatia vertical da
+Câmara (F1→F5) antes de abrir a F6. Assim, se o prazo apertar, o corte é limpo — o Senado
+vira "trabalho futuro" em vez de deixar o TCC pela metade.
+
+### Nota histórica sobre D3 — por que o Senado quase ficou de fora
 
 A versão v0.1 deste documento justificava "só Câmara" com o argumento de que *"o Senado
 dobra o esforço de ETL"*. **Esse argumento está errado** e foi corrigido após a medição
