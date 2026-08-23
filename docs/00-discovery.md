@@ -1397,7 +1397,7 @@ eleitoral. Recomendações:
 
 | # | Decisão | Opções | Recomendação |
 |---|---|---|---|
-| D1 | Linguagem do ETL/análise | (a) tudo .NET; (b) .NET + Python para SVD/Louvain | **(b)**: `numpy`/`scipy`/`networkx` resolvem em poucas linhas o que em C# dá trabalho. Defender como escolha arquitetural (poliglota por adequação), não como gambiarra |
+| ~~D1~~ | 🔄 **REVISADA — 2026-08-23** | ETL **inteiro em Python**, inclusive a ingestão — `pandas` resolve RFC 4180, ISO-8859-1 e vírgula decimal, que em C# viram código | [plano/01 §7](plano/01-arquitetura.md) |
 | D2 | Banco | (a) PostgreSQL; (b) Neo4j; (c) ambos | **(a)** no MVP. 📊 O grafo tem **644 nós** (medido, §5.1) — 207 mil pares, cabe folgado em tabela relacional. Neo4j só se a pergunta de pesquisa exigir travessia de caminhos |
 | ~~D3~~ | ✅ **DECIDIDO — 2026-08-22** | Escopo: **Câmara + Senado, como dois grafos independentes** | Ver §11.1 |
 | D4 | Base da afinidade | (a) votações reais; (b) questionário ideológico tipo Likert | **(a)** — é o diferencial do trabalho; (b) é o que todo mundo já faz |
