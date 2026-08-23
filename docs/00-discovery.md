@@ -292,7 +292,9 @@ Distribuição das 526 votações nominais da Câmara por órgão:
 | `Obstrução` | 375 |
 | `Abstenção` | 336 |
 
-⚠️ Note a assimetria: `Sim` + `Não` são 99,3% dos registros. Abstenção, obstrução e
+⚠️ Note a assimetria: `Sim` + `Não` são 99,3% dos registros **em 2025**. ⚠️ Na legislatura
+inteira são **98,7%** — obstrução foi bem maior em 2023 (2,50%), ver
+[04-contratos §6.1](04-contratos.md). Abstenção, obstrução e
 Artigo 17 são estatisticamente irrelevantes — o que **simplifica muito** a decisão de
 normalização da seção 6. Tratá-los como `null` (fora do cálculo) muda quase nada no
 resultado e é a escolha mais fácil de defender.
