@@ -7,7 +7,7 @@
 >
 > ⚠️ **O título tem consequências que este documento ainda não refletia** — ver §2.1.
 
-> **Status:** rascunho (v0.12)
+> **Status:** rascunho (v0.13)
 > **Data:** 2026-08-22
 > **Mudanças na v0.2:** volume real medido (seção 4.1.1); achado #6 (CSVs consolidados,
 > resolve R4); achado #7 (as duas casas não são comparáveis, seção 4.5); decisão D3
@@ -35,6 +35,10 @@
 > metade do título mas estava em F8; achado #17 no Senado: 56% das votações são secretas.
 > **v0.12:** ✅ **D3 DECIDIDA** (§11.1) — o Senado entra como grafo independente. Cenário C
 > escolhido. Senado sai de "fora do MVP" e vira escopo confirmado na F6.
+> **v0.13:** A1 resolvida (§4.1.1.1) — série de 2001 a 2026; a legislatura 57 tem 1.103
+> votações de plenário e 182 abertas no Senado, o triplo do que eu media com um ano só.
+> Achado #18 — 41 dos 81 senadores já foram deputados (ponte temporal entre os grafos).
+> §7.4.1 — posições são estáveis na legislatura (r=0,86): não ponderar por recência.
 > **Objetivo deste documento:** registrar o entendimento do problema, o escopo, as
 > fontes de dados (já validadas) e as decisões em aberto, para servir de contexto
 > permanente do TCC.
@@ -284,6 +288,57 @@ normalização da seção 6. Tratá-los como `null` (fora do cálculo) muda quas
 resultado e é a escolha mais fácil de defender.
 
 ⚠️ Note também o valor **vazio** (421 casos), não documentado. Tratar como `null`.
+
+### 4.1.1.1 ✅ Pendência A1 resolvida — cobertura histórica
+
+Todas as medições anteriores usaram **apenas 2025**. Verificada a série completa:
+
+**Câmara — `votacoesVotos-{ano}.csv` disponível de 2001 a 2026:**
+
+| Ano | Arquivo | Votações nominais | Das quais no plenário | Votos |
+|---|---|---|---|---|
+| 2023 | 40,8 MB | 447 | **300** | 128.679 |
+| 2024 | 36,9 MB | 448 | **273** | 116.400 |
+| 2025 | 55,5 MB | 526 | **410** | ~167.000 |
+| 2026 * | 16,0 MB | 149 | **120** | 50.581 |
+| **57ª legislatura** | ~150 MB | **1.570** | **1.103** | **~463.000** |
+
+\* 2026 em curso (dados até agosto).
+
+Anos anteriores também disponíveis: 2022 (62,6 MB), 2021 (102,3 MB), 2020 (50,7 MB),
+2019 (38,4 MB), 2015 (35,8 MB), 2011 (10,5 MB), 2003 (3,9 MB). A série começa em **2001**;
+1999 e anteriores não existem.
+
+**Senado — `/votacao` funciona para todos os anos testados:**
+
+| Ano | Votações | Secretas | **Abertas** |
+|---|---|---|---|
+| 2023 | 141 | 91 | **50** |
+| 2024 | 95 | 37 | **58** |
+| 2025 | 128 | 72 | **56** |
+| 2026 * | 57 | 39 | **18** |
+| **57ª legislatura** | 421 | 239 | **182** |
+
+Anteriores: 2022 (82 abertas), 2021 (137), 2019 (61).
+
+#### Por que isso muda o dimensionamento do projeto
+
+| | Antes (só 2025) | **Legislatura inteira** |
+|---|---|---|
+| Câmara — votações de plenário | 410 | **1.103** |
+| Senado — votações abertas | 56 | **182** |
+
+→ **O Senado triplica**, e isso melhora diretamente a precisão apontada no §2.5 do
+[11-api-senado](11-api-senado.md): com ~182 votações em vez de 56, a sobreposição típica
+por par sobe na mesma proporção, e o intervalo de confiança encolhe de ~±17 pp para a
+casa de ~±10 pp. **A fragilidade do Senado era em boa parte artefato de eu ter medido um
+ano só.**
+
+⚠️ **Custo:** ~150 MB de CSV para a Câmara na legislatura 57. Trivial para processar, mas
+reforça a decisão de **não versionar os brutos no Git** (pendência B5).
+
+⚠️ **Regra que permanece:** a matriz é sempre filtrada por **legislatura** (RN-12).
+Misturar legislaturas mistura populações diferentes de parlamentares.
 
 ### 4.1.2 O que está sendo votado — como chegar na matéria
 
@@ -649,6 +704,61 @@ a única ponte natural entre as casas, não aparecem em nenhuma das duas fontes.
 3. O questionário do cidadão precisaria ser **dois questionários** (um por casa), ou
    dar match contra apenas uma das casas.
 
+#### ⭐ Achado #18 — existe uma ponte, mas ela é temporal, não sincrônica
+
+**Metade do Senado já foi deputado.** Cruzando `NomeCompletoParlamentar` dos 81 senadores
+em exercício com o `nomeCivil` da base histórica de deputados (7.853 nomes):
+
+> **41 dos 81 senadores (51%) aparecem também como deputados.**
+
+Exemplos: Alan Rick Miranda, Ciro Nogueira Lima Filho, David Alcolumbre, Esperidião Amin,
+Eliziane Gama, Flávio Arns, Confúcio Moura…
+
+⚠️ *Match por nome civil completo; homônimos são improváveis mas a conferência final deve
+usar data de nascimento (ver [13-correlacao](13-correlacao-entre-fontes.md) §4.2).*
+
+**O que isso é — e o que não é:**
+
+| | |
+|---|---|
+| ⛔ **NÃO** resolve o achado #7 | Continua impossível comparar um deputado **em exercício** com um senador **em exercício** — eles não votam as mesmas matérias |
+| ✅ **É** uma ponte de **identidade**, não de votação | A mesma `pessoa` tem nó nos dois grafos, em **períodos diferentes** |
+| ✅ **É** uma estrutura de **rede multicamada** | Nós presentes em duas camadas são exatamente o *coupling link* da literatura de redes multiplex |
+
+```mermaid
+flowchart TD
+    subgraph L1["Camada 1 — Câmara (leg. 55/56)"]
+        D1(("Dep. X"))
+        D2((" ")); D3((" "))
+        D1---D2; D1---D3
+    end
+    subgraph L2["Camada 2 — Senado (leg. 57)"]
+        S1(("Sen. X"))
+        S2((" ")); S3((" "))
+        S1---S2; S1---S3
+    end
+    D1 -.->|"mesma pessoa<br/>≠ mesma votação"| S1
+    style D1 fill:#8957e5,color:#fff
+    style S1 fill:#8957e5,color:#fff
+```
+
+**A pergunta de pesquisa que isso habilita** — e é boa:
+
+> *A posição política de um parlamentar muda quando ele passa da Câmara para o Senado?*
+
+É testável e teoricamente motivada: o Senado tem mandato de 8 anos, eleição majoritária e
+**mandato que pertence à pessoa, não ao partido** ([02-senado §2.1](02-senado-federal.md)).
+A hipótese natural é que a mesma pessoa se torne **mais independente da bancada** ao mudar
+de casa. Com 41 casos, há amostra para testar.
+
+⚠️ **Custo de escopo:** exige ingerir as legislaturas **55 e 56** da Câmara (2015–2022)
+para ter os votos da fase de deputado. Isso é viável — os CSVs existem (§4.1.1.1) —, mas
+**expande o ETL** para além da 57ª legislatura.
+
+→ **Recomendação: registrar como F9 / trabalho futuro.** É um resultado atraente, mas
+depende de F1–F6 estarem fechadas e de ingestão histórica adicional. Não colocar no
+caminho crítico.
+
 **Alternativas para ligar as casas** (nenhuma no MVP):
 
 | Abordagem | Viabilidade |
@@ -970,9 +1080,50 @@ Documentar essa distinção no TCC é mais honesto do que fingir que são a mesm
 
 | Peso | Avaliação |
 |---|---|
-| Por **recência** (votos recentes valem mais) | 🟡 Defensável; escolher a meia-vida é arbitrário |
+| Por **recência** (votos recentes valem mais) | ⛔ **Desnecessário — medido.** Ver §7.4.1 |
 | Por **categoria** (substantiva > procedimental) | ⚠️ **Cuidado** — requerimento é o sinal **mais limpo** de governo × oposição (achado #11). Rebaixá-lo remove sinal em vez de ruído |
 | Por **tema** | ⛔ Introduz juízo do pesquisador sobre o que importa. Contraria o escopo |
+
+#### 7.4.1 ⭐ Votações antigas: medido, não arbitrado
+
+Com a legislatura inteira em jogo (§4.1.1.1), a pergunta é legítima: **um voto de 2023
+ainda diz algo sobre o parlamentar em 2026?**
+
+Em vez de escolher uma meia-vida no chute, dá para **medir a estabilidade**. Experimento:
+para os deputados presentes em 2023 e em 2025, calcular a similaridade de cada par nos
+dois anos separadamente e comparar.
+
+**Amostra:** 150 deputados, **9.873 pares** com ≥20 votações em comum em ambos os anos
+(só votações de plenário).
+
+| Métrica | Resultado |
+|---|---|
+| **Correlação entre similaridade de 2023 e de 2025** | **r = 0,862** |
+| Diferença absoluta média | **7,5 pp** |
+| Pares que mudaram mais de 15 pp | 1.089 (11 %) |
+
+→ **As posições são estáveis dentro da legislatura.** r = 0,86 é correlação forte: quem
+votava junto em 2023 continua votando junto em 2025.
+
+⚠️ **Leitura honesta do 7,5 pp:** não é zero. Com ~300 votações em comum por ano, o
+erro-padrão de cada estimativa é ~2,9 pp, então a diferença entre duas estimativas
+independentes teria desvio ~4,1 pp só por ruído — o que produziria diferença absoluta média
+de ~3,3 pp. Observamos 7,5 pp, **cerca do dobro**. Existe deriva real, mas **modesta**.
+
+**Decisões que decorrem:**
+
+| Situação | Tratamento | Por quê |
+|---|---|---|
+| **Dentro de uma legislatura** | ⛔ **Não ponderar por recência** | r = 0,86. O ganho é pequeno e o custo é arbitrariedade + perda de interpretabilidade |
+| **Entre legislaturas** | ✅ **Separar, não decair** (RN-12) | O limite de legislatura é uma **descontinuidade institucional real** — nova eleição, população diferente. Segmentar é principiado onde decair é arbitrário |
+| **Questionário do cidadão** | ✅ **Resolver na seleção** | Curar votações recentes e relevantes. Se um voto está velho demais, não pergunte sobre ele — não o pondere |
+
+> **O princípio geral:** onde existe uma fronteira institucional (a legislatura), use-a. Só
+> recorra a função de decaimento quando não houver fronteira natural — e aqui há.
+
+⭐ **Isso também é resultado, não só decisão de implementação.** "A estrutura de
+similaridade da Câmara é estável ao longo da legislatura (r = 0,86)" é um achado
+reportável, e sustenta a validade de agregar os quatro anos numa matriz só.
 
 ### 7.5 ⚠️ Limitação metodológica: o viés de seleção das votações nominais
 

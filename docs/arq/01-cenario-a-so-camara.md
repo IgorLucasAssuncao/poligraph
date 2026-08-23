@@ -110,7 +110,7 @@ flowchart TD
 
 | # | Pendência | Bloqueia |
 |---|---|---|
-| **A1** | Confirmar se os CSVs anuais existem para **2023 e 2024** (só 2025 foi testado) | Tamanho da matriz |
+| ~~A1~~ | ✅ **RESOLVIDA** — série de 2001 a 2026. Legislatura 57: 1.103 votações de plenário | — |
 | **A2** | Definir as regras regex de `categoria` e validar contra amostra rotulada à mão | Filtro do questionário |
 | **A3** | Decidir a estratégia de deduplicação de **PEC em dois turnos** | Viés de similaridade |
 | **A4** | Medir quantas das 100 proposições substantivas sobrevivem ao corte de unanimidade | Tamanho do questionário |
