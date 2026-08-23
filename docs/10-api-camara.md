@@ -477,7 +477,7 @@ despacho de **distribuição** que autoriza o rito, não o registro da decisão.
 auxiliar: apenas **26** `"Apresentação de Recurso"` no ano.
 
 → Dá para saber **quais proposições seguiram o rito conclusivo**; não dá para recuperar o
-voto individual da maioria dessas decisões. Ver §7.4 e §4.1.4 do discovery.
+voto individual da maioria dessas decisões. Ver §7.5 e §4.1.4 do discovery.
 
 **Domínio de `regime`** (medido): `Ordinário (Art. 151, III, RICD)` 35.653 ·
 `Prioridade (Art. 151, II, RICD)` 6.950 · `Urgência (Art. 155, RICD)` 6.225 ·

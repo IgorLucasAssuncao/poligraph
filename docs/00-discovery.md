@@ -1,6 +1,6 @@
 # Poligraph — Documento de Discovery
 
-> **Status:** rascunho (v0.9)
+> **Status:** rascunho (v0.10)
 > **Data:** 2026-08-22
 > **Mudanças na v0.2:** volume real medido (seção 4.1.1); achado #6 (CSVs consolidados,
 > resolve R4); achado #7 (as duas casas não são comparáveis, seção 4.5); decisão D3
@@ -10,7 +10,7 @@
 > **v0.4:** seções 4.1.2 e 4.1.3 — como chegar na matéria votada (achados #8 a #12);
 > 58% das votações nominais são procedimentais; polaridade de "Sim" não é constante;
 > seção 7.2 reescrita com o funil real. Documentos institucionais em `01-` e `02-`.
-> **v0.5:** seção 7.4 — viés de seleção das votações nominais (a pergunta mais provável
+> **v0.5:** seção 7.5 (era 7.4) — viés de seleção das votações nominais (a pergunta mais provável
 > da banca); votações simbólicas não trazem nem contagem agregada.
 > **v0.6:** seção 4.1.4 — dados de comissão (achado #14: o ponto cego se repete dentro
 > da comissão); achado #13 — frentes saem do grafo, comissão em comum entra.
@@ -21,6 +21,9 @@
 > **v0.9:** achado #15 reescrito — a justificativa da v0.7 ("confundimento com partido")
 > estava ERRADA: comissões espelham a casa. O motivo real é que votações de comissão são
 > 3x mais consensuais (39% quase-unânimes vs 12%), inflando seletivamente quem as tem.
+> **v0.10:** seção 7.4 — ponderação: soma ponderada não resolve o problema das comissões
+> (é estrutural, não de magnitude); a versão hierárquica funciona; peso por divisividade
+> é onde a ponderação realmente agrega. Antiga 7.4 renumerada para 7.5.
 > **Objetivo deste documento:** registrar o entendimento do problema, o escopo, as
 > fontes de dados (já validadas) e as decisões em aberto, para servir de contexto
 > permanente do TCC.
@@ -370,7 +373,7 @@ sequência de tramitações. Marcador auxiliar: só **26** "Apresentação de Re
 
 → **Conclusão parcial:** dá para **detectar que uma proposição seguiu o caminho
 conclusivo**. Não dá para recuperar o voto individual da maioria dessas decisões. A
-limitação da seção 7.4 continua valendo.
+limitação da seção 7.5 continua valendo.
 
 ### 4.1.5 ⚠️ Achado #15 — as votações de comissão NÃO servem como reserva
 
@@ -795,7 +798,105 @@ Resultado esperado: no Brasil o 1º componente normalmente captura o eixo
 **governo × oposição** mais do que esquerda × direita. Se isso se confirmar, é um
 achado interessante para discutir.
 
-### 7.4 ⚠️ Limitação metodológica: o viés de seleção das votações nominais
+### 7.4 Ponderação: onde peso resolve e onde não resolve
+
+Proposta levantada: *"dar peso à intenção — primeiro as votações de plenário, depois cada
+comissão."* A intuição está certa, mas precisa ser separada em duas ideias diferentes, que
+têm destinos opostos.
+
+#### ❌ Peso como soma ponderada NÃO resolve o problema das comissões
+
+Tentador: em vez de excluir as votações de comissão, incluí-las com peso menor
+(ex.: plenário = 1,0; comissão = 0,3).
+
+**Não funciona, e o motivo é estrutural.** O problema do achado #15 não é que as votações
+de comissão pesem *demais* — é que **o conjunto de itens comparáveis muda de par para
+par**:
+
+```
+A e B (ambos na CCJC)      → 409 plenárias + 49 de comissão
+A e C (comissões distintas) → 409 plenárias +  0 de comissão
+```
+
+Com peso 0,3, o par A–B continua recebendo uma contribuição que o par A–C **não tem como
+receber**. O peso reduz a magnitude do artefato; não altera sua estrutura. O único peso que
+elimina o problema é **zero** — que é exatamente a exclusão já decidida.
+
+→ Regra geral: ponderação corrige **quanto** um item conta. Não corrige **quais** itens
+existem para cada par.
+
+#### ✅ A versão hierárquica da ideia funciona
+
+*"Primeiro plenário, depois cada comissão"* lido como **níveis separados** — não como soma
+— é legítimo, porque cada nível compara populações homogêneas:
+
+| Nível | Universo | Vale para |
+|---|---|---|
+| **1 — Geral** | 409 votações de plenário | **Todos** os pares |
+| **2 — Por comissão** | as votações daquela comissão | Só pares que compartilham a comissão |
+
+Nada é misturado: são duas medidas, cada uma internamente consistente. Na interface isso
+vira algo como *"No plenário vocês concordaram em 15 de 18. Na Comissão de Saúde, em 6 de
+7."*
+
+⚠️ **Limite honesto:** o nível 2 só existe para a minoria de pares que compartilha comissão.
+É um **refinamento condicional**, não uma camada geral — e não pode virar a métrica
+principal, senão volta o problema de comparar coisas diferentes.
+
+#### ⭐ Onde peso é realmente valioso: divisividade da votação
+
+Aqui a ponderação resolve um problema real. **Concordar numa votação 95×5 não informa
+quase nada** — todo mundo concordou. **Concordar numa votação 51×49 informa muito.**
+Tratar as duas como equivalentes joga informação fora.
+
+📊 E há muita variação a explorar. Distribuição das 409 votações de plenário de 2025:
+
+| Quão dividida | Votações | % |
+|---|---|---|
+| 50–60 % (voto apertado) | 148 | **36 %** |
+| 60–70 % | 112 | 27 % |
+| 70–85 % | 99 | 24 % |
+| 85–95 % | 16 | 4 % |
+| > 95 % (quase unânime) | 34 | 8 % |
+
+**63% das votações são decididas com menos de 70% de um lado** — material farto para
+discriminar.
+
+**Peso proposto:** função decrescente da margem, ex.: `w = 1 − |margem|`, ou a entropia da
+votação. Vantagens:
+
+1. **É simétrico** — vale para todos os pares igualmente, porque toda votação de plenário
+   está disponível para todos. Não cria o artefato do item anterior.
+2. **Substitui a RN-05 por algo mais suave.** Hoje a regra descarta abruptamente votações
+   com >85% de um lado. Com ponderação contínua, as quase-unânimes recebem peso próximo de
+   zero **automaticamente**, sem corte arbitrário.
+3. **Tem lastro na literatura** de *roll-call analysis* — ponderar por poder discriminante
+   é prática estabelecida.
+
+#### ⚠️ Regra de projeto: ponderar a análise, não o número que o usuário vê
+
+Ponderação torna a métrica **menos interpretável**. "Similaridade ponderada 0,73" viola o
+RNF-30 tanto quanto qualquer jargão.
+
+→ **Separar os dois usos:**
+
+| Uso | Métrica |
+|---|---|
+| Grafo, comunidades, SVD, comparações do TCC | **Ponderada** por divisividade |
+| Número mostrado ao cidadão | **Não ponderada e contável**: "concordaram em 15 de 18" |
+
+As duas convivem sem contradição: uma é instrumento de análise, a outra é comunicação.
+Documentar essa distinção no TCC é mais honesto do que fingir que são a mesma coisa.
+
+#### Outros pesos possíveis — com ressalva
+
+| Peso | Avaliação |
+|---|---|
+| Por **recência** (votos recentes valem mais) | 🟡 Defensável; escolher a meia-vida é arbitrário |
+| Por **categoria** (substantiva > procedimental) | ⚠️ **Cuidado** — requerimento é o sinal **mais limpo** de governo × oposição (achado #11). Rebaixá-lo remove sinal em vez de ruído |
+| Por **tema** | ⛔ Introduz juízo do pesquisador sobre o que importa. Contraria o escopo |
+
+### 7.5 ⚠️ Limitação metodológica: o viés de seleção das votações nominais
 
 **Esta é a pergunta mais previsível que a banca vai fazer.** Convém ter a resposta pronta
 e escrita, não improvisada.
