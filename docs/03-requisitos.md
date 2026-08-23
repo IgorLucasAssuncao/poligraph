@@ -486,3 +486,7 @@ notícias**. F6, F7 e F9 são incrementos.
 | **RQ4** | Confirmar se existe orientação de bancada no Senado | RF-22 no Senado |
 | **RQ5** | Decidir a forma de **RNF-17** (acesso restrito): autenticação simples, ambiente local, ou adiar publicação | RNF-17 |
 | **RQ6** | Definir critérios de aceitação mensuráveis para os RF essenciais | Validação |
+| **RQ7** | Definir o **mecanismo de recomendação** — por parlamentar afim, por tema, ou híbrido — e como avaliá-lo | Sem métrica, "recomendação" vira "listagem filtrada" |
+| **RQ8** | 🔴 **Confirmar com o orientador** o sentido de *"em Redes Sociais"* no título — grafo (assumido) ou plataformas | Muda a fonte de dados e o levantamento inteiro |
+| **RQ9** | Escolher entre **A / B / C** para onde vive a lista de seguidos (§2.7.2). Enquanto isso, implementar **A** | LGPD e R7 |
+| **RQ10** | Decidir se o **feed agregado** (RF-43) entra. Recomendação: decidir tarde — classificar por tema desde já mantém a porta aberta a custo zero | §2.7.3 |

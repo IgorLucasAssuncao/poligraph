@@ -197,9 +197,9 @@ trabalhos futuros — que é um lugar perfeitamente respeitável para ele.
 
 | # | Pendência | Bloqueia | Prioridade |
 |---|---|---|---|
-| **C1** | Mapear o **domínio de `siglaVotoParlamentar`** | Normalização do voto | 🔴 Alta |
-| **C2** | Descobrir se existe **orientação de bancada** no Senado | Simetria da comparação | 🔴 Alta |
-| **C3** | Confirmar se `/votacao` cobre **2023 e 2024** | Tamanho da matriz | 🔴 Alta |
+| ~~C1~~ | ✅ **RESOLVIDA** — 12 valores; só 34% dos registros são posição de voto ([11-api-senado §2.4](../11-api-senado.md)) | — | — |
+| ~~C2~~ | ✅ **RESOLVIDA (negativamente)** — não existe orientação de bancada no Senado (§4.2) | — | — |
+| ~~C3~~ | ✅ **RESOLVIDA** — cobre 2019–2026. Legislatura 57 = **182 votações abertas** | — | — |
 | **C4** | Confirmar se `/votacao` traz **votações de comissão** ou só plenário | Volume | 🟡 Média |
 | **C5** | Escolher e calibrar o algoritmo de *fuzzy match* | Conciliação | 🟡 Média |
 | **C6** | Identificar em **quais anos eleitorais** buscar cada senador (renovação escalonada) | Join TSE↔Senado | 🟡 Média |
