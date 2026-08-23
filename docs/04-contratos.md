@@ -1,12 +1,12 @@
 # Contratos — entradas, saídas e uso
 
 > **Status:** v1.3 — 2026-08-23
-> **v1.1:** §7.1–7.3 — o suplente é tratado de forma diferente em cada casa; §9 — contrato
-> do grafo especificado (kNN k=10, limiar global descartado por medição).
 > **v1.3:** §5.1 — `bem_candidato` validado (CT1); §9.5 — contrato da API REST (C13);
 > regra metodológica anti-generalização no topo.
 > **v1.2:** §6.1 — domínio de `voto` medido nos 4 anos; obstrução cai 35× na legislatura.
 > CT5 e CT6 resolvidas.
+> **v1.1:** §7.1–7.3 — suplente é tratado de forma diferente em cada casa; §9 — contrato
+> do grafo (kNN k=10).
 > **Regra deste documento: nada aqui é suposição.** Todo formato, cardinalidade e domínio
 > foi medido contra o dado real. Onde algo não pôde ser validado, está marcado
 > ⛔ **NÃO VALIDADO**.
@@ -66,8 +66,8 @@ flowchart LR
 | C10 | Matriz de votos | ✅ dimensionado |
 | C11 | Similaridade | ✅ dimensionado |
 | C12 | Grafo | ✅ **kNN k=10, medido** |
-| C13 | API REST pública | 🔶 **especificada**, não implementada |
 | C7b | TSE: `bem_candidato` | ✅ |
+| C13 | API REST pública | 🔶 **especificada**, não implementada |
 | C14 | Fronteira Python ↔ Postgres | ⛔ proposto |
 
 ---
