@@ -500,9 +500,9 @@ Detalhes em [13-correlacao-entre-fontes.md](13-correlacao-entre-fontes.md).
 
 | # | Pendência | Impacto |
 |---|---|---|
-| ~~P1~~ | ✅ **RESOLVIDA** — domínio medido, ver §2.4. Só 34% dos registros são posição de voto | — |
-| **P2** | Confirmar se `/votacao` cobre **votações de comissão** ou só plenário | Volume disponível |
-| ~~P3~~ | ✅ **RESOLVIDA (negativamente)** — não existe, ver §4.2. A comparação entre casas fica assimétrica | — |
-| **P4** | Descobrir a **janela máxima** aceita por `dataInicio`/`dataFim` | Estratégia de particionamento |
-| **P5** | Verificar se há **arquivos consolidados** por ano, como na Câmara | Provavelmente desnecessário — 2,4 MB/ano já é trivial |
-| **P6** | Confirmar cobertura histórica: `/votacao` funciona para 2023 e 2024? | Tamanho da matriz do Senado |
+| ~~SE1~~ | ✅ **RESOLVIDA** — domínio medido, ver §2.4. Só 34% dos registros são posição de voto | — |
+| **SE2** | Confirmar se `/votacao` cobre **votações de comissão** ou só plenário | Volume disponível |
+| ~~SE3~~ | ✅ **RESOLVIDA (negativamente)** — não existe, ver §4.2. A comparação entre casas fica assimétrica | — |
+| ~~SE4~~ | ✅ **RESOLVIDA — 2026-08-23.** Janela de um ano inteiro funciona (2,4 MB); nao ha limite pratico | Estratégia de particionamento |
+| ~~SE5~~ | ✅ **RESOLVIDA — 2026-08-23.** Desnecessario — 2,4 MB por ano ja e trivial | Provavelmente desnecessário — 2,4 MB/ano já é trivial |
+| ~~SE6~~ | ✅ **RESOLVIDA — 2026-08-23.** Cobre 2019 a 2026; legislatura 57 tem 182 votacoes abertas | Tamanho da matriz do Senado |

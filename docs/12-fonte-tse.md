@@ -458,9 +458,9 @@ já registradas no risco R7 do discovery:
 
 | # | Pendência | Bloqueia |
 |---|---|---|
-| ~~P1~~ | ✅ **RESOLVIDA — 2026-08-23.** Arquivo baixado por script e validado: encoding, separador, 50 campos, 513 dep. federais, 27 senadores | — |
-| ~~P2~~ | ✅ **RESOLVIDA** — 7 valores; "eleito" são 3 deles (§3.3). Mas o join deve filtrar por `CD_CARGO`, não por situação (§3.4) | — |
-| **P3** | Confirmar layout de `bem_candidato` e `votacao_candidato_munzona` | Enriquecimento |
-| ~~P4~~ | ✅ **RESOLVIDA — 2026-08-23.** Desnecessária: o próprio CDN do TSE funciona com o conjunto completo de headers (§2.0) | — |
-| **P5** | Decidir se usa **Base dos Dados** como atalho e como declarar isso no TCC | Metodologia |
-| ~~P6~~ | ✅ **RESOLVIDA** — os arquivos somam ~14 MB, não centenas. Cabem no repositório se quiser | — |
+| ~~TS1~~ | ✅ **RESOLVIDA — 2026-08-23.** Arquivo baixado por script e validado: encoding, separador, 50 campos, 513 dep. federais, 27 senadores | — |
+| ~~TS2~~ | ✅ **RESOLVIDA** — 7 valores; "eleito" são 3 deles (§3.3). Mas o join deve filtrar por `CD_CARGO`, não por situação (§3.4) | — |
+| ~~TS3~~ | ✅ **RESOLVIDA — 2026-08-23.** bem_candidato validado; votacao_candidato_munzona medido (609 MB) e posto fora de escopo | Enriquecimento |
+| ~~TS4~~ | ✅ **RESOLVIDA — 2026-08-23.** Desnecessária: o próprio CDN do TSE funciona com o conjunto completo de headers (§2.0) | — |
+| **TS5** | Decidir se usa **Base dos Dados** como atalho e como declarar isso no TCC | Metodologia |
+| ~~TS6~~ | ✅ **RESOLVIDA** — os arquivos somam ~14 MB, não centenas. Cabem no repositório se quiser | — |

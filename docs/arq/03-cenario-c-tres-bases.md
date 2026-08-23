@@ -202,7 +202,7 @@ trabalhos futuros — que é um lugar perfeitamente respeitável para ele.
 | ~~C3~~ | ✅ **RESOLVIDA** — cobre 2019–2026. Legislatura 57 = **182 votações abertas** | — | — |
 | **C4** | Confirmar se `/votacao` traz **votações de comissão** ou só plenário | Volume | 🟡 Média |
 | **C5** | Escolher e calibrar o algoritmo de *fuzzy match* | Conciliação | 🟡 Média |
-| **C6** | Identificar em **quais anos eleitorais** buscar cada senador (renovação escalonada) | Join TSE↔Senado | 🟡 Média |
+| ~~C6~~ | ✅ **RESOLVIDA — 2026-08-23.** Camara 2022; Senado 2018 e 2022 (renovacao escalonada) | Join TSE↔Senado | 🟡 Média |
 | **C7** | Definir as métricas formais de comparação entre casas (modularidade, ARI, índice de Rice) | Resultado do TCC | 🟡 Média |
 | **C8** | Investigar se as **sessões do Congresso Nacional** existem em alguma terceira fonte | Poderia criar a ponte entre casas | 🟢 Baixa |
 | — | Herda **A1–A4** e **B1–B7** | | |

@@ -204,8 +204,8 @@ para elas:
 
 | # | Pendência | Depende de |
 |---|---|---|
-| **P1** | Executar o join Câmara↔TSE de verdade e medir a taxa real de casamento | Download manual do TSE |
-| **P2** | Escolher a biblioteca de *fuzzy match* (Jaro-Winkler vs Levenshtein) e calibrar o limiar | Decisão D1 |
-| **P3** | Definir o formato do manifesto de cargas manuais (`fonte`, `ano`, `sha256`, `data`) | — |
-| **P4** | Confirmar em quais anos eleitorais buscar cada senador (renovação escalonada) | Download do TSE |
-| **P5** | Decidir se `cpf_hash` usa salt e qual | Modelagem |
+| ~~ER1~~ | ✅ **RESOLVIDA — 2026-08-23.** Join testado: 59 de 59 filtrando por CD_CARGO ([04-contratos §7](04-contratos.md)) | Download manual do TSE |
+| **ER2** | Escolher a biblioteca de *fuzzy match* (Jaro-Winkler vs Levenshtein) e calibrar o limiar | Decisão D1 |
+| ~~ER3~~ | ✅ **RESOLVIDA — 2026-08-23.** Desnecessario — a carga do TSE e automatizavel; o manifesto vira log de carga comum | — |
+| ~~ER4~~ | ✅ **RESOLVIDA — 2026-08-23.** Camara: 2022. Senado: 2018 E 2022, com CD_CARGO IN (5,9,10) | Download do TSE |
+| **ER5** | Decidir se `cpf_hash` usa salt e qual | Modelagem |

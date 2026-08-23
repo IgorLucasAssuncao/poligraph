@@ -483,7 +483,7 @@ notícias**. F6, F7 e F9 são incrementos.
 | ~~RQ1~~ | ✅ **RESOLVIDA — 2026-08-23.** Limiar global descartado (densidade 11,6% mesmo a 0,90). Adotado **kNN com k=10** — ver [04-contratos §9](04-contratos.md) | — |
 | **RQ2** | Definir a métrica formal de comparação comunidade × partido (ARI? modularidade?) | RF-20 |
 | **RQ3** | Definir o **N final** de perguntas do questionário | RF-24 |
-| **RQ4** | Confirmar se existe orientação de bancada no Senado | RF-22 no Senado |
+| ~~RQ4~~ | ✅ **RESOLVIDA — 2026-08-23.** Nao existe orientacao de bancada no Senado — a comparacao entre casas fica assimetrica | RF-22 no Senado |
 | **RQ5** | Decidir a forma de **RNF-17** (acesso restrito): autenticação simples, ambiente local, ou adiar publicação | RNF-17 |
 | **RQ6** | Definir critérios de aceitação mensuráveis para os RF essenciais | Validação |
 | **RQ7** | Definir o **mecanismo de recomendação** — por parlamentar afim, por tema, ou híbrido — e como avaliá-lo | Sem métrica, "recomendação" vira "listagem filtrada" |

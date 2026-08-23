@@ -318,7 +318,7 @@ consequência direta da estratégia de coleta adotada."*
 | ~~N2~~ | ~~Medir o *rate limit* do Google News~~ | ✅ **Não se aplica** — busca por parlamentar foi descartada (§10) |
 | **N3** | Definir a regra de casamento nome→parlamentar e medir a taxa de erro | 🟡 Menor risco com feeds fixos, mas ainda necessária |
 | **N9** | Definir o texto de estado vazio no feed e na página (§10.2) | 🔴 Alta |
-| **N10** | Decidir se o feed inclui notícias por **tema** além de por parlamentar (RF-45) — é o que evita feed vazio | 🔴 Alta |
+| ~~N10~~ | ✅ **RESOLVIDA — 2026-08-23.** Sim — RF-48 classifica notica por tema desde o inicio, a custo zero | 🔴 Alta |
 | **N11** | Escolher a lista final de feeds e verificar termos de uso de cada um | 🟡 Média |
 | **N4** | Verificar `robots.txt` de cada veículo que entrar na lista | 🟡 Média |
 | **N5** | Definir o limiar de similaridade de título para dedup | 🟡 Média |

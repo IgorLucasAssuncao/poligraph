@@ -112,7 +112,7 @@ flowchart TD
 | **Comissões** (com vigência e cargo) | ambas | ✅ |
 | **Relatorias** | Câmara (regex) · Senado (estruturado) | ✅ |
 | **Autorias / coautorias** | ambas | ✅ |
-| **Governismo e disciplina partidária** | Câmara **apenas** | ⚠️ Assimétrico (P3) |
+| **Governismo e disciplina partidária** | Câmara **apenas** | ⚠️ Assimétrico (SE3) |
 | **Mais próximos / mais distantes** | matriz de similaridade | ✅ |
 | **Comunidade no grafo** | Louvain | ✅ |
 | **Perfil temático** (do que ele relata/autora) | relatoria + `/temas` | ✅ |
@@ -193,7 +193,7 @@ palavra do título, e é ele que exige o crawler no caminho crítico (F5b).
 ## 8. Pontos fracos
 
 - 🔴 **Assimetria entre casas.** Senadores não terão redes sociais nem governismo/disciplina
-  (P3). A página de senador será visivelmente mais pobre que a de deputado — e isso vai ser
+  (SE3). A página de senador será visivelmente mais pobre que a de deputado — e isso vai ser
   notado.
 - 🟡 **64% de cobertura de redes sociais** obriga a layout que tolera ausência.
 - 🟡 **Patrimônio é risco reputacional** se apresentado sem cuidado.

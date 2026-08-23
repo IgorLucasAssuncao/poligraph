@@ -267,5 +267,5 @@ mais sofisticada é desnecessária.
 | **API3** | Escrever o teste de regressão da **polaridade** | 🔴 Alta |
 | **API4** | Definir se a métrica exibida ao usuário é concordância simples ou cosseno (ou ambas) | 🟡 Média |
 | **API5** | Decidir se as respostas anônimas serão coletadas para análise agregada — e como declarar isso | 🟡 Média |
-| **API6** | Definir o formato de troca do job Python ↔ banco (tabela própria vs `COPY`) | 🟡 Média |
+| ~~API6~~ | ✅ RESOLVIDA 2026-08-23 — COPY mais execucao_id, especificado no contrato C14 | 🟡 Média |
 | **API7** | Medir quanto tempo o job de 207k pares leva de fato | 🟢 Baixa |
