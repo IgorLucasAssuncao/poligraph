@@ -145,15 +145,24 @@ vive **no navegador dele**, não em uma conta no servidor. Ver §2.7.2 e RNF-12.
 
 | ID | Requisito | Prioridade |
 |---|---|---|
-| **RF-37** | Coletar referências noticiosas via **RSS**, priorizando busca por nome | 🔴 **Essencial** — sustenta o RF-43 |
+| **RF-37** | Coletar referências noticiosas de **poucos feeds RSS fixos**, diariamente, e associar às menções de parlamentares | 🔴 **Essencial** — sustenta o RF-43 |
 | **RF-38** | Armazenar **apenas** URL, título, veículo, data e trecho curto | 🔴 Essencial |
 | **RF-39** | Deduplicar notícias replicadas | 🟡 Importante — feed repetido é feed ruim |
 | **RF-40** | Marcar grau de confiança da associação e ocultar abaixo do limiar | 🔴 **Essencial** — notícia errada no feed de quem seguiu é falha visível |
 
-⚠️ **Estes quatro requisitos subiram de prioridade.** Eram "desejáveis" quando notícia era
-enfeite da ficha. Com o feed de seguidos (§2.7), o crawler passa a sustentar um requisito
-essencial — e a **coleta precisa ser diária e cobrir os 594 parlamentares**, não sob
-demanda.
+⚠️ **Estes requisitos subiram de prioridade.** Eram "desejáveis" quando notícia era enfeite
+da ficha. Com o feed de seguidos (§2.7), o crawler passa a sustentar um requisito essencial
+— e a coleta precisa ser **diária e contínua**, não sob demanda.
+
+⚠️ **Escopo da coleta: poucos feeds fixos, sem busca por parlamentar** (decisão registrada
+em [arq/20-crawler §10](arq/20-crawler-noticias.md)). Isso mantém o custo em ~5 requisições
+diárias, mas **a cobertura é enviesada**: medido, uma coleta cita ~9 de 690 parlamentares,
+concentrados em lideranças. **A maior parte do Congresso não terá notícia.**
+
+| ID | Requisito derivado dessa limitação | Prioridade |
+|---|---|---|
+| **RF-47** | Exibir estado vazio honesto quando não há notícia do parlamentar seguido | 🔴 Essencial |
+| **RF-48** | Complementar o feed com notícias por **tema** de interesse, para que não fique vazio | 🔴 Essencial |
 
 ### 2.7 ⭐ Seguir parlamentares e receber notícias
 

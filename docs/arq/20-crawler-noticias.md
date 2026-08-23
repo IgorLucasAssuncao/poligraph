@@ -15,7 +15,9 @@
 
 ## 1. O objetivo, e o que ele NÃO é
 
-**Objetivo:** para cada parlamentar, exibir na ficha as referências noticiosas recentes.
+**Objetivo:** coletar notícias de poucos feeds fixos, associá-las aos parlamentares
+citados, e alimentar (a) a página do parlamentar e (b) **o feed de quem o segue**
+(RF-42/43).
 
 **O que não é:**
 
@@ -23,7 +25,9 @@
   político é um problema de pesquisa inteiro, com viés difícil de defender, e abriria uma
   frente que o TCC não tem como fechar.
 - ❌ Não é arquivo de conteúdo. **Não armazenamos o texto integral** — ver §5.
-- ❌ Não é fonte para o algoritmo de afinidade. Notícia é enfeite da ficha, não sinal.
+- ❌ Não é fonte para o algoritmo de afinidade. Notícia alimenta o feed, não a similaridade.
+- ❌ **Não é busca exaustiva.** Coleta-se o que os feeds publicam; o que não vier, não vem.
+  Ver §10 e a limitação declarada em §10.1.
 
 ---
 
@@ -62,21 +66,18 @@ Resultados reais de **2026-08-22**:
 | **Poder360** | `https://www.poder360.com.br/feed/` | ✅ 200 | 10 |
 | **Agência Câmara** | `https://www.camara.leg.br/noticias/rss/` | ⛔ | Devolve **HTML**, não RSS |
 
-### 3.1 ⭐ Google News RSS é a fonte principal
+### 3.1 ⚠️ Google News RSS — testado, mas **fora do escopo decidido**
 
-É a única que permite **busca por nome de parlamentar** — as demais são feeds cronológicos
-gerais, que trariam todas as notícias e exigiriam você filtrar por nome no texto.
+Permite busca por nome de parlamentar e retornou **100 itens** no teste, agregando centenas
+de veículos já deduplicados por evento. Era a fonte principal na v1.0 deste documento.
 
-```
-https://news.google.com/rss/search?q=%22Adriana+Ventura%22+deputada&hl=pt-BR&gl=BR&ceid=BR:pt-419
-```
+**Foi descartada** pela decisão de escopo (§10): busca por parlamentar significaria ~594
+requisições diárias a um serviço sem contrato de estabilidade, com *rate limiting* não
+documentado. O escopo adotado é **coleta de poucos feeds fixos**.
 
-Retornou **100 itens** no teste. Vantagens: agrega centenas de veículos, já vem
-deduplicado por evento, traz título, link, data e nome do veículo.
-
-⚠️ **Riscos a registrar:** não é uma API oficial com contrato de estabilidade — o Google
-pode alterar ou limitar o formato sem aviso. E há *rate limiting* não documentado.
-Recomendação: **um request por parlamentar por dia**, no máximo, com backoff.
+→ Fica registrada como **plano B**: se a cobertura dos feeds fixos se mostrar insuficiente
+na prática, este é o caminho para ampliá-la — de preferência apenas para os parlamentares
+que o usuário seguiu e que não têm cobertura (§10.2, mitigação 3).
 
 ### 3.2 ⛔ Agência Câmara — pendência aberta
 
@@ -152,13 +153,18 @@ noticia(id, pessoa_id, url, url_canonica, titulo, veiculo,
 
 ```mermaid
 flowchart LR
-    A["Para cada parlamentar<br/>monta query"] --> B["Google News RSS"]
-    B --> C["Normaliza:<br/>URL canônica, veículo,<br/>data UTC"]
+    A["Job diário<br/>~5 feeds fixos"] --> C["Normaliza:<br/>URL canônica, veículo,<br/>data UTC"]
     C --> D{"Dedup por<br/>hash(url_canonica)<br/>+ similaridade de título"}
-    D -->|novo| E["Desambigua homônimo"]
     D -->|repetido| X["descarta"]
-    E --> F[("noticia")]
+    D -->|novo| E["Casa menções<br/>título/resumo × roster"]
+    E -->|"confiança ≥ limiar"| F[("noticia")]
+    E -->|"abaixo"| Y["descarta"]
 ```
+
+⚠️ **A direção do casamento inverteu** em relação à v1.0. Antes: *para cada parlamentar,
+buscar notícias*. Agora: **para cada notícia, procurar quais parlamentares são citados**.
+Isso muda o algoritmo — é varredura de nomes sobre um texto pequeno e conhecido, não
+consulta a um buscador.
 
 ### 6.1 Os dois problemas reais
 
@@ -166,8 +172,9 @@ flowchart LR
 distribuem para afiliadas). Estratégia: URL canônica normalizada (remover `utm_*`, `#`,
 parâmetros de tracking) + similaridade de título acima de um limiar.
 
-**Homônimos.** É o problema mais sério. Buscar `"Marcos Pereira"` traz notícias de várias
-pessoas diferentes. Mitigações, em ordem:
+**Homônimos e nomes curtos.** Menor que na busca — o universo de texto é pequeno —, mas
+ainda existe: um nome de urna como "Cleitinho" ou "Professor X" pode aparecer em contexto
+que não é o parlamentar. Mitigações, em ordem:
 
 1. Usar o **nome de urna entre aspas** + qualificador (`deputado`, `senador`, sigla do
    partido ou UF);
