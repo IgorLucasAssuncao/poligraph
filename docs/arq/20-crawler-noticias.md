@@ -188,23 +188,28 @@ que não é o parlamentar. Mitigações, em ordem:
 ## 7. Pontos fortes
 
 - ✅ **RSS-first elimina a fragilidade** que normalmente condena crawlers de notícia.
-- ✅ Google News dá **cobertura de centenas de veículos** com um request por parlamentar.
+- ✅ **Custo irrisório e sem risco de bloqueio:** ~5 requisições diárias, contra as ~594 da
+  abordagem por busca. Nenhum *rate limit* a gerenciar.
+- ✅ **Fontes com RSS próprio**, publicadas para consumo — sem dependência de um agregador
+  de terceiros sem contrato.
 - ✅ Fica em .NET, dentro do projeto que já existe — sem novo ambiente.
 - ✅ A política de "só URL + título + trecho" é **juridicamente segura e simples de
   defender**.
-- ✅ Totalmente isolado: se o crawler não for entregue, nada mais no projeto quebra.
+- ✅ **Casamento mais confiável** que na busca: o universo de texto é pequeno e conhecido.
 
 ## 8. Pontos fracos
 
-- 🔴 **Google News RSS não é contrato estável.** Pode mudar ou limitar sem aviso — e é a
-  fonte principal.
-- 🔴 **Homônimos são um problema sem solução limpa.** A precisão será menor que 100% e
-  precisa ser comunicada ao usuário.
-- 🟡 A Agência Câmara — a fonte mais legítima para deputados — **não tem feed localizado**.
+- 🔴 **Cobertura enviesada e esparsa** (§10.1): ~9 de 690 parlamentares por coleta,
+  concentrados em lideranças. **A maior parte do Congresso não terá notícia** — e isso
+  interage mal com o "seguir" (§10.2).
+- 🔴 **Agora está no caminho crítico.** Deixou de ser isolado: se o crawler não for
+  entregue, o RF-42/43 cai junto e o título fica com um elemento a descoberto.
+- 🟡 A Agência Câmara — a fonte mais legítima para deputados — **não tem feed localizado**,
+  o que agrava o viés contra deputados.
 - 🟡 Sem análise de sentimento, o valor entregue é modesto: uma lista de links.
 - 🟡 Dedup por similaridade de título tem falsos positivos (dois fatos distintos com
   manchete parecida).
-- 🟢 Custo computacional irrisório: ~550 requests/dia.
+- 🟡 Nomes de urna curtos ("Cleitinho") geram falso positivo em texto genérico.
 
 ## 10. ✅ Escopo decidido: coleta simples de poucos feeds
 
