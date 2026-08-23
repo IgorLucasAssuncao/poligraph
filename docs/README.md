@@ -50,6 +50,7 @@ flowchart LR
 
 | Doc | Conteúdo |
 |---|---|
+| [plano/README.md](plano/README.md) | ⭐ **Plano de implementação** — stack, arquitetura, login, métricas, perguntas |
 | [arq/README.md](arq/README.md) | Índice + como escolher entre os cenários |
 | [arq/01-cenario-a-so-camara.md](arq/01-cenario-a-so-camara.md) | Mínimo viável — 1 base |
 | [arq/02-cenario-b-camara-tse.md](arq/02-cenario-b-camara-tse.md) | 2 bases — não escolhido |
