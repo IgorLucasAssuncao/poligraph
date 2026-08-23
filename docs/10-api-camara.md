@@ -186,8 +186,41 @@ conceito de deputado estadual na API: verificado nas tabelas de referência
 
 → Deputados estaduais e vereadores **não têm API equivalente**. A única fonte federada para
 eles é o **TSE** (`CD_CARGO` 7 = deputado estadual), que traz candidatura e resultado —
-**mas nenhum dado de votação**. Não existe base pública consolidada de como um deputado
-estadual votou.
+**mas nenhum dado de votação**.
+
+#### 3.0.1 📊 Existe API para deputados estaduais? — investigado
+
+**Não existe nada unificado.** Cada uma das 27 assembleias decide sozinha o que publicar.
+Testado em 2026-08-23:
+
+| Assembleia | Endpoint | Resultado |
+|---|---|---|
+| **ALMG** (MG) | `dadosabertos.almg.gov.br/ws/deputados/em_exercicio` | ✅ **API JSON de verdade** |
+| **ALESP** (SP) | `al.sp.gov.br/repositorioDados/deputados/deputados.xml` | ✅ XML, 301 KB |
+| ALERJ (RJ) | `alerj.rj.gov.br/dados-abertos` | ⛔ 404 |
+| ALEPE (PE) | `dadosabertos.alepe.pe.gov.br/api/v1/deputados` | ⛔ 404 |
+| ALRS (RS) | `dadosabertos.al.rs.gov.br/api/deputados` | ⛔ Sem resposta |
+
+As duas que funcionam são boas: a ALMG tem web service JSON estruturado; a ALESP publica um
+repositório XML com deputados, despesas, documentos, normas, agenda e composição de
+comissões.
+
+🔴 **Mas o que o projeto precisa é justamente o que falta: votação nominal.**
+
+- **ALESP:** o catálogo de datasets lista *deputado, despesa, documento, norma, agenda,
+  membro, autor, gabinete, organograma* — **nenhuma menção a votação ou voto**. Caminhos
+  testados (`/votacoes`, `/votacaoNominal`, `/sessoes`) retornam 404.
+- **ALMG:** `/votacoes`, `/plenario/votacoes` e `/deputados/{id}/votacoes` retornam
+  **500**; `/proposicoes/votacoes` retorna **403**. Proposições e deputados funcionam;
+  votação, não.
+
+→ **Conclusão:** mesmo as duas assembleias com melhor transparência publicam **cadastro e
+gasto, não comportamento de voto**. Sem votação nominal, nada do método deste trabalho —
+matriz, similaridade, grafo, afinidade — é aplicável a deputados estaduais.
+
+✅ **Isso confirma a decisão PP1** ([arq/30 §2](arq/30-pagina-do-parlamentar.md)): o escopo
+estadual não foi cortado só por prazo. **Ele é inviável com o dado que existe hoje**, e é
+assim que deve ser justificado no texto do TCC.
 
 ### 3.1 `GET /deputados` — lista
 
