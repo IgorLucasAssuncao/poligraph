@@ -40,7 +40,7 @@ flowchart TD
         DL --> LZ
     end
 
-    ETL["ETL .NET"]
+    ETL["ETL Python"]
     ER["🔑 Entity Resolution<br/>JOIN por CPF"]
     PG[("PostgreSQL")]
     ANL["Job analítico Python<br/>SVD · Louvain · similaridade"]

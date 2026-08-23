@@ -17,7 +17,7 @@ flowchart TB
     subgraph FONTES["Fontes públicas oficiais"]
         F1["Câmara dos Deputados<br/>API REST + CSV"]
         F2["Senado Federal<br/>API REST"]
-        F3["TSE<br/>CSV — carga manual"]
+        F3["TSE<br/>CSV via HTTP"]
         F4["Veículos de imprensa<br/>RSS"]
     end
 
@@ -390,7 +390,7 @@ de escondido numa nota de rodapé.
 | **RNF-19** | Toda afinidade exibida vem acompanhada do **n** de votações comparadas |
 | **RNF-20** | A **ementa original** fica sempre acessível ao lado da pergunta reescrita |
 | **RNF-21** | O método de cálculo é documentado e acessível ao usuário final |
-| **RNF-22** | Arquivos de carga manual são versionados com **hash SHA-256** e data de obtenção |
+| **RNF-22** | Toda carga registra **hash SHA-256** do arquivo e data de obtenção — reprodutibilidade auditável |
 
 ### 3.6 Portabilidade e operação
 
@@ -398,7 +398,7 @@ de escondido numa nota de rodapé.
 |---|---|
 | **RNF-23** | Executável em máquina única de desenvolvimento — 📊 as duas matrizes ocupam **menos de 1 MB** |
 | **RNF-24** | Banco em PostgreSQL, sem extensões proprietárias |
-| **RNF-25** | Ambiente reproduzível por script, exceto a carga manual do TSE (RNF-22) |
+| **RNF-25** | Ambiente **integralmente reproduzível por script**, incluindo o TSE — ver [plano/01](plano/01-arquitetura.md) |
 | **RNF-26** | Interface responsiva; o grafo deve degradar de forma graciosa em tela pequena |
 
 ---
@@ -430,7 +430,7 @@ de escondido numa nota de rodapé.
 
 | ID | Restrição | Natureza |
 |---|---|---|
-| **RE-01** | 📊 O TSE bloqueia acesso automatizado (HTTP 403) → carga manual obrigatória | Externa, sem contorno |
+| ~~RE-01~~ | 🔄 **REVISADA — 2026-08-23.** O TSE responde **200** com o conjunto completo de headers de navegador; a carga é automatizável. ⚠️ Frágil: detectar 403 e degradar para carga manual como plano B | Externa |
 | **RE-02** | 📊 Apenas **3,8%** das votações da Câmara são nominais | Institucional |
 | **RE-03** | 📊 As duas casas não compartilham votações | Institucional |
 | **RE-04** | 📊 O Senado não expõe CPF | Externa |

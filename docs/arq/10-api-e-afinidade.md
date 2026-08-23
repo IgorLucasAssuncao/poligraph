@@ -255,14 +255,14 @@ mais sofisticada é desnecessária.
   de sinal é silencioso.
 - 🟡 O questionário depende de **curadoria humana** que não escala e precisa ser refeita a
   cada nova janela de votações.
-- 🔴 Se o front for Blazor WebAssembly, a matriz **não** pode ir para o cliente (payload e
-  exposição do método). A afinidade tem que ficar no servidor.
+- ✅ ~~Se o front for Blazor WebAssembly…~~ — resolvido pela D5: com **React**, a matriz
+  fica no servidor por construção. A afinidade nunca vai para o cliente.
 
 ## 9. Pendências
 
 | # | Pendência | Prioridade |
 |---|---|---|
-| **API1** | Decidir **D5** (Blazor vs React) — afeta se o grafo é renderizado com Cytoscape.js | 🔴 Alta |
+| ~~API1~~ | ✅ **RESOLVIDA — 2026-08-23.** D5 decidida: **React + Vite**. Biblioteca do grafo em aberto (PL5) | — |
 | ~~API2~~ | ✅ **RESOLVIDA — 2026-08-23.** Limiar global descartado: mesmo a 0,90 a densidade é 11,6% (~24k arestas). Adotado **kNN com k=10** — [04-contratos §9](../04-contratos.md) | — |
 | **API3** | Escrever o teste de regressão da **polaridade** | 🔴 Alta |
 | **API4** | Definir se a métrica exibida ao usuário é concordância simples ou cosseno (ou ambas) | 🟡 Média |

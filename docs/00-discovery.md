@@ -463,7 +463,7 @@ Não é API: são **arquivos CSV em ZIP**, por ano e por UF. Datasets relevantes
 retornaram **HTTP 403** para requisições via `curl`, inclusive com User-Agent de
 navegador. O download precisará ser feito manualmente pelo navegador (ou por um cliente
 que replique sessão/headers). *Consequência:* o TSE **não pode ser tratado como fonte
-incremental automatizada** no MVP. Planejar como **carga manual versionada**: baixar uma
+incremental automatizada** no MVP. ⚠️ **REVISADO em 2026-08-23** — ver §2 do [12-fonte-tse](12-fonte-tse.md): o TSE É automatizável. O texto abaixo virou plano B. ~~Planejar como carga manual versionada: baixar uma
 vez, versionar o arquivo bruto, e o ETL lê do disco.
 
 Características dos CSVs do TSE: encoding **Latin-1 (ISO-8859-1)**, separador `;`,
@@ -899,10 +899,10 @@ principal.
 
 | Camada | Escolha | Observação |
 |---|---|---|
-| ETL / Workers | .NET 9 (`BackgroundService` ou Hangfire) | um job por fonte |
+| ETL / Workers | 🔄 **Python** (`pandas`) — ver D1 revisada | Um job diário, no GitHub Actions |
 | Banco | **PostgreSQL** | ver decisão D2 |
 | API | ASP.NET Core Minimal API | |
-| Front | Blazor ou React + Cytoscape.js / D3 | o grafo exige lib JS |
+| Front | ✅ **React + Vite** + Cytoscape.js — D5 decidida | O grafo exige lib JS |
 | Crawler | .NET + AngleSharp, ou Python + Scrapy | ver D1 |
 | Análise (SVD, Louvain) | ver decisão D1 | ponto de atrito do .NET |
 

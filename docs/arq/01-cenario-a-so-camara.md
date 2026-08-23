@@ -27,7 +27,7 @@ flowchart TD
     end
 
     subgraph APP["Aplicação .NET (monolito)"]
-        ETL["Worker ETL<br/>BackgroundService"]
+        ETL["ETL Python<br/>(job diário)"]
         SVC["Serviço de domínio<br/>+ matriz em memória"]
         WEB["ASP.NET Core<br/>Minimal API + front"]
     end
@@ -71,7 +71,7 @@ flowchart TD
 | ORM | **Dapper** para leitura em massa, EF Core para o CRUD | EF em 167k inserts é lento |
 | Banco | **PostgreSQL 16** | `COPY` para carga em massa |
 | Analítico | **Python** (numpy/scipy/networkx) como job separado | Ver D1 |
-| Front | Blazor ou React + Cytoscape.js | D5 em aberto |
+| Front | ✅ **React + Vite** + Cytoscape.js | D5 decidida |
 
 ---
 

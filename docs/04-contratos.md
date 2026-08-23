@@ -835,7 +835,7 @@ definido — **pendência CT7**.
 
 ## 9.6 C14 · Fronteira Python ↔ Postgres — especificada
 
-A decisão D1 adota stack poliglota: **.NET** para ETL e API, **Python** para álgebra
+⚠️ **D1 revisada em 2026-08-23:** o **ETL inteiro** é Python (não só a análise). O .NET fica com a **API**. A fronteira abaixo continua valendo — muda só o que roda de cada lado. A stack é poliglota: **Python** para ingestão e álgebra
 linear e grafos. Isso cria uma fronteira, e **o contrato dela é o que impede o
 poliglotismo de virar acoplamento**.
 
@@ -843,7 +843,7 @@ poliglotismo de virar acoplamento**.
 
 ```mermaid
 flowchart LR
-    ETL[".NET · ETL"] -->|"escreve"| G[("gold")]
+    ETL["Python · ETL"] -->|"escreve"| G[("gold")]
     G -->|"lê"| PY["Python · job analítico"]
     PY -->|"escreve"| R[("resultado")]
     R -->|"lê"| API[".NET · API"]
@@ -925,7 +925,7 @@ segundos.** É a diferença entre o job caber na janela noturna ou não.
 |---|---|---|
 | **C13** | API REST pública | Proposta em [arq/10](arq/10-api-e-afinidade.md) §5, não implementada |
 | **C14** | Fronteira Python ↔ Postgres | Formato de troca não definido (API6) |
-| **C15** | Contrato do front | Depende de D5 (Blazor vs React) |
+| **C15** | Contrato do front | D5 decidida (**React**); falta o contrato em si — ver CT3 |
 
 **Arestas do grafo — decisões tomadas, dimensões não:**
 
