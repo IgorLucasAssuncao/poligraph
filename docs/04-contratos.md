@@ -350,6 +350,87 @@ Os 13 ausentes do primeiro filtro estavam no arquivo como `SUPLENTE` (11) e
 > 🔑 **Contrato:** filtrar por **`CD_CARGO`**, nunca por `DS_SIT_TOT_TURNO`. A pergunta é
 > *"concorreu a este cargo?"*, não *"venceu?"*.
 
+### 7.1 🔴 O suplente é tratado de forma DIFERENTE em cada casa
+
+Este é o desdobramento que quase passou batido, e ele quebra o join do Senado **em
+silêncio** se ignorado.
+
+| Casa | Como o suplente aparece no TSE |
+|---|---|
+| **Câmara** | **Mesmo cargo** (`CD_CARGO = 6`), com `DS_SIT_TOT_TURNO = SUPLENTE` — 4.195 registros em 2022 |
+| **Senado** | 🔴 **CARGO SEPARADO**: `CD_CARGO = 9` (1º Suplente) e `10` (2º Suplente), **cada um com seu próprio `ELEITO`** |
+
+Medido em 2022:
+
+```
+CD_CARGO  5 = SENADOR        →  27 ELEITO · 200 NÃO ELEITO · 16 #NULO
+CD_CARGO  9 = 1º SUPLENTE    →  27 ELEITO ·  …
+CD_CARGO 10 = 2º SUPLENTE    →  27 ELEITO · 200 NÃO ELEITO · 49 #NULO
+CD_CARGO  6 = DEPUTADO FED.  → 513 eleitos (3 valores) · 4.195 SUPLENTE
+```
+
+→ **Um suplente de senador que assume o mandato NÃO está em `CD_CARGO = 5`.** Ele é, para
+o TSE, candidato eleito a *"1º Suplente"*. Se o join filtrar só por cargo 5, essa pessoa
+some — sem erro, sem exceção.
+
+**Impacto medido nos 81 senadores em exercício:**
+
+| Filtro no TSE 2022 | Casaram |
+|---|---|
+| `CD_CARGO = 5` | 24 |
+| **`CD_CARGO IN (5, 9, 10)`** | ✅ **27** |
+
+Os 3 recuperados são suplentes que assumiram:
+`ANTONIA JUSSARA GOMES ALVES SOUSA LIMA` · `HERMES ARTUR KLANN` ·
+`MARIA DE LOURDES PEREIRA E PEREIRA`.
+
+⚠️ E os 27 de 81 confirmam a renovação escalonada: **os outros 54 estão em
+`consulta_cand_2018`**, que precisa do mesmo filtro ampliado.
+
+### 7.2 ✅ Contrato final do join — os quatro filtros
+
+```sql
+-- CÂMARA  (legislatura 57 ← eleição 2022)
+WHERE ANO_ELEICAO = 2022
+  AND CD_CARGO    = 6              -- inclui SUPLENTE automaticamente
+  AND NR_CPF_CANDIDATO = :cpf      -- string, com zeros à esquerda
+
+-- SENADO  (legislatura 57 ← eleições 2018 E 2022)
+WHERE ANO_ELEICAO IN (2018, 2022)
+  AND CD_CARGO IN (5, 9, 10)       -- 🔴 titular + 1º e 2º suplentes
+  AND <fuzzy: nome + DT_NASCIMENTO + SG_UF>
+```
+
+| # | Filtro | Por quê |
+|---|---|---|
+| 1 | **`ANO_ELEICAO`** | Sem ele, um deputado com candidaturas em 2014/2018/2022 devolve N linhas |
+| 2 | **`CD_CARGO`** | Define a população; **nunca** `DS_SIT_TOT_TURNO` |
+| 3 | **Ampliar cargo no Senado** | 9 e 10 são suplentes que podem estar em exercício |
+| 4 | **CPF como `string`** | 32% começam com zero |
+
+### 7.3 O que fazer com cada resultado do join
+
+```mermaid
+flowchart TD
+    A["Parlamentar em exercício"] --> B{"Casou no TSE?"}
+    B -->|"1 linha"| C["✅ Enriquecer o nó"]
+    B -->|"N linhas"| D["⚠️ Faltou filtro de ANO_ELEICAO"]
+    B -->|"0 linhas"| E{"Por quê?"}
+    E --> F["Cargo não ampliado<br/>(suplente do Senado)"]
+    E --> G["CPF lido como número<br/>(perdeu zero à esquerda)"]
+    E --> H["Ano eleitoral errado<br/>(senador de 2018)"]
+    E --> I["Resíduo real →<br/>FILA DE EXCEÇÃO"]
+    style I fill:#8b5a00,color:#fff
+```
+
+> 🔑 **Nenhum não-casamento é descartado em silêncio** (RNF-09). Vai para fila de exceção
+> com o motivo, e o número final de exceções é **resultado a reportar** no TCC — mede a
+> qualidade do *entity resolution* (objetivo específico #2).
+
+⚠️ **`#NULO` como situação existe** (660 em deputado federal, 16 em senador). São
+candidaturas indeferidas ou retiradas antes da apuração. **Não filtre por situação** e
+elas deixam de importar — mais um argumento para o contrato de §7.2.
+
 **`DS_SIT_TOT_TURNO` — domínio completo:** `SUPLENTE` 14.623 · `NÃO ELEITO` 11.276 ·
 `#NULO` 1.662 · `ELEITO POR QP` 1.182 · `ELEITO POR MÉDIA` 390 · `ELEITO` 137 ·
 `2º TURNO` 52.
