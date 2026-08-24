@@ -819,7 +819,7 @@ efetivamente votam o mesmo, e **o registro nominal simplesmente não é publicad
 
 ⚠️ **Se algum dia for publicado**, é por ali que a unificação dos dois grafos passaria a
 ser possível — e o volume seria pequeno (poucas dezenas de votações por CPMI), mas
-suficiente para uma ponte real. **Vale reverificar antes de escrever a conclusão.**
+suficiente para uma ponte real. **Registrado no checklist:** [REVISAR-ANTES-DA-CONCLUSAO.md](REVISAR-ANTES-DA-CONCLUSAO.md), item 1.
 
 **Alternativas para ligar as casas** (nenhuma no MVP):
 

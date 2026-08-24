@@ -30,6 +30,7 @@ flowchart LR
 | [03-requisitos.md](03-requisitos.md) | Requisitos funcionais e não funcionais, regras de negócio, restrições |
 | [04-contratos.md](04-contratos.md) | **Contratos** — entradas, saídas e uso, com cardinalidades medidas |
 | [PENDENCIAS.md](PENDENCIAS.md) | ⭐ **Visão consolidada** — 46 abertas, agrupadas pelo que destrava cada uma |
+| [REVISAR-ANTES-DA-CONCLUSAO.md](REVISAR-ANTES-DA-CONCLUSAO.md) | ⏳ **Fatos com prazo de validade** — reverificar antes de escrever |
 
 ### Contexto institucional — *como o Brasil legisla*
 
