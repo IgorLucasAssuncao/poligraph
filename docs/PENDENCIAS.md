@@ -96,6 +96,19 @@ a D3 escolheu o C).
 
 ---
 
+## ⏳ Fatos com prazo de validade — lista separada
+
+Não são pendências de trabalho: são coisas que **podem mudar sozinhas** entre agora e a
+entrega. Vivem em [REVISAR-ANTES-DA-CONCLUSAO.md](REVISAR-ANTES-DA-CONCLUSAO.md).
+
+Os dois que podem **mudar a conclusão**: se a **CPMI** passar a publicar votação nominal,
+a unificação dos dois grafos vira possível; se o **Senado** publicar orientação de bancada,
+a comparação entre casas deixa de ser assimétrica.
+
+⚠️ E o mais provável de todos: **quase todos os números foram medidos com 2026 parcial.**
+
+---
+
 ## ✅ Resolvidas — 40
 
 `A1` `API1` `API2` `API6` `B1` `B2` `B3` `B4` `B5` `C1` `C2` `C3` `C6` `CT1` `CT2` `CT4`
