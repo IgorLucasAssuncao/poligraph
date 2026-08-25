@@ -1,8 +1,10 @@
 # Esqueleto — AppHost, schema e estrutura do ETL
 
-> **Status:** v1.0 — 2026-08-23
+> **Status:** v1.1 — 2026-08-25
 > Os dois artefatos do **passo 1** ([01-arquitetura §8](01-arquitetura.md)). Tudo aqui é
 > derivado dos contratos medidos em [`04-contratos.md`](../04-contratos.md).
+> **v1.1:** §2.2 — tabelas `usuario`, `segue`, `consentimento` e `token_email`, criadas
+> pela decisão da RQ9. ⚠️ Corrige a afirmação de que "não existe tabela de usuário".
 
 ---
 
@@ -236,8 +238,96 @@ CREATE TABLE noticia_tema (
 );
 ```
 
-⚠️ **Não existe tabela de usuário nem de "seguir".** É decisão, não omissão — a lista vive
-no `localStorage` ([02 §1](02-autenticacao-e-metricas.md)).
+### 2.2 🔄 Tabelas de usuário — acrescentadas pela RQ9 (2026-08-25)
+
+> ⚠️ **Correção:** este documento dizia *"não existe tabela de usuário nem de seguir"*.
+> Deixou de valer quando o autor decidiu por login com Google e notificação por e-mail
+> ([02 §3](02-autenticacao-e-metricas.md)).
+
+```sql
+CREATE TABLE usuario (
+    id            BIGSERIAL PRIMARY KEY,
+    sub_hash      TEXT NOT NULL UNIQUE,        -- SHA256(sub_google + pepper)
+    email         TEXT,                        -- ⭐ NULL até haver opt-in
+    primeiro_nome TEXT,                        -- só para saudar no e-mail; ver §2.2.1
+    criado_em     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    visto_em      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK (email IS NULL OR position('@' in email) > 1)
+);
+-- ⛔ SEM coluna de senha. SEM foto. SEM nome completo. SEM CPF. SEM telefone.
+
+CREATE TABLE segue (
+    usuario_id BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
+    pessoa_id  BIGINT NOT NULL REFERENCES pessoa(id),
+    criado_em  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (usuario_id, pessoa_id)
+);
+CREATE INDEX ON segue (pessoa_id);          -- "quantos seguem X"
+
+CREATE TABLE consentimento (               -- 🔴 LGPD art. 8º §2: o ônus da prova é seu
+    id          BIGSERIAL PRIMARY KEY,
+    usuario_id  BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
+    finalidade  TEXT NOT NULL CHECK (finalidade IN ('EMAIL_NOTICIAS')),
+    versao      TEXT NOT NULL,              -- ⭐ hash ou versão do TEXTO aceito
+    aceito_em   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    revogado_em TIMESTAMPTZ
+);
+CREATE UNIQUE INDEX ON consentimento (usuario_id, finalidade)
+    WHERE revogado_em IS NULL;             -- um consentimento vivo por finalidade
+
+CREATE TABLE token_email (
+    token      TEXT PRIMARY KEY,            -- 32 bytes aleatórios, base64url
+    usuario_id BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
+    proposito  TEXT NOT NULL CHECK (proposito IN ('DESCADASTRO')),
+    criado_em  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    usado_em   TIMESTAMPTZ                  -- ⚠️ sem expiração, de propósito
+);
+```
+
+#### 2.2.1 As quatro decisões de coluna, e o teste que as define
+
+O teste da [02 §3.4.1](02-autenticacao-e-metricas.md):
+**"preciso disso quando a pessoa NÃO está presente?"**
+
+| Campo | Passa? | Decisão |
+|---|---|---|
+| `sub` | ✅ É a chave | ⭐ Guardar **só o hash** |
+| `email` | ✅ O digest roda de madrugada | Guardar, **só com opt-in** |
+| `primeiro_nome` | ⚠️ **Passa, se o e-mail saudar pelo nome** | 🟡 Ver abaixo — **PL28** |
+| `picture` | ⛔ Não | ⛔ Não guardar — a URL ainda expira |
+| Nome completo, telefone, CPF | ⛔ Não | ⛔ Não guardar — nem chegam nos escopos usados |
+
+> 🔑 **O `primeiro_nome` merece honestidade:** eu tinha escrito *"nome: nunca persistir"*.
+> **Aplicando o próprio teste, ele passa** — se o digest disser *"Olá, Igor"*, o nome
+> precisa estar no banco, pela mesma razão do e-mail. Não dá para defender uma coisa e não
+> a outra.
+>
+> ⭐ Se o e-mail abrir com *"Olá!"*, a coluna some. **É uma escolha de redação de e-mail
+> decidindo um campo de banco** — e por isso vale decidir de propósito. → **PL28**
+
+⚠️ **`given_name`, nunca `name`.** "Igor" identifica muito menos que "Igor Lucas <sobrenome>".
+
+#### 2.2.2 🔴 A exclusão da LGPD é um `DELETE` só
+
+```sql
+DELETE FROM usuario WHERE sub_hash = :hash;   -- CASCADE leva segue, consentimento e tokens
+```
+
+⭐ **Os `ON DELETE CASCADE` existem para isso.** O direito à eliminação (art. 18, VI) vira
+uma linha — e não uma checklist de tabelas que alguém vai esquecer de atualizar.
+
+⚠️ **`ON DELETE CASCADE` NÃO aparece em `segue.pessoa_id`, de propósito.** Apagar um
+parlamentar da base não pode ser possível enquanto alguém o segue.
+
+#### 2.2.3 ⭐ O campo `versao` do consentimento é o que salva na auditoria
+
+> **Se você reescrever o texto do banner, os consentimentos antigos não cobrem o texto
+> novo.** Guardar qual versão a pessoa aceitou é o que permite responder *"consentiu com o
+> quê, exatamente?"* — que é a pergunta que a LGPD art. 8º §2 joga no seu colo.
+
+⚠️ **O consentimento do Clarity NÃO entra nesta tabela** — ele acontece antes do login,
+para um visitante anônimo. Ele vive no navegador. Só o opt-in de e-mail é registrado aqui,
+porque só ele pressupõe conta.
 
 ---
 
@@ -387,3 +477,4 @@ O item 6 é o que prova que o princípio da §1 está funcionando.
 | **PL14** | Definir a política de retenção de `execucao` (§9.6 dos contratos) |
 | **PL15** | Decidir se `pessoa` guarda `casa` ou se ela fica só em `mandato` |
 | **A2** | Escrever e validar as regex de `categoria` |
+| **PL28** | 🟡 O e-mail do digest sauda pelo nome? Se não, a coluna `primeiro_nome` some (§2.2.1) |
