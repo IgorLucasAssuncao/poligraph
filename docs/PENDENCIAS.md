@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-08-25 · **43 resolvidas · 54 abertas**
+> **Atualizado:** 2026-08-25 · **35 resolvidas · 58 abertas**
 > As pendências vivem espalhadas por 10 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 
