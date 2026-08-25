@@ -1,6 +1,9 @@
 # Requisitos — funcionais e não funcionais
 
-> **Status:** v1.2 — 2026-08-23
+> **Status:** v1.3 — 2026-08-25
+> **v1.3:** ✅ RQ9 RESOLVIDA — opção D, login só com Google e identidade opaca (§2.7.2).
+> Novo ator "cidadão autenticado" (§1.1). RNF-12 revisto, RNF-12a REVOGADO, nascem
+> RNF-12c e RNF-12d.
 > **v1.2:** §2.7.3 — feed agregado é **condicional**; se existir, é misto (seguidos +
 > temas). "Seguir" segue comprometido. RF-48 classifica notícia por tema desde já.
 > **v1.1:** §2.7 — seguir parlamentar e receber notícias (RF-42 a RF-46), com a tensão
@@ -69,14 +72,22 @@ flowchart LR
     S1[["🤖 Fontes oficiais"]] --> UC5
 ```
 
-⚠️ **Não existe ator "usuário cadastrado"** — e isso é decisão de projeto, não omissão.
-O cidadão **segue parlamentares** (RF-42) e, se o feed agregado existir, o recebe (RF-43,
-condicional) — mas essa preferência
-vive **no navegador dele**, não em uma conta no servidor. Ver §2.7.2 e RNF-12.
+🔄 **Existe um quarto ator, adicionado pela RQ9 (2026-08-25): o cidadão autenticado.**
+Ele é o mesmo cidadão anônimo, com **uma capacidade a mais** — a lista de seguidos o
+acompanha entre dispositivos.
 
-> A pergunta que orientou o desenho: *o produto precisa saber quem é a pessoa, ou só
-> precisa que **o navegador dela** lembre?* Para seguir e receber feed, o segundo basta —
-> e evita construir uma base de convicções políticas.
+```mermaid
+flowchart LR
+    A4(["🔑 Cidadão autenticado<br/><i>via Google</i>"]) --> UC7["Seguir parlamentar<br/>com sincronia"]
+    A4 -.herda.-> A1b(["👤 tudo do<br/>cidadão anônimo"])
+    style A4 fill:#1a4d8b,color:#fff
+```
+
+| | |
+|---|---|
+| ⛔ **Não existe ator "usuário com senha"** | A autenticação é **sempre** delegada ao Google — RNF-12d |
+| ⛔ **O login nunca é obrigatório** | Questionário, grafo e fichas funcionam sem entrar. Login só habilita a sincronia |
+| 🔴 O servidor passa a saber quem segue quem | É o custo aceito da decisão — mitigado por RNF-12b e RNF-12c |
 
 ---
 
@@ -251,33 +262,53 @@ Somando ao risco R7 (contexto eleitoral de outubro de 2026), guardar essa base e
 
 ### 2.7.2 Três formas de atender ao requisito
 
-| | **A — Local no navegador** ⭐ | **B — Conta anônima** | **C — Conta com login** |
-|---|---|---|---|
-| Onde fica quem você segue | `localStorage` do dispositivo | Servidor, ID aleatório | Servidor, vinculado a e-mail |
-| Feed ao voltar no site | ✅ Sim | ✅ Sim | ✅ Sim |
-| Notificação por e-mail/push | ⛔ Não | ⛔ Não | ✅ Sim |
-| Funciona em outro dispositivo | ⛔ Não | ⛔ Não | ✅ Sim |
-| **Dado sensível no servidor** | ✅ **Nenhum** | 🔴 Sim (não identificado) | 🔴 Sim (identificado) |
-| Exposição LGPD | ✅ Praticamente nula | 🟡 Média | 🔴 Alta |
-| Esforço | 🟢 Baixo | 🟡 Médio | 🔴 Alto |
+| | **A — Local no navegador** | **B — Conta anônima** | **C — Conta com login** | ✅ **D — Google, identidade opaca** |
+|---|---|---|---|---|
+| Onde fica quem você segue | `localStorage` do dispositivo | Servidor, ID aleatório | Servidor, vinculado a e-mail | Servidor, vinculado a `sub_hash` |
+| Feed ao voltar no site | ✅ Sim | ✅ Sim | ✅ Sim | ✅ Sim |
+| Notificação por e-mail/push | ⛔ Não | ⛔ Não | ✅ Sim | ⛔ **Não** — não guardamos e-mail |
+| Funciona em outro dispositivo | ⛔ Não | ⛔ Não | ✅ Sim | ✅ **Sim** |
+| Senha sob nossa guarda | ✅ Nenhuma | ✅ Nenhuma | 🔴 Depende do provedor | ✅ **Nenhuma** |
+| **Dado sensível no servidor** | ✅ **Nenhum** | 🔴 Sim (não identificado) | 🔴 Sim (identificado) | 🔴 Sim (**pseudonimizado**) |
+| Exposição LGPD | ✅ Praticamente nula | 🟡 Média | 🔴 Alta | 🟡 **Média** |
+| Esforço | 🟢 Baixo | 🟡 Médio | 🔴 Alto | 🟡 **~1 dia** |
 
-**Recomendação: opção A.**
+### ✅ RQ9 RESOLVIDA — opção D (2026-08-25)
+
+> **Decisão do autor:** login **apenas** com Google, sem estrutura de senha do nosso lado.
+
+**A opção D não existia na tabela original e é melhor que a B e a C para este caso.** Ela
+entrega o cross-device da C **sem** guardar e-mail, nome ou foto — e elimina por completo
+a superfície de senha, que era o motivo declarado da escolha.
+
+| O que a D remove do projeto | |
+|---|---|
+| Tabela de senha, hash, salt | ⛔ Não existe |
+| Fluxo de "esqueci minha senha" | ⛔ Não existe |
+| Envio de e-mail transacional | ⛔ Não existe |
+| Rate limit e bloqueio por tentativa | ⛔ Não existe — é problema do Google |
+| 2FA, detecção de vazamento, anti-phishing | ✅ Herdados do Google, de graça |
+
+⚠️ **O que a D NÃO remove:** a tabela `segue(sub_hash, pessoa_id)` continua sendo uma base
+de convicção política — o risco nunca esteve na senha, e sim no que se associa à
+identidade. Por isso a RNF-12b permanece **obrigatória**, e o desenho de
+[plano/02 §3.1](plano/02-autenticacao-e-metricas.md) (persistir **só** `SHA256(sub +
+pepper)`) deixa de ser sugestão e vira **requisito**.
+
+📐 Passo a passo de implementação em [plano/02 §3.2](plano/02-autenticacao-e-metricas.md).
 
 O feed é montado **no cliente**: a lista de seguidos fica no navegador, a API serve
 notícias públicas por parlamentar, e o front filtra. O servidor **nunca sabe** quem segue
 quem — ele só responde "quais as notícias recentes do parlamentar 204528", que é
 informação pública.
 
-Isso atende RF-42, RF-43, RF-44 e RF-46 **por inteiro**. O que se perde é só notificação
-ativa (e-mail/push) e sincronização entre dispositivos.
+Isso atenderia RF-42, RF-43, RF-44 e RF-46 **por inteiro**, perdendo só notificação ativa
+e sincronização. ⚠️ **A sincronização era justamente o que se queria** — daí a opção D.
 
-⚠️ **Se notificação por e-mail for inegociável**, então é opção C, e o projeto precisa de:
-consentimento específico e destacado para dado sensível, política de privacidade,
-mecanismo de exclusão, e — dado o R7 — provavelmente adiar a publicação para depois de
-outubro de 2026.
+⚠️ **Notificação por e-mail continua fora**, mesmo com a opção D: não guardamos e-mail.
+Quem quiser isso cai na opção C, que segue **não recomendada**.
 
-**Pendência RQ9:** decidir entre A, B e C. Enquanto não decidido, **implementar A** — é o
-único caminho que não cria passivo e não fecha portas.
+~~**Pendência RQ9**~~ ✅ **Resolvida: opção D** (acima).
 
 ---
 
@@ -308,9 +339,11 @@ outubro de 2026.
 
 | ID | Requisito | Origem |
 |---|---|---|
-| **RNF-12** | **Não persistir no servidor** nem respostas do questionário nem lista de seguidos. Estado do usuário fica **no dispositivo** (`localStorage`) — ver §2.7.2 | R7 / LGPD |
-| **RNF-12a** | A API **nunca recebe** a lista de quem o usuário segue. O feed é filtrado no cliente sobre endpoints públicos por parlamentar | §2.7.2 |
-| **RNF-12b** | Se a opção B ou C for adotada (RQ9), tratar a lista de seguidos como **dado pessoal sensível** (LGPD art. 5º, II — opinião política): consentimento específico, política de privacidade e exclusão sob demanda | LGPD |
+| **RNF-12** | 🔄 **Revisto pela RQ9.** **Não persistir no servidor as respostas do questionário** — isso continua valendo integralmente. A lista de seguidos passou a ser persistida sob as condições da RNF-12b e RNF-12c | R7 / LGPD |
+| ~~RNF-12a~~ | ⛔ **REVOGADO pela RQ9 = opção D.** A API passa a receber a lista de seguidos, por definição do cross-device. O que substitui esta garantia é a RNF-12c | §2.7.2 |
+| **RNF-12c** | 🔴 Persistir **apenas** `SHA256(sub + pepper)` do Google. ⛔ **Nunca** e-mail, nome ou foto. `pepper` em variável de ambiente, fora do banco. Endpoint de exclusão total (art. 18) | [plano/02 §3.1](plano/02-autenticacao-e-metricas.md) |
+| **RNF-12d** | ⛔ **Nenhuma estrutura de senha no projeto** — sem tabela de credencial, sem recuperação, sem sessão própria. Autenticação é sempre delegada ao Google | Decisão do autor |
+| **RNF-12b** | 🔴 **ATIVA** (RQ9 = opção D). Tratar a lista de seguidos como **dado pessoal sensível** (LGPD art. 5º, II — opinião política): consentimento específico, política de privacidade e exclusão sob demanda | LGPD |
 | **RNF-13** | **Não republicar CPF**. Uso interno como chave; persistir apenas hash | LGPD |
 | **RNF-14** | Exibir *disclaimer* em toda tela de resultado: ferramenta acadêmica, **não** recomendação de voto | R7 |
 | **RNF-15** | Não exibir dado de candidatos **não eleitos** | 12-fonte-tse §5 |
@@ -488,5 +521,5 @@ notícias**. F6, F7 e F9 são incrementos.
 | **RQ6** | Definir critérios de aceitação mensuráveis para os RF essenciais | Validação |
 | **RQ7** | Definir o **mecanismo de recomendação** — por parlamentar afim, por tema, ou híbrido — e como avaliá-lo | Sem métrica, "recomendação" vira "listagem filtrada" |
 | ~~RQ8~~ | ✅ **RESOLVIDA — 2026-08-23.** *"em Redes Sociais"* = **o grafo**, confirmado pelo autor. Não envolve plataformas (X, Instagram) | — |
-| **RQ9** | Escolher entre **A / B / C** para onde vive a lista de seguidos (§2.7.2). Enquanto isso, implementar **A** | LGPD e R7 |
+| ~~RQ9~~ | ✅ **Opção D — login Google com identidade opaca** (§2.7.2). RNF-12b passa a ser obrigatória | LGPD e R7 |
 | **RQ10** | Decidir se o **feed agregado** (RF-43) entra. Recomendação: decidir tarde — classificar por tema desde já mantém a porta aberta a custo zero | §2.7.3 |

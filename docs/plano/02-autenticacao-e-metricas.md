@@ -1,8 +1,10 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v1.3 — 2026-08-25
+> **Status:** v1.4 — 2026-08-25
+> **v1.4:** ✅ DECIDIDO — login só com Google, identidade opaca (§3). Resolve a RQ9 como
+> opção D. Nova §3.2.4: sem senha não significa sem sessão.
 > **v1.3:** §3.2 — o passo a passo concreto do login com Google (Google Cloud, escopos,
-> código, esforço) e por que a decisão da PL6 pesa CONTRA adotá-lo.
+> código, esforço).
 > **v1.2:** ✅ PL6 DECIDIDA — Clarity em produção, gravando tudo, com consentimento
 > prévio bloqueante (§4.5). PL8 e PL9 caem junto; nascem PL25 (texto do banner) e PL24 (CEP).
 > **v1.1:** §4.2–4.5 reescritas contra a documentação oficial do Clarity. 🔴 Duas
@@ -44,7 +46,7 @@ hipótese acadêmica.
 
 ## 2. As três formas de resolver
 
-### Opção 1 — Sem login, tudo no navegador ⭐ recomendada para o MVP
+### Opção 1 — Sem login, tudo no navegador  ⚠️ não escolhida
 
 ```
 Lista de seguidos → localStorage
@@ -60,7 +62,7 @@ Servidor          → nunca sabe quem segue quem
 | ⛔ | Perde a lista ao trocar de navegador ou limpar dados |
 | ⛔ | Sem notificação por e-mail |
 
-### Opção 2 — Google login com identidade opaca
+### Opção 2 — Google login com identidade opaca  ✅ ESCOLHIDA
 
 ```
 Guarda APENAS o `sub` do Google (id opaco, ex.: 117482...)
@@ -86,16 +88,33 @@ Tabela: usuario(sub_hash) · segue(sub_hash, pessoa_id)
 
 ---
 
-## 3. Recomendação
+## 3. ✅ DECISÃO — Opção 2 (2026-08-25)
 
-> **MVP: Opção 1 (sem login).** Se o cross-device se mostrar necessário, **Opção 2**.
-> A Opção 3 só com necessidade concreta de e-mail, e aí com todo o aparato de LGPD.
+> **Login apenas com Google, identidade opaca. Nenhuma estrutura de senha do nosso lado.**
+> Decisão do autor, com a justificativa registrada: *"justamente para ter mais segurança"*.
+> Resolve a **RQ9** como **opção D** em [03-requisitos §2.7.2](../03-requisitos.md).
 
-**O raciocínio:** login existe para resolver *um* problema — lembrar quem você é entre
-dispositivos. Pergunte se o TCC precisa disso. Se a resposta for "seria legal ter", não
-compensa: você troca zero passivo jurídico por uma conveniência.
+**A justificativa está correta, e vale registrá-la assim no TCC.** Não guardar senha não é
+economia de trabalho — é remoção de uma classe inteira de vulnerabilidade:
 
-### 3.1 Se decidir pela Opção 2 — o desenho mínimo
+| O que deixa de existir no projeto | |
+|---|---|
+| Tabela de senha, hash, salt, política de complexidade | ⛔ Não existe |
+| Fluxo "esqueci minha senha" (e o e-mail que ele exige) | ⛔ Não existe |
+| *Rate limit*, bloqueio por tentativa, *credential stuffing* | ⛔ **Problema do Google** |
+| Vazamento de senha em caso de invasão do banco | ⛔ **Não há o que vazar** |
+| 2FA, anti-phishing, detecção de conta comprometida | ✅ **Herdados de graça** |
+
+⭐ **É o argumento certo pelo motivo certo.** A superfície de ataque de autenticação passa
+a ser zero, porque a autenticação não acontece aqui.
+
+⚠️ **O que a decisão não resolve — e continua valendo:** o risco da §1 nunca esteve na
+senha, e sim na tabela `segue(sub_hash, pessoa_id)`, que é uma base de convicção política.
+Por isso a §3.1 deixa de ser sugestão e vira **requisito**: persistir **só**
+`SHA256(sub + pepper)`, nunca e-mail, nome ou foto. **São dois riscos diferentes; o login
+com Google elimina um deles por completo e não toca no outro.**
+
+### 3.1 🔴 O desenho obrigatório
 
 ```mermaid
 sequenceDiagram
@@ -200,7 +219,27 @@ var subHash = Convert.ToHexString(SHA256.HashData(
 | **Client Secret** | ⛔ **Não é usado neste fluxo.** Só existe no fluxo com *redirect* no servidor |
 | **`pepper`** | 🔴 Variável de ambiente **no painel do Coolify**, nunca no repositório |
 
-### 3.2.4 Esforço real
+### 3.2.4 🔴 Sem senha ≠ sem sessão — a decisão que sobra
+
+Tirar a senha do projeto **não tira a pergunta "como o servidor sabe que ainda é você na
+segunda requisição?"**. O `id_token` do Google **expira em ~1 hora**.
+
+| | **A — Validar o `id_token` a cada chamada** ⭐ | **B — Trocar por um JWT nosso** |
+|---|---|---|
+| Estado no servidor | ✅ **Nenhum** | 🟡 Somos emissor de token |
+| Duração | ~1 h; o GIS renova em silêncio | O que definirmos |
+| Se o usuário revoga no Google | ✅ **Acesso cai sozinho** | ⛔ Nosso token continua válido até expirar |
+| Complexidade | ✅ Uma chamada de validação | 🟡 Emissão, expiração, *refresh*, revogação |
+
+> ⭐ **Recomendação: A.** É a única coerente com *"nada do nosso lado"* — não há sessão,
+> não há cookie de autenticação, não há tabela de token. Cada requisição chega com o
+> crachá do Google e a API confere na hora.
+
+⚠️ **A validação é obrigatoriamente no servidor.** Um `id_token` vindo do navegador é
+texto que o usuário controla; só a checagem de assinatura contra as chaves públicas do
+Google o torna confiável. ⛔ **Nunca** decidir identidade por algo que o front afirmou.
+
+### 3.2.5 Esforço real
 
 | | |
 |---|---|
@@ -210,10 +249,10 @@ var subHash = Convert.ToHexString(SHA256.HashData(
 | Política de privacidade (PL7) | 🔴 **Meio dia** — é texto jurídico, não código |
 | **Total** | **~1 dia**, dominado pelo item que não é técnico |
 
-### 3.2.5 🔴 Mas leia isto antes de decidir fazer
+### 3.2.6 ⚠️ O ponto que a decisão não cobre
 
-A §3 continua recomendando **não ter login no MVP**, e a decisão da PL6 **reforçou** essa
-recomendação em vez de enfraquecê-la:
+A opção 2 está decidida (§3). Fica registrado, para o texto do TCC e para a banca, o que
+ela NÃO resolve — porque a PL6 aumentou esse lado:
 
 > A partir de agora o site **grava a sessão inteira**, incluindo as respostas do
 > questionário. Somar login a isso significa **ligar cada gravação de opinião política a
@@ -227,9 +266,10 @@ recomendação em vez de enfraquecê-la:
 
 ⚠️ **E o calendário agrava:** eleições gerais em **outubro de 2026**.
 
-> 🔑 **O login resolve um problema só: lembrar quem você é entre dispositivos.** Se a
-> resposta for *"seria legal ter"*, o custo aqui não compensa. Se você quiser lista de
-> seguidos sincronizada, esta seção é o caminho — e a §3.1 é obrigatória junto. → **RQ9**
+> 🔑 **Isso não contradiz a decisão — delimita.** O login com Google zerou o risco de
+> credencial. O risco que resta é o da §1, e ele se trata com a §3.1 (só `sub_hash`), com
+> a RNF-12b (consentimento específico) e com o endpoint de exclusão (LGPD art. 18).
+> **Três medidas concretas, todas já especificadas.**
 
 ## 4. Métricas de uso — a ferramenta é o Microsoft Clarity
 
