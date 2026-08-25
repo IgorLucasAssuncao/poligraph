@@ -1,7 +1,8 @@
 # Plano de implementação — arquitetura macro
 
 > **Status:** v1.2 — 2026-08-25
-> **v1.2:** ✅ **DECISÃO — VPS + Coolify** (§3.5), com Hetzner CX22 recomendado.
+> **v1.2:** ✅ **DECISÃO — VPS + Coolify** (§3.5). ETL roda em Scheduled Task do Coolify,
+> não no GitHub Actions — com Postgres interno, expor o banco não compensa. Hetzner CX32.
 > **v1.1:** §3 — opção D avaliada (compartilhada, Render, Railway, VPS+Coolify) e
 > comparação final; PL1 e PL2 decididas.
 > **Restrições dadas:** React no front · C# no back · Python no ETL · Postgres ·
@@ -191,10 +192,51 @@ O autor optou pela Opção D: **um painel só**. Esta seção dimensiona e escol
 
 **Disco:** 149 MB de CSV + Postgres + imagens Docker → **40 GB basta**, 80 GB folga.
 
-⚠️ **O ETL é o pico, e ele é diário e previsível.** Se apertar, a saída é mantê-lo no
-**GitHub Actions** mesmo com VPS — aí 4 GB sobram com folga. Vale considerar: o "painel
-único" continua valendo para o que é servido; o job diário fica de fora e não compete por
-memória.
+### 3.5.1.1 🔄 Onde o ETL roda — revisão da sugestão do GitHub Actions
+
+Sugeri manter o ETL no GitHub Actions mesmo com VPS, para poupar memória. **Revendo, é
+má ideia neste desenho** — e o motivo é de segurança, não de recurso.
+
+**O que o GitHub Actions é:** o GitHub executa seu código **nas máquinas dele**, de graça,
+no horário que você definir. A máquina liga, roda o script, desliga.
+
+**O problema:** essa máquina é do GitHub, não sua. Para o ETL gravar no seu banco, o
+**Postgres teria de ficar exposto na internet**.
+
+| | Neon (arquitetura antiga) | Postgres no seu VPS |
+|---|---|---|
+| Exposição | ✅ Já é público **por projeto** — é serviço gerenciado | 🔴 Ficaria **interno**; expor é escolha sua |
+| Restringir por IP | — | ⛔ **Inviável** — os *runners* do GitHub usam faixas enormes e dinâmicas |
+| Resultado | Coerente | 🔴 **Banco aberto ao mundo com senha** |
+
+> 🔑 **A sugestão fazia sentido quando o banco era o Neon**, que é público por natureza.
+> Com Postgres dentro do VPS, ela obriga a abrir a porta 5432 para a internet — troca ruim
+> por ~1 GB de RAM.
+
+### ✅ O ETL roda no próprio Coolify
+
+O Coolify tem **Scheduled Tasks** com sintaxe cron padrão (`* * * * *`), executando dentro
+de container — exatamente o que o ETL precisa.
+
+```
+Scheduled Task: etl-diario
+Comando:        python main.py ingest && python main.py analyze
+Cron:           0 9 * * *
+```
+
+| Ganho | |
+|---|---|
+| ✅ **Postgres fica interno** | Nunca exposto à internet |
+| ✅ **Um painel só** | Coerente com o motivo de ter escolhido VPS |
+| ✅ Logs no mesmo lugar | Sem alternar entre GitHub e Coolify |
+
+⚠️ **Limitação conhecida:** as Scheduled Tasks do Coolify rodam **dentro de container**,
+não no host. Para o ETL isso é irrelevante — ele é um container Python. Mas se um dia
+precisar de cron no host, aí é `crontab` por SSH, fora do painel.
+
+⚠️ **Consequência do dimensionamento:** com o ETL na mesma máquina, **8 GB passa a ser a
+escolha segura**, não 4 GB. A diferença de preço é pequena e evita o job morrer por falta
+de memória no meio de uma carga.
 
 ### 3.5.2 A escolha real: latência × preço
 
@@ -236,7 +278,7 @@ transferência, não latência — e a Cloudflare ajuda menos porque é dado din
 | Front | Cloudflare Pages | 🔄 Coolify (ou manter no Pages) |
 | API | Azure App Service F1 | 🔄 **Coolify** |
 | Postgres | Neon | 🔄 **Container no Coolify** |
-| ETL | GitHub Actions | 🟡 Coolify **ou manter no Actions** |
+| ETL | GitHub Actions | ✅ **Coolify Scheduled Task** — mantém o Postgres interno |
 | Cloudflare | DNS + Pages + WAF | ✅ **Mantém** — DNS, CDN, WAF, TLS na borda |
 | Custo | R\$ 0 | **~R\$ 24–80/mês** |
 
