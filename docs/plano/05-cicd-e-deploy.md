@@ -1,6 +1,7 @@
 # CI/CD, deploy e monitoramento
 
-> **Status:** v2.0 — 2026-08-25
+> **Status:** v2.1 — 2026-08-25
+> **v2.1:** §2.0 — direção do webhook e a exposição que ela implica (PL22).
 > 🔄 **Reescrito** para a arquitetura **VPS + Coolify** (a v1 supunha Azure + Cloudflare
 > Pages + Neon). Ver [01-arquitetura §3.5](01-arquitetura.md).
 
@@ -85,6 +86,49 @@ flowchart LR
 
 > 🔑 **Você não precisa escrever pipeline de deploy.** O Coolify conecta no repositório,
 > registra um webhook, e a cada push em `main` ele constrói e publica sozinho.
+
+### 2.0 🔴 Quem chama quem — o webhook não roda na sua máquina
+
+Vale desfazer a ambiguidade da palavra *webhook*, porque ela sugere um programa rodando em
+algum lugar. **Não é um programa. É uma linha de configuração dentro do GitHub.**
+
+```
+seu notebook  ──git push──>  GitHub
+                                │
+                                │  HTTP POST  (o "webhook")
+                                ▼
+                          VPS  :443  ← o Coolify mora aqui
+```
+
+| | |
+|---|---|
+| Onde o webhook "vive" | Em *Settings → Webhooks* do repositório, **no GitHub** |
+| Quem faz a chamada | **O GitHub**, a partir dos servidores dele |
+| Quem recebe | O **Coolify, no VPS** |
+| O que trafega | Um POST HTTPS com JSON, assinado em HMAC-SHA256. Dura milissegundos |
+| **Seu notebook** | ⛔ **Não participa.** Pode estar desligado — ele só deu o `push` |
+
+⚠️ **O Coolify se instala no VPS, não localmente.** É um painel web que roda lá, acessado
+pelo navegador como o painel da própria Hostinger.
+
+#### A consequência que importa
+
+> **Para o GitHub conseguir chamar, o Coolify precisa de endereço público.**
+> `coolify.seudominio.com` fica exposto na internet — é o preço do deploy automático.
+
+| Postura | |
+|---|---|
+| ⭐ Expor com senha forte + 2FA | O caminho normal; o Coolify tem login próprio |
+| Cloudflare + allow-list | O GitHub publica suas faixas de IP em `api.github.com/meta` |
+| Não expor | Deploy manual pelo painel via túnel/VPN — funciona, mas **deixa de ser automático** |
+
+✅ **Nada disso afeta o banco.** Só 80/443 abertos; o 5432 continua fechado (§5). O que se
+expõe é o painel, não o dado.
+
+🟡 **Alternativa sem exposição alguma:** um job do Actions que entra por SSH e roda
+`docker compose pull && up`. Mas troca *"painel exposto"* por **"chave SSH do servidor
+guardada no GitHub"** — e devolve a você o pipeline de deploy para escrever à mão. Pior nos
+dois eixos. Ver pendência **PL22**.
 
 ### 2.1 O que o Coolify faz sozinho
 
@@ -274,4 +318,5 @@ pior cenário possível, e são 10 minutos de configuração.
 | **PL19** | Escolher retenção do Prometheus e configurar | 🟡 Média |
 | **PL20** | Definir o destino do backup do Postgres (S3, Backblaze, outro VPS) | 🔴 Alta |
 | **PL21** | Decidir se o Grafana fica público ou só por VPN/túnel | 🟡 Média |
+| **PL22** | Postura de exposição do painel do Coolify — público com 2FA, allow-list da Cloudflare, ou VPN (§2.0) | 🟡 Média |
 | **PL3** | Registrar domínio | 🟢 Baixa |
