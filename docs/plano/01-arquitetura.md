@@ -34,7 +34,7 @@ flowchart TB
         DNS["DNS · CDN · WAF · TLS<br/>esconde o IP do VPS"]
     end
 
-    subgraph VPS["🖥️ VPS + Coolify — Hetzner CX22"]
+    subgraph VPS["🖥️ VPS + Coolify — Hetzner CX32"]
         WEB["React · build estático"]
         API["API C# · ASP.NET Core"]
         PG[("PostgreSQL")]
@@ -242,7 +242,8 @@ de memória no meio de uma carga.
 
 | Provedor | Config | Preço | Datacenter | Latência BR |
 |---|---|---|---|---|
-| ⭐ **Hetzner CX22** | 2 vCPU · **4 GB** · 40 GB NVMe · 20 TB | **€ 3,79 (~R\$ 24)** | 🇩🇪 EU / 🇺🇸 US | ⚠️ 150–250 ms |
+| ⭐ **Hetzner CX32** | 4 vCPU · **8 GB** · 80 GB NVMe | **~€ 7 (~R\$ 45)** | 🇩🇪 EU / 🇺🇸 US | ⚠️ 150–250 ms |
+| Hetzner CX22 | 2 vCPU · 4 GB · 40 GB NVMe · 20 TB | € 3,79 (~R\$ 24) | idem | ⚠️ Apertado com o ETL junto |
 | **Hostinger VPS KVM** | 4 GB | ~R\$ 40–80 | 🇧🇷 tem BR | ✅ 10–40 ms |
 | VPS brasileiro (KingHost, Locaweb…) | 4 GB | **R\$ 80–200** | 🇧🇷 São Paulo | ✅ 10–40 ms |
 
@@ -258,8 +259,12 @@ de memória no meio de uma carga.
 ⚠️ **Onde 200 ms incomoda:** o grafo, que transfere 400–600 KB. Aí o gargalo é
 transferência, não latência — e a Cloudflare ajuda menos porque é dado dinâmico.
 
-> **Recomendação: Hetzner CX22.** ~R\$ 24/mês por 4 GB é 3× a 8× mais barato que VPS
-> brasileiro equivalente, e 200 ms não compromete um site de consulta.
+> **Recomendação: Hetzner CX32 — 8 GB, ~R\$ 45/mês.** Com o ETL rodando na mesma máquina
+> (§3.5.1.1), 4 GB fica no limite. Ainda assim sai **mais barato que VPS brasileiro de
+> 4 GB**, e 200 ms não compromete um site de consulta.
+>
+> 💡 Comece no **CX22 (4 GB, ~R\$ 24)** se quiser economizar — a Hetzner permite
+> redimensionar depois sem recriar a máquina. Se o ETL morrer por memória, você sobe.
 >
 > ⚠️ **Escolha um VPS brasileiro se:** você quer suporte em português na véspera da
 > entrega, ou se a defesa será em conexão ruim onde cada 200 ms conta.
