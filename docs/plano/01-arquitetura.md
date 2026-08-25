@@ -1,6 +1,8 @@
 # Plano de implementação — arquitetura macro
 
-> **Status:** v1.0 — 2026-08-23
+> **Status:** v1.1 — 2026-08-25
+> **v1.1:** §3 — opção D avaliada (compartilhada, Render, Railway, VPS+Coolify) e
+> comparação final; PL1 e PL2 decididas.
 > **Restrições dadas:** React no front · C# no back · Python no ETL · Postgres ·
 > Cloudflare · login só com Google · Aspire para subir infra local · **prazo curto**.
 > Este documento escolhe o caminho de menor atrito dentro dessas restrições.
@@ -104,6 +106,70 @@ Fiz três rodadas até chegar na combinação de menor atrito.
 
 > ✅ **Escolhida.** Nenhum componente exige administração de servidor, e o único que
 > pode custar dinheiro é a API — que roda em tier gratuito no volume do TCC.
+
+### Opção D — "Tudo em um lugar só" (Hostinger, HostGator, Render, Railway)
+
+Avaliada em 2026-08-25, porque a vontade por trás é legítima: **uma conta, uma fatura, um
+painel**. Mas as quatro caem por motivos diferentes.
+
+#### ⛔ Hospedagem compartilhada (Hostinger, HostGator) — **impossível, não caro**
+
+| Barreira | |
+|---|---|
+| **Sem PostgreSQL** | Documentação oficial da Hostinger: *"PostgreSQL requer mais recursos e configurações que não estão disponíveis nos planos Web e Cloud — VPS é a opção suportada"*. Compartilhado = **MySQL apenas** |
+| **Sem .NET** | Compartilhado é ambiente **PHP/cPanel**. ASP.NET Core não roda |
+| **Sem cron para ETL Python** | Mesmo onde há Python via cPanel, é limitado |
+
+> 🔑 **Não é questão de plano mais caro.** Hospedagem compartilhada é uma categoria de
+> produto que não atende a esta stack. Trocaria Postgres por MySQL e C# por PHP — ou seja,
+> mudaria o projeto para caber na hospedagem.
+
+#### ⛔ Render — o Postgres gratuito **expira em 30 dias**
+
+| | |
+|---|---|
+| Postgres free | 1 GB, **expira 30 dias após a criação** (era 90 até 2024), depois 14 dias de carência e **os dados são apagados** |
+| Web service free | Dorme após 15 min · 750 h/mês |
+| Veredito | ⛔ Inviável — o TCC dura meses; o banco morreria três vezes no caminho |
+
+#### 🟡 Railway — US$ 5 de crédito único, depois US$ 1/mês
+
+| | |
+|---|---|
+| Trial | US$ 5 uma vez, sem cartão |
+| Free contínuo | **US$ 1/mês** — 1 vCPU, 0,5 GB RAM, 1 projeto |
+| Veredito | 🟡 Funciona, mas na prática vira **~US$ 5/mês**. Deploy num lugar só, isso sim |
+
+#### 🟡 VPS + PaaS self-hosted — **a opção honesta se quiser tudo junto**
+
+Se o valor for mesmo *"um lugar só"*, o caminho viável é **VPS com Coolify ou Dokploy**
+(PaaS auto-hospedado: deploy por `git push`, TLS automático, Postgres em container).
+
+| | |
+|---|---|
+| Custo | ~R\$ 30–50/mês (Hostinger VPS, Contabo, Hetzner) |
+| Setup | ~1 dia — instalar Docker + Coolify, apontar domínio |
+| Depois disso | Comporta-se como PaaS: `git push` e pronto |
+| ⛔ Custo real | **Atualização de SO, backup, monitoramento, e o dia que cair é você quem levanta** |
+
+### 3.0 Comparação final
+
+| Opção | Custo/mês | Sysadmin? | Serve? |
+|---|---|---|---|
+| Compartilhada (Hostinger/HostGator) | R\$ 10–30 | Não | ⛔ **Não roda .NET nem Postgres** |
+| Render | US\$ 0 | Não | ⛔ Postgres expira em 30 dias |
+| Railway | ~US\$ 5 | Não | 🟡 Serve |
+| VPS + Coolify | R\$ 30–50 | 🟡 Sim, um pouco | ✅ Serve |
+| ⭐ **Distribuída (Opção C)** | **R\$ 0** | **Não** | ✅ **Serve** |
+
+> 🔑 **A configuração distribuída é gratuita justamente por ser distribuída.** Cada
+> provedor cobre uma peça no seu tier gratuito. Concentrar tudo em um lugar significa
+> pedir a um único provedor que banque tudo — e aí ele cobra.
+
+⚠️ **O custo real da Opção C não é dinheiro, é atenção:** quatro painéis (Cloudflare,
+Azure, Neon, GitHub) em vez de um. Para um projeto que é configurado uma vez e roda,
+é troca vantajosa. **Se você prefere pagar ~R\$ 40/mês para ter um painel só, o VPS +
+Coolify é escolha defensável** — e vale registrar no TCC como decisão consciente.
 
 ### 3.1 ⭐ A decisão menos óbvia e mais útil: ETL no GitHub Actions
 
