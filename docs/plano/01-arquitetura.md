@@ -1,6 +1,7 @@
 # Plano de implementação — arquitetura macro
 
-> **Status:** v1.1 — 2026-08-25
+> **Status:** v1.2 — 2026-08-25
+> **v1.2:** ✅ **DECISÃO — VPS + Coolify** (§3.5), com Hetzner CX22 recomendado.
 > **v1.1:** §3 — opção D avaliada (compartilhada, Render, Railway, VPS+Coolify) e
 > comparação final; PL1 e PL2 decididas.
 > **Restrições dadas:** React no front · C# no back · Python no ETL · Postgres ·
@@ -104,8 +105,9 @@ Fiz três rodadas até chegar na combinação de menor atrito.
 | Postgres | ✅ **Neon** (Supabase pausa após 1 semana parado) | Grátis |
 | ETL Python | **GitHub Actions** (cron) | Grátis |
 
-> ✅ **Escolhida.** Nenhum componente exige administração de servidor, e o único que
-> pode custar dinheiro é a API — que roda em tier gratuito no volume do TCC.
+⚠️ **NÃO escolhida.** Era a recomendação até 2026-08-25, quando o autor optou pela Opção D
+(VPS + Coolify) por preferir um painel único. Mantida como registro — e a comparação
+continua válida para o texto do TCC.
 
 ### Opção D — "Tudo em um lugar só" (Hostinger, HostGator, Render, Railway)
 
@@ -140,7 +142,7 @@ painel**. Mas as quatro caem por motivos diferentes.
 | Free contínuo | **US$ 1/mês** — 1 vCPU, 0,5 GB RAM, 1 projeto |
 | Veredito | 🟡 Funciona, mas na prática vira **~US$ 5/mês**. Deploy num lugar só, isso sim |
 
-#### 🟡 VPS + PaaS self-hosted — **a opção honesta se quiser tudo junto**
+#### ✅ VPS + PaaS self-hosted — **ESCOLHIDA** (ver §3.5)
 
 Se o valor for mesmo *"um lugar só"*, o caminho viável é **VPS com Coolify ou Dokploy**
 (PaaS auto-hospedado: deploy por `git push`, TLS automático, Postgres em container).
@@ -170,6 +172,86 @@ Se o valor for mesmo *"um lugar só"*, o caminho viável é **VPS com Coolify ou
 Azure, Neon, GitHub) em vez de um. Para um projeto que é configurado uma vez e roda,
 é troca vantajosa. **Se você prefere pagar ~R\$ 40/mês para ter um painel só, o VPS +
 Coolify é escolha defensável** — e vale registrar no TCC como decisão consciente.
+
+---
+
+## 3.5 ✅ DECISÃO — VPS + Coolify (2026-08-25)
+
+O autor optou pela Opção D: **um painel só**. Esta seção dimensiona e escolhe.
+
+### 3.5.1 Dimensionamento — o ETL é quem manda
+
+| Componente | RAM |
+|---|---|
+| **Coolify** (só ele) | 750 MB – 1,2 GB |
+| PostgreSQL (463 mil votos) | ~1 GB |
+| API .NET | ~300 MB |
+| 🔴 **ETL Python — pico** | **1–2 GB** (`pandas` com CSV de 55 MB + `numpy`) |
+| Build (.NET compilando) | CPU-intensivo, picos de RAM |
+
+> 🔑 **4 GB é o piso, 8 GB é confortável.** Em 2 GB o Coolify sozinho come metade e o ETL
+> morre por falta de memória.
+
+**Disco:** 149 MB de CSV + Postgres + imagens Docker → **40 GB basta**, 80 GB folga.
+
+⚠️ **O ETL é o pico, e ele é diário e previsível.** Se apertar, a saída é mantê-lo no
+**GitHub Actions** mesmo com VPS — aí 4 GB sobram com folga. Vale considerar: o "painel
+único" continua valendo para o que é servido; o job diário fica de fora e não compete por
+memória.
+
+### 3.5.2 A escolha real: latência × preço
+
+| Provedor | Config | Preço | Datacenter | Latência BR |
+|---|---|---|---|---|
+| ⭐ **Hetzner CX22** | 2 vCPU · **4 GB** · 40 GB NVMe · 20 TB | **€ 3,79 (~R\$ 24)** | 🇩🇪 EU / 🇺🇸 US | ⚠️ 150–250 ms |
+| **Hostinger VPS KVM** | 4 GB | ~R\$ 40–80 | 🇧🇷 tem BR | ✅ 10–40 ms |
+| VPS brasileiro (KingHost, Locaweb…) | 4 GB | **R\$ 80–200** | 🇧🇷 São Paulo | ✅ 10–40 ms |
+
+#### A latência importa aqui?
+
+**Menos do que parece**, por dois motivos:
+
+1. **Cloudflare na frente** cacheia o estático na borda — o React carrega rápido mesmo com
+   origem na Alemanha.
+2. **O que sobra é chamada de API.** A ficha do parlamentar faz 1–2 chamadas; o
+   questionário faz 1. São **+200 ms por chamada**, perceptível mas tolerável.
+
+⚠️ **Onde 200 ms incomoda:** o grafo, que transfere 400–600 KB. Aí o gargalo é
+transferência, não latência — e a Cloudflare ajuda menos porque é dado dinâmico.
+
+> **Recomendação: Hetzner CX22.** ~R\$ 24/mês por 4 GB é 3× a 8× mais barato que VPS
+> brasileiro equivalente, e 200 ms não compromete um site de consulta.
+>
+> ⚠️ **Escolha um VPS brasileiro se:** você quer suporte em português na véspera da
+> entrega, ou se a defesa será em conexão ruim onde cada 200 ms conta.
+
+### 3.5.3 ⚠️ Duas armadilhas de preço
+
+| Armadilha | |
+|---|---|
+| **Preço promocional** | Hostinger e afins anunciam o valor de contratos de 24–48 meses. **A renovação costuma dobrar.** Confira o preço de renovação, não o da vitrine |
+| **Oracle Cloud Always Free** | Tem região São Paulo e oferece ARM com 4 CPU / 24 GB **de graça**. ⛔ **Não recomendo para TCC:** é notório por não haver capacidade disponível e por encerrar contas sem aviso. Perder o ambiente na semana da entrega não compensa a economia |
+
+### 3.5.4 O que muda no plano
+
+| Item | Antes (distribuída) | Agora (VPS + Coolify) |
+|---|---|---|
+| Front | Cloudflare Pages | 🔄 Coolify (ou manter no Pages) |
+| API | Azure App Service F1 | 🔄 **Coolify** |
+| Postgres | Neon | 🔄 **Container no Coolify** |
+| ETL | GitHub Actions | 🟡 Coolify **ou manter no Actions** |
+| Cloudflare | DNS + Pages + WAF | ✅ **Mantém** — DNS, CDN, WAF, TLS na borda |
+| Custo | R\$ 0 | **~R\$ 24–80/mês** |
+
+✅ **Some o problema do *cold start*** — sem App Service F1 dormindo e sem Neon pausando,
+a demonstração para a banca fica previsível. **Esse ganho sozinho já justifica a escolha.**
+
+⚠️ **Mantenha a Cloudflare na frente** mesmo com VPS: TLS, CDN, WAF e — importante —
+**esconde o IP do servidor**, o que reduz superfície de ataque.
+
+⚠️ **Backup do Postgres passa a ser sua responsabilidade.** O Coolify tem agendamento de
+backup para S3/storage externo — **configure no primeiro dia**, não depois. Perder o banco
+com o TCC em andamento é o pior cenário possível, e é evitável em 10 minutos.
 
 ### 3.1 ⭐ A decisão menos óbvia e mais útil: ETL no GitHub Actions
 
