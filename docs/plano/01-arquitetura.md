@@ -50,11 +50,11 @@ flowchart TB
     F3["TSE · CDN"] --> ETL
     F4["RSS de notícias"] --> ETL
 
-    PAGES -->|"fetch /api"| API
-    G(["Google<br/>OAuth"]) -.->|"id_token"| PAGES
+    CF --> WEB
+    CF --> API
 
     style CF fill:#f38020,color:#fff
-    style BATCH fill:#3776ab,color:#fff
+    style VPS fill:#0d1117,color:#fff
     style PG fill:#336791,color:#fff
 ```
 
@@ -63,7 +63,7 @@ simples:
 
 | Bloco | Roda quando | Se cair |
 |---|---|---|
-| **Front** (Pages) | Sempre, estático | CDN da Cloudflare segura |
+| **Front** (React) | Sempre, estático | CDN da Cloudflare segura |
 | **API** (C#) | Sempre, sob demanda | Site fica sem dados |
 | **ETL** (Python) | 1× por dia, offline | **Nada quebra** — dado fica velho |
 
@@ -161,8 +161,8 @@ Se o valor for mesmo *"um lugar só"*, o caminho viável é **VPS com Coolify ou
 | Compartilhada (Hostinger/HostGator) | R\$ 10–30 | Não | ⛔ **Não roda .NET nem Postgres** |
 | Render | US\$ 0 | Não | ⛔ Postgres expira em 30 dias |
 | Railway | ~US\$ 5 | Não | 🟡 Serve |
-| VPS + Coolify | R\$ 30–50 | 🟡 Sim, um pouco | ✅ Serve |
-| ⭐ **Distribuída (Opção C)** | **R\$ 0** | **Não** | ✅ **Serve** |
+| ⭐ **VPS + Coolify** | **R\$ 24–80** | 🟡 Sim, um pouco | ✅ **ESCOLHIDA** — §3.5 |
+| Distribuída (Opção C) | R\$ 0 | Não | ✅ Serve — não escolhida |
 
 > 🔑 **A configuração distribuída é gratuita justamente por ser distribuída.** Cada
 > provedor cobre uma peça no seu tier gratuito. Concentrar tudo em um lugar significa
