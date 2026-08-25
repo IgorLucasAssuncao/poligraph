@@ -1,8 +1,11 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v1.4 — 2026-08-25
-> **v1.4:** ✅ DECIDIDO — login só com Google, identidade opaca (§3). Resolve a RQ9 como
-> opção D. Nova §3.2.4: sem senha não significa sem sessão.
+> **Status:** v1.5 — 2026-08-25
+> **v1.5:** 🔄 §3 — a opção 2 não comporta e-mail; decisão revista para a **opção 3**
+> (Google + e-mail armazenado). Nova §3.3: o que a notificação por e-mail traz junto
+> (SPF/DKIM/DMARC, serviço de envio, `token_email`, assunto que vaza).
+> **v1.4:** ✅ DECIDIDO — login só com Google, identidade opaca (§3). Nova §3.2.4: sem
+> senha não significa sem sessão.
 > **v1.3:** §3.2 — o passo a passo concreto do login com Google (Google Cloud, escopos,
 > código, esforço).
 > **v1.2:** ✅ PL6 DECIDIDA — Clarity em produção, gravando tudo, com consentimento
@@ -62,7 +65,7 @@ Servidor          → nunca sabe quem segue quem
 | ⛔ | Perde a lista ao trocar de navegador ou limpar dados |
 | ⛔ | Sem notificação por e-mail |
 
-### Opção 2 — Google login com identidade opaca  ✅ ESCOLHIDA
+### Opção 2 — Google login com identidade opaca  🔄 superada pela §3
 
 ```
 Guarda APENAS o `sub` do Google (id opaco, ex.: 117482...)
@@ -77,25 +80,57 @@ Tabela: usuario(sub_hash) · segue(sub_hash, pessoa_id)
 | ⚠️ | **Continua sendo dado pessoal** — pseudonimizado ≠ anonimizado (LGPD art. 12) |
 | ⚠️ | Exige: consentimento específico, política de privacidade, exclusão sob demanda |
 
-### Opção 3 — Google login completo (e-mail, nome)
+### Opção 3 — Google login + e-mail armazenado  ✅ ESCOLHIDA (§3)
 
 | | |
 |---|---|
-| ✅ | Permite notificação por e-mail |
+| ✅ | **Permite notificação por e-mail** — o motivo da escolha |
+| ✅ | Continua **sem senha nossa** — a autenticação segue no Google |
 | 🔴 | **Base de convicção política vinculada a pessoa identificada** |
-| 🔴 | Maior exposição possível, no pior momento possível |
-| Veredito | ⛔ **Não recomendado** |
+| 🔴 | Maior exposição possível, e em ano eleitoral (R7) |
+| Mitigações | §3.3 — assunto neutro, opt-in separado, descadastro em um clique |
 
 ---
 
-## 3. ✅ DECISÃO — Opção 2 (2026-08-25)
+## 3. ✅ DECISÃO — Opção 3: Google + e-mail armazenado (2026-08-25)
 
-> **Login apenas com Google, identidade opaca. Nenhuma estrutura de senha do nosso lado.**
-> Decisão do autor, com a justificativa registrada: *"justamente para ter mais segurança"*.
-> Resolve a **RQ9** como **opção D** em [03-requisitos §2.7.2](../03-requisitos.md).
+> **Ponto do autor:** *"como o usuário vai receber os e-mails de notícias do político dele
+> se não tiver uma conta com e-mail válido?"*
 
-**A justificativa está correta, e vale registrá-la assim no TCC.** Não guardar senha não é
-economia de trabalho — é remoção de uma classe inteira de vulnerabilidade:
+**Está correto, e derrubou a opção 2 no mesmo dia em que ela foi decidida.** A opção 2
+guarda apenas `sub_hash` — **não há para onde enviar**. Notificação por e-mail não é um
+incremento dela: é a **opção 3**.
+
+| | Opção 2 (§3) | ✅ **Opção 3 — decidida** |
+|---|---|---|
+| Autenticação | Google | **Google, igual** |
+| Senha nossa | ⛔ Nenhuma | ⛔ **Nenhuma — isso não muda** |
+| Guarda | `sub_hash` | `sub_hash` **+ e-mail** |
+| Notificação por e-mail | ⛔ Impossível | ✅ **Possível** |
+
+⭐ **O que se preserva integralmente da decisão anterior:** a **RNF-12d** continua valendo —
+nenhuma estrutura de senha no projeto. Guardar e-mail para *enviar* é coisa diferente de
+guardar e-mail para *autenticar*. O Google segue sendo o único responsável por provar quem
+é a pessoa.
+
+⚠️ **O que muda de verdade:** a base deixa de ser pseudonimizada. `usuario(email)` +
+`segue(usuario, parlamentar)` é **preferência política vinculada a pessoa identificada** —
+exatamente o cenário da §1. Decisão do autor, registrada, e mitigada pela §3.3.
+
+### 3.0.1 ⭐ E há um ganho que compensa, no argumento do TCC
+
+O **RF-43 (feed agregado) é condicional** — pode não existir. Se não existir, o e-mail
+passa a ser **a única entrega de "Recomendação de Notícias"**, que é *metade do título do
+trabalho*. Isso muda o cálculo: o e-mail deixa de ser conveniência e vira **o canal que
+sustenta um dos quatro elementos do título**.
+
+
+### 3.0.2 O que se preserva — e por que a justificativa original continua correta
+
+A escolha nasceu de outra frase do autor: *"login com Google justamente para ter mais
+segurança, sem estrutura de senhas do nosso lado"*. **Isso não mudou com a entrada do
+e-mail** — e vale registrar assim no TCC, porque não guardar senha não é economia de
+trabalho, é remoção de uma classe inteira de vulnerabilidade:
 
 | O que deixa de existir no projeto | |
 |---|---|
@@ -108,11 +143,10 @@ economia de trabalho — é remoção de uma classe inteira de vulnerabilidade:
 ⭐ **É o argumento certo pelo motivo certo.** A superfície de ataque de autenticação passa
 a ser zero, porque a autenticação não acontece aqui.
 
-⚠️ **O que a decisão não resolve — e continua valendo:** o risco da §1 nunca esteve na
-senha, e sim na tabela `segue(sub_hash, pessoa_id)`, que é uma base de convicção política.
-Por isso a §3.1 deixa de ser sugestão e vira **requisito**: persistir **só**
-`SHA256(sub + pepper)`, nunca e-mail, nome ou foto. **São dois riscos diferentes; o login
-com Google elimina um deles por completo e não toca no outro.**
+⚠️ **O que a decisão não resolve — e agora pesa mais:** o risco da §1 nunca esteve na
+senha, e sim na tabela `segue`, que é base de convicção política. Com o e-mail dentro, ela
+deixa de ser pseudonimizada. **São dois riscos diferentes: o Google elimina o de
+credencial por completo e não toca no outro** — este se trata na §3.1 e na §3.3.
 
 ### 3.1 🔴 O desenho obrigatório
 
@@ -127,20 +161,38 @@ sequenceDiagram
     U->>A: GET /api/seguidos  (Authorization: Bearer id_token)
     A->>A: valida assinatura do Google
     A->>A: extrai `sub`, calcula sub_hash = SHA256(sub + pepper)
+    A->>A: grava `email` SOMENTE se houve opt-in (§3.3.5)
     A-->>U: lista de seguidos
-    Note over A: NUNCA persiste e-mail, nome ou foto
+    Note over A: NUNCA persiste nome nem foto
 ```
 
 | Regra | Motivo |
 |---|---|
 | Validar o `id_token` **no servidor** | Nunca confiar no cliente |
-| Persistir só `SHA256(sub + pepper)` | Nem o `sub` cru fica no banco |
-| ⛔ Não persistir e-mail, nome, foto | Não são necessários para nada |
+| Chave da conta é `SHA256(sub + pepper)` | O `sub` cru não fica no banco |
+| ⭐ **`email` é coluna anulável** | 🔑 Quem não pediu notificação **não tem e-mail gravado** |
+| ⛔ Nunca persistir nome nem foto | Não são necessários para nada |
 | Endpoint de exclusão total | LGPD art. 18 — direito à eliminação |
 | Retenção com prazo | Ex.: apagar após 12 meses sem acesso |
 
 ⚠️ **`pepper` fora do banco** (variável de ambiente). Se o banco vazar, o hash sozinho não
 liga a ninguém.
+
+> ⭐ **O detalhe que mais reduz exposição, e custa uma linha de schema:** deixar `email`
+> anulável e preenchê-lo **só** no opt-in. Quem apenas entra para sincronizar a lista
+> continua pseudonimizado, exatamente como na opção 2. **A base identificada passa a conter
+> apenas quem pediu para receber e-mail** — que é o mínimo indispensável.
+
+```sql
+CREATE TABLE usuario (
+    id        BIGSERIAL PRIMARY KEY,
+    sub_hash  TEXT NOT NULL UNIQUE,          -- SHA256(sub + pepper)
+    email     TEXT,                          -- ⭐ NULL enquanto não houver opt-in
+    email_ok  BOOLEAN NOT NULL DEFAULT FALSE,
+    criado_em TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK (email IS NOT NULL OR email_ok = FALSE)
+);
+```
 
 ---
 
@@ -270,6 +322,111 @@ ela NÃO resolve — porque a PL6 aumentou esse lado:
 > credencial. O risco que resta é o da §1, e ele se trata com a §3.1 (só `sub_hash`), com
 > a RNF-12b (consentimento específico) e com o endpoint de exclusão (LGPD art. 18).
 > **Três medidas concretas, todas já especificadas.**
+
+## 3.3 🔴 O que a notificação por e-mail traz junto
+
+Aqui está a parte que costuma surpreender: **enviar e-mail não é problema de código.** O
+código é uma chamada HTTP. O trabalho está em outro lugar.
+
+### 3.3.1 ⛔ Não envie do VPS
+
+| Por quê | |
+|---|---|
+| **Porta 25 bloqueada** | Quase todo provedor de VPS bloqueia saída na 25 por padrão |
+| **Reputação de IP zero** | IP novo, sem histórico → Gmail trata como spam |
+| Sem infra de entrega | Sem *bounce handling*, sem *feedback loop*, sem retentativa |
+
+**Use um serviço de envio:**
+
+| Serviço | Gratuito | Nota |
+|---|---|---|
+| ⭐ **Resend** | 3.000/mês · 100/dia | API simples, DNS guiado. Suficiente com folga |
+| **Brevo** | 300/dia | Mais generoso no diário |
+| Amazon SES | ~US$ 0,10/mil | Barato, mas exige **sair do sandbox** por pedido aprovado |
+
+⭐ **Com o volume esperado deste TCC, o tier gratuito basta** — e sobra.
+
+### 3.3.2 🔴 SPF, DKIM e DMARC — sem isso, o e-mail não chega
+
+Desde **fevereiro de 2024**, Gmail e Yahoo exigem de quem envia em volume:
+
+| Exigência | Onde se configura |
+|---|---|
+| **SPF** | Registro TXT no DNS (Cloudflare) |
+| **DKIM** | Registro TXT/CNAME que o serviço de envio fornece |
+| **DMARC** | Registro TXT `_dmarc` |
+| 🔴 **Descadastro em um clique** | Cabeçalho `List-Unsubscribe` + `List-Unsubscribe-Post` (RFC 8058) |
+
+⚠️ **Isso amarra na PL3.** Não dá para configurar SPF/DKIM/DMARC sem domínio próprio —
+e-mail é a segunda coisa (depois do login com Google) que torna o domínio bloqueante.
+
+### 3.3.3 ✅ Você tem razão sobre a tabela de tokens — mas não a que imagina
+
+Duas tabelas de token diferentes, e **só uma é necessária**:
+
+| Tabela | Precisa? | Por quê |
+|---|---|---|
+| `sessao(token, usuario)` — sessão de login | ⛔ **Não** | A §3.2.4 continua valendo: valide o `id_token` do Google a cada chamada. E-mail não muda isso |
+| ⭐ `token_email` — descadastro e confirmação | ✅ **Sim, obrigatória** | O link de descadastro **precisa funcionar sem login**, direto do e-mail |
+
+> 🔑 **O motivo é este:** a pessoa clica em "descadastrar" no cliente de e-mail, às vezes
+> em outro dispositivo, muitas vezes sem estar logada. Exigir login para sair de uma lista
+> é justamente o que o RFC 8058 proíbe. Por isso o token precisa existir — **e ser opaco,
+> longo e não adivinhável.**
+
+```sql
+CREATE TABLE token_email (
+    token      TEXT PRIMARY KEY,          -- 32 bytes aleatórios, base64url
+    usuario_id BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
+    proposito  TEXT NOT NULL CHECK (proposito IN ('DESCADASTRO', 'CONFIRMACAO')),
+    criado_em  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expira_em  TIMESTAMPTZ,               -- NULL no descadastro: nunca expira
+    usado_em   TIMESTAMPTZ
+);
+```
+
+⚠️ **O token de descadastro não expira, de propósito.** Um e-mail antigo com link morto
+transforma "quero sair" em "vou marcar como spam" — e aí a reputação do domínio cai.
+
+### 3.3.4 🔴 O assunto do e-mail vaza o que o banco protege
+
+> **"Notícias sobre o Deputado Fulano" na caixa de entrada é convicção política
+> atravessando o Gmail, o Outlook e o celular na tela de bloqueio.**
+
+De nada adianta `sub_hash` no banco se o assunto do e-mail diz a mesma coisa em texto puro.
+
+| ⛔ Evitar | ✅ Preferir |
+|---|---|
+| *"Novidades sobre o Deputado Fulano"* | *"Suas atualizações do Poligraph"* |
+| Nome do parlamentar no *preview* | Nomes só **dentro** do corpo |
+
+### 3.3.5 🔴 Consentimento para e-mail é separado do consentimento de login
+
+Entrar com o Google **não autoriza** receber e-mail. São finalidades distintas (LGPD
+art. 8º §4 — o consentimento é para finalidades determinadas).
+
+| # | Exigência |
+|---|---|
+| 1 | *Checkbox* de opt-in **desmarcado por padrão** |
+| 2 | Texto explícito: *"quero receber por e-mail notícias dos parlamentares que eu seguir"* |
+| 3 | Link de descadastro em **todos** os e-mails |
+| 4 | Descadastrar **não** apaga a conta — são ações diferentes |
+
+### 3.3.6 Esforço adicional
+
+| Item | |
+|---|---|
+| Conta no serviço + SPF/DKIM/DMARC | ~4 h (a maior parte é esperar propagação de DNS) |
+| Job de digest (Scheduled Task do Coolify) | ~1 dia |
+| `token_email` + endpoint de descadastro | ~4 h |
+| Template HTML que não quebra no Outlook | ~4 h — 🔴 mais chato do que parece |
+| **Total sobre o login** | **~2 a 3 dias** |
+
+⚠️ **Isso não é pequeno.** Some ao ~1 dia do login e à PL7, e a frente de "conta de
+usuário" passa de meio dia imaginado para **quase uma semana**. Vale saber disso antes de
+começar, para decidir onde ela entra no cronograma — não para desistir dela.
+
+---
 
 ## 4. Métricas de uso — a ferramenta é o Microsoft Clarity
 
@@ -448,6 +605,8 @@ custar meses se ficar para o fim.
 | Mapa de calor | **Microsoft Clarity** — 🔴 máscara não basta; o que protege é o consentimento (§4.5) |
 | Analytics de uso | **GA4**, sem PII |
 | Gravação de sessão | ✅ **Em produção, completa** — com consentimento bloqueante (§4.5) |
+| Login no MVP (revisto) | ✅ **Google + e-mail**, opção 3 (§3) — `email` anulável, só no opt-in |
+| Notificação por e-mail | ✅ **Sim** — exige serviço de envio, SPF/DKIM/DMARC e `token_email` (§3.3) |
 
 ---
 
@@ -461,6 +620,8 @@ custar meses se ficar para o fim.
 | **PL24** | Confirmar com o orientador se o TCC precisa de aprovação em CEP (Plataforma Brasil) | 🔴 Alta |
 | ~~PL9~~ | ✅ **Necessário e bloqueante** — decorre da PL6 (§4.5.1) | — |
 | **PL25** | Escrever o texto do banner cobrindo as 5 exigências da §4.5.2 | 🔴 Alta |
+| **PL26** | Escolher o serviço de envio de e-mail (Resend, Brevo, SES) e configurar SPF/DKIM/DMARC | 🔴 Alta |
+| **PL27** | Definir a cadência do digest — diário, semanal, ou por volume de notícia | 🟡 Média |
 
 ---
 

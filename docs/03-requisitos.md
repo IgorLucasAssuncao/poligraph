@@ -1,6 +1,9 @@
 # Requisitos — funcionais e não funcionais
 
-> **Status:** v1.3 — 2026-08-25
+> **Status:** v1.4 — 2026-08-25
+> **v1.4:** 🔄 RQ9 revista no mesmo dia — notificação por e-mail exige guardar e-mail,
+> então é a coluna C com a autenticação da D. Nascem RF-49 a RF-53 e a RNF-12e.
+> ⭐ `email` é coluna ANULÁVEL: só quem faz opt-in sai do pseudonimato.
 > **v1.3:** ✅ RQ9 RESOLVIDA — opção D, login só com Google e identidade opaca (§2.7.2).
 > Novo ator "cidadão autenticado" (§1.1). RNF-12 revisto, RNF-12a REVOGADO, nascem
 > RNF-12c e RNF-12d.
@@ -86,7 +89,8 @@ flowchart LR
 | | |
 |---|---|
 | ⛔ **Não existe ator "usuário com senha"** | A autenticação é **sempre** delegada ao Google — RNF-12d |
-| ⛔ **O login nunca é obrigatório** | Questionário, grafo e fichas funcionam sem entrar. Login só habilita a sincronia |
+| ⛔ **O login nunca é obrigatório** | Questionário, grafo e fichas funcionam sem entrar. Login só habilita sincronia e e-mail |
+| ⭐ **Entrar ≠ receber e-mail** | São dois consentimentos. Quem entra e não faz opt-in **fica sem `email` gravado** — RF-50, RNF-12c |
 | 🔴 O servidor passa a saber quem segue quem | É o custo aceito da decisão — mitigado por RNF-12b e RNF-12c |
 
 ---
@@ -192,6 +196,11 @@ transforma o produto de consulta pontual em algo com retorno.
 | **RF-44** | Sugerir a quem seguir a partir do **resultado do questionário** (afinidade + temas) | 🟡 Importante |
 | **RF-45** | Permitir seguir **tema** além de parlamentar | 🟢 Desejável |
 | **RF-46** | Indicar **por que** cada notícia apareceu ("porque você segue X") | 🟡 Importante *(se RF-43)* |
+| **RF-49** | Enviar **digest por e-mail** com notícias dos parlamentares seguidos | 🔴 **Essencial** — decisão do autor; se o RF-43 não existir, é a ÚNICA entrega de "Recomendação de Notícias" |
+| **RF-50** | *Opt-in* de e-mail **separado** do login, desmarcado por padrão | 🔴 Essencial — LGPD art. 8º §4 |
+| **RF-51** | 🔴 Link de **descadastro em um clique** em todos os e-mails, funcionando **sem login** | 🔴 Essencial — RFC 8058; Gmail/Yahoo exigem desde fev/2024 |
+| **RF-52** | Descadastrar do e-mail **não** apaga a conta — são ações distintas | 🔴 Essencial |
+| **RF-53** | Assunto e *preview* do e-mail **sem nome de parlamentar** | 🔴 Essencial — senão a preferência política vaza no Gmail |
 
 ### 2.7.3 🔶 O feed agregado é condicional — e se existir, é misto
 
@@ -273,9 +282,12 @@ Somando ao risco R7 (contexto eleitoral de outubro de 2026), guardar essa base e
 | Exposição LGPD | ✅ Praticamente nula | 🟡 Média | 🔴 Alta | 🟡 **Média** |
 | Esforço | 🟢 Baixo | 🟡 Médio | 🔴 Alto | 🟡 **~1 dia** |
 
-### ✅ RQ9 RESOLVIDA — opção D (2026-08-25)
+### ✅ RQ9 RESOLVIDA — opção D, revista para C no mesmo dia (2026-08-25)
 
 > **Decisão do autor:** login **apenas** com Google, sem estrutura de senha do nosso lado.
+> 🔄 **E, algumas horas depois:** *"como o usuário vai receber os e-mails de notícias do
+> político dele se não tiver uma conta com e-mail válido?"* — **procede**. A D guarda só
+> `sub_hash` e não tem para onde enviar. **Vale a coluna C, com a autenticação da D.**
 
 **A opção D não existia na tabela original e é melhor que a B e a C para este caso.** Ela
 entrega o cross-device da C **sem** guardar e-mail, nome ou foto — e elimina por completo
@@ -316,7 +328,7 @@ e sincronização. ⚠️ **A sincronização era justamente o que se queria** �
 ⚠️ **Notificação por e-mail continua fora**, mesmo com a opção D: não guardamos e-mail.
 Quem quiser isso cai na opção C, que segue **não recomendada**.
 
-~~**Pendência RQ9**~~ ✅ **Resolvida: opção D** (acima).
+~~**Pendência RQ9**~~ ✅ **Resolvida: opção C com autenticação Google** (acima).
 
 ---
 
@@ -348,10 +360,11 @@ Quem quiser isso cai na opção C, que segue **não recomendada**.
 | ID | Requisito | Origem |
 |---|---|---|
 | **RNF-12** | 🔄 **Revisto pela RQ9.** **Não persistir no servidor as respostas do questionário** — isso continua valendo integralmente. A lista de seguidos passou a ser persistida sob as condições da RNF-12b e RNF-12c | R7 / LGPD |
-| ~~RNF-12a~~ | ⛔ **REVOGADO pela RQ9 = opção D.** A API passa a receber a lista de seguidos, por definição do cross-device. O que substitui esta garantia é a RNF-12c | §2.7.2 |
-| **RNF-12c** | 🔴 Persistir **apenas** `SHA256(sub + pepper)` do Google. ⛔ **Nunca** e-mail, nome ou foto. `pepper` em variável de ambiente, fora do banco. Endpoint de exclusão total (art. 18) | [plano/02 §3.1](plano/02-autenticacao-e-metricas.md) |
+| ~~RNF-12a~~ | ⛔ **REVOGADO pela RQ9.** A API passa a receber a lista de seguidos, por definição do cross-device. O que substitui esta garantia é a RNF-12c | §2.7.2 |
+| **RNF-12c** | 🔄 **Revisto (opção 3).** Chave da conta é `SHA256(sub + pepper)`. ⛔ **Nunca** nome ou foto. ⭐ `email` é coluna **anulável**, preenchida **só** no opt-in — quem não pediu notificação segue pseudonimizado. `pepper` fora do banco. Endpoint de exclusão total (art. 18) | [plano/02 §3.1](plano/02-autenticacao-e-metricas.md) |
+| **RNF-12e** | ⛔ Não enviar e-mail a partir do VPS. Usar serviço de envio com **SPF, DKIM e DMARC** configurados no domínio | [plano/02 §3.3](plano/02-autenticacao-e-metricas.md) |
 | **RNF-12d** | ⛔ **Nenhuma estrutura de senha no projeto** — sem tabela de credencial, sem recuperação, sem sessão própria. Autenticação é sempre delegada ao Google | Decisão do autor |
-| **RNF-12b** | 🔴 **ATIVA** (RQ9 = opção D). Tratar a lista de seguidos como **dado pessoal sensível** (LGPD art. 5º, II — opinião política): consentimento específico, política de privacidade e exclusão sob demanda | LGPD |
+| **RNF-12b** | 🔴 **ATIVA** (RQ9). Tratar a lista de seguidos como **dado pessoal sensível** (LGPD art. 5º, II — opinião política): consentimento específico, política de privacidade e exclusão sob demanda | LGPD |
 | **RNF-13** | **Não republicar CPF**. Uso interno como chave; persistir apenas hash | LGPD |
 | **RNF-14** | Exibir *disclaimer* em toda tela de resultado: ferramenta acadêmica, **não** recomendação de voto | R7 |
 | **RNF-15** | Não exibir dado de candidatos **não eleitos** | 12-fonte-tse §5 |
@@ -529,5 +542,5 @@ notícias**. F6, F7 e F9 são incrementos.
 | **RQ6** | Definir critérios de aceitação mensuráveis para os RF essenciais | Validação |
 | **RQ7** | Definir o **mecanismo de recomendação** — por parlamentar afim, por tema, ou híbrido — e como avaliá-lo | Sem métrica, "recomendação" vira "listagem filtrada" |
 | ~~RQ8~~ | ✅ **RESOLVIDA — 2026-08-23.** *"em Redes Sociais"* = **o grafo**, confirmado pelo autor. Não envolve plataformas (X, Instagram) | — |
-| ~~RQ9~~ | ✅ **Opção D — login Google com identidade opaca** (§2.7.2). RNF-12b passa a ser obrigatória | LGPD e R7 |
+| ~~RQ9~~ | ✅ **Opção 3 — login Google + e-mail armazenado** (§2.7.2). Revista no mesmo dia: a D não comporta notificação. RNF-12b obrigatória | LGPD e R7 |
 | **RQ10** | Decidir se o **feed agregado** (RF-43) entra. Recomendação: decidir tarde — classificar por tema desde já mantém a porta aberta a custo zero | §2.7.3 |
