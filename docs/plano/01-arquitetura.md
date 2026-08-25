@@ -29,19 +29,17 @@ abaixo priorizam *"funciona no primeiro dia e não pede atenção depois"* sobre
 flowchart TB
     U(["👤 Cidadão"]) --> CF
 
-    subgraph CF["☁️ Cloudflare"]
-        PAGES["Pages<br/>React (build estático)"]
-        DNS["DNS · CDN · WAF · TLS"]
+    subgraph CF["☁️ Cloudflare — só a borda"]
+        DNS["DNS · CDN · WAF · TLS<br/>esconde o IP do VPS"]
     end
 
-    subgraph APP["Aplicação"]
-        API["API C# — ASP.NET Core<br/>Minimal API"]
+    subgraph VPS["🖥️ VPS + Coolify — Hetzner CX22"]
+        WEB["React · build estático"]
+        API["API C# · ASP.NET Core"]
         PG[("PostgreSQL")]
+        ETL["ETL Python · job diário"]
+        WEB --> API
         API <--> PG
-    end
-
-    subgraph BATCH["Processamento (não servido)"]
-        ETL["ETL Python<br/>ingestão + análise"]
         ETL --> PG
     end
 
@@ -51,15 +49,14 @@ flowchart TB
     F4["RSS de notícias"] --> ETL
 
     CF --> WEB
-    CF --> API
 
     style CF fill:#f38020,color:#fff
     style VPS fill:#0d1117,color:#fff
     style PG fill:#336791,color:#fff
 ```
 
-**Três blocos, três ciclos de vida diferentes** — e essa separação é o que mantém tudo
-simples:
+**Tudo numa máquina, mas três ciclos de vida diferentes** — e a separação lógica continua
+importando:
 
 | Bloco | Roda quando | Se cair |
 |---|---|---|
