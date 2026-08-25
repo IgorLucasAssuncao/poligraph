@@ -1,8 +1,26 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-08-25 · **51 resolvidas · 58 abertas**
-> As pendências vivem espalhadas por 10 documentos. Esta é a visão única, agrupada
+> **Atualizado:** 2026-08-25 · **59 resolvidas · 52 abertas**
+> As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
+
+---
+
+## ✅ Decidido na rodada de infraestrutura e privacidade (2026-08-25)
+
+| # | Decisão |
+|---|---|
+| **PL2** | ✅ **Hostinger VPS KVM 2** — 2 vCPU · 8 GB · 100 GB · São Paulo |
+| **PL4** | ✅ Repositório privado |
+| **PL6** | ✅ **Clarity em produção, gravando tudo**, com consentimento prévio bloqueante |
+| **PL8** | ✅ Todas as telas recebem o script — a proteção é o consentimento, não a máscara |
+| **PL9** | ✅ Banner de consentimento **necessário e bloqueante** |
+| **RQ9** | ✅ **Opção D** — login só com Google, identidade opaca (`sub_hash`) |
+
+> 🔑 **As duas decisões desta rodada empurram na mesma direção:** o projeto passou a
+> guardar mais coisa (sessão gravada, lista de seguidos no servidor) e a compensar isso
+> com **consentimento explícito**, em vez de com ausência de dado. Isso é defensável, mas
+> transfere o peso para textos que ainda não existem — as **PL7** e **PL25** abaixo.
 
 ---
 
@@ -10,13 +28,14 @@
 
 | # | Pergunta | Onde |
 |---|---|---|
-| ~~PL2~~ | ✅ **Azure App Service F1** — o Fly encerrou o free tier em out/2024 | — |
-| ~~PL4~~ | ✅ **Repositório privado** — 300 de 2.000 min/mês do Actions | — |
-| **PL6** | Clarity em produção ou só na avaliação? *É a única com peso jurídico* | [plano/02](plano/02-autenticacao-e-metricas.md) |
-| **RQ9** | Onde vive a lista de seguidos — A (localStorage), B (conta anônima) ou C? | [03-requisitos](03-requisitos.md) |
+| **PL25** | 🔴 Escrever o **texto do banner de consentimento** cobrindo as 5 exigências | [plano/02 §4.5.2](plano/02-autenticacao-e-metricas.md) |
+| **PL7** | 🔴 **Política de privacidade** — virou bloqueante: é campo obrigatório da tela do Google | [plano/02 §3.2.1](plano/02-autenticacao-e-metricas.md) |
+| **PL24** | 🔴 Confirmar com o orientador se o TCC precisa de **Comitê de Ética** | [plano/02 §4.5](plano/02-autenticacao-e-metricas.md) |
+| **PL23** | 🔴 CI como **portão** do deploy, ou os dois em paralelo? | [plano/01 §2.1.2](plano/01-arquitetura.md) |
+| **PL3** | 🟡 Registrar domínio — o login com Google **exige** para produção | [plano/01](plano/01-arquitetura.md) |
 
-> 🔑 **Nenhuma destas se resolve pesquisando.** São escolhas suas, e todas as cinco cabem
-> em uma conversa de dez minutos.
+⚠️ **PL7 e PL25 são texto jurídico, não código** — e agora estão no caminho crítico do
+login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 
 ---
 
@@ -28,8 +47,20 @@
 | **A2** | Escrever e validar as regex de `categoria` contra amostra rotulada à mão | 🟡 Horas |
 | **PL12** | Definir e documentar o critério "respondível por leigo" | 🟡 Horas |
 
-⚠️ **A PL11 é o gargalo escondido do projeto.** É o passo mais subjetivo do método, o mais
-atacável na banca, e o único que não escala. Comece cedo.
+⚠️ **A PL11 continua sendo o gargalo escondido do projeto.** É o passo mais subjetivo do
+método, o mais atacável na banca, e o único que não escala. **Está no caminho crítico do
+front, do questionário e do capítulo de método ao mesmo tempo.** Comece cedo.
+
+---
+
+## 🟡 Instalação — decida com o terminal aberto, não agora
+
+| # | Pendência |
+|---|---|
+| **PL19** | Retenção do Prometheus (ex.: 90 dias) — sem limite ele enche o disco |
+| **PL20** | 🔴 Destino do backup do Postgres — **configurar no primeiro dia** |
+| **PL21** | Grafana público ou só por VPN/túnel |
+| **PL22** | Exposição do painel do Coolify — público com 2FA, allow-list, ou VPN |
 
 ---
 
@@ -42,7 +73,6 @@ atacável na banca, e o único que não escala. Comece cedo.
 | **CT3** | Escrever o OpenAPI da C13 e validar contra o front |
 | **PL13** | EF Core migrations ou script SQL versionado |
 | **PL16** | Como o ETL sinaliza `novas_votacoes` |
-| **PL17** | Testar o *cold start* do Postgres gerenciado |
 | **C15** | Contrato do front — depende do React estar de pé |
 
 ---
@@ -59,7 +89,7 @@ atacável na banca, e o único que não escala. Comece cedo.
 | **A3** | Deduplicação de PEC em dois turnos |
 | **A4** | Quantas das 100 proposições sobrevivem ao corte de unanimidade |
 | **PL10** | Questionário adaptativo entra como experimento? |
-| **PL18** | Usar LLM para rascunhar a reescrita das ementas? (§3.5.2 do plano/03) |
+| **PL18** | Usar LLM para rascunhar a reescrita das ementas? |
 | **RQ7** | Mecanismo de recomendação e como avaliá-lo |
 | **RQ6** | Critérios de aceitação dos RF essenciais |
 | **ER2** | Biblioteca de *fuzzy match* e calibração do limiar |
@@ -84,13 +114,12 @@ social (PP4), parlamentar com poucos votos (PP5), perfil temático por relatoria
 </details>
 
 <details>
-<summary><b>Fontes e escopo</b> — B6, B7, C5, C7, TS5, ER5, PL3, PL5, PL7, PL8, PL9, PL13, PL14, PL15, PL16, PL17, A5</summary>
+<summary><b>Fontes e escopo</b> — B6, B7, C5, TS5, ER5, PL5, PL14, PL15, PL17, A5</summary>
 
 Base dos Dados como atalho (B6, TS5), política de `cpf_hash` (B7, ER5), *fuzzy match*
-(C5), métricas de comparação entre casas (C7), domínio (PL3), biblioteca do grafo (PL5), política de privacidade (PL7), máscaras do
-Clarity (PL8), banner de consentimento (PL9), retenção de `execucao` (PL14), `casa` em
-`pessoa` (PL15), reescrever objetivos se escolher o Cenário A (A5 — **já não se aplica**,
-a D3 escolheu o C).
+(C5), biblioteca do grafo (PL5), retenção de `execucao` (PL14), `casa` em `pessoa` (PL15),
+*cold start* do Postgres (PL17 — **já não se aplica**, o banco é container próprio),
+reescrever objetivos se escolher o Cenário A (A5 — **já não se aplica**, a D3 escolheu o C).
 </details>
 
 ---
@@ -106,14 +135,17 @@ a comparação entre casas deixa de ser assimétrica.
 
 ⚠️ E o mais provável de todos: **quase todos os números foram medidos com 2026 parcial.**
 
+⏳ **Novo:** a retenção do Clarity (playback **30 dias**) expira antes da escrita se a
+avaliação rodar cedo demais.
+
 ---
 
-## ✅ Resolvidas — 51
+## ✅ Resolvidas — 59
 
-`A1` `API1` `API2` `API6` `B1` `B2` `B3` `B4` `B5` `C1` `C2` `C3` `C6` `CT1` `CT2` `CT4`
-`CT5` `CT6` `D1` `D3` `D5` `ER1` `ER3` `ER4` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `PP1`
-`RE-01` `RQ1` `RQ4` `RQ8` `SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2` `TS3` `TS4`
-`TS6` `C4` `C8` `C13` `C14`
+`A1` `API1` `API2` `API6` `B1` `B2` `B3` `B4` `B5` `C1` `C2` `C3` `C4` `C6` `C8` `C13`
+`C14` `CT1` `CT2` `CT4` `CT5` `CT6` `D1` `D3` `D5` `ER1` `ER3` `ER4` `N2` `N10` `P1` `P2`
+`P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PP1` `RE-01` `RQ1` `RQ4` `RQ8` `RQ9`
+`SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2` `TS3` `TS4` `TS6`
 
 ⚠️ **Convenção de prefixo** (evita a colisão que existia até 2026-08-23):
 

@@ -297,10 +297,18 @@ pepper)`) deixa de ser sugestão e vira **requisito**.
 
 📐 Passo a passo de implementação em [plano/02 §3.2](plano/02-autenticacao-e-metricas.md).
 
-O feed é montado **no cliente**: a lista de seguidos fica no navegador, a API serve
-notícias públicas por parlamentar, e o front filtra. O servidor **nunca sabe** quem segue
-quem — ele só responde "quais as notícias recentes do parlamentar 204528", que é
-informação pública.
+#### O que a opção A propunha — e o que fica dela
+
+*(registro do caminho não escolhido; parte dele sobrevive)*
+
+O feed seria montado **no cliente**: a lista de seguidos no navegador, a API servindo
+notícias públicas por parlamentar, e o front filtrando. O servidor **nunca saberia** quem
+segue quem.
+
+⭐ **O que sobrevive na opção D:** os endpoints continuam sendo **públicos e por
+parlamentar** — *"quais as notícias recentes do parlamentar 204528"*. O servidor guarda a
+lista, mas **nenhum endpoint precisa aceitar "me dê o feed do usuário X"**. A montagem do
+feed segue no cliente, sobre dados públicos.
 
 Isso atenderia RF-42, RF-43, RF-44 e RF-46 **por inteiro**, perdendo só notificação ativa
 e sincronização. ⚠️ **A sincronização era justamente o que se queria** — daí a opção D.
