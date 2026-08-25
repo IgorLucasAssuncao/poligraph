@@ -56,6 +56,15 @@
 | **Verificar** | Header de `votacoesVotos-{ano}.csv` e a coluna `cpf` de `deputados.csv` (hoje **vazia**) |
 | **Se mudou** | ⭐ Se o `cpf` for preenchido, some a necessidade de 644 chamadas REST |
 
+### 6. O Clarity continua gratuito e com a mesma retenção?
+
+| | |
+|---|---|
+| **Situação** | Gratuito, sem tier pago, sem limite de tráfego. Retenção medida em **2026-08-25**: playback **30 dias**, clique/heatmap **9 meses** |
+| **Risco** | 🟡 Médio — produto gratuito muda política sem aviso |
+| ⚠️ **Efeito de cronograma** | Os 30 dias de playback **expiram antes da escrita** se a avaliação for muito antes do capítulo. Exporte na mesma semana |
+| **Verificar também** | Se o Consent Mode obrigatório (hoje só EEA/UK/CH desde 31/10/2025) passou a valer para o Brasil |
+
 ---
 
 ## 🟢 Números que crescem sozinhos

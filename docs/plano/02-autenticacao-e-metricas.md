@@ -1,6 +1,9 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v1.0 — 2026-08-23
+> **Status:** v1.1 — 2026-08-25
+> **v1.1:** §4.2–4.5 reescritas contra a documentação oficial do Clarity. 🔴 Duas
+> mitigações da v1.0 estavam erradas: máscara não esconde clique, e "só heatmap" é pior
+> que gravação. Consent Mode não protege o Brasil por padrão. Nova pendência PL24 (CEP).
 > ⚠️ Este documento contém **a decisão de maior consequência jurídica do projeto**.
 > Leia a §1 antes de implementar qualquer login.
 
@@ -139,7 +142,7 @@ Inclui mapa de calor, gravação de sessão e detecção de *rage click* e *dead
 | Métrica do Clarity | O que responde no TCC |
 |---|---|
 | Taxa de abandono do questionário | O N de perguntas (RQ3) está grande demais? |
-| Mapa de calor da tela de resultado | O usuário olha os "mais distantes" ou ignora? |
+| ⛔ ~~Mapa de calor da tela de resultado~~ | **Riscado** — é justamente onde o clique revela opinião (§4.4) |
 | *Rage click* no grafo | O grafo está utilizável ou frustrante? |
 | Tempo até responder | A ementa reescrita ficou compreensível? |
 
@@ -147,29 +150,79 @@ Inclui mapa de calor, gravação de sessão e detecção de *rage click* e *dead
 interface é clara"*, você escreve *"a taxa de conclusão do questionário foi de X%, com
 abandono concentrado na pergunta N"*.
 
-### 4.2 🔴 Mas há um conflito — e é sério
+### 4.2 Custo — R$ 0, sem asterisco no preço
 
-> **Gravação de sessão em um site de afinidade política grava a pessoa respondendo o
-> questionário.** Ou seja: grava opinião política.
-
-Isso colide com toda a §1 deste documento.
-
-**Mitigações obrigatórias se usar Clarity:**
-
-| # | Medida |
+| | |
 |---|---|
-| 1 | **Mascarar todo conteúdo sensível** — Clarity suporta `data-clarity-mask` |
-| 2 | **Não gravar a tela de resultado** — é onde a afinidade aparece |
-| 3 | Mascarar as respostas selecionadas no questionário |
-| 4 | Banner de consentimento antes de carregar o script |
-| 5 | ⚠️ **Considerar usar só o mapa de calor**, desligando a gravação |
+| Preço | **Gratuito, sem tier pago** — não existe versão paga para migrar |
+| Limite de tráfego | **Nenhum**. Sessões ilimitadas |
+| Cartão de crédito | Não pede |
+| O que a Microsoft ganha | Dado agregado de comportamento na web; o produto é isca de ecossistema |
 
-⚠️ **Alternativa mais segura:** usar Clarity **apenas em ambiente de teste**, com usuários
-voluntários que consentiram explicitamente, e **não** em produção aberta. Isso dá o dado
-de usabilidade para o TCC sem criar exposição.
+**Retenção** (medida na documentação oficial, 2026-08-25):
 
-→ **Recomendação:** Clarity em fase de avaliação com voluntários (n pequeno, consentido) +
-GA4 sem PII em produção. **Pendência PL6.**
+| Dado | Retenção |
+|---|---|
+| **Gravação de sessão** (playback) | **30 dias** |
+| Dado de clique / heatmap | 9 meses |
+| Sessões marcadas como favoritas | 9 meses |
+
+⚠️ **A retenção de 30 dias é uma armadilha de cronograma, não de privacidade.** Se você
+rodar a avaliação de usabilidade em outubro e for escrever o capítulo em janeiro, **as
+gravações não existem mais**. Exporte ou anote as conclusões na mesma semana.
+
+### 4.3 🔴 Precisa de consentimento — e o padrão NÃO protege o Brasil
+
+O Clarity tem **Consent Mode**: com ele ligado, nenhum cookie (`_clck`, `_clsk`) é gravado
+antes do usuário aceitar.
+
+> 🔴 **Mas ele vem ligado por padrão apenas para EEA, Reino Unido e Suíça.**
+> Desde 31/10/2025 a Microsoft **exige** sinal de consentimento nessas regiões. O Brasil
+> não está na lista. **No Brasil, o comportamento padrão é gravar cookie sem perguntar.**
+
+✅ **Ação concreta:** *Settings → Setup →* **desligar** "set cookies by default". Depois
+passar o sinal via [Consent API](https://learn.microsoft.com/en-us/clarity/setup-and-installation/consent-mode)
+no `onClick` do seu banner. Verificação no console:
+
+```javascript
+clarity('metadata', (d, upgrade, consent) => console.log('consentStatus:', consent), false, true, true);
+// esperado antes do aceite: { analytics_storage: "DENIED", ad_storage: "DENIED" }
+```
+
+⚠️ **Não é opcional aqui.** A LGPD trata **convicção política** como dado pessoal sensível
+(art. 5º, II) e exige, para tratá-la, **consentimento específico e destacado** (art. 11, I).
+*Legítimo interesse não serve para dado sensível.* Some a isso a transferência
+internacional (servidores da Microsoft fora do Brasil, art. 33).
+
+### 4.4 🔴 A mitigação que eu tinha escrito não funciona
+
+Duas correções ao que estava neste documento até 2026-08-25:
+
+| O que eu escrevi | Por que está errado |
+|---|---|
+| *"Mascarar as respostas selecionadas"* | ⛔ O mascaramento esconde **conteúdo** — texto, campos, dropdowns. **Não esconde o clique.** Numa tela de layout conhecido, saber que o clique caiu no 4º botão **é** saber a resposta |
+| *"Considerar usar só o mapa de calor, desligando a gravação"* | ⛔ **É a pior das duas.** O mapa de calor **é exatamente a posição do clique agregada**. Desligar a gravação e manter o heatmap remove a evidência e **mantém o dado sensível** |
+
+> 🔑 **Nenhum modo de máscara resolve.** Mesmo em *Strict*, onde todo o conteúdo é ocultado,
+> a coordenada do clique continua sendo coletada — é a razão de existir do produto.
+
+**A única mitigação que funciona de fato é não instrumentar a tela do questionário nem a
+de resultado.** Instrumente a navegação: home, busca, página do parlamentar, lista de
+notícias. É onde as dúvidas de usabilidade realmente estão.
+
+### 4.5 → Recomendação para a PL6
+
+| | |
+|---|---|
+| ⭐ **Em avaliação consentida** | n pequeno, voluntários com **TCLE assinado**, sessão supervisionada. Dá o dado de usabilidade do TCC sem exposição |
+| Em produção aberta | Só com Consent Mode ligado **e** com questionário/resultado fora da instrumentação |
+| ⛔ Nunca | Clarity em produção, no padrão de fábrica, sobre a tela do questionário |
+
+⚠️ **Pergunte ao orientador sobre o CEP.** Pesquisa com seres humanos costuma exigir
+aprovação de Comitê de Ética (Res. CNS 510/2016, via Plataforma Brasil). A resolução
+dispensa alguns casos — como pesquisa de opinião com participantes não identificados —
+mas **quem decide se o seu caso se enquadra não é você**. É pergunta de 5 minutos que pode
+custar meses se ficar para o fim.
 
 ---
 
@@ -180,7 +233,7 @@ GA4 sem PII em produção. **Pendência PL6.**
 | Login no MVP | ⭐ **Nenhum** — `localStorage` |
 | Se precisar de login | Google, guardando só `SHA256(sub + pepper)` |
 | E-mail / nome / foto | ⛔ Nunca persistir |
-| Mapa de calor | **Microsoft Clarity**, com máscara e consentimento |
+| Mapa de calor | **Microsoft Clarity** — 🔴 máscara NÃO basta, ver §4.4 |
 | Analytics de uso | **GA4**, sem PII |
 | Gravação de sessão | ⚠️ Só em avaliação consentida, não em produção aberta |
 
@@ -192,7 +245,8 @@ GA4 sem PII em produção. **Pendência PL6.**
 |---|---|---|
 | **PL6** | Decidir se Clarity roda em produção ou só na avaliação com voluntários | 🔴 Alta |
 | **PL7** | Se houver login: escrever política de privacidade e endpoint de exclusão | 🔴 Alta *(se opção 2)* |
-| **PL8** | Definir os seletores `data-clarity-mask` antes de subir o script | 🟡 Média |
+| **PL8** | Definir quais TELAS recebem o script (não quais seletores mascarar — §4.4) | 🟡 Média |
+| **PL24** | Confirmar com o orientador se o TCC precisa de aprovação em CEP (Plataforma Brasil) | 🔴 Alta |
 | **PL9** | Decidir se o banner de consentimento é necessário (depende de PL6) | 🟡 Média |
 
 ---
