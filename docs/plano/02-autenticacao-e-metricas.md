@@ -1,6 +1,8 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v1.2 — 2026-08-25
+> **Status:** v1.3 — 2026-08-25
+> **v1.3:** §3.2 — o passo a passo concreto do login com Google (Google Cloud, escopos,
+> código, esforço) e por que a decisão da PL6 pesa CONTRA adotá-lo.
 > **v1.2:** ✅ PL6 DECIDIDA — Clarity em produção, gravando tudo, com consentimento
 > prévio bloqueante (§4.5). PL8 e PL9 caem junto; nascem PL25 (texto do banner) e PL24 (CEP).
 > **v1.1:** §4.2–4.5 reescritas contra a documentação oficial do Clarity. 🔴 Duas
@@ -122,6 +124,112 @@ sequenceDiagram
 liga a ninguém.
 
 ---
+
+## 3.2 O que é preciso, concretamente, para o login com Google
+
+Não é biblioteca nem código difícil — é **cadastro no Google Cloud**. O trabalho está em
+preencher formulário, não em programar.
+
+### 3.2.1 Custo e pré-requisitos
+
+| | |
+|---|---|
+| Custo | **R$ 0.** O Google Identity é gratuito, sem cota relevante |
+| Precisa de cartão? | ⛔ Não. Login não é serviço faturável do Google Cloud |
+| 🔴 **Precisa de domínio** | Sim, para produção. `localhost` funciona no desenvolvimento — mas o *Authorized origin* de produção exige domínio real → **depende da PL3** |
+| 🔴 **Precisa de política de privacidade publicada** | Sim. É **campo obrigatório** da tela de consentimento → **transforma a PL7 em bloqueante** |
+
+### 3.2.2 Os seis passos
+
+| # | Onde | O que fazer |
+|---|---|---|
+| 1 | [console.cloud.google.com](https://console.cloud.google.com) | Criar um projeto (nome livre, ex.: `poligraph`) |
+| 2 | *APIs & Services → OAuth consent screen* | Tipo **External**. Nome do app, e-mail de suporte, **URL da política de privacidade**, domínio autorizado |
+| 3 | Mesma tela → *Scopes* | ⭐ Marcar **apenas** `openid`, `email`, `profile` |
+| 4 | *Credentials → Create → OAuth client ID* | Tipo **Web application**. Preencher *Authorized JavaScript origins* (`https://seudominio.com` e `http://localhost:5173`) |
+| 5 | — | Copiar o **Client ID**. É público, pode ir no código do front |
+| 6 | *Publishing status* | Sair de **Testing** e clicar em **Publish** |
+
+⚠️ **O passo 6 é o que trava projeto de TCC.** Em *Testing*, só entram **e-mails cadastrados
+manualmente como testadores, no máximo 100**. Se você abrir o site ao público e esquecer
+disso, todo visitante vê erro de acesso negado — e nada no site indica o motivo.
+
+⭐ **A boa notícia do passo 3:** com **apenas** `openid`, `email` e `profile`, o app **não
+precisa de verificação do Google**. Publicar é um clique. Se você marcar qualquer escopo
+sensível (Gmail, Drive, contatos), cai numa revisão que leva **semanas** e pede vídeo de
+demonstração. **Não marque nada além dos três.**
+
+### 3.2.3 O código — as duas metades
+
+**Front (React)** — a biblioteca Google Identity Services devolve um JWT:
+
+```html
+<script src="https://accounts.google.com/gsi/client" async></script>
+<div id="g_id_onload"
+     data-client_id="SEU_CLIENT_ID.apps.googleusercontent.com"
+     data-callback="onGoogleSignIn"></div>
+<div class="g_id_signin" data-type="standard"></div>
+```
+
+```javascript
+function onGoogleSignIn(response) {
+  // response.credential é o id_token (JWT). Mande para a sua API.
+  fetch('/api/auth/google', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${response.credential}` }
+  });
+}
+```
+
+**Back (C#)** — `dotnet add package Google.Apis.Auth`:
+
+```csharp
+var payload = await GoogleJsonWebSignature.ValidateAsync(idToken,
+    new GoogleJsonWebSignature.ValidationSettings {
+        Audience = [builder.Configuration["Google:ClientId"]]
+    });
+
+var subHash = Convert.ToHexString(SHA256.HashData(
+    Encoding.UTF8.GetBytes(payload.Subject + pepper)));
+// ⛔ payload.Email e payload.Name existem aqui — NÃO persistir (§3.1)
+```
+
+| Segredo | Vai onde |
+|---|---|
+| **Client ID** | ✅ Público — pode ficar no bundle do React |
+| **Client Secret** | ⛔ **Não é usado neste fluxo.** Só existe no fluxo com *redirect* no servidor |
+| **`pepper`** | 🔴 Variável de ambiente **no painel do Coolify**, nunca no repositório |
+
+### 3.2.4 Esforço real
+
+| | |
+|---|---|
+| Cadastro no Google Cloud | ~30 min |
+| Botão no front | ~1 h |
+| Validação na API + tabela | ~2 h |
+| Política de privacidade (PL7) | 🔴 **Meio dia** — é texto jurídico, não código |
+| **Total** | **~1 dia**, dominado pelo item que não é técnico |
+
+### 3.2.5 🔴 Mas leia isto antes de decidir fazer
+
+A §3 continua recomendando **não ter login no MVP**, e a decisão da PL6 **reforçou** essa
+recomendação em vez de enfraquecê-la:
+
+> A partir de agora o site **grava a sessão inteira**, incluindo as respostas do
+> questionário. Somar login a isso significa **ligar cada gravação de opinião política a
+> uma conta Google identificável**.
+
+| Sem login (hoje) | Com login |
+|---|---|
+| Gravação anônima, com consentimento | Gravação **vinculada a uma identidade persistente** |
+| Nenhuma base de convicção política | `usuario_segue` **é** base de convicção política (§1) |
+| PL7 opcional | 🔴 PL7 obrigatória, e mais pesada |
+
+⚠️ **E o calendário agrava:** eleições gerais em **outubro de 2026**.
+
+> 🔑 **O login resolve um problema só: lembrar quem você é entre dispositivos.** Se a
+> resposta for *"seria legal ter"*, o custo aqui não compensa. Se você quiser lista de
+> seguidos sincronizada, esta seção é o caminho — e a §3.1 é obrigatória junto. → **RQ9**
 
 ## 4. Métricas de uso — a ferramenta é o Microsoft Clarity
 
@@ -308,7 +416,7 @@ custar meses se ficar para o fim.
 | # | Pendência | Prioridade |
 |---|---|---|
 | ~~PL6~~ | ✅ **Produção aberta, gravando tudo, com consentimento prévio obrigatório** (§4.5) | — |
-| **PL7** | Se houver login: escrever política de privacidade e endpoint de exclusão | 🔴 Alta *(se opção 2)* |
+| **PL7** | Política de privacidade — 🔴 vira BLOQUEANTE se houver login: é campo obrigatório da tela de consentimento do Google (§3.2.1) | 🔴 Alta *(se houver login)* |
 | ~~PL8~~ | ✅ **Todas as telas** — a proteção passou a ser o consentimento, não a máscara | — |
 | **PL24** | Confirmar com o orientador se o TCC precisa de aprovação em CEP (Plataforma Brasil) | 🔴 Alta |
 | ~~PL9~~ | ✅ **Necessário e bloqueante** — decorre da PL6 (§4.5.1) | — |
