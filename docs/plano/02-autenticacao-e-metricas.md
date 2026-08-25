@@ -1,6 +1,9 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v1.6 — 2026-08-25
+> **Status:** v1.7 — 2026-08-25
+> **v1.7:** §3.2.4 reescrita — "e o token, não vai ser armazenado?". São TRÊS desenhos,
+> não dois. ⭐ Recomendação muda para B1 (cookie assinado `HttpOnly`, sem tabela), porque
+> a opção A expunha o `id_token` ao XSS. Truque do `sessao_versao` para revogação global.
 > **v1.6:** §3.4 — o que o id_token entrega e a regra "receber ≠ guardar". ⭐ Nome e foto
 > nunca são persistidos; só o `email` precisa, e só porque o job de digest roda sem o
 > usuário presente. `email_verified` do Google DERRUBA o double opt-in.
@@ -160,18 +163,24 @@ sequenceDiagram
     participant A as API C#
 
     U->>G: Sign in with Google
-    G-->>U: id_token (JWT)
-    U->>A: GET /api/seguidos  (Authorization: Bearer id_token)
-    A->>A: valida assinatura do Google
+    G-->>U: id_token (JWT, ~1 h)
+    U->>A: POST /api/auth/google  (id_token, uma vez só)
+    A->>A: valida assinatura contra as chaves do Google
     A->>A: extrai `sub`, calcula sub_hash = SHA256(sub + pepper)
     A->>A: grava `email` SOMENTE se houve opt-in (§3.3.5)
+    A->>A: 🗑️ DESCARTA o id_token
+    A-->>U: Set-Cookie: sid=<jwt nosso>; HttpOnly; Secure
+    U->>A: GET /api/seguidos  (cookie vai sozinho)
+    A->>A: confere assinatura do sid + sessao_versao
     A-->>U: lista de seguidos
-    Note over A: NUNCA persiste nome nem foto
+    Note over A: NUNCA persiste id_token, nome nem foto
 ```
 
 | Regra | Motivo |
 |---|---|
-| Validar o `id_token` **no servidor** | Nunca confiar no cliente |
+| Validar o `id_token` **no servidor**, uma vez | Nunca confiar no cliente |
+| ⛔ **Nunca armazenar o `id_token`** | Validado e descartado — §3.2.4 |
+| Sessão em cookie `HttpOnly` assinado | Script não lê; **sem tabela de sessão** |
 | Chave da conta é `SHA256(sub + pepper)` | O `sub` cru não fica no banco |
 | ⭐ **`email` é coluna anulável** | 🔑 Quem não pediu notificação **não tem e-mail gravado** |
 | ⛔ Nunca persistir nome nem foto | Não são necessários para nada |
@@ -279,20 +288,72 @@ var subHash = Convert.ToHexString(SHA256.HashData(
 Tirar a senha do projeto **não tira a pergunta "como o servidor sabe que ainda é você na
 segunda requisição?"**. O `id_token` do Google **expira em ~1 hora**.
 
-| | **A — Validar o `id_token` a cada chamada** ⭐ | **B — Trocar por um JWT nosso** |
-|---|---|---|
-| Estado no servidor | ✅ **Nenhum** | 🟡 Somos emissor de token |
-| Duração | ~1 h; o GIS renova em silêncio | O que definirmos |
-| Se o usuário revoga no Google | ✅ **Acesso cai sozinho** | ⛔ Nosso token continua válido até expirar |
-| Complexidade | ✅ Uma chamada de validação | 🟡 Emissão, expiração, *refresh*, revogação |
+🔴 **Antes de tudo, o que NUNCA é armazenado:** o `id_token` do Google. Nem no banco, nem
+em `localStorage`. Ele é **validado e descartado** — é um crachá que se confere na portaria
+e se devolve.
 
-> ⭐ **Recomendação: A.** É a única coerente com *"nada do nosso lado"* — não há sessão,
-> não há cookie de autenticação, não há tabela de token. Cada requisição chega com o
-> crachá do Google e a API confere na hora.
+A pergunta *"e o token, não vai ser armazenado?"* tem **três respostas possíveis**, não
+duas. Eu tinha colapsado as duas últimas:
+
+| | **A — Validar o `id_token` toda vez** | **B1 — Cookie assinado nosso** ⭐ | **B2 — Tabela `sessao`** |
+|---|---|---|---|
+| Guarda token no banco? | ⛔ Não | ⛔ **Não** | ✅ Sim |
+| Estado no servidor | ✅ Nenhum | ✅ **Nenhum** | 🟡 Uma linha por sessão viva |
+| Duração da sessão | ⚠️ **~1 h** | ✅ O que definirmos | ✅ O que definirmos |
+| Onde o token vive no cliente | 🔴 Memória JS → **XSS lê** | ✅ **Cookie `HttpOnly` — JS não lê** | ✅ Idem |
+| "Sair de todos os aparelhos" | n/a | 🟡 Ver o truque abaixo | ✅ Nativo |
+| Se revogar o app no Google | ✅ Cai na hora | ⚠️ Cai no fim da sessão | ⚠️ Idem |
+| Complexidade | ✅ Mínima | 🟡 Assinar e conferir cookie | 🔴 Tabela + limpeza + índice |
+
+> ⭐ **Recomendação: B1 — cookie de sessão assinado, sem tabela.**
+> **Sessão própria não implica guardar token.** Um JWT assinado com um segredo do servidor
+> se verifica pela assinatura: se ele é válido, ele é válido — não há o que consultar.
+
+**Por que não a A**, que era minha recomendação anterior: além da sessão morrer de hora em
+hora, ela obriga o `id_token` a ficar acessível ao JavaScript para ir no header
+`Authorization`. **Um cookie `HttpOnly` não pode ser lido por script** — e num site que
+guarda preferência política, essa diferença importa mais do que a economia de código.
+
+```
+Set-Cookie: sid=<jwt>; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/
+```
+
+⚠️ **Cookie traz CSRF junto.** `SameSite=Lax` cobre o caso comum; para `POST`, `DELETE` e
+afins, some um token anti-CSRF ou exija um header customizado.
+
+#### ⭐ O truque que dá revogação global sem tabela nenhuma
+
+O único ganho real da B2 é *"sair de todos os aparelhos"*. **Dá para ter isso com uma
+coluna `SMALLINT`:**
+
+```sql
+ALTER TABLE usuario ADD COLUMN sessao_versao SMALLINT NOT NULL DEFAULT 0;
+```
+
+| | |
+|---|---|
+| O JWT carrega | `{ sub_hash, sv: 3 }` |
+| A API confere | `sv` do token **é igual** ao `sessao_versao` do usuário? |
+| "Sair de todos" | `UPDATE usuario SET sessao_versao = sessao_versao + 1` |
+
+> 🔑 **Uma linha de `UPDATE` invalida todos os JWTs daquela pessoa, em todos os
+> dispositivos, instantaneamente** — sem tabela de sessão, sem varredura, sem limpeza de
+> registros expirados. E como o `usuario` já é consultado na requisição, não custa um
+> acesso a mais.
+
+#### Resumindo o que existe e o que não existe
+
+| Token | Armazenado? |
+|---|---|
+| `id_token` do Google | ⛔ **Nunca** — validado e descartado |
+| Sessão (`sid`) | ⛔ **Não** — assinado, verificado por assinatura |
+| ⭐ `token_email` (descadastro) | ✅ **Sim** — é o único, e está no schema |
 
 ⚠️ **A validação é obrigatoriamente no servidor.** Um `id_token` vindo do navegador é
 texto que o usuário controla; só a checagem de assinatura contra as chaves públicas do
 Google o torna confiável. ⛔ **Nunca** decidir identidade por algo que o front afirmou.
+
+→ **PL29:** confirmar B1 e definir a duração da sessão (sugerido: 7 dias).
 
 ### 3.2.5 Esforço real
 
@@ -369,7 +430,7 @@ Duas tabelas de token diferentes, e **só uma é necessária**:
 
 | Tabela | Precisa? | Por quê |
 |---|---|---|
-| `sessao(token, usuario)` — sessão de login | ⛔ **Não** | A §3.2.4 continua valendo: valide o `id_token` do Google a cada chamada. E-mail não muda isso |
+| `sessao(token, usuario)` — sessão de login | ⛔ **Não** | §3.2.4: cookie assinado (B1). Sessão própria **não** implica guardar token |
 | ~~`token_email` com propósito `CONFIRMACAO`~~ | ⛔ **Não** | ⭐ **Cai pela §3.4:** o Google já entrega `email_verified: true`. Double opt-in confirmaria o que já está provado |
 | ⭐ `token_email` com propósito `DESCADASTRO` | ✅ **Sim, obrigatória** | O link de descadastro **precisa funcionar sem login**, direto do e-mail |
 
@@ -690,6 +751,7 @@ custar meses se ficar para o fim.
 | **PL25** | Escrever o texto do banner cobrindo as 5 exigências da §4.5.2 | 🔴 Alta |
 | **PL26** | Escolher o serviço de envio de e-mail (Resend, Brevo, SES) e configurar SPF/DKIM/DMARC | 🔴 Alta |
 | **PL27** | Definir a cadência do digest — diário, semanal, ou por volume de notícia | 🟡 Média |
+| **PL29** | Confirmar o desenho B1 de sessão e a duração do cookie (sugerido: 7 dias) | 🟡 Média |
 
 ---
 

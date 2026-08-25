@@ -252,6 +252,7 @@ CREATE TABLE usuario (
     primeiro_nome TEXT,                        -- só para saudar no e-mail; ver §2.2.1
     criado_em     TIMESTAMPTZ NOT NULL DEFAULT now(),
     visto_em      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    sessao_versao SMALLINT NOT NULL DEFAULT 0,   -- ⭐ +1 = "sair de todos os aparelhos"
     CHECK (email IS NULL OR position('@' in email) > 1)
 );
 -- ⛔ SEM coluna de senha. SEM foto. SEM nome completo. SEM CPF. SEM telefone.
