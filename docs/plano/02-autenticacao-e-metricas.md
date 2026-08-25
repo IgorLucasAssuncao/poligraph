@@ -1,6 +1,9 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v1.5 — 2026-08-25
+> **Status:** v1.6 — 2026-08-25
+> **v1.6:** §3.4 — o que o id_token entrega e a regra "receber ≠ guardar". ⭐ Nome e foto
+> nunca são persistidos; só o `email` precisa, e só porque o job de digest roda sem o
+> usuário presente. `email_verified` do Google DERRUBA o double opt-in.
 > **v1.5:** 🔄 §3 — a opção 2 não comporta e-mail; decisão revista para a **opção 3**
 > (Google + e-mail armazenado). Nova §3.3: o que a notificação por e-mail traz junto
 > (SPF/DKIM/DMARC, serviço de envio, `token_email`, assunto que vaza).
@@ -367,7 +370,8 @@ Duas tabelas de token diferentes, e **só uma é necessária**:
 | Tabela | Precisa? | Por quê |
 |---|---|---|
 | `sessao(token, usuario)` — sessão de login | ⛔ **Não** | A §3.2.4 continua valendo: valide o `id_token` do Google a cada chamada. E-mail não muda isso |
-| ⭐ `token_email` — descadastro e confirmação | ✅ **Sim, obrigatória** | O link de descadastro **precisa funcionar sem login**, direto do e-mail |
+| ~~`token_email` com propósito `CONFIRMACAO`~~ | ⛔ **Não** | ⭐ **Cai pela §3.4:** o Google já entrega `email_verified: true`. Double opt-in confirmaria o que já está provado |
+| ⭐ `token_email` com propósito `DESCADASTRO` | ✅ **Sim, obrigatória** | O link de descadastro **precisa funcionar sem login**, direto do e-mail |
 
 > 🔑 **O motivo é este:** a pessoa clica em "descadastrar" no cliente de e-mail, às vezes
 > em outro dispositivo, muitas vezes sem estar logada. Exigir login para sair de uma lista
@@ -378,7 +382,7 @@ Duas tabelas de token diferentes, e **só uma é necessária**:
 CREATE TABLE token_email (
     token      TEXT PRIMARY KEY,          -- 32 bytes aleatórios, base64url
     usuario_id BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
-    proposito  TEXT NOT NULL CHECK (proposito IN ('DESCADASTRO', 'CONFIRMACAO')),
+    proposito  TEXT NOT NULL CHECK (proposito IN ('DESCADASTRO')),  -- CONFIRMACAO nao e necessaria
     criado_em  TIMESTAMPTZ NOT NULL DEFAULT now(),
     expira_em  TIMESTAMPTZ,               -- NULL no descadastro: nunca expira
     usado_em   TIMESTAMPTZ
@@ -420,11 +424,75 @@ art. 8º §4 — o consentimento é para finalidades determinadas).
 | Job de digest (Scheduled Task do Coolify) | ~1 dia |
 | `token_email` + endpoint de descadastro | ~4 h |
 | Template HTML que não quebra no Outlook | ~4 h — 🔴 mais chato do que parece |
+| ⭐ ~~Fluxo de confirmação (double opt-in)~~ | ✅ **Eliminado** pela §3.4.2 — o Google já verifica o e-mail |
 | **Total sobre o login** | **~2 a 3 dias** |
 
 ⚠️ **Isso não é pequeno.** Some ao ~1 dia do login e à PL7, e a frente de "conta de
 usuário" passa de meio dia imaginado para **quase uma semana**. Vale saber disso antes de
 começar, para decidir onde ela entra no cronograma — não para desistir dela.
+
+---
+
+## 3.4 ⭐ O que o Google entrega — e a distinção que economiza trabalho
+
+> **Ponto do autor:** *"com o login do Google temos todos os dados necessários do usuário"*.
+
+**Correto — e é verdade justamente porque este projeto precisa de muito pouco.** O
+`id_token` chega assinado, a cada login, com:
+
+| Claim | Conteúdo | Guardamos? |
+|---|---|---|
+| `sub` | ID estável e único da conta | ✅ **Só o hash** |
+| `email` | Endereço | ⚠️ **Só com opt-in** (§3.1) |
+| `email_verified` | O Google já validou o endereço | ⭐ Ver abaixo |
+| `name`, `given_name` | Nome | ⛔ **Nunca** |
+| `picture` | URL do avatar | ⛔ **Nunca** |
+| `iss`, `aud`, `exp` | Emissor, destinatário, expiração | Validação |
+
+### 3.4.1 🔑 Receber ≠ guardar
+
+Esta é a distinção que faz a diferença, e ela é boa notícia:
+
+> **Nome e foto chegam a cada login, de graça. Dá para exibir "Olá, Igor" com avatar
+> sem persistir uma única linha** — lê do token, renderiza, descarta.
+
+**Então por que o `email` precisa ser guardado?** Por um motivo só, e vale ter clareza dele:
+
+| | |
+|---|---|
+| ⭐ **O job de digest roda quando o usuário NÃO está** | De madrugada, sem navegador aberto, sem token nenhum disponível |
+| Consequência | O endereço tem que estar no banco **naquele momento** |
+
+⭐ **Isso é um teste útil para qualquer campo:** *"preciso disso quando a pessoa não está
+presente?"* Se não, **não guarde** — leia do token. Pelo teste, só o `email` passa.
+
+### 3.4.2 ⭐ E isso derruba uma exigência que eu tinha escrito
+
+O Google entrega **`email_verified: true`**. O endereço já está provado.
+
+| | |
+|---|---|
+| ⛔ **Cai o double opt-in** | Não faz sentido enviar e-mail de confirmação para provar o que o Google já provou |
+| ⛔ Cai o propósito `CONFIRMACAO` | A `token_email` fica **só com `DESCADASTRO`** (§3.3.3) |
+| ✅ Economia | ~meio dia de fluxo, template e tela de "confira sua caixa de entrada" |
+
+⚠️ **Mas verifique a claim.** `email_verified` pode vir `false` em contas fora do padrão.
+Se vier falso, **não envie** — é o único caso em que a confirmação voltaria a ser necessária.
+
+### 3.4.3 🔴 Duas armadilhas do que o Google entrega
+
+| Armadilha | |
+|---|---|
+| 🔴 **O `email` muda** | O Google permite trocar o endereço principal. **Nunca use e-mail como chave.** A chave é `sub_hash`; o `email` é um atributo que se atualiza a cada login |
+| **A URL de `picture` apodrece** | Expira e passa a dar 404. É mais um motivo para não persistir — se um dia exibir avatar, leia do token |
+
+### 3.4.4 O que o Google **não** dá
+
+Telefone, data de nascimento, CPF, endereço — **nada disso vem** com `openid email
+profile`. Exigiria escopos adicionais e derrubaria a dispensa de verificação (§3.2.2).
+
+⭐ **E não faz falta:** este projeto precisa de **uma coluna** — o e-mail — e mesmo essa só
+para quem pediu notificação.
 
 ---
 
