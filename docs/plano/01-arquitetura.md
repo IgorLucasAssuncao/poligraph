@@ -1,9 +1,11 @@
 # Plano de implementação — arquitetura macro
 
-> **Status:** v1.3 — 2026-08-25
+> **Status:** v1.4 — 2026-08-25
 > **v1.2:** ✅ **DECISÃO — VPS + Coolify** (§3.5). ETL roda em Scheduled Task do Coolify,
 > não no GitHub Actions — com Postgres interno, expor o banco não compensa.
 > **v1.3:** ✅ **Hostinger VPS KVM 2** (São Paulo) + stack Grafana no mesmo VPS.
+> **v1.4:** §2.1 — desenho detalhado do VPS: Traefik, containers, portas, TLS e o
+> caminho de um deploy. 🔴 CI e CD disparam em PARALELO, não em sequência (PL23).
 > **v1.1:** §3 — opção D avaliada (compartilhada, Render, Railway, VPS+Coolify) e
 > comparação final; PL1 e PL2 decididas.
 > **Restrições dadas:** React no front · C# no back · Python no ETL · Postgres ·
@@ -70,6 +72,148 @@ importando:
 
 ⚠️ **O ETL não é um serviço.** É um job que roda, escreve no banco e morre. Isso elimina
 a necessidade de hospedar Python em qualquer lugar permanente — ver §4.
+
+---
+
+## 2.1 ⭐ Desenho detalhado — o que existe dentro do VPS
+
+O desenho acima é o macro. Este é o que você vai realmente instalar.
+
+```mermaid
+flowchart TB
+    U(["👤 Cidadão"])
+    DEV(["💻 Seu notebook"])
+    GH["🐙 GitHub<br/><i>repositório privado</i>"]
+    FONTES["🏛️ Câmara · Senado · TSE · RSS"]
+
+    DEV -->|"git push"| GH
+
+    subgraph CFL["☁️ Cloudflare — só a borda, nada roda aqui"]
+        CF["DNS · CDN · WAF · TLS<br/>🔒 esconde o IP real do VPS"]
+    end
+
+    U --> CF
+    GH -->|"webhook<br/>POST assinado"| CF
+
+    subgraph VPS["🖥️ VPS Hostinger KVM 2 — 2 vCPU · 8 GB · São Paulo"]
+        FW{{"🔥 firewall: só 80 · 443 · 22"}}
+        TR["🚦 <b>Traefik</b><br/><i>proxy reverso — quem o Coolify instala<br/>e quem termina o TLS</i>"]
+
+        subgraph APP["📦 aplicação"]
+            WEB["📄 <b>web</b><br/>nginx + build React"]
+            API["⚙️ <b>api</b><br/>ASP.NET Core"]
+            PG[("🐘 <b>postgres</b><br/>só na rede interna")]
+            ETL["🐍 <b>etl</b><br/>Scheduled Task · 1×/dia"]
+        end
+
+        subgraph OBS["📊 observabilidade"]
+            GRA["grafana"]
+            PRO["prometheus"]
+            NE["node-exporter"]
+        end
+
+        subgraph COO["🟣 Coolify — o orquestrador"]
+            PAN["painel web<br/><i>:8000, publicado via Traefik</i>"]
+            CDB[("db próprio<br/>+ redis")]
+        end
+    end
+
+    CF -->|"443"| FW --> TR
+    TR --> WEB & API & GRA & PAN
+    WEB -->|"/api/*"| API
+    API <--> PG
+    ETL --> PG
+    FONTES --> ETL
+    PRO --> NE & API & PG
+    GRA --> PRO
+    PAN -.->|"docker build · run · stop"| APP
+    PAN -.-> OBS
+    PAN <-.->|"git clone"| GH
+
+    style CFL fill:#f38020,color:#fff
+    style VPS fill:#0d1117,color:#fff
+    style COO fill:#4c1d95,color:#fff
+    style PG fill:#336791,color:#fff
+```
+
+> 🔑 **Tudo dentro do VPS é container, inclusive o Coolify.** Ele não é um programa
+> instalado no sistema: é um conjunto de containers que fala com o Docker da máquina para
+> subir e derrubar os outros.
+
+### 2.1.1 O caminho de uma visita
+
+| # | | |
+|---|---|---|
+| 1 | Cidadão acessa `poligraph.com.br` | DNS resolve para **um IP da Cloudflare**, não o seu |
+| 2 | Cloudflare | Serve o que está em cache; filtra bot e ataque no WAF |
+| 3 | Chega no VPS na **443** | Único caminho aberto para a web |
+| 4 | **Traefik** olha o domínio | `poligraph.com.br` → `web` · `api.poligraph...` → `api` |
+| 5 | Container responde | O React chama `/api/*`, que o Traefik roteia para o C# |
+| 6 | API consulta o Postgres | Pelo **nome do container**, dentro da rede Docker |
+
+⭐ **O Postgres não tem endereço na internet.** Ele é alcançável por `postgres:5432` de
+dentro da rede Docker e mais nada. Não é firewall bem configurado — é **inexistência de
+rota**, que é mais forte.
+
+### 2.1.2 O caminho de um deploy
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant D as 💻 Notebook
+    participant G as GitHub
+    participant C as Coolify (no VPS)
+    participant T as Traefik
+
+    D->>G: git push origin main
+    par CI - testes
+        G->>G: Actions roda os testes
+    and CD - deploy
+        G->>C: POST no webhook (HMAC-SHA256)
+        C->>C: valida a assinatura
+        C->>G: git clone do commit
+        C->>C: docker build (Dockerfile do repo)
+        C->>C: sobe o container NOVO ao lado do antigo
+        C->>C: health check no novo
+        C->>T: troca a rota para o novo
+        C->>C: derruba o antigo
+    end
+```
+
+⚠️ 🔴 **Correção do que escrevi antes.** Chamei o arranjo de *"Actions = CI, Coolify = CD"*,
+o que sugere uma sequência. **Não é sequência: os dois disparam do mesmo push, ao mesmo
+tempo.** O Coolify não espera o teste passar — **ele publica código que quebrou o CI.**
+
+| Se você quer o portão | Como |
+|---|---|
+| ⭐ **Gate real** | Desligar o *auto-deploy* no Coolify e, **no fim do job de teste**, chamar a API de deploy dele (`POST /api/v1/deploy` com token) |
+| Aceitar o paralelo | Simples, e o rollback é um clique. Mas o e-mail do CI chega **depois** do deploy |
+
+> 🔑 Para este projeto, o gate vale a pena por um motivo específico: **o teste de
+> polaridade** (API3). Um erro de sinal não aparece na tela — só num número silenciosamente
+> invertido. É exatamente o tipo de bug que você não quer ver publicado antes do aviso.
+
+### 2.1.3 O que fica exposto
+
+| Porta | Exposta? | Quem usa |
+|---|---|---|
+| **443** | ✅ Pública, via Cloudflare | Site, API, painel do Coolify, Grafana |
+| **80** | ✅ Redireciona para 443 | Desafio do Let's Encrypt |
+| **22** (SSH) | 🟡 **Direto, sem Cloudflare** | ⚠️ Restrinja ao seu IP. A Cloudflare só faz proxy de HTTP/S |
+| 8000 (painel) | ⛔ Interna | O Traefik publica em 443 |
+| 3000 / 9090 | ⛔ Interna | Grafana e Prometheus, via Traefik |
+| 🔴 **5432** | ⛔ **Nunca** | Só a rede Docker |
+
+⚠️ **O SSH fura a Cloudflare.** Quem souber o IP do VPS bate direto na 22. Chave apenas,
+sem senha, sem login root — e, se possível, allow-list do seu IP.
+
+### 2.1.4 Armadilhas de TLS com a Cloudflare na frente
+
+| Armadilha | |
+|---|---|
+| 🔴 **Modo "Flexible"** | Cifra o cidadão→Cloudflare mas deixa **Cloudflare→VPS em texto puro**. Use **Full (strict)** |
+| Let's Encrypt atrás do proxy | O desafio HTTP-01 costuma passar, mas se falhar use um **Origin Certificate** da Cloudflare (validade de 15 anos) |
+| Redirecionamento em laço | Cloudflare forçando HTTPS + Traefik redirecionando = *too many redirects*. Sintoma clássico do modo Flexible |
 
 ---
 

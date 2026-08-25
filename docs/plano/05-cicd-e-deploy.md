@@ -84,6 +84,13 @@ flowchart LR
 | **CI** — testes, lint | **GitHub Actions** | Não precisa de banco nem de servidor |
 | **CD** — build e deploy | ⭐ **Coolify** | Já é nativo: webhook no push, build, sobe |
 
+⚠️ 🔴 **Os dois correm em PARALELO, não em sequência.** O mesmo push dispara os dois, e o
+Coolify não espera o teste passar. Se quiser portão, ver
+[01-arquitetura §2.1.2](01-arquitetura.md) e a pendência **PL23**.
+
+📐 **O desenho completo da hospedagem** — Traefik, containers, portas, TLS —
+está em [01-arquitetura §2.1](01-arquitetura.md).
+
 > 🔑 **Você não precisa escrever pipeline de deploy.** O Coolify conecta no repositório,
 > registra um webhook, e a cada push em `main` ele constrói e publica sozinho.
 
@@ -319,4 +326,5 @@ pior cenário possível, e são 10 minutos de configuração.
 | **PL20** | Definir o destino do backup do Postgres (S3, Backblaze, outro VPS) | 🔴 Alta |
 | **PL21** | Decidir se o Grafana fica público ou só por VPN/túnel | 🟡 Média |
 | **PL22** | Postura de exposição do painel do Coolify — público com 2FA, allow-list da Cloudflare, ou VPN (§2.0) | 🟡 Média |
+| **PL23** | 🔴 Fazer o CI ser **portão** do deploy (Actions chama a API do Coolify) ou aceitar os dois em paralelo | 🔴 Alta |
 | **PL3** | Registrar domínio | 🟢 Baixa |
