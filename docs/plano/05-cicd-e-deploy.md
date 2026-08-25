@@ -180,8 +180,65 @@ Hobby). A recomendação anterior por "não expirar" estava errada: ele custa de
 > ⚠️ Azure **não tem trava de gasto automática**: se passar do limite do F1, começa a
 > cobrar. Configure alerta de orçamento em US$ 1.
 
-⚠️ **Mas se você já tem crédito Azure de estudante com validade longa**, o Azure é mais
-integrado. É decisão de contexto — **PL2**.
+⚠️ **Mas se você já tem crédito Azure de estudante com validade longa**, dá para usar um
+tier pago pequeno e escapar das limitações abaixo.
+
+### 3.1 🔴 O que cabe no App Service F1 — e o que não cabe
+
+**Limites reais do F1** (verificados em 2026-08-25):
+
+| Limite | Valor |
+|---|---|
+| **CPU** | 🔴 **60 minutos por dia** |
+| **Always On** | ⛔ **Não existe** no Free |
+| Consequência | App **descarrega após ~20 min sem tráfego** → *cold start* na próxima visita |
+| Apps por plano | até 10 |
+
+**Resposta direta para os três componentes:**
+
+| Componente | Cabe no App Service? | Onde deve ficar |
+|---|---|---|
+| **API C#** | ✅ **Sim** — é para isso que ele serve | **App Service F1** |
+| **Jobs (ETL Python)** | ⛔ **Não** | **GitHub Actions** |
+| **Front (React)** | 🟡 Tecnicamente sim, **mas não faça** | **Cloudflare Pages** |
+
+#### Por que o ETL **não** cabe
+
+1. **WebJobs contínuos exigem Always On**, que não existe no Free.
+2. Mesmo *WebJob* acionado por gatilho **consome a mesma cota de 60 min/dia** — o ETL
+   competiria com a API pelo mesmo orçamento de CPU.
+3. Um ETL que processa 149 MB de CSV **estouraria os 60 minutos sozinho**.
+
+> ✅ **O GitHub Actions resolve isso de graça**, com 6 h de teto por job e minutos que não
+> concorrem com a API. Era a escolha certa antes de eu saber do limite — e agora tem
+> justificativa numérica.
+
+#### Por que o front **não deve** ficar lá
+
+Servir arquivo estático pelo App Service **gasta a cota de 60 CPU-min/dia que a API
+precisa**. Cada `index.html`, cada `.js`, cada imagem consome o mesmo orçamento.
+
+O Cloudflare Pages serve estático de graça, por CDN global, **sem tocar na cota**.
+
+> 🔑 **Os três componentes em três lugares não é complicação — é o que faz o custo ser
+> zero.** Concentrar tudo no App Service estouraria o Free em um dia.
+
+### 3.2 ⚠️ O *cold start* e a apresentação da banca
+
+Sem Always On, o app dorme após ~20 minutos parado. A primeira requisição depois disso
+demora — e o Postgres gerenciado **também** dorme (§7).
+
+**Dois adormecimentos somados. Na demonstração, isso é constrangedor.**
+
+| Mitigação | Como |
+|---|---|
+| ⭐ **Aquecer antes** | Abrir o site ~5 min antes da apresentação |
+| *Ping* periódico | Cron do GitHub Actions batendo em `/api/health` a cada 15 min |
+| Tier pago temporário | B1 (~US$ 13/mês) só no mês da defesa |
+
+⚠️ O *ping* periódico **consome a cota de 60 min/dia** — use intervalo largo, e só se
+necessário. Para o TCC, **aquecer manualmente antes de apresentar é mais simples e não
+custa nada**.
 
 ---
 

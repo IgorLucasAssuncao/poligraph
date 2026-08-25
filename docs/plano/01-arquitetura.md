@@ -98,8 +98,8 @@ Fiz três rodadas até chegar na combinação de menor atrito.
 |---|---|---|
 | Front | **Cloudflare Pages** | Grátis |
 | DNS/CDN/WAF | **Cloudflare** | Grátis |
-| API C# | **Azure App Service** (F1/B1) ou **Fly.io** | Grátis–US$ 5 |
-| Postgres | **Neon** ou **Supabase** | Grátis |
+| API C# | ✅ **Azure App Service F1** ⚠️ 60 CPU-min/dia, sem Always On | Grátis |
+| Postgres | ✅ **Neon** (Supabase pausa após 1 semana parado) | Grátis |
 | ETL Python | **GitHub Actions** (cron) | Grátis |
 
 > ✅ **Escolhida.** Nenhum componente exige administração de servidor, e o único que
@@ -298,7 +298,7 @@ pode ser entregue como visualização simples antes de virar interativo.
 
 | # | Pendência | Prioridade |
 |---|---|---|
-| **PL1** | Escolher entre **Neon** e **Supabase** para o Postgres gerenciado | 🟡 Média |
+| ~~PL1~~ | ✅ **RESOLVIDA — 2026-08-25: Neon.** O Supabase **pausa o projeto** após 1 semana parado e exige despausar à mão — ruim para demonstração | — |
 | **PL2** | Escolher entre **Azure App Service** e **Fly.io** para a API | 🟡 Média |
 | **PL3** | Registrar o domínio e apontar para a Cloudflare | 🟢 Baixa |
 | **PL4** | Confirmar se o repositório será público (afeta minutos do Actions) | 🟡 Média |

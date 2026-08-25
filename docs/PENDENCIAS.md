@@ -12,7 +12,6 @@
 |---|---|---|
 | ~~PL2~~ | ✅ **Azure App Service F1** — o Fly encerrou o free tier em out/2024 | — |
 | ~~PL4~~ | ✅ **Repositório privado** — 300 de 2.000 min/mês do Actions | — |
-| **PL1** | Postgres no **Neon** ou Supabase? | [plano/01](plano/01-arquitetura.md) |
 | **PL6** | Clarity em produção ou só na avaliação? *É a única com peso jurídico* | [plano/02](plano/02-autenticacao-e-metricas.md) |
 | **RQ9** | Onde vive a lista de seguidos — A (localStorage), B (conta anônima) ou C? | [03-requisitos](03-requisitos.md) |
 
