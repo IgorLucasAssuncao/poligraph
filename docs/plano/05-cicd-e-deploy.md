@@ -1,335 +1,277 @@
-# CI/CD e deploy
+# CI/CD, deploy e monitoramento
 
-> **Status:** v1.1 — 2026-08-25
-> **v1.1:** 🔴 correção — o Fly encerrou o free tier; PL2 e PL4 decididas.
-> Fecha a parte de infra do plano. Três *workflows*, três destinos, zero servidor
-> para administrar.
+> **Status:** v2.0 — 2026-08-25
+> 🔄 **Reescrito** para a arquitetura **VPS + Coolify** (a v1 supunha Azure + Cloudflare
+> Pages + Neon). Ver [01-arquitetura §3.5](01-arquitetura.md).
 
 ---
 
-## 1. Panorama
+## 1. Sim — o Coolify **é** Docker
+
+Não é "suporta". **É construído sobre Docker**: tudo que ele implanta vira container.
+
+| Como você entrega | O que o Coolify faz |
+|---|---|
+| **Dockerfile** no repositório | Usa o seu — controle total |
+| **docker-compose.yml** | Sobe a stack inteira |
+| **Nada** (só o código) | Detecta a linguagem e gera a imagem via *buildpack* |
+
+Para este projeto, **escreva Dockerfiles**. São três, todos triviais:
+
+```dockerfile
+# src/Poligraph.Api/Dockerfile
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY . .
+RUN dotnet publish Poligraph.Api -c Release -o /app
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+COPY --from=build /app .
+ENTRYPOINT ["dotnet", "Poligraph.Api.dll"]
+```
+
+```dockerfile
+# etl/Dockerfile
+FROM python:3.12-slim
+WORKDIR /etl
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["python", "main.py"]
+```
+
+```dockerfile
+# web/Dockerfile — build estático servido por nginx
+FROM node:22-alpine AS build
+WORKDIR /web
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /web/dist /usr/share/nginx/html
+```
+
+⚠️ **Por que Dockerfile e não *buildpack*:** o *buildpack* adivinha, e adivinha errado em
+projeto poliglota. Três Dockerfiles de dez linhas dão controle e são o que você mostra na
+banca.
+
+⭐ **Ganho de coerência:** o Aspire já roda os mesmos containers localmente. O que sobe em
+produção é o que você depurou no F5.
+
+---
+
+## 2. CI/CD — divisão de trabalho
+
+A pergunta "como fazer CI/CD" tem duas metades, e cada uma vai para um lugar:
 
 ```mermaid
 flowchart LR
-    subgraph GH["GitHub"]
-        W1["etl.yml<br/>cron diário"]
-        W2["api.yml<br/>push em main"]
-        W3["web.yml<br/>push em main"]
-    end
-
-    W1 -->|"escreve"| PG[("PostgreSQL<br/>Neon/Supabase")]
-    W2 -->|"deploy"| API["API C#"]
-    W3 -->|"deploy"| CFP["Cloudflare Pages"]
-    API --> PG
-    CFP -->|"/api/* proxy"| API
-
-    style W1 fill:#3776ab,color:#fff
-    style CFP fill:#f38020,color:#fff
+    D["git push"] --> GH["GitHub"]
+    GH -->|"CI · testes"| A["GitHub Actions"]
+    GH -->|"webhook"| C["Coolify no VPS"]
+    C -->|"build + deploy"| VPS["containers rodando"]
+    A -.->|"falhou? avisa"| D
+    style A fill:#3776ab,color:#fff
+    style C fill:#8b5cf6,color:#fff
 ```
 
-| Componente | Gatilho | Destino |
+| | Onde | Por quê |
 |---|---|---|
-| ETL | **cron diário** + manual | Escreve direto no Postgres |
-| API | push em `main` | App Service ou Fly.io |
-| Front | push em `main` | Cloudflare Pages |
+| **CI** — testes, lint | **GitHub Actions** | Não precisa de banco nem de servidor |
+| **CD** — build e deploy | ⭐ **Coolify** | Já é nativo: webhook no push, build, sobe |
 
-⚠️ **O front nem precisa de workflow** — o Cloudflare Pages faz *build* e *deploy* ao
-conectar o repositório. O `web.yml` só existe se você quiser rodar testes antes.
+> 🔑 **Você não precisa escrever pipeline de deploy.** O Coolify conecta no repositório,
+> registra um webhook, e a cada push em `main` ele constrói e publica sozinho.
 
----
+### 2.1 O que o Coolify faz sozinho
 
-## 2. `etl.yml` — o workflow que carrega o projeto
-
-```yaml
-name: ETL
-on:
-  schedule:
-    - cron: '0 9 * * *'      # 09:00 UTC — após o rebuild dos CSVs (~07:00, achado #19)
-  workflow_dispatch:          # botão de "rodar agora"
-    inputs:
-      recarga_completa:
-        description: 'Reprocessar a legislatura inteira'
-        type: boolean
-        default: false
-
-concurrency:
-  group: etl                  # ⚠️ nunca duas cargas simultâneas
-  cancel-in-progress: false
-
-jobs:
-  etl:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: pip
-
-      - run: pip install -r etl/requirements.txt
-
-      - name: Ingestão
-        id: ingest
-        env:
-          PG_CONN: ${{ secrets.PG_CONN }}
-        run: |
-          python etl/main.py ingest \
-            ${{ inputs.recarga_completa && '--full' || '--incremental' }}
-
-      # ⭐ Análise só roda se a ingestão trouxe votação nova (§5.2 do discovery)
-      - name: Análise
-        if: steps.ingest.outputs.novas_votacoes != '0'
-        env:
-          PG_CONN: ${{ secrets.PG_CONN }}
-        run: python etl/main.py analyze
-
-      - name: Resumo
-        run: |
-          echo "### Carga de $(date -u +%F)" >> $GITHUB_STEP_SUMMARY
-          echo "- Votações novas: ${{ steps.ingest.outputs.novas_votacoes }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Análise: ${{ steps.ingest.outputs.novas_votacoes != '0' && 'executada' || 'pulada' }}" >> $GITHUB_STEP_SUMMARY
-```
-
-### 2.1 As três decisões embutidas nesse YAML
-
-| Decisão | Por quê |
+| Recurso | |
 |---|---|
-| **09:00 UTC** | A Câmara reconstrói os CSVs entre 04:00 e 07:01 UTC. Duas horas de margem |
-| **`concurrency: etl`** | Duas cargas simultâneas corromperiam o `execucao_id` |
-| ⭐ **Análise condicional** | Votação só acontece em dia de sessão. Recalcular 207 mil pares num sábado é desperdício |
+| Deploy no push | Webhook do GitHub → build → substitui o container |
+| **Zero-downtime** | Sobe o novo, verifica saúde, só então derruba o antigo |
+| Rollback | Um clique para a versão anterior |
+| TLS | Let's Encrypt automático, com renovação |
+| Variáveis e segredos | Painel, sem `.env` no repositório |
+| Logs | Por container, na interface |
 
-### 2.2 🔴 O alerta precisa conhecer o calendário legislativo
+### 2.2 O que fica no GitHub Actions
 
-**"Zero votações novas" é normal em julho e suspeito em maio.**
-
-```yaml
-      - name: Alerta de coleta parada
-        if: steps.ingest.outputs.novas_votacoes == '0'
-        run: |
-          MES=$(date -u +%m); DIA=$(date -u +%d); DOW=$(date -u +%u)
-          # recesso: 18–31/07 e 23/12–01/02 · fim de semana · segunda e sexta
-          if [ "$DOW" -ge 6 ] || [ "$DOW" = 1 ] || [ "$DOW" = 5 ]; then exit 0; fi
-          if [ "$MES" = "01" ] || [ "$MES" = "12" ]; then exit 0; fi
-          if [ "$MES" = "07" ] && [ "$DIA" -ge 18 ]; then exit 0; fi
-          echo "::warning::Nenhuma votação nova em dia útil de sessão — verificar a coleta"
-```
-
-⚠️ **Sem isso, você tem uma de duas falhas:** ou o alarme dispara todo dia de recesso e
-você aprende a ignorá-lo, ou não existe alarme e a coleta fica quebrada por semanas sem
-ninguém notar. A segunda é pior, e é a que acontece por padrão.
-
-⭐ **Isso também é conteúdo de TCC.** "O monitoramento incorpora o calendário legislativo"
-é uma decisão de engenharia derivada do domínio, não configuração genérica.
-
----
-
-## 3. `api.yml` — depende da PL2
-
-### Opção A — Azure App Service
+Só o que **não** precisa de infraestrutura:
 
 ```yaml
-name: API
-on:
-  push:
-    branches: [main]
-    paths: ['src/**']
+name: CI
+on: [push, pull_request]
+
 jobs:
-  deploy:
+  dotnet:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with: { dotnet-version: '10.x' }
-      - run: dotnet publish src/Poligraph.Api -c Release -o out
-      - uses: azure/webapps-deploy@v3
-        with:
-          app-name: poligraph-api
-          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
-          package: out
+      - run: dotnet test          # 🔴 inclui o teste de polaridade (API3)
+
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install -r etl/requirements.txt
+      - run: pytest etl/tests     # normalização de voto, categoria, CPF com zero
 ```
 
-| ✅ | ⛔ |
-|---|---|
-| Aspire tem caminho nativo (`azd up`) | Tier gratuito com limites de CPU |
-| Familiar para quem usa .NET | Crédito de estudante **expira** |
+⚠️ **O teste da polaridade é o mais importante do projeto** — em 14% das votações "Sim"
+significa rejeitar, e um erro de sinal passa despercebido na tela. **Ele precisa rodar em
+todo push.**
 
-### Opção B — Fly.io
+⚠️ **Nenhum teste aqui toca o banco de produção.** Se precisar de Postgres para teste de
+integração, use `services: postgres:` do próprio Actions — container efêmero.
 
-```yaml
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+### 2.3 O ETL — Scheduled Task do Coolify
+
+```
+Scheduled Task: etl-diario
+Container:      etl
+Comando:        python main.py ingest && python main.py analyze
+Cron:           0 9 * * *        (após o rebuild dos CSVs, ~07:00 UTC)
 ```
 
-| ✅ | ⛔ |
-|---|---|
-| Deploy simples, Dockerfile único | Sem integração com Aspire |
-| Não expira | Precisa cartão cadastrado |
+✅ **O Postgres nunca sai do VPS.** Foi o motivo de tirar o ETL do GitHub Actions
+([01-arquitetura §3.5.1.1](01-arquitetura.md)).
 
-🔴 **CORREÇÃO — 2026-08-25.** O Fly.io **encerrou o free tier em outubro de 2024**. Contas
-novas têm um teste de 2 horas de VM ou 7 dias, depois **mínimo de US$ 5/mês** (plano
-Hobby). A recomendação anterior por "não expirar" estava errada: ele custa desde o dia 1.
+---
 
-> **Recomendação revisada: Azure App Service F1 (gratuito).** Continua existindo em 2026,
-> permite até 10 apps, e o app dorme por inatividade — aceitável para TCC. ⚠️ **Não
-> confundir** com o *Azure Database for PostgreSQL*, que **não** tem tier gratuito — o banco
-> vai para Neon/Supabase de qualquer forma.
->
-> ⚠️ Azure **não tem trava de gasto automática**: se passar do limite do F1, começa a
-> cobrar. Configure alerta de orçamento em US$ 1.
+## 3. ⭐ Monitoramento com Grafana
 
-⚠️ **Mas se você já tem crédito Azure de estudante com validade longa**, dá para usar um
-tier pago pequeno e escapar das limitações abaixo.
+### 3.1 O que subir
 
-### 3.1 🔴 O que cabe no App Service F1 — e o que não cabe
-
-**Limites reais do F1** (verificados em 2026-08-25):
-
-| Limite | Valor |
-|---|---|
-| **CPU** | 🔴 **60 minutos por dia** |
-| **Always On** | ⛔ **Não existe** no Free |
-| Consequência | App **descarrega após ~20 min sem tráfego** → *cold start* na próxima visita |
-| Apps por plano | até 10 |
-
-**Resposta direta para os três componentes:**
-
-| Componente | Cabe no App Service? | Onde deve ficar |
+| Container | Papel | RAM |
 |---|---|---|
-| **API C#** | ✅ **Sim** — é para isso que ele serve | **App Service F1** |
-| **Jobs (ETL Python)** | ⛔ **Não** | **GitHub Actions** |
-| **Front (React)** | 🟡 Tecnicamente sim, **mas não faça** | **Cloudflare Pages** |
+| **Grafana** | Painéis | ~250 MB |
+| **Prometheus** | Coleta e guarda métricas | ~500 MB–1 GB |
+| **node-exporter** | Métricas do host (CPU, RAM, disco) | ~50 MB |
+| **cAdvisor** | Métricas por container | ~100 MB |
+| **postgres-exporter** | Métricas do banco | ~50 MB |
 
-#### Por que o ETL **não** cabe
+**Total: ~1–1,5 GB.** Some ao resto e o dimensionamento muda — ver §4.
 
-1. **WebJobs contínuos exigem Always On**, que não existe no Free.
-2. Mesmo *WebJob* acionado por gatilho **consome a mesma cota de 60 min/dia** — o ETL
-   competiria com a API pelo mesmo orçamento de CPU.
-3. Um ETL que processa 149 MB de CSV **estouraria os 60 minutos sozinho**.
+⚠️ **Comece com Grafana + Prometheus + node-exporter.** cAdvisor e postgres-exporter são
+incrementos; adicione quando sentir falta.
 
-> ✅ **O GitHub Actions resolve isso de graça**, com 6 h de teto por job e minutos que não
-> concorrem com a API. Era a escolha certa antes de eu saber do limite — e agora tem
-> justificativa numérica.
+### 3.2 🔴 A limitação que precisa ser dita
 
-#### Por que o front **não deve** ficar lá
+> **Monitoramento na mesma máquina que ele monitora morre junto com ela.**
 
-Servir arquivo estático pelo App Service **gasta a cota de 60 CPU-min/dia que a API
-precisa**. Cada `index.html`, cada `.js`, cada imagem consome o mesmo orçamento.
+Se o VPS cair, o Grafana cai — e você descobre pelo site fora do ar, não pelo painel.
 
-O Cloudflare Pages serve estático de graça, por CDN global, **sem tocar na cota**.
-
-> 🔑 **Os três componentes em três lugares não é complicação — é o que faz o custo ser
-> zero.** Concentrar tudo no App Service estouraria o Free em um dia.
-
-### 3.2 ⚠️ O *cold start* e a apresentação da banca
-
-Sem Always On, o app dorme após ~20 minutos parado. A primeira requisição depois disso
-demora — e o Postgres gerenciado **também** dorme (§7).
-
-**Dois adormecimentos somados. Na demonstração, isso é constrangedor.**
-
-| Mitigação | Como |
+| Mitigação | |
 |---|---|
-| ⭐ **Aquecer antes** | Abrir o site ~5 min antes da apresentação |
-| *Ping* periódico | Cron do GitHub Actions batendo em `/api/health` a cada 15 min |
-| Tier pago temporário | B1 (~US$ 13/mês) só no mês da defesa |
+| **Uptime externo** | [UptimeRobot](https://uptimerobot.com) ou Better Stack, grátis: pinga `/api/health` de fora e avisa por e-mail |
+| Grafana Cloud | Tier gratuito recebe métricas de fora — mas é outro painel, contrariando sua escolha |
 
-⚠️ O *ping* periódico **consome a cota de 60 min/dia** — use intervalo largo, e só se
-necessário. Para o TCC, **aquecer manualmente antes de apresentar é mais simples e não
-custa nada**.
+> 🔑 **Recomendo Grafana no VPS + um monitor externo gratuito.** O Grafana responde *"como
+> está indo"*; o monitor externo responde *"está no ar?"*. São perguntas diferentes.
+
+### 3.3 ⭐ O painel que vale para o TCC
+
+Aqui está o ganho que não é operacional — **é acadêmico**.
+
+| Painel | Responde |
+|---|---|
+| ⭐ **Votações ingeridas por dia** | Torna visível o **calendário legislativo**: recesso, terças-a-quintas, dezembro cheio |
+| Duração do ETL | O job está degradando com o crescimento da base? |
+| Tamanho do Postgres | Curva de crescimento da base |
+| RAM do host durante o ETL | 🔴 **Confirma se 8 GB bastam** |
+| Latência da API (p95) | Valida o RNF-04 (< 500 ms) |
+| Erros 5xx | Saúde |
+
+> ⭐ **O primeiro painel é figura de dissertação.** Um gráfico de votações por dia ao longo
+> de meses **mostra o recesso de julho como um vale** e dezembro como um pico. Isso
+> transforma o achado institucional em evidência visual — e você não precisa de nada além
+> do que já vai coletar.
+
+⚠️ **Configure a retenção do Prometheus** (ex.: 90 dias). Sem limite, ele cresce até
+encher o disco — e aí derruba o Postgres junto.
 
 ---
 
-## 4. Cloudflare — o proxy que elimina CORS
+## 4. Dimensionamento com Hostinger
 
-```
-poligraph.app          → Cloudflare Pages (React)
-poligraph.app/api/*    → origem da API (App Service ou Fly)
-```
+**Decisão: Hostinger VPS** — datacenter em São Paulo e suporte em português.
 
-**Configure isso no primeiro dia.** Se front e API ficarem em domínios diferentes você
-ganha: *preflight* em toda requisição, dor de cabeça com cookie, e configuração de CORS
-para manter.
-
-| Recurso Cloudflare | Configuração |
+| Componente | RAM |
 |---|---|
-| Pages | Conectar repositório, *build* `npm run build`, saída `dist` |
-| DNS | `A`/`CNAME` para a origem, com proxy ativado (nuvem laranja) |
-| Rules | `/api/*` → origem da API |
-| **Rate limiting** | `/api/afinidade` — ex.: 30 req/min por IP |
-| WAF | Regras gerenciadas, modo padrão |
+| Coolify | ~1 GB |
+| PostgreSQL | ~1 GB |
+| API .NET | ~300 MB |
+| ETL (pico) | 1–2 GB |
+| **Grafana + Prometheus + exporters** | **~1–1,5 GB** |
+| **Pico total** | **~5–6 GB** |
 
-⚠️ **Rate limit em `/api/afinidade` não é paranoia.** É o endpoint que faz cálculo e é o
-único `POST` público. Sem limite, é o alvo óbvio.
+### Planos
 
----
-
-## 5. Secrets
-
-| Secret | Onde | Usado por |
+| Plano | Config | Serve? |
 |---|---|---|
-| `PG_CONN` | GitHub → Actions | `etl.yml` |
-| `AZURE_PUBLISH_PROFILE` **ou** `FLY_API_TOKEN` | GitHub → Actions | `api.yml` |
-| `ConnectionStrings__poligraph` | App Service / Fly secrets | API em produção |
-| `CLARITY_ID`, `GA4_ID` | Cloudflare Pages env | Front |
-| `PEPPER` | App Service / Fly secrets | Só se houver login (PL7) |
+| KVM 1 | 1 vCPU · 4 GB · 50 GB | ⛔ **Não** — RAM apertada e **1 vCPU trava o build .NET** |
+| ⭐ **KVM 2** | **2 vCPU · 8 GB · 100 GB NVMe** | ✅ **Escolha certa** |
+| KVM 4 | 4 vCPU · 16 GB · 200 GB | 🟡 Folga demais para o TCC |
 
-✅ **PL4 DECIDIDA — 2026-08-25: repositório PRIVADO.**
+> **Recomendação: KVM 2.** Com Grafana junto, 8 GB deixa de ser conforto e vira
+> necessidade. E 2 vCPU é o mínimo para compilar .NET sem sofrimento.
 
-| Consequência | |
-|---|---|
-| GitHub Actions | ⚠️ **2.000 min/mês** (não ilimitado). Job diário de ~10 min = ~300 min/mês — **cabe folgado** |
-| Logs dos Actions | ✅ Privados — o risco de vazar segredo em log cai muito |
-| Cloudflare Pages | ✅ Funciona com repositório privado |
+⚠️ **Armadilha do preço:** o valor anunciado (~R\$ 28 no KVM 1) é de contrato de **24–48
+meses**. **Confira o preço de renovação no checkout** — costuma dobrar. Para um TCC que
+dura ~1 ano, calcule o custo real do período.
 
-🔴 **Ainda assim, nunca commitar `.env`.** Repositório privado hoje pode virar público
-depois — e o histórico do Git não esquece.
-
-⚠️ **Se o repositório for público**, qualquer pessoa vê os logs dos Actions. **Não imprima
-a string de conexão** em nenhum `echo` de diagnóstico.
+✅ **Vantagens sobre a Hetzner:** São Paulo (10–40 ms em vez de 200 ms), suporte em
+português, backup automático incluso, e cobrança em reais.
 
 ---
 
-## 6. Ambientes
+## 5. Segurança — o que passa a ser seu
 
-| | Local | Produção |
+| Item | Ação |
+|---|---|
+| 🔴 **Backup do Postgres** | Coolify agenda para S3/storage externo. **Primeiro dia, não depois** |
+| **Cloudflare na frente** | TLS, WAF, e **esconde o IP do VPS** |
+| **Firewall** | Só 80/443 abertos. ⛔ **Nunca** expor 5432 |
+| SSH | Chave, não senha. Desabilitar login root |
+| Grafana | **Trocar a senha padrão** (`admin/admin`) — é alvo de varredura automática |
+| Atualização | `unattended-upgrades` para patches de segurança |
+
+⚠️ **O backup é o item que mais dói esquecer.** Perder o banco com o TCC em andamento é o
+pior cenário possível, e são 10 minutos de configuração.
+
+---
+
+## 6. Ordem de montagem
+
+| # | Passo | Tempo |
 |---|---|---|
-| Orquestração | ⭐ **Aspire** (`dotnet run`) | Nenhuma — peças independentes |
-| Postgres | Container do Aspire | Neon / Supabase |
-| API | `localhost` | App Service / Fly |
-| Front | Vite dev server | Cloudflare Pages |
-| ETL | Manual pelo dashboard | GitHub Actions cron |
+| 1 | Contratar VPS, apontar DNS na Cloudflare | 30 min |
+| 2 | Instalar Coolify (`curl` de uma linha) | 15 min |
+| 3 | Subir Postgres pelo painel + **configurar backup** | 30 min |
+| 4 | Conectar repositório, deploy da API | 30 min |
+| 5 | Deploy do front | 20 min |
+| 6 | Scheduled Task do ETL | 20 min |
+| 7 | Grafana + Prometheus + node-exporter | 1–2 h |
+| 8 | Monitor externo (UptimeRobot) | 10 min |
 
-> 🔑 **Não existe "ambiente de homologação".** Para um TCC, dois ambientes já são um a
-> mais do que o necessário. Local + produção basta.
-
----
-
-## 7. Custo total
-
-| Item | Custo/mês |
-|---|---|
-| Cloudflare (Pages, DNS, WAF) | **US$ 0** |
-| GitHub Actions (repo privado) | **US$ 0** — 300 de 2.000 min/mês |
-| Postgres (Neon/Supabase free) | **US$ 0** |
-| API (Azure App Service **F1**) | **US$ 0** ⚠️ app dorme por inatividade |
-| Domínio | ~US$ 10/ano |
-| **Total** | **US$ 0/mês** + ~US$ 10/ano de domínio |
-
-⚠️ **O free tier do Neon/Supabase suspende o banco após inatividade.** A primeira
-requisição depois disso demora alguns segundos. Para um TCC é aceitável — mas **avise a
-banca antes da demonstração**, ou faça uma requisição de aquecimento minutos antes.
+**Total: ~4 horas** para a infra inteira de pé.
 
 ---
 
-## 8. Pendências
+## 7. Pendências
 
 | # | Pendência | Prioridade |
 |---|---|---|
-| ~~PL2~~ | ✅ **RESOLVIDA — 2026-08-25: Azure App Service F1.** O Fly deixou de ser gratuito em out/2024 | — |
-| ~~PL4~~ | ✅ **RESOLVIDA — 2026-08-25: repositório privado.** 300 de 2.000 min/mês | — |
-| **PL16** | Definir como o ETL sinaliza `novas_votacoes` (output do step) | 🟡 Média |
-| **PL17** | Testar o cold start do Postgres gerenciado e decidir se precisa de *keep-alive* | 🟡 Média |
+| ~~PL2~~ | ✅ **Hostinger VPS KVM 2** | — |
+| ~~PL4~~ | ✅ Repositório privado | — |
+| **PL19** | Escolher retenção do Prometheus e configurar | 🟡 Média |
+| **PL20** | Definir o destino do backup do Postgres (S3, Backblaze, outro VPS) | 🔴 Alta |
+| **PL21** | Decidir se o Grafana fica público ou só por VPN/túnel | 🟡 Média |
 | **PL3** | Registrar domínio | 🟢 Baixa |

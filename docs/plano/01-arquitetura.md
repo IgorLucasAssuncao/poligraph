@@ -1,8 +1,9 @@
 # Plano de implementação — arquitetura macro
 
-> **Status:** v1.2 — 2026-08-25
+> **Status:** v1.3 — 2026-08-25
 > **v1.2:** ✅ **DECISÃO — VPS + Coolify** (§3.5). ETL roda em Scheduled Task do Coolify,
-> não no GitHub Actions — com Postgres interno, expor o banco não compensa. Hetzner CX32.
+> não no GitHub Actions — com Postgres interno, expor o banco não compensa.
+> **v1.3:** ✅ **Hostinger VPS KVM 2** (São Paulo) + stack Grafana no mesmo VPS.
 > **v1.1:** §3 — opção D avaliada (compartilhada, Render, Railway, VPS+Coolify) e
 > comparação final; PL1 e PL2 decididas.
 > **Restrições dadas:** React no front · C# no back · Python no ETL · Postgres ·
@@ -34,14 +35,16 @@ flowchart TB
         DNS["DNS · CDN · WAF · TLS<br/>esconde o IP do VPS"]
     end
 
-    subgraph VPS["🖥️ VPS + Coolify — Hetzner CX32"]
+    subgraph VPS["🖥️ VPS + Coolify — Hostinger KVM 2 · São Paulo"]
         WEB["React · build estático"]
         API["API C# · ASP.NET Core"]
         PG[("PostgreSQL")]
-        ETL["ETL Python · job diário"]
+        ETL["ETL Python · Scheduled Task"]
+        GRAF["Grafana + Prometheus"]
         WEB --> API
         API <--> PG
         ETL --> PG
+        GRAF -.observa.-> API & PG & ETL
     end
 
     F1["Câmara · CSV + API"] --> ETL
@@ -185,10 +188,12 @@ O autor optou pela Opção D: **um painel só**. Esta seção dimensiona e escol
 | PostgreSQL (463 mil votos) | ~1 GB |
 | API .NET | ~300 MB |
 | 🔴 **ETL Python — pico** | **1–2 GB** (`pandas` com CSV de 55 MB + `numpy`) |
+| ⭐ **Grafana + Prometheus + exporters** | **~1–1,5 GB** |
 | Build (.NET compilando) | CPU-intensivo, picos de RAM |
+| **Pico total** | **~5–6 GB** |
 
-> 🔑 **4 GB é o piso, 8 GB é confortável.** Em 2 GB o Coolify sozinho come metade e o ETL
-> morre por falta de memória.
+> 🔑 **Com o Grafana somado, 8 GB deixa de ser conforto e vira necessidade.** E 1 vCPU
+> trava o build .NET — 2 vCPU é o mínimo.
 
 **Disco:** 149 MB de CSV + Postgres + imagens Docker → **40 GB basta**, 80 GB folga.
 
