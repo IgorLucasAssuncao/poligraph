@@ -94,6 +94,37 @@ está em [01-arquitetura §2.1](01-arquitetura.md).
 > 🔑 **Você não precisa escrever pipeline de deploy.** O Coolify conecta no repositório,
 > registra um webhook, e a cada push em `main` ele constrói e publica sozinho.
 
+### 2.0.0 Webhook em uma frase
+
+> **Webhook é só uma URL que você entrega para outro sistema ligar de volta.**
+
+Não é software. Não é serviço. Não se "instala" nem se "contrata". É um **número de
+telefone que você deixa com o GitHub**: *"quando tiver push, liga nesse número."*
+
+| Pergunta | Resposta |
+|---|---|
+| **Dá para usar com VPS?** | ✅ **É justamente onde funciona melhor** |
+| Por quê? | Webhook exige **uma coisa só: um endereço público que atende HTTP**. Um VPS tem IP fixo e roda servidor web. É a definição de um VPS |
+| Por que não no seu notebook? | ⛔ Ele **não tem número de telefone**. Está atrás do roteador, com IP que muda e sem porta aberta. O GitHub não teria para onde ligar |
+
+⭐ **É o oposto da sua intuição:** webhook não é a parte difícil que o VPS talvez não
+aguente. Webhook é a parte que **só existe porque você tem um VPS**. Nas hospedagens sem
+servidor próprio é que ele fica complicado.
+
+#### O que você realmente vai fazer — os passos concretos
+
+| # | Passo | Onde |
+|---|---|---|
+| 1 | Instalar o Coolify | No VPS, `curl` de uma linha |
+| 2 | Apontar `coolify.seudominio.com` para o IP do VPS | Cloudflare |
+| 3 | Abrir o painel e clicar em **"Connect GitHub"** | Navegador |
+| 4 | Autorizar o GitHub App | GitHub |
+| 5 | ✅ **Nada** | O Coolify registra o webhook sozinho |
+
+> 🔑 **Você não digita URL de webhook em lugar nenhum.** O passo 4 faz isso por você. Na
+> prática o "webhook" é uma caixinha que você nunca vai ver — só o efeito: deu push,
+> subiu.
+
 ### 2.0 🔴 Quem chama quem — o webhook não roda na sua máquina
 
 Vale desfazer a ambiguidade da palavra *webhook*, porque ela sugere um programa rodando em

@@ -1,6 +1,8 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v1.1 — 2026-08-25
+> **Status:** v1.2 — 2026-08-25
+> **v1.2:** ✅ PL6 DECIDIDA — Clarity em produção, gravando tudo, com consentimento
+> prévio bloqueante (§4.5). PL8 e PL9 caem junto; nascem PL25 (texto do banner) e PL24 (CEP).
 > **v1.1:** §4.2–4.5 reescritas contra a documentação oficial do Clarity. 🔴 Duas
 > mitigações da v1.0 estavam erradas: máscara não esconde clique, e "só heatmap" é pior
 > que gravação. Consent Mode não protege o Brasil por padrão. Nova pendência PL24 (CEP).
@@ -142,7 +144,7 @@ Inclui mapa de calor, gravação de sessão e detecção de *rage click* e *dead
 | Métrica do Clarity | O que responde no TCC |
 |---|---|
 | Taxa de abandono do questionário | O N de perguntas (RQ3) está grande demais? |
-| ⛔ ~~Mapa de calor da tela de resultado~~ | **Riscado** — é justamente onde o clique revela opinião (§4.4) |
+| Mapa de calor da tela de resultado | O usuário olha os "mais distantes" ou ignora? ⚠️ Só com o consentimento da §4.5.2 |
 | *Rage click* no grafo | O grafo está utilizável ou frustrante? |
 | Tempo até responder | A ementa reescrita ficou compreensível? |
 
@@ -206,17 +208,79 @@ Duas correções ao que estava neste documento até 2026-08-25:
 > 🔑 **Nenhum modo de máscara resolve.** Mesmo em *Strict*, onde todo o conteúdo é ocultado,
 > a coordenada do clique continua sendo coletada — é a razão de existir do produto.
 
-**A única mitigação que funciona de fato é não instrumentar a tela do questionário nem a
-de resultado.** Instrumente a navegação: home, busca, página do parlamentar, lista de
-notícias. É onde as dúvidas de usabilidade realmente estão.
-
-### 4.5 → Recomendação para a PL6
+**Restam então duas saídas honestas, e só duas:**
 
 | | |
 |---|---|
-| ⭐ **Em avaliação consentida** | n pequeno, voluntários com **TCLE assinado**, sessão supervisionada. Dá o dado de usabilidade do TCC sem exposição |
-| Em produção aberta | Só com Consent Mode ligado **e** com questionário/resultado fora da instrumentação |
-| ⛔ Nunca | Clarity em produção, no padrão de fábrica, sobre a tela do questionário |
+| **A** — não instrumentar | Deixar questionário e resultado fora do script; medir só a navegação |
+| **B** — instrumentar tudo, mas **com consentimento que diga a verdade** | ✅ **Foi a escolhida** — ver §4.5 |
+
+> 🔑 **O que muda entre A e B não é a técnica, é quem decide.** Na A, você protege o
+> usuário sem perguntar. Na B, você conta exatamente o que vai gravar e ele escolhe. A B só
+> é legítima se o texto do consentimento for específico — daí a §4.5.2 ser obrigatória, e
+> não uma boa prática.
+
+### 4.5 ✅ DECISÃO — PL6 resolvida (2026-08-25)
+
+> **Clarity em produção aberta, gravando tudo — inclusive questionário e resultado —
+> com consentimento prévio obrigatório.**
+>
+> Decisão do autor. O material serve para a demonstração à banca, e o volume esperado de
+> usuários é baixo. Registrado que a alternativa mais conservadora (§4.4) foi apresentada
+> e não escolhida.
+
+Isso é defensável **desde que o consentimento seja realmente prévio, específico e
+informado**. Como o dado é sensível (LGPD art. 11), não há caminho do meio: ou está tudo
+abaixo implementado, ou o script não sobe.
+
+#### 4.5.1 🔴 Obrigatório — não é recomendação
+
+| # | Exigência | Por quê |
+|---|---|---|
+| 1 | 🔴 **Consent Mode LIGADO** — *Settings → Setup →* desligar "set cookies by default" | O padrão de fábrica **não cobre o Brasil** (§4.3) |
+| 2 | 🔴 **Script só carrega DEPOIS do aceite** | Não basta o banner aparecer: o `clarity.js` não pode ser injetado antes |
+| 3 | 🔴 **Recusar tem que ser tão fácil quanto aceitar** | Dois botões do mesmo peso. ⛔ Sem "aceitar" destacado e "saiba mais" escondido |
+| 4 | 🔴 **Recusar não pode bloquear o site** | LGPD art. 9º §3 — consentimento para finalidade não essencial **não pode ser condição de uso** |
+| 5 | 🔴 **Revogar tem que existir** | Um link no rodapé que reabre a escolha e chama a Consent API com `DENIED` |
+| 6 | Verificar no console antes de publicar | `consentStatus` deve vir `DENIED` antes do aceite (§4.3) |
+
+#### 4.5.2 🔴 O texto do consentimento precisa dizer estas cinco coisas
+
+Genérico não serve. Um banner de "usamos cookies para melhorar sua experiência" **não
+autoriza** o que vai ser gravado aqui.
+
+| Deve constar | Redação-guia |
+|---|---|
+| **O que é gravado** | *"gravamos sua navegação, incluindo cliques e as respostas que você marcar no questionário"* |
+| **Que isso revela opinião política** | *"essas respostas indicam sua posição política"* — 🔴 é o que torna o consentimento *específico* (art. 11) |
+| ⭐ **Que será exibido na defesa** | *"as gravações podem ser exibidas na apresentação e na defesa deste trabalho acadêmico"* |
+| **Quem recebe** | *"a ferramenta é a Microsoft Clarity; os dados ficam em servidores fora do Brasil"* (art. 33) |
+| **Por quanto tempo** | *"gravações por 30 dias; dados de clique por 9 meses"* |
+
+⚠️ **A terceira linha é a que quase todo mundo esquece** — e é a que legitima a sua
+finalidade. Exibir a gravação de um terceiro para a banca é **divulgação a outras pessoas**.
+Se o texto não disser isso, o consentimento obtido não cobre o uso pretendido.
+
+#### 4.5.3 ⏳ Os 30 dias vão te pegar
+
+> **A gravação que você quer mostrar na banca terá expirado no dia da banca.**
+
+| Ação | Quando |
+|---|---|
+| 🔴 Marcar as sessões escolhidas como **favoritas** | Sobe a retenção de 30 dias → **9 meses** |
+| 🔴 **Gravar a tela** reproduzindo a sessão (OBS, Xbox Game Bar) | O vídeo é seu, não expira, e funciona offline na defesa |
+| Exportar os números agregados | O painel do Clarity não é fonte permanente |
+
+⭐ **Grave o vídeo na mesma semana da coleta.** Depender do painel ao vivo na defesa junta
+dois riscos numa coisa só: expiração e Wi-Fi da universidade.
+
+#### 4.5.4 Uma escolha que ainda é sua
+
+Para a demonstração, **a sessão de um estranho e a sua própria sessão valem o mesmo**
+como evidência de usabilidade — mas custam coisas diferentes. Se der na mesma, prefira
+mostrar à banca a gravação de **um voluntário que você avisou pessoalmente**, e use as
+sessões do público aberto de forma **agregada** (heatmap, taxa de abandono). O
+consentimento cobre as duas; a segunda só é mais confortável de defender se perguntarem.
 
 ⚠️ **Pergunte ao orientador sobre o CEP.** Pesquisa com seres humanos costuma exigir
 aprovação de Comitê de Ética (Res. CNS 510/2016, via Plataforma Brasil). A resolução
@@ -233,9 +297,9 @@ custar meses se ficar para o fim.
 | Login no MVP | ⭐ **Nenhum** — `localStorage` |
 | Se precisar de login | Google, guardando só `SHA256(sub + pepper)` |
 | E-mail / nome / foto | ⛔ Nunca persistir |
-| Mapa de calor | **Microsoft Clarity** — 🔴 máscara NÃO basta, ver §4.4 |
+| Mapa de calor | **Microsoft Clarity** — 🔴 máscara não basta; o que protege é o consentimento (§4.5) |
 | Analytics de uso | **GA4**, sem PII |
-| Gravação de sessão | ⚠️ Só em avaliação consentida, não em produção aberta |
+| Gravação de sessão | ✅ **Em produção, completa** — com consentimento bloqueante (§4.5) |
 
 ---
 
@@ -243,11 +307,12 @@ custar meses se ficar para o fim.
 
 | # | Pendência | Prioridade |
 |---|---|---|
-| **PL6** | Decidir se Clarity roda em produção ou só na avaliação com voluntários | 🔴 Alta |
+| ~~PL6~~ | ✅ **Produção aberta, gravando tudo, com consentimento prévio obrigatório** (§4.5) | — |
 | **PL7** | Se houver login: escrever política de privacidade e endpoint de exclusão | 🔴 Alta *(se opção 2)* |
-| **PL8** | Definir quais TELAS recebem o script (não quais seletores mascarar — §4.4) | 🟡 Média |
+| ~~PL8~~ | ✅ **Todas as telas** — a proteção passou a ser o consentimento, não a máscara | — |
 | **PL24** | Confirmar com o orientador se o TCC precisa de aprovação em CEP (Plataforma Brasil) | 🔴 Alta |
-| **PL9** | Decidir se o banner de consentimento é necessário (depende de PL6) | 🟡 Média |
+| ~~PL9~~ | ✅ **Necessário e bloqueante** — decorre da PL6 (§4.5.1) | — |
+| **PL25** | Escrever o texto do banner cobrindo as 5 exigências da §4.5.2 | 🔴 Alta |
 
 ---
 
