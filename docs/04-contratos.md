@@ -923,8 +923,8 @@ segundos.** É a diferença entre o job caber na janela noturna ou não.
 
 | # | Contrato | O que falta |
 |---|---|---|
-| **C13** | API REST pública | Proposta em [arq/10](arq/10-api-e-afinidade.md) §5, não implementada |
-| **C14** | Fronteira Python ↔ Postgres | Formato de troca não definido (API6) |
+| ~~C13~~ | ✅ **ESPECIFICADA** em §9.5 — falta implementar |
+| ~~C14~~ | ✅ **ESPECIFICADO** em §9.6 — falta implementar |
 | **C15** | Contrato do front | D5 decidida (**React**); falta o contrato em si — ver CT3 |
 
 **Arestas do grafo — decisões tomadas, dimensões não:**

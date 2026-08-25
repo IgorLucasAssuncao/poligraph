@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-08-23 · **40 resolvidas · 46 abertas**
+> **Atualizado:** 2026-08-25 · **43 resolvidas · 54 abertas**
 > As pendências vivem espalhadas por 10 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 
@@ -84,10 +84,10 @@ social (PP4), parlamentar com poucos votos (PP5), perfil temático por relatoria
 </details>
 
 <details>
-<summary><b>Fontes e escopo</b> — B6, B7, C4, C5, C8, SE2, TS5, ER5, PL3, PL5, PL7, PL8, PL9, PL14, PL15, A5</summary>
+<summary><b>Fontes e escopo</b> — B6, B7, C5, C7, TS5, ER5, PL3, PL5, PL7, PL8, PL9, PL13, PL14, PL15, PL16, PL17, A5</summary>
 
 Base dos Dados como atalho (B6, TS5), política de `cpf_hash` (B7, ER5), votações de
-comissão no Senado (C4, SE2), *fuzzy match* (C5), sessões do Congresso Nacional (C8),
+*fuzzy match* (C5),
 domínio (PL3), biblioteca do grafo (PL5), política de privacidade (PL7), máscaras do
 Clarity (PL8), banner de consentimento (PL9), retenção de `execucao` (PL14), `casa` em
 `pessoa` (PL15), reescrever objetivos se escolher o Cenário A (A5 — **já não se aplica**,
@@ -113,7 +113,8 @@ a comparação entre casas deixa de ser assimétrica.
 
 `A1` `API1` `API2` `API6` `B1` `B2` `B3` `B4` `B5` `C1` `C2` `C3` `C6` `CT1` `CT2` `CT4`
 `CT5` `CT6` `D1` `D3` `D5` `ER1` `ER3` `ER4` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `PP1`
-`RE-01` `RQ1` `RQ4` `RQ8` `SE1` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2` `TS3` `TS4` `TS6`
+`RE-01` `RQ1` `RQ4` `RQ8` `SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2` `TS3` `TS4`
+`TS6` `C4` `C8` `C13` `C14`
 
 ⚠️ **Convenção de prefixo** (evita a colisão que existia até 2026-08-23):
 
