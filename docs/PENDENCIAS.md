@@ -44,7 +44,7 @@ atacável na banca, e o único que não escala. Comece cedo.
 | **PL13** | EF Core migrations ou script SQL versionado |
 | **PL16** | Como o ETL sinaliza `novas_votacoes` |
 | **PL17** | Testar o *cold start* do Postgres gerenciado |
-| **C13 / C14 / C15** | Contratos especificados, faltam implementados |
+| **C15** | Contrato do front — depende do React estar de pé |
 
 ---
 
@@ -86,9 +86,8 @@ social (PP4), parlamentar com poucos votos (PP5), perfil temático por relatoria
 <details>
 <summary><b>Fontes e escopo</b> — B6, B7, C5, C7, TS5, ER5, PL3, PL5, PL7, PL8, PL9, PL13, PL14, PL15, PL16, PL17, A5</summary>
 
-Base dos Dados como atalho (B6, TS5), política de `cpf_hash` (B7, ER5), votações de
-*fuzzy match* (C5),
-domínio (PL3), biblioteca do grafo (PL5), política de privacidade (PL7), máscaras do
+Base dos Dados como atalho (B6, TS5), política de `cpf_hash` (B7, ER5), *fuzzy match*
+(C5), métricas de comparação entre casas (C7), domínio (PL3), biblioteca do grafo (PL5), política de privacidade (PL7), máscaras do
 Clarity (PL8), banner de consentimento (PL9), retenção de `execucao` (PL14), `casa` em
 `pessoa` (PL15), reescrever objetivos se escolher o Cenário A (A5 — **já não se aplica**,
 a D3 escolheu o C).
@@ -109,7 +108,7 @@ a comparação entre casas deixa de ser assimétrica.
 
 ---
 
-## ✅ Resolvidas — 40
+## ✅ Resolvidas — 47
 
 `A1` `API1` `API2` `API6` `B1` `B2` `B3` `B4` `B5` `C1` `C2` `C3` `C6` `CT1` `CT2` `CT4`
 `CT5` `CT6` `D1` `D3` `D5` `ER1` `ER3` `ER4` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `PP1`
