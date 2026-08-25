@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-08-25 · **35 resolvidas · 58 abertas**
+> **Atualizado:** 2026-08-25 · **51 resolvidas · 58 abertas**
 > As pendências vivem espalhadas por 10 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 
@@ -108,7 +108,7 @@ a comparação entre casas deixa de ser assimétrica.
 
 ---
 
-## ✅ Resolvidas — 47
+## ✅ Resolvidas — 51
 
 `A1` `API1` `API2` `API6` `B1` `B2` `B3` `B4` `B5` `C1` `C2` `C3` `C6` `CT1` `CT2` `CT4`
 `CT5` `CT6` `D1` `D3` `D5` `ER1` `ER3` `ER4` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `PP1`
