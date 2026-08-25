@@ -10,8 +10,8 @@
 
 | # | Pergunta | Onde |
 |---|---|---|
-| **PL4** | O repositório será **público**? Afeta minutos do Actions e visibilidade dos logs | [plano/05](plano/05-cicd-e-deploy.md) |
-| **PL2** | API no **Fly.io** ou Azure? *Recomendo Fly — crédito Azure de estudante expira* | [plano/05](plano/05-cicd-e-deploy.md) |
+| ~~PL2~~ | ✅ **Azure App Service F1** — o Fly encerrou o free tier em out/2024 | — |
+| ~~PL4~~ | ✅ **Repositório privado** — 300 de 2.000 min/mês do Actions | — |
 | **PL1** | Postgres no **Neon** ou Supabase? | [plano/01](plano/01-arquitetura.md) |
 | **PL6** | Clarity em produção ou só na avaliação? *É a única com peso jurídico* | [plano/02](plano/02-autenticacao-e-metricas.md) |
 | **RQ9** | Onde vive a lista de seguidos — A (localStorage), B (conta anônima) ou C? | [03-requisitos](03-requisitos.md) |
@@ -60,6 +60,7 @@ atacável na banca, e o único que não escala. Comece cedo.
 | **A3** | Deduplicação de PEC em dois turnos |
 | **A4** | Quantas das 100 proposições sobrevivem ao corte de unanimidade |
 | **PL10** | Questionário adaptativo entra como experimento? |
+| **PL18** | Usar LLM para rascunhar a reescrita das ementas? (§3.5.2 do plano/03) |
 | **RQ7** | Mecanismo de recomendação e como avaliá-lo |
 | **RQ6** | Critérios de aceitação dos RF essenciais |
 | **ER2** | Biblioteca de *fuzzy match* e calibração do limiar |

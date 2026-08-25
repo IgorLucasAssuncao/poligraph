@@ -1,6 +1,7 @@
 # CI/CD e deploy
 
-> **Status:** v1.0 — 2026-08-23
+> **Status:** v1.1 — 2026-08-25
+> **v1.1:** 🔴 correção — o Fly encerrou o free tier; PL2 e PL4 decididas.
 > Fecha a parte de infra do plano. Três *workflows*, três destinos, zero servidor
 > para administrar.
 
@@ -167,8 +168,17 @@ jobs:
 | Deploy simples, Dockerfile único | Sem integração com Aspire |
 | Não expira | Precisa cartão cadastrado |
 
-> **Recomendação:** **Fly.io**, por não expirar. O ganho do `azd up` do Aspire não
-> compensa o risco do TCC sair do ar quando o crédito acabar.
+🔴 **CORREÇÃO — 2026-08-25.** O Fly.io **encerrou o free tier em outubro de 2024**. Contas
+novas têm um teste de 2 horas de VM ou 7 dias, depois **mínimo de US$ 5/mês** (plano
+Hobby). A recomendação anterior por "não expirar" estava errada: ele custa desde o dia 1.
+
+> **Recomendação revisada: Azure App Service F1 (gratuito).** Continua existindo em 2026,
+> permite até 10 apps, e o app dorme por inatividade — aceitável para TCC. ⚠️ **Não
+> confundir** com o *Azure Database for PostgreSQL*, que **não** tem tier gratuito — o banco
+> vai para Neon/Supabase de qualquer forma.
+>
+> ⚠️ Azure **não tem trava de gasto automática**: se passar do limite do F1, começa a
+> cobrar. Configure alerta de orçamento em US$ 1.
 
 ⚠️ **Mas se você já tem crédito Azure de estudante com validade longa**, o Azure é mais
 integrado. É decisão de contexto — **PL2**.
@@ -209,8 +219,16 @@ para manter.
 | `CLARITY_ID`, `GA4_ID` | Cloudflare Pages env | Front |
 | `PEPPER` | App Service / Fly secrets | Só se houver login (PL7) |
 
-🔴 **Nunca commitar `.env`.** O `.gitignore` de .NET já cobre `.env`, mas confira antes do
-primeiro *push* — o repositório pode ser público (PL4).
+✅ **PL4 DECIDIDA — 2026-08-25: repositório PRIVADO.**
+
+| Consequência | |
+|---|---|
+| GitHub Actions | ⚠️ **2.000 min/mês** (não ilimitado). Job diário de ~10 min = ~300 min/mês — **cabe folgado** |
+| Logs dos Actions | ✅ Privados — o risco de vazar segredo em log cai muito |
+| Cloudflare Pages | ✅ Funciona com repositório privado |
+
+🔴 **Ainda assim, nunca commitar `.env`.** Repositório privado hoje pode virar público
+depois — e o histórico do Git não esquece.
 
 ⚠️ **Se o repositório for público**, qualquer pessoa vê os logs dos Actions. **Não imprima
 a string de conexão** em nenhum `echo` de diagnóstico.
@@ -237,11 +255,11 @@ a string de conexão** em nenhum `echo` de diagnóstico.
 | Item | Custo/mês |
 |---|---|
 | Cloudflare (Pages, DNS, WAF) | **US$ 0** |
-| GitHub Actions | **US$ 0** (público) |
+| GitHub Actions (repo privado) | **US$ 0** — 300 de 2.000 min/mês |
 | Postgres (Neon/Supabase free) | **US$ 0** |
-| API (Fly.io) | **US$ 0–5** |
+| API (Azure App Service **F1**) | **US$ 0** ⚠️ app dorme por inatividade |
 | Domínio | ~US$ 10/ano |
-| **Total** | **≈ US$ 0–5/mês** |
+| **Total** | **US$ 0/mês** + ~US$ 10/ano de domínio |
 
 ⚠️ **O free tier do Neon/Supabase suspende o banco após inatividade.** A primeira
 requisição depois disso demora alguns segundos. Para um TCC é aceitável — mas **avise a
@@ -253,8 +271,8 @@ banca antes da demonstração**, ou faça uma requisição de aquecimento minuto
 
 | # | Pendência | Prioridade |
 |---|---|---|
-| **PL2** | Azure App Service vs **Fly.io** — recomendado Fly, por não expirar | 🔴 Alta |
-| **PL4** | Repositório público? Afeta minutos do Actions e visibilidade dos logs | 🔴 Alta |
+| ~~PL2~~ | ✅ **RESOLVIDA — 2026-08-25: Azure App Service F1.** O Fly deixou de ser gratuito em out/2024 | — |
+| ~~PL4~~ | ✅ **RESOLVIDA — 2026-08-25: repositório privado.** 300 de 2.000 min/mês | — |
 | **PL16** | Definir como o ETL sinaliza `novas_votacoes` (output do step) | 🟡 Média |
 | **PL17** | Testar o cold start do Postgres gerenciado e decidir se precisa de *keep-alive* | 🟡 Média |
 | **PL3** | Registrar domínio | 🟢 Baixa |

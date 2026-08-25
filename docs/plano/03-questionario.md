@@ -1,6 +1,7 @@
 # O questionário — que perguntas, dinâmicas?, e o conteúdo das propostas
 
-> **Status:** v1.0 — 2026-08-23
+> **Status:** v1.1 — 2026-08-25
+> **v1.1:** §3.5 — base vetorial avaliada e descartada; LLM como rascunho, não decisão.
 > Responde às três perguntas em aberto. Os exemplos são **votações reais de 2025**,
 > extraídas do dado, não inventadas.
 
@@ -192,6 +193,85 @@ Pergunta direta, resposta direta:
 ⚠️ **Isso importa para a banca.** O passo mais subjetivo do método é a reescrita da
 ementa. Mostrar o texto original **ao lado** da pergunta é o que separa "método" de
 "achismo" — já registrado como RF-30.
+
+---
+
+## 3.5 ⭐ Base vetorial dos textos votados? — **não compensa, e o número diz por quê**
+
+Pergunta legítima: em vez de curar perguntas à mão, tratar os textos votados e montar uma
+base vetorial (*embeddings*) para selecionar automaticamente.
+
+**Medi o volume antes de opinar:**
+
+| | |
+|---|---|
+| Ementa **média** | **137 caracteres** — do tamanho de um tweet |
+| Proposições substantivas a avaliar (legislatura) | ~300–400 |
+| **Tempo de leitura humana** | **≈ 3,3 horas** (400 × 30 s) |
+
+> 🔑 **Construir um pipeline de *embeddings* para 400 textos de 137 caracteres custa mais
+> tempo do que ler os 400.**
+
+*Embeddings* brilham quando o corpus é grande demais para leitura humana. Aqui ele cabe em
+uma tarde.
+
+### 3.5.1 E não é só o volume — resolveria o problema errado
+
+| O que *embeddings* resolvem | O projeto precisa? |
+|---|---|
+| Cobertura semântica / diversidade temática | ⛔ Já resolvido — `/temas` **oficial**, 96% de cobertura |
+| Classificação temática | ⛔ Substituiria fonte **autoritativa** por inferida — pior |
+| Busca semântica no produto | ⛔ Fora de escopo; 100 proposições não justificam |
+| **Julgar se é "respondível por leigo"** | 🔴 **É esse o gargalo — e embedding não julga isso** |
+
+⚠️ **O critério que mais elimina candidatas (§1.2, nº 4) é justamente o que nenhum modelo
+resolve.** Decidir que *"Institui o Comitê Gestor do IBS"* é impossível de virar pergunta
+honesta exige julgamento, não distância vetorial.
+
+### 3.5.2 Onde um LLM **ajuda de verdade**: rascunhar a reescrita
+
+A PL11 — reescrever ementa em linguagem leiga — **é** o gargalo, e aí sim há ganho:
+
+```
+ementa oficial → LLM rascunha a pergunta → 🔴 humano revisa e aprova
+```
+
+| ✅ Ganho | ⚠️ Custo |
+|---|---|
+| Corta a parte mais lenta da PL11 | **Introduz um modelo no método** |
+| Padroniza o tom das perguntas | A banca vai perguntar como você validou |
+| Human-in-the-loop mantém o controle | Reescrita ruim **distorce a pergunta** — problema metodológico, não técnico |
+
+> **Recomendação: use LLM como rascunho, nunca como decisão.** E **declare no texto** —
+> "as perguntas foram redigidas com assistência de modelo de linguagem e revisadas
+> manualmente uma a uma". Omitir isso é pior do que assumir.
+
+⚠️ **A revisão humana não é formalidade.** O RF-30 já exige exibir a **ementa original ao
+lado** da pergunta — é o que torna a reescrita auditável, com ou sem LLM.
+
+### 3.5.3 O único uso onde vetor ganharia: deduplicação semântica
+
+| | |
+|---|---|
+| Problema | **A3** — mesma matéria votada várias vezes (PEC em dois turnos, substitutivo, texto quase igual) |
+| Por que ID não basta | Turnos têm `idVotacao` diferentes e a proposição pode mudar |
+| Onde vetor ajuda | Similaridade de ementa acima de um limiar → candidata a duplicata |
+
+⚠️ Mas para ~400 textos isso também é resolvível com **similaridade de string** (Levenshtein
+ou trigramas) — o Postgres tem `pg_trgm` nativo. **Não precisa de base vetorial.**
+
+### 3.5.4 Veredito
+
+| Uso | Vale? |
+|---|---|
+| Base vetorial para **selecionar** perguntas | ⛔ **Não** — 400 textos de 137 caracteres |
+| Base vetorial para **classificar tema** | ⛔ Não — `/temas` é oficial |
+| **LLM para rascunhar a reescrita** | ✅ **Sim**, com revisão humana e declaração no texto |
+| Dedup semântico | 🟡 Sim, mas com `pg_trgm`, não com vetores |
+
+⭐ **E há um ganho indireto em decidir isso agora:** "avaliamos o uso de *embeddings* e
+concluímos que o volume não justifica" é uma decisão de engenharia **defensável** — melhor
+do que a banca perguntar e você não ter considerado.
 
 ---
 
