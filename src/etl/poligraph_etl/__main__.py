@@ -136,7 +136,7 @@ def _analisar(conexao: psycopg.Connection, legislatura: int) -> None:
 
 def _mapa_pessoas(conexao: psycopg.Connection) -> dict[str, int]:
     linhas = conexao.execute(
-        "SELECT id_externo, pessoa_id FROM pessoa_fonte_id WHERE fonte = 'CAMARA'"
+        "SELECT id_externo, pessoa_id FROM pessoa_fonte_ids WHERE fonte = 'CAMARA'"
     ).fetchall()
     return {str(externo): pessoa_id for externo, pessoa_id in linhas}
 
@@ -151,7 +151,7 @@ def _montar_matriz(conexao: psycopg.Connection, legislatura: int):
     votacoes = conexao.execute(
         """
         SELECT id, categoria, EXTRACT(YEAR FROM CURRENT_DATE) - EXTRACT(YEAR FROM data)
-          FROM votacao
+          FROM votacoes
          WHERE casa = 'CAMARA' AND legislatura = %s AND plenario AND NOT secreta
          ORDER BY id
         """,
@@ -161,7 +161,7 @@ def _montar_matriz(conexao: psycopg.Connection, legislatura: int):
     pessoas = [
         r[0]
         for r in conexao.execute(
-            "SELECT DISTINCT pessoa_id FROM voto ORDER BY pessoa_id"
+            "SELECT DISTINCT pessoa_id FROM votos ORDER BY pessoa_id"
         ).fetchall()
     ]
 
@@ -170,7 +170,7 @@ def _montar_matriz(conexao: psycopg.Connection, legislatura: int):
 
     matriz = np.full((len(pessoas), len(votacoes)), np.nan)
     for votacao_id, pessoa_id, valor in conexao.execute(
-        "SELECT votacao_id, pessoa_id, valor FROM voto WHERE valor IS NOT NULL"
+        "SELECT votacao_id, pessoa_id, valor FROM votos WHERE valor IS NOT NULL"
     ).fetchall():
         i, j = indice_pessoa.get(pessoa_id), indice_votacao.get(votacao_id)
         if i is not None and j is not None:

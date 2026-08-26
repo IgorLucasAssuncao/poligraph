@@ -39,7 +39,7 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
         for pessoa in pessoas:
             cur.execute(
                 """
-                SELECT pessoa_id FROM pessoa_fonte_id
+                SELECT pessoa_id FROM pessoa_fonte_ids
                  WHERE fonte = %(fonte)s AND id_externo = %(id_externo)s
                 """,
                 pessoa,
@@ -49,7 +49,7 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
             if existente:
                 cur.execute(
                     """
-                    UPDATE pessoa
+                    UPDATE pessoas
                        SET nome_civil = %(nome_civil)s,
                            nome_exibicao = %(nome_exibicao)s
                      WHERE id = %(id)s
@@ -60,7 +60,7 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
 
             cur.execute(
                 """
-                INSERT INTO pessoa (nome_civil, nome_exibicao, cpf_hash)
+                INSERT INTO pessoas (nome_civil, nome_exibicao, cpf_hash)
                 VALUES (%(nome_civil)s, %(nome_exibicao)s, %(cpf_hash)s)
                 RETURNING id
                 """,
@@ -70,7 +70,7 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
 
             cur.execute(
                 """
-                INSERT INTO pessoa_fonte_id (pessoa_id, fonte, id_externo, metodo, confianca)
+                INSERT INTO pessoa_fonte_ids (pessoa_id, fonte, id_externo, metodo, confianca)
                 VALUES (%(pessoa_id)s, %(fonte)s, %(id_externo)s,
                         %(metodo)s, %(confianca)s)
                 """,
@@ -86,7 +86,7 @@ def gravar_votacoes(conexao: psycopg.Connection, votacoes: Sequence[dict]) -> in
     return _executar_em_lotes(
         conexao,
         """
-        INSERT INTO votacao (id, casa, legislatura, data, orgao, descricao,
+        INSERT INTO votacoes (id, casa, legislatura, data, orgao, descricao,
                              proposicao_id, categoria, secreta, plenario,
                              votos_sim, votos_nao)
         VALUES (%(id)s, %(casa)s, %(legislatura)s, %(data)s, %(orgao)s, %(descricao)s,
@@ -113,7 +113,7 @@ def gravar_votos(conexao: psycopg.Connection, votos: Sequence[dict]) -> int:
     return _executar_em_lotes(
         conexao,
         """
-        INSERT INTO voto (votacao_id, pessoa_id, valor, partido_no_voto, uf_no_voto)
+        INSERT INTO votos (votacao_id, pessoa_id, valor, partido_no_voto, uf_no_voto)
         VALUES (%(votacao_id)s, %(pessoa_id)s, %(valor)s,
                 %(partido_no_voto)s, %(uf_no_voto)s)
         ON CONFLICT (votacao_id, pessoa_id) DO UPDATE SET
@@ -148,7 +148,7 @@ def gravar_similaridades(
     return _executar_em_lotes(
         conexao,
         """
-        INSERT INTO similaridade (execucao_id, pessoa_a, pessoa_b, metrica,
+        INSERT INTO similaridades (execucao_id, pessoa_a, pessoa_b, metrica,
                                   valor, n_votacoes_comuns)
         VALUES (%(execucao_id)s, %(pessoa_a)s, %(pessoa_b)s, %(metrica)s,
                 %(valor)s, %(n_votacoes_comuns)s)
@@ -163,7 +163,7 @@ def abrir_execucao(
     with conexao.cursor() as cur:
         cur.execute(
             """
-            INSERT INTO execucao (casa, legislatura, k, versao_carga, status)
+            INSERT INTO execucoes (casa, legislatura, k, versao_carga, status)
             VALUES (%s, %s, %s, %s, 'EM_ANDAMENTO')
             RETURNING id
             """,
@@ -176,7 +176,7 @@ def fechar_execucao(conexao: psycopg.Connection, execucao_id: int, sucesso: bool
     with conexao.cursor() as cur:
         cur.execute(
             """
-            UPDATE execucao
+            UPDATE execucoes
                SET status = %s, concluida_em = now()
              WHERE id = %s
             """,

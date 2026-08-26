@@ -36,4 +36,35 @@ builder.AddNpmApp("web", "../web", "dev")
     .WithExternalHttpEndpoints()
     .PublishAsDockerFile();
 
+// ─── ETL Python ────────────────────────────────────────────────────
+// ⚠️ Não é serviço: roda, faz o trabalho e morre. São dois comandos distintos, então
+//    são dois recursos — e cada um vira um botão próprio no painel do Aspire.
+//
+// 🔴 `WithExplicitStart()` é o ponto todo. Sem ele o `dotnet run` dispararia a
+//    ingestão a cada subida: dezenas de MB de CSV baixados da Câmara e minutos de
+//    espera antes de o ambiente ficar usável. Com ele o ambiente sobe completo e o
+//    ETL fica pronto, esperando você mandar rodar.
+//
+// ⭐ Roda pelo Dockerfile de produção, não por Python do host: o que você executa aqui
+//    é a mesma imagem que o VPS executa, e ninguém precisa de venv para subir o
+//    projeto.
+var etlIngerir = builder.AddDockerfile("etl-ingerir", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)   // 🔴 o Python nunca cria tabela — ver CLAUDE.md
+    .WithExplicitStart()
+    .WithArgs("ingerir", "--anos", "2025")
+    // ⭐ O cache sobrevive ao container: reingerir não rebaixa os CSVs.
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache");
+
+builder.AddDockerfile("etl-analisar", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs("analisar", "--legislatura", "57")
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    // ⚠️ Analisar sem ter ingerido monta uma matriz vazia e não avisa direito.
+    .WithParentRelationship(etlIngerir);
+
 builder.Build().Run();

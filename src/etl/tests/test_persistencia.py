@@ -20,25 +20,31 @@ PostgresContainer = pytest.importorskip(
 from poligraph_etl import persistencia  # noqa: E402
 from poligraph_etl.similaridade import ParSimilar  # noqa: E402
 
-# ⚠️ Schema mínimo espelhando o que o EF cria. NÃO é a fonte da verdade — serve para
-#    testar a gravação isoladamente. O schema real vem da migration do EF, e os
-#    testes .NET (TestesSchema) é que garantem que os CHECK existem lá.
+# 🔴 Schema mínimo espelhando o que o EF cria. ⛔ NÃO é a fonte da verdade.
+#
+# ⚠️ Escrever este DDL à mão já custou caro: durante todo o desenvolvimento ele usou os
+#    nomes NO SINGULAR (`votacao`, `voto`, `pessoa`) enquanto o EF criava no plural. Os
+#    testes passavam contra um banco que este arquivo inventava, e o ETL nunca havia
+#    conseguido falar com o banco de verdade.
+#
+# ⭐ `test_contrato_schema.py` agora lê o `PoligraphDb.cs` e trava os NOMES. O que
+#    continua sem proteção aqui são as COLUNAS — ver PL37.
 SCHEMA = """
-CREATE TABLE pessoa (
+CREATE TABLE pessoas (
     id BIGSERIAL PRIMARY KEY,
     nome_civil TEXT NOT NULL,
     nome_exibicao TEXT NOT NULL,
     cpf_hash TEXT
 );
-CREATE TABLE pessoa_fonte_id (
-    pessoa_id BIGINT NOT NULL REFERENCES pessoa(id),
+CREATE TABLE pessoa_fonte_ids (
+    pessoa_id BIGINT NOT NULL REFERENCES pessoas(id),
     fonte TEXT NOT NULL,
     id_externo TEXT NOT NULL,
     metodo TEXT NOT NULL,
     confianca REAL,
     PRIMARY KEY (fonte, id_externo)
 );
-CREATE TABLE votacao (
+CREATE TABLE votacoes (
     id TEXT PRIMARY KEY,
     casa TEXT NOT NULL,
     legislatura SMALLINT NOT NULL,
@@ -49,15 +55,15 @@ CREATE TABLE votacao (
     plenario BOOLEAN NOT NULL,
     votos_sim INT, votos_nao INT
 );
-CREATE TABLE voto (
-    votacao_id TEXT NOT NULL REFERENCES votacao(id),
-    pessoa_id BIGINT NOT NULL REFERENCES pessoa(id),
+CREATE TABLE votos (
+    votacao_id TEXT NOT NULL REFERENCES votacoes(id),
+    pessoa_id BIGINT NOT NULL REFERENCES pessoas(id),
     valor SMALLINT CHECK (valor IS NULL OR valor IN (-1,0,1)),
     partido_no_voto TEXT NOT NULL,
     uf_no_voto CHAR(2) NOT NULL,
     PRIMARY KEY (votacao_id, pessoa_id)
 );
-CREATE TABLE execucao (
+CREATE TABLE execucoes (
     id BIGSERIAL PRIMARY KEY,
     casa TEXT NOT NULL, legislatura SMALLINT NOT NULL, k SMALLINT NOT NULL,
     versao_carga TEXT NOT NULL,
@@ -65,8 +71,8 @@ CREATE TABLE execucao (
     concluida_em TIMESTAMPTZ,
     status TEXT NOT NULL
 );
-CREATE TABLE similaridade (
-    execucao_id BIGINT NOT NULL REFERENCES execucao(id) ON DELETE CASCADE,
+CREATE TABLE similaridades (
+    execucao_id BIGINT NOT NULL REFERENCES execucoes(id) ON DELETE CASCADE,
     pessoa_a BIGINT NOT NULL, pessoa_b BIGINT NOT NULL,
     metrica TEXT NOT NULL, valor REAL NOT NULL,
     n_votacoes_comuns INT NOT NULL CHECK (n_votacoes_comuns >= 20),
@@ -97,7 +103,7 @@ def conexao():
 @pytest.fixture(autouse=True)
 def limpar(conexao):
     conexao.execute(
-        "TRUNCATE similaridade, execucao, voto, votacao, pessoa_fonte_id, pessoa "
+        "TRUNCATE similaridades, execucoes, votos, votacoes, pessoa_fonte_ids, pessoas "
         "RESTART IDENTITY CASCADE"
     )
 
@@ -114,7 +120,7 @@ def test_pessoa_reingerida_nao_duplica(conexao):
     persistencia.gravar_pessoas(conexao, pessoas)
     persistencia.gravar_pessoas(conexao, pessoas)
 
-    total = conexao.execute("SELECT count(*) FROM pessoa").fetchone()[0]
+    total = conexao.execute("SELECT count(*) FROM pessoas").fetchone()[0]
     assert total == 1
 
 
@@ -123,7 +129,7 @@ def test_pessoa_reingerida_com_nome_novo_atualiza(conexao):
     persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Ana Ribeiro")])
     persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Ana Ribeiro Sobrinho")])
 
-    nome = conexao.execute("SELECT nome_exibicao FROM pessoa").fetchone()[0]
+    nome = conexao.execute("SELECT nome_exibicao FROM pessoas").fetchone()[0]
     assert nome == "Ana Ribeiro Sobrinho"
 
 
@@ -133,7 +139,7 @@ def test_votacao_reingerida_nao_duplica(conexao):
     persistencia.gravar_votacoes(conexao, votacoes)
     persistencia.gravar_votacoes(conexao, votacoes)
 
-    total = conexao.execute("SELECT count(*) FROM votacao").fetchone()[0]
+    total = conexao.execute("SELECT count(*) FROM votacoes").fetchone()[0]
     assert total == 1
 
 
@@ -144,7 +150,7 @@ def test_voto_reingerido_nao_duplica(conexao):
     persistencia.gravar_votos(conexao, votos)
     persistencia.gravar_votos(conexao, votos)
 
-    total = conexao.execute("SELECT count(*) FROM voto").fetchone()[0]
+    total = conexao.execute("SELECT count(*) FROM votos").fetchone()[0]
     assert total == 1
 
 
@@ -155,7 +161,7 @@ def test_voto_corrigido_pela_camara_e_atualizado(conexao):
     persistencia.gravar_votos(conexao, [_voto("2358548-89", pessoa_id, 1)])
     persistencia.gravar_votos(conexao, [_voto("2358548-89", pessoa_id, -1)])
 
-    valor = conexao.execute("SELECT valor FROM voto").fetchone()[0]
+    valor = conexao.execute("SELECT valor FROM votos").fetchone()[0]
     assert valor == -1
 
 
@@ -166,7 +172,7 @@ def test_partido_no_voto_e_historico_e_acompanha_correcao(conexao):
     persistencia.gravar_votos(conexao, [_voto("2358548-89", pessoa_id, 1, partido="PARTIDO-A")])
     persistencia.gravar_votos(conexao, [_voto("2358548-89", pessoa_id, 1, partido="PARTIDO-B")])
 
-    partido = conexao.execute("SELECT partido_no_voto FROM voto").fetchone()[0]
+    partido = conexao.execute("SELECT partido_no_voto FROM votos").fetchone()[0]
     assert partido == "PARTIDO-B"
 
 
@@ -179,14 +185,14 @@ def test_execucao_abre_em_andamento_e_fecha_concluida(conexao):
     execucao_id = persistencia.abrir_execucao(conexao, "CAMARA", 57, 10, "v1")
 
     status = conexao.execute(
-        "SELECT status FROM execucao WHERE id = %s", (execucao_id,)
+        "SELECT status FROM execucoes WHERE id = %s", (execucao_id,)
     ).fetchone()[0]
     assert status == "EM_ANDAMENTO"
 
     persistencia.fechar_execucao(conexao, execucao_id, sucesso=True)
 
     status, concluida = conexao.execute(
-        "SELECT status, concluida_em FROM execucao WHERE id = %s", (execucao_id,)
+        "SELECT status, concluida_em FROM execucoes WHERE id = %s", (execucao_id,)
     ).fetchone()
     assert status == "CONCLUIDA"
     assert concluida is not None
@@ -196,7 +202,7 @@ def test_similaridade_abaixo_do_minimo_e_rejeitada_pelo_banco(conexao):
     """🔴 RN-02 no banco. O Python pode ter bug; o CHECK não deixa passar."""
     pessoa_id = _preparar_pessoa_e_votacao(conexao)
     outro = persistencia.gravar_pessoas(conexao, [_pessoa("204529", "Bruno Tavares")])
-    ids = [r[0] for r in conexao.execute("SELECT id FROM pessoa ORDER BY id").fetchall()]
+    ids = [r[0] for r in conexao.execute("SELECT id FROM pessoas ORDER BY id").fetchall()]
     execucao_id = persistencia.abrir_execucao(conexao, "CAMARA", 57, 10, "v1")
 
     par = ParSimilar(min(ids), max(ids), "CONCORDANCIA", 0.9, 19)
@@ -209,7 +215,7 @@ def test_duas_execucoes_convivem_sem_conflito(conexao):
     """⭐ Cada execução é um retrato independente — é o que dá reprodutibilidade."""
     _preparar_pessoa_e_votacao(conexao)
     persistencia.gravar_pessoas(conexao, [_pessoa("204529", "Bruno Tavares")])
-    ids = [r[0] for r in conexao.execute("SELECT id FROM pessoa ORDER BY id").fetchall()]
+    ids = [r[0] for r in conexao.execute("SELECT id FROM pessoas ORDER BY id").fetchall()]
 
     par = ParSimilar(min(ids), max(ids), "CONCORDANCIA", 0.9, 30)
 
@@ -219,7 +225,7 @@ def test_duas_execucoes_convivem_sem_conflito(conexao):
     persistencia.gravar_similaridades(conexao, primeira, [par])
     persistencia.gravar_similaridades(conexao, segunda, [par])
 
-    total = conexao.execute("SELECT count(*) FROM similaridade").fetchone()[0]
+    total = conexao.execute("SELECT count(*) FROM similaridades").fetchone()[0]
     assert total == 2
 
 
@@ -254,4 +260,4 @@ def _preparar_pessoa_e_votacao(conexao) -> int:
     persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Ana Ribeiro")])
     persistencia.gravar_votacoes(conexao, [_votacao("2358548-89")])
 
-    return conexao.execute("SELECT id FROM pessoa LIMIT 1").fetchone()[0]
+    return conexao.execute("SELECT id FROM pessoas LIMIT 1").fetchone()[0]
