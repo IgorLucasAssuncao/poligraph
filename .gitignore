@@ -69,3 +69,6 @@ __pycache__/
 # Node
 node_modules/
 dist/
+
+# artefato de "2>/dev/null" no Windows
+NUL

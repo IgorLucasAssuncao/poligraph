@@ -124,10 +124,20 @@ VITE_CLARITY_ID=abcdefghij
 ⚠️ **O Vite congela isto no BUILD.** Mudou o valor? Rode `npm run build` de novo. Em
 produção, é *build variable* do Coolify — env var comum não funciona.
 
-### API — `src/Poligraph.Api/appsettings.Development.json`
+### API — ⭐ `user-secrets`, não `appsettings`
 
-```json
-{ "Google": { "ClientId": "1234567890-abc.apps.googleusercontent.com" } }
+```bash
+dotnet user-secrets set "Google:ClientId" "SEU-CLIENT-ID" --project src/Poligraph.Api
+```
+
+⚠️ **Por que não `appsettings.Development.json`:** esse arquivo É versionado. O Client ID
+não é segredo, mas gravá-lo ali amarraria o repositório a um projeto Google específico —
+quem clonasse herdaria o seu, e o `aud` do token não bateria com o Client ID dele.
+
+⭐ O `user-secrets` fica fora do repositório, na pasta do usuário. Conferir:
+
+```bash
+dotnet user-secrets list --project src/Poligraph.Api
 ```
 
 🔴 **O MESMO Client ID nos dois lugares.** A API confere o `aud` do token contra o valor
@@ -142,6 +152,7 @@ dela — divergindo, **todo login é rejeitado com 401** e nada na tela explica.
 
 | | Sinal de sucesso |
 |---|---|
+| ⭐ **API** | No log de subida: `Login com Google ligado (Client ID …googleusercontent.com)` |
 | Google | O botão "Entrar com Google" aparece no lugar do aviso amarelo |
 | Clarity | O `console` mostra `DENIED` antes do aceite e `GRANTED` depois |
 | Integração | Depois de entrar, `GET /api/auth/eu` responde 200 |
