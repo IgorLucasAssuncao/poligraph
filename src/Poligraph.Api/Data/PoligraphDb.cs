@@ -23,6 +23,9 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<Segue> Segue => Set<Segue>();
     public DbSet<Consentimento> Consentimentos => Set<Consentimento>();
     public DbSet<TokenEmail> TokensEmail => Set<TokenEmail>();
+    public DbSet<Noticia> Noticias => Set<Noticia>();
+    public DbSet<NoticiaPessoa> NoticiaPessoas => Set<NoticiaPessoa>();
+    public DbSet<NoticiaTema> NoticiaTemas => Set<NoticiaTema>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -31,6 +34,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         ConfigurarQuestionario(mb);
         ConfigurarAnalise(mb);
         ConfigurarUsuario(mb);
+        ConfigurarNoticia(mb);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -203,6 +207,46 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.Property(x => x.CriadoEm).HasDefaultValueSql("now()");
             e.ToTable(t => t.HasCheckConstraint(
                 "ck_token_proposito", "proposito IN ('DESCADASTRO')"));
+        });
+    }
+
+    private static void ConfigurarNoticia(ModelBuilder mb)
+    {
+        mb.Entity<Noticia>(e =>
+        {
+            e.HasKey(x => x.Id);
+            // ⭐ dedup em duas frentes: mesma URL, e mesma matéria republicada com outra URL
+            e.HasIndex(x => x.Url).IsUnique();
+            e.HasIndex(x => x.HashTitulo);
+            e.HasIndex(x => x.PublicadaEm);
+            e.Property(x => x.ColetadaEm).HasDefaultValueSql("now()");
+            // 🔴 RF-38: trecho CURTO. O limite é a regra virando constraint —
+            //    se alguém tentar gravar o corpo da matéria, o banco recusa.
+            e.ToTable(t => t.HasCheckConstraint(
+                "ck_noticia_trecho", "trecho IS NULL OR length(trecho) <= 500"));
+        });
+
+        mb.Entity<NoticiaPessoa>(e =>
+        {
+            e.HasKey(x => new { x.NoticiaId, x.PessoaId });
+            e.HasOne(x => x.Noticia).WithMany(n => n.Pessoas)
+                .HasForeignKey(x => x.NoticiaId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Pessoa).WithMany()
+                .HasForeignKey(x => x.PessoaId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => x.PessoaId);
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_np_confianca", "confianca BETWEEN 0 AND 1");
+                t.HasCheckConstraint("ck_np_metodo",
+                    "metodo IN ('NOME_COMPLETO','NOME_PARLAMENTAR','SOBRENOME')");
+            });
+        });
+
+        mb.Entity<NoticiaTema>(e =>
+        {
+            e.HasKey(x => new { x.NoticiaId, x.Tema });
+            e.HasOne(x => x.Noticia).WithMany()
+                .HasForeignKey(x => x.NoticiaId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

@@ -193,6 +193,117 @@ namespace Poligraph.Api.Data.Migrations
                     b.ToTable("nos_metrica", (string)null);
                 });
 
+            modelBuilder.Entity("Poligraph.Api.Data.Noticia", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("ColetadaEm")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("coletada_em")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("HashTitulo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("hash_titulo");
+
+                    b.Property<DateTimeOffset>("PublicadaEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("publicada_em");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("titulo");
+
+                    b.Property<string>("Trecho")
+                        .HasColumnType("text")
+                        .HasColumnName("trecho");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("url");
+
+                    b.Property<string>("Veiculo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("veiculo");
+
+                    b.HasKey("Id")
+                        .HasName("pk_noticias");
+
+                    b.HasIndex("HashTitulo")
+                        .HasDatabaseName("ix_noticias_hash_titulo");
+
+                    b.HasIndex("PublicadaEm")
+                        .HasDatabaseName("ix_noticias_publicada_em");
+
+                    b.HasIndex("Url")
+                        .IsUnique()
+                        .HasDatabaseName("ix_noticias_url");
+
+                    b.ToTable("noticias", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_noticia_trecho", "trecho IS NULL OR length(trecho) <= 500");
+                        });
+                });
+
+            modelBuilder.Entity("Poligraph.Api.Data.NoticiaPessoa", b =>
+                {
+                    b.Property<long>("NoticiaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("noticia_id");
+
+                    b.Property<long>("PessoaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("pessoa_id");
+
+                    b.Property<float>("Confianca")
+                        .HasColumnType("real")
+                        .HasColumnName("confianca");
+
+                    b.Property<string>("Metodo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("metodo");
+
+                    b.HasKey("NoticiaId", "PessoaId")
+                        .HasName("pk_noticia_pessoas");
+
+                    b.HasIndex("PessoaId")
+                        .HasDatabaseName("ix_noticia_pessoas_pessoa_id");
+
+                    b.ToTable("noticia_pessoas", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_np_confianca", "confianca BETWEEN 0 AND 1");
+
+                            t.HasCheckConstraint("ck_np_metodo", "metodo IN ('NOME_COMPLETO','NOME_PARLAMENTAR','SOBRENOME')");
+                        });
+                });
+
+            modelBuilder.Entity("Poligraph.Api.Data.NoticiaTema", b =>
+                {
+                    b.Property<long>("NoticiaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("noticia_id");
+
+                    b.Property<string>("Tema")
+                        .HasColumnType("text")
+                        .HasColumnName("tema");
+
+                    b.HasKey("NoticiaId", "Tema")
+                        .HasName("pk_noticia_temas");
+
+                    b.ToTable("noticia_temas", (string)null);
+                });
+
             modelBuilder.Entity("Poligraph.Api.Data.Pergunta", b =>
                 {
                     b.Property<string>("Id")
@@ -664,6 +775,39 @@ namespace Poligraph.Api.Data.Migrations
                         .HasConstraintName("fk_nos_metrica_execucoes_execucao_id");
                 });
 
+            modelBuilder.Entity("Poligraph.Api.Data.NoticiaPessoa", b =>
+                {
+                    b.HasOne("Poligraph.Api.Data.Noticia", "Noticia")
+                        .WithMany("Pessoas")
+                        .HasForeignKey("NoticiaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_noticia_pessoas_noticias_noticia_id");
+
+                    b.HasOne("Poligraph.Api.Data.Pessoa", "Pessoa")
+                        .WithMany()
+                        .HasForeignKey("PessoaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_noticia_pessoas_pessoas_pessoa_id");
+
+                    b.Navigation("Noticia");
+
+                    b.Navigation("Pessoa");
+                });
+
+            modelBuilder.Entity("Poligraph.Api.Data.NoticiaTema", b =>
+                {
+                    b.HasOne("Poligraph.Api.Data.Noticia", "Noticia")
+                        .WithMany()
+                        .HasForeignKey("NoticiaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_noticia_temas_noticias_noticia_id");
+
+                    b.Navigation("Noticia");
+                });
+
             modelBuilder.Entity("Poligraph.Api.Data.Pergunta", b =>
                 {
                     b.HasOne("Poligraph.Api.Data.Votacao", "Votacao")
@@ -760,6 +904,11 @@ namespace Poligraph.Api.Data.Migrations
                     b.Navigation("Pessoa");
 
                     b.Navigation("Votacao");
+                });
+
+            modelBuilder.Entity("Poligraph.Api.Data.Noticia", b =>
+                {
+                    b.Navigation("Pessoas");
                 });
 
             modelBuilder.Entity("Poligraph.Api.Data.Pessoa", b =>
