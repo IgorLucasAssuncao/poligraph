@@ -100,7 +100,8 @@ app.UseAuthorization();
 app.MapearParlamentares()
    .MapearAfinidade()
    .MapearAutenticacao()
-   .MapearSeguir();
+   .MapearSeguir()
+   .MapearGrafo();
 
 app.Run();
 
