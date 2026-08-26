@@ -16,10 +16,32 @@ public static class SemeadorDesenvolvimento
 {
     private const short Legislatura = 57;
 
-    public static async Task SemearAsync(PoligraphDb db, CancellationToken ct = default)
+    /// <summary>ID a partir do qual as votações são fictícias — ver `GerarVotacoes`.</summary>
+    private const string PrefixoFicticio = "9000";
+
+    /// <summary>
+    /// Semeia, e devolve o que aconteceu — ⛔ nunca sai em silêncio.
+    /// </summary>
+    public static async Task<string> SemearAsync(PoligraphDb db, CancellationToken ct = default)
     {
-        // guarda de idempotência: já semeado, sai
-        if (await db.Pessoas.AnyAsync(ct)) return;
+        // 🔴 Só semeia com a tabela VAZIA DE VERDADE.
+        //
+        // ⚠️ A armadilha não é semear duas vezes — é semear ANTES do ETL. O seed roda
+        //    no `dotnet run`, o ETL depois, e aí 12 deputados fictícios passam a
+        //    conviver com 551 reais numa mesma listagem, indistinguíveis na tela.
+        //    Eles não entram no grafo (5 votações não passam do mínimo de 20 da
+        //    RN-02), mas apareceriam numa demonstração para a banca.
+        var quantasPessoas = await db.Pessoas.CountAsync(ct);
+        if (quantasPessoas > 0)
+        {
+            var temReal = await db.Votacoes
+                .AnyAsync(v => !v.Id.StartsWith(PrefixoFicticio), ct);
+
+            return temReal
+                ? $"seed PULADO: o banco já tem dado REAL ({quantasPessoas} pessoas). "
+                  + "Para voltar aos dados fictícios, zere o volume do Postgres."
+                : $"seed PULADO: já semeado ({quantasPessoas} pessoas fictícias).";
+        }
 
         var pessoas = GerarParlamentares();
         db.Pessoas.AddRange(pessoas);
@@ -39,6 +61,9 @@ public static class SemeadorDesenvolvimento
         db.Perguntas.AddRange(GerarPerguntas(votacoes));
 
         await db.SaveChangesAsync(ct);
+
+        return $"seed aplicado: {pessoas.Count} parlamentares fictícios, "
+               + $"{votacoes.Count} votações, {votos.Count} votos.";
     }
 
     // ═══════════════════════════════════════════════════════════════

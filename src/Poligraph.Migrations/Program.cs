@@ -42,10 +42,13 @@ if (builder.Environment.IsProduction())
 }
 else
 {
-    Console.WriteLine($"Ambiente {builder.Environment.EnvironmentName}: semeando dados de teste...");
-    await SemeadorDesenvolvimento.SemearAsync(db);
+    Console.WriteLine($"Ambiente {builder.Environment.EnvironmentName}: verificando dados de teste...");
+
+    // ⚠️ O semeador diz qual ramo tomou. Pular em silêncio é o que fez o bug do
+    //    DOTNET_ENVIRONMENT sobreviver — não repetir o padrão.
+    Console.WriteLine(await SemeadorDesenvolvimento.SemearAsync(db));
 
     var pessoas = await db.Pessoas.CountAsync();
     var perguntas = await db.Perguntas.CountAsync();
-    Console.WriteLine($"Seed concluído: {pessoas} parlamentares, {perguntas} perguntas.");
+    Console.WriteLine($"Banco agora: {pessoas} parlamentares, {perguntas} perguntas.");
 }
