@@ -1,6 +1,8 @@
 # Lote 1 de perguntas — candidatas medidas
 
-> **Status:** v1.0 — 2026-08-26 · **PL11 em andamento**
+> **Status:** v2.0 — 2026-08-26 · **PL11 em andamento**
+> **v2.0:** decisões do autor aplicadas — só texto principal, formato afirmação, casos
+> nominais incluídos, PL12 resolvida. **22 perguntas.**
 > Extraído dos CSVs da Câmara com parser RFC 4180 próprio, validado contra os números
 > documentados em [`04-contratos`](../04-contratos.md).
 > ⚠️ **Nada aqui está aprovado.** É o primeiro lote para curadoria do autor.
@@ -15,6 +17,7 @@
       └─ 336  com conteúdo de política pública  (tirados cargos, homenagens, feriados)
           └─  58  votando o TEXTO PRINCIPAL  ⭐ ementa = o que foi votado
           └─ 166  votando EMENDA ou DESTAQUE  ⚠️ ementa ≠ o que foi votado
+              └─ 22  aprovadas no "teste do jantar"  (§4.3)
 ```
 
 ### 1.1 ✅ O parser foi validado antes de qualquer análise
@@ -27,6 +30,7 @@
 | 2026 | 7.021 | 8.551 | +21,8% |
 
 ⭐ **13.825 em 2025 bate exatamente com o número documentado.** O parser está correto.
+Ele vive em [`infra/analise/csv.awk`](../../infra/analise/csv.awk).
 
 ---
 
@@ -42,9 +46,8 @@ nisso.
 > comissionadas no quadro do STJ?"* não é respondível por leigo, e não mede afinidade
 > política — mede nada.
 
-⭐ **Consequência para o método:** o critério de seleção **não pode ser só divisão**.
-Precisa de um segundo filtro, que é humano: *"um cidadão tem opinião sobre isso?"* — é
-exatamente a **PL12**.
+⭐ **Consequência:** o critério de seleção **não pode ser só divisão**. Precisa de um
+segundo filtro, humano — resolvido na §4.3.
 
 ### Achado B — 74% das votações interessantes são sobre emenda, não sobre o texto
 
@@ -53,36 +56,30 @@ exatamente a **PL12**.
 | Texto principal | 58 | ✅ Sim |
 | **Emenda / destaque** | **166** | ⛔ **Não** |
 
-**O CSV traz a ementa da proposição, não o texto da emenda.** Para transformar uma emenda
-em pergunta é preciso ler o texto dela — que **não está no arquivo**, só na API
-(`/proposicoes/{id}/emendas`) ou no inteiro teor.
-
-⚠️ **Isso é trabalho manual adicional que a PL11 não previa.** Cada emenda exige uma
-consulta e uma leitura.
+**O CSV traz a ementa da proposição, não o texto da emenda.** Transformar uma emenda em
+pergunta exige ler o texto dela — que **não está no arquivo**.
 
 ### Achado C — a inversão de polaridade está visível nos dados
-
-Três descrições aparecem repetidamente:
 
 | Descrição | O que "Sim" significa | Polaridade |
 |---|---|---|
 | *"Aprovado o Projeto…"* | Aprovar a proposta | **+1** |
 | 🔴 *"Mantido o texto"* | **Rejeitar** o destaque supressivo | **−1** |
-| 🔴 *"Suprimido o texto"* | **Aprovar** a supressão | **+1**, mas sobre o oposto |
+| 🔴 *"Suprimido o texto"* | **Aprovar** a supressão | **+1**, sobre o oposto |
 
-⭐ **Isto confirma o achado #12 com dado novo** e mostra que a regra é detectável por
-padrão textual — o que permite pré-classificar antes da curadoria humana.
+⭐ **Confirma o achado #12 com dado novo** e mostra que a regra é **detectável por padrão
+textual** — dá para pré-classificar antes da curadoria humana.
 
 ---
 
 ## 3. Escopo temporal — por que só a legislatura 57
 
-> **Resposta à pergunta do autor: sim, só a 57 — e por um motivo que não é preguiça.**
+> **Resposta à pergunta do autor: sim, só a 57 — e não por preguiça.**
 
 | Motivo | |
 |---|---|
 | 🔴 **Cobertura** | Um deputado eleito em 2022 **não votou** nada da legislatura 56. Perguntas antigas gerariam "sem dados" para boa parte do painel |
-| 🔴 **Comparabilidade** | O cidadão responde 20 perguntas; todo parlamentar precisa ter votado nas mesmas. Misturar legislaturas quebra a base comum (RN-02) |
+| 🔴 **Comparabilidade** | Todo parlamentar precisa ter votado nas mesmas perguntas. Misturar legislaturas quebra a base comum (RN-02) |
 | **Relevância** | Pauta de 2019 mede afinidade com um debate que já passou |
 | **Estabilidade** | Dentro da legislatura, a posição é estável (r = 0,862). **Entre** legislaturas, não se mediu |
 
@@ -91,84 +88,147 @@ são perguntas diferentes, e o 2001–2026 continua disponível.
 
 ---
 
-## 4. 🗳️ O lote — 24 candidatas
+## 4. ✅ Decisões do autor (2026-08-26)
 
-**Legenda:** `div` = divisão (0,50 = empate) · ⭐ texto principal · ⚠️ emenda/destaque
+| # | Decisão | Efeito |
+|---|---|---|
+| **1** | ⭐ **Só votações de texto principal** | Polaridade **sempre +1**. Universo cai de 224 para **58** |
+| **2** | **Casos nominais entram** | Anistia do 8/1 e representações contra parlamentares ficam |
+| **3** | ⭐ **Formato afirmação** | *"X deve ser Y."* → **Concordo · Discordo · Não sei** |
+| **4** | ✅ **PL12 resolvida — "teste do jantar"** | Entra se dá para discutir num jantar de família **sem explicar o que é a proposta** |
 
-### 4.1 Instituições e democracia
+### 4.1 ⭐ A decisão 1 elimina o bug mais perigoso do sistema
 
-| # | Votação | Proposição | div | Pergunta proposta | Pol. |
-|---|---|---|---|---|---|
-| 1 | `2358548-89` | PL 2162/2023 | 0,337 | **Você é a favor de anistiar os condenados pelos atos de 8 de janeiro de 2023?** | ⭐ +1 |
-| 2 | `2525122-81` | REP 2/2025 | 0,428 | Um deputado condenado criminalmente em definitivo deve perder o mandato? | ⭐ +1 |
-| 3 | `2387066-91` | PL 4438/2023 | 0,491 | O Código Eleitoral deve ser afrouxado quanto à prestação de contas de campanha? | ⚠️ −1 |
+> **Usando só texto principal, "Sim" sempre significa "aprovar isto".** A inversão de
+> polaridade — 14% das votações, o erro que não aparece na tela — **deixa de ser possível
+> por construção**, não por vigilância.
 
-### 4.2 Meio ambiente
+⚠️ **O teste API3 continua obrigatório.** Ele deixa de guardar contra erro de curadoria e
+passa a guardar contra **regressão futura**: no dia em que alguém quiser incluir um
+destaque, é o teste que impede a inclusão silenciosa.
 
-| # | Votação | Proposição | div | Pergunta proposta | Pol. |
-|---|---|---|---|---|---|
-| 4 | `257161-483` | PL 2159/2021 | 0,274 | **Obras devem poder ser licenciadas por autodeclaração, sem análise prévia do órgão ambiental?** | ⭐ +1 |
-| 5 | `2345368-50` | MPV 1150/2022 | 0,449 | Prazos de regularização ambiental devem ser prorrogados para quem desmatou? | ⚠️ +1 |
-| 6 | `2269745-84` | PL 327/2021 | 0,454 | O país deve acelerar a transição energética com incentivo público? | ⚠️ −1 |
-| 7 | `545304-134` | PL 3899/2012 | 0,326 | O poder público deve priorizar compras de produtos sustentáveis? | ⭐ +1 |
+### 4.2 ⚠️ O preço da decisão 1, registrado para a banca
 
-### 4.3 Economia e tributos
+Saem do questionário os temas mais reconhecíveis da legislatura:
 
-| # | Votação | Proposição | div | Pergunta proposta | Pol. |
-|---|---|---|---|---|---|
-| 8 | `2456554-57` | PL 3449/2024 | 0,466 | **Compras internacionais de baixo valor devem ser taxadas?** | ⚠️ +1 |
-| 9 | `2430143-76` | PLP 68/2024 | 0,496 | A reforma tributária deve manter regimes especiais para setores específicos? | ⚠️ −1 |
-| 10 | `2473389-58` | PLP 210/2024 | 0,319 | As regras de limite de gastos públicos devem ser flexibilizadas? | ⭐ +1 |
-| 11 | `2374400-53` | PL 3626/2023 | 0,478 | **As apostas esportivas online (bets) devem ter regras mais duras?** | ⚠️ −1 |
-| 12 | `2115253-118` | PL 2721/2023 | 0,453 | Órgãos públicos devem ser obrigados a contratar os Correios? | ⭐ +1 |
+| Tema perdido | Por quê |
+|---|---|
+| Apostas online (*bets*) | Votado como emenda |
+| Posse de armas | Destaque — *"Mantido o texto"* |
+| Taxa das compras internacionais | Emenda de plenário |
+| Código Florestal | Emenda a MPV |
+| Reforma tributária (regimes especiais) | Emenda |
 
-### 4.4 Segurança e justiça
+> 🔑 **É troca consciente: menos cobertura temática, zero risco de sinal invertido.**
+> Um questionário com 22 perguntas certas vale mais que um com 30 e um número trocado.
 
-| # | Votação | Proposição | div | Pergunta proposta | Pol. |
-|---|---|---|---|---|---|
-| 13 | `264726-157` | PL 4149/2004 | 0,382 | **As regras para posse e registro de armas de fogo devem ser afrouxadas?** | ⚠️ −1 |
-| 14 | `2351284-38` | PL 1112/2023 | 0,163 | Condenados por crimes hediondos devem cumprir 80% da pena antes de progredir de regime? | ⭐ +1 |
-| 15 | `2194861-77` | PL 1637/2019 | 0,318 | Inimputáveis perigosos devem poder ficar internados por prazo indeterminado? | ⭐ +1 |
-| 16 | `2413257-116` | PL 6020/2023 | 0,247 | Aproximar-se da vítima deve ser crime mesmo com o consentimento dela? | ⭐ +1 |
-| 17 | `589982-124` | PL 6240/2013 | 0,484 | Desaparecimento forçado praticado por agente do Estado deve ter pena maior? | ⚠️ −1 |
+### 4.3 ✅ O "teste do jantar" — o critério da PL12
 
-### 4.5 Direitos sociais e trabalho
+| ✅ Passa | ⛔ Não passa |
+|---|---|
+| *"Condenados por crime hediondo devem cumprir 80% da pena?"* | *"Criar 12 funções comissionadas no quadro do STJ?"* |
+| *"Escola que nega matrícula a aluno com deficiência deve perder credenciamento?"* | *"Prorrogar restos a pagar não processados da LDO?"* |
+| *"Os condenados pelo 8 de janeiro devem ser anistiados?"* | *"Ratificar o Protocolo Complementar do CBERS-6?"* |
 
-| # | Votação | Proposição | div | Pergunta proposta | Pol. |
-|---|---|---|---|---|---|
-| 18 | `575585-92` | PL 5496/2013 | 0,241 | **Deve ser facilitado o contrato de trabalho por prazo determinado?** | ⭐ +1 |
-| 19 | `2162802-89` | PL 9133/2017 | 0,265 | Escolas que recusarem matrícula de aluno com deficiência devem perder o credenciamento? | ⭐ +1 |
-| 20 | `2367064-82` | PL 2920/2023 | 0,451 | O Estado deve comprar alimentos da agricultura familiar para programas sociais? | ⚠️ −1 |
-| 21 | `2482078-57` | PDL 3/2025 | 0,259 | O Congresso deve derrubar resoluções do conselho de direitos da criança? | ⭐ +1 |
-
-### 4.6 Terra e povos indígenas
-
-| # | Votação | Proposição | div | Pergunta proposta | Pol. |
-|---|---|---|---|---|---|
-| 22 | `2425883-50` | PL 1213/2024 | 0,439 | A Funai deve ser reforçada com carreira própria de servidores? | ⚠️ −1 |
-| 23 | `2471177-102` | PL 4497/2024 | 0,271 | Ocupações de terras públicas em faixa de fronteira devem ser regularizadas? | ⭐ +1 |
-| 24 | `2270325-92` | PLP 18/2021 | 0,408 | Serviços de resgate e salvamento devem entrar no piso da saúde? | ⚠️ −1 |
+⭐ **Operacional e defensável:** *"se preciso explicar a proposta antes de perguntar, a
+pergunta não serve."*
 
 ---
 
-## 5. ⚠️ O que ainda falta antes de qualquer uma virar pergunta de verdade
+## 5. 🗳️ O lote — 22 perguntas
 
-| # | Pendência |
+> Formato: **afirmação** · resposta **Concordo / Discordo / Não sei**
+> **Todas com polaridade `+1`** — "Sim" do parlamentar = concordar com a afirmação.
+
+### 5.1 Democracia e instituições
+
+| # | Afirmação | Votação | div |
+|---|---|---|---|
+| 1 | **Os condenados pelos atos de 8 de janeiro de 2023 devem ser anistiados.** | `2358548-89` · PL 2162/2023 | 0,337 |
+| 2 | ⚠️ Um deputado condenado criminalmente em definitivo deve perder o mandato. | `2525122-81` · REP 2/2025 | 0,428 |
+| 3 | Bancos que recusarem conta a políticos e seus parentes devem responder por discriminação. | `2364109-35` · PL 2720/2023 | 0,393 |
+
+### 5.2 Segurança pública
+
+| # | Afirmação | Votação | div |
+|---|---|---|---|
+| 4 | Condenados por crimes hediondos devem cumprir ao menos 80% da pena antes de mudar de regime. | `2351284-38` · PL 1112/2023 | 0,163 |
+| 5 | **As penas para integrantes de facções criminosas devem ser endurecidas.** | `2579832-62` · PL 5582/2025 | 0,229 |
+| 6 | Aproximar-se da vítima deve continuar sendo crime, mesmo que ela consinta. | `2413257-116` · PL 6020/2023 | 0,247 |
+| 7 | Pessoas inimputáveis consideradas perigosas devem poder ficar internadas por prazo indeterminado. | `2194861-77` · PL 1637/2019 | 0,318 |
+
+### 5.3 Meio ambiente
+
+| # | Afirmação | Votação | div |
+|---|---|---|---|
+| 8 | **Obras devem poder ser licenciadas por autodeclaração, sem análise prévia do órgão ambiental.** | `257161-483` · PL 2159/2021 | 0,274 |
+| 9 | O poder público deve dar preferência a produtos sustentáveis nas suas compras. | `545304-134` · PL 3899/2012 | 0,326 |
+| 10 | A rodovia BR-319, que corta a Amazônia, deve ser mantida trafegável como infraestrutura crítica. | `2395883-53` · PL 4994/2023 | 0,249 |
+
+### 5.4 Economia e tributos
+
+| # | Afirmação | Votação | div |
+|---|---|---|---|
+| 11 | O país deve ter uma regra permanente que limite o crescimento dos gastos públicos. | `2357053-47` · PLP 93/2023 | 0,225 |
+| 12 | Essa regra de limite de gastos deve poder ser flexibilizada quando o governo julgar necessário. | `2473389-58` · PLP 210/2024 | 0,319 |
+| 13 | **O Congresso deve derrubar o decreto que aumentou o IOF.** | `2515648-44` · PDL 214/2025 | 0,204 |
+| 14 | Dívidas de agricultores e pecuaristas devem ser renegociadas com desconto. | `2398530-73` · PL 5122/2023 | 0,212 |
+
+### 5.5 Trabalho e direitos sociais
+
+| # | Afirmação | Votação | div |
+|---|---|---|---|
+| 15 | Deve ser mais fácil contratar trabalhadores por prazo determinado. | `575585-92` · PL 5496/2013 | 0,241 |
+| 16 | **O governo deve pagar um incentivo em dinheiro para o estudante concluir o ensino médio.** | `2409076-34` · PLP 243/2023 | 0,172 |
+| 17 | Escolas que recusarem matrícula de aluno com deficiência devem perder o credenciamento. | `2162802-89` · PL 9133/2017 | 0,265 |
+| 18 | O país deve incentivar a indústria nacional de remédios e insumos de saúde. | `2252295-120` · PL 2583/2020 | 0,152 |
+
+### 5.6 Estado, serviços e relações exteriores
+
+| # | Afirmação | Votação | div |
+|---|---|---|---|
+| 19 | Órgãos públicos devem ser obrigados a contratar os Correios. | `2115253-118` · PL 2721/2023 | 0,453 |
+| 20 | Ocupações antigas de terras públicas em faixa de fronteira devem ser regularizadas. | `2471177-102` · PL 4497/2024 | 0,271 |
+| 21 | A Bolívia deve ser aceita como membro pleno do Mercosul. | `2149303-50` · PDC 745/2017 | 0,233 |
+| 22 | A sede do governo federal deve poder mudar temporariamente para sediar evento internacional. | `2483447-25` · PL 358/2025 | 0,174 |
+
+### 5.7 Equilíbrio do lote
+
+| Tema | Perguntas |
 |---|---|
-| 🔴 1 | **As 11 marcadas ⚠️ dependem de ler o texto da emenda** — a polaridade sugerida é inferência a partir da descrição, **não verificação** |
-| 🔴 2 | Conferir se cada proposição teve **votação nominal única** — repetições (2 turnos, redação final) precisam de deduplicação (A3) |
-| 🔴 3 | Medir quantos dos 644 deputados votaram em **cada** uma — pergunta com baixa cobertura enfraquece a comparação |
-| 🟡 4 | Definir o N final (**RQ3**) — 24 é lote de trabalho, não questionário |
-| 🟡 5 | Equilíbrio temático: hoje o lote pende para economia e segurança |
+| Segurança pública | 4 |
+| Economia e tributos | 4 |
+| Trabalho e social | 4 |
+| Estado e exterior | 4 |
+| Democracia | 3 |
+| Meio ambiente | 3 |
+
+⭐ **Nenhum tema domina.** Um questionário com 8 perguntas de segurança mediria "posição
+sobre segurança", não afinidade política.
 
 ---
 
-## 6. Pendências
+## 6. ⚠️ O que ainda precisa de verificação
+
+| # | Item | Risco |
+|---|---|---|
+| 🔴 1 | **Pergunta 2 (REP 2/2025)** — a descrição diz *"Rejeitado o Parecer da CCJ"*, com **227 Sim × 170 Não**. Foi rejeitada por **falta de maioria absoluta** (257), não por derrota. É preciso ler o parecer para saber se "Sim" era **cassar** ou **absolver** | 🔴 **Inverte a pergunta** |
+| 🔴 2 | **Cobertura** — medir quantos dos 644 deputados votaram em cada uma. Pergunta com poucos votantes enfraquece a comparação | 🟡 Enfraquece |
+| 🟡 3 | **Deduplicação (A3)** — conferir se alguma proposição aparece duas vezes (2 turnos, redação final) | 🟡 Peso dobrado |
+| 🟡 4 | **N final (RQ3)** — 22 é o lote. O questionário pode usar menos | — |
+
+⚠️ **A pergunta 2 é a única com risco de inversão** — justamente por ser caso nominal, onde
+o rito é mais complexo. **Se não der para verificar, corte-a:** as outras 21 estão seguras
+por construção.
+
+---
+
+## 7. Pendências
 
 | # | Pendência |
 |---|---|
-| **PL11** | 🔄 Em andamento — este é o lote 1 |
-| **PL12** | 🔴 Ganhou urgência: o **achado A** mostra que divisão alta não basta como critério |
-| **PL32** | 🔴 **Novo:** como obter o texto das emendas destacadas (API `/proposicoes/{id}/emendas`?) |
+| **PL11** | 🔄 Lote 1 pronto — aguarda revisão pergunta a pergunta |
+| ~~PL12~~ | ✅ **Teste do jantar** (§4.3) |
+| **PL32** | 🟢 **Rebaixada** — o texto das emendas deixou de ser necessário com a decisão 1 |
 | **RQ3** | N final |
-| **A3** | Deduplicação de proposição votada mais de uma vez |
+| **A3** | Deduplicação |
