@@ -1,7 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Avatar } from './Avatar';
 import {
-  IconeConta,
   IconeExplorar,
   IconeInicio,
   IconeQuestionario,
@@ -13,27 +12,36 @@ import { SugestoesParaSeguir } from './SugestoesParaSeguir';
 import { useSessao } from '../sessao';
 
 /**
- * Moldura de três colunas.
+ * A moldura do site.
  *
- * ⚠️ A coluna da direita some abaixo de 1100px e a esquerda vira barra inferior abaixo
- * de 700px — a navegação nunca desaparece, só muda de lugar.
+ * ⚠️ Antes era o trilho lateral esquerdo do Twitter, e o site inteiro lia como clone.
+ * O que substitui é a estrutura de site institucional: faixa de procedência, cabeçalho
+ * de largura total com navegação horizontal, corpo, rodapé de largura total.
+ *
+ * ⭐ E ocupa a tela inteira de propósito. A versão centralizada com `max-width` deixava
+ * calha morta dos dois lados — que é a assinatura visual da rede social, não a de um
+ * serviço de consulta pública.
  */
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="layout">
-      <BarraLateral />
+    <div className="site">
+      <FaixaDeProcedencia />
+      <CabecalhoDoSite />
 
-      <main className="coluna-central">{children}</main>
+      <div className="corpo">
+        <main className="coluna-central">{children}</main>
 
-      <aside className="coluna-direita">
-        <SugestoesParaSeguir />
-        <RodapeLateral />
-      </aside>
+        <aside className="coluna-direita">
+          <SugestoesParaSeguir />
+        </aside>
+      </div>
+
+      <RodapeDoSite />
     </div>
   );
 }
 
-/** Cabeçalho fixo da coluna central, com voltar opcional — padrão de timeline. */
+/** Cabeçalho fixo da coluna central, com voltar opcional. */
 export function CabecalhoDaColuna({
   titulo,
   subtitulo,
@@ -68,42 +76,60 @@ export function CabecalhoDaColuna({
 
 // ═══════════════════════════════════════════════════════════════════
 
-function BarraLateral() {
+/**
+ * ⭐ A faixa declara a procedência do dado antes de qualquer outra coisa na página.
+ *
+ * É o dispositivo que sites de órgão público usam para isso, e aqui ele não é
+ * decoração: a credibilidade deste trabalho depende inteiramente de o visitante saber
+ * que o número vem do registro nominal da Câmara, não de opinião nossa.
+ */
+function FaixaDeProcedencia() {
+  return (
+    <div className="faixa-procedencia">
+      <div className="faixa-conteudo">
+        <span>Dados abertos da Câmara dos Deputados · 57ª legislatura</span>
+        <span className="faixa-natureza">Trabalho de conclusão de curso</span>
+      </div>
+    </div>
+  );
+}
+
+function CabecalhoDoSite() {
   const { usuario, sair } = useSessao();
 
   return (
-    <nav className="barra-lateral" aria-label="Navegação principal">
-      <Link to="/" className="marca-link" aria-label="poligraph — início">
-        <Marca />
-        <span>poligraph</span>
-      </Link>
-
-      <div className="nav-itens">
-        <ItemDeNavegacao para="/" rotulo="Início" icone={<IconeInicio />} />
-        <ItemDeNavegacao para="/explorar" rotulo="Explorar" icone={<IconeExplorar />} />
-        <ItemDeNavegacao para="/seguindo" rotulo="Seguindo" icone={<IconeSeguindo />} />
-        <ItemDeNavegacao
-          para="/questionario"
-          rotulo="Questionário"
-          icone={<IconeQuestionario />}
-        />
-        <ItemDeNavegacao para="/conta" rotulo="Conta" icone={<IconeConta />} />
-      </div>
-
-      <Link to="/questionario" className="botao-principal">
-        Descobrir afinidade
-      </Link>
-
-      <div className="rodape-lateral-usuario">
-        <Link to="/conta" className="usuario-mini">
-          <Avatar nome={usuario?.nome ?? '?'} fotoUrl={usuario?.fotoUrl} tamanho="medio" />
-          <span className="usuario-mini-nome">{usuario?.nome ?? 'Minha conta'}</span>
+    <header className="cabecalho-site">
+      <div className="cabecalho-conteudo">
+        <Link to="/" className="marca-link" aria-label="poligraph — início">
+          <Marca />
+          <span className="marca-texto">
+            poligraph
+            <small>afinidade por voto registrado</small>
+          </span>
         </Link>
-        <button type="button" className="botao-texto" onClick={sair}>
-          Sair
-        </button>
+
+        <nav className="nav-principal" aria-label="Navegação principal">
+          <ItemDeNavegacao para="/" rotulo="Início" icone={<IconeInicio />} />
+          <ItemDeNavegacao para="/explorar" rotulo="Explorar" icone={<IconeExplorar />} />
+          <ItemDeNavegacao para="/seguindo" rotulo="Seguindo" icone={<IconeSeguindo />} />
+          <ItemDeNavegacao
+            para="/questionario"
+            rotulo="Questionário"
+            icone={<IconeQuestionario />}
+          />
+        </nav>
+
+        <div className="cabecalho-conta">
+          <Link to="/conta" className="usuario-mini">
+            <Avatar nome={usuario?.nome ?? '?'} fotoUrl={usuario?.fotoUrl} tamanho="pequeno" />
+            <span className="usuario-mini-nome">{usuario?.nome?.split(' ')[0] ?? 'Conta'}</span>
+          </Link>
+          <button type="button" className="botao-texto" onClick={sair}>
+            Sair
+          </button>
+        </div>
       </div>
-    </nav>
+    </header>
   );
 }
 
@@ -117,23 +143,56 @@ function ItemDeNavegacao({
   icone: React.ReactNode;
 }) {
   return (
-    <NavLink to={para} end={para === '/'} className="nav-item">
+    <NavLink to={para} end={para === '/'} className="nav-item" viewTransition>
       {icone}
       <span>{rotulo}</span>
     </NavLink>
   );
 }
 
-function RodapeLateral() {
+/**
+ * 🔴 O aviso da RNF-14 vive aqui, e por isso aparece em TODA tela — não só na de
+ * resultado, que era onde estava antes.
+ */
+function RodapeDoSite() {
   return (
-    <div className="cartao-lateral cartao-legal">
-      <p>
-        Ferramenta acadêmica de comparação de votos.{' '}
-        <strong>Não é recomendação de voto.</strong>
-      </p>
-      <p className="fontes">
-        Dados abertos da Câmara dos Deputados · <Link to="/privacidade">Privacidade</Link>
-      </p>
-    </div>
+    <footer className="rodape-site">
+      <div className="rodape-conteudo">
+        <section>
+          <h2>O que é</h2>
+          <p>
+            Compara sua posição com o voto registrado em plenário dos deputados federais. A
+            afinidade sai do comportamento revelado de voto, não de autodeclaração
+            ideológica.
+          </p>
+        </section>
+
+        <section>
+          <h2>Procedência</h2>
+          <p>
+            Registro nominal de votação publicado nos Dados Abertos da Câmara dos
+            Deputados. Nenhum voto é editado: a curadoria reescreve a ementa e registra a
+            polaridade da votação.
+          </p>
+        </section>
+
+        <section>
+          <h2>Seus dados</h2>
+          <p>
+            <Link to="/privacidade">Política de privacidade</Link>
+            <br />
+            <Link to="/conta">Apagar minha conta</Link>
+          </p>
+        </section>
+      </div>
+
+      <div className="rodape-aviso">
+        <p>
+          Ferramenta acadêmica de comparação de votos.{' '}
+          <strong>Não é recomendação de voto</strong> e não representa o programa completo
+          de nenhum parlamentar.
+        </p>
+      </div>
+    </footer>
   );
 }

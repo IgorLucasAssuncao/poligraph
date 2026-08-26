@@ -44,6 +44,20 @@
   --largura-centro: 37.5rem;
   --largura-dir: 21rem;
 
+  /* ═══ MOVIMENTO ═══
+     Curvas e durações do Material Design 3. Não são gosto: "emphasized" acelera
+     devagar e freia forte, que é como objeto físico se move — o olho lê como
+     natural. Linear lê como máquina.
+
+     ⚠️ Duração acima de ~400ms deixa de ser suavidade e vira espera. */
+  --curva: cubic-bezier(.2, 0, 0, 1);              /* padrão — a maior parte */
+  --curva-entrada: cubic-bezier(.05, .7, .1, 1);   /* algo que CHEGA: freia longo */
+  --curva-saida: cubic-bezier(.3, 0, .8, .15);     /* algo que SAI: acelera e some */
+  --t-toque: 90ms;      /* resposta ao dedo — precisa parecer instantânea */
+  --t-curto: 160ms;     /* hover, cor, borda */
+  --t-medio: 260ms;     /* troca de tela */
+  --t-longo: 380ms;     /* pergunta a pergunta, onde a distância é maior */
+
   --display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
   --corpo: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --dado: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
@@ -75,6 +89,25 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--fundo); }
 a { color: inherit; text-decoration: none; }
+
+/**
+ * ⭐ Resposta tátil em tudo que é clicável, não só nos botões grandes.
+ *
+ * O recuo é minúsculo (2%) e rápido (90ms) de propósito: acima de ~100ms deixa de ser
+ * percebido como "o botão respondeu" e vira animação, que atrasa a próxima ação. Abaixo
+ * de 60ms o olho não registra. É confirmação, não enfeite.
+ */
+button, [role='button'], .botao-destaque, .botao-secundario, .nav-item {
+  transition:
+    background var(--t-curto) var(--curva),
+    border-color var(--t-curto) var(--curva),
+    color var(--t-curto) var(--curva),
+    transform var(--t-toque) var(--curva);
+}
+button:active:not(:disabled),
+.botao-destaque:active,
+.botao-secundario:active { transform: scale(.98); }
+
 button { font: inherit; cursor: pointer; }
 
 /* ⚠️ Display expandida (wdth 114): ocupa a linha com calma, como placa.
@@ -100,75 +133,140 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 }
 :focus:not(:focus-visible) { outline: none; }
 
-/* ═══ LAYOUT DE TRÊS COLUNAS ═══════════════════════════════════ */
-.layout {
-  display: grid;
-  grid-template-columns: var(--largura-esq) minmax(0, var(--largura-centro)) var(--largura-dir);
-  justify-content: center;
-  gap: 0;
-  max-width: 78rem;
-  margin: 0 auto;
+/* ═══ MOLDURA DO SITE ══════════════════════════════════════════ */
+/**
+ * ⚠️ Estrutura de serviço público, ⛔ não de rede social: faixa de procedência,
+ *    cabeçalho de largura total com navegação horizontal, corpo, rodapé.
+ *
+ * ⭐ Largura total de propósito. A versão centralizada com max-width deixava calha
+ *    morta dos dois lados — a assinatura visual do Twitter, que é exatamente o que a
+ *    banca levantaria.
+ */
+.site { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ═══ FAIXA DE PROCEDÊNCIA ═════════════════════════════════════ */
+/* ⭐ De onde vem o dado, antes de tudo. Sem isto o site afirma sem creditar. */
+.faixa-procedencia {
+  background: var(--texto); color: var(--fundo);
+  font-family: var(--dado); font-size: .72rem; letter-spacing: .01em;
 }
-
-.coluna-central {
-  border-inline: 1px solid var(--borda);
-  min-height: 100vh;
+.faixa-conteudo {
+  display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  padding: .4rem clamp(1rem, 4vw, 3rem);
 }
+.faixa-natureza { opacity: .65; }
 
-.coluna-direita { padding: .75rem 1.25rem; }
-
-/* ═══ BARRA LATERAL ════════════════════════════════════════════ */
-.barra-lateral {
-  position: sticky; top: 0; align-self: start;
-  height: 100vh; display: flex; flex-direction: column;
-  padding: .5rem .75rem 1rem; gap: .15rem;
+/* ═══ CABEÇALHO DO SITE ════════════════════════════════════════ */
+.cabecalho-site {
+  position: sticky; top: 0; z-index: 30;
+  background: var(--fundo);
+  border-bottom: 1px solid var(--borda-forte);
+}
+.cabecalho-conteudo {
+  display: flex; align-items: stretch; gap: clamp(1rem, 3vw, 2.5rem);
+  padding: 0 clamp(1rem, 4vw, 3rem);
 }
 
 .marca-link {
-  display: flex; align-items: center; gap: .6rem;
-  padding: .75rem; margin-bottom: .35rem;
+  display: flex; align-items: center; gap: .65rem;
+  padding: .8rem 0; color: var(--realce);
+  flex-shrink: 0;
+}
+.marca-texto {
+  display: flex; flex-direction: column; line-height: 1.1;
   font-family: var(--display); font-variation-settings: 'wdth' 118;
-  font-size: 1.15rem; font-weight: 700; letter-spacing: -.02em;
-  color: var(--realce); border-radius: 999px;
+  font-size: 1.2rem; font-weight: 700; letter-spacing: -.022em;
 }
-.marca-link:hover { background: var(--realce-fraco); }
+.marca-texto small {
+  font-family: var(--corpo); font-variation-settings: normal;
+  font-size: .68rem; font-weight: 400; letter-spacing: 0;
+  color: var(--suave); margin-top: .12rem;
+}
 
-.nav-itens { display: flex; flex-direction: column; gap: .1rem; }
-
+/* ⚠️ Navegação horizontal com marcador embaixo — o padrão de aba de site
+      institucional. O pill vertical era o do Twitter. */
+.nav-principal { display: flex; gap: .25rem; margin-right: auto; overflow-x: auto; }
 .nav-item {
-  display: flex; align-items: center; gap: 1rem;
-  padding: .7rem .9rem; border-radius: 999px;
-  font-size: 1.05rem; color: var(--texto);
-  transition: background .12s;
+  display: flex; align-items: center; gap: .5rem;
+  padding: 0 .85rem; border-bottom: 3px solid transparent;
+  font-size: .93rem; font-weight: 500; color: var(--suave);
+  white-space: nowrap;
 }
-.nav-item:hover { background: var(--painel); }
-.nav-item.active { font-weight: 700; }
-.nav-item.active svg { stroke-width: 2.4; color: var(--realce); }
+.nav-item svg { width: 18px; height: 18px; }
+.nav-item:hover { color: var(--texto); background: var(--painel); }
+.nav-item.active {
+  color: var(--texto); font-weight: 600;
+  border-bottom-color: var(--realce);
+}
+.nav-item.active svg { color: var(--realce); }
 
-.botao-principal {
-  display: block; margin: 1rem .35rem 0;
-  padding: .8rem 1rem; text-align: center;
-  background: var(--realce); color: var(--sobre-realce);
-  font-weight: 700; font-size: .97rem; border-radius: 999px;
-  transition: background .12s;
+.cabecalho-conta { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
+.usuario-mini {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .4rem .6rem; border-radius: 6px; min-width: 0;
 }
-.botao-principal:hover { background: var(--realce-hover); }
-
-.rodape-lateral-usuario {
-  margin-top: auto; display: flex; align-items: center; gap: .5rem;
-  padding: .5rem; border-radius: 999px;
-}
-.rodape-lateral-usuario:hover { background: var(--painel); }
-.usuario-mini { display: flex; align-items: center; gap: .65rem; flex: 1; min-width: 0; }
+.usuario-mini:hover { background: var(--painel); }
 .usuario-mini-nome {
-  font-weight: 700; font-size: .9rem;
+  font-size: .88rem; font-weight: 500;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .botao-texto {
   background: none; border: none; color: var(--suave);
-  font-size: .85rem; padding: .3rem .5rem; border-radius: 999px;
+  font-size: .85rem; padding: .4rem .6rem; border-radius: 6px;
 }
 .botao-texto:hover { color: var(--realce); background: var(--realce-fraco); }
+
+/* ═══ CORPO ════════════════════════════════════════════════════ */
+/* ⭐ minmax(0, 1fr) na central: sem o 0, conteúdo largo (tabela, código) estoura
+      a coluna em vez de rolar dentro dela. */
+.corpo {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--largura-dir);
+  gap: clamp(1rem, 3vw, 2.5rem);
+  padding: 0 clamp(1rem, 4vw, 3rem);
+  align-items: start;
+}
+
+.coluna-central {
+  min-width: 0;
+  /* ⚠️ Teto de medida, não de layout: linha de texto acima de ~75ch fica difícil de
+        ler. A coluna preenche o espaço; o TEXTO é que tem limite. */
+  max-width: 52rem;
+  border-inline: 1px solid var(--borda);
+  min-height: 60vh;
+}
+
+.coluna-direita { position: sticky; top: 5.5rem; padding: 1.25rem 0; }
+
+/* ═══ RODAPÉ DO SITE ═══════════════════════════════════════════ */
+.rodape-site {
+  margin-top: 3rem;
+  background: var(--painel);
+  border-top: 1px solid var(--borda-forte);
+}
+.rodape-conteudo {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 2rem clamp(1.5rem, 4vw, 4rem);
+  padding: 2.25rem clamp(1rem, 4vw, 3rem);
+  max-width: 80rem;
+}
+.rodape-site h2 {
+  margin: 0 0 .5rem; font-size: .78rem; font-weight: 600;
+  font-family: var(--dado); font-variation-settings: normal;
+  text-transform: uppercase; letter-spacing: .1em; color: var(--suave);
+}
+.rodape-site p { margin: 0; font-size: .86rem; line-height: 1.55; color: var(--suave); }
+.rodape-site a { color: var(--realce); }
+.rodape-site a:hover { text-decoration: underline; }
+
+/* 🔴 RNF-14 — em toda tela, não só na de resultado. */
+.rodape-aviso {
+  border-top: 1px solid var(--borda);
+  padding: 1rem clamp(1rem, 4vw, 3rem);
+}
+.rodape-aviso p { margin: 0; font-size: .82rem; color: var(--suave); max-width: 60rem; }
+.rodape-aviso strong { color: var(--texto); }
 
 /* ═══ CABEÇALHO DA COLUNA ══════════════════════════════════════ */
 .cabecalho-coluna {
@@ -203,7 +301,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   display: flex; gap: .75rem;
   padding: .85rem 1rem;
   border-bottom: 1px solid var(--borda);
-  transition: background .1s;
+  transition: background var(--t-curto) var(--curva);
 }
 .linha:hover { background: var(--painel); }
 .linha-corpo { flex: 1; min-width: 0; }
@@ -217,7 +315,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 /* ═══ BOTÕES ═══════════════════════════════════════════════════ */
 .botao-seguir, .botao-seguindo {
   padding: .38rem .95rem; font-size: .875rem; font-weight: 700;
-  border-radius: 999px; white-space: nowrap; transition: all .12s;
+  border-radius: 999px; white-space: nowrap;
 }
 .botao-seguir {
   background: var(--texto); color: var(--fundo);
@@ -257,7 +355,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .sugestoes { list-style: none; margin: 0; padding: 0; }
 .sugestoes li {
   display: flex; align-items: center; gap: .6rem;
-  padding: .6rem 1rem; transition: background .1s;
+  padding: .6rem 1rem; transition: background var(--t-curto) var(--curva);
 }
 .sugestoes li:hover { background: var(--borda); }
 .sugestao-link { display: flex; align-items: center; gap: .65rem; flex: 1; min-width: 0; }
@@ -268,10 +366,6 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .criterio { margin: .5rem 1rem 0; font-family: var(--dado); font-size: .72rem; color: var(--suave); }
 .ver-mais { display: block; padding: .7rem 1rem 0; color: var(--realce); font-size: .92rem; }
 .ver-mais:hover { text-decoration: underline; }
-.cartao-legal { padding: 1rem; font-size: .8rem; color: var(--suave); }
-.cartao-legal p { margin: 0 0 .5rem; }
-.cartao-legal .fontes { margin: 0; }
-.cartao-legal a { color: var(--realce); }
 
 /* ═══ PERFIL ═══════════════════════════════════════════════════ */
 .capa-perfil { height: 7rem; background: var(--painel); border-bottom: 1px solid var(--borda); }
@@ -340,7 +434,12 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .questionario { padding-bottom: 4rem; }
 .progresso { padding: .75rem 1rem; border-bottom: 1px solid var(--borda); font-size: .85rem; color: var(--suave); }
 .barra-progresso { height: 4px; border-radius: 999px; background: var(--borda); margin-top: .45rem; overflow: hidden; }
-.barra-progresso div { height: 100%; background: var(--realce); transition: width .25s; }
+/* ⚠️ Mesma curva do resto: a barra e o cartão avançam juntos, senão a barra
+      chega antes e a tela parece dessincronizada. */
+.barra-progresso div {
+  height: 100%; background: var(--realce);
+  transition: width var(--t-longo) var(--curva);
+}
 
 /* ═══ AVALIAÇÃO ════════════════════════════════════════════════ */
 .avaliacao { padding: 1.25rem 1rem; background: var(--painel); border-bottom: 1px solid var(--borda); }
@@ -349,8 +448,9 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .avaliacao legend { font-weight: 600; font-size: .92rem; padding: 0; margin-bottom: .5rem; }
 .escala { display: flex; flex-wrap: wrap; gap: .35rem; }
 .escala label {
-  padding: .4rem .7rem; border: 1px solid var(--borda-forte); border-radius: 999px;
-  font-size: .8rem; cursor: pointer; transition: all .12s;
+  padding: .4rem .7rem; border: 1px solid var(--borda-forte); border-radius: 6px;
+  font-size: .8rem; cursor: pointer;
+  transition: background var(--t-curto) var(--curva), border-color var(--t-curto) var(--curva);
 }
 .escala label:hover { background: var(--fundo); }
 .escala input { position: absolute; opacity: 0; pointer-events: none; }
@@ -526,12 +626,18 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 
 /* ═══ RESPONSIVO ═══════════════════════════════════════════════ */
 @media (max-width: 1100px) {
-  .layout { grid-template-columns: 5rem minmax(0, 1fr); max-width: 45rem; }
+  /* ⭐ A coluna lateral sai primeiro: sugestão é complemento, não o serviço. */
+  .corpo { grid-template-columns: minmax(0, 1fr); }
   .coluna-direita { display: none; }
-  .barra-lateral { align-items: center; }
-  .nav-item span, .marca-link span, .usuario-mini-nome, .botao-texto { display: none; }
-  .botao-principal { width: 3rem; height: 3rem; padding: 0; font-size: 0; display: grid; place-items: center; }
-  .botao-principal::after { content: '?'; font-size: 1.3rem; }
+  .coluna-central { max-width: none; }
+}
+
+@media (max-width: 900px) {
+  .nav-item span { display: none; }
+  .nav-item { padding: 0 .9rem; }
+  .nav-item svg { width: 21px; height: 21px; }
+  .marca-texto small { display: none; }
+  .usuario-mini-nome { display: none; }
 }
 
 @media (max-width: 860px) {
@@ -541,17 +647,13 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 }
 
 @media (max-width: 700px) {
-  .layout { grid-template-columns: 1fr; }
-  .coluna-central { border: none; padding-bottom: 4.25rem; }
-  .barra-lateral {
-    position: fixed; inset: auto 0 0; z-index: 40;
-    height: auto; flex-direction: row; justify-content: space-around;
-    padding: .35rem; gap: 0;
-    background: var(--fundo); border-top: 1px solid var(--borda);
-  }
-  .marca-link, .botao-principal, .rodape-lateral-usuario { display: none; }
-  .nav-itens { flex-direction: row; flex: 1; justify-content: space-around; }
-  .nav-item { padding: .6rem; }
+  .faixa-natureza { display: none; }
+  .cabecalho-conteudo { gap: .5rem; padding: 0 .75rem; }
+  .coluna-central { border: none; }
+  .corpo { padding: 0; }
+  .cabecalho-coluna, .rodape-conteudo { padding-inline: 1rem; }
+  .nav-principal { gap: 0; }
+  .nav-item { padding: 0 .7rem; }
 }
 
 /* ═══ QUESTIONÁRIO: CARTÃO POR PERGUNTA ════════════════════════ */
@@ -560,15 +662,9 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   min-height: 24rem;
   display: flex; flex-direction: column;
 }
-.cartao-pergunta.entrando { animation: entrar .28s cubic-bezier(.2,.8,.2,1); }
-@keyframes entrar {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .cartao-pergunta.entrando { animation: none; }
-  .barra-progresso div { transition: none; }
-}
+/* ⚠️ A entrada do cartão é feita pela View Transition (ver fim do arquivo), não por
+      keyframe local: keyframe só anima quem CHEGA, e sem a saída do cartão anterior a
+      troca lê como pisca-pisca em vez de avanço. */
 
 .rotulo-pergunta {
   margin: 0 0 .6rem; font-family: var(--dado);
@@ -586,23 +682,26 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .opcao-grande {
   padding: 1rem 1.25rem; text-align: left;
   font-size: 1rem; font-weight: 600;
-  border: 1.5px solid var(--borda-forte); border-radius: 14px;
+  border: 1.5px solid var(--borda-forte); border-radius: 10px;
   background: transparent; color: inherit;
-  transition: border-color .12s, background .12s, transform .08s;
 }
 .opcao-grande:hover:not(:disabled) { border-color: var(--realce); background: var(--realce-fraco); }
-.opcao-grande:active:not(:disabled) { transform: scale(.985); }
+
 .opcao-grande:disabled { cursor: default; }
 .opcao-grande.opcao-ativa {
   border-color: var(--realce); background: var(--realce); color: var(--sobre-realce);
 }
 
+/* ⚠️ O painel CHEGA (curva de entrada) e não some deslizando: ele aparece como
+      resposta ao clique e a pergunta seguinte já leva o cartão inteiro embora. */
 .retorno {
   margin-top: auto; padding-top: 1.5rem;
-  opacity: 0; transform: translateY(6px);
-  transition: opacity .2s, transform .2s;
+  opacity: 0; transform: translateY(8px);
+  transition:
+    opacity var(--t-medio) var(--curva-entrada),
+    transform var(--t-medio) var(--curva-entrada);
   font-size: .92rem; color: var(--suave); text-align: center;
-  min-height: 2.5rem;
+  min-height: 3.5rem;
 }
 .retorno.visivel { opacity: 1; transform: none; }
 .retorno strong { color: var(--texto); }
@@ -612,3 +711,73 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .encerramento h2 { margin: 0 0 .5rem; font-size: 1.6rem; font-weight: 800; }
 .encerramento .ajuda { max-width: 24rem; margin: 0 auto 1.75rem; }
 .encerramento-acoes { display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; }
+
+
+/* ═══ TRANSIÇÃO ENTRE TELAS ════════════════════════════════════ */
+/**
+ * View Transitions API: o navegador retrata o DOM antes e depois e anima entre os dois.
+ *
+ * ⭐ Nomear a moldura é o truque todo. Elemento com `view-transition-name` é retratado
+ *    à parte e, se não mudou, fica PARADO. Sem isto o cabeçalho e o rodapé piscariam
+ *    junto com o conteúdo a cada clique no menu — que é justamente o defeito que a
+ *    transição deveria resolver.
+ */
+.faixa-procedencia { view-transition-name: faixa; }
+.cabecalho-site    { view-transition-name: cabecalho; }
+.coluna-direita    { view-transition-name: lateral; }
+.rodape-site       { view-transition-name: rodape; }
+
+/* O que sobra — a coluna central — atravessa em fusão curta. */
+::view-transition-old(root) {
+  animation: sumir var(--t-medio) var(--curva-saida) both;
+}
+::view-transition-new(root) {
+  animation: surgir var(--t-medio) var(--curva-entrada) both;
+}
+
+@keyframes sumir { to   { opacity: 0; transform: translateY(-6px); } }
+@keyframes surgir { from { opacity: 0; transform: translateY(10px); } }
+
+/* ═══ TRANSIÇÃO ENTRE PERGUNTAS ════════════════════════════════ */
+/**
+ * ⚠️ Direcional de propósito: a pergunta respondida sai pela ESQUERDA e a próxima
+ *    entra pela DIREITA. Direção é o que transforma um piscar em progresso — a pessoa
+ *    vê que avançou, não que a tela recarregou.
+ *
+ * ⭐ O cartão tem nome próprio, então ele é retratado à parte da coluna e não herda a
+ *    fusão vertical de `root`.
+ */
+.cartao-pergunta { view-transition-name: cartao; }
+
+::view-transition-old(cartao) {
+  animation: sair-esquerda var(--t-longo) var(--curva-saida) both;
+}
+::view-transition-new(cartao) {
+  animation: entrar-direita var(--t-longo) var(--curva-entrada) both;
+}
+
+@keyframes sair-esquerda { to   { opacity: 0; transform: translateX(-22px); } }
+@keyframes entrar-direita { from { opacity: 0; transform: translateX(28px); } }
+
+/* ═══ MENOS MOVIMENTO ══════════════════════════════════════════ */
+/**
+ * 🔴 Menos movimento ⛔ NÃO é "nenhuma mudança visual": sumir sem transição confunde
+ *    tanto quanto deslizar demais. O que sai é o DESLOCAMENTO — a fusão fica, curta.
+ *
+ * ⚠️ `transicao.ts` já nem inicia a View Transition nesse caso; isto cobre o resto e
+ *    o que o navegador anima por conta própria.
+ */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 1ms !important;
+  }
+
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

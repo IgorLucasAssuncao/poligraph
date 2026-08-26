@@ -10,6 +10,7 @@ import {
 import { CabecalhoDaColuna } from '../componentes/Layout';
 import { Painel } from '../componentes/Painel';
 import { Resultado } from '../componentes/Resultado';
+import { comTransicao } from '../transicao';
 
 const OPCOES: [Resposta, string][] = [
   [1, 'Concordo'],
@@ -92,7 +93,7 @@ export function Questionario() {
           enviando={enviando}
           erro={erro}
           aoEnviar={enviar}
-          aoRever={() => setIndice(0)}
+          aoRever={() => comTransicao(() => setIndice(0))}
         />
       ) : (
         <CartaoDePergunta
@@ -101,7 +102,7 @@ export function Questionario() {
           escolhida={respostas[atual.id]}
           revelando={revelando}
           aoResponder={responder}
-          aoVoltar={indice > 0 ? () => setIndice(indice - 1) : undefined}
+          aoVoltar={indice > 0 ? () => comTransicao(() => setIndice(indice - 1)) : undefined}
         />
       )}
     </div>
@@ -113,11 +114,16 @@ export function Questionario() {
     setRespostas((atuais) => ({ ...atuais, [perguntaId]: valor }));
     setRevelando(true);
 
-    // ⚠️ A pausa é curta de propósito: longa o bastante para a pessoa registrar o
-    //    retorno, curta o bastante para não virar espera.
+    // ⚠️ A pausa é curta de propósito: longa o bastante para a pessoa ler o painel,
+    //    curta o bastante para não virar espera.
     setTimeout(() => {
-      setRevelando(false);
-      setIndice((i) => i + 1);
+      // ⭐ A View Transition faz a pergunta respondida SAIR pela esquerda enquanto a
+      //    próxima entra pela direita. Sem ela só dá para animar quem chega, e a troca
+      //    lê como pisca-pisca em vez de avanço.
+      comTransicao(() => {
+        setRevelando(false);
+        setIndice((i) => i + 1);
+      });
     }, PAUSA);
   }
 
@@ -168,7 +174,7 @@ function CartaoDePergunta({
   aoVoltar?: () => void;
 }) {
   return (
-    <div className={`cartao-pergunta ${revelando ? 'revelando' : 'entrando'}`}>
+    <div className="cartao-pergunta">
       <p className="rotulo-pergunta">Você concorda?</p>
       <h2 className="texto-pergunta">{pergunta.texto}</h2>
 
