@@ -1,6 +1,9 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v2.0 — 2026-08-25
+> **Status:** v2.1 — 2026-08-25
+> **v2.1:** §3.6 — como a API valida quem é o usuário em cada requisição: cookie do
+> ASP.NET Core, as 4 conferências, e 🔴 a armadilha do Data Protection em container, que
+> desloga todo mundo no primeiro redeploy.
 > **v2.0:** 🔄 REVOGADO o princípio de minimização a pedido do autor. §3.5 reescrita:
 > armazenar o perfil COMPLETO do Google em claro. Caem o hash de `sub`, o `pepper`, o
 > `email` anulável e a regra "receber ≠ guardar". ⛔ Nenhum token é armazenado.
@@ -763,6 +766,134 @@ sessao_versao    = 0
 reescrita a cada login, isso só afeta quem não entra há muito tempo — trate o 404 no front
 com um avatar padrão.
 
+## 3.6 🔴 Como a API sabe que é você — e qual "você"
+
+> **Pergunta do autor:** *"a API precisa do token do usuário, não? Como vamos validar se é
+> um usuário válido e qual usuário é?"*
+
+**Sim — mas não o token do Google.** São dois momentos diferentes, com mecanismos
+diferentes, e confundi-los é a origem de quase toda confusão sobre login social.
+
+| | **Uma vez, no login** | **Em toda requisição depois** |
+|---|---|---|
+| O que chega | `id_token` do Google | 🍪 **Cookie de sessão** |
+| Quem assinou | Google (RSA, chave pública) | ⭐ **Nós** (chave simétrica no servidor) |
+| Como se valida | Baixa as chaves do Google e confere | Confere com o próprio segredo |
+| Frequência | 1× por login | Toda chamada |
+
+⭐ **Depois do login, o Google sai da história por completo.** A API nunca mais vê um
+`id_token`.
+
+### 3.6.1 O front não faz nada — e isso é o ponto
+
+```javascript
+// ⛔ NÃO existe isto:
+fetch('/api/seguidos', { headers: { Authorization: `Bearer ${token}` } });
+
+// ✅ É só isto — o navegador manda o cookie sozinho:
+fetch('/api/seguidos');
+```
+
+Sem interceptor, sem guardar token, sem renovar token no cliente. **O cookie é `HttpOnly`:
+o JavaScript nem consegue lê-lo.**
+
+### 3.6.2 ⭐ Em .NET, não escreva JWT à mão
+
+O caminho idiomático é a **autenticação por cookie do próprio ASP.NET Core**. Ela assina
+**e criptografa** o cookie via Data Protection — o conteúdo nem é legível pelo cliente,
+o que é melhor que um JWT cru.
+
+```csharp
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(o => {
+        o.Cookie.Name        = "sid";
+        o.Cookie.HttpOnly    = true;
+        o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        o.Cookie.SameSite    = SameSiteMode.Lax;
+        o.ExpireTimeSpan     = TimeSpan.FromDays(7);
+        o.SlidingExpiration  = true;
+    });
+```
+
+**No login** — depois de validar o `id_token` e fazer o UPSERT (§3.5.1):
+
+```csharp
+var claims = new List<Claim> {
+    new("usuario_id",    usuario.Id.ToString()),
+    new("sessao_versao", usuario.SessaoVersao.ToString())
+};
+await ctx.SignInAsync(new ClaimsPrincipal(
+    new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)));
+```
+
+**Em qualquer endpoint protegido** — a validação já aconteceu antes de entrar:
+
+```csharp
+app.MapGet("/api/seguidos", async (ClaimsPrincipal user, Db db) => {
+    var id = long.Parse(user.FindFirstValue("usuario_id")!);
+    return await db.SeguidosDoUsuarioAsync(id);
+}).RequireAuthorization();
+```
+
+### 3.6.3 As quatro conferências, na ordem
+
+| # | Conferência | Falhou → |
+|---|---|---|
+| 1 | O cookie existe? | `401` |
+| 2 | Assinatura/criptografia batem com o segredo do servidor? | `401` — cookie adulterado |
+| 3 | `ExpireTimeSpan` venceu? | `401` |
+| 4 | ⭐ `sessao_versao` do cookie == a do banco? | `401` — sessão revogada |
+
+A #4 é o `sessao_versao` (§3.2.4) e exige uma leitura no banco. Faz-se no
+`OnValidatePrincipal`:
+
+```csharp
+o.Events.OnValidatePrincipal = async ctx => {
+    var id = long.Parse(ctx.Principal!.FindFirstValue("usuario_id")!);
+    var sv = int.Parse(ctx.Principal.FindFirstValue("sessao_versao")!);
+    var db = ctx.HttpContext.RequestServices.GetRequiredService<Db>();
+    if (await db.SessaoVersaoAsync(id) != sv) {
+        ctx.RejectPrincipal();
+        await ctx.HttpContext.SignOutAsync();
+    }
+};
+```
+
+⚠️ **Honestidade sobre "sem estado":** a #4 é uma leitura por requisição. O desenho é
+*sem armazenamento de sessão*, não *sem acesso ao banco*. É um `SELECT` por chave
+primária — e na maioria dos endpoints protegidos você já ia buscar o usuário mesmo.
+
+### 3.6.4 🔴 A armadilha que aparece no primeiro redeploy
+
+> **As chaves do Data Protection são efêmeras dentro de um container.** No próximo deploy
+> pelo Coolify, elas mudam — **e todo mundo é deslogado**.
+
+O sintoma é péssimo de diagnosticar: funciona local, funciona em produção, e **quebra
+sozinho depois de um deploy que não mexeu em autenticação**.
+
+```csharp
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/keys"))   // volume do Coolify
+    .SetApplicationName("poligraph");
+```
+
+⚠️ **`/keys` tem que ser volume persistente**, não pasta do container. Alternativa:
+`PersistKeysToDbContext` e guardar no Postgres, que já tem backup.
+
+### 3.6.5 Autenticação é a exceção, não a regra
+
+| Endpoint | Precisa de login? |
+|---|---|
+| Questionário, resultado, grafo, ficha, notícias, busca | ⛔ **Não** — é site público |
+| `/api/seguidos`, `/api/conta`, `/api/preferencias` | ✅ Sim |
+| `/api/descadastro?token=…` | ⛔ **Não** — funciona pelo `token_email` (§3.3.3) |
+
+⭐ **Só três endpoints levam `.RequireAuthorization()`.** O resto do site funciona sem
+ninguém entrar — o login existe para sincronizar lista e habilitar e-mail, não para abrir
+portas.
+
+---
+
 ## 4. Métricas de uso — a ferramenta é o Microsoft Clarity
 
 Você mencionou "alguma do Google". São duas coisas diferentes, e a que você descreveu
@@ -957,7 +1088,8 @@ custar meses se ficar para o fim.
 | **PL25** | Escrever o texto do banner cobrindo as 5 exigências da §4.5.2 | 🔴 Alta |
 | **PL26** | Escolher o serviço de envio de e-mail (Resend, Brevo, SES) e configurar SPF/DKIM/DMARC | 🔴 Alta |
 | **PL27** | Definir a cadência do digest — diário, semanal, ou por volume de notícia | 🟡 Média |
-| **PL29** | Confirmar o desenho B1 de sessão e a duração do cookie (sugerido: 7 dias) | 🟡 Média |
+| **PL29** | Confirmar a duração do cookie (sugerido: 7 dias, sliding) | 🟡 Média |
+| **PL30** | 🔴 Definir onde persistir as chaves do Data Protection — volume do Coolify ou Postgres (§3.6.4) | 🔴 Alta |
 
 ---
 
