@@ -919,6 +919,9 @@ momentos com mecanismos diferentes:
 
 ### 3.6.1 O front não faz nada — e isso é o ponto
 
+📐 **O código completo desta seção** — `Program.cs`, endpoints, repositório e componente
+React — está em [04-esqueleto §2.3](04-esqueleto.md).
+
 ```javascript
 // ⛔ NÃO existe isto:
 fetch('/api/seguidos', { headers: { Authorization: `Bearer ${token}` } });

@@ -1,8 +1,10 @@
 # Esqueleto — AppHost, schema e estrutura do ETL
 
-> **Status:** v1.2 — 2026-08-25
+> **Status:** v1.3 — 2026-08-26
 > Os dois artefatos do **passo 1** ([01-arquitetura §8](01-arquitetura.md)). Tudo aqui é
 > derivado dos contratos medidos em [`04-contratos.md`](../04-contratos.md).
+> **v1.3:** §2.3 — o código COMPLETO da autenticação: Program.cs, os três endpoints, o
+> repositório, o componente React e como provar por curl. São quatro arquivos.
 > **v1.2:** §2.2 — 🔄 `usuario` passa a guardar o perfil COMPLETO do Google em claro.
 > Caem `sub_hash`, `pepper` e o `email` anulável.
 > **v1.1:** §2.2 — tabelas `usuario`, `segue`, `consentimento` e `token_email`, criadas
@@ -333,6 +335,231 @@ porque só ele pressupõe conta.
 
 ---
 
+## 2.3 🔴 Autenticação — o código completo
+
+> Responde *"não entendi como isso será feito tecnicamente"*. Aqui está tudo que existe:
+> **quatro arquivos**, nada além.
+
+### 2.3.1 `Program.cs` — a configuração inteira
+
+```csharp
+using Google.Apis.Auth;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// 🔴 Sem isto, todo redeploy desloga todo mundo (PL30)
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/keys"))
+    .SetApplicationName("poligraph");
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(o =>
+    {
+        o.Cookie.Name         = "sid";
+        o.Cookie.HttpOnly     = true;               // JS não lê
+        o.Cookie.SameSite     = SameSiteMode.Lax;
+        o.ExpireTimeSpan      = TimeSpan.FromDays(7);
+        o.SlidingExpiration   = true;
+        o.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest      // ⚠️ senão quebra em http://localhost
+            : CookieSecurePolicy.Always;
+
+        // 🔴 É uma API: responder 401/403, não redirecionar para tela de login
+        o.Events.OnRedirectToLogin =
+            c => { c.Response.StatusCode = 401; return Task.CompletedTask; };
+        o.Events.OnRedirectToAccessDenied =
+            c => { c.Response.StatusCode = 403; return Task.CompletedTask; };
+
+        // ⭐ A 4ª conferência: a sessão foi revogada? (02 §3.2.4)
+        o.Events.OnValidatePrincipal = async c =>
+        {
+            var id = long.Parse(c.Principal!.FindFirstValue("usuario_id")!);
+            var sv = int.Parse(c.Principal.FindFirstValue("sessao_versao")!);
+            var repo = c.HttpContext.RequestServices.GetRequiredService<UsuarioRepo>();
+            if (await repo.SessaoVersaoAsync(id) != sv)
+            {
+                c.RejectPrincipal();
+                await c.HttpContext.SignOutAsync();
+            }
+        };
+    });
+
+builder.Services.AddAuthorization();
+builder.Services.AddScoped<UsuarioRepo>();
+
+var app = builder.Build();
+app.UseAuthentication();
+app.UseAuthorization();
+```
+
+⚠️ **`OnRedirectToLogin` não é detalhe.** Sem ele, uma chamada sem cookie devolve **302
+para uma página que não existe** — e o front recebe HTML onde esperava JSON. É o bug de
+uma hora perdida.
+
+### 2.3.2 Os três endpoints
+
+```csharp
+record LoginRequest(string IdToken);
+
+// ─── 1. LOGIN — o único lugar onde o id_token do Google aparece ───────────
+app.MapPost("/api/auth/google", async (
+    LoginRequest req, HttpContext ctx, UsuarioRepo repo, IConfiguration cfg) =>
+{
+    GoogleJsonWebSignature.Payload payload;
+    try
+    {
+        payload = await GoogleJsonWebSignature.ValidateAsync(req.IdToken,
+            new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = [cfg["Google:ClientId"]!]   // 🔴 a conferência do `aud`
+            });
+    }
+    catch (InvalidJwtException) { return Results.Unauthorized(); }
+
+    var u = await repo.UpsertAsync(payload);          // grava o perfil (02 §3.5.1)
+
+    await ctx.SignInAsync(new ClaimsPrincipal(new ClaimsIdentity(
+        [ new Claim("usuario_id",    u.Id.ToString()),
+          new Claim("sessao_versao", u.SessaoVersao.ToString()) ],
+        CookieAuthenticationDefaults.AuthenticationScheme)));
+    // ⬆️ é este SignInAsync que emite o Set-Cookie assinado. O id_token morre aqui.
+
+    return Results.Ok(new { u.Nome, u.FotoUrl });
+});
+
+// ─── 2. ENDPOINT PROTEGIDO — a validação já ocorreu antes de entrar ───────
+app.MapGet("/api/seguidos", async (ClaimsPrincipal user, SegueRepo repo) =>
+    Results.Ok(await repo.ListarAsync(long.Parse(user.FindFirstValue("usuario_id")!)))
+).RequireAuthorization();
+
+// ─── 3. LOGOUT ────────────────────────────────────────────────────────────
+app.MapPost("/api/auth/logout", async (HttpContext ctx) =>
+{
+    await ctx.SignOutAsync();
+    return Results.NoContent();
+});
+```
+
+> 🔑 **Onde está a "verificação da assinatura" da qual falamos?**
+> **Dentro do `.RequireAuthorization()`.** O ASP.NET lê o cookie, recalcula a assinatura,
+> confere a expiração e dispara o `OnValidatePrincipal` — tudo antes de a sua função rodar.
+> **Você não escreve essa parte.**
+
+### 2.3.3 O repositório
+
+```csharp
+public class UsuarioRepo(NpgsqlConnection conn)
+{
+    public Task<Usuario> UpsertAsync(GoogleJsonWebSignature.Payload p) =>
+        conn.QuerySingleAsync<Usuario>("""
+            INSERT INTO usuario (google_sub, email, email_verificado, nome,
+                                 primeiro_nome, sobrenome, foto_url, locale)
+            VALUES (@Subject, @Email, @EmailVerified, @Name,
+                    @GivenName, @FamilyName, @Picture, @Locale)
+            ON CONFLICT (google_sub) DO UPDATE SET
+                email = EXCLUDED.email, email_verificado = EXCLUDED.email_verificado,
+                nome  = EXCLUDED.nome,  primeiro_nome    = EXCLUDED.primeiro_nome,
+                sobrenome = EXCLUDED.sobrenome, foto_url = EXCLUDED.foto_url,
+                locale = EXCLUDED.locale, visto_em = now()
+            RETURNING id, nome, foto_url AS FotoUrl, sessao_versao AS SessaoVersao;
+            """, p);
+
+    public Task<int> SessaoVersaoAsync(long id) =>
+        conn.QuerySingleAsync<int>(
+            "SELECT sessao_versao FROM usuario WHERE id = @id", new { id });
+}
+```
+
+⭐ **O `payload` do Google entra direto como parâmetro do Dapper** — os nomes das
+propriedades (`Subject`, `Email`, `GivenName`…) casam com os `@` da query.
+
+### 2.3.4 O front — um componente
+
+`index.html`:
+
+```html
+<script src="https://accounts.google.com/gsi/client" async></script>
+```
+
+`BotaoGoogle.tsx`:
+
+```tsx
+export function BotaoGoogle() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    window.google.accounts.id.initialize({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      callback: async (resp: { credential: string }) => {
+        await fetch("/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: resp.credential }),  // ⬅️ passo 4
+          credentials: "include",
+        });
+        location.reload();          // agora o cookie existe
+      },
+    });
+    window.google.accounts.id.renderButton(ref.current!,
+      { theme: "outline", size: "large", text: "signin_with" });
+  }, []);
+
+  return <div ref={ref} />;
+}
+```
+
+E qualquer chamada protegida daí em diante:
+
+```tsx
+const r = await fetch("/api/seguidos", { credentials: "include" });
+if (r.status === 401) mostrarBotaoDeLogin();
+```
+
+⛔ **Não existe** `localStorage.setItem("token", …)`, nem header `Authorization`, nem
+lógica de renovação. **O navegador cuida do cookie.**
+
+### 2.3.5 ⭐ Sirva front e API na MESMA origem
+
+| Arranjo | Consequência |
+|---|---|
+| ⭐ `poligraph.com.br` + `poligraph.com.br/api` | ✅ Mesma origem: **sem CORS**, `SameSite=Lax` funciona |
+| `poligraph.com.br` + `api.poligraph.com.br` | ⛔ *Cross-site*: exige `SameSite=None`, CORS com `AllowCredentials` e origem explícita |
+
+> 🔑 **O Traefik já roteia por caminho** ([01-arquitetura §2.1.1](01-arquitetura.md)).
+> Mandar `/api/*` para o container da API **elimina uma classe inteira de problema de
+> cookie** — e é uma linha de configuração.
+
+### 2.3.6 Configuração e segredos
+
+| Chave | Onde | Secreto? |
+|---|---|---|
+| `Google:ClientId` | `appsettings.json` | ⛔ Não — é público |
+| Chaves do Data Protection | 🔴 Volume `/keys` no Coolify | ✅ Sim (PL30) |
+| `ConnectionStrings:Postgres` | Variável de ambiente no Coolify | ✅ Sim |
+
+⛔ **Não existe `Google:ClientSecret`** — este fluxo não usa (02 §3.4.0).
+
+### 2.3.7 Como provar que funciona, sem front
+
+```bash
+# 1. pegue um id_token real em https://developers.google.com/oauthplayground
+curl -i -X POST http://localhost:5000/api/auth/google \
+     -H "Content-Type: application/json" \
+     -d "{\"idToken\":\"eyJhbGci...\"}" -c cookies.txt   # salva o cookie
+
+# 2. use o cookie salvo
+curl -i http://localhost:5000/api/seguidos -b cookies.txt   # → 200
+
+# 3. sem o cookie
+curl -i http://localhost:5000/api/seguidos                  # → 401
+```
+
+⭐ **Esses três comandos provam o mecanismo inteiro** — e viram teste de integração.
+
+---
 ## 3. AppHost do Aspire
 
 ```csharp
