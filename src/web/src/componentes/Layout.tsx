@@ -2,6 +2,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Avatar } from './Avatar';
 import {
   IconeExplorar,
+  IconeGrafo,
   IconeInicio,
   IconeQuestionario,
   IconeSeguindo,
@@ -111,6 +112,7 @@ function CabecalhoDoSite() {
         <nav className="nav-principal" aria-label="Navegação principal">
           <ItemDeNavegacao para="/" rotulo="Início" icone={<IconeInicio />} />
           <ItemDeNavegacao para="/explorar" rotulo="Explorar" icone={<IconeExplorar />} />
+          <ItemDeNavegacao para="/grafo" rotulo="Grafo" icone={<IconeGrafo />} />
           <ItemDeNavegacao para="/seguindo" rotulo="Seguindo" icone={<IconeSeguindo />} />
           <ItemDeNavegacao
             para="/questionario"

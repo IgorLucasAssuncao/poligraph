@@ -2,6 +2,7 @@ import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom';
 import { BannerConsentimento } from './componentes/BannerConsentimento';
 import { Layout } from './componentes/Layout';
 import { Explorar } from './paginas/Explorar';
+import { Grafo } from './paginas/Grafo';
 import { Inicio } from './paginas/Inicio';
 import { Login } from './paginas/Login';
 import { MinhaConta } from './paginas/MinhaConta';
@@ -49,6 +50,7 @@ function Roteador() {
       <Routes>
         <Route path="/" element={<Inicio />} />
         <Route path="/explorar" element={<Explorar />} />
+        <Route path="/grafo" element={<Grafo />} />
         <Route path="/seguindo" element={<Seguindo />} />
         <Route path="/questionario" element={<Questionario />} />
         <Route path="/parlamentar/:id" element={<Parlamentar />} />

@@ -93,3 +93,15 @@ export function Marca({ className, tamanho = 28 }: Props & { tamanho?: number })
     </svg>
   );
 }
+
+/** ⚠️ Três nós ligados — o mesmo desenho da marca, sem o preenchimento. */
+export function IconeGrafo({ className }: Props) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <circle cx="5" cy="18" r="2.2" />
+      <circle cx="19" cy="16" r="2.2" />
+      <circle cx="13" cy="5" r="2.2" />
+      <path d="m6.6 16.3 5-9.4m1.9.5 4.6 8.4M7.2 18.4l9.6-1.3" />
+    </svg>
+  );
+}

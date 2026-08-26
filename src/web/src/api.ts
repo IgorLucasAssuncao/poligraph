@@ -262,3 +262,33 @@ async function semCorpo(url: string, metodo: string): Promise<void> {
   if (resposta.status === 401) throw new NaoAutenticadoError();
   if (!resposta.ok) throw new Error(`Falha em ${url} (${resposta.status}).`);
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// Grafo (RF-33)
+// ═══════════════════════════════════════════════════════════════════
+
+export type NoDoGrafo = {
+  id: number;
+  nome: string;
+  partido: string;
+  uf: string;
+  /** ⚠️ Grupo detectado pelo VOTO, não pelo partido — ver `plano/07`. */
+  comunidade: number | null;
+  eixoX: number | null;
+  eixoY: number | null;
+  nVotacoes: number;
+};
+
+export type ArestaDoGrafo = { de: number; para: number; peso: number };
+
+export type Grafo = {
+  execucaoId: number;
+  casa: string;
+  legislatura: number;
+  nos: NoDoGrafo[];
+  arestas: ArestaDoGrafo[];
+};
+
+export async function obterGrafo(): Promise<Grafo> {
+  return buscar<Grafo>(`${BASE}/grafo`);
+}
