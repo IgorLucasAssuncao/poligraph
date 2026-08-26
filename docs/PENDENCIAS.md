@@ -59,8 +59,8 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 
 | # | Pendência | Prioridade | Esforço |
 |---|---|---|---|
-| 🔄 **PL11** | **Curar as 15–25 perguntas** — 🔄 **lote 1 gerado**, 24 candidatas em [plano/06](plano/06-perguntas-lote-1.md), aguardando curadoria | 🔴 **Alta** | 🔴 **Dias** |
-| 🔴 **RQ3** | Definir o **N final** de perguntas | 🔴 **Alta** | 🟢 Decisão |
+| 🔄 **PL11** | 🔄 **Avançou** — **21 perguntas curadas estão no ar**, polaridade conferida uma a uma. ⛔ Falta AMPLIAR o pool para **40–60**: o desempate dirigido escolhe a próxima pergunta do pool, e com 21 ele acaba antes de desempatar | 🔴 **Alta** | 🔴 **Dias** |
+| 🟡 **RQ3** | 🔄 **Agora com medição** — a curva de discriminação mostra 12 perguntas + desempate dirigido sob demanda, em vez de um N fixo. Falta o autor confirmar o desenho | 🟡 Média | 🟢 Decisão |
 | ~~PL12~~ | ✅ **Teste do jantar** — entra se dá para discutir num jantar sem explicar a proposta | — | — |
 | **CT7** | 🔴 Piso de respostas para o `422` — sugerido **60% do N** (plano/07 §4.4) | 🔴 Alta | 🟢 Decisão |
 | **PL10** | Questionário adaptativo entra como experimento comparativo? | 🟡 Média | — |
@@ -73,11 +73,11 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | 🔴 **PL35** | **A legislatura não é filtrada em consulta nenhuma** — a decisão "só a 57ª" ([plano/06 §3](plano/06-perguntas-lote-1.md)) vive só no documento. Detalhe abaixo | 🔴 **Alta** | 🟡 Horas |
 | ~~PL36~~ | ✅ **Resolvida (2026-08-26)** — nomes corrigidos e **verificado rodando o container contra o banco real**: monta a matriz e grava `execucoes`. Estava faltando também traduzir a connection string do Aspire (§ abaixo) | — | — |
 | 🟡 **PL37** | 🔄 **Parcial** — `test_contrato_schema.py` lê o `PoligraphDb.cs` e trava os **nomes** de tabela. ⛔ As **colunas** continuam sem proteção: o DDL de `test_persistencia.py` ainda é escrito à mão | 🟡 Média | 🟡 Horas |
-| 🟢 **PL39** | **O grafo local nunca terá arestas com o seed atual** — a RN-02 exige 20 votações comuns e o seed tem 5. ⭐ Não é bug: é o `CHECK` funcionando. Mas o grafo só aparece depois da ingestão real | 🟢 Baixa | 🟢 Decisão |
+| ~~PL39~~ | ✅ **Resolvida (2026-08-26)** — legislatura 57 inteira ingerida: 470.786 votos, 5.268 arestas | — | — |
 | 🔴 **PL42** | **O Senado não é ingerido** — nenhuma linha de código o alcança. ⚠️ A RF-07 é 🟢 Desejável, mas a **RNF-28 proíbe o seletor de casa** e o desenho da §3.4.1 exige perguntas das duas casas embaralhadas e duas listas no resultado. Sem Senado, esse desenho não existe | 🔴 **Alta** | 🔴 Dias |
-| 🟡 **PL41** | **Os 12 deputados fictícios do seed convivem com os reais** — aparecem em `/api/parlamentares` ao lado dos 551 de verdade. ⭐ Não entram no grafo (5 votações < 20 da RN-02), mas na tela ficam indistinguíveis. ⛔ Não demonstrar para a banca sem resolver | 🟡 Média | 🟢 Decisão |
+| ~~PL41~~ | ✅ **Resolvida (2026-08-26)** — o seed foi **aposentado** por decisão do autor: com o ETL funcional, só o schema precisa ser inicializado. O semeador virou `Poligraph.Tests/Fixtures/DadosDeTeste.cs` | — | — |
 | 🟡 **PL40** | **`proposicoes` nunca é ingerida** — o CSV de votações traz só o `id` da proposição, sem sigla/número/ano/ementa. Hoje o `proposicao_id` é anulado. 🔴 Bloqueia a **RF-30** (exibir a ementa original ao lado da pergunta) | 🟡 Média | 🟡 Horas |
-| 🟡 **PL38** | 🔄 **Parcial** — `arestas_grafo` já é gravada (`gravar_arestas`). ⛔ Falta `nos_metrica`: **comunidade, posição x/y, governismo e disciplina não são calculados por ninguém**, e o `networkx` segue sem ser importado (RF-19, RF-33) | 🟡 Média | 🟡 Horas |
+| ~~PL38~~ | ✅ **Resolvida (2026-08-26)** — `arestas_grafo` e `nos_metrica` gravadas; Louvain + layout de molas com semente fixa; 30 comunidades em 655 nós. ⚠️ `governismo` e `disciplina` seguem nulos: dependem de `votacoesOrientacoes`, ainda não ingerido | — | — |
 
 ### 🔴 PL35 — a legislatura não é filtrada em consulta nenhuma
 
