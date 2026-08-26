@@ -178,7 +178,7 @@ public class TestesEndpointAfinidade : BaseIntegracao
     // ═══════════════════════════════════════════════════════════════
 
     private async Task SemearAsync() =>
-        await Poligraph.Migrations.SemeadorDesenvolvimento.SemearAsync(Db);
+        await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
 
     private HttpClient CriarCliente() =>
         new FabricaApi(ConnectionString).CreateClient();

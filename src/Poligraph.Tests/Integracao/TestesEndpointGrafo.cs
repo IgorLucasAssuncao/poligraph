@@ -97,7 +97,7 @@ public class TestesEndpointGrafo : BaseIntegracao
     private HttpClient CriarCliente() => new FabricaApi(ConnectionString).CreateClient();
 
     private async Task SemearAsync() =>
-        await Poligraph.Migrations.SemeadorDesenvolvimento.SemearAsync(Db);
+        await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
 
     private async Task<long> MontarGrafoAsync(string status = "CONCLUIDA")
     {

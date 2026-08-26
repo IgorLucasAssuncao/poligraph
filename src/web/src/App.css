@@ -441,23 +441,49 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   transition: width var(--t-longo) var(--curva);
 }
 
-/* ═══ AVALIAÇÃO ════════════════════════════════════════════════ */
-.avaliacao { padding: 1.25rem 1rem; background: var(--painel); border-bottom: 1px solid var(--borda); }
-.avaliacao h3 { margin: 0 0 .2rem; font-size: 1.02rem; }
-.avaliacao fieldset { border: none; padding: 0; margin: 1.1rem 0 0; }
-.avaliacao legend { font-weight: 600; font-size: .92rem; padding: 0; margin-bottom: .5rem; }
-.escala { display: flex; flex-wrap: wrap; gap: .35rem; }
-.escala label {
-  padding: .4rem .7rem; border: 1px solid var(--borda-forte); border-radius: 6px;
-  font-size: .8rem; cursor: pointer;
+/* ═══ AVALIAÇÃO — modal ════════════════════════════════════════ */
+/**
+ * ⚠️ Era um bloco no fim da tela de resultado. Quem não rolava até lá nunca via, e a
+ *    amostra da pesquisa virava "quem tem paciência de rolar" — recorte enviesado.
+ */
+.modal-avaliacao {
+  width: min(30rem, calc(100vw - 2rem));
+  padding: 1.5rem;
+  border: 1px solid var(--borda-forte);
+  border-radius: 14px;
+  background: var(--fundo);
+  color: var(--texto);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 22%);
+}
+.modal-avaliacao::backdrop { background: rgb(0 0 0 / 45%); backdrop-filter: blur(2px); }
+
+.modal-avaliacao header { margin-bottom: 1.25rem; }
+.modal-avaliacao h2 { margin: 0 0 .2rem; font-size: 1.25rem; }
+.modal-avaliacao .ajuda { margin: 0; }
+
+.modal-avaliacao fieldset { border: none; padding: 0; margin: 0 0 1.35rem; }
+.modal-avaliacao legend { font-weight: 600; font-size: .93rem; padding: 0; margin-bottom: .55rem; }
+
+.opcoes-avaliacao { display: flex; gap: .5rem; }
+.opcoes-avaliacao label { flex: 1; text-align: center; }
+
+.escala, .opcoes-avaliacao { display: flex; flex-wrap: wrap; gap: .35rem; }
+.escala label, .opcoes-avaliacao label {
+  padding: .45rem .7rem; border: 1px solid var(--borda-forte); border-radius: 6px;
+  font-size: .82rem; cursor: pointer;
   transition: background var(--t-curto) var(--curva), border-color var(--t-curto) var(--curva);
 }
-.escala label:hover { background: var(--fundo); }
-.escala input { position: absolute; opacity: 0; pointer-events: none; }
-.escala-ativa { border-color: var(--realce); background: var(--realce-fraco); color: var(--realce); font-weight: 600; }
-.avaliacao button { margin-top: 1rem; padding: .6rem 1.3rem; font-weight: 700; border-radius: 999px; background: var(--realce); color: var(--sobre-realce); border: none; }
-.avaliacao button:disabled { opacity: .4; cursor: not-allowed; }
-.avaliacao-pronta { text-align: center; color: var(--suave); }
+.escala label:hover, .opcoes-avaliacao label:hover { background: var(--painel); }
+.escala input, .opcoes-avaliacao input { position: absolute; opacity: 0; pointer-events: none; }
+.escala-ativa {
+  border-color: var(--realce); background: var(--realce-fraco);
+  color: var(--realce); font-weight: 600;
+}
+
+.modal-avaliacao .nota-privacidade { margin: 0 0 1.25rem; }
+.modal-acoes { display: flex; gap: .6rem; flex-wrap: wrap; }
+.avaliacao-pronta { text-align: center; display: flex; flex-direction: column; gap: 1.25rem; }
+.avaliacao-pronta p { margin: 0; }
 
 /* ═══ LOGIN ════════════════════════════════════════════════════ */
 .tela-login {
@@ -838,4 +864,39 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
     transition-duration: .01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ═══ TERMO — explicação de jargão sob demanda ═════════════════ */
+/**
+ * 🔴 A RNF-29 proíbe jargão na interface. Isto ⛔ NÃO é licença para trazê-lo de
+ *    volta — serve ao caso que a RNF-31 admite: termo que é contexto descritivo e
+ *    não tem substituto honesto ("legislatura", "partido", "plenário").
+ *
+ * ⚠️ Abre por clique e por foco, ⛔ nunca só por :hover. Em telefone não existe
+ *    hover, e a explicação não existiria para metade dos visitantes.
+ */
+.termo { position: relative; display: inline-block; }
+.termo-gatilho {
+  padding: 0; border: none; background: none; color: inherit;
+  font: inherit; text-decoration: underline dotted;
+  text-underline-offset: .18em; text-decoration-thickness: 1px;
+  cursor: help;
+}
+.termo-gatilho:hover, .termo-gatilho[aria-expanded='true'] { color: var(--realce); }
+
+.termo-balao {
+  position: absolute; z-index: 20; left: 0; top: calc(100% + .4rem);
+  display: block; width: max-content; max-width: min(20rem, 80vw);
+  padding: .7rem .85rem;
+  background: var(--fundo); color: var(--texto);
+  border: 1px solid var(--borda-forte); border-radius: 10px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 16%);
+  font-size: .82rem; font-weight: 400; line-height: 1.5;
+  text-decoration: none; text-align: left;
+  white-space: normal;
+}
+.termo-balao strong {
+  display: block; margin-bottom: .2rem;
+  font-family: var(--dado); font-size: .68rem;
+  text-transform: uppercase; letter-spacing: .09em; color: var(--realce);
 }

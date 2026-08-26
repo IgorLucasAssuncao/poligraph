@@ -12,6 +12,7 @@ import {
 import { Avatar } from '../componentes/Avatar';
 import { CabecalhoDaColuna } from '../componentes/Layout';
 import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
+import { Termo } from '../componentes/Termo';
 
 type Aba = 'noticias' | 'votos' | 'similares';
 
@@ -95,7 +96,12 @@ export function Parlamentar() {
         </div>
 
         <div className="perfil-chips">
-          {ficha.partido && <span className="chip">{ficha.partido}</span>}
+          {/* ⚠️ RNF-31: termo institucional como contexto, nunca como controle. */}
+          {ficha.partido && (
+            <span className="chip">
+              <Termo nome="partido">{ficha.partido}</Termo>
+            </span>
+          )}
           {ficha.uf && <span className="chip">{ficha.uf}</span>}
         </div>
 
@@ -180,7 +186,9 @@ function AbaVotos({ votos }: { votos: Ficha['votosRecentes'] }) {
       {votos.map((v) => (
         <article key={v.votacaoId} className="linha linha-simples">
           <div className="linha-corpo">
-            <span className={`selo selo-${classeDoVoto(v.valor)}`}>{rotuloDoVoto(v.valor)}</span>
+            <span className={`selo selo-${classeDoVoto(v.valor)}`}>
+              {v.valor === 0 ? <Termo nome="abstencao">Abstenção</Termo> : rotuloDoVoto(v.valor)}
+            </span>
             <p className="voto-descricao">{v.descricao ?? v.votacaoId}</p>
             <span className="linha-detalhe">{formatarData(v.data)}</span>
           </div>

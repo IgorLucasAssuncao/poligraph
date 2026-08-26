@@ -16,4 +16,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+
+  <ItemGroup>
+    <!-- ⚠️ Conteúdo curado precisa acompanhar o binário: o carregador lê de
+         AppContext.BaseDirectory, e no container só existe o que foi publicado. -->
+    <None Update="curadoria\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

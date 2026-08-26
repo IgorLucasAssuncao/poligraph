@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { obterGrafo, type Grafo as DadosDoGrafo, type NoDoGrafo } from '../api';
 import { CabecalhoDaColuna } from '../componentes/Layout';
 import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
+import { Termo } from '../componentes/Termo';
 
 type Grupo = { comunidade: number; quantos: number; partidos: string[] };
 
@@ -60,7 +61,7 @@ export function Grafo() {
     <>
       <CabecalhoDaColuna
         titulo="Quem vota com quem"
-        subtitulo={`${grafo.nos.length} deputados · ${grafo.arestas.length} ligações · legislatura ${grafo.legislatura}`}
+        subtitulo={`${grafo.nos.length} deputados · ${grafo.arestas.length} ligações`}
       />
 
       <TelaDoGrafo grafo={grafo} aoSelecionar={abrirPerfil} />
@@ -69,7 +70,9 @@ export function Grafo() {
         <h2>Como ler</h2>
         <p>
           Cada ponto é um deputado. Dois pontos se ligam quando votaram parecido em pelo
-          menos 20 votações — e quanto mais forte a ligação, mais perto eles ficam.
+          menos 20 votações — e quanto mais forte a ligação, mais perto eles ficam. Só
+          entram votações de <Termo nome="plenario" /> da{' '}
+          <Termo nome="legislatura">{grafo.legislatura}ª legislatura</Termo>.
         </p>
         <p className="ajuda">
           {/* 🔴 O leitor lê espectro em qualquer eixo, mesmo sem a gente afirmar. */}
@@ -87,8 +90,8 @@ export function Grafo() {
       <section className="grafo-grupos">
         <h2>Os grupos</h2>
         <p className="ajuda ajuda-espacada">
-          Formados pelo <strong>voto</strong>, não pelo partido — e é por isso que um
-          mesmo partido aparece em vários.
+          Cada <Termo nome="comunidade" /> é formado pelo <strong>voto</strong>, não pelo{' '}
+          <Termo nome="partido" /> — e é por isso que um mesmo partido aparece em vários.
         </p>
 
         <ul>

@@ -239,7 +239,7 @@ public class TestesNoticiasEDigest : BaseIntegracao
     // ═══════════════════════════════════════════════════════════════
 
     private async Task SemearAsync() =>
-        await Poligraph.Migrations.SemeadorDesenvolvimento.SemearAsync(Db);
+        await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
 
     private async Task<long> PrimeiraPessoaAsync() =>
         await Db.Pessoas.AsNoTracking().OrderBy(p => p.Id).Select(p => p.Id).FirstAsync();

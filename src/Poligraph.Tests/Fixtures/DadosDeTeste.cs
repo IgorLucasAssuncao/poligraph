@@ -1,23 +1,26 @@
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
 
-namespace Poligraph.Migrations;
+namespace Poligraph.Tests.Fixtures;
 
 /// <summary>
-/// Dados de teste para desenvolvimento local.
+/// Dados fixos para os testes de integração.
 ///
-/// ⛔ NUNCA use HasData() do EF para isto: HasData entra dentro da migration, e a
-/// migration roda em produção — os deputados fictícios iriam para o ar.
+/// ⚠️ Isto vivia em `Poligraph.Migrations` e rodava a cada `dotnet run` local. Deixou de
+/// fazer sentido quando o ETL passou a funcionar: o banco de desenvolvimento é
+/// preenchido com a Câmara de verdade, e 12 parlamentares fictícios convivendo com 551
+/// reais só criavam risco de alguém tomar um pelo outro.
 ///
-/// ⚠️ O seed PRECISA conter perguntas de polaridade -1. Semear só polaridade +1 faz o
-/// bug mais perigoso do sistema ficar invisível durante todo o desenvolvimento.
+/// ⭐ Aqui é o lugar certo: dado de teste pertence ao projeto de teste. O que roda
+/// contra o banco real são as migrations e a curadoria de perguntas — conteúdo, não
+/// ficção.
+///
+/// 🔴 O conjunto PRECISA conter pergunta de polaridade -1. Semear só +1 faria o bug
+/// mais perigoso do sistema ficar invisível durante todo o desenvolvimento.
 /// </summary>
-public static class SemeadorDesenvolvimento
+public static class DadosDeTeste
 {
     private const short Legislatura = 57;
-
-    /// <summary>ID a partir do qual as votações são fictícias — ver `GerarVotacoes`.</summary>
-    private const string PrefixoFicticio = "9000";
 
     /// <summary>
     /// Semeia, e devolve o que aconteceu — ⛔ nunca sai em silêncio.
@@ -31,17 +34,8 @@ public static class SemeadorDesenvolvimento
         //    conviver com 551 reais numa mesma listagem, indistinguíveis na tela.
         //    Eles não entram no grafo (5 votações não passam do mínimo de 20 da
         //    RN-02), mas apareceriam numa demonstração para a banca.
-        var quantasPessoas = await db.Pessoas.CountAsync(ct);
-        if (quantasPessoas > 0)
-        {
-            var temReal = await db.Votacoes
-                .AnyAsync(v => !v.Id.StartsWith(PrefixoFicticio), ct);
-
-            return temReal
-                ? $"seed PULADO: o banco já tem dado REAL ({quantasPessoas} pessoas). "
-                  + "Para voltar aos dados fictícios, zere o volume do Postgres."
-                : $"seed PULADO: já semeado ({quantasPessoas} pessoas fictícias).";
-        }
+        // guarda de idempotência: já semeado, sai
+        if (await db.Pessoas.AnyAsync(ct)) return "já semeado.";
 
         var pessoas = GerarParlamentares();
         db.Pessoas.AddRange(pessoas);
