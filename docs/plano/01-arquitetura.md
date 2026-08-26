@@ -1,9 +1,11 @@
 # Plano de implementação — arquitetura macro
 
-> **Status:** v1.4 — 2026-08-25
+> **Status:** v1.5 — 2026-08-26
 > **v1.2:** ✅ **DECISÃO — VPS + Coolify** (§3.5). ETL roda em Scheduled Task do Coolify,
 > não no GitHub Actions — com Postgres interno, expor o banco não compensa.
 > **v1.3:** ✅ **Hostinger VPS KVM 2** (São Paulo) + stack Grafana no mesmo VPS.
+> **v1.5:** §8 reescrita — a ordem de construção não conhecia login, e-mail, deploy nem a
+> curadoria. Agora são DUAS trilhas: 🚀 deploy virou o passo 2 e 🔴 a PL11 começa no dia 1.
 > **v1.4:** §2.1 — desenho detalhado do VPS: Traefik, containers, portas, TLS e o
 > caminho de um deploy. 🔴 CI e CD disparam em PARALELO, não em sequência (PL23).
 > **v1.1:** §3 — opção D avaliada (compartilhada, Render, Railway, VPS+Coolify) e
@@ -602,39 +604,98 @@ Python, por adequação de ferramenta**. Isso precisa ser defendido no texto, n�
 
 ## 8. Ordem de construção
 
+> **Status:** ⚠️ **Reescrita em 2026-08-26.** A versão anterior tinha 8 passos e não
+> conhecia login, e-mail, deploy nem a curadoria das perguntas — tudo decidido depois.
+
+### 8.1 🔴 São duas trilhas, e a segunda tem prazo que você não controla
+
 ```mermaid
 flowchart LR
-    S1["1 · Aspire + Postgres<br/>+ 'hello world'"] --> S2["2 · ETL Python<br/>votacoesVotos 2025"]
-    S2 --> S3["3 · Matriz + similaridade"]
-    S3 --> S4["4 · API: /parlamentares<br/>+ /similares"]
-    S4 --> S5["5 · React: lista + ficha"]
-    S5 --> S6["6 · Grafo (kNN k=10)"]
-    S6 --> S7["7 · Questionário<br/>+ /afinidade"]
-    S7 --> S8["8 · Crawler + notícias"]
-    style S4 fill:#238636,color:#fff
-    style S7 fill:#238636,color:#fff
+    subgraph T2["🐌 TRILHA B — comece HOJE, depende de terceiros"]
+        B1["PL24 · falar com o orientador<br/>sobre Comitê de Ética"]
+        B2["PL3 · registrar domínio"]
+        B3["PL7 · política de privacidade"]
+        B4["🔴 PL11 · curar 15–25 perguntas"]
+    end
+    subgraph T1["⌨️ TRILHA A — código"]
+        A1["1 · Aspire + Postgres"] --> A2["2 · 🚀 DEPLOY vazio"]
+        A2 --> A3["3 · ETL Python"] --> A4["4 · Similaridade"]
+        A4 --> A5["5 · API"] --> A6["6 · React: lista + ficha"]
+        A6 --> A7["7 · Login Google"] --> A8["8 · Questionário"]
+        A8 --> A9["9 · Grafo"] --> A10["10 · Crawler"] --> A11["11 · E-mail"]
+    end
+    B4 -.destrava.-> A8
+    B2 -.destrava.-> A7
+    style B4 fill:#8b1a1a,color:#fff
+    style A2 fill:#238636,color:#fff
 ```
 
-| Passo | Entrega verificável | Esforço |
+⚠️ **A trilha B não é "burocracia para depois".** Ela tem **tempo de espera que não depende
+de você** — resposta do orientador, propagação de DNS, e sobretudo os **dias de leitura**
+da PL11. Começar isso no fim é o erro clássico.
+
+### 8.2 A trilha A, passo a passo
+
+| # | Passo | Entrega verificável | Esforço |
+|---|---|---|---|
+| 1 | Aspire + Postgres + "hello world" | `dotnet run` sobe tudo | 🟢 1 dia |
+| 2 | 🚀 **Deploy do vazio no VPS** | O "hello world" no ar, com HTTPS | 🟢 **meio dia** |
+| 3 | ETL Python — `votacoesVotos` | 463 mil votos no banco | 🟢 1–2 dias |
+| 4 | Matriz + similaridade | Tabela `similaridade` populada | 🟡 2 dias |
+| 5 | API: `/parlamentares` + `/similares` | Endpoint responde | 🟢 1 dia |
+| 6 | React: lista + ficha | Ficha do parlamentar na tela | 🟡 2–3 dias |
+| 7 | **Login com Google** | Entrar, seguir, sair | 🟡 1 dia |
+| 8 | **Questionário + `/afinidade`** | Ponta a ponta ⚠️ *precisa da PL11* | 🟡 2–3 dias |
+| 9 | Grafo (kNN k=10) | Grafo renderizado | 🔴 3–4 dias |
+| 10 | Crawler + notícias na ficha | Notícia aparece | 🟡 2 dias |
+| 11 | Digest por e-mail | E-mail chega, descadastro funciona | 🟡 2–3 dias |
+
+**Total: ~18 a 23 dias de trabalho** — sem contar a escrita do TCC.
+
+### 8.3 ⭐ Por que o deploy virou o passo 2, e não o último
+
+> **Deploy no fim é onde os projetos de TCC morrem.** Não porque seja difícil, mas porque
+> os problemas aparecem todos de uma vez, na semana da entrega.
+
+Três armadilhas já documentadas **só se manifestam num deploy real**:
+
+| | Onde |
+|---|---|
+| Chaves do Data Protection efêmeras → todo mundo deslogado | [02 §3.6.4](02-autenticacao-e-metricas.md) · PL30 |
+| `VITE_*` congelado no build → botão do Google some | [02 §3.2.2.4](02-autenticacao-e-metricas.md) |
+| Cookie `Secure` + `SameSite` atrás da Cloudflare | [02 §3.6.1](02-autenticacao-e-metricas.md) |
+
+⭐ **Subir um "hello world" custa meia hora e transforma cada uma dessas de crise em
+ajuste.** Depois disso, todo passo seguinte já nasce publicado.
+
+### 8.4 🔴 A PL11 tem que começar no dia 1
+
+> **A curadoria das 15–25 perguntas é o único item que não escala, não automatiza e não
+> pode ser feito às pressas.** E ela bloqueia o passo 8.
+
+| | |
+|---|---|
+| Por que demora | Ler ementas, escolher as respondíveis por leigo, reescrever em linguagem comum, **atribuir polaridade uma a uma** |
+| Por que é crítica | É o passo **mais subjetivo do método** — e o mais atacável na banca |
+| Onde ela entra | 🔴 **Em paralelo, desde o começo.** Uma hora por dia resolve; três dias seguidos no fim, não |
+
+⚠️ **Ela também alimenta o capítulo de metodologia.** Cada decisão de curadoria registrada
+vira parágrafo — deixar para o fim custa duas vezes.
+
+### 8.5 Se o prazo apertar, o que cai
+
+| Ordem de corte | Item | Por quê |
 |---|---|---|
-| 1 | `dotnet run` sobe Postgres + API + React | 🟢 1 dia |
-| 2 | 167 mil votos no banco | 🟢 1–2 dias |
-| 3 | Tabela `similaridade` populada | 🟡 2 dias |
-| 4 | `GET /api/parlamentares/{id}/similares` responde | 🟢 1 dia |
-| 5 | Ficha do parlamentar na tela | 🟡 2–3 dias |
-| 6 | Grafo renderizado | 🔴 3–4 dias |
-| 7 | Questionário ponta a ponta | 🟡 2–3 dias |
-| 8 | Notícias na ficha | 🟡 2 dias |
+| 1º | **Digest por e-mail** (11) | O feed na ficha já entrega "recomendação de notícias" |
+| 2º | **Grafo interativo** (9) | Vira imagem estática gerada pelo Python — o título continua honrado |
+| 3º | Login (7) | Volta para `localStorage`; perde sincronia, não perde função |
+| ⛔ **Nunca** | Questionário (8) e similaridade (4) | São a "Mensuração de Afinidade" do título |
 
-> 🔑 **O passo 2 é o marco que muda tudo.** A partir dele, a documentação passa a ser
-> validada por código em vez de por análise.
-
-⚠️ **O passo 6 (grafo) é o mais caro e o menos essencial.** Se o prazo apertar, entregue
-questionário (7) antes do grafo (6) — o título cobra "Modelagem em Grafos", mas o grafo
-pode ser entregue como visualização simples antes de virar interativo.
+> 🔑 **O passo 3 continua sendo o marco que muda tudo.** A partir dele, a documentação
+> passa a ser validada por código em vez de por análise — e 21 achados medidos deixam de
+> depender de scripts avulsos.
 
 ---
-
 ## 9. Pendências deste plano
 
 | # | Pendência | Prioridade |
