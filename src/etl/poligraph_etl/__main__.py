@@ -18,7 +18,7 @@ import numpy as np
 import psycopg
 
 from . import conexao as conexao_mod
-from . import ingestao, persistencia, similaridade
+from . import grafo, ingestao, persistencia, similaridade
 from .fontes import camara
 
 log = logging.getLogger("poligraph")
@@ -167,10 +167,27 @@ def _analisar(conexao: psycopg.Connection, legislatura: int) -> None:
                 gravadas = persistencia.gravar_arestas(conexao, execucao_id, arestas)
                 log.info("  grafo kNN: %d arestas gravadas", gravadas)
 
+                # ⭐ É aqui que o grafo ganha NÓS. Sem esta parte ele tem ligações e
+                #    nenhum ponto com comunidade, cor ou posição — nada a desenhar.
+                nos = grafo.calcular_nos(pessoas, arestas, _votacoes_por_pessoa(matriz, pessoas))
+                gravados = persistencia.gravar_nos_metrica(conexao, execucao_id, nos)
+                log.info("  %d nós gravados", gravados)
+
         persistencia.fechar_execucao(conexao, execucao_id, sucesso=True)
     except Exception:
         persistencia.fechar_execucao(conexao, execucao_id, sucesso=False)
         raise
+
+
+def _votacoes_por_pessoa(matriz, pessoas: list[int]) -> dict[int, int]:
+    """Quantas votações cada pessoa efetivamente pesou.
+
+    ⚠️ Conta só posicionamento (Sim ou Não). Ausência e abstenção ficam de fora, pelo
+    mesmo motivo do cálculo de afinidade: quem não se posicionou não discordou.
+    """
+    posicionou = (~np.isnan(matriz)) & (matriz != 0)
+
+    return {pessoa: int(posicionou[i].sum()) for i, pessoa in enumerate(pessoas)}
 
 
 def _mapa_pessoas(conexao: psycopg.Connection) -> dict[str, int]:

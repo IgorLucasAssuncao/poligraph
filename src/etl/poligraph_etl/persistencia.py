@@ -234,6 +234,40 @@ def gravar_arestas(
     )
 
 
+def gravar_nos_metrica(
+    conexao: psycopg.Connection, execucao_id: int, nos: Iterable
+) -> int:
+    """Grava comunidade, posição e volume de voto de cada nó.
+
+    ⚠️ `governismo` e `disciplina` ficam NULOS: dependem da orientação de bancada, que
+    vem do arquivo `votacoesOrientacoes` da Câmara e ainda não é ingerido. A coluna é
+    anulável de propósito — no Senado ela nunca terá valor, porque lá não existe
+    orientação de bancada.
+    """
+    linhas = [
+        {
+            "execucao_id": execucao_id,
+            "pessoa_id": no.pessoa_id,
+            "comunidade": no.comunidade,
+            "eixo_x": no.eixo_x,
+            "eixo_y": no.eixo_y,
+            "n_votacoes": no.n_votacoes,
+        }
+        for no in nos
+    ]
+
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO nos_metrica (execucao_id, pessoa_id, comunidade,
+                                 eixo_x, eixo_y, governismo, disciplina, n_votacoes)
+        VALUES (%(execucao_id)s, %(pessoa_id)s, %(comunidade)s,
+                %(eixo_x)s, %(eixo_y)s, NULL, NULL, %(n_votacoes)s)
+        """,
+        linhas,
+    )
+
+
 def abrir_execucao(
     conexao: psycopg.Connection, casa: str, legislatura: int, k: int, versao: str
 ) -> int:
