@@ -150,3 +150,72 @@ def test_quem_faltou_demais_nao_empata_no_topo():
 
     # o primeiro fica SOZINHO no topo: o terceiro não tem base para empatar com ele
     assert r.unicos >= 1
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Desempate dirigido
+# ═══════════════════════════════════════════════════════════════════
+
+
+def test_escolhe_a_pergunta_que_divide_O_GRUPO_nao_a_camara():
+    """🔴 A diferença entre o nível A e o nível C do `plano/03`.
+
+    ⚠️ A coluna 0 racha a matriz inteira ao meio, mas é UNÂNIME dentro do grupo que
+    empatou — não desempata nada. A coluna 1 é quase unânime no geral e divide o grupo
+    exatamente ao meio. Escolher pela divisão global pegaria a errada.
+    """
+    matriz = np.array(
+        [
+            [1, 1, 1],    # ┐ o grupo empatado
+            [1, -1, 1],   # ┘
+            [-1, 1, 1],
+            [-1, 1, 1],
+        ],
+        dtype=float,
+    )
+    grupo = np.array([0, 1])
+
+    assert validacao.melhor_pergunta_para_dividir(matriz, grupo, [0, 1]) == 1
+
+
+def test_sem_pergunta_que_divida_devolve_nada():
+    """⚠️ Acontece: se os empatados votaram idêntico em tudo, insistir faria a pessoa
+    responder à toa."""
+    matriz = np.array([[1, 1], [1, 1]], dtype=float)
+
+    assert validacao.melhor_pergunta_para_dividir(matriz, np.array([0, 1]), [0, 1]) is None
+
+
+def test_grupo_de_um_nao_precisa_de_desempate():
+    matriz = np.array([[1, -1], [1, 1]], dtype=float)
+
+    assert validacao.melhor_pergunta_para_dividir(matriz, np.array([0]), [0, 1]) is None
+
+
+def test_empatados_com_respeita_o_piso_de_base():
+    """🔴 O mesmo piso da API — quem faltou demais não entra no empate."""
+    matriz = np.array(
+        [
+            [1, 1, 1, 1, 1],
+            [1, NAN, NAN, NAN, NAN],   # concordou em 1 de 5
+        ],
+        dtype=float,
+    )
+
+    grupo = validacao.empatados_com(matriz, {0: 1, 1: 1, 2: 1, 3: 1, 4: 1})
+
+    assert grupo.tolist() == [0]
+
+
+def test_desempate_dirigido_encolhe_o_grupo():
+    """⭐ O efeito que a contribuição do trabalho promete."""
+    # 8 deputados, todos idênticos na coluna 0 e distinguíveis nas demais
+    matriz = np.array(
+        [[1] + [1 if (i >> b) & 1 else -1 for b in range(3)] for i in range(8)],
+        dtype=float,
+    )
+
+    tamanhos = validacao.simular_desempate(matriz, quem=0, base=[0], candidatas=[1, 2, 3])
+
+    assert tamanhos[0] == 8          # com só a coluna 0, todos empatam
+    assert tamanhos[-1] < tamanhos[0]

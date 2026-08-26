@@ -152,3 +152,116 @@ def divisao(matriz: np.ndarray, coluna: int) -> float:
     total = sim + nao
 
     return min(sim, nao) / total if total else 0.0
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Desempate dirigido — nível C do `plano/03`, aplicado sob demanda
+# ═══════════════════════════════════════════════════════════════════
+
+
+def empatados_com(
+    matriz: np.ndarray,
+    respostas: dict[int, int],
+    fracao_minima_comparavel: float = 0.60,
+) -> np.ndarray:
+    """Quem está no topo, dadas as respostas até agora.
+
+    `respostas` é {coluna da votação: -1 ou 1}.
+    """
+    colunas = sorted(respostas)
+    minha = np.array([respostas[c] for c in colunas], dtype=float)
+
+    deles = np.where(np.isnan(matriz[:, colunas]), 0, matriz[:, colunas])
+    comum = (deles != 0) & (minha != 0)
+
+    comparaveis = comum.sum(axis=1)
+    acordos = ((deles == minha) & comum).sum(axis=1)
+
+    piso = np.ceil(np.count_nonzero(minha) * fracao_minima_comparavel)
+    com_base = comparaveis >= piso
+
+    with np.errstate(invalid="ignore", divide="ignore"):
+        concordancia = np.where(com_base, acordos / np.maximum(comparaveis, 1), np.nan)
+
+    if np.all(np.isnan(concordancia)):
+        return np.array([], dtype=int)
+
+    melhor = np.nanmax(concordancia)
+
+    return np.flatnonzero(concordancia >= melhor - 1e-9)
+
+
+def melhor_pergunta_para_dividir(
+    matriz: np.ndarray, grupo: np.ndarray, candidatas: list[int]
+) -> int | None:
+    """A votação que mais divide **este grupo** — não a Câmara inteira.
+
+    🔴 É a diferença entre o nível A e o nível C do `plano/03`. Uma votação que racha a
+    Câmara ao meio pode ser unânime dentro do grupo que empatou com você — e aí ela não
+    desempata nada. O que importa é a divisão LOCAL.
+
+    ⚠️ Devolve `None` quando nenhuma candidata divide o grupo. Acontece de verdade: se
+    os empatados votaram idêntico em tudo que existe, ⛔ não há pergunta que os separe,
+    e insistir seria fazer a pessoa responder à toa.
+    """
+    if grupo.size < 2:
+        return None
+
+    recorte = matriz[np.ix_(grupo, candidatas)]
+
+    sim = np.sum(recorte == 1, axis=0)
+    nao = np.sum(recorte == -1, axis=0)
+    total = sim + nao
+
+    with np.errstate(invalid="ignore", divide="ignore"):
+        divisao_local = np.where(total > 0, np.minimum(sim, nao) / total, 0.0)
+
+    if np.max(divisao_local) <= 0:
+        return None
+
+    return candidatas[int(np.argmax(divisao_local))]
+
+
+def simular_desempate(
+    matriz: np.ndarray,
+    quem: int,
+    base: list[int],
+    candidatas: list[int],
+    rodadas: int = 6,
+    dirigido: bool = True,
+    semente: int = 20260826,
+) -> list[int]:
+    """Tamanho do empate a cada pergunta adicional, para UM deputado.
+
+    ⭐ `dirigido=False` sorteia a próxima pergunta. É o grupo de controle: sem ele, não
+    dá para afirmar que o ganho veio da escolha e não de simplesmente perguntar mais.
+    """
+    sorteio = np.random.default_rng(semente + quem)
+    respostas = {c: int(matriz[quem, c]) for c in base if not np.isnan(matriz[quem, c])}
+    respostas = {c: v for c, v in respostas.items() if v != 0}
+
+    disponiveis = [c for c in candidatas if c not in respostas]
+    tamanhos = []
+
+    for _ in range(rodadas):
+        grupo = empatados_com(matriz, respostas)
+        tamanhos.append(int(grupo.size))
+
+        if grupo.size < 2 or not disponiveis:
+            break
+
+        proxima = (
+            melhor_pergunta_para_dividir(matriz, grupo, disponiveis)
+            if dirigido
+            else int(sorteio.choice(disponiveis))
+        )
+        if proxima is None:
+            break
+
+        disponiveis.remove(proxima)
+
+        voto = matriz[quem, proxima]
+        if not np.isnan(voto) and voto != 0:
+            respostas[proxima] = int(voto)
+
+    return tamanhos

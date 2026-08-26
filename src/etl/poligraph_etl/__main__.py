@@ -224,6 +224,9 @@ def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: floa
             r.deputados_avaliados,
         )
 
+    # ═══ 1b. Desempate dirigido × aleatório ═══
+    _comparar_desempates(matriz, candidatas)
+
     # ═══ 2. Comunidade × partido (RF-20 / RQ2) ═══
     execucao = conexao.execute(
         "SELECT max(id) FROM execucoes WHERE status = 'CONCLUIDA'"
@@ -267,6 +270,44 @@ def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: floa
         "  → %s descreve melhor a estrutura de voto.",
         "A COMUNIDADE" if r.comunidade_descreve_melhor else "O PARTIDO",
     )
+
+
+def _comparar_desempates(matriz, candidatas: list[int], base_inicial: int = 12) -> None:
+    """Dirigido × aleatório, sobre uma amostra de deputados.
+
+    🔴 O grupo de controle é o que faz isto valer como evidência. Sem ele, o encolhimento
+    do empate poderia vir apenas de perguntar mais — e a "contribuição técnica" seria
+    só um contador de perguntas.
+    """
+    sorteio = np.random.default_rng(20260826)
+    base = sorted(sorteio.choice(candidatas, size=base_inicial, replace=False).tolist())
+    restantes = [c for c in candidatas if c not in base]
+
+    # ⚠️ Amostra de deputados, não todos: são 655 × 6 rodadas × duas estratégias.
+    quem_avaliar = sorteio.choice(matriz.shape[0], size=120, replace=False)
+
+    def media_por_rodada(dirigido: bool) -> list[float]:
+        series = [
+            validacao.simular_desempate(
+                matriz, int(q), base, restantes, rodadas=6, dirigido=dirigido
+            )
+            for q in quem_avaliar
+        ]
+        # ⚠️ Séries têm comprimentos diferentes: quem chega a 1 para antes. O último
+        #    valor é repetido para a média não subir artificialmente ao perdê-los.
+        maior = max(len(x) for x in series)
+        return [
+            float(np.mean([x[min(i, len(x) - 1)] for x in series])) for i in range(maior)
+        ]
+
+    dirigido = media_por_rodada(True)
+    aleatorio = media_por_rodada(False)
+
+    log.info("")
+    log.info("═══ Desempate: dirigido × aleatório (base de %d perguntas) ═══", base_inicial)
+    log.info("  perguntas extras | dirigido | aleatório")
+    for i, (d, a) in enumerate(zip(dirigido, aleatorio)):
+        log.info("  %16d | %8.1f | %9.1f", i, d, a)
 
 
 @dataclass(frozen=True)
