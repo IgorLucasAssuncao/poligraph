@@ -1,0 +1,152 @@
+"""O experimento de recuperação.
+
+⚠️ A aritmética da concordância é feita em matriz, e matriz erra em silêncio: um sinal
+trocado não estoura, devolve número plausível. Estes testes conferem o resultado contra
+casos calculados à mão.
+"""
+
+import numpy as np
+import pytest
+
+from poligraph_etl import validacao
+
+NAN = np.nan
+
+
+def test_concordancia_perfeita_deixa_o_topo_lotado():
+    """⭐ Três deputados que votaram idêntico: cada um empata com os outros dois."""
+    matriz = np.array(
+        [
+            [1, -1, 1],
+            [1, -1, 1],
+            [1, -1, 1],
+        ],
+        dtype=float,
+    )
+
+    r = validacao.avaliar(matriz, [0, 1, 2])
+
+    assert r.deputados_avaliados == 3
+    assert r.empate_mediano == 3
+    assert r.unicos == 0
+
+
+def test_deputado_com_padrao_proprio_fica_sozinho_no_topo():
+    """🔴 O caso que o instrumento precisa acertar: quem vota diferente é distinguível."""
+    matriz = np.array(
+        [
+            [1, 1, 1, 1],
+            [1, 1, 1, 1],
+            [-1, -1, -1, -1],   # o divergente
+        ],
+        dtype=float,
+    )
+
+    r = validacao.avaliar(matriz, [0, 1, 2, 3])
+
+    # o divergente é único no topo; os dois iguais empatam entre si
+    assert r.unicos == 1
+
+
+def test_mais_perguntas_desafogam_o_topo():
+    """⭐ O achado que o experimento existe para produzir.
+
+    Com uma pergunta, todo mundo que votou igual empata. Com quatro, os padrões se
+    separam. É por isso que a medida é o TAMANHO DO EMPATE, não a posição.
+    """
+    matriz = np.array(
+        [
+            [1, 1, 1, 1],
+            [1, 1, 1, -1],
+            [1, 1, -1, -1],
+            [1, -1, -1, -1],
+        ],
+        dtype=float,
+    )
+
+    com_uma = validacao.avaliar(matriz, [0])
+    com_quatro = validacao.avaliar(matriz, [0, 1, 2, 3])
+
+    assert com_uma.empate_medio > com_quatro.empate_medio
+    assert com_quatro.unicos > com_uma.unicos
+
+
+def test_ausencia_nao_conta_como_discordancia():
+    """🔴 A regra que atravessa o projeto inteiro.
+
+    ⚠️ Tratar `nan` como voto contrário faria o instrumento medir PRESENÇA em vez de
+    afinidade — e deputado faltoso viraria "discordante de todos".
+
+    ⭐ A afirmação é sobre QUEM FALTOU, não sobre o tamanho do empate: quem respondeu
+    2 de 4 e concordou nas 2 continua encontrando par. O piso de base comparável age
+    do outro lado — impede que ELE seja oferecido como par a quem respondeu tudo.
+    """
+    ausente = np.array([[1, 1, NAN, NAN], [1, 1, 1, 1]], dtype=float)
+
+    r = validacao.avaliar(ausente, [0, 1, 2, 3])
+
+    # os dois entram na avaliação; ninguém foi eliminado por ter faltado
+    assert r.deputados_avaliados == 2
+
+
+def test_abstencao_tambem_fica_de_fora():
+    """⚠️ 0 é abstenção declarada — não é meio-termo entre Sim e Não."""
+    matriz = np.array([[1, 0, 1], [1, 1, 1]], dtype=float)
+
+    r = validacao.avaliar(matriz, [0, 1, 2])
+
+    # compara só as colunas 0 e 2, em que ambos se posicionaram
+    assert r.deputados_avaliados == 2
+
+
+def test_quem_nao_respondeu_o_minimo_fica_de_fora():
+    matriz = np.array([[1, 1, 1], [NAN, NAN, NAN]], dtype=float)
+
+    r = validacao.avaliar(matriz, [0, 1, 2], minimo_respostas=1)
+
+    assert r.deputados_avaliados == 1
+
+
+def test_curva_e_reproduzivel():
+    """🔴 Sorteio com semente fixa — senão a curva do TCC muda a cada execução."""
+    matriz = np.random.default_rng(1).choice([-1.0, 1.0], size=(30, 20))
+
+    primeira = validacao.curva_de_discriminacao(matriz, list(range(20)), [5, 10])
+    segunda = validacao.curva_de_discriminacao(matriz, list(range(20)), [5, 10])
+
+    assert primeira == segunda
+
+
+@pytest.mark.parametrize(
+    ("coluna", "esperado"),
+    [(0, 0.5), (1, 0.0)],
+)
+def test_divisao_mede_quanto_a_pergunta_informa(coluna: int, esperado: float):
+    matriz = np.array([[1, 1], [1, 1], [-1, 1], [-1, 1]], dtype=float)
+
+    assert validacao.divisao(matriz, coluna) == esperado
+
+
+def test_quem_faltou_demais_nao_empata_no_topo():
+    """🔴 O erro que a primeira medição cometeu, agora travado.
+
+    ⚠️ Sem piso de base comparável, o deputado que faltou em quase tudo e concordou no
+    pouco que compareceu marca concordância 1,0 e empata com quem respondeu tudo. A
+    primeira rodada do experimento deu empate mediano de 90 por causa disso; a
+    conferência direta no banco dava no máximo 8.
+
+    ⭐ O piso é o MESMO da API (`TemBaseSuficiente`): 60% do que a pessoa respondeu.
+    """
+    matriz = np.array(
+        [
+            [1, 1, 1, 1, 1],          # respondeu tudo
+            [-1, -1, -1, -1, -1],     # discorda em tudo
+            [1, NAN, NAN, NAN, NAN],  # concordou em 1 de 5 — não pode empatar
+        ],
+        dtype=float,
+    )
+
+    r = validacao.avaliar(matriz, [0, 1, 2, 3, 4])
+
+    # o primeiro fica SOZINHO no topo: o terceiro não tem base para empatar com ele
+    assert r.unicos >= 1

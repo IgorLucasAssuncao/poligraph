@@ -12,13 +12,14 @@ import logging
 import os
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import psycopg
 
 from . import conexao as conexao_mod
-from . import grafo, ingestao, persistencia, similaridade
+from . import comparacao, grafo, ingestao, persistencia, similaridade, validacao
 from .fontes import camara
 
 log = logging.getLogger("poligraph")
@@ -46,6 +47,8 @@ def main(argv: list[str] | None = None) -> int:
         with psycopg.connect(conexao_str, autocommit=True) as conexao:
             if args.comando == "ingerir":
                 _ingerir(conexao, args.anos)
+            elif args.comando == "validar":
+                _validar(conexao, args.legislatura, args.divisao_minima)
             else:
                 _analisar(conexao, args.legislatura)
     except Exception:
@@ -70,6 +73,17 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
 
     analisar = sub.add_parser("analisar", help="calcula similaridade e grafo")
     analisar.add_argument("--legislatura", type=int, default=57)
+
+    validar = sub.add_parser(
+        "validar", help="mede discriminação do questionário e comunidade x partido"
+    )
+    validar.add_argument("--legislatura", type=int, default=57)
+    validar.add_argument(
+        "--divisao-minima",
+        type=float,
+        default=0.25,
+        help="só votações ao menos assim divididas entram como pergunta candidata",
+    )
 
     return parser.parse_args(argv)
 
@@ -177,6 +191,104 @@ def _analisar(conexao: psycopg.Connection, legislatura: int) -> None:
     except Exception:
         persistencia.fechar_execucao(conexao, execucao_id, sucesso=False)
         raise
+
+
+def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: float) -> None:
+    """RF-20 e a validação do questionário. ⛔ Não escreve no banco — é medição."""
+    pessoas, votacoes, matriz, _ = _montar_matriz(conexao, legislatura)
+    log.info("Matriz: %d pessoas × %d votações", len(pessoas), len(votacoes))
+
+    # ═══ 1. Quantas perguntas bastam ═══
+    candidatas = [
+        i
+        for i in range(len(votacoes))
+        if validacao.divisao(matriz, i) >= divisao_minima
+    ]
+    log.info(
+        "%d votações com divisão >= %.2f servem como pergunta",
+        len(candidatas),
+        divisao_minima,
+    )
+
+    log.info("")
+    log.info("  perguntas | empate mediano no topo | sozinhos no topo")
+    for r in validacao.curva_de_discriminacao(
+        matriz, candidatas, [4, 6, 8, 10, 12, 16, 22, 30, 40]
+    ):
+        log.info(
+            "  %9d | %22.0f | %5.1f%% (%d de %d)",
+            r.n_perguntas,
+            r.empate_mediano,
+            r.taxa_unicos * 100,
+            r.unicos,
+            r.deputados_avaliados,
+        )
+
+    # ═══ 2. Comunidade × partido (RF-20 / RQ2) ═══
+    execucao = conexao.execute(
+        "SELECT max(id) FROM execucoes WHERE status = 'CONCLUIDA'"
+    ).fetchone()
+    if not execucao or execucao[0] is None:
+        log.warning("Nenhuma execução concluída — rode `analisar` antes.")
+        return
+
+    comunidade_de = {
+        linha[0]: linha[1]
+        for linha in conexao.execute(
+            "SELECT pessoa_id, comunidade FROM nos_metrica WHERE execucao_id = %s",
+            (execucao[0],),
+        ).fetchall()
+        if linha[1] is not None
+    }
+
+    if not comunidade_de:
+        log.warning("`nos_metrica` vazia — rode `analisar` com a versão que grava nós.")
+        return
+
+    partido_de = _partido_mais_recente(conexao)
+    arestas = [
+        _Aresta(linha[0], linha[1], linha[2])
+        for linha in conexao.execute(
+            "SELECT pessoa_a, pessoa_b, peso FROM arestas_grafo WHERE execucao_id = %s",
+            (execucao[0],),
+        ).fetchall()
+    ]
+
+    g = grafo.montar(list(comunidade_de), arestas)
+    r = comparacao.comparar(g, comunidade_de, partido_de)
+
+    log.info("")
+    log.info("═══ Comunidade de voto × partido — %d deputados ═══", r.n_pessoas)
+    log.info("  %d comunidades detectadas, %d partidos", r.n_comunidades, r.n_partidos)
+    log.info("  ARI (coincidência entre as duas): %.3f", r.ari)
+    log.info("  Modularidade da comunidade: %.3f", r.modularidade_comunidade)
+    log.info("  Modularidade do partido:    %.3f", r.modularidade_partido)
+    log.info(
+        "  → %s descreve melhor a estrutura de voto.",
+        "A COMUNIDADE" if r.comunidade_descreve_melhor else "O PARTIDO",
+    )
+
+
+@dataclass(frozen=True)
+class _Aresta:
+    """⚠️ `grafo.montar` espera `.pessoa_a`, `.pessoa_b` e `.valor`."""
+
+    pessoa_a: int
+    pessoa_b: int
+    valor: float
+
+
+def _partido_mais_recente(conexao: psycopg.Connection) -> dict[int, str]:
+    """⚠️ Partido vem do voto, não da pessoa: o registro é histórico e deputado troca."""
+    linhas = conexao.execute(
+        """
+        SELECT DISTINCT ON (x.pessoa_id) x.pessoa_id, x.partido_no_voto
+          FROM votos x JOIN votacoes v ON v.id = x.votacao_id
+         ORDER BY x.pessoa_id, v.data DESC
+        """
+    ).fetchall()
+
+    return {pessoa: partido for pessoa, partido in linhas if partido}
 
 
 def _votacoes_por_pessoa(matriz, pessoas: list[int]) -> dict[int, int]:
