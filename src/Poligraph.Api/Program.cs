@@ -84,6 +84,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IValidadorGoogle, ValidadorGoogle>();
+builder.Services.AddScoped<ServicoDigest>();
 
 var app = builder.Build();
 
@@ -101,7 +102,8 @@ app.MapearParlamentares()
    .MapearAfinidade()
    .MapearAutenticacao()
    .MapearSeguir()
-   .MapearGrafo();
+   .MapearGrafo()
+   .MapearNoticias();
 
 app.Run();
 
