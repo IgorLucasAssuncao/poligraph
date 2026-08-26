@@ -1,8 +1,10 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v1.11 — 2026-08-25
-> **v1.11:** §3.5.6 — por que o `email` não pode ser hash (é destino, não comparação) e
-> ⭐ a regra nova: descadastrar ZERA a coluna, devolvendo a pessoa ao pseudonimato.
+> **Status:** v2.0 — 2026-08-25
+> **v2.0:** 🔄 REVOGADO o princípio de minimização a pedido do autor. §3.5 reescrita:
+> armazenar o perfil COMPLETO do Google em claro. Caem o hash de `sub`, o `pepper`, o
+> `email` anulável e a regra "receber ≠ guardar". ⛔ Nenhum token é armazenado.
+> **v1.11:** §3.5.6 — por que o `email` não pode ser hash. ⛔ Superada pela v2.0.
 > **v1.10:** §3.5 — inventário consolidado do que fica no banco após um login. Dos 12
 > campos recebidos, 11 são descartados. ⭐ A pseudonimização vale POR USUÁRIO e cai no
 > momento do opt-in de e-mail.
@@ -161,7 +163,7 @@ a ser zero, porque a autenticação não acontece aqui.
 ⚠️ **O que a decisão não resolve — e agora pesa mais:** o risco da §1 nunca esteve na
 senha, e sim na tabela `segue`, que é base de convicção política. Com o e-mail dentro, ela
 deixa de ser pseudonimizada. **São dois riscos diferentes: o Google elimina o de
-credencial por completo e não toca no outro** — este se trata na §3.1 e na §3.3.
+credencial por completo e não toca no outro** — este se trata na §3.3 e na §3.5.4.
 
 ### 3.1 🔴 O desenho obrigatório
 
@@ -175,14 +177,13 @@ sequenceDiagram
     G-->>U: id_token (JWT, ~1 h)
     U->>A: POST /api/auth/google  (id_token, uma vez só)
     A->>A: valida assinatura contra as chaves do Google
-    A->>A: extrai `sub`, calcula sub_hash = SHA256(sub + pepper)
-    A->>A: grava `email` SOMENTE se houve opt-in (§3.3.5)
+    A->>A: UPSERT usuario (sub, email, nome, foto, locale)
     A->>A: 🗑️ DESCARTA o id_token
     A-->>U: Set-Cookie: sid=<jwt nosso>; HttpOnly; Secure
     U->>A: GET /api/seguidos  (cookie vai sozinho)
     A->>A: confere assinatura do sid + sessao_versao
     A-->>U: lista de seguidos
-    Note over A: NUNCA persiste id_token, nome nem foto
+    Note over A: guarda o perfil; NUNCA guarda token
 ```
 
 | Regra | Motivo |
@@ -191,30 +192,19 @@ sequenceDiagram
 | ⛔ **Nunca armazenar o `id_token`** | Validado e descartado — §3.2.4 |
 | 🔴 Passar `Audience` na validação | Sem isso, token de outro app é aceito — §3.4.0 |
 | Sessão em cookie `HttpOnly` assinado | Script não lê; **sem tabela de sessão** |
-| Chave da conta é `SHA256(sub + pepper)` | O `sub` cru não fica no banco |
-| ⭐ **`email` é coluna anulável** | 🔑 Quem não pediu notificação **não tem e-mail gravado** |
-| ⛔ Nunca persistir nome nem foto | Não são necessários para nada |
+| Chave da conta é `google_sub` | 🔄 §3.5 — em claro; o hash foi revogado |
+| ⭐ **Persistir o perfil completo** | 🔄 §3.5 — e-mail, nome, sobrenome, foto, locale |
+| `ON CONFLICT DO UPDATE` a cada login | O perfil no Google pode ter mudado |
 | Endpoint de exclusão total | LGPD art. 18 — direito à eliminação |
 | Retenção com prazo | Ex.: apagar após 12 meses sem acesso |
 
-⚠️ **`pepper` fora do banco** (variável de ambiente). Se o banco vazar, o hash sozinho não
-liga a ninguém.
+🔄 **O `pepper` deixou de existir** com a decisão da §3.5 — sem hash de `sub`, não há o
+que temperar.
 
-> ⭐ **O detalhe que mais reduz exposição, e custa uma linha de schema:** deixar `email`
-> anulável e preenchê-lo **só** no opt-in. Quem apenas entra para sincronizar a lista
-> continua pseudonimizado, exatamente como na opção 2. **A base identificada passa a conter
-> apenas quem pediu para receber e-mail** — que é o mínimo indispensável.
+⛔ ~~O detalhe do `email` anulável~~ — **revogado pela §3.5.** A base é identificada para
+todo mundo que faz login, por decisão explícita.
 
-```sql
-CREATE TABLE usuario (
-    id        BIGSERIAL PRIMARY KEY,
-    sub_hash  TEXT NOT NULL UNIQUE,          -- SHA256(sub + pepper)
-    email     TEXT,                          -- ⭐ NULL enquanto não houver opt-in
-    email_ok  BOOLEAN NOT NULL DEFAULT FALSE,
-    criado_em TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CHECK (email IS NOT NULL OR email_ok = FALSE)
-);
-```
+
 
 ---
 
@@ -282,16 +272,17 @@ var payload = await GoogleJsonWebSignature.ValidateAsync(idToken,
         Audience = [builder.Configuration["Google:ClientId"]]
     });
 
-var subHash = Convert.ToHexString(SHA256.HashData(
-    Encoding.UTF8.GetBytes(payload.Subject + pepper)));
-// ⛔ payload.Email e payload.Name existem aqui — NÃO persistir (§3.1)
+// 🔄 §3.5: persiste o perfil completo
+await db.UpsertUsuarioAsync(payload.Subject, payload.Email, payload.EmailVerified,
+                           payload.Name, payload.GivenName, payload.FamilyName,
+                           payload.Picture, payload.Locale);
 ```
 
 | Segredo | Vai onde |
 |---|---|
 | **Client ID** | ✅ Público — pode ficar no bundle do React |
 | **Client Secret** | ⛔ **Não é usado neste fluxo.** Só existe no fluxo com *redirect* no servidor |
-| **`pepper`** | 🔴 Variável de ambiente **no painel do Coolify**, nunca no repositório |
+| **Segredo do cookie** | 🔴 Variável de ambiente **no painel do Coolify**, nunca no repositório |
 
 ### 3.2.4 🔴 Sem senha ≠ sem sessão — a decisão que sobra
 
@@ -342,7 +333,7 @@ ALTER TABLE usuario ADD COLUMN sessao_versao SMALLINT NOT NULL DEFAULT 0;
 
 | | |
 |---|---|
-| O JWT carrega | `{ sub_hash, sv: 3 }` |
+| O JWT carrega | `{ usuario_id, sv: 3 }` |
 | A API confere | `sv` do token **é igual** ao `sessao_versao` do usuário? |
 | "Sair de todos" | `UPDATE usuario SET sessao_versao = sessao_versao + 1` |
 
@@ -393,8 +384,8 @@ ela NÃO resolve — porque a PL6 aumentou esse lado:
 ⚠️ **E o calendário agrava:** eleições gerais em **outubro de 2026**.
 
 > 🔑 **Isso não contradiz a decisão — delimita.** O login com Google zerou o risco de
-> credencial. O risco que resta é o da §1, e ele se trata com a §3.1 (só `sub_hash`), com
-> a RNF-12b (consentimento específico) e com o endpoint de exclusão (LGPD art. 18).
+> credencial. O risco que resta é o da §1, e ele se trata com a RNF-12b (consentimento
+> específico), o endpoint de exclusão (art. 18) e o backup criptografado (PL20).
 > **Três medidas concretas, todas já especificadas.**
 
 ## 3.3 🔴 O que a notificação por e-mail traz junto
@@ -468,7 +459,7 @@ transforma "quero sair" em "vou marcar como spam" — e aí a reputação do dom
 > **"Notícias sobre o Deputado Fulano" na caixa de entrada é convicção política
 > atravessando o Gmail, o Outlook e o celular na tela de bloqueio.**
 
-De nada adianta `sub_hash` no banco se o assunto do e-mail diz a mesma coisa em texto puro.
+De nada adianta cuidado no banco se o assunto do e-mail expõe a preferência em texto puro.
 
 | ⛔ Evitar | ✅ Preferir |
 |---|---|
@@ -617,7 +608,10 @@ de credenciais" que a RNF-12d proíbe** — reintroduzida pela porta dos fundos.
 | `picture` | URL do avatar | ⛔ **Nunca** |
 | `iss`, `aud`, `exp` | Emissor, destinatário, expiração | Validação |
 
-### 3.4.1 🔑 Receber ≠ guardar
+### 3.4.1 ~~🔑 Receber ≠ guardar~~ ⛔ REVOGADA pela §3.5
+
+> ⛔ **Esta seção não vale mais.** Mantida como registro do raciocínio. A decisão vigente
+> é armazenar o perfil completo — ver [§3.5](#35-✅-decisão-final--armazenar-o-perfil-completo-2026-08-25).
 
 Esta é a distinção que faz a diferença, e ela é boa notícia:
 
@@ -647,11 +641,11 @@ O Google entrega **`email_verified: true`**. O endereço já está provado.
 ⚠️ **Mas verifique a claim.** `email_verified` pode vir `false` em contas fora do padrão.
 Se vier falso, **não envie** — é o único caso em que a confirmação voltaria a ser necessária.
 
-### 3.4.3 🔴 Duas armadilhas do que o Google entrega
+### 3.4.3 🔴 Duas armadilhas do que o Google entrega  ⚠️ ainda valem
 
 | Armadilha | |
 |---|---|
-| 🔴 **O `email` muda** | O Google permite trocar o endereço principal. **Nunca use e-mail como chave.** A chave é `sub_hash`; o `email` é um atributo que se atualiza a cada login |
+| 🔴 **O `email` muda** | O Google permite trocar o endereço principal. **Nunca use e-mail como chave.** A chave é `google_sub`; o `email` é atributo atualizado a cada login |
 | **A URL de `picture` apodrece** | Expira e passa a dar 404. É mais um motivo para não persistir — se um dia exibir avatar, leia do token |
 
 ### 3.4.4 O que o Google **não** dá
@@ -664,123 +658,110 @@ para quem pediu notificação.
 
 ---
 
-## 3.5 ⭐ Inventário — o que fica no banco depois de um login
+## 3.5 ✅ DECISÃO FINAL — armazenar o perfil completo (2026-08-25)
 
-A resposta curta: **uma linha, com um valor que importa.**
+> **Decisão do autor, revogando as regras anteriores deste documento:**
+> *"revogue o ponto de não armazenar informações, armazene tudo, menos o refresh_token
+> por causa do cookie."*
 
-### 3.5.1 Primeiro login, sem opt-in de e-mail
+⛔ **Revogadas:** a regra "receber ≠ guardar" (§3.4.1), o `email` anulável, o `sub` em
+hash, e a proibição de persistir nome e foto. **Ficam sem efeito.**
 
-```
-usuario
-  id            = 1
-  sub_hash      = 9f2a4c...c41        ← 64 caracteres hex. É só isto.
-  email         = NULL
-  primeiro_nome = NULL
-  criado_em     = 2026-08-25 14:02
-  visto_em      = 2026-08-25 14:02
-  sessao_versao = 0
-```
+### 3.5.1 O que passa a ser armazenado
 
-**E mais nada.** Nenhuma outra tabela recebe registro.
-
-### 3.5.2 O que foi recebido e descartado no mesmo instante
-
-| Recebido no `id_token` | Destino |
-|---|---|
-| `name`, `family_name` | 🗑️ Descartado |
-| `picture` | 🗑️ Descartado |
-| `locale`, `iat`, `exp`, `iss`, `aud` | 🗑️ Usado na validação, descartado |
-| `email` (sem opt-in) | 🗑️ **Descartado** |
-| `sub` | ⭐ Vira `SHA256(sub + pepper)` — **o cru não fica** |
-| O próprio `id_token` | 🗑️ Descartado |
-
-⭐ **Dos 12 campos que chegam, 11 são descartados** e o 12º só entra transformado.
-
-### 3.5.3 O que aparece depois, conforme a pessoa age
-
-| Ação dela | O que passa a existir |
-|---|---|
-| Voltar ao site | `visto_em` atualizado. Nada novo |
-| **Seguir** um parlamentar | Uma linha em `segue` 🔴 *(é o dado sensível)* |
-| **Opt-in** de e-mail | `usuario.email` preenchido + uma linha em `consentimento` |
-| Pedir descadastro | Uma linha em `token_email` (gerada no envio) |
-| Sair | ⛔ **Nada** — o cookie é apagado no navegador |
-| Excluir a conta | ⛔ **Nada** — um `DELETE` leva tudo (§2.2.2 do esqueleto) |
-
-### 3.5.4 O que nunca existe, em nenhum cenário
-
-⛔ Senha · ⛔ `refresh_token` · ⛔ `id_token` · ⛔ token de sessão · ⛔ nome completo ·
-⛔ foto · ⛔ CPF · ⛔ telefone · ⛔ endereço · ⛔ IP · ⛔ respostas do questionário
-
-### 3.5.5 ⚠️ E a leitura honesta disso
-
-| Quem | Situação na base |
-|---|---|
-| Entra e não segue ninguém | ✅ Uma linha praticamente vazia. **Nada a proteger** |
-| Entra e segue parlamentares | ⚠️ **Pseudonimizado** — `sub_hash` não diz quem é, mas a lista existe |
-| Faz opt-in de e-mail | 🔴 **Identificado.** O e-mail liga a lista a uma pessoa real |
-
-> 🔑 **O `sub_hash` sozinho não identifica ninguém** — sem o `pepper` (que vive fora do
-> banco) e sem conhecer o `sub` de origem, ele é opaco. **Mas isso deixa de valer no
-> momento em que o `email` é preenchido.**
->
-> ⭐ **Por isso a coluna é anulável.** Não é elegância de schema: é a diferença entre uma
-> base pseudonimizada e uma base identificada, e ela se aplica **por usuário**. Quem não
-> pediu e-mail continua do lado seguro da linha.
-
-### 3.5.6 🔴 O e-mail é a exceção — e não dá para tratá-lo como o `sub`
-
-A pergunta natural é: *"então por que não guardar o e-mail em hash também?"*
-
-> **Porque não dá para enviar mensagem para um hash.**
-
-| | `sub` | `email` |
-|---|---|---|
-| Para que serve | Só **comparar** — "é o mesmo usuário?" | **Endereçar** — é um destino |
-| Hash serve? | ✅ Sim. Compara-se hash com hash | ⛔ **Não.** É preciso o valor original |
-| Como fica no banco | `SHA256(sub + pepper)` | 🔴 **Em texto legível** |
-
-⚠️ **Esta é a única PII em claro no projeto inteiro.** Todo o resto ou é público (dado
-parlamentar), ou é hash (`sub`, `cpf` dos políticos), ou não existe.
-
-#### O que de fato protege, já que hash está fora
-
-| Medida | O que cobre | O que NÃO cobre |
-|---|---|---|
-| ⭐ **Só existir com opt-in** | A maioria dos usuários nem tem a coluna preenchida | Quem optou |
-| ⭐ **Descadastrar zera a coluna** | Ver abaixo — devolve a pessoa ao pseudonimato | — |
-| 🔴 **Backup criptografado** | Backup vazado, disco descartado | Invasão da aplicação em execução |
-| Retenção (12 meses sem acesso) | Base velha acumulando | O período ativo |
-
-⚠️ **Criptografia de coluna (pgcrypto) não resolve o que parece resolver.** A API precisa
-da chave para enviar o digest — então quem comprometer a aplicação lê o e-mail de qualquer
-jeito. Protege backup roubado, **não** aplicação invadida. Vale a pena, mas sabendo o
-alcance.
-
-#### ⭐ Descadastrar deve zerar o `email` — e isso não é óbvio
-
-A RF-52 diz que descadastrar **não** apaga a conta. Correto — a lista de seguidos
-sobrevive. **Mas o e-mail deve sair:**
+**Tudo que chega no `id_token`**, em claro:
 
 ```sql
-UPDATE usuario SET email = NULL WHERE id = :id;
-UPDATE consentimento SET revogado_em = now()
- WHERE usuario_id = :id AND finalidade = 'EMAIL_NOTICIAS' AND revogado_em IS NULL;
+CREATE TABLE usuario (
+    id               BIGSERIAL PRIMARY KEY,
+    google_sub       TEXT NOT NULL UNIQUE,     -- em claro; era SHA256(sub+pepper)
+    email            TEXT NOT NULL,
+    email_verificado BOOLEAN NOT NULL DEFAULT FALSE,
+    nome             TEXT,
+    primeiro_nome    TEXT,
+    sobrenome        TEXT,
+    foto_url         TEXT,
+    locale           TEXT,
+    criado_em        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    visto_em         TIMESTAMPTZ NOT NULL DEFAULT now(),
+    sessao_versao    SMALLINT NOT NULL DEFAULT 0
+);
 ```
 
-> 🔑 **O motivo é o próprio teste da §3.4.1:** guardávamos o e-mail porque o digest precisa
-> dele quando a pessoa não está. Se ela pediu para não receber, **a razão de guardar
-> deixou de existir** — e o dado deve ir embora com ela.
+Atualizado a cada login (o perfil no Google pode ter mudado):
 
-⭐ **O efeito é bonito: descadastrar devolve a pessoa ao estado pseudonimizado.** Ela
-continua com a conta e a lista, e sai da fatia identificada da base. E se voltar a optar,
-o e-mail chega de novo no próximo `id_token` — **nada se perde ao apagar.**
+```sql
+INSERT INTO usuario (google_sub, email, email_verificado, nome, primeiro_nome,
+                     sobrenome, foto_url, locale)
+VALUES (@sub, @email, @ev, @name, @given, @family, @picture, @locale)
+ON CONFLICT (google_sub) DO UPDATE SET
+    email = EXCLUDED.email, email_verificado = EXCLUDED.email_verificado,
+    nome = EXCLUDED.nome, primeiro_nome = EXCLUDED.primeiro_nome,
+    sobrenome = EXCLUDED.sobrenome, foto_url = EXCLUDED.foto_url,
+    locale = EXCLUDED.locale, visto_em = now();
+```
 
-⚠️ **Consequência para a PL20 (destino do backup):** o backup do Postgres passa a conter
-e-mails em claro. **Ele herda a sensibilidade da base** — criptografia no destino deixa de
-ser boa prática e vira parte da decisão.
+### 3.5.2 O que continua fora — e é só isto
 
----
+| | Por quê |
+|---|---|
+| ⛔ **`refresh_token`** | **Não existe neste fluxo** — não chega, não há o que guardar. E o cookie de sessão já faz o papel dele (§3.2.4) |
+| ⛔ **`id_token`** | Vida útil de 1 h; guardar credencial vencida não serve para nada |
+| ⛔ **Token de sessão** | O cookie é assinado, verificado por assinatura (§3.2.4 — B1) |
+| ⛔ Senha | Nunca chega. A autenticação é do Google |
+
+### 3.5.3 ⭐ O que essa decisão SIMPLIFICA
+
+Guardar tudo remove trabalho — vale registrar, porque não é óbvio:
+
+| Some do projeto | |
+|---|---|
+| `pepper` e sua gestão | ⛔ Não há mais hash de `sub` |
+| Coluna anulável e o `CHECK` que a acompanhava | ⛔ `email` é `NOT NULL` |
+| Zerar `email` no descadastro | ⛔ Descadastrar agora só marca `consentimento.revogado_em` |
+| A regra "leia do token, não persista" no front | ⭐ Nome e foto vêm do banco, como qualquer campo |
+
+⭐ **E habilita o que estava travado:** saudar por nome no digest (**PL28 resolvida — sim**),
+exibir avatar em "meus parlamentares", e uma tela de administração que mostra quem se
+cadastrou.
+
+### 3.5.4 O que a decisão não altera
+
+Não é preferência de projeto — são obrigações que existem independentemente do desenho:
+
+| | |
+|---|---|
+| **RNF-12b** | A lista de seguidos continua sendo dado sensível (LGPD art. 5º, II) |
+| **PL7** | Política de privacidade — já era bloqueante pelo Google |
+| **PL25** | Texto do consentimento |
+| **Art. 18** | O endpoint de exclusão continua sendo um `DELETE` com `CASCADE` |
+| **PL20** | O backup contém PII — criptografar no destino |
+
+⭐ **O `DELETE` continua sendo um só.** Foi por isso que os `ON DELETE CASCADE` entraram no
+schema, e eles seguem valendo com mais colunas do mesmo jeito.
+
+### 3.5.5 Inventário atualizado
+
+Depois de um login, `usuario` fica assim:
+
+```
+id               = 1
+google_sub       = 117482910375829104857
+email            = fulano@gmail.com
+email_verificado = true
+nome             = Fulano de Tal
+primeiro_nome    = Fulano
+sobrenome        = de Tal
+foto_url         = https://lh3.googleusercontent.com/a/ACg8oc...=s96-c
+locale           = pt-BR
+criado_em        = 2026-08-25 14:02
+visto_em         = 2026-08-25 14:02
+sessao_versao    = 0
+```
+
+⚠️ **`foto_url` apodrece.** A URL do Google expira e passa a dar 404. Como ela é
+reescrita a cada login, isso só afeta quem não entra há muito tempo — trate o 404 no front
+com um avatar padrão.
 
 ## 4. Métricas de uso — a ferramenta é o Microsoft Clarity
 
@@ -953,13 +934,13 @@ custar meses se ficar para o fim.
 
 | Tema | Decisão |
 |---|---|
-| Login no MVP | ⭐ **Nenhum** — `localStorage` |
-| Se precisar de login | Google, guardando só `SHA256(sub + pepper)` |
-| E-mail / nome / foto | ⛔ Nunca persistir |
+| ~~Login no MVP~~ | 🔄 Superado — ver linha abaixo |
+| Login | ✅ **Google, guardando o perfil completo** (§3.5) — sem senha, sem refresh_token |
+| E-mail / nome / foto | ✅ **Persistidos** — decisão de 2026-08-25 (§3.5) |
 | Mapa de calor | **Microsoft Clarity** — 🔴 máscara não basta; o que protege é o consentimento (§4.5) |
 | Analytics de uso | **GA4**, sem PII |
 | Gravação de sessão | ✅ **Em produção, completa** — com consentimento bloqueante (§4.5) |
-| Login no MVP (revisto) | ✅ **Google + e-mail**, opção 3 (§3) — `email` anulável, só no opt-in |
+| Login | ✅ **Google + perfil completo** (§3.5) — ⛔ nenhum token armazenado |
 | Notificação por e-mail | ✅ **Sim** — exige serviço de envio, SPF/DKIM/DMARC e `token_email` (§3.3) |
 
 ---

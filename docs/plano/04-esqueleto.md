@@ -1,8 +1,10 @@
 # Esqueleto — AppHost, schema e estrutura do ETL
 
-> **Status:** v1.1 — 2026-08-25
+> **Status:** v1.2 — 2026-08-25
 > Os dois artefatos do **passo 1** ([01-arquitetura §8](01-arquitetura.md)). Tudo aqui é
 > derivado dos contratos medidos em [`04-contratos.md`](../04-contratos.md).
+> **v1.2:** §2.2 — 🔄 `usuario` passa a guardar o perfil COMPLETO do Google em claro.
+> Caem `sub_hash`, `pepper` e o `email` anulável.
 > **v1.1:** §2.2 — tabelas `usuario`, `segue`, `consentimento` e `token_email`, criadas
 > pela decisão da RQ9. ⚠️ Corrige a afirmação de que "não existe tabela de usuário".
 
@@ -246,16 +248,22 @@ CREATE TABLE noticia_tema (
 
 ```sql
 CREATE TABLE usuario (
-    id            BIGSERIAL PRIMARY KEY,
-    sub_hash      TEXT NOT NULL UNIQUE,        -- SHA256(sub_google + pepper)
-    email         TEXT,                        -- ⭐ NULL até haver opt-in
-    primeiro_nome TEXT,                        -- só para saudar no e-mail; ver §2.2.1
-    criado_em     TIMESTAMPTZ NOT NULL DEFAULT now(),
-    visto_em      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    sessao_versao SMALLINT NOT NULL DEFAULT 0,   -- ⭐ +1 = "sair de todos os aparelhos"
-    CHECK (email IS NULL OR position('@' in email) > 1)
+    id               BIGSERIAL PRIMARY KEY,
+    google_sub       TEXT NOT NULL UNIQUE,     -- em claro (decisão de 2026-08-25)
+    email            TEXT NOT NULL,
+    email_verificado BOOLEAN NOT NULL DEFAULT FALSE,
+    nome             TEXT,
+    primeiro_nome    TEXT,
+    sobrenome        TEXT,
+    foto_url         TEXT,
+    locale           TEXT,
+    criado_em        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    visto_em         TIMESTAMPTZ NOT NULL DEFAULT now(),
+    sessao_versao    SMALLINT NOT NULL DEFAULT 0,  -- ⭐ +1 = "sair de todos os aparelhos"
+    CHECK (position('@' in email) > 1)
 );
--- ⛔ SEM coluna de senha. SEM foto. SEM nome completo. SEM CPF. SEM telefone.
+-- ⛔ SEM senha. SEM refresh_token. SEM id_token. SEM token de sessão.
+-- ⭐ O perfil do Google é gravado por inteiro — ver [02 §3.5](02-autenticacao-e-metricas.md).
 
 CREATE TABLE segue (
     usuario_id BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
@@ -265,7 +273,7 @@ CREATE TABLE segue (
 );
 CREATE INDEX ON segue (pessoa_id);          -- "quantos seguem X"
 
-CREATE TABLE consentimento (               -- 🔴 LGPD art. 8º §2: o ônus da prova é seu
+CREATE TABLE consentimento (               -- 🔴 LGPD art. 8º §2: o ônus da prova continua seu
     id          BIGSERIAL PRIMARY KEY,
     usuario_id  BIGINT NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
     finalidade  TEXT NOT NULL CHECK (finalidade IN ('EMAIL_NOTICIAS')),
@@ -285,28 +293,21 @@ CREATE TABLE token_email (
 );
 ```
 
-#### 2.2.1 As quatro decisões de coluna, e o teste que as define
+#### 2.2.1 🔄 O critério mudou: guardar tudo
 
-O teste da [02 §3.4.1](02-autenticacao-e-metricas.md):
-**"preciso disso quando a pessoa NÃO está presente?"**
+> ⛔ **O teste "preciso disso quando a pessoa não está presente?" foi revogado** pela
+> decisão de 2026-08-25. O critério agora é simples: **o que o Google manda, o banco
+> guarda.** Ver [02 §3.5](02-autenticacao-e-metricas.md).
 
-| Campo | Passa? | Decisão |
-|---|---|---|
-| `sub` | ✅ É a chave | ⭐ Guardar **só o hash** |
-| `email` | ✅ O digest roda de madrugada | Guardar, **só com opt-in** |
-| `primeiro_nome` | ⚠️ **Passa, se o e-mail saudar pelo nome** | 🟡 Ver abaixo — **PL28** |
-| `picture` | ⛔ Não | ⛔ Não guardar — a URL ainda expira |
-| Nome completo, telefone, CPF | ⛔ Não | ⛔ Não guardar — nem chegam nos escopos usados |
+| Campo | Guardado? |
+|---|---|
+| `sub`, `email`, `email_verified` | ✅ Em claro |
+| `name`, `given_name`, `family_name` | ✅ |
+| `picture`, `locale` | ✅ |
+| ⛔ `refresh_token`, `id_token`, sessão | ⛔ **Único grupo excluído** — o cookie faz o papel |
 
-> 🔑 **O `primeiro_nome` merece honestidade:** eu tinha escrito *"nome: nunca persistir"*.
-> **Aplicando o próprio teste, ele passa** — se o digest disser *"Olá, Igor"*, o nome
-> precisa estar no banco, pela mesma razão do e-mail. Não dá para defender uma coisa e não
-> a outra.
->
-> ⭐ Se o e-mail abrir com *"Olá!"*, a coluna some. **É uma escolha de redação de e-mail
-> decidindo um campo de banco** — e por isso vale decidir de propósito. → **PL28**
-
-⚠️ **`given_name`, nunca `name`.** "Igor" identifica muito menos que "Igor Lucas <sobrenome>".
+⭐ **PL28 resolvida por consequência:** com nome e sobrenome no banco, o digest pode saudar
+pelo nome sem depender de decisão prévia.
 
 #### 2.2.2 🔴 A exclusão da LGPD é um `DELETE` só
 
@@ -478,4 +479,4 @@ O item 6 é o que prova que o princípio da §1 está funcionando.
 | **PL14** | Definir a política de retenção de `execucao` (§9.6 dos contratos) |
 | **PL15** | Decidir se `pessoa` guarda `casa` ou se ela fica só em `mandato` |
 | **A2** | Escrever e validar as regex de `categoria` |
-| **PL28** | 🟡 O e-mail do digest sauda pelo nome? Se não, a coluna `primeiro_nome` some (§2.2.1) |
+| ~~PL28~~ | ✅ Resolvida por consequência — nome e sobrenome estão no banco (§2.2.1) |

@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-08-25 · **59 resolvidas · 56 abertas**
+> **Atualizado:** 2026-08-25 · **61 resolvidas · 54 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 
@@ -15,7 +15,8 @@
 | **PL6** | ✅ **Clarity em produção, gravando tudo**, com consentimento prévio bloqueante |
 | **PL8** | ✅ Todas as telas recebem o script — a proteção é o consentimento, não a máscara |
 | **PL9** | ✅ Banner de consentimento **necessário e bloqueante** |
-| **RQ9** | ✅ **Opção C com autenticação Google** — `sub_hash` + `email` anulável. Revista no mesmo dia: e-mail exige guardar e-mail |
+| **RQ9** | ✅ **Login Google + perfil completo em claro** — 🔄 minimização revogada em 2026-08-25 |
+| **PL28** | ✅ Resolvida por consequência — nome e sobrenome estão no banco |
 
 > 🔑 **As duas decisões desta rodada empurram na mesma direção:** o projeto passou a
 > guardar mais coisa (sessão gravada, lista de seguidos no servidor) e a compensar isso
@@ -31,7 +32,6 @@
 | **PL25** | 🔴 Escrever o **texto do banner de consentimento** cobrindo as 5 exigências | [plano/02 §4.5.2](plano/02-autenticacao-e-metricas.md) |
 | **PL26** | 🔴 Serviço de envio de e-mail (Resend, Brevo, SES) + **SPF, DKIM e DMARC** no domínio | [plano/02 §3.3.2](plano/02-autenticacao-e-metricas.md) |
 | **PL27** | 🟡 Cadência do digest — diário, semanal, ou por volume | [plano/02 §3.3](plano/02-autenticacao-e-metricas.md) |
-| **PL28** | 🟡 O e-mail sauda pelo nome? Decide se existe a coluna `primeiro_nome` | [plano/04 §2.2.1](plano/04-esqueleto.md) |
 | **PL29** | 🟡 Confirmar sessão B1 (cookie assinado, sem tabela) e sua duração | [plano/02 §3.2.4](plano/02-autenticacao-e-metricas.md) |
 | **PL7** | 🔴 **Política de privacidade** — virou bloqueante: é campo obrigatório da tela do Google | [plano/02 §3.2.1](plano/02-autenticacao-e-metricas.md) |
 | **PL24** | 🔴 Confirmar com o orientador se o TCC precisa de **Comitê de Ética** | [plano/02 §4.5](plano/02-autenticacao-e-metricas.md) |
@@ -144,11 +144,11 @@ avaliação rodar cedo demais.
 
 ---
 
-## ✅ Resolvidas — 59
+## ✅ Resolvidas — 61
 
 `A1` `API1` `API2` `API6` `B1` `B2` `B3` `B4` `B5` `C1` `C2` `C3` `C4` `C6` `C8` `C13`
 `C14` `CT1` `CT2` `CT4` `CT5` `CT6` `D1` `D3` `D5` `ER1` `ER3` `ER4` `N2` `N10` `P1` `P2`
-`P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PP1` `RE-01` `RQ1` `RQ4` `RQ8` `RQ9`
+`P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PL28` `PP1` `RE-01` `RQ1` `RQ4` `RQ8` `RQ9`
 `SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2` `TS3` `TS4` `TS6`
 
 ⚠️ **Convenção de prefixo** (evita a colisão que existia até 2026-08-23):
