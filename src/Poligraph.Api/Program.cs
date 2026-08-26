@@ -1,41 +1,30 @@
+using Microsoft.EntityFrameworkCore;
+using Poligraph.Api.Data;
+using Poligraph.Api.Endpoints;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.AddServiceDefaults();
 builder.Services.AddOpenApi();
+
+// 🔴 UseSnakeCaseNamingConvention não é estilo: o ETL Python lê estas mesmas tabelas.
+// Removê-lo quebra o ETL sem erro de compilação.
+builder.AddNpgsqlDbContext<PoligraphDb>(
+    connectionName: "poligraph",
+    configureDbContextOptions: opcoes => opcoes.UseSnakeCaseNamingConvention());
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+app.MapDefaultEndpoints();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapearAfinidade();
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+/// <summary>Exposto para o `WebApplicationFactory` dos testes de integração.</summary>
+public partial class Program;

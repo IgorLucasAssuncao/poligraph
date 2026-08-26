@@ -9,4 +9,13 @@
     <UserSecretsId>09541bb9-5e64-4c49-819a-70ea197d0f6e</UserSecretsId>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.5.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Poligraph.Api\Poligraph.Api.csproj" />
+    <ProjectReference Include="..\Poligraph.Migrations\Poligraph.Migrations.csproj" />
+  </ItemGroup>
+
 </Project>
