@@ -106,6 +106,7 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 | **API7** | Medir quanto tempo o job de 207k pares leva de fato |
 | **CT3** | Escrever o OpenAPI da C13 e validar contra o front |
 | **PL16** | Como o ETL sinaliza `novas_votacoes` |
+| **PL31** | Definir o conteúdo do seed de desenvolvimento — quantos parlamentares, votações e perguntas |
 | **C15** | Contrato do front — depende do React estar de pé |
 
 ---

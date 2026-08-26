@@ -1,6 +1,8 @@
 # CI/CD, deploy e monitoramento
 
-> **Status:** v2.1 — 2026-08-25
+> **Status:** v2.2 — 2026-08-26
+> **v2.2:** §2.2.1 — fluxo das migrations decidido: automático fora de produção (com seed),
+> script aplicado DENTRO do VPS em produção, porque o CI não alcança o Postgres.
 > **v2.1:** §2.0 — direção do webhook e a exposição que ela implica (PL22).
 > 🔄 **Reescrito** para a arquitetura **VPS + Coolify** (a v1 supunha Azure + Cloudflare
 > Pages + Neon). Ver [01-arquitetura §3.5](01-arquitetura.md).
@@ -17,7 +19,11 @@ Não é "suporta". **É construído sobre Docker**: tudo que ele implanta vira c
 | **docker-compose.yml** | Sobe a stack inteira |
 | **Nada** (só o código) | Detecta a linguagem e gera a imagem via *buildpack* |
 
-Para este projeto, **escreva Dockerfiles**. São três, todos triviais:
+Para este projeto, **escreva Dockerfiles**. São três (mais o de migrations).
+
+📐 **O padrão completo — cache de camadas, imagem `chiseled`, usuário não-root e
+`.dockerignore` — está na skill [`docker-e-aspire`](../../.claude/skills/docker-e-aspire/SKILL.md).**
+O esboço abaixo ficou aqui como referência rápida:
 
 ```dockerfile
 # src/Poligraph.Api/Dockerfile
@@ -34,7 +40,7 @@ ENTRYPOINT ["dotnet", "Poligraph.Api.dll"]
 
 ```dockerfile
 # etl/Dockerfile
-FROM python:3.12-slim
+FROM python:3.13-slim
 WORKDIR /etl
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -212,6 +218,31 @@ todo push.**
 
 ⚠️ **Nenhum teste aqui toca o banco de produção.** Se precisar de Postgres para teste de
 integração, use `services: postgres:` do próprio Actions — container efêmero.
+
+### 2.2.1 ✅ Migrations — decidido em 2026-08-26
+
+| | Local (`Environment != Production`) | Produção |
+|---|---|---|
+| Quem aplica | O projeto `Poligraph.Migrations`, via Aspire | Comando de pré-deploy do Coolify |
+| Dados de teste | ✅ Semeados se ainda não existirem | ⛔ Nunca |
+| ⛔ A API migra? | Não | **Nunca** |
+
+🔴 **O CI gera o script, mas não o aplica.** O runner do GitHub não alcança o Postgres —
+a 5432 não é exposta, pelo mesmo motivo que tirou o ETL do Actions. O CI roda
+`dotnet ef migrations script --idempotent` para **validar**; quem aplica é um container
+**dentro do VPS**, que já está na rede Docker.
+
+```bash
+# CI: valida
+dotnet ef migrations script --idempotent -o migration.sql
+# Coolify: aplica, antes do deploy
+docker compose run --rm migracoes
+```
+
+⚠️ **Migration destrutiva leva dois deploys** (expandir → migrar → contrair): durante a
+troca zero-downtime, o container antigo ainda serve com o schema novo aplicado.
+
+📐 Detalhe na skill `docker-e-aspire` §3.
 
 ### 2.3 O ETL — Scheduled Task do Coolify
 

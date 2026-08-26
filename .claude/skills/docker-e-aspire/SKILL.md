@@ -177,15 +177,7 @@ builder.Build().Run();
 
 Um projeto separado que só aplica migration e encerra:
 
-```csharp
-var builder = Host.CreateApplicationBuilder(args);
-builder.AddNpgsqlDbContext<PoligraphDb>("poligraph");
-var host = builder.Build();
-
-using var escopo = host.Services.CreateScope();
-var db = escopo.ServiceProvider.GetRequiredService<PoligraphDb>();
-await db.Database.MigrateAsync();
-```
+📐 **O código dele está na §3.1** — inclui a guarda de ambiente para o seed.
 
 | Motivo | |
 |---|---|
@@ -208,11 +200,137 @@ antigo — e o que o UptimeRobot vai pingar de fora.
 
 ---
 
-## 3. Erros que este projeto pode cometer
+## 3. ✅ Quando a migration roda — o fluxo decidido
+
+> **Local (`Environment != Production`):** aplica sozinha, junto com dados de teste.
+> **Produção:** fluxo externo, script aplicado via CI/CD. ⛔ **A API nunca migra em
+> produção.**
+
+| | Local | Produção |
+|---|---|---|
+| Quem dispara | ⭐ O projeto `Poligraph.Migrations`, pelo Aspire | O pipeline, antes do deploy |
+| Como | `Database.MigrateAsync()` | `migration.sql` idempotente |
+| Dados de teste | ✅ Sim, se ainda não existirem | ⛔ **Nunca** |
+| Se falhar | Você vê no dashboard do Aspire | 🔴 **O deploy não acontece** |
+
+### 3.1 O projeto de migrations, com os dois caminhos
+
+```csharp
+var builder = Host.CreateApplicationBuilder(args);
+builder.AddNpgsqlDbContext<PoligraphDb>("poligraph");
+var host = builder.Build();
+
+using var escopo = host.Services.CreateScope();
+var db = escopo.ServiceProvider.GetRequiredService<PoligraphDb>();
+
+await db.Database.MigrateAsync();          // idempotente por natureza
+
+if (!builder.Environment.IsProduction())
+    await SemeadorDesenvolvimento.SemearAsync(db);   // §3.2
+```
+
+⭐ **`MigrateAsync()` já é idempotente** — o EF consulta `__EFMigrationsHistory` e aplica só
+o que falta. Rodar duas vezes não faz nada na segunda.
+
+### 3.2 🔴 Dados de teste — o erro que quase todo mundo comete
+
+> ⛔ **Não use `HasData()` do EF para dados de teste.**
+> `HasData` entra **dentro da migration** — e a migration roda em produção. Seus deputados
+> fictícios iriam para o ar.
+
+Dados de teste ficam em **código, fora da migration, atrás da guarda de ambiente**:
+
+```csharp
+public static class SemeadorDesenvolvimento
+{
+    public static async Task SemearAsync(PoligraphDb db, CancellationToken ct = default)
+    {
+        // ⭐ guarda de idempotência: já semeado? sai.
+        if (await db.Pessoas.AnyAsync(ct)) return;
+
+        var pessoas = GerarParlamentares();
+        var votacoes = GerarVotacoes();
+        var perguntas = GerarPerguntas();   // 🔴 com polaridade dos dois sinais
+
+        db.AddRange(pessoas);
+        db.AddRange(votacoes);
+        db.AddRange(perguntas);
+        await db.SaveChangesAsync(ct);
+    }
+
+    private static IReadOnlyList<Pessoa> GerarParlamentares() => /* ... */;
+    private static IReadOnlyList<Votacao> GerarVotacoes() => /* ... */;
+    private static IReadOnlyList<Pergunta> GerarPerguntas() => /* ... */;
+}
+```
+
+⚠️ **O seed precisa conter perguntas com `polaridade = -1`.** Semear só polaridade `+1`
+faz o bug mais perigoso do sistema ficar invisível durante todo o desenvolvimento.
+
+| Guarda | |
+|---|---|
+| `if (await db.Pessoas.AnyAsync()) return;` | Simples e suficiente |
+| Alternativa | Uma linha em `execucao` marcando `SEED_DEV`, se o seed crescer |
+
+### 3.3 🔴 Produção: o script não pode ser aplicado do GitHub Actions
+
+Aqui a decisão esbarra em outra, tomada antes:
+
+> **A porta 5432 nunca é exposta à internet.** O runner do GitHub **não alcança o banco** —
+> pelo mesmo motivo que tirou o ETL do Actions.
+
+**Três caminhos, e o que sobra:**
+
+| | Caminho | Veredito |
+|---|---|---|
+| A | Actions conecta direto no Postgres | ⛔ Exige abrir a 5432. **Descartado** |
+| B | Actions entra por SSH e roda | 🟡 Coloca a chave do servidor no GitHub |
+| ⭐ **C** | **CI gera e valida o script · o VPS aplica** | ✅ **Escolhido** |
+
+```mermaid
+flowchart LR
+    A["git push"] --> B["CI: dotnet ef migrations script<br/>--idempotent"]
+    B --> C["CI: testes + valida o SQL"]
+    C --> D["Coolify: roda o container<br/>de migrations DENTRO do VPS"]
+    D --> E["Coolify: deploy da API"]
+    style D fill:#8b5cf6,color:#fff
+```
+
+⭐ **O container de migrations já está na rede Docker** — ele alcança `postgres:5432` sem
+que nada seja exposto. É o mesmo binário do desenvolvimento, com `Environment=Production`,
+o que faz o seed **não** rodar.
+
+```bash
+# no CI — gera o artefato e falha se a migration estiver quebrada
+dotnet ef migrations script --idempotent -o migration.sql
+
+# no Coolify — comando de pré-deploy
+docker compose run --rm migracoes
+```
+
+### 3.4 🔴 A migration tem que ser compatível com a versão ANTIGA
+
+Consequência do deploy zero-downtime: por alguns segundos, **o container antigo ainda está
+servindo com o schema novo já aplicado**.
+
+| ⛔ Quebra o container antigo | ✅ Seguro |
+|---|---|
+| `ADD COLUMN ... NOT NULL` sem default | `ADD COLUMN` anulável, preencher depois |
+| `DROP COLUMN` | Parar de usar agora, **remover no deploy seguinte** |
+| `RENAME COLUMN` | Adicionar a nova, migrar dado, remover a velha depois |
+
+> 🔑 **Regra: uma mudança destrutiva leva dois deploys.** Expandir, migrar, contrair.
+
+---
+
+## 4. Erros que este projeto pode cometer
 
 | ⛔ | Consequência |
 |---|---|
 | `Database.Migrate()` no `Program.cs` da API | Corrida no deploy zero-downtime |
+| `HasData()` para dado de teste | 🔴 Vai junto na migration e **semeia produção** |
+| Seed sem perguntas de polaridade `-1` | O bug mais perigoso fica invisível no dev |
+| Migration destrutiva num deploy só | Derruba o container antigo durante a troca |
 | Esquecer `.WithDataVolume()` | O banco local zera a cada restart |
 | `VITE_*` como env var em vez de build arg | Botão do Google some, sem erro |
 | Rodar como root no container | Achado óbvio em revisão de segurança |

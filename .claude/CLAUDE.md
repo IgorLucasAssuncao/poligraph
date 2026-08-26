@@ -110,7 +110,17 @@ Core isso significa **`HasCheckConstraint`** — ver [`plano/04 §2.4`](docs/pla
 | 🔴 **snake_case obrigatório** | PascalCase quebra o ETL Python |
 | 🔴 **EF é dono do schema** | O Python nunca cria tabela |
 | ⭐ **`DateTimeOffset`**, não `DateTime` | `timestamptz` do Npgsql exige `Kind=Utc` |
-| ⛔ **Não chamar `Database.Migrate()` na subida** | Zero-downtime sobe dois containers |
+| ⛔ **A API nunca migra** | Quem migra é o projeto `Poligraph.Migrations` |
+
+### Migrations
+
+| Ambiente | O que acontece |
+|---|---|
+| ⭐ `Environment != Production` | `MigrateAsync()` + **seed de dados de teste** (se ainda não existirem) |
+| 🔴 `Production` | Fluxo externo: o CI **gera e valida** o script; o **VPS aplica**, antes do deploy |
+
+⛔ **Nunca `HasData()` para dado de teste** — ele entra na migration e semearia produção.
+⚠️ **Mudança destrutiva leva dois deploys** (expandir → migrar → contrair).
 
 ### Python (ETL)
 
@@ -142,6 +152,7 @@ inflou a contagem em 8,8% — ver [`04-contratos`](docs/04-contratos.md).
 ```bash
 dotnet run --project src/Poligraph.AppHost      # sobe tudo (Aspire)
 dotnet ef migrations add <Nome> -p src/Poligraph.Api
+docker compose run --rm migracoes                # aplica em produção (dentro do VPS)
 dotnet ef migrations script --idempotent        # ⭐ conferir ANTES de aplicar
 dotnet test                                     # inclui o teste de polaridade
 ```
