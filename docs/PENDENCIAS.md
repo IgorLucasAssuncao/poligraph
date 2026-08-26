@@ -68,6 +68,7 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | **A2** | Regex de `categoria`, validadas contra amostra rotulada à mão | 🟡 Média | 🟡 Horas |
 | **A3** | Deduplicação de PEC em dois turnos | 🟡 Média | — |
 | **A4** | Quantas das 100 proposições sobrevivem ao corte de unanimidade | 🟡 Média | — |
+| **PL34** | 🔵 **Adiada por decisão do autor:** gravar as respostas individuais do questionário, SEM vínculo com a conta, para analisar quais perguntas dividem e quais ninguém entende (§ abaixo) | 🔵 Futuro | — |
 | ~~API4~~ | ✅ **Resolvida** — cosseno no grafo, concordância simples na tela (plano/07 §4.5) | — | — |
 
 > 🔑 **Por que esta é a frente mais crítica, e não uma lista de tarefas de conteúdo:**

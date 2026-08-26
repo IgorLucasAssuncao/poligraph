@@ -298,6 +298,56 @@ a frase. Assim a regra do RF-29 não pode ser burlada por engano na tela.
 
 ---
 
+## 5.2 🔵 O que NÃO é gravado hoje — e a decisão adiada (PL34)
+
+> **Nenhuma resposta individual do questionário é salva.** O cálculo acontece em memória,
+> na requisição, e o resultado não é persistido. Fechada a aba, não há registro de que a
+> pessoa respondeu — muito menos do que respondeu.
+
+### 5.2.1 O que é gravado hoje
+
+Só se a pessoa preencher a avaliação opcional, e **sem vínculo com a conta**:
+
+| Campo | O que é |
+|---|---|
+| `perguntas_respondidas` | **Quantas**, nunca quais |
+| `acordos_do_primeiro` · `comparaveis_do_primeiro` | O placar do primeiro colocado |
+| `acertou` | Se o resultado combinou com o esperado |
+| `posicao_autodeclarada` | Escala de −3 a +3 |
+
+⛔ **Não existe coluna de resposta.** Não há `q1 = concordo` em lugar nenhum do schema.
+
+### 5.2.2 Por que assim
+
+> **Guardar as 22 respostas seria guardar a opinião política da pessoa, pergunta por
+> pergunta** — posição declarada sobre anistia, armas, licenciamento, item a item.
+>
+> É mais sensível que a lista de quem ela segue, porque seguir é interesse; responder é
+> posição.
+
+E não era preciso: para validar o método bastam o placar e a autodeclaração.
+
+### 5.2.3 🔵 O que se perde — e a decisão adiada
+
+Sem as respostas individuais, duas perguntas ficam sem resposta:
+
+| Pergunta que não dá para responder | Por que importa |
+|---|---|
+| *"Qual afirmação mais divide os usuários?"* | Mede se o questionário discrimina |
+| ⭐ *"Qual afirmação ninguém entende?"* | 🔴 **Avalia a curadoria** — taxa alta de "não sei" numa pergunta significa que a reescrita falhou (PL11, PL12) |
+
+⭐ **O desenho que resolveria isso sem criar perfil:** uma linha por questionário
+respondido, com as respostas e **sem `usuario_id`** — exatamente o padrão já usado na
+`avaliacao_questionario`.
+
+Isso permitiria afirmar *"a q7 teve 40% de 'não sei'"*, que é achado forte sobre o método,
+sem permitir *"o Fulano respondeu X na q7"*.
+
+⚠️ **Adiado por decisão do autor (2026-08-26).** Registrado como **PL34** — hoje o sistema
+não grava, e mudar isso é acréscimo, não correção.
+
+---
+
 ## 6. Pendências
 
 | # | Pendência |
@@ -308,3 +358,4 @@ a frase. Assim a regra do RF-29 não pode ser burlada por engano na tela.
 | **PL5** | Biblioteca do grafo no front (D3? Cytoscape? sigma.js?) |
 | **API7** | Medir o tempo real do job de similaridade |
 | **RQ3** | N final de perguntas |
+| **PL34** | 🔵 **Adiada** — gravar respostas individuais sem vínculo com a conta, para avaliar a curadoria (§5.2.3) |
