@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BannerConsentimento } from './BannerConsentimento';
 import { TEXTO_CONSENTIMENTO, VERSAO_CONSENTIMENTO } from './textos-legais';
 
@@ -7,7 +7,12 @@ describe('BannerConsentimento', () => {
   beforeEach(() => {
     localStorage.clear();
     document.getElementById('clarity-js')?.remove();
+    // ⚠️ Sem ferramenta configurada o banner não aparece — ver o último teste.
+    //    Os demais precisam do cenário "há o que consentir".
+    vi.stubEnv('VITE_CLARITY_ID', 'abcdefghij');
   });
+
+  afterEach(() => vi.unstubAllEnvs());
 
   it('aparece quando ainda não houve escolha', () => {
     render(<BannerConsentimento />);
@@ -92,5 +97,20 @@ describe('BannerConsentimento', () => {
     render(<BannerConsentimento />);
 
     expect(document.getElementById('clarity-js')).toBeNull();
+  });
+
+  /**
+   * ⭐ Sem ferramenta de medição configurada, não há o que consentir.
+   *
+   * Mostrar o banner assim mesmo seria teatro de consentimento: pediria permissão para
+   * algo que não acontece, e treinaria a pessoa a clicar em "aceitar" sem ler — que é
+   * exatamente o hábito que torna o consentimento inútil quando ele passa a importar.
+   */
+  it('não aparece quando não há ferramenta de medição configurada', () => {
+    vi.stubEnv('VITE_CLARITY_ID', '');
+
+    render(<BannerConsentimento />);
+
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

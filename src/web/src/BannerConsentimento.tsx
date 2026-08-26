@@ -16,6 +16,9 @@ type Escolha = { versao: string; aceito: boolean; em: string };
  * no painel e passar o sinal por este componente.
  */
 export function BannerConsentimento() {
+  // ⚠️ Lido aqui, não no escopo do módulo — senão o valor congela na importação
+  //    e o componente fica impossível de testar.
+  const clarityId = import.meta.env.VITE_CLARITY_ID;
   const [escolha, setEscolha] = useState<Escolha | null>(null);
   const [carregado, setCarregado] = useState(false);
 
@@ -30,6 +33,13 @@ export function BannerConsentimento() {
 
     setCarregado(true);
   }, []);
+
+  // ⭐ Sem ferramenta de medição configurada, não há o que consentir.
+  //
+  // Mostrar o banner assim mesmo seria teatro de consentimento: pediria permissão para
+  // algo que não acontece, e treinaria a pessoa a clicar em "aceitar" sem ler — que é
+  // exatamente o hábito que torna o consentimento inútil quando ele passa a importar.
+  if (!clarityId) return null;
 
   if (!carregado || escolha) return null;
 

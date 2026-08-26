@@ -15,23 +15,33 @@
 dotnet run --project src/Poligraph.AppHost
 ```
 
-Isso sobe Postgres, aplica as migrations, **semeia dados de teste** e sobe a API.
+⭐ **Um comando sobe TUDO:** Postgres, migrations, seed, API **e o front**.
 O dashboard do Aspire abre no navegador com o endereço de cada serviço.
+
+| Serviço | Onde |
+|---|---|
+| **Front** | http://localhost:5173 |
+| API | porta dinâmica — veja no dashboard |
+| Dashboard | o link aparece no terminal |
+
+⚠️ **Na primeira vez rode `npm install` antes**, senão o Vite não sobe:
+
+```bash
+cd src/web && npm install
+```
 
 ⭐ **Não é preciso configurar nada.** Nenhuma variável, nenhuma conta, nenhuma chave.
 
-### O front
-
-```bash
-cd src/web && npm install && npm run dev
-```
+⭐ O proxy `/api` do Vite aponta para a API pelo endereço que o Aspire injeta — então
+front e API ficam na **mesma origem**, sem CORS, e o cookie `SameSite=Lax` funciona
+igual a produção.
 
 ## ⚠️ O que fica desligado sem configuração
 
 | Recurso | Falta | Sintoma |
 |---|---|---|
 | **Login com Google** | `VITE_GOOGLE_CLIENT_ID` + `Google:ClientId` | O botão não aparece; um aviso explica |
-| **Medição de uso** | `VITE_CLARITY_ID` | O banner aparece, mas nada é gravado |
+| **Medição de uso** | `VITE_CLARITY_ID` | ⭐ O banner **não aparece** — sem ferramenta, não há o que consentir |
 | **Digest por e-mail** | Serviço de envio (PL26) | O digest é montado, mas não sai |
 
 > 🔑 **Nada disso bloqueia o resto.** Questionário, resultado, fichas, busca e grafo

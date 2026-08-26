@@ -19,9 +19,21 @@ var migracoes = builder.AddProject<Projects.Poligraph_Migrations>("migracoes")
     .WaitFor(postgres);
 
 // ─── API ───────────────────────────────────────────────────────────
-builder.AddProject<Projects.Poligraph_Api>("api")
+var api = builder.AddProject<Projects.Poligraph_Api>("api")
     .WithReference(bancoPoligraph)
     .WaitForCompletion(migracoes)   // 🔴 não sobe antes de o schema existir
     .WithExternalHttpEndpoints();
+
+// ─── front ─────────────────────────────────────────────────────────
+// ⚠️ O Vite precisa saber para onde mandar /api. Em produção quem roteia é o nginx,
+//    na mesma origem; em desenvolvimento é o proxy do próprio Vite, que lê esta
+//    variável. Sem ela o proxy apontaria para uma porta fixa que o Aspire não usa.
+builder.AddNpmApp("web", "../web", "dev")
+    .WithReference(api)
+    .WaitFor(api)
+    .WithEnvironment("VITE_API_URL", api.GetEndpoint("http"))
+    .WithHttpEndpoint(env: "PORT", port: 5173)
+    .WithExternalHttpEndpoints()
+    .PublishAsDockerFile();
 
 builder.Build().Run();
