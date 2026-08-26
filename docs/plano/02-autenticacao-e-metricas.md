@@ -1,6 +1,9 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v2.2 — 2026-08-25
+> **Status:** v2.3 — 2026-08-25
+> **v2.3:** §3.6.0.1 — 🔑 como se verifica o cookie sem ter guardado nada: assinatura
+> HMAC refeita e comparada. Exemplo numérico do que acontece se alguém adulterar o
+> `usuario_id`.
 > **v2.2:** §3.6.0 — o fluxo de login em sete passos, com diagrama. ⚠️ Desfaz a confusão
 > criada por "não armazenamos token": existem DOIS tokens e ambos são essenciais; nenhum
 > é guardado.
@@ -829,7 +832,77 @@ assinatura.*
 
 ---
 
-### 3.6.0.1 Por que a API não continua usando o `id_token`
+### 3.6.0.1 🔑 Como verificar o cookie sem ter guardado nada
+
+A dúvida natural é: *"se não guardamos o cookie, como conferimos que ele é válido?"*
+
+> **Porque a verificação não é uma consulta. É uma conta que se refaz.**
+
+O servidor tem **um segredo** que só ele conhece. Ao criar o cookie, ele calcula uma
+**assinatura** a partir do conteúdo + segredo. Quando o cookie volta, ele **refaz a mesma
+conta** e compara.
+
+#### O exemplo concreto
+
+**No login**, o servidor monta:
+
+```
+conteúdo   = {"usuario_id":42,"sessao_versao":0,"exp":1757308800}
+segredo    = "k7Fq...9dZ"          ← só o servidor tem; vive na variável de ambiente
+assinatura = HMAC_SHA256(conteúdo, segredo)  =  9c1f4a...e7b2
+```
+
+E manda para o navegador:
+
+```
+Set-Cookie: sid=<conteúdo>.<assinatura>
+```
+
+**Em cada chamada seguinte**, o cookie volta e o servidor faz três coisas:
+
+| # | |
+|---|---|
+| 1 | Separa `conteúdo` de `assinatura` |
+| 2 | **Recalcula** `HMAC_SHA256(conteúdo, segredo)` |
+| 3 | O resultado bate com a assinatura recebida? |
+
+✅ **Bateu** → o conteúdo é autêntico. `usuario_id = 42`. **É esse o usuário.**
+⛔ **Não bateu** → `401`.
+
+#### Por que isso é seguro
+
+Suponha que alguém edite o cookie de `"usuario_id":42` para `"usuario_id":43`, para se
+passar por outra pessoa:
+
+```
+conteúdo adulterado → HMAC recalculado = 3b8e12...4fa9
+assinatura que veio junto             = 9c1f4a...e7b2     ⛔ não bate
+```
+
+> 🔑 **Para forjar a assinatura correta seria preciso ter o segredo — e ele nunca sai do
+> servidor.** É por isso que não é necessário guardar nada: **o servidor reconhece a
+> própria assinatura**, do mesmo jeito que você reconhece a sua letra sem precisar de uma
+> lista de tudo que já assinou.
+
+⭐ **No ASP.NET Core é ainda melhor:** o Data Protection **criptografa** o conteúdo além de
+assiná-lo. O navegador nem consegue ler `usuario_id`. O princípio, porém, é este mesmo.
+
+#### E as outras conferências
+
+| Conferência | Precisa do banco? |
+|---|---|
+| Assinatura | ⛔ **Não** — é conta |
+| Expiração (`exp`) | ⛔ **Não** — é comparar data |
+| ⭐ `sessao_versao` | ✅ **Sim** — um `SELECT` por chave primária |
+
+A terceira é o único acesso ao banco, e serve só para **revogação** ("sair de todos os
+aparelhos"). A identidade em si sai da assinatura.
+
+⚠️ **E se roubarem o cookie?** Quem tiver o cookie **é** aquele usuário até ele expirar —
+como acontece em qualquer site. Por isso ele é `HttpOnly` (script não lê), `Secure` (só
+por HTTPS) e tem prazo. Se houver suspeita, o `sessao_versao + 1` derruba tudo na hora.
+
+### 3.6.0.2 Por que a API não continua usando o `id_token`
 
 Depois do passo 6, cada requisição usa o cookie — e não o token do Google. São dois
 momentos com mecanismos diferentes:
