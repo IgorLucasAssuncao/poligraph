@@ -536,7 +536,8 @@ lógica de renovação. **O navegador cuida do cookie.**
 
 | Chave | Onde | Secreto? |
 |---|---|---|
-| `Google:ClientId` | `appsettings.json` | ⛔ Não — é público |
+| `Google:ClientId` | ⭐ **Um por ambiente** — `appsettings.Development.json` e env var do Coolify | ⛔ Não — é público |
+| `VITE_GOOGLE_CLIENT_ID` | 🔴 **Build arg** do Dockerfile do front, não env var | ⛔ Não |
 | Chaves do Data Protection | 🔴 Volume `/keys` no Coolify | ✅ Sim (PL30) |
 | `ConnectionStrings:Postgres` | Variável de ambiente no Coolify | ✅ Sim |
 

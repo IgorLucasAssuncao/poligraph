@@ -1,6 +1,9 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v2.4 — 2026-08-26
+> **Status:** v2.5 — 2026-08-26
+> **v2.5:** §3.2.2.4 — dois Client IDs, um por ambiente. ⭐ Isolamento real, porque a
+> conferência do `aud` rejeita token de dev na produção. 🔴 O Vite congela o Client ID em
+> tempo de BUILD — precisa ser build arg no Coolify.
 > **v2.4:** §3.2.2 reescrita contra o console atual — a Google moveu tudo para **Google
 > Auth Platform**; os nomes de tela antigos não existem mais. Acrescentadas as regras das
 > origens autorizadas e o que já dá para fazer hoje, sem domínio.
@@ -292,6 +295,61 @@ nada além dos três.**
 ⭐ **O Client ID sai no passo 6 e já serve para desenvolver localmente.** Domínio e política
 de privacidade só bloqueiam a **publicação**, não o desenvolvimento — dá para ter o login
 funcionando na sua máquina hoje e resolver o resto depois.
+
+#### 3.2.2.4 ⭐ Um Client ID para teste e outro para produção
+
+**Sim, e é o arranjo recomendado.** Mas é preciso saber o que é por *cliente* e o que é
+por *projeto*:
+
+| Configuração | Escopo |
+|---|---|
+| **Client ID** e suas origens autorizadas | ⭐ Por **cliente** — dá para ter vários |
+| Branding, escopos, *publishing status*, testadores | 🔴 Por **projeto** — compartilhados |
+
+Daí as três formas, e a escolha:
+
+| | Arranjo | Veredito |
+|---|---|---|
+| **A** | Um cliente só, com `localhost` **e** o domínio nas origens | 🟡 Funciona. Mas um erro de configuração derruba os dois ambientes juntos |
+| ⭐ **B** | **Dois clientes no mesmo projeto** — `poligraph-dev` e `poligraph-prod` | ✅ **Escolha certa** |
+| **C** | Dois projetos separados | 🟡 Só se quiser *publishing status* diferente por ambiente |
+
+```
+Projeto: poligraph
+├── Cliente "poligraph-dev"   → origens: http://localhost, http://localhost:5173
+└── Cliente "poligraph-prod"  → origens: https://poligraph.com.br
+```
+
+##### ⭐ O ganho real não é organização — é isolamento de verdade
+
+> **A API confere o `aud` contra um Client ID específico** (§3.4.0). Com clientes
+> separados, **um token gerado no ambiente de desenvolvimento é rejeitado pela produção
+> automaticamente** — o `aud` não bate.
+
+Não é ceremônia: é a mesma conferência que já protege contra token de outro app,
+funcionando também entre os seus próprios ambientes.
+
+##### Onde cada um vai
+
+| | Desenvolvimento | Produção |
+|---|---|---|
+| API (C#) | `appsettings.Development.json` | Variável de ambiente no Coolify |
+| Front (React) | `.env.local` | 🔴 **Build arg** — ver abaixo |
+
+⚠️ 🔴 **O Vite embute `import.meta.env` no bundle em tempo de BUILD, não de execução.**
+Definir `VITE_GOOGLE_CLIENT_ID` como variável de ambiente do container **não funciona** —
+o valor já foi congelado no `npm run build`. No Dockerfile do front:
+
+```dockerfile
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+RUN npm run build
+```
+
+E no Coolify, declarar como **build variable**, não como variável de ambiente comum.
+
+⚠️ **O sintoma quando se erra isso é traiçoeiro:** o build passa, o site sobe, e o botão do
+Google simplesmente não aparece — porque o `client_id` foi para o bundle como `undefined`.
 
 ### 3.2.3 O código — as duas metades
 
