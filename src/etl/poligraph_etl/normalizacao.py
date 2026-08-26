@@ -28,13 +28,18 @@ _VOTOS = {
 }
 
 
-def normalizar_voto(bruto: str | None) -> int | None:
+def normalizar_voto(bruto) -> int | None:
     """Converte o voto textual da Câmara para o domínio fechado {-1, 0, 1, None}.
 
     ⚠️ Devolver None significa "fora do cálculo", não "discordou". Tratar ausência
     como discordância faria o ranking medir presença em vez de afinidade.
+
+    🔴 Não anotado como `str | None` de propósito: o que chega aqui vem do pandas, e
+    célula vazia vira **`float('nan')`**, não `None` nem `""`. Foi assim que a
+    ingestão real de 2025 morreu com `'float' object has no attribute 'strip'` — o
+    `dtype=str` do `read_csv` não alcança o que o `na_values` transformou em nulo.
     """
-    if bruto is None:
+    if bruto is None or not isinstance(bruto, str):
         return None
 
     chave = _sem_acento(bruto.strip().lower())

@@ -135,3 +135,24 @@ def test_cpf_preserva_zero_a_esquerda():
 )
 def test_cpf(bruto, esperado):
     assert normalizar_cpf(bruto) == esperado
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 O que o pandas realmente entrega — descoberto na ingestão real
+# ═══════════════════════════════════════════════════════════════════
+
+
+def test_voto_vazio_do_pandas_vira_nulo():
+    """🔴 Célula vazia no CSV vira `float('nan')`, não `None` nem `""`.
+
+    ⚠️ O `dtype=str` do `read_csv` não alcança o que o `na_values` já transformou em
+    nulo. A ingestão de 2025 morreu aqui com
+    `'float' object has no attribute 'strip'`.
+    """
+    assert normalizar_voto(float("nan")) is None
+
+
+def test_voto_de_tipo_inesperado_nao_estoura():
+    # ⚠️ Fora do cálculo, ⛔ nunca discordância — ausência não é "votou contra".
+    for entrada in (None, 0, 1.5, [], {}):
+        assert normalizar_voto(entrada) is None
