@@ -83,11 +83,25 @@ export type ParlamentarAfim = {
   comparaveis: number;
 };
 
+/**
+ * 🔴 `baseDeVotacoes` existe para a tela poder ser franca: a posição do cidadão vale
+ * sobre as perguntas que ele respondeu; a de cada deputado, sobre a legislatura
+ * inteira. Não é a mesma medida com o mesmo nome.
+ */
+export type PosicaoDoCidadao = {
+  eixoX: number;
+  eixoY: number;
+  comunidade: number | null;
+  vizinhosUsados: number;
+  baseDeVotacoes: number;
+};
+
 export type ResultadoAfinidade = {
   casa: string;
   totalPerguntasRespondidas: number;
   maisProximos: ParlamentarAfim[];
   maisDistantes: ParlamentarAfim[];
+  posicaoNoGrafo: PosicaoDoCidadao | null;
 };
 
 export class NaoAutenticadoError extends Error {

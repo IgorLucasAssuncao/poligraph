@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { obterGrafo, type Grafo as DadosDoGrafo, type NoDoGrafo } from '../api';
 import { CabecalhoDaColuna } from '../componentes/Layout';
+import { GrafoAmpliado } from '../componentes/GrafoAmpliado';
 import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
 import { Termo } from '../componentes/Termo';
 
@@ -17,6 +18,7 @@ export function Grafo() {
   const navegar = useNavigate();
   const [grafo, setGrafo] = useState<DadosDoGrafo | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [ampliado, setAmpliado] = useState(false);
 
   useEffect(() => {
     obterGrafo()
@@ -64,7 +66,20 @@ export function Grafo() {
         subtitulo={`${grafo.nos.length} deputados · ${grafo.arestas.length} ligações`}
       />
 
+      <div className="grafo-topo">
+        <button type="button" className="botao-secundario" onClick={() => setAmpliado(true)}>
+          Ampliar
+        </button>
+      </div>
+
       <TelaDoGrafo grafo={grafo} aoSelecionar={abrirPerfil} />
+
+      <GrafoAmpliado
+        grafo={grafo}
+        aberto={ampliado}
+        aoFechar={() => setAmpliado(false)}
+        aoSelecionar={abrirPerfil}
+      />
 
       <section className="grafo-explicacao">
         <h2>Como ler</h2>

@@ -1,9 +1,12 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { ParlamentarAfim, ResultadoAfinidade } from '../api';
+import { obterGrafo, type Grafo, type ParlamentarAfim, type ResultadoAfinidade } from '../api';
 import { Avaliacao } from './Avaliacao';
 import { Avatar } from './Avatar';
 import { CabecalhoDaColuna } from './Layout';
+import { GrafoAmpliado } from './GrafoAmpliado';
 import { LinhaParlamentar } from './LinhaParlamentar';
+import { TelaDoGrafo } from './TelaDoGrafo';
 
 /**
  * A tela de resultado.
@@ -20,6 +23,8 @@ export function Resultado({
   aoRefazer: () => void;
 }) {
   const [primeiro, ...demais] = resultado.maisProximos;
+  const grafo = useGrafo(resultado.posicaoNoGrafo !== null);
+  const [ampliado, setAmpliado] = useState(false);
 
   return (
     <>
@@ -34,6 +39,38 @@ export function Resultado({
         A comparação usa apenas as votações em que o parlamentar esteve presente e se
         posicionou.
       </p>
+
+      {grafo && resultado.posicaoNoGrafo && (
+        <section className="resultado-grafo">
+          <h3 className="titulo-secao">Onde você caiu</h3>
+
+          <TelaDoGrafo grafo={grafo} cidadao={resultado.posicaoNoGrafo} altura={320} />
+
+          <p className="ajuda ajuda-espacada">
+            O losango é você, posicionado entre os{' '}
+            <strong>{resultado.posicaoNoGrafo.vizinhosUsados}</strong> deputados com quem
+            você mais concordou.{' '}
+            {/* 🔴 Sem esta frase a tela afirma uma precisão que o dado não tem. */}
+            <strong>
+              Sua posição vale sobre {resultado.posicaoNoGrafo.baseDeVotacoes} perguntas
+            </strong>{' '}
+            — a de cada deputado, sobre a legislatura inteira.
+          </p>
+
+          <div className="resultado-acoes">
+            <button type="button" className="botao-secundario" onClick={() => setAmpliado(true)}>
+              Ver o grafo inteiro
+            </button>
+          </div>
+
+          <GrafoAmpliado
+            grafo={grafo}
+            cidadao={resultado.posicaoNoGrafo}
+            aberto={ampliado}
+            aoFechar={() => setAmpliado(false)}
+          />
+        </section>
+      )}
 
       {demais.length > 0 && (
         <>
@@ -72,6 +109,21 @@ export function Resultado({
 }
 
 // ═══════════════════════════════════════════════════════════════════
+
+/** ⚠️ Só busca o grafo se houver posição — senão são centenas de KB à toa. */
+function useGrafo(precisa: boolean): Grafo | null {
+  const [grafo, setGrafo] = useState<Grafo | null>(null);
+
+  useEffect(() => {
+    if (!precisa) return;
+
+    obterGrafo()
+      .then(setGrafo)
+      .catch(() => setGrafo(null));
+  }, [precisa]);
+
+  return grafo;
+}
 
 /**
  * O primeiro colocado, em tamanho grande.

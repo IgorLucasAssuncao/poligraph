@@ -77,6 +77,99 @@ public class TestesEndpointAfinidade : BaseIntegracao
     private record PerguntaLida(
         string Id, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
 
+    /// <summary>
+    /// 🔴 A posição do cidadão é o CENTROIDE de quem ele mais concorda, ⛔ nunca a
+    /// posição de um deputado específico.
+    ///
+    /// ⚠️ Copiar a posição do primeiro colocado seria mais simples e estaria errado: o
+    /// topo empata — a medição deu empate mediano de 30 —, e o cidadão saltaria de
+    /// lugar entre duas execuções sem que nada tivesse mudado.
+    /// </summary>
+    [SkippableFact]
+    public async Task Posicao_FicaEntreOsVizinhos_NaoEmCimaDeUmDeles()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        await MontarNosDoGrafoAsync();
+        using var cliente = CriarCliente();
+
+        var resposta = await cliente.PostAsJsonAsync(Rota, new { respostas = TodasConcordo() });
+        resposta.EnsureSuccessStatusCode();
+
+        var lido = await resposta.Content.ReadFromJsonAsync<RespostaLida>();
+        Assert.NotNull(lido?.PosicaoNoGrafo);
+
+        var posicao = lido.PosicaoNoGrafo;
+        var eixos = await Db.NosMetrica.AsNoTracking().Select(n => n.EixoX!.Value).ToListAsync();
+
+        // dentro da nuvem, ⛔ não fora dela
+        Assert.InRange(posicao.EixoX, eixos.Min(), eixos.Max());
+        Assert.True(posicao.VizinhosUsados > 1, "um vizinho só não é centroide");
+
+        // 🔴 A asserção que importa: o cidadão NÃO cai em cima de ninguém.
+        //
+        // ⚠️ A primeira versão deste teste só conferia o intervalo, e por isso passava
+        //    mesmo com a implementação copiando a posição do primeiro colocado —
+        //    verificado por mutação. Intervalo não distingue centroide de cópia.
+        Assert.DoesNotContain(eixos, e => Math.Abs(e - posicao.EixoX) < 1e-6);
+
+        // ⭐ A base precisa vir junto: é o que permite a tela ser franca sobre a
+        //    diferença entre 22 perguntas e a legislatura inteira.
+        Assert.Equal(lido.TotalPerguntasRespondidas, posicao.BaseDeVotacoes);
+    }
+
+    /// <summary>⭐ Sem execução do grafo, a tela omite o desenho — não inventa ponto.</summary>
+    [SkippableFact]
+    public async Task SemExecucaoDoGrafo_NaoDevolvePosicao()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        using var cliente = CriarCliente();
+
+        var resposta = await cliente.PostAsJsonAsync(Rota, new { respostas = TodasConcordo() });
+        resposta.EnsureSuccessStatusCode();
+
+        var lido = await resposta.Content.ReadFromJsonAsync<RespostaLida>();
+
+        Assert.Null(lido?.PosicaoNoGrafo);
+    }
+
+    private record PosicaoLida(
+        float EixoX, float EixoY, short? Comunidade, int VizinhosUsados, int BaseDeVotacoes);
+
+    private record RespostaLida(
+        int TotalPerguntasRespondidas, PosicaoLida? PosicaoNoGrafo);
+
+    /// <summary>Uma execução concluída com posições espalhadas, o mínimo para posicionar.</summary>
+    private async Task MontarNosDoGrafoAsync()
+    {
+        var ids = await Db.Pessoas.AsNoTracking().OrderBy(p => p.Id)
+            .Select(p => p.Id).ToListAsync();
+
+        var execucao = new Execucao
+        {
+            Casa = "CAMARA", Legislatura = 57, K = 10,
+            VersaoCarga = "teste", Status = "CONCLUIDA"
+        };
+        Db.Execucoes.Add(execucao);
+        await Db.SaveChangesAsync();
+
+        for (var i = 0; i < ids.Count; i++)
+        {
+            Db.NosMetrica.Add(new NoMetrica
+            {
+                ExecucaoId = execucao.Id,
+                PessoaId = ids[i],
+                Comunidade = (short)(i / 4),
+                EixoX = -1f + i * (2f / Math.Max(ids.Count - 1, 1)),
+                EixoY = 0.25f,
+                NVotacoes = 5
+            });
+        }
+
+        await Db.SaveChangesAsync();
+    }
+
     [SkippableFact]
     public async Task PoucasRespostas_Retorna422()
     {

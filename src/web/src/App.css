@@ -900,3 +900,50 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   font-family: var(--dado); font-size: .68rem;
   text-transform: uppercase; letter-spacing: .09em; color: var(--realce);
 }
+
+/* ═══ GRAFO: NAVEGAÇÃO E AMPLIAÇÃO ═════════════════════════════ */
+.grafo-topo { display: flex; justify-content: flex-end; padding: .75rem 1rem 0; }
+
+.grafo-zoom {
+  position: absolute; right: .75rem; bottom: .75rem;
+  display: flex; flex-direction: column; gap: 1px;
+  background: var(--borda-forte); border: 1px solid var(--borda-forte);
+  border-radius: 8px; overflow: hidden;
+}
+.grafo-zoom button {
+  width: 2rem; height: 2rem; padding: 0;
+  background: var(--fundo); border: none; color: var(--texto);
+  font-size: .95rem; line-height: 1;
+}
+.grafo-zoom button:hover { background: var(--painel); color: var(--realce); }
+
+.grafo-foco {
+  position: absolute; left: .75rem; top: .75rem; margin: 0;
+  padding: .45rem .7rem; max-width: calc(100% - 5rem);
+  background: var(--fundo); border: 1px solid var(--borda-forte);
+  border-radius: 8px; font-size: .82rem;
+}
+
+.grafo-dica strong { display: block; }
+.grafo-ajuda-uso {
+  margin: .6rem 0 0; font-size: .78rem; color: var(--suave);
+}
+
+/* ⚠️ O grafo não se lê numa coluna de 52rem: 655 pontos viram nuvem. */
+.grafo-ampliado {
+  width: min(92vw, 82rem); max-width: none;
+  padding: 0; border: 1px solid var(--borda-forte); border-radius: 14px;
+  background: var(--fundo); color: var(--texto);
+  box-shadow: 0 16px 50px rgb(0 0 0 / 28%);
+}
+.grafo-ampliado::backdrop { background: rgb(0 0 0 / 55%); backdrop-filter: blur(3px); }
+.grafo-ampliado header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--borda);
+}
+.grafo-ampliado h2 { margin: 0; font-size: 1.2rem; }
+.grafo-ampliado .ajuda { margin: .1rem 0 0; }
+.grafo-ampliado .grafo { border-bottom: none; }
+
+.resultado-grafo { border-bottom: 1px solid var(--borda); padding-bottom: 1rem; }
+.resultado-grafo .grafo { border-bottom: none; }

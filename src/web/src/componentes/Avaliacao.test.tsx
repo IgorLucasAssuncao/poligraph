@@ -19,6 +19,8 @@ const RESULTADO: ResultadoAfinidade = {
     { pessoaId: 1, nome: 'Ana Ribeiro', partido: 'A', uf: 'SP', acordos: 9, comparaveis: 12 },
   ],
   maisDistantes: [],
+  // ⚠️ Sem execução do grafo não há posição — a tela omite o desenho.
+  posicaoNoGrafo: null,
 };
 
 /**

@@ -13,6 +13,8 @@ const RESULTADO: ResultadoAfinidade = {
   maisDistantes: [
     { pessoaId: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', uf: 'MG', acordos: 0, comparaveis: 3 },
   ],
+  // ⚠️ Sem execução do grafo não há posição — a tela omite o desenho, não inventa ponto.
+  posicaoNoGrafo: null,
 };
 
 /** ⚠️ O componente usa `Link`, que exige contexto de rota. */

@@ -10,11 +10,30 @@ public record RequisicaoAfinidade(IReadOnlyList<RespostaCidadao> Respostas);
 public record ParlamentarAfim(
     long PessoaId, string Nome, string Partido, string Uf, int Acordos, int Comparaveis);
 
+/// <summary>
+/// Onde o cidadão cai no grafo.
+///
+/// ⭐ Centroide ponderado dos parlamentares com quem ele mais concordou — ou seja, ele
+/// é posicionado ENTRE as pessoas com quem se parece, que é a leitura honesta.
+///
+/// 🔴 `BaseDeVotacoes` existe para a tela poder ser franca: a posição do cidadão vale
+/// sobre as perguntas que ele respondeu (dezenas), a de cada deputado sobre a
+/// legislatura inteira (mais de mil). ⛔ Não é a mesma medida com o mesmo nome, e
+/// esconder isso seria afirmar uma precisão que o dado não tem.
+/// </summary>
+public record PosicaoDoCidadao(
+    float EixoX,
+    float EixoY,
+    short? Comunidade,
+    int VizinhosUsados,
+    int BaseDeVotacoes);
+
 public record RespostaAfinidade(
     string Casa,
     int TotalPerguntasRespondidas,
     IReadOnlyList<ParlamentarAfim> MaisProximos,
-    IReadOnlyList<ParlamentarAfim> MaisDistantes);
+    IReadOnlyList<ParlamentarAfim> MaisDistantes,
+    PosicaoDoCidadao? PosicaoNoGrafo);
 
 /// <summary>
 /// ⚠️ `TotalVotos` é o comparecimento na votação — quantos deputados se posicionaram.
@@ -108,12 +127,93 @@ public static class EndpointsAfinidade
             Casa: "CAMARA",
             TotalPerguntasRespondidas: opinadas.Count,
             MaisProximos: Montar(resultados.OrderByDescending(r => r.Proporcao), fichas),
-            MaisDistantes: Montar(resultados.OrderBy(r => r.Proporcao), fichas)));
+            MaisDistantes: Montar(resultados.OrderBy(r => r.Proporcao), fichas),
+            PosicaoNoGrafo: await PosicionarAsync(db, resultados, opinadas.Count, ct)));
     }
 
     // ═══════════════════════════════════════════════════════════════
     // PRIVADOS — na ordem em que são usados
     // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>Quantos vizinhos entram no centroide.</summary>
+    private const int VizinhosParaPosicionar = 10;
+
+    /// <summary>
+    /// Coloca o cidadão no grafo, pelo centroide ponderado dos mais parecidos.
+    ///
+    /// ⚠️ Ponderado pela concordância AO QUADRADO. Sem elevar, quem concordou em 60%
+    /// puxa quase tanto quanto quem concordou em 95%, e todo mundo acaba no meio do
+    /// desenho — que é o pior resultado possível: parece medida e não separa nada.
+    ///
+    /// ⚠️ A comunidade é a MODA entre os vizinhos, não a do primeiro colocado. Com o
+    /// topo empatado — e a medição mostrou empate mediano de 30 —, olhar só o primeiro
+    /// seria sortear entre gente que a conta não distingue.
+    ///
+    /// ⛔ Devolve `null` quando não há execução do grafo, e a tela omite o desenho em
+    /// vez de inventar um ponto.
+    /// </summary>
+    private static async Task<PosicaoDoCidadao?> PosicionarAsync(
+        PoligraphDb db,
+        List<ResultadoAfinidade> resultados,
+        int perguntasRespondidas,
+        CancellationToken ct)
+    {
+        var execucaoId = await db.Execucoes.AsNoTracking()
+            .Where(e => e.Status == "CONCLUIDA")
+            .OrderByDescending(e => e.Id)
+            .Select(e => (long?)e.Id)
+            .FirstOrDefaultAsync(ct);
+
+        if (execucaoId is null) return null;
+
+        var vizinhos = resultados
+            .OrderByDescending(r => r.Proporcao)
+            .Take(VizinhosParaPosicionar)
+            .ToList();
+
+        var ids = vizinhos.Select(v => v.PessoaId).ToList();
+
+        var metricas = await db.NosMetrica.AsNoTracking()
+            .Where(n => n.ExecucaoId == execucaoId && ids.Contains(n.PessoaId)
+                        && n.EixoX != null && n.EixoY != null)
+            .ToDictionaryAsync(n => n.PessoaId, ct);
+
+        if (metricas.Count == 0) return null;
+
+        double x = 0, y = 0, somaDosPesos = 0;
+        var contribuiram = 0;
+        var comunidades = new Dictionary<short, double>();
+
+        foreach (var vizinho in vizinhos)
+        {
+            if (!metricas.TryGetValue(vizinho.PessoaId, out var metrica)) continue;
+
+            var peso = vizinho.Proporcao * vizinho.Proporcao;
+            if (peso <= 0) continue;
+
+            contribuiram++;
+            x += metrica.EixoX!.Value * peso;
+            y += metrica.EixoY!.Value * peso;
+            somaDosPesos += peso;
+
+            if (metrica.Comunidade is { } comunidade)
+                comunidades[comunidade] = comunidades.GetValueOrDefault(comunidade) + peso;
+        }
+
+        // ⚠️ Todos com concordância zero: dividir daria NaN, e NaN vira `null` no JSON
+        //    sem erro nenhum — a tela receberia um ponto fantasma.
+        if (somaDosPesos <= 0) return null;
+
+        return new PosicaoDoCidadao(
+            EixoX: (float)(x / somaDosPesos),
+            EixoY: (float)(y / somaDosPesos),
+            Comunidade: comunidades.Count == 0
+                ? null
+                : comunidades.OrderByDescending(c => c.Value).First().Key,
+            // ⚠️ Quem PESOU, não quem tem métrica: concordância zero não posiciona.
+            VizinhosUsados: contribuiram,
+            BaseDeVotacoes: perguntasRespondidas);
+    }
 
     /// <summary>CT7 — abaixo do piso o resultado não significa nada.</summary>
     private static bool TemRespostasSuficientes(int opinadas, int perguntasAtivas) =>
