@@ -1,8 +1,11 @@
 # Esqueleto — AppHost, schema e estrutura do ETL
 
-> **Status:** v1.3 — 2026-08-26
+> **Status:** v1.4 — 2026-08-26
 > Os dois artefatos do **passo 1** ([01-arquitetura §8](01-arquitetura.md)). Tudo aqui é
 > derivado dos contratos medidos em [`04-contratos.md`](../04-contratos.md).
+> **v1.4:** ✅ §2.4 — PL13 resolvida: **EF Core com migrations**. 🔴 Snake case obrigatório
+> (o ETL Python lê as mesmas tabelas), `HasCheckConstraint` para preservar as regras
+> medidas, e não chamar `Database.Migrate()` na subida por causa do zero-downtime.
 > **v1.3:** §2.3 — o código COMPLETO da autenticação: Program.cs, os três endpoints, o
 > repositório, o componente React e como provar por curl. São quatro arquivos.
 > **v1.2:** §2.2 — 🔄 `usuario` passa a guardar o perfil COMPLETO do Google em claro.
@@ -561,6 +564,180 @@ curl -i http://localhost:5000/api/seguidos                  # → 401
 ⭐ **Esses três comandos provam o mecanismo inteiro** — e viram teste de integração.
 
 ---
+## 2.4 ✅ EF Core e migrations — PL13 resolvida (2026-08-26)
+
+> **Decisão do autor:** usar **EF Core** com as **migrations do próprio EF**, em vez de
+> script SQL versionado à mão.
+
+### 2.4.1 🔴 O primeiro problema: o ETL é Python e lê as mesmas tabelas
+
+Esta não é uma decisão só de .NET. **Duas linguagens compartilham o mesmo banco:**
+
+| Quem | Faz o quê |
+|---|---|
+| ⭐ **EF Core** | **Dono do schema.** Cria e evolui as tabelas via migration |
+| 🐍 **ETL Python** | ⛔ **Nunca cria tabela.** Só `INSERT` / `SELECT` no schema pronto |
+
+> 🔑 **Regra:** se o Python precisar de uma coluna, a coluna nasce numa migration do EF.
+> **Duas ferramentas criando schema no mesmo banco é receita de divergência silenciosa.**
+
+#### ⚠️ E daí sai a configuração que não pode faltar
+
+Por padrão o EF gera nomes em **PascalCase** — `PessoaFonteId`, `VotacaoId`. O schema
+documentado (e o código Python) usa **snake_case**. Sem isto, o ETL quebra:
+
+```bash
+dotnet add package EFCore.NamingConventions
+```
+
+```csharp
+builder.Services.AddDbContext<PoligraphDb>(o => o
+    .UseNpgsql(cfg.GetConnectionString("Postgres"))
+    .UseSnakeCaseNamingConvention());     // 🔴 pessoa_fonte_id, não PessoaFonteId
+```
+
+### 2.4.2 Pacotes
+
+```bash
+dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
+dotnet add package EFCore.NamingConventions
+dotnet add package Microsoft.EntityFrameworkCore.Design   # só no projeto de migrations
+dotnet tool install --global dotnet-ef
+```
+
+### 2.4.3 As entidades — e como as regras medidas viram *constraint*
+
+O princípio da §1 continua valendo: **onde a regra medida puder virar `CHECK`, ela vira.**
+No EF isso mora na Fluent API.
+
+```csharp
+public class PoligraphDb(DbContextOptions<PoligraphDb> o) : DbContext(o)
+{
+    public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<Segue> Segues => Set<Segue>();
+    public DbSet<Voto> Votos => Set<Voto>();
+    public DbSet<Similaridade> Similaridades => Set<Similaridade>();
+    public DbSet<Pergunta> Perguntas => Set<Pergunta>();
+
+    protected override void OnModelCreating(ModelBuilder b)
+    {
+        // ── USUÁRIO ────────────────────────────────────────────────
+        b.Entity<Usuario>(e =>
+        {
+            e.HasIndex(x => x.GoogleSub).IsUnique();
+            e.Property(x => x.Email).IsRequired();
+            e.Property(x => x.SessaoVersao).HasDefaultValue((short)0);
+            e.Property(x => x.CriadoEm).HasDefaultValueSql("now()");
+        });
+
+        b.Entity<Segue>(e =>
+        {
+            e.HasKey(x => new { x.UsuarioId, x.PessoaId });
+            e.HasOne(x => x.Usuario).WithMany(u => u.Segue)
+                .OnDelete(DeleteBehavior.Cascade);       // ⭐ exclusão LGPD em 1 DELETE
+            e.HasOne(x => x.Pessoa).WithMany()
+                .OnDelete(DeleteBehavior.Restrict);      // ⛔ nunca apagar parlamentar seguido
+            e.HasIndex(x => x.PessoaId);
+        });
+
+        // ── VOTO — RN-03: domínio fechado ──────────────────────────
+        b.Entity<Voto>(e =>
+        {
+            e.HasKey(x => new { x.VotacaoId, x.PessoaId });
+            e.ToTable(t => t.HasCheckConstraint(
+                "ck_voto_valor", "valor IN (-1, 0, 1)"));
+        });
+
+        // ── SIMILARIDADE — RN-02 e I3 ──────────────────────────────
+        b.Entity<Similaridade>(e =>
+        {
+            e.HasKey(x => new { x.ExecucaoId, x.PessoaA, x.PessoaB, x.Metrica });
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_sim_minimo",  "n_votacoes_comuns >= 20");
+                t.HasCheckConstraint("ck_sim_ordem",   "pessoa_a < pessoa_b");
+                t.HasCheckConstraint("ck_sim_valor",   "valor BETWEEN 0 AND 1");
+            });
+        });
+
+        // ── PERGUNTA — 🔴 o campo mais perigoso do sistema ──────────
+        b.Entity<Pergunta>(e =>
+        {
+            e.ToTable(t => t.HasCheckConstraint(
+                "ck_pergunta_polaridade", "polaridade IN (-1, 1)"));
+            e.Property(x => x.Polaridade).IsRequired();
+            e.HasIndex(x => x.VotacaoId).IsUnique();
+        });
+
+        // ── CONSENTIMENTO — um vivo por finalidade ─────────────────
+        b.Entity<Consentimento>(e =>
+            e.HasIndex(x => new { x.UsuarioId, x.Finalidade })
+             .IsUnique()
+             .HasFilter("revogado_em IS NULL"));         // índice parcial
+    }
+}
+```
+
+⭐ **`HasCheckConstraint` é o que preserva o princípio do §1 dentro do EF.** Sem ele, as
+regras medidas viram comentário — e comentário não rejeita `INSERT` errado.
+
+### 2.4.4 🔴 A armadilha do `timestamptz`
+
+> **O Npgsql exige `DateTime` com `Kind = Utc` para colunas `timestamptz`.** Um
+> `DateTime.Now` estoura em runtime com *"Cannot write DateTime with Kind=Local"*.
+
+| ⛔ Errado | ✅ Certo |
+|---|---|
+| `DateTime.Now` | `DateTime.UtcNow` |
+| `DateTime` sem `Kind` vindo de parse | `DateTimeOffset`, ou `DateTime.SpecifyKind(x, DateTimeKind.Utc)` |
+
+⭐ **Solução mais simples: use `DateTimeOffset` nas entidades.** Mapeia direto para
+`timestamptz` e não deixa margem para erro.
+
+### 2.4.5 O ciclo das migrations
+
+```bash
+# criar
+dotnet ef migrations add InicialComUsuario -p src/Poligraph.Api
+
+# ver o SQL antes de aplicar (⭐ sempre)
+dotnet ef migrations script --idempotent -o migration.sql
+
+# aplicar localmente
+dotnet ef database update
+```
+
+### 2.4.6 🔴 Não chame `Database.Migrate()` na subida da API
+
+Parece prático e quebra exatamente no arranjo escolhido:
+
+> **O deploy zero-downtime do Coolify sobe o container novo ANTES de derrubar o antigo**
+> ([05-cicd §2.1](05-cicd-e-deploy.md)). Por alguns segundos existem **duas instâncias** —
+> e `Migrate()` não é seguro para execução concorrente.
+
+| Abordagem | Veredito |
+|---|---|
+| `Database.Migrate()` no `Program.cs` | ⛔ Corrida entre containers no deploy |
+| ⭐ **Scheduled Task / comando do Coolify**, rodado antes do deploy | ✅ Um executor só |
+| Script `--idempotent` aplicado à mão | 🟡 Seguro, mas manual |
+
+⭐ **Como o ETL já roda como Scheduled Task, o padrão já existe no projeto** — é só mais um
+comando na mesma infraestrutura.
+
+### 2.4.7 O que muda no documento
+
+| | |
+|---|---|
+| O SQL da §2 e §2.2 | ⭐ **Continua sendo a especificação** — é o alvo que a migration precisa produzir |
+| ⚠️ Conferência obrigatória | Rodar `dotnet ef migrations script` e **comparar com o SQL documentado** |
+| Se divergir | O SQL documentado está certo até prova em contrário — ele veio de contrato medido |
+
+> 🔑 **A migration não substitui o schema documentado; ela o implementa.** O `CHECK` de
+> `n_votacoes_comuns >= 20` não é preferência de estilo: veio de medição
+> ([04-contratos](../04-contratos.md)), e sumir dele na tradução para EF é regressão
+> silenciosa.
+
+---
 ## 3. AppHost do Aspire
 
 ```csharp
@@ -703,7 +880,7 @@ O item 6 é o que prova que o princípio da §1 está funcionando.
 
 | # | Pendência |
 |---|---|
-| **PL13** | Escolher entre EF Core migrations e script SQL versionado |
+| ~~PL13~~ | ✅ **EF Core migrations** (§2.4) — decisão do autor, 2026-08-26 |
 | **PL14** | Definir a política de retenção de `execucao` (§9.6 dos contratos) |
 | **PL15** | Decidir se `pessoa` guarda `casa` ou se ela fica só em `mandato` |
 | **A2** | Escrever e validar as regex de `categoria` |

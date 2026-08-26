@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-08-26 · **61 resolvidas · 55 abertas**
+> **Atualizado:** 2026-08-26 · **62 resolvidas · 54 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -19,6 +19,7 @@
 | **PL9** | ✅ Banner de consentimento **necessário e bloqueante** |
 | **RQ9** | ✅ **Login Google + perfil completo em claro** — 🔄 minimização revogada em 2026-08-25 |
 | **PL28** | ✅ Resolvida por consequência — nome e sobrenome estão no banco |
+| **PL13** | ✅ **EF Core migrations** — não script SQL à mão (2026-08-26) |
 
 > 🔑 **As duas decisões desta rodada empurram na mesma direção:** o projeto passou a
 > guardar mais coisa (sessão gravada, lista de seguidos no servidor) e a compensar isso
@@ -104,7 +105,6 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 | **API3** | Teste de regressão da **polaridade** — o bug mais perigoso do sistema |
 | **API7** | Medir quanto tempo o job de 207k pares leva de fato |
 | **CT3** | Escrever o OpenAPI da C13 e validar contra o front |
-| **PL13** | EF Core migrations ou script SQL versionado |
 | **PL16** | Como o ETL sinaliza `novas_votacoes` |
 | **C15** | Contrato do front — depende do React estar de pé |
 
@@ -166,11 +166,11 @@ avaliação rodar cedo demais.
 
 ---
 
-## ✅ Resolvidas — 61
+## ✅ Resolvidas — 62
 
 `A1` `API1` `API2` `API6` `B1` `B2` `B3` `B4` `B5` `C1` `C2` `C3` `C4` `C6` `C8` `C13`
 `C14` `CT1` `CT2` `CT4` `CT5` `CT6` `D1` `D3` `D5` `ER1` `ER3` `ER4` `N2` `N10` `P1` `P2`
-`P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PL28` `PP1` `RE-01` `RQ1` `RQ4` `RQ8` `RQ9`
+`P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PL13` `PL28` `PP1` `RE-01` `RQ1` `RQ4` `RQ8` `RQ9`
 `SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2` `TS3` `TS4` `TS6`
 
 ⚠️ **Convenção de prefixo** (evita a colisão que existia até 2026-08-23):
