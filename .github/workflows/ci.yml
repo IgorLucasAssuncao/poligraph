@@ -65,6 +65,25 @@ jobs:
           name: migration-sql
           path: migration.sql
 
+  python:
+    name: ETL Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Instalar dependências
+        run: pip install -r src/etl/requirements-dev.txt
+
+      # 🔴 Normalização de voto (obstrução ≠ abstenção), categoria, polaridade
+      #    e CPF com zero à esquerda. São as medições do discovery viradas teste.
+      - name: Testes
+        run: pytest -q
+        working-directory: src/etl
+
   docker:
     name: Imagens constroem
     runs-on: ubuntu-latest
@@ -76,3 +95,6 @@ jobs:
 
       - name: Build da imagem de migrations
         run: docker build -f docker/Dockerfile.migrations -t poligraph-migrations:ci .
+
+      - name: Build da imagem do ETL
+        run: docker build -f docker/Dockerfile.etl -t poligraph-etl:ci .
