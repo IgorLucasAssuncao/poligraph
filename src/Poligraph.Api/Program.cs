@@ -22,7 +22,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.MapearAfinidade();
+app.MapearParlamentares()
+   .MapearAfinidade();
 
 app.Run();
 
