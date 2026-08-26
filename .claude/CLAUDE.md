@@ -165,8 +165,19 @@ dotnet test                                     # inclui o teste de polaridade
 
 ## Estado atual
 
-**Fase de planejamento — zero linha de código.** ~28 documentos, ~11 mil linhas, 62
-pendências resolvidas e 54 abertas.
+**Aplicação de ponta a ponta rodando localmente** — ~9,4 mil linhas em `src/`, 18
+arquivos de teste. `dotnet run --project src/Poligraph.AppHost` sobe Postgres,
+migrations com seed, API e front.
 
-> 🔴 **O maior bloqueio não é técnico:** a **PL11** — curar 15–25 perguntas do questionário
-> — é leitura humana de ementa por ementa, não escala e trava o passo 8. **Comece cedo.**
+| Parte | Onde está |
+|---|---|
+| API | Afinidade, parlamentares, ficha, notícias, seguir, auth Google, avaliação |
+| Front | Login, início, explorar, seguindo, perfil, questionário, conta, privacidade |
+| ETL | Ingestão e persistência dos CSVs da Câmara |
+| Testes | 74 no .NET (Testcontainers com Postgres real) + 25 no front |
+
+⚠️ Os dados locais são **12 deputados fictícios em 3 blocos de voto** — não é a Câmara
+real. A ingestão de verdade ainda não rodou contra o banco.
+
+> 🔴 **O maior bloqueio continua não sendo técnico:** a **PL11** — curar 15–25 perguntas
+> do questionário — é leitura humana de ementa por ementa, não escala. **Comece cedo.**
