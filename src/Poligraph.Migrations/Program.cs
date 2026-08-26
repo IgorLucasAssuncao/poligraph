@@ -30,9 +30,22 @@ Console.WriteLine("Migrations aplicadas.");
 
 // ⛔ Dados de teste NUNCA em produção. E nunca via HasData(), que entraria
 //    dentro da migration e semearia produção junto.
-if (!builder.Environment.IsProduction())
+//
+// ⚠️ O log abaixo diz sempre qual ramo foi tomado, e isso não é verbosidade.
+//    Esta decisão já falhou em silêncio uma vez: como app de console lê
+//    DOTNET_ENVIRONMENT (e não ASPNETCORE_ENVIRONMENT), o ambiente virava
+//    "Production" por padrão e o seed era pulado sem que nada indicasse o motivo.
+//    O sintoma era a API respondendo 200 com listas vazias.
+if (builder.Environment.IsProduction())
+{
+    Console.WriteLine("Ambiente Production: seed NÃO executado (correto para produção).");
+}
+else
 {
     Console.WriteLine($"Ambiente {builder.Environment.EnvironmentName}: semeando dados de teste...");
     await SemeadorDesenvolvimento.SemearAsync(db);
-    Console.WriteLine("Seed concluído.");
+
+    var pessoas = await db.Pessoas.CountAsync();
+    var perguntas = await db.Perguntas.CountAsync();
+    Console.WriteLine($"Seed concluído: {pessoas} parlamentares, {perguntas} perguntas.");
 }

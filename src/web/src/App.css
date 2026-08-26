@@ -13,3 +13,26 @@ h1 { margin-bottom: 0; }
 .erro { color: #b00020; }
 button { padding: .6rem 1.2rem; border-radius: .4rem; cursor: pointer; font-size: 1rem; }
 footer { margin-top: 3rem; opacity: .6; }
+
+/* ─── banner de consentimento ─────────────────────────────────── */
+.banner-consentimento {
+  position: fixed; inset: auto 0 0 0; z-index: 50;
+  padding: 1.25rem; background: Canvas; color: CanvasText;
+  border-top: 2px solid currentColor;
+  max-height: 70vh; overflow-y: auto;
+}
+.banner-consentimento h2 { margin-top: 0; font-size: 1.1rem; }
+.banner-consentimento p { margin: .5rem 0; font-size: .93rem; }
+/* ⚠️ Mesmo peso nos dois botões, de propósito — LGPD art. 9º §3 */
+.banner-acoes { display: flex; gap: .75rem; margin: 1rem 0 .5rem; }
+.banner-acoes button { flex: 0 1 12rem; }
+.banner-rodape { opacity: .75; font-size: .85rem; }
+
+/* ─── documento legal ─────────────────────────────────────────── */
+.documento-legal { line-height: 1.7; }
+.documento-legal h1 { font-size: 1.6rem; }
+.documento-legal h2 { font-size: 1.15rem; margin-top: 2rem; }
+.documento-legal table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
+.documento-legal td { border: 1px solid currentColor; padding: .4rem .6rem; opacity: .95; }
+.documento-legal li { margin-left: 1.25rem; }
+.acoes-legais { opacity: .9; }
