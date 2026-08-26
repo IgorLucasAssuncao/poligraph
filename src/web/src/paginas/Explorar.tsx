@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { listarParlamentares, listarSeguidos, type Parlamentar } from '../api';
-import { CartaoParlamentar } from '../componentes/CartaoParlamentar';
+import { IconeExplorar } from '../componentes/Icones';
+import { CabecalhoDaColuna } from '../componentes/Layout';
+import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 
 /** Busca e navegação pelos parlamentares (RF-34). */
 export function Explorar() {
@@ -34,29 +36,38 @@ export function Explorar() {
   const ufs = [...new Set(lista.map((p) => p.uf))].filter(Boolean).sort();
 
   return (
-    <div className="explorar">
-      <h1>Explorar</h1>
+    <>
+      <CabecalhoDaColuna titulo="Explorar" />
 
-      <div className="filtros">
+      <div className="barra-busca">
+        <span className="icone-busca" aria-hidden="true">
+          <IconeExplorar />
+        </span>
         <input
           type="search"
-          placeholder="Buscar por nome…"
+          placeholder="Buscar deputado por nome"
           value={termo}
           onChange={(e) => setTermo(e.target.value)}
           aria-label="Buscar parlamentar por nome"
         />
+      </div>
 
+      <div className="filtros">
         <select value={partido} onChange={(e) => setPartido(e.target.value)} aria-label="Partido">
           <option value="">Todos os partidos</option>
           {partidos.map((p) => (
-            <option key={p} value={p}>{p}</option>
+            <option key={p} value={p}>
+              {p}
+            </option>
           ))}
         </select>
 
         <select value={uf} onChange={(e) => setUf(e.target.value)} aria-label="Estado">
           <option value="">Todos os estados</option>
           {ufs.map((u) => (
-            <option key={u} value={u}>{u}</option>
+            <option key={u} value={u}>
+              {u}
+            </option>
           ))}
         </select>
       </div>
@@ -67,21 +78,19 @@ export function Explorar() {
         <p className="vazio">Nenhum parlamentar encontrado com esses filtros.</p>
       )}
 
-      <div className="grade">
-        {lista.map((p) => (
-          <CartaoParlamentar
-            key={p.id}
-            id={p.id}
-            nome={p.nome}
-            partido={p.partido}
-            uf={p.uf}
-            detalhe={`${p.nVotacoes} votações`}
-            seguindo={seguidos.has(p.id)}
-            aoAlternarSeguir={alternar}
-          />
-        ))}
-      </div>
-    </div>
+      {lista.map((p) => (
+        <LinhaParlamentar
+          key={p.id}
+          id={p.id}
+          nome={p.nome}
+          partido={p.partido}
+          uf={p.uf}
+          detalhe={`${p.nVotacoes} votações registradas`}
+          seguindo={seguidos.has(p.id)}
+          aoAlternarSeguir={alternar}
+        />
+      ))}
+    </>
   );
 
   function alternar(id: number, seguindoAgora: boolean) {

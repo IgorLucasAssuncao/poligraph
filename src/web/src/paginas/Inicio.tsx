@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listarSeguidos, obterNoticias, type Noticia, type Parlamentar } from '../api';
 import { Avatar } from '../componentes/Avatar';
-import { useSessao } from '../sessao';
+import { CabecalhoDaColuna } from '../componentes/Layout';
 
 type ItemDoFeed = Noticia & { deQuem: Parlamentar };
 
@@ -17,7 +17,6 @@ type ItemDoFeed = Noticia & { deQuem: Parlamentar };
  * servidor sabe sobre o comportamento de cada pessoa.
  */
 export function Inicio() {
-  const { usuario } = useSessao();
   const [seguidos, setSeguidos] = useState<Parlamentar[]>([]);
   const [itens, setItens] = useState<ItemDoFeed[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -41,69 +40,69 @@ export function Inicio() {
       .finally(() => setCarregando(false));
   }, []);
 
-  if (carregando) return <p className="carregando">Carregando…</p>;
-
   return (
-    <div className="inicio">
-      <h1>Olá, {usuario?.nome?.split(' ')[0] ?? 'você'}</h1>
+    <>
+      <CabecalhoDaColuna
+        titulo="Início"
+        subtitulo={
+          seguidos.length > 0
+            ? `acompanhando ${seguidos.length} ${seguidos.length === 1 ? 'parlamentar' : 'parlamentares'}`
+            : undefined
+        }
+      />
 
-      {seguidos.length === 0 ? <SemSeguidos /> : null}
+      {carregando && <p className="carregando">Carregando…</p>}
 
-      {seguidos.length > 0 && itens.length === 0 && (
-        <p className="vazio">
-          Você acompanha {seguidos.length}{' '}
-          {seguidos.length === 1 ? 'parlamentar' : 'parlamentares'}, mas não há notícias
-          recentes. O coletor roda uma vez por dia.
-        </p>
+      {!carregando && seguidos.length === 0 && <SemSeguidos />}
+
+      {!carregando && seguidos.length > 0 && itens.length === 0 && (
+        <p className="vazio">Nada novo por aqui. O coletor de notícias roda uma vez por dia.</p>
       )}
 
-      {itens.length > 0 && (
-        <section>
-          <h2>Notícias de quem você acompanha</h2>
-
-          <ul className="feed">
-            {itens.map((item) => (
-              <li key={item.id} className="feed-item">
-                <Link to={`/parlamentar/${item.deQuem.id}`} className="feed-autor">
-                  <Avatar nome={item.deQuem.nome} tamanho="pequeno" />
-                  <span>{item.deQuem.nome}</span>
-                </Link>
-
-                <a
-                  className="feed-titulo"
-                  href={item.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  {item.titulo}
-                </a>
-
-                <span className="feed-meta">
-                  {item.veiculo} · {new Date(item.publicadaEm).toLocaleDateString('pt-BR')}
-                </span>
-
-                {/* RF-46 — por que isto apareceu */}
-                <span className="feed-motivo">
-                  porque você segue {item.deQuem.nome}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </div>
+      {itens.map((item) => (
+        <ItemDeNoticia key={item.id} item={item} />
+      ))}
+    </>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════
+
+function ItemDeNoticia({ item }: { item: ItemDoFeed }) {
+  return (
+    <article className="linha">
+      <Link to={`/parlamentar/${item.deQuem.id}`} aria-label={item.deQuem.nome}>
+        <Avatar nome={item.deQuem.nome} tamanho="medio" />
+      </Link>
+
+      <div className="linha-corpo">
+        <div className="linha-topo">
+          <Link to={`/parlamentar/${item.deQuem.id}`} className="linha-nome">
+            {item.deQuem.nome}
+          </Link>
+          <span className="linha-meta">
+            {item.veiculo} · {new Date(item.publicadaEm).toLocaleDateString('pt-BR')}
+          </span>
+        </div>
+
+        <a className="noticia-titulo" href={item.url} target="_blank" rel="noreferrer noopener">
+          {item.titulo}
+        </a>
+
+        {/* RF-46 — por que isto apareceu */}
+        <span className="linha-detalhe">porque você acompanha {item.deQuem.nome}</span>
+      </div>
+    </article>
+  );
+}
 
 /** ⭐ Estado vazio que ensina o que fazer, em vez de só dizer que está vazio. */
 function SemSeguidos() {
   return (
     <section className="convite">
       <h2>Comece por aqui</h2>
-      <p>
-        Você ainda não acompanha ninguém. Duas formas de encontrar quem te interessa:
+      <p className="ajuda">
+        Você ainda não acompanha ninguém. Descubra quem vota como você — ou procure por nome.
       </p>
 
       <div className="convite-acoes">
@@ -115,7 +114,7 @@ function SemSeguidos() {
         </Link>
       </div>
 
-      <p className="convite-nota">
+      <p className="criterio">
         O questionário compara suas respostas com o voto registrado de cada deputado.
       </p>
     </section>

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listarSeguidos, type Parlamentar } from '../api';
-import { CartaoParlamentar } from '../componentes/CartaoParlamentar';
+import { CabecalhoDaColuna } from '../componentes/Layout';
+import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 
 /**
  * 🔴 Esta tela mostra a lista de convicção política da pessoa.
@@ -20,40 +21,40 @@ export function Seguindo() {
       .finally(() => setCarregando(false));
   }, []);
 
-  if (carregando) return <p className="carregando">Carregando…</p>;
-
   return (
-    <div className="seguindo">
-      <h1>Acompanhando</h1>
+    <>
+      <CabecalhoDaColuna
+        titulo="Acompanhando"
+        subtitulo={lista.length > 0 ? `${lista.length} parlamentares` : undefined}
+      />
 
-      {lista.length === 0 ? (
+      {carregando && <p className="carregando">Carregando…</p>}
+
+      {!carregando && lista.length === 0 && (
         <p className="vazio">
-          Você ainda não acompanha ninguém. <Link to="/explorar">Explore os deputados</Link>{' '}
-          ou <Link to="/questionario">responda o questionário</Link>.
+          Você ainda não acompanha ninguém. <Link to="/explorar">Explore os deputados</Link> ou{' '}
+          <Link to="/questionario">responda o questionário</Link>.
         </p>
-      ) : (
-        <>
-          <div className="grade">
-            {lista.map((p) => (
-              <CartaoParlamentar
-                key={p.id}
-                id={p.id}
-                nome={p.nome}
-                partido={p.partido}
-                uf={p.uf}
-                seguindo
-                aoAlternarSeguir={(id) => setLista((l) => l.filter((x) => x.id !== id))}
-              />
-            ))}
-          </div>
-
-          <p className="nota-privacidade">
-            🔒 Esta lista indica sua posição política e é tratada como dado sensível.
-            Ela não é compartilhada com ninguém.{' '}
-            <Link to="/privacidade">Como apagar tudo</Link>
-          </p>
-        </>
       )}
-    </div>
+
+      {lista.map((p) => (
+        <LinhaParlamentar
+          key={p.id}
+          id={p.id}
+          nome={p.nome}
+          partido={p.partido}
+          uf={p.uf}
+          seguindo
+          aoAlternarSeguir={(id) => setLista((l) => l.filter((x) => x.id !== id))}
+        />
+      ))}
+
+      {!carregando && lista.length > 0 && (
+        <p className="nota-privacidade">
+          🔒 Esta lista indica sua posição política e é tratada como dado sensível. Ela não é
+          compartilhada com ninguém. <Link to="/conta">Como apagar tudo</Link>
+        </p>
+      )}
+    </>
   );
 }

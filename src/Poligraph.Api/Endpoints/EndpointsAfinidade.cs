@@ -16,7 +16,15 @@ public record RespostaAfinidade(
     IReadOnlyList<ParlamentarAfim> MaisProximos,
     IReadOnlyList<ParlamentarAfim> MaisDistantes);
 
-public record PerguntaPublica(string Id, string Texto, short Ordem);
+/// <summary>
+/// ⚠️ `TotalVotos` é o comparecimento na votação — quantos deputados se posicionaram.
+///
+/// 🔴 De propósito NÃO é a divisão (quantos Sim, quantos Não). Mostrar o placar antes
+/// de a pessoa responder induziria conformidade: "a maioria votou Sim, então voto Sim
+/// também" — e o instrumento passaria a medir adesão à maioria, não posição própria.
+/// O comparecimento dá contexto sem revelar direção.
+/// </summary>
+public record PerguntaPublica(string Id, string Texto, short Ordem, int TotalVotos);
 
 public static class EndpointsAfinidade
 {
@@ -46,7 +54,9 @@ public static class EndpointsAfinidade
             .AsNoTracking()
             .Where(p => p.Ativa)
             .OrderBy(p => p.Ordem)
-            .Select(p => new PerguntaPublica(p.Id, p.Texto, p.Ordem))
+            .Select(p => new PerguntaPublica(
+                p.Id, p.Texto, p.Ordem,
+                (p.Votacao!.VotosSim ?? 0) + (p.Votacao.VotosNao ?? 0)))
             .ToListAsync(ct);
 
         return Results.Ok(perguntas);

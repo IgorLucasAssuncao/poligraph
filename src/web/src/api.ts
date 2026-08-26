@@ -57,7 +57,16 @@ export type Noticia = {
   trecho: string | null;
 };
 
-export type Pergunta = { id: string; texto: string; ordem: number };
+export type Pergunta = {
+  id: string;
+  texto: string;
+  ordem: number;
+  /**
+   * Comparecimento na votação. ⛔ NÃO é o placar — revelar a divisão antes de a pessoa
+   * responder induziria conformidade. Ver `PerguntaPublica` na API.
+   */
+  totalVotos: number;
+};
 
 /** +1 concordo · -1 discordo · 0 não sei */
 export type Resposta = 1 | -1 | 0;

@@ -10,7 +10,16 @@ import {
   type Noticia,
 } from '../api';
 import { Avatar } from '../componentes/Avatar';
-import { CartaoParlamentar } from '../componentes/CartaoParlamentar';
+import { CabecalhoDaColuna } from '../componentes/Layout';
+import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
+
+type Aba = 'noticias' | 'votos' | 'similares';
+
+const ABAS: [Aba, string][] = [
+  ['noticias', 'Notícias'],
+  ['votos', 'Votos'],
+  ['similares', 'Vota parecido'],
+];
 
 /** O perfil do parlamentar — a página mais parecida com "rede social" do site. */
 export function Parlamentar() {
@@ -20,11 +29,13 @@ export function Parlamentar() {
   const [ficha, setFicha] = useState<Ficha | null>(null);
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [seguindo, setSeguindo] = useState(false);
+  const [aba, setAba] = useState<Aba>('noticias');
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
     setFicha(null);
     setErro(null);
+    setAba('noticias');
 
     Promise.all([obterFicha(pessoaId), obterNoticias(pessoaId), listarSeguidos()])
       .then(([f, n, seguidos]) => {
@@ -35,113 +46,84 @@ export function Parlamentar() {
       .catch(() => setErro('Não foi possível carregar este parlamentar.'));
   }, [pessoaId]);
 
-  if (erro) return <p className="erro">{erro}</p>;
-  if (!ficha) return <p className="carregando">Carregando…</p>;
+  if (erro) {
+    return (
+      <>
+        <CabecalhoDaColuna titulo="Parlamentar" comVoltar />
+        <p className="erro">{erro}</p>
+      </>
+    );
+  }
+
+  if (!ficha) {
+    return (
+      <>
+        <CabecalhoDaColuna titulo="Parlamentar" comVoltar />
+        <p className="carregando">Carregando…</p>
+      </>
+    );
+  }
 
   return (
-    <div className="perfil">
+    <>
+      <CabecalhoDaColuna
+        titulo={ficha.nome}
+        subtitulo={`${ficha.nVotacoes} votações registradas`}
+        comVoltar
+      />
+
+      {/* ⚠️ Capa em tom neutro único: cor não pode sugerir espectro político (RNF-16). */}
+      <div className="capa-perfil" aria-hidden="true" />
+
       <header className="perfil-cabecalho">
-        <Avatar nome={ficha.nome} tamanho="grande" />
+        <div className="perfil-avatar-linha">
+          <Avatar nome={ficha.nome} tamanho="grande" />
+
+          <button
+            type="button"
+            className={seguindo ? 'botao-seguindo' : 'botao-seguir'}
+            aria-pressed={seguindo}
+            onClick={alternarSeguir}
+          >
+            <span>{seguindo ? 'Acompanhando' : 'Acompanhar'}</span>
+          </button>
+        </div>
 
         <div className="perfil-identidade">
           <h1>{ficha.nome}</h1>
-          {ficha.nomeCivil !== ficha.nome && (
-            <p className="nome-civil">{ficha.nomeCivil}</p>
-          )}
-          <p className="perfil-filiacao">
-            {ficha.partido} · {ficha.uf}
-          </p>
-          <p className="perfil-numeros">
-            <strong>{ficha.nVotacoes}</strong> votações registradas
-          </p>
+          {ficha.nomeCivil !== ficha.nome && <p className="nome-civil">{ficha.nomeCivil}</p>}
         </div>
 
-        <button
-          type="button"
-          className={seguindo ? 'botao-seguindo' : 'botao-seguir'}
-          aria-pressed={seguindo}
-          onClick={alternarSeguir}
-        >
-          {seguindo ? 'Seguindo' : 'Seguir'}
-        </button>
+        <div className="perfil-chips">
+          {ficha.partido && <span className="chip">{ficha.partido}</span>}
+          {ficha.uf && <span className="chip">{ficha.uf}</span>}
+        </div>
+
+        <div className="perfil-numeros">
+          <span>
+            <strong>{ficha.nVotacoes}</strong> <span>votações registradas</span>
+          </span>
+        </div>
       </header>
 
-      <section className="perfil-secao">
-        <h2>Vota parecido com</h2>
+      <nav className="abas" aria-label="Seções do perfil">
+        {ABAS.map(([chave, rotulo]) => (
+          <button
+            key={chave}
+            type="button"
+            className={`aba ${aba === chave ? 'aba-ativa' : ''}`}
+            aria-current={aba === chave}
+            onClick={() => setAba(chave)}
+          >
+            {rotulo}
+          </button>
+        ))}
+      </nav>
 
-        {ficha.maisSimilares.length === 0 ? (
-          // ⭐ RF-47: estado vazio honesto. Acontece antes de o ETL analítico rodar.
-          <p className="vazio">
-            A análise de similaridade ainda não rodou para esta legislatura.
-          </p>
-        ) : (
-          <div className="grade">
-            {ficha.maisSimilares.map((s) => (
-              <CartaoParlamentar
-                key={s.pessoaId}
-                id={s.pessoaId}
-                nome={s.nome}
-                partido={s.partido}
-                uf=""
-                // ⛔ nunca percentual — a base aparece junto do número
-                detalhe={
-                  <>
-                    votaram igual em <strong>{Math.round(s.valor * s.comuns)}</strong> de{' '}
-                    <strong>{s.comuns}</strong> votações
-                  </>
-                }
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="perfil-secao">
-        <h2>Notícias</h2>
-
-        {noticias.length === 0 ? (
-          <p className="vazio">
-            Nenhuma notícia recente. Parlamentares de menor projeção passam semanas sem
-            aparecer na imprensa — isso não é erro.
-          </p>
-        ) : (
-          <ul className="lista-noticias">
-            {noticias.map((n) => (
-              <li key={n.id}>
-                {/* ⚠️ Link para o veículo. ⛔ Nunca reproduzimos o texto da matéria. */}
-                <a href={n.url} target="_blank" rel="noreferrer noopener">
-                  {n.titulo}
-                </a>
-                <span className="noticia-meta">
-                  {n.veiculo} · {formatarData(n.publicadaEm)}
-                </span>
-                {n.trecho && <p className="noticia-trecho">{n.trecho}</p>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="perfil-secao">
-        <h2>Votos recentes</h2>
-
-        {ficha.votosRecentes.length === 0 ? (
-          <p className="vazio">Nenhum voto registrado.</p>
-        ) : (
-          <ul className="lista-votos">
-            {ficha.votosRecentes.map((v) => (
-              <li key={v.votacaoId}>
-                <span className={`selo selo-${classeDoVoto(v.valor)}`}>
-                  {rotuloDoVoto(v.valor)}
-                </span>
-                <span className="voto-descricao">{v.descricao ?? v.votacaoId}</span>
-                <span className="voto-data">{formatarData(v.data)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </div>
+      {aba === 'noticias' && <AbaNoticias noticias={noticias} />}
+      {aba === 'votos' && <AbaVotos votos={ficha.votosRecentes} />}
+      {aba === 'similares' && <AbaSimilares similares={ficha.maisSimilares} />}
+    </>
   );
 
   // ═══════════════════════════════════════════════════════════════
@@ -159,6 +141,84 @@ export function Parlamentar() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+
+function AbaNoticias({ noticias }: { noticias: Noticia[] }) {
+  if (noticias.length === 0) {
+    return (
+      <p className="vazio">
+        Nenhuma notícia recente. Parlamentares de menor projeção passam semanas sem aparecer
+        na imprensa — isso não é erro.
+      </p>
+    );
+  }
+
+  return (
+    <>
+      {noticias.map((n) => (
+        <article key={n.id} className="linha linha-simples">
+          <div className="linha-corpo">
+            {/* ⚠️ Link para o veículo. ⛔ Nunca reproduzimos o texto da matéria. */}
+            <a className="noticia-titulo" href={n.url} target="_blank" rel="noreferrer noopener">
+              {n.titulo}
+            </a>
+            <span className="linha-detalhe">
+              {n.veiculo} · {formatarData(n.publicadaEm)}
+            </span>
+            {n.trecho && <p className="noticia-trecho">{n.trecho}</p>}
+          </div>
+        </article>
+      ))}
+    </>
+  );
+}
+
+function AbaVotos({ votos }: { votos: Ficha['votosRecentes'] }) {
+  if (votos.length === 0) return <p className="vazio">Nenhum voto registrado.</p>;
+
+  return (
+    <>
+      {votos.map((v) => (
+        <article key={v.votacaoId} className="linha linha-simples">
+          <div className="linha-corpo">
+            <span className={`selo selo-${classeDoVoto(v.valor)}`}>{rotuloDoVoto(v.valor)}</span>
+            <p className="voto-descricao">{v.descricao ?? v.votacaoId}</p>
+            <span className="linha-detalhe">{formatarData(v.data)}</span>
+          </div>
+        </article>
+      ))}
+    </>
+  );
+}
+
+function AbaSimilares({ similares }: { similares: Ficha['maisSimilares'] }) {
+  if (similares.length === 0) {
+    // ⭐ RF-47: estado vazio honesto. Acontece antes de o ETL analítico rodar.
+    return (
+      <p className="vazio">A análise de similaridade ainda não rodou para esta legislatura.</p>
+    );
+  }
+
+  return (
+    <>
+      {similares.map((s) => (
+        <LinhaParlamentar
+          key={s.pessoaId}
+          id={s.pessoaId}
+          nome={s.nome}
+          partido={s.partido}
+          uf=""
+          // ⛔ nunca percentual — a base aparece junto do número
+          detalhe={
+            <>
+              votaram igual em <strong>{Math.round(s.valor * s.comuns)}</strong> de{' '}
+              <strong>{s.comuns}</strong> votações
+            </>
+          }
+        />
+      ))}
+    </>
+  );
+}
 
 /**
  * ⚠️ Rótulo neutro, sem cor de juízo (RNF-16). "Sim" e "Não" descrevem o registro;

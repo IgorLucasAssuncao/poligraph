@@ -59,8 +59,10 @@ describe('Resultado', () => {
   });
 
   it('deixa claro quantas perguntas foram respondidas', () => {
-    renderizar();
+    const { container } = renderizar();
 
-    expect(screen.getByText(/respondeu 3 perguntas/i)).toBeDefined();
+    // ⚠️ Sem a base, "Ana Ribeiro é quem mais vota como você" soa definitivo. O total
+    //    respondido fica no cabeçalho da coluna, à vista o tempo todo.
+    expect(container.textContent).toMatch(/3 perguntas respondidas/i);
   });
 });

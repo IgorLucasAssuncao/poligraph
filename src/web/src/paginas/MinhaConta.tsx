@@ -1,19 +1,19 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { excluirConta } from '../api';
 import { Avatar } from '../componentes/Avatar';
+import { CabecalhoDaColuna } from '../componentes/Layout';
 import { useSessao } from '../sessao';
 
 /** As operações que a pessoa precisa ter sobre a própria conta. */
 export function MinhaConta() {
   const { usuario, sair } = useSessao();
-  const navegar = useNavigate();
   const [confirmando, setConfirmando] = useState(false);
   const [erro, setErro] = useState(false);
 
   return (
-    <div className="conta">
-      <h1>Minha conta</h1>
+    <>
+      <CabecalhoDaColuna titulo="Conta" />
 
       <section className="conta-identidade">
         <Avatar nome={usuario?.nome ?? '?'} fotoUrl={usuario?.fotoUrl} tamanho="grande" />
@@ -46,8 +46,8 @@ export function MinhaConta() {
         ) : (
           <div className="confirmacao">
             <p>
-              <strong>Isto apaga tudo:</strong> sua conta, a lista de quem você acompanha e
-              seus consentimentos. Não dá para desfazer.
+              <strong>Isto apaga tudo:</strong> sua conta, a lista de quem você acompanha e seus
+              consentimentos. Não dá para desfazer.
             </p>
             <div className="confirmacao-acoes">
               <button type="button" className="botao-perigo" onClick={apagar}>
@@ -66,7 +66,7 @@ export function MinhaConta() {
 
         {erro && <p className="erro">Não foi possível apagar agora. Tente de novo.</p>}
       </section>
-    </div>
+    </>
   );
 
   // ═══════════════════════════════════════════════════════════════
@@ -81,7 +81,4 @@ export function MinhaConta() {
       setConfirmando(false);
     }
   }
-
-  // `navegar` fica disponível para navegações futuras sem recarga total
-  void navegar;
 }

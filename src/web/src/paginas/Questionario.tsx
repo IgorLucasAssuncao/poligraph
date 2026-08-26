@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   calcularAfinidade,
   obterPerguntas,
@@ -7,18 +7,34 @@ import {
   type Resposta,
   type ResultadoAfinidade,
 } from '../api';
+import { CabecalhoDaColuna } from '../componentes/Layout';
 import { Resultado } from '../componentes/Resultado';
 
+const OPCOES: [Resposta, string][] = [
+  [1, 'Concordo'],
+  [-1, 'Discordo'],
+  [0, 'Não sei'],
+];
+
+/** Milissegundos entre responder e a próxima pergunta entrar. */
+const PAUSA = 620;
+
 /**
- * O questionário.
+ * O questionário, uma pergunta por tela.
  *
- * ⚠️ Formato AFIRMAÇÃO — "X deve ser Y." — com Concordo / Discordo / Não sei.
- * ⛔ A API não devolve polaridade nem id da votação: expor isso deixaria o cidadão
- * inferir o voto do parlamentar antes de responder.
+ * ⚠️ O formato de lista longa fazia a pessoa varrer tudo de uma vez e responder no
+ * automático. Um cartão por vez dá peso a cada afirmação — e o retorno imediato entre
+ * elas mantém o ritmo até o fim, que é o que decide se o questionário é concluído.
+ *
+ * 🔴 O retorno mostra o COMPARECIMENTO da votação, ⛔ nunca o placar. Ver
+ * `PerguntaPublica` na API: revelar a divisão induziria conformidade nas perguntas
+ * seguintes, e o instrumento passaria a medir adesão à maioria.
  */
 export function Questionario() {
   const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
+  const [indice, setIndice] = useState(0);
   const [respostas, setRespostas] = useState<Record<string, Resposta>>({});
+  const [revelando, setRevelando] = useState(false);
   const [resultado, setResultado] = useState<ResultadoAfinidade | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -29,47 +45,80 @@ export function Questionario() {
       .catch(() => setErro('Não foi possível carregar as perguntas.'));
   }, []);
 
+  const opinadas = useMemo(
+    () => Object.values(respostas).filter((v) => v !== 0).length,
+    [respostas],
+  );
+
   if (resultado) {
-    return <Resultado resultado={resultado} aoRefazer={() => setResultado(null)} />;
+    return <Resultado resultado={resultado} aoRefazer={recomecar} />;
   }
 
-  const respondidas = Object.values(respostas).filter((v) => v !== 0).length;
+  if (perguntas.length === 0) {
+    return (
+      <>
+        <CabecalhoDaColuna titulo="Questionário" />
+        <p className={erro ? 'erro' : 'carregando'}>{erro ?? 'Carregando…'}</p>
+      </>
+    );
+  }
+
+  const acabou = indice >= perguntas.length;
+  const atual = perguntas[indice];
+  const progresso = Math.round((indice / perguntas.length) * 100);
 
   return (
-    <section className="questionario">
-      <h2>Com quem você mais concorda?</h2>
-      <p className="ajuda">
-        Cada afirmação abaixo foi votada de verdade na Câmara. Responda o que você acha —
-        no fim, comparamos com o voto de cada parlamentar.
-      </p>
+    <div className="questionario">
+      <CabecalhoDaColuna
+        titulo="Questionário"
+        subtitulo={
+          acabou
+            ? `${opinadas} respondidas`
+            : `Pergunta ${indice + 1} de ${perguntas.length}`
+        }
+      />
 
-      {perguntas.map((pergunta) => (
-        <fieldset key={pergunta.id} className="pergunta">
-          <legend>{pergunta.texto}</legend>
+      <div className="progresso">
+        <div className="barra-progresso">
+          <div style={{ width: `${acabou ? 100 : progresso}%` }} />
+        </div>
+      </div>
 
-          {OPCOES.map(([valor, rotulo]) => (
-            <label key={rotulo}>
-              <input
-                type="radio"
-                name={pergunta.id}
-                checked={respostas[pergunta.id] === valor}
-                onChange={() => setRespostas({ ...respostas, [pergunta.id]: valor })}
-              />
-              {rotulo}
-            </label>
-          ))}
-        </fieldset>
-      ))}
-
-      {erro && <p role="alert" className="erro">{erro}</p>}
-
-      <button type="button" disabled={enviando} onClick={enviar}>
-        {enviando ? 'Calculando…' : `Ver resultado (${respondidas} respondidas)`}
-      </button>
-    </section>
+      {acabou ? (
+        <Encerramento
+          opinadas={opinadas}
+          total={perguntas.length}
+          enviando={enviando}
+          erro={erro}
+          aoEnviar={enviar}
+          aoRever={() => setIndice(0)}
+        />
+      ) : (
+        <CartaoDePergunta
+          key={atual.id}
+          pergunta={atual}
+          escolhida={respostas[atual.id]}
+          revelando={revelando}
+          aoResponder={responder}
+          aoVoltar={indice > 0 ? () => setIndice(indice - 1) : undefined}
+        />
+      )}
+    </div>
   );
 
   // ═══════════════════════════════════════════════════════════════
+
+  function responder(perguntaId: string, valor: Resposta) {
+    setRespostas((atuais) => ({ ...atuais, [perguntaId]: valor }));
+    setRevelando(true);
+
+    // ⚠️ A pausa é curta de propósito: longa o bastante para a pessoa registrar o
+    //    retorno, curta o bastante para não virar espera.
+    setTimeout(() => {
+      setRevelando(false);
+      setIndice((i) => i + 1);
+    }, PAUSA);
+  }
 
   async function enviar() {
     setEnviando(true);
@@ -93,10 +142,100 @@ export function Questionario() {
       setEnviando(false);
     }
   }
+
+  function recomecar() {
+    setResultado(null);
+    setRespostas({});
+    setIndice(0);
+    setErro(null);
+  }
 }
 
-const OPCOES: [Resposta, string][] = [
-  [1, 'Concordo'],
-  [-1, 'Discordo'],
-  [0, 'Não sei'],
-];
+// ═══════════════════════════════════════════════════════════════════
+
+function CartaoDePergunta({
+  pergunta,
+  escolhida,
+  revelando,
+  aoResponder,
+  aoVoltar,
+}: {
+  pergunta: Pergunta;
+  escolhida?: Resposta;
+  revelando: boolean;
+  aoResponder: (id: string, valor: Resposta) => void;
+  aoVoltar?: () => void;
+}) {
+  return (
+    <div className={`cartao-pergunta ${revelando ? 'revelando' : 'entrando'}`}>
+      <p className="rotulo-pergunta">Você concorda?</p>
+      <h2 className="texto-pergunta">{pergunta.texto}</h2>
+
+      <div className="opcoes-grandes">
+        {OPCOES.map(([valor, rotulo]) => (
+          <button
+            key={rotulo}
+            type="button"
+            className={`opcao-grande ${escolhida === valor ? 'opcao-ativa' : ''}`}
+            disabled={revelando}
+            onClick={() => aoResponder(pergunta.id, valor)}
+          >
+            {rotulo}
+          </button>
+        ))}
+      </div>
+
+      {/* ⭐ O retorno: comparecimento, NUNCA o placar. */}
+      <div className={`retorno ${revelando ? 'visivel' : ''}`} aria-live="polite">
+        {revelando && (
+          <p>
+            <strong>{pergunta.totalVotos}</strong> deputados se posicionaram nesta votação.
+          </p>
+        )}
+      </div>
+
+      {aoVoltar && !revelando && (
+        <button type="button" className="botao-texto voltar-pergunta" onClick={aoVoltar}>
+          ← Voltar
+        </button>
+      )}
+    </div>
+  );
+}
+
+function Encerramento({
+  opinadas,
+  total,
+  enviando,
+  erro,
+  aoEnviar,
+  aoRever,
+}: {
+  opinadas: number;
+  total: number;
+  enviando: boolean;
+  erro: string | null;
+  aoEnviar: () => void;
+  aoRever: () => void;
+}) {
+  return (
+    <div className="encerramento">
+      <h2>Pronto</h2>
+      <p className="ajuda">
+        Você opinou em <strong>{opinadas}</strong> de {total} afirmações. Agora vamos
+        comparar com o voto registrado de cada deputado.
+      </p>
+
+      {erro && <p className="erro">{erro}</p>}
+
+      <div className="encerramento-acoes">
+        <button type="button" className="botao-destaque" disabled={enviando} onClick={aoEnviar}>
+          {enviando ? 'Calculando…' : 'Ver meu resultado'}
+        </button>
+        <button type="button" className="botao-secundario" onClick={aoRever}>
+          Rever respostas
+        </button>
+      </div>
+    </div>
+  );
+}
