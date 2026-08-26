@@ -23,11 +23,16 @@ própria a cada cliente.
 | **Assunto** | O registro nominal de votação da Câmara dos Deputados |
 | **Público** | Cidadão brasileiro comum — e a banca do TCC |
 | **Trabalho da tela** | Levar a pessoa até o fim do questionário e fazer o resultado parecer confiável |
-| **Modelo de interação** | Rede social de linha do tempo, três colunas — **decisão do autor**, não reabrir |
+| **Modelo de interação** | Linha do tempo com coluna de apoio — **decisão do autor**, não reabrir |
 
-⚠️ O modelo de interação é do Twitter porque o autor pediu. A **identidade visual** não
-pode ser: um clone com a logo trocada é o oposto do que este documento existe para
-evitar.
+⚠️ A linha do tempo veio de pedido do autor e fica. A **moldura**, não: o trilho lateral
+esquerdo com `max-width` centralizado é a assinatura de layout do Twitter, e a calha
+morta nas laterais faz parte dela — o autor apontou as duas coisas de uma vez.
+
+🔴 **A moldura é de serviço público, e ocupa a tela inteira:** faixa de procedência,
+cabeçalho de largura total com navegação horizontal, corpo, rodapé em colunas. A faixa
+não é enfeite — a credibilidade deste trabalho depende de o visitante saber que o número
+vem do registro nominal da Câmara, não de opinião nossa.
 
 ---
 
@@ -101,7 +106,45 @@ não é.
 
 ---
 
-## 5. O chão de qualidade — sem anunciar
+## 5. Movimento
+
+Curvas e durações do Material Design 3. ⚠️ **Não são gosto:** `emphasized` acelera
+devagar e freia forte, que é como objeto físico se move — o olho lê como natural.
+Linear lê como máquina.
+
+| Token | Valor | Onde |
+|---|---|---|
+| `--t-toque` | 90ms | Resposta ao clique. Acima de ~100ms vira animação e atrasa a próxima ação; abaixo de 60ms o olho não registra |
+| `--t-curto` | 160ms | Hover, cor, borda |
+| `--t-medio` | 260ms | Troca de tela |
+| `--t-longo` | 380ms | Pergunta a pergunta |
+
+⚠️ **Acima de ~400ms deixa de ser suavidade e vira espera.**
+
+### Tela a tela
+
+View Transitions API, via `viewTransition` do React Router. ⭐ **O truque é nomear a
+moldura:** elemento com `view-transition-name` é retratado à parte e, se não mudou, fica
+**parado**. Faixa, cabeçalho, lateral e rodapé têm nome — por isso só a coluna central
+atravessa. Sem isso o cabeçalho pisca a cada clique, que é o defeito que a transição
+deveria resolver.
+
+### Pergunta a pergunta
+
+**Direcional:** a respondida sai pela esquerda, a próxima entra pela direita. Direção é o
+que transforma um piscar em progresso. ⚠️ Keyframe local só anima quem chega — sem a
+saída da anterior a troca lê como pisca-pisca. Por isso passa por `comTransicao()`.
+
+🔴 **`prefers-reduced-motion` é respeitado no JS, não só no CSS** (`transicao.ts`).
+Zerar a animação no CSS ainda deixaria a View Transition rodar e bloquear a interação
+durante o retrato do DOM.
+
+⚠️ **Menos movimento ⛔ não é "nenhuma mudança visual":** sumir sem transição confunde
+tanto quanto deslizar demais. Sai o deslocamento, fica a fusão curta.
+
+---
+
+## 6. O chão de qualidade — sem anunciar
 
 - Responsivo até o celular (quebras em 1100px, 860px e 700px)
 - **Foco de teclado visível** em tudo que recebe foco
@@ -111,7 +154,7 @@ não é.
 
 ---
 
-## 6. Os três defaults de IA — não caia neles
+## 7. Os três defaults de IA — não caia neles
 
 Design gerado por IA hoje converge para três aparências. **Todas as três orbitam este
 assunto**, o que as torna especialmente tentadoras aqui:
@@ -126,7 +169,7 @@ diagramação, é **o painel** — a assinatura da seção 2.
 
 ---
 
-## 7. Texto de interface
+## 8. Texto de interface
 
 Palavra em tela é material de design, não decoração.
 
@@ -143,7 +186,7 @@ Palavra em tela é material de design, não decoração.
 
 ---
 
-## 8. Antes de fechar
+## 9. Antes de fechar
 
 Chanel: antes de sair de casa, olhe no espelho e tire um acessório.
 
