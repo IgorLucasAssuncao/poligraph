@@ -1,0 +1,78 @@
+name: CI
+
+# ⚠️ Isto é CI, não CD. O deploy é do Coolify, por webhook no push.
+# 🔴 Os dois disparam do MESMO push, em paralelo — o Coolify não espera este job.
+#    Se quiser portão, ver a pendência PL23.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: 1
+
+jobs:
+  dotnet:
+    name: Build e testes
+    runs-on: ubuntu-latest   # ⭐ tem Docker: os testes de integração rodam de verdade
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      # 🔴 Inclui o teste de polaridade (API3). Em 14% das votações "Sim" significa
+      #    rejeitar, e um sinal invertido não aparece na tela — aparece como um
+      #    número plausível e errado. Este job não pode ser opcional.
+      - name: Testes unitários
+        run: dotnet test --no-build -c Release --filter "FullyQualifiedName~Unidade"
+
+      # Sobe Postgres real via Testcontainers. Valida que os CHECK sobreviveram
+      # à tradução para EF e chegaram ao banco.
+      - name: Testes de integração
+        run: dotnet test --no-build -c Release --filter "FullyQualifiedName~Integracao"
+
+  migration:
+    name: Migration gera script válido
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Instalar dotnet-ef
+        run: dotnet tool install --global dotnet-ef
+
+      # ⚠️ O CI GERA e VALIDA o script. Não aplica.
+      #    O runner do GitHub não alcança o Postgres: a porta 5432 nunca é exposta,
+      #    pelo mesmo motivo que tirou o ETL do Actions. Quem aplica é um container
+      #    rodando DENTRO do VPS, que já está na rede Docker.
+      - name: Gerar script idempotente
+        run: dotnet ef migrations script --idempotent -p src/Poligraph.Api -o migration.sql
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: migration-sql
+          path: migration.sql
+
+  docker:
+    name: Imagens constroem
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build da imagem da API
+        run: docker build -f docker/Dockerfile.api -t poligraph-api:ci .
+
+      - name: Build da imagem de migrations
+        run: docker build -f docker/Dockerfile.migrations -t poligraph-migrations:ci .
