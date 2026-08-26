@@ -1,6 +1,8 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v1.7 — 2026-08-25
+> **Status:** v1.8 — 2026-08-25
+> **v1.8:** §3.4.0 — o payload literal do `id_token`, os três blocos do JWT e as TRÊS
+> conferências obrigatórias. 🔴 A do `aud` é a que costuma faltar e a que mais importa.
 > **v1.7:** §3.2.4 reescrita — "e o token, não vai ser armazenado?". São TRÊS desenhos,
 > não dois. ⭐ Recomendação muda para B1 (cookie assinado `HttpOnly`, sem tabela), porque
 > a opção A expunha o `id_token` ao XSS. Truque do `sessao_versao` para revogação global.
@@ -180,6 +182,7 @@ sequenceDiagram
 |---|---|
 | Validar o `id_token` **no servidor**, uma vez | Nunca confiar no cliente |
 | ⛔ **Nunca armazenar o `id_token`** | Validado e descartado — §3.2.4 |
+| 🔴 Passar `Audience` na validação | Sem isso, token de outro app é aceito — §3.4.0 |
 | Sessão em cookie `HttpOnly` assinado | Script não lê; **sem tabela de sessão** |
 | Chave da conta é `SHA256(sub + pepper)` | O `sub` cru não fica no banco |
 | ⭐ **`email` é coluna anulável** | 🔑 Quem não pediu notificação **não tem e-mail gravado** |
@@ -498,8 +501,74 @@ começar, para decidir onde ela entra no cronograma — não para desistir dela.
 
 > **Ponto do autor:** *"com o login do Google temos todos os dados necessários do usuário"*.
 
-**Correto — e é verdade justamente porque este projeto precisa de muito pouco.** O
-`id_token` chega assinado, a cada login, com:
+**Correto — e é verdade justamente porque este projeto precisa de muito pouco.**
+
+### 3.4.0 O que chega, literalmente
+
+O que o navegador entrega em `response.credential` é **uma string**: um JWT, três blocos
+base64url separados por ponto, com cerca de 1 KB.
+
+```
+eyJhbGciOiJSUzI1NiIsImtpZCI6IjZmN2Y...  .  eyJpc3MiOiJodHRwczovL2FjY2 ...  .  NfV3sZ8Q7k...
+      cabeçalho (algoritmo, kid)                    conteúdo                    assinatura
+```
+
+**Decodificando o bloco do meio** — é isto que recebemos, e nada além:
+
+```json
+{
+  "iss": "https://accounts.google.com",
+  "aud": "1234567890-abc.apps.googleusercontent.com",
+  "sub": "117482910375829104857",
+  "email": "fulano@gmail.com",
+  "email_verified": true,
+  "name": "Fulano de Tal",
+  "given_name": "Fulano",
+  "family_name": "de Tal",
+  "picture": "https://lh3.googleusercontent.com/a/ACg8oc...=s96-c",
+  "locale": "pt-BR",
+  "iat": 1756100000,
+  "exp": 1756103600
+}
+```
+
+⚠️ **Nada disso é secreto ou confiável por si só.** Base64 não é criptografia — qualquer
+pessoa decodifica em [jwt.io](https://jwt.io). **O que dá valor ao conteúdo é a
+assinatura**, e conferi-la é obrigação do servidor.
+
+#### 🔴 As três conferências — e a que todo mundo esquece
+
+| # | Conferir | Se falhar |
+|---|---|---|
+| 1 | **Assinatura** contra as chaves públicas do Google | Token forjado |
+| 2 | 🔴 **`aud` == o SEU Client ID** | ⛔ **Um token legítimo, emitido para OUTRO app, entra no seu como se fosse seu** |
+| 3 | `iss` é `accounts.google.com` e `exp` não passou | Token de outro emissor, ou vencido |
+
+> 🔑 **A checagem #2 é a que costuma faltar.** Sem ela, qualquer site que use Sign in with
+> Google pode pegar o token dos próprios usuários e usá-lo na sua API. O
+> `Google.Apis.Auth` só faz essa conferência **se você passar o `Audience`** — não é
+> automático:
+
+```csharp
+var payload = await GoogleJsonWebSignature.ValidateAsync(idToken,
+    new GoogleJsonWebSignature.ValidationSettings {
+        Audience = [clientId]      // 🔴 sem esta linha, a #2 não acontece
+    });
+```
+
+#### ⛔ O que NÃO vem junto
+
+| | |
+|---|---|
+| **`refresh_token`** | ⛔ Não existe neste fluxo. Só no *authorization code* com troca no servidor |
+| Senha, telefone, nascimento, CPF | ⛔ Nunca |
+| Contatos, agenda, Drive | ⛔ Exigiriam escopos sensíveis (§3.2.2) |
+
+⭐ **A ausência de `refresh_token` é exatamente por que a §3.2.4 importa:** não há como
+renovar o `id_token` no servidor. Ou a sessão é do Google e dura 1 hora, ou é nossa — e foi
+por isso que a **B1** foi escolhida.
+
+### 3.4.0.1 Resumo dos campos
 
 | Claim | Conteúdo | Guardamos? |
 |---|---|---|
