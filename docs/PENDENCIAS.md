@@ -70,6 +70,109 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | **A4** | Quantas das 100 proposições sobrevivem ao corte de unanimidade | 🟡 Média | — |
 | **PL34** | 🔵 **Adiada por decisão do autor:** gravar as respostas individuais do questionário, SEM vínculo com a conta, para analisar quais perguntas dividem e quais ninguém entende (§ abaixo) | 🔵 Futuro | — |
 | ~~API4~~ | ✅ **Resolvida** — cosseno no grafo, concordância simples na tela (plano/07 §4.5) | — | — |
+| 🔴 **PL35** | **A legislatura não é filtrada em consulta nenhuma** — a decisão "só a 57ª" ([plano/06 §3](plano/06-perguntas-lote-1.md)) vive só no documento. Detalhe abaixo | 🔴 **Alta** | 🟡 Horas |
+| 🔴 **PL36** | **O ETL Python não fala com o banco real** — usa `votacao`, `voto`, `pessoa`; o EF criou `votacoes`, `votos`, `pessoas`. **Todas** as tabelas. Detalhe abaixo | 🔴 **Alta** | 🟡 Horas |
+| 🔴 **PL37** | **Os 104 testes do Python validam um schema fictício** — criam as tabelas no nome errado, então passam sem nunca tocar o schema do EF. É a causa-raiz da PL36 | 🔴 **Alta** | 🟡 Horas |
+| 🟡 **PL38** | **O grafo nunca é gravado** — `arestas_knn` é calculado e só vai para o log. `aresta_grafo` e `no_metrica` ficam vazias, e `/api/grafo` devolve grafo vazio para sempre (RF-33) | 🟡 Média | 🟡 Horas |
+
+### 🔴 PL35 — a legislatura não é filtrada em consulta nenhuma
+
+**Encontrada em 2026-08-26**, a partir da pergunta do autor *"será só dessa legislatura?"*.
+
+[`plano/06 §3`](plano/06-perguntas-lote-1.md) decidiu **só a legislatura 57**, com quatro
+motivos medidos — cobertura, comparabilidade (RN-02), relevância e estabilidade
+(r = 0,862 dentro da legislatura; **entre** legislaturas, não se mediu).
+
+⛔ **Mas a decisão nunca chegou ao código.** `Votacao.Legislatura` existe e é indexada,
+e só `EndpointsGrafo` a usa. Nenhuma consulta de afinidade, ficha ou painel filtra por
+ela. Hoje passa porque o banco tem uma legislatura só.
+
+| Consulta | O que acontece quando entrar uma segunda legislatura |
+|---|---|
+| 🔴 `PerguntaPublica.TotalPossivel` | `db.Votos.Select(PessoaId).Distinct().Count()` conta deputados das duas. O painel mostraria **"480 de 900"** — sem erro, só um número plausível e errado |
+| `ParlamentarNaLista.NVotacoes` | Soma as votações de todas as legislaturas |
+| `CarregarVotosAsync` | Escapa por acaso: só alcança votações ligadas a perguntas ativas |
+
+⚠️ **É o mesmo formato do bug de polaridade:** não quebra a tela, produz número
+plausível. E a regra 4 do projeto diz que regra medida vira *constraint*, não comentário.
+
+⏳ **E tem prazo.** A 57ª termina em **janeiro de 2027**; a 58ª toma posse em fevereiro.
+"Só a 57ª" é escolha com data de validade, e o sistema não tem hoje nenhum conceito de
+qual legislatura está ativa.
+
+**Encaminhamento sugerido:** derivar a legislatura da `Votacao` ligada à `Pergunta`, em
+vez de configurar à parte — dado derivado é mais difícil de errar do que dado repetido.
+🔴 O teste tem de semear **duas** legislaturas e provar que a segunda não vaza; sem isso,
+o filtro pode sumir num refactor e ninguém percebe.
+
+⚠️ **Vale para o questionário, não para o grafo.** O grafo de similaridade *pode* usar
+histórico — são perguntas diferentes, e 2001–2026 continua disponível.
+
+---
+
+### 🔴 PL36 e PL37 — o ETL Python e o banco nunca se falaram
+
+**Encontradas em 2026-08-26**, a partir da pergunta do autor *"o script em python já
+funciona?"*.
+
+**Não funciona.** O EF Core, com `UseSnakeCaseNamingConvention()`, nomeia a tabela a
+partir do `DbSet` — que é plural. O Python foi escrito no singular:
+
+| Python usa | Existe no banco |
+|---|---|
+| `votacao` | `votacoes` |
+| `voto` | `votos` |
+| `pessoa` | `pessoas` |
+| `pessoa_fonte_id` | `pessoa_fonte_ids` |
+| `similaridade` | `similaridades` |
+| `execucao` | `execucoes` |
+
+⛔ **Todas as seis.** Qualquer `python -m poligraph_etl` morre no primeiro `SELECT` com
+`relation "votacao" does not exist` — verificado contra o banco em execução.
+
+#### 🔴 Por que ninguém percebeu: os testes provavam a coisa errada (PL37)
+
+`tests/test_persistencia.py` faz `CREATE TABLE pessoa (...)`, `CREATE TABLE votacao
+(...)` — **com os nomes errados**. Os 104 testes passam porque testam o Python contra um
+banco que o Python mesmo inventou.
+
+> ⚠️ **A lição é maior que o bug.** O `CLAUDE.md` diz que **o EF é dono do schema** e o
+> Python só lê. Um teste que cria o próprio schema abandona esse contrato e passa a
+> medir consistência interna em vez de integração. Verde constante e zero informação.
+
+**Encaminhamento:** renomear é o menor dos trabalhos e ⛔ **não basta** — sem mudar o
+teste, a mesma deriva volta na próxima coluna que mudar de nome. O teste precisa subir o
+schema **pelas migrations do EF** (Testcontainers, como no lado C#) e só então rodar o
+Python contra ele. 🔴 Só assim a renomeação fica provada e protegida.
+
+---
+
+### 🟡 PL38 — o grafo é calculado e jogado fora
+
+`__main__._analisar` faz:
+
+```python
+arestas = similaridade.arestas_knn(pares)
+log.info("  grafo kNN: %d arestas", len(arestas))
+```
+
+⛔ E acaba aí. `similaridade.py` diz no cabeçalho que produz `aresta_grafo` e
+`no_metrica`, mas `persistencia.py` não tem função que escreva em nenhuma das duas —
+só `gravar_similaridades`.
+
+Consequência: `EndpointsGrafo` lê `arestas_grafo` e `nos_metrica`, encontra vazio e
+devolve `Grafo(0, casa, 0, [], [])`. O caminho está certo — ⭐ grafo vazio, não erro —
+mas seria vazio **para sempre**, mesmo com o ETL rodando sem falha e sem aviso no log.
+
+⚠️ Falta também **comunidade** e **posição (x, y)**: `NoDoGrafo` tem `Comunidade`,
+`EixoX` e `EixoY`, e nada os calcula. O `networkx` está na stack para isso e ainda não
+foi usado.
+
+⚠️ **E não há tela.** A RF-33 (visualizar o grafo, *force-directed*, filtro por limiar,
+cor por comunidade) é 🔴 Essencial e o front não tem página nenhuma que consuma
+`/api/grafo`.
+
+---
 
 > 🔑 **Por que esta é a frente mais crítica, e não uma lista de tarefas de conteúdo:**
 
