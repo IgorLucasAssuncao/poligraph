@@ -364,7 +364,7 @@ Quem quiser isso cai na opção C, que segue **não recomendada**.
 | **RNF-12c** | 🔄 **Revisto (opção 3).** Chave da conta é `SHA256(sub + pepper)`. ⛔ **Nunca** nome ou foto. ⭐ `email` é coluna **anulável**, preenchida **só** no opt-in — quem não pediu notificação segue pseudonimizado. `pepper` fora do banco. Endpoint de exclusão total (art. 18) | [plano/02 §3.1](plano/02-autenticacao-e-metricas.md) |
 | **RNF-12e** | ⛔ Não enviar e-mail a partir do VPS. Usar serviço de envio com **SPF, DKIM e DMARC** configurados no domínio | [plano/02 §3.3](plano/02-autenticacao-e-metricas.md) |
 | **RNF-12f** | ⭐ Nome e foto do Google **nunca são persistidos** — lidos do `id_token` a cada login e descartados. A chave da conta é `sub_hash`, ⛔ **nunca o e-mail**, que pode mudar | [plano/02 §3.4](plano/02-autenticacao-e-metricas.md) |
-| **RNF-12d** | ⛔ **Nenhuma estrutura de senha no projeto** — sem tabela de credencial, sem recuperação, sem sessão própria. Autenticação é sempre delegada ao Google | Decisão do autor |
+| **RNF-12d** | ⛔ **Nenhuma credencial de vida longa no projeto** — sem tabela de senha, sem recuperação, ⛔ **sem `refresh_token`**. A sessão é um cookie assinado, não um token armazenado | Decisão do autor |
 | **RNF-12b** | 🔴 **ATIVA** (RQ9). Tratar a lista de seguidos como **dado pessoal sensível** (LGPD art. 5º, II — opinião política): consentimento específico, política de privacidade e exclusão sob demanda | LGPD |
 | **RNF-13** | **Não republicar CPF**. Uso interno como chave; persistir apenas hash | LGPD |
 | **RNF-14** | Exibir *disclaimer* em toda tela de resultado: ferramenta acadêmica, **não** recomendação de voto | R7 |

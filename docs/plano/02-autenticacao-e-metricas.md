@@ -1,6 +1,8 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v1.8 — 2026-08-25
+> **Status:** v1.9 — 2026-08-25
+> **v1.9:** §3.4.0 — autenticação × autorização delegada: não existe `refresh_token`
+> neste fluxo, e o cookie de sessão é que faz o papel dele. Guardá-lo violaria a RNF-12d.
 > **v1.8:** §3.4.0 — o payload literal do `id_token`, os três blocos do JWT e as TRÊS
 > conferências obrigatórias. 🔴 A do `aud` é a que costuma faltar e a que mais importa.
 > **v1.7:** §3.2.4 reescrita — "e o token, não vai ser armazenado?". São TRÊS desenhos,
@@ -567,6 +569,37 @@ var payload = await GoogleJsonWebSignature.ValidateAsync(idToken,
 ⭐ **A ausência de `refresh_token` é exatamente por que a §3.2.4 importa:** não há como
 renovar o `id_token` no servidor. Ou a sessão é do Google e dura 1 hora, ou é nossa — e foi
 por isso que a **B1** foi escolhida.
+
+#### 🔑 Por que não há `refresh_token` — e por que isso é bom
+
+A pergunta *"não precisamos armazenar o refresh token?"* tem uma resposta curta —
+**não dá para armazenar o que nunca chega** — mas a razão de fundo vale mais que a resposta:
+
+> **São dois problemas diferentes, e só temos o primeiro.**
+
+| | **Autenticação** — quem é | **Autorização delegada** — agir por ela |
+|---|---|---|
+| Pergunta | *"Quem está entrando?"* | *"Posso ler o Gmail dela enquanto ela dorme?"* |
+| Token | ⭐ **`id_token`** | `access_token` + `refresh_token` |
+| Fluxo | Botão do GIS | *Authorization code* + `client_secret` no servidor |
+| **Precisamos?** | ✅ **Só disto** | ⛔ **Nunca** |
+
+**O `refresh_token` serve para manter acesso às APIs do Google quando o usuário não está
+presente.** Este projeto não chama nenhuma API do Google — só precisa saber **uma vez, no
+login**, quem é a pessoa. Depois disso o Google sai da história.
+
+⭐ **E o papel que o `refresh_token` teria — manter a pessoa logada sem perguntar de novo —
+é exatamente o que o nosso cookie de sessão faz** (§3.2.4). Ele *é* o nosso mecanismo de
+renovação, e não é armazenado.
+
+⚠️ **Guardar `refresh_token` seria o pior dos mundos aqui.** É credencial de vida longa,
+sem expiração natural — a coisa mais parecida com senha que existe depois da senha. Exigiria
+tabela, rotação, revogação e o `client_secret` no servidor. **Seria justamente a "estrutura
+de credenciais" que a RNF-12d proíbe** — reintroduzida pela porta dos fundos.
+
+> 🔑 **O fluxo escolhido não é uma versão simplificada do fluxo completo. É o fluxo certo
+> para o problema certo** — e o argumento cabe no TCC como decisão de projeto, não como
+> limitação.
 
 ### 3.4.0.1 Resumo dos campos
 
