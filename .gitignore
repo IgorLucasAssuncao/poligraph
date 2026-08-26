@@ -55,3 +55,7 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Claude Code — artefatos de runtime (as skills e commands SÃO versionadas)
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
