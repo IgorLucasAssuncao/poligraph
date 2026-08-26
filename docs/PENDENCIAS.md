@@ -74,7 +74,8 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | ~~PL36~~ | ✅ **Resolvida (2026-08-26)** — nomes corrigidos e **verificado rodando o container contra o banco real**: monta a matriz e grava `execucoes`. Estava faltando também traduzir a connection string do Aspire (§ abaixo) | — | — |
 | 🟡 **PL37** | 🔄 **Parcial** — `test_contrato_schema.py` lê o `PoligraphDb.cs` e trava os **nomes** de tabela. ⛔ As **colunas** continuam sem proteção: o DDL de `test_persistencia.py` ainda é escrito à mão | 🟡 Média | 🟡 Horas |
 | 🟢 **PL39** | **O grafo local nunca terá arestas com o seed atual** — a RN-02 exige 20 votações comuns e o seed tem 5. ⭐ Não é bug: é o `CHECK` funcionando. Mas o grafo só aparece depois da ingestão real | 🟢 Baixa | 🟢 Decisão |
-| 🟡 **PL38** | **O grafo nunca é gravado** — `arestas_knn` é calculado e só vai para o log. `aresta_grafo` e `no_metrica` ficam vazias, e `/api/grafo` devolve grafo vazio para sempre (RF-33) | 🟡 Média | 🟡 Horas |
+| 🟡 **PL40** | **`proposicoes` nunca é ingerida** — o CSV de votações traz só o `id` da proposição, sem sigla/número/ano/ementa. Hoje o `proposicao_id` é anulado. 🔴 Bloqueia a **RF-30** (exibir a ementa original ao lado da pergunta) | 🟡 Média | 🟡 Horas |
+| 🟡 **PL38** | 🔄 **Parcial** — `arestas_grafo` já é gravada (`gravar_arestas`). ⛔ Falta `nos_metrica`: **comunidade, posição x/y, governismo e disciplina não são calculados por ninguém**, e o `networkx` segue sem ser importado (RF-19, RF-33) | 🟡 Média | 🟡 Horas |
 
 ### 🔴 PL35 — a legislatura não é filtrada em consulta nenhuma
 

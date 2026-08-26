@@ -3,6 +3,8 @@
 import pandas as pd
 import pytest
 
+from poligraph_etl import ingestao
+
 from poligraph_etl.ingestao import (
     deputados_para_linhas,
     votacoes_para_linhas,
@@ -149,3 +151,55 @@ def test_deputado_sem_id_e_descartado():
     df = pd.DataFrame([{"id": "", "nome": "Sem Id", "nomeCivil": "Sem Id"}])
 
     assert deputados_para_linhas(df) == []
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 O id do deputado — descoberto na primeira ingestão real
+# ═══════════════════════════════════════════════════════════════════
+
+
+def test_id_do_deputado_sai_da_uri():
+    """🔴 `deputados.csv` NÃO tem coluna `id` — tem `uri`, com o id no fim.
+
+    ⚠️ Ler `id` devolvia vazio para toda linha e o ETL registrava
+    `0 deputados no arquivo` em INFO, sem erro. Sem a tabela de-para, os 13.825 votos
+    de 2025 também não casavam e o log dizia `0 votos`. Dois zeros plausíveis.
+    """
+    linha = {"uri": "https://dadosabertos.camara.leg.br/api/v2/deputados/220593"}
+
+    assert ingestao.id_do_deputado(linha) == "220593"
+
+
+def test_id_do_deputado_prefere_a_coluna_id_se_existir():
+    # ⭐ Se a Câmara passar a publicar a coluna, funciona sem mudança.
+    linha = {"id": "204554", "uri": ".../deputados/220593"}
+
+    assert ingestao.id_do_deputado(linha) == "204554"
+
+
+def test_id_do_deputado_sem_uri_nem_id_devolve_vazio():
+    assert ingestao.id_do_deputado({}) == ""
+    assert ingestao.id_do_deputado({"uri": ""}) == ""
+
+
+def test_deputados_do_formato_real_da_camara_viram_linhas():
+    """⭐ Colunas copiadas do cabeçalho real de `deputados.csv`, não inventadas."""
+    df = pd.DataFrame(
+        [
+            {
+                "uri": "https://dadosabertos.camara.leg.br/api/v2/deputados/220593",
+                "nome": "Abilio Brunini",
+                "nomeCivil": "ABILIO BRUNINI PEIXOTO",
+                "cpf": "",
+                "siglaSexo": "M",
+            }
+        ]
+    )
+
+    linhas = ingestao.deputados_para_linhas(df)
+
+    assert len(linhas) == 1
+    assert linhas[0]["id_externo"] == "220593"
+    assert linhas[0]["nome_exibicao"] == "Abilio Brunini"
+    # ⚠️ A coluna `cpf` do CSV vem vazia — medido: 0 de 7.889 preenchidos.
+    assert linhas[0]["cpf_hash"] is None

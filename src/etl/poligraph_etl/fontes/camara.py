@@ -46,16 +46,30 @@ def ler_csv(caminho: Path | str) -> pd.DataFrame:
     )
 
 
+# 🔴 Nem todo recurso da Câmara é anual.
+#
+# `votacoes` e `votacoesVotos` saem um arquivo por ano; `deputados` é UM arquivo só,
+# com todos os deputados de todas as legislaturas. Pedir `deputados-2025.csv` devolve
+# 404 — verificado em 2026-08-26 contra o servidor.
+SEM_ANO = {"deputados"}
+
+
+def url_do_arquivo(recurso: str, ano: int) -> str:
+    """⭐ Separada de `baixar` para poder ser testada sem rede."""
+    sufixo = "" if recurso in SEM_ANO else f"-{ano}"
+
+    return f"{BASE}/{recurso}/csv/{recurso}{sufixo}.csv"
+
+
 def baixar(recurso: str, ano: int, destino: Path) -> Path:
-    """Baixa um arquivo anual da Câmara.
+    """Baixa um arquivo da Câmara.
 
     ⚠️ Os arquivos são reconstruídos toda madrugada, TODOS os anos — inclusive os
     fechados (achado #19). Não dá para supor que o de 2023 nunca muda.
     """
     destino.parent.mkdir(parents=True, exist_ok=True)
-    url = f"{BASE}/{recurso}/csv/{recurso}-{ano}.csv"
 
-    resposta = requests.get(url, timeout=120)
+    resposta = requests.get(url_do_arquivo(recurso, ano), timeout=120)
     resposta.raise_for_status()
     destino.write_bytes(resposta.content)
 

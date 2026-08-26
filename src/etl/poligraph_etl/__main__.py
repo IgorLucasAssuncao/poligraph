@@ -90,6 +90,18 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
     novos = persistencia.gravar_pessoas(conexao, deputados)
     log.info("  %d deputados no arquivo, %d novos", len(deputados), novos)
 
+    # 🔴 Zero aqui NÃO é caso normal — é o arquivo ter mudado de forma.
+    #
+    # ⚠️ Foi exatamente assim que o bug do `uri` sobreviveu: `0 deputados no arquivo`
+    #    saiu em INFO, o ETL seguiu, e como o de-para ficou vazio os 13.825 votos de
+    #    2025 também foram descartados, registrando `0 votos`. Dois zeros plausíveis e
+    #    nenhuma exceção. Parar aqui é o que transforma isso em erro visível.
+    if not deputados:
+        raise RuntimeError(
+            f"Nenhum deputado lido de {caminho}. O layout do CSV mudou? "
+            "Sem o de-para, todos os votos seriam descartados em silêncio."
+        )
+
     mapa = _mapa_pessoas(conexao)
 
     for ano in anos:
@@ -100,15 +112,33 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
         camara.conferir_volume(df, ano)      # ⭐ canário contra regressão de parsing
 
         votacoes = ingestao.votacoes_para_linhas(df)
+
+        # ⚠️ A proposição referenciada quase nunca está na nossa base — ver PL40.
+        sem_proposicao = persistencia.desconectar_proposicoes_ausentes(conexao, votacoes)
+
         persistencia.gravar_votacoes(conexao, votacoes)
         log.info("  %d registros, %d votações nominais", len(df), len(votacoes))
+        if sem_proposicao:
+            log.warning(
+                "  %d votações sem proposição na base (proposicao_id nulo)",
+                sem_proposicao,
+            )
 
         arquivo_votos = camara.baixar(
             "votacoesVotos", ano, CACHE / f"votacoesVotos-{ano}.csv"
         )
-        votos = ingestao.votos_para_linhas(camara.ler_csv(arquivo_votos), mapa)
+        df_votos = camara.ler_csv(arquivo_votos)
+        votos = ingestao.votos_para_linhas(df_votos, mapa)
         persistencia.gravar_votos(conexao, votos)
-        log.info("  %d votos", len(votos))
+        log.info("  %d votos de %d linhas", len(votos), len(df_votos))
+
+        # ⚠️ Voto fora do de-para é descartado, não inventado. Em volume, o problema
+        #    está na ingestão de deputados — e aí o número precisa aparecer.
+        descartados = len(df_votos) - len(votos)
+        if descartados:
+            log.warning(
+                "  %d votos descartados: deputado fora do de-para", descartados
+            )
 
 
 def _analisar(conexao: psycopg.Connection, legislatura: int) -> None:
@@ -129,9 +159,13 @@ def _analisar(conexao: psycopg.Connection, legislatura: int) -> None:
             persistencia.gravar_similaridades(conexao, execucao_id, pares)
             log.info("  %s: %d pares acima do mínimo", metrica, len(pares))
 
+            # ⚠️ O grafo sai da CONCORDANCIA, não do cosseno: é a métrica que a
+            #    tela explica ("votaram igual em X de Y"). O cosseno fica gravado em
+            #    `similaridades` para a comparação da RF-18.
             if metrica == "CONCORDANCIA":
                 arestas = similaridade.arestas_knn(pares)
-                log.info("  grafo kNN: %d arestas", len(arestas))
+                gravadas = persistencia.gravar_arestas(conexao, execucao_id, arestas)
+                log.info("  grafo kNN: %d arestas gravadas", gravadas)
 
         persistencia.fechar_execucao(conexao, execucao_id, sucesso=True)
     except Exception:

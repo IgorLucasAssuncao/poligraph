@@ -81,6 +81,46 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
     return inseridas
 
 
+def desconectar_proposicoes_ausentes(
+    conexao: psycopg.Connection, votacoes: Sequence[dict]
+) -> int:
+    """Zera `proposicao_id` que não existe na tabela `proposicoes`, e diz quantos.
+
+    🔴 Sem isto a ingestão morre com `ForeignKeyViolation` na primeira votação — foi o
+    que aconteceu na primeira execução real contra a Câmara.
+
+    ⚠️ **O CSV de votações não permite criar a proposição.** Ele traz só
+    `ultimaApresentacaoProposicao_idProposicao`, sem sigla, número, ano ou ementa —
+    conferido no cabeçalho do arquivo de 2025. E a proposição votada em 2025 pode ser
+    de 2019, então nem ingerir `proposicoes-2025.csv` cobriria o conjunto.
+
+    ⭐ `proposicao_id` é anulável **por desenho**, e nada que o produto faz hoje
+    depende dela: afinidade e grafo saem do voto. Quem vai precisar é a RF-30, exibir a
+    ementa original ao lado da pergunta — ver PL40.
+
+    ⛔ Não é descarte silencioso: devolve a contagem, e o chamador registra no log.
+    """
+    ids = {v["proposicao_id"] for v in votacoes if v.get("proposicao_id") is not None}
+    if not ids:
+        return 0
+
+    existentes = {
+        linha[0]
+        for linha in conexao.execute(
+            "SELECT id FROM proposicoes WHERE id = ANY(%s)", (list(ids),)
+        ).fetchall()
+    }
+
+    desconectadas = 0
+    for votacao in votacoes:
+        atual = votacao.get("proposicao_id")
+        if atual is not None and atual not in existentes:
+            votacao["proposicao_id"] = None
+            desconectadas += 1
+
+    return desconectadas
+
+
 def gravar_votacoes(conexao: psycopg.Connection, votacoes: Sequence[dict]) -> int:
     """Grava votações. `ON CONFLICT (id) DO UPDATE` — a Câmara corrige dado retroativo."""
     return _executar_em_lotes(
@@ -152,6 +192,43 @@ def gravar_similaridades(
                                   valor, n_votacoes_comuns)
         VALUES (%(execucao_id)s, %(pessoa_a)s, %(pessoa_b)s, %(metrica)s,
                 %(valor)s, %(n_votacoes_comuns)s)
+        """,
+        linhas,
+    )
+
+
+def gravar_arestas(
+    conexao: psycopg.Connection, execucao_id: int, arestas: Iterable
+) -> int:
+    """Grava as arestas do grafo kNN.
+
+    🔴 Esta função não existia, e era por isso que `arestas_grafo` ficava vazia PARA
+    SEMPRE. O `__main__` calculava o kNN, escrevia a contagem no log e descartava o
+    resultado — sem erro, sem aviso: o ETL dizia "concluído", a execução fechava como
+    `CONCLUIDA`, e `/api/grafo` devolvia 200 com um grafo em branco.
+
+    ⚠️ `tipo` é sempre `SIMILARIDADE_VOTO` por enquanto. A coluna prevê
+    `COMISSAO_COMUM` e `COAUTORIA`, que ainda não têm origem de dado.
+
+    ⚠️ Sem `ON CONFLICT`, pelo mesmo motivo de `gravar_similaridades`: cada execução é
+    um retrato novo, e conflito de chave aqui é bug, não caso normal.
+    """
+    linhas = [
+        {
+            "execucao_id": execucao_id,
+            "pessoa_a": a.pessoa_a,
+            "pessoa_b": a.pessoa_b,
+            "tipo": "SIMILARIDADE_VOTO",
+            "peso": a.valor,
+        }
+        for a in arestas
+    ]
+
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO arestas_grafo (execucao_id, pessoa_a, pessoa_b, tipo, peso)
+        VALUES (%(execucao_id)s, %(pessoa_a)s, %(pessoa_b)s, %(tipo)s, %(peso)s)
         """,
         linhas,
     )

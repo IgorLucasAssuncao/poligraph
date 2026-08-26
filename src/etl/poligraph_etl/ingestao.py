@@ -90,7 +90,7 @@ def deputados_para_linhas(df: pd.DataFrame) -> list[dict]:
     vistos: set[str] = set()
 
     for _, r in df.iterrows():
-        id_externo = str(r.get("id") or "")
+        id_externo = id_do_deputado(r)
         if not id_externo or id_externo in vistos:
             continue                       # ⚠️ o CSV repete a pessoa por partido (achado #20)
         vistos.add(id_externo)
@@ -112,6 +112,30 @@ def deputados_para_linhas(df: pd.DataFrame) -> list[dict]:
 
 
 # ═══════════════════════════════════════════════════════════════════
+
+
+def id_do_deputado(linha) -> str:
+    """Extrai o id da Câmara da linha de `deputados.csv`.
+
+    🔴 O arquivo **não tem coluna `id`.** Tem `uri`, e o id é o último segmento:
+
+        https://dadosabertos.camara.leg.br/api/v2/deputados/220593  →  220593
+
+    ⚠️ Ler `r.get("id")` devolvia vazio para toda linha, o laço pulava todas, e o ETL
+    registrava `0 deputados no arquivo, 0 novos` — em **INFO**, sem erro. Como a tabela
+    de-para ficava vazia, os 13.825 votos de 2025 também não casavam com ninguém e o
+    log dizia `0 votos`. Dois zeros plausíveis, nenhuma exceção.
+
+    ⭐ Aceita `id` se existir: se a Câmara passar a publicar a coluna, funciona sem
+    mudança.
+    """
+    direto = str(linha.get("id") or "").strip()
+    if direto:
+        return direto
+
+    uri = str(linha.get("uri") or "").strip().rstrip("/")
+
+    return uri.rsplit("/", 1)[-1] if "/" in uri else ""
 
 
 def _inteiro(valor) -> int:

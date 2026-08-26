@@ -12,6 +12,7 @@ from poligraph_etl.fontes.camara import (
     REGISTROS_ESPERADOS,
     conferir_volume,
     ler_csv,
+    url_do_arquivo,
 )
 
 # ═══════════════════════════════════════════════════════════════════
@@ -130,3 +131,26 @@ def test_volume_inflado_para_o_etl():
 def test_ano_sem_referencia_nao_e_conferido():
     """Ano novo ainda não medido: não bloqueia o ETL."""
     conferir_volume(pd.DataFrame({"id": range(99)}), 2099)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 A URL — descoberto rodando a ingestão de verdade
+# ═══════════════════════════════════════════════════════════════════
+
+
+def test_votacoes_tem_ano_na_url():
+    assert url_do_arquivo("votacoes", 2025).endswith("/votacoes-2025.csv")
+    assert url_do_arquivo("votacoesVotos", 2025).endswith(
+        "/votacoesVotos-2025.csv"
+    )
+
+
+def test_deputados_nao_tem_ano_na_url():
+    """🔴 `deputados` é UM arquivo, com todas as legislaturas.
+
+    ⚠️ Pedir `deputados-2025.csv` devolve 404 e a ingestão morre na primeira linha —
+    foi o que aconteceu na primeira execução real. Verificado contra o servidor da
+    Câmara em 2026-08-26.
+    """
+    assert url_do_arquivo("deputados", 2025).endswith("/deputados.csv")
+    assert "2025" not in url_do_arquivo("deputados", 2025)
