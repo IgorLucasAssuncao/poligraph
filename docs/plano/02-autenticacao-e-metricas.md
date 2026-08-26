@@ -1,6 +1,9 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v2.1 — 2026-08-25
+> **Status:** v2.2 — 2026-08-25
+> **v2.2:** §3.6.0 — o fluxo de login em sete passos, com diagrama. ⚠️ Desfaz a confusão
+> criada por "não armazenamos token": existem DOIS tokens e ambos são essenciais; nenhum
+> é guardado.
 > **v2.1:** §3.6 — como a API valida quem é o usuário em cada requisição: cookie do
 > ASP.NET Core, as 4 conferências, e 🔴 a armadilha do Data Protection em container, que
 > desloga todo mundo no primeiro redeploy.
@@ -771,8 +774,65 @@ com um avatar padrão.
 > **Pergunta do autor:** *"a API precisa do token do usuário, não? Como vamos validar se é
 > um usuário válido e qual usuário é?"*
 
-**Sim — mas não o token do Google.** São dois momentos diferentes, com mecanismos
-diferentes, e confundi-los é a origem de quase toda confusão sobre login social.
+### 3.6.0 ⭐ O fluxo inteiro, em sete passos
+
+⚠️ **Desfazendo uma confusão que eu mesmo criei.** Venho repetindo *"não armazenamos
+token"*, e isso soou como *"não existe token"*.
+
+> **Existe token de login, sim — e ele é essencial.** O que não acontece é **guardá-lo**.
+> Ele é usado uma vez e descartado.
+
+| # | Onde acontece | O quê |
+|---|---|---|
+| 1 | Navegador | Pessoa clica em **"Entrar com Google"** |
+| 2 | Google | Popup abre, ela escolhe a conta |
+| 3 | Google → navegador | 🎫 Google devolve **o `id_token`** — a prova de quem ela é |
+| 4 | Navegador → nossa API | Manda esse token **uma única vez**: `POST /api/auth/google` |
+| 5 | Nossa API | Confere a assinatura com as chaves do Google, lê `sub`, `email`, nome… |
+| 6 | Nossa API | Grava/atualiza `usuario` · devolve `Set-Cookie: sid=…` · 🗑️ **joga o `id_token` fora** |
+| 7 | Navegador | Da**í em diante manda só o cookie**, sozinho, em toda requisição |
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant N as Navegador
+    participant G as Google
+    participant A as Nossa API
+    participant D as Postgres
+
+    N->>G: "Entrar com Google"
+    G-->>N: 🎫 id_token (a prova)
+    N->>A: POST /api/auth/google  ← o token vai aqui, UMA vez
+    A->>G: as chaves públicas conferem esta assinatura?
+    G-->>A: ✅ confere
+    A->>D: UPSERT usuario (sub, email, nome, foto…)
+    A-->>N: 🍪 Set-Cookie: sid=…
+    Note over A: 🗑️ id_token descartado — nunca vai ao banco
+    N->>A: GET /api/seguidos  (só o cookie)
+    A-->>N: lista
+```
+
+> 🔑 **A analogia:** o `id_token` é o **documento que você mostra na portaria** — apresenta
+> uma vez, o porteiro confere e devolve. O cookie é a **pulseira** que você ganha e usa o
+> resto da noite. Ninguém fica com o seu documento.
+
+#### Existem dois tokens. Nenhum é guardado.
+
+| Token | Existe? | Fica no banco? | Para quê |
+|---|---|---|---|
+| 🎫 `id_token` (Google) | ✅ **Sim** | ⛔ Não | **Fazer o login** — passo 4 |
+| 🍪 Cookie `sid` (nosso) | ✅ **Sim** | ⛔ Não* | **Manter o login** — passo 7 |
+| `refresh_token` | ⛔ **Não existe** | — | Não chega neste fluxo |
+
+\* *o cookie vive no navegador da pessoa; o servidor não guarda cópia — ele confere pela
+assinatura.*
+
+---
+
+### 3.6.0.1 Por que a API não continua usando o `id_token`
+
+Depois do passo 6, cada requisição usa o cookie — e não o token do Google. São dois
+momentos com mecanismos diferentes:
 
 | | **Uma vez, no login** | **Em toda requisição depois** |
 |---|---|---|
