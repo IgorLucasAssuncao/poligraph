@@ -36,3 +36,10 @@ footer { margin-top: 3rem; opacity: .6; }
 .documento-legal td { border: 1px solid currentColor; padding: .4rem .6rem; opacity: .95; }
 .documento-legal li { margin-left: 1.25rem; }
 .acoes-legais { opacity: .9; }
+
+/* ─── login ───────────────────────────────────────────────────── */
+.area-login { margin: 1rem 0; }
+.aviso-config {
+  font-size: .85rem; opacity: .75;
+  border-left: 3px solid currentColor; padding-left: .75rem;
+}

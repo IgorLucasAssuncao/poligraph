@@ -1,0 +1,118 @@
+import { useEffect, useRef, useState } from 'react';
+
+export type UsuarioLogado = { nome: string | null; fotoUrl: string | null };
+
+/**
+ * Botão "Entrar com Google".
+ *
+ * ⭐ Depois do login não sobra token nenhum aqui: o `id_token` vai UMA vez para a API,
+ * que devolve um cookie `HttpOnly`. O JavaScript nem consegue lê-lo.
+ *
+ * ⛔ Sem `localStorage`, sem header `Authorization`, sem lógica de renovação.
+ */
+export function BotaoGoogle({ aoEntrar }: { aoEntrar: (usuario: UsuarioLogado) => void }) {
+  // ⚠️ Lido AQUI, não no escopo do módulo: no escopo, o valor congela na importação
+  //    e o componente fica impossível de testar sem Client ID.
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const alvo = useRef<HTMLDivElement>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    // ⚠️ Sem Client ID o botão não existe — e isso é esperado em desenvolvimento.
+    //    O resto do site funciona: login só habilita sincronia e e-mail.
+    if (!clientId) return;
+
+    carregarScript().then(() => {
+      window.google?.accounts.id.initialize({
+        client_id: clientId,
+        callback: async (resposta) => {
+          try {
+            aoEntrar(await entrar(resposta.credential));
+          } catch {
+            setErro('Não foi possível entrar agora. Tente de novo.');
+          }
+        },
+      });
+
+      if (alvo.current) {
+        window.google?.accounts.id.renderButton(alvo.current, {
+          theme: 'outline',
+          size: 'large',
+          text: 'signin_with',
+          locale: 'pt-BR',
+        });
+      }
+    });
+  }, [aoEntrar, clientId]);
+
+  if (!clientId) {
+    return (
+      <p className="aviso-config">
+        ⚠️ Login desativado: falta <code>VITE_GOOGLE_CLIENT_ID</code>. O questionário e as
+        fichas funcionam normalmente — entrar só serve para acompanhar parlamentares.
+      </p>
+    );
+  }
+
+  return (
+    <>
+      <div ref={alvo} />
+      {erro && <p role="alert" className="erro">{erro}</p>}
+    </>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * ⚠️ O `id_token` aparece aqui e some. Vai para a API, que valida contra o Google,
+ * grava o perfil e devolve o cookie. Nada é guardado no navegador por nós.
+ */
+async function entrar(idToken: string): Promise<UsuarioLogado> {
+  const resposta = await fetch('/api/auth/google', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken }),
+    credentials: 'include',
+  });
+
+  if (!resposta.ok) throw new Error(`Login falhou (${resposta.status}).`);
+
+  return resposta.json();
+}
+
+/**
+ * ⚠️ O script do Google só entra na página quando há Client ID configurado.
+ * Carregá-lo sempre significaria contato com servidor do Google mesmo para quem
+ * nunca vai entrar.
+ */
+function carregarScript(): Promise<void> {
+  const ID = 'google-gsi';
+  if (document.getElementById(ID)) return Promise.resolve();
+
+  return new Promise((resolver, rejeitar) => {
+    const script = document.createElement('script');
+    script.id = ID;
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.onload = () => resolver();
+    script.onerror = () => rejeitar(new Error('Falha ao carregar o Google.'));
+    document.head.appendChild(script);
+  });
+}
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (resposta: { credential: string }) => void;
+          }) => void;
+          renderButton: (alvo: HTMLElement, opcoes: Record<string, string>) => void;
+        };
+      };
+    };
+  }
+}
