@@ -1,6 +1,9 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v2.3 — 2026-08-25
+> **Status:** v2.4 — 2026-08-26
+> **v2.4:** §3.2.2 reescrita contra o console atual — a Google moveu tudo para **Google
+> Auth Platform**; os nomes de tela antigos não existem mais. Acrescentadas as regras das
+> origens autorizadas e o que já dá para fazer hoje, sem domínio.
 > **v2.3:** §3.6.0.1 — 🔑 como se verifica o cookie sem ter guardado nada: assinatura
 > HMAC refeita e comparada. Exemplo numérico do que acontece se alguém adulterar o
 > `usuario_id`.
@@ -231,25 +234,64 @@ preencher formulário, não em programar.
 | 🔴 **Precisa de domínio** | Sim, para produção. `localhost` funciona no desenvolvimento — mas o *Authorized origin* de produção exige domínio real → **depende da PL3** |
 | 🔴 **Precisa de política de privacidade publicada** | Sim. É **campo obrigatório** da tela de consentimento → **transforma a PL7 em bloqueante** |
 
-### 3.2.2 Os seis passos
+### 3.2.2 Onde cadastrar — o passo a passo (console verificado em 2026-08-26)
+
+⚠️ **Os nomes de tela mudaram.** A Google moveu tudo isto para uma seção nova chamada
+**Google Auth Platform** — quem procurar por *"APIs & Services → OAuth consent screen"*,
+como estava escrito aqui antes, não acha mais.
+
+**Endereço direto:** [console.cloud.google.com/auth/clients](https://console.cloud.google.com/auth/clients)
 
 | # | Onde | O que fazer |
 |---|---|---|
-| 1 | [console.cloud.google.com](https://console.cloud.google.com) | Criar um projeto (nome livre, ex.: `poligraph`) |
-| 2 | *APIs & Services → OAuth consent screen* | Tipo **External**. Nome do app, e-mail de suporte, **URL da política de privacidade**, domínio autorizado |
-| 3 | Mesma tela → *Scopes* | ⭐ Marcar **apenas** `openid`, `email`, `profile` |
-| 4 | *Credentials → Create → OAuth client ID* | Tipo **Web application**. Preencher *Authorized JavaScript origins* (`https://seudominio.com` e `http://localhost:5173`) |
-| 5 | — | Copiar o **Client ID**. É público, pode ir no código do front |
-| 6 | *Publishing status* | Sair de **Testing** e clicar em **Publish** |
+| 1 | [console.cloud.google.com](https://console.cloud.google.com) | Criar um projeto — nome livre, ex.: `poligraph`. Não pede cartão |
+| 2 | *Google Auth Platform → **Branding*** | Nome do app, e-mail de suporte, **domínios autorizados**, link da home e 🔴 **URL da política de privacidade** |
+| 3 | *Google Auth Platform → **Audience*** | Tipo **External**. É aqui que fica o *publishing status* — ver o passo 6 |
+| 4 | *Google Auth Platform → **Data Access*** | ⭐ Marcar **apenas** `openid`, `email`, `profile` |
+| 5 | *Google Auth Platform → **Clients** → **Create client*** | Tipo **Web application** + *Authorized JavaScript origins* (ver §3.2.2.1) |
+| 6 | Copiar o **Client ID** | Formato `1234…-abc.apps.googleusercontent.com`. ⛔ **Não é segredo** — vai no código do front |
+| 7 | *Audience → **Publish app*** | 🔴 Sair de **Testing**. Ver o alerta abaixo |
 
-⚠️ **O passo 6 é o que trava projeto de TCC.** Em *Testing*, só entram **e-mails cadastrados
-manualmente como testadores, no máximo 100**. Se você abrir o site ao público e esquecer
-disso, todo visitante vê erro de acesso negado — e nada no site indica o motivo.
+#### 3.2.2.1 🔴 As origens autorizadas — onde quase todo mundo erra
 
-⭐ **A boa notícia do passo 3:** com **apenas** `openid`, `email` e `profile`, o app **não
-precisa de verificação do Google**. Publicar é um clique. Se você marcar qualquer escopo
-sensível (Gmail, Drive, contatos), cai numa revisão que leva **semanas** e pede vídeo de
-demonstração. **Não marque nada além dos três.**
+O campo aceita **só esquema + host (+ porta)**. Nada de caminho, nada de barra no fim:
+
+```
+✅ https://poligraph.com.br
+✅ http://localhost
+✅ http://localhost:5173          ← 🔴 precisa das DUAS linhas de localhost
+⛔ https://poligraph.com.br/      ← barra no fim: rejeitado
+⛔ https://poligraph.com.br/login ← caminho: rejeitado
+```
+
+⚠️ **`http://localhost` e `http://localhost:5173` são entradas separadas** — a Google exige
+as duas para desenvolvimento local. Faltar uma dá erro de origem sem explicação clara.
+
+⚠️ **One Tap só funciona em HTTPS.** Em `http://localhost` o botão normal funciona, o One
+Tap não. Não é bug seu.
+
+#### 3.2.2.2 ⚠️ O passo 7 é o que trava projeto de TCC
+
+Em **Testing**, só entram **e-mails cadastrados manualmente como testadores, no máximo
+100**. Se o site abrir ao público e isso for esquecido, **todo visitante vê acesso
+negado** — e nada na tela indica o motivo.
+
+⭐ **A boa notícia do passo 4:** com **apenas** `openid`, `email` e `profile`, o app **não
+precisa de verificação**. Publicar é um clique. Qualquer escopo sensível (Gmail, Drive,
+contatos) cai em revisão de **semanas**, com pedido de vídeo de demonstração. **Não marque
+nada além dos três.**
+
+#### 3.2.2.3 ⏱️ Dá para fazer hoje — e vale fazer
+
+| Momento | O que já dá para preencher |
+|---|---|
+| ✅ **Agora** | Projeto, `http://localhost` nas origens, escopos, **Client ID em mãos** |
+| ⏳ Quando houver domínio (PL3) | Acrescentar `https://poligraph.com.br` às origens |
+| ⏳ Quando houver política (PL7) | A URL no *Branding* — e só então **Publish** |
+
+⭐ **O Client ID sai no passo 6 e já serve para desenvolver localmente.** Domínio e política
+de privacidade só bloqueiam a **publicação**, não o desenvolvimento — dá para ter o login
+funcionando na sua máquina hoje e resolver o resto depois.
 
 ### 3.2.3 O código — as duas metades
 
