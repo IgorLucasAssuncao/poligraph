@@ -1,8 +1,10 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-08-25 · **61 resolvidas · 55 abertas**
+> **Atualizado:** 2026-08-26 · **61 resolvidas · 55 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
+> 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
+> manual"*, fora dos bloqueios.
 
 ---
 
@@ -38,23 +40,49 @@
 | **PL24** | 🔴 Confirmar com o orientador se o TCC precisa de **Comitê de Ética** | [plano/02 §4.5](plano/02-autenticacao-e-metricas.md) |
 | **PL23** | 🔴 CI como **portão** do deploy, ou os dois em paralelo? | [plano/01 §2.1.2](plano/01-arquitetura.md) |
 | **PL3** | 🔴 **Subiu para bloqueante** — o login com Google exige domínio, e o e-mail exige SPF/DKIM/DMARC nele | [plano/01](plano/01-arquitetura.md) |
+| 🔴 **PL11** | **Curar as 15–25 perguntas** — ⚠️ **o maior bloqueio de todos**, detalhado abaixo | [plano/03](plano/03-questionario.md) |
+| 🔴 **RQ3** | **N final de perguntas** — a PL11 não começa sem esta definida | [03-requisitos](03-requisitos.md) |
 
 ⚠️ **PL7 e PL25 são texto jurídico, não código** — e agora estão no caminho crítico do
 login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 
 ---
 
-## 🔴 Trabalho manual que ninguém automatiza
+## 🔴 O QUESTIONÁRIO — a frente mais bloqueante do projeto
 
-| # | Tarefa | Esforço |
-|---|---|---|
-| **PL11** | **Curar as 15–25 perguntas** — selecionar, reescrever em linguagem leiga, atribuir polaridade | 🔴 Dias |
-| **A2** | Escrever e validar as regex de `categoria` contra amostra rotulada à mão | 🟡 Horas |
-| **PL12** | Definir e documentar o critério "respondível por leigo" | 🟡 Horas |
+> ⚠️ **Corrigido em 2026-08-26.** Estas pendências existiam, mas ficavam num bloco chamado
+> *"trabalho manual"*, fora da seção de bloqueios — o que **subestimava** a única frente
+> que trava o passo 8 inteiro. A RQ3 ainda aparecia como 🟡 aqui, embora seja 🔴 no
+> documento de origem.
 
-⚠️ **A PL11 continua sendo o gargalo escondido do projeto.** É o passo mais subjetivo do
-método, o mais atacável na banca, e o único que não escala. **Está no caminho crítico do
-front, do questionário e do capítulo de método ao mesmo tempo.** Comece cedo.
+| # | Pendência | Prioridade | Esforço |
+|---|---|---|---|
+| 🔴 **PL11** | **Curar as 15–25 perguntas** — selecionar, reescrever em linguagem leiga, **atribuir polaridade uma a uma** | 🔴 **Alta** | 🔴 **Dias** |
+| 🔴 **RQ3** | Definir o **N final** de perguntas | 🔴 **Alta** | 🟢 Decisão |
+| **PL12** | Critério de "respondível por leigo", documentado como método | 🟡 Média | 🟡 Horas |
+| **CT7** | Mínimo de respostas para o resultado ter significado (o `422`) | 🟡 Média | 🟢 Decisão |
+| **PL10** | Questionário adaptativo entra como experimento comparativo? | 🟡 Média | — |
+| **PL18** | Usar LLM para rascunhar a reescrita das ementas? | 🟡 Média | — |
+| **A2** | Regex de `categoria`, validadas contra amostra rotulada à mão | 🟡 Média | 🟡 Horas |
+| **A3** | Deduplicação de PEC em dois turnos | 🟡 Média | — |
+| **A4** | Quantas das 100 proposições sobrevivem ao corte de unanimidade | 🟡 Média | — |
+| **API4** | Métrica exibida: concordância simples, cosseno, ou ambas? | 🟡 Média | — |
+
+> 🔑 **Por que esta é a frente mais crítica, e não uma lista de tarefas de conteúdo:**
+
+| | |
+|---|---|
+| **Não escala** | É leitura humana de ementa por ementa. Nenhuma ferramenta substitui |
+| **Não acelera no fim** | Uma hora por dia resolve; três dias seguidos na véspera, não |
+| **Bloqueia o passo 8** | Sem perguntas curadas, o questionário não existe — e ele é a *"Mensuração de Afinidade"* do título |
+| 🔴 **É o mais atacável na banca** | O passo mais subjetivo do método. Cada escolha precisa estar justificada **por escrito** |
+| **Alimenta o capítulo de metodologia** | Adiar custa duas vezes: o trabalho e o texto |
+
+⚠️ **A polaridade é a parte que não pode errar.** Em 14% das votações "Sim" significa
+rejeitar — e um sinal invertido **não aparece na tela**, aparece como um número plausível
+e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
+
+📐 **Detalhamento em [plano/03-questionario.md](plano/03-questionario.md).**
 
 ---
 
@@ -86,15 +114,8 @@ front, do questionário e do capítulo de método ao mesmo tempo.** Comece cedo.
 
 | # | Pendência |
 |---|---|
-| **RQ3** | N final de perguntas do questionário |
-| **CT7** | Mínimo de respostas para o resultado ter significado (o `422`) |
 | **RQ2** | Métrica de comparação comunidade × partido — ARI? modularidade? |
 | **C7** | Métricas formais de comparação entre casas |
-| **API4** | Métrica exibida: concordância simples, cosseno, ou ambas? |
-| **A3** | Deduplicação de PEC em dois turnos |
-| **A4** | Quantas das 100 proposições sobrevivem ao corte de unanimidade |
-| **PL10** | Questionário adaptativo entra como experimento? |
-| **PL18** | Usar LLM para rascunhar a reescrita das ementas? |
 | **RQ7** | Mecanismo de recomendação e como avaliá-lo |
 | **RQ6** | Critérios de aceitação dos RF essenciais |
 | **ER2** | Biblioteca de *fuzzy match* e calibração do limiar |
