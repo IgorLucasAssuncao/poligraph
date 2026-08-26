@@ -38,7 +38,7 @@ export function SugestoesParaSeguir() {
 
   return (
     <section className="cartao-lateral">
-      <h2>Quem acompanhar</h2>
+      <h2>Quem seguir</h2>
 
       <ul className="sugestoes">
         {sugestoes.map((p) => (

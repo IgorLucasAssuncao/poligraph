@@ -8,6 +8,7 @@ import {
   type ResultadoAfinidade,
 } from '../api';
 import { CabecalhoDaColuna } from '../componentes/Layout';
+import { Painel } from '../componentes/Painel';
 import { Resultado } from '../componentes/Resultado';
 
 const OPCOES: [Resposta, string][] = [
@@ -185,12 +186,10 @@ function CartaoDePergunta({
         ))}
       </div>
 
-      {/* ⭐ O retorno: comparecimento, NUNCA o placar. */}
+      {/* ⭐ O retorno é o painel: comparecimento, NUNCA a direção do voto. */}
       <div className={`retorno ${revelando ? 'visivel' : ''}`} aria-live="polite">
         {revelando && pergunta.totalVotos > 0 && (
-          <p>
-            <strong>{pergunta.totalVotos}</strong> deputados se posicionaram nesta votação.
-          </p>
+          <Painel posicionados={pergunta.totalVotos} total={pergunta.totalPossivel} />
         )}
         {/* ⚠️ Sem placar registrado, calar. "0 deputados se posicionaram" seria falso:
             o que falta é o dado, não o comparecimento. */}

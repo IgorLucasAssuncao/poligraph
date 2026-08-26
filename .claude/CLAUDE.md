@@ -34,12 +34,16 @@ Todas em português, em `.claude/skills/`. Invoque com a ferramenta Skill.
 | **`revisao-codigo`** | Revisar C# — começa pelas 5 verificações do projeto |
 | **`testes`** | xUnit e Testcontainers. Contém o teste de polaridade (API3) |
 | **`docker-e-aspire`** | Dockerfile, AppHost, migrations, `WaitForCompletion` |
+| 🎨 **`design-visual`** | **Sempre que mexer em tela, componente ou CSS** — paleta, tipografia, o painel |
 
 **Comando:** `/revisar <caminho>`
 
-> ⚠️ **Foram reescritas a partir das originais em inglês (MIT), não traduzidas ao pé da
-> letra.** As originais assumiam Clean Architecture + CQRS + Repository, que este projeto
-> decidiu não usar. Seguir aquilo geraria código que contraria o plano.
+> ⚠️ **Foram reescritas a partir das originais em inglês, não traduzidas ao pé da
+> letra.** As de C# (`dotnet-claude-skills`, MIT) assumiam Clean Architecture + CQRS +
+> Repository, que este projeto decidiu não usar — seguir aquilo geraria código que
+> contraria o plano. A `design-visual` vem de `anthropics/skills/frontend-design`
+> (Apache 2.0), que pede inventar uma direção do zero a cada página; aqui a direção já
+> foi escolhida e está fixada na própria skill.
 
 ---
 

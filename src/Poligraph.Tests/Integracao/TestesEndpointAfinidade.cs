@@ -63,11 +63,19 @@ public class TestesEndpointAfinidade : BaseIntegracao
             // ⚠️ zero significaria que o seed não contabilizou nada — e a tela cairia
             //    no caminho de "sem placar registrado" em desenvolvimento inteiro
             Assert.True(pergunta.TotalVotos > 0);
+
+            // ⭐ o denominador do painel: ninguém pode se posicionar além da base
+            var naBase = await Db.Votos.AsNoTracking()
+                .Select(v => v.PessoaId).Distinct().CountAsync();
+
+            Assert.Equal(naBase, pergunta.TotalPossivel);
+            Assert.True(pergunta.TotalVotos <= pergunta.TotalPossivel);
         }
     }
 
     /// <summary>⛔ Sem `VotosSim`/`VotosNao`: o que sai da API é só o total.</summary>
-    private record PerguntaLida(string Id, string Texto, short Ordem, int TotalVotos);
+    private record PerguntaLida(
+        string Id, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
 
     [SkippableFact]
     public async Task PoucasRespostas_Retorna422()

@@ -39,13 +39,13 @@ export function Login() {
           <li>Um questionário que compara você com os 513</li>
           <li>Perfil de cada deputado, com histórico de votos</li>
           <li>Quem vota parecido com quem</li>
-          <li>Notícias de quem você acompanha</li>
+          <li>Notícias de quem você segue</li>
         </ul>
 
         {/* ⚠️ Dito ANTES de entrar, não depois. */}
         <p className="aviso-privacidade">
           Ao entrar, guardamos seu nome, e-mail e foto do Google, e a lista de quem você
-          acompanhar. <strong>A lista de quem você segue indica posição política</strong> e é
+          seguir. <strong>A lista de quem você segue indica posição política</strong> e é
           tratada como dado sensível. Você pode apagar tudo a qualquer momento.{' '}
           <Link to="/privacidade">Política de privacidade</Link>
         </p>

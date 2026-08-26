@@ -81,7 +81,7 @@ function BarraLateral() {
       <div className="nav-itens">
         <ItemDeNavegacao para="/" rotulo="Início" icone={<IconeInicio />} />
         <ItemDeNavegacao para="/explorar" rotulo="Explorar" icone={<IconeExplorar />} />
-        <ItemDeNavegacao para="/seguindo" rotulo="Acompanhando" icone={<IconeSeguindo />} />
+        <ItemDeNavegacao para="/seguindo" rotulo="Seguindo" icone={<IconeSeguindo />} />
         <ItemDeNavegacao
           para="/questionario"
           rotulo="Questionário"

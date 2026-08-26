@@ -24,7 +24,7 @@ export function Seguindo() {
   return (
     <>
       <CabecalhoDaColuna
-        titulo="Acompanhando"
+        titulo="Seguindo"
         subtitulo={lista.length > 0 ? `${lista.length} parlamentares` : undefined}
       />
 
@@ -32,7 +32,7 @@ export function Seguindo() {
 
       {!carregando && lista.length === 0 && (
         <p className="vazio">
-          Você ainda não acompanha ninguém. <Link to="/explorar">Explore os deputados</Link> ou{' '}
+          Você ainda não segue ninguém. <Link to="/explorar">Explore os deputados</Link> ou{' '}
           <Link to="/questionario">responda o questionário</Link>.
         </p>
       )}

@@ -33,7 +33,7 @@ export function MinhaConta() {
       <section className="conta-secao">
         <h2>Seus dados</h2>
         <p className="ajuda">
-          Guardamos seu nome, e-mail e foto do Google, e a lista de quem você acompanha.{' '}
+          Guardamos seu nome, e-mail e foto do Google, e a lista de quem você segue.{' '}
           <Link to="/privacidade">Veja o detalhe</Link>.
         </p>
 
@@ -46,7 +46,7 @@ export function MinhaConta() {
         ) : (
           <div className="confirmacao">
             <p>
-              <strong>Isto apaga tudo:</strong> sua conta, a lista de quem você acompanha e seus
+              <strong>Isto apaga tudo:</strong> sua conta, a lista de quem você segue e seus
               consentimentos. Não dá para desfazer.
             </p>
             <div className="confirmacao-acoes">

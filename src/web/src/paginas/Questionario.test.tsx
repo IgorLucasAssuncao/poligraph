@@ -17,8 +17,8 @@ vi.mock('../api', async () => {
 const { calcularAfinidade, obterPerguntas } = await import('../api');
 
 const PERGUNTAS = [
-  { id: 'q1', texto: 'Primeira afirmação', ordem: 1, totalVotos: 480 },
-  { id: 'q2', texto: 'Segunda afirmação', ordem: 2, totalVotos: 501 },
+  { id: 'q1', texto: 'Primeira afirmação', ordem: 1, totalVotos: 480, totalPossivel: 513 },
+  { id: 'q2', texto: 'Segunda afirmação', ordem: 2, totalVotos: 501, totalPossivel: 513 },
 ];
 
 function renderizar() {
@@ -65,6 +65,13 @@ describe('Questionario', () => {
     //    e o instrumento passaria a medir adesão à maioria. Ver `PerguntaPublica`.
     await waitFor(() => expect(container.textContent).toMatch(/480/));
     expect(container.textContent).not.toMatch(/votaram sim|votaram não|a favor|contra/i);
+
+    // ⭐ E o painel desenhado também não: exatamente DOIS estados de marca, cheia e
+    //    vazada. Um terceiro estado seria direção codificada em forma.
+    const estados = new Set(
+      [...container.querySelectorAll('.marca')].map((m) => m.className),
+    );
+    expect(estados).toEqual(new Set(['marca', 'marca marca-cheia']));
   });
 
   it('sem placar registrado, não afirma "0 deputados se posicionaram"', async () => {

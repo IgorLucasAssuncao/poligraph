@@ -85,7 +85,7 @@ export function Parlamentar() {
             aria-pressed={seguindo}
             onClick={alternarSeguir}
           >
-            <span>{seguindo ? 'Acompanhando' : 'Acompanhar'}</span>
+            <span>{seguindo ? 'Seguindo' : 'Seguir'}</span>
           </button>
         </div>
 

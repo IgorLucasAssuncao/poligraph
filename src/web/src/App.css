@@ -1,47 +1,74 @@
 /* ═══════════════════════════════════════════════════════════════
-   poligraph
-   ⚠️ Paleta deliberadamente neutra e fria. Cor não pode sugerir
-      espectro político nem juízo sobre parlamentar (RNF-16) —
-      por isso nada de verde/vermelho em voto, e um único tom de
-      realce, usado só para navegação e ação.
+   poligraph — direção visual
+   Ver .claude/skills/design-visual/SKILL.md para o porquê de cada
+   escolha. O resumo:
+
+   🔴 A cor não pode sugerir espectro político (RNF-16). Daí um ÚNICO
+      tom de realce, teal — nenhum partido brasileiro o reivindica, e
+      ele lê como instrumento de medição, não como bandeira.
+
+   ⚠️ Três papéis tipográficos: Archivo levemente EXPANDIDA para
+      display (placa institucional, não pôster condensado), IBM Plex
+      Sans para corpo, IBM Plex Mono para todo número — porque todo
+      número aqui vem com a base junto e precisa alinhar.
+
+   🔴 Fontes auto-hospedadas. O CDN do Google entregaria o IP de todo
+      visitante em toda visita, contra a postura do resto do projeto.
    ═══════════════════════════════════════════════════════════════ */
+
+@import '@fontsource-variable/archivo/standard.css';
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
 
 :root {
   --fundo: #ffffff;
-  --painel: #f7f9fa;
-  --borda: #eff3f4;
-  --borda-forte: #cfd9de;
-  --texto: #0f1419;
-  --suave: #536471;
-  --realce: #1d4ed8;
-  --realce-hover: #1a43b8;
-  --realce-fraco: #eff4ff;
-  --perigo: #b42318;
+  --painel: #f3f5f7;
+  --borda: #e6eaee;
+  --borda-forte: #c8d0d8;
+  --texto: #12161b;
+  --suave: #5b6673;
+  --realce: #0f766e;
+  --realce-hover: #115e57;
+  --realce-fraco: #e6f2f0;
+  --perigo: #a8321f;
+  /* ⚠️ Texto sobre o realce. No claro o teal é escuro e pede branco; no escuro
+        ele clareia e branco perderia contraste — daí ser token, não literal. */
+  --sobre-realce: #ffffff;
 
   --largura-esq: 17.5rem;
   --largura-centro: 37.5rem;
   --largura-dir: 21rem;
 
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
+  --corpo: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --dado: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  font-family: var(--corpo);
   color: var(--texto);
   background: var(--fundo);
   font-size: 15px;
-  line-height: 1.4;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --fundo: #000000;
-    --painel: #16181c;
-    --borda: #2f3336;
-    --borda-forte: #3e4144;
-    --texto: #e7e9ea;
-    --suave: #71767b;
-    --realce: #6f9dff;
-    --realce-hover: #8db0ff;
-    --realce-fraco: #14203a;
-    --perigo: #f4574a;
+    --fundo: #0b0e11;
+    --painel: #161b21;
+    --borda: #232a32;
+    --borda-forte: #39434e;
+    --texto: #e6eaee;
+    --suave: #8b96a3;
+    --realce: #4dd4c4;
+    --realce-hover: #7ae3d6;
+    --realce-fraco: #0e2724;
+    --perigo: #f0705c;
+    --sobre-realce: #06201d;
   }
 }
 
@@ -49,7 +76,29 @@
 body { margin: 0; background: var(--fundo); }
 a { color: inherit; text-decoration: none; }
 button { font: inherit; cursor: pointer; }
-h1, h2, h3 { line-height: 1.25; }
+
+/* ⚠️ Display expandida (wdth 114): ocupa a linha com calma, como placa.
+      Condensada seria o reflexo automático de todo título. */
+h1, h2 {
+  font-family: var(--display);
+  font-variation-settings: 'wdth' 114;
+  line-height: 1.15;
+  letter-spacing: -.012em;
+}
+h3 { line-height: 1.25; }
+
+/* ⭐ Todo número deste produto vem com a base junto ("4 de 5"). Algarismo
+      tabular alinha e faz o número parecer medido, não afirmado. */
+strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
+
+/* ═══ FOCO ═════════════════════════════════════════════════════ */
+/* 🔴 Um anel só, em tudo. Sem isto o site é inutilizável no teclado. */
+:focus-visible {
+  outline: 2px solid var(--realce);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) { outline: none; }
 
 /* ═══ LAYOUT DE TRÊS COLUNAS ═══════════════════════════════════ */
 .layout {
@@ -78,7 +127,8 @@ h1, h2, h3 { line-height: 1.25; }
 .marca-link {
   display: flex; align-items: center; gap: .6rem;
   padding: .75rem; margin-bottom: .35rem;
-  font-size: 1.15rem; font-weight: 800; letter-spacing: -.02em;
+  font-family: var(--display); font-variation-settings: 'wdth' 118;
+  font-size: 1.15rem; font-weight: 700; letter-spacing: -.02em;
   color: var(--realce); border-radius: 999px;
 }
 .marca-link:hover { background: var(--realce-fraco); }
@@ -98,7 +148,7 @@ h1, h2, h3 { line-height: 1.25; }
 .botao-principal {
   display: block; margin: 1rem .35rem 0;
   padding: .8rem 1rem; text-align: center;
-  background: var(--realce); color: #fff;
+  background: var(--realce); color: var(--sobre-realce);
   font-weight: 700; font-size: .97rem; border-radius: 999px;
   transition: background .12s;
 }
@@ -169,9 +219,17 @@ h1, h2, h3 { line-height: 1.25; }
   padding: .38rem .95rem; font-size: .875rem; font-weight: 700;
   border-radius: 999px; white-space: nowrap; transition: all .12s;
 }
-.botao-seguir { background: var(--texto); color: var(--fundo); border: 1px solid var(--texto); }
+.botao-seguir {
+  background: var(--texto); color: var(--fundo);
+  border: 1px solid var(--texto); min-width: 9.5rem;
+}
 .botao-seguir:hover { opacity: .85; }
-.botao-seguindo { background: transparent; color: var(--texto); border: 1px solid var(--borda-forte); }
+/* ⚠️ min-width fixo: o texto do hover é mais longo, e sem isto a linha inteira
+      da timeline reflui a cada passagem do mouse. */
+.botao-seguindo {
+  background: transparent; color: var(--texto);
+  border: 1px solid var(--borda-forte); min-width: 9.5rem;
+}
 .botao-seguindo:hover { border-color: var(--perigo); color: var(--perigo); }
 .botao-seguindo:hover span { display: none; }
 .botao-seguindo:hover::after { content: 'Deixar de seguir'; }
@@ -180,7 +238,7 @@ h1, h2, h3 { line-height: 1.25; }
   display: inline-block; padding: .6rem 1.25rem;
   font-weight: 700; font-size: .92rem; border-radius: 999px;
 }
-.botao-destaque { background: var(--realce); color: #fff; border: 1px solid var(--realce); }
+.botao-destaque { background: var(--realce); color: var(--sobre-realce); border: 1px solid var(--realce); }
 .botao-destaque:hover { background: var(--realce-hover); }
 .botao-secundario { color: var(--texto); border: 1px solid var(--borda-forte); background: transparent; }
 .botao-secundario:hover { background: var(--painel); }
@@ -188,7 +246,7 @@ h1, h2, h3 { line-height: 1.25; }
   padding: .55rem 1.2rem; font-weight: 700; font-size: .9rem; border-radius: 999px;
   background: transparent; color: var(--perigo); border: 1px solid var(--perigo);
 }
-.botao-perigo:hover { background: var(--perigo); color: #fff; }
+.botao-perigo:hover { background: var(--perigo); color: var(--fundo); }
 
 /* ═══ CARTÃO LATERAL ═══════════════════════════════════════════ */
 .cartao-lateral {
@@ -207,7 +265,7 @@ h1, h2, h3 { line-height: 1.25; }
 .sugestao-texto strong { font-size: .92rem; }
 .sugestao-texto strong:hover { text-decoration: underline; }
 .sugestao-texto small { color: var(--suave); font-size: .84rem; }
-.criterio { margin: .5rem 1rem 0; font-size: .76rem; color: var(--suave); }
+.criterio { margin: .5rem 1rem 0; font-family: var(--dado); font-size: .72rem; color: var(--suave); }
 .ver-mais { display: block; padding: .7rem 1rem 0; color: var(--realce); font-size: .92rem; }
 .ver-mais:hover { text-decoration: underline; }
 .cartao-legal { padding: 1rem; font-size: .8rem; color: var(--suave); }
@@ -216,7 +274,7 @@ h1, h2, h3 { line-height: 1.25; }
 .cartao-legal a { color: var(--realce); }
 
 /* ═══ PERFIL ═══════════════════════════════════════════════════ */
-.capa-perfil { height: 8rem; background: linear-gradient(135deg, var(--borda), var(--borda-forte)); }
+.capa-perfil { height: 7rem; background: var(--painel); border-bottom: 1px solid var(--borda); }
 .perfil-cabecalho { padding: 0 1rem 1rem; border-bottom: 1px solid var(--borda); }
 .perfil-avatar-linha {
   display: flex; align-items: flex-end; justify-content: space-between;
@@ -227,7 +285,8 @@ h1, h2, h3 { line-height: 1.25; }
 .perfil-identidade .nome-civil { margin: .1rem 0 0; color: var(--suave); font-size: .92rem; }
 .perfil-chips { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem; }
 .chip {
-  padding: .2rem .65rem; border-radius: 999px; font-size: .82rem;
+  padding: .2rem .65rem; border-radius: 4px;
+  font-family: var(--dado); font-size: .78rem;
   background: var(--painel); color: var(--suave); border: 1px solid var(--borda);
 }
 .perfil-numeros { display: flex; gap: 1.25rem; margin-top: .75rem; font-size: .9rem; }
@@ -252,9 +311,10 @@ h1, h2, h3 { line-height: 1.25; }
 /* ═══ VOTO ═════════════════════════════════════════════════════ */
 /* ⚠️ Selos NEUTROS. Verde/vermelho leriam como acerto/erro (RNF-16). */
 .selo {
-  display: inline-block; min-width: 4.9rem; text-align: center;
-  padding: .12rem .55rem; border-radius: 999px;
-  font-size: .74rem; font-weight: 700; letter-spacing: .01em;
+  display: inline-block; min-width: 5.4rem; text-align: center;
+  padding: .14rem .55rem; border-radius: 4px;
+  font-family: var(--dado); font-size: .72rem; font-weight: 500;
+  text-transform: uppercase; letter-spacing: .06em;
   border: 1px solid var(--borda-forte); color: var(--suave);
 }
 .selo-sim { border-color: var(--realce); color: var(--realce); }
@@ -295,7 +355,7 @@ h1, h2, h3 { line-height: 1.25; }
 .escala label:hover { background: var(--fundo); }
 .escala input { position: absolute; opacity: 0; pointer-events: none; }
 .escala-ativa { border-color: var(--realce); background: var(--realce-fraco); color: var(--realce); font-weight: 600; }
-.avaliacao button { margin-top: 1rem; padding: .6rem 1.3rem; font-weight: 700; border-radius: 999px; background: var(--realce); color: #fff; border: none; }
+.avaliacao button { margin-top: 1rem; padding: .6rem 1.3rem; font-weight: 700; border-radius: 999px; background: var(--realce); color: var(--sobre-realce); border: none; }
 .avaliacao button:disabled { opacity: .4; cursor: not-allowed; }
 .avaliacao-pronta { text-align: center; color: var(--suave); }
 
@@ -309,7 +369,11 @@ h1, h2, h3 { line-height: 1.25; }
 /* ⭐ A coluna da marca é decorativa: some primeiro quando falta espaço. */
 .login-marca { display: grid; place-items: center; color: var(--realce); opacity: .9; }
 .login-conteudo { max-width: 27rem; }
-.login-titulo { margin: 0 0 .75rem; font-size: 2.6rem; font-weight: 800; letter-spacing: -.035em; line-height: 1.08; }
+.login-titulo {
+  margin: 0 0 .75rem; font-size: 2.7rem; font-weight: 700;
+  font-variation-settings: 'wdth' 116;
+  letter-spacing: -.03em; line-height: 1.06;
+}
 .login-chamada { color: var(--suave); margin: 0 0 1.75rem; font-size: 1.05rem; line-height: 1.5; }
 .o-que-tem { list-style: none; padding: 0; margin: 1.5rem 0; text-align: left; }
 .o-que-tem li { padding: .45rem 0 .45rem 1.5rem; position: relative; font-size: .93rem; color: var(--suave); }
@@ -380,11 +444,12 @@ h1, h2, h3 { line-height: 1.25; }
 .destaque-resultado {
   padding: 2rem 1.5rem 1.75rem; text-align: center;
   border-bottom: 1px solid var(--borda);
-  background: linear-gradient(180deg, var(--realce-fraco), transparent);
+  background: var(--realce-fraco);
 }
 .rotulo-destaque {
-  margin: 0 0 1.25rem; font-size: .78rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .08em; color: var(--realce);
+  margin: 0 0 1.25rem; font-family: var(--dado);
+  font-size: .72rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .12em; color: var(--realce);
 }
 .destaque-link { display: block; }
 .destaque-link .avatar { margin: 0 auto .85rem; border: 3px solid var(--fundo); }
@@ -428,6 +493,36 @@ h1, h2, h3 { line-height: 1.25; }
 .documento-publico { max-width: 46rem; margin: 0 auto; padding: 0 1rem 3rem; }
 .cabecalho-publico { padding: 1rem 0; border-bottom: 1px solid var(--borda); }
 .cabecalho-publico .marca-link { display: inline-flex; padding: .4rem .75rem; }
+
+/* ═══ O PAINEL — elemento-assinatura ═══════════════════════════ */
+/**
+ * Uma marca por parlamentar da base; cheia para quem se posicionou.
+ *
+ * 🔴 ⛔ Sem direção. As marcas cheias NÃO distinguem Sim de Não — ver
+ *    componentes/Painel.tsx. A densidade do bloco é a única informação.
+ *
+ * ⚠️ Largura fixa e marca de tamanho fixo: é o que faz 300 e 480 marcas
+ *    se diferenciarem a olho. Grid flexível destruiria a comparação.
+ */
+.painel-votacao { display: flex; flex-direction: column; align-items: center; gap: .65rem; }
+.painel-marcas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 3px);
+  justify-content: center;
+  gap: 2px;
+  width: min(100%, 20rem);
+}
+.marca {
+  height: 9px; width: 3px; border-radius: 1px;
+  background: var(--borda-forte); opacity: .45;
+}
+.marca-cheia { background: var(--realce); opacity: 1; }
+.painel-legenda {
+  margin: 0; font-family: var(--dado); font-size: .82rem;
+  color: var(--suave); letter-spacing: -.01em;
+}
+.painel-legenda strong { color: var(--texto); font-weight: 600; }
+
 
 /* ═══ RESPONSIVO ═══════════════════════════════════════════════ */
 @media (max-width: 1100px) {
@@ -476,12 +571,15 @@ h1, h2, h3 { line-height: 1.25; }
 }
 
 .rotulo-pergunta {
-  margin: 0 0 .5rem; font-size: .78rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .08em; color: var(--realce);
+  margin: 0 0 .6rem; font-family: var(--dado);
+  font-size: .72rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .12em; color: var(--realce);
 }
+/* ⭐ A afirmação é o herói da tela: display expandida, no maior corpo do site. */
 .texto-pergunta {
-  margin: 0 0 2rem; font-size: 1.45rem; font-weight: 700;
-  letter-spacing: -.02em; line-height: 1.32;
+  margin: 0 0 2rem; font-size: 1.5rem; font-weight: 700;
+  font-variation-settings: 'wdth' 112;
+  letter-spacing: -.018em; line-height: 1.28;
 }
 
 .opcoes-grandes { display: flex; flex-direction: column; gap: .6rem; }
@@ -496,7 +594,7 @@ h1, h2, h3 { line-height: 1.25; }
 .opcao-grande:active:not(:disabled) { transform: scale(.985); }
 .opcao-grande:disabled { cursor: default; }
 .opcao-grande.opcao-ativa {
-  border-color: var(--realce); background: var(--realce); color: #fff;
+  border-color: var(--realce); background: var(--realce); color: var(--sobre-realce);
 }
 
 .retorno {

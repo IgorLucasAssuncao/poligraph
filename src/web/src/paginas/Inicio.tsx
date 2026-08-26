@@ -46,7 +46,7 @@ export function Inicio() {
         titulo="Início"
         subtitulo={
           seguidos.length > 0
-            ? `acompanhando ${seguidos.length} ${seguidos.length === 1 ? 'parlamentar' : 'parlamentares'}`
+            ? `seguindo ${seguidos.length} ${seguidos.length === 1 ? 'parlamentar' : 'parlamentares'}`
             : undefined
         }
       />
@@ -90,7 +90,7 @@ function ItemDeNoticia({ item }: { item: ItemDoFeed }) {
         </a>
 
         {/* RF-46 — por que isto apareceu */}
-        <span className="linha-detalhe">porque você acompanha {item.deQuem.nome}</span>
+        <span className="linha-detalhe">porque você segue {item.deQuem.nome}</span>
       </div>
     </article>
   );
@@ -102,7 +102,7 @@ function SemSeguidos() {
     <section className="convite">
       <h2>Comece por aqui</h2>
       <p className="ajuda">
-        Você ainda não acompanha ninguém. Descubra quem vota como você — ou procure por nome.
+        Você ainda não segue ninguém. Descubra quem vota como você — ou procure por nome.
       </p>
 
       <div className="convite-acoes">

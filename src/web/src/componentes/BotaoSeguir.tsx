@@ -28,7 +28,9 @@ export function BotaoSeguir({
       aria-pressed={seguindo}
       onClick={alternar}
     >
-      {seguindo ? 'Seguindo' : 'Seguir'}
+      {/* ⚠️ O <span> não é decorativo: o CSS o esconde no hover para revelar
+          "Deixar de seguir" no lugar. Sem ele, os dois textos aparecem juntos. */}
+      <span>{seguindo ? 'Seguindo' : 'Seguir'}</span>
     </button>
   );
 

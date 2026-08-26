@@ -18,13 +18,19 @@ public record RespostaAfinidade(
 
 /// <summary>
 /// ⚠️ `TotalVotos` é o comparecimento na votação — quantos deputados se posicionaram.
+/// `TotalPossivel` é quantos parlamentares a base tem, ou seja, o denominador.
 ///
 /// 🔴 De propósito NÃO é a divisão (quantos Sim, quantos Não). Mostrar o placar antes
 /// de a pessoa responder induziria conformidade: "a maioria votou Sim, então voto Sim
 /// também" — e o instrumento passaria a medir adesão à maioria, não posição própria.
 /// O comparecimento dá contexto sem revelar direção.
+///
+/// ⭐ Os dois números juntos são o que a tela desenha como "painel": uma marca por
+/// parlamentar, cheia para quem se posicionou. Sem o denominador, 300 e 480 marcas
+/// seriam indistinguíveis a olho.
 /// </summary>
-public record PerguntaPublica(string Id, string Texto, short Ordem, int TotalVotos);
+public record PerguntaPublica(
+    string Id, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
 
 public static class EndpointsAfinidade
 {
@@ -50,13 +56,19 @@ public static class EndpointsAfinidade
     /// </summary>
     private static async Task<IResult> ObterPerguntasAsync(PoligraphDb db, CancellationToken ct)
     {
+        // ⚠️ Uma consulta só, fora do Select: o denominador é o mesmo para todas as
+        //    perguntas, e repeti-lo por linha viraria um subselect por pergunta.
+        var totalPossivel = await db.Votos.AsNoTracking()
+            .Select(v => v.PessoaId).Distinct().CountAsync(ct);
+
         var perguntas = await db.Perguntas
             .AsNoTracking()
             .Where(p => p.Ativa)
             .OrderBy(p => p.Ordem)
             .Select(p => new PerguntaPublica(
                 p.Id, p.Texto, p.Ordem,
-                (p.Votacao!.VotosSim ?? 0) + (p.Votacao.VotosNao ?? 0)))
+                (p.Votacao!.VotosSim ?? 0) + (p.Votacao.VotosNao ?? 0),
+                totalPossivel))
             .ToListAsync(ct);
 
         return Results.Ok(perguntas);

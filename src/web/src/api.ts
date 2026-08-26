@@ -66,6 +66,8 @@ export type Pergunta = {
    * responder induziria conformidade. Ver `PerguntaPublica` na API.
    */
   totalVotos: number;
+  /** Quantos parlamentares a base tem — o denominador do painel. */
+  totalPossivel: number;
 };
 
 /** +1 concordo · -1 discordo · 0 não sei */
