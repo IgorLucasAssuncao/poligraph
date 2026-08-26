@@ -58,7 +58,7 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 
 | # | Pendência | Prioridade | Esforço |
 |---|---|---|---|
-| 🔴 **PL11** | **Curar as 15–25 perguntas** — selecionar, reescrever em linguagem leiga, **atribuir polaridade uma a uma** | 🔴 **Alta** | 🔴 **Dias** |
+| 🔄 **PL11** | **Curar as 15–25 perguntas** — 🔄 **lote 1 gerado**, 24 candidatas em [plano/06](plano/06-perguntas-lote-1.md), aguardando curadoria | 🔴 **Alta** | 🔴 **Dias** |
 | 🔴 **RQ3** | Definir o **N final** de perguntas | 🔴 **Alta** | 🟢 Decisão |
 | **PL12** | Critério de "respondível por leigo", documentado como método | 🟡 Média | 🟡 Horas |
 | **CT7** | Mínimo de respostas para o resultado ter significado (o `422`) | 🟡 Média | 🟢 Decisão |
@@ -107,6 +107,7 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 | **CT3** | Escrever o OpenAPI da C13 e validar contra o front |
 | **PL16** | Como o ETL sinaliza `novas_votacoes` |
 | **PL31** | Definir o conteúdo do seed de desenvolvimento — quantos parlamentares, votações e perguntas |
+| **PL32** | 🔴 Como obter o texto das EMENDAS destacadas — 74% das votações interessantes votam emenda, e a ementa não descreve o que foi votado |
 | **C15** | Contrato do front — depende do React estar de pé |
 
 ---
