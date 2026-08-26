@@ -32,13 +32,36 @@ public static class SemeadorDesenvolvimento
 
         await db.SaveChangesAsync(ct);
 
-        db.Votos.AddRange(GerarVotos(pessoas, votacoes));
+        var votos = GerarVotos(pessoas, votacoes);
+        ContabilizarPlacar(votacoes, votos);
+
+        db.Votos.AddRange(votos);
         db.Perguntas.AddRange(GerarPerguntas(votacoes));
 
         await db.SaveChangesAsync(ct);
     }
 
     // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Preenche `votos_sim` / `votos_nao` a partir dos votos gerados.
+    ///
+    /// ⚠️ Contado, ⛔ nunca escrito à mão: número fixo no seed sai de sincronia com o
+    /// padrão de votos na primeira vez que alguém mexer na matriz, e aí a tela do
+    /// questionário passa a afirmar um comparecimento que não existe no banco.
+    ///
+    /// Em produção quem preenche é a ingestão, com o placar oficial da Câmara.
+    /// </summary>
+    private static void ContabilizarPlacar(List<Votacao> votacoes, List<Voto> votos)
+    {
+        foreach (var votacao in votacoes)
+        {
+            var daVotacao = votos.Where(v => v.VotacaoId == votacao.Id).ToList();
+
+            votacao.VotosSim = daVotacao.Count(v => v.Valor == 1);
+            votacao.VotosNao = daVotacao.Count(v => v.Valor == -1);
+        }
+    }
 
     private static List<Pessoa> GerarParlamentares()
     {

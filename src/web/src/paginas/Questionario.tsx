@@ -187,11 +187,14 @@ function CartaoDePergunta({
 
       {/* ⭐ O retorno: comparecimento, NUNCA o placar. */}
       <div className={`retorno ${revelando ? 'visivel' : ''}`} aria-live="polite">
-        {revelando && (
+        {revelando && pergunta.totalVotos > 0 && (
           <p>
             <strong>{pergunta.totalVotos}</strong> deputados se posicionaram nesta votação.
           </p>
         )}
+        {/* ⚠️ Sem placar registrado, calar. "0 deputados se posicionaram" seria falso:
+            o que falta é o dado, não o comparecimento. */}
+        {revelando && pergunta.totalVotos === 0 && <p>Resposta registrada.</p>}
       </div>
 
       {aoVoltar && !revelando && (

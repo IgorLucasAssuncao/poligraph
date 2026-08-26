@@ -31,6 +31,44 @@ public class TestesEndpointAfinidade : BaseIntegracao
         Assert.Contains("q1", json);
     }
 
+    /// <summary>
+    /// O comparecimento exibido na tela precisa BATER com os votos que estão no banco.
+    ///
+    /// 🔴 É o número que a pessoa vê entre uma pergunta e outra. Se `votos_sim` /
+    /// `votos_nao` sair de sincronia com a tabela `voto` — o que acontece na hora em que
+    /// alguém escreve o placar à mão —, a tela afirma um comparecimento que não existe.
+    /// </summary>
+    [SkippableFact]
+    public async Task Perguntas_TrazemComparecimentoQueConfereComOsVotos()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        using var cliente = CriarCliente();
+
+        var perguntas = await cliente.GetFromJsonAsync<List<PerguntaLida>>($"{Rota}/perguntas");
+        Assert.NotNull(perguntas);
+
+        foreach (var pergunta in perguntas)
+        {
+            var votacaoId = await Db.Perguntas.AsNoTracking()
+                .Where(p => p.Id == pergunta.Id)
+                .Select(p => p.VotacaoId)
+                .SingleAsync();
+
+            var posicionados = await Db.Votos.AsNoTracking()
+                .CountAsync(v => v.VotacaoId == votacaoId && (v.Valor == 1 || v.Valor == -1));
+
+            Assert.Equal(posicionados, pergunta.TotalVotos);
+
+            // ⚠️ zero significaria que o seed não contabilizou nada — e a tela cairia
+            //    no caminho de "sem placar registrado" em desenvolvimento inteiro
+            Assert.True(pergunta.TotalVotos > 0);
+        }
+    }
+
+    /// <summary>⛔ Sem `VotosSim`/`VotosNao`: o que sai da API é só o total.</summary>
+    private record PerguntaLida(string Id, string Texto, short Ordem, int TotalVotos);
+
     [SkippableFact]
     public async Task PoucasRespostas_Retorna422()
     {

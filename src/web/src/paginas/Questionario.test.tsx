@@ -67,6 +67,20 @@ describe('Questionario', () => {
     expect(container.textContent).not.toMatch(/votaram sim|votaram não|a favor|contra/i);
   });
 
+  it('sem placar registrado, não afirma "0 deputados se posicionaram"', async () => {
+    // ⚠️ Acontece quando a ingestão não trouxe o placar oficial daquela votação.
+    //    O que falta é o dado — dizer "0" seria afirmar um comparecimento inexistente.
+    vi.mocked(obterPerguntas).mockResolvedValue([{ ...PERGUNTAS[0], totalVotos: 0 }]);
+
+    const usuario = userEvent.setup();
+    const { container } = renderizar();
+
+    await usuario.click(await screen.findByRole('button', { name: 'Concordo' }));
+
+    await waitFor(() => expect(container.textContent).toMatch(/registrada/i));
+    expect(container.textContent).not.toMatch(/0 deputados|se posicionaram/i);
+  });
+
   it('conta apenas as respostas com opinião — "Não sei" não vira concordância', async () => {
     const usuario = userEvent.setup();
     renderizar();
