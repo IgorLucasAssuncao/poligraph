@@ -242,7 +242,7 @@ Fiz três rodadas até chegar na combinação de menor atrito.
 | ⛔ | Crédito de estudante expira, e aí o TCC fica fora do ar |
 | Veredito | 🟡 **Viável, mas com risco de custo** |
 
-### Opção C — Cloudflare Pages + host gerenciado + Postgres serverless ⭐
+### Opção C — Cloudflare Pages + host gerenciado + Postgres serverless  ⚠️ não escolhida
 
 | Camada | Escolha | Custo |
 |---|---|---|
