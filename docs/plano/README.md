@@ -17,6 +17,8 @@
 | [03-questionario.md](03-questionario.md) | Que perguntas, dinâmicas?, conteúdo das propostas |
 | [04-esqueleto.md](04-esqueleto.md) | ⭐ **Schema SQL, código da autenticação, AppHost e ETL** |
 | [05-cicd-e-deploy.md](05-cicd-e-deploy.md) | Dockerfiles, CI/CD, Grafana, dimensionamento, segurança |
+| [06-perguntas-lote-1.md](06-perguntas-lote-1.md) | 🗳️ **As 22 perguntas** medidas e curadas — PL11 |
+| [07-grafo-e-afinidade.md](07-grafo-e-afinidade.md) | ⭐ **O núcleo técnico** — nó, aresta, pesos e o cálculo da afinidade |
 
 ---
 

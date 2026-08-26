@@ -61,13 +61,13 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | 🔄 **PL11** | **Curar as 15–25 perguntas** — 🔄 **lote 1 gerado**, 24 candidatas em [plano/06](plano/06-perguntas-lote-1.md), aguardando curadoria | 🔴 **Alta** | 🔴 **Dias** |
 | 🔴 **RQ3** | Definir o **N final** de perguntas | 🔴 **Alta** | 🟢 Decisão |
 | ~~PL12~~ | ✅ **Teste do jantar** — entra se dá para discutir num jantar sem explicar a proposta | — | — |
-| **CT7** | Mínimo de respostas para o resultado ter significado (o `422`) | 🟡 Média | 🟢 Decisão |
+| **CT7** | 🔴 Piso de respostas para o `422` — sugerido **60% do N** (plano/07 §4.4) | 🔴 Alta | 🟢 Decisão |
 | **PL10** | Questionário adaptativo entra como experimento comparativo? | 🟡 Média | — |
 | **PL18** | Usar LLM para rascunhar a reescrita das ementas? | 🟡 Média | — |
 | **A2** | Regex de `categoria`, validadas contra amostra rotulada à mão | 🟡 Média | 🟡 Horas |
 | **A3** | Deduplicação de PEC em dois turnos | 🟡 Média | — |
 | **A4** | Quantas das 100 proposições sobrevivem ao corte de unanimidade | 🟡 Média | — |
-| **API4** | Métrica exibida: concordância simples, cosseno, ou ambas? | 🟡 Média | — |
+| ~~API4~~ | ✅ **Resolvida** — cosseno no grafo, concordância simples na tela (plano/07 §4.5) | — | — |
 
 > 🔑 **Por que esta é a frente mais crítica, e não uma lista de tarefas de conteúdo:**
 
