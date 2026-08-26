@@ -18,8 +18,16 @@ const OPCOES: [Resposta, string][] = [
   [0, 'Não sei'],
 ];
 
-/** Milissegundos entre responder e a próxima pergunta entrar. */
-const PAUSA = 620;
+/**
+ * Milissegundos entre responder e a próxima pergunta entrar.
+ *
+ * ⚠️ Subiu de 620 para 760 e a troca ficou parecendo MAIS rápida, não mais lenta. O que
+ * incomodava não era a duração: era a pausa estar VAZIA. Agora ela comporta o painel
+ * enchendo (420ms) e a legenda entrando (200ms depois), e o tempo passa sendo usado.
+ *
+ * ⭐ Velocidade percebida é tempo morto, não tempo total.
+ */
+const PAUSA = 760;
 
 /**
  * O questionário, uma pergunta por tela.

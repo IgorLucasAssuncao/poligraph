@@ -57,6 +57,9 @@
   --t-curto: 160ms;     /* hover, cor, borda */
   --t-medio: 260ms;     /* troca de tela */
   --t-longo: 380ms;     /* pergunta a pergunta, onde a distância é maior */
+  /* ⚠️ O painel é o único lugar onde passar de 400ms se justifica: não é espera, é o
+        momento de recompensa, e ele acontece enquanto a pessoa ainda lê o resultado. */
+  --t-painel: 420ms;
 
   --display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
   --corpo: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -439,6 +442,15 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .barra-progresso div {
   height: 100%; background: var(--realce);
   transition: width var(--t-longo) var(--curva);
+  /* ⭐ O brilho liga o avanço da barra ao clique que acabou de acontecer — sem ele a
+        barra cresce sozinha, num canto, e o ganho passa despercebido. */
+  box-shadow: 0 0 0 0 var(--realce);
+  animation: pulsar-progresso 620ms var(--curva-entrada);
+}
+
+@keyframes pulsar-progresso {
+  from { box-shadow: 0 0 6px 1px var(--realce); }
+  to   { box-shadow: 0 0 0 0 transparent; }
 }
 
 /* ═══ AVALIAÇÃO — modal ════════════════════════════════════════ */
@@ -638,6 +650,37 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   gap: 2px;
   width: min(100%, 20rem);
 }
+
+/**
+ * ⭐ O painel ENCHE, da esquerda para a direita, como placar de plenário.
+ *
+ * ⚠️ Uma animação de `clip-path` no contêiner, ⛔ não 500 animações de marca com
+ *    delay escalonado: o efeito visual é o mesmo e o custo é de um elemento em vez de
+ *    quinhentos.
+ *
+ * ⭐ É aqui que mora o momento de recompensa do questionário. A pausa entre uma
+ *    pergunta e a seguinte existia e estava VAZIA — a troca parecia abrupta porque não
+ *    havia nada acontecendo nela, não porque fosse rápida demais.
+ */
+.retorno.visivel .painel-marcas {
+  animation: encher var(--t-painel) var(--curva-entrada) both;
+}
+
+@keyframes encher {
+  from { clip-path: inset(0 100% 0 0); }
+  to   { clip-path: inset(0 0 0 0); }
+}
+
+/* ⚠️ A legenda entra DEPOIS da varredura: o número antes do desenho rouba a atenção
+      justamente do que o desenho ia mostrar. */
+.retorno.visivel .painel-legenda {
+  animation: surgir-legenda 200ms var(--curva-entrada) var(--t-painel) both;
+}
+
+@keyframes surgir-legenda {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
 .marca {
   height: 9px; width: 3px; border-radius: 1px;
   background: var(--borda-forte); opacity: .45;
@@ -716,6 +759,21 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .opcao-grande:disabled { cursor: default; }
 .opcao-grande.opcao-ativa {
   border-color: var(--realce); background: var(--realce); color: var(--sobre-realce);
+  /* ⭐ O pulso é a confirmação do clique: a escolha se firma antes de o cartão sair.
+        Sem ele, o clique e a saída acontecem juntos e a pessoa não vê o que escolheu. */
+  animation: fixar 220ms var(--curva) both;
+}
+
+@keyframes fixar {
+  0%   { transform: scale(1); }
+  38%  { transform: scale(1.025); }
+  100% { transform: scale(1); }
+}
+
+/* ⚠️ As não escolhidas recuam em vez de sumir: sumir é perda, recuar é escolha feita. */
+.opcoes-grandes:has(.opcao-ativa) .opcao-grande:not(.opcao-ativa) {
+  opacity: .38;
+  transition: opacity var(--t-curto) var(--curva);
 }
 
 /* ⚠️ O painel CHEGA (curva de entrada) e não some deslizando: ele aparece como
@@ -833,15 +891,25 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
  */
 .cartao-pergunta { view-transition-name: cartao; }
 
+/**
+ * ⚠️ A saída usa a curva PADRÃO, não a de saída.
+ *
+ * `curva-saida` acelera e some — boa para algo que é descartado, e era o que fazia a
+ * troca parecer abrupta: o cartão respondido era ARRANCADO da tela. Aqui ele não é
+ * descartado, é concluído. A curva padrão o deixa partir sem tranco.
+ *
+ * ⭐ E a entrada é mais lenta que a saída, de propósito: quem chega merece assentar,
+ * quem sai não precisa de cerimônia.
+ */
 ::view-transition-old(cartao) {
-  animation: sair-esquerda var(--t-longo) var(--curva-saida) both;
+  animation: sair-esquerda 240ms var(--curva) both;
 }
 ::view-transition-new(cartao) {
   animation: entrar-direita var(--t-longo) var(--curva-entrada) both;
 }
 
-@keyframes sair-esquerda { to   { opacity: 0; transform: translateX(-22px); } }
-@keyframes entrar-direita { from { opacity: 0; transform: translateX(28px); } }
+@keyframes sair-esquerda { to   { opacity: 0; transform: translateX(-14px); } }
+@keyframes entrar-direita { from { opacity: 0; transform: translateX(20px); } }
 
 /* ═══ MENOS MOVIMENTO ══════════════════════════════════════════ */
 /**
