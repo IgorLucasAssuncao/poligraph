@@ -1,6 +1,8 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v1.10 — 2026-08-25
+> **Status:** v1.11 — 2026-08-25
+> **v1.11:** §3.5.6 — por que o `email` não pode ser hash (é destino, não comparação) e
+> ⭐ a regra nova: descadastrar ZERA a coluna, devolvendo a pessoa ao pseudonimato.
 > **v1.10:** §3.5 — inventário consolidado do que fica no banco após um login. Dos 12
 > campos recebidos, 11 são descartados. ⭐ A pseudonimização vale POR USUÁRIO e cai no
 > momento do opt-in de e-mail.
@@ -725,6 +727,58 @@ usuario
 > ⭐ **Por isso a coluna é anulável.** Não é elegância de schema: é a diferença entre uma
 > base pseudonimizada e uma base identificada, e ela se aplica **por usuário**. Quem não
 > pediu e-mail continua do lado seguro da linha.
+
+### 3.5.6 🔴 O e-mail é a exceção — e não dá para tratá-lo como o `sub`
+
+A pergunta natural é: *"então por que não guardar o e-mail em hash também?"*
+
+> **Porque não dá para enviar mensagem para um hash.**
+
+| | `sub` | `email` |
+|---|---|---|
+| Para que serve | Só **comparar** — "é o mesmo usuário?" | **Endereçar** — é um destino |
+| Hash serve? | ✅ Sim. Compara-se hash com hash | ⛔ **Não.** É preciso o valor original |
+| Como fica no banco | `SHA256(sub + pepper)` | 🔴 **Em texto legível** |
+
+⚠️ **Esta é a única PII em claro no projeto inteiro.** Todo o resto ou é público (dado
+parlamentar), ou é hash (`sub`, `cpf` dos políticos), ou não existe.
+
+#### O que de fato protege, já que hash está fora
+
+| Medida | O que cobre | O que NÃO cobre |
+|---|---|---|
+| ⭐ **Só existir com opt-in** | A maioria dos usuários nem tem a coluna preenchida | Quem optou |
+| ⭐ **Descadastrar zera a coluna** | Ver abaixo — devolve a pessoa ao pseudonimato | — |
+| 🔴 **Backup criptografado** | Backup vazado, disco descartado | Invasão da aplicação em execução |
+| Retenção (12 meses sem acesso) | Base velha acumulando | O período ativo |
+
+⚠️ **Criptografia de coluna (pgcrypto) não resolve o que parece resolver.** A API precisa
+da chave para enviar o digest — então quem comprometer a aplicação lê o e-mail de qualquer
+jeito. Protege backup roubado, **não** aplicação invadida. Vale a pena, mas sabendo o
+alcance.
+
+#### ⭐ Descadastrar deve zerar o `email` — e isso não é óbvio
+
+A RF-52 diz que descadastrar **não** apaga a conta. Correto — a lista de seguidos
+sobrevive. **Mas o e-mail deve sair:**
+
+```sql
+UPDATE usuario SET email = NULL WHERE id = :id;
+UPDATE consentimento SET revogado_em = now()
+ WHERE usuario_id = :id AND finalidade = 'EMAIL_NOTICIAS' AND revogado_em IS NULL;
+```
+
+> 🔑 **O motivo é o próprio teste da §3.4.1:** guardávamos o e-mail porque o digest precisa
+> dele quando a pessoa não está. Se ela pediu para não receber, **a razão de guardar
+> deixou de existir** — e o dado deve ir embora com ela.
+
+⭐ **O efeito é bonito: descadastrar devolve a pessoa ao estado pseudonimizado.** Ela
+continua com a conta e a lista, e sai da fatia identificada da base. E se voltar a optar,
+o e-mail chega de novo no próximo `id_token` — **nada se perde ao apagar.**
+
+⚠️ **Consequência para a PL20 (destino do backup):** o backup do Postgres passa a conter
+e-mails em claro. **Ele herda a sensibilidade da base** — criptografia no destino deixa de
+ser boa prática e vira parte da decisão.
 
 ---
 

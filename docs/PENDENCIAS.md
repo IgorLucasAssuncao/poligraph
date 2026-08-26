@@ -62,7 +62,7 @@ front, do questionário e do capítulo de método ao mesmo tempo.** Comece cedo.
 | # | Pendência |
 |---|---|
 | **PL19** | Retenção do Prometheus (ex.: 90 dias) — sem limite ele enche o disco |
-| **PL20** | 🔴 Destino do backup do Postgres — **configurar no primeiro dia** |
+| **PL20** | 🔴 Destino do backup do Postgres — **configurar no primeiro dia**. ⚠️ Com e-mails em claro na base, o backup precisa ser **criptografado** no destino |
 | **PL21** | Grafana público ou só por VPN/túnel |
 | **PL22** | Exposição do painel do Coolify — público com 2FA, allow-list, ou VPN |
 

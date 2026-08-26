@@ -199,7 +199,7 @@ transforma o produto de consulta pontual em algo com retorno.
 | **RF-49** | Enviar **digest por e-mail** com notícias dos parlamentares seguidos | 🔴 **Essencial** — decisão do autor; se o RF-43 não existir, é a ÚNICA entrega de "Recomendação de Notícias" |
 | **RF-50** | *Opt-in* de e-mail **separado** do login, desmarcado por padrão | 🔴 Essencial — LGPD art. 8º §4 |
 | **RF-51** | 🔴 Link de **descadastro em um clique** em todos os e-mails, funcionando **sem login** | 🔴 Essencial — RFC 8058; Gmail/Yahoo exigem desde fev/2024 |
-| **RF-52** | Descadastrar do e-mail **não** apaga a conta — são ações distintas | 🔴 Essencial |
+| **RF-52** | Descadastrar **não** apaga a conta nem a lista de seguidos — mas ⭐ **zera a coluna `email`**, devolvendo a pessoa ao estado pseudonimizado | 🔴 Essencial |
 | **RF-53** | Assunto e *preview* do e-mail **sem nome de parlamentar** | 🔴 Essencial — senão a preferência política vaza no Gmail |
 
 ### 2.7.3 🔶 O feed agregado é condicional — e se existir, é misto
@@ -362,6 +362,7 @@ Quem quiser isso cai na opção C, que segue **não recomendada**.
 | **RNF-12** | 🔄 **Revisto pela RQ9.** **Não persistir no servidor as respostas do questionário** — isso continua valendo integralmente. A lista de seguidos passou a ser persistida sob as condições da RNF-12b e RNF-12c | R7 / LGPD |
 | ~~RNF-12a~~ | ⛔ **REVOGADO pela RQ9.** A API passa a receber a lista de seguidos, por definição do cross-device. O que substitui esta garantia é a RNF-12c | §2.7.2 |
 | **RNF-12c** | 🔄 **Revisto (opção 3).** Chave da conta é `SHA256(sub + pepper)`. ⛔ **Nunca** nome ou foto. ⭐ `email` é coluna **anulável**, preenchida **só** no opt-in — quem não pediu notificação segue pseudonimizado. `pepper` fora do banco. Endpoint de exclusão total (art. 18) | [plano/02 §3.1](plano/02-autenticacao-e-metricas.md) |
+| **RNF-12g** | 🔴 O `email` é a **única PII em claro do projeto** — não pode ser hash porque é destino de envio. Backup criptografado no destino (PL20) deixa de ser boa prática e vira requisito | [plano/02 §3.5.6](plano/02-autenticacao-e-metricas.md) |
 | **RNF-12e** | ⛔ Não enviar e-mail a partir do VPS. Usar serviço de envio com **SPF, DKIM e DMARC** configurados no domínio | [plano/02 §3.3](plano/02-autenticacao-e-metricas.md) |
 | **RNF-12f** | ⭐ Nome e foto do Google **nunca são persistidos** — lidos do `id_token` a cada login e descartados. A chave da conta é `sub_hash`, ⛔ **nunca o e-mail**, que pode mudar | [plano/02 §3.4](plano/02-autenticacao-e-metricas.md) |
 | **RNF-12d** | ⛔ **Nenhuma credencial de vida longa no projeto** — sem tabela de senha, sem recuperação, ⛔ **sem `refresh_token`**. A sessão é um cookie assinado, não um token armazenado | Decisão do autor |
