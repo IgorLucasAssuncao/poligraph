@@ -1,6 +1,9 @@
 # Autenticação, privacidade e métricas de uso
 
-> **Status:** v1.9 — 2026-08-25
+> **Status:** v1.10 — 2026-08-25
+> **v1.10:** §3.5 — inventário consolidado do que fica no banco após um login. Dos 12
+> campos recebidos, 11 são descartados. ⭐ A pseudonimização vale POR USUÁRIO e cai no
+> momento do opt-in de e-mail.
 > **v1.9:** §3.4.0 — autenticação × autorização delegada: não existe `refresh_token`
 > neste fluxo, e o cookie de sessão é que faz o papel dele. Guardá-lo violaria a RNF-12d.
 > **v1.8:** §3.4.0 — o payload literal do `id_token`, os três blocos do JWT e as TRÊS
@@ -656,6 +659,72 @@ profile`. Exigiria escopos adicionais e derrubaria a dispensa de verificação (
 
 ⭐ **E não faz falta:** este projeto precisa de **uma coluna** — o e-mail — e mesmo essa só
 para quem pediu notificação.
+
+---
+
+## 3.5 ⭐ Inventário — o que fica no banco depois de um login
+
+A resposta curta: **uma linha, com um valor que importa.**
+
+### 3.5.1 Primeiro login, sem opt-in de e-mail
+
+```
+usuario
+  id            = 1
+  sub_hash      = 9f2a4c...c41        ← 64 caracteres hex. É só isto.
+  email         = NULL
+  primeiro_nome = NULL
+  criado_em     = 2026-08-25 14:02
+  visto_em      = 2026-08-25 14:02
+  sessao_versao = 0
+```
+
+**E mais nada.** Nenhuma outra tabela recebe registro.
+
+### 3.5.2 O que foi recebido e descartado no mesmo instante
+
+| Recebido no `id_token` | Destino |
+|---|---|
+| `name`, `family_name` | 🗑️ Descartado |
+| `picture` | 🗑️ Descartado |
+| `locale`, `iat`, `exp`, `iss`, `aud` | 🗑️ Usado na validação, descartado |
+| `email` (sem opt-in) | 🗑️ **Descartado** |
+| `sub` | ⭐ Vira `SHA256(sub + pepper)` — **o cru não fica** |
+| O próprio `id_token` | 🗑️ Descartado |
+
+⭐ **Dos 12 campos que chegam, 11 são descartados** e o 12º só entra transformado.
+
+### 3.5.3 O que aparece depois, conforme a pessoa age
+
+| Ação dela | O que passa a existir |
+|---|---|
+| Voltar ao site | `visto_em` atualizado. Nada novo |
+| **Seguir** um parlamentar | Uma linha em `segue` 🔴 *(é o dado sensível)* |
+| **Opt-in** de e-mail | `usuario.email` preenchido + uma linha em `consentimento` |
+| Pedir descadastro | Uma linha em `token_email` (gerada no envio) |
+| Sair | ⛔ **Nada** — o cookie é apagado no navegador |
+| Excluir a conta | ⛔ **Nada** — um `DELETE` leva tudo (§2.2.2 do esqueleto) |
+
+### 3.5.4 O que nunca existe, em nenhum cenário
+
+⛔ Senha · ⛔ `refresh_token` · ⛔ `id_token` · ⛔ token de sessão · ⛔ nome completo ·
+⛔ foto · ⛔ CPF · ⛔ telefone · ⛔ endereço · ⛔ IP · ⛔ respostas do questionário
+
+### 3.5.5 ⚠️ E a leitura honesta disso
+
+| Quem | Situação na base |
+|---|---|
+| Entra e não segue ninguém | ✅ Uma linha praticamente vazia. **Nada a proteger** |
+| Entra e segue parlamentares | ⚠️ **Pseudonimizado** — `sub_hash` não diz quem é, mas a lista existe |
+| Faz opt-in de e-mail | 🔴 **Identificado.** O e-mail liga a lista a uma pessoa real |
+
+> 🔑 **O `sub_hash` sozinho não identifica ninguém** — sem o `pepper` (que vive fora do
+> banco) e sem conhecer o `sub` de origem, ele é opaco. **Mas isso deixa de valer no
+> momento em que o `email` é preenchido.**
+>
+> ⭐ **Por isso a coluna é anulável.** Não é elegância de schema: é a diferença entre uma
+> base pseudonimizada e uma base identificada, e ela se aplica **por usuário**. Quem não
+> pediu e-mail continua do lado seguro da linha.
 
 ---
 
