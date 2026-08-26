@@ -1,0 +1,15 @@
+:root { font-family: system-ui, sans-serif; line-height: 1.6; color-scheme: light dark; }
+main { max-width: 44rem; margin: 0 auto; padding: 2rem 1rem; }
+h1 { margin-bottom: 0; }
+.subtitulo, .ajuda { opacity: .75; }
+.pergunta { border: 1px solid currentColor; border-radius: .5rem; padding: 1rem; margin: 1rem 0; opacity: .95; }
+.pergunta legend { font-weight: 600; padding: 0 .5rem; }
+.pergunta label { display: inline-flex; gap: .35rem; margin-right: 1.25rem; cursor: pointer; }
+.lista-afinidade { padding-left: 1.25rem; }
+.lista-afinidade li { margin: .75rem 0; }
+.filiacao { opacity: .7; font-size: .9em; }
+.placar { display: block; font-size: .95em; }
+.aviso { border-left: 3px solid currentColor; padding-left: .75rem; opacity: .85; }
+.erro { color: #b00020; }
+button { padding: .6rem 1.2rem; border-radius: .4rem; cursor: pointer; font-size: 1rem; }
+footer { margin-top: 3rem; opacity: .6; }

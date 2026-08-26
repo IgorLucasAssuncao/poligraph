@@ -84,6 +84,24 @@ jobs:
         run: pytest -q
         working-directory: src/etl
 
+  web:
+    name: Front React
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: src/web/package-lock.json
+      - run: npm ci
+        working-directory: src/web
+      # 🔴 inclui o teste que impede percentual na tela (RF-29)
+      - run: npm test
+        working-directory: src/web
+      - run: npm run build
+        working-directory: src/web
+
   docker:
     name: Imagens constroem
     runs-on: ubuntu-latest
@@ -98,3 +116,6 @@ jobs:
 
       - name: Build da imagem do ETL
         run: docker build -f docker/Dockerfile.etl -t poligraph-etl:ci .
+
+      - name: Build da imagem do front
+        run: docker build -f docker/Dockerfile.web -t poligraph-web:ci .
