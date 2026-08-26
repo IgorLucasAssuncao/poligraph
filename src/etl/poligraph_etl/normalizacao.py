@@ -65,7 +65,18 @@ _CATEGORIAS: list[tuple[str, str]] = [
     ),
     (
         "DESTAQUE",
-        r"destaque|mantido o texto|suprimido o texto|emenda|subemenda",
+        # 🔴 `(?<!ressalvados os )destaques?` — a exceção não é detalhe.
+        #
+        # "Aprovado o Substitutivo ao PL 2.162, **ressalvados os destaques**" é voto no
+        # TEXTO PRINCIPAL: os destaques ficaram de fora, para votação separada. A frase
+        # cita destaque justamente para dizer que ele NÃO estava em jogo.
+        #
+        # ⚠️ Sem a exceção, 69 votações de mérito da legislatura 57 eram classificadas
+        # como DESTAQUE. Duas consequências, ambas silenciosas: entravam na matriz com
+        # peso 0,7 em vez de 1,0, e o filtro "só texto principal" da curadoria as
+        # descartava — encolhendo o universo de perguntas sem que ninguém notasse.
+        r"(?<!ressalvados os )destaques?|mantido o texto|suprimido o texto"
+        r"|emenda|subemenda",
     ),
     (
         "AUTORIDADE",

@@ -156,3 +156,36 @@ def test_voto_de_tipo_inesperado_nao_estoura():
     # ⚠️ Fora do cálculo, ⛔ nunca discordância — ausência não é "votou contra".
     for entrada in (None, 0, 1.5, [], {}):
         assert normalizar_voto(entrada) is None
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 "ressalvados os destaques" — achado de 2026-08-26
+# ═══════════════════════════════════════════════════════════════════
+
+
+def test_ressalvados_os_destaques_e_voto_no_texto_principal():
+    """🔴 A frase cita destaque para dizer que ele NÃO estava em jogo.
+
+    ⚠️ Classificar como DESTAQUE tinha duas consequências silenciosas: a votação entrava
+    na matriz com peso 0,7 em vez de 1,0, e o filtro "só texto principal" da curadoria a
+    descartava. Eram 69 votações de mérito da legislatura 57.
+    """
+    descricao = (
+        "Aprovado o Substitutivo ao Projeto de Lei nº 2.162, de 2023, adotado pelo "
+        "relator da Comissão Especial, ressalvados os destaques. Sim: 291; Não: 148."
+    )
+
+    assert classificar_categoria(descricao) == "SUBSTANTIVA"
+
+
+def test_destaque_de_verdade_continua_sendo_destaque():
+    """⚠️ A exceção não pode abrir buraco: votação de destaque real continua marcada."""
+    assert classificar_categoria("Aprovado o Destaque nº 3 do PL 1234.") == "DESTAQUE"
+    assert classificar_categoria("Mantido o texto, rejeitado o destaque.") == "DESTAQUE"
+    assert classificar_categoria("Aprovada a Emenda nº 12.") == "DESTAQUE"
+
+
+def test_a_polaridade_nao_muda_com_a_correcao():
+    """⭐ `inferir_polaridade` olha "mantido o texto", não a categoria — segue intacta."""
+    assert inferir_polaridade("Aprovado o Substitutivo, ressalvados os destaques.") == 1
+    assert inferir_polaridade("Mantido o texto.") == -1
