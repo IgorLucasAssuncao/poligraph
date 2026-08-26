@@ -17,6 +17,7 @@ from pathlib import Path
 import numpy as np
 import psycopg
 
+from . import conexao as conexao_mod
 from . import ingestao, persistencia, similaridade
 from .fontes import camara
 
@@ -35,6 +36,10 @@ def main(argv: list[str] | None = None) -> int:
     if not conexao_str:
         log.error("Defina ConnectionStrings__poligraph (ou POLIGRAPH_CONEXAO).")
         return 2
+
+    # 🔴 O Aspire injeta no formato do Npgsql (`Host=...;Database=...`) e o psycopg
+    #    fala libpq (`host=... dbname=...`). Sem traduzir, morre antes de conectar.
+    conexao_str = conexao_mod.normalizar(conexao_str)
 
     inicio = time.monotonic()
     try:

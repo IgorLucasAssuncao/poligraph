@@ -71,8 +71,9 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | **PL34** | 🔵 **Adiada por decisão do autor:** gravar as respostas individuais do questionário, SEM vínculo com a conta, para analisar quais perguntas dividem e quais ninguém entende (§ abaixo) | 🔵 Futuro | — |
 | ~~API4~~ | ✅ **Resolvida** — cosseno no grafo, concordância simples na tela (plano/07 §4.5) | — | — |
 | 🔴 **PL35** | **A legislatura não é filtrada em consulta nenhuma** — a decisão "só a 57ª" ([plano/06 §3](plano/06-perguntas-lote-1.md)) vive só no documento. Detalhe abaixo | 🔴 **Alta** | 🟡 Horas |
-| 🔴 **PL36** | **O ETL Python não fala com o banco real** — usa `votacao`, `voto`, `pessoa`; o EF criou `votacoes`, `votos`, `pessoas`. **Todas** as tabelas. Detalhe abaixo | 🔴 **Alta** | 🟡 Horas |
-| 🔴 **PL37** | **Os 104 testes do Python validam um schema fictício** — criam as tabelas no nome errado, então passam sem nunca tocar o schema do EF. É a causa-raiz da PL36 | 🔴 **Alta** | 🟡 Horas |
+| ~~PL36~~ | ✅ **Resolvida (2026-08-26)** — nomes corrigidos e **verificado rodando o container contra o banco real**: monta a matriz e grava `execucoes`. Estava faltando também traduzir a connection string do Aspire (§ abaixo) | — | — |
+| 🟡 **PL37** | 🔄 **Parcial** — `test_contrato_schema.py` lê o `PoligraphDb.cs` e trava os **nomes** de tabela. ⛔ As **colunas** continuam sem proteção: o DDL de `test_persistencia.py` ainda é escrito à mão | 🟡 Média | 🟡 Horas |
+| 🟢 **PL39** | **O grafo local nunca terá arestas com o seed atual** — a RN-02 exige 20 votações comuns e o seed tem 5. ⭐ Não é bug: é o `CHECK` funcionando. Mas o grafo só aparece depois da ingestão real | 🟢 Baixa | 🟢 Decisão |
 | 🟡 **PL38** | **O grafo nunca é gravado** — `arestas_knn` é calculado e só vai para o log. `aresta_grafo` e `no_metrica` ficam vazias, e `/api/grafo` devolve grafo vazio para sempre (RF-33) | 🟡 Média | 🟡 Horas |
 
 ### 🔴 PL35 — a legislatura não é filtrada em consulta nenhuma
@@ -110,7 +111,7 @@ histórico — são perguntas diferentes, e 2001–2026 continua disponível.
 
 ---
 
-### 🔴 PL36 e PL37 — o ETL Python e o banco nunca se falaram
+### ✅ PL36 (resolvida) e 🔄 PL37 (parcial) — o ETL Python e o banco nunca se falaram
 
 **Encontradas em 2026-08-26**, a partir da pergunta do autor *"o script em python já
 funciona?"*.
@@ -144,6 +145,23 @@ banco que o Python mesmo inventou.
 teste, a mesma deriva volta na próxima coluna que mudar de nome. O teste precisa subir o
 schema **pelas migrations do EF** (Testcontainers, como no lado C#) e só então rodar o
 Python contra ele. 🔴 Só assim a renomeação fica provada e protegida.
+
+#### ⚠️ O segundo defeito, que só apareceu ao rodar
+
+Com os nomes já corrigidos, o container ainda morria **antes de abrir conexão**:
+
+```
+psycopg.ProgrammingError: invalid connection option "Host"
+```
+
+O Aspire injeta `ConnectionStrings__poligraph` no formato do **Npgsql**
+(`Host=...;Database=...;Username=...`) e o `psycopg` fala **libpq**
+(`host=... dbname=... user=...`). Resolvido em `poligraph_etl/conexao.py`.
+
+> 🔑 **Nenhum teste pegaria isso**, e vale entender por quê: os testes recebiam a
+> conexão pronta do Testcontainers, que já vem em libpq. O formato do Aspire nunca
+> passava por ali. ⚠️ **Foi preciso executar de verdade** — é o mesmo padrão do bug do
+> `DOTNET_ENVIRONMENT`, que também só apareceu rodando.
 
 ---
 
