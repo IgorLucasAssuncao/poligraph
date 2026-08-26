@@ -25,28 +25,21 @@
 
 ## Skills disponíveis
 
-Instaladas em `.claude/skills/`. Invoque com a ferramenta Skill.
+Todas em português, em `.claude/skills/`. Invoque com a ferramenta Skill.
 
 | Skill | Quando usar |
 |---|---|
-| **`dotnet-code-review`** | Revisar C#: SOLID, performance, segurança, C# moderno |
-| **`dotnet-architecture`** | Escolher padrão de arquitetura — ⚠️ ler a ressalva abaixo |
-| **`dotnet-testing`** | xUnit, Testcontainers, Moq, TDD |
+| ⭐ **`padroes-codigo`** | **Sempre que escrever C#** — nomenclatura, ordem dos membros, estilo |
+| **`arquitetura`** | Estruturar projeto, criar endpoint, avaliar se vale um padrão novo |
+| **`revisao-codigo`** | Revisar C# — começa pelas 5 verificações do projeto |
+| **`testes`** | xUnit e Testcontainers. Contém o teste de polaridade (API3) |
+| **`docker-e-aspire`** | Dockerfile, AppHost, migrations, `WaitForCompletion` |
 
-**Comandos** em `.claude/commands/`: `/dotnet-review <path>` · `/new-feature <Nome>`
+**Comando:** `/revisar <caminho>`
 
-### ⚠️ Ressalva sobre a `dotnet-architecture` e a `/new-feature`
-
-Elas assumem **Clean Architecture + CQRS com MediatR + Repository**. **Este projeto
-decidiu o contrário**, e por um critério explícito:
-
-> **[`plano/01 §1`](docs/plano/01-arquitetura.md): "Quanto tempo isso rouba de escrever o
-> TCC?"** — Minimal API, sem camadas, sem MediatR.
-
-⭐ **A própria skill concorda:** *"the mark of a senior architect is knowing when NOT to
-over-engineer"*. Use-a para **avaliar trade-offs**, não como template a seguir. O
-`/new-feature` gera estrutura CQRS que **não corresponde a este projeto** — trate como
-referência, não como scaffold.
+> ⚠️ **Foram reescritas a partir das originais em inglês (MIT), não traduzidas ao pé da
+> letra.** As originais assumiam Clean Architecture + CQRS + Repository, que este projeto
+> decidiu não usar. Seguir aquilo geraria código que contraria o plano.
 
 ---
 
@@ -55,13 +48,15 @@ referência, não como scaffold.
 | Camada | Escolha |
 |---|---|
 | Front | React + Vite, nginx |
-| API | **C# · ASP.NET Core Minimal API** |
+| API | **C# · ASP.NET Core Minimal API** · **.NET 10 · C# 14** |
 | ORM | **EF Core + migrations** (PL13) |
 | ETL e análise | **Python** — pandas, scipy, networkx |
 | Banco | PostgreSQL em container |
 | Hospedagem | **VPS Hostinger KVM 2 + Coolify**, São Paulo |
 | Borda | Cloudflare (DNS, CDN, WAF, TLS) |
-| Dev local | .NET Aspire |
+| Dev local | **Aspire 13** — AppHost + ServiceDefaults |
+| Estrutura | **Tier 2 sem MediatR** — `Api` + `Tests` + `AppHost` |
+| Testes | xUnit + **Testcontainers** (Postgres real) |
 
 ---
 
@@ -126,13 +121,19 @@ df = pd.read_csv(path, sep=';', encoding='utf-8-sig', quotechar='"', dtype=str)
 ⚠️ **Os CSVs da Câmara têm quebras de linha dentro de campos.** Parsing ingênuo por linha
 inflou a contagem em 8,8% — ver [`04-contratos`](docs/04-contratos.md).
 
-### C#
+### C# — resumo
 
-- `Minimal API`, sem controllers
-- `record` para DTOs
-- `CancellationToken` em todo método assíncrono
-- Nullable reference types ligado
-- ⛔ Sem `MediatR`, sem `Repository<T>` genérico, sem camadas Application/Domain/Infra
+📐 **Detalhe completo na skill `padroes-codigo`.**
+
+| O quê | Padrão |
+|---|---|
+| Classes, métodos e propriedades públicas | **PascalCase** |
+| ⭐ Campos privados e serviços injetados | **`_camelCase`** |
+| 🔴 Ordem dos membros | **Públicos no topo · privados abaixo, na ordem de uso** |
+| Idioma | **Português** — `ServicoAfinidade`, `CalcularAsync` |
+| Datas | **`DateTimeOffset`**, nunca `DateTime` |
+
+⛔ Sem `MediatR`, sem `Repository<T>`, sem camadas Domain/Application/Infra, sem AutoMapper.
 
 ---
 
