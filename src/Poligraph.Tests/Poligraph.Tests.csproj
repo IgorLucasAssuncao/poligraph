@@ -18,4 +18,8 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Poligraph.Api\Poligraph.Api.csproj" />
+  </ItemGroup>
+
 </Project>
