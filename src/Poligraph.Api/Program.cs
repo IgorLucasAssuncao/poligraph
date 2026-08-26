@@ -103,7 +103,8 @@ app.MapearParlamentares()
    .MapearAutenticacao()
    .MapearSeguir()
    .MapearGrafo()
-   .MapearNoticias();
+   .MapearNoticias()
+   .MapearAvaliacao();
 
 // ⚠️ Diz na subida se o login está ligado.
 //

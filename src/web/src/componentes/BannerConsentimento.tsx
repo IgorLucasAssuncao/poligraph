@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TEXTO_CONSENTIMENTO, VERSAO_CONSENTIMENTO } from './textos-legais';
+import { TEXTO_CONSENTIMENTO, VERSAO_CONSENTIMENTO } from '../textos-legais';
 
 const CHAVE = 'poligraph.consentimento';
 

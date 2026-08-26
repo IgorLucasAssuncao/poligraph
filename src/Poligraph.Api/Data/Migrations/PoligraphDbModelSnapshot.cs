@@ -55,6 +55,50 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Api.Data.AvaliacaoQuestionario", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<bool?>("Acertou")
+                        .HasColumnType("boolean")
+                        .HasColumnName("acertou");
+
+                    b.Property<int>("AcordosDoPrimeiro")
+                        .HasColumnType("integer")
+                        .HasColumnName("acordos_do_primeiro");
+
+                    b.Property<int>("ComparaveisDoPrimeiro")
+                        .HasColumnType("integer")
+                        .HasColumnName("comparaveis_do_primeiro");
+
+                    b.Property<int>("PerguntasRespondidas")
+                        .HasColumnType("integer")
+                        .HasColumnName("perguntas_respondidas");
+
+                    b.Property<short?>("PosicaoAutodeclarada")
+                        .HasColumnType("smallint")
+                        .HasColumnName("posicao_autodeclarada");
+
+                    b.Property<DateTimeOffset>("RegistradaEm")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("registrada_em")
+                        .HasDefaultValueSql("now()");
+
+                    b.HasKey("Id")
+                        .HasName("pk_avaliacoes");
+
+                    b.ToTable("avaliacoes", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_avaliacao_posicao", "posicao_autodeclarada IS NULL OR posicao_autodeclarada BETWEEN -3 AND 3");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Api.Data.Consentimento", b =>
                 {
                     b.Property<long>("Id")

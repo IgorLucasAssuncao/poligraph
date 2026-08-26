@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { Resultado } from './Resultado';
-import type { ResultadoAfinidade } from './api';
+import type { ResultadoAfinidade } from '../api';
 
 const RESULTADO: ResultadoAfinidade = {
   casa: 'CAMARA',
@@ -14,9 +15,18 @@ const RESULTADO: ResultadoAfinidade = {
   ],
 };
 
+/** ⚠️ O componente usa `Link`, que exige contexto de rota. */
+function renderizar() {
+  return render(
+    <MemoryRouter>
+      <Resultado resultado={RESULTADO} aoRefazer={vi.fn()} />
+    </MemoryRouter>,
+  );
+}
+
 describe('Resultado', () => {
   it('mostra "X de Y" — o número junto da base', () => {
-    const { container } = render(<Resultado resultado={RESULTADO} aoRefazer={vi.fn()} />);
+    const { container } = renderizar();
 
     // ⚠️ o texto é quebrado por <strong>, então a checagem é sobre o conteúdo inteiro
     const texto = container.textContent!.replace(/\s+/g, ' ');
@@ -27,7 +37,7 @@ describe('Resultado', () => {
   });
 
   it('🔴 NUNCA exibe percentual', () => {
-    const { container } = render(<Resultado resultado={RESULTADO} aoRefazer={vi.fn()} />);
+    const { container } = renderizar();
 
     // "67%" esconderia que a base foram 3 perguntas
     expect(container.textContent).not.toMatch(/\d+\s*%/);
@@ -35,21 +45,21 @@ describe('Resultado', () => {
   });
 
   it('mostra os mais distantes, não só os mais próximos', () => {
-    render(<Resultado resultado={RESULTADO} aoRefazer={vi.fn()} />);
+    renderizar();
 
     // RF-28 — ver de quem você discorda é parte do método
     expect(screen.getByText('Bruno Tavares')).toBeDefined();
   });
 
   it('exibe o aviso de que não é recomendação de voto', () => {
-    render(<Resultado resultado={RESULTADO} aoRefazer={vi.fn()} />);
+    renderizar();
 
     // RNF-14 — obrigatório em toda tela de resultado
     expect(screen.getByRole('note').textContent).toMatch(/não é recomendação de voto/i);
   });
 
   it('deixa claro quantas perguntas foram respondidas', () => {
-    render(<Resultado resultado={RESULTADO} aoRefazer={vi.fn()} />);
+    renderizar();
 
     expect(screen.getByText(/respondeu 3 perguntas/i)).toBeDefined();
   });

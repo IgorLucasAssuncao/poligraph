@@ -6,8 +6,8 @@ import {
   type Pergunta,
   type Resposta,
   type ResultadoAfinidade,
-} from './api';
-import { Resultado } from './Resultado';
+} from '../api';
+import { Resultado } from '../componentes/Resultado';
 
 /**
  * O questionário.

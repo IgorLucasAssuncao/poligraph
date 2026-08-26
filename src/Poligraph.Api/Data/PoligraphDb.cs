@@ -26,6 +26,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<Noticia> Noticias => Set<Noticia>();
     public DbSet<NoticiaPessoa> NoticiaPessoas => Set<NoticiaPessoa>();
     public DbSet<NoticiaTema> NoticiaTemas => Set<NoticiaTema>();
+    public DbSet<AvaliacaoQuestionario> Avaliacoes => Set<AvaliacaoQuestionario>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -35,6 +36,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         ConfigurarAnalise(mb);
         ConfigurarUsuario(mb);
         ConfigurarNoticia(mb);
+        ConfigurarAvaliacao(mb);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -248,5 +250,24 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasOne(x => x.Noticia).WithMany()
                 .HasForeignKey(x => x.NoticiaId).OnDelete(DeleteBehavior.Cascade);
         });
+    }
+
+    private static void ConfigurarAvaliacao(ModelBuilder mb)
+    {
+        mb.Entity<AvaliacaoQuestionario>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.RegistradaEm).HasDefaultValueSql("now()");
+
+            // 🔴 A escala tem limite fechado. Sem o CHECK, um front com bug gravaria
+            //    valores fora da escala e a análise do TCC sairia errada em silêncio.
+            e.ToTable(t => t.HasCheckConstraint(
+                "ck_avaliacao_posicao",
+                "posicao_autodeclarada IS NULL OR posicao_autodeclarada BETWEEN -3 AND 3"));
+        });
+
+        // ⛔ Nenhuma relação com `usuario` — ver o comentário da entidade.
+        //    Se alguém acrescentar um `usuario_id` aqui, a tabela deixa de ser amostra
+        //    de pesquisa e vira cadastro de ideologia por pessoa identificada.
     }
 }

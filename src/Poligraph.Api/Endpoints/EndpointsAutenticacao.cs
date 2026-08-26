@@ -25,6 +25,7 @@ public static class EndpointsAutenticacao
         grupo.MapPost("/logout", SairAsync);
         grupo.MapPost("/sair-de-todos", SairDeTodosAsync).RequireAuthorization();
         grupo.MapGet("/eu", QuemSouAsync).RequireAuthorization();
+        grupo.MapDelete("/conta", ExcluirContaAsync).RequireAuthorization();
 
         return app;
     }
@@ -88,6 +89,25 @@ public static class EndpointsAutenticacao
             .FirstOrDefaultAsync(ct);
 
         return usuario is null ? Results.Unauthorized() : Results.Ok(usuario);
+    }
+
+    /// <summary>
+    /// 🔴 LGPD art. 18, VI — direito à eliminação.
+    ///
+    /// ⭐ É UM `DELETE`. Os `ON DELETE CASCADE` do schema levam junto a lista de
+    /// acompanhados, os consentimentos e os tokens de e-mail. Foi para isto que eles
+    /// existem: sem o cascade, esta operação seria uma lista de tabelas que alguém
+    /// esqueceria de atualizar ao criar a próxima.
+    /// </summary>
+    private static async Task<IResult> ExcluirContaAsync(
+        ClaimsPrincipal principal, HttpContext contexto, PoligraphDb db, CancellationToken ct)
+    {
+        var id = IdDoUsuario(principal);
+
+        await db.Usuarios.Where(u => u.Id == id).ExecuteDeleteAsync(ct);
+        await contexto.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+        return Results.NoContent();
     }
 
     // ═══════════════════════════════════════════════════════════════

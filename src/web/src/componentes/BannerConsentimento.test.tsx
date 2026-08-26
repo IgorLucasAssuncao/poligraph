@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BannerConsentimento } from './BannerConsentimento';
-import { TEXTO_CONSENTIMENTO, VERSAO_CONSENTIMENTO } from './textos-legais';
+import { TEXTO_CONSENTIMENTO, VERSAO_CONSENTIMENTO } from '../textos-legais';
 
 describe('BannerConsentimento', () => {
   beforeEach(() => {

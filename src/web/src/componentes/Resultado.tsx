@@ -1,4 +1,7 @@
-import type { ParlamentarAfim, ResultadoAfinidade } from './api';
+import { Link } from 'react-router-dom';
+import type { ParlamentarAfim, ResultadoAfinidade } from '../api';
+import { Avatar } from './Avatar';
+import { Avaliacao } from './Avaliacao';
 
 /**
  * A tela de resultado.
@@ -42,7 +45,11 @@ export function Resultado({
         parlamentar.
       </p>
 
-      <button type="button" onClick={aoRefazer}>
+      <Avaliacao resultado={resultado} />
+
+      {/* ⭐ Refazer sempre disponível: a pessoa muda de ideia, e as perguntas mudam
+          quando a curadoria acrescenta votações novas. */}
+      <button type="button" className="botao-secundario" onClick={aoRefazer}>
         Refazer o questionário
       </button>
     </section>
@@ -54,16 +61,22 @@ export function Resultado({
 function Linha({ parlamentar }: { parlamentar: ParlamentarAfim }) {
   return (
     <li>
-      <a href={`/parlamentares/${parlamentar.pessoaId}`}>{parlamentar.nome}</a>{' '}
-      <span className="filiacao">
-        {parlamentar.partido}
-        {parlamentar.uf && `/${parlamentar.uf}`}
-      </span>
-      <span className="placar">
-        {/* 🔴 nunca percentual — ver o cabeçalho deste arquivo */}
-        concordaram em <strong>{parlamentar.acordos}</strong> de{' '}
-        <strong>{parlamentar.comparaveis}</strong> perguntas
-      </span>
+      <Link to={`/parlamentar/${parlamentar.pessoaId}`} className="cartao-link">
+        <Avatar nome={parlamentar.nome} />
+
+        <div className="cartao-texto">
+          <strong className="cartao-nome">{parlamentar.nome}</strong>
+          <span className="cartao-filiacao">
+            {parlamentar.partido}
+            {parlamentar.uf && ` · ${parlamentar.uf}`}
+          </span>
+          <span className="cartao-detalhe">
+            {/* 🔴 nunca percentual — ver o cabeçalho deste arquivo */}
+            concordaram em <strong>{parlamentar.acordos}</strong> de{' '}
+            <strong>{parlamentar.comparaveis}</strong> perguntas
+          </span>
+        </div>
+      </Link>
     </li>
   );
 }
