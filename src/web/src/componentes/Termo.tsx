@@ -114,4 +114,26 @@ export const GLOSSARIO = {
       'e não pelo partido. Por isso um mesmo partido aparece em vários grupos, e o ' +
       'número do grupo é só um rótulo — não indica posição no espectro político.',
   },
+  fundao: {
+    rotulo: 'Fundo Especial',
+    explicacao:
+      ' Dinheiro público repassado aos partidos para financiar campanha eleitoral, ' +
+      'criado em 2017 e apelidado de "fundão". Não se confunde com o Fundo ' +
+      'Partidário, que custeia o partido o ano inteiro — os dois aparecem separados ' +
+      'aqui de propósito.',
+  },
+  emenda: {
+    rotulo: 'emenda parlamentar',
+    explicacao:
+      ' A parte do orçamento federal que cada parlamentar pode direcionar para onde ' +
+      'quiser — em geral obras e serviços no estado dele. É o principal instrumento ' +
+      'de poder orçamentário individual no Congresso.',
+  },
+  empenho: {
+    rotulo: 'empenhado e pago',
+    explicacao:
+      ' Empenhar é reservar o dinheiro no orçamento; pagar é ele de fato sair dos ' +
+      'cofres. Uma emenda pode ser anunciada, empenhada e nunca paga — por isso ' +
+      'mostramos os dois valores, e não só o primeiro.',
+  },
 } as const;

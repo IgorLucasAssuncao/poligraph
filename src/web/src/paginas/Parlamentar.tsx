@@ -2,12 +2,16 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   deixarDeSeguir,
+  obterEmendas,
+  obterFinanciamento,
   obterGastos,
   listarSeguidos,
   obterFicha,
   obterNoticias,
   seguir,
+  type EmendasDoParlamentar,
   type Ficha,
+  type FinanciamentoDeCampanha,
   type GastoDeCota,
   type Noticia,
 } from '../api';
@@ -16,12 +20,14 @@ import { CabecalhoDaColuna } from '../componentes/Layout';
 import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 import { Termo } from '../componentes/Termo';
 
-type Aba = 'noticias' | 'votos' | 'gastos' | 'similares';
+type Aba = 'noticias' | 'votos' | 'gastos' | 'emendas' | 'campanha' | 'similares';
 
 const ABAS: [Aba, string][] = [
   ['noticias', 'Notícias'],
   ['votos', 'Votos'],
   ['gastos', 'Gastos'],
+  ['emendas', 'Emendas'],
+  ['campanha', 'Campanha'],
   ['similares', 'Vota parecido'],
 ];
 
@@ -132,6 +138,8 @@ export function Parlamentar() {
       {aba === 'noticias' && <AbaNoticias noticias={noticias} />}
       {aba === 'votos' && <AbaVotos votos={ficha.votosRecentes} />}
       {aba === 'gastos' && <AbaGastos pessoaId={pessoaId} />}
+      {aba === 'emendas' && <AbaEmendas pessoaId={pessoaId} />}
+      {aba === 'campanha' && <AbaCampanha pessoaId={pessoaId} />}
       {aba === 'similares' && <AbaSimilares similares={ficha.maisSimilares} />}
     </>
   );
@@ -280,6 +288,201 @@ function AbaGastos({ pessoaId }: { pessoaId: number }) {
       <p className="ajuda ajuda-espacada">
         Cota para o Exercício da Atividade Parlamentar, publicada pela Câmara dos
         Deputados. Valores já descontada a glosa.
+      </p>
+    </>
+  );
+}
+
+/**
+ * As emendas parlamentares na ficha (Portal da Transparência).
+ *
+ * 🔴 **Empenhado e pago são coisas diferentes, e a tela mostra os dois.** Empenhar é
+ * reservar; pagar é o dinheiro sair. Um painel que exibisse só o empenhado deixaria a
+ * pessoa concluir que o dinheiro chegou — que é exatamente o que quem anuncia emenda
+ * gostaria que ela concluísse.
+ */
+function AbaEmendas({ pessoaId }: { pessoaId: number }) {
+  const [emendas, setEmendas] = useState<EmendasDoParlamentar | null>(null);
+  const [erro, setErro] = useState(false);
+
+  useEffect(() => {
+    setEmendas(null);
+    setErro(false);
+
+    obterEmendas(pessoaId).then(setEmendas).catch(() => setErro(true));
+  }, [pessoaId]);
+
+  if (erro) return <p className="erro">Não foi possível carregar as emendas.</p>;
+  if (!emendas) return <p className="carregando">Carregando…</p>;
+
+  // ⭐ Vazio HONESTO: pode ser parlamentar sem emenda, ou autor ainda não reconciliado
+  //    na base. ⛔ Nunca "R$ 0,00", que afirmaria o que não se sabe.
+  if (emendas.quantidade === 0) {
+    return (
+      <p className="vazio">
+        Nenhuma emenda atribuída a este parlamentar na base.
+      </p>
+    );
+  }
+
+  const maior = emendas.porDestino[0]?.empenhado ?? 1;
+  const executado = emendas.empenhado > 0 ? emendas.pago / emendas.empenhado : 0;
+
+  return (
+    <>
+      <section className="gastos-resumo">
+        <p className="rotulo-destaque">Emendas de {emendas.ano}</p>
+        <p className="gastos-total">{reais(emendas.empenhado)}</p>
+        <p className="ajuda">
+          empenhados em <strong>{emendas.quantidade}</strong>{' '}
+          {emendas.quantidade === 1 ? 'emenda' : 'emendas'}
+        </p>
+
+        {/* 🔴 A execução é a informação, e por isso vem em destaque próprio — ⛔ não
+            como um número miúdo ao lado do empenhado. */}
+        <div className="execucao">
+          <span className="gasto-barra execucao-barra">
+            <span style={{ width: `${Math.min(executado * 100, 100)}%` }} />
+          </span>
+          <p className="ajuda">
+            <strong>{reais(emendas.pago)}</strong> efetivamente pagos —{' '}
+            {(executado * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}%
+            do que foi empenhado
+          </p>
+        </div>
+      </section>
+
+      <h3 className="titulo-secao">Para onde foi</h3>
+      <ul className="gastos-categorias">
+        {emendas.porDestino.map((d) => (
+          <li key={d.localidade}>
+            <span className="gasto-nome">{d.localidade}</span>
+            <span className="gasto-barra">
+              {/* ⚠️ Proporcional ao MAIOR destino, não ao total — mesma razão da cota. */}
+              <span style={{ width: `${Math.max((d.empenhado / maior) * 100, 2)}%` }} />
+            </span>
+            <span className="gasto-valor">{reais(d.empenhado)}</span>
+          </li>
+        ))}
+      </ul>
+
+      {emendas.porFuncao.length > 0 && (
+        <>
+          <h3 className="titulo-secao">Em quê</h3>
+          <ul className="gastos-fornecedores">
+            {emendas.porFuncao.map((f) => (
+              <li key={f.funcao}>
+                <span className="gasto-nome">{f.funcao}</span>
+                <span className="gasto-valor">{reais(f.empenhado)}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      <p className="ajuda ajuda-espacada">
+        <Termo nome="emenda">Emendas parlamentares</Termo> publicadas pelo Portal da
+        Transparência. A diferença entre{' '}
+        <Termo nome="empenho">empenhado e pago</Termo> é o que a barra acima mostra.
+      </p>
+    </>
+  );
+}
+
+/**
+ * O financiamento da campanha que elegeu o parlamentar (TSE).
+ *
+ * 🔴 **O fundão e o fundo partidário aparecem SEPARADOS.** São fundos diferentes: o
+ * Fundo Especial (FEFC) é eleitoral, criado em 2017; o Fundo Partidário é o
+ * financiamento permanente dos partidos. Somá-los como "dinheiro público" é
+ * defensável — mas é uma afirmação, e a tela ⛔ não a faz pelo leitor.
+ */
+function AbaCampanha({ pessoaId }: { pessoaId: number }) {
+  const [fin, setFin] = useState<FinanciamentoDeCampanha | null>(null);
+  const [erro, setErro] = useState(false);
+
+  useEffect(() => {
+    setFin(null);
+    setErro(false);
+
+    obterFinanciamento(pessoaId).then(setFin).catch(() => setErro(true));
+  }, [pessoaId]);
+
+  if (erro) return <p className="erro">Não foi possível carregar o financiamento.</p>;
+  if (!fin) return <p className="carregando">Carregando…</p>;
+
+  if (fin.total === 0) {
+    return (
+      <p className="vazio">
+        Nenhuma receita de campanha registrada para este parlamentar na base.
+      </p>
+    );
+  }
+
+  const publico = fin.fundoEspecial + fin.fundoPartidario;
+  const maior = fin.porFonte[0]?.total ?? 1;
+
+  return (
+    <>
+      <section className="gastos-resumo">
+        <p className="rotulo-destaque">Campanha de {fin.anoEleicao}</p>
+        <p className="gastos-total">{reais(fin.total)}</p>
+        <p className="ajuda">arrecadados no total</p>
+      </section>
+
+      {/* 🔴 Os dois fundos, lado a lado e nomeados — ⛔ nunca somados num só número. */}
+      <ul className="fundos">
+        <li>
+          <span className="fundo-rotulo">
+            <Termo nome="fundao">Fundo Especial</Termo>
+          </span>
+          <span className="fundo-valor">{reais(fin.fundoEspecial)}</span>
+        </li>
+        <li>
+          <span className="fundo-rotulo">Fundo Partidário</span>
+          <span className="fundo-valor">{reais(fin.fundoPartidario)}</span>
+        </li>
+      </ul>
+
+      <p className="ajuda ajuda-espacada">
+        Juntos, os dois fundos somam <strong>{reais(publico)}</strong> —{' '}
+        {((publico / fin.total) * 100).toLocaleString('pt-BR', {
+          maximumFractionDigits: 0,
+        })}
+        % do que a campanha arrecadou. São fundos <strong>distintos</strong>: o Fundo
+        Especial é eleitoral; o Partidário custeia o partido o ano inteiro.
+      </p>
+
+      <h3 className="titulo-secao">De onde veio</h3>
+      <ul className="gastos-categorias">
+        {fin.porFonte.map((f) => (
+          <li key={f.fonte}>
+            <span className="gasto-nome">{minusculas(f.fonte)}</span>
+            <span className="gasto-barra">
+              <span style={{ width: `${Math.max((f.total / maior) * 100, 2)}%` }} />
+            </span>
+            <span className="gasto-valor">{reais(f.total)}</span>
+          </li>
+        ))}
+      </ul>
+
+      <h3 className="titulo-secao">Maiores doadores</h3>
+      <ul className="gastos-fornecedores">
+        {fin.maioresDoadores.map((d) => (
+          <li key={d.nome}>
+            <span className="gasto-nome">
+              {d.nome}
+              {/* 🔴 RNF-13: o documento de pessoa física é hasheado no banco. */}
+              {d.pessoaFisica && <small> · pessoa física</small>}
+            </span>
+            <span className="gasto-valor">{reais(d.total)}</span>
+          </li>
+        ))}
+      </ul>
+
+      <p className="ajuda ajuda-espacada">
+        Prestação de contas eleitorais publicada pelo TSE, referente à eleição de{' '}
+        {fin.anoEleicao}.
       </p>
     </>
   );

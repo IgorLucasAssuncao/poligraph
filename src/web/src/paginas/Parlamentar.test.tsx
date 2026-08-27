@@ -1,0 +1,171 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Parlamentar } from './Parlamentar';
+import type { EmendasDoParlamentar, Ficha, FinanciamentoDeCampanha } from '../api';
+
+vi.mock('../api', async (original) => ({
+  ...(await original<typeof import('../api')>()),
+  obterFicha: vi.fn(),
+  obterNoticias: vi.fn(),
+  listarSeguidos: vi.fn(),
+  obterGastos: vi.fn(),
+  obterEmendas: vi.fn(),
+  obterFinanciamento: vi.fn(),
+}));
+
+const api = await import('../api');
+
+const FICHA: Ficha = {
+  id: 1,
+  nome: 'Ana Ribeiro',
+  nomeCivil: 'ANA RIBEIRO',
+  partido: 'PARTIDO-A',
+  uf: 'SP',
+  urlFoto: null,
+  nVotacoes: 120,
+  votosRecentes: [],
+  maisSimilares: [],
+};
+
+/** ⭐ Empenhado ≠ pago, e a razão entre eles é 40%. */
+const EMENDAS: EmendasDoParlamentar = {
+  ano: 2025,
+  empenhado: 1_000_000,
+  pago: 400_000,
+  quantidade: 3,
+  porDestino: [
+    { localidade: 'Ananindeua - PA', empenhado: 900_000, pago: 400_000, quantidade: 2 },
+    { localidade: 'Belém - PA', empenhado: 100_000, pago: 0, quantidade: 1 },
+  ],
+  porFuncao: [{ funcao: 'Saúde', empenhado: 900_000, pago: 400_000 }],
+};
+
+const CAMPANHA: FinanciamentoDeCampanha = {
+  anoEleicao: 2022,
+  total: 3_250_000,
+  fundoEspecial: 3_000_000,
+  fundoPartidario: 200_000,
+  porFonte: [
+    { fonte: 'FUNDO ESPECIAL', total: 3_000_000, lancamentos: 4 },
+    { fonte: 'FUNDO PARTIDARIO', total: 200_000, lancamentos: 1 },
+    { fonte: 'OUTROS RECURSOS', total: 50_000, lancamentos: 9 },
+  ],
+  maioresDoadores: [{ nome: 'Jose da Silva', total: 50_000, pessoaFisica: true }],
+};
+
+function renderizar() {
+  return render(
+    <MemoryRouter initialEntries={['/parlamentares/1']}>
+      <Routes>
+        <Route path="/parlamentares/:id" element={<Parlamentar />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
+async function abrirAba(nome: string) {
+  renderizar();
+  // ⚠️ O nome aparece DUAS vezes, e as duas são `<h1>`: no cabeçalho da coluna e no
+  //    perfil. `findAllBy` só espera a ficha chegar — ⛔ não é o que está sob teste.
+  await screen.findAllByRole('heading', { name: /Ana Ribeiro/ });
+  await userEvent.click(screen.getByRole('button', { name: nome }));
+}
+
+beforeEach(() => {
+  vi.mocked(api.obterFicha).mockResolvedValue(FICHA);
+  vi.mocked(api.obterNoticias).mockResolvedValue([]);
+  vi.mocked(api.listarSeguidos).mockResolvedValue([]);
+  vi.mocked(api.obterEmendas).mockResolvedValue(EMENDAS);
+  vi.mocked(api.obterFinanciamento).mockResolvedValue(CAMPANHA);
+});
+
+describe('aba de emendas', () => {
+  it('🔴 mostra o pago junto do empenhado, nunca só o empenhado', async () => {
+    await abrirAba('Emendas');
+
+    const texto = await tela();
+
+    // ⚠️ Exibir só o empenhado deixaria a pessoa concluir que o dinheiro chegou — que
+    //    é exatamente o que quem anuncia emenda gostaria que ela concluísse.
+    expect(texto).toMatch(/R\$\s*1\.000\.000,00/);
+    expect(texto).toMatch(/R\$\s*400\.000,00/);
+    expect(texto).toMatch(/40% do que foi empenhado/);
+  });
+
+  it('⭐ estado vazio é honesto, não "R$ 0,00"', async () => {
+    vi.mocked(api.obterEmendas).mockResolvedValue({
+      ano: 0, empenhado: 0, pago: 0, quantidade: 0, porDestino: [], porFuncao: [],
+    });
+
+    await abrirAba('Emendas');
+    await screen.findByText(/Nenhuma emenda atribuída/);
+
+    // 🔴 Zero afirmaria que ele não teve emenda; o que se sabe é que a BASE não tem.
+    expect(await tela()).not.toMatch(/R\$\s*0,00/);
+  });
+
+  it('⚠️ não divide por zero quando nada foi empenhado', async () => {
+    vi.mocked(api.obterEmendas).mockResolvedValue({
+      ...EMENDAS, empenhado: 0, pago: 0, porDestino: [], porFuncao: [],
+    });
+
+    await abrirAba('Emendas');
+
+    // ⛔ Sem a guarda, `0/0` daria `NaN%` na tela
+    expect(await tela()).not.toMatch(/NaN/);
+  });
+});
+
+describe('aba de campanha', () => {
+  it('🔴 os dois fundos aparecem SEPARADOS e nomeados', async () => {
+    await abrirAba('Campanha');
+
+    await screen.findByText('Fundo Partidário');
+    const texto = await tela();
+
+    // ⭐ Cada um com o próprio valor…
+    expect(texto).toMatch(/R\$\s*3\.000\.000,00/);
+    expect(texto).toMatch(/R\$\s*200\.000,00/);
+
+    // ⛔ …e a soma dos dois NÃO substitui os dois: ela aparece dita como soma.
+    expect(texto).toMatch(/Juntos, os dois fundos somam R\$\s*3\.200\.000,00/);
+    expect(texto).toMatch(/São fundos distintos/);
+  });
+
+  it('⭐ a proporção pública é sobre o total arrecadado', async () => {
+    await abrirAba('Campanha');
+
+    // 3.200.000 de 3.250.000 = 98%
+    expect(await tela()).toMatch(/98% do que a campanha arrecadou/);
+  });
+
+  it('🔴 marca o doador pessoa física sem revelar documento', async () => {
+    await abrirAba('Campanha');
+
+    await screen.findByText(/Jose da Silva/);
+    const texto = await tela();
+
+    expect(texto).toMatch(/pessoa física/);
+    // RNF-13 — nem CPF, nem hash, nem a palavra
+    expect(texto).not.toMatch(/cpf|cnpj/i);
+  });
+
+  it('⭐ estado vazio é honesto', async () => {
+    vi.mocked(api.obterFinanciamento).mockResolvedValue({
+      anoEleicao: 0, total: 0, fundoEspecial: 0, fundoPartidario: 0,
+      porFonte: [], maioresDoadores: [],
+    });
+
+    await abrirAba('Campanha');
+    await screen.findByText(/Nenhuma receita de campanha registrada/);
+
+    expect(await tela()).not.toMatch(/NaN/);
+  });
+});
+
+/** ⚠️ O texto é quebrado por `<strong>` e `<Termo>` — a checagem é sobre o todo. */
+async function tela(): Promise<string> {
+  return await waitFor(() => document.body.textContent!.replace(/\s+/g, ' '));
+}

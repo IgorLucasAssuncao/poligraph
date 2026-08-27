@@ -343,3 +343,76 @@ export type GastoDeCota = {
 export async function obterGastos(pessoaId: number): Promise<GastoDeCota> {
   return buscar<GastoDeCota>(`${BASE}/parlamentares/${pessoaId}/gastos`);
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// Emendas parlamentares (Portal da Transparência)
+// ═══════════════════════════════════════════════════════════════════
+
+export type EmendaPorDestino = {
+  localidade: string;
+  empenhado: number;
+  pago: number;
+  quantidade: number;
+};
+
+export type EmendaPorFuncao = {
+  funcao: string;
+  empenhado: number;
+  pago: number;
+};
+
+/**
+ * 🔴 `empenhado` e `pago` são coisas DIFERENTES, e a distância entre eles é a
+ * informação. Empenhar é reservar; pagar é o dinheiro sair.
+ */
+export type EmendasDoParlamentar = {
+  ano: number;
+  empenhado: number;
+  pago: number;
+  quantidade: number;
+  porDestino: EmendaPorDestino[];
+  porFuncao: EmendaPorFuncao[];
+};
+
+export async function obterEmendas(pessoaId: number): Promise<EmendasDoParlamentar> {
+  return buscar<EmendasDoParlamentar>(`${BASE}/parlamentares/${pessoaId}/emendas`);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Financiamento de campanha (TSE)
+// ═══════════════════════════════════════════════════════════════════
+
+export type ReceitaPorFonte = {
+  fonte: string;
+  total: number;
+  lancamentos: number;
+};
+
+export type DoadorDoParlamentar = {
+  nome: string;
+  total: number;
+  /** ⚠️ Quando `true`, o documento está hasheado no banco — RNF-13. */
+  pessoaFisica: boolean;
+};
+
+/**
+ * 🔴 `fundoEspecial` (o "fundão", FEFC) e `fundoPartidario` são fundos DIFERENTES.
+ * A API os entrega separados de propósito; somá-los é uma afirmação, e quem a fizer
+ * que a assine.
+ */
+export type FinanciamentoDeCampanha = {
+  anoEleicao: number;
+  total: number;
+  fundoEspecial: number;
+  fundoPartidario: number;
+  porFonte: ReceitaPorFonte[];
+  maioresDoadores: DoadorDoParlamentar[];
+};
+
+export async function obterFinanciamento(
+  pessoaId: number,
+): Promise<FinanciamentoDeCampanha> {
+  return buscar<FinanciamentoDeCampanha>(
+    `${BASE}/parlamentares/${pessoaId}/financiamento`,
+  );
+}

@@ -1154,3 +1154,31 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   font-family: var(--dado); font-size: .84rem;
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
+
+/* ═══ EMENDAS E FINANCIAMENTO DE CAMPANHA ══════════════════════ */
+/* 🔴 A execução (pago ÷ empenhado) ganha destaque próprio, e não um número miúdo
+   ao lado do total: é ela que distingue emenda anunciada de emenda cumprida. */
+.execucao { margin: 1.15rem auto 0; max-width: 24rem; }
+.execucao-barra { display: block; height: 8px; margin-bottom: .5rem; }
+.execucao .ajuda { margin: 0; }
+
+/* ⚠️ Os dois fundos lado a lado, cada um com o nome à vista — a diagramação é o
+   que impede a leitura de "um bloco só de dinheiro público". */
+.fundos {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+.fundos li {
+  padding: 1rem; border-bottom: 1px solid var(--borda);
+  display: flex; flex-direction: column; gap: .3rem;
+}
+.fundos li + li { border-left: 1px solid var(--borda); }
+.fundo-rotulo {
+  font-family: var(--dado); font-size: .72rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .1em; color: var(--suave);
+}
+.fundo-valor {
+  font-family: var(--display); font-variation-settings: 'wdth' 112;
+  font-size: 1.35rem; font-weight: 700; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
