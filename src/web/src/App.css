@@ -1290,18 +1290,26 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
    centralizar o modal depende do display padrão, e trocá-lo o desloca na tela. O corpo
    rolável é resolvido com `max-height` no filho, não com flex no diálogo. */
 .contas-ampliadas {
-  width: min(94vw, 46rem); max-width: none;
+  width: min(94vw, 42rem); max-width: none;
   padding: 0; border: 1px solid var(--borda-forte); border-radius: 14px;
   background: var(--fundo); color: var(--texto);
   box-shadow: 0 16px 50px rgb(0 0 0 / 28%);
 }
 .contas-ampliadas::backdrop { background: rgb(0 0 0 / 55%); backdrop-filter: blur(3px); }
+/* O bloco de título ocupa a largura; sem `flex: 1` ele encolhia até o texto e o ✕
+   ficava a meia tela de distância, deixando a barra com um vazio à direita. */
 .contas-ampliadas header {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
-  padding: 1rem 1.25rem; border-bottom: 1px solid var(--borda);
+  display: flex; align-items: flex-start; gap: 1rem;
+  padding: 1.15rem 1.25rem; border-bottom: 1px solid var(--borda);
 }
-.contas-ampliadas h2 { margin: 0; font-size: 1.2rem; }
-.contas-ampliadas .ajuda { margin: .25rem 0 0; }
+.contas-ampliadas header > div { flex: 1; min-width: 0; }
+.contas-ampliadas h2 {
+  margin: 0;
+  font-family: var(--display); font-variation-settings: 'wdth' 114;
+  font-size: 1.45rem; font-weight: 700; letter-spacing: -.02em;
+}
+.contas-ampliadas .ajuda { margin: .2rem 0 0; }
+.contas-ampliadas .botao-icone { flex-shrink: 0; }
 .contas-corpo { max-height: min(70vh, 44rem); overflow-y: auto; }
 
 /* 🔴 Uma única margem esquerda no modal inteiro.
