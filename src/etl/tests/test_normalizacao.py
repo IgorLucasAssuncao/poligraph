@@ -189,3 +189,35 @@ def test_a_polaridade_nao_muda_com_a_correcao():
     """⭐ `inferir_polaridade` olha "mantido o texto", não a categoria — segue intacta."""
     assert inferir_polaridade("Aprovado o Substitutivo, ressalvados os destaques.") == 1
     assert inferir_polaridade("Mantido o texto.") == -1
+
+
+def test_destacado_no_particípio_tambem_e_destaque():
+    """🔴 A forma que o SENADO usa, e que o padrão original deixava passar.
+
+    ⚠️ O padrão cobria só o substantivo (`destaque`/`destaques`). O Senado escreve
+    *"Votação nominal do Art. 21 …, destacado"* — particípio. Resultado medido: 14
+    votações do Senado e 2 da Câmara entravam como SUBSTANTIVA, com peso 1,0 em vez de
+    0,7 na matriz, e elegíveis como pergunta do questionário.
+
+    🔴 As duas da Câmara são as piores do conjunto: *"Rejeitada a matéria destacada"* é
+    destaque **e** tem polaridade invertida.
+    """
+    for descricao in [
+        "Votação nominal do Art. 21 do texto consolidado ao PL nº 576/2021, destacado.",
+        "Votação nominal do §4º do art. 4º do Substitutivo ao PLP nº 175/2024, destacado.",
+        "Votação nominal da Expressão do §19 do art. 165, constante da PEC 66/2023, destacada.",
+        "Votação nominal das expressões contidas no PL 1.825/2022, destacadas.",
+        "Rejeitada a matéria destacada. Fica modificado o texto do Relator",
+    ]:
+        assert classificar_categoria(descricao) == "DESTAQUE", descricao
+
+
+def test_a_excecao_do_ressalvados_sobrevive_a_correcao():
+    """⚠️ A guarda de "ressalvados os destaques" continua valendo.
+
+    ⛔ Ampliar o padrão não pode reintroduzir o erro que a exceção corrigiu — eram 69
+    votações de mérito classificadas como destaque.
+    """
+    assert classificar_categoria(
+        "Aprovado o Substitutivo ao PL 2.162, ressalvados os destaques."
+    ) == "SUBSTANTIVA"

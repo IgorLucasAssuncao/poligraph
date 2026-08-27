@@ -84,7 +84,14 @@ _CATEGORIAS: list[tuple[str, str]] = [
         # como DESTAQUE. Duas consequências, ambas silenciosas: entravam na matriz com
         # peso 0,7 em vez de 1,0, e o filtro "só texto principal" da curadoria as
         # descartava — encolhendo o universo de perguntas sem que ninguém notasse.
-        r"(?<!ressalvados os )destaques?|mantido o texto|suprimido o texto"
+        #
+        # ⚠️ `destacad[oa]s?` é a forma do SENADO — "Votação nominal do Art. 21 …,
+        # destacado". O padrão só cobria o substantivo (`destaque`/`destaques`), então 14
+        # votações do Senado e 2 da Câmara entravam como SUBSTANTIVA. As duas da Câmara
+        # são as piores do conjunto: "Rejeitada a matéria destacada" é destaque **com
+        # polaridade invertida**.
+        r"(?<!ressalvados os )destaques?|destacad[oa]s?"
+        r"|mantido o texto|suprimido o texto"
         r"|emenda|subemenda",
     ),
     (

@@ -20,8 +20,8 @@ import psycopg
 
 from . import conexao as conexao_mod
 from . import (
-    comparacao, cota, emendas, grafo, ingestao, ingestao_senado, normalizacao,
-    persistencia, receitas, similaridade, validacao,
+    comparacao, cota, curadoria, emendas, grafo, ingestao, ingestao_senado,
+    normalizacao, persistencia, receitas, similaridade, validacao,
 )
 from .fontes import camara, senado, tse
 
@@ -55,6 +55,8 @@ def main(argv: list[str] | None = None) -> int:
                 _ingerir(conexao, args.anos)
             elif args.comando == "senado":
                 _senado(conexao, args.anos)
+            elif args.comando == "curar":
+                _curar(conexao, args.casa, args.legislatura, args.limite)
             elif args.comando == "emendas":
                 if args.resolver:
                     _resolver_a_mao(conexao, args.resolver)
@@ -128,6 +130,13 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         default=None,
         help="ZIP baixado à mão — o plano B para quando o WAF do TSE endurecer",
     )
+
+    curar = sub.add_parser(
+        "curar", help="lista votações candidatas a pergunta, das mais divididas"
+    )
+    curar.add_argument("--casa", choices=["CAMARA", "SENADO"], default="SENADO")
+    curar.add_argument("--legislatura", type=int, default=57)
+    curar.add_argument("--limite", type=int, default=25)
 
     validar = sub.add_parser(
         "validar", help="mede discriminação do questionário e comunidade x partido"
@@ -615,6 +624,41 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
             "Rode `cpf` de novo, ou confira se a eleição %d é a que elegeu a legislatura.",
             int(resumo["parlamentares"]), len(hashes), eleicao,
         )
+
+
+def _curar(conexao: psycopg.Connection, casa: str, legislatura: int, limite: int) -> None:
+    """PL11 — reduz o universo às votações que valem leitura humana.
+
+    Não grava pergunta nenhuma. A polaridade sugerida é auxílio: atribuí-la
+    automaticamente é o erro que este projeto persegue, porque um sinal invertido não
+    aparece na tela, aparece como número plausível.
+    """
+    curadas = curadoria.ja_curadas(conexao)
+    achadas = curadoria.candidatas(conexao, casa, legislatura, limite)
+
+    if not achadas:
+        log.warning(
+            "Nenhuma candidata em %s na legislatura %d. Rode a ingestão antes.",
+            casa, legislatura,
+        )
+        return
+
+    log.info("=== %d candidatas em %s, da mais dividida ===", len(achadas), casa)
+    log.info("")
+
+    for posicao, candidata in enumerate(achadas, 1):
+        marca = "JA CURADA" if candidata.votacao_id in curadas else ""
+        log.info(
+            "%2d. %-12s %s  %3d x %-3d  divisao %.0f%%  polaridade sugerida %+d  %s",
+            posicao, candidata.votacao_id, candidata.data,
+            candidata.sim, candidata.nao, candidata.divisao * 100,
+            candidata.polaridade_sugerida, marca,
+        )
+        log.info("    %s", candidata.descricao[:110])
+
+    log.info("")
+    log.info("A afirmacao em linguagem leiga e a polaridade FINAL sao leitura humana.")
+    log.info("Formato: src/Poligraph.Migrations/curadoria/perguntas-lote-1.json")
 
 
 def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: float) -> None:
