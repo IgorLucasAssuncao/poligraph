@@ -72,3 +72,9 @@ dist/
 
 # artefato de "2>/dev/null" no Windows
 NUL
+
+# Cache de ETL - dados brutos derivados de fonte oficial. Nunca versionar.
+src/etl/.cache/
+**/.cache/
+*.zip
+*.csv.gz
