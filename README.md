@@ -666,7 +666,7 @@ docs/                     Documentação
 | | |
 |---|---|
 | [**Índice completo**](docs/README.md) | Os quatro tipos de documento e a regra do dono único |
-| [**Achados**](docs/achados/README.md) | Os 24 achados medidos — **é o que a parte teórica cita** |
+| [**Achados**](docs/achados/README.md) | Os 25 achados medidos — **é o que a parte teórica cita** |
 | [**Fontes de gasto**](docs/14-fontes-de-gasto.md) | Cota, emendas e fundão — e o que foi **reprovado**, com o motivo |
 | [**Métodos**](docs/metodos.md) | O que cada número significa — `r`, ARI, modularidade |
 | [**Grafo e afinidade**](docs/plano/07-grafo-e-afinidade.md) | O núcleo técnico: fórmulas, pesos, comunidades |

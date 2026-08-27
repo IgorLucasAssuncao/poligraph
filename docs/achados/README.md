@@ -26,7 +26,7 @@ se mede*.
 
 ---
 
-## Os 24 achados
+## Os 25 achados
 
 ### 🔴 Estruturantes — mudaram a arquitetura
 
@@ -79,6 +79,12 @@ ingestão contra a fonte real.
 |---|---|---|
 | [**#23**](023-consolidado-do-tse-e-o-unico-com-df.md) | 🔴 No TSE, o consolidado é o **único arquivo com o DF** | E ele duplica os estaduais. Ler só os estaduais perdia **R$ 17,2 mi** em silêncio |
 | [**#24**](024-codigo-da-emenda-identifica-o-mandato.md) | O `codigoEmenda` embute um id estável de **mandato** | 173/173 estáveis, **zero colisões** — e serve ao Senado, que não publica CPF |
+
+### 🔬 Sobre o método
+
+| # | Achado | |
+|---|---|---|
+| [**#25**](025-a-metrica-nao-e-onde-mora-a-qualidade.md) | 🔴 A **métrica de afinidade não é onde mora a qualidade** | Concordância, cosseno e Pearson dão o mesmo ranking (ρ ≥ 0,996). O que discrimina é a **escolha das perguntas** |
 
 ---
 
