@@ -10,6 +10,29 @@ namespace Poligraph.Api.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // 🔴 Limpa ANTES de criar a chave, senão a migration não aplica.
+            //
+            // ⚠️ Não é hipótese: o banco de desenvolvimento tinha 12 linhas em
+            //    `nos_metrica` apontando para parlamentares que já não existiam — foi
+            //    justamente a AUSÊNCIA desta FK que permitiu que ficassem lá. Sem esta
+            //    limpeza, a migration falha, o projeto de migrations morre, e o
+            //    `WaitForCompletion` do Aspire trava a API atrás dele para sempre.
+            //
+            // ⭐ Só apaga o que JÁ ESTÁ inconsistente. Linha com pessoa existente não é
+            //    tocada, então é seguro rodar em produção.
+            migrationBuilder.Sql("""
+                DELETE FROM nos_metrica n
+                 WHERE NOT EXISTS (SELECT 1 FROM pessoas p WHERE p.id = n.pessoa_id);
+
+                DELETE FROM arestas_grafo a
+                 WHERE NOT EXISTS (SELECT 1 FROM pessoas p WHERE p.id = a.pessoa_a)
+                    OR NOT EXISTS (SELECT 1 FROM pessoas p WHERE p.id = a.pessoa_b);
+
+                DELETE FROM similaridades s
+                 WHERE NOT EXISTS (SELECT 1 FROM pessoas p WHERE p.id = s.pessoa_a)
+                    OR NOT EXISTS (SELECT 1 FROM pessoas p WHERE p.id = s.pessoa_b);
+                """);
+
             migrationBuilder.CreateIndex(
                 name: "ix_similaridades_pessoa_a",
                 table: "similaridades",
