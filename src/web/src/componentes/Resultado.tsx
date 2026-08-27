@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { obterGrafo, type Grafo, type ParlamentarAfim, type ResultadoAfinidade } from '../api';
+import {
+  NOME_DA_CASA,
+  obterGrafo,
+  type Grafo,
+  type ParlamentarAfim,
+  type ResultadoAfinidade,
+  type ResultadoPorCasa,
+} from '../api';
 import { Avaliacao } from './Avaliacao';
 import { Avatar } from './Avatar';
 import { CabecalhoDaColuna } from './Layout';
@@ -22,10 +29,6 @@ export function Resultado({
   resultado: ResultadoAfinidade;
   aoRefazer: () => void;
 }) {
-  const [primeiro, ...demais] = resultado.maisProximos;
-  const grafo = useGrafo(resultado.posicaoNoGrafo !== null);
-  const [ampliado, setAmpliado] = useState(false);
-
   return (
     <>
       <CabecalhoDaColuna
@@ -33,42 +36,94 @@ export function Resultado({
         subtitulo={`${resultado.totalPerguntasRespondidas} perguntas respondidas`}
       />
 
-      {primeiro && <Destaque parlamentar={primeiro} />}
-
       <p className="ajuda ajuda-espacada">
         A comparação usa apenas as votações em que o parlamentar esteve presente e se
-        posicionou.
+        posicionou. Deputados e senadores votam matérias diferentes, então cada grupo é
+        comparado separadamente.
       </p>
 
-      {grafo && resultado.posicaoNoGrafo && (
-        <section className="resultado-grafo">
+      {resultado.porCasa.map((casa) => (
+        <SecaoDaCasa key={casa.casa} casa={casa} />
+      ))}
+
+      <p className="aviso" role="note">
+        Esta é uma ferramenta acadêmica de comparação de votos.{' '}
+        <strong>Não é recomendação de voto</strong>, e não representa o programa completo de
+        nenhum parlamentar.
+      </p>
+
+      <Avaliacao resultado={resultado} />
+
+      {/* Refazer sempre disponível: a pessoa muda de ideia, e as perguntas mudam quando
+          a curadoria acrescenta votações novas. */}
+      <div className="resultado-acoes">
+        <button type="button" className="botao-secundario" onClick={aoRefazer}>
+          Refazer o questionário
+        </button>
+      </div>
+    </>
+  );
+}
+
+/**
+ * Uma casa: destaque, grafo próprio e as duas listas.
+ *
+ * O cidadão nunca escolheu entre Câmara e Senado — a separação acontece só aqui, no
+ * resultado, e é autoexplicativa: "Deputados mais próximos" e "Senadores mais próximos".
+ *
+ * O grafo é por casa porque as duas não são comparáveis entre si: nenhuma aresta liga
+ * deputado a senador, e a posição do cidadão sai da execução da própria casa.
+ */
+function SecaoDaCasa({ casa }: { casa: ResultadoPorCasa }) {
+  const [primeiro, ...demais] = casa.maisProximos;
+  const grafo = useGrafo(casa.posicaoNoGrafo !== null, casa.casa);
+  const [ampliado, setAmpliado] = useState(false);
+
+  const nome = NOME_DA_CASA[casa.casa];
+
+  if (casa.maisProximos.length === 0) return null;
+
+  return (
+    <section className="casa-resultado">
+      <h2 className="titulo-casa">
+        {nome.plural} mais próximos de você
+        <small>
+          {casa.perguntasRespondidas}{' '}
+          {casa.perguntasRespondidas === 1 ? 'pergunta' : 'perguntas'} desta casa
+        </small>
+      </h2>
+
+      {primeiro && <Destaque parlamentar={primeiro} />}
+
+      {grafo && casa.posicaoNoGrafo && (
+        <div className="resultado-grafo">
           <h3 className="titulo-secao">Onde você caiu</h3>
 
           <TelaDoGrafo
             grafo={grafo}
-            cidadao={resultado.posicaoNoGrafo}
+            cidadao={casa.posicaoNoGrafo}
             altura={320}
             aoAmpliar={() => setAmpliado(true)}
           />
 
           <p className="ajuda ajuda-espacada">
             O losango é você, posicionado entre os{' '}
-            <strong>{resultado.posicaoNoGrafo.vizinhosUsados}</strong> deputados com quem
-            você mais concordou.{' '}
-            {/* 🔴 Sem esta frase a tela afirma uma precisão que o dado não tem. */}
+            <strong>{casa.posicaoNoGrafo.vizinhosUsados}</strong> {nome.plural.toLowerCase()}{' '}
+            com quem você mais concordou.{' '}
+            {/* Sem esta frase a tela afirma uma precisão que o dado não tem. */}
             <strong>
-              Sua posição vale sobre {resultado.posicaoNoGrafo.baseDeVotacoes} perguntas
+              Sua posição vale sobre {casa.posicaoNoGrafo.baseDeVotacoes} perguntas
             </strong>{' '}
-            — a de cada deputado, sobre a legislatura inteira.
+            — a de cada {nome.singular}, sobre a legislatura inteira.
           </p>
 
           <GrafoAmpliado
             grafo={grafo}
-            cidadao={resultado.posicaoNoGrafo}
+            cidadao={casa.posicaoNoGrafo}
             aberto={ampliado}
             aoFechar={() => setAmpliado(false)}
           />
-        </section>
+        </div>
       )}
 
       {demais.length > 0 && (
@@ -80,56 +135,52 @@ export function Resultado({
         </>
       )}
 
-      <h3 className="titulo-secao">Mais distantes</h3>
-      {resultado.maisDistantes.map((p) => (
-        <LinhaAfim key={p.pessoaId} parlamentar={p} />
-      ))}
-
-      <p className="aviso" role="note">
-        ⚠️ Esta é uma ferramenta acadêmica de comparação de votos.{' '}
-        <strong>Não é recomendação de voto</strong>, e não representa o programa completo de
-        nenhum parlamentar.
-      </p>
-
-      <Avaliacao resultado={resultado} />
-
-      {/* ⭐ Refazer sempre disponível: a pessoa muda de ideia, e as perguntas mudam
-          quando a curadoria acrescenta votações novas. */}
-      <div className="resultado-acoes">
-        <button type="button" className="botao-secundario" onClick={aoRefazer}>
-          Refazer o questionário
-        </button>
-        <Link to="/explorar" className="botao-secundario">
-          Explorar os 513
-        </Link>
-      </div>
-    </>
+      {casa.maisDistantes.length > 0 && (
+        <>
+          <h3 className="titulo-secao">Mais distantes</h3>
+          {casa.maisDistantes.map((p) => (
+            <LinhaAfim key={p.pessoaId} parlamentar={p} />
+          ))}
+        </>
+      )}
+    </section>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
-/** ⚠️ Só busca o grafo se houver posição — senão são centenas de KB à toa. */
-function useGrafo(precisa: boolean): Grafo | null {
+/**
+ * Busca o grafo da casa, e só quando há posição para desenhar.
+ *
+ * Sem a condição, a tela baixaria o grafo inteiro para descartá-lo — e são centenas de
+ * nós e milhares de arestas por casa.
+ */
+function useGrafo(precisa: boolean, casa: ResultadoPorCasa['casa']): Grafo | null {
   const [grafo, setGrafo] = useState<Grafo | null>(null);
 
   useEffect(() => {
-    if (!precisa) return;
+    if (!precisa) {
+      setGrafo(null);
+      return;
+    }
 
-    obterGrafo()
-      .then(setGrafo)
-      .catch(() => setGrafo(null));
-  }, [precisa]);
+    let vivo = true;
+    obterGrafo(casa)
+      .then((recebido) => {
+        if (vivo) setGrafo(recebido);
+      })
+      // Falhar em buscar o grafo omite o desenho, nunca a tela: as listas são o
+      // resultado, e o grafo é ilustração.
+      .catch(() => {
+        if (vivo) setGrafo(null);
+      });
+
+    return () => {
+      vivo = false;
+    };
+  }, [precisa, casa]);
 
   return grafo;
 }
 
-/**
- * O primeiro colocado, em tamanho grande.
- *
- * ⚠️ Destaque de tamanho, ⛔ não de cor: a paleta é única para todos os parlamentares
- * (RNF-16). E o número vem com a base junto, como em toda parte.
- */
 function Destaque({ parlamentar }: { parlamentar: ParlamentarAfim }) {
   return (
     <section className="destaque-resultado">

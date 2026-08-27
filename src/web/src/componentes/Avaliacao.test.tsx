@@ -13,14 +13,19 @@ vi.mock('../api', async () => {
 const { registrarAvaliacao } = await import('../api');
 
 const RESULTADO: ResultadoAfinidade = {
-  casa: 'CAMARA',
   totalPerguntasRespondidas: 12,
-  maisProximos: [
-    { pessoaId: 1, nome: 'Ana Ribeiro', partido: 'A', uf: 'SP', acordos: 9, comparaveis: 12 },
+  porCasa: [
+    {
+      casa: 'CAMARA',
+      perguntasRespondidas: 12,
+      maisProximos: [
+        { pessoaId: 1, nome: 'Ana Ribeiro', partido: 'A', uf: 'SP', acordos: 9, comparaveis: 12 },
+      ],
+      maisDistantes: [],
+      // Sem execução do grafo não há posição — a tela omite o desenho.
+      posicaoNoGrafo: null,
+    },
   ],
-  maisDistantes: [],
-  // ⚠️ Sem execução do grafo não há posição — a tela omite o desenho.
-  posicaoNoGrafo: null,
 };
 
 // Os dublês de `showModal`/`close` vivem em `vitest.setup.ts` — o jsdom não os tem.

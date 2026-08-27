@@ -1036,6 +1036,24 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .grafo-ampliado .ajuda { margin: .1rem 0 0; }
 .grafo-ampliado .grafo { border-bottom: none; }
 
+/* ═══ RESULTADO POR CASA ═══════════════════════════════════════ */
+/* Duas seções na mesma tela precisam ler como duas, e não como uma lista longa: a
+   régua forte e o título em display marcam onde uma acaba e a outra começa. */
+.casa-resultado { border-top: 2px solid var(--borda-forte); }
+.casa-resultado:first-of-type { border-top: none; }
+.titulo-casa {
+  display: flex; flex-direction: column; gap: .15rem;
+  margin: 0; padding: 1.25rem 1rem .75rem;
+  font-family: var(--display); font-variation-settings: 'wdth' 114;
+  font-size: 1.35rem; font-weight: 700; letter-spacing: -.02em;
+}
+/* O denominador da casa fica junto do título: exibir "8 perguntas" ao lado de um
+   senador que respondeu 2 afirmaria uma base que ele não tem. */
+.titulo-casa small {
+  font-family: var(--dado); font-size: .74rem; font-weight: 500;
+  letter-spacing: .04em; color: var(--suave);
+}
+
 .resultado-grafo { border-bottom: 1px solid var(--borda); padding-bottom: 1rem; }
 .resultado-grafo .grafo { border-bottom: none; }
 

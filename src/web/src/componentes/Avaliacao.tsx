@@ -127,7 +127,9 @@ export function Avaliacao({
   }
 
   async function enviar() {
-    const primeiro = resultado.maisProximos[0];
+    // O primeiro da PRIMEIRA casa devolvida. A avaliação pergunta "acertou?", e a
+    // referência é o parlamentar em destaque no topo da tela — que é esse.
+    const primeiro = resultado.porCasa[0]?.maisProximos[0];
 
     try {
       await registrarAvaliacao({

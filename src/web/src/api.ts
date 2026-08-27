@@ -99,12 +99,35 @@ export type PosicaoDoCidadao = {
   baseDeVotacoes: number;
 };
 
-export type ResultadoAfinidade = {
-  casa: string;
-  totalPerguntasRespondidas: number;
+/**
+ * O resultado de UMA casa.
+ *
+ * `perguntasRespondidas` é o denominador desta casa, não o total: o piso de comparáveis
+ * vale por casa, senão um senador — que responde poucas perguntas do Senado — seria
+ * filtrado por um piso calculado sobre as perguntas da Câmara.
+ */
+export type ResultadoPorCasa = {
+  casa: 'CAMARA' | 'SENADO';
+  perguntasRespondidas: number;
   maisProximos: ParlamentarAfim[];
   maisDistantes: ParlamentarAfim[];
   posicaoNoGrafo: PosicaoDoCidadao | null;
+};
+
+/**
+ * O cidadão responde um fluxo único e nunca escolhe entre Câmara e Senado (RNF-28).
+ * As duas casas votam matérias diferentes, então o resultado se separa depois do
+ * questionário — em "Deputados mais próximos" e "Senadores mais próximos".
+ */
+export type ResultadoAfinidade = {
+  totalPerguntasRespondidas: number;
+  porCasa: ResultadoPorCasa[];
+};
+
+/** O rótulo de cada casa na tela. A API devolve a casa; a redação é do front. */
+export const NOME_DA_CASA: Record<ResultadoPorCasa['casa'], { plural: string; singular: string }> = {
+  CAMARA: { plural: 'Deputados', singular: 'deputado' },
+  SENADO: { plural: 'Senadores', singular: 'senador' },
 };
 
 export class NaoAutenticadoError extends Error {
@@ -310,8 +333,15 @@ export type Grafo = {
   arestas: ArestaDoGrafo[];
 };
 
-export async function obterGrafo(): Promise<Grafo> {
-  return buscar<Grafo>(`${BASE}/grafo`);
+/**
+ * O grafo de UMA casa.
+ *
+ * O parâmetro `casa` é permitido aqui e proibido no questionário (RNF-28): a proibição
+ * vale onde o *usuário* decidiria. Na tela de resultado o cliente já sabe qual grafo
+ * está desenhando, porque a separação veio do servidor.
+ */
+export async function obterGrafo(casa: ResultadoPorCasa['casa'] = 'CAMARA'): Promise<Grafo> {
+  return buscar<Grafo>(`${BASE}/grafo?casa=${casa}`);
 }
 
 // ═══════════════════════════════════════════════════════════════════

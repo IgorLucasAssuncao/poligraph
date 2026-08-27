@@ -24,7 +24,7 @@ Tudo abaixo saiu de `count(*)` no banco depois de rodar o ETL contra as fontes r
 | **Nós do grafo** | 643 | 104 |
 | **Arestas** | 5.271 | 594 |
 | **Comunidades detectadas** | 17 | 24 |
-| **Perguntas curadas ativas** | 21 | — |
+| **Perguntas curadas ativas** | 21 | 7 |
 
 As duas casas geram grafos **independentes**, e nenhuma aresta liga deputado a senador:
 elas não votam as mesmas matérias, então não há denominador para comparar um com o outro
@@ -70,10 +70,11 @@ senadores homônimos. [PL47](docs/PENDENCIAS.md) segue o resto.
 | | |
 |---|---|
 | **Notícias** | 0 — o coletor ainda não rodou |
-| **Testes** | **93 .NET · 311 Python · 37 front** |
+| **Testes** | **102 .NET · 321 Python · 42 front** |
 
-O questionário e a página do parlamentar ainda cobrem apenas a Câmara: a ingestão do
-Senado está pronta, o produto não — ver [PL42](docs/PENDENCIAS.md).
+O questionário mistura perguntas das duas casas e o resultado devolve duas listas
+(RNF-28). A página do parlamentar ainda não distingue casa — ver
+[PL42](docs/PENDENCIAS.md).
 **O único deputado sem receita de campanha** é um suplente com 6 votos, que não foi
 candidato a deputado federal em 2022. 642 de 643 é o teto real, não uma falha.
 
@@ -611,7 +612,7 @@ O padrão anterior era a aba *Notícias*, e o coletor ainda não rodou: a primei
 coisa que a página mostrava era estado vazio.
 | `GET` | `/api/parlamentares/{id}/noticias` | Notícias que mencionam a pessoa |
 | `GET` | `/api/afinidade/perguntas` | As perguntas ativas, em ordem |
-| `POST` | `/api/afinidade` | Calcula afinidade e **posiciona o cidadão no grafo** |
+| `POST` | `/api/afinidade` | **Uma lista por casa** — calcula e posiciona o cidadão no grafo de cada uma |
 | `GET` | `/api/grafo` | Nós e arestas da execução mais recente |
 | `GET` | `/api/seguidos` · `PUT`/`DELETE` `/{id}` | Lista de acompanhamento — dado sensível |
 | `POST` | `/api/auth/google` · `/logout` · `/sair-de-todos` | Sessão |

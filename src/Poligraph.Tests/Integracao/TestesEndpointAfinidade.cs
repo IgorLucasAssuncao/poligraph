@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
@@ -137,8 +137,17 @@ public class TestesEndpointAfinidade : BaseIntegracao
     private record PosicaoLida(
         float EixoX, float EixoY, short? Comunidade, int VizinhosUsados, int BaseDeVotacoes);
 
-    private record RespostaLida(
-        int TotalPerguntasRespondidas, PosicaoLida? PosicaoNoGrafo);
+    private record CasaLida(string Casa, PosicaoLida? PosicaoNoGrafo);
+
+    /// <summary>
+    /// A posição saiu do topo da resposta e passou a viver dentro de cada casa: o grafo
+    /// é por casa, e uma posição única teria de escolher qual — que é justamente a
+    /// escolha que o RNF-28 proíbe pedir ao cidadão.
+    /// </summary>
+    private record RespostaLida(int TotalPerguntasRespondidas, List<CasaLida> PorCasa)
+    {
+        public PosicaoLida? PosicaoNoGrafo => PorCasa.SingleOrDefault()?.PosicaoNoGrafo;
+    }
 
     /// <summary>Uma execução concluída com posições espalhadas, o mínimo para posicionar.</summary>
     private async Task MontarNosDoGrafoAsync()
@@ -324,9 +333,19 @@ public class TestesEndpointAfinidade : BaseIntegracao
     }
 
     private record ParlamentarJson(long PessoaId, string Nome, int Acordos, int Comparaveis);
-    private record RespostaJson(
+
+    private record CasaJson(
         string Casa,
-        int TotalPerguntasRespondidas,
+        int PerguntasRespondidas,
         List<ParlamentarJson> MaisProximos,
         List<ParlamentarJson> MaisDistantes);
+
+    private record RespostaJson(int TotalPerguntasRespondidas, List<CasaJson> PorCasa)
+    {
+        /// <summary>Atalho para os testes de casa única: a primeira (e só) casa.</summary>
+        public CasaJson Unica => Assert.Single(PorCasa);
+
+        public List<ParlamentarJson> MaisProximos => Unica.MaisProximos;
+        public List<ParlamentarJson> MaisDistantes => Unica.MaisDistantes;
+    }
 }

@@ -291,3 +291,54 @@ def test_a_descricao_da_sigla_vem_da_propria_fonte():
     )
 
     assert descricoes["LAP"] == "Licença paternidade ou ao adotante"
+
+
+# ═══════════════════════════════════════════════════════════════════
+# O placar — o painel do questionário depende dele
+# ═══════════════════════════════════════════════════════════════════
+
+
+def test_placar_e_contado_dos_votos_nao_lido_do_campo():
+    """O Senado devolve `totalVotosSim` e `totalVotosNao` como NULL — em todas.
+
+    O painel do questionário é a assinatura visual do site: uma fileira de traços, um
+    por parlamentar, cheio para quem se posicionou. Sem contar do array de votos, toda
+    pergunta do Senado renderizaria o painel vazio, como se ninguém tivesse votado.
+    """
+    linhas = ingestao_senado.votacoes_para_linhas(
+        [
+            votacao(
+                totalVotosSim=None,
+                totalVotosNao=None,
+                votos=[
+                    voto(codigoParlamentar=1, siglaVotoParlamentar="Sim"),
+                    voto(codigoParlamentar=2, siglaVotoParlamentar="Sim"),
+                    voto(codigoParlamentar=3, siglaVotoParlamentar="Não"),
+                    voto(codigoParlamentar=4, siglaVotoParlamentar="Abstenção"),
+                    voto(codigoParlamentar=5, siglaVotoParlamentar="AP"),
+                ],
+            )
+        ]
+    )
+
+    assert linhas[0]["votos_sim"] == 2
+    assert linhas[0]["votos_nao"] == 1
+
+
+def test_votacao_secreta_tem_placar_zero():
+    """Correto, e não uma falha: em votação secreta ninguém revelou posição.
+
+    O painel vazio ali é a informação — mas essas votações não viram pergunta, porque
+    a curadoria só alcança as abertas.
+    """
+    linhas = ingestao_senado.votacoes_para_linhas(
+        [
+            votacao(
+                votacaoSecreta="S",
+                votos=[voto(siglaVotoParlamentar="Votou") for _ in range(60)],
+            )
+        ]
+    )
+
+    assert linhas[0]["votos_sim"] == 0
+    assert linhas[0]["votos_nao"] == 0

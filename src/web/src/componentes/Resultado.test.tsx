@@ -5,16 +5,21 @@ import { Resultado } from './Resultado';
 import type { ResultadoAfinidade } from '../api';
 
 const RESULTADO: ResultadoAfinidade = {
-  casa: 'CAMARA',
   totalPerguntasRespondidas: 3,
-  maisProximos: [
-    { pessoaId: 1, nome: 'Ana Ribeiro', partido: 'PARTIDO-A', uf: 'SP', acordos: 2, comparaveis: 3 },
+  porCasa: [
+    {
+      casa: 'CAMARA',
+      perguntasRespondidas: 3,
+      maisProximos: [
+        { pessoaId: 1, nome: 'Ana Ribeiro', partido: 'PARTIDO-A', uf: 'SP', acordos: 2, comparaveis: 3 },
+      ],
+      maisDistantes: [
+        { pessoaId: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', uf: 'MG', acordos: 0, comparaveis: 3 },
+      ],
+      // Sem execução do grafo não há posição — a tela omite o desenho, não inventa ponto.
+      posicaoNoGrafo: null,
+    },
   ],
-  maisDistantes: [
-    { pessoaId: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', uf: 'MG', acordos: 0, comparaveis: 3 },
-  ],
-  // ⚠️ Sem execução do grafo não há posição — a tela omite o desenho, não inventa ponto.
-  posicaoNoGrafo: null,
 };
 
 /** ⚠️ O componente usa `Link`, que exige contexto de rota. */
@@ -66,5 +71,89 @@ describe('Resultado', () => {
     // ⚠️ Sem a base, "Ana Ribeiro é quem mais vota como você" soa definitivo. O total
     //    respondido fica no cabeçalho da coluna, à vista o tempo todo.
     expect(container.textContent).toMatch(/3 perguntas respondidas/i);
+  });
+});
+
+const DUAS_CASAS: ResultadoAfinidade = {
+  totalPerguntasRespondidas: 8,
+  porCasa: [
+    {
+      casa: 'CAMARA',
+      perguntasRespondidas: 6,
+      maisProximos: [
+        { pessoaId: 1, nome: 'Ana Ribeiro', partido: 'PARTIDO-A', uf: 'SP', acordos: 5, comparaveis: 6 },
+      ],
+      maisDistantes: [
+        { pessoaId: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', uf: 'MG', acordos: 1, comparaveis: 6 },
+      ],
+      posicaoNoGrafo: null,
+    },
+    {
+      casa: 'SENADO',
+      perguntasRespondidas: 2,
+      maisProximos: [
+        { pessoaId: 9, nome: 'Célia Nunes', partido: 'PARTIDO-C', uf: 'BA', acordos: 2, comparaveis: 2 },
+      ],
+      maisDistantes: [],
+      posicaoNoGrafo: null,
+    },
+  ],
+};
+
+describe('resultado com as duas casas', () => {
+  function renderizarDuasCasas() {
+    return render(
+      <MemoryRouter>
+        <Resultado resultado={DUAS_CASAS} aoRefazer={vi.fn()} />
+      </MemoryRouter>,
+    );
+  }
+
+  it('mostra uma lista por casa, cada uma com o próprio nome', () => {
+    const { container } = renderizarDuasCasas();
+    const texto = container.textContent!.replace(/\s+/g, ' ');
+
+    expect(texto).toMatch(/Deputados mais próximos de você/);
+    expect(texto).toMatch(/Senadores mais próximos de você/);
+  });
+
+  it('🔴 cada casa mostra o próprio denominador, não o total', () => {
+    const { container } = renderizarDuasCasas();
+    const texto = container.textContent!.replace(/\s+/g, ' ');
+
+    // O piso de comparáveis vale por casa: um senador responde poucas perguntas do
+    // Senado, e exibir "8 perguntas" ao lado dele afirmaria uma base que ele não tem.
+    expect(texto).toMatch(/6 perguntas desta casa/);
+    expect(texto).toMatch(/2 perguntas desta casa/);
+  });
+
+  it('mantém o total respondido no cabeçalho', () => {
+    const { container } = renderizarDuasCasas();
+
+    expect(container.textContent).toMatch(/8 perguntas respondidas/);
+  });
+
+  it('⛔ nunca exibe percentual, nem com duas casas', () => {
+    const { container } = renderizarDuasCasas();
+
+    expect(container.textContent).not.toMatch(/\d+\s*%/);
+  });
+
+  it('casa sem ninguém próximo não vira seção vazia', () => {
+    const semSenado: ResultadoAfinidade = {
+      ...DUAS_CASAS,
+      porCasa: [
+        DUAS_CASAS.porCasa[0],
+        { ...DUAS_CASAS.porCasa[1], maisProximos: [] },
+      ],
+    };
+
+    const { container } = render(
+      <MemoryRouter>
+        <Resultado resultado={semSenado} aoRefazer={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(container.textContent).not.toMatch(/Senadores mais próximos/);
   });
 });

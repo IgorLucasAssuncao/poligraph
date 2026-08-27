@@ -28,12 +28,42 @@ public record PosicaoDoCidadao(
     int VizinhosUsados,
     int BaseDeVotacoes);
 
-public record RespostaAfinidade(
+/// <summary>
+/// O resultado de UMA casa.
+///
+/// <para>
+/// <b>O piso de comparáveis vale por casa, e não sobre o total.</b> Com 21 perguntas da
+/// Câmara e 7 do Senado, um piso de 60% sobre as 28 daria 17 — e um senador tem no
+/// máximo 7 comparáveis. Todo senador seria filtrado, e a lista do Senado nasceria
+/// vazia para sempre, sem erro nenhum.
+/// </para>
+///
+/// <para>
+/// <c>PerguntasRespondidas</c> é o denominador honesto desta casa: quantas perguntas
+/// dela o cidadão respondeu. É o número que a tela usa em "concordaram em 4 de 6".
+/// </para>
+/// </summary>
+public record ResultadoPorCasa(
     string Casa,
-    int TotalPerguntasRespondidas,
+    int PerguntasRespondidas,
     IReadOnlyList<ParlamentarAfim> MaisProximos,
     IReadOnlyList<ParlamentarAfim> MaisDistantes,
     PosicaoDoCidadao? PosicaoNoGrafo);
+
+/// <summary>
+/// O resultado completo — uma lista por casa.
+///
+/// <para>
+/// O cidadão responde um fluxo único e nunca escolhe entre Câmara e Senado (RNF-28):
+/// escolher exigiria justamente o conhecimento que ele não tem. As duas casas votam
+/// matérias diferentes (achado #7), então o resultado se separa <b>depois</b> do
+/// questionário, em "Deputados mais próximos" e "Senadores mais próximos" — o que é
+/// autoexplicativo e não exige decisão prévia.
+/// </para>
+/// </summary>
+public record RespostaAfinidade(
+    int TotalPerguntasRespondidas,
+    IReadOnlyList<ResultadoPorCasa> PorCasa);
 
 /// <summary>
 /// ⚠️ `TotalVotos` é o comparecimento na votação — quantos deputados se posicionaram.
@@ -75,32 +105,44 @@ public static class EndpointsAfinidade
     /// </summary>
     private static async Task<IResult> ObterPerguntasAsync(PoligraphDb db, CancellationToken ct)
     {
-        // 🔴 PL35 — o denominador é RECORTADO pela legislatura das perguntas ativas.
+        // O denominador é recortado por legislatura (PL35) E por casa.
         //
-        // ⚠️ Sem o recorte, a chegada da 58ª faria o painel mostrar "480 de 900": os
-        //    900 seriam deputados das duas legislaturas, e 420 deles nunca votaram
-        //    nenhuma das votações exibidas. Número plausível, nenhuma exceção.
+        // A legislatura sai das PERGUNTAS, não do banco: na virada, o pool ainda é da
+        // 57ª por um tempo, e o denominador tem de acompanhar as votações mostradas.
         //
-        // ⭐ A legislatura sai das PERGUNTAS, ⛔ não do banco. Na virada, o pool ainda
-        //    é da 57ª por um tempo — e o denominador tem de acompanhar as votações
-        //    mostradas, ⛔ não o calendário.
+        // A casa importa desde que o Senado entrou: sem separar, uma pergunta da Câmara
+        // mostrava "439 de 747" — os 747 são deputados MAIS senadores, e os 104
+        // senadores nunca votaram aquela votação. Mesmo formato de erro da PL35.
         var legislaturas = await Legislaturas.DasPerguntasAtivasAsync(db, ct);
 
-        // ⚠️ Uma consulta só, fora do Select: o denominador é o mesmo para todas as
-        //    perguntas, e repeti-lo por linha viraria um subselect por pergunta.
-        var totalPossivel = await db.Votos.AsNoTracking()
+        var possivelPorCasa = await db.Votos.AsNoTracking()
             .Where(v => legislaturas.Contains(v.Votacao!.Legislatura))
-            .Select(v => v.PessoaId).Distinct().CountAsync(ct);
+            .GroupBy(v => v.Votacao!.Casa)
+            .Select(g => new { Casa = g.Key, Total = g.Select(v => v.PessoaId).Distinct().Count() })
+            .ToDictionaryAsync(x => x.Casa, x => x.Total, ct);
 
-        var perguntas = await db.Perguntas
+        var brutas = await db.Perguntas
             .AsNoTracking()
             .Where(p => p.Ativa)
             .OrderBy(p => p.Ordem)
-            .Select(p => new PerguntaPublica(
-                p.Id, p.Texto, p.Ordem,
-                (p.Votacao!.VotosSim ?? 0) + (p.Votacao.VotosNao ?? 0),
-                totalPossivel))
+            .Select(p => new
+            {
+                p.Id,
+                p.Texto,
+                p.Ordem,
+                Casa = p.Votacao!.Casa,
+                TotalVotos = (p.Votacao.VotosSim ?? 0) + (p.Votacao.VotosNao ?? 0)
+            })
             .ToListAsync(ct);
+
+        // A casa NÃO é serializada: o cidadão nunca escolhe entre Câmara e Senado
+        // (RNF-28), e saber de qual casa veio cada pergunta não muda o que ele responde.
+        // Ela serve só para escolher o denominador certo.
+        var perguntas = brutas
+            .Select(p => new PerguntaPublica(
+                p.Id, p.Texto, p.Ordem, p.TotalVotos,
+                possivelPorCasa.GetValueOrDefault(p.Casa)))
+            .ToList();
 
         return Results.Ok(perguntas);
     }
@@ -124,23 +166,45 @@ public static class EndpointsAfinidade
             });
         }
 
+        // O cálculo roda UMA VEZ POR CASA, sobre as perguntas daquela casa.
+        //
+        // Não é arrumação: o piso de comparáveis é uma fração das perguntas respondidas,
+        // e aplicá-lo sobre o total das duas casas eliminaria todos os senadores. Com 21
+        // da Câmara e 7 do Senado, o piso seria 17 e um senador tem no máximo 7.
+        var casaDaPergunta = await CasaDasPerguntasAsync(db, opinadas, ct);
         var votosPorPessoa = await CarregarVotosAsync(db, opinadas, ct);
-        var resultados = CalcularParaTodos(opinadas, votosPorPessoa);
 
-        if (resultados.Count == 0) return Results.UnprocessableEntity(new
+        var porCasa = new List<ResultadoPorCasa>();
+        foreach (var casa in casaDaPergunta.Values.Distinct().OrderBy(c => c))
+        {
+            var daCasa = opinadas
+                .Where(r => casaDaPergunta.GetValueOrDefault(r.PerguntaId) == casa)
+                .ToList();
+
+            var resultados = CalcularParaTodos(daCasa, votosPorPessoa);
+            if (resultados.Count == 0) continue;
+
+            var fichas = await CarregarFichasAsync(db, resultados, ct);
+
+            porCasa.Add(new ResultadoPorCasa(
+                Casa: casa,
+                PerguntasRespondidas: daCasa.Count,
+                MaisProximos: Montar(resultados.OrderByDescending(r => r.Proporcao), fichas),
+                MaisDistantes: Montar(resultados.OrderBy(r => r.Proporcao), fichas),
+                PosicaoNoGrafo: await PosicionarAsync(db, casa, resultados, daCasa.Count, ct)));
+        }
+
+        // Nenhuma casa com base comparável é caso de erro, não de resposta vazia: a tela
+        // precisa dizer o que houve, e não mostrar duas listas em branco.
+        if (porCasa.Count == 0) return Results.UnprocessableEntity(new
         {
             erro = "sem_base_comparavel",
             mensagem = "Nenhum parlamentar votou o suficiente nas perguntas respondidas."
         });
 
-        var fichas = await CarregarFichasAsync(db, resultados, ct);
-
         return Results.Ok(new RespostaAfinidade(
-            Casa: "CAMARA",
             TotalPerguntasRespondidas: opinadas.Count,
-            MaisProximos: Montar(resultados.OrderByDescending(r => r.Proporcao), fichas),
-            MaisDistantes: Montar(resultados.OrderBy(r => r.Proporcao), fichas),
-            PosicaoNoGrafo: await PosicionarAsync(db, resultados, opinadas.Count, ct)));
+            PorCasa: porCasa));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -166,12 +230,18 @@ public static class EndpointsAfinidade
     /// </summary>
     private static async Task<PosicaoDoCidadao?> PosicionarAsync(
         PoligraphDb db,
+        string casa,
         List<ResultadoAfinidade> resultados,
         int perguntasRespondidas,
         CancellationToken ct)
     {
+        // A execução é a mais recente DAQUELA CASA. Antes do Senado havia uma só, e
+        // pegar "a mais recente" funcionava por acidente; agora existem duas, e a
+        // ordem entre elas depende de qual ETL rodou por último. Posicionar o cidadão
+        // no grafo do Senado a partir das respostas da Câmara daria um ponto plausível
+        // sobre uma figura que não é a dele.
         var execucaoId = await db.Execucoes.AsNoTracking()
-            .Where(e => e.Status == "CONCLUIDA")
+            .Where(e => e.Status == "CONCLUIDA" && e.Casa == casa)
             .OrderByDescending(e => e.Id)
             .Select(e => (long?)e.Id)
             .FirstOrDefaultAsync(ct);
@@ -233,6 +303,28 @@ public static class EndpointsAfinidade
 
     private static int MinimoDeRespostas(int perguntasAtivas) =>
         (int)Math.Ceiling(perguntasAtivas * 0.60);
+
+    /// <summary>
+    /// De qual casa é cada pergunta respondida.
+    ///
+    /// <para>
+    /// A casa vive em <c>votacoes.casa</c>, e a pergunta a alcança pela chave estrangeira.
+    /// Sem este mapa não haveria como separar o resultado, porque as duas casas
+    /// compartilham as mesmas tabelas.
+    /// </para>
+    /// </summary>
+    private static async Task<Dictionary<string, string>> CasaDasPerguntasAsync(
+        PoligraphDb db, List<RespostaCidadao> opinadas, CancellationToken ct)
+    {
+        var ids = opinadas.Select(r => r.PerguntaId).ToList();
+
+        var linhas = await db.Perguntas.AsNoTracking()
+            .Where(p => p.Ativa && ids.Contains(p.Id))
+            .Select(p => new { p.Id, Casa = p.Votacao!.Casa })
+            .ToListAsync(ct);
+
+        return linhas.ToDictionary(l => l.Id, l => l.Casa);
+    }
 
     /// <summary>
     /// Uma consulta só, para todas as perguntas respondidas.

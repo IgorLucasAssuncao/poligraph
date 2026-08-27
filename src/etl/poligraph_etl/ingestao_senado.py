@@ -223,8 +223,12 @@ def votacoes_para_linhas(votacoes: list[dict]) -> list[dict]:
                 "categoria": classificar_categoria(descricao),
                 "secreta": _texto(votacao.get("votacaoSecreta")).upper() == "S",
                 "plenario": True,
-                "votos_sim": _inteiro_ou_nulo(votacao.get("totalVotosSim")),
-                "votos_nao": _inteiro_ou_nulo(votacao.get("totalVotosNao")),
+                # Contados do array de votos, não lidos do campo: o Senado devolve
+                # `totalVotosSim` e `totalVotosNao` como NULL em todas as votações
+                # medidas. Sem contar, o painel do questionário — que é a assinatura
+                # visual do site — renderizaria vazio para toda pergunta do Senado.
+                "votos_sim": _contar(votacao, 1),
+                "votos_nao": _contar(votacao, -1),
             }
         )
 
@@ -267,6 +271,18 @@ def votos_para_linhas(
 # ═══════════════════════════════════════════════════════════════════
 
 
+def _contar(votacao: dict, valor: int) -> int:
+    """Quantos votaram naquele sentido.
+
+    Em votação secreta o resultado é zero, e é correto: ninguém revelou posição.
+    """
+    return sum(
+        1
+        for voto in votacao.get("votos") or []
+        if normalizar_voto(voto.get("siglaVotoParlamentar")) == valor
+    )
+
+
 def _data(votacao: dict) -> str:
     """A data da sessão, em `YYYY-MM-DD`.
 
@@ -284,9 +300,3 @@ def _texto(valor) -> str:
     """Tudo passa por aqui: os campos do Senado não vêm higienizados."""
     return "" if valor is None else str(valor).strip()
 
-
-def _inteiro_ou_nulo(valor) -> int | None:
-    try:
-        return int(valor) if valor is not None else None
-    except (TypeError, ValueError):
-        return None
