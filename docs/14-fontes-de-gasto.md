@@ -214,18 +214,13 @@ Fica no CDN do TSE, junto do resto:
 [portal de dados abertos do TSE](https://dadosabertos.tse.jus.br/) — o padrão que
 funcionou para candidatos não vale para partidos.
 
-### 🔴 Achado: o WAF do TSE bloqueia `HEAD` e libera `GET`
+### ⚠️ O WAF do TSE bloqueia `HEAD`
 
-| Método | Resposta |
-|---|---|
-| `HEAD` com a receita completa de headers | ⛔ **403** |
-| `GET` com a mesma receita | ✅ **200 · 4,4 MB** |
+Descoberto aqui, mas 📐 **documentado onde é o dono**:
+[`12-fonte-tse §2.0.1`](12-fonte-tse.md) — junto da receita de headers.
 
-⚠️ **Isto não estava em [`12-fonte-tse.md`](12-fonte-tse.md)**, e é o tipo de detalhe que
-faz alguém concluir *"o TSE fechou de novo"* quando não fechou. Verificar disponibilidade
-com `HEAD` é o reflexo natural — e aqui ele mente.
-
-📐 A receita de headers está em [`12-fonte-tse §2.0`](12-fonte-tse.md).
+⚠️ Em resumo: `HEAD` dá 403 e `GET` dá 200 na **mesma URL**. Verificar disponibilidade
+com `HEAD` é o reflexo natural, e aqui ele mente.
 
 ---
 

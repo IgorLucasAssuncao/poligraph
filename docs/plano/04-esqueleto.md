@@ -36,6 +36,29 @@ o resultado fica errado sem dar erro"* — e esse é o pior modo de falha possí
 
 ## 2. Schema inicial
 
+> 🔴 **AVISO DE 2026-08-27 — os nomes de tabela abaixo estão NO SINGULAR e o banco usa o
+> PLURAL.**
+>
+> O EF nomeia a tabela a partir do `DbSet` (`Pessoas` → `pessoas`), e este SQL foi
+> escrito antes de o EF existir. ⛔ **Não copie daqui para escrever consulta.**
+>
+> | Aqui está | No banco é |
+> |---|---|
+> | `pessoa` | `pessoas` |
+> | `votacao` · `voto` | `votacoes` · `votos` |
+> | `pergunta` · `proposicao` | `perguntas` · `proposicoes` |
+> | `similaridade` · `execucao` | `similaridades` · `execucoes` |
+> | `aresta_grafo` · `no_metrica` | `arestas_grafo` · `nos_metrica` |
+> | `usuario` · `consentimento` | `usuarios` · `consentimentos` |
+>
+> ⚠️ **Isto já custou caro:** o ETL Python inteiro foi escrito no singular e **nunca
+> conseguiu falar com o banco** — 104 testes verdes contra um schema que não existia.
+> Ver [`achados/`](../achados/README.md) e a PL36 em [`PENDENCIAS`](../PENDENCIAS.md).
+>
+> ⭐ **A fonte canônica do schema é `src/Poligraph.Api/Data/PoligraphDb.cs`**, e
+> `src/etl/tests/test_contrato_schema.py` trava a divergência automaticamente. Este SQL
+> permanece como **registro de desenho** — mostra as decisões e os `CHECK`, não o estado.
+
 ```sql
 -- ═══════════════════════════════════════════════════════════
 -- IDENTIDADE
@@ -335,6 +358,114 @@ parlamentar da base não pode ser possível enquanto alguém o segue.
 ⚠️ **O consentimento do Clarity NÃO entra nesta tabela** — ele acontece antes do login,
 para um visitante anônimo. Ele vive no navegador. Só o opt-in de e-mail é registrado aqui,
 porque só ele pressupõe conta.
+
+---
+
+## 2.2b 🔄 O que mudou desde o desenho (2026-08-27)
+
+⚠️ Acrescentado à medida que o produto foi construído. A fonte canônica continua sendo
+`PoligraphDb.cs`; isto é o registro do **porquê**.
+
+### Tabela nova: `despesas` — cota parlamentar (CEAP)
+
+```sql
+CREATE TABLE despesas (
+    id                            BIGSERIAL PRIMARY KEY,
+    pessoa_id                     BIGINT NOT NULL REFERENCES pessoas(id) ON DELETE CASCADE,
+    ano                           SMALLINT NOT NULL,
+    mes                           SMALLINT NOT NULL CHECK (mes BETWEEN 1 AND 12),
+    categoria                     TEXT NOT NULL,
+    fornecedor                    TEXT,
+    cnpj_ou_hash                  VARCHAR(64),   -- 🔴 ver abaixo
+    fornecedor_eh_pessoa_fisica   BOOLEAN NOT NULL,
+    valor_liquido                 NUMERIC(14,2) NOT NULL CHECK (valor_liquido <> 0),
+    data_emissao                  DATE,
+    url_documento                 TEXT
+);
+CREATE INDEX ix_despesa_pessoa_ano ON despesas (pessoa_id, ano);
+```
+
+🔴 **`cnpj_ou_hash` guarda duas coisas, e a flag diz qual.** O campo `txtCNPJCPF` do
+arquivo da Câmara mistura CNPJ de empresa com **CPF em claro** de fornecedor pessoa
+física. A RNF-13 proíbe o segundo, então o ETL aplica o mesmo hash de `cpf_hash` quando
+detecta 11 dígitos.
+
+⚠️ **E hashear os dois "por segurança" destruiria a análise:** CNPJ é dado público de
+empresa, e sem ele não dá para cruzar o mesmo fornecedor entre parlamentares.
+
+⭐ `valor_liquido <> 0` e não `> 0`: **valor negativo é estorno**, e somá-lo importa.
+
+📐 Fonte e armadilhas em [`14-fontes-de-gasto`](../14-fontes-de-gasto.md).
+
+### Colunas novas em `pessoas`
+
+```sql
+ALTER TABLE pessoas ADD COLUMN url_foto    TEXT;
+ALTER TABLE pessoas ADD COLUMN excluido_em TIMESTAMPTZ;
+```
+
+| Coluna | Por quê |
+|---|---|
+| `url_foto` | 🔴 Guardamos a **URL**, ⛔ não a imagem — *linkar* e *rehospedar* são atos diferentes perante licença e LGPD |
+| `excluido_em` | Exclusão **lógica** — ver §2.2c |
+
+### Colunas novas em `nos_metrica`
+
+```sql
+ALTER TABLE nos_metrica ADD COLUMN componente1 REAL;
+ALTER TABLE nos_metrica ADD COLUMN componente2 REAL;
+```
+
+🔴 **`componente1`, SEM underscore antes do dígito.** O snake_case do EF quebra por
+MAIÚSCULA, e `Componente1` não tem nenhuma antes do `1`. Escrever `componente_1` no SQL
+do Python dá `UndefinedColumn` — **aconteceu**, e o teste de contrato não pegava porque
+travava nomes de tabela e não de coluna.
+
+📐 O que cada eixo significa: [`plano/07 §3.6`](07-grafo-e-afinidade.md).
+
+### 🔴 Chaves estrangeiras que faltavam
+
+```sql
+ALTER TABLE nos_metrica   ADD FOREIGN KEY (pessoa_id) REFERENCES pessoas(id) ON DELETE CASCADE;
+ALTER TABLE arestas_grafo ADD FOREIGN KEY (pessoa_a)  REFERENCES pessoas(id) ON DELETE CASCADE;
+ALTER TABLE arestas_grafo ADD FOREIGN KEY (pessoa_b)  REFERENCES pessoas(id) ON DELETE CASCADE;
+ALTER TABLE similaridades ADD FOREIGN KEY (pessoa_a)  REFERENCES pessoas(id) ON DELETE CASCADE;
+ALTER TABLE similaridades ADD FOREIGN KEY (pessoa_b)  REFERENCES pessoas(id) ON DELETE CASCADE;
+```
+
+⚠️ **O furo apareceu de verdade.** Ao remover 12 parlamentares fictícios, seus nós
+ficaram em `nos_metrica` sem ninguém do outro lado, e **o grafo desenhou 12 pontos sem
+nome**. Nada acusou — o banco aceitou calado.
+
+⭐ **E a migration precisou LIMPAR antes de criar a chave**, senão não aplicava: o
+Postgres recusa FK sobre dado que já a viola. A migration falhava, o projeto de migrations
+morria, e o `WaitForCompletion` do Aspire travava a API atrás dele.
+
+> 🔑 A ironia vale registro: a migration não aplicava por causa da sujeira que ela própria
+> existe para impedir.
+
+---
+
+## 2.2c 🔴 Exclusão: lógica por padrão, física para dado pessoal
+
+**Padrão do projeto: exclusão LÓGICA.** `pessoas.excluido_em` + filtro global de consulta
+no EF — quem é excluído some de toda consulta sem que cada endpoint lembre do filtro.
+
+⭐ Parlamentar ⛔ **nunca** é apagado de verdade: o voto dele é registro histórico, e o
+`DELETE` físico levaria junto — por `CASCADE` — o nó no grafo, as arestas e as
+similaridades de **toda execução já feita**, inclusive as que a banca pode reproduzir.
+
+### 🔴 Duas exceções, e são jurídicas
+
+| Onde | Comportamento | Por quê |
+|---|---|---|
+| `usuarios` (`ExcluirContaAsync`) | **DELETE físico** | LGPD art. 18, VI dá direito à **eliminação**, ⛔ não à ocultação. Marcar `excluido_em` e manter a linha seria dizer ao cidadão que os dados foram apagados enquanto continuam no banco |
+| `segue` (`DeixarDeSeguirAsync`) | **DELETE físico** | É **registro de convicção política** (art. 5º, II). Exclusão lógica guardaria justamente o que a pessoa pediu para desfazer |
+
+> 🔴 **Regra para tabela nova:** se guarda dado **pessoal**, o `DELETE` é físico.
+
+⚠️ **O ETL Python ⛔ não enxerga o filtro global** — ele fala SQL direto. É proposital: a
+análise trabalha sobre o registro histórico completo, e é a API que decide o que mostrar.
 
 ---
 

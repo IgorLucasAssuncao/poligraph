@@ -56,6 +56,7 @@ valor — número repetido é número que diverge.
 | [00-discovery.md](00-discovery.md) | **Documento central.** Título do TCC, escopo, fontes, riscos, decisões, roadmap. ⚠️ Os achados foram extraídos para [`achados/`](achados/README.md) — aqui fica a narrativa |
 | [03-requisitos.md](03-requisitos.md) | Requisitos funcionais e não funcionais, regras de negócio, restrições |
 | [04-contratos.md](04-contratos.md) | **Contratos** — entradas, saídas e uso, com cardinalidades medidas |
+| [14-fontes-de-gasto.md](14-fontes-de-gasto.md) | 💰 **O que pode enriquecer o perfil** — cota parlamentar, fotos, emendas. Com o critério que reprova licitações e PNCP |
 | [PENDENCIAS.md](PENDENCIAS.md) | ⭐ **Visão consolidada** — 46 abertas, agrupadas pelo que destrava cada uma |
 | [REVISAR-ANTES-DA-CONCLUSAO.md](REVISAR-ANTES-DA-CONCLUSAO.md) | ⏳ **Fatos com prazo de validade** — reverificar antes de escrever |
 

@@ -162,6 +162,28 @@ Upgrade-Insecure-Requests: 1
 ⚠️ **`Accept-Encoding` é a peça que faltava**, mas sozinho não basta — é o conjunto que
 passa. Comportamento típico de WAF que pontua "parece navegador?" por combinação de sinais.
 
+### 2.0.1 🔴 E o WAF bloqueia `HEAD`, mesmo com a receita completa
+
+> **Descoberto em 2026-08-27**, ao levantar as fontes de gasto.
+
+| Método | Mesma URL, mesmos headers |
+|---|---|
+| `HEAD` | ⛔ **403** |
+| `GET` | ✅ **200 · 4.389.914 bytes** |
+
+🔴 **Isto engana com facilidade.** Verificar disponibilidade com `HEAD` é o reflexo
+natural — é a requisição barata, que não baixa o corpo. E aqui ela **mente**: leva a
+concluir que *"o TSE fechou de novo"* quando nada fechou.
+
+⭐ **Para checar sem baixar o arquivo inteiro**, use `GET` com `Range`:
+
+```bash
+curl -r 0-2000 -H "..." "https://cdn.tse.jus.br/..."   # 206, só o começo
+```
+
+⚠️ Vale para todo o CDN — testado em `consulta_cand`, `prestacao_contas` e no ZIP de
+fotos de candidato.
+
 ⚠️ **Isto é frágil por natureza.** O TSE pode endurecer a regra a qualquer momento. Trate
 como **otimização, não como garantia**: o pipeline deve detectar 403 e degradar para carga
 manual, que continua sendo o plano B documentado em §2.2.
