@@ -1,5 +1,13 @@
 # Como rodar localmente
 
+> ⚠️ **Este arquivo virou detalhe.** O passo a passo principal agora vive no
+> [`README.md`](README.md) da raiz, junto dos desenhos de arquitetura. Aqui ficam só as
+> variações e os problemas conhecidos.
+>
+> 🔴 **Correção de 2026-08-27:** o texto abaixo menciona **seed de dados de teste**. Ele
+> foi **aposentado** — o banco local é preenchido pelo ETL com a Câmara de verdade. Ver
+> [`plano/04 §2.2b`](docs/plano/04-esqueleto.md).
+
 ## O que você precisa instalado
 
 | | |
@@ -7,7 +15,7 @@
 | **.NET 10 SDK** | API, migrations, testes |
 | **Docker Desktop** | Postgres (o Aspire sobe sozinho) — precisa estar **aberto** |
 | **Node 22+** | Front |
-| Python 3.13+ | ⚠️ Só para o ETL — não é preciso para subir o site |
+| Python 3.13+ | 🔵 **Opcional** — só para rodar os testes do ETL. O ETL em si roda em container |
 
 ## Subir tudo
 
@@ -15,7 +23,9 @@
 dotnet run --project src/Poligraph.AppHost
 ```
 
-⭐ **Um comando sobe TUDO:** Postgres, migrations, seed, API **e o front**.
+⭐ **Um comando sobe TUDO:** Postgres, migrations, API **e o front**.
+
+⚠️ ⛔ **Sem seed** — o banco sobe VAZIO. Rode `etl-ingerir` no painel do Aspire.
 O dashboard do Aspire abre no navegador com o endereço de cada serviço.
 
 | Serviço | Onde |
@@ -76,4 +86,4 @@ python -m poligraph_etl analisar --legislatura 57
 ```
 
 ⚠️ A porta e a senha do Postgres aparecem no dashboard do Aspire.
-⚠️ A ingestão baixa ~60 MB de CSV da Câmara e substitui os dados de teste.
+⚠️ A ingestão baixa ~60 MB de CSV da Câmara.

@@ -332,11 +332,92 @@ da §"critério": são compras do Executivo, sem político do outro lado.
 ⭐ **Mas fecham a ponte:** `/contratos/cpf-cnpj` permite perguntar *"o que mais o governo
 comprou desta empresa?"* — partindo de um CNPJ que veio da cota parlamentar.
 
+### ✅ Discovery COM a chave (2026-08-27)
+
+> ⚠️ Executado com credencial real. ⛔ A chave não está neste repositório, e é pessoal —
+> atrelada ao CPF de quem a pediu.
+
+**A chave funciona: `HTTP 200`.**
+
+#### Volume e paginação
+
+| | |
+|---|---|
+| Itens por página | **15** — ⛔ fixo, sem parâmetro de tamanho |
+| Última página com dado (2025) | **421** |
+| **Emendas em 2025** | **~6.315** |
+| Anos disponíveis | **2022 a 2026** — todos respondem |
+| Requisições para varrer um ano | **~421** |
+
+⭐ **Volume tratável.** Ao contrário do PNCP (~1 milhão de contratos/ano), aqui uma
+legislatura inteira são ~25 mil emendas — cabe em ingestão completa.
+
+#### Composição da amostra (375 emendas)
+
+| Tipo | Qtd |
+|---|---|
+| **Emenda Individual — Transferências com Finalidade Definida** | 372 |
+| Emenda de Bancada | 2 |
+| Emenda Individual — Transferências Especiais | 1 |
+
+⭐ **99% são individuais**, que é exatamente o que liga a UM parlamentar.
+
+#### 🔴 O teste que decide: os nomes casam?
+
+O campo `nomeAutor` vem em **CAIXA ALTA, sem acento** — nosso banco guarda o nome
+parlamentar. Testado contra os **643 deputados** que têm voto:
+
+| | |
+|---|---|
+| Autores distintos na amostra | 266 |
+| **Casam por nome normalizado** | **222 — 83%** |
+
+⭐ **83% sem nenhuma heurística**, só removendo acento e caixa.
+
+#### ⚠️ Os 17% que não casam — e por que isso é BOM
+
+```
+ALESSANDRO VIEIRA · CARLOS VIANA · EFRAIM FILHO · ELIZIANE GAMA · ESPERIDIAO AMIN
+   → SENADORES. Emenda individual também é do Senado.
+
+BANCADA DO RIO DE JANEIRO
+   → Emenda de BANCADA, não tem autor pessoa.
+
+CARLA DICKSON (EX-PARLAMENTAR PAULINHO FREIRE, NOS TERMOS ART. 78 LDO 2025…)
+   → O campo carrega texto jurídico junto do nome.
+
+ALAN RICK · ASTRONAUTA MARCOS PONTES · CHICO RODRIGUES
+   → Deputados de outras legislaturas, ou que mudaram de casa.
+```
+
+🔴 **Nenhum dos casos é falha de conciliação — são registros que legitimamente não são
+deputado da 57ª.** Isso significa que o casamento por nome é **muito melhor do que a §5
+supunha**: a fila de revisão manual da RF-13 provavelmente ⛔ **não é necessária** aqui.
+
+⚠️ Restam dois cuidados reais:
+1. **Homônimo** entre deputado e senador — ⛔ não medido ainda
+2. **Texto jurídico dentro do nome** — precisa de limpeza antes de comparar
+
+#### ⚠️ Um campo que surpreende
+
+```json
+"valorEmpenhado": "- 26.002,00",
+"valorPago":      "12.599,10",
+"valorRestoPago": "211.398,90"
+```
+
+🔴 **Valores vêm como TEXTO em formato brasileiro**, com vírgula decimal e ponto de
+milhar — e o empenhado pode ser **negativo** (cancelamento). ⛔ Converter com `float()`
+direto quebra.
+
+⚠️ E `valorRestoPago` pode ser **muito maior** que o pago do ano: é resto a pagar de
+exercícios anteriores. Somar tudo como se fosse do ano corrente inflaria o número.
+
 ### Veredito do discovery
 
 | Grupo | Liga ao parlamentar | Vale a chave? |
 |---|---|---|
-| **`emendas`** | ✅ por `nomeAutor` | 🔴 **SIM — é a razão para pedir a chave** |
+| **`emendas`** | ✅ por `nomeAutor` — **83% casam direto** | ✅ **CHAVE OBTIDA — pronta para ingerir** |
 | `contratos/cpf-cnpj` | 🟡 indireto, via CNPJ da cota | ⭐ Sim, como complemento |
 | `servidores`, `peps` | ⚠️ por CPF, que não temos em claro | 🔵 Talvez |
 | `licitacoes`, `contratos` | ⛔ Não | ⛔ Não |
