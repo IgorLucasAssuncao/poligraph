@@ -41,16 +41,40 @@ export function TelaDoGrafo({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const arrastando = useRef<{ x: number; y: number } | null>(null);
+  const arrastandoNo = useRef<NoDoGrafo | null>(null);
+
+  /**
+   * ⚠️ Deslocamentos manuais de nó, em coordenada do LAYOUT.
+   *
+   * ⛔ Não voltam para o banco, de propósito: `nos_metrica` é retrato reproduzível da
+   * execução do ETL, e deixar o usuário reescrever isso destruiria a garantia de que a
+   * banca reproduz a mesma figura. Arrastar é para enxergar, não para corrigir.
+   */
+  const [movidos, setMovidos] = useState<Map<number, { x: number; y: number }>>(new Map());
 
   const [camera, setCamera] = useState<Camera>({ escala: 1, x: 0, y: 0 });
   const [limiar, setLimiar] = useState(0);
   const [alvo, setAlvo] = useState<Alvo | null>(null);
   const [fixado, setFixado] = useState<NoDoGrafo | null>(null);
+
+  /**
+   * ⭐ Isolado ⛔ não é o mesmo que fixado.
+   *
+   * Fixado apaga o resto mas o mantém no desenho — dá contexto. Isolado REMOVE tudo o
+   * que não é vizinho, e aí o zoom passa a valer a pena: 30 pontos em vez de 643.
+   */
+  const [isolado, setIsolado] = useState<NoDoGrafo | null>(null);
   const [tamanho, setTamanho] = useState<Tamanho>({ largura: 800, altura: altura ?? 520 });
 
   const posicionados = useMemo(
-    () => grafo.nos.filter((n) => n.eixoX !== null && n.eixoY !== null),
-    [grafo.nos],
+    () =>
+      grafo.nos
+        .filter((n) => n.eixoX !== null && n.eixoY !== null)
+        .map((n) => {
+          const movido = movidos.get(n.id);
+          return movido ? { ...n, eixoX: movido.x, eixoY: movido.y } : n;
+        }),
+    [grafo.nos, movidos],
   );
 
   const porId = useMemo(
@@ -58,16 +82,23 @@ export function TelaDoGrafo({
     [posicionados],
   );
 
-  const visiveis = useMemo(
+  const arestasDoLimiar = useMemo(
     () => grafo.arestas.filter((a) => a.peso >= limiar),
     [grafo.arestas, limiar],
   );
+
+  const visiveis = useMemo(() => {
+    if (!isolado) return arestasDoLimiar;
+
+    return arestasDoLimiar.filter((a) => a.de === isolado.id || a.para === isolado.id);
+  }, [arestasDoLimiar, isolado]);
 
   /**
    * ⭐ Vizinhança do nó em foco. É o gesto que torna o grafo legível: com 5 mil
    * arestas, olhar um deputado sem apagar o resto não informa nada.
    */
-  const emFoco = fixado ?? (alvo?.tipo === 'no' ? alvo.no : null);
+  const emFoco = isolado ?? fixado ?? (alvo?.tipo === 'no' ? alvo.no : null);
+
   const vizinhos = useMemo(() => {
     if (!emFoco) return null;
 
@@ -79,6 +110,11 @@ export function TelaDoGrafo({
 
     return conjunto;
   }, [emFoco, visiveis]);
+
+  const noDesenho = useMemo(
+    () => (isolado && vizinhos ? posicionados.filter((n) => vizinhos.has(n.id)) : posicionados),
+    [isolado, vizinhos, posicionados],
+  );
 
   useEffect(() => {
     const pai = canvasRef.current?.parentElement;
@@ -102,7 +138,7 @@ export function TelaDoGrafo({
     if (!canvas || !ctx) return;
 
     desenhar(ctx, canvas, {
-      nos: posicionados,
+      nos: noDesenho,
       arestas: visiveis,
       porId,
       alvo,
@@ -111,7 +147,7 @@ export function TelaDoGrafo({
       cidadao,
       camera,
     });
-  }, [posicionados, visiveis, porId, alvo, emFoco, vizinhos, cidadao, camera, tamanho]);
+  }, [noDesenho, visiveis, porId, alvo, emFoco, vizinhos, cidadao, camera, tamanho]);
 
   // ⚠️ `passive: false` é obrigatório: sem isto o navegador ignora o
   //    `preventDefault` e a página inteira rola junto com o zoom.
@@ -146,13 +182,30 @@ export function TelaDoGrafo({
         const dx = px - arrastando.current.x;
         const dy = py - arrastando.current.y;
         arrastando.current = { x: px, y: py };
+
+        const no = arrastandoNo.current;
+        if (no) {
+          // ⚠️ O deslocamento vem em PIXEL e precisa virar coordenada de layout, senão
+          //    o nó anda mais rápido que o cursor conforme o zoom aumenta.
+          const escalaX = (2 / (tamanho.largura - MARGEM * 2)) / camera.escala;
+          const escalaY = (2 / (tamanho.altura - MARGEM * 2)) / camera.escala;
+
+          setMovidos((atual) => {
+            const novo = new Map(atual);
+            const base = novo.get(no.id) ?? { x: no.eixoX!, y: no.eixoY! };
+            novo.set(no.id, { x: base.x + dx * escalaX, y: base.y + dy * escalaY });
+            return novo;
+          });
+          return;
+        }
+
         setCamera((c) => ({ ...c, x: c.x + dx, y: c.y + dy }));
         return;
       }
 
-      setAlvo(alvoSob(posicionados, visiveis, porId, px, py, tamanho, camera));
+      setAlvo(alvoSob(noDesenho, visiveis, porId, px, py, tamanho, camera));
     },
-    [posicionados, visiveis, porId, tamanho, camera],
+    [noDesenho, visiveis, porId, tamanho, camera],
   );
 
   return (
@@ -170,17 +223,25 @@ export function TelaDoGrafo({
           onMouseMove={aoMover}
           onMouseDown={(e) => {
             const caixa = e.currentTarget.getBoundingClientRect();
-            arrastando.current = { x: e.clientX - caixa.left, y: e.clientY - caixa.top };
+            const ponto = { x: e.clientX - caixa.left, y: e.clientY - caixa.top };
+
+            // ⭐ Sobre um nó, arrasta o NÓ; no vazio, arrasta o mapa.
+            if (alvo?.tipo === 'no') arrastandoNo.current = alvo.no;
+            arrastando.current = ponto;
           }}
-          onMouseUp={() => (arrastando.current = null)}
+          onMouseUp={() => {
+            arrastando.current = null;
+            arrastandoNo.current = null;
+          }}
           onMouseLeave={() => {
             arrastando.current = null;
+            arrastandoNo.current = null;
             setAlvo(null);
           }}
           onClick={aoClicar}
           onDoubleClick={() => aoSelecionar && emFoco && aoSelecionar(emFoco)}
           role="img"
-          aria-label={`Grafo de ${posicionados.length} parlamentares e ${visiveis.length} ligações`}
+          aria-label={`Grafo de ${noDesenho.length} parlamentares e ${visiveis.length} ligações`}
         />
 
         {alvo && <Dica alvo={alvo} porId={porId} tamanho={tamanho} camera={camera} />}
@@ -189,7 +250,12 @@ export function TelaDoGrafo({
         <div className="grafo-zoom">
           <button type="button" onClick={() => setCamera((c) => aproximar(c, tamanho.largura / 2, tamanho.altura / 2, -240))} aria-label="Aproximar">+</button>
           <button type="button" onClick={() => setCamera((c) => aproximar(c, tamanho.largura / 2, tamanho.altura / 2, 240))} aria-label="Afastar">−</button>
-          <button type="button" onClick={() => { setCamera({ escala: 1, x: 0, y: 0 }); setFixado(null); }} aria-label="Enquadrar tudo">⤢</button>
+          <button type="button" onClick={() => {
+            setCamera({ escala: 1, x: 0, y: 0 });
+            setFixado(null);
+            setIsolado(null);
+            setMovidos(new Map());   // ⚠️ devolve o desenho ao retrato do ETL
+          }} aria-label="Enquadrar tudo e desfazer">⤢</button>
         </div>
 
         {aoAmpliar && (
@@ -198,13 +264,46 @@ export function TelaDoGrafo({
           </button>
         )}
 
-        {fixado && (
-          <p className="grafo-foco">
-            Mostrando <strong>{fixado.nome}</strong> e quem vota com {ehFeminino(fixado.nome) ? 'ela' : 'ele'}.{' '}
-            <button type="button" className="botao-texto" onClick={() => setFixado(null)}>
-              Ver todos
-            </button>
-          </p>
+        {(fixado || isolado) && (
+          <div className="grafo-foco">
+            <p>
+              <strong>{(isolado ?? fixado)!.nome}</strong>
+              <span>
+                {(isolado ?? fixado)!.partido}
+                {vizinhos && ` · ${vizinhos.size - 1} ligações`}
+              </span>
+            </p>
+
+            <div className="grafo-foco-acoes">
+              {/* ⭐ É a diferença que o autor pediu: destacar mantém o contexto,
+                  isolar remove tudo o que não é vizinho e libera o zoom. */}
+              {!isolado ? (
+                <button type="button" onClick={() => setIsolado(fixado)}>
+                  Só as conexões dele
+                </button>
+              ) : (
+                <button type="button" onClick={() => setIsolado(null)}>
+                  Voltar ao grafo
+                </button>
+              )}
+
+              {aoSelecionar && (
+                <button type="button" onClick={() => aoSelecionar((isolado ?? fixado)!)}>
+                  Abrir perfil
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setFixado(null);
+                  setIsolado(null);
+                }}
+              >
+                Limpar
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
@@ -224,8 +323,8 @@ export function TelaDoGrafo({
           </output>
         </label>
         <p className="grafo-ajuda-uso">
-          Rolar para aproximar · arrastar para mover · clicar isola quem vota junto ·
-          clicar duas vezes abre o perfil
+          Rolar aproxima · arrastar o fundo move o mapa · arrastar um ponto reposiciona
+          ele · clicar destaca e abre as ações · clicar duas vezes abre o perfil
         </p>
       </div>
     </div>
@@ -301,7 +400,9 @@ const DENSIDADE = typeof window === 'undefined' ? 1 : window.devicePixelRatio ||
 const MARGEM = 30;
 const RAIO = 3.2;
 const ESCALA_MINIMA = 0.6;
-const ESCALA_MAXIMA = 14;
+// ⚠️ 14× era pouco: com 643 nós amontoados, é só a partir de ~25× que dá para separar
+//    dois pontos vizinhos com o cursor.
+const ESCALA_MAXIMA = 40;
 
 /**
  * 🔴 Paleta CATEGÓRICA — rótulo, não escala (RNF-16). Nenhum destes tons é cor de
@@ -417,11 +518,6 @@ function distanciaAoSegmento(
   const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / comprimento));
 
   return Math.hypot(x - (a.x + t * dx), y - (a.y + t * dy));
-}
-
-/** ⚠️ Heurística de concordância só para o texto do foco; erra e não custa nada. */
-function ehFeminino(nome: string): boolean {
-  return /a$/i.test(nome.split(' ')[0]);
 }
 
 function desenhar(

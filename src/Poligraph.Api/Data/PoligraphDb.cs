@@ -132,6 +132,13 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasKey(x => new { x.ExecucaoId, x.PessoaA, x.PessoaB, x.Metrica });
             e.HasOne<Execucao>().WithMany().HasForeignKey(x => x.ExecucaoId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // 🔴 Os DOIS lados apontam para `pessoas` — ver a nota em `NoMetrica`.
+            e.HasOne<Pessoa>().WithMany().HasForeignKey(x => x.PessoaA)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Pessoa>().WithMany().HasForeignKey(x => x.PessoaB)
+                .OnDelete(DeleteBehavior.Cascade);
+
             e.ToTable(t =>
             {
                 t.HasCheckConstraint("ck_sim_metrica", "metrica IN ('CONCORDANCIA','COSSENO')");
@@ -146,6 +153,13 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasKey(x => new { x.ExecucaoId, x.PessoaA, x.PessoaB, x.Tipo });
             e.HasOne<Execucao>().WithMany().HasForeignKey(x => x.ExecucaoId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // 🔴 Aresta para quem não existe vira ponto sem nome no desenho.
+            e.HasOne<Pessoa>().WithMany().HasForeignKey(x => x.PessoaA)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<Pessoa>().WithMany().HasForeignKey(x => x.PessoaB)
+                .OnDelete(DeleteBehavior.Cascade);
+
             e.ToTable(t =>
             {
                 t.HasCheckConstraint("ck_aresta_tipo",
@@ -158,6 +172,19 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         {
             e.HasKey(x => new { x.ExecucaoId, x.PessoaId });
             e.HasOne<Execucao>().WithMany().HasForeignKey(x => x.ExecucaoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // 🔴 FK para `pessoas` — faltava, e o furo apareceu de verdade.
+            //
+            // ⚠️ Ao remover 12 parlamentares fictícios do banco, seus nós ficaram em
+            //    `nos_metrica` sem ninguém do outro lado. O grafo desenhou 12 pontos
+            //    SEM NOME e nada acusou — o banco aceitou calado. É o formato de bug
+            //    que este projeto mais teme: não quebra, produz resultado plausível.
+            //
+            // ⭐ CASCADE, e não RESTRICT: métrica é retrato derivado, e apagar a pessoa
+            //    deve levar junto o que se calculou sobre ela. É o oposto de `segue`,
+            //    que é registro de convicção e por isso BARRA a exclusão.
+            e.HasOne<Pessoa>().WithMany().HasForeignKey(x => x.PessoaId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

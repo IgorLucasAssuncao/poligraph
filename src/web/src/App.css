@@ -985,12 +985,35 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 }
 .grafo-zoom button:hover { background: var(--painel); color: var(--realce); }
 
+/* ⭐ O painel de ação aparece SOBRE o desenho, ancorado no canto — as ações do nó
+      ficam junto do nó, não num menu longe dele. */
 .grafo-foco {
-  position: absolute; left: .75rem; top: .75rem; margin: 0;
-  padding: .45rem .7rem; max-width: calc(100% - 5rem);
-  background: var(--fundo); border: 1px solid var(--borda-forte);
-  border-radius: 8px; font-size: .82rem;
+  position: absolute; left: .75rem; top: .75rem;
+  max-width: min(20rem, calc(100% - 6rem));
+  padding: .6rem .75rem;
+  background: color-mix(in srgb, var(--fundo) 94%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--borda-forte); border-radius: 10px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 14%);
 }
+.grafo-foco p {
+  margin: 0 0 .5rem; display: flex; flex-direction: column; line-height: 1.35;
+}
+.grafo-foco strong { font-size: .92rem; }
+.grafo-foco span { font-size: .78rem; color: var(--suave); font-family: var(--dado); }
+
+.grafo-foco-acoes { display: flex; flex-wrap: wrap; gap: .35rem; }
+.grafo-foco-acoes button {
+  padding: .3rem .6rem;
+  background: transparent; color: var(--texto);
+  border: 1px solid var(--borda-forte); border-radius: 6px;
+  font-size: .78rem; font-weight: 500;
+}
+.grafo-foco-acoes button:hover { border-color: var(--realce); color: var(--realce); }
+.grafo-foco-acoes button:first-child {
+  background: var(--realce); color: var(--sobre-realce); border-color: var(--realce);
+}
+.grafo-foco-acoes button:first-child:hover { background: var(--realce-hover); color: var(--sobre-realce); }
 
 .grafo-dica strong { display: block; }
 .grafo-ajuda-uso {
