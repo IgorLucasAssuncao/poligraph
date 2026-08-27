@@ -64,6 +64,7 @@ export function TelaDoGrafo({
    * que não é vizinho, e aí o zoom passa a valer a pena: 30 pontos em vez de 643.
    */
   const [isolado, setIsolado] = useState<NoDoGrafo | null>(null);
+  const [busca, setBusca] = useState('');
   const [tamanho, setTamanho] = useState<Tamanho>({ largura: 800, altura: altura ?? 520 });
 
   const posicionados = useMemo(
@@ -110,6 +111,19 @@ export function TelaDoGrafo({
 
     return conjunto;
   }, [emFoco, visiveis]);
+
+  /**
+   * ⭐ Achar alguém sem caçar ponto por ponto. Com 643 nós, encontrar o Arthur Lira
+   * passando o mouse é inviável — e era o gesto que o desenho obrigava.
+   */
+  const achados = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+    if (termo.length < 2) return [];
+
+    return posicionados
+      .filter((n) => n.nome.toLowerCase().includes(termo))
+      .slice(0, MAX_SUGESTOES);
+  }, [busca, posicionados]);
 
   const noDesenho = useMemo(
     () => (isolado && vizinhos ? posicionados.filter((n) => vizinhos.has(n.id)) : posicionados),
@@ -308,6 +322,38 @@ export function TelaDoGrafo({
       </div>
 
       <div className="grafo-controles">
+        <div className="grafo-busca">
+          <input
+            type="search"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Procurar deputado pelo nome"
+            aria-label="Procurar deputado no grafo"
+          />
+
+          {achados.length > 0 && (
+            <ul className="grafo-sugestoes">
+              {achados.map((no) => (
+                <li key={no.id}>
+                  <button type="button" onClick={() => irPara(no)}>
+                    <strong>{no.nome}</strong>
+                    <span>
+                      {no.partido}
+                      {no.uf && ` · ${no.uf}`}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* ⚠️ Só avisa quando houve busca de verdade: dizer "nada encontrado" com
+              uma letra digitada é ruído, não informação. */}
+          {busca.trim().length >= 2 && achados.length === 0 && (
+            <p className="grafo-sem-achado">Nenhum deputado com esse nome.</p>
+          )}
+        </div>
+
         <label>
           Só ligações mais fortes
           <input
@@ -329,6 +375,27 @@ export function TelaDoGrafo({
       </div>
     </div>
   );
+
+  /**
+   * Leva a câmera até o nó e o deixa destacado.
+   *
+   * ⚠️ Aproxima para 3× em vez de manter o zoom atual: encontrar alguém e continuar
+   * vendo a mesma nuvem de 643 pontos não resolve nada — a busca precisa entregar a
+   * pessoa, não a coordenada dela.
+   */
+  function irPara(no: NoDoGrafo) {
+    const escala = Math.max(camera.escala, 3);
+    const base = paraTela(no.eixoX!, no.eixoY!, tamanho, { escala, x: 0, y: 0 });
+
+    setCamera({
+      escala,
+      x: tamanho.largura / 2 - base.x,
+      y: tamanho.altura / 2 - base.y,
+    });
+
+    setFixado(no);
+    setBusca('');
+  }
 
   function aoClicar() {
     if (alvo?.tipo !== 'no') return;
@@ -403,6 +470,7 @@ const ESCALA_MINIMA = 0.6;
 // ⚠️ 14× era pouco: com 643 nós amontoados, é só a partir de ~25× que dá para separar
 //    dois pontos vizinhos com o cursor.
 const ESCALA_MAXIMA = 40;
+const MAX_SUGESTOES = 6;
 
 /**
  * 🔴 Paleta CATEGÓRICA — rótulo, não escala (RNF-16). Nenhum destes tons é cor de

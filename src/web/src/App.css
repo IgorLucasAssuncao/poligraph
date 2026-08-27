@@ -1055,3 +1055,33 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 
 /* ⚠️ Dentro do modal não faz sentido oferecer tela cheia de novo. */
 .grafo-ampliado .grafo-ampliar { display: none; }
+
+/* ═══ BUSCA NO GRAFO ═══════════════════════════════════════════ */
+/* ⭐ Com 643 nós, achar alguém passando o mouse é inviável. */
+.grafo-busca { position: relative; margin-bottom: .75rem; }
+.grafo-busca input {
+  width: 100%; font: inherit; font-size: .9rem;
+  padding: .55rem .85rem;
+  background: var(--painel); color: inherit;
+  border: 1px solid transparent; border-radius: 8px; outline: none;
+}
+.grafo-busca input:focus { background: var(--fundo); border-color: var(--realce); }
+
+.grafo-sugestoes {
+  position: absolute; z-index: 15; left: 0; right: 0; top: calc(100% + .25rem);
+  list-style: none; margin: 0; padding: .25rem;
+  background: var(--fundo); border: 1px solid var(--borda-forte);
+  border-radius: 10px; box-shadow: 0 6px 20px rgb(0 0 0 / 16%);
+}
+.grafo-sugestoes button {
+  display: flex; flex-direction: column; width: 100%; gap: .05rem;
+  padding: .45rem .6rem; text-align: left;
+  background: none; border: none; color: inherit; border-radius: 6px;
+}
+.grafo-sugestoes button:hover { background: var(--realce-fraco); color: var(--realce); }
+.grafo-sugestoes strong { font-size: .88rem; }
+.grafo-sugestoes span { font-size: .76rem; color: var(--suave); font-family: var(--dado); }
+
+.grafo-sem-achado {
+  margin: .4rem 0 0; font-size: .8rem; color: var(--suave);
+}
