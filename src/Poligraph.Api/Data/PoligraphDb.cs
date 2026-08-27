@@ -16,6 +16,9 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<Proposicao> Proposicoes => Set<Proposicao>();
     public DbSet<Pergunta> Perguntas => Set<Pergunta>();
     public DbSet<Despesa> Despesas => Set<Despesa>();
+    public DbSet<ReceitaDeCampanha> ReceitasDeCampanha => Set<ReceitaDeCampanha>();
+    public DbSet<Emenda> Emendas => Set<Emenda>();
+    public DbSet<AutorDeEmenda> AutoresDeEmenda => Set<AutorDeEmenda>();
     public DbSet<Execucao> Execucoes => Set<Execucao>();
     public DbSet<Similaridade> Similaridades => Set<Similaridade>();
     public DbSet<ArestaGrafo> ArestasGrafo => Set<ArestaGrafo>();
@@ -35,6 +38,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         ConfigurarVotacao(mb);
         ConfigurarQuestionario(mb);
         ConfigurarDespesa(mb);
+        ConfigurarDinheiro(mb);
         ConfigurarAnalise(mb);
         ConfigurarUsuario(mb);
         ConfigurarNoticia(mb);
@@ -148,6 +152,61 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
                 // ⚠️ Valor negativo existe: é estorno. ⛔ Zero não.
                 t.HasCheckConstraint("ck_despesa_valor", "valor_liquido <> 0");
             });
+        });
+    }
+
+    private static void ConfigurarDinheiro(ModelBuilder mb)
+    {
+        mb.Entity<ReceitaDeCampanha>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasOne(x => x.Pessoa).WithMany().HasForeignKey(x => x.PessoaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasIndex(x => new { x.PessoaId, x.AnoEleicao })
+                .HasDatabaseName("ix_receita_pessoa_eleicao");
+
+            e.Property(x => x.Valor).HasPrecision(14, 2);
+            e.Property(x => x.DoadorCnpjOuHash).HasMaxLength(64);
+
+            // ⚠️ Receita zero é linha administrativa; negativa é estorno e FICA.
+            e.ToTable(t => t.HasCheckConstraint("ck_receita_valor", "valor <> 0"));
+        });
+
+        mb.Entity<Emenda>(e =>
+        {
+            e.HasKey(x => x.Id);
+
+            // ⚠️ `SetNull`, ⛔ não `Cascade`: apagar a pessoa ⛔ não pode apagar a emenda.
+            //    O gasto público continua tendo existido — o que se perde é o vínculo.
+            e.HasOne(x => x.Pessoa).WithMany().HasForeignKey(x => x.PessoaId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // 🔴 A chave natural é (código do autor, código da emenda) — ⛔ NÃO envolve
+            //    `pessoa_id`, que pode ser nulo e mudar na reconciliação.
+            e.HasIndex(x => new { x.CodigoAutor, x.CodigoEmenda }).IsUnique()
+                .HasDatabaseName("ux_emenda_autor_codigo");
+
+            e.Property(x => x.CodigoAutor).HasMaxLength(16);
+            e.HasIndex(x => x.PessoaId).HasDatabaseName("ix_emenda_pessoa");
+
+            e.Property(x => x.ValorEmpenhado).HasPrecision(16, 2);
+            e.Property(x => x.ValorLiquidado).HasPrecision(16, 2);
+            e.Property(x => x.ValorPago).HasPrecision(16, 2);
+            e.Property(x => x.ValorRestoPago).HasPrecision(16, 2);
+        });
+
+        mb.Entity<AutorDeEmenda>(e =>
+        {
+            e.HasKey(x => x.Codigo);
+            e.Property(x => x.Codigo).HasMaxLength(16);
+            e.Property(x => x.AtualizadoEm).HasDefaultValueSql("now()");
+
+            e.HasOne(x => x.Pessoa).WithMany().HasForeignKey(x => x.PessoaId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            e.ToTable(t => t.HasCheckConstraint(
+                "ck_autor_metodo", "metodo IN ('AUTOMATICO','MANUAL','NAO_RESOLVIDO')"));
         });
     }
 

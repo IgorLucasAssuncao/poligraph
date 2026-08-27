@@ -181,6 +181,141 @@ public class Despesa
     public Pessoa? Pessoa { get; set; }
 }
 
+/// <summary>
+/// Uma receita de campanha eleitoral — inclui o **fundo eleitoral**.
+///
+/// ⭐ Liga a `pessoas` por **hash de CPF**, que é chave forte: o teste contra o Amapá
+/// casou **15 de 15**, contra 14 de 15 do nome civil.
+///
+/// ⚠️ Fonte: `prestacao_de_contas_eleitorais_candidatos_{ano}.zip` do TSE — 377 MB,
+/// Latin-1, um CSV por UF. Ver <see href="../../docs/14-fontes-de-gasto.md"/>.
+/// </summary>
+public class ReceitaDeCampanha
+{
+    public long Id { get; set; }
+    public long PessoaId { get; set; }
+
+    /// <summary>Ano da ELEIÇÃO, ⛔ não do exercício. 2022 elegeu a legislatura 57.</summary>
+    public short AnoEleicao { get; set; }
+
+    /// <summary>
+    /// 🔴 `FUNDO ESPECIAL` é o "fundão" (FEFC); `FUNDO PARTIDARIO` é outro fundo.
+    ///
+    /// ⚠️ O CSV os separa, e somá-los como "dinheiro público de campanha" é defensável
+    /// mas precisa ser dito — ⛔ não são a mesma coisa.
+    /// </summary>
+    public required string FonteReceita { get; set; }
+
+    /// <summary>"Recursos de partido político", "Recursos de pessoas físicas"…</summary>
+    public string? OrigemReceita { get; set; }
+
+    public string? Doador { get; set; }
+
+    /// <summary>🔴 CNPJ do doador **ou hash**, quando pessoa física — como em `Despesa`.</summary>
+    public string? DoadorCnpjOuHash { get; set; }
+
+    public bool DoadorEhPessoaFisica { get; set; }
+
+    public decimal Valor { get; set; }
+
+    public Pessoa? Pessoa { get; set; }
+}
+
+/// <summary>
+/// Uma emenda parlamentar — o instrumento de poder orçamentário do parlamentar.
+///
+/// 🔴 **A chave é o CÓDIGO DO AUTOR, ⛔ não o nome.** O `codigoEmenda` do Portal embute
+/// um identificador estável:
+///
+/// <code>
+/// 202541840004
+///  │   │    └── numeroEmenda
+///  │   └─────── 4184 ← código do autor
+///  └─────────── ano
+/// </code>
+///
+/// **Medido:** 173 de 173 autores com código estável dentro do ano, **zero colisões**.
+/// Entre 2023 e 2025, mudou para dois — ⭐ e os dois viraram **senadores**, o que
+/// confirma a chave: ela identifica o **mandato**, e por isso é estável dentro dele.
+///
+/// ⚠️ **`PessoaId` é ANULÁVEL de propósito.** A emenda é ingerida mesmo sem dono
+/// conhecido — senador, emenda de bancada, parlamentar de outra legislatura. Perder o
+/// registro por não saber ligar seria pior: o dado deixa de existir, e a reconciliação
+/// futura não tem o que reconciliar.
+/// </summary>
+public class Emenda
+{
+    public long Id { get; set; }
+
+    /// <summary>⚠️ `null` enquanto o autor não foi reconciliado — ver o resumo acima.</summary>
+    public long? PessoaId { get; set; }
+
+    /// <summary>🔴 A chave do Portal. ⭐ Serve para Câmara **e** Senado.</summary>
+    public required string CodigoAutor { get; set; }
+
+    /// <summary>⚠️ Guardado para a reconciliação e para auditoria — ⛔ não é chave.</summary>
+    public required string NomeAutor { get; set; }
+
+    /// <summary>Código completo do Portal — ⭐ torna a linha rastreável na fonte.</summary>
+    public required string CodigoEmenda { get; set; }
+
+    public short Ano { get; set; }
+
+    /// <summary>"Emenda Individual — Transferências com Finalidade Definida" etc.</summary>
+    public string? Tipo { get; set; }
+
+    /// <summary>⭐ Para ONDE o dinheiro foi — município ou "Nacional".</summary>
+    public string? Localidade { get; set; }
+
+    public string? Funcao { get; set; }
+    public string? Subfuncao { get; set; }
+
+    /// <summary>⚠️ Pode ser NEGATIVO — é cancelamento de empenho.</summary>
+    public decimal ValorEmpenhado { get; set; }
+
+    public decimal ValorLiquidado { get; set; }
+
+    /// <summary>⭐ A distância entre empenhado e pago é o que a análise procura.</summary>
+    public decimal ValorPago { get; set; }
+
+    /// <summary>
+    /// ⚠️ Resto a pagar de exercícios ANTERIORES — pode ser muito maior que o pago do
+    /// ano. ⛔ Somar como se fosse do ano corrente inflaria o número na ficha.
+    /// </summary>
+    public decimal ValorRestoPago { get; set; }
+
+    public Pessoa? Pessoa { get; set; }
+}
+
+/// <summary>
+/// Liga o código de autor do Portal a uma pessoa nossa.
+///
+/// ⭐ **É a tabela que o autor pediu ao dispensar o casamento por nome:** ingere-se tudo
+/// primeiro, resolve-se depois. Um código sem `pessoa_id` fica visível como pendência de
+/// reconciliação, ⛔ em vez de virar registro perdido.
+///
+/// ⚠️ Serve para Senado também — o Portal usa o mesmo esquema de código para as duas
+/// casas.
+/// </summary>
+public class AutorDeEmenda
+{
+    /// <summary>O código extraído do `codigoEmenda`.</summary>
+    public required string Codigo { get; set; }
+
+    /// <summary>⚠️ Última grafia vista — muda; o código, não.</summary>
+    public required string NomeAutor { get; set; }
+
+    /// <summary>`null` = ainda não reconciliado.</summary>
+    public long? PessoaId { get; set; }
+
+    /// <summary>`AUTOMATICO` (nome normalizado) | `MANUAL` | `NAO_RESOLVIDO`</summary>
+    public required string Metodo { get; set; }
+
+    public DateTimeOffset AtualizadoEm { get; set; }
+
+    public Pessoa? Pessoa { get; set; }
+}
+
 public class Execucao
 {
     public long Id { get; set; }

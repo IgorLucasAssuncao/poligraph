@@ -36,6 +36,20 @@ FONTES_PYTHON = sorted(
 # ⚠️ `FROM data` aparece em `EXTRACT(YEAR FROM data)` — é coluna, não tabela.
 NAO_SAO_TABELAS = {"data"}
 
+PADRAO_TABELA = re.compile(
+    # ⚠️ `(?<!DISTINCT )` — em `e.pessoa_id IS DISTINCT FROM a.pessoa_id` o `FROM`
+    #    ⛔ não introduz tabela nenhuma; é operador de comparação.
+    # ⚠️ `(?!\.)` — `FROM a.pessoa_id` é referência a ALIAS. Sem isto o parser acusava
+    #    uma tabela chamada `a`, que ninguém jamais criaria.
+    r"(?<!DISTINCT )"
+    r"\b(?:FROM|INTO|UPDATE|JOIN|CREATE\s+TABLE|REFERENCES|TRUNCATE)\s+"
+    r"([a-z_][a-z0-9_]*)(?!\.)"
+)
+
+# ⚠️ `TRUNCATE a, b, c` só teria a primeira capturada pelo padrão acima. Esta segunda
+#    passada pega o resto da lista.
+PADRAO_TRUNCATE = re.compile(r"\bTRUNCATE\s+([a-z_,\s]+)", re.IGNORECASE)
+
 
 def snake_case(nome: str) -> str:
     """Reproduz o `UseSnakeCaseNamingConvention()` do EF sobre o nome do DbSet.
@@ -55,13 +69,8 @@ def tabelas_do_ef() -> set[str]:
 
 def tabelas_usadas_pelo_python() -> dict[str, list[str]]:
     """Tabela → arquivos que a citam, para o erro dizer onde consertar."""
-    padrao = re.compile(
-        r"\b(?:FROM|INTO|UPDATE|JOIN|CREATE\s+TABLE|REFERENCES|TRUNCATE)\s+"
-        r"([a-z_][a-z0-9_]*)"
-    )
-    # ⚠️ `TRUNCATE a, b, c` só teria a primeira capturada pelo padrão acima. Esta
-    #    segunda passada pega o resto da lista.
-    lista_apos_truncate = re.compile(r"\bTRUNCATE\s+([a-z_,\s]+)", re.IGNORECASE)
+    padrao = PADRAO_TABELA
+    lista_apos_truncate = PADRAO_TRUNCATE
 
     encontradas: dict[str, list[str]] = {}
 
@@ -104,6 +113,39 @@ def test_python_so_usa_tabelas_que_o_ef_criou():
             f"O EF cria: {', '.join(sorted(do_ef))}",
         ]
     )
+
+
+def test_o_parser_de_tabelas_nao_ficou_cego():
+    """🔴 A guarda das exclusões.
+
+    ⚠️ Toda exceção adicionada a um parser de detecção é uma chance de ele parar de
+    detectar. Este teste fixa os dois lados: o que ⛔ **não** é tabela continua fora, e
+    o que **é** continua dentro. Sem ele, apagar o corpo do padrão deixaria o contrato
+    verde e inútil.
+    """
+    achadas = lambda sql: set(PADRAO_TABELA.findall(sql))  # noqa: E731
+
+    # ⛔ O que não é tabela
+    assert achadas("WHERE e.pessoa_id IS DISTINCT FROM a.pessoa_id") == set()
+    assert achadas("SELECT pessoa_id FROM autores_de_emenda a WHERE a.x = 1") == {
+        "autores_de_emenda"
+    }
+
+    # 🔴 O caso que ⛔ **não** é coberto pelo `(?!\.)`: comparação sem alias. Aqui
+    #    `valor_pago` é COLUNA, e sem o `(?<!DISTINCT )` o parser a acusaria de tabela
+    #    inexistente. A mutação que apagou o lookbehind passou até esta linha existir.
+    assert achadas("WHERE valor_empenhado IS DISTINCT FROM valor_pago") == set()
+
+    # 🔴 E o caso que justifica o `(?!\.)`: `EXTRACT(YEAR FROM d.data)`. O `data` solto
+    #    já estava em `NAO_SAO_TABELAS`, mas qualificado por alias ele escaparia da
+    #    lista e viraria uma tabela `d`. Esta linha matou a segunda mutação.
+    assert achadas("SELECT EXTRACT(YEAR FROM d.data) FROM despesas d") == {"despesas"}
+
+    # ⭐ O que é — e precisa continuar sendo pego
+    assert achadas("INSERT INTO emendas (ano)") == {"emendas"}
+    assert achadas("UPDATE pessoas SET cpf_hash = %s") == {"pessoas"}
+    assert achadas("JOIN pessoa_fonte_ids ON") == {"pessoa_fonte_ids"}
+    assert achadas("SELECT * FROM tabela_que_nao_existe") == {"tabela_que_nao_existe"}
 
 
 @pytest.mark.parametrize(

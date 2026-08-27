@@ -153,6 +153,58 @@ def gravar_cpf_hash(conexao: psycopg.Connection, pessoa_id: int, hash_cpf: str) 
     )
 
 
+def mapa_de_cpf_hash(conexao: psycopg.Connection) -> dict[str, int]:
+    """`cpf_hash` → `pessoa_id`. É o de-para que casa o TSE com a Câmara.
+
+    ⭐ **O join acontece entre hashes**, ⛔ nunca entre CPFs em claro: o do TSE é hasheado
+    em memória durante a leitura do CSV e comparado com este mapa. Nenhum dos dois lados
+    precisa ser revertido — RNF-13 sem perder a chave forte.
+
+    ⚠️ Traz também quem foi excluído logicamente. É de propósito: o filtro de exclusão é
+    da API, e o ETL ⛔ não pode reinserir receita órfã por não enxergar o dono.
+    """
+    return {
+        linha[0]: linha[1]
+        for linha in conexao.execute(
+            "SELECT cpf_hash, id FROM pessoas WHERE cpf_hash IS NOT NULL"
+        ).fetchall()
+    }
+
+
+def gravar_receitas(
+    conexao: psycopg.Connection, ano_eleicao: int, linhas: Sequence[dict]
+) -> int:
+    """Grava o financiamento de campanha, substituindo o que já havia da mesma eleição.
+
+    ⚠️ **Apaga por ano de ELEIÇÃO antes de inserir**, pelo mesmo motivo das emendas: o
+    TSE republica o arquivo com prestações retificadas, e ⛔ não há chave natural estável
+    por linha — o mesmo doador aparece várias vezes com o mesmo valor legitimamente
+    (doações parceladas), então `ON CONFLICT` exigiria inventar uma chave que a fonte
+    ⛔ não garante.
+
+    ⭐ Reingerir 2022 ⛔ não toca 2018.
+    """
+    if not linhas:
+        return 0
+
+    conexao.execute(
+        "DELETE FROM receitas_de_campanha WHERE ano_eleicao = %s", (ano_eleicao,)
+    )
+
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO receitas_de_campanha (pessoa_id, ano_eleicao, fonte_receita,
+                                          origem_receita, doador, doador_cnpj_ou_hash,
+                                          doador_eh_pessoa_fisica, valor)
+        VALUES (%(pessoa_id)s, %(ano_eleicao)s, %(fonte_receita)s,
+                %(origem_receita)s, %(doador)s, %(doador_cnpj_ou_hash)s,
+                %(doador_eh_pessoa_fisica)s, %(valor)s)
+        """,
+        linhas,
+    )
+
+
 def gravar_votacoes(conexao: psycopg.Connection, votacoes: Sequence[dict]) -> int:
     """Grava votações. `ON CONFLICT (id) DO UPDATE` — a Câmara corrige dado retroativo."""
     return _executar_em_lotes(
@@ -263,6 +315,103 @@ def gravar_despesas(
                 %(valor_liquido)s, %(data_emissao)s, %(url_documento)s)
         """,
         despesas,
+    )
+
+
+def gravar_emendas(
+    conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict]
+) -> int:
+    """Grava as emendas, substituindo o que já havia dos mesmos anos.
+
+    ⚠️ **Apaga por ANO antes de inserir.** O Portal corrige valor retroativamente — o
+    `valorPago` de uma emenda de 2023 muda ao longo do exercício seguinte. Manter o
+    antigo daria número velho na ficha.
+
+    ⭐ `pessoa_id` ⛔ NÃO é preenchido aqui: a emenda entra sem dono, e a reconciliação
+    é passo separado.
+    """
+    if not linhas:
+        return 0
+
+    conexao.execute("DELETE FROM emendas WHERE ano = ANY(%s)", (anos,))
+
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO emendas (codigo_autor, nome_autor, codigo_emenda, ano, tipo,
+                             localidade, funcao, subfuncao,
+                             valor_empenhado, valor_liquidado, valor_pago,
+                             valor_resto_pago)
+        VALUES (%(codigo_autor)s, %(nome_autor)s, %(codigo_emenda)s, %(ano)s, %(tipo)s,
+                %(localidade)s, %(funcao)s, %(subfuncao)s,
+                %(valor_empenhado)s, %(valor_liquidado)s, %(valor_pago)s,
+                %(valor_resto_pago)s)
+        ON CONFLICT (codigo_autor, codigo_emenda) DO NOTHING
+        """,
+        linhas,
+    )
+
+
+def registrar_autores(conexao: psycopg.Connection, autores: dict[str, str]) -> int:
+    """Registra os códigos de autor vistos, sem resolver o vínculo.
+
+    ⭐ É a lista de pendências de reconciliação. Código sem `pessoa_id` fica **visível**,
+    ⛔ em vez de virar registro perdido.
+
+    ⚠️ `DO UPDATE` só no nome: a grafia muda entre anos, mas ⛔ nunca sobrescreve um
+    `pessoa_id` já resolvido — inclusive o resolvido à mão.
+    """
+    if not autores:
+        return 0
+
+    linhas = [{"codigo": c, "nome_autor": n} for c, n in autores.items()]
+
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO autores_de_emenda (codigo, nome_autor, metodo)
+        VALUES (%(codigo)s, %(nome_autor)s, 'NAO_RESOLVIDO')
+        ON CONFLICT (codigo) DO UPDATE SET nome_autor = EXCLUDED.nome_autor
+        """,
+        linhas,
+    )
+
+
+def vincular_emendas(conexao: psycopg.Connection) -> int:
+    """Aplica o de-para resolvido às emendas já gravadas.
+
+    ⭐ Roda depois da reconciliação e é idempotente — resolver um autor novo e rodar de
+    novo preenche só o que faltava.
+    """
+    return conexao.execute(
+        """
+        UPDATE emendas e
+           SET pessoa_id = a.pessoa_id
+          FROM autores_de_emenda a
+         WHERE a.codigo = e.codigo_autor
+           AND a.pessoa_id IS NOT NULL
+           AND e.pessoa_id IS DISTINCT FROM a.pessoa_id
+        """
+    ).rowcount
+
+
+def autores_nao_resolvidos(conexao: psycopg.Connection) -> list[tuple[str, str]]:
+    return [
+        (linha[0], linha[1])
+        for linha in conexao.execute(
+            "SELECT codigo, nome_autor FROM autores_de_emenda "
+            "WHERE pessoa_id IS NULL ORDER BY nome_autor"
+        ).fetchall()
+    ]
+
+
+def resolver_autor(
+    conexao: psycopg.Connection, codigo: str, pessoa_id: int, metodo: str
+) -> None:
+    conexao.execute(
+        "UPDATE autores_de_emenda SET pessoa_id = %s, metodo = %s, atualizado_em = now() "
+        "WHERE codigo = %s",
+        (pessoa_id, metodo, codigo),
     )
 
 

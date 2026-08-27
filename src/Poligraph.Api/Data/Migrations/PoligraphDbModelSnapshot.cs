@@ -61,6 +61,45 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Api.Data.AutorDeEmenda", b =>
+                {
+                    b.Property<string>("Codigo")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("codigo");
+
+                    b.Property<DateTimeOffset>("AtualizadoEm")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("atualizado_em")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Metodo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("metodo");
+
+                    b.Property<string>("NomeAutor")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nome_autor");
+
+                    b.Property<long?>("PessoaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("pessoa_id");
+
+                    b.HasKey("Codigo")
+                        .HasName("pk_autores_de_emenda");
+
+                    b.HasIndex("PessoaId")
+                        .HasDatabaseName("ix_autores_de_emenda_pessoa_id");
+
+                    b.ToTable("autores_de_emenda", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_autor_metodo", "metodo IN ('AUTOMATICO','MANUAL','NAO_RESOLVIDO')");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Api.Data.AvaliacaoQuestionario", b =>
                 {
                     b.Property<long>("Id")
@@ -216,6 +255,88 @@ namespace Poligraph.Api.Data.Migrations
 
                             t.HasCheckConstraint("ck_despesa_valor", "valor_liquido <> 0");
                         });
+                });
+
+            modelBuilder.Entity("Poligraph.Api.Data.Emenda", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<short>("Ano")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano");
+
+                    b.Property<string>("CodigoAutor")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("codigo_autor");
+
+                    b.Property<string>("CodigoEmenda")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("codigo_emenda");
+
+                    b.Property<string>("Funcao")
+                        .HasColumnType("text")
+                        .HasColumnName("funcao");
+
+                    b.Property<string>("Localidade")
+                        .HasColumnType("text")
+                        .HasColumnName("localidade");
+
+                    b.Property<string>("NomeAutor")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nome_autor");
+
+                    b.Property<long?>("PessoaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("pessoa_id");
+
+                    b.Property<string>("Subfuncao")
+                        .HasColumnType("text")
+                        .HasColumnName("subfuncao");
+
+                    b.Property<string>("Tipo")
+                        .HasColumnType("text")
+                        .HasColumnName("tipo");
+
+                    b.Property<decimal>("ValorEmpenhado")
+                        .HasPrecision(16, 2)
+                        .HasColumnType("numeric(16,2)")
+                        .HasColumnName("valor_empenhado");
+
+                    b.Property<decimal>("ValorLiquidado")
+                        .HasPrecision(16, 2)
+                        .HasColumnType("numeric(16,2)")
+                        .HasColumnName("valor_liquidado");
+
+                    b.Property<decimal>("ValorPago")
+                        .HasPrecision(16, 2)
+                        .HasColumnType("numeric(16,2)")
+                        .HasColumnName("valor_pago");
+
+                    b.Property<decimal>("ValorRestoPago")
+                        .HasPrecision(16, 2)
+                        .HasColumnType("numeric(16,2)")
+                        .HasColumnName("valor_resto_pago");
+
+                    b.HasKey("Id")
+                        .HasName("pk_emendas");
+
+                    b.HasIndex("PessoaId")
+                        .HasDatabaseName("ix_emenda_pessoa");
+
+                    b.HasIndex("CodigoAutor", "CodigoEmenda")
+                        .IsUnique()
+                        .HasDatabaseName("ux_emenda_autor_codigo");
+
+                    b.ToTable("emendas", (string)null);
                 });
 
             modelBuilder.Entity("Poligraph.Api.Data.Execucao", b =>
@@ -595,6 +716,62 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Api.Data.ReceitaDeCampanha", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<short>("AnoEleicao")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano_eleicao");
+
+                    b.Property<string>("Doador")
+                        .HasColumnType("text")
+                        .HasColumnName("doador");
+
+                    b.Property<string>("DoadorCnpjOuHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("doador_cnpj_ou_hash");
+
+                    b.Property<bool>("DoadorEhPessoaFisica")
+                        .HasColumnType("boolean")
+                        .HasColumnName("doador_eh_pessoa_fisica");
+
+                    b.Property<string>("FonteReceita")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("fonte_receita");
+
+                    b.Property<string>("OrigemReceita")
+                        .HasColumnType("text")
+                        .HasColumnName("origem_receita");
+
+                    b.Property<long>("PessoaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("pessoa_id");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("valor");
+
+                    b.HasKey("Id")
+                        .HasName("pk_receitas_de_campanha");
+
+                    b.HasIndex("PessoaId", "AnoEleicao")
+                        .HasDatabaseName("ix_receita_pessoa_eleicao");
+
+                    b.ToTable("receitas_de_campanha", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_receita_valor", "valor <> 0");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Api.Data.Segue", b =>
                 {
                     b.Property<long>("UsuarioId")
@@ -908,6 +1085,17 @@ namespace Poligraph.Api.Data.Migrations
                         .HasConstraintName("fk_arestas_grafo_pessoas_pessoa_b");
                 });
 
+            modelBuilder.Entity("Poligraph.Api.Data.AutorDeEmenda", b =>
+                {
+                    b.HasOne("Poligraph.Api.Data.Pessoa", "Pessoa")
+                        .WithMany()
+                        .HasForeignKey("PessoaId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_autores_de_emenda_pessoas_pessoa_id");
+
+                    b.Navigation("Pessoa");
+                });
+
             modelBuilder.Entity("Poligraph.Api.Data.Consentimento", b =>
                 {
                     b.HasOne("Poligraph.Api.Data.Usuario", "Usuario")
@@ -928,6 +1116,17 @@ namespace Poligraph.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_despesas_pessoas_pessoa_id");
+
+                    b.Navigation("Pessoa");
+                });
+
+            modelBuilder.Entity("Poligraph.Api.Data.Emenda", b =>
+                {
+                    b.HasOne("Poligraph.Api.Data.Pessoa", "Pessoa")
+                        .WithMany()
+                        .HasForeignKey("PessoaId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_emendas_pessoas_pessoa_id");
 
                     b.Navigation("Pessoa");
                 });
@@ -1002,6 +1201,18 @@ namespace Poligraph.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_pessoa_fonte_ids_pessoas_pessoa_id");
+
+                    b.Navigation("Pessoa");
+                });
+
+            modelBuilder.Entity("Poligraph.Api.Data.ReceitaDeCampanha", b =>
+                {
+                    b.HasOne("Poligraph.Api.Data.Pessoa", "Pessoa")
+                        .WithMany()
+                        .HasForeignKey("PessoaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_receitas_de_campanha_pessoas_pessoa_id");
 
                     b.Navigation("Pessoa");
                 });

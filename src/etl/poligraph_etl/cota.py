@@ -22,7 +22,7 @@ from pathlib import Path
 
 import requests
 
-from .normalizacao import hash_de_cpf
+from .normalizacao import hash_de_cpf, valor_com_ponto
 
 log = logging.getLogger("poligraph")
 
@@ -138,12 +138,10 @@ def _identificar_fornecedor(bruto: str | None) -> tuple[str | None, bool]:
     return digitos, False
 
 
-def _decimal(valor: str | None) -> float:
-    """⚠️ O separador decimal do arquivo é PONTO, não vírgula — conferido no dado real."""
-    try:
-        return float((valor or "0").replace(",", "."))
-    except ValueError:
-        return 0.0
+# ⚠️ **Aqui o ponto é DECIMAL** — conferido no arquivo real da CEAP, e é o oposto do
+#   Portal e do TSE. Usar `valor_pt_br` por engano daria um total mil vezes menor, sem
+#   erro nenhum. O nome da função importada é o que impede a troca silenciosa.
+_decimal = valor_com_ponto
 
 
 def _inteiro(valor: str | None) -> int:

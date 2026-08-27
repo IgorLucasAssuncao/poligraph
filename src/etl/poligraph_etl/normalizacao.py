@@ -172,6 +172,75 @@ def normalizar_cpf(bruto: str | int | None) -> str | None:
 
 
 # ═══════════════════════════════════════════════════════════════════
+# 🔴 Dinheiro — e as DUAS convenções que convivem no projeto
+# ═══════════════════════════════════════════════════════════════════
+#
+# ⚠️ Este bloco existe porque as fontes ⛔ **não** concordam sobre o que é um número:
+#
+# | Fonte | `VR` / `vlr` | Convenção |
+# |---|---|---|
+# | Portal da Transparência (emendas) | `- 26.002,00` | pt-BR — ponto é MILHAR |
+# | TSE (prestação de contas) | `3170000,00` | pt-BR — vírgula é decimal |
+# | Câmara (cota parlamentar, CEAP) | `1234.56` | ponto é DECIMAL |
+#
+# 🔴 **A mesma string `"1.234"` vale 1234 numa e 1,234 na outra** — mil vezes de
+# diferença, sem erro nenhum. Foi por isso que as funções ganharam nomes que dizem a
+# convenção, ⛔ não a fonte: escolher a errada tem de ser uma escolha visível.
+
+
+def valor_pt_br(bruto: str | None) -> float:
+    """`"- 26.002,00"` → `-26002.0`. Ponto é MILHAR, vírgula é decimal.
+
+    🔴 **Três armadilhas num campo só**, todas vistas no dado real:
+
+    1. `float()` direto estoura em `"12.599,10"` — e, pior, `float("12.599")` daria
+       **12,599** em vez de 12.599: três ordens de grandeza abaixo, **sem erro**
+    2. O sinal negativo vem **antes e separado**: `"- 26.002,00"`. Empenho negativo é
+       **cancelamento**, e é caso normal — ⛔ não descartar
+    3. Campo vazio, `"#NULO"` e `"#NULO#"` aparecem nas duas fontes pt-BR
+    """
+    texto = (bruto or "").strip()
+    if not texto or texto.upper().startswith("#"):
+        return 0.0
+
+    negativo = texto.startswith("-")
+    digitos = texto.lstrip("-").strip().replace(".", "").replace(",", ".")
+
+    try:
+        valor = float(digitos)
+    except ValueError:
+        return 0.0
+
+    return -valor if negativo else valor
+
+
+def valor_com_ponto(bruto: str | None) -> float:
+    """`"1234.56"` → `1234.56`. O ponto é DECIMAL — convenção da CEAP.
+
+    ⚠️ Conferido no arquivo real da cota: ⛔ **não** tem separador de milhar. Passar
+    um valor pt-BR por aqui daria um número mil vezes menor, calado.
+    """
+    texto = (bruto or "").strip()
+    if not texto or texto.startswith("#"):
+        return 0.0
+
+    try:
+        return float(texto.replace(",", "."))
+    except ValueError:
+        return 0.0
+
+
+# ═══════════════════════════════════════════════════════════════════
+
+def sem_acento_maiusculo(texto: str | None) -> str:
+    """Forma canônica para comparar nomes entre fontes.
+
+    ⚠️ O Portal manda `SOSTENES CAVALCANTE`; a Câmara guarda `Sóstenes Cavalcante`. Sem
+    remover acento E normalizar a caixa E colapsar espaço, os dois nunca casariam — e o
+    sintoma seria "não achou", ⛔ nunca um erro.
+    """
+    return " ".join(_sem_acento(texto or "").upper().split())
+
 
 def _sem_acento(texto: str) -> str:
     return "".join(

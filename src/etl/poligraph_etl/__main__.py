@@ -19,8 +19,11 @@ import numpy as np
 import psycopg
 
 from . import conexao as conexao_mod
-from . import comparacao, cota, grafo, ingestao, normalizacao, persistencia, similaridade, validacao
-from .fontes import camara
+from . import (
+    comparacao, cota, emendas, grafo, ingestao, normalizacao, persistencia,
+    receitas, similaridade, validacao,
+)
+from .fontes import camara, tse
 
 log = logging.getLogger("poligraph")
 
@@ -50,10 +53,14 @@ def main(argv: list[str] | None = None) -> int:
         with psycopg.connect(conexao_str, autocommit=True) as conexao:
             if args.comando == "ingerir":
                 _ingerir(conexao, args.anos)
+            elif args.comando == "emendas":
+                _emendas(conexao, args.anos)
             elif args.comando == "cpf":
                 _cpf(conexao)
             elif args.comando == "cota":
                 _cota(conexao, args.anos)
+            elif args.comando == "fundo":
+                _fundo(conexao, args.eleicao, args.arquivo)
             elif args.comando == "validar":
                 _validar(conexao, args.legislatura, args.divisao_minima)
             else:
@@ -83,8 +90,23 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
 
     sub.add_parser("cpf", help="busca o CPF dos deputados com voto e grava o HASH")
 
+    emd = sub.add_parser("emendas", help="ingere emendas parlamentares (Portal)")
+    emd.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
+
     cotas = sub.add_parser("cota", help="ingere a cota parlamentar (CEAP)")
     cotas.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
+
+    fundo = sub.add_parser(
+        "fundo", help="ingere o financiamento de campanha, incluindo o fundão (TSE)"
+    )
+    # ⚠️ Ano da ELEIÇÃO, ⛔ não do exercício. 2022 elegeu a legislatura 57.
+    fundo.add_argument("--eleicao", type=int, default=2022)
+    fundo.add_argument(
+        "--arquivo",
+        type=Path,
+        default=None,
+        help="ZIP baixado à mão — o plano B para quando o WAF do TSE endurecer",
+    )
 
     validar = sub.add_parser(
         "validar", help="mede discriminação do questionário e comunidade x partido"
@@ -207,6 +229,85 @@ def _analisar(conexao: psycopg.Connection, legislatura: int) -> None:
         raise
 
 
+def _emendas(conexao: psycopg.Connection, anos: list[int]) -> None:
+    """Emendas parlamentares — ingere primeiro, resolve o vínculo depois.
+
+    🔴 **Decisão do autor:** a chave é o **código do autor**, ⛔ não o nome. Nada é
+    descartado por não ter dono conhecido — senador, emenda de bancada e parlamentar de
+    outra legislatura entram com `pessoa_id` nulo e ficam na fila de reconciliação.
+
+    ⭐ O casamento por nome roda **uma vez**, como SUGESTÃO (`AUTOMATICO`). Depois disso
+    o vínculo vive no código, e a grafia deixa de importar.
+    """
+    todas: list[dict] = []
+    autores: dict[str, str] = {}
+
+    for ano in anos:
+        log.info("Emendas de %d...", ano)
+        brutas = emendas.baixar_ano(ano)
+
+        linhas, do_ano = emendas.para_linhas(brutas)
+        todas.extend(linhas)
+        autores.update(do_ano)
+
+        log.info("  %d emendas, %d autores", len(linhas), len(do_ano))
+
+    gravadas = persistencia.gravar_emendas(conexao, anos, todas)
+    persistencia.registrar_autores(conexao, autores)
+    log.info("%d emendas gravadas, %d autores conhecidos", gravadas, len(autores))
+
+    _reconciliar_autores(conexao)
+
+
+def _reconciliar_autores(conexao: psycopg.Connection) -> None:
+    """Sugere o vínculo código → pessoa, pelo nome normalizado.
+
+    ⚠️ Roda só sobre quem ainda ⛔ NÃO está resolvido — nunca sobrescreve resolução
+    manual.
+
+    ⚠️ **Ambiguidade ⛔ não vira palpite:** se duas pessoas normalizam para o mesmo nome,
+    o código fica sem vínculo e aparece na lista de pendências. Chutar seria pior — o
+    erro ficaria congelado no código e invisível.
+    """
+    pendentes = persistencia.autores_nao_resolvidos(conexao)
+    if not pendentes:
+        log.info("Nenhum autor pendente de reconciliação.")
+        return
+
+    por_nome: dict[str, list[int]] = {}
+    for pessoa_id, nome in conexao.execute(
+        "SELECT id, nome_exibicao FROM pessoas WHERE cpf_hash IS NOT NULL"
+    ).fetchall():
+        por_nome.setdefault(normalizacao.sem_acento_maiusculo(nome), []).append(pessoa_id)
+
+    resolvidos = ambiguos = 0
+    for codigo, nome_autor in pendentes:
+        candidatos = por_nome.get(normalizacao.sem_acento_maiusculo(nome_autor), [])
+
+        if len(candidatos) == 1:
+            persistencia.resolver_autor(conexao, codigo, candidatos[0], "AUTOMATICO")
+            resolvidos += 1
+        elif len(candidatos) > 1:
+            ambiguos += 1
+
+    vinculadas = persistencia.vincular_emendas(conexao)
+
+    log.info(
+        "Reconciliação: %d de %d autores resolvidos, %d emendas vinculadas",
+        resolvidos, len(pendentes), vinculadas,
+    )
+    if ambiguos:
+        log.warning("  %d autores AMBÍGUOS — dois deputados com o mesmo nome", ambiguos)
+
+    restantes = len(persistencia.autores_nao_resolvidos(conexao))
+    if restantes:
+        # ⚠️ Pendência é NORMAL: senadores e bancadas nunca terão dono na nossa base.
+        log.info(
+            "  %d autores seguem sem vínculo (senadores, bancadas, outras legislaturas)",
+            restantes,
+        )
+
+
 def _cpf(conexao: psycopg.Connection) -> None:
     """Completa `cpf_hash` a partir da API REST da Câmara.
 
@@ -280,6 +381,74 @@ def _cota(conexao: psycopg.Connection, anos: list[int]) -> None:
                 "  %d descartadas: sem `ideCadastro`, fora do de-para, ou valor zero",
                 descartadas,
             )
+
+
+def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> None:
+    """Financiamento de campanha — o fundão e o resto, ligados por CPF.
+
+    🔴 **Depende de `cpf` ter rodado antes.** Sem `cpf_hash` em `pessoas`, o de-para sai
+    vazio e **toda** linha do TSE é descartada — 377 MB lidos para gravar zero, com log
+    de sucesso. É exatamente o tipo de falha silenciosa que este projeto já pagou caro.
+    """
+    hashes = persistencia.mapa_de_cpf_hash(conexao)
+    if not hashes:
+        raise RuntimeError(
+            "Nenhuma pessoa com `cpf_hash`. Rode `cpf` antes: o join com o TSE é por "
+            "hash de CPF, e sem ele toda receita seria descartada em silêncio."
+        )
+
+    log.info("De-para: %d pessoas com CPF hasheado", len(hashes))
+
+    if arquivo is None:
+        url = tse.url_de_prestacao_de_contas(eleicao)
+        if not tse.existe(url):
+            raise tse.ErroDeAcessoAoTse(
+                f"O TSE ⛔ não respondeu para {url}. Se for 403, a receita de headers "
+                "caiu; baixe à mão e use --arquivo. Ver docs/12-fonte-tse.md §2.2."
+            )
+        arquivo = tse.baixar(url, CACHE / f"prestacao-contas-{eleicao}.zip")
+
+    nomes = receitas.nomes_de_receita(arquivo, eleicao)
+    if not nomes:
+        raise RuntimeError(
+            f"Nenhum `receitas_candidatos_{eleicao}_*.csv` dentro de {arquivo.name}. "
+            "O layout do ZIP mudou?"
+        )
+
+    log.info("%d arquivos estaduais de receita", len(nomes))
+
+    todas: list[dict] = []
+    for nome in nomes:
+        linhas = receitas.para_linhas(
+            receitas.ler_receitas(arquivo, nome), hashes, eleicao
+        )
+        todas.extend(linhas)
+
+        if linhas:
+            log.info("  %s — %d linhas de deputado federal eleito", nome, len(linhas))
+
+    gravadas = persistencia.gravar_receitas(conexao, eleicao, todas)
+    resumo = receitas.resumir(todas)
+
+    log.info(
+        "Eleição %d: %d receitas gravadas, %d parlamentares",
+        eleicao, gravadas, int(resumo["parlamentares"]),
+    )
+    # 🔴 Fundo Especial (o "fundão") e Fundo Partidário são fundos DIFERENTES — o log
+    #    os separa pelo mesmo motivo que o banco: somá-los é decisão de quem analisa.
+    log.info(
+        "  total R$ %.2f · fundo especial (FEFC) R$ %.2f",
+        resumo["total"], resumo["fundo_especial"],
+    )
+
+    # ⚠️ Casar muito pouco ⛔ não é erro do TSE — é `cpf` incompleto. Sem este aviso, a
+    #    ficha mostraria financiamento zerado para a maioria e ninguém perceberia.
+    if resumo["parlamentares"] < len(hashes) * 0.5:
+        log.warning(
+            "  só %d de %d pessoas com CPF casaram. Esperado: a maioria dos eleitos. "
+            "Rode `cpf` de novo, ou confira se a eleição %d é a que elegeu a legislatura.",
+            int(resumo["parlamentares"]), len(hashes), eleicao,
+        )
 
 
 def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: float) -> None:
