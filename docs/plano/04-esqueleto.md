@@ -70,7 +70,7 @@ CREATE TABLE pessoa (
     nome_exibicao   TEXT NOT NULL,
     data_nascimento DATE,
     sexo            CHAR(1),
-    cpf_hash        CHAR(64)                   -- ⚠️ NUNCA o CPF em claro (RNF-13)
+    cpf_hash        VARCHAR(64)                -- ⚠️ NUNCA o CPF em claro (RNF-13)
 );
 
 CREATE TABLE pessoa_fonte_id (
@@ -397,12 +397,95 @@ empresa, e sem ele não dá para cruzar o mesmo fornecedor entre parlamentares.
 
 📐 Fonte e armadilhas em [`14-fontes-de-gasto`](../14-fontes-de-gasto.md).
 
+### Tabelas novas: `emendas` e `autores_de_emenda`
+
+```sql
+CREATE TABLE emendas (
+    id                BIGSERIAL PRIMARY KEY,
+    pessoa_id         BIGINT REFERENCES pessoas(id) ON DELETE SET NULL,  -- 🔴 ANULÁVEL
+    codigo_autor      VARCHAR(16) NOT NULL,   -- 🔴 a chave, ⛔ não o nome
+    nome_autor        TEXT NOT NULL,          -- ⚠️ auditoria, ⛔ NÃO é chave
+    codigo_emenda     TEXT NOT NULL,
+    ano               SMALLINT NOT NULL,
+    tipo              TEXT,
+    localidade        TEXT,
+    funcao            TEXT,
+    subfuncao         TEXT,
+    valor_empenhado   NUMERIC(16,2) NOT NULL,   -- ⚠️ pode ser NEGATIVO: é cancelamento
+    valor_liquidado   NUMERIC(16,2) NOT NULL,
+    valor_pago        NUMERIC(16,2) NOT NULL,
+    valor_resto_pago  NUMERIC(16,2) NOT NULL
+);
+CREATE UNIQUE INDEX ux_emenda_autor_codigo ON emendas (codigo_autor, codigo_emenda);
+CREATE INDEX ix_emenda_pessoa ON emendas (pessoa_id);
+
+CREATE TABLE autores_de_emenda (
+    codigo        VARCHAR(16) PRIMARY KEY,
+    nome_autor    TEXT NOT NULL,
+    pessoa_id     BIGINT REFERENCES pessoas(id) ON DELETE SET NULL,
+    metodo        TEXT NOT NULL CHECK (metodo IN ('AUTOMATICO','MANUAL','NAO_RESOLVIDO')),
+    atualizado_em TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+🔴 **`pessoa_id` é anulável DE PROPÓSITO, e é a decisão de desenho mais importante aqui.**
+O plano é *ingerir tudo primeiro, resolver o vínculo depois*: emenda de comissão, de
+bancada e de parlamentar de outra legislatura entra sem dono e vira **pendência visível**
+em `autores_de_emenda`. Descartar o registro por não saber ligar seria pior — a
+reconciliação futura ⛔ não teria o que reconciliar.
+
+⚠️ **`nome_autor` fica nas duas tabelas, e ⛔ nenhuma das duas o usa como chave.** Ele
+existe para que a pendência seja legível por um humano. A chave é `codigo_autor`, que
+identifica o **mandato** — 📐 [achado #24](../achados/024-codigo-da-emenda-identifica-o-mandato.md).
+
+⭐ **`metodo` é procedência, ⛔ não estado.** `MANUAL` ⛔ nunca é sobrescrito por execução
+automática posterior — é o que torna cada vínculo auditável no TCC.
+
+⚠️ **⛔ Não há `CHECK` de valor não-zero aqui**, ao contrário de `despesas`: emenda com
+`valor_pago = 0` é o **caso mais informativo** da tabela — a emenda anunciada, empenhada e
+nunca paga.
+
+### Tabela nova: `receitas_de_campanha` — o fundão
+
+```sql
+CREATE TABLE receitas_de_campanha (
+    id                       BIGSERIAL PRIMARY KEY,
+    pessoa_id                BIGINT NOT NULL REFERENCES pessoas(id) ON DELETE CASCADE,
+    ano_eleicao              SMALLINT NOT NULL,   -- ⚠️ da ELEIÇÃO, não do exercício
+    fonte_receita            TEXT NOT NULL,       -- 🔴 'FUNDO ESPECIAL' ≠ 'FUNDO PARTIDARIO'
+    origem_receita           TEXT,
+    doador                   TEXT,
+    doador_cnpj_ou_hash      VARCHAR(64),         -- mesma regra de `despesas`
+    doador_eh_pessoa_fisica  BOOLEAN NOT NULL,
+    valor                    NUMERIC(14,2) NOT NULL CHECK (valor <> 0)
+);
+CREATE INDEX ix_receita_pessoa_eleicao ON receitas_de_campanha (pessoa_id, ano_eleicao);
+```
+
+🔴 **`fonte_receita` é um literal COMBINADO entre C# e Python**, e é o tipo de acoplamento
+que o banco ⛔ não consegue proteger: o ETL grava o texto, a API compara com ele, e
+qualquer texto é válido na coluna. Uma letra de diferença faria o total do fundão sair
+**zero** na ficha, sem exceção nenhuma.
+
+⭐ Por isso o valor vive como `const` em `ReceitaDeCampanha.FonteFundoEspecial`, e
+`test_contrato_schema.py` compara os dois lados. É a **terceira** forma de C# e Python
+divergirem — depois de nome de tabela e nome de coluna.
+
+⚠️ **`CASCADE` aqui, `SET NULL` em `emendas`**, e a diferença é de significado: receita de
+campanha ⛔ não existe sem o candidato; **emenda existe sem dono conhecido** — é o estado
+normal de 159 delas.
+
 ### Colunas novas em `pessoas`
 
 ```sql
 ALTER TABLE pessoas ADD COLUMN url_foto    TEXT;
 ALTER TABLE pessoas ADD COLUMN excluido_em TIMESTAMPTZ;
 ```
+
+⚠️ **`cpf_hash` ⛔ NÃO é coluna nova** — está no desenho desde o começo (§2.1). O que mudou
+é que ela **passou a ser preenchida**: 643 de 643, pelo comando `cpf`, a partir da API REST
+da Câmara. O CSV em bloco traz a coluna **vazia** —
+📐 [achado #22](../achados/022-deputados-nao-e-arquivo-anual.md).
 
 | Coluna | Por quê |
 |---|---|

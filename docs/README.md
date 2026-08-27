@@ -43,7 +43,7 @@ valor — número repetido é número que diverge.
 
 | Doc | Conteúdo |
 |---|---|
-| [**achados/**](achados/README.md) | 🔬 **Os 22 achados**, um arquivo cada: o que foi medido, como, quando, resultado. **É o que a fundamentação cita** |
+| [**achados/**](achados/README.md) | 🔬 **Os 24 achados**, um arquivo cada: o que foi medido, como, quando, resultado. **É o que a fundamentação cita** |
 | [**metodos.md**](metodos.md) | 📐 **O que cada número significa** — `r` de Pearson, ARI, modularidade, variância explicada. Com intervalo, leitura e valor medido |
 
 > ⚠️ **`r` significa duas coisas neste projeto** — correlação de Pearson (0,862) e razão
@@ -56,7 +56,7 @@ valor — número repetido é número que diverge.
 | [00-discovery.md](00-discovery.md) | **Documento central.** Título do TCC, escopo, fontes, riscos, decisões, roadmap. ⚠️ Os achados foram extraídos para [`achados/`](achados/README.md) — aqui fica a narrativa |
 | [03-requisitos.md](03-requisitos.md) | Requisitos funcionais e não funcionais, regras de negócio, restrições |
 | [04-contratos.md](04-contratos.md) | **Contratos** — entradas, saídas e uso, com cardinalidades medidas |
-| [14-fontes-de-gasto.md](14-fontes-de-gasto.md) | 💰 **O que pode enriquecer o perfil** — cota parlamentar, fotos, emendas. Com o critério que reprova licitações e PNCP |
+| [14-fontes-de-gasto.md](14-fontes-de-gasto.md) | 💰 **O que enriquece o perfil** — cota, emendas e fundão, **os três ingerindo**. Com o critério que reprova licitações e PNCP |
 | [PENDENCIAS.md](PENDENCIAS.md) | ⭐ **Visão consolidada** — 46 abertas, agrupadas pelo que destrava cada uma |
 | [REVISAR-ANTES-DA-CONCLUSAO.md](REVISAR-ANTES-DA-CONCLUSAO.md) | ⏳ **Fatos com prazo de validade** — reverificar antes de escrever |
 
@@ -73,7 +73,7 @@ valor — número repetido é número que diverge.
 |---|---|---|
 | [10-api-camara.md](10-api-camara.md) | Endpoints, payloads reais, CSVs consolidados, 15 armadilhas | ✅ Sim |
 | [11-api-senado.md](11-api-senado.md) | Endpoints, envelopes XML→JSON, endpoint depreciado | ✅ Sim |
-| [12-fonte-tse.md](12-fonte-tse.md) | Arquivos CSV, bloqueio 403, carga manual | ⚠️ **Parcial** — 403 impediu validação |
+| [12-fonte-tse.md](12-fonte-tse.md) | Arquivos CSV, o WAF, prestação de contas | ✅ **v3.0** — prestação de contas de 2022 **ingerida** |
 | [13-correlacao-entre-fontes.md](13-correlacao-entre-fontes.md) | *Entity resolution*, chaves, ordem do ETL | ✅ Sim |
 
 ### Rascunhos de arquitetura
@@ -91,7 +91,7 @@ valor — número repetido é número que diverge.
 
 ---
 
-## Os 18 achados de exploração
+## Os 24 achados
 
 Resumo do que a investigação nas APIs revelou. Detalhes no
 [discovery](00-discovery.md).
@@ -116,6 +116,21 @@ Resumo do que a investigação nas APIs revelou. Detalhes no
 | 16 | ⭐ **Relatoria** é o melhor sinal não-votação (mediana 7/deputado) | Perfil temático |
 | 17 | 🔴 **56% das votações do Senado são secretas** | Senado tem 182, não 421 |
 | 18 | ⭐ **41 dos 81 senadores já foram deputados** | Ponte temporal entre grafos |
+
+### ⭐ E os que vieram da IMPLEMENTAÇÃO, não do discovery
+
+⚠️ **Estes só apareceram ao rodar o ETL contra a fonte real** — nenhum deles era visível
+lendo documentação ou fazendo requisição de amostra. É o argumento empírico a favor de
+implementar cedo.
+
+| # | Achado | Impacto |
+|---|---|---|
+| 19 | Os CSVs são **reconstruídos toda madrugada**, todos os anos | Reingestão precisa ser idempotente |
+| 20 | O endpoint devolve **duplicatas** | Deduplicação obrigatória |
+| 21 | A CPMI **não publica** votação nominal | ⏳ Prazo de validade |
+| 22 | `deputados.csv` **não é anual** e **não tem coluna `id`** | O ETL registrava `0 deputados` em INFO |
+| 23 | 🔴 No TSE, o **consolidado é o único com o DF** — e duplica os estaduais | R$ 17,2 mi perdidos em silêncio |
+| 24 | ⭐ O `codigoEmenda` embute um id estável de **mandato** | Chave que serve à Câmara **e** ao Senado |
 
 ---
 

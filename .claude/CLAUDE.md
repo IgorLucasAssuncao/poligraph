@@ -12,10 +12,10 @@
 
 | Documento | Por quê |
 |---|---|
-| [`docs/PENDENCIAS.md`](docs/PENDENCIAS.md) | O que está aberto e o que bloqueia |
-| [`docs/plano/01-arquitetura.md`](docs/plano/01-arquitetura.md) **§8** | A ordem de construção |
-| [`docs/plano/04-esqueleto.md`](docs/plano/04-esqueleto.md) | Schema, EF Core e código de auth |
-| [`docs/04-contratos.md`](docs/04-contratos.md) | **Cardinalidades medidas** — a fonte da verdade |
+| [`docs/PENDENCIAS.md`](../docs/PENDENCIAS.md) | O que está aberto e o que bloqueia |
+| [`docs/plano/01-arquitetura.md`](../docs/plano/01-arquitetura.md) **§8** | A ordem de construção |
+| [`docs/plano/04-esqueleto.md`](../docs/plano/04-esqueleto.md) | Schema, EF Core e código de auth |
+| [`docs/04-contratos.md`](../docs/04-contratos.md) | **Cardinalidades medidas** — a fonte da verdade |
 
 > ⚠️ **Regra metodológica do projeto, escrita depois de errar várias vezes:**
 > **medir um ano e generalizar foi a origem de quase todos os erros cometidos aqui.**
@@ -83,7 +83,7 @@ invertido **não aparece na tela** — aparece como um número plausível e erra
 | Token de sessão | O cookie é assinado, verificado por assinatura |
 | Senha | A autenticação é sempre delegada ao Google |
 
-Ver [`plano/02 §3.6`](docs/plano/02-autenticacao-e-metricas.md).
+Ver [`plano/02 §3.6`](../docs/plano/02-autenticacao-e-metricas.md).
 
 ### 3. Dado sensível — LGPD art. 5º, II
 
@@ -97,7 +97,7 @@ respeitar consentimento específico (RNF-12b) e o endpoint de exclusão (art. 18
 > **Onde a regra puder virar `CHECK`, `UNIQUE` ou `FK`, ela vira.**
 
 Um bug que o banco rejeita custa minutos; um que ele aceita custa um capítulo do TCC. No EF
-Core isso significa **`HasCheckConstraint`** — ver [`plano/04 §2.4`](docs/plano/04-esqueleto.md).
+Core isso significa **`HasCheckConstraint`** — ver [`plano/04 §2.4`](../docs/plano/04-esqueleto.md).
 
 ---
 
@@ -133,7 +133,7 @@ df = pd.read_csv(path, sep=';', encoding='utf-8-sig', quotechar='"', dtype=str)
 ```
 
 ⚠️ **Os CSVs da Câmara têm quebras de linha dentro de campos.** Parsing ingênuo por linha
-inflou a contagem em 8,8% — ver [`04-contratos`](docs/04-contratos.md).
+inflou a contagem em 8,8% — ver [`04-contratos`](../docs/04-contratos.md).
 
 ### C# — resumo
 

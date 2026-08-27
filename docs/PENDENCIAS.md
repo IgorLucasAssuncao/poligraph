@@ -70,10 +70,12 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | **A4** | Quantas das 100 proposições sobrevivem ao corte de unanimidade | 🟡 Média | — |
 | **PL34** | 🔵 **Adiada por decisão do autor:** gravar as respostas individuais do questionário, SEM vínculo com a conta, para analisar quais perguntas dividem e quais ninguém entende (§ abaixo) | 🔵 Futuro | — |
 | ~~API4~~ | ✅ **Resolvida** — cosseno no grafo, concordância simples na tela (plano/07 §4.5) | — | — |
-| 🔴 **PL44** | **A troca de legislatura não é tratada de ponta a ponta** — a ingestão já deduz a legislatura pela data (corrigido), mas ⛔ falta: filtrar por legislatura nas consultas (PL35), decidir o que a tela mostra na virada, e o que acontece com quem respondeu o questionário na 57ª. ⏳ **A 57ª termina em janeiro de 2027** | 🔴 **Alta** | 🟡 Horas |
-| 🔴 **PL35** | **A legislatura não é filtrada em consulta nenhuma** — a decisão "só a 57ª" ([plano/06 §3](plano/06-perguntas-lote-1.md)) vive só no documento. Detalhe abaixo | 🔴 **Alta** | 🟡 Horas |
+| 🟡 **PL44** | 🔄 **Avançou** — a ingestão deduz a legislatura pela data e as **consultas já filtram** (PL35 ✅). ⛔ Falta a parte de **produto**: o que a tela mostra na virada, e o que acontece com quem respondeu o questionário na 57ª. ⏳ **A 57ª termina em janeiro de 2027** | 🟡 Média | 🟢 Decisão |
+| 🟡 **PL45** | **🆕 9 autores de emenda ambíguos aguardam decisão humana** — a porta de entrada já existe (`emendas --resolver`), mas quem decide é uma pessoa. Lista completa abaixo | 🟡 Média | 🟢 Minutos |
+| 🔵 **PL46** | **🆕 83 autores de emenda são senadores** — resolvem-se sozinhos quando a [PL42](#) trouxer o Senado, porque o código do autor é de **mandato** e vale para as duas casas ([achado #24](achados/024-codigo-da-emenda-identifica-o-mandato.md)) | 🔵 Futuro | — |
+| ~~PL35~~ | ✅ **Resolvida (2026-08-27)** — `Legislaturas` DERIVA a legislatura do dado, nunca de configuração. `TestesLegislatura` semeia **duas** legislaturas e prova que a segunda ⛔ não vaza; as três mutações matam os três filtros. § abaixo mantido como registro | — | — |
 | ~~PL36~~ | ✅ **Resolvida (2026-08-26)** — nomes corrigidos e **verificado rodando o container contra o banco real**: monta a matriz e grava `execucoes`. Estava faltando também traduzir a connection string do Aspire (§ abaixo) | — | — |
-| 🟡 **PL37** | 🔄 **Parcial** — `test_contrato_schema.py` lê o `PoligraphDb.cs` e trava os **nomes** de tabela. ⛔ As **colunas** continuam sem proteção: o DDL de `test_persistencia.py` ainda é escrito à mão | 🟡 Média | 🟡 Horas |
+| ~~PL37~~ | ✅ **Resolvida (2026-08-27)** — `test_contrato_schema.py` cobre agora **nomes de tabela, nomes de coluna e os literais combinados** entre os dois lados (`FUNDO ESPECIAL`, `ck_autor_metodo`). ⭐ O próprio parser tem teste que morre sob mutação — sem ele, uma exceção mal posta o deixaria cego e verde | — | — |
 | ~~PL39~~ | ✅ **Resolvida (2026-08-26)** — legislatura 57 inteira ingerida: 470.786 votos, 5.268 arestas | — | — |
 | 🟡 **PL43** | **`eixo_x`/`eixo_y` divergem do plano** — o rascunho previa 1ª componente do SVD (eixo interpretável, linhagem W-NOMINATE); o implementado é layout de molas, que ⛔ não tem eixo com significado. Guardar as duas coisas ou ficar só com molas? Ver [plano/07 §3.6](plano/07-grafo-e-afinidade.md) | 🟡 Média | 🟢 Decisão |
 | 🔴 **PL42** | **O Senado não é ingerido** — nenhuma linha de código o alcança. ⚠️ A RF-07 é 🟢 Desejável, mas a **RNF-28 proíbe o seletor de casa** e o desenho da §3.4.1 exige perguntas das duas casas embaralhadas e duas listas no resultado. Sem Senado, esse desenho não existe | 🔴 **Alta** | 🔴 Dias |
@@ -81,7 +83,56 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | 🟡 **PL40** | **`proposicoes` nunca é ingerida** — o CSV de votações traz só o `id` da proposição, sem sigla/número/ano/ementa. Hoje o `proposicao_id` é anulado. 🔴 Bloqueia a **RF-30** (exibir a ementa original ao lado da pergunta) | 🟡 Média | 🟡 Horas |
 | ~~PL38~~ | ✅ **Resolvida (2026-08-26)** — `arestas_grafo` e `nos_metrica` gravadas; Louvain + layout de molas com semente fixa; 30 comunidades em 655 nós. ⚠️ `governismo` e `disciplina` seguem nulos: dependem de `votacoesOrientacoes`, ainda não ingerido | — | — |
 
-### 🔴 PL35 — a legislatura não é filtrada em consulta nenhuma
+### 🟡 PL45 — os 9 autores de emenda ambíguos
+
+**Medida em 2026-08-27**, na ingestão real das emendas de 2023–2026.
+
+A reconciliação automática casa `codigo → pessoa` pelo nome normalizado, e **desiste
+quando o nome casa com mais de uma pessoa**. ⛔ Chutar seria pior: o erro ficaria
+congelado no código do autor e invisível — toda emenda daquele mandato iria para a ficha
+errada, e nada na tela indicaria isso.
+
+| Código | Nome no Portal | Candidatos em `pessoas` |
+|---|---|---|
+| `2815` | RICARDO IZAR | `883` Ricardo Izar · `1781` RICARDO IZAR |
+| `2733` | MARCIO MACEDO | `825` Márcio Macêdo · `3377` MÁRCIO MACEDO |
+| `2052` | ALVARO DIAS | `1839` ÁLVARO DIAS · `3502` ALVARO DIAS |
+| `1338` | PAULO RAMOS | `862` Paulo Ramos · `4965` PAULO RAMOS |
+| `2674` | LUIZ CARLOS | `7716` LUIZ CARLOS · `807` Luiz Carlos |
+| `4015` | HELIO COSTA | `766` Hélio Costa · `2177` HÉLIO COSTA |
+| `2215` | BILAC PINTO | `4230` BILAC PINTO · `683` Bilac Pinto |
+| `4020` | JOAO ROMA | `4055` JOÃO ROMA · `782` João Roma |
+| `2900` | CIRO NOGUEIRA | `2630` CIRO NOGUEIRA · `1632` CIRO NOGUEIRA |
+
+⚠️ **⛔ Não são todos duplicata.** Alguns são **pai e filho** homônimos de gerações
+diferentes — *Ciro Nogueira* e *Ricardo Izar* são os casos clássicos. É por isso que uma
+regra automática do tipo *"prefira quem está na legislatura corrente"* ⛔ **não** serve: a
+emenda para o exercício de 2023 foi apresentada em **2022**, quando o outro podia estar em
+exercício.
+
+**Como resolver, depois de decidir olhando o dado:**
+
+```bash
+python -m poligraph_etl emendas --resolver 2815=883 2900=1632
+```
+
+⭐ Fica gravado como `metodo = 'MANUAL'`, e execução automática posterior ⛔ **nunca**
+sobrescreve. A procedência de cada vínculo é auditável — o que importa para o TCC.
+
+---
+
+### ✅ PL35 (resolvida) — a legislatura não era filtrada em consulta nenhuma
+
+> ✅ **Resolvida em 2026-08-27.** O que está abaixo é o registro do problema; a
+> solução está em [`Legislaturas.cs`](../src/Poligraph.Api/Data/Legislaturas.cs) e em
+> [`TestesLegislatura.cs`](../src/Poligraph.Tests/Integracao/TestesLegislatura.cs).
+>
+> ⭐ **A decisão de desenho:** a legislatura é **derivada do dado**, ⛔ nunca configurada —
+> dado repetido em `appsettings` seria mais uma coisa a esquecer de virar na posse da 58ª,
+> e o erro reapareceria como número plausível. E são **duas** derivações, porque são duas
+> perguntas: o denominador do painel sai das **perguntas ativas** (na virada, o pool ainda
+> é da 57ª e o denominador tem de acompanhar as votações mostradas); a lista e a ficha
+> usam a **corrente** = `MAX` em `votacoes`.
 
 **Encontrada em 2026-08-26**, a partir da pergunta do autor *"será só dessa legislatura?"*.
 

@@ -1,5 +1,18 @@
 # TSE — Dados Abertos Eleitorais
 
+> 🔄 **v3.0 — 2026-08-27: O TSE SAIU DO PAPEL.** A prestação de contas de 2022 está
+> **ingerida**: 22.511 receitas de campanha, **642 dos 643** deputados, R$ 907,7 mi de
+> Fundo Especial. O acesso descrito em §2.0 foi **reconferido ao vivo** — `HEAD` continua
+> devolvendo 403 e `GET` com `Range`, 200.
+>
+> 🔴 **E apareceu uma armadilha que o discovery ⛔ não tinha visto**, porque só aparece
+> ao abrir o ZIP: o **DF ⛔ não tem arquivo estadual próprio**, e o consolidado duplica os
+> estaduais. 📐 [Achado #23](achados/023-consolidado-do-tse-e-o-unico-com-df.md).
+>
+> ⚠️ **O que continua valendo desta página:** §1.1.2 — o TSE como **infraestrutura de
+> identidade** para a ponte deputado→senador. Esse uso ⛔ ainda não foi implementado, e
+> segue sendo o argumento mais forte para manter o TSE no escopo.
+
 > **Status:** v2.0 — 2026-08-23
 > 🔄 **v2.0 — REESCRITO APÓS VALIDAÇÃO REAL.** O **achado #5 foi derrubado**: o TSE **é**
 > automatizável, com o conjunto completo de headers de navegador. O

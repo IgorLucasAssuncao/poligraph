@@ -26,7 +26,7 @@ se mede*.
 
 ---
 
-## Os 22 achados
+## Os 24 achados
 
 ### 🔴 Estruturantes — mudaram a arquitetura
 
@@ -69,6 +69,16 @@ se mede*.
 | [#5](005-tse-bloqueia-acesso-automatizado.md) | TSE bloqueia acesso automatizado | ⚠️ **Revisado** — é automatizável |
 | [#13](013-frente-parlamentar-nao-serve.md) | Frente parlamentar **não discrimina** | Assinar é barato |
 | [#16](016-relatoria-e-o-melhor-sinal.md) | **Relatoria** é o melhor sinal não-voto | ⛔ Não implementado |
+
+### 💰 Sobre o dinheiro do mandato
+
+⭐ **Os dois vieram da implementação, ⛔ não do discovery** — só apareceram ao rodar a
+ingestão contra a fonte real.
+
+| # | Achado | |
+|---|---|---|
+| [**#23**](023-consolidado-do-tse-e-o-unico-com-df.md) | 🔴 No TSE, o consolidado é o **único arquivo com o DF** | E ele duplica os estaduais. Ler só os estaduais perdia **R$ 17,2 mi** em silêncio |
+| [**#24**](024-codigo-da-emenda-identifica-o-mandato.md) | O `codigoEmenda` embute um id estável de **mandato** | 173/173 estáveis, **zero colisões** — e serve ao Senado, que não publica CPF |
 
 ---
 

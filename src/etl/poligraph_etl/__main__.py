@@ -54,7 +54,10 @@ def main(argv: list[str] | None = None) -> int:
             if args.comando == "ingerir":
                 _ingerir(conexao, args.anos)
             elif args.comando == "emendas":
-                _emendas(conexao, args.anos)
+                if args.resolver:
+                    _resolver_a_mao(conexao, args.resolver)
+                else:
+                    _emendas(conexao, args.anos)
             elif args.comando == "cpf":
                 _cpf(conexao)
             elif args.comando == "cota":
@@ -92,6 +95,16 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
 
     emd = sub.add_parser("emendas", help="ingere emendas parlamentares (Portal)")
     emd.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
+    # ⭐ A porta de entrada da reconciliação MANUAL. Sem ela, `metodo = 'MANUAL'` seria
+    #    um valor que o `CHECK` admite e ⛔ nada jamais grava — e os 9 autores ambíguos
+    #    ficariam sem saída, porque ambiguidade ⛔ não pode virar palpite automático.
+    emd.add_argument(
+        "--resolver",
+        nargs="+",
+        default=[],
+        metavar="CODIGO=PESSOA_ID",
+        help="vincula autores à mão, ex.: --resolver 4184=612 3767=91",
+    )
 
     cotas = sub.add_parser("cota", help="ingere a cota parlamentar (CEAP)")
     cotas.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
@@ -318,6 +331,65 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
             "  %d autores seguem sem vínculo (senadores, bancadas, outras legislaturas)",
             restantes,
         )
+
+
+def pares_de_resolucao(entradas: list[str]) -> list[tuple[str, int]]:
+    """Converte `["4184=612", "3767=91"]` em `[("4184", 612), ("3767", 91)]`.
+
+    🔴 **Entrada malformada estoura**, ⛔ não é ignorada. Um `--resolver 4184` sem o `=`
+    seria silenciosamente descartado, e a pessoa concluiria que vinculou quando ⛔ não
+    vinculou — o mesmo formato de falha que este projeto persegue.
+    """
+    pares: list[tuple[str, int]] = []
+
+    for entrada in entradas:
+        codigo, separador, pessoa = entrada.partition("=")
+        if not separador or not codigo.strip() or not pessoa.strip():
+            raise ValueError(
+                f"'{entrada}' não é CODIGO=PESSOA_ID. Ex.: --resolver 4184=612"
+            )
+
+        try:
+            pares.append((codigo.strip(), int(pessoa)))
+        except ValueError:
+            raise ValueError(f"'{pessoa}' não é um id de pessoa") from None
+
+    return pares
+
+
+def _resolver_a_mao(conexao: psycopg.Connection, entradas: list[str]) -> None:
+    """PL45 — vincula autor de emenda à mão.
+
+    ⭐ **É a saída dos 9 ambíguos.** Dois parlamentares com o mesmo nome de urna ⛔ não
+    são separáveis por texto; a reconciliação automática desiste de propósito, e quem
+    decide é uma pessoa — que fica registrada como `MANUAL`.
+
+    ⚠️ `MANUAL` ⛔ nunca é sobrescrito por execução automática posterior, e a coluna
+    `metodo` é o que torna essa procedência auditável no TCC.
+    """
+    for codigo, pessoa_id in pares_de_resolucao(entradas):
+        existe = conexao.execute(
+            "SELECT nome_exibicao FROM pessoas WHERE id = %s", (pessoa_id,)
+        ).fetchone()
+
+        # 🔴 Confere ANTES de gravar. A FK pegaria o id inexistente, mas com uma
+        #    mensagem do Postgres — e aqui dá para dizer o que fazer.
+        if not existe:
+            raise RuntimeError(f"pessoa {pessoa_id} não existe. Confira o id em `pessoas`.")
+
+        autor = conexao.execute(
+            "SELECT nome_autor FROM autores_de_emenda WHERE codigo = %s", (codigo,)
+        ).fetchone()
+        if not autor:
+            raise RuntimeError(
+                f"código {codigo} não foi visto em nenhuma emenda. Rode `emendas` antes."
+            )
+
+        persistencia.resolver_autor(conexao, codigo, pessoa_id, "MANUAL")
+        log.info("  %s (%s) → %s (id %d)", codigo, autor[0], existe[0], pessoa_id)
+
+    vinculadas = persistencia.vincular_emendas(conexao)
+    log.info("%d emendas vinculadas", vinculadas)
 
 
 def _cpf(conexao: psycopg.Connection) -> None:

@@ -83,14 +83,33 @@ confirmar que a prestação de contas expõe o CNPJ do doador — ⛔ ainda não
 
 ## O que efetivamente vai para a ficha
 
-| Campo na ficha | Fonte | Estado |
-|---|---|---|
-| **Foto** | Câmara, `urlFoto` | ⭐ Pronta — 48 KB, sem autenticação |
-| **Gasto de cota, total e por categoria** | `Ano-2025.csv.zip` | ⭐ Pronta — 99,6% liga por `ideCadastro` |
-| **Maiores fornecedores do parlamentar** | mesma fonte, `txtFornecedor` | ⭐ Pronta |
-| **Financiamento de campanha** | TSE, prestação de contas | 🟡 Fricção do WAF |
-| ~~Assessores~~ | — | 🔴 Não existe ligação |
-| ~~Licitações~~ | — | 🔴 Não existe ligação |
+> ✅ **Atualizado em 2026-08-27, depois de ingerir de verdade.** As três fontes que
+> passaram no filtro estão **no ar**, e o perfil tem hoje três abas de dinheiro:
+> **Gastos**, **Emendas** e **Campanha**.
+
+| Campo na ficha | Fonte | Estado | Medido |
+|---|---|---|---|
+| **Foto** | Câmara, `urlFoto` | ✅ No ar | 48 KB, sem autenticação |
+| **Gasto de cota, total e por categoria** | `Ano-{ano}.csv.zip` | ✅ No ar | **208.188** despesas |
+| **Maiores fornecedores** | mesma fonte, `txtFornecedor` | ✅ No ar | — |
+| ⭐ **Emendas — empenhado × pago, por destino e função** | Portal, `api-de-dados/emendas` | ✅ No ar | **24.810**, 86% com autor |
+| ⭐ **Financiamento de campanha — fundão separado** | TSE, prestação de contas | ✅ No ar | **22.511**, 642 de 643 |
+| ~~Assessores~~ | — | 🔴 Não existe ligação | — |
+| ~~Licitações~~ | — | 🔴 Não existe ligação | — |
+
+### 🔴 As três distinções que a tela ⛔ não pode apagar
+
+Cada fonte trouxe um par de números que é **tentador somar** — e somar destruiria a
+informação:
+
+| Par | Por que ⛔ não se soma |
+|---|---|
+| **Empenhado × pago** | Empenhar é reservar; pagar é o dinheiro sair. Exibir só o empenhado deixaria concluir que o dinheiro chegou — que é o que quem anuncia emenda gostaria |
+| **Fundo Especial × Fundo Partidário** | O FEFC é eleitoral (2017); o Partidário custeia o partido o ano inteiro. Somar é defensável, mas é **uma afirmação** — quem a fizer que a assine |
+| **CNPJ × CPF de fornecedor/doador** | CNPJ é dado público de empresa e fica legível; CPF é hasheado (RNF-13). Tratá-los igual perderia a ponte campanha → cota, ou vazaria dado pessoal |
+
+⭐ **A API entrega os dois lados de cada par, sempre.** A soma, quando aparece, vem
+**escrita como soma** — *"juntos, os dois fundos somam R$ X"*.
 
 ---
 
@@ -102,8 +121,8 @@ confirmar que a prestação de contas expõe o CNPJ do doador — ⛔ ainda não
 | **Licitações da Câmara** | 182 licitações, R$ 286,6 mi contratados | ⛔ Não | 🔴 **Não liga a parlamentar** |
 | **PNCP** (contratações do Executivo) | 27.187 contratos em **10 dias** de janeiro/2025 | ⛔ Não | 🔴 **Não liga a parlamentar** |
 | **Fotos de deputado** | 48 KB por pessoa, JPEG direto | ⛔ Não | ✅ Pronta |
-| ⭐ **Fundão eleitoral (FEFC)** | `DS_FONTE_RECEITA` por candidato, com CPF e CNPJ do doador | ⛔ Não | ✅ **Achado e medido** |
-| 🔴 **Emendas parlamentares** | Autor, município, empenhado × pago | 🔑 **Sim** | ⏳ **É a razão para pedir a chave** |
+| ⭐ **Fundão eleitoral (FEFC)** | `DS_FONTE_RECEITA` por candidato, com CPF e CNPJ do doador | ⛔ Não | ✅ **INGERINDO** — R$ 907,7 mi de FEFC |
+| ⭐ **Emendas parlamentares** | Autor, município, empenhado × pago | 🔑 **Sim** | ✅ **INGERINDO** — 24.810 emendas |
 | Servidores federais, convênios | Portal da Transparência | 🔑 Sim | 🔵 Ligam por CPF, que não temos em claro |
 
 > ⚠️ **Correção de 2026-08-27.** Esta página afirmava que *"o Portal da Transparência é a
@@ -275,14 +294,44 @@ recebeu** dinheiro público depois.
 > 🔴 **Cruzar responde: "este deputado paga, com verba de gabinete, empresas que
 > financiaram a campanha dele?"** — associado à pessoa, verificável, e pergunta de TCC.
 
-### ⚠️ O que precisa ser resolvido antes de ingerir
+### ✅ Ingerido — o resultado real (2026-08-27)
 
-| # | Questão |
+| | |
 |---|---|
-| 1 | ✅ **RESOLVIDA** — ver §3.1 abaixo. O CPF existe na **API REST** da Câmara, e o casamento deu **15 de 15** |
-| 2 | ⚠️ **377 MB por eleição**, encoding **Latin-1**, separador `;` |
-| 3 | ⚠️ Traz **CPF de candidato e de doador pessoa física em claro** — RNF-13 exige hash |
-| 4 | 🔵 A eleição de 2022 elegeu a legislatura 57. Para 2026 o arquivo só existe depois do pleito |
+| Receitas gravadas | **22.511** |
+| Parlamentares alcançados | **642 de 643** |
+| Total arrecadado | **R$ 1.163.414.247,54** |
+| ⭐ Fundo Especial (FEFC) | **R$ 907.742.619,90** — 78% do total |
+| Tempo | ~90 s com o ZIP em cache; ~2 min com download |
+
+⭐ **O único fora é um suplente com 6 votos**, que ⛔ não foi candidato a deputado federal
+em 2022. 642 de 643 é o teto real da fonte, ⛔ não uma falha do casamento.
+
+### ⚠️ O que precisou ser resolvido — e uma armadilha que só apareceu ingerindo
+
+| # | Questão | |
+|---|---|---|
+| 1 | O CPF do deputado | ✅ Existe na **API REST** da Câmara; casamento **15 de 15** — §3.1 |
+| 2 | **396 MB por eleição**, **Latin-1**, separador `;` | ✅ Lido em fluxo, ⛔ nunca em memória |
+| 3 | **CPF em claro** de candidato e de doador pessoa física | ✅ Hasheado no laço de leitura — RNF-13 |
+| 4 | Qual arquivo do ZIP ler | 🔴 **A armadilha** — [achado #23](achados/023-consolidado-do-tse-e-o-unico-com-df.md) |
+| 5 | A eleição de 2026 | 🔵 O arquivo só existe depois do pleito |
+
+> 🔴 **A armadilha do item 4, em uma linha:** são **26** arquivos estaduais mais um
+> `_BRASIL`, ⛔ não 27 estaduais — o **DF ⛔ não tem arquivo próprio**, e o `_BRASIL`
+> **duplica** os estaduais linha por linha. Ler só os estaduais perdia **R$ 17,2 milhões e
+> 10 parlamentares em silêncio**; ler os dois dobraria o resto.
+
+### 🔴 E o doador pessoa física
+
+`NR_CPF_CNPJ_DOADOR` mistura CNPJ e CPF, exatamente como o `txtCNPJCPF` da cota. A regra é
+**a mesma dos dois lados**, de propósito:
+
+| | |
+|---|---|
+| **CNPJ** | Fica **legível** — é dado público de empresa, e é ele que sustenta a ponte campanha → cota |
+| **CPF** | Vira **hash**, com a mesma função de `Pessoa.CpfHash` |
+| `00000000000` | Vira **`NULL`** — ⚠️ hasheá-lo daria um valor CONSTANTE em milhares de linhas, que casaria todas entre si e **inventaria um doador comum que ⛔ não existe** |
 
 ### 3.1 ✅ O CPF existe — na API REST, não no CSV
 
@@ -426,6 +475,31 @@ valorRestoInscrito · valorRestoCancelado · valorRestoPago
 ⭐ **`nomeAutor` é o parlamentar, e `localidadeDoGasto` é o município.** Isto responde
 *"para onde este deputado mandou dinheiro público?"* — ligado à pessoa, com valor
 empenhado × pago, e por município.
+
+> 🔴 **Mas o vínculo ⛔ NÃO é feito pelo `nomeAutor`** — decisão do autor do projeto, e a
+> medição a sustenta. O `codigoEmenda` embute um identificador estável de **mandato**, que
+> ⛔ não depende de grafia e **serve também ao Senado**, que não publica CPF.
+> 📐 [Achado #24](achados/024-codigo-da-emenda-identifica-o-mandato.md).
+
+### ✅ Ingerido — o resultado real (2026-08-27)
+
+| | |
+|---|---|
+| Emendas gravadas (2023–2026) | **24.810** |
+| Autores distintos | **951** |
+| Autores resolvidos | **792** (83,3%) |
+| Emendas com autor resolvido | **21.349** (86,0%) |
+| Deputados da 57ª com emenda | **550 de 643** |
+| Sem vínculo | **159** — 76 comissões e bancadas, 83 senadores e outros |
+| Tempo | ~10 min (≈1.700 requisições, 15 itens por página) |
+
+⚠️ **A paginação é fixa em 15 itens e ⛔ não há parâmetro para mudar.** São ~420 páginas
+por ano; o ETL pausa 0,12 s entre chamadas, porque é serviço público com limite de taxa.
+
+⭐ **Emenda de comissão e de bancada ⛔ não é descartada** — entra com `pessoa_id` nulo e
+vira pendência visível. As maiores, por valor empenhado, são exatamente elas: `COM. DA
+SAUDE` (R$ 13,4 bi), `COM. DESENV REGIONAL E TURISMO` (R$ 9,6 bi), `BANCADA DO AMAZONAS`
+(R$ 1,4 bi). Atribuí-las a alguém seria inventar autoria.
 
 🔴 **É a fonte mais forte de todas as levantadas**, e vale mais que a cota: emenda
 parlamentar é o instrumento de poder orçamentário do deputado, e o par
