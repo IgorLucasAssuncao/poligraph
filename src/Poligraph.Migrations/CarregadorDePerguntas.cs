@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
@@ -19,17 +19,51 @@ public record PerguntaCurada(
 /// </summary>
 public static class CarregadorDePerguntas
 {
-    private const string Arquivo = "curadoria/perguntas-lote-1.json";
+    private const string Pasta = "curadoria";
 
+    /// <summary>
+    /// Todo <c>perguntas-*.json</c> da pasta, em ordem de nome.
+    ///
+    /// <para>
+    /// Era um arquivo fixo. Cada casa cura no próprio ritmo, e um arquivo só forçaria a
+    /// editar o mesmo JSON de dois lados — ou, pior, privilegiaria a Câmara por ser a
+    /// que já estava lá.
+    /// </para>
+    ///
+    /// <para>
+    /// O carregador não sabe de qual casa vem cada pergunta, e não precisa: a casa está
+    /// na votação a que a pergunta se liga. O embaralhamento é do servidor, e o cidadão
+    /// nunca escolhe entre Câmara e Senado (RNF-28).
+    /// </para>
+    /// </summary>
     public static async Task<string> CarregarAsync(
         PoligraphDb db, CancellationToken ct = default)
     {
-        var caminho = Path.Combine(AppContext.BaseDirectory, Arquivo);
-        if (!File.Exists(caminho))
-            return $"curadoria NÃO carregada: {Arquivo} não encontrado.";
+        var pasta = Path.Combine(AppContext.BaseDirectory, Pasta);
+        if (!Directory.Exists(pasta))
+            return $"curadoria NÃO carregada: {Pasta} não encontrada.";
 
-        var curadas = Ler(caminho);
-        if (curadas.Count == 0) return "curadoria vazia: nenhuma pergunta no arquivo.";
+        var lotes = Directory.GetFiles(pasta, "perguntas-*.json").OrderBy(a => a).ToList();
+        if (lotes.Count == 0)
+            return $"curadoria NÃO carregada: nenhum perguntas-*.json em {Pasta}.";
+
+        // Id repetido entre lotes seria a última leitura vencendo em silêncio, e a
+        // pergunta do outro lote sumindo da tela sem explicação.
+        var curadas = new List<PerguntaCurada>();
+        var vistos = new HashSet<string>();
+        foreach (var lote in lotes)
+        {
+            foreach (var curada in Ler(lote))
+            {
+                if (!vistos.Add(curada.Id))
+                    throw new InvalidOperationException(
+                        $"pergunta '{curada.Id}' aparece em mais de um lote de curadoria.");
+
+                curadas.Add(curada);
+            }
+        }
+
+        if (curadas.Count == 0) return "curadoria vazia: nenhuma pergunta nos lotes.";
 
         // ⚠️ Pergunta sem a votação no banco viraria violação de chave estrangeira. É
         //    caso NORMAL, não erro: a curadoria pode citar 2023 antes de 2023 ser
@@ -45,7 +79,9 @@ public static class CarregadorDePerguntas
 
         var novas = await AplicarAsync(db, aplicaveis, ct);
 
-        var resumo = $"curadoria: {aplicaveis.Count} perguntas ativas ({novas} novas)";
+        var resumo =
+            $"curadoria: {aplicaveis.Count} perguntas ativas ({novas} novas) "
+            + $"de {lotes.Count} lote(s)";
 
         return semVotacao == 0
             ? resumo + "."

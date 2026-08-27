@@ -88,6 +88,37 @@ def baixar_senadores() -> list[dict]:
     ]
 
 
+def baixar_indexacao(codigo_materia: int) -> str:
+    """A indexação temática da matéria — o que a ementa quase nunca diz.
+
+    A ementa costuma ser a lista de leis alteradas: *"Altera dispositivos da Lei nº
+    7.210 (Lei de Execução Penal) e do Decreto-Lei nº 2.848 (Código Penal)"*. Isso não
+    permite escrever pergunta nenhuma.
+
+    `IndexacaoMateria` é o vocabulário controlado do Senado e diz o assunto:
+    *"CAUSA DE DIMINUIÇÃO DE PENA, CRIME CONTRA AS INSTITUIÇÕES DEMOCRÁTICAS"* — que é a
+    dosimetria dos atos de 8 de janeiro, e aí a pergunta se escreve.
+
+    Devolve string vazia em qualquer falha: é insumo de curadoria, e derrubar a listagem
+    inteira porque uma matéria não respondeu seria pior que listá-la sem indexação.
+    """
+    try:
+        resposta = requests.get(
+            f"{BASE}/materia/{codigo_materia}", headers=CABECALHOS, timeout=60
+        )
+        resposta.raise_for_status()
+        basicos = (
+            resposta.json()
+            .get("DetalheMateria", {})
+            .get("Materia", {})
+            .get("DadosBasicosMateria", {})
+        )
+    except (requests.RequestException, ValueError, AttributeError):
+        return ""
+
+    return " ".join((basicos.get("IndexacaoMateria") or "").split())
+
+
 def conferir_volume(votacoes: list[dict], ano: int) -> None:
     """Canário: ano com volume muito abaixo do medido indica contrato alterado.
 
