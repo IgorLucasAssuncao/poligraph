@@ -70,6 +70,7 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | **A4** | Quantas das 100 proposições sobrevivem ao corte de unanimidade | 🟡 Média | — |
 | **PL34** | 🔵 **Adiada por decisão do autor:** gravar as respostas individuais do questionário, SEM vínculo com a conta, para analisar quais perguntas dividem e quais ninguém entende (§ abaixo) | 🔵 Futuro | — |
 | ~~API4~~ | ✅ **Resolvida** — cosseno no grafo, concordância simples na tela (plano/07 §4.5) | — | — |
+| 🔴 **PL44** | **A troca de legislatura não é tratada de ponta a ponta** — a ingestão já deduz a legislatura pela data (corrigido), mas ⛔ falta: filtrar por legislatura nas consultas (PL35), decidir o que a tela mostra na virada, e o que acontece com quem respondeu o questionário na 57ª. ⏳ **A 57ª termina em janeiro de 2027** | 🔴 **Alta** | 🟡 Horas |
 | 🔴 **PL35** | **A legislatura não é filtrada em consulta nenhuma** — a decisão "só a 57ª" ([plano/06 §3](plano/06-perguntas-lote-1.md)) vive só no documento. Detalhe abaixo | 🔴 **Alta** | 🟡 Horas |
 | ~~PL36~~ | ✅ **Resolvida (2026-08-26)** — nomes corrigidos e **verificado rodando o container contra o banco real**: monta a matriz e grava `execucoes`. Estava faltando também traduzir a connection string do Aspire (§ abaixo) | — | — |
 | 🟡 **PL37** | 🔄 **Parcial** — `test_contrato_schema.py` lê o `PoligraphDb.cs` e trava os **nomes** de tabela. ⛔ As **colunas** continuam sem proteção: o DDL de `test_persistencia.py` ainda é escrito à mão | 🟡 Média | 🟡 Horas |

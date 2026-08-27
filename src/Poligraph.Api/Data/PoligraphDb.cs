@@ -51,6 +51,14 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.Property(x => x.CpfHash).HasMaxLength(64);
             e.ToTable(t => t.HasCheckConstraint(
                 "ck_pessoa_sexo", "sexo IS NULL OR sexo IN ('M','F')"));
+
+            // 🔴 Exclusão lógica: quem tem `excluido_em` some de TODA consulta do EF,
+            //    sem que cada endpoint precise lembrar do filtro.
+            //
+            // ⚠️ O ETL Python ⛔ NÃO enxerga este filtro — ele fala SQL direto. É
+            //    proposital: a análise trabalha sobre o registro histórico completo, e
+            //    é a API que decide o que mostrar ao cidadão.
+            e.HasQueryFilter(x => x.ExcluidoEm == null);
         });
 
         mb.Entity<PessoaFonteId>(e =>

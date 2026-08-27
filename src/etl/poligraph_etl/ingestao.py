@@ -13,11 +13,38 @@ from .normalizacao import classificar_categoria, normalizar_voto
 LEGISLATURA_57_INICIO = date(2023, 2, 1)
 
 
-def votacoes_para_linhas(df: pd.DataFrame, legislatura: int = 57) -> list[dict]:
+# 🔴 A legislatura NÃO é escolhida: ela é uma função da data.
+#
+# ⚠️ Até 2026-08-27 isto era um parâmetro com valor padrão 57, e o `__main__` nunca o
+# passava. Ingerir 2027 gravaria as votações da 58ª legislatura COMO SE FOSSEM DA 57ª —
+# sem erro, sem aviso, e a matriz de similaridade passaria a misturar duas Câmaras
+# diferentes. A 57ª termina em janeiro de 2027, então o prazo era real.
+#
+# A 57ª vai de 01/02/2023 a 31/01/2027; cada legislatura dura quatro anos.
+PRIMEIRO_ANO_DA_57 = 2023
+NUMERO_DA_57 = 57
+
+
+def legislatura_da_data(data: str) -> int:
+    """Deduz a legislatura a partir da data da votação (`AAAA-MM-DD`).
+
+    ⚠️ A virada é em **fevereiro**, não em janeiro: a posse é em 1º de fevereiro. Uma
+    votação de janeiro de 2027 ainda pertence à 57ª.
+    """
+    ano, mes = int(data[:4]), int(data[5:7])
+    ano_efetivo = ano if mes >= 2 else ano - 1
+
+    return NUMERO_DA_57 + (ano_efetivo - PRIMEIRO_ANO_DA_57) // 4
+
+
+def votacoes_para_linhas(df: pd.DataFrame, legislatura: int | None = None) -> list[dict]:
     """Converte o CSV de votações nas linhas da tabela `votacao`.
 
     ⚠️ Só entram votações NOMINAIS — as que têm contagem de votos. Votação simbólica
     não registra quem votou o quê, então não serve para medir afinidade.
+
+    ⭐ `legislatura=None` (o normal) deduz de cada votação pela data. Passar um valor
+    força — serve só para teste.
     """
     linhas: list[dict] = []
 
@@ -31,7 +58,7 @@ def votacoes_para_linhas(df: pd.DataFrame, legislatura: int = 57) -> list[dict]:
             {
                 "id": r["id"],
                 "casa": "CAMARA",
-                "legislatura": legislatura,
+                "legislatura": legislatura or legislatura_da_data(str(r["data"])),
                 "data": r["data"],
                 "orgao": r.get("siglaOrgao"),
                 "descricao": descricao,

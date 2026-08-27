@@ -203,3 +203,42 @@ def test_deputados_do_formato_real_da_camara_viram_linhas():
     assert linhas[0]["nome_exibicao"] == "Abilio Brunini"
     # ⚠️ A coluna `cpf` do CSV vem vazia — medido: 0 de 7.889 preenchidos.
     assert linhas[0]["cpf_hash"] is None
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 A legislatura sai da DATA — descoberto pela pergunta "e quando virar?"
+# ═══════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.parametrize(
+    ("data", "esperada"),
+    [
+        ("2023-02-01", 57),   # primeiro dia da 57ª
+        ("2025-07-16", 57),
+        ("2026-12-31", 57),
+        ("2027-01-31", 57),   # ⚠️ janeiro de 2027 ainda é a 57ª
+        ("2027-02-01", 58),   # 🔴 a posse é em 1º de FEVEREIRO
+        ("2030-12-01", 58),
+        ("2031-02-01", 59),
+        ("2019-02-01", 56),   # retroage também
+    ],
+)
+def test_legislatura_sai_da_data(data: str, esperada: int):
+    """🔴 Era um `57` chumbado no código.
+
+    ⚠️ Ingerir 2027 gravaria as votações da 58ª COMO SE FOSSEM DA 57ª — sem erro, e a
+    matriz de similaridade passaria a misturar duas Câmaras diferentes.
+    """
+    assert ingestao.legislatura_da_data(data) == esperada
+
+
+def test_votacao_recebe_a_legislatura_da_propria_data():
+    df = pd.DataFrame([
+        _votacao_bruta(id="X-1", data="2026-05-10"),
+        _votacao_bruta(id="Y-1", data="2027-05-10"),
+    ])
+
+    linhas = {l["id"]: l["legislatura"] for l in ingestao.votacoes_para_linhas(df)}
+
+    assert linhas["X-1"] == 57
+    assert linhas["Y-1"] == 58

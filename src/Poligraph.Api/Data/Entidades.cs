@@ -12,6 +12,19 @@ public class Pessoa
     /// <summary>⛔ NUNCA o CPF em claro — RNF-13.</summary>
     public string? CpfHash { get; set; }
 
+    /// <summary>
+    /// Exclusão lógica. `null` = ativo.
+    ///
+    /// 🔴 Parlamentar ⛔ NUNCA é apagado de verdade. O voto dele é registro histórico e
+    /// público: apagar a pessoa levaria junto — por `CASCADE` — o nó no grafo, as
+    /// arestas e as similaridades de toda execução já feita, inclusive as que a banca
+    /// pode querer reproduzir.
+    ///
+    /// ⚠️ Isto ⛔ NÃO vale para `usuario` nem `segue`, e a diferença é jurídica, não de
+    /// gosto — ver `EndpointsAutenticacao.ExcluirContaAsync`.
+    /// </summary>
+    public DateTimeOffset? ExcluidoEm { get; set; }
+
     public List<PessoaFonteId> FontesId { get; set; } = [];
     public List<Voto> Votos { get; set; } = [];
 }

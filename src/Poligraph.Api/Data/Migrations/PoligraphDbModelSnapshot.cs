@@ -47,6 +47,12 @@ namespace Poligraph.Api.Data.Migrations
                     b.HasKey("ExecucaoId", "PessoaA", "PessoaB", "Tipo")
                         .HasName("pk_arestas_grafo");
 
+                    b.HasIndex("PessoaA")
+                        .HasDatabaseName("ix_arestas_grafo_pessoa_a");
+
+                    b.HasIndex("PessoaB")
+                        .HasDatabaseName("ix_arestas_grafo_pessoa_b");
+
                     b.ToTable("arestas_grafo", null, t =>
                         {
                             t.HasCheckConstraint("ck_aresta_ordem", "pessoa_a < pessoa_b");
@@ -234,6 +240,9 @@ namespace Poligraph.Api.Data.Migrations
                     b.HasKey("ExecucaoId", "PessoaId")
                         .HasName("pk_nos_metrica");
 
+                    b.HasIndex("PessoaId")
+                        .HasDatabaseName("ix_nos_metrica_pessoa_id");
+
                     b.ToTable("nos_metrica", (string)null);
                 });
 
@@ -407,6 +416,10 @@ namespace Poligraph.Api.Data.Migrations
                         .HasColumnType("date")
                         .HasColumnName("data_nascimento");
 
+                    b.Property<DateTimeOffset?>("ExcluidoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("excluido_em");
+
                     b.Property<string>("NomeCivil")
                         .IsRequired()
                         .HasColumnType("text")
@@ -557,6 +570,12 @@ namespace Poligraph.Api.Data.Migrations
 
                     b.HasKey("ExecucaoId", "PessoaA", "PessoaB", "Metrica")
                         .HasName("pk_similaridades");
+
+                    b.HasIndex("PessoaA")
+                        .HasDatabaseName("ix_similaridades_pessoa_a");
+
+                    b.HasIndex("PessoaB")
+                        .HasDatabaseName("ix_similaridades_pessoa_b");
 
                     b.ToTable("similaridades", null, t =>
                         {
@@ -795,6 +814,20 @@ namespace Poligraph.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_arestas_grafo_execucoes_execucao_id");
+
+                    b.HasOne("Poligraph.Api.Data.Pessoa", null)
+                        .WithMany()
+                        .HasForeignKey("PessoaA")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_arestas_grafo_pessoas_pessoa_a");
+
+                    b.HasOne("Poligraph.Api.Data.Pessoa", null)
+                        .WithMany()
+                        .HasForeignKey("PessoaB")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_arestas_grafo_pessoas_pessoa_b");
                 });
 
             modelBuilder.Entity("Poligraph.Api.Data.Consentimento", b =>
@@ -817,6 +850,13 @@ namespace Poligraph.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_nos_metrica_execucoes_execucao_id");
+
+                    b.HasOne("Poligraph.Api.Data.Pessoa", null)
+                        .WithMany()
+                        .HasForeignKey("PessoaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_nos_metrica_pessoas_pessoa_id");
                 });
 
             modelBuilder.Entity("Poligraph.Api.Data.NoticiaPessoa", b =>
@@ -905,6 +945,20 @@ namespace Poligraph.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_similaridades_execucoes_execucao_id");
+
+                    b.HasOne("Poligraph.Api.Data.Pessoa", null)
+                        .WithMany()
+                        .HasForeignKey("PessoaA")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_similaridades_pessoas_pessoa_a");
+
+                    b.HasOne("Poligraph.Api.Data.Pessoa", null)
+                        .WithMany()
+                        .HasForeignKey("PessoaB")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_similaridades_pessoas_pessoa_b");
                 });
 
             modelBuilder.Entity("Poligraph.Api.Data.TokenEmail", b =>

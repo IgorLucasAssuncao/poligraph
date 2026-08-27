@@ -71,6 +71,14 @@ public static class EndpointsSeguir
         return Results.NoContent();
     }
 
+    /// <summary>
+    /// 🔴 Exclusão FÍSICA, e de propósito.
+    ///
+    /// ⚠️ `segue` é **registro de convicção política** — dado sensível pela LGPD
+    /// art. 5º, II. "Deixar de seguir" com exclusão lógica manteria no banco a
+    /// informação de que a pessoa seguiu aquele parlamentar, que é exatamente o que ela
+    /// pediu para desfazer. Ver a nota em `ExcluirContaAsync`.
+    /// </summary>
     private static async Task<IResult> DeixarDeSeguirAsync(
         long pessoaId, ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
     {

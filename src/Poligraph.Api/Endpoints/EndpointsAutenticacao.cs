@@ -98,6 +98,17 @@ public static class EndpointsAutenticacao
     /// acompanhados, os consentimentos e os tokens de e-mail. Foi para isto que eles
     /// existem: sem o cascade, esta operação seria uma lista de tabelas que alguém
     /// esqueceria de atualizar ao criar a próxima.
+    ///
+    /// 🔴 ⛔ **AQUI A EXCLUSÃO É FÍSICA, E ISSO NÃO É DESCUIDO.**
+    ///
+    /// O projeto adota exclusão LÓGICA como padrão (ver `Pessoa.ExcluidoEm`) — mas
+    /// ⛔ não neste caminho. A LGPD art. 18, VI dá direito à **eliminação**, não à
+    /// ocultação. Marcar `excluido_em` e manter a linha seria dizer ao cidadão que os
+    /// dados foram apagados enquanto eles continuam no banco — e a tabela `segue`, que
+    /// vem junto no cascade, é **registro de convicção política** (art. 5º, II).
+    ///
+    /// ⚠️ Quem for adotar exclusão lógica em novas tabelas precisa decidir, uma a uma,
+    /// se a tabela guarda dado PESSOAL. Se guarda, o `DELETE` é físico.
     /// </summary>
     private static async Task<IResult> ExcluirContaAsync(
         ClaimsPrincipal principal, HttpContext contexto, PoligraphDb db, CancellationToken ct)
