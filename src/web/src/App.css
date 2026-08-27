@@ -1263,6 +1263,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 
 /* A mesma comparação repetida no topo do modal: quem abriu clicando nela precisa
    reencontrá-la, senão o modal parece outro assunto. */
+.bloco-conta:first-of-type { border-top: none; }
 .contas-comparacao {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem;
   padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--borda);
@@ -1303,14 +1304,22 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .contas-ampliadas .ajuda { margin: .25rem 0 0; }
 .contas-corpo { max-height: min(70vh, 44rem); overflow-y: auto; }
 
-.bloco-conta { border-bottom: 1px solid var(--borda); }
-.bloco-conta:last-child { border-bottom: none; }
-.cabecalho-bloco { padding: 1rem 1rem .35rem; }
-.cabecalho-bloco .ajuda { margin: .1rem 0 0; }
+/* 🔴 As três seções precisam ler como CAPÍTULOS, não como mais três títulos numa
+   rolagem longa: sem peso próprio elas se confundem, e o leitor perde de vista que
+   trocou de dinheiro. Daí a superfície tinta, a régua forte e a display expandida. */
+.bloco-conta { border-top: 2px solid var(--borda-forte); }
+/* ⭐ Gruda no topo da rolagem: numa lista longa é o que impede o leitor de esquecer
+   qual dos três dinheiros está vendo. */
+.cabecalho-bloco {
+  position: sticky; top: 0; z-index: 1;
+  padding: .9rem 1.25rem;
+  background: var(--painel); border-bottom: 1px solid var(--borda);
+}
+.cabecalho-bloco .ajuda { margin: .15rem 0 0; }
 .titulo-bloco {
   margin: 0;
-  font-family: var(--display); font-variation-settings: 'wdth' 108;
-  font-size: 1.05rem; font-weight: 700; letter-spacing: -.01em;
+  font-family: var(--display); font-variation-settings: 'wdth' 114;
+  font-size: 1.3rem; font-weight: 700; letter-spacing: -.02em;
 }
 /* ⚠️ Dentro do modal a faixa de resumo de cada fonte é MENOR: ela já não é o topo da
       tela, e o tamanho original competiria com o título do bloco. */
