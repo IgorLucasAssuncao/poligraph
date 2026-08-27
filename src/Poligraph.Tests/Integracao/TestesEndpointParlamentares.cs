@@ -121,6 +121,111 @@ public class TestesEndpointParlamentares : BaseIntegracao
         Assert.Empty(ficha!.MaisSimilares);   // lista vazia, não erro
     }
 
+    /// <summary>
+    /// 🔴 O `GroupBy` da cota precisa ser TRADUZÍVEL pelo EF.
+    ///
+    /// ⚠️ Projetar direto num `record` posicional compila sem reclamar e estoura em
+    /// RUNTIME com `could not be translated` — aconteceu. Só um teste que executa a
+    /// consulta contra Postgres de verdade pega isso.
+    /// </summary>
+    [SkippableFact]
+    public async Task Gastos_AgregaPorCategoriaEFornecedor()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var pessoaId = await SemearDespesasAsync();
+        using var cliente = CriarCliente();
+
+        var resposta = await cliente.GetAsync($"{Rota}/{pessoaId}/gastos");
+        resposta.EnsureSuccessStatusCode();
+
+        var gastos = await resposta.Content.ReadFromJsonAsync<GastoLido>();
+
+        Assert.NotNull(gastos);
+        Assert.Equal(2025, gastos.Ano);
+        Assert.Equal(3, gastos.Lancamentos);
+        Assert.Equal(450m, gastos.Total);
+
+        // ⭐ Duas categorias, e a maior vem primeiro
+        Assert.Equal(2, gastos.PorCategoria.Count);
+        Assert.Equal("PASSAGEM AÉREA", gastos.PorCategoria[0].Categoria);
+        Assert.Equal(300m, gastos.PorCategoria[0].Total);
+    }
+
+    /// <summary>⭐ Sem despesa é caso normal — a tela mostra vazio, ⛔ não erro.</summary>
+    [SkippableFact]
+    public async Task Gastos_SemDespesa_DevolveVazioNaoErro()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        using var cliente = CriarCliente();
+
+        var id = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+        var resposta = await cliente.GetAsync($"{Rota}/{id}/gastos");
+
+        resposta.EnsureSuccessStatusCode();
+        var gastos = await resposta.Content.ReadFromJsonAsync<GastoLido>();
+
+        Assert.Equal(0, gastos!.Lancamentos);
+        Assert.Empty(gastos.PorCategoria);
+    }
+
+    /// <summary>
+    /// 🔴 RNF-13 — o documento de fornecedor pessoa física ⛔ NUNCA sai em claro.
+    /// </summary>
+    [SkippableFact]
+    public async Task Gastos_NaoVazamCpfDeFornecedor()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var pessoaId = await SemearDespesasAsync();
+        using var cliente = CriarCliente();
+
+        var json = await cliente.GetStringAsync($"{Rota}/{pessoaId}/gastos");
+
+        // ⚠️ O endpoint não devolve o campo de documento de jeito nenhum — nem hash.
+        //    A ficha precisa do NOME do fornecedor, não do CNPJ dele.
+        Assert.DoesNotContain("cnpj", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("12345678909", json);
+    }
+
+    private record CategoriaLida(string Categoria, decimal Total, int Lancamentos);
+
+    private record GastoLido(
+        int Ano, decimal Total, int Lancamentos,
+        IReadOnlyList<CategoriaLida> PorCategoria);
+
+    private async Task<long> SemearDespesasAsync()
+    {
+        var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+
+        Db.Despesas.AddRange(
+            new Despesa
+            {
+                PessoaId = pessoaId, Ano = 2025, Mes = 3,
+                Categoria = "PASSAGEM AÉREA", Fornecedor = "CIA AEREA",
+                CnpjOuHash = "12345678000199", ValorLiquido = 200m
+            },
+            new Despesa
+            {
+                PessoaId = pessoaId, Ano = 2025, Mes = 4,
+                Categoria = "PASSAGEM AÉREA", Fornecedor = "CIA AEREA",
+                CnpjOuHash = "12345678000199", ValorLiquido = 100m
+            },
+            new Despesa
+            {
+                PessoaId = pessoaId, Ano = 2025, Mes = 5,
+                Categoria = "COMBUSTÍVEIS", Fornecedor = "POSTO",
+                // ⚠️ hash de CPF, como o ETL grava — nunca o número
+                CnpjOuHash = new string('a', 64), FornecedorEhPessoaFisica = true,
+                ValorLiquido = 150m
+            });
+
+        await Db.SaveChangesAsync();
+
+        return pessoaId;
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // PRIVADOS — na ordem de uso
     // ═══════════════════════════════════════════════════════════════

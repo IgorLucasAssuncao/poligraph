@@ -15,6 +15,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<Voto> Votos => Set<Voto>();
     public DbSet<Proposicao> Proposicoes => Set<Proposicao>();
     public DbSet<Pergunta> Perguntas => Set<Pergunta>();
+    public DbSet<Despesa> Despesas => Set<Despesa>();
     public DbSet<Execucao> Execucoes => Set<Execucao>();
     public DbSet<Similaridade> Similaridades => Set<Similaridade>();
     public DbSet<ArestaGrafo> ArestasGrafo => Set<ArestaGrafo>();
@@ -33,6 +34,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         ConfigurarIdentidade(mb);
         ConfigurarVotacao(mb);
         ConfigurarQuestionario(mb);
+        ConfigurarDespesa(mb);
         ConfigurarAnalise(mb);
         ConfigurarUsuario(mb);
         ConfigurarNoticia(mb);
@@ -122,6 +124,30 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             // 🔴 RN-08: sem polaridade não entra pergunta nenhuma
             e.ToTable(t => t.HasCheckConstraint(
                 "ck_pergunta_polaridade", "polaridade IN (-1, 1)"));
+        });
+    }
+
+    private static void ConfigurarDespesa(ModelBuilder mb)
+    {
+        mb.Entity<Despesa>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasOne(x => x.Pessoa).WithMany().HasForeignKey(x => x.PessoaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ⭐ A consulta da ficha é sempre "as despesas DESTE deputado, por ano".
+            e.HasIndex(x => new { x.PessoaId, x.Ano })
+                .HasDatabaseName("ix_despesa_pessoa_ano");
+
+            e.Property(x => x.ValorLiquido).HasPrecision(14, 2);
+            e.Property(x => x.CnpjOuHash).HasMaxLength(64);
+
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_despesa_mes", "mes BETWEEN 1 AND 12");
+                // ⚠️ Valor negativo existe: é estorno. ⛔ Zero não.
+                t.HasCheckConstraint("ck_despesa_valor", "valor_liquido <> 0");
+            });
         });
     }
 

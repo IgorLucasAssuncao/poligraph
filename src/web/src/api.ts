@@ -313,3 +313,33 @@ export type Grafo = {
 export async function obterGrafo(): Promise<Grafo> {
   return buscar<Grafo>(`${BASE}/grafo`);
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// Cota parlamentar (CEAP)
+// ═══════════════════════════════════════════════════════════════════
+
+export type GastoPorCategoria = {
+  categoria: string;
+  total: number;
+  lancamentos: number;
+};
+
+export type FornecedorDoParlamentar = {
+  nome: string;
+  total: number;
+  lancamentos: number;
+  /** ⚠️ Quando `true`, o CNPJ/CPF está hasheado no banco — RNF-13. */
+  pessoaFisica: boolean;
+};
+
+export type GastoDeCota = {
+  ano: number;
+  total: number;
+  lancamentos: number;
+  porCategoria: GastoPorCategoria[];
+  maioresFornecedores: FornecedorDoParlamentar[];
+};
+
+export async function obterGastos(pessoaId: number): Promise<GastoDeCota> {
+  return buscar<GastoDeCota>(`${BASE}/parlamentares/${pessoaId}/gastos`);
+}

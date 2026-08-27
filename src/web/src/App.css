@@ -1115,3 +1115,42 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   font-size: .76rem; line-height: 1.45; color: var(--suave);
 }
 .grafo-layout-ajuda strong { color: var(--texto); }
+
+/* ═══ GASTOS DE COTA ═══════════════════════════════════════════ */
+.gastos-resumo {
+  padding: 1.75rem 1rem 1.5rem; text-align: center;
+  border-bottom: 1px solid var(--borda);
+}
+.gastos-total {
+  margin: 0 0 .2rem;
+  font-family: var(--display); font-variation-settings: 'wdth' 112;
+  font-size: 2.2rem; font-weight: 700; letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums;
+}
+.gastos-resumo .ajuda { margin: 0; }
+
+.gastos-categorias, .gastos-fornecedores {
+  list-style: none; margin: 0; padding: 0;
+}
+.gastos-categorias li, .gastos-fornecedores li {
+  display: grid; align-items: center; gap: .75rem;
+  padding: .6rem 1rem; border-bottom: 1px solid var(--borda);
+  font-size: .88rem;
+}
+.gastos-categorias li { grid-template-columns: minmax(0, 1fr) 6rem auto; }
+.gastos-fornecedores li { grid-template-columns: minmax(0, 1fr) auto; }
+
+.gasto-nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gasto-nome small { color: var(--suave); font-family: var(--dado); font-size: .72rem; }
+
+/* ⚠️ Proporcional à MAIOR categoria, não ao total: com 15 categorias, proporção do
+      total vira fiapo ilegível. */
+.gasto-barra {
+  height: 6px; background: var(--borda); border-radius: 999px; overflow: hidden;
+}
+.gasto-barra span { display: block; height: 100%; background: var(--realce); }
+
+.gasto-valor {
+  font-family: var(--dado); font-size: .84rem;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}

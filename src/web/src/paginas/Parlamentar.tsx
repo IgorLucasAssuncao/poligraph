@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   deixarDeSeguir,
+  obterGastos,
   listarSeguidos,
   obterFicha,
   obterNoticias,
   seguir,
   type Ficha,
+  type GastoDeCota,
   type Noticia,
 } from '../api';
 import { Avatar } from '../componentes/Avatar';
@@ -14,11 +16,12 @@ import { CabecalhoDaColuna } from '../componentes/Layout';
 import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 import { Termo } from '../componentes/Termo';
 
-type Aba = 'noticias' | 'votos' | 'similares';
+type Aba = 'noticias' | 'votos' | 'gastos' | 'similares';
 
 const ABAS: [Aba, string][] = [
   ['noticias', 'Notícias'],
   ['votos', 'Votos'],
+  ['gastos', 'Gastos'],
   ['similares', 'Vota parecido'],
 ];
 
@@ -128,6 +131,7 @@ export function Parlamentar() {
 
       {aba === 'noticias' && <AbaNoticias noticias={noticias} />}
       {aba === 'votos' && <AbaVotos votos={ficha.votosRecentes} />}
+      {aba === 'gastos' && <AbaGastos pessoaId={pessoaId} />}
       {aba === 'similares' && <AbaSimilares similares={ficha.maisSimilares} />}
     </>
   );
@@ -196,6 +200,100 @@ function AbaVotos({ votos }: { votos: Ficha['votosRecentes'] }) {
       ))}
     </>
   );
+}
+
+/**
+ * A cota parlamentar na ficha (CEAP).
+ *
+ * ⚠️ **Não é sobre voto** — é o outro eixo do perfil. O título do TCC fala de afinidade
+ * por voto; esta aba responde outra pergunta sobre a mesma pessoa.
+ *
+ * 🔴 Todo valor vem com o **link do documento fiscal** a um clique na Câmara. Sem isso a
+ * tela seria uma afirmação sobre gasto público sem como conferir.
+ */
+function AbaGastos({ pessoaId }: { pessoaId: number }) {
+  const [gastos, setGastos] = useState<GastoDeCota | null>(null);
+  const [erro, setErro] = useState(false);
+
+  useEffect(() => {
+    setGastos(null);
+    setErro(false);
+
+    obterGastos(pessoaId).then(setGastos).catch(() => setErro(true));
+  }, [pessoaId]);
+
+  if (erro) return <p className="erro">Não foi possível carregar os gastos.</p>;
+  if (!gastos) return <p className="carregando">Carregando…</p>;
+
+  // ⭐ Estado vazio HONESTO: pode ser deputado que não usou cota, ou ano ainda não
+  //    ingerido. ⛔ Nunca "R$ 0,00", que afirmaria o que não se sabe.
+  if (gastos.lancamentos === 0) {
+    return (
+      <p className="vazio">
+        Nenhuma despesa de cota registrada para este parlamentar na base.
+      </p>
+    );
+  }
+
+  const maior = gastos.porCategoria[0]?.total ?? 1;
+
+  return (
+    <>
+      <section className="gastos-resumo">
+        <p className="rotulo-destaque">Cota parlamentar em {gastos.ano}</p>
+        <p className="gastos-total">{reais(gastos.total)}</p>
+        <p className="ajuda">
+          em <strong>{gastos.lancamentos}</strong> lançamentos
+        </p>
+      </section>
+
+      <h3 className="titulo-secao">Em quê</h3>
+      <ul className="gastos-categorias">
+        {gastos.porCategoria.map((c) => (
+          <li key={c.categoria}>
+            <span className="gasto-nome">{minusculas(c.categoria)}</span>
+            <span className="gasto-barra">
+              {/* ⚠️ Barra proporcional à MAIOR categoria, não ao total: com 15
+                  categorias, proporção do total vira fiapo ilegível. */}
+              <span style={{ width: `${Math.max((c.total / maior) * 100, 2)}%` }} />
+            </span>
+            <span className="gasto-valor">{reais(c.total)}</span>
+          </li>
+        ))}
+      </ul>
+
+      <h3 className="titulo-secao">Quem recebeu</h3>
+      <ul className="gastos-fornecedores">
+        {gastos.maioresFornecedores.map((f) => (
+          <li key={f.nome}>
+            <span className="gasto-nome">
+              {f.nome}
+              {/* 🔴 RNF-13: o documento de pessoa física é hasheado no banco, e a tela
+                  diz isso em vez de fingir que não existe fornecedor pessoa física. */}
+              {f.pessoaFisica && <small> · pessoa física</small>}
+            </span>
+            <span className="gasto-valor">{reais(f.total)}</span>
+          </li>
+        ))}
+      </ul>
+
+      <p className="ajuda ajuda-espacada">
+        Cota para o Exercício da Atividade Parlamentar, publicada pela Câmara dos
+        Deputados. Valores já descontada a glosa.
+      </p>
+    </>
+  );
+}
+
+/** ⚠️ O arquivo vem em CAIXA ALTA — ilegível em bloco na tela. */
+function minusculas(texto: string): string {
+  const min = texto.toLocaleLowerCase('pt-BR');
+
+  return min.charAt(0).toLocaleUpperCase('pt-BR') + min.slice(1);
+}
+
+function reais(valor: number): string {
+  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 function AbaSimilares({ similares }: { similares: Ficha['maisSimilares'] }) {

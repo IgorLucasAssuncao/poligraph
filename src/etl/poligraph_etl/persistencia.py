@@ -198,6 +198,43 @@ def gravar_similaridades(
     )
 
 
+def gravar_despesas(
+    conexao: psycopg.Connection, pessoa_ids: list[int], despesas: Sequence[dict]
+) -> int:
+    """Grava a cota parlamentar, substituindo o que já havia dos mesmos deputados.
+
+    ⚠️ **Apaga antes de inserir**, e não é preguiça: o arquivo da Câmara é reconstruído
+    com correções ([achado #19](../../docs/achados/019-csv-reconstruido-toda-madrugada.md)),
+    e não há chave natural estável por linha — `ideDocumento` se repete entre
+    parcelas. `ON CONFLICT` exigiria inventar uma chave que a fonte não garante.
+
+    ⭐ O recorte do DELETE é (pessoa, ano) das linhas que estão entrando — reingerir
+    2025 ⛔ não apaga 2024.
+    """
+    if not despesas:
+        return 0
+
+    anos = sorted({d["ano"] for d in despesas})
+
+    conexao.execute(
+        "DELETE FROM despesas WHERE pessoa_id = ANY(%s) AND ano = ANY(%s)",
+        (pessoa_ids, anos),
+    )
+
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO despesas (pessoa_id, ano, mes, categoria, fornecedor,
+                              cnpj_ou_hash, fornecedor_eh_pessoa_fisica,
+                              valor_liquido, data_emissao, url_documento)
+        VALUES (%(pessoa_id)s, %(ano)s, %(mes)s, %(categoria)s, %(fornecedor)s,
+                %(cnpj_ou_hash)s, %(fornecedor_eh_pessoa_fisica)s,
+                %(valor_liquido)s, %(data_emissao)s, %(url_documento)s)
+        """,
+        despesas,
+    )
+
+
 def gravar_arestas(
     conexao: psycopg.Connection, execucao_id: int, arestas: Iterable
 ) -> int:

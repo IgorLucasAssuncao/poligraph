@@ -152,6 +152,72 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Api.Data.Despesa", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<short>("Ano")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("categoria");
+
+                    b.Property<string>("CnpjOuHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("cnpj_ou_hash");
+
+                    b.Property<DateOnly?>("DataEmissao")
+                        .HasColumnType("date")
+                        .HasColumnName("data_emissao");
+
+                    b.Property<string>("Fornecedor")
+                        .HasColumnType("text")
+                        .HasColumnName("fornecedor");
+
+                    b.Property<bool>("FornecedorEhPessoaFisica")
+                        .HasColumnType("boolean")
+                        .HasColumnName("fornecedor_eh_pessoa_fisica");
+
+                    b.Property<short>("Mes")
+                        .HasColumnType("smallint")
+                        .HasColumnName("mes");
+
+                    b.Property<long>("PessoaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("pessoa_id");
+
+                    b.Property<string>("UrlDocumento")
+                        .HasColumnType("text")
+                        .HasColumnName("url_documento");
+
+                    b.Property<decimal>("ValorLiquido")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("valor_liquido");
+
+                    b.HasKey("Id")
+                        .HasName("pk_despesas");
+
+                    b.HasIndex("PessoaId", "Ano")
+                        .HasDatabaseName("ix_despesa_pessoa_ano");
+
+                    b.ToTable("despesas", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_despesa_mes", "mes BETWEEN 1 AND 12");
+
+                            t.HasCheckConstraint("ck_despesa_valor", "valor_liquido <> 0");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Api.Data.Execucao", b =>
                 {
                     b.Property<long>("Id")
@@ -852,6 +918,18 @@ namespace Poligraph.Api.Data.Migrations
                         .HasConstraintName("fk_consentimentos_usuarios_usuario_id");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Poligraph.Api.Data.Despesa", b =>
+                {
+                    b.HasOne("Poligraph.Api.Data.Pessoa", "Pessoa")
+                        .WithMany()
+                        .HasForeignKey("PessoaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_despesas_pessoas_pessoa_id");
+
+                    b.Navigation("Pessoa");
                 });
 
             modelBuilder.Entity("Poligraph.Api.Data.NoMetrica", b =>

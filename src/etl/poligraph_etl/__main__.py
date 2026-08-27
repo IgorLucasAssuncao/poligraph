@@ -19,7 +19,7 @@ import numpy as np
 import psycopg
 
 from . import conexao as conexao_mod
-from . import comparacao, grafo, ingestao, persistencia, similaridade, validacao
+from . import comparacao, cota, grafo, ingestao, persistencia, similaridade, validacao
 from .fontes import camara
 
 log = logging.getLogger("poligraph")
@@ -47,6 +47,8 @@ def main(argv: list[str] | None = None) -> int:
         with psycopg.connect(conexao_str, autocommit=True) as conexao:
             if args.comando == "ingerir":
                 _ingerir(conexao, args.anos)
+            elif args.comando == "cota":
+                _cota(conexao, args.anos)
             elif args.comando == "validar":
                 _validar(conexao, args.legislatura, args.divisao_minima)
             else:
@@ -73,6 +75,9 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
 
     analisar = sub.add_parser("analisar", help="calcula similaridade e grafo")
     analisar.add_argument("--legislatura", type=int, default=57)
+
+    cotas = sub.add_parser("cota", help="ingere a cota parlamentar (CEAP)")
+    cotas.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
 
     validar = sub.add_parser(
         "validar", help="mede discriminação do questionário e comunidade x partido"
@@ -193,6 +198,37 @@ def _analisar(conexao: psycopg.Connection, legislatura: int) -> None:
     except Exception:
         persistencia.fechar_execucao(conexao, execucao_id, sucesso=False)
         raise
+
+
+def _cota(conexao: psycopg.Connection, anos: list[int]) -> None:
+    """Cota parlamentar — o gasto de gabinete que vai para a ficha do deputado."""
+    mapa = _mapa_pessoas(conexao)
+    if not mapa:
+        raise RuntimeError(
+            "De-para de pessoas vazio. Rode `ingerir` antes: sem ele, nenhuma despesa "
+            "encontra dono e tudo seria descartado em silêncio."
+        )
+
+    for ano in anos:
+        log.info("Cota de %d...", ano)
+
+        arquivo = cota.baixar(ano, CACHE / f"cota-{ano}.zip")
+        registros = cota.ler(arquivo)
+        cota.conferir_volume(registros, ano)
+
+        linhas = cota.para_linhas(registros, mapa)
+        gravadas = persistencia.gravar_despesas(conexao, list(mapa.values()), linhas)
+
+        descartadas = len(registros) - len(linhas)
+        log.info("  %d linhas, %d gravadas", len(registros), gravadas)
+
+        # ⚠️ O descarte é NORMAL (lideranças, órgãos, valor zero), mas em volume alto
+        #    significa de-para incompleto — e aí a ficha mostraria gasto a menos.
+        if descartadas:
+            log.warning(
+                "  %d descartadas: sem `ideCadastro`, fora do de-para, ou valor zero",
+                descartadas,
+            )
 
 
 def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: float) -> None:
