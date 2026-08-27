@@ -189,6 +189,262 @@ public class TestesEndpointParlamentares : BaseIntegracao
         Assert.DoesNotContain("12345678909", json);
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // Emendas — o dinheiro que o parlamentar DIRECIONA
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// 🔴 Mesmo risco do `GroupBy` da cota: compila e estoura em runtime.
+    ///
+    /// ⭐ E confere o que interessa de verdade: **empenhado ⛔ ≠ pago**.
+    /// </summary>
+    [SkippableFact]
+    public async Task Emendas_SeparamEmpenhadoDePago()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var pessoaId = await SemearEmendasAsync();
+        using var cliente = CriarCliente();
+
+        var emendas = await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{pessoaId}/emendas");
+
+        Assert.NotNull(emendas);
+        Assert.Equal(2025, emendas!.Ano);
+        Assert.Equal(3, emendas.Quantidade);
+
+        // 🔴 A distância entre os dois é a informação. Um endpoint que devolvesse só
+        //    o empenhado passaria num teste que só olhasse o total.
+        Assert.Equal(1_000_000m, emendas.Empenhado);
+        Assert.Equal(400_000m, emendas.Pago);
+        Assert.NotEqual(emendas.Empenhado, emendas.Pago);
+
+        Assert.Equal("Ananindeua - PA", emendas.PorDestino[0].Localidade);
+    }
+
+    /// <summary>
+    /// 🔴 O total ⛔ NÃO pode ser a soma dos itens exibidos.
+    ///
+    /// ⚠️ `PorDestino` é cortado em 8. Somar a lista cortada daria um total menor que o
+    /// real, e nada na tela indicaria o corte — o parlamentar apareceria com menos
+    /// emenda do que tem.
+    /// </summary>
+    [SkippableFact]
+    public async Task Emendas_TotalNaoEhASomaDaListaCortada()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+
+        for (var i = 0; i < 12; i++)
+        {
+            Db.Emendas.Add(new Emenda
+            {
+                PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO",
+                CodigoEmenda = $"20255184{i:D4}", Ano = 2025,
+                Localidade = $"Municipio {i} - PA",
+                ValorEmpenhado = 100m, ValorPago = 100m
+            });
+        }
+        await Db.SaveChangesAsync();
+
+        using var cliente = CriarCliente();
+        var emendas = await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{pessoaId}/emendas");
+
+        Assert.Equal(8, emendas!.PorDestino.Count);          // a lista é cortada…
+        Assert.Equal(12, emendas.Quantidade);                // …e o total, não
+        Assert.Equal(1_200m, emendas.Empenhado);
+    }
+
+    /// <summary>⭐ Sem emenda é caso normal — inclusive para autor não reconciliado.</summary>
+    [SkippableFact]
+    public async Task Emendas_SemEmenda_DevolveVazioNaoErro()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        using var cliente = CriarCliente();
+
+        var id = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+        var emendas = await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{id}/emendas");
+
+        Assert.Equal(0, emendas!.Quantidade);
+        Assert.Empty(emendas.PorDestino);
+    }
+
+    /// <summary>
+    /// 🔴 Emenda sem dono ⛔ NÃO pode aparecer na ficha de ninguém.
+    ///
+    /// ⚠️ `pessoa_id` é anulável de propósito — emenda de bancada e de autor ainda não
+    /// reconciliado entram assim. Atribuí-las a alguém seria inventar autoria.
+    /// </summary>
+    [SkippableFact]
+    public async Task Emendas_DeAutorNaoReconciliado_NaoAparecemNaFicha()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var pessoaId = await SemearEmendasAsync();
+
+        Db.Emendas.Add(new Emenda
+        {
+            PessoaId = null,                      // ⛔ sem dono
+            CodigoAutor = "9999", NomeAutor = "BANCADA DO PARA",
+            CodigoEmenda = "202599990001", Ano = 2025,
+            Localidade = "Ananindeua - PA",
+            ValorEmpenhado = 50_000_000m, ValorPago = 50_000_000m
+        });
+        await Db.SaveChangesAsync();
+
+        using var cliente = CriarCliente();
+        var emendas = await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{pessoaId}/emendas");
+
+        Assert.Equal(3, emendas!.Quantidade);
+        Assert.Equal(1_000_000m, emendas.Empenhado);   // ⭐ os 50 milhões ficaram fora
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Financiamento — o dinheiro que ELEGEU o parlamentar
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// 🔴 Fundo Especial e Fundo Partidário são fundos DIFERENTES.
+    ///
+    /// ⚠️ Somá-los mudaria o número que o TCC cita. A API entrega os dois separados e
+    /// deixa a soma para quem quiser assiná-la.
+    /// </summary>
+    [SkippableFact]
+    public async Task Financiamento_SeparaOsDoisFundos()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var pessoaId = await SemearReceitasAsync();
+        using var cliente = CriarCliente();
+
+        var fin = await cliente.GetFromJsonAsync<FinanciamentoLido>(
+            $"{Rota}/{pessoaId}/financiamento");
+
+        Assert.NotNull(fin);
+        Assert.Equal(2022, fin!.AnoEleicao);
+
+        Assert.Equal(3_000_000m, fin.FundoEspecial);
+        Assert.Equal(200_000m, fin.FundoPartidario);
+        Assert.Equal(3_250_000m, fin.Total);
+
+        // 🔴 A soma dos dois ⛔ NÃO é o total — há dinheiro privado no meio.
+        Assert.NotEqual(fin.Total, fin.FundoEspecial + fin.FundoPartidario);
+    }
+
+    /// <summary>
+    /// 🔴 RNF-13 — o documento do doador pessoa física ⛔ NUNCA sai da API.
+    /// </summary>
+    [SkippableFact]
+    public async Task Financiamento_NaoVazaDocumentoDeDoador()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var pessoaId = await SemearReceitasAsync();
+        using var cliente = CriarCliente();
+
+        var json = await cliente.GetStringAsync($"{Rota}/{pessoaId}/financiamento");
+
+        Assert.DoesNotContain("cnpj", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("11122233344", json);
+        Assert.DoesNotContain(new string('b', 64), json);   // ⛔ nem o hash
+    }
+
+    /// <summary>⭐ Sem receita é caso normal — o TSE pode não ter sido ingerido.</summary>
+    [SkippableFact]
+    public async Task Financiamento_SemReceita_DevolveVazioNaoErro()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        using var cliente = CriarCliente();
+
+        var id = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+        var fin = await cliente.GetFromJsonAsync<FinanciamentoLido>(
+            $"{Rota}/{id}/financiamento");
+
+        Assert.Equal(0m, fin!.Total);
+        Assert.Empty(fin.PorFonte);
+    }
+
+    private record DestinoLido(string Localidade, decimal Empenhado, decimal Pago, int Quantidade);
+
+    private record EmendasLidas(
+        int Ano, decimal Empenhado, decimal Pago, int Quantidade,
+        IReadOnlyList<DestinoLido> PorDestino);
+
+    private record FonteLida(string Fonte, decimal Total, int Lancamentos);
+
+    private record FinanciamentoLido(
+        int AnoEleicao, decimal Total, decimal FundoEspecial, decimal FundoPartidario,
+        IReadOnlyList<FonteLida> PorFonte);
+
+    private async Task<long> SemearEmendasAsync()
+    {
+        var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+
+        Db.Emendas.AddRange(
+            new Emenda
+            {
+                PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
+                CodigoEmenda = "202541840001", Ano = 2025,
+                Localidade = "Ananindeua - PA", Funcao = "Saúde",
+                ValorEmpenhado = 600_000m, ValorPago = 300_000m
+            },
+            new Emenda
+            {
+                PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
+                CodigoEmenda = "202541840002", Ano = 2025,
+                Localidade = "Ananindeua - PA", Funcao = "Saúde",
+                ValorEmpenhado = 300_000m, ValorPago = 100_000m
+            },
+            new Emenda
+            {
+                PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
+                CodigoEmenda = "202541840003", Ano = 2025,
+                Localidade = "Belém - PA", Funcao = "Educação",
+                // ⭐ empenhada e nunca paga — é o caso que a ficha precisa deixar visível
+                ValorEmpenhado = 100_000m, ValorPago = 0m
+            });
+
+        await Db.SaveChangesAsync();
+
+        return pessoaId;
+    }
+
+    private async Task<long> SemearReceitasAsync()
+    {
+        var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+
+        Db.ReceitasDeCampanha.AddRange(
+            new ReceitaDeCampanha
+            {
+                PessoaId = pessoaId, AnoEleicao = 2022,
+                FonteReceita = ReceitaDeCampanha.FonteFundoEspecial,
+                Doador = "PARTIDO EXEMPLO", DoadorCnpjOuHash = "12345678000199",
+                Valor = 3_000_000m
+            },
+            new ReceitaDeCampanha
+            {
+                PessoaId = pessoaId, AnoEleicao = 2022,
+                FonteReceita = ReceitaDeCampanha.FonteFundoPartidario,
+                Doador = "PARTIDO EXEMPLO", DoadorCnpjOuHash = "12345678000199",
+                Valor = 200_000m
+            },
+            new ReceitaDeCampanha
+            {
+                PessoaId = pessoaId, AnoEleicao = 2022,
+                FonteReceita = "OUTROS RECURSOS",
+                Doador = "JOSE DA SILVA",
+                // ⚠️ hash, como o ETL grava — o CPF em claro nunca chega ao banco
+                DoadorCnpjOuHash = new string('b', 64), DoadorEhPessoaFisica = true,
+                Valor = 50_000m
+            });
+
+        await Db.SaveChangesAsync();
+
+        return pessoaId;
+    }
+
     private record CategoriaLida(string Categoria, decimal Total, int Lancamentos);
 
     private record GastoLido(

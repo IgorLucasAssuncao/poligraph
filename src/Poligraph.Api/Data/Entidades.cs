@@ -199,7 +199,20 @@ public class ReceitaDeCampanha
     public short AnoEleicao { get; set; }
 
     /// <summary>
-    /// 🔴 `FUNDO ESPECIAL` é o "fundão" (FEFC); `FUNDO PARTIDARIO` é outro fundo.
+    /// 🔴 O "fundão" — FEFC, criado em 2017.
+    ///
+    /// ⚠️ **O valor tem de ser idêntico ao de `receitas.FUNDO_ESPECIAL` no ETL Python**,
+    /// que é quem grava a coluna. Divergir de uma letra faria o total do fundão sair
+    /// **zero** na ficha, sem erro nenhum. `test_contrato_schema.py` compara os dois.
+    /// </summary>
+    public const string FonteFundoEspecial = "FUNDO ESPECIAL";
+
+    /// <summary>🔴 Fundo **Partidário** — permanente, ⛔ NÃO é o fundão.</summary>
+    public const string FonteFundoPartidario = "FUNDO PARTIDARIO";
+
+    /// <summary>
+    /// 🔴 <see cref="FonteFundoEspecial"/> é o "fundão"; <see cref="FonteFundoPartidario"/>
+    /// é outro fundo.
     ///
     /// ⚠️ O CSV os separa, e somá-los como "dinheiro público de campanha" é defensável
     /// mas precisa ser dito — ⛔ não são a mesma coisa.

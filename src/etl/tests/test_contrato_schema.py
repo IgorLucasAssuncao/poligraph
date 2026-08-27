@@ -246,3 +246,72 @@ def test_o_sql_do_etl_so_usa_colunas_que_o_ef_cria():
                     erros.append(f"{arquivo.name}: {tabela}.{coluna}")
 
     assert not erros, "Coluna que o EF não cria:\n  " + "\n  ".join(erros)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 Os VALORES combinados entre C# e Python
+# ═══════════════════════════════════════════════════════════════════
+#
+# ⚠️ Nome de tabela e de coluna já estão cobertos acima. Falta a terceira forma de os
+# dois lados divergirem: um **literal** que o Python grava e o C# compara.
+
+
+def constantes_do_ef() -> dict[str, str]:
+    """`public const string Nome = "VALOR";` lidos de `Entidades.cs`."""
+    fonte = (CONTEXTO.parent / "Entidades.cs").read_text(encoding="utf-8")
+    achadas = dict(
+        re.findall(r'public\s+const\s+string\s+(\w+)\s*=\s*"([^"]*)"', fonte)
+    )
+
+    assert achadas, "nenhuma `const string` encontrada — o parser quebrou"
+    return achadas
+
+
+def test_o_nome_dos_fundos_e_o_mesmo_dos_dois_lados():
+    """🔴 O ETL GRAVA o texto; a API COMPARA com ele.
+
+    ⚠️ Uma letra de diferença faria `FundoEspecial` somar **zero** na ficha — número
+    plausível, nenhuma exceção, e a conclusão do TCC sairia errada. ⛔ Não há
+    `CHECK` que pegue isto: qualquer texto é um valor válido na coluna.
+
+    ⭐ E os dois fundos precisam continuar DIFERENTES entre si.
+    """
+    from poligraph_etl import receitas
+
+    do_ef = constantes_do_ef()
+
+    assert do_ef["FonteFundoEspecial"] == receitas.FUNDO_ESPECIAL
+    assert do_ef["FonteFundoPartidario"] != do_ef["FonteFundoEspecial"]
+
+
+def test_o_metodo_de_reconciliacao_respeita_o_check():
+    """🔴 `ck_autor_metodo` só aceita três valores.
+
+    ⚠️ O Python passa o método como string literal. Um valor fora do domínio derruba o
+    lote inteiro no banco — e só na execução real, ⛔ nunca no teste unitário.
+    """
+    permitidos = {"AUTOMATICO", "MANUAL", "NAO_RESOLVIDO"}
+
+    # ⚠️ Ancorado no NOME da constraint. Há três `metodo IN (...)` no contexto — em
+    #    `pessoa_fonte_ids`, aqui e na correlação de notícias — e pegar "a primeira"
+    #    comparava o domínio errado.
+    fonte = CONTEXTO.read_text(encoding="utf-8")
+    achado = re.search(r'"ck_autor_metodo"[^)]*?metodo IN \(([^)]*)\)', fonte, re.DOTALL)
+
+    assert achado, "`ck_autor_metodo` não encontrada — a constraint sumiu ou mudou de nome"
+    do_check = set(achado.group(1).replace("'", "").split(","))
+
+    assert do_check == permitidos
+
+    usados = set()
+    for arquivo in FONTES_PYTHON:
+        usados |= set(
+            re.findall(
+                r'resolver_autor\([^)]*?"(\w+)"\s*\)',
+                arquivo.read_text(encoding="utf-8"),
+                re.DOTALL,
+            )
+        )
+
+    assert usados, "nenhuma chamada a `resolver_autor` encontrada — o parser quebrou"
+    assert usados <= permitidos, f"método fora do CHECK: {usados - permitidos}"

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
 
 namespace Poligraph.Api.Endpoints;
@@ -38,6 +38,45 @@ public record GastoDeCota(
     IReadOnlyList<GastoPorCategoria> PorCategoria,
     IReadOnlyList<FornecedorDoParlamentar> MaioresFornecedores);
 
+public record EmendaPorDestino(string Localidade, decimal Empenhado, decimal Pago, int Quantidade);
+
+public record EmendaPorFuncao(string Funcao, decimal Empenhado, decimal Pago);
+
+/// <summary>
+/// As emendas do parlamentar num ano.
+///
+/// 🔴 **`Empenhado` e `Pago` são coisas diferentes, e a distância entre eles é a
+/// informação.** Empenhar é reservar; pagar é o dinheiro sair. Mostrar só um dos dois
+/// responderia metade da pergunta — e seria a metade que favorece quem só anuncia.
+/// </summary>
+public record EmendasDoParlamentar(
+    int Ano,
+    decimal Empenhado,
+    decimal Pago,
+    int Quantidade,
+    IReadOnlyList<EmendaPorDestino> PorDestino,
+    IReadOnlyList<EmendaPorFuncao> PorFuncao);
+
+public record ReceitaPorFonte(string Fonte, decimal Total, int Lancamentos);
+
+public record DoadorDoParlamentar(string Nome, decimal Total, bool PessoaFisica);
+
+/// <summary>
+/// O financiamento da campanha que elegeu o parlamentar.
+///
+/// 🔴 **`FundoEspecial` e `FundoPartidario` ficam SEPARADOS de propósito.** O primeiro é
+/// o "fundão" (FEFC, de 2017), eleitoral; o segundo é o financiamento permanente dos
+/// partidos. Somá-los como *"dinheiro público de campanha"* é defensável — mas é uma
+/// afirmação, e quem a fizer que a assine. A API entrega os dois.
+/// </summary>
+public record FinanciamentoDeCampanha(
+    int AnoEleicao,
+    decimal Total,
+    decimal FundoEspecial,
+    decimal FundoPartidario,
+    IReadOnlyList<ReceitaPorFonte> PorFonte,
+    IReadOnlyList<DoadorDoParlamentar> MaioresDoadores);
+
 public static class EndpointsParlamentares
 {
     private const int LimiteLista = 100;
@@ -51,6 +90,8 @@ public static class EndpointsParlamentares
         grupo.MapGet("/", ListarAsync);
         grupo.MapGet("/{id:long}", ObterFichaAsync);
         grupo.MapGet("/{id:long}/gastos", ObterGastosAsync);
+        grupo.MapGet("/{id:long}/emendas", ObterEmendasAsync);
+        grupo.MapGet("/{id:long}/financiamento", ObterFinanciamentoAsync);
 
         return app;
     }
@@ -170,6 +211,141 @@ public static class EndpointsParlamentares
             Lancamentos: porCategoria.Sum(c => c.Lancamentos),
             PorCategoria: porCategoria,
             MaioresFornecedores: fornecedores));
+    }
+
+    /// <summary>Quantos destinos, funções e doadores aparecem na ficha.</summary>
+    private const int ItensNaFicha = 8;
+
+    /// <summary>
+    /// As emendas do parlamentar, agregadas por ano.
+    ///
+    /// ⭐ **Só entra emenda já reconciliada** (`pessoa_id` preenchido). Emenda de bancada
+    /// e de autor ainda não resolvido existem no banco e ⛔ não aparecem aqui — atribuí-las
+    /// a alguém por semelhança de nome seria inventar autoria.
+    /// </summary>
+    private static async Task<IResult> ObterEmendasAsync(
+        long id, PoligraphDb db, CancellationToken ct, int? ano = null)
+    {
+        var alvo = ano ?? await db.Emendas.AsNoTracking()
+            .Where(e => e.PessoaId == id)
+            .MaxAsync(e => (int?)e.Ano, ct);
+
+        // ⭐ Sem emenda é caso NORMAL — parlamentar que não apresentou, ou autor ainda
+        //    não reconciliado. A tela mostra estado vazio, ⛔ não erro.
+        if (alvo is null) return Results.Ok(new EmendasDoParlamentar(0, 0, 0, 0, [], []));
+
+        var doAno = db.Emendas.AsNoTracking()
+            .Where(e => e.PessoaId == id && e.Ano == (short)alvo.Value);
+
+        // ⚠️ Tipo ANÔNIMO, ⛔ não `record` posicional: o EF não traduz `GroupBy` com
+        //    construtor posicional e falha em RUNTIME, não na compilação.
+        var destinos = await doAno
+            .Where(e => e.Localidade != null)
+            .GroupBy(e => e.Localidade!)
+            .Select(g => new
+            {
+                Localidade = g.Key,
+                Empenhado = g.Sum(e => e.ValorEmpenhado),
+                Pago = g.Sum(e => e.ValorPago),
+                Quantidade = g.Count()
+            })
+            .OrderByDescending(d => d.Empenhado)
+            .Take(ItensNaFicha)
+            .ToListAsync(ct);
+
+        var funcoes = await doAno
+            .Where(e => e.Funcao != null)
+            .GroupBy(e => e.Funcao!)
+            .Select(g => new
+            {
+                Funcao = g.Key,
+                Empenhado = g.Sum(e => e.ValorEmpenhado),
+                Pago = g.Sum(e => e.ValorPago)
+            })
+            .OrderByDescending(f => f.Empenhado)
+            .Take(ItensNaFicha)
+            .ToListAsync(ct);
+
+        // ⚠️ Os totais saem de uma agregação PRÓPRIA, ⛔ não da soma dos `Take(8)` acima
+        //    — que mostrariam um total menor que o real sem nada indicar o corte.
+        var totais = await doAno
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Empenhado = g.Sum(e => e.ValorEmpenhado),
+                Pago = g.Sum(e => e.ValorPago),
+                Quantidade = g.Count()
+            })
+            .FirstOrDefaultAsync(ct);
+
+        return Results.Ok(new EmendasDoParlamentar(
+            Ano: alvo.Value,
+            Empenhado: totais?.Empenhado ?? 0,
+            Pago: totais?.Pago ?? 0,
+            Quantidade: totais?.Quantidade ?? 0,
+            PorDestino: [.. destinos.Select(d =>
+                new EmendaPorDestino(d.Localidade, d.Empenhado, d.Pago, d.Quantidade))],
+            PorFuncao: [.. funcoes.Select(f =>
+                new EmendaPorFuncao(f.Funcao, f.Empenhado, f.Pago))]));
+    }
+
+    /// <summary>
+    /// O financiamento da campanha que elegeu o parlamentar.
+    ///
+    /// 🔴 Devolve o fundão e o fundo partidário **separados** — ver
+    /// <see cref="FinanciamentoDeCampanha"/>.
+    /// </summary>
+    private static async Task<IResult> ObterFinanciamentoAsync(
+        long id, PoligraphDb db, CancellationToken ct, int? eleicao = null)
+    {
+        var alvo = eleicao ?? await db.ReceitasDeCampanha.AsNoTracking()
+            .Where(r => r.PessoaId == id)
+            .MaxAsync(r => (int?)r.AnoEleicao, ct);
+
+        if (alvo is null) return Results.Ok(new FinanciamentoDeCampanha(0, 0, 0, 0, [], []));
+
+        var daEleicao = db.ReceitasDeCampanha.AsNoTracking()
+            .Where(r => r.PessoaId == id && r.AnoEleicao == (short)alvo.Value);
+
+        var fontes = await daEleicao
+            .GroupBy(r => r.FonteReceita)
+            .Select(g => new
+            {
+                Fonte = g.Key,
+                Total = g.Sum(r => r.Valor),
+                Lancamentos = g.Count()
+            })
+            .OrderByDescending(f => f.Total)
+            .ToListAsync(ct);
+
+        // ⚠️ Doador pessoa física aparece pelo NOME; o documento dele é hash e ⛔ nunca
+        //    sai da API. RNF-13 — ver `Despesa.CnpjOuHash`, mesma regra.
+        var doadores = await daEleicao
+            .Where(r => r.Doador != null)
+            .GroupBy(r => new { r.Doador, r.DoadorEhPessoaFisica })
+            .Select(g => new
+            {
+                g.Key.Doador,
+                g.Key.DoadorEhPessoaFisica,
+                Total = g.Sum(r => r.Valor)
+            })
+            .OrderByDescending(d => d.Total)
+            .Take(ItensNaFicha)
+            .ToListAsync(ct);
+
+        return Results.Ok(new FinanciamentoDeCampanha(
+            AnoEleicao: alvo.Value,
+            Total: fontes.Sum(f => f.Total),
+            FundoEspecial: fontes
+                .Where(f => f.Fonte == ReceitaDeCampanha.FonteFundoEspecial)
+                .Sum(f => f.Total),
+            FundoPartidario: fontes
+                .Where(f => f.Fonte == ReceitaDeCampanha.FonteFundoPartidario)
+                .Sum(f => f.Total),
+            PorFonte: [.. fontes.Select(f =>
+                new ReceitaPorFonte(f.Fonte, f.Total, f.Lancamentos))],
+            MaioresDoadores: [.. doadores.Select(d =>
+                new DoadorDoParlamentar(d.Doador!, d.Total, d.DoadorEhPessoaFisica))]));
     }
 
     /// <summary>RF-31 — ficha com dados, histórico de votos e mais similares.</summary>

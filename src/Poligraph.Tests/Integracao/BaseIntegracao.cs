@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
 using Testcontainers.PostgreSql;
 
@@ -16,10 +16,16 @@ namespace Poligraph.Tests.Integracao;
 /// </summary>
 public abstract class BaseIntegracao : IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
-        .WithImage("postgres:17-alpine")
-        .WithDatabase("poligraph_teste")
-        .Build();
+    private const string Imagem = "postgres:17-alpine";
+
+    // 🔴 Construído DENTRO do try, ⛔ não como campo.
+    //
+    // ⚠️ O `PostgreSqlBuilder` valida a configuração já no construtor. Com um
+    // `DOCKER_HOST` malformado ele lança `TypeInitializationException` — e como isso
+    // acontecia num inicializador de campo, o estouro vinha do construtor da CLASSE DE
+    // TESTE, antes de qualquer `try`. Resultado: os 86 testes ficavam **vermelhos** em
+    // vez de pulados, justo o oposto do que esta classe promete.
+    private PostgreSqlContainer? _postgres;
 
     protected PoligraphDb Db { get; private set; } = null!;
     protected string ConnectionString { get; private set; } = "";
@@ -29,6 +35,11 @@ public abstract class BaseIntegracao : IAsyncLifetime
     {
         try
         {
+            // ⭐ A imagem vai no construtor: o sem-parâmetro está obsoleto.
+            _postgres = new PostgreSqlBuilder(Imagem)
+                .WithDatabase("poligraph_teste")
+                .Build();
+
             await _postgres.StartAsync();
             DockerDisponivel = true;
         }
@@ -49,7 +60,7 @@ public abstract class BaseIntegracao : IAsyncLifetime
     public async Task DisposeAsync()
     {
         if (Db is not null) await Db.DisposeAsync();
-        if (DockerDisponivel) await _postgres.DisposeAsync();
+        if (_postgres is not null) await _postgres.DisposeAsync();
     }
 
     protected PoligraphDb CriarContexto() =>
