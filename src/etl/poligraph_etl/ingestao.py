@@ -128,6 +128,7 @@ def deputados_para_linhas(df: pd.DataFrame) -> list[dict]:
                 "nome_civil": nome,
                 "nome_exibicao": r.get("nome") or nome,
                 "cpf_hash": None,
+                "url_foto": url_da_foto(id_externo),
                 "fonte": "CAMARA",
                 "id_externo": id_externo,
                 "metodo": "MANUAL",
@@ -139,6 +140,19 @@ def deputados_para_linhas(df: pd.DataFrame) -> list[dict]:
 
 
 # ═══════════════════════════════════════════════════════════════════
+
+
+# ⭐ A URL da foto é DETERMINÍSTICA a partir do id — não precisa de requisição.
+#
+# ⚠️ O CSV de deputados NÃO traz a foto (conferido: só `urlRedeSocial` e `urlWebsite`).
+#    Ela aparece em `ultimoStatus.urlFoto` na API REST, um deputado por chamada — o que
+#    seria 7.889 requisições para obter algo que se monta com uma f-string.
+FOTO = "https://www.camara.leg.br/internet/deputado/bandep/{id}.jpg"
+
+
+def url_da_foto(id_camara: str) -> str | None:
+    """Monta a URL da foto oficial. `None` quando não há id."""
+    return FOTO.format(id=id_camara) if id_camara else None
 
 
 def id_do_deputado(linha) -> str:

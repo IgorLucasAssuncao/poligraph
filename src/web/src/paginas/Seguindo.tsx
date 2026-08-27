@@ -44,6 +44,7 @@ export function Seguindo() {
           nome={p.nome}
           partido={p.partido}
           uf={p.uf}
+          fotoUrl={p.urlFoto}
           seguindo
           aoAlternarSeguir={(id) => setLista((l) => l.filter((x) => x.id !== id))}
         />

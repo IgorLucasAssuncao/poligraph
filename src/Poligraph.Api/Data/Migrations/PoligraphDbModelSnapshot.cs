@@ -442,6 +442,10 @@ namespace Poligraph.Api.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("sexo");
 
+                    b.Property<string>("UrlFoto")
+                        .HasColumnType("text")
+                        .HasColumnName("url_foto");
+
                     b.HasKey("Id")
                         .HasName("pk_pessoas");
 

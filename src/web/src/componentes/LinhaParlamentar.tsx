@@ -13,6 +13,7 @@ export function LinhaParlamentar({
   nome,
   partido,
   uf,
+  fotoUrl,
   detalhe,
   seguindo,
   aoAlternarSeguir,
@@ -21,6 +22,7 @@ export function LinhaParlamentar({
   nome: string;
   partido: string;
   uf: string;
+  fotoUrl?: string | null;
   detalhe?: React.ReactNode;
   seguindo?: boolean;
   aoAlternarSeguir?: (id: number, seguindoAgora: boolean) => void;
@@ -28,7 +30,7 @@ export function LinhaParlamentar({
   return (
     <article className="linha">
       <Link to={`/parlamentar/${id}`} aria-label={nome}>
-        <Avatar nome={nome} tamanho="medio" />
+        <Avatar nome={nome} fotoUrl={fotoUrl} tamanho="medio" />
       </Link>
 
       <div className="linha-corpo">

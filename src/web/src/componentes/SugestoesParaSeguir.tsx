@@ -44,7 +44,7 @@ export function SugestoesParaSeguir() {
         {sugestoes.map((p) => (
           <li key={p.id}>
             <Link to={`/parlamentar/${p.id}`} className="sugestao-link">
-              <Avatar nome={p.nome} tamanho="medio" />
+              <Avatar nome={p.nome} fotoUrl={p.urlFoto} tamanho="medio" />
               <span className="sugestao-texto">
                 <strong>{p.nome}</strong>
                 <small>

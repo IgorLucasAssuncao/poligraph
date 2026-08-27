@@ -34,7 +34,9 @@ CREATE TABLE pessoas (
     id BIGSERIAL PRIMARY KEY,
     nome_civil TEXT NOT NULL,
     nome_exibicao TEXT NOT NULL,
-    cpf_hash TEXT
+    cpf_hash TEXT,
+    url_foto TEXT,
+    excluido_em TIMESTAMPTZ
 );
 CREATE TABLE pessoa_fonte_ids (
     pessoa_id BIGINT NOT NULL REFERENCES pessoas(id),
@@ -235,6 +237,7 @@ def test_duas_execucoes_convivem_sem_conflito(conexao):
 def _pessoa(id_externo: str, nome: str) -> dict:
     return {
         "nome_civil": nome, "nome_exibicao": nome, "cpf_hash": None,
+        "url_foto": None,
         "fonte": "CAMARA", "id_externo": id_externo,
         "metodo": "MANUAL", "confianca": 1.0,
     }

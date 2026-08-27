@@ -85,6 +85,7 @@ export function Explorar() {
           nome={p.nome}
           partido={p.partido}
           uf={p.uf}
+          fotoUrl={p.urlFoto}
           detalhe={`${p.nVotacoes} votações registradas`}
           seguindo={seguidos.has(p.id)}
           aoAlternarSeguir={alternar}

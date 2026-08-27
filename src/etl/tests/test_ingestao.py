@@ -242,3 +242,25 @@ def test_votacao_recebe_a_legislatura_da_propria_data():
 
     assert linhas["X-1"] == 57
     assert linhas["Y-1"] == 58
+
+
+def test_url_da_foto_e_deterministica():
+    """⭐ Não precisa de requisição: a URL se monta a partir do id.
+
+    ⚠️ O CSV de deputados NÃO traz a foto — só `urlRedeSocial` e `urlWebsite`. Ela existe
+    em `ultimoStatus.urlFoto` na API REST, um deputado por chamada: 7.889 requisições
+    para obter algo que sai de uma f-string.
+    """
+    assert ingestao.url_da_foto("220593").endswith("/bandep/220593.jpg")
+    assert ingestao.url_da_foto("") is None
+
+
+def test_deputado_ingerido_ja_vem_com_foto():
+    df = pd.DataFrame([{
+        "uri": "https://dadosabertos.camara.leg.br/api/v2/deputados/220593",
+        "nome": "Abilio Brunini", "nomeCivil": "ABILIO BRUNINI PEIXOTO",
+    }])
+
+    linha = ingestao.deputados_para_linhas(df)[0]
+
+    assert "220593.jpg" in linha["url_foto"]

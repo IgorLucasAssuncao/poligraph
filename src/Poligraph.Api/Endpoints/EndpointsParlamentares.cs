@@ -3,7 +3,8 @@ using Poligraph.Api.Data;
 
 namespace Poligraph.Api.Endpoints;
 
-public record ParlamentarNaLista(long Id, string Nome, string Partido, string Uf, int NVotacoes);
+public record ParlamentarNaLista(
+    long Id, string Nome, string Partido, string Uf, int NVotacoes, string? UrlFoto);
 
 public record VotoNaFicha(string VotacaoId, DateOnly Data, string? Descricao, short? Valor);
 
@@ -15,6 +16,8 @@ public record FichaParlamentar(
     string NomeCivil,
     string Partido,
     string Uf,
+    /// <summary>🔴 URL na Câmara — ⛔ a imagem NÃO é rehospedada.</summary>
+    string? UrlFoto,
     int NVotacoes,
     IReadOnlyList<VotoNaFicha> VotosRecentes,
     IReadOnlyList<SimilarNaFicha> MaisSimilares);
@@ -52,6 +55,7 @@ public static class EndpointsParlamentares
             {
                 p.Id,
                 p.NomeExibicao,
+                p.UrlFoto,
                 NVotacoes = p.Votos.Count(v => v.Valor != null),
                 Ultimo = p.Votos
                     .OrderByDescending(v => v.Votacao!.Data)
@@ -77,7 +81,7 @@ public static class EndpointsParlamentares
         return Results.Ok(lista.Select(p => new ParlamentarNaLista(
             p.Id, p.NomeExibicao,
             p.Ultimo?.PartidoNoVoto ?? "", p.Ultimo?.UfNoVoto ?? "",
-            p.NVotacoes)));
+            p.NVotacoes, p.UrlFoto)));
     }
 
     /// <summary>RF-31 — ficha com dados, histórico de votos e mais similares.</summary>
@@ -85,7 +89,7 @@ public static class EndpointsParlamentares
     {
         var pessoa = await db.Pessoas.AsNoTracking()
             .Where(p => p.Id == id)
-            .Select(p => new { p.Id, p.NomeExibicao, p.NomeCivil })
+            .Select(p => new { p.Id, p.NomeExibicao, p.NomeCivil, p.UrlFoto })
             .FirstOrDefaultAsync(ct);
 
         if (pessoa is null) return Results.NotFound();
@@ -96,7 +100,7 @@ public static class EndpointsParlamentares
 
         return Results.Ok(new FichaParlamentar(
             pessoa.Id, pessoa.NomeExibicao, pessoa.NomeCivil,
-            partido, uf,
+            partido, uf, pessoa.UrlFoto,
             await db.Votos.CountAsync(v => v.PessoaId == id && v.Valor != null, ct),
             votos, similares));
     }

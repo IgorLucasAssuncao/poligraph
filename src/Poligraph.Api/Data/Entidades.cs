@@ -13,6 +13,18 @@ public class Pessoa
     public string? CpfHash { get; set; }
 
     /// <summary>
+    /// URL da foto oficial, na própria Câmara.
+    ///
+    /// 🔴 Guardamos a URL, ⛔ NÃO a imagem. A diferença é jurídica, não de espaço:
+    /// **linkar** e **rehospedar** são atos diferentes perante licença e LGPD, e
+    /// rehospedar foto de pessoa é decisão que este trabalho ainda não tomou.
+    ///
+    /// ⚠️ Consequência aceita: se a Câmara mudar o padrão de URL, as fotos somem da
+    /// tela. `Avatar.tsx` cai para as iniciais sozinho — por isso o `onError` existe.
+    /// </summary>
+    public string? UrlFoto { get; set; }
+
+    /// <summary>
     /// Exclusão lógica. `null` = ativo.
     ///
     /// 🔴 Parlamentar ⛔ NUNCA é apagado de verdade. O voto dele é registro histórico e

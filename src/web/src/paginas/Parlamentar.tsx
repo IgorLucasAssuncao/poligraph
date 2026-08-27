@@ -78,7 +78,7 @@ export function Parlamentar() {
 
       <header className="perfil-cabecalho">
         <div className="perfil-avatar-linha">
-          <Avatar nome={ficha.nome} tamanho="grande" />
+          <Avatar nome={ficha.nome} fotoUrl={ficha.urlFoto} tamanho="grande" />
 
           <button
             type="button"

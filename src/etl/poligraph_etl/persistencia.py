@@ -51,7 +51,8 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
                     """
                     UPDATE pessoas
                        SET nome_civil = %(nome_civil)s,
-                           nome_exibicao = %(nome_exibicao)s
+                           nome_exibicao = %(nome_exibicao)s,
+                           url_foto = %(url_foto)s
                      WHERE id = %(id)s
                     """,
                     {**pessoa, "id": existente[0]},
@@ -60,8 +61,8 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
 
             cur.execute(
                 """
-                INSERT INTO pessoas (nome_civil, nome_exibicao, cpf_hash)
-                VALUES (%(nome_civil)s, %(nome_exibicao)s, %(cpf_hash)s)
+                INSERT INTO pessoas (nome_civil, nome_exibicao, cpf_hash, url_foto)
+                VALUES (%(nome_civil)s, %(nome_exibicao)s, %(cpf_hash)s, %(url_foto)s)
                 RETURNING id
                 """,
                 pessoa,

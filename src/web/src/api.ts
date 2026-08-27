@@ -20,6 +20,8 @@ export type Parlamentar = {
   partido: string;
   uf: string;
   nVotacoes: number;
+  /** 🔴 URL na Câmara — ⛔ a imagem não é rehospedada. */
+  urlFoto?: string | null;
 };
 
 export type VotoNaFicha = {
@@ -43,6 +45,7 @@ export type Ficha = {
   nomeCivil: string;
   partido: string;
   uf: string;
+  urlFoto: string | null;
   nVotacoes: number;
   votosRecentes: VotoNaFicha[];
   maisSimilares: Similar[];
