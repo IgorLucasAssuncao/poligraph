@@ -1,4 +1,4 @@
-"""Validação do instrumento — o deputado consegue se encontrar?
+"""ANÁLISE — validação do instrumento — o deputado consegue se encontrar?
 
 🔴 A ideia, do autor: **se um deputado usar o app e responder segundo os próprios
 votos, ele tem de aparecer em primeiro lugar.** É verdade-terreno de graça — não

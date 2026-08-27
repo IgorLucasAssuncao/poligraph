@@ -1,13 +1,28 @@
-"""Comunidades e layout do grafo — o que preenche `nos_metrica`.
+"""ANÁLISE — comunidades e layout, o que preenche `nos_metrica`.
 
-⚠️ Este módulo é o que faltava para o grafo existir. `similaridade.py` produz pares e
-arestas; sem daqui, `arestas_grafo` tem ligações e `nos_metrica` fica vazia — o grafo
-tem arestas e nenhum nó com nome, cor ou posição.
+## ENTRADA
 
-🔴 **Tudo aqui é determinístico por semente fixa.** Louvain e o layout de molas são
-estocásticos: rodar duas vezes sem semente dá comunidades e posições diferentes sobre o
-MESMO dado. Num TCC isso é fatal — a banca reproduz e não bate. A semente entra junto
-da `versao_carga` na tabela `execucoes`, que é o retrato auditável de cada análise.
+As `arestas_grafo` da execução, produzidas por `similaridade`.
+
+## CÁLCULO
+
+1. **Louvain** sobre a rede ponderada — comunidade detectada pelo VOTO, ⛔ não pelo
+   partido
+2. Layout de **molas** (Fruchterman-Reingold), semente fixa: o desenho tem de ser
+   reproduzível entre execuções
+3. **SVD** para os dois componentes principais — eixos interpretáveis, em paralelo
+
+## SAÍDA
+
+`nos_metrica`: comunidade, posição de molas e posição por componentes.
+
+---
+
+⚠️ **Os eixos de molas ⛔ não significam nada** — girar a figura ⛔ não muda o que ela
+diz. Quem tem eixo com significado é o SVD, e mesmo lá **o centro ⛔ não é moderação**:
+quem faltou a muitas votações também cai ali.
+
+📐 [`docs/plano/07-grafo-e-afinidade.md §3.5`](../../../docs/plano/07-grafo-e-afinidade.md)
 """
 
 import logging

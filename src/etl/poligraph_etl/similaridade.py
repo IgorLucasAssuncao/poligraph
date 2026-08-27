@@ -1,7 +1,28 @@
-"""Matriz de votos, similaridade entre parlamentares e construção do grafo.
+"""ANÁLISE — matriz de votos, similaridade e as arestas do grafo.
 
-⚠️ É este módulo que produz `similaridade`, `aresta_grafo` e `no_metrica`. O C# só LÊ
-essas tabelas — se um cálculo de similaridade aparecer lá, é regressão de arquitetura.
+## ENTRADA
+
+Tabelas `votos` e `votacoes`, já tratadas. ⛔ Nada de arquivo aqui.
+
+## CÁLCULO
+
+1. Monta a matriz **pessoa × votação**, só plenário e ⛔ nunca secreta
+2. Concordância e cosseno, **ponderados pela categoria** da votação
+3. 🔴 Descarta o par com menos de **20 votações em comum** — RN-02, e o banco também
+   recusa pelo `ck_sim_minimo`
+4. kNN k=10 por **união**: a aresta sobrevive se **qualquer um** dos dois escolheu o
+   outro, porque o grafo é não-direcionado
+
+## SAÍDA
+
+`similaridades` · `arestas_grafo`, sempre atreladas a uma `execucao`.
+
+---
+
+🔴 **O cálculo de similaridade é DAQUI.** O C# só lê essas tabelas — se um cálculo
+aparecer lá, é regressão de arquitetura.
+
+📐 [`docs/plano/07-grafo-e-afinidade.md §3.2`](../../../docs/plano/07-grafo-e-afinidade.md)
 """
 
 from dataclasses import dataclass

@@ -1,4 +1,4 @@
-"""Coleta de notícias por RSS e associação a parlamentares.
+"""TRATAMENTO — coleta de notícias por RSS e associação a parlamentares.
 
 🔴 RF-38 — guardamos APENAS url, título, veículo, data e um trecho curto.
 ⛔ Nunca o texto integral: é reprodução de obra de terceiro, e o projeto não tem

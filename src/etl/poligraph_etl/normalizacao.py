@@ -1,7 +1,15 @@
-"""Normalização dos dados brutos da Câmara e do Senado.
+"""TRATAMENTO — as regras puras, e só elas.
 
-Estas funções são puras de propósito: são o que os testes unitários cobrem, e o que
-as medições do discovery transformaram em regra. Nada aqui toca banco ou rede.
+Funções puras de propósito: ⛔ não tocam banco nem rede, e são o que os testes unitários
+cobrem. Cada uma nasceu de uma medição do discovery que virou regra.
+
+| O que resolve | Por que existe |
+|---|---|
+| Domínio fechado do voto | ⚠️ "Obstrução" ⛔ **não** é abstenção — vira `None`, fora do cálculo |
+| Categoria da votação | Define o **peso** na matriz de similaridade |
+| 🔴 Polaridade | Em 14% das nominais "Sim" significa **rejeitar** |
+| Hash de CPF | RNF-13 — normaliza **antes** de hashear, senão os lados ⛔ não casam |
+| Dinheiro | 🔴 **Duas convenções incompatíveis** convivem: `"1.234"` vale 1234 numa e 1,234 na outra |
 """
 
 import hashlib

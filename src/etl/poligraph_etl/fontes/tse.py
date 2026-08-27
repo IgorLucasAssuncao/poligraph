@@ -1,7 +1,7 @@
-"""TSE — CDN de dados abertos eleitorais.
+"""ENTRADA — CDN de dados abertos eleitorais do TSE.
 
-Cuida **só do acesso**: passar pelo WAF, baixar e abrir o ZIP. O que se faz com o
-conteúdo fica em [`receitas.py`](../receitas.py).
+Passa pelo WAF, baixa e abre o ZIP. O que se faz com o conteúdo fica em
+[`receitas.py`](../receitas.py).
 
 🔴 **Duas armadilhas do WAF, e as duas mentem em vez de errar:**
 

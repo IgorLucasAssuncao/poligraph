@@ -10,13 +10,57 @@ qual arquivo ele veio, o que foi feito com ele e em que coluna foi parar.
 
 | Fase | Responsabilidade | Módulos |
 |---|---|---|
-| **ENTRADA** | Baixar e ler. ⛔ Não interpreta, ⛔ não descarta | `fontes/camara` · `fontes/tse` · a metade `baixar`/`ler` de `cota` e `emendas` |
-| **TRATAMENTO** | Normalizar, classificar, descartar o que ⛔ não entra | `normalizacao` · `ingestao` · `para_linhas` de cada fonte |
+| **ENTRADA** | Baixar e ler. ⛔ Não interpreta, ⛔ não descarta | `fontes/camara` · `fontes/tse` · o `baixar`/`ler` de `cota` e `emendas` |
+| **TRATAMENTO** | Normalizar, classificar, descartar o que ⛔ não entra | `normalizacao` · `ingestao` · o `para_linhas` de cada fonte |
 | **SAÍDA** | Gravar. ⛔ Não decide nada | `persistencia` |
+| **ANÁLISE** | Ler do banco, calcular, gravar de volta | `similaridade` · `grafo` · `comparacao` · `validacao` |
 
 🔴 **Nenhum módulo de ENTRADA toca o banco, e `persistencia` ⛔ não decide o que gravar.**
-Quando as três se misturam, um descarte silencioso vira um número plausível e errado —
-que é o modo de falha que este projeto persegue.
+Quando as três primeiras se misturam, um descarte silencioso vira um número plausível e
+errado — que é o modo de falha que este projeto persegue.
+
+⭐ **A ANÁLISE é uma fase à parte, e o contrato dela é outro:** a entrada ⛔ não é arquivo,
+são tabelas já tratadas; a saída é sempre atrelada a uma `execucao`, que é o que torna
+cada retrato do grafo reproduzível. `validacao` é a exceção — ⛔ **não grava nada**, só
+mede.
+
+---
+
+## 🔴 A ordem de execução
+
+```
+ingerir                       pessoas, votacoes, votos — TUDO depende dele
+│
+├── analisar                  similaridade, comunidades, grafo
+│   └── validar               ⭐ só mede, ⛔ não grava
+│
+├── cota                      🔴 BARRA sem `ingerir`
+│
+├── emendas                   🔑 exige chave do Portal
+│   └── emendas --resolver    reconciliação manual dos ambíguos
+│
+└── cpf                       🔴 grava o HASH, nunca o CPF
+    └── fundo                 🔴 BARRA sem `cpf`
+```
+
+⚠️ **Duas dependências são DURAS — o comando estoura com mensagem dizendo o que rodar
+antes.** As outras degradam, e é aí que mora o perigo:
+
+| Comando | Sem o pré-requisito |
+|---|---|
+| 🔴 `cota` | **Estoura**: *"De-para de pessoas vazio. Rode `ingerir` antes"* |
+| 🔴 `fundo` | **Estoura**: *"Nenhuma pessoa com `cpf_hash`. Rode `cpf` antes"* |
+| `analisar` | ⚠️ Avisa *"menos de duas pessoas com voto"* e sai — ⛔ não estoura |
+| `emendas` | ⚠️ Ingere normalmente e **resolve zero autores**, calado |
+| `validar` | ⚠️ Avisa *"nenhuma execução concluída — rode `analisar` antes"* |
+
+🔴 **Os dois `raise` existem porque o silêncio custa caro:** sem eles, `fundo` leria
+**396 MB**, descartaria **toda** linha por não achar dono, e terminaria com log de
+sucesso. Foi esse formato de falha que já custou uma ingestão inteira neste projeto.
+
+⭐ **`ingerir` também estoura ao ler zero deputados** — e ⛔ não é excesso de zelo: quando
+o `id` mudou de lugar no CSV, o ETL registrou `0 deputados` e `0 votos` em `INFO` e
+seguiu. Dois zeros plausíveis, nenhuma exceção.
 
 ---
 
@@ -27,7 +71,7 @@ a revisão ⛔ não dependa de ler o código inteiro:
 
 | Fonte | Entrada | Liga por | Saída |
 |---|---|---|---|
-| `ingestao` | CSVs anuais da Câmara | `id` da Câmara | `votacoes` · `votos` · `pessoas` |
+| 🔴 `ingestao` | CSVs anuais da Câmara | `id` da Câmara, extraído da `uri` | `votacoes` · `votos` · `pessoas` |
 | `cota` | `cotas/Ano-{ano}.csv.zip` | `ideCadastro` | `despesas` |
 | `emendas` | `api-de-dados/emendas` 🔑 | **código do autor** | `emendas` · `autores_de_emenda` |
 | `receitas` | `prestacao_de_contas_*.zip` | **hash de CPF** | `receitas_de_campanha` |

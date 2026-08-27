@@ -1,4 +1,4 @@
-"""Comunidade detectada × partido declarado — o objetivo específico #3 (RF-20).
+"""ANÁLISE — comunidade detectada × partido declarado — o objetivo específico #3 (RF-20).
 
 🔴 **A RQ2 perguntava "ARI ou modularidade?". A resposta é as duas, e elas respondem
 perguntas diferentes:**

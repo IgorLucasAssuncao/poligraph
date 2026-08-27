@@ -1,7 +1,47 @@
-"""Transformação do CSV bruto para as linhas que vão ao banco.
+"""TRATAMENTO — do CSV bruto da Câmara para as linhas que vão ao banco.
 
-⚠️ A camada bronze é o CSV como veio; esta é a silver. Nada aqui inventa dado — só
-normaliza, classifica e descarta o que não entra na matriz.
+🔴 **É o núcleo do trabalho.** O título do TCC mede afinidade por comportamento revelado
+de voto, e é aqui que o voto vira dado comparável. Tudo o que este módulo classifica
+errado reaparece como número plausível na tela.
+
+## ENTRADA
+
+| | |
+|---|---|
+| Vem de | `fontes/camara.ler_csv` — já validado no volume, ⛔ nunca lido por linha |
+| `votacoes-{ano}` | Uma linha por votação, nominal **ou não** |
+| `votacoesVotos-{ano}` | Uma linha por voto individual |
+| `deputados` | ⚠️ ⛔ **Não é anual**, e ⛔ **não tem coluna `id`** — ele vive na `uri` |
+
+## TRATAMENTO
+
+1. **Descarta a votação simbólica** — ⛔ não registra quem votou, e sem isso ⛔ não há o
+   que comparar. É a maioria delas
+2. **Deduz a legislatura pela DATA**, ⛔ nunca por parâmetro — ver `legislatura_da_data`
+3. Classifica a **categoria** (procedimental · destaque · autoridade · substantiva), que
+   define o **peso** da votação na matriz
+4. Infere a **polaridade** — 🔴 o campo mais perigoso do sistema
+5. Converte o voto para o domínio fechado `{-1, 0, 1, None}`; `None` é *fora do cálculo*,
+   ⛔ **não** *discordou*
+6. Descarta voto de deputado fora do de-para, e o chamador **loga a contagem**
+
+## SAÍDA
+
+| | |
+|---|---|
+| Tabelas | `pessoas` · `pessoa_fonte_ids` · `votacoes` · `votos` |
+| Chave de ligação | `id` da Câmara, extraído da `uri` |
+| Constraint do banco | `ck_voto_valor` (`valor IN (-1,0,1)`) · `ck_votacao_categoria` |
+| Idempotência | `ON CONFLICT (id) DO UPDATE` — a Câmara corrige dado retroativo |
+
+---
+
+⚠️ **Nada aqui inventa dado.** Só normaliza, classifica e descarta o que ⛔ não entra na
+matriz — e todo descarte é contado e registrado.
+
+📐 [`docs/04-contratos.md`](../../../docs/04-contratos.md) ·
+[achado #12](../../../docs/achados/012-polaridade-nao-e-constante.md) ·
+[achado #22](../../../docs/achados/022-deputados-nao-e-arquivo-anual.md)
 """
 
 from datetime import date

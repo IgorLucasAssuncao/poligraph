@@ -1304,6 +1304,19 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .contas-ampliadas .ajuda { margin: .25rem 0 0; }
 .contas-corpo { max-height: min(70vh, 44rem); overflow-y: auto; }
 
+/* 🔴 Uma única margem esquerda no modal inteiro.
+   ⚠️ As listas e os títulos são reaproveitados do perfil, onde a coluna é mais estreita
+   e o recuo é 1rem; o cabeçalho e a comparação nascem aqui, com 1,25rem. Misturados, o
+   texto do topo ficava recuado em relação a tudo abaixo — lia como desalinhamento. */
+.contas-corpo .titulo-secao,
+.contas-corpo .ajuda-espacada,
+.contas-corpo .execucao,
+.contas-corpo .gastos-categorias li,
+.contas-corpo .gastos-fornecedores li,
+.contas-corpo .fundos li {
+  padding-inline: 1.25rem;
+}
+
 /* 🔴 As três seções precisam ler como CAPÍTULOS, não como mais três títulos numa
    rolagem longa: sem peso próprio elas se confundem, e o leitor perde de vista que
    trocou de dinheiro. Daí a superfície tinta, a régua forte e a display expandida. */

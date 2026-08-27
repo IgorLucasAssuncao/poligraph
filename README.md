@@ -151,9 +151,59 @@ dotnet user-secrets set "PortalTransparencia:Chave" "SUA_CHAVE" --project src/Po
 | `emendas --resolver 2815=883` | Vincula autor de emenda **à mão** — [PL45](docs/PENDENCIAS.md) | instantâneo |
 | `validar --legislatura 57` | ⭐ Mede discriminação e comunidade × partido | ~2 s |
 
-🔴 **A ordem importa entre `cpf` e `fundo`.** O join com o TSE é por hash de CPF; sem
-`cpf` executado antes, o de-para sai vazio e **toda** receita é descartada — 396 MB lidos
-para gravar zero. O comando barra isso com erro claro, ⛔ em vez de logar sucesso.
+### 🔴 A ordem de execução
+
+```mermaid
+flowchart TD
+    ING["<b>ingerir</b><br/>pessoas · votacoes · votos"]
+
+    ANA["<b>analisar</b><br/>similaridade · comunidades · grafo"]
+    VAL["<b>validar</b><br/>⭐ só mede, não grava"]
+
+    COTA["<b>cota</b><br/>despesas"]
+    EMD["<b>emendas</b> 🔑<br/>emendas · autores"]
+    RES["<b>emendas --resolver</b><br/>reconciliação manual"]
+
+    CPF["<b>cpf</b><br/>🔴 grava o HASH"]
+    FUN["<b>fundo</b><br/>receitas de campanha"]
+
+    ING ==>|"🔴 barra"| COTA
+    ING -.->|"degrada"| ANA
+    ING -.->|"degrada"| EMD
+    ING -.->|"degrada"| CPF
+    ANA -.->|"degrada"| VAL
+    CPF ==>|"🔴 barra"| FUN
+    EMD --> RES
+
+    classDef dura fill:#fbe8e4,stroke:#a8321f,color:#12161b
+    classDef base fill:#e6f2f0,stroke:#0f766e,color:#12161b
+    class COTA,FUN dura
+    class ING base
+```
+
+| | |
+|---|---|
+| **⟹ traço grosso** | Dependência **dura**: o comando estoura dizendo o que rodar antes |
+| **⟶ tracejado** | Degrada em silêncio — e é aí que mora o perigo |
+
+⚠️ **Duas dependências são DURAS — o comando estoura dizendo o que rodar antes.** As
+outras degradam, e é aí que mora o perigo:
+
+| Comando | Sem o pré-requisito |
+|---|---|
+| 🔴 `cota` | **Estoura**: *"De-para de pessoas vazio. Rode `ingerir` antes"* |
+| 🔴 `fundo` | **Estoura**: *"Nenhuma pessoa com `cpf_hash`. Rode `cpf` antes"* |
+| `analisar` | ⚠️ Avisa *"menos de duas pessoas com voto"* e sai — ⛔ não estoura |
+| `emendas` | ⚠️ Ingere normalmente e **resolve zero autores**, calado |
+| `validar` | ⚠️ Avisa *"nenhuma execução concluída — rode `analisar` antes"* |
+
+🔴 **Os dois `raise` existem porque o silêncio custa caro:** sem eles, `fundo` leria
+**396 MB**, descartaria **toda** linha por não achar dono, e terminaria com log de
+sucesso. Foi esse formato de falha que já custou uma ingestão inteira aqui — quando o
+`id` mudou de lugar no CSV, o ETL registrou `0 deputados` e `0 votos` em `INFO` e seguiu.
+
+⭐ **No painel do Aspire o parentesco codifica essa ordem:** `etl-fundo` aparece aninhado
+sob `etl-cpf`. O painel ⛔ não impede o clique fora de ordem — quem impede é o comando.
 
 ⛔ **`emendas` exige chave do Portal da Transparência**, pessoal e atrelada ao CPF de quem
 a pede ([como obter](docs/plano/08-obter-as-chaves.md)). Ela vem de
@@ -269,14 +319,57 @@ Esta é a *"Arquitetura ETL"* do título. A separação ⛔ **não é organizaç
 o que permite dizer, para cada número que aparece na tela, de qual arquivo ele veio, o que
 foi feito com ele e em que coluna foi parar.
 
+```mermaid
+flowchart LR
+    subgraph E["ENTRADA"]
+        direction TB
+        E1["fontes/camara<br/>fontes/tse"]
+        E2["baixar · ler<br/>de cada fonte"]
+    end
+
+    subgraph T["TRATAMENTO"]
+        direction TB
+        T1["normalizacao<br/>as regras puras"]
+        T2["ingestao<br/>para_linhas"]
+    end
+
+    subgraph S["SAÍDA"]
+        P["persistencia"]
+    end
+
+    BD[("PostgreSQL")]
+
+    subgraph A["ANÁLISE"]
+        direction TB
+        A1["similaridade · grafo"]
+        A2["comparacao · validacao"]
+    end
+
+    E --> T --> S --> BD
+    BD --> A --> P
+
+    classDef entrada fill:#f3f5f7,stroke:#5b6673,color:#12161b
+    classDef trat fill:#e6f2f0,stroke:#0f766e,color:#12161b
+    classDef saida fill:#f3f5f7,stroke:#5b6673,color:#12161b
+    class E entrada
+    class T trat
+    class S,A saida
+```
+
 | Fase | Responsabilidade | Onde |
 |---|---|---|
 | **ENTRADA** | Baixar e ler. ⛔ Não interpreta, ⛔ não descarta | `fontes/camara` · `fontes/tse` · `baixar`/`ler` de cada fonte |
 | **TRATAMENTO** | Normalizar, classificar, descartar o que ⛔ não entra | `normalizacao` · `ingestao` · `para_linhas` de cada fonte |
 | **SAÍDA** | Gravar. ⛔ Não decide nada | `persistencia` |
+| **ANÁLISE** | Ler do banco, calcular, gravar de volta | `similaridade` · `grafo` · `comparacao` · `validacao` |
 
 ⚠️ **Nenhum módulo de ENTRADA toca o banco, e `persistencia` ⛔ não decide o que gravar.**
-Quando as três se misturam, um descarte silencioso vira um número plausível e errado.
+Quando as três primeiras se misturam, um descarte silencioso vira um número plausível e
+errado.
+
+⭐ **A ANÁLISE tem contrato próprio:** a entrada ⛔ não é arquivo, são tabelas já
+tratadas; a saída vem sempre atrelada a uma `execucao`, que é o que torna cada retrato do
+grafo reproduzível. `validacao` é a exceção — ⛔ **não grava nada**, só mede.
 
 ⭐ **Todo módulo de fonte abre com o mesmo bloco** — *Entrada · Tratamento · Saída* — com
 formato, encoding, chave de ligação, o que é descartado, a tabela de destino, a constraint

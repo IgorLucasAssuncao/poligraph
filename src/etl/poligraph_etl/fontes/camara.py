@@ -1,9 +1,24 @@
-"""Leitura dos arquivos abertos da Câmara dos Deputados.
+"""ENTRADA — os arquivos abertos da Câmara dos Deputados.
 
-🔴 O ponto mais perigoso deste módulo são os PARÂMETROS de leitura, não a lógica.
-Os CSVs da Câmara têm quebra de linha DENTRO de campos entre aspas. Ler por linha
-infla a contagem entre 15% e 26%, dependendo do ano — e o erro não dá exceção:
-produz linhas quebradas que viram registros inválidos silenciosamente.
+Baixa e lê. ⛔ Não interpreta e ⛔ não descarta: isso é `ingestao`.
+
+## O que entrega
+
+| Recurso | Forma |
+|---|---|
+| `votacoes-{ano}` · `votacoesVotos-{ano}` | CSV anual, `;`, aspas, `utf-8-sig` |
+| ⚠️ `deputados` | **Arquivo único**, ⛔ não anual — todas as legislaturas juntas |
+| `api/v2/deputados/{id}` | JSON, uma requisição por deputado — é onde o **CPF** existe |
+
+🔴 **O ponto perigoso são os PARÂMETROS de leitura, ⛔ não a lógica.** Os CSVs têm quebra
+de linha **dentro** de campos entre aspas: ler por linha infla a contagem entre 15% e 26%,
+dependendo do ano — e ⛔ **sem exceção nenhuma**, produzindo registros inválidos calados.
+
+⭐ Por isso `conferir_volume` é canário obrigatório: compara a contagem lida com a medida
+e **estoura** se divergir.
+
+📐 [`docs/04-contratos.md`](../../../../docs/04-contratos.md) ·
+[achado #22](../../../../docs/achados/022-deputados-nao-e-arquivo-anual.md)
 """
 
 from pathlib import Path
