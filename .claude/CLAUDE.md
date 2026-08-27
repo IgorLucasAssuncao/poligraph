@@ -163,21 +163,37 @@ dotnet test                                     # inclui o teste de polaridade
 
 ---
 
-## Estado atual
+## Estado atual — 2026-08-27
 
-**Aplicação de ponta a ponta rodando localmente** — ~9,4 mil linhas em `src/`, 18
-arquivos de teste. `dotnet run --project src/Poligraph.AppHost` sobe Postgres,
-migrations com seed, API e front.
+**Aplicação de ponta a ponta rodando localmente, com dado REAL.**
+`dotnet run --project src/Poligraph.AppHost` sobe Postgres, migrations, API e front; o
+ETL fica como botão no painel, esperando você mandar rodar.
 
 | Parte | Onde está |
 |---|---|
-| API | Afinidade, parlamentares, ficha, notícias, seguir, auth Google, avaliação |
-| Front | Login, início, explorar, seguindo, perfil, questionário, conta, privacidade |
-| ETL | Ingestão e persistência dos CSVs da Câmara |
-| Testes | 74 no .NET (Testcontainers com Postgres real) + 25 no front |
+| API | Afinidade, parlamentares, ficha, **gastos, emendas, financiamento**, notícias, seguir, auth Google, avaliação |
+| Front | Login, início, explorar, seguindo, perfil (**6 abas**), questionário, conta, privacidade |
+| ETL | `ingerir` · `analisar` · `cpf` · `cota` · `emendas` · `fundo` · `validar` |
+| Testes | **91 .NET** (Testcontainers com Postgres real) · **282 Python** · **37 front** |
 
-⚠️ Os dados locais são **12 deputados fictícios em 3 blocos de voto** — não é a Câmara
-real. A ingestão de verdade ainda não rodou contra o banco.
+⭐ **O seed foi aposentado** (PL41). O dado local é a Câmara de verdade — 470.727 votos da
+legislatura 57, 643 deputados, 24.810 emendas, 22.511 receitas de campanha. 📐 Os números
+todos, conferidos contra o banco, no [`README`](../README.md).
+
+⚠️ **Duas fontes ainda não ingerem:** o **Senado** ([PL42](../docs/PENDENCIAS.md)) e o
+**coletor de notícias**.
 
 > 🔴 **O maior bloqueio continua não sendo técnico:** a **PL11** — curar 15–25 perguntas
 > do questionário — é leitura humana de ementa por ementa, não escala. **Comece cedo.**
+> ⚠️ 21 estão no ar; o desempate dirigido precisa de **40–60** para não acabar antes de
+> desempatar.
+
+### 🔑 Chaves que o ambiente pede
+
+| Segredo | Para quê | Onde |
+|---|---|---|
+| `Google:ClientId` | Login | user-secrets de `Poligraph.Api` |
+| `PortalTransparencia:Chave` | `etl-emendas` | user-secrets de `Poligraph.AppHost` |
+
+⛔ **Nunca em `appsettings.json`** — os dois arquivos são versionados, e a chave do Portal
+é **pessoal, atrelada ao CPF de quem a pediu**.
