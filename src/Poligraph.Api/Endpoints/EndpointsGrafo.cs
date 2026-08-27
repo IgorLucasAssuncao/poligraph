@@ -3,9 +3,15 @@ using Poligraph.Api.Data;
 
 namespace Poligraph.Api.Endpoints;
 
+/// <summary>
+/// ⚠️ **Duas posições, de propósito** (PL43). `EixoX`/`EixoY` vêm do layout de molas e
+/// ⛔ não têm interpretação. `Componente1`/`Componente2` vêm do SVD e ⭐ têm: são a
+/// direção em que os deputados mais se diferenciam. A tela escolhe qual desenhar.
+/// </summary>
 public record NoDoGrafo(
     long Id, string Nome, string Partido, string Uf,
-    short? Comunidade, float? EixoX, float? EixoY, int NVotacoes);
+    short? Comunidade, float? EixoX, float? EixoY, int NVotacoes,
+    float? Componente1, float? Componente2);
 
 public record ArestaDoGrafo(long De, long Para, float Peso);
 
@@ -86,7 +92,8 @@ public static class EndpointsGrafo
                 pessoa?.NomeExibicao ?? "",
                 pessoa?.Ultimo?.PartidoNoVoto ?? "",
                 pessoa?.Ultimo?.UfNoVoto ?? "",
-                m.Comunidade, m.EixoX, m.EixoY, m.NVotacoes);
+                m.Comunidade, m.EixoX, m.EixoY, m.NVotacoes,
+                m.Componente1, m.Componente2);
         })];
     }
 

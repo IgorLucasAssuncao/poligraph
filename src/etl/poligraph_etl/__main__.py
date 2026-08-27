@@ -183,7 +183,9 @@ def _analisar(conexao: psycopg.Connection, legislatura: int) -> None:
 
                 # ⭐ É aqui que o grafo ganha NÓS. Sem esta parte ele tem ligações e
                 #    nenhum ponto com comunidade, cor ou posição — nada a desenhar.
-                nos = grafo.calcular_nos(pessoas, arestas, _votacoes_por_pessoa(matriz, pessoas))
+                nos = grafo.calcular_nos(
+                    pessoas, arestas, _votacoes_por_pessoa(matriz, pessoas), matriz
+                )
                 gravados = persistencia.gravar_nos_metrica(conexao, execucao_id, nos)
                 log.info("  %d nós gravados", gravados)
 

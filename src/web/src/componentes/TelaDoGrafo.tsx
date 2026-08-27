@@ -10,6 +10,42 @@ export type PosicaoDoCidadao = {
 };
 
 type Camera = { escala: number; x: number; y: number };
+
+/**
+ * ⭐ PL43 — as duas maneiras de posicionar um deputado, lado a lado para comparar.
+ *
+ * `molas` desenha bem e ⛔ não interpreta nada. `componentes` (SVD) tem eixo com
+ * significado, mas convida o leitor a ler espectro político.
+ */
+export type Layout = 'molas' | 'componentes';
+
+/**
+ * ⚠️ A explicação de cada layout vive JUNTO do seletor, não num rodapé.
+ *
+ * 🔴 A do SVD precisa dizer o que o centro NÃO é. Medido na legislatura 57: os 80 nós
+ * mais centrais têm mediana de 472 votações; os 80 mais extremos, 925 (r = 0,566). Quem
+ * faltou é empurrado para o meio, e sem esse aviso o leitor conclui que ali estão os
+ * moderados.
+ */
+const EXPLICACAO: Record<Layout, { rotulo: string; titulo: string; texto: string }> = {
+  molas: {
+    rotulo: 'Molas',
+    titulo: 'Ligações como molas',
+    texto:
+      'Cada ligação puxa dois deputados para perto; todos se repelem. Quem vota junto ' +
+      'fica junto. ⛔ Os eixos não significam nada: girar a figura não muda o que ela ' +
+      'diz. A forma redonda é escolha do algoritmo, não do dado.',
+  },
+  componentes: {
+    rotulo: 'Componentes',
+    titulo: 'Direção de maior diferença',
+    texto:
+      'O eixo horizontal é a direção em que os deputados mais se diferenciam — ela ' +
+      'sozinha explica 34,6% do comportamento de voto, contra 9,6% do eixo vertical. ' +
+      'Por isso a figura é achatada: a Câmara se divide quase em uma linha só. ' +
+      '⚠️ O centro NÃO é moderação — quem faltou a muitas votações também cai ali.',
+  },
+};
 type Tamanho = { largura: number; altura: number };
 type Alvo = { tipo: 'no'; no: NoDoGrafo } | { tipo: 'aresta'; aresta: ArestaDoGrafo };
 
@@ -65,18 +101,25 @@ export function TelaDoGrafo({
    */
   const [isolado, setIsolado] = useState<NoDoGrafo | null>(null);
   const [busca, setBusca] = useState('');
+  const [layout, setLayout] = useState<Layout>('molas');
   const [tamanho, setTamanho] = useState<Tamanho>({ largura: 800, altura: altura ?? 520 });
 
-  const posicionados = useMemo(
-    () =>
-      grafo.nos
-        .filter((n) => n.eixoX !== null && n.eixoY !== null)
-        .map((n) => {
-          const movido = movidos.get(n.id);
-          return movido ? { ...n, eixoX: movido.x, eixoY: movido.y } : n;
-        }),
-    [grafo.nos, movidos],
-  );
+  const posicionados = useMemo(() => {
+    // ⚠️ O nó carrega as duas posições; aqui uma delas é promovida a `eixoX`/`eixoY`
+    //    para o resto do desenho não precisar saber qual layout está ativo.
+    const comLayout = grafo.nos.map((n) =>
+      layout === 'componentes'
+        ? { ...n, eixoX: n.componente1, eixoY: n.componente2 }
+        : n,
+    );
+
+    return comLayout
+      .filter((n) => n.eixoX !== null && n.eixoY !== null)
+      .map((n) => {
+        const movido = movidos.get(n.id);
+        return movido ? { ...n, eixoX: movido.x, eixoY: movido.y } : n;
+      });
+  }, [grafo.nos, movidos, layout]);
 
   const porId = useMemo(
     () => new Map(posicionados.map((n) => [n.id, n])),
@@ -270,6 +313,34 @@ export function TelaDoGrafo({
             setIsolado(null);
             setMovidos(new Map());   // ⚠️ devolve o desenho ao retrato do ETL
           }} aria-label="Enquadrar tudo e desfazer">⤢</button>
+        </div>
+
+        {/* ⭐ PL43: o seletor fica NA moldura, para comparar sem sair da tela. */}
+        <div className="grafo-layout">
+          <div className="grafo-layout-botoes" role="group" aria-label="Como posicionar os pontos">
+            {(Object.keys(EXPLICACAO) as Layout[]).map((opcao) => (
+              <button
+                key={opcao}
+                type="button"
+                className={layout === opcao ? 'ativo' : ''}
+                aria-pressed={layout === opcao}
+                title={EXPLICACAO[opcao].titulo}
+                onClick={() => {
+                  setLayout(opcao);
+                  setCamera({ escala: 1, x: 0, y: 0 });
+                  setMovidos(new Map());
+                }}
+              >
+                {EXPLICACAO[opcao].rotulo}
+              </button>
+            ))}
+          </div>
+
+          {/* 🔴 A ressalva do SVD não é opcional: sem ela o leitor lê o centro como
+              moderação, quando ali também está quem faltou. */}
+          <p className="grafo-layout-ajuda">
+            <strong>{EXPLICACAO[layout].titulo}.</strong> {EXPLICACAO[layout].texto}
+          </p>
         </div>
 
         {aoAmpliar && (

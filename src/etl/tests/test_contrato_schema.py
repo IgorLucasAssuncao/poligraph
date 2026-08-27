@@ -122,3 +122,85 @@ def test_python_so_usa_tabelas_que_o_ef_criou():
 def test_snake_case_reproduz_a_convencao_do_ef(dbset: str, tabela: str):
     """⭐ Conferido contra o banco em execução, não deduzido da documentação."""
     assert snake_case(dbset) == tabela
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 As COLUNAS — a lacuna da PL37, fechada depois de morder duas vezes
+# ═══════════════════════════════════════════════════════════════════
+
+
+def snake_case_de_propriedade(nome: str) -> str:
+    """O `UseSnakeCaseNamingConvention()` do EF sobre o nome de uma propriedade.
+
+    🔴 A regra quebra por MAIÚSCULA, ⛔ não por dígito. `Componente1` vira
+    `componente1`, **sem** underscore antes do `1` — escrever `componente_1` no SQL do
+    Python dá `UndefinedColumn`, e foi o que aconteceu.
+    """
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", nome).lower()
+
+
+def colunas_do_ef() -> dict[str, set[str]]:
+    """Tabela → colunas, lidas das classes de entidade."""
+    fonte = (CONTEXTO.parent / "Entidades.cs").read_text(encoding="utf-8")
+
+    # DbSet<Entidade> Nome  →  qual classe vira qual tabela
+    contexto = CONTEXTO.read_text(encoding="utf-8")
+    tabela_de = {
+        classe: snake_case(dbset)
+        for classe, dbset in re.findall(r"public\s+DbSet<(\w+)>\s+(\w+)\s*=>", contexto)
+    }
+
+    por_tabela: dict[str, set[str]] = {}
+    for classe, corpo in re.findall(
+        r"public class (\w+)\s*\{(.*?)\n\}", fonte, re.DOTALL
+    ):
+        tabela = tabela_de.get(classe)
+        if not tabela:
+            continue
+
+        # ⚠️ `public required string NomeCivil` tem DOIS termos antes do nome. Sem
+        #    aceitar modificadores, toda propriedade `required` sumia — e o teste
+        #    acusava colunas legítimas como inexistentes.
+        propriedades = re.findall(
+            r"public\s+(?:required\s+|virtual\s+)*[\w<>?\[\],\s]+?\s+(\w+)\s*\{\s*get;",
+            corpo,
+        )
+        por_tabela[tabela] = {snake_case_de_propriedade(p) for p in propriedades}
+
+    return por_tabela
+
+
+def test_o_parser_de_colunas_funciona():
+    # ⚠️ Sem esta guarda, um parser quebrado faria os testes abaixo passarem vazios.
+    colunas = colunas_do_ef()
+
+    assert "nos_metrica" in colunas
+    assert "componente1" in colunas["nos_metrica"]
+    assert "componente_1" not in colunas["nos_metrica"]
+
+
+def test_o_sql_do_etl_so_usa_colunas_que_o_ef_cria():
+    """🔴 Fecha a lacuna que deixou `componente_1` passar.
+
+    ⚠️ Confere só as colunas dos INSERTs, que é onde o erro é fatal e silencioso até a
+    execução. Cobrir todo SELECT exigiria um parser de SQL de verdade.
+    """
+    do_ef = colunas_do_ef()
+    padrao = re.compile(r"INSERT INTO\s+(\w+)\s*\(([^)]*)\)", re.IGNORECASE)
+
+    erros: list[str] = []
+    for arquivo in FONTES_PYTHON:
+        texto = arquivo.read_text(encoding="utf-8")
+
+        for tabela, lista in padrao.findall(texto):
+            conhecidas = do_ef.get(tabela)
+            if not conhecidas:
+                continue
+
+            for coluna in lista.split(","):
+                # ⚠️ tira comentários SQL de dentro da lista de colunas
+                coluna = re.sub(r"--.*", "", coluna).strip()
+                if coluna and coluna not in conhecidas:
+                    erros.append(f"{arquivo.name}: {tabela}.{coluna}")
+
+    assert not erros, "Coluna que o EF não cria:\n  " + "\n  ".join(erros)

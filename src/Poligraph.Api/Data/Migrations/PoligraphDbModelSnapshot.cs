@@ -213,6 +213,14 @@ namespace Poligraph.Api.Data.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("pessoa_id");
 
+                    b.Property<float?>("Componente1")
+                        .HasColumnType("real")
+                        .HasColumnName("componente1");
+
+                    b.Property<float?>("Componente2")
+                        .HasColumnType("real")
+                        .HasColumnName("componente2");
+
                     b.Property<short?>("Comunidade")
                         .HasColumnType("smallint")
                         .HasColumnName("comunidade");

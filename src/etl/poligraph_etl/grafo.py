@@ -14,6 +14,7 @@ import logging
 from dataclasses import dataclass
 
 import networkx as nx
+import numpy as np
 
 log = logging.getLogger("poligraph")
 
@@ -33,6 +34,11 @@ class NoDoGrafo:
     eixo_x: float
     eixo_y: float
     n_votacoes: int
+
+    # ⭐ PL43: as duas posições convivem. Molas para desenhar, componentes para o eixo
+    #    interpretável do TCC. A tela escolhe qual mostrar; o banco guarda as duas.
+    componente_1: float = 0.0
+    componente_2: float = 0.0
 
 
 def montar(pessoas: list[int], arestas: list) -> nx.Graph:
@@ -89,13 +95,19 @@ def calcular_posicoes(g: nx.Graph) -> dict[int, tuple[float, float]]:
 
 
 def calcular_nos(
-    pessoas: list[int], arestas: list, votacoes_por_pessoa: dict[int, int]
+    pessoas: list[int],
+    arestas: list,
+    votacoes_por_pessoa: dict[int, int],
+    matriz: np.ndarray | None = None,
 ) -> list[NoDoGrafo]:
-    """Junta comunidade, posição e volume de voto num nó só."""
+    """Junta comunidade, posição, componentes e volume de voto num nó só."""
     g = montar(pessoas, arestas)
 
     comunidades = detectar_comunidades(g)
     posicoes = calcular_posicoes(g)
+
+    # ⚠️ Sem matriz não há componentes: teste que só exercita o grafo passa None.
+    componentes = calcular_componentes(matriz) if matriz is not None else None
 
     log.info(
         "  %d comunidades detectadas em %d nós (%d arestas)",
@@ -111,6 +123,96 @@ def calcular_nos(
             eixo_x=posicoes[pessoa][0],
             eixo_y=posicoes[pessoa][1],
             n_votacoes=votacoes_por_pessoa.get(pessoa, 0),
+            componente_1=float(componentes[i, 0]) if componentes is not None else 0.0,
+            componente_2=float(componentes[i, 1]) if componentes is not None else 0.0,
         )
-        for pessoa in pessoas
+        for i, pessoa in enumerate(pessoas)
     ]
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Componentes principais — o eixo interpretável (PL43)
+# ═══════════════════════════════════════════════════════════════════
+
+
+def calcular_componentes(matriz: np.ndarray) -> np.ndarray:
+    """As duas primeiras componentes principais da matriz de votos, por SVD.
+
+    ⭐ **A diferença para o layout de molas:** aqui o eixo x SIGNIFICA alguma coisa. É a
+    direção em que os deputados mais se diferenciam — a linhagem do W-NOMINATE na
+    ciência política. No layout de molas, x e y não têm interpretação nenhuma: gire a
+    figura e ela continua igualmente válida.
+
+    🔴 **ATENÇÃO — o centro da figura NÃO é "moderado".**
+
+    Ausência e abstenção viram **0** antes do SVD. Depois de centrar, zero fica perto da
+    média, e **quem faltou muito é empurrado para o meio do desenho**. O centro mistura
+    duas coisas incomparáveis: quem vota no meio-termo e quem simplesmente não votou.
+
+    ⚠️ **Medido na legislatura 57**, não deduzido:
+
+    | | Mediana de votações |
+    |---|---|
+    | 80 nós mais próximos do centro | **472** |
+    | 80 nós nos extremos | **925** |
+
+    Correlação entre distância do centro e número de votações: **r = 0,566**.
+
+    ⛔ É limitação do método, não bug. A literatura de *ideal point estimation*
+    (W-NOMINATE e sucessores) trata ausência com imputação justamente por isso. Aqui o
+    zero é o ponto neutro entre −1 e +1: mantém a conta honesta sem inventar voto, ao
+    preço de confundir ausência com moderação.
+
+    🔴 **Isso precisa estar dito NA TELA** — ver o texto de ajuda do seletor de layout.
+
+    🔴 **O SINAL DO SVD É ARBITRÁRIO.** Numericamente, `u` e `-u` são soluções igualmente
+    válidas: o desenho sairia espelhado a cada execução, e a "esquerda" da figura viraria
+    a "direita" sem nada ter mudado nos dados. Fixado pela convenção abaixo.
+    """
+    centrada = np.where(np.isnan(matriz), 0.0, matriz)
+    centrada = centrada - centrada.mean(axis=0)
+
+    u, valores, _ = np.linalg.svd(centrada, full_matrices=False)
+    coordenadas = u[:, :2] * valores[:2]
+
+    # ⭐ Quanto cada componente explica é resultado, não diagnóstico: mede o quanto a
+    #    Câmara se divide ao longo de UMA linha só.
+    explicada = valores**2 / (valores**2).sum()
+    log.info(
+        "  componentes: 1ª explica %.1f%% da variância, 2ª explica %.1f%%",
+        explicada[0] * 100,
+        explicada[1] * 100,
+    )
+
+    return _normalizar(_fixar_sinal(coordenadas))
+
+
+def _fixar_sinal(coordenadas: np.ndarray) -> np.ndarray:
+    """Convenção de sinal, para o desenho não espelhar entre execuções.
+
+    ⚠️ A regra é arbitrária de propósito e só precisa ser ESTÁVEL: o componente aponta
+    para o lado onde está a pessoa de maior coordenada absoluta.
+    """
+    for coluna in range(coordenadas.shape[1]):
+        extremo = coordenadas[np.argmax(np.abs(coordenadas[:, coluna])), coluna]
+        if extremo < 0:
+            coordenadas[:, coluna] *= -1
+
+    return coordenadas
+
+
+def _normalizar(coordenadas: np.ndarray) -> np.ndarray:
+    """Reescala para [-1, 1] com um divisor ÚNICO para os dois eixos.
+
+    🔴 **A primeira versão dividia cada eixo pelo próprio máximo, e isso mentia.**
+    O componente 2 explica 9,6% da variância contra 34,6% do componente 1 — mas,
+    normalizado à parte, ele ocupava a MESMA altura na tela. O resultado parecia uma
+    nuvem bidimensional quando o dado é quase unidimensional: ruído desenhado do mesmo
+    tamanho que sinal.
+
+    ⭐ Com divisor único, o eixo 2 fica visualmente menor **na proporção em que importa
+    menos**. A figura fica achatada — e é essa a forma verdadeira da Câmara.
+    """
+    maximo = float(np.max(np.abs(coordenadas)))
+
+    return coordenadas / (maximo or 1.0)

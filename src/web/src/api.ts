@@ -288,9 +288,13 @@ export type NoDoGrafo = {
   uf: string;
   /** ⚠️ Grupo detectado pelo VOTO, não pelo partido — ver `plano/07`. */
   comunidade: number | null;
+  /** Posição no DESENHO — layout de molas. ⛔ Sem interpretação. */
   eixoX: number | null;
   eixoY: number | null;
   nVotacoes: number;
+  /** 1ª componente principal (SVD) — ⭐ o eixo que SIGNIFICA algo. Ver PL43. */
+  componente1: number | null;
+  componente2: number | null;
 };
 
 export type ArestaDoGrafo = { de: number; para: number; peso: number };

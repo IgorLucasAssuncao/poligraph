@@ -359,6 +359,52 @@ onde o eixo teria sim uma ordenação defensável.
 TCC, molas para o desenho — ou ficar só com molas. As colunas já existem; o que falta é a
 escolha.
 
+#### 3.6.1 🔴 O que mede cada eixo — e o que o centro NÃO é
+
+**Medido na legislatura 57 completa:**
+
+| Componente | Variância explicada |
+|---|---|
+| **1ª** | **34,6%** |
+| 2ª | 9,6% |
+| 3ª | 3,0% |
+
+⭐ **A primeira explica 3,6× mais que a segunda.** É resultado, não detalhe técnico: o
+comportamento de voto da Câmara é **quase unidimensional**. A figura sai achatada porque
+essa é a forma verdadeira — o layout de molas a arredonda por conta própria.
+
+🔴 **O centro da figura NÃO é moderação.**
+
+Ausência e abstenção viram `0` antes do SVD. Depois de centrar, zero fica perto da média,
+e **quem faltou muito é empurrado para o meio**. O centro mistura duas coisas
+incomparáveis.
+
+| | Mediana de votações |
+|---|---|
+| 80 nós mais próximos do centro | **472** |
+| 80 nós nos extremos | **925** |
+
+Correlação entre distância do centro e número de votações: **r = 0,566**.
+
+⛔ É limitação do método, não bug — a literatura de *ideal point estimation* trata
+ausência com imputação justamente por isso. Está dito na tela, junto do seletor de
+layout, e travado por teste em `test_grafo.py`.
+
+⚠️ **E o sinal é convenção nossa.** Numericamente a figura espelhada é igualmente válida;
+qual lado fica à esquerda foi escolha de implementação, não do dado.
+
+#### 3.6.2 O que a 1ª componente separou
+
+⭐ Sem que ninguém dissesse ao algoritmo o que é PT ou PL:
+
+| Extremo negativo | Extremo positivo |
+|---|---|
+| Merlong Solano (PT) | Sargento Fahur (PL) |
+| Luiz Couto (PT) | Delegado Paulo Bilynskyj (PL) |
+| Jandira Feghali (PCdoB) | Rodolfo Nogueira (PL) |
+
+---
+
 🔴 **Reprodutibilidade:** Louvain e o layout são estocásticos. **Semente fixa (20260826)**
 em ambos, e mudá-la exige nova `versao_carga` na tabela `execucao`. Sem isso, a banca
 reproduz o experimento e não bate — o que é fatal num TCC. As comunidades são numeradas

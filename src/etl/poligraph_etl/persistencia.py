@@ -252,6 +252,8 @@ def gravar_nos_metrica(
             "eixo_x": no.eixo_x,
             "eixo_y": no.eixo_y,
             "n_votacoes": no.n_votacoes,
+            "componente_1": no.componente_1,
+            "componente_2": no.componente_2,
         }
         for no in nos
     ]
@@ -259,10 +261,15 @@ def gravar_nos_metrica(
     return _executar_em_lotes(
         conexao,
         """
+        -- ⚠️ `componente1`, SEM underscore antes do dígito. O snake_case do EF quebra
+        --    por MAIÚSCULA, e `Componente1` não tem nenhuma antes do `1`. Escrever
+        --    `componente_1` dá `UndefinedColumn` — aconteceu de verdade.
         INSERT INTO nos_metrica (execucao_id, pessoa_id, comunidade,
-                                 eixo_x, eixo_y, governismo, disciplina, n_votacoes)
+                                 eixo_x, eixo_y, governismo, disciplina, n_votacoes,
+                                 componente1, componente2)
         VALUES (%(execucao_id)s, %(pessoa_id)s, %(comunidade)s,
-                %(eixo_x)s, %(eixo_y)s, NULL, NULL, %(n_votacoes)s)
+                %(eixo_x)s, %(eixo_y)s, NULL, NULL, %(n_votacoes)s,
+                %(componente_1)s, %(componente_2)s)
         """,
         linhas,
     )

@@ -1085,3 +1085,33 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .grafo-sem-achado {
   margin: .4rem 0 0; font-size: .8rem; color: var(--suave);
 }
+
+/* ═══ SELETOR DE LAYOUT (PL43) ═════════════════════════════════ */
+/* ⭐ Fica na moldura para dar para comparar os dois sem sair da tela. */
+.grafo-layout-botoes button {
+  padding: .35rem .7rem;
+  background: var(--fundo); border: none; color: var(--suave);
+  font-size: .76rem; font-weight: 600;
+}
+.grafo-layout-botoes button:hover { color: var(--texto); }
+.grafo-layout-botoes button.ativo { background: var(--realce); color: var(--sobre-realce); }
+
+/* ⚠️ A explicação acompanha o seletor: trocar de layout sem entender a diferença é o
+      caminho mais curto para ler espectro onde não há. */
+.grafo-layout {
+  position: absolute; left: .75rem; bottom: .75rem;
+  max-width: min(24rem, calc(100% - 5rem));
+}
+.grafo-layout-botoes {
+  display: flex; gap: 1px; width: fit-content;
+  background: var(--borda-forte); border: 1px solid var(--borda-forte);
+  border-radius: 8px; overflow: hidden;
+}
+.grafo-layout-ajuda {
+  margin: .4rem 0 0; padding: .55rem .7rem;
+  background: color-mix(in srgb, var(--fundo) 92%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--borda); border-radius: 8px;
+  font-size: .76rem; line-height: 1.45; color: var(--suave);
+}
+.grafo-layout-ajuda strong { color: var(--texto); }
