@@ -74,6 +74,7 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | ~~PL36~~ | ✅ **Resolvida (2026-08-26)** — nomes corrigidos e **verificado rodando o container contra o banco real**: monta a matriz e grava `execucoes`. Estava faltando também traduzir a connection string do Aspire (§ abaixo) | — | — |
 | 🟡 **PL37** | 🔄 **Parcial** — `test_contrato_schema.py` lê o `PoligraphDb.cs` e trava os **nomes** de tabela. ⛔ As **colunas** continuam sem proteção: o DDL de `test_persistencia.py` ainda é escrito à mão | 🟡 Média | 🟡 Horas |
 | ~~PL39~~ | ✅ **Resolvida (2026-08-26)** — legislatura 57 inteira ingerida: 470.786 votos, 5.268 arestas | — | — |
+| 🟡 **PL43** | **`eixo_x`/`eixo_y` divergem do plano** — o rascunho previa 1ª componente do SVD (eixo interpretável, linhagem W-NOMINATE); o implementado é layout de molas, que ⛔ não tem eixo com significado. Guardar as duas coisas ou ficar só com molas? Ver [plano/07 §3.6](plano/07-grafo-e-afinidade.md) | 🟡 Média | 🟢 Decisão |
 | 🔴 **PL42** | **O Senado não é ingerido** — nenhuma linha de código o alcança. ⚠️ A RF-07 é 🟢 Desejável, mas a **RNF-28 proíbe o seletor de casa** e o desenho da §3.4.1 exige perguntas das duas casas embaralhadas e duas listas no resultado. Sem Senado, esse desenho não existe | 🔴 **Alta** | 🔴 Dias |
 | ~~PL41~~ | ✅ **Resolvida (2026-08-26)** — o seed foi **aposentado** por decisão do autor: com o ETL funcional, só o schema precisa ser inicializado. O semeador virou `Poligraph.Tests/Fixtures/DadosDeTeste.cs` | — | — |
 | 🟡 **PL40** | **`proposicoes` nunca é ingerida** — o CSV de votações traz só o `id` da proposição, sem sigla/número/ano/ementa. Hoje o `proposicao_id` é anulado. 🔴 Bloqueia a **RF-30** (exibir a ementa original ao lado da pergunta) | 🟡 Média | 🟡 Horas |
@@ -242,7 +243,7 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 
 | # | Pendência |
 |---|---|
-| **RQ2** | Métrica de comparação comunidade × partido — ARI? modularidade? |
+| ~~RQ2~~ | ✅ **Resolvida (2026-08-26)** — **as duas**: ARI 0,277 · modularidade 0,558 (comunidade) × 0,288 (partido). Ver [plano/07 §3.5.1](plano/07-grafo-e-afinidade.md) |
 | **C7** | Métricas formais de comparação entre casas |
 | **RQ7** | Mecanismo de recomendação e como avaliá-lo |
 | **RQ6** | Critérios de aceitação dos RF essenciais |

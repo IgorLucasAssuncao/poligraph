@@ -66,13 +66,11 @@ export function Grafo() {
         subtitulo={`${grafo.nos.length} deputados · ${grafo.arestas.length} ligações`}
       />
 
-      <div className="grafo-topo">
-        <button type="button" className="botao-secundario" onClick={() => setAmpliado(true)}>
-          Ampliar
-        </button>
-      </div>
-
-      <TelaDoGrafo grafo={grafo} aoSelecionar={abrirPerfil} />
+      <TelaDoGrafo
+        grafo={grafo}
+        aoSelecionar={abrirPerfil}
+        aoAmpliar={() => setAmpliado(true)}
+      />
 
       <GrafoAmpliado
         grafo={grafo}

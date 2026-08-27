@@ -44,7 +44,12 @@ export function Resultado({
         <section className="resultado-grafo">
           <h3 className="titulo-secao">Onde você caiu</h3>
 
-          <TelaDoGrafo grafo={grafo} cidadao={resultado.posicaoNoGrafo} altura={320} />
+          <TelaDoGrafo
+            grafo={grafo}
+            cidadao={resultado.posicaoNoGrafo}
+            altura={320}
+            aoAmpliar={() => setAmpliado(true)}
+          />
 
           <p className="ajuda ajuda-espacada">
             O losango é você, posicionado entre os{' '}
@@ -56,12 +61,6 @@ export function Resultado({
             </strong>{' '}
             — a de cada deputado, sobre a legislatura inteira.
           </p>
-
-          <div className="resultado-acoes">
-            <button type="button" className="botao-secundario" onClick={() => setAmpliado(true)}>
-              Ver o grafo inteiro
-            </button>
-          </div>
 
           <GrafoAmpliado
             grafo={grafo}

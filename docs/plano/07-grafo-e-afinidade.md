@@ -44,9 +44,9 @@ Um nó = um parlamentar. Os dados moram em **duas tabelas com ciclos de vida dif
 CREATE TABLE no_metrica (
     execucao_id BIGINT REFERENCES execucao(id) ON DELETE CASCADE,
     pessoa_id   BIGINT REFERENCES pessoa(id),
-    comunidade  SMALLINT,   -- grupo detectado por Louvain
-    eixo_x      REAL,       -- 1ª componente do SVD — o "eixo ideológico"
-    eixo_y      REAL,       -- 2ª componente
+    comunidade  SMALLINT,   -- grupo detectado por Louvain (§3.5)
+    eixo_x      REAL,       -- layout de molas — posição no DESENHO (§3.6)
+    eixo_y      REAL,       -- idem
     governismo  REAL,       -- % de votos alinhados com a orientação do governo
     disciplina  REAL,       -- % de votos alinhados com a orientação do partido
     n_votacoes  INT NOT NULL,
@@ -57,8 +57,8 @@ CREATE TABLE no_metrica (
 | Campo | O que significa | ⚠️ |
 |---|---|---|
 | `comunidade` | Grupo detectado **pelo voto**, não pelo partido | ⭐ Comparar com o partido é o objetivo específico #3 |
-| `eixo_x` | Posição na 1ª componente principal | Ordena o espectro sem rótulo político |
-| `eixo_y` | 2ª componente | Costuma capturar governo × oposição |
+| `eixo_x` | Coordenada horizontal no desenho | 🔴 **Descritiva, ⛔ não é medida** — ver §3.6 |
+| `eixo_y` | Coordenada vertical no desenho | 🔴 Idem. **Nenhum dos dois eixos tem interpretação** |
 | `governismo` | | 🔴 **NULL no Senado** — não há orientação de bancada |
 | `disciplina` | | 🔴 **NULL no Senado** — idem |
 | `n_votacoes` | Quantas votações a pessoa participou | Nó com poucas votações é frágil |
@@ -104,18 +104,58 @@ CREATE TABLE aresta_grafo (
 ⚠️ **Não misture os três num peso só.** São relações de naturezas diferentes; somá-las
 produz um número sem interpretação. São **camadas** do mesmo grafo.
 
-### 3.2 🔴 O peso principal — como a similaridade é calculada
+### 3.2 🔴 O peso principal — a matemática da similaridade
+
+> **Medido na legislatura 57 completa em 2026-08-26:** 643 deputados, 1.127 votações de
+> plenário, 470.786 votos. Os números desta seção saem desse banco, ⛔ não de estimativa.
 
 Para cada par (A, B) da **mesma casa**:
 
 ```
-1. Encontrar as votações em que AMBOS votaram          → conjunto comum C
-2. Se |C| < 20, descartar o par                         → RN-02
-3. Para cada votação em C, comparar os votos
-4. peso = Σ (concordância × peso_da_votação) / Σ peso_da_votação
+1. Conjunto comum C = votações em que AMBOS se posicionaram
+2. |C| < 20  →  descarta o par                       (RN-02, §3.2.3)
+3. peso de cada votação v ∈ C: w(v) = categoria(v) × 0,86^anos(v)
+4. similaridade = fórmula da métrica, ponderada por w
 ```
 
-#### 3.2.1 O peso de cada votação — dois fatores
+#### 3.2.1 As duas fórmulas, escritas por extenso
+
+🔴 **Ambas são calculadas e guardadas** (RF-18); a coluna `metrica` distingue. Comparar
+as duas **é resultado do TCC**, não indecisão.
+
+**Concordância simples** — vai para a TELA:
+
+```
+                  Σ  w(v) · [ voto_A(v) == voto_B(v) ]
+                 v∈C
+concordância =  ───────────────────────────────────────
+                          Σ  w(v)
+                         v∈C
+```
+
+Lê-se direto: *"votaram igual em 82% das votações que ambos participaram"*. É o número
+que a RF-29 exige acompanhado da base.
+
+**Cosseno** — vai para o GRAFO:
+
+```
+             ⟨ a , b ⟩                    onde  a = (voto_A(v) · w(v))
+cos(a,b) =  ───────────                         b = (voto_B(v) · w(v))    v∈C
+             ‖a‖ · ‖b‖
+
+                cos(a,b) + 1
+cosseno_01  =  ──────────────
+                     2
+```
+
+⚠️ **O reescalonamento não é cosmético.** O cosseno cru vive em [−1, 1] e o banco exige
+[0, 1] (`ck_sim_valor`). Sem a transformação, todo par em oposição seria rejeitado pelo
+`CHECK` — e o grafo perderia justamente a informação de quem vota ao contrário.
+
+⚠️ **Voto é −1, 0 ou +1** (RN-03). A abstenção (0) anula o termo no produto interno, o
+que é o comportamento correto: ela não é meio-termo entre Sim e Não.
+
+#### 3.2.2 O peso de cada votação — dois fatores
 
 **a) Categoria** — nem toda votação diz o mesmo sobre uma pessoa:
 
@@ -126,24 +166,83 @@ Para cada par (A, B) da **mesma casa**:
 | `AUTORIDADE` | **0,3** | Voto em pessoa, não em política |
 | `PROCEDIMENTAL` | **0,0** | ⛔ Fora da matriz — mede obstrução, não posição |
 
+> 🔴 **Correção de 2026-08-26.** A regex de categoria classificava como `DESTAQUE` toda
+> descrição que citasse a palavra — inclusive *"Aprovado o Substitutivo […] **ressalvados
+> os destaques**"*, que é voto no TEXTO PRINCIPAL: a frase menciona destaque para dizer
+> que ele **não** estava em jogo. Eram **69 votações de mérito** da legislatura 57
+> entrando com peso 0,7 em vez de 1,0. Corrigido com *lookbehind* negativo. ⭐ A
+> polaridade não foi afetada — ela olha `"mantido o texto"`, não a categoria.
+
 **b) Recência** — a posição muda devagar, mas muda:
 
 ```
-peso_tempo = r ^ (anos_decorridos)        com r = 0,86
+peso_tempo = r ^ anos_decorridos          com r = 0,86
 ```
 
-⭐ **O `r = 0,86` não é arbitrário.** Vem da correlação medida de posição entre anos
-dentro da legislatura ([`00-discovery §7.4.1`](../00-discovery.md)).
+⭐ **O `r = 0,86` não é arbitrário.** Vem da correlação medida entre a similaridade de
+2023 e a de 2025 sobre 9.873 pares: **r = 0,862**, diferença absoluta média de 7,5 pp
+([`00-discovery §7.4.1`](../00-discovery.md)). Traduz uma afirmação verificada — *a
+posição é estável dentro da legislatura* — em decaimento suave.
 
-#### 3.2.2 Duas métricas, e por que ambas
+#### 3.2.3 🔴 Por que o mínimo é 20 votações em comum (RN-02)
 
-| Métrica | Fórmula | Boa para |
-|---|---|---|
-| **Concordância simples** | `acordos / comparações` | ⭐ Explicável: *"votaram igual em 82% das vezes"* |
-| **Cosseno** | `(A·B) / (‖A‖‖B‖)` | Trata abstenção com nuance; padrão na literatura |
+**A pergunta certa é: quantas votações bastam para o número não ser sorte?**
 
-⭐ **Ambas são calculadas e guardadas** (RF-18) — a coluna `metrica` distingue. Comparar as
-duas **é resultado do TCC**, não indecisão.
+Com |C| pequeno a proporção é instável — dois deputados que coincidiram em 3 votações
+podem marcar 100% sem que isso signifique nada. O corte em 20 é onde o custo de manter
+passa a superar o de descartar:
+
+| | Medido |
+|---|---|
+| Deputados com **menos de 20** posicionamentos na legislatura 57 | **6 de 643** (0,9%) |
+| Mediana de posicionamentos por deputado | **821** |
+| Mediana de votações em comum entre pares guardados | **279** |
+| Pares acima do corte | **185.908** |
+
+⭐ **O corte custa pouco e protege muito:** exclui menos de 1% dos deputados, e a
+mediana de base dos pares que ficam é 279 — quatorze vezes o mínimo. Na medição do
+discovery, sobre 2025 isolado, o custo era de 14 deputados em 552 (2,5%).
+
+⚠️ **No Senado o corte morde mais:** 88% dos pares têm ≥ 20 em comum, com média de 33
+([`11-api-senado §2.5`](../11-api-senado.md)). O intervalo de confiança lá é de ±17 pp —
+o custo é precisão, não viabilidade.
+
+🔴 **A regra vive no banco, não em comentário:**
+
+```sql
+CHECK (n_votacoes_comuns >= 20)   -- ck_sim_minimo
+```
+
+Um bug no Python que tentasse gravar par com base insuficiente é rejeitado pelo Postgres.
+É a regra 4 do projeto: *onde a regra puder virar `CHECK`, ela vira.*
+
+#### 3.2.4 ⚠️ O que fica de fora da matriz, e por quê
+
+| Filtro | Motivo |
+|---|---|
+| `casa = 'CAMARA'` | Câmara e Senado votam matérias diferentes (achado #7) — o par entre casas não teria base comum |
+| `legislatura = 57` | §3.2.5 |
+| `plenario` | Comissão é **3× mais consensual** que plenário (39% vs 12% de quase unanimidade); misturar achataria a similaridade |
+| `NOT secreta` | Sem voto individual registrado, não há o que comparar |
+| `valor IS NOT NULL` | Ausência ⛔ **não é discordância** — ver §4.4 |
+| `valor != 0` | Abstenção é posição declarada de não tomar partido |
+
+#### 3.2.5 🔴 Por que só a legislatura 57
+
+> **Resposta à pergunta do autor: sim, só a 57 — e por quatro motivos medidos.**
+
+| Motivo | |
+|---|---|
+| 🔴 **Cobertura** | Deputado eleito em 2022 **não votou nada** da legislatura 56. Comparar entre legislaturas geraria "sem dados" para boa parte do painel |
+| 🔴 **Comparabilidade** | A RN-02 exige base comum. Misturar legislaturas infla `|C|` com votações que metade do painel não podia ter votado |
+| **Relevância** | Pauta de 2019 mede afinidade com um debate que já passou |
+| **Estabilidade** | Dentro da legislatura, r = 0,862. **Entre** legislaturas, ⛔ não se mediu — e afirmar sem medir é o erro que este projeto já cometeu antes |
+
+⚠️ **A decisão vale para o questionário e para o grafo do produto.** O histórico
+2001–2026 continua disponível para análise no TCC — são perguntas diferentes.
+
+⛔ **E ainda NÃO está no código** — nenhuma consulta filtra por legislatura fora do ETL.
+É a **PL35**, e o prazo é real: a 57ª termina em **janeiro de 2027**.
 
 ### 3.3 ⭐ Por que kNN e não limiar global
 
@@ -173,6 +272,98 @@ A tentação é: *"cria aresta se similaridade > 0,8"*. **Foi medido e não func
 | **I3** | Aresta não-direcionada, gravada uma vez | `CHECK (pessoa_a < pessoa_b)` |
 
 ⚠️ **São dois grafos independentes**, um por casa. Isso é achado do projeto, não limitação.
+
+---
+
+### 3.5 🔴 As comunidades — como são detectadas e o que significam
+
+**Algoritmo: Louvain**, ponderado pela similaridade, sobre o grafo kNN.
+
+```python
+nx.community.louvain_communities(g, weight="peso", seed=SEMENTE)
+```
+
+⭐ **O número de comunidades NÃO é escolhido.** Louvain o encontra maximizando
+modularidade. Fixar *k* de antemão embutiria a resposta na pergunta do objetivo
+específico #3 — que é justamente saber se o voto agrupa como o partido.
+
+**Medido na legislatura 57:**
+
+| | |
+|---|---|
+| Comunidades detectadas | **30** — mas 631 dos 655 nós em **seis** |
+| Tamanhos das seis | 241 · 171 · 111 · 76 · 18 · 14 |
+| Isolados (sem aresta) | 24 |
+
+Composição partidária das quatro maiores:
+
+| # | Deputados | Partidos predominantes |
+|---|---:|---|
+| 1 | 241 | UNIÃO, REPUBLICANOS, PP, MDB, PODE |
+| 2 | 171 | PL, PP, UNIÃO, MDB, PODE |
+| 3 | 111 | PT, PCdoB, PSB, PV, REDE |
+| 4 | 76 | PSD, UNIÃO, PSB, PODE, PP |
+
+⭐ **UNIÃO aparece em quatro das seis.** O partido não determina o bloco — é o achado
+central do objetivo #3, visto de perto.
+
+#### 3.5.1 ✅ RQ2 resolvida — ARI **e** modularidade
+
+A RQ2 perguntava *"ARI ou modularidade?"*. **A resposta é as duas, porque respondem
+coisas diferentes:**
+
+| Medida | Responde | Medido |
+|---|---|---|
+| **ARI** | As comunidades *coincidem* com os partidos? | **0,277** |
+| **Modularidade da comunidade** | A divisão por voto descreve o grafo? | **0,558** |
+| **Modularidade do partido** | E a divisão por partido? | **0,288** |
+
+⚠️ Sozinha, a modularidade não compara nada — mede a qualidade de UMA partição. Sozinho,
+o ARI diz que duas partições diferem, mas ⛔ não diz qual descreve melhor.
+
+⭐ **Juntas sustentam a afirmação do TCC:** *as comunidades de voto descrevem a estrutura
+quase duas vezes melhor que os partidos (0,558 × 0,288), e coincidem com eles apenas em
+0,277.*
+
+🔴 **"Ajustado" no ARI é a palavra que importa.** O Rand simples sobe só por haver muitos
+grupos: com 25 partidos e 30 comunidades, quase todo par de deputados cai em grupos
+diferentes nas duas partições, e isso contaria como concordância. O ajuste desconta o
+acaso — por isso **0 significa "nada além do acaso"**, não "nenhuma coincidência".
+
+⚠️ Implementados à mão (`comparacao.py`) em vez de trazer `scikit-learn`: o ARI são vinte
+linhas e a modularidade o `networkx` já tem. 30 MB de dependência por uma função seria
+custo sem contrapartida.
+
+---
+
+### 3.6 ⚠️ A posição no desenho — o que ela NÃO é
+
+**Algoritmo: layout de molas (Fruchterman-Reingold)**, `nx.spring_layout`.
+
+> 🔴 **Isto DIVERGE do plano original**, e a divergência precisa estar registrada: o
+> rascunho previa `eixo_x` como **1ª componente do SVD** — um eixo ordenado e
+> interpretável, na linhagem do W-NOMINATE. O que está implementado é layout de molas,
+> que ⛔ **não tem eixo interpretável nenhum**.
+
+| | SVD / PCA (planejado) | Molas (implementado) |
+|---|---|---|
+| O eixo x significa algo? | **Sim** — ordena por posição | ⛔ **Não** |
+| Bom para desenhar o grafo? | Regular — ignora as arestas | ⭐ **Sim** — é para isso |
+| Risco de ler espectro onde não há | Existe, e é grande | Menor, mas o leitor lê assim mesmo |
+
+**Consequência prática:** hoje a tela diz, com todas as letras, que *não existe
+"esquerda" à esquerda*. Isso é honesto com o layout de molas — e seria **falso** com SVD,
+onde o eixo teria sim uma ordenação defensável.
+
+⏳ **Decisão em aberto (PL43):** guardar as duas coisas — PCA para o eixo interpretável do
+TCC, molas para o desenho — ou ficar só com molas. As colunas já existem; o que falta é a
+escolha.
+
+🔴 **Reprodutibilidade:** Louvain e o layout são estocásticos. **Semente fixa (20260826)**
+em ambos, e mudá-la exige nova `versao_carga` na tabela `execucao`. Sem isso, a banca
+reproduz o experimento e não bate — o que é fatal num TCC. As comunidades são numeradas
+por **tamanho**, não pela ordem que o algoritmo devolve, senão a legenda da tela troca de
+cor entre duas execuções do mesmo dado.
 
 ---
 
@@ -251,18 +442,44 @@ perguntas comparáveis."*
 
 ⚠️ **API4 fica resolvida assim:** cosseno **no grafo**, concordância simples **na tela**.
 
-### 4.6 Onde o cidadão aparece no grafo — se aparecer
+### 4.6 🔴 Onde o cidadão aparece no grafo
 
-Ele **não é nó**. Mas dá para projetá-lo no mesmo eixo, para efeito visual:
+Ele **não é nó** — não está em `no_metrica`, não tem aresta, não entra no Louvain. Mas
+**é posicionado**, e a conta é esta:
 
 ```
-eixo_x(cidadão) = Σ (r_q × carga_q) / Σ |carga_q|
+                Σ  c_i² · (x_i , y_i)
+               i∈V
+posição  =  ──────────────────────────      V = os 10 parlamentares
+                    Σ  c_i²                     de maior concordância c
+                   i∈V
 ```
 
-onde `carga_q` é o peso da votação de *q* na 1ª componente do SVD.
+Centroide dos vizinhos, **ponderado pela concordância ao quadrado**.
 
-⚠️ **É visualização, não medida.** Projetar 22 respostas no eixo derivado de 1.100
-votações **não tem a mesma precisão** — e isso precisa estar escrito na legenda da figura.
+#### 4.6.1 Três decisões, e o que cada uma evita
+
+| Decisão | O que evita |
+|---|---|
+| **Centroide**, ⛔ não a posição do 1º colocado | O topo empata — mediana de **30** empatados com 22 perguntas. Copiar o primeiro seria sortear entre gente que a conta não distingue |
+| Peso ao **quadrado** | Sem elevar, quem concordou em 60% puxa quase tanto quanto quem concordou em 95%, e todos acabam no meio do desenho — parece medida e não separa nada |
+| Comunidade pela **moda** dos vizinhos | Mesma razão do primeiro item |
+
+#### 4.6.2 🔴 A franqueza obrigatória na tela
+
+⚠️ **A posição do cidadão e a do deputado NÃO são a mesma medida com o mesmo nome:**
+
+| | Base |
+|---|---|
+| Deputado | até **1.127** votações |
+| Cidadão | as perguntas que respondeu — hoje **21** |
+
+Por isso `PosicaoDoCidadao.BaseDeVotacoes` viaja junto na resposta da API e **aparece na
+tela**: *"sua posição vale sobre 21 perguntas — a de cada deputado, sobre a legislatura
+inteira"*. Omitir isso afirmaria uma precisão que o dado não tem.
+
+⛔ Sem execução do grafo concluída a API devolve `null` e a tela **omite o desenho** —
+não inventa ponto.
 
 ---
 

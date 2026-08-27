@@ -28,12 +28,16 @@ export function TelaDoGrafo({
   cidadao,
   aoSelecionar,
   altura,
+  aoAmpliar,
 }: {
   grafo: Grafo;
   cidadao?: PosicaoDoCidadao | null;
   aoSelecionar?: (no: NoDoGrafo) => void;
   /** Fixa a altura; sem isto acompanha a largura. */
   altura?: number;
+  /** ⚠️ Quando presente, vira um botão NA MOLDURA do grafo — não um link solto na
+   *  página, que se perde entre os textos abaixo do desenho. */
+  aoAmpliar?: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const arrastando = useRef<{ x: number; y: number } | null>(null);
@@ -181,11 +185,18 @@ export function TelaDoGrafo({
 
         {alvo && <Dica alvo={alvo} porId={porId} tamanho={tamanho} camera={camera} />}
 
+        {/* ⭐ Os controles moram sobre o desenho, junto do que eles controlam. */}
         <div className="grafo-zoom">
           <button type="button" onClick={() => setCamera((c) => aproximar(c, tamanho.largura / 2, tamanho.altura / 2, -240))} aria-label="Aproximar">+</button>
           <button type="button" onClick={() => setCamera((c) => aproximar(c, tamanho.largura / 2, tamanho.altura / 2, 240))} aria-label="Afastar">−</button>
           <button type="button" onClick={() => { setCamera({ escala: 1, x: 0, y: 0 }); setFixado(null); }} aria-label="Enquadrar tudo">⤢</button>
         </div>
+
+        {aoAmpliar && (
+          <button type="button" className="grafo-ampliar" onClick={aoAmpliar}>
+            <span aria-hidden="true">⛶</span> Abrir em tela cheia
+          </button>
+        )}
 
         {fixado && (
           <p className="grafo-foco">
