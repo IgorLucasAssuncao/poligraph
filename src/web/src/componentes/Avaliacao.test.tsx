@@ -23,18 +23,8 @@ const RESULTADO: ResultadoAfinidade = {
   posicaoNoGrafo: null,
 };
 
-/**
- * ⚠️ O jsdom não implementa `showModal` nem `close` — são do `<dialog>` nativo. Sem
- * estes dublês o componente estoura antes de a asserção rodar.
- */
+// Os dublês de `showModal`/`close` vivem em `vitest.setup.ts` — o jsdom não os tem.
 beforeEach(() => {
-  HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
-    this.open = true;
-  });
-  HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
-    this.open = false;
-  });
-
   vi.mocked(registrarAvaliacao).mockReset();
   vi.mocked(registrarAvaliacao).mockResolvedValue(undefined);
 });

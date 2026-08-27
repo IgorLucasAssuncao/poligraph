@@ -33,7 +33,7 @@ const EXPLICACAO: Record<Layout, { rotulo: string; titulo: string; texto: string
     titulo: 'Ligações como molas',
     texto:
       'Cada ligação puxa dois deputados para perto; todos se repelem. Quem vota junto ' +
-      'fica junto. ⛔ Os eixos não significam nada: girar a figura não muda o que ela ' +
+      'fica junto. Os eixos não significam nada: girar a figura não muda o que ela ' +
       'diz. A forma redonda é escolha do algoritmo, não do dado.',
   },
   componentes: {
@@ -43,7 +43,7 @@ const EXPLICACAO: Record<Layout, { rotulo: string; titulo: string; texto: string
       'O eixo horizontal é a direção em que os deputados mais se diferenciam — ela ' +
       'sozinha explica 34,6% do comportamento de voto, contra 9,6% do eixo vertical. ' +
       'Por isso a figura é achatada: a Câmara se divide quase em uma linha só. ' +
-      '⚠️ O centro NÃO é moderação — quem faltou a muitas votações também cai ali.',
+      'Atenção: o centro não é moderação — quem faltou a muitas votações também cai ali.',
   },
 };
 type Tamanho = { largura: number; altura: number };

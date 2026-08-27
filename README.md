@@ -263,6 +263,34 @@ o ETL inteiro foi escrito com nomes de tabela errados e nunca falou com o banco.
 
 ## O processo de ETL
 
+### 🔴 Três fases, sempre separadas
+
+Esta é a *"Arquitetura ETL"* do título. A separação ⛔ **não é organização de arquivo**: é
+o que permite dizer, para cada número que aparece na tela, de qual arquivo ele veio, o que
+foi feito com ele e em que coluna foi parar.
+
+| Fase | Responsabilidade | Onde |
+|---|---|---|
+| **ENTRADA** | Baixar e ler. ⛔ Não interpreta, ⛔ não descarta | `fontes/camara` · `fontes/tse` · `baixar`/`ler` de cada fonte |
+| **TRATAMENTO** | Normalizar, classificar, descartar o que ⛔ não entra | `normalizacao` · `ingestao` · `para_linhas` de cada fonte |
+| **SAÍDA** | Gravar. ⛔ Não decide nada | `persistencia` |
+
+⚠️ **Nenhum módulo de ENTRADA toca o banco, e `persistencia` ⛔ não decide o que gravar.**
+Quando as três se misturam, um descarte silencioso vira um número plausível e errado.
+
+⭐ **Todo módulo de fonte abre com o mesmo bloco** — *Entrada · Tratamento · Saída* — com
+formato, encoding, chave de ligação, o que é descartado, a tabela de destino, a constraint
+que o banco impõe e a estratégia de idempotência. A revisão ⛔ não depende de ler o código.
+
+| Fonte | Entrada | Liga por | Saída |
+|---|---|---|---|
+| `ingestao` | CSVs anuais da Câmara | `id` da Câmara | `votacoes` · `votos` · `pessoas` |
+| `cota` | `cotas/Ano-{ano}.csv.zip` | `ideCadastro` | `despesas` |
+| `emendas` | `api-de-dados/emendas` 🔑 | **código do autor** | `emendas` · `autores_de_emenda` |
+| `receitas` | `prestacao_de_contas_*.zip` | **hash de CPF** | `receitas_de_campanha` |
+
+### O fluxo do voto
+
 ```mermaid
 flowchart TB
     A["CSVs anuais da Câmara<br/>votacoes · votacoesVotos"] --> B{"canário<br/>de parsing"}
@@ -462,6 +490,28 @@ Minimal API, ⛔ sem controllers, sem MediatR, sem Repository.
 | `GET` | `/api/parlamentares/{id}/gastos` | 💰 Cota agregada por categoria e fornecedor |
 | `GET` | `/api/parlamentares/{id}/emendas` | 💰 Emendas por destino e função — **empenhado ⛔ ≠ pago** |
 | `GET` | `/api/parlamentares/{id}/financiamento` | 💰 Campanha — **fundão e fundo partidário separados** |
+
+### A página do parlamentar
+
+⚠️ **Chegou a ter seis abas**, e três delas nomeavam **datasets** — *Gastos*, *Emendas*,
+*Campanha*. Ninguém abre um perfil querendo *"ver o dataset de emendas"*: abre querendo
+saber quanto dinheiro passa por aquela pessoa. Nomear pela fonte é nomear pelo jeito como
+o sistema foi construído.
+
+🔴 **E separá-las destruía o achado que justifica ingerir as três:** o cruzamento
+*"este deputado paga, com verba de gabinete, empresas que financiaram a campanha dele?"*
+exige ver campanha e cota **ao mesmo tempo** — impossível em abas diferentes.
+
+⭐ **A separação que funciona é por PROFUNDIDADE, ⛔ não por fonte:**
+
+| Onde | O quê |
+|---|---|
+| **Duas abas** | *Como vota* (votos + quem vota parecido) · *Notícias* |
+| **Uma linha no perfil** | As contas existem e estão a um clique |
+| **Um modal** | A comparação dos três totais no topo, e o detalhe das três abaixo |
+
+⚠️ O padrão anterior era a aba *Notícias*, e o coletor ⛔ ainda não rodou: a primeira
+coisa que a página mostrava era estado vazio.
 | `GET` | `/api/parlamentares/{id}/noticias` | Notícias que mencionam a pessoa |
 | `GET` | `/api/afinidade/perguntas` | As perguntas ativas, em ordem |
 | `POST` | `/api/afinidade` | ⭐ Calcula afinidade e **posiciona o cidadão no grafo** |

@@ -1,28 +1,43 @@
 """Emendas parlamentares — Portal da Transparência.
 
-⭐ **O instrumento de poder orçamentário do parlamentar.** Responde *"para onde este
-deputado mandou dinheiro público, e quanto de fato saiu?"* — com `valorEmpenhado` ×
-`valorPago` e o município de destino.
+Responde *"para onde este deputado mandou dinheiro público, e quanto de fato saiu?"*.
 
-🔴 **A chave é o CÓDIGO DO AUTOR, ⛔ não o nome.** Decisão do autor do projeto, e a
-medição a sustenta:
+## ENTRADA
 
-    202541840004
-     │   │    └── numeroEmenda
-     │   └─────── 4184 ← código do autor
-     └─────────── ano
-
-| Medido | |
+| | |
 |---|---|
-| Autores com código estável dentro de 2025 | **173 de 173** |
-| Códigos com mais de um autor | **0** |
-| Estáveis entre 2023 e 2025 | 31 de 33 — ⭐ os 2 viraram **senadores** |
+| Fonte | `api.portaldatransparencia.gov.br/api-de-dados/emendas?ano=&pagina=` |
+| 🔑 Autenticação | Chave **pessoal**, de `PORTAL_TRANSPARENCIA_CHAVE` — ⛔ nunca do código |
+| Paginação | **15 itens fixos**, ⛔ sem parâmetro para mudar. ~420 páginas por ano |
+| Fim da varredura | Primeira página vazia — a API ⛔ não informa o total |
+| Formato | JSON; valores em **pt-BR** (`"- 26.002,00"`) |
 
-⚠️ Ou seja: o código identifica o **mandato**, e por isso é estável dentro dele. Serve
-para Câmara **e** Senado, que é o motivo de tê-lo escolhido.
+## TRATAMENTO
 
-⛔ **Exige chave de API** — pessoal, atrelada ao CPF de quem a pediu. Vem de
-`PORTAL_TRANSPARENCIA_CHAVE`, ⛔ nunca do código.
+1. Extrai o **código do autor** de dentro do `codigoEmenda`, cortando pelo `numeroEmenda`
+2. Descarta registro cujo código ⛔ não seja coerente — sinal de que a fonte mudou
+3. Converte valores pt-BR; **negativo é cancelamento** e é mantido
+4. Monta o mapa `código -> nome`, que vira a fila de reconciliação
+
+## SAÍDA
+
+| | |
+|---|---|
+| Tabelas | `emendas` · `autores_de_emenda` |
+| Chave de ligação | `codigo_autor` — resolvido em passo **separado** |
+| Constraint do banco | `ux_emenda_autor_codigo` · `ck_autor_metodo` · FK `SET NULL` |
+| Idempotência | `DELETE` por `ano` + `ON CONFLICT DO NOTHING` |
+
+---
+
+🔴 **A chave é o CÓDIGO DO AUTOR, ⛔ não o nome.** O `codigoEmenda` embute um
+identificador de **mandato**, estável dentro dele e válido para Câmara **e** Senado — que
+é o motivo de tê-lo escolhido, já que o Senado ⛔ não publica CPF.
+
+⭐ **`pessoa_id` sai NULO daqui.** Nada é descartado por não ter dono; o vínculo é
+decisão de outro passo.
+
+📐 [achado #24](../../../docs/achados/024-codigo-da-emenda-identifica-o-mandato.md)
 """
 
 import logging
@@ -37,11 +52,8 @@ log = logging.getLogger("poligraph")
 
 BASE = "https://api.portaldatransparencia.gov.br/api-de-dados"
 
-# ⚠️ Pausa entre chamadas.
-#
-# ⭐ Medido: a API devolve **15 itens por página** e ⛔ não aceita parâmetro para mudar.
-# Em 2025 a última página com dado foi a **421** — cerca de 6.300 emendas no ano, ~1.700
-# requisições nos quatro anos. É serviço público com limite de taxa, então o laço pausa.
+# A API devolve 15 itens por página e ⛔ não aceita parâmetro para mudar: são ~1.700
+# requisições nos quatro anos, contra serviço público com limite de taxa.
 PAUSA = 0.12
 
 
@@ -61,8 +73,8 @@ def chave() -> str:
 def baixar_ano(ano: int, maximo_de_paginas: int = 600) -> list[dict]:
     """Varre todas as páginas de um ano.
 
-    ⚠️ Para na primeira página vazia — a API ⛔ não informa o total, e pedir página além
-    do fim devolve `[]` em vez de erro.
+    Para na primeira página vazia: a API ⛔ não informa o total, e pedir página além do
+    fim devolve `[]` em vez de erro.
     """
     cabecalho = {"chave-api-dados": chave(), "Accept": "application/json"}
     tudo: list[dict] = []
@@ -90,8 +102,13 @@ def baixar_ano(ano: int, maximo_de_paginas: int = 600) -> list[dict]:
 def codigo_do_autor(emenda: dict) -> str | None:
     """Extrai o código do autor de dentro do `codigoEmenda`.
 
-    ⚠️ O corte usa o `numeroEmenda` do próprio registro, ⛔ não uma posição fixa: o
-    número tem tamanho variável, e recortar por índice erraria em silêncio.
+        202541840004
+         │   │    └── numeroEmenda (tamanho VARIÁVEL)
+         │   └─────── 4184 = o código do autor
+         └─────────── ano
+
+    🔴 O corte usa o `numeroEmenda` do próprio registro, ⛔ nunca posição fixa: recortar
+    por índice erraria em silêncio, devolvendo o código de **outro** autor.
     """
     codigo = (emenda.get("codigoEmenda") or "").strip()
     numero = (emenda.get("numeroEmenda") or "").strip()
@@ -105,45 +122,43 @@ def codigo_do_autor(emenda: dict) -> str | None:
 
 
 def para_linhas(emendas: list[dict]) -> tuple[list[dict], dict[str, str]]:
-    """Converte em linhas de `emendas`, e devolve o mapa código → nome do autor.
+    """Converte em linhas de `emendas`, e devolve o mapa código -> nome do autor.
 
-    ⭐ **Nada é descartado por não ter dono.** Emenda de bancada, senador e parlamentar
-    de outra legislatura entram com `pessoa_id` nulo — o vínculo é resolvido depois.
-    Perder o registro por não saber ligar seria pior: a reconciliação futura ⛔ não teria
-    o que reconciliar.
+    ⭐ **Nada é descartado por não ter dono.** Emenda de comissão, de bancada e de
+    parlamentar de outra legislatura entra com `pessoa_id` nulo, e o vínculo é resolvido
+    depois — perder o registro deixaria a reconciliação futura sem o que reconciliar.
     """
     linhas: list[dict] = []
     autores: dict[str, str] = {}
 
-    for e in emendas:
-        codigo_autor = codigo_do_autor(e)
+    for emenda in emendas:
+        codigo_autor = codigo_do_autor(emenda)
         if not codigo_autor:
             continue
 
-        nome = (e.get("nomeAutor") or "").strip()
+        nome = (emenda.get("nomeAutor") or "").strip()
         autores.setdefault(codigo_autor, nome)
 
         linhas.append(
             {
                 "codigo_autor": codigo_autor,
                 "nome_autor": nome,
-                "codigo_emenda": (e.get("codigoEmenda") or "").strip(),
-                "ano": int(e.get("ano") or 0),
-                "tipo": (e.get("tipoEmenda") or "").strip() or None,
-                "localidade": (e.get("localidadeDoGasto") or "").strip() or None,
-                "funcao": (e.get("funcao") or "").strip() or None,
-                "subfuncao": (e.get("subfuncao") or "").strip() or None,
-                "valor_empenhado": valor_brasileiro(e.get("valorEmpenhado")),
-                "valor_liquidado": valor_brasileiro(e.get("valorLiquidado")),
-                "valor_pago": valor_brasileiro(e.get("valorPago")),
-                "valor_resto_pago": valor_brasileiro(e.get("valorRestoPago")),
+                "codigo_emenda": (emenda.get("codigoEmenda") or "").strip(),
+                "ano": int(emenda.get("ano") or 0),
+                "tipo": (emenda.get("tipoEmenda") or "").strip() or None,
+                "localidade": (emenda.get("localidadeDoGasto") or "").strip() or None,
+                "funcao": (emenda.get("funcao") or "").strip() or None,
+                "subfuncao": (emenda.get("subfuncao") or "").strip() or None,
+                "valor_empenhado": valor_brasileiro(emenda.get("valorEmpenhado")),
+                "valor_liquidado": valor_brasileiro(emenda.get("valorLiquidado")),
+                "valor_pago": valor_brasileiro(emenda.get("valorPago")),
+                "valor_resto_pago": valor_brasileiro(emenda.get("valorRestoPago")),
             }
         )
 
     return linhas, autores
 
 
-# ⭐ A conversão vive em `normalizacao`, junto da do TSE — as duas usam a mesma
-#   convenção pt-BR, e mantê-las em cópias separadas era esperar que divergissem.
-#   O nome local fica como apelido porque é assim que este módulo lê melhor.
+# A conversão vive em `normalizacao`, junto da do TSE: as duas usam a convenção pt-BR, e
+# cópias separadas divergiriam. Apelido local porque é assim que este módulo lê melhor.
 valor_brasileiro = normalizacao.valor_pt_br

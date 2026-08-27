@@ -1155,10 +1155,85 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 
+/* ═══ CONTAS DO MANDATO — a faixa fixa do perfil ═══════════════ */
+/* 🔴 Os três totais lado a lado é o ponto TODO da faixa: campanha na casa dos milhões,
+   emendas na das dezenas de milhões, cota na das centenas de milhares. Essa diferença
+   de ordem de grandeza é a informação, e ela só existe quando os três se veem juntos. */
+/* No perfil, as contas são UMA linha no mesmo peso de "120 votações registradas": a
+   comparação entre os três valores acontece no modal, que tem largura para ela. */
+.perfil-contas {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: .75rem;
+  margin: .6rem 0 0; font-size: .9rem; color: var(--suave);
+}
+/* Controle de verdade, ⛔ não link de texto: é a única porta para o detalhe, e como
+   link discreto ela não se anunciava. */
+.botao-contas {
+  padding: .4rem .85rem; border-radius: 8px;
+  border: 1px solid var(--borda-forte); background: var(--fundo);
+  color: var(--texto); font-size: .84rem; font-weight: 600;
+}
+.botao-contas:hover { border-color: var(--realce); color: var(--realce); }
+
+/* A comparação, dentro do modal. */
+.contas-comparacao {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem;
+  padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--borda);
+}
+.conta-valor { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.conta-rotulo {
+  font-family: var(--dado); font-size: .68rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .1em; color: var(--suave);
+}
+.conta-numero {
+  font-family: var(--display); font-variation-settings: 'wdth' 108;
+  font-size: 1.25rem; font-weight: 700; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+  /* ⚠️ Valor longo (R$ 163.712.480,00) não pode empurrar as três colunas. */
+  overflow-wrap: anywhere;
+}
+/* ⭐ O travessão do "sem registro" fica DISCRETO: ele não é um valor, e destacá-lo com o
+      mesmo peso dos outros dois faria a ausência competir com o dado. */
+.conta-ausente { color: var(--suave); font-weight: 500; }
+.conta-nota { font-size: .74rem; color: var(--suave); }
+
+/* ═══ CONTAS AMPLIADAS — o modal de detalhe ════════════════════ */
+/* ⚠️ Sem `display:flex` no próprio `<dialog>`: o `margin:auto` que o navegador usa para
+   centralizar o modal depende do display padrão, e trocá-lo o desloca na tela. O corpo
+   rolável é resolvido com `max-height` no filho, não com flex no diálogo. */
+.contas-ampliadas {
+  width: min(94vw, 46rem); max-width: none;
+  padding: 0; border: 1px solid var(--borda-forte); border-radius: 14px;
+  background: var(--fundo); color: var(--texto);
+  box-shadow: 0 16px 50px rgb(0 0 0 / 28%);
+}
+.contas-ampliadas::backdrop { background: rgb(0 0 0 / 55%); backdrop-filter: blur(3px); }
+.contas-ampliadas header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--borda);
+}
+.contas-ampliadas h2 { margin: 0; font-size: 1.2rem; }
+.contas-ampliadas .ajuda { margin: .25rem 0 0; }
+.contas-corpo { max-height: min(70vh, 44rem); overflow-y: auto; }
+
+.bloco-conta { border-bottom: 1px solid var(--borda); }
+.bloco-conta:last-child { border-bottom: none; }
+.cabecalho-bloco { padding: 1rem 1rem .35rem; }
+.cabecalho-bloco .ajuda { margin: .1rem 0 0; }
+.titulo-bloco {
+  margin: 0;
+  font-family: var(--display); font-variation-settings: 'wdth' 108;
+  font-size: 1.05rem; font-weight: 700; letter-spacing: -.01em;
+}
+/* ⚠️ Dentro do modal a faixa de resumo de cada fonte é MENOR: ela já não é o topo da
+      tela, e o tamanho original competiria com o título do bloco. */
+.bloco-conta .gastos-resumo { padding-top: .5rem; border-bottom: none; }
+.bloco-conta .gastos-total { font-size: 1.7rem; }
+
 /* ═══ EMENDAS E FINANCIAMENTO DE CAMPANHA ══════════════════════ */
 /* 🔴 A execução (pago ÷ empenhado) ganha destaque próprio, e não um número miúdo
    ao lado do total: é ela que distingue emenda anunciada de emenda cumprida. */
-.execucao { margin: 1.15rem auto 0; max-width: 24rem; }
+.execucao { padding: .9rem 1rem 1rem; border-bottom: 1px solid var(--borda); }
 .execucao-barra { display: block; height: 8px; margin-bottom: .5rem; }
 .execucao .ajuda { margin: 0; }
 

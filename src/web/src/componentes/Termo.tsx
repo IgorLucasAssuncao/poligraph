@@ -129,6 +129,33 @@ export const GLOSSARIO = {
       'quiser — em geral obras e serviços no estado dele. É o principal instrumento ' +
       'de poder orçamentário individual no Congresso.',
   },
+  multiplo: {
+    rotulo: 'MÚLTIPLO',
+    explicacao:
+      ' Não é um lugar — é o aviso de que a emenda se reparte entre vários municípios ' +
+      'ou estados, e o Portal da Transparência não diz quais. São 4 de cada 10 emendas, ' +
+      'e as maiores: em média oito vezes o valor de uma emenda destinada a uma cidade só.',
+  },
+  nacional: {
+    rotulo: 'Nacional',
+    explicacao:
+      ' A emenda não tem destino territorial: financia algo de alcance federal, como um ' +
+      'programa ou um órgão, em vez de uma obra num lugar determinado.',
+  },
+  funcaoOrcamentaria: {
+    rotulo: 'área do orçamento',
+    explicacao:
+      ' A classificação oficial do gasto público — Saúde, Educação, Segurança. ' +
+      '"Encargos especiais" é a exceção que confunde: não é uma área de serviço, e sim ' +
+      'onde entram repasses que o município aplica onde decidir.',
+  },
+  cota: {
+    rotulo: 'cota parlamentar',
+    explicacao:
+      ' Verba mensal para o deputado manter o mandato — passagem, aluguel de escritório, ' +
+      'combustível, divulgação. É separada do salário, varia conforme a distância do ' +
+      'estado até Brasília, e cada nota fiscal é pública.',
+  },
   empenho: {
     rotulo: 'empenhado e pago',
     explicacao:

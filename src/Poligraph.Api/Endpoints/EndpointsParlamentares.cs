@@ -45,9 +45,11 @@ public record EmendaPorFuncao(string Funcao, decimal Empenhado, decimal Pago);
 /// <summary>
 /// As emendas do parlamentar num ano.
 ///
-/// 🔴 **`Empenhado` e `Pago` são coisas diferentes, e a distância entre eles é a
-/// informação.** Empenhar é reservar; pagar é o dinheiro sair. Mostrar só um dos dois
-/// responderia metade da pergunta — e seria a metade que favorece quem só anuncia.
+/// <para>
+/// 🔴 <b>Empenhado ⛔ ≠ pago, e a distância entre os dois é a informação.</b> Empenhar é
+/// reservar; pagar é o dinheiro sair. Mostrar só um responderia metade da pergunta — e
+/// seria a metade que favorece quem só anuncia.
+/// </para>
 /// </summary>
 public record EmendasDoParlamentar(
     int Ano,
@@ -64,10 +66,11 @@ public record DoadorDoParlamentar(string Nome, decimal Total, bool PessoaFisica)
 /// <summary>
 /// O financiamento da campanha que elegeu o parlamentar.
 ///
-/// 🔴 **`FundoEspecial` e `FundoPartidario` ficam SEPARADOS de propósito.** O primeiro é
-/// o "fundão" (FEFC, de 2017), eleitoral; o segundo é o financiamento permanente dos
-/// partidos. Somá-los como *"dinheiro público de campanha"* é defensável — mas é uma
-/// afirmação, e quem a fizer que a assine. A API entrega os dois.
+/// <para>
+/// 🔴 <b>Fundo Especial e Fundo Partidário ficam SEPARADOS.</b> O primeiro é o "fundão"
+/// (FEFC, 2017), eleitoral; o segundo custeia o partido o ano inteiro. Somá-los é
+/// defensável, mas é uma afirmação — e quem a fizer que a assine.
+/// </para>
 /// </summary>
 public record FinanciamentoDeCampanha(
     int AnoEleicao,
@@ -82,6 +85,12 @@ public static class EndpointsParlamentares
     private const int LimiteLista = 100;
     private const int VotosNaFicha = 20;
     private const int SimilaresNaFicha = 10;
+
+    /// <summary>Quantos fornecedores da cota aparecem na ficha.</summary>
+    private const int FornecedoresExibidos = 8;
+
+    /// <summary>Quantos destinos, funções e doadores aparecem na ficha.</summary>
+    private const int ItensNaFicha = 8;
 
     public static IEndpointRouteBuilder MapearParlamentares(this IEndpointRouteBuilder app)
     {
@@ -155,9 +164,6 @@ public static class EndpointsParlamentares
             p.NVotacoes, p.UrlFoto)));
     }
 
-    /// <summary>Quantos fornecedores aparecem na ficha.</summary>
-    private const int FornecedoresExibidos = 8;
-
     /// <summary>
     /// A cota parlamentar do deputado, agregada por ano.
     ///
@@ -226,15 +232,14 @@ public static class EndpointsParlamentares
             MaioresFornecedores: fornecedores));
     }
 
-    /// <summary>Quantos destinos, funções e doadores aparecem na ficha.</summary>
-    private const int ItensNaFicha = 8;
-
     /// <summary>
     /// As emendas do parlamentar, agregadas por ano.
     ///
-    /// ⭐ **Só entra emenda já reconciliada** (`pessoa_id` preenchido). Emenda de bancada
-    /// e de autor ainda não resolvido existem no banco e ⛔ não aparecem aqui — atribuí-las
-    /// a alguém por semelhança de nome seria inventar autoria.
+    /// <para>
+    /// ⭐ Só entra emenda <b>já reconciliada</b>. Emenda de comissão, de bancada e de
+    /// autor não resolvido existe no banco e ⛔ não aparece aqui: atribuí-la por
+    /// semelhança de nome seria inventar autoria.
+    /// </para>
     /// </summary>
     private static async Task<IResult> ObterEmendasAsync(
         long id, PoligraphDb db, CancellationToken ct, int? ano = null)
@@ -243,15 +248,14 @@ public static class EndpointsParlamentares
             .Where(e => e.PessoaId == id)
             .MaxAsync(e => (int?)e.Ano, ct);
 
-        // ⭐ Sem emenda é caso NORMAL — parlamentar que não apresentou, ou autor ainda
-        //    não reconciliado. A tela mostra estado vazio, ⛔ não erro.
+        // Sem emenda é caso normal: a tela mostra estado vazio, ⛔ não erro.
         if (alvo is null) return Results.Ok(new EmendasDoParlamentar(0, 0, 0, 0, [], []));
 
         var doAno = db.Emendas.AsNoTracking()
             .Where(e => e.PessoaId == id && e.Ano == (short)alvo.Value);
 
         // ⚠️ Tipo ANÔNIMO, ⛔ não `record` posicional: o EF não traduz `GroupBy` com
-        //    construtor posicional e falha em RUNTIME, não na compilação.
+        // construtor posicional e falha em RUNTIME, não na compilação.
         var destinos = await doAno
             .Where(e => e.Localidade != null)
             .GroupBy(e => e.Localidade!)
@@ -279,8 +283,8 @@ public static class EndpointsParlamentares
             .Take(ItensNaFicha)
             .ToListAsync(ct);
 
-        // ⚠️ Os totais saem de uma agregação PRÓPRIA, ⛔ não da soma dos `Take(8)` acima
-        //    — que mostrariam um total menor que o real sem nada indicar o corte.
+        // 🔴 Agregação PRÓPRIA, ⛔ não a soma dos `Take(8)` acima: eles mostrariam um
+        // total menor que o real, sem nada na tela indicando o corte.
         var totais = await doAno
             .GroupBy(_ => 1)
             .Select(g => new
@@ -303,10 +307,8 @@ public static class EndpointsParlamentares
     }
 
     /// <summary>
-    /// O financiamento da campanha que elegeu o parlamentar.
-    ///
-    /// 🔴 Devolve o fundão e o fundo partidário **separados** — ver
-    /// <see cref="FinanciamentoDeCampanha"/>.
+    /// O financiamento da campanha, com os dois fundos separados —
+    /// ver <see cref="FinanciamentoDeCampanha"/>.
     /// </summary>
     private static async Task<IResult> ObterFinanciamentoAsync(
         long id, PoligraphDb db, CancellationToken ct, int? eleicao = null)
@@ -331,8 +333,8 @@ public static class EndpointsParlamentares
             .OrderByDescending(f => f.Total)
             .ToListAsync(ct);
 
-        // ⚠️ Doador pessoa física aparece pelo NOME; o documento dele é hash e ⛔ nunca
-        //    sai da API. RNF-13 — ver `Despesa.CnpjOuHash`, mesma regra.
+        // 🔴 RNF-13: doador pessoa física aparece pelo NOME; o documento é hash e ⛔
+        // nunca sai da API. Mesma regra de `Despesa.CnpjOuHash`.
         var doadores = await daEleicao
             .Where(r => r.Doador != null)
             .GroupBy(r => new { r.Doador, r.DoadorEhPessoaFisica })

@@ -172,7 +172,7 @@ ETL fica como botão no painel, esperando você mandar rodar.
 | Parte | Onde está |
 |---|---|
 | API | Afinidade, parlamentares, ficha, **gastos, emendas, financiamento**, notícias, seguir, auth Google, avaliação |
-| Front | Login, início, explorar, seguindo, perfil (**6 abas**), questionário, conta, privacidade |
+| Front | Login, início, explorar, seguindo, perfil, questionário, conta, privacidade |
 | ETL | `ingerir` · `analisar` · `cpf` · `cota` · `emendas` · `fundo` · `validar` |
 | Testes | **91 .NET** (Testcontainers com Postgres real) · **282 Python** · **37 front** |
 

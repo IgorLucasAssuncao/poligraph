@@ -1,11 +1,26 @@
-"""Gravação no Postgres.
+"""SAÍDA — a única camada que escreve no Postgres.
 
-🔴 O EF Core é DONO do schema. Este módulo só escreve — ⛔ nunca cria tabela, nunca
-altera coluna. Se o ETL precisar de um campo novo, ele nasce numa migration do EF.
+🔴 **O EF Core é dono do schema.** Este módulo só grava: ⛔ nunca cria tabela, nunca
+altera coluna. Campo novo nasce em migration do EF, e `test_contrato_schema` trava a
+divergência de nome de tabela, de coluna e de literal combinado entre os dois lados.
 
-⚠️ Toda escrita é idempotente (RF-09): reexecutar uma carga não duplica registro.
-O ETL roda todo dia sobre os mesmos arquivos, que a Câmara reconstrói toda madrugada
-(achado #19) — sem idempotência, o banco dobraria de tamanho por dia.
+🔴 **Aqui ⛔ não se decide o que gravar.** O que entra e o que é descartado foi resolvido
+na fase de TRATAMENTO; misturar as duas faz um descarte virar número plausível e errado.
+
+## Idempotência (RF-09) — e por que cada tabela usa uma estratégia
+
+O ETL roda todo dia sobre arquivos que a Câmara **reconstrói toda madrugada** e que o
+Portal **corrige retroativamente**. Sem idempotência o banco dobraria por dia.
+
+| Estratégia | Onde | Por quê |
+|---|---|---|
+| `ON CONFLICT (id) DO UPDATE` | `votacoes` · `votos` · `pessoas` | Há chave natural estável |
+| `ON CONFLICT DO NOTHING` | `emendas` | `ux_emenda_autor_codigo` já garante unicidade |
+| `DELETE` do recorte + `INSERT` | `despesas` · `receitas_de_campanha` | ⚠️ ⛔ **Não há** chave natural por linha: `ideDocumento` se repete entre parcelas, e o mesmo doador aparece várias vezes legitimamente |
+
+⚠️ O recorte do `DELETE` é sempre o **mínimo**: reingerir 2025 ⛔ não apaga 2024.
+
+📐 [achado #19](../../../docs/achados/019-csv-reconstruido-toda-madrugada.md)
 """
 
 from dataclasses import dataclass
@@ -154,14 +169,12 @@ def gravar_cpf_hash(conexao: psycopg.Connection, pessoa_id: int, hash_cpf: str) 
 
 
 def mapa_de_cpf_hash(conexao: psycopg.Connection) -> dict[str, int]:
-    """`cpf_hash` → `pessoa_id`. É o de-para que casa o TSE com a Câmara.
+    """`cpf_hash` -> `pessoa_id` — o de-para que casa o TSE com a Câmara.
 
-    ⭐ **O join acontece entre hashes**, ⛔ nunca entre CPFs em claro: o do TSE é hasheado
-    em memória durante a leitura do CSV e comparado com este mapa. Nenhum dos dois lados
-    precisa ser revertido — RNF-13 sem perder a chave forte.
+    ⭐ O join acontece **entre hashes**, ⛔ nunca entre CPFs em claro.
 
-    ⚠️ Traz também quem foi excluído logicamente. É de propósito: o filtro de exclusão é
-    da API, e o ETL ⛔ não pode reinserir receita órfã por não enxergar o dono.
+    ⚠️ Traz também quem foi excluído logicamente: o filtro de exclusão é da API, e o ETL
+    ⛔ não pode reinserir receita órfã por não enxergar o dono.
     """
     return {
         linha[0]: linha[1]
@@ -174,15 +187,10 @@ def mapa_de_cpf_hash(conexao: psycopg.Connection) -> dict[str, int]:
 def gravar_receitas(
     conexao: psycopg.Connection, ano_eleicao: int, linhas: Sequence[dict]
 ) -> int:
-    """Grava o financiamento de campanha, substituindo o que já havia da mesma eleição.
+    """Grava o financiamento, substituindo a eleição que está entrando.
 
-    ⚠️ **Apaga por ano de ELEIÇÃO antes de inserir**, pelo mesmo motivo das emendas: o
-    TSE republica o arquivo com prestações retificadas, e ⛔ não há chave natural estável
-    por linha — o mesmo doador aparece várias vezes com o mesmo valor legitimamente
-    (doações parceladas), então `ON CONFLICT` exigiria inventar uma chave que a fonte
-    ⛔ não garante.
-
-    ⭐ Reingerir 2022 ⛔ não toca 2018.
+    ⚠️ O mesmo doador aparece várias vezes com o mesmo valor **legitimamente** (doação
+    parcelada), então ⛔ não há chave natural por linha. Reingerir 2022 ⛔ não toca 2018.
     """
     if not linhas:
         return 0
@@ -284,16 +292,7 @@ def gravar_similaridades(
 def gravar_despesas(
     conexao: psycopg.Connection, pessoa_ids: list[int], despesas: Sequence[dict]
 ) -> int:
-    """Grava a cota parlamentar, substituindo o que já havia dos mesmos deputados.
-
-    ⚠️ **Apaga antes de inserir**, e não é preguiça: o arquivo da Câmara é reconstruído
-    com correções ([achado #19](../../docs/achados/019-csv-reconstruido-toda-madrugada.md)),
-    e não há chave natural estável por linha — `ideDocumento` se repete entre
-    parcelas. `ON CONFLICT` exigiria inventar uma chave que a fonte não garante.
-
-    ⭐ O recorte do DELETE é (pessoa, ano) das linhas que estão entrando — reingerir
-    2025 ⛔ não apaga 2024.
-    """
+    """Grava a cota, substituindo o recorte (pessoa, ano) que está entrando."""
     if not despesas:
         return 0
 
@@ -321,14 +320,10 @@ def gravar_despesas(
 def gravar_emendas(
     conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict]
 ) -> int:
-    """Grava as emendas, substituindo o que já havia dos mesmos anos.
+    """Grava as emendas, substituindo os anos que estão entrando.
 
-    ⚠️ **Apaga por ANO antes de inserir.** O Portal corrige valor retroativamente — o
-    `valorPago` de uma emenda de 2023 muda ao longo do exercício seguinte. Manter o
-    antigo daria número velho na ficha.
-
-    ⭐ `pessoa_id` ⛔ NÃO é preenchido aqui: a emenda entra sem dono, e a reconciliação
-    é passo separado.
+    ⭐ `pessoa_id` ⛔ NÃO é preenchido aqui: a emenda entra sem dono, e o vínculo é
+    decisão de `vincular_emendas`.
     """
     if not linhas:
         return 0

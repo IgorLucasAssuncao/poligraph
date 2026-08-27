@@ -1,17 +1,40 @@
 """Cota parlamentar (CEAP) — a despesa de gabinete de cada deputado.
 
-⚠️ **A API não serve.** `GET /deputados/{id}/despesas?ano=` responde **200** e devolve
-`"dados": []` para todo deputado e todo ano testado. O dado existe só no arquivo em
-bloco — e ele fica **fora** de `dadosabertos.camara.leg.br`:
+## ENTRADA
 
-    https://www.camara.leg.br/cotas/Ano-{ano}.csv.zip
+| | |
+|---|---|
+| Fonte | `www.camara.leg.br/cotas/Ano-{ano}.csv.zip` — ⚠️ **fora** de `dadosabertos` |
+| Tamanho | ~6,6 MB compactado, ~233 mil linhas por ano |
+| Formato | CSV `;`, aspas, `utf-8-sig` |
+| Decimal | **PONTO** — o oposto do Portal e do TSE |
+| ⛔ O que ⛔ não serve | `GET /deputados/{id}/despesas` responde **200** com `"dados": []` |
 
-⭐ **Liga a `pessoas` por `ideCadastro`**, que é o mesmo id da Câmara já usado em
-`pessoa_fonte_ids`. A ligação sai de graça — foi o critério que o autor deu: *o que não
-se associa ao perfil do político não entra*.
+## TRATAMENTO
 
-🔴 **`txtCNPJCPF` mistura CNPJ e CPF.** Fornecedor pessoa jurídica traz CNPJ; pessoa
-física traz **CPF em claro**. A RNF-13 proíbe guardar CPF assim.
+1. Casa `ideCadastro` contra o de-para de `pessoa_fonte_ids` — quem ⛔ não casa sai
+2. Descarta valor zero, que violaria `ck_despesa_valor`
+3. Separa CNPJ (legível) de CPF de fornecedor (**hasheado**)
+4. ⚠️ Confere o **volume** contra o mínimo medido: arquivo encolhido = layout mudou
+
+## SAÍDA
+
+| | |
+|---|---|
+| Tabela | `despesas` |
+| Chave de ligação | `pessoa_id`, via `ideCadastro` |
+| Constraint do banco | `ck_despesa_valor` (`valor_liquido <> 0`) · FK `CASCADE` |
+| Idempotência | `DELETE` por (pessoa, ano) antes do `INSERT` |
+
+---
+
+⭐ Valor **negativo é estorno** e é mantido — somá-lo importa para o total.
+
+🔴 `txtCNPJCPF` mistura CNPJ de empresa com **CPF em claro** de pessoa física; a RNF-13
+proíbe o segundo. Hashear os dois destruiria a análise: sem CNPJ legível ⛔ não dá para
+cruzar o mesmo fornecedor entre parlamentares.
+
+📐 [`docs/14-fontes-de-gasto.md §1`](../../../docs/14-fontes-de-gasto.md)
 """
 
 import csv
@@ -28,13 +51,12 @@ log = logging.getLogger("poligraph")
 
 URL = "https://www.camara.leg.br/cotas/Ano-{ano}.csv.zip"
 
-# ⚠️ Medido em 2025: 209.176 linhas, das quais 99,6% com `ideCadastro`. Serve de canário
-#    — se cair muito abaixo, o layout mudou.
+# Medido: ~233 mil linhas por ano, 99,6% com `ideCadastro`.
 MINIMO_ESPERADO = 50_000
 
 
 def baixar(ano: int, destino: Path) -> Path:
-    """⚠️ 6,6 MB compactado em 2025. Vale cachear entre execuções."""
+    """⚠️ ~6,6 MB compactado. Vale cachear entre execuções."""
     destino.parent.mkdir(parents=True, exist_ok=True)
 
     resposta = requests.get(URL.format(ano=ano), timeout=300)
@@ -47,9 +69,8 @@ def baixar(ano: int, destino: Path) -> Path:
 def ler(caminho: Path) -> list[dict]:
     """Lê o CSV de dentro do ZIP.
 
-    ⚠️ Mesmos parâmetros do resto da Câmara: `;`, aspas, BOM. ⛔ Não reutiliza
-    `camara.ler_csv` porque aqui a fonte é ZIP, não CSV solto, e carregar 209 mil linhas
-    num DataFrame para depois iterar seria desperdício.
+    ⛔ Não reutiliza `camara.ler_csv`: aqui a fonte é ZIP, e carregar 233 mil linhas num
+    DataFrame para depois iterar seria desperdício.
     """
     with zipfile.ZipFile(caminho) as arquivo:
         nome = arquivo.namelist()[0]
@@ -60,17 +81,15 @@ def ler(caminho: Path) -> list[dict]:
 
 
 def para_linhas(registros: list[dict], mapa_pessoas: dict[str, int]) -> list[dict]:
-    """Converte em linhas de `despesas`, descartando o que não liga a um parlamentar.
+    """Converte em linhas de `despesas`, descartando o que ⛔ não liga a um parlamentar.
 
-    ⚠️ O que é descartado, e por quê:
+    Descarta, e por quê:
 
     | Caso | Motivo |
     |---|---|
-    | Sem `ideCadastro` | São lideranças e órgãos (0,4% em 2025), ⛔ não pessoas |
-    | Fora do de-para | Deputado que a ingestão de pessoas não trouxe |
+    | Sem `ideCadastro` | São lideranças e órgãos (0,4%), ⛔ não pessoas |
+    | Fora do de-para | Deputado que a ingestão de pessoas ⛔ não trouxe |
     | Valor zero | Linha administrativa sem efeito financeiro |
-
-    ⭐ Valor **negativo** é mantido: é estorno, e some-lo importa para o total.
     """
     linhas: list[dict] = []
 
@@ -105,7 +124,7 @@ def para_linhas(registros: list[dict], mapa_pessoas: dict[str, int]) -> list[dic
 
 
 def conferir_volume(registros: list[dict], ano: int) -> None:
-    """⭐ Canário: se o arquivo encolher demais, o layout mudou."""
+    """Canário: arquivo muito menor que o medido significa layout mudado."""
     if len(registros) < MINIMO_ESPERADO:
         raise RuntimeError(
             f"Só {len(registros)} linhas em Ano-{ano}.csv — esperado ao menos "
@@ -117,30 +136,24 @@ def conferir_volume(registros: list[dict], ano: int) -> None:
 
 
 def _identificar_fornecedor(bruto: str | None) -> tuple[str | None, bool]:
-    """Separa CNPJ de CPF, e **hasheia o CPF**.
+    """Separa CNPJ de CPF e **hasheia o CPF** — a mesma regra de `receitas`.
 
-    🔴 RNF-13: CPF ⛔ nunca em claro no banco. CNPJ é dado público de empresa e fica
-    legível — sem ele, não dá para cruzar fornecedor entre parlamentares, que é
-    justamente a análise que interessa.
-
-    ⚠️ O mesmo hash de `Pessoa.CpfHash`, para que os dois lados possam ser comparados
-    sem nunca reverter nenhum dos dois.
+    🔴 Usa o mesmo hash de `Pessoa.CpfHash`, o que torna os dois lados comparáveis sem
+    reverter nenhum deles.
     """
-    digitos = "".join(c for c in (bruto or "") if c.isdigit())
+    digitos = "".join(caractere for caractere in (bruto or "") if caractere.isdigit())
 
     if not digitos:
         return None, False
 
     if len(digitos) == 11:
-        # ⭐ Mesmo hash de `Pessoa.CpfHash` — é o que torna os dois lados comparáveis.
         return hash_de_cpf(digitos), True
 
     return digitos, False
 
 
-# ⚠️ **Aqui o ponto é DECIMAL** — conferido no arquivo real da CEAP, e é o oposto do
-#   Portal e do TSE. Usar `valor_pt_br` por engano daria um total mil vezes menor, sem
-#   erro nenhum. O nome da função importada é o que impede a troca silenciosa.
+# 🔴 Ponto DECIMAL aqui, o oposto do Portal e do TSE. Usar `valor_pt_br` por engano daria
+# um total mil vezes menor, sem erro — o nome importado é o que impede a troca silenciosa.
 _decimal = valor_com_ponto
 
 

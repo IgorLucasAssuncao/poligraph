@@ -95,9 +95,8 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
 
     emd = sub.add_parser("emendas", help="ingere emendas parlamentares (Portal)")
     emd.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
-    # ⭐ A porta de entrada da reconciliação MANUAL. Sem ela, `metodo = 'MANUAL'` seria
-    #    um valor que o `CHECK` admite e ⛔ nada jamais grava — e os 9 autores ambíguos
-    #    ficariam sem saída, porque ambiguidade ⛔ não pode virar palpite automático.
+    # A porta da reconciliação MANUAL: sem ela os autores ambíguos ficam sem saída,
+    # porque ambiguidade ⛔ não pode virar palpite automático.
     emd.add_argument(
         "--resolver",
         nargs="+",
@@ -136,12 +135,9 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
 
 
 def _configurar_log() -> None:
-    # 🔴 O console do Windows é **cp1252**, e `logging` ⛔ NÃO trata erro de codificação:
-    #    ele imprime um rastro de exceção no lugar da mensagem e segue. Um `→` numa
-    #    linha de log fazia o comando de reconciliação manual parecer ter quebrado.
-    #
-    # ⚠️ `errors="replace"` garante que o texto DEGRADE em vez de sumir — e as mensagens
-    #    em si evitam caractere fora do cp1252, para que nem a degradação apareça.
+    # 🔴 O console do Windows é cp1252, e `logging` ⛔ não trata erro de codificação:
+    # imprime um rastro de exceção no lugar da mensagem e segue. `errors="replace"` faz
+    # o texto degradar em vez de sumir; as mensagens evitam o problema na origem.
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="replace")
 
@@ -296,18 +292,10 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
         log.info("Nenhum autor pendente de reconciliação.")
         return
 
-    # 🔴 **Todas as pessoas**, ⛔ não só as que têm `cpf_hash`.
-    #
-    # ⚠️ A primeira versão filtrava por `cpf_hash IS NOT NULL`, o que na prática limitava
-    # a reconciliação aos 643 que votaram na legislatura 57. Medido no dado real: **241
-    # autores** que casavam por nome ficaram sem vínculo por causa disso — Angela Amin
-    # (legislatura 56), Tadeu Alencar, e outros que **apresentaram emenda para o exercício
-    # de 2023 ainda na legislatura anterior**, o que é o caso normal: a LOA de 2023 foi
-    # votada em 2022.
-    #
-    # ⭐ O `cpf_hash` ⛔ nada tem a ver com casamento por nome — era um recorte acidental.
-    # A ficha do parlamentar já filtra a legislatura corrente (PL35), então vincular
-    # autoria antiga ⛔ não polui tela nenhuma; deixá-la solta é que perdia informação.
+    # 🔴 TODAS as pessoas, ⛔ não só as com `cpf_hash` — filtrar por ele limitava a
+    # reconciliação aos 643 votantes da 57ª e deixava 241 autores soltos, gente que
+    # apresentou emenda para 2023 ainda na legislatura anterior (a LOA foi votada em
+    # 2022). A ficha já filtra a legislatura corrente, então autoria antiga não polui.
     por_nome: dict[str, list[int]] = {}
     for pessoa_id, nome in conexao.execute(
         "SELECT id, nome_exibicao FROM pessoas"
@@ -343,11 +331,10 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
 
 
 def pares_de_resolucao(entradas: list[str]) -> list[tuple[str, int]]:
-    """Converte `["4184=612", "3767=91"]` em `[("4184", 612), ("3767", 91)]`.
+    """Converte `["4184=612"]` em `[("4184", 612)]`.
 
-    🔴 **Entrada malformada estoura**, ⛔ não é ignorada. Um `--resolver 4184` sem o `=`
-    seria silenciosamente descartado, e a pessoa concluiria que vinculou quando ⛔ não
-    vinculou — o mesmo formato de falha que este projeto persegue.
+    🔴 Entrada malformada **estoura**, ⛔ não é ignorada: `--resolver 4184` sem o `=`
+    seria descartado em silêncio, e a pessoa concluiria que vinculou quando não vinculou.
     """
     pares: list[tuple[str, int]] = []
 
@@ -367,23 +354,20 @@ def pares_de_resolucao(entradas: list[str]) -> list[tuple[str, int]]:
 
 
 def _resolver_a_mao(conexao: psycopg.Connection, entradas: list[str]) -> None:
-    """PL45 — vincula autor de emenda à mão.
+    """PL45 — vincula autor de emenda à mão, a saída dos ambíguos.
 
-    ⭐ **É a saída dos 9 ambíguos.** Dois parlamentares com o mesmo nome de urna ⛔ não
-    são separáveis por texto; a reconciliação automática desiste de propósito, e quem
-    decide é uma pessoa — que fica registrada como `MANUAL`.
-
-    ⚠️ `MANUAL` ⛔ nunca é sobrescrito por execução automática posterior, e a coluna
-    `metodo` é o que torna essa procedência auditável no TCC.
+    Dois parlamentares com o mesmo nome de urna ⛔ não são separáveis por texto: a
+    reconciliação automática desiste de propósito e quem decide é uma pessoa. Fica
+    gravado como `MANUAL`, que execução automática posterior ⛔ nunca sobrescreve.
     """
     for codigo, pessoa_id in pares_de_resolucao(entradas):
-        existe = conexao.execute(
+        pessoa = conexao.execute(
             "SELECT nome_exibicao FROM pessoas WHERE id = %s", (pessoa_id,)
         ).fetchone()
 
-        # 🔴 Confere ANTES de gravar. A FK pegaria o id inexistente, mas com uma
-        #    mensagem do Postgres — e aqui dá para dizer o que fazer.
-        if not existe:
+        # A FK pegaria o id inexistente, mas com mensagem do Postgres; aqui dá para
+        # dizer o que fazer.
+        if not pessoa:
             raise RuntimeError(f"pessoa {pessoa_id} não existe. Confira o id em `pessoas`.")
 
         autor = conexao.execute(
@@ -395,7 +379,7 @@ def _resolver_a_mao(conexao: psycopg.Connection, entradas: list[str]) -> None:
             )
 
         persistencia.resolver_autor(conexao, codigo, pessoa_id, "MANUAL")
-        log.info("  %s (%s) -> %s (id %d)", codigo, autor[0], existe[0], pessoa_id)
+        log.info("  %s (%s) -> %s (id %d)", codigo, autor[0], pessoa[0], pessoa_id)
 
     vinculadas = persistencia.vincular_emendas(conexao)
     log.info("%d emendas vinculadas", vinculadas)
@@ -508,8 +492,8 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
             "O layout do ZIP mudou?"
         )
 
-    # ⚠️ Normalmente é UM arquivo: o consolidado. Vários significa que o TSE ⛔ não
-    #    publicou o consolidado naquele ano — e aí o DF fica de fora, ver `receitas`.
+    # Vários arquivos significa que o TSE não publicou o consolidado — e aí o DF fica
+    # de fora, ver `receitas.nomes_de_receita`.
     log.info(
         "%d arquivo(s) de receita: %s", len(nomes),
         "consolidado" if len(nomes) == 1 else f"{len(nomes)} estaduais (⛔ sem DF)",
@@ -532,15 +516,14 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
         "Eleição %d: %d receitas gravadas, %d parlamentares",
         eleicao, gravadas, int(resumo["parlamentares"]),
     )
-    # 🔴 Fundo Especial (o "fundão") e Fundo Partidário são fundos DIFERENTES — o log
-    #    os separa pelo mesmo motivo que o banco: somá-los é decisão de quem analisa.
+    # 🔴 Separados pelo mesmo motivo que no banco: somá-los é decisão de quem analisa.
     log.info(
         "  total R$ %.2f · fundo especial (FEFC) R$ %.2f",
         resumo["total"], resumo["fundo_especial"],
     )
 
-    # ⚠️ Casar muito pouco ⛔ não é erro do TSE — é `cpf` incompleto. Sem este aviso, a
-    #    ficha mostraria financiamento zerado para a maioria e ninguém perceberia.
+    # Casar pouco ⛔ não é erro do TSE, é `cpf` incompleto — e sem o aviso a ficha
+    # mostraria financiamento zerado para a maioria, sem ninguém perceber.
     if resumo["parlamentares"] < len(hashes) * 0.5:
         log.warning(
             "  só %d de %d pessoas com CPF casaram. Esperado: a maioria dos eleitos. "

@@ -65,12 +65,16 @@ function renderizar() {
   );
 }
 
-async function abrirAba(nome: string) {
+/** Renderiza e espera a ficha chegar. O nome aparece em dois `<h1>` — daí o `findAll`. */
+async function abrirPerfil() {
   renderizar();
-  // ⚠️ O nome aparece DUAS vezes, e as duas são `<h1>`: no cabeçalho da coluna e no
-  //    perfil. `findAllBy` só espera a ficha chegar — ⛔ não é o que está sob teste.
   await screen.findAllByRole('heading', { name: /Ana Ribeiro/ });
-  await userEvent.click(screen.getByRole('button', { name: nome }));
+}
+
+/** As contas moram num modal, ⛔ não numa aba: quem abre é o botão da faixa. */
+async function abrirContas() {
+  await abrirPerfil();
+  await userEvent.click(await screen.findByRole('button', { name: 'Ver as contas' }));
 }
 
 beforeEach(() => {
@@ -81,9 +85,9 @@ beforeEach(() => {
   vi.mocked(api.obterFinanciamento).mockResolvedValue(CAMPANHA);
 });
 
-describe('aba de emendas', () => {
+describe('contas — emendas', () => {
   it('🔴 mostra o pago junto do empenhado, nunca só o empenhado', async () => {
-    await abrirAba('Emendas');
+    await abrirContas();
 
     const texto = await tela();
 
@@ -91,7 +95,7 @@ describe('aba de emendas', () => {
     //    é exatamente o que quem anuncia emenda gostaria que ela concluísse.
     expect(texto).toMatch(/R\$\s*1\.000\.000,00/);
     expect(texto).toMatch(/R\$\s*400\.000,00/);
-    expect(texto).toMatch(/40% do que foi empenhado/);
+    expect(texto).toMatch(/40% saiu de fato/);
   });
 
   it('⭐ estado vazio é honesto, não "R$ 0,00"', async () => {
@@ -99,7 +103,7 @@ describe('aba de emendas', () => {
       ano: 0, empenhado: 0, pago: 0, quantidade: 0, porDestino: [], porFuncao: [],
     });
 
-    await abrirAba('Emendas');
+    await abrirContas();
     await screen.findByText(/Nenhuma emenda atribuída/);
 
     // 🔴 Zero afirmaria que ele não teve emenda; o que se sabe é que a BASE não tem.
@@ -111,16 +115,16 @@ describe('aba de emendas', () => {
       ...EMENDAS, empenhado: 0, pago: 0, porDestino: [], porFuncao: [],
     });
 
-    await abrirAba('Emendas');
+    await abrirContas();
 
     // ⛔ Sem a guarda, `0/0` daria `NaN%` na tela
     expect(await tela()).not.toMatch(/NaN/);
   });
 });
 
-describe('aba de campanha', () => {
+describe('contas — campanha', () => {
   it('🔴 os dois fundos aparecem SEPARADOS e nomeados', async () => {
-    await abrirAba('Campanha');
+    await abrirContas();
 
     await screen.findByText('Fundo Partidário');
     const texto = await tela();
@@ -135,14 +139,14 @@ describe('aba de campanha', () => {
   });
 
   it('⭐ a proporção pública é sobre o total arrecadado', async () => {
-    await abrirAba('Campanha');
+    await abrirContas();
 
     // 3.200.000 de 3.250.000 = 98%
     expect(await tela()).toMatch(/98% do que a campanha arrecadou/);
   });
 
   it('🔴 marca o doador pessoa física sem revelar documento', async () => {
-    await abrirAba('Campanha');
+    await abrirContas();
 
     await screen.findByText(/Jose da Silva/);
     const texto = await tela();
@@ -158,7 +162,7 @@ describe('aba de campanha', () => {
       porFonte: [], maioresDoadores: [],
     });
 
-    await abrirAba('Campanha');
+    await abrirContas();
     await screen.findByText(/Nenhuma receita de campanha registrada/);
 
     expect(await tela()).not.toMatch(/NaN/);
