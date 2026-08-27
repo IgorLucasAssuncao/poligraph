@@ -123,7 +123,18 @@ export function Parlamentar() {
         </div>
 
         <div className="perfil-chips">
-          {/* ⚠️ RNF-31: termo institucional como contexto, nunca como controle. */}
+          {/* A casa vem primeiro: é o que situa todo o resto. Um "PT · SP" sem ela
+              deixa o leitor sem saber se está diante de deputado ou senador — e as
+              duas casas votam matérias diferentes, então o número de votações e o
+              grafo da pessoa significam coisas distintas. */}
+          {ficha.casa && (
+            <span className="chip chip-casa">
+              <Termo nome={ficha.casa === 'SENADO' ? 'senado' : 'camara'}>
+                {ficha.casa === 'SENADO' ? 'Senador' : 'Deputado'}
+              </Termo>
+            </span>
+          )}
+          {/* RNF-31: termo institucional como contexto, nunca como controle. */}
           {ficha.partido && (
             <span className="chip">
               <Termo nome="partido">{ficha.partido}</Termo>

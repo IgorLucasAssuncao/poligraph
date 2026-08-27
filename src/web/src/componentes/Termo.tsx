@@ -114,6 +114,20 @@ export const GLOSSARIO = {
       'e não pelo partido. Por isso um mesmo partido aparece em vários grupos, e o ' +
       'número do grupo é só um rótulo — não indica posição no espectro político.',
   },
+  camara: {
+    rotulo: 'Câmara dos Deputados',
+    explicacao:
+      ' São 513 deputados, eleitos a cada quatro anos por estado, na proporção da ' +
+      'população. É onde a maioria dos projetos começa, e onde há mais votação com o ' +
+      'voto de cada um registrado.',
+  },
+  senado: {
+    rotulo: 'Senado Federal',
+    explicacao:
+      ' São 81 senadores, três por estado, com mandato de oito anos. Revisa boa parte ' +
+      'do que vem da Câmara — e mais da metade das votações dele é secreta, então há ' +
+      'menos base para comparar senadores entre si do que deputados.',
+  },
   fundao: {
     rotulo: 'Fundo Especial',
     explicacao:

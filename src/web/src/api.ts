@@ -15,6 +15,8 @@ const BASE = '/api';
 export type Usuario = { nome: string | null; fotoUrl: string | null };
 
 export type Parlamentar = {
+  /** CAMARA ou SENADO. */
+  casa: 'CAMARA' | 'SENADO' | '';
   id: number;
   nome: string;
   partido: string;
@@ -42,6 +44,8 @@ export type Similar = {
 export type Ficha = {
   id: number;
   nome: string;
+  /** CAMARA ou SENADO, derivado do voto mais recente — a casa é do mandato. */
+  casa: 'CAMARA' | 'SENADO' | '';
   nomeCivil: string;
   partido: string;
   uf: string;
@@ -227,7 +231,7 @@ export async function obterNoticias(id: number): Promise<Noticia[]> {
 
 export async function listarSeguidos(): Promise<Parlamentar[]> {
   const seguidos = await buscar<
-    { pessoaId: number; nome: string; partido: string; uf: string }[]
+    { pessoaId: number; nome: string; casa: Parlamentar['casa']; partido: string; uf: string }[]
   >(`${BASE}/seguidos`);
 
   return seguidos.map((s) => ({ ...s, id: s.pessoaId, nVotacoes: 0 }));

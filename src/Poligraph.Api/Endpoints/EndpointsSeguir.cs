@@ -1,10 +1,11 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
 
 namespace Poligraph.Api.Endpoints;
 
-public record ParlamentarSeguido(long PessoaId, string Nome, string Partido, string Uf);
+public record ParlamentarSeguido(
+    long PessoaId, string Nome, string Casa, string Partido, string Uf);
 
 /// <summary>
 /// 🔴 Estes endpoints escrevem na tabela `segue`, que é REGISTRO DE CONVICÇÃO POLÍTICA
@@ -43,13 +44,13 @@ public static class EndpointsSeguir
                 s.Pessoa!.NomeExibicao,
                 Ultimo = s.Pessoa.Votos
                     .OrderByDescending(v => v.Votacao!.Data)
-                    .Select(v => new { v.PartidoNoVoto, v.UfNoVoto })
+                    .Select(v => new { v.Votacao!.Casa, v.PartidoNoVoto, v.UfNoVoto })
                     .FirstOrDefault()
             })
             .ToListAsync(ct);
 
         return Results.Ok(seguidos.Select(s => new ParlamentarSeguido(
-            s.PessoaId, s.NomeExibicao,
+            s.PessoaId, s.NomeExibicao, s.Ultimo?.Casa ?? "",
             s.Ultimo?.PartidoNoVoto ?? "", s.Ultimo?.UfNoVoto ?? "")));
     }
 

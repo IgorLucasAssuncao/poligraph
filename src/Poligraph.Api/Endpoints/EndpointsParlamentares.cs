@@ -4,7 +4,7 @@ using Poligraph.Api.Data;
 namespace Poligraph.Api.Endpoints;
 
 public record ParlamentarNaLista(
-    long Id, string Nome, string Partido, string Uf, int NVotacoes, string? UrlFoto);
+    long Id, string Nome, string Casa, string Partido, string Uf, int NVotacoes, string? UrlFoto);
 
 public record VotoNaFicha(string VotacaoId, DateOnly Data, string? Descricao, short? Valor);
 
@@ -13,6 +13,16 @@ public record SimilarNaFicha(long PessoaId, string Nome, string Partido, float V
 public record FichaParlamentar(
     long Id,
     string Nome,
+    /// <summary>
+    /// CAMARA ou SENADO, derivado do voto mais recente — como partido e UF.
+    ///
+    /// <para>
+    /// Não vem de uma coluna em <c>pessoas</c>: a casa é do mandato, não da pessoa. 43
+    /// nomes aparecem nas duas casas, e o deputado que virou senador deve poder ser uma
+    /// pessoa só quando a ponte do achado #18 existir.
+    /// </para>
+    /// </summary>
+    string Casa,
     string NomeCivil,
     string Partido,
     string Uf,
@@ -139,7 +149,7 @@ public static class EndpointsParlamentares
                 Ultimo = p.Votos
                     .Where(v => v.Votacao!.Legislatura == legislatura)
                     .OrderByDescending(v => v.Votacao!.Data)
-                    .Select(v => new { v.PartidoNoVoto, v.UfNoVoto })
+                    .Select(v => new { v.PartidoNoVoto, v.UfNoVoto, v.Votacao!.Casa })
                     .FirstOrDefault()
             })
             .Where(p => p.NVotacoes > 0);
@@ -159,7 +169,7 @@ public static class EndpointsParlamentares
             .ToListAsync(ct);
 
         return Results.Ok(lista.Select(p => new ParlamentarNaLista(
-            p.Id, p.NomeExibicao,
+            p.Id, p.NomeExibicao, p.Ultimo?.Casa ?? "",
             p.Ultimo?.PartidoNoVoto ?? "", p.Ultimo?.UfNoVoto ?? "",
             p.NVotacoes, p.UrlFoto)));
     }
@@ -376,10 +386,10 @@ public static class EndpointsParlamentares
         var legislatura = await Legislaturas.CorrenteAsync(db, ct);
         var votos = await UltimosVotosAsync(db, id, ct);
         var similares = await MaisSimilaresAsync(db, id, ct);
-        var (partido, uf) = await FiliacaoAtualAsync(db, id, ct);
+        var (casa, partido, uf) = await FiliacaoAtualAsync(db, id, ct);
 
         return Results.Ok(new FichaParlamentar(
-            pessoa.Id, pessoa.NomeExibicao, pessoa.NomeCivil,
+            pessoa.Id, pessoa.NomeExibicao, casa, pessoa.NomeCivil,
             partido, uf, pessoa.UrlFoto,
             // 🔴 PL35 — só a legislatura corrente, igual à lista. Contar todas daria
             //    um número maior na ficha do que na lista, para a mesma pessoa.
@@ -462,15 +472,23 @@ public static class EndpointsParlamentares
     /// `partido_no_voto` é registro histórico — 14 deputados trocaram de legenda só
     /// em 2025, e a filiação "atual" é a do último voto conhecido.
     /// </summary>
-    private static async Task<(string Partido, string Uf)> FiliacaoAtualAsync(
+    /// <summary>
+    /// Casa, partido e UF do voto mais recente.
+    ///
+    /// <para>
+    /// A casa vem daqui, e não de <c>pessoa_fonte_ids</c>: quem atuou nas duas tem duas
+    /// fontes, e a pergunta que a ficha responde é "onde essa pessoa está agora".
+    /// </para>
+    /// </summary>
+    private static async Task<(string Casa, string Partido, string Uf)> FiliacaoAtualAsync(
         PoligraphDb db, long id, CancellationToken ct)
     {
         var ultimo = await db.Votos.AsNoTracking()
             .Where(v => v.PessoaId == id)
             .OrderByDescending(v => v.Votacao!.Data)
-            .Select(v => new { v.PartidoNoVoto, v.UfNoVoto })
+            .Select(v => new { v.Votacao!.Casa, v.PartidoNoVoto, v.UfNoVoto })
             .FirstOrDefaultAsync(ct);
 
-        return (ultimo?.PartidoNoVoto ?? "", ultimo?.UfNoVoto ?? "");
+        return (ultimo?.Casa ?? "", ultimo?.PartidoNoVoto ?? "", ultimo?.UfNoVoto ?? "");
     }
 }

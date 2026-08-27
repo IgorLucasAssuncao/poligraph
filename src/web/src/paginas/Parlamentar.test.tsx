@@ -20,6 +20,7 @@ const api = await import('../api');
 const FICHA: Ficha = {
   id: 1,
   nome: 'Ana Ribeiro',
+  casa: 'CAMARA',
   nomeCivil: 'ANA RIBEIRO',
   partido: 'PARTIDO-A',
   uf: 'SP',
@@ -83,6 +84,33 @@ beforeEach(() => {
   vi.mocked(api.listarSeguidos).mockResolvedValue([]);
   vi.mocked(api.obterEmendas).mockResolvedValue(EMENDAS);
   vi.mocked(api.obterFinanciamento).mockResolvedValue(CAMPANHA);
+});
+
+describe('a casa do parlamentar', () => {
+  it('aparece no perfil, antes de partido e UF', async () => {
+    await abrirPerfil();
+
+    // Situa todo o resto: um "PT · SP" sem a casa deixa o leitor sem saber se está
+    // diante de deputado ou senador — e as duas votam matérias diferentes, então o
+    // número de votações e o grafo significam coisas distintas.
+    expect(await screen.findByRole('button', { name: 'Deputado' })).toBeInTheDocument();
+  });
+
+  it('senador é rotulado como senador', async () => {
+    vi.mocked(api.obterFicha).mockResolvedValue({ ...FICHA, casa: 'SENADO' });
+    await abrirPerfil();
+
+    expect(await screen.findByRole('button', { name: 'Senador' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Deputado' })).toBeNull();
+  });
+
+  it('sem casa na base, o perfil não inventa rótulo', async () => {
+    vi.mocked(api.obterFicha).mockResolvedValue({ ...FICHA, casa: '' });
+    await abrirPerfil();
+
+    expect(screen.queryByRole('button', { name: 'Deputado' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Senador' })).toBeNull();
+  });
 });
 
 describe('contas — emendas', () => {

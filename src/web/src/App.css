@@ -381,6 +381,10 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .perfil-identidade h1 { margin: 0; font-size: 1.35rem; font-weight: 800; letter-spacing: -.01em; }
 .perfil-identidade .nome-civil { margin: .1rem 0 0; color: var(--suave); font-size: .92rem; }
 .perfil-chips { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem; }
+/* A casa ganha peso próprio: ela situa o resto, e um chip idêntico ao do partido a
+   faria ler como mais um atributo entre outros. Cor NÃO — a paleta é única, e nenhum
+   realce pode sugerir espectro político (RNF-16). A distinção é de borda e peso. */
+.chip-casa { border-color: var(--borda-forte); color: var(--texto); font-weight: 600; }
 .chip {
   padding: .2rem .65rem; border-radius: 4px;
   font-family: var(--dado); font-size: .78rem;
