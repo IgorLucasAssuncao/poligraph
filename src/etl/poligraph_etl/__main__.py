@@ -274,9 +274,21 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
         log.info("Nenhum autor pendente de reconciliação.")
         return
 
+    # 🔴 **Todas as pessoas**, ⛔ não só as que têm `cpf_hash`.
+    #
+    # ⚠️ A primeira versão filtrava por `cpf_hash IS NOT NULL`, o que na prática limitava
+    # a reconciliação aos 643 que votaram na legislatura 57. Medido no dado real: **241
+    # autores** que casavam por nome ficaram sem vínculo por causa disso — Angela Amin
+    # (legislatura 56), Tadeu Alencar, e outros que **apresentaram emenda para o exercício
+    # de 2023 ainda na legislatura anterior**, o que é o caso normal: a LOA de 2023 foi
+    # votada em 2022.
+    #
+    # ⭐ O `cpf_hash` ⛔ nada tem a ver com casamento por nome — era um recorte acidental.
+    # A ficha do parlamentar já filtra a legislatura corrente (PL35), então vincular
+    # autoria antiga ⛔ não polui tela nenhuma; deixá-la solta é que perdia informação.
     por_nome: dict[str, list[int]] = {}
     for pessoa_id, nome in conexao.execute(
-        "SELECT id, nome_exibicao FROM pessoas WHERE cpf_hash IS NOT NULL"
+        "SELECT id, nome_exibicao FROM pessoas"
     ).fetchall():
         por_nome.setdefault(normalizacao.sem_acento_maiusculo(nome), []).append(pessoa_id)
 
@@ -415,7 +427,12 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
             "O layout do ZIP mudou?"
         )
 
-    log.info("%d arquivos estaduais de receita", len(nomes))
+    # ⚠️ Normalmente é UM arquivo: o consolidado. Vários significa que o TSE ⛔ não
+    #    publicou o consolidado naquele ano — e aí o DF fica de fora, ver `receitas`.
+    log.info(
+        "%d arquivo(s) de receita: %s", len(nomes),
+        "consolidado" if len(nomes) == 1 else f"{len(nomes)} estaduais (⛔ sem DF)",
+    )
 
     todas: list[dict] = []
     for nome in nomes:

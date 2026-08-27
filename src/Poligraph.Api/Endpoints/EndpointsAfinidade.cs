@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
 using Poligraph.Api.Services;
 
@@ -75,9 +75,21 @@ public static class EndpointsAfinidade
     /// </summary>
     private static async Task<IResult> ObterPerguntasAsync(PoligraphDb db, CancellationToken ct)
     {
+        // 🔴 PL35 — o denominador é RECORTADO pela legislatura das perguntas ativas.
+        //
+        // ⚠️ Sem o recorte, a chegada da 58ª faria o painel mostrar "480 de 900": os
+        //    900 seriam deputados das duas legislaturas, e 420 deles nunca votaram
+        //    nenhuma das votações exibidas. Número plausível, nenhuma exceção.
+        //
+        // ⭐ A legislatura sai das PERGUNTAS, ⛔ não do banco. Na virada, o pool ainda
+        //    é da 57ª por um tempo — e o denominador tem de acompanhar as votações
+        //    mostradas, ⛔ não o calendário.
+        var legislaturas = await Legislaturas.DasPerguntasAtivasAsync(db, ct);
+
         // ⚠️ Uma consulta só, fora do Select: o denominador é o mesmo para todas as
         //    perguntas, e repeti-lo por linha viraria um subselect por pergunta.
         var totalPossivel = await db.Votos.AsNoTracking()
+            .Where(v => legislaturas.Contains(v.Votacao!.Legislatura))
             .Select(v => v.PessoaId).Distinct().CountAsync(ct);
 
         var perguntas = await db.Perguntas

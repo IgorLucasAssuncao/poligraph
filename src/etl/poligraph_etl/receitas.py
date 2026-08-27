@@ -36,8 +36,27 @@ PREFIXO = "receitas_candidatos_{ano}_"
 #    plausíveis deixaria a outra passar — DUPLICANDO a receita de cada candidato.
 IGNORAR = "doador_originario"
 
-# ⚠️ O arquivo `_BRASIL` é o consolidado de 1,3 GB. Ler os 27 estaduais dá o mesmo
-#    conteúdo com uma fração da memória — e ler os dois DUPLICARIA tudo.
+# 🔴 **O consolidado é o arquivo CERTO, e os estaduais são a armadilha.**
+#
+# ⚠️ A primeira versão deste módulo lia os estaduais e pulava o `_BRASIL`, supondo que
+# fossem equivalentes. **Os dois pressupostos estavam errados**, e a medição no ZIP real
+# de 2022 mostrou por quê:
+#
+# | Medido | |
+# |---|---|
+# | Arquivos com o prefixo `receitas_candidatos_2022_` | 27 — ⚠️ mas **um deles é o `_BRASIL`** |
+# | Logo, arquivos **estaduais** | **26**, ⛔ não 27 |
+# | UFs no `_BRASIL` (Deputado Federal) | **27** |
+# | ⛔ UF sem arquivo próprio | **DF** — 3.075 linhas que existem **só** no consolidado |
+# | `_BRASIL` / SP × arquivo `_SP` | 17.609 × 17.609 — **duplica exatamente** |
+# | Tamanho do `_BRASIL` descompactado | **432 MB**, ⛔ não 1,3 GB |
+#
+# ⭐ Ou seja: ler os 26 estaduais perdia o **Distrito Federal em silêncio** — 8 deputados
+# federais sem financiamento na ficha, sem erro nenhum. E ler os 26 **mais** o
+# consolidado duplicaria todo o resto.
+#
+# 🔴 Por isso: **quando o consolidado existe, ele é o único lido.** Os estaduais ficam
+# como plano B para o caso de um ano em que o consolidado não seja publicado.
 CONSOLIDADO = "_BRASIL"
 
 CARGO = "DEPUTADO FEDERAL"
@@ -50,18 +69,32 @@ NULOS = {"#NULO", "#NULO#", "#NE", "#NE#", "-1", ""}
 
 
 def nomes_de_receita(caminho: Path, ano: int) -> list[str]:
-    """Os 27 CSVs estaduais de receita, ⛔ sem o consolidado e sem o doador originário."""
+    """Os CSVs de receita a ler — **o consolidado, se existir**; senão, os estaduais.
+
+    🔴 ⛔ **Nunca os dois.** O consolidado repete os estaduais linha por linha; somá-los
+    dobraria o financiamento de cada candidato, e o número continuaria plausível.
+
+    ⚠️ E ⛔ **nunca só os estaduais**, quando o consolidado existe: o **DF ⛔ não tem
+    arquivo próprio**, e os 8 deputados federais dele ficariam sem financiamento na
+    ficha — sem erro, sem log, sem nada.
+    """
     prefixo = PREFIXO.format(ano=ano)
 
     with zipfile.ZipFile(caminho) as zipe:
-        return sorted(
+        candidatos = [
             nome
             for nome in zipe.namelist()
             if nome.startswith(prefixo)
             and IGNORAR not in nome
-            and CONSOLIDADO not in nome
             and nome.lower().endswith(".csv")
-        )
+        ]
+
+    consolidado = [n for n in candidatos if CONSOLIDADO in n]
+
+    # ⭐ O consolidado sozinho é o caminho normal. A lista de estaduais só entra em cena
+    #    se o TSE deixar de publicá-lo — e aí ela vem com o DF faltando, o que o
+    #    comando avisa pelo canário de casamento.
+    return consolidado or sorted(candidatos)
 
 
 def ler_receitas(caminho: Path, nome_interno: str):

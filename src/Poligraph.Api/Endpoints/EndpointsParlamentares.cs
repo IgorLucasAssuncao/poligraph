@@ -108,14 +108,27 @@ public static class EndpointsParlamentares
         string? partido = null,
         string? uf = null)
     {
+        // 🔴 PL35 — "parlamentar" é quem votou na legislatura CORRENTE.
+        //
+        // ⚠️ Sem o recorte, a chegada da 58ª faria "explorar" listar ex-deputados junto
+        //    dos atuais, e `NVotacoes` somaria mandatos diferentes. Nada quebraria: só
+        //    apareceria gente que ⛔ não está mais lá, com um número inflado.
+        //
+        // ⭐ `null` só acontece em base sem votação nenhuma — antes do primeiro ETL. Aí
+        //    a lista sai vazia, que é a resposta honesta.
+        var legislatura = await Legislaturas.CorrenteAsync(db, ct);
+        if (legislatura is null) return Results.Ok(Array.Empty<ParlamentarNaLista>());
+
         var consulta = db.Pessoas.AsNoTracking()
             .Select(p => new
             {
                 p.Id,
                 p.NomeExibicao,
                 p.UrlFoto,
-                NVotacoes = p.Votos.Count(v => v.Valor != null),
+                NVotacoes = p.Votos.Count(
+                    v => v.Valor != null && v.Votacao!.Legislatura == legislatura),
                 Ultimo = p.Votos
+                    .Where(v => v.Votacao!.Legislatura == legislatura)
                     .OrderByDescending(v => v.Votacao!.Data)
                     .Select(v => new { v.PartidoNoVoto, v.UfNoVoto })
                     .FirstOrDefault()
@@ -358,6 +371,7 @@ public static class EndpointsParlamentares
 
         if (pessoa is null) return Results.NotFound();
 
+        var legislatura = await Legislaturas.CorrenteAsync(db, ct);
         var votos = await UltimosVotosAsync(db, id, ct);
         var similares = await MaisSimilaresAsync(db, id, ct);
         var (partido, uf) = await FiliacaoAtualAsync(db, id, ct);
@@ -365,7 +379,11 @@ public static class EndpointsParlamentares
         return Results.Ok(new FichaParlamentar(
             pessoa.Id, pessoa.NomeExibicao, pessoa.NomeCivil,
             partido, uf, pessoa.UrlFoto,
-            await db.Votos.CountAsync(v => v.PessoaId == id && v.Valor != null, ct),
+            // 🔴 PL35 — só a legislatura corrente, igual à lista. Contar todas daria
+            //    um número maior na ficha do que na lista, para a mesma pessoa.
+            await db.Votos.CountAsync(
+                v => v.PessoaId == id && v.Valor != null
+                     && v.Votacao!.Legislatura == legislatura, ct),
             votos, similares));
     }
 

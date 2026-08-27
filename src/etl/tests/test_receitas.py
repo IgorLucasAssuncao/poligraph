@@ -274,18 +274,35 @@ def zip_do_tse(tmp_path: Path) -> Path:
     return caminho
 
 
-def test_so_os_estaduais_de_receita_entram(zip_do_tse):
-    """⚠️ Três exclusões, cada uma por um motivo diferente:
+def test_o_consolidado_e_o_unico_lido(zip_do_tse):
+    """🔴 O consolidado **substitui** os estaduais — ⛔ nunca soma com eles.
 
-    | Fora | Por quê |
-    |---|---|
-    | `_BRASIL` | É o consolidado de 1,3 GB — ler junto DUPLICARIA tudo |
-    | `doador_originario` | Rastreia intermediário; ⛔ não é a receita |
-    | `despesas_*`, `leiame` | Outro assunto |
+    ⚠️ Medido no ZIP real de 2022: `_BRASIL`/SP tem **17.609** linhas de deputado
+    federal, e o arquivo `_SP` tem as mesmas **17.609**. Ler os dois dobraria o
+    financiamento de cada candidato, e o número continuaria plausível.
+
+    ⭐ E o consolidado é o único que traz o **DF**, que ⛔ não tem arquivo próprio.
     """
     nomes = receitas.nomes_de_receita(zip_do_tse, 2022)
 
-    assert nomes == [
+    assert nomes == ["receitas_candidatos_2022_BRASIL.csv"]
+
+
+def test_sem_consolidado_cai_para_os_estaduais(tmp_path):
+    """⭐ Plano B: se o TSE deixar de publicar o consolidado, os estaduais servem.
+
+    ⚠️ Com a ressalva conhecida — nesse caminho o **DF fica de fora**, porque ⛔ não
+    existe arquivo estadual dele. Quem avisa é o canário de casamento do comando.
+    """
+    caminho = tmp_path / "sem-consolidado.zip"
+    with zipfile.ZipFile(caminho, "w") as zipe:
+        zipe.writestr("receitas_candidatos_2022_AP.csv", "x")
+        zipe.writestr("receitas_candidatos_2022_SP.csv", "x")
+        zipe.writestr("receitas_candidatos_doador_originario_2022_AP.csv", "x")
+        zipe.writestr("receitas_candidatos_2022_doador_originario_AP.csv", "x")
+        zipe.writestr("despesas_pagas_candidatos_2022_AP.csv", "x")
+
+    assert receitas.nomes_de_receita(caminho, 2022) == [
         "receitas_candidatos_2022_AP.csv",
         "receitas_candidatos_2022_SP.csv",
     ]
