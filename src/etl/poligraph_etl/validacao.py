@@ -169,7 +169,7 @@ def empatados_com(
     `respostas` é {coluna da votação: -1 ou 1}.
     """
     colunas = sorted(respostas)
-    minha = np.array([respostas[c] for c in colunas], dtype=float)
+    minha = np.array([respostas[coluna] for coluna in colunas], dtype=float)
 
     deles = np.where(np.isnan(matriz[:, colunas]), 0, matriz[:, colunas])
     comum = (deles != 0) & (minha != 0)
@@ -237,10 +237,16 @@ def simular_desempate(
     dá para afirmar que o ganho veio da escolha e não de simplesmente perguntar mais.
     """
     sorteio = np.random.default_rng(semente + quem)
-    respostas = {c: int(matriz[quem, c]) for c in base if not np.isnan(matriz[quem, c])}
-    respostas = {c: v for c, v in respostas.items() if v != 0}
+    respostas = {
+        coluna: int(matriz[quem, coluna])
+        for coluna in base
+        if not np.isnan(matriz[quem, coluna])
+    }
+    respostas = {
+        coluna: voto for coluna, voto in respostas.items() if voto != 0
+    }
 
-    disponiveis = [c for c in candidatas if c not in respostas]
+    disponiveis = [coluna for coluna in candidatas if coluna not in respostas]
     tamanhos = []
 
     for _ in range(rodadas):

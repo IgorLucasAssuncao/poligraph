@@ -93,30 +93,30 @@ def para_linhas(registros: list[dict], mapa_pessoas: dict[str, int]) -> list[dic
     """
     linhas: list[dict] = []
 
-    for r in registros:
-        id_camara = (r.get("ideCadastro") or "").strip()
+    for registro in registros:
+        id_camara = (registro.get("ideCadastro") or "").strip()
         pessoa_id = mapa_pessoas.get(id_camara)
         if pessoa_id is None:
             continue
 
-        valor = _decimal(r.get("vlrLiquido"))
+        valor = _decimal(registro.get("vlrLiquido"))
         if valor == 0:
             continue
 
-        documento, pessoa_fisica = _identificar_fornecedor(r.get("txtCNPJCPF"))
+        documento, pessoa_fisica = _identificar_fornecedor(registro.get("txtCNPJCPF"))
 
         linhas.append(
             {
                 "pessoa_id": pessoa_id,
-                "ano": _inteiro(r.get("numAno")),
-                "mes": _inteiro(r.get("numMes")),
-                "categoria": (r.get("txtDescricao") or "").strip() or "SEM CATEGORIA",
-                "fornecedor": (r.get("txtFornecedor") or "").strip() or None,
+                "ano": _inteiro(registro.get("numAno")),
+                "mes": _inteiro(registro.get("numMes")),
+                "categoria": (registro.get("txtDescricao") or "").strip() or "SEM CATEGORIA",
+                "fornecedor": (registro.get("txtFornecedor") or "").strip() or None,
                 "cnpj_ou_hash": documento,
                 "fornecedor_eh_pessoa_fisica": pessoa_fisica,
                 "valor_liquido": valor,
-                "data_emissao": (r.get("datEmissao") or "")[:10] or None,
-                "url_documento": (r.get("urlDocumento") or "").strip() or None,
+                "data_emissao": (registro.get("datEmissao") or "")[:10] or None,
+                "url_documento": (registro.get("urlDocumento") or "").strip() or None,
             }
         )
 

@@ -48,16 +48,16 @@ def montar(pessoas: list[int], arestas: list) -> nx.Graph:
     aresta — quem votou pouco e não passou do mínimo da RN-02 com ninguém — precisa
     existir como nó isolado, senão some do grafo sem que nada registre o motivo.
     """
-    g = nx.Graph()
-    g.add_nodes_from(pessoas)
+    rede = nx.Graph()
+    rede.add_nodes_from(pessoas)
 
     for aresta in arestas:
-        g.add_edge(aresta.pessoa_a, aresta.pessoa_b, peso=float(aresta.valor))
+        rede.add_edge(aresta.pessoa_a, aresta.pessoa_b, peso=float(aresta.valor))
 
-    return g
+    return rede
 
 
-def detectar_comunidades(g: nx.Graph) -> dict[int, int]:
+def detectar_comunidades(rede: nx.Graph) -> dict[int, int]:
     """Louvain, ponderado pela similaridade. Decidido em `plano/07`.
 
     ⭐ O número de comunidades NÃO é escolhido: Louvain o encontra maximizando
@@ -69,7 +69,7 @@ def detectar_comunidades(g: nx.Graph) -> dict[int, int]:
     que o algoritmo devolver, e a legenda da tela troca de cor entre duas execuções do
     mesmo dado.
     """
-    grupos = nx.community.louvain_communities(g, weight="peso", seed=SEMENTE)
+    grupos = nx.community.louvain_communities(rede, weight="peso", seed=SEMENTE)
     grupos = sorted(grupos, key=len, reverse=True)
 
     return {
@@ -79,7 +79,7 @@ def detectar_comunidades(g: nx.Graph) -> dict[int, int]:
     }
 
 
-def calcular_posicoes(g: nx.Graph) -> dict[int, tuple[float, float]]:
+def calcular_posicoes(rede: nx.Graph) -> dict[int, tuple[float, float]]:
     """Layout de molas (Fruchterman-Reingold), semente fixa.
 
     ⚠️ A posição é DESCRITIVA, não uma medida. Proximidade na tela sugere similaridade
@@ -88,7 +88,7 @@ def calcular_posicoes(g: nx.Graph) -> dict[int, tuple[float, float]]:
     espectro que o método não afirma.
     """
     posicoes = nx.spring_layout(
-        g, weight="peso", seed=SEMENTE, iterations=ITERACOES_LAYOUT
+        rede, weight="peso", seed=SEMENTE, iterations=ITERACOES_LAYOUT
     )
 
     return {pessoa: (float(xy[0]), float(xy[1])) for pessoa, xy in posicoes.items()}
@@ -101,10 +101,10 @@ def calcular_nos(
     matriz: np.ndarray | None = None,
 ) -> list[NoDoGrafo]:
     """Junta comunidade, posição, componentes e volume de voto num nó só."""
-    g = montar(pessoas, arestas)
+    rede = montar(pessoas, arestas)
 
-    comunidades = detectar_comunidades(g)
-    posicoes = calcular_posicoes(g)
+    comunidades = detectar_comunidades(rede)
+    posicoes = calcular_posicoes(rede)
 
     # ⚠️ Sem matriz não há componentes: teste que só exercita o grafo passa None.
     componentes = calcular_componentes(matriz) if matriz is not None else None
@@ -112,8 +112,8 @@ def calcular_nos(
     log.info(
         "  %d comunidades detectadas em %d nós (%d arestas)",
         len(set(comunidades.values())),
-        g.number_of_nodes(),
-        g.number_of_edges(),
+        rede.number_of_nodes(),
+        rede.number_of_edges(),
     )
 
     return [

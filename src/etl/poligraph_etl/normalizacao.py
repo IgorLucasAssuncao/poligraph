@@ -244,6 +244,6 @@ def sem_acento_maiusculo(texto: str | None) -> str:
 
 def _sem_acento(texto: str) -> str:
     return "".join(
-        c for c in unicodedata.normalize("NFD", texto)
-        if unicodedata.category(c) != "Mn"
+        caractere for caractere in unicodedata.normalize("NFD", texto)
+        if unicodedata.category(caractere) != "Mn"
     )

@@ -44,5 +44,21 @@ a revisão ⛔ não dependa de ler o código inteiro:
 | **Zero ⛔ não é sucesso** | Ingestão que grava zero linhas **estoura**, ⛔ não registra `INFO` |
 | **Reingestão é idempotente** | A Câmara reconstrói os CSVs toda madrugada, e o Portal corrige valor retroativo |
 
+---
+
+## Nomes
+
+Tudo em português, e **nome curto só onde ele é a notação do assunto**:
+
+| Fica | Onde | Por quê |
+|---|---|---|
+| `i`, `j` | Índices de matriz | É a notação de álgebra linear; `indice_da_linha` piora a leitura |
+| `k` | kNN | É o nome do parâmetro no método |
+| `u` | Fator do SVD | É como a decomposição é escrita |
+| `a`, `b` | As duas partições do ARI | A função é simétrica: nomeá-las sugeriria papéis que ⛔ não existem |
+
+⛔ **Todo o resto é por extenso** — `registro`, `linha`, `pessoa`, `caractere`, `emenda`,
+`coluna`. Uma letra que ⛔ não é notação é significado escondido.
+
 📐 [`docs/README.md`](../../../docs/README.md) · [`docs/achados/`](../../../docs/achados/README.md)
 """

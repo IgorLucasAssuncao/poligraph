@@ -539,9 +539,9 @@ def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: floa
 
     # ═══ 1. Quantas perguntas bastam ═══
     candidatas = [
-        i
-        for i in range(len(votacoes))
-        if validacao.divisao(matriz, i) >= divisao_minima
+        indice
+        for indice in range(len(votacoes))
+        if validacao.divisao(matriz, indice) >= divisao_minima
     ]
     log.info(
         "%d votações com divisão >= %.2f servem como pergunta",
@@ -551,16 +551,16 @@ def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: floa
 
     log.info("")
     log.info("  perguntas | empate mediano no topo | sozinhos no topo")
-    for r in validacao.curva_de_discriminacao(
+    for ponto in validacao.curva_de_discriminacao(
         matriz, candidatas, [4, 6, 8, 10, 12, 16, 22, 30, 40]
     ):
         log.info(
             "  %9d | %22.0f | %5.1f%% (%d de %d)",
-            r.n_perguntas,
-            r.empate_mediano,
-            r.taxa_unicos * 100,
-            r.unicos,
-            r.deputados_avaliados,
+            ponto.n_perguntas,
+            ponto.empate_mediano,
+            ponto.taxa_unicos * 100,
+            ponto.unicos,
+            ponto.deputados_avaliados,
         )
 
     # ═══ 1b. Desempate dirigido × aleatório ═══
@@ -596,18 +596,18 @@ def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: floa
         ).fetchall()
     ]
 
-    g = grafo.montar(list(comunidade_de), arestas)
-    r = comparacao.comparar(g, comunidade_de, partido_de)
+    rede = grafo.montar(list(comunidade_de), arestas)
+    resultado = comparacao.comparar(rede, comunidade_de, partido_de)
 
     log.info("")
-    log.info("=== Comunidade de voto x partido - %d deputados ===", r.n_pessoas)
-    log.info("  %d comunidades detectadas, %d partidos", r.n_comunidades, r.n_partidos)
-    log.info("  ARI (coincidência entre as duas): %.3f", r.ari)
-    log.info("  Modularidade da comunidade: %.3f", r.modularidade_comunidade)
-    log.info("  Modularidade do partido:    %.3f", r.modularidade_partido)
+    log.info("=== Comunidade de voto x partido - %d deputados ===", resultado.n_pessoas)
+    log.info("  %d comunidades detectadas, %d partidos", resultado.n_comunidades, resultado.n_partidos)
+    log.info("  ARI (coincidência entre as duas): %.3f", resultado.ari)
+    log.info("  Modularidade da comunidade: %.3f", resultado.modularidade_comunidade)
+    log.info("  Modularidade do partido:    %.3f", resultado.modularidade_partido)
     log.info(
         "  → %s descreve melhor a estrutura de voto.",
-        "A COMUNIDADE" if r.comunidade_descreve_melhor else "O PARTIDO",
+        "A COMUNIDADE" if resultado.comunidade_descreve_melhor else "O PARTIDO",
     )
 
 
@@ -620,7 +620,7 @@ def _comparar_desempates(matriz, candidatas: list[int], base_inicial: int = 12) 
     """
     sorteio = np.random.default_rng(20260826)
     base = sorted(sorteio.choice(candidatas, size=base_inicial, replace=False).tolist())
-    restantes = [c for c in candidatas if c not in base]
+    restantes = [candidata for candidata in candidatas if candidata not in base]
 
     # ⚠️ Amostra de deputados, não todos: são 655 × 6 rodadas × duas estratégias.
     quem_avaliar = sorteio.choice(matriz.shape[0], size=120, replace=False)
@@ -628,15 +628,16 @@ def _comparar_desempates(matriz, candidatas: list[int], base_inicial: int = 12) 
     def media_por_rodada(dirigido: bool) -> list[float]:
         series = [
             validacao.simular_desempate(
-                matriz, int(q), base, restantes, rodadas=6, dirigido=dirigido
+                matriz, int(pessoa), base, restantes, rodadas=6, dirigido=dirigido
             )
-            for q in quem_avaliar
+            for pessoa in quem_avaliar
         ]
         # ⚠️ Séries têm comprimentos diferentes: quem chega a 1 para antes. O último
         #    valor é repetido para a média não subir artificialmente ao perdê-los.
-        maior = max(len(x) for x in series)
+        mais_longa = max(len(serie) for serie in series)
         return [
-            float(np.mean([x[min(i, len(x) - 1)] for x in series])) for i in range(maior)
+            float(np.mean([serie[min(rodada, len(serie) - 1)] for serie in series]))
+            for rodada in range(mais_longa)
         ]
 
     dirigido = media_por_rodada(True)
@@ -645,8 +646,8 @@ def _comparar_desempates(matriz, candidatas: list[int], base_inicial: int = 12) 
     log.info("")
     log.info("=== Desempate: dirigido x aleatorio (base de %d perguntas) ===", base_inicial)
     log.info("  perguntas extras | dirigido | aleatório")
-    for i, (d, a) in enumerate(zip(dirigido, aleatorio)):
-        log.info("  %16d | %8.1f | %9.1f", i, d, a)
+    for extras, (com_direcao, ao_acaso) in enumerate(zip(dirigido, aleatorio)):
+        log.info("  %16d | %8.1f | %9.1f", extras, com_direcao, ao_acaso)
 
 
 @dataclass(frozen=True)
@@ -707,14 +708,14 @@ def _montar_matriz(conexao: psycopg.Connection, legislatura: int):
     ).fetchall()
 
     pessoas = [
-        r[0]
-        for r in conexao.execute(
+        linha[0]
+        for linha in conexao.execute(
             "SELECT DISTINCT pessoa_id FROM votos ORDER BY pessoa_id"
         ).fetchall()
     ]
 
-    indice_votacao = {v[0]: i for i, v in enumerate(votacoes)}
-    indice_pessoa = {p: i for i, p in enumerate(pessoas)}
+    indice_votacao = {votacao[0]: ordem for ordem, votacao in enumerate(votacoes)}
+    indice_pessoa = {pessoa: ordem for ordem, pessoa in enumerate(pessoas)}
 
     matriz = np.full((len(pessoas), len(votacoes)), np.nan)
     for votacao_id, pessoa_id, valor in conexao.execute(

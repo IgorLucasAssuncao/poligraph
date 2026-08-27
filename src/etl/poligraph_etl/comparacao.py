@@ -43,20 +43,23 @@ class Comparacao:
 
 
 def comparar(
-    g: nx.Graph,
+    grafo: nx.Graph,
     comunidade_de: dict[int, int],
     partido_de: dict[int, str],
 ) -> Comparacao:
     """⚠️ Compara só quem tem os dois rótulos — deputado sem partido registrado sai."""
-    pessoas = [p for p in g.nodes if p in comunidade_de and p in partido_de]
+    pessoas = [
+        pessoa for pessoa in grafo.nodes
+        if pessoa in comunidade_de and pessoa in partido_de
+    ]
 
-    comunidades = [comunidade_de[p] for p in pessoas]
-    partidos = [partido_de[p] for p in pessoas]
+    comunidades = [comunidade_de[pessoa] for pessoa in pessoas]
+    partidos = [partido_de[pessoa] for pessoa in pessoas]
 
     return Comparacao(
         ari=indice_rand_ajustado(comunidades, partidos),
-        modularidade_comunidade=modularidade(g, pessoas, comunidades),
-        modularidade_partido=modularidade(g, pessoas, partidos),
+        modularidade_comunidade=modularidade(grafo, pessoas, comunidades),
+        modularidade_partido=modularidade(grafo, pessoas, partidos),
         n_comunidades=len(set(comunidades)),
         n_partidos=len(set(partidos)),
         n_pessoas=len(pessoas),
@@ -75,8 +78,8 @@ def indice_rand_ajustado(a: list, b: list) -> float:
     if len(a) != len(b):
         raise ValueError("as duas partições precisam ter o mesmo tamanho")
 
-    n = len(a)
-    if n < 2:
+    elementos = len(a)
+    if elementos < 2:
         return 0.0
 
     tabela: dict[tuple, int] = {}
@@ -89,12 +92,12 @@ def indice_rand_ajustado(a: list, b: list) -> float:
         linhas[x] = linhas.get(x, 0) + quantos
         colunas[y] = colunas.get(y, 0) + quantos
 
-    soma_celulas = sum(_pares(v) for v in tabela.values())
-    soma_linhas = sum(_pares(v) for v in linhas.values())
-    soma_colunas = sum(_pares(v) for v in colunas.values())
-    total = _pares(n)
+    soma_celulas = sum(_pares(quantidade) for quantidade in tabela.values())
+    soma_linhas = sum(_pares(quantidade) for quantidade in linhas.values())
+    soma_colunas = sum(_pares(quantidade) for quantidade in colunas.values())
+    total_de_pares = _pares(elementos)
 
-    esperado = soma_linhas * soma_colunas / total
+    esperado = soma_linhas * soma_colunas / total_de_pares
     maximo = (soma_linhas + soma_colunas) / 2
 
     # ⚠️ Partições idênticas E triviais (tudo num grupo só) zeram o denominador.
@@ -104,7 +107,7 @@ def indice_rand_ajustado(a: list, b: list) -> float:
     return (soma_celulas - esperado) / (maximo - esperado)
 
 
-def modularidade(g: nx.Graph, pessoas: list[int], rotulos: list) -> float:
+def modularidade(grafo: nx.Graph, pessoas: list[int], rotulos: list) -> float:
     """Modularidade da partição sobre o grafo, ponderada pela similaridade.
 
     ⭐ Mede quanto das arestas fica DENTRO dos grupos, descontado o que se esperaria
@@ -114,7 +117,7 @@ def modularidade(g: nx.Graph, pessoas: list[int], rotulos: list) -> float:
     for pessoa, rotulo in zip(pessoas, rotulos):
         grupos.setdefault(rotulo, set()).add(pessoa)
 
-    subgrafo = g.subgraph(pessoas)
+    subgrafo = grafo.subgraph(pessoas)
 
     return float(nx.community.modularity(subgrafo, grupos.values(), weight="peso"))
 

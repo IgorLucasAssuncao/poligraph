@@ -105,7 +105,7 @@ def _parece_dotnet(texto: str) -> bool:
 
 def _escapar(valor: str) -> str:
     """⚠️ Senha com espaço ou aspa quebra o parser do libpq se não for citada."""
-    if valor and not any(c in valor for c in " '\\"):
+    if valor and not any(caractere in valor for caractere in " '\\"):
         return valor
 
     return "'" + valor.replace("\\", "\\\\").replace("'", "\\'") + "'"

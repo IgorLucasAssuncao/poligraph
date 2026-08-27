@@ -116,7 +116,11 @@ def desconectar_proposicoes_ausentes(
 
     ⛔ Não é descarte silencioso: devolve a contagem, e o chamador registra no log.
     """
-    ids = {v["proposicao_id"] for v in votacoes if v.get("proposicao_id") is not None}
+    ids = {
+        votacao["proposicao_id"]
+        for votacao in votacoes
+        if votacao.get("proposicao_id") is not None
+    }
     if not ids:
         return 0
 
@@ -268,13 +272,13 @@ def gravar_similaridades(
     linhas = [
         {
             "execucao_id": execucao_id,
-            "pessoa_a": p.pessoa_a,
-            "pessoa_b": p.pessoa_b,
-            "metrica": p.metrica,
-            "valor": p.valor,
-            "n_votacoes_comuns": p.n_votacoes_comuns,
+            "pessoa_a": par.pessoa_a,
+            "pessoa_b": par.pessoa_b,
+            "metrica": par.metrica,
+            "valor": par.valor,
+            "n_votacoes_comuns": par.n_votacoes_comuns,
         }
-        for p in pares
+        for par in pares
     ]
 
     return _executar_em_lotes(
@@ -296,7 +300,7 @@ def gravar_despesas(
     if not despesas:
         return 0
 
-    anos = sorted({d["ano"] for d in despesas})
+    anos = sorted({despesa["ano"] for despesa in despesas})
 
     conexao.execute(
         "DELETE FROM despesas WHERE pessoa_id = ANY(%s) AND ano = ANY(%s)",
@@ -359,7 +363,10 @@ def registrar_autores(conexao: psycopg.Connection, autores: dict[str, str]) -> i
     if not autores:
         return 0
 
-    linhas = [{"codigo": c, "nome_autor": n} for c, n in autores.items()]
+    linhas = [
+        {"codigo": codigo, "nome_autor": nome}
+        for codigo, nome in autores.items()
+    ]
 
     return _executar_em_lotes(
         conexao,
@@ -429,12 +436,12 @@ def gravar_arestas(
     linhas = [
         {
             "execucao_id": execucao_id,
-            "pessoa_a": a.pessoa_a,
-            "pessoa_b": a.pessoa_b,
+            "pessoa_a": aresta.pessoa_a,
+            "pessoa_b": aresta.pessoa_b,
             "tipo": "SIMILARIDADE_VOTO",
-            "peso": a.valor,
+            "peso": aresta.valor,
         }
-        for a in arestas
+        for aresta in arestas
     ]
 
     return _executar_em_lotes(

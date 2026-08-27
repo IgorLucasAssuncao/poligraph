@@ -128,11 +128,11 @@ def arestas_knn(pares: list[ParSimilar], k: int = K_VIZINHOS) -> list[ParSimilar
 
     escolhidas: set[tuple[int, int]] = set()
     for vizinhos in por_pessoa.values():
-        for par in sorted(vizinhos, key=lambda p: p.valor, reverse=True)[:k]:
+        for par in sorted(vizinhos, key=lambda vizinho: vizinho.valor, reverse=True)[:k]:
             escolhidas.add((par.pessoa_a, par.pessoa_b))
 
     # a aresta sobrevive se QUALQUER um dos dois a escolheu — o grafo é não-direcionado
-    return [p for p in pares if (p.pessoa_a, p.pessoa_b) in escolhidas]
+    return [par for par in pares if (par.pessoa_a, par.pessoa_b) in escolhidas]
 
 
 # ═══════════════════════════════════════════════════════════════════

@@ -168,6 +168,6 @@ def _texto(item, tag: str) -> str | None:
 
 def _sem_acento(texto: str) -> str:
     return "".join(
-        c for c in unicodedata.normalize("NFD", texto)
-        if unicodedata.category(c) != "Mn"
+        caractere for caractere in unicodedata.normalize("NFD", texto)
+        if unicodedata.category(caractere) != "Mn"
     )

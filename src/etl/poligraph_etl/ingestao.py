@@ -48,26 +48,26 @@ def votacoes_para_linhas(df: pd.DataFrame, legislatura: int | None = None) -> li
     """
     linhas: list[dict] = []
 
-    for _, r in df.iterrows():
-        sim, nao, outros = _inteiro(r.get("votosSim")), _inteiro(r.get("votosNao")), _inteiro(r.get("votosOutros"))
+    for _, registro in df.iterrows():
+        sim, nao, outros = _inteiro(registro.get("votosSim")), _inteiro(registro.get("votosNao")), _inteiro(registro.get("votosOutros"))
         if sim + nao + outros == 0:
             continue                       # simbólica: sem registro individual
 
-        descricao = r.get("descricao") or ""
+        descricao = registro.get("descricao") or ""
         linhas.append(
             {
-                "id": r["id"],
+                "id": registro["id"],
                 "casa": "CAMARA",
-                "legislatura": legislatura or legislatura_da_data(str(r["data"])),
-                "data": r["data"],
-                "orgao": r.get("siglaOrgao"),
+                "legislatura": legislatura or legislatura_da_data(str(registro["data"])),
+                "data": registro["data"],
+                "orgao": registro.get("siglaOrgao"),
                 "descricao": descricao,
                 "proposicao_id": _inteiro_ou_nulo(
-                    r.get("ultimaApresentacaoProposicao_idProposicao")
+                    registro.get("ultimaApresentacaoProposicao_idProposicao")
                 ),
                 "categoria": classificar_categoria(descricao),
                 "secreta": False,          # ⚠️ a Câmara não marca; o Senado sim
-                "plenario": r.get("siglaOrgao") == "PLEN",
+                "plenario": registro.get("siglaOrgao") == "PLEN",
                 "votos_sim": sim,
                 "votos_nao": nao,
             }
@@ -87,19 +87,19 @@ def votos_para_linhas(df: pd.DataFrame, mapa_pessoas: dict[str, int]) -> list[di
     """
     linhas: list[dict] = []
 
-    for _, r in df.iterrows():
-        id_camara = str(r.get("deputado_id") or "")
+    for _, registro in df.iterrows():
+        id_camara = str(registro.get("deputado_id") or "")
         pessoa_id = mapa_pessoas.get(id_camara)
         if pessoa_id is None:
             continue
 
         linhas.append(
             {
-                "votacao_id": r["idVotacao"],
+                "votacao_id": registro["idVotacao"],
                 "pessoa_id": pessoa_id,
-                "valor": normalizar_voto(r.get("voto")),
-                "partido_no_voto": r.get("deputado_siglaPartido") or "",
-                "uf_no_voto": (r.get("deputado_siglaUf") or "")[:2],
+                "valor": normalizar_voto(registro.get("voto")),
+                "partido_no_voto": registro.get("deputado_siglaPartido") or "",
+                "uf_no_voto": (registro.get("deputado_siglaUf") or "")[:2],
             }
         )
 
@@ -116,17 +116,17 @@ def deputados_para_linhas(df: pd.DataFrame) -> list[dict]:
     linhas: list[dict] = []
     vistos: set[str] = set()
 
-    for _, r in df.iterrows():
-        id_externo = id_do_deputado(r)
+    for _, registro in df.iterrows():
+        id_externo = id_do_deputado(registro)
         if not id_externo or id_externo in vistos:
             continue                       # ⚠️ o CSV repete a pessoa por partido (achado #20)
         vistos.add(id_externo)
 
-        nome = r.get("nomeCivil") or r.get("nome") or ""
+        nome = registro.get("nomeCivil") or registro.get("nome") or ""
         linhas.append(
             {
                 "nome_civil": nome,
-                "nome_exibicao": r.get("nome") or nome,
+                "nome_exibicao": registro.get("nome") or nome,
                 "cpf_hash": None,
                 "url_foto": url_da_foto(id_externo),
                 "fonte": "CAMARA",
@@ -162,7 +162,7 @@ def id_do_deputado(linha) -> str:
 
         https://dadosabertos.camara.leg.br/api/v2/deputados/220593  →  220593
 
-    ⚠️ Ler `r.get("id")` devolvia vazio para toda linha, o laço pulava todas, e o ETL
+    ⚠️ Ler `registro.get("id")` devolvia vazio para toda linha, o laço pulava todas, e o ETL
     registrava `0 deputados no arquivo, 0 novos` — em **INFO**, sem erro. Como a tabela
     de-para ficava vazia, os 13.825 votos de 2025 também não casavam com ninguém e o
     log dizia `0 votos`. Dois zeros plausíveis, nenhuma exceção.
