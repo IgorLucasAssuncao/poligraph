@@ -25,7 +25,7 @@
 |---|---|---|
 | **Cota parlamentar** | ✅ `ideCadastro` — **99,6% dos registros** | ⭐ **Entra** |
 | **Fotos** | ✅ id do deputado na própria URL | ⭐ **Entra** |
-| **Fundão / prestação de contas** | ✅ por candidato, com CPF | 🟡 Entra, com fricção do TSE |
+| **Fundão / prestação de contas** | ✅ **CPF do candidato** — chave forte | ⭐ **Entra** |
 | **Licitações da Câmara** | ⛔ **NÃO** — 19 colunas, nenhuma de parlamentar | 🔴 **Fora** |
 | **PNCP** | ⛔ **NÃO** — contratos do Executivo | 🔴 **Fora** |
 | **Servidores da Câmara** | ⛔ **NÃO** — 15.227 registros, **0** lotados em gabinete de deputado | 🔴 **Fora** |
@@ -102,7 +102,7 @@ confirmar que a prestação de contas expõe o CNPJ do doador — ⛔ ainda não
 | **Licitações da Câmara** | 182 licitações, R$ 286,6 mi contratados | ⛔ Não | 🔴 **Não liga a parlamentar** |
 | **PNCP** (contratações do Executivo) | 27.187 contratos em **10 dias** de janeiro/2025 | ⛔ Não | 🔴 **Não liga a parlamentar** |
 | **Fotos de deputado** | 48 KB por pessoa, JPEG direto | ⛔ Não | ✅ Pronta |
-| **Fundão eleitoral (FEFC)** | Prestação de contas por candidato | ⛔ Não | ⚠️ TSE, com fricção |
+| ⭐ **Fundão eleitoral (FEFC)** | `DS_FONTE_RECEITA` por candidato, com CPF e CNPJ do doador | ⛔ Não | ✅ **Achado e medido** |
 | 🔴 **Emendas parlamentares** | Autor, município, empenhado × pago | 🔑 **Sim** | ⏳ **É a razão para pedir a chave** |
 | Servidores federais, convênios | Portal da Transparência | 🔑 Sim | 🔵 Ligam por CPF, que não temos em claro |
 
@@ -200,27 +200,89 @@ ingerir inteira — precisa de recorte (órgão, valor mínimo, período) defini
 
 ---
 
-## 3. Fundo eleitoral (FEFC) e prestação de contas
+## 3. ✅ Fundo eleitoral (FEFC) — ACHADO e medido (2026-08-27)
 
-Fica no CDN do TSE, junto do resto:
+### Onde está
 
 ```
-/estatistica/sead/odsele/prestacao_contas/
-    prestacao_de_contas_eleitorais_candidatos_2022.zip   →  ✅ 200
-    prestacao_de_contas_eleitorais_partidos_2022.zip     →  ⛔ 404 (nome errado)
+https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/
+    prestacao_de_contas_eleitorais_candidatos_2022.zip     →  ✅ 200 · 377 MB
 ```
 
-⚠️ O nome do arquivo de partidos precisa ser descoberto no
-[portal de dados abertos do TSE](https://dadosabertos.tse.jus.br/) — o padrão que
-funcionou para candidatos não vale para partidos.
+⚠️ **Só este nome funciona.** `prestacao_de_contas_2022`, `prestacao_contas_2022` e
+`prestacao_de_contas_eleitorais_2022` dão 404. ⛔ Não há arquivo de partidos com padrão
+análogo — o de candidatos é o que interessa aqui.
 
-### ⚠️ O WAF do TSE bloqueia `HEAD`
+📐 A receita de headers e o truque do `HEAD` × `GET`:
+[`12-fonte-tse §2.0`](12-fonte-tse.md).
 
-Descoberto aqui, mas 📐 **documentado onde é o dono**:
-[`12-fonte-tse §2.0.1`](12-fonte-tse.md) — junto da receita de headers.
+### O que tem dentro
 
-⚠️ Em resumo: `HEAD` dá 403 e `GET` dá 200 na **mesma URL**. Verificar disponibilidade
-com `HEAD` é o reflexo natural, e aqui ele mente.
+**112 arquivos, 5 tipos, 27 UFs cada** (mais um `BRASIL` consolidado de 1,3 GB):
+
+| Tipo | O que traz |
+|---|---|
+| ⭐ **`receitas_candidatos_2022`** | **Quem financiou cada candidato** — é o que interessa |
+| `receitas_candidatos_doador_originario_2022` | Rastreia doação que passou por intermediário |
+| `despesas_contratadas_candidatos_2022` | O que a campanha contratou |
+| `despesas_pagas_candidatos_2022` | O que foi efetivamente pago |
+| `leiame` | Dicionário de dados |
+
+### 🔴 O Fundão aparece EXPLICITAMENTE
+
+O campo é **`DS_FONTE_RECEITA`**. Medido no Amapá (2.822 registros):
+
+| Fonte de receita | Linhas |
+|---|---|
+| OUTROS RECURSOS | 1.684 |
+| ⭐ **FUNDO ESPECIAL** — o FEFC | **969** |
+| FUNDO PARTIDARIO | 95 |
+| `#NULO` | 74 |
+
+⚠️ **São dois fundos distintos, e o CSV os separa:** o **Fundo Especial (FEFC)** é o
+"fundão eleitoral", criado em 2017; o **Fundo Partidário** é o financiamento permanente
+dos partidos. ⛔ Somar os dois como "dinheiro público de campanha" é defensável, mas
+precisa ser dito.
+
+### Liga ao político? ✅ **Sim, por CPF e por nome**
+
+60 colunas. As que importam:
+
+```
+LIGA AO CANDIDATO   NR_CPF_CANDIDATO · NM_CANDIDATO · SQ_CANDIDATO · DS_CARGO
+ORIGEM DO RECURSO   DS_FONTE_RECEITA · DS_ORIGEM_RECEITA · DS_NATUREZA_RECEITA
+DOADOR              NR_CPF_CNPJ_DOADOR · NM_DOADOR · NM_DOADOR_RFB · DS_CNAE_DOADOR
+VALOR               VR_RECEITA
+```
+
+⭐ **`NR_CPF_CANDIDATO` é chave forte** — melhor que o nome das emendas.
+
+### Teste real — deputado federal no Amapá
+
+| Candidato | Fundão | Total recebido |
+|---|---:|---:|
+| KASSYO SANTOS RAMOS | R$ 3.170.000,00 | R$ 3.185.000,00 |
+| CARLOS CAMILO GOES CAPIBERIBE | R$ 2.500.000,00 | R$ 2.593.000,00 |
+| ANDRÉ DOS SANTOS ABDON | R$ 2.500.000,00 | R$ 2.500.000,00 |
+
+⭐ **149 candidatos a deputado federal só no Amapá** — a menor UF do arquivo.
+
+### ⭐ E fecha a ponte com a cota parlamentar
+
+`NR_CPF_CNPJ_DOADOR` é o CNPJ de **quem doou**. `txtCNPJCPF` da cota é o CNPJ de **quem
+recebeu** dinheiro público depois.
+
+> 🔴 **Cruzar responde: "este deputado paga, com verba de gabinete, empresas que
+> financiaram a campanha dele?"** — associado à pessoa, verificável, e pergunta de TCC.
+
+### ⚠️ O que precisa ser resolvido antes de ingerir
+
+| # | Questão |
+|---|---|
+| 1 | 🔴 **Ligar candidato → deputado eleito.** O arquivo tem CPF; nosso banco guarda `cpf_hash` e ⛔ **o CPF do deputado nunca é ingerido** (a coluna `cpf` do CSV da Câmara vem vazia — [achado #22](achados/022-deputados-nao-e-arquivo-anual.md)). A ligação teria de ser **por nome**, como nas emendas |
+| 2 | ⚠️ **377 MB por eleição**, encoding **Latin-1**, separador `;` |
+| 3 | ⚠️ Traz **CPF de candidato e de doador pessoa física em claro** — RNF-13 exige hash |
+| 4 | 🔵 A eleição de 2022 elegeu a legislatura 57. Para 2026 o arquivo só existe depois do pleito |
 
 ---
 
