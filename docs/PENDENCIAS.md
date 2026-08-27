@@ -79,7 +79,7 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | ~~PL37~~ | ✅ **Resolvida (2026-08-27)** — `test_contrato_schema.py` cobre agora **nomes de tabela, nomes de coluna e os literais combinados** entre os dois lados (`FUNDO ESPECIAL`, `ck_autor_metodo`). ⭐ O próprio parser tem teste que morre sob mutação — sem ele, uma exceção mal posta o deixaria cego e verde | — | — |
 | ~~PL39~~ | ✅ **Resolvida (2026-08-26)** — legislatura 57 inteira ingerida: 470.786 votos, 5.268 arestas | — | — |
 | 🟡 **PL43** | **`eixo_x`/`eixo_y` divergem do plano** — o rascunho previa 1ª componente do SVD (eixo interpretável, linhagem W-NOMINATE); o implementado é layout de molas, que ⛔ não tem eixo com significado. Guardar as duas coisas ou ficar só com molas? Ver [plano/07 §3.6](plano/07-grafo-e-afinidade.md) | 🟡 Média | 🟢 Decisão |
-| 🔴 **PL42** | **O Senado não é ingerido** — nenhuma linha de código o alcança. ⚠️ A RF-07 é 🟢 Desejável, mas a **RNF-28 proíbe o seletor de casa** e o desenho da §3.4.1 exige perguntas das duas casas embaralhadas e duas listas no resultado. Sem Senado, esse desenho não existe | 🔴 **Alta** | 🔴 Dias |
+| 🟡 **PL42** | 🔄 **Metade resolvida (2026-08-27)** — a **ingestão do Senado está no ar**: 421 votações, 34.101 votos, 104 senadores, grafo próprio com 594 arestas. ⛔ Falta a parte de **produto**: a RNF-28 proíbe o seletor de casa, e o desenho da §3.4.1 exige perguntas das duas casas embaralhadas e duas listas no resultado. Detalhe abaixo | 🟡 Média | 🟡 Horas |
 | ~~PL41~~ | ✅ **Resolvida (2026-08-26)** — o seed foi **aposentado** por decisão do autor: com o ETL funcional, só o schema precisa ser inicializado. O semeador virou `Poligraph.Tests/Fixtures/DadosDeTeste.cs` | — | — |
 | 🟡 **PL40** | **`proposicoes` nunca é ingerida** — o CSV de votações traz só o `id` da proposição, sem sigla/número/ano/ementa. Hoje o `proposicao_id` é anulado. 🔴 Bloqueia a **RF-30** (exibir a ementa original ao lado da pergunta) | 🟡 Média | 🟡 Horas |
 | ~~PL38~~ | ✅ **Resolvida (2026-08-26)** — `arestas_grafo` e `nos_metrica` gravadas; Louvain + layout de molas com semente fixa; 30 comunidades em 655 nós. ⚠️ `governismo` e `disciplina` seguem nulos: dependem de `votacoesOrientacoes`, ainda não ingerido | — | — |
@@ -145,6 +145,48 @@ código; **1 caso ⛔ não é medição, é anedota**. O caminho manual da
 Portal usa o **nome parlamentar** com variação que a igualdade exata ⛔ não alcança.
 Confirmar exige comparar os 159 pendentes com os 92 faltantes **um a um, à mão** — é
 trabalho humano, como a PL11, e ⛔ não escala por regra.
+
+---
+
+### 🔄 PL42 — o Senado entra pela metade
+
+**Ingerido em 2026-08-27.** O que está no ar:
+
+| | Câmara | Senado |
+|---|---:|---:|
+| Votações | 1.594 | **421** — 239 secretas |
+| Votos | 470.727 | **34.101** |
+| Com posição utilizável | 463.994 (98,6%) | **11.881 (34,8%)** |
+| Parlamentares | 643 | **104** |
+| Arestas do grafo | 5.271 | **594** |
+| Comunidades | 17 | **24** |
+
+🔴 **São dois grafos, e continuarão sendo.** As duas casas ⛔ não votam as mesmas
+matérias, então similaridade entre deputado e senador ⛔ não teria denominador
+([achado #7](achados/007-casas-nao-sao-comparaveis.md)). Cada casa gera a própria
+`execucao`, e `analisar --casa` recorta a matriz.
+
+⚠️ **Aresta cruzando as casas ⛔ nunca é legítima** — nem para deputado que virou senador.
+Aresta significa *"estes dois votam parecido"*; a mesma pessoa nas duas casas é **um nó
+só**, não dois ligados. Depois da ponte do achado #18 ela apareceria nos **dois** grafos,
+com os votos de cada casa separados.
+
+### O que a ingestão revelou
+
+| | |
+|---|---|
+| `Votou` é o valor **mais frequente** do Senado | Registra que houve voto **sem revelar qual** — é votação secreta. Tratá-lo como posição inventaria opinião para um terço da base |
+| A lista `/senador/lista/atual` tem **81**, mas os votos alcançam **104** | Suplentes, licenciados e quem assumiu cargo no Executivo. Sem criá-los pelo próprio voto, 3.252 votos (10,5%) seriam descartados |
+| ⭐ Sigla nova `LAP` apareceu em 2026 | *Licença paternidade* — o canário de domínio funcionou na primeira execução real |
+
+### ⛔ O que falta, e é produto, não ingestão
+
+| # | |
+|---|---|
+| 1 | A **RNF-28 proíbe o seletor de casa**: o questionário precisa embaralhar perguntas das duas e devolver **duas listas** no resultado |
+| 2 | ⛔ **Nenhuma pergunta do Senado foi curada** — a PL11 vale para as duas casas |
+| 3 | A ficha e o "explorar" filtram a legislatura corrente, mas ⛔ não distinguem casa |
+| 4 | A **ponte deputado→senador** (achado #18) segue aberta: 43 nomes aparecem nas duas casas, e o Senado ⛔ não publica CPF |
 
 ---
 

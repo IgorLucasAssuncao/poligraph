@@ -15,14 +15,25 @@ não por autodeclaração ideológica.
 
 Tudo abaixo saiu de `count(*)` no banco depois de rodar o ETL contra as fontes reais.
 
-| Voto — o núcleo | |
-|---|---|
-| **Votos ingeridos** | 470.727 — legislatura 57 completa (2023–2026) |
-| **Deputados com voto** | 643 |
-| **Votações** | 1.594 |
-| **Pares de similaridade** | 2.327.880 |
-| **Arestas do grafo** | 36.017 |
-| **Perguntas curadas ativas** | 21 |
+| Voto — o núcleo | Câmara | Senado |
+|---|---:|---:|
+| **Votações** | 1.594 | 421 — **239 secretas** |
+| **Votos** | 470.727 | 34.101 |
+| **Votos com posição utilizável** | 463.994 (98,6%) | **11.881 (34,8%)** |
+| **Parlamentares com voto** | 643 | 104 |
+| **Nós do grafo** | 643 | 104 |
+| **Arestas** | 5.271 | 594 |
+| **Comunidades detectadas** | 17 | 24 |
+| **Perguntas curadas ativas** | 21 | — |
+
+As duas casas geram grafos **independentes**, e nenhuma aresta liga deputado a senador:
+elas não votam as mesmas matérias, então não há denominador para comparar um com o outro
+([achado #7](docs/achados/007-casas-nao-sao-comparaveis.md)).
+
+No Senado, **56,8% das votações são secretas**, e só 34,8% dos registros de voto são
+posição utilizável — contra 98,6% na Câmara. O valor mais frequente é `Votou`, que
+registra que houve voto sem revelar qual
+([achado #17](docs/achados/017-senado-maioria-secreta.md)).
 
 | Dinheiro — o perfil do parlamentar | |
 |---|---|
@@ -59,7 +70,10 @@ senadores homônimos. [PL47](docs/PENDENCIAS.md) segue o resto.
 | | |
 |---|---|
 | **Notícias** | 0 — o coletor ainda não rodou |
-| **Testes** | **91 .NET · 282 Python · 37 front** | **O Senado ainda não é ingerido** — ver [PL42](docs/PENDENCIAS.md).
+| **Testes** | **93 .NET · 311 Python · 37 front** |
+
+O questionário e a página do parlamentar ainda cobrem apenas a Câmara: a ingestão do
+Senado está pronta, o produto não — ver [PL42](docs/PENDENCIAS.md).
 **O único deputado sem receita de campanha** é um suplente com 6 votos, que não foi
 candidato a deputado federal em 2022. 642 de 643 é o teto real, não uma falha.
 
@@ -74,7 +88,9 @@ candidato a deputado federal em 2022. 642 de 643 é o teto real, não uma falha.
 | **.NET 10 SDK** | A API, as migrations e o AppHost |
 | **Node 20+** | O front |
 | **Podman ou Docker** | Postgres e o ETL rodam em container |
-| **Client ID do Google** | Sem ele o login não funciona — [como obter](docs/plano/08-obter-as-chaves.md) | **Python no host é dispensável** — o ETL roda pela mesma imagem que o VPS executa.
+| **Client ID do Google** | Sem ele o login não funciona — [como obter](docs/plano/08-obter-as-chaves.md) |
+
+Python no host é dispensável: o ETL roda pela mesma imagem que o VPS executa.
 
 ### 1. O segredo do Google
 
@@ -135,21 +151,23 @@ dotnet user-secrets set "PortalTransparencia:Chave" "SUA_CHAVE" --project src/Po
 | Comando | O que faz | Duração |
 |---|---|---|
 | `ingerir --anos 2023 2024 2025 2026` | Deputados, votações e votos | ~2 min |
-| `analisar --legislatura 57` | Similaridade, kNN, comunidades, componentes | ~40 s |
+| `analisar --legislatura 57 [--casa SENADO]` | Similaridade, kNN, comunidades | ~90 s |
 | `cota --anos 2023 2024 2025 2026` | Cota parlamentar (CEAP) | ~50 s |
 | `cpf` | Completa `cpf_hash` — chave para conciliar com o TSE | ~4 min |
 | `emendas --anos 2023 2024 2025 2026` | Emendas + reconciliação de autor | ~10 min |
 | `fundo --eleicao 2022` | Financiamento de campanha e fundão | ~2 min |
 | `emendas --resolver 2815=883` | Vincula autor de emenda **à mão** — [PL45](docs/PENDENCIAS.md) | instantâneo |
+| `senado --anos 2023 2024 2025 2026` | Senadores, votações e votos do Senado | ~5 s |
 | `validar --legislatura 57` | Mede discriminação e comunidade × partido | ~2 s |
 
 ### A ordem de execução
 
 ```mermaid
 flowchart TD
-    ING["<b>ingerir</b><br/>pessoas · votacoes · votos"]
+    ING["<b>ingerir</b><br/>Câmara: pessoas · votacoes · votos"]
+    SENA["<b>senado</b><br/>Senado: idem, independente"]
 
-    ANA["<b>analisar</b><br/>similaridade · comunidades · grafo"]
+    ANA["<b>analisar --casa</b><br/>similaridade · comunidades · grafo"]
     VAL["<b>validar</b><br/>só mede, não grava"]
 
     COTA["<b>cota</b><br/>despesas"]
@@ -161,6 +179,7 @@ flowchart TD
 
     ING ==>|"rígida"| COTA
     ING -.->|"degrada"| ANA
+    SENA -.->|"degrada"| ANA
     ING -.->|"degrada"| EMD
     ING -.->|"degrada"| CPF
     ANA -.->|"degrada"| VAL
@@ -170,7 +189,7 @@ flowchart TD
     classDef dura fill:#fbe8e4,stroke:#a8321f,color:#12161b
     classDef base fill:#e6f2f0,stroke:#0f766e,color:#12161b
     class COTA,FUN dura
-    class ING base
+    class ING,SENA base
 ```
 
 | | |
@@ -248,7 +267,7 @@ flowchart LR
         CAM["Câmara<br/>votações · votos · cota · CPF · fotos"]
         POR["Portal da Transparência<br/>emendas parlamentares"]
         TSE["TSE<br/>prestação de contas · fundão"]
-        SEN["Senado<br/>votações"]
+        SEN["Senado<br/>senadores · votações · votos"]
         RSS["Feeds RSS<br/>notícias"]
     end
 
@@ -274,7 +293,7 @@ flowchart LR
     CAM --> DIN
     POR --> DIN
     TSE --> DIN
-    SEN -.-> ING
+    SEN --> ING
     RSS -.-> ING
     ING --> PG
     DIN --> PG
@@ -286,8 +305,8 @@ flowchart LR
     style PG fill:#f3f5f7,stroke:#5b6673
 ```
 
-**Linha tracejada = ainda não implementado.** O Senado e o coletor de notícias estão
-levantados e documentados, mas não ingerem.
+**Linha tracejada = ainda não implementado.** Só o coletor de notícias está nesse
+estado: levantado e documentado, mas sem ingerir.
 **Os dois ramos do ETL respondem perguntas diferentes sobre a mesma pessoa.** O ramo do
 **voto** sustenta o título do TCC — afinidade e grafo. O ramo do **dinheiro** não entra
 em cálculo nenhum de afinidade: ele povoa o perfil, e existe porque o critério do autor foi
@@ -363,6 +382,7 @@ que o banco impõe e a estratégia de idempotência. A revisão não depende de 
 | Fonte | Entrada | Liga por | Saída |
 |---|---|---|---|
 | `ingestao` | CSVs anuais da Câmara | `id` da Câmara | `votacoes` · `votos` · `pessoas` |
+| `ingestao_senado` | `legis.senado.leg.br/votacao` | `CodigoParlamentar` | `votacoes` · `votos` · `pessoas` |
 | `cota` | `cotas/Ano-{ano}.csv.zip` | `ideCadastro` | `despesas` |
 | `emendas` | `api-de-dados/emendas` | **código do autor** | `emendas` · `autores_de_emenda` |
 | `receitas` | `prestacao_de_contas_*.zip` | **hash de CPF** | `receitas_de_campanha` |
@@ -447,7 +467,7 @@ O que cada número significa: [`metodos.md`](docs/metodos.md).
 | **Câmara — `bandep/{id}.jpg`** | Foto oficial | URL guardada |
 | **TSE — `prestacao_de_contas_*`** | **Fundão (FEFC) e doadores** | Ingerindo |
 | **Portal — `api-de-dados/emendas`** | **Emendas parlamentares** | Ingerindo |
-| **Senado** | Votações e votos | Não — [PL42](docs/PENDENCIAS.md) |
+| **Senado — `legis.senado.leg.br`** | Senadores, votações e votos | Ingerindo |
 | **TSE — `consulta_cand_*`** | Candidaturas, patrimônio, escolaridade | Levantado |
 | **Feeds RSS** | Notícias por parlamentar | Coletor não rodou |
 

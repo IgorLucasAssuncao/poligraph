@@ -29,9 +29,11 @@ mede.
 ## 🔴 A ordem de execução
 
 ```
-ingerir                       pessoas, votacoes, votos — TUDO depende dele
+ingerir                       Câmara: pessoas, votacoes, votos
+senado                        Senado: idem, e independente da Câmara
 │
-├── analisar                  similaridade, comunidades, grafo
+├── analisar --casa CAMARA    similaridade, comunidades, grafo
+├── analisar --casa SENADO    grafo PRÓPRIO — as casas não se comparam
 │   └── validar               ⭐ só mede, ⛔ não grava
 │
 ├── cota                      🔴 BARRA sem `ingerir`
@@ -72,6 +74,7 @@ a revisão ⛔ não dependa de ler o código inteiro:
 | Fonte | Entrada | Liga por | Saída |
 |---|---|---|---|
 | 🔴 `ingestao` | CSVs anuais da Câmara | `id` da Câmara, extraído da `uri` | `votacoes` · `votos` · `pessoas` |
+| `ingestao_senado` | `legis.senado.leg.br/votacao` | `CodigoParlamentar` | `votacoes` · `votos` · `pessoas` |
 | `cota` | `cotas/Ano-{ano}.csv.zip` | `ideCadastro` | `despesas` |
 | `emendas` | `api-de-dados/emendas` 🔑 | **código do autor** | `emendas` · `autores_de_emenda` |
 | `receitas` | `prestacao_de_contas_*.zip` | **hash de CPF** | `receitas_de_campanha` |
@@ -87,6 +90,7 @@ a revisão ⛔ não dependa de ler o código inteiro:
 | **Descarte é LOGADO** | Linha descartada em silêncio é a origem do número plausível e errado |
 | **Zero ⛔ não é sucesso** | Ingestão que grava zero linhas **estoura**, ⛔ não registra `INFO` |
 | **Reingestão é idempotente** | A Câmara reconstrói os CSVs toda madrugada, e o Portal corrige valor retroativo |
+| 🔴 **Uma casa por execução** | Câmara e Senado ⛔ não votam as mesmas matérias: comparar as duas ⛔ não teria denominador |
 
 ---
 

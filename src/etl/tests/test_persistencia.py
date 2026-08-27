@@ -264,3 +264,73 @@ def _preparar_pessoa_e_votacao(conexao) -> int:
     persistencia.gravar_votacoes(conexao, [_votacao("2358548-89")])
 
     return conexao.execute("SELECT id FROM pessoas LIMIT 1").fetchone()[0]
+
+
+# ═══════════════════════════════════════════════════════════════════
+# O recorte por casa — achado #7
+# ═══════════════════════════════════════════════════════════════════
+
+
+def test_matriz_de_uma_casa_ignora_o_voto_da_outra(conexao):
+    """A pessoa que atua nas duas casas entra nas duas matrizes, com os votos de cada uma.
+
+    É o caso do deputado que virou senador: 43 nomes aparecem nas duas casas na base. Se
+    a ponte do achado #18 for construída, ele vira **uma** pessoa — e a partir daí a
+    matriz precisa recortar por casa, senão o voto de senador entraria na comparação
+    entre deputados.
+
+    Aresta cruzando as casas nunca é legítima, nem para essa pessoa: aresta significa
+    "estes dois votam parecido", e ela é um nó só, não dois ligados.
+    """
+    from poligraph_etl.__main__ import _montar_matriz
+
+    persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Ana Ribeiro")])
+    pessoa_id = conexao.execute("SELECT id FROM pessoas LIMIT 1").fetchone()[0]
+
+    # A mesma pessoa com id nas duas casas — o estado que a ponte produziria
+    conexao.execute(
+        """INSERT INTO pessoa_fonte_ids (pessoa_id, fonte, id_externo, metodo, confianca)
+           VALUES (%s, 'SENADO', '5672', 'MANUAL', 1.0)""",
+        (pessoa_id,),
+    )
+
+    da_camara = _votacao("2358548-89")
+    do_senado = {**_votacao("SF-6918"), "casa": "SENADO"}
+    persistencia.gravar_votacoes(conexao, [da_camara, do_senado])
+    persistencia.gravar_votos(
+        conexao,
+        [_voto("2358548-89", pessoa_id, 1), _voto("SF-6918", pessoa_id, -1)],
+    )
+
+    _, votacoes_camara, matriz_camara, _ = _montar_matriz(conexao, 57, "CAMARA")
+    _, votacoes_senado, matriz_senado, _ = _montar_matriz(conexao, 57, "SENADO")
+
+    assert [v[0] for v in votacoes_camara] == ["2358548-89"]
+    assert [v[0] for v in votacoes_senado] == ["SF-6918"]
+
+    # Cada matriz tem só o voto da própria casa, e o valor é o daquela casa
+    assert matriz_camara.shape == (1, 1) and matriz_camara[0, 0] == 1
+    assert matriz_senado.shape == (1, 1) and matriz_senado[0, 0] == -1
+
+
+def test_quem_so_vota_numa_casa_nao_entra_na_matriz_da_outra(conexao):
+    """Sem o recorte, analisar o Senado montaria 643 linhas vazias de deputado.
+
+    A consequência não seria erro: seria o kNN comparando quem não tem uma votação em
+    comum sequer, e o grafo do Senado nascendo com vizinhos falsos.
+    """
+    from poligraph_etl.__main__ import _montar_matriz
+
+    persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Só Deputada")])
+    deputada = conexao.execute("SELECT id FROM pessoas LIMIT 1").fetchone()[0]
+
+    persistencia.gravar_votacoes(
+        conexao, [_votacao("2358548-89"), {**_votacao("SF-6918"), "casa": "SENADO"}]
+    )
+    persistencia.gravar_votos(conexao, [_voto("2358548-89", deputada, 1)])
+
+    pessoas_camara, _, _, _ = _montar_matriz(conexao, 57, "CAMARA")
+    pessoas_senado, _, _, _ = _montar_matriz(conexao, 57, "SENADO")
+
+    assert pessoas_camara == [deputada]
+    assert pessoas_senado == []

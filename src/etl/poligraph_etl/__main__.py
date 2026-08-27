@@ -20,10 +20,10 @@ import psycopg
 
 from . import conexao as conexao_mod
 from . import (
-    comparacao, cota, emendas, grafo, ingestao, normalizacao, persistencia,
-    receitas, similaridade, validacao,
+    comparacao, cota, emendas, grafo, ingestao, ingestao_senado, normalizacao,
+    persistencia, receitas, similaridade, validacao,
 )
-from .fontes import camara, tse
+from .fontes import camara, senado, tse
 
 log = logging.getLogger("poligraph")
 
@@ -53,6 +53,8 @@ def main(argv: list[str] | None = None) -> int:
         with psycopg.connect(conexao_str, autocommit=True) as conexao:
             if args.comando == "ingerir":
                 _ingerir(conexao, args.anos)
+            elif args.comando == "senado":
+                _senado(conexao, args.anos)
             elif args.comando == "emendas":
                 if args.resolver:
                     _resolver_a_mao(conexao, args.resolver)
@@ -67,7 +69,7 @@ def main(argv: list[str] | None = None) -> int:
             elif args.comando == "validar":
                 _validar(conexao, args.legislatura, args.divisao_minima)
             else:
-                _analisar(conexao, args.legislatura)
+                _analisar(conexao, args.legislatura, args.casa)
     except Exception:
         log.exception("ETL falhou")
         return 1
@@ -88,8 +90,15 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     ingerir = sub.add_parser("ingerir", help="baixa e grava votações e votos")
     ingerir.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
 
+    sen = sub.add_parser("senado", help="ingere senadores, votações e votos do Senado")
+    sen.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
+
     analisar = sub.add_parser("analisar", help="calcula similaridade e grafo")
     analisar.add_argument("--legislatura", type=int, default=57)
+    analisar.add_argument(
+        "--casa", choices=["CAMARA", "SENADO"], default="CAMARA",
+        help="uma casa por execução — as duas não são comparáveis entre si",
+    )
 
     sub.add_parser("cpf", help="busca o CPF dos deputados com voto e grava o HASH")
 
@@ -207,17 +216,93 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
             )
 
 
-def _analisar(conexao: psycopg.Connection, legislatura: int) -> None:
-    """RF-17, RF-19 — matriz, similaridade e grafo."""
-    pessoas, votacoes, matriz, pesos = _montar_matriz(conexao, legislatura)
-    log.info("Matriz: %d pessoas × %d votações", len(pessoas), len(votacoes))
+def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
+    """Ingestão do Senado — senadores, votações e votos.
+
+    As duas casas não são comparáveis entre si (achado #7), então isto alimenta um grafo
+    próprio: o `analisar` recebe a casa e monta uma matriz separada. Nenhuma aresta liga
+    deputado a senador.
+    """
+    log.info("Ingerindo senadores...")
+    senadores = ingestao_senado.senadores_para_linhas(senado.baixar_senadores())
+    novos = persistencia.gravar_pessoas(conexao, senadores)
+    log.info("  %d senadores em exercício, %d novos", len(senadores), novos)
+
+    # Zero senadores é mudança de contrato, não Senado vazio — e sem o de-para todos os
+    # votos seriam descartados em silêncio, como já aconteceu com a Câmara.
+    if not senadores:
+        raise RuntimeError(
+            "Nenhum senador lido de /senador/lista/atual. O envelope do JSON mudou? "
+            "Sem o de-para, todos os votos seriam descartados em silêncio."
+        )
+
+    for ano in anos:
+        log.info("Ingerindo Senado %d...", ano)
+
+        votacoes_brutas = senado.baixar_votacoes(ano)
+        senado.conferir_volume(votacoes_brutas, ano)
+
+        # A lista de exercício só tem quem está hoje; os votos alcançam quem saiu,
+        # licenciou-se ou devolveu a cadeira. Criá-los a partir do próprio voto evita
+        # descartar 10,5% da base por falta de dono.
+        anteriores = ingestao_senado.senadores_dos_votos(votacoes_brutas)
+        recuperados = persistencia.gravar_pessoas(conexao, anteriores)
+        if recuperados:
+            log.info("  %d senadores fora da lista de exercício, criados pelo voto",
+                     recuperados)
+
+        mapa = _mapa_pessoas(conexao, fonte="SENADO")
+
+        votacoes = ingestao_senado.votacoes_para_linhas(votacoes_brutas)
+        persistencia.gravar_votacoes(conexao, votacoes)
+
+        abertas = sum(1 for linha in votacoes if not linha["secreta"])
+        log.info(
+            "  %d votações, %d abertas (%.0f%% secretas)",
+            len(votacoes), abertas,
+            100 * (len(votacoes) - abertas) / max(len(votacoes), 1),
+        )
+
+        votos = ingestao_senado.votos_para_linhas(votacoes_brutas, mapa)
+        persistencia.gravar_votos(conexao, votos)
+
+        com_posicao = sum(1 for linha in votos if linha["valor"] is not None)
+        log.info(
+            "  %d votos, %d com posição utilizável (%.0f%%)",
+            len(votos), com_posicao, 100 * com_posicao / max(len(votos), 1),
+        )
+
+        descartados = sum(len(v.get("votos") or []) for v in votacoes_brutas) - len(votos)
+        if descartados:
+            log.warning("  %d votos descartados: senador fora do de-para", descartados)
+
+        # Sigla nova é sinal de que o domínio mudou. Ela vira None e a ingestão segue,
+        # mas o log precisa denunciar — senão a base encolhe sem ninguém perceber.
+        novas = ingestao_senado.siglas_desconhecidas(votacoes_brutas)
+        if novas:
+            descricoes = ingestao_senado.descricoes_de_sigla(votacoes_brutas)
+            for sigla, quantas in sorted(novas.items()):
+                log.warning(
+                    "  sigla FORA do domínio medido: %s (%d) — %s",
+                    sigla, quantas, descricoes.get(sigla, "sem descrição na fonte"),
+                )
+
+
+def _analisar(conexao: psycopg.Connection, legislatura: int, casa: str) -> None:
+    """RF-17, RF-19 — matriz, similaridade e grafo, de UMA casa.
+
+    Cada casa gera a própria `execucao`: nenhuma aresta liga deputado a senador, porque
+    as duas não votam as mesmas matérias (achado #7).
+    """
+    pessoas, votacoes, matriz, pesos = _montar_matriz(conexao, legislatura, casa)
+    log.info("Matriz %s: %d pessoas × %d votações", casa, len(pessoas), len(votacoes))
 
     if len(pessoas) < 2:
         log.warning("Menos de duas pessoas com voto — nada a calcular.")
         return
 
     execucao_id = persistencia.abrir_execucao(
-        conexao, "CAMARA", legislatura, similaridade.K_VIZINHOS, "v1"
+        conexao, casa, legislatura, similaridade.K_VIZINHOS, "v1"
     )
     try:
         for metrica in ("CONCORDANCIA", "COSSENO"):
@@ -683,34 +768,54 @@ def _votacoes_por_pessoa(matriz, pessoas: list[int]) -> dict[int, int]:
     return {pessoa: int(posicionou[i].sum()) for i, pessoa in enumerate(pessoas)}
 
 
-def _mapa_pessoas(conexao: psycopg.Connection) -> dict[str, int]:
+def _mapa_pessoas(conexao: psycopg.Connection, fonte: str = "CAMARA") -> dict[str, int]:
+    """`id_externo` -> `pessoa_id`, por fonte.
+
+    A fonte é parâmetro porque a mesma pessoa pode ter id nas duas casas: 41 dos 81
+    senadores já foram deputados (achado #18). Misturar as duas faria o voto de senador
+    procurar dono entre ids da Câmara e ser descartado inteiro.
+    """
     linhas = conexao.execute(
-        "SELECT id_externo, pessoa_id FROM pessoa_fonte_ids WHERE fonte = 'CAMARA'"
+        "SELECT id_externo, pessoa_id FROM pessoa_fonte_ids WHERE fonte = %s", (fonte,)
     ).fetchall()
     return {str(externo): pessoa_id for externo, pessoa_id in linhas}
 
 
-def _montar_matriz(conexao: psycopg.Connection, legislatura: int):
-    """Monta a matriz pessoa × votação.
+def _montar_matriz(conexao: psycopg.Connection, legislatura: int, casa: str = "CAMARA"):
+    """Monta a matriz pessoa × votação de UMA casa.
 
-    ⚠️ Só votações NOMINAIS de PLENÁRIO, e não secretas. Votação de comissão fica de
-    fora: é 3× mais consensual que plenário (39% vs 12% de quase unanimidade), e
-    misturá-la achataria a similaridade.
+    Só votações nominais de plenário, e não secretas. Votação de comissão fica de fora:
+    é 3× mais consensual que plenário (39% contra 12% de quase unanimidade), e misturá-la
+    achataria a similaridade. No Senado o filtro de sigilo é o que mais corta — 239 das
+    421 votações da legislatura.
+
+    A casa é parâmetro, e nunca uma matriz só: as duas casas não votam as mesmas
+    matérias, então similaridade entre deputado e senador não teria denominador
+    (achado #7). São dois grafos independentes.
     """
     votacoes = conexao.execute(
         """
         SELECT id, categoria, EXTRACT(YEAR FROM CURRENT_DATE) - EXTRACT(YEAR FROM data)
           FROM votacoes
-         WHERE casa = 'CAMARA' AND legislatura = %s AND plenario AND NOT secreta
+         WHERE casa = %s AND legislatura = %s AND plenario AND NOT secreta
          ORDER BY id
         """,
-        (legislatura,),
+        (casa, legislatura),
     ).fetchall()
 
+    # As pessoas saem dos votos DESTA casa. Sem o recorte, a matriz ganharia 643
+    # deputados de linhas inteiramente vazias ao analisar o Senado — e o kNN passaria a
+    # comparar quem não tem voto em comum nenhum.
     pessoas = [
         linha[0]
         for linha in conexao.execute(
-            "SELECT DISTINCT pessoa_id FROM votos ORDER BY pessoa_id"
+            """
+            SELECT DISTINCT v.pessoa_id
+              FROM votos v JOIN votacoes vt ON vt.id = v.votacao_id
+             WHERE vt.casa = %s AND vt.legislatura = %s
+             ORDER BY 1
+            """,
+            (casa, legislatura),
         ).fetchall()
     ]
 
@@ -719,7 +824,12 @@ def _montar_matriz(conexao: psycopg.Connection, legislatura: int):
 
     matriz = np.full((len(pessoas), len(votacoes)), np.nan)
     for votacao_id, pessoa_id, valor in conexao.execute(
-        "SELECT votacao_id, pessoa_id, valor FROM votos WHERE valor IS NOT NULL"
+        """
+        SELECT v.votacao_id, v.pessoa_id, v.valor
+          FROM votos v JOIN votacoes vt ON vt.id = v.votacao_id
+         WHERE v.valor IS NOT NULL AND vt.casa = %s AND vt.legislatura = %s
+        """,
+        (casa, legislatura),
     ).fetchall():
         i, j = indice_pessoa.get(pessoa_id), indice_votacao.get(votacao_id)
         if i is not None and j is not None:
