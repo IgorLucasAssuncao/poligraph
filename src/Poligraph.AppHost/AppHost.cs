@@ -1,4 +1,4 @@
-var builder = DistributedApplication.CreateBuilder(args);
+﻿var builder = DistributedApplication.CreateBuilder(args);
 
 // ─── infraestrutura ────────────────────────────────────────────────
 var postgres = builder.AddPostgres("postgres")
@@ -65,6 +65,62 @@ builder.AddDockerfile("etl-analisar", "../..", "docker/Dockerfile.etl")
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
     // ⚠️ Analisar sem ter ingerido monta uma matriz vazia e não avisa direito.
+    .WithParentRelationship(etlIngerir);
+
+// ─── O dinheiro do mandato ─────────────────────────────────────────
+// ⭐ **Ramo separado, e é uma distinção de método, ⛔ não de arrumação.** Nada daqui
+//    entra em cálculo de afinidade: o título do TCC fala de voto, e o voto vem do ramo
+//    acima. Estes três povoam o **perfil** do parlamentar.
+//
+// 🔴 A ORDEM entre eles importa em um ponto: `fundo` casa por hash de CPF, e sem `cpf`
+//    executado antes o de-para sai vazio e **toda** receita do TSE é descartada — 396 MB
+//    lidos para gravar zero. O comando barra isso com erro claro, mas o painel ⛔ não
+//    tem como impedir o clique fora de ordem. Daí o parentesco: eles aparecem aninhados
+//    sob `etl-cpf`, que é o pré-requisito real.
+var etlCpf = builder.AddDockerfile("etl-cpf", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs("cpf")
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    // ⚠️ Sem pessoas ingeridas ⛔ não há a quem buscar CPF.
+    .WithParentRelationship(etlIngerir);
+
+builder.AddDockerfile("etl-cota", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs("cota", "--anos", "2025")
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithParentRelationship(etlIngerir);
+
+builder.AddDockerfile("etl-fundo", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    // ⚠️ Ano da ELEIÇÃO, ⛔ não do exercício: 2022 elegeu a legislatura 57.
+    .WithArgs("fundo", "--eleicao", "2022")
+    // ⭐ O volume é o que evita rebaixar 396 MB a cada execução.
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithParentRelationship(etlCpf);
+
+// 🔴 **Exige chave pessoal do Portal da Transparência.** Ela vem do ambiente, ⛔ nunca
+//    do código nem de `appsettings` — e o comando falha com a URL de cadastro se faltar.
+//    ⚠️ Sem a variável definida, o botão aparece e o container morre explicando; é
+//    melhor do que esconder o recurso e deixar a pessoa sem saber que ele existe.
+builder.AddDockerfile("etl-emendas", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs("emendas", "--anos", "2023", "2024", "2025", "2026")
+    .WithEnvironment(
+        "PORTAL_TRANSPARENCIA_CHAVE",
+        builder.Configuration["PortalTransparencia:Chave"] ?? "")
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
     .WithParentRelationship(etlIngerir);
 
 builder.Build().Run();

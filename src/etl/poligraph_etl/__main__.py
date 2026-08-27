@@ -471,7 +471,7 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
     """Financiamento de campanha — o fundão e o resto, ligados por CPF.
 
     🔴 **Depende de `cpf` ter rodado antes.** Sem `cpf_hash` em `pessoas`, o de-para sai
-    vazio e **toda** linha do TSE é descartada — 377 MB lidos para gravar zero, com log
+    vazio e **toda** linha do TSE é descartada — 396 MB lidos para gravar zero, com log
     de sucesso. É exatamente o tipo de falha silenciosa que este projeto já pagou caro.
     """
     hashes = persistencia.mapa_de_cpf_hash(conexao)

@@ -27,7 +27,6 @@ que *"o TSE fechou de novo"* quando nada fechou. Por isso `existe()` usa `GET` c
 """
 
 import logging
-import zipfile
 from pathlib import Path
 
 import requests
@@ -72,7 +71,7 @@ def url_de_prestacao_de_contas(ano: int) -> str:
 
 
 def existe(url: str) -> bool:
-    """Confere disponibilidade **sem** baixar 377 MB.
+    """Confere disponibilidade **sem** baixar o arquivo inteiro.
 
     🔴 `GET` com `Range`, ⛔ nunca `HEAD` — ver o cabeçalho do módulo. Um `HEAD` aqui
     devolveria 403 e faria o pipeline concluir o oposto da verdade.
@@ -88,9 +87,9 @@ def existe(url: str) -> bool:
 
 
 def baixar(url: str, destino: Path) -> Path:
-    """Baixa em fluxo — o arquivo de 2022 tem **377 MB**, e não cabe em memória.
+    """Baixa em fluxo — o arquivo de 2022 tem **396 MB** medidos, e ⛔ não cabe em memória.
 
-    ⭐ Se o destino já existe, ⛔ não rebaixa. São 377 MB por execução, e o arquivo de
+    ⭐ Se o destino já existe, ⛔ não rebaixa. São 396 MB por execução, e o arquivo de
     uma eleição passada nunca muda.
     """
     if destino.exists() and destino.stat().st_size > 0:
@@ -121,13 +120,3 @@ def baixar(url: str, destino: Path) -> Path:
     log.info("  %s — %.0f MB", destino.name, destino.stat().st_size / 1e6)
 
     return destino
-
-
-def arquivos_no_zip(caminho: Path, prefixo: str) -> list[str]:
-    """Nomes internos que começam com `prefixo`.
-
-    ⚠️ O ZIP de 2022 traz **112 arquivos, 5 tipos, 27 UFs cada** — mais um `BRASIL`
-    consolidado de 1,3 GB. Ler o que não interessa é o custo dominante aqui.
-    """
-    with zipfile.ZipFile(caminho) as zipe:
-        return sorted(n for n in zipe.namelist() if n.startswith(prefixo))

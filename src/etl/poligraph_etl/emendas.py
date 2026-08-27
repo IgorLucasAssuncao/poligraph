@@ -37,11 +37,11 @@ log = logging.getLogger("poligraph")
 
 BASE = "https://api.portaldatransparencia.gov.br/api-de-dados"
 
-# ⚠️ Medido: 15 itens por página, ⛔ sem parâmetro para mudar. Em 2025 a última página
-#    com dado foi a 421 — ~6.315 emendas no ano.
-POR_PAGINA = 15
-
-# ⚠️ Pausa entre chamadas. São centenas contra serviço público com limite de taxa.
+# ⚠️ Pausa entre chamadas.
+#
+# ⭐ Medido: a API devolve **15 itens por página** e ⛔ não aceita parâmetro para mudar.
+# Em 2025 a última página com dado foi a **421** — cerca de 6.300 emendas no ano, ~1.700
+# requisições nos quatro anos. É serviço público com limite de taxa, então o laço pausa.
 PAUSA = 0.12
 
 

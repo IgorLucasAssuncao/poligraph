@@ -81,10 +81,35 @@ painel. O front fica em **http://localhost:5173**.
 ⚠️ **O banco sobe vazio.** Não há mais seed de desenvolvimento: o dado local é a Câmara
 de verdade.
 
-No painel do Aspire, inicie **`etl-ingerir`** e depois **`etl-analisar`**.
+No painel do Aspire, inicie **`etl-ingerir`** e depois **`etl-analisar`**. Os demais
+recursos aparecem aninhados sob eles, na ordem em que fazem sentido:
+
+```
+etl-ingerir          deputados, votações e votos      ← comece por aqui
+├── etl-analisar     similaridade, grafo, comunidades
+├── etl-cota         cota parlamentar (CEAP)
+├── etl-emendas      emendas — 🔑 exige chave do Portal
+└── etl-cpf          🔴 completa cpf_hash
+    └── etl-fundo    financiamento de campanha e fundão
+```
 
 > ⭐ Eles não rodam sozinhos, de propósito: a ingestão baixa dezenas de MB, e disparar
 > isso a cada `dotnet run` deixaria o ambiente inutilizável por minutos.
+
+🔴 **`etl-fundo` aparece aninhado sob `etl-cpf` porque depende dele de verdade**: o join
+com o TSE é por hash de CPF, e sem `cpf` executado antes o de-para sai vazio e **toda**
+receita é descartada. O painel ⛔ não impede o clique fora de ordem — quem impede é o
+comando, com erro claro antes de ler os 396 MB.
+
+⛔ **`etl-emendas` precisa da chave do Portal**, que o AppHost lê de
+`PortalTransparencia:Chave`:
+
+```bash
+dotnet user-secrets set "PortalTransparencia:Chave" "SUA_CHAVE" --project src/Poligraph.AppHost
+```
+
+> 🔴 **Nunca em `appsettings.json`** — a chave é **pessoal e atrelada ao seu CPF**, e o
+> arquivo é versionado. [Como obter](docs/plano/08-obter-as-chaves.md).
 
 ### Os comandos do ETL
 
@@ -96,6 +121,7 @@ No painel do Aspire, inicie **`etl-ingerir`** e depois **`etl-analisar`**.
 | `cpf` | 🔴 Completa `cpf_hash` — chave para conciliar com o TSE | ~4 min |
 | `emendas --anos 2023 2024 2025 2026` | Emendas + reconciliação de autor | ~10 min |
 | `fundo --eleicao 2022` | 🔴 Financiamento de campanha e fundão | ~2 min |
+| `emendas --resolver 2815=883` | Vincula autor de emenda **à mão** — [PL45](docs/PENDENCIAS.md) | instantâneo |
 | `validar --legislatura 57` | ⭐ Mede discriminação e comunidade × partido | ~2 s |
 
 🔴 **A ordem importa entre `cpf` e `fundo`.** O join com o TSE é por hash de CPF; sem
@@ -106,12 +132,13 @@ para gravar zero. O comando barra isso com erro claro, ⛔ em vez de logar suces
 a pede ([como obter](docs/plano/08-obter-as-chaves.md)). Ela vem de
 `PORTAL_TRANSPARENCIA_CHAVE`, ⛔ **nunca** do código ou de `appsettings`.
 
-`cota` e `validar` ainda não estão no painel — rodam pelo container:
+⭐ **`validar` ⛔ não está no painel de propósito** — é medição para o TCC, ⛔ não etapa
+do pipeline, e ⛔ não escreve nada no banco. Roda pelo container:
 
 ```bash
 podman run --rm --network "container:<postgres>" \
   -e "ConnectionStrings__poligraph=Host=localhost;Port=5432;Database=poligraph;Username=postgres;Password=..." \
-  poligraph-etl:local cota --anos 2025
+  poligraph-etl:local validar --legislatura 57
 ```
 
 ### Testes

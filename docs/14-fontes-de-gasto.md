@@ -225,8 +225,13 @@ ingerir inteira — precisa de recorte (órgão, valor mínimo, período) defini
 
 ```
 https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/
-    prestacao_de_contas_eleitorais_candidatos_2022.zip     →  ✅ 200 · 377 MB
+    prestacao_de_contas_eleitorais_candidatos_2022.zip     →  ✅ 200 · 396 MB
 ```
+
+> ⚠️ **Este documento dizia 377 MB.** ⛔ Não era erro: **377 MiB = 396 MB** — o
+> Windows conta em MiB e o `Content-Length` em MB. Padronizado em **MB decimal**,
+> que é o que o log do ETL imprime. ⭐ Vale o registro porque duas medições do mesmo
+> arquivo parecendo divergir é exatamente o tipo de coisa que faz perder uma tarde.
 
 ⚠️ **Só este nome funciona.** `prestacao_de_contas_2022`, `prestacao_contas_2022` e
 `prestacao_de_contas_eleitorais_2022` dão 404. ⛔ Não há arquivo de partidos com padrão

@@ -106,7 +106,7 @@ def ler_receitas(caminho: Path, nome_interno: str):
     """
     with zipfile.ZipFile(caminho) as zipe, zipe.open(nome_interno) as fluxo:
         # 🔴 Latin-1. `errors="replace"` porque uma linha malformada ⛔ não pode derrubar
-        #    a ingestão de um arquivo de 377 MB.
+        #    a ingestão de um arquivo de 396 MB.
         texto = io.TextIOWrapper(fluxo, encoding="latin-1", errors="replace")
 
         yield from csv.DictReader(texto, delimiter=";", quotechar='"')

@@ -97,7 +97,7 @@ def test_outro_cargo_fica_de_fora(conhecidos):
 
 
 def test_de_para_vazio_descarta_tudo(conhecidos):
-    """🔴 A falha silenciosa que o comando precisa impedir ANTES de ler 377 MB.
+    """🔴 A falha silenciosa que o comando precisa impedir ANTES de ler 396 MB.
 
     ⚠️ Com `cpf` não executado, o de-para sai vazio e o resultado correto da função é
     **nada** — por isso quem barra é `_fundo`, com erro claro, ⛔ não este módulo.
@@ -312,7 +312,7 @@ def test_le_latin1_sem_corromper(zip_do_tse, conhecidos):
     """🔴 O TSE é **Latin-1** — a única fonte do projeto assim.
 
     ⚠️ Lido como UTF-8, `JOSÉ AÇÃÍ` estouraria em `UnicodeDecodeError` na primeira linha
-    acentuada de um arquivo de 377 MB.
+    acentuada de um arquivo de 396 MB.
     """
     registros = list(receitas.ler_receitas(zip_do_tse, "receitas_candidatos_2022_AP.csv"))
 
