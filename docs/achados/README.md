@@ -1,0 +1,98 @@
+# Achados — o que foi medido
+
+> **Tipo:** índice · **Atualizado em:** 2026-08-27
+>
+> ⭐ **Um achado é uma medição datada.** Ele nunca muda: remedir gera achado **novo**, ou
+> uma revisão explícita dentro do mesmo arquivo. É por isso que ele vive separado do
+> plano e da referência, que precisam estar sempre atuais.
+
+---
+
+## Como usar
+
+🔴 **Cada arquivo aqui é a fonte canônica do seu achado.** Outros documentos **linkam**,
+⛔ nunca repetem o número.
+
+> ⚠️ **Por que essa regra existe:** o mínimo de 20 votações em comum estava escrito em
+> **cinco arquivos**. Mudar exigiria mudar em cinco — e um ficaria para trás. Número
+> repetido é número que diverge.
+
+**Para citar na parte teórica:** o arquivo traz o que foi medido, como, quando e o
+resultado. É a unidade que a fundamentação e a metodologia referenciam.
+
+📐 **Os valores estatísticos** — o que significa `r`, ARI, modularidade — estão em
+[`../metodos.md`](../metodos.md), não aqui. Achado é *o que se descobriu*; método é *como
+se mede*.
+
+---
+
+## Os 22 achados
+
+### 🔴 Estruturantes — mudaram a arquitetura
+
+| # | Achado | Por que pesa |
+|---|---|---|
+| [**#7**](007-casas-nao-sao-comparaveis.md) | As duas casas **não são comparáveis** entre si | ⛔ Não existe grafo único Câmara + Senado |
+| [**#12**](012-polaridade-nao-e-constante.md) | 🔴 A polaridade de "Sim" **não é constante** | Em 14% das votações, "Sim" significa rejeitar. **O achado mais perigoso** |
+| [**#1**](001-votacoes-simbolicas.md) | A maioria das votações **não tem voto nominal** | Todo o dimensionamento parte daqui |
+| [**#11**](011-maioria-e-procedimental.md) | 58% das nominais são **procedimentais** | Gera duas regras **opostas**: filtrar no questionário, não filtrar na matriz |
+| [**#15**](015-comissao-nao-serve-de-reserva.md) | Comissão **não serve de reserva** | ⚠️ Corrige afirmação anterior do próprio discovery |
+
+### 📊 Sobre o dado da Câmara
+
+| # | Achado | |
+|---|---|---|
+| [#3](003-id-de-votacao-e-string.md) | O id de votação é **string composta** | `varchar`, não `bigint` |
+| [#6](006-csv-consolidado-por-ano.md) | Existem **CSVs anuais** | ⭐ Elimina o N+1 |
+| [#8](008-uriproposicaocitada-e-armadilha.md) | `uriProposicaoCitada` é **armadilha** | Leva ao parecer, não ao projeto |
+| [#9](009-prefixo-do-id-e-a-proposicao.md) | O **prefixo do id** é a proposição | 30/30 resolveram |
+| [#10](010-classificacao-tematica-oficial.md) | Existe **classificação temática oficial** | ⛔ Ainda não usada |
+| [#14](014-comissao-tambem-vota-simbolico.md) | O ponto cego **se repete na comissão** | |
+| [#19](019-csv-reconstruido-toda-madrugada.md) | Os CSVs são **reconstruídos toda noite** | ⭐ Por isso `ON CONFLICT DO UPDATE` |
+| [#20](020-endpoint-devolve-duplicatas.md) | O endpoint devolve **duplicatas** | Deduplicar por `id_externo` |
+| [#2](002-votos-nao-aceita-paginacao.md) | `/votos` **não pagina** | Perdeu relevância com o #6 |
+| [#22](022-deputados-nao-e-arquivo-anual.md) | `deputados` **não é arquivo anual** | ⭐ Achado da implementação |
+
+### 🏛️ Sobre o Senado e as pontes
+
+| # | Achado | |
+|---|---|---|
+| [#4](004-endpoint-do-senado-depreciado.md) | Endpoint de plenário **depreciado** | ✅ Já migrado |
+| [#17](017-senado-maioria-secreta.md) | **56% secretas** no Senado | Custo é precisão, não viabilidade |
+| [#18](018-ponte-temporal-entre-as-casas.md) | 41 dos 81 senadores **foram deputados** | Ponte **temporal**, não sincrônica |
+| [#21](021-cpmi-nao-publica-votacao.md) | A CPMI **não publica** votação | ⏳ **Reverificar antes da conclusão** |
+
+### 🔗 Sobre outras fontes e sinais
+
+| # | Achado | |
+|---|---|---|
+| [#5](005-tse-bloqueia-acesso-automatizado.md) | TSE bloqueia acesso automatizado | ⚠️ **Revisado** — é automatizável |
+| [#13](013-frente-parlamentar-nao-serve.md) | Frente parlamentar **não discrimina** | Assinar é barato |
+| [#16](016-relatoria-e-o-melhor-sinal.md) | **Relatoria** é o melhor sinal não-voto | ⛔ Não implementado |
+
+---
+
+## ⏳ Achados com prazo de validade
+
+Dependem de fato externo que pode mudar. Estão em
+[`../REVISAR-ANTES-DA-CONCLUSAO.md`](../REVISAR-ANTES-DA-CONCLUSAO.md):
+
+| # | O que reverificar |
+|---|---|
+| [#21](021-cpmi-nao-publica-votacao.md) | A CPMI passou a publicar votação nominal? Mudaria o #7 |
+| [#5](005-tse-bloqueia-acesso-automatizado.md) | Já revisado uma vez — o TSE mudou de novo? |
+
+---
+
+## ⚠️ Dois achados que se corrigem
+
+⭐ **Vale ler juntos, porque mostram o método funcionando:**
+
+- [**#15**](015-comissao-nao-serve-de-reserva.md) desmente uma afirmação anterior do
+  discovery sobre comissões servirem de reserva
+- [**#5**](005-tse-bloqueia-acesso-automatizado.md) foi revisado quando uma segunda
+  medição contradisse a primeira
+
+> 🔴 **A regra metodológica do projeto nasceu disto:** *medir um ano e generalizar foi a
+> origem de quase todos os erros cometidos aqui.* Antes de afirmar um número, meça — e
+> diga sobre qual período.

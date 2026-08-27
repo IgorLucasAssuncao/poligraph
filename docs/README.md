@@ -1,7 +1,7 @@
 # Documentação do Poligraph
 
 > Índice da documentação do TCC. **Comece pelo discovery.**
-> Atualizado em 2026-08-22.
+> Atualizado em 2026-08-27.
 
 ---
 
@@ -20,13 +20,40 @@ flowchart LR
 
 ---
 
+## 🔴 Os quatro tipos de documento
+
+⭐ **A regra que organiza tudo:** cada arquivo tem **um** ciclo de vida. Misturá-los é o
+que faz um documento ficar "meio desatualizado", sem ninguém saber qual metade.
+
+| Tipo | Ciclo de vida | Onde |
+|---|---|---|
+| **Achado** | ⏸️ Nunca muda — foi medido naquele dia. Remedir gera achado **novo** | [`achados/`](achados/README.md) |
+| **Método** | 🔄 Muda quando o cálculo muda | [`metodos.md`](metodos.md) |
+| **Referência** | 🔄 Precisa estar **sempre** atual; mentir aqui é caro | `01`, `02`, `10`–`13`, `plano/` |
+| **Histórico** | 🗄️ Valor documental, zero operacional | [`arq/`](arq/README.md) |
+
+🔴 **Cada número tem UM dono.** Outros documentos citam com link, ⛔ nunca repetem o
+valor — número repetido é número que diverge.
+
+---
+
 ## Índice
+
+### ⭐ Para a parte teórica
+
+| Doc | Conteúdo |
+|---|---|
+| [**achados/**](achados/README.md) | 🔬 **Os 22 achados**, um arquivo cada: o que foi medido, como, quando, resultado. **É o que a fundamentação cita** |
+| [**metodos.md**](metodos.md) | 📐 **O que cada número significa** — `r` de Pearson, ARI, modularidade, variância explicada. Com intervalo, leitura e valor medido |
+
+> ⚠️ **`r` significa duas coisas neste projeto** — correlação de Pearson (0,862) e razão
+> de decaimento (0,86). Não são a mesma grandeza. Ver [`metodos.md`](metodos.md).
 
 ### Fundamentos
 
 | Doc | Conteúdo |
 |---|---|
-| [00-discovery.md](00-discovery.md) | **Documento central.** Título do TCC, escopo, fontes, riscos, decisões, roadmap. Contém os 18 achados |
+| [00-discovery.md](00-discovery.md) | **Documento central.** Título do TCC, escopo, fontes, riscos, decisões, roadmap. ⚠️ Os achados foram extraídos para [`achados/`](achados/README.md) — aqui fica a narrativa |
 | [03-requisitos.md](03-requisitos.md) | Requisitos funcionais e não funcionais, regras de negócio, restrições |
 | [04-contratos.md](04-contratos.md) | **Contratos** — entradas, saídas e uso, com cardinalidades medidas |
 | [PENDENCIAS.md](PENDENCIAS.md) | ⭐ **Visão consolidada** — 46 abertas, agrupadas pelo que destrava cada uma |
