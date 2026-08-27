@@ -177,7 +177,8 @@ ETL fica como botão no painel, esperando você mandar rodar.
 | Testes | **91 .NET** (Testcontainers com Postgres real) · **282 Python** · **37 front** |
 
 ⭐ **O seed foi aposentado** (PL41). O dado local é a Câmara de verdade — 470.727 votos da
-legislatura 57, 643 deputados, 24.810 emendas, 22.511 receitas de campanha. 📐 Os números
+legislatura 57, 643 deputados, 773.716 despesas de cota, 24.810 emendas, 22.511
+receitas de campanha. 📐 Os números
 todos, conferidos contra o banco, no [`README`](../README.md).
 
 ⚠️ **Duas fontes ainda não ingerem:** o **Senado** ([PL42](../docs/PENDENCIAS.md)) e o

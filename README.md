@@ -26,12 +26,39 @@ Tudo abaixo saiu de `count(*)` no banco depois de rodar o ETL contra as fontes r
 
 | Dinheiro — o perfil do parlamentar | |
 |---|---|
-| **Despesas de cota** (CEAP) | 208.188 |
-| **Emendas parlamentares** | 24.810 — **21.349 (86%) com autor resolvido** |
-| **Autores de emenda** | 792 resolvidos · 159 sem vínculo (comissões e bancadas) |
+| **Despesas de cota** (CEAP) | **773.716** — 2023 a 2026 |
+| **Emendas parlamentares** | 24.810 — **21.358 (86,1%) com autor resolvido** |
+| **Autores de emenda** | 793 resolvidos · 158 sem vínculo (comissões e bancadas) |
 | **Receitas de campanha** (TSE) | 22.511, de **642 dos 643** deputados |
 | **Fundo Especial — o "fundão"** | R$ 907,7 mi · R$ 1.163,4 mi arrecadados no total |
 | **Deputados com `cpf_hash`** | 643 — 100%, e ⛔ nenhum CPF em claro |
+
+### 🔴 Cobertura por fonte — e o que falta em cada uma
+
+⚠️ **A pergunta certa ⛔ não é "deu certo?", é "quem ficou de fora, e por quê?"** Cada
+lacuna abaixo foi investigada caso a caso; nenhuma é "provavelmente normal".
+
+| Fonte | Cobre | Falta | O que é a lacuna |
+|---|---:|---:|---|
+| `cpf_hash` · foto · grafo | **643** | 0 | — |
+| **Cota (CEAP)** | **642** | 1 | ⭐ Suplente com 48 votos — **0 linhas no arquivo da Câmara**, conferido. Ausência real |
+| **Receitas (TSE)** | **642** | 1 | ⭐ Suplente com 6 votos que ⛔ não foi candidato a deputado federal em 2022 |
+| **Emendas** | **551** | 92 | ⚠️ Ver abaixo — a única lacuna que ⛔ não está fechada |
+
+🔴 **A cota só tinha 2025 até 2026-08-27**, e isso fazia a cobertura parecer **560 de
+643**. Os 83 "faltantes" eram, quase todos, deputados que serviram em 2023, 2024 ou 2026 —
+suplentes e quem saiu no meio do mandato. Ingerir os quatro anos levou a **642**.
+
+> ⚠️ **A lição:** *"87% de cobertura"* parecia um limite da fonte e era **um parâmetro do
+> comando**. Cobertura baixa merece a pergunta *"faltou dado, ou faltou pedir?"* antes de
+> virar nota de rodapé.
+
+⚠️ **Os 92 sem emenda ⛔ não têm explicação única.** Emenda individual é impositiva desde
+2015, então um deputado de mandato inteiro sem nenhuma é suspeito. Dos 12 com mais de 600
+votos, a checagem manual achou **um** caso real de nome divergente — `DR. ALLAN GARCES` no
+Portal, *Allan Garcês* na Câmara — resolvido pelo caminho manual da
+[PL45](docs/PENDENCIAS.md). Os demais aparentes foram **ruído de casamento aproximado**:
+senadores homônimos. 📐 [PL47](docs/PENDENCIAS.md) segue o resto.
 
 | | |
 |---|---|
@@ -117,7 +144,7 @@ dotnet user-secrets set "PortalTransparencia:Chave" "SUA_CHAVE" --project src/Po
 |---|---|---|
 | `ingerir --anos 2023 2024 2025 2026` | Deputados, votações e votos | ~2 min |
 | `analisar --legislatura 57` | Similaridade, kNN, comunidades, componentes | ~40 s |
-| `cota --anos 2025` | Cota parlamentar (CEAP) | ~11 s |
+| `cota --anos 2023 2024 2025 2026` | Cota parlamentar (CEAP) | ~50 s |
 | `cpf` | 🔴 Completa `cpf_hash` — chave para conciliar com o TSE | ~4 min |
 | `emendas --anos 2023 2024 2025 2026` | Emendas + reconciliação de autor | ~10 min |
 | `fundo --eleicao 2022` | 🔴 Financiamento de campanha e fundão | ~2 min |
@@ -311,7 +338,7 @@ perdia **R$ 17,2 milhões e 10 parlamentares em silêncio**; ler os dois dobrari
 |---|---|---|
 | **Câmara — CSVs anuais** | Votações e votos nominais | ✅ Ingerindo |
 | **Câmara — `deputados.csv`** | Cadastro e id de-para | ✅ Ingerindo |
-| **Câmara — `cotas/Ano-{ano}.zip`** | Cota parlamentar (CEAP) | ✅ Ingerindo |
+| **Câmara — `cotas/Ano-{ano}.zip`** | Cota parlamentar (CEAP) | ✅ Ingerindo — 4 anos |
 | **Câmara — `bandep/{id}.jpg`** | Foto oficial | ✅ URL guardada |
 | **TSE — `prestacao_de_contas_*`** | ⭐ **Fundão (FEFC) e doadores** | ✅ Ingerindo |
 | **Portal — `api-de-dados/emendas`** | ⭐ **Emendas parlamentares** | ✅ Ingerindo |
@@ -330,9 +357,9 @@ entra.** Cada fonte usa uma chave diferente, e a força delas ⛔ não é a mesm
 | Fonte | Chave | Força | Cobertura medida |
 |---|---|---|---|
 | Câmara — votos | `id` da Câmara | 🟢 Determinística | 100% |
-| Cota (CEAP) | `ideCadastro` = o mesmo id | 🟢 Determinística | 99,6% das linhas |
+| Cota (CEAP) | `ideCadastro` = o mesmo id | 🟢 Determinística | **642 de 643** deputados |
 | **TSE — receitas** | **hash de CPF** | 🟢 Determinística | **642 de 643** |
-| **Portal — emendas** | **código do autor** no `codigoEmenda` | 🟡 Estável, mas indireta | **86% das emendas** |
+| **Portal — emendas** | **código do autor** no `codigoEmenda` | 🟡 Estável, mas indireta | **86% · 551 de 643** |
 
 ⭐ **A emenda ⛔ não usa o nome do autor como chave.** O `codigoEmenda` embute um
 identificador de **mandato**:

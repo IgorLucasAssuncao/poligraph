@@ -90,7 +90,7 @@ confirmar que a prestação de contas expõe o CNPJ do doador — ⛔ ainda não
 | Campo na ficha | Fonte | Estado | Medido |
 |---|---|---|---|
 | **Foto** | Câmara, `urlFoto` | ✅ No ar | 48 KB, sem autenticação |
-| **Gasto de cota, total e por categoria** | `Ano-{ano}.csv.zip` | ✅ No ar | **208.188** despesas |
+| **Gasto de cota, total e por categoria** | `Ano-{ano}.csv.zip` | ✅ No ar | **773.716** despesas, 4 anos |
 | **Maiores fornecedores** | mesma fonte, `txtFornecedor` | ✅ No ar | — |
 | ⭐ **Emendas — empenhado × pago, por destino e função** | Portal, `api-de-dados/emendas` | ✅ No ar | **24.810**, 86% com autor |
 | ⭐ **Financiamento de campanha — fundão separado** | TSE, prestação de contas | ✅ No ar | **22.511**, 642 de 643 |

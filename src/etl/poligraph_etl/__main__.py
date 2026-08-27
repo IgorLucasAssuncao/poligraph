@@ -136,6 +136,15 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
 
 
 def _configurar_log() -> None:
+    # 🔴 O console do Windows é **cp1252**, e `logging` ⛔ NÃO trata erro de codificação:
+    #    ele imprime um rastro de exceção no lugar da mensagem e segue. Um `→` numa
+    #    linha de log fazia o comando de reconciliação manual parecer ter quebrado.
+    #
+    # ⚠️ `errors="replace"` garante que o texto DEGRADE em vez de sumir — e as mensagens
+    #    em si evitam caractere fora do cp1252, para que nem a degradação apareça.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="replace")
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)-7s %(message)s",
@@ -386,7 +395,7 @@ def _resolver_a_mao(conexao: psycopg.Connection, entradas: list[str]) -> None:
             )
 
         persistencia.resolver_autor(conexao, codigo, pessoa_id, "MANUAL")
-        log.info("  %s (%s) → %s (id %d)", codigo, autor[0], existe[0], pessoa_id)
+        log.info("  %s (%s) -> %s (id %d)", codigo, autor[0], existe[0], pessoa_id)
 
     vinculadas = persistencia.vincular_emendas(conexao)
     log.info("%d emendas vinculadas", vinculadas)
@@ -608,7 +617,7 @@ def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: floa
     r = comparacao.comparar(g, comunidade_de, partido_de)
 
     log.info("")
-    log.info("═══ Comunidade de voto × partido — %d deputados ═══", r.n_pessoas)
+    log.info("=== Comunidade de voto x partido - %d deputados ===", r.n_pessoas)
     log.info("  %d comunidades detectadas, %d partidos", r.n_comunidades, r.n_partidos)
     log.info("  ARI (coincidência entre as duas): %.3f", r.ari)
     log.info("  Modularidade da comunidade: %.3f", r.modularidade_comunidade)
@@ -651,7 +660,7 @@ def _comparar_desempates(matriz, candidatas: list[int], base_inicial: int = 12) 
     aleatorio = media_por_rodada(False)
 
     log.info("")
-    log.info("═══ Desempate: dirigido × aleatório (base de %d perguntas) ═══", base_inicial)
+    log.info("=== Desempate: dirigido x aleatorio (base de %d perguntas) ===", base_inicial)
     log.info("  perguntas extras | dirigido | aleatório")
     for i, (d, a) in enumerate(zip(dirigido, aleatorio)):
         log.info("  %16d | %8.1f | %9.1f", i, d, a)
