@@ -1234,24 +1234,31 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
    emendas na das dezenas de milhões, cota na das centenas de milhares. Essa diferença
    de ordem de grandeza é a informação, e ela só existe quando os três se veem juntos. */
 /* Os três totais de cara no perfil, com régua acima em vez de borda em volta: solta
-   entre dois blocos com borda, a faixa lia como uma tira flutuando. */
+   entre dois blocos com borda, a faixa lia como uma tira flutuando.
+
+   ⚠️ O botão fica em LINHA PRÓPRIA. Ao lado dos números ele disputava a largura e
+   comprimia a grade de três colunas contra a esquerda — valor em moeda ⛔ não tem para
+   onde encolher. */
 .perfil-contas {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  flex-wrap: wrap; gap: 1rem;
+  display: flex; flex-direction: column; gap: .9rem;
   margin-top: 1rem; padding-top: .9rem; border-top: 1px solid var(--borda);
 }
-.perfil-contas .contas-numeros { flex: 1 1 22rem; }
 /* Controle de verdade, ⛔ não link de texto: é a única porta para o detalhe, e como
    link discreto ela não se anunciava. */
 .botao-contas {
-  padding: .4rem .85rem; border-radius: 8px;
+  width: 100%; padding: .55rem .85rem; border-radius: 8px;
   border: 1px solid var(--borda-forte); background: var(--fundo);
-  color: var(--texto); font-size: .84rem; font-weight: 600;
+  color: var(--texto); font-size: .86rem; font-weight: 600;
+  transition: border-color var(--t-curto) var(--curva),
+              color var(--t-curto) var(--curva);
 }
 .botao-contas:hover { border-color: var(--realce); color: var(--realce); }
 
 .contas-numeros {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem;
+}
+@media (width <= 30rem) {
+  .contas-numeros, .contas-comparacao { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* A mesma comparação repetida no topo do modal: quem abriu clicando nela precisa
