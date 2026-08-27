@@ -79,7 +79,7 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | ~~PL37~~ | ✅ **Resolvida (2026-08-27)** — `test_contrato_schema.py` cobre agora **nomes de tabela, nomes de coluna e os literais combinados** entre os dois lados (`FUNDO ESPECIAL`, `ck_autor_metodo`). ⭐ O próprio parser tem teste que morre sob mutação — sem ele, uma exceção mal posta o deixaria cego e verde | — | — |
 | ~~PL39~~ | ✅ **Resolvida (2026-08-26)** — legislatura 57 inteira ingerida: 470.786 votos, 5.268 arestas | — | — |
 | 🟡 **PL43** | **`eixo_x`/`eixo_y` divergem do plano** — o rascunho previa 1ª componente do SVD (eixo interpretável, linhagem W-NOMINATE); o implementado é layout de molas, que ⛔ não tem eixo com significado. Guardar as duas coisas ou ficar só com molas? Ver [plano/07 §3.6](plano/07-grafo-e-afinidade.md) | 🟡 Média | 🟢 Decisão |
-| 🟡 **PL42** | 🔄 **Metade resolvida (2026-08-27)** — a **ingestão do Senado está no ar**: 421 votações, 34.101 votos, 104 senadores, grafo próprio com 594 arestas. ⛔ Falta a parte de **produto**: a RNF-28 proíbe o seletor de casa, e o desenho da §3.4.1 exige perguntas das duas casas embaralhadas e duas listas no resultado. Detalhe abaixo | 🟡 Média | 🟡 Horas |
+| 🟢 **PL42** | ✅ **Resolvida (2026-08-27)** — ingestão, curadoria e produto. 7 perguntas do Senado ativas, questionário misto de 28, resultado com **uma lista por casa**, grafo próprio de cada uma. ⛔ Resta a ficha do parlamentar, que ainda não distingue casa. Detalhe abaixo | 🟢 Baixa | 🟡 Horas |
 | ~~PL41~~ | ✅ **Resolvida (2026-08-26)** — o seed foi **aposentado** por decisão do autor: com o ETL funcional, só o schema precisa ser inicializado. O semeador virou `Poligraph.Tests/Fixtures/DadosDeTeste.cs` | — | — |
 | 🟡 **PL40** | **`proposicoes` nunca é ingerida** — o CSV de votações traz só o `id` da proposição, sem sigla/número/ano/ementa. Hoje o `proposicao_id` é anulado. 🔴 Bloqueia a **RF-30** (exibir a ementa original ao lado da pergunta) | 🟡 Média | 🟡 Horas |
 | ~~PL38~~ | ✅ **Resolvida (2026-08-26)** — `arestas_grafo` e `nos_metrica` gravadas; Louvain + layout de molas com semente fixa; 30 comunidades em 655 nós. ⚠️ `governismo` e `disciplina` seguem nulos: dependem de `votacoesOrientacoes`, ainda não ingerido | — | — |
@@ -148,7 +148,7 @@ trabalho humano, como a PL11, e ⛔ não escala por regra.
 
 ---
 
-### 🔄 PL42 — o Senado entra pela metade
+### ✅ PL42 — o Senado, de ponta a ponta
 
 **Ingerido em 2026-08-27.** O que está no ar:
 
@@ -179,14 +179,38 @@ com os votos de cada casa separados.
 | A lista `/senador/lista/atual` tem **81**, mas os votos alcançam **104** | Suplentes, licenciados e quem assumiu cargo no Executivo. Sem criá-los pelo próprio voto, 3.252 votos (10,5%) seriam descartados |
 | ⭐ Sigla nova `LAP` apareceu em 2026 | *Licença paternidade* — o canário de domínio funcionou na primeira execução real |
 
-### ⛔ O que falta, e é produto, não ingestão
+### ✅ O produto, entregue no mesmo dia
 
 | # | |
 |---|---|
-| 1 | A **RNF-28 proíbe o seletor de casa**: o questionário precisa embaralhar perguntas das duas e devolver **duas listas** no resultado |
-| 2 | ⛔ **Nenhuma pergunta do Senado foi curada** — a PL11 vale para as duas casas |
-| 3 | A ficha e o "explorar" filtram a legislatura corrente, mas ⛔ não distinguem casa |
-| 4 | A **ponte deputado→senador** (achado #18) segue aberta: 43 nomes aparecem nas duas casas, e o Senado ⛔ não publica CPF |
+| 1 | Questionário **misto** — 21 da Câmara + 7 do Senado, sem seletor de casa |
+| 2 | Resultado com **uma lista por casa**, e grafo próprio de cada uma |
+| 3 | 7 perguntas do Senado curadas — a ementa ⛔ não bastou, foi preciso `IndexacaoMateria` |
+
+### 🔴 Três defeitos que só apareceram ao juntar as casas
+
+Todos do mesmo formato: **número plausível, tela intacta**.
+
+| Defeito | Consequência |
+|---|---|
+| Piso de comparáveis sobre o **total** | Com 21+7 perguntas o piso era 17, e um senador tem no máximo 7 comparáveis. **Todo senador era filtrado**, e a lista do Senado nasceria vazia para sempre |
+| Denominador do painel somando as casas | Pergunta da Câmara mostrava *"439 de 747"* — os 747 incluem 104 senadores que ⛔ nunca votaram aquela votação |
+| Posição do cidadão na execução "mais recente" | Funcionava por acidente com uma casa só; com duas, dependia de qual ETL rodou por último |
+
+⭐ E um quarto, do ETL: o Senado devolve `totalVotosSim` e `totalVotosNao` **NULL em todas
+as votações**. Sem contar do array de votos, o painel — que é a assinatura visual do site —
+renderizaria vazio para toda pergunta do Senado.
+
+⚠️ `TestesAfinidadeDuasCasas` semeia as duas casas de propósito: o resto da suíte semeia
+uma só, então o recorte poderia sumir num refactor e tudo continuaria verde.
+
+### ⛔ O que ainda falta
+
+| # | |
+|---|---|
+| 1 | A ficha e o "explorar" filtram a legislatura corrente, mas ⛔ não distinguem casa |
+| 2 | A **ponte deputado→senador** (achado #18) segue aberta: 43 nomes aparecem nas duas casas, e o Senado ⛔ não publica CPF |
+| 3 | 7 perguntas do Senado contra 21 da Câmara — o desequilíbrio favorece a Câmara no fluxo misto, e ampliar depende da PL11 |
 
 ---
 
