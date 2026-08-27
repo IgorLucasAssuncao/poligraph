@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Grafo, NoDoGrafo } from '../api';
 import { TelaDoGrafo, type PosicaoDoCidadao } from './TelaDoGrafo';
 
@@ -27,12 +27,20 @@ export function GrafoAmpliado({
 }) {
   const dialogo = useRef<HTMLDialogElement>(null);
 
+  // Monta na primeira abertura e ⛔ não desmonta ao fechar: desmontar no clique faria a
+  // animação de saída acontecer sobre uma caixa vazia.
+  const [jaAbriu, setJaAbriu] = useState(false);
+
   useEffect(() => {
     const elemento = dialogo.current;
     if (!elemento) return;
 
-    if (aberto && !elemento.open) elemento.showModal();
-    if (!aberto && elemento.open) elemento.close();
+    if (aberto) {
+      setJaAbriu(true);
+      if (!elemento.open) elemento.showModal();
+    } else if (elemento.open) {
+      elemento.close();
+    }
   }, [aberto]);
 
   return (
@@ -50,9 +58,9 @@ export function GrafoAmpliado({
         </button>
       </header>
 
-      {/* ⚠️ Só monta com o modal aberto: o Canvas mediria o contêiner com altura zero
-          e desenharia num quadro invisível. */}
-      {aberto && (
+      {/* ⚠️ ⛔ Não monta antes da primeira abertura: o Canvas mediria o contêiner com
+          altura zero e desenharia num quadro invisível. */}
+      {jaAbriu && (
         <TelaDoGrafo
           grafo={grafo}
           cidadao={cidadao}

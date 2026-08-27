@@ -312,13 +312,29 @@ function PainelDeContas({ pessoaId }: { pessoaId: number }) {
 
   return (
     <>
-      <p className="perfil-contas">
-        <span>Campanha · Emendas · Cota</span>
+      <section className="perfil-contas" aria-label="Contas do mandato">
+        <div className="contas-numeros">
+          <ValorDaConta
+            rotulo="Campanha"
+            valor={fin?.total}
+            nota={fin?.anoEleicao ? `eleição de ${fin.anoEleicao}` : undefined}
+          />
+          <ValorDaConta
+            rotulo="Emendas"
+            valor={emendas?.empenhado}
+            nota={emendas?.ano ? `empenhado em ${emendas.ano}` : undefined}
+          />
+          <ValorDaConta
+            rotulo="Cota"
+            valor={gastos?.total}
+            nota={gastos?.ano ? `gasto em ${gastos.ano}` : undefined}
+          />
+        </div>
 
         <button type="button" className="botao-contas" onClick={() => setAberto(true)}>
           Ver as contas
         </button>
-      </p>
+      </section>
 
       <ContasAmpliadas
         aberto={aberto}
@@ -382,12 +398,21 @@ function ContasAmpliadas({
 }) {
   const dialogo = useRef<HTMLDialogElement>(null);
 
+  // Monta na primeira abertura e ⛔ não desmonta ao fechar. Duas razões: fora do modal
+  // são três subárvores grandes que ninguém está vendo, e desmontá-las no clique de
+  // fechar faria a animação de saída acontecer sobre uma caixa VAZIA.
+  const [jaAbriu, setJaAbriu] = useState(false);
+
   useEffect(() => {
     const elemento = dialogo.current;
     if (!elemento) return;
 
-    if (aberto && !elemento.open) elemento.showModal();
-    if (!aberto && elemento.open) elemento.close();
+    if (aberto) {
+      setJaAbriu(true);
+      if (!elemento.open) elemento.showModal();
+    } else if (elemento.open) {
+      elemento.close();
+    }
   }, [aberto]);
 
   return (
@@ -403,9 +428,7 @@ function ContasAmpliadas({
         </button>
       </header>
 
-      {/* Só monta com o modal aberto: fora dele são três subárvores grandes que
-          ninguém está vendo. */}
-      {aberto && (
+      {jaAbriu && (
         <div className="contas-corpo">
           {/* 🔴 A comparação vive AQUI, com a largura do modal — é o único lugar em que
               as três ordens de grandeza cabem lado a lado sem se atropelar. */}

@@ -1155,17 +1155,92 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 
+/* ═══ MODAIS — entrada e saída ═════════════════════════════════ */
+/* 🔴 `<dialog>` não anima sozinho: ele aparece e some no mesmo quadro, e a saída é a
+   pior das duas — o conteúdo desaparece antes de o olho registrar que fechou.
+
+   ⚠️ Animar exige TRÊS peças, e faltando qualquer uma só a entrada funciona:
+   · `@starting-style` — de onde a animação PARTE quando o elemento passa a existir
+   · `allow-discrete` em `display` e `overlay` — sem isso o navegador troca os dois de
+     uma vez no fim, e a saída não é vista
+   · o estado fechado declarado no seletor base, que é para onde ela VAI
+
+   ⭐ Vale para os três diálogos do projeto de uma vez. */
+.modal-avaliacao,
+.grafo-ampliado,
+.contas-ampliadas {
+  opacity: 0;
+  transform: translateY(10px) scale(.985);
+  transition:
+    opacity var(--t-medio) var(--curva-saida),
+    transform var(--t-medio) var(--curva-saida),
+    overlay var(--t-medio) allow-discrete,
+    display var(--t-medio) allow-discrete;
+}
+.modal-avaliacao[open],
+.grafo-ampliado[open],
+.contas-ampliadas[open] {
+  opacity: 1;
+  transform: none;
+  /* ⭐ Entrada e saída com curvas DIFERENTES: o que chega freia longo, o que sai
+     acelera e some. É a distinção que faz o movimento ler como físico. */
+  transition-timing-function: var(--curva-entrada);
+}
+@starting-style {
+  .modal-avaliacao[open],
+  .grafo-ampliado[open],
+  .contas-ampliadas[open] {
+    opacity: 0;
+    transform: translateY(10px) scale(.985);
+  }
+}
+
+.modal-avaliacao::backdrop,
+.grafo-ampliado::backdrop,
+.contas-ampliadas::backdrop {
+  opacity: 0;
+  transition:
+    opacity var(--t-medio) var(--curva),
+    overlay var(--t-medio) allow-discrete,
+    display var(--t-medio) allow-discrete;
+}
+.modal-avaliacao[open]::backdrop,
+.grafo-ampliado[open]::backdrop,
+.contas-ampliadas[open]::backdrop { opacity: 1; }
+@starting-style {
+  .modal-avaliacao[open]::backdrop,
+  .grafo-ampliado[open]::backdrop,
+  .contas-ampliadas[open]::backdrop { opacity: 0; }
+}
+
+/* ⚠️ Menos movimento ⛔ não é "nenhuma mudança visual": sumir sem transição confunde
+   tanto quanto deslizar demais. Sai o deslocamento, fica a fusão curta. */
+@media (prefers-reduced-motion: reduce) {
+  .modal-avaliacao,
+  .grafo-ampliado,
+  .contas-ampliadas {
+    transform: none;
+    transition-duration: var(--t-curto);
+  }
+  @starting-style {
+    .modal-avaliacao[open],
+    .grafo-ampliado[open],
+    .contas-ampliadas[open] { transform: none; }
+  }
+}
+
 /* ═══ CONTAS DO MANDATO — a faixa fixa do perfil ═══════════════ */
 /* 🔴 Os três totais lado a lado é o ponto TODO da faixa: campanha na casa dos milhões,
    emendas na das dezenas de milhões, cota na das centenas de milhares. Essa diferença
    de ordem de grandeza é a informação, e ela só existe quando os três se veem juntos. */
-/* No perfil, as contas são UMA linha no mesmo peso de "120 votações registradas": a
-   comparação entre os três valores acontece no modal, que tem largura para ela. */
+/* Os três totais de cara no perfil, com régua acima em vez de borda em volta: solta
+   entre dois blocos com borda, a faixa lia como uma tira flutuando. */
 .perfil-contas {
-  display: flex; align-items: center; justify-content: space-between;
-  flex-wrap: wrap; gap: .75rem;
-  margin: .6rem 0 0; font-size: .9rem; color: var(--suave);
+  display: flex; align-items: flex-end; justify-content: space-between;
+  flex-wrap: wrap; gap: 1rem;
+  margin-top: 1rem; padding-top: .9rem; border-top: 1px solid var(--borda);
 }
+.perfil-contas .contas-numeros { flex: 1 1 22rem; }
 /* Controle de verdade, ⛔ não link de texto: é a única porta para o detalhe, e como
    link discreto ela não se anunciava. */
 .botao-contas {
@@ -1175,7 +1250,12 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 }
 .botao-contas:hover { border-color: var(--realce); color: var(--realce); }
 
-/* A comparação, dentro do modal. */
+.contas-numeros {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem;
+}
+
+/* A mesma comparação repetida no topo do modal: quem abriu clicando nela precisa
+   reencontrá-la, senão o modal parece outro assunto. */
 .contas-comparacao {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem;
   padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--borda);
