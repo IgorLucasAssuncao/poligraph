@@ -15,13 +15,14 @@ física traz **CPF em claro**. A RNF-13 proíbe guardar CPF assim.
 """
 
 import csv
-import hashlib
 import io
 import logging
 import zipfile
 from pathlib import Path
 
 import requests
+
+from .normalizacao import hash_de_cpf
 
 log = logging.getLogger("poligraph")
 
@@ -131,7 +132,8 @@ def _identificar_fornecedor(bruto: str | None) -> tuple[str | None, bool]:
         return None, False
 
     if len(digitos) == 11:
-        return hashlib.sha256(digitos.encode()).hexdigest(), True
+        # ⭐ Mesmo hash de `Pessoa.CpfHash` — é o que torna os dois lados comparáveis.
+        return hash_de_cpf(digitos), True
 
     return digitos, False
 

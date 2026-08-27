@@ -4,6 +4,7 @@ Estas funções são puras de propósito: são o que os testes unitários cobrem
 as medições do discovery transformaram em regra. Nada aqui toca banco ou rede.
 """
 
+import hashlib
 import re
 import unicodedata
 
@@ -133,6 +134,22 @@ def inferir_polaridade(descricao: str | None) -> int:
 # ═══════════════════════════════════════════════════════════════════
 # CPF — a armadilha do zero à esquerda
 # ═══════════════════════════════════════════════════════════════════
+
+
+def hash_de_cpf(bruto: str | int | None) -> str | None:
+    """SHA-256 do CPF normalizado — é o que vai para o banco.
+
+    🔴 **RNF-13: CPF ⛔ nunca em claro.** Mas o hash **não impede a conciliação**: basta
+    hashear os dois lados com o mesmo algoritmo e comparar os hashes. O CPF em claro só
+    precisa existir **em memória**, durante a ingestão.
+
+    ⚠️ Normaliza ANTES de hashear, e isso não é detalhe: `012.345.678-90` e
+    `01234567890` são o mesmo CPF e precisam dar o **mesmo** hash. Sem a normalização,
+    a fonte que formata com pontos nunca casaria com a que não formata.
+    """
+    digitos = normalizar_cpf(bruto)
+
+    return hashlib.sha256(digitos.encode()).hexdigest() if digitos else None
 
 
 def normalizar_cpf(bruto: str | int | None) -> str | None:

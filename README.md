@@ -22,6 +22,7 @@ nominal de votação** da Câmara. Afinidade medida por **comportamento revelado
 | **Arestas do grafo** | 36.017 |
 | **Despesas de cota** | 208.188 |
 | **Perguntas curadas ativas** | 21 |
+| **Deputados com `cpf_hash`** | 643 — 100% |
 | **Notícias** | 0 — ⛔ o coletor ainda não rodou |
 | **Testes** | 79 .NET · 196 Python · 30 front |
 
@@ -77,6 +78,7 @@ No painel do Aspire, inicie **`etl-ingerir`** e depois **`etl-analisar`**.
 | `ingerir --anos 2023 2024 2025 2026` | Deputados, votações e votos | ~2 min |
 | `analisar --legislatura 57` | Similaridade, kNN, comunidades, componentes | ~40 s |
 | `cota --anos 2025` | Cota parlamentar (CEAP) | ~11 s |
+| `cpf` | 🔴 Completa `cpf_hash` — chave para conciliar com o TSE | ~4 min |
 | `validar --legislatura 57` | ⭐ Mede discriminação e comunidade × partido | ~2 s |
 
 `cota` e `validar` ainda não estão no painel — rodam pelo container:

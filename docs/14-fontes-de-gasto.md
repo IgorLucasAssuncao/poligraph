@@ -302,6 +302,27 @@ recebeu** dinheiro público depois.
 chave forte, e o [achado #22](achados/022-deputados-nao-e-arquivo-anual.md) registra que
 o CSV em bloco não a tem.
 
+#### ✅ Implementado — `python -m poligraph_etl cpf`
+
+```
+Buscando CPF de 643 deputados...
+  643 de 643 com CPF
+Concluído em 225.8s
+```
+
+| Verificado no banco | |
+|---|---|
+| Com `cpf_hash` | **643** |
+| Hash válido (64 hex) | **643** |
+| ⛔ **CPF em claro** | **0** |
+
+⭐ **Idempotente:** a segunda execução responde *"todos já têm cpf_hash"* em 0,0s. Só
+busca quem tem **voto** e ainda **não** tem hash — 7.889 pessoas no cadastro contra 643
+com voto na legislatura.
+
+⚠️ **Canário:** se menos de 80% retornarem CPF, o ETL registra WARNING. Perda grande
+significa layout mudado ou bloqueio, ⛔ não "alguns sem CPF".
+
 #### 🔴 O teste de casamento — CPF ganha
 
 Deputados do **Amapá** (15) contra os candidatos a deputado federal do TSE (149):

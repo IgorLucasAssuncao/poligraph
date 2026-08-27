@@ -122,6 +122,37 @@ def desconectar_proposicoes_ausentes(
     return desconectadas
 
 
+def pessoas_sem_cpf(conexao: psycopg.Connection) -> list[tuple[str, int]]:
+    """Quem tem VOTO mas ainda não tem `cpf_hash`, com o id da Câmara junto.
+
+    ⚠️ **Só quem votou**, e o recorte importa: são 7.889 pessoas no cadastro contra ~643
+    com voto na legislatura. Buscar CPF de todas seriam 7.889 requisições para preencher
+    7.246 registros que ninguém consulta.
+
+    ⭐ E só quem AINDA não tem — reingerir ⛔ não refaz o trabalho.
+    """
+    return [
+        (str(linha[0]), linha[1])
+        for linha in conexao.execute(
+            """
+            SELECT DISTINCT f.id_externo, p.id
+              FROM pessoas p
+              JOIN pessoa_fonte_ids f ON f.pessoa_id = p.id AND f.fonte = 'CAMARA'
+             WHERE p.cpf_hash IS NULL
+               AND EXISTS (SELECT 1 FROM votos v WHERE v.pessoa_id = p.id)
+             ORDER BY p.id
+            """
+        ).fetchall()
+    ]
+
+
+def gravar_cpf_hash(conexao: psycopg.Connection, pessoa_id: int, hash_cpf: str) -> None:
+    """🔴 Grava o HASH, ⛔ nunca o CPF. RNF-13."""
+    conexao.execute(
+        "UPDATE pessoas SET cpf_hash = %s WHERE id = %s", (hash_cpf, pessoa_id)
+    )
+
+
 def gravar_votacoes(conexao: psycopg.Connection, votacoes: Sequence[dict]) -> int:
     """Grava votações. `ON CONFLICT (id) DO UPDATE` — a Câmara corrige dado retroativo."""
     return _executar_em_lotes(

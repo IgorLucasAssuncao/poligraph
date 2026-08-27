@@ -19,12 +19,15 @@ import numpy as np
 import psycopg
 
 from . import conexao as conexao_mod
-from . import comparacao, cota, grafo, ingestao, persistencia, similaridade, validacao
+from . import comparacao, cota, grafo, ingestao, normalizacao, persistencia, similaridade, validacao
 from .fontes import camara
 
 log = logging.getLogger("poligraph")
 
 CACHE = Path(os.environ.get("POLIGRAPH_CACHE", ".cache"))
+
+# ⚠️ Segundos entre chamadas na busca de CPF — são centenas contra serviço público.
+PAUSA_ENTRE_CHAMADAS = 0.15
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -47,6 +50,8 @@ def main(argv: list[str] | None = None) -> int:
         with psycopg.connect(conexao_str, autocommit=True) as conexao:
             if args.comando == "ingerir":
                 _ingerir(conexao, args.anos)
+            elif args.comando == "cpf":
+                _cpf(conexao)
             elif args.comando == "cota":
                 _cota(conexao, args.anos)
             elif args.comando == "validar":
@@ -75,6 +80,8 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
 
     analisar = sub.add_parser("analisar", help="calcula similaridade e grafo")
     analisar.add_argument("--legislatura", type=int, default=57)
+
+    sub.add_parser("cpf", help="busca o CPF dos deputados com voto e grava o HASH")
 
     cotas = sub.add_parser("cota", help="ingere a cota parlamentar (CEAP)")
     cotas.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
@@ -198,6 +205,50 @@ def _analisar(conexao: psycopg.Connection, legislatura: int) -> None:
     except Exception:
         persistencia.fechar_execucao(conexao, execucao_id, sucesso=False)
         raise
+
+
+def _cpf(conexao: psycopg.Connection) -> None:
+    """Completa `cpf_hash` a partir da API REST da Câmara.
+
+    🔴 **Por que existe um comando só para isto:** a coluna `cpf` do CSV em bloco vem
+    VAZIA — 0 de 7.889. O valor só existe em `/api/v2/deputados/{id}`, **uma requisição
+    por deputado**.
+
+    ⭐ E vale a viagem: contra a prestação de contas do TSE, o CPF casou **15 de 15**,
+    contra 14 de 15 do nome civil.
+
+    ⚠️ O CPF em claro existe apenas **em memória** — o que vai para o banco é o hash.
+    """
+    faltantes = persistencia.pessoas_sem_cpf(conexao)
+    if not faltantes:
+        log.info("Todos os deputados com voto já têm cpf_hash.")
+        return
+
+    log.info("Buscando CPF de %d deputados...", len(faltantes))
+
+    achados = 0
+    for i, (id_camara, pessoa_id) in enumerate(faltantes, 1):
+        cpf = camara.cpf_do_deputado(id_camara)
+        hash_cpf = normalizacao.hash_de_cpf(cpf)
+
+        if hash_cpf:
+            persistencia.gravar_cpf_hash(conexao, pessoa_id, hash_cpf)
+            achados += 1
+
+        # ⚠️ Uma pausa curta: são centenas de requisições seguidas contra um serviço
+        #    público, e não há motivo para apertá-lo.
+        time.sleep(PAUSA_ENTRE_CHAMADAS)
+
+        if i % 100 == 0:
+            log.info("  %d de %d...", i, len(faltantes))
+
+    log.info("  %d de %d com CPF", achados, len(faltantes))
+
+    # 🔴 Perda grande significa layout mudado ou bloqueio — ⛔ não "alguns sem CPF".
+    if achados < len(faltantes) * 0.8:
+        log.warning(
+            "  ⚠️ Menos de 80%% dos deputados tinham CPF. A API mudou ou está limitando?"
+        )
 
 
 def _cota(conexao: psycopg.Connection, anos: list[int]) -> None:

@@ -93,3 +93,36 @@ def conferir_volume(df: pd.DataFrame, ano: int) -> None:
             f"(desvio de {desvio:.1%}). "
             "Parsing regrediu, ou a Câmara mudou o arquivo — confira antes de ingerir."
         )
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 CPF — só existe na API REST, um deputado por chamada
+# ═══════════════════════════════════════════════════════════════════
+
+# ⚠️ Aqui NÃO dá para usar o arquivo em bloco: a coluna `cpf` de `deputados.csv` vem
+#    VAZIA — 0 de 7.889 preenchidos. O valor só existe em `/api/v2/deputados/{id}`.
+#
+# ⭐ E vale a requisição: no teste contra a prestação de contas do TSE, o CPF casou
+#    15 de 15, contra 14 de 15 do nome civil. Errar um em quinze, em escala nacional,
+#    são dezenas de conciliações manuais.
+API = "https://dadosabertos.camara.leg.br/api/v2"
+
+
+def cpf_do_deputado(id_camara: str) -> str | None:
+    """Busca o CPF de um deputado. `None` quando não há.
+
+    🔴 `id_camara` é o id da CÂMARA, ⛔ não o `pessoas.id` do projeto — que é sintético
+    (RF-11). Passar o errado devolve **404**, e o erro é silencioso na leitura do
+    código: os dois são número, e nada avisa. O de-para vive em `pessoa_fonte_ids`.
+
+    ⚠️ Devolve `None` em qualquer falha, de propósito. Uma requisição que cai ⛔ não pode
+    derrubar a ingestão inteira — o deputado fica sem CPF e a próxima execução tenta de
+    novo.
+    """
+    try:
+        resposta = requests.get(f"{API}/deputados/{id_camara}", timeout=30)
+        resposta.raise_for_status()
+
+        return (resposta.json().get("dados") or {}).get("cpf") or None
+    except (requests.RequestException, ValueError):
+        return None
