@@ -103,11 +103,13 @@ confirmar que a prestação de contas expõe o CNPJ do doador — ⛔ ainda não
 | **PNCP** (contratações do Executivo) | 27.187 contratos em **10 dias** de janeiro/2025 | ⛔ Não | 🔴 **Não liga a parlamentar** |
 | **Fotos de deputado** | 48 KB por pessoa, JPEG direto | ⛔ Não | ✅ Pronta |
 | **Fundão eleitoral (FEFC)** | Prestação de contas por candidato | ⛔ Não | ⚠️ TSE, com fricção |
-| **Servidores federais, convênios** | Portal da Transparência | 🔑 **Sim** | ⏳ Aguardando chave |
+| 🔴 **Emendas parlamentares** | Autor, município, empenhado × pago | 🔑 **Sim** | ⏳ **É a razão para pedir a chave** |
+| Servidores federais, convênios | Portal da Transparência | 🔑 Sim | 🔵 Ligam por CPF, que não temos em claro |
 
-🔴 **O Portal da Transparência é a fonte MENOS necessária** para o que foi pedido.
-Licitação tem fonte melhor (PNCP), cota e fotos vêm da Câmara, fundão vem do TSE. A
-chave só destrava servidores federais e convênios.
+> ⚠️ **Correção de 2026-08-27.** Esta página afirmava que *"o Portal da Transparência é a
+> fonte MENOS necessária"*. **O discovery do contrato OpenAPI desmente**: o grupo
+> `emendas` liga ao parlamentar por `nomeAutor` e traz empenhado × pago por município.
+> É a fonte mais forte do levantamento — ver §5.
 
 ---
 
@@ -269,6 +271,84 @@ backup e restore do Postgres agradecem, e trocar de estratégia depois fica bara
 
 ---
 
+## 5. Portal da Transparência — discovery **sem a chave**
+
+> ⭐ Feito lendo o **contrato OpenAPI**, que responde **200 sem autenticação**:
+> `https://api.portaldatransparencia.gov.br/v3/api-docs`. Dá para saber exatamente o que
+> chega antes de esperar o token.
+
+**106 endpoints, em 53 grupos.** A maioria é programa social (Bolsa Família, BPC, PETI,
+Seguro Defeso) — ⛔ nada disso liga a parlamentar.
+
+Aplicando o critério, restam quatro grupos:
+
+### 🔴 `emendas` — a descoberta que muda o quadro
+
+```
+GET /api-de-dados/emendas?nomeAutor=&ano=&tipoEmenda=
+```
+
+O retorno traz:
+
+```
+codigoEmenda · ano · tipoEmenda · autor · nomeAutor · numeroEmenda
+localidadeDoGasto · funcao · subfuncao
+valorEmpenhado · valorLiquidado · valorPago
+valorRestoInscrito · valorRestoCancelado · valorRestoPago
+```
+
+⭐ **`nomeAutor` é o parlamentar, e `localidadeDoGasto` é o município.** Isto responde
+*"para onde este deputado mandou dinheiro público?"* — ligado à pessoa, com valor
+empenhado × pago, e por município.
+
+🔴 **É a fonte mais forte de todas as levantadas**, e vale mais que a cota: emenda
+parlamentar é o instrumento de poder orçamentário do deputado, e o par
+`valorEmpenhado × valorPago` mostra o que foi prometido versus o que saiu.
+
+⚠️ **A ligação é por NOME, ⛔ não por id.** Vai exigir conciliação — grafia, homônimos,
+nome parlamentar × nome civil. É o mesmo problema da RF-13, e o projeto já tem a `fila de
+revisão manual` prevista para isso.
+
+### 🟡 `servidores` e `peps` — ligam por CPF
+
+```
+GET /api-de-dados/servidores?cpf=&nome=
+GET /api-de-dados/servidores/remuneracao?cpf=&mesAno=
+GET /api-de-dados/peps?cpf=&nome=          ← Pessoas Expostas Politicamente
+```
+
+⭐ Ligam por **CPF**, que é chave forte. ⚠️ Mas o projeto guarda apenas `cpf_hash`
+(RNF-13) — e ⛔ **hash não se reverte para consultar a API**. Usar isto exigiria manter o
+CPF em claro em algum ponto do fluxo, o que contraria a regra.
+
+🔵 Alternativa: consultar por `nome` e cair no mesmo problema de conciliação das emendas.
+
+### ⛔ `contratos` e `licitacoes` — confirmam o que já se sabia
+
+```
+/contratos          → dataInicial, dataFinal, codigoOrgao
+/contratos/cpf-cnpj → cpfCnpj                    ← do FORNECEDOR, não do político
+/licitacoes         → dataInicial, dataFinal, codigoOrgao
+```
+
+🔴 **Nenhum parâmetro de parlamentar.** O `cpfCnpj` é do fornecedor. Confirma o veredito
+da §"critério": são compras do Executivo, sem político do outro lado.
+
+⭐ **Mas fecham a ponte:** `/contratos/cpf-cnpj` permite perguntar *"o que mais o governo
+comprou desta empresa?"* — partindo de um CNPJ que veio da cota parlamentar.
+
+### Veredito do discovery
+
+| Grupo | Liga ao parlamentar | Vale a chave? |
+|---|---|---|
+| **`emendas`** | ✅ por `nomeAutor` | 🔴 **SIM — é a razão para pedir a chave** |
+| `contratos/cpf-cnpj` | 🟡 indireto, via CNPJ da cota | ⭐ Sim, como complemento |
+| `servidores`, `peps` | ⚠️ por CPF, que não temos em claro | 🔵 Talvez |
+| `licitacoes`, `contratos` | ⛔ Não | ⛔ Não |
+| Programas sociais (40+ endpoints) | ⛔ Não | ⛔ Não |
+
+---
+
 ## O que falta decidir
 
 | # | Decisão | Quem decide |
@@ -276,6 +356,7 @@ backup e restore do Postgres agradecem, e trocar de estratégia depois fica bara
 | 1 | A cota parlamentar entra no escopo? Ela **não** é sobre voto — é outro eixo de análise, e o título do TCC não a menciona | 🔴 Autor |
 | 2 | Se entrar: o `cpf` do CSV passa por hash, como manda a RNF-13 | Já resolvido pela regra |
 | 3 | Vale perseguir a ponte **fornecedor da cota × doador de campanha**? | 🔴 Autor |
+| 3b | **Emendas** entram? A ligação é por NOME e exige conciliação (mesmo problema da RF-13) | 🔴 Autor |
 | 4 | Fotos: rehospedar ou linkar? | 🔴 Autor — é LGPD, não técnica |
 
 ⛔ **Licitações e PNCP saíram da lista** por não passarem no critério de associação à
