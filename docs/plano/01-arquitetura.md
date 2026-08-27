@@ -480,6 +480,54 @@ no plano gratuito). Um job diário de 10 min = 300 min/mês. Ainda cabe, mas fiq
 **Aspire 13** é a versão atual e cobre exatamente esta stack: ele orquestra **C#, Python,
 React e Postgres** no mesmo *AppHost*.
 
+### 4.0 🔄 Como o AppHost ficou de fato (2026-08-27)
+
+> ⚠️ O trecho da §4.1 abaixo é o **rascunho original**. O que está em
+> `src/Poligraph.AppHost/AppHost.cs` divergiu em três pontos, e cada um tem motivo.
+
+**1. O ETL são DOIS recursos, não um** — `ingerir` e `analisar` são comandos distintos,
+e cada um vira um botão próprio no painel.
+
+**2. 🔴 `WithExplicitStart()` — o ponto mais importante**
+
+```csharp
+var etlIngerir = builder.AddDockerfile("etl-ingerir", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()                      // 🔴 sem isto, todo `dotnet run` ingere
+    .WithArgs("ingerir", "--anos", "2025")
+    .WithVolume("poligraph-etl-cache", "/etl/.cache");
+```
+
+⚠️ Sem `WithExplicitStart()`, cada subida do ambiente dispararia a ingestão: dezenas de
+MB de CSV baixados da Câmara e **minutos de espera antes de o ambiente ficar usável**.
+Com ele, o ambiente sobe completo e o ETL fica pronto, aguardando o clique.
+
+**3. `AddDockerfile`, ⛔ não `AddPythonApp`**
+
+⭐ Roda pela **mesma imagem que o VPS executa**, e ninguém precisa de Python nem venv no
+host para subir o projeto. `AddPythonApp` exigiria ambiente Python local — e o que roda
+em desenvolvimento deixaria de ser o que roda em produção.
+
+**4. `WaitForCompletion(migracoes)`** — 🔴 o Python **nunca cria tabela**; o EF é dono do
+schema. Sem esperar, o ETL correria contra um banco sem estrutura.
+
+> ⚠️ **`WaitForCompletion` é faca de dois gumes.** Se a migration falhar, a API fica
+> travada atrás dela **para sempre** — e o sintoma é "o Aspire está demorando", não um
+> erro. Já aconteceu: uma FK não aplicava por causa de linhas órfãs, e a espera parecia
+> lentidão. Ver [`plano/04 §2.2b`](04-esqueleto.md).
+
+**Comandos, uma vez o ambiente no ar:**
+
+| Recurso | O que faz |
+|---|---|
+| `etl-ingerir` | Baixa e grava deputados, votações e votos |
+| `etl-analisar` | Similaridade, kNN, comunidades e componentes |
+| `cota` | ⚠️ Ainda **não** exposto no painel — roda via container |
+| `validar` | Idem — mede discriminação e comunidade × partido |
+
+---
+
 ### 4.1 O que o Aspire entrega
 
 ```csharp

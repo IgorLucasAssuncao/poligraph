@@ -241,8 +241,36 @@ Um bug no Python que tentasse gravar par com base insuficiente é rejeitado pelo
 ⚠️ **A decisão vale para o questionário e para o grafo do produto.** O histórico
 2001–2026 continua disponível para análise no TCC — são perguntas diferentes.
 
-⛔ **E ainda NÃO está no código** — nenhuma consulta filtra por legislatura fora do ETL.
-É a **PL35**, e o prazo é real: a 57ª termina em **janeiro de 2027**.
+#### 3.2.5.1 🔄 A legislatura sai da DATA, não de um número fixo
+
+> **Corrigido em 2026-08-27**, a partir da pergunta *"o que acontece quando mudar de
+> legislatura?"*.
+
+⛔ **Era um `57` chumbado.** `votacoes_para_linhas(df, legislatura=57)` tinha o valor como
+padrão, e o `__main__` **nunca o passava**.
+
+🔴 **Ingerir 2027 gravaria as votações da 58ª COMO SE FOSSEM DA 57ª** — sem erro, sem
+aviso, e a matriz de similaridade passaria a comparar deputados de duas Câmaras
+diferentes como se fossem a mesma.
+
+```python
+def legislatura_da_data(data: str) -> int:
+    ano, mes = int(data[:4]), int(data[5:7])
+    ano_efetivo = ano if mes >= 2 else ano - 1      # ⚠️ a posse é em FEVEREIRO
+    return 57 + (ano_efetivo - 2023) // 4
+```
+
+⚠️ **A virada é em fevereiro, ⛔ não em janeiro.** A posse é em 1º de fevereiro, então
+uma votação de **janeiro de 2027 ainda pertence à 57ª**. Travado por teste.
+
+---
+
+⛔ **E o FILTRO ainda não está no código** — nenhuma consulta da API filtra por
+legislatura fora do ETL. É a **PL35**.
+
+⏳ **O que ainda não foi decidido** é a **PL44**: quando a 58ª começar, o grafo mostra
+qual? As 21 perguntas continuam? Quem respondeu na 57ª mantém o resultado? A 57ª termina
+em **janeiro de 2027**.
 
 ### 3.3 ⭐ Por que kNN e não limiar global
 

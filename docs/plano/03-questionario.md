@@ -159,6 +159,91 @@ mais como capítulo de avaliação do que como recurso de produto.
 
 ---
 
+## 2.4 ✅ MEDIDO — o nível C funciona, e ganha do acaso (2026-08-27)
+
+> ⚠️ A §2.2 acima **estimava** que "8 adaptativas discriminam tanto quanto 20 fixas". A
+> estimativa não estava certa nem errada — estava **sem medição**. Agora tem.
+
+Comando: `python -m poligraph_etl validar --legislatura 57`.
+
+### 2.4.1 A ideia que torna a medição possível
+
+🔴 **Se um deputado usar o app respondendo os próprios votos, ele tem de se encontrar.**
+É verdade-terreno de graça — ⛔ não depende de painel humano nem de rótulo externo.
+
+⭐ **E o que falha com poucas perguntas não é ele sair do topo** — ele nunca sai, casa
+consigo por construção. É o topo ficar **lotado**. Por isso a medida é o **tamanho do
+empate**, ⛔ não a posição.
+
+### 2.4.2 Quantas perguntas bastam
+
+| Perguntas | Empate mediano no topo | Sozinho no topo |
+|---:|---:|---:|
+| 4 | 225 | 0,0% |
+| 8 | 93 | 0,0% |
+| 12 | 58 | 3,1% |
+| **22** | **30** | **8,3%** |
+| 30 | 14 | 16,7% |
+
+🔴 **Com 22 perguntas, 91,7% das pessoas empatam com pelo menos mais um deputado**, e a
+mediana do empate é 30.
+
+⛔ **Consequência para o produto:** *"o deputado que mais vota como você"* é um sorteio
+dentro de um grupo de ~30. Mostrar um nome só ali afirma precisão que o dado não tem.
+
+⭐ **A saída honesta é a COMUNIDADE.** O instrumento não identifica uma pessoa, mas
+identifica bem um bloco — e a modularidade de 0,558 confirma
+([`plano/07 §3.5.1`](07-grafo-e-afinidade.md)).
+
+### 2.4.3 O desempate dirigido — 2× mais eficiente que o acaso
+
+O mecanismo escolhe a votação que mais divide **o grupo empatado**, ⛔ não a Câmara.
+
+> ⚠️ É a diferença entre o nível A e o C: uma votação que racha a Câmara ao meio pode ser
+> **unânime** entre os 30 que empataram com você — e aí não desempata nada.
+
+Partindo de 12 perguntas, com grupo de controle aleatório:
+
+| Perguntas extras | Dirigido | Aleatório |
+|---:|---:|---:|
+| 0 | 88,9 | 88,9 |
+| 1 | **64,1** | 84,6 |
+| 3 | **46,5** | 72,0 |
+| 5 | **33,4** | 62,2 |
+
+⭐ Cinco perguntas dirigidas cortam o empate em **62%**; cinco sorteadas, em 30%.
+
+🔴 **O grupo de controle é o que faz isto valer como evidência.** Sem ele, o encolhimento
+poderia vir só de perguntar mais, e a "contribuição técnica" seria um contador de
+perguntas.
+
+### 2.4.4 ⚠️ O preço, que não estava previsto
+
+🔴 **A pergunta de desempate também precisa ser CURADA.** Gerar pergunta a partir da
+descrição crua da votação violaria a RNF-29 (nada de jargão institucional) e o teste do
+jantar.
+
+⛔ **O desempate não funciona com 22 perguntas** — ele escolhe a próxima do pool, e o pool
+acaba antes de desempatar. Exige **40–60 perguntas curadas**.
+
+⭐ Isso dá à RQ3 um **tamanho-alvo justificado por medição**, em vez do "15–25" que o
+discovery chutou. É argumento para a banca, ⛔ não desculpa.
+
+### 2.4.5 🔴 Um erro meu, pego pela conferência direta
+
+A primeira rodada deu empate mediano de **90** com 22 perguntas. A conferência direta no
+banco dava **no máximo 8** padrões idênticos. Os dois números não podiam ser verdadeiros.
+
+⚠️ **A causa era o experimento, não o sistema:** eu contava como empatado quem tinha
+concordância 1,0 **sem exigir base comparável**. Quem faltou em 15 das 22 e concordou nas
+7 que compareceu marca 1,0 e empata com quem respondeu todas.
+
+⭐ A regra *"ausência não é discordância"* está certa, mas sozinha **infla o empate** — e
+a API já se protege disso com `TemBaseSuficiente`, que o experimento não aplicava.
+Aplicado o mesmo piso de 60%, os números caíram para os da tabela.
+
+---
+
 ## 3. O conteúdo das propostas é necessário? — **não**
 
 Pergunta direta, resposta direta:
