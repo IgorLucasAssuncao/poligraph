@@ -279,10 +279,58 @@ recebeu** dinheiro público depois.
 
 | # | Questão |
 |---|---|
-| 1 | 🔴 **Ligar candidato → deputado eleito.** O arquivo tem CPF; nosso banco guarda `cpf_hash` e ⛔ **o CPF do deputado nunca é ingerido** (a coluna `cpf` do CSV da Câmara vem vazia — [achado #22](achados/022-deputados-nao-e-arquivo-anual.md)). A ligação teria de ser **por nome**, como nas emendas |
+| 1 | ✅ **RESOLVIDA** — ver §3.1 abaixo. O CPF existe na **API REST** da Câmara, e o casamento deu **15 de 15** |
 | 2 | ⚠️ **377 MB por eleição**, encoding **Latin-1**, separador `;` |
 | 3 | ⚠️ Traz **CPF de candidato e de doador pessoa física em claro** — RNF-13 exige hash |
 | 4 | 🔵 A eleição de 2022 elegeu a legislatura 57. Para 2026 o arquivo só existe depois do pleito |
+
+### 3.1 ✅ O CPF existe — na API REST, não no CSV
+
+> **Medido em 2026-08-27.** Eu havia escrito que *"o CPF do deputado nunca é ingerido"* e
+> que a ligação teria de ser por nome. ⛔ **Errado.**
+
+| Fonte | Campo `cpf` |
+|---|---|
+| `arquivos/deputados/csv/deputados.csv` | ⛔ **Vazio** — 0 de 7.889 ([achado #22](achados/022-deputados-nao-e-arquivo-anual.md)) |
+| `api/v2/deputados/{id}` | ✅ **Preenchido** — 10 de 10 na amostra |
+
+```json
+{ "nomeCivil": "JOSE ABILIO SILVA DE SANTANA", "cpf": "36607606504" }
+```
+
+⚠️ **Custa uma requisição por deputado** — 643 chamadas, uma vez só. É o preço de uma
+chave forte, e o [achado #22](achados/022-deputados-nao-e-arquivo-anual.md) registra que
+o CSV em bloco não a tem.
+
+#### 🔴 O teste de casamento — CPF ganha
+
+Deputados do **Amapá** (15) contra os candidatos a deputado federal do TSE (149):
+
+| Estratégia | Acerto |
+|---|---|
+| ⭐ **Por CPF** | **15 de 15 — 100%** |
+| Por nome civil normalizado | 14 de 15 — 93% |
+
+⭐ **O CPF resolve sem heurística nenhuma.** O nome civil chega perto, mas erra um — e
+errar um em quinze, em escala nacional, é dezenas de conciliações manuais.
+
+#### ⚠️ Uma armadilha que custou uma rodada de teste
+
+A primeira medição deu **0 de 15**, nos dois critérios. A causa ⛔ não era o dado:
+
+🔴 **`pessoas.id` é o id SINTÉTICO do projeto (RF-11), ⛔ não o id da Câmara.** Passá-lo
+para `api/v2/deputados/{id}` devolve **404**. O id externo vive em `pessoa_fonte_ids`, e
+foi para isso que essa tabela existe.
+
+⚠️ O erro é silencioso na leitura do código — os dois são `long`, e nada avisa.
+
+#### 🔴 Ao ingerir o CPF, ele vira hash
+
+A RNF-13 proíbe CPF em claro. ⭐ Mas o hash **não impede o casamento**: basta hashear os
+dois lados com o mesmo algoritmo e comparar os hashes — o CPF em claro só precisa existir
+**em memória**, durante a ingestão.
+
+⚠️ É o mesmo desenho já usado em `despesas.cnpj_ou_hash`.
 
 ---
 
