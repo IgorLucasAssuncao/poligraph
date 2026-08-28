@@ -999,6 +999,32 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   50% { opacity: .55; }
 }
 
+/* ═══ ALINHAMENTO DE BANCADA ═══════════════════════════════════
+   🔴 ⛔ SEM cor semântica, ⛔ sem seta, ⛔ sem comparação com média. Governismo alto não
+   é elogio nem acusação, e qualquer um dos três transformaria medição em juízo. A
+   apresentação é a mesma dos demais números do perfil, de propósito. */
+.alinhamento {
+  display: flex; flex-wrap: wrap; gap: 1px;
+  margin: .9rem 0 0; padding: 0;
+  background: var(--borda); border: 1px solid var(--borda); border-radius: 10px;
+  overflow: hidden;
+}
+.alinhamento > div { flex: 1 1 11rem; background: var(--fundo); padding: .7rem .85rem; }
+.alinhamento dt {
+  display: flex; align-items: baseline; gap: .3rem;
+  font-size: .76rem; color: var(--suave);
+}
+.alinhamento dd {
+  margin: .1rem 0 0;
+  font-family: var(--dado); font-size: 1.35rem; font-weight: 600;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+}
+/* ⭐ A base é parte do número, não nota de rodapé: sem ela o percentual não se lê. */
+.alinhamento small {
+  display: block; font-size: .7rem; color: var(--suave);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ═══ RESPONSIVO ═══════════════════════════════════════════════ */
 @media (max-width: 1000px) {
   /* ⭐ O trilho sai antes de espremer o conteúdo: sugestão é complemento. */

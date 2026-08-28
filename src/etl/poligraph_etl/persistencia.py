@@ -244,6 +244,42 @@ def gravar_votacoes(conexao: psycopg.Connection, votacoes: Sequence[dict]) -> in
     )
 
 
+def gravar_orientacoes(
+    conexao: psycopg.Connection, orientacoes: Sequence[dict]
+) -> int:
+    """Grava orientação de bancada. ⚠️ Só a Câmara publica isso."""
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO orientacoes (votacao_id, bancada, orientacao)
+        VALUES (%(votacao_id)s, %(bancada)s, %(orientacao)s)
+        ON CONFLICT (votacao_id, bancada) DO UPDATE SET
+            orientacao = EXCLUDED.orientacao
+        """,
+        orientacoes,
+    )
+
+
+def gravar_metricas_de_alinhamento(
+    conexao: psycopg.Connection, execucao_id: int, metricas: Sequence[dict]
+) -> int:
+    """Preenche `governismo` e `disciplina` nos nós já gravados.
+
+    ⚠️ `UPDATE`, ⛔ não `INSERT`: o nó nasce em `gravar_nos_metrica` com comunidade e
+    posição, e o alinhamento é calculado depois — depende das orientações, que ⛔ não
+    existem para o Senado.
+    """
+    return _executar_em_lotes(
+        conexao,
+        """
+        UPDATE nos_metrica
+           SET governismo = %(governismo)s, disciplina = %(disciplina)s
+         WHERE execucao_id = %(execucao_id)s AND pessoa_id = %(pessoa_id)s
+        """,
+        [{**m, "execucao_id": execucao_id} for m in metricas],
+    )
+
+
 def gravar_votos(conexao: psycopg.Connection, votos: Sequence[dict]) -> int:
     """Grava votos.
 

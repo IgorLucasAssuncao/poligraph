@@ -114,6 +114,14 @@ export const GLOSSARIO = {
       'e não pelo partido. Por isso um mesmo partido aparece em vários grupos, e o ' +
       'número do grupo é só um rótulo — não indica posição no espectro político.',
   },
+  orientacao: {
+    rotulo: 'orientação de bancada',
+    explicacao:
+      ' Antes de uma votação, cada liderança recomenda como sua bancada deve votar. ' +
+      'A do Governo é publicada junto com as dos partidos. Seguir ou não seguir é ' +
+      'decisão de cada parlamentar — a orientação não obriga, e votar contra é comum. ' +
+      'Só a Câmara publica isso; o Senado não.',
+  },
   camara: {
     rotulo: 'Câmara dos Deputados',
     explicacao:

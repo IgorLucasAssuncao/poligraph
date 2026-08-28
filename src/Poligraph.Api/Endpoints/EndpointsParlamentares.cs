@@ -35,7 +35,27 @@ public record FichaParlamentarDto(
     string? UrlFoto,
     int NVotacoes,
     IReadOnlyList<VotoNaFichaDto> VotosRecentes,
-    IReadOnlyList<SimilarNaFichaDto> MaisSimilares);
+    IReadOnlyList<SimilarNaFichaDto> MaisSimilares,
+    AlinhamentoDto? Alinhamento);
+
+/// <summary>
+/// Com que frequência o parlamentar votou como pediram a ele.
+///
+/// <para>
+/// ⭐ Carrega a BASE junto de cada proporção. <c>80%</c> sobre 15 votações e <c>80%</c>
+/// sobre 900 são afirmações de força muito diferente, e a tela ⛔ nunca mostra uma sem
+/// a outra — é a mesma regra da aresta do grafo.
+/// </para>
+///
+/// <para>
+/// ⚠️ Nulo para o Senado inteiro: lá ⛔ não existe orientação de bancada publicada.
+/// Zero afirmaria "nunca seguiu o governo", e o que houve foi não haver o que comparar.
+/// </para>
+/// </summary>
+public record AlinhamentoDto(
+    double? Governismo, int BaseGovernismo,
+    double? Disciplina, int BaseDisciplina,
+    string? PartidoMedido);
 
 /// <summary>
 /// ⚠️ Agregado, ⛔ não a lista de 200 mil linhas. A ficha responde "quanto e em quê",
@@ -401,7 +421,8 @@ public static class EndpointsParlamentares
             await db.Votos.CountAsync(
                 v => v.PessoaId == id && v.Valor != null
                      && v.Votacao!.Legislatura == legislatura, ct),
-            votos, similares));
+            votos, similares,
+            await AlinhamentoAsync(db, id, casa, legislatura, partido, ct)));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -485,6 +506,76 @@ public static class EndpointsParlamentares
     /// fontes, e a pergunta que a ficha responde é "onde essa pessoa está agora".
     /// </para>
     /// </summary>
+    /// <summary>
+    /// Governismo e disciplina, com a base de cada um.
+    ///
+    /// <para>
+    /// ⚠️ As proporções vêm de <c>nos_metrica</c>, calculadas pelo ETL; as BASES são
+    /// contadas aqui. Guardar a base também seria duplicar dado que a consulta já sabe
+    /// produzir, e ela precisa aparecer na tela junto do número.
+    /// </para>
+    ///
+    /// <para>
+    /// ⛔ Devolve <c>null</c> no Senado e antes da primeira análise — ⛔ nunca zero.
+    /// </para>
+    /// </summary>
+    private static async Task<AlinhamentoDto?> AlinhamentoAsync(
+        PoligraphDb db, long id, Casa? casa, short? legislatura,
+        string partido, CancellationToken ct)
+    {
+        if (casa is not Casa.CAMARA || legislatura is null) return null;
+
+        // ⚠️ `NoMetricaModel` ⛔ não tem navegação para a execução — a chave é só o id.
+        //    A execução mais recente CONCLUÍDA da casa é o recorte, o mesmo que o
+        //    endpoint do grafo usa.
+        var execucaoId = await db.Execucoes.AsNoTracking()
+            .Where(e => e.Casa == Casa.CAMARA
+                     && e.Legislatura == legislatura
+                     && e.Status == StatusDaExecucao.CONCLUIDA)
+            .OrderByDescending(e => e.Id)
+            .Select(e => (long?)e.Id)
+            .FirstOrDefaultAsync(ct);
+
+        if (execucaoId is null) return null;
+
+        var metrica = await db.NosMetrica.AsNoTracking()
+            .Where(n => n.PessoaId == id && n.ExecucaoId == execucaoId)
+            .Select(n => new { n.Governismo, n.Disciplina })
+            .FirstOrDefaultAsync(ct);
+
+        if (metrica is null) return null;
+
+        var baseGoverno = await BaseComparavelAsync(db, id, legislatura.Value, "Governo", ct);
+        var basePartido = await BaseComparavelAsync(db, id, legislatura.Value, partido, ct);
+
+        return new AlinhamentoDto(
+            metrica.Governismo, baseGoverno,
+            metrica.Disciplina, basePartido,
+            // ⚠️ Diz CONTRA QUAL sigla a disciplina foi medida. Quem trocou de partido
+            //    no meio do mandato tem a medida feita contra a do voto mais recente,
+            //    e omitir isso deixaria o número sem referência.
+            metrica.Disciplina is null ? null : partido);
+    }
+
+    /// <summary>
+    /// Quantas votações têm posição dos DOIS lados — o denominador honesto.
+    ///
+    /// ⚠️ <c>Obstrução</c> e <c>Liberado</c> ficam de fora: a primeira é tática de
+    /// quórum, a segunda é ausência de orientação. Nenhuma das duas é posição de mérito.
+    /// </summary>
+    private static async Task<int> BaseComparavelAsync(
+        PoligraphDb db, long id, short legislatura, string bancada, CancellationToken ct) =>
+        string.IsNullOrEmpty(bancada)
+            ? 0
+            : await db.Votos.AsNoTracking()
+                .CountAsync(v => v.PessoaId == id
+                              && v.Valor != null && v.Valor != 0
+                              && v.Votacao!.Legislatura == legislatura
+                              && db.Orientacoes.Any(o => o.VotacaoId == v.VotacaoId
+                                                      && o.Bancada == bancada
+                                                      && (o.Orientacao == "Sim"
+                                                       || o.Orientacao == "Não")), ct);
+
     private static async Task<(Casa? Casa, string Partido, string Uf)> FiliacaoAtualAsync(
         PoligraphDb db, long id, CancellationToken ct)
     {

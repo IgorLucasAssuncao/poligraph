@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   deixarDeSeguir,
+  listarSeguidos,
   obterEmendas,
+  obterFicha,
   obterFinanciamento,
   obterGastos,
-  listarSeguidos,
-  obterFicha,
   obterNoticias,
   seguir,
+  type Alinhamento,
   type EmendasDoParlamentar,
   type Ficha,
   type FinanciamentoDeCampanha,
@@ -149,6 +150,8 @@ export function Parlamentar() {
           </span>
         </div>
 
+        {ficha.alinhamento && <FaixaDeAlinhamento alinhamento={ficha.alinhamento} />}
+
         {/* Dentro do cabeçalho, e não entre ele e as abas: as contas são parte de quem
             a pessoa é, não uma das seções entre as quais se escolhe. */}
         <PainelDeContas pessoaId={pessoaId} />
@@ -267,6 +270,48 @@ function AbaSimilares({ similares }: { similares: Ficha['maisSimilares'] }) {
  *
  * ⚠️ `allSettled`, ⛔ não `all`: falha de uma fonte ⛔ não pode apagar as outras duas.
  */
+/**
+ * Governismo e disciplina — com que frequência votou como pediram a ele.
+ *
+ * ## 🔴 O que este bloco ⛔ NÃO pode fazer
+ *
+ * Governismo alto ⛔ não é elogio nem acusação, e a tela ⛔ não pode sugerir que seja.
+ * ⛔ Sem cor semântica, ⛔ sem seta, ⛔ sem comparação com uma média — qualquer um dos
+ * três transformaria medição em juízo, que é o que a RNF-16 proíbe.
+ *
+ * ⭐ A base anda junto do percentual, sempre. 80% sobre 15 votações e 80% sobre 900 são
+ * afirmações de força muito diferente.
+ */
+function FaixaDeAlinhamento({ alinhamento }: { alinhamento: Alinhamento }) {
+  const { governismo, baseGovernismo, disciplina, baseDisciplina, partidoMedido } =
+    alinhamento;
+
+  if (governismo === null && disciplina === null) return null;
+
+  return (
+    <dl className="alinhamento">
+      {governismo !== null && (
+        <div>
+          <dt>
+            Votou com o Governo
+            <Termo nome="orientacao" />
+          </dt>
+          <dd>{Math.round(governismo * 100)}%</dd>
+          <small>de {baseGovernismo} votações orientadas</small>
+        </div>
+      )}
+
+      {disciplina !== null && (
+        <div>
+          <dt>Votou com o {partidoMedido}</dt>
+          <dd>{Math.round(disciplina * 100)}%</dd>
+          <small>de {baseDisciplina} votações orientadas</small>
+        </div>
+      )}
+    </dl>
+  );
+}
+
 function PainelDeContas({ pessoaId }: { pessoaId: number }) {
   const [dados, setDados] = useState<{
     gastos: GastoDeCota | null;

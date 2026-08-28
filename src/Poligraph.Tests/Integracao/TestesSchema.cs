@@ -149,7 +149,8 @@ public class TestesSchema : BaseIntegracao
         {
             "arestas_grafo", "autores_de_emenda", "avaliacoes", "consentimentos",
             "despesas", "emendas", "execucoes", "noticia_pessoas", "noticia_temas",
-            "noticias", "nos_metrica", "perguntas", "pessoa_fonte_ids", "pessoas",
+            "noticias", "nos_metrica", "orientacoes", "perguntas", "pessoa_fonte_ids",
+            "pessoas",
             "proposicoes", "receitas_de_campanha", "segue", "similaridades",
             "tokens_email", "usuarios", "votacoes", "votos",
         };

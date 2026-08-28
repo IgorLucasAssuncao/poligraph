@@ -44,6 +44,23 @@ export type Similar = {
   comuns: number;
 };
 
+/**
+ * Com que frequência o parlamentar votou como pediram a ele.
+ *
+ * ⚠️ Cada proporção vem com a BASE. 80% sobre 15 votações e 80% sobre 900 são
+ * afirmações de força muito diferente, e a tela ⛔ nunca mostra uma sem a outra.
+ *
+ * ⛔ Nulo no Senado inteiro: lá não existe orientação de bancada publicada.
+ */
+export type Alinhamento = {
+  governismo: number | null;
+  baseGovernismo: number;
+  disciplina: number | null;
+  baseDisciplina: number;
+  /** Contra qual sigla a disciplina foi medida — quem trocou de partido tem a do voto mais recente. */
+  partidoMedido: string | null;
+};
+
 export type Ficha = {
   id: number;
   nome: string;
@@ -56,6 +73,7 @@ export type Ficha = {
   nVotacoes: number;
   votosRecentes: VotoNaFicha[];
   maisSimilares: Similar[];
+  alinhamento: Alinhamento | null;
 };
 
 export type Noticia = {

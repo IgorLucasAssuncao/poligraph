@@ -23,6 +23,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<SimilaridadeModel> Similaridades => Set<SimilaridadeModel>();
     public DbSet<ArestaGrafoModel> ArestasGrafo => Set<ArestaGrafoModel>();
     public DbSet<NoMetricaModel> NosMetrica => Set<NoMetricaModel>();
+    public DbSet<OrientacaoModel> Orientacoes => Set<OrientacaoModel>();
     public DbSet<UsuarioModel> Usuarios => Set<UsuarioModel>();
     public DbSet<SegueModel> Segue => Set<SegueModel>();
     public DbSet<ConsentimentoModel> Consentimentos => Set<ConsentimentoModel>();
@@ -250,6 +251,17 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
                 t.HasCheckConstraint(
                     "ck_execucao_status", "status IN ('EM_ANDAMENTO','CONCLUIDA','FALHOU')");
             });
+        });
+
+        mb.Entity<OrientacaoModel>(e =>
+        {
+            // ⭐ A chave é (votação, bancada): uma bancada orienta uma vez por votação.
+            //    Reingerir o ano ⛔ não duplica.
+            e.HasKey(x => new { x.VotacaoId, x.Bancada });
+            e.HasOne(x => x.Votacao).WithMany()
+                .HasForeignKey(x => x.VotacaoId).OnDelete(DeleteBehavior.Cascade);
+            e.ToTable(t => t.HasCheckConstraint(
+                "ck_orientacao_nao_vazia", "orientacao <> ''"));
         });
 
         mb.Entity<SimilaridadeModel>(e =>

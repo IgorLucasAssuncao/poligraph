@@ -21,7 +21,7 @@ import psycopg
 from . import conexao as conexao_mod
 from . import (
     comparacao, cota, curadoria, emendas, grafo, ingestao, ingestao_senado,
-    normalizacao, persistencia, receitas, similaridade, validacao,
+    normalizacao, orientacoes, persistencia, receitas, similaridade, validacao,
 )
 from .fontes import camara, senado, tse
 
@@ -224,6 +224,22 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
                 "  %d votos descartados: deputado fora do de-para", descartados
             )
 
+        # ⭐ Orientação de bancada: é o que transforma "votou Sim" em posição. Sem ela,
+        #    `governismo` e `disciplina` ficam nulos — as colunas existem desde o
+        #    schema inicial e passaram a legislatura inteira vazias.
+        arquivo_orientacoes = camara.baixar(
+            "votacoesOrientacoes", ano, CACHE / f"votacoesOrientacoes-{ano}.csv"
+        )
+        df_orientacoes = camara.ler_csv(arquivo_orientacoes)
+        linhas = orientacoes.para_linhas(
+            df_orientacoes.to_dict("records"), {v["id"] for v in votacoes}
+        )
+        persistencia.gravar_orientacoes(conexao, linhas)
+        log.info(
+            "  %d orientações de %d linhas (%d bancadas)",
+            len(linhas), len(df_orientacoes), len({l["bancada"] for l in linhas}),
+        )
+
 
 def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
     """Ingestão do Senado — senadores, votações e votos.
@@ -335,10 +351,100 @@ def _analisar(conexao: psycopg.Connection, legislatura: int, casa: str) -> None:
                 gravados = persistencia.gravar_nos_metrica(conexao, execucao_id, nos)
                 log.info("  %d nós gravados", gravados)
 
+                _alinhamento(conexao, execucao_id, casa, legislatura, pessoas)
+
         persistencia.fechar_execucao(conexao, execucao_id, sucesso=True)
     except Exception:
         persistencia.fechar_execucao(conexao, execucao_id, sucesso=False)
         raise
+
+
+def _alinhamento(
+    conexao: psycopg.Connection,
+    execucao_id: int,
+    casa: str,
+    legislatura: int,
+    pessoas: list[int],
+) -> None:
+    """Preenche `governismo` e `disciplina` a partir da orientação de bancada.
+
+    ⭐ **Governismo** é seguir a bancada `Governo`; **disciplina** é seguir o próprio
+    partido no momento do voto. O partido vem de `votos.partido_no_voto`, ⛔ não da
+    filiação de hoje: trocar de partido é comum, e medir disciplina contra a filiação
+    atual reescreveria o passado.
+
+    ⚠️ Sai sem fazer nada no Senado — lá ⛔ não existe orientação de bancada, e as duas
+    colunas continuam nulas de propósito.
+    """
+    if casa != orientacoes.CASA:
+        log.info("  alinhamento: %s não publica orientação de bancada", casa)
+        return
+
+    por_votacao: dict[str, dict[str, str]] = {}
+    for votacao_id, bancada, orientacao in conexao.execute(
+        """
+        SELECT o.votacao_id, o.bancada, o.orientacao
+          FROM orientacoes o
+          JOIN votacoes v ON v.id = o.votacao_id
+         WHERE v.casa = %s AND v.legislatura = %s
+        """,
+        (casa, legislatura),
+    ).fetchall():
+        por_votacao.setdefault(votacao_id, {})[bancada] = orientacao
+
+    if not por_votacao:
+        log.warning("  alinhamento: nenhuma orientação na base — rode `ingerir`")
+        return
+
+    # ⚠️ Uma consulta só, e ⛔ não uma por pessoa: são 643 parlamentares, e o laço com
+    #    ida ao banco levaria minutos para devolver o que cabe numa varredura.
+    votos_por_pessoa: dict[int, dict[str, int]] = {}
+    partido_por_pessoa: dict[int, str] = {}
+    for pessoa_id, votacao_id, valor, partido in conexao.execute(
+        """
+        SELECT vo.pessoa_id, vo.votacao_id, vo.valor, vo.partido_no_voto
+          FROM votos vo
+          JOIN votacoes v ON v.id = vo.votacao_id
+         WHERE v.casa = %s AND v.legislatura = %s AND vo.valor IN (1, -1)
+        """,
+        (casa, legislatura),
+    ).fetchall():
+        votos_por_pessoa.setdefault(pessoa_id, {})[votacao_id] = valor
+        # O partido do voto MAIS RECENTE lido vence — serve só para escolher contra
+        # qual bancada medir disciplina quando a pessoa trocou de sigla.
+        partido_por_pessoa[pessoa_id] = partido
+
+    metricas = []
+    for pessoa_id in pessoas:
+        votos = votos_por_pessoa.get(pessoa_id) or {}
+        if not votos:
+            continue
+
+        segue_gov, base_gov = orientacoes.alinhamento(
+            votos, por_votacao, orientacoes.BANCADA_DO_GOVERNO
+        )
+        segue_part, base_part = orientacoes.alinhamento(
+            votos, por_votacao, partido_por_pessoa.get(pessoa_id, "")
+        )
+
+        # ⛔ Sem base, NULO — ⛔ nunca zero. Zero afirmaria "nunca seguiu o governo",
+        #    e o que houve foi não haver votação comparável.
+        metricas.append(
+            {
+                "pessoa_id": pessoa_id,
+                "governismo": segue_gov / base_gov if base_gov else None,
+                "disciplina": segue_part / base_part if base_part else None,
+            }
+        )
+
+    persistencia.gravar_metricas_de_alinhamento(conexao, execucao_id, metricas)
+
+    com_gov = sum(1 for m in metricas if m["governismo"] is not None)
+    com_part = sum(1 for m in metricas if m["disciplina"] is not None)
+    log.info(
+        "  alinhamento: %d com governismo, %d com disciplina, de %d nós",
+        com_gov, com_part, len(metricas),
+    )
 
 
 def _emendas(conexao: psycopg.Connection, anos: list[int]) -> None:

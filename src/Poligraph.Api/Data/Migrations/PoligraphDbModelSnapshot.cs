@@ -554,6 +554,30 @@ namespace Poligraph.Api.Data.Migrations
                     b.ToTable("noticia_temas", (string)null);
                 });
 
+            modelBuilder.Entity("Poligraph.Api.Data.OrientacaoModel", b =>
+                {
+                    b.Property<string>("VotacaoId")
+                        .HasColumnType("text")
+                        .HasColumnName("votacao_id");
+
+                    b.Property<string>("Bancada")
+                        .HasColumnType("text")
+                        .HasColumnName("bancada");
+
+                    b.Property<string>("Orientacao")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("orientacao");
+
+                    b.HasKey("VotacaoId", "Bancada")
+                        .HasName("pk_orientacoes");
+
+                    b.ToTable("orientacoes", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_orientacao_nao_vazia", "orientacao <> ''");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Api.Data.PerguntaModel", b =>
                 {
                     b.Property<string>("Id")
@@ -1181,6 +1205,18 @@ namespace Poligraph.Api.Data.Migrations
                         .HasConstraintName("fk_noticia_temas_noticias_noticia_id");
 
                     b.Navigation("Noticia");
+                });
+
+            modelBuilder.Entity("Poligraph.Api.Data.OrientacaoModel", b =>
+                {
+                    b.HasOne("Poligraph.Api.Data.VotacaoModel", "Votacao")
+                        .WithMany()
+                        .HasForeignKey("VotacaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_orientacoes_votacoes_votacao_id");
+
+                    b.Navigation("Votacao");
                 });
 
             modelBuilder.Entity("Poligraph.Api.Data.PerguntaModel", b =>
