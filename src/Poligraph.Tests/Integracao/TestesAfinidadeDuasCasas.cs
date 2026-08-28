@@ -44,7 +44,7 @@ public class TestesAfinidadeDuasCasas : BaseIntegracao
 
         var lido = await ResponderTudoAsync(cliente);
 
-        var senado = Assert.Single(lido!.PorCasa, c => c.Casa == "SENADO");
+        var senado = Assert.Single(lido!.PorCasa, c => c.Casa == nameof(Casa.SENADO));
         Assert.NotEmpty(senado.MaisProximos);
         Assert.Equal(2, senado.PerguntasRespondidas);
     }
@@ -91,7 +91,7 @@ public class TestesAfinidadeDuasCasas : BaseIntegracao
                 .Distinct()
                 .ToListAsync();
 
-            Assert.Equal([casa.Casa], fontes);
+            Assert.Equal([Enum.Parse<Casa>(casa.Casa).ComoFonte()], fontes);
         }
     }
 
@@ -180,14 +180,14 @@ public class TestesAfinidadeDuasCasas : BaseIntegracao
 
         // Eixos bem separados por casa: se a posição vier da execução errada, ela cai
         // na faixa da outra casa e a asserção denuncia.
-        await SemearGrafoAsync("CAMARA", eixoBase: 0f);
-        await SemearGrafoAsync("SENADO", eixoBase: 100f);
+        await SemearGrafoAsync(Casa.CAMARA, eixoBase: 0f);
+        await SemearGrafoAsync(Casa.SENADO, eixoBase: 100f);
 
         using var cliente = CriarCliente();
         var lido = await ResponderTudoAsync(cliente);
 
-        var camara = Assert.Single(lido!.PorCasa, c => c.Casa == "CAMARA");
-        var senado = Assert.Single(lido.PorCasa, c => c.Casa == "SENADO");
+        var camara = Assert.Single(lido!.PorCasa, c => c.Casa == nameof(Casa.CAMARA));
+        var senado = Assert.Single(lido.PorCasa, c => c.Casa == nameof(Casa.SENADO));
 
         Assert.NotNull(camara.PosicaoNoGrafo);
         Assert.NotNull(senado.PosicaoNoGrafo);
@@ -209,22 +209,22 @@ public class TestesAfinidadeDuasCasas : BaseIntegracao
     /// </summary>
     private async Task SemearDuasCasasAsync(int perguntasCamara, int perguntasSenado)
     {
-        var deputados = await SemearPessoasAsync("CAMARA", DeputadosSemeados);
-        var senadores = await SemearPessoasAsync("SENADO", SenadoresSemeados);
+        var deputados = await SemearPessoasAsync(Casa.CAMARA, DeputadosSemeados);
+        var senadores = await SemearPessoasAsync(Casa.SENADO, SenadoresSemeados);
 
-        await SemearVotacoesEPerguntasAsync("CAMARA", "cam", perguntasCamara, deputados);
-        await SemearVotacoesEPerguntasAsync("SENADO", "sen", perguntasSenado, senadores);
+        await SemearVotacoesEPerguntasAsync(Casa.CAMARA, "cam", perguntasCamara, deputados);
+        await SemearVotacoesEPerguntasAsync(Casa.SENADO, "sen", perguntasSenado, senadores);
     }
 
-    private async Task<List<long>> SemearPessoasAsync(string fonte, int quantas)
+    private async Task<List<long>> SemearPessoasAsync(Casa casa, int quantas)
     {
-        var criadas = new List<Pessoa>();
+        var criadas = new List<PessoaModel>();
         for (var i = 1; i <= quantas; i++)
         {
-            var pessoa = new Pessoa
+            var pessoa = new PessoaModel
             {
-                NomeCivil = $"{fonte} {i}",
-                NomeExibicao = $"{fonte} {i}"
+                NomeCivil = $"{casa} {i}",
+                NomeExibicao = $"{casa} {i}"
             };
             Db.Pessoas.Add(pessoa);
             criadas.Add(pessoa);
@@ -234,12 +234,12 @@ public class TestesAfinidadeDuasCasas : BaseIntegracao
 
         foreach (var pessoa in criadas)
         {
-            Db.PessoaFonteIds.Add(new PessoaFonteId
+            Db.PessoaFonteIds.Add(new PessoaFonteIdModel
             {
                 PessoaId = pessoa.Id,
-                Fonte = fonte,
-                IdExterno = $"{fonte}-{pessoa.Id}",
-                Metodo = "MANUAL",
+                Fonte = casa.ComoFonte(),
+                IdExterno = $"{casa}-{pessoa.Id}",
+                Metodo = MetodoDeVinculo.MANUAL,
                 Confianca = 1.0f
             });
         }
@@ -250,26 +250,26 @@ public class TestesAfinidadeDuasCasas : BaseIntegracao
     }
 
     private async Task SemearVotacoesEPerguntasAsync(
-        string casa, string prefixo, int quantas, List<long> pessoas)
+        Casa casa, string prefixo, int quantas, List<long> pessoas)
     {
         for (var i = 1; i <= quantas; i++)
         {
             var votacaoId = $"{prefixo}-v{i}";
 
-            Db.Votacoes.Add(new Votacao
+            Db.Votacoes.Add(new VotacaoModel
             {
                 Id = votacaoId,
                 Casa = casa,
                 Legislatura = 57,
                 Data = new DateOnly(2025, 6, 1),
                 Descricao = "Aprovado o Projeto, nos termos do parecer.",
-                Categoria = "SUBSTANTIVA",
+                Categoria = CategoriaDeVotacao.SUBSTANTIVA,
                 Plenario = true,
                 VotosSim = pessoas.Count,
                 VotosNao = 0
             });
 
-            Db.Perguntas.Add(new Pergunta
+            Db.Perguntas.Add(new PerguntaModel
             {
                 Id = $"{prefixo}-{i}",
                 VotacaoId = votacaoId,
@@ -285,7 +285,7 @@ public class TestesAfinidadeDuasCasas : BaseIntegracao
 
             foreach (var pessoaId in pessoas)
             {
-                Db.Votos.Add(new Voto
+                Db.Votos.Add(new VotoModel
                 {
                     VotacaoId = votacaoId,
                     PessoaId = pessoaId,
@@ -300,24 +300,24 @@ public class TestesAfinidadeDuasCasas : BaseIntegracao
     }
 
     /// <summary>Uma execução concluída por casa, com os nós daquela casa.</summary>
-    private async Task SemearGrafoAsync(string casa, float eixoBase)
+    private async Task SemearGrafoAsync(Casa casa, float eixoBase)
     {
-        var execucao = new Execucao
+        var execucao = new ExecucaoModel
         {
             Casa = casa, Legislatura = 57, K = 10,
-            VersaoCarga = "teste", Status = "CONCLUIDA"
+            VersaoCarga = "teste", Status = StatusDaExecucao.CONCLUIDA
         };
         Db.Execucoes.Add(execucao);
         await Db.SaveChangesAsync();
 
         var pessoas = await Db.PessoaFonteIds.AsNoTracking()
-            .Where(f => f.Fonte == casa)
+            .Where(f => f.Fonte == casa.ComoFonte())
             .Select(f => f.PessoaId)
             .ToListAsync();
 
         for (var i = 0; i < pessoas.Count; i++)
         {
-            Db.NosMetrica.Add(new NoMetrica
+            Db.NosMetrica.Add(new NoMetricaModel
             {
                 ExecucaoId = execucao.Id,
                 PessoaId = pessoas[i],

@@ -15,7 +15,7 @@ namespace Poligraph.Api.Data;
 /// mais interessante do TCC: a correlação entre afinidade CALCULADA e posição
 /// AUTODECLARADA valida o método por comportamento revelado.
 /// </summary>
-public class AvaliacaoQuestionario
+public class AvaliacaoQuestionarioModel
 {
     public long Id { get; set; }
 

@@ -3,7 +3,7 @@ using Google.Apis.Auth;
 namespace Poligraph.Api.Services;
 
 /// <summary>O que o `id_token` do Google carrega, depois de validado.</summary>
-public record PerfilGoogle(
+public record PerfilGoogleDto(
     string Sub,
     string Email,
     bool EmailVerificado,
@@ -22,14 +22,14 @@ public record PerfilGoogle(
 /// </summary>
 public interface IValidadorGoogle
 {
-    Task<PerfilGoogle?> ValidarAsync(string idToken, CancellationToken ct = default);
+    Task<PerfilGoogleDto?> ValidarAsync(string idToken, CancellationToken ct = default);
 }
 
 public class ValidadorGoogle(IConfiguration configuracao) : IValidadorGoogle
 {
     private readonly IConfiguration _configuracao = configuracao;
 
-    public async Task<PerfilGoogle?> ValidarAsync(string idToken, CancellationToken ct = default)
+    public async Task<PerfilGoogleDto?> ValidarAsync(string idToken, CancellationToken ct = default)
     {
         var clientId = _configuracao["Google:ClientId"];
         if (string.IsNullOrWhiteSpace(clientId)) return null;
@@ -43,7 +43,7 @@ public class ValidadorGoogle(IConfiguration configuracao) : IValidadorGoogle
                 idToken,
                 new GoogleJsonWebSignature.ValidationSettings { Audience = [clientId] });
 
-            return new PerfilGoogle(
+            return new PerfilGoogleDto(
                 payload.Subject,
                 payload.Email,
                 payload.EmailVerified,

@@ -3,7 +3,7 @@ using Poligraph.Api.Data;
 
 namespace Poligraph.Api.Endpoints;
 
-public record NoticiaNaFicha(
+public record NoticiaNaFichaDto(
     long Id, string Url, string Titulo, string Veiculo,
     DateTimeOffset PublicadaEm, string? Trecho);
 
@@ -43,7 +43,7 @@ public static class EndpointsNoticias
             .Where(np => np.PessoaId == id && np.Confianca >= ConfiancaMinima)
             .OrderByDescending(np => np.Noticia!.PublicadaEm)
             .Take(Math.Clamp(limite, 1, 50))
-            .Select(np => new NoticiaNaFicha(
+            .Select(np => new NoticiaNaFichaDto(
                 np.Noticia!.Id,
                 np.Noticia.Url,
                 np.Noticia.Titulo,

@@ -78,7 +78,7 @@ public class TestesCuradoria : BaseIntegracao
     }
 
     /// <summary>
-    /// Pergunta que sai do arquivo é DESATIVADA, não apagada: apagar levaria junto o
+    /// PerguntaModel que sai do arquivo é DESATIVADA, não apagada: apagar levaria junto o
     /// histórico de quem já respondeu.
     /// </summary>
     [SkippableFact]
@@ -109,14 +109,14 @@ public class TestesCuradoria : BaseIntegracao
     {
         foreach (var id in ids)
         {
-            Db.Votacoes.Add(new Votacao
+            Db.Votacoes.Add(new VotacaoModel
             {
                 Id = id,
-                Casa = id.StartsWith("SF-", StringComparison.Ordinal) ? "SENADO" : "CAMARA",
+                Casa = id.StartsWith("SF-", StringComparison.Ordinal) ? Casa.SENADO : Casa.CAMARA,
                 Legislatura = 57,
                 Data = new DateOnly(2025, 6, 1),
                 Descricao = "Aprovado o Projeto, nos termos do parecer.",
-                Categoria = "SUBSTANTIVA",
+                Categoria = CategoriaDeVotacao.SUBSTANTIVA,
                 Plenario = true
             });
         }

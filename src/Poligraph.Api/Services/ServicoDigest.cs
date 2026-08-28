@@ -72,7 +72,7 @@ public class ServicoDigest(PoligraphDb db)
     private async Task<List<Destinatario>> DestinatariosAsync(CancellationToken ct) =>
         await _db.Usuarios.AsNoTracking()
             .Where(u => u.Consentimentos.Any(
-                c => c.Finalidade == "EMAIL_NOTICIAS" && c.RevogadoEm == null))
+                c => c.Finalidade == FinalidadeDeConsentimento.EMAIL_NOTICIAS && c.RevogadoEm == null))
             .Where(u => u.Segue.Count > 0)
             .Select(u => new Destinatario(u.Id, u.Email, u.PrimeiroNome))
             .ToListAsync(ct);
@@ -104,7 +104,7 @@ public class ServicoDigest(PoligraphDb db)
     private async Task<string> GarantirTokenAsync(long usuarioId, CancellationToken ct)
     {
         var existente = await _db.TokensEmail
-            .Where(t => t.UsuarioId == usuarioId && t.Proposito == "DESCADASTRO")
+            .Where(t => t.UsuarioId == usuarioId && t.Proposito == PropositoDeToken.DESCADASTRO)
             .Select(t => t.Token)
             .FirstOrDefaultAsync(ct);
 
@@ -113,11 +113,11 @@ public class ServicoDigest(PoligraphDb db)
         var token = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator
             .GetBytes(32)).Replace('+', '-').Replace('/', '_').TrimEnd('=');
 
-        _db.TokensEmail.Add(new TokenEmail
+        _db.TokensEmail.Add(new TokenEmailModel
         {
             Token = token,
             UsuarioId = usuarioId,
-            Proposito = "DESCADASTRO"
+            Proposito = PropositoDeToken.DESCADASTRO
         });
         await _db.SaveChangesAsync(ct);
 

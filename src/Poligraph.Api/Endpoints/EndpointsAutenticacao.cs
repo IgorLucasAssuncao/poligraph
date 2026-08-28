@@ -7,10 +7,10 @@ using Poligraph.Api.Services;
 
 namespace Poligraph.Api.Endpoints;
 
-public record RequisicaoLogin(string IdToken);
+public record RequisicaoLoginDto(string IdToken);
 
 /// <summary>⛔ Não devolve e-mail: o front não precisa, e o que não trafega não vaza.</summary>
-public record UsuarioLogado(string? Nome, string? FotoUrl);
+public record UsuarioLogadoDto(string? Nome, string? FotoUrl);
 
 public static class EndpointsAutenticacao
 {
@@ -39,7 +39,7 @@ public static class EndpointsAutenticacao
     /// ⭐ Ele é validado, usado e DESCARTADO — nunca vai ao banco.
     /// </summary>
     private static async Task<IResult> EntrarAsync(
-        RequisicaoLogin requisicao,
+        RequisicaoLoginDto requisicao,
         HttpContext contexto,
         IValidadorGoogle validador,
         PoligraphDb db,
@@ -52,7 +52,7 @@ public static class EndpointsAutenticacao
         await EmitirCookieAsync(contexto, usuario);
         // ⬆️ o id_token morre aqui
 
-        return Results.Ok(new UsuarioLogado(usuario.Nome, usuario.FotoUrl));
+        return Results.Ok(new UsuarioLogadoDto(usuario.Nome, usuario.FotoUrl));
     }
 
     private static async Task<IResult> SairAsync(HttpContext contexto)
@@ -85,7 +85,7 @@ public static class EndpointsAutenticacao
 
         var usuario = await db.Usuarios.AsNoTracking()
             .Where(u => u.Id == id)
-            .Select(u => new UsuarioLogado(u.Nome, u.FotoUrl))
+            .Select(u => new UsuarioLogadoDto(u.Nome, u.FotoUrl))
             .FirstOrDefaultAsync(ct);
 
         return usuario is null ? Results.Unauthorized() : Results.Ok(usuario);
@@ -101,7 +101,7 @@ public static class EndpointsAutenticacao
     ///
     /// 🔴 ⛔ **AQUI A EXCLUSÃO É FÍSICA, E ISSO NÃO É DESCUIDO.**
     ///
-    /// O projeto adota exclusão LÓGICA como padrão (ver `Pessoa.ExcluidoEm`) — mas
+    /// O projeto adota exclusão LÓGICA como padrão (ver `PessoaModel.ExcluidoEm`) — mas
     /// ⛔ não neste caminho. A LGPD art. 18, VI dá direito à **eliminação**, não à
     /// ocultação. Marcar `excluido_em` e manter a linha seria dizer ao cidadão que os
     /// dados foram apagados enquanto eles continuam no banco — e a tabela `segue`, que
@@ -132,14 +132,14 @@ public static class EndpointsAutenticacao
     /// ⚠️ A chave é `GoogleSub`, ⛔ nunca o e-mail — o Google permite trocar o
     /// endereço principal, e usar e-mail como chave criaria uma conta órfã.
     /// </summary>
-    private static async Task<Usuario> SalvarPerfilAsync(
-        PoligraphDb db, PerfilGoogle perfil, CancellationToken ct)
+    private static async Task<UsuarioModel> SalvarPerfilAsync(
+        PoligraphDb db, PerfilGoogleDto perfil, CancellationToken ct)
     {
         var usuario = await db.Usuarios.FirstOrDefaultAsync(u => u.GoogleSub == perfil.Sub, ct);
 
         if (usuario is null)
         {
-            usuario = new Usuario { GoogleSub = perfil.Sub, Email = perfil.Email };
+            usuario = new UsuarioModel { GoogleSub = perfil.Sub, Email = perfil.Email };
             db.Usuarios.Add(usuario);
         }
 
@@ -156,7 +156,7 @@ public static class EndpointsAutenticacao
         return usuario;
     }
 
-    private static async Task EmitirCookieAsync(HttpContext contexto, Usuario usuario)
+    private static async Task EmitirCookieAsync(HttpContext contexto, UsuarioModel usuario)
     {
         Claim[] claims =
         [

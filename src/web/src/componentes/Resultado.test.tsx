@@ -113,8 +113,8 @@ describe('resultado com as duas casas', () => {
     const { container } = renderizarDuasCasas();
     const texto = container.textContent!.replace(/\s+/g, ' ');
 
-    expect(texto).toMatch(/Deputados mais próximos de você/);
-    expect(texto).toMatch(/Senadores mais próximos de você/);
+    expect(texto).toMatch(/Os deputados mais próximos de você/);
+    expect(texto).toMatch(/Os senadores mais próximos de você/);
   });
 
   it('🔴 cada casa mostra o próprio denominador, não o total', () => {

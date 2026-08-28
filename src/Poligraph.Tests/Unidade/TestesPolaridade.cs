@@ -77,14 +77,14 @@ public class TestesPolaridade
     [Fact]
     public void ParlamentarAusente_PerguntaSaiDaConta()
     {
-        var posicao = new PosicaoParlamentar(Voto: null, Polaridade: 1);
+        var posicao = new PosicaoParlamentar(VotoModel: null, Polaridade: 1);
         Assert.False(CalculadoraAfinidade.EComparavel(1, posicao));
     }
 
     [Fact]
     public void ParlamentarAbsteve_PerguntaSaiDaConta()
     {
-        var posicao = new PosicaoParlamentar(Voto: 0, Polaridade: 1);
+        var posicao = new PosicaoParlamentar(VotoModel: 0, Polaridade: 1);
         Assert.False(CalculadoraAfinidade.EComparavel(1, posicao));
     }
 

@@ -77,7 +77,7 @@ export const GLOSSARIO = {
     rotulo: 'legislatura',
     explicacao:
       ' Os quatro anos de mandato de uma Câmara, entre uma eleição e a seguinte. ' +
-      'A 57ª começou em 2023. Só comparamos votos dentro da mesma legislatura: quem ' +
+      'Só comparamos votos dentro da mesma legislatura: quem ' +
       'foi eleito em 2022 não votou nada do que veio antes.',
   },
   partido: {

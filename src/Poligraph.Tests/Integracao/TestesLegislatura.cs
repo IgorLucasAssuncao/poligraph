@@ -133,19 +133,19 @@ public class TestesLegislatura : BaseIntegracao
     /// </summary>
     private async Task SemearOutraLegislaturaAsync(long? reeleitoId = null)
     {
-        var votacao = new Votacao
+        var votacao = new VotacaoModel
         {
             Id = "9999999-1",
-            Casa = "CAMARA",
+            Casa = Casa.CAMARA,
             Legislatura = Seguinte,
             Data = new DateOnly(2027, 3, 10),
             Descricao = "Votação da legislatura seguinte",
-            Categoria = "SUBSTANTIVA",
+            Categoria = CategoriaDeVotacao.SUBSTANTIVA,
             Plenario = true
         };
         Db.Votacoes.Add(votacao);
 
-        var novos = new List<Pessoa>
+        var novos = new List<PessoaModel>
         {
             new() { NomeExibicao = "Novo Um", NomeCivil = "NOVO UM" },
             new() { NomeExibicao = "Novo Dois", NomeCivil = "NOVO DOIS" }
@@ -155,7 +155,7 @@ public class TestesLegislatura : BaseIntegracao
 
         foreach (var pessoa in novos)
         {
-            Db.Votos.Add(new Voto
+            Db.Votos.Add(new VotoModel
             {
                 VotacaoId = votacao.Id, PessoaId = pessoa.Id, Valor = 1,
                 PartidoNoVoto = "PARTIDO-Z", UfNoVoto = "DF"
@@ -164,7 +164,7 @@ public class TestesLegislatura : BaseIntegracao
 
         if (reeleitoId is not null)
         {
-            Db.Votos.Add(new Voto
+            Db.Votos.Add(new VotoModel
             {
                 VotacaoId = votacao.Id, PessoaId = reeleitoId.Value, Valor = 1,
                 PartidoNoVoto = "PARTIDO-Z", UfNoVoto = "DF"

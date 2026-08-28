@@ -535,9 +535,9 @@ def _cota(conexao: psycopg.Connection, anos: list[int]) -> None:
     for ano in anos:
         log.info("Cota de %d...", ano)
 
-        arquivo = cota.baixar(ano, CACHE / f"cota-{ano}.zip")
-        registros = cota.ler(arquivo)
-        cota.conferir_volume(registros, ano)
+        arquivo = camara.baixar_cota(ano, CACHE / f"cota-{ano}.zip")
+        registros = camara.ler_cota(arquivo)
+        camara.conferir_volume_de_cota(registros, ano)
 
         linhas = cota.para_linhas(registros, mapa)
         gravadas = persistencia.gravar_despesas(conexao, list(mapa.values()), linhas)

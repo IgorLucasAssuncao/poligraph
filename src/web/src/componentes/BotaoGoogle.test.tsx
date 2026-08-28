@@ -15,7 +15,7 @@ describe('BotaoGoogle sem Client ID configurado', () => {
   it('não quebra a aplicação', () => {
     render(<BotaoGoogle aoEntrar={vi.fn()} />);
 
-    expect(screen.getByText(/login desativado/i)).toBeDefined();
+    expect(screen.getByText(/login indisponível/i)).toBeDefined();
   });
 
   /**
@@ -28,11 +28,19 @@ describe('BotaoGoogle sem Client ID configurado', () => {
     expect(document.getElementById('google-gsi')).toBeNull();
   });
 
-  /** ⭐ O aviso diz o que fazer e deixa claro que o resto do site funciona. */
-  it('explica o que falta e que o site segue utilizável', () => {
+  /**
+   * 🔴 O aviso diz o que falta e QUAL é a consequência real.
+   *
+   * ⚠️ Ele afirmava que "o questionário e as fichas funcionam normalmente" — e este
+   * teste travava essa frase. Era falso desde 26/08/2026, quando o login virou
+   * obrigatório: sem Client ID ⛔ não há como entrar, e ⛔ não há site. Um teste verde
+   * sobre uma afirmação errada é pior que teste nenhum, porque dá confiança nela.
+   */
+  it('explica o que falta e que sem isso não há acesso', () => {
     const { container } = render(<BotaoGoogle aoEntrar={vi.fn()} />);
 
     expect(container.textContent).toMatch(/VITE_GOOGLE_CLIENT_ID/);
-    expect(container.textContent).toMatch(/funcionam normalmente/i);
+    expect(container.textContent).toMatch(/exige conta/i);
+    expect(container.textContent).not.toMatch(/funcionam normalmente/i);
   });
 });

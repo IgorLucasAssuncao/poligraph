@@ -237,7 +237,7 @@ public class TestesEndpointParlamentares : BaseIntegracao
 
         for (var i = 0; i < 12; i++)
         {
-            Db.Emendas.Add(new Emenda
+            Db.Emendas.Add(new EmendaModel
             {
                 PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO",
                 CodigoEmenda = $"20255184{i:D4}", Ano = 2025,
@@ -271,7 +271,7 @@ public class TestesEndpointParlamentares : BaseIntegracao
     }
 
     /// <summary>
-    /// 🔴 Emenda sem dono ⛔ NÃO pode aparecer na ficha de ninguém.
+    /// 🔴 EmendaModel sem dono ⛔ NÃO pode aparecer na ficha de ninguém.
     ///
     /// ⚠️ `pessoa_id` é anulável de propósito — emenda de bancada e de autor ainda não
     /// reconciliado entram assim. Atribuí-las a alguém seria inventar autoria.
@@ -283,7 +283,7 @@ public class TestesEndpointParlamentares : BaseIntegracao
         await SemearAsync();
         var pessoaId = await SemearEmendasAsync();
 
-        Db.Emendas.Add(new Emenda
+        Db.Emendas.Add(new EmendaModel
         {
             PessoaId = null,                      // ⛔ sem dono
             CodigoAutor = "9999", NomeAutor = "BANCADA DO PARA",
@@ -383,21 +383,21 @@ public class TestesEndpointParlamentares : BaseIntegracao
         var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
 
         Db.Emendas.AddRange(
-            new Emenda
+            new EmendaModel
             {
                 PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
                 CodigoEmenda = "202541840001", Ano = 2025,
                 Localidade = "Ananindeua - PA", Funcao = "Saúde",
                 ValorEmpenhado = 600_000m, ValorPago = 300_000m
             },
-            new Emenda
+            new EmendaModel
             {
                 PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
                 CodigoEmenda = "202541840002", Ano = 2025,
                 Localidade = "Ananindeua - PA", Funcao = "Saúde",
                 ValorEmpenhado = 300_000m, ValorPago = 100_000m
             },
-            new Emenda
+            new EmendaModel
             {
                 PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
                 CodigoEmenda = "202541840003", Ano = 2025,
@@ -416,21 +416,21 @@ public class TestesEndpointParlamentares : BaseIntegracao
         var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
 
         Db.ReceitasDeCampanha.AddRange(
-            new ReceitaDeCampanha
+            new ReceitaDeCampanhaModel
             {
                 PessoaId = pessoaId, AnoEleicao = 2022,
-                FonteReceita = ReceitaDeCampanha.FonteFundoEspecial,
+                FonteReceita = ReceitaDeCampanhaModel.FonteFundoEspecial,
                 Doador = "PARTIDO EXEMPLO", DoadorCnpjOuHash = "12345678000199",
                 Valor = 3_000_000m
             },
-            new ReceitaDeCampanha
+            new ReceitaDeCampanhaModel
             {
                 PessoaId = pessoaId, AnoEleicao = 2022,
-                FonteReceita = ReceitaDeCampanha.FonteFundoPartidario,
+                FonteReceita = ReceitaDeCampanhaModel.FonteFundoPartidario,
                 Doador = "PARTIDO EXEMPLO", DoadorCnpjOuHash = "12345678000199",
                 Valor = 200_000m
             },
-            new ReceitaDeCampanha
+            new ReceitaDeCampanhaModel
             {
                 PessoaId = pessoaId, AnoEleicao = 2022,
                 FonteReceita = "OUTROS RECURSOS",
@@ -456,19 +456,19 @@ public class TestesEndpointParlamentares : BaseIntegracao
         var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
 
         Db.Despesas.AddRange(
-            new Despesa
+            new DespesaModel
             {
                 PessoaId = pessoaId, Ano = 2025, Mes = 3,
                 Categoria = "PASSAGEM AÉREA", Fornecedor = "CIA AEREA",
                 CnpjOuHash = "12345678000199", ValorLiquido = 200m
             },
-            new Despesa
+            new DespesaModel
             {
                 PessoaId = pessoaId, Ano = 2025, Mes = 4,
                 Categoria = "PASSAGEM AÉREA", Fornecedor = "CIA AEREA",
                 CnpjOuHash = "12345678000199", ValorLiquido = 100m
             },
-            new Despesa
+            new DespesaModel
             {
                 PessoaId = pessoaId, Ano = 2025, Mes = 5,
                 Categoria = "COMBUSTÍVEIS", Fornecedor = "POSTO",
@@ -501,10 +501,10 @@ public class TestesEndpointParlamentares : BaseIntegracao
     {
         var ids = await db_TodosOsIdsAsync();
 
-        var execucao = new Execucao
+        var execucao = new ExecucaoModel
         {
-            Casa = "CAMARA", Legislatura = 57, K = 10,
-            VersaoCarga = "teste", Status = "CONCLUIDA"
+            Casa = Casa.CAMARA, Legislatura = 57, K = 10,
+            VersaoCarga = "teste", Status = StatusDaExecucao.CONCLUIDA
         };
         Db.Execucoes.Add(execucao);
         await Db.SaveChangesAsync();
@@ -513,12 +513,12 @@ public class TestesEndpointParlamentares : BaseIntegracao
         {
             for (var j = i + 1; j < ids.Count; j++)
             {
-                Db.Similaridades.Add(new Similaridade
+                Db.Similaridades.Add(new SimilaridadeModel
                 {
                     ExecucaoId = execucao.Id,
                     PessoaA = ids[i],          // I3: menor primeiro
                     PessoaB = ids[j],
-                    Metrica = "CONCORDANCIA",
+                    Metrica = Metrica.CONCORDANCIA,
                     Valor = 0.5f + (i + j) / 100f,
                     NVotacoesComuns = 25
                 });

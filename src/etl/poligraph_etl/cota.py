@@ -4,11 +4,16 @@
 
 | | |
 |---|---|
-| Fonte | `www.camara.leg.br/cotas/Ano-{ano}.csv.zip` — ⚠️ **fora** de `dadosabertos` |
+| Fonte | ⭐ `fontes.camara.baixar_cota` — o download é ENTRADA e mora lá, com as demais |
 | Tamanho | ~6,6 MB compactado, ~233 mil linhas por ano |
 | Formato | CSV `;`, aspas, `utf-8-sig` |
 | Decimal | **PONTO** — o oposto do Portal e do TSE |
 | ⛔ O que ⛔ não serve | `GET /deputados/{id}/despesas` responde **200** com `"dados": []` |
+
+⭐ Este módulo é **só TRATAMENTO**. O download e o canário de volume vivem em
+`fontes/camara.py`, junto do resto do que vem da Câmara — a cota é um recurso da
+Câmara como os outros, e ter a entrada aqui era a única fonte do projeto que
+misturava as duas fases no mesmo arquivo.
 
 ## TRATAMENTO
 
@@ -37,48 +42,11 @@ cruzar o mesmo fornecedor entre parlamentares.
 📐 [`docs/14-fontes-de-gasto.md §1`](../../../docs/14-fontes-de-gasto.md)
 """
 
-import csv
-import io
 import logging
-import zipfile
-from pathlib import Path
 
-import requests
-
-from .normalizacao import hash_de_cpf, valor_com_ponto
+from .normalizacao import hash_de_cpf, inteiro, valor_com_ponto
 
 log = logging.getLogger("poligraph")
-
-URL = "https://www.camara.leg.br/cotas/Ano-{ano}.csv.zip"
-
-# Medido: ~233 mil linhas por ano, 99,6% com `ideCadastro`.
-MINIMO_ESPERADO = 50_000
-
-
-def baixar(ano: int, destino: Path) -> Path:
-    """⚠️ ~6,6 MB compactado. Vale cachear entre execuções."""
-    destino.parent.mkdir(parents=True, exist_ok=True)
-
-    resposta = requests.get(URL.format(ano=ano), timeout=300)
-    resposta.raise_for_status()
-    destino.write_bytes(resposta.content)
-
-    return destino
-
-
-def ler(caminho: Path) -> list[dict]:
-    """Lê o CSV de dentro do ZIP.
-
-    ⛔ Não reutiliza `camara.ler_csv`: aqui a fonte é ZIP, e carregar 233 mil linhas num
-    DataFrame para depois iterar seria desperdício.
-    """
-    with zipfile.ZipFile(caminho) as arquivo:
-        nome = arquivo.namelist()[0]
-        with arquivo.open(nome) as fluxo:
-            texto = io.TextIOWrapper(fluxo, encoding="utf-8-sig")
-
-            return list(csv.DictReader(texto, delimiter=";", quotechar='"'))
-
 
 def para_linhas(registros: list[dict], mapa_pessoas: dict[str, int]) -> list[dict]:
     """Converte em linhas de `despesas`, descartando o que ⛔ não liga a um parlamentar.
@@ -108,8 +76,8 @@ def para_linhas(registros: list[dict], mapa_pessoas: dict[str, int]) -> list[dic
         linhas.append(
             {
                 "pessoa_id": pessoa_id,
-                "ano": _inteiro(registro.get("numAno")),
-                "mes": _inteiro(registro.get("numMes")),
+                "ano": inteiro(registro.get("numAno")),
+                "mes": inteiro(registro.get("numMes")),
                 "categoria": (registro.get("txtDescricao") or "").strip() or "SEM CATEGORIA",
                 "fornecedor": (registro.get("txtFornecedor") or "").strip() or None,
                 "cnpj_ou_hash": documento,
@@ -121,15 +89,6 @@ def para_linhas(registros: list[dict], mapa_pessoas: dict[str, int]) -> list[dic
         )
 
     return linhas
-
-
-def conferir_volume(registros: list[dict], ano: int) -> None:
-    """Canário: arquivo muito menor que o medido significa layout mudado."""
-    if len(registros) < MINIMO_ESPERADO:
-        raise RuntimeError(
-            f"Só {len(registros)} linhas em Ano-{ano}.csv — esperado ao menos "
-            f"{MINIMO_ESPERADO}. O layout do arquivo mudou?"
-        )
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -157,8 +116,3 @@ def _identificar_fornecedor(bruto: str | None) -> tuple[str | None, bool]:
 _decimal = valor_com_ponto
 
 
-def _inteiro(valor: str | None) -> int:
-    try:
-        return int(valor or 0)
-    except ValueError:
-        return 0

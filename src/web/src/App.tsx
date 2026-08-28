@@ -1,15 +1,13 @@
 import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom';
 import { BannerConsentimento } from './componentes/BannerConsentimento';
 import { Layout } from './componentes/Layout';
-import { Explorar } from './paginas/Explorar';
-import { Grafo } from './paginas/Grafo';
 import { Inicio } from './paginas/Inicio';
 import { Login } from './paginas/Login';
 import { MinhaConta } from './paginas/MinhaConta';
 import { Parlamentar } from './paginas/Parlamentar';
+import { Parlamentares } from './paginas/Parlamentares';
 import { PoliticaDePrivacidade } from './paginas/PoliticaDePrivacidade';
 import { Questionario } from './paginas/Questionario';
-import { Seguindo } from './paginas/Seguindo';
 import { ProvedorDeSessao, useSessao } from './sessao';
 import './App.css';
 
@@ -49,13 +47,23 @@ function Roteador() {
     <Layout>
       <Routes>
         <Route path="/" element={<Inicio />} />
-        <Route path="/explorar" element={<Explorar />} />
-        <Route path="/grafo" element={<Grafo />} />
-        <Route path="/seguindo" element={<Seguindo />} />
-        <Route path="/questionario" element={<Questionario />} />
+        <Route path="/parlamentares" element={<Parlamentares />} />
+        <Route path="/resultado" element={<Questionario />} />
         <Route path="/parlamentar/:id" element={<Parlamentar />} />
         <Route path="/conta" element={<MinhaConta />} />
         <Route path="/privacidade" element={<PoliticaDePrivacidade />} />
+
+        {/* ⚠️ Os endereços antigos continuam funcionando. Cinco destinos viraram três,
+            e quem tiver um link salvo ⛔ não pode cair num 404 — nem ser mandado para a
+            home, que perderia a intenção de quem clicou. */}
+        <Route path="/explorar" element={<Navigate to="/parlamentares" replace />} />
+        <Route
+          path="/grafo"
+          element={<Navigate to="/parlamentares?vista=grafo" replace />}
+        />
+        <Route path="/seguindo" element={<Navigate to="/" replace />} />
+        <Route path="/questionario" element={<Navigate to="/resultado" replace />} />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
@@ -68,7 +76,7 @@ function DocumentoPublico() {
     <div className="documento-publico">
       <header className="cabecalho-publico">
         <Link to="/" className="marca-link">
-          poligraph
+          Registro Aberto
         </Link>
       </header>
       <main>

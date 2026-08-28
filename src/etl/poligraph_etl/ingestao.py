@@ -48,7 +48,12 @@ from datetime import date
 
 import pandas as pd
 
-from .normalizacao import classificar_categoria, normalizar_voto
+from .normalizacao import (
+    classificar_categoria,
+    inteiro,
+    inteiro_ou_nulo,
+    normalizar_voto,
+)
 
 LEGISLATURA_57_INICIO = date(2023, 2, 1)
 
@@ -89,7 +94,7 @@ def votacoes_para_linhas(df: pd.DataFrame, legislatura: int | None = None) -> li
     linhas: list[dict] = []
 
     for _, registro in df.iterrows():
-        sim, nao, outros = _inteiro(registro.get("votosSim")), _inteiro(registro.get("votosNao")), _inteiro(registro.get("votosOutros"))
+        sim, nao, outros = inteiro(registro.get("votosSim")), inteiro(registro.get("votosNao")), inteiro(registro.get("votosOutros"))
         if sim + nao + outros == 0:
             continue                       # simbólica: sem registro individual
 
@@ -102,7 +107,7 @@ def votacoes_para_linhas(df: pd.DataFrame, legislatura: int | None = None) -> li
                 "data": registro["data"],
                 "orgao": registro.get("siglaOrgao"),
                 "descricao": descricao,
-                "proposicao_id": _inteiro_ou_nulo(
+                "proposicao_id": inteiro_ou_nulo(
                     registro.get("ultimaApresentacaoProposicao_idProposicao")
                 ),
                 "categoria": classificar_categoria(descricao),
@@ -219,13 +224,3 @@ def id_do_deputado(linha) -> str:
     return uri.rsplit("/", 1)[-1] if "/" in uri else ""
 
 
-def _inteiro(valor) -> int:
-    try:
-        return int(float(valor))
-    except (TypeError, ValueError):
-        return 0
-
-
-def _inteiro_ou_nulo(valor) -> int | None:
-    resultado = _inteiro(valor)
-    return resultado or None

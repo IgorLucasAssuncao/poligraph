@@ -21,9 +21,9 @@ public class TestesNoticiasEDigest : BaseIntegracao
         var pessoaId = await PrimeiraPessoaAsync();
 
         await GravarNoticiaAsync("https://ex.com/forte", "Nome completo citado",
-            pessoaId, confianca: 0.85f, metodo: "NOME_PARLAMENTAR");
+            pessoaId, confianca: 0.85f, metodo: MetodoDeCitacao.NOME_PARLAMENTAR);
         await GravarNoticiaAsync("https://ex.com/fraca", "Só o sobrenome",
-            pessoaId, confianca: 0.40f, metodo: "SOBRENOME");
+            pessoaId, confianca: 0.40f, metodo: MetodoDeCitacao.SOBRENOME);
 
         using var cliente = CriarCliente();
         var noticias = await cliente.GetFromJsonAsync<List<NoticiaJson>>(
@@ -86,7 +86,7 @@ public class TestesNoticiasEDigest : BaseIntegracao
     {
         ExigeDocker();
 
-        Db.Noticias.Add(new Noticia
+        Db.Noticias.Add(new NoticiaModel
         {
             Url = "https://ex.com/longa",
             Titulo = "Título",
@@ -108,7 +108,7 @@ public class TestesNoticiasEDigest : BaseIntegracao
 
         await GravarNoticiaAsync("https://ex.com/mesma", "Primeira", pessoaId);
 
-        Db.Noticias.Add(new Noticia
+        Db.Noticias.Add(new NoticiaModel
         {
             Url = "https://ex.com/mesma",
             Titulo = "Segunda",
@@ -246,10 +246,10 @@ public class TestesNoticiasEDigest : BaseIntegracao
 
     private async Task GravarNoticiaAsync(
         string url, string titulo, long pessoaId,
-        float confianca = 0.85f, string metodo = "NOME_PARLAMENTAR",
+        float confianca = 0.85f, MetodoDeCitacao metodo = MetodoDeCitacao.NOME_PARLAMENTAR,
         DateTimeOffset? publicada = null)
     {
-        var noticia = new Noticia
+        var noticia = new NoticiaModel
         {
             Url = url,
             Titulo = titulo,
@@ -261,7 +261,7 @@ public class TestesNoticiasEDigest : BaseIntegracao
         Db.Noticias.Add(noticia);
         await Db.SaveChangesAsync();
 
-        Db.NoticiaPessoas.Add(new NoticiaPessoa
+        Db.NoticiaPessoas.Add(new NoticiaPessoaModel
         {
             NoticiaId = noticia.Id,
             PessoaId = pessoaId,
@@ -273,18 +273,18 @@ public class TestesNoticiasEDigest : BaseIntegracao
 
     private async Task<long> CriarUsuarioAsync(string sub, long pessoaId, bool optIn)
     {
-        var usuario = new Usuario { GoogleSub = sub, Email = $"{sub}@exemplo.com" };
+        var usuario = new UsuarioModel { GoogleSub = sub, Email = $"{sub}@exemplo.com" };
         Db.Usuarios.Add(usuario);
         await Db.SaveChangesAsync();
 
-        Db.Segue.Add(new Segue { UsuarioId = usuario.Id, PessoaId = pessoaId });
+        Db.Segue.Add(new SegueModel { UsuarioId = usuario.Id, PessoaId = pessoaId });
 
         if (optIn)
         {
-            Db.Consentimentos.Add(new Consentimento
+            Db.Consentimentos.Add(new ConsentimentoModel
             {
                 UsuarioId = usuario.Id,
-                Finalidade = "EMAIL_NOTICIAS",
+                Finalidade = FinalidadeDeConsentimento.EMAIL_NOTICIAS,
                 Versao = "v1"
             });
         }

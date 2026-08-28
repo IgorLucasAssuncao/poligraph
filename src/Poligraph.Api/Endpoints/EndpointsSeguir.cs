@@ -4,8 +4,8 @@ using Poligraph.Api.Data;
 
 namespace Poligraph.Api.Endpoints;
 
-public record ParlamentarSeguido(
-    long PessoaId, string Nome, string Casa, string Partido, string Uf);
+public record ParlamentarSeguidoDto(
+    long PessoaId, string Nome, Casa? Casa, string Partido, string Uf);
 
 /// <summary>
 /// 🔴 Estes endpoints escrevem na tabela `segue`, que é REGISTRO DE CONVICÇÃO POLÍTICA
@@ -49,8 +49,8 @@ public static class EndpointsSeguir
             })
             .ToListAsync(ct);
 
-        return Results.Ok(seguidos.Select(s => new ParlamentarSeguido(
-            s.PessoaId, s.NomeExibicao, s.Ultimo?.Casa ?? "",
+        return Results.Ok(seguidos.Select(s => new ParlamentarSeguidoDto(
+            s.PessoaId, s.NomeExibicao, s.Ultimo?.Casa,
             s.Ultimo?.PartidoNoVoto ?? "", s.Ultimo?.UfNoVoto ?? "")));
     }
 
@@ -66,7 +66,7 @@ public static class EndpointsSeguir
         if (await db.Segue.AnyAsync(s => s.UsuarioId == usuarioId && s.PessoaId == pessoaId, ct))
             return Results.NoContent();   // idempotente
 
-        db.Segue.Add(new Segue { UsuarioId = usuarioId, PessoaId = pessoaId });
+        db.Segue.Add(new SegueModel { UsuarioId = usuarioId, PessoaId = pessoaId });
         await db.SaveChangesAsync(ct);
 
         return Results.NoContent();

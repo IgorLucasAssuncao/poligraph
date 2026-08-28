@@ -417,6 +417,8 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 | **CT3** | Escrever o OpenAPI da C13 e validar contra o front |
 | **PL16** | Como o ETL sinaliza `novas_votacoes` |
 | **PL31** | Definir o conteúdo do seed de desenvolvimento — quantos parlamentares, votações e perguntas |
+| **PL48** | **Avaliar simplificação de migrations** — são 8 arquivos para um schema que nunca foi a produção. Consolidar numa migration inicial só enquanto isso ainda é barato, ou manter o histórico? ⚠️ Depois do primeiro deploy a decisão deixa de existir |
+| **PL49** | **Mover as migrations para o projeto `Poligraph.Migrations`** — hoje elas moram em `Poligraph.Api/Data/Migrations`, e é `Poligraph.Api` quem o `dotnet ef` toma como projeto-alvo. ⛔ A API nunca migra (regra do CLAUDE.md), então o artefato está no projeto errado: quem aplica é o console |
 | ~~PL32~~ | 🟢 Rebaixada — só texto principal foi a decisão; o texto das emendas deixou de ser necessário |
 | **C15** | Contrato do front — depende do React estar de pé |
 

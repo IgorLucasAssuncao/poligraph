@@ -204,6 +204,37 @@ def test_senador_entra_sem_cpf():
     assert linhas[0]["fonte"] == "SENADO"
 
 
+def test_foto_do_senado_vem_em_http_e_e_promovida_a_https():
+    """🔴 A API do Senado publica a foto em `http://`.
+
+    A página é servida por HTTPS, e imagem em HTTP é conteúdo misto: o navegador
+    bloqueia sem erro visível — o nó simplesmente fica sem rosto. O host responde em
+    HTTPS no mesmo caminho.
+    """
+    linhas = ingestao_senado.senadores_para_linhas(
+        [
+            {
+                "CodigoParlamentar": "5672",
+                "NomeParlamentar": "Alan Rick",
+                "UrlFotoParlamentar":
+                    "http://www.senado.leg.br/senadores/img/fotos-oficiais/senador5672.jpg",
+            }
+        ]
+    )
+
+    assert linhas[0]["url_foto"] == (
+        "https://www.senado.leg.br/senadores/img/fotos-oficiais/senador5672.jpg"
+    )
+
+
+def test_foto_ausente_fica_nula_e_nao_vira_string_vazia():
+    linhas = ingestao_senado.senadores_para_linhas(
+        [{"CodigoParlamentar": "5672", "NomeParlamentar": "Alan Rick"}]
+    )
+
+    assert linhas[0]["url_foto"] is None
+
+
 def test_usa_o_codigo_parlamentar_nao_o_publico():
     """São dois identificadores diferentes no mesmo objeto: 5672 e 800.
 

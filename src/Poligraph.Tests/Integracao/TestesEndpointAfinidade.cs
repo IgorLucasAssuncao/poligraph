@@ -155,17 +155,17 @@ public class TestesEndpointAfinidade : BaseIntegracao
         var ids = await Db.Pessoas.AsNoTracking().OrderBy(p => p.Id)
             .Select(p => p.Id).ToListAsync();
 
-        var execucao = new Execucao
+        var execucao = new ExecucaoModel
         {
-            Casa = "CAMARA", Legislatura = 57, K = 10,
-            VersaoCarga = "teste", Status = "CONCLUIDA"
+            Casa = Casa.CAMARA, Legislatura = 57, K = 10,
+            VersaoCarga = "teste", Status = StatusDaExecucao.CONCLUIDA
         };
         Db.Execucoes.Add(execucao);
         await Db.SaveChangesAsync();
 
         for (var i = 0; i < ids.Count; i++)
         {
-            Db.NosMetrica.Add(new NoMetrica
+            Db.NosMetrica.Add(new NoMetricaModel
             {
                 ExecucaoId = execucao.Id,
                 PessoaId = ids[i],

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Poligraph.Api.Data;
 
 namespace Poligraph.Tests.Integracao;
@@ -23,12 +24,12 @@ public class TestesSchema : BaseIntegracao
         var (a, b) = await CriarDuasPessoasAsync();
         var execucao = await CriarExecucaoAsync();
 
-        Db.Similaridades.Add(new Similaridade
+        Db.Similaridades.Add(new SimilaridadeModel
         {
             ExecucaoId = execucao,
             PessoaA = a,
             PessoaB = b,
-            Metrica = "CONCORDANCIA",
+            Metrica = Metrica.CONCORDANCIA,
             Valor = 0.9f,
             NVotacoesComuns = 19          // 🔴 um abaixo do mínimo
         });
@@ -43,10 +44,10 @@ public class TestesSchema : BaseIntegracao
         var (a, b) = await CriarDuasPessoasAsync();
         var execucao = await CriarExecucaoAsync();
 
-        Db.Similaridades.Add(new Similaridade
+        Db.Similaridades.Add(new SimilaridadeModel
         {
             ExecucaoId = execucao, PessoaA = a, PessoaB = b,
-            Metrica = "CONCORDANCIA", Valor = 0.9f, NVotacoesComuns = 20
+            Metrica = Metrica.CONCORDANCIA, Valor = 0.9f, NVotacoesComuns = 20
         });
 
         await Db.SaveChangesAsync();      // não pode lançar
@@ -63,12 +64,12 @@ public class TestesSchema : BaseIntegracao
         var (a, b) = await CriarDuasPessoasAsync();
         var execucao = await CriarExecucaoAsync();
 
-        Db.Similaridades.Add(new Similaridade
+        Db.Similaridades.Add(new SimilaridadeModel
         {
             ExecucaoId = execucao,
             PessoaA = b,                  // 🔴 invertido: b > a
             PessoaB = a,
-            Metrica = "CONCORDANCIA", Valor = 0.9f, NVotacoesComuns = 30
+            Metrica = Metrica.CONCORDANCIA, Valor = 0.9f, NVotacoesComuns = 30
         });
 
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
@@ -88,7 +89,7 @@ public class TestesSchema : BaseIntegracao
         var (pessoa, _) = await CriarDuasPessoasAsync();
         var votacao = await CriarVotacaoAsync();
 
-        Db.Votos.Add(new Voto
+        Db.Votos.Add(new VotoModel
         {
             VotacaoId = votacao, PessoaId = pessoa, Valor = valor,
             PartidoNoVoto = "PT", UfNoVoto = "SP"
@@ -110,7 +111,7 @@ public class TestesSchema : BaseIntegracao
         ExigeDocker();
         var votacao = await CriarVotacaoAsync();
 
-        Db.Perguntas.Add(new Pergunta
+        Db.Perguntas.Add(new PerguntaModel
         {
             Id = $"q-{polaridade}", VotacaoId = votacao,
             Texto = "Afirmação de teste.", Polaridade = polaridade, Ordem = 1
@@ -120,40 +121,133 @@ public class TestesSchema : BaseIntegracao
     }
 
     // ═══════════════════════════════════════════════════════════════
+    // Nomes de tabela — o ETL Python depende deles
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// 🔴 <b>A lista é literal de propósito.</b>
+    ///
+    /// <para>
+    /// O nome da tabela sai do nome do <c>DbSet</c>, então renomear uma propriedade de
+    /// C# renomeia uma tabela — e o EF gera o <c>RenameTable</c> sem perguntar. Isso já
+    /// aconteceu: a renomeação das entidades para o sufixo <c>Model</c> pegou o DbSet
+    /// <c>Segue</c> junto e produziria <c>segue_model</c>, na tabela que é registro de
+    /// convicção política (LGPD art. 5º, II).
+    /// </para>
+    ///
+    /// <para>
+    /// ⚠️ Derivar a lista esperada do próprio modelo tornaria o teste vazio: ele
+    /// concordaria com qualquer renomeação. A lista escrita à mão é o ponto.
+    /// </para>
+    /// </summary>
+    [SkippableFact]
+    public async Task NomesDeTabela_SaoOsQueOEtlPythonLe()
+    {
+        ExigeDocker();
+
+        var esperadas = new[]
+        {
+            "arestas_grafo", "autores_de_emenda", "avaliacoes", "consentimentos",
+            "despesas", "emendas", "execucoes", "noticia_pessoas", "noticia_temas",
+            "noticias", "nos_metrica", "perguntas", "pessoa_fonte_ids", "pessoas",
+            "proposicoes", "receitas_de_campanha", "segue", "similaridades",
+            "tokens_email", "usuarios", "votacoes", "votos",
+        };
+
+        var noBanco = await Db.Database
+            .SqlQuery<string>($"""
+                SELECT tablename AS "Value" FROM pg_tables
+                 WHERE schemaname = 'public' AND tablename NOT LIKE '\_\_%'
+                """)
+            .ToListAsync();
+
+        // ⚠️ A ordenação é feita aqui, ⛔ não no `ORDER BY`: a ordem do Postgres depende
+        //    do collation do container, e `nos_metrica` vem antes ou depois de
+        //    `noticia_pessoas` conforme a regra de intercalação. O teste afirma QUAIS
+        //    tabelas existem, não em que ordem o banco as lista.
+        Assert.Equal(
+            esperadas.Order(StringComparer.Ordinal),
+            noBanco.Order(StringComparer.Ordinal));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // Domínios fechados de texto
     // ═══════════════════════════════════════════════════════════════
 
-    [SkippableFact]
-    public async Task Votacao_ComCategoriaInvalida_ERejeitada()
+    /// <summary>
+    /// 🔴 <b>SQL cru, e ⛔ não o EF, de propósito.</b>
+    ///
+    /// <para>
+    /// Desde que <c>casa</c> e <c>categoria</c> viraram enum, escrever
+    /// <c>Casa = "ASSEMBLEIA"</c> ⛔ nem compila — e a versão anterior deste teste,
+    /// que passava pelo EF, deixaria de existir por isso.
+    /// </para>
+    ///
+    /// <para>
+    /// Só que o enum ⛔ não é quem protege a coluna: <b>quem escreve a maior parte
+    /// destas linhas é o ETL Python</b>, que manda texto e nunca viu o tipo. O caminho
+    /// que o teste precisa exercitar é justamente esse. Passar pelo EF testaria o
+    /// compilador; passar por SQL testa a restrição.
+    /// </para>
+    /// </summary>
+    [Theory]
+    [InlineData("casa", "'ASSEMBLEIA'", "ck_votacao_casa")]
+    [InlineData("categoria", "'INVENTADA'", "ck_votacao_categoria")]
+    public async Task Votacao_ComValorForaDoDominio_ERejeitadaPeloBanco(
+        string coluna, string valor, string restricao)
     {
         ExigeDocker();
-        Db.Votacoes.Add(new Votacao
-        {
-            Id = "cat-invalida", Casa = "CAMARA", Legislatura = 57,
-            Data = new DateOnly(2025, 1, 1), Categoria = "INVENTADA", Plenario = true
-        });
 
-        await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
+        var colunas = "id, casa, legislatura, data, categoria, plenario, secreta";
+        var valores = coluna == "casa"
+            ? $"'fora-dominio', {valor}, 57, DATE '2025-01-01', 'SUBSTANTIVA', true, false"
+            : $"'fora-dominio', 'CAMARA', 57, DATE '2025-01-01', {valor}, true, false";
+
+        var erro = await Assert.ThrowsAsync<PostgresException>(() =>
+            Db.Database.ExecuteSqlRawAsync(
+                $"INSERT INTO votacoes ({colunas}) VALUES ({valores})"));
+
+        // ⭐ Confere QUAL restrição barrou. Sem isto, um NOT NULL acidental em outra
+        //    coluna faria o teste passar por um motivo que não é o que ele afirma.
+        Assert.Equal(restricao, erro.ConstraintName);
     }
 
+    /// <summary>
+    /// ⚠️ O outro lado da mesma moeda: o enum precisa chegar ao banco como TEXTO.
+    ///
+    /// Se a convenção de <c>ConfigureConventions</c> sumir, o EF grava o ordinal, a
+    /// restrição recusa <c>0</c> e o ETL Python continua gravando <c>'CAMARA'</c> na
+    /// mesma coluna. Este teste falha antes disso chegar em produção.
+    /// </summary>
     [SkippableFact]
-    public async Task Votacao_ComCasaInvalida_ERejeitada()
+    public async Task Enum_ChegaAoBancoComoTexto_NaoComoOrdinal()
     {
         ExigeDocker();
-        Db.Votacoes.Add(new Votacao
+        Db.Votacoes.Add(new VotacaoModel
         {
-            Id = "casa-invalida", Casa = "ASSEMBLEIA", Legislatura = 57,
-            Data = new DateOnly(2025, 1, 1), Categoria = "SUBSTANTIVA", Plenario = true
+            Id = "enum-texto", Casa = Casa.SENADO, Legislatura = 57,
+            Data = new DateOnly(2025, 1, 1),
+            Categoria = CategoriaDeVotacao.DESTAQUE, Plenario = true
         });
+        await Db.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
+        var gravado = await Db.Database
+            // ⚠️ O alias `Value` não é enfeite: `SqlQuery<T>` de tipo escalar procura
+            //    uma coluna com esse nome exato.
+            .SqlQuery<string>($"""
+                SELECT casa || '/' || categoria AS "Value"
+                  FROM votacoes WHERE id = 'enum-texto'
+                """)
+            .SingleAsync();
+
+        Assert.Equal("SENADO/DESTAQUE", gravado);
     }
 
     [SkippableFact]
     public async Task Usuario_ComEmailSemArroba_ERejeitado()
     {
         ExigeDocker();
-        Db.Usuarios.Add(new Usuario { GoogleSub = "sub-1", Email = "naoehemail" });
+        Db.Usuarios.Add(new UsuarioModel { GoogleSub = "sub-1", Email = "naoehemail" });
 
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
     }
@@ -168,18 +262,18 @@ public class TestesSchema : BaseIntegracao
         ExigeDocker();
         var (pessoa, _) = await CriarDuasPessoasAsync();
 
-        var usuario = new Usuario { GoogleSub = "sub-lgpd", Email = "pessoa@exemplo.com" };
+        var usuario = new UsuarioModel { GoogleSub = "sub-lgpd", Email = "pessoa@exemplo.com" };
         Db.Usuarios.Add(usuario);
         await Db.SaveChangesAsync();
 
-        Db.Segue.Add(new Segue { UsuarioId = usuario.Id, PessoaId = pessoa });
-        Db.Consentimentos.Add(new Consentimento
+        Db.Segue.Add(new SegueModel { UsuarioId = usuario.Id, PessoaId = pessoa });
+        Db.Consentimentos.Add(new ConsentimentoModel
         {
-            UsuarioId = usuario.Id, Finalidade = "EMAIL_NOTICIAS", Versao = "v1"
+            UsuarioId = usuario.Id, Finalidade = FinalidadeDeConsentimento.EMAIL_NOTICIAS, Versao = "v1"
         });
-        Db.TokensEmail.Add(new TokenEmail
+        Db.TokensEmail.Add(new TokenEmailModel
         {
-            Token = "tok-1", UsuarioId = usuario.Id, Proposito = "DESCADASTRO"
+            Token = "tok-1", UsuarioId = usuario.Id, Proposito = PropositoDeToken.DESCADASTRO
         });
         await Db.SaveChangesAsync();
 
@@ -194,7 +288,7 @@ public class TestesSchema : BaseIntegracao
 
     // ═══════════════════════════════════════════════════════════════
     // ⛔ O oposto do CASCADE: apagar parlamentar que alguém segue não pode
-    //    ser possível. Por isso `Segue → Pessoa` é RESTRICT.
+    //    ser possível. Por isso `SegueModel → PessoaModel` é RESTRICT.
     //
     // ⭐ São DUAS camadas de proteção, e as duas são testadas — porque a
     //    primeira pode ser contornada e a segunda não.
@@ -226,7 +320,7 @@ public class TestesSchema : BaseIntegracao
         ExigeDocker();
         var pessoa = await CriarParlamentarSeguidoAsync("sub-banco");
 
-        // contexto novo: o change tracker não conhece nenhum `Segue`
+        // contexto novo: o change tracker não conhece nenhum `SegueModel`
         await using var outro = CriarContexto();
         var alvo = await outro.Pessoas.FirstAsync(p => p.Id == pessoa);
         outro.Pessoas.Remove(alvo);
@@ -243,19 +337,19 @@ public class TestesSchema : BaseIntegracao
     public async Task Consentimento_DoisVivosParaAMesmaFinalidade_ERejeitado()
     {
         ExigeDocker();
-        var usuario = new Usuario { GoogleSub = "sub-consent", Email = "c@exemplo.com" };
+        var usuario = new UsuarioModel { GoogleSub = "sub-consent", Email = "c@exemplo.com" };
         Db.Usuarios.Add(usuario);
         await Db.SaveChangesAsync();
 
-        Db.Consentimentos.Add(new Consentimento
+        Db.Consentimentos.Add(new ConsentimentoModel
         {
-            UsuarioId = usuario.Id, Finalidade = "EMAIL_NOTICIAS", Versao = "v1"
+            UsuarioId = usuario.Id, Finalidade = FinalidadeDeConsentimento.EMAIL_NOTICIAS, Versao = "v1"
         });
         await Db.SaveChangesAsync();
 
-        Db.Consentimentos.Add(new Consentimento
+        Db.Consentimentos.Add(new ConsentimentoModel
         {
-            UsuarioId = usuario.Id, Finalidade = "EMAIL_NOTICIAS", Versao = "v2"
+            UsuarioId = usuario.Id, Finalidade = FinalidadeDeConsentimento.EMAIL_NOTICIAS, Versao = "v2"
         });
 
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
@@ -267,8 +361,8 @@ public class TestesSchema : BaseIntegracao
 
     private async Task<(long, long)> CriarDuasPessoasAsync()
     {
-        var a = new Pessoa { NomeCivil = "A", NomeExibicao = "A" };
-        var b = new Pessoa { NomeCivil = "B", NomeExibicao = "B" };
+        var a = new PessoaModel { NomeCivil = "A", NomeExibicao = "A" };
+        var b = new PessoaModel { NomeCivil = "B", NomeExibicao = "B" };
         Db.Pessoas.AddRange(a, b);
         await Db.SaveChangesAsync();
 
@@ -279,11 +373,11 @@ public class TestesSchema : BaseIntegracao
     {
         var (pessoa, _) = await CriarDuasPessoasAsync();
 
-        var usuario = new Usuario { GoogleSub = sub, Email = $"{sub}@exemplo.com" };
+        var usuario = new UsuarioModel { GoogleSub = sub, Email = $"{sub}@exemplo.com" };
         Db.Usuarios.Add(usuario);
         await Db.SaveChangesAsync();
 
-        Db.Segue.Add(new Segue { UsuarioId = usuario.Id, PessoaId = pessoa });
+        Db.Segue.Add(new SegueModel { UsuarioId = usuario.Id, PessoaId = pessoa });
         await Db.SaveChangesAsync();
 
         return pessoa;
@@ -291,10 +385,10 @@ public class TestesSchema : BaseIntegracao
 
     private async Task<long> CriarExecucaoAsync()
     {
-        var execucao = new Execucao
+        var execucao = new ExecucaoModel
         {
-            Casa = "CAMARA", Legislatura = 57, K = 10,
-            VersaoCarga = "teste", Status = "CONCLUIDA"
+            Casa = Casa.CAMARA, Legislatura = 57, K = 10,
+            VersaoCarga = "teste", Status = StatusDaExecucao.CONCLUIDA
         };
         Db.Execucoes.Add(execucao);
         await Db.SaveChangesAsync();
@@ -304,10 +398,10 @@ public class TestesSchema : BaseIntegracao
     private async Task<string> CriarVotacaoAsync()
     {
         var id = $"v-{Guid.NewGuid():N}";
-        Db.Votacoes.Add(new Votacao
+        Db.Votacoes.Add(new VotacaoModel
         {
-            Id = id, Casa = "CAMARA", Legislatura = 57,
-            Data = new DateOnly(2025, 1, 1), Categoria = "SUBSTANTIVA", Plenario = true
+            Id = id, Casa = Casa.CAMARA, Legislatura = 57,
+            Data = new DateOnly(2025, 1, 1), Categoria = CategoriaDeVotacao.SUBSTANTIVA, Plenario = true
         });
         await Db.SaveChangesAsync();
         return id;

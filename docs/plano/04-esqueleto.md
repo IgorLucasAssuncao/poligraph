@@ -742,8 +742,8 @@ lógica de renovação. **O navegador cuida do cookie.**
 
 | Arranjo | Consequência |
 |---|---|
-| ⭐ `poligraph.com.br` + `poligraph.com.br/api` | ✅ Mesma origem: **sem CORS**, `SameSite=Lax` funciona |
-| `poligraph.com.br` + `api.poligraph.com.br` | ⛔ *Cross-site*: exige `SameSite=None`, CORS com `AllowCredentials` e origem explícita |
+| ⭐ `registroaberto.org` + `registroaberto.org/api` | ✅ Mesma origem: **sem CORS**, `SameSite=Lax` funciona |
+| `registroaberto.org` + `api.registroaberto.org` | ⛔ *Cross-site*: exige `SameSite=None`, CORS com `AllowCredentials` e origem explícita |
 
 > 🔑 **O Traefik já roteia por caminho** ([01-arquitetura §2.1.1](01-arquitetura.md)).
 > Mandar `/api/*` para o container da API **elimina uma classe inteira de problema de

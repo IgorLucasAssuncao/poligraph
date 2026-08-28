@@ -4,10 +4,10 @@ using Poligraph.Api.Services;
 
 namespace Poligraph.Api.Endpoints;
 
-public record RequisicaoAfinidade(IReadOnlyList<RespostaCidadao> Respostas);
+public record RequisicaoAfinidadeDto(IReadOnlyList<RespostaCidadao> Respostas);
 
 /// <summary>⛔ Sem percentual — a tela monta "concordou em X de Y" (RF-29).</summary>
-public record ParlamentarAfim(
+public record ParlamentarAfimDto(
     long PessoaId, string Nome, string Partido, string Uf, int Acordos, int Comparaveis);
 
 /// <summary>
@@ -21,7 +21,7 @@ public record ParlamentarAfim(
 /// legislatura inteira (mais de mil). ⛔ Não é a mesma medida com o mesmo nome, e
 /// esconder isso seria afirmar uma precisão que o dado não tem.
 /// </summary>
-public record PosicaoDoCidadao(
+public record PosicaoDoCidadaoDto(
     float EixoX,
     float EixoY,
     short? Comunidade,
@@ -43,12 +43,12 @@ public record PosicaoDoCidadao(
 /// dela o cidadão respondeu. É o número que a tela usa em "concordaram em 4 de 6".
 /// </para>
 /// </summary>
-public record ResultadoPorCasa(
-    string Casa,
+public record ResultadoPorCasaDto(
+    Casa Casa,
     int PerguntasRespondidas,
-    IReadOnlyList<ParlamentarAfim> MaisProximos,
-    IReadOnlyList<ParlamentarAfim> MaisDistantes,
-    PosicaoDoCidadao? PosicaoNoGrafo);
+    IReadOnlyList<ParlamentarAfimDto> MaisProximos,
+    IReadOnlyList<ParlamentarAfimDto> MaisDistantes,
+    PosicaoDoCidadaoDto? PosicaoNoGrafo);
 
 /// <summary>
 /// O resultado completo — uma lista por casa.
@@ -61,9 +61,9 @@ public record ResultadoPorCasa(
 /// autoexplicativo e não exige decisão prévia.
 /// </para>
 /// </summary>
-public record RespostaAfinidade(
+public record RespostaAfinidadeDto(
     int TotalPerguntasRespondidas,
-    IReadOnlyList<ResultadoPorCasa> PorCasa);
+    IReadOnlyList<ResultadoPorCasaDto> PorCasa);
 
 /// <summary>
 /// ⚠️ `TotalVotos` é o comparecimento na votação — quantos deputados se posicionaram.
@@ -78,7 +78,7 @@ public record RespostaAfinidade(
 /// parlamentar, cheia para quem se posicionou. Sem o denominador, 300 e 480 marcas
 /// seriam indistinguíveis a olho.
 /// </summary>
-public record PerguntaPublica(
+public record PerguntaPublicaDto(
     string Id, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
 
 public static class EndpointsAfinidade
@@ -139,7 +139,7 @@ public static class EndpointsAfinidade
         // (RNF-28), e saber de qual casa veio cada pergunta não muda o que ele responde.
         // Ela serve só para escolher o denominador certo.
         var perguntas = brutas
-            .Select(p => new PerguntaPublica(
+            .Select(p => new PerguntaPublicaDto(
                 p.Id, p.Texto, p.Ordem, p.TotalVotos,
                 possivelPorCasa.GetValueOrDefault(p.Casa)))
             .ToList();
@@ -148,7 +148,7 @@ public static class EndpointsAfinidade
     }
 
     private static async Task<IResult> CalcularAsync(
-        RequisicaoAfinidade requisicao, PoligraphDb db, CancellationToken ct)
+        RequisicaoAfinidadeDto requisicao, PoligraphDb db, CancellationToken ct)
     {
         var opinadas = requisicao.Respostas.Where(r => r.Valor != 0).ToList();
 
@@ -174,7 +174,7 @@ public static class EndpointsAfinidade
         var casaDaPergunta = await CasaDasPerguntasAsync(db, opinadas, ct);
         var votosPorPessoa = await CarregarVotosAsync(db, opinadas, ct);
 
-        var porCasa = new List<ResultadoPorCasa>();
+        var porCasa = new List<ResultadoPorCasaDto>();
         foreach (var casa in casaDaPergunta.Values.Distinct().OrderBy(c => c))
         {
             var daCasa = opinadas
@@ -186,7 +186,7 @@ public static class EndpointsAfinidade
 
             var fichas = await CarregarFichasAsync(db, resultados, ct);
 
-            porCasa.Add(new ResultadoPorCasa(
+            porCasa.Add(new ResultadoPorCasaDto(
                 Casa: casa,
                 PerguntasRespondidas: daCasa.Count,
                 MaisProximos: Montar(resultados.OrderByDescending(r => r.Proporcao), fichas),
@@ -202,7 +202,7 @@ public static class EndpointsAfinidade
             mensagem = "Nenhum parlamentar votou o suficiente nas perguntas respondidas."
         });
 
-        return Results.Ok(new RespostaAfinidade(
+        return Results.Ok(new RespostaAfinidadeDto(
             TotalPerguntasRespondidas: opinadas.Count,
             PorCasa: porCasa));
     }
@@ -228,9 +228,9 @@ public static class EndpointsAfinidade
     /// ⛔ Devolve `null` quando não há execução do grafo, e a tela omite o desenho em
     /// vez de inventar um ponto.
     /// </summary>
-    private static async Task<PosicaoDoCidadao?> PosicionarAsync(
+    private static async Task<PosicaoDoCidadaoDto?> PosicionarAsync(
         PoligraphDb db,
-        string casa,
+        Casa casa,
         List<ResultadoAfinidade> resultados,
         int perguntasRespondidas,
         CancellationToken ct)
@@ -241,7 +241,7 @@ public static class EndpointsAfinidade
         // no grafo do Senado a partir das respostas da Câmara daria um ponto plausível
         // sobre uma figura que não é a dele.
         var execucaoId = await db.Execucoes.AsNoTracking()
-            .Where(e => e.Status == "CONCLUIDA" && e.Casa == casa)
+            .Where(e => e.Status == StatusDaExecucao.CONCLUIDA && e.Casa == casa)
             .OrderByDescending(e => e.Id)
             .Select(e => (long?)e.Id)
             .FirstOrDefaultAsync(ct);
@@ -286,7 +286,7 @@ public static class EndpointsAfinidade
         //    sem erro nenhum — a tela receberia um ponto fantasma.
         if (somaDosPesos <= 0) return null;
 
-        return new PosicaoDoCidadao(
+        return new PosicaoDoCidadaoDto(
             EixoX: (float)(x / somaDosPesos),
             EixoY: (float)(y / somaDosPesos),
             Comunidade: comunidades.Count == 0
@@ -313,7 +313,7 @@ public static class EndpointsAfinidade
     /// compartilham as mesmas tabelas.
     /// </para>
     /// </summary>
-    private static async Task<Dictionary<string, string>> CasaDasPerguntasAsync(
+    private static async Task<Dictionary<string, Casa>> CasaDasPerguntasAsync(
         PoligraphDb db, List<RespostaCidadao> opinadas, CancellationToken ct)
     {
         var ids = opinadas.Select(r => r.PerguntaId).ToList();
@@ -405,7 +405,7 @@ public static class EndpointsAfinidade
             f => (f.NomeExibicao, f.Ultimo?.PartidoNoVoto ?? "", f.Ultimo?.UfNoVoto ?? ""));
     }
 
-    private static List<ParlamentarAfim> Montar(
+    private static List<ParlamentarAfimDto> Montar(
         IOrderedEnumerable<ResultadoAfinidade> ordenados,
         Dictionary<long, (string Nome, string Partido, string Uf)> fichas) =>
         ordenados
@@ -413,7 +413,7 @@ public static class EndpointsAfinidade
             .Select(r =>
             {
                 var ficha = fichas.GetValueOrDefault(r.PessoaId);
-                return new ParlamentarAfim(
+                return new ParlamentarAfimDto(
                     r.PessoaId, ficha.Nome ?? "", ficha.Partido ?? "", ficha.Uf ?? "",
                     r.Acordos, r.Comparaveis);
             })

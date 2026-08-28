@@ -127,7 +127,7 @@ def senadores_para_linhas(identificacoes: list[dict]) -> list[dict]:
                 "nome_civil": _texto(identificacao.get("NomeCompletoParlamentar")) or nome,
                 "nome_exibicao": nome,
                 "cpf_hash": None,
-                "url_foto": _texto(identificacao.get("UrlFotoParlamentar")) or None,
+                "url_foto": _em_https(_texto(identificacao.get("UrlFotoParlamentar"))),
                 "fonte": CASA,
                 "id_externo": codigo,
                 "metodo": "MANUAL",
@@ -299,4 +299,16 @@ def _data(votacao: dict) -> str:
 def _texto(valor) -> str:
     """Tudo passa por aqui: os campos do Senado não vêm higienizados."""
     return "" if valor is None else str(valor).strip()
+
+
+def _em_https(url: str) -> str | None:
+    """🔴 O Senado publica a foto em `http://`, e o navegador bloqueia.
+
+    A página é servida por HTTPS; imagem em HTTP é conteúdo misto e não carrega — sem
+    erro visível, só um nó sem rosto. O host responde em HTTPS com o mesmo caminho.
+    """
+    if not url:
+        return None
+
+    return f"https://{url[len('http://'):]}" if url.startswith("http://") else url
 

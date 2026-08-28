@@ -7,7 +7,6 @@ import {
   type Resposta,
   type ResultadoAfinidade,
 } from '../api';
-import { CabecalhoDaColuna } from '../componentes/Layout';
 import { Painel } from '../componentes/Painel';
 import { Resultado } from '../componentes/Resultado';
 import { comTransicao } from '../transicao';
@@ -67,7 +66,6 @@ export function Questionario() {
   if (perguntas.length === 0) {
     return (
       <>
-        <CabecalhoDaColuna titulo="Questionário" />
         <p className={erro ? 'erro' : 'carregando'}>{erro ?? 'Carregando…'}</p>
       </>
     );
@@ -79,19 +77,18 @@ export function Questionario() {
 
   return (
     <div className="questionario">
-      <CabecalhoDaColuna
-        titulo="Questionário"
-        subtitulo={
-          acabou
-            ? `${opinadas} respondidas`
-            : `Pergunta ${indice + 1} de ${perguntas.length}`
-        }
-      />
-
       <div className="progresso">
         <div className="barra-progresso">
           <div style={{ width: `${acabou ? 100 : progresso}%` }} />
         </div>
+
+        {/* ⚠️ Isto ⛔ não é título repetido: é a única indicação de quanto falta, e
+            saiu junto com o cabeçalho da página por descuido. */}
+        <p className="progresso-contagem">
+          {acabou
+            ? `${opinadas} de ${perguntas.length} respondidas`
+            : `Pergunta ${indice + 1} de ${perguntas.length}`}
+        </p>
       </div>
 
       {acabou ? (

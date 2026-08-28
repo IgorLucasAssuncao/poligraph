@@ -3,14 +3,14 @@ using Poligraph.Api.Data;
 
 namespace Poligraph.Api.Endpoints;
 
-public record ParlamentarNaLista(
-    long Id, string Nome, string Casa, string Partido, string Uf, int NVotacoes, string? UrlFoto);
+public record ParlamentarNaListaDto(
+    long Id, string Nome, Casa? Casa, string Partido, string Uf, int NVotacoes, string? UrlFoto);
 
-public record VotoNaFicha(string VotacaoId, DateOnly Data, string? Descricao, short? Valor);
+public record VotoNaFichaDto(string VotacaoId, DateOnly Data, string? Descricao, short? Valor);
 
-public record SimilarNaFicha(long PessoaId, string Nome, string Partido, float Valor, int Comuns);
+public record SimilarNaFichaDto(long PessoaId, string Nome, string Partido, float Valor, int Comuns);
 
-public record FichaParlamentar(
+public record FichaParlamentarDto(
     long Id,
     string Nome,
     /// <summary>
@@ -21,36 +21,41 @@ public record FichaParlamentar(
     /// nomes aparecem nas duas casas, e o deputado que virou senador deve poder ser uma
     /// pessoa só quando a ponte do achado #18 existir.
     /// </para>
+    ///
+    /// <para>
+    /// ⭐ Nula quando a pessoa ainda não tem voto. Antes disto era string vazia, que era
+    /// um terceiro valor da casa que o tipo agora ⛔ não admite.
+    /// </para>
     /// </summary>
-    string Casa,
+    Casa? Casa,
     string NomeCivil,
     string Partido,
     string Uf,
     /// <summary>🔴 URL na Câmara — ⛔ a imagem NÃO é rehospedada.</summary>
     string? UrlFoto,
     int NVotacoes,
-    IReadOnlyList<VotoNaFicha> VotosRecentes,
-    IReadOnlyList<SimilarNaFicha> MaisSimilares);
+    IReadOnlyList<VotoNaFichaDto> VotosRecentes,
+    IReadOnlyList<SimilarNaFichaDto> MaisSimilares);
 
 /// <summary>
 /// ⚠️ Agregado, ⛔ não a lista de 200 mil linhas. A ficha responde "quanto e em quê",
 /// e o documento fiscal fica a um clique na Câmara.
 /// </summary>
-public record GastoPorCategoria(string Categoria, decimal Total, int Lancamentos);
+public record GastoPorCategoriaDto(string Categoria, decimal Total, int Lancamentos);
 
-public record FornecedorDoParlamentar(
+public record FornecedorDoParlamentarDto(
     string Nome, decimal Total, int Lancamentos, bool PessoaFisica);
 
-public record GastoDeCota(
+public record GastoDeCotaDto(
     int Ano,
     decimal Total,
     int Lancamentos,
-    IReadOnlyList<GastoPorCategoria> PorCategoria,
-    IReadOnlyList<FornecedorDoParlamentar> MaioresFornecedores);
+    IReadOnlyList<GastoPorCategoriaDto> PorCategoria,
+    IReadOnlyList<FornecedorDoParlamentarDto> MaioresFornecedores);
 
-public record EmendaPorDestino(string Localidade, decimal Empenhado, decimal Pago, int Quantidade);
+public record EmendaPorDestinoDto(string Localidade, decimal Empenhado, decimal Pago, int Quantidade);
 
-public record EmendaPorFuncao(string Funcao, decimal Empenhado, decimal Pago);
+public record EmendaPorFuncaoDto(string Funcao, decimal Empenhado, decimal Pago);
 
 /// <summary>
 /// As emendas do parlamentar num ano.
@@ -61,17 +66,17 @@ public record EmendaPorFuncao(string Funcao, decimal Empenhado, decimal Pago);
 /// seria a metade que favorece quem só anuncia.
 /// </para>
 /// </summary>
-public record EmendasDoParlamentar(
+public record EmendasDoParlamentarDto(
     int Ano,
     decimal Empenhado,
     decimal Pago,
     int Quantidade,
-    IReadOnlyList<EmendaPorDestino> PorDestino,
-    IReadOnlyList<EmendaPorFuncao> PorFuncao);
+    IReadOnlyList<EmendaPorDestinoDto> PorDestino,
+    IReadOnlyList<EmendaPorFuncaoDto> PorFuncao);
 
-public record ReceitaPorFonte(string Fonte, decimal Total, int Lancamentos);
+public record ReceitaPorFonteDto(string Fonte, decimal Total, int Lancamentos);
 
-public record DoadorDoParlamentar(string Nome, decimal Total, bool PessoaFisica);
+public record DoadorDoParlamentarDto(string Nome, decimal Total, bool PessoaFisica);
 
 /// <summary>
 /// O financiamento da campanha que elegeu o parlamentar.
@@ -82,13 +87,13 @@ public record DoadorDoParlamentar(string Nome, decimal Total, bool PessoaFisica)
 /// defensável, mas é uma afirmação — e quem a fizer que a assine.
 /// </para>
 /// </summary>
-public record FinanciamentoDeCampanha(
+public record FinanciamentoDeCampanhaDto(
     int AnoEleicao,
     decimal Total,
     decimal FundoEspecial,
     decimal FundoPartidario,
-    IReadOnlyList<ReceitaPorFonte> PorFonte,
-    IReadOnlyList<DoadorDoParlamentar> MaioresDoadores);
+    IReadOnlyList<ReceitaPorFonteDto> PorFonte,
+    IReadOnlyList<DoadorDoParlamentarDto> MaioresDoadores);
 
 public static class EndpointsParlamentares
 {
@@ -136,7 +141,7 @@ public static class EndpointsParlamentares
         // ⭐ `null` só acontece em base sem votação nenhuma — antes do primeiro ETL. Aí
         //    a lista sai vazia, que é a resposta honesta.
         var legislatura = await Legislaturas.CorrenteAsync(db, ct);
-        if (legislatura is null) return Results.Ok(Array.Empty<ParlamentarNaLista>());
+        if (legislatura is null) return Results.Ok(Array.Empty<ParlamentarNaListaDto>());
 
         var consulta = db.Pessoas.AsNoTracking()
             .Select(p => new
@@ -168,8 +173,8 @@ public static class EndpointsParlamentares
             .Take(LimiteLista)
             .ToListAsync(ct);
 
-        return Results.Ok(lista.Select(p => new ParlamentarNaLista(
-            p.Id, p.NomeExibicao, p.Ultimo?.Casa ?? "",
+        return Results.Ok(lista.Select(p => new ParlamentarNaListaDto(
+            p.Id, p.NomeExibicao, p.Ultimo?.Casa,
             p.Ultimo?.PartidoNoVoto ?? "", p.Ultimo?.UfNoVoto ?? "",
             p.NVotacoes, p.UrlFoto)));
     }
@@ -193,7 +198,7 @@ public static class EndpointsParlamentares
 
         // ⭐ Sem despesa é caso NORMAL — deputado que não usou cota, ou ano ainda não
         //    ingerido. A tela mostra estado vazio, ⛔ não erro.
-        if (alvo is null) return Results.Ok(new GastoDeCota(0, 0, 0, [], []));
+        if (alvo is null) return Results.Ok(new GastoDeCotaDto(0, 0, 0, [], []));
 
         var doAno = db.Despesas.AsNoTracking().Where(d => d.PessoaId == id && d.Ano == alvo);
 
@@ -212,7 +217,7 @@ public static class EndpointsParlamentares
             .ToListAsync(ct);
 
         var porCategoria = categorias
-            .Select(c => new GastoPorCategoria(c.Categoria, c.Total, c.Lancamentos))
+            .Select(c => new GastoPorCategoriaDto(c.Categoria, c.Total, c.Lancamentos))
             .ToList();
 
         var brutos = await doAno
@@ -230,11 +235,11 @@ public static class EndpointsParlamentares
             .ToListAsync(ct);
 
         var fornecedores = brutos
-            .Select(f => new FornecedorDoParlamentar(
+            .Select(f => new FornecedorDoParlamentarDto(
                 f.Fornecedor!, f.Total, f.Lancamentos, f.FornecedorEhPessoaFisica))
             .ToList();
 
-        return Results.Ok(new GastoDeCota(
+        return Results.Ok(new GastoDeCotaDto(
             Ano: alvo.Value,
             Total: porCategoria.Sum(c => c.Total),
             Lancamentos: porCategoria.Sum(c => c.Lancamentos),
@@ -246,7 +251,7 @@ public static class EndpointsParlamentares
     /// As emendas do parlamentar, agregadas por ano.
     ///
     /// <para>
-    /// ⭐ Só entra emenda <b>já reconciliada</b>. Emenda de comissão, de bancada e de
+    /// ⭐ Só entra emenda <b>já reconciliada</b>. EmendaModel de comissão, de bancada e de
     /// autor não resolvido existe no banco e ⛔ não aparece aqui: atribuí-la por
     /// semelhança de nome seria inventar autoria.
     /// </para>
@@ -259,7 +264,7 @@ public static class EndpointsParlamentares
             .MaxAsync(e => (int?)e.Ano, ct);
 
         // Sem emenda é caso normal: a tela mostra estado vazio, ⛔ não erro.
-        if (alvo is null) return Results.Ok(new EmendasDoParlamentar(0, 0, 0, 0, [], []));
+        if (alvo is null) return Results.Ok(new EmendasDoParlamentarDto(0, 0, 0, 0, [], []));
 
         var doAno = db.Emendas.AsNoTracking()
             .Where(e => e.PessoaId == id && e.Ano == (short)alvo.Value);
@@ -305,20 +310,20 @@ public static class EndpointsParlamentares
             })
             .FirstOrDefaultAsync(ct);
 
-        return Results.Ok(new EmendasDoParlamentar(
+        return Results.Ok(new EmendasDoParlamentarDto(
             Ano: alvo.Value,
             Empenhado: totais?.Empenhado ?? 0,
             Pago: totais?.Pago ?? 0,
             Quantidade: totais?.Quantidade ?? 0,
             PorDestino: [.. destinos.Select(d =>
-                new EmendaPorDestino(d.Localidade, d.Empenhado, d.Pago, d.Quantidade))],
+                new EmendaPorDestinoDto(d.Localidade, d.Empenhado, d.Pago, d.Quantidade))],
             PorFuncao: [.. funcoes.Select(f =>
-                new EmendaPorFuncao(f.Funcao, f.Empenhado, f.Pago))]));
+                new EmendaPorFuncaoDto(f.Funcao, f.Empenhado, f.Pago))]));
     }
 
     /// <summary>
     /// O financiamento da campanha, com os dois fundos separados —
-    /// ver <see cref="FinanciamentoDeCampanha"/>.
+    /// ver <see cref="FinanciamentoDeCampanhaDto"/>.
     /// </summary>
     private static async Task<IResult> ObterFinanciamentoAsync(
         long id, PoligraphDb db, CancellationToken ct, int? eleicao = null)
@@ -327,7 +332,7 @@ public static class EndpointsParlamentares
             .Where(r => r.PessoaId == id)
             .MaxAsync(r => (int?)r.AnoEleicao, ct);
 
-        if (alvo is null) return Results.Ok(new FinanciamentoDeCampanha(0, 0, 0, 0, [], []));
+        if (alvo is null) return Results.Ok(new FinanciamentoDeCampanhaDto(0, 0, 0, 0, [], []));
 
         var daEleicao = db.ReceitasDeCampanha.AsNoTracking()
             .Where(r => r.PessoaId == id && r.AnoEleicao == (short)alvo.Value);
@@ -344,7 +349,7 @@ public static class EndpointsParlamentares
             .ToListAsync(ct);
 
         // 🔴 RNF-13: doador pessoa física aparece pelo NOME; o documento é hash e ⛔
-        // nunca sai da API. Mesma regra de `Despesa.CnpjOuHash`.
+        // nunca sai da API. Mesma regra de `DespesaModel.CnpjOuHash`.
         var doadores = await daEleicao
             .Where(r => r.Doador != null)
             .GroupBy(r => new { r.Doador, r.DoadorEhPessoaFisica })
@@ -358,19 +363,19 @@ public static class EndpointsParlamentares
             .Take(ItensNaFicha)
             .ToListAsync(ct);
 
-        return Results.Ok(new FinanciamentoDeCampanha(
+        return Results.Ok(new FinanciamentoDeCampanhaDto(
             AnoEleicao: alvo.Value,
             Total: fontes.Sum(f => f.Total),
             FundoEspecial: fontes
-                .Where(f => f.Fonte == ReceitaDeCampanha.FonteFundoEspecial)
+                .Where(f => f.Fonte == ReceitaDeCampanhaModel.FonteFundoEspecial)
                 .Sum(f => f.Total),
             FundoPartidario: fontes
-                .Where(f => f.Fonte == ReceitaDeCampanha.FonteFundoPartidario)
+                .Where(f => f.Fonte == ReceitaDeCampanhaModel.FonteFundoPartidario)
                 .Sum(f => f.Total),
             PorFonte: [.. fontes.Select(f =>
-                new ReceitaPorFonte(f.Fonte, f.Total, f.Lancamentos))],
+                new ReceitaPorFonteDto(f.Fonte, f.Total, f.Lancamentos))],
             MaioresDoadores: [.. doadores.Select(d =>
-                new DoadorDoParlamentar(d.Doador!, d.Total, d.DoadorEhPessoaFisica))]));
+                new DoadorDoParlamentarDto(d.Doador!, d.Total, d.DoadorEhPessoaFisica))]));
     }
 
     /// <summary>RF-31 — ficha com dados, histórico de votos e mais similares.</summary>
@@ -388,7 +393,7 @@ public static class EndpointsParlamentares
         var similares = await MaisSimilaresAsync(db, id, ct);
         var (casa, partido, uf) = await FiliacaoAtualAsync(db, id, ct);
 
-        return Results.Ok(new FichaParlamentar(
+        return Results.Ok(new FichaParlamentarDto(
             pessoa.Id, pessoa.NomeExibicao, casa, pessoa.NomeCivil,
             partido, uf, pessoa.UrlFoto,
             // 🔴 PL35 — só a legislatura corrente, igual à lista. Contar todas daria
@@ -403,13 +408,13 @@ public static class EndpointsParlamentares
     // PRIVADOS — na ordem de uso
     // ═══════════════════════════════════════════════════════════════
 
-    private static async Task<List<VotoNaFicha>> UltimosVotosAsync(
+    private static async Task<List<VotoNaFichaDto>> UltimosVotosAsync(
         PoligraphDb db, long id, CancellationToken ct) =>
         await db.Votos.AsNoTracking()
             .Where(v => v.PessoaId == id)
             .OrderByDescending(v => v.Votacao!.Data)
             .Take(VotosNaFicha)
-            .Select(v => new VotoNaFicha(
+            .Select(v => new VotoNaFichaDto(
                 v.VotacaoId, v.Votacao!.Data, v.Votacao.Descricao, v.Valor))
             .ToListAsync(ct);
 
@@ -420,11 +425,11 @@ public static class EndpointsParlamentares
     /// Por isso a consulta precisa olhar os DOIS lados — senão metade dos vizinhos
     /// some, e some justamente para quem tem id alto.
     /// </summary>
-    private static async Task<List<SimilarNaFicha>> MaisSimilaresAsync(
+    private static async Task<List<SimilarNaFichaDto>> MaisSimilaresAsync(
         PoligraphDb db, long id, CancellationToken ct)
     {
         var execucao = await db.Execucoes.AsNoTracking()
-            .Where(e => e.Status == "CONCLUIDA")
+            .Where(e => e.Status == StatusDaExecucao.CONCLUIDA)
             .OrderByDescending(e => e.Id)
             .Select(e => (long?)e.Id)
             .FirstOrDefaultAsync(ct);
@@ -433,7 +438,7 @@ public static class EndpointsParlamentares
 
         var pares = await db.Similaridades.AsNoTracking()
             .Where(s => s.ExecucaoId == execucao
-                     && s.Metrica == "CONCORDANCIA"
+                     && s.Metrica == Metrica.CONCORDANCIA
                      && (s.PessoaA == id || s.PessoaB == id))
             .OrderByDescending(s => s.Valor)
             .Take(SimilaresNaFicha)
@@ -459,7 +464,7 @@ public static class EndpointsParlamentares
             })
             .ToDictionaryAsync(p => p.Id, ct);
 
-        return [.. pares.Select(p => new SimilarNaFicha(
+        return [.. pares.Select(p => new SimilarNaFichaDto(
             p.Outro,
             fichas.GetValueOrDefault(p.Outro)?.NomeExibicao ?? "",
             fichas.GetValueOrDefault(p.Outro)?.Partido ?? "",
@@ -480,7 +485,7 @@ public static class EndpointsParlamentares
     /// fontes, e a pergunta que a ficha responde é "onde essa pessoa está agora".
     /// </para>
     /// </summary>
-    private static async Task<(string Casa, string Partido, string Uf)> FiliacaoAtualAsync(
+    private static async Task<(Casa? Casa, string Partido, string Uf)> FiliacaoAtualAsync(
         PoligraphDb db, long id, CancellationToken ct)
     {
         var ultimo = await db.Votos.AsNoTracking()
@@ -489,6 +494,6 @@ public static class EndpointsParlamentares
             .Select(v => new { v.Votacao!.Casa, v.PartidoNoVoto, v.UfNoVoto })
             .FirstOrDefaultAsync(ct);
 
-        return (ultimo?.Casa ?? "", ultimo?.PartidoNoVoto ?? "", ultimo?.UfNoVoto ?? "");
+        return (ultimo?.Casa, ultimo?.PartidoNoVoto ?? "", ultimo?.UfNoVoto ?? "");
     }
 }

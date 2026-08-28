@@ -65,7 +65,7 @@ public static class CarregadorDePerguntas
 
         if (curadas.Count == 0) return "curadoria vazia: nenhuma pergunta nos lotes.";
 
-        // ⚠️ Pergunta sem a votação no banco viraria violação de chave estrangeira. É
+        // ⚠️ PerguntaModel sem a votação no banco viraria violação de chave estrangeira. É
         //    caso NORMAL, não erro: a curadoria pode citar 2023 antes de 2023 ser
         //    ingerido. Fica de fora e o número aparece no log.
         var votacoes = curadas.Select(p => p.VotacaoId).ToList();
@@ -130,7 +130,7 @@ public static class CarregadorDePerguntas
                 continue;
             }
 
-            db.Perguntas.Add(new Pergunta
+            db.Perguntas.Add(new PerguntaModel
             {
                 Id = curada.Id,
                 VotacaoId = curada.VotacaoId,

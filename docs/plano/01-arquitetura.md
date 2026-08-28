@@ -146,10 +146,10 @@ flowchart TB
 
 | # | | |
 |---|---|---|
-| 1 | Cidadão acessa `poligraph.com.br` | DNS resolve para **um IP da Cloudflare**, não o seu |
+| 1 | Cidadão acessa `registroaberto.org` | DNS resolve para **um IP da Cloudflare**, não o seu |
 | 2 | Cloudflare | Serve o que está em cache; filtra bot e ataque no WAF |
 | 3 | Chega no VPS na **443** | Único caminho aberto para a web |
-| 4 | **Traefik** olha o domínio | `poligraph.com.br` → `web` · `api.poligraph...` → `api` |
+| 4 | **Traefik** olha o domínio | `registroaberto.org` → `web` · `api.registroaberto.org` → `api` |
 | 5 | Container responde | O React chama `/api/*`, que o Traefik roteia para o C# |
 | 6 | API consulta o Postgres | Pelo **nome do container**, dentro da rede Docker |
 
@@ -588,8 +588,8 @@ comando. Reprodutibilidade demonstrável.
 simples — servir a API sob o **mesmo domínio** via Cloudflare:
 
 ```
-poligraph.app          → Cloudflare Pages (React)
-poligraph.app/api/*    → proxy para a origem da API
+registroaberto.org      → Cloudflare Pages (React)
+registroaberto.org/api/* → proxy para a origem da API
 ```
 
 Isso elimina CORS, elimina *preflight* e simplifica o cookie/token. **Configure assim

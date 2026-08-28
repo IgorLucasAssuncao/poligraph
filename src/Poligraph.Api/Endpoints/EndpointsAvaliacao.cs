@@ -4,7 +4,7 @@ using Poligraph.Api.Data;
 
 namespace Poligraph.Api.Endpoints;
 
-public record RequisicaoAvaliacao(
+public record RequisicaoAvaliacaoDto(
     int PerguntasRespondidas,
     int AcordosDoPrimeiro,
     int ComparaveisDoPrimeiro,
@@ -18,7 +18,7 @@ public static class EndpointsAvaliacao
         var grupo = app.MapGroup("/api/avaliacao").WithTags("Avaliação");
 
         // ⚠️ Exige login como todo o resto do site, mas o que é GRAVADO não carrega
-        //    a identidade — ver `AvaliacaoQuestionario`.
+        //    a identidade — ver `AvaliacaoQuestionarioModel`.
         grupo.MapPost("/", RegistrarAsync).RequireAuthorization();
 
         return app;
@@ -38,7 +38,7 @@ public static class EndpointsAvaliacao
     /// pensa?" — que é exatamente o que o TCC precisa.
     /// </summary>
     private static async Task<IResult> RegistrarAsync(
-        RequisicaoAvaliacao requisicao,
+        RequisicaoAvaliacaoDto requisicao,
         ClaimsPrincipal _,
         PoligraphDb db,
         CancellationToken ct)
@@ -46,7 +46,7 @@ public static class EndpointsAvaliacao
         if (requisicao.PosicaoAutodeclarada is < -3 or > 3)
             return Results.BadRequest(new { erro = "posicao_fora_da_escala" });
 
-        db.Avaliacoes.Add(new AvaliacaoQuestionario
+        db.Avaliacoes.Add(new AvaliacaoQuestionarioModel
         {
             PerguntasRespondidas = requisicao.PerguntasRespondidas,
             AcordosDoPrimeiro = requisicao.AcordosDoPrimeiro,

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { listarParlamentares, listarSeguidos, type Parlamentar } from '../api';
 import { IconeExplorar } from '../componentes/Icones';
-import { CabecalhoDaColuna } from '../componentes/Layout';
 import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 
 /** Busca e navegação pelos parlamentares (RF-34). */
@@ -37,8 +36,6 @@ export function Explorar() {
 
   return (
     <>
-      <CabecalhoDaColuna titulo="Explorar" />
-
       <div className="barra-busca">
         <span className="icone-busca" aria-hidden="true">
           <IconeExplorar />

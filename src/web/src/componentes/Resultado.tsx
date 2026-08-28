@@ -86,7 +86,7 @@ function SecaoDaCasa({ casa }: { casa: ResultadoPorCasa }) {
   return (
     <section className="casa-resultado">
       <h2 className="titulo-casa">
-        {nome.plural} mais próximos de você
+        Os {nome.plural} mais próximos de você
         <small>
           {casa.perguntasRespondidas}{' '}
           {casa.perguntasRespondidas === 1 ? 'pergunta' : 'perguntas'} desta casa
@@ -108,7 +108,7 @@ function SecaoDaCasa({ casa }: { casa: ResultadoPorCasa }) {
 
           <p className="ajuda ajuda-espacada">
             O losango é você, posicionado entre os{' '}
-            <strong>{casa.posicaoNoGrafo.vizinhosUsados}</strong> {nome.plural.toLowerCase()}{' '}
+            <strong>{casa.posicaoNoGrafo.vizinhosUsados}</strong> {nome.plural}{' '}
             com quem você mais concordou.{' '}
             {/* Sem esta frase a tela afirma uma precisão que o dado não tem. */}
             <strong>

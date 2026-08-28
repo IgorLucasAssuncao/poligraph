@@ -7,7 +7,7 @@ namespace Poligraph.Api.Data;
 /// ⛔ Nunca o texto integral: isso é reprodução de obra de terceiro, e o projeto não
 /// tem licença para isso. ⛔ Nunca conteúdo atrás de paywall.
 /// </summary>
-public class Noticia
+public class NoticiaModel
 {
     public long Id { get; set; }
 
@@ -26,7 +26,7 @@ public class Noticia
 
     public DateTimeOffset ColetadaEm { get; set; }
 
-    public List<NoticiaPessoa> Pessoas { get; set; } = [];
+    public List<NoticiaPessoaModel> Pessoas { get; set; } = [];
 }
 
 /// <summary>
@@ -35,26 +35,25 @@ public class Noticia
 /// 🔴 RF-40 — `Confianca` existe porque notícia errada na página de quem a pessoa segue
 /// é falha visível. Abaixo do limiar, a associação NÃO é exibida.
 /// </summary>
-public class NoticiaPessoa
+public class NoticiaPessoaModel
 {
     public long NoticiaId { get; set; }
-    public Noticia? Noticia { get; set; }
+    public NoticiaModel? Noticia { get; set; }
 
     public long PessoaId { get; set; }
-    public Pessoa? Pessoa { get; set; }
+    public PessoaModel? Pessoa { get; set; }
 
     /// <summary>0 a 1. Nome completo casado vale mais que sobrenome solto.</summary>
     public float Confianca { get; set; }
 
-    /// <summary>NOME_COMPLETO | NOME_PARLAMENTAR | SOBRENOME</summary>
-    public required string Metodo { get; set; }
+    public MetodoDeCitacao Metodo { get; set; }
 }
 
 /// <summary>RF-48 — tema da notícia, para o feed misto.</summary>
-public class NoticiaTema
+public class NoticiaTemaModel
 {
     public long NoticiaId { get; set; }
-    public Noticia? Noticia { get; set; }
+    public NoticiaModel? Noticia { get; set; }
 
     public required string Tema { get; set; }
 }

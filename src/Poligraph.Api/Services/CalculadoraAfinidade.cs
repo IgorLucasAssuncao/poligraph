@@ -6,9 +6,9 @@ namespace Poligraph.Api.Services;
 public readonly record struct RespostaCidadao(string PerguntaId, short Valor);
 
 /// <summary>Como o parlamentar se posicionou na afirmação de uma pergunta.</summary>
-/// <param name="Voto">+1 sim · -1 não · 0 abstenção · null ausente.</param>
+/// <param name="VotoModel">+1 sim · -1 não · 0 abstenção · null ausente.</param>
 /// <param name="Polaridade">+1 "Sim" aprova a afirmação · -1 "Sim" a rejeita.</param>
-public readonly record struct PosicaoParlamentar(short? Voto, short Polaridade);
+public readonly record struct PosicaoParlamentar(short? VotoModel, short Polaridade);
 
 /// <summary>Afinidade de um parlamentar com o cidadão. ⛔ Sem percentual — RF-29.</summary>
 public readonly record struct ResultadoAfinidade(long PessoaId, int Acordos, int Comparaveis)
@@ -33,7 +33,7 @@ public static class CalculadoraAfinidade
     /// Posição efetiva do parlamentar na afirmação: o voto corrigido pela polaridade.
     /// </summary>
     public static short? PosicaoEfetiva(PosicaoParlamentar posicao) =>
-        posicao.Voto is null ? null : (short)(posicao.Voto.Value * posicao.Polaridade);
+        posicao.VotoModel is null ? null : (short)(posicao.VotoModel.Value * posicao.Polaridade);
 
     /// <summary>
     /// A pergunta entra na conta? Só se os dois lados se manifestaram de fato.

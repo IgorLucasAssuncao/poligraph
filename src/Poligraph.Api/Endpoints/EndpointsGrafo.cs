@@ -8,25 +8,34 @@ namespace Poligraph.Api.Endpoints;
 /// ⛔ não têm interpretação. `Componente1`/`Componente2` vêm do SVD e ⭐ têm: são a
 /// direção em que os deputados mais se diferenciam. A tela escolhe qual desenhar.
 /// </summary>
-public record NoDoGrafo(
+public record NoDoGrafoDto(
     long Id, string Nome, string Partido, string Uf,
     short? Comunidade, float? EixoX, float? EixoY, int NVotacoes,
-    float? Componente1, float? Componente2);
+    float? Componente1, float? Componente2, string? UrlFoto);
 
-public record ArestaDoGrafo(long De, long Para, float Peso);
+/// <summary>
+/// ⚠️ <c>Peso</c> é a CONCORDÂNCIA — a proporção de votos iguais —, e sozinho ele não
+/// se lê: 82% sobre 24 votações e 82% sobre 540 são afirmações de força muito
+/// diferente. <c>VotacoesComuns</c> é a base, e a tela ⛔ nunca mostra um sem o outro.
+///
+/// <c>Cosseno</c> é a outra métrica da RF-18, calculada sobre os mesmos pares. Vai
+/// junto para que a comparação entre as duas seja verificável na própria interface.
+/// </summary>
+public record ArestaDoGrafoDto(
+    long De, long Para, float Peso, int VotacoesComuns, float? Cosseno);
 
-public record Grafo(
+public record GrafoDto(
     long ExecucaoId,
-    string Casa,
+    Casa Casa,
     short Legislatura,
-    IReadOnlyList<NoDoGrafo> Nos,
-    IReadOnlyList<ArestaDoGrafo> Arestas);
+    IReadOnlyList<NoDoGrafoDto> Nos,
+    IReadOnlyList<ArestaDoGrafoDto> Arestas);
 
 public static class EndpointsGrafo
 {
     public static IEndpointRouteBuilder MapearGrafo(this IEndpointRouteBuilder app)
     {
-        var grupo = app.MapGroup("/api/grafo").WithTags("Grafo");
+        var grupo = app.MapGroup("/api/grafo").WithTags("GrafoDto");
 
         grupo.MapGet("/", ObterAsync);
 
@@ -43,26 +52,26 @@ public static class EndpointsGrafo
     /// inteiro para posicionar. Paginar aqui quebraria a visualização.
     /// </summary>
     private static async Task<IResult> ObterAsync(
-        PoligraphDb db, CancellationToken ct, string casa = "CAMARA")
+        PoligraphDb db, CancellationToken ct, Casa casa = Casa.CAMARA)
     {
         var execucao = await db.Execucoes.AsNoTracking()
-            .Where(e => e.Casa == casa && e.Status == "CONCLUIDA")
+            .Where(e => e.Casa == casa && e.Status == StatusDaExecucao.CONCLUIDA)
             .OrderByDescending(e => e.Id)
             .Select(e => new { e.Id, e.Casa, e.Legislatura })
             .FirstOrDefaultAsync(ct);
 
         // ⭐ Primeiro dia, antes de o ETL analítico rodar: grafo vazio, não erro.
         if (execucao is null)
-            return Results.Ok(new Grafo(0, casa, 0, [], []));
+            return Results.Ok(new GrafoDto(0, casa, 0, [], []));
 
         var nos = await NosAsync(db, execucao.Id, ct);
         var arestas = await ArestasAsync(db, execucao.Id, ct);
 
-        return Results.Ok(new Grafo(
+        return Results.Ok(new GrafoDto(
             execucao.Id, execucao.Casa, execucao.Legislatura, nos, arestas));
     }
 
-    private static async Task<List<NoDoGrafo>> NosAsync(
+    private static async Task<List<NoDoGrafoDto>> NosAsync(
         PoligraphDb db, long execucaoId, CancellationToken ct)
     {
         var metricas = await db.NosMetrica.AsNoTracking()
@@ -77,6 +86,7 @@ public static class EndpointsGrafo
             {
                 p.Id,
                 p.NomeExibicao,
+                p.UrlFoto,
                 Ultimo = p.Votos
                     .OrderByDescending(v => v.Votacao!.Data)
                     .Select(v => new { v.PartidoNoVoto, v.UfNoVoto })
@@ -87,13 +97,13 @@ public static class EndpointsGrafo
         return [.. metricas.Select(m =>
         {
             var pessoa = pessoas.GetValueOrDefault(m.PessoaId);
-            return new NoDoGrafo(
+            return new NoDoGrafoDto(
                 m.PessoaId,
                 pessoa?.NomeExibicao ?? "",
                 pessoa?.Ultimo?.PartidoNoVoto ?? "",
                 pessoa?.Ultimo?.UfNoVoto ?? "",
                 m.Comunidade, m.EixoX, m.EixoY, m.NVotacoes,
-                m.Componente1, m.Componente2);
+                m.Componente1, m.Componente2, pessoa?.UrlFoto);
         })];
     }
 
@@ -104,10 +114,39 @@ public static class EndpointsGrafo
     /// convivência, coautoria mede colaboração. Misturá-las num grafo só produziria
     /// um desenho sem interpretação.
     /// </summary>
-    private static async Task<List<ArestaDoGrafo>> ArestasAsync(
-        PoligraphDb db, long execucaoId, CancellationToken ct) =>
-        await db.ArestasGrafo.AsNoTracking()
-            .Where(a => a.ExecucaoId == execucaoId && a.Tipo == "SIMILARIDADE_VOTO")
-            .Select(a => new ArestaDoGrafo(a.PessoaA, a.PessoaB, a.Peso))
-            .ToListAsync(ct);
+    private static async Task<List<ArestaDoGrafoDto>> ArestasAsync(
+        PoligraphDb db, long execucaoId, CancellationToken ct)
+    {
+        // ⚠️ A base e o cosseno vivem em `similaridades`, não em `arestas_grafo`. A
+        //    junção acontece no banco: `similaridades` tem 185.908 linhas por métrica
+        //    nesta execução, e trazê-las para a memória para casar aqui seria ler
+        //    370 mil linhas a cada abertura da tela.
+        var arestas =
+            from a in db.ArestasGrafo.AsNoTracking()
+            where a.ExecucaoId == execucaoId && a.Tipo == TipoDeAresta.SIMILARIDADE_VOTO
+
+            join concordancia in db.Similaridades.AsNoTracking()
+                    .Where(s => s.Metrica == Metrica.CONCORDANCIA)
+                on new { a.ExecucaoId, a.PessoaA, a.PessoaB }
+                equals new { concordancia.ExecucaoId, concordancia.PessoaA, concordancia.PessoaB }
+                into porConcordancia
+            from base_ in porConcordancia.DefaultIfEmpty()
+
+            join cosseno in db.Similaridades.AsNoTracking()
+                    .Where(s => s.Metrica == Metrica.COSSENO)
+                on new { a.ExecucaoId, a.PessoaA, a.PessoaB }
+                equals new { cosseno.ExecucaoId, cosseno.PessoaA, cosseno.PessoaB }
+                into porCosseno
+            from outra in porCosseno.DefaultIfEmpty()
+
+            select new ArestaDoGrafoDto(
+                a.PessoaA, a.PessoaB, a.Peso,
+                // ⭐ `DefaultIfEmpty` porque o par sem linha de similaridade é bug, e o
+                //    zero aparece na tela como "0 votações" em vez de derrubar a
+                //    requisição inteira.
+                base_ == null ? 0 : base_.NVotacoesComuns,
+                outra == null ? null : outra.Valor);
+
+        return await arestas.ToListAsync(ct);
+    }
 }

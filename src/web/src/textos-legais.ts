@@ -7,7 +7,7 @@
  * responder "consentiu com o quê, exatamente?" — que é a pergunta que a LGPD art. 8º §2
  * joga no colo do controlador, porque o ônus da prova do consentimento é dele.
  */
-export const VERSAO_CONSENTIMENTO = 'v1-2026-08-26';
+export const VERSAO_CONSENTIMENTO = 'v3-2026-08-28';
 
 export const CONTATO = 'igorlucas1217@gmail.com';
 
@@ -17,146 +17,138 @@ export const CONTATO = 'igorlucas1217@gmail.com';
  * o que o sistema realmente faz.
  */
 export const POLITICA_DE_PRIVACIDADE = `
-# Política de Privacidade — Poligraph
+# Política de Privacidade
 
-**Versão ${VERSAO_CONSENTIMENTO}**
+**Versão ${VERSAO_CONSENTIMENTO}** · Última atualização: 28 de agosto de 2026.
 
-O Poligraph é uma ferramenta **acadêmica**, desenvolvida como trabalho de conclusão de
-curso. Ele compara o que você responde num questionário com o **voto real** de deputados
-federais, usando dados abertos da Câmara dos Deputados.
+O Registro Aberto é um trabalho de conclusão de curso. Ele compara as respostas de um
+questionário com o voto registrado em plenário de deputados federais e senadores,
+a partir dos dados abertos da Câmara dos Deputados e do Senado Federal.
 
-Esta política descreve exatamente o que o sistema faz com dados — nem mais, nem menos.
-
----
-
-## 1. Você pode usar quase tudo sem se identificar
-
-Responder o questionário, ver o resultado, consultar a ficha de um parlamentar, explorar
-o grafo e ler as notícias **não exigem login**.
-
-**Suas respostas do questionário não são gravadas em lugar nenhum.** O cálculo acontece
-no momento em que você pede o resultado, e o resultado não é armazenado.
+Este texto descreve o que o sistema faz com dados pessoais.
 
 ---
 
-## 2. O que guardamos se você entrar com o Google
+## 1. O site exige conta
 
-Entrar serve para **uma coisa**: manter sua lista de parlamentares acompanhados entre
-dispositivos, e — se você pedir — receber notícias por e-mail.
+Desde 26 de agosto de 2026 é preciso entrar com o Google para usar qualquer parte do
+site. Só a política de privacidade fica acessível sem login.
 
-Ao entrar, recebemos e guardamos do Google:
+**As respostas do questionário não são gravadas.** O cálculo do resultado acontece na
+requisição, com as respostas enviadas naquele momento, e nem as respostas nem o
+resultado ficam no banco.
 
-| Dado | Para quê |
+---
+
+## 2. Dados recebidos do Google
+
+Entrar tem duas finalidades: manter a lista de parlamentares acompanhados entre
+dispositivos e, mediante pedido, enviar notícias por e-mail.
+
+| Dado | Finalidade |
 |---|---|
-| Identificador da conta | Reconhecer que é você ao voltar |
-| E-mail | Enviar o resumo de notícias, se você tiver pedido |
-| Nome e sobrenome | Cumprimentá-lo na tela e no e-mail |
-| Foto do perfil | Exibir seu avatar |
+| Identificador da conta | Reconhecer a mesma pessoa em acessos seguintes |
+| E-mail | Enviar o resumo de notícias, quando solicitado |
+| Nome | Identificar a pessoa na interface e no e-mail |
+| Foto do perfil | Exibir o avatar |
 | Idioma | Ajustar a interface |
 
-**Nunca recebemos sua senha.** A autenticação acontece inteiramente no Google.
-Também **não guardamos nenhum token de acesso**.
+A autenticação acontece no Google. O sistema não recebe senha. O token de identidade
+devolvido pelo Google é validado e descartado na mesma requisição: nenhum token é
+gravado.
 
 ---
 
-## 3. 🔴 A lista de quem você acompanha é dado sensível
+## 3. A lista de parlamentares acompanhados
 
-Ao seguir um parlamentar, gravamos essa escolha vinculada à sua conta.
+Seguir um parlamentar grava essa escolha vinculada à conta.
 
-Pela **Lei Geral de Proteção de Dados (art. 5º, II)**, opinião política é **dado pessoal
-sensível** — uma categoria com proteção mais rígida. Tratamos essa lista com esse peso:
+A Lei Geral de Proteção de Dados classifica dado sobre convicção política como **dado
+pessoal sensível** (art. 5º, II), categoria com exigências mais estritas de tratamento.
+Esta lista é tratada nessa condição:
 
-- ela existe **apenas** para montar sua lista e o resumo por e-mail;
-- **não é vendida, compartilhada, cedida ou usada para publicidade**;
-- **não é usada para segmentar você** em nada;
-- você pode apagá-la a qualquer momento, item a item ou de uma vez.
+- é usada para montar a lista exibida na conta e o resumo por e-mail, e para nada além disso;
+- não é vendida, cedida, compartilhada nem usada para publicidade;
+- não alimenta segmentação de nenhum tipo;
+- pode ser apagada a qualquer momento, item a item ou por inteiro.
 
-**A base legal é o seu consentimento** (art. 7º, I e art. 11, I), que você dá ao entrar e
-ao seguir alguém, e pode retirar quando quiser.
+A base legal é o consentimento (art. 7º, I e art. 11, I), manifestado ao entrar e ao
+seguir alguém, e revogável a qualquer tempo.
 
 ---
 
-## 4. E-mail: só se você pedir
+## 4. E-mail
 
-O resumo por e-mail é **opcional** e desligado por padrão. Se você ativar:
+O resumo por e-mail é opcional e vem desativado. Quando ativado:
 
-- enviamos apenas notícias de parlamentares que **você** acompanha;
-- **o assunto do e-mail nunca cita nome de parlamentar**, para que sua preferência
-  política não fique visível na caixa de entrada ou na tela de bloqueio do celular;
-- todo e-mail traz um link de **descadastro em um clique**, que funciona sem login;
-- descadastrar **não** apaga sua conta.
+- cobre apenas os parlamentares acompanhados pela própria pessoa;
+- o assunto não cita nome de parlamentar, para que a preferência política não fique
+  legível na caixa de entrada ou na tela de bloqueio do celular;
+- todo envio traz link de descadastro que funciona em um clique, sem login;
+- o descadastro encerra o envio e não apaga a conta.
 
-O envio é feito por um serviço terceirizado de e-mail, que processa o endereço apenas
-para entregar a mensagem.
+A entrega é feita por serviço terceirizado, que processa o endereço apenas para esse fim.
 
 ---
 
 ## 5. Medição de uso
 
-Usamos ferramentas de análise para entender como as pessoas usam a interface — é parte
-da avaliação acadêmica do trabalho.
+A interface é avaliada com ferramenta de análise, como parte da pesquisa. **A medição
+inclui gravação de sessão**, que registra a navegação e os cliques — inclusive as
+respostas marcadas no questionário, que indicam posição política.
 
-🔴 **Isso inclui gravação de sessão**, que registra sua navegação e os cliques, incluindo
-as respostas que você marcar no questionário. **Essas respostas indicam sua posição
-política.**
-
-- Nada disso é coletado **antes** de você aceitar.
-- As gravações **podem ser exibidas na apresentação e na defesa** deste trabalho.
-- A ferramenta é a **Microsoft Clarity**; os dados ficam em servidores **fora do Brasil**
-  (art. 33 da LGPD).
-- Gravações são retidas por **30 dias**; dados de clique, por **9 meses**.
-- Recusar **não impede** o uso do site.
+- Nada é coletado antes do aceite.
+- As gravações podem ser exibidas na apresentação e na defesa do trabalho.
+- A ferramenta é a Microsoft Clarity, com dados em servidores fora do Brasil (art. 33).
+- Gravações ficam 30 dias; dados de clique, 9 meses.
+- Recusar a medição não impede o uso do site.
 
 ---
 
-## 6. Quanto tempo guardamos
+## 6. Prazos de retenção
 
 | Dado | Prazo |
 |---|---|
 | Conta e lista de acompanhados | Enquanto a conta existir |
-| Conta sem acesso | Apagada após **12 meses** de inatividade |
+| Conta sem acesso | Apagada após 12 meses de inatividade |
 | Gravações de sessão | 30 dias |
 | Dados de clique | 9 meses |
 
 ---
 
-## 7. Seus direitos (LGPD art. 18)
+## 7. Direitos do titular (art. 18)
 
-Você pode, a qualquer momento:
+A qualquer momento é possível:
 
-- **ver** os dados que temos sobre você;
-- **corrigir** o que estiver errado;
-- **apagar tudo** — a exclusão remove conta, lista de acompanhados, consentimentos e
-  tokens, de uma vez;
-- **retirar o consentimento**, sem que isso afete o que já foi feito legitimamente antes;
-- **saber com quem compartilhamos** — hoje: Google (login), o serviço de e-mail, e a
-  Microsoft (medição de uso).
+- obter os dados mantidos sobre você;
+- corrigir dado incorreto;
+- apagar tudo, em uma operação que remove conta, lista de acompanhados, consentimentos e tokens;
+- revogar o consentimento, sem efeito sobre tratamentos já realizados licitamente;
+- saber com quem há compartilhamento: Google, para o login; o serviço de envio de e-mail;
+  e a Microsoft, para a medição de uso.
 
-Para exercer qualquer um deles: **${CONTATO}**.
+Para exercer qualquer um deles, escreva para **${CONTATO}**.
 
 ---
 
 ## 8. Segurança
 
-- Todo o tráfego é cifrado (HTTPS).
-- O banco de dados **não é acessível pela internet**.
-- Backups são criptografados.
-- Não guardamos senha, nem token de acesso, nem CPF em texto legível.
+- Todo o tráfego é cifrado por HTTPS.
+- O banco de dados não é acessível pela internet.
+- Os backups são criptografados.
+- Não há senha, token de acesso nem CPF gravado em texto legível. O CPF, quando usado
+  para reconciliar fontes públicas, é convertido em hash antes de chegar ao banco.
 
-⚠️ Nenhum sistema é imune a incidente. Em caso de vazamento que possa gerar risco a você,
-comunicaremos você e a ANPD, como exige o art. 48.
-
----
-
-## 9. Isto não é recomendação de voto
-
-O Poligraph compara **votos registrados**. Ele não avalia, não classifica e não recomenda
-nenhum parlamentar. Um alto grau de concordância significa apenas que suas respostas
-coincidiram com votos daquela pessoa nas perguntas apresentadas — nada além disso.
+Nenhum sistema é imune a incidente. Havendo vazamento com risco relevante, a comunicação
+ao titular e à ANPD é feita nos termos do art. 48.
 
 ---
 
-*Última atualização: 26 de agosto de 2026.*
+## 9. O que este trabalho não faz
+
+O Registro Aberto compara votos registrados. Não avalia, não classifica e não recomenda
+parlamentar algum. Concordância alta significa que as respostas coincidiram com os votos
+daquela pessoa nas perguntas apresentadas, e nada além disso.
 `.trim();
 
 /**
@@ -167,11 +159,11 @@ export const TEXTO_CONSENTIMENTO = {
   titulo: 'Antes de continuar',
 
   corpo: [
-    'Para avaliar a interface deste trabalho acadêmico, podemos **gravar sua navegação**, incluindo cliques e **as respostas que você marcar no questionário**.',
-    '**Essas respostas indicam sua posição política.**',
-    'As gravações **podem ser exibidas na apresentação e na defesa** deste trabalho.',
-    'A ferramenta é a **Microsoft Clarity**; os dados ficam em servidores fora do Brasil.',
-    'Gravações são guardadas por **30 dias**; dados de clique, por **9 meses**.',
+    'Para avaliar a interface deste trabalho acadêmico, a navegação pode ser gravada, incluindo cliques e as respostas marcadas no questionário.',
+    '**Essas respostas indicam posição política.**',
+    'As gravações podem ser exibidas na apresentação e na defesa deste trabalho.',
+    'A ferramenta é a Microsoft Clarity, com dados em servidores fora do Brasil.',
+    'Gravações ficam 30 dias; dados de clique, 9 meses.',
   ],
 
   // ⚠️ Os dois botões têm o MESMO peso visual, de propósito (LGPD art. 9º §3):

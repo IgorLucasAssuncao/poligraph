@@ -135,6 +135,39 @@ def test_pessoa_reingerida_com_nome_novo_atualiza(conexao):
     assert nome == "Ana Ribeiro Sobrinho"
 
 
+def test_fonte_sem_foto_nao_apaga_a_foto_ja_gravada(conexao):
+    """🔴 A regressão que deixou os 104 senadores sem rosto no banco.
+
+    `ingerir_senado` grava DUAS vezes a mesma pessoa: primeiro pela lista de exercício,
+    que traz `UrlFotoParlamentar`, e depois por `senadores_dos_votos`, que devolve os
+    mesmos senadores com `url_foto` nula — porque o registro de voto ⛔ não tem foto.
+
+    Com atribuição direta a segunda passada apagava a primeira, sem erro e sem log.
+    """
+    com_foto = _pessoa("5672", "Alan Rick")
+    com_foto["url_foto"] = "https://www.senado.leg.br/senadores/img/senador5672.jpg"
+    persistencia.gravar_pessoas(conexao, [com_foto])
+
+    persistencia.gravar_pessoas(conexao, [_pessoa("5672", "Alan Rick")])
+
+    foto = conexao.execute("SELECT url_foto FROM pessoas").fetchone()[0]
+    assert foto == com_foto["url_foto"]
+
+
+def test_foto_nova_substitui_a_antiga(conexao):
+    """⚠️ O COALESCE preserva, ⛔ não congela: foto nova continua entrando."""
+    antiga = _pessoa("204528", "Ana Ribeiro")
+    antiga["url_foto"] = "https://camara.leg.br/bandep/antiga.jpg"
+    persistencia.gravar_pessoas(conexao, [antiga])
+
+    nova = _pessoa("204528", "Ana Ribeiro")
+    nova["url_foto"] = "https://camara.leg.br/bandep/nova.jpg"
+    persistencia.gravar_pessoas(conexao, [nova])
+
+    foto = conexao.execute("SELECT url_foto FROM pessoas").fetchone()[0]
+    assert foto == "https://camara.leg.br/bandep/nova.jpg"
+
+
 def test_votacao_reingerida_nao_duplica(conexao):
     votacoes = [_votacao("2358548-89")]
 

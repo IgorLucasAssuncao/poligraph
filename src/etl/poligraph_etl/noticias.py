@@ -9,10 +9,11 @@ licença. ⛔ Nunca conteúdo atrás de paywall — nem é preciso: o RSS é pú
 
 import hashlib
 import re
-import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from xml.etree import ElementTree
+
+from .normalizacao import sem_acento
 
 TRECHO_MAXIMO = 500
 
@@ -79,7 +80,7 @@ def hash_titulo(titulo: str) -> str:
     ⭐ Pega a mesma matéria republicada com outra URL — o caso mais comum de
     duplicata, que a chave por URL sozinha não resolve.
     """
-    normalizado = re.sub(r"[^a-z0-9 ]", "", _sem_acento(titulo.lower()))
+    normalizado = re.sub(r"[^a-z0-9 ]", "", sem_acento(titulo.lower()))
     normalizado = re.sub(r"\s+", " ", normalizado).strip()
 
     return hashlib.sha256(normalizado.encode()).hexdigest()
@@ -95,7 +96,7 @@ def encontrar_mencoes(
     ⚠️ O método mais forte vence: se o nome completo aparece, não se registra também
     o sobrenome — senão a mesma pessoa entraria duas vezes com confianças diferentes.
     """
-    texto = _sem_acento(f"{titulo} {trecho or ''}".lower())
+    texto = sem_acento(f"{titulo} {trecho or ''}".lower())
     mencoes: list[Mencao] = []
 
     for pessoa_id, nomes in parlamentares.items():
@@ -117,8 +118,8 @@ def deve_exibir(confianca: float) -> bool:
 
 
 def _metodo_do_casamento(texto: str, nomes: dict) -> str | None:
-    completo = _sem_acento((nomes.get("nome_civil") or "").lower())
-    parlamentar = _sem_acento((nomes.get("nome_exibicao") or "").lower())
+    completo = sem_acento((nomes.get("nome_civil") or "").lower())
+    parlamentar = sem_acento((nomes.get("nome_exibicao") or "").lower())
 
     if completo and _palavra_inteira(texto, completo):
         return "NOME_COMPLETO"
@@ -166,8 +167,3 @@ def _texto(item, tag: str) -> str | None:
     return elemento.text.strip() if elemento is not None and elemento.text else None
 
 
-def _sem_acento(texto: str) -> str:
-    return "".join(
-        caractere for caractere in unicodedata.normalize("NFD", texto)
-        if unicodedata.category(caractere) != "Mn"
-    )

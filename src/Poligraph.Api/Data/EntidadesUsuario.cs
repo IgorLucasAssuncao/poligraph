@@ -5,7 +5,7 @@ namespace Poligraph.Api.Data;
 /// que revogou a minimização. ⛔ Nenhum token é armazenado: nem id_token, nem
 /// refresh_token, nem sessão. A sessão é um cookie assinado.
 /// </summary>
-public class Usuario
+public class UsuarioModel
 {
     public long Id { get; set; }
 
@@ -30,21 +30,21 @@ public class Usuario
     /// <summary>⭐ +1 invalida todos os cookies desta pessoa — "sair de todos os aparelhos".</summary>
     public short SessaoVersao { get; set; }
 
-    public List<Segue> Segue { get; set; } = [];
-    public List<Consentimento> Consentimentos { get; set; } = [];
+    public List<SegueModel> Segue { get; set; } = [];
+    public List<ConsentimentoModel> Consentimentos { get; set; } = [];
 }
 
 /// <summary>
 /// 🔴 Esta tabela é registro de CONVICÇÃO POLÍTICA — LGPD art. 5º, II.
 /// Toda mudança aqui exige consentimento específico (RNF-12b).
 /// </summary>
-public class Segue
+public class SegueModel
 {
     public long UsuarioId { get; set; }
-    public Usuario? Usuario { get; set; }
+    public UsuarioModel? Usuario { get; set; }
 
     public long PessoaId { get; set; }
-    public Pessoa? Pessoa { get; set; }
+    public PessoaModel? Pessoa { get; set; }
 
     public DateTimeOffset CriadoEm { get; set; }
 }
@@ -54,15 +54,14 @@ public class Segue
 /// `Versao` é o que faz a tabela valer alguma coisa — sem ela não dá para responder
 /// "consentiu com o quê, exatamente" depois de reescrever o texto.
 /// </summary>
-public class Consentimento
+public class ConsentimentoModel
 {
     public long Id { get; set; }
 
     public long UsuarioId { get; set; }
-    public Usuario? Usuario { get; set; }
+    public UsuarioModel? Usuario { get; set; }
 
-    /// <summary>EMAIL_NOTICIAS</summary>
-    public required string Finalidade { get; set; }
+    public FinalidadeDeConsentimento Finalidade { get; set; }
 
     /// <summary>Hash ou versão do TEXTO que a pessoa aceitou.</summary>
     public required string Versao { get; set; }
@@ -75,16 +74,15 @@ public class Consentimento
 /// Token de descadastro de e-mail. ⚠️ NÃO expira, de propósito: link morto num e-mail
 /// antigo transforma "quero sair" em "vou marcar como spam" — e a reputação do domínio cai.
 /// </summary>
-public class TokenEmail
+public class TokenEmailModel
 {
     /// <summary>32 bytes aleatórios, base64url.</summary>
     public required string Token { get; set; }
 
     public long UsuarioId { get; set; }
-    public Usuario? Usuario { get; set; }
+    public UsuarioModel? Usuario { get; set; }
 
-    /// <summary>DESCADASTRO — ⛔ CONFIRMACAO não é necessária: o Google já verifica o e-mail.</summary>
-    public required string Proposito { get; set; }
+    public PropositoDeToken Proposito { get; set; }
 
     public DateTimeOffset CriadoEm { get; set; }
     public DateTimeOffset? UsadoEm { get; set; }

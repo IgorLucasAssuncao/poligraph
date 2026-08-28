@@ -8,6 +8,7 @@ proíbe o segundo no banco.
 import pytest
 
 from poligraph_etl import cota
+from poligraph_etl.fontes import camara
 
 MAPA = {"62881": 7, "204554": 8}
 
@@ -122,8 +123,8 @@ def test_arquivo_pequeno_demais_estoura():
     gasto a menos — sem nada acusar.
     """
     with pytest.raises(RuntimeError, match="layout"):
-        cota.conferir_volume([registro()], 2025)
+        camara.conferir_volume_de_cota([registro()], 2025)
 
 
 def test_volume_normal_passa():
-    cota.conferir_volume([registro()] * 60_000, 2025)
+    camara.conferir_volume_de_cota([registro()] * 60_000, 2025)

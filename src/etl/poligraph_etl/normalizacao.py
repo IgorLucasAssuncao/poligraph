@@ -51,9 +51,9 @@ def normalizar_voto(bruto) -> int | None:
     if bruto is None or not isinstance(bruto, str):
         return None
 
-    chave = _sem_acento(bruto.strip().lower())
+    chave = sem_acento(bruto.strip().lower())
     for texto, valor in _VOTOS.items():
-        if chave == _sem_acento(texto):
+        if chave == sem_acento(texto):
             return valor
 
     return None
@@ -111,7 +111,7 @@ def classificar_categoria(descricao: str | None) -> str:
     if not descricao:
         return "SUBSTANTIVA"
 
-    texto = _sem_acento(descricao.lower())
+    texto = sem_acento(descricao.lower())
     for categoria, padrao in _CATEGORIAS:
         if re.search(padrao, texto):
             return categoria
@@ -136,7 +136,7 @@ def inferir_polaridade(descricao: str | None) -> int:
     if not descricao:
         return 1
 
-    texto = _sem_acento(descricao.lower())
+    texto = sem_acento(descricao.lower())
 
     # "Mantido o texto" = o destaque supressivo foi REJEITADO.
     # Quem votou Sim quis MANTER, ou seja, votou CONTRA a supressão proposta.
@@ -254,10 +254,35 @@ def sem_acento_maiusculo(texto: str | None) -> str:
     remover acento E normalizar a caixa E colapsar espaço, os dois nunca casariam — e o
     sintoma seria "não achou", ⛔ nunca um erro.
     """
-    return " ".join(_sem_acento(texto or "").upper().split())
+    return " ".join(sem_acento(texto or "").upper().split())
 
 
-def _sem_acento(texto: str) -> str:
+def inteiro(valor) -> int:
+    """Inteiro tolerante, ⛔ nunca exceção. Zero para o que não converte.
+
+    🔴 Passa por `float` de propósito. Existiam duas versões disto, e a de `cota.py`
+    fazia `int(valor or 0)` — que devolve **0** para `"2024.0"`, em silêncio, sem
+    estourar. Um `numAno` com decimal viraria ano zero e a despesa seria arquivada no
+    lugar errado sem nenhum sinal. As fontes trocam de formato numérico sem avisar:
+    a cota usa ponto decimal, o TSE e o Portal usam vírgula.
+    """
+    try:
+        return int(float(valor))
+    except (TypeError, ValueError):
+        return 0
+
+
+def inteiro_ou_nulo(valor) -> int | None:
+    """Como `inteiro`, mas zero vira `None` — para coluna anulável."""
+    return inteiro(valor) or None
+
+
+def sem_acento(texto: str) -> str:
+    """Remove os diacríticos, preservando a caixa.
+
+    ⚠️ Público porque tem dois consumidores. Era privado, e a consequência foi uma
+    cópia idêntica em `noticias.py` — o custo de esconder algo que outro módulo precisa.
+    """
     return "".join(
         caractere for caractere in unicodedata.normalize("NFD", texto)
         if unicodedata.category(caractere) != "Mn"

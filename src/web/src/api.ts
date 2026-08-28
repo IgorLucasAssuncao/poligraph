@@ -12,11 +12,14 @@ const BASE = '/api';
 // Tipos
 // ═══════════════════════════════════════════════════════════════════
 
+/** As duas casas do Congresso. ⛔ Nunca há um terceiro valor. */
+export type Casa = 'CAMARA' | 'SENADO';
+
 export type Usuario = { nome: string | null; fotoUrl: string | null };
 
 export type Parlamentar = {
-  /** CAMARA ou SENADO. */
-  casa: 'CAMARA' | 'SENADO' | '';
+  /** ⚠️ Vazio quando a pessoa ainda não tem voto — a casa vem do mandato. */
+  casa: Casa | '';
   id: number;
   nome: string;
   partido: string;
@@ -44,8 +47,8 @@ export type Similar = {
 export type Ficha = {
   id: number;
   nome: string;
-  /** CAMARA ou SENADO, derivado do voto mais recente — a casa é do mandato. */
-  casa: 'CAMARA' | 'SENADO' | '';
+  /** Derivada do voto mais recente — a casa é do mandato, não do cadastro. */
+  casa: Casa | '';
   nomeCivil: string;
   partido: string;
   uf: string;
@@ -111,7 +114,7 @@ export type PosicaoDoCidadao = {
  * filtrado por um piso calculado sobre as perguntas da Câmara.
  */
 export type ResultadoPorCasa = {
-  casa: 'CAMARA' | 'SENADO';
+  casa: Casa;
   perguntasRespondidas: number;
   maisProximos: ParlamentarAfim[];
   maisDistantes: ParlamentarAfim[];
@@ -128,10 +131,18 @@ export type ResultadoAfinidade = {
   porCasa: ResultadoPorCasa[];
 };
 
-/** O rótulo de cada casa na tela. A API devolve a casa; a redação é do front. */
-export const NOME_DA_CASA: Record<ResultadoPorCasa['casa'], { plural: string; singular: string }> = {
-  CAMARA: { plural: 'Deputados', singular: 'deputado' },
-  SENADO: { plural: 'Senadores', singular: 'senador' },
+/**
+ * O rótulo de cada casa na tela. A API devolve a casa; a redação é do front.
+ *
+ * ⚠️ `nome` é a instituição, `plural`/`singular` são as pessoas. São usos
+ * diferentes: “Senado Federal” encabeça a figura, “104 senadores” a descreve.
+ */
+export const NOME_DA_CASA: Record<
+  Casa,
+  { nome: string; plural: string; singular: string }
+> = {
+  CAMARA: { nome: 'Câmara dos Deputados', plural: 'deputados', singular: 'deputado' },
+  SENADO: { nome: 'Senado Federal', plural: 'senadores', singular: 'senador' },
 };
 
 export class NaoAutenticadoError extends Error {
@@ -199,6 +210,32 @@ export async function excluirConta(): Promise<void> {
 
 export async function sair(): Promise<void> {
   await fetch(`${BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Panorama — o tamanho da base
+// ═══════════════════════════════════════════════════════════════════
+
+export type PanoramaDaCasa = {
+  casa: Casa;
+  parlamentares: number;
+  votacoes: number;
+  /** 🔴 O sigilo do Senado é achado do trabalho, não detalhe: 239 de 421. */
+  votacoesSecretas: number;
+  votosComPosicao: number;
+  comunidades: number;
+  ligacoes: number;
+};
+
+/** ⚠️ `legislatura` é nula em base sem votação — o estado antes do primeiro ETL. */
+export type Panorama = {
+  legislatura: number | null;
+  perguntasAtivas: number;
+  porCasa: PanoramaDaCasa[];
+};
+
+export async function obterPanorama(): Promise<Panorama> {
+  return buscar<Panorama>(`${BASE}/panorama`);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -325,9 +362,23 @@ export type NoDoGrafo = {
   /** 1ª componente principal (SVD) — ⭐ o eixo que SIGNIFICA algo. Ver PL43. */
   componente1: number | null;
   componente2: number | null;
+  /** Foto oficial da casa. ⚠️ Nula para quem foi criado a partir do próprio voto. */
+  urlFoto: string | null;
 };
 
-export type ArestaDoGrafo = { de: number; para: number; peso: number };
+/**
+ * ⚠️ `peso` é a CONCORDÂNCIA, e sozinho ele ⛔ não se lê: 82% sobre 24 votações e 82%
+ * sobre 540 são afirmações de força muito diferente. A tela ⛔ nunca mostra um sem
+ * `votacoesComuns`.
+ */
+export type ArestaDoGrafo = {
+  de: number;
+  para: number;
+  peso: number;
+  votacoesComuns: number;
+  /** A outra métrica da RF-18, sobre o mesmo par. */
+  cosseno: number | null;
+};
 
 export type Grafo = {
   execucaoId: number;
@@ -344,7 +395,7 @@ export type Grafo = {
  * vale onde o *usuário* decidiria. Na tela de resultado o cliente já sabe qual grafo
  * está desenhando, porque a separação veio do servidor.
  */
-export async function obterGrafo(casa: ResultadoPorCasa['casa'] = 'CAMARA'): Promise<Grafo> {
+export async function obterGrafo(casa: Casa = 'CAMARA'): Promise<Grafo> {
   return buscar<Grafo>(`${BASE}/grafo?casa=${casa}`);
 }
 

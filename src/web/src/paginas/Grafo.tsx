@@ -1,126 +1,151 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { obterGrafo, type Grafo as DadosDoGrafo, type NoDoGrafo } from '../api';
-import { CabecalhoDaColuna } from '../componentes/Layout';
+import {
+  NOME_DA_CASA,
+  obterGrafo,
+  type Casa,
+  type Grafo as DadosDoGrafo,
+  type NoDoGrafo,
+} from '../api';
 import { GrafoAmpliado } from '../componentes/GrafoAmpliado';
 import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
 import { Termo } from '../componentes/Termo';
 
 type Grupo = { comunidade: number; quantos: number; partidos: string[] };
 
+const CASAS: Casa[] = ['CAMARA', 'SENADO'];
+
 /**
  * O grafo de similaridade de voto (RF-33).
  *
- * ⚠️ Esta tela mostra **só a Câmara**. O Senado ainda não é ingerido, e calar isso
- * faria o leitor concluir que o Congresso inteiro está aqui. Ver PL42.
+ * ## 🔴 Um grafo por casa, nunca um só
+ *
+ * Deputado e senador ⛔ não votam as mesmas matérias: o par não teria base comum, e o
+ * banco impede a aresta entre casas por restrição. Juntar os dois desenhos produziria
+ * duas nuvens sem ligação nenhuma entre elas, o que sugere oposição onde só há ausência
+ * de dado.
+ *
+ * ⚠️ O seletor é permitido aqui e proibido no questionário (RNF-28): a proibição vale
+ * onde o *usuário* declararia afinidade por uma casa. Aqui ele só escolhe qual figura
+ * olhar.
  */
 export function Grafo() {
   const navegar = useNavigate();
+  const [casa, setCasa] = useState<Casa>('CAMARA');
   const [grafo, setGrafo] = useState<DadosDoGrafo | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [ampliado, setAmpliado] = useState(false);
 
   useEffect(() => {
-    obterGrafo()
-      .then(setGrafo)
-      .catch(() => setErro('Não foi possível carregar o grafo agora.'));
-  }, []);
+    let atual = true;
+
+    // ⚠️ Zera antes de buscar: sem isto a tela mostra o grafo da Câmara sob o título do
+    //    Senado enquanto a requisição não volta.
+    setGrafo(null);
+    setErro(null);
+
+    obterGrafo(casa)
+      .then((novo) => atual && setGrafo(novo))
+      .catch(() => atual && setErro('Não foi possível carregar o grafo agora.'));
+
+    return () => {
+      atual = false;
+    };
+  }, [casa]);
 
   const grupos = useMemo(() => (grafo ? resumirGrupos(grafo.nos) : []), [grafo]);
-
-  if (erro) {
-    return (
-      <>
-        <CabecalhoDaColuna titulo="Grafo" />
-        <p className="erro">{erro}</p>
-      </>
-    );
-  }
-
-  if (!grafo) {
-    return (
-      <>
-        <CabecalhoDaColuna titulo="Grafo" />
-        <p className="carregando">Carregando…</p>
-      </>
-    );
-  }
-
-  // ⭐ Estado vazio honesto: acontece antes de o ETL analítico rodar.
-  if (grafo.nos.length === 0) {
-    return (
-      <>
-        <CabecalhoDaColuna titulo="Grafo" />
-        <p className="vazio">
-          A análise ainda não rodou para esta legislatura. O grafo aparece depois da
-          próxima execução do ETL.
-        </p>
-      </>
-    );
-  }
+  const membro = NOME_DA_CASA[casa];
 
   return (
     <>
-      <CabecalhoDaColuna
-        titulo="Quem vota com quem"
-        subtitulo={`${grafo.nos.length} deputados · ${grafo.arestas.length} ligações`}
-      />
+      <div className="grafo-barra">
+        <SeletorDeCasa casa={casa} aoTrocar={setCasa} />
 
-      <TelaDoGrafo
-        grafo={grafo}
-        aoSelecionar={abrirPerfil}
-        aoAmpliar={() => setAmpliado(true)}
-      />
+        {grafo && grafo.nos.length > 0 && (
+          <p className="grafo-contagem">
+            {grafo.nos.length} {membro.plural} · {grafo.arestas.length} ligações
+          </p>
+        )}
+      </div>
 
-      <GrafoAmpliado
-        grafo={grafo}
-        aberto={ampliado}
-        aoFechar={() => setAmpliado(false)}
-        aoSelecionar={abrirPerfil}
-      />
+      {erro && <p className="erro">{erro}</p>}
+      {!erro && !grafo && <p className="carregando">Carregando…</p>}
 
-      <section className="grafo-explicacao">
-        <h2>Como ler</h2>
-        <p>
-          Cada ponto é um deputado. Dois pontos se ligam quando votaram parecido em pelo
-          menos 20 votações — e quanto mais forte a ligação, mais perto eles ficam. Só
-          entram votações de <Termo nome="plenario" /> da{' '}
-          <Termo nome="legislatura">{grafo.legislatura}ª legislatura</Termo>.
+      {/* ⭐ Estado vazio honesto: acontece antes de o ETL analítico rodar para a casa. */}
+      {!erro && grafo && grafo.nos.length === 0 && (
+        <p className="vazio">
+          A análise ainda não rodou para {NOME_DA_CASA[casa].nome} nesta
+          legislatura. O grafo aparece depois da próxima execução do ETL.
         </p>
-        <p className="ajuda">
-          {/* 🔴 O leitor lê espectro em qualquer eixo, mesmo sem a gente afirmar. */}
-          <strong>A posição não é um espectro.</strong> Não existe “esquerda” à esquerda
-          nem “direita” à direita: o desenho só aproxima quem vota junto. As cores
-          identificam grupos, e o número de cada grupo é apenas um rótulo.
-        </p>
-        {/* ⚠️ PL42 — calar isto faria o leitor concluir que o Congresso está todo aqui. */}
-        <p className="ajuda">
-          Por enquanto o grafo tem <strong>apenas a Câmara dos Deputados</strong>. O
-          Senado ainda não entrou na base.
-        </p>
-      </section>
+      )}
 
-      <section className="grafo-grupos">
-        <h2>Os grupos</h2>
-        <p className="ajuda ajuda-espacada">
-          Cada <Termo nome="comunidade" /> é formado pelo <strong>voto</strong>, não pelo{' '}
-          <Termo nome="partido" /> — e é por isso que um mesmo partido aparece em vários.
-        </p>
+      {!erro && grafo && grafo.nos.length > 0 && (
+        <>
+          <TelaDoGrafo
+            grafo={grafo}
+            aoSelecionar={abrirPerfil}
+            aoAmpliar={() => setAmpliado(true)}
+          />
 
-        <ul>
-          {grupos.map((g) => (
-            <li key={g.comunidade}>
-              <span className="grupo-cor" data-comunidade={g.comunidade % 8} />
-              <span className="grupo-corpo">
-                <strong>
-                  Grupo {g.comunidade + 1} · {g.quantos} deputados
-                </strong>
-                <small>{g.partidos.join(' · ')}</small>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+          <GrafoAmpliado
+            grafo={grafo}
+            aberto={ampliado}
+            aoFechar={() => setAmpliado(false)}
+            aoSelecionar={abrirPerfil}
+            titulo={`Quem vota com quem · ${NOME_DA_CASA[casa].nome}`}
+          />
+
+          <section className="grafo-explicacao">
+            <h2>Como ler</h2>
+            <p>
+              Cada ponto é um {membro.singular}. Dois pontos se ligam quando votaram
+              parecido em pelo menos 20 votações — e quanto mais forte a ligação, mais
+              perto eles ficam. Só entram votações de <Termo nome="plenario" /> da{' '}
+              <Termo nome="legislatura">{grafo.legislatura}ª legislatura</Termo>.
+            </p>
+            <p className="ajuda">
+              {/* 🔴 O leitor lê espectro em qualquer eixo, mesmo sem a gente afirmar. */}
+              <strong>A posição não é um espectro.</strong> Não existe “esquerda” à
+              esquerda nem “direita” à direita: o desenho só aproxima quem vota junto. As
+              cores identificam grupos, e o número de cada grupo é apenas um rótulo.
+            </p>
+
+            {/* 🔴 O sigilo do Senado muda o que a figura pode afirmar, e calar isso
+                faria o leitor comparar as duas casas como se fossem equivalentes. */}
+            {casa === 'SENADO' && (
+              <p className="ajuda">
+                <strong>O Senado vota em segredo com frequência.</strong> Das 421
+                votações da legislatura, 239 são secretas — e nelas não há voto
+                individual publicado. Este desenho se apoia nas 182 abertas, e é por isso
+                que ele tem menos ligações e mais pontos soltos que o da Câmara.
+              </p>
+            )}
+          </section>
+
+          <section className="grafo-grupos">
+            <h2>Os grupos</h2>
+            <p className="ajuda ajuda-espacada">
+              Cada <Termo nome="comunidade" /> é formado pelo <strong>voto</strong>, não
+              pelo <Termo nome="partido" /> — e é por isso que um mesmo partido aparece em
+              vários.
+            </p>
+
+            <ul>
+              {grupos.map((g) => (
+                <li key={g.comunidade}>
+                  <span className="grupo-cor" data-comunidade={g.comunidade % 8} />
+                  <span className="grupo-corpo">
+                    <strong>
+                      Grupo {g.comunidade + 1} · {g.quantos} {membro.plural}
+                    </strong>
+                    <small>{g.partidos.join(' · ')}</small>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </>
+      )}
     </>
   );
 
@@ -131,7 +156,25 @@ export function Grafo() {
 
 // ═══════════════════════════════════════════════════════════════════
 
-/** ⚠️ Só grupos com mais de um deputado: 24 isolados virariam 24 linhas de legenda. */
+function SeletorDeCasa({ casa, aoTrocar }: { casa: Casa; aoTrocar: (nova: Casa) => void }) {
+  return (
+    <div className="grafo-casas" role="group" aria-label="Casa legislativa">
+      {CASAS.map((opcao) => (
+        <button
+          key={opcao}
+          type="button"
+          className={casa === opcao ? 'ativo' : ''}
+          aria-pressed={casa === opcao}
+          onClick={() => aoTrocar(opcao)}
+        >
+          {NOME_DA_CASA[opcao].nome}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** ⚠️ Só grupos com mais de um membro: 21 isolados virariam 21 linhas de legenda. */
 const MINIMO_PARA_LISTAR = 2;
 
 const PARTIDOS_MOSTRADOS = 5;

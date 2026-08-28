@@ -48,8 +48,8 @@ export function BotaoGoogle({ aoEntrar }: { aoEntrar: (usuario: UsuarioLogado) =
   if (!clientId) {
     return (
       <p className="aviso-config">
-        ⚠️ Login desativado: falta <code>VITE_GOOGLE_CLIENT_ID</code>. O questionário e as
-        fichas funcionam normalmente — entrar só serve para acompanhar parlamentares.
+        Login indisponível: falta <code>VITE_GOOGLE_CLIENT_ID</code> no ambiente. Sem
+        ele não há como entrar, e o site inteiro exige conta desde 26/08.
       </p>
     );
   }

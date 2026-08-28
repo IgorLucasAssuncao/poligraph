@@ -9,6 +9,7 @@ Baixa e lê. ⛔ Não interpreta e ⛔ não descarta: isso é `ingestao`.
 | `votacoes-{ano}` · `votacoesVotos-{ano}` | CSV anual, `;`, aspas, `utf-8-sig` |
 | ⚠️ `deputados` | **Arquivo único**, ⛔ não anual — todas as legislaturas juntas |
 | `api/v2/deputados/{id}` | JSON, uma requisição por deputado — é onde o **CPF** existe |
+| ⚠️ `cotas/Ano-{ano}.csv.zip` | ZIP, e em **outro host** — `www.camara.leg.br`, fora de `dadosabertos` |
 
 🔴 **O ponto perigoso são os PARÂMETROS de leitura, ⛔ não a lógica.** Os CSVs têm quebra
 de linha **dentro** de campos entre aspas: ler por linha infla a contagem entre 15% e 26%,
@@ -21,6 +22,9 @@ e **estoura** se divergir.
 [achado #22](../../../../docs/achados/022-deputados-nao-e-arquivo-anual.md)
 """
 
+import csv
+import io
+import zipfile
 from pathlib import Path
 
 import pandas as pd
@@ -107,6 +111,55 @@ def conferir_volume(df: pd.DataFrame, ano: int) -> None:
             f"votacoes-{ano}: {len(df)} registros, esperado ~{esperado} "
             f"(desvio de {desvio:.1%}). "
             "Parsing regrediu, ou a Câmara mudou o arquivo — confira antes de ingerir."
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Cota parlamentar (CEAP) — ⚠️ FORA de `dadosabertos`
+# ═══════════════════════════════════════════════════════════════════
+
+# ⚠️ Outro host e outro formato: ZIP em vez de CSV solto. É a mesma casa, então a
+#    ENTRADA mora aqui; o tratamento vive em `cota.py`.
+#
+# ⛔ `GET /deputados/{id}/despesas` responde 200 com `"dados": []` — a API REST ⛔ não
+#    serve, e é por isso que o arquivo em bloco é o único caminho.
+URL_COTA = "https://www.camara.leg.br/cotas/Ano-{ano}.csv.zip"
+
+# Medido: ~233 mil linhas por ano, 99,6% com `ideCadastro`.
+MINIMO_DE_COTA = 50_000
+
+
+def baixar_cota(ano: int, destino: Path) -> Path:
+    """⚠️ ~6,6 MB compactado. Vale cachear entre execuções."""
+    destino.parent.mkdir(parents=True, exist_ok=True)
+
+    resposta = requests.get(URL_COTA.format(ano=ano), timeout=300)
+    resposta.raise_for_status()
+    destino.write_bytes(resposta.content)
+
+    return destino
+
+
+def ler_cota(caminho: Path) -> list[dict]:
+    """Lê o CSV de dentro do ZIP.
+
+    ⛔ Não reutiliza `ler_csv`: aqui a fonte é ZIP, e carregar 233 mil linhas num
+    DataFrame para depois iterar seria desperdício.
+    """
+    with zipfile.ZipFile(caminho) as arquivo:
+        nome = arquivo.namelist()[0]
+        with arquivo.open(nome) as fluxo:
+            texto = io.TextIOWrapper(fluxo, encoding="utf-8-sig")
+
+            return list(csv.DictReader(texto, delimiter=";", quotechar='"'))
+
+
+def conferir_volume_de_cota(registros: list[dict], ano: int) -> None:
+    """Canário: arquivo muito menor que o medido significa layout mudado."""
+    if len(registros) < MINIMO_DE_COTA:
+        raise RuntimeError(
+            f"Só {len(registros)} linhas em Ano-{ano}.csv — esperado ao menos "
+            f"{MINIMO_DE_COTA}. O layout do arquivo mudou?"
         )
 
 

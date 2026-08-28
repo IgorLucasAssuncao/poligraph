@@ -11,6 +11,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 builder.Services.AddOpenApi();
 
+// 🔴 Enum vai para o JSON como TEXTO. O padrão de System.Text.Json é o ordinal: sem
+// esta linha `"casa": "CAMARA"` viraria `"casa": 0`, o front compararia com a string e
+// nenhuma comparação daria certo — sem erro em lugar nenhum.
+builder.Services.ConfigureHttpJsonOptions(opcoes =>
+    opcoes.SerializerOptions.Converters.Add(
+        new System.Text.Json.Serialization.JsonStringEnumConverter()));
+
 // 🔴 UseSnakeCaseNamingConvention não é estilo: o ETL Python lê estas mesmas tabelas.
 // Removê-lo quebra o ETL sem erro de compilação.
 builder.AddNpgsqlDbContext<PoligraphDb>(
@@ -99,6 +106,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapearParlamentares()
+   .MapearPanorama()
    .MapearAfinidade()
    .MapearAutenticacao()
    .MapearSeguir()

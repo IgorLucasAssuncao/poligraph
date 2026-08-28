@@ -62,12 +62,18 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
             existente = cur.fetchone()
 
             if existente:
+                # 🔴 `COALESCE` na foto: uma fonte mais pobre ⛔ não apaga o que uma mais
+                #    rica já trouxe. Medido — `senadores_dos_votos` roda DEPOIS de
+                #    `senadores_para_linhas` e devolve os mesmos 81 em exercício com
+                #    `url_foto` nula, porque o registro de voto não traz foto. Com
+                #    atribuição direta, os 104 senadores terminavam sem foto no banco,
+                #    sem erro e sem log.
                 cur.execute(
                     """
                     UPDATE pessoas
                        SET nome_civil = %(nome_civil)s,
                            nome_exibicao = %(nome_exibicao)s,
-                           url_foto = %(url_foto)s
+                           url_foto = COALESCE(%(url_foto)s, url_foto)
                      WHERE id = %(id)s
                     """,
                     {**pessoa, "id": existente[0]},

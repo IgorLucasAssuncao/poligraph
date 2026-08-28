@@ -11,12 +11,12 @@ namespace Poligraph.Tests.Integracao;
 /// <summary>Substitui o Google nos testes — não dá para gerar `id_token` válido aqui.</summary>
 public class ValidadorFalso : IValidadorGoogle
 {
-    public PerfilGoogle? Perfil { get; set; } = new(
+    public PerfilGoogleDto? Perfil { get; set; } = new(
         "sub-123", "fulano@exemplo.com", true,
         "Fulano de Tal", "Fulano", "de Tal",
         "https://lh3.googleusercontent.com/foto", "pt-BR");
 
-    public Task<PerfilGoogle?> ValidarAsync(string idToken, CancellationToken ct = default) =>
+    public Task<PerfilGoogleDto?> ValidarAsync(string idToken, CancellationToken ct = default) =>
         Task.FromResult(idToken == "token-valido" ? Perfil : null);
 }
 

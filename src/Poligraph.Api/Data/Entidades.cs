@@ -1,13 +1,13 @@
 namespace Poligraph.Api.Data;
 
 /// <summary>Parlamentar. Identidade própria do projeto, mapeada para os IDs externos.</summary>
-public class Pessoa
+public class PessoaModel
 {
     public long Id { get; set; }
     public required string NomeCivil { get; set; }
     public required string NomeExibicao { get; set; }
     public DateOnly? DataNascimento { get; set; }
-    public string? Sexo { get; set; }
+    public Sexo? Sexo { get; set; }
 
     /// <summary>⛔ NUNCA o CPF em claro — RNF-13.</summary>
     public string? CpfHash { get; set; }
@@ -37,40 +37,39 @@ public class Pessoa
     /// </summary>
     public DateTimeOffset? ExcluidoEm { get; set; }
 
-    public List<PessoaFonteId> FontesId { get; set; } = [];
-    public List<Voto> Votos { get; set; } = [];
+    public List<PessoaFonteIdModel> FontesId { get; set; } = [];
+    public List<VotoModel> Votos { get; set; } = [];
 }
 
 /// <summary>
 /// Liga a pessoa ao ID dela em cada fonte. `Metodo` e `Confianca` não são enfeite:
 /// são o resultado do objetivo específico #2, reportável no TCC.
 /// </summary>
-public class PessoaFonteId
+public class PessoaFonteIdModel
 {
     public long PessoaId { get; set; }
-    public Pessoa? Pessoa { get; set; }
+    public PessoaModel? Pessoa { get; set; }
 
-    public required string Fonte { get; set; }       // CAMARA | SENADO | TSE
+    public FonteDeIdentificador Fonte { get; set; }
     public required string IdExterno { get; set; }
-    public required string Metodo { get; set; }      // CPF | FUZZY | MANUAL
+    public MetodoDeVinculo Metodo { get; set; }
     public float? Confianca { get; set; }
 }
 
 /// <summary>Uma votação nominal. O Id é texto: "2456731-84" (achado #3).</summary>
-public class Votacao
+public class VotacaoModel
 {
     public required string Id { get; set; }
-    public required string Casa { get; set; }        // CAMARA | SENADO
+    public Casa Casa { get; set; }
     public short Legislatura { get; set; }
     public DateOnly Data { get; set; }
     public string? Orgao { get; set; }
     public string? Descricao { get; set; }
 
     public long? ProposicaoId { get; set; }
-    public Proposicao? Proposicao { get; set; }
+    public ProposicaoModel? Proposicao { get; set; }
 
-    /// <summary>PROCEDIMENTAL | DESTAQUE | SUBSTANTIVA | AUTORIDADE</summary>
-    public required string Categoria { get; set; }
+    public CategoriaDeVotacao Categoria { get; set; }
 
     /// <summary>🔴 Senado: 56% das votações são secretas — registram "Votou", não posição.</summary>
     public bool Secreta { get; set; }
@@ -79,20 +78,20 @@ public class Votacao
     public int? VotosSim { get; set; }
     public int? VotosNao { get; set; }
 
-    public List<Voto> Votos { get; set; } = [];
+    public List<VotoModel> Votos { get; set; } = [];
 }
 
 /// <summary>
 /// O voto de uma pessoa numa votação.
 /// `PartidoNoVoto` e `UfNoVoto` são desnormalizados DE PROPÓSITO: são registro histórico.
 /// </summary>
-public class Voto
+public class VotoModel
 {
     public required string VotacaoId { get; set; }
-    public Votacao? Votacao { get; set; }
+    public VotacaoModel? Votacao { get; set; }
 
     public long PessoaId { get; set; }
-    public Pessoa? Pessoa { get; set; }
+    public PessoaModel? Pessoa { get; set; }
 
     /// <summary>+1 sim · -1 não · 0 abstenção · NULL fora do cálculo — RN-03.</summary>
     public short? Valor { get; set; }
@@ -101,7 +100,7 @@ public class Voto
     public required string UfNoVoto { get; set; }
 }
 
-public class Proposicao
+public class ProposicaoModel
 {
     public long Id { get; set; }
     public string? SiglaTipo { get; set; }
@@ -111,14 +110,14 @@ public class Proposicao
     public string? UrlInteiroTeor { get; set; }
 }
 
-/// <summary>Pergunta do questionário. Curadoria manual — PL11.</summary>
-public class Pergunta
+/// <summary>PerguntaModel do questionário. Curadoria manual — PL11.</summary>
+public class PerguntaModel
 {
     /// <summary>"q1" — ⚠️ nunca expor o idVotacao ao cidadão.</summary>
     public required string Id { get; set; }
 
     public required string VotacaoId { get; set; }
-    public Votacao? Votacao { get; set; }
+    public VotacaoModel? Votacao { get; set; }
 
     /// <summary>Afirmação em linguagem leiga. Formato: "X deve ser Y."</summary>
     public required string Texto { get; set; }
@@ -144,7 +143,7 @@ public class Pergunta
 /// ⭐ Liga a `pessoas` por `ideCadastro`, que é o MESMO id da Câmara que o projeto já
 /// usa em `pessoa_fonte_ids` — a ligação sai de graça.
 /// </summary>
-public class Despesa
+public class DespesaModel
 {
     public long Id { get; set; }
     public long PessoaId { get; set; }
@@ -162,7 +161,7 @@ public class Despesa
     ///
     /// ⚠️ O campo `txtCNPJCPF` do CSV mistura os dois: fornecedor pessoa jurídica traz
     /// CNPJ, fornecedor pessoa física traz **CPF em claro**. A RNF-13 proíbe guardar CPF
-    /// assim, então o ETL aplica o mesmo hash de `Pessoa.CpfHash` quando detecta 11
+    /// assim, então o ETL aplica o mesmo hash de `PessoaModel.CpfHash` quando detecta 11
     /// dígitos. CNPJ (14 dígitos) é dado público de empresa e fica em claro.
     /// </summary>
     public string? CnpjOuHash { get; set; }
@@ -178,7 +177,7 @@ public class Despesa
     /// <summary>Link para o documento fiscal na Câmara. ⭐ É o que torna auditável.</summary>
     public string? UrlDocumento { get; set; }
 
-    public Pessoa? Pessoa { get; set; }
+    public PessoaModel? Pessoa { get; set; }
 }
 
 /// <summary>
@@ -190,7 +189,7 @@ public class Despesa
 /// ⚠️ Fonte: `prestacao_de_contas_eleitorais_candidatos_{ano}.zip` do TSE — 377 MB,
 /// Latin-1, um CSV por UF. Ver <see href="../../docs/14-fontes-de-gasto.md"/>.
 /// </summary>
-public class ReceitaDeCampanha
+public class ReceitaDeCampanhaModel
 {
     public long Id { get; set; }
     public long PessoaId { get; set; }
@@ -224,14 +223,14 @@ public class ReceitaDeCampanha
 
     public string? Doador { get; set; }
 
-    /// <summary>🔴 CNPJ do doador **ou hash**, quando pessoa física — como em `Despesa`.</summary>
+    /// <summary>🔴 CNPJ do doador **ou hash**, quando pessoa física — como em `DespesaModel`.</summary>
     public string? DoadorCnpjOuHash { get; set; }
 
     public bool DoadorEhPessoaFisica { get; set; }
 
     public decimal Valor { get; set; }
 
-    public Pessoa? Pessoa { get; set; }
+    public PessoaModel? Pessoa { get; set; }
 }
 
 /// <summary>
@@ -256,7 +255,7 @@ public class ReceitaDeCampanha
 /// registro por não saber ligar seria pior: o dado deixa de existir, e a reconciliação
 /// futura não tem o que reconciliar.
 /// </summary>
-public class Emenda
+public class EmendaModel
 {
     public long Id { get; set; }
 
@@ -274,7 +273,7 @@ public class Emenda
 
     public short Ano { get; set; }
 
-    /// <summary>"Emenda Individual — Transferências com Finalidade Definida" etc.</summary>
+    /// <summary>"EmendaModel Individual — Transferências com Finalidade Definida" etc.</summary>
     public string? Tipo { get; set; }
 
     /// <summary>⭐ Para ONDE o dinheiro foi — município ou "Nacional".</summary>
@@ -297,7 +296,7 @@ public class Emenda
     /// </summary>
     public decimal ValorRestoPago { get; set; }
 
-    public Pessoa? Pessoa { get; set; }
+    public PessoaModel? Pessoa { get; set; }
 }
 
 /// <summary>
@@ -310,7 +309,7 @@ public class Emenda
 /// ⚠️ Serve para Senado também — o Portal usa o mesmo esquema de código para as duas
 /// casas.
 /// </summary>
-public class AutorDeEmenda
+public class AutorDeEmendaModel
 {
     /// <summary>O código extraído do `codigoEmenda`.</summary>
     public required string Codigo { get; set; }
@@ -321,18 +320,17 @@ public class AutorDeEmenda
     /// <summary>`null` = ainda não reconciliado.</summary>
     public long? PessoaId { get; set; }
 
-    /// <summary>`AUTOMATICO` (nome normalizado) | `MANUAL` | `NAO_RESOLVIDO`</summary>
-    public required string Metodo { get; set; }
+    public MetodoDeAutor Metodo { get; set; }
 
     public DateTimeOffset AtualizadoEm { get; set; }
 
-    public Pessoa? Pessoa { get; set; }
+    public PessoaModel? Pessoa { get; set; }
 }
 
-public class Execucao
+public class ExecucaoModel
 {
     public long Id { get; set; }
-    public required string Casa { get; set; }
+    public Casa Casa { get; set; }
     public short Legislatura { get; set; }
 
     /// <summary>k do kNN — 10 por decisão medida.</summary>
@@ -341,18 +339,17 @@ public class Execucao
     public required string VersaoCarga { get; set; }
     public DateTimeOffset IniciadaEm { get; set; }
     public DateTimeOffset? ConcluidaEm { get; set; }
-    public required string Status { get; set; }      // EM_ANDAMENTO | CONCLUIDA | FALHOU
+    public StatusDaExecucao Status { get; set; }
 }
 
-/// <summary>Similaridade entre dois parlamentares da MESMA casa. Escrita pelo Python.</summary>
-public class Similaridade
+/// <summary>SimilaridadeModel entre dois parlamentares da MESMA casa. Escrita pelo Python.</summary>
+public class SimilaridadeModel
 {
     public long ExecucaoId { get; set; }
     public long PessoaA { get; set; }
     public long PessoaB { get; set; }
 
-    /// <summary>CONCORDANCIA | COSSENO — as duas são calculadas (RF-18).</summary>
-    public required string Metrica { get; set; }
+    public Metrica Metrica { get; set; }
 
     public float Valor { get; set; }
 
@@ -361,20 +358,19 @@ public class Similaridade
 }
 
 /// <summary>Aresta do grafo. Três tipos em CAMADAS — ⛔ não somar os pesos.</summary>
-public class ArestaGrafo
+public class ArestaGrafoModel
 {
     public long ExecucaoId { get; set; }
     public long PessoaA { get; set; }
     public long PessoaB { get; set; }
 
-    /// <summary>SIMILARIDADE_VOTO | COMISSAO_COMUM | COAUTORIA</summary>
-    public required string Tipo { get; set; }
+    public TipoDeAresta Tipo { get; set; }
 
     public float Peso { get; set; }
 }
 
 /// <summary>Métricas do nó, por execução.</summary>
-public class NoMetrica
+public class NoMetricaModel
 {
     public long ExecucaoId { get; set; }
     public long PessoaId { get; set; }
