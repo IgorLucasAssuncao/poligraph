@@ -87,3 +87,60 @@ de 3,9 pontos) e três faixas intermediárias que o rótulo binário achata.
   não por sigla própria.
 - ⛔ **Nada disso existe para o Senado**, que não publica orientação de bancada. As duas
   colunas ficam nulas lá, de propósito.
+
+---
+
+## 🔴 O eixo horizontal do desenho tinha nome, e ninguém sabia
+
+A interface nunca conseguiu dizer o que o eixo horizontal significa. O layout de molas
+declarava que *"os eixos não significam nada"*; o de componentes dizia apenas *"a direção
+em que os parlamentares mais se diferenciam"*. Com `governismo` medido, deu para
+perguntar contra o quê aquele eixo se correlaciona:
+
+| Eixo do desenho | × governismo (Spearman) | × governismo (Pearson) |
+|---|---:|---:|
+| **Componente 1 (SVD)** | **−0,870** | **−0,903** |
+| **Molas — horizontal** | **−0,889** | −0,830 |
+| Componente 2 | +0,187 | +0,027 |
+| Molas — vertical | −0,130 | −0,149 |
+
+O gradiente, por faixa do eixo horizontal de molas:
+
+| Faixa | Nós | Governismo médio |
+|---:|---:|---:|
+| 2 | 70 | 94,9% |
+| 3 | 261 | 86,6% |
+| 4 | 227 | 60,2% |
+| 5 | 75 | 25,2% |
+
+⚠️ As faixas 1, 6 e 7 têm 7, 2 e 1 nó — são os isolados, e o número ali é ruído.
+
+### Por que isto vale como validação, e até onde
+
+⭐ **O layout de molas nunca viu orientação de bancada.** Ele posiciona por similaridade
+de voto entre pares, passando por kNN e Fruchterman-Reingold, e nenhuma dessas etapas
+sabe o que o Governo pediu. Ainda assim o eixo que ele produziu reproduz o alinhamento
+governista a −0,889.
+
+⚠️ **⛔ Não é evidência independente, e afirmar isso seria exagero.** As duas medidas
+saem do mesmo voto bruto. O que a correlação mostra é que **construções independentes
+sobre o mesmo dado convergem** — a similaridade entre pares e o alinhamento com uma
+orientação externa chegam ao mesmo eixo por caminhos que não se falam.
+
+### O que a tela passou a dizer, e o que ⛔ não pode dizer
+
+O eixo agora é nomeado, com duas ressalvas obrigatórias:
+
+1. 🔴 **⛔ Não é esquerda e direita.** É alinhamento com **este** governo. Um deputado
+   troca de lado na eleição seguinte sem mudar uma posição sequer.
+2. O centro continua ⛔ não sendo moderação — quem faltou a muitas votações cai ali.
+
+⛔ **A cor do nó continua sendo comunidade, e ⛔ não governismo.** Colorir por alinhamento
+daria ao desenho uma segunda leitura de cor, e a única regra que a figura tem é a
+RNF-16: cor é rótulo de grupo, ⛔ nunca escala política.
+
+### Consequência para a PL43
+
+A pendência era manter os dois layouts ou só molas. Os dois eixos horizontais medem a
+mesma coisa (−0,87 e −0,89), então **⛔ não se contradizem** — a escolha deixa de ser
+sobre qual está certo e passa a ser sobre qual explica melhor.

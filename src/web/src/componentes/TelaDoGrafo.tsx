@@ -42,17 +42,20 @@ const EXPLICACAO: Record<Layout, { rotulo: string; titulo: string; texto: string
     titulo: 'Ligações como molas',
     texto:
       'Cada ligação puxa dois parlamentares para perto; todos se repelem. Quem vota ' +
-      'junto fica junto. Os eixos não significam nada: girar a figura não muda o que ' +
-      'ela diz. A forma redonda é escolha do algoritmo, não do dado.',
+      'junto fica junto. O algoritmo nunca viu orientação de bancada, e ainda assim o ' +
+      'eixo horizontal que ele produziu mede −0,89 contra o alinhamento com o Governo. ' +
+      'A vertical não mede nada, e a forma redonda é escolha do algoritmo, não do dado.',
   },
   componentes: {
     rotulo: 'Componentes',
-    titulo: 'Direção de maior diferença',
+    titulo: 'Alinhamento com o Governo',
     texto:
-      'O eixo horizontal é a direção em que os parlamentares mais se diferenciam — ela ' +
-      'sozinha explica 34,6% do comportamento de voto, contra 9,6% do eixo vertical. ' +
-      'Por isso a figura é achatada: a casa se divide quase em uma linha só. ' +
-      'Atenção: o centro não é moderação — quem faltou a muitas votações também cai ali.',
+      'O eixo horizontal é a direção em que os parlamentares mais se diferenciam, e ' +
+      'ela tem nome: mede −0,87 contra o quanto cada um votou como a bancada do ' +
+      'Governo orientou. De um lado quem seguiu quase sempre, do outro quem quase ' +
+      'nunca seguiu. Atenção: isto é alinhamento com ESTE governo, não é esquerda e ' +
+      'direita — e o centro não é moderação, porque quem faltou a muitas votações ' +
+      'também cai ali.',
   },
 };
 

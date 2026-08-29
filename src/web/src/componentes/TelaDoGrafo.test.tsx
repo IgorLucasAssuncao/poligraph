@@ -125,13 +125,19 @@ describe('painel de ajustes', () => {
     render(<TelaDoGrafo grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
-    // Com molas, a tela precisa afirmar que os eixos não significam nada.
-    expect(screen.getByText(/eixos não significam nada/)).toBeInTheDocument();
+    // ⚠️ Este teste afirmava "os eixos não significam nada" para molas. Era verdade
+    //    por construção e passou a ser FALSO por medição: o eixo horizontal do layout
+    //    de molas mede −0,89 contra o alinhamento com o Governo, sem nunca ter visto
+    //    orientação de bancada. A tela ⛔ não pode negar o que o dado mostra.
+    expect(screen.getByText(/vertical não mede nada/)).toBeInTheDocument();
 
     await usuario.click(screen.getByRole('button', { name: 'Componentes' }));
 
-    // 🔴 Com componentes, precisa dizer o que o centro NÃO é: quem faltou a muitas
-    //    votações também cai ali, e sem o aviso o leitor lê moderação.
+    // 🔴 Duas ressalvas obrigatórias no eixo nomeado:
+    //    · ⛔ NÃO é esquerda e direita — é alinhamento com ESTE governo, e um deputado
+    //      muda de lado na eleição seguinte sem mudar uma posição sequer;
+    //    · o centro ⛔ não é moderação, porque quem faltou a muitas votações cai ali.
+    expect(screen.getByText(/não é esquerda e direita/)).toBeInTheDocument();
     expect(screen.getByText(/centro não é moderação/)).toBeInTheDocument();
   });
 
