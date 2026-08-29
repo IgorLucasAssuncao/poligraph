@@ -875,8 +875,17 @@ function Dica({
         {no.partido}
         {no.uf && ` · ${no.uf}`}
       </span>
+      {/* 🔴 "comparáveis", ⛔ não "votações". Medido em 2026-08-29: o número do grafo é,
+          em média, METADE do que a lista mostra para a mesma pessoa — Sargento Fahur
+          aparece com 1.134 na lista e 559 aqui. Os dois estão certos e contam coisas
+          diferentes: a lista conta votação registrada, o grafo conta as que entram na
+          comparação (⛔ fora as procedimentais, que pesam zero). Com a mesma palavra nos
+          dois lugares, ⛔ não há como conciliar — e o leitor conclui que um deles erra.
+
+          ⭐ "comparável" é o vocabulário que a afinidade já usa ("perguntas
+          comparáveis") e que a dica da aresta já segue. */}
       <span className="grafo-dica-meta">
-        {no.nVotacoes} votações · grupo {(no.comunidade ?? 0) + 1}
+        {no.nVotacoes} votações comparáveis · grupo {(no.comunidade ?? 0) + 1}
       </span>
     </div>
   );

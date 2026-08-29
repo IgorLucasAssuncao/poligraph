@@ -89,16 +89,23 @@ export function ListaDoGrafo({
               <span className="lista-grafo-nome">{no.nome}</span>
             )}
 
+            {/* 🔴 "comparáveis", ⛔ não "votações". 📐 Medido em 2026-08-29: este
+                número é, em média, METADE do que a lista de parlamentares mostra para a
+                mesma pessoa — Sargento Fahur aparece com 1.134 lá e 559 aqui. Os dois
+                estão certos e contam coisas diferentes: lá é votação registrada, aqui
+                são as que entram na comparação (⛔ fora as procedimentais, que pesam
+                zero). ⛔ Com a mesma palavra nos dois lugares o leitor conclui que um
+                deles erra. */}
             <span className="lista-grafo-filiacao">
               {no.partido}
-              {no.uf && ` · ${no.uf}`}
+              {no.uf && ` · ${no.uf}`} · {no.nVotacoes} votações comparáveis
             </span>
 
             {proximos.length === 0 ? (
               /* ⚠️ Achado #27: quem votou pouco demais ⛔ não tem par comparável, e no
                  desenho aparece solto na borda sem explicação nenhuma. */
               <span className="lista-grafo-sem-par">
-                sem ligações — votou pouco demais para ser comparado
+                sem ligações — precisa de ao menos 20 votações em comum com alguém
               </span>
             ) : (
               <span className="lista-grafo-vizinhos">

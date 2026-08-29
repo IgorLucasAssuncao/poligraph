@@ -15,11 +15,14 @@ não por autodeclaração ideológica.
 
 Tudo abaixo saiu de `count(*)` no banco depois de rodar o ETL contra as fontes reais.
 
-⚠️ **Os números do voto oscilam entre medições, e ⛔ não é erro.** A Câmara reconstrói os
-CSVs toda madrugada, inclusive os de anos fechados
-([achado #19](docs/achados/019-csv-reconstruido-toda-madrugada.md)). Entre 27 e 29 de
-agosto, os votos com posição utilizável foram de 463.994 para 462.867 — **1.127 a
-menos**, sem que nada no ETL mudasse. ⭐ É por isso que toda afirmação aqui traz a data.
+🔴 **"Votos com posição" mudou de 463.994 para 462.867 — e ⛔ NÃO foi a fonte que
+mudou.** A medição de 27/08 contava `valor IS NOT NULL`, que inclui **abstenção**; a de
+hoje conta `valor IN (1,-1)`. A diferença é exatamente o número de abstenções: **1.127**
+na Câmara e **33** no Senado.
+
+⚠️ **⛔ Abstenção ⛔ não é posição** — a RN-03 a transforma em nulo, e a calculadora de
+afinidade a exclui da conta. ⭐ O número certo é o menor, e `/api/panorama` também
+exibia o maior até 29/08.
 
 | Voto — o núcleo | Câmara | Senado |
 |---|---:|---:|

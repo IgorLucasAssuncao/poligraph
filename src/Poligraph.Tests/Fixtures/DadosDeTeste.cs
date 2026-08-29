@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
 
 namespace Poligraph.Tests.Fixtures;
@@ -174,11 +174,18 @@ public static class DadosDeTeste
                 // um ausente de propósito: exercita "ausência não é discordância"
                 if (i == 11 && v == 4) continue;
 
+                // 🔴 E um ABSTIDO de propósito. Sem ele, `/api/panorama` afirmou
+                //    463.994 "votos com posição" na Câmara enquanto a posição de
+                //    verdade eram 462.867 — contava `Valor != null`, e as 1.127 de
+                //    diferença eram exatamente as abstenções. Nenhum teste pegou
+                //    porque o fixture não tinha nenhuma.
+                var valor = i == 10 && v == 3 ? (short)0 : padrao[bloco][v];
+
                 votos.Add(new VotoModel
                 {
                     VotacaoId = votacoes[v].Id,
                     PessoaId = pessoas[i].Id,
-                    Valor = padrao[bloco][v],
+                    Valor = valor,
                     PartidoNoVoto = partidos[bloco],
                     UfNoVoto = ufs[i % 4]
                 });

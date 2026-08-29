@@ -200,7 +200,7 @@ trabalho humano, como a PL11, e ⛔ não escala por regra.
 |---|---:|---:|
 | Votações | 1.594 | **421** — 239 secretas |
 | Votos | 470.727 | **34.101** |
-| Com posição utilizável | 463.994 (98,6%) | **11.881 (34,8%)** |
+| Com posição utilizável | 462.867 (98,3%) | **11.848 (34,7%)** |
 | Parlamentares | 643 | **104** |
 | Arestas do grafo | 5.271 | **594** |
 | Comunidades | 17 | **24** |

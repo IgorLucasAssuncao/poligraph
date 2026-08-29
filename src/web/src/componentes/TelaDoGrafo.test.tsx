@@ -293,7 +293,7 @@ describe('acessibilidade do grafo', () => {
     render(<TelaDoGrafo grafo={isolado} />);
     await usuario.click(screen.getByText(/ver o grafo como lista/i));
 
-    expect(screen.getByText(/votou pouco demais para ser comparado/i)).toBeInTheDocument();
+    expect(screen.getByText(/precisa de ao menos 20 votações em comum/i)).toBeInTheDocument();
   });
 
   /** ⭐ A lista não é só leitura: cada nome leva ao mesmo lugar que clicar no ponto. */
@@ -304,5 +304,25 @@ describe('acessibilidade do grafo', () => {
     await usuario.click(screen.getByText(/ver o grafo como lista/i));
 
     expect(screen.getByRole('button', { name: 'Ana Ribeiro' })).toBeInTheDocument();
+  });
+});
+
+describe('os dois números de "votações" não podem usar a mesma palavra', () => {
+  /**
+   * 🔴 📐 Medido em 2026-08-29: o número do grafo é, em média, METADE do que a lista de
+   * parlamentares mostra para a mesma pessoa. Sargento Fahur aparece com **1.134
+   * votações registradas** lá e **559** aqui.
+   *
+   * Os dois estão certos e contam coisas diferentes — lá é votação registrada, aqui são
+   * as que entram na comparação, fora as procedimentais, que pesam zero. ⛔ Com a mesma
+   * palavra nos dois lugares não há como conciliar, e o leitor conclui que um erra.
+   */
+  it('a lista qualifica o número como "comparáveis"', async () => {
+    const usuario = userEvent.setup();
+    render(<TelaDoGrafo grafo={GRAFO} />);
+
+    await usuario.click(screen.getByText(/ver o grafo como lista/i));
+
+    expect(screen.getAllByText(/500 votações comparáveis/i).length).toBeGreaterThan(0);
   });
 });
