@@ -74,7 +74,7 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | 🟡 **PL45** | **🆕 9 autores de emenda ambíguos aguardam decisão humana** — a porta de entrada já existe (`emendas --resolver`), mas quem decide é uma pessoa. Lista completa abaixo | 🟡 Média | 🟢 Minutos |
 | 🟢 **PL50** | ✅ **Resolvida (2026-08-29)** — 359 matérias do Senado ingeridas, **421 de 421 votações vinculadas (100%)**. A colisão de id foi resolvida com chave composta `(casa, id)`, ⛔ não com deslocamento aritmético. Detalhe abaixo | 🟢 Baixa | — |
 | 🟡 **PL51** | **🆕 O Smart App Control barra binários recém-compilados** — 193 bloqueios em 2026-08-29, e o AppHost parou de subir. ⭐ **Contornável com `rm -rf bin obj` e rebuild**, ⛔ sem mexer na política. Detalhe abaixo | 🟡 Média | 🟢 Contorno conhecido |
-| 🟡 **PL47** | **🆕 92 deputados sem nenhuma emenda vinculada** — emenda individual é **impositiva desde 2015**, então mandato inteiro sem nenhuma é suspeito. Detalhe abaixo | 🟡 Média | 🟡 Horas |
+| 🟡 **PL47** | 🔄 **Causa raiz encontrada (2026-08-29)** — ⛔ NÃO é falha de reconciliação. São **duas** causas medidas, e as duas têm conserto: o homônimo histórico e o `(EX-PARLAMENTAR X)` que o Portal escreve quando o suplente executa. Levam de **106 para 81**. Detalhe abaixo | 🟡 Média | 🟡 Horas |
 | 🔵 **PL46** | **🆕 83 autores de emenda são senadores** — resolvem-se sozinhos quando a [PL42](#) trouxer o Senado, porque o código do autor é de **mandato** e vale para as duas casas ([achado #24](achados/024-codigo-da-emenda-identifica-o-mandato.md)) | 🔵 Futuro | — |
 | ~~PL35~~ | ✅ **Resolvida (2026-08-27)** — `Legislaturas` DERIVA a legislatura do dado, nunca de configuração. `TestesLegislatura` semeia **duas** legislaturas e prova que a segunda ⛔ não vaza; as três mutações matam os três filtros. § abaixo mantido como registro | — | — |
 | ~~PL36~~ | ✅ **Resolvida (2026-08-26)** — nomes corrigidos e **verificado rodando o container contra o banco real**: monta a matriz e grava `execucoes`. Estava faltando também traduzir a connection string do Aspire (§ abaixo) | — | — |
@@ -316,8 +316,114 @@ Comparando o nome deles contra os 159 autores pendentes, por semelhança:
 código; **1 caso ⛔ não é medição, é anedota**. O caminho manual da
 [PL45](#-pl45--os-9-autores-de-emenda-ambíguos) já o resolve em uma linha.
 
-**Encaminhamento:** a hipótese mais provável para o grosso dos 92 é que o `nomeAutor` do
-Portal usa o **nome parlamentar** com variação que a igualdade exata ⛔ não alcança.
+### 🔄 Análise de 2026-08-29 — a hipótese estava errada, e a causa é outra
+
+⚠️ **A hipótese acima ⛔ não se confirmou.** ⛔ Não é "variação de grafia que a igualdade
+exata ⛔ não alcança": dos 106 deputados sem emenda hoje, **0** têm o nome na lista de
+autores esperando um casamento mais frouxo. Ou o nome está lá e é **ambíguo**, ou ⛔ **não
+está lá de forma nenhuma**.
+
+📐 **A conta refeita**, com o dado reingerido:
+
+| | |
+|---|---:|
+| Deputados da 57ª sem nenhuma emenda | **106** (eram 92 em 27/08) |
+| Autores pendentes de reconciliação | 169 |
+| 🔴 Pendentes que casariam com **uma** pessoa só | **0** — o casamento automático está correto |
+
+---
+
+#### 🔴 Causa 1 — o homônimo histórico manufatura ambiguidade
+
+A reconciliação compara contra as **7.993 pessoas** do banco, quase todas de legislaturas
+antigas. Em **14** casos isso cria um empate que ⛔ não existe na realidade:
+
+| Deputado da 57ª | Concorrente |
+|---|---|
+| **Bebeto** — Carlos Roberto Rodrigues, 1.117 votos | *BEBETO* — Adalberto Souza Galvão, **0 votos** |
+| **Albuquerque** — José Francisco Lopes, 933 votos | *ALBUQUERQUE* — Manoel José de Albuquerque, **0 votos** |
+| **José Guimarães** — José Nobre, 1.029 votos | *JOSÉ GUIMARÃES* — José Gomes de O. Guimarães, **0 votos** |
+
+⭐ **Em todos os 14 o concorrente ⛔ não tem voto nenhum na base** — pessoa diferente, id
+diferente na Câmara, de legislatura anterior.
+
+🔴 **Checagem de segurança:** em **0 dos 14** o concorrente é senador em exercício. Era o
+risco real — senador apresenta emenda, e roubar a dele seria erro silencioso.
+
+📐 **Corroboração independente** — o destino da emenda contra a UF do parlamentar, o
+mesmo teste que resolveu o Allan Garcês:
+
+| | |
+|---|---:|
+| ✅ Destino principal bate com a UF | **50 de 56** |
+| 🔴 Discorda | **2** (ambos *TEREZA CRISTINA*, senadora do MS com destino em MT) |
+| — Sem UF no destino (`MÚLTIPLO`, `Nacional`) | 4 |
+
+⚠️ **Átila Lira é ambiguidade REAL** e continua sem vínculo, corretamente: `ÁTILA DE MELO
+LIRA` e `ÁTILA FREITAS LIRA` são duas pessoas, com ids distintos na Câmara.
+
+---
+
+#### 🔴 Causa 2 — o Portal renomeia o autor para o SUCESSOR
+
+⭐ **A descoberta que explica a metade que faltava.** As emendas **estão no banco**; o que
+está errado é o nome:
+
+```
+código 2429  ->  "TIAGO DIMAS (EX-PARLAMENTAR LAZARO BOTELHO,
+                  NOS TERMOS ART. 78 LDO 2025 E DA MENSAGEM 95-CN, DE 06.11.25)"
+```
+
+Quando o parlamentar deixa o mandato, o **suplente executa** a emenda dele, e o Portal
+passa a escrever o nome assim. Como `registrar_autores` faz `ON CONFLICT DO UPDATE SET
+nome_autor`, **o último ano ingerido vence** — e o nome que chega ao reconciliador ⛔ não
+casa com ninguém.
+
+📐 **14 autores pendentes** trazem o padrão `(EX-PARLAMENTAR X…)`; em **12** o nome do
+ex-parlamentar casa com exatamente um deputado da 57ª.
+
+⭐ **Isto ⛔ não é heurística** — é ler um rótulo que a própria fonte escreve, citando o
+art. 78 da LDO.
+
+---
+
+#### 📐 O efeito das duas regras
+
+| | Recupera |
+|---|---:|
+| **A** — desempatar pelo candidato que tem voto na base | 13 deputados |
+| **B** — extrair o nome do `EX-PARLAMENTAR` | 12 deputados |
+| Sobreposição | **0** |
+| 🔴 **Juntas** | **106 → 81** · 2.269 emendas · R$ 9,3 bi empenhados |
+
+#### ⛔ Os 81 que sobram ⛔ não são defeito nosso
+
+Sondado direto na API do Portal, por nome:
+
+| Deputado | No Portal |
+|---|---|
+| **Gisela Simona** (1.147 votos) | ⛔ **0 registros**, em ano nenhum |
+| **Ronaldo Nogueira** (687 votos) | Tem de **2018**; ⛔ **0** em 2023, 2024 e 2025 |
+
+⚠️ E a varredura ⛔ **não trunca**: em 2025 ela termina numa página parcial de 11
+registros, que é o fim real do ano.
+
+---
+
+#### 🔴 Um defeito ATIVO, descoberto na análise
+
+A resolução manual registrada acima — `emendas --resolver 4511=43` — **está errada
+hoje**. O `43` é um `pessoa_id`, e ⛔ **ele ⛔ não sobrevive à reingestão**: `pessoas.id` é
+`BIGSERIAL` e é reatribuído quando a base é recarregada.
+
+| | |
+|---|---|
+| Quando foi registrado | `43` = Allan Garcês |
+| 🔴 **Hoje** | `43` = **André Ferreira** · Allan Garcês é o **31** |
+
+⛔ **Reaplicar o comando documentado colocaria as emendas do Allan Garcês na ficha do
+André Ferreira, em silêncio.** ⭐ O `--resolver` precisa aceitar um identificador
+**estável** — o id da Câmara em `pessoa_fonte_ids` —, ⛔ não a chave interna.
 Confirmar exige comparar os 159 pendentes com os 92 faltantes **um a um, à mão** — é
 trabalho humano, como a PL11, e ⛔ não escala por regra.
 
