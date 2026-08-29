@@ -96,7 +96,7 @@ export function Grafo() {
             titulo={`Quem vota com quem · ${NOME_DA_CASA[casa].nome}`}
           />
 
-          <LegendaDoGrafo grafo={grafo} />
+          <LegendaDoGrafo />
 
           <section className="grafo-explicacao">
             <h2>De onde vem</h2>

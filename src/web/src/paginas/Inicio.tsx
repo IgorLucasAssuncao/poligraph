@@ -101,7 +101,7 @@ export function Inicio() {
             <h2>Como a Câmara se agrupa</h2>
             <TelaDoGrafo grafo={grafo} altura={460} />
 
-            <LegendaDoGrafo grafo={grafo} />
+            <LegendaDoGrafo />
 
             <Link to="/parlamentares?vista=grafo" className="painel-mais">
               Abrir o grafo completo

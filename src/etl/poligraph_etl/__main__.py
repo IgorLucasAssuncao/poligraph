@@ -346,7 +346,7 @@ def _analisar(conexao: psycopg.Connection, legislatura: int, casa: str) -> None:
                 # ⭐ É aqui que o grafo ganha NÓS. Sem esta parte ele tem ligações e
                 #    nenhum ponto com comunidade, cor ou posição — nada a desenhar.
                 nos = grafo.calcular_nos(
-                    pessoas, arestas, _votacoes_por_pessoa(matriz, pessoas), matriz
+                    pessoas, arestas, _votacoes_por_pessoa(matriz, pessoas, pesos), matriz
                 )
                 gravados = persistencia.gravar_nos_metrica(conexao, execucao_id, nos)
                 log.info("  %d nós gravados", gravados)
@@ -907,13 +907,22 @@ def _partido_mais_recente(conexao: psycopg.Connection) -> dict[int, str]:
     return {pessoa: partido for pessoa, partido in linhas if partido}
 
 
-def _votacoes_por_pessoa(matriz, pessoas: list[int]) -> dict[int, int]:
+def _votacoes_por_pessoa(matriz, pessoas: list[int], pesos) -> dict[int, int]:
     """Quantas votações cada pessoa efetivamente pesou.
 
     ⚠️ Conta só posicionamento (Sim ou Não). Ausência e abstenção ficam de fora, pelo
     mesmo motivo do cálculo de afinidade: quem não se posicionou não discordou.
+
+    🔴 **E só as de peso maior que zero.** PROCEDIMENTAL tem peso 0 e ⛔ não entra em
+    nenhuma conta de similaridade — contá-la aqui produz um número que a tela exibe e
+    o método ⛔ não usou.
+
+    ⚠️ Medido: o Soldado Noelio aparecia com **40 votações** e nenhuma ligação, e 24
+    daquelas 40 eram procedimentais. Um leitor olharia "40 votações" ao lado do mínimo
+    de 20 e concluiria, com razão, que o corte estava errado — quando o que ele tinha
+    eram 16. Número exibido que ⛔ não é o número usado é o modo de falha deste projeto.
     """
-    posicionou = (~np.isnan(matriz)) & (matriz != 0)
+    posicionou = (~np.isnan(matriz)) & (matriz != 0) & (pesos > 0)
 
     return {pessoa: int(posicionou[i].sum()) for i, pessoa in enumerate(pessoas)}
 

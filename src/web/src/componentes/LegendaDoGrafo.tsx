@@ -1,125 +1,27 @@
-import { useMemo } from 'react';
-import type { Grafo } from '../api';
-import { montarLegenda, type FaixaDaLegenda } from './grafo/legenda';
-
 /**
- * O que a figura mostra, em português comum.
+ * O que a figura mostra, em três frases.
  *
- * ## Para quem isto é escrito
+ * ## ⚠️ Por que é texto fixo e ⛔ não dado calculado
  *
- * Para quem nunca ouviu falar em grafo, comunidade ou orientação de bancada. ⛔ Sem
- * percentual solto, ⛔ sem coeficiente, ⛔ sem jargão: "97 de cada 100 votações" no lugar
- * de "governismo médio 0,973".
+ * A versão anterior montava faixas com contagem e governismo médio, mais um
+ * contraexemplo derivado dos partidos. Era correto e era demais: quem abre o desenho
+ * quer saber como lê-lo, ⛔ não receber um relatório. A análise vive em
+ * `docs/achados`, que é onde ela é útil.
  *
- * ## 🔴 Duas coisas que ela ⛔ não pode deixar de dizer
+ * ## 🔴 O que as três frases precisam cobrir
  *
- * 1. **⛔ Não é esquerda e direita política.** É alinhamento com ESTE governo, e o lado
- *    da tela é arbitrário — espelhar a figura ⛔ não mudaria nada.
- * 2. **O meio ⛔ não é moderação.** Medido: dos 80 mais centrais, 69 são claramente de
- *    um lado. O centro cai dentro do bloco maior porque a nuvem ⛔ não é simétrica.
- *
- * ⭐ Os números vêm do próprio desenho, ⛔ nunca escritos à mão — ver `grafo/legenda.ts`.
+ * 1. A posição ⛔ **não** indica orientação política — é a leitura errada que a figura
+ *    convida a fazer, e a única que precisa ser bloqueada.
+ * 2. O que o desenho **faz**, e que o *"é só isso"* delimita: aproximar quem vota junto,
+ *    e nada além disso.
+ * 3. A borda ⛔ **não** é extremismo, é ausência de dado (achado #27).
  */
-export function LegendaDoGrafo({ grafo }: { grafo: Grafo }) {
-  const legenda = useMemo(() => montarLegenda(grafo.nos), [grafo.nos]);
-
-  if (!legenda) return null;
-
+export function LegendaDoGrafo() {
   return (
-    <section className="legenda-grafo">
-      <h3>Como ler este desenho</h3>
-
-      <p className="legenda-regra">
-        Cada ponto é um parlamentar. Dois pontos se ligam quando votaram parecido — e{' '}
-        <strong>quanto mais votam junto, mais perto ficam</strong>. Ninguém escolheu
-        onde cada um fica: a posição sai do voto. Um ponto <strong>sem nenhuma linha</strong>{' '}
-        é alguém que votou pouco demais para ser comparado com quem quer que seja.
-      </p>
-
-      {legenda.temAlinhamento && (
-        <>
-          <ul className="legenda-faixas">
-            {legenda.faixas.map((faixa) => (
-              <li key={faixa.chave}>
-                <Faixa faixa={faixa} />
-              </li>
-            ))}
-          </ul>
-
-          {/* 🔴 As duas ressalvas obrigatórias. Sem elas o leitor lê espectro político
-              numa figura que ⛔ não mede isso. */}
-          <p className="legenda-ressalva">
-            <strong>Isto não é esquerda e direita.</strong> O que separa os lados é
-            votar ou não votar como o Governo pediu — e um parlamentar troca de lado na
-            eleição seguinte sem mudar nenhuma opinião. Os lados da tela também são
-            arbitrários: espelhar a figura não mudaria nada.
-          </p>
-
-          <p className="legenda-ressalva">
-            <strong>As cores não são partido nem lado.</strong> Elas só marcam grupos de
-            quem vota junto, e o número de cada grupo é apenas um rótulo.
-          </p>
-        </>
-      )}
-
-      {!legenda.temAlinhamento && (
-        <p className="legenda-ressalva">
-          Nesta casa o desenho não tem lados com nome: o Senado não publica a orientação
-          das bancadas, então não há como dizer o que separa um lado do outro.
-        </p>
-      )}
-    </section>
+    <p className="legenda-grafo">
+      <strong>A posição não indica orientação política</strong> — quem vota junto se
+      atrai, e é só isso que o desenho mostra. Nas bordas ficam os que votaram pouco
+      demais para serem comparados com alguém.
+    </p>
   );
-}
-
-// ═══════════════════════════════════════════════════════════════════
-
-function Faixa({ faixa }: { faixa: FaixaDaLegenda }) {
-  const emCada100 = faixa.governismo === null ? null : Math.round(faixa.governismo * 100);
-
-  return (
-    <>
-      <b>
-        {faixa.onde} <small>{faixa.quantos} parlamentares</small>
-      </b>
-      <p>{descrever(faixa, emCada100)}</p>
-    </>
-  );
-}
-
-/**
- * A frase de cada faixa.
- *
- * ⚠️ O texto é fixo, os NÚMEROS vêm do desenho. O contrário — número no texto — é o que
- * apodrece na primeira reexecução.
- */
-function descrever(faixa: FaixaDaLegenda, emCada100: number | null): string {
-  const votou =
-    emCada100 === null
-      ? ''
-      : `Votaram como o Governo pediu em ${emCada100} de cada 100 votações. `;
-
-  switch (faixa.chave) {
-    case 'lado-a':
-      return `${votou}É o bloco mais fechado do desenho.`;
-
-    case 'centro':
-      // 🔴 A correção mais importante desta legenda. A interface dizia que no centro
-      //    estava quem faltou muito — e quem faltou está na PONTA.
-      return (
-        `${votou}Não são os "moderados": estão no meio por serem a maioria, ` +
-        `não por ficarem em cima do muro.`
-      );
-
-    case 'lado-b':
-      return `${votou}É o lado que mais vota contra o que o Governo pede.`;
-
-    case 'bordas':
-      // 🔴 A leitura mais enganosa da figura. Em grafo político, ponta parece
-      //    radicalismo; aqui é AUSÊNCIA DE DADO — os da ponta têm zero ligações.
-      return (
-        `Não são os extremos: são suplentes, com ${faixa.votacoes} votações e ` +
-        `nenhuma ligação. A posição deles não mede nada.`
-      );
-  }
 }

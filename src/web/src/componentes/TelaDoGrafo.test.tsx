@@ -164,6 +164,38 @@ describe('painel de ajustes', () => {
     expect(screen.getByText(/não tem eixo com nome/)).toBeInTheDocument();
   });
 
+  it('⭐ oferece o layout de alinhamento quando a casa tem a medida', async () => {
+    const usuario = userEvent.setup();
+    render(<TelaDoGrafo grafo={GRAFO} />);
+    await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
+
+    expect(screen.getByRole('button', { name: 'Alinhamento' })).toBeInTheDocument();
+  });
+
+  it('⛔ esconde o alinhamento no Senado', async () => {
+    const usuario = userEvent.setup();
+    // Sem orientação de bancada publicada, o eixo do governismo ⛔ não teria coordenada.
+    const senado = { ...GRAFO, nos: GRAFO.nos.map((n) => ({ ...n, governismo: null })) };
+    render(<TelaDoGrafo grafo={senado} />);
+
+    await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
+
+    expect(screen.queryByRole('button', { name: 'Alinhamento' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Molas' })).toBeInTheDocument();
+  });
+
+  it('🔴 no alinhamento a tela declara que a posição não vem de algoritmo', async () => {
+    const usuario = userEvent.setup();
+    render(<TelaDoGrafo grafo={GRAFO} />);
+    await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
+    await usuario.click(screen.getByRole('button', { name: 'Alinhamento' }));
+
+    // ⭐ É o que distingue este layout dos outros dois: aqui a coordenada É a medida.
+    expect(screen.getByText(/não é resultado de algoritmo/)).toBeInTheDocument();
+    // 🔴 E a ressalva continua obrigatória.
+    expect(screen.getByText(/não é esquerda e direita/)).toBeInTheDocument();
+  });
+
   it('⛔ a simulação de forças não existe mais', async () => {
     const usuario = userEvent.setup();
     render(<TelaDoGrafo grafo={GRAFO} />);

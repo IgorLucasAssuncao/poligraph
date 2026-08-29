@@ -27,7 +27,7 @@ export type PosicaoDoCidadao = {
  * `molas` desenha bem e ⛔ não interpreta nada. `componentes` (SVD) tem eixo com
  * significado, mas convida o leitor a ler espectro político.
  */
-export type Layout = 'molas' | 'componentes';
+export type Layout = 'molas' | 'componentes' | 'alinhamento';
 
 /**
  * ⚠️ A explicação de cada layout vive JUNTO do seletor, não num rodapé.
@@ -46,6 +46,23 @@ const EXPLICACAO: Record<Layout, { rotulo: string; titulo: string; texto: string
       'junto fica junto. O algoritmo nunca viu orientação de bancada, e ainda assim o ' +
       'eixo horizontal que ele produziu mede −0,89 contra o alinhamento com o Governo. ' +
       'A vertical não mede nada, e a forma redonda é escolha do algoritmo, não do dado.',
+  },
+  /**
+   * ⭐ O único layout em que o eixo ⛔ NÃO é arbitrário.
+   *
+   * Nos outros dois a posição sai de um algoritmo e o significado é descoberto depois,
+   * por correlação — e o sinal pode espelhar numa reexecução. Aqui a coordenada É a
+   * medida: `x` vem direto do governismo, e quem manda no sentido somos nós.
+   */
+  alinhamento: {
+    rotulo: 'Alinhamento',
+    titulo: 'Alinhamento com o Governo',
+    texto:
+      'O eixo horizontal é a própria medida: quanto o parlamentar votou como a bancada ' +
+      'do Governo orientou, da esquerda (quase nunca) para a direita (quase sempre). ' +
+      'Aqui a posição não é resultado de algoritmo nenhum. A vertical continua sem ' +
+      'significado — serve para os pontos não se sobreporem. E isto não é esquerda e ' +
+      'direita política: é alinhamento com ESTE governo.',
   },
   componentes: {
     rotulo: 'Componentes',
@@ -132,12 +149,37 @@ export function TelaDoGrafo({
   const [ajustesAbertos, setAjustesAbertos] = useState(false);
   const [tamanho, setTamanho] = useState<Tamanho>({ largura: 800, altura: altura ?? 520 });
 
+  /**
+   * ⛔ "Alinhamento" ⛔ não aparece no Senado. Lá ⛔ não existe orientação de bancada
+   * publicada, e um layout cujo eixo é o governismo ⛔ não teria coordenada nenhuma.
+   */
+  const layoutsDisponiveis = useMemo<Layout[]>(() => {
+    const temAlinhamento = grafo.nos.some((n) => n.governismo !== null);
+
+    return temAlinhamento
+      ? ['molas', 'alinhamento', 'componentes']
+      : ['molas', 'componentes'];
+  }, [grafo.nos]);
+
   const posicionados = useMemo(() => {
     // ⚠️ O nó carrega as duas posições; aqui uma delas é promovida a `eixoX`/`eixoY`
     //    para o resto do desenho não precisar saber qual layout está ativo.
-    const comLayout = grafo.nos.map((n) =>
-      layout === 'componentes' ? { ...n, eixoX: n.componente1, eixoY: n.componente2 } : n,
-    );
+    const comLayout = grafo.nos.map((n) => {
+      if (layout === 'componentes')
+        return { ...n, eixoX: n.componente1, eixoY: n.componente2 };
+
+      // ⭐ `governismo` vive em [0, 1] e o plano em [-1, 1]. A vertical continua vindo
+      //    do layout de molas: ela ⛔ não mede nada em nenhum dos dois, e reaproveitá-la
+      //    mantém os agrupamentos visualmente coerentes enquanto o eixo x muda.
+      if (layout === 'alinhamento')
+        return {
+          ...n,
+          eixoX: n.governismo === null ? null : n.governismo * 2 - 1,
+          eixoY: n.eixoY,
+        };
+
+      return n;
+    });
 
     return comLayout
       .filter((n) => n.eixoX !== null && n.eixoY !== null)
@@ -433,7 +475,7 @@ export function TelaDoGrafo({
                 <p className="grafo-painel-titulo">Como posicionar os pontos</p>
 
                 <div className="grafo-layout-botoes" role="group" aria-label="Como posicionar os pontos">
-                  {(Object.keys(EXPLICACAO) as Layout[]).map((opcao) => (
+                  {layoutsDisponiveis.map((opcao) => (
                     <button
                       key={opcao}
                       type="button"

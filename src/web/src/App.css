@@ -1026,50 +1026,15 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 }
 
 /* ═══ LEGENDA DO GRAFO ═════════════════════════════════════════
-   ⭐ Escrita para quem nunca ouviu falar em grafo. A hierarquia é a da leitura: a regra
-      geral primeiro, as faixas depois, as ressalvas por último — e as ressalvas ⛔ não
-      podem parecer rodapé, porque são a parte que impede a leitura errada. */
+   Três frases abaixo do desenho. ⚠️ ⛔ Não é rodapé: é o que impede a leitura errada da
+   figura, então tem fundo próprio para ⛔ não ser pulada. */
 .legenda-grafo {
-  padding: 1.25rem 0 0;
-}
-.legenda-grafo h3 {
-  margin: 0 0 .6rem;
-  font-family: var(--display); font-variation-settings: 'wdth' 110;
-  font-size: 1.05rem; font-weight: 700;
-}
-.legenda-regra {
-  margin: 0 0 1.1rem; max-width: 46rem;
-  font-size: .94rem; line-height: 1.55; color: var(--suave);
-}
-.legenda-regra strong { color: var(--texto); font-weight: 600; }
-
-.legenda-faixas {
-  list-style: none; margin: 0 0 1.1rem; padding: 0;
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: 1px; background: var(--borda);
-  border: 1px solid var(--borda); border-radius: 10px; overflow: hidden;
-}
-.legenda-faixas li { background: var(--fundo); padding: .85rem .95rem; }
-.legenda-faixas b {
-  display: flex; align-items: baseline; gap: .45rem; flex-wrap: wrap;
-  margin-bottom: .35rem; font-size: .92rem;
-}
-/* A contagem é parte do rótulo: "do lado esquerdo" sem quantos ⛔ não se lê. */
-.legenda-faixas b small {
-  font-family: var(--dado); font-size: .7rem; font-weight: 500; color: var(--suave);
-}
-.legenda-faixas p { margin: 0; font-size: .84rem; line-height: 1.5; color: var(--suave); }
-
-/* 🔴 Ressalva ⛔ não é rodapé: é o que impede o leitor de ver espectro político numa
-   figura que ⛔ não mede isso. Fundo próprio, para ⛔ não ser pulada. */
-.legenda-ressalva {
-  margin: 0 0 .6rem; padding: .7rem .85rem; max-width: 46rem;
+  margin: 1rem 0 0; padding: .8rem .95rem; max-width: 48rem;
   background: var(--painel);
   border-left: 3px solid var(--borda-forte); border-radius: 0 8px 8px 0;
-  font-size: .84rem; line-height: 1.5; color: var(--suave);
+  font-size: .88rem; line-height: 1.55; color: var(--suave);
 }
-.legenda-ressalva:last-child { margin-bottom: 0; }
-.legenda-ressalva strong { color: var(--texto); font-weight: 600; }
+.legenda-grafo strong { color: var(--texto); font-weight: 600; }
 
 /* ═══ ORIENTAÇÃO NO VOTO ═══════════════════════════════════════
    🔴 ⛔ SEM cor semântica. Votar contra a orientação ⛔ não é erro, e verde/vermelho

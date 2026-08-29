@@ -1,51 +1,12 @@
 import type { NoDoGrafo } from '../../api';
 
 /**
- * O que a figura mostra, lido do próprio dado.
- *
- * ## 🔴 Por que isto é calculado e ⛔ não escrito à mão
- *
- * O sinal do eixo horizontal é **arbitrário**. A semente do layout é fixa, então a
- * figura é reproduzível — mas uma reexecução com dado novo pode espelhá-la. Uma legenda
- * que afirmasse *"à esquerda ficam os governistas"* ficaria errada em silêncio no dia em
- * que isso acontecesse, e silêncio é exatamente o modo de falha que este projeto
- * persegue.
- *
- * Aqui a legenda olha onde os governistas efetivamente caíram e descreve o que vê.
- *
- * ## ⚠️ Os cortes
- *
- * `0,2` separa o miolo das laterais e `0,6` separa as laterais das bordas. ⛔ Não são
- * arbitrários: com eles as faixas ficam com 357, 127, 149 e 10 nós — um miolo denso,
- * dois lados com massa comparável, e uma borda que é só quem não tem ligação.
- */
-
-const CORTE_CENTRO = 0.2;
-const CORTE_BORDA = 0.6;
-
-export type FaixaDaLegenda = {
-  chave: 'lado-a' | 'centro' | 'lado-b' | 'bordas';
-  /** Descrição da posição na tela, ⛔ nunca "esquerda política". */
-  onde: string;
-  quantos: number;
-  /** Governismo médio, de 0 a 1. Nulo quando a casa não tem orientação. */
-  governismo: number | null;
-  /** Mediana de votações — é o que denuncia a borda. */
-  votacoes: number;
-};
-
-export type Legenda = {
-  faixas: FaixaDaLegenda[];
-  /** ⛔ Falso no Senado: sem orientação de bancada, o eixo continua sem nome. */
-  temAlinhamento: boolean;
-};
-
-/**
  * Como rotular os eixos desenhados sobre a figura.
  *
- * 🔴 Derivado, pelo mesmo motivo da legenda: o sinal do eixo é arbitrário. Rótulo
- * escrito à mão passa a mentir no dia em que uma reexecução espelhar o desenho — e
- * mentiria em cima do próprio desenho, que é o pior lugar possível.
+ * 🔴 **Derivado do dado, ⛔ nunca escrito à mão.** O sinal do eixo é arbitrário: a
+ * semente do layout é fixa, então a figura é reproduzível — mas uma reexecução com dado
+ * novo pode espelhá-la. Um rótulo fixo dizendo *"à esquerda ficam os governistas"*
+ * passaria a mentir em cima do próprio desenho, que é o pior lugar possível.
  */
 export type RotulosDoEixo = {
   /** O que fica na ponta esquerda da tela. */
@@ -60,8 +21,20 @@ export type RotulosDoEixo = {
 
 export function rotulosDoEixo(
   nos: NoDoGrafo[],
-  layout: 'molas' | 'componentes',
+  layout: 'molas' | 'componentes' | 'alinhamento',
 ): RotulosDoEixo | null {
+  // ⭐ No layout de alinhamento a coordenada É a medida, e o sentido foi definido por
+  //    nós: menos governismo à esquerda. ⛔ Não há o que derivar, e derivar aqui seria
+  //    perguntar ao dado uma coisa que já sabemos.
+  if (layout === 'alinhamento') {
+    return {
+      esquerda: 'quase nunca votou com o Governo',
+      direita: 'quase sempre votou com o Governo',
+      legenda: 'a posição horizontal é a própria medida, não resultado de algoritmo',
+      vertical: 'a vertical não mede nada: é só espaço para os pontos não se sobreporem',
+    };
+  }
+
   const comAlinhamento = nos.filter(
     (n) => n.eixoX !== null && n.governismo !== null,
   );
@@ -85,7 +58,7 @@ export function rotulosDoEixo(
   return {
     esquerda: negativoEhGovernista ? maisGoverno : menosGoverno,
     direita: negativoEhGovernista ? menosGoverno : maisGoverno,
-    legenda: 'quanto o parlamentar votou como o Governo pediu — medido, não programado',
+    legenda: 'quanto o parlamentar votou como a bancada do Governo orientou',
     vertical:
       layout === 'molas'
         ? 'a vertical não mede nada: é só espaço para os pontos não se sobreporem'
@@ -93,20 +66,34 @@ export function rotulosDoEixo(
   };
 }
 
-export function montarLegenda(nos: NoDoGrafo[]): Legenda | null {
+export function montarLegenda(
+  nos: NoDoGrafo[],
+  arestas: ArestaDoGrafo[],
+): Legenda | null {
   const posicionados = nos.filter((n) => n.eixoX !== null);
   if (posicionados.length < 20) return null;
 
-  const dentro = (min: number, max: number) =>
-    posicionados.filter((n) => {
-      const x = n.eixoX!;
-      return x >= min && x < max;
-    });
+  // 🔴 O grupo das pontas é definido por NÃO TER LIGAÇÃO, ⛔ não por estar longe do
+  //    centro. É o que o achado #27 mediu: os 10 mais afastados têm todos zero
+  //    arestas, e a posição extrema deles é consequência disso, ⛔ não causa. Separar
+  //    por distância acertaria hoje e erraria no dia em que um nó conectado chegasse
+  //    à borda — e erraria dizendo que ele "votou pouco", o que seria falso.
+  const ligados = new Set<number>();
+  for (const a of arestas) {
+    ligados.add(a.de);
+    ligados.add(a.para);
+  }
 
-  const ladoNegativo = dentro(-CORTE_BORDA, -CORTE_CENTRO);
-  const centro = dentro(-CORTE_CENTRO, CORTE_CENTRO);
-  const ladoPositivo = dentro(CORTE_CENTRO, CORTE_BORDA);
-  const bordas = posicionados.filter((n) => Math.abs(n.eixoX!) >= CORTE_BORDA);
+  const isolados = posicionados.filter((n) => !ligados.has(n.id));
+  const comLigacao = posicionados.filter((n) => ligados.has(n.id));
+
+  // ⚠️ Sem limite externo: com os isolados fora, um nó conectado distante do centro
+  //    continua sendo daquele lado. Um teto de 0,6 o deixaria em faixa nenhuma, e ele
+  //    sumiria da soma sem nada avisar.
+  const ladoNegativo = comLigacao.filter((n) => n.eixoX! < -CORTE_CENTRO);
+  const centro = comLigacao.filter((n) => Math.abs(n.eixoX!) <= CORTE_CENTRO);
+  const ladoPositivo = comLigacao.filter((n) => n.eixoX! > CORTE_CENTRO);
+  const bordas = isolados;
 
   const temAlinhamento = posicionados.some((n) => n.governismo !== null);
 
@@ -125,7 +112,7 @@ export function montarLegenda(nos: NoDoGrafo[]): Legenda | null {
       faixa('lado-a', `Do lado ${ondeFica(primeiro)}`, primeiro),
       faixa('centro', 'No meio', centro),
       faixa('lado-b', `Do lado ${ondeFica(segundo)}`, segundo),
-      faixa('bordas', 'Nas pontas', bordas),
+      faixa('bordas', 'Sem nenhuma ligação', bordas),
     ].filter((f) => f.quantos > 0),
   };
 }
