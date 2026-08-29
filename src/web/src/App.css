@@ -1071,6 +1071,14 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .legenda-ressalva:last-child { margin-bottom: 0; }
 .legenda-ressalva strong { color: var(--texto); font-weight: 600; }
 
+/* ═══ ORIENTAÇÃO NO VOTO ═══════════════════════════════════════
+   🔴 ⛔ SEM cor semântica. Votar contra a orientação ⛔ não é erro, e verde/vermelho
+   transformaria comportamento em nota. O que distingue é o peso do texto, ⛔ não a cor. */
+.voto-orientacao b { color: var(--texto); font-weight: 600; }
+.voto-orientacao em {
+  font-style: normal; font-weight: 600; color: var(--texto);
+}
+
 /* ═══ RESPONSIVO ═══════════════════════════════════════════════ */
 @media (max-width: 1000px) {
   /* ⭐ O trilho sai antes de espremer o conteúdo: sugestão é complemento. */

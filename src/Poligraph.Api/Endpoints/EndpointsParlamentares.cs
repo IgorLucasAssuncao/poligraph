@@ -6,7 +6,24 @@ namespace Poligraph.Api.Endpoints;
 public record ParlamentarNaListaDto(
     long Id, string Nome, Casa? Casa, string Partido, string Uf, int NVotacoes, string? UrlFoto);
 
-public record VotoNaFichaDto(string VotacaoId, DateOnly Data, string? Descricao, short? Valor);
+/// <summary>
+/// Um voto da ficha, com o que a bancada do Governo pediu naquela votação.
+///
+/// <para>
+/// ⭐ <c>OrientacaoDoGoverno</c> é o que transforma o voto em informação. "Votou Sim"
+/// sozinho ⛔ não diz nada; "votou Sim quando o Governo pediu Não" diz.
+/// </para>
+///
+/// <para>
+/// ⚠️ Nula com frequência, e por três motivos diferentes que a tela ⛔ não deve
+/// confundir: o Governo ⛔ não orientou aquela votação, orientou <c>Obstrução</c> ou
+/// <c>Liberado</c> — que ⛔ não são posição de mérito —, ou a casa é o Senado, que ⛔ não
+/// publica orientação.
+/// </para>
+/// </summary>
+public record VotoNaFichaDto(
+    string VotacaoId, DateOnly Data, string? Descricao, short? Valor,
+    string? OrientacaoDoGoverno);
 
 public record SimilarNaFichaDto(long PessoaId, string Nome, string Partido, float Valor, int Comuns);
 
@@ -435,8 +452,15 @@ public static class EndpointsParlamentares
             .Where(v => v.PessoaId == id)
             .OrderByDescending(v => v.Votacao!.Data)
             .Take(VotosNaFicha)
+            // ⚠️ Subconsulta, ⛔ não `join`: a orientação é opcional, e um `join` sem
+            //    `DefaultIfEmpty` sumiria com as votações que o Governo não orientou —
+            //    que são justamente as mais comuns na ficha.
             .Select(v => new VotoNaFichaDto(
-                v.VotacaoId, v.Votacao!.Data, v.Votacao.Descricao, v.Valor))
+                v.VotacaoId, v.Votacao!.Data, v.Votacao.Descricao, v.Valor,
+                db.Orientacoes
+                    .Where(o => o.VotacaoId == v.VotacaoId && o.Bancada == "Governo")
+                    .Select(o => o.Orientacao)
+                    .FirstOrDefault()))
             .ToListAsync(ct);
 
     /// <summary>

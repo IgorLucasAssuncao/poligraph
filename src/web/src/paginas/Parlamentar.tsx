@@ -15,6 +15,7 @@ import {
   type FinanciamentoDeCampanha,
   type GastoDeCota,
   type Noticia,
+  type VotoNaFicha,
 } from '../api';
 import { Avatar } from '../componentes/Avatar';
 import { CabecalhoDaColuna } from '../componentes/Layout';
@@ -209,10 +210,48 @@ function AbaVotos({ votos }: { votos: Ficha['votosRecentes'] }) {
               {v.valor === 0 ? <Termo nome="abstencao">Abstenção</Termo> : rotuloDoVoto(v.valor)}
             </span>
             <p className="voto-descricao">{v.descricao ?? v.votacaoId}</p>
-            <span className="linha-detalhe">{formatarData(v.data)}</span>
+            <span className="linha-detalhe">
+              {formatarData(v.data)}
+              <ContraAOrientacao voto={v} />
+            </span>
           </div>
         </article>
       ))}
+    </>
+  );
+}
+
+/**
+ * O que o Governo pediu naquela votação, ao lado do voto.
+ *
+ * ## 🔴 Sem juízo, ⛔ nem por palavra nem por cor
+ *
+ * ⛔ Nada de "seguiu ✓" e "contrariou ✗", ⛔ nada de verde e vermelho. Acompanhar ou não
+ * a orientação ⛔ não é acerto nem erro — é comportamento, e quem julga é quem lê.
+ * Escrito de forma neutra: *"o Governo pediu Não"* e, quando divergiu, *"votou
+ * diferente"*, sem adjetivo.
+ *
+ * ⛔ Silenciosa quando ⛔ não há o que dizer: o Governo não orientou, orientou obstrução
+ * ou liberou, ou é o Senado. ⚠️ Uma marca de "sem orientação" em quase toda linha viraria
+ * ruído e esconderia as linhas que importam.
+ */
+function ContraAOrientacao({ voto }: { voto: VotoNaFicha }) {
+  const orientacao = voto.orientacaoDoGoverno;
+
+  // ⚠️ Só Sim e Não são comparáveis. `Obstrução` é tática de quórum e `Liberado` é
+  //    ausência de orientação — nenhuma das duas é posição de mérito.
+  if (orientacao !== 'Sim' && orientacao !== 'Não') return null;
+  if (voto.valor !== 1 && voto.valor !== -1) return null;
+
+  const acompanhou = (voto.valor === 1) === (orientacao === 'Sim');
+
+  return (
+    <>
+      {' · '}
+      <span className="voto-orientacao">
+        Governo pediu <b>{orientacao}</b>
+        {!acompanhou && <em> — votou diferente</em>}
+      </span>
     </>
   );
 }

@@ -101,30 +101,25 @@ function descrever(faixa: FaixaDaLegenda, emCada100: number | null): string {
 
   switch (faixa.chave) {
     case 'lado-a':
-      return `${votou}É o bloco mais fechado do desenho: quase sempre juntos, quase sempre com o Governo.`;
+      return `${votou}É o bloco mais fechado do desenho.`;
 
     case 'centro':
-      // 🔴 A correção mais importante desta legenda. A versão anterior da interface
-      //    dizia que no centro estava quem faltou muito — e a medição mostra o
-      //    contrário: quem faltou está na PONTA, e o centro é o parlamentar típico.
+      // 🔴 A correção mais importante desta legenda. A interface dizia que no centro
+      //    estava quem faltou muito — e quem faltou está na PONTA.
       return (
-        `${votou}Estes não são os "moderados". A maioria também vota com o Governo — ` +
-        `eles estão no meio porque são o parlamentar comum, e a maior parte da Casa ` +
-        `vota assim. O meio do desenho é onde está a maioria, não onde está o meio-termo.`
+        `${votou}Não são os "moderados": estão no meio por serem a maioria, ` +
+        `não por ficarem em cima do muro.`
       );
 
     case 'lado-b':
       return `${votou}É o lado que mais vota contra o que o Governo pede.`;
 
     case 'bordas':
-      // 🔴 A leitura mais enganosa da figura inteira. Em grafo político, ponta parece
-      //    radicalismo. Aqui ponta é AUSÊNCIA DE DADO: os dez têm zero ligações.
+      // 🔴 A leitura mais enganosa da figura. Em grafo político, ponta parece
+      //    radicalismo; aqui é AUSÊNCIA DE DADO — os da ponta têm zero ligações.
       return (
-        `Estes não são os extremos — são quem quase não votou. ${faixa.votacoes} ` +
-        `votações, contra centenas dos demais: suplentes e quem assumiu por poucas ` +
-        `semanas. Nenhum deles tem uma única linha ligando a alguém, porque não houve ` +
-        `votações em comum suficientes para comparar. A posição deles não mede nada — ` +
-        `é o desenho dizendo que não sabe onde colocá-los.`
+        `Não são os extremos: são suplentes, com ${faixa.votacoes} votações e ` +
+        `nenhuma ligação. A posição deles não mede nada.`
       );
   }
 }

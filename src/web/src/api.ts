@@ -29,11 +29,17 @@ export type Parlamentar = {
   urlFoto?: string | null;
 };
 
+/**
+ * ⚠️ `orientacaoDoGoverno` é nula com frequência, por TRÊS motivos diferentes que a
+ * tela ⛔ não deve confundir: o Governo não orientou aquela votação, orientou
+ * `Obstrução`/`Liberado` — que não são posição de mérito —, ou a casa é o Senado.
+ */
 export type VotoNaFicha = {
   votacaoId: string;
   data: string;
   descricao: string | null;
   valor: number | null;
+  orientacaoDoGoverno: string | null;
 };
 
 export type Similar = {

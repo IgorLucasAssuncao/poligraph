@@ -28,7 +28,26 @@ const FICHA: Ficha = {
   nVotacoes: 120,
   votosRecentes: [],
   maisSimilares: [],
+  alinhamento: null,
 };
+
+/**
+ * Um voto de cada situação em que a orientação do Governo aparece — ou ⛔ não deve
+ * aparecer. As três últimas são os motivos distintos de a orientação ser inútil.
+ */
+function voto(
+  id: string,
+  valor: number | null,
+  orientacaoDoGoverno: string | null,
+): Ficha['votosRecentes'][number] {
+  return {
+    votacaoId: id,
+    data: '2025-06-01',
+    descricao: `Votação ${id}`,
+    valor,
+    orientacaoDoGoverno,
+  };
+}
 
 /** ⭐ Empenhado ≠ pago, e a razão entre eles é 40%. */
 const EMENDAS: EmendasDoParlamentar = {
@@ -201,3 +220,55 @@ describe('contas — campanha', () => {
 async function tela(): Promise<string> {
   return await waitFor(() => document.body.textContent!.replace(/\s+/g, ' '));
 }
+
+describe('orientação do Governo ao lado do voto', () => {
+  /**
+   * 🔴 "Votou Sim" sozinho ⛔ não diz nada. O que informa é "votou Sim quando o Governo
+   * pediu Não" — e é isso que a linha precisa mostrar.
+   */
+  it('mostra o que o Governo pediu', async () => {
+    vi.mocked(api.obterFicha).mockResolvedValue({
+      ...FICHA,
+      votosRecentes: [voto('a', 1, 'Sim')],
+    });
+
+    await abrirPerfil();
+
+    expect(await screen.findByText(/Governo pediu/)).toBeInTheDocument();
+  });
+
+  it('avisa quando o voto divergiu da orientação', async () => {
+    vi.mocked(api.obterFicha).mockResolvedValue({
+      ...FICHA,
+      votosRecentes: [voto('a', 1, 'Não')],
+    });
+
+    await abrirPerfil();
+
+    // ⚠️ Texto neutro: "votou diferente", ⛔ nunca "contrariou" nem um ✗ vermelho.
+    //    Divergir da orientação ⛔ não é erro, e a tela ⛔ não pode dar nota.
+    expect(await screen.findByText(/votou diferente/)).toBeInTheDocument();
+  });
+
+  it('⛔ cala quando não há o que comparar', async () => {
+    vi.mocked(api.obterFicha).mockResolvedValue({
+      ...FICHA,
+      votosRecentes: [
+        // O Governo ⛔ não orientou — o caso mais comum, e uma marca em toda linha
+        // viraria ruído.
+        voto('a', 1, null),
+        // ⭐ `Obstrução` é tática de quórum, ⛔ não posição de mérito.
+        voto('b', -1, 'Obstrução'),
+        // ⭐ `Liberado` é ausência de orientação.
+        voto('c', 1, 'Liberado'),
+        // O parlamentar se absteve: ⛔ não há voto a comparar.
+        voto('d', 0, 'Sim'),
+      ],
+    });
+
+    await abrirPerfil();
+    await screen.findByText(/Votação a/);
+
+    expect(screen.queryByText(/Governo pediu/)).not.toBeInTheDocument();
+  });
+});
