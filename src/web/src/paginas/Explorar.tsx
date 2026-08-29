@@ -4,6 +4,15 @@ import { IconeExplorar } from '../componentes/Icones';
 import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 
 /** Busca e navegação pelos parlamentares (RF-34). */
+/**
+ * ⚠️ "na Câmara" / "no Senado" — a preposição muda, e concatenar `NOME_DA_CASA` daria
+ * "votações registradas Senado Federal".
+ */
+const NA_CASA: Record<Parlamentar['casa'], string> = {
+  CAMARA: 'na Câmara',
+  SENADO: 'no Senado',
+};
+
 export function Explorar() {
   const [termo, setTermo] = useState('');
   const [partido, setPartido] = useState('');
@@ -40,9 +49,11 @@ export function Explorar() {
         <span className="icone-busca" aria-hidden="true">
           <IconeExplorar />
         </span>
+        {/* ⛔ "parlamentar", ⛔ não "deputado": a lista traz as DUAS casas, e o
+            aria-label já dizia parlamentar — o texto visível é que discordava. */}
         <input
           type="search"
-          placeholder="Buscar deputado por nome"
+          placeholder="Buscar parlamentar por nome"
           value={termo}
           onChange={(e) => setTermo(e.target.value)}
           aria-label="Buscar parlamentar por nome"
@@ -83,7 +94,14 @@ export function Explorar() {
           partido={p.partido}
           uf={p.uf}
           fotoUrl={p.urlFoto}
-          detalhe={`${p.nVotacoes} votações registradas`}
+          /* 🔴 A casa entra no detalhe, ⛔ não é enfeite.
+             📐 Medido em 2026-08-29: o deputado mediano tem 845 votações registradas e o
+             senador mediano, 140 — SEIS vezes menos. O senador com MAIS votações (177)
+             fica abaixo de 549 dos 643 deputados.
+             ⚠️ A lista mistura as duas casas, e sem dizer qual é qual todo senador parece
+             inativo. A causa é o Senado fazer menos votação nominal — e 56,8% delas serem
+             secretas —, ⛔ não o senador trabalhar menos. */
+          detalhe={`${p.nVotacoes} votações registradas ${NA_CASA[p.casa]}`}
           seguindo={seguidos.has(p.id)}
           aoAlternarSeguir={alternar}
         />
