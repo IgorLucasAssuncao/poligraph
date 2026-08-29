@@ -765,6 +765,51 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 
 .nota-fora-da-conta { margin: .9rem 0 0; font-size: .86rem; }
 
+/* ═══════════════════════════════════════════════════════════════
+   Grafo — teclado e alternativa em texto
+   ═══════════════════════════════════════════════════════════════ */
+
+/* 🔴 O canvas é focável (tabIndex=0). Sem anel de foco, quem navega por teclado
+   perde o cursor dentro do desenho e não sabe que as setas já funcionam. */
+.grafo-tela canvas:focus-visible {
+  outline: 3px solid var(--realce);
+  outline-offset: -3px;
+}
+
+.grafo-lista { margin: 1.25rem 1rem 0; }
+.grafo-lista > summary {
+  cursor: pointer; list-style: none; width: fit-content;
+  padding: .45rem .8rem; border: 1px solid var(--borda-forte); border-radius: 999px;
+  font-size: .88rem; color: var(--suave);
+  transition: border-color var(--t-curto) var(--curva), color var(--t-curto) var(--curva);
+}
+.grafo-lista > summary::-webkit-details-marker { display: none; }
+.grafo-lista > summary:hover { border-color: var(--realce); color: var(--texto); }
+.grafo-lista > summary:focus-visible { outline: 2px solid var(--realce); outline-offset: 2px; }
+.grafo-lista > .ajuda { margin: .9rem 0; }
+
+.lista-grafo {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; gap: .75rem;
+  /* ⚠️ 643 parlamentares: sem teto a lista empurra o rodapé para longe demais.
+     O contêiner rola, ⛔ não a página. */
+  max-height: 26rem; overflow-y: auto;
+  border: 1px solid var(--borda); border-radius: .5rem; padding: .9rem;
+}
+.lista-grafo li { display: grid; gap: .15rem; font-size: .9rem; line-height: 1.4; }
+
+.lista-grafo-nome { font-weight: 700; color: var(--texto); justify-self: start; }
+button.lista-grafo-nome {
+  background: none; border: 0; padding: 0; font: inherit; font-weight: 700;
+  color: var(--realce); cursor: pointer; text-align: left;
+}
+button.lista-grafo-nome:hover { text-decoration: underline; }
+button.lista-grafo-nome:focus-visible { outline: 2px solid var(--realce); outline-offset: 2px; }
+
+.lista-grafo-filiacao { color: var(--suave); font-size: .82rem; }
+.lista-grafo-vizinhos { color: var(--suave); }
+.lista-grafo-sem-par { color: var(--suave); font-style: italic; }
+
 .titulo-secao {
   margin: 0; padding: 1rem 1rem .6rem;
   font-size: 1.05rem; font-weight: 800;

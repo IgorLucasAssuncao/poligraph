@@ -81,6 +81,27 @@ CREATE TABLE similaridades (
     PRIMARY KEY (execucao_id, pessoa_a, pessoa_b, metrica),
     CHECK (pessoa_a < pessoa_b)
 );
+CREATE TABLE noticias (
+    id BIGSERIAL PRIMARY KEY,
+    url TEXT NOT NULL UNIQUE,
+    titulo TEXT NOT NULL,
+    veiculo TEXT NOT NULL,
+    publicada_em TIMESTAMPTZ NOT NULL,
+    trecho TEXT,
+    hash_titulo TEXT NOT NULL,
+    coletada_em TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- 🔴 RF-38 virando constraint: se alguém tentar gravar o corpo da matéria, o
+    --    banco recusa. É a mesma checagem que o EF cria.
+    CHECK (trecho IS NULL OR length(trecho) <= 500)
+);
+CREATE TABLE noticia_pessoas (
+    noticia_id BIGINT NOT NULL REFERENCES noticias(id) ON DELETE CASCADE,
+    pessoa_id BIGINT NOT NULL REFERENCES pessoas(id) ON DELETE CASCADE,
+    confianca REAL NOT NULL CHECK (confianca BETWEEN 0 AND 1),
+    metodo TEXT NOT NULL
+        CHECK (metodo IN ('NOME_COMPLETO','NOME_PARLAMENTAR','SOBRENOME')),
+    PRIMARY KEY (noticia_id, pessoa_id)
+);
 """
 
 
@@ -105,8 +126,8 @@ def conexao():
 @pytest.fixture(autouse=True)
 def limpar(conexao):
     conexao.execute(
-        "TRUNCATE similaridades, execucoes, votos, votacoes, pessoa_fonte_ids, pessoas "
-        "RESTART IDENTITY CASCADE"
+        "TRUNCATE noticia_pessoas, noticias, similaridades, execucoes, votos, votacoes, "
+        "pessoa_fonte_ids, pessoas RESTART IDENTITY CASCADE"
     )
 
 
@@ -367,3 +388,101 @@ def test_quem_so_vota_numa_casa_nao_entra_na_matriz_da_outra(conexao):
 
     assert pessoas_camara == [deputada]
     assert pessoas_senado == []
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Notícias — RF-38 e RF-40
+# ═══════════════════════════════════════════════════════════════════
+
+
+def _noticia(url="https://x/1", titulo="Câmara aprova projeto", trecho=None):
+    from datetime import datetime, timezone
+
+    from poligraph_etl.noticias import NoticiaColetada, hash_titulo
+
+    return NoticiaColetada(
+        url=url,
+        titulo=titulo,
+        veiculo="Agência Câmara",
+        publicada_em=datetime(2026, 8, 29, 12, 0, tzinfo=timezone.utc),
+        trecho=trecho,
+        hash_titulo=hash_titulo(titulo),
+    )
+
+
+def test_noticia_recoletada_nao_duplica(conexao):
+    """⭐ O feed republica os mesmos itens a cada leitura — é o caso NORMAL."""
+    persistencia.gravar_noticias(conexao, [_noticia()])
+    persistencia.gravar_noticias(conexao, [_noticia()])
+
+    assert conexao.execute("SELECT count(*) FROM noticias").fetchone()[0] == 1
+
+
+def test_devolve_id_tambem_de_noticia_que_ja_existia(conexao):
+    """🔴 O de-para é o que liga a menção à notícia.
+
+    ⚠️ `RETURNING` sozinho ⛔ não serviria: numa segunda coleta a linha ⛔ não é
+    inserida, e a menção ficaria sem id — as associações sumiriam em silêncio a partir
+    da segunda execução.
+    """
+    primeira = persistencia.gravar_noticias(conexao, [_noticia()])
+    segunda = persistencia.gravar_noticias(conexao, [_noticia()])
+
+    assert primeira == segunda
+    assert list(segunda) == ["https://x/1"]
+
+
+def test_manchete_corrigida_atualiza_titulo_e_hash(conexao):
+    """O veículo edita a manchete depois de publicar, e a URL continua a mesma."""
+    persistencia.gravar_noticias(conexao, [_noticia(titulo="Câmara aprova projeto")])
+    persistencia.gravar_noticias(conexao, [_noticia(titulo="Câmara aprova o projeto X")])
+
+    titulo, = conexao.execute("SELECT titulo FROM noticias").fetchone()
+    assert titulo == "Câmara aprova o projeto X"
+
+
+def test_trecho_maior_que_o_limite_e_recusado_pelo_banco(conexao):
+    """🔴 RF-38 virando constraint. O trecho é cortado em `noticias.py`; isto prova que,
+    se alguém contornar o corte, o BANCO recusa — regra medida vira constraint.
+    """
+    with pytest.raises(psycopg.errors.CheckViolation):
+        persistencia.gravar_noticias(conexao, [_noticia(trecho="x" * 501)])
+
+
+def test_mencao_abaixo_do_limiar_e_gravada(conexao):
+    """🔴 RF-40 — guardar o que ⛔ não se exibe é o que permite medir depois se o limiar
+    de 0,70 está no lugar certo. Filtrar na gravação apagaria a evidência.
+    """
+    persistencia.gravar_pessoas(conexao, [_pessoa("1", "Ana Ribeiro")])
+    pessoa_id, = conexao.execute("SELECT id FROM pessoas").fetchone()
+    ids = persistencia.gravar_noticias(conexao, [_noticia()])
+
+    persistencia.gravar_mencoes(
+        conexao,
+        [{
+            "noticia_id": ids["https://x/1"],
+            "pessoa_id": pessoa_id,
+            "confianca": 0.40,
+            "metodo": "SOBRENOME",
+        }],
+    )
+
+    confianca, = conexao.execute("SELECT confianca FROM noticia_pessoas").fetchone()
+    assert confianca == pytest.approx(0.40)
+
+
+def test_mencao_recoletada_nao_duplica(conexao):
+    persistencia.gravar_pessoas(conexao, [_pessoa("1", "Ana Ribeiro")])
+    pessoa_id, = conexao.execute("SELECT id FROM pessoas").fetchone()
+    ids = persistencia.gravar_noticias(conexao, [_noticia()])
+    linha = {
+        "noticia_id": ids["https://x/1"],
+        "pessoa_id": pessoa_id,
+        "confianca": 1.0,
+        "metodo": "NOME_COMPLETO",
+    }
+
+    persistencia.gravar_mencoes(conexao, [linha])
+    persistencia.gravar_mencoes(conexao, [linha])
+
+    assert conexao.execute("SELECT count(*) FROM noticia_pessoas").fetchone()[0] == 1

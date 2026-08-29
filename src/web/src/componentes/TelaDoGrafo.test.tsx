@@ -224,3 +224,85 @@ describe('o desenho', () => {
     expect(screen.getByRole('button', { name: /tela cheia/i })).toBeInTheDocument();
   });
 });
+
+describe('acessibilidade do grafo', () => {
+  /**
+   * 🔴 Sem `tabIndex`, o desenho inteiro fica fora da ordem de tabulação e quem não usa
+   * mouse não consegue nem aproximar.
+   */
+  it('o desenho recebe foco pelo teclado', () => {
+    const { container } = render(<TelaDoGrafo grafo={GRAFO} />);
+
+    const canvas = container.querySelector('canvas')!;
+
+    expect(canvas.getAttribute('tabindex')).toBe('0');
+  });
+
+  /**
+   * ⚠️ O rótulo precisa DIZER que as teclas existem. Um canvas focável cujas teclas
+   * ninguém anuncia é o mesmo que não ter teclado.
+   */
+  it('o rótulo anuncia as teclas e a alternativa em texto', () => {
+    const { container } = render(<TelaDoGrafo grafo={GRAFO} />);
+
+    const rotulo = container.querySelector('canvas')!.getAttribute('aria-label')!;
+
+    expect(rotulo).toMatch(/setas/i);
+    expect(rotulo).toMatch(/lista/i);
+  });
+
+  /**
+   * ⛔ Tab e Escape seguem para o navegador. Prender o foco dentro de um canvas seria
+   * pior do que não tê-lo — a pessoa ficaria sem saída.
+   */
+  it('não sequestra Tab', async () => {
+    const usuario = userEvent.setup();
+    const { container } = render(<TelaDoGrafo grafo={GRAFO} />);
+
+    const canvas = container.querySelector('canvas')!;
+    canvas.focus();
+    await usuario.tab();
+
+    expect(document.activeElement).not.toBe(canvas);
+  });
+
+  /**
+   * 🔴 O canvas com `role="img"` anuncia "Grafo de 3 parlamentares" e acaba ali. Esta
+   * lista é o único caminho para a informação do desenho — quem vota junto com quem.
+   */
+  it('a lista em texto traz quem vota junto com quem', async () => {
+    const usuario = userEvent.setup();
+    render(<TelaDoGrafo grafo={GRAFO} />);
+
+    await usuario.click(screen.getByText(/ver o grafo como lista/i));
+
+    // Bruno liga com Ana (0,92) e Célia (0,61) — as duas arestas do fixture.
+    const bruno = screen.getByText(/vota junto com Ana Ribeiro, Célia Nunes/i);
+
+    expect(bruno).toBeInTheDocument();
+  });
+
+  /**
+   * ⚠️ Achado #27: quem votou pouco demais não tem par comparável e no desenho aparece
+   * solto na borda, sem explicação. Na lista a ausência é DITA.
+   */
+  it('diz quando o parlamentar não tem ligação nenhuma', async () => {
+    const usuario = userEvent.setup();
+    const isolado: Grafo = { ...GRAFO, nos: [...GRAFO.nos, no(9, 'Dora Lima')] };
+
+    render(<TelaDoGrafo grafo={isolado} />);
+    await usuario.click(screen.getByText(/ver o grafo como lista/i));
+
+    expect(screen.getByText(/votou pouco demais para ser comparado/i)).toBeInTheDocument();
+  });
+
+  /** ⭐ A lista não é só leitura: cada nome leva ao mesmo lugar que clicar no ponto. */
+  it('cada nome da lista é acionável', async () => {
+    const usuario = userEvent.setup();
+    render(<TelaDoGrafo grafo={GRAFO} />);
+
+    await usuario.click(screen.getByText(/ver o grafo como lista/i));
+
+    expect(screen.getByRole('button', { name: 'Ana Ribeiro' })).toBeInTheDocument();
+  });
+});

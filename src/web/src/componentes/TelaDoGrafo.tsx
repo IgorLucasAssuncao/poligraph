@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { KeyboardEvent } from 'react';
 import type { ArestaDoGrafo, Grafo, NoDoGrafo } from '../api';
+import { ListaDoGrafo } from './ListaDoGrafo';
 import {
   aproximar,
   comEscala,
@@ -364,6 +366,45 @@ export function TelaDoGrafo({
     setCamera(enquadrar(pontos, tamanho));
   }, [noDesenho, tamanho]);
 
+  /**
+   * Teclado no desenho: setas movem, mais e menos aproximam, zero enquadra.
+   *
+   * ⚠️ Isto ⛔ NÃO torna o grafo acessível por si só — mover a câmera com o teclado ⛔
+   * não diz a quem usa leitor de tela quem está perto de quem. Quem faz esse trabalho é
+   * `ListaDoGrafo`. Aqui o objetivo é outro e mais modesto: quem ⛔ não usa mouse
+   * conseguir operar os mesmos controles que o mouse tem.
+   *
+   * ⛔ Só intercepta as teclas que usa. Tab, Shift+Tab e Escape seguem para o navegador
+   * — prender o foco dentro de um canvas seria pior do que ⛔ não tê-lo.
+   */
+  const aoTeclar = useCallback(
+    (evento: KeyboardEvent<HTMLCanvasElement>) => {
+      const PASSO = evento.shiftKey ? 120 : 40;
+      const centro = { x: tamanho.largura / 2, y: tamanho.altura / 2 };
+
+      const acoes: Record<string, () => void> = {
+        ArrowLeft: () => setCamera((c) => ({ ...c, x: c.x + PASSO })),
+        ArrowRight: () => setCamera((c) => ({ ...c, x: c.x - PASSO })),
+        ArrowUp: () => setCamera((c) => ({ ...c, y: c.y + PASSO })),
+        ArrowDown: () => setCamera((c) => ({ ...c, y: c.y - PASSO })),
+        '+': () => setCamera((c) => comEscala(c, c.escala * 1.6, centro.x, centro.y)),
+        '=': () => setCamera((c) => comEscala(c, c.escala * 1.6, centro.x, centro.y)),
+        '-': () => setCamera((c) => comEscala(c, c.escala / 1.6, centro.x, centro.y)),
+        '0': enquadrarTudo,
+        Home: enquadrarTudo,
+      };
+
+      const acao = acoes[evento.key];
+      if (!acao) return;
+
+      // ⚠️ Só depois de saber que a tecla É nossa: prevenir antes tiraria a rolagem da
+      //    página de quem só passou o foco pelo grafo.
+      evento.preventDefault();
+      acao();
+    },
+    [tamanho, enquadrarTudo],
+  );
+
   return (
     <div className="grafo">
       <div className="grafo-tela">
@@ -391,8 +432,16 @@ export function TelaDoGrafo({
           }}
           onClick={aoClicar}
           onDoubleClick={() => aoSelecionar && emFoco && aoSelecionar(emFoco)}
+          onKeyDown={aoTeclar}
+          /* ⭐ Focável pelo teclado: sem isto o desenho inteiro fica fora da ordem de
+             tabulação, e quem ⛔ não usa mouse ⛔ não consegue nem aproximar. */
+          tabIndex={0}
           role="img"
-          aria-label={`Grafo de ${noDesenho.length} parlamentares e ${visiveis.length} ligações`}
+          aria-label={
+            `Grafo de ${noDesenho.length} parlamentares e ${visiveis.length} ligações. `
+            + 'Use as setas para mover, mais e menos para aproximar, zero para enquadrar. '
+            + 'A lista logo abaixo traz a mesma informação em texto.'
+          }
         />
 
         {alvo && <Dica alvo={alvo} porId={porId} tamanho={tamanho} camera={camera} />}
@@ -597,6 +646,10 @@ export function TelaDoGrafo({
           </div>
         )}
       </div>
+
+      {/* 🔴 A alternativa em texto. ⛔ Não é "acessibilidade adicionada por cima": é o
+          único caminho para a informação do desenho quem usa leitor de tela tem. */}
+      <ListaDoGrafo nos={noDesenho} arestas={visiveis} aoSelecionar={irPara} />
     </div>
   );
 

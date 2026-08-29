@@ -375,6 +375,74 @@ def gravar_similaridades(
     )
 
 
+def gravar_noticias(conexao: psycopg.Connection, noticias: Sequence) -> dict[str, int]:
+    """Grava as notícias e devolve `url -> id`.
+
+    ⭐ **Devolve o de-para porque a menção precisa do id**, e a notícia pode já existir
+    de uma coleta anterior — `RETURNING` sozinho ⛔ não traria a linha que ⛔ não foi
+    inserida.
+
+    ⚠️ `ON CONFLICT (url) DO UPDATE` sobre o título: o veículo corrige manchete depois de
+    publicar, e a URL continua a mesma. ⛔ Não mexe em `coletada_em`, que é quando NÓS
+    vimos pela primeira vez.
+    """
+    if not noticias:
+        return {}
+
+    linhas = [
+        {
+            "url": n.url,
+            "titulo": n.titulo,
+            "veiculo": n.veiculo,
+            "publicada_em": n.publicada_em,
+            "trecho": n.trecho,
+            "hash_titulo": n.hash_titulo,
+        }
+        for n in noticias
+    ]
+
+    with conexao.cursor() as cursor:
+        cursor.executemany(
+            """
+            INSERT INTO noticias (url, titulo, veiculo, publicada_em, trecho, hash_titulo)
+            VALUES (%(url)s, %(titulo)s, %(veiculo)s, %(publicada_em)s, %(trecho)s,
+                    %(hash_titulo)s)
+            ON CONFLICT (url) DO UPDATE SET
+                titulo = EXCLUDED.titulo,
+                trecho = EXCLUDED.trecho,
+                hash_titulo = EXCLUDED.hash_titulo
+            """,
+            linhas,
+        )
+
+        cursor.execute(
+            "SELECT url, id FROM noticias WHERE url = ANY(%s)",
+            ([n.url for n in noticias],),
+        )
+
+        return dict(cursor.fetchall())
+
+
+def gravar_mencoes(conexao: psycopg.Connection, mencoes: Sequence[dict]) -> int:
+    """Liga notícia a parlamentar.
+
+    🔴 RF-40 — a confiança vai ao banco INTEIRA, inclusive abaixo do limiar de exibição.
+    ⛔ Não é desperdício: guardar o que ⛔ não se exibe é o que permite medir depois se o
+    limiar de 0,70 está no lugar certo. Filtrar na gravação apagaria a evidência.
+    """
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO noticia_pessoas (noticia_id, pessoa_id, confianca, metodo)
+        VALUES (%(noticia_id)s, %(pessoa_id)s, %(confianca)s, %(metodo)s)
+        ON CONFLICT (noticia_id, pessoa_id) DO UPDATE SET
+            confianca = EXCLUDED.confianca,
+            metodo = EXCLUDED.metodo
+        """,
+        mencoes,
+    )
+
+
 def gravar_despesas(
     conexao: psycopg.Connection, pessoa_ids: list[int], despesas: Sequence[dict]
 ) -> int:

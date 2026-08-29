@@ -8,12 +8,15 @@ licença. ⛔ Nunca conteúdo atrás de paywall — nem é preciso: o RSS é pú
 """
 
 import hashlib
+import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from xml.etree import ElementTree
 
 from .normalizacao import sem_acento
+
+log = logging.getLogger("poligraph")
 
 TRECHO_MAXIMO = 500
 
@@ -50,8 +53,19 @@ def ler_feed(xml: str, veiculo: str) -> list[NoticiaColetada]:
 
     ⚠️ Item sem link ou sem título é descartado: sem eles a notícia não é exibível
     nem deduplicável.
+
+    🔴 **XML malformado devolve lista vazia, ⛔ não exceção.** ⛔ Não é defensividade
+    genérica: medido em 2026-08-29, o feed
+    `www12.senado.leg.br/noticias/ultimas/rss` responde **200 com XML quebrado**
+    (`mismatched tag`). Um veículo servindo lixo ⛔ não pode derrubar a coleta dos
+    outros — quem chama vê pelo canário de volume.
     """
-    raiz = ElementTree.fromstring(xml)
+    try:
+        raiz = ElementTree.fromstring(xml)
+    except ElementTree.ParseError as erro:
+        log.warning("feed de %s veio com XML inválido: %s", veiculo, erro)
+        return []
+
     coletadas: list[NoticiaColetada] = []
 
     for item in raiz.iter("item"):
