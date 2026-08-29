@@ -11,38 +11,61 @@ não por autodeclaração ideológica.
 
 ---
 
-## Estado atual — medido em 2026-08-27
+## Estado atual — medido em 2026-08-29
 
 Tudo abaixo saiu de `count(*)` no banco depois de rodar o ETL contra as fontes reais.
+
+⚠️ **Os números do voto oscilam entre medições, e ⛔ não é erro.** A Câmara reconstrói os
+CSVs toda madrugada, inclusive os de anos fechados
+([achado #19](docs/achados/019-csv-reconstruido-toda-madrugada.md)). Entre 27 e 29 de
+agosto, os votos com posição utilizável foram de 463.994 para 462.867 — **1.127 a
+menos**, sem que nada no ETL mudasse. ⭐ É por isso que toda afirmação aqui traz a data.
 
 | Voto — o núcleo | Câmara | Senado |
 |---|---:|---:|
 | **Votações** | 1.594 | 421 — **239 secretas** |
 | **Votos** | 470.727 | 34.101 |
-| **Votos com posição utilizável** | 463.994 (98,6%) | **11.881 (34,8%)** |
+| **Votos com posição utilizável** | 462.867 (98,3%) | **11.848 (34,7%)** |
 | **Parlamentares com voto** | 643 | 104 |
 | **Nós do grafo** | 643 | 104 |
-| **Arestas** | 5.271 | 594 |
+| **Arestas** | 5.259 | 595 |
 | **Comunidades detectadas** | 17 | 24 |
-| **Perguntas curadas ativas** | 21 | 7 |
+| ⭐ **Perguntas curadas no poço** | **41** | **9** |
 
 As duas casas geram grafos **independentes**, e nenhuma aresta liga deputado a senador:
 elas não votam as mesmas matérias, então não há denominador para comparar um com o outro
 ([achado #7](docs/achados/007-casas-nao-sao-comparaveis.md)).
 
-No Senado, **56,8% das votações são secretas**, e só 34,8% dos registros de voto são
+⚠️ **O poço ⛔ não é o questionário.** As 50 perguntas curadas são de onde se escolhe; o
+cidadão responde **24** — 8 de abertura da Câmara, as 9 do Senado, e 7 escolhidas contra
+o empate dele. 📐 Medido: 15 perguntas com desempate dirigido valem 25 fixas.
+
+No Senado, **56,8% das votações são secretas**, e só 34,7% dos registros de voto são
 posição utilizável — contra 98,6% na Câmara. O valor mais frequente é `Votou`, que
 registra que houve voto sem revelar qual
 ([achado #17](docs/achados/017-senado-maioria-secreta.md)).
 
 | Dinheiro — o perfil do parlamentar | |
 |---|---|
-| **Despesas de cota** (CEAP) | **773.716** — 2023 a 2026 |
-| **Emendas parlamentares** | 24.810 — **21.358 (86,1%) com autor resolvido** |
+| **Despesas de cota** (CEAP) | **772.677** — 2023 a 2026 |
+| **Emendas parlamentares** | 24.825 — ⚠️ eram 24.810 em 27/08; o Portal publica novas |
 | **Autores de emenda** | 793 resolvidos · 158 sem vínculo (comissões e bancadas) |
 | **Receitas de campanha** (TSE) | 22.511, de **642 dos 643** deputados |
 | **Fundo Especial — o "fundão"** | R$ 907,7 mi · R$ 1.163,4 mi arrecadados no total |
 | **Deputados com `cpf_hash`** | 643 — 100%, e nenhum CPF em claro |
+
+| Notícias — o feed | |
+|---|---|
+| **Coletadas** | 45 — Agência Câmara (20), Agência Senado (15), Agência Brasil (10) |
+| **Menções gravadas** | 110 |
+| 🔴 **Menções exibíveis** (confiança ≥ 0,70) | **16** — as outras 94 vieram de sobrenome solto |
+| **Notícias com alguma menção exibível** | 12 de 45 (27%) |
+
+🔴 **As 94 barradas são o achado, ⛔ não o defeito.** "Silas **Câmara**" casou 14 vezes
+com manchete da Agência **Câmara**; "Marco **Brasil**", 4 vezes com a Agência **Brasil**.
+O sobrenome de um parlamentar é o nome da instituição que a notícia cobre — e o limiar da
+RF-40 barrou **94 de 94 sem barrar nenhuma boa**
+([achado #29](docs/achados/029-o-sobrenome-casa-com-a-instituicao.md)).
 
 ### Cobertura por fonte — e o que falta em cada uma
 

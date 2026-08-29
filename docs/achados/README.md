@@ -88,6 +88,7 @@ ingestão contra a fonte real.
 | [**#26**](026-a-comunidade-nao-e-partido-nem-bloco.md) | 🔴 A comunidade **não é o partido nem o bloco governista** | ARI 0,272 contra partido e 0,268 contra governo/oposição — e os dois rótulos quase não se sobrepõem entre si (0,058) |
 | [**#27**](027-a-borda-do-grafo-e-falta-de-dado.md) | 🔴 A **borda do desenho é falta de dado**, e o centro é a maioria | Os 10 da borda têm **zero ligações** e 20 votações; o centro tem governismo 81,8% contra 80,7% da Câmara inteira |
 | [**#28**](028-o-senado-nao-publica-orientacao-de-bancada.md) | ⛔ O **Senado não publica orientação de bancada** | O único proxy possível — o voto do Líder do Governo — ⛔ não serve: 96% das votações são anteriores à designação dele |
+| [**#29**](029-o-sobrenome-casa-com-a-instituicao.md) | 🔴 O **sobrenome casa com o nome da instituição** | 94 de 110 menções vieram do método mais fraco e o limiar barrou todas. "Silas **Câmara**" casou 14 vezes com manchete da Agência **Câmara**; "Marco **Brasil**", 4 vezes com a Agência **Brasil** |
 
 ---
 
