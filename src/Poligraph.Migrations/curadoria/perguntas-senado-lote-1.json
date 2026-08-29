@@ -35,11 +35,11 @@
       "texto": "Quem recebe benefício social deve passar por identificação biométrica para continuar recebendo."
     },
     {
-      "id": "sf-seguro-transito",
-      "votacaoId": "SF-6827",
+      "id": "sf-inelegibilidade-registro",
+      "votacaoId": "SF-7007",
       "ordem": 102,
       "polaridade": 1,
-      "texto": "Deve existir um seguro obrigatório, pago por todos os donos de veículo, para indenizar vítimas de acidentes de trânsito."
+      "texto": "Se um político já cumpriu o tempo de punição, deve poder se candidatar de novo sem restrição adicional."
     },
     {
       "id": "sf-pena-atos-golpistas",
@@ -49,18 +49,11 @@
       "texto": "As penas de quem participou de atos contra o resultado da eleição devem ser reduzidas."
     },
     {
-      "id": "sf-marco-temporal",
-      "votacaoId": "SF-6756",
+      "id": "sf-seguro-transito",
+      "votacaoId": "SF-6827",
       "ordem": 104,
       "polaridade": 1,
-      "texto": "Uma terra só deve ser reconhecida como indígena se estava ocupada por indígenas na data da Constituição de 1988."
-    },
-    {
-      "id": "sf-inelegibilidade-registro",
-      "votacaoId": "SF-7007",
-      "ordem": 105,
-      "polaridade": 1,
-      "texto": "Se um político já cumpriu o tempo de punição, deve poder se candidatar de novo sem restrição adicional."
+      "texto": "Deve existir um seguro obrigatório, pago por todos os donos de veículo, para indenizar vítimas de acidentes de trânsito."
     },
     {
       "id": "sf-ministerios",
@@ -70,9 +63,16 @@
       "texto": "O presidente deve poder criar e reorganizar ministérios sem depender de uma nova lei a cada mudança."
     },
     {
+      "id": "sf-marco-temporal",
+      "votacaoId": "SF-6756",
+      "ordem": 107,
+      "polaridade": 1,
+      "texto": "Uma terra só deve ser reconhecida como indígena se estava ocupada por indígenas na data da Constituição de 1988."
+    },
+    {
       "id": "sf-licenciamento-ambiental",
       "votacaoId": "SF-6935",
-      "ordem": 107,
+      "ordem": 109,
       "polaridade": 1,
       "texto": "Obras de menor impacto devem poder ser licenciadas sem estudo ambiental completo, para não travar investimentos."
     }

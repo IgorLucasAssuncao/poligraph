@@ -54,142 +54,142 @@
   ],
   "perguntas": [
     {
-      "id": "q-preco-abusivo",
-      "votacaoId": "2613731-65",
-      "ordem": 22,
-      "polaridade": 1,
-      "texto": "Aumentar sem justificativa o preço de combustíveis e de outros produtos essenciais deve ser crime."
-    },
-    {
       "id": "q-cadeiras-por-estado",
       "votacaoId": "2383019-54",
-      "ordem": 23,
+      "ordem": 1,
       "polaridade": 1,
       "texto": "O número de cadeiras de cada estado na Câmara deve ser atualizado conforme o novo censo da população."
     },
     {
-      "id": "q-politica-industrial",
-      "votacaoId": "2382675-97",
-      "ordem": 24,
+      "id": "q-sustar-acao-penal",
+      "votacaoId": "2564763-24",
+      "ordem": 2,
       "polaridade": 1,
-      "texto": "O governo deve ter uma política industrial que direcione incentivos públicos a setores como inovação e transição energética."
+      "texto": "A Câmara deve poder suspender um processo criminal aberto pelo Supremo contra um deputado."
     },
     {
-      "id": "q-cargos-judiciario",
-      "votacaoId": "2578879-38",
-      "ordem": 25,
+      "id": "q-preco-abusivo",
+      "votacaoId": "2613731-65",
+      "ordem": 4,
       "polaridade": 1,
-      "texto": "Os tribunais devem poder criar novos cargos e funções para o seu quadro de servidores."
+      "texto": "Aumentar sem justificativa o preço de combustíveis e de outros produtos essenciais deve ser crime."
     },
     {
       "id": "q-silvicultura",
       "votacaoId": "2324721-94",
-      "ordem": 26,
+      "ordem": 6,
       "polaridade": 1,
       "texto": "O plantio de árvores para produção de madeira deve deixar de ser tratado como atividade potencialmente poluidora."
     },
     {
       "id": "q-especies-migratorias",
       "votacaoId": "2603342-42",
-      "ordem": 27,
+      "ordem": 7,
       "polaridade": 1,
       "texto": "O Brasil deve assinar acordos internacionais de proteção a animais silvestres que cruzam fronteiras."
     },
     {
-      "id": "q-sustar-acao-penal",
-      "votacaoId": "2564763-24",
-      "ordem": 28,
+      "id": "q-politica-industrial",
+      "votacaoId": "2382675-97",
+      "ordem": 10,
       "polaridade": 1,
-      "texto": "A Câmara deve poder suspender um processo criminal aberto pelo Supremo contra um deputado."
+      "texto": "O governo deve ter uma política industrial que direcione incentivos públicos a setores como inovação e transição energética."
     },
     {
       "id": "q-feriado-consciencia-negra",
       "votacaoId": "2299903-53",
-      "ordem": 29,
+      "ordem": 11,
       "polaridade": 1,
       "texto": "O 20 de novembro, Dia da Consciência Negra, deve ser feriado nacional."
     },
     {
-      "id": "q-perdas-bancos",
-      "votacaoId": "2460010-43",
-      "ordem": 30,
+      "id": "q-cargos-judiciario",
+      "votacaoId": "2578879-38",
+      "ordem": 13,
       "polaridade": 1,
-      "texto": "Os bancos devem poder descontar do imposto que pagam as perdas com clientes que não quitaram seus empréstimos."
-    },
-    {
-      "id": "q-decreto-saneamento",
-      "votacaoId": "2355135-49",
-      "ordem": 31,
-      "polaridade": 1,
-      "texto": "O Congresso deve anular decreto do presidente que mude as regras de contratação do saneamento básico definidas em lei."
+      "texto": "Os tribunais devem poder criar novos cargos e funções para o seu quadro de servidores."
     },
     {
       "id": "q-saude-educacao-fora-do-teto",
       "votacaoId": "2541109-38",
-      "ordem": 32,
+      "ordem": 17,
       "polaridade": 1,
       "texto": "Gastos com saúde e educação devem ficar fora do limite de despesas do governo federal."
     },
     {
-      "id": "q-anpd-agencia",
-      "votacaoId": "2562173-30",
-      "ordem": 33,
+      "id": "q-decreto-saneamento",
+      "votacaoId": "2355135-49",
+      "ordem": 18,
       "polaridade": 1,
-      "texto": "O órgão que fiscaliza o uso dos dados pessoais dos brasileiros deve virar uma agência reguladora, com servidores de carreira própria."
+      "texto": "O Congresso deve anular decreto do presidente que mude as regras de contratação do saneamento básico definidas em lei."
     },
     {
       "id": "q-dia-congadeiro",
       "votacaoId": "2360457-45",
-      "ordem": 34,
+      "ordem": 20,
       "polaridade": 1,
       "texto": "O país deve ter uma data nacional em homenagem aos congados e reinados, tradições culturais afro-brasileiras."
     },
     {
       "id": "q-satelite-china",
       "votacaoId": "2462730-34",
-      "ordem": 35,
+      "ordem": 21,
       "polaridade": 1,
       "texto": "O Brasil deve manter a parceria com a China para desenvolver satélites em conjunto."
     },
     {
-      "id": "q-reajuste-judiciario",
-      "votacaoId": "2564274-37",
-      "ordem": 36,
+      "id": "q-perdas-bancos",
+      "votacaoId": "2460010-43",
+      "ordem": 23,
       "polaridade": 1,
-      "texto": "Os servidores do Judiciário devem receber reajuste salarial."
+      "texto": "Os bancos devem poder descontar do imposto que pagam as perdas com clientes que não quitaram seus empréstimos."
+    },
+    {
+      "id": "q-anpd-agencia",
+      "votacaoId": "2562173-30",
+      "ordem": 24,
+      "polaridade": 1,
+      "texto": "O órgão que fiscaliza o uso dos dados pessoais dos brasileiros deve virar uma agência reguladora, com servidores de carreira própria."
     },
     {
       "id": "q-estrutura-ministerios",
       "votacaoId": "2345493-41",
-      "ordem": 37,
+      "ordem": 26,
       "polaridade": 1,
       "texto": "O presidente deve poder reorganizar os ministérios do seu governo, criando pastas como as de Povos Indígenas e Igualdade Racial."
     },
     {
-      "id": "q-mes-desigualdades",
-      "votacaoId": "2381043-63",
-      "ordem": 38,
+      "id": "q-reajuste-judiciario",
+      "votacaoId": "2564274-37",
+      "ordem": 28,
       "polaridade": 1,
-      "texto": "Agosto deve ser o mês nacional de combate às desigualdades."
+      "texto": "Os servidores do Judiciário devem receber reajuste salarial."
     },
     {
       "id": "q-reforma-tributaria",
       "votacaoId": "2430143-140",
-      "ordem": 39,
+      "ordem": 29,
       "polaridade": 1,
       "texto": "O Brasil deve aprovar as regras que colocam em prática a reforma tributária, unificando os impostos sobre bens e serviços."
     },
     {
       "id": "q-correios-prioridade",
       "votacaoId": "2115253-175",
-      "ordem": 40,
+      "ordem": 31,
       "polaridade": 1,
       "texto": "Órgãos do governo federal devem contratar os Correios com prioridade, em vez de empresas privadas de entrega."
     },
     {
+      "id": "q-mes-desigualdades",
+      "votacaoId": "2381043-63",
+      "ordem": 35,
+      "polaridade": 1,
+      "texto": "Agosto deve ser o mês nacional de combate às desigualdades."
+    },
+    {
       "id": "q-fundacao-caixa",
       "votacaoId": "2490985-54",
-      "ordem": 41,
+      "ordem": 37,
       "polaridade": 1,
       "texto": "A Caixa Econômica Federal deve poder criar uma fundação própria para tocar projetos de educação, cultura e assistência social."
     }

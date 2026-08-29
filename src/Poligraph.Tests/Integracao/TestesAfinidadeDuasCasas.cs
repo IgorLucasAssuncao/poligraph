@@ -111,10 +111,11 @@ public class TestesAfinidadeDuasCasas : BaseIntegracao
         await SemearDuasCasasAsync(perguntasCamara: 6, perguntasSenado: 2);
         using var cliente = CriarCliente();
 
-        var perguntas = await cliente.GetFromJsonAsync<List<PerguntaLida>>(
+        var questionario = await cliente.GetFromJsonAsync<QuestionarioLido>(
             "/api/afinidade/perguntas");
 
-        var denominadores = perguntas!.Select(p => p.TotalPossivel).Distinct().Order().ToList();
+        var denominadores =
+            questionario!.Perguntas.Select(p => p.TotalPossivel).Distinct().Order().ToList();
 
         Assert.Equal([SenadoresSemeados, DeputadosSemeados], denominadores);
         Assert.DoesNotContain(DeputadosSemeados + SenadoresSemeados, denominadores);
@@ -194,6 +195,119 @@ public class TestesAfinidadeDuasCasas : BaseIntegracao
 
         Assert.InRange(camara.PosicaoNoGrafo!.EixoX, 0f, 10f);
         Assert.InRange(senado.PosicaoNoGrafo!.EixoX, 100f, 110f);
+    }
+
+    /// <summary>
+    /// 🔴 O defeito que a rodada de desempate conserta.
+    ///
+    /// <para>
+    /// A curadoria cresceu de 28 para 50 perguntas, e o mínimo obrigatório era
+    /// <c>ceil(ativas × 0,60)</c> — subiu de 17 para 30 sozinho. Questionário maior ⛔
+    /// não é questionário melhor: medido, 15 perguntas com desempate dirigido deixam 6
+    /// parlamentares empatados no topo, e 25 fixas deixam 5.
+    /// </para>
+    ///
+    /// <para>
+    /// Aqui o poço tem 30 perguntas da Câmara e a abertura devolve 8.
+    /// </para>
+    /// </summary>
+    [SkippableFact]
+    public async Task Abertura_NaoDevolveOPocoInteiro()
+    {
+        ExigeDocker();
+        await SemearDuasCasasAsync(perguntasCamara: 30, perguntasSenado: 2);
+        using var cliente = CriarCliente();
+
+        var questionario = await cliente.GetFromJsonAsync<QuestionarioLido>(
+            "/api/afinidade/perguntas");
+
+        // 8 da Câmara + as 2 do Senado, que ⛔ não têm desempate: são o poço inteiro.
+        Assert.Equal(10, questionario!.Perguntas.Count);
+    }
+
+    /// <summary>
+    /// ⚠️ <c>Total</c> anuncia o questionário INTEIRO, ⛔ não o bloco de abertura. Sem
+    /// isso a barra de progresso mostraria "Pergunta 9 de 10" e o denominador saltaria
+    /// para 17 quando o desempate chegasse — quem estava terminando voltaria ao meio.
+    /// </summary>
+    [SkippableFact]
+    public async Task Total_AnunciaOQuestionarioInteiro_NaoOBlocoDeAbertura()
+    {
+        ExigeDocker();
+        await SemearDuasCasasAsync(perguntasCamara: 30, perguntasSenado: 2);
+        using var cliente = CriarCliente();
+
+        var questionario = await cliente.GetFromJsonAsync<QuestionarioLido>(
+            "/api/afinidade/perguntas");
+
+        // 15 da Câmara (8 de abertura + 7 de desempate) mais as 2 do Senado.
+        Assert.Equal(17, questionario!.Total);
+        Assert.True(questionario.Total > questionario.Perguntas.Count);
+    }
+
+    /// <summary>
+    /// ⛔ O desempate ⛔ nunca repete o que já foi respondido — repetir gastaria a
+    /// pergunta sem separar ninguém, que é exatamente o que ele existe para evitar.
+    /// </summary>
+    [SkippableFact]
+    public async Task Desempate_NaoRepetePerguntaJaRespondida()
+    {
+        ExigeDocker();
+        await SemearDuasCasasAsync(perguntasCamara: 30, perguntasSenado: 2);
+        using var cliente = CriarCliente();
+
+        var questionario = await cliente.GetFromJsonAsync<QuestionarioLido>(
+            "/api/afinidade/perguntas");
+
+        var respondidas = questionario!.Perguntas.Select(p => p.Id).ToHashSet();
+        var respostas = respondidas.Select(id => new { perguntaId = id, valor = 1 }).ToArray();
+
+        var resposta = await cliente.PostAsJsonAsync(
+            "/api/afinidade/perguntas/desempate", new { respostas });
+        resposta.EnsureSuccessStatusCode();
+
+        var extras = await resposta.Content.ReadFromJsonAsync<List<PerguntaLida>>();
+
+        Assert.Equal(7, extras!.Count);
+        Assert.DoesNotContain(extras, p => respondidas.Contains(p.Id));
+    }
+
+    /// <summary>
+    /// 🔴 A regressão que motivou trocar a base do mínimo.
+    ///
+    /// <para>
+    /// O mínimo era <c>ceil(perguntas ativas × 0,60)</c>. Com 32 ativas daria 20, e o
+    /// questionário só OFERECE 17 — o cidadão responderia tudo o que a tela mostrou e
+    /// receberia 422 pedindo perguntas que ⛔ nunca existiram. Agora a base é o tamanho
+    /// oferecido.
+    /// </para>
+    /// </summary>
+    [SkippableFact]
+    public async Task Responder_TudoQueFoiOferecido_Basta_MesmoComPocoGrande()
+    {
+        ExigeDocker();
+        await SemearDuasCasasAsync(perguntasCamara: 30, perguntasSenado: 2);
+        using var cliente = CriarCliente();
+
+        var questionario = await cliente.GetFromJsonAsync<QuestionarioLido>(
+            "/api/afinidade/perguntas");
+
+        var respostas = questionario!.Perguntas
+            .Select(p => new { perguntaId = p.Id, valor = 1 })
+            .ToList();
+
+        var desempate = await cliente.PostAsJsonAsync(
+            "/api/afinidade/perguntas/desempate", new { respostas });
+
+        var extras = await desempate.Content.ReadFromJsonAsync<List<PerguntaLida>>();
+        respostas.AddRange(extras!.Select(p => new { perguntaId = p.Id, valor = 1 }));
+
+        Assert.Equal(questionario.Total, respostas.Count);
+
+        var resultado = await cliente.PostAsJsonAsync(Rota, new { respostas });
+
+        Assert.NotEqual(HttpStatusCode.UnprocessableEntity, resultado.StatusCode);
+        resultado.EnsureSuccessStatusCode();
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -334,10 +448,12 @@ public class TestesAfinidadeDuasCasas : BaseIntegracao
 
     private static async Task<RespostaLida?> ResponderTudoAsync(HttpClient cliente)
     {
-        var perguntas = await cliente.GetFromJsonAsync<List<PerguntaLida>>(
+        var questionario = await cliente.GetFromJsonAsync<QuestionarioLido>(
             "/api/afinidade/perguntas");
 
-        var respostas = perguntas!.Select(p => new { perguntaId = p.Id, valor = 1 }).ToArray();
+        var respostas = questionario!.Perguntas
+            .Select(p => new { perguntaId = p.Id, valor = 1 })
+            .ToArray();
         var resposta = await cliente.PostAsJsonAsync(Rota, new { respostas });
         resposta.EnsureSuccessStatusCode();
 
@@ -345,6 +461,13 @@ public class TestesAfinidadeDuasCasas : BaseIntegracao
     }
 
     private record PerguntaLida(string Id, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
+
+    /// <summary>
+    /// ⚠️ <c>Total</c> é o tamanho do questionário INTEIRO, e é maior que
+    /// <c>Perguntas.Count</c>: as de desempate só podem ser escolhidas depois de haver
+    /// respostas. A barra de progresso precisa do total desde o início.
+    /// </summary>
+    private record QuestionarioLido(List<PerguntaLida> Perguntas, int Total);
 
     private record ParlamentarLido(long PessoaId, string Nome, int Acordos, int Comparaveis);
 

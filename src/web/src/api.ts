@@ -311,8 +311,41 @@ export async function deixarDeSeguir(pessoaId: number): Promise<void> {
 // Questionário
 // ═══════════════════════════════════════════════════════════════════
 
-export async function obterPerguntas(): Promise<Pergunta[]> {
-  return buscar<Pergunta[]>(`${BASE}/afinidade/perguntas`);
+/**
+ * O bloco de abertura e o tamanho do questionário completo.
+ *
+ * ⚠️ `total` é MAIOR que `perguntas.length`: o resto vem de {@link obterDesempate},
+ * que só pode escolher depois de haver respostas. A barra de progresso usa `total`
+ * desde o início — sem isso o denominador saltaria no meio do questionário.
+ */
+export async function obterPerguntas(): Promise<{ perguntas: Pergunta[]; total: number }> {
+  return buscar<{ perguntas: Pergunta[]; total: number }>(`${BASE}/afinidade/perguntas`);
+}
+
+/**
+ * As próximas perguntas, escolhidas contra o empate DESTE cidadão.
+ *
+ * ⭐ Medido: 8 de base + 7 escolhidas assim deixam 6 parlamentares empatados no topo;
+ * as 15 melhores fixas deixam 14, e 8 + 7 sorteadas deixam 16.
+ *
+ * ⛔ Devolve `[]` — ⛔ nunca erro — quando ⛔ não há mais candidatas. Falhar aqui
+ * impediria de concluir um questionário que já está válido.
+ */
+export async function obterDesempate(
+  respostas: { perguntaId: string; valor: Resposta }[],
+): Promise<Pergunta[]> {
+  try {
+    const resposta = await fetch(`${BASE}/afinidade/perguntas/desempate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ respostas }),
+      credentials: 'include',
+    });
+
+    return resposta.ok ? await resposta.json() : [];
+  } catch {
+    return [];
+  }
 }
 
 export async function calcularAfinidade(

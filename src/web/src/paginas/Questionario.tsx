@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   calcularAfinidade,
+  obterDesempate,
   obterPerguntas,
   RespostasInsuficientesError,
   type Pergunta,
@@ -41,6 +42,7 @@ const PAUSA = 760;
  */
 export function Questionario() {
   const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
+  const [total, setTotal] = useState(0);
   const [indice, setIndice] = useState(0);
   const [respostas, setRespostas] = useState<Record<string, Resposta>>({});
   const [revelando, setRevelando] = useState(false);
@@ -50,9 +52,45 @@ export function Questionario() {
 
   useEffect(() => {
     obterPerguntas()
-      .then(setPerguntas)
+      .then(({ perguntas: iniciais, total: tamanho }) => {
+        setPerguntas(iniciais);
+        setTotal(tamanho);
+      })
       .catch(() => setErro('Não foi possível carregar as perguntas.'));
   }, []);
+
+  /**
+   * As perguntas de desempate, buscadas UMA vez, quando falta uma para acabar o bloco
+   * de abertura.
+   *
+   * ⚠️ Buscar na última e não depois dela é o que esconde a rodada: enquanto a pessoa
+   * lê e responde a pergunta que está na tela, as próximas já chegaram. Buscar depois
+   * mostraria "Carregando…" no meio do questionário.
+   *
+   * ⛔ Falha ⛔ não interrompe: `obterDesempate` devolve `[]`, o questionário termina
+   * com as de abertura, e o mínimo do servidor decide se dá para calcular.
+   */
+  const pediuDesempate = useRef(false);
+  const [aguardandoDesempate, setAguardandoDesempate] = useState(false);
+
+  useEffect(() => {
+    if (pediuDesempate.current) return;
+    if (perguntas.length === 0 || perguntas.length >= total) return;
+    if (indice < perguntas.length - 1) return;
+
+    pediuDesempate.current = true;
+    setAguardandoDesempate(true);
+
+    const respondidas = Object.entries(respostas).map(([perguntaId, valor]) => ({
+      perguntaId,
+      valor,
+    }));
+
+    obterDesempate(respondidas).then((extras) => {
+      if (extras.length > 0) setPerguntas((atuais) => [...atuais, ...extras]);
+      setAguardandoDesempate(false);
+    });
+  }, [indice, perguntas.length, total, respostas]);
 
   const opinadas = useMemo(
     () => Object.values(respostas).filter((v) => v !== 0).length,
@@ -71,9 +109,17 @@ export function Questionario() {
     );
   }
 
+  // ⚠️ O denominador é o TOTAL declarado pelo servidor, ⛔ não `perguntas.length`:
+  //    as de desempate entram no meio do caminho, e usar o tamanho da lista faria a
+  //    barra andar para trás quando elas chegassem.
+  const previstas = Math.max(total, perguntas.length);
+
+  // 🔴 `acabou` olha a lista CARREGADA, ⛔ não o total previsto. Se o desempate falhar,
+  //    a lista para em 17 e o total continua 24 — comparar com o total deixaria a
+  //    pessoa numa tela sem pergunta e sem encerramento, sem nada a fazer.
   const acabou = indice >= perguntas.length;
   const atual = perguntas[indice];
-  const progresso = Math.round((indice / perguntas.length) * 100);
+  const progresso = Math.round((indice / previstas) * 100);
 
   return (
     <div className="questionario">
@@ -87,11 +133,13 @@ export function Questionario() {
         <p className="progresso-contagem">
           {acabou
             ? `${opinadas} de ${perguntas.length} respondidas`
-            : `Pergunta ${indice + 1} de ${perguntas.length}`}
+            : `Pergunta ${indice + 1} de ${previstas}`}
         </p>
       </div>
 
-      {acabou ? (
+      {acabou && aguardandoDesempate ? (
+        <p className="carregando">Escolhendo as próximas perguntas…</p>
+      ) : acabou ? (
         <Encerramento
           opinadas={opinadas}
           total={perguntas.length}

@@ -52,18 +52,18 @@
   ],
   "perguntas": [
     {
+      "id": "sf-agencias-fora-do-limite",
+      "votacaoId": "SF-7095",
+      "ordem": 105,
+      "polaridade": 1,
+      "texto": "As agências que fiscalizam setores como energia e telefonia devem poder gastar o dinheiro das taxas que arrecadam, fora do limite de despesas do governo."
+    },
+    {
       "id": "sf-cargos-stf",
       "votacaoId": "SF-7016",
       "ordem": 108,
       "polaridade": 1,
       "texto": "O Supremo Tribunal Federal deve poder criar novos cargos de servidor e de policial para o seu quadro."
-    },
-    {
-      "id": "sf-agencias-fora-do-limite",
-      "votacaoId": "SF-7095",
-      "ordem": 109,
-      "polaridade": 1,
-      "texto": "As agências que fiscalizam setores como energia e telefonia devem poder gastar o dinheiro das taxas que arrecadam, fora do limite de despesas do governo."
     }
   ]
 }

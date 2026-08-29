@@ -116,12 +116,12 @@ public class TestesLegislatura : BaseIntegracao
     private async Task<int> TotalPossivelAsync()
     {
         using var cliente = CriarCliente();
-        var perguntas = await cliente.GetFromJsonAsync<List<PerguntaLida>>(
+        var questionario = await cliente.GetFromJsonAsync<QuestionarioLido>(
             "/api/afinidade/perguntas");
 
-        Assert.NotEmpty(perguntas!);
+        Assert.NotEmpty(questionario!.Perguntas);
 
-        return perguntas![0].TotalPossivel;
+        return questionario.Perguntas[0].TotalPossivel;
     }
 
     /// <summary>
@@ -179,4 +179,6 @@ public class TestesLegislatura : BaseIntegracao
     private record FichaLida(long Id, string Nome, int NVotacoes);
 
     private record PerguntaLida(string Id, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
+
+    private record QuestionarioLido(List<PerguntaLida> Perguntas, int Total);
 }

@@ -81,15 +81,61 @@ public record RespostaAfinidadeDto(
 public record PerguntaPublicaDto(
     string Id, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
 
+/// <summary>
+/// O bloco de abertura mais o TAMANHO do questionário completo.
+///
+/// <para>
+/// 🔴 <c>Total</c> existe por causa da barra de progresso. As perguntas de desempate só
+/// podem ser escolhidas depois das respostas de base, então a primeira resposta traz
+/// menos perguntas do que o questionário terá. Sem declarar o total, a tela mostraria
+/// "Pergunta 9 de 17" e o denominador saltaria para 24 no meio — quem estava quase
+/// terminando voltaria a estar pela metade.
+/// </para>
+/// </summary>
+public record QuestionarioDto(IReadOnlyList<PerguntaPublicaDto> Perguntas, int Total);
+
 public static class EndpointsAfinidade
 {
     private const int QuantidadeExibida = 5;
+
+    /// <summary>
+    /// 📐 Quantas perguntas da Câmara o questionário tem, ao todo. Medido em 2026-08-29,
+    /// com cada deputado no papel de cidadão:
+    ///
+    /// <code>
+    ///   perguntas | empate mediano no topo | sozinho no topo
+    ///          12 |                     20 |            3,0%
+    ///          15 |                     13 |           10,1%   ← com desempate: 6
+    ///          21 |                      6 |           20,2%
+    ///          41 |                      2 |           44,3%
+    /// </code>
+    ///
+    /// ⭐ 15 <b>com desempate dirigido</b> valem 25 fixas. O poço tem 41 curadas, e
+    /// mostrar todas faria o mínimo obrigatório subir para 30 — questionário mais longo
+    /// ⛔ não é questionário melhor.
+    /// </summary>
+    private const int PerguntasDaCamara = 15;
+
+    /// <summary>
+    /// Quantas vêm antes do desempate. As <c>Ordem</c> da Câmara estão gravadas na ordem
+    /// gulosa de cobertura de pares, então "as 8 primeiras" ⭐ significa "as 8 que mais
+    /// separam deputados" — ⛔ não é a ordem em que foram curadas.
+    /// </summary>
+    private const int BaseDaCamara = 8;
+
+    /// <summary>
+    /// ⛔ O Senado ⛔ não tem desempate: as 9 perguntas SÃO o poço inteiro. Das 52
+    /// votações substantivas abertas da 57ª, 39 têm divisão abaixo de 5% e as demais
+    /// substantivas são secretas (achado #17). ⛔ Não há de onde escolher.
+    /// </summary>
+    private const int DesempateDaCamara = PerguntasDaCamara - BaseDaCamara;
 
     public static IEndpointRouteBuilder MapearAfinidade(this IEndpointRouteBuilder app)
     {
         var grupo = app.MapGroup("/api/afinidade").WithTags("Afinidade");
 
         grupo.MapGet("/perguntas", ObterPerguntasAsync);
+        grupo.MapPost("/perguntas/desempate", ObterDesempateAsync);
         grupo.MapPost("/", CalcularAsync);
 
         return app;
@@ -100,10 +146,164 @@ public static class EndpointsAfinidade
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// As perguntas ativas, em ordem. ⚠️ Nunca devolve `VotacaoId` nem `Polaridade`:
-    /// expor a polaridade permitiria ao cidadão inferir o voto antes de responder.
+    /// O bloco de abertura: as <see cref="BaseDaCamara"/> primeiras da Câmara e TODAS as
+    /// do Senado. ⚠️ Nunca devolve `VotacaoId` nem `Polaridade`: expor a polaridade
+    /// permitiria ao cidadão inferir o voto antes de responder.
+    ///
+    /// <para>
+    /// ⛔ Já ⛔ NÃO devolve o poço inteiro. Com 50 perguntas ativas o mínimo obrigatório
+    /// seria <c>ceil(50 × 0,60) = 30</c>; o resto vem de
+    /// <see cref="ObterDesempateAsync"/>, escolhido contra o empate de quem respondeu.
+    /// </para>
     /// </summary>
     private static async Task<IResult> ObterPerguntasAsync(PoligraphDb db, CancellationToken ct)
+    {
+        var daCamara = await db.Perguntas.AsNoTracking()
+            .Where(p => p.Ativa && p.Votacao!.Casa == Casa.CAMARA)
+            .OrderBy(p => p.Ordem)
+            .Take(BaseDaCamara)
+            .Select(p => p.Id)
+            .ToListAsync(ct);
+
+        var doSenado = await db.Perguntas.AsNoTracking()
+            .Where(p => p.Ativa && p.Votacao!.Casa == Casa.SENADO)
+            .OrderBy(p => p.Ordem)
+            .Select(p => p.Id)
+            .ToListAsync(ct);
+
+        return Results.Ok(new QuestionarioDto(
+            await MontarAsync(db, [.. daCamara, .. doSenado], ct),
+            await TamanhoDoQuestionarioAsync(db, ct)));
+    }
+
+    /// <summary>
+    /// As próximas perguntas da Câmara, escolhidas contra o empate DESTE cidadão.
+    ///
+    /// <para>
+    /// 📐 Medido em 2026-08-29: 8 de base + 7 escolhidas aqui deixam empate mediano de
+    /// <b>6</b> no topo; as 15 melhores fixas deixam <b>14</b>, e 8 + 7 sorteadas
+    /// deixam <b>16</b> — ou seja, sortear é o mesmo que não adaptar.
+    /// </para>
+    ///
+    /// <para>
+    /// ⭐ Sem estado no servidor: a requisição carrega as respostas, e a resposta é
+    /// função só delas. Repetir a chamada com as mesmas respostas devolve a mesma lista.
+    /// </para>
+    ///
+    /// <para>
+    /// ⛔ Só da Câmara. O Senado ⛔ não tem de onde escolher — ver
+    /// <see cref="DesempateDaCamara"/>.
+    /// </para>
+    /// </summary>
+    private static async Task<IResult> ObterDesempateAsync(
+        RequisicaoAfinidadeDto requisicao, PoligraphDb db, CancellationToken ct)
+    {
+        var respondidas = requisicao.Respostas.Select(r => r.PerguntaId).ToList();
+
+        var candidatas = await db.Perguntas.AsNoTracking()
+            .Where(p => p.Ativa && p.Votacao!.Casa == Casa.CAMARA && !respondidas.Contains(p.Id))
+            .OrderBy(p => p.Ordem)
+            .Select(p => p.Id)
+            .Take(DesempateDaCamara * 4)
+            .ToListAsync(ct);
+
+        if (candidatas.Count == 0) return Results.Ok(Array.Empty<PerguntaPublicaDto>());
+
+        var empatados = await EmpatadosNoTopoAsync(db, requisicao.Respostas, ct);
+        var posicoes = await PosicoesAsync(db, candidatas, ct);
+
+        var escolhidas = SeletorDeDesempate.Escolher(empatados, posicoes, DesempateDaCamara);
+
+        return Results.Ok(await MontarAsync(db, escolhidas, ct));
+    }
+
+    /// <summary>
+    /// Quem está empatado na primeira posição depois das respostas de base.
+    ///
+    /// <para>
+    /// ⚠️ Só a Câmara entra: o desempate escolhe perguntas de lá, e um senador no grupo
+    /// ⛔ não seria separado por nenhuma delas.
+    /// </para>
+    ///
+    /// <para>
+    /// ⛔ Devolve lista vazia quando ninguém passa o piso de comparáveis — e aí o
+    /// seletor cai na ordem de cobertura geral, que é a melhor aposta sem informação.
+    /// </para>
+    /// </summary>
+    private static async Task<List<long>> EmpatadosNoTopoAsync(
+        PoligraphDb db, IReadOnlyList<RespostaCidadao> respostas, CancellationToken ct)
+    {
+        var opinadas = respostas.Where(r => r.Valor != 0).ToList();
+        if (opinadas.Count == 0) return [];
+
+        var casaDaPergunta = await CasaDasPerguntasAsync(db, opinadas, ct);
+        var daCamara = opinadas
+            .Where(r => casaDaPergunta.GetValueOrDefault(r.PerguntaId) == Casa.CAMARA)
+            .ToList();
+
+        if (daCamara.Count == 0) return [];
+
+        var votos = await CarregarVotosAsync(db, daCamara, ct);
+        var resultados = CalcularParaTodos(daCamara, votos);
+        if (resultados.Count == 0) return [];
+
+        var topo = resultados.Max(r => r.Proporcao);
+
+        return resultados
+            .Where(r => Math.Abs(r.Proporcao - topo) < 1e-9)
+            .Select(r => r.PessoaId)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Posição efetiva de cada parlamentar nas candidatas — o voto já corrigido pela
+    /// polaridade. 🔴 Sem a correção, uma pergunta cuja votação inverte o sinal separaria
+    /// o grupo ao contrário, e o desempate pioraria o resultado em silêncio.
+    /// </summary>
+    private static async Task<Dictionary<string, IReadOnlyDictionary<long, short>>>
+        PosicoesAsync(PoligraphDb db, List<string> perguntas, CancellationToken ct)
+    {
+        var linhas = await db.Perguntas.AsNoTracking()
+            .Where(p => perguntas.Contains(p.Id))
+            .Join(db.Votos.AsNoTracking(),
+                  pergunta => pergunta.VotacaoId,
+                  voto => voto.VotacaoId,
+                  (pergunta, voto) => new
+                  {
+                      pergunta.Id,
+                      pergunta.Polaridade,
+                      voto.PessoaId,
+                      voto.Valor
+                  })
+            .ToListAsync(ct);
+
+        var porPergunta = new Dictionary<string, IReadOnlyDictionary<long, short>>();
+
+        foreach (var grupo in linhas.GroupBy(l => l.Id))
+        {
+            var posicoes = new Dictionary<long, short>();
+
+            foreach (var linha in grupo)
+            {
+                var efetiva = CalculadoraAfinidade.PosicaoEfetiva(
+                    new PosicaoParlamentar(linha.Valor, linha.Polaridade));
+
+                if (efetiva is not null and not 0) posicoes[linha.PessoaId] = efetiva.Value;
+            }
+
+            porPergunta[grupo.Key] = posicoes;
+        }
+
+        return porPergunta;
+    }
+
+    /// <summary>
+    /// Monta o DTO público de um conjunto de perguntas, preservando a ordem recebida.
+    /// ⚠️ A ordem importa: o desempate devolve as perguntas por valor de separação, e
+    /// reordenar por <c>Ordem</c> aqui desfaria a escolha.
+    /// </summary>
+    private static async Task<List<PerguntaPublicaDto>> MontarAsync(
+        PoligraphDb db, List<string> perguntas, CancellationToken ct)
     {
         // O denominador é recortado por legislatura (PL35) E por casa.
         //
@@ -123,8 +323,7 @@ public static class EndpointsAfinidade
 
         var brutas = await db.Perguntas
             .AsNoTracking()
-            .Where(p => p.Ativa)
-            .OrderBy(p => p.Ordem)
+            .Where(p => p.Ativa && perguntas.Contains(p.Id))
             .Select(p => new
             {
                 p.Id,
@@ -138,13 +337,15 @@ public static class EndpointsAfinidade
         // A casa NÃO é serializada: o cidadão nunca escolhe entre Câmara e Senado
         // (RNF-28), e saber de qual casa veio cada pergunta não muda o que ele responde.
         // Ela serve só para escolher o denominador certo.
-        var perguntas = brutas
+        var porId = brutas.ToDictionary(p => p.Id);
+
+        return perguntas
+            .Where(porId.ContainsKey)
+            .Select(id => porId[id])
             .Select(p => new PerguntaPublicaDto(
                 p.Id, p.Texto, p.Ordem, p.TotalVotos,
                 possivelPorCasa.GetValueOrDefault(p.Casa)))
             .ToList();
-
-        return Results.Ok(perguntas);
     }
 
     private static async Task<IResult> CalcularAsync(
@@ -152,17 +353,16 @@ public static class EndpointsAfinidade
     {
         var opinadas = requisicao.Respostas.Where(r => r.Valor != 0).ToList();
 
-        var perguntasAtivas = await db.Perguntas.AsNoTracking()
-            .Where(p => p.Ativa).CountAsync(ct);
+        var tamanho = await TamanhoDoQuestionarioAsync(db, ct);
 
-        if (!TemRespostasSuficientes(opinadas.Count, perguntasAtivas))
+        if (!TemRespostasSuficientes(opinadas.Count, tamanho))
         {
             return Results.UnprocessableEntity(new
             {
                 erro = "respostas_insuficientes",
                 mensagem = "Responda mais perguntas para que o resultado tenha significado.",
                 respondidas = opinadas.Count,
-                minimo = MinimoDeRespostas(perguntasAtivas)
+                minimo = MinimoDeRespostas(tamanho)
             });
         }
 
@@ -298,11 +498,40 @@ public static class EndpointsAfinidade
     }
 
     /// <summary>CT7 — abaixo do piso o resultado não significa nada.</summary>
-    private static bool TemRespostasSuficientes(int opinadas, int perguntasAtivas) =>
-        perguntasAtivas > 0 && opinadas >= MinimoDeRespostas(perguntasAtivas);
+    private static bool TemRespostasSuficientes(int opinadas, int tamanhoDoQuestionario) =>
+        tamanhoDoQuestionario > 0 && opinadas >= MinimoDeRespostas(tamanhoDoQuestionario);
 
-    private static int MinimoDeRespostas(int perguntasAtivas) =>
-        (int)Math.Ceiling(perguntasAtivas * 0.60);
+    private static int MinimoDeRespostas(int tamanhoDoQuestionario) =>
+        (int)Math.Ceiling(tamanhoDoQuestionario * 0.60);
+
+    /// <summary>
+    /// Quantas perguntas o questionário OFERECE — ⛔ não quantas existem curadas.
+    ///
+    /// <para>
+    /// 🔴 A distinção é o ponto todo. O poço tem 50 perguntas ativas; o cidadão vê 24
+    /// (<see cref="PerguntasDaCamara"/> da Câmara mais as do Senado). Contar as 50 aqui
+    /// exigiria <c>ceil(50 × 0,60) = 30</c> respostas de um questionário de 24 — o
+    /// resultado ficaria <b>impossível de obter</b>, e a mensagem de erro pediria
+    /// perguntas que a tela nunca mostrou.
+    /// </para>
+    ///
+    /// <para>
+    /// ⚠️ Sai do banco, ⛔ não é constante: se a curadoria da Câmara encolher para menos
+    /// de <see cref="PerguntasDaCamara"/>, o questionário encolhe junto e o mínimo
+    /// acompanha.
+    /// </para>
+    /// </summary>
+    private static async Task<int> TamanhoDoQuestionarioAsync(PoligraphDb db, CancellationToken ct)
+    {
+        var porCasa = await db.Perguntas.AsNoTracking()
+            .Where(p => p.Ativa)
+            .GroupBy(p => p.Votacao!.Casa)
+            .Select(g => new { Casa = g.Key, Total = g.Count() })
+            .ToDictionaryAsync(x => x.Casa, x => x.Total, ct);
+
+        return Math.Min(PerguntasDaCamara, porCasa.GetValueOrDefault(Casa.CAMARA))
+               + porCasa.GetValueOrDefault(Casa.SENADO);
+    }
 
     /// <summary>
     /// De qual casa é cada pergunta respondida.

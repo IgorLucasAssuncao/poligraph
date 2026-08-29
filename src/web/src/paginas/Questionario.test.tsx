@@ -10,11 +10,12 @@ vi.mock('../api', async () => {
   return {
     ...real,
     obterPerguntas: vi.fn(),
+    obterDesempate: vi.fn(),
     calcularAfinidade: vi.fn(),
   };
 });
 
-const { calcularAfinidade, obterPerguntas } = await import('../api');
+const { calcularAfinidade, obterDesempate, obterPerguntas } = await import('../api');
 
 const PERGUNTAS = [
   { id: 'q1', texto: 'Primeira afirmação', ordem: 1, totalVotos: 480, totalPossivel: 513 },
@@ -31,7 +32,8 @@ function renderizar() {
 
 describe('Questionario', () => {
   beforeEach(() => {
-    vi.mocked(obterPerguntas).mockResolvedValue(PERGUNTAS);
+    vi.mocked(obterPerguntas).mockResolvedValue({ perguntas: PERGUNTAS, total: PERGUNTAS.length });
+    vi.mocked(obterDesempate).mockResolvedValue([]);
     vi.mocked(calcularAfinidade).mockReset();
   });
 
@@ -77,7 +79,10 @@ describe('Questionario', () => {
   it('sem placar registrado, não afirma "0 deputados se posicionaram"', async () => {
     // ⚠️ Acontece quando a ingestão não trouxe o placar oficial daquela votação.
     //    O que falta é o dado — dizer "0" seria afirmar um comparecimento inexistente.
-    vi.mocked(obterPerguntas).mockResolvedValue([{ ...PERGUNTAS[0], totalVotos: 0 }]);
+    vi.mocked(obterPerguntas).mockResolvedValue({
+      perguntas: [{ ...PERGUNTAS[0], totalVotos: 0 }],
+      total: 1,
+    });
 
     const usuario = userEvent.setup();
     const { container } = renderizar();
@@ -86,6 +91,61 @@ describe('Questionario', () => {
 
     await waitFor(() => expect(container.textContent).toMatch(/registrada/i));
     expect(container.textContent).not.toMatch(/0 deputados|se posicionaram/i);
+  });
+
+  /**
+   * 🔴 A rodada de desempate é invisível de propósito. Ela existe porque as 15
+   * melhores perguntas fixas deixam 14 deputados empatados no topo, e 8 fixas mais 7
+   * escolhidas contra o empate de quem respondeu deixam 6.
+   */
+  it('emenda as perguntas de desempate sem o cidadão perceber', async () => {
+    vi.mocked(obterPerguntas).mockResolvedValue({ perguntas: PERGUNTAS, total: 3 });
+    vi.mocked(obterDesempate).mockResolvedValue([
+      { id: 'q9', texto: 'Afirmação escolhida para desempatar', ordem: 9, totalVotos: 400, totalPossivel: 513 },
+    ]);
+
+    const usuario = userEvent.setup();
+    renderizar();
+
+    // ⚠️ Esperar o cartão TROCAR entre os cliques. O botão continua na tela durante a
+    //    pausa de 760ms, e clicar de novo sem esperar só reescreve a mesma resposta.
+    await usuario.click(await screen.findByRole('button', { name: 'Concordo' }));
+    await screen.findByText('Segunda afirmação');
+    await usuario.click(screen.getByRole('button', { name: 'Concordo' }));
+
+    expect(await screen.findByText('Afirmação escolhida para desempatar')).toBeDefined();
+  });
+
+  /**
+   * ⚠️ O denominador é o total DECLARADO, não o tamanho da lista já carregada. Sem
+   * isso a barra andaria para trás quando as de desempate chegassem: quem via
+   * "Pergunta 2 de 2" passaria a ver "Pergunta 3 de 3" tendo avançado.
+   */
+  it('conta o progresso sobre o questionário inteiro, não sobre o que já chegou', async () => {
+    vi.mocked(obterPerguntas).mockResolvedValue({ perguntas: PERGUNTAS, total: 3 });
+
+    renderizar();
+
+    expect(await screen.findByText('Pergunta 1 de 3')).toBeDefined();
+  });
+
+  /**
+   * ⛔ Falha no desempate ⛔ não pode travar o questionário: `obterDesempate` devolve
+   * `[]`, e comparar o índice com o TOTAL previsto (3) em vez de com a lista carregada
+   * (2) deixaria o cidadão numa tela sem pergunta e sem encerramento.
+   */
+  it('encerra normalmente quando o desempate não devolve nada', async () => {
+    vi.mocked(obterPerguntas).mockResolvedValue({ perguntas: PERGUNTAS, total: 3 });
+    vi.mocked(obterDesempate).mockResolvedValue([]);
+
+    const usuario = userEvent.setup();
+    const { container } = renderizar();
+
+    await usuario.click(await screen.findByRole('button', { name: 'Concordo' }));
+    await screen.findByText('Segunda afirmação');
+    await usuario.click(screen.getByRole('button', { name: 'Concordo' }));
+
+    await waitFor(() => expect(container.textContent).toMatch(/2 de 2 respondidas/));
   });
 
   it('conta apenas as respostas com opinião — "Não sei" não vira concordância', async () => {

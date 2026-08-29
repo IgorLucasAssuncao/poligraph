@@ -45,10 +45,11 @@ public class TestesEndpointAfinidade : BaseIntegracao
         await SemearAsync();
         using var cliente = CriarCliente();
 
-        var perguntas = await cliente.GetFromJsonAsync<List<PerguntaLida>>($"{Rota}/perguntas");
-        Assert.NotNull(perguntas);
+        var questionario = await cliente.GetFromJsonAsync<QuestionarioLido>($"{Rota}/perguntas");
+        Assert.NotNull(questionario);
+        Assert.NotEmpty(questionario.Perguntas);
 
-        foreach (var pergunta in perguntas)
+        foreach (var pergunta in questionario.Perguntas)
         {
             var votacaoId = await Db.Perguntas.AsNoTracking()
                 .Where(p => p.Id == pergunta.Id)
@@ -74,6 +75,13 @@ public class TestesEndpointAfinidade : BaseIntegracao
     }
 
     /// <summary>⛔ Sem `VotosSim`/`VotosNao`: o que sai da API é só o total.</summary>
+    /// <summary>
+    /// ⚠️ A resposta ⛔ não é mais um array: <c>Total</c> anuncia o questionário inteiro,
+    /// e <c>Perguntas</c> traz só o bloco de abertura. O resto vem do desempate, que ⛔
+    /// não pode ser escolhido antes de haver resposta.
+    /// </summary>
+    private record QuestionarioLido(List<PerguntaLida> Perguntas, int Total);
+
     private record PerguntaLida(
         string Id, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
 
