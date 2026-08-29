@@ -103,6 +103,46 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
     return inseridas
 
 
+def gravar_proposicoes(
+    conexao: psycopg.Connection, proposicoes: Sequence[dict]
+) -> int:
+    """Grava proposições. `ON CONFLICT DO UPDATE` — a Câmara corrige ementa retroativa."""
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO proposicoes (id, sigla_tipo, numero, ano, ementa, url_inteiro_teor)
+        VALUES (%(id)s, %(sigla_tipo)s, %(numero)s, %(ano)s, %(ementa)s,
+                %(url_inteiro_teor)s)
+        ON CONFLICT (id) DO UPDATE SET
+            sigla_tipo = EXCLUDED.sigla_tipo,
+            numero = EXCLUDED.numero,
+            ano = EXCLUDED.ano,
+            ementa = EXCLUDED.ementa
+        """,
+        proposicoes,
+    )
+
+
+def vincular_proposicoes(
+    conexao: psycopg.Connection, vinculo: dict[str, int]
+) -> int:
+    """Liga cada votação à sua proposição.
+
+    ⚠️ Passo SEPARADO da gravação das votações, e ⛔ não uma coluna a mais no `INSERT`
+    delas. A votação é ingerida antes de a proposição existir — a FK recusaria a linha,
+    e a ingestão inteira do ano cairia por causa de um vínculo.
+    """
+    return _executar_em_lotes(
+        conexao,
+        """
+        UPDATE votacoes SET proposicao_id = %(proposicao_id)s
+         WHERE id = %(votacao_id)s
+           AND EXISTS (SELECT 1 FROM proposicoes p WHERE p.id = %(proposicao_id)s)
+        """,
+        [{"votacao_id": v, "proposicao_id": p} for v, p in vinculo.items()],
+    )
+
+
 def desconectar_proposicoes_ausentes(
     conexao: psycopg.Connection, votacoes: Sequence[dict]
 ) -> int:

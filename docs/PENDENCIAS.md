@@ -352,6 +352,36 @@ O Aspire injeta `ConnectionStrings__poligraph` no formato do **Npgsql**
 
 ---
 
+### ✅ PL40 (resolvida em 2026-08-28) — a ementa chegou, e destrava a PL11
+
+`proposicoes` tinha **zero linhas**, e `proposicao_id` era nulo em **1.594 de 1.594**
+votações da Câmara (100%). Quem cura lia só a descrição da votação:
+
+> *"Aprovado o Substitutivo ao Projeto de Lei Complementar nº 80, de 2026, adotado pelo
+> relator da Comissão de…"*
+
+Isso diz o **número** do projeto e ⛔ **não diz sobre o que ele é**.
+
+⭐ **A fonte certa ⛔ não era o arquivo óbvio.** `proposicoes-{ano}.csv` tem 90 MB por ano;
+`votacoesProposicoes-{ano}.csv` tem **5 MB** e já traz `proposicao_ementa` embutida —
+5 MB entregam o que interessa, contra 360 MB nos quatro anos para extrair as mesmas
+~1.600 linhas.
+
+| | Antes | Depois |
+|---|---:|---:|
+| Proposições na base | 0 | **683** |
+| Votações com proposição | 0 de 1.594 (0,0%) | **1.587 de 1.594 (99,6%)** |
+| 🔴 **Substantivas com ementa** | 0 de 266 (0,0%) | **263 de 266 (98,9%)** |
+
+⚠️ O arquivo grande tem duas colunas que este ⛔ não tem: `keywords` (indexação temática)
+e `ementaDetalhada`. Se a curadoria precisar delas, aí vale pagar os 90 MB — ⛔ não antes.
+
+**O comando `curar` passa a exibir a ementa acima da descrição**, e diz explicitamente
+quando a votação ⛔ não tem proposição vinculada, para quem cura saber que vai procurar
+à mão.
+
+---
+
 ### ✅ PL43 (resolvida em 2026-08-28) — um layout, não dois
 
 A pergunta era manter os dois layouts do desenho ou só o de molas. **Resolvida por um

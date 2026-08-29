@@ -6,7 +6,10 @@ de centenas de votações às poucas dezenas que valem a leitura.
 
 ## ENTRADA
 
-Tabelas `votacoes` e `votos` de uma casa e legislatura.
+Tabelas `votacoes`, `votos` e `proposicoes` de uma casa e legislatura.
+
+⭐ A **ementa** vem de `proposicoes`, ligada por `votacoes.proposicao_id`. Sem ela a
+curadoria lê só a descrição da votação, que ⛔ não diz sobre o que a matéria é.
 
 ## CRITÉRIO
 
@@ -53,6 +56,16 @@ class Candidata:
     nao: int
     polaridade_sugerida: int
 
+    # ⭐ A EMENTA — é ela que torna a leitura humana possível.
+    #
+    # 🔴 A `descricao` diz o NÚMERO do projeto e ⛔ não diz sobre o que ele é:
+    # *"Aprovado o Substitutivo ao Projeto de Lei Complementar nº 80, de 2026, adotado
+    # pelo relator da Comissão de…"*. Escrever pergunta em linguagem leiga a partir
+    # disso é adivinhação — e a PL11 é o maior bloqueio do projeto.
+    #
+    # ⚠️ Nula em 3 das 266 substantivas da 57ª (98,9% têm) — ver achado sobre PL40.
+    ementa: str | None = None
+
     @property
     def divisao(self) -> float:
         """`min(sim, não) / total` — 0,5 é o máximo, e significa casa dividida ao meio."""
@@ -69,18 +82,19 @@ def candidatas(
 
     linhas = conexao.execute(
         """
-        SELECT vt.id, vt.data, vt.descricao,
+        SELECT vt.id, vt.data, vt.descricao, p.ementa,
                count(*) FILTER (WHERE v.valor = 1)  AS sim,
                count(*) FILTER (WHERE v.valor = -1) AS nao
           FROM votacoes vt
           JOIN votos v ON v.votacao_id = vt.id
+          LEFT JOIN proposicoes p ON p.id = vt.proposicao_id
          WHERE vt.casa = %s
            AND vt.legislatura = %s
            AND vt.plenario
            AND NOT vt.secreta
            AND vt.categoria = 'SUBSTANTIVA'
            AND v.valor IN (1, -1)
-         GROUP BY vt.id, vt.data, vt.descricao
+         GROUP BY vt.id, vt.data, vt.descricao, p.ementa
         HAVING count(*) >= %s
         """,
         (casa, legislatura, minimo),
@@ -94,8 +108,9 @@ def candidatas(
             sim=sim,
             nao=nao,
             polaridade_sugerida=inferir_polaridade(descricao),
+            ementa=ementa,
         )
-        for vid, data, descricao, sim, nao in linhas
+        for vid, data, descricao, ementa, sim, nao in linhas
     ]
 
     return sorted(achadas, key=lambda c: c.divisao, reverse=True)[:limite]

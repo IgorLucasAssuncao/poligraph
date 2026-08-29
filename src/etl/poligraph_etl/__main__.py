@@ -21,7 +21,8 @@ import psycopg
 from . import conexao as conexao_mod
 from . import (
     comparacao, cota, curadoria, emendas, grafo, ingestao, ingestao_senado,
-    normalizacao, orientacoes, persistencia, receitas, similaridade, validacao,
+    normalizacao, orientacoes, persistencia, proposicoes, receitas, similaridade,
+    validacao,
 )
 from .fontes import camara, senado, tse
 
@@ -197,16 +198,28 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
 
         votacoes = ingestao.votacoes_para_linhas(df)
 
-        # ⚠️ A proposição referenciada quase nunca está na nossa base — ver PL40.
-        sem_proposicao = persistencia.desconectar_proposicoes_ausentes(conexao, votacoes)
-
+        # ⚠️ A votação entra SEM proposição: ela é ingerida antes de a proposição
+        #    existir, e a FK recusaria a linha. O vínculo vem logo abaixo.
+        persistencia.desconectar_proposicoes_ausentes(conexao, votacoes)
         persistencia.gravar_votacoes(conexao, votacoes)
         log.info("  %d registros, %d votações nominais", len(df), len(votacoes))
-        if sem_proposicao:
-            log.warning(
-                "  %d votações sem proposição na base (proposicao_id nulo)",
-                sem_proposicao,
-            )
+
+        # ⭐ A ementa é o que destrava a curadoria (PL11): a DESCRIÇÃO da votação diz o
+        #    número do projeto e ⛔ não diz sobre o que ele é.
+        arquivo_prop = camara.baixar(
+            "votacoesProposicoes", ano, CACHE / f"votacoesProposicoes-{ano}.csv"
+        )
+        lista, vinculo = proposicoes.para_linhas(
+            camara.ler_csv(arquivo_prop).to_dict("records"),
+            {v["id"] for v in votacoes},
+        )
+        persistencia.gravar_proposicoes(conexao, lista)
+        vinculadas = persistencia.vincular_proposicoes(conexao, vinculo)
+        log.info(
+            "  %d proposições, %d votações vinculadas (%d sem ementa)",
+            len(lista), vinculadas,
+            sum(1 for p in lista if not p["ementa"]),
+        )
 
         arquivo_votos = camara.baixar(
             "votacoesVotos", ano, CACHE / f"votacoesVotos-{ano}.csv"
@@ -760,7 +773,16 @@ def _curar(conexao: psycopg.Connection, casa: str, legislatura: int, limite: int
             candidata.sim, candidata.nao, candidata.divisao * 100,
             candidata.polaridade_sugerida, marca,
         )
-        log.info("    %s", candidata.descricao[:110])
+        # ⭐ A EMENTA primeiro, e a descrição depois. A descrição diz o NÚMERO do
+        #    projeto; a ementa diz sobre o que ele é — e é dela que sai a pergunta.
+        if candidata.ementa:
+            log.info("    ementa: %s", candidata.ementa[:150])
+        else:
+            # ⚠️ 3 das 266 substantivas ⛔ não têm proposição vinculada. Dizer isso é
+            #    melhor que omitir a linha: quem cura precisa saber que vai ter de
+            #    procurar a matéria à mão.
+            log.info("    ementa: (sem proposicao vinculada - procure pelo numero)")
+        log.info("    votacao: %s", candidata.descricao[:110])
 
     log.info("")
     log.info("A afirmacao em linguagem leiga e a polaridade FINAL sao leitura humana.")
