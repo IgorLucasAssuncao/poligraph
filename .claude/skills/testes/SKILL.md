@@ -205,6 +205,39 @@ dotnet test --filter FullyQualifiedName~Integracao # precisa de Docker rodando
 ⚠️ **A integração exige Docker de pé** — local e no CI. O runner do GitHub Actions já
 tem; sua máquina precisa do Docker Desktop aberto.
 
+### 6.1 🔴 Nesta máquina, `dotnet test` nativo NÃO roda
+
+Medido em 2026-08-29. Dois bloqueios **independentes**, e os dois precisam de desvio:
+
+| Bloqueio | Sintoma | Causa |
+|---|---|---|
+| **Aspire de pé** | `MSB3021 … arquivo é bloqueado por Poligraph.Api` | a API segura o `.dll` que o build precisa reescrever |
+| 🔴 **Smart App Control** | `FileLoadException … Uma política de Controle de Aplicativo bloqueou (0x800711C7)` | está em **imposição** (`VerifiedAndReputablePolicyState = 1`) e recusa binário recém-compilado, sem reputação |
+
+⚠️ **Parar o Aspire ⛔ não basta** — o segundo bloqueio aparece logo em seguida. E ⛔
+**não desligue o Smart App Control**: no Windows 11 ele só volta a ser ligado
+reinstalando o sistema.
+
+⭐ **A saída é rodar num container**, que passa por fora do SAC:
+
+```bash
+podman run --rm --network host   -v "$PWD:/repo:ro"   -v "/run/user/1000/podman/podman.sock:/var/run/docker.sock"   -e DOCKER_HOST=unix:///var/run/docker.sock   -e TESTCONTAINERS_RYUK_DISABLED=true   mcr.microsoft.com/dotnet/sdk:10.0   bash -lc 'cp -r /repo /work && cd /work && rm -rf src/*/bin src/*/obj && dotnet test src/Poligraph.Tests'
+```
+
+📐 Cada pedaço resolve um problema medido, ⛔ nenhum é decoração:
+
+| Trecho | Por quê |
+|---|---|
+| 🔴 `--network host` | O Postgres do Testcontainers publica na VM do Podman. Sem isto: **94 de 125 falham** com `Failed to connect to 127.0.0.1:44701` |
+| `podman.sock` montado | O Testcontainers precisa falar com o runtime para criar o Postgres |
+| `:ro` + `cp -r /repo /work` | ⛔ O `obj/` do Linux ⛔ não pode contaminar o do Windows |
+| `rm -rf src/*/bin src/*/obj` | Restos do build do Windows quebram a compilação no Linux |
+| `TESTCONTAINERS_RYUK_DISABLED` | O Ryuk ⛔ não sobe bem com socket montado |
+
+⛔ **⛔ Não redirecione `BaseOutputPath` para contornar o Aspire.** Foi tentado: o SAC
+bloqueia igual, e apontar `BaseIntermediateOutputPath` junto faz todos os projetos
+compartilharem um `obj/`, gerando `CS0579 Duplicar atributo`.
+
 ---
 
 ## 7. No CI
