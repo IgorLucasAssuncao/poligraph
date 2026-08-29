@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
@@ -78,6 +78,59 @@ public class TestesEndpointParlamentares : BaseIntegracao
         Assert.NotEmpty(ficha!.Nome);
         Assert.NotEmpty(ficha.VotosRecentes);
         Assert.NotEmpty(ficha.Partido);
+    }
+
+    /// <summary>
+    /// 🔴 A ementa é o que torna o voto legível.
+    ///
+    /// <para>
+    /// A descrição é o registro processual — <i>"Aprovado o Projeto de Lei nº 2.162"</i>
+    /// — e diz o NÚMERO, ⛔ não o assunto. Sem a ementa, a ficha lista dez linhas que ⛔
+    /// não informam em que a pessoa votou.
+    /// </para>
+    ///
+    /// <para>
+    /// ⚠️ A ementa chegou com a PL40 em 2026-08-28, e a ficha era o lugar que ainda ⛔
+    /// não a usava — o dado estava no banco, sem chegar à tela.
+    /// </para>
+    /// </summary>
+    [SkippableFact]
+    public async Task Ficha_TrazAEmentaDaProposicao_NaoSoADescricaoProcessual()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        using var cliente = CriarCliente();
+        var id = await PrimeiroParlamentarAsync();
+
+        var ficha = await cliente.GetFromJsonAsync<FichaJson>($"{Rota}/{id}");
+
+        var comEmenta = ficha!.VotosRecentes.Where(v => v.Ementa is not null).ToList();
+
+        Assert.NotEmpty(comEmenta);
+        Assert.All(comEmenta, v => Assert.False(string.IsNullOrWhiteSpace(v.Materia)));
+    }
+
+    /// <summary>
+    /// ⭐ A matéria é a etiqueta que permite conferir na fonte — "PL 2162/2023".
+    /// ⛔ Sem ela, quem quiser checar a ementa ⛔ não tem por onde procurar.
+    /// </summary>
+    [SkippableFact]
+    public async Task Ficha_MonstaAMateriaComSiglaNumeroEAno()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        using var cliente = CriarCliente();
+        var id = await PrimeiroParlamentarAsync();
+
+        var ficha = await cliente.GetFromJsonAsync<FichaJson>($"{Rota}/{id}");
+
+        var materias = ficha!.VotosRecentes
+            .Where(v => v.Materia is not null)
+            .Select(v => v.Materia!)
+            .ToList();
+
+        Assert.NotEmpty(materias);
+        Assert.All(materias, m => Assert.Matches(@"^(PL|PLP|PEC|MPV|PDL|PRC) \d+/\d{4}$", m));
     }
 
     /// <summary>
@@ -533,5 +586,7 @@ public class TestesEndpointParlamentares : BaseIntegracao
     private record FichaJson(
         long Id, string Nome, string NomeCivil, string Partido, string Uf, int NVotacoes,
         List<VotoJson> VotosRecentes, List<SimilarJson> MaisSimilares);
-    private record VotoJson(string VotacaoId, DateOnly Data, string? Descricao, short? Valor);
+    private record VotoJson(
+        string VotacaoId, DateOnly Data, string? Descricao, short? Valor,
+        string? OrientacaoDoGoverno, string? Ementa, string? Materia);
 }

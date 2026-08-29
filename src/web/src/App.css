@@ -825,6 +825,14 @@ button.lista-grafo-nome:focus-visible { outline: 2px solid var(--realce); outlin
 .noticia-titulo:hover { text-decoration: underline; }
 .voto-descricao { margin: .45rem 0 .2rem; font-size: .95rem; }
 
+/* ⚠️ O registro processual fica MENOR e mais apagado que a ementa, de propósito:
+   ele identifica qual votação daquele projeto foi, e isso é conferência — não é
+   o que a pessoa lê para entender o voto. */
+.voto-processual {
+  margin: 0 0 .2rem; font-size: .82rem; color: var(--suave); line-height: 1.4;
+}
+.voto-processual strong { font-family: var(--dado); font-weight: 600; color: var(--texto); }
+
 /* ═══ BARRA DE BUSCA ═══════════════════════════════════════════ */
 .barra-busca {
   display: flex; align-items: center; gap: .6rem;

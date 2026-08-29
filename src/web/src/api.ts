@@ -37,9 +37,17 @@ export type Parlamentar = {
 export type VotoNaFicha = {
   votacaoId: string;
   data: string;
+  /**
+   * 🔴 O registro PROCESSUAL — "Aprovado o Substitutivo ao Projeto de Lei nº 4.133".
+   * Diz o NÚMERO do projeto e não diz o assunto. Serve de reserva quando falta a ementa.
+   */
   descricao: string | null;
   valor: number | null;
   orientacaoDoGoverno: string | null;
+  /** ⭐ O que o projeto propõe. Nula no Senado inteiro — a ingestão é só da Câmara. */
+  ementa: string | null;
+  /** "PL 4133/2023" — a etiqueta que permite conferir na fonte. */
+  materia: string | null;
 };
 
 export type Similar = {

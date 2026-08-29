@@ -209,7 +209,21 @@ function AbaVotos({ votos }: { votos: Ficha['votosRecentes'] }) {
             <span className={`selo selo-${classeDoVoto(v.valor)}`}>
               {v.valor === 0 ? <Termo nome="abstencao">Abstenção</Termo> : rotuloDoVoto(v.valor)}
             </span>
-            <p className="voto-descricao">{v.descricao ?? v.votacaoId}</p>
+            {/* 🔴 A ementa primeiro, a descrição só como reserva. A descrição diz o
+                NÚMERO do projeto; a ementa diz o que ele propõe — e é o assunto, não o
+                número, que torna o voto legível para quem não acompanha o Congresso. */}
+            <p className="voto-descricao">{v.ementa ?? v.descricao ?? v.votacaoId}</p>
+
+            {/* ⚠️ Quando há ementa, a descrição processual continua acessível: é ela
+                que identifica O QUE foi votado daquele projeto — o texto principal, um
+                destaque, a redação final. Sem isso, dois votos opostos do mesmo projeto
+                apareceriam como a mesma linha repetida. */}
+            {v.ementa && v.descricao && (
+              <p className="voto-processual">
+                {v.materia && <strong>{v.materia}</strong>} {v.descricao}
+              </p>
+            )}
+
             <span className="linha-detalhe">
               {formatarData(v.data)}
               <ContraAOrientacao voto={v} />

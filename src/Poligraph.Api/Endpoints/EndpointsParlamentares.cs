@@ -21,9 +21,36 @@ public record ParlamentarNaListaDto(
 /// publica orientação.
 /// </para>
 /// </summary>
+/// <summary>
+/// Um voto na ficha do parlamentar.
+///
+/// <para>
+/// 🔴 <c>Descricao</c> sozinha ⛔ NÃO diz sobre o que era a votação. Ela é o registro
+/// processual — <i>"Aprovado o Substitutivo ao Projeto de Lei nº 4.133, de 2023,
+/// adotado pelo relator da Comissão de Ciência, Tecnologia e Inovação"</i> — e informa o
+/// NÚMERO do projeto, ⛔ não o assunto.
+/// </para>
+///
+/// <para>
+/// ⭐ <c>Ementa</c> é o que o projeto propõe, e é o que torna o voto legível para quem
+/// ⛔ não acompanha o Congresso. Veio com a PL40; a ficha era o lugar que ainda ⛔ não a
+/// usava.
+/// </para>
+///
+/// <para>
+/// ⚠️ Nula em <b>todo o Senado</b> e em parte da Câmara — a ingestão de proposições é só
+/// da Câmara, e lá cobre 263 das 266 substantivas. A tela mostra a descrição quando
+/// falta, ⛔ nunca um espaço em branco.
+/// </para>
+/// </summary>
 public record VotoNaFichaDto(
-    string VotacaoId, DateOnly Data, string? Descricao, short? Valor,
-    string? OrientacaoDoGoverno);
+    string VotacaoId,
+    DateOnly Data,
+    string? Descricao,
+    short? Valor,
+    string? OrientacaoDoGoverno,
+    string? Ementa,
+    string? Materia);
 
 public record SimilarNaFichaDto(long PessoaId, string Nome, string Partido, float Valor, int Comuns);
 
@@ -460,7 +487,13 @@ public static class EndpointsParlamentares
                 db.Orientacoes
                     .Where(o => o.VotacaoId == v.VotacaoId && o.Bancada == "Governo")
                     .Select(o => o.Orientacao)
-                    .FirstOrDefault()))
+                    .FirstOrDefault(),
+                v.Votacao.Proposicao!.Ementa,
+                // ⭐ "PL 4.133/2023" — a etiqueta curta que permite conferir na fonte.
+                //    ⛔ Não é enfeite: sem ela, quem quiser checar a ementa ⛔ não tem
+                //    por onde procurar.
+                v.Votacao.Proposicao!.SiglaTipo + " "
+                    + v.Votacao.Proposicao.Numero + "/" + v.Votacao.Proposicao.Ano))
             .ToListAsync(ct);
 
     /// <summary>

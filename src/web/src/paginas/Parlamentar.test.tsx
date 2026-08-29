@@ -46,6 +46,8 @@ function voto(
     descricao: `Votação ${id}`,
     valor,
     orientacaoDoGoverno,
+    ementa: null,
+    materia: null,
   };
 }
 
@@ -83,6 +85,15 @@ function renderizar() {
       </Routes>
     </MemoryRouter>,
   );
+}
+
+/** Renderiza com uma ficha específica e espera ela chegar. */
+async function renderizarCom(ficha: Ficha) {
+  vi.mocked(api.obterFicha).mockResolvedValue(ficha);
+  const resultado = renderizar();
+  await screen.findAllByRole('heading', { name: /Ana Ribeiro/ });
+
+  return resultado;
 }
 
 /** Renderiza e espera a ficha chegar. O nome aparece em dois `<h1>` — daí o `findAll`. */
@@ -270,5 +281,72 @@ describe('orientação do Governo ao lado do voto', () => {
     await screen.findByText(/Votação a/);
 
     expect(screen.queryByText(/Governo pediu/)).not.toBeInTheDocument();
+  });
+});
+
+
+describe('a ementa na lista de votos', () => {
+  /**
+   * 🔴 A descrição diz o NÚMERO do projeto — "Aprovado o Substitutivo ao Projeto de Lei
+   * nº 4.133" — e não diz o assunto. Quem não acompanha o Congresso lê isso e não sabe
+   * em que a pessoa votou. A ementa é o que torna o voto legível.
+   */
+  it('mostra a ementa no lugar da descrição processual', async () => {
+    const comEmenta = {
+      ...FICHA,
+      votosRecentes: [
+        {
+          ...voto('v1', 1, null),
+          descricao: 'Aprovado o Substitutivo ao Projeto de Lei nº 4.133, de 2023.',
+          ementa: 'Dispõe sobre diretrizes para a política industrial brasileira.',
+          materia: 'PL 4133/2023',
+        },
+      ],
+    };
+
+    const { container } = await renderizarCom(comEmenta);
+
+    const texto = container.textContent!;
+    expect(texto).toMatch(/diretrizes para a política industrial/i);
+  });
+
+  /**
+   * ⚠️ A descrição processual continua acessível: é ela que identifica QUAL votação
+   * daquele projeto foi — texto principal, destaque, redação final. Sem ela, dois votos
+   * opostos do mesmo projeto apareceriam como a mesma linha repetida.
+   */
+  it('mantém a descrição processual junto da matéria', async () => {
+    const comEmenta = {
+      ...FICHA,
+      votosRecentes: [
+        {
+          ...voto('v1', 1, null),
+          descricao: 'Aprovado o Substitutivo ao Projeto de Lei nº 4.133, de 2023.',
+          ementa: 'Dispõe sobre diretrizes para a política industrial brasileira.',
+          materia: 'PL 4133/2023',
+        },
+      ],
+    };
+
+    const { container } = await renderizarCom(comEmenta);
+
+    const texto = container.textContent!;
+    expect(texto).toMatch(/PL 4133\/2023/);
+    expect(texto).toMatch(/Aprovado o Substitutivo/);
+  });
+
+  /**
+   * ⛔ Sem ementa — todo o Senado e parte da Câmara — a tela cai na descrição, ⛔ nunca
+   * num espaço em branco.
+   */
+  it('sem ementa, cai na descrição', async () => {
+    const semEmenta = {
+      ...FICHA,
+      votosRecentes: [{ ...voto('v1', 1, null), descricao: 'Votação nominal do PLP 73.' }],
+    };
+
+    const { container } = await renderizarCom(semEmenta);
+
+    expect(container.textContent).toMatch(/Votação nominal do PLP 73/);
   });
 });
