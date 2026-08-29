@@ -73,26 +73,53 @@ _CATEGORIAS: list[tuple[str, str]] = [
         r"|votacao em globo|recurso",
     ),
     (
-        "DESTAQUE",
-        # 🔴 `(?<!ressalvados os )destaques?` — a exceção não é detalhe.
+        "DESTAQUE_FORTE",
+        # 🔴 Sinal INEQUÍVOCO de recorte. Avaliado ANTES do mérito, porque a mesma
+        #    frase costuma citar as duas coisas.
         #
-        # "Aprovado o Substitutivo ao PL 2.162, **ressalvados os destaques**" é voto no
-        # TEXTO PRINCIPAL: os destaques ficaram de fora, para votação separada. A frase
-        # cita destaque justamente para dizer que ele NÃO estava em jogo.
+        # ⚠️ Os dois lookbehind são obrigatórios e **fixos** — `re` ⛔ não aceita
+        #    lookbehind de tamanho variável. "Ressalvad**o o** destaque" (singular)
+        #    aparecia em **38 votações** da 57ª e só o plural estava coberto.
         #
-        # ⚠️ Sem a exceção, 69 votações de mérito da legislatura 57 eram classificadas
-        # como DESTAQUE. Duas consequências, ambas silenciosas: entravam na matriz com
-        # peso 0,7 em vez de 1,0, e o filtro "só texto principal" da curadoria as
-        # descartava — encolhendo o universo de perguntas sem que ninguém notasse.
-        #
-        # ⚠️ `destacad[oa]s?` é a forma do SENADO — "Votação nominal do Art. 21 …,
-        # destacado". O padrão só cobria o substantivo (`destaque`/`destaques`), então 14
-        # votações do Senado e 2 da Câmara entravam como SUBSTANTIVA. As duas da Câmara
-        # são as piores do conjunto: "Rejeitada a matéria destacada" é destaque **com
-        # polaridade invertida**.
-        r"(?<!ressalvados os )destaques?|destacad[oa]s?"
+        # ⚠️ `destacad[oa]s?` é a forma do SENADO. `votacao nominal do §/art.` também:
+        #    votar um dispositivo isolado é destaque, mesmo quando a frase termina em
+        #    "…à Proposta de Emenda à Constituição".
+        r"(?<!ressalvados os )(?<!ressalvado o )destaques?"
+        r"|destacad[oa]s?"
         r"|mantido o texto|suprimido o texto"
-        r"|emenda|subemenda",
+        r"|votacao nominal d[ao] (§|art|paragrafo|inciso|caput|expressao)",
+    ),
+    (
+        "MERITO",
+        # 🔴 O que é voto de MÉRITO mesmo contendo a palavra "emenda".
+        #
+        # 📐 Medido em 2026-08-29, na legislatura 57 — cada linha é um defeito que
+        #    existia, e todos silenciosos: a votação entrava na matriz com peso 0,7 em
+        #    vez de 1,0 **e** ficava fora do universo de curadoria (RN-04).
+        #
+        # | Padrão | O que estava errado |
+        # |---|---|
+        # | 🔴 `proposta de emenda` | **73 votações de PEC** viravam DESTAQUE por conterem "emenda" — o voto mais substantivo que existe |
+        # | `ressalvad… destaque` | O destaque foi citado para dizer que ⛔ NÃO estava em jogo |
+        # | `subemenda substitutiva global` | A subemenda global **troca o texto inteiro**; ⛔ não é recorte |
+        # | `emendas do senado` | O mérito das mudanças da outra casa. ⚠️ **Plural** — "a Emenda do Senado nº 1" é destaque |
+        # ⚠️ `pec n` também: "Votação, em segundo turno, da PEC nº 72/2023" ⛔ não
+        #    escreve o nome por extenso.
+        r"proposta de emenda|\bpec n"
+        r"|ressalvad[oa]s? [oa]s? destaques?"
+        r"|subemenda substitutiva global"
+        r"|emendas do senado",
+    ),
+    (
+        "DESTAQUE",
+        # ⚠️ Sinal FRACO, avaliado por último: "emenda" solto casa com coisa demais —
+        #    inclusive com "Proposta de **Emenda** à Constituição". Só chega aqui o que
+        #    ⛔ não foi resgatado pelo mérito acima.
+        #
+        # ⭐ Mas ele ⛔ NÃO pode sair: "Rejeitadas as Emendas de Plenário" e "Aprovada a
+        #    Emenda." são destaques de verdade, e ⛔ nenhum padrão mais específico os
+        #    alcança.
+        r"emenda|subemenda",
     ),
     (
         "AUTORIDADE",
@@ -105,18 +132,94 @@ _CATEGORIAS: list[tuple[str, str]] = [
 def classificar_categoria(descricao: str | None) -> str:
     """Classifica a votação. O default é SUBSTANTIVA — voto de mérito.
 
-    ⚠️ As regex precisam de validação contra amostra rotulada à mão (pendência A2).
-    Categoria errada muda o PESO da votação na matriz de similaridade.
+    🔴 **Categoria errada muda o PESO na matriz E o universo da curadoria.** Uma votação
+    marcada DESTAQUE entra com 0,7 em vez de 1,0 e ⛔ não pode virar pergunta (RN-04) — e
+    ⛔ nada disso dá erro, só um resultado plausível e menor.
+
+    ⭐ **A ordem é o método**, e ⛔ não detalhe de implementação:
+
+    | Passo | Por quê |
+    |---|---|
+    | 1. `PROCEDIMENTAL` | *"Requerimento de urgência para a PEC"* é rito, ⛔ não mérito |
+    | 2. `DESTAQUE_FORTE` | Sinal inequívoco de recorte — *"destacada"*, *"mantido o texto"*, votar um `§` |
+    | 3. `MERITO` | Resgata o que só parece destaque por conter "emenda" |
+    | 4. `DESTAQUE` | Sinal fraco: "emenda" solto, o que sobrou |
+    | 5. `AUTORIDADE` | Sabatina |
+
+    ⚠️ Trocar 2 e 3 de lugar quebraria *"Votação nominal do §11 … à Proposta de Emenda à
+    Constituição"*, que é destaque de um dispositivo dentro de uma PEC.
     """
     if not descricao:
         return "SUBSTANTIVA"
 
     texto = sem_acento(descricao.lower())
+
     for categoria, padrao in _CATEGORIAS:
         if re.search(padrao, texto):
+            # ⭐ Os dois rótulos internos ⛔ não vazam para o banco: um é a mesma coisa
+            #    que DESTAQUE, o outro é a decisão de ⛔ NÃO ser destaque.
+            if categoria == "DESTAQUE_FORTE":
+                return "DESTAQUE"
+            if categoria == "MERITO":
+                return "SUBSTANTIVA"
+
             return categoria
 
     return "SUBSTANTIVA"
+
+
+# 🔴 O que RECONHECEMOS como voto de mérito, para separar "é substantiva" de "⛔ não
+#    reconheci nada e caí no default".
+#
+# ⚠️ ⛔ NÃO entra em `classificar_categoria`: o default continua SUBSTANTIVA, e mudar
+#    isso trocaria um erro silencioso por outro. Serve ao canário abaixo.
+_SUBSTANTIVA_RECONHECIDA = (
+    r"aprovad|rejeitad|votacao nominal d|mantid|prejudicad|retirad"
+    r"|projeto de lei|medida provisoria|parecer|substitutivo|proposta"
+)
+
+
+def descricoes_nao_reconhecidas(descricoes) -> list[str]:
+    """As descrições que ⛔ não casam com padrão NENHUM — nem de rito, nem de destaque,
+    nem de mérito.
+
+    ## 🔴 Por que existe
+
+    ⚠️ **O default silencioso é o risco de todo classificador por texto.** Se a Câmara
+    mudar a frase, tudo vira `SUBSTANTIVA` e ⛔ nada avisa — a votação entra na matriz
+    com peso 1,0 e pode virar pergunta.
+
+    ⭐ É o mesmo desenho de `ingestao_senado.siglas_desconhecidas`, que já protege o
+    domínio do voto: valor novo ⛔ não derruba a ingestão, mas **aparece no log**.
+
+    ## 📐 O que ele encontrou na primeira execução (2026-08-29)
+
+    **4 de 2.015 descrições.** Duas ⛔ não são ruído:
+
+    | Descrição | O que era |
+    |---|---|
+    | *"Resultado. Sim: 182; Não: 182"* | A votação do `q-preco-abusivo` — marcada **à mão** na curadoria como "precisa de conferência", justamente porque ⛔ não diz o que foi votado |
+    | *"Votação, em segundo turno, da PEC nº 72/2023"* | PEC escrita pela **sigla**; o padrão só cobria "Proposta de Emenda" por extenso |
+
+    ⭐ O canário achou sozinho o que a leitura humana tinha achado, e mais um.
+    """
+    orfas = []
+
+    for descricao in descricoes:
+        # ⚠️ `.strip()`: descrição só com espaço é AUSÊNCIA de descrição, ⛔ não frase
+        #    que o padrão deixou passar. Sem isto o canário acusaria o vazio.
+        if not (descricao or "").strip():
+            continue
+
+        texto = sem_acento(descricao.lower())
+        if any(re.search(padrao, texto) for _, padrao in _CATEGORIAS):
+            continue
+        if re.search(_SUBSTANTIVA_RECONHECIDA, texto):
+            continue
+
+        orfas.append(descricao)
+
+    return orfas
 
 
 # ═══════════════════════════════════════════════════════════════════

@@ -90,6 +90,7 @@ ingestão contra a fonte real.
 | [**#28**](028-o-senado-nao-publica-orientacao-de-bancada.md) | ⛔ O **Senado não publica orientação de bancada** | O único proxy possível — o voto do Líder do Governo — ⛔ não serve: 96% das votações são anteriores à designação dele |
 | [**#29**](029-o-sobrenome-casa-com-a-instituicao.md) | 🔴 O **sobrenome casa com o nome da instituição** | 94 de 110 menções vieram do método mais fraco e o limiar barrou todas. "Silas **Câmara**" casou 14 vezes com manchete da Agência **Câmara**; "Marco **Brasil**", 4 vezes com a Agência **Brasil** |
 | [**#30**](030-o-destaque-carrega-o-grafo.md) | ⭐ O **peso do destaque quase não importa**, mas incluí-lo importa muito | Entre 0,3 e 1,0 a vizinhança muda 6% a 17%; com peso **zero** sobram **2 dos 10** vizinhos. Na matriz há **422 destaques contra 141 substantivas** |
+| [**#31**](031-a-pec-estava-escondida-como-destaque.md) | 🔴 A **PEC estava escondida como destaque** | "Proposta de **Emenda** à Constituição" casava com o padrão de destaque: **73 votações de PEC** com peso 0,7 e fora da curadoria. O universo do Senado **dobrou**, de 52 para 104 |
 
 ---
 

@@ -1,7 +1,7 @@
 /**
  * A pintura do quadro. Nada aqui decide o que mostrar — só desenha o que recebe.
  *
- * ⚠️ **Canvas, não SVG.** São 643 nós e 5.271 arestas: em SVG cada aresta vira um
+ * ⚠️ **Canvas, não SVG.** São 643 nós e 5.259 arestas: em SVG cada aresta vira um
  * elemento do DOM, e cada quadro de zoom refaria seis mil deles.
  *
  * 🔴 As cores identificam COMUNIDADE e ⛔ não têm significado político (RNF-16). A

@@ -215,6 +215,18 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
 
         votacoes = ingestao.votacoes_para_linhas(df)
 
+        # 🔴 Canário do classificador por texto — ver `descricoes_nao_reconhecidas`.
+        #    ⚠️ Frase nova ⛔ não derruba a ingestão, mas ⛔ não passa em silêncio: sem
+        #    isto, uma mudança de redação na fonte mandaria tudo para SUBSTANTIVA.
+        orfas = normalizacao.descricoes_nao_reconhecidas(
+            linha["descricao"] for linha in votacoes
+        )
+        if orfas:
+            log.warning(
+                "  %d descrições que nenhum padrão de categoria reconhece — a 1ª: %s",
+                len(orfas), (orfas[0] or "")[:90],
+            )
+
         # ⚠️ A votação entra SEM proposição: ela é ingerida antes de a proposição
         #    existir, e a FK recusaria a linha. O vínculo vem logo abaixo.
         persistencia.desconectar_proposicoes_ausentes(conexao, votacoes)

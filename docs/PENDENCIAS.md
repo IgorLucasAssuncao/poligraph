@@ -690,14 +690,27 @@ curva fixa só chega a empate 5 com 25 perguntas.
 ⚠️ Escolher **uma por vez** daria empate 5 em vez de 6, ao custo de **sete idas e voltas**
 ao servidor no meio do questionário. ⛔ Não vale.
 
-#### O Senado está esgotado, e isso é da fonte
+#### 🔄 "O Senado está esgotado" — afirmado e DERRUBADO no mesmo dia
 
-Das 52 substantivas **abertas** da 57ª: **39 têm divisão abaixo de 5%**, e 7 das 8 acima
-de 25% já estavam curadas. As outras 51 substantivas são **secretas**
-([#17](achados/017-senado-maioria-secreta.md)) e ⛔ não têm voto individual.
+⚠️ **A conclusão registrada aqui estava errada, e o motivo é instrutivo.** Ela dizia:
+*"das 52 substantivas abertas da 57ª, 39 dividem menos de 5% e 7 das 8 acima de 25% já
+estavam curadas — ⛔ não há mais nada a curar"*.
 
-⛔ **⛔ Não há mais nada a curar no Senado sem mudar a fonte.** As 2 que entraram
-revertem um veto do lote 1 — o argumento está no `_leia` do arquivo.
+🔴 **As 52 eram 104.** As votações de PEC estavam classificadas como , porque
+o padrão continha  solto e *"Proposta de **Emenda** à Constituição"* casa com
+ele ([achado #31](achados/031-a-pec-estava-escondida-como-destaque.md)).
+
+| | Afirmado | Medido depois |
+|---|---:|---:|
+| Substantivas abertas do Senado | 52 | ⭐ **104** |
+| Candidatas novas com divisão ≥ 25% | 2 | ⭐ **10** |
+
+⭐ E as novas são de peso: **reforma tributária (PEC 45)**, número de deputados federais,
+crédito fiscal de subvenção.
+
+⚠️ **A lição ⛔ não é sobre o Senado.** É que "esgotado" foi afirmado a partir de um
+recorte cuja construção ⛔ não tinha sido conferida — a regra do projeto, aplicada a si
+mesma: *antes de afirmar um número, meça, e diga de onde ele veio*.
 
 ---
 

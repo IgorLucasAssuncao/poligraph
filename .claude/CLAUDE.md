@@ -194,8 +194,10 @@ e Agência Brasil).
 > é **OFERECIDO** (24), ⛔ não do poço (50) — sobre o poço daria 30 respostas num
 > questionário de 24. 📐 A conta toda em [`PENDENCIAS`](../docs/PENDENCIAS.md).
 >
-> ⛔ **O Senado está esgotado:** das 52 substantivas abertas da 57ª, 39 dividem menos de
-> 5% e o resto é secreto. ⛔ Não há mais o que curar lá sem mudar a fonte.
+> ⚠️ **O Senado ⛔ NÃO estava esgotado** — a conclusão de 29/08 caiu no mesmo dia. As
+> PECs estavam classificadas como destaque ([achado #31](../docs/achados/031-a-pec-estava-escondida-como-destaque.md)),
+> e o universo dobrou: **52 → 104** substantivas abertas, **2 → 10** candidatas novas com
+> divisão ≥25% — incluindo a reforma tributária.
 
 ### 🔑 Chaves que o ambiente pede
 

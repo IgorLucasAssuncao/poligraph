@@ -8,7 +8,7 @@ const VIZINHOS = 5;
  * O grafo dito em palavras.
  *
  * 🔴 **Um `<canvas>` com `role="img"` é um beco sem saída.** O leitor de tela anuncia
- * "Grafo de 643 parlamentares e 5.212 ligações" e ⛔ não há mais nada: ⛔ não dá para
+ * "Grafo de 643 parlamentares e 5.259 ligações" e ⛔ não há mais nada: ⛔ não dá para
  * percorrer, ⛔ não dá para saber quem está perto de quem. O desenho inteiro fica
  * inacessível, e a informação que ele carrega ⛔ não existe em nenhum outro lugar da
  * página.
