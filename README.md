@@ -34,6 +34,8 @@ exibia o maior até 29/08.
 | **Arestas** | 5.259 | 595 |
 | **Comunidades detectadas** | 17 | 24 |
 | ⭐ **Perguntas curadas no poço** | **41** | **9** |
+| **Proposições com ementa** | 683 | **359** |
+| **Votações com a ementa ligada** | 1.587 (99,6%) | ⭐ **421 (100%)** |
 
 As duas casas geram grafos **independentes**, e nenhuma aresta liga deputado a senador:
 elas não votam as mesmas matérias, então não há denominador para comparar um com o outro

@@ -72,7 +72,7 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | ~~API4~~ | ✅ **Resolvida** — cosseno no grafo, concordância simples na tela (plano/07 §4.5) | — | — |
 | 🟡 **PL44** | 🔄 **Avançou** — a ingestão deduz a legislatura pela data e as **consultas já filtram** (PL35 ✅). ⛔ Falta a parte de **produto**: o que a tela mostra na virada, e o que acontece com quem respondeu o questionário na 57ª. ⏳ **A 57ª termina em janeiro de 2027** | 🟡 Média | 🟢 Decisão |
 | 🟡 **PL45** | **🆕 9 autores de emenda ambíguos aguardam decisão humana** — a porta de entrada já existe (`emendas --resolver`), mas quem decide é uma pessoa. Lista completa abaixo | 🟡 Média | 🟢 Minutos |
-| 🔴 **PL50** | **🆕 O Senado ⛔ não tem ementa nenhuma** — 421 votações, **0 com proposição vinculada**. A ficha de senador mostra *"Votação nominal do Projeto de Lei nº 4.614, nos termos do parecer"* e mais nada. É o mesmo buraco que a PL40 fechou na Câmara, intocado aqui. ⚠️ Esbarra numa decisão de schema — detalhe abaixo | 🔴 Alta | 🟡 Horas |
+| 🟢 **PL50** | ✅ **Resolvida (2026-08-29)** — 359 matérias do Senado ingeridas, **421 de 421 votações vinculadas (100%)**. A colisão de id foi resolvida com chave composta `(casa, id)`, ⛔ não com deslocamento aritmético. Detalhe abaixo | 🟢 Baixa | — |
 | 🟡 **PL47** | **🆕 92 deputados sem nenhuma emenda vinculada** — emenda individual é **impositiva desde 2015**, então mandato inteiro sem nenhuma é suspeito. Detalhe abaixo | 🟡 Média | 🟡 Horas |
 | 🔵 **PL46** | **🆕 83 autores de emenda são senadores** — resolvem-se sozinhos quando a [PL42](#) trouxer o Senado, porque o código do autor é de **mandato** e vale para as duas casas ([achado #24](achados/024-codigo-da-emenda-identifica-o-mandato.md)) | 🔵 Futuro | — |
 | ~~PL35~~ | ✅ **Resolvida (2026-08-27)** — `Legislaturas` DERIVA a legislatura do dado, nunca de configuração. `TestesLegislatura` semeia **duas** legislaturas e prova que a segunda ⛔ não vaza; as três mutações matam os três filtros. § abaixo mantido como registro | — | — |
@@ -85,9 +85,30 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | 🟡 **PL40** | **`proposicoes` nunca é ingerida** — o CSV de votações traz só o `id` da proposição, sem sigla/número/ano/ementa. Hoje o `proposicao_id` é anulado. 🔴 Bloqueia a **RF-30** (exibir a ementa original ao lado da pergunta) | 🟡 Média | 🟡 Horas |
 | ~~PL38~~ | ✅ **Resolvida (2026-08-26)** — `arestas_grafo` e `nos_metrica` gravadas; Louvain + layout de molas com semente fixa; 30 comunidades em 655 nós. ⚠️ `governismo` e `disciplina` seguem nulos: dependem de `votacoesOrientacoes`, ainda não ingerido | — | — |
 
-### 🔴 PL50 — o Senado ⛔ não tem ementa, e o id colide
+### ✅ PL50 (resolvida em 2026-08-29) — a ementa do Senado entrou
 
 **Medido em 2026-08-29.**
+
+⚠️ **⛔ NÃO é limitação da fonte** — ao contrário dos achados
+[#17](achados/017-senado-maioria-secreta.md), [#24](achados/024-codigo-da-emenda-identifica-o-mandato.md)
+e [#28](achados/028-o-senado-nao-publica-orientacao-de-bancada.md), onde o Senado
+publica **menos** que a Câmara. Aqui ele publica **mais**: `/materia/{codigo}` devolve
+`EmentaMateria` **e** `IndexacaoMateria`, o vocabulário controlado que diz o assunto — a
+Câmara ⛔ não tem equivalente no CSV.
+
+⭐ A lacuna é **nossa**: `proposicoes.py` tem `CASA = "CAMARA"` e lê só o CSV da Câmara.
+⛔ Ninguém escreveu o caminho do Senado.
+
+📐 A mesma votação, nos dois lugares:
+
+> **No banco** — `SF-7101`, ementa `NULL`:
+> *"Votação nominal do Substitutivo da Câmara dos Deputados ao Projeto de Lei
+> Complementar nº 124, de 2022, na forma do texto consolidado apresentado pelo parecer."*
+>
+> **Na fonte** — matéria 171682, `PLP 124/2022`:
+> *"Altera o Código Tributário Nacional, a fim de estabelecer normas gerais sobre solução
+> de controvérsias, consensualidade e processo administrativo em matéria tributária e
+> aduaneira."*
 
 | | |
 |---|---:|
@@ -115,16 +136,48 @@ Senado** — colisão é questão de tempo, ⛔ não hipótese. E uma colisão �
 vincularia a votação do Senado à **ementa de um projeto da Câmara**, e a ficha exibiria
 um assunto plausível e errado.
 
-#### As saídas, e o que cada uma custa
+#### ✅ A saída escolhida: chave composta `(casa, id)`
 
-| Caminho | Custo | Objeção |
-|---|---|---|
-| ⭐ **`fonte` em `proposicoes`**, chave `(fonte, id_externo)` | migration + FK composta em `votacoes` | ⭐ É o idioma que o projeto já usa em `pessoa_fonte_ids`. ⚠️ Mudança destrutiva = **dois deploys** |
-| **Deslocar o id do Senado** (`+ 1.000.000.000`) | ⛔ nenhuma migration | Namespace por aritmética. ⭐ Fica explícito com um `CHECK`, mas ⛔ continua implícito na leitura |
-| **Tabela separada** `materias_senado` | migration | Duplica a mesma entidade por causa da numeração |
+⭐ **⛔ Não foi preciso coluna nova em `votacoes`** — a chave estrangeira usa a `casa` que
+a votação **já tem**, e que já carrega o valor certo:
 
-🔴 **Decisão do autor.** ⛔ Nenhuma das três é errada, e a escolha muda o esforço de
-horas para um ciclo de dois deploys.
+```sql
+ALTER TABLE proposicoes ADD casa text NOT NULL DEFAULT 'CAMARA';
+ALTER TABLE proposicoes ALTER COLUMN casa DROP DEFAULT;
+ALTER TABLE proposicoes ADD CONSTRAINT ak_proposicoes_casa_id PRIMARY KEY (casa, id);
+ALTER TABLE votacoes ADD CONSTRAINT fk_votacoes_proposicoes_casa_proposicao_id
+    FOREIGN KEY (casa, proposicao_id) REFERENCES proposicoes (casa, id);
+```
+
+⛔ **Descartadas:** deslocar o id do Senado (`+ 1e9`) seria namespace por aritmética,
+implícito na leitura; tabela separada duplicaria a mesma entidade por causa da numeração.
+
+🔴 **O `DROP DEFAULT` ⛔ não é detalhe.** O `'CAMARA'` existe só para preencher as 683
+linhas antigas — todas da Câmara, porque só ela era ingerida. Mantê-lo faria um `INSERT`
+sem `casa` cair silenciosamente na Câmara, e uma matéria do Senado gravada assim viraria
+proposição da casa errada **sem erro nenhum**.
+
+⚠️ **O scaffold do EF gerou `defaultValue: ""`**, o que teria feito a migration falhar:
+com `casa = ''` o `AddForeignKey` ⛔ não acharia linha para os 1.587 vínculos existentes
+— e num banco com dado real ela falharia **depois** de já ter derrubado a chave antiga.
+
+#### 🔴 A chave estrangeira ⛔ não basta
+
+⚠️ A FK garante que o **vínculo** seja da mesma casa. Um `SELECT` que ligue as tabelas
+apenas por `id` lê a linha errada **assim mesmo**. Dois lugares tinham esse ponto cego e
+foram fechados junto:
+
+| Onde | O que faria |
+|---|---|
+| `curadoria.py` | Mostraria a ementa de um projeto da Câmara ao lado de uma votação do Senado |
+| `persistencia.desconectar_proposicoes_ausentes` | Uma proposição da Câmara faria a do Senado **parecer existente**, o vínculo sobreviveria à limpeza e a FK derrubaria a ingestão do ano |
+
+#### 📐 O resultado
+
+| | Câmara | Senado |
+|---|---:|---:|
+| Proposições | 683 | **359** |
+| Votações vinculadas | 1.587 de 1.594 (99,6%) | ⭐ **421 de 421 (100%)** |
 
 ---
 

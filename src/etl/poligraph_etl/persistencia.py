@@ -106,14 +106,21 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
 def gravar_proposicoes(
     conexao: psycopg.Connection, proposicoes: Sequence[dict]
 ) -> int:
-    """Grava proposições. `ON CONFLICT DO UPDATE` — a Câmara corrige ementa retroativa."""
+    """Grava proposições. `ON CONFLICT DO UPDATE` — a Câmara corrige ementa retroativa.
+
+    🔴 A chave é `(casa, id)`, ⛔ não `id`. As duas fontes numeram no mesmo espaço: a
+    Câmara vai de 106.701 a 2.638.483 e o Senado de 121.883 a 175.446. Com `id` sozinho,
+    uma matéria do Senado sobrescreveria a ementa de um projeto da Câmara — e o defeito
+    ⛔ não daria erro, apareceria como um assunto plausível e errado na ficha.
+    """
     return _executar_em_lotes(
         conexao,
         """
-        INSERT INTO proposicoes (id, sigla_tipo, numero, ano, ementa, url_inteiro_teor)
-        VALUES (%(id)s, %(sigla_tipo)s, %(numero)s, %(ano)s, %(ementa)s,
+        INSERT INTO proposicoes (casa, id, sigla_tipo, numero, ano, ementa,
+                                 url_inteiro_teor)
+        VALUES (%(casa)s, %(id)s, %(sigla_tipo)s, %(numero)s, %(ano)s, %(ementa)s,
                 %(url_inteiro_teor)s)
-        ON CONFLICT (id) DO UPDATE SET
+        ON CONFLICT (casa, id) DO UPDATE SET
             sigla_tipo = EXCLUDED.sigla_tipo,
             numero = EXCLUDED.numero,
             ano = EXCLUDED.ano,
@@ -124,29 +131,43 @@ def gravar_proposicoes(
 
 
 def vincular_proposicoes(
-    conexao: psycopg.Connection, vinculo: dict[str, int]
+    conexao: psycopg.Connection, vinculo: dict[str, int], casa: str = "CAMARA"
 ) -> int:
     """Liga cada votação à sua proposição.
 
     ⚠️ Passo SEPARADO da gravação das votações, e ⛔ não uma coluna a mais no `INSERT`
     delas. A votação é ingerida antes de a proposição existir — a FK recusaria a linha,
     e a ingestão inteira do ano cairia por causa de um vínculo.
+
+    🔴 O `casa` entra nas DUAS pontas do `WHERE`: a votação tem de ser daquela casa, e a
+    proposição também. ⛔ Sem isso, uma votação do Senado poderia apontar para uma
+    proposição da Câmara de mesmo número — que é exatamente a colisão que a chave
+    composta existe para impedir.
     """
     return _executar_em_lotes(
         conexao,
         """
         UPDATE votacoes SET proposicao_id = %(proposicao_id)s
          WHERE id = %(votacao_id)s
-           AND EXISTS (SELECT 1 FROM proposicoes p WHERE p.id = %(proposicao_id)s)
+           AND casa = %(casa)s
+           AND EXISTS (SELECT 1 FROM proposicoes p
+                        WHERE p.id = %(proposicao_id)s AND p.casa = %(casa)s)
         """,
-        [{"votacao_id": v, "proposicao_id": p} for v, p in vinculo.items()],
+        [
+            {"votacao_id": v, "proposicao_id": p, "casa": casa}
+            for v, p in vinculo.items()
+        ],
     )
 
 
 def desconectar_proposicoes_ausentes(
-    conexao: psycopg.Connection, votacoes: Sequence[dict]
+    conexao: psycopg.Connection, votacoes: Sequence[dict], casa: str = "CAMARA"
 ) -> int:
     """Zera `proposicao_id` que não existe na tabela `proposicoes`, e diz quantos.
+
+    🔴 A checagem é por `(casa, id)`, ⛔ não por `id`. As duas fontes numeram no mesmo
+    espaço: sem a casa, uma proposição da Câmara faria a do Senado parecer existente, o
+    vínculo sobreviveria à limpeza e a chave estrangeira derrubaria a ingestão do ano.
 
     🔴 Sem isto a ingestão morre com `ForeignKeyViolation` na primeira votação — foi o
     que aconteceu na primeira execução real contra a Câmara.
@@ -173,7 +194,8 @@ def desconectar_proposicoes_ausentes(
     existentes = {
         linha[0]
         for linha in conexao.execute(
-            "SELECT id FROM proposicoes WHERE id = ANY(%s)", (list(ids),)
+            "SELECT id FROM proposicoes WHERE casa = %s AND id = ANY(%s)",
+            (casa, list(ids)),
         ).fetchall()
     }
 

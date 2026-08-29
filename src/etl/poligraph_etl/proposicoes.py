@@ -50,6 +50,7 @@ import logging
 log = logging.getLogger("poligraph")
 
 CASA = "CAMARA"
+CASA_SENADO = "SENADO"
 
 
 def para_linhas(
@@ -91,6 +92,9 @@ def para_linhas(
         #    dicionário deduplica; ⛔ não é acidente que a última leitura vença, porque
         #    o conteúdo é idêntico.
         proposicoes[proposicao_id] = {
+            # 🔴 Parte da chave — ver `gravar_proposicoes`. As duas fontes numeram no
+            #    mesmo espaço e as faixas se sobrepõem.
+            "casa": CASA,
             "id": proposicao_id,
             "sigla_tipo": _texto(registro.get("proposicao_siglaTipo")) or None,
             "numero": _inteiro_ou_nulo(registro.get("proposicao_numero")),
@@ -98,6 +102,51 @@ def para_linhas(
             "ementa": _texto(registro.get("proposicao_ementa")) or None,
             "url_inteiro_teor": None,
         }
+
+    return list(proposicoes.values()), vinculo
+
+
+def do_senado(materias, vinculo_bruto: dict[str, str]) -> tuple[list[dict], dict[str, int]]:
+    """As proposições do Senado, no mesmo formato das da Câmara.
+
+    ⚠️ **A forma da entrada é outra.** Na Câmara o vínculo vem embutido em cada linha do
+    CSV; aqui vêm duas coisas separadas: as matérias já baixadas de `/materia/{codigo}`
+    e o de-para `votacao_id -> codigo_materia` extraído da listagem de votações.
+
+    ⛔ Matéria sem código ou sem ementa é descartada: gravar linha sem ementa ⛔ não
+    resolve nada — a ficha continuaria mostrando o número.
+
+    📐 Medido em 2026-08-29: 421 votações do Senado apontam para **359 matérias
+    distintas**.
+    """
+    proposicoes: dict[int, dict] = {}
+
+    for materia in materias:
+        if not materia:
+            continue
+
+        codigo = _inteiro_ou_nulo(materia.get("codigo"))
+        ementa = _texto(materia.get("ementa"))
+        if codigo is None or not ementa:
+            continue
+
+        proposicoes[codigo] = {
+            "casa": CASA_SENADO,
+            "id": codigo,
+            "sigla_tipo": _texto(materia.get("sigla_tipo")) or None,
+            "numero": _inteiro_ou_nulo(materia.get("numero")),
+            "ano": _inteiro_ou_nulo(materia.get("ano")),
+            "ementa": ementa,
+            "url_inteiro_teor": None,
+        }
+
+    # ⭐ Só vincula o que foi de fato gravado: apontar para matéria descartada deixaria
+    #    `proposicao_id` preenchido e a FK recusaria a linha inteira.
+    vinculo = {
+        votacao_id: _inteiro_ou_nulo(codigo)
+        for votacao_id, codigo in vinculo_bruto.items()
+        if _inteiro_ou_nulo(codigo) in proposicoes
+    }
 
     return list(proposicoes.values()), vinculo
 

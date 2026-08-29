@@ -87,7 +87,13 @@ def candidatas(
                count(*) FILTER (WHERE v.valor = -1) AS nao
           FROM votacoes vt
           JOIN votos v ON v.votacao_id = vt.id
-          LEFT JOIN proposicoes p ON p.id = vt.proposicao_id
+          -- 🔴 `AND p.casa = vt.casa` ⛔ NÃO é redundante com a chave estrangeira.
+          --    A FK garante que o VÍNCULO seja da mesma casa; ligar apenas por `id`
+          --    leria a linha errada assim mesmo, porque as duas fontes numeram no
+          --    mesmo espaço e as faixas se sobrepõem. A curadoria mostraria a ementa
+          --    de um projeto da Câmara ao lado de uma votação do Senado.
+          LEFT JOIN proposicoes p
+                 ON p.id = vt.proposicao_id AND p.casa = vt.casa
          WHERE vt.casa = %s
            AND vt.legislatura = %s
            AND vt.plenario

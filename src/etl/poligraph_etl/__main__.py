@@ -328,6 +328,8 @@ def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
         if descartados:
             log.warning("  %d votos descartados: senador fora do de-para", descartados)
 
+        _materias_do_senado(conexao, votacoes_brutas)
+
         # Sigla nova é sinal de que o domínio mudou. Ela vira None e a ingestão segue,
         # mas o log precisa denunciar — senão a base encolhe sem ninguém perceber.
         novas = ingestao_senado.siglas_desconhecidas(votacoes_brutas)
@@ -801,6 +803,71 @@ def _curar(conexao: psycopg.Connection, casa: str, legislatura: int, limite: int
     log.info("")
     log.info("A afirmacao em linguagem leiga e a polaridade FINAL sao leitura humana.")
     log.info("Formato: src/Poligraph.Migrations/curadoria/perguntas-lote-1.json")
+
+
+def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]) -> None:
+    """A ementa das votações do Senado — o que a descrição ⛔ não diz.
+
+    ## 🔴 Por que
+
+    A descrição diz o NÚMERO do projeto:
+
+    > *"Votação nominal do Projeto de Lei Complementar nº 124, de 2022, nos termos do
+    > parecer."*
+
+    ⛔ Sem a matéria, os votos do Senado ⛔ não têm assunto nenhum — a ficha do senador
+    lista vinte linhas assim, e a curadoria do questionário vira adivinhação. É o mesmo
+    buraco que a PL40 fechou na Câmara.
+
+    ## ⚠️ Uma chamada por matéria
+
+    ⛔ Não há arquivo em lote: o Senado publica matéria a matéria. São ~360 chamadas por
+    carga completa, e por isso só se baixa o que ainda ⛔ não está no banco — recarregar
+    o ano inteiro toda vez custaria minutos sem trazer nada novo.
+    """
+    codigos = {}
+    for votacao in votacoes_brutas:
+        codigo = votacao.get("codigoMateria")
+        sessao = votacao.get("codigoSessaoVotacao")
+        if codigo and sessao:
+            codigos[f"SF-{sessao}"] = str(codigo)
+
+    if not codigos:
+        return
+
+    # ⭐ Só o que falta. A ementa ⛔ não muda depois de a matéria ser apresentada, e a
+    #    releitura custaria uma requisição por matéria a cada execução.
+    with conexao.cursor() as cursor:
+        cursor.execute(
+            "SELECT id FROM proposicoes WHERE casa = 'SENADO' AND id = ANY(%s)",
+            ([int(c) for c in set(codigos.values()) if c.isdigit()],),
+        )
+        ja_temos = {str(linha[0]) for linha in cursor.fetchall()}
+
+    faltam = sorted(set(codigos.values()) - ja_temos)
+    log.info("  %d matérias distintas, %d a baixar", len(set(codigos.values())), len(faltam))
+
+    materias = []
+    for posicao, codigo in enumerate(faltam, 1):
+        if posicao % 50 == 0:
+            log.info("    %d de %d...", posicao, len(faltam))
+        materias.append(senado.baixar_materia(codigo))
+
+    linhas, vinculo = proposicoes.do_senado(materias, codigos)
+
+    if linhas:
+        persistencia.gravar_proposicoes(conexao, linhas)
+
+    # 🔴 O vínculo cobre TODAS as votações do ano, ⛔ não só as recém-baixadas: matéria
+    #    já no banco continua precisando ser apontada pelas votações novas.
+    todas = {v: c for v, c in codigos.items()}
+    ligados = persistencia.vincular_proposicoes(
+        conexao,
+        {v: int(c) for v, c in todas.items() if c.isdigit()},
+        casa="SENADO",
+    )
+
+    log.info("  %d matérias gravadas, %d votações vinculadas", len(linhas), ligados)
 
 
 def _noticias(conexao: psycopg.Connection, limiar_de_exibicao: float) -> None:

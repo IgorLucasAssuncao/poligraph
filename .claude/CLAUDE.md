@@ -16,6 +16,7 @@
 | [`docs/plano/01-arquitetura.md`](../docs/plano/01-arquitetura.md) **§8** | A ordem de construção |
 | [`docs/plano/04-esqueleto.md`](../docs/plano/04-esqueleto.md) | Schema, EF Core e código de auth |
 | [`docs/04-contratos.md`](../docs/04-contratos.md) | **Cardinalidades medidas** — a fonte da verdade |
+| 📖 [`docs/glossario.md`](../docs/glossario.md) | **Termos e como se ligam** — e os pares que já viraram bug |
 
 > ⚠️ **Regra metodológica do projeto, escrita depois de errar várias vezes:**
 > **medir um ano e generalizar foi a origem de quase todos os erros cometidos aqui.**

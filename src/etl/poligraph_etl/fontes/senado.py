@@ -88,35 +88,65 @@ def baixar_senadores() -> list[dict]:
     ]
 
 
-def baixar_indexacao(codigo_materia: int) -> str:
-    """A indexação temática da matéria — o que a ementa quase nunca diz.
+def baixar_materia(codigo_materia: str) -> dict | None:
+    """A matéria inteira: ementa, identificação e indexação.
 
-    A ementa costuma ser a lista de leis alteradas: *"Altera dispositivos da Lei nº
-    7.210 (Lei de Execução Penal) e do Decreto-Lei nº 2.848 (Código Penal)"*. Isso não
-    permite escrever pergunta nenhuma.
+    ## 🔴 Por que isto existe
 
-    `IndexacaoMateria` é o vocabulário controlado do Senado e diz o assunto:
-    *"CAUSA DE DIMINUIÇÃO DE PENA, CRIME CONTRA AS INSTITUIÇÕES DEMOCRÁTICAS"* — que é a
-    dosimetria dos atos de 8 de janeiro, e aí a pergunta se escreve.
+    A descrição da votação do Senado ⛔ **não diz sobre o que ela é**:
 
-    Devolve string vazia em qualquer falha: é insumo de curadoria, e derrubar a listagem
-    inteira porque uma matéria não respondeu seria pior que listá-la sem indexação.
+    > *"Votação nominal do Substitutivo da Câmara dos Deputados ao Projeto de Lei
+    > Complementar nº 124, de 2022, na forma do texto consolidado apresentado pelo
+    > parecer."*
+
+    Isso diz o **número**. A matéria diz o assunto:
+
+    > *"Altera o Código Tributário Nacional, a fim de estabelecer normas gerais sobre
+    > solução de controvérsias, consensualidade e processo administrativo em matéria
+    > tributária e aduaneira."*
+
+    ⭐ **`IndexacaoMateria` é o vocabulário controlado do Senado** e a Câmara ⛔ não tem
+    equivalente no CSV — aqui o Senado publica **mais**, ⛔ não menos.
+
+    ## O que devolve
+
+    | Chave | De onde vem |
+    |---|---|
+    | `sigla_tipo` · `numero` · `ano` | `IdentificacaoMateria` |
+    | `ementa` | `DadosBasicosMateria.EmentaMateria` |
+    | `indexacao` | `DadosBasicosMateria.IndexacaoMateria` |
+
+    ⛔ **Devolve `None` em qualquer falha.** São ~360 chamadas por carga; derrubar a
+    ingestão inteira porque uma matéria ⛔ não respondeu seria trocar 359 boas por zero.
     """
     try:
         resposta = requests.get(
             f"{BASE}/materia/{codigo_materia}", headers=CABECALHOS, timeout=60
         )
         resposta.raise_for_status()
-        basicos = (
-            resposta.json()
-            .get("DetalheMateria", {})
-            .get("Materia", {})
-            .get("DadosBasicosMateria", {})
-        )
-    except (requests.RequestException, ValueError, AttributeError):
-        return ""
+        materia = resposta.json().get("DetalheMateria", {}).get("Materia", {})
+    except (requests.RequestException, ValueError, AttributeError) as erro:
+        log.warning("matéria %s não respondeu: %s", codigo_materia, erro)
+        return None
 
-    return " ".join((basicos.get("IndexacaoMateria") or "").split())
+    identificacao = materia.get("IdentificacaoMateria") or {}
+    basicos = materia.get("DadosBasicosMateria") or {}
+
+    return {
+        "codigo": _texto(identificacao.get("CodigoMateria")),
+        "sigla_tipo": _texto(identificacao.get("SiglaSubtipoMateria")),
+        # ⚠️ Vem com zeros à esquerda: "00124". `int` cuida disso; guardar o texto
+        #    faria "PLP 00124/2022" aparecer na tela.
+        "numero": _texto(identificacao.get("NumeroMateria")),
+        "ano": _texto(identificacao.get("AnoMateria")),
+        "ementa": _texto(basicos.get("EmentaMateria")),
+        "indexacao": _texto(basicos.get("IndexacaoMateria")),
+    }
+
+
+def _texto(valor) -> str:
+    """⚠️ Colapsa espaço: a ementa vem com quebra de linha DENTRO do campo."""
+    return "" if valor is None else " ".join(str(valor).split())
 
 
 def conferir_volume(votacoes: list[dict], ano: int) -> None:

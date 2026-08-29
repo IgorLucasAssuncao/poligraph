@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Poligraph.Api.Data;
 
@@ -108,7 +108,16 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         mb.Entity<VotacaoModel>(e =>
         {
             e.HasKey(x => x.Id);
-            e.HasOne(x => x.Proposicao).WithMany().HasForeignKey(x => x.ProposicaoId);
+            // 🔴 Chave estrangeira COMPOSTA — ver `ProposicaoModel.Casa`. A `Casa` da
+            //    votação entra na chave, e com isso uma votação do Senado ⛔ não
+            //    alcança proposição da Câmara nem por acidente.
+            //
+            // ⭐ `MATCH SIMPLE` é o padrão do Postgres: com `proposicao_id` nulo a
+            //    chave ⛔ não é cobrada, que é o caso das 7 votações sem vínculo.
+            e.HasOne(x => x.Proposicao)
+                .WithMany()
+                .HasForeignKey(x => new { x.Casa, x.ProposicaoId })
+                .HasPrincipalKey(p => new { p.Casa, p.Id });
             // 🔴 Guardado como TEXTO, ⛔ nunca como inteiro. A coluna é lida e escrita
             //    pelo ETL Python, e um enum persistido por ordinal transformaria
             //    'CAMARA' em 0 — a restrição do banco recusaria toda inserção, e o ETL
@@ -136,7 +145,9 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
 
         mb.Entity<ProposicaoModel>(e =>
         {
-            e.HasKey(x => x.Id);
+            // 🔴 (casa, id), ⛔ não id. As duas fontes numeram no mesmo espaço e as
+            //    faixas se sobrepõem — ver `ProposicaoModel.Casa`.
+            e.HasKey(x => new { x.Casa, x.Id });
             e.Property(x => x.Id).ValueGeneratedNever();
             // ano = 0 sinaliza PPP/parecer, não matéria real
             e.ToTable(t => t.HasCheckConstraint("ck_proposicao_ano", "ano IS NULL OR ano <> 0"));

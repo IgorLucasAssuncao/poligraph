@@ -5,6 +5,15 @@
 
 ---
 
+## 📖 Perdeu um termo?
+
+[**`glossario.md`**](glossario.md) — o que é *ementa*, *proposição*, *destaque*,
+*polaridade*, *poço*, e como cada um se liga aos outros. ⭐ Cada verbete diz **por que
+aquilo importa aqui**, ⛔ não só o que é — e a §2 lista os pares que **já produziram
+bug** por serem confundidos.
+
+---
+
 ## Por onde começar
 
 ```mermaid

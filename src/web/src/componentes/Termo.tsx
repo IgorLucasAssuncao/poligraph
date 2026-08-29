@@ -87,6 +87,23 @@ export const GLOSSARIO = {
       'Mostramos o partido do voto mais recente, porque trocar de partido é comum e ' +
       'o registro de cada voto guarda o partido daquele momento.',
   },
+  proposicao: {
+    rotulo: 'proposição',
+    explicacao:
+      ' O documento proposto: um projeto de lei, uma emenda à Constituição, uma medida ' +
+      'provisória. É identificado por sigla, número e ano — "PL 4133/2023". Uma mesma ' +
+      'proposição costuma ir a voto VÁRIAS vezes: o texto principal, um trecho ' +
+      'destacado, a redação final. Por isso duas linhas com o mesmo número podem ter ' +
+      'votos opostos sem contradição.',
+  },
+  ementa: {
+    rotulo: 'ementa',
+    explicacao:
+      ' O parágrafo que resume o que uma proposição faz, escrito por quem a apresentou. ' +
+      'É o que diz o ASSUNTO — o registro da votação diz apenas o número do projeto. ' +
+      'Sem a ementa, "Aprovado o Substitutivo ao Projeto de Lei nº 4.133" não informa ' +
+      'em que a pessoa votou.',
+  },
   plenario: {
     rotulo: 'plenário',
     explicacao:

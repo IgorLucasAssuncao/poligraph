@@ -108,3 +108,91 @@ def test_ementa_vazia_vira_nula_e_nao_string_vazia():
     lista, _ = proposicoes.para_linhas([linha(proposicao_ementa="  ")], CONHECIDAS)
 
     assert lista[0]["ementa"] is None
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 O Senado — outra fonte, outro namespace
+# ═══════════════════════════════════════════════════════════════════
+
+
+def materia(codigo="171682", **campos) -> dict:
+    base = {
+        "codigo": codigo,
+        "sigla_tipo": "PLP",
+        # ⚠️ A fonte manda com zeros à esquerda.
+        "numero": "00124",
+        "ano": "2022",
+        "ementa": "Altera o Código Tributário Nacional.",
+        "indexacao": "ALTERAÇÃO , LEGISLAÇÃO TRIBUTARIA",
+    }
+
+    return {**base, **campos}
+
+
+def test_a_casa_faz_parte_da_linha():
+    """🔴 As duas fontes numeram no mesmo espaço.
+
+    📐 Medido em 2026-08-29: a Câmara vai de 106.701 a 2.638.483 e o Senado de 121.883 a
+    175.446 — 3 proposições da Câmara já estão dentro da faixa do Senado. ⛔ Sem a casa
+    na chave, uma matéria sobrescreveria a ementa de um projeto da outra casa, e o
+    defeito ⛔ não daria erro: apareceria como assunto plausível e errado na ficha.
+    """
+    linhas, _ = proposicoes.do_senado([materia()], {"SF-1": "171682"})
+
+    assert linhas[0]["casa"] == "SENADO"
+    assert linhas[0]["id"] == 171682
+
+
+def test_zeros_a_esquerda_saem_do_numero():
+    """⚠️ Sem isto a tela mostraria "PLP 00124/2022"."""
+    linhas, _ = proposicoes.do_senado([materia()], {"SF-1": "171682"})
+
+    assert linhas[0]["numero"] == 124
+    assert linhas[0]["ano"] == 2022
+
+
+def test_a_ementa_e_o_que_importa():
+    linhas, _ = proposicoes.do_senado([materia()], {"SF-1": "171682"})
+
+    assert linhas[0]["ementa"] == "Altera o Código Tributário Nacional."
+
+
+def test_materia_sem_ementa_e_descartada():
+    """⛔ Gravar linha sem ementa ⛔ não resolve nada: a ficha continuaria no número."""
+    linhas, vinculo = proposicoes.do_senado([materia(ementa="")], {"SF-1": "171682"})
+
+    assert (linhas, vinculo) == ([], {})
+
+
+def test_materia_que_nao_respondeu_e_descartada():
+    """⛔ `baixar_materia` devolve None em falha — o tratamento ⛔ não pode estourar."""
+    linhas, vinculo = proposicoes.do_senado([None], {"SF-1": "171682"})
+
+    assert (linhas, vinculo) == ([], {})
+
+
+def test_vinculo_so_aponta_para_materia_gravada():
+    """🔴 Apontar para matéria descartada deixaria `proposicao_id` preenchido, e a chave
+    estrangeira recusaria a votação inteira.
+    """
+    linhas, vinculo = proposicoes.do_senado(
+        [materia()], {"SF-1": "171682", "SF-2": "999999"}
+    )
+
+    assert len(linhas) == 1
+    assert vinculo == {"SF-1": 171682}
+
+
+def test_varias_votacoes_da_mesma_materia():
+    """⭐ 421 votações apontam para 359 matérias: a mesma matéria vai a voto várias vezes."""
+    _, vinculo = proposicoes.do_senado(
+        [materia()], {"SF-1": "171682", "SF-2": "171682"}
+    )
+
+    assert vinculo == {"SF-1": 171682, "SF-2": 171682}
+
+
+def test_materia_repetida_grava_uma_vez():
+    linhas, _ = proposicoes.do_senado([materia(), materia()], {"SF-1": "171682"})
+
+    assert len(linhas) == 1

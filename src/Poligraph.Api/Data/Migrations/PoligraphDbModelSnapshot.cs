@@ -709,6 +709,10 @@ namespace Poligraph.Api.Data.Migrations
 
             modelBuilder.Entity("Poligraph.Api.Data.ProposicaoModel", b =>
                 {
+                    b.Property<string>("Casa")
+                        .HasColumnType("text")
+                        .HasColumnName("casa");
+
                     b.Property<long>("Id")
                         .HasColumnType("bigint")
                         .HasColumnName("id");
@@ -733,8 +737,8 @@ namespace Poligraph.Api.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("url_inteiro_teor");
 
-                    b.HasKey("Id")
-                        .HasName("pk_proposicoes");
+                    b.HasKey("Casa", "Id")
+                        .HasName("ak_proposicoes_casa_id");
 
                     b.ToTable("proposicoes", null, t =>
                         {
@@ -1036,8 +1040,8 @@ namespace Poligraph.Api.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_votacoes");
 
-                    b.HasIndex("ProposicaoId")
-                        .HasDatabaseName("ix_votacoes_proposicao_id");
+                    b.HasIndex("Casa", "ProposicaoId")
+                        .HasDatabaseName("ix_votacoes_casa_proposicao_id");
 
                     b.HasIndex("Casa", "Legislatura", "Plenario", "Categoria")
                         .HasDatabaseName("ix_votacao_matriz");
@@ -1316,8 +1320,8 @@ namespace Poligraph.Api.Data.Migrations
                 {
                     b.HasOne("Poligraph.Api.Data.ProposicaoModel", "Proposicao")
                         .WithMany()
-                        .HasForeignKey("ProposicaoId")
-                        .HasConstraintName("fk_votacoes_proposicoes_proposicao_id");
+                        .HasForeignKey("Casa", "ProposicaoId")
+                        .HasConstraintName("fk_votacoes_proposicoes_casa_proposicao_id");
 
                     b.Navigation("Proposicao");
                 });
