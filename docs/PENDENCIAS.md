@@ -72,6 +72,7 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | ~~API4~~ | ✅ **Resolvida** — cosseno no grafo, concordância simples na tela (plano/07 §4.5) | — | — |
 | 🟡 **PL44** | 🔄 **Avançou** — a ingestão deduz a legislatura pela data e as **consultas já filtram** (PL35 ✅). ⛔ Falta a parte de **produto**: o que a tela mostra na virada, e o que acontece com quem respondeu o questionário na 57ª. ⏳ **A 57ª termina em janeiro de 2027** | 🟡 Média | 🟢 Decisão |
 | 🟡 **PL45** | **🆕 9 autores de emenda ambíguos aguardam decisão humana** — a porta de entrada já existe (`emendas --resolver`), mas quem decide é uma pessoa. Lista completa abaixo | 🟡 Média | 🟢 Minutos |
+| 🔴 **PL50** | **🆕 O Senado ⛔ não tem ementa nenhuma** — 421 votações, **0 com proposição vinculada**. A ficha de senador mostra *"Votação nominal do Projeto de Lei nº 4.614, nos termos do parecer"* e mais nada. É o mesmo buraco que a PL40 fechou na Câmara, intocado aqui. ⚠️ Esbarra numa decisão de schema — detalhe abaixo | 🔴 Alta | 🟡 Horas |
 | 🟡 **PL47** | **🆕 92 deputados sem nenhuma emenda vinculada** — emenda individual é **impositiva desde 2015**, então mandato inteiro sem nenhuma é suspeito. Detalhe abaixo | 🟡 Média | 🟡 Horas |
 | 🔵 **PL46** | **🆕 83 autores de emenda são senadores** — resolvem-se sozinhos quando a [PL42](#) trouxer o Senado, porque o código do autor é de **mandato** e vale para as duas casas ([achado #24](achados/024-codigo-da-emenda-identifica-o-mandato.md)) | 🔵 Futuro | — |
 | ~~PL35~~ | ✅ **Resolvida (2026-08-27)** — `Legislaturas` DERIVA a legislatura do dado, nunca de configuração. `TestesLegislatura` semeia **duas** legislaturas e prova que a segunda ⛔ não vaza; as três mutações matam os três filtros. § abaixo mantido como registro | — | — |
@@ -83,6 +84,49 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | ~~PL41~~ | ✅ **Resolvida (2026-08-26)** — o seed foi **aposentado** por decisão do autor: com o ETL funcional, só o schema precisa ser inicializado. O semeador virou `Poligraph.Tests/Fixtures/DadosDeTeste.cs` | — | — |
 | 🟡 **PL40** | **`proposicoes` nunca é ingerida** — o CSV de votações traz só o `id` da proposição, sem sigla/número/ano/ementa. Hoje o `proposicao_id` é anulado. 🔴 Bloqueia a **RF-30** (exibir a ementa original ao lado da pergunta) | 🟡 Média | 🟡 Horas |
 | ~~PL38~~ | ✅ **Resolvida (2026-08-26)** — `arestas_grafo` e `nos_metrica` gravadas; Louvain + layout de molas com semente fixa; 30 comunidades em 655 nós. ⚠️ `governismo` e `disciplina` seguem nulos: dependem de `votacoesOrientacoes`, ainda não ingerido | — | — |
+
+### 🔴 PL50 — o Senado ⛔ não tem ementa, e o id colide
+
+**Medido em 2026-08-29.**
+
+| | |
+|---|---:|
+| Votações do Senado na 57ª | 421 |
+| 🔴 **Com proposição vinculada** | **0** |
+| Matérias distintas nas votações | 359 |
+| Chamadas a `/materia/{codigo}` para trazer tudo | 359 |
+
+⭐ **A fonte existe e já está no código.** `senado.baixar_indexacao` foi escrita para
+isto e está **órfã** desde então — ⛔ nenhum módulo a chama. O endpoint devolve `ementa`
+e `IndexacaoMateria`, que é o vocabulário controlado e diz o assunto.
+
+#### 🔴 O que trava: os dois ids vivem no mesmo namespace
+
+`proposicoes.id` é o id da proposição **na Câmara**. O Senado tem `codigoMateria`, que é
+outra numeração — e as faixas **se sobrepõem**:
+
+| | Faixa |
+|---|---|
+| Proposições da Câmara (683) | 106.701 a **2.638.483** |
+| 🔴 Códigos do Senado (359) | **121.883** a 175.446 |
+
+📐 **Colisões hoje: 0.** ⚠️ Mas **3 proposições da Câmara já estão dentro da faixa do
+Senado** — colisão é questão de tempo, ⛔ não hipótese. E uma colisão ⛔ não daria erro:
+vincularia a votação do Senado à **ementa de um projeto da Câmara**, e a ficha exibiria
+um assunto plausível e errado.
+
+#### As saídas, e o que cada uma custa
+
+| Caminho | Custo | Objeção |
+|---|---|---|
+| ⭐ **`fonte` em `proposicoes`**, chave `(fonte, id_externo)` | migration + FK composta em `votacoes` | ⭐ É o idioma que o projeto já usa em `pessoa_fonte_ids`. ⚠️ Mudança destrutiva = **dois deploys** |
+| **Deslocar o id do Senado** (`+ 1.000.000.000`) | ⛔ nenhuma migration | Namespace por aritmética. ⭐ Fica explícito com um `CHECK`, mas ⛔ continua implícito na leitura |
+| **Tabela separada** `materias_senado` | migration | Duplica a mesma entidade por causa da numeração |
+
+🔴 **Decisão do autor.** ⛔ Nenhuma das três é errada, e a escolha muda o esforço de
+horas para um ciclo de dois deploys.
+
+---
 
 ### 🟡 PL47 — 92 deputados sem nenhuma emenda vinculada
 
