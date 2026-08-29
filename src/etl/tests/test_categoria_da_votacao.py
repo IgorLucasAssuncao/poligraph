@@ -35,6 +35,8 @@ import pytest
 from poligraph_etl.normalizacao import (
     classificar_categoria,
     descricoes_nao_reconhecidas,
+    divergencias_de_destaque,
+    sigla_do_objeto,
 )
 
 # ⭐ Todas são frases REAIS, tiradas do banco com a legislatura 57 ingerida.
@@ -160,3 +162,46 @@ def test_o_canario_achou_o_que_a_leitura_humana_tinha_achado():
     foi votado. O canário chegou sozinho à mesma conclusão.
     """
     assert descricoes_nao_reconhecidas(["Resultado. Sim: 182; Não: 182; Abstenção: 2; Total: 366."])
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 O cruzamento com a sigla da fonte
+# ═══════════════════════════════════════════════════════════════════
+
+
+def test_extrai_a_sigla_do_objeto():
+    """⭐ `DTQ` é código CONTROLADO da Câmara — o único sinal estruturado sobre o tipo."""
+    assert sigla_do_objeto(
+        "Votação do DTQ 2 (PL): Destaque de Emenda de Plenário n. 2. (161, II)."
+    ) == "DTQ"
+
+
+def test_sem_sigla_devolve_nulo():
+    """⛔ É o caso mais COMUM — 682 de 996 —, e ⛔ não é erro."""
+    assert sigla_do_objeto("Votação em turno único.") is None
+    assert sigla_do_objeto(None) is None
+    assert sigla_do_objeto("") is None
+
+
+def test_divergencia_aparece_quando_a_fonte_diz_destaque_e_nos_nao():
+    """🔴 O caso real que motivou isto.
+
+    A votação `2613731-65` tinha descrição *"Resultado. Sim: 182; Não: 182"* — que ⛔ não
+    diz nada — e virou a pergunta `q-preco-abusivo`. A abertura dizia *"Votação do DTQ 2:
+    Destaque de Emenda de Plenário n. 2"*: voto num **destaque**, ⛔ não no projeto.
+
+    ⚠️ A pergunta foi removida da curadoria.
+    """
+    divergentes = divergencias_de_destaque([
+        {"id": "2613731-65", "categoria": "SUBSTANTIVA",
+         "abertura": "Votação do DTQ 2 (PL): Destaque de Emenda de Plenário n. 2."},
+    ])
+
+    assert [d[0] for d in divergentes] == ["2613731-65"]
+
+
+def test_concordancia_nao_vira_divergencia():
+    assert divergencias_de_destaque([
+        {"id": "x", "categoria": "DESTAQUE", "abertura": "Votação do DTQ 3: Destaque."},
+        {"id": "y", "categoria": "SUBSTANTIVA", "abertura": "Votação em turno único."},
+    ]) == []

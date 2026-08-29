@@ -179,6 +179,73 @@ _SUBSTANTIVA_RECONHECIDA = (
 )
 
 
+# 🔴 A sigla do objeto, no começo de `ultimaAberturaVotacao_descricao`.
+#
+#    "Votação do **DTQ** 2 (PL): Destaque de Emenda de Plenário n. 2. (161, II)."
+#
+# ⭐ `DTQ` é código CONTROLADO da Câmara, ⛔ não prosa. É o único sinal estruturado que a
+#    fonte oferece sobre o tipo do voto.
+_SIGLA_DA_ABERTURA = re.compile(r"^vota[çc][ãa]o\s+d[oa]\s+([A-Z]{2,5})\b", re.IGNORECASE)
+
+
+def sigla_do_objeto(abertura: str | None) -> str | None:
+    """A sigla do objeto votado, se a descrição da abertura a declarar.
+
+    ⛔ Devolve `None` quando ⛔ não há sigla — que é o caso mais comum, e ⛔ não é erro.
+    """
+    if not abertura:
+        return None
+
+    achado = _SIGLA_DA_ABERTURA.match(abertura.strip())
+
+    return achado.group(1).upper() if achado else None
+
+
+def divergencias_de_destaque(votacoes) -> list[tuple[str, str, str]]:
+    """Onde a sigla da fonte diz **destaque** e a nossa classificação diz outra coisa.
+
+    ## 🔴 Por que ⛔ NÃO substitui o classificador
+
+    📐 Medido em 2026-08-29, sobre as 1.594 votações da Câmara:
+
+    | | |
+    |---|---:|
+    | Com `ultimaAberturaVotacao_descricao` preenchido | 996 — **62,5%** |
+    | Com sigla no começo | 314 |
+    | ⛔ **Sem sigla** | **682** — e elas se dividem em SUBSTANTIVA (319) e PROCEDIMENTAL (331) |
+
+    ⛔ **A sigla ⛔ não separa mérito de rito.** E o campo é da última ABERTURA da sessão,
+    ⛔ não da votação: `2432423-87` e `2432423-88` compartilham a mesma. ⭐ Por isso ele é
+    **cruzamento**, ⛔ não fonte da verdade.
+
+    ## ⭐ O que ele pegou
+
+    🔴 A votação `2613731-65` tinha descrição *"Resultado. Sim: 182; Não: 182"* — que ⛔
+    não diz nada — e virou a pergunta `q-preco-abusivo`, marcada à mão como *"precisa de
+    conferência"*. A abertura dizia:
+
+    > *"Votação do **DTQ 2** (PL): Destaque de Emenda de Plenário n. 2. (161, II)."*
+
+    ⛔ Voto num **destaque de emenda**, ⛔ não no projeto. A pergunta foi removida.
+
+    ⚠️ Devolve `(id, nossa_categoria, abertura)` para leitura humana — ⛔ **não corrige
+    sozinho**: 14 das 18 divergências são "Destaque de Preferência", que é dispositivo de
+    rito dentro do trâmite de destaque, e classificá-las ⛔ não é decisão de regex.
+    """
+    divergentes = []
+
+    for votacao in votacoes:
+        abertura = votacao.get("abertura")
+        if sigla_do_objeto(abertura) != "DTQ":
+            continue
+        if votacao.get("categoria") == "DESTAQUE":
+            continue
+
+        divergentes.append((votacao.get("id"), votacao.get("categoria"), abertura))
+
+    return divergentes
+
+
 def descricoes_nao_reconhecidas(descricoes) -> list[str]:
     """As descrições que ⛔ não casam com padrão NENHUM — nem de rito, nem de destaque,
     nem de mérito.

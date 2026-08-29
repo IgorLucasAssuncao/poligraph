@@ -227,6 +227,26 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
                 len(orfas), (orfas[0] or "")[:90],
             )
 
+        # 🔴 Cruzamento com o ÚNICO sinal estruturado que a fonte dá sobre o tipo do
+        #    voto: a sigla no começo de `ultimaAberturaVotacao_descricao`.
+        #
+        # ⚠️ ⛔ NÃO corrige a categoria — o campo é da última abertura da SESSÃO, ⛔ não
+        #    da votação. Serve para a divergência aparecer, e foi assim que a votação
+        #    2613731-65 ("Resultado. Sim: 182; Não: 182") se revelou um destaque de
+        #    emenda depois de já ter virado pergunta.
+        aberturas = dict(
+            zip(df["id"], df.get("ultimaAberturaVotacao_descricao", []), strict=False)
+        )
+        divergentes = normalizacao.divergencias_de_destaque(
+            {**linha, "abertura": aberturas.get(linha["id"])} for linha in votacoes
+        )
+        if divergentes:
+            log.warning(
+                "  %d votações que a fonte abre como DTQ e nós ⛔ não classificamos como "
+                "DESTAQUE — confira antes de curar. A 1ª: %s",
+                len(divergentes), divergentes[0][0],
+            )
+
         # ⚠️ A votação entra SEM proposição: ela é ingerida antes de a proposição
         #    existir, e a FK recusaria a linha. O vínculo vem logo abaixo.
         persistencia.desconectar_proposicoes_ausentes(conexao, votacoes)
