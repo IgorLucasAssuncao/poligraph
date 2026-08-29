@@ -97,6 +97,32 @@ def test_procedimental_tem_peso_zero():
     assert PESO_CATEGORIA["PROCEDIMENTAL"] == 0.0
 
 
+def test_destaque_entra_na_matriz():
+    """🔴 O que sustenta o grafo ⛔ NÃO é o valor do peso: é o destaque estar dentro.
+
+    📐 Medido em 2026-08-29 sobre a matriz real (643 × 1.122), comparando os 10 vizinhos
+    mais próximos de cada deputado contra o peso atual:
+
+    | Peso | Sobreposição |
+    |---|---|
+    | 🔴 **0,0** | **2,00 de 10 (20%)** |
+    | 0,3 | 8,28 de 10 (82,8%) |
+    | 0,5 | 9,18 de 10 (91,8%) |
+    | 0,9 | 9,40 de 10 (94,0%) |
+    | 1,0 | 9,23 de 10 (92,3%) |
+
+    ⭐ **Qualquer valor entre 0,3 e 1,0 devolve 83% a 94% da mesma vizinhança** — o `0,7`
+    ⛔ não é escolha delicada. ⛔ **Zerar reescreve o grafo**: sobram 2 dos 10 vizinhos,
+    porque a matriz tem 422 destaques contra 141 substantivas.
+
+    ⚠️ Este teste ⛔ não trava o VALOR, de propósito — travar 0,7 fingiria uma precisão
+    que a medição desmente. Trava o que ela mostrou importar.
+
+    📐 [achado #30](../../../docs/achados/030-o-destaque-carrega-o-grafo.md)
+    """
+    assert PESO_CATEGORIA["DESTAQUE"] > 0.0
+
+
 def test_substantiva_pesa_mais_que_destaque_que_pesa_mais_que_autoridade():
     assert (
         PESO_CATEGORIA["SUBSTANTIVA"]
