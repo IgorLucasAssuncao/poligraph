@@ -5,6 +5,7 @@ import {
   obterGrafo,
   type Grafo,
   type ParlamentarAfim,
+  type Pergunta,
   type ResultadoAfinidade,
   type ResultadoPorCasa,
 } from '../api';
@@ -25,10 +26,21 @@ import { TelaDoGrafo } from './TelaDoGrafo';
 export function Resultado({
   resultado,
   aoRefazer,
+  perguntas,
 }: {
   resultado: ResultadoAfinidade;
   aoRefazer: () => void;
+  /**
+   * As perguntas que acabaram de ser respondidas, para o detalhe "em quais".
+   *
+   * ⚠️ Vêm de fora e não da resposta da API de propósito: a tela já as tem, e repetir
+   * 24 enunciados por parlamentar, para dez parlamentares, inflaria a resposta sem
+   * acrescentar nada.
+   */
+  perguntas: Pergunta[];
 }) {
+  const textos = new Map(perguntas.map((p) => [p.id, p.texto]));
+
   return (
     <>
       <CabecalhoDaColuna
@@ -43,7 +55,7 @@ export function Resultado({
       </p>
 
       {resultado.porCasa.map((casa) => (
-        <SecaoDaCasa key={casa.casa} casa={casa} />
+        <SecaoDaCasa key={casa.casa} casa={casa} textos={textos} />
       ))}
 
       <p className="aviso" role="note">
@@ -74,7 +86,13 @@ export function Resultado({
  * O grafo é por casa porque as duas não são comparáveis entre si: nenhuma aresta liga
  * deputado a senador, e a posição do cidadão sai da execução da própria casa.
  */
-function SecaoDaCasa({ casa }: { casa: ResultadoPorCasa }) {
+function SecaoDaCasa({
+  casa,
+  textos,
+}: {
+  casa: ResultadoPorCasa;
+  textos: Map<string, string>;
+}) {
   const [primeiro, ...demais] = casa.maisProximos;
   const grafo = useGrafo(casa.posicaoNoGrafo !== null, casa.casa);
   const [ampliado, setAmpliado] = useState(false);
@@ -93,7 +111,13 @@ function SecaoDaCasa({ casa }: { casa: ResultadoPorCasa }) {
         </small>
       </h2>
 
-      {primeiro && <Destaque parlamentar={primeiro} />}
+      {primeiro && (
+        <Destaque
+          parlamentar={primeiro}
+          textos={textos}
+          respondidasNaCasa={casa.perguntasRespondidas}
+        />
+      )}
 
       {grafo && casa.posicaoNoGrafo && (
         <div className="resultado-grafo">
@@ -181,7 +205,75 @@ function useGrafo(precisa: boolean, casa: ResultadoPorCasa['casa']): Grafo | nul
   return grafo;
 }
 
-function Destaque({ parlamentar }: { parlamentar: ParlamentarAfim }) {
+/**
+ * 🔴 A conta por extenso: EM QUAIS perguntas houve acordo.
+ *
+ * "Concordaram em 14 de 17" não é conferível — não dá para saber se os 14 foram nas
+ * perguntas que importam para quem responde ou nas de data comemorativa. Só a lista
+ * transforma o número em conta.
+ *
+ * ⚠️ Mostra também as que FICARAM DE FORA, com o motivo. O denominador é a parte que
+ * mais engana: 17 não é o número de perguntas do questionário, é quantas os dois
+ * responderam. Omitir isso faria "14 de 17" parecer um questionário de 17.
+ */
+function DetalheDaConta({
+  parlamentar,
+  textos,
+  respondidasNaCasa,
+}: {
+  parlamentar: ParlamentarAfim;
+  textos: Map<string, string>;
+  respondidasNaCasa: number;
+}) {
+  const foraDaConta = respondidasNaCasa - parlamentar.comparaveis;
+
+  return (
+    <details className="detalhe-conta">
+      <summary>Ver em quais perguntas</summary>
+
+      <ul className="lista-detalhe">
+        {parlamentar.acordou.map((id) => (
+          <li key={id} className="acordo">
+            <span aria-hidden="true">✓</span>
+            <span>
+              <span className="sr-apenas">Concordaram: </span>
+              {textos.get(id) ?? id}
+            </span>
+          </li>
+        ))}
+
+        {parlamentar.discordou.map((id) => (
+          <li key={id} className="desacordo">
+            <span aria-hidden="true">✗</span>
+            <span>
+              <span className="sr-apenas">Discordaram: </span>
+              {textos.get(id) ?? id}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      {foraDaConta > 0 && (
+        <p className="ajuda nota-fora-da-conta">
+          Outras <strong>{foraDaConta}</strong>{' '}
+          {foraDaConta === 1 ? 'pergunta ficou' : 'perguntas ficaram'} de fora da conta:
+          {foraDaConta === 1 ? ' ela' : ' elas'} tratam de votações em que{' '}
+          {parlamentar.nome.split(' ')[0]} não votou, ou em que você respondeu “Não sei”.
+        </p>
+      )}
+    </details>
+  );
+}
+
+function Destaque({
+  parlamentar,
+  textos,
+  respondidasNaCasa,
+}: {
+  parlamentar: ParlamentarAfim;
+  textos: Map<string, string>;
+  respondidasNaCasa: number;
+}) {
   return (
     <section className="destaque-resultado">
       <p className="rotulo-destaque">Quem mais votou como você</p>
@@ -201,6 +293,12 @@ function Destaque({ parlamentar }: { parlamentar: ParlamentarAfim }) {
         Vocês concordaram em <strong>{parlamentar.acordos}</strong> de{' '}
         <strong>{parlamentar.comparaveis}</strong> perguntas comparáveis
       </p>
+
+      <DetalheDaConta
+        parlamentar={parlamentar}
+        textos={textos}
+        respondidasNaCasa={respondidasNaCasa}
+      />
     </section>
   );
 }

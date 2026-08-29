@@ -98,7 +98,7 @@ export function Questionario() {
   );
 
   if (resultado) {
-    return <Resultado resultado={resultado} aoRefazer={recomecar} />;
+    return <Resultado resultado={resultado} aoRefazer={recomecar} perguntas={perguntas} />;
   }
 
   if (perguntas.length === 0) {

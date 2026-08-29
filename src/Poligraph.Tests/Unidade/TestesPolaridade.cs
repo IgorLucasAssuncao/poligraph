@@ -1,4 +1,4 @@
-using Poligraph.Api.Services;
+﻿using Poligraph.Api.Services;
 
 namespace Poligraph.Tests.Unidade;
 
@@ -106,5 +106,79 @@ public class TestesPolaridade
 
         Assert.Equal(1, resultado.Acordos);
         Assert.Equal(1, resultado.Comparaveis);   // ⭐ não 2
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // O detalhe — "em quais perguntas"
+    // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// 🔴 O detalhe corre o MESMO risco de polaridade que o total, e é pior quando erra:
+    /// um total invertido é um número plausível, mas uma lista invertida diz ao cidadão,
+    /// por escrito, que ele concordou justamente onde discordou.
+    /// </summary>
+    [Fact]
+    public void Detalhe_RespeitaAPolaridadeInvertida()
+    {
+        var respostas = new[] { new RespostaCidadao("q1", 1) };
+        var posicoes = new Dictionary<string, PosicaoParlamentar>
+        {
+            // Votou "Sim" numa votação em que Sim REJEITA a afirmação: discorda de quem
+            // respondeu "concordo".
+            ["q1"] = new(1, -1)
+        };
+
+        var detalhe = CalculadoraAfinidade.Detalhar(respostas, posicoes);
+
+        Assert.Empty(detalhe.Acordou);
+        Assert.Equal(["q1"], detalhe.Discordou);
+    }
+
+    /// <summary>
+    /// ⭐ As duas listas somadas dão <c>Comparaveis</c>, ⛔ nunca o total respondido —
+    /// é a mesma regra do denominador, e é o que permite a tela dizer quantas ficaram
+    /// de fora sem recontar nada.
+    /// </summary>
+    [Fact]
+    public void Detalhe_SomaBateComOsComparaveis()
+    {
+        var respostas = new[]
+        {
+            new RespostaCidadao("q1", 1),
+            new RespostaCidadao("q2", 1),
+            new RespostaCidadao("q3", 0),      // não sei
+            new RespostaCidadao("q4", 1)
+        };
+
+        var posicoes = new Dictionary<string, PosicaoParlamentar>
+        {
+            ["q1"] = new(1, 1),                // acordo
+            ["q2"] = new(-1, 1),               // desacordo
+            ["q3"] = new(1, 1),                // fora: o cidadão não opinou
+            ["q4"] = new(null, 1)              // fora: ausente
+        };
+
+        var resultado = CalculadoraAfinidade.Calcular(42, respostas, posicoes);
+        var detalhe = CalculadoraAfinidade.Detalhar(respostas, posicoes);
+
+        Assert.Equal(["q1"], detalhe.Acordou);
+        Assert.Equal(["q2"], detalhe.Discordou);
+        Assert.Equal(resultado.Comparaveis, detalhe.Acordou.Count + detalhe.Discordou.Count);
+    }
+
+    /// <summary>
+    /// ⛔ Pergunta que o parlamentar ⛔ não votou fica fora das DUAS listas. Aparecer em
+    /// "discordaram" seria afirmar uma posição que ele ⛔ nunca tomou.
+    /// </summary>
+    [Fact]
+    public void Detalhe_AusenteNaoApareceEmNenhumaDasListas()
+    {
+        var respostas = new[] { new RespostaCidadao("q1", 1) };
+        var posicoes = new Dictionary<string, PosicaoParlamentar> { ["q1"] = new(null, 1) };
+
+        var detalhe = CalculadoraAfinidade.Detalhar(respostas, posicoes);
+
+        Assert.Empty(detalhe.Acordou);
+        Assert.Empty(detalhe.Discordou);
     }
 }

@@ -2,7 +2,13 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { Resultado } from './Resultado';
-import type { ResultadoAfinidade } from '../api';
+import type { Pergunta, ResultadoAfinidade } from '../api';
+
+const PERGUNTAS: Pergunta[] = [
+  { id: 'q1', texto: 'Primeira afirmação.', ordem: 1, totalVotos: 400, totalPossivel: 513 },
+  { id: 'q2', texto: 'Segunda afirmação.', ordem: 2, totalVotos: 410, totalPossivel: 513 },
+  { id: 'q3', texto: 'Terceira afirmação.', ordem: 3, totalVotos: 420, totalPossivel: 513 },
+];
 
 const RESULTADO: ResultadoAfinidade = {
   totalPerguntasRespondidas: 3,
@@ -11,10 +17,19 @@ const RESULTADO: ResultadoAfinidade = {
       casa: 'CAMARA',
       perguntasRespondidas: 3,
       maisProximos: [
-        { pessoaId: 1, nome: 'Ana Ribeiro', partido: 'PARTIDO-A', uf: 'SP', acordos: 2, comparaveis: 3 },
+        {
+          pessoaId: 1,
+          nome: 'Ana Ribeiro',
+          partido: 'PARTIDO-A',
+          uf: 'SP',
+          acordos: 2,
+          comparaveis: 3,
+          acordou: ['q1', 'q3'],
+          discordou: ['q2'],
+        },
       ],
       maisDistantes: [
-        { pessoaId: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', uf: 'MG', acordos: 0, comparaveis: 3 },
+        { pessoaId: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', uf: 'MG', acordos: 0, comparaveis: 3, acordou: [], discordou: [] },
       ],
       // Sem execução do grafo não há posição — a tela omite o desenho, não inventa ponto.
       posicaoNoGrafo: null,
@@ -26,7 +41,7 @@ const RESULTADO: ResultadoAfinidade = {
 function renderizar() {
   return render(
     <MemoryRouter>
-      <Resultado resultado={RESULTADO} aoRefazer={vi.fn()} />
+      <Resultado resultado={RESULTADO} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
     </MemoryRouter>,
   );
 }
@@ -49,6 +64,58 @@ describe('Resultado', () => {
     // "67%" esconderia que a base foram 3 perguntas
     expect(container.textContent).not.toMatch(/\d+\s*%/);
     expect(container.textContent).not.toMatch(/0[.,]\d\d/);
+  });
+
+  /**
+   * 🔴 A invariante do projeto na tela: todo número vem com a conta que o produziu.
+   * "Concordaram em 2 de 3" não é conferível sem dizer em QUAIS — não dá para saber se
+   * os acordos foram nas perguntas que importam ou nas de data comemorativa.
+   */
+  it('diz em QUAIS perguntas houve acordo, e em quais não', () => {
+    const { container } = renderizar();
+
+    const texto = container.textContent!.replace(/\s+/g, ' ');
+
+    expect(texto).toMatch(/Primeira afirmação\./);
+    expect(texto).toMatch(/Terceira afirmação\./);
+    expect(texto).toMatch(/Segunda afirmação\./);
+  });
+
+  /**
+   * ⚠️ O denominador é a parte que mais engana. "2 de 3" parece um questionário de 3
+   * perguntas; na verdade 3 é quantas OS DOIS responderam. Quando sobra alguma fora da
+   * conta, a tela diz quantas e por quê.
+   */
+  it('explica quantas perguntas ficaram fora da conta', () => {
+    const comAusencia: ResultadoAfinidade = {
+      ...RESULTADO,
+      porCasa: [{ ...RESULTADO.porCasa[0], perguntasRespondidas: 5 }],
+    };
+
+    const { container } = render(
+      <MemoryRouter>
+        <Resultado resultado={comAusencia} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
+      </MemoryRouter>,
+    );
+
+    const texto = container.textContent!.replace(/\s+/g, ' ');
+
+    // 5 respondidas na casa - 3 comparáveis = 2 fora
+    expect(texto).toMatch(/Outras 2 perguntas ficaram de fora da conta/);
+    expect(texto).toMatch(/não votou|Não sei/);
+  });
+
+  /**
+   * ⛔ O leitor de tela ⛔ não recebe o ✓ e o ✗ — eles são `aria-hidden`. Sem o rótulo
+   * textual, quem ouve receberia a lista de afirmações sem saber quais foram acordo.
+   */
+  it('marca acordo e desacordo para quem usa leitor de tela', () => {
+    const { container } = renderizar();
+
+    const texto = container.textContent!;
+
+    expect(texto).toMatch(/Concordaram: Primeira afirmação\./);
+    expect(texto).toMatch(/Discordaram: Segunda afirmação\./);
   });
 
   it('mostra os mais distantes, não só os mais próximos', () => {
@@ -81,10 +148,10 @@ const DUAS_CASAS: ResultadoAfinidade = {
       casa: 'CAMARA',
       perguntasRespondidas: 6,
       maisProximos: [
-        { pessoaId: 1, nome: 'Ana Ribeiro', partido: 'PARTIDO-A', uf: 'SP', acordos: 5, comparaveis: 6 },
+        { pessoaId: 1, nome: 'Ana Ribeiro', partido: 'PARTIDO-A', uf: 'SP', acordos: 5, comparaveis: 6, acordou: [], discordou: [] },
       ],
       maisDistantes: [
-        { pessoaId: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', uf: 'MG', acordos: 1, comparaveis: 6 },
+        { pessoaId: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', uf: 'MG', acordos: 1, comparaveis: 6, acordou: [], discordou: [] },
       ],
       posicaoNoGrafo: null,
     },
@@ -92,7 +159,7 @@ const DUAS_CASAS: ResultadoAfinidade = {
       casa: 'SENADO',
       perguntasRespondidas: 2,
       maisProximos: [
-        { pessoaId: 9, nome: 'Célia Nunes', partido: 'PARTIDO-C', uf: 'BA', acordos: 2, comparaveis: 2 },
+        { pessoaId: 9, nome: 'Célia Nunes', partido: 'PARTIDO-C', uf: 'BA', acordos: 2, comparaveis: 2, acordou: [], discordou: [] },
       ],
       maisDistantes: [],
       posicaoNoGrafo: null,
@@ -104,7 +171,7 @@ describe('resultado com as duas casas', () => {
   function renderizarDuasCasas() {
     return render(
       <MemoryRouter>
-        <Resultado resultado={DUAS_CASAS} aoRefazer={vi.fn()} />
+        <Resultado resultado={DUAS_CASAS} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
       </MemoryRouter>,
     );
   }
@@ -150,7 +217,7 @@ describe('resultado com as duas casas', () => {
 
     const { container } = render(
       <MemoryRouter>
-        <Resultado resultado={semSenado} aoRefazer={vi.fn()} />
+        <Resultado resultado={semSenado} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
       </MemoryRouter>,
     );
 

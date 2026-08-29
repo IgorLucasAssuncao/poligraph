@@ -6,9 +6,29 @@ namespace Poligraph.Api.Endpoints;
 
 public record RequisicaoAfinidadeDto(IReadOnlyList<RespostaCidadao> Respostas);
 
-/// <summary>⛔ Sem percentual — a tela monta "concordou em X de Y" (RF-29).</summary>
+/// <summary>
+/// ⛔ Sem percentual — a tela monta "concordou em X de Y" (RF-29).
+///
+/// <para>
+/// ⭐ <c>Acordou</c> e <c>Discordou</c> são os ids das perguntas que produziram esse
+/// "X de Y". Sem eles o número ⛔ não é conferível: o cidadão ⛔ não tem como saber se
+/// os 14 acordos foram nas perguntas que ele considera importantes ou nas de data
+/// comemorativa.
+/// </para>
+///
+/// <para>
+/// ⚠️ Id, ⛔ não texto — o front acabou de mostrar os enunciados e já os tem.
+/// </para>
+/// </summary>
 public record ParlamentarAfimDto(
-    long PessoaId, string Nome, string Partido, string Uf, int Acordos, int Comparaveis);
+    long PessoaId,
+    string Nome,
+    string Partido,
+    string Uf,
+    int Acordos,
+    int Comparaveis,
+    IReadOnlyList<string> Acordou,
+    IReadOnlyList<string> Discordou);
 
 /// <summary>
 /// Onde o cidadão cai no grafo.
@@ -389,8 +409,10 @@ public static class EndpointsAfinidade
             porCasa.Add(new ResultadoPorCasaDto(
                 Casa: casa,
                 PerguntasRespondidas: daCasa.Count,
-                MaisProximos: Montar(resultados.OrderByDescending(r => r.Proporcao), fichas),
-                MaisDistantes: Montar(resultados.OrderBy(r => r.Proporcao), fichas),
+                MaisProximos: Montar(
+                    resultados.OrderByDescending(r => r.Proporcao), fichas, daCasa, votosPorPessoa),
+                MaisDistantes: Montar(
+                    resultados.OrderBy(r => r.Proporcao), fichas, daCasa, votosPorPessoa),
                 PosicaoNoGrafo: await PosicionarAsync(db, casa, resultados, daCasa.Count, ct)));
         }
 
@@ -634,17 +656,28 @@ public static class EndpointsAfinidade
             f => (f.NomeExibicao, f.Ultimo?.PartidoNoVoto ?? "", f.Ultimo?.UfNoVoto ?? ""));
     }
 
+    /// <summary>
+    /// ⚠️ O detalhe é calculado só para os <see cref="QuantidadeExibida"/> que aparecem,
+    /// ⛔ não para os ~640 do cálculo: são duas listas de ids por parlamentar, e gerá-las
+    /// para quem ⛔ não vai à tela seria trabalho jogado fora em toda requisição.
+    /// </summary>
     private static List<ParlamentarAfimDto> Montar(
         IOrderedEnumerable<ResultadoAfinidade> ordenados,
-        Dictionary<long, (string Nome, string Partido, string Uf)> fichas) =>
+        Dictionary<long, (string Nome, string Partido, string Uf)> fichas,
+        List<RespostaCidadao> respostas,
+        Dictionary<long, Dictionary<string, PosicaoParlamentar>> votosPorPessoa) =>
         ordenados
             .Take(QuantidadeExibida)
             .Select(r =>
             {
                 var ficha = fichas.GetValueOrDefault(r.PessoaId);
+                var detalhe = CalculadoraAfinidade.Detalhar(
+                    respostas,
+                    votosPorPessoa.GetValueOrDefault(r.PessoaId) ?? []);
+
                 return new ParlamentarAfimDto(
                     r.PessoaId, ficha.Nome ?? "", ficha.Partido ?? "", ficha.Uf ?? "",
-                    r.Acordos, r.Comparaveis);
+                    r.Acordos, r.Comparaveis, detalhe.Acordou, detalhe.Discordou);
             })
             .ToList();
 }

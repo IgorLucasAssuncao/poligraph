@@ -18,6 +18,13 @@ public readonly record struct ResultadoAfinidade(long PessoaId, int Acordos, int
 }
 
 /// <summary>
+/// Em quais perguntas o parlamentar concordou com o cidadão, e em quais não.
+/// ⚠️ As duas listas somadas dão <c>Comparaveis</c>, ⛔ nunca o total respondido.
+/// </summary>
+public readonly record struct DetalheDaAfinidade(
+    IReadOnlyList<string> Acordou, IReadOnlyList<string> Discordou);
+
+/// <summary>
 /// 🔴 O coração do sistema, e o lugar do bug mais perigoso dele.
 ///
 /// Em 14% das votações nominais "Sim" significa REJEITAR (destaques). Um sinal invertido
@@ -71,6 +78,44 @@ public static class CalculadoraAfinidade
         }
 
         return new ResultadoAfinidade(pessoaId, acordos, comparaveis);
+    }
+
+    /// <summary>
+    /// ⭐ Em QUAIS perguntas houve acordo, e em quais não.
+    ///
+    /// <para>
+    /// Existe porque "concordaram em 14 de 17" ⛔ não é auditável: o cidadão ⛔ não tem
+    /// como saber se as 14 foram as que ele considera importantes ou as de data
+    /// comemorativa. Devolver a lista transforma o número em conta conferível.
+    /// </para>
+    ///
+    /// <para>
+    /// ⚠️ Devolve o <b>id</b> da pergunta, ⛔ não o texto: o front já tem os textos, ele
+    /// acabou de mostrá-los. Repetir 24 enunciados por parlamentar, para dez
+    /// parlamentares, inflaria a resposta sem acrescentar informação.
+    /// </para>
+    ///
+    /// <para>
+    /// ⛔ Pergunta ⛔ não comparável fica fora das DUAS listas — ausência e "não sei" ⛔
+    /// não são discordância, e é a mesma regra que o denominador usa.
+    /// </para>
+    /// </summary>
+    public static DetalheDaAfinidade Detalhar(
+        IReadOnlyList<RespostaCidadao> respostas,
+        IReadOnlyDictionary<string, PosicaoParlamentar> posicoes)
+    {
+        List<string> acordou = [], discordou = [];
+
+        foreach (var resposta in respostas)
+        {
+            if (!posicoes.TryGetValue(resposta.PerguntaId, out var posicao)) continue;
+            if (!EComparavel(resposta.Valor, posicao)) continue;
+
+            if (PosicaoEfetiva(posicao) == resposta.Valor) acordou.Add(resposta.PerguntaId);
+            else discordou.Add(resposta.PerguntaId);
+        }
+
+        return new DetalheDaAfinidade(acordou, discordou);
     }
 
     /// <summary>

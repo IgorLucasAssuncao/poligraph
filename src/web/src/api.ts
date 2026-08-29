@@ -115,6 +115,16 @@ export type ParlamentarAfim = {
   /** ⭐ acordos e comparáveis, nunca percentual — a frase "X de Y" é montada aqui */
   acordos: number;
   comparaveis: number;
+  /**
+   * ⭐ Os ids das perguntas que produziram o "X de Y". Sem eles o número não é
+   * conferível: não dá para saber se os acordos foram nas perguntas que importam para
+   * quem responde ou nas de data comemorativa.
+   *
+   * ⚠️ Só vêm preenchidos para os que aparecem na tela — calcular para os ~640 do
+   * cálculo seria trabalho jogado fora.
+   */
+  acordou: string[];
+  discordou: string[];
 };
 
 /**
