@@ -73,6 +73,7 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | 🟡 **PL44** | 🔄 **Avançou** — a ingestão deduz a legislatura pela data e as **consultas já filtram** (PL35 ✅). ⛔ Falta a parte de **produto**: o que a tela mostra na virada, e o que acontece com quem respondeu o questionário na 57ª. ⏳ **A 57ª termina em janeiro de 2027** | 🟡 Média | 🟢 Decisão |
 | 🟡 **PL45** | **🆕 9 autores de emenda ambíguos aguardam decisão humana** — a porta de entrada já existe (`emendas --resolver`), mas quem decide é uma pessoa. Lista completa abaixo | 🟡 Média | 🟢 Minutos |
 | 🟢 **PL50** | ✅ **Resolvida (2026-08-29)** — 359 matérias do Senado ingeridas, **421 de 421 votações vinculadas (100%)**. A colisão de id foi resolvida com chave composta `(casa, id)`, ⛔ não com deslocamento aritmético. Detalhe abaixo | 🟢 Baixa | — |
+| 🔴 **PL51** | **🆕 O Smart App Control bloqueia os binários do projeto** — 193 bloqueios hoje, e `dotnet run` do AppHost ⛔ **não sobe mais**. ⚠️ ⛔ Não é bug do código: é política da máquina, e só o autor pode mudar. Detalhe abaixo | 🔴 **Bloqueia o dia a dia** | 🟢 Decisão |
 | 🟡 **PL47** | **🆕 92 deputados sem nenhuma emenda vinculada** — emenda individual é **impositiva desde 2015**, então mandato inteiro sem nenhuma é suspeito. Detalhe abaixo | 🟡 Média | 🟡 Horas |
 | 🔵 **PL46** | **🆕 83 autores de emenda são senadores** — resolvem-se sozinhos quando a [PL42](#) trouxer o Senado, porque o código do autor é de **mandato** e vale para as duas casas ([achado #24](achados/024-codigo-da-emenda-identifica-o-mandato.md)) | 🔵 Futuro | — |
 | ~~PL35~~ | ✅ **Resolvida (2026-08-27)** — `Legislaturas` DERIVA a legislatura do dado, nunca de configuração. `TestesLegislatura` semeia **duas** legislaturas e prova que a segunda ⛔ não vaza; as três mutações matam os três filtros. § abaixo mantido como registro | — | — |
@@ -178,6 +179,66 @@ foram fechados junto:
 |---|---:|---:|
 | Proposições | 683 | **359** |
 | Votações vinculadas | 1.587 de 1.594 (99,6%) | ⭐ **421 de 421 (100%)** |
+
+---
+
+### 🔴 PL51 — o Smart App Control bloqueia os binários do projeto
+
+**Medido em 2026-08-29.**
+
+⛔ **⛔ NÃO é defeito do código.** É política de segurança do Windows, e ⛔ nenhuma
+mudança no repositório contorna.
+
+#### O que acontece
+
+```
+Unhandled exception. System.IO.FileLoadException: Could not load file or assembly
+'…\Poligraph.Migrations\bin\Debug\net10.0\Poligraph.Migrations.dll'.
+Uma política de Controle de Aplicativo bloqueou este arquivo. (0x800711C7)
+```
+
+📐 Medido: **8 execuções seguidas, 8 bloqueadas.** ⛔ ⛔ Não é intermitente.
+
+| Evidência | |
+|---|---|
+| Registro do Windows | `Microsoft-Windows-CodeIntegrity/Operational`, eventos **3118** (*Smart App Control Block*), 3077 e 3033 |
+| Bloqueios registrados | **193**, o primeiro em **2026-08-29 01:02** |
+| Estado da política | `VerifiedAndReputablePolicyState = 1` — **imposição** |
+
+#### 🔴 O efeito prático
+
+| O quê | Estado |
+|---|---|
+| `dotnet build` | ✅ Compila normalmente |
+| `dotnet test` | ⛔ **Bloqueado** — a suíte roda em container (skill `testes` §6.1) |
+| 🔴 `dotnet run --project src/Poligraph.AppHost` | ⛔ **⛔ NÃO sobe** |
+
+⚠️ **O sintoma engana.** O Aspire ⛔ não diz "bloqueado": o `migracoes` sai com código
+diferente de zero, o `WaitForCompletion` marca a API como `FailedToStart`, e o painel
+fica de pé sem API nem front. ⭐ Parece **lentidão**, e foi lido como lentidão mais de
+uma vez.
+
+#### Por que só agora
+
+⚠️ **Todo `build` gera um arquivo novo**, e o SAC avalia por reputação: arquivo que ele
+⛔ não conhece é barrado. O binário que rodava antes tinha reputação; o recompilado ⛔
+não tem — e ⛔ **nunca terá**, porque cada build muda o conteúdo.
+
+⭐ Isso torna o problema **permanente**, ⛔ não transitório: ⛔ não adianta esperar.
+
+#### As saídas
+
+| Caminho | Custo | Objeção |
+|---|---|---|
+| ⭐ **Desligar o Smart App Control** | Um clique | 🔴 **Irreversível**: no Windows 11 ele só volta a ser ligado **reinstalando o sistema**. É o caminho normal em máquina de desenvolvimento |
+| **Assinar os binários** | Certificado de code signing | ⚠️ Custa dinheiro e ⛔ não resolve o `dotnet test` local |
+| **Rodar tudo em container** | Reescrever o fluxo local | ⛔ Joga fora o Aspire, que é a decisão de arquitetura do projeto |
+
+🔴 **Decisão do autor.** Enquanto ⛔ não for tomada, o ambiente local ⛔ **não sobe** —
+os testes seguem rodando pelo container.
+
+📐 Onde: *Configurações → Privacidade e segurança → Segurança do Windows → Controle de
+aplicativos e navegador → Controle de aplicativo inteligente*.
 
 ---
 
