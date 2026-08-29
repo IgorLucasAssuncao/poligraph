@@ -71,10 +71,61 @@ flowchart TD
 | ⚠️ **Poço de perguntas** | **Questionário** | Curar 22 perguntas novas empurrou o mínimo obrigatório de **17 para 30** — o questionário ficou **pior** por ter mais perguntas |
 | ⚠️ **Comunidade** | **Partido** | ARI = **0,272**. A comunidade descreve melhor a estrutura de voto — modularidade **0,557** contra **0,286** ([#26](achados/026-a-comunidade-nao-e-partido-nem-bloco.md)) |
 | ⚠️ **Concordância** | **Cosseno** | Duas métricas sobre o mesmo par. A **concordância** vai à tela porque é auditável; o **cosseno** fica no grafo |
+| 🔴 **Emenda** *(dinheiro)* | **Emenda** *(texto)* | ⛔ **Duas coisas sem relação nenhuma, com o mesmo nome.** Ver a §3.1 |
 
 ---
 
-## 3. O que se vota
+## 3. 🔴 A palavra "emenda" significa duas coisas
+
+⚠️ **⛔ Não são variações de um mesmo conceito — são assuntos sem relação nenhuma que
+dividem a palavra.** Confundi-las leva a perguntas como *"o peso do destaque afeta o
+dinheiro que o deputado destina?"*, cuja resposta é **⛔ não, de jeito nenhum**.
+
+| | **Emenda parlamentar** | **Emenda a projeto** |
+|---|---|---|
+| O que é | O **dinheiro** que o parlamentar destina do Orçamento | Uma alteração ao **texto** de um projeto em votação |
+| Nome completo | Emenda **orçamentária** / individual / de bancada | Emenda de plenário, de comissão, aglutinativa, de redação |
+| Onde vive | `emendas` · `autores_de_emenda` | `votacoes`, categoria `DESTAQUE` |
+| Ordem de grandeza | **24.825** emendas · R$ 70,8 bi | **327** votações de destaque na 57ª |
+| Entra na afinidade? | ⛔ **Nunca.** Povoa o perfil | ⭐ **Sim** — com peso 0,7 |
+| Na tela | Aba de contas do parlamentar | Lista de votos da ficha |
+
+⭐ **Um jeito de ⛔ não errar:** emenda **parlamentar** tem valor em reais e um
+**destino** (município, estado). Emenda **a projeto** tem número, autor e um **texto**.
+
+⚠️ A `Proposta de Emenda à Constituição` (**PEC**) é uma terceira coisa ainda: ⛔ não é
+alteração a um projeto, é alteração à **Constituição** — e é voto de **mérito**, ⛔ não de
+destaque. Confundi-la com emenda a projeto custou **73 votações** classificadas errado
+([#31](achados/031-a-pec-estava-escondida-como-destaque.md)).
+
+---
+
+## 3.1. Os quatro tipos de voto, e quanto cada um pesa
+
+📐 Medido em 2026-08-29, Câmara na legislatura 57. *"Na matriz"* = plenário e ⛔ não
+secreta, que é o recorte que a similaridade usa.
+
+| Categoria | Peso | Todas | Na matriz | O que é |
+|---|---:|---:|---:|---|
+| **SUBSTANTIVA** | **1,0** | 370 | 243 | O mérito do texto — o projeto em si |
+| **DESTAQUE** | **0,7** | 327 | 320 | Um **trecho** do texto, recortado para votar à parte |
+| **AUTORIDADE** | 0,3 | 1 | 1 | Sabatina — voto em **pessoa**, ⛔ não em política |
+| ⛔ **PROCEDIMENTAL** | **0,0** | 896 | 558 | Rito — urgência, retirada de pauta. **Descartadas** |
+
+🔴 **564 votações de fato pesam**, de 1.122 abertas em plenário. As 558 procedimentais
+entram na conta com peso zero: elas medem obstrução, ⛔ não posição.
+
+⚠️ **O peso ainda decai com o tempo:** `categoria × 0,86^anos`. Uma substantiva de três
+anos atrás vale **0,64** — menos que um destaque de hoje.
+
+🔴 **Os destaques são 320 dos 564 — 57% do que pesa.** ⭐ O grafo é construído mais sobre
+**disputa de trecho** do que sobre mérito de projeto
+([#30](achados/030-o-destaque-carrega-o-grafo.md)), e o texto do TCC precisa dizer isso:
+quem lê *"quem vota junto fica junto"* imagina projetos, e são emendas supressivas.
+
+---
+
+## 4. O que se vota
 
 | Termo | O que é | Onde vive | Por que importa aqui | No produto? |
 |---|---|---|---|---|
@@ -93,7 +144,7 @@ flowchart TD
 
 ---
 
-## 4. Como se compara
+## 5. Como se compara
 
 | Termo | O que é | Por que importa aqui | No produto? |
 |---|---|---|---|
@@ -110,7 +161,7 @@ flowchart TD
 
 ---
 
-## 5. O questionário
+## 6. O questionário
 
 | Termo | O que é | Por que importa aqui |
 |---|---|---|
@@ -123,7 +174,7 @@ flowchart TD
 
 ---
 
-## 6. O dinheiro — ⛔ não entra em afinidade nenhuma
+## 7. O dinheiro — ⛔ não entra em afinidade nenhuma
 
 ⚠️ **Nenhum termo desta seção participa do cálculo.** Eles povoam o perfil, e existem
 porque o critério do autor foi *o que ⛔ não se associa ao perfil do político ⛔ não entra*.
@@ -138,7 +189,7 @@ porque o critério do autor foi *o que ⛔ não se associa ao perfil do polític
 
 ---
 
-## 7. As pessoas e as fontes
+## 8. As pessoas e as fontes
 
 | Termo | O que é | Por que importa aqui |
 |---|---|---|
@@ -151,7 +202,7 @@ porque o critério do autor foi *o que ⛔ não se associa ao perfil do polític
 
 ---
 
-## 8. Onde cada termo mora no banco
+## 9. Onde cada termo mora no banco
 
 | Tabela | Guarda |
 |---|---|

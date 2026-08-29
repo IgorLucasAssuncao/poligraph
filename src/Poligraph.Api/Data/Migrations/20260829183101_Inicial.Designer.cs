@@ -12,8 +12,8 @@ using Poligraph.Api.Data;
 namespace Poligraph.Api.Data.Migrations
 {
     [DbContext(typeof(PoligraphDb))]
-    [Migration("20260827053436_DinheiroDoMandato")]
-    partial class DinheiroDoMandato
+    [Migration("20260829183101_Inicial")]
+    partial class Inicial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace Poligraph.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Poligraph.Api.Data.ArestaGrafo", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.ArestaGrafoModel", b =>
                 {
                     b.Property<long>("ExecucaoId")
                         .HasColumnType("bigint")
@@ -64,7 +64,7 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.AutorDeEmenda", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.AutorDeEmendaModel", b =>
                 {
                     b.Property<string>("Codigo")
                         .HasMaxLength(16)
@@ -103,7 +103,7 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.AvaliacaoQuestionario", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.AvaliacaoQuestionarioModel", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -147,7 +147,7 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Consentimento", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.ConsentimentoModel", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -194,7 +194,7 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Despesa", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.DespesaModel", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -260,7 +260,7 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Emenda", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.EmendaModel", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -342,7 +342,7 @@ namespace Poligraph.Api.Data.Migrations
                     b.ToTable("emendas", (string)null);
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Execucao", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.ExecucaoModel", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -389,11 +389,13 @@ namespace Poligraph.Api.Data.Migrations
 
                     b.ToTable("execucoes", null, t =>
                         {
+                            t.HasCheckConstraint("ck_execucao_casa", "casa IN ('CAMARA','SENADO')");
+
                             t.HasCheckConstraint("ck_execucao_status", "status IN ('EM_ANDAMENTO','CONCLUIDA','FALHOU')");
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.NoMetrica", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.NoMetricaModel", b =>
                 {
                     b.Property<long>("ExecucaoId")
                         .HasColumnType("bigint")
@@ -444,7 +446,7 @@ namespace Poligraph.Api.Data.Migrations
                     b.ToTable("nos_metrica", (string)null);
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Noticia", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.NoticiaModel", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -506,7 +508,7 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.NoticiaPessoa", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.NoticiaPessoaModel", b =>
                 {
                     b.Property<long>("NoticiaId")
                         .HasColumnType("bigint")
@@ -539,7 +541,7 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.NoticiaTema", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.NoticiaTemaModel", b =>
                 {
                     b.Property<long>("NoticiaId")
                         .HasColumnType("bigint")
@@ -555,7 +557,31 @@ namespace Poligraph.Api.Data.Migrations
                     b.ToTable("noticia_temas", (string)null);
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Pergunta", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.OrientacaoModel", b =>
+                {
+                    b.Property<string>("VotacaoId")
+                        .HasColumnType("text")
+                        .HasColumnName("votacao_id");
+
+                    b.Property<string>("Bancada")
+                        .HasColumnType("text")
+                        .HasColumnName("bancada");
+
+                    b.Property<string>("Orientacao")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("orientacao");
+
+                    b.HasKey("VotacaoId", "Bancada")
+                        .HasName("pk_orientacoes");
+
+                    b.ToTable("orientacoes", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_orientacao_nao_vazia", "orientacao <> ''");
+                        });
+                });
+
+            modelBuilder.Entity("Poligraph.Api.Data.PerguntaModel", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text")
@@ -596,7 +622,46 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Pessoa", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.PessoaFonteIdModel", b =>
+                {
+                    b.Property<string>("Fonte")
+                        .HasColumnType("text")
+                        .HasColumnName("fonte");
+
+                    b.Property<string>("IdExterno")
+                        .HasColumnType("text")
+                        .HasColumnName("id_externo");
+
+                    b.Property<float?>("Confianca")
+                        .HasColumnType("real")
+                        .HasColumnName("confianca");
+
+                    b.Property<string>("Metodo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("metodo");
+
+                    b.Property<long>("PessoaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("pessoa_id");
+
+                    b.HasKey("Fonte", "IdExterno")
+                        .HasName("pk_pessoa_fonte_ids");
+
+                    b.HasIndex("PessoaId")
+                        .HasDatabaseName("ix_pessoa_fonte_ids_pessoa_id");
+
+                    b.ToTable("pessoa_fonte_ids", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_confianca", "confianca IS NULL OR (confianca BETWEEN 0 AND 1)");
+
+                            t.HasCheckConstraint("ck_fonte", "fonte IN ('CAMARA','SENADO','TSE')");
+
+                            t.HasCheckConstraint("ck_metodo", "metodo IN ('CPF','FUZZY','MANUAL')");
+                        });
+                });
+
+            modelBuilder.Entity("Poligraph.Api.Data.PessoaModel", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -645,47 +710,12 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.PessoaFonteId", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.ProposicaoModel", b =>
                 {
-                    b.Property<string>("Fonte")
+                    b.Property<string>("Casa")
                         .HasColumnType("text")
-                        .HasColumnName("fonte");
+                        .HasColumnName("casa");
 
-                    b.Property<string>("IdExterno")
-                        .HasColumnType("text")
-                        .HasColumnName("id_externo");
-
-                    b.Property<float?>("Confianca")
-                        .HasColumnType("real")
-                        .HasColumnName("confianca");
-
-                    b.Property<string>("Metodo")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("metodo");
-
-                    b.Property<long>("PessoaId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("pessoa_id");
-
-                    b.HasKey("Fonte", "IdExterno")
-                        .HasName("pk_pessoa_fonte_ids");
-
-                    b.HasIndex("PessoaId")
-                        .HasDatabaseName("ix_pessoa_fonte_ids_pessoa_id");
-
-                    b.ToTable("pessoa_fonte_ids", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_confianca", "confianca IS NULL OR (confianca BETWEEN 0 AND 1)");
-
-                            t.HasCheckConstraint("ck_fonte", "fonte IN ('CAMARA','SENADO','TSE')");
-
-                            t.HasCheckConstraint("ck_metodo", "metodo IN ('CPF','FUZZY','MANUAL')");
-                        });
-                });
-
-            modelBuilder.Entity("Poligraph.Api.Data.Proposicao", b =>
-                {
                     b.Property<long>("Id")
                         .HasColumnType("bigint")
                         .HasColumnName("id");
@@ -710,8 +740,8 @@ namespace Poligraph.Api.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("url_inteiro_teor");
 
-                    b.HasKey("Id")
-                        .HasName("pk_proposicoes");
+                    b.HasKey("Casa", "Id")
+                        .HasName("ak_proposicoes_casa_id");
 
                     b.ToTable("proposicoes", null, t =>
                         {
@@ -719,7 +749,7 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.ReceitaDeCampanha", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.ReceitaDeCampanhaModel", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -775,7 +805,7 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Segue", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.SegueModel", b =>
                 {
                     b.Property<long>("UsuarioId")
                         .HasColumnType("bigint")
@@ -800,7 +830,7 @@ namespace Poligraph.Api.Data.Migrations
                     b.ToTable("segue", (string)null);
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Similaridade", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.SimilaridadeModel", b =>
                 {
                     b.Property<long>("ExecucaoId")
                         .HasColumnType("bigint")
@@ -847,7 +877,7 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.TokenEmail", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.TokenEmailModel", b =>
                 {
                     b.Property<string>("Token")
                         .HasColumnType("text")
@@ -884,7 +914,7 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Usuario", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.UsuarioModel", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -958,7 +988,7 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Votacao", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.VotacaoModel", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text")
@@ -1013,8 +1043,8 @@ namespace Poligraph.Api.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_votacoes");
 
-                    b.HasIndex("ProposicaoId")
-                        .HasDatabaseName("ix_votacoes_proposicao_id");
+                    b.HasIndex("Casa", "ProposicaoId")
+                        .HasDatabaseName("ix_votacoes_casa_proposicao_id");
 
                     b.HasIndex("Casa", "Legislatura", "Plenario", "Categoria")
                         .HasDatabaseName("ix_votacao_matriz");
@@ -1027,7 +1057,7 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Voto", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.VotoModel", b =>
                 {
                     b.Property<string>("VotacaoId")
                         .HasColumnType("text")
@@ -1064,23 +1094,23 @@ namespace Poligraph.Api.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.ArestaGrafo", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.ArestaGrafoModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Execucao", null)
+                    b.HasOne("Poligraph.Api.Data.ExecucaoModel", null)
                         .WithMany()
                         .HasForeignKey("ExecucaoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_arestas_grafo_execucoes_execucao_id");
 
-                    b.HasOne("Poligraph.Api.Data.Pessoa", null)
+                    b.HasOne("Poligraph.Api.Data.PessoaModel", null)
                         .WithMany()
                         .HasForeignKey("PessoaA")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_arestas_grafo_pessoas_pessoa_a");
 
-                    b.HasOne("Poligraph.Api.Data.Pessoa", null)
+                    b.HasOne("Poligraph.Api.Data.PessoaModel", null)
                         .WithMany()
                         .HasForeignKey("PessoaB")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1088,9 +1118,9 @@ namespace Poligraph.Api.Data.Migrations
                         .HasConstraintName("fk_arestas_grafo_pessoas_pessoa_b");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.AutorDeEmenda", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.AutorDeEmendaModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Pessoa", "Pessoa")
+                    b.HasOne("Poligraph.Api.Data.PessoaModel", "Pessoa")
                         .WithMany()
                         .HasForeignKey("PessoaId")
                         .OnDelete(DeleteBehavior.SetNull)
@@ -1099,9 +1129,9 @@ namespace Poligraph.Api.Data.Migrations
                     b.Navigation("Pessoa");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Consentimento", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.ConsentimentoModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Usuario", "Usuario")
+                    b.HasOne("Poligraph.Api.Data.UsuarioModel", "Usuario")
                         .WithMany("Consentimentos")
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1111,9 +1141,9 @@ namespace Poligraph.Api.Data.Migrations
                     b.Navigation("Usuario");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Despesa", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.DespesaModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Pessoa", "Pessoa")
+                    b.HasOne("Poligraph.Api.Data.PessoaModel", "Pessoa")
                         .WithMany()
                         .HasForeignKey("PessoaId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1123,9 +1153,9 @@ namespace Poligraph.Api.Data.Migrations
                     b.Navigation("Pessoa");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Emenda", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.EmendaModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Pessoa", "Pessoa")
+                    b.HasOne("Poligraph.Api.Data.PessoaModel", "Pessoa")
                         .WithMany()
                         .HasForeignKey("PessoaId")
                         .OnDelete(DeleteBehavior.SetNull)
@@ -1134,16 +1164,16 @@ namespace Poligraph.Api.Data.Migrations
                     b.Navigation("Pessoa");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.NoMetrica", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.NoMetricaModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Execucao", null)
+                    b.HasOne("Poligraph.Api.Data.ExecucaoModel", null)
                         .WithMany()
                         .HasForeignKey("ExecucaoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_nos_metrica_execucoes_execucao_id");
 
-                    b.HasOne("Poligraph.Api.Data.Pessoa", null)
+                    b.HasOne("Poligraph.Api.Data.PessoaModel", null)
                         .WithMany()
                         .HasForeignKey("PessoaId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1151,16 +1181,16 @@ namespace Poligraph.Api.Data.Migrations
                         .HasConstraintName("fk_nos_metrica_pessoas_pessoa_id");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.NoticiaPessoa", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.NoticiaPessoaModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Noticia", "Noticia")
+                    b.HasOne("Poligraph.Api.Data.NoticiaModel", "Noticia")
                         .WithMany("Pessoas")
                         .HasForeignKey("NoticiaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_noticia_pessoas_noticias_noticia_id");
 
-                    b.HasOne("Poligraph.Api.Data.Pessoa", "Pessoa")
+                    b.HasOne("Poligraph.Api.Data.PessoaModel", "Pessoa")
                         .WithMany()
                         .HasForeignKey("PessoaId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1172,9 +1202,9 @@ namespace Poligraph.Api.Data.Migrations
                     b.Navigation("Pessoa");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.NoticiaTema", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.NoticiaTemaModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Noticia", "Noticia")
+                    b.HasOne("Poligraph.Api.Data.NoticiaModel", "Noticia")
                         .WithMany()
                         .HasForeignKey("NoticiaId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1184,9 +1214,21 @@ namespace Poligraph.Api.Data.Migrations
                     b.Navigation("Noticia");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Pergunta", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.OrientacaoModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Votacao", "Votacao")
+                    b.HasOne("Poligraph.Api.Data.VotacaoModel", "Votacao")
+                        .WithMany()
+                        .HasForeignKey("VotacaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_orientacoes_votacoes_votacao_id");
+
+                    b.Navigation("Votacao");
+                });
+
+            modelBuilder.Entity("Poligraph.Api.Data.PerguntaModel", b =>
+                {
+                    b.HasOne("Poligraph.Api.Data.VotacaoModel", "Votacao")
                         .WithMany()
                         .HasForeignKey("VotacaoId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1196,9 +1238,9 @@ namespace Poligraph.Api.Data.Migrations
                     b.Navigation("Votacao");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.PessoaFonteId", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.PessoaFonteIdModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Pessoa", "Pessoa")
+                    b.HasOne("Poligraph.Api.Data.PessoaModel", "Pessoa")
                         .WithMany("FontesId")
                         .HasForeignKey("PessoaId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1208,9 +1250,9 @@ namespace Poligraph.Api.Data.Migrations
                     b.Navigation("Pessoa");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.ReceitaDeCampanha", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.ReceitaDeCampanhaModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Pessoa", "Pessoa")
+                    b.HasOne("Poligraph.Api.Data.PessoaModel", "Pessoa")
                         .WithMany()
                         .HasForeignKey("PessoaId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1220,16 +1262,16 @@ namespace Poligraph.Api.Data.Migrations
                     b.Navigation("Pessoa");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Segue", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.SegueModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Pessoa", "Pessoa")
+                    b.HasOne("Poligraph.Api.Data.PessoaModel", "Pessoa")
                         .WithMany()
                         .HasForeignKey("PessoaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_segue_pessoas_pessoa_id");
 
-                    b.HasOne("Poligraph.Api.Data.Usuario", "Usuario")
+                    b.HasOne("Poligraph.Api.Data.UsuarioModel", "Usuario")
                         .WithMany("Segue")
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1241,23 +1283,23 @@ namespace Poligraph.Api.Data.Migrations
                     b.Navigation("Usuario");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Similaridade", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.SimilaridadeModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Execucao", null)
+                    b.HasOne("Poligraph.Api.Data.ExecucaoModel", null)
                         .WithMany()
                         .HasForeignKey("ExecucaoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_similaridades_execucoes_execucao_id");
 
-                    b.HasOne("Poligraph.Api.Data.Pessoa", null)
+                    b.HasOne("Poligraph.Api.Data.PessoaModel", null)
                         .WithMany()
                         .HasForeignKey("PessoaA")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_similaridades_pessoas_pessoa_a");
 
-                    b.HasOne("Poligraph.Api.Data.Pessoa", null)
+                    b.HasOne("Poligraph.Api.Data.PessoaModel", null)
                         .WithMany()
                         .HasForeignKey("PessoaB")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1265,9 +1307,9 @@ namespace Poligraph.Api.Data.Migrations
                         .HasConstraintName("fk_similaridades_pessoas_pessoa_b");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.TokenEmail", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.TokenEmailModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Usuario", "Usuario")
+                    b.HasOne("Poligraph.Api.Data.UsuarioModel", "Usuario")
                         .WithMany()
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1277,26 +1319,26 @@ namespace Poligraph.Api.Data.Migrations
                     b.Navigation("Usuario");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Votacao", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.VotacaoModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Proposicao", "Proposicao")
+                    b.HasOne("Poligraph.Api.Data.ProposicaoModel", "Proposicao")
                         .WithMany()
-                        .HasForeignKey("ProposicaoId")
-                        .HasConstraintName("fk_votacoes_proposicoes_proposicao_id");
+                        .HasForeignKey("Casa", "ProposicaoId")
+                        .HasConstraintName("fk_votacoes_proposicoes_casa_proposicao_id");
 
                     b.Navigation("Proposicao");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Voto", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.VotoModel", b =>
                 {
-                    b.HasOne("Poligraph.Api.Data.Pessoa", "Pessoa")
+                    b.HasOne("Poligraph.Api.Data.PessoaModel", "Pessoa")
                         .WithMany("Votos")
                         .HasForeignKey("PessoaId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_votos_pessoas_pessoa_id");
 
-                    b.HasOne("Poligraph.Api.Data.Votacao", "Votacao")
+                    b.HasOne("Poligraph.Api.Data.VotacaoModel", "Votacao")
                         .WithMany("Votos")
                         .HasForeignKey("VotacaoId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1308,26 +1350,26 @@ namespace Poligraph.Api.Data.Migrations
                     b.Navigation("Votacao");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Noticia", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.NoticiaModel", b =>
                 {
                     b.Navigation("Pessoas");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Pessoa", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.PessoaModel", b =>
                 {
                     b.Navigation("FontesId");
 
                     b.Navigation("Votos");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Usuario", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.UsuarioModel", b =>
                 {
                     b.Navigation("Consentimentos");
 
                     b.Navigation("Segue");
                 });
 
-            modelBuilder.Entity("Poligraph.Api.Data.Votacao", b =>
+            modelBuilder.Entity("Poligraph.Api.Data.VotacaoModel", b =>
                 {
                     b.Navigation("Votos");
                 });

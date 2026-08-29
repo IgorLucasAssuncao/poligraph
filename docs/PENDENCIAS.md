@@ -180,6 +180,64 @@ foram fechados junto:
 | Proposições | 683 | **359** |
 | Votações vinculadas | 1.587 de 1.594 (99,6%) | ⭐ **421 de 421 (100%)** |
 
+
+---
+
+### ✅ PL48 (resolvida em 2026-08-29) — 12 migrations viraram uma
+
+Eram **12** arquivos, ⛔ não os 8 que esta pendência registrava — o número cresceu
+durante o desenvolvimento, que é exatamente o argumento para consolidar.
+
+| | |
+|---|---:|
+| Arquivos de migration | 12 → ⭐ **1** |
+| Linhas | 1.193 → 40 KB numa `Inicial` |
+| 🔴 Deploy já feito? | ⛔ **Não** — a PL3 (domínio) ainda bloqueia |
+
+⭐ **A janela estava aberta**, e ⛔ não estaria depois do primeiro deploy.
+
+#### 📐 Como foi conferido, e ⛔ não presumido
+
+⚠️ **Consolidar migration é reescrever o schema.** A verificação foi comparar o banco
+real contra um banco limpo criado só pela migration nova:
+
+```sql
+-- 397 definições de cada lado: colunas (tipo, nulidade, default),
+-- constraints (PK, FK, CHECK, UNIQUE) e índices
+SELECT 'COL ' || table_name || '.' || column_name || ' ' || data_type ...
+UNION ALL SELECT 'CON ' || conrelid::regclass || ' ' || pg_get_constraintdef(oid) ...
+UNION ALL SELECT 'IDX ' || tablename || ' ' || indexdef ...
+```
+
+| | |
+|---|---:|
+| Schema atual (12 migrations) | **397** definições |
+| Schema consolidado (1) | **397** definições |
+| 🔴 **Diferenças** | ⭐ **0** |
+
+⭐ E os **133 testes .NET** passam: eles criam Postgres novo e aplicam a migration, o que
+torna a validação de ponta a ponta, ⛔ não só um diff.
+
+#### ⚠️ O que se perde, e por que ⛔ não importa
+
+Os comentários dentro das migrations antigas — como a armadilha do `DROP DEFAULT` em
+`ProposicaoPorCasa` — somem. ⭐ Mas eles ⛔ não eram a fonte da verdade: o conteúdo vive
+nos achados e aqui, e o histórico literal segue no git.
+
+#### 🔴 O que isto NÃO resolve
+
+⚠️ A **PL49** continua aberta, e agora é o único item de migration: os arquivos seguem em
+`Poligraph.Api/Data/Migrations`, e ⛔ a API ⛔ nunca migra. ⭐ Consolidar deixou a mudança
+**mais barata** — é um arquivo a mover, ⛔ não doze.
+
+#### ⚠️ Foi preciso container para gerar
+
+🔴 A **PL51** bloqueou: `dotnet ef migrations add` ⛔ não roda nesta máquina, porque o
+Smart App Control barra o binário recém-compilado. O contorno do rebuild limpo ⛔ **não
+funcionou** desta vez — a geração saiu no container, pela mesma receita dos testes.
+
+⭐ Isso reclassifica a PL51: ela ⛔ não atrapalha só teste, ela **bloqueia trabalho de
+schema**.
 ---
 
 ### 🟡 PL51 — o Smart App Control barra binários recém-compilados
@@ -844,8 +902,8 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 | **CT3** | Escrever o OpenAPI da C13 e validar contra o front |
 | **PL16** | Como o ETL sinaliza `novas_votacoes` |
 | **PL31** | Definir o conteúdo do seed de desenvolvimento — quantos parlamentares, votações e perguntas |
-| **PL48** | **Avaliar simplificação de migrations** — são 8 arquivos para um schema que nunca foi a produção. Consolidar numa migration inicial só enquanto isso ainda é barato, ou manter o histórico? ⚠️ Depois do primeiro deploy a decisão deixa de existir |
-| **PL49** | **Mover as migrations para o projeto `Poligraph.Migrations`** — hoje elas moram em `Poligraph.Api/Data/Migrations`, e é `Poligraph.Api` quem o `dotnet ef` toma como projeto-alvo. ⛔ A API nunca migra (regra do CLAUDE.md), então o artefato está no projeto errado: quem aplica é o console |
+| ✅ ~~PL48~~ | **Resolvida (2026-08-29)** — consolidadas. Eram **12** arquivos, ⛔ não 8: o número cresceu durante o desenvolvimento. Viraram **uma** `Inicial`, com o schema conferido definição por definição. Detalhe abaixo |
+| 🔴 **PL49** | **Mover as migrations para o projeto `Poligraph.Migrations`** — hoje elas moram em `Poligraph.Api/Data/Migrations`, e é `Poligraph.Api` quem o `dotnet ef` toma como projeto-alvo. ⛔ A API nunca migra (regra do CLAUDE.md), então o artefato está no projeto errado: quem aplica é o console |
 | ~~PL32~~ | 🟢 Rebaixada — só texto principal foi a decisão; o texto das emendas deixou de ser necessário |
 | **C15** | Contrato do front — depende do React estar de pé |
 
