@@ -922,9 +922,15 @@ function DetalheGastos({ gastos }: { gastos: GastoDeCota }) {
 function AbaNoticias({ noticias }: { noticias: Noticia[] }) {
   if (noticias.length === 0) {
     return (
+      /* ⭐ O estado vazio diz o MOTIVO medido, ⛔ não uma desculpa genérica.
+         📐 Em 2026-08-29, na primeira coleta real: 12 de 45 notícias citavam algum
+         parlamentar pelo nome. As outras 33 falavam da atividade legislativa sem
+         nomear ninguém — "Comissão aprova MP que destina crédito…". ⚠️ O vazio é o
+         caso COMUM, e a tela precisa dizer isso ou parece quebrada. */
       <p className="vazio">
-        Nenhuma notícia recente. Parlamentares de menor projeção passam semanas sem aparecer
-        na imprensa — isso não é erro.
+        Nenhuma notícia recente cita esta pessoa pelo nome. A maior parte da cobertura
+        legislativa fala das votações sem nomear quem votou — e parlamentares de menor
+        projeção passam semanas fora da imprensa. Nenhum dos dois é erro.
       </p>
     );
   }
