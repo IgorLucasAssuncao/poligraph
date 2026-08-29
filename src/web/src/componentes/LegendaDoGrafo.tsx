@@ -32,7 +32,8 @@ export function LegendaDoGrafo({ grafo }: { grafo: Grafo }) {
       <p className="legenda-regra">
         Cada ponto é um parlamentar. Dois pontos se ligam quando votaram parecido — e{' '}
         <strong>quanto mais votam junto, mais perto ficam</strong>. Ninguém escolheu
-        onde cada um fica: a posição sai do voto.
+        onde cada um fica: a posição sai do voto. Um ponto <strong>sem nenhuma linha</strong>{' '}
+        é alguém que votou pouco demais para ser comparado com quem quer que seja.
       </p>
 
       {legenda.temAlinhamento && (
@@ -116,10 +117,14 @@ function descrever(faixa: FaixaDaLegenda, emCada100: number | null): string {
       return `${votou}É o lado que mais vota contra o que o Governo pede.`;
 
     case 'bordas':
+      // 🔴 A leitura mais enganosa da figura inteira. Em grafo político, ponta parece
+      //    radicalismo. Aqui ponta é AUSÊNCIA DE DADO: os dez têm zero ligações.
       return (
-        `Quase não votaram — ${faixa.votacoes} votações, contra centenas dos demais. ` +
-        `São suplentes e quem assumiu por poucas semanas. O desenho empurra para fora ` +
-        `quem não teve votações suficientes para ser comparado com alguém.`
+        `Estes não são os extremos — são quem quase não votou. ${faixa.votacoes} ` +
+        `votações, contra centenas dos demais: suplentes e quem assumiu por poucas ` +
+        `semanas. Nenhum deles tem uma única linha ligando a alguém, porque não houve ` +
+        `votações em comum suficientes para comparar. A posição deles não mede nada — ` +
+        `é o desenho dizendo que não sabe onde colocá-los.`
       );
   }
 }
