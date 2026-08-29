@@ -73,7 +73,7 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | 🟡 **PL44** | 🔄 **Avançou** — a ingestão deduz a legislatura pela data e as **consultas já filtram** (PL35 ✅). ⛔ Falta a parte de **produto**: o que a tela mostra na virada, e o que acontece com quem respondeu o questionário na 57ª. ⏳ **A 57ª termina em janeiro de 2027** | 🟡 Média | 🟢 Decisão |
 | 🟡 **PL45** | **🆕 9 autores de emenda ambíguos aguardam decisão humana** — a porta de entrada já existe (`emendas --resolver`), mas quem decide é uma pessoa. Lista completa abaixo | 🟡 Média | 🟢 Minutos |
 | 🟢 **PL50** | ✅ **Resolvida (2026-08-29)** — 359 matérias do Senado ingeridas, **421 de 421 votações vinculadas (100%)**. A colisão de id foi resolvida com chave composta `(casa, id)`, ⛔ não com deslocamento aritmético. Detalhe abaixo | 🟢 Baixa | — |
-| 🔴 **PL51** | **🆕 O Smart App Control bloqueia os binários do projeto** — 193 bloqueios hoje, e `dotnet run` do AppHost ⛔ **não sobe mais**. ⚠️ ⛔ Não é bug do código: é política da máquina, e só o autor pode mudar. Detalhe abaixo | 🔴 **Bloqueia o dia a dia** | 🟢 Decisão |
+| 🟡 **PL51** | **🆕 O Smart App Control barra binários recém-compilados** — 193 bloqueios em 2026-08-29, e o AppHost parou de subir. ⭐ **Contornável com `rm -rf bin obj` e rebuild**, ⛔ sem mexer na política. Detalhe abaixo | 🟡 Média | 🟢 Contorno conhecido |
 | 🟡 **PL47** | **🆕 92 deputados sem nenhuma emenda vinculada** — emenda individual é **impositiva desde 2015**, então mandato inteiro sem nenhuma é suspeito. Detalhe abaixo | 🟡 Média | 🟡 Horas |
 | 🔵 **PL46** | **🆕 83 autores de emenda são senadores** — resolvem-se sozinhos quando a [PL42](#) trouxer o Senado, porque o código do autor é de **mandato** e vale para as duas casas ([achado #24](achados/024-codigo-da-emenda-identifica-o-mandato.md)) | 🔵 Futuro | — |
 | ~~PL35~~ | ✅ **Resolvida (2026-08-27)** — `Legislaturas` DERIVA a legislatura do dado, nunca de configuração. `TestesLegislatura` semeia **duas** legislaturas e prova que a segunda ⛔ não vaza; as três mutações matam os três filtros. § abaixo mantido como registro | — | — |
@@ -182,7 +182,7 @@ foram fechados junto:
 
 ---
 
-### 🔴 PL51 — o Smart App Control bloqueia os binários do projeto
+### 🟡 PL51 — o Smart App Control barra binários recém-compilados
 
 **Medido em 2026-08-29.**
 
@@ -218,27 +218,44 @@ diferente de zero, o `WaitForCompletion` marca a API como `FailedToStart`, e o p
 fica de pé sem API nem front. ⭐ Parece **lentidão**, e foi lido como lentidão mais de
 uma vez.
 
-#### Por que só agora
+#### ⭐ O contorno: rebuild limpo
 
-⚠️ **Todo `build` gera um arquivo novo**, e o SAC avalia por reputação: arquivo que ele
-⛔ não conhece é barrado. O binário que rodava antes tinha reputação; o recompilado ⛔
-não tem — e ⛔ **nunca terá**, porque cada build muda o conteúdo.
+🔴 **A primeira versão desta pendência afirmou que o problema era permanente e que ⛔ não
+adiantava esperar. Estava errado.** O bloqueio é por **arquivo**, ⛔ não pelo projeto:
 
-⭐ Isso torna o problema **permanente**, ⛔ não transitório: ⛔ não adianta esperar.
+| Tentativa | Resultado |
+|---|---:|
+| Mesmo `.dll`, 8 execuções | ⛔ **8 bloqueadas** — ⛔ não é intermitente |
+| Depois de `rm -rf bin obj` e rebuild | ⭐ **Rodou** |
+| `Poligraph.Api.dll` no mesmo momento | ⭐ Carregava normalmente |
 
-#### As saídas
+⭐ **Um binário ficou marcado, o outro ⛔ não.** Um rebuild limpo produz um arquivo que o
+SAC aceita:
+
+```bash
+rm -rf src/Poligraph.Migrations/bin src/Poligraph.Migrations/obj
+dotnet build src/Poligraph.Migrations
+```
+
+⚠️ **Isto ⛔ não é garantia** — foi medido uma vez, e ⛔ não há como prever qual arquivo
+o SAC vai marcar. Se voltar a acontecer, o contorno é o mesmo.
+
+#### Se o contorno parar de funcionar
 
 | Caminho | Custo | Objeção |
 |---|---|---|
-| ⭐ **Desligar o Smart App Control** | Um clique | 🔴 **Irreversível**: no Windows 11 ele só volta a ser ligado **reinstalando o sistema**. É o caminho normal em máquina de desenvolvimento |
-| **Assinar os binários** | Certificado de code signing | ⚠️ Custa dinheiro e ⛔ não resolve o `dotnet test` local |
+| **Desligar o Smart App Control** | Um comando, com reinício | 🔴 **Irreversível**: no Windows 11 ele só volta a ser ligado **reinstalando o sistema** |
+| **Assinar os binários** | Certificado de code signing | ⚠️ Custa dinheiro |
 | **Rodar tudo em container** | Reescrever o fluxo local | ⛔ Joga fora o Aspire, que é a decisão de arquitetura do projeto |
 
-🔴 **Decisão do autor.** Enquanto ⛔ não for tomada, o ambiente local ⛔ **não sobe** —
-os testes seguem rodando pelo container.
+```powershell
+# PowerShell COMO ADMINISTRADOR, e reiniciar depois
+Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy' `
+                 -Name 'VerifiedAndReputablePolicyState' -Value 0
+```
 
-📐 Onde: *Configurações → Privacidade e segurança → Segurança do Windows → Controle de
-aplicativos e navegador → Controle de aplicativo inteligente*.
+⚠️ **`dotnet test` local ⛔ não foi retestado** depois do contorno — a receita em
+container da skill `testes` §6.1 continua sendo o caminho conhecido.
 
 ---
 
