@@ -696,8 +696,8 @@ ao servidor no meio do questionário. ⛔ Não vale.
 *"das 52 substantivas abertas da 57ª, 39 dividem menos de 5% e 7 das 8 acima de 25% já
 estavam curadas — ⛔ não há mais nada a curar"*.
 
-🔴 **As 52 eram 104.** As votações de PEC estavam classificadas como , porque
-o padrão continha  solto e *"Proposta de **Emenda** à Constituição"* casa com
+🔴 **As 52 eram 104.** As votações de PEC estavam classificadas como `DESTAQUE`, porque
+o padrão continha `emenda` solto e *"Proposta de **Emenda** à Constituição"* casa com
 ele ([achado #31](achados/031-a-pec-estava-escondida-como-destaque.md)).
 
 | | Afirmado | Medido depois |
