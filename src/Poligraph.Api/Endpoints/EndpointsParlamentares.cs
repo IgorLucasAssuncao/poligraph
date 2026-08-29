@@ -42,6 +42,15 @@ public record ParlamentarNaListaDto(
 /// da Câmara, e lá cobre 263 das 266 substantivas. A tela mostra a descrição quando
 /// falta, ⛔ nunca um espaço em branco.
 /// </para>
+///
+/// <para>
+/// 🔴 <b><c>Categoria</c> ⛔ não é enfeite — sem ela a ementa MENTE.</b> 📐 Medido em
+/// 2026-08-29: <b>43,2%</b> das linhas desta lista são <c>PROCEDIMENTAL</c>. Nelas a
+/// ementa é do projeto em pauta, mas o voto foi num <i>requerimento</i> — e a linha
+/// <i>"Institui o Imposto sobre Bens e Serviços"</i> ao lado de um "Sim" faria o leitor
+/// concluir que a pessoa votou a favor da reforma tributária, quando ela votou sobre
+/// rito. ⭐ É o modo de falha que este projeto persegue: plausível e errado.
+/// </para>
 /// </summary>
 public record VotoNaFichaDto(
     string VotacaoId,
@@ -50,7 +59,8 @@ public record VotoNaFichaDto(
     short? Valor,
     string? OrientacaoDoGoverno,
     string? Ementa,
-    string? Materia);
+    string? Materia,
+    CategoriaDeVotacao Categoria);
 
 public record SimilarNaFichaDto(long PessoaId, string Nome, string Partido, float Valor, int Comuns);
 
@@ -493,7 +503,8 @@ public static class EndpointsParlamentares
                 //    ⛔ Não é enfeite: sem ela, quem quiser checar a ementa ⛔ não tem
                 //    por onde procurar.
                 v.Votacao.Proposicao!.SiglaTipo + " "
-                    + v.Votacao.Proposicao.Numero + "/" + v.Votacao.Proposicao.Ano))
+                    + v.Votacao.Proposicao.Numero + "/" + v.Votacao.Proposicao.Ano,
+                v.Votacao.Categoria))
             .ToListAsync(ct);
 
     /// <summary>

@@ -209,20 +209,7 @@ function AbaVotos({ votos }: { votos: Ficha['votosRecentes'] }) {
             <span className={`selo selo-${classeDoVoto(v.valor)}`}>
               {v.valor === 0 ? <Termo nome="abstencao">Abstenção</Termo> : rotuloDoVoto(v.valor)}
             </span>
-            {/* 🔴 A ementa primeiro, a descrição só como reserva. A descrição diz o
-                NÚMERO do projeto; a ementa diz o que ele propõe — e é o assunto, não o
-                número, que torna o voto legível para quem não acompanha o Congresso. */}
-            <p className="voto-descricao">{v.ementa ?? v.descricao ?? v.votacaoId}</p>
-
-            {/* ⚠️ Quando há ementa, a descrição processual continua acessível: é ela
-                que identifica O QUE foi votado daquele projeto — o texto principal, um
-                destaque, a redação final. Sem isso, dois votos opostos do mesmo projeto
-                apareceriam como a mesma linha repetida. */}
-            {v.ementa && v.descricao && (
-              <p className="voto-processual">
-                {v.materia && <strong>{v.materia}</strong>} {v.descricao}
-              </p>
-            )}
+            <LinhaDoVoto voto={v} />
 
             <span className="linha-detalhe">
               {formatarData(v.data)}
@@ -231,6 +218,50 @@ function AbaVotos({ votos }: { votos: Ficha['votosRecentes'] }) {
           </div>
         </article>
       ))}
+    </>
+  );
+}
+
+/**
+ * O enunciado de um voto — e QUAL enunciado depende do que foi votado.
+ *
+ * 🔴 **A ementa só pode ser a manchete quando o voto foi no MÉRITO.** 📐 Medido em
+ * 2026-08-29: 43,2% das linhas desta lista são de rito. Nelas a ementa é do projeto em
+ * pauta, mas o voto foi num requerimento — e *"Institui o Imposto sobre Bens e
+ * Serviços"* ao lado de um "Sim" faria o leitor concluir que a pessoa votou a favor da
+ * reforma tributária, quando ela votou sobre **rito**.
+ *
+ * ⭐ Então a ordem se inverte: no voto de rito a manchete é o que foi de fato votado
+ * (*"Rejeitado o Requerimento"*), e a ementa vira contexto — *"sobre PLP 68/2024: …"*.
+ *
+ * ⛔ Voto de rito ⛔ não é escondido. Ele existe, é público, e some-lo seria editar o
+ * histórico. ⚠️ Mas ele **pesa zero** na afinidade, e a tela diz isso.
+ */
+function LinhaDoVoto({ voto }: { voto: VotoNaFicha }) {
+  const rito = voto.categoria === 'PROCEDIMENTAL';
+  const temEmenta = Boolean(voto.ementa);
+
+  return (
+    <>
+      {rito && (
+        <p className="voto-rito">
+          <Termo nome="procedimental">questão de rito</Termo> — não é voto no mérito
+        </p>
+      )}
+
+      <p className="voto-descricao">
+        {rito || !temEmenta ? (voto.descricao ?? voto.votacaoId) : voto.ementa}
+      </p>
+
+      {/* ⚠️ A outra metade continua visível: no voto de mérito ela identifica QUAL
+          votação daquele projeto foi — texto principal, destaque, redação final. Sem
+          isso, dois votos opostos do mesmo projeto seriam a mesma linha repetida. */}
+      {temEmenta && (
+        <p className="voto-processual">
+          {voto.materia && <strong>{voto.materia}</strong>}{' '}
+          {rito ? voto.ementa : voto.descricao}
+        </p>
+      )}
     </>
   );
 }

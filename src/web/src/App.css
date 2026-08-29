@@ -833,6 +833,13 @@ button.lista-grafo-nome:focus-visible { outline: 2px solid var(--realce); outlin
 }
 .voto-processual strong { font-family: var(--dado); font-weight: 600; color: var(--texto); }
 
+/* 🔴 O marcador de rito vem ANTES do enunciado, não depois: quem lê a linha
+   precisa saber que não é voto de mérito antes de ler o que foi votado. */
+.voto-rito {
+  margin: .45rem 0 .15rem; font-size: .78rem; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--suave);
+}
+
 /* ═══ BARRA DE BUSCA ═══════════════════════════════════════════ */
 .barra-busca {
   display: flex; align-items: center; gap: .6rem;

@@ -107,6 +107,14 @@ export const GLOSSARIO = {
       ' O parlamentar estava presente e registrou que não queria tomar partido. ' +
       'Não conta como concordância nem como discordância: fica de fora da conta.',
   },
+  procedimental: {
+    rotulo: 'questão de rito',
+    explicacao:
+      ' Voto sobre o ANDAMENTO dos trabalhos — urgência, retirada de pauta, ordem da ' +
+      'sessão —, não sobre o conteúdo da proposta. São 56% das votações da Câmara, e ' +
+      'costumam separar governo de oposição sem dizer nada sobre o mérito. Por isso ' +
+      'não entram no cálculo de afinidade.',
+  },
   comunidade: {
     rotulo: 'grupo de voto',
     explicacao:

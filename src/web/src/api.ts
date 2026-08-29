@@ -48,6 +48,13 @@ export type VotoNaFicha = {
   ementa: string | null;
   /** "PL 4133/2023" — a etiqueta que permite conferir na fonte. */
   materia: string | null;
+  /**
+   * 🔴 Sem isto a ementa MENTE. 43,2% das linhas desta lista são PROCEDIMENTAL: a
+   * ementa é do projeto em pauta, mas o voto foi num requerimento. "Institui o Imposto
+   * sobre Bens e Serviços" ao lado de um "Sim" faria o leitor concluir que a pessoa
+   * votou a favor da reforma tributária — e ela votou sobre rito.
+   */
+  categoria: 'SUBSTANTIVA' | 'DESTAQUE' | 'PROCEDIMENTAL' | 'AUTORIDADE';
 };
 
 export type Similar = {

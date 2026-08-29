@@ -48,6 +48,7 @@ function voto(
     orientacaoDoGoverno,
     ementa: null,
     materia: null,
+    categoria: 'SUBSTANTIVA' as const,
   };
 }
 
@@ -300,6 +301,7 @@ describe('a ementa na lista de votos', () => {
           descricao: 'Aprovado o Substitutivo ao Projeto de Lei nº 4.133, de 2023.',
           ementa: 'Dispõe sobre diretrizes para a política industrial brasileira.',
           materia: 'PL 4133/2023',
+          categoria: 'SUBSTANTIVA' as const,
         },
       ],
     };
@@ -324,6 +326,7 @@ describe('a ementa na lista de votos', () => {
           descricao: 'Aprovado o Substitutivo ao Projeto de Lei nº 4.133, de 2023.',
           ementa: 'Dispõe sobre diretrizes para a política industrial brasileira.',
           materia: 'PL 4133/2023',
+          categoria: 'SUBSTANTIVA' as const,
         },
       ],
     };
@@ -348,5 +351,70 @@ describe('a ementa na lista de votos', () => {
     const { container } = await renderizarCom(semEmenta);
 
     expect(container.textContent).toMatch(/Votação nominal do PLP 73/);
+  });
+});
+
+
+describe('voto de rito não pode usar a ementa como manchete', () => {
+  const RITO = {
+    descricao: 'Rejeitado o Requerimento. Sim: 118; Não: 289; Total: 407.',
+    ementa: 'Institui o Imposto sobre Bens e Serviços - IBS e dá outras providências.',
+    materia: 'PLP 68/2024',
+    categoria: 'PROCEDIMENTAL' as const,
+  };
+
+  /**
+   * 🔴 O modo de falha que este projeto persegue: plausível e errado. 43,2% das linhas
+   * da ficha são de rito. Com a ementa por manchete, "Institui o IBS" ao lado de um
+   * "Sim" faria o leitor concluir que a pessoa votou a favor da reforma tributária —
+   * quando ela votou sobre andamento.
+   */
+  it('a manchete é o que foi de fato votado, não a ementa', async () => {
+    const { container } = await renderizarCom({
+      ...FICHA,
+      votosRecentes: [{ ...voto('v1', 1, null), ...RITO }],
+    });
+
+    const manchete = container.querySelector('.voto-descricao')!.textContent!;
+
+    expect(manchete).toMatch(/Rejeitado o Requerimento/);
+    expect(manchete).not.toMatch(/Institui o Imposto/);
+  });
+
+  /** ⚠️ A ementa não some: vira contexto, para dizer sobre QUE projeto era o rito. */
+  it('a ementa vira contexto, junto da matéria', async () => {
+    const { container } = await renderizarCom({
+      ...FICHA,
+      votosRecentes: [{ ...voto('v1', 1, null), ...RITO }],
+    });
+
+    const contexto = container.querySelector('.voto-processual')!.textContent!;
+
+    expect(contexto).toMatch(/PLP 68\/2024/);
+    expect(contexto).toMatch(/Institui o Imposto/);
+  });
+
+  /**
+   * ⛔ Voto de rito não é escondido — ele existe e é público. Mas pesa ZERO na
+   * afinidade, e a tela precisa dizer isso antes do enunciado, não depois.
+   */
+  it('avisa que não é voto no mérito', async () => {
+    const { container } = await renderizarCom({
+      ...FICHA,
+      votosRecentes: [{ ...voto('v1', 1, null), ...RITO }],
+    });
+
+    expect(container.textContent).toMatch(/não é voto no mérito/i);
+  });
+
+  /** ⭐ No voto de mérito a ordem é a oposta: a ementa manda. */
+  it('no voto de mérito a ementa continua sendo a manchete', async () => {
+    const { container } = await renderizarCom({
+      ...FICHA,
+      votosRecentes: [{ ...voto('v1', 1, null), ...RITO, categoria: 'SUBSTANTIVA' as const }],
+    });
+
+    expect(container.querySelector('.voto-descricao')!.textContent).toMatch(/Institui o Imposto/);
+    expect(container.textContent).not.toMatch(/não é voto no mérito/i);
   });
 });
