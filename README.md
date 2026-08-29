@@ -54,6 +54,7 @@ registra que houve voto sem revelar qual
 |---|---|
 | **Despesas de cota** (CEAP) | **772.677** — 2023 a 2026 |
 | **Emendas parlamentares** | 24.825 — ⚠️ eram 24.810 em 27/08; o Portal publica novas |
+| **Emendas com autor resolvido** | ⭐ **23.247 (93,6%)** — R$ 70,8 bi |
 | **Autores de emenda** | 793 resolvidos · 158 sem vínculo (comissões e bancadas) |
 | **Receitas de campanha** (TSE) | 22.511, de **642 dos 643** deputados |
 | **Fundo Especial — o "fundão"** | R$ 907,7 mi · R$ 1.163,4 mi arrecadados no total |

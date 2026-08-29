@@ -115,8 +115,11 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         "--resolver",
         nargs="+",
         default=[],
-        metavar="CODIGO=PESSOA_ID",
-        help="vincula autores à mão, ex.: --resolver 4184=612 3767=91",
+        metavar="CODIGO=ID_NA_CAMARA",
+        help=(
+            "vincula autores à mão, ex.: --resolver 4184=204521. "
+            "⚠️ O segundo valor é o id NA CÂMARA — `pessoas.id` muda a cada reingestão"
+        ),
     )
 
     cotas = sub.add_parser("cota", help="ingere a cota parlamentar (CEAP)")
@@ -531,15 +534,41 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
     ).fetchall():
         por_nome.setdefault(normalizacao.sem_acento_maiusculo(nome), []).append(pessoa_id)
 
-    resolvidos = ambiguos = 0
+    # ⭐ Quem tem voto na base. É o desempate da PL47 — ver `_desempatar`.
+    com_voto = {
+        linha[0] for linha in conexao.execute("SELECT DISTINCT pessoa_id FROM votos")
+    }
+
+    resolvidos = por_sucessor = por_desempate = ambiguos = 0
+
     for codigo, nome_autor in pendentes:
         candidatos = por_nome.get(normalizacao.sem_acento_maiusculo(nome_autor), [])
 
-        if len(candidatos) == 1:
-            persistencia.resolver_autor(conexao, codigo, candidatos[0], "AUTOMATICO")
-            resolvidos += 1
+        # 🔴 REGRA B — o Portal renomeia o autor para o SUPLENTE que executa a emenda:
+        #    "TIAGO DIMAS (EX-PARLAMENTAR LAZARO BOTELHO, NOS TERMOS ART. 78 LDO 2025)".
+        #    O nome do sucessor ⛔ não casa com ninguém, e a emenda fica órfã — mas ela é
+        #    de quem a APRESENTOU. ⭐ ⛔ Não é similaridade: é um rótulo da própria fonte.
+        original = None
+        if not candidatos:
+            original = emendas.autor_original(nome_autor)
+            if original:
+                candidatos = por_nome.get(
+                    normalizacao.sem_acento_maiusculo(original), []
+                )
+
+        escolhido = _desempatar(candidatos, com_voto)
+
+        if escolhido is None:
+            if len(candidatos) > 1:
+                ambiguos += 1
+            continue
+
+        persistencia.resolver_autor(conexao, codigo, escolhido, "AUTOMATICO")
+        resolvidos += 1
+        if original:
+            por_sucessor += 1
         elif len(candidatos) > 1:
-            ambiguos += 1
+            por_desempate += 1
 
     vinculadas = persistencia.vincular_emendas(conexao)
 
@@ -547,8 +576,12 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
         "Reconciliação: %d de %d autores resolvidos, %d emendas vinculadas",
         resolvidos, len(pendentes), vinculadas,
     )
+    if por_sucessor:
+        log.info("  %d pelo nome do ex-parlamentar citado no registro", por_sucessor)
+    if por_desempate:
+        log.info("  %d por desempate — homônimo sem voto na base", por_desempate)
     if ambiguos:
-        log.warning("  %d autores AMBÍGUOS — dois deputados com o mesmo nome", ambiguos)
+        log.warning("  %d autores AMBÍGUOS — dois parlamentares com o mesmo nome", ambiguos)
 
     restantes = len(persistencia.autores_nao_resolvidos(conexao))
     if restantes:
@@ -559,25 +592,83 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
         )
 
 
-def pares_de_resolucao(entradas: list[str]) -> list[tuple[str, int]]:
-    """Converte `["4184=612"]` em `[("4184", 612)]`.
+def _desempatar(candidatos: list[int], com_voto: set[int]) -> int | None:
+    """Qual das pessoas de mesmo nome é a autora, ou `None` se ⛔ não dá para saber.
+
+    ## 🔴 REGRA A — o homônimo histórico manufatura ambiguidade
+
+    A busca é contra as **7.993 pessoas** do banco, quase todas de legislaturas antigas.
+    📐 Medido em 2026-08-29, isso criava **14** empates que ⛔ não existem na realidade:
+
+    | Deputado em exercício | "Concorrente" |
+    |---|---|
+    | Bebeto — Carlos Roberto Rodrigues, 1.117 votos | *BEBETO* — Adalberto Souza Galvão, **0 votos** |
+    | Albuquerque — José F. Lopes, 933 votos | *ALBUQUERQUE* — Manoel J. de Albuquerque, **0 votos** |
+
+    ⭐ **Quem ⛔ não tem voto nenhum na base ⛔ não aparece em tela nenhuma** — e ⛔ não é
+    o autor de emenda de 2024. Se sobra **exatamente um** com voto, é ele.
+
+    ## Por que isto ⛔ não é chute
+
+    | Evidência | |
+    |---|---|
+    | Concorrente ser senador em exercício | 🔴 **0 de 14** — era o risco real, porque senador apresenta emenda |
+    | Destino da emenda bate com a UF do parlamentar | ⭐ **50 de 56** · 2 discordam · 4 sem UF |
+    | Emendas de 2024 em diante, que só a 57ª podia apresentar | 82% |
+
+    ⚠️ **Ambiguidade REAL continua sem vínculo**, e deve continuar: `ÁTILA DE MELO LIRA`
+    e `ÁTILA FREITAS LIRA` são duas pessoas, as duas com voto — o desempate desiste, e a
+    saída é o `--resolver`.
+    """
+    if len(candidatos) == 1:
+        return candidatos[0]
+
+    if len(candidatos) < 2:
+        return None
+
+    votantes = [pessoa_id for pessoa_id in candidatos if pessoa_id in com_voto]
+
+    return votantes[0] if len(votantes) == 1 else None
+
+
+def pares_de_resolucao(entradas: list[str]) -> list[tuple[str, str]]:
+    """Converte `["4184=204521"]` em `[("4184", "204521")]`.
+
+    ## 🔴 O segundo valor é o id NA CÂMARA, ⛔ não `pessoas.id`
+
+    ⚠️ **Isto mudou em 2026-08-29, depois de o defeito se materializar.** A PL47
+    registrava `--resolver 4511=43` para o Allan Garcês. Depois de uma reingestão:
+
+    | | |
+    |---|---|
+    | Quando foi registrado | `43` = Allan Garcês |
+    | 🔴 Hoje | `43` = **André Ferreira** · Allan Garcês virou o **31** |
+
+    `pessoas.id` é `BIGSERIAL` e é **reatribuído** quando a base é recarregada. ⛔ Um
+    comando anotado no dia anterior colocaria as emendas de um parlamentar na ficha de
+    outro — **em silêncio**, porque a FK aceita qualquer id que exista.
+
+    ⭐ O id da Câmara vem da fonte e ⛔ nunca muda. É o mesmo que aparece na URL do
+    perfil oficial e em `pessoa_fonte_ids`.
 
     🔴 Entrada malformada **estoura**, ⛔ não é ignorada: `--resolver 4184` sem o `=`
     seria descartado em silêncio, e a pessoa concluiria que vinculou quando não vinculou.
     """
-    pares: list[tuple[str, int]] = []
+    pares: list[tuple[str, str]] = []
 
     for entrada in entradas:
-        codigo, separador, pessoa = entrada.partition("=")
-        if not separador or not codigo.strip() or not pessoa.strip():
+        codigo, separador, externo = entrada.partition("=")
+        if not separador or not codigo.strip() or not externo.strip():
             raise ValueError(
-                f"'{entrada}' não é CODIGO=PESSOA_ID. Ex.: --resolver 4184=612"
+                f"'{entrada}' não é CODIGO=ID_NA_CAMARA. Ex.: --resolver 4184=204521"
             )
 
-        try:
-            pares.append((codigo.strip(), int(pessoa)))
-        except ValueError:
-            raise ValueError(f"'{pessoa}' não é um id de pessoa") from None
+        # ⚠️ O id da fonte é numérico nas três (Câmara, Senado, TSE). Recusar aqui pega
+        #    o typo com uma mensagem útil, em vez de devolver "ninguém com id_externo".
+        if not externo.strip().isdigit():
+            raise ValueError(f"'{externo.strip()}' não é um id da Câmara")
+
+        pares.append((codigo.strip(), externo.strip()))
 
     return pares
 
@@ -589,15 +680,28 @@ def _resolver_a_mao(conexao: psycopg.Connection, entradas: list[str]) -> None:
     reconciliação automática desiste de propósito e quem decide é uma pessoa. Fica
     gravado como `MANUAL`, que execução automática posterior ⛔ nunca sobrescreve.
     """
-    for codigo, pessoa_id in pares_de_resolucao(entradas):
+    for codigo, id_externo in pares_de_resolucao(entradas):
+        # 🔴 Resolve o id ESTÁVEL da fonte para a chave interna, na hora de aplicar —
+        #    ⛔ nunca o contrário. Ver `pares_de_resolucao`.
         pessoa = conexao.execute(
-            "SELECT nome_exibicao FROM pessoas WHERE id = %s", (pessoa_id,)
+            """
+            SELECT p.id, p.nome_exibicao
+              FROM pessoas p
+              JOIN pessoa_fonte_ids f ON f.pessoa_id = p.id
+             WHERE f.id_externo = %s
+            """,
+            (id_externo,),
         ).fetchone()
 
         # A FK pegaria o id inexistente, mas com mensagem do Postgres; aqui dá para
         # dizer o que fazer.
         if not pessoa:
-            raise RuntimeError(f"pessoa {pessoa_id} não existe. Confira o id em `pessoas`.")
+            raise RuntimeError(
+                f"ninguém com id_externo {id_externo}. ⚠️ É o id NA CÂMARA (o da URL do "
+                f"perfil oficial), ⛔ não `pessoas.id` — que muda a cada reingestão."
+            )
+
+        pessoa_id, nome_exibicao = pessoa
 
         autor = conexao.execute(
             "SELECT nome_autor FROM autores_de_emenda WHERE codigo = %s", (codigo,)
@@ -608,7 +712,10 @@ def _resolver_a_mao(conexao: psycopg.Connection, entradas: list[str]) -> None:
             )
 
         persistencia.resolver_autor(conexao, codigo, pessoa_id, "MANUAL")
-        log.info("  %s (%s) -> %s (id %d)", codigo, autor[0], pessoa[0], pessoa_id)
+        log.info(
+            "  %s (%s) -> %s (câmara %s, id interno %d)",
+            codigo, autor[0], nome_exibicao, id_externo, pessoa_id,
+        )
 
     vinculadas = persistencia.vincular_emendas(conexao)
     log.info("%d emendas vinculadas", vinculadas)

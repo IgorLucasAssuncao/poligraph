@@ -74,7 +74,7 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | 🟡 **PL45** | **🆕 9 autores de emenda ambíguos aguardam decisão humana** — a porta de entrada já existe (`emendas --resolver`), mas quem decide é uma pessoa. Lista completa abaixo | 🟡 Média | 🟢 Minutos |
 | 🟢 **PL50** | ✅ **Resolvida (2026-08-29)** — 359 matérias do Senado ingeridas, **421 de 421 votações vinculadas (100%)**. A colisão de id foi resolvida com chave composta `(casa, id)`, ⛔ não com deslocamento aritmético. Detalhe abaixo | 🟢 Baixa | — |
 | 🟡 **PL51** | **🆕 O Smart App Control barra binários recém-compilados** — 193 bloqueios em 2026-08-29, e o AppHost parou de subir. ⭐ **Contornável com `rm -rf bin obj` e rebuild**, ⛔ sem mexer na política. Detalhe abaixo | 🟡 Média | 🟢 Contorno conhecido |
-| 🟡 **PL47** | 🔄 **Causa raiz encontrada (2026-08-29)** — ⛔ NÃO é falha de reconciliação. São **duas** causas medidas, e as duas têm conserto: o homônimo histórico e o `(EX-PARLAMENTAR X)` que o Portal escreve quando o suplente executa. Levam de **106 para 81**. Detalhe abaixo | 🟡 Média | 🟡 Horas |
+| 🟢 **PL47** | ✅ **Resolvida até o limite da fonte (2026-08-29)** — as duas regras entraram: **106 → 81** deputados sem emenda, autores pendentes **169 → 101**, e **93,6%** das emendas com dono. ⛔ Os 81 restantes ⛔ não têm emenda no Portal — sondado por nome. Detalhe abaixo | 🟢 Baixa | — |
 | 🔵 **PL46** | **🆕 83 autores de emenda são senadores** — resolvem-se sozinhos quando a [PL42](#) trouxer o Senado, porque o código do autor é de **mandato** e vale para as duas casas ([achado #24](achados/024-codigo-da-emenda-identifica-o-mandato.md)) | 🔵 Futuro | — |
 | ~~PL35~~ | ✅ **Resolvida (2026-08-27)** — `Legislaturas` DERIVA a legislatura do dado, nunca de configuração. `TestesLegislatura` semeia **duas** legislaturas e prova que a segunda ⛔ não vaza; as três mutações matam os três filtros. § abaixo mantido como registro | — | — |
 | ~~PL36~~ | ✅ **Resolvida (2026-08-26)** — nomes corrigidos e **verificado rodando o container contra o banco real**: monta a matriz e grava `execucoes`. Estava faltando também traduzir a connection string do Aspire (§ abaixo) | — | — |
@@ -387,14 +387,22 @@ art. 78 da LDO.
 
 ---
 
-#### 📐 O efeito das duas regras
+#### ✅ 📐 As duas regras entraram, e o resultado medido
 
-| | Recupera |
-|---|---:|
-| **A** — desempatar pelo candidato que tem voto na base | 13 deputados |
-| **B** — extrair o nome do `EX-PARLAMENTAR` | 12 deputados |
-| Sobreposição | **0** |
-| 🔴 **Juntas** | **106 → 81** · 2.269 emendas · R$ 9,3 bi empenhados |
+| | Antes | Depois |
+|---|---:|---:|
+| Deputados da 57ª sem emenda | 106 | ⭐ **81** |
+| Autores pendentes | 169 | ⭐ **101** |
+| Autores resolvidos | 782 | **850** |
+| 🔴 **Emendas com dono** | — | **23.247 de 24.825 (93,6%)** · R$ 70,8 bi |
+
+⭐ **Corroboração na tela:** *Abilio Brunini* devolvia `ano: 0` e agora mostra 13 emendas
+com destino a **Cuiabá — MT**, onde ele é prefeito desde 2024. É o caso do
+`EX-PARLAMENTAR` no estado puro.
+
+⚠️ **Sobram 8 autores ambíguos**, e ⛔ **devem** sobrar: `BILAC PINTO`, `LUIZ CARLOS`,
+`PAULO RAMOS` e `RICARDO IZAR` são dois parlamentares de mesmo nome de urna, os dois com
+voto. A saída é o `--resolver`.
 
 #### ⛔ Os 81 que sobram ⛔ não são defeito nosso
 
@@ -421,9 +429,19 @@ hoje**. O `43` é um `pessoa_id`, e ⛔ **ele ⛔ não sobrevive à reingestão*
 | Quando foi registrado | `43` = Allan Garcês |
 | 🔴 **Hoje** | `43` = **André Ferreira** · Allan Garcês é o **31** |
 
-⛔ **Reaplicar o comando documentado colocaria as emendas do Allan Garcês na ficha do
-André Ferreira, em silêncio.** ⭐ O `--resolver` precisa aceitar um identificador
-**estável** — o id da Câmara em `pessoa_fonte_ids` —, ⛔ não a chave interna.
+⛔ Reaplicar o comando documentado colocaria as emendas do Allan Garcês na ficha do
+André Ferreira, **em silêncio** — a chave estrangeira aceita qualquer id que exista.
+
+✅ **Corrigido em 2026-08-29.** O `--resolver` passou a receber o **id na Câmara**, que
+vem da fonte e ⛔ nunca muda:
+
+```bash
+# ⛔ ANTES — pessoas.id, reatribuído a cada reingestão
+python -m poligraph_etl emendas --resolver 4511=43
+
+# ⭐ AGORA — o id da Câmara, o mesmo da URL do perfil oficial
+python -m poligraph_etl emendas --resolver 4511=204521
+```
 Confirmar exige comparar os 159 pendentes com os 92 faltantes **um a um, à mão** — é
 trabalho humano, como a PL11, e ⛔ não escala por regra.
 

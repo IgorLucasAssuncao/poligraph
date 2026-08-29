@@ -42,6 +42,7 @@ decisão de outro passo.
 
 import logging
 import os
+import re
 import time
 
 import requests
@@ -49,6 +50,40 @@ import requests
 from . import normalizacao
 
 log = logging.getLogger("poligraph")
+
+
+# 🔴 Quando o parlamentar deixa o mandato, o SUPLENTE executa a emenda dele — e o Portal
+#    passa a escrever o nome assim, citando o artigo da LDO que autoriza:
+#
+#      "TIAGO DIMAS (EX-PARLAMENTAR LAZARO BOTELHO, NOS TERMOS ART. 78 LDO 2025 ...)"
+#
+#    ⚠️ ⛔ Não é variação de grafia: é OUTRA PESSOA no lugar do autor.
+_EX_PARLAMENTAR = re.compile(r"EX-PARLAMENTAR\s+([^,)]+)", re.IGNORECASE)
+
+
+def autor_original(nome_autor: str | None) -> str | None:
+    """O nome de quem APRESENTOU a emenda, quando o Portal cita o sucessor.
+
+    ⭐ **⛔ Não é heurística de similaridade** — é ler um rótulo que a própria fonte
+    escreve, com a base legal junto (art. 78 da LDO).
+
+    ⚠️ A emenda é do autor, ⛔ não de quem a executa: a pergunta que a ficha responde é
+    *"para onde ESTE parlamentar mandou dinheiro"*, e quem mandou foi quem apresentou.
+
+    📐 Medido em 2026-08-29: **14** autores pendentes trazem o padrão, e em **12** o nome
+    extraído casa com exatamente um deputado da 57ª — 229 emendas, R$ 656 mi.
+
+    ⛔ Devolve `None` quando ⛔ não há o padrão, e quem chama segue com o nome original.
+    """
+    if not nome_autor:
+        return None
+
+    achado = _EX_PARLAMENTAR.search(nome_autor)
+    if not achado:
+        return None
+
+    return " ".join(achado.group(1).split()) or None
+
 
 BASE = "https://api.portaldatransparencia.gov.br/api-de-dados"
 
