@@ -352,6 +352,41 @@ O Aspire injeta `ConnectionStrings__poligraph` no formato do **Npgsql**
 
 ---
 
+### ✅ PL43 (resolvida em 2026-08-28) — um layout, não dois
+
+A pergunta era manter os dois layouts do desenho ou só o de molas. **Resolvida por um
+terceiro que não existia quando ela foi escrita.**
+
+Com `governismo` medido (achado #26), o eixo do SVD ganhou nome: ele correlaciona
+−0,87 com o alinhamento ao Governo. Mas então dá para desenhar o alinhamento
+**diretamente**, e foi o que se fez — o layout `Alinhamento` usa o governismo como
+coordenada.
+
+| | Componentes (SVD) | Alinhamento |
+|---|---|---|
+| Eixo horizontal | correlaciona −0,87 com governismo | **é** o governismo |
+| Sinal do eixo | arbitrário, pode espelhar entre execuções | definido por nós |
+| Precisa de ressalva sobre correlação | sim | ⛔ não |
+| Eixo vertical | 2ª componente, 9,6% — sem leitura em português | ⛔ não mede nada, e diz isso |
+
+⭐ **Os dois mostram a mesma divisão**, e o do SVD pede um parágrafo para dizer o que o
+outro diz sozinho.
+
+**Decisão:** `Componentes` sai da TELA e ⛔ não do dado. `componente1` e `componente2`
+continuam calculados e gravados — são resultado do método e sustentam o achado #26.
+
+Ficam dois layouts com funções distintas:
+
+| | |
+|---|---|
+| **Molas** | Quem vota com quem — a estrutura, os grupos |
+| **Alinhamento** | Quanto vota com o Governo — a medida |
+
+⛔ No Senado sobra só o de molas: sem orientação de bancada publicada, o layout de
+alinhamento ⛔ não teria coordenada.
+
+---
+
 ### 🟡 PL38 — o grafo é calculado e jogado fora
 
 `__main__._analisar` faz:

@@ -27,7 +27,18 @@ export type PosicaoDoCidadao = {
  * `molas` desenha bem e ⛔ não interpreta nada. `componentes` (SVD) tem eixo com
  * significado, mas convida o leitor a ler espectro político.
  */
-export type Layout = 'molas' | 'componentes' | 'alinhamento';
+/**
+ * ⚠️ `componentes` (SVD) saiu da TELA e ⛔ não do dado — PL43 resolvida em 2026-08-28.
+ *
+ * Ele mostrava a MESMA divisão que `alinhamento`: o eixo dele correlaciona −0,87 com o
+ * governismo. A diferença é que ali a posição saía de um algoritmo e exigia um parágrafo
+ * para explicar o que `alinhamento` diz sozinho — e o segundo eixo, com 9,6% da
+ * variância, ⛔ não tem leitura em português.
+ *
+ * ⭐ `componente1` e `componente2` continuam calculados e gravados: são resultado do
+ * método e sustentam o achado #26.
+ */
+export type Layout = 'molas' | 'alinhamento';
 
 /**
  * ⚠️ A explicação de cada layout vive JUNTO do seletor, não num rodapé.
@@ -42,10 +53,9 @@ const EXPLICACAO: Record<Layout, { rotulo: string; titulo: string; texto: string
     rotulo: 'Molas',
     titulo: 'Ligações como molas',
     texto:
-      'Cada ligação puxa dois parlamentares para perto; todos se repelem. Quem vota ' +
-      'junto fica junto. O algoritmo nunca viu orientação de bancada, e ainda assim o ' +
-      'eixo horizontal que ele produziu mede −0,89 contra o alinhamento com o Governo. ' +
-      'A vertical não mede nada, e a forma redonda é escolha do algoritmo, não do dado.',
+      'Os pontos se atraem quando votam junto e se afastam quando votam diferente. ' +
+      'É a vista que mostra os grupos. Aqui os eixos não significam nada: girar ou ' +
+      'espelhar a figura não muda o que ela diz.',
   },
   /**
    * ⭐ O único layout em que o eixo ⛔ NÃO é arbitrário.
@@ -58,22 +68,10 @@ const EXPLICACAO: Record<Layout, { rotulo: string; titulo: string; texto: string
     rotulo: 'Alinhamento',
     titulo: 'Alinhamento com o Governo',
     texto:
-      'O eixo horizontal é a própria medida: quanto o parlamentar votou como a bancada ' +
-      'do Governo orientou, da esquerda (quase nunca) para a direita (quase sempre). ' +
-      'Aqui a posição não é resultado de algoritmo nenhum. A vertical continua sem ' +
-      'significado — serve para os pontos não se sobreporem. E isto não é esquerda e ' +
-      'direita política: é alinhamento com ESTE governo.',
-  },
-  componentes: {
-    rotulo: 'Componentes',
-    titulo: 'Alinhamento com o Governo',
-    texto:
-      'O eixo horizontal é a direção em que os parlamentares mais se diferenciam, e ' +
-      'ela tem nome: mede −0,87 contra o quanto cada um votou como a bancada do ' +
-      'Governo orientou. De um lado quem seguiu quase sempre, do outro quem quase ' +
-      'nunca seguiu. Atenção: isto é alinhamento com ESTE governo, não é esquerda e ' +
-      'direita — e o centro não é moderação, porque quem faltou a muitas votações ' +
-      'também cai ali.',
+      'Cada ponto é colocado conforme votou como o Governo pediu: à esquerda quem ' +
+      'quase nunca seguiu, à direita quem quase sempre seguiu. A posição horizontal é ' +
+      'a própria medida, não resultado de cálculo. Atenção: não é esquerda e direita ' +
+      'política, e o meio não é moderação — é onde está a maioria.',
   },
 };
 
@@ -156,18 +154,14 @@ export function TelaDoGrafo({
   const layoutsDisponiveis = useMemo<Layout[]>(() => {
     const temAlinhamento = grafo.nos.some((n) => n.governismo !== null);
 
-    return temAlinhamento
-      ? ['molas', 'alinhamento', 'componentes']
-      : ['molas', 'componentes'];
+    // ⛔ Sem governismo (Senado), sobra o layout de molas — e ali o eixo ⛔ não tem nome.
+    return temAlinhamento ? ['molas', 'alinhamento'] : ['molas'];
   }, [grafo.nos]);
 
   const posicionados = useMemo(() => {
     // ⚠️ O nó carrega as duas posições; aqui uma delas é promovida a `eixoX`/`eixoY`
     //    para o resto do desenho não precisar saber qual layout está ativo.
     const comLayout = grafo.nos.map((n) => {
-      if (layout === 'componentes')
-        return { ...n, eixoX: n.componente1, eixoY: n.componente2 };
-
       // ⭐ `governismo` vive em [0, 1] e o plano em [-1, 1]. A vertical continua vindo
       //    do layout de molas: ela ⛔ não mede nada em nenhum dos dois, e reaproveitá-la
       //    mantém os agrupamentos visualmente coerentes enquanto o eixo x muda.
@@ -472,8 +466,13 @@ export function TelaDoGrafo({
                 {/* ⭐ PL43: o seletor e a ressalva dele andam JUNTOS. 🔴 A do SVD não é
                     opcional — sem ela o leitor lê o centro como moderação, quando ali
                     também está quem faltou a muitas votações. */}
-                <p className="grafo-painel-titulo">Como posicionar os pontos</p>
+                {/* ⚠️ Com uma opção só (Senado), o seletor vira um botão que ⛔ não
+                    escolhe nada. A explicação abaixo fica, porque ela é que importa. */}
+                {layoutsDisponiveis.length > 1 && (
+                  <p className="grafo-painel-titulo">Como posicionar os pontos</p>
+                )}
 
+                {layoutsDisponiveis.length > 1 && (
                 <div className="grafo-layout-botoes" role="group" aria-label="Como posicionar os pontos">
                   {layoutsDisponiveis.map((opcao) => (
                     <button
@@ -492,6 +491,7 @@ export function TelaDoGrafo({
                     </button>
                   ))}
                 </div>
+                )}
 
                 <p className="grafo-painel-ajuda">
                   <strong>{EXPLICACAO[layout].titulo}.</strong> {EXPLICACAO[layout].texto}

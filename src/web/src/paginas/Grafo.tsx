@@ -102,10 +102,9 @@ export function Grafo() {
             <h2>De onde vem</h2>
             <p>
               Só entram votações de <Termo nome="plenario" /> da{' '}
-              <Termo nome="legislatura">{grafo.legislatura}ª legislatura</Termo>, e dois
-              {' '}{membro.plural} só se ligam se votaram nas mesmas{' '}
-              <strong>20 votações</strong> pelo menos — abaixo disso a semelhança seria
-              coincidência.
+              <Termo nome="legislatura">{grafo.legislatura}ª legislatura</Termo>. Dois
+              {' '}{membro.plural} só se ligam se votaram juntos vezes suficientes —
+              com poucas votações em comum, votar igual seria coincidência.
             </p>
 
             {/* 🔴 O sigilo do Senado muda o que a figura pode afirmar, e calar isso

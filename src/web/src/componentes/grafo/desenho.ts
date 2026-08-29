@@ -124,6 +124,10 @@ function desenharGrade(ctx: CanvasRenderingContext2D, t: Tamanho, c: Camera, esc
  * efetivamente caíram. O sinal do eixo é arbitrário — escrever "esquerda = governo"
  * aqui faria a figura mentir sobre si mesma no dia em que uma reexecução a espelhasse.
  *
+ * ⚠️ Só as duas pontas ganham texto. O parágrafo explicativo que ficava sob a linha
+ * saiu: quem liga os eixos quer a referência, ⛔ não uma aula — e a explicação já vive
+ * no painel de ajustes, junto do seletor que a produz.
+ *
  * ## ⚠️ Por que o rótulo fica preso à BORDA e não à ponta do eixo
  *
  * Com zoom, a ponta do eixo sai da tela e o texto sumiria justamente quando a pessoa
@@ -139,7 +143,6 @@ function desenharEixos(
   const origem = paraTela(0, 0, t, quadro.camera);
 
   const linha = escuro ? 'rgba(150,165,180,0.30)' : 'rgba(70,90,110,0.28)';
-  const tinta = escuro ? '#8b98a5' : '#5b6673';
   const forte = escuro ? '#c9d4de' : '#3b4652';
 
   ctx.save();
@@ -186,10 +189,6 @@ function desenharEixos(
   ctx.textAlign = 'right';
   escrever(`${eixos.direita} ▶`, t.largura - 10, y - 12, forte);
 
-  ctx.font = '400 10.5px "IBM Plex Sans", system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  escrever(eixos.legenda, t.largura / 2, y + 14, tinta);
-  escrever(eixos.vertical, t.largura / 2, y + 29, tinta);
   ctx.restore();
 }
 

@@ -126,20 +126,17 @@ describe('painel de ajustes', () => {
     render(<TelaDoGrafo grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
-    // ⚠️ Este teste afirmava "os eixos não significam nada" para molas. Era verdade
-    //    por construção e passou a ser FALSO por medição: o eixo horizontal do layout
-    //    de molas mede −0,89 contra o alinhamento com o Governo, sem nunca ter visto
-    //    orientação de bancada. A tela ⛔ não pode negar o que o dado mostra.
-    expect(screen.getByText(/vertical não mede nada/)).toBeInTheDocument();
+    // Com molas, a tela declara que os eixos ⛔ não significam nada.
+    expect(screen.getByText(/eixos não significam nada/)).toBeInTheDocument();
 
-    await usuario.click(screen.getByRole('button', { name: 'Componentes' }));
+    await usuario.click(screen.getByRole('button', { name: 'Alinhamento' }));
 
-    // 🔴 Duas ressalvas obrigatórias no eixo nomeado:
+    // 🔴 Duas ressalvas obrigatórias no layout do eixo nomeado:
     //    · ⛔ NÃO é esquerda e direita — é alinhamento com ESTE governo, e um deputado
     //      muda de lado na eleição seguinte sem mudar uma posição sequer;
-    //    · o centro ⛔ não é moderação, porque quem faltou a muitas votações cai ali.
+    //    · o meio ⛔ não é moderação — é onde está a maioria (achado #27).
     expect(screen.getByText(/não é esquerda e direita/)).toBeInTheDocument();
-    expect(screen.getByText(/centro não é moderação/)).toBeInTheDocument();
+    expect(screen.getByText(/meio não é moderação/)).toBeInTheDocument();
   });
 
   it('os eixos começam desligados e a chave existe', async () => {
@@ -164,12 +161,15 @@ describe('painel de ajustes', () => {
     expect(screen.getByText(/não tem eixo com nome/)).toBeInTheDocument();
   });
 
-  it('⭐ oferece o layout de alinhamento quando a casa tem a medida', async () => {
+  it('⭐ oferece Molas e Alinhamento, e ⛔ não Componentes', async () => {
     const usuario = userEvent.setup();
     render(<TelaDoGrafo grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
     expect(screen.getByRole('button', { name: 'Alinhamento' })).toBeInTheDocument();
+    // ⚠️ PL43: o SVD saiu da TELA e ⛔ não do dado. Ele mostrava a mesma divisão que
+    //    Alinhamento (−0,87) e exigia um parágrafo para dizer o que o outro diz sozinho.
+    expect(screen.queryByRole('button', { name: 'Componentes' })).not.toBeInTheDocument();
   });
 
   it('⛔ esconde o alinhamento no Senado', async () => {
@@ -180,8 +180,11 @@ describe('painel de ajustes', () => {
 
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
+    // ⛔ Com uma opção só, o seletor inteiro some: um botão que não escolhe nada.
     expect(screen.queryByRole('button', { name: 'Alinhamento' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Molas' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Molas' })).not.toBeInTheDocument();
+    // ⭐ Mas a explicação fica, porque ela é que importa.
+    expect(screen.getByText(/Ligações como molas/)).toBeInTheDocument();
   });
 
   it('🔴 no alinhamento a tela declara que a posição não vem de algoritmo', async () => {
@@ -190,10 +193,8 @@ describe('painel de ajustes', () => {
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
     await usuario.click(screen.getByRole('button', { name: 'Alinhamento' }));
 
-    // ⭐ É o que distingue este layout dos outros dois: aqui a coordenada É a medida.
-    expect(screen.getByText(/não é resultado de algoritmo/)).toBeInTheDocument();
-    // 🔴 E a ressalva continua obrigatória.
-    expect(screen.getByText(/não é esquerda e direita/)).toBeInTheDocument();
+    // ⭐ É o que distingue este layout do de molas: aqui a coordenada É a medida.
+    expect(screen.getByText(/a própria medida, não resultado de cálculo/)).toBeInTheDocument();
   });
 
   it('⛔ a simulação de forças não existe mais', async () => {
