@@ -59,11 +59,11 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 
 | # | Pendência | Prioridade | Esforço |
 |---|---|---|---|
-| 🔄 **PL11** | 🔄 **Avançou** — **21 perguntas curadas estão no ar**, polaridade conferida uma a uma. ⛔ Falta AMPLIAR o pool para **40–60**: o desempate dirigido escolhe a próxima pergunta do pool, e com 21 ele acaba antes de desempatar | 🔴 **Alta** | 🔴 **Dias** |
-| 🟡 **RQ3** | 🔄 **Agora com medição** — a curva de discriminação mostra 12 perguntas + desempate dirigido sob demanda, em vez de um N fixo. Falta o autor confirmar o desenho | 🟡 Média | 🟢 Decisão |
+| 🟢 **PL11** | ✅ **Resolvida (2026-08-29)** — **50 perguntas no poço**, 41 da Câmara e 9 do Senado. ⛔ O critério ⛔ não foi divisão: 106 das 703 duplas entre as candidatas dividem a Câmara IGUAL, e a seleção gulosa mediu cobertura de pares. Detalhe abaixo | 🟢 Baixa | — |
+| 🟢 **RQ3** | ✅ **Resolvida (2026-08-29)** — **24 perguntas**, sendo 8 de abertura da Câmara, as 9 do Senado e 7 de desempate dirigido. Medido: 15 adaptativas valem 25 fixas | 🟢 Baixa | — |
+| 🟢 **PL10** | ✅ **Virou o desenho, ⛔ não experimento** — o desempate dirigido está no ar. Medido: empate mediano 6 (dirigido) contra 14 (fixo) e 16 (sorteado) | 🟢 Baixa | — |
 | ~~PL12~~ | ✅ **Teste do jantar** — entra se dá para discutir num jantar sem explicar a proposta | — | — |
-| **CT7** | 🔴 Piso de respostas para o `422` — sugerido **60% do N** (plano/07 §4.4) | 🔴 Alta | 🟢 Decisão |
-| **PL10** | Questionário adaptativo entra como experimento comparativo? | 🟡 Média | — |
+| 🟢 **CT7** | ✅ **Resolvida (2026-08-29)** — 60%, mas do que é **OFERECIDO** (24), ⛔ não do poço (50). Sobre o poço daria 30 respostas num questionário de 24, e o resultado seria impossível de obter | 🟢 Baixa | — |
 | **PL18** | Usar LLM para rascunhar a reescrita das ementas? | 🟡 Média | — |
 | **A2** | Regex de `categoria`, validadas contra amostra rotulada à mão | 🟡 Média | 🟡 Horas |
 | **A3** | Deduplicação de PEC em dois turnos | 🟡 Média | — |
@@ -349,6 +349,56 @@ O Aspire injeta `ConnectionStrings__poligraph` no formato do **Npgsql**
 > conexão pronta do Testcontainers, que já vem em libpq. O formato do Aspire nunca
 > passava por ali. ⚠️ **Foi preciso executar de verdade** — é o mesmo padrão do bug do
 > `DOTNET_ENVIRONMENT`, que também só apareceu rodando.
+
+---
+
+### ✅ PL11 e RQ3 (resolvidas em 2026-08-29) — o poço e o tamanho do questionário
+
+⚠️ **O poço e o questionário ⛔ não são a mesma coisa**, e confundi-los foi o que quase
+fez o trabalho render ao contrário. Com 50 perguntas curadas e o endpoint devolvendo
+todas, o mínimo obrigatório — `ceil(ativas × 0,60)` — subiu **sozinho de 17 para 30**.
+⛔ Curar mais perguntas tinha acabado de deixar o questionário **pior**.
+
+#### Como as 22 novas foram escolhidas
+
+⛔ **⛔ Não pela divisão do placar.** O [`plano/06 §2`](plano/06-perguntas-lote-1.md) já
+avisava, e a medição confirmou: das **703 duplas** entre as 38 candidatas com divisão
+≥ 25%, **106 têm os deputados votando igual em mais de 90%** das duas. Quase toda
+votação dividida divide a Câmara **no mesmo eixo**.
+
+📐 O critério foi cobertura de **pares de deputados que o conjunto separa**, contando só
+discordância real — ⛔ ausência ⛔ não separa ninguém:
+
+| Conjunto | Pares separados |
+|---|---|
+| As 21 do lote 1 | 139.667 de 194.376 (**71,9%**) |
+| ⭐ + as 20 do lote 2 | **84,9%** |
+| + as 18 restantes | 86,1% — por isso paramos em 20 |
+
+#### O tamanho: 24, ⛔ não 50
+
+📐 Medido com cada deputado no papel de cidadão, 15 perguntas da Câmara:
+
+| Estratégia | Empate mediano no topo | Sozinho no topo |
+|---|---:|---:|
+| As 15 melhores, **fixas** | 14 | 4,5% |
+| ⭐ 8 fixas + **7 dirigidas** | **6** | 13,4% |
+| 8 fixas + 7 **sorteadas** | 16 | 10,4% |
+
+🔴 **Sortear é o mesmo que ⛔ não adaptar.** E **15 adaptativas valem 25 fixas** — a
+curva fixa só chega a empate 5 com 25 perguntas.
+
+⚠️ Escolher **uma por vez** daria empate 5 em vez de 6, ao custo de **sete idas e voltas**
+ao servidor no meio do questionário. ⛔ Não vale.
+
+#### O Senado está esgotado, e isso é da fonte
+
+Das 52 substantivas **abertas** da 57ª: **39 têm divisão abaixo de 5%**, e 7 das 8 acima
+de 25% já estavam curadas. As outras 51 substantivas são **secretas**
+([#17](achados/017-senado-maioria-secreta.md)) e ⛔ não têm voto individual.
+
+⛔ **⛔ Não há mais nada a curar no Senado sem mudar a fonte.** As 2 que entraram
+revertem um veto do lote 1 — o argumento está no `_leia` do arquivo.
 
 ---
 

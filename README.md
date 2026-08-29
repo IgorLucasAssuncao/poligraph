@@ -306,8 +306,9 @@ flowchart LR
     style PG fill:#f3f5f7,stroke:#5b6673
 ```
 
-**Linha tracejada = ainda não implementado.** Só o coletor de notícias está nesse
-estado: levantado e documentado, mas sem ingerir.
+⭐ **Todos os ramos ingerem.** O coletor de notícias era o último tracejado e saiu do
+papel em 2026-08-29: `etl-noticias` lê três feeds públicos — Agência Câmara, Agência
+Senado e Agência Brasil — e associa cada matéria a quem ela cita.
 **Os dois ramos do ETL respondem perguntas diferentes sobre a mesma pessoa.** O ramo do
 **voto** sustenta o título do TCC — afinidade e grafo. O ramo do **dinheiro** não entra
 em cálculo nenhum de afinidade: ele povoa o perfil, e existe porque o critério do autor foi

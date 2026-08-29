@@ -181,13 +181,20 @@ legislatura 57, 643 deputados, 773.716 despesas de cota, 24.810 emendas, 22.511
 receitas de campanha. 📐 Os números
 todos, conferidos contra o banco, no [`README`](../README.md).
 
-⚠️ **Duas fontes ainda não ingerem:** o **Senado** ([PL42](../docs/PENDENCIAS.md)) e o
-**coletor de notícias**.
+⭐ **Todas as fontes ingerem** — o Senado desde a PL42, e o **coletor de notícias**
+desde 2026-08-29 (`etl-noticias`, três feeds públicos: Agência Câmara, Agência Senado
+e Agência Brasil).
 
-> 🔴 **O maior bloqueio continua não sendo técnico:** a **PL11** — curar 15–25 perguntas
-> do questionário — é leitura humana de ementa por ementa, não escala. **Comece cedo.**
-> ⚠️ 21 estão no ar; o desempate dirigido precisa de **40–60** para não acabar antes de
-> desempatar.
+> ✅ **A PL11 saiu do caminho (2026-08-29).** São **50 perguntas curadas** — 41 da
+> Câmara e 9 do Senado —, e o cidadão responde **24**: 8 de abertura, as 9 do Senado e
+> 7 escolhidas contra o empate dele.
+>
+> ⚠️ **Poço e questionário ⛔ não são a mesma coisa.** O mínimo obrigatório é 60% do que
+> é **OFERECIDO** (24), ⛔ não do poço (50) — sobre o poço daria 30 respostas num
+> questionário de 24. 📐 A conta toda em [`PENDENCIAS`](../docs/PENDENCIAS.md).
+>
+> ⛔ **O Senado está esgotado:** das 52 substantivas abertas da 57ª, 39 dividem menos de
+> 5% e o resto é secreto. ⛔ Não há mais o que curar lá sem mudar a fonte.
 
 ### 🔑 Chaves que o ambiente pede
 
