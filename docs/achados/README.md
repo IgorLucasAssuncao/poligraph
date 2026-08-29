@@ -26,7 +26,7 @@ se mede*.
 
 ---
 
-## Os 27 achados
+## Os 28 achados
 
 ### 🔴 Estruturantes — mudaram a arquitetura
 
@@ -87,6 +87,7 @@ ingestão contra a fonte real.
 | [**#25**](025-a-metrica-nao-e-onde-mora-a-qualidade.md) | 🔴 A **métrica de afinidade não é onde mora a qualidade** | Concordância, cosseno e Pearson dão o mesmo ranking (ρ ≥ 0,996). O que discrimina é a **escolha das perguntas** |
 | [**#26**](026-a-comunidade-nao-e-partido-nem-bloco.md) | 🔴 A comunidade **não é o partido nem o bloco governista** | ARI 0,272 contra partido e 0,268 contra governo/oposição — e os dois rótulos quase não se sobrepõem entre si (0,058) |
 | [**#27**](027-a-borda-do-grafo-e-falta-de-dado.md) | 🔴 A **borda do desenho é falta de dado**, e o centro é a maioria | Os 10 da borda têm **zero ligações** e 20 votações; o centro tem governismo 81,8% contra 80,7% da Câmara inteira |
+| [**#28**](028-o-senado-nao-publica-orientacao-de-bancada.md) | ⛔ O **Senado não publica orientação de bancada** | O único proxy possível — o voto do Líder do Governo — ⛔ não serve: 96% das votações são anteriores à designação dele |
 
 ---
 
