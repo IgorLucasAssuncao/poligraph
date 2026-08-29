@@ -382,6 +382,16 @@ export type NoDoGrafo = {
   componente2: number | null;
   /** Foto oficial da casa. ⚠️ Nula para quem foi criado a partir do próprio voto. */
   urlFoto: string | null;
+  /**
+   * ⭐ De 0 a 1 — quanto o parlamentar votou como a bancada do Governo orientou.
+   *
+   * Vai junto para a LEGENDA do grafo ser derivada do dado, ⛔ não escrita à mão: o
+   * sinal do eixo é arbitrário, e uma legenda fixa dizendo "à esquerda ficam os
+   * governistas" ficaria errada em silêncio se uma reexecução espelhasse a figura.
+   *
+   * ⛔ Nulo no Senado.
+   */
+  governismo: number | null;
 };
 
 /**

@@ -17,6 +17,7 @@ function no(id: number, nome: string, partido = 'PARTIDO-A'): NoDoGrafo {
     componente1: 0.1,
     componente2: -0.1,
     urlFoto: null,
+    governismo: id / 4,
   };
 }
 
@@ -139,6 +140,28 @@ describe('painel de ajustes', () => {
     //    · o centro ⛔ não é moderação, porque quem faltou a muitas votações cai ali.
     expect(screen.getByText(/não é esquerda e direita/)).toBeInTheDocument();
     expect(screen.getByText(/centro não é moderação/)).toBeInTheDocument();
+  });
+
+  it('os eixos começam desligados e a chave existe', async () => {
+    const usuario = userEvent.setup();
+    render(<TelaDoGrafo grafo={GRAFO} />);
+    await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
+
+    // ⚠️ Desligado por padrão: quem abre o desenho quer ver a forma primeiro, e o eixo
+    //    rotulado é a leitura seguinte.
+    expect(screen.getByLabelText(/Mostrar os eixos/)).not.toBeChecked();
+  });
+
+  it('⛔ sem orientação de bancada, avisa que o eixo não tem nome', async () => {
+    const usuario = userEvent.setup();
+    // É o caso do Senado, que não publica orientação.
+    const senado = { ...GRAFO, nos: GRAFO.nos.map((n) => ({ ...n, governismo: null })) };
+    render(<TelaDoGrafo grafo={senado} />);
+
+    await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
+    await usuario.click(screen.getByLabelText(/Mostrar os eixos/));
+
+    expect(screen.getByText(/não tem eixo com nome/)).toBeInTheDocument();
   });
 
   it('⛔ a simulação de forças não existe mais', async () => {

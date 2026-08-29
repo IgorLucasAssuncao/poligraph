@@ -11,7 +11,20 @@ namespace Poligraph.Api.Endpoints;
 public record NoDoGrafoDto(
     long Id, string Nome, string Partido, string Uf,
     short? Comunidade, float? EixoX, float? EixoY, int NVotacoes,
-    float? Componente1, float? Componente2, string? UrlFoto);
+    float? Componente1, float? Componente2, string? UrlFoto,
+    /// <summary>
+    /// ⭐ Vai junto para a LEGENDA ser derivada, ⛔ não escrita à mão.
+    ///
+    /// <para>
+    /// O sinal do eixo é arbitrário: a semente do layout é fixa, mas uma reexecução com
+    /// dado novo pode espelhar a figura. Uma legenda que afirme "à esquerda ficam os
+    /// governistas" ficaria errada em silêncio no dia em que isso acontecesse — e
+    /// silêncio é justamente o modo de falha que este projeto persegue.
+    /// </para>
+    ///
+    /// <para>⛔ Nulo no Senado, que não publica orientação de bancada.</para>
+    /// </summary>
+    float? Governismo);
 
 /// <summary>
 /// ⚠️ <c>Peso</c> é a CONCORDÂNCIA — a proporção de votos iguais —, e sozinho ele não
@@ -103,7 +116,7 @@ public static class EndpointsGrafo
                 pessoa?.Ultimo?.PartidoNoVoto ?? "",
                 pessoa?.Ultimo?.UfNoVoto ?? "",
                 m.Comunidade, m.EixoX, m.EixoY, m.NVotacoes,
-                m.Componente1, m.Componente2, pessoa?.UrlFoto);
+                m.Componente1, m.Componente2, pessoa?.UrlFoto, m.Governismo);
         })];
     }
 

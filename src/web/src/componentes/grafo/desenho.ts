@@ -13,6 +13,7 @@
 import type { ArestaDoGrafo, NoDoGrafo } from '../../api';
 import { paraTela, type Camera, type Tamanho } from './camera';
 import { foto, iniciais } from './fotos';
+import type { RotulosDoEixo } from './legenda';
 
 /** ⚠️ Retina: sem isto o desenho sai borrado em tela de alta densidade. */
 export const DENSIDADE = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
@@ -52,6 +53,8 @@ export type Quadro = {
   cidadao?: { eixoX: number; eixoY: number } | null;
   camera: Camera;
   comFotos: boolean;
+  /** ⛔ Nulo quando os eixos estão desligados ou a casa não os nomeia. */
+  eixos: RotulosDoEixo | null;
   /** Repinta quando uma foto termina de baixar. */
   aoChegarFoto: () => void;
 };
@@ -77,6 +80,9 @@ export function desenhar(
   ctx.clearRect(0, 0, t.largura, t.altura);
 
   desenharGrade(ctx, t, quadro.camera, escuro);
+  // ⚠️ ANTES das arestas: o eixo é referência de fundo, ⛔ não elemento sobre a figura.
+  //    Desenhado por cima, ele cortaria os nós ao meio.
+  if (quadro.eixos) desenharEixos(ctx, t, quadro, escuro);
   desenharArestas(ctx, t, quadro, escuro);
   desenharNos(ctx, t, quadro, escuro);
   desenharCidadao(ctx, t, quadro, escuro);
@@ -107,6 +113,84 @@ function desenharGrade(ctx: CanvasRenderingContext2D, t: Tamanho, c: Camera, esc
       ctx.fillRect(x, y, 1, 1);
     }
   }
+}
+
+/**
+ * Os dois eixos, com o que a horizontal significa escrito nas pontas.
+ *
+ * ## 🔴 Os rótulos vêm do dado
+ *
+ * `eixos.esquerda` e `.direita` são calculados olhando de que lado os governistas
+ * efetivamente caíram. O sinal do eixo é arbitrário — escrever "esquerda = governo"
+ * aqui faria a figura mentir sobre si mesma no dia em que uma reexecução a espelhasse.
+ *
+ * ## ⚠️ Por que o rótulo fica preso à BORDA e não à ponta do eixo
+ *
+ * Com zoom, a ponta do eixo sai da tela e o texto sumiria justamente quando a pessoa
+ * está examinando de perto. Ancorado na borda, ele acompanha.
+ */
+function desenharEixos(
+  ctx: CanvasRenderingContext2D,
+  t: Tamanho,
+  quadro: Quadro,
+  escuro: boolean,
+) {
+  const eixos = quadro.eixos!;
+  const origem = paraTela(0, 0, t, quadro.camera);
+
+  const linha = escuro ? 'rgba(150,165,180,0.30)' : 'rgba(70,90,110,0.28)';
+  const tinta = escuro ? '#8b98a5' : '#5b6673';
+  const forte = escuro ? '#c9d4de' : '#3b4652';
+
+  ctx.save();
+  ctx.setLineDash([4, 4]);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = linha;
+
+  // Horizontal — a que tem significado.
+  if (origem.y > -20 && origem.y < t.altura + 20) {
+    ctx.beginPath();
+    ctx.moveTo(0, origem.y);
+    ctx.lineTo(t.largura, origem.y);
+    ctx.stroke();
+  }
+
+  // Vertical — presente para dar a referência do meio, ⛔ não porque meça algo.
+  if (origem.x > -20 && origem.x < t.largura + 20) {
+    ctx.beginPath();
+    ctx.moveTo(origem.x, 0);
+    ctx.lineTo(origem.x, t.altura);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  const y = Math.max(22, Math.min(t.altura - 34, origem.y));
+
+  ctx.save();
+  ctx.font = '600 11px "IBM Plex Sans", system-ui, sans-serif';
+  ctx.textBaseline = 'middle';
+
+  // ⚠️ Contorno na cor do fundo: o rótulo fica sobre a nuvem de pontos, e sem ele o
+  //    texto some dentro da teia de arestas.
+  const escrever = (texto: string, x: number, altura: number, cor: string) => {
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = escuro ? 'rgba(11,14,17,0.9)' : 'rgba(255,255,255,0.9)';
+    ctx.strokeText(texto, x, altura);
+    ctx.fillStyle = cor;
+    ctx.fillText(texto, x, altura);
+  };
+
+  ctx.textAlign = 'left';
+  escrever(`◀ ${eixos.esquerda}`, 10, y - 12, forte);
+
+  ctx.textAlign = 'right';
+  escrever(`${eixos.direita} ▶`, t.largura - 10, y - 12, forte);
+
+  ctx.font = '400 10.5px "IBM Plex Sans", system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  escrever(eixos.legenda, t.largura / 2, y + 14, tinta);
+  escrever(eixos.vertical, t.largura / 2, y + 29, tinta);
+  ctx.restore();
 }
 
 function desenharArestas(

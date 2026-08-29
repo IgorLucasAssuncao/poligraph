@@ -13,6 +13,7 @@ import {
   type Parlamentar,
 } from '../api';
 import { Avatar } from '../componentes/Avatar';
+import { LegendaDoGrafo } from '../componentes/LegendaDoGrafo';
 import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 import { SugestoesParaSeguir } from '../componentes/SugestoesParaSeguir';
 import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
@@ -98,14 +99,9 @@ export function Inicio() {
         {grafo && grafo.nos.length > 0 && (
           <section className="painel-secao">
             <h2>Como a Câmara se agrupa</h2>
-            <p className="ajuda">
-              Cada ponto é um deputado; dois se ligam quando votaram parecido em pelo menos
-              20 votações. <strong>A posição não é um espectro</strong> — o desenho só
-              aproxima quem vota junto, e as cores identificam grupos formados pelo voto,
-              não pelo partido.
-            </p>
-
             <TelaDoGrafo grafo={grafo} altura={460} />
+
+            <LegendaDoGrafo grafo={grafo} />
 
             <Link to="/parlamentares?vista=grafo" className="painel-mais">
               Abrir o grafo completo

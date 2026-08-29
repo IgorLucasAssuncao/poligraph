@@ -8,6 +8,7 @@ import {
   type NoDoGrafo,
 } from '../api';
 import { GrafoAmpliado } from '../componentes/GrafoAmpliado';
+import { LegendaDoGrafo } from '../componentes/LegendaDoGrafo';
 import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
 import { Termo } from '../componentes/Termo';
 
@@ -95,19 +96,16 @@ export function Grafo() {
             titulo={`Quem vota com quem · ${NOME_DA_CASA[casa].nome}`}
           />
 
+          <LegendaDoGrafo grafo={grafo} />
+
           <section className="grafo-explicacao">
-            <h2>Como ler</h2>
+            <h2>De onde vem</h2>
             <p>
-              Cada ponto é um {membro.singular}. Dois pontos se ligam quando votaram
-              parecido em pelo menos 20 votações — e quanto mais forte a ligação, mais
-              perto eles ficam. Só entram votações de <Termo nome="plenario" /> da{' '}
-              <Termo nome="legislatura">{grafo.legislatura}ª legislatura</Termo>.
-            </p>
-            <p className="ajuda">
-              {/* 🔴 O leitor lê espectro em qualquer eixo, mesmo sem a gente afirmar. */}
-              <strong>A posição não é um espectro.</strong> Não existe “esquerda” à
-              esquerda nem “direita” à direita: o desenho só aproxima quem vota junto. As
-              cores identificam grupos, e o número de cada grupo é apenas um rótulo.
+              Só entram votações de <Termo nome="plenario" /> da{' '}
+              <Termo nome="legislatura">{grafo.legislatura}ª legislatura</Termo>, e dois
+              {' '}{membro.plural} só se ligam se votaram nas mesmas{' '}
+              <strong>20 votações</strong> pelo menos — abaixo disso a semelhança seria
+              coincidência.
             </p>
 
             {/* 🔴 O sigilo do Senado muda o que a figura pode afirmar, e calar isso

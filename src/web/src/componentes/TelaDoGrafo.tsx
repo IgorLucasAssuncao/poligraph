@@ -11,6 +11,7 @@ import {
   type Tamanho,
 } from './grafo/camera';
 import { DENSIDADE, desenhar, raioNaTela, type Quadro } from './grafo/desenho';
+import { rotulosDoEixo } from './grafo/legenda';
 
 export type PosicaoDoCidadao = {
   eixoX: number;
@@ -127,6 +128,7 @@ export function TelaDoGrafo({
   const [busca, setBusca] = useState('');
   const [layout, setLayout] = useState<Layout>('molas');
   const [comFotos, setComFotos] = useState(true);
+  const [comEixos, setComEixos] = useState(false);
   const [ajustesAbertos, setAjustesAbertos] = useState(false);
   const [tamanho, setTamanho] = useState<Tamanho>({ largura: 800, altura: altura ?? 520 });
 
@@ -230,6 +232,19 @@ export function TelaDoGrafo({
     return () => observador.disconnect();
   }, [altura, preencher]);
 
+  /**
+   * ⭐ Os rótulos do eixo saem do DADO. O sinal do eixo é arbitrário, e escrever
+   * "esquerda = governo" faria a figura mentir sobre si mesma no dia em que uma
+   * reexecução a espelhasse.
+   *
+   * ⛔ Nulo no Senado: sem orientação de bancada, o eixo ⛔ não tem nome — e desenhar a
+   * linha com rótulo inventado seria pior que não desenhar.
+   */
+  const eixos = useMemo(
+    () => (comEixos ? rotulosDoEixo(posicionados, layout) : null),
+    [comEixos, posicionados, layout],
+  );
+
   const quadro = useMemo(
     () => ({
       nos: noDesenho,
@@ -242,9 +257,11 @@ export function TelaDoGrafo({
       cidadao,
       camera,
       comFotos,
+      eixos,
       aoChegarFoto: repintar,
     }),
-    [noDesenho, visiveis, porId, graus, alvo, emFoco, vizinhos, cidadao, camera, comFotos, repintar],
+    [noDesenho, visiveis, porId, graus, alvo, emFoco, vizinhos, cidadao, camera,
+     comFotos, eixos, repintar],
   );
 
   useEffect(() => {
@@ -465,6 +482,25 @@ export function TelaDoGrafo({
                   />
                   Rostos ao aproximar
                 </label>
+
+                <label className="grafo-painel-chave">
+                  <input
+                    type="checkbox"
+                    checked={comEixos}
+                    onChange={(e) => setComEixos(e.target.checked)}
+                  />
+                  Mostrar os eixos
+                </label>
+
+                {/* ⚠️ Começa desligado: a maior parte de quem abre o desenho quer ver a
+                    forma, e o eixo rotulado é a leitura seguinte. Ligado por padrão, ele
+                    disputaria atenção com a própria figura. */}
+                {comEixos && !eixos && (
+                  <p className="grafo-painel-ajuda">
+                    Esta casa não tem eixo com nome: o Senado não publica a orientação
+                    das bancadas, então não há como dizer o que separa um lado do outro.
+                  </p>
+                )}
 
                 <hr />
 
