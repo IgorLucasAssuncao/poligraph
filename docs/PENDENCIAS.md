@@ -71,19 +71,19 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | **PL34** | 🔵 **Adiada por decisão do autor:** gravar as respostas individuais do questionário, SEM vínculo com a conta, para analisar quais perguntas dividem e quais ninguém entende (§ abaixo) | 🔵 Futuro | — |
 | ~~API4~~ | ✅ **Resolvida** — cosseno no grafo, concordância simples na tela (plano/07 §4.5) | — | — |
 | 🟡 **PL44** | 🔄 **Avançou** — a ingestão deduz a legislatura pela data e as **consultas já filtram** (PL35 ✅). ⛔ Falta a parte de **produto**: o que a tela mostra na virada, e o que acontece com quem respondeu o questionário na 57ª. ⏳ **A 57ª termina em janeiro de 2027** | 🟡 Média | 🟢 Decisão |
-| 🟡 **PL45** | **🆕 9 autores de emenda ambíguos aguardam decisão humana** — a porta de entrada já existe (`emendas --resolver`), mas quem decide é uma pessoa. Lista completa abaixo | 🟡 Média | 🟢 Minutos |
+| ✅ ~~PL45~~ | **Resolvida (2026-09-06)** — ⭐ sobrou **0**. O desempate da [PL47](#-pl47-a-causa-raiz-nao-era-reconciliacao) resolveu todos: quando só um homônimo tem voto na base, é ele. ⛔ Ninguém a decidir | 🟢 Baixa | — |
 | 🟢 **PL50** | ✅ **Resolvida (2026-08-29)** — 359 matérias do Senado ingeridas, **421 de 421 votações vinculadas (100%)**. A colisão de id foi resolvida com chave composta `(casa, id)`, ⛔ não com deslocamento aritmético. Detalhe abaixo | 🟢 Baixa | — |
 | ✅ ~~PL51~~ | **Resolvida (2026-09-06)** — o autor desligou o Smart App Control. `dotnet test` e `dotnet ef` voltaram a rodar **nativos**. ⚠️ ⛔ Irreversível: no Windows 11 o SAC só religa reinstalando o sistema | 🟢 Baixa | — |
 | 🟢 **PL47** | ✅ **Resolvida até o limite da fonte (2026-08-29)** — as duas regras entraram: **106 → 81** deputados sem emenda, autores pendentes **169 → 101**, e **93,6%** das emendas com dono. ⛔ Os 81 restantes ⛔ não têm emenda no Portal — sondado por nome. Detalhe abaixo | 🟢 Baixa | — |
-| 🔵 **PL46** | **🆕 83 autores de emenda são senadores** — resolvem-se sozinhos quando a [PL42](#) trouxer o Senado, porque o código do autor é de **mandato** e vale para as duas casas ([achado #24](achados/024-codigo-da-emenda-identifica-o-mandato.md)) | 🔵 Futuro | — |
+| ✅ ~~PL46~~ | **Resolvida (2026-09-06)** — resolveu-se sozinha, como previsto: a PL42 trouxe o Senado e ⭐ **0** dos 101 autores pendentes casa com senador. O código do autor é de **mandato** ([achado #24](achados/024-codigo-da-emenda-identifica-o-mandato.md)) | 🟢 Baixa | — |
 | ~~PL35~~ | ✅ **Resolvida (2026-08-27)** — `Legislaturas` DERIVA a legislatura do dado, nunca de configuração. `TestesLegislatura` semeia **duas** legislaturas e prova que a segunda ⛔ não vaza; as três mutações matam os três filtros. § abaixo mantido como registro | — | — |
 | ~~PL36~~ | ✅ **Resolvida (2026-08-26)** — nomes corrigidos e **verificado rodando o container contra o banco real**: monta a matriz e grava `execucoes`. Estava faltando também traduzir a connection string do Aspire (§ abaixo) | — | — |
 | ~~PL37~~ | ✅ **Resolvida (2026-08-27)** — `test_contrato_schema.py` cobre agora **nomes de tabela, nomes de coluna e os literais combinados** entre os dois lados (`FUNDO ESPECIAL`, `ck_autor_metodo`). ⭐ O próprio parser tem teste que morre sob mutação — sem ele, uma exceção mal posta o deixaria cego e verde | — | — |
 | ~~PL39~~ | ✅ **Resolvida (2026-08-26)** — legislatura 57 inteira ingerida: 470.786 votos, 5.268 arestas | — | — |
-| 🟡 **PL43** | **`eixo_x`/`eixo_y` divergem do plano** — o rascunho previa 1ª componente do SVD (eixo interpretável, linhagem W-NOMINATE); o implementado é layout de molas, que ⛔ não tem eixo com significado. Guardar as duas coisas ou ficar só com molas? Ver [plano/07 §3.6](plano/07-grafo-e-afinidade.md) | 🟡 Média | 🟢 Decisão |
+| ✅ ~~PL43~~ | **Resolvida (2026-08-28)** — detalhe abaixo. O índice ficou desatualizado por uma semana, que é o defeito que esta linha corrige | 🟢 Baixa | — |
 | 🟢 **PL42** | ✅ **Resolvida (2026-08-27)** — ingestão, curadoria e produto. 7 perguntas do Senado ativas, questionário misto de 28, resultado com **uma lista por casa**, grafo próprio de cada uma. ⛔ Resta a ficha do parlamentar, que ainda não distingue casa. Detalhe abaixo | 🟢 Baixa | 🟡 Horas |
 | ~~PL41~~ | ✅ **Resolvida (2026-08-26)** — o seed foi **aposentado** por decisão do autor: com o ETL funcional, só o schema precisa ser inicializado. O semeador virou `Poligraph.Tests/Fixtures/DadosDeTeste.cs` | — | — |
-| 🟡 **PL40** | **`proposicoes` nunca é ingerida** — o CSV de votações traz só o `id` da proposição, sem sigla/número/ano/ementa. Hoje o `proposicao_id` é anulado. 🔴 Bloqueia a **RF-30** (exibir a ementa original ao lado da pergunta) | 🟡 Média | 🟡 Horas |
+| ✅ ~~PL40~~ | **Resolvida (2026-08-28)** — detalhe abaixo. ⭐ **1.042** proposições no banco (683 Câmara + 359 Senado), e a ementa chegou à ficha e à curadoria | 🟢 Baixa | — |
 | ~~PL38~~ | ✅ **Resolvida (2026-08-26)** — `arestas_grafo` e `nos_metrica` gravadas; Louvain + layout de molas com semente fixa; 30 comunidades em 655 nós. ⚠️ `governismo` e `disciplina` seguem nulos: dependem de `votacoesOrientacoes`, ainda não ingerido | — | — |
 
 ### ✅ PL50 (resolvida em 2026-08-29) — a ementa do Senado entrou
@@ -633,7 +633,7 @@ uma só, então o recorte poderia sumir num refactor e tudo continuaria verde.
 
 ---
 
-### 🟡 PL45 — os 9 autores de emenda ambíguos
+### ✅ PL45 (resolvida em 2026-09-06) — sobrou zero ambíguo
 
 **Medida em 2026-08-27**, na ingestão real das emendas de 2023–2026.
 
