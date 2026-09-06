@@ -156,7 +156,7 @@ inflou a contagem em 8,8% — ver [`04-contratos`](../docs/04-contratos.md).
 
 ```bash
 dotnet run --project src/Poligraph.AppHost      # sobe tudo (Aspire)
-dotnet ef migrations add <Nome> -p src/Poligraph.Api
+dotnet ef migrations add <Nome> -p src/Poligraph.Migrations   # 🔴 NÃO a API (PL49)
 docker compose run --rm migracoes                # aplica em produção (dentro do VPS)
 dotnet ef migrations script --idempotent        # ⭐ conferir ANTES de aplicar
 dotnet test                                     # inclui o teste de polaridade

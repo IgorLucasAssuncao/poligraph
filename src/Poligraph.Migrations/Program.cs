@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Poligraph.Api.Data;
@@ -17,7 +17,12 @@ var builder = Host.CreateApplicationBuilder(args);
 
 builder.AddNpgsqlDbContext<PoligraphDb>(
     connectionName: "poligraph",
-    configureDbContextOptions: opcoes => opcoes.UseSnakeCaseNamingConvention());
+    configureDbContextOptions: opcoes => opcoes
+        // 🔴 PL49 — as migrations moram NESTE projeto, ⛔ não no da API. O contexto vem
+        //    de `Poligraph.Api`, e sem esta linha o EF procuraria migration lá e ⛔ não
+        //    acharia nenhuma: `MigrateAsync` ⛔ não daria erro, criaria um banco VAZIO.
+        .UseNpgsql(npgsql => npgsql.MigrationsAssembly(FabricaDesignTime.Assembly))
+        .UseSnakeCaseNamingConvention());
 
 var host = builder.Build();
 

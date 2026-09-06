@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Poligraph.Api.Data.Migrations
+namespace Poligraph.Migrations.Migrations
 {
     /// <inheritdoc />
     public partial class Inicial : Migration

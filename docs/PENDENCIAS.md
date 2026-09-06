@@ -224,11 +224,11 @@ Os comentários dentro das migrations antigas — como a armadilha do `DROP DEFA
 `ProposicaoPorCasa` — somem. ⭐ Mas eles ⛔ não eram a fonte da verdade: o conteúdo vive
 nos achados e aqui, e o histórico literal segue no git.
 
-#### 🔴 O que isto NÃO resolve
+#### ⭐ E destravou a PL49
 
-⚠️ A **PL49** continua aberta, e agora é o único item de migration: os arquivos seguem em
-`Poligraph.Api/Data/Migrations`, e ⛔ a API ⛔ nunca migra. ⭐ Consolidar deixou a mudança
-**mais barata** — é um arquivo a mover, ⛔ não doze.
+⚠️ Consolidar deixou a mudança seguinte **barata**: mover **um** arquivo, ⛔ não doze com
+doze `Designer` junto. ✅ A [PL49](#-pl49-resolvida-em-2026-09-06--a-migration-foi-para-quem-a-aplica)
+foi resolvida logo depois.
 
 #### ⚠️ Foi preciso container para gerar
 
@@ -238,6 +238,46 @@ funcionou** desta vez — a geração saiu no container, pela mesma receita dos 
 
 ⭐ Isso reclassifica a PL51: ela ⛔ não atrapalha só teste, ela **bloqueia trabalho de
 schema**.
+
+---
+
+### ✅ PL49 (resolvida em 2026-09-06) — a migration foi para quem a aplica
+
+O artefato estava no projeto errado: `Poligraph.Api/Data/Migrations`, com a
+`FabricaDesignTime` junto — e é a fábrica que faz o `dotnet ef` eleger o projeto-alvo.
+
+⛔ **A API ⛔ nunca migra** (regra do CLAUDE.md), mas o comando pedia
+`-p src/Poligraph.Api`, contradizendo a própria regra.
+
+| | Antes | Depois |
+|---|---|---|
+| Migrations | `Poligraph.Api/Data/Migrations/` | ⭐ `Poligraph.Migrations/Migrations/` |
+| `FabricaDesignTime` | `Poligraph.Api/Data/` | ⭐ `Poligraph.Migrations/` |
+| Namespace | `Poligraph.Api.Data.Migrations` | `Poligraph.Migrations.Migrations` |
+| Comando | `dotnet ef … -p src/Poligraph.Api` | ⭐ `dotnet ef … -p src/Poligraph.Migrations` |
+
+#### 🔴 `MigrationsAssembly` ⛔ não é detalhe
+
+⚠️ O **contexto** (`PoligraphDb`) continua em `Poligraph.Api`, e o EF procura migration no
+assembly **do contexto** por padrão. Sem declarar o assembly, ⛔ ele ⛔ não acharia
+nenhuma — e `MigrateAsync` ⛔ **não daria erro**: criaria um banco **vazio**.
+
+⭐ O nome vive num lugar só, `FabricaDesignTime.Assembly`, e os três pontos o usam:
+
+| Onde | Por quê |
+|---|---|
+| `FabricaDesignTime` | Senão o scaffold geraria uma `Inicial` nova por cima do schema que já existe |
+| `Poligraph.Migrations/Program.cs` | É quem aplica |
+| `Poligraph.Tests/BaseIntegracao.cs` | Cada teste de integração migra um Postgres novo |
+
+⭐ **133 testes .NET passam** — e eles criam banco do zero e aplicam a migration, então
+provam o caminho inteiro, ⛔ não só a compilação.
+
+#### ⭐ Por que agora e ⛔ não antes
+
+A [PL48](#-pl48-resolvida-em-2026-08-29--12-migrations-viraram-uma) tinha acabado de
+consolidar 12 arquivos em 1. ⚠️ Mover **doze** arquivos com doze `Designer` seria a mesma
+mudança com doze vezes mais superfície de erro.
 ---
 
 ### 🟡 PL51 — o Smart App Control barra binários recém-compilados
@@ -903,7 +943,7 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 | **PL16** | Como o ETL sinaliza `novas_votacoes` |
 | **PL31** | Definir o conteúdo do seed de desenvolvimento — quantos parlamentares, votações e perguntas |
 | ✅ ~~PL48~~ | **Resolvida (2026-08-29)** — consolidadas. Eram **12** arquivos, ⛔ não 8: o número cresceu durante o desenvolvimento. Viraram **uma** `Inicial`, com o schema conferido definição por definição. Detalhe abaixo |
-| 🔴 **PL49** | **Mover as migrations para o projeto `Poligraph.Migrations`** — hoje elas moram em `Poligraph.Api/Data/Migrations`, e é `Poligraph.Api` quem o `dotnet ef` toma como projeto-alvo. ⛔ A API nunca migra (regra do CLAUDE.md), então o artefato está no projeto errado: quem aplica é o console |
+| ✅ ~~PL49~~ | **Resolvida (2026-09-06)** — as migrations e a `FabricaDesignTime` foram para `Poligraph.Migrations`. O `dotnet ef` agora toma como alvo o projeto que **aplica**, ⛔ não a API, que ⛔ nunca migra. Detalhe abaixo |
 | ~~PL32~~ | 🟢 Rebaixada — só texto principal foi a decisão; o texto das emendas deixou de ser necessário |
 | **C15** | Contrato do front — depende do React estar de pé |
 

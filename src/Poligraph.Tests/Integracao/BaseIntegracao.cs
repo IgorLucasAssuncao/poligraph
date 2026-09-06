@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
+using Poligraph.Migrations;
 using Testcontainers.PostgreSql;
 
 namespace Poligraph.Tests.Integracao;
@@ -65,7 +66,12 @@ public abstract class BaseIntegracao : IAsyncLifetime
 
     protected PoligraphDb CriarContexto() =>
         new(new DbContextOptionsBuilder<PoligraphDb>()
-            .UseNpgsql(ConnectionString)
+            // 🔴 PL49 — o mesmo assembly que o `Poligraph.Migrations` aplica. Sem
+            //    isto o `MigrateAsync` abaixo ⛔ não acharia migration nenhuma e o teste
+            //    rodaria contra um banco VAZIO — falhando por "relation does not exist",
+            //    que ⛔ não diz o que houve.
+            .UseNpgsql(ConnectionString,
+                       npgsql => npgsql.MigrationsAssembly(FabricaDesignTime.Assembly))
             .UseSnakeCaseNamingConvention()   // 🔴 igual à produção, senão o teste mente
             .Options);
 
