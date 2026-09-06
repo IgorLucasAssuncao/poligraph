@@ -205,20 +205,27 @@ dotnet test --filter FullyQualifiedName~Integracao # precisa de Docker rodando
 ⚠️ **A integração exige Docker de pé** — local e no CI. O runner do GitHub Actions já
 tem; sua máquina precisa do Docker Desktop aberto.
 
-### 6.1 🔴 Nesta máquina, `dotnet test` nativo NÃO roda
+### 6.1 ⭐ O container, e por que ele existe
 
-Medido em 2026-08-29. Dois bloqueios **independentes**, e os dois precisam de desvio:
+✅ **`dotnet test` nativo VOLTOU a funcionar em 2026-09-06**, quando o Smart App Control
+foi desligado (PL51). ⭐ A receita abaixo continua sendo o que o **CI** usa, e o plano B
+se a máquina mudar.
+
+⚠️ Fica o registro do que aconteceu, porque o sintoma engana e custou tempo — foi lido
+como lentidão mais de uma vez. Medido em 2026-08-29, eram dois bloqueios
+**independentes**:
 
 | Bloqueio | Sintoma | Causa |
 |---|---|---|
 | **Aspire de pé** | `MSB3021 … arquivo é bloqueado por Poligraph.Api` | a API segura o `.dll` que o build precisa reescrever |
 | 🔴 **Smart App Control** | `FileLoadException … Uma política de Controle de Aplicativo bloqueou (0x800711C7)` | está em **imposição** (`VerifiedAndReputablePolicyState = 1`) e recusa binário recém-compilado, sem reputação |
 
-⚠️ **Parar o Aspire ⛔ não basta** — o segundo bloqueio aparece logo em seguida. E ⛔
-**não desligue o Smart App Control**: no Windows 11 ele só volta a ser ligado
-reinstalando o sistema.
+⚠️ **Parar o Aspire ⛔ não bastava** — o segundo bloqueio aparecia logo em seguida. O
+autor acabou desligando o SAC, decisão ⛔ **irreversível** e que ⛔ não se recomenda numa
+máquina qualquer.
 
-⭐ **A saída é rodar num container**, que passa por fora do SAC:
+🔴 **O primeiro bloqueio continua valendo:** com o Aspire de pé, o build falha com
+`MSB3021`. ⭐ Rodar no container resolve os dois de uma vez, sem parar o ambiente:
 
 ```bash
 podman run --rm --network host   -v "$PWD:/repo:ro"   -v "/run/user/1000/podman/podman.sock:/var/run/docker.sock"   -e DOCKER_HOST=unix:///var/run/docker.sock   -e TESTCONTAINERS_RYUK_DISABLED=true   mcr.microsoft.com/dotnet/sdk:10.0   bash -lc 'cp -r /repo /work && cd /work && rm -rf src/*/bin src/*/obj && dotnet test src/Poligraph.Tests'

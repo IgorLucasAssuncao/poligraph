@@ -73,7 +73,7 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | 🟡 **PL44** | 🔄 **Avançou** — a ingestão deduz a legislatura pela data e as **consultas já filtram** (PL35 ✅). ⛔ Falta a parte de **produto**: o que a tela mostra na virada, e o que acontece com quem respondeu o questionário na 57ª. ⏳ **A 57ª termina em janeiro de 2027** | 🟡 Média | 🟢 Decisão |
 | 🟡 **PL45** | **🆕 9 autores de emenda ambíguos aguardam decisão humana** — a porta de entrada já existe (`emendas --resolver`), mas quem decide é uma pessoa. Lista completa abaixo | 🟡 Média | 🟢 Minutos |
 | 🟢 **PL50** | ✅ **Resolvida (2026-08-29)** — 359 matérias do Senado ingeridas, **421 de 421 votações vinculadas (100%)**. A colisão de id foi resolvida com chave composta `(casa, id)`, ⛔ não com deslocamento aritmético. Detalhe abaixo | 🟢 Baixa | — |
-| 🟡 **PL51** | **🆕 O Smart App Control barra binários recém-compilados** — 193 bloqueios em 2026-08-29, e o AppHost parou de subir. ⭐ **Contornável com `rm -rf bin obj` e rebuild**, ⛔ sem mexer na política. Detalhe abaixo | 🟡 Média | 🟢 Contorno conhecido |
+| ✅ ~~PL51~~ | **Resolvida (2026-09-06)** — o autor desligou o Smart App Control. `dotnet test` e `dotnet ef` voltaram a rodar **nativos**. ⚠️ ⛔ Irreversível: no Windows 11 o SAC só religa reinstalando o sistema | 🟢 Baixa | — |
 | 🟢 **PL47** | ✅ **Resolvida até o limite da fonte (2026-08-29)** — as duas regras entraram: **106 → 81** deputados sem emenda, autores pendentes **169 → 101**, e **93,6%** das emendas com dono. ⛔ Os 81 restantes ⛔ não têm emenda no Portal — sondado por nome. Detalhe abaixo | 🟢 Baixa | — |
 | 🔵 **PL46** | **🆕 83 autores de emenda são senadores** — resolvem-se sozinhos quando a [PL42](#) trouxer o Senado, porque o código do autor é de **mandato** e vale para as duas casas ([achado #24](achados/024-codigo-da-emenda-identifica-o-mandato.md)) | 🔵 Futuro | — |
 | ~~PL35~~ | ✅ **Resolvida (2026-08-27)** — `Legislaturas` DERIVA a legislatura do dado, nunca de configuração. `TestesLegislatura` semeia **duas** legislaturas e prova que a segunda ⛔ não vaza; as três mutações matam os três filtros. § abaixo mantido como registro | — | — |
@@ -280,7 +280,7 @@ consolidar 12 arquivos em 1. ⚠️ Mover **doze** arquivos com doze `Designer` 
 mudança com doze vezes mais superfície de erro.
 ---
 
-### 🟡 PL51 — o Smart App Control barra binários recém-compilados
+### ✅ PL51 (resolvida em 2026-09-06) — o Smart App Control foi desligado
 
 **Medido em 2026-08-29.**
 
@@ -337,6 +337,28 @@ dotnet build src/Poligraph.Migrations
 
 ⚠️ **Isto ⛔ não é garantia** — foi medido uma vez, e ⛔ não há como prever qual arquivo
 o SAC vai marcar. Se voltar a acontecer, o contorno é o mesmo.
+
+#### ✅ Como terminou
+
+📐 Verificado em **2026-09-06**, depois de o autor desligar pela interface do Windows:
+
+| | |
+|---|---:|
+| `VerifiedAndReputablePolicyState` | **0** — desligado |
+| Bloqueios do SAC desde 29/08 | **0** |
+| `dotnet test` **nativo** | ⭐ **133 de 133** |
+| `dotnet ef migrations list` | ⭐ funciona |
+
+⚠️ **O comando de registro ⛔ não funcionou**, nem para o autor: `Set-ItemProperty` em
+`HKLM:\SYSTEM\...\CI\Policy` devolve *"Acesso ao Registro solicitado ⛔ não é
+permitido"* mesmo com o caminho certo — o SAC protege a chave. ⭐ **O caminho que
+funciona é a interface:** *Configurações → Privacidade e segurança → Segurança do Windows
+→ Controle de aplicativos e navegador → Controle de aplicativo inteligente*.
+
+🔴 **⛔ Não tem volta.** No Windows 11 o SAC só é religado **reinstalando o sistema**.
+
+⭐ A receita em container da skill `testes` §6.1 **fica**: ela é o que o CI usa, e é o
+plano B se a máquina mudar.
 
 #### Se o contorno parar de funcionar
 
