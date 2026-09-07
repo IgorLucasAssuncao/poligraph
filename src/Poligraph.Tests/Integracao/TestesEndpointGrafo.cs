@@ -82,7 +82,7 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
         ExigeDocker();
         await SemearAsync();
         var boa = await MontarGrafoAsync();
-        await MontarGrafoAsync(status: StatusDaExecucao.FALHOU);
+        await MontarGrafoAsync(status: TipoStatusDaExecucao.FALHOU);
         using var cliente = CriarCliente();
 
         var grafo = await cliente.GetFromJsonAsync<GrafoJson>(Rota);
@@ -160,14 +160,14 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
     private async Task SemearAsync() =>
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
 
-    private async Task<long> MontarGrafoAsync(StatusDaExecucao status = StatusDaExecucao.CONCLUIDA)
+    private async Task<long> MontarGrafoAsync(TipoStatusDaExecucao status = TipoStatusDaExecucao.CONCLUIDA)
     {
         var ids = await Db.Pessoas.AsNoTracking()
             .OrderBy(p => p.Id).Select(p => p.Id).ToListAsync();
 
         var execucao = new ExecucaoModel
         {
-            Casa = Casa.CAMARA, Legislatura = 57, K = 10,
+            Casa = TipoCasa.CAMARA, Legislatura = 57, K = 10,
             VersaoCarga = "teste", Status = status
         };
         Db.Execucoes.Add(execucao);
@@ -219,7 +219,7 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
                 ExecucaoId = execucaoId,
                 PessoaA = aresta.PessoaA,
                 PessoaB = aresta.PessoaB,
-                Metrica = Metrica.CONCORDANCIA,
+                Metrica = TipoMetrica.CONCORDANCIA,
                 Valor = 0.8f,
                 NVotacoesComuns = comuns
             });
@@ -229,7 +229,7 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
                 ExecucaoId = execucaoId,
                 PessoaA = aresta.PessoaA,
                 PessoaB = aresta.PessoaB,
-                Metrica = Metrica.COSSENO,
+                Metrica = TipoMetrica.COSSENO,
                 Valor = cosseno,
                 NVotacoesComuns = comuns
             });

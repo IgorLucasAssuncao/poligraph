@@ -12,7 +12,7 @@ public class TokenEmailModel
     public long UsuarioId { get; set; }
     public UsuarioModel? Usuario { get; set; }
 
-    public PropositoDeToken Proposito { get; set; }
+    public TipoPropositoDeToken Proposito { get; set; }
 
     public DateTimeOffset CriadoEm { get; set; }
     public DateTimeOffset? UsadoEm { get; set; }

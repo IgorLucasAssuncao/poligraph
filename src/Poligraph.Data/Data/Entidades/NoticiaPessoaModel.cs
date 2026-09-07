@@ -17,5 +17,5 @@ public class NoticiaPessoaModel
     /// <summary>0 a 1. Nome completo casado vale mais que sobrenome solto.</summary>
     public float Confianca { get; set; }
 
-    public MetodoDeCitacao Metodo { get; set; }
+    public TipoMetodoDeCitacao Metodo { get; set; }
 }

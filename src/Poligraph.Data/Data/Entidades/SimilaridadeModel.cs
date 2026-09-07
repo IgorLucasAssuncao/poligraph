@@ -7,7 +7,7 @@ public class SimilaridadeModel
     public long PessoaA { get; set; }
     public long PessoaB { get; set; }
 
-    public Metrica Metrica { get; set; }
+    public TipoMetrica Metrica { get; set; }
 
     public float Valor { get; set; }
 

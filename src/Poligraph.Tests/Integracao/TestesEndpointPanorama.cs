@@ -40,9 +40,9 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
         var camara = panorama!.PorCasa.Single(c => c.Casa == "CAMARA");
 
         var comPosicao = await Db.Votos
-            .CountAsync(v => (v.Valor == 1 || v.Valor == -1) && v.Votacao!.Casa == Casa.CAMARA);
+            .CountAsync(v => (v.Valor == 1 || v.Valor == -1) && v.Votacao!.Casa == TipoCasa.CAMARA);
         var naoNulos = await Db.Votos
-            .CountAsync(v => v.Valor != null && v.Votacao!.Casa == Casa.CAMARA);
+            .CountAsync(v => v.Valor != null && v.Votacao!.Casa == TipoCasa.CAMARA);
 
         // ⚠️ O teste só vale se o fixture TIVER abstenção — senão os dois números são
         //    iguais e a asserção passaria com o código errado.
@@ -66,7 +66,7 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
         var camara = panorama!.PorCasa.Single(c => c.Casa == "CAMARA");
 
         Assert.Equal(
-            await Db.Votacoes.CountAsync(v => v.Casa == Casa.CAMARA),
+            await Db.Votacoes.CountAsync(v => v.Casa == TipoCasa.CAMARA),
             camara.Votacoes);
 
         Assert.Equal(

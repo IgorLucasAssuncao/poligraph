@@ -1,7 +1,7 @@
 ﻿namespace Poligraph.Data;
 
 /// <summary>Como o nome do parlamentar foi reconhecido no texto da notícia.</summary>
-public enum MetodoDeCitacao
+public enum TipoMetodoDeCitacao
 {
     NOME_COMPLETO,
     NOME_PARLAMENTAR,

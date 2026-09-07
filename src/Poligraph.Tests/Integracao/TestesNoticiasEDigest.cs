@@ -21,9 +21,9 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
         var pessoaId = await PrimeiraPessoaAsync();
 
         await GravarNoticiaAsync("https://ex.com/forte", "Nome completo citado",
-            pessoaId, confianca: 0.85f, metodo: MetodoDeCitacao.NOME_PARLAMENTAR);
+            pessoaId, confianca: 0.85f, metodo: TipoMetodoDeCitacao.NOME_PARLAMENTAR);
         await GravarNoticiaAsync("https://ex.com/fraca", "Só o sobrenome",
-            pessoaId, confianca: 0.40f, metodo: MetodoDeCitacao.SOBRENOME);
+            pessoaId, confianca: 0.40f, metodo: TipoMetodoDeCitacao.SOBRENOME);
 
         using var cliente = CriarCliente();
         var noticias = await cliente.GetFromJsonAsync<List<NoticiaJson>>(
@@ -246,7 +246,7 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
 
     private async Task GravarNoticiaAsync(
         string url, string titulo, long pessoaId,
-        float confianca = 0.85f, MetodoDeCitacao metodo = MetodoDeCitacao.NOME_PARLAMENTAR,
+        float confianca = 0.85f, TipoMetodoDeCitacao metodo = TipoMetodoDeCitacao.NOME_PARLAMENTAR,
         DateTimeOffset? publicada = null)
     {
         var noticia = new NoticiaModel
@@ -284,7 +284,7 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
             Db.Consentimentos.Add(new ConsentimentoModel
             {
                 UsuarioId = usuario.Id,
-                Finalidade = FinalidadeDeConsentimento.EMAIL_NOTICIAS,
+                Finalidade = TipoFinalidadeDeConsentimento.EMAIL_NOTICIAS,
                 Versao = "v1"
             });
         }

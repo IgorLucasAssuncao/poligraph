@@ -44,7 +44,7 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
 
         var lido = await ResponderTudoAsync(cliente);
 
-        var senado = Assert.Single(lido!.PorCasa, c => c.Casa == nameof(Casa.SENADO));
+        var senado = Assert.Single(lido!.PorCasa, c => c.Casa == nameof(TipoCasa.SENADO));
         Assert.NotEmpty(senado.MaisProximos);
         Assert.Equal(2, senado.PerguntasRespondidas);
     }
@@ -91,7 +91,7 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
                 .Distinct()
                 .ToListAsync();
 
-            Assert.Equal([Enum.Parse<Casa>(casa.Casa).ComoFonte()], fontes);
+            Assert.Equal([Enum.Parse<TipoCasa>(casa.Casa).ComoFonte()], fontes);
         }
     }
 
@@ -181,14 +181,14 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
 
         // Eixos bem separados por casa: se a posição vier da execução errada, ela cai
         // na faixa da outra casa e a asserção denuncia.
-        await SemearGrafoAsync(Casa.CAMARA, eixoBase: 0f);
-        await SemearGrafoAsync(Casa.SENADO, eixoBase: 100f);
+        await SemearGrafoAsync(TipoCasa.CAMARA, eixoBase: 0f);
+        await SemearGrafoAsync(TipoCasa.SENADO, eixoBase: 100f);
 
         using var cliente = CriarCliente();
         var lido = await ResponderTudoAsync(cliente);
 
-        var camara = Assert.Single(lido!.PorCasa, c => c.Casa == nameof(Casa.CAMARA));
-        var senado = Assert.Single(lido.PorCasa, c => c.Casa == nameof(Casa.SENADO));
+        var camara = Assert.Single(lido!.PorCasa, c => c.Casa == nameof(TipoCasa.CAMARA));
+        var senado = Assert.Single(lido.PorCasa, c => c.Casa == nameof(TipoCasa.SENADO));
 
         Assert.NotNull(camara.PosicaoNoGrafo);
         Assert.NotNull(senado.PosicaoNoGrafo);
@@ -323,14 +323,14 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
     /// </summary>
     private async Task SemearDuasCasasAsync(int perguntasCamara, int perguntasSenado)
     {
-        var deputados = await SemearPessoasAsync(Casa.CAMARA, DeputadosSemeados);
-        var senadores = await SemearPessoasAsync(Casa.SENADO, SenadoresSemeados);
+        var deputados = await SemearPessoasAsync(TipoCasa.CAMARA, DeputadosSemeados);
+        var senadores = await SemearPessoasAsync(TipoCasa.SENADO, SenadoresSemeados);
 
-        await SemearVotacoesEPerguntasAsync(Casa.CAMARA, "cam", perguntasCamara, deputados);
-        await SemearVotacoesEPerguntasAsync(Casa.SENADO, "sen", perguntasSenado, senadores);
+        await SemearVotacoesEPerguntasAsync(TipoCasa.CAMARA, "cam", perguntasCamara, deputados);
+        await SemearVotacoesEPerguntasAsync(TipoCasa.SENADO, "sen", perguntasSenado, senadores);
     }
 
-    private async Task<List<long>> SemearPessoasAsync(Casa casa, int quantas)
+    private async Task<List<long>> SemearPessoasAsync(TipoCasa casa, int quantas)
     {
         var criadas = new List<PessoaModel>();
         for (var i = 1; i <= quantas; i++)
@@ -353,7 +353,7 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
                 PessoaId = pessoa.Id,
                 Fonte = casa.ComoFonte(),
                 IdExterno = $"{casa}-{pessoa.Id}",
-                Metodo = MetodoDeVinculo.MANUAL,
+                Metodo = TipoMetodoDeVinculo.MANUAL,
                 Confianca = 1.0f
             });
         }
@@ -364,7 +364,7 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
     }
 
     private async Task SemearVotacoesEPerguntasAsync(
-        Casa casa, string prefixo, int quantas, List<long> pessoas)
+        TipoCasa casa, string prefixo, int quantas, List<long> pessoas)
     {
         for (var i = 1; i <= quantas; i++)
         {
@@ -377,7 +377,7 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
                 Legislatura = 57,
                 Data = new DateOnly(2025, 6, 1),
                 Descricao = "Aprovado o Projeto, nos termos do parecer.",
-                Categoria = CategoriaDeVotacao.SUBSTANTIVA,
+                Categoria = TipoCategoriaDeVotacao.SUBSTANTIVA,
                 Plenario = true,
                 VotosSim = pessoas.Count,
                 VotosNao = 0
@@ -414,12 +414,12 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
     }
 
     /// <summary>Uma execução concluída por casa, com os nós daquela casa.</summary>
-    private async Task SemearGrafoAsync(Casa casa, float eixoBase)
+    private async Task SemearGrafoAsync(TipoCasa casa, float eixoBase)
     {
         var execucao = new ExecucaoModel
         {
             Casa = casa, Legislatura = 57, K = 10,
-            VersaoCarga = "teste", Status = StatusDaExecucao.CONCLUIDA
+            VersaoCarga = "teste", Status = TipoStatusDaExecucao.CONCLUIDA
         };
         Db.Execucoes.Add(execucao);
         await Db.SaveChangesAsync();

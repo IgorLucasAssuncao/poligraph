@@ -55,7 +55,7 @@ public static class EndpointsPanorama
         var perguntas = await db.Perguntas.AsNoTracking().CountAsync(p => p.Ativa, ct);
 
         var porCasa = new List<PanoramaDaCasaDto>();
-        foreach (var casa in (Casa[])[Casa.CAMARA, Casa.SENADO])
+        foreach (var casa in (TipoCasa[])[TipoCasa.CAMARA, TipoCasa.SENADO])
             porCasa.Add(await DaCasaAsync(db, casa, legislatura.Value, ct));
 
         // Casa sem nenhuma votação ingerida fica fora — a tela ⛔ não deve anunciar
@@ -65,7 +65,7 @@ public static class EndpointsPanorama
     }
 
     private static async Task<PanoramaDaCasaDto> DaCasaAsync(
-        PoligraphDb db, Casa casa, short legislatura, CancellationToken ct)
+        PoligraphDb db, TipoCasa casa, short legislatura, CancellationToken ct)
     {
         var votacoes = db.Votacoes.AsNoTracking()
             .Where(v => v.Casa == casa && v.Legislatura == legislatura);
@@ -76,7 +76,7 @@ public static class EndpointsPanorama
         var execucao = await db.Execucoes.AsNoTracking()
             .Where(e => e.Casa == casa
                      && e.Legislatura == legislatura
-                     && e.Status == StatusDaExecucao.CONCLUIDA)
+                     && e.Status == TipoStatusDaExecucao.CONCLUIDA)
             .OrderByDescending(e => e.Id)
             .Select(e => (long?)e.Id)
             .FirstOrDefaultAsync(ct);

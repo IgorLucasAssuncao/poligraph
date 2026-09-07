@@ -4,7 +4,7 @@ namespace Poligraph.Api.Dtos;
 
 /// <summary>O tamanho da base de uma casa — o que a página inicial afirma.</summary>
 public record PanoramaDaCasaDto(
-    Casa Casa,
+    TipoCasa Casa,
     int Parlamentares,
     int Votacoes,
     int VotacoesSecretas,

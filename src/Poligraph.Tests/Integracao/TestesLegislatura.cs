@@ -136,11 +136,11 @@ public class TestesLegislatura(FixturePostgres postgres) : BaseIntegracao(postgr
         var votacao = new VotacaoModel
         {
             Id = "9999999-1",
-            Casa = Casa.CAMARA,
+            Casa = TipoCasa.CAMARA,
             Legislatura = Seguinte,
             Data = new DateOnly(2027, 3, 10),
             Descricao = "Votação da legislatura seguinte",
-            Categoria = CategoriaDeVotacao.SUBSTANTIVA,
+            Categoria = TipoCategoriaDeVotacao.SUBSTANTIVA,
             Plenario = true
         };
         Db.Votacoes.Add(votacao);

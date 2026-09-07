@@ -72,7 +72,7 @@ public class ServicoDigest(PoligraphDb db)
     private async Task<List<Destinatario>> DestinatariosAsync(CancellationToken ct) =>
         await _db.Usuarios.AsNoTracking()
             .Where(u => u.Consentimentos.Any(
-                c => c.Finalidade == FinalidadeDeConsentimento.EMAIL_NOTICIAS && c.RevogadoEm == null))
+                c => c.Finalidade == TipoFinalidadeDeConsentimento.EMAIL_NOTICIAS && c.RevogadoEm == null))
             .Where(u => u.Segue.Count > 0)
             .Select(u => new Destinatario(u.Id, u.Email, u.PrimeiroNome))
             .ToListAsync(ct);
@@ -104,7 +104,7 @@ public class ServicoDigest(PoligraphDb db)
     private async Task<string> GarantirTokenAsync(long usuarioId, CancellationToken ct)
     {
         var existente = await _db.TokensEmail
-            .Where(t => t.UsuarioId == usuarioId && t.Proposito == PropositoDeToken.DESCADASTRO)
+            .Where(t => t.UsuarioId == usuarioId && t.Proposito == TipoPropositoDeToken.DESCADASTRO)
             .Select(t => t.Token)
             .FirstOrDefaultAsync(ct);
 
@@ -117,7 +117,7 @@ public class ServicoDigest(PoligraphDb db)
         {
             Token = token,
             UsuarioId = usuarioId,
-            Proposito = PropositoDeToken.DESCADASTRO
+            Proposito = TipoPropositoDeToken.DESCADASTRO
         });
         await _db.SaveChangesAsync(ct);
 

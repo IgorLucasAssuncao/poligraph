@@ -12,7 +12,7 @@ public class ConsentimentoModel
     public long UsuarioId { get; set; }
     public UsuarioModel? Usuario { get; set; }
 
-    public FinalidadeDeConsentimento Finalidade { get; set; }
+    public TipoFinalidadeDeConsentimento Finalidade { get; set; }
 
     /// <summary>Hash ou versão do TEXTO que a pessoa aceitou.</summary>
     public required string Versao { get; set; }

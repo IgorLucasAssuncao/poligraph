@@ -6,7 +6,7 @@
 /// 🔴 <c>DESTAQUE</c> é a categoria perigosa: em 14% das votações nominais votar "Sim"
 /// significa <b>rejeitar</b>. Ver o teste de regressão de polaridade.
 /// </summary>
-public enum CategoriaDeVotacao
+public enum TipoCategoriaDeVotacao
 {
     /// <summary>Rito. Peso 0 — mede obstrução, não posição.</summary>
     PROCEDIMENTAL,

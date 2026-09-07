@@ -374,7 +374,7 @@ public static class EndpointsParlamentares
         PoligraphDb db, long id, CancellationToken ct)
     {
         var execucao = await db.Execucoes.AsNoTracking()
-            .Where(e => e.Status == StatusDaExecucao.CONCLUIDA)
+            .Where(e => e.Status == TipoStatusDaExecucao.CONCLUIDA)
             .OrderByDescending(e => e.Id)
             .Select(e => (long?)e.Id)
             .FirstOrDefaultAsync(ct);
@@ -383,7 +383,7 @@ public static class EndpointsParlamentares
 
         var pares = await db.Similaridades.AsNoTracking()
             .Where(s => s.ExecucaoId == execucao
-                     && s.Metrica == Metrica.CONCORDANCIA
+                     && s.Metrica == TipoMetrica.CONCORDANCIA
                      && (s.PessoaA == id || s.PessoaB == id))
             .OrderByDescending(s => s.Valor)
             .Take(SimilaresNaFicha)
@@ -444,18 +444,18 @@ public static class EndpointsParlamentares
     /// </para>
     /// </summary>
     private static async Task<AlinhamentoDto?> AlinhamentoAsync(
-        PoligraphDb db, long id, Casa? casa, short? legislatura,
+        PoligraphDb db, long id, TipoCasa? casa, short? legislatura,
         string partido, CancellationToken ct)
     {
-        if (casa is not Casa.CAMARA || legislatura is null) return null;
+        if (casa is not TipoCasa.CAMARA || legislatura is null) return null;
 
         // ⚠️ `NoMetricaModel` ⛔ não tem navegação para a execução — a chave é só o id.
         //    A execução mais recente CONCLUÍDA da casa é o recorte, o mesmo que o
         //    endpoint do grafo usa.
         var execucaoId = await db.Execucoes.AsNoTracking()
-            .Where(e => e.Casa == Casa.CAMARA
+            .Where(e => e.Casa == TipoCasa.CAMARA
                      && e.Legislatura == legislatura
-                     && e.Status == StatusDaExecucao.CONCLUIDA)
+                     && e.Status == TipoStatusDaExecucao.CONCLUIDA)
             .OrderByDescending(e => e.Id)
             .Select(e => (long?)e.Id)
             .FirstOrDefaultAsync(ct);
@@ -500,7 +500,7 @@ public static class EndpointsParlamentares
                                                       && (o.Orientacao == "Sim"
                                                        || o.Orientacao == "Não")), ct);
 
-    private static async Task<(Casa? Casa, string Partido, string Uf)> FiliacaoAtualAsync(
+    private static async Task<(TipoCasa? Casa, string Partido, string Uf)> FiliacaoAtualAsync(
         PoligraphDb db, long id, CancellationToken ct)
     {
         var ultimo = await db.Votos.AsNoTracking()

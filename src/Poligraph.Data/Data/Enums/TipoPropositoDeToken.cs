@@ -5,7 +5,7 @@
 ///
 /// ⛔ <c>CONFIRMACAO</c> ⛔ não existe: o Google já verifica o endereço.
 /// </summary>
-public enum PropositoDeToken
+public enum TipoPropositoDeToken
 {
     DESCADASTRO,
 }

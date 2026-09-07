@@ -4,7 +4,7 @@ namespace Poligraph.Api.Dtos;
 
 public record GrafoDto(
     long ExecucaoId,
-    Casa Casa,
+    TipoCasa Casa,
     short Legislatura,
     IReadOnlyList<NoDoGrafoDto> Nos,
     IReadOnlyList<ArestaDoGrafoDto> Arestas);

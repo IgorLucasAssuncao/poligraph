@@ -19,7 +19,7 @@ public record FichaParlamentarDto(
     /// um terceiro valor da casa que o tipo agora ⛔ não admite.
     /// </para>
     /// </summary>
-    Casa? Casa,
+    TipoCasa? Casa,
     string NomeCivil,
     string Partido,
     string Uf,

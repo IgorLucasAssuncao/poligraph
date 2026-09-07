@@ -89,14 +89,14 @@ public static class EndpointsAfinidade
     private static async Task<IResult> ObterPerguntasAsync(PoligraphDb db, CancellationToken ct)
     {
         var daCamara = await db.Perguntas.AsNoTracking()
-            .Where(p => p.Ativa && p.Votacao!.Casa == Casa.CAMARA)
+            .Where(p => p.Ativa && p.Votacao!.Casa == TipoCasa.CAMARA)
             .OrderBy(p => p.Ordem)
             .Take(BaseDaCamara)
             .Select(p => p.Id)
             .ToListAsync(ct);
 
         var doSenado = await db.Perguntas.AsNoTracking()
-            .Where(p => p.Ativa && p.Votacao!.Casa == Casa.SENADO)
+            .Where(p => p.Ativa && p.Votacao!.Casa == TipoCasa.SENADO)
             .OrderBy(p => p.Ordem)
             .Select(p => p.Id)
             .ToListAsync(ct);
@@ -131,7 +131,7 @@ public static class EndpointsAfinidade
         var respondidas = requisicao.Respostas.Select(r => r.PerguntaId).ToList();
 
         var candidatas = await db.Perguntas.AsNoTracking()
-            .Where(p => p.Ativa && p.Votacao!.Casa == Casa.CAMARA && !respondidas.Contains(p.Id))
+            .Where(p => p.Ativa && p.Votacao!.Casa == TipoCasa.CAMARA && !respondidas.Contains(p.Id))
             .OrderBy(p => p.Ordem)
             .Select(p => p.Id)
             .Take(DesempateDaCamara * 4)
@@ -168,7 +168,7 @@ public static class EndpointsAfinidade
 
         var casaDaPergunta = await CasaDasPerguntasAsync(db, opinadas, ct);
         var daCamara = opinadas
-            .Where(r => casaDaPergunta.GetValueOrDefault(r.PerguntaId) == Casa.CAMARA)
+            .Where(r => casaDaPergunta.GetValueOrDefault(r.PerguntaId) == TipoCasa.CAMARA)
             .ToList();
 
         if (daCamara.Count == 0) return [];
@@ -362,7 +362,7 @@ public static class EndpointsAfinidade
     /// </summary>
     private static async Task<PosicaoDoCidadaoDto?> PosicionarAsync(
         PoligraphDb db,
-        Casa casa,
+        TipoCasa casa,
         List<ResultadoAfinidade> resultados,
         int perguntasRespondidas,
         CancellationToken ct)
@@ -373,7 +373,7 @@ public static class EndpointsAfinidade
         // no grafo do Senado a partir das respostas da Câmara daria um ponto plausível
         // sobre uma figura que não é a dele.
         var execucaoId = await db.Execucoes.AsNoTracking()
-            .Where(e => e.Status == StatusDaExecucao.CONCLUIDA && e.Casa == casa)
+            .Where(e => e.Status == TipoStatusDaExecucao.CONCLUIDA && e.Casa == casa)
             .OrderByDescending(e => e.Id)
             .Select(e => (long?)e.Id)
             .FirstOrDefaultAsync(ct);
@@ -461,8 +461,8 @@ public static class EndpointsAfinidade
             .Select(g => new { Casa = g.Key, Total = g.Count() })
             .ToDictionaryAsync(x => x.Casa, x => x.Total, ct);
 
-        return Math.Min(PerguntasDaCamara, porCasa.GetValueOrDefault(Casa.CAMARA))
-               + porCasa.GetValueOrDefault(Casa.SENADO);
+        return Math.Min(PerguntasDaCamara, porCasa.GetValueOrDefault(TipoCasa.CAMARA))
+               + porCasa.GetValueOrDefault(TipoCasa.SENADO);
     }
 
     /// <summary>
@@ -474,7 +474,7 @@ public static class EndpointsAfinidade
     /// compartilham as mesmas tabelas.
     /// </para>
     /// </summary>
-    private static async Task<Dictionary<string, Casa>> CasaDasPerguntasAsync(
+    private static async Task<Dictionary<string, TipoCasa>> CasaDasPerguntasAsync(
         PoligraphDb db, List<RespostaCidadao> opinadas, CancellationToken ct)
     {
         var ids = opinadas.Select(r => r.PerguntaId).ToList();

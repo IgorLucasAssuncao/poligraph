@@ -1,7 +1,7 @@
 ﻿namespace Poligraph.Data;
 
 /// <summary>Como uma pessoa foi ligada ao identificador de uma fonte.</summary>
-public enum MetodoDeVinculo
+public enum TipoMetodoDeVinculo
 {
     /// <summary>⭐ Hash de CPF — determinístico.</summary>
     CPF,

@@ -165,8 +165,8 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
 
         var execucao = new ExecucaoModel
         {
-            Casa = Casa.CAMARA, Legislatura = 57, K = 10,
-            VersaoCarga = "teste", Status = StatusDaExecucao.CONCLUIDA
+            Casa = TipoCasa.CAMARA, Legislatura = 57, K = 10,
+            VersaoCarga = "teste", Status = TipoStatusDaExecucao.CONCLUIDA
         };
         Db.Execucoes.Add(execucao);
         await Db.SaveChangesAsync();

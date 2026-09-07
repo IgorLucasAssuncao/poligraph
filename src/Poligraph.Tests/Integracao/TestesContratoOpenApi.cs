@@ -160,7 +160,10 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
 
         var casa = documento.RootElement
             .GetProperty("components").GetProperty("schemas")
-            .GetProperty("Casa");
+            // O nome do esquema segue o nome do TIPO em C#. Renomear o enum
+            // muda esta chave — mas ⛔ NÃO muda os valores, que são o que o
+            // front compara.
+            .GetProperty("TipoCasa");
 
         var valores = casa.GetProperty("enum").EnumerateArray().ToList();
 

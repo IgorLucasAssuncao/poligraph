@@ -97,7 +97,7 @@ public static class DadosDeTeste
             NomeCivil = nome,
             NomeExibicao = nome,
             DataNascimento = new DateOnly(1970 + i, 3, 15),
-            Sexo = i % 2 == 0 ? Sexo.F : Sexo.M
+            Sexo = i % 2 == 0 ? TipoSexo.F : TipoSexo.M
         })];
     }
 
@@ -117,25 +117,25 @@ public static class DadosDeTeste
 
     private static List<VotacaoModel> GerarVotacoes(List<ProposicaoModel> proposicoes) =>
     [
-        VotacaoModel("900001-1", proposicoes[0], CategoriaDeVotacao.SUBSTANTIVA, new(2025, 12, 9),
+        VotacaoModel("900001-1", proposicoes[0], TipoCategoriaDeVotacao.SUBSTANTIVA, new(2025, 12, 9),
                 "Aprovado o Projeto de Lei nº 2.162, de 2023."),
-        VotacaoModel("900002-1", proposicoes[1], CategoriaDeVotacao.SUBSTANTIVA, new(2025, 7, 16),
+        VotacaoModel("900002-1", proposicoes[1], TipoCategoriaDeVotacao.SUBSTANTIVA, new(2025, 7, 16),
                 "Aprovado o Substitutivo ao Projeto de Lei nº 2.159, de 2021."),
-        VotacaoModel("900003-1", proposicoes[2], CategoriaDeVotacao.SUBSTANTIVA, new(2025, 7, 2),
+        VotacaoModel("900003-1", proposicoes[2], TipoCategoriaDeVotacao.SUBSTANTIVA, new(2025, 7, 2),
                 "Aprovado o Substitutivo ao Projeto de Lei nº 1.112, de 2023."),
-        VotacaoModel("900004-1", proposicoes[3], CategoriaDeVotacao.SUBSTANTIVA, new(2023, 12, 13),
+        VotacaoModel("900004-1", proposicoes[3], TipoCategoriaDeVotacao.SUBSTANTIVA, new(2023, 12, 13),
                 "Aprovado o Projeto de Lei Complementar nº 243, de 2023."),
         // 🔴 DESTAQUE: aqui "Sim" significa MANTER o texto, ou seja, REJEITAR a supressão
-        VotacaoModel("900005-1", proposicoes[4], CategoriaDeVotacao.DESTAQUE, new(2023, 11, 21),
+        VotacaoModel("900005-1", proposicoes[4], TipoCategoriaDeVotacao.DESTAQUE, new(2023, 11, 21),
                 "Mantido o texto. Sim: 8; Não: 4."),
     ];
 
     private static VotacaoModel VotacaoModel(
-        string id, ProposicaoModel proposicao, CategoriaDeVotacao categoria, DateOnly data, string descricao) =>
+        string id, ProposicaoModel proposicao, TipoCategoriaDeVotacao categoria, DateOnly data, string descricao) =>
         new()
         {
             Id = id,
-            Casa = Casa.CAMARA,
+            Casa = TipoCasa.CAMARA,
             Legislatura = Legislatura,
             Data = data,
             Orgao = "PLEN",

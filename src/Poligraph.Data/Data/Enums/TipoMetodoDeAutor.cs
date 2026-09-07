@@ -1,7 +1,7 @@
 ﻿namespace Poligraph.Data;
 
 /// <summary>Como o autor de uma emenda foi resolvido para uma pessoa.</summary>
-public enum MetodoDeAutor
+public enum TipoMetodoDeAutor
 {
     AUTOMATICO,
     MANUAL,

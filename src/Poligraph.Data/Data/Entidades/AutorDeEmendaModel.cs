@@ -21,7 +21,7 @@ public class AutorDeEmendaModel
     /// <summary>`null` = ainda não reconciliado.</summary>
     public long? PessoaId { get; set; }
 
-    public MetodoDeAutor Metodo { get; set; }
+    public TipoMetodoDeAutor Metodo { get; set; }
 
     public DateTimeOffset AtualizadoEm { get; set; }
 

@@ -56,4 +56,4 @@ public record VotoNaFichaDto(
     string? OrientacaoDoGoverno,
     string? Ementa,
     string? Materia,
-    CategoriaDeVotacao Categoria);
+    TipoCategoriaDeVotacao Categoria);

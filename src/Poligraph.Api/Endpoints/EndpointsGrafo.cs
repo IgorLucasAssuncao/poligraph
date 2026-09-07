@@ -27,10 +27,10 @@ public static class EndpointsGrafo
     /// inteiro para posicionar. Paginar aqui quebraria a visualização.
     /// </summary>
     private static async Task<IResult> ObterAsync(
-        PoligraphDb db, CancellationToken ct, Casa casa = Casa.CAMARA)
+        PoligraphDb db, CancellationToken ct, TipoCasa casa = TipoCasa.CAMARA)
     {
         var execucao = await db.Execucoes.AsNoTracking()
-            .Where(e => e.Casa == casa && e.Status == StatusDaExecucao.CONCLUIDA)
+            .Where(e => e.Casa == casa && e.Status == TipoStatusDaExecucao.CONCLUIDA)
             .OrderByDescending(e => e.Id)
             .Select(e => new { e.Id, e.Casa, e.Legislatura })
             .FirstOrDefaultAsync(ct);
@@ -101,14 +101,14 @@ public static class EndpointsGrafo
             where a.ExecucaoId == execucaoId && a.Tipo == TipoDeAresta.SIMILARIDADE_VOTO
 
             join concordancia in db.Similaridades.AsNoTracking()
-                    .Where(s => s.Metrica == Metrica.CONCORDANCIA)
+                    .Where(s => s.Metrica == TipoMetrica.CONCORDANCIA)
                 on new { a.ExecucaoId, a.PessoaA, a.PessoaB }
                 equals new { concordancia.ExecucaoId, concordancia.PessoaA, concordancia.PessoaB }
                 into porConcordancia
             from base_ in porConcordancia.DefaultIfEmpty()
 
             join cosseno in db.Similaridades.AsNoTracking()
-                    .Where(s => s.Metrica == Metrica.COSSENO)
+                    .Where(s => s.Metrica == TipoMetrica.COSSENO)
                 on new { a.ExecucaoId, a.PessoaA, a.PessoaB }
                 equals new { cosseno.ExecucaoId, cosseno.PessoaA, cosseno.PessoaB }
                 into porCosseno

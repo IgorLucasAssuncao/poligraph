@@ -111,11 +111,11 @@ public class TestesCuradoria(FixturePostgres postgres) : BaseIntegracao(postgres
             Db.Votacoes.Add(new VotacaoModel
             {
                 Id = id,
-                Casa = id.StartsWith("SF-", StringComparison.Ordinal) ? Casa.SENADO : Casa.CAMARA,
+                Casa = id.StartsWith("SF-", StringComparison.Ordinal) ? TipoCasa.SENADO : TipoCasa.CAMARA,
                 Legislatura = 57,
                 Data = new DateOnly(2025, 6, 1),
                 Descricao = "Aprovado o Projeto, nos termos do parecer.",
-                Categoria = CategoriaDeVotacao.SUBSTANTIVA,
+                Categoria = TipoCategoriaDeVotacao.SUBSTANTIVA,
                 Plenario = true
             });
         }

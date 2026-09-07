@@ -556,8 +556,8 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
 
         var execucao = new ExecucaoModel
         {
-            Casa = Casa.CAMARA, Legislatura = 57, K = 10,
-            VersaoCarga = "teste", Status = StatusDaExecucao.CONCLUIDA
+            Casa = TipoCasa.CAMARA, Legislatura = 57, K = 10,
+            VersaoCarga = "teste", Status = TipoStatusDaExecucao.CONCLUIDA
         };
         Db.Execucoes.Add(execucao);
         await Db.SaveChangesAsync();
@@ -571,7 +571,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
                     ExecucaoId = execucao.Id,
                     PessoaA = ids[i],          // I3: menor primeiro
                     PessoaB = ids[j],
-                    Metrica = Metrica.CONCORDANCIA,
+                    Metrica = TipoMetrica.CONCORDANCIA,
                     Valor = 0.5f + (i + j) / 100f,
                     NVotacoesComuns = 25
                 });

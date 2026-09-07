@@ -6,7 +6,7 @@
 /// ⚠️ Um valor só, e é isso que o torna auditável: consentimento genérico ⛔ não
 /// atende ao art. 8º, §4º.
 /// </summary>
-public enum FinalidadeDeConsentimento
+public enum TipoFinalidadeDeConsentimento
 {
     EMAIL_NOTICIAS,
 }

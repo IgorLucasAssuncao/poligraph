@@ -9,8 +9,8 @@ public class PessoaFonteIdModel
     public long PessoaId { get; set; }
     public PessoaModel? Pessoa { get; set; }
 
-    public FonteDeIdentificador Fonte { get; set; }
+    public TipoFonteDeIdentificador Fonte { get; set; }
     public required string IdExterno { get; set; }
-    public MetodoDeVinculo Metodo { get; set; }
+    public TipoMetodoDeVinculo Metodo { get; set; }
     public float? Confianca { get; set; }
 }

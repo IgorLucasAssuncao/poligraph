@@ -19,10 +19,10 @@ public class ProposicaoModel
     ///
     /// <para>
     /// ⭐ ⛔ Não foi preciso coluna nova em <c>votacoes</c>: a chave estrangeira usa a
-    /// <c>Casa</c> que a votação já tem, e que já carrega o valor certo.
+    /// <c>TipoCasa</c> que a votação já tem, e que já carrega o valor certo.
     /// </para>
     /// </summary>
-    public Casa Casa { get; set; }
+    public TipoCasa Casa { get; set; }
 
     public long Id { get; set; }
     public string? SiglaTipo { get; set; }

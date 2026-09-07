@@ -18,7 +18,7 @@ namespace Poligraph.Api.Dtos;
 /// </para>
 /// </summary>
 public record ResultadoPorCasaDto(
-    Casa Casa,
+    TipoCasa Casa,
     int PerguntasRespondidas,
     IReadOnlyList<ParlamentarAfimDto> MaisProximos,
     IReadOnlyList<ParlamentarAfimDto> MaisDistantes,

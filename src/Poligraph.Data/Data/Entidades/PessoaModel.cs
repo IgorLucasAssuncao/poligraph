@@ -7,7 +7,7 @@ public class PessoaModel
     public required string NomeCivil { get; set; }
     public required string NomeExibicao { get; set; }
     public DateOnly? DataNascimento { get; set; }
-    public Sexo? Sexo { get; set; }
+    public TipoSexo? Sexo { get; set; }
 
     /// <summary>⛔ NUNCA o CPF em claro — RNF-13.</summary>
     public string? CpfHash { get; set; }

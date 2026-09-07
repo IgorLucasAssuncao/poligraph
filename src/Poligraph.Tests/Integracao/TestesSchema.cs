@@ -29,7 +29,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
             ExecucaoId = execucao,
             PessoaA = a,
             PessoaB = b,
-            Metrica = Metrica.CONCORDANCIA,
+            Metrica = TipoMetrica.CONCORDANCIA,
             Valor = 0.9f,
             NVotacoesComuns = 19          // 🔴 um abaixo do mínimo
         });
@@ -47,7 +47,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         Db.Similaridades.Add(new SimilaridadeModel
         {
             ExecucaoId = execucao, PessoaA = a, PessoaB = b,
-            Metrica = Metrica.CONCORDANCIA, Valor = 0.9f, NVotacoesComuns = 20
+            Metrica = TipoMetrica.CONCORDANCIA, Valor = 0.9f, NVotacoesComuns = 20
         });
 
         await Db.SaveChangesAsync();      // não pode lançar
@@ -69,7 +69,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
             ExecucaoId = execucao,
             PessoaA = b,                  // 🔴 invertido: b > a
             PessoaB = a,
-            Metrica = Metrica.CONCORDANCIA, Valor = 0.9f, NVotacoesComuns = 30
+            Metrica = TipoMetrica.CONCORDANCIA, Valor = 0.9f, NVotacoesComuns = 30
         });
 
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
@@ -226,9 +226,9 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         ExigeDocker();
         Db.Votacoes.Add(new VotacaoModel
         {
-            Id = "enum-texto", Casa = Casa.SENADO, Legislatura = 57,
+            Id = "enum-texto", Casa = TipoCasa.SENADO, Legislatura = 57,
             Data = new DateOnly(2025, 1, 1),
-            Categoria = CategoriaDeVotacao.DESTAQUE, Plenario = true
+            Categoria = TipoCategoriaDeVotacao.DESTAQUE, Plenario = true
         });
         await Db.SaveChangesAsync();
 
@@ -270,11 +270,11 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         Db.Segue.Add(new SegueModel { UsuarioId = usuario.Id, PessoaId = pessoa });
         Db.Consentimentos.Add(new ConsentimentoModel
         {
-            UsuarioId = usuario.Id, Finalidade = FinalidadeDeConsentimento.EMAIL_NOTICIAS, Versao = "v1"
+            UsuarioId = usuario.Id, Finalidade = TipoFinalidadeDeConsentimento.EMAIL_NOTICIAS, Versao = "v1"
         });
         Db.TokensEmail.Add(new TokenEmailModel
         {
-            Token = "tok-1", UsuarioId = usuario.Id, Proposito = PropositoDeToken.DESCADASTRO
+            Token = "tok-1", UsuarioId = usuario.Id, Proposito = TipoPropositoDeToken.DESCADASTRO
         });
         await Db.SaveChangesAsync();
 
@@ -344,13 +344,13 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
 
         Db.Consentimentos.Add(new ConsentimentoModel
         {
-            UsuarioId = usuario.Id, Finalidade = FinalidadeDeConsentimento.EMAIL_NOTICIAS, Versao = "v1"
+            UsuarioId = usuario.Id, Finalidade = TipoFinalidadeDeConsentimento.EMAIL_NOTICIAS, Versao = "v1"
         });
         await Db.SaveChangesAsync();
 
         Db.Consentimentos.Add(new ConsentimentoModel
         {
-            UsuarioId = usuario.Id, Finalidade = FinalidadeDeConsentimento.EMAIL_NOTICIAS, Versao = "v2"
+            UsuarioId = usuario.Id, Finalidade = TipoFinalidadeDeConsentimento.EMAIL_NOTICIAS, Versao = "v2"
         });
 
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
@@ -388,8 +388,8 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
     {
         var execucao = new ExecucaoModel
         {
-            Casa = Casa.CAMARA, Legislatura = 57, K = 10,
-            VersaoCarga = "teste", Status = StatusDaExecucao.CONCLUIDA
+            Casa = TipoCasa.CAMARA, Legislatura = 57, K = 10,
+            VersaoCarga = "teste", Status = TipoStatusDaExecucao.CONCLUIDA
         };
         Db.Execucoes.Add(execucao);
         await Db.SaveChangesAsync();
@@ -401,8 +401,8 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         var id = $"v-{Guid.NewGuid():N}";
         Db.Votacoes.Add(new VotacaoModel
         {
-            Id = id, Casa = Casa.CAMARA, Legislatura = 57,
-            Data = new DateOnly(2025, 1, 1), Categoria = CategoriaDeVotacao.SUBSTANTIVA, Plenario = true
+            Id = id, Casa = TipoCasa.CAMARA, Legislatura = 57,
+            Data = new DateOnly(2025, 1, 1), Categoria = TipoCategoriaDeVotacao.SUBSTANTIVA, Plenario = true
         });
         await Db.SaveChangesAsync();
         return id;
