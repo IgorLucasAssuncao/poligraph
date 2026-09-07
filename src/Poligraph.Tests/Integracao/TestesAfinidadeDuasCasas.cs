@@ -20,7 +20,7 @@ namespace Poligraph.Tests.Integracao;
 /// e tudo continuaria verde. Estes testes semeiam as duas.
 /// </para>
 /// </summary>
-public class TestesAfinidadeDuasCasas : BaseIntegracao
+public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
     private const string Rota = "/api/afinidade";
 

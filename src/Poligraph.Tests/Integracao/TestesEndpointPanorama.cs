@@ -20,7 +20,7 @@ namespace Poligraph.Tests.Integracao;
 /// contra 462.867 a olho. ⭐ É o mesmo modo de falha da polaridade invertida.
 /// </para>
 /// </summary>
-public class TestesEndpointPanorama : BaseIntegracao
+public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
     private const string Rota = "/api/panorama";
 

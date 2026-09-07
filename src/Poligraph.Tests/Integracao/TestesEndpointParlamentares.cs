@@ -6,7 +6,7 @@ using Poligraph.Api.Data;
 namespace Poligraph.Tests.Integracao;
 
 /// <summary>Os endpoints de parlamentar, ponta a ponta, contra Postgres real.</summary>
-public class TestesEndpointParlamentares : BaseIntegracao
+public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
     private const string Rota = "/api/parlamentares";
 

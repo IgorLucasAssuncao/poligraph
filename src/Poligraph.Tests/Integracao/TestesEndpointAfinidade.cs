@@ -12,7 +12,7 @@ namespace Poligraph.Tests.Integracao;
 /// pergunta↔voto, o piso de comparáveis aplicado sobre dados reais, e o contrato da
 /// resposta — que ⛔ não pode conter percentual (RF-29).
 /// </summary>
-public class TestesEndpointAfinidade : BaseIntegracao
+public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
     private const string Rota = "/api/afinidade";
 

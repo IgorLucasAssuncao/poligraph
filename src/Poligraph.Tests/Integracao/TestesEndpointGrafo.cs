@@ -1,10 +1,10 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
 
 namespace Poligraph.Tests.Integracao;
 
-public class TestesEndpointGrafo : BaseIntegracao
+public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
     private const string Rota = "/api/grafo";
 

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Poligraph.Api.Data;
 
@@ -11,7 +11,7 @@ namespace Poligraph.Tests.Integracao;
 /// É o único jeito de garantir que um `HasCheckConstraint` não desapareceu numa migration
 /// futura. Sem eles, a regra vira comentário e ninguém percebe.
 /// </summary>
-public class TestesSchema : BaseIntegracao
+public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
     // ═══════════════════════════════════════════════════════════════
     // RN-02 — mínimo de 20 votações comuns

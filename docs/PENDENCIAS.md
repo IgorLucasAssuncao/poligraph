@@ -256,6 +256,36 @@ O job `migration` chamava `dotnet ef … -p src/Poligraph.Api`. ⚠️ A
 `Design` da API no mesmo dia e ⛔ não atualizou o CI. Corrigido para
 `-p src/Poligraph.Migrations` — script de **600 linhas, 24 tabelas**, conferido.
 
+#### ⭐ Uma fixture global por stack — 126 containers viraram 1
+
+Feito logo em seguida, e o número mudou de patamar:
+
+| | Antes | Depois |
+|---|---:|---:|
+| Containers na suíte .NET | **126** | ⭐ **1** |
+| `dotnet test` completo | **2 min 36 s** | ⭐ **34 s** |
+| Testes | 159 | 159 — todos passando |
+
+**O que mudou:** `BaseIntegracao` deixou de ser `IAsyncLifetime` com container próprio e
+passou a receber uma `FixturePostgres` por `ICollectionFixture`. O container sobe **uma
+vez**, a migration roda **uma vez**, e cada teste chama `LimparAsync()`.
+
+⚠️ **O isolamento por teste ⛔ não foi afrouxado.** O `TRUNCATE ... RESTART IDENTITY
+CASCADE` roda antes de cada teste, e a lista de tabelas sai do **modelo do EF**, ⛔ não
+de uma lista escrita à mão — que silenciosamente deixaria de limpar toda tabela nova.
+
+⭐ **`TRUNCATE` e ⛔ não `CREATE DATABASE ... TEMPLATE`** porque ⛔ nenhum teste faz DDL:
+conferido, o único SQL cru é o `INSERT` do `TestesSchema` que deve ser barrado por
+`CHECK`. Sem DDL, truncar devolve o banco ao estado pós-migration.
+
+**Python:** já estava quase certo — `scope="module"` e `TRUNCATE` autouse. A fixture
+`conexao` foi para `tests/conftest.py` com **`scope="session"`**, para valer para
+qualquer módulo futuro e ficar simétrica ao .NET.
+
+> ⭐ **Consequência:** a razão original para tirar os testes do CI ⛔ deixou de valer —
+> 34 s cabem em qualquer runner. Ficaram fora porque a decisão foi rodá-los localmente,
+> ⛔ não porque ⛔ não caibam. Voltar é uma linha em cada job.
+
 #### ⚠️ Os testes de integração saíram do CI (2026-09-06)
 
 🔴 **A causa ⛔ não é "runner fraco" — é um container por TESTE.**
@@ -271,6 +301,7 @@ núcleos) ⛔ não fecha.
 |---|---|---|
 | `dotnet` | unitários **+ integração** | ⭐ só `~Unidade` (**33**) |
 | `qualidade` | suíte inteira | ⭐ só `~Unidade` |
+| `python` | 416 testes | ⭐ `-m "not integracao"` — **397**, 19 desmarcados |
 
 ✅ **O teste de polaridade (API3) ⛔ NÃO se perdeu:** `TestesPolaridade.cs` está em
 `Unidade/`, ⛔ não em `Integracao/`. A regra do CLAUDE.md continua valendo no CI.

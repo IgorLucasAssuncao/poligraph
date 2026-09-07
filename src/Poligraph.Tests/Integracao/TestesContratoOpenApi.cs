@@ -24,7 +24,7 @@ namespace Poligraph.Tests.Integracao;
 /// certa e a outra errada.
 /// </para>
 /// </summary>
-public class TestesContratoOpenApi : BaseIntegracao
+public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
     /// <summary>
     /// ⚠️ `MapOpenApi()` só roda em Development — e `FabricaApi` sobe assim de propósito.

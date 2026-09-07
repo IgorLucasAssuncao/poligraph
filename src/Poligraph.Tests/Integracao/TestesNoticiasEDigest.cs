@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
@@ -7,7 +7,7 @@ using Poligraph.Api.Services;
 
 namespace Poligraph.Tests.Integracao;
 
-public class TestesNoticiasEDigest : BaseIntegracao
+public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
     // ═══════════════════════════════════════════════════════════════
     // RF-35 / RF-40 — notícias na ficha

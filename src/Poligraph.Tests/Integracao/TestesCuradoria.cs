@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
 using Poligraph.Migrations;
 
@@ -19,7 +19,7 @@ namespace Poligraph.Tests.Integracao;
 /// (RNF-28).
 /// </para>
 /// </summary>
-public class TestesCuradoria : BaseIntegracao
+public class TestesCuradoria(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
     [SkippableFact]
     public async Task DoisLotes_SaoCarregadosJuntos()

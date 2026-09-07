@@ -17,7 +17,7 @@ namespace Poligraph.Tests.Integracao;
 ///
 /// ⏳ E tem data: a 57ª termina em **janeiro de 2027**.
 /// </summary>
-public class TestesLegislatura : BaseIntegracao
+public class TestesLegislatura(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
     private const short Corrente = 57;
     private const short Seguinte = 58;

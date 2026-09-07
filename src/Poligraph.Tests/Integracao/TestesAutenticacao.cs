@@ -20,7 +20,7 @@ public class ValidadorFalso : IValidadorGoogle
         Task.FromResult(idToken == "token-valido" ? Perfil : null);
 }
 
-public class TestesAutenticacao : BaseIntegracao
+public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
     [SkippableFact]
     public async Task Login_ComTokenInvalido_Retorna401()

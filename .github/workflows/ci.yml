@@ -72,8 +72,10 @@ jobs:
       - name: Instalar dependências
         run: pip install -r src/etl/requirements-dev.txt
 
+      # `-m "not integracao"` desmarca test_persistencia.py, que sobe Postgres real.
+      # Roda localmente: `pytest` sem filtro.
       - name: Testes
-        run: pytest -q
+        run: pytest -q -m "not integracao"
         working-directory: src/etl
 
   web:
