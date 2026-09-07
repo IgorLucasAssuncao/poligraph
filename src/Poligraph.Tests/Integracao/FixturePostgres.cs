@@ -70,7 +70,7 @@ public class FixturePostgres : IAsyncLifetime
     public PoligraphDb CriarContexto() =>
         new(new DbContextOptionsBuilder<PoligraphDb>()
             .UseNpgsql(ConnectionString,
-                       npgsql => npgsql.MigrationsAssembly(FabricaDesignTime.Assembly))
+                       npgsql => npgsql.MigrationsAssembly(Migracoes.Assembly))
             .UseSnakeCaseNamingConvention()
             .Options);
 

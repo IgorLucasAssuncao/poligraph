@@ -21,6 +21,13 @@ jobs:
         with:
           dotnet-version: '10.x'
 
+      - name: Cache do NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
       - name: Restore
         run: dotnet restore
 
@@ -68,9 +75,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+          cache: pip
+          cache-dependency-path: src/etl/requirements*.txt
 
+      # --only-binary :all: impede que um sdist rode setup.py na instalação.
+      # Conferido com `pip install --dry-run`: todas as dependências têm wheel.
       - name: Instalar dependências
-        run: pip install -r src/etl/requirements-dev.txt
+        run: 'pip install --only-binary :all: -r src/etl/requirements-dev.txt'
 
       # `-m "not integracao"` desmarca test_persistencia.py, que sobe Postgres real.
       # Roda localmente: `pytest` sem filtro.
@@ -88,7 +99,9 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: src/web/package-lock.json
-      - run: npm ci
+      # --ignore-scripts: nenhum pacote da árvore declara install/postinstall
+      # (conferido com `npm query`), então não há o que perder.
+      - run: npm ci --ignore-scripts
         working-directory: src/web
       - run: npm test
         working-directory: src/web
@@ -130,6 +143,8 @@ jobs:
         if: env.SONAR_TOKEN != ''
         with:
           python-version: '3.13'
+          cache: pip
+          cache-dependency-path: src/etl/requirements*.txt
 
       - uses: actions/setup-node@v4
         if: env.SONAR_TOKEN != ''
@@ -146,22 +161,39 @@ jobs:
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
 
-      - name: Instalar o scanner
+      # O restore completo (Aspire, EF, Testcontainers) era refeito a cada execução.
+      - name: Cache do NuGet
         if: env.SONAR_TOKEN != ''
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Cache do scanner
+        id: cache-scanner
+        if: env.SONAR_TOKEN != ''
+        uses: actions/cache@v4
+        with:
+          path: ~/.dotnet/tools
+          key: ${{ runner.os }}-sonar-scanner-v1
+
+      - name: Instalar o scanner
+        if: env.SONAR_TOKEN != '' && steps.cache-scanner.outputs.cache-hit != 'true'
         run: dotnet tool install --global dotnet-sonarscanner
 
       - name: Cobertura do ETL
         if: env.SONAR_TOKEN != ''
         working-directory: src/etl
         run: |
-          pip install -r requirements-dev.txt
+          pip install --only-binary :all: -r requirements-dev.txt
           pytest -q --cov=poligraph_etl --cov-report=xml
 
       - name: Cobertura do front
         if: env.SONAR_TOKEN != ''
         working-directory: src/web
         run: |
-          npm ci
+          npm ci --ignore-scripts
           npm test -- --coverage --coverage.reporter=lcov
 
       - name: Analisar

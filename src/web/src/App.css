@@ -789,7 +789,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .grafo-lista > .ajuda { margin: .9rem 0; }
 
 .lista-grafo {
-  list-style: none; margin: 0; padding: 0;
+  list-style: none; margin: 0;
   display: grid; gap: .75rem;
   /* ⚠️ 643 parlamentares: sem teto a lista empurra o rodapé para longe demais.
      O contêiner rola, ⛔ não a página. */

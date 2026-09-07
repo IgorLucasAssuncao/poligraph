@@ -256,6 +256,54 @@ O job `migration` chamava `dotnet ef … -p src/Poligraph.Api`. ⚠️ A
 `Design` da API no mesmo dia e ⛔ não atualizou o CI. Corrigido para
 `-p src/Poligraph.Migrations` — script de **600 linhas, 24 tabelas**, conferido.
 
+#### O primeiro relatório do Sonar, e a fábrica que ⛔ não precisava existir
+
+⭐ **`FabricaDesignTime` foi REMOVIDA.** O Sonar apontou `Password=postgres` como
+credencial versionada, e a pergunta certa veio junto: **a fábrica precisa existir?**
+
+📐 **Medido:** renomeando o arquivo e rodando `dotnet ef migrations script --idempotent`,
+o resultado é **byte a byte idêntico** — 600 linhas, `diff -q` limpo.
+
+⚠️ `Poligraph.Migrations` é um **executável com host**: o `dotnet ef` constrói o host,
+pega o `IServiceProvider` e resolve o `PoligraphDb`, com `MigrationsAssembly` e
+`UseSnakeCaseNamingConvention` já declarados no `Program.cs`.
+
+🔴 **A fábrica só fazia sentido enquanto o alvo era a API** — cujo `Program.cs` precisa da
+connection string do Aspire, do Google e do Data Protection para subir. Quando a
+[PL49](#-pl49-resolvida-em-2026-09-06--a-migration-foi-para-quem-a-aplica) mudou o alvo
+para o console, ela virou peso morto. ⛔ Ela foi **movida** em vez de questionada.
+
+⭐ Sobrou só o `const`, em `Migracoes.Assembly` — que continua necessário: o contexto mora
+em `Poligraph.Api`, e sem declarar o assembly o EF ⛔ não acharia migration nenhuma.
+
+##### Os outros achados
+
+| Achado | O que era |
+|---|---|
+| `App.css` L792 — `padding` duplicado | ⭐ **Real.** `padding: 0` era sobrescrito por `padding: .9rem` cinco linhas abaixo. O `0` saiu |
+| `pip install` sem `--only-binary :all:` | ⭐ **Aplicado.** `pip install --dry-run` confirmou que todas as dependências têm wheel |
+| `npm ci` sem `--ignore-scripts` | ⭐ **Aplicado.** `npm query` por `install`/`postinstall`/`preinstall` devolveu `[]` |
+| `ingestao_senado.py` — HTTP inseguro | ⛔ **Falso positivo.** A linha é o CONSERTO: `f"https://{url[len('http://'):]}"`. O literal `"http://"` está numa comparação |
+| Dependências sem versão travada | 🟡 **Aberto.** O `requirements.txt` usa `>=`. Travar exige `pip freeze`/`pip-compile` — decisão em aberto |
+
+##### ⚠️ O passo `Analisar` levou 16 min
+
+⭐ O repositório ⛔ não é o problema: são **48 `.py`, 46 `.cs`, 37 `.tsx`, 13 `.ts`** —
+o `scanAll` varre isso em segundos. ⛔ Nem o `.cache` de 597 MB do ETL, que ⛔ não é
+versionado e ⛔ não existe num checkout novo.
+
+🔴 **O tempo era restore.** ⛔ Não havia cache de NuGet nenhum: Aspire, EF, Testcontainers
+e Google.Apis.Auth baixados inteiros a cada execução — o cache local do autor tem **1,8 GB**.
+
+| Entrou | O que economiza |
+|---|---|
+| `actions/cache` em `~/.nuget/packages` | O restore completo, nos jobs `dotnet` e `qualidade` |
+| `cache: pip` no `setup-python` | O download das rodas do pandas/scipy |
+| `actions/cache` em `~/.dotnet/tools` | O `dotnet tool install` do scanner, a cada execução |
+
+⚠️ **Falta medir a próxima execução.** O `dotnet build` sob o scanner também é mais lento
+que o normal — ele injeta os analisadores do Sonar —, e isso o cache ⛔ não resolve.
+
 #### ⭐ Uma fixture global por stack — 126 containers viraram 1
 
 Feito logo em seguida, e o número mudou de patamar:
