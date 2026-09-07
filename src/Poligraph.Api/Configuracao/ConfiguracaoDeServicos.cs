@@ -23,6 +23,8 @@ public static class ConfiguracaoDeServicos
         servicos.AddScoped<ServicoFinanciamento>();
         servicos.AddScoped<ServicoAfinidade>();
         servicos.AddScoped<ServicoQuestionario>();
+        servicos.AddScoped<ServicoGrafo>();
+        servicos.AddScoped<ServicoPanorama>();
 
         return servicos;
     }
