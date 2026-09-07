@@ -78,3 +78,9 @@ src/etl/.cache/
 **/.cache/
 *.zip
 *.csv.gz
+
+# Cobertura — gerada pelo CI e pelo `--coverage` local
+TestResults/
+coverage/
+coverage.xml
+.coverage

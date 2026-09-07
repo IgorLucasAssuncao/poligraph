@@ -261,9 +261,9 @@ podman run --rm --network "container:<postgres>" \
 ### Testes
 
 ```bash
-dotnet test                              # 160 — Testcontainers com Postgres real
-cd src/etl && python -m pytest           # 282
-cd src/web && npm test                   # 37
+dotnet test                              # 159 — Testcontainers com Postgres real
+cd src/etl && python -m pytest           # 416
+cd src/web && npm test                   # 97
 ```
 
 ### Com Podman: os dois suítes querem `DOCKER_HOST` DIFERENTE
@@ -275,8 +275,8 @@ Medido em 2026-08-27, no Windows. **A mesma variável, dois formatos incompatív
 | `dotnet test` | `npipe://./pipe/podman-machine-default` | **duas** |
 | `python -m pytest` | `npipe:////./pipe/podman-machine-default` | **quatro** |
 
-**E o formato errado não dá erro claro em nenhum dos dois.** No Python, os 9 testes
-que precisam de Postgres viram **`SKIPPED`** e a suíte fica verde com 273 em vez de 282 —
+**E o formato errado não dá erro claro em nenhum dos dois.** No Python, os 19 testes
+que precisam de Postgres viram **`SKIPPED`** e a suíte fica verde com 397 em vez de 416 —
 a contagem é a **única** pista. No .NET, `TypeInitializationException` no construtor da
 classe de teste.
 **Com Docker Desktop o problema não existe** — o socket padrão é encontrado sozinho,

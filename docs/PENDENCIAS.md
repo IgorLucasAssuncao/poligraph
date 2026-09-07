@@ -240,6 +240,70 @@ funcionou** desta vez — a geração saiu no container, pela mesma receita dos 
 schema**.
 
 
+
+---
+
+### ✅ CT4 (resolvida em 2026-09-06) — estágio de qualidade no CI
+
+🔴 **Achado antes de escrever qualquer coisa: o `ci.yml` estava QUEBRADO.**
+
+```
+Your startup project 'Poligraph.Api' doesn't reference Microsoft.EntityFrameworkCore.Design.
+```
+
+O job `migration` chamava `dotnet ef … -p src/Poligraph.Api`. ⚠️ A
+[PL49](#-pl49-resolvida-em-2026-09-06--a-migration-foi-para-quem-a-aplica) tirou o pacote
+`Design` da API no mesmo dia e ⛔ não atualizou o CI. Corrigido para
+`-p src/Poligraph.Migrations` — script de **600 linhas, 24 tabelas**, conferido.
+
+#### O que o job `qualidade` faz
+
+| Linguagem | Cobertura | Propriedade do Sonar |
+|---|---|---|
+| C# | `--collect:"XPlat Code Coverage;Format=opencover"` | `sonar.cs.opencover.reportsPaths` |
+| Python | `pytest --cov --cov-report=xml` | `sonar.python.coverage.reportPaths` |
+| TS/React | `vitest --coverage --coverage.reporter=lcov` | `sonar.javascript.lcov.reportPaths` |
+
+📐 Os três formatos foram gerados e conferidos localmente antes de entrar no YAML.
+Cobertura medida hoje: **62,3%** no ETL, **43,6%** no front.
+
+#### 🔴 Três coisas que ⛔ não são óbvias
+
+| | |
+|---|---|
+| **O job repete build e testes** | O scanner de C# precisa **envolver** o build (`begin` → `dotnet build` → `end`): ele lê a saída do compilador, ⛔ não o código parado. Como os jobs correm em paralelo, o custo é minuto de runner, ⛔ não espera |
+| **`sonar.scanner.scanAll=true`** | Sem isso o scanner de .NET olha só o que passa pelo MSBuild — ⛔ **Python e TS ficariam de fora**, que é metade do projeto |
+| **`fetch-depth: 0`** | Clone raso apaga o histórico, e o quality gate decide sobre **código novo**. Sem o histórico, ⛔ não há "novo" |
+
+⚠️ `src/Poligraph.Migrations/Migrations/**` está em `sonar.exclusions`: são **397 definições
+geradas** pelo `dotnet ef`, que inundariam o relatório com dívida que ninguém escreveu.
+
+#### 🔴 O que ainda bloqueia
+
+**O plano gratuito do SonarQube Cloud cobre APENAS repositórios públicos**, e
+`IgorLucasAssuncao/poligraph` está privado (`api.github.com` devolve 404 sem
+autenticação). As saídas são: tornar o repositório **público**, pagar o plano por linhas
+de código, ou auto-hospedar o **SonarQube Community Build** — que ⛔ não tem análise de PR
+nem as regras de *taint analysis*.
+
+⚠️ **Sem o segredo `SONAR_TOKEN` o job fica VERDE com todos os passos pulados.** ⛔ Verde
+ali ⛔ não significa "analisado" — por isso o primeiro passo emite um
+`::warning` dizendo exatamente isso.
+
+#### ⭐ Como virar portão
+
+Acrescentar `/d:sonar.qualitygate.wait=true` ao `begin`. Ficou **fora** de propósito: até
+a primeira análise calibrar o que é dívida herdada, o primeiro PR reprovaria por código
+que já estava lá.
+
+#### Limpeza que veio junto
+
+⭐ `UnitTest1.cs` removido — esqueleto do template `dotnet new xunit`, **sem asserção
+nenhuma**, e fora dos filtros `~Unidade`/`~Integracao` do CI. Por isso a contagem caiu de
+160 para **159**: ⛔ não se perdeu teste, tirou-se o que ⛔ nunca testou nada.
+
+📐 As contagens de Python e front estavam **defasadas no README**: eram 282 e 37, e o
+medido hoje é **416** e **97**.
 ---
 
 ### ✅ CT3 (resolvida em 2026-09-06) — o contrato existia, mas estava vazio
@@ -1011,6 +1075,8 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 | **API3** | Teste de regressão da **polaridade** — o bug mais perigoso do sistema |
 | **API7** | Medir quanto tempo o job de 207k pares leva de fato |
 | ✅ ~~CT3~~ | **Resolvida (2026-09-06)** — 27 testes conferem rota por rota e campo por campo contra `src/web/src/api.ts`, e o `/scalar` renderiza o mesmo documento. 🔴 **Achou um bug na primeira execução:** `/api/auth/logout` ⛔ não existia no contrato e devolvia 200 em vez de 204 ([achado 032](achados/032-a-rota-que-o-contrato-dizia-nao-existir.md)). Detalhe abaixo |
+| 🟡 **PL52** | **🆕 Teste intermitente** — `TestesAfinidadeDuasCasas.Nenhuma_Lista_Mistura_Parlamentar_Da_Outra_Casa` falhou **1 vez em 3** rodadas da suíte completa (2026-09-06), em **1 ms**, e passa isolado. ⚠️ Duração de 1 ms sugere estado compartilhado entre testes, ⛔ não asserção de dado. **A mensagem ⛔ não foi capturada** — as duas rodadas seguintes passaram |
+| ✅ ~~CT4~~ | **Nova, resolvida (2026-09-06)** — estágio de qualidade (SonarQube Cloud) no `ci.yml`, com cobertura das três linguagens. 🔴 **Depende de repositório público** ou de plano pago. Detalhe abaixo |
 | **PL16** | Como o ETL sinaliza `novas_votacoes` |
 | **PL31** | Definir o conteúdo do seed de desenvolvimento — quantos parlamentares, votações e perguntas |
 | ✅ ~~PL48~~ | **Resolvida (2026-08-29)** — consolidadas. Eram **12** arquivos, ⛔ não 8: o número cresceu durante o desenvolvimento. Viraram **uma** `Inicial`, com o schema conferido definição por definição. Detalhe abaixo |

@@ -57,8 +57,11 @@ jobs:
       #    O runner do GitHub não alcança o Postgres: a porta 5432 nunca é exposta,
       #    pelo mesmo motivo que tirou o ETL do Actions. Quem aplica é um container
       #    rodando DENTRO do VPS, que já está na rede Docker.
+      # 🔴 `-p src/Poligraph.Migrations`, ⛔ NÃO a API (PL49). Quebrou aqui quando o
+      #    `Microsoft.EntityFrameworkCore.Design` saiu da API: o comando morria com
+      #    "Your startup project 'Poligraph.Api' doesn't reference ...Design".
       - name: Gerar script idempotente
-        run: dotnet ef migrations script --idempotent -p src/Poligraph.Api -o migration.sql
+        run: dotnet ef migrations script --idempotent -p src/Poligraph.Migrations -o migration.sql
 
       - uses: actions/upload-artifact@v4
         with:
@@ -101,6 +104,115 @@ jobs:
         working-directory: src/web
       - run: npm run build
         working-directory: src/web
+
+  # ═══════════════════════════════════════════════════════════════════
+  # 🔴 Qualidade de código — SonarQube Cloud
+  # ═══════════════════════════════════════════════════════════════════
+  #
+  # ⚠️ Este job NÃO é o portão. O portão é `dotnet` + `python` + `web`, que rodam em
+  #    paralelo com este. Se o Sonar cair, o CI continua dizendo a verdade sobre o
+  #    código.
+  #
+  # 🔴 Ele repete build e testes de propósito. O scanner de C# precisa ENVOLVER o
+  #    build (`begin` → `dotnet build` → `end`): ele lê a saída do compilador, não o
+  #    código parado. Como os jobs correm em paralelo, o custo é minuto de runner,
+  #    ⛔ não tempo de espera.
+  #
+  # ⚠️ SEM O SEGREDO `SONAR_TOKEN` OS PASSOS PULAM — e o job fica verde.
+  #    ⛔ Verde aqui ⛔ não significa "analisado". Ver o passo `Aviso` abaixo.
+  qualidade:
+    name: Qualidade de código
+    runs-on: ubuntu-latest
+
+    # 🔴 Precisa ser env DO JOB, ⛔ não do passo: o contexto `env` só chega ao `if`
+    #    de um passo se tiver sido declarado no job. (`secrets` ⛔ não existe em `if`.)
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_PROJETO: IgorLucasAssuncao_poligraph
+      SONAR_ORG: igorlucasassuncao
+
+    steps:
+      - name: Aviso quando o segredo não existe
+        if: env.SONAR_TOKEN == ''
+        run: |
+          echo "::warning title=Sonar não rodou::SONAR_TOKEN ausente — nenhuma análise foi feita."
+          echo "⚠️ O plano gratuito do SonarQube Cloud cobre APENAS repositórios públicos."
+
+      - uses: actions/checkout@v4
+        if: env.SONAR_TOKEN != ''
+        with:
+          # 🔴 Clone raso arruína a análise: sem histórico o Sonar ⛔ não sabe o que é
+          #    "código novo", e é sobre código novo que o quality gate decide.
+          fetch-depth: 0
+
+      # ⭐ O scanner é Java, mesmo o de .NET.
+      - uses: actions/setup-java@v4
+        if: env.SONAR_TOKEN != ''
+        with:
+          java-version: '21'
+          distribution: zulu
+
+      - uses: actions/setup-dotnet@v4
+        if: env.SONAR_TOKEN != ''
+        with:
+          dotnet-version: '10.x'
+
+      - uses: actions/setup-python@v5
+        if: env.SONAR_TOKEN != ''
+        with:
+          python-version: '3.13'
+
+      - uses: actions/setup-node@v4
+        if: env.SONAR_TOKEN != ''
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: src/web/package-lock.json
+
+      - name: Cache do Sonar
+        if: env.SONAR_TOKEN != ''
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Instalar o scanner
+        if: env.SONAR_TOKEN != ''
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      # ─── cobertura das duas linguagens que ⛔ não passam pelo MSBuild ─────
+      # ⚠️ Precisam sair ANTES do `end`: o scanner lê os arquivos de cobertura na
+      #    hora de fechar. Rodar depois ⛔ não adianta.
+      - name: Cobertura do ETL
+        if: env.SONAR_TOKEN != ''
+        working-directory: src/etl
+        run: |
+          pip install -r requirements-dev.txt
+          pytest -q --cov=poligraph_etl --cov-report=xml
+
+      - name: Cobertura do front
+        if: env.SONAR_TOKEN != ''
+        working-directory: src/web
+        run: |
+          npm ci
+          npm test -- --coverage --coverage.reporter=lcov
+
+      # ─── a análise propriamente ───────────────────────────────────────────
+      - name: Analisar
+        if: env.SONAR_TOKEN != ''
+        run: |
+          dotnet-sonarscanner begin             /k:"$SONAR_PROJETO"             /o:"$SONAR_ORG"             /d:sonar.token="$SONAR_TOKEN"             /d:sonar.scanner.scanAll=true             /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"             /d:sonar.python.coverage.reportPaths="src/etl/coverage.xml"             /d:sonar.javascript.lcov.reportPaths="src/web/coverage/lcov.info"             /d:sonar.exclusions="**/bin/**,**/obj/**,**/node_modules/**,src/web/dist/**,src/Poligraph.Migrations/Migrations/**"             /d:sonar.test.inclusions="src/etl/tests/**,**/*.test.ts,**/*.test.tsx"
+
+          dotnet build -c Release
+          dotnet test --no-build -c Release --collect:"XPlat Code Coverage;Format=opencover"
+
+          dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+
+      # ⭐ Para o estágio virar PORTÃO de verdade, acrescentar ao `begin`:
+      #        /d:sonar.qualitygate.wait=true
+      #    Fica fora até a primeira análise calibrar o que é dívida herdada — senão o
+      #    primeiro PR reprova por código que já estava lá.
 
   docker:
     name: Imagens constroem
