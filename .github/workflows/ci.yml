@@ -27,11 +27,11 @@ jobs:
       - name: Build
         run: dotnet build --no-restore -c Release
 
+      # Só os unitários. Os de integração sobem UM container Postgres POR TESTE
+      # (BaseIntegracao : IAsyncLifetime, e o xUnit instancia por método), o que o
+      # runner do GitHub não aguenta. Rodam localmente: `dotnet test`.
       - name: Testes unitários
         run: dotnet test --no-build -c Release --filter "FullyQualifiedName~Unidade"
-
-      - name: Testes de integração
-        run: dotnet test --no-build -c Release --filter "FullyQualifiedName~Integracao"
 
   migration:
     name: Migration gera script válido
@@ -177,7 +177,7 @@ jobs:
             /d:sonar.test.inclusions="src/etl/tests/**,**/*.test.ts,**/*.test.tsx"
 
           dotnet build -c Release
-          dotnet test --no-build -c Release --collect:"XPlat Code Coverage;Format=opencover"
+          dotnet test --no-build -c Release --filter "FullyQualifiedName~Unidade" --collect:"XPlat Code Coverage;Format=opencover"
 
           dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 

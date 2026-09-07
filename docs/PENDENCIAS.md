@@ -256,6 +256,34 @@ O job `migration` chamava `dotnet ef … -p src/Poligraph.Api`. ⚠️ A
 `Design` da API no mesmo dia e ⛔ não atualizou o CI. Corrigido para
 `-p src/Poligraph.Migrations` — script de **600 linhas, 24 tabelas**, conferido.
 
+#### ⚠️ Os testes de integração saíram do CI (2026-09-06)
+
+🔴 **A causa ⛔ não é "runner fraco" — é um container por TESTE.**
+
+`BaseIntegracao : IAsyncLifetime`, e o xUnit constrói **uma instância nova por método de
+teste**. Então `InitializeAsync` roda a cada teste: sobe um Postgres novo **e aplica a
+migration inteira**. São **126 testes de integração** = 126 containers e 126 migrations.
+
+⚠️ Local isso leva ~3 min, com imagem quente e disco rápido. No runner do GitHub (2
+núcleos) ⛔ não fecha.
+
+| Job | Antes | Depois |
+|---|---|---|
+| `dotnet` | unitários **+ integração** | ⭐ só `~Unidade` (**33**) |
+| `qualidade` | suíte inteira | ⭐ só `~Unidade` |
+
+✅ **O teste de polaridade (API3) ⛔ NÃO se perdeu:** `TestesPolaridade.cs` está em
+`Unidade/`, ⛔ não em `Integracao/`. A regra do CLAUDE.md continua valendo no CI.
+
+⛔ **O que o CI deixa de proteger:** `TestesSchema` (os `CHECK` chegaram ao banco),
+`TestesContratoOpenApi` (a CT3 recém-escrita), autenticação, endpoints, curadoria,
+legislatura e notícias. São **126 de 159**. Rodam localmente com `dotnet test`.
+
+> ⭐ **O conserto que devolveria os testes ao CI** é fazer o container ser **um só**, via
+> `IClassFixture`/`ICollectionFixture` em vez de `IAsyncLifetime` na base — com cada teste
+> limpando o que escreveu. Deixa de ser 126 containers e vira 1. ⚠️ Mexe nas 11 classes de
+> teste, então ⛔ não entrou junto com esta mudança.
+
 #### 🔴 Na primeira execução real, o CI reprovou em 3 jobs
 
 ⭐ E esse é o ponto: **o `npm run build` já estava no job `web` o tempo todo.** Como o
