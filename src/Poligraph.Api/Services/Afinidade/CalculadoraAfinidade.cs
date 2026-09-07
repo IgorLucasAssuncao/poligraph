@@ -1,28 +1,4 @@
-namespace Poligraph.Api.Services;
-
-/// <summary>Resposta do cidadão a uma pergunta.</summary>
-/// <param name="PerguntaId">Ex.: "q1" — ⚠️ nunca o idVotacao.</param>
-/// <param name="Valor">+1 concordo · -1 discordo · 0 não sei.</param>
-public readonly record struct RespostaCidadao(string PerguntaId, short Valor);
-
-/// <summary>Como o parlamentar se posicionou na afirmação de uma pergunta.</summary>
-/// <param name="VotoModel">+1 sim · -1 não · 0 abstenção · null ausente.</param>
-/// <param name="Polaridade">+1 "Sim" aprova a afirmação · -1 "Sim" a rejeita.</param>
-public readonly record struct PosicaoParlamentar(short? VotoModel, short Polaridade);
-
-/// <summary>Afinidade de um parlamentar com o cidadão. ⛔ Sem percentual — RF-29.</summary>
-public readonly record struct ResultadoAfinidade(long PessoaId, int Acordos, int Comparaveis)
-{
-    /// <summary>Uso interno para ordenar. ⛔ Não expor na API: a tela mostra "X de Y".</summary>
-    public double Proporcao => Comparaveis == 0 ? 0 : (double)Acordos / Comparaveis;
-}
-
-/// <summary>
-/// Em quais perguntas o parlamentar concordou com o cidadão, e em quais não.
-/// ⚠️ As duas listas somadas dão <c>Comparaveis</c>, ⛔ nunca o total respondido.
-/// </summary>
-public readonly record struct DetalheDaAfinidade(
-    IReadOnlyList<string> Acordou, IReadOnlyList<string> Discordou);
+﻿namespace Poligraph.Api.Services;
 
 /// <summary>
 /// 🔴 O coração do sistema, e o lugar do bug mais perigoso dele.

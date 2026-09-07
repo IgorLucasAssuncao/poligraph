@@ -1,13 +1,8 @@
-using Microsoft.EntityFrameworkCore;
-using Poligraph.Data;
+﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Endpoints;
+using Poligraph.Data;
 
 namespace Poligraph.Api.Services;
-
-public record ItemDoDigest(string Titulo, string Veiculo, string Url, string PorCausaDe);
-
-public record Digest(long UsuarioId, string Email, string? PrimeiroNome, string Assunto,
-                     IReadOnlyList<ItemDoDigest> Itens, string TokenDescadastro);
 
 /// <summary>
 /// Monta o digest de notícias por e-mail (RF-49).

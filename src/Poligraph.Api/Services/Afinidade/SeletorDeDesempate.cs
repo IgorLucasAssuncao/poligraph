@@ -1,4 +1,4 @@
-namespace Poligraph.Api.Services;
+﻿namespace Poligraph.Api.Services;
 
 /// <summary>
 /// Escolhe as próximas perguntas para separar quem está empatado no topo.
