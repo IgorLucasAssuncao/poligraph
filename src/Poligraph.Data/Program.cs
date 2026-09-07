@@ -1,8 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Poligraph.Api.Data;
-using Poligraph.Migrations;
+using Poligraph.Data;
 
 // ═══════════════════════════════════════════════════════════════════
 // Aplicador de migrations. Existe separado da API por dois motivos:

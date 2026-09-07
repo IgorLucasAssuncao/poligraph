@@ -223,7 +223,7 @@ integração, use `services: postgres:` do próprio Actions — container efême
 
 | | Local (`Environment != Production`) | Produção |
 |---|---|---|
-| Quem aplica | O projeto `Poligraph.Migrations`, via Aspire | Comando de pré-deploy do Coolify |
+| Quem aplica | O projeto `Poligraph.Data`, via Aspire | Comando de pré-deploy do Coolify |
 | Dados de teste | ✅ Semeados se ainda não existirem | ⛔ Nunca |
 | ⛔ A API migra? | Não | **Nunca** |
 

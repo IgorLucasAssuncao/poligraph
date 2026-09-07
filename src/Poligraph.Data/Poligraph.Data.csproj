@@ -1,19 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\Poligraph.Api\Poligraph.Api.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.5.3" />
-    <!-- 🔴 PL49: as migrations moram AQUI, e o `dotnet ef` só funciona no projeto que
-         tem este pacote. Ele ficou para trás na mudança, e o comando morria com
-         "doesn't reference Microsoft.EntityFrameworkCore.Design". -->
+    <!-- O `dotnet ef` só funciona no projeto que tem este pacote. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.11" />
+    <!-- Vinham por tabela da API. Com a inversão da dependência, são daqui. -->
+    <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
   </ItemGroup>
 
   <PropertyGroup>

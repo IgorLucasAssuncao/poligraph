@@ -427,7 +427,7 @@ Cobertura medida hoje: **62,3%** no ETL, **43,6%** no front.
 | **`sonar.scanner.scanAll=true`** | Sem isso o scanner de .NET olha só o que passa pelo MSBuild — ⛔ **Python e TS ficariam de fora**, que é metade do projeto |
 | **`fetch-depth: 0`** | Clone raso apaga o histórico, e o quality gate decide sobre **código novo**. Sem o histórico, ⛔ não há "novo" |
 
-⚠️ `src/Poligraph.Migrations/Migrations/**` está em `sonar.exclusions`: são **397 definições
+⚠️ `src/Poligraph.Data/Migrations/**` está em `sonar.exclusions`: são **397 definições
 geradas** pelo `dotnet ef`, que inundariam o relatório com dívida que ninguém escreveu.
 
 #### 🔴 O que ainda bloqueia

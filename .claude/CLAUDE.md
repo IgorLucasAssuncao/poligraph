@@ -60,7 +60,7 @@ Todas em português, em `.claude/skills/`. Invoque com a ferramenta Skill.
 | Hospedagem | **VPS Hostinger KVM 2 + Coolify**, São Paulo |
 | Borda | Cloudflare (DNS, CDN, WAF, TLS) |
 | Dev local | **Aspire 13** — AppHost + ServiceDefaults |
-| Estrutura | **Tier 2 sem MediatR** — `Api` + `Tests` + `AppHost` |
+| Estrutura | **Tier 2 sem MediatR** — `Api` + `Data` + `Tests` + `AppHost` |
 | Testes | xUnit + **Testcontainers** (Postgres real) |
 
 ---
@@ -115,7 +115,7 @@ Core isso significa **`HasCheckConstraint`** — ver [`plano/04 §2.4`](../docs/
 | 🔴 **snake_case obrigatório** | PascalCase quebra o ETL Python |
 | 🔴 **EF é dono do schema** | O Python nunca cria tabela |
 | ⭐ **`DateTimeOffset`**, não `DateTime` | `timestamptz` do Npgsql exige `Kind=Utc` |
-| ⛔ **A API nunca migra** | Quem migra é o projeto `Poligraph.Migrations` |
+| ⛔ **A API nunca migra** | Quem migra é o projeto `Poligraph.Data` |
 
 ### Migrations
 
@@ -156,7 +156,7 @@ inflou a contagem em 8,8% — ver [`04-contratos`](../docs/04-contratos.md).
 
 ```bash
 dotnet run --project src/Poligraph.AppHost      # sobe tudo (Aspire)
-dotnet ef migrations add <Nome> -p src/Poligraph.Migrations   # 🔴 NÃO a API (PL49)
+dotnet ef migrations add <Nome> -p src/Poligraph.Data   # 🔴 NÃO a API
 docker compose run --rm migracoes                # aplica em produção (dentro do VPS)
 dotnet ef migrations script --idempotent        # ⭐ conferir ANTES de aplicar
 dotnet test                                     # inclui o teste de polaridade

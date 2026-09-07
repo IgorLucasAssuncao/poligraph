@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Poligraph.Api\Poligraph.Api.csproj" />
-    <ProjectReference Include="..\Poligraph.Migrations\Poligraph.Migrations.csproj" />
+    <ProjectReference Include="..\Poligraph.Data\Poligraph.Data.csproj" />
   </ItemGroup>
 
 </Project>

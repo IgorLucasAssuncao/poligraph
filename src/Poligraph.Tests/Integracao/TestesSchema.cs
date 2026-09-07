@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Poligraph.Api.Data;
+using Poligraph.Data;
 
 namespace Poligraph.Tests.Integracao;
 

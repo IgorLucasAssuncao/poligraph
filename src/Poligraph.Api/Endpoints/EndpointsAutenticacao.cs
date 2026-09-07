@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
-using Poligraph.Api.Data;
+using Poligraph.Data;
 using Poligraph.Api.Services;
 
 namespace Poligraph.Api.Endpoints;

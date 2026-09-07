@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Poligraph.Api.Data;
+using Poligraph.Data;
 using Poligraph.Api.Services;
 
 namespace Poligraph.Tests.Integracao;

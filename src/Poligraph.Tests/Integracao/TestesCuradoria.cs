@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Poligraph.Api.Data;
-using Poligraph.Migrations;
+using Poligraph.Data;
 
 namespace Poligraph.Tests.Integracao;
 

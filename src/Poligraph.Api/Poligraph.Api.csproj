@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Poligraph.Data\Poligraph.Data.csproj" />
     <ProjectReference Include="..\Poligraph.ServiceDefaults\Poligraph.ServiceDefaults.csproj" />
   </ItemGroup>
 

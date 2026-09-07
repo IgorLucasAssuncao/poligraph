@@ -1,4 +1,4 @@
-namespace Poligraph.Api.Data;
+﻿namespace Poligraph.Data;
 
 /// <summary>
 /// Notícia coletada de feed RSS.
@@ -27,33 +27,4 @@ public class NoticiaModel
     public DateTimeOffset ColetadaEm { get; set; }
 
     public List<NoticiaPessoaModel> Pessoas { get; set; } = [];
-}
-
-/// <summary>
-/// Liga a notícia ao parlamentar mencionado.
-///
-/// 🔴 RF-40 — `Confianca` existe porque notícia errada na página de quem a pessoa segue
-/// é falha visível. Abaixo do limiar, a associação NÃO é exibida.
-/// </summary>
-public class NoticiaPessoaModel
-{
-    public long NoticiaId { get; set; }
-    public NoticiaModel? Noticia { get; set; }
-
-    public long PessoaId { get; set; }
-    public PessoaModel? Pessoa { get; set; }
-
-    /// <summary>0 a 1. Nome completo casado vale mais que sobrenome solto.</summary>
-    public float Confianca { get; set; }
-
-    public MetodoDeCitacao Metodo { get; set; }
-}
-
-/// <summary>RF-48 — tema da notícia, para o feed misto.</summary>
-public class NoticiaTemaModel
-{
-    public long NoticiaId { get; set; }
-    public NoticiaModel? Noticia { get; set; }
-
-    public required string Tema { get; set; }
 }

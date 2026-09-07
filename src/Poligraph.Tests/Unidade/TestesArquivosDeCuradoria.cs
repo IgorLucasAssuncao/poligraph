@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Poligraph.Migrations;
+using Poligraph.Data;
 
 namespace Poligraph.Tests.Unidade;
 
@@ -114,7 +114,7 @@ public class TestesArquivosDeCuradoria
         var opcoes = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
         return Directory
-            .GetFiles(Path.Combine(Raiz, "src", "Poligraph.Migrations", "curadoria"),
+            .GetFiles(Path.Combine(Raiz, "src", "Poligraph.Data", "curadoria"),
                       "perguntas-*.json")
             .OrderBy(a => a)
             .Select(arquivo => (

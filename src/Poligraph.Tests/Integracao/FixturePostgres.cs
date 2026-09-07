@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Poligraph.Api.Data;
-using Poligraph.Migrations;
+using Poligraph.Data;
 using Testcontainers.PostgreSql;
 
 namespace Poligraph.Tests.Integracao;

@@ -1,4 +1,4 @@
-namespace Poligraph.Api.Data;
+﻿namespace Poligraph.Data;
 
 /// <summary>
 /// Avaliação do questionário pelo cidadão — dado de PESQUISA, não de perfil.

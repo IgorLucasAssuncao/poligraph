@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Poligraph.Api.Data;
+using Poligraph.Data;
 
 namespace Poligraph.Tests.Fixtures;
 
 /// <summary>
 /// Dados fixos para os testes de integração.
 ///
-/// ⚠️ Isto vivia em `Poligraph.Migrations` e rodava a cada `dotnet run` local. Deixou de
+/// ⚠️ Isto vivia em `Poligraph.Data` e rodava a cada `dotnet run` local. Deixou de
 /// fazer sentido quando o ETL passou a funcionar: o banco de desenvolvimento é
 /// preenchido com a Câmara de verdade, e 12 parlamentares fictícios convivendo com 551
 /// reais só criavam risco de alguém tomar um pelo outro.

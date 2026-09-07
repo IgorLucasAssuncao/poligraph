@@ -13,7 +13,7 @@ var bancoPoligraph = postgres.AddDatabase("poligraph");
 // DOTNET_ENVIRONMENT. O Aspire injeta ASPNETCORE_ENVIRONMENT, que só vale para
 // projetos web — então sem esta linha o ambiente vira "Production" por padrão e o
 // seed de desenvolvimento é PULADO EM SILÊNCIO. Sem erro. Só sem dado.
-var migracoes = builder.AddProject<Projects.Poligraph_Migrations>("migracoes")
+var migracoes = builder.AddProject<Projects.Poligraph_Data>("migracoes")
     .WithReference(bancoPoligraph)
     .WithEnvironment("DOTNET_ENVIRONMENT", builder.Environment.EnvironmentName)
     .WaitFor(postgres);

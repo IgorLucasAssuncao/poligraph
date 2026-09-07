@@ -1,6 +1,6 @@
 ﻿using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
-using Poligraph.Api.Data;
+using Poligraph.Data;
 
 namespace Poligraph.Tests.Integracao;
 

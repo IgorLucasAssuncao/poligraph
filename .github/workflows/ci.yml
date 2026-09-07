@@ -59,7 +59,7 @@ jobs:
 
       # Gera e valida. Não aplica: quem aplica é um container dentro do VPS.
       - name: Gerar script idempotente
-        run: dotnet ef migrations script --idempotent -p src/Poligraph.Migrations -o migration.sql
+        run: dotnet ef migrations script --idempotent -p src/Poligraph.Data -o migration.sql
 
       - uses: actions/upload-artifact@v4
         with:
@@ -207,7 +207,7 @@ jobs:
             /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
             /d:sonar.python.coverage.reportPaths="src/etl/coverage.xml" \
             /d:sonar.javascript.lcov.reportPaths="src/web/coverage/lcov.info" \
-            /d:sonar.exclusions="**/bin/**,**/obj/**,**/node_modules/**,src/web/dist/**,src/Poligraph.Migrations/Migrations/**" \
+            /d:sonar.exclusions="**/bin/**,**/obj/**,**/node_modules/**,src/web/dist/**,src/Poligraph.Data/Migrations/**" \
             /d:sonar.test.inclusions="src/etl/tests/**,**/*.test.ts,**/*.test.tsx"
 
           dotnet build -c Release

@@ -1,4 +1,4 @@
-using Poligraph.Api.Data;
+using Poligraph.Data;
 
 namespace Poligraph.Tests.Integracao;
 

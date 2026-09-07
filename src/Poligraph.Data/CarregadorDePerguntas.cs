@@ -1,9 +1,9 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
-using Poligraph.Api.Data;
+using Poligraph.Data;
 
-namespace Poligraph.Migrations;
+namespace Poligraph.Data;
 
 public record PerguntaCurada(
     string Id, string VotacaoId, short Ordem, short Polaridade, string Texto);

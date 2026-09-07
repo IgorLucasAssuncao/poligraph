@@ -1,4 +1,4 @@
-namespace Poligraph.Migrations;
+namespace Poligraph.Data;
 
 /// <summary>
 /// Um lugar só para o nome do assembly das migrations.
@@ -11,5 +11,5 @@ namespace Poligraph.Migrations;
 /// </summary>
 public static class Migracoes
 {
-    public const string Assembly = "Poligraph.Migrations";
+    public const string Assembly = "Poligraph.Data";
 }

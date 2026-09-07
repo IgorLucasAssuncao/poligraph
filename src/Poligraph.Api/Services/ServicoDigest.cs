@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Poligraph.Api.Data;
+using Poligraph.Data;
 using Poligraph.Api.Endpoints;
 
 namespace Poligraph.Api.Services;
