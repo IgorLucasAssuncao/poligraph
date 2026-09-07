@@ -15,6 +15,7 @@ public static class ConfiguracaoDeServicos
                 new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
         servicos.AddScoped<IValidadorGoogle, ValidadorGoogle>();
+        servicos.AddScoped<ServicoContas>();
         servicos.AddScoped<ServicoDigest>();
         servicos.AddScoped<ServicoParlamentares>();
         servicos.AddScoped<ServicoGastosDeCota>();

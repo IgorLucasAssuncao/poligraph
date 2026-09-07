@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Data;
 using Poligraph.Api.Dtos;
+using Poligraph.Api.Services;
 
 namespace Poligraph.Api.Endpoints;
 
@@ -34,7 +35,7 @@ public static class EndpointsSeguir
     private static async Task<IResult> ListarAsync(
         ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
     {
-        var id = EndpointsAutenticacao.IdDoUsuario(principal);
+        var id = SessaoDoUsuario.IdDoUsuario(principal);
 
         var seguidos = await db.Segue.AsNoTracking()
             .Where(s => s.UsuarioId == id)
@@ -61,7 +62,7 @@ public static class EndpointsSeguir
         if (!await db.Pessoas.AnyAsync(p => p.Id == pessoaId, ct))
             return Results.NotFound();
 
-        var usuarioId = EndpointsAutenticacao.IdDoUsuario(principal);
+        var usuarioId = SessaoDoUsuario.IdDoUsuario(principal);
 
         if (await db.Segue.AnyAsync(s => s.UsuarioId == usuarioId && s.PessoaId == pessoaId, ct))
             return Results.NoContent();   // idempotente
@@ -83,7 +84,7 @@ public static class EndpointsSeguir
     private static async Task<IResult> DeixarDeSeguirAsync(
         long pessoaId, ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
     {
-        var usuarioId = EndpointsAutenticacao.IdDoUsuario(principal);
+        var usuarioId = SessaoDoUsuario.IdDoUsuario(principal);
 
         await db.Segue
             .Where(s => s.UsuarioId == usuarioId && s.PessoaId == pessoaId)

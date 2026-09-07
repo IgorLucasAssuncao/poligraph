@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Endpoints;
 using Poligraph.Data;
+using Poligraph.Api.Services;
 
 namespace Poligraph.Api.Configuracao;
 
@@ -56,8 +57,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         opcoes.Events.OnValidatePrincipal = async contexto =>
         {
             var principal = contexto.Principal;
-            var idBruto = principal?.FindFirst(EndpointsAutenticacao.ClaimUsuario)?.Value;
-            var versaoBruta = principal?.FindFirst(EndpointsAutenticacao.ClaimSessao)?.Value;
+            var idBruto = principal?.FindFirst(SessaoDoUsuario.ClaimUsuario)?.Value;
+            var versaoBruta = principal?.FindFirst(SessaoDoUsuario.ClaimSessao)?.Value;
 
             if (!long.TryParse(idBruto, out var id) || !short.TryParse(versaoBruta, out var versao))
             {
