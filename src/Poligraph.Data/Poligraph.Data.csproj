@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\Poligraph.ServiceDefaults\Poligraph.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.5.3" />
     <!-- O `dotnet ef` só funciona no projeto que tem este pacote. -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
