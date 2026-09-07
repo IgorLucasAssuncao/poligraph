@@ -1,11 +1,10 @@
 ﻿using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Data;
+using Poligraph.Api.Dtos;
 
 namespace Poligraph.Api.Endpoints;
 
-public record ParlamentarSeguidoDto(
-    long PessoaId, string Nome, Casa? Casa, string Partido, string Uf);
 
 /// <summary>
 /// 🔴 Estes endpoints escrevem na tabela `segue`, que é REGISTRO DE CONVICÇÃO POLÍTICA

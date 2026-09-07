@@ -4,13 +4,10 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Data;
 using Poligraph.Api.Services;
+using Poligraph.Api.Dtos;
 
 namespace Poligraph.Api.Endpoints;
 
-public record RequisicaoLoginDto(string IdToken);
-
-/// <summary>⛔ Não devolve e-mail: o front não precisa, e o que não trafega não vaza.</summary>
-public record UsuarioLogadoDto(string? Nome, string? FotoUrl);
 
 public static class EndpointsAutenticacao
 {

@@ -1,17 +1,8 @@
 using Google.Apis.Auth;
+using Poligraph.Api.Dtos;
 
 namespace Poligraph.Api.Services;
 
-/// <summary>O que o `id_token` do Google carrega, depois de validado.</summary>
-public record PerfilGoogleDto(
-    string Sub,
-    string Email,
-    bool EmailVerificado,
-    string? Nome,
-    string? PrimeiroNome,
-    string? Sobrenome,
-    string? FotoUrl,
-    string? Locale);
 
 /// <summary>
 /// ⚠️ Esta interface é a exceção à regra "sem interface para uma implementação só".

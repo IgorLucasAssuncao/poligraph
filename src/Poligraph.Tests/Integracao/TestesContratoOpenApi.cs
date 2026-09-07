@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Poligraph.Api.Dtos;
 
 namespace Poligraph.Tests.Integracao;
 

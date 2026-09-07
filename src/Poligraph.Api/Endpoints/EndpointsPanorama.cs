@@ -1,42 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Data;
+using Poligraph.Api.Dtos;
 
 namespace Poligraph.Api.Endpoints;
 
-/// <summary>O tamanho da base de uma casa — o que a página inicial afirma.</summary>
-public record PanoramaDaCasaDto(
-    Casa Casa,
-    int Parlamentares,
-    int Votacoes,
-    int VotacoesSecretas,
-    /// <summary>
-    /// 🔴 Votos <b>Sim</b> ou <b>Não</b> — ⛔ nunca abstenção.
-    ///
-    /// <para>
-    /// ⚠️ Contava <c>Valor != null</c>, que inclui a abstenção, e por isso afirmava
-    /// <b>463.994</b> na Câmara quando a posição de verdade eram <b>462.867</b>. As
-    /// 1.127 de diferença são exatamente as abstenções (33 no Senado).
-    /// </para>
-    ///
-    /// <para>
-    /// ⛔ Abstenção ⛔ NÃO é posição: a RN-03 a transforma em nulo, e
-    /// <c>CalculadoraAfinidade.EComparavel</c> a exclui da conta. Exibir um número que o
-    /// cálculo ⛔ não usa é o defeito que este projeto persegue — plausível e errado.
-    /// </para>
-    /// </summary>
-    int VotosComPosicao,
-    int Comunidades,
-    int Ligacoes);
-
-/// <summary>
-/// ⚠️ <c>Legislatura</c> pode vir nula, e a tela precisa disso: base sem votação é o
-/// estado real antes do primeiro ETL, e inventar 57 esconderia isso atrás de um número
-/// que parece certo.
-/// </summary>
-public record PanoramaDto(
-    short? Legislatura,
-    int PerguntasAtivas,
-    IReadOnlyList<PanoramaDaCasaDto> PorCasa);
 
 /// <summary>
 /// RF-33 — os números da base, para a página inicial.

@@ -680,7 +680,8 @@ possível cruzar financiador de campanha com fornecedor de gabinete.
 
 src/
   Poligraph.Api/          Minimal API · dono do schema (EF Core)
-  Poligraph.Data/         Entidades, contexto, migrations e curadoria
+  Poligraph.Api/          Endpoints, Services, Dtos/ (1 por arquivo, por área)
+  Poligraph.Data/         Data/Entidades, Data/Enumeracoes, Migrations, curadoria
   Poligraph.AppHost/      Aspire — orquestra o ambiente local
   Poligraph.Tests/        xUnit + Testcontainers
   etl/                    Python — ingestão e análise

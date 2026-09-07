@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Poligraph.Data;
 using Poligraph.Api.Services;
+using Poligraph.Api.Dtos;
 
 namespace Poligraph.Tests.Integracao;
 

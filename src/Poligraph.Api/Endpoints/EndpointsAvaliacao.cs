@@ -1,15 +1,10 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Data;
+using Poligraph.Api.Dtos;
 
 namespace Poligraph.Api.Endpoints;
 
-public record RequisicaoAvaliacaoDto(
-    int PerguntasRespondidas,
-    int AcordosDoPrimeiro,
-    int ComparaveisDoPrimeiro,
-    bool? Acertou,
-    short? PosicaoAutodeclarada);
 
 public static class EndpointsAvaliacao
 {

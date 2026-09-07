@@ -1,11 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Data;
+using Poligraph.Api.Dtos;
 
 namespace Poligraph.Api.Endpoints;
 
-public record NoticiaNaFichaDto(
-    long Id, string Url, string Titulo, string Veiculo,
-    DateTimeOffset PublicadaEm, string? Trecho);
 
 public static class EndpointsNoticias
 {
