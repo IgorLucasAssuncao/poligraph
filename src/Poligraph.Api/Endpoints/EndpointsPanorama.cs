@@ -57,7 +57,19 @@ public static class EndpointsPanorama
 {
     public static IEndpointRouteBuilder MapearPanorama(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/panorama", ObterAsync).WithTags("Panorama");
+        // 🔴 CT3 — `.Produces<T>()` ⛔ não é enfeite de documentação.
+        //
+        //    O handler devolve `Task<IResult>`, e daí o ASP.NET ⛔ não infere NADA:
+        //    o OpenAPI saía com a rota e **zero** esquema de resposta. O `/scalar`
+        //    listava os endpoints sem dizer o que devolvem, e o teste de contrato
+        //    ⛔ não tinha o que conferir.
+        //
+        // ⚠️ Metadado PODE divergir do retorno real — por isso ele ⛔ não anda
+        //    sozinho: `TestesContratoOpenApi` confere os campos contra o que o front
+        //    lê, e os testes de integração desserializam a resposta de verdade.
+        app.MapGet("/api/panorama", ObterAsync)
+           .WithTags("Panorama")
+           .Produces<PanoramaDto>();
 
         return app;
     }

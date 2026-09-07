@@ -261,7 +261,7 @@ podman run --rm --network "container:<postgres>" \
 ### Testes
 
 ```bash
-dotnet test                              # 91 — Testcontainers com Postgres real
+dotnet test                              # 160 — Testcontainers com Postgres real
 cd src/etl && python -m pytest           # 282
 cd src/web && npm test                   # 37
 ```

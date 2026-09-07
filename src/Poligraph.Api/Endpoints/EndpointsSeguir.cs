@@ -22,7 +22,8 @@ public static class EndpointsSeguir
             .WithTags("Seguir")
             .RequireAuthorization();
 
-        grupo.MapGet("/", ListarAsync);
+        grupo.MapGet("/", ListarAsync)
+             .Produces<IReadOnlyList<ParlamentarSeguidoDto>>();
         grupo.MapPut("/{pessoaId:long}", SeguirAsync);
         grupo.MapDelete("/{pessoaId:long}", DeixarDeSeguirAsync);
 

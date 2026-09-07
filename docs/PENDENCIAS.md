@@ -239,6 +239,55 @@ funcionou** desta vez — a geração saiu no container, pela mesma receita dos 
 ⭐ Isso reclassifica a PL51: ela ⛔ não atrapalha só teste, ela **bloqueia trabalho de
 schema**.
 
+
+---
+
+### ✅ CT3 (resolvida em 2026-09-06) — o contrato existia, mas estava vazio
+
+O `AddOpenApi()`/`MapOpenApi()` já estavam no `Program.cs`. ⚠️ **O documento que eles
+geravam ⛔ não tinha esquema nenhum** — `components.schemas` vinha vazio.
+
+🔴 **Motivo:** todo handler devolve `Task<IResult>`, e daí o ASP.NET ⛔ não infere forma
+de resposta. O OpenAPI publicava a rota e **⛔ nada** sobre o que ela devolve.
+
+| | Antes | Depois |
+|---|---|---|
+| Esquemas no documento | **0** | ⭐ **31** |
+| Rotas publicadas | 17 (de 18 mapeadas) | ⭐ **18** |
+| Testes .NET | 133 | ⭐ **160** |
+
+#### O que entrou
+
+| Peça | Papel |
+|---|---|
+| `Scalar.AspNetCore` 2.17.2 | ⭐ `/scalar` — documentação navegável, **só em Development** |
+| `.Produces<T>()` em 17 rotas | 🔴 É o que faz o esquema existir, ⛔ não enfeite |
+| `TestesContratoOpenApi.cs` | 27 testes: 17 rotas + 9 DTOs + o enum + o documento |
+
+⚠️ **O `/scalar` ⛔ NÃO sobe em produção.** Ele expõe `DELETE /api/auth/conta` e
+`POST /api/auth/sair-de-todos` num formulário pronto para disparar — está dentro do
+`if (app.Environment.IsDevelopment())`, junto do `MapOpenApi()`.
+
+#### 🔴 O que ele achou de cara
+
+`/api/auth/logout` estava **mapeada** e mesmo assim ⛔ **fora do documento**. `MapPost`
+tinha ligado na sobrecarga `RequestDelegate` — rota terminal, que **descarta o
+`IResult`**. O `Results.NoContent()` ⛔ nunca era escrito: a resposta saía **200**.
+
+⚠️ **Havia teste de logout, e ele passava.** O `SignOutAsync` roda antes do `return`,
+então o acesso caía e o teste ficava verde. 📐 O caminho inteiro está no
+[achado 032](achados/032-a-rota-que-o-contrato-dizia-nao-existir.md).
+
+⭐ `ASP0016` virou `error` no `.editorconfig` — o aviso existia e estava se perdendo no
+meio dos `CA1305`.
+
+#### ⚠️ O que este teste ⛔ NÃO garante
+
+Ele confere **metadado**, ⛔ não o corpo devolvido: `.Produces<T>()` pode mentir sobre o
+tipo real. ⭐ Por isso ele ⛔ não anda sozinho — os outros 133 testes de integração
+desserializam a resposta de verdade. **A lista de rotas e campos é escrita à mão a partir
+de `src/web/src/api.ts`**: se o front passar a ler um campo novo e ninguém o acrescentar
+aqui, o teste ⛔ não acusa. É o custo conhecido do formato.
 ---
 
 ### ✅ PL49 (resolvida em 2026-09-06) — a migration foi para quem a aplica
@@ -961,7 +1010,7 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 |---|---|
 | **API3** | Teste de regressão da **polaridade** — o bug mais perigoso do sistema |
 | **API7** | Medir quanto tempo o job de 207k pares leva de fato |
-| **CT3** | Escrever o OpenAPI da C13 e validar contra o front |
+| ✅ ~~CT3~~ | **Resolvida (2026-09-06)** — 27 testes conferem rota por rota e campo por campo contra `src/web/src/api.ts`, e o `/scalar` renderiza o mesmo documento. 🔴 **Achou um bug na primeira execução:** `/api/auth/logout` ⛔ não existia no contrato e devolvia 200 em vez de 204 ([achado 032](achados/032-a-rota-que-o-contrato-dizia-nao-existir.md)). Detalhe abaixo |
 | **PL16** | Como o ETL sinaliza `novas_votacoes` |
 | **PL31** | Definir o conteúdo do seed de desenvolvimento — quantos parlamentares, votações e perguntas |
 | ✅ ~~PL48~~ | **Resolvida (2026-08-29)** — consolidadas. Eram **12** arquivos, ⛔ não 8: o número cresceu durante o desenvolvimento. Viraram **uma** `Inicial`, com o schema conferido definição por definição. Detalhe abaixo |

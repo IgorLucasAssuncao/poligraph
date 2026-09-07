@@ -1,10 +1,11 @@
-using Microsoft.AspNetCore.DataProtection;
+﻿using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
 using Poligraph.Api.Endpoints;
 using Poligraph.Api.Services;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,6 +101,18 @@ app.MapDefaultEndpoints();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    // ⭐ `/scalar` — a documentação navegável, com "experimente" em cada rota.
+    //
+    // ⚠️ Só em desenvolvimento. Em produção ela expõe a superfície inteira da API a
+    // quem passar, incluindo as rotas de conta e de exclusão (LGPD art. 18).
+    //
+    // 🔴 Ela lê o MESMO documento que o teste de contrato confere
+    // (`TestesContratoOpenApi`): se a documentação e o front discordarem, o teste
+    // quebra antes de alguém abrir a página.
+    app.MapScalarApiReference(opcoes => opcoes
+        .WithTitle("Registro Aberto — API")
+        .WithTheme(ScalarTheme.BluePlanet));
 }
 
 app.UseAuthentication();

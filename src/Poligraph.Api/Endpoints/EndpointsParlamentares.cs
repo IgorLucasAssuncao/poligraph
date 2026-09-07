@@ -185,11 +185,31 @@ public static class EndpointsParlamentares
     {
         var grupo = app.MapGroup("/api/parlamentares").WithTags("Parlamentares");
 
-        grupo.MapGet("/", ListarAsync);
-        grupo.MapGet("/{id:long}", ObterFichaAsync);
-        grupo.MapGet("/{id:long}/gastos", ObterGastosAsync);
-        grupo.MapGet("/{id:long}/emendas", ObterEmendasAsync);
-        grupo.MapGet("/{id:long}/financiamento", ObterFinanciamentoAsync);
+        // 🔴 CT3 — `.Produces<T>()` ⛔ não é enfeite de documentação.
+        //
+        //    O handler devolve `Task<IResult>`, e daí o ASP.NET ⛔ não infere NADA:
+        //    o OpenAPI saía com a rota e **zero** esquema de resposta. O `/scalar`
+        //    listava os endpoints sem dizer o que devolvem, e o teste de contrato
+        //    ⛔ não tinha o que conferir.
+        //
+        // ⚠️ Metadado PODE divergir do retorno real — por isso ele ⛔ não anda
+        //    sozinho: `TestesContratoOpenApi` confere os campos contra o que o front
+        //    lê, e os testes de integração desserializam a resposta de verdade.
+        grupo.MapGet("/", ListarAsync)
+             .Produces<IReadOnlyList<ParlamentarNaListaDto>>();
+
+        grupo.MapGet("/{id:long}", ObterFichaAsync)
+             .Produces<FichaParlamentarDto>()
+             .Produces(StatusCodes.Status404NotFound);
+
+        grupo.MapGet("/{id:long}/gastos", ObterGastosAsync)
+             .Produces<GastoDeCotaDto>();
+
+        grupo.MapGet("/{id:long}/emendas", ObterEmendasAsync)
+             .Produces<EmendasDoParlamentarDto>();
+
+        grupo.MapGet("/{id:long}/financiamento", ObterFinanciamentoAsync)
+             .Produces<FinanciamentoDeCampanhaDto>();
 
         return app;
     }

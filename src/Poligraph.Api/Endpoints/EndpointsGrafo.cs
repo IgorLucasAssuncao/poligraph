@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
 
 namespace Poligraph.Api.Endpoints;
@@ -50,7 +50,8 @@ public static class EndpointsGrafo
     {
         var grupo = app.MapGroup("/api/grafo").WithTags("GrafoDto");
 
-        grupo.MapGet("/", ObterAsync);
+        grupo.MapGet("/", ObterAsync)
+             .Produces<GrafoDto>();
 
         return app;
     }

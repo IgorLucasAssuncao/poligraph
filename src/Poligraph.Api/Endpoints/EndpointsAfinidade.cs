@@ -154,9 +154,27 @@ public static class EndpointsAfinidade
     {
         var grupo = app.MapGroup("/api/afinidade").WithTags("Afinidade");
 
-        grupo.MapGet("/perguntas", ObterPerguntasAsync);
-        grupo.MapPost("/perguntas/desempate", ObterDesempateAsync);
-        grupo.MapPost("/", CalcularAsync);
+        // 🔴 CT3 — `.Produces<T>()` ⛔ não é enfeite de documentação.
+        //
+        //    O handler devolve `Task<IResult>`, e daí o ASP.NET ⛔ não infere NADA:
+        //    o OpenAPI saía com a rota e **zero** esquema de resposta. O `/scalar`
+        //    listava os endpoints sem dizer o que devolvem, e o teste de contrato
+        //    ⛔ não tinha o que conferir.
+        //
+        // ⚠️ Metadado PODE divergir do retorno real — por isso ele ⛔ não anda
+        //    sozinho: `TestesContratoOpenApi` confere os campos contra o que o front
+        //    lê, e os testes de integração desserializam a resposta de verdade.
+        grupo.MapGet("/perguntas", ObterPerguntasAsync)
+             .Produces<QuestionarioDto>();
+
+        grupo.MapPost("/perguntas/desempate", ObterDesempateAsync)
+             .Produces<IReadOnlyList<PerguntaPublicaDto>>();
+
+        // ⚠️ O 422 é resposta PREVISTA (CT7), ⛔ não falha: abaixo do piso de respostas
+        //    o resultado ⛔ não significa nada, e o front trata esse código.
+        grupo.MapPost("/", CalcularAsync)
+             .Produces<RespostaAfinidadeDto>()
+             .Produces(StatusCodes.Status422UnprocessableEntity);
 
         return app;
     }

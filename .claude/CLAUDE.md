@@ -175,7 +175,7 @@ ETL fica como botão no painel, esperando você mandar rodar.
 | API | Afinidade, parlamentares, ficha, **gastos, emendas, financiamento**, notícias, seguir, auth Google, avaliação |
 | Front | Login, início, explorar, seguindo, perfil, questionário, conta, privacidade |
 | ETL | `ingerir` · `analisar` · `cpf` · `cota` · `emendas` · `fundo` · `validar` |
-| Testes | **91 .NET** (Testcontainers com Postgres real) · **282 Python** · **37 front** |
+| Testes | **160 .NET** (Testcontainers com Postgres real) · **282 Python** · **37 front** |
 
 ⭐ **O seed foi aposentado** (PL41). O dado local é a Câmara de verdade — 470.727 votos da
 legislatura 57, 643 deputados, 773.716 despesas de cota, 24.810 emendas, 22.511

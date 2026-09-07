@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
@@ -22,9 +22,33 @@ public static class EndpointsAutenticacao
         var grupo = app.MapGroup("/api/auth").WithTags("Autenticação");
 
         grupo.MapPost("/google", EntrarAsync);
-        grupo.MapPost("/logout", SairAsync);
+        // 🔴 O `(Delegate)` ⛔ NÃO é enfeite — sem ele esta rota se comporta DIFERENTE.
+        //
+        //    `SairAsync` devolve `Task<IResult>`, e `Task<IResult>` converte para
+        //    `RequestDelegate` (`Task Invoke(HttpContext)`) por covariância de retorno
+        //    do grupo de métodos. O C# então elege `MapPost(string, RequestDelegate)`,
+        //    que é uma rota TERMINAL: ⛔ sem binding de parâmetro, ⛔ sem `MethodInfo`
+        //    nos metadados — e o `IResult` devolvido é **descartado** (ASP0016).
+        //
+        //    Duas consequências, e nenhuma aparecia:
+        //      1. `Results.NoContent()` ⛔ nunca era escrito — a resposta saía 200.
+        //      2. Sem `MethodInfo` o ApiExplorer pula a rota INTEIRA: ela ⛔ não estava
+        //         no OpenAPI nem no `/scalar`, e o front chamava um caminho que o
+        //         contrato dizia ⛔ não existir. Foi a CT3 quem achou.
+        //
+        // ⚠️ `Logout_DerrubaOAcesso` passava o tempo todo: o `SignOutAsync` roda,
+        //    só o retorno é que ia para o lixo. Por isso o teste agora confere o 204.
+        //
+        // ⭐ Só acontece com handler cujo ÚNICO parâmetro é `HttpContext` — um segundo
+        //    parâmetro já impede a conversão. Era o único do projeto, e o ASP0016 agora
+        //    é `error` no `.editorconfig` para ⛔ não voltar calado.
+        grupo.MapPost("/logout", (Delegate)SairAsync)
+             .Produces(StatusCodes.Status204NoContent);
         grupo.MapPost("/sair-de-todos", SairDeTodosAsync).RequireAuthorization();
-        grupo.MapGet("/eu", QuemSouAsync).RequireAuthorization();
+        grupo.MapGet("/eu", QuemSouAsync)
+             .RequireAuthorization()
+             .Produces<UsuarioLogadoDto>()
+             .Produces(StatusCodes.Status401Unauthorized);
         grupo.MapDelete("/conta", ExcluirContaAsync).RequireAuthorization();
 
         return app;

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Data;
 
 namespace Poligraph.Api.Endpoints;
@@ -20,6 +20,8 @@ public static class EndpointsNoticias
     public static IEndpointRouteBuilder MapearNoticias(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/parlamentares/{id:long}/noticias", ObterAsync)
+           .Produces<IReadOnlyList<NoticiaNaFichaDto>>()
+           .Produces(StatusCodes.Status404NotFound)
             .WithTags("Notícias");
 
         return app;

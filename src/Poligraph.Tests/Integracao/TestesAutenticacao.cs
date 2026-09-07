@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection.Extensions;
+﻿using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
@@ -138,6 +138,18 @@ public class TestesAutenticacao : BaseIntegracao
         resposta.EnsureSuccessStatusCode();
     }
 
+    /// <summary>
+    /// ⚠️ O <c>204</c> ⛔ não é preciosismo de contrato.
+    ///
+    /// <para>
+    /// 🔴 Este teste passou por semanas devolvendo <b>200</b>: <c>MapPost</c> tinha
+    /// ligado na sobrecarga <c>RequestDelegate</c>, que **descarta** o <c>IResult</c>.
+    /// O <c>SignOutAsync</c> rodava — então o acesso caía, e o teste ficava verde —
+    /// mas o <c>Results.NoContent()</c> ia para o lixo e a rota ⛔ sumia do OpenAPI.
+    /// ⭐ Conferir o código devolvido é o que separa "o efeito colateral aconteceu" de
+    /// "o handler terminou como escrito".
+    /// </para>
+    /// </summary>
     [SkippableFact]
     public async Task Logout_DerrubaOAcesso()
     {
@@ -145,9 +157,10 @@ public class TestesAutenticacao : BaseIntegracao
         using var cliente = CriarCliente();
         await EntrarAsync(cliente);
 
-        await cliente.PostAsync("/api/auth/logout", null);
+        var saida = await cliente.PostAsync("/api/auth/logout", null);
         var resposta = await cliente.GetAsync("/api/seguidos");
 
+        Assert.Equal(HttpStatusCode.NoContent, saida.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, resposta.StatusCode);
     }
 
