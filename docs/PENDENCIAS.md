@@ -256,6 +256,31 @@ O job `migration` chamava `dotnet ef … -p src/Poligraph.Api`. ⚠️ A
 `Design` da API no mesmo dia e ⛔ não atualizou o CI. Corrigido para
 `-p src/Poligraph.Migrations` — script de **600 linhas, 24 tabelas**, conferido.
 
+#### 🔴 E o gatilho apontava para um branch órfão
+
+Medido em **2026-09-06**, com `git ls-tree` em cada branch remota:
+
+| Branch remota | Commits | Arquivos | Tem `.github/` |
+|---|---:|---:|---|
+| **`main`** ← *padrão do GitHub* | **1** | **2** | ⛔ **não** |
+| `master` | 173 | 249 | ✅ |
+| `senado-enums-e-nova-interface` | 211 | 269 | ✅ |
+
+⚠️ **`main` ⛔ não é ancestral de `master`** — são históricos separados. É o padrão de
+repositório criado no GitHub com README, com o histórico local empurrado depois.
+
+🔴 O `ci.yml` disparava em `push: branches: [main]`. **O gatilho de push ⛔ nunca
+disparou, nenhuma vez.** O que rodava era só o `pull_request`, que ⛔ não tem filtro.
+
+⭐ Corrigido para `[master]`, e entrou `workflow_dispatch`.
+
+> ⚠️ **Falta uma ação fora do repositório:** trocar o **branch padrão** para `master` nas
+> configurações do GitHub. Enquanto for `main`, o botão *"Run workflow"* ⛔ não aparece —
+> o GitHub só o oferece se o arquivo com o gatilho existir no branch padrão.
+>
+> ⚠️ **Conferir também o Coolify**, que faz deploy por webhook no push: se ele estiver
+> ouvindo `main`, está ouvindo um branch que ⛔ nunca recebe nada.
+
 #### O que o job `qualidade` faz
 
 | Linguagem | Cobertura | Propriedade do Sonar |

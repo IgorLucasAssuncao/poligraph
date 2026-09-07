@@ -3,10 +3,29 @@ name: CI
 # ⚠️ Isto é CI, não CD. O deploy é do Coolify, por webhook no push.
 # 🔴 Os dois disparam do MESMO push, em paralelo — o Coolify não espera este job.
 #    Se quiser portão, ver a pendência PL23.
+#
+# 🔴 O TRONCO É `master`, ⛔ NÃO `main`.
+#
+#    O `main` remoto é um branch ÓRFÃO: 1 commit, 2 arquivos, ⛔ sem `.github/`, e
+#    ⛔ não é ancestral de `master`. Nasceu do "criar repositório com README" no
+#    GitHub; o histórico de verdade (173 commits) foi empurrado depois, em `master`.
+#
+# ⚠️ Enquanto isto dizia `[main]`, o gatilho de push ⛔ NUNCA disparou — nenhuma vez.
 on:
   push:
-    branches: [main]
+    branches: [master]
+
+  # ⭐ Sem filtro de branch de propósito: é assim que uma branch de trabalho roda o CI
+  #    inteiro antes de entrar no tronco.
   pull_request:
+
+  # ⭐ Botão "Run workflow", para rodar em qualquer branch sem abrir PR.
+  #
+  # 🔴 O botão só APARECE se este arquivo, com este gatilho, existir no **branch
+  #    padrão** do repositório. O padrão precisa estar em `master` — enquanto for
+  #    `main` (que ⛔ não tem `.github/`), ⛔ não há botão, e o `gh workflow run`
+  #    responde que o workflow ⛔ não tem `workflow_dispatch`.
+  workflow_dispatch:
 
 env:
   DOTNET_CLI_TELEMETRY_OPTOUT: 1
