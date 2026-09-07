@@ -1,7 +1,7 @@
 ﻿namespace Poligraph.Data;
 
 /// <summary>Pontes entre enumerações que compartilham tokens mas ⛔ não são a mesma coisa.</summary>
-public static class Enumeracoes
+public static class ExtensoesDeEnums
 {
     /// <summary>
     /// A fonte de identificador correspondente a uma casa.

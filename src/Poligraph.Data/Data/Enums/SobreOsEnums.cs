@@ -28,4 +28,4 @@
 /// inserção e o ETL pararia de escrever sem que nada em C# quebrasse.
 /// </para>
 /// </summary>
-internal static class SobreAsEnumeracoes;
+internal static class SobreOsEnums;
