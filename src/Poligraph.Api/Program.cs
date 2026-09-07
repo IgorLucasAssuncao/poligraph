@@ -97,6 +97,8 @@ builder.Services.AddScoped<ServicoParlamentares>();
 builder.Services.AddScoped<ServicoGastosDeCota>();
 builder.Services.AddScoped<ServicoEmendas>();
 builder.Services.AddScoped<ServicoFinanciamento>();
+builder.Services.AddScoped<ServicoAfinidade>();
+builder.Services.AddScoped<ServicoQuestionario>();
 
 var app = builder.Build();
 
