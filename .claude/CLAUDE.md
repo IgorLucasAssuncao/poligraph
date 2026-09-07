@@ -146,6 +146,8 @@ inflou a contagem em 8,8% — ver [`04-contratos`](../docs/04-contratos.md).
 | ⭐ Campos privados e serviços injetados | **`_camelCase`** |
 | 🔴 Ordem dos membros | **Públicos no topo · privados abaixo, na ordem de uso** |
 | Idioma | **Português** — `ServicoAfinidade`, `CalcularAsync` |
+| 🔴 Comentários | **`///` no membro, ⛔ nunca `//` no meio do corpo** |
+| 🔴 No código-fonte | ⛔ **Sem emoji e sem carga emocional.** Os marcadores desta documentação ⛔ **não** valem para `.cs` |
 | Datas | **`DateTimeOffset`**, nunca `DateTime` |
 
 ⛔ Sem `MediatR`, sem `Repository<T>`, sem camadas Domain/Application/Infra, sem AutoMapper.

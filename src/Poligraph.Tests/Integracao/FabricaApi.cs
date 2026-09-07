@@ -8,13 +8,13 @@ using Poligraph.Api;
 
 namespace Poligraph.Tests.Integracao;
 
-/// <summary>
-/// Sobe a API de verdade, apontando para o Postgres do Testcontainers.
-///
-/// ⚠️ Substitui o `PoligraphDb` registrado pelo Aspire: em teste não há AppHost, e a
-/// connection string vem do container. O resto do pipeline — endpoints, serialização,
-/// status codes — é o mesmo de produção.
-/// </summary>
+/// <summary>
+/// Sobe a API de verdade, apontando para o Postgres do Testcontainers.
+///
+/// Substitui o `PoligraphDb` registrado pelo Aspire: em teste não há AppHost, e a
+/// connection string vem do container. O resto do pipeline — endpoints, serialização,
+/// status codes — é o mesmo de produção.
+/// </summary>
 public class FabricaApi(string connectionString) : WebApplicationFactory<MarcadorApi>
 {
     private readonly string _connectionString = connectionString;
@@ -29,23 +29,22 @@ public class FabricaApi(string connectionString) : WebApplicationFactory<Marcado
 
             services.AddDbContext<PoligraphDb>(opcoes => opcoes
                 .UseNpgsql(_connectionString)
-                .UseSnakeCaseNamingConvention());   // 🔴 igual à produção
+                .UseSnakeCaseNamingConvention());   // igual à produção
         });
 
         return base.CreateHost(builder);
     }
 
-    // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>
-    /// ⚠️ Não basta remover `DbContextOptions` e `PoligraphDb`.
-    ///
-    /// O `AddNpgsqlDbContext` do Aspire registra o contexto em POOL — e o pool
-    /// (`IDbContextPool`, `IScopedDbContextLease`) é singleton. Se ele sobrevive e o
-    /// substituto é escopado, o container falha na validação: *"cannot consume scoped
-    /// service from singleton"*. Por isso a varredura é por menção ao tipo, não por
-    /// lista de serviços conhecidos.
-    /// </summary>
+    /// <summary>
+    /// Não basta remover `DbContextOptions` e `PoligraphDb`.
+    ///
+    /// O `AddNpgsqlDbContext` do Aspire registra o contexto em POOL — e o pool
+    /// (`IDbContextPool`, `IScopedDbContextLease`) é singleton. Se ele sobrevive e o
+    /// substituto é escopado, o container falha na validação: *"cannot consume scoped
+    /// service from singleton"*. Por isso a varredura é por menção ao tipo, não por
+    /// lista de serviços conhecidos.
+    /// </summary>
     private static void RemoverRegistrosDoDbContext(IServiceCollection services)
     {
         var descritores = services

@@ -7,7 +7,7 @@ namespace Poligraph.Tests.Unidade;
 /// Os arquivos de curadoria que o produto realmente distribui.
 ///
 /// <para>
-/// ⚠️ <see cref="Integracao.TestesCuradoria"/> exercita o CARREGADOR com arquivos
+/// <see cref="Integracao.TestesCuradoria"/> exercita o CARREGADOR com arquivos
 /// inventados. Aqui é o oposto: o carregador não interessa, o conteúdo sim. Curadoria é
 /// escrita à mão, e um <c>ordem</c> repetido ou um <c>votacaoId</c> com um dígito
 /// trocado não estoura em lugar nenhum — vira pergunta que some da tela, ou some do
@@ -15,7 +15,7 @@ namespace Poligraph.Tests.Unidade;
 /// </para>
 ///
 /// <para>
-/// 🔴 A polaridade é o campo mais perigoso do sistema. Estes testes ⛔ não conseguem
+/// A polaridade é o campo mais perigoso do sistema. Estes testes não conseguem
 /// conferir se ela está certa — isso é leitura humana da descrição da votação. O que dá
 /// para travar é a forma: que exista, e que seja +1 ou −1.
 /// </para>
@@ -46,7 +46,7 @@ public class TestesArquivosDeCuradoria
     }
 
     /// <summary>
-    /// ⚠️ <c>ordem</c> repetida ⛔ não estoura: o banco aceita, e o
+    /// <c>ordem</c> repetida não estoura: o banco aceita, e o
     /// <c>OrderBy(p =&gt; p.Ordem)</c> do endpoint desempata por conta própria, mudando
     /// a sequência das perguntas a cada consulta. É o tipo de defeito que aparece como
     /// "a ordem mudou sozinha" e ninguém liga ao arquivo.
@@ -73,7 +73,7 @@ public class TestesArquivosDeCuradoria
     /// <summary>
     /// RNF-29 proíbe jargão: a afirmação é reescrita a partir da ementa, e o cidadão
     /// responde concordando ou discordando dela. Texto vazio ou que ainda carrega o
-    /// número do projeto ⛔ não foi reescrito.
+    /// número do projeto não foi reescrito.
     /// </summary>
     [Fact]
     public void TodoTexto_EhAfirmacaoEmLinguagemSimples()
@@ -89,7 +89,7 @@ public class TestesArquivosDeCuradoria
     }
 
     /// <summary>
-    /// ⭐ O id vai para o banco e para o corpo da requisição de afinidade. Espaço ou
+    /// O id vai para o banco e para o corpo da requisição de afinidade. Espaço ou
     /// maiúscula ali vira diferença silenciosa entre o que o front manda e o que o banco
     /// tem.
     /// </summary>
@@ -102,8 +102,6 @@ public class TestesArquivosDeCuradoria
 
         Assert.Empty(fora);
     }
-
-    // ═══════════════════════════════════════════════════════════════
 
     private static IEnumerable<PerguntaCurada> Todas => Lotes.SelectMany(l => l.Perguntas);
 
@@ -124,7 +122,7 @@ public class TestesArquivosDeCuradoria
     }
 
     /// <summary>
-    /// ⛔ Não dá para usar <c>AppContext.BaseDirectory/curadoria</c>: aquela pasta é a
+    /// Não dá para usar <c>AppContext.BaseDirectory/curadoria</c>: aquela pasta é a
     /// cópia da compilação, e <see cref="Integracao.TestesCuradoria"/> troca o conteúdo
     /// dela durante a execução. Estes testes leem o arquivo VERSIONADO.
     /// </summary>

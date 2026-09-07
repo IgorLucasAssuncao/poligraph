@@ -3,7 +3,7 @@
 /// <summary>
 /// Liga a notícia ao parlamentar mencionado.
 ///
-/// 🔴 RF-40 — `Confianca` existe porque notícia errada na página de quem a pessoa segue
+/// RF-40 — `Confianca` existe porque notícia errada na página de quem a pessoa segue
 /// é falha visível. Abaixo do limiar, a associação NÃO é exibida.
 /// </summary>
 public class NoticiaPessoaModel

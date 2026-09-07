@@ -5,17 +5,17 @@ using Poligraph.Data;
 namespace Poligraph.Tests.Integracao;
 
 /// <summary>
-/// 🔴 **PL35 — a segunda legislatura ⛔ NÃO pode vazar.**
+/// **PL35 — a segunda legislatura NÃO pode vazar.**
 ///
-/// ⚠️ Todo teste desta suíte semeia **uma** legislatura, então o filtro poderia sumir num
+/// Todo teste desta suíte semeia **uma** legislatura, então o filtro poderia sumir num
 /// refactor e tudo continuaria verde. Estes testes são os únicos que semeiam **duas**, e
 /// existem exatamente para isso.
 ///
-/// ⭐ O sintoma que eles impedem ⛔ não é uma exceção: é o painel do questionário mostrar
+/// O sintoma que eles impedem não é uma exceção: é o painel do questionário mostrar
 /// *"480 de 900"*, contando deputados de uma legislatura que nunca votou aquelas
 /// votações. Número plausível, tela intacta — o mesmo formato do bug de polaridade.
 ///
-/// ⏳ E tem data: a 57ª termina em **janeiro de 2027**.
+/// E tem data: a 57ª termina em **janeiro de 2027**.
 /// </summary>
 public class TestesLegislatura(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
@@ -30,12 +30,12 @@ public class TestesLegislatura(FixturePostgres postgres) : BaseIntegracao(postgr
 
         var antes = await TotalPossivelAsync();
 
-        // ⭐ Chega a 58ª: gente nova, votações novas, ⛔ nenhuma pergunta nova.
+        // Chega a 58ª: gente nova, votações novas, nenhuma pergunta nova.
         await SemearOutraLegislaturaAsync();
 
         var depois = await TotalPossivelAsync();
 
-        // 🔴 As perguntas ativas continuam sendo da 57ª, então o denominador ⛔ NÃO muda.
+        // As perguntas ativas continuam sendo da 57ª, então o denominador NÃO muda.
         Assert.Equal(antes, depois);
     }
 
@@ -51,10 +51,9 @@ public class TestesLegislatura(FixturePostgres postgres) : BaseIntegracao(postgr
 
         Assert.NotNull(lista);
 
-        // 🔴 A legislatura CORRENTE virou a 58ª — quem só votou na 57ª saiu da lista.
-        //
-        // ⚠️ Sem o filtro, os 12 da 57ª e os 2 da 58ª apareceriam juntos, e nada na
-        //    tela diria que metade já não está mais lá.
+        // A legislatura CORRENTE virou a 58ª — quem só votou na 57ª saiu da lista.
+        // Sem o filtro, os 12 da 57ª e os 2 da 58ª apareceriam juntos, e nada na
+        // tela diria que metade já não está mais lá.
         Assert.All(lista!, p => Assert.StartsWith("Novo ", p.Nome));
         Assert.Equal(2, lista!.Count);
     }
@@ -65,7 +64,7 @@ public class TestesLegislatura(FixturePostgres postgres) : BaseIntegracao(postgr
         ExigeDocker();
         await SemearAsync();
 
-        // ⭐ O MESMO parlamentar reeleito: vota na 57ª e na 58ª.
+        // O MESMO parlamentar reeleito: vota na 57ª e na 58ª.
         var reeleito = await Db.Pessoas.AsNoTracking().OrderBy(p => p.Id).FirstAsync();
         var naPrimeira = await Db.Votos
             .CountAsync(v => v.PessoaId == reeleito.Id && v.Valor != null);
@@ -77,7 +76,7 @@ public class TestesLegislatura(FixturePostgres postgres) : BaseIntegracao(postgr
         using var cliente = CriarCliente();
         var ficha = await cliente.GetFromJsonAsync<FichaLida>($"/api/parlamentares/{reeleito.Id}");
 
-        // 🔴 Só o mandato corrente. Somar os dois inflaria a ficha sem erro nenhum.
+        // Só o mandato corrente. Somar os dois inflaria a ficha sem erro nenhum.
         Assert.Equal(1, ficha!.NVotacoes);
     }
 
@@ -99,14 +98,12 @@ public class TestesLegislatura(FixturePostgres postgres) : BaseIntegracao(postgr
     {
         ExigeDocker();
 
-        // ⚠️ ⛔ Sem seed. Devolver 57 aqui esconderia uma base vazia atrás de um número
-        //    que parece certo — e o primeiro ETL que falhasse passaria despercebido.
+        // Sem seed. Devolver 57 aqui esconderia uma base vazia atrás de um número
+        // que parece certo — e o primeiro ETL que falhasse passaria despercebido.
         Assert.Null(await Legislaturas.CorrenteAsync(Db, default));
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // PRIVADOS — na ordem de uso
-    // ═══════════════════════════════════════════════════════════════
 
     private async Task SemearAsync() =>
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
@@ -125,9 +122,9 @@ public class TestesLegislatura(FixturePostgres postgres) : BaseIntegracao(postgr
     }
 
     /// <summary>
-    /// A 58ª legislatura: duas pessoas novas, uma votação, e ⛔ nenhuma pergunta.
+    /// A 58ª legislatura: duas pessoas novas, uma votação, e nenhuma pergunta.
     ///
-    /// ⚠️ É de propósito que ⛔ não há pergunta nova: na virada real, o pool curado
+    /// É de propósito que não há pergunta nova: na virada real, o pool curado
     /// continua sendo o da legislatura anterior por um tempo. É justamente aí que o
     /// denominador erraria.
     /// </summary>

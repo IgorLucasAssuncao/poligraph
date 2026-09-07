@@ -6,7 +6,7 @@ namespace Poligraph.Tests.Unidade;
 /// O seletor que escolhe as próximas perguntas contra o empate do cidadão.
 ///
 /// <para>
-/// 📐 Por que ele existe, medido em 2026-08-29 com cada deputado no papel de cidadão e
+/// Por que ele existe, medido em 2026-08-29 com cada deputado no papel de cidadão e
 /// 15 perguntas da Câmara: as 15 melhores fixas deixam <b>14</b> empatados no topo;
 /// 8 fixas mais 7 escolhidas aqui deixam <b>6</b>; 8 fixas mais 7 sorteadas deixam
 /// <b>16</b> — sortear é o mesmo que não adaptar.
@@ -15,7 +15,7 @@ namespace Poligraph.Tests.Unidade;
 public class TestesSeletorDeDesempate
 {
     /// <summary>
-    /// ⭐ A conta é pares separados, ⛔ não quantidade de votos. Uma pergunta em que
+    /// A conta é pares separados, não quantidade de votos. Uma pergunta em que
     /// todos os empatados votaram igual separa zero pares, por mais gente que tenha
     /// votado nela.
     /// </summary>
@@ -35,9 +35,9 @@ public class TestesSeletorDeDesempate
     }
 
     /// <summary>
-    /// 🔴 Ausência ⛔ não separa. Quem não votou naquela votação ⛔ não fica distinguível
+    /// Ausência não separa. Quem não votou naquela votação não fica distinguível
     /// de ninguém por ela — tratar o ausente como um dos lados inventaria uma separação
-    /// que o dado ⛔ não tem, que é o modo de falha que este projeto persegue.
+    /// que o dado não tem, que é o modo de falha que este projeto persegue.
     /// </summary>
     [Fact]
     public void AusenteNaoConta_ComoLado()
@@ -58,7 +58,7 @@ public class TestesSeletorDeDesempate
 
     /// <summary>
     /// Depois da primeira escolha, o que conta é o que AINDA separa. Uma pergunta
-    /// idêntica à já escolhida ⛔ não acrescenta nada, mesmo dividindo o grupo ao meio.
+    /// idêntica à já escolhida não acrescenta nada, mesmo dividindo o grupo ao meio.
     /// </summary>
     [Fact]
     public void SegundaEscolha_OlhaOQueASobrouParaSeparar()
@@ -93,7 +93,7 @@ public class TestesSeletorDeDesempate
     }
 
     /// <summary>
-    /// ⚠️ Sem empate ⛔ não há o que dirigir, e a ordem de cobertura geral — a ordem em
+    /// Sem empate não há o que dirigir, e a ordem de cobertura geral — a ordem em
     /// que as candidatas chegam — é a melhor aposta que existe sem informação.
     /// </summary>
     [Fact]
@@ -112,9 +112,9 @@ public class TestesSeletorDeDesempate
     }
 
     /// <summary>
-    /// ⭐ Quando nada mais separa, completa em vez de devolver lista curta: o
+    /// Quando nada mais separa, completa em vez de devolver lista curta: o
     /// questionário tem um tamanho anunciado na barra de progresso, e entregar menos
-    /// faria o total prometido ⛔ nunca ser alcançado.
+    /// faria o total prometido nunca ser alcançado.
     /// </summary>
     [Fact]
     public void QuandoNadaMaisSepara_CompletaAQuantidadePedida()
@@ -133,7 +133,7 @@ public class TestesSeletorDeDesempate
     }
 
     /// <summary>
-    /// 🔴 A mesma requisição tem de devolver a mesma lista. O servidor ⛔ não guarda
+    /// A mesma requisição tem de devolver a mesma lista. O servidor não guarda
     /// estado: se a ordem dependesse do hash do dicionário, recarregar a página no meio
     /// do questionário traria perguntas diferentes e as respostas anteriores ficariam
     /// órfãs.
@@ -161,8 +161,6 @@ public class TestesSeletorDeDesempate
 
         Assert.Empty(escolhidas);
     }
-
-    // ═══════════════════════════════════════════════════════════════
 
     private static IReadOnlyDictionary<long, short> Posicoes(params (long Pessoa, short Posicao)[] itens) =>
         itens.ToDictionary(i => i.Pessoa, i => i.Posicao);

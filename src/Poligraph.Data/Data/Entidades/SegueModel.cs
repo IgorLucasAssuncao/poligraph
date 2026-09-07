@@ -1,7 +1,7 @@
 ﻿namespace Poligraph.Data;
 
 /// <summary>
-/// 🔴 Esta tabela é registro de CONVICÇÃO POLÍTICA — LGPD art. 5º, II.
+/// Esta tabela é registro de CONVICÇÃO POLÍTICA — LGPD art. 5º, II.
 /// Toda mudança aqui exige consentimento específico (RNF-12b).
 /// </summary>
 public class SegueModel

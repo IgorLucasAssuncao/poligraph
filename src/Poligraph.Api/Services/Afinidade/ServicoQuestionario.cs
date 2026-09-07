@@ -12,51 +12,47 @@ namespace Poligraph.Api.Services;
 public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
 {
     /// <summary>
-    /// 📐 Quantas perguntas da Câmara o questionário tem, ao todo. Medido em 2026-08-29,
+    /// Quantas perguntas da Câmara o questionário tem, ao todo. Medido em 2026-08-29,
     /// com cada deputado no papel de cidadão:
     ///
     /// <code>
-    ///   perguntas | empate mediano no topo | sozinho no topo
-    ///          12 |                     20 |            3,0%
-    ///          15 |                     13 |           10,1%   ← com desempate: 6
-    ///          21 |                      6 |           20,2%
-    ///          41 |                      2 |           44,3%
+    /// perguntas | empate mediano no topo | sozinho no topo
+    /// 12 | 20 | 3,0%
+    /// 15 | 13 | 10,1% com desempate: 6
+    /// 21 | 6 | 20,2%
+    /// 41 | 2 | 44,3%
     /// </code>
     ///
-    /// ⭐ 15 <b>com desempate dirigido</b> valem 25 fixas. O poço tem 41 curadas, e
+    /// 15 <b>com desempate dirigido</b> valem 25 fixas. O poço tem 41 curadas, e
     /// mostrar todas faria o mínimo obrigatório subir para 30 — questionário mais longo
-    /// ⛔ não é questionário melhor.
+    /// não é questionário melhor.
     /// </summary>
     private const int PerguntasDaCamara = 15;
 
     /// <summary>
     /// Quantas vêm antes do desempate. As <c>Ordem</c> da Câmara estão gravadas na ordem
-    /// gulosa de cobertura de pares, então "as 8 primeiras" ⭐ significa "as 8 que mais
-    /// separam deputados" — ⛔ não é a ordem em que foram curadas.
+    /// gulosa de cobertura de pares, então "as 8 primeiras" significa "as 8 que mais
+    /// separam deputados" — não é a ordem em que foram curadas.
     /// </summary>
     private const int BaseDaCamara = 8;
 
     /// <summary>
-    /// ⛔ O Senado ⛔ não tem desempate: as 9 perguntas SÃO o poço inteiro. Das 52
+    /// O Senado não tem desempate: as 9 perguntas SÃO o poço inteiro. Das 52
     /// votações substantivas abertas da 57ª, 39 têm divisão abaixo de 5% e as demais
-    /// substantivas são secretas (achado #17). ⛔ Não há de onde escolher.
+    /// substantivas são secretas (achado #17). Não há de onde escolher.
     /// </summary>
     private const int DesempateDaCamara = PerguntasDaCamara - BaseDaCamara;
 
     private readonly PoligraphDb _db = db;
     private readonly ServicoAfinidade _afinidade = afinidade;
 
-    // ═══════════════════════════════════════════════════════════════
-    // PÚBLICOS
-    // ═══════════════════════════════════════════════════════════════
-
     /// <summary>
     /// O bloco de abertura: as <see cref="BaseDaCamara"/> primeiras da Câmara e TODAS as
-    /// do Senado. ⚠️ Nunca devolve `VotacaoId` nem `Polaridade`: expor a polaridade
+    /// do Senado. Nunca devolve `VotacaoId` nem `Polaridade`: expor a polaridade
     /// permitiria ao cidadão inferir o voto antes de responder.
     ///
     /// <para>
-    /// ⛔ Já ⛔ NÃO devolve o poço inteiro. Com 50 perguntas ativas o mínimo obrigatório
+    /// Já NÃO devolve o poço inteiro. Com 50 perguntas ativas o mínimo obrigatório
     /// seria <c>ceil(50 × 0,60) = 30</c>; o resto vem de
     /// <see cref="ObterDesempateAsync"/>, escolhido contra o empate de quem respondeu.
     /// </para>
@@ -85,18 +81,18 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
     /// As próximas perguntas da Câmara, escolhidas contra o empate DESTE cidadão.
     ///
     /// <para>
-    /// 📐 Medido em 2026-08-29: 8 de base + 7 escolhidas aqui deixam empate mediano de
+    /// Medido em 2026-08-29: 8 de base + 7 escolhidas aqui deixam empate mediano de
     /// <b>6</b> no topo; as 15 melhores fixas deixam <b>14</b>, e 8 + 7 sorteadas
     /// deixam <b>16</b> — ou seja, sortear é o mesmo que não adaptar.
     /// </para>
     ///
     /// <para>
-    /// ⭐ Sem estado no servidor: a requisição carrega as respostas, e a resposta é
+    /// Sem estado no servidor: a requisição carrega as respostas, e a resposta é
     /// função só delas. Repetir a chamada com as mesmas respostas devolve a mesma lista.
     /// </para>
     ///
     /// <para>
-    /// ⛔ Só da Câmara. O Senado ⛔ não tem de onde escolher — ver
+    /// Só da Câmara. O Senado não tem de onde escolher — ver
     /// <see cref="DesempateDaCamara"/>.
     /// </para>
     /// </summary>
@@ -123,10 +119,10 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
     }
 
     /// <summary>
-    /// Quantas perguntas o questionário OFERECE — ⛔ não quantas existem curadas.
+    /// Quantas perguntas o questionário OFERECE — não quantas existem curadas.
     ///
     /// <para>
-    /// 🔴 A distinção é o ponto todo. O poço tem 50 perguntas ativas; o cidadão vê 24
+    /// A distinção é o ponto todo. O poço tem 50 perguntas ativas; o cidadão vê 24
     /// (<see cref="PerguntasDaCamara"/> da Câmara mais as do Senado). Contar as 50 aqui
     /// exigiria <c>ceil(50 × 0,60) = 30</c> respostas de um questionário de 24 — o
     /// resultado ficaria <b>impossível de obter</b>, e a mensagem de erro pediria
@@ -134,7 +130,7 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
     /// </para>
     ///
     /// <para>
-    /// ⚠️ Sai do banco, ⛔ não é constante: se a curadoria da Câmara encolher para menos
+    /// Sai do banco, não é constante: se a curadoria da Câmara encolher para menos
     /// de <see cref="PerguntasDaCamara"/>, o questionário encolhe junto e o mínimo
     /// acompanha.
     /// </para>
@@ -155,24 +151,20 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
     public bool TemRespostasSuficientes(int opinadas, int tamanhoDoQuestionario) =>
         tamanhoDoQuestionario > 0 && opinadas >= MinimoDeRespostas(tamanhoDoQuestionario);
 
-    /// <summary>⚠️ 60% do que é OFERECIDO, ⛔ não do poço curado.</summary>
+    /// <summary> 60% do que é OFERECIDO, não do poço curado.</summary>
     public static int MinimoDeRespostas(int tamanhoDoQuestionario) =>
         (int)Math.Ceiling(tamanhoDoQuestionario * 0.60);
-
-    // ═══════════════════════════════════════════════════════════════
-    // PRIVADOS — na ordem de uso
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Quem está empatado na primeira posição depois das respostas de base.
     ///
     /// <para>
-    /// ⚠️ Só a Câmara entra: o desempate escolhe perguntas de lá, e um senador no grupo
-    /// ⛔ não seria separado por nenhuma delas.
+    /// Só a Câmara entra: o desempate escolhe perguntas de lá, e um senador no grupo
+    /// não seria separado por nenhuma delas.
     /// </para>
     ///
     /// <para>
-    /// ⛔ Devolve lista vazia quando ninguém passa o piso de comparáveis — e aí o
+    /// Devolve lista vazia quando ninguém passa o piso de comparáveis — e aí o
     /// seletor cai na ordem de cobertura geral, que é a melhor aposta sem informação.
     /// </para>
     /// </summary>
@@ -203,7 +195,7 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
 
     /// <summary>
     /// Posição efetiva de cada parlamentar nas candidatas — o voto já corrigido pela
-    /// polaridade. 🔴 Sem a correção, uma pergunta cuja votação inverte o sinal separaria
+    /// polaridade. Sem a correção, uma pergunta cuja votação inverte o sinal separaria
     /// o grupo ao contrário, e o desempate pioraria o resultado em silêncio.
     /// </summary>
     private async Task<Dictionary<string, IReadOnlyDictionary<long, short>>>
@@ -245,20 +237,16 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
 
     /// <summary>
     /// Monta o DTO público de um conjunto de perguntas, preservando a ordem recebida.
-    /// ⚠️ A ordem importa: o desempate devolve as perguntas por valor de separação, e
+    /// A ordem importa: o desempate devolve as perguntas por valor de separação, e
     /// reordenar por <c>Ordem</c> aqui desfaria a escolha.
     /// </summary>
+    /// <remarks>
+    /// <para>O denominador é recortado por legislatura (PL35) E por casa. A legislatura sai das PERGUNTAS, não do banco: na virada, o pool ainda é da 57ª por um tempo, e o denominador tem de acompanhar as votações mostradas. A casa importa desde que o Senado entrou: sem separar, uma pergunta da Câmara mostrava "439 de 747" — os 747 são deputados MAIS senadores, e os 104 senadores nunca votaram aquela votação. Mesmo formato de erro da PL35.</para>
+    /// <para>A casa NÃO é serializada: o cidadão nunca escolhe entre Câmara e Senado (RNF-28), e saber de qual casa veio cada pergunta não muda o que ele responde. Ela serve só para escolher o denominador certo.</para>
+    /// </remarks>
     private async Task<List<PerguntaPublicaDto>> MontarAsync(
         List<string> perguntas, CancellationToken ct)
     {
-        // O denominador é recortado por legislatura (PL35) E por casa.
-        //
-        // A legislatura sai das PERGUNTAS, não do banco: na virada, o pool ainda é da
-        // 57ª por um tempo, e o denominador tem de acompanhar as votações mostradas.
-        //
-        // A casa importa desde que o Senado entrou: sem separar, uma pergunta da Câmara
-        // mostrava "439 de 747" — os 747 são deputados MAIS senadores, e os 104
-        // senadores nunca votaram aquela votação. Mesmo formato de erro da PL35.
         var legislaturas = await Legislaturas.DasPerguntasAtivasAsync(_db, ct);
 
         var possivelPorCasa = await _db.Votos.AsNoTracking()
@@ -280,9 +268,6 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
             })
             .ToListAsync(ct);
 
-        // A casa NÃO é serializada: o cidadão nunca escolhe entre Câmara e Senado
-        // (RNF-28), e saber de qual casa veio cada pergunta não muda o que ele responde.
-        // Ela serve só para escolher o denominador certo.
         var porId = brutas.ToDictionary(p => p.Id);
 
         return perguntas

@@ -22,8 +22,6 @@ public static class EndpointsAfinidade
         return app;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-
     private static async Task<IResult> ObterPerguntasAsync(
         ServicoQuestionario questionario, CancellationToken ct) =>
         Results.Ok(await questionario.ObterAsync(ct));

@@ -1,7 +1,7 @@
 ﻿namespace Poligraph.Data;
 
 /// <summary>
-/// 🔴 LGPD art. 8º §2: o ônus da prova do consentimento é do controlador.
+/// LGPD art. 8º §2: o ônus da prova do consentimento é do controlador.
 /// `Versao` é o que faz a tabela valer alguma coisa — sem ela não dá para responder
 /// "consentiu com o quê, exatamente" depois de reescrever o texto.
 /// </summary>

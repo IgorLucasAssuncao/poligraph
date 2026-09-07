@@ -2,11 +2,15 @@
 
 public static class DiagnosticoDeSubida
 {
-// ⚠️ Diz na subida se o login está ligado.
-//
-// Sem isto, a única evidência seria um 401 no endpoint de login — que é exatamente o
-// mesmo código devolvido para token inválido. Um Client ID ausente ficaria
-// indistinguível de um token forjado, e a investigação começaria pelo lugar errado.
+/// <summary>
+/// Diz na subida se o login está ligado.
+/// Sem isto, a única evidência seria um 401 no endpoint de login — que é exatamente o
+/// mesmo código devolvido para token inválido. Um Client ID ausente ficaria
+/// indistinguível de um token forjado, e a investigação começaria pelo lugar errado.
+/// </summary>
+    /// <remarks>
+    /// <para>Só o final: o Client ID é público, mas log não é lugar de despejar configuração inteira por hábito.</para>
+    /// </remarks>
     public static WebApplication AvisarSeOLoginEstaDesligado(this WebApplication app)
     {
     var clientId = app.Configuration["Google:ClientId"];
@@ -20,8 +24,6 @@ public static class DiagnosticoDeSubida
     }
     else
     {
-        // ⛔ Só o final: o Client ID é público, mas log não é lugar de despejar
-        //    configuração inteira por hábito.
         log.LogInformation(
             "Login com Google ligado (Client ID …{Final}).",
             clientId[^24..]);

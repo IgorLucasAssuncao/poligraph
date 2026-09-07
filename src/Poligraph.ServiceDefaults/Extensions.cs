@@ -10,9 +10,11 @@ using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.Hosting;
 
-// Adds common Aspire services: service discovery, resilience, health checks, and OpenTelemetry.
-// This project should be referenced by each service project in your solution.
-// To learn more about using this project, see https://aka.ms/aspire/service-defaults
+/// <summary>
+/// Adds common Aspire services: service discovery, resilience, health checks, and OpenTelemetry.
+/// This project should be referenced by each service project in your solution.
+/// To learn more about using this project, see https://aka.ms/aspire/service-defaults
+/// </summary>
 public static class Extensions
 {
     private const string HealthEndpointPath = "/health";
@@ -38,7 +40,7 @@ public static class Extensions
         // Uncomment the following to restrict the allowed schemes for service discovery.
         // builder.Services.Configure<ServiceDiscoveryOptions>(options =>
         // {
-        //     options.AllowedSchemes = ["https"];
+        // options.AllowedSchemes = ["https"];
         // });
 
         return builder;
@@ -90,8 +92,8 @@ public static class Extensions
         // Uncomment the following lines to enable the Azure Monitor exporter (requires the Azure.Monitor.OpenTelemetry.AspNetCore package)
         //if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
         //{
-        //    builder.Services.AddOpenTelemetry()
-        //       .UseAzureMonitor();
+        // builder.Services.AddOpenTelemetry()
+        // .UseAzureMonitor();
         //}
 
         return builder;

@@ -1,7 +1,7 @@
 ﻿namespace Poligraph.Api.Services;
 
 /// <summary>
-/// 🔴 O coração do sistema, e o lugar do bug mais perigoso dele.
+/// O coração do sistema, e o lugar do bug mais perigoso dele.
 ///
 /// Em 14% das votações nominais "Sim" significa REJEITAR (destaques). Um sinal invertido
 /// não aparece na tela — aparece como um número plausível e errado. Nenhuma alteração
@@ -29,7 +29,7 @@ public static class CalculadoraAfinidade
         return efetiva is not null && efetiva != 0;          // parlamentar votou e não se absteve
     }
 
-    /// <summary>Houve acordo nesta pergunta? ⚠️ Só faz sentido se <see cref="EComparavel"/>.</summary>
+    /// <summary>Houve acordo nesta pergunta? Só faz sentido se <see cref="EComparavel"/>.</summary>
     public static bool Concordam(short respostaCidadao, PosicaoParlamentar posicao) =>
         EComparavel(respostaCidadao, posicao) && PosicaoEfetiva(posicao) == respostaCidadao;
 
@@ -57,22 +57,22 @@ public static class CalculadoraAfinidade
     }
 
     /// <summary>
-    /// ⭐ Em QUAIS perguntas houve acordo, e em quais não.
+    /// Em QUAIS perguntas houve acordo, e em quais não.
     ///
     /// <para>
-    /// Existe porque "concordaram em 14 de 17" ⛔ não é auditável: o cidadão ⛔ não tem
+    /// Existe porque "concordaram em 14 de 17" não é auditável: o cidadão não tem
     /// como saber se as 14 foram as que ele considera importantes ou as de data
     /// comemorativa. Devolver a lista transforma o número em conta conferível.
     /// </para>
     ///
     /// <para>
-    /// ⚠️ Devolve o <b>id</b> da pergunta, ⛔ não o texto: o front já tem os textos, ele
+    /// Devolve o <b>id</b> da pergunta, não o texto: o front já tem os textos, ele
     /// acabou de mostrá-los. Repetir 24 enunciados por parlamentar, para dez
     /// parlamentares, inflaria a resposta sem acrescentar informação.
     /// </para>
     ///
     /// <para>
-    /// ⛔ Pergunta ⛔ não comparável fica fora das DUAS listas — ausência e "não sei" ⛔
+    /// Pergunta não comparável fica fora das DUAS listas — ausência e "não sei"
     /// não são discordância, e é a mesma regra que o denominador usa.
     /// </para>
     /// </summary>
@@ -95,7 +95,7 @@ public static class CalculadoraAfinidade
     }
 
     /// <summary>
-    /// 🔴 Piso de comparáveis. Quem votou em 2 perguntas e concordou nas 2 daria 100%
+    /// Piso de comparáveis. Quem votou em 2 perguntas e concordou nas 2 daria 100%
     /// e lideraria o ranking — por isso o corte existe.
     /// </summary>
     public static bool TemBaseSuficiente(

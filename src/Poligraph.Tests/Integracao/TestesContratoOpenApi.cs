@@ -7,34 +7,34 @@ namespace Poligraph.Tests.Integracao;
 /// CT3 — o contrato entre a API e o front, conferido contra o documento OpenAPI.
 ///
 /// <para>
-/// 🔴 <b>O que este arquivo pega, e nenhum outro teste pega.</b> Renomear
+/// <b>O que este arquivo pega, e nenhum outro teste pega.</b> Renomear
 /// <c>Acordos</c> para <c>Acertos</c> num DTO compila, passa em todo teste de C#, e
-/// quebra a tela — o front lê <c>acordos</c> e recebe <c>undefined</c>. ⛔ Sem erro em
+/// quebra a tela — o front lê <c>acordos</c> e recebe <c>undefined</c>. Sem erro em
 /// lugar nenhum: aparece como <i>"concordaram em de perguntas"</i>.
 /// </para>
 ///
 /// <para>
-/// ⚠️ A lista abaixo ⛔ não é decorativa: cada rota e cada campo foi extraído de
+/// A lista abaixo não é decorativa: cada rota e cada campo foi extraído de
 /// <c>src/web/src/api.ts</c>. Se o front passar a ler um campo novo, ele entra aqui —
 /// senão este teste vira teatro.
 /// </para>
 ///
 /// <para>
-/// ⭐ É o mesmo documento que o <c>/scalar</c> renderiza em desenvolvimento. A
-/// documentação navegável e o teste leem a mesma fonte, então ⛔ não há como uma estar
+/// É o mesmo documento que o <c>/scalar</c> renderiza em desenvolvimento. A
+/// documentação navegável e o teste leem a mesma fonte, então não há como uma estar
 /// certa e a outra errada.
 /// </para>
 /// </summary>
 public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
     /// <summary>
-    /// ⚠️ `MapOpenApi()` só roda em Development — e `FabricaApi` sobe assim de propósito.
-    /// Em produção o documento ⛔ não é exposto.
+    /// `MapOpenApi()` só roda em Development — e `FabricaApi` sobe assim de propósito.
+    /// Em produção o documento não é exposto.
     /// </summary>
     private const string Documento = "/openapi/v1.json";
 
     /// <summary>
-    /// Toda rota que `src/web/src/api.ts` chama. ⭐ `{id}` é como o OpenAPI nomeia o
+    /// Toda rota que `src/web/src/api.ts` chama. `{id}` é como o OpenAPI nomeia o
     /// parâmetro; o front monta com template string.
     /// </summary>
     public static readonly string[] RotasDoFront =
@@ -77,16 +77,16 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
 
         Assert.True(
             caminhos.TryGetProperty(rota, out _),
-            $"o front chama '{rota}', e ela ⛔ não está no OpenAPI. "
+ $"o front chama '{rota}', e ela não está no OpenAPI. "
             + $"Rotas publicadas: {string.Join(", ", caminhos.EnumerateObject().Select(p => p.Name))}");
     }
 
     /// <summary>
-    /// 🔴 O caso que motivou o teste: o campo existe no C#, o front lê outro nome, e ⛔
+    /// O caso que motivou o teste: o campo existe no C#, o front lê outro nome, e
     /// nada acusa.
     ///
     /// <para>
-    /// ⚠️ Os nomes são <b>camelCase</b> — é como o `System.Text.Json` serializa por
+    /// Os nomes são <b>camelCase</b> — é como o `System.Text.Json` serializa por
     /// padrão, e é o que o front espera. Trocar a política de nomes quebraria tudo de
     /// uma vez, e este teste é quem avisa.
     /// </para>
@@ -96,17 +96,17 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     [InlineData("PanoramaDaCasaDto", "casa,parlamentares,votacoes,votacoesSecretas,votosComPosicao,comunidades,ligacoes")]
     // A lista de "explorar" — `casa` entrou quando a lista passou a misturar as duas.
     [InlineData("ParlamentarNaListaDto", "id,nome,casa,partido,uf,nVotacoes,urlFoto")]
-    // 🔴 `acordou`/`discordou` são o "por que este resultado": sem eles o número não é
-    //    conferível.
+    // `acordou`/`discordou` são o "por que este resultado": sem eles o número não é
+    // conferível.
     [InlineData("ParlamentarAfimDto", "pessoaId,nome,partido,uf,acordos,comparaveis,acordou,discordou")]
-    // 🔴 `ementa`, `materia` e `categoria` chegaram juntos: sem `categoria` a ementa
-    //    vira manchete de voto de rito, que é erro de leitura, ⛔ não de layout.
+    // `ementa`, `materia` e `categoria` chegaram juntos: sem `categoria` a ementa
+    // vira manchete de voto de rito, que é erro de leitura, não de layout.
     [InlineData("VotoNaFichaDto", "votacaoId,data,descricao,valor,orientacaoDoGoverno,ementa,materia,categoria")]
-    // ⚠️ `totalVotos` é comparecimento, ⛔ nunca o placar (RF-29).
+    // `totalVotos` é comparecimento, nunca o placar (RF-29).
     [InlineData("PerguntaPublicaDto", "id,texto,ordem,totalVotos,totalPossivel")]
     // O envelope do questionário — `total` existe para a barra de progresso.
     [InlineData("QuestionarioDto", "perguntas,total")]
-    // ⚠️ `governismo` é nulo no Senado inteiro (achado #28), mas a PROPRIEDADE existe.
+    // `governismo` é nulo no Senado inteiro (achado #28), mas a PROPRIEDADE existe.
     [InlineData("NoDoGrafoDto", "id,nome,partido,uf,comunidade,eixoX,eixoY,nVotacoes,componente1,componente2,urlFoto,governismo")]
     [InlineData("ArestaDoGrafoDto", "de,para,peso,votacoesComuns,cosseno")]
     public async Task Dto_TemOsCamposQueOFrontLe(string dto, string campos)
@@ -120,7 +120,7 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
 
         Assert.True(
             esquemas.TryGetProperty(dto, out var esquema),
-            $"o esquema '{dto}' ⛔ não está no OpenAPI — foi renomeado?");
+ $"o esquema '{dto}' não está no OpenAPI — foi renomeado?");
 
         var publicadas = esquema.GetProperty("properties")
             .EnumerateObject()
@@ -131,23 +131,23 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
 
         Assert.True(
             faltando.Count == 0,
-            $"'{dto}' ⛔ não publica {string.Join(", ", faltando)} — o front lê esses nomes. "
+ $"'{dto}' não publica {string.Join(", ", faltando)} — o front lê esses nomes. "
             + $"Publicados: {string.Join(", ", publicadas.Order())}");
     }
 
     /// <summary>
-    /// 🔴 Enum vai como TEXTO, ⛔ não como ordinal.
+    /// Enum vai como TEXTO, não como ordinal.
     ///
     /// <para>
-    /// ⚠️ O padrão do `System.Text.Json` é o ordinal: sem o `JsonStringEnumConverter`,
+    /// O padrão do `System.Text.Json` é o ordinal: sem o `JsonStringEnumConverter`,
     /// <c>"casa": "CAMARA"</c> viraria <c>"casa": 0</c>. O front compara com a string,
-    /// nenhuma comparação daria certo, e ⛔ **não haveria erro em lugar nenhum** — as
+    /// nenhuma comparação daria certo, e **não haveria erro em lugar nenhum** — as
     /// listas apareceriam vazias.
     /// </para>
     ///
     /// <para>
-    /// ⭐ A asserção é sobre o <b>tipo JSON de cada valor</b>, ⛔ não sobre um campo
-    /// <c>"type": "string"</c> — o documento sai em <b>OpenAPI 3.1</b>, que ⛔ não
+    /// A asserção é sobre o <b>tipo JSON de cada valor</b>, não sobre um campo
+    /// <c>"type": "string"</c> — o documento sai em <b>OpenAPI 3.1</b>, que não
     /// emite <c>type</c> quando o <c>enum</c> já fixa os valores. Exigir o campo faria
     /// o teste falhar sem que nada estivesse errado.
     /// </para>
@@ -161,19 +161,19 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
         var casa = documento.RootElement
             .GetProperty("components").GetProperty("schemas")
             // O nome do esquema segue o nome do TIPO em C#. Renomear o enum
-            // muda esta chave — mas ⛔ NÃO muda os valores, que são o que o
+            // muda esta chave — mas NÃO muda os valores, que são o que o
             // front compara.
             .GetProperty("TipoCasa");
 
         var valores = casa.GetProperty("enum").EnumerateArray().ToList();
 
-        // 🔴 O ordinal apareceria aqui como `Number`, e é ESTE o erro que o teste pega.
+        // O ordinal apareceria aqui como `Number`, e é ESTE o erro que o teste pega.
         Assert.All(valores, v => Assert.Equal(JsonValueKind.String, v.ValueKind));
         Assert.Equal(["CAMARA", "SENADO"], valores.Select(v => v.GetString()));
     }
 
     /// <summary>
-    /// ⭐ O documento existe e é JSON válido. ⚠️ Parece óbvio, mas `MapOpenApi()` mora
+    /// O documento existe e é JSON válido. Parece óbvio, mas `MapOpenApi()` mora
     /// dentro de um `if (IsDevelopment())` — e o `/scalar` depende dele.
     /// </summary>
     [SkippableFact]
@@ -187,8 +187,6 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
         resposta.EnsureSuccessStatusCode();
         Assert.Contains("json", resposta.Content.Headers.ContentType?.MediaType);
     }
-
-    // ═══════════════════════════════════════════════════════════════
 
     private async Task<JsonDocument> LerDocumentoAsync()
     {

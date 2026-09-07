@@ -15,15 +15,15 @@ public record FichaParlamentarDto(
     /// </para>
     ///
     /// <para>
-    /// ⭐ Nula quando a pessoa ainda não tem voto. Antes disto era string vazia, que era
-    /// um terceiro valor da casa que o tipo agora ⛔ não admite.
+    /// Nula quando a pessoa ainda não tem voto. Antes disto era string vazia, que era
+    /// um terceiro valor da casa que o tipo agora não admite.
     /// </para>
     /// </summary>
     TipoCasa? Casa,
     string NomeCivil,
     string Partido,
     string Uf,
-    /// <summary>🔴 URL na Câmara — ⛔ a imagem NÃO é rehospedada.</summary>
+    /// <summary> URL na Câmara — a imagem NÃO é rehospedada.</summary>
     string? UrlFoto,
     int NVotacoes,
     IReadOnlyList<VotoNaFichaDto> VotosRecentes,

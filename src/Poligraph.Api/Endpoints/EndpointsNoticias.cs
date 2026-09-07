@@ -4,11 +4,10 @@ using Poligraph.Api.Dtos;
 
 namespace Poligraph.Api.Endpoints;
 
-
 public static class EndpointsNoticias
 {
     /// <summary>
-    /// 🔴 RF-40 — abaixo disto a associação existe no banco mas NÃO vai à tela.
+    /// RF-40 — abaixo disto a associação existe no banco mas NÃO vai à tela.
     /// Notícia errada na página de quem a pessoa segue é falha visível.
     /// </summary>
     public const float ConfiancaMinima = 0.70f;
@@ -25,12 +24,10 @@ public static class EndpointsNoticias
         return app;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-
     /// <summary>
     /// RF-35 — notícias recentes do parlamentar.
     ///
-    /// ⚠️ Lista vazia é resposta legítima e comum: parlamentar de baixo perfil pode
+    /// Lista vazia é resposta legítima e comum: parlamentar de baixo perfil pode
     /// passar semanas sem notícia. O front mostra estado vazio honesto (RF-47), não erro.
     /// </summary>
     private static async Task<IResult> ObterAsync(

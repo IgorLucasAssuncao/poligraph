@@ -75,6 +75,20 @@ builder.Services.AddDbContext<PoligraphDb>(o => o
 
 ---
 
+## 0. 🔴 Comentários — a regra que vem antes das outras
+
+| | |
+|---|---|
+| ⭐ **Onde** | `/// <summary>` no membro. `<remarks>` para o porquê |
+| ⛔ **Nunca** | `//` no meio de um corpo de método |
+| ⛔ **Nunca** | Emoji em arquivo `.cs` |
+| ⛔ **Nunca** | Carga emocional — *"não é preciosismo"*, *"o bug de uma hora perdida"*, *"horrendo"* |
+| ⛔ **Nunca** | Decisão de arquitetura como `<summary>` — isso é `docs/`, ⛔ não documentação de membro |
+
+> ⚠️ **Os marcadores 🔴 ⚠️ ⛔ ⭐ 📐 valem para esta documentação, e ⛔ NÃO para o código.**
+> Em 2026-09-07 foram removidos de **103 arquivos** `.cs`.
+
+
 ## 2. 🔴 Ordem dos membros dentro da classe
 
 > **Públicos no topo. Privados abaixo, na ordem em que são usados.**

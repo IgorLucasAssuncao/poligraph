@@ -7,7 +7,7 @@ namespace Poligraph.Api.Services;
 /// <summary>
 /// Monta o digest de notícias por e-mail (RF-49).
 ///
-/// 🔴 Este serviço lê a tabela `segue`, que é registro de CONVICÇÃO POLÍTICA
+/// Este serviço lê a tabela `segue`, que é registro de CONVICÇÃO POLÍTICA
 /// (LGPD art. 5º, II), e produz um e-mail que sai da nossa infraestrutura.
 /// </summary>
 public class ServicoDigest(PoligraphDb db)
@@ -15,7 +15,7 @@ public class ServicoDigest(PoligraphDb db)
     private readonly PoligraphDb _db = db;
 
     /// <summary>
-    /// 🔴 O assunto NUNCA contém nome de parlamentar.
+    /// O assunto NUNCA contém nome de parlamentar.
     ///
     /// "Novidades sobre o Deputado Fulano" na caixa de entrada é convicção política
     /// atravessando o Gmail, o Outlook e a tela de bloqueio do celular. De nada adianta
@@ -25,16 +25,15 @@ public class ServicoDigest(PoligraphDb db)
 
     private const int ItensPorDigest = 10;
 
-    // ═══════════════════════════════════════════════════════════════
-    // PÚBLICOS
-    // ═══════════════════════════════════════════════════════════════
-
     /// <summary>
     /// Monta os digests de quem tem opt-in vivo e seguiu alguém.
     ///
-    /// ⚠️ Quem revogou o consentimento sai da lista pela consulta, não por `if` no
+    /// Quem revogou o consentimento sai da lista pela consulta, não por `if` no
     /// meio do envio — a regra fica onde não dá para esquecer.
     /// </summary>
+    /// <remarks>
+    /// <para>sem notícia, sem e-mail. Digest vazio é spam.</para>
+    /// </remarks>
     public async Task<IReadOnlyList<Digest>> MontarAsync(
         DateTimeOffset desde, CancellationToken ct = default)
     {
@@ -45,7 +44,6 @@ public class ServicoDigest(PoligraphDb db)
         {
             var itens = await ItensAsync(destinatario.Id, desde, ct);
 
-            // ⭐ sem notícia, sem e-mail. Digest vazio é spam.
             if (itens.Count == 0) continue;
 
             digests.Add(new Digest(
@@ -60,10 +58,6 @@ public class ServicoDigest(PoligraphDb db)
         return digests;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // PRIVADOS — na ordem de uso
-    // ═══════════════════════════════════════════════════════════════
-
     private async Task<List<Destinatario>> DestinatariosAsync(CancellationToken ct) =>
         await _db.Usuarios.AsNoTracking()
             .Where(u => u.Consentimentos.Any(
@@ -72,6 +66,9 @@ public class ServicoDigest(PoligraphDb db)
             .Select(u => new Destinatario(u.Id, u.Email, u.PrimeiroNome))
             .ToListAsync(ct);
 
+    /// <remarks>
+    /// <para>RF-46 — "porque você segue X"</para>
+    /// </remarks>
     private async Task<List<ItemDoDigest>> ItensAsync(
         long usuarioId, DateTimeOffset desde, CancellationToken ct) =>
         await _db.NoticiaPessoas.AsNoTracking()
@@ -85,12 +82,11 @@ public class ServicoDigest(PoligraphDb db)
                 np.Noticia!.Titulo,
                 np.Noticia.Veiculo,
                 np.Noticia.Url,
-                // RF-46 — "porque você segue X"
                 np.Pessoa!.NomeExibicao))
             .ToListAsync(ct);
 
     /// <summary>
-    /// ⚠️ O token de descadastro é reaproveitado, não gerado a cada envio.
+    /// O token de descadastro é reaproveitado, não gerado a cada envio.
     ///
     /// Gerar um por e-mail encheria a tabela e, pior, faria links de e-mails antigos
     /// pararem de funcionar — e link morto transforma "quero sair" em "vou marcar

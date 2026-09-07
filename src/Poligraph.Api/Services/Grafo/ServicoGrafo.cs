@@ -7,7 +7,7 @@ namespace Poligraph.Api.Services;
 /// <summary>
 /// RF-33 — o grafo da execução mais recente da casa.
 ///
-/// ⚠️ Devolve TUDO de uma vez, e isso é decisão consciente: 644 nós e ~6.400 arestas
+/// Devolve TUDO de uma vez, e isso é decisão consciente: 644 nós e ~6.400 arestas
 /// cabem em poucos MB, e o layout <i>force-directed</i> precisa do grafo inteiro para
 /// posicionar. Paginar aqui quebraria a visualização.
 /// </summary>
@@ -15,6 +15,9 @@ public class ServicoGrafo(PoligraphDb db)
 {
     private readonly PoligraphDb _db = db;
 
+    /// <remarks>
+    /// <para>Primeiro dia, antes de o ETL analítico rodar: grafo vazio, não erro.</para>
+    /// </remarks>
     public async Task<GrafoDto> ObterAsync(TipoCasa casa, CancellationToken ct)
     {
         var execucao = await _db.Execucoes.AsNoTracking()
@@ -23,7 +26,6 @@ public class ServicoGrafo(PoligraphDb db)
             .Select(e => new { e.Id, e.Casa, e.Legislatura })
             .FirstOrDefaultAsync(ct);
 
-        // ⭐ Primeiro dia, antes de o ETL analítico rodar: grafo vazio, ⛔ não erro.
         if (execucao is null) return new GrafoDto(0, casa, 0, [], []);
 
         return new GrafoDto(
@@ -31,10 +33,6 @@ public class ServicoGrafo(PoligraphDb db)
             await NosAsync(execucao.Id, ct),
             await ArestasAsync(execucao.Id, ct));
     }
-
-    // ═══════════════════════════════════════════════════════════════
-    // PRIVADOS — na ordem de uso
-    // ═══════════════════════════════════════════════════════════════
 
     private async Task<List<NoDoGrafoDto>> NosAsync(long execucaoId, CancellationToken ct)
     {
@@ -72,18 +70,18 @@ public class ServicoGrafo(PoligraphDb db)
     }
 
     /// <summary>
-    /// ⚠️ Só arestas de <c>SIMILARIDADE_VOTO</c>.
+    /// Só arestas de <c>SIMILARIDADE_VOTO</c>.
     ///
     /// Os três tipos são CAMADAS de naturezas diferentes — comissão comum mede
     /// convivência, coautoria mede colaboração. Misturá-las num grafo só produziria
     /// um desenho sem interpretação.
     /// </summary>
+    /// <remarks>
+    /// <para>A base e o cosseno vivem em `similaridades`, não em `arestas_grafo`. A junção acontece no banco: `similaridades` tem 185.908 linhas por métrica nesta execução, e trazê-las para a memória para casar aqui seria ler 370 mil linhas a cada abertura da tela.</para>
+    /// <para>`DefaultIfEmpty` porque o par sem linha de similaridade é bug, e o zero aparece na tela como "0 votações" em vez de derrubar a requisição inteira.</para>
+    /// </remarks>
     private async Task<List<ArestaDoGrafoDto>> ArestasAsync(long execucaoId, CancellationToken ct)
     {
-        // ⚠️ A base e o cosseno vivem em `similaridades`, ⛔ não em `arestas_grafo`. A
-        //    junção acontece no banco: `similaridades` tem 185.908 linhas por métrica
-        //    nesta execução, e trazê-las para a memória para casar aqui seria ler
-        //    370 mil linhas a cada abertura da tela.
         var arestas =
             from a in _db.ArestasGrafo.AsNoTracking()
             where a.ExecucaoId == execucaoId && a.Tipo == TipoDeAresta.SIMILARIDADE_VOTO
@@ -104,9 +102,6 @@ public class ServicoGrafo(PoligraphDb db)
 
             select new ArestaDoGrafoDto(
                 a.PessoaA, a.PessoaB, a.Peso,
-                // ⭐ `DefaultIfEmpty` porque o par sem linha de similaridade é bug, e o
-                //    zero aparece na tela como "0 votações" em vez de derrubar a
-                //    requisição inteira.
                 base_ == null ? 0 : base_.NVotacoesComuns,
                 outra == null ? null : outra.Valor);
 

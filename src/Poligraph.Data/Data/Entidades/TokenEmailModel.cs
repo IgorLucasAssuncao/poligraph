@@ -1,7 +1,7 @@
 ﻿namespace Poligraph.Data;
 
 /// <summary>
-/// Token de descadastro de e-mail. ⚠️ NÃO expira, de propósito: link morto num e-mail
+/// Token de descadastro de e-mail. NÃO expira, de propósito: link morto num e-mail
 /// antigo transforma "quero sair" em "vou marcar como spam" — e a reputação do domínio cai.
 /// </summary>
 public class TokenEmailModel

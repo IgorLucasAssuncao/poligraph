@@ -54,7 +54,7 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         Assert.NotNull(usuario.FotoUrl);
     }
 
-    /// <summary>⭐ Entrar de novo atualiza o perfil e NÃO cria conta nova.</summary>
+    /// <summary> Entrar de novo atualiza o perfil e NÃO cria conta nova.</summary>
     [SkippableFact]
     public async Task Login_DuasVezes_NaoDuplicaConta()
     {
@@ -69,7 +69,7 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
     }
 
     /// <summary>
-    /// 🔴 A chave é o `sub`, ⛔ nunca o e-mail — o Google permite trocar o endereço.
+    /// A chave é o `sub`, nunca o e-mail — o Google permite trocar o endereço.
     /// Se o e-mail fosse chave, a troca criaria uma conta órfã e a pessoa perderia
     /// a lista de seguidos sem entender por quê.
     /// </summary>
@@ -90,9 +90,7 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         Assert.Equal("outro@exemplo.com", (await db.Usuarios.FirstAsync()).Email);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // 🔴 Nenhum token é armazenado
-    // ═══════════════════════════════════════════════════════════════
+    // Nenhum token é armazenado
 
     [SkippableFact]
     public async Task Login_NaoGuardaOIdTokenEmLugarNenhum()
@@ -105,15 +103,13 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         await using var db = CriarContexto();
         var usuario = await db.Usuarios.FirstAsync();
 
-        // ⭐ o id_token foi validado e descartado — nenhuma coluna o contém
+        // o id_token foi validado e descartado — nenhuma coluna o contém
         Assert.DoesNotContain("token-valido", usuario.GoogleSub);
         Assert.DoesNotContain("token-valido", usuario.Email);
         Assert.Equal(0, await db.TokensEmail.CountAsync());
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // Cookie e sessão
-    // ═══════════════════════════════════════════════════════════════
 
     [SkippableFact]
     public async Task SemCookie_EndpointProtegidoRetorna401_NaoRedireciona()
@@ -123,7 +119,7 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
 
         var resposta = await cliente.GetAsync("/api/seguidos");
 
-        // 🔴 401, não 302: o front espera JSON, não HTML de tela de login
+        // 401, não 302: o front espera JSON, não HTML de tela de login
         Assert.Equal(HttpStatusCode.Unauthorized, resposta.StatusCode);
     }
 
@@ -140,14 +136,14 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
     }
 
     /// <summary>
-    /// ⚠️ O <c>204</c> ⛔ não é preciosismo de contrato.
+    /// O <c>204</c> não é preciosismo de contrato.
     ///
     /// <para>
-    /// 🔴 Este teste passou por semanas devolvendo <b>200</b>: <c>MapPost</c> tinha
+    /// Este teste passou por semanas devolvendo <b>200</b>: <c>MapPost</c> tinha
     /// ligado na sobrecarga <c>RequestDelegate</c>, que **descarta** o <c>IResult</c>.
     /// O <c>SignOutAsync</c> rodava — então o acesso caía, e o teste ficava verde —
-    /// mas o <c>Results.NoContent()</c> ia para o lixo e a rota ⛔ sumia do OpenAPI.
-    /// ⭐ Conferir o código devolvido é o que separa "o efeito colateral aconteceu" de
+    /// mas o <c>Results.NoContent()</c> ia para o lixo e a rota sumia do OpenAPI.
+    /// Conferir o código devolvido é o que separa "o efeito colateral aconteceu" de
     /// "o handler terminou como escrito".
     /// </para>
     /// </summary>
@@ -166,7 +162,7 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
     }
 
     /// <summary>
-    /// ⭐ "Sair de todos os aparelhos" sem tabela de sessão.
+    /// "Sair de todos os aparelhos" sem tabela de sessão.
     ///
     /// Incrementar `sessao_versao` invalida o cookie que já estava emitido — inclusive
     /// os de outros dispositivos, que este teste simula com um segundo cliente.
@@ -190,9 +186,7 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         Assert.Equal(HttpStatusCode.Unauthorized, resposta.StatusCode);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // Seguir — 🔴 escreve dado sensível (LGPD art. 5º, II)
-    // ═══════════════════════════════════════════════════════════════
+    // Seguir — escreve dado sensível (LGPD art. 5º, II)
 
     [SkippableFact]
     public async Task Seguir_DuasVezes_EIdempotente()
@@ -238,9 +232,7 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         Assert.Empty(lista!);
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // PRIVADOS — na ordem de uso
-    // ═══════════════════════════════════════════════════════════════
 
     private HttpClient CriarCliente(
         ValidadorFalso? validador = null, bool seguirRedirecionamento = true)

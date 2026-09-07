@@ -15,7 +15,7 @@ public class VotacaoModel
 
     public TipoCategoriaDeVotacao Categoria { get; set; }
 
-    /// <summary>🔴 Senado: 56% das votações são secretas — registram "Votou", não posição.</summary>
+    /// <summary> Senado: 56% das votações são secretas — registram "Votou", não posição.</summary>
     public bool Secreta { get; set; }
 
     public bool Plenario { get; set; }

@@ -9,7 +9,7 @@ namespace Poligraph.Api.Services;
 /// <summary>
 /// O cookie de sessão: o que ele carrega, como é emitido e como é lido.
 ///
-/// ⛔ <b>Nenhum token é armazenado</b> — nem o <c>id_token</c> do Google, nem sessão em
+/// <b>Nenhum token é armazenado</b> — nem o <c>id_token</c> do Google, nem sessão em
 /// tabela. O cookie é assinado, e a identidade sai das duas claims abaixo.
 /// </summary>
 public static class SessaoDoUsuario

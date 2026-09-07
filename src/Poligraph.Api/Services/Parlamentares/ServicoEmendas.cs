@@ -8,8 +8,8 @@ namespace Poligraph.Api.Services;
 /// As emendas do parlamentar, agregadas por ano.
 ///
 /// <para>
-/// ⭐ Só entra emenda <b>já reconciliada</b>. Emenda de comissão, de bancada e de autor
-/// não resolvido existe no banco e ⛔ não aparece aqui: atribuí-la por semelhança de
+/// Só entra emenda <b>já reconciliada</b>. Emenda de comissão, de bancada e de autor
+/// não resolvido existe no banco e não aparece aqui: atribuí-la por semelhança de
 /// nome seria inventar autoria.
 /// </para>
 /// </summary>
@@ -20,20 +20,22 @@ public class ServicoEmendas(PoligraphDb db)
 
     private readonly PoligraphDb _db = db;
 
+    /// <remarks>
+    /// <para>Sem emenda é caso normal: a tela mostra estado vazio, não erro.</para>
+    /// <para>Tipo ANÔNIMO, não `record` posicional: o EF não traduz `GroupBy` com construtor posicional e falha em RUNTIME, não na compilação.</para>
+    /// <para>Agregação PRÓPRIA, não a soma dos `Take(8)` acima: eles mostrariam um total menor que o real, sem nada na tela indicando o corte.</para>
+    /// </remarks>
     public async Task<EmendasDoParlamentarDto> ObterAsync(long id, int? ano, CancellationToken ct)
     {
         var alvo = ano ?? await _db.Emendas.AsNoTracking()
             .Where(e => e.PessoaId == id)
             .MaxAsync(e => (int?)e.Ano, ct);
 
-        // Sem emenda é caso normal: a tela mostra estado vazio, ⛔ não erro.
         if (alvo is null) return new EmendasDoParlamentarDto(0, 0, 0, 0, [], []);
 
         var doAno = _db.Emendas.AsNoTracking()
             .Where(e => e.PessoaId == id && e.Ano == (short)alvo.Value);
 
-        // ⚠️ Tipo ANÔNIMO, ⛔ não `record` posicional: o EF não traduz `GroupBy` com
-        // construtor posicional e falha em RUNTIME, não na compilação.
         var destinos = await doAno
             .Where(e => e.Localidade != null)
             .GroupBy(e => e.Localidade!)
@@ -61,8 +63,6 @@ public class ServicoEmendas(PoligraphDb db)
             .Take(ItensNaFicha)
             .ToListAsync(ct);
 
-        // 🔴 Agregação PRÓPRIA, ⛔ não a soma dos `Take(8)` acima: eles mostrariam um
-        // total menor que o real, sem nada na tela indicando o corte.
         var totais = await doAno
             .GroupBy(_ => 1)
             .Select(g => new

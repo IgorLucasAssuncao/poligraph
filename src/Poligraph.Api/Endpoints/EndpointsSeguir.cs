@@ -6,9 +6,8 @@ using Poligraph.Api.Services;
 
 namespace Poligraph.Api.Endpoints;
 
-
 /// <summary>
-/// 🔴 Estes endpoints escrevem na tabela `segue`, que é REGISTRO DE CONVICÇÃO POLÍTICA
+/// Estes endpoints escrevem na tabela `segue`, que é REGISTRO DE CONVICÇÃO POLÍTICA
 /// — dado sensível pela LGPD art. 5º, II.
 ///
 /// Toda alteração aqui merece atenção extra: consentimento específico (RNF-12b) e o
@@ -29,8 +28,6 @@ public static class EndpointsSeguir
 
         return app;
     }
-
-    // ═══════════════════════════════════════════════════════════════
 
     private static async Task<IResult> ListarAsync(
         ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
@@ -55,7 +52,7 @@ public static class EndpointsSeguir
             s.Ultimo?.PartidoNoVoto ?? "", s.Ultimo?.UfNoVoto ?? "")));
     }
 
-    /// <summary>⭐ PUT e não POST: seguir duas vezes tem de ser o mesmo que seguir uma.</summary>
+    /// <summary> PUT e não POST: seguir duas vezes tem de ser o mesmo que seguir uma.</summary>
     private static async Task<IResult> SeguirAsync(
         long pessoaId, ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
     {
@@ -74,9 +71,9 @@ public static class EndpointsSeguir
     }
 
     /// <summary>
-    /// 🔴 Exclusão FÍSICA, e de propósito.
+    /// Exclusão FÍSICA, e de propósito.
     ///
-    /// ⚠️ `segue` é **registro de convicção política** — dado sensível pela LGPD
+    /// `segue` é **registro de convicção política** — dado sensível pela LGPD
     /// art. 5º, II. "Deixar de seguir" com exclusão lógica manteria no banco a
     /// informação de que a pessoa seguiu aquele parlamentar, que é exatamente o que ela
     /// pediu para desfazer. Ver a nota em `ExcluirContaAsync`.

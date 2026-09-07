@@ -8,7 +8,7 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
 {
     private const string Rota = "/api/grafo";
 
-    /// <summary>⭐ Primeiro dia, antes de o ETL analítico rodar: vazio, não erro.</summary>
+    /// <summary> Primeiro dia, antes de o ETL analítico rodar: vazio, não erro.</summary>
     [SkippableFact]
     public async Task SemExecucao_DevolveGrafoVazio()
     {
@@ -39,7 +39,7 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
     }
 
     /// <summary>
-    /// ⚠️ As três camadas de aresta têm naturezas diferentes: similaridade de voto,
+    /// As três camadas de aresta têm naturezas diferentes: similaridade de voto,
     /// comissão comum e coautoria. Só a primeira é o grafo do título — misturar
     /// produziria um desenho sem interpretação.
     /// </summary>
@@ -59,7 +59,7 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
             "a camada de comissão não pode entrar no grafo de similaridade");
     }
 
-    /// <summary>⭐ Sempre a execução mais recente — é o que dá reprodutibilidade.</summary>
+    /// <summary> Sempre a execução mais recente — é o que dá reprodutibilidade.</summary>
     [SkippableFact]
     public async Task ComDuasExecucoes_UsaAMaisRecente()
     {
@@ -91,7 +91,7 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
     }
 
     /// <summary>
-    /// 🔴 O percentual sem a base não se lê: 80% sobre 24 votações e 80% sobre 540 são
+    /// O percentual sem a base não se lê: 80% sobre 24 votações e 80% sobre 540 são
     /// afirmações de força muito diferente, e a tela promete mostrar as duas coisas.
     /// </summary>
     [SkippableFact]
@@ -110,7 +110,7 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
     }
 
     /// <summary>
-    /// ⚠️ Par de aresta sem linha de similaridade é bug do ETL, ⛔ não caso normal — mas
+    /// Par de aresta sem linha de similaridade é bug do ETL, não caso normal — mas
     /// derrubar a tela inteira por causa dele deixaria o usuário sem grafo nenhum. A
     /// junção é externa de propósito: a aresta chega, com a base declarada como zero.
     /// </summary>
@@ -129,7 +129,7 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
         Assert.All(grafo.Arestas, a => Assert.Null(a.Cosseno));
     }
 
-    /// <summary>⭐ A foto vem da casa e alimenta o rosto no nó do grafo.</summary>
+    /// <summary> A foto vem da casa e alimenta o rosto no nó do grafo.</summary>
     [SkippableFact]
     public async Task No_TrazAFotoDaPessoa()
     {
@@ -151,9 +151,7 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
         Assert.Contains(grafo.Nos, n => n.UrlFoto is null);
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // PRIVADOS — na ordem de uso
-    // ═══════════════════════════════════════════════════════════════
 
     private HttpClient CriarCliente() => new FabricaApi(ConnectionString).CreateClient();
 
@@ -205,8 +203,8 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
     private async Task AcrescentarSimilaridadesAsync(
         long execucaoId, int comuns, float cosseno)
     {
-        // ⚠️ As DUAS métricas, porque o endpoint junta com cada uma por um caminho
-        //    diferente: a base sai da concordância, o valor comparativo do cosseno.
+        // As DUAS métricas, porque o endpoint junta com cada uma por um caminho
+        // diferente: a base sai da concordância, o valor comparativo do cosseno.
         var arestas = await Db.ArestasGrafo.AsNoTracking()
             .Where(a => a.ExecucaoId == execucaoId && a.Tipo == TipoDeAresta.SIMILARIDADE_VOTO)
             .Select(a => new { a.PessoaA, a.PessoaB })

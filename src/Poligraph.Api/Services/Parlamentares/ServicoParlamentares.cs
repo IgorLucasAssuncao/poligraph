@@ -13,22 +13,13 @@ public class ServicoParlamentares(PoligraphDb db)
 
     private readonly PoligraphDb _db = db;
 
-    // ═══════════════════════════════════════════════════════════════
-    // PÚBLICOS
-    // ═══════════════════════════════════════════════════════════════
-
     /// <summary>RF-34 — busca por nome, partido e UF.</summary>
+    /// <remarks>
+    /// <para>PL35 — "parlamentar" é quem votou na legislatura CORRENTE. Sem o recorte, a chegada da 58ª faria "explorar" listar ex-deputados junto dos atuais, e `NVotacoes` somaria mandatos diferentes. Nada quebraria: só apareceria gente que não está mais lá, com um número inflado. `null` só acontece em base sem votação nenhuma — antes do primeiro ETL. Aí a lista sai vazia, que é a resposta honesta.</para>
+    /// </remarks>
     public async Task<IReadOnlyList<ParlamentarNaListaDto>> ListarAsync(
         string? nome, string? partido, string? uf, CancellationToken ct)
     {
-        // 🔴 PL35 — "parlamentar" é quem votou na legislatura CORRENTE.
-        //
-        // ⚠️ Sem o recorte, a chegada da 58ª faria "explorar" listar ex-deputados junto
-        //    dos atuais, e `NVotacoes` somaria mandatos diferentes. Nada quebraria: só
-        //    apareceria gente que ⛔ não está mais lá, com um número inflado.
-        //
-        // ⭐ `null` só acontece em base sem votação nenhuma — antes do primeiro ETL. Aí
-        //    a lista sai vazia, que é a resposta honesta.
         var legislatura = await Legislaturas.CorrenteAsync(_db, ct);
         if (legislatura is null) return [];
 
@@ -69,6 +60,9 @@ public class ServicoParlamentares(PoligraphDb db)
     }
 
     /// <summary>RF-31 — ficha com dados, histórico de votos e mais similares.</summary>
+    /// <remarks>
+    /// <para>PL35 — só a legislatura corrente, igual à lista. Contar todas daria um número maior na ficha do que na lista, para a mesma pessoa.</para>
+    /// </remarks>
     public async Task<FichaParlamentarDto?> ObterFichaAsync(long id, CancellationToken ct)
     {
         var pessoa = await _db.Pessoas.AsNoTracking()
@@ -86,8 +80,6 @@ public class ServicoParlamentares(PoligraphDb db)
         return new FichaParlamentarDto(
             pessoa.Id, pessoa.NomeExibicao, casa, pessoa.NomeCivil,
             partido, uf, pessoa.UrlFoto,
-            // 🔴 PL35 — só a legislatura corrente, igual à lista. Contar todas daria
-            //    um número maior na ficha do que na lista, para a mesma pessoa.
             await _db.Votos.CountAsync(
                 v => v.PessoaId == id && v.Valor != null
                      && v.Votacao!.Legislatura == legislatura, ct),
@@ -95,19 +87,16 @@ public class ServicoParlamentares(PoligraphDb db)
             await AlinhamentoAsync(id, casa, legislatura, partido, ct));
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // PRIVADOS — na ordem de uso
-    // ═══════════════════════════════════════════════════════════════
-
+    /// <remarks>
+    /// <para>Subconsulta, não `join`: a orientação é opcional, e um `join` sem `DefaultIfEmpty` sumiria com as votações que o Governo não orientou — que são justamente as mais comuns na ficha.</para>
+    /// <para>"PL 4.133/2023" — a etiqueta curta que permite conferir na fonte. Não é enfeite: sem ela, quem quiser checar a ementa não tem por onde procurar.</para>
+    /// </remarks>
     private async Task<List<VotoNaFichaDto>> UltimosVotosAsync(
         long id, CancellationToken ct) =>
         await _db.Votos.AsNoTracking()
             .Where(v => v.PessoaId == id)
             .OrderByDescending(v => v.Votacao!.Data)
             .Take(VotosNaFicha)
-            // ⚠️ Subconsulta, ⛔ não `join`: a orientação é opcional, e um `join` sem
-            //    `DefaultIfEmpty` sumiria com as votações que o Governo não orientou —
-            //    que são justamente as mais comuns na ficha.
             .Select(v => new VotoNaFichaDto(
                 v.VotacaoId, v.Votacao!.Data, v.Votacao.Descricao, v.Valor,
                 _db.Orientacoes
@@ -115,9 +104,6 @@ public class ServicoParlamentares(PoligraphDb db)
                     .Select(o => o.Orientacao)
                     .FirstOrDefault(),
                 v.Votacao.Proposicao!.Ementa,
-                // ⭐ "PL 4.133/2023" — a etiqueta curta que permite conferir na fonte.
-                //    ⛔ Não é enfeite: sem ela, quem quiser checar a ementa ⛔ não tem
-                //    por onde procurar.
                 v.Votacao.Proposicao!.SiglaTipo + " "
                     + v.Votacao.Proposicao.Numero + "/" + v.Votacao.Proposicao.Ano,
                 v.Votacao.Categoria))
@@ -126,7 +112,7 @@ public class ServicoParlamentares(PoligraphDb db)
     /// <summary>
     /// Os mais parecidos, da execução mais recente.
     ///
-    /// ⚠️ A similaridade é gravada uma vez por par, com `pessoa_a &lt; pessoa_b` (I3).
+    /// A similaridade é gravada uma vez por par, com `pessoa_a &lt; pessoa_b` (I3).
     /// Por isso a consulta precisa olhar os DOIS lados — senão metade dos vizinhos
     /// some, e some justamente para quem tem id alto.
     /// </summary>
@@ -181,24 +167,25 @@ public class ServicoParlamentares(PoligraphDb db)
     /// Governismo e disciplina, com a base de cada um.
     ///
     /// <para>
-    /// ⚠️ As proporções vêm de <c>nos_metrica</c>, calculadas pelo ETL; as BASES são
+    /// As proporções vêm de <c>nos_metrica</c>, calculadas pelo ETL; as BASES são
     /// contadas aqui. Guardar a base também seria duplicar dado que a consulta já sabe
     /// produzir, e ela precisa aparecer na tela junto do número.
     /// </para>
     ///
     /// <para>
-    /// ⛔ Devolve <c>null</c> no Senado e antes da primeira análise — ⛔ nunca zero.
+    /// Devolve <c>null</c> no Senado e antes da primeira análise — nunca zero.
     /// </para>
     /// </summary>
+    /// <remarks>
+    /// <para>`NoMetricaModel` não tem navegação para a execução — a chave é só o id. A execução mais recente CONCLUÍDA da casa é o recorte, o mesmo que o endpoint do grafo usa.</para>
+    /// <para>Diz CONTRA QUAL sigla a disciplina foi medida. Quem trocou de partido no meio do mandato tem a medida feita contra a do voto mais recente, e omitir isso deixaria o número sem referência.</para>
+    /// </remarks>
     private async Task<AlinhamentoDto?> AlinhamentoAsync(
         long id, TipoCasa? casa, short? legislatura,
         string partido, CancellationToken ct)
     {
         if (casa is not TipoCasa.CAMARA || legislatura is null) return null;
 
-        // ⚠️ `NoMetricaModel` ⛔ não tem navegação para a execução — a chave é só o id.
-        //    A execução mais recente CONCLUÍDA da casa é o recorte, o mesmo que o
-        //    endpoint do grafo usa.
         var execucaoId = await _db.Execucoes.AsNoTracking()
             .Where(e => e.Casa == TipoCasa.CAMARA
                      && e.Legislatura == legislatura
@@ -222,16 +209,13 @@ public class ServicoParlamentares(PoligraphDb db)
         return new AlinhamentoDto(
             metrica.Governismo, baseGoverno,
             metrica.Disciplina, basePartido,
-            // ⚠️ Diz CONTRA QUAL sigla a disciplina foi medida. Quem trocou de partido
-            //    no meio do mandato tem a medida feita contra a do voto mais recente,
-            //    e omitir isso deixaria o número sem referência.
             metrica.Disciplina is null ? null : partido);
     }
 
     /// <summary>
     /// Quantas votações têm posição dos DOIS lados — o denominador honesto.
     ///
-    /// ⚠️ <c>Obstrução</c> e <c>Liberado</c> ficam de fora: a primeira é tática de
+    /// <c>Obstrução</c> e <c>Liberado</c> ficam de fora: a primeira é tática de
     /// quórum, a segunda é ausência de orientação. Nenhuma das duas é posição de mérito.
     /// </summary>
     private async Task<int> BaseComparavelAsync(
@@ -251,13 +235,13 @@ public class ServicoParlamentares(PoligraphDb db)
     /// Casa, partido e UF do voto mais recente.
     ///
     /// <para>
-    /// ⚠️ Vem do voto mais recente, ⛔ não de uma coluna em <c>pessoa</c>.
+    /// Vem do voto mais recente, não de uma coluna em <c>pessoa</c>.
     /// <c>partido_no_voto</c> é registro histórico — 14 deputados trocaram de legenda
     /// só em 2025, e a filiação "atual" é a do último voto conhecido.
     /// </para>
     ///
     /// <para>
-    /// A casa vem daqui, e ⛔ não de <c>pessoa_fonte_ids</c>: quem atuou nas duas tem
+    /// A casa vem daqui, e não de <c>pessoa_fonte_ids</c>: quem atuou nas duas tem
     /// duas fontes, e a pergunta que a ficha responde é "onde essa pessoa está agora".
     /// </para>
     /// </summary>

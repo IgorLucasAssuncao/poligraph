@@ -6,16 +6,16 @@ namespace Poligraph.Tests.Fixtures;
 /// <summary>
 /// Dados fixos para os testes de integração.
 ///
-/// ⚠️ Isto vivia em `Poligraph.Data` e rodava a cada `dotnet run` local. Deixou de
+/// Isto vivia em `Poligraph.Data` e rodava a cada `dotnet run` local. Deixou de
 /// fazer sentido quando o ETL passou a funcionar: o banco de desenvolvimento é
 /// preenchido com a Câmara de verdade, e 12 parlamentares fictícios convivendo com 551
 /// reais só criavam risco de alguém tomar um pelo outro.
 ///
-/// ⭐ Aqui é o lugar certo: dado de teste pertence ao projeto de teste. O que roda
+/// Aqui é o lugar certo: dado de teste pertence ao projeto de teste. O que roda
 /// contra o banco real são as migrations e a curadoria de perguntas — conteúdo, não
 /// ficção.
 ///
-/// 🔴 O conjunto PRECISA conter pergunta de polaridade -1. Semear só +1 faria o bug
+/// O conjunto PRECISA conter pergunta de polaridade -1. Semear só +1 faria o bug
 /// mais perigoso do sistema ficar invisível durante todo o desenvolvimento.
 /// </summary>
 public static class DadosDeTeste
@@ -23,17 +23,16 @@ public static class DadosDeTeste
     private const short Legislatura = 57;
 
     /// <summary>
-    /// Semeia, e devolve o que aconteceu — ⛔ nunca sai em silêncio.
+    /// Semeia, e devolve o que aconteceu — nunca sai em silêncio.
     /// </summary>
     public static async Task<string> SemearAsync(PoligraphDb db, CancellationToken ct = default)
     {
-        // 🔴 Só semeia com a tabela VAZIA DE VERDADE.
-        //
-        // ⚠️ A armadilha não é semear duas vezes — é semear ANTES do ETL. O seed roda
-        //    no `dotnet run`, o ETL depois, e aí 12 deputados fictícios passam a
-        //    conviver com 551 reais numa mesma listagem, indistinguíveis na tela.
-        //    Eles não entram no grafo (5 votações não passam do mínimo de 20 da
-        //    RN-02), mas apareceriam numa demonstração para a banca.
+        // Só semeia com a tabela VAZIA DE VERDADE.
+        // A armadilha não é semear duas vezes — é semear ANTES do ETL. O seed roda
+        // no `dotnet run`, o ETL depois, e aí 12 deputados fictícios passam a
+        // conviver com 551 reais numa mesma listagem, indistinguíveis na tela.
+        // Eles não entram no grafo (5 votações não passam do mínimo de 20 da
+        // RN-02), mas apareceriam numa demonstração para a banca.
         // guarda de idempotência: já semeado, sai
         if (await db.Pessoas.AnyAsync(ct)) return "já semeado.";
 
@@ -60,12 +59,10 @@ public static class DadosDeTeste
                + $"{votacoes.Count} votações, {votos.Count} votos.";
     }
 
-    // ═══════════════════════════════════════════════════════════════
-
     /// <summary>
     /// Preenche `votos_sim` / `votos_nao` a partir dos votos gerados.
     ///
-    /// ⚠️ Contado, ⛔ nunca escrito à mão: número fixo no seed sai de sincronia com o
+    /// Contado, nunca escrito à mão: número fixo no seed sai de sincronia com o
     /// padrão de votos na primeira vez que alguém mexer na matriz, e aí a tela do
     /// questionário passa a afirmar um comparecimento que não existe no banco.
     ///
@@ -125,7 +122,7 @@ public static class DadosDeTeste
                 "Aprovado o Substitutivo ao Projeto de Lei nº 1.112, de 2023."),
         VotacaoModel("900004-1", proposicoes[3], TipoCategoriaDeVotacao.SUBSTANTIVA, new(2023, 12, 13),
                 "Aprovado o Projeto de Lei Complementar nº 243, de 2023."),
-        // 🔴 DESTAQUE: aqui "Sim" significa MANTER o texto, ou seja, REJEITAR a supressão
+        // DESTAQUE: aqui "Sim" significa MANTER o texto, ou seja, REJEITAR a supressão
         VotacaoModel("900005-1", proposicoes[4], TipoCategoriaDeVotacao.DESTAQUE, new(2023, 11, 21),
                 "Mantido o texto. Sim: 8; Não: 4."),
     ];
@@ -174,11 +171,11 @@ public static class DadosDeTeste
                 // um ausente de propósito: exercita "ausência não é discordância"
                 if (i == 11 && v == 4) continue;
 
-                // 🔴 E um ABSTIDO de propósito. Sem ele, `/api/panorama` afirmou
-                //    463.994 "votos com posição" na Câmara enquanto a posição de
-                //    verdade eram 462.867 — contava `Valor != null`, e as 1.127 de
-                //    diferença eram exatamente as abstenções. Nenhum teste pegou
-                //    porque o fixture não tinha nenhuma.
+                // E um ABSTIDO de propósito. Sem ele, `/api/panorama` afirmou
+                // 463.994 "votos com posição" na Câmara enquanto a posição de
+                // verdade eram 462.867 — contava `Valor != null`, e as 1.127 de
+                // diferença eram exatamente as abstenções. Nenhum teste pegou
+                // porque o fixture não tinha nenhuma.
                 var valor = i == 10 && v == 3 ? (short)0 : padrao[bloco][v];
 
                 votos.Add(new VotoModel
@@ -196,7 +193,7 @@ public static class DadosDeTeste
     }
 
     /// <summary>
-    /// ⚠️ A pergunta q5 tem polaridade -1 DE PROPÓSITO — é o que mantém o caminho da
+    /// A pergunta q5 tem polaridade -1 DE PROPÓSITO — é o que mantém o caminho da
     /// inversão exercitado em desenvolvimento.
     /// </summary>
     private static List<PerguntaModel> GerarPerguntas(List<VotacaoModel> votacoes) =>

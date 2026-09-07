@@ -81,16 +81,16 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     }
 
     /// <summary>
-    /// 🔴 A ementa é o que torna o voto legível.
+    /// A ementa é o que torna o voto legível.
     ///
     /// <para>
     /// A descrição é o registro processual — <i>"Aprovado o Projeto de Lei nº 2.162"</i>
-    /// — e diz o NÚMERO, ⛔ não o assunto. Sem a ementa, a ficha lista dez linhas que ⛔
+    /// — e diz o NÚMERO, não o assunto. Sem a ementa, a ficha lista dez linhas que
     /// não informam em que a pessoa votou.
     /// </para>
     ///
     /// <para>
-    /// ⚠️ A ementa chegou com a PL40 em 2026-08-28, e a ficha era o lugar que ainda ⛔
+    /// A ementa chegou com a PL40 em 2026-08-28, e a ficha era o lugar que ainda
     /// não a usava — o dado estava no banco, sem chegar à tela.
     /// </para>
     /// </summary>
@@ -111,8 +111,8 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     }
 
     /// <summary>
-    /// ⭐ A matéria é a etiqueta que permite conferir na fonte — "PL 2162/2023".
-    /// ⛔ Sem ela, quem quiser checar a ementa ⛔ não tem por onde procurar.
+    /// A matéria é a etiqueta que permite conferir na fonte — "PL 2162/2023".
+    /// Sem ela, quem quiser checar a ementa não tem por onde procurar.
     /// </summary>
     [SkippableFact]
     public async Task Ficha_MonstaAMateriaComSiglaNumeroEAno()
@@ -134,7 +134,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     }
 
     /// <summary>
-    /// 🔴 A armadilha da invariante I3.
+    /// A armadilha da invariante I3.
     ///
     /// A similaridade é gravada uma vez por par, sempre com `pessoa_a &lt; pessoa_b`.
     /// Uma consulta que olhasse só `pessoa_a = id` funcionaria para quem tem id baixo
@@ -157,7 +157,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         var fichaMaior = await cliente.GetFromJsonAsync<FichaJson>($"{Rota}/{maior}");
 
         Assert.NotEmpty(fichaMenor!.MaisSimilares);
-        Assert.NotEmpty(fichaMaior!.MaisSimilares);   // ⭐ o que quebraria com meio join
+        Assert.NotEmpty(fichaMaior!.MaisSimilares);   // o que quebraria com meio join
     }
 
     [SkippableFact]
@@ -175,9 +175,9 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     }
 
     /// <summary>
-    /// 🔴 O `GroupBy` da cota precisa ser TRADUZÍVEL pelo EF.
+    /// O `GroupBy` da cota precisa ser TRADUZÍVEL pelo EF.
     ///
-    /// ⚠️ Projetar direto num `record` posicional compila sem reclamar e estoura em
+    /// Projetar direto num `record` posicional compila sem reclamar e estoura em
     /// RUNTIME com `could not be translated` — aconteceu. Só um teste que executa a
     /// consulta contra Postgres de verdade pega isso.
     /// </summary>
@@ -199,13 +199,13 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         Assert.Equal(3, gastos.Lancamentos);
         Assert.Equal(450m, gastos.Total);
 
-        // ⭐ Duas categorias, e a maior vem primeiro
+        // Duas categorias, e a maior vem primeiro
         Assert.Equal(2, gastos.PorCategoria.Count);
         Assert.Equal("PASSAGEM AÉREA", gastos.PorCategoria[0].Categoria);
         Assert.Equal(300m, gastos.PorCategoria[0].Total);
     }
 
-    /// <summary>⭐ Sem despesa é caso normal — a tela mostra vazio, ⛔ não erro.</summary>
+    /// <summary> Sem despesa é caso normal — a tela mostra vazio, não erro.</summary>
     [SkippableFact]
     public async Task Gastos_SemDespesa_DevolveVazioNaoErro()
     {
@@ -224,7 +224,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     }
 
     /// <summary>
-    /// 🔴 RNF-13 — o documento de fornecedor pessoa física ⛔ NUNCA sai em claro.
+    /// RNF-13 — o documento de fornecedor pessoa física NUNCA sai em claro.
     /// </summary>
     [SkippableFact]
     public async Task Gastos_NaoVazamCpfDeFornecedor()
@@ -236,20 +236,18 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
 
         var json = await cliente.GetStringAsync($"{Rota}/{pessoaId}/gastos");
 
-        // ⚠️ O endpoint não devolve o campo de documento de jeito nenhum — nem hash.
-        //    A ficha precisa do NOME do fornecedor, não do CNPJ dele.
+        // O endpoint não devolve o campo de documento de jeito nenhum — nem hash.
+        // A ficha precisa do NOME do fornecedor, não do CNPJ dele.
         Assert.DoesNotContain("cnpj", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("12345678909", json);
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // Emendas — o dinheiro que o parlamentar DIRECIONA
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// 🔴 Mesmo risco do `GroupBy` da cota: compila e estoura em runtime.
+    /// Mesmo risco do `GroupBy` da cota: compila e estoura em runtime.
     ///
-    /// ⭐ E confere o que interessa de verdade: **empenhado ⛔ ≠ pago**.
+    /// E confere o que interessa de verdade: **empenhado ≠ pago**.
     /// </summary>
     [SkippableFact]
     public async Task Emendas_SeparamEmpenhadoDePago()
@@ -265,8 +263,8 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         Assert.Equal(2025, emendas!.Ano);
         Assert.Equal(3, emendas.Quantidade);
 
-        // 🔴 A distância entre os dois é a informação. Um endpoint que devolvesse só
-        //    o empenhado passaria num teste que só olhasse o total.
+        // A distância entre os dois é a informação. Um endpoint que devolvesse só
+        // o empenhado passaria num teste que só olhasse o total.
         Assert.Equal(1_000_000m, emendas.Empenhado);
         Assert.Equal(400_000m, emendas.Pago);
         Assert.NotEqual(emendas.Empenhado, emendas.Pago);
@@ -275,9 +273,9 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     }
 
     /// <summary>
-    /// 🔴 O total ⛔ NÃO pode ser a soma dos itens exibidos.
+    /// O total NÃO pode ser a soma dos itens exibidos.
     ///
-    /// ⚠️ `PorDestino` é cortado em 8. Somar a lista cortada daria um total menor que o
+    /// `PorDestino` é cortado em 8. Somar a lista cortada daria um total menor que o
     /// real, e nada na tela indicaria o corte — o parlamentar apareceria com menos
     /// emenda do que tem.
     /// </summary>
@@ -308,7 +306,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         Assert.Equal(1_200m, emendas.Empenhado);
     }
 
-    /// <summary>⭐ Sem emenda é caso normal — inclusive para autor não reconciliado.</summary>
+    /// <summary> Sem emenda é caso normal — inclusive para autor não reconciliado.</summary>
     [SkippableFact]
     public async Task Emendas_SemEmenda_DevolveVazioNaoErro()
     {
@@ -324,9 +322,9 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     }
 
     /// <summary>
-    /// 🔴 EmendaModel sem dono ⛔ NÃO pode aparecer na ficha de ninguém.
+    /// EmendaModel sem dono NÃO pode aparecer na ficha de ninguém.
     ///
-    /// ⚠️ `pessoa_id` é anulável de propósito — emenda de bancada e de autor ainda não
+    /// `pessoa_id` é anulável de propósito — emenda de bancada e de autor ainda não
     /// reconciliado entram assim. Atribuí-las a alguém seria inventar autoria.
     /// </summary>
     [SkippableFact]
@@ -338,7 +336,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
 
         Db.Emendas.Add(new EmendaModel
         {
-            PessoaId = null,                      // ⛔ sem dono
+            PessoaId = null,   // sem dono
             CodigoAutor = "9999", NomeAutor = "BANCADA DO PARA",
             CodigoEmenda = "202599990001", Ano = 2025,
             Localidade = "Ananindeua - PA",
@@ -350,17 +348,15 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         var emendas = await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{pessoaId}/emendas");
 
         Assert.Equal(3, emendas!.Quantidade);
-        Assert.Equal(1_000_000m, emendas.Empenhado);   // ⭐ os 50 milhões ficaram fora
+        Assert.Equal(1_000_000m, emendas.Empenhado);   // os 50 milhões ficaram fora
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // Financiamento — o dinheiro que ELEGEU o parlamentar
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// 🔴 Fundo Especial e Fundo Partidário são fundos DIFERENTES.
+    /// Fundo Especial e Fundo Partidário são fundos DIFERENTES.
     ///
-    /// ⚠️ Somá-los mudaria o número que o TCC cita. A API entrega os dois separados e
+    /// Somá-los mudaria o número que o TCC cita. A API entrega os dois separados e
     /// deixa a soma para quem quiser assiná-la.
     /// </summary>
     [SkippableFact]
@@ -381,12 +377,12 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         Assert.Equal(200_000m, fin.FundoPartidario);
         Assert.Equal(3_250_000m, fin.Total);
 
-        // 🔴 A soma dos dois ⛔ NÃO é o total — há dinheiro privado no meio.
+        // A soma dos dois NÃO é o total — há dinheiro privado no meio.
         Assert.NotEqual(fin.Total, fin.FundoEspecial + fin.FundoPartidario);
     }
 
     /// <summary>
-    /// 🔴 RNF-13 — o documento do doador pessoa física ⛔ NUNCA sai da API.
+    /// RNF-13 — o documento do doador pessoa física NUNCA sai da API.
     /// </summary>
     [SkippableFact]
     public async Task Financiamento_NaoVazaDocumentoDeDoador()
@@ -400,10 +396,10 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
 
         Assert.DoesNotContain("cnpj", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("11122233344", json);
-        Assert.DoesNotContain(new string('b', 64), json);   // ⛔ nem o hash
+        Assert.DoesNotContain(new string('b', 64), json);   // nem o hash
     }
 
-    /// <summary>⭐ Sem receita é caso normal — o TSE pode não ter sido ingerido.</summary>
+    /// <summary> Sem receita é caso normal — o TSE pode não ter sido ingerido.</summary>
     [SkippableFact]
     public async Task Financiamento_SemReceita_DevolveVazioNaoErro()
     {
@@ -455,7 +451,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
                 PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
                 CodigoEmenda = "202541840003", Ano = 2025,
                 Localidade = "Belém - PA", Funcao = "Educação",
-                // ⭐ empenhada e nunca paga — é o caso que a ficha precisa deixar visível
+                // empenhada e nunca paga — é o caso que a ficha precisa deixar visível
                 ValorEmpenhado = 100_000m, ValorPago = 0m
             });
 
@@ -488,7 +484,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
                 PessoaId = pessoaId, AnoEleicao = 2022,
                 FonteReceita = "OUTROS RECURSOS",
                 Doador = "JOSE DA SILVA",
-                // ⚠️ hash, como o ETL grava — o CPF em claro nunca chega ao banco
+                // hash, como o ETL grava — o CPF em claro nunca chega ao banco
                 DoadorCnpjOuHash = new string('b', 64), DoadorEhPessoaFisica = true,
                 Valor = 50_000m
             });
@@ -525,7 +521,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
             {
                 PessoaId = pessoaId, Ano = 2025, Mes = 5,
                 Categoria = "COMBUSTÍVEIS", Fornecedor = "POSTO",
-                // ⚠️ hash de CPF, como o ETL grava — nunca o número
+                // hash de CPF, como o ETL grava — nunca o número
                 CnpjOuHash = new string('a', 64), FornecedorEhPessoaFisica = true,
                 ValorLiquido = 150m
             });
@@ -535,9 +531,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         return pessoaId;
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // PRIVADOS — na ordem de uso
-    // ═══════════════════════════════════════════════════════════════
 
     private async Task SemearAsync() =>
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);

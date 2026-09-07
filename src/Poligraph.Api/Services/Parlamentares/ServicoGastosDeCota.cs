@@ -7,7 +7,7 @@ namespace Poligraph.Api.Services;
 /// <summary>
 /// A cota parlamentar do deputado, agregada por ano.
 ///
-/// ⚠️ **Agregação no banco, ⛔ não em memória.** São 209 mil linhas por ano no total;
+/// **Agregação no banco, não em memória.** São 209 mil linhas por ano no total;
 /// trazer as de um deputado e somar em C# seria desperdício, e a consulta usa o índice
 /// `ix_despesa_pessoa_ano`.
 /// </summary>
@@ -19,24 +19,23 @@ public class ServicoGastosDeCota(PoligraphDb db)
     private readonly PoligraphDb _db = db;
 
     /// <summary>
-    /// ⭐ O ano é opcional: sem ele, devolve o mais recente que existir para a pessoa —
+    /// O ano é opcional: sem ele, devolve o mais recente que existir para a pessoa —
     /// que é o que a ficha quer mostrar por padrão.
     /// </summary>
+    /// <remarks>
+    /// <para>Sem despesa é caso NORMAL — deputado que não usou cota, ou ano ainda não ingerido. A tela mostra estado vazio, não erro.</para>
+    /// <para>Projeta em tipo ANÔNIMO, não direto no `record`: o EF não traduz `GroupBy` com construtor posicional — devolve `could not be translated` em runtime, não em compilação. O `record` é montado depois, em memória.</para>
+    /// </remarks>
     public async Task<GastoDeCotaDto> ObterAsync(long id, int? ano, CancellationToken ct)
     {
         var alvo = ano ?? await _db.Despesas.AsNoTracking()
             .Where(d => d.PessoaId == id)
             .MaxAsync(d => (int?)d.Ano, ct);
 
-        // ⭐ Sem despesa é caso NORMAL — deputado que não usou cota, ou ano ainda não
-        //    ingerido. A tela mostra estado vazio, ⛔ não erro.
         if (alvo is null) return new GastoDeCotaDto(0, 0, 0, [], []);
 
         var doAno = _db.Despesas.AsNoTracking().Where(d => d.PessoaId == id && d.Ano == alvo);
 
-        // ⚠️ Projeta em tipo ANÔNIMO, não direto no `record`: o EF não traduz `GroupBy`
-        //    com construtor posicional — devolve `could not be translated` em runtime,
-        //    ⛔ não em compilação. O `record` é montado depois, em memória.
         var categorias = await doAno
             .GroupBy(d => d.Categoria)
             .Select(g => new

@@ -15,6 +15,9 @@ public class ServicoFinanciamento(PoligraphDb db)
 
     private readonly PoligraphDb _db = db;
 
+    /// <remarks>
+    /// <para>RNF-13: doador pessoa física aparece pelo NOME; o documento é hash e nunca sai da API. Mesma regra de `DespesaModel.CnpjOuHash`.</para>
+    /// </remarks>
     public async Task<FinanciamentoDeCampanhaDto> ObterAsync(long id, int? eleicao, CancellationToken ct)
     {
         var alvo = eleicao ?? await _db.ReceitasDeCampanha.AsNoTracking()
@@ -37,8 +40,6 @@ public class ServicoFinanciamento(PoligraphDb db)
             .OrderByDescending(f => f.Total)
             .ToListAsync(ct);
 
-        // 🔴 RNF-13: doador pessoa física aparece pelo NOME; o documento é hash e ⛔
-        // nunca sai da API. Mesma regra de `DespesaModel.CnpjOuHash`.
         var doadores = await daEleicao
             .Where(r => r.Doador != null)
             .GroupBy(r => new { r.Doador, r.DoadorEhPessoaFisica })

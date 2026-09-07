@@ -28,8 +28,6 @@ public static class EndpointsParlamentares
         return app;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-
     /// <summary>RF-34 — busca por nome, partido e UF.</summary>
     private static async Task<IResult> ListarAsync(
         ServicoParlamentares servico,

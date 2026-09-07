@@ -6,6 +6,6 @@ public enum TipoMetodoDeCitacao
     NOME_COMPLETO,
     NOME_PARLAMENTAR,
 
-    /// <summary>⚠️ O mais frágil — carrega a menor <c>confianca</c>.</summary>
+    /// <summary> O mais frágil — carrega a menor <c>confianca</c>.</summary>
     SOBRENOME,
 }

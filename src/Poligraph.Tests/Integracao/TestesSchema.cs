@@ -5,7 +5,7 @@ using Poligraph.Data;
 namespace Poligraph.Tests.Integracao;
 
 /// <summary>
-/// 🔑 Estes testes não testam código — testam se as REGRAS MEDIDAS sobreviveram à
+/// Estes testes não testam código — testam se as REGRAS MEDIDAS sobreviveram à
 /// tradução para EF e chegaram ao banco como constraint.
 ///
 /// É o único jeito de garantir que um `HasCheckConstraint` não desapareceu numa migration
@@ -13,9 +13,7 @@ namespace Poligraph.Tests.Integracao;
 /// </summary>
 public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
-    // ═══════════════════════════════════════════════════════════════
     // RN-02 — mínimo de 20 votações comuns
-    // ═══════════════════════════════════════════════════════════════
 
     [SkippableFact]
     public async Task Similaridade_ComMenosDe20VotacoesComuns_ERejeitada()
@@ -31,7 +29,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
             PessoaB = b,
             Metrica = TipoMetrica.CONCORDANCIA,
             Valor = 0.9f,
-            NVotacoesComuns = 19          // 🔴 um abaixo do mínimo
+            NVotacoesComuns = 19   // um abaixo do mínimo
         });
 
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
@@ -53,9 +51,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         await Db.SaveChangesAsync();      // não pode lançar
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // I3 — aresta não-direcionada, gravada uma vez só
-    // ═══════════════════════════════════════════════════════════════
 
     [SkippableFact]
     public async Task Similaridade_ComParForaDeOrdem_ERejeitada()
@@ -67,7 +63,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         Db.Similaridades.Add(new SimilaridadeModel
         {
             ExecucaoId = execucao,
-            PessoaA = b,                  // 🔴 invertido: b > a
+            PessoaA = b,   // invertido: b > a
             PessoaB = a,
             Metrica = TipoMetrica.CONCORDANCIA, Valor = 0.9f, NVotacoesComuns = 30
         });
@@ -75,9 +71,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // RN-03 — domínio fechado do voto
-    // ═══════════════════════════════════════════════════════════════
 
     [SkippableTheory]
     [InlineData((short)2)]
@@ -98,10 +92,8 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // 🔴 RN-08 — polaridade. O CHECK é a última linha de defesa do bug
-    //    mais perigoso do sistema.
-    // ═══════════════════════════════════════════════════════════════
+    // RN-08 — polaridade. O CHECK é a última linha de defesa do bug
+    // mais perigoso do sistema.
 
     [SkippableTheory]
     [InlineData((short)0)]
@@ -120,12 +112,10 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // Nomes de tabela — o ETL Python depende deles
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// 🔴 <b>A lista é literal de propósito.</b>
+    /// <b>A lista é literal de propósito.</b>
     ///
     /// <para>
     /// O nome da tabela sai do nome do <c>DbSet</c>, então renomear uma propriedade de
@@ -136,7 +126,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
     /// </para>
     ///
     /// <para>
-    /// ⚠️ Derivar a lista esperada do próprio modelo tornaria o teste vazio: ele
+    /// Derivar a lista esperada do próprio modelo tornaria o teste vazio: ele
     /// concordaria com qualquer renomeação. A lista escrita à mão é o ponto.
     /// </para>
     /// </summary>
@@ -162,30 +152,28 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
                 """)
             .ToListAsync();
 
-        // ⚠️ A ordenação é feita aqui, ⛔ não no `ORDER BY`: a ordem do Postgres depende
-        //    do collation do container, e `nos_metrica` vem antes ou depois de
-        //    `noticia_pessoas` conforme a regra de intercalação. O teste afirma QUAIS
-        //    tabelas existem, não em que ordem o banco as lista.
+        // A ordenação é feita aqui, não no `ORDER BY`: a ordem do Postgres depende
+        // do collation do container, e `nos_metrica` vem antes ou depois de
+        // `noticia_pessoas` conforme a regra de intercalação. O teste afirma QUAIS
+        // tabelas existem, não em que ordem o banco as lista.
         Assert.Equal(
             esperadas.Order(StringComparer.Ordinal),
             noBanco.Order(StringComparer.Ordinal));
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // Domínios fechados de texto
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// 🔴 <b>SQL cru, e ⛔ não o EF, de propósito.</b>
+    /// <b>SQL cru, e não o EF, de propósito.</b>
     ///
     /// <para>
     /// Desde que <c>casa</c> e <c>categoria</c> viraram enum, escrever
-    /// <c>Casa = "ASSEMBLEIA"</c> ⛔ nem compila — e a versão anterior deste teste,
+    /// <c>Casa = "ASSEMBLEIA"</c> nem compila — e a versão anterior deste teste,
     /// que passava pelo EF, deixaria de existir por isso.
     /// </para>
     ///
     /// <para>
-    /// Só que o enum ⛔ não é quem protege a coluna: <b>quem escreve a maior parte
+    /// Só que o enum não é quem protege a coluna: <b>quem escreve a maior parte
     /// destas linhas é o ETL Python</b>, que manda texto e nunca viu o tipo. O caminho
     /// que o teste precisa exercitar é justamente esse. Passar pelo EF testaria o
     /// compilador; passar por SQL testa a restrição.
@@ -208,13 +196,13 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
             Db.Database.ExecuteSqlRawAsync(
                 $"INSERT INTO votacoes ({colunas}) VALUES ({valores})"));
 
-        // ⭐ Confere QUAL restrição barrou. Sem isto, um NOT NULL acidental em outra
-        //    coluna faria o teste passar por um motivo que não é o que ele afirma.
+        // Confere QUAL restrição barrou. Sem isto, um NOT NULL acidental em outra
+        // coluna faria o teste passar por um motivo que não é o que ele afirma.
         Assert.Equal(restricao, erro.ConstraintName);
     }
 
     /// <summary>
-    /// ⚠️ O outro lado da mesma moeda: o enum precisa chegar ao banco como TEXTO.
+    /// O outro lado da mesma moeda: o enum precisa chegar ao banco como TEXTO.
     ///
     /// Se a convenção de <c>ConfigureConventions</c> sumir, o EF grava o ordinal, a
     /// restrição recusa <c>0</c> e o ETL Python continua gravando <c>'CAMARA'</c> na
@@ -233,8 +221,8 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         await Db.SaveChangesAsync();
 
         var gravado = await Db.Database
-            // ⚠️ O alias `Value` não é enfeite: `SqlQuery<T>` de tipo escalar procura
-            //    uma coluna com esse nome exato.
+            // O alias `Value` não é enfeite: `SqlQuery<T>` de tipo escalar procura
+            // uma coluna com esse nome exato.
             .SqlQuery<string>($"""
                 SELECT casa || '/' || categoria AS "Value"
                   FROM votacoes WHERE id = 'enum-texto'
@@ -253,9 +241,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // ⭐ LGPD art. 18 — a exclusão precisa ser UM delete
-    // ═══════════════════════════════════════════════════════════════
+    // LGPD art. 18 — a exclusão precisa ser UM delete
 
     [SkippableFact]
     public async Task ExcluirUsuario_LevaSegueConsentimentoETokens()
@@ -278,7 +264,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         });
         await Db.SaveChangesAsync();
 
-        // ⭐ um DELETE só — é para isso que os CASCADE existem
+        // um DELETE só — é para isso que os CASCADE existem
         Db.Usuarios.Remove(usuario);
         await Db.SaveChangesAsync();
 
@@ -287,17 +273,14 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         Assert.Empty(await Db.TokensEmail.Where(t => t.UsuarioId == usuario.Id).ToListAsync());
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // ⛔ O oposto do CASCADE: apagar parlamentar que alguém segue não pode
-    //    ser possível. Por isso `SegueModel → PessoaModel` é RESTRICT.
-    //
-    // ⭐ São DUAS camadas de proteção, e as duas são testadas — porque a
-    //    primeira pode ser contornada e a segunda não.
-    // ═══════════════════════════════════════════════════════════════
+    // O oposto do CASCADE: apagar parlamentar que alguém segue não pode
+    // ser possível. Por isso `SegueModel PessoaModel` é RESTRICT.
+    // São DUAS camadas de proteção, e as duas são testadas — porque a
+    // primeira pode ser contornada e a segunda não.
 
     /// <summary>
     /// Camada 1 — o *change tracker* do EF barra antes de chegar ao banco.
-    /// ⚠️ Esta proteção **some** se a exclusão for feita por SQL direto ou `ExecuteDelete`.
+    /// Esta proteção **some** se a exclusão for feita por SQL direto ou `ExecuteDelete`.
     /// </summary>
     [SkippableFact]
     public async Task ExcluirParlamentarSeguido_EFBarraAntesDeIrAoBanco()
@@ -312,7 +295,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
     }
 
     /// <summary>
-    /// 🔑 Camada 2 — a que realmente importa: o Postgres rejeita, mesmo sem o EF saber
+    /// Camada 2 — a que realmente importa: o Postgres rejeita, mesmo sem o EF saber
     /// do vínculo. É esta que protege contra `DELETE` escrito à mão e contra o ETL Python.
     /// </summary>
     [SkippableFact]
@@ -330,9 +313,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         Assert.Contains("fk_segue_pessoas_pessoa_id", erro.InnerException?.Message ?? "");
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // Um consentimento vivo por finalidade
-    // ═══════════════════════════════════════════════════════════════
 
     [SkippableFact]
     public async Task Consentimento_DoisVivosParaAMesmaFinalidade_ERejeitado()
@@ -356,9 +337,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // PRIVADOS — na ordem de uso
-    // ═══════════════════════════════════════════════════════════════
 
     private async Task<(long, long)> CriarDuasPessoasAsync()
     {

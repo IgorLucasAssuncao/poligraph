@@ -8,9 +8,9 @@ namespace Poligraph.Tests.Integracao;
 /// <summary>
 /// O endpoint de afinidade, ponta a ponta, contra Postgres real.
 ///
-/// ⭐ O que estes testes protegem que os unitários não alcançam: o SQL da junção
-/// pergunta↔voto, o piso de comparáveis aplicado sobre dados reais, e o contrato da
-/// resposta — que ⛔ não pode conter percentual (RF-29).
+/// O que estes testes protegem que os unitários não alcançam: o SQL da junção
+/// perguntavoto, o piso de comparáveis aplicado sobre dados reais, e o contrato da
+/// resposta — que não pode conter percentual (RF-29).
 /// </summary>
 public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
@@ -25,7 +25,7 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
 
         var json = await cliente.GetStringAsync($"{Rota}/perguntas");
 
-        // 🔴 expor a polaridade deixaria o cidadão inferir o voto ANTES de responder
+        // expor a polaridade deixaria o cidadão inferir o voto ANTES de responder
         Assert.DoesNotContain("olaridade", json);
         Assert.DoesNotContain("otacaoId", json);
         Assert.Contains("q1", json);
@@ -34,7 +34,7 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
     /// <summary>
     /// O comparecimento exibido na tela precisa BATER com os votos que estão no banco.
     ///
-    /// 🔴 É o número que a pessoa vê entre uma pergunta e outra. Se `votos_sim` /
+    /// É o número que a pessoa vê entre uma pergunta e outra. Se `votos_sim` /
     /// `votos_nao` sair de sincronia com a tabela `voto` — o que acontece na hora em que
     /// alguém escreve o placar à mão —, a tela afirma um comparecimento que não existe.
     /// </summary>
@@ -61,11 +61,11 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
 
             Assert.Equal(posicionados, pergunta.TotalVotos);
 
-            // ⚠️ zero significaria que o seed não contabilizou nada — e a tela cairia
-            //    no caminho de "sem placar registrado" em desenvolvimento inteiro
+            // zero significaria que o seed não contabilizou nada — e a tela cairia
+            // no caminho de "sem placar registrado" em desenvolvimento inteiro
             Assert.True(pergunta.TotalVotos > 0);
 
-            // ⭐ o denominador do painel: ninguém pode se posicionar além da base
+            // o denominador do painel: ninguém pode se posicionar além da base
             var naBase = await Db.Votos.AsNoTracking()
                 .Select(v => v.PessoaId).Distinct().CountAsync();
 
@@ -74,10 +74,10 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
         }
     }
 
-    /// <summary>⛔ Sem `VotosSim`/`VotosNao`: o que sai da API é só o total.</summary>
+    /// <summary> Sem `VotosSim`/`VotosNao`: o que sai da API é só o total.</summary>
     /// <summary>
-    /// ⚠️ A resposta ⛔ não é mais um array: <c>Total</c> anuncia o questionário inteiro,
-    /// e <c>Perguntas</c> traz só o bloco de abertura. O resto vem do desempate, que ⛔
+    /// A resposta não é mais um array: <c>Total</c> anuncia o questionário inteiro,
+    /// e <c>Perguntas</c> traz só o bloco de abertura. O resto vem do desempate, que
     /// não pode ser escolhido antes de haver resposta.
     /// </summary>
     private record QuestionarioLido(List<PerguntaLida> Perguntas, int Total);
@@ -86,10 +86,10 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
         string Id, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
 
     /// <summary>
-    /// 🔴 A posição do cidadão é o CENTROIDE de quem ele mais concorda, ⛔ nunca a
+    /// A posição do cidadão é o CENTROIDE de quem ele mais concorda, nunca a
     /// posição de um deputado específico.
     ///
-    /// ⚠️ Copiar a posição do primeiro colocado seria mais simples e estaria errado: o
+    /// Copiar a posição do primeiro colocado seria mais simples e estaria errado: o
     /// topo empata — a medição deu empate mediano de 30 —, e o cidadão saltaria de
     /// lugar entre duas execuções sem que nada tivesse mudado.
     /// </summary>
@@ -110,23 +110,22 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
         var posicao = lido.PosicaoNoGrafo;
         var eixos = await Db.NosMetrica.AsNoTracking().Select(n => n.EixoX!.Value).ToListAsync();
 
-        // dentro da nuvem, ⛔ não fora dela
+        // dentro da nuvem, não fora dela
         Assert.InRange(posicao.EixoX, eixos.Min(), eixos.Max());
         Assert.True(posicao.VizinhosUsados > 1, "um vizinho só não é centroide");
 
-        // 🔴 A asserção que importa: o cidadão NÃO cai em cima de ninguém.
-        //
-        // ⚠️ A primeira versão deste teste só conferia o intervalo, e por isso passava
-        //    mesmo com a implementação copiando a posição do primeiro colocado —
-        //    verificado por mutação. Intervalo não distingue centroide de cópia.
+        // A asserção que importa: o cidadão NÃO cai em cima de ninguém.
+        // A primeira versão deste teste só conferia o intervalo, e por isso passava
+        // mesmo com a implementação copiando a posição do primeiro colocado —
+        // verificado por mutação. Intervalo não distingue centroide de cópia.
         Assert.DoesNotContain(eixos, e => Math.Abs(e - posicao.EixoX) < 1e-6);
 
-        // ⭐ A base precisa vir junto: é o que permite a tela ser franca sobre a
-        //    diferença entre 22 perguntas e a legislatura inteira.
+        // A base precisa vir junto: é o que permite a tela ser franca sobre a
+        // diferença entre 22 perguntas e a legislatura inteira.
         Assert.Equal(lido.TotalPerguntasRespondidas, posicao.BaseDeVotacoes);
     }
 
-    /// <summary>⭐ Sem execução do grafo, a tela omite o desenho — não inventa ponto.</summary>
+    /// <summary> Sem execução do grafo, a tela omite o desenho — não inventa ponto.</summary>
     [SkippableFact]
     public async Task SemExecucaoDoGrafo_NaoDevolvePosicao()
     {
@@ -217,19 +216,19 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
 
         Assert.Contains("acordos", json, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("comparaveis", json, StringComparison.OrdinalIgnoreCase);
-        // ⛔ RF-29: a frase "X de Y" é montada na tela. A API não devolve proporção.
+        // RF-29: a frase "X de Y" é montada na tela. A API não devolve proporção.
         Assert.DoesNotContain("proporcao", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("percentual", json, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
-    /// 🔴 O teste de polaridade ponta a ponta — e a forma dele importa.
+    /// O teste de polaridade ponta a ponta — e a forma dele importa.
     ///
-    /// ⚠️ A primeira versão perguntava "quem ficou em primeiro votou NÃO na q5?". Estava
+    /// A primeira versão perguntava "quem ficou em primeiro votou NÃO na q5?". Estava
     /// errada: com quatro perguntas, o primeiro lugar é decidido pelo conjunto, não pela
     /// q5 sozinha. O teste falhou por premissa ruim, não por bug.
     ///
-    /// ⭐ A forma correta isola a variável: duas requisições que diferem APENAS na q5
+    /// A forma correta isola a variável: duas requisições que diferem APENAS na q5
     /// (polaridade -1). Para um mesmo deputado, inverter só essa resposta tem de mover a
     /// contagem de acordos em exatamente 1 — e na direção oposta à intuição, porque ali
     /// "Sim" significa rejeitar.
@@ -251,8 +250,8 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
 
             var acordosDiscordando = discordando[pessoaId];
 
-            // 🔴 polaridade -1: quem votou SIM está REJEITANDO a afirmação.
-            //    Logo, discordar da afirmação é que concorda com ele.
+            // polaridade -1: quem votou SIM está REJEITANDO a afirmação.
+            // Logo, discordar da afirmação é que concorda com ele.
             var esperado = votouNaQ5 == 1
                 ? acordosConcordando + 1                    // discordar acrescenta um acordo
                 : acordosConcordando - 1;
@@ -275,7 +274,7 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
         Assert.NotEmpty(resultado!.MaisProximos);
         Assert.NotEmpty(resultado.MaisDistantes);   // RF-28
 
-        // ⭐ o mais próximo concorda mais que o mais distante
+        // o mais próximo concorda mais que o mais distante
         var proximo = resultado.MaisProximos[0];
         var distante = resultado.MaisDistantes[0];
         Assert.True(
@@ -283,9 +282,7 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
             >= (double)distante.Acordos / distante.Comparaveis);
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // PRIVADOS — na ordem de uso
-    // ═══════════════════════════════════════════════════════════════
 
     private async Task SemearAsync() =>
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
@@ -304,7 +301,7 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
 
     /// <summary>
     /// Responde tudo "concordo", variando só a q5, e devolve os acordos por pessoa.
-    /// ⚠️ Junta próximos e distantes: o ranking não interessa aqui, a contagem sim.
+    /// Junta próximos e distantes: o ranking não interessa aqui, a contagem sim.
     /// </summary>
     private static async Task<Dictionary<long, int>> AcordosPorPessoaAsync(
         HttpClient cliente, int respostaQ5)

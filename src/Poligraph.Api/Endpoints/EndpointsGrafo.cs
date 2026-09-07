@@ -16,8 +16,6 @@ public static class EndpointsGrafo
         return app;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-
     /// <summary>RF-33 — o grafo da execução mais recente da casa.</summary>
     private static async Task<IResult> ObterAsync(
         ServicoGrafo servico, CancellationToken ct, TipoCasa casa = TipoCasa.CAMARA) =>

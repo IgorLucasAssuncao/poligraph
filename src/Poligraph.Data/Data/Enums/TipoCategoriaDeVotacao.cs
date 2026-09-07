@@ -3,7 +3,7 @@
 /// <summary>
 /// O que a votação decidia — o que dita o peso dela na matriz.
 ///
-/// 🔴 <c>DESTAQUE</c> é a categoria perigosa: em 14% das votações nominais votar "Sim"
+/// <c>DESTAQUE</c> é a categoria perigosa: em 14% das votações nominais votar "Sim"
 /// significa <b>rejeitar</b>. Ver o teste de regressão de polaridade.
 /// </summary>
 public enum TipoCategoriaDeVotacao

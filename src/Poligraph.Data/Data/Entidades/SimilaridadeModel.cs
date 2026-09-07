@@ -11,6 +11,6 @@ public class SimilaridadeModel
 
     public float Valor { get; set; }
 
-    /// <summary>🔴 Mínimo de 20 — RN-02. Abaixo disso o par é descartado.</summary>
+    /// <summary> Mínimo de 20 — RN-02. Abaixo disso o par é descartado.</summary>
     public int NVotacoesComuns { get; set; }
 }

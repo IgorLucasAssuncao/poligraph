@@ -8,16 +8,16 @@ namespace Poligraph.Tests.Integracao;
 /// Os números da página inicial (RF-33).
 ///
 /// <para>
-/// 🔴 <b>Existe por causa de um defeito real.</b> <c>votosComPosicao</c> contava
+/// <b>Existe por causa de um defeito real.</b> <c>votosComPosicao</c> contava
 /// <c>Valor != null</c> e afirmava <b>463.994</b> na Câmara, quando a posição de verdade
 /// eram <b>462.867</b>. As 1.127 de diferença eram exatamente as abstenções — e no
 /// Senado, 33.
 /// </para>
 ///
 /// <para>
-/// ⚠️ Ele passou despercebido por dois motivos que se reforçam: o fixture ⛔ não tinha
+/// Ele passou despercebido por dois motivos que se reforçam: o fixture não tinha
 /// nenhuma abstenção, e o número errado é <b>plausível</b> — ninguém confere 463.994
-/// contra 462.867 a olho. ⭐ É o mesmo modo de falha da polaridade invertida.
+/// contra 462.867 a olho. É o mesmo modo de falha da polaridade invertida.
 /// </para>
 /// </summary>
 public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(postgres)
@@ -25,9 +25,9 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
     private const string Rota = "/api/panorama";
 
     /// <summary>
-    /// 🔴 A invariante do projeto: o número exibido é o número que o cálculo usa.
+    /// A invariante do projeto: o número exibido é o número que o cálculo usa.
     /// <c>CalculadoraAfinidade.EComparavel</c> exclui a abstenção; o panorama tem de
-    /// excluir também, ou a tela afirma uma base que o método ⛔ não usou.
+    /// excluir também, ou a tela afirma uma base que o método não usou.
     /// </summary>
     [SkippableFact]
     public async Task VotosComPosicao_ExcluiAbstencao()
@@ -44,14 +44,14 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
         var naoNulos = await Db.Votos
             .CountAsync(v => v.Valor != null && v.Votacao!.Casa == TipoCasa.CAMARA);
 
-        // ⚠️ O teste só vale se o fixture TIVER abstenção — senão os dois números são
-        //    iguais e a asserção passaria com o código errado.
+        // O teste só vale se o fixture TIVER abstenção — senão os dois números são
+        // iguais e a asserção passaria com o código errado.
         Assert.True(naoNulos > comPosicao, "o fixture precisa de ao menos uma abstenção");
         Assert.Equal(comPosicao, camara.VotosComPosicao);
     }
 
     /// <summary>
-    /// ⚠️ Todas as contagens vêm do banco, ⛔ nenhuma é constante no código: a página
+    /// Todas as contagens vêm do banco, nenhuma é constante no código: a página
     /// inicial afirma o tamanho da base, e um número fixo mentiria no dia em que a
     /// ingestão mudasse.
     /// </summary>
@@ -75,7 +75,7 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
     }
 
     /// <summary>
-    /// ⭐ Público de propósito: é o que a tela de login mostra a quem ainda ⛔ não entrou.
+    /// Público de propósito: é o que a tela de login mostra a quem ainda não entrou.
     /// </summary>
     [SkippableFact]
     public async Task Panorama_NaoExigeAutenticacao()
@@ -88,8 +88,6 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
 
         resposta.EnsureSuccessStatusCode();
     }
-
-    // ═══════════════════════════════════════════════════════════════
 
     private async Task SemearAsync() =>
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);

@@ -1,6 +1,6 @@
 ﻿namespace Poligraph.Data;
 
-/// <summary>Aresta do grafo. Três tipos em CAMADAS — ⛔ não somar os pesos.</summary>
+/// <summary>Aresta do grafo. Três tipos em CAMADAS — não somar os pesos.</summary>
 public class ArestaGrafoModel
 {
     public long ExecucaoId { get; set; }

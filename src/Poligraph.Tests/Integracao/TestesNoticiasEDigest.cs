@@ -9,9 +9,7 @@ namespace Poligraph.Tests.Integracao;
 
 public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
-    // ═══════════════════════════════════════════════════════════════
     // RF-35 / RF-40 — notícias na ficha
-    // ═══════════════════════════════════════════════════════════════
 
     [SkippableFact]
     public async Task Noticias_TrazSomenteAsDeConfiancaSuficiente()
@@ -29,7 +27,7 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
         var noticias = await cliente.GetFromJsonAsync<List<NoticiaJson>>(
             $"/api/parlamentares/{pessoaId}/noticias");
 
-        // 🔴 a fraca EXISTE no banco, mas não vai à tela
+        // a fraca EXISTE no banco, mas não vai à tela
         Assert.Single(noticias!);
         Assert.Equal("Nome completo citado", noticias![0].Titulo);
         Assert.Equal(2, await Db.NoticiaPessoas.CountAsync());
@@ -46,7 +44,7 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
         var noticias = await cliente.GetFromJsonAsync<List<NoticiaJson>>(
             $"/api/parlamentares/{pessoaId}/noticias");
 
-        // ⭐ RF-47: parlamentar de baixo perfil passa semanas sem notícia — não é erro
+        // RF-47: parlamentar de baixo perfil passa semanas sem notícia — não é erro
         Assert.Empty(noticias!);
     }
 
@@ -80,7 +78,7 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
         Assert.Equal("Recente", noticias![0].Titulo);
     }
 
-    /// <summary>🔴 RF-38 — o banco recusa trecho longo. A regra é constraint, não disciplina.</summary>
+    /// <summary> RF-38 — o banco recusa trecho longo. A regra é constraint, não disciplina.</summary>
     [SkippableFact]
     public async Task Noticia_ComTrechoLongoDemais_ERejeitadaPeloBanco()
     {
@@ -120,9 +118,7 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // RF-49 a RF-53 — digest por e-mail
-    // ═══════════════════════════════════════════════════════════════
 
     [SkippableFact]
     public async Task Digest_SoVaiParaQuemTemOptInVivo()
@@ -141,7 +137,7 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
         Assert.Equal(comOptIn, digests[0].UsuarioId);
     }
 
-    /// <summary>⭐ Revogar tira da lista pela consulta, não por `if` no meio do envio.</summary>
+    /// <summary> Revogar tira da lista pela consulta, não por `if` no meio do envio.</summary>
     [SkippableFact]
     public async Task Digest_NaoVaiParaQuemRevogou()
     {
@@ -158,7 +154,7 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
         Assert.Empty(await MontarDigestsAsync());
     }
 
-    /// <summary>⭐ Sem notícia, sem e-mail. Digest vazio é spam.</summary>
+    /// <summary> Sem notícia, sem e-mail. Digest vazio é spam.</summary>
     [SkippableFact]
     public async Task Digest_SemNoticiaNoPeriodo_NaoEnviaNada()
     {
@@ -171,7 +167,7 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
     }
 
     /// <summary>
-    /// 🔴 RF-53 — o assunto não pode conter nome de parlamentar.
+    /// RF-53 — o assunto não pode conter nome de parlamentar.
     ///
     /// "Novidades sobre o Deputado Fulano" na caixa de entrada é convicção política
     /// atravessando o Gmail e a tela de bloqueio do celular.
@@ -191,12 +187,12 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
 
         Assert.DoesNotContain(nome, digest.Assunto);
         Assert.Equal(ServicoDigest.Assunto, digest.Assunto);
-        // ⭐ mas o nome APARECE dentro, no "porque você segue X" (RF-46)
+        // mas o nome APARECE dentro, no "porque você segue X" (RF-46)
         Assert.Contains(digest.Itens, i => i.PorCausaDe == nome);
     }
 
     /// <summary>
-    /// ⚠️ O token é reaproveitado entre envios.
+    /// O token é reaproveitado entre envios.
     ///
     /// Gerar um por e-mail encheria a tabela e faria links antigos pararem de
     /// funcionar — e link morto vira "marcar como spam", derrubando a reputação.
@@ -234,9 +230,7 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
         Assert.Equal("Do seguido", digest.Itens[0].Titulo);
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // PRIVADOS — na ordem de uso
-    // ═══════════════════════════════════════════════════════════════
 
     private async Task SemearAsync() =>
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);

@@ -8,8 +8,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 builder.Services.AddOpenApi();
 
-// 🔴 UseSnakeCaseNamingConvention não é estilo: o ETL Python lê estas mesmas tabelas.
-// Removê-lo quebra o ETL sem erro de compilação.
 builder.AddNpgsqlDbContext<PoligraphDb>(
     connectionName: "poligraph",
     configureDbContextOptions: opcoes => opcoes.UseSnakeCaseNamingConvention());

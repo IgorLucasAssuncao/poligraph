@@ -8,14 +8,14 @@ namespace Poligraph.Tests.Integracao;
 /// UM Postgres para toda a suíte de integração.
 ///
 /// <para>
-/// 🔴 Antes disto a base era <c>IAsyncLifetime</c> direto, e o xUnit instancia a classe
+/// Antes disto a base era <c>IAsyncLifetime</c> direto, e o xUnit instancia a classe
 /// de teste <b>uma vez por método</b> — subia um container e aplicava a migration
 /// inteira <b>a cada teste</b>. Eram 126 containers e 126 migrations, o que o runner do
-/// GitHub ⛔ não aguentava.
+/// GitHub não aguentava.
 /// </para>
 ///
 /// <para>
-/// ⚠️ O isolamento continua por teste: o <see cref="LimparAsync"/> trunca tudo antes de
+/// O isolamento continua por teste: o <see cref="LimparAsync"/> trunca tudo antes de
 /// cada um. É o mesmo desenho do lado Python (<c>conftest.py</c>), de propósito.
 /// </para>
 /// </summary>
@@ -80,10 +80,8 @@ public class FixturePostgres : IAsyncLifetime
         await db.Database.ExecuteSqlRawAsync(_limpeza);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-
     /// <summary>
-    /// A lista de tabelas sai do MODELO do EF, ⛔ não de uma lista escrita à mão — que
+    /// A lista de tabelas sai do MODELO do EF, não de uma lista escrita à mão — que
     /// silenciosamente deixaria de limpar toda tabela nova.
     /// </summary>
     private static string MontarLimpeza(PoligraphDb db)

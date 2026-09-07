@@ -3,19 +3,17 @@
 namespace Poligraph.Tests.Unidade;
 
 /// <summary>
-/// 🔴 API3 — o teste mais importante do projeto.
+/// API3 — o teste mais importante do projeto.
 ///
 /// Em 14% das votações nominais "Sim" significa REJEITAR. Um sinal invertido não aparece
 /// na tela: aparece como um número plausível e errado, e passa pela banca.
 ///
-/// ⚠️ Os casos de polaridade -1 são o teste inteiro. Os de +1 passam mesmo com o código
+/// Os casos de polaridade -1 são o teste inteiro. Os de +1 passam mesmo com o código
 /// errado — por isso estão marcados.
 /// </summary>
 public class TestesPolaridade
 {
-    // ═══════════════════════════════════════════════════════════════
     // Polaridade +1 — texto principal. "Sim" aprova a afirmação.
-    // ═══════════════════════════════════════════════════════════════
 
     [Theory]
     [InlineData( 1,  1, true )]   // parlamentar Sim   · cidadão concorda → acordo
@@ -29,16 +27,14 @@ public class TestesPolaridade
         Assert.Equal(esperado, CalculadoraAfinidade.Concordam(resposta, posicao));
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // 🔴 Polaridade -1 — destaque supressivo. "Sim" REJEITA a afirmação.
-    //    Estes quatro casos são a razão de existir deste arquivo.
-    // ═══════════════════════════════════════════════════════════════
+    // Polaridade -1 — destaque supressivo. "Sim" REJEITA a afirmação.
+    // Estes quatro casos são a razão de existir deste arquivo.
 
     [Theory]
-    [InlineData( 1,  1, false)]   // 🔴 parlamentar Sim = rejeitar · cidadão concorda → DESACORDO
-    [InlineData( 1, -1, true )]   // 🔴 parlamentar Sim = rejeitar · cidadão discorda → ACORDO
-    [InlineData(-1,  1, true )]   // 🔴 parlamentar Não = manter   · cidadão concorda → ACORDO
-    [InlineData(-1, -1, false)]   // 🔴
+    [InlineData( 1,  1, false)]   // parlamentar Sim = rejeitar · cidadão concorda → DESACORDO
+    [InlineData( 1, -1, true )]   // parlamentar Sim = rejeitar · cidadão discorda → ACORDO
+    [InlineData(-1,  1, true )]   // parlamentar Não = manter · cidadão concorda → ACORDO
+    [InlineData(-1, -1, false)]
     public void PolaridadeNegativa_VotoInverteOSentidoDaAfirmacao(
         short voto, short resposta, bool esperado)
     {
@@ -47,7 +43,7 @@ public class TestesPolaridade
     }
 
     /// <summary>
-    /// ⭐ O invariante em uma frase: inverter a polaridade inverte o resultado.
+    /// O invariante em uma frase: inverter a polaridade inverte o resultado.
     /// Se este teste falhar, a polaridade parou de ser aplicada em algum lugar.
     /// </summary>
     [Theory]
@@ -63,9 +59,7 @@ public class TestesPolaridade
         Assert.NotEqual(positiva, negativa);
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // Comparabilidade — o que sai do DENOMINADOR
-    // ═══════════════════════════════════════════════════════════════
 
     [Fact]
     public void CidadaoRespondeuNaoSei_PerguntaSaiDaConta()
@@ -89,7 +83,7 @@ public class TestesPolaridade
     }
 
     /// <summary>
-    /// ⚠️ Ausência NÃO é discordância. Se virasse, quem falta muito pareceria discordar de
+    /// Ausência NÃO é discordância. Se virasse, quem falta muito pareceria discordar de
     /// todo mundo — e o ranking mediria presença, não afinidade.
     /// </summary>
     [Fact]
@@ -105,15 +99,13 @@ public class TestesPolaridade
         var resultado = CalculadoraAfinidade.Calcular(42, respostas, posicoes);
 
         Assert.Equal(1, resultado.Acordos);
-        Assert.Equal(1, resultado.Comparaveis);   // ⭐ não 2
+        Assert.Equal(1, resultado.Comparaveis);   // não 2
     }
 
-    // ═══════════════════════════════════════════════════════════════
     // O detalhe — "em quais perguntas"
-    // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// 🔴 O detalhe corre o MESMO risco de polaridade que o total, e é pior quando erra:
+    /// O detalhe corre o MESMO risco de polaridade que o total, e é pior quando erra:
     /// um total invertido é um número plausível, mas uma lista invertida diz ao cidadão,
     /// por escrito, que ele concordou justamente onde discordou.
     /// </summary>
@@ -135,7 +127,7 @@ public class TestesPolaridade
     }
 
     /// <summary>
-    /// ⭐ As duas listas somadas dão <c>Comparaveis</c>, ⛔ nunca o total respondido —
+    /// As duas listas somadas dão <c>Comparaveis</c>, nunca o total respondido —
     /// é a mesma regra do denominador, e é o que permite a tela dizer quantas ficaram
     /// de fora sem recontar nada.
     /// </summary>
@@ -167,8 +159,8 @@ public class TestesPolaridade
     }
 
     /// <summary>
-    /// ⛔ Pergunta que o parlamentar ⛔ não votou fica fora das DUAS listas. Aparecer em
-    /// "discordaram" seria afirmar uma posição que ele ⛔ nunca tomou.
+    /// Pergunta que o parlamentar não votou fica fora das DUAS listas. Aparecer em
+    /// "discordaram" seria afirmar uma posição que ele nunca tomou.
     /// </summary>
     [Fact]
     public void Detalhe_AusenteNaoApareceEmNenhumaDasListas()

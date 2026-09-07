@@ -6,6 +6,9 @@ namespace Poligraph.Api.Endpoints;
 
 public static class EndpointsAutenticacao
 {
+    /// <remarks>
+    /// <para>O `(Delegate)` muda o COMPORTAMENTO da rota, não a documentação: com `HttpContext` como único parâmetro, o C# elege a sobrecarga `MapPost(string, RequestDelegate)`, que DESCARTA o `IResult` e some do OpenAPI. achados/032. O `ASP0016` é `error` para não voltar calado.</para>
+    /// </remarks>
     public static IEndpointRouteBuilder MapearAutenticacao(this IEndpointRouteBuilder app)
     {
         var grupo = app.MapGroup("/api/auth").WithTags("Autenticação");
@@ -14,10 +17,6 @@ public static class EndpointsAutenticacao
              .Produces<UsuarioLogadoDto>()
              .Produces(StatusCodes.Status401Unauthorized);
 
-        // 🔴 O `(Delegate)` muda o COMPORTAMENTO da rota, ⛔ não a documentação: com
-        //    `HttpContext` como único parâmetro, o C# elege a sobrecarga
-        //    `MapPost(string, RequestDelegate)`, que DESCARTA o `IResult` e some do
-        //    OpenAPI. 📐 achados/032. O `ASP0016` é `error` para ⛔ não voltar calado.
         grupo.MapPost("/logout", (Delegate)SairAsync)
              .Produces(StatusCodes.Status204NoContent);
 
@@ -37,12 +36,13 @@ public static class EndpointsAutenticacao
         return app;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-
     /// <summary>
     /// O único lugar do sistema onde o `id_token` do Google aparece.
-    /// ⭐ Ele é validado, usado e DESCARTADO — nunca vai ao banco.
+    /// Ele é validado, usado e DESCARTADO — nunca vai ao banco.
     /// </summary>
+    /// <remarks>
+    /// <para>o id_token morre aqui</para>
+    /// </remarks>
     private static async Task<IResult> EntrarAsync(
         RequisicaoLoginDto requisicao,
         HttpContext contexto,
@@ -55,7 +55,6 @@ public static class EndpointsAutenticacao
 
         var usuario = await contas.SalvarPerfilAsync(perfil, ct);
         await SessaoDoUsuario.EmitirAsync(contexto, usuario);
-        // o id_token morre aqui
 
         return Results.Ok(new UsuarioLogadoDto(usuario.Nome, usuario.FotoUrl));
     }
@@ -82,7 +81,7 @@ public static class EndpointsAutenticacao
             ? Results.Ok(usuario)
             : Results.Unauthorized();
 
-    /// <summary>🔴 LGPD art. 18, VI — a exclusão é FÍSICA. Ver `ServicoContas.ExcluirAsync`.</summary>
+    /// <summary> LGPD art. 18, VI — a exclusão é FÍSICA. Ver `ServicoContas.ExcluirAsync`.</summary>
     private static async Task<IResult> ExcluirContaAsync(
         ClaimsPrincipal principal, HttpContext contexto,
         ServicoContas contas, CancellationToken ct)

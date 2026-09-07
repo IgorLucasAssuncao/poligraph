@@ -14,8 +14,6 @@ public static class EndpointsPanorama
         return app;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-
     /// <summary>RF-33 — os números da base, para a página inicial.</summary>
     private static async Task<IResult> ObterAsync(
         ServicoPanorama servico, CancellationToken ct) =>

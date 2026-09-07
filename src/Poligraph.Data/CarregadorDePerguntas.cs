@@ -11,10 +11,10 @@ public record PerguntaCurada(
 /// <summary>
 /// Carrega as perguntas curadas do arquivo JSON versionado.
 ///
-/// 🔴 Diferente do <see cref="SemeadorDesenvolvimento"/>: isto é CONTEÚDO, não dado de
+/// Diferente do <see cref="SemeadorDesenvolvimento"/>: isto é CONTEÚDO, não dado de
 /// teste. Roda em todo ambiente, produção incluída — a curadoria é o produto.
 ///
-/// ⚠️ Mas continua fora de <c>HasData()</c>. A lista muda quando a curadoria avança, e
+/// Mas continua fora de <c>HasData()</c>. A lista muda quando a curadoria avança, e
 /// conteúdo que muda dentro de migration exige uma migration por revisão.
 /// </summary>
 public static class CarregadorDePerguntas
@@ -65,9 +65,9 @@ public static class CarregadorDePerguntas
 
         if (curadas.Count == 0) return "curadoria vazia: nenhuma pergunta nos lotes.";
 
-        // ⚠️ PerguntaModel sem a votação no banco viraria violação de chave estrangeira. É
-        //    caso NORMAL, não erro: a curadoria pode citar 2023 antes de 2023 ser
-        //    ingerido. Fica de fora e o número aparece no log.
+        // PerguntaModel sem a votação no banco viraria violação de chave estrangeira. É
+        // caso NORMAL, não erro: a curadoria pode citar 2023 antes de 2023 ser
+        // ingerido. Fica de fora e o número aparece no log.
         var votacoes = curadas.Select(p => p.VotacaoId).ToList();
         var existentes = await db.Votacoes.AsNoTracking()
             .Where(v => votacoes.Contains(v.Id))
@@ -88,8 +88,6 @@ public static class CarregadorDePerguntas
             : resumo + $"; {semVotacao} sem a votação no banco — ingira os anos que faltam.";
     }
 
-    // ═══════════════════════════════════════════════════════════════
-
     private static List<PerguntaCurada> Ler(string caminho)
     {
         using var fluxo = File.OpenRead(caminho);
@@ -105,10 +103,10 @@ public static class CarregadorDePerguntas
     };
 
     /// <summary>
-    /// ⭐ Idempotente: reescrever o texto de uma pergunta e recarregar atualiza, não
+    /// Idempotente: reescrever o texto de uma pergunta e recarregar atualiza, não
     /// duplica. A curadoria é iterativa por natureza.
     ///
-    /// 🔴 Perguntas fora do arquivo são DESATIVADAS, não apagadas. Apagar levaria junto
+    /// Perguntas fora do arquivo são DESATIVADAS, não apagadas. Apagar levaria junto
     /// o histórico de quem já respondeu; desativar tira da tela e preserva o registro.
     /// </summary>
     private static async Task<int> AplicarAsync(

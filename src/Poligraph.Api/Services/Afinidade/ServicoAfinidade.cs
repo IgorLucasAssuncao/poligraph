@@ -19,23 +19,18 @@ public class ServicoAfinidade(PoligraphDb db)
 
     private readonly PoligraphDb _db = db;
 
-    // ═══════════════════════════════════════════════════════════════
-    // PÚBLICOS
-    // ═══════════════════════════════════════════════════════════════
-
     /// <summary>
-    /// ⛔ Devolve <c>null</c> quando nenhuma casa tem base comparável — é caso de
-    /// ERRO, ⛔ não de resposta vazia: a tela precisa dizer o que houve, e ⛔ não
+    /// Devolve <c>null</c> quando nenhuma casa tem base comparável — é caso de
+    /// ERRO, não de resposta vazia: a tela precisa dizer o que houve, e não
     /// mostrar duas listas em branco. Quem traduz isso em 422 é o endpoint.
     /// </summary>
+    /// <remarks>
+    /// <para>O cálculo roda UMA VEZ POR CASA, sobre as perguntas daquela casa. Não é arrumação: o piso de comparáveis é uma fração das perguntas respondidas, e aplicá-lo sobre o total das duas casas eliminaria todos os senadores. Com 21 da Câmara e 7 do Senado, o piso seria 17 e um senador tem no máximo 7.</para>
+    /// <para>Nenhuma casa com base comparável é caso de erro, não de resposta vazia: a tela precisa dizer o que houve, e não mostrar duas listas em branco.</para>
+    /// </remarks>
     public async Task<RespostaAfinidadeDto?> CalcularAsync(
         IReadOnlyList<RespostaCidadao> opinadas, CancellationToken ct)
     {
-        // O cálculo roda UMA VEZ POR CASA, sobre as perguntas daquela casa.
-        //
-        // Não é arrumação: o piso de comparáveis é uma fração das perguntas respondidas,
-        // e aplicá-lo sobre o total das duas casas eliminaria todos os senadores. Com 21
-        // da Câmara e 7 do Senado, o piso seria 17 e um senador tem no máximo 7.
         var casaDaPergunta = await CasaDasPerguntasAsync(opinadas, ct);
         var votosPorPessoa = await CarregarVotosAsync(opinadas, ct);
 
@@ -61,8 +56,6 @@ public class ServicoAfinidade(PoligraphDb db)
                 PosicaoNoGrafo: await PosicionarAsync(casa, resultados, daCasa.Count, ct)));
         }
 
-        // Nenhuma casa com base comparável é caso de erro, não de resposta vazia: a tela
-        // precisa dizer o que houve, e não mostrar duas listas em branco.
         if (porCasa.Count == 0) return null;
 
         return new RespostaAfinidadeDto(
@@ -94,7 +87,7 @@ public class ServicoAfinidade(PoligraphDb db)
 
     /// <summary>
     /// Uma consulta só, para todas as perguntas respondidas.
-    /// ⚠️ Um `foreach` com consulta dentro seria N+1 sobre ~640 parlamentares.
+    /// Um `foreach` com consulta dentro seria N+1 sobre ~640 parlamentares.
     /// </summary>
     public async Task<Dictionary<long, Dictionary<string, PosicaoParlamentar>>>
         CarregarVotosAsync(
@@ -128,6 +121,9 @@ public class ServicoAfinidade(PoligraphDb db)
         return porPessoa;
     }
 
+    /// <remarks>
+    /// <para>sem o piso, quem votou em 2 e concordou nas 2 lideraria com 100%</para>
+    /// </remarks>
     public List<ResultadoAfinidade> CalcularParaTodos(
         IReadOnlyList<RespostaCidadao> opinadas,
         Dictionary<long, Dictionary<string, PosicaoParlamentar>> votosPorPessoa)
@@ -138,7 +134,6 @@ public class ServicoAfinidade(PoligraphDb db)
         {
             var resultado = CalculadoraAfinidade.Calcular(pessoaId, opinadas, posicoes);
 
-            // 🔴 sem o piso, quem votou em 2 e concordou nas 2 lideraria com 100%
             if (CalculadoraAfinidade.TemBaseSuficiente(resultado, opinadas.Count))
                 resultados.Add(resultado);
         }
@@ -146,10 +141,9 @@ public class ServicoAfinidade(PoligraphDb db)
         return resultados;
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // PRIVADOS — na ordem de uso
-    // ═══════════════════════════════════════════════════════════════
-
+    /// <remarks>
+    /// <para>partido e UF vêm do voto mais recente — é o registro histórico</para>
+    /// </remarks>
     private async Task<Dictionary<long, (string Nome, string Partido, string Uf)>>
         CarregarFichasAsync(
             List<ResultadoAfinidade> resultados, CancellationToken ct)
@@ -162,7 +156,6 @@ public class ServicoAfinidade(PoligraphDb db)
             {
                 p.Id,
                 p.NomeExibicao,
-                // partido e UF vêm do voto mais recente — é o registro histórico
                 Ultimo = p.Votos
                     .OrderByDescending(v => v.Votacao!.Data)
                     .Select(v => new { v.PartidoNoVoto, v.UfNoVoto })
@@ -176,9 +169,9 @@ public class ServicoAfinidade(PoligraphDb db)
     }
 
     /// <summary>
-    /// ⚠️ O detalhe é calculado só para os <see cref="QuantidadeExibida"/> que aparecem,
-    /// ⛔ não para os ~640 do cálculo: são duas listas de ids por parlamentar, e gerá-las
-    /// para quem ⛔ não vai à tela seria trabalho jogado fora em toda requisição.
+    /// O detalhe é calculado só para os <see cref="QuantidadeExibida"/> que aparecem,
+    /// não para os ~640 do cálculo: são duas listas de ids por parlamentar, e gerá-las
+    /// para quem não vai à tela seria trabalho jogado fora em toda requisição.
     /// </summary>
     private List<ParlamentarAfimDto> Montar(
         IOrderedEnumerable<ResultadoAfinidade> ordenados,
@@ -203,28 +196,28 @@ public class ServicoAfinidade(PoligraphDb db)
     /// <summary>
     /// Coloca o cidadão no grafo, pelo centroide ponderado dos mais parecidos.
     ///
-    /// ⚠️ Ponderado pela concordância AO QUADRADO. Sem elevar, quem concordou em 60%
+    /// Ponderado pela concordância AO QUADRADO. Sem elevar, quem concordou em 60%
     /// puxa quase tanto quanto quem concordou em 95%, e todo mundo acaba no meio do
     /// desenho — que é o pior resultado possível: parece medida e não separa nada.
     ///
-    /// ⚠️ A comunidade é a MODA entre os vizinhos, não a do primeiro colocado. Com o
+    /// A comunidade é a MODA entre os vizinhos, não a do primeiro colocado. Com o
     /// topo empatado — e a medição mostrou empate mediano de 30 —, olhar só o primeiro
     /// seria sortear entre gente que a conta não distingue.
     ///
-    /// ⛔ Devolve `null` quando não há execução do grafo, e a tela omite o desenho em
+    /// Devolve `null` quando não há execução do grafo, e a tela omite o desenho em
     /// vez de inventar um ponto.
     /// </summary>
+    /// <remarks>
+    /// <para>A execução é a mais recente DAQUELA CASA. Antes do Senado havia uma só, e pegar "a mais recente" funcionava por acidente; agora existem duas, e a ordem entre elas depende de qual ETL rodou por último. Posicionar o cidadão no grafo do Senado a partir das respostas da Câmara daria um ponto plausível sobre uma figura que não é a dele.</para>
+    /// <para>Todos com concordância zero: dividir daria NaN, e NaN vira `null` no JSON sem erro nenhum — a tela receberia um ponto fantasma.</para>
+    /// <para>Quem PESOU, não quem tem métrica: concordância zero não posiciona.</para>
+    /// </remarks>
     private async Task<PosicaoDoCidadaoDto?> PosicionarAsync(
         TipoCasa casa,
         List<ResultadoAfinidade> resultados,
         int perguntasRespondidas,
         CancellationToken ct)
     {
-        // A execução é a mais recente DAQUELA CASA. Antes do Senado havia uma só, e
-        // pegar "a mais recente" funcionava por acidente; agora existem duas, e a
-        // ordem entre elas depende de qual ETL rodou por último. Posicionar o cidadão
-        // no grafo do Senado a partir das respostas da Câmara daria um ponto plausível
-        // sobre uma figura que não é a dele.
         var execucaoId = await _db.Execucoes.AsNoTracking()
             .Where(e => e.Status == TipoStatusDaExecucao.CONCLUIDA && e.Casa == casa)
             .OrderByDescending(e => e.Id)
@@ -267,8 +260,6 @@ public class ServicoAfinidade(PoligraphDb db)
                 comunidades[comunidade] = comunidades.GetValueOrDefault(comunidade) + peso;
         }
 
-        // ⚠️ Todos com concordância zero: dividir daria NaN, e NaN vira `null` no JSON
-        //    sem erro nenhum — a tela receberia um ponto fantasma.
         if (somaDosPesos <= 0) return null;
 
         return new PosicaoDoCidadaoDto(
@@ -277,7 +268,6 @@ public class ServicoAfinidade(PoligraphDb db)
             Comunidade: comunidades.Count == 0
                 ? null
                 : comunidades.OrderByDescending(c => c.Value).First().Key,
-            // ⚠️ Quem PESOU, não quem tem métrica: concordância zero não posiciona.
             VizinhosUsados: contribuiram,
             BaseDeVotacoes: perguntasRespondidas);
     }

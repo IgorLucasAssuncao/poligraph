@@ -6,6 +6,6 @@ public enum TipoMetodoDeAutor
     AUTOMATICO,
     MANUAL,
 
-    /// <summary>⚠️ Registrado, ⛔ não descartado: a lacuna é resultado, não sujeira.</summary>
+    /// <summary> Registrado, não descartado: a lacuna é resultado, não sujeira.</summary>
     NAO_RESOLVIDO,
 }
