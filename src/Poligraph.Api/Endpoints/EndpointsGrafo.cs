@@ -8,7 +8,6 @@ public static class EndpointsGrafo
 {
     public static IEndpointRouteBuilder MapearGrafo(this IEndpointRouteBuilder app)
     {
-        // A etiqueta era "GrafoDto" — nome de DTO vazando para a documentação da API.
         var grupo = app.MapGroup("/api/grafo").WithTags("Grafo");
 
         grupo.MapGet("/", ObterAsync)

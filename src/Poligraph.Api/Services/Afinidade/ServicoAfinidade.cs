@@ -7,9 +7,8 @@ namespace Poligraph.Api.Services;
 /// <summary>
 /// O cálculo da afinidade: dadas as respostas do cidadão, quem votou como ele.
 ///
-/// ⚠️ As três primitivas públicas — casa de cada pergunta, votos e cálculo em lote — são
-/// usadas também pelo <see cref="ServicoQuestionario"/>, que precisa saber quem está
-/// empatado para escolher a próxima pergunta.
+/// As três primitivas públicas — casa de cada pergunta, votos e cálculo em lote — servem
+/// também ao <see cref="ServicoQuestionario"/>.
 /// </summary>
 public class ServicoAfinidade(PoligraphDb db)
 {

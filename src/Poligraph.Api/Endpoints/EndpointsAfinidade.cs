@@ -9,16 +9,12 @@ public static class EndpointsAfinidade
     {
         var grupo = app.MapGroup("/api/afinidade").WithTags("Afinidade");
 
-        // 🔴 CT3 — `.Produces<T>()` ⛔ não é enfeite: sem ele o OpenAPI publica a rota
-        //    com zero esquema de resposta.
         grupo.MapGet("/perguntas", ObterPerguntasAsync)
              .Produces<QuestionarioDto>();
 
         grupo.MapPost("/perguntas/desempate", ObterDesempateAsync)
              .Produces<IReadOnlyList<PerguntaPublicaDto>>();
 
-        // ⚠️ O 422 é resposta PREVISTA (CT7), ⛔ não falha: abaixo do piso de respostas
-        //    o resultado ⛔ não significa nada, e o front trata esse código.
         grupo.MapPost("/", CalcularAsync)
              .Produces<RespostaAfinidadeDto>()
              .Produces(StatusCodes.Status422UnprocessableEntity);
@@ -38,11 +34,6 @@ public static class EndpointsAfinidade
         CancellationToken ct) =>
         Results.Ok(await questionario.DesempatarAsync(requisicao.Respostas, ct));
 
-    /// <summary>
-    /// 🔴 Os dois 422 moram AQUI, ⛔ não no serviço: eles carregam campos diferentes —
-    /// um leva <c>respondidas</c> e <c>minimo</c>, que o front usa na mensagem — e a
-    /// forma da resposta HTTP é assunto do endpoint.
-    /// </summary>
     private static async Task<IResult> CalcularAsync(
         RequisicaoAfinidadeDto requisicao,
         ServicoQuestionario questionario,

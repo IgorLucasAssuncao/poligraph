@@ -9,9 +9,6 @@ public static class EndpointsParlamentares
     {
         var grupo = app.MapGroup("/api/parlamentares").WithTags("Parlamentares");
 
-        // 🔴 CT3 — `.Produces<T>()` ⛔ não é enfeite de documentação. O handler devolve
-        //    `Task<IResult>`, e daí o ASP.NET ⛔ não infere NADA: o OpenAPI saía com a
-        //    rota e zero esquema de resposta.
         grupo.MapGet("/", ListarAsync)
              .Produces<IReadOnlyList<ParlamentarNaListaDto>>();
 

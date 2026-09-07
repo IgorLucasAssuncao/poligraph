@@ -9,16 +9,8 @@ namespace Poligraph.Api.Services;
 /// <summary>
 /// O cookie de sessão: o que ele carrega, como é emitido e como é lido.
 ///
-/// <para>
 /// ⛔ <b>Nenhum token é armazenado</b> — nem o <c>id_token</c> do Google, nem sessão em
 /// tabela. O cookie é assinado, e a identidade sai das duas claims abaixo.
-/// </para>
-///
-/// <para>
-/// ⚠️ Estas constantes eram lidas de <c>EndpointsAutenticacao</c> pela configuração de
-/// autenticação e por <c>EndpointsSeguir</c> — um endpoint alcançando o estático de
-/// outro. Elas são da SESSÃO, ⛔ não de um endpoint.
-/// </para>
 /// </summary>
 public static class SessaoDoUsuario
 {
@@ -26,9 +18,8 @@ public static class SessaoDoUsuario
     public const string ClaimSessao = "sessao_versao";
 
     /// <summary>
-    /// ⚠️ <c>InvariantCulture</c> ⛔ não é preciosismo: a claim é lida de volta por
-    /// <see cref="IdDoUsuario"/> e pela validação do cookie. Formatar número na cultura
-    /// do processo faria a leitura depender de onde o container roda.
+    /// Emite o cookie assinado. As claims são numéricas e lidas de volta por
+    /// <see cref="IdDoUsuario"/> — daí o <c>InvariantCulture</c>.
     /// </summary>
     public static async Task EmitirAsync(HttpContext contexto, UsuarioModel usuario)
     {

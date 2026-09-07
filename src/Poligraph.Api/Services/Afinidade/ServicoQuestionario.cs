@@ -7,8 +7,7 @@ namespace Poligraph.Api.Services;
 /// <summary>
 /// Quais perguntas o cidadão vê, e quantas ele precisa responder.
 ///
-/// ⚠️ Depende do <see cref="ServicoAfinidade"/> porque o desempate precisa saber QUEM
-/// está empatado — e isso é um cálculo de afinidade sobre as respostas já dadas.
+/// Usa o <see cref="ServicoAfinidade"/>: o desempate precisa saber quem está empatado.
 /// </summary>
 public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
 {

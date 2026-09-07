@@ -4,12 +4,7 @@ using Poligraph.Data;
 
 namespace Poligraph.Api.Services;
 
-/// <summary>
-/// Lista e ficha do parlamentar — quem ele é, como votou e com quem se parece.
-///
-/// ⛔ Dinheiro ⛔ não entra aqui: cota, emendas e financiamento têm serviços próprios,
-/// porque são três fontes diferentes — Câmara, Portal da Transparência e TSE.
-/// </summary>
+/// <summary>Lista e ficha do parlamentar — quem ele é, como votou e com quem se parece.</summary>
 public class ServicoParlamentares(PoligraphDb db)
 {
     private const int LimiteLista = 100;

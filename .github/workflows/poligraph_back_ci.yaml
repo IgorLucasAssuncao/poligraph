@@ -1,0 +1,144 @@
+name: Back (.NET)
+
+# Caminhos: o back não roda quando só o front ou o ETL mudam.
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'src/Poligraph.*/**'
+      - 'Poligraph.slnx'
+      - '.editorconfig'
+      - 'docker/Dockerfile.api'
+      - 'docker/Dockerfile.migrations'
+      - '.github/workflows/poligraph_back_ci.yaml'
+  pull_request:
+    paths:
+      - 'src/Poligraph.*/**'
+      - 'Poligraph.slnx'
+      - '.editorconfig'
+      - 'docker/Dockerfile.api'
+      - 'docker/Dockerfile.migrations'
+      - '.github/workflows/poligraph_back_ci.yaml'
+  workflow_dispatch:
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: 1
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Cache do NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      # Só os unitários. Os de integração sobem um Postgres por classe e rodam
+      # localmente com `dotnet test` sem filtro.
+      - name: Testes unitários
+        run: dotnet test --no-build -c Release --filter "FullyQualifiedName~Unidade"
+
+      - name: Instalar dotnet-ef
+        run: dotnet tool install --global dotnet-ef
+
+      # Gera e VALIDA o script. Não aplica: quem aplica é um container dentro do VPS.
+      - name: Migration gera script válido
+        run: dotnet ef migrations script --idempotent -p src/Poligraph.Data -o migration.sql
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: migration-sql
+          path: migration.sql
+
+      - name: Imagem da API
+        run: docker build -f docker/Dockerfile.api -t poligraph-api:ci .
+
+      - name: Imagem de migrations
+        run: docker build -f docker/Dockerfile.migrations -t poligraph-migrations:ci .
+
+  qualidade:
+    name: Qualidade
+    runs-on: ubuntu-latest
+
+    # env do JOB: o contexto `env` só chega ao `if` de um passo assim.
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_PROJETO: IgorLucasAssuncao_poligraph_back
+      SONAR_ORG: igorlucasassuncao
+
+    steps:
+      - name: Aviso quando o segredo não existe
+        if: env.SONAR_TOKEN == ''
+        run: echo "::warning title=Sonar não rodou::SONAR_TOKEN ausente — nada foi analisado."
+
+      - uses: actions/checkout@v4
+        if: env.SONAR_TOKEN != ''
+        with:
+          # Clone raso apaga o histórico, e o quality gate decide sobre código NOVO.
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        if: env.SONAR_TOKEN != ''
+        with:
+          java-version: '21'
+          distribution: zulu
+
+      - uses: actions/setup-dotnet@v4
+        if: env.SONAR_TOKEN != ''
+        with:
+          dotnet-version: '10.x'
+
+      - name: Cache do Sonar
+        if: env.SONAR_TOKEN != ''
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Cache do NuGet
+        if: env.SONAR_TOKEN != ''
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Cache do scanner
+        id: cache-scanner
+        if: env.SONAR_TOKEN != ''
+        uses: actions/cache@v4
+        with:
+          path: ~/.dotnet/tools
+          key: ${{ runner.os }}-sonar-scanner-v1
+
+      - name: Instalar o scanner
+        if: env.SONAR_TOKEN != '' && steps.cache-scanner.outputs.cache-hit != 'true'
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      # O scanner de C# precisa ENVOLVER o build: ele lê a saída do compilador.
+      - name: Analisar
+        if: env.SONAR_TOKEN != ''
+        run: |
+          dotnet-sonarscanner begin /k:"$SONAR_PROJETO" /o:"$SONAR_ORG" /d:sonar.token="$SONAR_TOKEN" /d:sonar.scanner.scanAll=false /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" /d:sonar.exclusions="**/bin/**,**/obj/**,src/Poligraph.Data/Migrations/**"
+
+          dotnet build -c Release
+          dotnet test --no-build -c Release --filter "FullyQualifiedName~Unidade" --collect:"XPlat Code Coverage;Format=opencover"
+
+          dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"

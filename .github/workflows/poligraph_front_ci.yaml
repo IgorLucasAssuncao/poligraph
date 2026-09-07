@@ -1,0 +1,93 @@
+name: Front (React)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'src/web/**'
+      - 'docker/Dockerfile.web'
+      - 'docker/nginx.conf'
+      - '.github/workflows/poligraph_front_ci.yaml'
+  pull_request:
+    paths:
+      - 'src/web/**'
+      - 'docker/Dockerfile.web'
+      - 'docker/nginx.conf'
+      - '.github/workflows/poligraph_front_ci.yaml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: src/web/package-lock.json
+
+      # --ignore-scripts: nenhum pacote da árvore declara install/postinstall,
+      # conferido com `npm query`.
+      - run: npm ci --ignore-scripts
+
+      - run: npm run lint
+
+      - run: npm test
+
+      # `tsc -b` roda aqui: o vitest não faz checagem de tipo, então a suíte pode
+      # ficar verde sobre código que não compila.
+      - run: npm run build
+
+      - name: Imagem do front
+        working-directory: .
+        run: docker build -f docker/Dockerfile.web -t poligraph-web:ci .
+
+  qualidade:
+    name: Qualidade
+    runs-on: ubuntu-latest
+
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    steps:
+      - name: Aviso quando o segredo não existe
+        if: env.SONAR_TOKEN == ''
+        run: echo "::warning title=Sonar não rodou::SONAR_TOKEN ausente — nada foi analisado."
+
+      - uses: actions/checkout@v4
+        if: env.SONAR_TOKEN != ''
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        if: env.SONAR_TOKEN != ''
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: src/web/package-lock.json
+
+      - name: Testes com cobertura
+        if: env.SONAR_TOKEN != ''
+        working-directory: src/web
+        run: |
+          npm ci --ignore-scripts
+          npm test -- --coverage --coverage.reporter=lcov
+
+      - name: Analisar
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarqube-scan-action@v6
+        with:
+          args: >
+            -Dsonar.projectKey=IgorLucasAssuncao_poligraph_front
+            -Dsonar.organization=igorlucasassuncao
+            -Dsonar.sources=src/web/src
+            -Dsonar.tests=src/web/src
+            -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx
+            -Dsonar.javascript.lcov.reportPaths=src/web/coverage/lcov.info
+            -Dsonar.exclusions=**/node_modules/**,src/web/dist/**,src/web/coverage/**

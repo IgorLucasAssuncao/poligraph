@@ -1,0 +1,86 @@
+name: ETL (Python)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'src/etl/**'
+      - 'docker/Dockerfile.etl'
+      - '.github/workflows/poligraph_etl_ci.yaml'
+  pull_request:
+    paths:
+      - 'src/etl/**'
+      - 'docker/Dockerfile.etl'
+      - '.github/workflows/poligraph_etl_ci.yaml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: src/etl/requirements*.txt
+
+      # --only-binary :all: impede que um sdist rode setup.py na instalação.
+      # Conferido com `pip install --dry-run`: todas as dependências têm wheel.
+      - name: Instalar dependências
+        run: 'pip install --only-binary :all: -r src/etl/requirements-dev.txt'
+
+      # `-m "not integracao"` desmarca test_persistencia.py, que sobe Postgres real.
+      # Roda localmente: `pytest` sem filtro.
+      - name: Testes unitários
+        run: pytest -q -m "not integracao"
+        working-directory: src/etl
+
+      - name: Imagem do ETL
+        run: docker build -f docker/Dockerfile.etl -t poligraph-etl:ci .
+
+  qualidade:
+    name: Qualidade
+    runs-on: ubuntu-latest
+
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    steps:
+      - name: Aviso quando o segredo não existe
+        if: env.SONAR_TOKEN == ''
+        run: echo "::warning title=Sonar não rodou::SONAR_TOKEN ausente — nada foi analisado."
+
+      - uses: actions/checkout@v4
+        if: env.SONAR_TOKEN != ''
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        if: env.SONAR_TOKEN != ''
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: src/etl/requirements*.txt
+
+      - name: Testes com cobertura
+        if: env.SONAR_TOKEN != ''
+        working-directory: src/etl
+        run: |
+          pip install --only-binary :all: -r requirements-dev.txt
+          pytest -q -m "not integracao" --cov=poligraph_etl --cov-report=xml
+
+      - name: Analisar
+        if: env.SONAR_TOKEN != ''
+        uses: SonarSource/sonarqube-scan-action@v6
+        with:
+          args: >
+            -Dsonar.projectKey=IgorLucasAssuncao_poligraph_etl
+            -Dsonar.organization=igorlucasassuncao
+            -Dsonar.sources=src/etl/poligraph_etl
+            -Dsonar.tests=src/etl/tests
+            -Dsonar.python.version=3.13
+            -Dsonar.python.coverage.reportPaths=src/etl/coverage.xml
+            -Dsonar.exclusions=**/__pycache__/**,**/.cache/**
