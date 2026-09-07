@@ -1,30 +1,9 @@
 name: CI
 
-# ⚠️ Isto é CI, não CD. O deploy é do Coolify, por webhook no push.
-# 🔴 Os dois disparam do MESMO push, em paralelo — o Coolify não espera este job.
-#    Se quiser portão, ver a pendência PL23.
-#
-# 🔴 O TRONCO É `master`, ⛔ NÃO `main`.
-#
-#    O `main` remoto é um branch ÓRFÃO: 1 commit, 2 arquivos, ⛔ sem `.github/`, e
-#    ⛔ não é ancestral de `master`. Nasceu do "criar repositório com README" no
-#    GitHub; o histórico de verdade (173 commits) foi empurrado depois, em `master`.
-#
-# ⚠️ Enquanto isto dizia `[main]`, o gatilho de push ⛔ NUNCA disparou — nenhuma vez.
 on:
   push:
     branches: [master]
-
-  # ⭐ Sem filtro de branch de propósito: é assim que uma branch de trabalho roda o CI
-  #    inteiro antes de entrar no tronco.
   pull_request:
-
-  # ⭐ Botão "Run workflow", para rodar em qualquer branch sem abrir PR.
-  #
-  # 🔴 O botão só APARECE se este arquivo, com este gatilho, existir no **branch
-  #    padrão** do repositório. O padrão precisa estar em `master` — enquanto for
-  #    `main` (que ⛔ não tem `.github/`), ⛔ não há botão, e o `gh workflow run`
-  #    responde que o workflow ⛔ não tem `workflow_dispatch`.
   workflow_dispatch:
 
 env:
@@ -34,8 +13,7 @@ env:
 jobs:
   dotnet:
     name: Build e testes
-    runs-on: ubuntu-latest   # ⭐ tem Docker: os testes de integração rodam de verdade
-
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -49,14 +27,9 @@ jobs:
       - name: Build
         run: dotnet build --no-restore -c Release
 
-      # 🔴 Inclui o teste de polaridade (API3). Em 14% das votações "Sim" significa
-      #    rejeitar, e um sinal invertido não aparece na tela — aparece como um
-      #    número plausível e errado. Este job não pode ser opcional.
       - name: Testes unitários
         run: dotnet test --no-build -c Release --filter "FullyQualifiedName~Unidade"
 
-      # Sobe Postgres real via Testcontainers. Valida que os CHECK sobreviveram
-      # à tradução para EF e chegaram ao banco.
       - name: Testes de integração
         run: dotnet test --no-build -c Release --filter "FullyQualifiedName~Integracao"
 
@@ -72,13 +45,7 @@ jobs:
       - name: Instalar dotnet-ef
         run: dotnet tool install --global dotnet-ef
 
-      # ⚠️ O CI GERA e VALIDA o script. Não aplica.
-      #    O runner do GitHub não alcança o Postgres: a porta 5432 nunca é exposta,
-      #    pelo mesmo motivo que tirou o ETL do Actions. Quem aplica é um container
-      #    rodando DENTRO do VPS, que já está na rede Docker.
-      # 🔴 `-p src/Poligraph.Migrations`, ⛔ NÃO a API (PL49). Quebrou aqui quando o
-      #    `Microsoft.EntityFrameworkCore.Design` saiu da API: o comando morria com
-      #    "Your startup project 'Poligraph.Api' doesn't reference ...Design".
+      # Gera e valida. Não aplica: quem aplica é um container dentro do VPS.
       - name: Gerar script idempotente
         run: dotnet ef migrations script --idempotent -p src/Poligraph.Migrations -o migration.sql
 
@@ -100,8 +67,6 @@ jobs:
       - name: Instalar dependências
         run: pip install -r src/etl/requirements-dev.txt
 
-      # 🔴 Normalização de voto (obstrução ≠ abstenção), categoria, polaridade
-      #    e CPF com zero à esquerda. São as medições do discovery viradas teste.
       - name: Testes
         run: pytest -q
         working-directory: src/etl
@@ -113,38 +78,21 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: '24'
           cache: npm
           cache-dependency-path: src/web/package-lock.json
       - run: npm ci
         working-directory: src/web
-      # 🔴 inclui o teste que impede percentual na tela (RF-29)
       - run: npm test
         working-directory: src/web
       - run: npm run build
         working-directory: src/web
 
-  # ═══════════════════════════════════════════════════════════════════
-  # 🔴 Qualidade de código — SonarQube Cloud
-  # ═══════════════════════════════════════════════════════════════════
-  #
-  # ⚠️ Este job NÃO é o portão. O portão é `dotnet` + `python` + `web`, que rodam em
-  #    paralelo com este. Se o Sonar cair, o CI continua dizendo a verdade sobre o
-  #    código.
-  #
-  # 🔴 Ele repete build e testes de propósito. O scanner de C# precisa ENVOLVER o
-  #    build (`begin` → `dotnet build` → `end`): ele lê a saída do compilador, não o
-  #    código parado. Como os jobs correm em paralelo, o custo é minuto de runner,
-  #    ⛔ não tempo de espera.
-  #
-  # ⚠️ SEM O SEGREDO `SONAR_TOKEN` OS PASSOS PULAM — e o job fica verde.
-  #    ⛔ Verde aqui ⛔ não significa "analisado". Ver o passo `Aviso` abaixo.
   qualidade:
     name: Qualidade de código
     runs-on: ubuntu-latest
 
-    # 🔴 Precisa ser env DO JOB, ⛔ não do passo: o contexto `env` só chega ao `if`
-    #    de um passo se tiver sido declarado no job. (`secrets` ⛔ não existe em `if`.)
+    # env do JOB: o contexto `env` só chega ao `if` de um passo assim.
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       SONAR_PROJETO: IgorLucasAssuncao_poligraph
@@ -153,18 +101,13 @@ jobs:
     steps:
       - name: Aviso quando o segredo não existe
         if: env.SONAR_TOKEN == ''
-        run: |
-          echo "::warning title=Sonar não rodou::SONAR_TOKEN ausente — nenhuma análise foi feita."
-          echo "⚠️ O plano gratuito do SonarQube Cloud cobre APENAS repositórios públicos."
+        run: echo "::warning title=Sonar não rodou::SONAR_TOKEN ausente — nada foi analisado."
 
       - uses: actions/checkout@v4
         if: env.SONAR_TOKEN != ''
         with:
-          # 🔴 Clone raso arruína a análise: sem histórico o Sonar ⛔ não sabe o que é
-          #    "código novo", e é sobre código novo que o quality gate decide.
           fetch-depth: 0
 
-      # ⭐ O scanner é Java, mesmo o de .NET.
       - uses: actions/setup-java@v4
         if: env.SONAR_TOKEN != ''
         with:
@@ -200,9 +143,6 @@ jobs:
         if: env.SONAR_TOKEN != ''
         run: dotnet tool install --global dotnet-sonarscanner
 
-      # ─── cobertura das duas linguagens que ⛔ não passam pelo MSBuild ─────
-      # ⚠️ Precisam sair ANTES do `end`: o scanner lê os arquivos de cobertura na
-      #    hora de fechar. Rodar depois ⛔ não adianta.
       - name: Cobertura do ETL
         if: env.SONAR_TOKEN != ''
         working-directory: src/etl
@@ -217,21 +157,24 @@ jobs:
           npm ci
           npm test -- --coverage --coverage.reporter=lcov
 
-      # ─── a análise propriamente ───────────────────────────────────────────
       - name: Analisar
         if: env.SONAR_TOKEN != ''
         run: |
-          dotnet-sonarscanner begin             /k:"$SONAR_PROJETO"             /o:"$SONAR_ORG"             /d:sonar.token="$SONAR_TOKEN"             /d:sonar.scanner.scanAll=true             /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"             /d:sonar.python.coverage.reportPaths="src/etl/coverage.xml"             /d:sonar.javascript.lcov.reportPaths="src/web/coverage/lcov.info"             /d:sonar.exclusions="**/bin/**,**/obj/**,**/node_modules/**,src/web/dist/**,src/Poligraph.Migrations/Migrations/**"             /d:sonar.test.inclusions="src/etl/tests/**,**/*.test.ts,**/*.test.tsx"
+          dotnet-sonarscanner begin \
+            /k:"$SONAR_PROJETO" \
+            /o:"$SONAR_ORG" \
+            /d:sonar.token="$SONAR_TOKEN" \
+            /d:sonar.scanner.scanAll=true \
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
+            /d:sonar.python.coverage.reportPaths="src/etl/coverage.xml" \
+            /d:sonar.javascript.lcov.reportPaths="src/web/coverage/lcov.info" \
+            /d:sonar.exclusions="**/bin/**,**/obj/**,**/node_modules/**,src/web/dist/**,src/Poligraph.Migrations/Migrations/**" \
+            /d:sonar.test.inclusions="src/etl/tests/**,**/*.test.ts,**/*.test.tsx"
 
           dotnet build -c Release
           dotnet test --no-build -c Release --collect:"XPlat Code Coverage;Format=opencover"
 
           dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"
-
-      # ⭐ Para o estágio virar PORTÃO de verdade, acrescentar ao `begin`:
-      #        /d:sonar.qualitygate.wait=true
-      #    Fica fora até a primeira análise calibrar o que é dívida herdada — senão o
-      #    primeiro PR reprova por código que já estava lá.
 
   docker:
     name: Imagens constroem
