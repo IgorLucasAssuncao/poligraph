@@ -136,7 +136,7 @@ jobs:
       - name: Analisar
         if: env.SONAR_TOKEN != ''
         run: |
-          dotnet-sonarscanner begin /k:"$SONAR_PROJETO" /o:"$SONAR_ORG" /d:sonar.token="$SONAR_TOKEN" /d:sonar.scanner.scanAll=false /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" /d:sonar.exclusions="**/bin/**,**/obj/**,src/Poligraph.Data/Migrations/**"
+          dotnet-sonarscanner begin /k:"$SONAR_PROJETO" /o:"$SONAR_ORG" /d:sonar.token="$SONAR_TOKEN" /d:sonar.scanner.scanAll=false /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" /d:sonar.exclusions="**/bin/**,**/obj/**,**/TestResults/**,src/Poligraph.Data/Migrations/**,src/Poligraph.Data/curadoria/**,src/Poligraph.ServiceDefaults/**" /d:sonar.coverage.exclusions="src/Poligraph.Api/Dtos/**,src/Poligraph.Api/Configuracao/**,src/Poligraph.Api/Program.cs,src/Poligraph.Data/Data/Entidades/**,src/Poligraph.Data/Data/Enums/**,src/Poligraph.Data/Program.cs,src/Poligraph.AppHost/**"
 
           dotnet build -c Release
           dotnet test --no-build -c Release --filter "FullyQualifiedName~Unidade" --collect:"XPlat Code Coverage;Format=opencover"
