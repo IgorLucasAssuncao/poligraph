@@ -19,7 +19,11 @@ const RESULTADO: ResultadoAfinidade = {
       casa: 'CAMARA',
       perguntasRespondidas: 12,
       maisProximos: [
-        { pessoaId: 1, nome: 'Ana Ribeiro', partido: 'A', uf: 'SP', acordos: 9, comparaveis: 12 },
+        {
+          pessoaId: 1, nome: 'Ana Ribeiro', partido: 'A', uf: 'SP',
+          acordos: 9, comparaveis: 12,
+          acordou: ['p-1', 'p-2'], discordou: ['p-3'],
+        },
       ],
       maisDistantes: [],
       // Sem execução do grafo não há posição — a tela omite o desenho.

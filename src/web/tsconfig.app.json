@@ -22,5 +22,8 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  // `vitest.setup.ts` importa `@testing-library/jest-dom/vitest`, que é quem
+  // declara toBeInTheDocument e companhia. Fora do include, o `tsc -b` não via a
+  // declaração e reprovava todo teste — mesmo com a suíte verde.
+  "include": ["src", "vitest.setup.ts"]
 }

@@ -45,6 +45,11 @@ jobs:
       - name: Instalar dotnet-ef
         run: dotnet tool install --global dotnet-ef
 
+      # Sem isto o `dotnet ef` morre com NETSDK1004: ele lê metadados do projeto e
+      # precisa do project.assets.json, que só existe depois do restore.
+      - name: Restore
+        run: dotnet restore
+
       # Gera e valida. Não aplica: quem aplica é um container dentro do VPS.
       - name: Gerar script idempotente
         run: dotnet ef migrations script --idempotent -p src/Poligraph.Migrations -o migration.sql

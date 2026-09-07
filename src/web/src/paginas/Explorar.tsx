@@ -11,6 +11,9 @@ import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 const NA_CASA: Record<Parlamentar['casa'], string> = {
   CAMARA: 'na Câmara',
   SENADO: 'no Senado',
+  // Sem voto não há casa, e não há onde. A frase termina em "0 votações
+  // registradas", que é exatamente o caso.
+  '': '',
 };
 
 export function Explorar() {
@@ -101,7 +104,7 @@ export function Explorar() {
              ⚠️ A lista mistura as duas casas, e sem dizer qual é qual todo senador parece
              inativo. A causa é o Senado fazer menos votação nominal — e 56,8% delas serem
              secretas —, ⛔ não o senador trabalhar menos. */
-          detalhe={`${p.nVotacoes} votações registradas ${NA_CASA[p.casa]}`}
+          detalhe={`${p.nVotacoes} votações registradas ${NA_CASA[p.casa]}`.trim()}
           seguindo={seguidos.has(p.id)}
           aoAlternarSeguir={alternar}
         />

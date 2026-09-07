@@ -256,6 +256,26 @@ O job `migration` chamava `dotnet ef … -p src/Poligraph.Api`. ⚠️ A
 `Design` da API no mesmo dia e ⛔ não atualizou o CI. Corrigido para
 `-p src/Poligraph.Migrations` — script de **600 linhas, 24 tabelas**, conferido.
 
+#### 🔴 Na primeira execução real, o CI reprovou em 3 jobs
+
+⭐ E esse é o ponto: **o `npm run build` já estava no job `web` o tempo todo.** Como o
+gatilho apontava para um branch órfão, ele ⛔ nunca rodou — e 47 erros de TypeScript se
+acumularam com a suíte de testes **verde**, porque o `vitest` ⛔ não faz checagem de tipo.
+
+| Erro | Quantos | Causa |
+|---|---:|---|
+| `TS2339` — `toBeInTheDocument` ⛔ não existe | **38** | `vitest.setup.ts` estava **fora** do `include` do `tsconfig.app.json`. É ele que importa `@testing-library/jest-dom/vitest`, quem declara os matchers |
+| `TS2304` — nome ⛔ não encontrado | **7** | `legenda.ts` referenciava `Legenda`, `FaixaDaLegenda` e `CORTE_CENTRO`, que ⛔ **nunca existiram** |
+| `TS2741` — falta a chave `''` | 1 | `NA_CASA` em `Explorar.tsx`: `Parlamentar['casa']` é `Casa | ''` — vazio quando a pessoa ⛔ não tem voto |
+| `TS2739` — faltam `acordou`, `discordou` | 1 | O fixture de `Avaliacao.test.tsx` ficou para trás quando os dois campos entraram na CT3 |
+| `NETSDK1004` — assets file ⛔ não encontrado | 1 job | `dotnet ef` lê metadados do projeto e precisa do `project.assets.json`. Faltava `dotnet restore` antes |
+
+⚠️ **`montarLegenda` foi REMOVIDA, ⛔ não consertada.** Ela ⛔ não era chamada por
+ninguém — só `rotulosDoEixo` é importada — e dependia de um `CORTE_CENTRO` que ⛔ não
+existe em lugar nenhum. Escrever o valor agora seria **inventar o limiar que decide quem
+fica "no centro"** do grafo, e a regra do projeto é a oposta: primeiro se mede.
+📐 Estão no histórico, se voltarem a fazer falta.
+
 #### 🔴 E o gatilho apontava para um branch órfão
 
 Medido em **2026-09-06**, com `git ls-tree` em cada branch remota:
