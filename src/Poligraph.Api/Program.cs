@@ -93,6 +93,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IValidadorGoogle, ValidadorGoogle>();
 builder.Services.AddScoped<ServicoDigest>();
+builder.Services.AddScoped<ServicoParlamentares>();
+builder.Services.AddScoped<ServicoGastosDeCota>();
+builder.Services.AddScoped<ServicoEmendas>();
+builder.Services.AddScoped<ServicoFinanciamento>();
 
 var app = builder.Build();
 
