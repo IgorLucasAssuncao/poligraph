@@ -18,9 +18,18 @@ from pathlib import Path
 
 import pytest
 
-CONTEXTO = (
-    Path(__file__).resolve().parents[2] / "Poligraph.Api" / "Data" / "PoligraphDb.cs"
-)
+_DATA = Path(__file__).resolve().parents[2] / "Poligraph.Data" / "Data"
+
+CONTEXTO = _DATA / "PoligraphDb.cs"
+
+# As entidades eram um arquivo só; agora são uma por arquivo, em Data/Entidades/.
+ENTIDADES = sorted((_DATA / "Entidades").glob("*.cs"))
+
+
+def fonte_das_entidades() -> str:
+    """Concatena as classes de entidade, que hoje moram uma por arquivo."""
+    assert ENTIDADES, f"nenhuma entidade em {_DATA / 'Entidades'} — o caminho mudou?"
+    return chr(10).join(p.read_text(encoding="utf-8") for p in ENTIDADES)
 
 RAIZ = Path(__file__).resolve().parents[1]
 
@@ -94,6 +103,7 @@ def tabelas_usadas_pelo_python() -> dict[str, list[str]]:
 def test_contexto_do_ef_existe():
     # ⚠️ Se o arquivo mudar de lugar, os testes abaixo passariam vazios e em silêncio.
     assert CONTEXTO.is_file(), f"não achei {CONTEXTO}"
+    assert ENTIDADES, f"nenhuma entidade em {_DATA / 'Entidades'}"
 
 
 def test_python_so_usa_tabelas_que_o_ef_criou():
@@ -183,7 +193,7 @@ def snake_case_de_propriedade(nome: str) -> str:
 
 def colunas_do_ef() -> dict[str, set[str]]:
     """Tabela → colunas, lidas das classes de entidade."""
-    fonte = (CONTEXTO.parent / "Entidades.cs").read_text(encoding="utf-8")
+    fonte = fonte_das_entidades()
 
     # DbSet<Entidade> Nome  →  qual classe vira qual tabela
     contexto = CONTEXTO.read_text(encoding="utf-8")
@@ -257,8 +267,8 @@ def test_o_sql_do_etl_so_usa_colunas_que_o_ef_cria():
 
 
 def constantes_do_ef() -> dict[str, str]:
-    """`public const string Nome = "VALOR";` lidos de `Entidades.cs`."""
-    fonte = (CONTEXTO.parent / "Entidades.cs").read_text(encoding="utf-8")
+    """`public const string Nome = "VALOR";` lidos das entidades."""
+    fonte = fonte_das_entidades()
     achadas = dict(
         re.findall(r'public\s+const\s+string\s+(\w+)\s*=\s*"([^"]*)"', fonte)
     )
