@@ -52,7 +52,7 @@ registra que houve voto sem revelar qual
 
 | Dinheiro — o perfil do parlamentar | |
 |---|---|
-| **Despesas de cota** (CEAP) | **772.677** — 2023 a 2026 |
+| **Despesas de cota** | **844.279** — 2023 a 2026. CEAP: **767.692** de 642 deputados · CEAPS: **76.587** de **98 senadores** |
 | **Emendas parlamentares** | 24.825 — ⚠️ eram 24.810 em 27/08; o Portal publica novas |
 | **Emendas com autor resolvido** | ⭐ **23.247 (93,6%)** — R$ 70,8 bi |
 | **Autores de emenda** | 793 resolvidos · 158 sem vínculo (comissões e bancadas) |

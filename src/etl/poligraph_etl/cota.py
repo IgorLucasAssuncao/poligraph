@@ -44,7 +44,7 @@ cruzar o mesmo fornecedor entre parlamentares.
 
 import logging
 
-from .normalizacao import hash_de_cpf, inteiro, valor_com_ponto
+from .normalizacao import hash_de_cpf, inteiro, valor_com_ponto, sem_acento_maiusculo
 
 log = logging.getLogger("poligraph")
 
@@ -92,6 +92,63 @@ def para_linhas(registros: list[dict], mapa_pessoas: dict[str, int]) -> list[dic
 
 
 # ═══════════════════════════════════════════════════════════════════
+
+
+def para_linhas_do_senado(
+    registros: list[dict], por_nome: dict[str, int]
+) -> list[dict]:
+    """Converte a CEAPS em linhas de `despesas` — a mesma tabela da Camara.
+
+    A CEAPS nao tem id de parlamentar: a chave e a coluna `SENADOR`, o nome
+    parlamentar em caixa alta. O casamento e por nome normalizado, e quem nao casa
+    e descartado — atribuir gasto por semelhanca seria inventar dono.
+
+    O resto do layout difere da Camara em tudo: `VALOR_REEMBOLSADO` em pt-BR,
+    `DATA` em dd/mm/aaaa, e nao ha URL de documento.
+    """
+    linhas: list[dict] = []
+
+    for registro in registros:
+        nome = sem_acento_maiusculo(registro.get("SENADOR"))
+        pessoa_id = por_nome.get(nome)
+        if pessoa_id is None:
+            continue
+
+        valor = _decimal(str(registro.get("VALOR_REEMBOLSADO") or "").replace(",", "."))
+        if valor == 0:
+            continue
+
+        documento, pessoa_fisica = _identificar_fornecedor(registro.get("CNPJ_CPF"))
+
+        linhas.append(
+            {
+                "pessoa_id": pessoa_id,
+                "ano": inteiro(registro.get("ANO")),
+                "mes": inteiro(registro.get("MES")),
+                "categoria": (registro.get("TIPO_DESPESA") or "").strip()
+                or "SEM CATEGORIA",
+                "fornecedor": (registro.get("FORNECEDOR") or "").strip() or None,
+                "cnpj_ou_hash": documento,
+                "fornecedor_eh_pessoa_fisica": pessoa_fisica,
+                "valor_liquido": valor,
+                "data_emissao": _data_iso(registro.get("DATA")),
+                # A CEAPS publica so o numero do documento, nao o link da imagem.
+                "url_documento": None,
+            }
+        )
+
+    return linhas
+
+
+def _data_iso(bruto: str | None) -> str | None:
+    """`dd/mm/aaaa` -> `aaaa-mm-dd`. Devolve `None` para o que nao converte."""
+    partes = (bruto or "").strip().split("/")
+    if len(partes) != 3 or not all(partes):
+        return None
+
+    dia, mes, ano = partes
+
+    return f"{ano}-{mes.zfill(2)}-{dia.zfill(2)}"
 
 
 def _identificar_fornecedor(bruto: str | None) -> tuple[str | None, bool]:

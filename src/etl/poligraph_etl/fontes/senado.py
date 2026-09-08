@@ -27,7 +27,9 @@ direita. Tudo passa por `strip()`.
 Documentação: [`docs/11-api-senado.md`](../../../../docs/11-api-senado.md)
 """
 
+import csv
 import logging
+from pathlib import Path
 
 import requests
 
@@ -86,6 +88,55 @@ def baixar_senadores() -> list[dict]:
         for item in parlamentares
         if "IdentificacaoParlamentar" in item
     ]
+
+
+CEAPS = "https://www.senado.gov.br/transparencia/LAI/verba/despesa_ceaps_{ano}.csv"
+
+# O CSV NAO aceita os CABECALHOS do modulo: eles pedem `application/json`, e o portal da
+# transparencia responde 406 Not Acceptable. Medido em 2026-09-08.
+CABECALHOS_CSV = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/csv,application/octet-stream,*/*",
+}
+
+
+def baixar_ceaps(ano: int, destino: Path) -> Path:
+    """A cota do Senado (CEAPS) do ano, em CSV. Reaproveita o cache."""
+    if destino.exists():
+        log.info("  ja em cache: %s", destino.name)
+        return destino
+
+    url = CEAPS.format(ano=ano)
+    log.info("  baixando %s", url)
+
+    resposta = requests.get(url, headers=CABECALHOS_CSV, timeout=300)
+    resposta.raise_for_status()
+
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    destino.write_bytes(resposta.content)
+
+    return destino
+
+
+def ler_ceaps(caminho: Path) -> list[dict]:
+    """As linhas da CEAPS, ja sem a linha de metadado do topo.
+
+    O arquivo NAO comeca pelo cabecalho: a primeira linha e
+    `"ULTIMA ATUALIZACAO";"07/09/2026 02:02"`. Um `DictReader` direto tomaria isso como
+    cabecalho, nenhuma coluna casaria e a leitura devolveria zero despesa sem erro.
+
+    Latin-1, como o TSE e ao contrario da Camara.
+    """
+    with caminho.open(encoding="latin-1", errors="replace") as arquivo:
+        primeira = arquivo.readline()
+        if "ULTIMA ATUALIZACAO" not in primeira.upper():
+            # O layout mudou: voltar ao inicio e deixar o cabecalho ser lido de la.
+            arquivo.seek(0)
+
+        return list(csv.DictReader(arquivo, delimiter=";", quotechar='"'))
 
 
 def baixar_senador(codigo: str) -> dict | None:

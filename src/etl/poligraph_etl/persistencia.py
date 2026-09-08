@@ -28,6 +28,8 @@ from typing import Iterable, Sequence
 
 import psycopg
 
+from .normalizacao import sem_acento_maiusculo
+
 LOTE = 5_000
 
 
@@ -231,6 +233,27 @@ def pessoas_sem_cpf(conexao: psycopg.Connection) -> list[tuple[str, int]]:
             """
         ).fetchall()
     ]
+
+
+def senadores_por_nome(conexao: psycopg.Connection) -> dict[str, int]:
+    """Nome parlamentar normalizado -> `pessoa_id`, so de quem votou no Senado.
+
+    A CEAPS nao publica id de parlamentar; a unica chave e o nome. O recorte por casa
+    evita que um deputado homonimo receba despesa de senador.
+    """
+    return {
+        sem_acento_maiusculo(linha[0]): linha[1]
+        for linha in conexao.execute(
+            """
+            SELECT p.nome_exibicao, p.id
+              FROM pessoas p
+             WHERE EXISTS (
+                     SELECT 1 FROM votos v
+                      JOIN votacoes t ON t.id = v.votacao_id
+                     WHERE v.pessoa_id = p.id AND t.casa = 'SENADO')
+            """
+        ).fetchall()
+    }
 
 
 def casa_por_pessoa(conexao: psycopg.Connection) -> dict[int, str]:

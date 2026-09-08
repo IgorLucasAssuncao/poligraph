@@ -8,7 +8,7 @@ proíbe o segundo no banco.
 import pytest
 
 from poligraph_etl import cota
-from poligraph_etl.fontes import camara
+from poligraph_etl.fontes import camara, senado
 
 MAPA = {"62881": 7, "204554": 8}
 
@@ -128,3 +128,107 @@ def test_arquivo_pequeno_demais_estoura():
 
 def test_volume_normal_passa():
     camara.conferir_volume_de_cota([registro()] * 60_000, 2025)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 CEAPS — a cota do Senado, na mesma tabela
+# ═══════════════════════════════════════════════════════════════════
+
+POR_NOME = {"ALAN RICK": 7}
+
+
+def ceaps(**campos) -> dict:
+    base = {
+        "ANO": "2025",
+        "MES": "1",
+        "SENADOR": "ALAN RICK",
+        "TIPO_DESPESA": "Aluguel de imóveis para escritório político",
+        "CNPJ_CPF": "66.970.229/0132-26",
+        "FORNECEDOR": "CLARO NXT TELECOMUNICAÇÕES S.A",
+        "DATA": "18/01/2025",
+        "VALOR_REEMBOLSADO": "399,44",
+    }
+
+    return {**base, **campos}
+
+
+def test_ceaps_casa_pelo_nome_parlamentar():
+    linha = cota.para_linhas_do_senado([ceaps()], POR_NOME)[0]
+
+    assert linha["pessoa_id"] == 7
+    assert linha["valor_liquido"] == 399.44
+
+
+def test_ceaps_normaliza_acento_e_caixa_do_nome():
+    """A CEAPS manda caixa alta; `pessoas.nome_exibicao` guarda com acento e caixa mista."""
+    linhas = cota.para_linhas_do_senado(
+        [ceaps(SENADOR="Alan Rick")], {"ALAN RICK": 7}
+    )
+
+    assert linhas[0]["pessoa_id"] == 7
+
+
+def test_ceaps_de_quem_nao_esta_no_de_para_e_descartada():
+    """⛔ Atribuir por semelhança de nome seria inventar dono."""
+    assert cota.para_linhas_do_senado([ceaps(SENADOR="FULANO")], POR_NOME) == []
+
+
+def test_ceaps_converte_a_data_para_iso():
+    linha = cota.para_linhas_do_senado([ceaps(DATA="03/12/2025")], POR_NOME)[0]
+
+    assert linha["data_emissao"] == "2025-12-03"
+
+
+def test_ceaps_data_vazia_nao_derruba_a_linha():
+    linha = cota.para_linhas_do_senado([ceaps(DATA="")], POR_NOME)[0]
+
+    assert linha["data_emissao"] is None
+
+
+def test_ceaps_valor_sem_centavos():
+    """⚠️ O TSE manda `4000`, sem vírgula, na mesma coluna que manda `399,44`."""
+    linha = cota.para_linhas_do_senado([ceaps(VALOR_REEMBOLSADO="4000")], POR_NOME)[0]
+
+    assert linha["valor_liquido"] == 4000
+
+
+def test_ceaps_valor_zero_sai():
+    assert cota.para_linhas_do_senado([ceaps(VALOR_REEMBOLSADO="0")], POR_NOME) == []
+
+
+def test_ceaps_nao_tem_url_de_documento():
+    """A CEAPS publica o número do documento, ⛔ não o link da imagem."""
+    assert cota.para_linhas_do_senado([ceaps()], POR_NOME)[0]["url_documento"] is None
+
+
+def test_ler_ceaps_pula_a_linha_de_metadado(tmp_path):
+    """🔴 A armadilha do arquivo: a PRIMEIRA linha ⛔ não é o cabeçalho.
+
+    Ela é `"ULTIMA ATUALIZACAO";"07/09/2026 02:02"`. Um `DictReader` direto tomaria isso
+    como cabeçalho, nenhuma coluna casaria, e a leitura devolveria zero despesa — com
+    log de sucesso.
+    """
+    caminho = tmp_path / "ceaps.csv"
+    caminho.write_text(
+        '"ULTIMA ATUALIZACAO";"07/09/2026 02:02"' + chr(10)
+        + '"ANO";"MES";"SENADOR";"VALOR_REEMBOLSADO"' + chr(10)
+        + '"2025";"1";"ALAN RICK";"399,44"' + chr(10),
+        encoding="latin-1",
+    )
+
+    linhas = senado.ler_ceaps(caminho)
+
+    assert len(linhas) == 1
+    assert linhas[0]["SENADOR"] == "ALAN RICK"
+
+
+def test_ler_ceaps_sem_a_linha_de_metadado_ainda_funciona(tmp_path):
+    """Se o Senado tirar a linha de metadado, o leitor ⛔ não pode perder o cabeçalho."""
+    caminho = tmp_path / "ceaps.csv"
+    caminho.write_text(
+        '"ANO";"MES";"SENADOR";"VALOR_REEMBOLSADO"' + chr(10)
+        + '"2025";"1";"ALAN RICK";"399,44"' + chr(10),
+        encoding="latin-1",
+    )
+
+    assert senado.ler_ceaps(caminho)[0]["SENADOR"] == "ALAN RICK"

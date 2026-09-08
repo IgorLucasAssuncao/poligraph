@@ -186,7 +186,7 @@ contra o banco em **2026-09-08**:
 |---|---:|
 | Votos da 57ª — Câmara · Senado | **470.727** · **34.101** |
 | Quem votou na 57ª — deputados · senadores | **643** · **104** |
-| Despesas de cota (CEAP) | **772.677** |
+| Despesas de cota | **844.279** — CEAP 767.692 (642 dep.) · CEAPS 76.587 (**98 sen.**) |
 | Emendas | **24.825** |
 | Receitas de campanha | **44.171** — 642 deputados e **76 senadores** |
 

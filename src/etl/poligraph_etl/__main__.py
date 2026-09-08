@@ -940,6 +940,52 @@ def _cota(conexao: psycopg.Connection, anos: list[int]) -> None:
                 descartadas,
             )
 
+    _cota_do_senado(conexao, anos)
+
+
+def _cota_do_senado(conexao: psycopg.Connection, anos: list[int]) -> None:
+    """CEAPS — a cota do Senado, na MESMA tabela `despesas` da Camara.
+
+    A tabela ja e generica: a ficha consulta por `pessoa_id`, entao o senador passa a
+    ter gasto de gabinete sem tocar em API nem em tela.
+
+    O de-para e por NOME parlamentar, porque a CEAPS nao publica id. Quem nao casa e
+    descartado: atribuir gasto por semelhanca seria inventar dono.
+    """
+    por_nome = persistencia.senadores_por_nome(conexao)
+    if not por_nome:
+        log.info("Nenhum senador no de-para; CEAPS nao foi lida.")
+        return
+
+    for ano in anos:
+        log.info("CEAPS de %d...", ano)
+
+        arquivo = senado.baixar_ceaps(ano, CACHE / f"ceaps-{ano}.csv")
+        registros = senado.ler_ceaps(arquivo)
+
+        linhas = cota.para_linhas_do_senado(registros, por_nome)
+        gravadas = persistencia.gravar_despesas(
+            conexao, list(por_nome.values()), linhas
+        )
+
+        log.info("  %d linhas, %d gravadas", len(registros), gravadas)
+
+        # Descarte alto significa de-para incompleto ou nome grafado diferente — e a
+        # ficha mostraria gasto a menos, sem erro.
+        descartadas = len(registros) - len(linhas)
+        if descartadas > len(registros) * 0.2:
+            nao_casaram = sorted(
+                {
+                    normalizacao.sem_acento_maiusculo(r.get("SENADOR"))
+                    for r in registros
+                    if normalizacao.sem_acento_maiusculo(r.get("SENADOR")) not in por_nome
+                }
+            )
+            log.warning(
+                "  %d de %d descartadas. Nomes sem de-para: %s",
+                descartadas, len(registros), ", ".join(nao_casaram[:10]) or "-",
+            )
+
 
 def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> None:
     """Financiamento de campanha — o fundão e o resto, ligados por CPF.
