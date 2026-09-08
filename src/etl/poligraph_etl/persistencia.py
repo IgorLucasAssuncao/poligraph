@@ -233,6 +233,77 @@ def pessoas_sem_cpf(conexao: psycopg.Connection) -> list[tuple[str, int]]:
     ]
 
 
+def casa_por_pessoa(conexao: psycopg.Connection) -> dict[int, str]:
+    """`pessoa_id` -> casa em que ela votou. Quem votou nas duas fica com a mais recente."""
+    return {
+        linha[0]: linha[1]
+        for linha in conexao.execute(
+            """
+            SELECT DISTINCT ON (v.pessoa_id) v.pessoa_id, t.casa
+              FROM votos v JOIN votacoes t ON t.id = v.votacao_id
+             ORDER BY v.pessoa_id, t.data DESC
+            """
+        ).fetchall()
+    }
+
+
+def senadores_sem_nome_civil(conexao: psycopg.Connection) -> list[tuple[str, int]]:
+    """Senadores com voto cujo `nome_civil` ainda é o nome parlamentar.
+
+    O critério é `nome_civil = nome_exibicao`: é exatamente o que
+    `senadores_dos_votos` grava quando não tem o nome completo. Quem já veio da lista de
+    exercício tem os dois diferentes e não entra aqui.
+    """
+    return [
+        (str(linha[0]), linha[1])
+        for linha in conexao.execute(
+            """
+            SELECT f.id_externo, p.id
+              FROM pessoas p
+              JOIN pessoa_fonte_ids f ON f.pessoa_id = p.id AND f.fonte = 'SENADO'
+             WHERE p.nome_civil = p.nome_exibicao
+               AND EXISTS (SELECT 1 FROM votos v WHERE v.pessoa_id = p.id)
+             ORDER BY p.id
+            """
+        ).fetchall()
+    ]
+
+
+def gravar_nome_civil(conexao: psycopg.Connection, pessoa_id: int, nome: str) -> None:
+    """O nome civil é a chave de casamento com o TSE — ver `senadores_sem_nome_civil`."""
+    conexao.execute(
+        "UPDATE pessoas SET nome_civil = %s WHERE id = %s", (nome, pessoa_id)
+    )
+
+
+def senadores_para_casar(conexao: psycopg.Connection) -> list[tuple[int, str, str]]:
+    """`(pessoa_id, nome_civil, uf)` de quem votou no Senado e ainda não tem `cpf_hash`.
+
+    A UF sai do voto mais recente, e serve para desempatar homônimo: dois candidatos a
+    Senador com o mesmo nome civil em estados diferentes são pessoas diferentes.
+    """
+    return [
+        (linha[0], linha[1], linha[2] or "")
+        for linha in conexao.execute(
+            """
+            SELECT p.id, p.nome_civil, (
+                     SELECT v.uf_no_voto FROM votos v
+                      JOIN votacoes t ON t.id = v.votacao_id
+                     WHERE v.pessoa_id = p.id AND t.casa = 'SENADO'
+                     ORDER BY t.data DESC LIMIT 1
+                   )
+              FROM pessoas p
+             WHERE p.cpf_hash IS NULL
+               AND EXISTS (
+                     SELECT 1 FROM votos v
+                      JOIN votacoes t ON t.id = v.votacao_id
+                     WHERE v.pessoa_id = p.id AND t.casa = 'SENADO')
+             ORDER BY p.id
+            """
+        ).fetchall()
+    ]
+
+
 def gravar_cpf_hash(conexao: psycopg.Connection, pessoa_id: int, hash_cpf: str) -> None:
     """🔴 Grava o HASH, ⛔ nunca o CPF. RNF-13."""
     conexao.execute(

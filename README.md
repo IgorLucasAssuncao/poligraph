@@ -56,7 +56,7 @@ registra que houve voto sem revelar qual
 | **Emendas parlamentares** | 24.825 — ⚠️ eram 24.810 em 27/08; o Portal publica novas |
 | **Emendas com autor resolvido** | ⭐ **23.247 (93,6%)** — R$ 70,8 bi |
 | **Autores de emenda** | 793 resolvidos · 158 sem vínculo (comissões e bancadas) |
-| **Receitas de campanha** (TSE) | 22.511, de **642 dos 643** deputados |
+| **Receitas de campanha** (TSE) | **44.171** — 2018 e 2022. **642 dos 643** deputados e **76 dos 104** senadores |
 | **Fundo Especial — o "fundão"** | R$ 907,7 mi · R$ 1.163,4 mi arrecadados no total |
 | **Deputados com `cpf_hash`** | 643 — 100%, e nenhum CPF em claro |
 

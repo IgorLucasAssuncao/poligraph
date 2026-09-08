@@ -88,6 +88,29 @@ def baixar_senadores() -> list[dict]:
     ]
 
 
+def baixar_senador(codigo: str) -> dict | None:
+    """A identificação de UM senador, que é onde vive o nome civil.
+
+    A lista de exercício traz `NomeCompletoParlamentar`, mas só dos 81 de hoje. Os
+    suplentes que devolveram a cadeira aparecem nos votos e não naquela lista, e o
+    registro de voto não tem nome completo — sem isto, ficam sem chave para o TSE.
+
+    Devolve `None` quando o código não existe, para o chamador registrar e seguir em vez
+    de derrubar o lote inteiro por um senador.
+    """
+    resposta = requests.get(
+        f"{BASE}/senador/{codigo}", headers=CABECALHOS, timeout=120
+    )
+    if resposta.status_code == 404:
+        return None
+    resposta.raise_for_status()
+
+    detalhe = (resposta.json() or {}).get("DetalheParlamentar") or {}
+    _registrar_descontinuacao(detalhe)
+
+    return ((detalhe.get("Parlamentar") or {}).get("IdentificacaoParlamentar")) or None
+
+
 def baixar_materia(codigo_materia: str) -> dict | None:
     """A matéria inteira: ementa, identificação e indexação.
 

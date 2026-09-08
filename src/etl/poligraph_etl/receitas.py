@@ -45,7 +45,12 @@ import logging
 import zipfile
 from pathlib import Path
 
-from .normalizacao import hash_de_cpf, valor_pt_br
+from .normalizacao import (
+    hash_de_cpf,
+    normalizar_cpf,
+    sem_acento_maiusculo,
+    valor_pt_br,
+)
 
 log = logging.getLogger("poligraph")
 
@@ -57,6 +62,11 @@ IGNORAR = "doador_originario"
 
 CONSOLIDADO = "_BRASIL"
 CARGO = "DEPUTADO FEDERAL"
+
+# O cargo esperado de cada casa. Serve para NÃO atribuir a um deputado atual a campanha
+# ao Senado que ele perdeu numa eleição anterior: o CPF é o mesmo, o cargo não.
+CARGO_POR_CASA = {"CAMARA": CARGO, "SENADO": "SENADOR"}
+CARGOS_ACEITOS = frozenset(CARGO_POR_CASA.values())
 FUNDO_ESPECIAL = "FUNDO ESPECIAL"
 
 # Sentinelas do TSE para campo ausente. Chegam como TEXTO, ⛔ não como vazio.
@@ -101,8 +111,50 @@ def ler_receitas(caminho: Path, nome_interno: str):
         yield from csv.DictReader(texto, delimiter=";", quotechar='"')
 
 
+CARGO_SENADOR = "SENADOR"
+
+
+def cpf_de_senadores(caminho: Path, ano: int) -> dict[tuple[str, str], str | None]:
+    """`(nome civil normalizado, UF)` -> CPF do candidato a Senador daquela eleição.
+
+    🔴 O CPF em claro existe só dentro deste dicionário, em memória; quem chama hasheia
+    antes de gravar. RNF-13.
+
+    ⚠️ **A chave inclui a UF de propósito.** Dois candidatos a Senador com o mesmo nome
+    civil em estados diferentes são pessoas diferentes, e casar só por nome atribuiria o
+    financiamento de campanha de um a outro — número plausível e errado, sem erro.
+
+    ⛔ Chave com mais de um CPF vira `None`, ⛔ nunca "o primeiro". Ambiguidade não
+    resolvida tem de chegar a quem chama como ambiguidade.
+    """
+    achados: dict[tuple[str, str], set[str]] = {}
+
+    for interno in nomes_de_receita(caminho, ano):
+        for registro in ler_receitas(caminho, interno):
+            if not (_texto(registro.get("DS_CARGO")) or "").upper().startswith(
+                CARGO_SENADOR
+            ):
+                continue
+
+            nome = sem_acento_maiusculo(registro.get("NM_CANDIDATO"))
+            uf = (_texto(registro.get("SG_UF")) or "").upper()
+            cpf = normalizar_cpf(registro.get("NR_CPF_CANDIDATO"))
+            if not nome or not uf or not cpf:
+                continue
+
+            achados.setdefault((nome, uf), set()).add(cpf)
+
+    return {
+        chave: (next(iter(cpfs)) if len(cpfs) == 1 else None)
+        for chave, cpfs in achados.items()
+    }
+
+
 def para_linhas(
-    registros, hashes_conhecidos: dict[str, int], ano_eleicao: int
+    registros,
+    hashes_conhecidos: dict[str, int],
+    ano_eleicao: int,
+    casa_por_pessoa: dict[int, str] | None = None,
 ) -> list[dict]:
     """Converte em linhas de `receitas_de_campanha`, guardando só quem casa por CPF.
 
@@ -119,12 +171,21 @@ def para_linhas(
     linhas: list[dict] = []
 
     for registro in registros:
-        if _texto(registro.get("DS_CARGO")).upper() != CARGO:
+        # Filtro barato primeiro: descarta ~85% das linhas (Presidente, Deputado
+        # Estadual, Governador) antes de hashear CPF de um arquivo de 396 MB.
+        cargo = _texto(registro.get("DS_CARGO")).upper()
+        if cargo not in CARGOS_ACEITOS:
             continue
 
         chave = hash_de_cpf(registro.get("NR_CPF_CANDIDATO")) or ""
         pessoa_id = hashes_conhecidos.get(chave)
         if pessoa_id is None:
+            continue
+
+        # Sem `casa_por_pessoa`, só a Câmara entra — que é o comportamento de antes de o
+        # Senado ter cpf_hash.
+        casa = (casa_por_pessoa or {}).get(pessoa_id, "CAMARA")
+        if cargo != CARGO_POR_CASA.get(casa, CARGO):
             continue
 
         valor = valor_pt_br(registro.get("VR_RECEITA"))

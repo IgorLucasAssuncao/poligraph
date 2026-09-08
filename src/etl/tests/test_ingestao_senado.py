@@ -373,3 +373,16 @@ def test_votacao_secreta_tem_placar_zero():
 
     assert linhas[0]["votos_sim"] == 0
     assert linhas[0]["votos_nao"] == 0
+
+
+def test_senador_ja_trazido_pela_lista_nao_e_recriado_pelo_voto():
+    """🔴 Sem isto, `gravar_pessoas` sobrescreve o nome civil pelo nome parlamentar.
+
+    A lista de exercício traz `NomeCompletoParlamentar`; o voto ⛔ não traz. Como o
+    upsert faz `SET nome_civil = ...`, o segundo passo regredia o dado — e foi assim
+    que os 104 senadores ficaram sem chave para casar com o TSE.
+    """
+    votacoes = [{"votos": [{"codigoParlamentar": "5540", "nomeParlamentar": "Fulano"}]}]
+
+    assert ingestao_senado.senadores_dos_votos(votacoes, ja_conhecidos={"5540"}) == []
+    assert len(ingestao_senado.senadores_dos_votos(votacoes)) == 1

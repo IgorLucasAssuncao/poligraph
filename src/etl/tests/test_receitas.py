@@ -327,3 +327,115 @@ def test_ano_diferente_nao_acha_nada(zip_do_tse):
     """⚠️ Pedir 2018 num ZIP de 2022 devolve **vazio**, e o comando trata isso como
     erro — ⛔ não como "essa eleição não teve receita"."""
     assert receitas.nomes_de_receita(zip_do_tse, 2018) == []
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 Senadores — o cargo tem de casar com a CASA da pessoa
+# ═══════════════════════════════════════════════════════════════════
+
+CPF_SENADOR = "11144477735"
+
+
+def test_sem_casa_por_pessoa_so_a_camara_entra(conhecidos):
+    """O comportamento de antes de o Senado ter `cpf_hash` continua o padrão."""
+    assert receitas.para_linhas([linha(DS_CARGO="SENADOR")], conhecidos, 2022) == []
+
+
+def test_senador_entra_quando_a_casa_dele_e_o_senado():
+    conhecidos = {hash_de_cpf(CPF_SENADOR): 7}
+
+    linhas = receitas.para_linhas(
+        [linha(DS_CARGO="SENADOR", NR_CPF_CANDIDATO=CPF_SENADOR)],
+        conhecidos,
+        2022,
+        {7: "SENADO"},
+    )
+
+    assert len(linhas) == 1
+    assert linhas[0]["pessoa_id"] == 7
+
+
+def test_campanha_ao_senado_que_o_deputado_PERDEU_nao_entra(conhecidos):
+    """🔴 O caso que motivou o `casa_por_pessoa`.
+
+    O CPF é o mesmo em toda eleição. Um deputado em exercício que disputou o Senado
+    numa eleição anterior e ⛔ não se elegeu tem receita naquele arquivo — e somá-la
+    ao financiamento dele daria um total maior, plausível e errado, sem erro nenhum.
+    """
+    linhas = receitas.para_linhas(
+        [linha(DS_CARGO="SENADOR")], conhecidos, 2018, {42: "CAMARA"}
+    )
+
+    assert linhas == []
+
+
+def test_cargo_que_nao_e_de_nenhuma_casa_nunca_entra(conhecidos):
+    assert receitas.para_linhas(
+        [linha(DS_CARGO="GOVERNADOR")], conhecidos, 2022, {42: "CAMARA"}
+    ) == []
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 O de-para de CPF do Senado, extraído do próprio arquivo do TSE
+# ═══════════════════════════════════════════════════════════════════
+
+
+def _zip_de_receitas(tmp_path: Path, linhas: list[dict], ano: int = 2022) -> Path:
+    caminho = tmp_path / f"contas-{ano}.zip"
+    colunas = ["DS_CARGO", "NM_CANDIDATO", "SG_UF", "NR_CPF_CANDIDATO"]
+
+    corpo = ";".join(f'"{c}"' for c in colunas) + chr(10)
+    for l in linhas:
+        corpo += ";".join(f'"{l.get(c, "")}"' for c in colunas) + chr(10)
+
+    with zipfile.ZipFile(caminho, "w") as pacote:
+        pacote.writestr(f"receitas_candidatos_{ano}_BRASIL.csv", corpo.encode("latin-1"))
+
+    return caminho
+
+
+def test_cpf_de_senadores_casa_por_nome_e_uf(tmp_path):
+    caminho = _zip_de_receitas(tmp_path, [
+        {"DS_CARGO": "Senador", "NM_CANDIDATO": "JOSÉ DA SILVA",
+         "SG_UF": "SP", "NR_CPF_CANDIDATO": CPF_SENADOR},
+    ])
+
+    mapa = receitas.cpf_de_senadores(caminho, 2022)
+
+    assert mapa[("JOSE DA SILVA", "SP")] == CPF_SENADOR
+
+
+def test_homonimo_em_estados_diferentes_sao_pessoas_diferentes(tmp_path):
+    """⚠️ A UF faz parte da chave: sem ela, um sobrescreveria o outro."""
+    caminho = _zip_de_receitas(tmp_path, [
+        {"DS_CARGO": "Senador", "NM_CANDIDATO": "JOSE DA SILVA",
+         "SG_UF": "SP", "NR_CPF_CANDIDATO": CPF_SENADOR},
+        {"DS_CARGO": "Senador", "NM_CANDIDATO": "JOSE DA SILVA",
+         "SG_UF": "BA", "NR_CPF_CANDIDATO": CPF_ELEITO},
+    ])
+
+    mapa = receitas.cpf_de_senadores(caminho, 2022)
+
+    assert mapa[("JOSE DA SILVA", "SP")] == CPF_SENADOR
+    assert mapa[("JOSE DA SILVA", "BA")] == CPF_ELEITO
+
+
+def test_mesmo_nome_e_mesma_uf_com_dois_cpf_vira_ambiguidade(tmp_path):
+    """🔴 Ambiguidade sai como `None`, ⛔ nunca "o primeiro"."""
+    caminho = _zip_de_receitas(tmp_path, [
+        {"DS_CARGO": "Senador", "NM_CANDIDATO": "JOSE DA SILVA",
+         "SG_UF": "SP", "NR_CPF_CANDIDATO": CPF_SENADOR},
+        {"DS_CARGO": "Senador", "NM_CANDIDATO": "JOSE DA SILVA",
+         "SG_UF": "SP", "NR_CPF_CANDIDATO": CPF_ELEITO},
+    ])
+
+    assert receitas.cpf_de_senadores(caminho, 2022)[("JOSE DA SILVA", "SP")] is None
+
+
+def test_deputado_nao_entra_no_de_para_de_senador(tmp_path):
+    caminho = _zip_de_receitas(tmp_path, [
+        {"DS_CARGO": "Deputado Federal", "NM_CANDIDATO": "JOSE DA SILVA",
+         "SG_UF": "SP", "NR_CPF_CANDIDATO": CPF_SENADOR},
+    ])
+
+    assert receitas.cpf_de_senadores(caminho, 2022) == {}

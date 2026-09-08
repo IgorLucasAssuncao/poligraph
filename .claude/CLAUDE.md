@@ -188,7 +188,7 @@ contra o banco em **2026-09-08**:
 | Quem votou na 57ª — deputados · senadores | **643** · **104** |
 | Despesas de cota (CEAP) | **772.677** |
 | Emendas | **24.825** |
-| Receitas de campanha | **22.511** |
+| Receitas de campanha | **44.171** — 642 deputados e **76 senadores** |
 
 ⚠️ `pessoas` tem **7.993** linhas: é o cadastro de TODAS as legislaturas, ⛔ não os 747
 que votaram na 57ª. Somar as duas casas ou ler o cadastro cru dá número maior e errado.

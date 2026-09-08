@@ -105,7 +105,7 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         help="uma casa por execução — as duas não são comparáveis entre si",
     )
 
-    sub.add_parser("cpf", help="busca o CPF dos deputados com voto e grava o HASH")
+    sub.add_parser("cpf", help="completa o cpf_hash das duas casas (Câmara: API; Senado: TSE)")
 
     emd = sub.add_parser("emendas", help="ingere emendas parlamentares (Portal)")
     emd.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
@@ -332,7 +332,9 @@ def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
         # A lista de exercício só tem quem está hoje; os votos alcançam quem saiu,
         # licenciou-se ou devolveu a cadeira. Criá-los a partir do próprio voto evita
         # descartar 10,5% da base por falta de dono.
-        anteriores = ingestao_senado.senadores_dos_votos(votacoes_brutas)
+        anteriores = ingestao_senado.senadores_dos_votos(
+            votacoes_brutas, ja_conhecidos={s["id_externo"] for s in senadores}
+        )
         recuperados = persistencia.gravar_pessoas(conexao, anteriores)
         if recuperados:
             log.info("  %d senadores fora da lista de exercício, criados pelo voto",
@@ -754,6 +756,18 @@ def _resolver_a_mao(conexao: psycopg.Connection, entradas: list[str]) -> None:
 
 
 def _cpf(conexao: psycopg.Connection) -> None:
+    """Completa `cpf_hash` das duas casas — e cada uma tem um caminho.
+
+    Câmara: a API REST publica o CPF, uma requisição por deputado.
+    Senado: não publica. O caminho é o nome civil contra a prestação de contas do TSE,
+    em `_nome_civil_dos_senadores` e `_cpf_dos_senadores`.
+    """
+    _cpf_dos_deputados(conexao)
+    _nome_civil_dos_senadores(conexao)
+    _cpf_dos_senadores(conexao)
+
+
+def _cpf_dos_deputados(conexao: psycopg.Connection) -> None:
     """Completa `cpf_hash` a partir da API REST da Câmara.
 
     🔴 **Por que existe um comando só para isto:** a coluna `cpf` do CSV em bloco vem
@@ -795,6 +809,105 @@ def _cpf(conexao: psycopg.Connection) -> None:
         log.warning(
             "  ⚠️ Menos de 80%% dos deputados tinham CPF. A API mudou ou está limitando?"
         )
+
+
+# As duas eleições que compõem a 57ª legislatura do Senado: a Casa renova por terços
+# alternados, então metade das cadeiras vem de 2018 e a outra de 2022.
+ELEICOES_DO_SENADO = (2018, 2022)
+
+
+def _nome_civil_dos_senadores(conexao: psycopg.Connection) -> int:
+    """Completa `nome_civil` pelo detalhe do Senado. É a chave para casar com o TSE.
+
+    A lista de exercício traz `NomeCompletoParlamentar` dos 81 de hoje; os suplentes que
+    devolveram a cadeira só aparecem nos votos, e o voto não tem nome completo. O
+    endpoint de detalhe responde para qualquer código.
+    """
+    faltantes = persistencia.senadores_sem_nome_civil(conexao)
+    if not faltantes:
+        log.info("Todos os senadores com voto já têm nome civil.")
+        return 0
+
+    log.info("Buscando nome civil de %d senadores...", len(faltantes))
+
+    achados = 0
+    for codigo, pessoa_id in faltantes:
+        identificacao = senado.baixar_senador(codigo)
+        completo = (identificacao or {}).get("NomeCompletoParlamentar")
+        parlamentar = (identificacao or {}).get("NomeParlamentar")
+
+        # Só grava se for DIFERENTE do nome parlamentar: gravar o mesmo texto deixaria a
+        # pessoa fora de `senadores_sem_nome_civil` na próxima execução, escondendo que
+        # o Senado não tem o dado dela.
+        if completo and completo.strip() != (parlamentar or "").strip():
+            persistencia.gravar_nome_civil(conexao, pessoa_id, completo.strip())
+            achados += 1
+
+        time.sleep(PAUSA_ENTRE_CHAMADAS)
+
+    log.info("  %d de %d com nome civil", achados, len(faltantes))
+    return achados
+
+
+def _cpf_dos_senadores(conexao: psycopg.Connection) -> None:
+    """Completa `cpf_hash` dos senadores casando o nome civil contra o TSE.
+
+    🔴 **O Senado não publica CPF.** A prestação de contas eleitoral publica: cada
+    candidato a Senador aparece com `NM_CANDIDATO` (civil), `SG_UF` e
+    `NR_CPF_CANDIDATO`. O casamento é por **nome civil + UF**, ⛔ nunca por nome
+    sozinho — homônimo em estados diferentes é outra pessoa, e atribuir a campanha de um
+    a outro daria número plausível e errado.
+
+    ⚠️ **Teto conhecido:** suplentes não prestam contas próprias. Quem assumiu a cadeira
+    sem ter sido eleito titular ⛔ não está no arquivo, e continua sem `cpf_hash`. Isso
+    ⛔ não é falha de carga — é alcance da fonte, e a tela precisa dizer isso em vez de
+    mostrar zero como se fosse medida.
+    """
+    pendentes = persistencia.senadores_para_casar(conexao)
+    if not pendentes:
+        log.info("Todos os senadores com voto já têm cpf_hash.")
+        return
+
+    mapa: dict[tuple[str, str], str | None] = {}
+    for eleicao in ELEICOES_DO_SENADO:
+        arquivo = CACHE / f"prestacao-contas-{eleicao}.zip"
+        if not arquivo.exists():
+            url = tse.url_de_prestacao_de_contas(eleicao)
+            if not tse.existe(url):
+                log.warning("  TSE não respondeu para %s; seguindo sem essa eleição", url)
+                continue
+            arquivo = tse.baixar(url, arquivo)
+
+        do_ano = receitas.cpf_de_senadores(arquivo, eleicao)
+        log.info("  %d candidatos a Senador em %d", len(do_ano), eleicao)
+
+        for chave, cpf in do_ano.items():
+            # Chave repetida entre as duas eleições com CPF diferente é ambiguidade, e
+            # ambiguidade não se resolve escolhendo uma.
+            if chave in mapa and mapa[chave] != cpf:
+                mapa[chave] = None
+            else:
+                mapa.setdefault(chave, cpf)
+
+    if not mapa:
+        log.warning("Nenhum candidato a Senador lido do TSE; cpf_hash não foi tocado.")
+        return
+
+    casados = ambiguos = 0
+    for pessoa_id, nome_civil, uf in pendentes:
+        cpf = mapa.get((normalizacao.sem_acento_maiusculo(nome_civil), uf.upper()))
+        if cpf is None:
+            ambiguos += (normalizacao.sem_acento_maiusculo(nome_civil), uf.upper()) in mapa
+            continue
+
+        hash_cpf = normalizacao.hash_de_cpf(cpf)
+        if hash_cpf:
+            persistencia.gravar_cpf_hash(conexao, pessoa_id, hash_cpf)
+            casados += 1
+
+    log.info("  %d de %d senadores casados por nome civil + UF", casados, len(pendentes))
+    if ambiguos:
+        log.warning("  %d ficaram de fora por ambiguidade de nome + UF", ambiguos)
 
 
 def _cota(conexao: psycopg.Connection, anos: list[int]) -> None:
@@ -867,15 +980,19 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
         "consolidado" if len(nomes) == 1 else f"{len(nomes)} estaduais (⛔ sem DF)",
     )
 
+    # O cargo esperado sai da casa em que a pessoa votou. Sem isto, a campanha ao
+    # Senado que um deputado atual PERDEU entraria no financiamento dele.
+    casas = persistencia.casa_por_pessoa(conexao)
+
     todas: list[dict] = []
     for nome in nomes:
         linhas = receitas.para_linhas(
-            receitas.ler_receitas(arquivo, nome), hashes, eleicao
+            receitas.ler_receitas(arquivo, nome), hashes, eleicao, casas
         )
         todas.extend(linhas)
 
         if linhas:
-            log.info("  %s — %d linhas de deputado federal eleito", nome, len(linhas))
+            log.info("  %s — %d linhas de parlamentar em exercício", nome, len(linhas))
 
     gravadas = persistencia.gravar_receitas(conexao, eleicao, todas)
     resumo = receitas.resumir(todas)

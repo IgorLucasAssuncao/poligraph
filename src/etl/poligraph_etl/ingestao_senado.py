@@ -36,6 +36,8 @@ Achados: [#4](../../../docs/achados/004-endpoint-do-senado-depreciado.md) ·
 [#17](../../../docs/achados/017-senado-maioria-secreta.md)
 """
 
+from collections.abc import Container
+
 from .ingestao import legislatura_da_data
 from .normalizacao import classificar_categoria
 
@@ -138,7 +140,9 @@ def senadores_para_linhas(identificacoes: list[dict]) -> list[dict]:
     return linhas
 
 
-def senadores_dos_votos(votacoes: list[dict]) -> list[dict]:
+def senadores_dos_votos(
+    votacoes: list[dict], ja_conhecidos: Container[str] = ()
+) -> list[dict]:
     """Os senadores que aparecem nos votos e não estão na lista de exercício.
 
     `/senador/lista/atual` devolve apenas os 81 em exercício hoje. Nos votos de 2023 a
@@ -148,6 +152,11 @@ def senadores_dos_votos(votacoes: list[dict]) -> list[dict]:
 
     O registro de voto traz nome, partido e UF, que basta para criar a pessoa. O nome
     civil fica igual ao de exibição: o voto não traz o nome completo.
+
+    `ja_conhecidos` recebe os códigos que a lista de exercício já trouxe, e sem ele esta
+    função REGRIDE o dado: `gravar_pessoas` faz `SET nome_civil = ...`, então os 81 que
+    vieram com `NomeCompletoParlamentar` eram sobrescritos aqui pelo nome parlamentar.
+    Ficaram 104 de 104 sem nome civil, e com isso sem chave para casar com o TSE.
     """
     vistos: dict[str, dict] = {}
 
@@ -155,7 +164,7 @@ def senadores_dos_votos(votacoes: list[dict]) -> list[dict]:
         for voto in votacao.get("votos") or []:
             codigo = _texto(voto.get("codigoParlamentar"))
             nome = _texto(voto.get("nomeParlamentar"))
-            if not codigo or not nome or codigo in vistos:
+            if not codigo or not nome or codigo in vistos or codigo in ja_conhecidos:
                 continue
 
             vistos[codigo] = {
