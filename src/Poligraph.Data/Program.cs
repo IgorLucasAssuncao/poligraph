@@ -43,7 +43,8 @@ log.LogInformation("Migrations aplicadas.");
 // `Poligraph.Tests/Fixtures/DadosDeTeste.cs`, que é onde ele pertence.
 // E continua fora de `HasData()`: a curadoria muda quando avança, e conteúdo que
 // muda dentro de migration exigiria uma migration por revisão.
-log.LogInformation("{Curadoria}", await CarregadorDePerguntas.CarregarAsync(db));
+var curadoria = await CarregadorDePerguntas.CarregarAsync(db);
+log.LogInformation("{Curadoria}", curadoria);
 
 var perguntas = await db.Perguntas.CountAsync(p => p.Ativa);
 var pessoas = await db.Pessoas.CountAsync();

@@ -192,9 +192,14 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
             ? $"'fora-dominio', {valor}, 57, DATE '2025-01-01', 'SUBSTANTIVA', true, false"
             : $"'fora-dominio', 'CAMARA', 57, DATE '2025-01-01', {valor}, true, false";
 
+        // EF1002 suprimido: a interpolação é o OBJETO do teste. `colunas` e `valores`
+        // vêm de [InlineData] neste arquivo, nunca de entrada externa, e o que se
+        // verifica é qual CHECK do banco barra o INSERT.
+#pragma warning disable EF1002
         var erro = await Assert.ThrowsAsync<PostgresException>(() =>
             Db.Database.ExecuteSqlRawAsync(
                 $"INSERT INTO votacoes ({colunas}) VALUES ({valores})"));
+#pragma warning restore EF1002
 
         // Confere QUAL restrição barrou. Sem isto, um NOT NULL acidental em outra
         // coluna faria o teste passar por um motivo que não é o que ele afirma.

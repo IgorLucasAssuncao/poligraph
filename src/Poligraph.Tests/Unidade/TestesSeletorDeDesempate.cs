@@ -1,4 +1,4 @@
-using Poligraph.Api.Services;
+﻿using Poligraph.Api.Services;
 
 namespace Poligraph.Tests.Unidade;
 
@@ -162,6 +162,6 @@ public class TestesSeletorDeDesempate
         Assert.Empty(escolhidas);
     }
 
-    private static IReadOnlyDictionary<long, short> Posicoes(params (long Pessoa, short Posicao)[] itens) =>
+    private static Dictionary<long, short> Posicoes(params (long Pessoa, short Posicao)[] itens) =>
         itens.ToDictionary(i => i.Pessoa, i => i.Posicao);
 }

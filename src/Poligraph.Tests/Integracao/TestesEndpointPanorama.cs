@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Data;
 
@@ -86,7 +87,7 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
 
         var resposta = await cliente.GetAsync(Rota);
 
-        resposta.EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
     }
 
     private async Task SemearAsync() =>

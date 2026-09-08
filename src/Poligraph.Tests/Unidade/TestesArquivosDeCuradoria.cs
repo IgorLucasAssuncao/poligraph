@@ -1,3 +1,4 @@
+﻿using System.Text.RegularExpressions;
 using System.Text.Json;
 using Poligraph.Data;
 
@@ -20,7 +21,7 @@ namespace Poligraph.Tests.Unidade;
 /// para travar é a forma: que exista, e que seja +1 ou −1.
 /// </para>
 /// </summary>
-public class TestesArquivosDeCuradoria
+public partial class TestesArquivosDeCuradoria
 {
     [Fact]
     public void TodoLote_TemPerguntas()
@@ -97,7 +98,7 @@ public class TestesArquivosDeCuradoria
     public void TodoId_EhKebabCase()
     {
         var fora = Todas
-            .Where(p => !System.Text.RegularExpressions.Regex.IsMatch(p.Id, "^[a-z0-9]+(-[a-z0-9]+)*$"))
+            .Where(p => !KebabCase().IsMatch(p.Id))
             .Select(p => p.Id);
 
         Assert.Empty(fora);
@@ -141,6 +142,9 @@ public class TestesArquivosDeCuradoria
         return pasta?.FullName
             ?? throw new InvalidOperationException("Poligraph.slnx não encontrado acima de " + caminho);
     }
+
+    [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*$")]
+    private static partial Regex KebabCase();
 
     private sealed record ArquivoLido(List<PerguntaCurada> Perguntas);
 }

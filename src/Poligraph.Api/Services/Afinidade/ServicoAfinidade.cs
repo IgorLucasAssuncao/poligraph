@@ -173,7 +173,7 @@ public class ServicoAfinidade(PoligraphDb db)
     /// não para os ~640 do cálculo: são duas listas de ids por parlamentar, e gerá-las
     /// para quem não vai à tela seria trabalho jogado fora em toda requisição.
     /// </summary>
-    private List<ParlamentarAfimDto> Montar(
+    private static List<ParlamentarAfimDto> Montar(
         IOrderedEnumerable<ResultadoAfinidade> ordenados,
         Dictionary<long, (string Nome, string Partido, string Uf)> fichas,
         IReadOnlyList<RespostaCidadao> respostas,
