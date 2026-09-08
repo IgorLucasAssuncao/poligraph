@@ -179,21 +179,34 @@ ETL fica como botão no painel, esperando você mandar rodar.
 | ETL | `ingerir` · `analisar` · `cpf` · `cota` · `emendas` · `fundo` · `validar` |
 | Testes | **159 .NET** (Testcontainers com Postgres real) · **416 Python** · **97 front** |
 
-⭐ **O seed foi aposentado** (PL41). O dado local é a Câmara de verdade — 470.727 votos da
-legislatura 57, 643 deputados, 773.716 despesas de cota, 24.810 emendas, 22.511
-receitas de campanha. 📐 Os números
-todos, conferidos contra o banco, no [`README`](../README.md).
+⭐ **O seed foi aposentado** (PL41). O dado local é a Câmara de verdade. 📐 Conferido
+contra o banco em **2026-09-08**:
+
+| | |
+|---|---:|
+| Votos da 57ª — Câmara · Senado | **470.727** · **34.101** |
+| Quem votou na 57ª — deputados · senadores | **643** · **104** |
+| Despesas de cota (CEAP) | **772.677** |
+| Emendas | **24.825** |
+| Receitas de campanha | **22.511** |
+
+⚠️ `pessoas` tem **7.993** linhas: é o cadastro de TODAS as legislaturas, ⛔ não os 747
+que votaram na 57ª. Somar as duas casas ou ler o cadastro cru dá número maior e errado.
 
 ⭐ **Todas as fontes ingerem** — o Senado desde a PL42, e o **coletor de notícias**
 desde 2026-08-29 (`etl-noticias`, três feeds públicos: Agência Câmara, Agência Senado
 e Agência Brasil).
 
-> ✅ **A PL11 saiu do caminho (2026-08-29).** São **50 perguntas curadas** — 41 da
-> Câmara e 9 do Senado —, e o cidadão responde **24**: 8 de abertura, as 9 do Senado e
-> 7 escolhidas contra o empate dele.
+> ✅ **A PL11 saiu do caminho (2026-08-29).** O poço tem **50 linhas** em `perguntas`,
+> das quais **49 ativas** — 40 da Câmara e 9 do Senado. O cidadão responde **24**: 8 de
+> abertura, as 9 do Senado e 7 escolhidas contra o empate dele.
+>
+> ⚠️ A 50ª é a `q-preco-abusivo`, **desativada** e ⛔ não apagada: a votação era destaque
+> de Emenda de Plenário, ⛔ não a proposição. O carregador desativa em vez de excluir,
+> senão a linha voltaria na próxima carga.
 >
 > ⚠️ **Poço e questionário ⛔ não são a mesma coisa.** O mínimo obrigatório é 60% do que
-> é **OFERECIDO** (24), ⛔ não do poço (50) — sobre o poço daria 30 respostas num
+> é **OFERECIDO** (24), ⛔ não do poço (49) — sobre o poço daria 30 respostas num
 > questionário de 24. 📐 A conta toda em [`PENDENCIAS`](../docs/PENDENCIAS.md).
 >
 > ⚠️ **O Senado ⛔ NÃO estava esgotado** — a conclusão de 29/08 caiu no mesmo dia. As
