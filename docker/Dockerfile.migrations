@@ -6,7 +6,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Não copia mais a API: com a dependência invertida, Data não depende dela.
-COPY ["src/Poligraph.Data/Poligraph.Data.csproj", "src/Poligraph.Data/"]
+COPY ["src/Poligraph.Data/Poligraph.Data.csproj",                        "src/Poligraph.Data/"]
+COPY ["src/Poligraph.ServiceDefaults/Poligraph.ServiceDefaults.csproj", "src/Poligraph.ServiceDefaults/"]
 RUN dotnet restore "src/Poligraph.Data/Poligraph.Data.csproj"
 
 COPY src/ src/
