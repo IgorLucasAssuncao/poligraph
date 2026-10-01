@@ -26,7 +26,7 @@ export function Parlamentares() {
 
   return (
     <>
-      <div className="abas-vista" role="tablist" aria-label="Como ver os parlamentares">
+      <div className="abas-vista" data-tour="vistas" role="tablist" aria-label="Como ver os parlamentares">
         {VISTAS.map((opcao) => (
           <button
             key={opcao.chave}

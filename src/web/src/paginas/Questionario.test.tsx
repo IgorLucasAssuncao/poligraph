@@ -161,4 +161,15 @@ describe('Questionario', () => {
     const encerramento = await screen.findByText(/opinou em/i);
     expect(encerramento.textContent).toMatch(/opinou em 1 de 2/i);
   });
+
+  /** Um alvo que sumisse da página faria o tour pular o passo calado. */
+  it('o tour encontra na página cada elemento que explica', async () => {
+    const { passosDoQuestionario } = await import('../tour');
+    renderizar();
+    await screen.findByText('Primeira afirmação');
+
+    for (const passo of passosDoQuestionario()) {
+      expect(document.querySelector(`[data-tour="${passo.alvo}"]`), passo.alvo).not.toBeNull();
+    }
+  });
 });

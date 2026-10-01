@@ -49,6 +49,17 @@ public class EmendaModel
     public string? Funcao { get; set; }
     public string? Subfuncao { get; set; }
 
+    /// <summary>Código IBGE do município. Nulo quando o destino é UF, "Nacional" ou "MÚLTIPLO".</summary>
+    public string? CodigoMunicipioIbge { get; set; }
+
+    /// <summary>
+    /// A ação orçamentária. Com o plano orçamentário e a localidade, distingue as linhas de
+    /// uma mesma emenda: 55 emendas de 2023 a 2026 se repartem em mais de uma.
+    /// </summary>
+    public string? CodigoAcao { get; set; }
+
+    public string? CodigoPlanoOrcamentario { get; set; }
+
     /// <summary> Pode ser NEGATIVO — é cancelamento de empenho.</summary>
     public decimal ValorEmpenhado { get; set; }
 

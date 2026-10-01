@@ -128,3 +128,22 @@ export function distanciaAoSegmento(x: number, y: number, a: Ponto, b: Ponto): n
 
   return Math.hypot(x - (a.x + t * dx), y - (a.y + t * dy));
 }
+
+/**
+ * A pinça de dois dedos: aproxima pela razão entre as distâncias, em volta do ponto
+ * médio, e acompanha o ponto médio quando os dois dedos andam juntos.
+ *
+ * ⭐ Sem o acompanhamento, arrastar com dois dedos ⛔ moveria nada — e é o gesto que quem
+ * usa mapa no celular faz primeiro.
+ */
+export function pinca(camera: Camera, antes: [Ponto, Ponto], depois: [Ponto, Ponto]): Camera {
+  const distancia = (a: Ponto, b: Ponto) => Math.hypot(a.x - b.x, a.y - b.y);
+  const meio = (a: Ponto, b: Ponto) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+  const meioAntes = meio(...antes);
+  const meioDepois = meio(...depois);
+  const razao = distancia(...depois) / Math.max(distancia(...antes), 1);
+
+  const arrastada = { ...camera, x: camera.x + meioDepois.x - meioAntes.x, y: camera.y + meioDepois.y - meioAntes.y };
+  return comEscala(arrastada, camera.escala * razao, meioDepois.x, meioDepois.y);
+}

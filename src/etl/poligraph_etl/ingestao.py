@@ -143,6 +143,8 @@ def votos_para_linhas(df: pd.DataFrame, mapa_pessoas: dict[str, int]) -> list[di
                 "votacao_id": registro["idVotacao"],
                 "pessoa_id": pessoa_id,
                 "valor": normalizar_voto(registro.get("voto")),
+                # A Câmara lista só quem estava: toda linha é presença, e o ausente ⛔ tem linha.
+                "presenca": "PRESENTE",
                 "partido_no_voto": registro.get("deputado_siglaPartido") or "",
                 "uf_no_voto": (registro.get("deputado_siglaUf") or "")[:2],
             }

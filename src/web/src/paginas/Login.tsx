@@ -72,6 +72,8 @@ export function Login() {
           seguir. <strong>A lista de quem você segue indica posição política</strong> e é
           tratada como dado sensível. Você pode apagar tudo a qualquer momento.{' '}
           <Link to="/privacidade">Política de privacidade</Link>
+          {' · '}
+          <Link to="/metodologia">Como calculamos</Link>
         </p>
 
         <p className="aviso-academico">

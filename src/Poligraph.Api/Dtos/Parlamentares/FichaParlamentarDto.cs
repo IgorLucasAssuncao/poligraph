@@ -26,6 +26,18 @@ public record FichaParlamentarDto(
     /// <summary> URL na Câmara — a imagem NÃO é rehospedada.</summary>
     string? UrlFoto,
     int NVotacoes,
+    /// <summary>
+    /// Todos os registros de voto da legislatura, inclusive os sem posição (obstrução,
+    /// ausência registrada). É o total da lista de votos, que os mostra; <c>NVotacoes</c>
+    /// não os conta.
+    /// </summary>
+    int NRegistrosDeVoto,
     IReadOnlyList<VotoNaFichaDto> VotosRecentes,
     IReadOnlyList<SimilarNaFichaDto> MaisSimilares,
-    AlinhamentoDto? Alinhamento);
+    AlinhamentoDto? Alinhamento,
+    /// <summary>Em quantas votações de plenário estava. Nulo sem voto registrado na legislatura.</summary>
+    PresencaDto? Presenca,
+    /// <summary>A página do parlamentar na própria casa — onde tudo o que a ficha mostra pode ser conferido.</summary>
+    string? UrlFonte,
+    /// <summary>PP4 — as redes que o parlamentar publicou; vazia quando ⛔ publicou nenhuma.</summary>
+    IReadOnlyList<RedeSocialDto> RedesSociais);

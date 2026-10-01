@@ -1,0 +1,102 @@
+/**
+ * Formatos de número e data usados em mais de uma tela.
+ *
+ * ⚠️ `bilhoes` arredonda para uma casa: serve para comparar ordem de grandeza numa
+ * tabela, ⛔ para citar valor exato — onde o valor exato importa, use `reais`.
+ */
+export function reais(valor: number): string {
+  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+/** `185_512_000_000` → `"R$ 185,5 bi"`; trilhão com duas casas; abaixo de um milhão, o valor inteiro. */
+export function reaisCompacto(valor: number): string {
+  const absoluto = Math.abs(valor);
+  const casa = (n: number) => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+
+  if (absoluto >= 1e12) {
+    return `R$ ${(valor / 1e12).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} tri`;
+  }
+  if (absoluto >= 1e9) return `R$ ${casa(valor / 1e9)} bi`;
+  if (absoluto >= 1e6) return `R$ ${casa(valor / 1e6)} mi`;
+  return reais(valor);
+}
+
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+/** `"2025-03-01"` → `"mar/2025"`. Lê o texto, ⛔ `Date`: o fuso deslocaria o dia 1 para o mês anterior. */
+export function mesCurto(iso: string): string {
+  const [ano, mes] = iso.split('-');
+  return `${MESES[Number(mes) - 1]}/${ano}`;
+}
+
+/** `"2025-01-16"` → `"16/01/2025"`, pelo mesmo motivo de `mesCurto`. */
+export function dataCurta(iso: string): string {
+  const [ano, mes, dia] = iso.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
+/** Preenche com zero os meses sem pagamento: pular o mês esconderia a espera. */
+export function mesesContinuos<T extends { mes: string; valor: number }>(
+  meses: T[],
+): { mes: string; valor: number }[] {
+  const valores = new Map(meses.map((m) => [m.mes, m.valor]));
+  const [anoInicial, mesInicial] = meses[0].mes.split('-').map(Number);
+  const [anoFinal, mesFinal] = meses[meses.length - 1].mes.split('-').map(Number);
+
+  const serie: { mes: string; valor: number }[] = [];
+  for (let a = anoInicial, m = mesInicial; a < anoFinal || (a === anoFinal && m <= mesFinal); ) {
+    const mes = `${a}-${String(m).padStart(2, '0')}-01`;
+    serie.push({ mes, valor: valores.get(mes) ?? 0 });
+    m += 1;
+    if (m > 12) {
+      m = 1;
+      a += 1;
+    }
+  }
+
+  return serie;
+}
+
+const PARTICULAS = new Set(['da', 'das', 'de', 'do', 'dos', 'e']);
+
+/** `"LUIZ INÁCIO LULA DA SILVA"` → `"Luiz Inácio Lula da Silva"`. O TSE publica em caixa alta. */
+export function nomeProprio(texto: string): string {
+  return texto
+    .toLocaleLowerCase('pt-BR')
+    .split(' ')
+    .map((palavra, i) =>
+      i > 0 && PARTICULAS.has(palavra)
+        ? palavra
+        : palavra.charAt(0).toLocaleUpperCase('pt-BR') + palavra.slice(1),
+    )
+    .join(' ');
+}
+
+/**
+ * Reparte 100 entre os valores, em inteiros que somam exatamente 100.
+ *
+ * ⭐ Pelo maior resto: arredondar cada parte sozinha dá 99 ou 101, e a tela diria "de
+ * cada R$ 100" com uma conta que ⛔ fecha.
+ */
+export function partesDeCem(valores: number[]): number[] {
+  const total = valores.reduce((soma, v) => soma + Math.max(v, 0), 0);
+  if (total <= 0) return valores.map(() => 0);
+
+  const exatas = valores.map((v) => (Math.max(v, 0) / total) * 100);
+  const partes = exatas.map(Math.floor);
+  const faltam = 100 - partes.reduce((soma, p) => soma + p, 0);
+
+  exatas
+    .map((e, i) => ({ i, resto: e - Math.floor(e) }))
+    .sort((a, b) => b.resto - a.resto)
+    .slice(0, faltam)
+    .forEach(({ i }) => (partes[i] += 1));
+
+  return partes;
+}
+
+/** `"PASSAGEM AÉREA"` → `"Passagem aérea"`. ⚠️ Os arquivos oficiais vêm em CAIXA ALTA, ilegível em bloco. */
+export function minusculas(texto: string): string {
+  const min = texto.toLocaleLowerCase('pt-BR');
+  return min.charAt(0).toLocaleUpperCase('pt-BR') + min.slice(1);
+}

@@ -92,6 +92,8 @@ ingestão contra a fonte real.
 | [**#30**](030-o-destaque-carrega-o-grafo.md) | ⭐ O **peso do destaque quase não importa**, mas incluí-lo importa muito | Entre 0,3 e 1,0 a vizinhança muda 6% a 17%; com peso **zero** sobram **2 dos 10** vizinhos. Na matriz há **422 destaques contra 141 substantivas** |
 | [**#31**](031-a-pec-estava-escondida-como-destaque.md) | 🔴 A **PEC estava escondida como destaque** | "Proposta de **Emenda** à Constituição" casava com o padrão de destaque: **73 votações de PEC** com peso 0,7 e fora da curadoria. O universo do Senado **dobrou**, de 52 para 104 |
 | [**#32**](032-a-rota-que-o-contrato-dizia-nao-existir.md) | 🔴 A **rota que o contrato dizia ⛔ não existir** | `MapPost("/logout", SairAsync)` ligou na sobrecarga `RequestDelegate`: o `IResult` era **descartado** (200 em vez de 204) e a rota sumia do OpenAPI. ⚠️ **O teste de logout passava** — o `SignOutAsync` roda antes do `return` |
+| [**#33**](033-o-destino-da-emenda.md) | 🔴 O **destino da emenda**: três números que inflavam sem erro | O `DO NOTHING` descartava **55 linhas** de emenda; o convênio somado por emenda inventava **R$ 5,4 bi**; o **Banco do Brasil** (R$ 32,57 bi) aparecia como destino |
+| [**#34**](034-a-dotacao-de-2025-sem-a-regra-de-ouro.md) | 🔴 A **dotação de 2025 publicada sem a regra de ouro** | **R$ 228,6 bi** empenhados além da dotação publicada — o valor condicionado na LOA era R$ 228,5 bi. E o arquivo é só do **Executivo** |
 
 ---
 

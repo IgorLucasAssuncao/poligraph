@@ -55,6 +55,10 @@ export type VotoNaFicha = {
    * votou a favor da reforma tributária — e ela votou sobre rito.
    */
   categoria: 'SUBSTANTIVA' | 'DESTAQUE' | 'PROCEDIMENTAL' | 'AUTORIDADE';
+  /** A ficha de tramitação da proposição, na casa. */
+  urlProposicao: string | null;
+  /** O registro nominal da votação, com o voto de cada um. Só na Câmara. */
+  urlRegistro: string | null;
 };
 
 export type Similar = {
@@ -92,10 +96,23 @@ export type Ficha = {
   uf: string;
   urlFoto: string | null;
   nVotacoes: number;
+  /** Todos os registros de voto da legislatura, inclusive sem posição — o total da lista. */
+  nRegistrosDeVoto: number;
   votosRecentes: VotoNaFicha[];
   maisSimilares: Similar[];
   alinhamento: Alinhamento | null;
+  /** "Ele vai às votações?" Nulo sem voto na legislatura. */
+  presenca: Presenca | null;
+  /** A página do parlamentar na própria casa. */
+  urlFonte: string | null;
+  /** PP4 — as redes que o parlamentar publicou. Vazia quando ⛔ publicou nenhuma. */
+  redesSociais: RedeSocial[];
 };
+
+export type TipoRedeSocial = 'INSTAGRAM' | 'FACEBOOK' | 'X' | 'YOUTUBE' | 'TIKTOK' | 'LINKEDIN' | 'OUTRA';
+
+/** `fonte` diz de quando: a da Câmara é a lista atual; a do TSE, a da candidatura. */
+export type RedeSocial = { rede: TipoRedeSocial; url: string; fonte: 'CAMARA' | 'TSE' };
 
 export type Noticia = {
   id: number;
@@ -168,6 +185,11 @@ export type ResultadoPorCasa = {
   maisProximos: ParlamentarAfim[];
   maisDistantes: ParlamentarAfim[];
   posicaoNoGrafo: PosicaoDoCidadao | null;
+  /**
+   * A régua do resultado: quantos parlamentares foram comparados, e quanto o do meio da
+   * lista concordou. Sem ela, "8 de 11" ⛔ diz se é muito.
+   */
+  escala: { comparados: number; medianoAcordos: number; medianoComparaveis: number };
 };
 
 /**
@@ -291,24 +313,59 @@ export async function obterPanorama(): Promise<Panorama> {
 // Parlamentares
 // ═══════════════════════════════════════════════════════════════════
 
-export async function listarParlamentares(filtro?: {
+/**
+ * Uma página da lista. `total` é o de todos os que passam no filtro; `partidos` e `ufs`
+ * são as opções dos filtros, tiradas da lista inteira — ⛔ da página.
+ */
+export type PaginaDeParlamentares = {
+  itens: Parlamentar[];
+  pagina: number;
+  tamanho: number;
+  total: number;
+  partidos: string[];
+  ufs: string[];
+};
+
+export type FiltroDaLista = {
   nome?: string;
   partido?: string;
   uf?: string;
-}): Promise<Parlamentar[]> {
+  /** Mais votações registradas primeiro: quem tem mais dado para comparar. */
+  ordem?: 'NOME' | 'VOTACOES';
+  /** Começa em 1. */
+  pagina?: number;
+  tamanho?: number;
+};
+
+export async function listarParlamentares(filtro: FiltroDaLista = {}): Promise<PaginaDeParlamentares> {
   const query = new URLSearchParams(
-    Object.entries(filtro ?? {}).filter(([, v]) => v) as [string, string][],
+    Object.entries(filtro)
+      .filter(([, v]) => v !== undefined && v !== '')
+      .map(([k, v]) => [k, String(v)]),
   );
 
-  return buscar<Parlamentar[]>(`${BASE}/parlamentares?${query}`);
+  return buscar<PaginaDeParlamentares>(`${BASE}/parlamentares?${query}`);
 }
 
 export async function obterFicha(id: number): Promise<Ficha> {
   return buscar<Ficha>(`${BASE}/parlamentares/${id}`);
 }
 
-export async function obterNoticias(id: number): Promise<Noticia[]> {
-  return buscar<Noticia[]>(`${BASE}/parlamentares/${id}/noticias`);
+/**
+ * Uma página de uma lista maior. `total` é o da lista inteira: a tela diz quantos faltam
+ * em vez de cortar calada. `pagina` começa em 1.
+ */
+export type PaginaDe<T> = { itens: T[]; pagina: number; tamanho: number; total: number };
+
+export async function obterNoticias(id: number, pagina = 1): Promise<PaginaDe<Noticia>> {
+  return buscar<PaginaDe<Noticia>>(`${BASE}/parlamentares/${id}/noticias?pagina=${pagina}`);
+}
+
+/** Votos da legislatura corrente, do mais recente. A página 1 é a que vem na ficha. */
+export async function listarVotos(id: number, pagina: number, tamanho: number): Promise<PaginaDe<VotoNaFicha>> {
+  return buscar<PaginaDe<VotoNaFicha>>(
+    `${BASE}/parlamentares/${id}/votos?pagina=${pagina}&tamanho=${tamanho}`,
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -476,6 +533,8 @@ export type Grafo = {
   execucaoId: number;
   casa: string;
   legislatura: number;
+  /** Quantas ligações mais fortes cada ponto mantém — o `k` da execução. */
+  vizinhosPorNo: number;
   nos: NoDoGrafo[];
   arestas: ArestaDoGrafo[];
 };
@@ -549,10 +608,237 @@ export type EmendasDoParlamentar = {
   quantidade: number;
   porDestino: EmendaPorDestino[];
   porFuncao: EmendaPorFuncao[];
+  favorecidos: FavorecidosDaEmenda;
+  pagamentosPorMes: PagamentoPorMes[];
+  convenios: ConveniosDaEmenda;
+  cidades: CidadesDaEmenda;
+};
+
+/** As cidades que receberam, pela sede de quem recebeu — ⛔ pela localidade declarada. */
+export type CidadesDaEmenda = {
+  quantidade: number;
+  maiores: { municipio: Municipio; recebido: number }[];
+};
+
+export type FavorecidoDaEmenda = {
+  nome: string;
+  naturezaJuridica: string | null;
+  uf: string | null;
+  municipio: string | null;
+  recebido: number;
+  /** Só pessoa jurídica que tem página de entidade; empresário individual e unidade gestora vêm sem. */
+  cnpj?: string | null;
+};
+
+/**
+ * Quem recebeu, somado desde o primeiro pagamento — por isso `recebido` pode passar do
+ * `pago` do ano: inclui o que foi pago nos anos seguintes. `ultimoMes` diz até quando.
+ *
+ * 🔴 Intermediário, pessoas e sem identificação ficam FORA de `maiores`, com o valor
+ * declarado ao lado. Pessoa ⛔ chega com nome: o banco nem o guarda.
+ */
+export type FavorecidosDaEmenda = {
+  recebido: number;
+  viaIntermediario: number;
+  aPessoas: number;
+  semIdentificacao: number;
+  /** `"2026-09-01"` — o mês, no primeiro dia. */
+  ultimoMes: string | null;
+  /** Quantos favorecidos a lista teria inteira; `maiores` traz os primeiros. */
+  identificados: number;
+  maiores: FavorecidoDaEmenda[];
+};
+
+export type PagamentoPorMes = {
+  /** `"2025-03-01"` — o mês, no primeiro dia. */
+  mes: string;
+  valor: number;
+};
+
+/**
+ * 🔴 `valor` é do convênio INTEIRO, e ele pode receber emendas de vários autores —
+ * `emendasQueFinanciam` diz quantas. Somar a lista ⛔ dá o que o parlamentar destinou.
+ */
+export type ConvenioDaEmenda = {
+  numero: string;
+  convenente: string;
+  objeto: string | null;
+  dataPublicacao: string;
+  valor: number;
+  emendasQueFinanciam: number;
+  /** O convênio no Portal da Transparência. */
+  urlFonte: string;
+};
+
+export type ConveniosDaEmenda = {
+  quantidade: number;
+  maiores: ConvenioDaEmenda[];
 };
 
 export async function obterEmendas(pessoaId: number): Promise<EmendasDoParlamentar> {
   return buscar<EmendasDoParlamentar>(`${BASE}/parlamentares/${pessoaId}/emendas`);
+}
+
+/** Uma emenda, somadas as linhas dela, com o link no Portal. */
+export type EmendaNaLista = {
+  codigo: string;
+  tipo: string | null;
+  localidade: string | null;
+  /** Mais de 1 quando a emenda se reparte entre destinos. */
+  localidades: number;
+  funcao: string | null;
+  empenhado: number;
+  pago: number;
+  urlFonte: string;
+};
+
+/** As emendas do ano, uma a uma — o caminho de volta à fonte de cada soma. */
+export async function listarEmendas(
+  pessoaId: number, ano: number, pagina: number, tamanho: number,
+): Promise<PaginaDe<EmendaNaLista>> {
+  return buscar<PaginaDe<EmendaNaLista>>(
+    `${BASE}/parlamentares/${pessoaId}/emendas/lista?ano=${ano}&pagina=${pagina}&tamanho=${tamanho}`,
+  );
+}
+
+/** Um lançamento da cota, com o documento fiscal quando a casa o publica. */
+export type LancamentoDaCota = {
+  data: string | null;
+  mes: number;
+  categoria: string;
+  fornecedor: string | null;
+  valor: number;
+  urlDocumento: string | null;
+};
+
+/** Os lançamentos da cota no ano, do mais recente, nota por nota. */
+export async function listarLancamentos(
+  pessoaId: number, ano: number, pagina: number, tamanho: number,
+): Promise<PaginaDe<LancamentoDaCota>> {
+  return buscar<PaginaDe<LancamentoDaCota>>(
+    `${BASE}/parlamentares/${pessoaId}/gastos/lancamentos?ano=${ano}&pagina=${pagina}&tamanho=${tamanho}`,
+  );
+}
+
+/** Quem recebeu as emendas do ano, em páginas. A página 1 é a da ficha. */
+export async function listarFavorecidos(
+  pessoaId: number, ano: number, pagina: number, tamanho: number,
+): Promise<PaginaDe<FavorecidoDaEmenda>> {
+  return buscar<PaginaDe<FavorecidoDaEmenda>>(
+    `${BASE}/parlamentares/${pessoaId}/emendas/favorecidos?ano=${ano}&pagina=${pagina}&tamanho=${tamanho}`,
+  );
+}
+
+/** Os convênios das emendas do ano, em páginas. A página 1 é a da ficha. */
+export async function listarConvenios(
+  pessoaId: number, ano: number, pagina: number, tamanho: number,
+): Promise<PaginaDe<ConvenioDaEmenda>> {
+  return buscar<PaginaDe<ConvenioDaEmenda>>(
+    `${BASE}/parlamentares/${pessoaId}/emendas/convenios?ano=${ano}&pagina=${pagina}&tamanho=${tamanho}`,
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Governo federal — quem governa, de onde veio o dinheiro e para onde foi
+// ═══════════════════════════════════════════════════════════════════
+
+export type PessoaDaGestao = { nome: string; nomeDeUrna: string; partido: string };
+
+/** Presidente e vice eleitos, segundo o TSE. O mandato é contado em anos. */
+export type Gestao = {
+  eleicao: number;
+  primeiroAno: number;
+  ultimoAno: number;
+  presidente: PessoaDaGestao;
+  vice: PessoaDaGestao;
+  coligacao: string | null;
+};
+
+export type OrigemDaReceita = { origem: string; prevista: number; realizada: number };
+
+/**
+ * 🔴 `emissaoDeDivida` ⛔ é arrecadação: é dinheiro emprestado, e em 2025 quase iguala
+ * o `arrecadado`. Somar os dois faria a arrecadação parecer o dobro.
+ */
+export type Arrecadacao = {
+  arrecadado: number;
+  porOrigem: OrigemDaReceita[];
+  emissaoDeDivida: number;
+  outrasReceitasDeCapital: number;
+};
+
+/**
+ * `pago` é o do próprio ano; `restosAPagarPagos`, o de despesas de anos anteriores pago
+ * neste. O que saiu no ano é a soma dos dois.
+ */
+export type AreaDaDespesa = {
+  codigo: string;
+  nome: string;
+  dotacaoAtualizada: number;
+  empenhado: number;
+  pago: number;
+  restosAPagarPagos: number;
+  dotacaoCompleta: boolean;
+};
+
+export type GrupoDeEncargo = 'TRANSFERENCIAS' | 'SERVICO_DA_DIVIDA' | 'REFINANCIAMENTO' | 'OUTROS';
+
+export type Encargo = { grupo: GrupoDeEncargo; pago: number; restosAPagarPagos: number };
+
+export type Despesa = {
+  empenhadoAcimaDaDotacao: number;
+  areas: AreaDaDespesa[];
+  encargos: Encargo[];
+};
+
+/**
+ * O governo federal num período. Os totais somam os anos; `porAno` traz os três números
+ * de cada um, para comparar sem trocar o filtro.
+ */
+export type Governo = {
+  /** Mais de uma quando o período atravessa uma posse. */
+  gestoes: Gestao[];
+  periodo: Periodo;
+  /** A data em que o Portal gerou os arquivos — até onde vai o dado do ano corrente. */
+  geradoEm: string;
+  /** O ano do período que ainda está correndo; nulo quando todos estão fechados. */
+  emAndamento: number | null;
+  anosDisponiveis: number[];
+  arrecadacao: Arrecadacao;
+  despesa: Despesa;
+  /** Nulo enquanto a carga do gasto sigiloso ainda ⛔ rodou para o período. */
+  sigilo: Sigilo | null;
+  porAno: GovernoNoAno[];
+  /** Todas as gestões com dado, qualquer que seja o período: os atalhos do seletor. */
+  gestoesDisponiveis: Gestao[];
+};
+
+/** `gastou` ⛔ inclui a rolagem da dívida, que é dívida paga com dívida nova. */
+export type GovernoNoAno = { ano: number; arrecadou: number; gastou: number; pegouEmprestado: number; fechado: boolean };
+
+/**
+ * O gasto que o Portal publica sem dizer em quê. Cartão e ação ⛔ se somam: o cartão
+ * sigiloso esconde quem comprou, de quem e quando; a ação sigilosa esconde a finalidade.
+ */
+export type Sigilo = {
+  cartaoSigiloso: number;
+  cartaoTotal: number;
+  transacoesSigilosas: number;
+  acaoSigilosa: number;
+  meses: number;
+  porOrgao: { orgao: string; cartao: number; cartaoTotal: number; acao: number }[];
+};
+
+/** Sem período, todos os anos. `null` quando a carga ainda ⛔ rodou. */
+export async function obterGoverno(periodo?: Periodo): Promise<Governo | null> {
+  const url = periodo ? `${BASE}/governo?de=${periodo.de}&ate=${periodo.ate}` : `${BASE}/governo`;
+  const resposta = await fetch(url, { credentials: 'include' });
+
+  if (resposta.status === 404) return null;
+  if (resposta.status === 401) throw new NaoAutenticadoError();
+  if (!resposta.ok) throw new Error(`Falha ao consultar ${url} (${resposta.status}).`);
+
+  return resposta.json();
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -592,4 +878,331 @@ export async function obterFinanciamento(
   return buscar<FinanciamentoDeCampanha>(
     `${BASE}/parlamentares/${pessoaId}/financiamento`,
   );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Metodologia — os parâmetros do método, de onde o cálculo os lê
+// ═══════════════════════════════════════════════════════════════════
+
+export type CasaNaMetodologia = {
+  casa: Casa;
+  legislatura: number;
+  votacoes: number;
+  votacoesSecretas: number;
+  analiseConcluidaEm: string | null;
+  /** Os parâmetros da execução que desenhou o grafo. Nulos em execução antiga. */
+  vizinhosPorNo: number | null;
+  minimoVotacoesComuns: number | null;
+  razaoRecencia: number | null;
+  pesoDestaque: number | null;
+  pesoAutoridade: number | null;
+};
+
+export type Metodologia = {
+  questionario: {
+    perguntasDaCamara: number;
+    aberturaDaCamara: number;
+    desempateDaCamara: number;
+    perguntasDoSenado: number;
+    fracaoMinimaDeRespostas: number;
+    minimoDeRespostas: number;
+  };
+  afinidade: { quantidadeExibida: number; vizinhosParaPosicionar: number };
+  casas: CasaNaMetodologia[];
+};
+
+export async function obterMetodologia(): Promise<Metodologia> {
+  return buscar<Metodologia>(`${BASE}/metodologia`);
+}
+
+/**
+ * Se o site pode ser lido sem login. Desligado durante o período eleitoral (RNF-17); a
+ * falha também conta como desligado — melhor pedir login a mais que abrir sem querer.
+ */
+export async function obterAcesso(): Promise<{ leituraPublica: boolean }> {
+  try {
+    return await buscar<{ leituraPublica: boolean }>(`${BASE}/acesso`);
+  } catch {
+    return { leituraPublica: false };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Mapa das emendas — pela sede de quem recebeu
+// ═══════════════════════════════════════════════════════════════════
+
+/** Os anos de emenda considerados, inclusive nas duas pontas. Sem dado, `{ de: 0, ate: 0 }`. */
+export type Periodo = { de: number; ate: number };
+
+/** Uma UF no mapa. `codigoUf` é o código IBGE de dois dígitos, o `codarea` da malha. */
+export type RecebidoNaUf = { uf: string; codigoUf: string; recebido: number; municipios: number };
+
+/**
+ * 🔴 `noMapa` ⛔ é `recebido`. O que passou pelo intermediário (Banco do Brasil) e o pago a
+ * pessoa ou sem identificação ⛔ têm sede, e ficam declarados ao lado do mapa.
+ */
+export type MapaDoBrasil = {
+  periodo: Periodo;
+  anosDisponiveis: number[];
+  recebido: number;
+  noMapa: number;
+  viaIntermediario: number;
+  semSede: number;
+  porUf: RecebidoNaUf[];
+};
+
+export type RecebidoNoMunicipio = { codigoIbge: string; nome: string; recebido: number };
+
+/** TODAS as cidades da UF; a que nada recebeu vem com zero. */
+export type MapaDoEstado = {
+  uf: string;
+  periodo: Periodo;
+  recebido: number;
+  porMunicipio: RecebidoNoMunicipio[];
+};
+
+export type Municipio = { codigoIbge: string; nome: string; uf: string };
+
+/** Um deputado ou senador. Sem `pessoaId`, o autor ainda ⛔ foi ligado a uma ficha. */
+export type ParlamentarQueMandou = {
+  pessoaId: number | null;
+  nome: string;
+  partido: string | null;
+  uf: string | null;
+  casa: Casa | null;
+  urlFoto: string | null;
+  recebido: number;
+  emendas: number;
+};
+
+export type TipoAutorColetivo = 'BANCADA' | 'COMISSAO' | 'OUTRO';
+
+/** Bancada estadual ou comissão: autor de emenda que ⛔ é uma pessoa. */
+export type ColetivoQueMandou = { tipo: TipoAutorColetivo; nome: string; recebido: number; emendas: number };
+
+/**
+ * ⚠️ `naPropriaCidade` é o que foi à prefeitura ou a órgão municipal; o resto, a entidades
+ * com sede ali. As duas listas longas trazem a primeira página.
+ */
+export type EmendasDoMunicipio = {
+  municipio: Municipio;
+  periodo: Periodo;
+  anosDisponiveis: number[];
+  recebido: number;
+  naPropriaCidade: number;
+  deParlamentares: number;
+  parlamentares: PaginaDe<ParlamentarQueMandou>;
+  coletivos: ColetivoQueMandou[];
+  favorecidos: PaginaDe<FavorecidoDaEmenda>;
+  convenios: ConveniosDaCidade;
+};
+
+/**
+ * Os convênios de quem tem sede na cidade, das emendas do período.
+ *
+ * ⚠️ `aLiberar` soma só os em execução: nos outros a execução acabou, e a diferença ⛔ é
+ * dinheiro que ainda vai chegar.
+ */
+export type ConveniosDaCidade = {
+  quantidade: number;
+  emExecucao: number;
+  combinado: number;
+  liberado: number;
+  aLiberar: number;
+  lista: PaginaDe<ConvenioDaCidade>;
+};
+
+export type ConvenioDaCidade = {
+  numero: string;
+  objeto: string | null;
+  convenente: string;
+  cnpj: string;
+  situacao: string | null;
+  dataPublicacao: string;
+  valor: number;
+  valorLiberado: number | null;
+  urlFonte: string;
+};
+
+/** Sem período, todos os anos. */
+function comPeriodo(url: string, periodo?: Periodo, extra?: Record<string, string>): string {
+  const busca = new URLSearchParams(extra);
+  if (periodo) {
+    busca.set('de', String(periodo.de));
+    busca.set('ate', String(periodo.ate));
+  }
+  const texto = busca.toString();
+  return texto ? `${url}?${texto}` : url;
+}
+
+export async function obterMapaDoBrasil(periodo?: Periodo): Promise<MapaDoBrasil> {
+  return buscar<MapaDoBrasil>(comPeriodo(`${BASE}/mapa/emendas`, periodo));
+}
+
+export async function obterMapaDoEstado(uf: string, periodo?: Periodo): Promise<MapaDoEstado> {
+  return buscar<MapaDoEstado>(comPeriodo(`${BASE}/mapa/emendas/${uf}`, periodo));
+}
+
+export async function buscarMunicipios(busca: string): Promise<Municipio[]> {
+  return buscar<Municipio[]>(`${BASE}/municipios?busca=${encodeURIComponent(busca)}`);
+}
+
+export async function obterEmendasDoMunicipio(codigoIbge: string, periodo?: Periodo): Promise<EmendasDoMunicipio> {
+  return buscar<EmendasDoMunicipio>(comPeriodo(`${BASE}/municipios/${codigoIbge}/emendas`, periodo));
+}
+
+export async function listarParlamentaresDoMunicipio(
+  codigoIbge: string,
+  periodo: Periodo | undefined,
+  pagina: number,
+): Promise<PaginaDe<ParlamentarQueMandou>> {
+  return buscar<PaginaDe<ParlamentarQueMandou>>(
+    comPeriodo(`${BASE}/municipios/${codigoIbge}/emendas/parlamentares`, periodo, { pagina: String(pagina) }),
+  );
+}
+
+export async function listarFavorecidosDoMunicipio(
+  codigoIbge: string,
+  periodo: Periodo | undefined,
+  pagina: number,
+): Promise<PaginaDe<FavorecidoDaEmenda>> {
+  return buscar<PaginaDe<FavorecidoDaEmenda>>(
+    comPeriodo(`${BASE}/municipios/${codigoIbge}/emendas/favorecidos`, periodo, { pagina: String(pagina) }),
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Entidades — quem recebeu emenda, por CNPJ — e a busca do cabeçalho
+// ═══════════════════════════════════════════════════════════════════
+
+export type GrupoDeEntidade = 'MUNICIPIO' | 'ESTADO' | 'SEM_FINS_LUCRATIVOS' | 'EMPRESA' | 'OUTRO';
+
+export type EntidadeNaLista = {
+  cnpj: string;
+  nome: string;
+  naturezaJuridica: string | null;
+  grupo: GrupoDeEntidade;
+  sede: Municipio | null;
+  recebido: number;
+  emendas: number;
+};
+
+export type ParlamentarNaCota = {
+  pessoaId: number;
+  nome: string;
+  partido: string | null;
+  casa: Casa | null;
+  total: number;
+  lancamentos: number;
+};
+
+/** ⚠️ Estar na cota e na emenda ⛔ é indício de nada: a tela diz isso ao lado (RNF-16). */
+export type CotaDaEntidade = { total: number; lancamentos: number; porParlamentar: ParlamentarNaCota[] };
+
+export type Entidade = EntidadeNaLista & {
+  urlFonte: string;
+  porAno: { ano: number; recebido: number }[];
+  deParlamentares: number;
+  parlamentares: PaginaDe<ParlamentarQueMandou>;
+  coletivos: ColetivoQueMandou[];
+  naCota: CotaDaEntidade | null;
+  convenios: PaginaDe<ConvenioDaEntidade>;
+};
+
+export type Busca = {
+  parlamentares: Parlamentar[];
+  municipios: Municipio[];
+  entidades: EntidadeNaLista[];
+};
+
+export async function listarEntidades(filtro: {
+  busca?: string;
+  grupo?: GrupoDeEntidade | null;
+  pagina?: number;
+}): Promise<PaginaDe<EntidadeNaLista>> {
+  const busca = new URLSearchParams();
+  if (filtro.busca) busca.set('busca', filtro.busca);
+  if (filtro.grupo) busca.set('grupo', filtro.grupo);
+  if (filtro.pagina) busca.set('pagina', String(filtro.pagina));
+  const texto = busca.toString();
+  return buscar<PaginaDe<EntidadeNaLista>>(`${BASE}/entidades${texto ? `?${texto}` : ''}`);
+}
+
+/** `null` quando o CNPJ ⛔ recebeu emenda — a página diz isso em vez de quebrar. */
+export async function obterEntidade(cnpj: string): Promise<Entidade | null> {
+  const resposta = await fetch(`${BASE}/entidades/${cnpj}`, { credentials: 'include' });
+  if (resposta.status === 404) return null;
+  if (resposta.status === 401) throw new NaoAutenticadoError();
+  if (!resposta.ok) throw new Error(`Falha ao consultar a entidade (${resposta.status}).`);
+  return resposta.json();
+}
+
+export async function listarParlamentaresDaEntidade(
+  cnpj: string,
+  pagina: number,
+): Promise<PaginaDe<ParlamentarQueMandou>> {
+  return buscar<PaginaDe<ParlamentarQueMandou>>(`${BASE}/entidades/${cnpj}/parlamentares?pagina=${pagina}`);
+}
+
+export async function buscarTudo(termo: string): Promise<Busca> {
+  return buscar<Busca>(`${BASE}/busca?q=${encodeURIComponent(termo)}`);
+}
+
+/** Um convênio que a entidade assinou: o combinado e quanto já saiu. Ligado pelo CNPJ do convenente. */
+export type ConvenioDaEntidade = {
+  numero: string;
+  objeto: string | null;
+  situacao: string | null;
+  dataPublicacao: string;
+  valor: number;
+  valorLiberado: number | null;
+  urlFonte: string;
+};
+
+export async function listarConveniosDaEntidade(cnpj: string, pagina: number): Promise<PaginaDe<ConvenioDaEntidade>> {
+  return buscar<PaginaDe<ConvenioDaEntidade>>(`${BASE}/entidades/${cnpj}/convenios?pagina=${pagina}`);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Patrimônio declarado ao TSE (PP3)
+// ═══════════════════════════════════════════════════════════════════
+
+/** 🔴 Só tipo e valor: a descrição de cada bem traz endereço, e ⛔ chega aqui. */
+export type DeclaracaoDeBens = {
+  anoEleicao: number;
+  total: number;
+  bens: number;
+  porTipo: { tipo: string; valor: number; quantidade: number }[];
+};
+
+export async function obterPatrimonio(pessoaId: number): Promise<DeclaracaoDeBens[]> {
+  const resposta = await buscar<{ declaracoes: DeclaracaoDeBens[] }>(`${BASE}/parlamentares/${pessoaId}/patrimonio`);
+  return resposta.declaracoes;
+}
+
+/**
+ * Em quantas votações de plenário o parlamentar participou. Sempre com a base.
+ *
+ * ⚠️ Na Câmara, `ausenteJustificado` é nulo: a casa ⛔ publica a justificativa no registro
+ * de votação, e licença (para ser ministro, por exemplo) aparece como ausência.
+ */
+export type Presenca = {
+  presente: number;
+  votacoes: number;
+  ausente: number;
+  ausenteJustificado: number | null;
+  justificativaPublicada: boolean;
+  desde: string;
+  ate: string;
+};
+
+export async function listarConveniosDaCidade(
+  codigoIbge: string,
+  periodo: Periodo | undefined,
+  pagina: number,
+): Promise<PaginaDe<ConvenioDaCidade>> {
+  const resposta = await buscar<ConveniosDaCidade>(
+    comPeriodo(`${BASE}/municipios/${codigoIbge}/emendas/convenios`, periodo, { pagina: String(pagina) }),
+  );
+  return resposta.lista;
 }

@@ -27,21 +27,27 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
     /// mostrar todas faria o mínimo obrigatório subir para 30 — questionário mais longo
     /// não é questionário melhor.
     /// </summary>
-    private const int PerguntasDaCamara = 15;
+    public const int PerguntasDaCamara = 15;
 
     /// <summary>
     /// Quantas vêm antes do desempate. As <c>Ordem</c> da Câmara estão gravadas na ordem
     /// gulosa de cobertura de pares, então "as 8 primeiras" significa "as 8 que mais
     /// separam deputados" — não é a ordem em que foram curadas.
     /// </summary>
-    private const int BaseDaCamara = 8;
+    public const int BaseDaCamara = 8;
 
     /// <summary>
     /// O Senado não tem desempate: as 9 perguntas SÃO o poço inteiro. Das 52
     /// votações substantivas abertas da 57ª, 39 têm divisão abaixo de 5% e as demais
     /// substantivas são secretas (achado #17). Não há de onde escolher.
     /// </summary>
-    private const int DesempateDaCamara = PerguntasDaCamara - BaseDaCamara;
+    public const int DesempateDaCamara = PerguntasDaCamara - BaseDaCamara;
+
+    /// <summary>
+    /// A parte do questionário OFERECIDO que precisa de opinião para haver resultado.
+    /// Sobre o oferecido, e não sobre o poço: sobre o poço daria mais respostas que perguntas.
+    /// </summary>
+    public const double FracaoMinimaDeRespostas = 0.60;
 
     private readonly PoligraphDb _db = db;
     private readonly ServicoAfinidade _afinidade = afinidade;
@@ -153,7 +159,7 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
 
     /// <summary> 60% do que é OFERECIDO, não do poço curado.</summary>
     public static int MinimoDeRespostas(int tamanhoDoQuestionario) =>
-        (int)Math.Ceiling(tamanhoDoQuestionario * 0.60);
+        (int)Math.Ceiling(tamanhoDoQuestionario * FracaoMinimaDeRespostas);
 
     /// <summary>
     /// Quem está empatado na primeira posição depois das respostas de base.

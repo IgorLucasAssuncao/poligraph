@@ -17,4 +17,30 @@ public class VotoModel
 
     public required string PartidoNoVoto { get; set; }
     public required string UfNoVoto { get; set; }
+
+    /// <summary>
+    /// Se o parlamentar estava na votação — ⛔ o mesmo que ter posição: votar secreto e
+    /// obstruir são presença sem posição.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// As casas registram a ausência de jeitos diferentes. O Senado lista todo senador em
+    /// exercício, com a sigla da ausência ("NCom", "LS", "MIS"); a Câmara lista só quem votou,
+    /// e o ausente ⛔ tem linha. Por isso a Câmara só tem <see cref="PresencaNoVoto.PRESENTE"/>,
+    /// e a ausência dela se conta pela falta da linha.
+    /// </para>
+    /// <para>Nulo quando a sigla ⛔ diz nada sobre presença ("NA", não aplicável).</para>
+    /// </remarks>
+    public PresencaNoVoto? Presenca { get; set; }
+}
+
+public enum PresencaNoVoto
+{
+    PRESENTE,
+
+    /// <summary>Licença, missão oficial ou ausência justificada — só o Senado publica.</summary>
+    AUSENTE_JUSTIFICADO,
+
+    /// <summary>Não compareceu, sem justificativa registrada.</summary>
+    AUSENTE,
 }

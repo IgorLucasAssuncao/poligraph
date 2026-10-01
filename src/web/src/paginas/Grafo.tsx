@@ -7,10 +7,12 @@ import {
   type Grafo as DadosDoGrafo,
   type NoDoGrafo,
 } from '../api';
+import { BotaoDoTour } from '../componentes/BotaoDoTour';
 import { GrafoAmpliado } from '../componentes/GrafoAmpliado';
 import { LegendaDoGrafo } from '../componentes/LegendaDoGrafo';
 import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
 import { Termo } from '../componentes/Termo';
+import { passosDoGrafo } from '../tour';
 
 type Grupo = { comunidade: number; quantos: number; partidos: string[] };
 
@@ -57,6 +59,20 @@ export function Grafo() {
   const grupos = useMemo(() => (grafo ? resumirGrupos(grafo.nos) : []), [grafo]);
   const membro = NOME_DA_CASA[casa];
 
+  /** O alinhamento só existe onde a orientação do Governo foi registrada. */
+  const passos = useMemo(
+    () =>
+      grafo && grafo.nos.length > 0
+        ? passosDoGrafo({
+            singular: NOME_DA_CASA[casa].singular,
+            plural: NOME_DA_CASA[casa].plural,
+            vizinhosPorNo: grafo.vizinhosPorNo,
+            temAlinhamento: grafo.nos.some((n) => n.governismo !== null),
+          })
+        : null,
+    [grafo, casa],
+  );
+
   return (
     <>
       <div className="grafo-barra">
@@ -67,6 +83,8 @@ export function Grafo() {
             {grafo.nos.length} {membro.plural} · {grafo.arestas.length} ligações
           </p>
         )}
+
+        {passos && <BotaoDoTour nome="grafo" passos={passos} />}
       </div>
 
       {erro && <p className="erro">{erro}</p>}
@@ -119,7 +137,7 @@ export function Grafo() {
             )}
           </section>
 
-          <section className="grafo-grupos">
+          <section className="grafo-grupos" data-tour="grafo-grupos">
             <h2>Os grupos</h2>
             <p className="ajuda ajuda-espacada">
               Cada <Termo nome="comunidade" /> é formado pelo <strong>voto</strong>, não
@@ -155,7 +173,7 @@ export function Grafo() {
 
 function SeletorDeCasa({ casa, aoTrocar }: { casa: Casa; aoTrocar: (nova: Casa) => void }) {
   return (
-    <div className="grafo-casas" role="group" aria-label="Casa legislativa">
+    <div className="grafo-casas" data-tour="grafo-casas" role="group" aria-label="Casa legislativa">
       {CASAS.map((opcao) => (
         <button
           key={opcao}

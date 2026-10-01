@@ -18,7 +18,17 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<DespesaModel> Despesas => Set<DespesaModel>();
     public DbSet<ReceitaDeCampanhaModel> ReceitasDeCampanha => Set<ReceitaDeCampanhaModel>();
     public DbSet<EmendaModel> Emendas => Set<EmendaModel>();
-    public DbSet<AutorDeEmendaModel> AutoresDeEmenda => Set<AutorDeEmendaModel>();
+    public DbSet<AutorDeEmendaModel> AutoresDeEmenda => Set<AutorDeEmendaModel>();
+    public DbSet<EmendaFavorecidoModel> EmendasFavorecidos => Set<EmendaFavorecidoModel>();
+    public DbSet<ConvenioModel> Convenios => Set<ConvenioModel>();
+    public DbSet<EmendaConvenioModel> EmendasConvenios => Set<EmendaConvenioModel>();
+    public DbSet<OrcamentoPorFuncaoModel> OrcamentoPorFuncao => Set<OrcamentoPorFuncaoModel>();
+    public DbSet<EncargoEspecialModel> EncargosEspeciais => Set<EncargoEspecialModel>();
+    public DbSet<GastoSigilosoModel> GastosSigilosos => Set<GastoSigilosoModel>();
+    public DbSet<ReceitaPorOrigemModel> ReceitasPorOrigem => Set<ReceitaPorOrigemModel>();
+    public DbSet<GestaoModel> Gestoes => Set<GestaoModel>();
+    public DbSet<MunicipioModel> Municipios => Set<MunicipioModel>();
+    public DbSet<CnpjMunicipioModel> CnpjsMunicipio => Set<CnpjMunicipioModel>();
     public DbSet<ExecucaoModel> Execucoes => Set<ExecucaoModel>();
     public DbSet<SimilaridadeModel> Similaridades => Set<SimilaridadeModel>();
     public DbSet<ArestaGrafoModel> ArestasGrafo => Set<ArestaGrafoModel>();
@@ -31,7 +41,9 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<NoticiaModel> Noticias => Set<NoticiaModel>();
     public DbSet<NoticiaPessoaModel> NoticiaPessoas => Set<NoticiaPessoaModel>();
     public DbSet<NoticiaTemaModel> NoticiaTemas => Set<NoticiaTemaModel>();
-    public DbSet<AvaliacaoQuestionarioModel> Avaliacoes => Set<AvaliacaoQuestionarioModel>();
+    public DbSet<AvaliacaoQuestionarioModel> Avaliacoes => Set<AvaliacaoQuestionarioModel>();
+    public DbSet<RedeSocialModel> RedesSociais => Set<RedeSocialModel>();
+    public DbSet<PatrimonioModel> Patrimonios => Set<PatrimonioModel>();
 
     /// <summary>
     /// <b>Todo enum é gravado como TEXTO.</b>
@@ -135,8 +147,14 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasOne(x => x.Pessoa).WithMany(p => p.Votos).HasForeignKey(x => x.PessoaId);
             e.Property(x => x.UfNoVoto).HasMaxLength(2);
             // RN-03: domínio fechado
-            e.ToTable(t => t.HasCheckConstraint(
-                "ck_voto_valor", "valor IS NULL OR valor IN (-1, 0, 1)"));
+            e.Property(x => x.Presenca).HasMaxLength(20);
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_voto_valor", "valor IS NULL OR valor IN (-1, 0, 1)");
+                t.HasCheckConstraint(
+                    "ck_voto_presenca", "presenca IS NULL OR presenca IN ('PRESENTE','AUSENTE_JUSTIFICADO','AUSENTE')");
+                t.HasCheckConstraint("ck_voto_posicao_presente", "valor IS NULL OR presenca IS NULL OR presenca = 'PRESENTE'");
+            });
         });
 
         mb.Entity<ProposicaoModel>(e =>
@@ -214,10 +232,19 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasOne(x => x.Pessoa).WithMany().HasForeignKey(x => x.PessoaId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // A chave natural é (código do autor, código da emenda) — NÃO envolve
-            // `pessoa_id`, que pode ser nulo e mudar na reconciliação.
-            e.HasIndex(x => new { x.CodigoAutor, x.CodigoEmenda }).IsUnique()
-                .HasDatabaseName("ux_emenda_autor_codigo");
+            // Uma emenda ocupa uma linha por localidade, ação e plano orçamentário.
+            // `pessoa_id` fica fora da chave: pode ser nulo e mudar na reconciliação.
+            e.HasIndex(x => new { x.CodigoEmenda, x.Localidade, x.CodigoAcao, x.CodigoPlanoOrcamentario })
+                .IsUnique()
+                .AreNullsDistinct(false)
+                .HasDatabaseName("ux_emenda_programacao");
+            e.HasIndex(x => x.CodigoEmenda).HasDatabaseName("ix_emenda_codigo");
+
+            e.Property(x => x.CodigoEmenda).HasMaxLength(16);
+            e.Property(x => x.CodigoMunicipioIbge).HasMaxLength(7);
+            e.ToTable(t => t.HasCheckConstraint(
+                "ck_emenda_municipio_ibge",
+                "codigo_municipio_ibge IS NULL OR codigo_municipio_ibge ~ '^[0-9]{7}$'"));
 
             e.Property(x => x.CodigoAutor).HasMaxLength(16);
             e.HasIndex(x => x.PessoaId).HasDatabaseName("ix_emenda_pessoa");
@@ -236,10 +263,211 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
 
             e.HasOne(x => x.Pessoa).WithMany().HasForeignKey(x => x.PessoaId)
                 .OnDelete(DeleteBehavior.SetNull);
-            e.ToTable(t => t.HasCheckConstraint(
-                "ck_autor_metodo", "metodo IN ('AUTOMATICO','MANUAL','NAO_RESOLVIDO')"));
-        });
-    }
+            e.ToTable(t => t.HasCheckConstraint(
+                "ck_autor_metodo", "metodo IN ('AUTOMATICO','MANUAL','NAO_RESOLVIDO')"));
+        });
+
+        ConfigurarDestinoDeEmenda(mb);
+        ConfigurarOrcamento(mb);
+    }
+
+    /// <summary>
+    /// Favorecidos e convênios das emendas.
+    /// </summary>
+    /// <remarks>
+    /// <para>A identificação do favorecido segue o tipo: CNPJ de 14 dígitos com nome, código de unidade gestora de 6 dígitos com nome, ou nada. Pessoa nunca tem documento nem nome gravado.</para>
+    /// <para>Só pessoa jurídica pode ser intermediária: o intermediário medido é o Banco do Brasil.</para>
+    /// </remarks>
+    private static void ConfigurarDestinoDeEmenda(ModelBuilder mb)
+    {
+        mb.Entity<EmendaFavorecidoModel>(e =>
+        {
+            e.ToTable("emendas_favorecidos", t =>
+            {
+                t.HasCheckConstraint(
+                    "ck_favorecido_tipo",
+                    "tipo IN ('PESSOA_JURIDICA','UNIDADE_GESTORA','PESSOA','SEM_INFORMACAO')");
+                t.HasCheckConstraint(
+                    "ck_favorecido_identificacao",
+                    "(tipo = 'PESSOA_JURIDICA' AND documento ~ '^[0-9]{14}$' AND nome IS NOT NULL)"
+                    + " OR (tipo = 'UNIDADE_GESTORA' AND documento ~ '^[0-9]{6}$' AND nome IS NOT NULL)"
+                    + " OR (tipo IN ('PESSOA','SEM_INFORMACAO') AND documento IS NULL AND nome IS NULL)");
+                t.HasCheckConstraint(
+                    "ck_favorecido_intermediario", "NOT intermediario OR tipo = 'PESSOA_JURIDICA'");
+                t.HasCheckConstraint("ck_favorecido_valor", "valor <> 0");
+                t.HasCheckConstraint(
+                    "ck_favorecido_competencia", "EXTRACT(DAY FROM competencia) = 1");
+            });
+
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new
+            {
+                x.CodigoEmenda, x.Competencia, x.Tipo, x.Documento,
+                x.NaturezaJuridica, x.Uf, x.Municipio,
+            })
+                .IsUnique()
+                .AreNullsDistinct(false)
+                .HasDatabaseName("ux_favorecido_pagamento");
+            e.HasIndex(x => x.CodigoEmenda).HasDatabaseName("ix_favorecido_emenda");
+
+            e.Property(x => x.CodigoEmenda).HasMaxLength(16);
+            e.Property(x => x.Documento).HasMaxLength(14);
+            e.Property(x => x.Uf).HasMaxLength(2);
+            e.Property(x => x.Valor).HasPrecision(16, 2);
+        });
+
+        mb.Entity<ConvenioModel>(e =>
+        {
+            e.HasKey(x => x.Numero);
+            e.Property(x => x.Numero).HasMaxLength(16);
+            e.Property(x => x.Valor).HasPrecision(16, 2);
+            e.Property(x => x.ValorLiberado).HasPrecision(16, 2);
+            e.Property(x => x.CnpjConvenente).HasMaxLength(14);
+            e.HasIndex(x => x.CnpjConvenente);
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_convenio_valor", "valor > 0");
+                t.HasCheckConstraint("ck_convenio_cnpj", "cnpj_convenente IS NULL OR cnpj_convenente ~ '^[0-9]{14}$'");
+            });
+        });
+
+        mb.Entity<RedeSocialModel>(e =>
+        {
+            e.ToTable("redes_sociais", t =>
+            {
+                t.HasCheckConstraint("ck_rede_url", "url ~ '^https?://[^[:space:]]+$'");
+                t.HasCheckConstraint(
+                    "ck_rede_tipo", "rede IN ('INSTAGRAM','FACEBOOK','X','YOUTUBE','TIKTOK','LINKEDIN','OUTRA')");
+                t.HasCheckConstraint("ck_rede_fonte", "fonte IN ('CAMARA','TSE')");
+            });
+            e.HasKey(x => new { x.PessoaId, x.Url });
+            e.Property(x => x.Rede).HasMaxLength(10);
+            e.Property(x => x.Fonte).HasMaxLength(6);
+            e.HasOne<PessoaModel>().WithMany().HasForeignKey(x => x.PessoaId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<PatrimonioModel>(e =>
+        {
+            e.ToTable("patrimonios", t =>
+            {
+                t.HasCheckConstraint("ck_patrimonio_ano", "ano_eleicao BETWEEN 2002 AND 2100 AND ano_eleicao % 2 = 0");
+                t.HasCheckConstraint("ck_patrimonio_quantidade", "quantidade > 0");
+            });
+            e.HasKey(x => new { x.PessoaId, x.AnoEleicao, x.TipoBem });
+            e.Property(x => x.Valor).HasPrecision(16, 2);
+            e.HasOne<PessoaModel>().WithMany().HasForeignKey(x => x.PessoaId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        mb.Entity<EmendaConvenioModel>(e =>
+        {
+            e.ToTable("emendas_convenios");
+            e.HasKey(x => new { x.CodigoEmenda, x.NumeroConvenio });
+            e.Property(x => x.CodigoEmenda).HasMaxLength(16);
+            e.HasOne(x => x.Convenio).WithMany().HasForeignKey(x => x.NumeroConvenio)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigurarOrcamento(ModelBuilder mb)
+    {
+        mb.Entity<OrcamentoPorFuncaoModel>(e =>
+        {
+            e.ToTable("orcamento_por_funcao", t =>
+            {
+                t.HasCheckConstraint("ck_orcamento_funcao", "codigo_funcao ~ '^[0-9]{2}$'");
+                t.HasCheckConstraint(
+                    "ck_orcamento_acima_da_dotacao", "empenhado_acima_da_dotacao >= 0");
+            });
+
+            e.HasKey(x => new { x.Ano, x.CodigoFuncao });
+            e.Property(x => x.CodigoFuncao).HasMaxLength(2);
+
+            e.Property(x => x.DotacaoInicial).HasPrecision(18, 2);
+            e.Property(x => x.DotacaoAtualizada).HasPrecision(18, 2);
+            e.Property(x => x.Empenhado).HasPrecision(18, 2);
+            e.Property(x => x.Pago).HasPrecision(18, 2);
+            e.Property(x => x.EmpenhadoAcimaDaDotacao).HasPrecision(18, 2);
+            e.Property(x => x.RestosAPagarPagos).HasPrecision(18, 2);
+        });
+
+        mb.Entity<EncargoEspecialModel>(e =>
+        {
+            e.ToTable("encargos_especiais", t =>
+                t.HasCheckConstraint("ck_encargo_subfuncao", "codigo_subfuncao ~ '^[0-9]{3}$'"));
+
+            e.HasKey(x => new { x.Ano, x.CodigoSubfuncao });
+            e.Property(x => x.CodigoSubfuncao).HasMaxLength(3);
+            e.Property(x => x.DotacaoAtualizada).HasPrecision(18, 2);
+            e.Property(x => x.Empenhado).HasPrecision(18, 2);
+            e.Property(x => x.Pago).HasPrecision(18, 2);
+            e.Property(x => x.RestosAPagarPagos).HasPrecision(18, 2);
+        });
+
+        mb.Entity<GastoSigilosoModel>(e =>
+        {
+            e.ToTable("gastos_sigilosos", t =>
+            {
+                t.HasCheckConstraint("ck_sigilo_origem", "origem IN ('CARTAO_CORPORATIVO','ACAO_SIGILOSA')");
+                t.HasCheckConstraint("ck_sigilo_meses", "meses BETWEEN 1 AND 12");
+                t.HasCheckConstraint(
+                    "ck_sigilo_base",
+                    "(origem = 'ACAO_SIGILOSA' AND total = sigiloso AND lancamentos IS NULL) "
+                    + "OR (origem = 'CARTAO_CORPORATIVO' AND lancamentos >= 0)");
+            });
+
+            e.HasKey(x => new { x.Ano, x.Origem, x.OrgaoSuperior });
+            e.Property(x => x.Origem).HasMaxLength(20);
+            e.Property(x => x.Sigiloso).HasPrecision(18, 2);
+            e.Property(x => x.Total).HasPrecision(18, 2);
+        });
+
+        mb.Entity<ReceitaPorOrigemModel>(e =>
+        {
+            e.ToTable("receitas_por_origem");
+            e.HasKey(x => new { x.Ano, x.Categoria, x.Origem });
+            e.Property(x => x.Prevista).HasPrecision(18, 2);
+            e.Property(x => x.Realizada).HasPrecision(18, 2);
+        });
+
+        mb.Entity<GestaoModel>(e =>
+        {
+            e.ToTable("gestoes", t =>
+            {
+                t.HasCheckConstraint("ck_gestao_mandato", "ultimo_ano = primeiro_ano + 3");
+                t.HasCheckConstraint("ck_gestao_posse", "primeiro_ano = eleicao + 1");
+            });
+
+            e.HasKey(x => x.Eleicao);
+            e.Property(x => x.Eleicao).ValueGeneratedNever();
+        });
+
+        mb.Entity<MunicipioModel>(e =>
+        {
+            e.ToTable("municipios", t =>
+            {
+                t.HasCheckConstraint("ck_municipio_ibge", "codigo_ibge ~ '^[0-9]{7}$'");
+                t.HasCheckConstraint("ck_municipio_tom", "codigo_tom ~ '^[0-9]{4}$'");
+                t.HasCheckConstraint("ck_municipio_uf", "uf ~ '^[A-Z]{2}$'");
+            });
+            e.HasKey(x => x.CodigoIbge);
+            e.Property(x => x.CodigoIbge).HasMaxLength(7);
+            e.Property(x => x.CodigoTom).HasMaxLength(4);
+            e.Property(x => x.Uf).HasMaxLength(2);
+            e.HasIndex(x => x.CodigoTom).IsUnique().HasDatabaseName("ux_municipio_tom");
+        });
+
+        mb.Entity<CnpjMunicipioModel>(e =>
+        {
+            e.ToTable("cnpjs_municipio", t =>
+                t.HasCheckConstraint("ck_cnpj_municipio_cnpj", "cnpj ~ '^[0-9]{14}$'"));
+            e.HasKey(x => x.Cnpj);
+            e.Property(x => x.Cnpj).HasMaxLength(14);
+            e.Property(x => x.CodigoIbge).HasMaxLength(7);
+            e.HasOne(x => x.Municipio).WithMany().HasForeignKey(x => x.CodigoIbge)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(x => x.CodigoIbge).HasDatabaseName("ix_cnpj_municipio_ibge");
+        });
+    }
 
     private static void ConfigurarAnalise(ModelBuilder mb)
     {
@@ -255,8 +483,14 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
                 // encontra: a tela mostraria "a análise ainda não rodou", que é
                 // exatamente a mensagem do caso legítimo.
                 t.HasCheckConstraint("ck_execucao_casa", "casa IN ('CAMARA','SENADO')");
-                t.HasCheckConstraint(
-                    "ck_execucao_status", "status IN ('EM_ANDAMENTO','CONCLUIDA','FALHOU')");
+                t.HasCheckConstraint(
+                    "ck_execucao_status", "status IN ('EM_ANDAMENTO','CONCLUIDA','FALHOU')");
+                t.HasCheckConstraint(
+                    "ck_execucao_parametros",
+                    "(minimo_votacoes_comuns IS NULL OR minimo_votacoes_comuns > 0)"
+                    + " AND (razao_recencia IS NULL OR razao_recencia BETWEEN 0 AND 1)"
+                    + " AND (peso_destaque IS NULL OR peso_destaque BETWEEN 0 AND 1)"
+                    + " AND (peso_autoridade IS NULL OR peso_autoridade BETWEEN 0 AND 1)");
             });
         });
 

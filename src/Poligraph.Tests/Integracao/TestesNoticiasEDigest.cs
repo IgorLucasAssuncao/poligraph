@@ -24,8 +24,8 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
             pessoaId, confianca: 0.40f, metodo: TipoMetodoDeCitacao.SOBRENOME);
 
         using var cliente = CriarCliente();
-        var noticias = await cliente.GetFromJsonAsync<List<NoticiaJson>>(
-            $"/api/parlamentares/{pessoaId}/noticias");
+        var noticias = (await cliente.GetFromJsonAsync<PaginaDeNoticias>(
+            $"/api/parlamentares/{pessoaId}/noticias"))?.Itens;
 
         // a fraca EXISTE no banco, mas não vai à tela
         Assert.Single(noticias!);
@@ -41,8 +41,8 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
         var pessoaId = await PrimeiraPessoaAsync();
         using var cliente = CriarCliente();
 
-        var noticias = await cliente.GetFromJsonAsync<List<NoticiaJson>>(
-            $"/api/parlamentares/{pessoaId}/noticias");
+        var noticias = (await cliente.GetFromJsonAsync<PaginaDeNoticias>(
+            $"/api/parlamentares/{pessoaId}/noticias"))?.Itens;
 
         // RF-47: parlamentar de baixo perfil passa semanas sem notícia — não é erro
         Assert.Empty(noticias!);
@@ -72,8 +72,8 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
             publicada: DateTimeOffset.UtcNow.AddDays(-1));
 
         using var cliente = CriarCliente();
-        var noticias = await cliente.GetFromJsonAsync<List<NoticiaJson>>(
-            $"/api/parlamentares/{pessoaId}/noticias");
+        var noticias = (await cliente.GetFromJsonAsync<PaginaDeNoticias>(
+            $"/api/parlamentares/{pessoaId}/noticias"))?.Itens;
 
         Assert.Equal("Recente", noticias![0].Titulo);
     }
@@ -298,4 +298,6 @@ public class TestesNoticiasEDigest(FixturePostgres postgres) : BaseIntegracao(po
     private record NoticiaJson(
         long Id, string Url, string Titulo, string Veiculo,
         DateTimeOffset PublicadaEm, string? Trecho);
+
+    private record PaginaDeNoticias(List<NoticiaJson> Itens, int Total);
 }

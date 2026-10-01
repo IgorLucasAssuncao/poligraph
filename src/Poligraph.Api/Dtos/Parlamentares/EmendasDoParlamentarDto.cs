@@ -17,4 +17,21 @@ public record EmendasDoParlamentarDto(
     decimal Pago,
     int Quantidade,
     IReadOnlyList<EmendaPorDestinoDto> PorDestino,
-    IReadOnlyList<EmendaPorFuncaoDto> PorFuncao);
+    IReadOnlyList<EmendaPorFuncaoDto> PorFuncao,
+    FavorecidosDaEmendaDto Favorecidos,
+    IReadOnlyList<PagamentoPorMesDto> PagamentosPorMes,
+    ConveniosDaEmendaDto Convenios,
+    CidadesDaEmendaDto Cidades);
+
+/// <summary>
+/// As cidades que receberam, pela sede de quem recebeu — CNPJ → TOM → IBGE, chave forte.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Responde "para onde foi" melhor que a localidade DECLARADA na emenda, que em boa parte
+/// diz "MÚLTIPLO", o estado inteiro ou "Nacional". A declarada continua nos detalhes.
+/// </para>
+/// </remarks>
+public record CidadesDaEmendaDto(int Quantidade, IReadOnlyList<RecebidoNaCidadeDto> Maiores);
+
+public record RecebidoNaCidadeDto(MunicipioDto Municipio, decimal Recebido);

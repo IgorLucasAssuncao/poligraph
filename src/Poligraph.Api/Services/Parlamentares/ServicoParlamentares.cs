@@ -1,62 +1,66 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Globalization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
 
 namespace Poligraph.Api.Services;
 
 /// <summary>Lista e ficha do parlamentar — quem ele é, como votou e com quem se parece.</summary>
-public class ServicoParlamentares(PoligraphDb db)
+public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache)
 {
-    private const int LimiteLista = 100;
-    private const int VotosNaFicha = 20;
+    public const int TamanhoPadrao = 30;
+    public const int TamanhoMaximo = 100;
+
+    /// <summary>Quantos votos vêm na ficha, e em cada página seguinte.</summary>
+    public const int VotosPorPagina = 20;
+
     private const int SimilaresNaFicha = 10;
 
+    /// <summary>
+    /// Quanto a lista da legislatura fica em memória. Ela só muda quando o ETL roda, e
+    /// montá-la custa ~260 ms: sem o cache, cada tecla da busca pagaria esse preço.
+    /// </summary>
+    private static readonly TimeSpan ValidadeDaLista = TimeSpan.FromMinutes(5);
+
+    private static readonly CompareInfo Comparacao = CultureInfo.GetCultureInfo("pt-BR").CompareInfo;
+
     private readonly PoligraphDb _db = db;
+    private readonly IMemoryCache _cache = cache;
 
-    /// <summary>RF-34 — busca por nome, partido e UF.</summary>
+    /// <summary>RF-34 — busca por nome, partido e UF, em páginas.</summary>
     /// <remarks>
-    /// <para>PL35 — "parlamentar" é quem votou na legislatura CORRENTE. Sem o recorte, a chegada da 58ª faria "explorar" listar ex-deputados junto dos atuais, e `NVotacoes` somaria mandatos diferentes. Nada quebraria: só apareceria gente que não está mais lá, com um número inflado. `null` só acontece em base sem votação nenhuma — antes do primeiro ETL. Aí a lista sai vazia, que é a resposta honesta.</para>
+    /// <para>PL35 — "parlamentar" é quem votou na legislatura CORRENTE. Sem o recorte, a chegada da 58ª faria "explorar" listar ex-deputados junto dos atuais, e `NVotacoes` somaria mandatos diferentes. `null` só acontece em base sem votação nenhuma — antes do primeiro ETL. Aí a lista sai vazia, que é a resposta honesta.</para>
+    /// <para>A lista cortava em 100 por ordem alfabética, sem avisar: de 745 parlamentares da 57ª, só os 100 primeiros em ordem alfabética chegavam à tela, e "quem seguir" escolhia o mais ativo entre eles. A página devolve o total, e o corte passa a ser visível.</para>
+    /// <para>A busca por nome ignora caixa e acento: "jose" encontra "José".</para>
     /// </remarks>
-    public async Task<IReadOnlyList<ParlamentarNaListaDto>> ListarAsync(
-        string? nome, string? partido, string? uf, CancellationToken ct)
+    public async Task<PaginaDeParlamentaresDto> ListarAsync(
+        string? nome, string? partido, string? uf, TipoOrdemDaLista ordem,
+        int pagina, int tamanho, CancellationToken ct)
     {
-        var legislatura = await Legislaturas.CorrenteAsync(_db, ct);
-        if (legislatura is null) return [];
+        var todos = await ListaDaLegislaturaAsync(ct);
 
-        var consulta = _db.Pessoas.AsNoTracking()
-            .Select(p => new
-            {
-                p.Id,
-                p.NomeExibicao,
-                p.UrlFoto,
-                NVotacoes = p.Votos.Count(
-                    v => v.Valor != null && v.Votacao!.Legislatura == legislatura),
-                Ultimo = p.Votos
-                    .Where(v => v.Votacao!.Legislatura == legislatura)
-                    .OrderByDescending(v => v.Votacao!.Data)
-                    .Select(v => new { v.PartidoNoVoto, v.UfNoVoto, v.Votacao!.Casa })
-                    .FirstOrDefault()
-            })
-            .Where(p => p.NVotacoes > 0);
+        pagina = Math.Max(pagina, 1);
+        tamanho = Math.Clamp(tamanho, 1, TamanhoMaximo);
 
-        if (!string.IsNullOrWhiteSpace(nome))
-            consulta = consulta.Where(p => EF.Functions.ILike(p.NomeExibicao, $"%{nome}%"));
+        var filtrados = todos.Where(p =>
+            (string.IsNullOrWhiteSpace(nome) || ContemNome(p.Nome, nome))
+            && (string.IsNullOrWhiteSpace(partido) || p.Partido == partido)
+            && (string.IsNullOrWhiteSpace(uf) || p.Uf == uf));
 
-        if (!string.IsNullOrWhiteSpace(partido))
-            consulta = consulta.Where(p => p.Ultimo!.PartidoNoVoto == partido);
+        var ordenados = ordem == TipoOrdemDaLista.VOTACOES
+            ? filtrados.OrderByDescending(p => p.NVotacoes).ThenBy(p => p.Nome, Comparacao.GetStringComparer(CompareOptions.IgnoreCase))
+            : filtrados.OrderBy(p => p.Nome, Comparacao.GetStringComparer(CompareOptions.IgnoreCase));
 
-        if (!string.IsNullOrWhiteSpace(uf))
-            consulta = consulta.Where(p => p.Ultimo!.UfNoVoto == uf);
+        var lista = ordenados.ToList();
 
-        var lista = await consulta
-            .OrderBy(p => p.NomeExibicao)
-            .Take(LimiteLista)
-            .ToListAsync(ct);
-
-        return [.. lista.Select(p => new ParlamentarNaListaDto(
-            p.Id, p.NomeExibicao, p.Ultimo?.Casa,
-            p.Ultimo?.PartidoNoVoto ?? "", p.Ultimo?.UfNoVoto ?? "",
-            p.NVotacoes, p.UrlFoto))];
+        return new PaginaDeParlamentaresDto(
+            Itens: [.. lista.Skip((pagina - 1) * tamanho).Take(tamanho)],
+            Pagina: pagina,
+            Tamanho: tamanho,
+            Total: lista.Count,
+            Partidos: [.. todos.Select(p => p.Partido).Where(v => v != "").Distinct().Order(StringComparer.Ordinal)],
+            Ufs: [.. todos.Select(p => p.Uf).Where(v => v != "").Distinct().Order(StringComparer.Ordinal)]);
     }
 
     /// <summary>RF-31 — ficha com dados, histórico de votos e mais similares.</summary>
@@ -73,7 +77,7 @@ public class ServicoParlamentares(PoligraphDb db)
         if (pessoa is null) return null;
 
         var legislatura = await Legislaturas.CorrenteAsync(_db, ct);
-        var votos = await UltimosVotosAsync(id, ct);
+        var votos = await UltimosVotosAsync(id, legislatura, 0, VotosPorPagina, ct);
         var similares = await MaisSimilaresAsync(id, ct);
         var (casa, partido, uf) = await FiliacaoAtualAsync(id, ct);
 
@@ -83,31 +87,205 @@ public class ServicoParlamentares(PoligraphDb db)
             await _db.Votos.CountAsync(
                 v => v.PessoaId == id && v.Valor != null
                      && v.Votacao!.Legislatura == legislatura, ct),
+            await _db.Votos.CountAsync(
+                v => v.PessoaId == id && v.Votacao!.Legislatura == legislatura, ct),
             votos, similares,
-            await AlinhamentoAsync(id, casa, legislatura, partido, ct));
+            await AlinhamentoAsync(id, casa, legislatura, partido, ct),
+            await PresencaAsync(id, casa, legislatura, ct),
+            await PaginaOficialAsync(id, casa, ct),
+            await RedesSociaisAsync(id, ct));
     }
+
+    /// <summary>Em quantas votações de plenário da legislatura o parlamentar estava.</summary>
+    /// <remarks>
+    /// <para>Só plenário: na comissão vota quem é membro, e contar as dela como falta acusaria ausência de quem nem podia votar.</para>
+    /// <para>Senado: a casa registra presença e ausência de cada senador em exercício, e a conta sai das linhas. Câmara: só quem votou tem linha, e a base são as votações de plenário entre o primeiro e o último voto do deputado.</para>
+    /// </remarks>
+    private async Task<PresencaDto?> PresencaAsync(long id, TipoCasa? casa, short? legislatura, CancellationToken ct)
+    {
+        if (casa is null || legislatura is null) return null;
+
+        var registros = _db.Votos.AsNoTracking().Where(v =>
+            v.PessoaId == id && v.Votacao!.Casa == casa && v.Votacao.Legislatura == legislatura && v.Votacao.Plenario);
+
+        var porPresenca = await registros
+            .Where(v => v.Presenca != null)
+            .GroupBy(v => v.Presenca)
+            .Select(g => new { Presenca = g.Key, Quantos = g.Count(), Desde = g.Min(v => v.Votacao!.Data), Ate = g.Max(v => v.Votacao!.Data) })
+            .ToListAsync(ct);
+
+        if (porPresenca.Count == 0) return null;
+
+        var desde = porPresenca.Min(p => p.Desde);
+        var ate = porPresenca.Max(p => p.Ate);
+        int Quantos(PresencaNoVoto presenca) => porPresenca.FirstOrDefault(p => p.Presenca == presenca)?.Quantos ?? 0;
+
+        if (casa == TipoCasa.SENADO)
+        {
+            return new PresencaDto(
+                Quantos(PresencaNoVoto.PRESENTE),
+                porPresenca.Sum(p => p.Quantos),
+                Quantos(PresencaNoVoto.AUSENTE),
+                Quantos(PresencaNoVoto.AUSENTE_JUSTIFICADO),
+                JustificativaPublicada: true,
+                desde, ate);
+        }
+
+        var presente = Quantos(PresencaNoVoto.PRESENTE);
+        var votacoes = await _db.Votacoes.AsNoTracking().CountAsync(vt =>
+            vt.Casa == casa && vt.Legislatura == legislatura && vt.Plenario && vt.Data >= desde && vt.Data <= ate, ct);
+
+        return new PresencaDto(presente, votacoes, votacoes - presente, null, JustificativaPublicada: false, desde, ate);
+    }
+
+    /// <summary>O patrimônio declarado em cada candidatura, da mais recente. Nulo para pessoa inexistente.</summary>
+    public async Task<PatrimonioDoParlamentarDto?> PatrimonioAsync(long id, CancellationToken ct)
+    {
+        if (!await _db.Pessoas.AnyAsync(p => p.Id == id, ct)) return null;
+
+        var linhas = await _db.Patrimonios.AsNoTracking().Where(p => p.PessoaId == id).ToListAsync(ct);
+
+        return new PatrimonioDoParlamentarDto([.. linhas
+            .GroupBy(l => l.AnoEleicao)
+            .OrderByDescending(g => g.Key)
+            .Select(g => new DeclaracaoDeBensDto(
+                g.Key,
+                g.Sum(l => l.Valor),
+                g.Sum(l => l.Quantidade),
+                [.. g.OrderByDescending(l => l.Valor).Select(l => new BemPorTipoDto(l.TipoBem, l.Valor, l.Quantidade))]))]);
+    }
+
+    /// <summary>As redes na ordem em que se reconhecem: as grandes primeiro, o site próprio por último.</summary>
+    private async Task<IReadOnlyList<RedeSocialDto>> RedesSociaisAsync(long id, CancellationToken ct) =>
+        [.. (await _db.RedesSociais.AsNoTracking().Where(r => r.PessoaId == id).ToListAsync(ct))
+            .OrderBy(r => r.Rede)
+            .ThenBy(r => r.Url, StringComparer.Ordinal)
+            .Select(r => new RedeSocialDto(r.Rede, r.Url, r.Fonte))];
+
+    /// <summary>Os votos do parlamentar na legislatura corrente, do mais recente, em páginas.</summary>
+    /// <remarks>
+    /// <para>A ficha mostrava 20 dos ~845 votos do deputado mediano, sem dizer que havia mais. A primeira página é a mesma que vem na ficha.</para>
+    /// <para><c>Total</c> conta também os registros sem posição (obstrução, ausência registrada), que a lista mostra e as "votações registradas" da ficha não contam. A tela diz a diferença.</para>
+    /// <para>Devolve <c>null</c> para pessoa inexistente, e o endpoint responde 404.</para>
+    /// </remarks>
+    public async Task<PaginaDto<VotoNaFichaDto>?> ListarVotosAsync(
+        long id, int pagina, int tamanho, CancellationToken ct)
+    {
+        if (!await _db.Pessoas.AnyAsync(p => p.Id == id, ct)) return null;
+
+        pagina = Math.Max(pagina, 1);
+        tamanho = Math.Clamp(tamanho, 1, TamanhoMaximo);
+
+        var legislatura = await Legislaturas.CorrenteAsync(_db, ct);
+        var total = await _db.Votos.CountAsync(
+            v => v.PessoaId == id && v.Votacao!.Legislatura == legislatura, ct);
+
+        return new PaginaDto<VotoNaFichaDto>(
+            await UltimosVotosAsync(id, legislatura, (pagina - 1) * tamanho, tamanho, ct),
+            pagina, tamanho, total);
+    }
+
+    /// <summary>Quem votou na legislatura corrente, com casa, partido e UF do último voto. Em cache.</summary>
+    public Task<IReadOnlyList<ParlamentarNaListaDto>> ParlamentaresDaLegislaturaAsync(CancellationToken ct) =>
+        ListaDaLegislaturaAsync(ct);
+
+    /// <summary>Quem votou na legislatura corrente, com a filiação do último voto. Em cache.</summary>
+    private async Task<IReadOnlyList<ParlamentarNaListaDto>> ListaDaLegislaturaAsync(CancellationToken ct)
+    {
+        var legislatura = await Legislaturas.CorrenteAsync(_db, ct);
+        if (legislatura is null) return [];
+
+        return await _cache.GetOrCreateAsync(("parlamentares", legislatura.Value), entrada =>
+        {
+            entrada.AbsoluteExpirationRelativeToNow = ValidadeDaLista;
+            return MontarListaAsync(legislatura.Value, ct);
+        }) ?? [];
+    }
+
+    /// <remarks>
+    /// <para>Três consultas agrupadas, e não duas subconsultas por pessoa: a versão anterior contava os votos e buscava o último voto para cada uma das 7.993 linhas do cadastro, 1,2 s por chamada. Agrupado, 260 ms.</para>
+    /// <para>A filiação é a do último dia em que a pessoa votou. Havendo mais de uma votação nesse dia, qualquer uma serve: partido e UF não mudam dentro do dia.</para>
+    /// </remarks>
+    private async Task<IReadOnlyList<ParlamentarNaListaDto>> MontarListaAsync(
+        short legislatura, CancellationToken ct)
+    {
+        var daLegislatura = _db.Votos.AsNoTracking()
+            .Where(v => v.Votacao!.Legislatura == legislatura);
+
+        var contagens = await daLegislatura
+            .GroupBy(v => v.PessoaId)
+            .Select(g => new { PessoaId = g.Key, NVotacoes = g.Count(v => v.Valor != null) })
+            .Where(c => c.NVotacoes > 0)
+            .ToDictionaryAsync(c => c.PessoaId, c => c.NVotacoes, ct);
+
+        var ultimoDia = daLegislatura
+            .GroupBy(v => v.PessoaId)
+            .Select(g => new { PessoaId = g.Key, Data = g.Max(v => v.Votacao!.Data) });
+
+        var filiacoes = (await (
+                from v in daLegislatura
+                join u in ultimoDia on new { v.PessoaId, v.Votacao!.Data } equals new { u.PessoaId, u.Data }
+                select new { v.PessoaId, v.PartidoNoVoto, v.UfNoVoto, v.Votacao!.Casa })
+            .ToListAsync(ct))
+            .GroupBy(f => f.PessoaId)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        var ids = contagens.Keys.ToList();
+        var pessoas = await _db.Pessoas.AsNoTracking()
+            .Where(p => ids.Contains(p.Id))
+            .Select(p => new { p.Id, p.NomeExibicao, p.UrlFoto })
+            .ToListAsync(ct);
+
+        return [.. pessoas.Select(p =>
+        {
+            var filiacao = filiacoes.GetValueOrDefault(p.Id);
+            return new ParlamentarNaListaDto(
+                p.Id, p.NomeExibicao, filiacao?.Casa,
+                filiacao?.PartidoNoVoto ?? "", filiacao?.UfNoVoto ?? "",
+                contagens[p.Id], p.UrlFoto);
+        })];
+    }
+
+    private static bool ContemNome(string nome, string busca) =>
+        Comparacao.IndexOf(nome, busca.Trim(), CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) >= 0;
 
     /// <remarks>
     /// <para>Subconsulta, não `join`: a orientação é opcional, e um `join` sem `DefaultIfEmpty` sumiria com as votações que o Governo não orientou — que são justamente as mais comuns na ficha.</para>
     /// <para>"PL 4.133/2023" — a etiqueta curta que permite conferir na fonte. Não é enfeite: sem ela, quem quiser checar a ementa não tem por onde procurar.</para>
     /// </remarks>
     private async Task<List<VotoNaFichaDto>> UltimosVotosAsync(
-        long id, CancellationToken ct) =>
-        await _db.Votos.AsNoTracking()
-            .Where(v => v.PessoaId == id)
+        long id, short? legislatura, int pular, int quantos, CancellationToken ct)
+    {
+        var votos = await _db.Votos.AsNoTracking()
+            .Where(v => v.PessoaId == id && v.Votacao!.Legislatura == legislatura)
             .OrderByDescending(v => v.Votacao!.Data)
-            .Take(VotosNaFicha)
-            .Select(v => new VotoNaFichaDto(
-                v.VotacaoId, v.Votacao!.Data, v.Votacao.Descricao, v.Valor,
-                _db.Orientacoes
+            .ThenByDescending(v => v.VotacaoId)
+            .Skip(pular)
+            .Take(quantos)
+            .Select(v => new
+            {
+                v.VotacaoId,
+                v.Votacao!.Data,
+                v.Votacao.Descricao,
+                v.Valor,
+                Orientacao = _db.Orientacoes
                     .Where(o => o.VotacaoId == v.VotacaoId && o.Bancada == "Governo")
                     .Select(o => o.Orientacao)
                     .FirstOrDefault(),
                 v.Votacao.Proposicao!.Ementa,
-                v.Votacao.Proposicao!.SiglaTipo + " "
+                Materia = v.Votacao.Proposicao!.SiglaTipo + " "
                     + v.Votacao.Proposicao.Numero + "/" + v.Votacao.Proposicao.Ano,
-                v.Votacao.Categoria))
+                v.Votacao.Categoria,
+                v.Votacao.Casa,
+                v.Votacao.ProposicaoId
+            })
             .ToListAsync(ct);
+
+        return [.. votos.Select(v => new VotoNaFichaDto(
+            v.VotacaoId, v.Data, v.Descricao, v.Valor, v.Orientacao, v.Ementa, v.Materia, v.Categoria,
+            FontesOficiais.Proposicao(v.Casa, v.ProposicaoId),
+            FontesOficiais.RegistroDaVotacao(v.Casa, v.VotacaoId)))];
+    }
 
     /// <summary>
     /// Os mais parecidos, da execução mais recente.
@@ -245,6 +423,20 @@ public class ServicoParlamentares(PoligraphDb db)
     /// duas fontes, e a pergunta que a ficha responde é "onde essa pessoa está agora".
     /// </para>
     /// </summary>
+    /// <summary>A página do parlamentar na casa em que votou por último.</summary>
+    private async Task<string?> PaginaOficialAsync(long id, TipoCasa? casa, CancellationToken ct)
+    {
+        if (casa is null) return null;
+
+        var fonte = casa.Value.ComoFonte();
+        var idNaCasa = await _db.PessoaFonteIds.AsNoTracking()
+            .Where(f => f.PessoaId == id && f.Fonte == fonte)
+            .Select(f => f.IdExterno)
+            .FirstOrDefaultAsync(ct);
+
+        return FontesOficiais.Parlamentar(casa, idNaCasa);
+    }
+
     private async Task<(TipoCasa? Casa, string Partido, string Uf)> FiliacaoAtualAsync(
         long id, CancellationToken ct)
     {

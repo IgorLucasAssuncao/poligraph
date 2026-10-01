@@ -10,6 +10,8 @@ import {
 } from '../api';
 import { Painel } from '../componentes/Painel';
 import { Resultado } from '../componentes/Resultado';
+import { BotaoDoTour } from '../componentes/BotaoDoTour';
+import { passosDoQuestionario } from '../tour';
 import { comTransicao } from '../transicao';
 
 const OPCOES: [Resposta, string][] = [
@@ -28,6 +30,8 @@ const OPCOES: [Resposta, string][] = [
  * ⭐ Velocidade percebida é tempo morto, não tempo total.
  */
 const PAUSA = 760;
+
+const PASSOS_DO_QUESTIONARIO = passosDoQuestionario();
 
 /**
  * O questionário, uma pergunta por tela.
@@ -123,7 +127,7 @@ export function Questionario() {
 
   return (
     <div className="questionario">
-      <div className="progresso">
+      <div className="progresso" data-tour="progresso">
         <div className="barra-progresso">
           <div style={{ width: `${acabou ? 100 : progresso}%` }} />
         </div>
@@ -135,6 +139,8 @@ export function Questionario() {
             ? `${opinadas} de ${perguntas.length} respondidas`
             : `Pergunta ${indice + 1} de ${previstas}`}
         </p>
+
+        <BotaoDoTour nome="questionario" passos={PASSOS_DO_QUESTIONARIO} />
       </div>
 
       {acabou && aguardandoDesempate ? (
@@ -227,11 +233,11 @@ function CartaoDePergunta({
   aoVoltar?: () => void;
 }) {
   return (
-    <div className="cartao-pergunta">
+    <div className="cartao-pergunta" data-tour="pergunta">
       <p className="rotulo-pergunta">Você concorda?</p>
       <h2 className="texto-pergunta">{pergunta.texto}</h2>
 
-      <div className="opcoes-grandes">
+      <div className="opcoes-grandes" data-tour="opcoes">
         {OPCOES.map(([valor, rotulo]) => (
           <button
             key={rotulo}

@@ -40,11 +40,31 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     public static readonly string[] RotasDoFront =
     [
         "/api/panorama",
+        "/api/governo",
         "/api/parlamentares",
         "/api/parlamentares/{id}",
         "/api/parlamentares/{id}/noticias",
         "/api/parlamentares/{id}/gastos",
         "/api/parlamentares/{id}/emendas",
+        "/api/parlamentares/{id}/emendas/favorecidos",
+        "/api/parlamentares/{id}/emendas/convenios",
+        "/api/parlamentares/{id}/votos",
+        "/api/parlamentares/{id}/emendas/lista",
+        "/api/parlamentares/{id}/gastos/lancamentos",
+        "/api/metodologia",
+        "/api/mapa/emendas",
+        "/api/mapa/emendas/{uf}",
+        "/api/municipios",
+        "/api/municipios/{codigoIbge}/emendas",
+        "/api/municipios/{codigoIbge}/emendas/parlamentares",
+        "/api/municipios/{codigoIbge}/emendas/favorecidos",
+        "/api/municipios/{codigoIbge}/emendas/convenios",
+        "/api/entidades",
+        "/api/entidades/{cnpj}",
+        "/api/entidades/{cnpj}/parlamentares",
+        "/api/entidades/{cnpj}/convenios",
+        "/api/parlamentares/{id}/patrimonio",
+        "/api/busca",
         "/api/parlamentares/{id}/financiamento",
         "/api/afinidade",
         "/api/afinidade/perguntas",
@@ -96,6 +116,8 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     [InlineData("PanoramaDaCasaDto", "casa,parlamentares,votacoes,votacoesSecretas,votosComPosicao,comunidades,ligacoes")]
     // A lista de "explorar" — `casa` entrou quando a lista passou a misturar as duas.
     [InlineData("ParlamentarNaListaDto", "id,nome,casa,partido,uf,nVotacoes,urlFoto")]
+    // A lista vem em páginas; `partidos` e `ufs` são as opções dos filtros.
+    [InlineData("PaginaDeParlamentaresDto", "itens,pagina,tamanho,total,partidos,ufs")]
     // `acordou`/`discordou` são o "por que este resultado": sem eles o número não é
     // conferível.
     [InlineData("ParlamentarAfimDto", "pessoaId,nome,partido,uf,acordos,comparaveis,acordou,discordou")]
@@ -106,9 +128,29 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     [InlineData("PerguntaPublicaDto", "id,texto,ordem,totalVotos,totalPossivel")]
     // O envelope do questionário — `total` existe para a barra de progresso.
     [InlineData("QuestionarioDto", "perguntas,total")]
+    // `vizinhosPorNo` é o `k` da execução: o tour do grafo explica o desenho com ele.
+    [InlineData("GrafoDto", "execucaoId,casa,legislatura,vizinhosPorNo,nos,arestas")]
     // `governismo` é nulo no Senado inteiro (achado #28), mas a PROPRIEDADE existe.
     [InlineData("NoDoGrafoDto", "id,nome,partido,uf,comunidade,eixoX,eixoY,nVotacoes,componente1,componente2,urlFoto,governismo")]
     [InlineData("ArestaDoGrafoDto", "de,para,peso,votacoesComuns,cosseno")]
+    // Quem recebeu, quando e por qual convênio: a aba de emendas da ficha.
+    [InlineData("EmendasDoParlamentarDto", "ano,empenhado,pago,quantidade,porDestino,porFuncao,favorecidos,pagamentosPorMes,convenios,cidades")]
+    [InlineData("FavorecidosDaEmendaDto", "recebido,viaIntermediario,aPessoas,semIdentificacao,ultimoMes,identificados,maiores")]
+    [InlineData("ConvenioDaEmendaDto", "numero,convenente,objeto,dataPublicacao,valor,emendasQueFinanciam")]
+    // O perfil do governo: o período, o ano a ano e o sigilo com a base.
+    [InlineData("GovernoDto", "gestoes,periodo,geradoEm,emAndamento,anosDisponiveis,arrecadacao,despesa,sigilo,porAno,gestoesDisponiveis")]
+    [InlineData("GovernoNoAnoDto", "ano,arrecadou,gastou,pegouEmprestado,fechado")]
+    [InlineData("SigiloDto", "cartaoSigiloso,cartaoTotal,transacoesSigilosas,acaoSigilosa,meses,porOrgao")]
+    // As cidades pela sede de quem recebeu, e o CNPJ que leva à página da entidade.
+    [InlineData("CidadesDaEmendaDto", "quantidade,maiores")]
+    [InlineData("FavorecidoDaEmendaDto", "nome,naturezaJuridica,uf,municipio,recebido,cnpj")]
+    // PP4 e PP3: redes na ficha, patrimônio por candidatura — ⛔ a descrição do bem.
+    [InlineData("RedeSocialDto", "rede,url,fonte")]
+    [InlineData("DeclaracaoDeBensDto", "anoEleicao,total,bens,porTipo")]
+    [InlineData("ConvenioDaEntidadeDto", "numero,objeto,situacao,dataPublicacao,valor,valorLiberado,urlFonte")]
+    [InlineData("ArrecadacaoDto", "arrecadado,porOrigem,emissaoDeDivida,outrasReceitasDeCapital")]
+    [InlineData("AreaDaDespesaDto", "codigo,nome,dotacaoAtualizada,empenhado,pago,restosAPagarPagos,dotacaoCompleta")]
+    [InlineData("EncargoDto", "grupo,pago,restosAPagarPagos")]
     public async Task Dto_TemOsCamposQueOFrontLe(string dto, string campos)
     {
         ExigeDocker();

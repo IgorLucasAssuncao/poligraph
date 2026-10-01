@@ -325,3 +325,20 @@ def test_o_metodo_de_reconciliacao_respeita_o_check():
 
     assert usados, "nenhuma chamada a `resolver_autor` encontrada — o parser quebrou"
     assert usados <= permitidos, f"método fora do CHECK: {usados - permitidos}"
+
+
+def test_o_tipo_de_favorecido_respeita_o_check():
+    """🔴 `ck_favorecido_tipo` e o Python precisam falar os mesmos quatro valores.
+
+    ⚠️ Um valor a mais no Python derruba o lote no banco; um a menos deixa um tipo que o
+    banco aceita e o ETL nunca grava — e a tela, que agrupa por ele, mostra zero.
+    """
+    from poligraph_etl import emendas
+
+    fonte = CONTEXTO.read_text(encoding="utf-8")
+    achado = re.search(r'"ck_favorecido_tipo",\s*"tipo IN \(([^)]*)\)', fonte)
+
+    assert achado, "`ck_favorecido_tipo` não encontrada — a constraint sumiu ou mudou de nome"
+    do_check = set(achado.group(1).replace("'", "").split(","))
+
+    assert do_check == set(emendas.TIPOS_DE_FAVORECIDO)

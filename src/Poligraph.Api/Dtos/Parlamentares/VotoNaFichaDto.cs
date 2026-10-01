@@ -56,4 +56,8 @@ public record VotoNaFichaDto(
     string? OrientacaoDoGoverno,
     string? Ementa,
     string? Materia,
-    TipoCategoriaDeVotacao Categoria);
+    TipoCategoriaDeVotacao Categoria,
+    /// <summary>A ficha de tramitação da proposição, na casa. Nula sem proposição ligada.</summary>
+    string? UrlProposicao,
+    /// <summary>O registro nominal da votação, com o voto de cada um. Só na Câmara.</summary>
+    string? UrlRegistro);

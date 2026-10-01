@@ -65,6 +65,6 @@ public class ServicoFinanciamento(PoligraphDb db)
             PorFonte: [.. fontes.Select(f =>
                 new ReceitaPorFonteDto(f.Fonte, f.Total, f.Lancamentos))],
             MaioresDoadores: [.. doadores.Select(d =>
-                new DoadorDoParlamentarDto(d.Doador!, d.Total, d.DoadorEhPessoaFisica))]);
+                new DoadorDoParlamentarDto(TextoSemCpf.Limpar(d.Doador!), d.Total, d.DoadorEhPessoaFisica))]);
     }
 }

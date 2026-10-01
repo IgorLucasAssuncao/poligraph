@@ -137,11 +137,12 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
 
         var esperadas = new[]
         {
-            "arestas_grafo", "autores_de_emenda", "avaliacoes", "consentimentos",
-            "despesas", "emendas", "execucoes", "noticia_pessoas", "noticia_temas",
+            "arestas_grafo", "autores_de_emenda", "avaliacoes", "cnpjs_municipio", "consentimentos", "convenios",
+            "despesas", "emendas", "emendas_convenios", "emendas_favorecidos", "encargos_especiais", "execucoes", "gastos_sigilosos", "gestoes",
+            "municipios", "noticia_pessoas", "noticia_temas", "orcamento_por_funcao", "patrimonios",
             "noticias", "nos_metrica", "orientacoes", "perguntas", "pessoa_fonte_ids",
             "pessoas",
-            "proposicoes", "receitas_de_campanha", "segue", "similaridades",
+            "proposicoes", "receitas_de_campanha", "receitas_por_origem", "redes_sociais", "segue", "similaridades",
             "tokens_email", "usuarios", "votacoes", "votos",
         };
 
@@ -179,7 +180,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
     /// compilador; passar por SQL testa a restrição.
     /// </para>
     /// </summary>
-    [Theory]
+    [SkippableTheory]
     [InlineData("casa", "'ASSEMBLEIA'", "ck_votacao_casa")]
     [InlineData("categoria", "'INVENTADA'", "ck_votacao_categoria")]
     public async Task Votacao_ComValorForaDoDominio_ERejeitadaPeloBanco(

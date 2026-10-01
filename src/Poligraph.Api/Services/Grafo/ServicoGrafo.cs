@@ -23,13 +23,13 @@ public class ServicoGrafo(PoligraphDb db)
         var execucao = await _db.Execucoes.AsNoTracking()
             .Where(e => e.Casa == casa && e.Status == TipoStatusDaExecucao.CONCLUIDA)
             .OrderByDescending(e => e.Id)
-            .Select(e => new { e.Id, e.Casa, e.Legislatura })
+            .Select(e => new { e.Id, e.Casa, e.Legislatura, e.K })
             .FirstOrDefaultAsync(ct);
 
-        if (execucao is null) return new GrafoDto(0, casa, 0, [], []);
+        if (execucao is null) return new GrafoDto(0, casa, 0, 0, [], []);
 
         return new GrafoDto(
-            execucao.Id, execucao.Casa, execucao.Legislatura,
+            execucao.Id, execucao.Casa, execucao.Legislatura, execucao.K,
             await NosAsync(execucao.Id, ct),
             await ArestasAsync(execucao.Id, ct));
     }

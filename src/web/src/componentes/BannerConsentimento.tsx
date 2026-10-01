@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { TEXTO_CONSENTIMENTO, VERSAO_CONSENTIMENTO } from '../textos-legais';
 
-const CHAVE = 'poligraph.consentimento';
-
-type Escolha = { versao: string; aceito: boolean; em: string };
+import {
+  CHAVE_CONSENTIMENTO,
+  EVENTO_CONSENTIMENTO,
+  lerConsentimento,
+  type Escolha,
+} from '../consentimento';
 
 /**
  * 🔴 Banner de consentimento — bloqueante e obrigatório.
@@ -23,7 +26,7 @@ export function BannerConsentimento() {
   const [carregado, setCarregado] = useState(false);
 
   useEffect(() => {
-    const salvo = ler();
+    const salvo = lerConsentimento();
 
     // ⭐ Mudou a versão do texto? O consentimento antigo não cobre o novo (art. 8º §2).
     if (salvo?.versao === VERSAO_CONSENTIMENTO) {
@@ -77,30 +80,15 @@ export function BannerConsentimento() {
       em: new Date().toISOString(),
     };
 
-    localStorage.setItem(CHAVE, JSON.stringify(nova));
+    localStorage.setItem(CHAVE_CONSENTIMENTO, JSON.stringify(nova));
     setEscolha(nova);
+    window.dispatchEvent(new Event(EVENTO_CONSENTIMENTO));
 
     if (aceito) ativarMedicao();
   }
 }
 
-/** Revoga o consentimento e reabre a escolha. Chamado pelo link do rodapé. */
-export function revogarConsentimento() {
-  localStorage.removeItem(CHAVE);
-  window.clarity?.('consent', false);
-  location.reload();
-}
-
 // ═══════════════════════════════════════════════════════════════════
-
-function ler(): Escolha | null {
-  try {
-    const bruto = localStorage.getItem(CHAVE);
-    return bruto ? (JSON.parse(bruto) as Escolha) : null;
-  } catch {
-    return null;   // navegador anônimo, storage bloqueado
-  }
-}
 
 /**
  * ⚠️ Só aqui o script entra na página. Antes disto, nada é carregado.

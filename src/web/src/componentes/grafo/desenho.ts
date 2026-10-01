@@ -14,6 +14,7 @@ import type { ArestaDoGrafo, NoDoGrafo } from '../../api';
 import { paraTela, type Camera, type Tamanho } from './camera';
 import { foto, iniciais } from './fotos';
 import type { RotulosDoEixo } from './legenda';
+import { temaEfetivoEscuro } from '../../tema';
 
 /** ⚠️ Retina: sem isto o desenho sai borrado em tela de alta densidade. */
 export const DENSIDADE = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
@@ -37,8 +38,25 @@ const CORES = [
   '#0e7490', '#7c2d12', '#4d7c0f', '#9f1239',
 ];
 
-export function corDaComunidade(comunidade: number | null): string {
-  return comunidade === null ? '#94a3b8' : CORES[comunidade % CORES.length];
+/**
+ * Os mesmos matizes, mais claros, para o fundo escuro. Três dos tons de cima ficavam
+ * abaixo de 3:1 contra #0b0e11 (índigo 2,45, marrom 2,07, vinho 2,41) e sumiam no
+ * desenho. Aqui todos passam de 3:1 contra o fundo e contra o painel.
+ */
+const CORES_ESCURO = [
+  '#2dd4bf', '#f59e0b', '#818cf8', '#e879f9',
+  '#22d3ee', '#ea8a5a', '#a3e635', '#fb7185',
+];
+
+/** Cinza de quem não tem comunidade. Um só serve aos dois temas: 3,6:1 no claro e 5,3:1
+ *  no escuro. O anterior, #94a3b8, ficava em 2,56:1 sobre o branco. */
+const SEM_COMUNIDADE = '#7b8794';
+
+export function corDaComunidade(comunidade: number | null, escuro = false): string {
+  if (comunidade === null) return SEM_COMUNIDADE;
+  const paleta = escuro ? CORES_ESCURO : CORES;
+
+  return paleta[comunidade % paleta.length];
 }
 
 export type Quadro = {
@@ -74,7 +92,7 @@ export function desenhar(
   quadro: Quadro,
 ) {
   const t = { largura: canvas.width / DENSIDADE, altura: canvas.height / DENSIDADE };
-  const escuro = matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+  const escuro = temaEfetivoEscuro();
 
   ctx.setTransform(DENSIDADE, 0, 0, DENSIDADE, 0, 0);
   ctx.clearRect(0, 0, t.largura, t.altura);
@@ -220,7 +238,7 @@ function desenharArestas(
     const forca = Math.max(0, Math.min(1, (aresta.peso - 0.5) * 2));
     ctx.lineWidth = destacada ? 2.4 : 0.35 + forca * 1.15;
     ctx.strokeStyle = destacada
-      ? corDaComunidade(a.comunidade)
+      ? corDaComunidade(a.comunidade, escuro)
       : escuro
         ? `rgba(140,155,170,${naVizinhanca ? 0.1 + forca * 0.22 : 0.04})`
         : `rgba(70,90,110,${naVizinhanca ? 0.08 + forca * 0.2 : 0.035})`;
@@ -248,7 +266,7 @@ function desenharNos(
 
     const destacado = quadro.emFoco?.id === no.id;
     const apagado = quadro.vizinhos ? !quadro.vizinhos.has(no.id) : false;
-    const cor = corDaComunidade(no.comunidade);
+    const cor = corDaComunidade(no.comunidade, escuro);
     const raioFinal = destacado ? raio * 1.5 : raio;
 
     ctx.globalAlpha = apagado ? 0.12 : 1;

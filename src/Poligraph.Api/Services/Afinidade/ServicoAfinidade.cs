@@ -12,10 +12,10 @@ namespace Poligraph.Api.Services;
 /// </summary>
 public class ServicoAfinidade(PoligraphDb db)
 {
-    private const int QuantidadeExibida = 5;
+    public const int QuantidadeExibida = 5;
 
     /// <summary>Quantos vizinhos entram no centroide.</summary>
-    private const int VizinhosParaPosicionar = 10;
+    public const int VizinhosParaPosicionar = 10;
 
     private readonly PoligraphDb _db = db;
 
@@ -53,7 +53,8 @@ public class ServicoAfinidade(PoligraphDb db)
                     resultados.OrderByDescending(r => r.Proporcao), fichas, daCasa, votosPorPessoa),
                 MaisDistantes: Montar(
                     resultados.OrderBy(r => r.Proporcao), fichas, daCasa, votosPorPessoa),
-                PosicaoNoGrafo: await PosicionarAsync(casa, resultados, daCasa.Count, ct)));
+                PosicaoNoGrafo: await PosicionarAsync(casa, resultados, daCasa.Count, ct),
+                Escala: Escala(resultados)));
         }
 
         if (porCasa.Count == 0) return null;
@@ -270,5 +271,15 @@ public class ServicoAfinidade(PoligraphDb db)
                 : comunidades.OrderByDescending(c => c.Value).First().Key,
             VizinhosUsados: contribuiram,
             BaseDeVotacoes: perguntasRespondidas);
+    }
+
+    /// <summary>O parlamentar do meio da lista, pela mesma proporção que ordena os mais próximos.</summary>
+    /// <remarks>
+    /// <para>Não recalcula nada: lê o resultado que já existe para todos os parlamentares da casa.</para>
+    /// </remarks>
+    private static EscalaDaCasaDto Escala(IReadOnlyList<ResultadoAfinidade> resultados)
+    {
+        var mediano = resultados.OrderBy(r => r.Proporcao).ElementAt(resultados.Count / 2);
+        return new EscalaDaCasaDto(resultados.Count, mediano.Acordos, mediano.Comparaveis);
     }
 }

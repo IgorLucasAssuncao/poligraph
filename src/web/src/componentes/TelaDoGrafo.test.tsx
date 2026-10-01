@@ -25,6 +25,7 @@ const GRAFO: Grafo = {
   execucaoId: 1,
   casa: 'CAMARA',
   legislatura: 57,
+  vizinhosPorNo: 10,
   nos: [no(1, 'Ana Ribeiro'), no(2, 'Bruno Tavares'), no(3, 'Célia Nunes')],
   arestas: [
     { de: 1, para: 2, peso: 0.92, votacoesComuns: 137, cosseno: 0.9 },

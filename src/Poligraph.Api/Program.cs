@@ -25,6 +25,11 @@ app.UseAuthorization();
 
 app.MapearParlamentares()
    .MapearPanorama()
+   .MapearGoverno()
+   .MapearMetodologia()
+   .MapearAcesso()
+   .MapearMapa()
+   .MapearEntidades()
    .MapearAfinidade()
    .MapearAutenticacao()
    .MapearSeguir()

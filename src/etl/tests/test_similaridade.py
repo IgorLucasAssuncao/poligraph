@@ -281,3 +281,18 @@ def test_knn_nao_produz_aresta_duplicada():
     chaves = [(p.pessoa_a, p.pessoa_b) for p in mantidas]
 
     assert len(chaves) == len(set(chaves))
+
+
+def test_parametros_gravados_sao_os_que_o_calculo_usa():
+    """🔴 A metodologia mostra o que a execução gravou — e ela grava as constantes do cálculo.
+
+    ⚠️ Se alguém mudar o peso do destaque, a página muda junto, sem ninguém editar texto.
+    """
+    from poligraph_etl import similaridade
+
+    assert similaridade.parametros() == {
+        "minimo_votacoes_comuns": similaridade.MINIMO_VOTACOES_COMUNS,
+        "razao_recencia": similaridade.RAZAO_RECENCIA,
+        "peso_destaque": similaridade.PESO_CATEGORIA["DESTAQUE"],
+        "peso_autoridade": similaridade.PESO_CATEGORIA["AUTORIDADE"],
+    }

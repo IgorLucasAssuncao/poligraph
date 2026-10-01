@@ -44,7 +44,7 @@ cruzar o mesmo fornecedor entre parlamentares.
 
 import logging
 
-from .normalizacao import hash_de_cpf, inteiro, valor_com_ponto, sem_acento_maiusculo
+from .normalizacao import hash_de_cpf, inteiro, sem_acento_maiusculo, sem_cpf, valor_com_ponto
 
 log = logging.getLogger("poligraph")
 
@@ -79,7 +79,7 @@ def para_linhas(registros: list[dict], mapa_pessoas: dict[str, int]) -> list[dic
                 "ano": inteiro(registro.get("numAno")),
                 "mes": inteiro(registro.get("numMes")),
                 "categoria": (registro.get("txtDescricao") or "").strip() or "SEM CATEGORIA",
-                "fornecedor": (registro.get("txtFornecedor") or "").strip() or None,
+                "fornecedor": sem_cpf((registro.get("txtFornecedor") or "").strip() or None),
                 "cnpj_ou_hash": documento,
                 "fornecedor_eh_pessoa_fisica": pessoa_fisica,
                 "valor_liquido": valor,
@@ -127,7 +127,7 @@ def para_linhas_do_senado(
                 "mes": inteiro(registro.get("MES")),
                 "categoria": (registro.get("TIPO_DESPESA") or "").strip()
                 or "SEM CATEGORIA",
-                "fornecedor": (registro.get("FORNECEDOR") or "").strip() or None,
+                "fornecedor": sem_cpf((registro.get("FORNECEDOR") or "").strip() or None),
                 "cnpj_ou_hash": documento,
                 "fornecedor_eh_pessoa_fisica": pessoa_fisica,
                 "valor_liquido": valor,

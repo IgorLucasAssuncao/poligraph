@@ -22,4 +22,5 @@ public record ResultadoPorCasaDto(
     int PerguntasRespondidas,
     IReadOnlyList<ParlamentarAfimDto> MaisProximos,
     IReadOnlyList<ParlamentarAfimDto> MaisDistantes,
-    PosicaoDoCidadaoDto? PosicaoNoGrafo);
+    PosicaoDoCidadaoDto? PosicaoNoGrafo,
+    EscalaDaCasaDto Escala);

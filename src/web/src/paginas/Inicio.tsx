@@ -17,6 +17,7 @@ import { LegendaDoGrafo } from '../componentes/LegendaDoGrafo';
 import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 import { SugestoesParaSeguir } from '../componentes/SugestoesParaSeguir';
 import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
+import { useSessao } from '../sessao';
 
 type ItemDoFeed = Noticia & { deQuem: Parlamentar };
 
@@ -35,6 +36,7 @@ type ItemDoFeed = Noticia & { deQuem: Parlamentar };
  * aparece **quando houver notícia** — deixou de ser a tela e virou uma seção dela.
  */
 export function Inicio() {
+  const { usuario } = useSessao();
   const [panorama, setPanorama] = useState<Panorama | null>(null);
   const [grafo, setGrafo] = useState<DadosDoGrafo | null>(null);
   const [seguidos, setSeguidos] = useState<Parlamentar[]>([]);
@@ -47,12 +49,15 @@ export function Inicio() {
     //    depende dele para ter sentido.
     obterGrafo('CAMARA').then(setGrafo).catch(() => setGrafo(null));
 
+    // Sem conta não há seguidos, e a lista responderia 401.
+    if (!usuario) return;
+
     listarSeguidos()
       .then(async (lista) => {
         setSeguidos(lista);
 
         const porParlamentar = await Promise.all(
-          lista.map(async (p) => (await obterNoticias(p.id)).map((n) => ({ ...n, deQuem: p }))),
+          lista.map(async (p) => (await obterNoticias(p.id)).itens.map((n) => ({ ...n, deQuem: p }))),
         );
 
         setItens(
@@ -62,7 +67,7 @@ export function Inicio() {
         );
       })
       .catch(() => setSeguidos([]));
-  }, []);
+  }, [usuario]);
 
   return (
     <div className="painel-com-trilho">
@@ -84,7 +89,7 @@ export function Inicio() {
             )}
           </p>
 
-          <div className="painel-acoes">
+          <div className="painel-acoes" data-tour="comecar">
             <Link to="/resultado" className="botao-destaque">
               Responder o questionário
             </Link>

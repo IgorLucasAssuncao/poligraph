@@ -8,6 +8,7 @@ import {
   ESCALA_MINIMA,
   paraMundo,
   paraTela,
+  pinca,
   type Camera,
 } from './camera';
 
@@ -127,5 +128,32 @@ describe('distância ao segmento', () => {
 
   it('segmento degenerado vira distância ao ponto', () => {
     expect(distanciaAoSegmento(3, 4, { x: 0, y: 0 }, { x: 0, y: 0 })).toBeCloseTo(5);
+  });
+});
+
+describe('pinça de dois dedos', () => {
+  const camera = { escala: 1, x: 0, y: 0 };
+
+  /** Dedos se afastando ao dobro da distância: aproxima 2x. */
+  it('afastar os dedos aproxima na mesma razão', () => {
+    const depois = pinca(camera, [{ x: 90, y: 100 }, { x: 110, y: 100 }], [{ x: 80, y: 100 }, { x: 120, y: 100 }]);
+
+    expect(depois.escala).toBeCloseTo(2);
+  });
+
+  /** ⭐ O ponto entre os dedos fica parado: é o que faz a pinça parecer segurar o desenho. */
+  it('o ponto entre os dedos não sai do lugar', () => {
+    const depois = pinca(camera, [{ x: 90, y: 100 }, { x: 110, y: 100 }], [{ x: 80, y: 100 }, { x: 120, y: 100 }]);
+    const meio = { x: 100, y: 100 };
+
+    expect((meio.x - depois.x) / depois.escala).toBeCloseTo((meio.x - camera.x) / camera.escala);
+  });
+
+  it('dois dedos andando juntos arrastam o desenho, sem aproximar', () => {
+    const depois = pinca(camera, [{ x: 0, y: 0 }, { x: 10, y: 0 }], [{ x: 5, y: 7 }, { x: 15, y: 7 }]);
+
+    expect(depois.escala).toBeCloseTo(1);
+    expect(depois.x).toBeCloseTo(5);
+    expect(depois.y).toBeCloseTo(7);
   });
 });

@@ -54,10 +54,45 @@ export function aplicarTema(tema: Tema): void {
   if (tema === 'sistema') raiz.removeAttribute('data-tema');
   else raiz.setAttribute('data-tema', tema);
 
+  window.dispatchEvent(new Event(EVENTO_TEMA));
+
   try {
     if (tema === 'sistema') localStorage.removeItem(CHAVE);
     else localStorage.setItem(CHAVE, tema);
   } catch {
     // Sem armazenamento a escolha vale só nesta aba — melhor que não valer nada.
   }
+}
+
+const EVENTO_TEMA = 'poligraph:tema';
+
+/**
+ * Se a tela está escura AGORA, somando a escolha do botão e a do sistema.
+ *
+ * O CSS resolve isso sozinho pelos seletores; quem pinta em canvas não tem seletor, e
+ * perguntar só ao `prefers-color-scheme` ignora o botão: com o sistema claro e o site em
+ * escuro, o grafo saía com as cores do tema claro sobre a página escura.
+ */
+export function temaEfetivoEscuro(): boolean {
+  const escolhido = document.documentElement.getAttribute('data-tema');
+  if (escolhido === 'escuro') return true;
+  if (escolhido === 'claro') return false;
+
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+}
+
+/**
+ * Avisa quando o tema efetivo pode ter mudado: pelo botão do site ou pelo sistema.
+ * Devolve a função que cancela a inscrição, no formato que o `useEffect` espera.
+ */
+export function aoMudarTema(aviso: () => void): () => void {
+  const sistema = window.matchMedia?.('(prefers-color-scheme: dark)');
+
+  window.addEventListener(EVENTO_TEMA, aviso);
+  sistema?.addEventListener('change', aviso);
+
+  return () => {
+    window.removeEventListener(EVENTO_TEMA, aviso);
+    sistema?.removeEventListener('change', aviso);
+  };
 }

@@ -68,6 +68,7 @@ export function ListaDoGrafo({
   return (
     <details
       className="grafo-lista"
+      data-tour="grafo-lista"
       onToggle={(e) => setAberta((e.currentTarget as HTMLDetailsElement).open)}
     >
       <summary>Ver o grafo como lista</summary>

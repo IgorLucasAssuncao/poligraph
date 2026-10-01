@@ -222,6 +222,33 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
     }
 
     /// <summary>
+    /// A régua do resultado: quantos foram comparados, e o parlamentar do meio da lista.
+    /// </summary>
+    /// <remarks>
+    /// <para>O do meio nunca concorda mais que o primeiro: se concordasse, a régua estaria lendo outra ordem que não a dos mais próximos.</para>
+    /// </remarks>
+    [SkippableFact]
+    public async Task Escala_DizQuantosForamComparadosEOMediano()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        using var cliente = CriarCliente();
+
+        var resposta = await cliente.PostAsJsonAsync(Rota, new { respostas = TodasConcordo() });
+        resposta.EnsureSuccessStatusCode();
+        using var json = System.Text.Json.JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+
+        var casa = json.RootElement.GetProperty("porCasa")[0];
+        var escala = casa.GetProperty("escala");
+        var primeiro = casa.GetProperty("maisProximos")[0];
+
+        Assert.True(escala.GetProperty("comparados").GetInt32() >= casa.GetProperty("maisProximos").GetArrayLength());
+        var proporcaoDoMeio = (double)escala.GetProperty("medianoAcordos").GetInt32() / escala.GetProperty("medianoComparaveis").GetInt32();
+        var proporcaoDoPrimeiro = (double)primeiro.GetProperty("acordos").GetInt32() / primeiro.GetProperty("comparaveis").GetInt32();
+        Assert.True(proporcaoDoMeio <= proporcaoDoPrimeiro);
+    }
+
+    /// <summary>
     /// O teste de polaridade ponta a ponta — e a forma dele importa.
     ///
     /// A primeira versão perguntava "quem ficou em primeiro votou NÃO na q5?". Estava

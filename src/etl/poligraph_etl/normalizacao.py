@@ -457,3 +457,22 @@ def sem_acento(texto: str) -> str:
         caractere for caractere in unicodedata.normalize("NFD", texto)
         if unicodedata.category(caractere) != "Mn"
     )
+
+
+_CPF_NO_TEXTO = re.compile(r"(?<!\d)\d{3}\.?\d{3}\.?\d{3}-?\d{2}(?!\d)")
+
+
+def sem_cpf(texto: str | None) -> str | None:
+    """Tira CPF de um nome: `"FULANO DE TAL 12345678900"` → `"FULANO DE TAL"`.
+
+    🔴 O nome empresarial de MEI é o nome do dono seguido do CPF, e é assim que a Câmara
+    publica o fornecedor da cota. 📐 Medido em 2026-09-25: 3.310 lançamentos, R$ 9,70 mi,
+    gravados com o CPF em claro — e a ficha os mostrava.
+
+    Casa exatamente 11 dígitos, com ou sem pontuação: os 14 de um CNPJ ⛔ são cortados.
+    """
+    if texto is None:
+        return None
+    limpo = re.sub(r"\s{2,}", " ", _CPF_NO_TEXTO.sub(" ", texto)).strip(" -/")
+    return limpo or None
+

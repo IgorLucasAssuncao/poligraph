@@ -15,13 +15,48 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     {
         ExigeDocker();
         await SemearAsync();
-        using var cliente = CriarCliente();
 
-        var lista = await cliente.GetFromJsonAsync<List<ParlamentarJson>>(Rota);
+        var pagina = await ListarAsync(Rota);
 
-        Assert.NotNull(lista);
-        Assert.Equal(12, lista!.Count);
-        Assert.All(lista, p => Assert.True(p.NVotacoes > 0));
+        Assert.Equal(12, pagina.Total);
+        Assert.Equal(12, pagina.Itens.Count);
+        Assert.All(pagina.Itens, p => Assert.True(p.NVotacoes > 0));
+    }
+
+    /// <summary>
+    /// A página diz o total. A lista antiga cortava em 100 sem avisar, e a tela não
+    /// tinha como saber que havia mais.
+    /// </summary>
+    [SkippableFact]
+    public async Task Lista_PaginaDizOTotalEAvanca()
+    {
+        ExigeDocker();
+        await SemearAsync();
+
+        var primeira = await ListarAsync($"{Rota}?tamanho=5");
+        var terceira = await ListarAsync($"{Rota}?tamanho=5&pagina=3");
+
+        Assert.Equal(12, primeira.Total);
+        Assert.Equal(["Ana Ribeiro", "Bruno Tavares", "Carla Nunes", "Diego Salles", "Elisa Moraes"],
+            primeira.Itens.Select(p => p.Nome));
+        Assert.Equal(["Karina Melo", "Lucas Ferraz"], terceira.Itens.Select(p => p.Nome));
+    }
+
+    /// <summary>
+    /// Por votações, quem tem mais dado primeiro; o empate sai em ordem alfabética, para a
+    /// página ser a mesma a cada chamada.
+    /// </summary>
+    [SkippableFact]
+    public async Task Lista_OrdenaPorVotacoes()
+    {
+        ExigeDocker();
+        await SemearAsync();
+
+        var pagina = await ListarAsync($"{Rota}?ordem=VOTACOES");
+
+        Assert.Equal("Ana Ribeiro", pagina.Itens[0].Nome);
+        Assert.Equal("Lucas Ferraz", pagina.Itens[^1].Nome);
+        Assert.True(pagina.Itens[0].NVotacoes > pagina.Itens[^1].NVotacoes);
     }
 
     [SkippableFact]
@@ -29,27 +64,38 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     {
         ExigeDocker();
         await SemearAsync();
-        using var cliente = CriarCliente();
 
-        var lista = await cliente.GetFromJsonAsync<List<ParlamentarJson>>(
-            $"{Rota}?partido=PARTIDO-B");
+        var pagina = await ListarAsync($"{Rota}?partido=PARTIDO-B");
 
-        Assert.NotNull(lista);
-        Assert.NotEmpty(lista!);
-        Assert.All(lista, p => Assert.Equal("PARTIDO-B", p.Partido));
+        Assert.Equal(4, pagina.Total);
+        Assert.All(pagina.Itens, p => Assert.Equal("PARTIDO-B", p.Partido));
     }
 
+    /// <summary>
+    /// As opções dos filtros saem da lista inteira. Montadas a partir do resultado,
+    /// escolher um partido esvaziava a lista de estados.
+    /// </summary>
     [SkippableFact]
-    public async Task Lista_BuscaPorNomeIgnoraCaixa()
+    public async Task Lista_OpcoesDosFiltrosNaoDependemDoFiltro()
     {
         ExigeDocker();
         await SemearAsync();
-        using var cliente = CriarCliente();
 
-        var lista = await cliente.GetFromJsonAsync<List<ParlamentarJson>>($"{Rota}?nome=ana");
+        var pagina = await ListarAsync($"{Rota}?partido=PARTIDO-B&tamanho=1");
 
-        Assert.NotNull(lista);
-        Assert.Contains(lista!, p => p.Nome.Contains("Ana"));
+        Assert.Equal(["PARTIDO-A", "PARTIDO-B", "PARTIDO-C"], pagina.Partidos);
+        Assert.Equal(["BA", "MG", "RS", "SP"], pagina.Ufs);
+    }
+
+    [SkippableFact]
+    public async Task Lista_BuscaPorNomeIgnoraCaixaEAcento()
+    {
+        ExigeDocker();
+        await SemearAsync();
+
+        var pagina = await ListarAsync($"{Rota}?nome=fabio");
+
+        Assert.Equal("Fábio Lins", Assert.Single(pagina.Itens).Nome);
     }
 
     [SkippableFact]
@@ -576,6 +622,16 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     }
 
     private record ParlamentarJson(long Id, string Nome, string Partido, string Uf, int NVotacoes);
+
+    private record PaginaJson(
+        List<ParlamentarJson> Itens, int Pagina, int Tamanho, int Total,
+        List<string> Partidos, List<string> Ufs);
+
+    private async Task<PaginaJson> ListarAsync(string rota)
+    {
+        using var cliente = CriarCliente();
+        return (await cliente.GetFromJsonAsync<PaginaJson>(rota))!;
+    }
     private record SimilarJson(long PessoaId, string Nome, string Partido, float Valor, int Comuns);
     private record FichaJson(
         long Id, string Nome, string NomeCivil, string Partido, string Uf, int NVotacoes,

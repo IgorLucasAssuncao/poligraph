@@ -1,8 +1,18 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Explorar } from './Explorar';
-import type { Parlamentar } from '../api';
+import type { PaginaDeParlamentares, Parlamentar } from '../api';
+
+vi.mock('../sessao', () => ({
+  useSessao: () => ({
+    usuario: { nome: 'Pessoa de Teste', email: 'teste@exemplo.com', fotoUrl: null },
+    carregando: false,
+    leituraPublica: false,
+    entrou: () => {},
+    sair: async () => {},
+  }),
+}));
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -21,6 +31,13 @@ function parlamentar(
   return { id, nome, casa, partido: 'PARTIDO-A', uf: 'SP', nVotacoes, urlFoto: null };
 }
 
+function pagina(itens: Parlamentar[], total = itens.length, numero = 1): PaginaDeParlamentares {
+  return {
+    itens, pagina: numero, tamanho: 30, total,
+    partidos: ['PARTIDO-A', 'PARTIDO-B'], ufs: ['BA', 'SP'],
+  };
+}
+
 /**
  * 🔴 A lista mistura as duas casas — 87 deputados e 13 senadores na primeira página do
  * banco real —, e os números **não são comparáveis entre elas**.
@@ -36,10 +53,9 @@ function parlamentar(
 describe('Explorar mistura as casas e precisa dizer qual é qual', () => {
   beforeEach(() => {
     vi.mocked(api.listarSeguidos).mockResolvedValue([]);
-    vi.mocked(api.listarParlamentares).mockResolvedValue([
-      parlamentar(1, 'Ana Ribeiro', 'CAMARA', 845),
-      parlamentar(2, 'Bruno Tavares', 'SENADO', 140),
-    ]);
+    vi.mocked(api.listarParlamentares).mockResolvedValue(
+      pagina([parlamentar(1, 'Ana Ribeiro', 'CAMARA', 845), parlamentar(2, 'Bruno Tavares', 'SENADO', 140)]),
+    );
   });
 
   function renderizar() {
@@ -68,5 +84,48 @@ describe('Explorar mistura as casas e precisa dizer qual é qual', () => {
 
     expect(campo.getAttribute('placeholder')).toMatch(/parlamentar/i);
     expect(campo.getAttribute('placeholder')).not.toMatch(/deputado/i);
+  });
+});
+
+describe('Explorar em páginas', () => {
+  beforeEach(() => {
+    vi.mocked(api.listarSeguidos).mockResolvedValue([]);
+  });
+
+  /** 🔴 A lista cortava em 100 sem avisar. Agora ela diz quantos são e busca o resto. */
+  it('diz o total e mostra mais quando pedido', async () => {
+    const primeiros = Array.from({ length: 30 }, (_, i) => parlamentar(i + 1, `Nome ${i + 1}`, 'CAMARA', 800));
+    vi.mocked(api.listarParlamentares)
+      .mockResolvedValueOnce(pagina(primeiros, 32))
+      .mockResolvedValueOnce(pagina([parlamentar(31, 'Nome 31', 'CAMARA', 800), parlamentar(32, 'Nome 32', 'SENADO', 100)], 32, 2));
+
+    render(
+      <MemoryRouter>
+        <Explorar />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('30 de 32 parlamentares')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar mais 2' }));
+
+    expect(await screen.findByText('Nome 32')).toBeInTheDocument();
+    expect(screen.getByText('32 parlamentares')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Mostrar mais/ })).toBeNull();
+    expect(vi.mocked(api.listarParlamentares).mock.lastCall?.[0]).toMatchObject({ pagina: 2 });
+  });
+
+  /** ⚠️ As opções vêm da API, da lista inteira — ⛔ do que está na tela. */
+  it('os filtros oferecem todos os partidos, mesmo com um só na tela', async () => {
+    vi.mocked(api.listarParlamentares).mockResolvedValue(pagina([parlamentar(1, 'Ana Ribeiro', 'CAMARA', 845)]));
+
+    render(
+      <MemoryRouter>
+        <Explorar />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText('Ana Ribeiro');
+    expect(screen.getByRole('option', { name: 'PARTIDO-B' })).toBeInTheDocument();
   });
 });

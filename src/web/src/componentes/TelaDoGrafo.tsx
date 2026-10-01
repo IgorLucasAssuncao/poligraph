@@ -8,12 +8,14 @@ import {
   distanciaAoSegmento,
   enquadrar,
   paraMundo,
+  pinca,
   paraTela,
   type Camera,
   type Tamanho,
 } from './grafo/camera';
 import { DENSIDADE, desenhar, raioNaTela, type Quadro } from './grafo/desenho';
 import { rotulosDoEixo } from './grafo/legenda';
+import { aoMudarTema } from '../tema';
 
 export type PosicaoDoCidadao = {
   eixoX: number;
@@ -120,6 +122,14 @@ export function TelaDoGrafo({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const arrastando = useRef<{ x: number; y: number } | null>(null);
   const arrastandoNo = useRef<NoDoGrafo | null>(null);
+
+  /**
+   * Os ponteiros na tela, por id — mouse, caneta ou dedo.
+   *
+   * ⚠️ O grafo tratava só mouse: no celular, arrastar e pinçar ⛔ faziam nada, e tocar num
+   * ponto ⛔ o selecionava, porque a seleção dependia de passar o mouse por cima.
+   */
+  const ponteiros = useRef(new Map<number, { x: number; y: number }>());
 
   /**
    * ⚠️ Deslocamentos manuais de nó, em coordenada do LAYOUT.
@@ -310,6 +320,10 @@ export function TelaDoGrafo({
     desenhar(ctx, canvas, quadro);
   }, [quadro, tamanho, revisao]);
 
+  // O canvas não tem seletor de CSS: sem isto, trocar o tema deixava o grafo com as cores
+  // do tema anterior até o próximo movimento.
+  useEffect(() => aoMudarTema(repintar), [repintar]);
+
   // ⚠️ `passive: false` é obrigatório: sem isto o navegador ignora o
   //    `preventDefault` e a página inteira rola junto com o zoom.
   useEffect(() => {
@@ -407,7 +421,7 @@ export function TelaDoGrafo({
 
   return (
     <div className="grafo">
-      <div className="grafo-tela">
+      <div className="grafo-tela" data-tour="grafo-desenho">
         <canvas
           ref={canvasRef}
           width={tamanho.largura * DENSIDADE}
@@ -416,17 +430,16 @@ export function TelaDoGrafo({
             width: '100%',
             height: tamanho.altura,
             cursor: arrastando.current ? 'grabbing' : alvo ? 'pointer' : 'grab',
+            /* O gesto no desenho é do grafo: sem isto o navegador rolaria e aproximaria
+               a página inteira junto com a pinça. */
+            touchAction: 'none',
           }}
-          onMouseMove={aoMover}
-          onMouseDown={(e) => {
-            const caixa = e.currentTarget.getBoundingClientRect();
-
-            // ⭐ Sobre um nó, arrasta o NÓ; no vazio, arrasta o plano.
-            if (alvo?.tipo === 'no') arrastandoNo.current = alvo.no;
-            arrastando.current = { x: e.clientX - caixa.left, y: e.clientY - caixa.top };
-          }}
-          onMouseUp={soltar}
-          onMouseLeave={() => {
+          onPointerMove={aoMoverPonteiro}
+          onPointerDown={aoApertar}
+          onPointerUp={aoLevantar}
+          onPointerCancel={aoLevantar}
+          onPointerLeave={(e) => {
+            if (e.pointerType !== 'mouse') return;
             soltar();
             setAlvo(null);
           }}
@@ -447,7 +460,7 @@ export function TelaDoGrafo({
         {alvo && <Dica alvo={alvo} porId={porId} tamanho={tamanho} camera={camera} />}
 
         {/* ⭐ Os controles moram sobre o desenho, junto do que eles controlam. */}
-        <div className="grafo-zoom">
+        <div className="grafo-zoom" data-tour="grafo-zoom">
           <button
             type="button"
             onClick={() => setCamera((c) => comEscala(c, c.escala * 1.6, tamanho.largura / 2, tamanho.altura / 2))}
@@ -498,7 +511,7 @@ export function TelaDoGrafo({
             aoEscolher={irPara}
           />
 
-          <div className="grafo-ajustes">
+          <div className="grafo-ajustes" data-tour="grafo-ajustes">
             <button
               type="button"
               className={`grafo-ferramenta ${ajustesAbertos ? 'ativo' : ''}`}
@@ -658,6 +671,64 @@ export function TelaDoGrafo({
     arrastandoNo.current = null;
   }
 
+  function posicaoNoDesenho(e: React.PointerEvent<HTMLCanvasElement>) {
+    const caixa = e.currentTarget.getBoundingClientRect();
+    return { x: e.clientX - caixa.left, y: e.clientY - caixa.top };
+  }
+
+  /**
+   * Um ponteiro desce: com um, arrasta o ponto sob ele ou o plano; com dois, começa a pinça.
+   *
+   * ⭐ No toque ⛔ há "passar por cima", então o alvo é calculado aqui, no toque: é o que
+   * faz tocar num ponto selecioná-lo.
+   */
+  function aoApertar(e: React.PointerEvent<HTMLCanvasElement>) {
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    const ponto = posicaoNoDesenho(e);
+    ponteiros.current.set(e.pointerId, ponto);
+
+    const sob = e.pointerType === 'mouse' ? alvo : alvoSob(quadro, ponto.x, ponto.y, tamanho);
+    if (e.pointerType !== 'mouse') setAlvo(sob);
+
+    if (ponteiros.current.size === 1) {
+      // Sobre um nó, arrasta o NÓ; no vazio, arrasta o plano.
+      arrastandoNo.current = sob?.tipo === 'no' ? sob.no : null;
+      arrastando.current = ponto;
+    } else {
+      soltar();
+    }
+  }
+
+  function aoMoverPonteiro(e: React.PointerEvent<HTMLCanvasElement>) {
+    const anterior = ponteiros.current.get(e.pointerId);
+
+    if (anterior && ponteiros.current.size >= 2) {
+      const [a, b] = [...ponteiros.current.entries()];
+      const depois = posicaoNoDesenho(e);
+      const antes: [{ x: number; y: number }, { x: number; y: number }] = [a[1], b[1]];
+      ponteiros.current.set(e.pointerId, depois);
+      const agora = [...ponteiros.current.values()] as [{ x: number; y: number }, { x: number; y: number }];
+      setCamera((c) => pinca(c, antes, agora));
+      return;
+    }
+
+    if (anterior) ponteiros.current.set(e.pointerId, posicaoNoDesenho(e));
+    aoMover(e);
+  }
+
+  /** Um ponteiro sobe: o que resta continua o arrasto de onde está, sem saltar. */
+  function aoLevantar(e: React.PointerEvent<HTMLCanvasElement>) {
+    ponteiros.current.delete(e.pointerId);
+
+    const [restante] = [...ponteiros.current.values()];
+    if (restante) {
+      arrastandoNo.current = null;
+      arrastando.current = restante;
+    } else {
+      soltar();
+    }
+  }
+
   /**
    * Leva a câmera até o nó e o deixa destacado.
    *
@@ -720,6 +791,7 @@ function Busca({
       <button
         type="button"
         className="grafo-ferramenta"
+        data-tour="grafo-busca"
         aria-label="Procurar parlamentar no grafo"
         title="Procurar parlamentar"
         onClick={() => setAberta(true)}
@@ -730,7 +802,7 @@ function Busca({
   }
 
   return (
-    <div className="grafo-busca">
+    <div className="grafo-busca" data-tour="grafo-busca">
       <IconeLupa />
       <input
         ref={campo}

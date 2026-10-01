@@ -58,5 +58,5 @@ function corDe(nome: string): string {
   for (let i = 0; i < nome.length; i++) hash = nome.charCodeAt(i) + ((hash << 5) - hash);
 
   const matiz = Math.abs(hash) % 360;
-  return `hsl(${matiz} 22% 45%)`;
+  return `hsl(${matiz} 22% 38%)`;
 }

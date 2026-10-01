@@ -3,8 +3,13 @@ import { Link } from 'react-router-dom';
 import { listarParlamentares, listarSeguidos, type Parlamentar } from '../api';
 import { Avatar } from './Avatar';
 import { BotaoSeguir } from './BotaoSeguir';
+import { useSessao } from '../sessao';
 
-const QUANTOS = 3;
+/**
+ * ⚠️ Eram 3, escolhidos entre os 100 primeiros em ordem alfabética — a lista da API
+ * cortava ali, e o "mais ativo" era o mais ativo entre esses 100 nomes.
+ */
+const QUANTOS = 8;
 
 /**
  * "Quem seguir" — o cartão lateral.
@@ -16,23 +21,28 @@ const QUANTOS = 3;
  * parlamentares por critério nosso, contrariando a RNF-16.
  */
 export function SugestoesParaSeguir() {
+  const { usuario } = useSessao();
   const [sugestoes, setSugestoes] = useState<Parlamentar[]>([]);
   const [seguidos, setSeguidos] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    Promise.all([listarParlamentares(), listarSeguidos()])
-      .then(([todos, jaSeguidos]) => {
+    // Sem conta não há o que seguir, e a lista de seguidos responderia 401.
+    if (!usuario) return;
+
+    // ⭐ A ordem é feita no servidor, e só vem o que a tela mostra — mais os que a
+    //    pessoa já segue, que saem daqui. Antes vinha a lista inteira para usar 3.
+    listarSeguidos()
+      .then(async (jaSeguidos) => {
         const ids = new Set(jaSeguidos.map((p) => p.id));
+        const pagina = await listarParlamentares({
+          ordem: 'VOTACOES',
+          tamanho: QUANTOS + ids.size,
+        });
         setSeguidos(ids);
-        setSugestoes(
-          todos
-            .filter((p) => !ids.has(p.id))
-            .sort((a, b) => b.nVotacoes - a.nVotacoes)
-            .slice(0, QUANTOS),
-        );
+        setSugestoes(pagina.itens.filter((p) => !ids.has(p.id)).slice(0, QUANTOS));
       })
       .catch(() => setSugestoes([]));
-  }, []);
+  }, [usuario]);
 
   if (sugestoes.length === 0) return null;
 
@@ -72,7 +82,7 @@ export function SugestoesParaSeguir() {
       {/* ⭐ O critério fica à vista: ordem por dado disponível, não por juízo nosso. */}
       <p className="criterio">Ordenado por número de votações registradas.</p>
 
-      <Link to="/explorar" className="ver-mais">
+      <Link to="/parlamentares" className="ver-mais">
         Ver todos
       </Link>
     </section>

@@ -13,18 +13,21 @@ import os
 import sys
 import time
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 import numpy as np
 import psycopg
+import requests
 
 from . import conexao as conexao_mod
 from . import (
-    comparacao, cota, curadoria, emendas, grafo, ingestao, ingestao_senado,
-    noticias, normalizacao, orientacoes, persistencia, proposicoes, receitas,
-    similaridade, validacao,
+    arrecadacao, comparacao, cota, curadoria, emendas, gestao, grafo, ingestao,
+    ingestao_senado, municipios, noticias, normalizacao, orcamento, orientacoes,
+    persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
-from .fontes import camara, rss, senado, tse
+from .fontes import camara, portal, receita, rss, senado, tse
+from . import convenentes, patrimonio, redes
 
 log = logging.getLogger("poligraph")
 
@@ -63,6 +66,16 @@ def main(argv: list[str] | None = None) -> int:
                     _resolver_a_mao(conexao, args.resolver)
                 else:
                     _emendas(conexao, args.anos)
+            elif args.comando == "governo":
+                _governo(conexao, args.anos, args.eleicao)
+            elif args.comando == "convenios":
+                _convenios(conexao)
+            elif args.comando == "patrimonio":
+                _patrimonio(conexao, args.anos)
+            elif args.comando == "redes":
+                _redes(conexao, args.anos)
+            elif args.comando == "municipios":
+                _municipios(conexao, args.diretorio)
             elif args.comando == "cpf":
                 _cpf(conexao)
             elif args.comando == "cota":
@@ -107,7 +120,35 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
 
     sub.add_parser("cpf", help="completa o cpf_hash das duas casas (Câmara: API; Senado: TSE)")
 
-    emd = sub.add_parser("emendas", help="ingere emendas parlamentares (Portal)")
+    sub.add_parser(
+        "convenios",
+        help="completa CNPJ do convenente, situação e liberado dos convênios de emenda (Portal)",
+    )
+    pat = sub.add_parser("patrimonio", help="bens declarados ao TSE, por tipo — ⛔ a descrição")
+    pat.add_argument("--anos", type=int, nargs="+", default=[2018, 2022])
+    red = sub.add_parser("redes", help="redes sociais: Câmara para deputados, TSE para senadores")
+    red.add_argument("--anos", type=int, nargs="+", default=[2018, 2022],
+                     help="eleições do TSE para os senadores; vale a mais recente de cada um")
+
+    mun = sub.add_parser(
+        "municipios",
+        help="liga quem recebeu emenda à cidade da sede, por CNPJ → TOM → IBGE (Receita)",
+    )
+    # ⚠️ ~6 GB por mês. Uma pasta já baixada evita rebaixar o cadastro inteiro.
+    mun.add_argument("--diretorio", type=Path, default=None,
+                     help="pasta com Estabelecimentos0..9.zip já baixados")
+
+    gov = sub.add_parser(
+        "governo",
+        help="ingere quem governa (TSE), o orçamento, o pago e a arrecadação (Portal)",
+    )
+    gov.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
+    # ⚠️ Ano da ELEIÇÃO presidencial, ⛔ do mandato: 2022 elegeu a gestão 2023–2026.
+    gov.add_argument("--eleicao", type=int, default=2022)
+
+    emd = sub.add_parser(
+        "emendas", help="ingere emendas, favorecidos e convênios (Portal)"
+    )
     emd.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
     # A porta da reconciliação MANUAL: sem ela os autores ambíguos ficam sem saída,
     # porque ambiguidade ⛔ não pode virar palpite automático.
@@ -393,7 +434,8 @@ def _analisar(conexao: psycopg.Connection, legislatura: int, casa: str) -> None:
         return
 
     execucao_id = persistencia.abrir_execucao(
-        conexao, casa, legislatura, similaridade.K_VIZINHOS, "v1"
+        conexao, casa, legislatura, similaridade.K_VIZINHOS, "v1",
+        similaridade.parametros(),
     )
     try:
         for metrica in ("CONCORDANCIA", "COSSENO"):
@@ -522,25 +564,287 @@ def _emendas(conexao: psycopg.Connection, anos: list[int]) -> None:
 
     ⭐ O casamento por nome roda **uma vez**, como SUGESTÃO (`AUTOMATICO`). Depois disso
     o vínculo vive no código, e a grafia deixa de importar.
+
+    ⚠️ O arquivo é regerado todo dia, então o cache leva a data: o de ontem ⛔ serve.
+    E emendas, favorecidos e convênios trocam **juntos**, numa transação — uma falha no
+    meio deixaria a ficha com o favorecido de hoje e a emenda de ontem.
     """
-    todas: list[dict] = []
-    autores: dict[str, str] = {}
+    arquivo = portal.baixar(
+        emendas.RECURSO, CACHE / f"emendas-{date.today():%Y%m%d}.zip"
+    )
 
-    for ano in anos:
-        log.info("Emendas de %d...", ano)
-        brutas = emendas.baixar_ano(ano)
+    linhas, autores = emendas.para_linhas(
+        portal.ler_csv(arquivo, emendas.ARQUIVO_EMENDAS), anos
+    )
+    codigos = {linha["codigo_emenda"] for linha in linhas}
+    log.info("  %d linhas, %d emendas, %d autores", len(linhas), len(codigos), len(autores))
 
-        linhas, do_ano = emendas.para_linhas(brutas)
-        todas.extend(linhas)
-        autores.update(do_ano)
+    favorecidos = emendas.favorecidos_para_linhas(
+        portal.ler_csv(arquivo, emendas.ARQUIVO_FAVORECIDOS), codigos
+    )
+    convenios, ligacoes = emendas.convenios_para_linhas(
+        portal.ler_csv(arquivo, emendas.ARQUIVO_CONVENIOS), codigos
+    )
 
-        log.info("  %d emendas, %d autores", len(linhas), len(do_ano))
+    with conexao.transaction():
+        gravadas = persistencia.gravar_emendas(conexao, anos, linhas)
+        persistencia.registrar_autores(conexao, autores)
+        persistencia.gravar_favorecidos(conexao, anos, favorecidos)
+        persistencia.gravar_convenios(conexao, anos, convenios, ligacoes)
 
-    gravadas = persistencia.gravar_emendas(conexao, anos, todas)
-    persistencia.registrar_autores(conexao, autores)
-    log.info("%d emendas gravadas, %d autores conhecidos", gravadas, len(autores))
+    log.info(
+        "%d linhas de emenda, %d pagamentos a favorecidos, %d convênios (%d ligações)",
+        gravadas, len(favorecidos), len(convenios), len(ligacoes),
+    )
 
     _reconciliar_autores(conexao)
+
+
+def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None:
+    """O perfil do governo federal: quem governa, quanto gastou e de onde veio o dinheiro.
+
+    É **contexto** da legislatura, ⛔ medida de afinidade, e ⛔ liga a parlamentar.
+
+    ⚠️ Os arquivos do ano corrente mudam todo dia; os dos anos fechados, ⛔. O cache
+    leva a data nos do ano corrente e ⛔ nos fechados — os meses de execução são 48
+    arquivos de ~10 MB, e rebaixá-los todo dia seria meio gigabyte por nada.
+    """
+    zip_tse = tse.baixar(
+        f"{tse.CDN}/{gestao.RECURSO.format(eleicao=eleicao)}",
+        CACHE / f"consulta-cand-{eleicao}.zip",
+    )
+    gestao_eleita = gestao.eleitos(gestao.ler(zip_tse, eleicao))
+    log.info("  gestão %d–%d: %s (%s) e %s (%s)",
+             gestao_eleita["primeiro_ano"], gestao_eleita["ultimo_ano"],
+             gestao_eleita["presidente_nome_de_urna"], gestao_eleita["presidente_partido"],
+             gestao_eleita["vice_nome_de_urna"], gestao_eleita["vice_partido"])
+
+    funcoes: list[dict] = []
+    encargos: list[dict] = []
+    receitas_do_periodo: list[dict] = []
+    sigilosos: list[dict] = []
+
+    for ano in anos:
+        sufixo = f"-{date.today():%Y%m%d}" if ano >= date.today().year else ""
+
+        arquivo = portal.baixar(
+            orcamento.RECURSO.format(ano=ano), CACHE / f"orcamento-{ano}{sufixo}.zip"
+        )
+        membro = orcamento.arquivo(ano)
+        tabela = portal.ler_csv(arquivo, membro)
+        do_ano = orcamento.para_linhas(tabela, portal.gerado_em(arquivo, membro))
+        encargos_do_ano = orcamento.encargos_para_linhas(tabela)
+
+        restos = _restos_a_pagar_do_ano(ano)
+        for linha in do_ano:
+            linha["restos_a_pagar_pagos"] = round(restos["por_funcao"].get(linha["codigo_funcao"], 0.0), 2)
+        for linha in encargos_do_ano:
+            linha["restos_a_pagar_pagos"] = round(restos["por_subfuncao"].get(linha["codigo_subfuncao"], 0.0), 2)
+
+        pago_anual = sum(linha["pago"] for linha in do_ano)
+        if restos["meses"] == 12 and abs(restos["pago"] - pago_anual) > 1e9:
+            log.warning("  %d: pago mensal R$ %.1f bi ≠ anual R$ %.1f bi — os arquivos divergem",
+                        ano, restos["pago"] / 1e9, pago_anual / 1e9)
+
+        log.info("  %d: %d funções; restos a pagar pagos R$ %.1f bi (%d meses)",
+                 ano, len(do_ano), sum(restos["por_funcao"].values()) / 1e9, restos["meses"])
+
+        cartao, meses_do_cartao = _cartao_do_ano(ano)
+        do_sigilo = sigilo.para_linhas(ano, cartao, meses_do_cartao, restos["sigilosas"], restos["meses"])
+        log.info("  %d: cartão sigiloso R$ %.1f mi (%d meses); ação sigilosa R$ %.1f mi", ano,
+                 sum(l["sigiloso"] for l in do_sigilo if l["origem"] == "CARTAO_CORPORATIVO") / 1e6,
+                 meses_do_cartao,
+                 sum(l["sigiloso"] for l in do_sigilo if l["origem"] == "ACAO_SIGILOSA") / 1e6)
+        sigilosos.extend(do_sigilo)
+        funcoes.extend(do_ano)
+        encargos.extend(encargos_do_ano)
+
+        arquivo_receita = portal.baixar(
+            arrecadacao.RECURSO.format(ano=ano), CACHE / f"receitas-{ano}{sufixo}.zip"
+        )
+        membro_receita = arrecadacao.arquivo(ano)
+        receitas_do_periodo.extend(arrecadacao.para_linhas(
+            portal.ler_csv(arquivo_receita, membro_receita),
+            portal.gerado_em(arquivo_receita, membro_receita),
+        ))
+
+    with conexao.transaction():
+        persistencia.gravar_gestao(conexao, gestao_eleita)
+        persistencia.gravar_orcamento(conexao, anos, funcoes)
+        persistencia.gravar_encargos(conexao, anos, encargos)
+        persistencia.gravar_arrecadacao(conexao, anos, receitas_do_periodo)
+        persistencia.gravar_sigilosos(conexao, anos, sigilosos)
+
+
+def _convenios(conexao: psycopg.Connection) -> None:
+    """O CNPJ de quem assinou cada convênio de emenda — rode depois de `emendas`."""
+    numeros = persistencia.numeros_de_convenio(conexao)
+    if not numeros:
+        log.warning("Nenhum convênio no banco — rode `emendas` antes.")
+        return
+
+    data = convenentes.ultimo_retrato()
+    arquivo = portal.baixar(convenentes.RECURSO.format(data=data), CACHE / f"convenios-{data}.zip")
+    linhas = convenentes.ler(arquivo, numeros)
+    log.info("  retrato de %s: %d de %d convênios achados, %d com CNPJ", data, len(linhas), len(numeros),
+             sum(1 for linha in linhas if linha["cnpj_convenente"]))
+
+    with conexao.transaction():
+        persistencia.gravar_convenentes(conexao, linhas)
+
+
+def _patrimonio(conexao: psycopg.Connection, anos: list[int]) -> None:
+    """Bens declarados ao TSE, por tipo. Rode depois de `cpf`: a ponte é o `cpf_hash`."""
+    hashes = persistencia.hashes_de_pessoas(conexao)
+    todas: list[dict] = []
+    for ano in anos:
+        candidatos = tse.baixar(f"{tse.CDN}/{patrimonio.RECURSO_CANDIDATOS.format(ano=ano)}",
+                                CACHE / f"consulta-cand-{ano}.zip")
+        ligadas = patrimonio.candidaturas(candidatos, hashes)
+        bens = tse.baixar(f"{tse.CDN}/{patrimonio.RECURSO_BENS.format(ano=ano)}", CACHE / f"bem-candidato-{ano}.zip")
+        linhas = patrimonio.bens_para_linhas(patrimonio.linhas_do_zip(bens), ligadas, ano)
+        log.info("  %d: %d candidaturas ligadas, %d pessoas com bem declarado", ano, len(ligadas),
+                 len({linha["pessoa_id"] for linha in linhas}))
+        todas.extend(linhas)
+
+    with conexao.transaction():
+        persistencia.gravar_patrimonios(conexao, anos, todas)
+
+
+def _redes(conexao: psycopg.Connection, anos: list[int]) -> None:
+    """Redes sociais: a Câmara para deputados, o TSE (candidatura) para senadores."""
+    consultados: list[int] = []
+    da_camara: list[dict] = []
+    for i, (id_camara, pessoa_id) in enumerate(persistencia.deputados_da_legislatura(conexao), 1):
+        urls = camara.redes_do_deputado(id_camara)
+        if urls is not None:
+            consultados.append(pessoa_id)
+            da_camara.extend(redes.para_linhas(pessoa_id, urls, "CAMARA"))
+        if i % 100 == 0:
+            log.info("  %d deputados consultados", i)
+        time.sleep(0.05)
+    log.info("  Câmara: %d deputados, %d redes", len(consultados), len(da_camara))
+
+    # O TSE da eleição MAIS RECENTE de cada senador: por isso os anos vão do último ao primeiro.
+    senadores = persistencia.senadores_da_legislatura(conexao)
+    hashes = {h: p for h, p in persistencia.hashes_de_pessoas(conexao).items() if p in senadores}
+    do_tse: dict[int, list[dict]] = {}
+    for ano in sorted(anos, reverse=True):
+        candidatos = tse.baixar(f"{tse.CDN}/{patrimonio.RECURSO_CANDIDATOS.format(ano=ano)}",
+                                CACHE / f"consulta-cand-{ano}.zip")
+        ligadas = patrimonio.candidaturas(candidatos, hashes, {"5"})
+        arquivo = tse.baixar(f"{tse.CDN}/{redes.RECURSO_TSE.format(ano=ano)}", CACHE / f"rede-social-{ano}.zip")
+        por_pessoa: dict[int, list[str]] = {}
+        for linha in patrimonio.linhas_do_zip(arquivo):
+            pessoa = ligadas.get(linha.get("SQ_CANDIDATO"))
+            if pessoa is not None and pessoa not in do_tse:
+                por_pessoa.setdefault(pessoa, []).append(redes.url_da_linha(linha))
+        for pessoa, urls in por_pessoa.items():
+            do_tse[pessoa] = redes.para_linhas(pessoa, urls, "TSE")
+    log.info("  TSE: %d senadores com rede", len(do_tse))
+
+    with conexao.transaction():
+        persistencia.gravar_redes(conexao, consultados, da_camara, "CAMARA")
+        persistencia.gravar_redes(conexao, list(senadores), [l for ls in do_tse.values() for l in ls], "TSE")
+
+
+def _municipios(conexao: psycopg.Connection, diretorio: Path | None) -> None:
+    """A cidade da sede de cada CNPJ que recebeu emenda — só por chave forte.
+
+    ⚠️ Rode depois de `emendas`: os CNPJs procurados são os que estão em
+    `emendas_favorecidos`. Sem eles, o cadastro inteiro é lido para gravar nada.
+    """
+    tabela = receita.ler_tabela_tom(receita.baixar_tabela_tom(CACHE / "receita-municipios.csv"))
+    linhas_municipios = municipios.municipios_para_linhas(tabela)
+    tom_para_ibge = {m["codigo_tom"]: m["codigo_ibge"] for m in linhas_municipios}
+    log.info("  %d municípios na tabela TOM ↔ IBGE", len(linhas_municipios))
+
+    alvos = persistencia.cnpjs_que_receberam_emenda(conexao)
+    if not alvos:
+        log.warning("Nenhum CNPJ em emendas_favorecidos — rode `emendas` antes.")
+        return
+
+    pasta = receita.ultima_pasta()
+    if diretorio:
+        arquivos = [diretorio / nome for nome in receita.ARQUIVOS_DE_ESTABELECIMENTOS]
+    else:
+        arquivos = [
+            receita.baixar(pasta, nome, CACHE / "receita" / pasta / nome)
+            for nome in receita.ARQUIVOS_DE_ESTABELECIMENTOS
+        ]
+
+    sedes = municipios.sedes_para_linhas(receita.sedes(arquivos, alvos), tom_para_ibge, pasta)
+    log.info("  %d de %d CNPJs com município IBGE", len(sedes), len(alvos))
+
+    with conexao.transaction():
+        persistencia.gravar_municipios(conexao, linhas_municipios)
+        persistencia.gravar_cnpjs_municipio(conexao, sedes)
+
+
+def _restos_a_pagar_do_ano(ano: int) -> dict:
+    """Soma os arquivos mensais de execução do ano.
+
+    ⚠️ No ano corrente, o mês que o Portal ainda ⛔ publicou devolve erro: a soma para no
+    último publicado, e `meses` diz até onde foi.
+    """
+    hoje = date.today()
+    meses: list[dict] = []
+    sigilosas: list[dict] = []
+
+    for mes in range(1, 13):
+        if (ano, mes) > (hoje.year, hoje.month):
+            break
+
+        sufixo = f"-{hoje:%Y%m%d}" if (ano, mes) >= (hoje.year, hoje.month - 1) else ""
+        try:
+            arquivo = portal.baixar(
+                orcamento.EXECUCAO.format(ano=ano, mes=mes),
+                CACHE / f"execucao-{ano}{mes:02d}{sufixo}.zip",
+            )
+        except requests.HTTPError as erro:
+            # 🔴 Só 403 e 404 querem dizer "ainda ⛔ publicado". O 405 que sobra depois
+            #    das tentativas é limite de taxa: tratá-lo como fim do ano gravaria 4
+            #    meses como se fossem o ano até agora — aconteceu na primeira carga.
+            if erro.response is None or erro.response.status_code not in (403, 404):
+                raise
+            log.info("  %d/%02d ainda não publicado — a soma do ano para aqui", ano, mes)
+            break
+
+        tabela = portal.ler_csv(
+            arquivo, orcamento.arquivo_de_execucao(ano, mes),
+            colunas=orcamento.COLUNAS_DE_EXECUCAO + sigilo.COLUNAS_DA_ACAO,
+        )
+        meses.append(orcamento.restos_a_pagar_do_mes(tabela))
+        sigilosas.append(sigilo.acoes_do_mes(tabela))
+
+    return {**orcamento.somar_meses(meses), "meses": len(meses), "sigilosas": sigilo.somar_acoes(sigilosas)}
+
+
+def _cartao_do_ano(ano: int) -> tuple[dict[str, dict], int]:
+    """Soma os extratos mensais do cartão corporativo. Mesma regra de parada da execução."""
+    hoje = date.today()
+    meses: list[dict] = []
+
+    for mes in range(1, 13):
+        if (ano, mes) > (hoje.year, hoje.month):
+            break
+
+        sufixo = f"-{hoje:%Y%m%d}" if (ano, mes) >= (hoje.year, hoje.month - 1) else ""
+        try:
+            arquivo = portal.baixar(
+                sigilo.RECURSO_DO_CARTAO.format(ano=ano, mes=mes), CACHE / f"cpgf-{ano}{mes:02d}{sufixo}.zip"
+            )
+        except requests.HTTPError as erro:
+            if erro.response is None or erro.response.status_code not in (403, 404):
+                raise
+            log.info("  cartão %d/%02d ainda não publicado — a soma do ano para aqui", ano, mes)
+            break
+
+        meses.append(sigilo.cartao_do_mes(portal.ler_csv(
+            arquivo, sigilo.arquivo_do_cartao(ano, mes), colunas=sigilo.COLUNAS_DO_CARTAO,
+        )))
+
+    return sigilo.somar_cartao(meses), len(meses)
 
 
 def _reconciliar_autores(conexao: psycopg.Connection) -> None:

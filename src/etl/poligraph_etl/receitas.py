@@ -49,6 +49,7 @@ from .normalizacao import (
     hash_de_cpf,
     normalizar_cpf,
     sem_acento_maiusculo,
+    sem_cpf,
     valor_pt_br,
 )
 
@@ -201,7 +202,7 @@ def para_linhas(
                 "fonte_receita": _texto(registro.get("DS_FONTE_RECEITA")).upper()
                 or "NAO INFORMADA",
                 "origem_receita": _texto(registro.get("DS_ORIGEM_RECEITA")) or None,
-                "doador": _texto(registro.get("NM_DOADOR")) or None,
+                "doador": sem_cpf(_texto(registro.get("NM_DOADOR")) or None),
                 "doador_cnpj_ou_hash": documento,
                 "doador_eh_pessoa_fisica": pessoa_fisica,
                 "valor": valor,

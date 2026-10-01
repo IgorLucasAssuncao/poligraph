@@ -386,3 +386,32 @@ def test_senador_ja_trazido_pela_lista_nao_e_recriado_pelo_voto():
 
     assert ingestao_senado.senadores_dos_votos(votacoes, ja_conhecidos={"5540"}) == []
     assert len(ingestao_senado.senadores_dos_votos(votacoes)) == 1
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Presença — separada da posição
+# ═══════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.parametrize(
+    ("sigla", "presenca"),
+    [
+        ("Sim", "PRESENTE"),
+        ("Não", "PRESENTE"),
+        # Votação secreta e "presente, não registrou voto": presença sem posição.
+        ("Votou", "PRESENTE"),
+        ("P-NRV", "PRESENTE"),
+        ("Presidente (art. 51 RISF)", "PRESENTE"),
+        ("LS", "AUSENTE_JUSTIFICADO"),
+        ("MIS", "AUSENTE_JUSTIFICADO"),
+        ("AP", "AUSENTE_JUSTIFICADO"),
+        ("NCom", "AUSENTE"),
+        ("NA", None),
+        # ⚠️ Sigla nova ⛔ vira presença: inflaria o número sem erro.
+        ("XYZ", None),
+    ],
+)
+def test_presenca_pela_sigla(sigla, presenca):
+    from poligraph_etl.ingestao_senado import presenca_do_voto
+
+    assert presenca_do_voto(sigla) == presenca

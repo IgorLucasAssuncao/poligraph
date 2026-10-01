@@ -18,20 +18,21 @@ const base = {
   strokeLinejoin: 'round' as const,
 };
 
-export function IconeInicio({ className }: Props) {
-  return (
-    <svg {...base} className={className} aria-hidden="true">
-      <path d="M3 10.5 12 3l9 7.5" />
-      <path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5" />
-    </svg>
-  );
-}
-
 export function IconeExplorar({ className }: Props) {
   return (
     <svg {...base} className={className} aria-hidden="true">
       <circle cx="11" cy="11" r="7" />
       <path d="m20 20-3.5-3.5" />
+    </svg>
+  );
+}
+
+/** Colunas sobre uma linha de base: o orçamento por área. */
+export function IconeOrcamento({ className }: Props) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="M3 20h18" />
+      <path d="M6 20v-7M11 20V5M16 20v-10" />
     </svg>
   );
 }

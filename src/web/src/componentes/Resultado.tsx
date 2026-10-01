@@ -11,10 +11,16 @@ import {
 } from '../api';
 import { Avaliacao } from './Avaliacao';
 import { Avatar } from './Avatar';
+import { BotaoDoTour } from './BotaoDoTour';
 import { CabecalhoDaColuna } from './Layout';
 import { GrafoAmpliado } from './GrafoAmpliado';
 import { LinhaParlamentar } from './LinhaParlamentar';
 import { TelaDoGrafo } from './TelaDoGrafo';
+import { LinkDeFonte } from './LinkDeFonte';
+import { FONTES } from '../fontes';
+import { passosDoResultado } from '../tour';
+
+const PASSOS_DO_RESULTADO = passosDoResultado();
 
 /**
  * A tela de resultado.
@@ -44,9 +50,13 @@ export function Resultado({
   return (
     <>
       <CabecalhoDaColuna
-        titulo="Seu resultado"
+        titulo="Quem vota como você"
         subtitulo={`${resultado.totalPerguntasRespondidas} perguntas respondidas`}
       />
+
+      <div className="linha-do-tour">
+        <BotaoDoTour nome="resultado" passos={PASSOS_DO_RESULTADO} />
+      </div>
 
       <p className="ajuda ajuda-espacada">
         A comparação usa apenas as votações em que o parlamentar esteve presente e se
@@ -58,7 +68,7 @@ export function Resultado({
         <SecaoDaCasa key={casa.casa} casa={casa} textos={textos} />
       ))}
 
-      <p className="aviso" role="note">
+      <p className="aviso" role="note" data-tour="resultado-aviso">
         Esta é uma ferramenta acadêmica de comparação de votos.{' '}
         <strong>Não é recomendação de voto</strong>, e não representa o programa completo de
         nenhum parlamentar.
@@ -119,8 +129,29 @@ function SecaoDaCasa({
         />
       )}
 
+      {/* ⭐ A régua: "8 de 11" só diz se é muito ao lado do parlamentar do meio da lista.
+          Contagem com base, ⛔ percentual (RF-29). */}
+      <p className="escala-resultado">
+        Entre os <strong>{casa.escala.comparados}</strong> {nome.plural} comparados com você, o
+        do meio da lista votou como você em{' '}
+        <strong>
+          {casa.escala.medianoAcordos} de {casa.escala.medianoComparaveis}
+        </strong>
+        .
+      </p>
+
+      <p className="fonte-dado">
+        Fonte: registro nominal de votação da {NOME_DA_CASA[casa.casa].nome}. Cada pergunta
+        corresponde a uma votação em plenário.{' '}
+        <LinkDeFonte href={casa.casa === 'SENADO' ? FONTES.senado.url : FONTES.camara.url}>
+          Dados abertos da casa
+        </LinkDeFonte>
+        {' · '}
+        <Link to="/metodologia">Como calculamos</Link>
+      </p>
+
       {grafo && casa.posicaoNoGrafo && (
-        <div className="resultado-grafo">
+        <div className="resultado-grafo" data-tour="resultado-grafo">
           <h3 className="titulo-secao">Onde você caiu</h3>
 
           <TelaDoGrafo
@@ -161,7 +192,7 @@ function SecaoDaCasa({
 
       {casa.maisDistantes.length > 0 && (
         <>
-          <h3 className="titulo-secao">Mais distantes</h3>
+          <h3 className="titulo-secao" data-tour="resultado-distantes">Mais distantes</h3>
           {casa.maisDistantes.map((p) => (
             <LinhaAfim key={p.pessoaId} parlamentar={p} />
           ))}
@@ -275,7 +306,7 @@ function Destaque({
   respondidasNaCasa: number;
 }) {
   return (
-    <section className="destaque-resultado">
+    <section className="destaque-resultado" data-tour="resultado-destaque">
       <p className="rotulo-destaque">Quem mais votou como você</p>
 
       <Link to={`/parlamentar/${parlamentar.pessoaId}`} className="destaque-link">
@@ -288,10 +319,12 @@ function Destaque({
         </p>
       </Link>
 
+      {/* Nunca percentual: "13 de 13" mostra sobre quantas perguntas a conta foi feita. */}
       <p className="destaque-placar">
-        {/* 🔴 nunca percentual — ver o cabeçalho deste arquivo */}
-        Vocês concordaram em <strong>{parlamentar.acordos}</strong> de{' '}
-        <strong>{parlamentar.comparaveis}</strong> perguntas comparáveis
+        <span className="placar-numero">
+          {parlamentar.acordos} de {parlamentar.comparaveis}
+        </span>{' '}
+        <span className="placar-texto">perguntas comparáveis em que vocês votaram igual</span>
       </p>
 
       <DetalheDaConta

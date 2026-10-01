@@ -1,9 +1,15 @@
+import type { ReactNode } from 'react';
 import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom';
 import { BannerConsentimento } from './componentes/BannerConsentimento';
 import { Layout } from './componentes/Layout';
 import { Inicio } from './paginas/Inicio';
 import { Login } from './paginas/Login';
+import { Metodologia } from './paginas/Metodologia';
 import { MinhaConta } from './paginas/MinhaConta';
+import { Emendas } from './paginas/Emendas';
+import { Entidade } from './paginas/Entidade';
+import { Entidades } from './paginas/Entidades';
+import { Governo } from './paginas/Governo';
 import { Parlamentar } from './paginas/Parlamentar';
 import { Parlamentares } from './paginas/Parlamentares';
 import { PoliticaDePrivacidade } from './paginas/PoliticaDePrivacidade';
@@ -25,7 +31,7 @@ export default function App() {
 // ═══════════════════════════════════════════════════════════════════
 
 function Roteador() {
-  const { usuario, carregando } = useSessao();
+  const { usuario, carregando, leituraPublica } = useSessao();
 
   // ⚠️ Sem isto, a tela de login pisca antes de a sessão ser verificada — e quem já
   //    está logado vê o próprio site sugerir que não está.
@@ -37,8 +43,20 @@ function Roteador() {
   if (!usuario) {
     return (
       <Routes>
-        <Route path="/privacidade" element={<DocumentoPublico />} />
-        <Route path="*" element={<Login />} />
+        <Route path="/privacidade" element={<DocumentoPublico><PoliticaDePrivacidade /></DocumentoPublico>} />
+        <Route path="/metodologia" element={<DocumentoPublico><Metodologia /></DocumentoPublico>} />
+        {/* ⭐ Com a leitura liberada, quem não entrou lê as páginas de dado público. O
+            questionário e a conta continuam pedindo login: um guarda respostas, a
+            outra é da pessoa. Desligado no período eleitoral (RNF-17). */}
+        {leituraPublica ? (
+          <>
+            <Route path="/resultado" element={<Login />} />
+            <Route path="/conta" element={<Login />} />
+            <Route path="*" element={<LeituraSemConta />} />
+          </>
+        ) : (
+          <Route path="*" element={<Login />} />
+        )}
       </Routes>
     );
   }
@@ -49,9 +67,16 @@ function Roteador() {
         <Route path="/" element={<Inicio />} />
         <Route path="/parlamentares" element={<Parlamentares />} />
         <Route path="/resultado" element={<Questionario />} />
-        <Route path="/parlamentar/:id" element={<Parlamentar />} />
+        <Route path="/parlamentar/:id/:aba?" element={<Parlamentar />} />
+        <Route path="/governo" element={<Governo />} />
+        <Route path="/emendas" element={<Emendas />} />
+        <Route path="/entidades" element={<Entidades />} />
+        <Route path="/entidades/:cnpj" element={<Entidade />} />
+        <Route path="/orcamento" element={<Navigate to="/governo" replace />} />
+        <Route path="/dinheiro" element={<Navigate to="/emendas" replace />} />
         <Route path="/conta" element={<MinhaConta />} />
         <Route path="/privacidade" element={<PoliticaDePrivacidade />} />
+        <Route path="/metodologia" element={<Metodologia />} />
 
         {/* ⚠️ Os endereços antigos continuam funcionando. Cinco destinos viraram três,
             e quem tiver um link salvo ⛔ não pode cair num 404 — nem ser mandado para a
@@ -70,8 +95,29 @@ function Roteador() {
   );
 }
 
-/** A política acessível sem login, com o mínimo de moldura. */
-function DocumentoPublico() {
+/** O site para quem não entrou, quando a leitura está liberada: só as páginas de dado público. */
+function LeituraSemConta() {
+  return (
+    <Layout>
+      <Routes>
+        <Route path="/" element={<Inicio />} />
+        <Route path="/parlamentares" element={<Parlamentares />} />
+        <Route path="/parlamentar/:id/:aba?" element={<Parlamentar />} />
+        <Route path="/governo" element={<Governo />} />
+        <Route path="/emendas" element={<Emendas />} />
+        <Route path="/entidades" element={<Entidades />} />
+        <Route path="/entidades/:cnpj" element={<Entidade />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Layout>
+  );
+}
+
+/**
+ * Página acessível sem login, com o mínimo de moldura: a política de privacidade e o
+ * "Como calculamos". Nenhuma das duas mostra dado de ninguém.
+ */
+function DocumentoPublico({ children }: { children: ReactNode }) {
   return (
     <div className="documento-publico">
       <header className="cabecalho-publico">
@@ -79,9 +125,7 @@ function DocumentoPublico() {
           Registro Aberto
         </Link>
       </header>
-      <main>
-        <PoliticaDePrivacidade />
-      </main>
+      <main>{children}</main>
     </div>
   );
 }

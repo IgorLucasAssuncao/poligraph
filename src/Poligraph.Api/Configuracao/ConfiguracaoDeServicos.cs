@@ -14,6 +14,7 @@ public static class ConfiguracaoDeServicos
             opcoes.SerializerOptions.Converters.Add(
                 new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
+        servicos.AddMemoryCache();
         servicos.AddScoped<IValidadorGoogle, ValidadorGoogle>();
         servicos.AddScoped<ServicoContas>();
         servicos.AddScoped<ServicoDigest>();
@@ -25,6 +26,12 @@ public static class ConfiguracaoDeServicos
         servicos.AddScoped<ServicoQuestionario>();
         servicos.AddScoped<ServicoGrafo>();
         servicos.AddScoped<ServicoPanorama>();
+        servicos.AddScoped<ServicoGoverno>();
+        servicos.AddScoped<ServicoMetodologia>();
+        servicos.AddScoped<ServicoAutoresDeEmenda>();
+        servicos.AddScoped<ServicoMapaDeEmendas>();
+        servicos.AddScoped<ServicoEntidades>();
+        servicos.AddScoped<ServicoBusca>();
 
         return servicos;
     }

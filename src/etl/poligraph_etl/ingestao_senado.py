@@ -70,6 +70,38 @@ _VOTOS = {
 # O presidente da sessão só vota em desempate — equivale ao "Artigo 17" da Câmara.
 _PREFIXO_PRESIDENTE = "presidente"
 
+# A presença de cada sigla — separada da POSIÇÃO de propósito: votar secreto ("Votou") e
+# estar presente sem votar ("P-NRV") são presença sem posição. Só o Senado publica a
+# justificativa da ausência; a Câmara ⛔ lista o ausente.
+_PRESENCA = {
+    "sim": "PRESENTE",
+    "não": "PRESENTE",
+    "nao": "PRESENTE",
+    "abstenção": "PRESENTE",
+    "abstencao": "PRESENTE",
+    "votou": "PRESENTE",
+    "p-nrv": "PRESENTE",
+    "ap": "AUSENTE_JUSTIFICADO",
+    "mis": "AUSENTE_JUSTIFICADO",
+    "ls": "AUSENTE_JUSTIFICADO",
+    "lp": "AUSENTE_JUSTIFICADO",
+    "lap": "AUSENTE_JUSTIFICADO",
+    "ncom": "AUSENTE",
+    "na": None,
+}
+
+
+def presenca_do_voto(bruto: str | None) -> str | None:
+    """Se o senador estava na votação. `None` para sigla que ⛔ diz nada sobre isso.
+
+    ⚠️ Sigla desconhecida também vira `None`, ⛔ presente: contar um senador como presente
+    por uma sigla que ninguém mediu inflaria a presença sem erro.
+    """
+    chave = (bruto or "").strip().lower()
+    if chave.startswith(_PREFIXO_PRESIDENTE):
+        return "PRESENTE"
+    return _PRESENCA.get(chave)
+
 
 def normalizar_voto(bruto: str | None) -> int | None:
     """Converte `siglaVotoParlamentar` para o domínio fechado `{-1, 0, 1, None}`.
@@ -269,6 +301,7 @@ def votos_para_linhas(
                     "votacao_id": f"SF-{codigo}",
                     "pessoa_id": pessoa_id,
                     "valor": normalizar_voto(voto.get("siglaVotoParlamentar")),
+                    "presenca": presenca_do_voto(voto.get("siglaVotoParlamentar")),
                     "partido_no_voto": _texto(voto.get("siglaPartidoParlamentar")) or None,
                     "uf_no_voto": _texto(voto.get("siglaUFParlamentar")) or None,
                 }

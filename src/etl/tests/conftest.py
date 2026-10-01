@@ -47,6 +47,7 @@ CREATE TABLE votos (
     votacao_id TEXT NOT NULL REFERENCES votacoes(id),
     pessoa_id BIGINT NOT NULL REFERENCES pessoas(id),
     valor SMALLINT CHECK (valor IS NULL OR valor IN (-1,0,1)),
+    presenca TEXT CHECK (presenca IS NULL OR presenca IN ('PRESENTE','AUSENTE_JUSTIFICADO','AUSENTE')),
     partido_no_voto TEXT NOT NULL,
     uf_no_voto CHAR(2) NOT NULL,
     PRIMARY KEY (votacao_id, pessoa_id)
@@ -57,7 +58,9 @@ CREATE TABLE execucoes (
     versao_carga TEXT NOT NULL,
     iniciada_em TIMESTAMPTZ NOT NULL DEFAULT now(),
     concluida_em TIMESTAMPTZ,
-    status TEXT NOT NULL
+    status TEXT NOT NULL,
+    minimo_votacoes_comuns SMALLINT, razao_recencia DOUBLE PRECISION,
+    peso_destaque DOUBLE PRECISION, peso_autoridade DOUBLE PRECISION
 );
 CREATE TABLE similaridades (
     execucao_id BIGINT NOT NULL REFERENCES execucoes(id) ON DELETE CASCADE,

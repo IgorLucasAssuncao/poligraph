@@ -1,18 +1,32 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Parlamentar } from './Parlamentar';
 import type { EmendasDoParlamentar, Ficha, FinanciamentoDeCampanha } from '../api';
 
+vi.mock('../sessao', () => ({
+  useSessao: () => ({
+    usuario: { nome: 'Pessoa de Teste', email: 'teste@exemplo.com', fotoUrl: null },
+    carregando: false,
+    leituraPublica: false,
+    entrou: () => {},
+    sair: async () => {},
+  }),
+}));
+
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
   obterFicha: vi.fn(),
   obterNoticias: vi.fn(),
+  listarVotos: vi.fn(),
+  listarLancamentos: vi.fn(),
+  listarConvenios: vi.fn(),
   listarSeguidos: vi.fn(),
   obterGastos: vi.fn(),
   obterEmendas: vi.fn(),
   obterFinanciamento: vi.fn(),
+  obterPatrimonio: vi.fn(),
 }));
 
 const api = await import('../api');
@@ -26,9 +40,13 @@ const FICHA: Ficha = {
   uf: 'SP',
   urlFoto: null,
   nVotacoes: 120,
+  nRegistrosDeVoto: 120,
   votosRecentes: [],
   maisSimilares: [],
   alinhamento: null,
+  urlFonte: 'https://www.camara.leg.br/deputados/1',
+  redesSociais: [],
+  presenca: null,
 };
 
 /**
@@ -49,6 +67,8 @@ function voto(
     ementa: null,
     materia: null,
     categoria: 'SUBSTANTIVA' as const,
+    urlProposicao: null,
+    urlRegistro: null,
   };
 }
 
@@ -63,6 +83,55 @@ const EMENDAS: EmendasDoParlamentar = {
     { localidade: 'Belém - PA', empenhado: 100_000, pago: 0, quantidade: 1 },
   ],
   porFuncao: [{ funcao: 'Saúde', empenhado: 900_000, pago: 400_000 }],
+  favorecidos: {
+    recebido: 700_000,
+    viaIntermediario: 200_000,
+    aPessoas: 50_000,
+    semIdentificacao: 0,
+    ultimoMes: '2026-03-01',
+    identificados: 1,
+    maiores: [
+      {
+        nome: 'CONSTRUTORA EXEMPLO LTDA',
+        naturezaJuridica: 'Sociedade Empresária Limitada',
+        uf: 'PA',
+        municipio: 'ANANINDEUA',
+        recebido: 450_000,
+      },
+    ],
+  },
+  pagamentosPorMes: [
+    { mes: '2025-11-01', valor: 300_000 },
+    { mes: '2026-03-01', valor: 400_000 },
+  ],
+  convenios: {
+    quantidade: 1,
+    maiores: [
+      {
+        numero: '1AAQKR',
+        convenente: 'MUNICIPIO DE ANANINDEUA',
+        objeto: 'AQUISICAO DE EQUIPAMENTO',
+        dataPublicacao: '2025-01-16',
+        valor: 80_000_000,
+        emendasQueFinanciam: 23,
+        urlFonte: 'https://portaldatransparencia.gov.br/convenios/1AAQKR',
+      },
+    ],
+  },
+  cidades: {
+    quantidade: 1,
+    maiores: [{ municipio: { codigoIbge: '1500800', nome: 'Ananindeua', uf: 'PA' }, recebido: 450_000 }],
+  },
+};
+
+const SEM_DESTINO = {
+  cidades: { quantidade: 0, maiores: [] },
+  favorecidos: {
+    recebido: 0, viaIntermediario: 0, aPessoas: 0, semIdentificacao: 0,
+    ultimoMes: null, identificados: 0, maiores: [],
+  },
+  pagamentosPorMes: [],
+  convenios: { quantidade: 0, maiores: [] },
 };
 
 const CAMPANHA: FinanciamentoDeCampanha = {
@@ -80,9 +149,9 @@ const CAMPANHA: FinanciamentoDeCampanha = {
 
 function renderizar() {
   return render(
-    <MemoryRouter initialEntries={['/parlamentares/1']}>
+    <MemoryRouter initialEntries={['/parlamentar/1']}>
       <Routes>
-        <Route path="/parlamentares/:id" element={<Parlamentar />} />
+        <Route path="/parlamentar/:id/:aba?" element={<Parlamentar />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -103,18 +172,20 @@ async function abrirPerfil() {
   await screen.findAllByRole('heading', { name: /Ana Ribeiro/ });
 }
 
-/** As contas moram num modal, ⛔ não numa aba: quem abre é o botão da faixa. */
-async function abrirContas() {
+/** Cada dinheiro é uma aba com endereço: abre pelo link da aba, como a pessoa faria. */
+async function abrirAba(nome: 'Emendas' | 'Cota' | 'Campanha') {
   await abrirPerfil();
-  await userEvent.click(await screen.findByRole('button', { name: 'Ver as contas' }));
+  const abas = screen.getByRole('navigation', { name: 'Seções do perfil' });
+  await userEvent.click(within(abas).getByRole('link', { name: nome }));
 }
 
 beforeEach(() => {
   vi.mocked(api.obterFicha).mockResolvedValue(FICHA);
-  vi.mocked(api.obterNoticias).mockResolvedValue([]);
+  vi.mocked(api.obterNoticias).mockResolvedValue({ itens: [], pagina: 1, tamanho: 10, total: 0 });
   vi.mocked(api.listarSeguidos).mockResolvedValue([]);
   vi.mocked(api.obterEmendas).mockResolvedValue(EMENDAS);
   vi.mocked(api.obterFinanciamento).mockResolvedValue(CAMPANHA);
+  vi.mocked(api.obterPatrimonio).mockResolvedValue([]);
 });
 
 describe('a casa do parlamentar', () => {
@@ -146,7 +217,7 @@ describe('a casa do parlamentar', () => {
 
 describe('contas — emendas', () => {
   it('🔴 mostra o pago junto do empenhado, nunca só o empenhado', async () => {
-    await abrirContas();
+    await abrirAba('Emendas');
 
     const texto = await tela();
 
@@ -160,9 +231,10 @@ describe('contas — emendas', () => {
   it('⭐ estado vazio é honesto, não "R$ 0,00"', async () => {
     vi.mocked(api.obterEmendas).mockResolvedValue({
       ano: 0, empenhado: 0, pago: 0, quantidade: 0, porDestino: [], porFuncao: [],
+      ...SEM_DESTINO,
     });
 
-    await abrirContas();
+    await abrirAba('Emendas');
     await screen.findByText(/Nenhuma emenda atribuída/);
 
     // 🔴 Zero afirmaria que ele não teve emenda; o que se sabe é que a BASE não tem.
@@ -174,16 +246,51 @@ describe('contas — emendas', () => {
       ...EMENDAS, empenhado: 0, pago: 0, porDestino: [], porFuncao: [],
     });
 
-    await abrirContas();
+    await abrirAba('Emendas');
 
     // ⛔ Sem a guarda, `0/0` daria `NaN%` na tela
     expect(await tela()).not.toMatch(/NaN/);
   });
 });
 
+describe('contas — quem recebeu a emenda', () => {
+  /**
+   * 🔴 O intermediário e as pessoas saem da lista, ⛔ da conta: o valor de cada um
+   * aparece em linha própria.
+   */
+  it('mostra o intermediário e as pessoas à parte, com o valor', async () => {
+    await abrirAba('Emendas');
+    const texto = await tela();
+
+    expect(texto).toMatch(/Via Banco do Brasil, que repassa\s*R\$\s*200\.000,00/);
+    expect(texto).toMatch(/A pessoas, sem identificação\s*R\$\s*50\.000,00/);
+    expect(texto).not.toMatch(/Sem identificação na fonte/);
+  });
+
+  it('diz até quando vai a soma, porque ela inclui os anos seguintes', async () => {
+    await abrirAba('Emendas');
+
+    expect(await tela()).toMatch(/R\$\s*700\.000,00 recebidos pelas emendas de 2025, até mar\/2026/);
+  });
+
+  /** ⭐ A frase é a leitura; o gráfico, o detalhe. */
+  it('diz quanto saiu no próprio ano', async () => {
+    await abrirAba('Emendas');
+
+    expect(await tela()).toMatch(/R\$\s*300\.000,00 de R\$\s*700\.000,00 — 43% — saíram ainda em 2025/);
+  });
+
+  /** 🔴 R$ 80 mi de 23 emendas ⛔ é dinheiro deste parlamentar, e a linha precisa dizer. */
+  it('o convênio diz de quantas emendas é', async () => {
+    await abrirAba('Emendas');
+
+    expect(await tela()).toMatch(/financiado por 23 emendas/);
+  });
+});
+
 describe('contas — campanha', () => {
   it('🔴 os dois fundos aparecem SEPARADOS e nomeados', async () => {
-    await abrirContas();
+    await abrirAba('Campanha');
 
     await screen.findByText('Fundo Partidário');
     const texto = await tela();
@@ -198,14 +305,14 @@ describe('contas — campanha', () => {
   });
 
   it('⭐ a proporção pública é sobre o total arrecadado', async () => {
-    await abrirContas();
+    await abrirAba('Campanha');
 
     // 3.200.000 de 3.250.000 = 98%
     expect(await tela()).toMatch(/98% do que a campanha arrecadou/);
   });
 
   it('🔴 marca o doador pessoa física sem revelar documento', async () => {
-    await abrirContas();
+    await abrirAba('Campanha');
 
     await screen.findByText(/Jose da Silva/);
     const texto = await tela();
@@ -221,7 +328,7 @@ describe('contas — campanha', () => {
       porFonte: [], maioresDoadores: [],
     });
 
-    await abrirContas();
+    await abrirAba('Campanha');
     await screen.findByText(/Nenhuma receita de campanha registrada/);
 
     expect(await tela()).not.toMatch(/NaN/);
@@ -416,5 +523,195 @@ describe('voto de rito não pode usar a ementa como manchete', () => {
 
     expect(container.querySelector('.voto-descricao')!.textContent).toMatch(/Institui o Imposto/);
     expect(container.textContent).not.toMatch(/não é voto no mérito/i);
+  });
+});
+
+describe('o tour da ficha', () => {
+  /** Um alvo que sumisse da página faria o tour pular o passo calado. */
+  it('encontra na página cada elemento que explica', async () => {
+    const { passosDaFicha } = await import('../tour');
+    await renderizarCom({
+      ...FICHA,
+      votosRecentes: [voto('v1', 1, 'Sim')],
+      maisSimilares: [{ pessoaId: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', valor: 0.9, comuns: 100 }],
+      alinhamento: {
+        governismo: 0.8,
+        baseGovernismo: 50,
+        disciplina: 0.9,
+        baseDisciplina: 50,
+        partidoMedido: 'PARTIDO-A',
+      },
+    });
+    await screen.findByRole('navigation', { name: 'Contas do mandato' });
+
+    for (const passo of passosDaFicha()) {
+      expect(document.querySelector(`[data-tour="${passo.alvo}"]`), passo.alvo).not.toBeNull();
+    }
+  });
+});
+
+describe('listas da ficha em páginas', () => {
+  /**
+   * 🔴 A ficha trazia 20 votos e parava, sem dizer que havia mais. Agora diz o total, e
+   * quantos ficam fora das "votações registradas" por ⛔ ter posição.
+   */
+  it('votos: diz o total e busca a página seguinte', async () => {
+    const primeiros = Array.from({ length: 2 }, (_, i) => voto(`v${i}`, 1, null));
+    vi.mocked(api.listarVotos).mockResolvedValue({ itens: [voto('v2', -1, null)], pagina: 2, tamanho: 2, total: 3 });
+
+    await renderizarCom({ ...FICHA, votosRecentes: primeiros, nVotacoes: 2, nRegistrosDeVoto: 3 });
+
+    expect(await tela()).toMatch(/2 de 3 registros de voto, 1 deles sem posição/);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Mostrar mais 1' }));
+
+    expect(await screen.findByText('Votação v2')).toBeDefined();
+    expect(vi.mocked(api.listarVotos)).toHaveBeenCalledWith(1, 2, 2);
+    expect(screen.queryByRole('button', { name: /Mostrar mais/ })).toBeNull();
+  });
+
+  it('convênios: o botão diz quantos faltam', async () => {
+    vi.mocked(api.obterEmendas).mockResolvedValue({
+      ...EMENDAS,
+      convenios: { quantidade: 72, maiores: EMENDAS.convenios.maiores },
+    });
+
+    await abrirAba('Emendas');
+
+    expect(await screen.findByRole('button', { name: 'Mostrar mais 1' })).toBeDefined();
+    expect(await tela()).toMatch(/71 ainda não mostrados/);
+  });
+});
+
+describe('fontes oficiais', () => {
+  /** 🔴 A persona da jornalista: sem link para a fonte, ela ⛔ cita o site. */
+  it('a ficha leva à página oficial do parlamentar', async () => {
+    await abrirPerfil();
+
+    const link = screen.getByRole('link', { name: /Página oficial na Câmara/ });
+    expect(link.getAttribute('href')).toBe('https://www.camara.leg.br/deputados/1');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toContain('noopener');
+    expect(link.textContent).toMatch(/abre o site oficial em nova aba/);
+  });
+
+  it('cada voto leva à proposição e ao registro da votação', async () => {
+    await renderizarCom({
+      ...FICHA,
+      votosRecentes: [{
+        ...voto('v1', 1, null),
+        urlProposicao: 'https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao=1',
+        urlRegistro: 'https://dadosabertos.camara.leg.br/api/v2/votacoes/1-1',
+      }],
+    });
+
+    expect(screen.getByRole('link', { name: /proposição/ }).getAttribute('href')).toMatch(/idProposicao=1/);
+    expect(screen.getByRole('link', { name: /registro da votação/ }).getAttribute('href')).toMatch(/votacoes\/1-1/);
+  });
+
+  it('o convênio leva ao Portal', async () => {
+    await abrirAba('Emendas');
+
+    expect(screen.getByRole('link', { name: /no Portal/ }).getAttribute('href')).toBe(
+      'https://portaldatransparencia.gov.br/convenios/1AAQKR',
+    );
+  });
+});
+
+describe('as abas do perfil', () => {
+  /** ⭐ Cada dinheiro tem endereço: o link compartilhado abre direto nele. */
+  it('o número do topo leva à aba do dinheiro', async () => {
+    await abrirPerfil();
+
+    const faixa = await screen.findByRole('navigation', { name: 'Contas do mandato' });
+    await userEvent.click(within(faixa).getByRole('link', { name: /Campanha/ }));
+
+    expect(await screen.findByText(/Arrecadou/)).toBeInTheDocument();
+    const abas = screen.getByRole('navigation', { name: 'Seções do perfil' });
+    expect(within(abas).getByRole('link', { name: 'Campanha' })).toHaveAttribute('aria-current', 'page');
+  });
+
+  /** A cidade vem da sede de quem recebeu, e leva ao mapa. */
+  it('as cidades que receberam levam ao mapa', async () => {
+    await abrirAba('Emendas');
+
+    expect(await screen.findByRole('link', { name: 'Ananindeua – PA' })).toHaveAttribute(
+      'href',
+      '/emendas?uf=PA&cidade=1500800',
+    );
+  });
+
+  /** O secundário fica recolhido: a aba abre com a resposta, ⛔ com 13 blocos. */
+  it('os detalhes começam fechados', async () => {
+    await abrirAba('Emendas');
+
+    const detalhes = (await screen.findByText(/Ver detalhes: áreas do orçamento/)).closest('details')!;
+    expect(detalhes.open).toBe(false);
+  });
+});
+
+describe('redes e patrimônio', () => {
+  beforeEach(() => {
+    vi.mocked(api.obterPatrimonio).mockResolvedValue([
+      { anoEleicao: 2022, total: 900_000, bens: 3, porTipo: [
+        { tipo: 'Casa', valor: 600_000, quantidade: 2 }, { tipo: 'Veículo', valor: 300_000, quantidade: 1 }] },
+      { anoEleicao: 2018, total: 400_000, bens: 1, porTipo: [{ tipo: 'Casa', valor: 400_000, quantidade: 1 }] },
+    ]);
+  });
+
+  /** 🔴 Só vira link o que é http(s), e nenhum leva recomendação do site aos buscadores. */
+  it('as redes viram link seguro, e o que não é http(s) some', async () => {
+    vi.mocked(api.obterFicha).mockResolvedValue({
+      ...FICHA,
+      redesSociais: [
+        { rede: 'INSTAGRAM', url: 'https://instagram.com/ana', fonte: 'CAMARA' },
+        { rede: 'OUTRA', url: 'javascript:alert(1)', fonte: 'CAMARA' },
+      ],
+    });
+    await abrirPerfil();
+
+    const link = screen.getByRole('link', { name: /Instagram/ });
+    expect(link).toHaveAttribute('href', 'https://instagram.com/ana');
+    expect(link.getAttribute('rel')).toContain('nofollow');
+    expect(document.querySelector('a[href^="javascript"]')).toBeNull();
+    expect(screen.getByText(/Redes publicadas na Câmara/)).toBeInTheDocument();
+  });
+
+  /** ⚠️ Duas declarações, dois números — ⛔ "cresceu X%", que leria como acusação. */
+  it('o patrimônio mostra a última declaração e a anterior, sem porcentagem', async () => {
+    await abrirAba('Campanha');
+
+    const frase = (await screen.findByText(/Declarou/)).closest('p')!;
+    expect(frase.textContent).toMatch(/R\$\s*900\.000,00 em 3 bens ao se candidatar em 2022/);
+    expect(frase.textContent).toMatch(/Em 2018, tinha declarado R\$\s*400\.000,00/);
+    expect(frase.textContent).not.toMatch(/%/);
+    expect(screen.getByText(/não uma avaliação de mercado/)).toBeInTheDocument();
+  });
+});
+
+describe('participação nas votações', () => {
+  /** ⭐ Sempre "X de Y", com o percentual depois — ⛔ percentual solto (RF-29). */
+  it('diz de quantas votações participou, com a base', async () => {
+    vi.mocked(api.obterFicha).mockResolvedValue({
+      ...FICHA,
+      presenca: { presente: 812, votacoes: 1015, ausente: 203, ausenteJustificado: null, justificativaPublicada: false, desde: '2023-02-01', ate: '2026-09-10' },
+    });
+    await abrirPerfil();
+
+    const bloco = screen.getByText('812 de 1015').closest('div')!;
+    expect(bloco.textContent).toMatch(/votações em plenário \(80%\)/);
+    expect(bloco.textContent).not.toMatch(/licença/);
+  });
+
+  /** O Senado publica a justificativa da ausência; a tela a mostra à parte. */
+  it('no Senado, mostra as ausências com licença ou missão à parte', async () => {
+    vi.mocked(api.obterFicha).mockResolvedValue({
+      ...FICHA,
+      casa: 'SENADO',
+      presenca: { presente: 380, votacoes: 421, ausente: 3, ausenteJustificado: 38, justificativaPublicada: true, desde: '2023-02-01', ate: '2026-09-10' },
+    });
+    await abrirPerfil();
+
+    expect(screen.getByText('380 de 421').closest('div')!.textContent).toMatch(/38 ausências com licença ou missão/);
   });
 });

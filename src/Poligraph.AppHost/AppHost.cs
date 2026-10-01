@@ -103,18 +103,67 @@ builder.AddDockerfile("etl-fundo", "../..", "docker/Dockerfile.etl")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
     .WithParentRelationship(etlCpf);
 
-// **Exige chave pessoal do Portal da Transparência.** Ela vem do ambiente, nunca
-// do código nem de `appsettings` — e o comando falha com a URL de cadastro se faltar.
-// Sem a variável definida, o botão aparece e o container morre explicando; é
-// melhor do que esconder o recurso e deixar a pessoa sem saber que ele existe.
+// Emendas, favorecidos e convênios saem do download público do Portal da
+// Transparência, que não pede a chave pessoal da API de dados.
 builder.AddDockerfile("etl-emendas", "../..", "docker/Dockerfile.etl")
     .WithReference(bancoPoligraph)
     .WaitForCompletion(migracoes)
     .WithExplicitStart()
     .WithArgs("emendas", "--anos", "2023", "2024", "2025", "2026")
-    .WithEnvironment(
-        "PORTAL_TRANSPARENCIA_CHAVE",
-        builder.Configuration["PortalTransparencia:Chave"] ?? "")
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithParentRelationship(etlIngerir);
+
+// A cidade da sede de quem recebeu emenda, por CNPJ → TOM → IBGE, para o mapa. Roda
+// depois de `etl-emendas`: procura só os CNPJs que já estão em emendas_favorecidos.
+// O cadastro da Receita tem ~6 GB por mês; o volume de cache evita rebaixá-lo.
+builder.AddDockerfile("etl-municipios", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs("municipios")
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithParentRelationship(etlIngerir);
+
+// O CNPJ de quem assinou cada convênio de emenda (arquivo completo de convênios do
+// Portal), para a página da entidade mostrar o que foi combinado. Depois de `etl-emendas`.
+builder.AddDockerfile("etl-convenios", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs("convenios")
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithParentRelationship(etlIngerir);
+
+// Bens declarados ao TSE (2018 e 2022), por tipo, e as redes sociais: Câmara para
+// deputados, TSE para senadores. As duas ligam pelo cpf_hash — rode depois de `cpf`.
+builder.AddDockerfile("etl-patrimonio", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs("patrimonio")
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithParentRelationship(etlIngerir);
+
+builder.AddDockerfile("etl-redes", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs("redes")
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithParentRelationship(etlIngerir);
+
+// Contexto da legislatura, não dado de parlamentar: quem governa (TSE), o orçamento,
+// o pago de cada ano e a arrecadação (Portal). Não depende de nada ingerido antes.
+builder.AddDockerfile("etl-governo", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs("governo", "--anos", "2023", "2024", "2025", "2026")
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
     .WithParentRelationship(etlIngerir);

@@ -33,6 +33,7 @@ const RESULTADO: ResultadoAfinidade = {
       ],
       // Sem execução do grafo não há posição — a tela omite o desenho, não inventa ponto.
       posicaoNoGrafo: null,
+      escala: { comparados: 12, medianoAcordos: 1, medianoComparaveis: 3 },
     },
   ],
 };
@@ -54,7 +55,8 @@ describe('Resultado', () => {
     const texto = container.textContent!.replace(/\s+/g, ' ');
 
     // ⭐ RF-29: nunca o número sozinho — sempre "2 de 3"
-    expect(texto).toMatch(/concordaram em 2 de 3 perguntas/);
+    // O destaque traz o número em evidência e a base logo em seguida.
+    expect(texto).toMatch(/2 de 3 perguntas comparáveis em que vocês votaram igual/);
     expect(texto).toMatch(/concordaram em 0 de 3 perguntas/);
   });
 
@@ -154,6 +156,7 @@ const DUAS_CASAS: ResultadoAfinidade = {
         { pessoaId: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', uf: 'MG', acordos: 1, comparaveis: 6, acordou: [], discordou: [] },
       ],
       posicaoNoGrafo: null,
+      escala: { comparados: 12, medianoAcordos: 1, medianoComparaveis: 3 },
     },
     {
       casa: 'SENADO',
@@ -163,6 +166,7 @@ const DUAS_CASAS: ResultadoAfinidade = {
       ],
       maisDistantes: [],
       posicaoNoGrafo: null,
+      escala: { comparados: 12, medianoAcordos: 1, medianoComparaveis: 3 },
     },
   ],
 };
@@ -222,5 +226,15 @@ describe('resultado com as duas casas', () => {
     );
 
     expect(container.textContent).not.toMatch(/Senadores mais próximos/);
+  });
+});
+
+describe('a régua do resultado', () => {
+  /** ⚠️ "8 de 11" sozinho ⛔ diz se é muito: o parlamentar do meio da lista dá a escala. */
+  it('diz quantos foram comparados e quanto concordou o do meio da lista', async () => {
+    renderizar();
+
+    expect(await screen.findByText(/Entre os/)).toBeDefined();
+    expect(document.body.textContent).toMatch(/12 deputados comparados com você, o do meio da lista votou como você em 1 de 3/);
   });
 });

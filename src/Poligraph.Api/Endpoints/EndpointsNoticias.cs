@@ -12,12 +12,13 @@ public static class EndpointsNoticias
     /// </summary>
     public const float ConfiancaMinima = 0.70f;
 
-    private const int LimitePadrao = 10;
+    private const int TamanhoPadrao = 10;
+    private const int TamanhoMaximo = 50;
 
     public static IEndpointRouteBuilder MapearNoticias(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/parlamentares/{id:long}/noticias", ObterAsync)
-           .Produces<IReadOnlyList<NoticiaNaFichaDto>>()
+           .Produces<PaginaDto<NoticiaNaFichaDto>>()
            .Produces(StatusCodes.Status404NotFound)
             .WithTags("Notícias");
 
@@ -25,21 +26,29 @@ public static class EndpointsNoticias
     }
 
     /// <summary>
-    /// RF-35 — notícias recentes do parlamentar.
+    /// RF-35 — notícias recentes do parlamentar, em páginas.
     ///
     /// Lista vazia é resposta legítima e comum: parlamentar de baixo perfil pode
     /// passar semanas sem notícia. O front mostra estado vazio honesto (RF-47), não erro.
     /// </summary>
     private static async Task<IResult> ObterAsync(
-        long id, PoligraphDb db, CancellationToken ct, int limite = LimitePadrao)
+        long id, PoligraphDb db, CancellationToken ct,
+        int pagina = 1, int tamanho = TamanhoPadrao)
     {
         if (!await db.Pessoas.AnyAsync(p => p.Id == id, ct))
             return Results.NotFound();
 
-        var noticias = await db.NoticiaPessoas.AsNoTracking()
-            .Where(np => np.PessoaId == id && np.Confianca >= ConfiancaMinima)
+        pagina = Math.Max(pagina, 1);
+        tamanho = Math.Clamp(tamanho, 1, TamanhoMaximo);
+
+        var doParlamentar = db.NoticiaPessoas.AsNoTracking()
+            .Where(np => np.PessoaId == id && np.Confianca >= ConfiancaMinima);
+
+        var noticias = await doParlamentar
             .OrderByDescending(np => np.Noticia!.PublicadaEm)
-            .Take(Math.Clamp(limite, 1, 50))
+            .ThenByDescending(np => np.NoticiaId)
+            .Skip((pagina - 1) * tamanho)
+            .Take(tamanho)
             .Select(np => new NoticiaNaFichaDto(
                 np.Noticia!.Id,
                 np.Noticia.Url,
@@ -49,6 +58,7 @@ public static class EndpointsNoticias
                 np.Noticia.Trecho))
             .ToListAsync(ct);
 
-        return Results.Ok(noticias);
+        return Results.Ok(new PaginaDto<NoticiaNaFichaDto>(
+            noticias, pagina, tamanho, await doParlamentar.CountAsync(ct)));
     }
 }

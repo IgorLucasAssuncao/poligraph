@@ -219,7 +219,10 @@ e Agência Brasil).
 | Segredo | Para quê | Onde |
 |---|---|---|
 | `Google:ClientId` | Login | user-secrets de `Poligraph.Api` |
-| `PortalTransparencia:Chave` | `etl-emendas` | user-secrets de `Poligraph.AppHost` |
 
-⛔ **Nunca em `appsettings.json`** — os dois arquivos são versionados, e a chave do Portal
-é **pessoal, atrelada ao CPF de quem a pediu**.
+⛔ **Nunca em `appsettings.json`** — o arquivo é versionado.
+
+⭐ **A chave do Portal da Transparência deixou de ser necessária** (2026-09-25): emendas e
+orçamento saem do **download público**, ⛔ da API de dados. Se `PortalTransparencia:Chave`
+ainda estiver nos user-secrets do AppHost, pode ser apagada — ela é **pessoal, atrelada
+ao CPF de quem a pediu**. Ver [achado #33](../docs/achados/033-o-destino-da-emenda.md).

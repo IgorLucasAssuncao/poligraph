@@ -33,15 +33,43 @@ export function Avaliacao({
   const [enviado, setEnviado] = useState(false);
   const [erro, setErro] = useState(false);
 
-  useEffect(() => {
-    // ⚠️ A espera é deliberada: abrir junto com o resultado atropelaria a leitura, e a
-    //    pessoa fecharia o modal sem ter visto o que veio responder.
-    const relogio = setTimeout(() => dialogo.current?.showModal(), esperaMs);
+  const fimDosResultados = useRef<HTMLDivElement>(null);
 
-    return () => clearTimeout(relogio);
+  useEffect(() => {
+    let aberto = false;
+
+    // ⚠️ Nunca por cima de outro diálogo (o tour, as contas): dois modais empilhados
+    //    tiram da pessoa o controle de qual fechar. Tenta de novo logo depois.
+    const abrir = () => {
+      if (aberto || !dialogo.current) return;
+      if (document.querySelector('dialog[open]')) {
+        relogio = setTimeout(abrir, 1500);
+        return;
+      }
+      aberto = true;
+      dialogo.current.showModal();
+    };
+
+    // ⭐ O que vier primeiro: o tempo de ler, ou a pessoa ter rolado até o fim dos
+    //    resultados das duas casas — aí ela já viu o que veio buscar.
+    let relogio = setTimeout(abrir, esperaMs);
+
+    const alvo = fimDosResultados.current;
+    const observador =
+      alvo && typeof IntersectionObserver !== 'undefined'
+        ? new IntersectionObserver(([entrada]) => entrada.isIntersecting && abrir())
+        : null;
+    if (observador && alvo) observador.observe(alvo);
+
+    return () => {
+      clearTimeout(relogio);
+      observador?.disconnect();
+    };
   }, [esperaMs]);
 
   return (
+    <>
+    <div ref={fimDosResultados} aria-hidden="true" />
     <dialog ref={dialogo} className="modal-avaliacao" onCancel={fechar}>
       {enviado ? (
         <div className="avaliacao-pronta">
@@ -118,6 +146,7 @@ export function Avaliacao({
         </form>
       )}
     </dialog>
+    </>
   );
 
   // ═══════════════════════════════════════════════════════════════
@@ -147,8 +176,13 @@ export function Avaliacao({
   }
 }
 
-/** Milissegundos entre o resultado aparecer e o modal subir. */
-const ESPERA = 2200;
+/**
+ * Milissegundos entre o resultado aparecer e o modal subir, se a pessoa ⛔ rolar antes.
+ *
+ * ⚠️ Eram 2,2 s — menos que o tempo de ler o nome do primeiro parlamentar. O pedido de
+ * avaliação chegava antes do valor que ela avaliaria.
+ */
+const ESPERA = 8000;
 
 /**
  * ⚠️ Escala de 7 pontos, com o centro nomeado.

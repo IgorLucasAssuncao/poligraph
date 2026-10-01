@@ -53,6 +53,16 @@ MINIMO_VOTACOES_COMUNS = 20
 K_VIZINHOS = 10
 
 
+def parametros() -> dict:
+    """Os parâmetros que a execução grava, para a metodologia mostrar o que foi usado."""
+    return {
+        "minimo_votacoes_comuns": MINIMO_VOTACOES_COMUNS,
+        "razao_recencia": RAZAO_RECENCIA,
+        "peso_destaque": PESO_CATEGORIA["DESTAQUE"],
+        "peso_autoridade": PESO_CATEGORIA["AUTORIDADE"],
+    }
+
+
 @dataclass(frozen=True)
 class ParSimilar:
     pessoa_a: int

@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
-import { listarParlamentares, listarSeguidos, type Parlamentar } from '../api';
+import {
+  listarParlamentares,
+  listarSeguidos,
+  type PaginaDeParlamentares,
+  type Parlamentar,
+} from '../api';
 import { IconeExplorar } from '../componentes/Icones';
 import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
+import { useSessao } from '../sessao';
 
 /** Busca e navegação pelos parlamentares (RF-34). */
 /**
@@ -16,39 +22,59 @@ const NA_CASA: Record<Parlamentar['casa'], string> = {
   '': '',
 };
 
+/**
+ * Quantos por vez. ⚠️ A lista cortava em 100 por ordem alfabética, sem avisar: dos 745
+ * parlamentares da 57ª, a tela nunca mostrava os outros 645.
+ */
+const POR_PAGINA = 30;
+
 export function Explorar() {
   const [termo, setTermo] = useState('');
   const [partido, setPartido] = useState('');
   const [uf, setUf] = useState('');
   const [lista, setLista] = useState<Parlamentar[]>([]);
+  const [pagina, setPagina] = useState<PaginaDeParlamentares | null>(null);
   const [seguidos, setSeguidos] = useState<Set<number>>(new Set());
   const [carregando, setCarregando] = useState(true);
+  const [carregandoMais, setCarregandoMais] = useState(false);
+
+  const { usuario } = useSessao();
 
   useEffect(() => {
+    if (!usuario) return;
     listarSeguidos()
       .then((s) => setSeguidos(new Set(s.map((p) => p.id))))
       .catch(() => setSeguidos(new Set()));
-  }, []);
+  }, [usuario]);
 
   useEffect(() => {
     // ⚠️ Espera a digitação parar: sem isso, cada tecla vira uma consulta ao banco.
     const timer = setTimeout(() => {
       setCarregando(true);
-      listarParlamentares({ nome: termo, partido, uf })
-        .then(setLista)
-        .catch(() => setLista([]))
+      listarParlamentares({ nome: termo, partido, uf, tamanho: POR_PAGINA })
+        .then((primeira) => {
+          setPagina(primeira);
+          setLista(primeira.itens);
+        })
+        .catch(() => {
+          setPagina(null);
+          setLista([]);
+        })
         .finally(() => setCarregando(false));
     }, 300);
 
     return () => clearTimeout(timer);
   }, [termo, partido, uf]);
 
-  const partidos = [...new Set(lista.map((p) => p.partido))].filter(Boolean).sort();
-  const ufs = [...new Set(lista.map((p) => p.uf))].filter(Boolean).sort();
+  // ⭐ As opções vêm da lista inteira, que a API manda junto. Tiradas do que está na
+  //    tela, escolher um partido esvaziava a lista de estados.
+  const partidos = pagina?.partidos ?? [];
+  const ufs = pagina?.ufs ?? [];
+  const total = pagina?.total ?? 0;
 
   return (
     <>
-      <div className="barra-busca">
+      <div className="barra-busca" data-tour="busca">
         <span className="icone-busca" aria-hidden="true">
           <IconeExplorar />
         </span>
@@ -89,6 +115,12 @@ export function Explorar() {
         <p className="vazio">Nenhum parlamentar encontrado com esses filtros.</p>
       )}
 
+      {!carregando && total > 0 && (
+        <p className="contagem-lista" aria-live="polite">
+          {lista.length === total ? `${total} parlamentares` : `${lista.length} de ${total} parlamentares`}
+        </p>
+      )}
+
       {lista.map((p) => (
         <LinhaParlamentar
           key={p.id}
@@ -106,11 +138,33 @@ export function Explorar() {
              secretas —, ⛔ não o senador trabalhar menos. */
           detalhe={`${p.nVotacoes} votações registradas ${NA_CASA[p.casa]}`.trim()}
           seguindo={seguidos.has(p.id)}
-          aoAlternarSeguir={alternar}
+          aoAlternarSeguir={usuario ? alternar : undefined}
         />
       ))}
+
+      {!carregando && lista.length < total && (
+        <div className="carregar-mais">
+          <button type="button" className="botao-secundario" onClick={carregarMais} disabled={carregandoMais}>
+            {carregandoMais ? 'Carregando…' : `Mostrar mais ${Math.min(POR_PAGINA, total - lista.length)}`}
+          </button>
+        </div>
+      )}
     </>
   );
+
+  async function carregarMais() {
+    if (!pagina) return;
+    setCarregandoMais(true);
+    try {
+      const proxima = await listarParlamentares({
+        nome: termo, partido, uf, tamanho: POR_PAGINA, pagina: pagina.pagina + 1,
+      });
+      setPagina(proxima);
+      setLista((atual) => [...atual, ...proxima.itens]);
+    } finally {
+      setCarregandoMais(false);
+    }
+  }
 
   function alternar(id: number, seguindoAgora: boolean) {
     setSeguidos((atual) => {

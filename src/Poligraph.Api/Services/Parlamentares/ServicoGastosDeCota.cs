@@ -13,8 +13,13 @@ namespace Poligraph.Api.Services;
 /// </summary>
 public class ServicoGastosDeCota(PoligraphDb db)
 {
+    /// <summary>Quantos lançamentos vêm por página.</summary>
+    public const int LancamentosPorPagina = 20;
+
     /// <summary>Quantos fornecedores da cota aparecem na ficha.</summary>
     private const int FornecedoresExibidos = 8;
+
+    private const int TamanhoMaximo = 100;
 
     private readonly PoligraphDb _db = db;
 
@@ -67,7 +72,7 @@ public class ServicoGastosDeCota(PoligraphDb db)
 
         var fornecedores = brutos
             .Select(f => new FornecedorDoParlamentarDto(
-                f.Fornecedor!, f.Total, f.Lancamentos, f.FornecedorEhPessoaFisica))
+                TextoSemCpf.Limpar(f.Fornecedor!), f.Total, f.Lancamentos, f.FornecedorEhPessoaFisica))
             .ToList();
 
         return new GastoDeCotaDto(
@@ -76,5 +81,38 @@ public class ServicoGastosDeCota(PoligraphDb db)
             Lancamentos: porCategoria.Sum(c => c.Lancamentos),
             PorCategoria: porCategoria,
             MaioresFornecedores: fornecedores);
+    }
+
+    /// <summary>Os lançamentos do ano, do mais recente, com o documento fiscal de cada um.</summary>
+    /// <remarks>
+    /// <para>É o caminho de volta à fonte: a ficha mostra somas por categoria, e cada soma se confere aqui, nota por nota.</para>
+    /// </remarks>
+    public async Task<PaginaDto<LancamentoDaCotaDto>> ListarLancamentosAsync(
+        long id, int? ano, int pagina, int tamanho, CancellationToken ct)
+    {
+        pagina = Math.Max(pagina, 1);
+        tamanho = Math.Clamp(tamanho, 1, TamanhoMaximo);
+
+        var alvo = ano ?? await _db.Despesas.AsNoTracking()
+            .Where(d => d.PessoaId == id)
+            .MaxAsync(d => (int?)d.Ano, ct);
+
+        if (alvo is null) return new PaginaDto<LancamentoDaCotaDto>([], pagina, tamanho, 0);
+
+        var doAno = _db.Despesas.AsNoTracking().Where(d => d.PessoaId == id && d.Ano == alvo);
+
+        var itens = await doAno
+            .OrderByDescending(d => d.Mes)
+            .ThenByDescending(d => d.DataEmissao)
+            .ThenByDescending(d => d.Id)
+            .Skip((pagina - 1) * tamanho)
+            .Take(tamanho)
+            .Select(d => new LancamentoDaCotaDto(
+                d.DataEmissao, d.Mes, d.Categoria, d.Fornecedor, d.ValorLiquido, d.UrlDocumento))
+            .ToListAsync(ct);
+
+        return new PaginaDto<LancamentoDaCotaDto>(
+            [.. itens.Select(l => l with { Fornecedor = TextoSemCpf.LimparOuNulo(l.Fornecedor) })],
+            pagina, tamanho, await doAno.CountAsync(ct));
     }
 }

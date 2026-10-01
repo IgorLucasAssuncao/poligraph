@@ -447,15 +447,16 @@ def gravar_votos(conexao: psycopg.Connection, votos: Sequence[dict]) -> int:
     return _executar_em_lotes(
         conexao,
         """
-        INSERT INTO votos (votacao_id, pessoa_id, valor, partido_no_voto, uf_no_voto)
-        VALUES (%(votacao_id)s, %(pessoa_id)s, %(valor)s,
+        INSERT INTO votos (votacao_id, pessoa_id, valor, presenca, partido_no_voto, uf_no_voto)
+        VALUES (%(votacao_id)s, %(pessoa_id)s, %(valor)s, %(presenca)s,
                 %(partido_no_voto)s, %(uf_no_voto)s)
         ON CONFLICT (votacao_id, pessoa_id) DO UPDATE SET
             valor = EXCLUDED.valor,
+            presenca = EXCLUDED.presenca,
             partido_no_voto = EXCLUDED.partido_no_voto,
             uf_no_voto = EXCLUDED.uf_no_voto
         """,
-        votos,
+        [{**voto, "presenca": voto.get("presenca")} for voto in votos],
     )
 
 
@@ -594,6 +595,11 @@ def gravar_emendas(
 
     ⭐ `pessoa_id` ⛔ NÃO é preenchido aqui: a emenda entra sem dono, e o vínculo é
     decisão de `vincular_emendas`.
+
+    🔴 **Sem `ON CONFLICT`.** O `DO NOTHING` de antes descartava em silêncio a segunda
+    linha de uma mesma emenda — 55 linhas e R$ 0,18 bi empenhados em 2023–26. Linha
+    repetida agora derruba a carga, que é o que deve fazer: ela diz que a chave
+    `ux_emenda_programacao` deixou de descrever o arquivo.
     """
     if not linhas:
         return 0
@@ -604,16 +610,238 @@ def gravar_emendas(
         conexao,
         """
         INSERT INTO emendas (codigo_autor, nome_autor, codigo_emenda, ano, tipo,
-                             localidade, funcao, subfuncao,
+                             localidade, funcao, subfuncao, codigo_municipio_ibge,
+                             codigo_acao, codigo_plano_orcamentario,
                              valor_empenhado, valor_liquidado, valor_pago,
                              valor_resto_pago)
         VALUES (%(codigo_autor)s, %(nome_autor)s, %(codigo_emenda)s, %(ano)s, %(tipo)s,
-                %(localidade)s, %(funcao)s, %(subfuncao)s,
+                %(localidade)s, %(funcao)s, %(subfuncao)s, %(codigo_municipio_ibge)s,
+                %(codigo_acao)s, %(codigo_plano_orcamentario)s,
                 %(valor_empenhado)s, %(valor_liquidado)s, %(valor_pago)s,
                 %(valor_resto_pago)s)
-        ON CONFLICT (codigo_autor, codigo_emenda) DO NOTHING
         """,
         linhas,
+    )
+
+
+def gravar_favorecidos(
+    conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict]
+) -> int:
+    """Grava quem recebeu, substituindo as emendas dos anos que estão entrando.
+
+    ⚠️ O ano é o da **emenda** (os quatro primeiros dígitos do código), ⛔ o do
+    pagamento: emenda de 2023 paga em 2025 é da carga de 2023.
+    """
+    conexao.execute(
+        "DELETE FROM emendas_favorecidos WHERE left(codigo_emenda, 4)::int = ANY(%s)",
+        (anos,),
+    )
+
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO emendas_favorecidos (codigo_emenda, competencia, tipo, documento,
+                                         nome, natureza_juridica, uf, municipio,
+                                         valor, intermediario)
+        VALUES (%(codigo_emenda)s, %(competencia)s, %(tipo)s, %(documento)s,
+                %(nome)s, %(natureza_juridica)s, %(uf)s, %(municipio)s,
+                %(valor)s, %(intermediario)s)
+        """,
+        linhas,
+    )
+
+
+def gravar_convenios(
+    conexao: psycopg.Connection,
+    anos: list[int],
+    convenios: Sequence[dict],
+    ligacoes: Sequence[dict],
+) -> int:
+    """Grava os convênios e a ligação com as emendas dos anos que estão entrando.
+
+    ⭐ O convênio é atualizado, ⛔ apagado: um mesmo convênio pode receber emenda de
+    anos diferentes. O que some é o convênio que ficou sem emenda nenhuma.
+    """
+    conexao.execute(
+        "DELETE FROM emendas_convenios WHERE left(codigo_emenda, 4)::int = ANY(%s)",
+        (anos,),
+    )
+
+    _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO convenios (numero, convenente, objeto, data_publicacao, valor)
+        VALUES (%(numero)s, %(convenente)s, %(objeto)s, %(data_publicacao)s, %(valor)s)
+        ON CONFLICT (numero) DO UPDATE SET
+            convenente = EXCLUDED.convenente,
+            objeto = EXCLUDED.objeto,
+            data_publicacao = EXCLUDED.data_publicacao,
+            valor = EXCLUDED.valor
+        """,
+        convenios,
+    )
+
+    gravadas = _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO emendas_convenios (codigo_emenda, numero_convenio)
+        VALUES (%(codigo_emenda)s, %(numero_convenio)s)
+        """,
+        ligacoes,
+    )
+
+    conexao.execute(
+        """
+        DELETE FROM convenios c
+         WHERE NOT EXISTS (SELECT 1 FROM emendas_convenios ec
+                            WHERE ec.numero_convenio = c.numero)
+        """
+    )
+
+    return gravadas
+
+
+def gravar_orcamento(
+    conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict]
+) -> int:
+    """Grava a execução por função, substituindo os anos que estão entrando."""
+    conexao.execute("DELETE FROM orcamento_por_funcao WHERE ano = ANY(%s)", (anos,))
+
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO orcamento_por_funcao (ano, codigo_funcao, funcao, dotacao_inicial,
+                                          dotacao_atualizada, empenhado, pago,
+                                          restos_a_pagar_pagos,
+                                          empenhado_acima_da_dotacao, gerado_em)
+        VALUES (%(ano)s, %(codigo_funcao)s, %(funcao)s, %(dotacao_inicial)s,
+                %(dotacao_atualizada)s, %(empenhado)s, %(pago)s,
+                %(restos_a_pagar_pagos)s,
+                %(empenhado_acima_da_dotacao)s, %(gerado_em)s)
+        """,
+        linhas,
+    )
+
+
+def gravar_encargos(
+    conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict]
+) -> int:
+    """Grava Encargos especiais por subfunção, substituindo os anos que estão entrando."""
+    conexao.execute("DELETE FROM encargos_especiais WHERE ano = ANY(%s)", (anos,))
+
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO encargos_especiais (ano, codigo_subfuncao, subfuncao,
+                                        dotacao_atualizada, empenhado, pago,
+                                        restos_a_pagar_pagos)
+        VALUES (%(ano)s, %(codigo_subfuncao)s, %(subfuncao)s,
+                %(dotacao_atualizada)s, %(empenhado)s, %(pago)s,
+                %(restos_a_pagar_pagos)s)
+        """,
+        linhas,
+    )
+
+
+def gravar_sigilosos(
+    conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict]
+) -> int:
+    """Grava o gasto sigiloso por órgão, substituindo os anos que estão entrando."""
+    conexao.execute("DELETE FROM gastos_sigilosos WHERE ano = ANY(%s)", (anos,))
+
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO gastos_sigilosos (ano, origem, orgao_superior, sigiloso, total,
+                                      lancamentos, meses)
+        VALUES (%(ano)s, %(origem)s, %(orgao_superior)s, %(sigiloso)s, %(total)s,
+                %(lancamentos)s, %(meses)s)
+        """,
+        linhas,
+    )
+
+
+def gravar_arrecadacao(
+    conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict]
+) -> int:
+    """Grava a receita por origem, substituindo os anos que estão entrando."""
+    conexao.execute("DELETE FROM receitas_por_origem WHERE ano = ANY(%s)", (anos,))
+
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO receitas_por_origem (ano, categoria, origem, prevista, realizada,
+                                         gerado_em)
+        VALUES (%(ano)s, %(categoria)s, %(origem)s, %(prevista)s, %(realizada)s,
+                %(gerado_em)s)
+        """,
+        linhas,
+    )
+
+
+def gravar_municipios(conexao: psycopg.Connection, linhas: Sequence[dict]) -> int:
+    """Grava a tabela TOM ↔ IBGE. Atualiza em vez de apagar: `cnpjs_municipio` aponta para ela."""
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO municipios (codigo_ibge, codigo_tom, nome, uf)
+        VALUES (%(codigo_ibge)s, %(codigo_tom)s, %(nome)s, %(uf)s)
+        ON CONFLICT (codigo_ibge) DO UPDATE SET
+            codigo_tom = EXCLUDED.codigo_tom, nome = EXCLUDED.nome, uf = EXCLUDED.uf
+        """,
+        linhas,
+    )
+
+
+def cnpjs_que_receberam_emenda(conexao: psycopg.Connection) -> set[str]:
+    """Os CNPJs que receberam emenda fora do intermediário — os únicos cuja sede interessa."""
+    return {
+        linha[0]
+        for linha in conexao.execute(
+            """
+            SELECT DISTINCT documento FROM emendas_favorecidos
+             WHERE tipo = 'PESSOA_JURIDICA' AND NOT intermediario
+            """
+        ).fetchall()
+    }
+
+
+def gravar_cnpjs_municipio(conexao: psycopg.Connection, linhas: Sequence[dict]) -> int:
+    """Grava a sede de cada CNPJ, substituindo a anterior: a sede muda quando a empresa muda."""
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO cnpjs_municipio (cnpj, codigo_ibge, cadastro_de)
+        VALUES (%(cnpj)s, %(codigo_ibge)s, %(cadastro_de)s)
+        ON CONFLICT (cnpj) DO UPDATE SET
+            codigo_ibge = EXCLUDED.codigo_ibge, cadastro_de = EXCLUDED.cadastro_de
+        """,
+        linhas,
+    )
+
+
+def gravar_gestao(conexao: psycopg.Connection, gestao: dict) -> None:
+    """Grava presidente e vice de uma eleição, substituindo a linha dela."""
+    conexao.execute(
+        """
+        INSERT INTO gestoes (eleicao, primeiro_ano, ultimo_ano, presidente_nome,
+                             presidente_nome_de_urna, presidente_partido, vice_nome,
+                             vice_nome_de_urna, vice_partido, coligacao)
+        VALUES (%(eleicao)s, %(primeiro_ano)s, %(ultimo_ano)s, %(presidente_nome)s,
+                %(presidente_nome_de_urna)s, %(presidente_partido)s, %(vice_nome)s,
+                %(vice_nome_de_urna)s, %(vice_partido)s, %(coligacao)s)
+        ON CONFLICT (eleicao) DO UPDATE SET
+            primeiro_ano = EXCLUDED.primeiro_ano,
+            ultimo_ano = EXCLUDED.ultimo_ano,
+            presidente_nome = EXCLUDED.presidente_nome,
+            presidente_nome_de_urna = EXCLUDED.presidente_nome_de_urna,
+            presidente_partido = EXCLUDED.presidente_partido,
+            vice_nome = EXCLUDED.vice_nome,
+            vice_nome_de_urna = EXCLUDED.vice_nome_de_urna,
+            vice_partido = EXCLUDED.vice_partido,
+            coligacao = EXCLUDED.coligacao
+        """,
+        gestao,
     )
 
 
@@ -762,16 +990,36 @@ def gravar_nos_metrica(
 
 
 def abrir_execucao(
-    conexao: psycopg.Connection, casa: str, legislatura: int, k: int, versao: str
+    conexao: psycopg.Connection,
+    casa: str,
+    legislatura: int,
+    k: int,
+    versao: str,
+    parametros: dict | None = None,
 ) -> int:
+    """Abre a execução e grava os parâmetros com que ela calcula.
+
+    ⭐ Gravados, ⛔ só lidos do código: a página de metodologia mostra o valor que ESTA
+    execução usou. Se uma constante mudar, as execuções antigas continuam dizendo o que
+    usaram.
+    """
+    parametros = parametros or {}
     with conexao.cursor() as cur:
         cur.execute(
             """
-            INSERT INTO execucoes (casa, legislatura, k, versao_carga, status)
-            VALUES (%s, %s, %s, %s, 'EM_ANDAMENTO')
+            INSERT INTO execucoes (casa, legislatura, k, versao_carga, status,
+                                   minimo_votacoes_comuns, razao_recencia,
+                                   peso_destaque, peso_autoridade)
+            VALUES (%s, %s, %s, %s, 'EM_ANDAMENTO', %s, %s, %s, %s)
             RETURNING id
             """,
-            (casa, legislatura, k, versao),
+            (
+                casa, legislatura, k, versao,
+                parametros.get("minimo_votacoes_comuns"),
+                parametros.get("razao_recencia"),
+                parametros.get("peso_destaque"),
+                parametros.get("peso_autoridade"),
+            ),
         )
         return cur.fetchone()[0]
 
@@ -808,3 +1056,97 @@ def _executar_em_lotes(
             total += len(fatia)
 
     return total
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Redes sociais, patrimônio e convenentes
+# ═══════════════════════════════════════════════════════════════════
+
+
+def hashes_de_pessoas(conexao: psycopg.Connection) -> dict[str, int]:
+    """`cpf_hash` → `pessoas.id`, de quem tem hash. A ponte do TSE para o parlamentar."""
+    return {
+        linha[0]: linha[1]
+        for linha in conexao.execute("SELECT cpf_hash, id FROM pessoas WHERE cpf_hash IS NOT NULL").fetchall()
+    }
+
+
+def deputados_da_legislatura(conexao: psycopg.Connection) -> list[tuple[str, int]]:
+    """(id da Câmara, `pessoas.id`) de quem tem voto — o mesmo recorte de `pessoas_sem_cpf`."""
+    return [
+        (str(linha[0]), linha[1])
+        for linha in conexao.execute(
+            """
+            SELECT DISTINCT f.id_externo, f.pessoa_id
+              FROM pessoa_fonte_ids f
+             WHERE f.fonte = 'CAMARA'
+               AND EXISTS (SELECT 1 FROM votos v WHERE v.pessoa_id = f.pessoa_id)
+             ORDER BY f.pessoa_id
+            """
+        ).fetchall()
+    ]
+
+
+def senadores_da_legislatura(conexao: psycopg.Connection) -> set[int]:
+    """`pessoas.id` de quem é senador e tem voto."""
+    return {
+        linha[0]
+        for linha in conexao.execute(
+            """
+            SELECT DISTINCT f.pessoa_id FROM pessoa_fonte_ids f
+             WHERE f.fonte = 'SENADO'
+               AND EXISTS (SELECT 1 FROM votos v WHERE v.pessoa_id = f.pessoa_id)
+            """
+        ).fetchall()
+    }
+
+
+def gravar_redes(conexao: psycopg.Connection, pessoas: list[int], linhas: Sequence[dict], fonte: str) -> int:
+    """Substitui as redes da fonte para as pessoas consultadas — e só para elas.
+
+    ⚠️ Quem ⛔ foi consultado (a requisição falhou) mantém o que tinha: apagar tudo da fonte
+    e regravar deixaria sem rede quem só teve azar na rede.
+    """
+    conexao.execute("DELETE FROM redes_sociais WHERE fonte = %s AND pessoa_id = ANY(%s)", (fonte, pessoas))
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO redes_sociais (pessoa_id, url, rede, fonte)
+        VALUES (%(pessoa_id)s, %(url)s, %(rede)s, %(fonte)s)
+        ON CONFLICT (pessoa_id, url) DO NOTHING
+        """,
+        linhas,
+    )
+
+
+def gravar_patrimonios(conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict]) -> int:
+    """Grava o patrimônio por tipo, substituindo as eleições que estão entrando."""
+    conexao.execute("DELETE FROM patrimonios WHERE ano_eleicao = ANY(%s)", (anos,))
+    return _executar_em_lotes(
+        conexao,
+        """
+        INSERT INTO patrimonios (pessoa_id, ano_eleicao, tipo_bem, valor, quantidade)
+        VALUES (%(pessoa_id)s, %(ano_eleicao)s, %(tipo_bem)s, %(valor)s, %(quantidade)s)
+        """,
+        linhas,
+    )
+
+
+def numeros_de_convenio(conexao: psycopg.Connection) -> set[str]:
+    return {linha[0] for linha in conexao.execute("SELECT numero FROM convenios").fetchall()}
+
+
+def gravar_convenentes(conexao: psycopg.Connection, linhas: Sequence[dict]) -> int:
+    """Completa CNPJ, situação e liberado de cada convênio — pelo número, chave forte."""
+    return _executar_em_lotes(
+        conexao,
+        """
+        UPDATE convenios
+           SET cnpj_convenente = %(cnpj_convenente)s,
+               situacao = %(situacao)s,
+               valor_liberado = %(valor_liberado)s
+         WHERE numero = %(numero)s
+        """,
+        linhas,
+    )
+

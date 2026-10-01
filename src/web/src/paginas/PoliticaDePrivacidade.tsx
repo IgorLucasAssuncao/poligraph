@@ -1,5 +1,5 @@
 import { CONTATO, POLITICA_DE_PRIVACIDADE, VERSAO_CONSENTIMENTO } from '../textos-legais';
-import { revogarConsentimento } from '../componentes/BannerConsentimento';
+import { revogarConsentimento } from '../consentimento';
 
 /**
  * A página de política de privacidade.

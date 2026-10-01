@@ -28,6 +28,7 @@ const RESULTADO: ResultadoAfinidade = {
       maisDistantes: [],
       // Sem execução do grafo não há posição — a tela omite o desenho.
       posicaoNoGrafo: null,
+      escala: { comparados: 12, medianoAcordos: 1, medianoComparaveis: 3 },
     },
   ],
 };
@@ -67,8 +68,26 @@ describe('Avaliacao', () => {
     //    ter visto o que veio responder.
     expect(HTMLDialogElement.prototype.showModal).not.toHaveBeenCalled();
 
+    // ⚠️ Aos 3 s a pessoa ainda está lendo o nome do primeiro parlamentar.
     vi.advanceTimersByTime(3000);
+    expect(HTMLDialogElement.prototype.showModal).not.toHaveBeenCalled();
 
+    vi.advanceTimersByTime(5000);
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalledOnce();
+  });
+
+  it('não abre por cima de outro diálogo, e tenta de novo depois', () => {
+    vi.useFakeTimers();
+    const outro = document.createElement('dialog');
+    outro.setAttribute('open', '');
+    document.body.append(outro);
+
+    render(<Avaliacao resultado={RESULTADO} />);
+    vi.advanceTimersByTime(8000);
+    expect(HTMLDialogElement.prototype.showModal).not.toHaveBeenCalled();
+
+    outro.remove();
+    vi.advanceTimersByTime(1500);
     expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalledOnce();
   });
 

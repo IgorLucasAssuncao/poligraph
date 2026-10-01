@@ -70,3 +70,27 @@ def test_a_cota_usa_o_mesmo_hash_das_pessoas():
 
     assert pessoa_fisica is True
     assert documento == hash_de_cpf("01234567890")
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 CPF dentro de NOME — o nome empresarial de MEI
+# ═══════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.parametrize(
+    ("bruto", "limpo"),
+    [
+        ("FULANO DE TAL 12345678900", "FULANO DE TAL"),
+        ("FULANO DE TAL 123.456.789-00", "FULANO DE TAL"),
+        ("12345678900 FULANO DE TAL", "FULANO DE TAL"),
+        ("POSTO EXEMPLO LTDA", "POSTO EXEMPLO LTDA"),
+        # ⭐ Os 14 dígitos de um CNPJ ⛔ são um CPF: ficam.
+        ("EMPRESA 12345678000190", "EMPRESA 12345678000190"),
+        ("12345678900", None),
+        (None, None),
+    ],
+)
+def test_sem_cpf_tira_o_cpf_do_nome_de_mei(bruto, limpo):
+    from poligraph_etl.normalizacao import sem_cpf
+
+    assert sem_cpf(bruto) == limpo

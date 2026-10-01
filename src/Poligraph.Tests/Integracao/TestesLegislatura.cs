@@ -47,7 +47,7 @@ public class TestesLegislatura(FixturePostgres postgres) : BaseIntegracao(postgr
         await SemearOutraLegislaturaAsync();
 
         using var cliente = CriarCliente();
-        var lista = await cliente.GetFromJsonAsync<List<ParlamentarLido>>("/api/parlamentares");
+        var lista = (await cliente.GetFromJsonAsync<PaginaLida>("/api/parlamentares"))?.Itens;
 
         Assert.NotNull(lista);
 
@@ -172,6 +172,8 @@ public class TestesLegislatura(FixturePostgres postgres) : BaseIntegracao(postgr
     }
 
     private record ParlamentarLido(long Id, string Nome, string Partido, string Uf, int NVotacoes);
+
+    private record PaginaLida(List<ParlamentarLido> Itens, int Total);
 
     private record FichaLida(long Id, string Nome, int NVotacoes);
 

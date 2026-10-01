@@ -176,6 +176,17 @@ def conferir_volume_de_cota(registros: list[dict], ano: int) -> None:
 API = "https://dadosabertos.camara.leg.br/api/v2"
 
 
+def redes_do_deputado(id_camara: str) -> list[str] | None:
+    """Os endereços em `redeSocial`. `None` quando a requisição falha — ⛔ lista vazia, que
+    afirmaria que o deputado ⛔ tem rede e apagaria a que já estava gravada."""
+    try:
+        resposta = requests.get(f"{API}/deputados/{id_camara}", headers={"Accept": "application/json"}, timeout=30)
+        resposta.raise_for_status()
+        return list((resposta.json().get("dados") or {}).get("redeSocial") or [])
+    except (requests.RequestException, ValueError):
+        return None
+
+
 def cpf_do_deputado(id_camara: str) -> str | None:
     """Busca o CPF de um deputado. `None` quando não há.
 

@@ -1,16 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { obterPanorama } from '../api';
-import { Avatar } from './Avatar';
-import {
-  IconeExplorar,
-  IconeInicio,
-  IconeQuestionario,
-  IconeVoltar,
-  Marca,
-} from './Icones';
-import { SeletorDeTema } from './SeletorDeTema';
-import { useSessao } from '../sessao';
+import { ehDinheiroPublico } from '../navegacao';
+import { BuscaDoCabecalho } from './BuscaDoCabecalho';
+import { IconeExplorar, IconeOrcamento, IconeQuestionario, IconeVoltar, Marca } from './Icones';
+import { MenuDaConta } from './MenuDaConta';
+import { ProvedorDoTour } from './Tour';
 
 /**
  * A largura útil de uma tela.
@@ -54,6 +49,7 @@ const LARGURA: { padrao: Largura; rotas: [string, Largura][] } = {
  */
 export function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
+  const legislatura = useLegislatura();
 
   const largura =
     LARGURA.rotas.find(([rota]) =>
@@ -61,15 +57,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
     )?.[1] ?? LARGURA.padrao;
 
   return (
-    <div className="site">
-      <CabecalhoDoSite />
+    <ProvedorDoTour>
+      <div className="site">
+        <FaixaDeProcedencia legislatura={legislatura} />
+        <CabecalhoDoSite />
 
-      <main className="corpo" data-largura={largura}>
-        {children}
-      </main>
+        <main className="corpo" data-largura={largura}>
+          {children}
+        </main>
 
-      <RodapeDoSite />
-    </div>
+        <RodapeDoSite legislatura={legislatura} />
+      </div>
+    </ProvedorDoTour>
   );
 }
 
@@ -115,21 +114,59 @@ export function CabecalhoDaColuna({
 // ═══════════════════════════════════════════════════════════════════
 
 /**
- * ⭐ Três destinos, ⛔ não cinco.
+ * ⭐ As três intenções de quem usa, ⛔ as fontes de dado que temos (ver `navegacao.ts`).
  *
- * "Início" e "Seguindo" dependiam os dois de a pessoa já seguir alguém, e mostravam a
- * mesma lista de duas formas. "Explorar" e "Grafo" eram duas vistas do mesmo conjunto
- * de parlamentares — separá-las em abas do menu obrigava a sair de uma para ver a
- * outra, quando a pergunta é a mesma.
+ * Eram cinco destinos — Início, Parlamentares, Compare seu voto, Emendas, Governo — e
+ * "Entidades" seria o sexto. Emendas, Entidades e Governo respondem a mesma pergunta,
+ * "para onde vai o dinheiro", e viraram abas de um destino só. O Início continua na marca.
  */
 const DESTINOS = [
-  { para: '/', rotulo: 'Início', icone: <IconeInicio /> },
   { para: '/parlamentares', rotulo: 'Parlamentares', icone: <IconeExplorar /> },
-  { para: '/resultado', rotulo: 'Meu resultado', icone: <IconeQuestionario /> },
+  { para: '/resultado', rotulo: 'Compare seu voto', icone: <IconeQuestionario /> },
+  { para: '/emendas', rotulo: 'Dinheiro público', icone: <IconeOrcamento /> },
 ];
 
+/**
+ * De onde vem o dado, dito antes de qualquer número.
+ *
+ * Esta faixa já existiu e saiu porque, somada ao cabeçalho fixo, deixava 110px presos na
+ * tela. Voltou sem ser fixa: rola junto com a página, e só o cabeçalho fica. Custa uma
+ * linha no topo e nada durante a leitura.
+ */
+function FaixaDeProcedencia({ legislatura }: { legislatura: number | null }) {
+  return (
+    <p className="faixa-procedencia" data-tour="procedencia">
+      <strong>Dados públicos</strong>
+      <span>Registro nominal de votação da Câmara dos Deputados e do Senado Federal</span>
+      {legislatura && <span>{legislatura}ª legislatura</span>}
+    </p>
+  );
+}
+
+/**
+ * A legislatura vem do dado, nunca de um literal (PL35): escrita à mão, continuaria
+ * dizendo "57ª" depois de a 58ª entrar na base.
+ */
+function useLegislatura(): number | null {
+  const [legislatura, setLegislatura] = useState<number | null>(null);
+
+  useEffect(() => {
+    obterPanorama()
+      .then((p) => setLegislatura(p.legislatura))
+      .catch(() => setLegislatura(null));
+  }, []);
+
+  return legislatura;
+}
+
+/**
+ * Marca, as três intenções, a busca e a conta.
+ *
+ * ⭐ Eram onze elementos na barra. A busca responde a quem chega com um nome; o resto da
+ * conta — tema, tour, sair — foi para o menu, porque se usa uma vez por visita, ou nenhuma.
+ */
 function CabecalhoDoSite() {
-  const { usuario, sair } = useSessao();
+  const { pathname } = useLocation();
 
   return (
     <header className="cabecalho-site">
@@ -144,8 +181,9 @@ function CabecalhoDoSite() {
             <NavLink
               key={destino.para}
               to={destino.para}
-              end={destino.para === '/'}
-              className="nav-item"
+              className={({ isActive }) =>
+                `nav-item ${isActive || (destino.para === '/emendas' && ehDinheiroPublico(pathname)) ? 'active' : ''}`
+              }
               viewTransition
             >
               {destino.icone}
@@ -154,17 +192,8 @@ function CabecalhoDoSite() {
           ))}
         </nav>
 
-        <div className="cabecalho-conta">
-          <SeletorDeTema />
-
-          <Link to="/conta" className="usuario-mini">
-            <Avatar nome={usuario?.nome ?? '?'} fotoUrl={usuario?.fotoUrl} tamanho="pequeno" />
-            <span className="usuario-mini-nome">{usuario?.nome?.split(' ')[0] ?? 'Conta'}</span>
-          </Link>
-          <button type="button" className="botao-texto" onClick={sair}>
-            Sair
-          </button>
-        </div>
+        <BuscaDoCabecalho />
+        <MenuDaConta />
       </div>
     </header>
   );
@@ -178,15 +207,7 @@ function CabecalhoDoSite() {
  * preta no topo de toda página: o lugar de maior custo da tela para uma informação que
  * se lê uma vez.
  */
-function RodapeDoSite() {
-  const [legislatura, setLegislatura] = useState<number | null>(null);
-
-  useEffect(() => {
-    obterPanorama()
-      .then((p) => setLegislatura(p.legislatura))
-      .catch(() => setLegislatura(null));
-  }, []);
-
+function RodapeDoSite({ legislatura }: { legislatura: number | null }) {
   return (
     <footer className="rodape-site">
       <div className="rodape-conteudo">
@@ -214,6 +235,8 @@ function RodapeDoSite() {
         <section>
           <h2>Seus dados</h2>
           <p>
+            <Link to="/metodologia">Como calculamos</Link>
+            <br />
             <Link to="/privacidade">Política de privacidade</Link>
             <br />
             <Link to="/conta">Apagar minha conta</Link>
