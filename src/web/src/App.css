@@ -255,6 +255,15 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   view-transition-name: faixa;
 }
 .faixa-procedencia strong { font-weight: 600; }
+/* ⭐ O seletor de período mora na faixa: o mesmo lugar em todo o site. Cores da faixa,
+   ⛔ do conteúdo — senão vira um controle claro numa tira escura. */
+.faixa-procedencia { align-items: center; }
+.faixa-procedencia .seletor-legislatura { color: var(--faixa-texto); font-size: var(--t-1); margin-left: auto; }
+.faixa-procedencia .seletor-legislatura select {
+  padding: .1rem .35rem; font-size: var(--t-1);
+  color: var(--faixa-texto); background: var(--faixa-fundo);
+  border: 1px solid color-mix(in srgb, var(--faixa-texto) 45%, transparent);
+}
 
 .cabecalho-site {
   position: sticky; top: 0; z-index: 30;
@@ -555,7 +564,6 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .selo-ausente { opacity: .6; }
 
 /* ═══ FEED ═════════════════════════════════════════════════════ */
-.noticia-trecho { margin: .35rem 0 0; color: var(--suave); font-size: var(--t-2); }
 
 /* ═══ BUSCA E FILTROS ══════════════════════════════════════════ */
 .filtros { display: flex; gap: .5rem; padding: .8rem 1rem; flex-wrap: wrap; border-bottom: 1px solid var(--borda); }
@@ -695,6 +703,8 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   background: var(--painel); border-left: 3px solid var(--perigo); border-radius: 0 var(--raio) var(--raio) 0;
   font-size: var(--t-2); line-height: 1.5; color: var(--suave);
 }
+.login-opcional { margin: .9rem 0 0; color: var(--suave); font-size: var(--t-2); }
+.login-opcional a { color: var(--realce); }
 .aviso-privacidade {
   font-size: var(--t-1); color: var(--suave); text-align: left;
   border-top: 1px solid var(--borda); padding-top: 1rem; line-height: 1.5;
@@ -953,8 +963,6 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 /* ═══ NOTÍCIAS E VOTOS NA TIMELINE ═════════════════════════════ */
 /* ⚠️ Linha sem avatar: o dono do conteúdo já é o perfil da página. */
 .linha-simples { padding-inline: 1rem; }
-.noticia-titulo { display: block; font-weight: 600; font-size: var(--t-3); margin: .1rem 0 .2rem; }
-.noticia-titulo:hover { text-decoration: underline; }
 .voto-descricao { margin: .45rem 0 .2rem; font-size: var(--t-2); }
 
 /* ⚠️ O registro processual fica MENOR e mais apagado que a ementa, de propósito:
@@ -1509,6 +1517,11 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   font-size: var(--t-2); color: var(--suave);
 }
 .grafo-barra .seletor-legislatura { padding: .75rem 0 0; }
+/* Botão que se lê como link: escolher outro período sem sair da frase que explica por quê. */
+.botao-link {
+  padding: 0; border: 0; background: none; font: inherit;
+  color: var(--realce); text-decoration: underline; cursor: pointer;
+}
 .painel-secao > .seletor-legislatura { margin: .2rem 0 1rem; }
 .seletor-legislatura select {
   padding: .3rem .5rem;
@@ -2716,6 +2729,9 @@ dialog.tour::backdrop { background: transparent; }
   .faixa-procedencia { flex-wrap: nowrap; gap: .6rem; white-space: nowrap; overflow: hidden; }
   .faixa-procedencia .faixa-longa { display: none; }
   .faixa-procedencia .faixa-curta { display: inline; }
+  /* No celular a faixa é uma linha só: o seletor fica, o texto de procedência encolhe. */
+  .faixa-procedencia .seletor-legislatura { flex: none; }
+  .faixa-procedencia .seletor-legislatura > span { display: none; }
 
   .cabecalho-conteudo .nav-principal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
   .cabecalho-conteudo .nav-item {

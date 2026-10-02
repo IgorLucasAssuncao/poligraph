@@ -16,6 +16,7 @@ import { CabecalhoDaColuna } from './Layout';
 import { GrafoAmpliado } from './GrafoAmpliado';
 import { LinhaParlamentar } from './LinhaParlamentar';
 import { TelaDoGrafo } from './TelaDoGrafo';
+import { useSessao } from '../sessao';
 import { LinkDeFonte } from './LinkDeFonte';
 import { FONTES } from '../fontes';
 import { passosDoResultado } from '../tour';
@@ -46,6 +47,7 @@ export function Resultado({
   perguntas: Pergunta[];
 }) {
   const textos = new Map(perguntas.map((p) => [p.id, p.texto]));
+  const { usuario } = useSessao();
 
   return (
     <>
@@ -74,7 +76,9 @@ export function Resultado({
         nenhum parlamentar.
       </p>
 
-      <Avaliacao resultado={resultado} />
+      {/* ⚠️ O registro da avaliação exige conta no servidor — é o freio contra quem
+          enviaria mil avaliações. Sem conta, a avaliação ⛔ aparece. */}
+      {usuario && <Avaliacao resultado={resultado} />}
 
       {/* Refazer sempre disponível: a pessoa muda de ideia, e as perguntas mudam quando
           a curadoria acrescenta votações novas. */}

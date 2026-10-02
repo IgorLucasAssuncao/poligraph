@@ -5,11 +5,9 @@ import {
   listarSeguidos,
   listarVotos,
   obterFicha,
-  obterNoticias,
   seguir,
   type Alinhamento,
   type Ficha,
-  type Noticia,
   type PaginaDe,
   type Presenca,
   type VotoNaFicha,
@@ -17,6 +15,7 @@ import {
 import { Avatar } from '../componentes/Avatar';
 import { BotaoDoTour } from '../componentes/BotaoDoTour';
 import { BotaoMostrarMais } from '../componentes/BotaoMostrarMais';
+import { BotaoSeguir } from '../componentes/BotaoSeguir';
 import { AbaCampanha, AbaCota, AbaEmendas, FaixaDeContas } from '../componentes/ContasDoParlamentar';
 import { useContas } from '../componentes/useContas';
 import { BotaoBaixarCsv } from '../componentes/BotaoBaixarCsv';
@@ -43,14 +42,13 @@ const PASSOS_DA_FICHA = passosDaFicha();
  *
  * ⭐ `votos` é o padrão porque é o núcleo do trabalho e sempre tem conteúdo.
  */
-type Aba = 'votos' | 'emendas' | 'cota' | 'campanha' | 'noticias';
+type Aba = 'votos' | 'emendas' | 'cota' | 'campanha';
 
 const ABAS: [Aba, string][] = [
   ['votos', 'Como vota'],
   ['emendas', 'Emendas'],
   ['cota', 'Cota'],
   ['campanha', 'Campanha'],
-  ['noticias', 'Notícias'],
 ];
 
 /** O perfil do parlamentar — a página mais parecida com "rede social" do site. */
@@ -66,7 +64,6 @@ export function Parlamentar() {
   const { usuario } = useSessao();
 
   const [ficha, setFicha] = useState<Ficha | null>(null);
-  const [noticias, setNoticias] = useState<PaginaDe<Noticia>>({ itens: [], pagina: 1, tamanho: 10, total: 0 });
   const [seguindo, setSeguindo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -76,13 +73,11 @@ export function Parlamentar() {
 
     Promise.all([
       obterFicha(pessoaId, legislaturaPedida),
-      obterNoticias(pessoaId),
       // Sem conta, ninguém é seguido — e a lista responderia 401 e derrubaria a ficha.
       usuario ? listarSeguidos() : Promise.resolve([]),
     ])
-      .then(([f, n, seguidos]) => {
+      .then(([f, seguidos]) => {
         setFicha(f);
-        setNoticias(n);
         setSeguindo(seguidos.some((s) => s.id === pessoaId));
       })
       .catch(() => setErro('Não foi possível carregar este parlamentar.'));
@@ -122,16 +117,7 @@ export function Parlamentar() {
             {ficha.nomeCivil !== ficha.nome && <p className="nome-civil">{ficha.nomeCivil}</p>}
           </div>
 
-          {usuario && (
-          <button
-            type="button"
-            className={seguindo ? 'botao-seguindo' : 'botao-seguir'}
-            aria-pressed={seguindo}
-            onClick={alternarSeguir}
-          >
-            <span>{seguindo ? 'Seguindo' : 'Seguir'}</span>
-          </button>
-          )}
+          <BotaoSeguir pessoaId={pessoaId} seguindo={seguindo} aoAlternar={(_, agora) => setSeguindo(agora)} />
         </div>
 
         <div className="perfil-chips">
@@ -212,22 +198,9 @@ export function Parlamentar() {
           />
         </>
       )}
-      {aba === 'noticias' && <AbaNoticias pessoaId={pessoaId} primeira={noticias} />}
     </>
   );
 
-  // ═══════════════════════════════════════════════════════════════
-
-  async function alternarSeguir() {
-    const proximo = !seguindo;
-    setSeguindo(proximo);
-
-    try {
-      await (proximo ? seguir(pessoaId) : deixarDeSeguir(pessoaId));
-    } catch {
-      setSeguindo(!proximo);
-    }
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -507,47 +480,6 @@ function FaixaDeAlinhamento({ alinhamento, presenca }: { alinhamento: Alinhament
         </div>
       )}
     </dl>
-  );
-}
-
-function AbaNoticias({ pessoaId, primeira }: { pessoaId: number; primeira: PaginaDe<Noticia> }) {
-  const lista = usePaginas(primeira.itens, primeira.total, primeira.tamanho, (pagina) =>
-    obterNoticias(pessoaId, pagina),
-  );
-
-  if (lista.itens.length === 0) {
-    return (
-      /* ⭐ O estado vazio diz o MOTIVO medido, ⛔ não uma desculpa genérica.
-         📐 Em 2026-08-29, na primeira coleta real: 12 de 45 notícias citavam algum
-         parlamentar pelo nome. As outras 33 falavam da atividade legislativa sem
-         nomear ninguém — "Comissão aprova MP que destina crédito…". ⚠️ O vazio é o
-         caso COMUM, e a tela precisa dizer isso ou parece quebrada. */
-      <p className="vazio">
-        Nenhuma notícia recente cita esta pessoa pelo nome. A maior parte da cobertura
-        legislativa fala das votações sem nomear quem votou — e parlamentares de menor
-        projeção passam semanas fora da imprensa. Nenhum dos dois é erro.
-      </p>
-    );
-  }
-
-  return (
-    <>
-      {lista.itens.map((n) => (
-        <article key={n.id} className="linha linha-simples">
-          <div className="linha-corpo">
-            {/* ⚠️ Link para o veículo. ⛔ Nunca reproduzimos o texto da matéria. */}
-            <a className="noticia-titulo" href={n.url} target="_blank" rel="noreferrer noopener">
-              {n.titulo}
-            </a>
-            <span className="linha-detalhe">
-              {n.veiculo} · {formatarData(n.publicadaEm)}
-            </span>
-            {n.trecho && <p className="noticia-trecho">{n.trecho}</p>}
-          </div>
-        </article>
-      ))}
-      <BotaoMostrarMais {...lista} aoClicar={lista.carregarMais} />
-    </>
   );
 }
 

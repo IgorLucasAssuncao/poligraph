@@ -1,10 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Poligraph.Api.Services;
 using Poligraph.Data;
 
 namespace Poligraph.Tests.Integracao;
@@ -157,30 +153,6 @@ public class TestesHistorico(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Equal(1, camara.Parlamentares);
     }
 
-    /// <summary>
-    /// O feed da página inicial numa requisição só, e só de quem o usuário segue.
-    /// </summary>
-    [SkippableFact]
-    public async Task NoticiasDosSeguidos_TrazSoDeQuemSegue_AcimaDoLimiar()
-    {
-        ExigeDocker();
-        await SemearAsync();
-        var ids = await Db.Pessoas.AsNoTracking().OrderBy(p => p.Id).Select(p => p.Id).Take(2).ToListAsync();
-        await GravarNoticiaAsync("https://exemplo.gov.br/seguido", ids[0], confianca: 0.9f);
-        await GravarNoticiaAsync("https://exemplo.gov.br/fraca", ids[0], confianca: 0.5f);
-        await GravarNoticiaAsync("https://exemplo.gov.br/outro", ids[1], confianca: 0.9f);
-
-        using var cliente = ClienteLogado();
-        (await cliente.PostAsJsonAsync("/api/auth/google", new { idToken = "token-valido" })).EnsureSuccessStatusCode();
-        (await cliente.PutAsync($"/api/seguidos/{ids[0]}", null)).EnsureSuccessStatusCode();
-
-        var feed = await cliente.GetFromJsonAsync<List<NoticiaDoFeedLida>>("/api/seguidos/noticias");
-
-        var item = Assert.Single(feed!);
-        Assert.Equal(ids[0], item.PessoaId);
-        Assert.Equal("https://exemplo.gov.br/seguido", item.Noticia.Url);
-    }
-
     // PRIVADOS — na ordem de uso
 
     private async Task SemearAsync() =>
@@ -221,30 +193,6 @@ public class TestesHistorico(FixturePostgres postgres) : BaseIntegracao(postgres
         await Db.SaveChangesAsync();
     }
 
-    private async Task GravarNoticiaAsync(string url, long pessoaId, float confianca)
-    {
-        var noticia = new NoticiaModel
-        {
-            Url = url, Titulo = url, Veiculo = "Agência Câmara", HashTitulo = url,
-            PublicadaEm = DateTimeOffset.UtcNow, ColetadaEm = DateTimeOffset.UtcNow
-        };
-        noticia.Pessoas.Add(new NoticiaPessoaModel
-        {
-            PessoaId = pessoaId, Confianca = confianca, Metodo = TipoMetodoDeCitacao.NOME_COMPLETO
-        });
-        Db.Noticias.Add(noticia);
-        await Db.SaveChangesAsync();
-    }
-
-    private HttpClient ClienteLogado() =>
-        new FabricaApi(ConnectionString)
-            .WithWebHostBuilder(b => b.ConfigureTestServices(s =>
-            {
-                s.RemoveAll<IValidadorGoogle>();
-                s.AddScoped<IValidadorGoogle>(_ => new ValidadorFalso());
-            }))
-            .CreateClient(new() { HandleCookies = true });
-
     private record ParlamentarLido(long Id, string Nome, string? Casa, int NVotacoes, short Legislatura);
 
     private record PaginaLida(List<ParlamentarLido> Itens, int Total, short? LegislaturaCorrente);
@@ -256,8 +204,4 @@ public class TestesHistorico(FixturePostgres postgres) : BaseIntegracao(postgres
     private record PanoramaLido(short? Legislatura, List<CasaDoPanoramaLida> PorCasa);
 
     private record CasaDoPanoramaLida(string Casa, int Votacoes, int Parlamentares);
-
-    private record NoticiaLida(string Url);
-
-    private record NoticiaDoFeedLida(long PessoaId, NoticiaLida Noticia);
 }

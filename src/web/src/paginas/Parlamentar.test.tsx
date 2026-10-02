@@ -18,7 +18,6 @@ vi.mock('../sessao', () => ({
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
   obterFicha: vi.fn(),
-  obterNoticias: vi.fn(),
   listarVotos: vi.fn(),
   listarLancamentos: vi.fn(),
   listarConvenios: vi.fn(),
@@ -185,7 +184,6 @@ async function abrirAba(nome: 'Emendas' | 'Cota' | 'Campanha') {
 
 beforeEach(() => {
   vi.mocked(api.obterFicha).mockResolvedValue(FICHA);
-  vi.mocked(api.obterNoticias).mockResolvedValue({ itens: [], pagina: 1, tamanho: 10, total: 0 });
   vi.mocked(api.listarSeguidos).mockResolvedValue([]);
   vi.mocked(api.obterEmendas).mockResolvedValue(EMENDAS);
   vi.mocked(api.obterFinanciamento).mockResolvedValue(CAMPANHA);
@@ -734,7 +732,6 @@ describe('os mandatos na ficha', () => {
   };
 
   beforeEach(() => {
-    vi.mocked(api.obterNoticias).mockResolvedValue({ itens: [], pagina: 1, tamanho: 10, total: 0 });
     vi.mocked(api.listarSeguidos).mockResolvedValue([]);
   });
 

@@ -1,5 +1,8 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { deixarDeSeguir, seguir } from '../api';
+import { useSessao } from '../sessao';
+import { useEntrar } from './useEntrar';
 
 /**
  * 🔴 Este botão escreve na tabela `segue`, que é REGISTRO DE CONVICÇÃO POLÍTICA
@@ -19,6 +22,20 @@ export function BotaoSeguir({
   aoAlternar: (id: number, seguindoAgora: boolean) => void;
 }) {
   const [ocupado, setOcupado] = useState(false);
+  const { usuario } = useSessao();
+  const entrar = useEntrar();
+
+  /**
+   * ⭐ Sem conta, o botão aparece igual e leva a entrar (2026-10-02, decisão do autor):
+   * a conta só existe para seguir. Esconder o botão escondia também que dava para seguir.
+   */
+  if (!usuario) {
+    return (
+      <Link to={entrar} className="botao-seguir" title="Entre com o Google para seguir">
+        <span>Seguir</span>
+      </Link>
+    );
+  }
 
   return (
     <button

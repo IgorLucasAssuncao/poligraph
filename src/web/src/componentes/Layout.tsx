@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { obterPanorama } from '../api';
 import { ehDinheiroPublico } from '../navegacao';
 import { BuscaDoCabecalho } from './BuscaDoCabecalho';
+import { FaixaDeProcedencia } from './FaixaDeProcedencia';
 import { IconeExplorar, IconeOrcamento, IconeQuestionario, IconeVoltar, Marca } from './Icones';
 import { MenuDaConta } from './MenuDaConta';
 import { ProvedorDoTour } from './Tour';
+import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
 
 /**
  * A largura útil de uma tela.
@@ -49,7 +49,6 @@ const LARGURA: { padrao: Largura; rotas: [string, Largura][] } = {
  */
 export function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
-  const legislatura = useLegislatura();
 
   const largura =
     LARGURA.rotas.find(([rota]) =>
@@ -59,14 +58,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <ProvedorDoTour>
       <div className="site">
-        <FaixaDeProcedencia legislatura={legislatura} />
+        <FaixaDeProcedencia />
         <CabecalhoDoSite />
 
         <main className="corpo" data-largura={largura}>
           {children}
         </main>
 
-        <RodapeDoSite legislatura={legislatura} />
+        <RodapeDoSite />
       </div>
     </ProvedorDoTour>
   );
@@ -126,39 +125,6 @@ const DESTINOS = [
   { para: '/emendas', rotulo: 'Dinheiro público', icone: <IconeOrcamento /> },
 ];
 
-/**
- * De onde vem o dado, dito antes de qualquer número.
- *
- * Esta faixa já existiu e saiu porque, somada ao cabeçalho fixo, deixava 110px presos na
- * tela. Voltou sem ser fixa: rola junto com a página, e só o cabeçalho fica. Custa uma
- * linha no topo e nada durante a leitura.
- */
-function FaixaDeProcedencia({ legislatura }: { legislatura: number | null }) {
-  return (
-    <p className="faixa-procedencia" data-tour="procedencia">
-      <strong>Dados públicos</strong>
-      <span className="faixa-longa">Registro nominal de votação da Câmara dos Deputados e do Senado Federal</span>
-      <span className="faixa-curta" aria-hidden="true">Câmara e Senado</span>
-      {legislatura && <span>{legislatura}ª legislatura</span>}
-    </p>
-  );
-}
-
-/**
- * A legislatura vem do dado, nunca de um literal (PL35): escrita à mão, continuaria
- * dizendo "57ª" depois de a 58ª entrar na base.
- */
-function useLegislatura(): number | null {
-  const [legislatura, setLegislatura] = useState<number | null>(null);
-
-  useEffect(() => {
-    obterPanorama()
-      .then((p) => setLegislatura(p.legislatura))
-      .catch(() => setLegislatura(null));
-  }, []);
-
-  return legislatura;
-}
 
 /**
  * Marca, as três intenções, a busca e a conta.
@@ -168,11 +134,17 @@ function useLegislatura(): number | null {
  */
 function CabecalhoDoSite() {
   const { pathname } = useLocation();
+  const [escolha] = useLegislaturaDaUrl();
+  /**
+   * ⭐ O período escolhido acompanha quem vai do início para os parlamentares e volta.
+   * Sem isto, a escolha feita na faixa se perdia no primeiro clique do menu.
+   */
+  const comPeriodo = (rota: string) => (escolha === undefined ? rota : `${rota}?legislatura=${escolha}`);
 
   return (
     <header className="cabecalho-site">
       <div className="cabecalho-conteudo">
-        <Link to="/" className="marca-link" aria-label="Registro Aberto — início">
+        <Link to={comPeriodo('/')} className="marca-link" aria-label="Registro Aberto — início">
           <Marca />
           <span className="marca-texto">Registro Aberto</span>
         </Link>
@@ -181,7 +153,7 @@ function CabecalhoDoSite() {
           {DESTINOS.map((destino) => (
             <NavLink
               key={destino.para}
-              to={destino.para}
+              to={destino.para === '/parlamentares' ? comPeriodo(destino.para) : destino.para}
               className={({ isActive }) =>
                 `nav-item ${isActive || (destino.para === '/emendas' && ehDinheiroPublico(pathname)) ? 'active' : ''}`
               }
@@ -208,7 +180,11 @@ function CabecalhoDoSite() {
  * preta no topo de toda página: o lugar de maior custo da tela para uma informação que
  * se lê uma vez.
  */
-function RodapeDoSite({ legislatura }: { legislatura: number | null }) {
+function RodapeDoSite() {
+  const legislaturas = useLegislaturas();
+  const maisAntiga = legislaturas?.at(-1)?.numero;
+  const corrente = legislaturas?.[0]?.numero;
+
   return (
     <footer className="rodape-site">
       <div className="rodape-conteudo">
@@ -228,7 +204,13 @@ function RodapeDoSite({ legislatura }: { legislatura: number | null }) {
             {/* 🔴 PL35 — a legislatura vem do DADO, ⛔ nunca de um literal. Escrita à
                 mão aqui, ela continuaria dizendo "57ª" depois de a 58ª entrar na base,
                 e o rodapé creditaria a procedência errada sem nada quebrar. */}
-            {legislatura ? `, ${legislatura}ª legislatura` : ''}. Nenhum voto é editado:
+            {/* ⚠️ Dizia só a corrente. Com o histórico na base, o crédito é do intervalo. */}
+            {maisAntiga && corrente
+              ? maisAntiga === corrente
+                ? `, ${corrente}ª legislatura`
+                : `, da ${maisAntiga}ª à ${corrente}ª legislatura`
+              : ''}
+            . Nenhum voto é editado:
             a curadoria reescreve a ementa e registra a polaridade da votação.
           </p>
         </section>

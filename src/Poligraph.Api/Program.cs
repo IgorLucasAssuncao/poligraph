@@ -36,7 +36,6 @@ app.MapearParlamentares()
    .MapearAutenticacao()
    .MapearSeguir()
    .MapearGrafo()
-   .MapearNoticias()
    .MapearAvaliacao();
 
 app.AvisarSeOLoginEstaDesligado();

@@ -23,10 +23,10 @@ import requests
 from . import conexao as conexao_mod
 from . import (
     arrecadacao, comparacao, cota, curadoria, emendas, gestao, grafo, ingestao,
-    ingestao_senado, municipios, noticias, normalizacao, orcamento, orientacoes,
+    ingestao_senado, municipios, normalizacao, orcamento, orientacoes,
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
-from .fontes import camara, portal, receita, rss, senado, tse
+from .fontes import camara, portal, receita, senado, tse
 from . import convenentes, patrimonio, redes
 
 log = logging.getLogger("poligraph")
@@ -90,8 +90,6 @@ def main(argv: list[str] | None = None) -> int:
                 _cota(conexao, args.anos)
             elif args.comando == "fundo":
                 _fundo(conexao, args.eleicao, args.arquivo)
-            elif args.comando == "noticias":
-                _noticias(conexao, args.limiar_de_exibicao)
             elif args.comando == "validar":
                 _validar(conexao, args.legislatura, args.divisao_minima)
             else:
@@ -199,18 +197,6 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     curar.add_argument("--casa", choices=["CAMARA", "SENADO"], default="SENADO")
     curar.add_argument("--legislatura", type=int, default=57)
     curar.add_argument("--limite", type=int, default=25)
-
-    noticias_cmd = sub.add_parser(
-        "noticias", help="coleta notícias dos feeds RSS e associa a parlamentares"
-    )
-    # ⚠️ Existe para MEDIR o limiar, ⛔ não para afrouxá-lo em produção: a gravação leva
-    #    toda menção, e este número só muda o que o relatório chama de "exibível".
-    noticias_cmd.add_argument(
-        "--limiar-de-exibicao",
-        type=float,
-        default=noticias.CONFIANCA_MINIMA,
-        help="só para o relatório — a RF-40 fixa 0,70 na API",
-    )
 
     validar = sub.add_parser(
         "validar", help="mede discriminação do questionário e comunidade x partido"
@@ -1568,91 +1554,6 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
     )
 
     log.info("  %d matérias gravadas, %d votações vinculadas", len(linhas), ligados)
-
-
-def _noticias(conexao: psycopg.Connection, limiar_de_exibicao: float) -> None:
-    """RF-38, RF-40 — coleta os feeds e associa cada notícia a quem ela cita.
-
-    ⚠️ Sem recorte por legislatura: a notícia é de hoje, e quem a cita é quem está no
-    banco. Um ex-parlamentar citado ⛔ não é associado simplesmente porque ⛔ não está
-    entre as pessoas com voto.
-    """
-    nomes = _nomes_para_casar(conexao)
-    log.info("%d parlamentares no índice de nomes", len(nomes))
-
-    coletadas: list = []
-    for veiculo, url in rss.FEEDS:
-        xml = rss.baixar(url)
-        if xml is None:
-            continue
-
-        itens = noticias.ler_feed(xml, veiculo)
-        log.info("%-16s %3d notícias", veiculo, len(itens))
-        coletadas.extend(itens)
-
-    rss.conferir_volume(len(coletadas))
-
-    if not coletadas:
-        log.warning("Nenhuma notícia coletada — nada a gravar.")
-        return
-
-    # ⚠️ Deduplica por URL ANTES de gravar: dois feeds republicam a mesma matéria, e
-    #    `executemany` com a mesma chave duas vezes no mesmo lote irrita o ON CONFLICT.
-    por_url = {n.url: n for n in coletadas}
-    log.info("%d notícias, %d únicas por URL", len(coletadas), len(por_url))
-
-    ids = persistencia.gravar_noticias(conexao, list(por_url.values()))
-    log.info("%d notícias gravadas", len(ids))
-
-    linhas, exibiveis = [], 0
-    for noticia in por_url.values():
-        for mencao in noticias.encontrar_mencoes(noticia.titulo, noticia.trecho, nomes):
-            if mencao.confianca >= limiar_de_exibicao:
-                exibiveis += 1
-
-            linhas.append(
-                {
-                    "noticia_id": ids[noticia.url],
-                    "pessoa_id": mencao.pessoa_id,
-                    "confianca": mencao.confianca,
-                    "metodo": mencao.metodo,
-                }
-            )
-
-    gravadas = persistencia.gravar_mencoes(conexao, linhas)
-
-    # 🔴 Os dois números juntos, ⛔ nunca só o total: a diferença é o que a RF-40 esconde
-    #    da tela, e é ela que diz se o limiar está no lugar certo.
-    log.info(
-        "%d menções gravadas · %d acima do limiar de %.2f (as outras %d ficam no banco "
-        "e ⛔ não vão à tela)",
-        gravadas,
-        exibiveis,
-        limiar_de_exibicao,
-        gravadas - exibiveis,
-    )
-
-
-def _nomes_para_casar(conexao: psycopg.Connection) -> dict:
-    """Índice `pessoa_id -> nomes`, no formato que `encontrar_mencoes` espera.
-
-    ⚠️ Só quem votou na legislatura CORRENTE. O banco guarda milhares de pessoas, quase
-    todas de legislaturas antigas — e, com o histórico, muitas delas com voto. Procurá-las
-    em cada manchete traria homônimo de quem ⛔ está mais em exercício.
-    """
-    with conexao.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT p.id, p.nome_civil, p.nome_exibicao
-              FROM pessoas p
-             WHERE p.excluido_em IS NULL
-               AND """ + persistencia.na_legislatura_corrente("p.id")
-        )
-
-        return {
-            pessoa_id: {"nome_civil": completo or "", "nome_exibicao": exibicao or ""}
-            for pessoa_id, completo, exibicao in cursor.fetchall()
-        }
 
 
 def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: float) -> None:

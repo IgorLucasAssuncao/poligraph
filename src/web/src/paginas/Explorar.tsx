@@ -11,8 +11,7 @@ import { IconeExplorar } from '../componentes/Icones';
 import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 import { useSessao } from '../sessao';
 import { EsqueletoDeLista } from '../componentes/Esqueleto';
-import { SeletorDeLegislatura } from '../componentes/SeletorDeLegislatura';
-import { useLegislaturaDaUrl, useLegislaturas } from '../componentes/useLegislatura';
+import { useLegislaturaDaUrl } from '../componentes/useLegislatura';
 
 /** Busca e navegação pelos parlamentares (RF-34). */
 /**
@@ -38,8 +37,8 @@ export function Explorar() {
   const [partido, setPartido] = useState('');
   const [uf, setUf] = useState('');
   const [casa, setCasa] = useState<Casa | ''>('');
-  const [escolha, setLegislatura] = useLegislaturaDaUrl();
-  const legislaturas = useLegislaturas();
+  /** O período vem da faixa do topo — o seletor é um só, no mesmo lugar em todo o site. */
+  const [escolha] = useLegislaturaDaUrl();
   const [lista, setLista] = useState<Parlamentar[]>([]);
   const [pagina, setPagina] = useState<PaginaDeParlamentares | null>(null);
   const [seguidos, setSeguidos] = useState<Set<number>>(new Set());
@@ -132,17 +131,6 @@ export function Explorar() {
           ))}
         </select>
 
-        {/* ⭐ A corrente por padrão: o histórico são milhares de nomes, e quem chega
-            procura quem está lá hoje. "Todos os períodos" substituiu a caixa "Incluir
-            quem já saiu", que ⛔ deixava escolher UM período passado. */}
-        {legislaturas && legislaturas.length > 1 && (
-          <SeletorDeLegislatura
-            opcoes={legislaturas.map((l) => l.numero)}
-            atual={escolha ?? legislaturas[0].numero}
-            aoTrocar={setLegislatura}
-            comTodas
-          />
-        )}
       </div>
 
       {carregando && <EsqueletoDeLista rotulo="Buscando parlamentares" linhas={8} />}
@@ -155,6 +143,7 @@ export function Explorar() {
         <p className="contagem-lista" aria-live="polite">
           {lista.length === total ? `${total} parlamentares` : `${lista.length} de ${total} parlamentares`}
           {passada && ` que votaram em ${periodoDaLegislatura(passada)}`}
+          {escolha === 'todas' && ' de todos os períodos, cada um com o último mandato'}
         </p>
       )}
 
@@ -176,7 +165,7 @@ export function Explorar() {
           detalhe={detalheDe(p)}
           legislatura={p.legislatura && p.legislatura !== pagina?.legislaturaCorrente ? p.legislatura : undefined}
           seguindo={seguidos.has(p.id)}
-          aoAlternarSeguir={usuario ? alternar : undefined}
+          aoAlternarSeguir={alternar}
         />
       ))}
 

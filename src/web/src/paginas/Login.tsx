@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { NOME_DA_CASA, obterPanorama, type Panorama } from '../api';
 import { BotaoGoogle } from '../componentes/BotaoGoogle';
 import { Marca } from '../componentes/Icones';
 import { SeletorDeTema } from '../componentes/SeletorDeTema';
 import { useSessao } from '../sessao';
+import { destinoSeguro } from '../componentes/useEntrar';
 
 /**
  * Porta de entrada.
  *
- * ⚠️ O login passou a ser obrigatório por decisão do autor (2026-08-26), revertendo o
- * desenho anterior em que o questionário funcionava anônimo. Isso significa que TODA
- * pessoa que usa o site tem conta — e a tabela `segue`, que é dado sensível pela LGPD
- * art. 5º, II, deixa de ter alternativa anônima.
+ * ## Quando ela aparece
+ *
+ * | Leitura pública (`Acesso:LeituraPublica`) | Esta tela |
+ * |---|---|
+ * | 🔴 Desligada — o padrão, e o período eleitoral (RNF-17) | Para tudo: o site exige conta |
+ * | Ligada | Só para seguir alguém e para a própria conta. O resto é aberto |
+ *
+ * ⚠️ O login foi obrigatório de 2026-08-26 a 2026-10-02. Passou a ser opcional por
+ * decisão do autor: a conta só existe para a lista de quem a pessoa segue, que é dado
+ * sensível (LGPD art. 5º, II). Quem ⛔ segue ninguém ⛔ precisa dar dado nenhum.
  *
  * Por isso esta tela diz, ANTES de entrar, o que vai ser guardado.
  *
@@ -28,7 +35,9 @@ import { useSessao } from '../sessao';
  * publicado, e ⛔ não depende de quem está olhando.
  */
 export function Login() {
-  const { entrou } = useSessao();
+  const { entrou, leituraPublica } = useSessao();
+  const [parametros] = useSearchParams();
+  const voltar = destinoSeguro(parametros.get('voltar'));
   const [panorama, setPanorama] = useState<Panorama | null>(null);
 
   useEffect(() => {
@@ -57,6 +66,13 @@ export function Login() {
         <div className="acao-login">
           <BotaoGoogle aoEntrar={entrou} />
         </div>
+
+        {leituraPublica && (
+          <p className="login-opcional">
+            A conta serve para <strong>seguir parlamentares</strong>. O questionário e
+            todos os dados funcionam sem ela. <Link to={voltar}>Continuar sem conta</Link>
+          </p>
+        )}
 
         {panorama && panorama.porCasa.length > 0 && <Base panorama={panorama} />}
 

@@ -31,7 +31,6 @@ public static class ConfiguracaoDeServicos
             opcoes => opcoes.Level = System.IO.Compression.CompressionLevel.Optimal);
         servicos.AddScoped<IValidadorGoogle, ValidadorGoogle>();
         servicos.AddScoped<ServicoContas>();
-        servicos.AddScoped<ServicoDigest>();
         servicos.AddScoped<ServicoParlamentares>();
         servicos.AddScoped<ServicoGastosDeCota>();
         servicos.AddScoped<ServicoEmendas>();

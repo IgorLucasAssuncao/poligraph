@@ -174,10 +174,10 @@ ETL fica como botão no painel, esperando você mandar rodar.
 
 | Parte | Onde está |
 |---|---|
-| API | Afinidade, parlamentares, ficha, **gastos, emendas, financiamento**, notícias, seguir, auth Google, avaliação |
+| API | Afinidade, parlamentares, ficha, **gastos, emendas, financiamento**, legislaturas, seguir, auth Google, avaliação |
 | Front | Login, início, explorar, seguindo, perfil, questionário, conta, privacidade |
 | ETL | `ingerir` · `analisar` · `cpf` · `cota` · `emendas` · `fundo` · `validar` |
-| Testes | **159 .NET** (Testcontainers com Postgres real) · **416 Python** · **97 front** |
+| Testes | **300 .NET** (Testcontainers com Postgres real) · **562 Python** · **235 front** — conferido em 2026-10-02 |
 
 ⭐ **O seed foi aposentado** (PL41). O dado local é a Câmara de verdade. 📐 Conferido
 contra o banco em **2026-09-08**:
@@ -193,9 +193,11 @@ contra o banco em **2026-09-08**:
 ⚠️ `pessoas` tem **7.993** linhas: é o cadastro de TODAS as legislaturas, ⛔ não os 747
 que votaram na 57ª. Somar as duas casas ou ler o cadastro cru dá número maior e errado.
 
-⭐ **Todas as fontes ingerem** — o Senado desde a PL42, e o **coletor de notícias**
-desde 2026-08-29 (`etl-noticias`, três feeds públicos: Agência Câmara, Agência Senado
-e Agência Brasil).
+⭐ **Todas as fontes ingerem** — o Senado desde a PL42. ⛔ **As notícias saíram em
+2026-10-02** (PL61): coletor, aba da ficha e seção do início. O que as substitui é a PL63.
+
+⭐ **A conta é opcional** quando `Acesso:LeituraPublica` está ligado — só seguir e a conta
+pedem login (PL65). 🔴 Em produção continua desligado: RNF-17, período eleitoral de 2026.
 
 > ✅ **A PL11 saiu do caminho (2026-08-29).** O poço tem **50 linhas** em `perguntas`,
 > das quais **49 ativas** — 40 da Câmara e 9 do Senado. O cidadão responde **24**: 8 de

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Link, Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
+import { destinoSeguro } from './componentes/useEntrar';
 import { BannerConsentimento } from './componentes/BannerConsentimento';
 import { Layout } from './componentes/Layout';
 import { Inicio } from './paginas/Inicio';
@@ -45,12 +46,13 @@ function Roteador() {
       <Routes>
         <Route path="/privacidade" element={<DocumentoPublico><PoliticaDePrivacidade /></DocumentoPublico>} />
         <Route path="/metodologia" element={<DocumentoPublico><Metodologia /></DocumentoPublico>} />
-        {/* ⭐ Com a leitura liberada, quem não entrou lê as páginas de dado público. O
-            questionário e a conta continuam pedindo login: um guarda respostas, a
-            outra é da pessoa. Desligado no período eleitoral (RNF-17). */}
+        {/* ⭐ Com a leitura liberada, a conta é OPCIONAL (2026-10-02, decisão do autor):
+            o questionário funciona sem ela — as respostas ⛔ são gravadas, o cálculo é
+            na requisição. Só seguir e a própria conta pedem login, e o login volta
+            para onde a pessoa estava. 🔴 Desligado no período eleitoral (RNF-17). */}
         {leituraPublica ? (
           <>
-            <Route path="/resultado" element={<Login />} />
+            <Route path="/entrar" element={<Login />} />
             <Route path="/conta" element={<Login />} />
             <Route path="*" element={<LeituraSemConta />} />
           </>
@@ -75,6 +77,7 @@ function Roteador() {
         <Route path="/orcamento" element={<Navigate to="/governo" replace />} />
         <Route path="/dinheiro" element={<Navigate to="/emendas" replace />} />
         <Route path="/conta" element={<MinhaConta />} />
+        <Route path="/entrar" element={<VoltarDepoisDeEntrar />} />
         <Route path="/privacidade" element={<PoliticaDePrivacidade />} />
         <Route path="/metodologia" element={<Metodologia />} />
 
@@ -102,15 +105,25 @@ function LeituraSemConta() {
       <Routes>
         <Route path="/" element={<Inicio />} />
         <Route path="/parlamentares" element={<Parlamentares />} />
+        <Route path="/resultado" element={<Questionario />} />
         <Route path="/parlamentar/:id/:aba?" element={<Parlamentar />} />
         <Route path="/governo" element={<Governo />} />
         <Route path="/emendas" element={<Emendas />} />
         <Route path="/entidades" element={<Entidades />} />
         <Route path="/entidades/:cnpj" element={<Entidade />} />
+        <Route path="/questionario" element={<Navigate to="/resultado" replace />} />
+        <Route path="/explorar" element={<Navigate to="/parlamentares" replace />} />
+        <Route path="/grafo" element={<Navigate to="/parlamentares?vista=grafo" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
   );
+}
+
+/** Depois de entrar, de volta para onde a pessoa estava — seguir alguém, a própria conta. */
+function VoltarDepoisDeEntrar() {
+  const [parametros] = useSearchParams();
+  return <Navigate to={destinoSeguro(parametros.get('voltar'))} replace />;
 }
 
 /**

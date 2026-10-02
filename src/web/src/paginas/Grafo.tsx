@@ -15,7 +15,6 @@ import { Termo } from '../componentes/Termo';
 import { mesCurto, periodoDaLegislatura } from '../formato';
 import { passosDoGrafo } from '../tour';
 import { Bloco, Esqueleto } from '../componentes/Esqueleto';
-import { SeletorDeLegislatura } from '../componentes/SeletorDeLegislatura';
 import { useLegislaturaDaUrl } from '../componentes/useLegislatura';
 
 type Grupo = { comunidade: number; quantos: number; partidos: string[] };
@@ -88,14 +87,6 @@ export function Grafo() {
       <div className="grafo-barra">
         <SeletorDeCasa casa={casa} aoTrocar={trocarDeCasa} />
 
-        {grafo && grafo.legislaturasComGrafo.length > 1 && (
-          <SeletorDeLegislatura
-            opcoes={grafo.legislaturasComGrafo}
-            atual={grafo.legislatura}
-            aoTrocar={setLegislatura}
-          />
-        )}
-
         {grafo && grafo.nos.length > 0 && (
           <p className="grafo-contagem">
             {grafo.nos.length} {membro.plural} · {grafo.arestas.length} ligações
@@ -118,7 +109,16 @@ export function Grafo() {
           {grafo.legislaturasComGrafo.length > 0 ? (
             <>
               {NOME_DA_CASA[casa].nome} ⛔ tem grafo em {periodoDaLegislatura(grafo.legislatura)}:
-              havia votações abertas de menos para comparar quem vota com quem.
+              havia votações abertas de menos para comparar quem vota com quem. Há grafo em{' '}
+              {grafo.legislaturasComGrafo.map((l, i) => (
+                <span key={l}>
+                  {i > 0 && ', '}
+                  <button type="button" className="botao-link" onClick={() => setLegislatura(l)}>
+                    {periodoDaLegislatura(l)}
+                  </button>
+                </span>
+              ))}
+              .
             </>
           ) : (
             <>

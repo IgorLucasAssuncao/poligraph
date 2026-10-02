@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -76,26 +76,42 @@ function renderizar() {
   );
 }
 
-/** O período do grafo (achado #35): só aparece com mais de uma legislatura com grafo. */
+/** O período do grafo (achado #35): vem da faixa do topo, pelo endereço. */
 describe('o período do grafo', () => {
-  it('com uma legislatura só, ⛔ há seletor', async () => {
-    vi.mocked(api.obterGrafo).mockResolvedValue(GRAFO);
-    renderizar();
-    await screen.findByRole('button', { name: /Entenda esta tela/ });
+  it('pede a legislatura do endereço', async () => {
+    vi.mocked(api.obterGrafo).mockResolvedValue({ ...GRAFO, legislatura: 56, legislaturasComGrafo: [57, 56] });
+    render(
+      <MemoryRouter initialEntries={['/parlamentares?vista=grafo&legislatura=56']}>
+        <Grafo />
+      </MemoryRouter>,
+    );
 
-    expect(screen.queryByLabelText('Período')).toBeNull();
+    await waitFor(() => expect(vi.mocked(api.obterGrafo)).toHaveBeenLastCalledWith('CAMARA', 56));
   });
 
-  it('com várias, oferece só as que têm grafo e pede a escolhida', async () => {
-    vi.mocked(api.obterGrafo).mockResolvedValue({ ...GRAFO, legislaturasComGrafo: [57, 56, 55] });
-    renderizar();
+  /** ⭐ "Todas" é da lista: ⛔ existe grafo de todas juntas, e vale a corrente. */
+  it('"todos os períodos" desenha a corrente', async () => {
+    vi.mocked(api.obterGrafo).mockResolvedValue(GRAFO);
+    render(
+      <MemoryRouter initialEntries={['/parlamentares?vista=grafo&legislatura=todas']}>
+        <Grafo />
+      </MemoryRouter>,
+    );
 
-    const seletor = await screen.findByLabelText('Período');
-    expect(within(seletor).getAllByRole('option').map((o) => o.textContent)).toEqual([
-      '2023–2027 (atual)', '2019–2023 · 56ª', '2015–2019 · 55ª',
-    ]);
+    await waitFor(() => expect(vi.mocked(api.obterGrafo)).toHaveBeenLastCalledWith('CAMARA', undefined));
+  });
 
-    await userEvent.selectOptions(seletor, '56');
+  it('sem grafo no período, oferece os que têm', async () => {
+    vi.mocked(api.obterGrafo).mockResolvedValue({
+      ...GRAFO, legislatura: 51, nos: [], arestas: [], legislaturasComGrafo: [57, 56],
+    });
+    render(
+      <MemoryRouter initialEntries={['/parlamentares?vista=grafo&legislatura=51']}>
+        <Grafo />
+      </MemoryRouter>,
+    );
+
+    await userEvent.click(await screen.findByRole('button', { name: '2019–2023' }));
     await waitFor(() => expect(vi.mocked(api.obterGrafo)).toHaveBeenLastCalledWith('CAMARA', 56));
   });
 

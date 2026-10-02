@@ -458,8 +458,8 @@ def inteiro_ou_nulo(valor) -> int | None:
 def sem_acento(texto: str) -> str:
     """Remove os diacríticos, preservando a caixa.
 
-    ⚠️ Público porque tem dois consumidores. Era privado, e a consequência foi uma
-    cópia idêntica em `noticias.py` — o custo de esconder algo que outro módulo precisa.
+    ⚠️ Público de propósito: esconder algo que outro módulo precisa já gerou cópia
+    idêntica fora daqui.
     """
     return "".join(
         caractere for caractere in unicodedata.normalize("NFD", texto)

@@ -136,15 +136,6 @@ export type TipoRedeSocial = 'INSTAGRAM' | 'FACEBOOK' | 'X' | 'YOUTUBE' | 'TIKTO
 /** `fonte` diz de quando: a da Câmara é a lista atual; a do TSE, a da candidatura. */
 export type RedeSocial = { rede: TipoRedeSocial; url: string; fonte: 'CAMARA' | 'TSE' };
 
-export type Noticia = {
-  id: number;
-  url: string;
-  titulo: string;
-  veiculo: string;
-  publicadaEm: string;
-  trecho: string | null;
-};
-
 export type Pergunta = {
   id: string;
   texto: string;
@@ -406,10 +397,6 @@ export async function obterFicha(id: number, legislatura?: number): Promise<Fich
  */
 export type PaginaDe<T> = { itens: T[]; pagina: number; tamanho: number; total: number };
 
-export async function obterNoticias(id: number, pagina = 1): Promise<PaginaDe<Noticia>> {
-  return buscar<PaginaDe<Noticia>>(`${BASE}/parlamentares/${id}/noticias?pagina=${pagina}`);
-}
-
 /** Votos de uma legislatura da pessoa, do mais recente. A página 1 é a que vem na ficha. */
 export async function listarVotos(
   id: number,
@@ -426,19 +413,6 @@ export async function listarVotos(
 // ═══════════════════════════════════════════════════════════════════
 // Seguir — 🔴 escreve dado sensível (LGPD art. 5º, II)
 // ═══════════════════════════════════════════════════════════════════
-
-/** Uma notícia do feed da página inicial, com quem a trouxe para o feed. */
-export type NoticiaDeSeguido = {
-  pessoaId: number;
-  nome: string;
-  urlFoto: string | null;
-  noticia: Noticia;
-};
-
-/** As notícias de todos os seguidos numa requisição só — eram uma por seguido. */
-export async function listarNoticiasDosSeguidos(): Promise<NoticiaDeSeguido[]> {
-  return buscar<NoticiaDeSeguido[]>(`${BASE}/seguidos/noticias`);
-}
 
 export async function listarSeguidos(): Promise<Parlamentar[]> {
   const seguidos = await buscar<

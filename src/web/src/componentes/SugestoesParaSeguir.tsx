@@ -26,8 +26,14 @@ export function SugestoesParaSeguir() {
   const [seguidos, setSeguidos] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    // Sem conta não há o que seguir, e a lista de seguidos responderia 401.
-    if (!usuario) return;
+    // ⭐ Sem conta, as mesmas sugestões: o botão leva a entrar. A lista de seguidos
+    //    responderia 401, e por isso ⛔ é pedida.
+    if (!usuario) {
+      listarParlamentares({ ordem: 'VOTACOES', tamanho: QUANTOS })
+        .then((pagina) => setSugestoes(pagina.itens))
+        .catch(() => setSugestoes([]));
+      return;
+    }
 
     // ⭐ A ordem é feita no servidor, e só vem o que a tela mostra — mais os que a
     //    pessoa já segue, que saem daqui. Antes vinha a lista inteira para usar 3.

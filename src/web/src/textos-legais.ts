@@ -7,7 +7,7 @@
  * responder "consentiu com o quê, exatamente?" — que é a pergunta que a LGPD art. 8º §2
  * joga no colo do controlador, porque o ônus da prova do consentimento é dele.
  */
-export const VERSAO_CONSENTIMENTO = 'v3-2026-08-28';
+export const VERSAO_CONSENTIMENTO = 'v4-2026-10-02';
 
 export const CONTATO = 'igorlucas1217@gmail.com';
 
@@ -19,7 +19,7 @@ export const CONTATO = 'igorlucas1217@gmail.com';
 export const POLITICA_DE_PRIVACIDADE = `
 # Política de Privacidade
 
-**Versão ${VERSAO_CONSENTIMENTO}** · Última atualização: 28 de agosto de 2026.
+**Versão ${VERSAO_CONSENTIMENTO}** · Última atualização: 2 de outubro de 2026.
 
 O Registro Aberto é um trabalho de conclusão de curso. Ele compara as respostas de um
 questionário com o voto registrado em plenário de deputados federais e senadores,
@@ -29,10 +29,14 @@ Este texto descreve o que o sistema faz com dados pessoais.
 
 ---
 
-## 1. O site exige conta
+## 1. A conta é opcional
 
-Desde 26 de agosto de 2026 é preciso entrar com o Google para usar qualquer parte do
-site. Só a política de privacidade fica acessível sem login.
+A conta serve para uma coisa: **seguir parlamentares**. O questionário, o resultado e
+todos os dados públicos funcionam sem entrar.
+
+Durante o período eleitoral de 2026, por cautela com a legislação eleitoral, o site pode
+exigir conta para qualquer uso. Nesse período, só esta política e a explicação do método
+ficam acessíveis sem login.
 
 **As respostas do questionário não são gravadas.** O cálculo do resultado acontece na
 requisição, com as respostas enviadas naquele momento, e nem as respostas nem o
@@ -42,14 +46,14 @@ resultado ficam no banco.
 
 ## 2. Dados recebidos do Google
 
-Entrar tem duas finalidades: manter a lista de parlamentares acompanhados entre
-dispositivos e, mediante pedido, enviar notícias por e-mail.
+Entrar tem uma finalidade: manter a lista de parlamentares acompanhados, entre acessos e
+entre dispositivos.
 
 | Dado | Finalidade |
 |---|---|
 | Identificador da conta | Reconhecer a mesma pessoa em acessos seguintes |
-| E-mail | Enviar o resumo de notícias, quando solicitado |
-| Nome | Identificar a pessoa na interface e no e-mail |
+| E-mail | Mostrar à pessoa qual conta está usando. **Nenhum e-mail é enviado** |
+| Nome | Identificar a pessoa na interface |
 | Foto do perfil | Exibir o avatar |
 | Idioma | Ajustar a interface |
 
@@ -67,7 +71,7 @@ A Lei Geral de Proteção de Dados classifica dado sobre convicção política c
 pessoal sensível** (art. 5º, II), categoria com exigências mais estritas de tratamento.
 Esta lista é tratada nessa condição:
 
-- é usada para montar a lista exibida na conta e o resumo por e-mail, e para nada além disso;
+- é usada para montar a lista exibida no site, e para nada além disso;
 - não é vendida, cedida, compartilhada nem usada para publicidade;
 - não alimenta segmentação de nenhum tipo;
 - pode ser apagada a qualquer momento, item a item ou por inteiro.
@@ -79,15 +83,9 @@ seguir alguém, e revogável a qualquer tempo.
 
 ## 4. E-mail
 
-O resumo por e-mail é opcional e vem desativado. Quando ativado:
-
-- cobre apenas os parlamentares acompanhados pela própria pessoa;
-- o assunto não cita nome de parlamentar, para que a preferência política não fique
-  legível na caixa de entrada ou na tela de bloqueio do celular;
-- todo envio traz link de descadastro que funciona em um clique, sem login;
-- o descadastro encerra o envio e não apaga a conta.
-
-A entrega é feita por serviço terceirizado, que processa o endereço apenas para esse fim.
+O site não envia e-mail. Um resumo de notícias por e-mail chegou a ser planejado e foi
+retirado em 2 de outubro de 2026. Se algum aviso por e-mail voltar, ele será opcional,
+virá desativado, terá consentimento próprio, e esta política será atualizada antes.
 
 ---
 
@@ -124,8 +122,8 @@ A qualquer momento é possível:
 - corrigir dado incorreto;
 - apagar tudo, em uma operação que remove conta, lista de acompanhados, consentimentos e tokens;
 - revogar o consentimento, sem efeito sobre tratamentos já realizados licitamente;
-- saber com quem há compartilhamento: Google, para o login; o serviço de envio de e-mail;
-  e a Microsoft, para a medição de uso.
+- saber com quem há compartilhamento: Google, para o login, e a Microsoft, para a
+  medição de uso.
 
 Para exercer qualquer um deles, escreva para **${CONTATO}**.
 
@@ -175,8 +173,3 @@ export const TEXTO_CONSENTIMENTO = {
   //    pode ser condição de uso.
   rodape: 'Você pode usar o site normalmente escolhendo qualquer uma das opções.',
 } as const;
-
-/** Texto do opt-in de e-mail. ⚠️ Desmarcado por padrão — é consentimento separado. */
-export const TEXTO_OPTIN_EMAIL =
-  'Quero receber por e-mail notícias dos parlamentares que eu seguir. ' +
-  'O assunto não cita nomes, e há link para sair em todo e-mail.';

@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-10-02 · **93 resolvidas · 54 abertas**
+> **Atualizado:** 2026-10-02 · **94 resolvidas · 66 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -41,6 +41,44 @@ PL41).
 | **PL56** | 🟡 **Governos anteriores:** `gestoes` é uma linha por eleição (`ck_gestao_posse`), e ⛔ representa Temer (2016–18). Decidir o modelo antes de ingerir eleições anteriores | 🟡 Média |
 | **PL55** | 🟡 **30 arquivos `.cs` com emoji** nos comentários, todos do trabalho de 25/09 — o CLAUDE.md proíbe. No que estava commitado eram 0 | 🟢 Baixa |
 | **PL57** | 🟡 **PR bloqueado:** a credencial do GitHub expirou, o `gh` ⛔ está instalado, e o `origin/main` do último fetch só tem o `Initial commit`, ⛔ ancestral da branch | 🟡 Média |
+| ✅ ~~PL61~~ | **Resolvida (2026-10-02)** — as notícias saíram de vez, por decisão do autor (sem tempo hábil): coletor RSS, comando `noticias`, `etl-noticias` no AppHost, `/api/parlamentares/{id}/noticias`, `/api/seguidos/noticias`, o digest por e-mail, a aba da ficha e a seção do início. A política de privacidade foi para a `v4-2026-10-02` e ⛔ promete mais e-mail | — |
+| **PL62** | 🟡 **Contrair o schema das notícias:** as tabelas `noticias`, `noticia_pessoas` e `noticia_temas` e os modelos do EF ficaram, porque apagar tabela é mudança destrutiva (dois deploys). Migration que as remove, depois de o código sem elas estar em produção. ⚠️ `EMAIL_NOTICIAS` é o único valor de `ck_consentimento_finalidade`: decidir junto com a PL63 | 🟢 Baixa |
+| **PL63** | 🔴 **O que substitui as notícias** — proposta em [`plano/09 §4.1`](plano/09-apresentacao-validacao-e-valor.md): uma seção "O que mudou" no início, com dado próprio (votou na semana, votou contra o partido, trocou de partido, gastou na cota). **Decisão do autor**: quais avisos, e se só no site ou também por e-mail | 🔴 Alta |
+| **PL64** | 🔴 **Carga agendada:** a ETL roda à mão (botões do Aspire). Qualquer aviso periódico, e a própria atualidade do site, depende de agendar votações (semanal) e cota e emendas (mensal) | 🔴 Alta |
+| **PL65** | 🔴 **Login opcional — e a RNF-17.** Feito em 2026-10-02: com `Acesso:LeituraPublica` ligado, só seguir e a conta pedem login, e o login volta para onde a pessoa estava. Ligado **só** em `appsettings.Development.json`. ⚠️ **Em produção continua desligado**: a RNF-17 restringe o acesso no período eleitoral, e o 2º turno é em **25/10/2026**. Ligar em produção é decisão do autor | 🔴 Alta |
+| **PL66** | 🔴 **`conferir` na ETL** — as regras de plausibilidade depois da carga ([`plano/09 §5.2`](plano/09-apresentacao-validacao-e-valor.md)). A que teria pego os 203 senadores no dia. Já medidas: **1 votação do Senado com 82 votantes** (56ª) e **13 placares** da Câmara que ⛔ batem com os votos contados | 🔴 Alta |
+| **PL67** | 🟡 **Amostra manual contra a fonte oficial**: 20 votações sorteadas por casa e legislatura, conferidas no site da casa. Vira achado ([`plano/09 §5.3`](plano/09-apresentacao-validacao-e-valor.md)) | 🟡 Média |
+| **PL68** | 🟡 **A Câmara na 51ª legislatura ⛔ tem voto nominal:** 1.541 das 1.548 votações gravadas estão sem voto. O painel mostra "1.548 votações", e a tela ⛔ distingue votação nominal de simbólica em legislatura nenhuma | 🟡 Média |
+
+### 🖥️ Usabilidade — avaliação heurística (2026-10-01 e 02)
+
+⚠️ Avaliação **por especialista**, com GOV.UK, USWDS e Nielsen como referência — ⛔ teste
+com usuário. Os modelos e a proposta de teste estão em
+[`plano/09`](plano/09-apresentacao-validacao-e-valor.md).
+
+| # | Item | Estado |
+|---|---|---|
+| U1 | Grafo abre no miolo da nuvem; nomes sem sobreposição | ✅ `f7ea93e` |
+| U2 | "Você responde 24, escolhidas entre 49" | ✅ `f7ea93e` |
+| U3 | Celular: cabeçalho e menu em 3 colunas | ✅ `f7ea93e` |
+| U4 | Ficha: nome ao lado da foto, sem capa, mandatos | ✅ `f7ea93e` |
+| U5 | Esqueleto cinza no carregamento; fotos em cache no navegador | ✅ `437617a` `444ace3` |
+| U6 | Cada número da ficha diz o que conta | ✅ `e0dadce` |
+| U7 | Ano no rótulo do dinheiro da ficha | ✅ `e0dadce` |
+| U8 | "Quem vota parecido" antes da lista de votos | ✅ `e0dadce` |
+| U9 | "Quem seguir" em uma linha, botão menor | ✅ `4018075` |
+| U10 | Aba "Emendas por cidade" com o nome da página | ✅ `4018075` |
+| U11 | Cartões do mapa de emendas sem jargão | ✅ `4018075` |
+| U12 | Navegação entre legislaturas | ✅ `4018075` |
+| U13 | **A faixa do topo dizia "57ª" sobre a lista de 2015–2019** — virou o seletor de período, o mesmo em todo o site; os seletores repetidos saíram | ✅ 2026-10-02 |
+| U14 | "A base · 55ª legislatura" e "Período · 55ª" diziam o mesmo duas vezes | ✅ 2026-10-02 |
+| U15 | 🔴 **Resultado do questionário sem filtro por estado** — "quem do meu estado vota como eu" ⛔ tem resposta | ⛔ aberta |
+| U16 | 🔴 **Votos da ficha sem busca** — "como fulano votou em X" exige rolar centenas | ⛔ aberta |
+| U17 | Lista sem filtros aplicados visíveis nem "limpar"; ordenação por votações só na API | ⛔ aberta |
+| U18 | Grafo: destacar um estado ou partido sem esconder o resto | ⛔ aberta |
+| U19 | Afinidade com base pequena aparece igual à de base grande | ⛔ aberta |
+| U20 | ⚠️ A página inicial com `?legislatura=55` **travou o Chrome duas vezes** na verificação de 2026-10-02 e ⛔ se reproduziu depois. Conferir à mão | ⚠️ a confirmar |
+| U21 | Celular: conferir a faixa com o seletor de período a 390 px | ⛔ a conferir |
 
 ### ⏳ A única com prazo
 
@@ -1339,13 +1377,13 @@ avaliação rodar cedo demais.
 
 ---
 
-## ✅ Resolvidas — 93
+## ✅ Resolvidas — 94
 
 `A1` `A5` `API1` `API2` `API3` `API4` `API6` `B1` `B2` `B3` `B4` `B5` `C1` `C2` `C3` `C4`
 `C6` `C8` `C13` `C14` `CT1` `CT2` `CT3` `CT4` `CT5` `CT6` `CT7` `D1` `D3` `D5` `ER1` `ER3`
 `ER4` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PL10`
 `PL11` `PL12` `PL13` `PL17` `PL28` `PL31` `PL32` `PL35` `PL36` `PL37` `PL38` `PL39` `PL40`
-`PL41` `PL42` `PL43` `PL45` `PL46` `PL47` `PL48` `PL49` `PL50` `PL51` `PL54` `PL59` `PP1` `PP3` `PP4`
+`PL41` `PL42` `PL43` `PL45` `PL46` `PL47` `PL48` `PL49` `PL50` `PL51` `PL54` `PL59` `PL61` `PP1` `PP3` `PP4`
 `RE-01` `RQ1` `RQ2` `RQ3` `RQ4` `RQ8` `RQ9` `SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2`
 `TS3` `TS4` `TS6`
 

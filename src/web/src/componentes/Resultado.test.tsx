@@ -4,6 +4,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { Resultado } from './Resultado';
 import type { Pergunta, ResultadoAfinidade } from '../api';
 
+/** Sem conta: o resultado funciona igual, e só a avaliação some (ela exige conta no servidor). */
+const sessao = { usuario: null as { nome: string } | null };
+vi.mock('../sessao', () => ({ useSessao: () => sessao }));
+
 const PERGUNTAS: Pergunta[] = [
   { id: 'q1', texto: 'Primeira afirmação.', ordem: 1, totalVotos: 400, totalPossivel: 513 },
   { id: 'q2', texto: 'Segunda afirmação.', ordem: 2, totalVotos: 410, totalPossivel: 513 },

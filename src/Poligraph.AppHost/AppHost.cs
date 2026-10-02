@@ -202,15 +202,4 @@ builder.AddDockerfile("etl-governo", "../..", "docker/Dockerfile.etl")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
     .WithParentRelationship(etlIngerir);
 
-// Não depende de `etl-ingerir`: a notícia é de hoje, e associá-la a parlamentar
-// exige apenas que ALGUÉM esteja no banco. Com banco vazio o comando coleta,
-// grava e não associa ninguém — que é o comportamento correto, não uma falha.
-// Sem volume de cache: feed RSS é fluxo, não arquivo. Reler é o ponto.
-builder.AddDockerfile("etl-noticias", "../..", "docker/Dockerfile.etl")
-    .WithReference(bancoPoligraph)
-    .WaitForCompletion(migracoes)
-    .WithExplicitStart()
-    .WithArgs("noticias")
-    .WithParentRelationship(etlIngerir);
-
 builder.Build().Run();

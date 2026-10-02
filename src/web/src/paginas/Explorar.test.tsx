@@ -162,13 +162,22 @@ describe('quem já saiu', () => {
     expect(screen.getByText('845 votos com posição na Câmara')).toBeInTheDocument();
   });
 
+  /** O período vem da faixa do topo, pelo endereço — a lista só o lê. */
+  function renderizarEm(endereco: string) {
+    return render(
+      <MemoryRouter initialEntries={[endereco]}>
+        <Explorar />
+      </MemoryRouter>,
+    );
+  }
+
   it('o histórico só entra quando pedido', async () => {
     renderizar();
     await screen.findByText(/Ex-deputado/);
-
     expect(vi.mocked(api.listarParlamentares).mock.calls[0][0]?.anteriores).toBeUndefined();
 
-    fireEvent.change(await screen.findByLabelText('Período'), { target: { value: 'todas' } });
+    vi.mocked(api.listarParlamentares).mockClear();
+    renderizarEm('/parlamentares?legislatura=todas');
 
     await vi.waitFor(() =>
       expect(vi.mocked(api.listarParlamentares).mock.lastCall?.[0]?.anteriores).toBe(true),
@@ -180,17 +189,14 @@ describe('quem já saiu', () => {
    * por estar numa lista de 2019.
    */
   it('um período passado pede a legislatura dele e ⛔ chama ninguém de ex', async () => {
-    renderizar();
-    await screen.findByText(/Ex-deputado/);
-
-    fireEvent.change(await screen.findByLabelText('Período'), { target: { value: '56' } });
+    renderizarEm('/parlamentares?legislatura=56');
 
     await vi.waitFor(() =>
       expect(vi.mocked(api.listarParlamentares).mock.lastCall?.[0]).toMatchObject({ legislatura: 56 }),
     );
     expect(vi.mocked(api.listarParlamentares).mock.lastCall?.[0]?.anteriores).toBeUndefined();
-    await vi.waitFor(() => expect(screen.queryByText(/Ex-deputado/)).toBeNull());
-    expect(screen.getByText(/que votaram em 2019–2023/)).toBeInTheDocument();
+    expect(await screen.findByText(/que votaram em 2019–2023/)).toBeInTheDocument();
+    expect(screen.queryByText(/Ex-deputado/)).toBeNull();
   });
 
   it('a ficha abre no mandato de quem já saiu', async () => {

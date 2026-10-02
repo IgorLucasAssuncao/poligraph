@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSessao } from '../sessao';
+import { useEntrar } from './useEntrar';
 import { Avatar } from './Avatar';
 import { useTour } from './contextoDoTour';
 import { SeletorDeTema } from './SeletorDeTema';
@@ -20,6 +21,7 @@ import { SeletorDeTema } from './SeletorDeTema';
  */
 export function MenuDaConta() {
   const { usuario, sair } = useSessao();
+  const entrar = useEntrar();
   const { iniciar } = useTour();
   const [aberto, setAberto] = useState(false);
   const caixa = useRef<HTMLDivElement>(null);
@@ -46,7 +48,7 @@ export function MenuDaConta() {
   return (
     <div className="menu-conta" ref={caixa}>
       {!usuario && (
-        <Link to="/resultado" className="botao-secundario">
+        <Link to={entrar} className="botao-secundario">
           Entrar
         </Link>
       )}
