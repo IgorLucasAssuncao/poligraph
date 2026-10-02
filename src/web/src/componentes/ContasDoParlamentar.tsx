@@ -51,26 +51,31 @@ export function FaixaDeContas({ contas, base }: { contas: Contas | null; base: s
   if (!temAlgo) return null;
 
   return (
-    <nav className="perfil-contas contas-numeros" data-tour="ficha-contas" aria-label="Contas do mandato">
-      <ValorDaConta
-        para={`${base}/campanha`}
-        rotulo="Campanha"
-        valor={fin?.total}
-        nota={fin?.anoEleicao ? `eleição de ${fin.anoEleicao}` : undefined}
-      />
-      <ValorDaConta
-        para={`${base}/emendas`}
-        rotulo="Emendas"
-        valor={emendas?.empenhado}
-        nota={emendas?.ano ? `empenhado em ${emendas.ano}` : undefined}
-      />
-      <ValorDaConta
-        para={`${base}/cota`}
-        rotulo="Cota"
-        valor={gastos?.total}
-        nota={gastos?.ano ? `gasto em ${gastos.ano}` : undefined}
-      />
-    </nav>
+    <>
+      {/* ⚠️ Os três vêm de anos diferentes — a eleição, e o ano mais recente de emenda e
+          de cota. Lado a lado, sem o ano no rótulo, liam como comparáveis (2026-10-01). */}
+      <p className="contas-aviso">O valor mais recente de cada um. Os anos são diferentes.</p>
+      <nav className="perfil-contas contas-numeros" data-tour="ficha-contas" aria-label="Contas do mandato">
+        <ValorDaConta
+          para={`${base}/campanha`}
+          rotulo={fin?.anoEleicao ? `Campanha de ${fin.anoEleicao}` : 'Campanha'}
+          valor={fin?.total}
+          nota="arrecadado na eleição"
+        />
+        <ValorDaConta
+          para={`${base}/emendas`}
+          rotulo={emendas?.ano ? `Emendas de ${emendas.ano}` : 'Emendas'}
+          valor={emendas?.empenhado}
+          nota="empenhado no ano"
+        />
+        <ValorDaConta
+          para={`${base}/cota`}
+          rotulo={gastos?.ano ? `Cota de ${gastos.ano}` : 'Cota'}
+          valor={gastos?.total}
+          nota="gasto no ano"
+        />
+      </nav>
+    </>
   );
 }
 

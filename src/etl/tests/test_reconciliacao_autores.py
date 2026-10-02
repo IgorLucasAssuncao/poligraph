@@ -98,3 +98,33 @@ def test_tres_candidatos_com_um_so_votante():
 
 def test_tres_candidatos_com_dois_votantes():
     assert _desempatar([1, 2, 3], com_voto={2, 3}) is None
+
+
+# ═══════════════════════════════════════════════════════════════════
+# As emendas de 2014 a 2022: o desempate pela legislatura da emenda
+# ═══════════════════════════════════════════════════════════════════
+
+from poligraph_etl.__main__ import votantes_do_mandato  # noqa: E402
+
+VOTANTES = {55: {1, 2}, 56: {3}, 57: {4, 5}}
+
+
+def test_emenda_de_2017_desempata_com_quem_votou_na_55a():
+    """Apresentada em 2016, na 55ª. O homônimo de hoje ⛔ disputa."""
+    com_voto = votantes_do_mandato({2017}, VOTANTES, corrente=57)
+
+    assert com_voto == {1, 2}
+    assert _desempatar([1, 4], com_voto) == 1
+
+
+def test_emenda_de_2023_foi_apresentada_na_56a():
+    """A lei orçamentária de 2023 foi votada em 2022."""
+    assert votantes_do_mandato({2023}, VOTANTES, corrente=57) == {3}
+
+
+def test_autor_com_emendas_em_dois_mandatos_soma_os_dois():
+    assert votantes_do_mandato({2019, 2024}, VOTANTES, corrente=57) == {1, 2, 4, 5}
+
+
+def test_sem_ano_vale_a_corrente():
+    assert votantes_do_mandato(set(), VOTANTES, corrente=57) == {4, 5}

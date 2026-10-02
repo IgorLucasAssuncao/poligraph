@@ -922,6 +922,30 @@ def autores_nao_resolvidos(conexao: psycopg.Connection) -> list[tuple[str, str]]
     ]
 
 
+def anos_dos_autores(conexao: psycopg.Connection) -> dict[str, set[int]]:
+    """Código do autor → anos das emendas dele. É o que diz de que mandato ele é."""
+    return {
+        codigo: set(anos)
+        for codigo, anos in conexao.execute(
+            "SELECT codigo_autor, array_agg(DISTINCT ano) FROM emendas "
+            "WHERE codigo_autor IS NOT NULL GROUP BY codigo_autor"
+        ).fetchall()
+    }
+
+
+def votantes_por_legislatura(conexao: psycopg.Connection) -> dict[int, set[int]]:
+    """Legislatura → quem votou nela, nas duas casas."""
+    votantes: dict[int, set[int]] = {}
+    for legislatura, pessoa_id in conexao.execute(
+        """
+        SELECT DISTINCT t.legislatura, v.pessoa_id
+          FROM votos v JOIN votacoes t ON t.id = v.votacao_id
+        """
+    ).fetchall():
+        votantes.setdefault(legislatura, set()).add(pessoa_id)
+    return votantes
+
+
 def resolver_autor(
     conexao: psycopg.Connection, codigo: str, pessoa_id: int, metodo: str
 ) -> None:

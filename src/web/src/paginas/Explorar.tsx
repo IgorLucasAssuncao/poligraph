@@ -198,7 +198,7 @@ export function Explorar() {
    * de 2007 parecer tão ativo quanto alguém em exercício.
    */
   function detalheDe(p: Parlamentar) {
-    const votacoes = `${p.nVotacoes} votações registradas ${NA_CASA[p.casa]}`.trim();
+    const votacoes = `${p.nVotacoes} votos com posição ${NA_CASA[p.casa]}`.trim();
     const corrente = pagina?.legislaturaCorrente;
     if (!p.legislatura || !corrente || p.legislatura === corrente) return votacoes;
 

@@ -703,7 +703,7 @@ describe('participação nas votações', () => {
     await abrirPerfil();
 
     const bloco = screen.getByText('812 de 1015').closest('div')!;
-    expect(bloco.textContent).toMatch(/votações em plenário \(80%\)/);
+    expect(bloco.textContent).toMatch(/votações de plenário \(80%\)/);
     expect(bloco.textContent).not.toMatch(/licença/);
   });
 

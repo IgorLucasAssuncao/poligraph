@@ -167,7 +167,7 @@ export function Parlamentar() {
 
         <div className="perfil-numeros" data-tour="ficha-votacoes">
           <span>
-            <strong>{ficha.nVotacoes}</strong> <span>votações registradas</span>
+            <strong>{ficha.nVotacoes}</strong> <span>votos com posição, em plenário e comissões</span>
           </span>
           <BotaoDoTour nome="ficha" passos={PASSOS_DA_FICHA} />
         </div>
@@ -199,6 +199,10 @@ export function Parlamentar() {
       {aba === 'campanha' && <AbaCampanha pessoaId={pessoaId} contas={contas} erro={erroDasContas} />}
       {aba === 'votos' && (
         <>
+          {/* ⭐ Antes dos votos: a lista de votos tem centenas de itens, e no celular os
+              "mais parecidos" ficavam depois de ~17 mil pixels (2026-10-01). */}
+          <AbaSimilares similares={ficha.maisSimilares} />
+          <h2 className="titulo-secao">Votos</h2>
           <AbaVotos
             pessoaId={pessoaId}
             legislatura={ficha.legislatura}
@@ -206,7 +210,6 @@ export function Parlamentar() {
             total={ficha.nRegistrosDeVoto}
             comPosicao={ficha.nVotacoes}
           />
-          <AbaSimilares similares={ficha.maisSimilares} />
         </>
       )}
       {aba === 'noticias' && <AbaNoticias pessoaId={pessoaId} primeira={noticias} />}
@@ -393,7 +396,12 @@ function ContraAOrientacao({ voto }: { voto: VotoNaFicha }) {
   );
 }
 
+/** Quantos "parecidos" aparecem antes do botão: o bastante para ler o grupo, sem empurrar os votos. */
+const SIMILARES_DE_INICIO = 5;
+
 function AbaSimilares({ similares }: { similares: Ficha['maisSimilares'] }) {
+  const [todos, setTodos] = useState(false);
+
   if (similares.length === 0) {
     // ⭐ RF-47: estado vazio honesto. Acontece antes de o ETL analítico rodar.
     return (
@@ -402,8 +410,9 @@ function AbaSimilares({ similares }: { similares: Ficha['maisSimilares'] }) {
   }
 
   return (
-    <div data-tour="ficha-similares">
-      {similares.map((s) => (
+    <section data-tour="ficha-similares">
+      <h2 className="titulo-secao">Quem vota parecido</h2>
+      {similares.slice(0, todos ? similares.length : SIMILARES_DE_INICIO).map((s) => (
         <LinhaParlamentar
           key={s.pessoaId}
           id={s.pessoaId}
@@ -419,7 +428,14 @@ function AbaSimilares({ similares }: { similares: Ficha['maisSimilares'] }) {
           }
         />
       ))}
-    </div>
+      {!todos && similares.length > SIMILARES_DE_INICIO && (
+        <div className="carregar-mais">
+          <button type="button" className="botao-secundario" onClick={() => setTodos(true)}>
+            Ver os {similares.length}
+          </button>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -455,13 +471,13 @@ function FaixaDeAlinhamento({ alinhamento, presenca }: { alinhamento: Alinhament
       {presenca && presenca.votacoes > 0 && (
         <div>
           <dt>
-            Participou
+            Esteve em
             <Termo nome="participacao" />
           </dt>
           <dd>
             {presenca.presente} de {presenca.votacoes}
             <small>
-              votações em plenário ({Math.round((presenca.presente / presenca.votacoes) * 100)}%)
+              votações de plenário ({Math.round((presenca.presente / presenca.votacoes) * 100)}%)
               {presenca.ausenteJustificado !== null && presenca.ausenteJustificado > 0 && (
                 <> · {presenca.ausenteJustificado} ausências com licença ou missão</>
               )}

@@ -482,6 +482,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .perfil-identidade h1 { margin: 0; font-size: var(--t-4); font-weight: 800; letter-spacing: -.01em; }
 .perfil-identidade .nome-civil { margin: .1rem 0 0; color: var(--suave); font-size: var(--t-2); }
 .perfil-chips { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem; }
+.contas-aviso { margin: 1rem 0 .4rem; font-size: var(--t-1); color: var(--suave); }
 
 /* Os mandatos do parlamentar. Um só vira a linha que diz de quando é a ficha; dois ou
    mais viram links, e o ativo leva o realce como as outras abas. */

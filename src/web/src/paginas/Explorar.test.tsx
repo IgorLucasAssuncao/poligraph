@@ -70,8 +70,8 @@ describe('Explorar mistura as casas e precisa dizer qual é qual', () => {
   it('ancora o número à casa de cada parlamentar', async () => {
     renderizar();
 
-    expect(await screen.findByText(/845 votações registradas na Câmara/)).toBeInTheDocument();
-    expect(screen.getByText(/140 votações registradas no Senado/)).toBeInTheDocument();
+    expect(await screen.findByText(/845 votos com posição na Câmara/)).toBeInTheDocument();
+    expect(screen.getByText(/140 votos com posição no Senado/)).toBeInTheDocument();
   });
 
   /**
@@ -154,8 +154,8 @@ describe('quem já saiu', () => {
   it('diz de quando era o mandato de quem já saiu, e ⛔ o de quem está', async () => {
     renderizar();
 
-    expect(await screen.findByText(/Ex-deputado · 2015–2019 · 610 votações/)).toBeInTheDocument();
-    expect(screen.getByText('845 votações registradas na Câmara')).toBeInTheDocument();
+    expect(await screen.findByText(/Ex-deputado · 2015–2019 · 610 votos com posição/)).toBeInTheDocument();
+    expect(screen.getByText('845 votos com posição na Câmara')).toBeInTheDocument();
   });
 
   it('o histórico só entra quando pedido', async () => {

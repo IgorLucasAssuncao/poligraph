@@ -925,16 +925,19 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
     ).fetchall():
         por_nome.setdefault(normalizacao.sem_acento_maiusculo(nome), []).append(pessoa_id)
 
-    # ⭐ Quem votou na legislatura CORRENTE. É o desempate da PL47 — ver `_desempatar`.
-    #    ⚠️ ⛔ "quem tem voto": com o histórico na base, o homônimo de 2003 também tem,
-    #    e os 14 empates que a regra resolve voltariam (achado #35).
-    com_voto = {
-        linha[0]
-        for linha in conexao.execute(
-            "SELECT p.id FROM pessoas p WHERE "
-            + persistencia.na_legislatura_corrente("p.id")
-        )
-    }
+    # ⭐ O desempate da PL47 — ver `_desempatar` — com quem votou na legislatura em que
+    #    a emenda foi APRESENTADA: a de um ano entra na lei orçamentária votada no ano
+    #    anterior, e o código do autor é de um mandato só (achado #24).
+    #
+    #    ⚠️ Era quem votou na legislatura corrente. Com as emendas de 2014 a 2022, isso
+    #    escolheria o homônimo de hoje para a emenda de 2017 — e a emenda iria para a
+    #    ficha de outra pessoa, sem erro nenhum.
+    anos_por_autor = persistencia.anos_dos_autores(conexao)
+    votantes = persistencia.votantes_por_legislatura(conexao)
+    corrente = max(votantes) if votantes else None
+
+    def com_voto_de(codigo: str) -> set[int]:
+        return votantes_do_mandato(anos_por_autor.get(codigo, set()), votantes, corrente)
 
     resolvidos = por_sucessor = por_desempate = ambiguos = 0
 
@@ -953,7 +956,7 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
                     normalizacao.sem_acento_maiusculo(original), []
                 )
 
-        escolhido = _desempatar(candidatos, com_voto)
+        escolhido = _desempatar(candidatos, com_voto_de(codigo))
 
         if escolhido is None:
             if len(candidatos) > 1:
@@ -987,6 +990,20 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
             "  %d autores seguem sem vínculo (senadores, bancadas, outras legislaturas)",
             restantes,
         )
+
+
+def votantes_do_mandato(
+    anos_das_emendas: set[int], votantes: dict[int, set[int]], corrente: int | None
+) -> set[int]:
+    """Quem votou na legislatura em que as emendas foram apresentadas.
+
+    A emenda de um ano entra na lei orçamentária votada no ano ANTERIOR: a de 2019 foi
+    apresentada em 2018, ainda na 55ª. Sem ano conhecido, vale a legislatura corrente.
+    """
+    legislaturas = {
+        ingestao.legislatura_da_data(f"{ano - 1}-07-01") for ano in anos_das_emendas
+    } or ({corrente} if corrente else set())
+    return set().union(*(votantes.get(l, set()) for l in legislaturas))
 
 
 def _desempatar(candidatos: list[int], com_voto: set[int]) -> int | None:
