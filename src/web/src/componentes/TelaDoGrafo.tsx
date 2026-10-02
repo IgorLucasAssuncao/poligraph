@@ -103,6 +103,7 @@ export function TelaDoGrafo({
   altura,
   preencher = false,
   aoAmpliar,
+  embutido = false,
 }: {
   grafo: Grafo;
   cidadao?: PosicaoDoCidadao | null;
@@ -119,6 +120,15 @@ export function TelaDoGrafo({
   /** ⚠️ Quando presente, vira um botão NA MOLDURA do grafo — não um link solto na
    *  página, que se perde entre os textos abaixo do desenho. */
   aoAmpliar?: () => void;
+  /**
+   * ⭐ Dentro de uma página que rola — o início, o resultado. Ali a roda do mouse rola a
+   * PÁGINA, e só aproxima com Ctrl (⌘ no Mac), como num mapa embutido.
+   *
+   * 📐 Sem isto (2026-10-02): quem rolava o início com o mouse sobre o grafo dava zoom sem
+   * querer, ficava preso no desenho e disparava o download das fotos de cada ponto que
+   * crescia — na 55ª, 56 fotos e 40 redesenhos em 3 segundos, e a aba travou duas vezes.
+   */
+  embutido?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const arrastando = useRef<{ x: number; y: number } | null>(null);
@@ -258,7 +268,27 @@ export function TelaDoGrafo({
 
   // Repinte forçado quando uma foto termina de baixar — o dado não mudou, o pixel sim.
   const [revisao, setRevisao] = useState(0);
-  const repintar = useCallback(() => setRevisao((n) => n + 1), []);
+  /**
+   * ⭐ Um redesenho por quadro, por mais fotos que cheguem nele. Eram um por foto: com o
+   * zoom, dezenas chegavam em sequência e cada uma redesenhava 5 mil ligações.
+   */
+  const repinturaPedida = useRef<number | null>(null);
+  const repintar = useCallback(() => {
+    if (repinturaPedida.current !== null) return;
+    repinturaPedida.current = requestAnimationFrame(() => {
+      repinturaPedida.current = null;
+      setRevisao((n) => n + 1);
+    });
+  }, []);
+  useEffect(
+    () => () => {
+      if (repinturaPedida.current !== null) cancelAnimationFrame(repinturaPedida.current);
+    },
+    [],
+  );
+
+  /** O aviso "Ctrl + roda", que aparece quando a roda passa por um grafo embutido. */
+  const [avisoDaRoda, setAvisoDaRoda] = useState(false);
 
   useEffect(() => {
     const pai = canvasRef.current?.parentElement;
@@ -330,8 +360,17 @@ export function TelaDoGrafo({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    let apagarAviso: ReturnType<typeof setTimeout> | undefined;
 
     function aoRolar(evento: WheelEvent) {
+      // ⭐ Embutido e sem Ctrl: a roda é da página. ⛔ preventDefault — ela rola.
+      if (embutido && !evento.ctrlKey && !evento.metaKey) {
+        setAvisoDaRoda(true);
+        clearTimeout(apagarAviso);
+        apagarAviso = setTimeout(() => setAvisoDaRoda(false), 1500);
+        return;
+      }
+
       evento.preventDefault();
 
       const caixa = canvas!.getBoundingClientRect();
@@ -341,8 +380,11 @@ export function TelaDoGrafo({
     }
 
     canvas.addEventListener('wheel', aoRolar, { passive: false });
-    return () => canvas.removeEventListener('wheel', aoRolar);
-  }, []);
+    return () => {
+      clearTimeout(apagarAviso);
+      canvas.removeEventListener('wheel', aoRolar);
+    };
+  }, [embutido]);
 
   const aoMover = useCallback(
     (evento: React.MouseEvent<HTMLCanvasElement>) => {
@@ -454,6 +496,11 @@ export function TelaDoGrafo({
   return (
     <div className="grafo">
       <div className="grafo-tela" data-tour="grafo-desenho">
+        {avisoDaRoda && (
+          <p className="grafo-aviso-roda" role="status">
+            Use Ctrl + roda do mouse para aproximar
+          </p>
+        )}
         <canvas
           ref={canvasRef}
           width={tamanho.largura * DENSIDADE}
@@ -463,8 +510,9 @@ export function TelaDoGrafo({
             height: tamanho.altura,
             cursor: arrastando.current ? 'grabbing' : alvo ? 'pointer' : 'grab',
             /* O gesto no desenho é do grafo: sem isto o navegador rolaria e aproximaria
-               a página inteira junto com a pinça. */
-            touchAction: 'none',
+               a página inteira junto com a pinça. ⭐ Embutido, o arrasto vertical é da
+               página — senão o dedo que rola o início ficava preso no desenho. */
+            touchAction: embutido ? 'pan-y' : 'none',
           }}
           onPointerMove={aoMoverPonteiro}
           onPointerDown={aoApertar}

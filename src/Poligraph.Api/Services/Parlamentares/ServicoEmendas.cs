@@ -29,8 +29,9 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
     /// <para>Tipo ANÔNIMO, não `record` posicional: o EF não traduz `GroupBy` com construtor posicional e falha em RUNTIME, não na compilação.</para>
     /// <para>Agregação PRÓPRIA, não a soma dos `Take(8)` acima: eles mostrariam um total menor que o real, sem nada na tela indicando o corte.</para>
     /// </remarks>
-    public Task<EmendasDoParlamentarDto> ObterAsync(long id, int? ano, CancellationToken ct) =>
-        _leitura.ObterAsync(("emendas", id, ano), () => CalcularAsync(id, ano, ct));
+    /// <param name="legislatura">Sem ano, o mais recente DENTRO do mandato (ver <c>Legislaturas.AnosDeEmenda</c>).</param>
+    public Task<EmendasDoParlamentarDto> ObterAsync(long id, int? ano, short? legislatura, CancellationToken ct) =>
+        _leitura.ObterAsync(("emendas", id, ano, legislatura), () => CalcularAsync(id, ano, legislatura, ct));
 
     /// <summary>Quem recebeu, em páginas, na mesma ordem da ficha. A primeira página é a da ficha.</summary>
     public async Task<PaginaDto<FavorecidoDaEmendaDto>> ListarFavorecidosAsync(
@@ -111,9 +112,9 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
             pagina, tamanho, await porCodigo.CountAsync(ct));
     }
 
-    private async Task<EmendasDoParlamentarDto> CalcularAsync(long id, int? ano, CancellationToken ct)
+    private async Task<EmendasDoParlamentarDto> CalcularAsync(long id, int? ano, short? legislatura, CancellationToken ct)
     {
-        var alvo = await AnoAlvoAsync(id, ano, ct);
+        var alvo = await AnoAlvoAsync(id, ano, ct, legislatura);
 
         if (alvo is null)
         {
@@ -182,12 +183,17 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
     /// <remarks>
     /// <para>Abria no mais recente, que é o ano em andamento: valores parciais, que pareciam baixos só por estarem incompletos. O ano corrente só abre quando é o único que o parlamentar tem, e a tela o marca.</para>
     /// </remarks>
-    private async Task<int?> AnoAlvoAsync(long id, int? ano, CancellationToken ct)
+    private async Task<int?> AnoAlvoAsync(long id, int? ano, CancellationToken ct, short? legislatura = null)
     {
         if (ano is not null) return ano;
 
-        var anos = await _db.Emendas.AsNoTracking()
-            .Where(e => e.PessoaId == id)
+        var daPessoa = _db.Emendas.AsNoTracking().Where(e => e.PessoaId == id);
+        if (legislatura is { } l)
+        {
+            var (de, ate) = Legislaturas.AnosDeEmenda(l);
+            daPessoa = daPessoa.Where(e => e.Ano >= de && e.Ano <= ate);
+        }
+        var anos = await daPessoa
             .Select(e => (int)e.Ano)
             .Distinct()
             .ToListAsync(ct);

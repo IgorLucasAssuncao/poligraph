@@ -165,7 +165,11 @@ export function Explorar() {
           detalhe={detalheDe(p)}
           legislatura={p.legislatura && p.legislatura !== pagina?.legislaturaCorrente ? p.legislatura : undefined}
           seguindo={seguidos.has(p.id)}
-          aoAlternarSeguir={alternar}
+          /* ⭐ Seguir só quem está em exercício (decisão do autor, 2026-10-02) — ou quem a
+             pessoa já segue, para poder deixar de seguir. A API recusa o resto (422). */
+          aoAlternarSeguir={
+            p.legislatura === pagina?.legislaturaCorrente || seguidos.has(p.id) ? alternar : undefined
+          }
         />
       ))}
 

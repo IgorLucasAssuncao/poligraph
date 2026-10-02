@@ -162,6 +162,7 @@ function SecaoDaCasa({
             grafo={grafo}
             cidadao={casa.posicaoNoGrafo}
             altura={320}
+            embutido
             aoAmpliar={() => setAmpliado(true)}
           />
 

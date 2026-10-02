@@ -28,14 +28,21 @@ export function MandatosDoParlamentar({
     const [unico] = mandatos;
     return (
       <p className="mandatos-unico">
-        Mandato <span className="dado">{periodoDaLegislatura(unico.legislatura)}</span>
+        Votou em <span className="dado">{periodoDaLegislatura(unico.legislatura)}</span>
       </p>
     );
   }
 
   return (
-    <nav className="mandatos" aria-label="Mandatos">
-      <span className="mandatos-rotulo">Mandatos</span>
+    <nav className="mandatos" aria-label="Legislaturas em que votou">
+      {/* ⚠️ "Mandatos" dizia errado no Senado: o mandato de senador tem oito anos e cobre
+          duas legislaturas, e a lista mostrava um mandato só como dois. */}
+      <span className="mandatos-rotulo">
+        Legislaturas em que votou
+        {mandatos.some((m) => m.casa === 'SENADO') && (
+          <small> · no Senado, um mandato cobre duas</small>
+        )}
+      </span>
       <ul>
         {mandatos.map((m, i) => {
           const ativo = m.legislatura === atual;

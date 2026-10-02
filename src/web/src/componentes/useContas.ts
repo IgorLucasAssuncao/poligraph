@@ -20,25 +20,40 @@ export type Contas = {
  * ⚠️ As três falhando juntas é problema de rede, ⛔ ausência de dado — `erro` diz isso, e
  * a tela ⛔ mostra três traços que mentiriam "não há registro".
  */
-export function useContas(pessoaId: number): { contas: Contas | null; erro: boolean } {
-  const [estado, setEstado] = useState<{ pessoaId: number; contas: Contas | null; erro: boolean }>({
-    pessoaId,
+/**
+ * ⭐ `mandato` é a legislatura que a ficha mostra: cota, emendas e campanha saem de
+ * DENTRO dela. Eram "o mais recente que existir", e a ficha de 2015–2019 mostrava os votos
+ * de 2015 ao lado da cota de 2026 (2026-10-02). `'aguardando'` enquanto a ficha ⛔ chegou:
+ * buscar antes traria o período errado e buscaria duas vezes.
+ */
+export function useContas(
+  pessoaId: number,
+  mandato: number | null | 'aguardando' = null,
+): { contas: Contas | null; erro: boolean } {
+  const chave = `${pessoaId}-${mandato}`;
+  const [estado, setEstado] = useState<{ chave: string; contas: Contas | null; erro: boolean }>({
+    chave,
     contas: null,
     erro: false,
   });
 
   useEffect(() => {
+    if (mandato === 'aguardando') return;
     let vivo = true;
 
-    Promise.allSettled([obterGastos(pessoaId), obterEmendas(pessoaId), obterFinanciamento(pessoaId)]).then(
+    Promise.allSettled([
+      obterGastos(pessoaId, mandato),
+      obterEmendas(pessoaId, mandato),
+      obterFinanciamento(pessoaId, mandato),
+    ]).then(
       ([g, e, f]) => {
         if (!vivo) return;
         if (g.status === 'rejected' && e.status === 'rejected' && f.status === 'rejected') {
-          setEstado({ pessoaId, contas: null, erro: true });
+          setEstado({ chave, contas: null, erro: true });
           return;
         }
         setEstado({
-          pessoaId,
+          chave,
           erro: false,
           contas: {
             gastos: g.status === 'fulfilled' ? g.value : null,
@@ -52,7 +67,7 @@ export function useContas(pessoaId: number): { contas: Contas | null; erro: bool
     return () => {
       vivo = false;
     };
-  }, [pessoaId]);
+  }, [pessoaId, mandato, chave]);
 
-  return estado.pessoaId === pessoaId ? estado : { contas: null, erro: false };
+  return estado.chave === chave ? estado : { contas: null, erro: false };
 }

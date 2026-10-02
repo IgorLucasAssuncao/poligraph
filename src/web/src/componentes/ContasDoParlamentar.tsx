@@ -9,7 +9,7 @@ import {
 } from '../api';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { FONTES } from '../fontes';
-import { dataCurta, minusculas, nomeProprio, reais } from '../formato';
+import { dataCurta, minusculas, nomeProprio, periodoDaLegislatura, reais } from '../formato';
 import { BotaoBaixarCsv } from './BotaoBaixarCsv';
 import { BotaoMostrarMais } from './BotaoMostrarMais';
 import { Convenios, EmendasUmaAUma, QuandoFoiPago, QuemRecebeu } from './DestinoDasEmendas';
@@ -43,7 +43,19 @@ import { EsqueletoDePainel, EsqueletoDeTexto } from './Esqueleto';
  *
  * ⭐ Silêncio enquanto carrega e no erro: a faixa é contexto, ⛔ o conteúdo principal.
  */
-export function FaixaDeContas({ contas, base }: { contas: Contas | null; base: string }) {
+export function FaixaDeContas({
+  contas,
+  base,
+  sufixo = '',
+  mandatoPassado = null,
+}: {
+  contas: Contas | null;
+  base: string;
+  /** O `?legislatura=` da ficha: o número leva à aba no MESMO mandato. */
+  sufixo?: string;
+  /** A legislatura do mandato aberto, quando ⛔ é a corrente — a frase diz de qual. */
+  mandatoPassado?: number | null;
+}) {
   if (!contas) return null;
 
   const { gastos, emendas, fin } = contas;
@@ -54,22 +66,26 @@ export function FaixaDeContas({ contas, base }: { contas: Contas | null; base: s
     <>
       {/* ⚠️ Os três vêm de anos diferentes — a eleição, e o ano mais recente de emenda e
           de cota. Lado a lado, sem o ano no rótulo, liam como comparáveis (2026-10-01). */}
-      <p className="contas-aviso">O valor mais recente de cada um. Os anos são diferentes.</p>
+      <p className="contas-aviso">
+        {mandatoPassado
+          ? `No mandato de ${periodoDaLegislatura(mandatoPassado)}: o ano mais recente de cada um dentro dele.`
+          : 'O valor mais recente de cada um. Os anos são diferentes.'}
+      </p>
       <nav className="perfil-contas contas-numeros" data-tour="ficha-contas" aria-label="Contas do mandato">
         <ValorDaConta
-          para={`${base}/campanha`}
+          para={`${base}/campanha${sufixo}`}
           rotulo={fin?.anoEleicao ? `Campanha de ${fin.anoEleicao}` : 'Campanha'}
           valor={fin?.total}
           nota="arrecadado na eleição"
         />
         <ValorDaConta
-          para={`${base}/emendas`}
+          para={`${base}/emendas${sufixo}`}
           rotulo={emendas?.ano ? `Emendas de ${emendas.ano}` : 'Emendas'}
           valor={emendas?.empenhado}
           nota="empenhado no ano"
         />
         <ValorDaConta
-          para={`${base}/cota`}
+          para={`${base}/cota${sufixo}`}
           rotulo={gastos?.ano ? `Cota de ${gastos.ano}` : 'Cota'}
           valor={gastos?.total}
           nota="gasto no ano"

@@ -1,6 +1,6 @@
 import { useLocation, useSearchParams } from 'react-router-dom';
+import { periodoDaLegislatura } from '../formato';
 import { ehDinheiroPublico } from '../navegacao';
-import { SeletorDeLegislatura } from './SeletorDeLegislatura';
 import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
 
 /**
@@ -17,7 +17,7 @@ import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
  *
  * | Tela | A faixa |
  * |---|---|
- * | Início e Parlamentares | **O seletor de período** — um só, no mesmo lugar em todo o site |
+ * | Início e Parlamentares | O período escolhido, em texto. ⚠️ O seletor esteve aqui e saiu: na tira escura, em letra pequena, ficava escondido. Ele mora na `BarraDePeriodo`, junto do conteúdo |
  * | Compare seu voto | "Perguntas da 57ª legislatura": o questionário é só da corrente |
  * | Ficha | Nada: a ficha mostra os mandatos da pessoa, e qual está aberto |
  * | Dinheiro público e o resto | Nada: lá o recorte é por ano, ⛔ por legislatura |
@@ -39,7 +39,7 @@ export function FaixaDeProcedencia() {
 
 function PeriodoDaFaixa({ pathname }: { pathname: string }) {
   const [parametros] = useSearchParams();
-  const [escolha, definir] = useLegislaturaDaUrl();
+  const [escolha] = useLegislaturaDaUrl();
   const legislaturas = useLegislaturas();
 
   if (!legislaturas || legislaturas.length === 0) return null;
@@ -55,11 +55,10 @@ function PeriodoDaFaixa({ pathname }: { pathname: string }) {
   const atual = escolha === 'todas' && !naLista ? corrente : (escolha ?? corrente);
 
   return (
-    <SeletorDeLegislatura
-      opcoes={legislaturas.map((l) => l.numero)}
-      atual={atual}
-      aoTrocar={definir}
-      comTodas={naLista}
-    />
+    <span className="faixa-periodo">
+      {atual === 'todas'
+        ? 'Todos os períodos'
+        : `${atual}ª legislatura · ${periodoDaLegislatura(atual)}`}
+    </span>
   );
 }

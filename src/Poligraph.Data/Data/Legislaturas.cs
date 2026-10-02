@@ -27,6 +27,21 @@ public static class Legislaturas
     /// </remarks>
     public static int AnoInicial(short legislatura) => 2023 + (legislatura - 57) * 4;
 
+    /// <summary>Os anos de despesa de um mandato: da posse ao último ano inteiro dele.</summary>
+    public static (int De, int Ate) AnosDeDespesa(short legislatura) =>
+        (AnoInicial(legislatura), AnoInicial(legislatura) + 3);
+
+    /// <summary>
+    /// Os anos de emenda de um mandato. A emenda de um ano entra na lei orçamentária
+    /// votada no ano anterior (achado #24): o mandato que começa em 2019 apresenta as
+    /// emendas de 2020 a 2023, e as de 2019 são do mandato anterior.
+    /// </summary>
+    public static (int De, int Ate) AnosDeEmenda(short legislatura) =>
+        (AnoInicial(legislatura) + 1, AnoInicial(legislatura) + 4);
+
+    /// <summary>A eleição que deu o mandato: a do ano anterior à posse.</summary>
+    public static int EleicaoDoMandato(short legislatura) => AnoInicial(legislatura) - 1;
+
     /// <summary>
     /// A legislatura corrente: a maior que existe em <c>votacoes</c>.
     ///

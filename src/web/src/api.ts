@@ -641,8 +641,13 @@ export type GastoDeCota = {
   maioresFornecedores: FornecedorDoParlamentar[];
 };
 
-export async function obterGastos(pessoaId: number): Promise<GastoDeCota> {
-  return buscar<GastoDeCota>(`${BASE}/parlamentares/${pessoaId}/gastos`);
+/** Com `legislatura`, o ano mais recente DENTRO do mandato — a ficha ⛔ mistura períodos. */
+function doMandato(legislatura?: number | null): string {
+  return legislatura ? `?legislatura=${legislatura}` : '';
+}
+
+export async function obterGastos(pessoaId: number, legislatura?: number | null): Promise<GastoDeCota> {
+  return buscar<GastoDeCota>(`${BASE}/parlamentares/${pessoaId}/gastos${doMandato(legislatura)}`);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -740,8 +745,8 @@ export type ConveniosDaEmenda = {
   maiores: ConvenioDaEmenda[];
 };
 
-export async function obterEmendas(pessoaId: number): Promise<EmendasDoParlamentar> {
-  return buscar<EmendasDoParlamentar>(`${BASE}/parlamentares/${pessoaId}/emendas`);
+export async function obterEmendas(pessoaId: number, legislatura?: number | null): Promise<EmendasDoParlamentar> {
+  return buscar<EmendasDoParlamentar>(`${BASE}/parlamentares/${pessoaId}/emendas${doMandato(legislatura)}`);
 }
 
 /** Uma emenda, somadas as linhas dela, com o link no Portal. */
@@ -937,11 +942,13 @@ export type FinanciamentoDeCampanha = {
   maioresDoadores: DoadorDoParlamentar[];
 };
 
+/** Com `legislatura`, a eleição que deu ESTE mandato, e nenhuma outra. */
 export async function obterFinanciamento(
   pessoaId: number,
+  legislatura?: number | null,
 ): Promise<FinanciamentoDeCampanha> {
   return buscar<FinanciamentoDeCampanha>(
-    `${BASE}/parlamentares/${pessoaId}/financiamento`,
+    `${BASE}/parlamentares/${pessoaId}/financiamento${doMandato(legislatura)}`,
   );
 }
 

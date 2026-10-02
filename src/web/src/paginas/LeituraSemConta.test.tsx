@@ -24,7 +24,13 @@ vi.mock('../api', async (original) => ({
     id: 1, nome: 'Ana Ribeiro', casa: 'CAMARA', nomeCivil: 'ANA RIBEIRO', partido: 'PARTIDO-A',
     uf: 'SP', urlFoto: null, nVotacoes: 0, nRegistrosDeVoto: 0, votosRecentes: [],
     maisSimilares: [], alinhamento: null, urlFonte: null,
+    legislatura: 57,
+    mandatos: [{ legislatura: 57, casa: 'CAMARA', anoInicial: 2023, partido: 'PARTIDO-A', uf: 'SP', nRegistrosDeVoto: 0 }],
   }),
+  listarLegislaturas: vi.fn().mockResolvedValue([
+    { numero: 57, anoInicial: 2023, anoFinal: 2027, corrente: true, casas: ['CAMARA', 'SENADO'] },
+    { numero: 56, anoInicial: 2019, anoFinal: 2023, corrente: false, casas: ['CAMARA', 'SENADO'] },
+  ]),
   listarSeguidos: vi.fn().mockRejectedValue(new Error('401')),
   obterGastos: vi.fn().mockResolvedValue({ ano: 0, total: 0, lancamentos: 0, porCategoria: [], maioresFornecedores: [] }),
   obterEmendas: vi.fn().mockRejectedValue(new Error('sem')),
@@ -45,10 +51,32 @@ describe('ficha sem conta', () => {
 
     expect((await screen.findAllByRole('heading', { name: /Ana Ribeiro/ })).length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: /Seguir/ })).toBeNull();
-    expect(screen.getByRole('link', { name: 'Seguir' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Seguir' })).toHaveAttribute(
       'href', '/entrar?voltar=%2Fparlamentar%2F1',
     );
     expect(api.listarSeguidos).not.toHaveBeenCalled();
+  });
+});
+
+/** ⭐ Seguir é acompanhar quem está no poder (decisão do autor, 2026-10-02). */
+describe('ficha de quem já saiu', () => {
+  it('⛔ oferece "Seguir"', async () => {
+    vi.mocked(api.obterFicha).mockResolvedValueOnce({
+      ...(await api.obterFicha(1)),
+      legislatura: 52,
+      mandatos: [{ legislatura: 52, casa: 'CAMARA', anoInicial: 2003, partido: 'PARTIDO-A', uf: 'SP', nRegistrosDeVoto: 9 }],
+    });
+    render(
+      <MemoryRouter initialEntries={['/parlamentar/1']}>
+        <Routes>
+          <Route path="/parlamentar/:id" element={<Parlamentar />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect((await screen.findAllByRole('heading', { name: /Ana Ribeiro/ })).length).toBeGreaterThan(0);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByRole('link', { name: 'Seguir' })).toBeNull();
   });
 });
 

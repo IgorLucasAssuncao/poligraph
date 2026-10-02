@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
+import { BarraDePeriodo } from '../componentes/BarraDePeriodo';
 import { Explorar } from './Explorar';
 import { Grafo } from './Grafo';
 
@@ -26,6 +27,10 @@ export function Parlamentares() {
 
   return (
     <>
+      {/* ⭐ Acima das duas vistas: o período vale para a lista e para o grafo. "Todos os
+          períodos" só na lista — ⛔ existe grafo de todas as legislaturas juntas. */}
+      <BarraDePeriodo comTodas={vista === 'lista'} />
+
       <div className="abas-vista" data-tour="vistas" role="tablist" aria-label="Como ver os parlamentares">
         {VISTAS.map((opcao) => (
           <button

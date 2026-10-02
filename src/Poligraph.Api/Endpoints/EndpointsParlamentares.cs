@@ -76,8 +76,8 @@ public static class EndpointsParlamentares
             : Results.NotFound();
 
     private static async Task<IResult> ObterGastosAsync(
-        long id, ServicoGastosDeCota servico, CancellationToken ct, int? ano = null) =>
-        Results.Ok(await servico.ObterAsync(id, ano, ct));
+        long id, ServicoGastosDeCota servico, CancellationToken ct, int? ano = null, short? legislatura = null) =>
+        Results.Ok(await servico.ObterAsync(id, ano, legislatura, ct));
 
     /// <summary>Os votos de uma legislatura da pessoa, do mais recente, em páginas. Sem legislatura, a última em que votou. <c>busca</c> filtra por descrição, ementa e matéria.</summary>
     private static async Task<IResult> ListarVotosAsync(
@@ -89,8 +89,8 @@ public static class EndpointsParlamentares
             : Results.NotFound();
 
     private static async Task<IResult> ObterEmendasAsync(
-        long id, ServicoEmendas servico, CancellationToken ct, int? ano = null) =>
-        Results.Ok(await servico.ObterAsync(id, ano, ct));
+        long id, ServicoEmendas servico, CancellationToken ct, int? ano = null, short? legislatura = null) =>
+        Results.Ok(await servico.ObterAsync(id, ano, legislatura, ct));
 
     /// <summary>As emendas do ano, uma a uma, com o link de cada uma no Portal.</summary>
     private static async Task<IResult> ListarEmendasAsync(
@@ -117,8 +117,8 @@ public static class EndpointsParlamentares
         Results.Ok(await servico.ListarConveniosAsync(id, ano, pagina, tamanho, ct));
 
     private static async Task<IResult> ObterFinanciamentoAsync(
-        long id, ServicoFinanciamento servico, CancellationToken ct, int? eleicao = null) =>
-        Results.Ok(await servico.ObterAsync(id, eleicao, ct));
+        long id, ServicoFinanciamento servico, CancellationToken ct, int? eleicao = null, short? legislatura = null) =>
+        Results.Ok(await servico.ObterAsync(id, eleicao, legislatura, ct));
 
     /// <summary>PP3 — o patrimônio declarado ao TSE, por candidatura e tipo de bem.</summary>
     private static async Task<IResult> ObterPatrimonioAsync(long id, ServicoParlamentares servico, CancellationToken ct) =>

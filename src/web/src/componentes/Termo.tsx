@@ -76,9 +76,10 @@ export const GLOSSARIO = {
   legislatura: {
     rotulo: 'legislatura',
     explicacao:
-      ' Os quatro anos de mandato de uma Câmara, entre uma eleição e a seguinte. ' +
-      'Só comparamos votos dentro da mesma legislatura: quem ' +
-      'foi eleito em 2022 não votou nada do que veio antes.',
+      ' Os quatro anos do Congresso — Câmara e Senado —, entre uma eleição e a seguinte. ' +
+      'O deputado tem mandato de uma legislatura; o senador, de duas (oito anos), e por isso ' +
+      'aparece nas duas. Só comparamos votos dentro da mesma legislatura: quem foi eleito em ' +
+      '2022 não votou nada do que veio antes.',
   },
   partido: {
     rotulo: 'partido',

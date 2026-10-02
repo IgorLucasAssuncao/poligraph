@@ -12,10 +12,12 @@ import {
 } from '../api';
 import { Avatar } from '../componentes/Avatar';
 import { BotaoDoTour } from '../componentes/BotaoDoTour';
+import { periodoDaLegislatura } from '../formato';
 import { BotaoMostrarMais } from '../componentes/BotaoMostrarMais';
 import { BotaoSeguir } from '../componentes/BotaoSeguir';
 import { AbaCampanha, AbaCota, AbaEmendas, FaixaDeContas } from '../componentes/ContasDoParlamentar';
 import { useContas } from '../componentes/useContas';
+import { useLegislaturas } from '../componentes/useLegislatura';
 import { BotaoBaixarCsv } from '../componentes/BotaoBaixarCsv';
 import { LinkDeFonte } from '../componentes/LinkDeFonte';
 import { MandatosDoParlamentar } from '../componentes/MandatosDoParlamentar';
@@ -59,10 +61,18 @@ export function Parlamentar() {
   const { pathname } = useLocation();
   const [busca] = useSearchParams();
   const legislaturaPedida = Number(busca.get('legislatura')) || undefined;
-  const { contas, erro: erroDasContas } = useContas(pessoaId);
+  const [ficha, setFicha] = useState<Ficha | null>(null);
+  const { contas, erro: erroDasContas } = useContas(
+    pessoaId,
+    ficha === null ? 'aguardando' : ficha.legislatura,
+  );
+  const legislaturas = useLegislaturas();
+  const corrente = legislaturas?.[0]?.numero;
+  /** Votou na legislatura corrente — a regra de seguir, a mesma da API. */
+  const emExercicio =
+    corrente !== undefined && (ficha?.mandatos ?? []).some((m) => m.legislatura === corrente);
   const { usuario } = useSessao();
 
-  const [ficha, setFicha] = useState<Ficha | null>(null);
   const [seguindo, setSeguindo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -116,8 +126,22 @@ export function Parlamentar() {
             {ficha.nomeCivil !== ficha.nome && <p className="nome-civil">{ficha.nomeCivil}</p>}
           </div>
 
-          <BotaoSeguir pessoaId={pessoaId} seguindo={seguindo} aoAlternar={(_, agora) => setSeguindo(agora)} />
+          {/* ⭐ Seguir é acompanhar quem está no poder (decisão do autor, 2026-10-02): só
+              para quem votou na legislatura corrente. Quem já segue um ex-parlamentar
+              continua vendo o botão — para poder deixar de seguir. */}
+          {(seguindo || emExercicio) && (
+            <BotaoSeguir pessoaId={pessoaId} seguindo={seguindo} aoAlternar={(_, agora) => setSeguindo(agora)} />
+          )}
         </div>
+
+        {/* ⭐ O porquê de ⛔ haver botão, dito na ficha (autor, 2026-10-02): sem isto o perfil
+            inativo parecia só ter perdido o botão. */}
+        {!seguindo && !emExercicio && corrente !== undefined && (
+          <p className="perfil-inativo" role="note">
+            Fora do mandato. Só é possível seguir quem está em exercício na legislatura
+            atual ({periodoDaLegislatura(corrente)}).
+          </p>
+        )}
 
         <div className="perfil-chips">
           {/* A casa vem primeiro: é o que situa todo o resto. Um "PT · SP" sem ela
@@ -162,7 +186,12 @@ export function Parlamentar() {
         )}
 
         {/* Os três dinheiros, cada um levando à sua aba. */}
-        <FaixaDeContas contas={contas} base={base} />
+        <FaixaDeContas
+          contas={contas}
+          base={base}
+          sufixo={legislaturaPedida ? `?legislatura=${legislaturaPedida}` : ''}
+          mandatoPassado={ficha.legislatura && corrente && ficha.legislatura !== corrente ? ficha.legislatura : null}
+        />
       </header>
 
       <nav className="abas" aria-label="Seções do perfil">

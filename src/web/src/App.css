@@ -258,12 +258,46 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 /* ⭐ O seletor de período mora na faixa: o mesmo lugar em todo o site. Cores da faixa,
    ⛔ do conteúdo — senão vira um controle claro numa tira escura. */
 .faixa-procedencia { align-items: center; }
-.faixa-procedencia .seletor-legislatura { color: var(--faixa-texto); font-size: var(--t-1); margin-left: auto; }
-.faixa-procedencia .seletor-legislatura select {
-  padding: .1rem .35rem; font-size: var(--t-1);
-  color: var(--faixa-texto); background: var(--faixa-fundo);
-  border: 1px solid color-mix(in srgb, var(--faixa-texto) 45%, transparent);
+.faixa-periodo { margin-left: auto; font-variant-numeric: tabular-nums; opacity: .85; }
+
+/* ⭐ Pílula na cor da faixa, ⛔ o select nativo com borda branca e fonte de máquina — que
+   destoava da tira e "ficou bem feio" (autor, 2026-10-02). A seta é desenhada com dois
+   gradientes em `currentColor`: acompanha o tema sem imagem. */
+/* ⭐ A barra do período, no alto do conteúdo (2026-10-02): na faixa, ficava escondida. */
+.barra-periodo {
+  margin: 0 0 1rem; padding: .7rem 1rem;
+  background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio);
 }
+.barra-periodo-linha { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .9rem; }
+.barra-periodo-rotulo { font-weight: 700; font-size: var(--t-3); }
+.barra-periodo-ajuda { color: var(--suave); font-size: var(--t-2); }
+/* Período passado: a tela inteira é de outro tempo, e isso precisa ser visto. */
+.barra-periodo-passada { border-color: var(--realce); border-left-width: 4px; }
+.barra-periodo-aviso { margin: .5rem 0 0; font-size: var(--t-2); }
+
+.seletor-legislatura {
+  display: inline-flex; align-items: center; gap: .45rem;
+  color: var(--texto); font-size: var(--t-3);
+}
+.seletor-legislatura select {
+  appearance: none; -webkit-appearance: none;
+  padding: .2rem 1.7rem .2rem .75rem;
+  font: inherit; font-weight: 600; font-variant-numeric: tabular-nums;
+  color: inherit; cursor: pointer;
+  background-color: color-mix(in srgb, var(--faixa-texto) 12%, transparent);
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 13px) 52%, calc(100% - 8px) 52%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  border: 1px solid transparent; border-radius: 999px;
+  transition: background-color var(--t-curto) var(--curva);
+}
+.seletor-legislatura select:hover { background-color: color-mix(in srgb, var(--faixa-texto) 20%, transparent); }
+.seletor-legislatura select:focus-visible { outline: 2px solid var(--realce); outline-offset: 2px; }
+/* A lista aberta herda a faixa: sem isto, texto claro em fundo branco do sistema. */
+.seletor-legislatura option { color: var(--texto); background: var(--fundo); font-weight: 400; }
 
 .cabecalho-site {
   position: sticky; top: 0; z-index: 30;
@@ -502,6 +536,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .perfil-identidade h1 { margin: 0; font-size: var(--t-4); font-weight: 800; letter-spacing: -.01em; }
 .perfil-identidade .nome-civil { margin: .1rem 0 0; color: var(--suave); font-size: var(--t-2); }
 .perfil-chips { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem; }
+.perfil-inativo { margin: .6rem 0 0; color: var(--suave); font-size: var(--t-2); }
 .contas-aviso { margin: 1rem 0 .4rem; font-size: var(--t-1); color: var(--suave); }
 
 /* Os mandatos do parlamentar. Um só vira a linha que diz de quando é a ficha; dois ou
@@ -1187,6 +1222,15 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .cartao-casa .cartao-ressalva strong { color: var(--texto); }
 
 /* ═══ BARRA DO GRAFO ═══════════════════════════════════════════ */
+/* O aviso do grafo embutido: a roda rolou a página, e o zoom pede Ctrl. Sobre o desenho,
+   ⛔ empurra nada — aparece e some sem mudar a altura da página. */
+.grafo-aviso-roda {
+  position: absolute; inset: 0; z-index: 2; margin: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--fundo) 70%, transparent);
+  font-size: var(--t-3); font-weight: 600; color: var(--texto);
+  pointer-events: none;
+}
 .grafo-barra {
   display: flex; align-items: center; justify-content: space-between;
   flex-wrap: wrap; gap: .75rem; margin-bottom: 1rem;
@@ -1512,24 +1556,10 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   padding: .75rem 1rem 0;
 }
 
-/* O período do grafo: rótulo curto e o select com o contorno de controle (3:1 nos dois
-   temas). Fica na mesma linha da casa, que é a escolha principal. */
-.seletor-legislatura {
-  display: flex; align-items: center; gap: .4rem;
-  font-size: var(--t-2); color: var(--suave);
-}
-.grafo-barra .seletor-legislatura { padding: .75rem 0 0; }
 /* Botão que se lê como link: escolher outro período sem sair da frase que explica por quê. */
 .botao-link {
   padding: 0; border: 0; background: none; font: inherit;
   color: var(--realce); text-decoration: underline; cursor: pointer;
-}
-.painel-secao > .seletor-legislatura { margin: .2rem 0 1rem; }
-.seletor-legislatura select {
-  padding: .3rem .5rem;
-  font: inherit; font-family: var(--dado); font-variant-numeric: tabular-nums;
-  color: var(--texto); background: var(--fundo);
-  border: 1px solid var(--borda-controle); border-radius: var(--raio);
 }
 .grafo-casas button {
   padding: .4rem .85rem;
@@ -2731,9 +2761,10 @@ dialog.tour::backdrop { background: transparent; }
   .faixa-procedencia { flex-wrap: nowrap; gap: .6rem; white-space: nowrap; overflow: hidden; }
   .faixa-procedencia .faixa-longa { display: none; }
   .faixa-procedencia .faixa-curta { display: inline; }
-  /* No celular a faixa é uma linha só: o seletor fica, o texto de procedência encolhe. */
-  .faixa-procedencia .seletor-legislatura { flex: none; }
-  .faixa-procedencia .seletor-legislatura > span { display: none; }
+  /* No celular a faixa é uma linha só: o seletor fica, o texto de procedência encolhe.
+     📐 A 386 px o seletor terminava em 401 px, cortado (2026-10-02): com ele na faixa,
+     "Câmara e Senado" sai e "Dados públicos" fica. */
+  .faixa-procedencia:has(.faixa-periodo) .faixa-curta { display: none; }
 
   .cabecalho-conteudo .nav-principal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
   .cabecalho-conteudo .nav-item {

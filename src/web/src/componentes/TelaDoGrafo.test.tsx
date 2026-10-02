@@ -332,3 +332,37 @@ describe('os dois números de "votações" não podem usar a mesma palavra', () 
     expect(screen.getAllByText(/500 votações comparáveis/i).length).toBeGreaterThan(0);
   });
 });
+
+/**
+ * 📐 O grafo do início sequestrava a rolagem: a roda sobre ele dava zoom, prendia quem
+ * rolava a página e disparava o download das fotos (2026-10-02). Embutido, a roda é da
+ * página; o zoom pede Ctrl.
+ */
+describe('a roda num grafo embutido', () => {
+  function rodar(canvas: Element, ctrlKey: boolean) {
+    const evento = new WheelEvent('wheel', { deltaY: -120, ctrlKey, bubbles: true, cancelable: true });
+    canvas.dispatchEvent(evento);
+    return evento.defaultPrevented;
+  }
+
+  it('sem Ctrl, rola a página e avisa como aproximar', async () => {
+    render(<TelaDoGrafo grafo={GRAFO} embutido />);
+    const canvas = screen.getByRole('img');
+
+    expect(rodar(canvas, false)).toBe(false);
+    expect(await screen.findByText('Use Ctrl + roda do mouse para aproximar')).toBeInTheDocument();
+  });
+
+  it('com Ctrl, aproxima — e ⛔ deixa a página rolar junto', () => {
+    render(<TelaDoGrafo grafo={GRAFO} embutido />);
+
+    expect(rodar(screen.getByRole('img'), true)).toBe(true);
+  });
+
+  it('fora da página que rola — a aba do grafo —, a roda aproxima sem Ctrl', () => {
+    render(<TelaDoGrafo grafo={GRAFO} />);
+
+    expect(rodar(screen.getByRole('img'), false)).toBe(true);
+    expect(screen.queryByText(/Ctrl \+ roda/)).toBeNull();
+  });
+});

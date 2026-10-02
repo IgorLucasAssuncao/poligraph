@@ -4,8 +4,9 @@ import type { EscolhaDeLegislatura } from './useLegislatura';
 /**
  * O seletor de período, igual em todo o site.
  *
- * ⭐ O período ("2019–2023") na frente do número: "56ª legislatura" ⛔ diz nada a quem
- * ⛔ acompanha o Congresso. O número vem depois, para quem procura por ele.
+ * ⭐ Só o período ("2019–2023"): "56ª legislatura" ⛔ diz nada a quem ⛔ acompanha o
+ * Congresso. O número fica no `title`, para quem procura por ele — na opção, ele
+ * dobrava a largura da pílula sem ajudar a escolher.
  *
  * ⭐ `<select>` e ⛔ botões: são até sete legislaturas, e sete botões tomariam a linha
  * dos outros filtros.
@@ -16,6 +17,7 @@ export function SeletorDeLegislatura({
   aoTrocar,
   comTodas = false,
   rotulo = 'Período',
+  rotuloVisivel = true,
 }: {
   /** Da mais recente para a mais antiga; a primeira é a corrente. */
   opcoes: number[];
@@ -24,12 +26,15 @@ export function SeletorDeLegislatura({
   /** "Todas", na lista: cada pessoa com o último mandato. */
   comTodas?: boolean;
   rotulo?: string;
+  /** Falso quando o texto ao lado já nomeia a escolha: o rótulo fica para o leitor de tela. */
+  rotuloVisivel?: boolean;
 }) {
   return (
     <label className="seletor-legislatura">
-      <span>{rotulo}</span>
+      <span className={rotuloVisivel ? undefined : 'so-leitor'}>{rotulo}</span>
       <select
         value={String(atual)}
+        title={atual === 'todas' ? 'Todos os períodos' : `${atual}ª legislatura`}
         onChange={(e) => {
           const valor = e.target.value;
           if (valor === 'todas') aoTrocar('todas');
@@ -39,7 +44,7 @@ export function SeletorDeLegislatura({
         {opcoes.map((l, i) => (
           <option key={l} value={l}>
             {periodoDaLegislatura(l)}
-            {i === 0 ? ' (atual)' : ` · ${l}ª`}
+            {i === 0 ? ' · atual' : ''}
           </option>
         ))}
         {comTodas && <option value="todas">Todos os períodos</option>}

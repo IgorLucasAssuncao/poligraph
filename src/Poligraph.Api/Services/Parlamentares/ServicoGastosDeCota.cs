@@ -31,11 +31,16 @@ public class ServicoGastosDeCota(PoligraphDb db)
     /// <para>Sem despesa é caso NORMAL — deputado que não usou cota, ou ano ainda não ingerido. A tela mostra estado vazio, não erro.</para>
     /// <para>Projeta em tipo ANÔNIMO, não direto no `record`: o EF não traduz `GroupBy` com construtor posicional — devolve `could not be translated` em runtime, não em compilação. O `record` é montado depois, em memória.</para>
     /// </remarks>
-    public async Task<GastoDeCotaDto> ObterAsync(long id, int? ano, CancellationToken ct)
+    /// <param name="legislatura">Sem ano, o mais recente DENTRO do mandato: a ficha aberta em 2015-2019 não mostra a cota de hoje.</param>
+    public async Task<GastoDeCotaDto> ObterAsync(long id, int? ano, short? legislatura, CancellationToken ct)
     {
-        var alvo = ano ?? await _db.Despesas.AsNoTracking()
-            .Where(d => d.PessoaId == id)
-            .MaxAsync(d => (int?)d.Ano, ct);
+        var daPessoa = _db.Despesas.AsNoTracking().Where(d => d.PessoaId == id);
+        if (legislatura is { } l)
+        {
+            var (de, ate) = Legislaturas.AnosDeDespesa(l);
+            daPessoa = daPessoa.Where(d => d.Ano >= de && d.Ano <= ate);
+        }
+        var alvo = ano ?? await daPessoa.MaxAsync(d => (int?)d.Ano, ct);
 
         if (alvo is null) return new GastoDeCotaDto(0, 0, 0, [], []);
 

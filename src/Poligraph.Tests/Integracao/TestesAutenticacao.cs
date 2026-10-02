@@ -216,6 +216,36 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         Assert.Equal(HttpStatusCode.NotFound, resposta.StatusCode);
     }
 
+    /// <summary>
+    /// Seguir é só para quem está em exercício: votou na legislatura corrente.
+    /// </summary>
+    [SkippableFact]
+    public async Task Seguir_QuemSaiu_Retorna422_ENaoGrava()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var corrente = await Db.Votacoes.MaxAsync(v => v.Legislatura);
+        var ex = new PessoaModel { NomeExibicao = "Ex Deputado", NomeCivil = "EX DEPUTADO" };
+        Db.Pessoas.Add(ex);
+        Db.Votacoes.Add(new VotacaoModel
+        {
+            Id = "7777777-1", Casa = TipoCasa.CAMARA, Legislatura = (short)(corrente - 1),
+            Data = new DateOnly(2021, 5, 4), Descricao = "Votação antiga",
+            Categoria = TipoCategoriaDeVotacao.SUBSTANTIVA, Plenario = true
+        });
+        await Db.SaveChangesAsync();
+        Db.Votos.Add(new VotoModel { VotacaoId = "7777777-1", PessoaId = ex.Id, Valor = 1, PartidoNoVoto = "X", UfNoVoto = "AC" });
+        await Db.SaveChangesAsync();
+        using var cliente = CriarCliente();
+        await EntrarAsync(cliente);
+
+        var resposta = await cliente.PutAsync($"/api/seguidos/{ex.Id}", null);
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, resposta.StatusCode);
+        await using var db = CriarContexto();
+        Assert.Equal(0, await db.Segue.CountAsync());
+    }
+
     [SkippableFact]
     public async Task DeixarDeSeguir_RemoveDaLista()
     {

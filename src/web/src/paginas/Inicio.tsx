@@ -17,6 +17,7 @@ import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
 import { useSessao } from '../sessao';
 import { EsqueletoDePainel } from '../componentes/Esqueleto';
 import { useLegislaturaDaUrl, useLegislaturas } from '../componentes/useLegislatura';
+import { BarraDePeriodo } from '../componentes/BarraDePeriodo';
 import { periodoDaLegislatura } from '../formato';
 
 
@@ -96,6 +97,8 @@ export function Inicio() {
             </Link>
           </div>
         </section>
+
+        <BarraDePeriodo />
 
         {panorama ? (
           <Base panorama={panorama} />
@@ -212,7 +215,7 @@ function GrafoDaAbertura({ legislatura }: { legislatura?: number }) {
         {grafo && <small>{periodoDaLegislatura(grafo.legislatura)}</small>}
       </h2>
       {grafo ? (
-        <TelaDoGrafo grafo={grafo} altura={460} />
+        <TelaDoGrafo grafo={grafo} altura={460} embutido />
       ) : (
         <div className="grafo-reserva" style={{ height: 460 }} aria-hidden="true" />
       )}

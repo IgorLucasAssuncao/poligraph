@@ -776,13 +776,13 @@ describe('os mandatos na ficha', () => {
     await renderizarCom(FICHA);
 
     expect(screen.getByText('2023–2027')).toBeDefined();
-    expect(screen.queryByRole('navigation', { name: 'Mandatos' })).toBeNull();
+    expect(screen.queryByRole('navigation', { name: 'Legislaturas em que votou' })).toBeNull();
   });
 
   it('com dois, cada mandato é um link, com a sigla de então', async () => {
     await renderizarCom(DOIS_MANDATOS);
 
-    const mandatos = screen.getByRole('navigation', { name: 'Mandatos' });
+    const mandatos = screen.getByRole('navigation', { name: 'Legislaturas em que votou' });
     const links = within(mandatos).getAllByRole('link');
 
     expect(links).toHaveLength(2);
@@ -796,7 +796,7 @@ describe('os mandatos na ficha', () => {
     renderizar();
     await screen.findAllByRole('heading', { name: /Ana Ribeiro/ });
 
-    await userEvent.click(within(screen.getByRole('navigation', { name: 'Mandatos' })).getByText('2019–2023'));
+    await userEvent.click(within(screen.getByRole('navigation', { name: 'Legislaturas em que votou' })).getByText('2019–2023'));
 
     await waitFor(() => expect(vi.mocked(api.obterFicha)).toHaveBeenLastCalledWith(1, 56));
   });

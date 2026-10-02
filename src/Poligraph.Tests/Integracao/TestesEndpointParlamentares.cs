@@ -251,6 +251,26 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         Assert.Equal(300m, gastos.PorCategoria[0].Total);
     }
 
+    /// <summary>
+    /// A ficha aberta num mandato mostra a cota de DENTRO dele: a de 2025 não aparece no
+    /// mandato de 2019-2023, e a busca por mandato não cai em outro ano calada.
+    /// </summary>
+    [SkippableFact]
+    public async Task Gastos_DoMandato_SoAnosDele()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var pessoaId = await SemearDespesasAsync();
+        using var cliente = CriarCliente();
+
+        var doMandato = await cliente.GetFromJsonAsync<GastoLido>($"{Rota}/{pessoaId}/gastos?legislatura=57");
+        var deOutro = await cliente.GetFromJsonAsync<GastoLido>($"{Rota}/{pessoaId}/gastos?legislatura=56");
+
+        Assert.Equal(2025, doMandato!.Ano);
+        Assert.Equal(0, deOutro!.Ano);
+        Assert.Equal(0, deOutro.Lancamentos);
+    }
+
     /// <summary> Sem despesa é caso normal — a tela mostra vazio, não erro.</summary>
     [SkippableFact]
     public async Task Gastos_SemDespesa_DevolveVazioNaoErro()

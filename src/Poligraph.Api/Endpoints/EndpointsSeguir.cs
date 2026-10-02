@@ -53,6 +53,20 @@ public static class EndpointsSeguir
     }
 
     /// <summary> PUT e não POST: seguir duas vezes tem de ser o mesmo que seguir uma.</summary>
+    /// <summary>
+    /// Decisão do autor (2026-10-02): seguir é acompanhar quem está no poder. Com o
+    /// histórico na base, a lista e a busca trazem milhares de ex-parlamentares, e seguir
+    /// alguém de 2005 guardaria dado sensível (LGPD art. 5º, II) sem nada a acompanhar.
+    /// </summary>
+    /// <remarks>
+    /// <para>"Em exercício" é ter votado na legislatura corrente, a mesma regra da lista. Quem já é seguido continua na lista e pode deixar de ser seguido.</para>
+    /// </remarks>
+    private static async Task<bool> EmExercicioAsync(PoligraphDb db, long pessoaId, CancellationToken ct)
+    {
+        var corrente = await Legislaturas.CorrenteAsync(db, ct);
+        return await db.Votos.AnyAsync(v => v.PessoaId == pessoaId && v.Votacao!.Legislatura == corrente, ct);
+    }
+
     private static async Task<IResult> SeguirAsync(
         long pessoaId, ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
     {
@@ -63,6 +77,12 @@ public static class EndpointsSeguir
 
         if (await db.Segue.AnyAsync(s => s.UsuarioId == usuarioId && s.PessoaId == pessoaId, ct))
             return Results.NoContent();   // idempotente
+
+        if (!await EmExercicioAsync(db, pessoaId, ct))
+            return Results.Problem(
+                statusCode: StatusCodes.Status422UnprocessableEntity,
+                title: "Só é possível seguir quem está em exercício.",
+                detail: "A pessoa não votou na legislatura atual. A ficha dela continua aberta para consulta.");
 
         db.Segue.Add(new SegueModel { UsuarioId = usuarioId, PessoaId = pessoaId });
         await db.SaveChangesAsync(ct);

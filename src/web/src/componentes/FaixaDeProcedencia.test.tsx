@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { FaixaDeProcedencia } from './FaixaDeProcedencia';
@@ -29,55 +29,42 @@ function renderizarEm(endereco: string) {
 
 /**
  * 🔴 A faixa dizia "57ª legislatura" sobre a lista de 2015–2019 (2026-10-02). Ela ⛔ pode
- * afirmar um período que a tela ⛔ mostra.
+ * afirmar um período que a tela ⛔ mostra. O seletor saiu dela para a `BarraDePeriodo`.
  */
 describe('a faixa do topo', () => {
-  it('no início é o seletor de período, e escolher muda o endereço', async () => {
-    renderizarEm('/');
-
-    const seletor = await screen.findByLabelText('Período');
-    fireEvent.change(seletor, { target: { value: '55' } });
-
-    expect(screen.getByTestId('endereco')).toHaveTextContent('/?legislatura=55');
-  });
-
-  it('mostra o período do endereço, ⛔ a corrente', async () => {
+  it('diz o período do endereço, ⛔ a corrente', async () => {
     renderizarEm('/parlamentares?legislatura=56');
-
-    expect(await screen.findByLabelText('Período')).toHaveValue('56');
+    expect(await screen.findByText('56ª legislatura · 2019–2023')).toBeInTheDocument();
   });
 
-  it('"todos os períodos" só na lista, ⛔ no grafo', async () => {
-    renderizarEm('/parlamentares');
-    expect(await screen.findByRole('option', { name: 'Todos os períodos' })).toBeInTheDocument();
+  it('sem período no endereço, a corrente', async () => {
+    renderizarEm('/');
+    expect(await screen.findByText('57ª legislatura · 2023–2027')).toBeInTheDocument();
   });
 
-  it('no grafo, "todas" vira a corrente', async () => {
+  it('"todos os períodos" na lista; no grafo, a corrente', async () => {
+    const { unmount } = renderizarEm('/parlamentares?legislatura=todas');
+    expect(await screen.findByText('Todos os períodos')).toBeInTheDocument();
+    unmount();
+
     renderizarEm('/parlamentares?vista=grafo&legislatura=todas');
-
-    expect(await screen.findByLabelText('Período')).toHaveValue('57');
-    expect(screen.queryByRole('option', { name: 'Todos os períodos' })).toBeNull();
+    expect(await screen.findByText('57ª legislatura · 2023–2027')).toBeInTheDocument();
   });
 
-  it('a corrente tira o parâmetro do endereço', async () => {
-    renderizarEm('/?legislatura=55');
-
-    fireEvent.change(await screen.findByLabelText('Período'), { target: { value: '57' } });
-
-    expect(screen.getByTestId('endereco')).toHaveTextContent(/^\/$/);
+  it('⛔ é controle: a escolha mora na barra do conteúdo', async () => {
+    renderizarEm('/');
+    await screen.findByText(/57ª legislatura/);
+    expect(screen.queryByRole('combobox')).toBeNull();
   });
 
   it('no questionário diz de que legislatura são as perguntas', async () => {
     renderizarEm('/resultado?legislatura=55');
-
     expect(await screen.findByText('Perguntas da 57ª legislatura')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Período')).toBeNull();
   });
 
   it('no dinheiro e na ficha ⛔ afirma legislatura nenhuma', async () => {
     renderizarEm('/emendas');
     await screen.findByText('Dados públicos');
     expect(screen.queryByText(/legislatura/)).toBeNull();
-    expect(screen.queryByLabelText('Período')).toBeNull();
   });
 });
