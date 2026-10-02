@@ -1,9 +1,9 @@
 /**
  * Textos jurídicos do projeto.
  *
- * 🔴 `VERSAO_CONSENTIMENTO` é gravada em `consentimento.versao` a cada aceite.
+ * RISCO: `VERSAO_CONSENTIMENTO` é gravada em `consentimento.versao` a cada aceite.
  *
- * ⚠️ SEMPRE incremente a versão ao mudar qualquer texto abaixo. Sem isso não há como
+ * ATENÇÃO: SEMPRE incremente a versão ao mudar qualquer texto abaixo. Sem isso não há como
  * responder "consentiu com o quê, exatamente?" — que é a pergunta que a LGPD art. 8º §2
  * joga no colo do controlador, porque o ônus da prova do consentimento é dele.
  */
@@ -12,7 +12,7 @@ export const VERSAO_CONSENTIMENTO = 'v4-2026-10-02';
 export const CONTATO = 'igorlucas1217@gmail.com';
 
 /**
- * ⚠️ Rascunho para revisão do orientador e, se possível, de alguém da área jurídica.
+ * ATENÇÃO: Rascunho para revisão do orientador e, se possível, de alguém da área jurídica.
  * Não é peça jurídica revisada — é o melhor esforço técnico de descrever com precisão
  * o que o sistema realmente faz.
  */
@@ -150,8 +150,14 @@ daquela pessoa nas perguntas apresentadas, e nada além disso.
 `.trim();
 
 /**
- * 🔴 O banner precisa dizer CINCO coisas (plano/02 §4.5.2). Um "usamos cookies para
+ * RISCO: O banner precisa dizer CINCO coisas (plano/02 §4.5.2). Um "usamos cookies para
  * melhorar sua experiência" genérico NÃO autoriza o que este site grava.
+ *
+ * ATENÇÃO: Os dois botões têm o MESMO peso visual, de propósito (LGPD art. 9º §3):
+ * recusar não pode ser mais difícil que aceitar.
+ *
+ * DECISÃO: Recusar NÃO bloqueia o site — consentimento para finalidade não essencial não
+ * pode ser condição de uso.
  */
 export const TEXTO_CONSENTIMENTO = {
   titulo: 'Antes de continuar',
@@ -164,12 +170,8 @@ export const TEXTO_CONSENTIMENTO = {
     'Gravações ficam 30 dias; dados de clique, 9 meses.',
   ],
 
-  // ⚠️ Os dois botões têm o MESMO peso visual, de propósito (LGPD art. 9º §3):
-  //    recusar não pode ser mais difícil que aceitar.
   aceitar: 'Aceitar',
   recusar: 'Recusar',
 
-  // ⭐ Recusar NÃO bloqueia o site — consentimento para finalidade não essencial não
-  //    pode ser condição de uso.
   rodape: 'Você pode usar o site normalmente escolhendo qualquer uma das opções.',
 } as const;

@@ -4,26 +4,41 @@ import { registrarAvaliacao, type ResultadoAfinidade } from '../api';
 /**
  * Avaliação do questionário — o feedback que valida o método.
  *
- * ⚠️ **Modal, não rodapé.** Estava no fim da tela de resultado, depois das duas listas
+ * ATENÇÃO: **Modal, não rodapé.** Estava no fim da tela de resultado, depois das duas listas
  * e do aviso legal: quem não rolava até lá nunca via, e a amostra da pesquisa dependia
  * de quem tem paciência de rolar — que é um recorte enviesado da população.
  *
- * 🔴 Duas decisões que precisam estar visíveis para quem mexer aqui:
+ * RISCO: Duas decisões que precisam estar visíveis para quem mexer aqui:
  *
  * 1. É perguntado DEPOIS do resultado, nunca antes. Perguntar a posição política antes
  *    ancoraria as respostas do questionário no rótulo que a pessoa escolheu para si —
  *    e o instrumento passaria a medir o rótulo, não o voto.
  *
- * 2. O que é enviado ⛔ NÃO carrega a identidade. O servidor grava a autodeclaração
+ * 2. O que é enviado NÃO carrega a identidade. O servidor grava a autodeclaração
  *    sem `usuario_id`, de propósito: assim ela responde "o instrumento acerta?" sem
  *    responder "o que o Fulano pensa?".
+ *
+ * ATENÇÃO: Nunca por cima de outro diálogo (o tour, as contas): dois modais empilhados
+ * tiram da pessoa o controle de qual fechar. Tenta de novo logo depois.
+ *
+ * DECISÃO: O que vier primeiro: o tempo de ler, ou a pessoa ter rolado até o fim dos
+ * resultados das duas casas — aí ela já viu o que veio buscar.
+ *
+ * DECISÃO: "Opcionais" dito antes das perguntas, não depois.
+ *
+ * ATENÇÃO: Dito no lugar onde a pessoa decide responder, não escondido na política.
+ *
+ * RISCO: Recusar precisa ser tão fácil quanto aceitar.
+ *
+ * O primeiro da PRIMEIRA casa devolvida. A avaliação pergunta "acertou?", e a
+ * referência é o parlamentar em destaque no topo da tela — que é esse.
  */
 export function Avaliacao({
   resultado,
   esperaMs = ESPERA,
 }: {
   resultado: ResultadoAfinidade;
-  /** ⭐ Injetável para o teste não precisar de relógio falso — que briga com o
+  /** DECISÃO: Injetável para o teste não precisar de relógio falso — que briga com o
    *  `userEvent` e trava a suíte. */
   esperaMs?: number;
 }) {
@@ -38,8 +53,6 @@ export function Avaliacao({
   useEffect(() => {
     let aberto = false;
 
-    // ⚠️ Nunca por cima de outro diálogo (o tour, as contas): dois modais empilhados
-    //    tiram da pessoa o controle de qual fechar. Tenta de novo logo depois.
     const abrir = () => {
       if (aberto || !dialogo.current) return;
       if (document.querySelector('dialog[open]')) {
@@ -50,8 +63,6 @@ export function Avaliacao({
       dialogo.current.showModal();
     };
 
-    // ⭐ O que vier primeiro: o tempo de ler, ou a pessoa ter rolado até o fim dos
-    //    resultados das duas casas — aí ela já viu o que veio buscar.
     let relogio = setTimeout(abrir, esperaMs);
 
     const alvo = fimDosResultados.current;
@@ -82,7 +93,6 @@ export function Avaliacao({
         <form method="dialog" onSubmit={(e) => e.preventDefault()}>
           <header>
             <h2>Ajude a avaliar</h2>
-            {/* ⭐ "Opcionais" dito antes das perguntas, não depois. */}
             <p className="ajuda">Duas perguntas rápidas e opcionais, para a pesquisa.</p>
           </header>
 
@@ -120,7 +130,6 @@ export function Avaliacao({
             </div>
           </fieldset>
 
-          {/* ⚠️ Dito no lugar onde a pessoa decide responder, não escondido na política. */}
           <p className="nota-privacidade">
             🔒 Estas duas respostas são gravadas{' '}
             <strong>sem ligação com a sua conta</strong>. Servem para medir se o método
@@ -138,7 +147,6 @@ export function Avaliacao({
             >
               Enviar avaliação
             </button>
-            {/* 🔴 Recusar precisa ser tão fácil quanto aceitar. */}
             <button type="button" className="botao-secundario" onClick={fechar}>
               Agora não
             </button>
@@ -149,15 +157,11 @@ export function Avaliacao({
     </>
   );
 
-  // ═══════════════════════════════════════════════════════════════
-
   function fechar() {
     dialogo.current?.close();
   }
 
   async function enviar() {
-    // O primeiro da PRIMEIRA casa devolvida. A avaliação pergunta "acertou?", e a
-    // referência é o parlamentar em destaque no topo da tela — que é esse.
     const primeiro = resultado.porCasa[0]?.maisProximos[0];
 
     try {
@@ -177,15 +181,15 @@ export function Avaliacao({
 }
 
 /**
- * Milissegundos entre o resultado aparecer e o modal subir, se a pessoa ⛔ rolar antes.
+ * Milissegundos entre o resultado aparecer e o modal subir, se a pessoa não rolar antes.
  *
- * ⚠️ Eram 2,2 s — menos que o tempo de ler o nome do primeiro parlamentar. O pedido de
+ * ATENÇÃO: Eram 2,2 s — menos que o tempo de ler o nome do primeiro parlamentar. O pedido de
  * avaliação chegava antes do valor que ela avaliaria.
  */
 const ESPERA = 8000;
 
 /**
- * ⚠️ Escala de 7 pontos, com o centro nomeado.
+ * ATENÇÃO: Escala de 7 pontos, com o centro nomeado.
  *
  * Sem um "centro" explícito, quem não se identifica com nenhum lado ou não responde ou
  * escolhe arbitrariamente — e os dois casos sujam a amostra.

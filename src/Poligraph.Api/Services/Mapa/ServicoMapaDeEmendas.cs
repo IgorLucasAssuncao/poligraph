@@ -12,12 +12,12 @@ namespace Poligraph.Api.Services;
 /// <remarks>
 /// <para>
 /// A cidade é a da sede de quem recebeu, pela cadeia CNPJ → TOM → IBGE, toda por chave
-/// forte — nenhum nome ou UF é casado por texto. O ano é o da emenda, e ⛔ o do pagamento:
+/// forte — nenhum nome ou UF é casado por texto. O ano é o da emenda, e não o do pagamento:
 /// a pergunta é "que emendas de 2025 chegaram aqui", paga quando fosse.
 /// </para>
 /// <para>
 /// Tudo recebe um período, "de" e "até". Sem período, todos os anos carregados: a pergunta
-/// "quem mandou dinheiro para a minha cidade" se responde pela legislatura, ⛔ por um ano.
+/// "quem mandou dinheiro para a minha cidade" se responde pela legislatura, não por um ano.
 /// </para>
 /// </remarks>
 public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAutoresDeEmenda autores, CacheDeLeitura leitura)
@@ -210,7 +210,7 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
 
     /// <summary>
     /// O período pedido, contido nos anos que existem. Sem ponta, a ponta dos anos
-    /// carregados; ponta invertida é desinvertida, ⛔ recusada.
+    /// carregados; ponta invertida é desinvertida, não recusada.
     /// </summary>
     /// <remarks>
     /// <para><c>Prefixos</c> são os anos do período como texto: o ano da emenda são os quatro primeiros dígitos do código dela.</para>

@@ -18,7 +18,7 @@ TABELA = [
 
 
 def test_tom_ganha_zeros_a_esquerda():
-    """⚠️ A tabela grava "1"; o cadastro de CNPJ, "0001". Sem o zfill a chave ⛔ casa."""
+    """ATENÇÃO: A tabela grava "1"; o cadastro de CNPJ, "0001". Sem o zfill a chave não casa."""
     linhas = municipios.municipios_para_linhas(TABELA)
 
     assert {"codigo_ibge": "5200050", "codigo_tom": "0001", "nome": "Abadia de Goiás", "uf": "GO"} in linhas
@@ -64,7 +64,7 @@ def test_sedes_le_so_os_cnpjs_pedidos(tmp_path):
 
 
 def test_campo_com_quebra_de_linha_nao_desloca_as_colunas(tmp_path):
-    """⚠️ O cadastro tem texto livre com quebra de linha dentro de aspas."""
+    """ATENÇÃO: O cadastro tem texto livre com quebra de linha dentro de aspas."""
     arquivo = tmp_path / "Estabelecimentos1.zip"
     colunas = ["12345678", "0001", "90"] + ["X"] * 3 + ["NOME\nFANTASIA"] + ["X"] * 13 + ["7979"] + ["Y"] * 9
     with zipfile.ZipFile(arquivo, "w") as zf:

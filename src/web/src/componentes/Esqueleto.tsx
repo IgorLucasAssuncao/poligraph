@@ -4,15 +4,15 @@ import type { CSSProperties, ReactNode } from 'react';
  * O lugar do conteúdo enquanto ele chega: blocos cinza na forma do que vem, com um
  * brilho que atravessa.
  *
- * ⭐ Forma, ⛔ "Carregando…": o texto dizia que algo vinha, mas ⛔ onde nem de que
- * tamanho. Com o bloco no lugar certo, a página ⛔ pula quando o dado chega, e o olho já
+ * DECISÃO: Forma, não "Carregando…": o texto dizia que algo vinha, mas não onde nem de que
+ * tamanho. Com o bloco no lugar certo, a página não pula quando o dado chega, e o olho já
  * está no lugar da resposta.
  *
- * 🔴 ⛔ Nunca conteúdo de exemplo. Numa ferramenta que credita a procedência de cada
+ * RISCO: Nunca conteúdo de exemplo. Numa ferramenta que credita a procedência de cada
  * número, inventar nome, valor ou manchete para ilustrar o layout seria produzir na tela
- * o que o trabalho existe para ⛔ fazer. As barras mostram a forma sem afirmar nada.
+ * o que o trabalho existe para não fazer. As barras mostram a forma sem afirmar nada.
  *
- * ♿ O leitor de tela ⛔ vê cinza: `role="status"` com o texto escondido diz o que está
+ * ♿ O leitor de tela não vê cinza: `role="status"` com o texto escondido diz o que está
  * vindo, e o resto é `aria-hidden`.
  */
 export function Esqueleto({ rotulo, children }: { rotulo: string; children: ReactNode }) {
@@ -34,7 +34,7 @@ export function Bloco({ altura, estilo }: { altura: number | string; estilo?: CS
   return <span className="esqueleto-bloco" style={{ height: altura, ...estilo }} />;
 }
 
-/** Larguras que se repetem sem parecer padrão. Fixas: o esqueleto ⛔ muda a cada render. */
+/** Larguras que se repetem sem parecer padrão. Fixas: o esqueleto não muda a cada render. */
 const LARGURAS = [62, 48, 71, 55, 66, 44, 58, 69];
 
 /** Linhas de lista: foto e duas barras, como `LinhaParlamentar`. */

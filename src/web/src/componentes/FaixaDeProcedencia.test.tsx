@@ -28,11 +28,11 @@ function renderizarEm(endereco: string) {
 }
 
 /**
- * 🔴 A faixa dizia "57ª legislatura" sobre a lista de 2015–2019 (2026-10-02). Ela ⛔ pode
- * afirmar um período que a tela ⛔ mostra. O seletor saiu dela para a `BarraDePeriodo`.
+ * RISCO: A faixa dizia "57ª legislatura" sobre a lista de 2015–2019 (2026-10-02). Ela não pode
+ * afirmar um período que a tela não mostra. O seletor saiu dela para a `BarraDePeriodo`.
  */
 describe('a faixa do topo', () => {
-  it('diz o período do endereço, ⛔ a corrente', async () => {
+  it('diz o período do endereço, não a corrente', async () => {
     renderizarEm('/parlamentares?legislatura=56');
     expect(await screen.findByText('56ª legislatura · 2019–2023')).toBeInTheDocument();
   });
@@ -51,7 +51,7 @@ describe('a faixa do topo', () => {
     expect(await screen.findByText('57ª legislatura · 2023–2027')).toBeInTheDocument();
   });
 
-  it('⛔ é controle: a escolha mora na barra do conteúdo', async () => {
+  it('Não é controle: a escolha mora na barra do conteúdo', async () => {
     renderizarEm('/');
     await screen.findByText(/57ª legislatura/);
     expect(screen.queryByRole('combobox')).toBeNull();
@@ -62,7 +62,7 @@ describe('a faixa do topo', () => {
     expect(await screen.findByText('Perguntas da 57ª legislatura')).toBeInTheDocument();
   });
 
-  it('no dinheiro e na ficha ⛔ afirma legislatura nenhuma', async () => {
+  it('no dinheiro e na ficha não afirma legislatura nenhuma', async () => {
     renderizarEm('/emendas');
     await screen.findByText('Dados públicos');
     expect(screen.queryByText(/legislatura/)).toBeNull();

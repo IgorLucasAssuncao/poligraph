@@ -15,7 +15,7 @@ def candidato(cargo: str, numero: str, nome: str, urna: str, partido: str, situa
 
 
 def cadastro() -> pd.DataFrame:
-    """⭐ A forma do arquivo real: o eleito aparece como `2º TURNO` na linha do 1º turno."""
+    """DECISÃO: A forma do arquivo real: o eleito aparece como `2º TURNO` na linha do 1º turno."""
     return pd.DataFrame([
         candidato("PRESIDENTE", "13", "LUIZ INÁCIO LULA DA SILVA", "LULA", "PT", "2º TURNO"),
         candidato("PRESIDENTE", "13", "LUIZ INÁCIO LULA DA SILVA", "LULA", "PT", "ELEITO"),
@@ -34,7 +34,7 @@ def test_presidente_e_vice_eleitos():
 
 
 def test_sem_eleito_e_erro_claro():
-    """⚠️ Eleição em andamento, ou formato novo: ⛔ adivinhar quem governa."""
+    """ATENÇÃO: Eleição em andamento, ou formato novo: Não adivinhar quem governa."""
     df = cadastro()
     df = df[df["DS_SIT_TOT_TURNO"] != "ELEITO"]
 
@@ -43,5 +43,5 @@ def test_sem_eleito_e_erro_claro():
 
 
 def test_o_cpf_nao_e_lido():
-    """🔴 O arquivo traz o CPF em claro; a leitura ⛔ o pede."""
+    """RISCO: O arquivo traz o CPF em claro; a leitura não o pede."""
     assert not any("CPF" in coluna for coluna in gestao.COLUNAS)

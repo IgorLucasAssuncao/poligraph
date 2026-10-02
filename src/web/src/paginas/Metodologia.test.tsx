@@ -39,15 +39,15 @@ function renderizar() {
   );
 }
 
+/**
+ * RISCO: O número vem do cálculo. O "12" aqui não existe no código da página: se ele
+ * aparece, a página leu o parâmetro da execução.
+ */
 describe('Como calculamos', () => {
   beforeEach(() => {
     vi.mocked(api.obterMetodologia).mockResolvedValue(DADOS);
   });
 
-  /**
-   * 🔴 O número vem do cálculo. O "12" aqui ⛔ existe no código da página: se ele
-   * aparece, a página leu o parâmetro da execução.
-   */
   it('mostra os parâmetros que a execução gravou', async () => {
     renderizar();
 

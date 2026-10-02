@@ -38,12 +38,21 @@ const GRAFO: Grafo = {
   abertasAte: null,
 };
 
+/**
+ * DECISÃO: É o ponto da mudança: o campo ocupava uma faixa fixa abaixo do canvas, e essa
+ * faixa custava altura de desenho em toda tela.
+ *
+ * ATENÇÃO: Sem o foco automático, abrir a lupa exigiria um segundo clique e ela deixaria
+ * de funcionar como atalho.
+ *
+ * Dizer "nada encontrado" com uma letra digitada é ruído, não informação.
+ *
+ * Reabrir vem em branco: o termo antigo reapareceria como se fosse busca nova.
+ */
 describe('ferramentas sobre o desenho', () => {
   it('a busca começa recolhida numa lupa', () => {
     render(<TelaDoGrafo grafo={GRAFO} />);
 
-    // ⭐ É o ponto da mudança: o campo ocupava uma faixa fixa abaixo do canvas, e essa
-    //    faixa custava altura de desenho em toda tela.
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /procurar parlamentar/i }),
@@ -57,8 +66,6 @@ describe('ferramentas sobre o desenho', () => {
     await usuario.click(screen.getByRole('button', { name: /procurar parlamentar/i }));
 
     const campo = screen.getByRole('searchbox');
-    // ⚠️ Sem o foco automático, abrir a lupa exigiria um segundo clique e ela deixaria
-    //    de funcionar como atalho.
     expect(campo).toHaveFocus();
   });
 
@@ -80,7 +87,6 @@ describe('ferramentas sobre o desenho', () => {
     await usuario.click(screen.getByRole('button', { name: /procurar parlamentar/i }));
     await usuario.type(screen.getByRole('searchbox'), 'z');
 
-    // Dizer "nada encontrado" com uma letra digitada é ruído, não informação.
     expect(screen.queryByText(/Nenhum parlamentar/)).not.toBeInTheDocument();
 
     await usuario.type(screen.getByRole('searchbox'), 'zz');
@@ -97,12 +103,37 @@ describe('ferramentas sobre o desenho', () => {
 
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
 
-    // Reabrir vem em branco: o termo antigo reapareceria como se fosse busca nova.
     await usuario.click(screen.getByRole('button', { name: /procurar parlamentar/i }));
     expect(screen.getByRole('searchbox')).toHaveValue('');
   });
 });
 
+/**
+ * Com molas, a tela declara que os eixos não significam nada.
+ *
+ * RISCO: Duas ressalvas obrigatórias no layout do eixo nomeado:
+ * · NÃO é esquerda e direita — é alinhamento com ESTE governo, e um deputado
+ * muda de lado na eleição seguinte sem mudar uma posição sequer;
+ * · o meio não é moderação — é onde está a maioria (achado #27).
+ *
+ * ATENÇÃO: Desligado por padrão: quem abre o desenho quer ver a forma primeiro, e o eixo
+ * rotulado é a leitura seguinte.
+ *
+ * É o caso do Senado, que não publica orientação.
+ *
+ * ATENÇÃO: PL43: o SVD saiu da TELA e não do dado. Ele mostrava a mesma divisão que
+ * Alinhamento (−0,87) e exigia um parágrafo para dizer o que o outro diz sozinho.
+ *
+ * Sem orientação de bancada publicada, o eixo do governismo não teria coordenada.
+ *
+ * Não Com uma opção só, o seletor inteiro some: um botão que não escolhe nada.
+ *
+ * DECISÃO: Mas a explicação fica, porque ela é que importa.
+ *
+ * DECISÃO: É o que distingue este layout do de molas: aqui a coordenada É a medida.
+ *
+ * O desenho é sempre o retrato reproduzível do ETL.
+ */
 describe('painel de ajustes', () => {
   it('começa fechado e abre pela engrenagem', async () => {
     const usuario = userEvent.setup();
@@ -127,20 +158,15 @@ describe('painel de ajustes', () => {
     expect(screen.getByText('2 de 2')).toBeInTheDocument();
   });
 
-  it('🔴 a ressalva do layout escolhido fica junto do seletor', async () => {
+  it('RISCO: a ressalva do layout escolhido fica junto do seletor', async () => {
     const usuario = userEvent.setup();
     render(<TelaDoGrafo grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
-    // Com molas, a tela declara que os eixos ⛔ não significam nada.
     expect(screen.getByText(/eixos não significam nada/)).toBeInTheDocument();
 
     await usuario.click(screen.getByRole('button', { name: 'Alinhamento' }));
 
-    // 🔴 Duas ressalvas obrigatórias no layout do eixo nomeado:
-    //    · ⛔ NÃO é esquerda e direita — é alinhamento com ESTE governo, e um deputado
-    //      muda de lado na eleição seguinte sem mudar uma posição sequer;
-    //    · o meio ⛔ não é moderação — é onde está a maioria (achado #27).
     expect(screen.getByText(/não é esquerda e direita/)).toBeInTheDocument();
     expect(screen.getByText(/meio não é moderação/)).toBeInTheDocument();
   });
@@ -150,14 +176,11 @@ describe('painel de ajustes', () => {
     render(<TelaDoGrafo grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
-    // ⚠️ Desligado por padrão: quem abre o desenho quer ver a forma primeiro, e o eixo
-    //    rotulado é a leitura seguinte.
     expect(screen.getByLabelText(/Mostrar os eixos/)).not.toBeChecked();
   });
 
-  it('⛔ sem orientação de bancada, avisa que o eixo não tem nome', async () => {
+  it('sem orientação de bancada, avisa que o eixo não tem nome', async () => {
     const usuario = userEvent.setup();
-    // É o caso do Senado, que não publica orientação.
     const senado = { ...GRAFO, nos: GRAFO.nos.map((n) => ({ ...n, governismo: null })) };
     render(<TelaDoGrafo grafo={senado} />);
 
@@ -167,48 +190,41 @@ describe('painel de ajustes', () => {
     expect(screen.getByText(/não tem eixo com nome/)).toBeInTheDocument();
   });
 
-  it('⭐ oferece Molas e Alinhamento, e ⛔ não Componentes', async () => {
+  it('DECISÃO: oferece Molas e Alinhamento, e não Componentes', async () => {
     const usuario = userEvent.setup();
     render(<TelaDoGrafo grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
     expect(screen.getByRole('button', { name: 'Alinhamento' })).toBeInTheDocument();
-    // ⚠️ PL43: o SVD saiu da TELA e ⛔ não do dado. Ele mostrava a mesma divisão que
-    //    Alinhamento (−0,87) e exigia um parágrafo para dizer o que o outro diz sozinho.
     expect(screen.queryByRole('button', { name: 'Componentes' })).not.toBeInTheDocument();
   });
 
-  it('⛔ esconde o alinhamento no Senado', async () => {
+  it('Não esconde o alinhamento no Senado', async () => {
     const usuario = userEvent.setup();
-    // Sem orientação de bancada publicada, o eixo do governismo ⛔ não teria coordenada.
     const senado = { ...GRAFO, nos: GRAFO.nos.map((n) => ({ ...n, governismo: null })) };
     render(<TelaDoGrafo grafo={senado} />);
 
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
-    // ⛔ Com uma opção só, o seletor inteiro some: um botão que não escolhe nada.
     expect(screen.queryByRole('button', { name: 'Alinhamento' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Molas' })).not.toBeInTheDocument();
-    // ⭐ Mas a explicação fica, porque ela é que importa.
     expect(screen.getByText(/Ligações como molas/)).toBeInTheDocument();
   });
 
-  it('🔴 no alinhamento a tela declara que a posição não vem de algoritmo', async () => {
+  it('RISCO: no alinhamento a tela declara que a posição não vem de algoritmo', async () => {
     const usuario = userEvent.setup();
     render(<TelaDoGrafo grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
     await usuario.click(screen.getByRole('button', { name: 'Alinhamento' }));
 
-    // ⭐ É o que distingue este layout do de molas: aqui a coordenada É a medida.
     expect(screen.getByText(/a própria medida, não resultado de cálculo/)).toBeInTheDocument();
   });
 
-  it('⛔ a simulação de forças não existe mais', async () => {
+  it('Não a simulação de forças não existe mais', async () => {
     const usuario = userEvent.setup();
     render(<TelaDoGrafo grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
-    // O desenho é sempre o retrato reproduzível do ETL.
     expect(screen.queryByLabelText(/Soltar as molas/)).not.toBeInTheDocument();
   });
 });
@@ -231,11 +247,27 @@ describe('o desenho', () => {
   });
 });
 
+/**
+ * RISCO: Sem `tabIndex`, o desenho inteiro fica fora da ordem de tabulação e quem não usa
+ * mouse não consegue nem aproximar.
+ *
+ * ATENÇÃO: O rótulo precisa DIZER que as teclas existem. Um canvas focável cujas teclas
+ * ninguém anuncia é o mesmo que não ter teclado.
+ *
+ * Não Tab e Escape seguem para o navegador. Prender o foco dentro de um canvas seria
+ * pior do que não tê-lo — a pessoa ficaria sem saída.
+ *
+ * RISCO: O canvas com `role="img"` anuncia "Grafo de 3 parlamentares" e acaba ali. Esta
+ * lista é o único caminho para a informação do desenho — quem vota junto com quem.
+ *
+ * Bruno liga com Ana (0,92) e Célia (0,61) — as duas arestas do fixture.
+ *
+ * ATENÇÃO: Achado #27: quem votou pouco demais não tem par comparável e no desenho aparece
+ * solto na borda, sem explicação. Na lista a ausência é DITA.
+ *
+ * DECISÃO: A lista não é só leitura: cada nome leva ao mesmo lugar que clicar no ponto.
+ */
 describe('acessibilidade do grafo', () => {
-  /**
-   * 🔴 Sem `tabIndex`, o desenho inteiro fica fora da ordem de tabulação e quem não usa
-   * mouse não consegue nem aproximar.
-   */
   it('o desenho recebe foco pelo teclado', () => {
     const { container } = render(<TelaDoGrafo grafo={GRAFO} />);
 
@@ -244,10 +276,6 @@ describe('acessibilidade do grafo', () => {
     expect(canvas.getAttribute('tabindex')).toBe('0');
   });
 
-  /**
-   * ⚠️ O rótulo precisa DIZER que as teclas existem. Um canvas focável cujas teclas
-   * ninguém anuncia é o mesmo que não ter teclado.
-   */
   it('o rótulo anuncia as teclas e a alternativa em texto', () => {
     const { container } = render(<TelaDoGrafo grafo={GRAFO} />);
 
@@ -257,10 +285,6 @@ describe('acessibilidade do grafo', () => {
     expect(rotulo).toMatch(/lista/i);
   });
 
-  /**
-   * ⛔ Tab e Escape seguem para o navegador. Prender o foco dentro de um canvas seria
-   * pior do que não tê-lo — a pessoa ficaria sem saída.
-   */
   it('não sequestra Tab', async () => {
     const usuario = userEvent.setup();
     const { container } = render(<TelaDoGrafo grafo={GRAFO} />);
@@ -272,26 +296,17 @@ describe('acessibilidade do grafo', () => {
     expect(document.activeElement).not.toBe(canvas);
   });
 
-  /**
-   * 🔴 O canvas com `role="img"` anuncia "Grafo de 3 parlamentares" e acaba ali. Esta
-   * lista é o único caminho para a informação do desenho — quem vota junto com quem.
-   */
   it('a lista em texto traz quem vota junto com quem', async () => {
     const usuario = userEvent.setup();
     render(<TelaDoGrafo grafo={GRAFO} />);
 
     await usuario.click(screen.getByText(/ver o grafo como lista/i));
 
-    // Bruno liga com Ana (0,92) e Célia (0,61) — as duas arestas do fixture.
     const bruno = screen.getByText(/vota junto com Ana Ribeiro, Célia Nunes/i);
 
     expect(bruno).toBeInTheDocument();
   });
 
-  /**
-   * ⚠️ Achado #27: quem votou pouco demais não tem par comparável e no desenho aparece
-   * solto na borda, sem explicação. Na lista a ausência é DITA.
-   */
   it('diz quando o parlamentar não tem ligação nenhuma', async () => {
     const usuario = userEvent.setup();
     const isolado: Grafo = { ...GRAFO, nos: [...GRAFO.nos, no(9, 'Dora Lima')] };
@@ -302,7 +317,6 @@ describe('acessibilidade do grafo', () => {
     expect(screen.getByText(/precisa de ao menos 20 votações em comum/i)).toBeInTheDocument();
   });
 
-  /** ⭐ A lista não é só leitura: cada nome leva ao mesmo lugar que clicar no ponto. */
   it('cada nome da lista é acionável', async () => {
     const usuario = userEvent.setup();
     render(<TelaDoGrafo grafo={GRAFO} />);
@@ -313,16 +327,16 @@ describe('acessibilidade do grafo', () => {
   });
 });
 
+/**
+ * RISCO: Medido em 2026-08-29: o número do grafo é, em média, METADE do que a lista de
+ * parlamentares mostra para a mesma pessoa. Sargento Fahur aparece com **1.134
+ * votações registradas** lá e **559** aqui.
+ *
+ * Os dois estão certos e contam coisas diferentes — lá é votação registrada, aqui são
+ * as que entram na comparação, fora as procedimentais, que pesam zero. Não Com a mesma
+ * palavra nos dois lugares não há como conciliar, e o leitor conclui que um erra.
+ */
 describe('os dois números de "votações" não podem usar a mesma palavra', () => {
-  /**
-   * 🔴 📐 Medido em 2026-08-29: o número do grafo é, em média, METADE do que a lista de
-   * parlamentares mostra para a mesma pessoa. Sargento Fahur aparece com **1.134
-   * votações registradas** lá e **559** aqui.
-   *
-   * Os dois estão certos e contam coisas diferentes — lá é votação registrada, aqui são
-   * as que entram na comparação, fora as procedimentais, que pesam zero. ⛔ Com a mesma
-   * palavra nos dois lugares não há como conciliar, e o leitor conclui que um erra.
-   */
   it('a lista qualifica o número como "comparáveis"', async () => {
     const usuario = userEvent.setup();
     render(<TelaDoGrafo grafo={GRAFO} />);
@@ -334,7 +348,7 @@ describe('os dois números de "votações" não podem usar a mesma palavra', () 
 });
 
 /**
- * 📐 O grafo do início sequestrava a rolagem: a roda sobre ele dava zoom, prendia quem
+ * MEDIDO: O grafo do início sequestrava a rolagem: a roda sobre ele dava zoom, prendia quem
  * rolava a página e disparava o download das fotos (2026-10-02). Embutido, a roda é da
  * página; o zoom pede Ctrl.
  */
@@ -353,7 +367,7 @@ describe('a roda num grafo embutido', () => {
     expect(await screen.findByText('Use Ctrl + roda do mouse para aproximar')).toBeInTheDocument();
   });
 
-  it('com Ctrl, aproxima — e ⛔ deixa a página rolar junto', () => {
+  it('com Ctrl, aproxima — e não deixa a página rolar junto', () => {
     render(<TelaDoGrafo grafo={GRAFO} embutido />);
 
     expect(rodar(screen.getByRole('img'), true)).toBe(true);

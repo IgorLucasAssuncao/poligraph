@@ -7,12 +7,12 @@ import { EsqueletoDeTexto } from '../componentes/Esqueleto';
 /**
  * "Como calculamos" — o método, com os parâmetros que o cálculo usou.
  *
- * 🔴 **Nenhum número desta página é escrito à mão.** O questionário e a afinidade vêm
+ * RISCO: **Nenhum número desta página é escrito à mão.** O questionário e a afinidade vêm
  * das constantes da API, que são as que calculam; o grafo vem da execução do ETL que o
  * desenhou, que grava os próprios parâmetros. Um "10 vizinhos" digitado aqui continuaria
  * na tela depois de o ETL passar a usar 12.
  *
- * ⭐ Pública, como a política de privacidade: não mostra dado de ninguém, e é a página
+ * DECISÃO: Pública, como a política de privacidade: não mostra dado de ninguém, e é a página
  * que a banca e quem desconfia do site precisam ler antes de entrar.
  */
 export function Metodologia() {
@@ -40,8 +40,6 @@ export function Metodologia() {
     </article>
   );
 }
-
-// ═══════════════════════════════════════════════════════════════════
 
 function Conteudo({ dados }: { dados: DadosDaMetodologia }) {
   const { questionario: q, afinidade, casas } = dados;
@@ -185,8 +183,6 @@ function Conteudo({ dados }: { dados: DadosDaMetodologia }) {
     </>
   );
 }
-
-// ═══════════════════════════════════════════════════════════════════
 
 /** Os parâmetros da execução que desenhou cada grafo — "—" quando a execução é anterior ao registro. */
 function TabelaDoGrafo({ casas }: { casas: CasaNaMetodologia[] }) {

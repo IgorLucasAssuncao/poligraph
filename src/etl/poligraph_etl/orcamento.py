@@ -1,8 +1,8 @@
 """Execução do orçamento federal — Portal da Transparência.
 
 Responde *"quanto o governo federal tinha autorizado para gastar em cada área, quanto
-reservou e quanto de fato pagou, ano a ano?"*. É **contexto** da legislatura, ⛔ não
-medida de afinidade, e ⛔ não liga a parlamentar nenhum.
+reservou e quanto de fato pagou, ano a ano?"*. É **contexto** da legislatura, não
+medida de afinidade, e não liga a parlamentar nenhum.
 
 ## ENTRADA
 
@@ -11,7 +11,7 @@ medida de afinidade, e ⛔ não liga a parlamentar nenhum.
 | Fonte | Download `orcamento-despesa/{ano}` — ver [`fontes/portal.py`](fontes/portal.py) |
 | Grão | Uma linha por órgão × unidade × funcional-programática × elemento de despesa |
 | Volume | ~25 mil linhas por ano, ZIP com menos de 1 MB |
-| ⚠️ Cobertura | **Poder Executivo federal**, 36 órgãos superiores. Legislativo, Judiciário e Ministério Público aparecem só em linhas residuais — a função Legislativa soma poucos milhares de reais |
+| ATENÇÃO: Cobertura | **Poder Executivo federal**, 36 órgãos superiores. Legislativo, Judiciário e Ministério Público aparecem só em linhas residuais — a função Legislativa soma poucos milhares de reais |
 
 ## TRATAMENTO
 
@@ -27,15 +27,15 @@ empenhou **além** da dotação publicada.
 
 ---
 
-🔴 **Empenhar além da dotação é ilegal — e o arquivo de 2025 mostra R$ 228,6 bi assim.**
+RISCO: **Empenhar além da dotação é ilegal — e o arquivo de 2025 mostra R$ 228,6 bi assim.**
 É o valor que a lei orçamentária de 2025 deixou **condicionado à regra de ouro** (R$
 228,5 bi): o arquivo publica a dotação sem essa parcela, e o empenho a usou depois de
 liberada. Em 2023 o mesmo cálculo dá R$ 0,1 bi; em 2024, R$ 1,4 bi.
 
-⭐ Por isso `empenhado_acima_da_dotacao` é gravado ao lado dos totais: onde ele ⛔ é
-desprezível, a razão entre pago e dotação ⛔ pode ser mostrada, e a tela diz por quê.
+DECISÃO: Por isso `empenhado_acima_da_dotacao` é gravado ao lado dos totais: onde ele não é
+desprezível, a razão entre pago e dotação não pode ser mostrada, e a tela diz por quê.
 
-📐 [achado #34](../../../docs/achados/034-a-dotacao-de-2025-sem-a-regra-de-ouro.md)
+MEDIDO: [achado #34](../../../docs/achados/034-a-dotacao-de-2025-sem-a-regra-de-ouro.md)
 """
 
 from datetime import date
@@ -46,8 +46,8 @@ from . import normalizacao
 
 RECURSO = "orcamento-despesa/{ano}"
 
-# ⚠️ Onde a dotação é autorizada: a funcional-programática da unidade orçamentária. Abaixo
-#    disso — no elemento de despesa — a dotação ⛔ existe linha a linha, e comparar ali
+# ATENÇÃO: Onde a dotação é autorizada: a funcional-programática da unidade orçamentária. Abaixo
+#    disso — no elemento de despesa — a dotação não existe linha a linha, e comparar ali
 #    acusaria excesso em toda linha de dotação zero.
 PROGRAMACAO = [
     "CÓDIGO UNIDADE ORÇAMENTÁRIA",
@@ -72,8 +72,8 @@ def arquivo(ano: int) -> str:
 def para_linhas(df: pd.DataFrame, gerado_em: date) -> list[dict]:
     """Uma linha por ano e função, com o empenho além da dotação ao lado.
 
-    ⚠️ "Realizado" no arquivo é o **pago no exercício**. Resto a pagar quitado no ano
-    seguinte ⛔ entra — conferido contra a API: Defesa 2023, R$ 78,99 bi nos dois.
+    ATENÇÃO: "Realizado" no arquivo é o **pago no exercício**. Resto a pagar quitado no ano
+    seguinte não entra — conferido contra a API: Defesa 2023, R$ 78,99 bi nos dois.
     """
     valores = df[list(VALORES)].apply(lambda coluna: coluna.map(normalizacao.valor_pt_br))
     base = pd.concat([df[["EXERCÍCIO", "NOME FUNÇÃO", *PROGRAMACAO]], valores], axis=1)
@@ -109,8 +109,8 @@ def para_linhas(df: pd.DataFrame, gerado_em: date) -> list[dict]:
 # Encargos especiais — dívida e transferências, separadas por subfunção
 # ═══════════════════════════════════════════════════════════════════
 
-# 🔴 "Encargos especiais" ⛔ é área de serviço: é 60% da dotação de 2023 a 2025, e junta
-#    coisas que ⛔ se leem juntas — pagar juros, rolar a dívida, repassar o FPM. A
+# RISCO: "Encargos especiais" Não é área de serviço: é 60% da dotação de 2023 a 2025, e junta
+#    coisas que não se leem juntas — pagar juros, rolar a dívida, repassar o FPM. A
 #    subfunção separa as três. Em 2025, pago: refinanciamento R$ 1.412 bi, serviço da
 #    dívida R$ 607 bi, transferências R$ 588 bi, outros R$ 230 bi.
 ENCARGOS_ESPECIAIS = "28"
@@ -148,15 +148,15 @@ def encargos_para_linhas(df: pd.DataFrame) -> list[dict]:
 # Restos a pagar — o que saiu no ano por despesa de anos anteriores
 # ═══════════════════════════════════════════════════════════════════
 
-# ⚠️ O arquivo de orçamento traz só o pago do PRÓPRIO exercício. O que foi empenhado
-#    num ano e pago no seguinte está no arquivo mensal de execução. 📐 Em 2025: R$ 234,6
+# ATENÇÃO: O arquivo de orçamento traz só o pago do PRÓPRIO exercício. O que foi empenhado
+#    num ano e pago no seguinte está no arquivo mensal de execução. MEDIDO: Em 2025: R$ 234,6
 #    bi — em Urbanismo, 3,3 vezes o pago do exercício. Sem isso, área de obra parece
 #    parada.
 EXECUCAO = "despesas-execucao/{ano}{mes:02d}"
 
 COLUNAS_DE_EXECUCAO = [
     "Código Função",
-    "Código Subfução",  # ⚠️ Sic: o cabeçalho do Portal escreve "Subfução".
+    "Código Subfução",  # ATENÇÃO: Sic: o cabeçalho do Portal escreve "Subfução".
     "Valor Pago (R$)",
     "Valor Restos a Pagar Pagos (R$)",
 ]
@@ -169,8 +169,8 @@ def arquivo_de_execucao(ano: int, mes: int) -> str:
 def restos_a_pagar_do_mes(df: pd.DataFrame) -> dict:
     """Soma o mês: resto a pagar pago por função e por subfunção de Encargos especiais.
 
-    ⭐ Devolve também o pago do exercício, para conferir o arquivo mensal contra o anual.
-    📐 Em 2025 os doze meses somam R$ 5.147,8 bi pagos, o mesmo do arquivo de orçamento.
+    DECISÃO: Devolve também o pago do exercício, para conferir o arquivo mensal contra o anual.
+    MEDIDO: Em 2025 os doze meses somam R$ 5.147,8 bi pagos, o mesmo do arquivo de orçamento.
     """
     valores = df[COLUNAS_DE_EXECUCAO[2:]].apply(lambda c: c.map(normalizacao.valor_pt_br))
     base = pd.concat([df[COLUNAS_DE_EXECUCAO[:2]], valores], axis=1)

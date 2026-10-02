@@ -5,8 +5,8 @@
 /// </summary>
 /// <remarks>
 /// <para>
-/// 🔴 Só tipo e valor: a descrição de cada bem traz endereço, e ⛔ está no banco. É o que o
-/// candidato declarou, pelo valor que ele deu ao bem — ⛔ uma avaliação de mercado.
+/// RISCO: Só tipo e valor: a descrição de cada bem traz endereço, e não está no banco. É o que o
+/// candidato declarou, pelo valor que ele deu ao bem — não uma avaliação de mercado.
 /// </para>
 /// </remarks>
 public record PatrimonioDoParlamentarDto(IReadOnlyList<DeclaracaoDeBensDto> Declaracoes);

@@ -6,7 +6,7 @@ import { nomeProprio, periodoDaLegislatura } from '../formato';
 /**
  * Uma caixa, três tipos de resposta: parlamentar, cidade e entidade.
  *
- * ⭐ Quem chega com um nome ⛔ sabe em que página ele está — "São Paulo" é cidade, é parte
+ * DECISÃO: Quem chega com um nome não sabe em que página ele está — "São Paulo" é cidade, é parte
  * de nome de entidade e de parlamentar. A busca responde nos três grupos, e a pessoa escolhe.
  *
  * Combobox do WAI-ARIA: as setas andam pelas opções sem tirar o foco da caixa, Enter abre a
@@ -143,6 +143,9 @@ const GRUPOS = [
   { grupo: 'entidade', titulo: 'Entidades' },
 ] as const;
 
+/**
+ * ATENÇÃO: O histórico entra na busca, e quem já saiu diz de quando era.
+ */
 function opcoesDa(resposta: Busca): Opcao[] {
   return [
     ...resposta.parlamentares.map((p) => ({
@@ -152,7 +155,6 @@ function opcoesDa(resposta: Busca): Opcao[] {
         p.partido,
         p.uf,
         p.casa === 'SENADO' ? 'Senado' : p.casa === 'CAMARA' ? 'Câmara' : '',
-        // ⚠️ O histórico entra na busca, e quem já saiu diz de quando era.
         p.legislatura && resposta.legislaturaCorrente && p.legislatura !== resposta.legislaturaCorrente
           ? `até ${periodoDaLegislatura(p.legislatura).split('–')[1]}`
           : '',

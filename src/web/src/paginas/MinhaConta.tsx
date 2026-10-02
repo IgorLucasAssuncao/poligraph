@@ -5,7 +5,14 @@ import { Avatar } from '../componentes/Avatar';
 import { CabecalhoDaColuna } from '../componentes/Layout';
 import { useSessao } from '../sessao';
 
-/** As operações que a pessoa precisa ter sobre a própria conta. */
+/**
+ * As operações que a pessoa precisa ter sobre a própria conta.
+ *
+ * RISCO: LGPD art. 18, VI — o direito à eliminação precisa estar ao alcance,
+ * não escondido num e-mail de suporte.
+ *
+ * ATENÇÃO: Recarrega do zero: o estado em memória ainda acha que há sessão.
+ */
 export function MinhaConta() {
   const { usuario, sair } = useSessao();
   const [confirmando, setConfirmando] = useState(false);
@@ -37,8 +44,6 @@ export function MinhaConta() {
           <Link to="/privacidade">Veja o detalhe</Link>.
         </p>
 
-        {/* 🔴 LGPD art. 18, VI — o direito à eliminação precisa estar ao alcance,
-            não escondido num e-mail de suporte. */}
         {!confirmando ? (
           <button type="button" className="botao-perigo" onClick={() => setConfirmando(true)}>
             Apagar minha conta
@@ -69,12 +74,9 @@ export function MinhaConta() {
     </>
   );
 
-  // ═══════════════════════════════════════════════════════════════
-
   async function apagar() {
     try {
       await excluirConta();
-      // ⚠️ Recarrega do zero: o estado em memória ainda acha que há sessão.
       window.location.href = '/';
     } catch {
       setErro(true);

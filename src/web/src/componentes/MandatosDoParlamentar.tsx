@@ -5,12 +5,15 @@ import { periodoDaLegislatura } from '../formato';
 /**
  * Os mandatos do parlamentar, e qual deles a ficha está mostrando.
  *
- * ⭐ Um mandato só ⛔ vira seletor: vira a linha que diz de quando é o que está na tela.
+ * DECISÃO: Um mandato só não vira seletor: vira a linha que diz de quando é o que está na tela.
  * Com dois ou mais, cada um é um link — `?legislatura=` no endereço, para o "voltar" do
  * navegador e o link compartilhado continuarem valendo.
  *
- * ⚠️ Partido e UF são os do último voto DAQUELE mandato: quem trocou de partido aparece
- * com a sigla de então, ⛔ com a de hoje.
+ * ATENÇÃO: Partido e UF são os do último voto DAQUELE mandato: quem trocou de partido aparece
+ * com a sigla de então, não com a de hoje.
+ *
+ * ATENÇÃO: "Mandatos" dizia errado no Senado: o mandato de senador tem oito anos e cobre
+ * duas legislaturas, e a lista mostrava um mandato só como dois.
  */
 export function MandatosDoParlamentar({
   mandatos,
@@ -35,8 +38,6 @@ export function MandatosDoParlamentar({
 
   return (
     <nav className="mandatos" aria-label="Legislaturas em que votou">
-      {/* ⚠️ "Mandatos" dizia errado no Senado: o mandato de senador tem oito anos e cobre
-          duas legislaturas, e a lista mostrava um mandato só como dois. */}
       <span className="mandatos-rotulo">
         Legislaturas em que votou
         {mandatos.some((m) => m.casa === 'SENADO') && (

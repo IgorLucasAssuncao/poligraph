@@ -4,7 +4,7 @@ import { aplicarTema, NOME_DO_TEMA, TEMAS, temaGuardado, type Tema } from '../te
 /**
  * O interruptor de tema — três posições, no cabeçalho.
  *
- * ⭐ Segmentado, ⛔ não um botão que alterna. Um botão de alternar consegue expressar
+ * DECISÃO: Segmentado, não um botão que alterna. Um botão de alternar consegue expressar
  * dois valores, e "seguir o sistema" é o terceiro — o mais importante, porque é o
  * padrão e o único que continua acompanhando o SO depois.
  */
@@ -34,10 +34,12 @@ export function SeletorDeTema() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
-// ⚠️ Desenhados à mão em vez de emoji: ☀️ e 🌙 mudam de forma e de cor conforme o
-//    sistema, e num interruptor de 1,7rem isso vira ruído.
+/**
+ * ATENÇÃO: Desenhados à mão em vez de emoji: ☀️ e 🌙 mudam de forma e de cor conforme o
+ * sistema, e num interruptor de 1,7rem isso vira ruído.
+ *
+ * Sistema: a tela do computador — é ele quem decide.
+ */
 function Icone({ tema }: { tema: Tema }) {
   if (tema === 'claro') {
     return (
@@ -67,7 +69,6 @@ function Icone({ tema }: { tema: Tema }) {
     );
   }
 
-  // Sistema: a tela do computador — é ele quem decide.
   return (
     <svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true" focusable="false">
       <rect

@@ -3,10 +3,10 @@ import type { ReactNode } from 'react';
 /**
  * Link para a fonte oficial de um dado — a Câmara, o Senado, o Portal, o TSE.
  *
- * ⭐ Abre em nova aba e DIZ isso ao leitor de tela: sair do site sem aviso desorienta
- * quem ⛔ vê a aba nova surgir.
+ * DECISÃO: Abre em nova aba e DIZ isso ao leitor de tela: sair do site sem aviso desorienta
+ * quem não vê a aba nova surgir.
  *
- * ⚠️ `noopener noreferrer`: a página oficial ⛔ recebe de onde a pessoa veio, nem
+ * ATENÇÃO: `noopener noreferrer`: a página oficial não recebe de onde a pessoa veio, nem
  * controle sobre esta aba.
  */
 export function LinkDeFonte({ href, children }: { href: string | null | undefined; children: ReactNode }) {

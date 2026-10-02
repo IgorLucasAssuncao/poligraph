@@ -5,8 +5,8 @@ import { BotaoSeguir } from './BotaoSeguir';
 /**
  * A linha de parlamentar — unidade visual repetida em toda a timeline.
  *
- * ⚠️ `detalhe` vem formatado pela tela que usa. Na afinidade é "concordaram em X de Y",
- * ⛔ nunca percentual (RF-29).
+ * ATENÇÃO: `detalhe` vem formatado pela tela que usa. Na afinidade é "concordaram em X de Y",
+ * nunca percentual (RF-29).
  */
 export function LinhaParlamentar({
   id,

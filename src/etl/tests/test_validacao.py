@@ -1,6 +1,6 @@
 """O experimento de recuperação.
 
-⚠️ A aritmética da concordância é feita em matriz, e matriz erra em silêncio: um sinal
+ATENÇÃO: A aritmética da concordância é feita em matriz, e matriz erra em silêncio: um sinal
 trocado não estoura, devolve número plausível. Estes testes conferem o resultado contra
 casos calculados à mão.
 """
@@ -14,7 +14,7 @@ NAN = np.nan
 
 
 def test_concordancia_perfeita_deixa_o_topo_lotado():
-    """⭐ Três deputados que votaram idêntico: cada um empata com os outros dois."""
+    """DECISÃO: Três deputados que votaram idêntico: cada um empata com os outros dois."""
     matriz = np.array(
         [
             [1, -1, 1],
@@ -32,7 +32,7 @@ def test_concordancia_perfeita_deixa_o_topo_lotado():
 
 
 def test_deputado_com_padrao_proprio_fica_sozinho_no_topo():
-    """🔴 O caso que o instrumento precisa acertar: quem vota diferente é distinguível."""
+    """RISCO: O caso que o instrumento precisa acertar: quem vota diferente é distinguível."""
     matriz = np.array(
         [
             [1, 1, 1, 1],
@@ -49,7 +49,7 @@ def test_deputado_com_padrao_proprio_fica_sozinho_no_topo():
 
 
 def test_mais_perguntas_desafogam_o_topo():
-    """⭐ O achado que o experimento existe para produzir.
+    """DECISÃO: O achado que o experimento existe para produzir.
 
     Com uma pergunta, todo mundo que votou igual empata. Com quatro, os padrões se
     separam. É por isso que a medida é o TAMANHO DO EMPATE, não a posição.
@@ -72,12 +72,12 @@ def test_mais_perguntas_desafogam_o_topo():
 
 
 def test_ausencia_nao_conta_como_discordancia():
-    """🔴 A regra que atravessa o projeto inteiro.
+    """RISCO: A regra que atravessa o projeto inteiro.
 
-    ⚠️ Tratar `nan` como voto contrário faria o instrumento medir PRESENÇA em vez de
+    ATENÇÃO: Tratar `nan` como voto contrário faria o instrumento medir PRESENÇA em vez de
     afinidade — e deputado faltoso viraria "discordante de todos".
 
-    ⭐ A afirmação é sobre QUEM FALTOU, não sobre o tamanho do empate: quem respondeu
+    DECISÃO: A afirmação é sobre QUEM FALTOU, não sobre o tamanho do empate: quem respondeu
     2 de 4 e concordou nas 2 continua encontrando par. O piso de base comparável age
     do outro lado — impede que ELE seja oferecido como par a quem respondeu tudo.
     """
@@ -90,7 +90,7 @@ def test_ausencia_nao_conta_como_discordancia():
 
 
 def test_abstencao_tambem_fica_de_fora():
-    """⚠️ 0 é abstenção declarada — não é meio-termo entre Sim e Não."""
+    """ATENÇÃO: 0 é abstenção declarada — não é meio-termo entre Sim e Não."""
     matriz = np.array([[1, 0, 1], [1, 1, 1]], dtype=float)
 
     r = validacao.avaliar(matriz, [0, 1, 2])
@@ -108,7 +108,7 @@ def test_quem_nao_respondeu_o_minimo_fica_de_fora():
 
 
 def test_curva_e_reproduzivel():
-    """🔴 Sorteio com semente fixa — senão a curva do TCC muda a cada execução."""
+    """RISCO: Sorteio com semente fixa — senão a curva do TCC muda a cada execução."""
     matriz = np.random.default_rng(1).choice([-1.0, 1.0], size=(30, 20))
 
     primeira = validacao.curva_de_discriminacao(matriz, list(range(20)), [5, 10])
@@ -128,14 +128,14 @@ def test_divisao_mede_quanto_a_pergunta_informa(coluna: int, esperado: float):
 
 
 def test_quem_faltou_demais_nao_empata_no_topo():
-    """🔴 O erro que a primeira medição cometeu, agora travado.
+    """RISCO: O erro que a primeira medição cometeu, agora travado.
 
-    ⚠️ Sem piso de base comparável, o deputado que faltou em quase tudo e concordou no
+    ATENÇÃO: Sem piso de base comparável, o deputado que faltou em quase tudo e concordou no
     pouco que compareceu marca concordância 1,0 e empata com quem respondeu tudo. A
     primeira rodada do experimento deu empate mediano de 90 por causa disso; a
     conferência direta no banco dava no máximo 8.
 
-    ⭐ O piso é o MESMO da API (`TemBaseSuficiente`): 60% do que a pessoa respondeu.
+    DECISÃO: O piso é o MESMO da API (`TemBaseSuficiente`): 60% do que a pessoa respondeu.
     """
     matriz = np.array(
         [
@@ -158,9 +158,9 @@ def test_quem_faltou_demais_nao_empata_no_topo():
 
 
 def test_escolhe_a_pergunta_que_divide_O_GRUPO_nao_a_camara():
-    """🔴 A diferença entre o nível A e o nível C do `plano/03`.
+    """RISCO: A diferença entre o nível A e o nível C do `plano/03`.
 
-    ⚠️ A coluna 0 racha a matriz inteira ao meio, mas é UNÂNIME dentro do grupo que
+    ATENÇÃO: A coluna 0 racha a matriz inteira ao meio, mas é UNÂNIME dentro do grupo que
     empatou — não desempata nada. A coluna 1 é quase unânime no geral e divide o grupo
     exatamente ao meio. Escolher pela divisão global pegaria a errada.
     """
@@ -179,7 +179,7 @@ def test_escolhe_a_pergunta_que_divide_O_GRUPO_nao_a_camara():
 
 
 def test_sem_pergunta_que_divida_devolve_nada():
-    """⚠️ Acontece: se os empatados votaram idêntico em tudo, insistir faria a pessoa
+    """ATENÇÃO: Acontece: se os empatados votaram idêntico em tudo, insistir faria a pessoa
     responder à toa."""
     matriz = np.array([[1, 1], [1, 1]], dtype=float)
 
@@ -193,7 +193,7 @@ def test_grupo_de_um_nao_precisa_de_desempate():
 
 
 def test_empatados_com_respeita_o_piso_de_base():
-    """🔴 O mesmo piso da API — quem faltou demais não entra no empate."""
+    """RISCO: O mesmo piso da API — quem faltou demais não entra no empate."""
     matriz = np.array(
         [
             [1, 1, 1, 1, 1],
@@ -208,7 +208,7 @@ def test_empatados_com_respeita_o_piso_de_base():
 
 
 def test_desempate_dirigido_encolhe_o_grupo():
-    """⭐ O efeito que a contribuição do trabalho promete."""
+    """DECISÃO: O efeito que a contribuição do trabalho promete."""
     # 8 deputados, todos idênticos na coluna 0 e distinguíveis nas demais
     matriz = np.array(
         [[1] + [1 if (i >> b) & 1 else -1 for b in range(3)] for i in range(8)],

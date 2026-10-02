@@ -53,7 +53,7 @@ const FICHA: Ficha = {
 };
 
 /**
- * Um voto de cada situação em que a orientação do Governo aparece — ou ⛔ não deve
+ * Um voto de cada situação em que a orientação do Governo aparece — ou não deve
  * aparecer. As três últimas são os motivos distintos de a orientação ser inútil.
  */
 function voto(
@@ -75,7 +75,7 @@ function voto(
   };
 }
 
-/** ⭐ Empenhado ≠ pago, e a razão entre eles é 40%. */
+/** DECISÃO: Empenhado ≠ pago, e a razão entre eles é 40%. */
 const EMENDAS: EmendasDoParlamentar = {
   ano: 2025,
   empenhado: 1_000_000,
@@ -190,13 +190,15 @@ beforeEach(() => {
   vi.mocked(api.obterPatrimonio).mockResolvedValue([]);
 });
 
+/**
+ * Situa todo o resto: um "PT · SP" sem a casa deixa o leitor sem saber se está
+ * diante de deputado ou senador — e as duas votam matérias diferentes, então o
+ * número de votações e o grafo significam coisas distintas.
+ */
 describe('a casa do parlamentar', () => {
   it('aparece no perfil, antes de partido e UF', async () => {
     await abrirPerfil();
 
-    // Situa todo o resto: um "PT · SP" sem a casa deixa o leitor sem saber se está
-    // diante de deputado ou senador — e as duas votam matérias diferentes, então o
-    // número de votações e o grafo significam coisas distintas.
     expect(await screen.findByRole('button', { name: 'Deputado' })).toBeInTheDocument();
   });
 
@@ -217,20 +219,26 @@ describe('a casa do parlamentar', () => {
   });
 });
 
+/**
+ * ATENÇÃO: Exibir só o empenhado deixaria a pessoa concluir que o dinheiro chegou — que
+ * é exatamente o que quem anuncia emenda gostaria que ela concluísse.
+ *
+ * RISCO: Zero afirmaria que ele não teve emenda; o que se sabe é que a BASE não tem.
+ *
+ * Sem a guarda, `0/0` daria `NaN%` na tela
+ */
 describe('contas — emendas', () => {
-  it('🔴 mostra o pago junto do empenhado, nunca só o empenhado', async () => {
+  it('RISCO: mostra o pago junto do empenhado, nunca só o empenhado', async () => {
     await abrirAba('Emendas');
 
     const texto = await tela();
 
-    // ⚠️ Exibir só o empenhado deixaria a pessoa concluir que o dinheiro chegou — que
-    //    é exatamente o que quem anuncia emenda gostaria que ela concluísse.
     expect(texto).toMatch(/R\$\s*1\.000\.000,00/);
     expect(texto).toMatch(/R\$\s*400\.000,00/);
     expect(texto).toMatch(/40% saiu de fato/);
   });
 
-  it('⭐ estado vazio é honesto, não "R$ 0,00"', async () => {
+  it('DECISÃO: estado vazio é honesto, não "R$ 0,00"', async () => {
     vi.mocked(api.obterEmendas).mockResolvedValue({
       ano: 0, empenhado: 0, pago: 0, quantidade: 0, porDestino: [], porFuncao: [],
       ...SEM_DESTINO,
@@ -239,27 +247,29 @@ describe('contas — emendas', () => {
     await abrirAba('Emendas');
     await screen.findByText(/Nenhuma emenda atribuída/);
 
-    // 🔴 Zero afirmaria que ele não teve emenda; o que se sabe é que a BASE não tem.
     expect(await tela()).not.toMatch(/R\$\s*0,00/);
   });
 
-  it('⚠️ não divide por zero quando nada foi empenhado', async () => {
+  it('ATENÇÃO: não divide por zero quando nada foi empenhado', async () => {
     vi.mocked(api.obterEmendas).mockResolvedValue({
       ...EMENDAS, empenhado: 0, pago: 0, porDestino: [], porFuncao: [],
     });
 
     await abrirAba('Emendas');
 
-    // ⛔ Sem a guarda, `0/0` daria `NaN%` na tela
     expect(await tela()).not.toMatch(/NaN/);
   });
 });
 
+/**
+ * RISCO: O intermediário e as pessoas saem da lista, não da conta: o valor de cada um
+ * aparece em linha própria.
+ *
+ * DECISÃO: A frase é a leitura; o gráfico, o detalhe.
+ *
+ * RISCO: R$ 80 mi de 23 emendas não é dinheiro deste parlamentar, e a linha precisa dizer.
+ */
 describe('contas — quem recebeu a emenda', () => {
-  /**
-   * 🔴 O intermediário e as pessoas saem da lista, ⛔ da conta: o valor de cada um
-   * aparece em linha própria.
-   */
   it('mostra o intermediário e as pessoas à parte, com o valor', async () => {
     await abrirAba('Emendas');
     const texto = await tela();
@@ -275,14 +285,12 @@ describe('contas — quem recebeu a emenda', () => {
     expect(await tela()).toMatch(/R\$\s*700\.000,00 recebidos pelas emendas de 2025, até mar\/2026/);
   });
 
-  /** ⭐ A frase é a leitura; o gráfico, o detalhe. */
   it('diz quanto saiu no próprio ano', async () => {
     await abrirAba('Emendas');
 
     expect(await tela()).toMatch(/R\$\s*300\.000,00 de R\$\s*700\.000,00 — 43% — saíram ainda em 2025/);
   });
 
-  /** 🔴 R$ 80 mi de 23 emendas ⛔ é dinheiro deste parlamentar, e a linha precisa dizer. */
   it('o convênio diz de quantas emendas é', async () => {
     await abrirAba('Emendas');
 
@@ -290,41 +298,46 @@ describe('contas — quem recebeu a emenda', () => {
   });
 });
 
+/**
+ * DECISÃO: Cada um com o próprio valor…
+ *
+ * Não …e a soma dos dois NÃO substitui os dois: ela aparece dita como soma.
+ *
+ * 3.200.000 de 3.250.000 = 98%
+ *
+ * RNF-13 — nem CPF, nem hash, nem a palavra
+ */
 describe('contas — campanha', () => {
-  it('🔴 os dois fundos aparecem SEPARADOS e nomeados', async () => {
+  it('RISCO: os dois fundos aparecem SEPARADOS e nomeados', async () => {
     await abrirAba('Campanha');
 
     await screen.findByText('Fundo Partidário');
     const texto = await tela();
 
-    // ⭐ Cada um com o próprio valor…
     expect(texto).toMatch(/R\$\s*3\.000\.000,00/);
     expect(texto).toMatch(/R\$\s*200\.000,00/);
 
-    // ⛔ …e a soma dos dois NÃO substitui os dois: ela aparece dita como soma.
     expect(texto).toMatch(/Juntos, os dois fundos somam R\$\s*3\.200\.000,00/);
     expect(texto).toMatch(/São fundos distintos/);
   });
 
-  it('⭐ a proporção pública é sobre o total arrecadado', async () => {
+  it('DECISÃO: a proporção pública é sobre o total arrecadado', async () => {
     await abrirAba('Campanha');
 
-    // 3.200.000 de 3.250.000 = 98%
     expect(await tela()).toMatch(/98% do que a campanha arrecadou/);
   });
 
-  it('🔴 marca o doador pessoa física sem revelar documento', async () => {
+  it('RISCO: marca o doador pessoa física sem revelar documento', async () => {
     await abrirAba('Campanha');
 
     await screen.findByText(/Jose da Silva/);
     const texto = await tela();
 
     expect(texto).toMatch(/pessoa física/);
-    // RNF-13 — nem CPF, nem hash, nem a palavra
     expect(texto).not.toMatch(/cpf|cnpj/i);
   });
 
-  it('⭐ estado vazio é honesto', async () => {
+  it('DECISÃO: estado vazio é honesto', async () => {
     vi.mocked(api.obterFinanciamento).mockResolvedValue({
       anoEleicao: 0, total: 0, fundoEspecial: 0, fundoPartidario: 0,
       porFonte: [], maioresDoadores: [],
@@ -337,16 +350,28 @@ describe('contas — campanha', () => {
   });
 });
 
-/** ⚠️ O texto é quebrado por `<strong>` e `<Termo>` — a checagem é sobre o todo. */
+/** ATENÇÃO: O texto é quebrado por `<strong>` e `<Termo>` — a checagem é sobre o todo. */
 async function tela(): Promise<string> {
   return await waitFor(() => document.body.textContent!.replace(/\s+/g, ' '));
 }
 
+/**
+ * RISCO: "Votou Sim" sozinho não diz nada. O que informa é "votou Sim quando o Governo
+ * pediu Não" — e é isso que a linha precisa mostrar.
+ *
+ * ATENÇÃO: Texto neutro: "votou diferente", nunca "contrariou" nem um ✗ vermelho.
+ * Divergir da orientação não é erro, e a tela não pode dar nota.
+ *
+ * O Governo não orientou — o caso mais comum, e uma marca em toda linha
+ * viraria ruído.
+ *
+ * DECISÃO: `Obstrução` é tática de quórum, não posição de mérito.
+ *
+ * DECISÃO: `Liberado` é ausência de orientação.
+ *
+ * O parlamentar se absteve: não há voto a comparar.
+ */
 describe('orientação do Governo ao lado do voto', () => {
-  /**
-   * 🔴 "Votou Sim" sozinho ⛔ não diz nada. O que informa é "votou Sim quando o Governo
-   * pediu Não" — e é isso que a linha precisa mostrar.
-   */
   it('mostra o que o Governo pediu', async () => {
     vi.mocked(api.obterFicha).mockResolvedValue({
       ...FICHA,
@@ -366,23 +391,16 @@ describe('orientação do Governo ao lado do voto', () => {
 
     await abrirPerfil();
 
-    // ⚠️ Texto neutro: "votou diferente", ⛔ nunca "contrariou" nem um ✗ vermelho.
-    //    Divergir da orientação ⛔ não é erro, e a tela ⛔ não pode dar nota.
     expect(await screen.findByText(/votou diferente/)).toBeInTheDocument();
   });
 
-  it('⛔ cala quando não há o que comparar', async () => {
+  it('Não cala quando não há o que comparar', async () => {
     vi.mocked(api.obterFicha).mockResolvedValue({
       ...FICHA,
       votosRecentes: [
-        // O Governo ⛔ não orientou — o caso mais comum, e uma marca em toda linha
-        // viraria ruído.
         voto('a', 1, null),
-        // ⭐ `Obstrução` é tática de quórum, ⛔ não posição de mérito.
         voto('b', -1, 'Obstrução'),
-        // ⭐ `Liberado` é ausência de orientação.
         voto('c', 1, 'Liberado'),
-        // O parlamentar se absteve: ⛔ não há voto a comparar.
         voto('d', 0, 'Sim'),
       ],
     });
@@ -394,13 +412,19 @@ describe('orientação do Governo ao lado do voto', () => {
   });
 });
 
-
+/**
+ * RISCO: A descrição diz o NÚMERO do projeto — "Aprovado o Substitutivo ao Projeto de Lei
+ * nº 4.133" — e não diz o assunto. Quem não acompanha o Congresso lê isso e não sabe
+ * em que a pessoa votou. A ementa é o que torna o voto legível.
+ *
+ * ATENÇÃO: A descrição processual continua acessível: é ela que identifica QUAL votação
+ * daquele projeto foi — texto principal, destaque, redação final. Sem ela, dois votos
+ * opostos do mesmo projeto apareceriam como a mesma linha repetida.
+ *
+ * Sem ementa — todo o Senado e parte da Câmara — a tela cai na descrição, nunca
+ * num espaço em branco.
+ */
 describe('a ementa na lista de votos', () => {
-  /**
-   * 🔴 A descrição diz o NÚMERO do projeto — "Aprovado o Substitutivo ao Projeto de Lei
-   * nº 4.133" — e não diz o assunto. Quem não acompanha o Congresso lê isso e não sabe
-   * em que a pessoa votou. A ementa é o que torna o voto legível.
-   */
   it('mostra a ementa no lugar da descrição processual', async () => {
     const comEmenta = {
       ...FICHA,
@@ -421,11 +445,6 @@ describe('a ementa na lista de votos', () => {
     expect(texto).toMatch(/diretrizes para a política industrial/i);
   });
 
-  /**
-   * ⚠️ A descrição processual continua acessível: é ela que identifica QUAL votação
-   * daquele projeto foi — texto principal, destaque, redação final. Sem ela, dois votos
-   * opostos do mesmo projeto apareceriam como a mesma linha repetida.
-   */
   it('mantém a descrição processual junto da matéria', async () => {
     const comEmenta = {
       ...FICHA,
@@ -447,10 +466,6 @@ describe('a ementa na lista de votos', () => {
     expect(texto).toMatch(/Aprovado o Substitutivo/);
   });
 
-  /**
-   * ⛔ Sem ementa — todo o Senado e parte da Câmara — a tela cai na descrição, ⛔ nunca
-   * num espaço em branco.
-   */
   it('sem ementa, cai na descrição', async () => {
     const semEmenta = {
       ...FICHA,
@@ -463,7 +478,19 @@ describe('a ementa na lista de votos', () => {
   });
 });
 
-
+/**
+ * RISCO: O modo de falha que este projeto persegue: plausível e errado. 43,2% das linhas
+ * da ficha são de rito. Com a ementa por manchete, "Institui o IBS" ao lado de um
+ * "Sim" faria o leitor concluir que a pessoa votou a favor da reforma tributária —
+ * quando ela votou sobre andamento.
+ *
+ * ATENÇÃO: A ementa não some: vira contexto, para dizer sobre QUE projeto era o rito.
+ *
+ * Não Voto de rito não é escondido — ele existe e é público. Mas pesa ZERO na
+ * afinidade, e a tela precisa dizer isso antes do enunciado, não depois.
+ *
+ * DECISÃO: No voto de mérito a ordem é a oposta: a ementa manda.
+ */
 describe('voto de rito não pode usar a ementa como manchete', () => {
   const RITO = {
     descricao: 'Rejeitado o Requerimento. Sim: 118; Não: 289; Total: 407.',
@@ -472,12 +499,6 @@ describe('voto de rito não pode usar a ementa como manchete', () => {
     categoria: 'PROCEDIMENTAL' as const,
   };
 
-  /**
-   * 🔴 O modo de falha que este projeto persegue: plausível e errado. 43,2% das linhas
-   * da ficha são de rito. Com a ementa por manchete, "Institui o IBS" ao lado de um
-   * "Sim" faria o leitor concluir que a pessoa votou a favor da reforma tributária —
-   * quando ela votou sobre andamento.
-   */
   it('a manchete é o que foi de fato votado, não a ementa', async () => {
     const { container } = await renderizarCom({
       ...FICHA,
@@ -490,7 +511,6 @@ describe('voto de rito não pode usar a ementa como manchete', () => {
     expect(manchete).not.toMatch(/Institui o Imposto/);
   });
 
-  /** ⚠️ A ementa não some: vira contexto, para dizer sobre QUE projeto era o rito. */
   it('a ementa vira contexto, junto da matéria', async () => {
     const { container } = await renderizarCom({
       ...FICHA,
@@ -503,10 +523,6 @@ describe('voto de rito não pode usar a ementa como manchete', () => {
     expect(contexto).toMatch(/Institui o Imposto/);
   });
 
-  /**
-   * ⛔ Voto de rito não é escondido — ele existe e é público. Mas pesa ZERO na
-   * afinidade, e a tela precisa dizer isso antes do enunciado, não depois.
-   */
   it('avisa que não é voto no mérito', async () => {
     const { container } = await renderizarCom({
       ...FICHA,
@@ -516,7 +532,6 @@ describe('voto de rito não pode usar a ementa como manchete', () => {
     expect(container.textContent).toMatch(/não é voto no mérito/i);
   });
 
-  /** ⭐ No voto de mérito a ordem é a oposta: a ementa manda. */
   it('no voto de mérito a ementa continua sendo a manchete', async () => {
     const { container } = await renderizarCom({
       ...FICHA,
@@ -528,8 +543,10 @@ describe('voto de rito não pode usar a ementa como manchete', () => {
   });
 });
 
+/**
+ * Um alvo que sumisse da página faria o tour pular o passo calado.
+ */
 describe('o tour da ficha', () => {
-  /** Um alvo que sumisse da página faria o tour pular o passo calado. */
   it('encontra na página cada elemento que explica', async () => {
     const { passosDaFicha } = await import('../tour');
     await renderizarCom({
@@ -552,11 +569,16 @@ describe('o tour da ficha', () => {
   });
 });
 
+/**
+ * RISCO: A ficha trazia 20 votos e parava, sem dizer que havia mais. Agora diz o total, e
+ * quantos ficam fora das "votações registradas" por não ter posição.
+ *
+ * `expect(vi.mocked(api.listarVotos)).toHaveBeenCalledWith(1, 2, 2, 57...`: a legislatura que a ficha mostra
+ *
+ * DECISÃO: "Como fulano votou em X" sem rolar centenas de votos (2026-10-02). A busca vai ao
+ * servidor — a ficha só tem a primeira página — e a contagem diz o que achou.
+ */
 describe('listas da ficha em páginas', () => {
-  /**
-   * 🔴 A ficha trazia 20 votos e parava, sem dizer que havia mais. Agora diz o total, e
-   * quantos ficam fora das "votações registradas" por ⛔ ter posição.
-   */
   it('votos: diz o total e busca a página seguinte', async () => {
     const primeiros = Array.from({ length: 2 }, (_, i) => voto(`v${i}`, 1, null));
     vi.mocked(api.listarVotos).mockResolvedValue({ itens: [voto('v2', -1, null)], pagina: 2, tamanho: 2, total: 3 });
@@ -568,14 +590,10 @@ describe('listas da ficha em páginas', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Mostrar mais 1' }));
 
     expect(await screen.findByText('Votação v2')).toBeDefined();
-    expect(vi.mocked(api.listarVotos)).toHaveBeenCalledWith(1, 2, 2, 57, undefined);   // a legislatura que a ficha mostra
+    expect(vi.mocked(api.listarVotos)).toHaveBeenCalledWith(1, 2, 2, 57, undefined);
     expect(screen.queryByRole('button', { name: /Mostrar mais/ })).toBeNull();
   });
 
-  /**
-   * ⭐ "Como fulano votou em X" sem rolar centenas de votos (2026-10-02). A busca vai ao
-   * servidor — a ficha só tem a primeira página — e a contagem diz o que achou.
-   */
   it('votos: a busca pede ao servidor e diz quantos achou', async () => {
     vi.mocked(api.listarVotos).mockResolvedValue({ itens: [voto('v9', 1, null)], pagina: 1, tamanho: 20, total: 1 });
     await renderizarCom({ ...FICHA, votosRecentes: [voto('v0', 1, null)], nVotacoes: 1, nRegistrosDeVoto: 1 });
@@ -588,7 +606,7 @@ describe('listas da ficha em páginas', () => {
     expect(screen.queryByText('Votação v0')).toBeNull();
   });
 
-  it('votos: uma letra ⛔ busca, e apagar volta à lista da ficha', async () => {
+  it('votos: uma letra não busca, e apagar volta à lista da ficha', async () => {
     vi.mocked(api.listarVotos).mockClear();
     await renderizarCom({ ...FICHA, votosRecentes: [voto('v0', 1, null)], nVotacoes: 1, nRegistrosDeVoto: 1 });
 
@@ -622,8 +640,10 @@ describe('listas da ficha em páginas', () => {
   });
 });
 
+/**
+ * RISCO: A persona da jornalista: sem link para a fonte, ela não cita o site.
+ */
 describe('fontes oficiais', () => {
-  /** 🔴 A persona da jornalista: sem link para a fonte, ela ⛔ cita o site. */
   it('a ficha leva à página oficial do parlamentar', async () => {
     await abrirPerfil();
 
@@ -657,8 +677,14 @@ describe('fontes oficiais', () => {
   });
 });
 
+/**
+ * DECISÃO: Cada dinheiro tem endereço: o link compartilhado abre direto nele.
+ *
+ * A cidade vem da sede de quem recebeu, e leva ao mapa.
+ *
+ * O secundário fica recolhido: a aba abre com a resposta, não com 13 blocos.
+ */
 describe('as abas do perfil', () => {
-  /** ⭐ Cada dinheiro tem endereço: o link compartilhado abre direto nele. */
   it('o número do topo leva à aba do dinheiro', async () => {
     await abrirPerfil();
 
@@ -670,7 +696,6 @@ describe('as abas do perfil', () => {
     expect(within(abas).getByRole('link', { name: 'Campanha' })).toHaveAttribute('aria-current', 'page');
   });
 
-  /** A cidade vem da sede de quem recebeu, e leva ao mapa. */
   it('as cidades que receberam levam ao mapa', async () => {
     await abrirAba('Emendas');
 
@@ -680,7 +705,6 @@ describe('as abas do perfil', () => {
     );
   });
 
-  /** O secundário fica recolhido: a aba abre com a resposta, ⛔ com 13 blocos. */
   it('os detalhes começam fechados', async () => {
     await abrirAba('Emendas');
 
@@ -689,6 +713,11 @@ describe('as abas do perfil', () => {
   });
 });
 
+/**
+ * RISCO: Só vira link o que é http(s), e nenhum leva recomendação do site aos buscadores.
+ *
+ * ATENÇÃO: Duas declarações, dois números — não "cresceu X%", que leria como acusação.
+ */
 describe('redes e patrimônio', () => {
   beforeEach(() => {
     vi.mocked(api.obterPatrimonio).mockResolvedValue([
@@ -698,7 +727,6 @@ describe('redes e patrimônio', () => {
     ]);
   });
 
-  /** 🔴 Só vira link o que é http(s), e nenhum leva recomendação do site aos buscadores. */
   it('as redes viram link seguro, e o que não é http(s) some', async () => {
     vi.mocked(api.obterFicha).mockResolvedValue({
       ...FICHA,
@@ -716,7 +744,6 @@ describe('redes e patrimônio', () => {
     expect(screen.getByText(/Redes publicadas na Câmara/)).toBeInTheDocument();
   });
 
-  /** ⚠️ Duas declarações, dois números — ⛔ "cresceu X%", que leria como acusação. */
   it('o patrimônio mostra a última declaração e a anterior, sem porcentagem', async () => {
     await abrirAba('Campanha');
 
@@ -728,8 +755,12 @@ describe('redes e patrimônio', () => {
   });
 });
 
+/**
+ * DECISÃO: Sempre "X de Y", com o percentual depois — não percentual solto (RF-29).
+ *
+ * O Senado publica a justificativa da ausência; a tela a mostra à parte.
+ */
 describe('participação nas votações', () => {
-  /** ⭐ Sempre "X de Y", com o percentual depois — ⛔ percentual solto (RF-29). */
   it('diz de quantas votações participou, com a base', async () => {
     vi.mocked(api.obterFicha).mockResolvedValue({
       ...FICHA,
@@ -742,7 +773,6 @@ describe('participação nas votações', () => {
     expect(bloco.textContent).not.toMatch(/licença/);
   });
 
-  /** O Senado publica a justificativa da ausência; a tela a mostra à parte. */
   it('no Senado, mostra as ausências com licença ou missão à parte', async () => {
     vi.mocked(api.obterFicha).mockResolvedValue({
       ...FICHA,
@@ -772,7 +802,7 @@ describe('os mandatos na ficha', () => {
     vi.mocked(api.listarSeguidos).mockResolvedValue([]);
   });
 
-  it('um mandato só vira a linha que diz de quando é a ficha, ⛔ um seletor', async () => {
+  it('um mandato só vira a linha que diz de quando é a ficha, não um seletor', async () => {
     await renderizarCom(FICHA);
 
     expect(screen.getByText('2023–2027')).toBeDefined();

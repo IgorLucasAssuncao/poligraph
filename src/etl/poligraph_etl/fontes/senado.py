@@ -42,15 +42,15 @@ CABECALHOS = {"Accept": "application/json"}
 # menos que isto significa recorte errado ou mudança de contrato, não Senado parado.
 MINIMO_POR_ANO = 20
 
-# 📐 Lacunas DA FONTE, medidas em 2026-10-02 (achados #35 e #37), contadas DEPOIS do
+# MEDIDO: Lacunas DA FONTE, medidas em 2026-10-02 (achados #35 e #37), contadas DEPOIS do
 #    descarte das votações fora de época: 2015 tem zero e 2016 tem 6, contra 100 a 225
-#    nos vizinhos — e 2016 é o ano do impeachment, ⛔ um Senado parado. Pela sequência do
+#    nos vizinhos — e 2016 é o ano do impeachment, não um Senado parado. Pela sequência do
 #    código, faltam ~230 votações entre a última de 2014 (5329) e a primeira de 2016 (5560).
 #
-# ⚠️ Eram 17 e 13 — mas as 17 de 2015 e 7 das 13 de 2016 eram votações de 1998 e 1999 com
+# ATENÇÃO: Eram 17 e 13 — mas as 17 de 2015 e 7 das 13 de 2016 eram votações de 1998 e 1999 com
 #    a data errada. O ano entra com o que a fonte tem, e o log diz que é lacuna.
 #
-# ⚠️ É um PISO, ⛔ um valor exato: se o Senado completar o arquivo, o ano passa a cruzar
+# ATENÇÃO: É um PISO, não um valor exato: se o Senado completar o arquivo, o ano passa a cruzar
 #    o mínimo normal e sai daqui sozinho. Abaixo do piso, o canário volta a estourar.
 LACUNAS_CONHECIDAS = {2015: 0, 2016: 6}
 
@@ -177,9 +177,9 @@ def baixar_senador(codigo: str) -> dict | None:
 def baixar_materia(codigo_materia: str) -> dict | None:
     """A matéria inteira: ementa, identificação e indexação.
 
-    ## 🔴 Por que isto existe
+    ## RISCO: Por que isto existe
 
-    A descrição da votação do Senado ⛔ **não diz sobre o que ela é**:
+    A descrição da votação do Senado não **não diz sobre o que ela é**:
 
     > *"Votação nominal do Substitutivo da Câmara dos Deputados ao Projeto de Lei
     > Complementar nº 124, de 2022, na forma do texto consolidado apresentado pelo
@@ -191,8 +191,8 @@ def baixar_materia(codigo_materia: str) -> dict | None:
     > solução de controvérsias, consensualidade e processo administrativo em matéria
     > tributária e aduaneira."*
 
-    ⭐ **`IndexacaoMateria` é o vocabulário controlado do Senado** e a Câmara ⛔ não tem
-    equivalente no CSV — aqui o Senado publica **mais**, ⛔ não menos.
+    DECISÃO: **`IndexacaoMateria` é o vocabulário controlado do Senado** e a Câmara não tem
+    equivalente no CSV — aqui o Senado publica **mais**, não menos.
 
     ## O que devolve
 
@@ -202,8 +202,8 @@ def baixar_materia(codigo_materia: str) -> dict | None:
     | `ementa` | `DadosBasicosMateria.EmentaMateria` |
     | `indexacao` | `DadosBasicosMateria.IndexacaoMateria` |
 
-    ⛔ **Devolve `None` em qualquer falha.** São ~360 chamadas por carga; derrubar a
-    ingestão inteira porque uma matéria ⛔ não respondeu seria trocar 359 boas por zero.
+    Não **Devolve `None` em qualquer falha.** São ~360 chamadas por carga; derrubar a
+    ingestão inteira porque uma matéria não respondeu seria trocar 359 boas por zero.
     """
     try:
         resposta = requests.get(
@@ -221,7 +221,7 @@ def baixar_materia(codigo_materia: str) -> dict | None:
     return {
         "codigo": _texto(identificacao.get("CodigoMateria")),
         "sigla_tipo": _texto(identificacao.get("SiglaSubtipoMateria")),
-        # ⚠️ Vem com zeros à esquerda: "00124". `int` cuida disso; guardar o texto
+        # ATENÇÃO: Vem com zeros à esquerda: "00124". `int` cuida disso; guardar o texto
         #    faria "PLP 00124/2022" aparecer na tela.
         "numero": _texto(identificacao.get("NumeroMateria")),
         "ano": _texto(identificacao.get("AnoMateria")),
@@ -231,7 +231,7 @@ def baixar_materia(codigo_materia: str) -> dict | None:
 
 
 def _texto(valor) -> str:
-    """⚠️ Colapsa espaço: a ementa vem com quebra de linha DENTRO do campo."""
+    """ATENÇÃO: Colapsa espaço: a ementa vem com quebra de linha DENTRO do campo."""
     return "" if valor is None else " ".join(str(valor).split())
 
 
@@ -247,7 +247,7 @@ def conferir_volume(votacoes: list[dict], ano: int) -> None:
 
     if len(votacoes) >= LACUNAS_CONHECIDAS.get(ano, MINIMO_POR_ANO):
         log.warning(
-            "  só %d votações em %d: lacuna conhecida da fonte (achado #35), ⛔ contrato "
+            "  só %d votações em %d: lacuna conhecida da fonte (achado #35), não contrato "
             "alterado. A legislatura fica com menos dado nesses anos.",
             len(votacoes), ano,
         )

@@ -5,7 +5,7 @@ type Celula = string | number | null | undefined;
 /**
  * CSV no formato que o Excel e o LibreOffice em português abrem sem pergunta.
  *
- * ⚠️ Ponto e vírgula entre colunas e vírgula no decimal: com vírgula entre colunas, o
+ * ATENÇÃO: Ponto e vírgula entre colunas e vírgula no decimal: com vírgula entre colunas, o
  * Excel brasileiro juntaria tudo numa coluna só, e "1234.56" viraria mil duzentos e
  * trinta e quatro mil. O BOM no começo é o que faz o Excel ler os acentos.
  */
@@ -33,7 +33,7 @@ export function baixarCsv(nome: string, cabecalho: string[], linhas: Celula[][])
 }
 
 /**
- * Busca todas as páginas de uma lista, para exportar a lista inteira — ⛔ só o que já
+ * Busca todas as páginas de uma lista, para exportar a lista inteira — não só o que já
  * está na tela.
  */
 export async function buscarTodas<T>(

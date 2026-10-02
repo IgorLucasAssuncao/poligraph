@@ -9,7 +9,7 @@ namespace Poligraph.Api.Dtos;
 /// </summary>
 /// <param name="PerguntasAtivas">O poço: todas as perguntas curadas e ativas.</param>
 /// <param name="PerguntasNoQuestionario">
-/// Quantas o cidadão responde, tiradas do poço. Poço e questionário ⛔ são a mesma coisa:
+/// Quantas o cidadão responde, tiradas do poço. Poço e questionário não são a mesma coisa:
 /// a página inicial dizia "49 perguntas" e o questionário mostrava "1 de 24".
 /// </param>
 public record PanoramaDto(

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { buscarTodas, paraCsv } from './exportar';
 
+/**
+ * ATENÇÃO: Vírgula entre colunas juntaria tudo numa coluna só no Excel brasileiro.
+ */
 describe('CSV para planilha em português', () => {
-  /** ⚠️ Vírgula entre colunas juntaria tudo numa coluna só no Excel brasileiro. */
   it('usa ponto e vírgula entre colunas e vírgula no decimal', () => {
     expect(paraCsv(['Área', 'Pago'], [['Saúde', 234.3]])).toBe('Área;Pago\r\nSaúde;234,3');
   });
@@ -16,8 +18,10 @@ describe('CSV para planilha em português', () => {
   });
 });
 
+/**
+ * DECISÃO: Exporta a lista inteira, e não só a página que está na tela.
+ */
 describe('buscarTodas', () => {
-  /** ⭐ Exporta a lista inteira, e ⛔ só a página que está na tela. */
   it('percorre as páginas até o total', async () => {
     const paginas = [[1, 2], [3, 4], [5]];
     const todas = await buscarTodas(async (pagina) => ({

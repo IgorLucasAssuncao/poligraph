@@ -27,31 +27,37 @@ export type PosicaoDoCidadao = {
 };
 
 /**
- * ⭐ PL43 — as duas maneiras de posicionar um parlamentar, lado a lado para comparar.
+ * DECISÃO: PL43 — as duas maneiras de posicionar um parlamentar, lado a lado para comparar.
  *
- * `molas` desenha bem e ⛔ não interpreta nada. `componentes` (SVD) tem eixo com
+ * `molas` desenha bem e não interpreta nada. `componentes` (SVD) tem eixo com
  * significado, mas convida o leitor a ler espectro político.
  */
 /**
- * ⚠️ `componentes` (SVD) saiu da TELA e ⛔ não do dado — PL43 resolvida em 2026-08-28.
+ * ATENÇÃO: `componentes` (SVD) saiu da TELA e não do dado — PL43 resolvida em 2026-08-28.
  *
  * Ele mostrava a MESMA divisão que `alinhamento`: o eixo dele correlaciona −0,87 com o
  * governismo. A diferença é que ali a posição saía de um algoritmo e exigia um parágrafo
  * para explicar o que `alinhamento` diz sozinho — e o segundo eixo, com 9,6% da
- * variância, ⛔ não tem leitura em português.
+ * variância, não tem leitura em português.
  *
- * ⭐ `componente1` e `componente2` continuam calculados e gravados: são resultado do
+ * DECISÃO: `componente1` e `componente2` continuam calculados e gravados: são resultado do
  * método e sustentam o achado #26.
  */
 export type Layout = 'molas' | 'alinhamento';
 
 /**
- * ⚠️ A explicação de cada layout vive JUNTO do seletor, não num rodapé.
+ * ATENÇÃO: A explicação de cada layout vive JUNTO do seletor, não num rodapé.
  *
- * 🔴 A do SVD precisa dizer o que o centro NÃO é. Medido na legislatura 57: os 80 nós
+ * RISCO: A do SVD precisa dizer o que o centro NÃO é. Medido na legislatura 57: os 80 nós
  * mais centrais têm mediana de 472 votações; os 80 mais extremos, 925 (r = 0,566). Quem
  * faltou é empurrado para o meio, e sem esse aviso o leitor conclui que ali estão os
  * moderados.
+ *
+ * DECISÃO: O único layout em que o eixo NÃO é arbitrário.
+ *
+ * Nos outros dois a posição sai de um algoritmo e o significado é descoberto depois,
+ * por correlação — e o sinal pode espelhar numa reexecução. Aqui a coordenada É a
+ * medida: `x` vem direto do governismo, e quem manda no sentido somos nós.
  */
 const EXPLICACAO: Record<Layout, { rotulo: string; titulo: string; texto: string }> = {
   molas: {
@@ -62,13 +68,6 @@ const EXPLICACAO: Record<Layout, { rotulo: string; titulo: string; texto: string
       'É a vista que mostra os grupos. Aqui os eixos não significam nada: girar ou ' +
       'espelhar a figura não muda o que ela diz.',
   },
-  /**
-   * ⭐ O único layout em que o eixo ⛔ NÃO é arbitrário.
-   *
-   * Nos outros dois a posição sai de um algoritmo e o significado é descoberto depois,
-   * por correlação — e o sinal pode espelhar numa reexecução. Aqui a coordenada É a
-   * medida: `x` vem direto do governismo, e quem manda no sentido somos nós.
-   */
   alinhamento: {
     rotulo: 'Alinhamento',
     titulo: 'Alinhamento com o Governo',
@@ -90,11 +89,147 @@ type Alvo = { tipo: 'no'; no: NoDoGrafo } | { tipo: 'aresta'; aresta: ArestaDoGr
  * Rolar aproxima e afastar não tem parede: a malha de pontos do fundo se move junto e
  * dá a referência. O que existe é um intervalo de escala — ver `camera.ts`.
  *
- * ## 🔴 Duas coisas que o desenho ⛔ não pode deixar de dizer
+ * ## RISCO: Duas coisas que o desenho não pode deixar de dizer
  *
- * A cor é COMUNIDADE, ⛔ nunca partido nem espectro (RNF-16). E o percentual de uma
- * ligação ⛔ nunca aparece sem a base: 82% sobre 24 votações e 82% sobre 540 não são a
+ * A cor é COMUNIDADE, nunca partido nem espectro (RNF-16). E o percentual de uma
+ * ligação nunca aparece sem a base: 82% sobre 24 votações e 82% sobre 540 não são a
  * mesma afirmação.
+ *
+ * Os ponteiros na tela, por id — mouse, caneta ou dedo.
+ *
+ * ATENÇÃO: O grafo tratava só mouse: no celular, arrastar e pinçar não faziam nada, e tocar num
+ * ponto não o selecionava, porque a seleção dependia de passar o mouse por cima.
+ *
+ * ATENÇÃO: Deslocamentos manuais de nó, em coordenada do LAYOUT.
+ *
+ * Não voltam para o banco, de propósito: `nos_metrica` é retrato reproduzível da
+ * execução do ETL, e deixar o usuário reescrever isso destruiria a garantia de que a
+ * banca reproduz a mesma figura. Arrastar é para enxergar, não para corrigir.
+ *
+ * DECISÃO: Isolado não é o mesmo que fixado.
+ *
+ * Fixado apaga o resto mas o mantém no desenho — dá contexto. Isolado REMOVE tudo o
+ * que não é vizinho, e aí o zoom passa a valer a pena: 30 pontos em vez de 643.
+ *
+ * Não "Alinhamento" não aparece no Senado. Lá não existe orientação de bancada
+ * publicada, e um layout cujo eixo é o governismo não teria coordenada nenhuma.
+ *
+ * Sem governismo (Senado), sobra o layout de molas — e ali o eixo não tem nome.
+ *
+ * ATENÇÃO: O nó carrega as duas posições; aqui uma delas é promovida a `eixoX`/`eixoY`
+ * para o resto do desenho não precisar saber qual layout está ativo.
+ *
+ * DECISÃO: `governismo` vive em [0, 1] e o plano em [-1, 1]. A vertical continua vindo
+ * do layout de molas: ela não mede nada em nenhum dos dois, e reaproveitá-la
+ * mantém os agrupamentos visualmente coerentes enquanto o eixo x muda.
+ *
+ * DECISÃO: O grau dita o tamanho do ponto: quem liga com muita gente aparece maior.
+ *
+ * DECISÃO: Vizinhança do nó em foco. É o gesto que torna o grafo legível: com 5 mil
+ * arestas, olhar um parlamentar sem apagar o resto não informa nada.
+ *
+ * DECISÃO: Achar alguém sem caçar ponto por ponto. Com 643 nós, encontrar o Arthur Lira
+ * passando o mouse é inviável — e era o gesto que o desenho obrigava.
+ *
+ * Repinte forçado quando uma foto termina de baixar — o dado não mudou, o pixel sim.
+ *
+ * DECISÃO: Um redesenho por quadro, por mais fotos que cheguem nele. Eram um por foto: com o
+ * zoom, dezenas chegavam em sequência e cada uma redesenhava 5 mil ligações.
+ *
+ * O aviso "Ctrl + roda", que aparece quando a roda passa por um grafo embutido.
+ *
+ * ATENÇÃO: Piso de 240px também no modo preencher: numa janela muito baixa o contêiner
+ * chega a medir poucos pixels no primeiro quadro, e o canvas nasceria vazio.
+ *
+ * DECISÃO: Os rótulos do eixo saem do DADO. O sinal do eixo é arbitrário, e escrever
+ * "esquerda = governo" faria a figura mentir sobre si mesma no dia em que uma
+ * reexecução a espelhasse.
+ *
+ * Não Nulo no Senado: sem orientação de bancada, o eixo não tem nome — e desenhar a
+ * linha com rótulo inventado seria pior que não desenhar.
+ *
+ * O canvas não tem seletor de CSS: sem isto, trocar o tema deixava o grafo com as cores
+ * do tema anterior até o próximo movimento.
+ *
+ * ATENÇÃO: `passive: false` é obrigatório: sem isto o navegador ignora o
+ * `preventDefault` e a página inteira rola junto com o zoom.
+ *
+ * DECISÃO: Embutido e sem Ctrl: a roda é da página. Não preventDefault — ela rola.
+ *
+ * DECISÃO: Converte o PONTO, não o deslocamento: o nó gruda no cursor em qualquer
+ * escala. Converter o delta por regra de três descolava no zoom alto.
+ *
+ * O quadro da abertura: o miolo da nuvem, sem os isolados das bordas.
+ *
+ * Abre enquadrado no miolo, e volta a ele quando o grafo, o layout ou o tamanho mudam.
+ *
+ * ATENÇÃO: Só enquanto a pessoa não mexeu na câmera: depois de um zoom ou de arrastar o
+ * desenho, redimensionar a janela não desfaz o que ela fez.
+ *
+ * ATENÇÃO: A função passada a `setCamera` precisa ser PURA: o StrictMode a chama duas
+ * vezes. Atualizar o ref dentro dela fazia a segunda chamada achar que a pessoa
+ * tinha mexido, e a câmera ficava presa no tamanho inicial de 800 × 520.
+ *
+ * Teclado no desenho: setas movem, mais e menos aproximam, zero enquadra.
+ *
+ * ATENÇÃO: Isto NÃO torna o grafo acessível por si só — mover a câmera com o teclado não * não diz a quem usa leitor de tela quem está perto de quem. Quem faz esse trabalho é
+ * `ListaDoGrafo`. Aqui o objetivo é outro e mais modesto: quem não usa mouse
+ * conseguir operar os mesmos controles que o mouse tem.
+ *
+ * Não Só intercepta as teclas que usa. Tab, Shift+Tab e Escape seguem para o navegador
+ * — prender o foco dentro de um canvas seria pior do que não tê-lo.
+ *
+ * ATENÇÃO: Só depois de saber que a tecla É nossa: prevenir antes tiraria a rolagem da
+ * página de quem só passou o foco pelo grafo.
+ *
+ * O gesto no desenho é do grafo: sem isto o navegador rolaria e aproximaria
+ * a página inteira junto com a pinça. DECISÃO: Embutido, o arrasto vertical é da
+ * página — senão o dedo que rola o início ficava preso no desenho.
+ *
+ * DECISÃO: Focável pelo teclado: sem isto o desenho inteiro fica fora da ordem de
+ * tabulação, e quem não usa mouse não consegue nem aproximar.
+ *
+ * DECISÃO: Os controles moram sobre o desenho, junto do que eles controlam.
+ *
+ * `setMovidos(new Map());`: ATENÇÃO: devolve o desenho ao retrato do ETL
+ *
+ * DECISÃO: PL43: o seletor fica NA moldura, para comparar sem sair da tela.
+ *
+ * DECISÃO: Busca e ajustes moram SOBRE o desenho, recolhidos.
+ * Ocupavam uma faixa fixa abaixo do canvas — e essa faixa custava altura de
+ * desenho em toda tela, para controles que se usam uma vez.
+ *
+ * DECISÃO: PL43: o seletor e a ressalva dele andam JUNTOS. RISCO: A do SVD não é
+ * opcional — sem ela o leitor lê o centro como moderação, quando ali
+ * também está quem faltou a muitas votações.
+ *
+ * ATENÇÃO: Com uma opção só (Senado), o seletor vira um botão que não
+ * escolhe nada. A explicação abaixo fica, porque ela é que importa.
+ *
+ * ATENÇÃO: Começa desligado: a maior parte de quem abre o desenho quer ver a
+ * forma, e o eixo rotulado é a leitura seguinte. Ligado por padrão, ele
+ * disputaria atenção com a própria figura.
+ *
+ * DECISÃO: Destacar mantém o contexto; isolar remove tudo o que não é vizinho
+ * e é o que faz o zoom valer a pena.
+ *
+ * RISCO: A alternativa em texto. Não é "acessibilidade adicionada por cima": é o
+ * único caminho para a informação do desenho quem usa leitor de tela tem.
+ *
+ * Um ponteiro desce: com um, arrasta o ponto sob ele ou o plano; com dois, começa a pinça.
+ *
+ * DECISÃO: No toque não há "passar por cima", então o alvo é calculado aqui, no toque: é o que
+ * faz tocar num ponto selecioná-lo.
+ *
+ * Sobre um nó, arrasta o NÓ; no vazio, arrasta o plano.
+ *
+ * Um ponteiro sobe: o que resta continua o arrasto de onde está, sem saltar.
+ *
+ * Leva a câmera até o nó e o deixa destacado.
+ *
+ * ATENÇÃO: Aproxima para 6× em vez de manter o zoom atual: encontrar alguém e continuar
+ * vendo a mesma nuvem de 643 pontos não resolve nada — a busca precisa entregar a
+ * pessoa, não a coordenada dela. É também a escala em que o rosto aparece.
  */
 export function TelaDoGrafo({
   grafo,
@@ -111,20 +246,20 @@ export function TelaDoGrafo({
   /** Fixa a altura; sem isto acompanha a largura. */
   altura?: number;
   /**
-   * ⭐ Ocupa a altura do contêiner em vez de derivá-la da largura.
+   * DECISÃO: Ocupa a altura do contêiner em vez de derivá-la da largura.
    *
    * É o modo da prancheta em tela cheia: lá quem manda na altura é a janela, e a
    * proporção 0,62 da largura deixaria uma faixa morta embaixo do desenho.
    */
   preencher?: boolean;
-  /** ⚠️ Quando presente, vira um botão NA MOLDURA do grafo — não um link solto na
+  /** ATENÇÃO: Quando presente, vira um botão NA MOLDURA do grafo — não um link solto na
    *  página, que se perde entre os textos abaixo do desenho. */
   aoAmpliar?: () => void;
   /**
-   * ⭐ Dentro de uma página que rola — o início, o resultado. Ali a roda do mouse rola a
+   * DECISÃO: Dentro de uma página que rola — o início, o resultado. Ali a roda do mouse rola a
    * PÁGINA, e só aproxima com Ctrl (⌘ no Mac), como num mapa embutido.
    *
-   * 📐 Sem isto (2026-10-02): quem rolava o início com o mouse sobre o grafo dava zoom sem
+   * MEDIDO: Sem isto (2026-10-02): quem rolava o início com o mouse sobre o grafo dava zoom sem
    * querer, ficava preso no desenho e disparava o download das fotos de cada ponto que
    * crescia — na 55ª, 56 fotos e 40 redesenhos em 3 segundos, e a aba travou duas vezes.
    */
@@ -134,21 +269,8 @@ export function TelaDoGrafo({
   const arrastando = useRef<{ x: number; y: number } | null>(null);
   const arrastandoNo = useRef<NoDoGrafo | null>(null);
 
-  /**
-   * Os ponteiros na tela, por id — mouse, caneta ou dedo.
-   *
-   * ⚠️ O grafo tratava só mouse: no celular, arrastar e pinçar ⛔ faziam nada, e tocar num
-   * ponto ⛔ o selecionava, porque a seleção dependia de passar o mouse por cima.
-   */
   const ponteiros = useRef(new Map<number, { x: number; y: number }>());
 
-  /**
-   * ⚠️ Deslocamentos manuais de nó, em coordenada do LAYOUT.
-   *
-   * ⛔ Não voltam para o banco, de propósito: `nos_metrica` é retrato reproduzível da
-   * execução do ETL, e deixar o usuário reescrever isso destruiria a garantia de que a
-   * banca reproduz a mesma figura. Arrastar é para enxergar, não para corrigir.
-   */
   const [movidos, setMovidos] = useState<Map<number, { x: number; y: number }>>(new Map());
 
   const [camera, setCamera] = useState<Camera>({ escala: 1, x: 0, y: 0 });
@@ -156,12 +278,6 @@ export function TelaDoGrafo({
   const [alvo, setAlvo] = useState<Alvo | null>(null);
   const [fixado, setFixado] = useState<NoDoGrafo | null>(null);
 
-  /**
-   * ⭐ Isolado ⛔ não é o mesmo que fixado.
-   *
-   * Fixado apaga o resto mas o mantém no desenho — dá contexto. Isolado REMOVE tudo o
-   * que não é vizinho, e aí o zoom passa a valer a pena: 30 pontos em vez de 643.
-   */
   const [isolado, setIsolado] = useState<NoDoGrafo | null>(null);
   const [busca, setBusca] = useState('');
   const [layout, setLayout] = useState<Layout>('molas');
@@ -170,24 +286,14 @@ export function TelaDoGrafo({
   const [ajustesAbertos, setAjustesAbertos] = useState(false);
   const [tamanho, setTamanho] = useState<Tamanho>({ largura: 800, altura: altura ?? 520 });
 
-  /**
-   * ⛔ "Alinhamento" ⛔ não aparece no Senado. Lá ⛔ não existe orientação de bancada
-   * publicada, e um layout cujo eixo é o governismo ⛔ não teria coordenada nenhuma.
-   */
   const layoutsDisponiveis = useMemo<Layout[]>(() => {
     const temAlinhamento = grafo.nos.some((n) => n.governismo !== null);
 
-    // ⛔ Sem governismo (Senado), sobra o layout de molas — e ali o eixo ⛔ não tem nome.
     return temAlinhamento ? ['molas', 'alinhamento'] : ['molas'];
   }, [grafo.nos]);
 
   const posicionados = useMemo(() => {
-    // ⚠️ O nó carrega as duas posições; aqui uma delas é promovida a `eixoX`/`eixoY`
-    //    para o resto do desenho não precisar saber qual layout está ativo.
     const comLayout = grafo.nos.map((n) => {
-      // ⭐ `governismo` vive em [0, 1] e o plano em [-1, 1]. A vertical continua vindo
-      //    do layout de molas: ela ⛔ não mede nada em nenhum dos dois, e reaproveitá-la
-      //    mantém os agrupamentos visualmente coerentes enquanto o eixo x muda.
       if (layout === 'alinhamento')
         return {
           ...n,
@@ -219,7 +325,6 @@ export function TelaDoGrafo({
     return arestasDoLimiar.filter((a) => a.de === isolado.id || a.para === isolado.id);
   }, [arestasDoLimiar, isolado]);
 
-  /** ⭐ O grau dita o tamanho do ponto: quem liga com muita gente aparece maior. */
   const graus = useMemo(() => {
     const contagem = new Map<number, number>();
     for (const a of visiveis) {
@@ -229,10 +334,6 @@ export function TelaDoGrafo({
     return contagem;
   }, [visiveis]);
 
-  /**
-   * ⭐ Vizinhança do nó em foco. É o gesto que torna o grafo legível: com 5 mil
-   * arestas, olhar um parlamentar sem apagar o resto não informa nada.
-   */
   const emFoco = isolado ?? fixado ?? (alvo?.tipo === 'no' ? alvo.no : null);
 
   const vizinhos = useMemo(() => {
@@ -247,10 +348,6 @@ export function TelaDoGrafo({
     return conjunto;
   }, [emFoco, visiveis]);
 
-  /**
-   * ⭐ Achar alguém sem caçar ponto por ponto. Com 643 nós, encontrar o Arthur Lira
-   * passando o mouse é inviável — e era o gesto que o desenho obrigava.
-   */
   const achados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     if (termo.length < 2) return [];
@@ -266,12 +363,7 @@ export function TelaDoGrafo({
     [isolado, vizinhos, posicionados],
   );
 
-  // Repinte forçado quando uma foto termina de baixar — o dado não mudou, o pixel sim.
   const [revisao, setRevisao] = useState(0);
-  /**
-   * ⭐ Um redesenho por quadro, por mais fotos que cheguem nele. Eram um por foto: com o
-   * zoom, dezenas chegavam em sequência e cada uma redesenhava 5 mil ligações.
-   */
   const repinturaPedida = useRef<number | null>(null);
   const repintar = useCallback(() => {
     if (repinturaPedida.current !== null) return;
@@ -287,7 +379,6 @@ export function TelaDoGrafo({
     [],
   );
 
-  /** O aviso "Ctrl + roda", que aparece quando a roda passa por um grafo embutido. */
   const [avisoDaRoda, setAvisoDaRoda] = useState(false);
 
   useEffect(() => {
@@ -297,8 +388,6 @@ export function TelaDoGrafo({
     const observador = new ResizeObserver(([entrada]) => {
       const { width, height } = entrada.contentRect;
 
-      // ⚠️ Piso de 240px também no modo preencher: numa janela muito baixa o contêiner
-      //    chega a medir poucos pixels no primeiro quadro, e o canvas nasceria vazio.
       setTamanho({
         largura: width,
         altura: preencher
@@ -311,14 +400,6 @@ export function TelaDoGrafo({
     return () => observador.disconnect();
   }, [altura, preencher]);
 
-  /**
-   * ⭐ Os rótulos do eixo saem do DADO. O sinal do eixo é arbitrário, e escrever
-   * "esquerda = governo" faria a figura mentir sobre si mesma no dia em que uma
-   * reexecução a espelhasse.
-   *
-   * ⛔ Nulo no Senado: sem orientação de bancada, o eixo ⛔ não tem nome — e desenhar a
-   * linha com rótulo inventado seria pior que não desenhar.
-   */
   const eixos = useMemo(
     () => (comEixos ? rotulosDoEixo(posicionados, layout) : null),
     [comEixos, posicionados, layout],
@@ -351,19 +432,14 @@ export function TelaDoGrafo({
     desenhar(ctx, canvas, quadro);
   }, [quadro, tamanho, revisao]);
 
-  // O canvas não tem seletor de CSS: sem isto, trocar o tema deixava o grafo com as cores
-  // do tema anterior até o próximo movimento.
   useEffect(() => aoMudarTema(repintar), [repintar]);
 
-  // ⚠️ `passive: false` é obrigatório: sem isto o navegador ignora o
-  //    `preventDefault` e a página inteira rola junto com o zoom.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     let apagarAviso: ReturnType<typeof setTimeout> | undefined;
 
     function aoRolar(evento: WheelEvent) {
-      // ⭐ Embutido e sem Ctrl: a roda é da página. ⛔ preventDefault — ela rola.
       if (embutido && !evento.ctrlKey && !evento.metaKey) {
         setAvisoDaRoda(true);
         clearTimeout(apagarAviso);
@@ -402,8 +478,6 @@ export function TelaDoGrafo({
 
         const no = arrastandoNo.current;
         if (no) {
-          // ⭐ Converte o PONTO, não o deslocamento: o nó gruda no cursor em qualquer
-          //    escala. Converter o delta por regra de três descolava no zoom alto.
           const destino = paraMundo(px, py, tamanho, camera);
           setMovidos((atual) => new Map(atual).set(no.id, destino));
           return;
@@ -423,27 +497,17 @@ export function TelaDoGrafo({
     setCamera(enquadrar(pontos, tamanho));
   }, [noDesenho, tamanho]);
 
-  /** O quadro da abertura: o miolo da nuvem, sem os isolados das bordas. */
   const vistaInicial = useCallback(
     () => enquadrarMiolo(posicionados.map((n) => ({ x: n.eixoX!, y: n.eixoY! })), tamanho),
     [posicionados, tamanho],
   );
 
-  /**
-   * Abre enquadrado no miolo, e volta a ele quando o grafo, o layout ou o tamanho mudam.
-   *
-   * ⚠️ Só enquanto a pessoa ⛔ mexeu na câmera: depois de um zoom ou de arrastar o
-   * desenho, redimensionar a janela ⛔ desfaz o que ela fez.
-   */
   const cameraAutomatica = useRef<Camera | null>(null);
   useEffect(() => {
     const nova = vistaInicial();
     const anterior = cameraAutomatica.current;
     cameraAutomatica.current = nova;
 
-    // ⚠️ A função passada a `setCamera` precisa ser PURA: o StrictMode a chama duas
-    //    vezes. Atualizar o ref dentro dela fazia a segunda chamada achar que a pessoa
-    //    tinha mexido, e a câmera ficava presa no tamanho inicial de 800 × 520.
     setCamera((atual) => {
       const intocada =
         anterior === null
@@ -451,20 +515,9 @@ export function TelaDoGrafo({
         || (atual.escala === 1 && atual.x === 0 && atual.y === 0);
       return intocada ? nova : atual;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- só grafo, layout e tamanho; arrastar um nó ⛔ reenquadra
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só grafo, layout e tamanho; arrastar um nó não reenquadra
   }, [grafo, layout, tamanho]);
 
-  /**
-   * Teclado no desenho: setas movem, mais e menos aproximam, zero enquadra.
-   *
-   * ⚠️ Isto ⛔ NÃO torna o grafo acessível por si só — mover a câmera com o teclado ⛔
-   * não diz a quem usa leitor de tela quem está perto de quem. Quem faz esse trabalho é
-   * `ListaDoGrafo`. Aqui o objetivo é outro e mais modesto: quem ⛔ não usa mouse
-   * conseguir operar os mesmos controles que o mouse tem.
-   *
-   * ⛔ Só intercepta as teclas que usa. Tab, Shift+Tab e Escape seguem para o navegador
-   * — prender o foco dentro de um canvas seria pior do que ⛔ não tê-lo.
-   */
   const aoTeclar = useCallback(
     (evento: KeyboardEvent<HTMLCanvasElement>) => {
       const PASSO = evento.shiftKey ? 120 : 40;
@@ -485,8 +538,6 @@ export function TelaDoGrafo({
       const acao = acoes[evento.key];
       if (!acao) return;
 
-      // ⚠️ Só depois de saber que a tecla É nossa: prevenir antes tiraria a rolagem da
-      //    página de quem só passou o foco pelo grafo.
       evento.preventDefault();
       acao();
     },
@@ -509,9 +560,6 @@ export function TelaDoGrafo({
             width: '100%',
             height: tamanho.altura,
             cursor: arrastando.current ? 'grabbing' : alvo ? 'pointer' : 'grab',
-            /* O gesto no desenho é do grafo: sem isto o navegador rolaria e aproximaria
-               a página inteira junto com a pinça. ⭐ Embutido, o arrasto vertical é da
-               página — senão o dedo que rola o início ficava preso no desenho. */
             touchAction: embutido ? 'pan-y' : 'none',
           }}
           onPointerMove={aoMoverPonteiro}
@@ -526,8 +574,6 @@ export function TelaDoGrafo({
           onClick={aoClicar}
           onDoubleClick={() => aoSelecionar && emFoco && aoSelecionar(emFoco)}
           onKeyDown={aoTeclar}
-          /* ⭐ Focável pelo teclado: sem isto o desenho inteiro fica fora da ordem de
-             tabulação, e quem ⛔ não usa mouse ⛔ não consegue nem aproximar. */
           tabIndex={0}
           role="img"
           aria-label={
@@ -539,7 +585,6 @@ export function TelaDoGrafo({
 
         {alvo && <Dica alvo={alvo} porId={porId} tamanho={tamanho} camera={camera} />}
 
-        {/* ⭐ Os controles moram sobre o desenho, junto do que eles controlam. */}
         <div className="grafo-zoom" data-tour="grafo-zoom">
           <button
             type="button"
@@ -561,7 +606,7 @@ export function TelaDoGrafo({
           <button
             type="button"
             onClick={() => {
-              setMovidos(new Map()); // ⚠️ devolve o desenho ao retrato do ETL
+              setMovidos(new Map());
               setFixado(null);
               setIsolado(null);
               setCamera(vistaInicial());
@@ -573,16 +618,12 @@ export function TelaDoGrafo({
           </button>
         </div>
 
-        {/* ⭐ PL43: o seletor fica NA moldura, para comparar sem sair da tela. */}
         {aoAmpliar && (
           <button type="button" className="grafo-ampliar" onClick={aoAmpliar}>
             <span aria-hidden="true">⛶</span> Abrir em tela cheia
           </button>
         )}
 
-        {/* ⭐ Busca e ajustes moram SOBRE o desenho, recolhidos.
-            Ocupavam uma faixa fixa abaixo do canvas — e essa faixa custava altura de
-            desenho em toda tela, para controles que se usam uma vez. */}
         <div className="grafo-ferramentas">
           <Busca
             valor={busca}
@@ -605,11 +646,6 @@ export function TelaDoGrafo({
 
             {ajustesAbertos && (
               <div className="grafo-painel" role="group" aria-label="Ajustes do desenho">
-                {/* ⭐ PL43: o seletor e a ressalva dele andam JUNTOS. 🔴 A do SVD não é
-                    opcional — sem ela o leitor lê o centro como moderação, quando ali
-                    também está quem faltou a muitas votações. */}
-                {/* ⚠️ Com uma opção só (Senado), o seletor vira um botão que ⛔ não
-                    escolhe nada. A explicação abaixo fica, porque ela é que importa. */}
                 {layoutsDisponiveis.length > 1 && (
                   <p className="grafo-painel-titulo">Como posicionar os pontos</p>
                 )}
@@ -676,9 +712,6 @@ export function TelaDoGrafo({
                   Mostrar os eixos
                 </label>
 
-                {/* ⚠️ Começa desligado: a maior parte de quem abre o desenho quer ver a
-                    forma, e o eixo rotulado é a leitura seguinte. Ligado por padrão, ele
-                    disputaria atenção com a própria figura. */}
                 {comEixos && !eixos && (
                   <p className="grafo-painel-ajuda">
                     Esta casa não tem eixo com nome: o Senado não publica a orientação
@@ -708,8 +741,6 @@ export function TelaDoGrafo({
             </p>
 
             <div className="grafo-foco-acoes">
-              {/* ⭐ Destacar mantém o contexto; isolar remove tudo o que não é vizinho
-                  e é o que faz o zoom valer a pena. */}
               {!isolado ? (
                 <button type="button" onClick={() => setIsolado(fixado)}>
                   Só as conexões dele
@@ -740,8 +771,6 @@ export function TelaDoGrafo({
         )}
       </div>
 
-      {/* 🔴 A alternativa em texto. ⛔ Não é "acessibilidade adicionada por cima": é o
-          único caminho para a informação do desenho quem usa leitor de tela tem. */}
       <ListaDoGrafo nos={noDesenho} arestas={visiveis} aoSelecionar={irPara} />
     </div>
   );
@@ -756,12 +785,6 @@ export function TelaDoGrafo({
     return { x: e.clientX - caixa.left, y: e.clientY - caixa.top };
   }
 
-  /**
-   * Um ponteiro desce: com um, arrasta o ponto sob ele ou o plano; com dois, começa a pinça.
-   *
-   * ⭐ No toque ⛔ há "passar por cima", então o alvo é calculado aqui, no toque: é o que
-   * faz tocar num ponto selecioná-lo.
-   */
   function aoApertar(e: React.PointerEvent<HTMLCanvasElement>) {
     e.currentTarget.setPointerCapture?.(e.pointerId);
     const ponto = posicaoNoDesenho(e);
@@ -771,7 +794,6 @@ export function TelaDoGrafo({
     if (e.pointerType !== 'mouse') setAlvo(sob);
 
     if (ponteiros.current.size === 1) {
-      // Sobre um nó, arrasta o NÓ; no vazio, arrasta o plano.
       arrastandoNo.current = sob?.tipo === 'no' ? sob.no : null;
       arrastando.current = ponto;
     } else {
@@ -796,7 +818,6 @@ export function TelaDoGrafo({
     aoMover(e);
   }
 
-  /** Um ponteiro sobe: o que resta continua o arrasto de onde está, sem saltar. */
   function aoLevantar(e: React.PointerEvent<HTMLCanvasElement>) {
     ponteiros.current.delete(e.pointerId);
 
@@ -809,13 +830,6 @@ export function TelaDoGrafo({
     }
   }
 
-  /**
-   * Leva a câmera até o nó e o deixa destacado.
-   *
-   * ⚠️ Aproxima para 6× em vez de manter o zoom atual: encontrar alguém e continuar
-   * vendo a mesma nuvem de 643 pontos não resolve nada — a busca precisa entregar a
-   * pessoa, não a coordenada dela. É também a escala em que o rosto aparece.
-   */
   function irPara(no: NoDoGrafo) {
     const escala = Math.max(camera.escala, 6);
     const base = paraTela(no.eixoX!, no.eixoY!, tamanho, { escala, x: 0, y: 0 });
@@ -837,14 +851,21 @@ export function TelaDoGrafo({
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
  * A busca recolhida numa lupa.
  *
- * ⭐ Fechada, ocupa 2rem do canto do desenho; aberta, vira campo. Antes era um campo
+ * DECISÃO: Fechada, ocupa 2rem do canto do desenho; aberta, vira campo. Antes era um campo
  * sempre visível numa faixa abaixo do canvas — e essa faixa custava altura de figura em
  * toda tela, para um controle que se usa uma vez.
+ *
+ * ATENÇÃO: O foco vai para o campo assim que ele existe. Sem isto, abrir a lupa exige um
+ * segundo clique — e a lupa deixa de parecer um atalho.
+ *
+ * DECISÃO: Enter leva ao primeiro resultado: com o campo aberto sobre o desenho,
+ * obrigar a mirar o item da lista com o mouse desfaz o ganho do atalho.
+ *
+ * ATENÇÃO: Só avisa quando houve busca de verdade: dizer "nada encontrado" com uma
+ * letra digitada é ruído, não informação.
  */
 function Busca({
   valor,
@@ -860,8 +881,6 @@ function Busca({
   const [aberta, setAberta] = useState(false);
   const campo = useRef<HTMLInputElement>(null);
 
-  // ⚠️ O foco vai para o campo assim que ele existe. Sem isto, abrir a lupa exige um
-  //    segundo clique — e a lupa deixa de parecer um atalho.
   useEffect(() => {
     if (aberta) campo.current?.focus();
   }, [aberta]);
@@ -893,8 +912,6 @@ function Busca({
         aria-label="Procurar parlamentar no grafo"
         onKeyDown={(e) => {
           if (e.key === 'Escape') fechar();
-          // ⭐ Enter leva ao primeiro resultado: com o campo aberto sobre o desenho,
-          //    obrigar a mirar o item da lista com o mouse desfaz o ganho do atalho.
           if (e.key === 'Enter' && achados.length > 0) {
             aoEscolher(achados[0]);
             setAberta(false);
@@ -928,8 +945,6 @@ function Busca({
         </ul>
       )}
 
-      {/* ⚠️ Só avisa quando houve busca de verdade: dizer "nada encontrado" com uma
-          letra digitada é ruído, não informação. */}
       {valor.trim().length >= 2 && achados.length === 0 && (
         <p className="grafo-sem-achado">Nenhum parlamentar com esse nome.</p>
       )}
@@ -942,8 +957,10 @@ function Busca({
   }
 }
 
-// ⚠️ Desenhados à mão em vez de emoji: 🔍 e ⚙️ mudam de forma e de cor conforme o
-//    sistema, e num canto de 2rem sobre o desenho isso vira ruído.
+/**
+ * ATENÇÃO: Desenhados à mão em vez de emoji: 🔍 e ⚙️ mudam de forma e de cor conforme o
+ * sistema, e num canto de 2rem sobre o desenho isso vira ruído.
+ */
 function IconeLupa() {
   return (
     <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false">
@@ -967,6 +984,23 @@ function IconeEngrenagem() {
   );
 }
 
+/**
+ * RISCO: O percentual nunca vem sem a base. "Peso" é jargão nosso; na tela,
+ * o que o número significa.
+ *
+ * ATENÇÃO: A segunda métrica fica em segundo plano: ela existe para a comparação
+ * da RF-18, e não é o número que a tela pede para o leitor usar.
+ *
+ * RISCO: "comparáveis", não "votações". Medido em 2026-08-29: o número do grafo é,
+ * em média, METADE do que a lista mostra para a mesma pessoa — Sargento Fahur
+ * aparece com 1.134 na lista e 559 aqui. Os dois estão certos e contam coisas
+ * diferentes: a lista conta votação registrada, o grafo conta as que entram na
+ * comparação (Não fora as procedimentais, que pesam zero). Com a mesma palavra nos
+ * dois lugares, não há como conciliar — e o leitor conclui que um deles erra.
+ *
+ * DECISÃO: "comparável" é o vocabulário que a afinidade já usa ("perguntas
+ * comparáveis") e que a dica da aresta já segue.
+ */
 function Dica({
   alvo,
   porId,
@@ -999,15 +1033,11 @@ function Dica({
         <strong>{a?.nome}</strong>
         <strong>{b?.nome}</strong>
 
-        {/* 🔴 O percentual ⛔ nunca vem sem a base. "Peso" é jargão nosso; na tela,
-            o que o número significa. */}
         <span className="grafo-dica-meta">
           votaram igual em {Math.round(alvo.aresta.peso * 100)}% das{' '}
           {alvo.aresta.votacoesComuns} votações em que os dois se posicionaram
         </span>
 
-        {/* ⚠️ A segunda métrica fica em segundo plano: ela existe para a comparação
-            da RF-18, e não é o número que a tela pede para o leitor usar. */}
         {alvo.aresta.cosseno !== null && (
           <span className="grafo-dica-secundaria">
             cosseno {alvo.aresta.cosseno.toFixed(2)}
@@ -1027,15 +1057,6 @@ function Dica({
         {no.partido}
         {no.uf && ` · ${no.uf}`}
       </span>
-      {/* 🔴 "comparáveis", ⛔ não "votações". Medido em 2026-08-29: o número do grafo é,
-          em média, METADE do que a lista mostra para a mesma pessoa — Sargento Fahur
-          aparece com 1.134 na lista e 559 aqui. Os dois estão certos e contam coisas
-          diferentes: a lista conta votação registrada, o grafo conta as que entram na
-          comparação (⛔ fora as procedimentais, que pesam zero). Com a mesma palavra nos
-          dois lugares, ⛔ não há como conciliar — e o leitor conclui que um deles erra.
-
-          ⭐ "comparável" é o vocabulário que a afinidade já usa ("perguntas
-          comparáveis") e que a dica da aresta já segue. */}
       <span className="grafo-dica-meta">
         {no.nVotacoes} votações comparáveis · grupo {(no.comunidade ?? 0) + 1}
       </span>
@@ -1045,7 +1066,15 @@ function Dica({
 
 const MAX_SUGESTOES = 6;
 
-/** ⚠️ Nó vence aresta: o alvo pequeno tem de ser o mais fácil de acertar. */
+/**
+ * ATENÇÃO: Nó vence aresta: o alvo pequeno tem de ser o mais fácil de acertar.
+ *
+ * DECISÃO: A área de acerto acompanha o raio desenhado: com foto o nó fica grande, e o
+ * alvo de 12px do desenho antigo cairia no meio do rosto.
+ *
+ * ATENÇÃO: Só procura aresta perto do cursor; varrer 5 mil segmentos por movimento do
+ * mouse derrubaria o quadro.
+ */
 function alvoSob(
   quadro: Quadro,
   x: number,
@@ -1058,8 +1087,6 @@ function alvoSob(
   for (const no of quadro.nos) {
     const p = paraTela(no.eixoX!, no.eixoY!, t, quadro.camera);
 
-    // ⭐ A área de acerto acompanha o raio desenhado: com foto o nó fica grande, e o
-    //    alvo de 12px do desenho antigo cairia no meio do rosto.
     const alcance = Math.max(12, raioNaTela(no, quadro) + 4);
     const distancia2 = (p.x - x) ** 2 + (p.y - y) ** 2;
 
@@ -1071,8 +1098,6 @@ function alvoSob(
 
   if (achado) return { tipo: 'no', no: achado };
 
-  // ⚠️ Só procura aresta perto do cursor; varrer 5 mil segmentos por movimento do
-  //    mouse derrubaria o quadro.
   let arestaAchada: ArestaDoGrafo | null = null;
   let menorDistancia = 5;
 

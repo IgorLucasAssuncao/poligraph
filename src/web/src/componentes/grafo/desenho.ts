@@ -1,10 +1,10 @@
 /**
  * A pintura do quadro. Nada aqui decide o que mostrar — só desenha o que recebe.
  *
- * ⚠️ **Canvas, não SVG.** São 643 nós e 5.259 arestas: em SVG cada aresta vira um
+ * ATENÇÃO: **Canvas, não SVG.** São 643 nós e 5.259 arestas: em SVG cada aresta vira um
  * elemento do DOM, e cada quadro de zoom refaria seis mil deles.
  *
- * 🔴 As cores identificam COMUNIDADE e ⛔ não têm significado político (RNF-16). A
+ * RISCO: As cores identificam COMUNIDADE e não têm significado político (RNF-16). A
  * paleta é categórica de propósito: vermelho→azul seria lido como espectro mesmo sem
  * dizermos nada, e a foto no nó torna esse risco maior, não menor — o rosto convida à
  * leitura partidária.
@@ -16,7 +16,7 @@ import { foto, iniciais } from './fotos';
 import type { RotulosDoEixo } from './legenda';
 import { temaEfetivoEscuro } from '../../tema';
 
-/** ⚠️ Retina: sem isto o desenho sai borrado em tela de alta densidade. */
+/** ATENÇÃO: Retina: sem isto o desenho sai borrado em tela de alta densidade. */
 export const DENSIDADE = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
 
 const RAIO_BASE = 3.4;
@@ -30,8 +30,8 @@ const RAIO_PARA_FOTO = 9;
 const RAIO_PARA_NOME = 6.5;
 
 /**
- * 🔴 Paleta CATEGÓRICA — rótulo, não escala (RNF-16). Nenhum destes tons é cor de
- * partido brasileiro, e a sequência ⛔ não sugere um eixo.
+ * RISCO: Paleta CATEGÓRICA — rótulo, não escala (RNF-16). Nenhum destes tons é cor de
+ * partido brasileiro, e a sequência não sugere um eixo.
  */
 const CORES = [
   '#0f766e', '#b45309', '#4338ca', '#a21caf',
@@ -71,7 +71,7 @@ export type Quadro = {
   cidadao?: { eixoX: number; eixoY: number } | null;
   camera: Camera;
   comFotos: boolean;
-  /** ⛔ Nulo quando os eixos estão desligados ou a casa não os nomeia. */
+  /** Não Nulo quando os eixos estão desligados ou a casa não os nomeia. */
   eixos: RotulosDoEixo | null;
   /** Repinta quando uma foto termina de baixar. */
   aoChegarFoto: () => void;
@@ -86,6 +86,10 @@ export function raioNaTela(no: NoDoGrafo, quadro: Quadro): number {
   return Math.min(RAIO_MAXIMO, Math.max(RAIO_MINIMO, RAIO_BASE * porGrau * porZoom));
 }
 
+/**
+ * ATENÇÃO: ANTES das arestas: o eixo é referência de fundo, não elemento sobre a figura.
+ * Desenhado por cima, ele cortaria os nós ao meio.
+ */
 export function desenhar(
   ctx: CanvasRenderingContext2D,
   canvas: HTMLCanvasElement,
@@ -98,25 +102,22 @@ export function desenhar(
   ctx.clearRect(0, 0, t.largura, t.altura);
 
   desenharGrade(ctx, t, quadro.camera, escuro);
-  // ⚠️ ANTES das arestas: o eixo é referência de fundo, ⛔ não elemento sobre a figura.
-  //    Desenhado por cima, ele cortaria os nós ao meio.
   if (quadro.eixos) desenharEixos(ctx, t, quadro, escuro);
   desenharArestas(ctx, t, quadro, escuro);
   desenharNos(ctx, t, quadro, escuro);
   desenharCidadao(ctx, t, quadro, escuro);
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
- * ⭐ A malha de pontos que anda junto com a câmera.
+ * DECISÃO: A malha de pontos que anda junto com a câmera.
  *
  * É o que faz o plano parecer infinito em vez de uma imagem dentro de uma moldura: sem
  * uma referência que se mexe, arrastar o fundo vazio não dá nenhum retorno visual e o
  * usuário conclui que o gesto não funcionou.
+ *
+ * O passo dobra a cada oitava de zoom, para a densidade na tela ficar constante.
  */
 function desenharGrade(ctx: CanvasRenderingContext2D, t: Tamanho, c: Camera, escuro: boolean) {
-  // O passo dobra a cada oitava de zoom, para a densidade na tela ficar constante.
   const passoMundo = Math.pow(2, Math.round(Math.log2(60 / c.escala)));
   const passo = passoMundo * c.escala;
   if (passo < 8) return;
@@ -136,20 +137,27 @@ function desenharGrade(ctx: CanvasRenderingContext2D, t: Tamanho, c: Camera, esc
 /**
  * Os dois eixos, com o que a horizontal significa escrito nas pontas.
  *
- * ## 🔴 Os rótulos vêm do dado
+ * ## RISCO: Os rótulos vêm do dado
  *
  * `eixos.esquerda` e `.direita` são calculados olhando de que lado os governistas
  * efetivamente caíram. O sinal do eixo é arbitrário — escrever "esquerda = governo"
  * aqui faria a figura mentir sobre si mesma no dia em que uma reexecução a espelhasse.
  *
- * ⚠️ Só as duas pontas ganham texto. O parágrafo explicativo que ficava sob a linha
- * saiu: quem liga os eixos quer a referência, ⛔ não uma aula — e a explicação já vive
+ * ATENÇÃO: Só as duas pontas ganham texto. O parágrafo explicativo que ficava sob a linha
+ * saiu: quem liga os eixos quer a referência, não uma aula — e a explicação já vive
  * no painel de ajustes, junto do seletor que a produz.
  *
- * ## ⚠️ Por que o rótulo fica preso à BORDA e não à ponta do eixo
+ * ## ATENÇÃO: Por que o rótulo fica preso à BORDA e não à ponta do eixo
  *
  * Com zoom, a ponta do eixo sai da tela e o texto sumiria justamente quando a pessoa
  * está examinando de perto. Ancorado na borda, ele acompanha.
+ *
+ * Horizontal — a que tem significado.
+ *
+ * Vertical — presente para dar a referência do meio, não porque meça algo.
+ *
+ * ATENÇÃO: Contorno na cor do fundo: o rótulo fica sobre a nuvem de pontos, e sem ele o
+ * texto some dentro da teia de arestas.
  */
 function desenharEixos(
   ctx: CanvasRenderingContext2D,
@@ -168,7 +176,6 @@ function desenharEixos(
   ctx.lineWidth = 1;
   ctx.strokeStyle = linha;
 
-  // Horizontal — a que tem significado.
   if (origem.y > -20 && origem.y < t.altura + 20) {
     ctx.beginPath();
     ctx.moveTo(0, origem.y);
@@ -176,7 +183,6 @@ function desenharEixos(
     ctx.stroke();
   }
 
-  // Vertical — presente para dar a referência do meio, ⛔ não porque meça algo.
   if (origem.x > -20 && origem.x < t.largura + 20) {
     ctx.beginPath();
     ctx.moveTo(origem.x, 0);
@@ -191,8 +197,6 @@ function desenharEixos(
   ctx.font = '600 11px "IBM Plex Sans", system-ui, sans-serif';
   ctx.textBaseline = 'middle';
 
-  // ⚠️ Contorno na cor do fundo: o rótulo fica sobre a nuvem de pontos, e sem ele o
-  //    texto some dentro da teia de arestas.
   const escrever = (texto: string, x: number, altura: number, cor: string) => {
     ctx.lineWidth = 3.5;
     ctx.strokeStyle = escuro ? 'rgba(11,14,17,0.9)' : 'rgba(255,255,255,0.9)';
@@ -210,6 +214,10 @@ function desenharEixos(
   ctx.restore();
 }
 
+/**
+ * DECISÃO: A espessura carrega o peso: a ligação de 95% é visivelmente mais grossa que a
+ * de 62%, e a figura passa a dizer isso sem precisar de legenda.
+ */
 function desenharArestas(
   ctx: CanvasRenderingContext2D,
   t: Tamanho,
@@ -233,8 +241,6 @@ function desenharArestas(
     ctx.moveTo(pa.x, pa.y);
     ctx.lineTo(pb.x, pb.y);
 
-    // ⭐ A espessura carrega o peso: a ligação de 95% é visivelmente mais grossa que a
-    //    de 62%, e a figura passa a dizer isso sem precisar de legenda.
     const forca = Math.max(0, Math.min(1, (aresta.peso - 0.5) * 2));
     ctx.lineWidth = destacada ? 2.4 : 0.35 + forca * 1.15;
     ctx.strokeStyle = destacada
@@ -246,6 +252,13 @@ function desenharArestas(
   }
 }
 
+/**
+ * Fora do quadro não desenha — e, sobretudo, não pede a foto.
+ *
+ * RISCO: O anel da comunidade fica MESMO com foto: é ele que carrega o agrupamento,
+ * e trocar a cor pelo rosto devolveria a leitura ao partido — o contrário do
+ * que o trabalho mede.
+ */
 function desenharNos(
   ctx: CanvasRenderingContext2D,
   t: Tamanho,
@@ -259,7 +272,6 @@ function desenharNos(
     const p = paraTela(no.eixoX!, no.eixoY!, t, quadro.camera);
     const raio = raioNaTela(no, quadro);
 
-    // Fora do quadro não desenha — e, sobretudo, ⛔ não pede a foto.
     if (
       p.x < -raio * 2 || p.x > t.largura + raio * 2 ||
       p.y < -raio * 2 || p.y > t.altura + raio * 2
@@ -288,9 +300,6 @@ function desenharNos(
       ctx.fill();
     }
 
-    // 🔴 O anel da comunidade fica MESMO com foto: é ele que carrega o agrupamento,
-    //    e trocar a cor pelo rosto devolveria a leitura ao partido — o contrário do
-    //    que o trabalho mede.
     if (raioFinal >= RAIO_PARA_FOTO && !apagado) {
       ctx.globalAlpha = 1;
       ctx.beginPath();
@@ -330,11 +339,11 @@ type NomeCandidato = {
 /**
  * Os nomes depois de todos os pontos, e só os que cabem.
  *
- * 📐 Com a abertura enquadrada no miolo (2026-10-01), dezenas de pontos passavam do raio
+ * MEDIDO: Com a abertura enquadrada no miolo (2026-10-01), dezenas de pontos passavam do raio
  * mínimo ao mesmo tempo, e os nomes se empilhavam no meio da nuvem: "sopa de letras",
  * exatamente o que o limiar de raio existia para evitar.
  *
- * ⭐ Vão em ordem de relevância: o destacado sempre, depois quem tem mais ligações. Um
+ * DECISÃO: Vão em ordem de relevância: o destacado sempre, depois quem tem mais ligações. Um
  * nome que cairia sobre outro já desenhado fica de fora — aproximar o zoom abre espaço e
  * ele aparece. Desenhados por último, nenhum ponto os cobre.
  */
@@ -373,6 +382,11 @@ function fonteDoNome(tamanho: number): string {
   return `500 ${tamanho}px "IBM Plex Sans", system-ui, sans-serif`;
 }
 
+/**
+ * ATENÇÃO: A foto oficial é retrato (mais alta que larga). Esticá-la para o círculo
+ * deforma o rosto; o recorte quadrado no topo pega a cabeça, que é o que
+ * identifica a pessoa.
+ */
 function desenharRosto(
   ctx: CanvasRenderingContext2D,
   imagem: HTMLImageElement,
@@ -384,9 +398,6 @@ function desenharRosto(
   ctx.arc(p.x, p.y, raio, 0, Math.PI * 2);
   ctx.clip();
 
-  // ⚠️ A foto oficial é retrato (mais alta que larga). Esticá-la para o círculo
-  //    deforma o rosto; o recorte quadrado no topo pega a cabeça, que é o que
-  //    identifica a pessoa.
   const lado = Math.min(imagem.naturalWidth, imagem.naturalHeight) || 1;
   const origemX = (imagem.naturalWidth - lado) / 2;
   const origemY = Math.max(0, (imagem.naturalHeight - lado) * 0.18);
@@ -419,6 +430,11 @@ function desenharIniciais(
   ctx.textBaseline = 'alphabetic';
 }
 
+/**
+ * ATENÇÃO: Contorno na cor do fundo antes do texto: sem ele o nome sobre uma teia de
+ * arestas fica ilegível, e escurecer o grafo inteiro para resolver isso apagaria
+ * justamente a estrutura que a tela existe para mostrar.
+ */
 function desenharNome(
   ctx: CanvasRenderingContext2D,
   no: NoDoGrafo,
@@ -431,9 +447,6 @@ function desenharNome(
   ctx.font = fonteDoNome(tamanho);
   ctx.textAlign = 'center';
 
-  // ⚠️ Contorno na cor do fundo antes do texto: sem ele o nome sobre uma teia de
-  //    arestas fica ilegível, e escurecer o grafo inteiro para resolver isso apagaria
-  //    justamente a estrutura que a tela existe para mostrar.
   ctx.lineWidth = 3;
   ctx.strokeStyle = escuro ? 'rgba(11,14,17,0.85)' : 'rgba(255,255,255,0.85)';
   ctx.strokeText(no.nome, p.x, p.y + raio + tamanho + 2);
@@ -442,6 +455,10 @@ function desenharNome(
   ctx.fillText(no.nome, p.x, p.y + raio + tamanho + 2);
 }
 
+/**
+ * ATENÇÃO: Forma DIFERENTE, não só cor: o cidadão não é parlamentar, e a distinção
+ * precisa sobreviver a daltonismo e a impressão em preto e branco.
+ */
 function desenharCidadao(
   ctx: CanvasRenderingContext2D,
   t: Tamanho,
@@ -452,8 +469,6 @@ function desenharCidadao(
 
   const p = paraTela(quadro.cidadao.eixoX, quadro.cidadao.eixoY, t, quadro.camera);
 
-  // ⚠️ Forma DIFERENTE, não só cor: o cidadão não é parlamentar, e a distinção
-  //    precisa sobreviver a daltonismo e a impressão em preto e branco.
   const raio = Math.max(9, Math.min(22, 10 * Math.pow(quadro.camera.escala, 0.4)));
 
   ctx.beginPath();

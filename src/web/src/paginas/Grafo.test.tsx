@@ -44,8 +44,10 @@ const GRAFO: DadosDoGrafo = {
   abertasAte: null,
 };
 
+/**
+ * Um alvo que sumisse da página faria o tour pular o passo calado.
+ */
 describe('o tour do grafo', () => {
-  /** Um alvo que sumisse da página faria o tour pular o passo calado. */
   it('encontra na página cada elemento que explica', async () => {
     vi.mocked(api.obterGrafo).mockResolvedValue(GRAFO);
 
@@ -76,7 +78,13 @@ function renderizar() {
   );
 }
 
-/** O período do grafo (achado #35): vem da faixa do topo, pelo endereço. */
+/**
+ * O período do grafo (achado #35): vem da faixa do topo, pelo endereço.
+ *
+ * DECISÃO: "Todas" é da lista: Não existe grafo de todas juntas, e vale a corrente.
+ *
+ * MEDIDO: A 55ª do Senado: a legislatura é 2015–2019, e as abertas vão de 2016 a 2018 (achado #37).
+ */
 describe('o período do grafo', () => {
   it('pede a legislatura do endereço', async () => {
     vi.mocked(api.obterGrafo).mockResolvedValue({ ...GRAFO, legislatura: 56, legislaturasComGrafo: [57, 56] });
@@ -89,7 +97,6 @@ describe('o período do grafo', () => {
     await waitFor(() => expect(vi.mocked(api.obterGrafo)).toHaveBeenLastCalledWith('CAMARA', 56));
   });
 
-  /** ⭐ "Todas" é da lista: ⛔ existe grafo de todas juntas, e vale a corrente. */
   it('"todos os períodos" desenha a corrente', async () => {
     vi.mocked(api.obterGrafo).mockResolvedValue(GRAFO);
     render(
@@ -126,8 +133,7 @@ describe('o período do grafo', () => {
     expect(screen.getByText(/nas 180 abertas/)).toBeDefined();
   });
 
-  /** 📐 A 55ª do Senado: a legislatura é 2015–2019, e as abertas vão de 2016 a 2018 (achado #37). */
-  it('diz o recorte que o desenho cobre, ⛔ só o período da legislatura', async () => {
+  it('diz o recorte que o desenho cobre, não só o período da legislatura', async () => {
     vi.mocked(api.obterGrafo).mockResolvedValue({
       ...GRAFO, legislatura: 55, legislaturasComGrafo: [57, 55],
       abertasDesde: '2016-05-11', abertasAte: '2018-12-12',

@@ -1,15 +1,15 @@
-"""🔴 O contrato entre o EF e o Python.
+"""RISCO: O contrato entre o EF e o Python.
 
 O `CLAUDE.md` diz: **o EF é dono do schema, o Python nunca cria tabela.** Este arquivo
 é o que faz essa frase valer alguma coisa.
 
-⚠️ Foi escrito depois de o ETL passar por 104 testes verdes sem nunca conseguir falar
+ATENÇÃO: Foi escrito depois de o ETL passar por 104 testes verdes sem nunca conseguir falar
 com o banco: o EF nomeia a tabela a partir do `DbSet`, que é plural (`votacoes`), e o
 Python estava escrito no singular (`votacao`). **Todas as seis tabelas.** Os testes
 passavam porque `test_persistencia.py` faz `CREATE TABLE` com os nomes que o próprio
 Python usa — mediam consistência interna, não integração.
 
-⭐ Este teste lê o `PoligraphDb.cs` de verdade. Não há como os dois lados divergirem
+DECISÃO: Este teste lê o `PoligraphDb.cs` de verdade. Não há como os dois lados divergirem
 sem ele ficar vermelho, e ele não precisa de container nenhum para isso.
 """
 
@@ -33,7 +33,7 @@ def fonte_das_entidades() -> str:
 
 RAIZ = Path(__file__).resolve().parents[1]
 
-# ⚠️ Os testes entram na varredura de propósito. Foi exatamente no DDL de
+# ATENÇÃO: Os testes entram na varredura de propósito. Foi exatamente no DDL de
 #    `test_persistencia.py` que os nomes errados sobreviveram — varrer só o código de
 #    produção deixaria o esconderijo original intacto.
 FONTES_PYTHON = sorted(
@@ -42,20 +42,20 @@ FONTES_PYTHON = sorted(
     if p.name != Path(__file__).name
 )
 
-# ⚠️ `FROM data` aparece em `EXTRACT(YEAR FROM data)` — é coluna, não tabela.
+# ATENÇÃO: `FROM data` aparece em `EXTRACT(YEAR FROM data)` — é coluna, não tabela.
 NAO_SAO_TABELAS = {"data"}
 
 PADRAO_TABELA = re.compile(
-    # ⚠️ `(?<!DISTINCT )` — em `e.pessoa_id IS DISTINCT FROM a.pessoa_id` o `FROM`
-    #    ⛔ não introduz tabela nenhuma; é operador de comparação.
-    # ⚠️ `(?!\.)` — `FROM a.pessoa_id` é referência a ALIAS. Sem isto o parser acusava
+    # ATENÇÃO: `(?<!DISTINCT )` — em `e.pessoa_id IS DISTINCT FROM a.pessoa_id` o `FROM`
+    #    não introduz tabela nenhuma; é operador de comparação.
+    # ATENÇÃO: `(?!\.)` — `FROM a.pessoa_id` é referência a ALIAS. Sem isto o parser acusava
     #    uma tabela chamada `a`, que ninguém jamais criaria.
     r"(?<!DISTINCT )"
     r"\b(?:FROM|INTO|UPDATE|JOIN|CREATE\s+TABLE|REFERENCES|TRUNCATE)\s+"
     r"([a-z_][a-z0-9_]*)(?!\.)"
 )
 
-# ⚠️ `TRUNCATE a, b, c` só teria a primeira capturada pelo padrão acima. Esta segunda
+# ATENÇÃO: `TRUNCATE a, b, c` só teria a primeira capturada pelo padrão acima. Esta segunda
 #    passada pega o resto da lista.
 PADRAO_TRUNCATE = re.compile(r"\bTRUNCATE\s+([a-z_,\s]+)", re.IGNORECASE)
 
@@ -63,7 +63,7 @@ PADRAO_TRUNCATE = re.compile(r"\bTRUNCATE\s+([a-z_,\s]+)", re.IGNORECASE)
 def snake_case(nome: str) -> str:
     """Reproduz o `UseSnakeCaseNamingConvention()` do EF sobre o nome do DbSet.
 
-    ⚠️ `PessoaFonteIds` → `pessoa_fonte_ids`, `NosMetrica` → `nos_metrica`.
+    ATENÇÃO: `PessoaFonteIds` → `pessoa_fonte_ids`, `NosMetrica` → `nos_metrica`.
     """
     return re.sub(r"(?<!^)(?=[A-Z])", "_", nome).lower()
 
@@ -101,7 +101,7 @@ def tabelas_usadas_pelo_python() -> dict[str, list[str]]:
 
 
 def test_contexto_do_ef_existe():
-    # ⚠️ Se o arquivo mudar de lugar, os testes abaixo passariam vazios e em silêncio.
+    # ATENÇÃO: Se o arquivo mudar de lugar, os testes abaixo passariam vazios e em silêncio.
     assert CONTEXTO.is_file(), f"não achei {CONTEXTO}"
     assert ENTIDADES, f"nenhuma entidade em {_DATA / 'Entidades'}"
 
@@ -126,32 +126,32 @@ def test_python_so_usa_tabelas_que_o_ef_criou():
 
 
 def test_o_parser_de_tabelas_nao_ficou_cego():
-    """🔴 A guarda das exclusões.
+    """RISCO: A guarda das exclusões.
 
-    ⚠️ Toda exceção adicionada a um parser de detecção é uma chance de ele parar de
-    detectar. Este teste fixa os dois lados: o que ⛔ **não** é tabela continua fora, e
+    ATENÇÃO: Toda exceção adicionada a um parser de detecção é uma chance de ele parar de
+    detectar. Este teste fixa os dois lados: o que não **não** é tabela continua fora, e
     o que **é** continua dentro. Sem ele, apagar o corpo do padrão deixaria o contrato
     verde e inútil.
     """
     achadas = lambda sql: set(PADRAO_TABELA.findall(sql))  # noqa: E731
 
-    # ⛔ O que não é tabela
+    # Não O que não é tabela
     assert achadas("WHERE e.pessoa_id IS DISTINCT FROM a.pessoa_id") == set()
     assert achadas("SELECT pessoa_id FROM autores_de_emenda a WHERE a.x = 1") == {
         "autores_de_emenda"
     }
 
-    # 🔴 O caso que ⛔ **não** é coberto pelo `(?!\.)`: comparação sem alias. Aqui
+    # RISCO: O caso que não **não** é coberto pelo `(?!\.)`: comparação sem alias. Aqui
     #    `valor_pago` é COLUNA, e sem o `(?<!DISTINCT )` o parser a acusaria de tabela
     #    inexistente. A mutação que apagou o lookbehind passou até esta linha existir.
     assert achadas("WHERE valor_empenhado IS DISTINCT FROM valor_pago") == set()
 
-    # 🔴 E o caso que justifica o `(?!\.)`: `EXTRACT(YEAR FROM d.data)`. O `data` solto
+    # RISCO: E o caso que justifica o `(?!\.)`: `EXTRACT(YEAR FROM d.data)`. O `data` solto
     #    já estava em `NAO_SAO_TABELAS`, mas qualificado por alias ele escaparia da
     #    lista e viraria uma tabela `d`. Esta linha matou a segunda mutação.
     assert achadas("SELECT EXTRACT(YEAR FROM d.data) FROM despesas d") == {"despesas"}
 
-    # ⭐ O que é — e precisa continuar sendo pego
+    # DECISÃO: O que é — e precisa continuar sendo pego
     assert achadas("INSERT INTO emendas (ano)") == {"emendas"}
     assert achadas("UPDATE pessoas SET cpf_hash = %s") == {"pessoas"}
     assert achadas("JOIN pessoa_fonte_ids ON") == {"pessoa_fonte_ids"}
@@ -172,19 +172,19 @@ def test_o_parser_de_tabelas_nao_ficou_cego():
     ],
 )
 def test_snake_case_reproduz_a_convencao_do_ef(dbset: str, tabela: str):
-    """⭐ Conferido contra o banco em execução, não deduzido da documentação."""
+    """DECISÃO: Conferido contra o banco em execução, não deduzido da documentação."""
     assert snake_case(dbset) == tabela
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 As COLUNAS — a lacuna da PL37, fechada depois de morder duas vezes
+# RISCO: As COLUNAS — a lacuna da PL37, fechada depois de morder duas vezes
 # ═══════════════════════════════════════════════════════════════════
 
 
 def snake_case_de_propriedade(nome: str) -> str:
     """O `UseSnakeCaseNamingConvention()` do EF sobre o nome de uma propriedade.
 
-    🔴 A regra quebra por MAIÚSCULA, ⛔ não por dígito. `Componente1` vira
+    RISCO: A regra quebra por MAIÚSCULA, não por dígito. `Componente1` vira
     `componente1`, **sem** underscore antes do `1` — escrever `componente_1` no SQL do
     Python dá `UndefinedColumn`, e foi o que aconteceu.
     """
@@ -210,7 +210,7 @@ def colunas_do_ef() -> dict[str, set[str]]:
         if not tabela:
             continue
 
-        # ⚠️ `public required string NomeCivil` tem DOIS termos antes do nome. Sem
+        # ATENÇÃO: `public required string NomeCivil` tem DOIS termos antes do nome. Sem
         #    aceitar modificadores, toda propriedade `required` sumia — e o teste
         #    acusava colunas legítimas como inexistentes.
         propriedades = re.findall(
@@ -223,7 +223,7 @@ def colunas_do_ef() -> dict[str, set[str]]:
 
 
 def test_o_parser_de_colunas_funciona():
-    # ⚠️ Sem esta guarda, um parser quebrado faria os testes abaixo passarem vazios.
+    # ATENÇÃO: Sem esta guarda, um parser quebrado faria os testes abaixo passarem vazios.
     colunas = colunas_do_ef()
 
     assert "nos_metrica" in colunas
@@ -232,9 +232,9 @@ def test_o_parser_de_colunas_funciona():
 
 
 def test_o_sql_do_etl_so_usa_colunas_que_o_ef_cria():
-    """🔴 Fecha a lacuna que deixou `componente_1` passar.
+    """RISCO: Fecha a lacuna que deixou `componente_1` passar.
 
-    ⚠️ Confere só as colunas dos INSERTs, que é onde o erro é fatal e silencioso até a
+    ATENÇÃO: Confere só as colunas dos INSERTs, que é onde o erro é fatal e silencioso até a
     execução. Cobrir todo SELECT exigiria um parser de SQL de verdade.
     """
     do_ef = colunas_do_ef()
@@ -250,7 +250,7 @@ def test_o_sql_do_etl_so_usa_colunas_que_o_ef_cria():
                 continue
 
             for coluna in lista.split(","):
-                # ⚠️ tira comentários SQL de dentro da lista de colunas
+                # ATENÇÃO: tira comentários SQL de dentro da lista de colunas
                 coluna = re.sub(r"--.*", "", coluna).strip()
                 if coluna and coluna not in conhecidas:
                     erros.append(f"{arquivo.name}: {tabela}.{coluna}")
@@ -259,10 +259,10 @@ def test_o_sql_do_etl_so_usa_colunas_que_o_ef_cria():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 Os VALORES combinados entre C# e Python
+# RISCO: Os VALORES combinados entre C# e Python
 # ═══════════════════════════════════════════════════════════════════
 #
-# ⚠️ Nome de tabela e de coluna já estão cobertos acima. Falta a terceira forma de os
+# ATENÇÃO: Nome de tabela e de coluna já estão cobertos acima. Falta a terceira forma de os
 # dois lados divergirem: um **literal** que o Python grava e o C# compara.
 
 
@@ -278,13 +278,13 @@ def constantes_do_ef() -> dict[str, str]:
 
 
 def test_o_nome_dos_fundos_e_o_mesmo_dos_dois_lados():
-    """🔴 O ETL GRAVA o texto; a API COMPARA com ele.
+    """RISCO: O ETL GRAVA o texto; a API COMPARA com ele.
 
-    ⚠️ Uma letra de diferença faria `FundoEspecial` somar **zero** na ficha — número
-    plausível, nenhuma exceção, e a conclusão do TCC sairia errada. ⛔ Não há
+    ATENÇÃO: Uma letra de diferença faria `FundoEspecial` somar **zero** na ficha — número
+    plausível, nenhuma exceção, e a conclusão do TCC sairia errada. Não há
     `CHECK` que pegue isto: qualquer texto é um valor válido na coluna.
 
-    ⭐ E os dois fundos precisam continuar DIFERENTES entre si.
+    DECISÃO: E os dois fundos precisam continuar DIFERENTES entre si.
     """
     from poligraph_etl import receitas
 
@@ -295,14 +295,14 @@ def test_o_nome_dos_fundos_e_o_mesmo_dos_dois_lados():
 
 
 def test_o_metodo_de_reconciliacao_respeita_o_check():
-    """🔴 `ck_autor_metodo` só aceita três valores.
+    """RISCO: `ck_autor_metodo` só aceita três valores.
 
-    ⚠️ O Python passa o método como string literal. Um valor fora do domínio derruba o
-    lote inteiro no banco — e só na execução real, ⛔ nunca no teste unitário.
+    ATENÇÃO: O Python passa o método como string literal. Um valor fora do domínio derruba o
+    lote inteiro no banco — e só na execução real, nunca no teste unitário.
     """
     permitidos = {"AUTOMATICO", "MANUAL", "NAO_RESOLVIDO"}
 
-    # ⚠️ Ancorado no NOME da constraint. Há três `metodo IN (...)` no contexto — em
+    # ATENÇÃO: Ancorado no NOME da constraint. Há três `metodo IN (...)` no contexto — em
     #    `pessoa_fonte_ids`, aqui e na correlação de notícias — e pegar "a primeira"
     #    comparava o domínio errado.
     fonte = CONTEXTO.read_text(encoding="utf-8")
@@ -328,9 +328,9 @@ def test_o_metodo_de_reconciliacao_respeita_o_check():
 
 
 def test_o_tipo_de_favorecido_respeita_o_check():
-    """🔴 `ck_favorecido_tipo` e o Python precisam falar os mesmos quatro valores.
+    """RISCO: `ck_favorecido_tipo` e o Python precisam falar os mesmos quatro valores.
 
-    ⚠️ Um valor a mais no Python derruba o lote no banco; um a menos deixa um tipo que o
+    ATENÇÃO: Um valor a mais no Python derruba o lote no banco; um a menos deixa um tipo que o
     banco aceita e o ETL nunca grava — e a tela, que agrupa por ele, mostra zero.
     """
     from poligraph_etl import emendas

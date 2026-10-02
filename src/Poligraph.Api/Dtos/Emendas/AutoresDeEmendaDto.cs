@@ -4,7 +4,7 @@ namespace Poligraph.Api.Dtos;
 
 /// <summary>Um deputado ou senador que mandou dinheiro de emenda — para uma cidade ou uma entidade.</summary>
 /// <remarks>
-/// <para><see cref="PessoaId"/> é nulo quando o código do autor ainda ⛔ foi ligado a um parlamentar: o nome vem da emenda, e a tela ⛔ tem ficha para onde levar.</para>
+/// <para><see cref="PessoaId"/> é nulo quando o código do autor ainda não foi ligado a um parlamentar: o nome vem da emenda, e a tela não tem ficha para onde levar.</para>
 /// </remarks>
 public record ParlamentarQueMandouDto(
     long? PessoaId,
@@ -19,7 +19,7 @@ public record ParlamentarQueMandouDto(
 /// <summary>Uma bancada estadual ou comissão que mandou dinheiro de emenda.</summary>
 public record ColetivoQueMandouDto(TipoAutorColetivo Tipo, string Nome, decimal Recebido, int Emendas);
 
-/// <summary>O autor de emenda que ⛔ é uma pessoa.</summary>
+/// <summary>O autor de emenda que não é uma pessoa.</summary>
 public enum TipoAutorColetivo
 {
     /// <summary>Os deputados e senadores de um estado, juntos (CF, art. 166, § 12).</summary>

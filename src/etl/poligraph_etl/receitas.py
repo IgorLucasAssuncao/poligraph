@@ -5,15 +5,15 @@
 | | |
 |---|---|
 | Fonte | `cdn.tse.jus.br/.../prestacao_de_contas_eleitorais_candidatos_{ano}.zip` |
-| Tamanho | **396 MB**, lidos em fluxo — ⛔ nunca em memória |
+| Tamanho | **396 MB**, lidos em fluxo — nunca em memória |
 | Formato | CSV `;`, aspas, **Latin-1** — a única fonte do projeto assim |
-| Recorte | O arquivo **consolidado**, ⛔ nunca ele *mais* os estaduais |
+| Recorte | O arquivo **consolidado**, nunca ele *mais* os estaduais |
 | Sentinelas | `#NULO`, `#NE`, `-1` chegam como **texto** |
 
 ## TRATAMENTO
 
-1. Descarta cargo ⛔ ≠ `DEPUTADO FEDERAL`
-2. **Hasheia o CPF do candidato** e casa contra `pessoas.cpf_hash` — quem ⛔ não casa sai
+1. Descarta cargo não ≠ `DEPUTADO FEDERAL`
+2. **Hasheia o CPF do candidato** e casa contra `pessoas.cpf_hash` — quem não casa sai
 3. Descarta valor zero, que violaria `ck_receita_valor`
 4. Separa CNPJ (legível) de CPF do doador (**hasheado**); `00000000000` vira `NULL`
 5. Normaliza `DS_FONTE_RECEITA` para caixa alta
@@ -29,13 +29,13 @@
 
 ---
 
-🔴 `FUNDO ESPECIAL` e `FUNDO PARTIDARIO` são fundos **diferentes**, e este módulo ⛔ não
+RISCO: `FUNDO ESPECIAL` e `FUNDO PARTIDARIO` são fundos **diferentes**, e este módulo não
 os soma: o primeiro é o "fundão" eleitoral de 2017, o segundo custeia o partido o ano
 inteiro. Somá-los é decisão de quem analisa.
 
-🔴 O CPF em claro existe **só em memória**, durante a leitura — RNF-13.
+RISCO: O CPF em claro existe **só em memória**, durante a leitura — RNF-13.
 
-📐 [`docs/14-fontes-de-gasto.md §3`](../../../docs/14-fontes-de-gasto.md) ·
+MEDIDO: [`docs/14-fontes-de-gasto.md §3`](../../../docs/14-fontes-de-gasto.md) ·
 [achado #23](../../../docs/achados/023-consolidado-do-tse-e-o-unico-com-df.md)
 """
 
@@ -57,7 +57,7 @@ log = logging.getLogger("poligraph")
 
 PREFIXO = "receitas_candidatos_{ano}_"
 
-# Fragmento, ⛔ não o nome inteiro: a posição do ano no arquivo estadual ainda não foi
+# Fragmento, não o nome inteiro: a posição do ano no arquivo estadual ainda não foi
 # medida, e prender o filtro a uma das duas grafias plausíveis deixaria a outra passar.
 IGNORAR = "doador_originario"
 
@@ -70,16 +70,16 @@ CARGO_POR_CASA = {"CAMARA": CARGO, "SENADO": "SENADOR"}
 CARGOS_ACEITOS = frozenset(CARGO_POR_CASA.values())
 FUNDO_ESPECIAL = "FUNDO ESPECIAL"
 
-# Sentinelas do TSE para campo ausente. Chegam como TEXTO, ⛔ não como vazio.
+# Sentinelas do TSE para campo ausente. Chegam como TEXTO, não como vazio.
 NULOS = {"#NULO", "#NULO#", "#NE", "#NE#", "-1", ""}
 
 
 def nomes_de_receita(caminho: Path, ano: int) -> list[str]:
     """Os CSVs de receita a ler — o consolidado, se existir; senão, os estaduais.
 
-    🔴 ⛔ **Nunca os dois, e nunca só os estaduais.** Medido no ZIP de 2022: são **26**
+    RISCO: não **Nunca os dois, e nunca só os estaduais.** Medido no ZIP de 2022: são **26**
     arquivos estaduais mais um `_BRASIL`, e o consolidado **repete** os estaduais linha
-    por linha (SP: 17.609 × 17.609). Só ele traz o **Distrito Federal**, que ⛔ não tem
+    por linha (SP: 17.609 × 17.609). Só ele traz o **Distrito Federal**, que não tem
     arquivo próprio. Ler os dois dobra tudo; ler só os estaduais perdia R$ 17,2 milhões
     e 10 parlamentares, em silêncio.
     """
@@ -102,9 +102,9 @@ def nomes_de_receita(caminho: Path, ano: int) -> list[str]:
 def ler_receitas(caminho: Path, nome_interno: str):
     """Itera as linhas de um CSV de dentro do ZIP, sem carregar tudo em memória.
 
-    ⚠️ **Latin-1**, a única fonte do projeto assim — lida como UTF-8, estoura na primeira
+    ATENÇÃO: **Latin-1**, a única fonte do projeto assim — lida como UTF-8, estoura na primeira
     linha acentuada de um arquivo de 396 MB. `errors="replace"` porque uma linha
-    malformada ⛔ não pode derrubar a ingestão inteira.
+    malformada não pode derrubar a ingestão inteira.
     """
     with zipfile.ZipFile(caminho) as pacote, pacote.open(nome_interno) as fluxo:
         texto = io.TextIOWrapper(fluxo, encoding="latin-1", errors="replace")
@@ -118,14 +118,14 @@ CARGO_SENADOR = "SENADOR"
 def cpf_de_senadores(caminho: Path, ano: int) -> dict[tuple[str, str], str | None]:
     """`(nome civil normalizado, UF)` -> CPF do candidato a Senador daquela eleição.
 
-    🔴 O CPF em claro existe só dentro deste dicionário, em memória; quem chama hasheia
+    RISCO: O CPF em claro existe só dentro deste dicionário, em memória; quem chama hasheia
     antes de gravar. RNF-13.
 
-    ⚠️ **A chave inclui a UF de propósito.** Dois candidatos a Senador com o mesmo nome
+    ATENÇÃO: **A chave inclui a UF de propósito.** Dois candidatos a Senador com o mesmo nome
     civil em estados diferentes são pessoas diferentes, e casar só por nome atribuiria o
     financiamento de campanha de um a outro — número plausível e errado, sem erro.
 
-    ⛔ Chave com mais de um CPF vira `None`, ⛔ nunca "o primeiro". Ambiguidade não
+    Não Chave com mais de um CPF vira `None`, nunca "o primeiro". Ambiguidade não
     resolvida tem de chegar a quem chama como ambiguidade.
     """
     achados: dict[tuple[str, str], set[str]] = {}
@@ -163,11 +163,11 @@ def para_linhas(
 
     | Caso | Motivo |
     |---|---|
-    | Cargo ⛔ ≠ deputado federal | Vereador, prefeito e senador ⛔ não estão em `pessoas` |
-    | CPF fora do de-para | Candidato que ⛔ não se elegeu, ou de outra legislatura |
-    | Valor zero | ⭐ Viola `ck_receita_valor`, e o lote inteiro seria recusado |
+    | Cargo não ≠ deputado federal | Vereador, prefeito e senador não estão em `pessoas` |
+    | CPF fora do de-para | Candidato que não se elegeu, ou de outra legislatura |
+    | Valor zero | DECISÃO: Viola `ck_receita_valor`, e o lote inteiro seria recusado |
 
-    🔴 O CPF em claro do candidato existe só dentro deste laço; o que sai já é hash.
+    RISCO: O CPF em claro do candidato existe só dentro deste laço; o que sai já é hash.
     """
     linhas: list[dict] = []
 
@@ -215,10 +215,10 @@ def para_linhas(
 def identificar_doador(bruto: str | None) -> tuple[str | None, bool]:
     """Separa CNPJ de CPF e **hasheia o CPF** — a mesma regra de `cota`.
 
-    🔴 CNPJ fica legível de propósito: é dado público de empresa, e é ele que permite
+    RISCO: CNPJ fica legível de propósito: é dado público de empresa, e é ele que permite
     cruzar quem financiou a campanha com quem recebeu verba de gabinete depois.
 
-    ⚠️ `00000000000` (doação sem doador identificado) vira `None`. Hasheá-lo daria um
+    ATENÇÃO: `00000000000` (doação sem doador identificado) vira `None`. Hasheá-lo daria um
     valor **constante** em milhares de linhas, que casaria todas entre si e inventaria um
     doador comum inexistente.
     """
@@ -236,7 +236,7 @@ def identificar_doador(bruto: str | None) -> tuple[str | None, bool]:
 def resumir(linhas: list[dict]) -> dict[str, float]:
     """Canário de ingestão, e a resposta que o TCC cita.
 
-    ⚠️ Separa o fundão do resto de propósito: um total único esconderia justamente a
+    ATENÇÃO: Separa o fundão do resto de propósito: um total único esconderia justamente a
     distinção que dá sentido ao dado.
     """
     fundao = sum(

@@ -23,7 +23,7 @@ const SAIDA_MS = 260;
 
 /**
  * Quanto dura a viagem de um passo ao outro, em ms: cresce com a distância, dentro destes
- * limites. Abaixo de ~300 ms o olho ⛔ acompanha o destaque; acima de ~700 ms vira espera.
+ * limites. Abaixo de ~300 ms o olho não acompanha o destaque; acima de ~700 ms vira espera.
  */
 const DURACAO_MINIMA = 320;
 
@@ -113,8 +113,10 @@ export function ProvedorDoTour({ children }: { children: ReactNode }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
+/**
+ * A oferta espera a resposta ao banner de consentimento, pelo mesmo motivo por que
+ * as ofertas não se somam: uma decisão por vez.
+ */
 function OfertaDoTour({
   nome,
   aoAceitar,
@@ -127,8 +129,6 @@ function OfertaDoTour({
   const [visivel, setVisivel] = useState(false);
 
   useEffect(() => {
-    // A oferta espera a resposta ao banner de consentimento, pelo mesmo motivo por que
-    // as ofertas não se somam: uma decisão por vez.
     const decidir = () => {
       if (consentimentoDecidido()) setVisivel(true);
     };
@@ -158,8 +158,6 @@ function OfertaDoTour({
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
  * O tour aberto.
  *
@@ -176,14 +174,45 @@ function OfertaDoTour({
  *   alvo com a dele. Duas curvas: o destaque ficava para trás e depois alcançava, como um
  *   elástico. E "20% por quadro" anda duas vezes mais rápido numa tela de 120 Hz.
  *
- * ⚠️ Cada quadro LÊ tudo antes de ESCREVER. Escrever o tamanho do destaque e depois ler o
+ * ATENÇÃO: Cada quadro LÊ tudo antes de ESCREVER. Escrever o tamanho do destaque e depois ler o
  * do balão obriga o navegador a recalcular o layout no meio do quadro — era a outra causa
  * do engasgo.
  *
  * Depois de chegar, o destaque acompanha a rolagem e o redimensionamento na hora, sem
  * animar. Se a pessoa rola durante a viagem, a viagem para e o destaque passa a acompanhar.
  *
- * ⚠️ Com "menos movimento", a viagem dura zero: tudo vai direto ao lugar.
+ * ATENÇÃO: Com "menos movimento", a viagem dura zero: tudo vai direto ao lugar.
+ *
+ * "Passo 4 de 6" com dois opcionais ausentes prometia dois passos que não vêm. Conta o que
+ * está na página, e o opcional de OUTRA página conta — não dá para saber daqui.
+ *
+ * Escreve destaque e balão. Só escreve — quem chama já mediu tudo.
+ *
+ * Abre o diálogo. A entrada (`visivel`) só liga depois do primeiro desenho: antes disso o
+ * balão não tem lugar, e apareceria no canto para depois saltar.
+ *
+ * A cada passo: troca de página se precisar, espera o alvo e faz a viagem.
+ *
+ * ATENÇÃO: Na página atual, alvo ausente é passo que não se aplica (um opcional): pula já. Esperar
+ * os 3 s de quem troca de página deixava o balão com o texto novo sobre o alvo antigo.
+ *
+ * Medir tudo de uma vez, antes de qualquer escrita.
+ *
+ * A área útil começa ABAIXO do cabeçalho fixo: centralizar na janela inteira deixava o
+ * topo do destaque escondido atrás dele.
+ *
+ * ATENÇÃO: Alvo mais alto que a área útil: destaca o começo dele e deixa o espaço do balão
+ * embaixo. Destacar tudo punha o balão EM CIMA do que ele explica.
+ *
+ * ATENÇÃO: Menos movimento não é "nenhuma transição": sai o deslizamento, fica a fusão curta.
+ * Destaque e balão somem, a página se reposiciona parada, e os dois voltam no alvo.
+ * Cortar seco confunde tanto quanto deslizar demais.
+ *
+ * Parado: o destaque acompanha rolagem e redimensionamento na hora, sem animar. Rolar
+ * durante a viagem a interrompe — a pessoa assumiu o controle da página.
+ *
+ * A `key` refaz o bloco a cada passo, e a entrada curta do CSS roda de novo: o
+ * texto novo chega junto com o balão em movimento, sem piscar para vazio.
  */
 function Tour({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: () => void }) {
   const dialogo = useRef<HTMLDialogElement>(null);
@@ -211,8 +240,6 @@ function Tour({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: () => voi
 
   const passo = passos[indice];
 
-  // "Passo 4 de 6" com dois opcionais ausentes prometia dois passos que ⛔ vêm. Conta o que
-  // está na página, e o opcional de OUTRA página conta — ⛔ dá para saber daqui.
   const contam = passos.filter(
     (p) => !p.opcional || (p.rota !== null && p.rota !== pathname) || alvoVisivel(p.alvo) !== null,
   );
@@ -231,7 +258,6 @@ function Tour({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: () => voi
     }, menosMovimento() ? 0 : SAIDA_MS);
   }, [aoFechar]);
 
-  /** Escreve destaque e balão. Só escreve — quem chama já mediu tudo. */
   const desenhar = useCallback((r: Retangulo, balaoEm: { x: number; y: number }, lado: 'baixo' | 'cima') => {
     const furo = destaque.current;
     const caixa = balao.current;
@@ -247,22 +273,17 @@ function Tour({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: () => voi
     posicaoDoBalao.current = balaoEm;
   }, []);
 
-  // Abre o diálogo. A entrada (`visivel`) só liga depois do primeiro desenho: antes disso o
-  // balão ⛔ tem lugar, e apareceria no canto para depois saltar.
   useEffect(() => {
     const d = dialogo.current;
     if (d && !d.open) d.showModal();
   }, []);
 
-  // A cada passo: troca de página se precisar, espera o alvo e faz a viagem.
   useEffect(() => {
     let cancelado = false;
 
     const trocaDePagina = Boolean(passo.rota && passo.rota !== rotaAtual.current);
     if (trocaDePagina) navegar(passo.rota!);
 
-    // ⚠️ Na página atual, alvo ausente é passo que ⛔ se aplica (um opcional): pula já. Esperar
-    // os 3 s de quem troca de página deixava o balão com o texto novo sobre o alvo antigo.
     const achado = trocaDePagina ? esperarAlvo(passo.alvo) : Promise.resolve(alvoVisivel(passo.alvo));
 
     achado.then((alvo) => {
@@ -278,7 +299,6 @@ function Tour({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: () => voi
       alvoAtual.current = alvo;
       cancelAnimationFrame(viagem.current);
 
-      // Medir tudo de uma vez, antes de qualquer escrita.
       const r = alvo.getBoundingClientRect();
       const largura = balao.current?.offsetWidth ?? 0;
       const altura = balao.current?.offsetHeight ?? 0;
@@ -286,8 +306,6 @@ function Tour({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: () => voi
       const rolagemInicial = window.scrollY;
       const rolagemMaxima = Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
 
-      // A área útil começa ABAIXO do cabeçalho fixo: centralizar na janela inteira deixava o
-      // topo do destaque escondido atrás dele.
       const util = window.innerHeight - topo;
       const cabe = r.height + FOLGA * 2 + altura + MARGEM * 3 <= util;
       const desejada = cabe
@@ -296,8 +314,6 @@ function Tour({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: () => voi
       const rolagemFinal = limitar(desejada, 0, rolagemMaxima);
       const deslocamento = rolagemFinal - rolagemInicial;
 
-      // ⚠️ Alvo mais alto que a área útil: destaca o começo dele e deixa o espaço do balão
-      // embaixo. Destacar tudo punha o balão EM CIMA do que ele explica.
       const alturaMaxima = window.innerHeight - (r.top - deslocamento - FOLGA) - altura - MARGEM * 2;
       const destino: Retangulo = {
         x: r.left - FOLGA,
@@ -348,9 +364,6 @@ function Tour({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: () => voi
         botaoAvancar.current?.focus({ preventScroll: true });
       };
 
-      // ⚠️ Menos movimento ⛔ é "nenhuma transição": sai o deslizamento, fica a fusão curta.
-      // Destaque e balão somem, a página se reposiciona parada, e os dois voltam no alvo.
-      // Cortar seco confunde tanto quanto deslizar demais.
       const fundir = menosMovimento() && !primeiroDesenho && dialogo.current;
       if (fundir) {
         dialogo.current!.classList.add('tour-trocando');
@@ -372,8 +385,6 @@ function Tour({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: () => voi
     };
   }, [indice, passo, passos.length, navegar, fechar, desenhar]);
 
-  // Parado: o destaque acompanha rolagem e redimensionamento na hora, sem animar. Rolar
-  // durante a viagem a interrompe — a pessoa assumiu o controle da página.
   useEffect(() => {
     let quadro = 0;
 
@@ -438,8 +449,6 @@ function Tour({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: () => voi
       <div ref={destaque} className="tour-destaque" aria-hidden="true" />
 
       <div ref={balao} className="tour-balao">
-        {/* A `key` refaz o bloco a cada passo, e a entrada curta do CSS roda de novo: o
-            texto novo chega junto com o balão em movimento, sem piscar para vazio. */}
         <div key={indice} aria-live="polite" className="tour-conteudo">
           <p className="tour-passo">
             Passo {numero} de {contam.length}
@@ -491,7 +500,7 @@ function suavizar(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-/** Embaixo do destaque; em cima quando embaixo ⛔ cabe. Sempre dentro da janela. */
+/** Embaixo do destaque; em cima quando embaixo não cabe. Sempre dentro da janela. */
 function lugarDoBalao(
   destaque: Retangulo,
   largura: number,
@@ -521,13 +530,11 @@ function topoLivre(): number {
   return cabecalho ? Math.max(cabecalho.getBoundingClientRect().bottom, 0) : 0;
 }
 
-/** O alvo, se está na página e tem tamanho; `null` se ⛔. */
+/** O alvo, se está na página e tem tamanho; `null` se não . */
 function alvoVisivel(alvo: string): HTMLElement | null {
   const el = acharAlvo(alvo);
   return el && el.getBoundingClientRect().height > 0 ? el : null;
 }
-
-// ═══════════════════════════════════════════════════════════════════
 
 function acharAlvo(alvo: string): HTMLElement | null {
   return document.querySelector<HTMLElement>(`[data-tour="${alvo}"]`);

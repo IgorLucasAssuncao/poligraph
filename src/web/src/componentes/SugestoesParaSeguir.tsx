@@ -6,7 +6,7 @@ import { BotaoSeguir } from './BotaoSeguir';
 import { useSessao } from '../sessao';
 
 /**
- * ⚠️ Eram 3, escolhidos entre os 100 primeiros em ordem alfabética — a lista da API
+ * ATENÇÃO: Eram 3, escolhidos entre os 100 primeiros em ordem alfabética — a lista da API
  * cortava ali, e o "mais ativo" era o mais ativo entre esses 100 nomes.
  */
 const QUANTOS = 8;
@@ -14,11 +14,19 @@ const QUANTOS = 8;
 /**
  * "Quem seguir" — o cartão lateral.
  *
- * 🔴 A ordem NÃO é recomendação editorial. São os parlamentares com mais votações
+ * RISCO: A ordem NÃO é recomendação editorial. São os parlamentares com mais votações
  * registradas, ou seja, os que têm mais dado disponível — e isso está escrito na tela.
  *
- * ⚠️ Ordenar por "relevância" num site sobre política seria dar destaque a alguns
+ * ATENÇÃO: Ordenar por "relevância" num site sobre política seria dar destaque a alguns
  * parlamentares por critério nosso, contrariando a RNF-16.
+ *
+ * DECISÃO: Sem conta, as mesmas sugestões: o botão leva a entrar. A lista de seguidos
+ * responderia 401, e por isso não é pedida.
+ *
+ * DECISÃO: A ordem é feita no servidor, e só vem o que a tela mostra — mais os que a
+ * pessoa já segue, que saem daqui. Antes vinha a lista inteira para usar 3.
+ *
+ * DECISÃO: O critério fica à vista: ordem por dado disponível, não por juízo nosso.
  */
 export function SugestoesParaSeguir() {
   const { usuario } = useSessao();
@@ -26,8 +34,6 @@ export function SugestoesParaSeguir() {
   const [seguidos, setSeguidos] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    // ⭐ Sem conta, as mesmas sugestões: o botão leva a entrar. A lista de seguidos
-    //    responderia 401, e por isso ⛔ é pedida.
     if (!usuario) {
       listarParlamentares({ ordem: 'VOTACOES', tamanho: QUANTOS })
         .then((pagina) => setSugestoes(pagina.itens))
@@ -35,8 +41,6 @@ export function SugestoesParaSeguir() {
       return;
     }
 
-    // ⭐ A ordem é feita no servidor, e só vem o que a tela mostra — mais os que a
-    //    pessoa já segue, que saem daqui. Antes vinha a lista inteira para usar 3.
     listarSeguidos()
       .then(async (jaSeguidos) => {
         const ids = new Set(jaSeguidos.map((p) => p.id));
@@ -85,7 +89,6 @@ export function SugestoesParaSeguir() {
         ))}
       </ul>
 
-      {/* ⭐ O critério fica à vista: ordem por dado disponível, não por juízo nosso. */}
       <p className="criterio">Ordenado por número de votações registradas.</p>
 
       <Link to="/parlamentares" className="ver-mais">

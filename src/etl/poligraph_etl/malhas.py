@@ -7,11 +7,11 @@ Uso: `python -m poligraph_etl.malhas --destino ../web/public/malhas`
 | `brasil.json` | As 27 UFs | ~31 KB |
 | `{codigo da UF}.json` | Os municípios da UF | 50–200 KB |
 
-⭐ **Servida por nós, ⛔ pelo IBGE no navegador.** Pelo mesmo motivo das fontes
+DECISÃO: **Servida por nós, não pelo IBGE no navegador.** Pelo mesmo motivo das fontes
 auto-hospedadas: cada visita buscando a malha no IBGE entregaria o IP do visitante a
 outro serviço, e o mapa pararia quando a API do IBGE parasse.
 
-⚠️ TopoJSON, ⛔ GeoJSON: as fronteiras vizinhas são guardadas uma vez só, e o arquivo
+ATENÇÃO: TopoJSON, não GeoJSON: as fronteiras vizinhas são guardadas uma vez só, e o arquivo
 fica um terço do tamanho. A propriedade `codarea` é o código IBGE — a mesma chave forte
 de `municipios.codigo_ibge`.
 """
@@ -38,7 +38,7 @@ def baixar(url: str, destino: Path) -> None:
     resposta.raise_for_status()
     topologia = resposta.json()
     if topologia.get("type") != "Topology":
-        raise RuntimeError(f"{url} ⛔ devolveu TopoJSON — o formato da API mudou?")
+        raise RuntimeError(f"{url} não devolveu TopoJSON — o formato da API mudou?")
     destino.write_text(json.dumps(topologia, separators=(",", ":")), encoding="utf-8")
 
 

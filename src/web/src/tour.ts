@@ -366,11 +366,13 @@ export function tourJaVisto(nome: NomeDoTour): boolean {
   }
 }
 
+/**
+ * A oferta volta na próxima visita; não há o que fazer sem armazenamento.
+ */
 export function marcarTourVisto(nome: NomeDoTour): void {
   try {
     localStorage.setItem(chave(nome), '1');
   } catch {
-    // A oferta volta na próxima visita; não há o que fazer sem armazenamento.
   }
 }
 

@@ -2,12 +2,12 @@ import type { ReactNode } from 'react';
 import type { Periodo } from '../api';
 
 /**
- * "Todos os anos" ou um intervalo, de uma vez — ⛔ um ano por clique.
+ * "Todos os anos" ou um intervalo, de uma vez — não um ano por clique.
  *
- * ⭐ O mesmo controle no mapa das emendas e no governo: ir de ano em ano obrigava a somar
+ * DECISÃO: O mesmo controle no mapa das emendas e no governo: ir de ano em ano obrigava a somar
  * de cabeça, e cada página com o seu jeito de escolher o ano obrigava a reaprender.
  *
- * ⚠️ O ano corrente vem marcado: ainda está sendo pago, e somado aos fechados pareceria
+ * ATENÇÃO: O ano corrente vem marcado: ainda está sendo pago, e somado aos fechados pareceria
  * menor do que vai ser.
  */
 export function SeletorDePeriodo({

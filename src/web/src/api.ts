@@ -1,31 +1,31 @@
 /**
  * Cliente da API.
  *
- * ⛔ Não existe token aqui. Nada de `localStorage.setItem('token', …)`, nada de header
+ * Não existe token aqui. Nada de `localStorage.setItem('token', …)`, nada de header
  * `Authorization`, nada de lógica de renovação — o cookie de sessão é `HttpOnly` e o
  * navegador o envia sozinho. `credentials: 'include'` é tudo que se precisa.
  */
 
 const BASE = '/api';
 
-// ═══════════════════════════════════════════════════════════════════
-// Tipos
-// ═══════════════════════════════════════════════════════════════════
-
-/** As duas casas do Congresso. ⛔ Nunca há um terceiro valor. */
+/**
+ * As duas casas do Congresso. Nunca há um terceiro valor.
+ *
+ * Tipos
+ */
 export type Casa = 'CAMARA' | 'SENADO';
 
 export type Usuario = { nome: string | null; fotoUrl: string | null };
 
 export type Parlamentar = {
-  /** ⚠️ Vazio quando a pessoa ainda não tem voto — a casa vem do mandato. */
+  /** ATENÇÃO: Vazio quando a pessoa ainda não tem voto — a casa vem do mandato. */
   casa: Casa | '';
   id: number;
   nome: string;
   partido: string;
   uf: string;
   nVotacoes: number;
-  /** 🔴 URL na Câmara — ⛔ a imagem não é rehospedada. */
+  /** RISCO: URL na Câmara — não a imagem não é rehospedada. */
   urlFoto?: string | null;
   /**
    * A última legislatura em que votou — vem na lista e na busca. Menor que a corrente
@@ -35,26 +35,26 @@ export type Parlamentar = {
 };
 
 /**
- * ⚠️ `orientacaoDoGoverno` é nula com frequência, por TRÊS motivos diferentes que a
- * tela ⛔ não deve confundir: o Governo não orientou aquela votação, orientou
+ * ATENÇÃO: `orientacaoDoGoverno` é nula com frequência, por TRÊS motivos diferentes que a
+ * tela não deve confundir: o Governo não orientou aquela votação, orientou
  * `Obstrução`/`Liberado` — que não são posição de mérito —, ou a casa é o Senado.
  */
 export type VotoNaFicha = {
   votacaoId: string;
   data: string;
   /**
-   * 🔴 O registro PROCESSUAL — "Aprovado o Substitutivo ao Projeto de Lei nº 4.133".
+   * RISCO: O registro PROCESSUAL — "Aprovado o Substitutivo ao Projeto de Lei nº 4.133".
    * Diz o NÚMERO do projeto e não diz o assunto. Serve de reserva quando falta a ementa.
    */
   descricao: string | null;
   valor: number | null;
   orientacaoDoGoverno: string | null;
-  /** ⭐ O que o projeto propõe. Nula no Senado inteiro — a ingestão é só da Câmara. */
+  /** DECISÃO: O que o projeto propõe. Nula no Senado inteiro — a ingestão é só da Câmara. */
   ementa: string | null;
   /** "PL 4133/2023" — a etiqueta que permite conferir na fonte. */
   materia: string | null;
   /**
-   * 🔴 Sem isto a ementa MENTE. 43,2% das linhas desta lista são PROCEDIMENTAL: a
+   * RISCO: Sem isto a ementa MENTE. 43,2% das linhas desta lista são PROCEDIMENTAL: a
    * ementa é do projeto em pauta, mas o voto foi num requerimento. "Institui o Imposto
    * sobre Bens e Serviços" ao lado de um "Sim" faria o leitor concluir que a pessoa
    * votou a favor da reforma tributária — e ela votou sobre rito.
@@ -77,10 +77,10 @@ export type Similar = {
 /**
  * Com que frequência o parlamentar votou como pediram a ele.
  *
- * ⚠️ Cada proporção vem com a BASE. 80% sobre 15 votações e 80% sobre 900 são
- * afirmações de força muito diferente, e a tela ⛔ nunca mostra uma sem a outra.
+ * ATENÇÃO: Cada proporção vem com a BASE. 80% sobre 15 votações e 80% sobre 900 são
+ * afirmações de força muito diferente, e a tela nunca mostra uma sem a outra.
  *
- * ⛔ Nulo no Senado inteiro: lá não existe orientação de bancada publicada.
+ * Não Nulo no Senado inteiro: lá não existe orientação de bancada publicada.
  */
 export type Alinhamento = {
   governismo: number | null;
@@ -110,11 +110,11 @@ export type Ficha = {
   presenca: Presenca | null;
   /** A página do parlamentar na própria casa. */
   urlFonte: string | null;
-  /** PP4 — as redes que o parlamentar publicou. Vazia quando ⛔ publicou nenhuma. */
+  /** PP4 — as redes que o parlamentar publicou. Vazia quando não publicou nenhuma. */
   redesSociais: RedeSocial[];
   /**
    * A legislatura que a ficha mostra: a pedida no endereço, se a pessoa votou nela; senão
-   * a última em que votou. ⚠️ ⛔ É a corrente do site: o ex-deputado abre na dele.
+   * a última em que votou. ATENÇÃO: não É a corrente do site: o ex-deputado abre na dele.
    */
   legislatura: number | null;
   /** Todas as legislaturas em que votou, da mais recente para a mais antiga. */
@@ -141,7 +141,7 @@ export type Pergunta = {
   texto: string;
   ordem: number;
   /**
-   * Comparecimento na votação. ⛔ NÃO é o placar — revelar a divisão antes de a pessoa
+   * Comparecimento na votação. NÃO é o placar — revelar a divisão antes de a pessoa
    * responder induziria conformidade. Ver `PerguntaPublica` na API.
    */
   totalVotos: number;
@@ -157,15 +157,15 @@ export type ParlamentarAfim = {
   nome: string;
   partido: string;
   uf: string;
-  /** ⭐ acordos e comparáveis, nunca percentual — a frase "X de Y" é montada aqui */
+  /** DECISÃO: acordos e comparáveis, nunca percentual — a frase "X de Y" é montada aqui */
   acordos: number;
   comparaveis: number;
   /**
-   * ⭐ Os ids das perguntas que produziram o "X de Y". Sem eles o número não é
+   * DECISÃO: Os ids das perguntas que produziram o "X de Y". Sem eles o número não é
    * conferível: não dá para saber se os acordos foram nas perguntas que importam para
    * quem responde ou nas de data comemorativa.
    *
-   * ⚠️ Só vêm preenchidos para os que aparecem na tela — calcular para os ~640 do
+   * ATENÇÃO: Só vêm preenchidos para os que aparecem na tela — calcular para os ~640 do
    * cálculo seria trabalho jogado fora.
    */
   acordou: string[];
@@ -173,7 +173,7 @@ export type ParlamentarAfim = {
 };
 
 /**
- * 🔴 `baseDeVotacoes` existe para a tela poder ser franca: a posição do cidadão vale
+ * RISCO: `baseDeVotacoes` existe para a tela poder ser franca: a posição do cidadão vale
  * sobre as perguntas que ele respondeu; a de cada deputado, sobre a legislatura
  * inteira. Não é a mesma medida com o mesmo nome.
  */
@@ -200,7 +200,7 @@ export type ResultadoPorCasa = {
   posicaoNoGrafo: PosicaoDoCidadao | null;
   /**
    * A régua do resultado: quantos parlamentares foram comparados, e quanto o do meio da
-   * lista concordou. Sem ela, "8 de 11" ⛔ diz se é muito.
+   * lista concordou. Sem ela, "8 de 11" Não diz se é muito.
    */
   escala: { comparados: number; medianoAcordos: number; medianoComparaveis: number };
 };
@@ -218,7 +218,7 @@ export type ResultadoAfinidade = {
 /**
  * O rótulo de cada casa na tela. A API devolve a casa; a redação é do front.
  *
- * ⚠️ `nome` é a instituição, `plural`/`singular` são as pessoas. São usos
+ * ATENÇÃO: `nome` é a instituição, `plural`/`singular` são as pessoas. São usos
  * diferentes: “Senado Federal” encabeça a figura, “104 senadores” a descreve.
  */
 export const NOME_DA_CASA: Record<
@@ -235,21 +235,23 @@ export class NaoAutenticadoError extends Error {
   }
 }
 
+/**
+ * ATENÇÃO: sem "parameter property": o projeto usa `erasableSyntaxOnly`
+ */
 export class RespostasInsuficientesError extends Error {
   readonly minimo: number;
 
-  // ⚠️ sem "parameter property": o projeto usa `erasableSyntaxOnly`
   constructor(minimo: number) {
     super('Responda mais perguntas para o resultado ter significado.');
     this.minimo = minimo;
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Sessão
-// ═══════════════════════════════════════════════════════════════════
-
-/** Devolve o usuário logado, ou `null` se não houver sessão. */
+/**
+ * Devolve o usuário logado, ou `null` se não houver sessão.
+ *
+ * Sessão
+ */
 export async function quemSouEu(): Promise<Usuario | null> {
   const resposta = await fetch(`${BASE}/auth/eu`, { credentials: 'include' });
 
@@ -273,7 +275,7 @@ export type Avaliacao = {
 };
 
 /**
- * ⚠️ Vai SEM identificação: o servidor grava sem `usuario_id`, de propósito.
+ * ATENÇÃO: Vai SEM identificação: o servidor grava sem `usuario_id`, de propósito.
  * Responde "o instrumento acerta?" sem responder "o que o Fulano pensa?".
  */
 export async function registrarAvaliacao(avaliacao: Avaliacao): Promise<void> {
@@ -287,7 +289,7 @@ export async function registrarAvaliacao(avaliacao: Avaliacao): Promise<void> {
   if (!resposta.ok) throw new Error(`Falha ao registrar avaliação (${resposta.status}).`);
 }
 
-/** 🔴 LGPD art. 18, VI — apaga conta, lista de acompanhados e consentimentos. */
+/** RISCO: LGPD art. 18, VI — apaga conta, lista de acompanhados e consentimentos. */
 export async function excluirConta(): Promise<void> {
   await semCorpo(`${BASE}/auth/conta`, 'DELETE');
 }
@@ -296,31 +298,30 @@ export async function sair(): Promise<void> {
   await fetch(`${BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Panorama — o tamanho da base
-// ═══════════════════════════════════════════════════════════════════
-
+/**
+ * Panorama — o tamanho da base
+ */
 export type PanoramaDaCasa = {
   casa: Casa;
   parlamentares: number;
   /** Só as com voto nominal — as que o cálculo usa (PL68). */
   votacoes: number;
-  /** Registradas pela casa sem a lista de quem votou como. ⛔ Entram em `votacoes`. */
+  /** Registradas pela casa sem a lista de quem votou como. Não Entram em `votacoes`. */
   votacoesSemVotoNominal: number;
-  /** 🔴 O sigilo do Senado é achado do trabalho, não detalhe: 239 de 421. */
+  /** RISCO: O sigilo do Senado é achado do trabalho, não detalhe: 239 de 421. */
   votacoesSecretas: number;
   votosComPosicao: number;
   comunidades: number;
   ligacoes: number;
 };
 
-/** ⚠️ `legislatura` é nula em base sem votação — o estado antes do primeiro ETL. */
+/** ATENÇÃO: `legislatura` é nula em base sem votação — o estado antes do primeiro ETL. */
 export type Panorama = {
   legislatura: number | null;
   /** O poço: todas as perguntas curadas. */
   perguntasAtivas: number;
   porCasa: PanoramaDaCasa[];
-  /** Quantas o cidadão responde, tiradas do poço. ⚠️ ⛔ é o mesmo número. */
+  /** Quantas o cidadão responde, tiradas do poço. ATENÇÃO: não é o mesmo número. */
   perguntasNoQuestionario: number;
 };
 
@@ -329,7 +330,7 @@ export async function obterPanorama(legislatura?: number): Promise<Panorama> {
   return buscar<Panorama>(`${BASE}/panorama${legislatura ? `?legislatura=${legislatura}` : ''}`);
 }
 
-/** Uma legislatura da base. Sai das votações: sem votação ingerida, ⛔ aparece. */
+/** Uma legislatura da base. Sai das votações: sem votação ingerida, não aparece. */
 export type Legislatura = {
   numero: number;
   anoInicial: number;
@@ -344,13 +345,11 @@ export async function listarLegislaturas(): Promise<Legislatura[]> {
   return buscar<Legislatura[]>(`${BASE}/legislaturas`);
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Parlamentares
-// ═══════════════════════════════════════════════════════════════════
-
 /**
  * Uma página da lista. `total` é o de todos os que passam no filtro; `partidos` e `ufs`
- * são as opções dos filtros, tiradas da lista inteira — ⛔ da página.
+ * são as opções dos filtros, tiradas da lista inteira — não da página.
+ *
+ * Parlamentares
  */
 export type PaginaDeParlamentares = {
   itens: Parlamentar[];
@@ -404,7 +403,7 @@ export type PaginaDe<T> = { itens: T[]; pagina: number; tamanho: number; total: 
  * Votos de uma legislatura da pessoa, do mais recente. A página 1 é a que vem na ficha.
  *
  * `busca` procura na ementa, na descrição e na matéria, sem diferença de caixa nem de
- * acento; com ela, `total` é o dos encontrados. Menos de 2 letras ⛔ filtram.
+ * acento; com ela, `total` é o dos encontrados. Menos de 2 letras não filtram.
  */
 export async function listarVotos(
   id: number,
@@ -421,10 +420,9 @@ export async function listarVotos(
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Seguir — 🔴 escreve dado sensível (LGPD art. 5º, II)
-// ═══════════════════════════════════════════════════════════════════
-
+/**
+ * Seguir — RISCO: escreve dado sensível (LGPD art. 5º, II)
+ */
 export async function listarSeguidos(): Promise<Parlamentar[]> {
   const seguidos = await buscar<
     { pessoaId: number; nome: string; casa: Parlamentar['casa']; partido: string; uf: string }[]
@@ -433,7 +431,7 @@ export async function listarSeguidos(): Promise<Parlamentar[]> {
   return seguidos.map((s) => ({ ...s, id: s.pessoaId, nVotacoes: 0 }));
 }
 
-/** ⭐ PUT: seguir duas vezes é o mesmo que seguir uma. */
+/** DECISÃO: PUT: seguir duas vezes é o mesmo que seguir uma. */
 export async function seguir(pessoaId: number): Promise<void> {
   await semCorpo(`${BASE}/seguidos/${pessoaId}`, 'PUT');
 }
@@ -442,16 +440,14 @@ export async function deixarDeSeguir(pessoaId: number): Promise<void> {
   await semCorpo(`${BASE}/seguidos/${pessoaId}`, 'DELETE');
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Questionário
-// ═══════════════════════════════════════════════════════════════════
-
 /**
  * O bloco de abertura e o tamanho do questionário completo.
  *
- * ⚠️ `total` é MAIOR que `perguntas.length`: o resto vem de {@link obterDesempate},
+ * ATENÇÃO: `total` é MAIOR que `perguntas.length`: o resto vem de {@link obterDesempate},
  * que só pode escolher depois de haver respostas. A barra de progresso usa `total`
  * desde o início — sem isso o denominador saltaria no meio do questionário.
+ *
+ * Questionário
  */
 export async function obterPerguntas(): Promise<{ perguntas: Pergunta[]; total: number }> {
   return buscar<{ perguntas: Pergunta[]; total: number }>(`${BASE}/afinidade/perguntas`);
@@ -460,10 +456,10 @@ export async function obterPerguntas(): Promise<{ perguntas: Pergunta[]; total: 
 /**
  * As próximas perguntas, escolhidas contra o empate DESTE cidadão.
  *
- * ⭐ Medido: 8 de base + 7 escolhidas assim deixam 6 parlamentares empatados no topo;
+ * DECISÃO: Medido: 8 de base + 7 escolhidas assim deixam 6 parlamentares empatados no topo;
  * as 15 melhores fixas deixam 14, e 8 + 7 sorteadas deixam 16.
  *
- * ⛔ Devolve `[]` — ⛔ nunca erro — quando ⛔ não há mais candidatas. Falhar aqui
+ * Não Devolve `[]` — nunca erro — quando não há mais candidatas. Falhar aqui
  * impediria de concluir um questionário que já está válido.
  */
 export async function obterDesempate(
@@ -483,6 +479,9 @@ export async function obterDesempate(
   }
 }
 
+/**
+ * DECISÃO: 422 é resposta prevista (CT7), não falha de rede
+ */
 export async function calcularAfinidade(
   respostas: { perguntaId: string; valor: Resposta }[],
 ): Promise<ResultadoAfinidade> {
@@ -493,7 +492,6 @@ export async function calcularAfinidade(
     credentials: 'include',
   });
 
-  // ⭐ 422 é resposta prevista (CT7), não falha de rede
   if (resposta.status === 422) {
     const corpo = await resposta.json().catch(() => ({ minimo: 0 }));
     throw new RespostasInsuficientesError(corpo.minimo ?? 0);
@@ -504,8 +502,6 @@ export async function calcularAfinidade(
 
   return resposta.json();
 }
-
-// ═══════════════════════════════════════════════════════════════════
 
 async function buscar<T>(url: string): Promise<T> {
   const resposta = await fetch(url, { credentials: 'include' });
@@ -536,41 +532,40 @@ async function semCorpo(url: string, metodo: string): Promise<void> {
   if (!resposta.ok) throw new Error(`Falha em ${url} (${resposta.status}).`);
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Grafo (RF-33)
-// ═══════════════════════════════════════════════════════════════════
-
+/**
+ * Grafo (RF-33)
+ */
 export type NoDoGrafo = {
   id: number;
   nome: string;
   partido: string;
   uf: string;
-  /** ⚠️ Grupo detectado pelo VOTO, não pelo partido — ver `plano/07`. */
+  /** ATENÇÃO: Grupo detectado pelo VOTO, não pelo partido — ver `plano/07`. */
   comunidade: number | null;
-  /** Posição no DESENHO — layout de molas. ⛔ Sem interpretação. */
+  /** Posição no DESENHO — layout de molas. Sem interpretação. */
   eixoX: number | null;
   eixoY: number | null;
   nVotacoes: number;
-  /** 1ª componente principal (SVD) — ⭐ o eixo que SIGNIFICA algo. Ver PL43. */
+  /** 1ª componente principal (SVD) — DECISÃO: o eixo que SIGNIFICA algo. Ver PL43. */
   componente1: number | null;
   componente2: number | null;
-  /** Foto oficial da casa. ⚠️ Nula para quem foi criado a partir do próprio voto. */
+  /** Foto oficial da casa. ATENÇÃO: Nula para quem foi criado a partir do próprio voto. */
   urlFoto: string | null;
   /**
-   * ⭐ De 0 a 1 — quanto o parlamentar votou como a bancada do Governo orientou.
+   * DECISÃO: De 0 a 1 — quanto o parlamentar votou como a bancada do Governo orientou.
    *
-   * Vai junto para a LEGENDA do grafo ser derivada do dado, ⛔ não escrita à mão: o
+   * Vai junto para a LEGENDA do grafo ser derivada do dado, não escrita à mão: o
    * sinal do eixo é arbitrário, e uma legenda fixa dizendo "à esquerda ficam os
    * governistas" ficaria errada em silêncio se uma reexecução espelhasse a figura.
    *
-   * ⛔ Nulo no Senado.
+   * Não Nulo no Senado.
    */
   governismo: number | null;
 };
 
 /**
- * ⚠️ `peso` é a CONCORDÂNCIA, e sozinho ele ⛔ não se lê: 82% sobre 24 votações e 82%
- * sobre 540 são afirmações de força muito diferente. A tela ⛔ nunca mostra um sem
+ * ATENÇÃO: `peso` é a CONCORDÂNCIA, e sozinho ele não se lê: 82% sobre 24 votações e 82%
+ * sobre 540 são afirmações de força muito diferente. A tela nunca mostra um sem
  * `votacoesComuns`.
  */
 export type ArestaDoGrafo = {
@@ -591,8 +586,8 @@ export type Grafo = {
   nos: NoDoGrafo[];
   arestas: ArestaDoGrafo[];
   /**
-   * As legislaturas em que a casa tem grafo, da mais recente. A que ⛔ teve dado suficiente
-   * ⛔ está aqui, e a tela ⛔ a oferece.
+   * As legislaturas em que a casa tem grafo, da mais recente. A que não teve dado suficiente
+   * Não está aqui, e a tela não a oferece.
    */
   legislaturasComGrafo: number[];
   /** As votações de plenário da legislatura desenhada, e quantas foram secretas. */
@@ -615,10 +610,9 @@ export async function obterGrafo(casa: Casa = 'CAMARA', legislatura?: number): P
   return buscar<Grafo>(`${BASE}/grafo?casa=${casa}${filtro}`);
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Cota parlamentar (CEAP)
-// ═══════════════════════════════════════════════════════════════════
-
+/**
+ * Cota parlamentar (CEAP)
+ */
 export type GastoPorCategoria = {
   categoria: string;
   total: number;
@@ -629,7 +623,7 @@ export type FornecedorDoParlamentar = {
   nome: string;
   total: number;
   lancamentos: number;
-  /** ⚠️ Quando `true`, o CNPJ/CPF está hasheado no banco — RNF-13. */
+  /** ATENÇÃO: Quando `true`, o CNPJ/CPF está hasheado no banco — RNF-13. */
   pessoaFisica: boolean;
 };
 
@@ -641,7 +635,7 @@ export type GastoDeCota = {
   maioresFornecedores: FornecedorDoParlamentar[];
 };
 
-/** Com `legislatura`, o ano mais recente DENTRO do mandato — a ficha ⛔ mistura períodos. */
+/** Com `legislatura`, o ano mais recente DENTRO do mandato — a ficha não mistura períodos. */
 function doMandato(legislatura?: number | null): string {
   return legislatura ? `?legislatura=${legislatura}` : '';
 }
@@ -650,10 +644,9 @@ export async function obterGastos(pessoaId: number, legislatura?: number | null)
   return buscar<GastoDeCota>(`${BASE}/parlamentares/${pessoaId}/gastos${doMandato(legislatura)}`);
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Emendas parlamentares (Portal da Transparência)
-// ═══════════════════════════════════════════════════════════════════
-
+/**
+ * Emendas parlamentares (Portal da Transparência)
+ */
 export type EmendaPorDestino = {
   localidade: string;
   empenhado: number;
@@ -668,7 +661,7 @@ export type EmendaPorFuncao = {
 };
 
 /**
- * 🔴 `empenhado` e `pago` são coisas DIFERENTES, e a distância entre eles é a
+ * RISCO: `empenhado` e `pago` são coisas DIFERENTES, e a distância entre eles é a
  * informação. Empenhar é reservar; pagar é o dinheiro sair.
  */
 export type EmendasDoParlamentar = {
@@ -684,7 +677,7 @@ export type EmendasDoParlamentar = {
   cidades: CidadesDaEmenda;
 };
 
-/** As cidades que receberam, pela sede de quem recebeu — ⛔ pela localidade declarada. */
+/** As cidades que receberam, pela sede de quem recebeu — não pela localidade declarada. */
 export type CidadesDaEmenda = {
   quantidade: number;
   maiores: { municipio: Municipio; recebido: number }[];
@@ -704,8 +697,8 @@ export type FavorecidoDaEmenda = {
  * Quem recebeu, somado desde o primeiro pagamento — por isso `recebido` pode passar do
  * `pago` do ano: inclui o que foi pago nos anos seguintes. `ultimoMes` diz até quando.
  *
- * 🔴 Intermediário, pessoas e sem identificação ficam FORA de `maiores`, com o valor
- * declarado ao lado. Pessoa ⛔ chega com nome: o banco nem o guarda.
+ * RISCO: Intermediário, pessoas e sem identificação ficam FORA de `maiores`, com o valor
+ * declarado ao lado. Pessoa não chega com nome: o banco nem o guarda.
  */
 export type FavorecidosDaEmenda = {
   recebido: number;
@@ -726,8 +719,8 @@ export type PagamentoPorMes = {
 };
 
 /**
- * 🔴 `valor` é do convênio INTEIRO, e ele pode receber emendas de vários autores —
- * `emendasQueFinanciam` diz quantas. Somar a lista ⛔ dá o que o parlamentar destinou.
+ * RISCO: `valor` é do convênio INTEIRO, e ele pode receber emendas de vários autores —
+ * `emendasQueFinanciam` diz quantas. Somar a lista não dá o que o parlamentar destinou.
  */
 export type ConvenioDaEmenda = {
   numero: string;
@@ -808,10 +801,9 @@ export async function listarConvenios(
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Governo federal — quem governa, de onde veio o dinheiro e para onde foi
-// ═══════════════════════════════════════════════════════════════════
-
+/**
+ * Governo federal — quem governa, de onde veio o dinheiro e para onde foi
+ */
 export type PessoaDaGestao = { nome: string; nomeDeUrna: string; partido: string };
 
 /** Presidente e vice eleitos, segundo o TSE. O mandato é contado em anos. */
@@ -827,7 +819,7 @@ export type Gestao = {
 export type OrigemDaReceita = { origem: string; prevista: number; realizada: number };
 
 /**
- * 🔴 `emissaoDeDivida` ⛔ é arrecadação: é dinheiro emprestado, e em 2025 quase iguala
+ * RISCO: `emissaoDeDivida` não é arrecadação: é dinheiro emprestado, e em 2025 quase iguala
  * o `arrecadado`. Somar os dois faria a arrecadação parecer o dobro.
  */
 export type Arrecadacao = {
@@ -876,18 +868,18 @@ export type Governo = {
   anosDisponiveis: number[];
   arrecadacao: Arrecadacao;
   despesa: Despesa;
-  /** Nulo enquanto a carga do gasto sigiloso ainda ⛔ rodou para o período. */
+  /** Nulo enquanto a carga do gasto sigiloso ainda não rodou para o período. */
   sigilo: Sigilo | null;
   porAno: GovernoNoAno[];
   /** Todas as gestões com dado, qualquer que seja o período: os atalhos do seletor. */
   gestoesDisponiveis: Gestao[];
 };
 
-/** `gastou` ⛔ inclui a rolagem da dívida, que é dívida paga com dívida nova. */
+/** `gastou` não inclui a rolagem da dívida, que é dívida paga com dívida nova. */
 export type GovernoNoAno = { ano: number; arrecadou: number; gastou: number; pegouEmprestado: number; fechado: boolean };
 
 /**
- * O gasto que o Portal publica sem dizer em quê. Cartão e ação ⛔ se somam: o cartão
+ * O gasto que o Portal publica sem dizer em quê. Cartão e ação não se somam: o cartão
  * sigiloso esconde quem comprou, de quem e quando; a ação sigilosa esconde a finalidade.
  */
 export type Sigilo = {
@@ -899,7 +891,7 @@ export type Sigilo = {
   porOrgao: { orgao: string; cartao: number; cartaoTotal: number; acao: number }[];
 };
 
-/** Sem período, todos os anos. `null` quando a carga ainda ⛔ rodou. */
+/** Sem período, todos os anos. `null` quando a carga ainda não rodou. */
 export async function obterGoverno(periodo?: Periodo): Promise<Governo | null> {
   const url = periodo ? `${BASE}/governo?de=${periodo.de}&ate=${periodo.ate}` : `${BASE}/governo`;
   const resposta = await fetch(url, { credentials: 'include' });
@@ -911,10 +903,9 @@ export async function obterGoverno(periodo?: Periodo): Promise<Governo | null> {
   return resposta.json();
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Financiamento de campanha (TSE)
-// ═══════════════════════════════════════════════════════════════════
-
+/**
+ * Financiamento de campanha (TSE)
+ */
 export type ReceitaPorFonte = {
   fonte: string;
   total: number;
@@ -924,12 +915,12 @@ export type ReceitaPorFonte = {
 export type DoadorDoParlamentar = {
   nome: string;
   total: number;
-  /** ⚠️ Quando `true`, o documento está hasheado no banco — RNF-13. */
+  /** ATENÇÃO: Quando `true`, o documento está hasheado no banco — RNF-13. */
   pessoaFisica: boolean;
 };
 
 /**
- * 🔴 `fundoEspecial` (o "fundão", FEFC) e `fundoPartidario` são fundos DIFERENTES.
+ * RISCO: `fundoEspecial` (o "fundão", FEFC) e `fundoPartidario` são fundos DIFERENTES.
  * A API os entrega separados de propósito; somá-los é uma afirmação, e quem a fizer
  * que a assine.
  */
@@ -952,10 +943,9 @@ export async function obterFinanciamento(
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Metodologia — os parâmetros do método, de onde o cálculo os lê
-// ═══════════════════════════════════════════════════════════════════
-
+/**
+ * Metodologia — os parâmetros do método, de onde o cálculo os lê
+ */
 export type CasaNaMetodologia = {
   casa: Casa;
   legislatura: number;
@@ -999,19 +989,19 @@ export async function obterAcesso(): Promise<{ leituraPublica: boolean }> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Mapa das emendas — pela sede de quem recebeu
-// ═══════════════════════════════════════════════════════════════════
-
-/** Os anos de emenda considerados, inclusive nas duas pontas. Sem dado, `{ de: 0, ate: 0 }`. */
+/**
+ * Os anos de emenda considerados, inclusive nas duas pontas. Sem dado, `{ de: 0, ate: 0 }`.
+ *
+ * Mapa das emendas — pela sede de quem recebeu
+ */
 export type Periodo = { de: number; ate: number };
 
 /** Uma UF no mapa. `codigoUf` é o código IBGE de dois dígitos, o `codarea` da malha. */
 export type RecebidoNaUf = { uf: string; codigoUf: string; recebido: number; municipios: number };
 
 /**
- * 🔴 `noMapa` ⛔ é `recebido`. O que passou pelo intermediário (Banco do Brasil) e o pago a
- * pessoa ou sem identificação ⛔ têm sede, e ficam declarados ao lado do mapa.
+ * RISCO: `noMapa` não é `recebido`. O que passou pelo intermediário (Banco do Brasil) e o pago a
+ * pessoa ou sem identificação não têm sede, e ficam declarados ao lado do mapa.
  */
 export type MapaDoBrasil = {
   periodo: Periodo;
@@ -1035,7 +1025,7 @@ export type MapaDoEstado = {
 
 export type Municipio = { codigoIbge: string; nome: string; uf: string };
 
-/** Um deputado ou senador. Sem `pessoaId`, o autor ainda ⛔ foi ligado a uma ficha. */
+/** Um deputado ou senador. Sem `pessoaId`, o autor ainda não foi ligado a uma ficha. */
 export type ParlamentarQueMandou = {
   pessoaId: number | null;
   nome: string;
@@ -1049,11 +1039,11 @@ export type ParlamentarQueMandou = {
 
 export type TipoAutorColetivo = 'BANCADA' | 'COMISSAO' | 'OUTRO';
 
-/** Bancada estadual ou comissão: autor de emenda que ⛔ é uma pessoa. */
+/** Bancada estadual ou comissão: autor de emenda que não é uma pessoa. */
 export type ColetivoQueMandou = { tipo: TipoAutorColetivo; nome: string; recebido: number; emendas: number };
 
 /**
- * ⚠️ `naPropriaCidade` é o que foi à prefeitura ou a órgão municipal; o resto, a entidades
+ * ATENÇÃO: `naPropriaCidade` é o que foi à prefeitura ou a órgão municipal; o resto, a entidades
  * com sede ali. As duas listas longas trazem a primeira página.
  */
 export type EmendasDoMunicipio = {
@@ -1072,7 +1062,7 @@ export type EmendasDoMunicipio = {
 /**
  * Os convênios de quem tem sede na cidade, das emendas do período.
  *
- * ⚠️ `aLiberar` soma só os em execução: nos outros a execução acabou, e a diferença ⛔ é
+ * ATENÇÃO: `aLiberar` soma só os em execução: nos outros a execução acabou, e a diferença não é
  * dinheiro que ainda vai chegar.
  */
 export type ConveniosDaCidade = {
@@ -1143,10 +1133,9 @@ export async function listarFavorecidosDoMunicipio(
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Entidades — quem recebeu emenda, por CNPJ — e a busca do cabeçalho
-// ═══════════════════════════════════════════════════════════════════
-
+/**
+ * Entidades — quem recebeu emenda, por CNPJ — e a busca do cabeçalho
+ */
 export type GrupoDeEntidade = 'MUNICIPIO' | 'ESTADO' | 'SEM_FINS_LUCRATIVOS' | 'EMPRESA' | 'OUTRO';
 
 export type EntidadeNaLista = {
@@ -1168,7 +1157,7 @@ export type ParlamentarNaCota = {
   lancamentos: number;
 };
 
-/** ⚠️ Estar na cota e na emenda ⛔ é indício de nada: a tela diz isso ao lado (RNF-16). */
+/** ATENÇÃO: Estar na cota e na emenda não é indício de nada: a tela diz isso ao lado (RNF-16). */
 export type CotaDaEntidade = { total: number; lancamentos: number; porParlamentar: ParlamentarNaCota[] };
 
 export type Entidade = EntidadeNaLista & {
@@ -1202,7 +1191,7 @@ export async function listarEntidades(filtro: {
   return buscar<PaginaDe<EntidadeNaLista>>(`${BASE}/entidades${texto ? `?${texto}` : ''}`);
 }
 
-/** `null` quando o CNPJ ⛔ recebeu emenda — a página diz isso em vez de quebrar. */
+/** `null` quando o CNPJ não recebeu emenda — a página diz isso em vez de quebrar. */
 export async function obterEntidade(cnpj: string): Promise<Entidade | null> {
   const resposta = await fetch(`${BASE}/entidades/${cnpj}`, { credentials: 'include' });
   if (resposta.status === 404) return null;
@@ -1237,11 +1226,11 @@ export async function listarConveniosDaEntidade(cnpj: string, pagina: number): P
   return buscar<PaginaDe<ConvenioDaEntidade>>(`${BASE}/entidades/${cnpj}/convenios?pagina=${pagina}`);
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Patrimônio declarado ao TSE (PP3)
-// ═══════════════════════════════════════════════════════════════════
-
-/** 🔴 Só tipo e valor: a descrição de cada bem traz endereço, e ⛔ chega aqui. */
+/**
+ * RISCO: Só tipo e valor: a descrição de cada bem traz endereço, e não chega aqui.
+ *
+ * Patrimônio declarado ao TSE (PP3)
+ */
 export type DeclaracaoDeBens = {
   anoEleicao: number;
   total: number;
@@ -1257,7 +1246,7 @@ export async function obterPatrimonio(pessoaId: number): Promise<DeclaracaoDeBen
 /**
  * Em quantas votações de plenário o parlamentar participou. Sempre com a base.
  *
- * ⚠️ Na Câmara, `ausenteJustificado` é nulo: a casa ⛔ publica a justificativa no registro
+ * ATENÇÃO: Na Câmara, `ausenteJustificado` é nulo: a casa não publica a justificativa no registro
  * de votação, e licença (para ser ministro, por exemplo) aparece como ausência.
  */
 export type Presenca = {

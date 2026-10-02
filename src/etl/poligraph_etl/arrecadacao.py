@@ -16,14 +16,14 @@ Responde *"de onde veio o dinheiro que o governo federal gastou?"*.
 
 ---
 
-🔴 **Operação de crédito ⛔ é arrecadação.** É dinheiro emprestado — a emissão de títulos
+RISCO: **Operação de crédito não é arrecadação.** É dinheiro emprestado — a emissão de títulos
 da dívida —, e em 2025 soma R$ 2.464 bi, quase o mesmo que tudo o que se arrecadou em
 impostos, contribuições e demais receitas correntes (R$ 2.878 bi). Somar os dois
 faria a arrecadação parecer o dobro. A tabela guarda a categoria e a origem como o
 Portal publica; quem separa é a API, e a tela diz por quê.
 
-⚠️ As intra-orçamentárias são o governo pagando a si mesmo — a contribuição patronal
-que um órgão recolhe para a previdência do servidor. Ficam gravadas e ⛔ entram na
+ATENÇÃO: As intra-orçamentárias são o governo pagando a si mesmo — a contribuição patronal
+que um órgão recolhe para a previdência do servidor. Ficam gravadas e não entram na
 arrecadação.
 """
 

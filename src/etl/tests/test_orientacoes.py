@@ -1,6 +1,6 @@
 """Orientação de bancada — o que transforma "votou Sim" em posição.
 
-🔴 O risco aqui é o mesmo da polaridade: um alinhamento invertido ⛔ não aparece na
+RISCO: O risco aqui é o mesmo da polaridade: um alinhamento invertido não aparece na
 tela. Aparece como um governismo de 0,82 que deveria ser 0,18, e ninguém percebe.
 """
 
@@ -20,9 +20,9 @@ CONHECIDAS = {"2162802-89", "2162802-90"}
 
 
 def test_orientacao_vazia_e_descartada():
-    """⚠️ 24% das linhas de 2025 vêm com orientação vazia.
+    """ATENÇÃO: 24% das linhas de 2025 vêm com orientação vazia.
 
-    Vazio ⛔ não é "Liberado": gravá-lo como se fosse inventaria uma decisão que a
+    Vazio não é "Liberado": gravá-lo como se fosse inventaria uma decisão que a
     bancada não tomou, e ela entraria no denominador de disciplina.
     """
     linhas = orientacoes.para_linhas([linha(orientacao="")], CONHECIDAS)
@@ -31,16 +31,16 @@ def test_orientacao_vazia_e_descartada():
 
 
 def test_votacao_fora_da_base_e_descartada():
-    """Orientação sem votação ⛔ não mede o alinhamento de ninguém."""
+    """Orientação sem votação não mede o alinhamento de ninguém."""
     linhas = orientacoes.para_linhas([linha(votacao="999-1")], CONHECIDAS)
 
     assert linhas == []
 
 
 def test_par_repetido_nao_duplica():
-    """⚠️ A fonte repete (votação, bancada) quando a votação tem mais de um objeto.
+    """ATENÇÃO: A fonte repete (votação, bancada) quando a votação tem mais de um objeto.
 
-    Deduplicar aqui, e ⛔ não só no `ON CONFLICT`, mantém verdadeira a contagem do log.
+    Deduplicar aqui, e não só no `ON CONFLICT`, mantém verdadeira a contagem do log.
     """
     linhas = orientacoes.para_linhas([linha(), linha()], CONHECIDAS)
 
@@ -56,7 +56,7 @@ def test_bancada_com_espaco_extra_e_normalizada():
 
 
 def test_obstrucao_e_liberado_sao_gravados():
-    """⭐ Gravados como dado; quem os exclui do cálculo é `alinhamento`."""
+    """DECISÃO: Gravados como dado; quem os exclui do cálculo é `alinhamento`."""
     linhas = orientacoes.para_linhas(
         [linha(orientacao="Obstrução"), linha(bancada="Novo", orientacao="Liberado")],
         CONHECIDAS,
@@ -66,7 +66,7 @@ def test_obstrucao_e_liberado_sao_gravados():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 ALINHAMENTO — onde um sinal invertido não apareceria
+# RISCO: ALINHAMENTO — onde um sinal invertido não apareceria
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -81,7 +81,7 @@ def test_seguir_a_orientacao_conta_como_alinhado():
 
 
 def test_contrariar_a_orientacao_nao_conta():
-    """🔴 O teste que pega o sinal invertido.
+    """RISCO: O teste que pega o sinal invertido.
 
     Votar Sim quando o Governo pediu Não é o OPOSTO de governismo. Trocar a comparação
     daria 1 de 1 — um número plausível e exatamente errado.
@@ -94,7 +94,7 @@ def test_contrariar_a_orientacao_nao_conta():
 
 
 def test_obstrucao_sai_do_denominador():
-    """⭐ Obstrução é tática de quórum, ⛔ não posição de mérito.
+    """DECISÃO: Obstrução é tática de quórum, não posição de mérito.
 
     Contá-la como "Não" transformaria manobra regimental em discordância de conteúdo.
     """
@@ -106,7 +106,7 @@ def test_obstrucao_sai_do_denominador():
 
 
 def test_liberado_sai_do_denominador():
-    """⛔ Não houve orientação a seguir — não há o que medir."""
+    """Não houve orientação a seguir — não há o que medir."""
     seguiu, base = orientacoes.alinhamento(
         {"a": 1}, {"a": {"Governo": "Liberado"}}, "Governo"
     )
@@ -115,7 +115,7 @@ def test_liberado_sai_do_denominador():
 
 
 def test_abstencao_do_parlamentar_sai_do_denominador():
-    """Ausência ⛔ não é desobediência — a mesma regra da afinidade."""
+    """Ausência não é desobediência — a mesma regra da afinidade."""
     seguiu, base = orientacoes.alinhamento(
         {"a": 0}, {"a": {"Governo": "Sim"}}, "Governo"
     )
@@ -134,7 +134,7 @@ def test_votacao_sem_orientacao_da_bancada_sai():
 
 def test_devolve_o_par_e_nunca_a_proporcao():
     """
-    ⭐ `12 de 15` e `800 de 1000` dão 0,8 os dois. Só o par distingue o deputado que
+    DECISÃO: `12 de 15` e `800 de 1000` dão 0,8 os dois. Só o par distingue o deputado que
     participou de tudo daquele que apareceu quinze vezes — e é a base que a tela precisa
     exibir junto do número.
     """
@@ -145,21 +145,21 @@ def test_devolve_o_par_e_nunca_a_proporcao():
 
 
 def test_bancada_inexistente_devolve_base_zero():
-    """⛔ Quem não tem partido conhecido fica sem disciplina, ⛔ não com disciplina zero."""
+    """Não Quem não tem partido conhecido fica sem disciplina, não com disciplina zero."""
     seguiu, base = orientacoes.alinhamento({"a": 1}, {"a": {"Governo": "Sim"}}, "")
 
     assert (seguiu, base) == (0, 0)
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 Achado #36 — de que bancada é a orientação do partido
+# RISCO: Achado #36 — de que bancada é a orientação do partido
 # ═══════════════════════════════════════════════════════════════════
 
 from poligraph_etl.orientacoes import bancada_do_partido, disciplina  # noqa: E402
 
 
 def test_pt_e_medido_pela_federacao():
-    """📐 Na 57ª, "PT" sozinho ⛔ aparece: o PT orienta como `Fdr PT-PCdoB-PV`."""
+    """MEDIDO: Na 57ª, "PT" sozinho não aparece: o PT orienta como `Fdr PT-PCdoB-PV`."""
     bancadas = ["Governo", "Fdr PT-PCdoB-PV", "PL", "Bl UniPpPsd..."]
 
     assert bancada_do_partido("PT", bancadas) == "Fdr PT-PCdoB-PV"
@@ -186,7 +186,7 @@ def test_nome_cortado_pela_fonte_casa_com_a_sigla_inteira():
 
 
 def test_sigla_curta_nao_casa_com_outra_que_comeca_igual():
-    """`PSD` ⛔ pode ser lido como o começo de `PSDB`."""
+    """`PSD` não pode ser lido como o começo de `PSDB`."""
     assert bancada_do_partido("PSDB", ["PSD"]) is None
     assert bancada_do_partido("PSD", ["PSDB"]) is None
 
@@ -205,7 +205,7 @@ def test_disciplina_usa_o_partido_de_cada_voto():
 
 
 def test_votacao_sem_bancada_do_partido_sai_da_base():
-    """Sem quem represente o partido, ⛔ é desobediência: a votação ⛔ conta."""
+    """Sem quem represente o partido, não é desobediência: a votação não conta."""
     votos = {"v1": 1, "v2": -1}
     orientacoes = {"v1": {"Bl UniPpPsd...": "Sim"}, "v2": {"PP": "Não"}}
 

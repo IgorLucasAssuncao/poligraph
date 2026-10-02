@@ -4,23 +4,23 @@
 
 | | |
 |---|---|
-| Fonte | ⭐ `fontes.camara.baixar_cota` — o download é ENTRADA e mora lá, com as demais |
+| Fonte | DECISÃO: `fontes.camara.baixar_cota` — o download é ENTRADA e mora lá, com as demais |
 | Tamanho | ~6,6 MB compactado, ~233 mil linhas por ano |
 | Formato | CSV `;`, aspas, `utf-8-sig` |
 | Decimal | **PONTO** — o oposto do Portal e do TSE |
-| ⛔ O que ⛔ não serve | `GET /deputados/{id}/despesas` responde **200** com `"dados": []` |
+| não O que não serve | `GET /deputados/{id}/despesas` responde **200** com `"dados": []` |
 
-⭐ Este módulo é **só TRATAMENTO**. O download e o canário de volume vivem em
+DECISÃO: Este módulo é **só TRATAMENTO**. O download e o canário de volume vivem em
 `fontes/camara.py`, junto do resto do que vem da Câmara — a cota é um recurso da
 Câmara como os outros, e ter a entrada aqui era a única fonte do projeto que
 misturava as duas fases no mesmo arquivo.
 
 ## TRATAMENTO
 
-1. Casa `ideCadastro` contra o de-para de `pessoa_fonte_ids` — quem ⛔ não casa sai
+1. Casa `ideCadastro` contra o de-para de `pessoa_fonte_ids` — quem não casa sai
 2. Descarta valor zero, que violaria `ck_despesa_valor`
 3. Separa CNPJ (legível) de CPF de fornecedor (**hasheado**)
-4. ⚠️ Confere o **volume** contra o mínimo medido: arquivo encolhido = layout mudou
+4. ATENÇÃO: Confere o **volume** contra o mínimo medido: arquivo encolhido = layout mudou
 
 ## SAÍDA
 
@@ -33,13 +33,13 @@ misturava as duas fases no mesmo arquivo.
 
 ---
 
-⭐ Valor **negativo é estorno** e é mantido — somá-lo importa para o total.
+DECISÃO: Valor **negativo é estorno** e é mantido — somá-lo importa para o total.
 
-🔴 `txtCNPJCPF` mistura CNPJ de empresa com **CPF em claro** de pessoa física; a RNF-13
-proíbe o segundo. Hashear os dois destruiria a análise: sem CNPJ legível ⛔ não dá para
+RISCO: `txtCNPJCPF` mistura CNPJ de empresa com **CPF em claro** de pessoa física; a RNF-13
+proíbe o segundo. Hashear os dois destruiria a análise: sem CNPJ legível não dá para
 cruzar o mesmo fornecedor entre parlamentares.
 
-📐 [`docs/14-fontes-de-gasto.md §1`](../../../docs/14-fontes-de-gasto.md)
+MEDIDO: [`docs/14-fontes-de-gasto.md §1`](../../../docs/14-fontes-de-gasto.md)
 """
 
 import logging
@@ -49,14 +49,14 @@ from .normalizacao import hash_de_cpf, inteiro, sem_acento_maiusculo, sem_cpf, v
 log = logging.getLogger("poligraph")
 
 def para_linhas(registros: list[dict], mapa_pessoas: dict[str, int]) -> list[dict]:
-    """Converte em linhas de `despesas`, descartando o que ⛔ não liga a um parlamentar.
+    """Converte em linhas de `despesas`, descartando o que não liga a um parlamentar.
 
     Descarta, e por quê:
 
     | Caso | Motivo |
     |---|---|
-    | Sem `ideCadastro` | São lideranças e órgãos (0,4%), ⛔ não pessoas |
-    | Fora do de-para | Deputado que a ingestão de pessoas ⛔ não trouxe |
+    | Sem `ideCadastro` | São lideranças e órgãos (0,4%), não pessoas |
+    | Fora do de-para | Deputado que a ingestão de pessoas não trouxe |
     | Valor zero | Linha administrativa sem efeito financeiro |
     """
     linhas: list[dict] = []
@@ -154,7 +154,7 @@ def _data_iso(bruto: str | None) -> str | None:
 def _identificar_fornecedor(bruto: str | None) -> tuple[str | None, bool]:
     """Separa CNPJ de CPF e **hasheia o CPF** — a mesma regra de `receitas`.
 
-    🔴 Usa o mesmo hash de `Pessoa.CpfHash`, o que torna os dois lados comparáveis sem
+    RISCO: Usa o mesmo hash de `Pessoa.CpfHash`, o que torna os dois lados comparáveis sem
     reverter nenhum deles.
     """
     digitos = "".join(caractere for caractere in (bruto or "") if caractere.isdigit())
@@ -168,7 +168,7 @@ def _identificar_fornecedor(bruto: str | None) -> tuple[str | None, bool]:
     return digitos, False
 
 
-# 🔴 Ponto DECIMAL aqui, o oposto do Portal e do TSE. Usar `valor_pt_br` por engano daria
+# RISCO: Ponto DECIMAL aqui, o oposto do Portal e do TSE. Usar `valor_pt_br` por engano daria
 # um total mil vezes menor, sem erro — o nome importado é o que impede a troca silenciosa.
 _decimal = valor_com_ponto
 

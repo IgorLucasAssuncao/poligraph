@@ -14,12 +14,12 @@ import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
  *
  * ## Câmara e Senado
  *
- * A legislatura é do **Congresso**, ⛔ só da Câmara: os quatro anos valem para as duas
+ * A legislatura é do **Congresso**, não só da Câmara: os quatro anos valem para as duas
  * casas (Constituição, art. 44). O senador tem mandato de oito anos e aparece em duas.
  * A barra diz isso, porque "57ª legislatura" ao lado do Senado parece coisa de deputado.
  *
- * ⚠️ Num período passado, o aviso é forte de propósito: a tela inteira está em 2015–2019,
- * e quem chegou por um link guardado precisa saber que ⛔ está vendo o presente.
+ * ATENÇÃO: Num período passado, o aviso é forte de propósito: a tela inteira está em 2015–2019,
+ * e quem chegou por um link guardado precisa saber que não está vendo o presente.
  */
 export function BarraDePeriodo({ comTodas = false }: { comTodas?: boolean }) {
   const [escolha, definir] = useLegislaturaDaUrl();

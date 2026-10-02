@@ -1,13 +1,13 @@
 """PL66 — as regras de plausibilidade, com os casos reais que as motivaram.
 
-Cada teste usa o número medido em 2026-10-02: a regra que ⛔ pega o caso real ⛔ serve.
+Cada teste usa o número medido em 2026-10-02: a regra que não pega o caso real não serve.
 """
 
 from poligraph_etl import conferencia
 
 
 def test_os_203_senadores_da_55a_sao_erro():
-    """🔴 Achado #37: o caso que a conferência existe para pegar no dia da carga."""
+    """RISCO: Achado #37: o caso que a conferência existe para pegar no dia da carga."""
     [achado] = conferencia.votantes_na_legislatura([("SENADO", 55, 203)])
 
     assert achado.severidade == "ERRO"
@@ -15,12 +15,12 @@ def test_os_203_senadores_da_55a_sao_erro():
 
 
 def test_os_maiores_medidos_passam():
-    """📐 Câmara 644 (54ª) e Senado 111 (54ª e 56ª): suplentes ⛔ são erro."""
+    """MEDIDO: Câmara 644 (54ª) e Senado 111 (54ª e 56ª): suplentes não são erro."""
     assert conferencia.votantes_na_legislatura([("CAMARA", 54, 644), ("SENADO", 56, 111)]) == []
 
 
 def test_82_senadores_numa_votacao_e_aviso_e_muito_acima_e_erro():
-    """📐 SF-5999: titular e suplente juntos no dia da troca. É da fonte, ⛔ defeito nosso."""
+    """MEDIDO: SF-5999: titular e suplente juntos no dia da troca. É da fonte, não defeito nosso."""
     aviso, erro = conferencia.votantes_na_votacao(
         [("SENADO", 56, "SF-5999", 82), ("SENADO", 55, "SF-1", 120)]
     )
@@ -52,14 +52,14 @@ def test_placar_divergente_e_aviso_so_quando_difere():
 
 
 def test_votacao_so_com_presenca_na_camara_e_aviso_de_secreta_de_fato():
-    """📐 "Eleito o Sr. …": 11 na Câmara, todas sem posição registrada."""
+    """MEDIDO: "Eleito o Sr. …": 11 na Câmara, todas sem posição registrada."""
     achados = conferencia.sem_posicao_nenhuma([("CAMARA", 55, "1203407-4"), ("SENADO", 56, "SF-1")])
 
     assert [a.casa for a in achados] == ["CAMARA"]
 
 
 def test_a_51a_da_camara_quase_sem_voto_nominal_e_aviso():
-    """📐 1.541 de 1.548 votações sem voto. A 56ª, com 129 de ~2.400, ⛔ é."""
+    """MEDIDO: 1.541 de 1.548 votações sem voto. A 56ª, com 129 de ~2.400, não é."""
     achados = conferencia.votacoes_sem_voto([("CAMARA", 51, 1548, 1541), ("CAMARA", 56, 2400, 129)])
 
     assert [a.legislatura for a in achados] == [51]
@@ -78,7 +78,7 @@ def test_quatro_senadores_de_uma_uf_e_aviso():
 
 
 def test_conferir_roda_toda_regra_com_a_consulta_dela():
-    """Cada regra tem consulta, e uma base vazia ⛔ quebra nada."""
+    """Cada regra tem consulta, e uma base vazia não quebra nada."""
     vistas = []
 
     def executar(sql):

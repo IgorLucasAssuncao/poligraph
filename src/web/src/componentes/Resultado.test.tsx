@@ -14,6 +14,9 @@ const PERGUNTAS: Pergunta[] = [
   { id: 'q3', texto: 'Terceira afirmação.', ordem: 3, totalVotos: 420, totalPossivel: 513 },
 ];
 
+/**
+ * Sem execução do grafo não há posição — a tela omite o desenho, não inventa ponto.
+ */
 const RESULTADO: ResultadoAfinidade = {
   totalPerguntasRespondidas: 3,
   porCasa: [
@@ -35,14 +38,13 @@ const RESULTADO: ResultadoAfinidade = {
       maisDistantes: [
         { pessoaId: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', uf: 'MG', acordos: 0, comparaveis: 3, acordou: [], discordou: [] },
       ],
-      // Sem execução do grafo não há posição — a tela omite o desenho, não inventa ponto.
       posicaoNoGrafo: null,
       escala: { comparados: 12, medianoAcordos: 1, medianoComparaveis: 3 },
     },
   ],
 };
 
-/** ⚠️ O componente usa `Link`, que exige contexto de rota. */
+/** ATENÇÃO: O componente usa `Link`, que exige contexto de rota. */
 function renderizar() {
   return render(
     <MemoryRouter>
@@ -51,32 +53,51 @@ function renderizar() {
   );
 }
 
+/**
+ * ATENÇÃO: o texto é quebrado por <strong>, então a checagem é sobre o conteúdo inteiro
+ *
+ * DECISÃO: RF-29: nunca o número sozinho — sempre "2 de 3"
+ * O destaque traz o número em evidência e a base logo em seguida.
+ *
+ * "67%" esconderia que a base foram 3 perguntas
+ *
+ * RISCO: A invariante do projeto na tela: todo número vem com a conta que o produziu.
+ * "Concordaram em 2 de 3" não é conferível sem dizer em QUAIS — não dá para saber se
+ * os acordos foram nas perguntas que importam ou nas de data comemorativa.
+ *
+ * ATENÇÃO: O denominador é a parte que mais engana. "2 de 3" parece um questionário de 3
+ * perguntas; na verdade 3 é quantas OS DOIS responderam. Quando sobra alguma fora da
+ * conta, a tela diz quantas e por quê.
+ *
+ * 5 respondidas na casa - 3 comparáveis = 2 fora
+ *
+ * Não O leitor de tela não recebe o ✓ e o ✗ — eles são `aria-hidden`. Sem o rótulo
+ * textual, quem ouve receberia a lista de afirmações sem saber quais foram acordo.
+ *
+ * RF-28 — ver de quem você discorda é parte do método
+ *
+ * RNF-14 — obrigatório em toda tela de resultado
+ *
+ * ATENÇÃO: Sem a base, "Ana Ribeiro é quem mais vota como você" soa definitivo. O total
+ * respondido fica no cabeçalho da coluna, à vista o tempo todo.
+ */
 describe('Resultado', () => {
   it('mostra "X de Y" — o número junto da base', () => {
     const { container } = renderizar();
 
-    // ⚠️ o texto é quebrado por <strong>, então a checagem é sobre o conteúdo inteiro
     const texto = container.textContent!.replace(/\s+/g, ' ');
 
-    // ⭐ RF-29: nunca o número sozinho — sempre "2 de 3"
-    // O destaque traz o número em evidência e a base logo em seguida.
     expect(texto).toMatch(/2 de 3 perguntas comparáveis em que vocês votaram igual/);
     expect(texto).toMatch(/concordaram em 0 de 3 perguntas/);
   });
 
-  it('🔴 NUNCA exibe percentual', () => {
+  it('RISCO: NUNCA exibe percentual', () => {
     const { container } = renderizar();
 
-    // "67%" esconderia que a base foram 3 perguntas
     expect(container.textContent).not.toMatch(/\d+\s*%/);
     expect(container.textContent).not.toMatch(/0[.,]\d\d/);
   });
 
-  /**
-   * 🔴 A invariante do projeto na tela: todo número vem com a conta que o produziu.
-   * "Concordaram em 2 de 3" não é conferível sem dizer em QUAIS — não dá para saber se
-   * os acordos foram nas perguntas que importam ou nas de data comemorativa.
-   */
   it('diz em QUAIS perguntas houve acordo, e em quais não', () => {
     const { container } = renderizar();
 
@@ -87,11 +108,6 @@ describe('Resultado', () => {
     expect(texto).toMatch(/Segunda afirmação\./);
   });
 
-  /**
-   * ⚠️ O denominador é a parte que mais engana. "2 de 3" parece um questionário de 3
-   * perguntas; na verdade 3 é quantas OS DOIS responderam. Quando sobra alguma fora da
-   * conta, a tela diz quantas e por quê.
-   */
   it('explica quantas perguntas ficaram fora da conta', () => {
     const comAusencia: ResultadoAfinidade = {
       ...RESULTADO,
@@ -106,15 +122,10 @@ describe('Resultado', () => {
 
     const texto = container.textContent!.replace(/\s+/g, ' ');
 
-    // 5 respondidas na casa - 3 comparáveis = 2 fora
     expect(texto).toMatch(/Outras 2 perguntas ficaram de fora da conta/);
     expect(texto).toMatch(/não votou|Não sei/);
   });
 
-  /**
-   * ⛔ O leitor de tela ⛔ não recebe o ✓ e o ✗ — eles são `aria-hidden`. Sem o rótulo
-   * textual, quem ouve receberia a lista de afirmações sem saber quais foram acordo.
-   */
   it('marca acordo e desacordo para quem usa leitor de tela', () => {
     const { container } = renderizar();
 
@@ -127,22 +138,18 @@ describe('Resultado', () => {
   it('mostra os mais distantes, não só os mais próximos', () => {
     renderizar();
 
-    // RF-28 — ver de quem você discorda é parte do método
     expect(screen.getByText('Bruno Tavares')).toBeDefined();
   });
 
   it('exibe o aviso de que não é recomendação de voto', () => {
     renderizar();
 
-    // RNF-14 — obrigatório em toda tela de resultado
     expect(screen.getByRole('note').textContent).toMatch(/não é recomendação de voto/i);
   });
 
   it('deixa claro quantas perguntas foram respondidas', () => {
     const { container } = renderizar();
 
-    // ⚠️ Sem a base, "Ana Ribeiro é quem mais vota como você" soa definitivo. O total
-    //    respondido fica no cabeçalho da coluna, à vista o tempo todo.
     expect(container.textContent).toMatch(/3 perguntas respondidas/i);
   });
 });
@@ -175,6 +182,10 @@ const DUAS_CASAS: ResultadoAfinidade = {
   ],
 };
 
+/**
+ * O piso de comparáveis vale por casa: um senador responde poucas perguntas do
+ * Senado, e exibir "8 perguntas" ao lado dele afirmaria uma base que ele não tem.
+ */
 describe('resultado com as duas casas', () => {
   function renderizarDuasCasas() {
     return render(
@@ -192,12 +203,10 @@ describe('resultado com as duas casas', () => {
     expect(texto).toMatch(/Os senadores mais próximos de você/);
   });
 
-  it('🔴 cada casa mostra o próprio denominador, não o total', () => {
+  it('RISCO: cada casa mostra o próprio denominador, não o total', () => {
     const { container } = renderizarDuasCasas();
     const texto = container.textContent!.replace(/\s+/g, ' ');
 
-    // O piso de comparáveis vale por casa: um senador responde poucas perguntas do
-    // Senado, e exibir "8 perguntas" ao lado dele afirmaria uma base que ele não tem.
     expect(texto).toMatch(/6 perguntas desta casa/);
     expect(texto).toMatch(/2 perguntas desta casa/);
   });
@@ -208,7 +217,7 @@ describe('resultado com as duas casas', () => {
     expect(container.textContent).toMatch(/8 perguntas respondidas/);
   });
 
-  it('⛔ nunca exibe percentual, nem com duas casas', () => {
+  it('nunca exibe percentual, nem com duas casas', () => {
     const { container } = renderizarDuasCasas();
 
     expect(container.textContent).not.toMatch(/\d+\s*%/);
@@ -233,8 +242,10 @@ describe('resultado com as duas casas', () => {
   });
 });
 
+/**
+ * ATENÇÃO: "8 de 11" sozinho não diz se é muito: o parlamentar do meio da lista dá a escala.
+ */
 describe('a régua do resultado', () => {
-  /** ⚠️ "8 de 11" sozinho ⛔ diz se é muito: o parlamentar do meio da lista dá a escala. */
   it('diz quantos foram comparados e quanto concordou o do meio da lista', async () => {
     renderizar();
 

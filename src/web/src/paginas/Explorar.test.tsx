@@ -44,16 +44,19 @@ function pagina(itens: Parlamentar[], total = itens.length, numero = 1): PaginaD
 }
 
 /**
- * 🔴 A lista mistura as duas casas — 87 deputados e 13 senadores na primeira página do
+ * RISCO: A lista mistura as duas casas — 87 deputados e 13 senadores na primeira página do
  * banco real —, e os números **não são comparáveis entre elas**.
  *
- * 📐 Medido em 2026-08-29: o deputado mediano tem **845** votações registradas e o
+ * MEDIDO: Medido em 2026-08-29: o deputado mediano tem **845** votações registradas e o
  * senador mediano, **140**. O senador com MAIS votações (177) fica abaixo de **549 dos
  * 643** deputados.
  *
- * ⚠️ A causa é o Senado fazer menos votação nominal — e 56,8% delas serem secretas —,
- * ⛔ não o senador trabalhar menos. Sem dizer de que casa é cada linha, todo senador
+ * ATENÇÃO: A causa é o Senado fazer menos votação nominal — e 56,8% delas serem secretas —,
+ * não o senador trabalhar menos. Sem dizer de que casa é cada linha, todo senador
  * parece inativo: um número plausível levando à conclusão errada.
+ *
+ * Não "Buscar deputado" excluiria os senadores da leitura de quem procura — e eles
+ * estão na lista.
  */
 describe('Explorar mistura as casas e precisa dizer qual é qual', () => {
   beforeEach(() => {
@@ -78,10 +81,6 @@ describe('Explorar mistura as casas e precisa dizer qual é qual', () => {
     expect(screen.getByText(/140 votos com posição no Senado/)).toBeInTheDocument();
   });
 
-  /**
-   * ⛔ "Buscar deputado" excluiria os senadores da leitura de quem procura — e eles
-   * estão na lista.
-   */
   it('a busca fala de parlamentar, não de deputado', async () => {
     renderizar();
 
@@ -92,12 +91,16 @@ describe('Explorar mistura as casas e precisa dizer qual é qual', () => {
   });
 });
 
+/**
+ * RISCO: A lista cortava em 100 sem avisar. Agora ela diz quantos são e busca o resto.
+ *
+ * ATENÇÃO: As opções vêm da API, da lista inteira — não do que está na tela.
+ */
 describe('Explorar em páginas', () => {
   beforeEach(() => {
     vi.mocked(api.listarSeguidos).mockResolvedValue([]);
   });
 
-  /** 🔴 A lista cortava em 100 sem avisar. Agora ela diz quantos são e busca o resto. */
   it('diz o total e mostra mais quando pedido', async () => {
     const primeiros = Array.from({ length: 30 }, (_, i) => parlamentar(i + 1, `Nome ${i + 1}`, 'CAMARA', 800));
     vi.mocked(api.listarParlamentares)
@@ -120,7 +123,6 @@ describe('Explorar em páginas', () => {
     expect(vi.mocked(api.listarParlamentares).mock.lastCall?.[0]).toMatchObject({ pagina: 2 });
   });
 
-  /** ⚠️ As opções vêm da API, da lista inteira — ⛔ do que está na tela. */
   it('os filtros oferecem todos os partidos, mesmo com um só na tela', async () => {
     vi.mocked(api.listarParlamentares).mockResolvedValue(pagina([parlamentar(1, 'Ana Ribeiro', 'CAMARA', 845)]));
 
@@ -135,7 +137,14 @@ describe('Explorar em páginas', () => {
   });
 });
 
-/** O histórico (achado #35): fora da lista por padrão, e marcado quando entra. */
+/**
+ * O histórico (achado #35): fora da lista por padrão, e marcado quando entra.
+ *
+ * O período vem da faixa do topo, pelo endereço — a lista só o lê.
+ *
+ * Um período passado é a lista DELE — e quem foi reeleito não vira "Ex-deputado" só
+ * por estar numa lista de 2019.
+ */
 describe('quem já saiu', () => {
   beforeEach(() => {
     vi.mocked(api.listarSeguidos).mockResolvedValue([]);
@@ -155,14 +164,13 @@ describe('quem já saiu', () => {
     );
   }
 
-  it('diz de quando era o mandato de quem já saiu, e ⛔ o de quem está', async () => {
+  it('diz de quando era o mandato de quem já saiu, e não o de quem está', async () => {
     renderizar();
 
     expect(await screen.findByText(/Ex-deputado · 2015–2019 · 610 votos com posição/)).toBeInTheDocument();
     expect(screen.getByText('845 votos com posição na Câmara')).toBeInTheDocument();
   });
 
-  /** O período vem da faixa do topo, pelo endereço — a lista só o lê. */
   function renderizarEm(endereco: string) {
     return render(
       <MemoryRouter initialEntries={[endereco]}>
@@ -184,11 +192,7 @@ describe('quem já saiu', () => {
     );
   });
 
-  /**
-   * Um período passado é a lista DELE — e quem foi reeleito ⛔ vira "Ex-deputado" só
-   * por estar numa lista de 2019.
-   */
-  it('um período passado pede a legislatura dele e ⛔ chama ninguém de ex', async () => {
+  it('um período passado pede a legislatura dele e não chama ninguém de ex', async () => {
     renderizarEm('/parlamentares?legislatura=56');
 
     await vi.waitFor(() =>

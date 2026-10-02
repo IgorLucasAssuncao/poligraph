@@ -7,13 +7,13 @@ leva o convênio à página da entidade.
 
 | | |
 |---|---|
-| Fonte | `convenios/AAAAMMDD` no Portal — um retrato por data, ⛔ todo dia |
+| Fonte | `convenios/AAAAMMDD` no Portal — um retrato por data, não todo dia |
 | Tamanho | ~67 MB (2026-09-18); lido em fluxo, só as linhas dos convênios que já temos |
 
-📐 Medido em 2026-09-25 (retrato de 2026-09-18): 16.872 de 16.872 convênios de emenda
+MEDIDO: Medido em 2026-09-25 (retrato de 2026-09-18): 16.872 de 16.872 convênios de emenda
 achados; 8.036 CNPJs, 8.033 deles com página de entidade.
 
-⚠️ O retrato ⛔ sai todo dia: `ultimo_retrato` procura para trás a partir de hoje.
+ATENÇÃO: O retrato não sai todo dia: `ultimo_retrato` procura para trás a partir de hoje.
 """
 
 import csv
@@ -36,7 +36,7 @@ DIAS_PARA_TRAS = 30
 def ultimo_retrato(hoje: date | None = None) -> str:
     """A data (`AAAAMMDD`) do retrato mais recente publicado, procurando até 30 dias atrás.
 
-    ⚠️ `GET` com `Range`, ⛔ `HEAD`: o CDN do Portal responde 403 ao `HEAD` mesmo quando o
+    ATENÇÃO: `GET` com `Range`, não `HEAD`: o CDN do Portal responde 403 ao `HEAD` mesmo quando o
     arquivo existe.
     """
     dia = hoje or date.today()
@@ -59,7 +59,7 @@ def ler(arquivo_zip: Path, numeros: set[str]) -> list[dict]:
 
     O CNPJ só entra com 14 dígitos: convenente pessoa física ou órgão sem CNPJ fica nulo.
 
-    ⚠️ O arquivo repete alguns números (3 em 2026-09-18): vale a última linha, uma por convênio.
+    ATENÇÃO: O arquivo repete alguns números (3 em 2026-09-18): vale a última linha, uma por convênio.
     """
     linhas: dict[str, dict] = {}
     with zipfile.ZipFile(arquivo_zip) as zf:

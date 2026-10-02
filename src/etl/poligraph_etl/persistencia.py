@@ -1,10 +1,10 @@
 """SAÍDA — a única camada que escreve no Postgres.
 
-🔴 **O EF Core é dono do schema.** Este módulo só grava: ⛔ nunca cria tabela, nunca
+RISCO: **O EF Core é dono do schema.** Este módulo só grava: nunca cria tabela, nunca
 altera coluna. Campo novo nasce em migration do EF, e `test_contrato_schema` trava a
 divergência de nome de tabela, de coluna e de literal combinado entre os dois lados.
 
-🔴 **Aqui ⛔ não se decide o que gravar.** O que entra e o que é descartado foi resolvido
+RISCO: **Aqui não se decide o que gravar.** O que entra e o que é descartado foi resolvido
 na fase de TRATAMENTO; misturar as duas faz um descarte virar número plausível e errado.
 
 ## Idempotência (RF-09) — e por que cada tabela usa uma estratégia
@@ -16,11 +16,11 @@ Portal **corrige retroativamente**. Sem idempotência o banco dobraria por dia.
 |---|---|---|
 | `ON CONFLICT (id) DO UPDATE` | `votacoes` · `votos` · `pessoas` | Há chave natural estável |
 | `ON CONFLICT DO NOTHING` | `emendas` | `ux_emenda_autor_codigo` já garante unicidade |
-| `DELETE` do recorte + `INSERT` | `despesas` · `receitas_de_campanha` | ⚠️ ⛔ **Não há** chave natural por linha: `ideDocumento` se repete entre parcelas, e o mesmo doador aparece várias vezes legitimamente |
+| `DELETE` do recorte + `INSERT` | `despesas` · `receitas_de_campanha` | ATENÇÃO: não **Não há** chave natural por linha: `ideDocumento` se repete entre parcelas, e o mesmo doador aparece várias vezes legitimamente |
 
-⚠️ O recorte do `DELETE` é sempre o **mínimo**: reingerir 2025 ⛔ não apaga 2024.
+ATENÇÃO: O recorte do `DELETE` é sempre o **mínimo**: reingerir 2025 não apaga 2024.
 
-📐 [achado #19](../../../docs/achados/019-csv-reconstruido-toda-madrugada.md)
+MEDIDO: [achado #19](../../../docs/achados/019-csv-reconstruido-toda-madrugada.md)
 """
 
 from dataclasses import dataclass
@@ -48,7 +48,7 @@ class ResumoCarga:
 def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
     """Insere ou atualiza pessoas, casando pelo ID externo da fonte.
 
-    ⭐ O `pessoa_fonte_id` é que dá a idempotência: a chave é (fonte, id_externo),
+    DECISÃO: O `pessoa_fonte_id` é que dá a idempotência: a chave é (fonte, id_externo),
     então a mesma pessoa reingerida encontra o próprio registro.
     """
     inseridas = 0
@@ -64,7 +64,7 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
             existente = cur.fetchone()
 
             if existente:
-                # 🔴 `COALESCE` na foto: uma fonte mais pobre ⛔ não apaga o que uma mais
+                # RISCO: `COALESCE` na foto: uma fonte mais pobre não apaga o que uma mais
                 #    rica já trouxe. Medido — `senadores_dos_votos` roda DEPOIS de
                 #    `senadores_para_linhas` e devolve os mesmos 81 em exercício com
                 #    `url_foto` nula, porque o registro de voto não traz foto. Com
@@ -110,10 +110,10 @@ def gravar_proposicoes(
 ) -> int:
     """Grava proposições. `ON CONFLICT DO UPDATE` — a Câmara corrige ementa retroativa.
 
-    🔴 A chave é `(casa, id)`, ⛔ não `id`. As duas fontes numeram no mesmo espaço: a
+    RISCO: A chave é `(casa, id)`, não `id`. As duas fontes numeram no mesmo espaço: a
     Câmara vai de 106.701 a 2.638.483 e o Senado de 121.883 a 175.446. Com `id` sozinho,
     uma matéria do Senado sobrescreveria a ementa de um projeto da Câmara — e o defeito
-    ⛔ não daria erro, apareceria como um assunto plausível e errado na ficha.
+    não daria erro, apareceria como um assunto plausível e errado na ficha.
     """
     return _executar_em_lotes(
         conexao,
@@ -137,12 +137,12 @@ def vincular_proposicoes(
 ) -> int:
     """Liga cada votação à sua proposição.
 
-    ⚠️ Passo SEPARADO da gravação das votações, e ⛔ não uma coluna a mais no `INSERT`
+    ATENÇÃO: Passo SEPARADO da gravação das votações, e não uma coluna a mais no `INSERT`
     delas. A votação é ingerida antes de a proposição existir — a FK recusaria a linha,
     e a ingestão inteira do ano cairia por causa de um vínculo.
 
-    🔴 O `casa` entra nas DUAS pontas do `WHERE`: a votação tem de ser daquela casa, e a
-    proposição também. ⛔ Sem isso, uma votação do Senado poderia apontar para uma
+    RISCO: O `casa` entra nas DUAS pontas do `WHERE`: a votação tem de ser daquela casa, e a
+    proposição também. Sem isso, uma votação do Senado poderia apontar para uma
     proposição da Câmara de mesmo número — que é exatamente a colisão que a chave
     composta existe para impedir.
     """
@@ -167,23 +167,23 @@ def desconectar_proposicoes_ausentes(
 ) -> int:
     """Zera `proposicao_id` que não existe na tabela `proposicoes`, e diz quantos.
 
-    🔴 A checagem é por `(casa, id)`, ⛔ não por `id`. As duas fontes numeram no mesmo
+    RISCO: A checagem é por `(casa, id)`, não por `id`. As duas fontes numeram no mesmo
     espaço: sem a casa, uma proposição da Câmara faria a do Senado parecer existente, o
     vínculo sobreviveria à limpeza e a chave estrangeira derrubaria a ingestão do ano.
 
-    🔴 Sem isto a ingestão morre com `ForeignKeyViolation` na primeira votação — foi o
+    RISCO: Sem isto a ingestão morre com `ForeignKeyViolation` na primeira votação — foi o
     que aconteceu na primeira execução real contra a Câmara.
 
-    ⚠️ **O CSV de votações não permite criar a proposição.** Ele traz só
+    ATENÇÃO: **O CSV de votações não permite criar a proposição.** Ele traz só
     `ultimaApresentacaoProposicao_idProposicao`, sem sigla, número, ano ou ementa —
     conferido no cabeçalho do arquivo de 2025. E a proposição votada em 2025 pode ser
     de 2019, então nem ingerir `proposicoes-2025.csv` cobriria o conjunto.
 
-    ⭐ `proposicao_id` é anulável **por desenho**, e nada que o produto faz hoje
+    DECISÃO: `proposicao_id` é anulável **por desenho**, e nada que o produto faz hoje
     depende dela: afinidade e grafo saem do voto. Quem vai precisar é a RF-30, exibir a
     ementa original ao lado da pergunta — ver PL40.
 
-    ⛔ Não é descarte silencioso: devolve a contagem, e o chamador registra no log.
+    Não é descarte silencioso: devolve a contagem, e o chamador registra no log.
     """
     ids = {
         votacao["proposicao_id"]
@@ -211,15 +211,15 @@ def desconectar_proposicoes_ausentes(
     return desconectadas
 
 
-# 🔴 "Votou na legislatura CORRENTE", ⛔ "tem voto" (achado #35).
+# RISCO: "Votou na legislatura CORRENTE", não "tem voto" (achado #35).
 #
 # Com uma legislatura só na base as duas coisas coincidiam, e várias consultas usavam a
 # segunda querendo dizer a primeira. Com o histórico, "tem voto" passa a incluir quem
 # votou em 2003: o CPF seria buscado para milhares, o homônimo antigo ganharia voto e
 # desfaria o desempate da PL47, e a notícia de hoje casaria com ex-parlamentar.
 #
-# ⭐ A corrente é a MAIOR legislatura em `votacoes` — a mesma regra de
-#    `Legislaturas.CorrenteAsync` na API. ⛔ Configurada em lugar nenhum.
+# DECISÃO: A corrente é a MAIOR legislatura em `votacoes` — a mesma regra de
+#    `Legislaturas.CorrenteAsync` na API. Não Configurada em lugar nenhum.
 _NA_LEGISLATURA_CORRENTE = """EXISTS (
                      SELECT 1 FROM votos v
                       JOIN votacoes t ON t.id = v.votacao_id
@@ -236,11 +236,11 @@ def na_legislatura_corrente(pessoa: str, casa: str | None = None) -> str:
 def pessoas_sem_cpf(conexao: psycopg.Connection) -> list[tuple[str, int]]:
     """Quem tem VOTO mas ainda não tem `cpf_hash`, com o id da Câmara junto.
 
-    ⚠️ **Só quem votou**, e o recorte importa: são 7.889 pessoas no cadastro contra ~643
+    ATENÇÃO: **Só quem votou**, e o recorte importa: são 7.889 pessoas no cadastro contra ~643
     com voto na legislatura. Buscar CPF de todas seriam 7.889 requisições para preencher
     7.246 registros que ninguém consulta.
 
-    ⭐ E só quem AINDA não tem — reingerir ⛔ não refaz o trabalho.
+    DECISÃO: E só quem AINDA não tem — reingerir não refaz o trabalho.
     """
     return [
         (str(linha[0]), linha[1])
@@ -348,7 +348,7 @@ def senadores_para_casar(conexao: psycopg.Connection) -> list[tuple[int, str, st
 
 
 def gravar_cpf_hash(conexao: psycopg.Connection, pessoa_id: int, hash_cpf: str) -> None:
-    """🔴 Grava o HASH, ⛔ nunca o CPF. RNF-13."""
+    """RISCO: Grava o HASH, nunca o CPF. RNF-13."""
     conexao.execute(
         "UPDATE pessoas SET cpf_hash = %s WHERE id = %s", (hash_cpf, pessoa_id)
     )
@@ -357,10 +357,10 @@ def gravar_cpf_hash(conexao: psycopg.Connection, pessoa_id: int, hash_cpf: str) 
 def mapa_de_cpf_hash(conexao: psycopg.Connection) -> dict[str, int]:
     """`cpf_hash` -> `pessoa_id` — o de-para que casa o TSE com a Câmara.
 
-    ⭐ O join acontece **entre hashes**, ⛔ nunca entre CPFs em claro.
+    DECISÃO: O join acontece **entre hashes**, nunca entre CPFs em claro.
 
-    ⚠️ Traz também quem foi excluído logicamente: o filtro de exclusão é da API, e o ETL
-    ⛔ não pode reinserir receita órfã por não enxergar o dono.
+    ATENÇÃO: Traz também quem foi excluído logicamente: o filtro de exclusão é da API, e o ETL
+    não pode reinserir receita órfã por não enxergar o dono.
     """
     return {
         linha[0]: linha[1]
@@ -375,8 +375,8 @@ def gravar_receitas(
 ) -> int:
     """Grava o financiamento, substituindo a eleição que está entrando.
 
-    ⚠️ O mesmo doador aparece várias vezes com o mesmo valor **legitimamente** (doação
-    parcelada), então ⛔ não há chave natural por linha. Reingerir 2022 ⛔ não toca 2018.
+    ATENÇÃO: O mesmo doador aparece várias vezes com o mesmo valor **legitimamente** (doação
+    parcelada), então não há chave natural por linha. Reingerir 2022 não toca 2018.
     """
     if not linhas:
         return 0
@@ -423,7 +423,7 @@ def gravar_votacoes(conexao: psycopg.Connection, votacoes: Sequence[dict]) -> in
 def apagar_votacoes(conexao: psycopg.Connection, ids: Sequence[str]) -> int:
     """Apaga votações que a fonte desmentiu, com os votos e orientações delas (cascata).
 
-    🔴 Pergunta do questionário ⛔ se apaga em silêncio: a FK também é em cascata, e a
+    RISCO: Pergunta do questionário não se apaga em silêncio: a FK também é em cascata, e a
     pergunta sumiria do poço sem ninguém decidir. Se alguma votação tiver pergunta, nada é
     apagado e o erro diz qual.
     """
@@ -448,7 +448,7 @@ def apagar_votacoes(conexao: psycopg.Connection, ids: Sequence[str]) -> int:
 def gravar_orientacoes(
     conexao: psycopg.Connection, orientacoes: Sequence[dict]
 ) -> int:
-    """Grava orientação de bancada. ⚠️ Só a Câmara publica isso."""
+    """Grava orientação de bancada. ATENÇÃO: Só a Câmara publica isso."""
     return _executar_em_lotes(
         conexao,
         """
@@ -466,8 +466,8 @@ def gravar_metricas_de_alinhamento(
 ) -> int:
     """Preenche `governismo`, `disciplina` e a base da disciplina nos nós já gravados.
 
-    ⚠️ `UPDATE`, ⛔ não `INSERT`: o nó nasce em `gravar_nos_metrica` com comunidade e
-    posição, e o alinhamento é calculado depois — depende das orientações, que ⛔ não
+    ATENÇÃO: `UPDATE`, não `INSERT`: o nó nasce em `gravar_nos_metrica` com comunidade e
+    posição, e o alinhamento é calculado depois — depende das orientações, que não
     existem para o Senado.
     """
     return _executar_em_lotes(
@@ -485,7 +485,7 @@ def gravar_metricas_de_alinhamento(
 def gravar_votos(conexao: psycopg.Connection, votos: Sequence[dict]) -> int:
     """Grava votos.
 
-    ⚠️ `partido_no_voto` e `uf_no_voto` são atualizados no conflito de propósito:
+    ATENÇÃO: `partido_no_voto` e `uf_no_voto` são atualizados no conflito de propósito:
     são registro histórico do momento do voto, e a Câmara corrige filiação
     retroativamente. Normalizar para o partido atual destruiria a informação —
     14 deputados trocaram de partido só em 2025.
@@ -511,7 +511,7 @@ def gravar_similaridades(
 ) -> int:
     """Grava os pares de similaridade de uma execução.
 
-    ⚠️ Não usa ON CONFLICT: cada execução é um retrato novo e independente. Se a
+    ATENÇÃO: Não usa ON CONFLICT: cada execução é um retrato novo e independente. Se a
     mesma execução for regravada, é bug — e o conflito de chave primária avisa.
     """
     linhas = [
@@ -571,10 +571,10 @@ def gravar_emendas(
 ) -> int:
     """Grava as emendas, substituindo os anos que estão entrando.
 
-    ⭐ `pessoa_id` ⛔ NÃO é preenchido aqui: a emenda entra sem dono, e o vínculo é
+    DECISÃO: `pessoa_id` NÃO é preenchido aqui: a emenda entra sem dono, e o vínculo é
     decisão de `vincular_emendas`.
 
-    🔴 **Sem `ON CONFLICT`.** O `DO NOTHING` de antes descartava em silêncio a segunda
+    RISCO: **Sem `ON CONFLICT`.** O `DO NOTHING` de antes descartava em silêncio a segunda
     linha de uma mesma emenda — 55 linhas e R$ 0,18 bi empenhados em 2023–26. Linha
     repetida agora derruba a carga, que é o que deve fazer: ela diz que a chave
     `ux_emenda_programacao` deixou de descrever o arquivo.
@@ -607,7 +607,7 @@ def gravar_favorecidos(
 ) -> int:
     """Grava quem recebeu, substituindo as emendas dos anos que estão entrando.
 
-    ⚠️ O ano é o da **emenda** (os quatro primeiros dígitos do código), ⛔ o do
+    ATENÇÃO: O ano é o da **emenda** (os quatro primeiros dígitos do código), não o do
     pagamento: emenda de 2023 paga em 2025 é da carga de 2023.
     """
     conexao.execute(
@@ -637,7 +637,7 @@ def gravar_convenios(
 ) -> int:
     """Grava os convênios e a ligação com as emendas dos anos que estão entrando.
 
-    ⭐ O convênio é atualizado, ⛔ apagado: um mesmo convênio pode receber emenda de
+    DECISÃO: O convênio é atualizado, não apagado: um mesmo convênio pode receber emenda de
     anos diferentes. O que some é o convênio que ficou sem emenda nenhuma.
     """
     conexao.execute(
@@ -826,10 +826,10 @@ def gravar_gestao(conexao: psycopg.Connection, gestao: dict) -> None:
 def registrar_autores(conexao: psycopg.Connection, autores: dict[str, str]) -> int:
     """Registra os códigos de autor vistos, sem resolver o vínculo.
 
-    ⭐ É a lista de pendências de reconciliação. Código sem `pessoa_id` fica **visível**,
-    ⛔ em vez de virar registro perdido.
+    DECISÃO: É a lista de pendências de reconciliação. Código sem `pessoa_id` fica **visível**,
+    Não em vez de virar registro perdido.
 
-    ⚠️ `DO UPDATE` só no nome: a grafia muda entre anos, mas ⛔ nunca sobrescreve um
+    ATENÇÃO: `DO UPDATE` só no nome: a grafia muda entre anos, mas nunca sobrescreve um
     `pessoa_id` já resolvido — inclusive o resolvido à mão.
     """
     if not autores:
@@ -854,7 +854,7 @@ def registrar_autores(conexao: psycopg.Connection, autores: dict[str, str]) -> i
 def vincular_emendas(conexao: psycopg.Connection) -> int:
     """Aplica o de-para resolvido às emendas já gravadas.
 
-    ⭐ Roda depois da reconciliação e é idempotente — resolver um autor novo e rodar de
+    DECISÃO: Roda depois da reconciliação e é idempotente — resolver um autor novo e rodar de
     novo preenche só o que faltava.
     """
     return conexao.execute(
@@ -918,15 +918,15 @@ def gravar_arestas(
 ) -> int:
     """Grava as arestas do grafo kNN.
 
-    🔴 Esta função não existia, e era por isso que `arestas_grafo` ficava vazia PARA
+    RISCO: Esta função não existia, e era por isso que `arestas_grafo` ficava vazia PARA
     SEMPRE. O `__main__` calculava o kNN, escrevia a contagem no log e descartava o
     resultado — sem erro, sem aviso: o ETL dizia "concluído", a execução fechava como
     `CONCLUIDA`, e `/api/grafo` devolvia 200 com um grafo em branco.
 
-    ⚠️ `tipo` é sempre `SIMILARIDADE_VOTO` por enquanto. A coluna prevê
+    ATENÇÃO: `tipo` é sempre `SIMILARIDADE_VOTO` por enquanto. A coluna prevê
     `COMISSAO_COMUM` e `COAUTORIA`, que ainda não têm origem de dado.
 
-    ⚠️ Sem `ON CONFLICT`, pelo mesmo motivo de `gravar_similaridades`: cada execução é
+    ATENÇÃO: Sem `ON CONFLICT`, pelo mesmo motivo de `gravar_similaridades`: cada execução é
     um retrato novo, e conflito de chave aqui é bug, não caso normal.
     """
     linhas = [
@@ -955,7 +955,7 @@ def gravar_nos_metrica(
 ) -> int:
     """Grava comunidade, posição e volume de voto de cada nó.
 
-    ⚠️ `governismo` e `disciplina` ficam NULOS: dependem da orientação de bancada, que
+    ATENÇÃO: `governismo` e `disciplina` ficam NULOS: dependem da orientação de bancada, que
     vem do arquivo `votacoesOrientacoes` da Câmara e ainda não é ingerido. A coluna é
     anulável de propósito — no Senado ela nunca terá valor, porque lá não existe
     orientação de bancada.
@@ -977,7 +977,7 @@ def gravar_nos_metrica(
     return _executar_em_lotes(
         conexao,
         """
-        -- ⚠️ `componente1`, SEM underscore antes do dígito. O snake_case do EF quebra
+        -- ATENÇÃO: `componente1`, SEM underscore antes do dígito. O snake_case do EF quebra
         --    por MAIÚSCULA, e `Componente1` não tem nenhuma antes do `1`. Escrever
         --    `componente_1` dá `UndefinedColumn` — aconteceu de verdade.
         INSERT INTO nos_metrica (execucao_id, pessoa_id, comunidade,
@@ -1001,7 +1001,7 @@ def abrir_execucao(
 ) -> int:
     """Abre a execução e grava os parâmetros com que ela calcula.
 
-    ⭐ Gravados, ⛔ só lidos do código: a página de metodologia mostra o valor que ESTA
+    DECISÃO: Gravados, não só lidos do código: a página de metodologia mostra o valor que ESTA
     execução usou. Se uma constante mudar, as execuções antigas continuam dizendo o que
     usaram.
     """
@@ -1046,7 +1046,7 @@ def fechar_execucao(conexao: psycopg.Connection, execucao_id: int, sucesso: bool
 def _executar_em_lotes(
     conexao: psycopg.Connection, comando: str, linhas: Sequence[dict]
 ) -> int:
-    """Executa em lotes. ⚠️ 463 mil votos numa transação só estouraria a memória."""
+    """Executa em lotes. ATENÇÃO: 463 mil votos numa transação só estouraria a memória."""
     if not linhas:
         return 0
 
@@ -1106,7 +1106,7 @@ def senadores_da_legislatura(conexao: psycopg.Connection) -> set[int]:
 def gravar_redes(conexao: psycopg.Connection, pessoas: list[int], linhas: Sequence[dict], fonte: str) -> int:
     """Substitui as redes da fonte para as pessoas consultadas — e só para elas.
 
-    ⚠️ Quem ⛔ foi consultado (a requisição falhou) mantém o que tinha: apagar tudo da fonte
+    ATENÇÃO: Quem não foi consultado (a requisição falhou) mantém o que tinha: apagar tudo da fonte
     e regravar deixaria sem rede quem só teve azar na rede.
     """
     conexao.execute("DELETE FROM redes_sociais WHERE fonte = %s AND pessoa_id = ANY(%s)", (fonte, pessoas))

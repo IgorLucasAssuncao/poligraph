@@ -5,9 +5,8 @@ namespace Poligraph.Api.Dtos;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A UF sai da cadeia CNPJ → código TOM → código IBGE, toda por chave forte. O que ⛔
-/// entra no mapa fica declarado ao lado: o que passou pelo Banco do Brasil, que repassa, e
-/// o pago a pessoa ou sem identificação, que ⛔ tem sede. Somem do mapa, ⛔ da conta.
+/// A UF sai da cadeia CNPJ → código TOM → código IBGE, toda por chave forte. O que não /// entra no mapa fica declarado ao lado: o que passou pelo Banco do Brasil, que repassa, e
+/// o pago a pessoa ou sem identificação, que não tem sede. Somem do mapa, não da conta.
 /// </para>
 /// </remarks>
 public record MapaDoBrasilDto(
@@ -20,8 +19,7 @@ public record MapaDoBrasilDto(
     IReadOnlyList<RecebidoNaUfDto> PorUf);
 
 /// <summary>
-/// Os anos das emendas consideradas, inclusive nas duas pontas. O ano é o da emenda, e ⛔
-/// o do pagamento.
+/// Os anos das emendas consideradas, inclusive nas duas pontas. O ano é o da emenda, e não /// o do pagamento.
 /// </summary>
 /// <remarks>
 /// <para>Sem dado carregado, <c>(0, 0)</c>.</para>

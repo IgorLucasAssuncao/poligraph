@@ -1,8 +1,8 @@
 /**
  * Formatos de número e data usados em mais de uma tela.
  *
- * ⚠️ `bilhoes` arredonda para uma casa: serve para comparar ordem de grandeza numa
- * tabela, ⛔ para citar valor exato — onde o valor exato importa, use `reais`.
+ * ATENÇÃO: `bilhoes` arredonda para uma casa: serve para comparar ordem de grandeza numa
+ * tabela, não para citar valor exato — onde o valor exato importa, use `reais`.
  */
 export function reais(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -23,7 +23,7 @@ export function reaisCompacto(valor: number): string {
 
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
-/** `"2025-03-01"` → `"mar/2025"`. Lê o texto, ⛔ `Date`: o fuso deslocaria o dia 1 para o mês anterior. */
+/** `"2025-03-01"` → `"mar/2025"`. Lê o texto, não `Date`: o fuso deslocaria o dia 1 para o mês anterior. */
 export function mesCurto(iso: string): string {
   const [ano, mes] = iso.split('-');
   return `${MESES[Number(mes) - 1]}/${ano}`;
@@ -75,8 +75,8 @@ export function nomeProprio(texto: string): string {
 /**
  * Reparte 100 entre os valores, em inteiros que somam exatamente 100.
  *
- * ⭐ Pelo maior resto: arredondar cada parte sozinha dá 99 ou 101, e a tela diria "de
- * cada R$ 100" com uma conta que ⛔ fecha.
+ * DECISÃO: Pelo maior resto: arredondar cada parte sozinha dá 99 ou 101, e a tela diria "de
+ * cada R$ 100" com uma conta que não fecha.
  */
 export function partesDeCem(valores: number[]): number[] {
   const total = valores.reduce((soma, v) => soma + Math.max(v, 0), 0);
@@ -95,7 +95,7 @@ export function partesDeCem(valores: number[]): number[] {
   return partes;
 }
 
-/** `"PASSAGEM AÉREA"` → `"Passagem aérea"`. ⚠️ Os arquivos oficiais vêm em CAIXA ALTA, ilegível em bloco. */
+/** `"PASSAGEM AÉREA"` → `"Passagem aérea"`. ATENÇÃO: Os arquivos oficiais vêm em CAIXA ALTA, ilegível em bloco. */
 export function minusculas(texto: string): string {
   const min = texto.toLocaleLowerCase('pt-BR');
   return min.charAt(0).toLocaleUpperCase('pt-BR') + min.slice(1);
@@ -104,7 +104,7 @@ export function minusculas(texto: string): string {
 /**
  * `56` → `"2019–2023"`. A 57ª tomou posse em 2023, e cada legislatura dura quatro anos.
  *
- * ⭐ É o que o cidadão reconhece: "56ª legislatura" ⛔ diz nada a quem ⛔ acompanha o
+ * DECISÃO: É o que o cidadão reconhece: "56ª legislatura" Não diz nada a quem não acompanha o
  * Congresso, e o ano diz. O número ordinal vai junto só onde ajuda a conferir.
  */
 export function periodoDaLegislatura(legislatura: number): string {

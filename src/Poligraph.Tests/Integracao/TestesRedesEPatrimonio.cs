@@ -35,7 +35,7 @@ public class TestesRedesEPatrimonio(FixturePostgres postgres) : BaseIntegracao(p
         Assert.Equal(["INSTAGRAM", "X"], ficha.RedesSociais.Select(r => r.Rede));
     }
 
-    /// <summary>🔴 O banco recusa endereço que ⛔ seja http(s): a tela o viraria link executável.</summary>
+    /// <summary>RISCO: O banco recusa endereço que não seja http(s): a tela o viraria link executável.</summary>
     [SkippableTheory]
     [InlineData("javascript:alert(1)")]
     [InlineData("ftp://exemplo.com")]
@@ -83,7 +83,7 @@ public class TestesRedesEPatrimonio(FixturePostgres postgres) : BaseIntegracao(p
     }
 
     /// <summary>
-    /// O convênio chega à entidade pelo CNPJ do convenente — ⛔ pelo nome, que no arquivo de
+    /// O convênio chega à entidade pelo CNPJ do convenente — não pelo nome, que no arquivo de
     /// emendas vem escrito de outro jeito.
     /// </summary>
     [SkippableFact]

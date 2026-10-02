@@ -13,12 +13,15 @@ export const EVENTO_CONSENTIMENTO = 'poligraph:consentimento';
 
 export type Escolha = { versao: string; aceito: boolean; em: string };
 
+/**
+ * `return null;`: navegador anônimo, armazenamento bloqueado
+ */
 export function lerConsentimento(): Escolha | null {
   try {
     const bruto = localStorage.getItem(CHAVE_CONSENTIMENTO);
     return bruto ? (JSON.parse(bruto) as Escolha) : null;
   } catch {
-    return null; // navegador anônimo, armazenamento bloqueado
+    return null;
   }
 }
 

@@ -28,7 +28,7 @@ function renderizarEm(endereco: string, elemento: React.ReactNode = <BarraDePeri
 }
 
 /**
- * ⭐ A escolha do período, no alto do conteúdo: na faixa escura ficava escondida (autor,
+ * DECISÃO: A escolha do período, no alto do conteúdo: na faixa escura ficava escondida (autor,
  * 2026-10-02). E ela diz que a legislatura é das DUAS casas.
  */
 describe('a barra de período', () => {

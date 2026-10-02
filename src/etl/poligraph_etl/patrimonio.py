@@ -8,16 +8,16 @@
 | Candidatura → CPF → hash | `NR_CPF_CANDIDATO` | `consulta_cand_{ano}.zip` |
 | Hash → parlamentar | `cpf_hash` | `pessoas` |
 
-📐 Medido em 2026-09-25: 696 dos 747 parlamentares que votaram na 57ª têm bem declarado
+MEDIDO: Medido em 2026-09-25: 696 dos 747 parlamentares que votaram na 57ª têm bem declarado
 (643 em 2022, 426 em 2018).
 
-## 🔴 O que ⛔ entra
+## RISCO: O que não entra
 
 - **A descrição do bem.** É texto livre e traz endereço ("prédio comercial situado à rua…").
-  A pergunta da tela é quanto e em quê, ⛔ onde. Minimização (LGPD).
-- **O CPF em claro.** Vira hash na leitura e ⛔ sai da memória.
+  A pergunta da tela é quanto e em quê, não onde. Minimização (LGPD).
+- **O CPF em claro.** Vira hash na leitura e não sai da memória.
 
-⚠️ O TSE publica um arquivo por UF, e às vezes também um `BRASIL`. Com o `BRASIL` presente,
+ATENÇÃO: O TSE publica um arquivo por UF, e às vezes também um `BRASIL`. Com o `BRASIL` presente,
 lê-se só ele: somar os dois contaria cada bem duas vezes.
 """
 
@@ -53,7 +53,7 @@ def linhas_do_zip(arquivo_zip: Path):
 def candidaturas(arquivo_zip: Path, hashes: dict[str, int], cargos: set[str] = CARGOS_DO_CONGRESSO) -> dict[str, int]:
     """`SQ_CANDIDATO` → `pessoas.id`, para as candidaturas de parlamentar que estão na base.
 
-    🔴 O CPF vira hash aqui mesmo e ⛔ é guardado: só o hash é comparado.
+    RISCO: O CPF vira hash aqui mesmo e não é guardado: só o hash é comparado.
     """
     ligadas = {}
     for r in linhas_do_zip(arquivo_zip):
@@ -66,7 +66,7 @@ def candidaturas(arquivo_zip: Path, hashes: dict[str, int], cargos: set[str] = C
 
 
 def bens_para_linhas(linhas, candidaturas_ligadas: dict[str, int], ano: int) -> list[dict]:
-    """Soma os bens por pessoa e tipo. ⛔ Lê `DS_BEM_CANDIDATO`, que traz endereço."""
+    """Soma os bens por pessoa e tipo. Não Lê `DS_BEM_CANDIDATO`, que traz endereço."""
     somas: dict[tuple[int, str], list] = defaultdict(lambda: [0.0, 0])
     for r in linhas:
         pessoa = candidaturas_ligadas.get(r.get("SQ_CANDIDATO"))

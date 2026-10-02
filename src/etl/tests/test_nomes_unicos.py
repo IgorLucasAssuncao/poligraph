@@ -1,6 +1,6 @@
 """Nenhum módulo do ETL define a mesma função duas vezes.
 
-🔴 Em Python a segunda definição substitui a primeira sem aviso. Aconteceu em
+RISCO: Em Python a segunda definição substitui a primeira sem aviso. Aconteceu em
 `persistencia.py`: a `gravar_receitas` da arrecadação federal apagou a do financiamento
 de campanha, e o comando `fundo` passaria a gravar na tabela errada.
 """

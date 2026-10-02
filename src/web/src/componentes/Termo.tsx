@@ -3,16 +3,16 @@ import { useEffect, useId, useRef, useState } from 'react';
 /**
  * Explicação de termo institucional, sob demanda.
  *
- * 🔴 A **RNF-29 proíbe jargão na interface do cidadão** — *votação nominal*, *destaque*,
+ * RISCO: A **RNF-29 proíbe jargão na interface do cidadão** — *votação nominal*, *destaque*,
  * *requerimento*, *proposição*, *substitutivo*, *polaridade*, *obstrução*. Este
- * componente ⛔ NÃO é licença para trazer essas palavras de volta.
+ * componente NÃO é licença para trazer essas palavras de volta.
  *
- * ⭐ Ele serve ao caso que a **RNF-31** admite: o termo que é *contexto descritivo* e
+ * DECISÃO: Ele serve ao caso que a **RNF-31** admite: o termo que é *contexto descritivo* e
  * não tem substituto honesto — "legislatura", "partido", "plenário". Trocar por
  * aproximação ("período", "grupo") seria impreciso; deixar sem explicação exclui quem
  * não acompanha política, que é justamente o público do trabalho.
  *
- * ⚠️ Abre por clique e por foco, ⛔ nunca só por `:hover`. Em telefone não existe hover,
+ * ATENÇÃO: Abre por clique e por foco, nunca só por `:hover`. Em telefone não existe hover,
  * e a explicação simplesmente não existiria para metade dos visitantes.
  */
 export function Termo({ nome, children }: { nome: keyof typeof GLOSSARIO; children?: React.ReactNode }) {
@@ -64,11 +64,11 @@ export function Termo({ nome, children }: { nome: keyof typeof GLOSSARIO; childr
 }
 
 /**
- * ⚠️ Explicações escritas para quem **não acompanha política** — é o público do
+ * ATENÇÃO: Explicações escritas para quem **não acompanha política** — é o público do
  * trabalho. Sem "conforme o regimento", sem remissão a artigo de lei: o verbete que
  * exige outro verbete não explicou nada.
  *
- * ⭐ Cada uma diz também **por que aquilo importa aqui**, não só o que é. Saber que
+ * DECISÃO: Cada uma diz também **por que aquilo importa aqui**, não só o que é. Saber que
  * legislatura dura quatro anos não ajuda; saber que por isso não dá para comparar
  * deputado de mandatos diferentes, ajuda.
  */

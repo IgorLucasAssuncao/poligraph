@@ -1,6 +1,6 @@
 """A ementa que destrava a curadoria (PL11).
 
-⚠️ Sem ela, quem cura lê só a descrição da votação — que diz o NÚMERO do projeto e não
+ATENÇÃO: Sem ela, quem cura lê só a descrição da votação — que diz o NÚMERO do projeto e não
 diz sobre o que ele é.
 """
 
@@ -28,7 +28,7 @@ def linha(votacao="2162802-89", proposicao="2121642", **campos) -> dict:
 
 
 def test_extrai_a_proposicao_e_o_vinculo_de_uma_leitura_so():
-    """⭐ Os dois saem juntos: separar exigiria percorrer o arquivo duas vezes."""
+    """DECISÃO: Os dois saem juntos: separar exigiria percorrer o arquivo duas vezes."""
     lista, vinculo = proposicoes.para_linhas([linha()], CONHECIDAS)
 
     assert vinculo == {"2162802-89": 2121642}
@@ -45,7 +45,7 @@ def test_a_ementa_e_o_que_importa():
 
 
 def test_quebra_de_linha_dentro_da_ementa_e_colapsada():
-    """⚠️ A fonte traz quebra de linha DENTRO do campo — o mesmo vício dos outros CSVs."""
+    """ATENÇÃO: A fonte traz quebra de linha DENTRO do campo — o mesmo vício dos outros CSVs."""
     lista, _ = proposicoes.para_linhas(
         [linha(proposicao_ementa="Altera  a Lei\nnº 7.210,\n  de 1984.")], CONHECIDAS
     )
@@ -59,7 +59,7 @@ def test_quebra_de_linha_dentro_da_ementa_e_colapsada():
 
 
 def test_votacao_fora_da_base_e_descartada():
-    """🔴 O vínculo apontaria para votação inexistente, e a FK recusaria."""
+    """RISCO: O vínculo apontaria para votação inexistente, e a FK recusaria."""
     lista, vinculo = proposicoes.para_linhas([linha(votacao="999-1")], CONHECIDAS)
 
     assert (lista, vinculo) == ([], {})
@@ -72,7 +72,7 @@ def test_linha_sem_proposicao_e_descartada():
 
 
 def test_proposicao_nao_numerica_e_descartada():
-    """Id que não é número é mudança de contrato, ⛔ não caso normal."""
+    """Id que não é número é mudança de contrato, não caso normal."""
     lista, vinculo = proposicoes.para_linhas([linha(proposicao="PL-2672")], CONHECIDAS)
 
     assert (lista, vinculo) == ([], {})
@@ -84,7 +84,7 @@ def test_proposicao_nao_numerica_e_descartada():
 
 
 def test_votacao_com_varios_objetos_vincula_uma_vez():
-    """⚠️ A mesma votação aparece repetida quando tem mais de um objeto em pauta."""
+    """ATENÇÃO: A mesma votação aparece repetida quando tem mais de um objeto em pauta."""
     lista, vinculo = proposicoes.para_linhas(
         [linha(), linha(proposicao="9999999")], CONHECIDAS
     )
@@ -94,7 +94,7 @@ def test_votacao_com_varios_objetos_vincula_uma_vez():
 
 
 def test_mesma_proposicao_em_votacoes_diferentes_grava_uma_vez():
-    """⭐ Vários turnos do mesmo projeto: duas votações, uma proposição."""
+    """DECISÃO: Vários turnos do mesmo projeto: duas votações, uma proposição."""
     lista, vinculo = proposicoes.para_linhas(
         [linha(votacao="2162802-89"), linha(votacao="2162802-90")], CONHECIDAS
     )
@@ -104,14 +104,14 @@ def test_mesma_proposicao_em_votacoes_diferentes_grava_uma_vez():
 
 
 def test_ementa_vazia_vira_nula_e_nao_string_vazia():
-    """⛔ String vazia na tela vira um espaço em branco que parece defeito de layout."""
+    """Não String vazia na tela vira um espaço em branco que parece defeito de layout."""
     lista, _ = proposicoes.para_linhas([linha(proposicao_ementa="  ")], CONHECIDAS)
 
     assert lista[0]["ementa"] is None
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 O Senado — outra fonte, outro namespace
+# RISCO: O Senado — outra fonte, outro namespace
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -119,7 +119,7 @@ def materia(codigo="171682", **campos) -> dict:
     base = {
         "codigo": codigo,
         "sigla_tipo": "PLP",
-        # ⚠️ A fonte manda com zeros à esquerda.
+        # ATENÇÃO: A fonte manda com zeros à esquerda.
         "numero": "00124",
         "ano": "2022",
         "ementa": "Altera o Código Tributário Nacional.",
@@ -130,12 +130,12 @@ def materia(codigo="171682", **campos) -> dict:
 
 
 def test_a_casa_faz_parte_da_linha():
-    """🔴 As duas fontes numeram no mesmo espaço.
+    """RISCO: As duas fontes numeram no mesmo espaço.
 
-    📐 Medido em 2026-08-29: a Câmara vai de 106.701 a 2.638.483 e o Senado de 121.883 a
-    175.446 — 3 proposições da Câmara já estão dentro da faixa do Senado. ⛔ Sem a casa
+    MEDIDO: Medido em 2026-08-29: a Câmara vai de 106.701 a 2.638.483 e o Senado de 121.883 a
+    175.446 — 3 proposições da Câmara já estão dentro da faixa do Senado. Sem a casa
     na chave, uma matéria sobrescreveria a ementa de um projeto da outra casa, e o
-    defeito ⛔ não daria erro: apareceria como assunto plausível e errado na ficha.
+    defeito não daria erro: apareceria como assunto plausível e errado na ficha.
     """
     linhas, _ = proposicoes.do_senado([materia()], {"SF-1": "171682"})
 
@@ -144,7 +144,7 @@ def test_a_casa_faz_parte_da_linha():
 
 
 def test_zeros_a_esquerda_saem_do_numero():
-    """⚠️ Sem isto a tela mostraria "PLP 00124/2022"."""
+    """ATENÇÃO: Sem isto a tela mostraria "PLP 00124/2022"."""
     linhas, _ = proposicoes.do_senado([materia()], {"SF-1": "171682"})
 
     assert linhas[0]["numero"] == 124
@@ -158,21 +158,21 @@ def test_a_ementa_e_o_que_importa():
 
 
 def test_materia_sem_ementa_e_descartada():
-    """⛔ Gravar linha sem ementa ⛔ não resolve nada: a ficha continuaria no número."""
+    """Não Gravar linha sem ementa não resolve nada: a ficha continuaria no número."""
     linhas, vinculo = proposicoes.do_senado([materia(ementa="")], {"SF-1": "171682"})
 
     assert (linhas, vinculo) == ([], {})
 
 
 def test_materia_que_nao_respondeu_e_descartada():
-    """⛔ `baixar_materia` devolve None em falha — o tratamento ⛔ não pode estourar."""
+    """Não `baixar_materia` devolve None em falha — o tratamento não pode estourar."""
     linhas, vinculo = proposicoes.do_senado([None], {"SF-1": "171682"})
 
     assert (linhas, vinculo) == ([], {})
 
 
 def test_vinculo_so_aponta_para_materia_gravada():
-    """🔴 Apontar para matéria descartada deixaria `proposicao_id` preenchido, e a chave
+    """RISCO: Apontar para matéria descartada deixaria `proposicao_id` preenchido, e a chave
     estrangeira recusaria a votação inteira.
     """
     linhas, vinculo = proposicoes.do_senado(
@@ -184,7 +184,7 @@ def test_vinculo_so_aponta_para_materia_gravada():
 
 
 def test_varias_votacoes_da_mesma_materia():
-    """⭐ 421 votações apontam para 359 matérias: a mesma matéria vai a voto várias vezes."""
+    """DECISÃO: 421 votações apontam para 359 matérias: a mesma matéria vai a voto várias vezes."""
     _, vinculo = proposicoes.do_senado(
         [materia()], {"SF-1": "171682", "SF-2": "171682"}
     )

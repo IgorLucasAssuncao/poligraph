@@ -7,7 +7,7 @@ import { Termo } from './Termo';
 /**
  * Quem mandou dinheiro de emenda — a mesma apresentação na cidade e na entidade.
  *
- * 🔴 Bancada e comissão ⛔ são pessoas, e vêm em lista própria, explicadas: misturadas aos
+ * RISCO: Bancada e comissão não são pessoas, e vêm em lista própria, explicadas: misturadas aos
  * deputados, "Bancada de Minas Gerais" lia como o nome de um político.
  */
 export function LinhaDoParlamentar({ parlamentar: p }: { parlamentar: ParlamentarQueMandou }) {
@@ -40,7 +40,7 @@ const ROTULO_DO_COLETIVO: Record<ColetivoQueMandou['tipo'], string> = {
   OUTRO: 'Autor coletivo',
 };
 
-/** Bancadas e comissões: autores que ⛔ são pessoas, cada um com o que é. */
+/** Bancadas e comissões: autores que não são pessoas, cada um com o que é. */
 export function Coletivos({ coletivos }: { coletivos: ColetivoQueMandou[] }) {
   if (coletivos.length === 0) return null;
 

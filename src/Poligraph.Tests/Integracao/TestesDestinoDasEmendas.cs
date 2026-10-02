@@ -81,7 +81,7 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
 
     /// <summary>
     /// O CNPJ de empresa sai — é a chave da página da entidade —; o de empresário
-    /// individual, ⛔: é de uma pessoa.
+    /// individual, não : é de uma pessoa.
     /// </summary>
     [SkippableFact]
     public async Task Favorecidos_SoSaiCnpjDePessoaJuridica()
@@ -106,7 +106,7 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
     }
 
     /// <summary>
-    /// A cidade sai da sede de quem recebeu, pelo CNPJ — ⛔ da localidade declarada na emenda.
+    /// A cidade sai da sede de quem recebeu, pelo CNPJ — não da localidade declarada na emenda.
     /// </summary>
     [SkippableFact]
     public async Task Cidades_SaemDaSedeDeQuemRecebeu()

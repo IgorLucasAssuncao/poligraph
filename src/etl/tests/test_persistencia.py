@@ -1,12 +1,12 @@
 """Testes de integração da gravação, contra Postgres real.
 
-🔴 O que estes testes provam e nenhum unitário provaria: que a carga é IDEMPOTENTE.
+RISCO: O que estes testes provam e nenhum unitário provaria: que a carga é IDEMPOTENTE.
 
 O ETL roda todo dia sobre os mesmos arquivos — a Câmara os reconstrói toda madrugada,
 inclusive os anos fechados (achado #19). Sem idempotência o banco dobraria de tamanho
 por dia, e ninguém perceberia até o disco encher.
 
-⚠️ Exigem Docker. Sem ele, são PULADOS — teste vermelho por falta de ambiente treina
+ATENÇÃO: Exigem Docker. Sem ele, são PULADOS — teste vermelho por falta de ambiente treina
 a pessoa a ignorar vermelho.
 """
 
@@ -22,14 +22,14 @@ psycopg = pytest.importorskip("psycopg")
 from poligraph_etl import persistencia  # noqa: E402
 from poligraph_etl.similaridade import ParSimilar  # noqa: E402
 
-# 🔴 Schema mínimo espelhando o que o EF cria. ⛔ NÃO é a fonte da verdade.
+# RISCO: Schema mínimo espelhando o que o EF cria. NÃO é a fonte da verdade.
 #
-# ⚠️ Escrever este DDL à mão já custou caro: durante todo o desenvolvimento ele usou os
+# ATENÇÃO: Escrever este DDL à mão já custou caro: durante todo o desenvolvimento ele usou os
 #    nomes NO SINGULAR (`votacao`, `voto`, `pessoa`) enquanto o EF criava no plural. Os
 #    testes passavam contra um banco que este arquivo inventava, e o ETL nunca havia
 #    conseguido falar com o banco de verdade.
 #
-# ⭐ `test_contrato_schema.py` agora lê o `PoligraphDb.cs` e trava os NOMES. O que
+# DECISÃO: `test_contrato_schema.py` agora lê o `PoligraphDb.cs` e trava os NOMES. O que
 #    continua sem proteção aqui são as COLUNAS — ver PL37.
 
 
@@ -42,7 +42,7 @@ def limpar(conexao):
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 RF-09 — idempotência
+# RISCO: RF-09 — idempotência
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -67,11 +67,11 @@ def test_pessoa_reingerida_com_nome_novo_atualiza(conexao):
 
 
 def test_fonte_sem_foto_nao_apaga_a_foto_ja_gravada(conexao):
-    """🔴 A regressão que deixou os 104 senadores sem rosto no banco.
+    """RISCO: A regressão que deixou os 104 senadores sem rosto no banco.
 
     `ingerir_senado` grava DUAS vezes a mesma pessoa: primeiro pela lista de exercício,
     que traz `UrlFotoParlamentar`, e depois por `senadores_dos_votos`, que devolve os
-    mesmos senadores com `url_foto` nula — porque o registro de voto ⛔ não tem foto.
+    mesmos senadores com `url_foto` nula — porque o registro de voto não tem foto.
 
     Com atribuição direta a segunda passada apagava a primeira, sem erro e sem log.
     """
@@ -86,7 +86,7 @@ def test_fonte_sem_foto_nao_apaga_a_foto_ja_gravada(conexao):
 
 
 def test_foto_nova_substitui_a_antiga(conexao):
-    """⚠️ O COALESCE preserva, ⛔ não congela: foto nova continua entrando."""
+    """ATENÇÃO: O COALESCE preserva, não congela: foto nova continua entrando."""
     antiga = _pessoa("204528", "Ana Ribeiro")
     antiga["url_foto"] = "https://camara.leg.br/bandep/antiga.jpg"
     persistencia.gravar_pessoas(conexao, [antiga])
@@ -121,7 +121,7 @@ def test_voto_reingerido_nao_duplica(conexao):
 
 
 def test_voto_corrigido_pela_camara_e_atualizado(conexao):
-    """⚠️ Sem o DO UPDATE, uma correção da Câmara seria ignorada em silêncio."""
+    """ATENÇÃO: Sem o DO UPDATE, uma correção da Câmara seria ignorada em silêncio."""
     pessoa_id = _preparar_pessoa_e_votacao(conexao)
 
     persistencia.gravar_votos(conexao, [_voto("2358548-89", pessoa_id, 1)])
@@ -132,7 +132,7 @@ def test_voto_corrigido_pela_camara_e_atualizado(conexao):
 
 
 def test_partido_no_voto_e_historico_e_acompanha_correcao(conexao):
-    """⭐ 14 deputados trocaram de partido só em 2025 — o campo é registro do momento."""
+    """DECISÃO: 14 deputados trocaram de partido só em 2025 — o campo é registro do momento."""
     pessoa_id = _preparar_pessoa_e_votacao(conexao)
 
     persistencia.gravar_votos(conexao, [_voto("2358548-89", pessoa_id, 1, partido="PARTIDO-A")])
@@ -165,7 +165,7 @@ def test_execucao_abre_em_andamento_e_fecha_concluida(conexao):
 
 
 def test_similaridade_abaixo_do_minimo_e_rejeitada_pelo_banco(conexao):
-    """🔴 RN-02 no banco. O Python pode ter bug; o CHECK não deixa passar."""
+    """RISCO: RN-02 no banco. O Python pode ter bug; o CHECK não deixa passar."""
     pessoa_id = _preparar_pessoa_e_votacao(conexao)
     outro = persistencia.gravar_pessoas(conexao, [_pessoa("204529", "Bruno Tavares")])
     ids = [r[0] for r in conexao.execute("SELECT id FROM pessoas ORDER BY id").fetchall()]
@@ -178,7 +178,7 @@ def test_similaridade_abaixo_do_minimo_e_rejeitada_pelo_banco(conexao):
 
 
 def test_duas_execucoes_convivem_sem_conflito(conexao):
-    """⭐ Cada execução é um retrato independente — é o que dá reprodutibilidade."""
+    """DECISÃO: Cada execução é um retrato independente — é o que dá reprodutibilidade."""
     _preparar_pessoa_e_votacao(conexao)
     persistencia.gravar_pessoas(conexao, [_pessoa("204529", "Bruno Tavares")])
     ids = [r[0] for r in conexao.execute("SELECT id FROM pessoas ORDER BY id").fetchall()]
@@ -301,7 +301,7 @@ def test_quem_so_vota_numa_casa_nao_entra_na_matriz_da_outra(conexao):
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 Achado #35 — "votou na legislatura corrente", ⛔ "tem voto"
+# RISCO: Achado #35 — "votou na legislatura corrente", não "tem voto"
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -349,7 +349,7 @@ def test_desempate_nao_conta_voto_de_legislatura_antiga(conexao):
 
 
 def test_legislatura_corrente_e_a_maior_da_base(conexao):
-    """Antes da 57ª chegar, a 56ª É a corrente — ⛔ um número fixo."""
+    """Antes da 57ª chegar, a 56ª É a corrente — não um número fixo."""
     persistencia.gravar_pessoas(conexao, [_pessoa("100", "Ex Deputado")])
     pessoa = conexao.execute("SELECT id FROM pessoas").fetchone()[0]
     persistencia.gravar_votacoes(
@@ -361,7 +361,7 @@ def test_legislatura_corrente_e_a_maior_da_base(conexao):
 
 
 def test_legislatura_com_pouco_dado_fica_sem_grafo(conexao, caplog):
-    """Abaixo de `VOTACOES_MINIMAS_PARA_GRAFO` ⛔ se abre execução: a tela ⛔ a oferece."""
+    """Abaixo de `VOTACOES_MINIMAS_PARA_GRAFO` não se abre execução: a tela não a oferece."""
     from poligraph_etl.__main__ import VOTACOES_MINIMAS_PARA_GRAFO, _analisar
 
     antiga, atual = _com_historico(conexao)
@@ -376,7 +376,7 @@ def test_legislatura_com_pouco_dado_fica_sem_grafo(conexao, caplog):
 
 
 def test_ceaps_casa_o_nome_so_com_senador_da_legislatura_da_despesa(conexao):
-    """O senador de 2003 ⛔ pode receber a despesa do homônimo de 2023 (achado #35)."""
+    """O senador de 2003 não pode receber a despesa do homônimo de 2023 (achado #35)."""
     persistencia.gravar_pessoas(
         conexao,
         [{**_pessoa("1", "Fulano"), "fonte": "SENADO"}, {**_pessoa("2", "Fulano"), "fonte": "SENADO"}],
@@ -413,7 +413,7 @@ def test_apagar_votacoes_leva_os_votos_junto(conexao):
 
 
 def test_apagar_votacao_com_pergunta_recusa_tudo(conexao):
-    """🔴 A cascata levaria a pergunta do questionário junto, sem ninguém decidir."""
+    """RISCO: A cascata levaria a pergunta do questionário junto, sem ninguém decidir."""
     _preparar_pessoa_e_votacao(conexao)
     persistencia.gravar_votacoes(conexao, [_votacao("SF-1483")])
     conexao.execute("INSERT INTO perguntas (id, votacao_id) VALUES ('q-teste', '2358548-89')")

@@ -30,7 +30,7 @@ def _zip(tmp_path, nome, arquivos: dict[str, str]):
         ("  https://x.com/fulano  ", "https://x.com/fulano"),
         # O TSE publica em caixa alta; o caminho diferencia maiúsculas e fica como veio.
         ("HTTPS://YOUTUBE.COM/RogerioCarvalho13", "https://youtube.com/RogerioCarvalho13"),
-        # 🔴 Outro esquema vira link que executa script: recusado.
+        # RISCO: Outro esquema vira link que executa script: recusado.
         ("javascript:alert(1)", None),
         ("fulano no instagram", None),
         ("", None),
@@ -48,7 +48,7 @@ def test_normalizar_so_aceita_http(bruto, esperado):
         ("https://m.facebook.com/a", "FACEBOOK"),
         ("https://twitter.com/a", "X"),
         ("https://x.com/a", "X"),
-        # ⚠️ Domínio inteiro: "max.com" termina em "x.com", mas ⛔ é o X.
+        # ATENÇÃO: Domínio inteiro: "max.com" termina em "x.com", mas não é o X.
         ("https://max.com/a", "OUTRA"),
         ("https://youtu.be/a", "YOUTUBE"),
         ("https://fulano.com.br", "OUTRA"),
@@ -106,7 +106,7 @@ def test_bens_somam_por_tipo_e_nunca_leem_a_descricao():
 
     assert sorted((l["tipo_bem"], l["valor"], l["quantidade"]) for l in saida) == [
         ("Casa", 500_000.0, 2), ("Veículo", 50_000.0, 1)]
-    # 🔴 Nenhum pedaço da descrição chega à linha gravada.
+    # RISCO: Nenhum pedaço da descrição chega à linha gravada.
     assert not any("RUA" in str(v) or "PLACA" in str(v) for l in saida for v in l.values())
 
 

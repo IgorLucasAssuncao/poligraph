@@ -11,7 +11,7 @@ namespace Poligraph.Tests.Integracao;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Os dois erros que este mapa comete sem avisar: pôr no mapa o que ⛔ tem sede — o
+/// Os dois erros que este mapa comete sem avisar: pôr no mapa o que não tem sede — o
 /// intermediário, a pessoa — e deixar de somar o que ficou fora. Cada um tem o seu teste.
 /// </para>
 /// </remarks>
@@ -113,12 +113,12 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
     }
 
     /// <summary>
-    /// A emenda de bancada ⛔ é de uma pessoa: vai para a lista dos coletivos, e ⛔ aparece
+    /// A emenda de bancada não é de uma pessoa: vai para a lista dos coletivos, e não aparece
     /// como se fosse um deputado.
     /// </summary>
     /// <summary>
     /// Os convênios da cidade são os de quem tem sede nela, pelo CNPJ; e "a liberar" soma só os
-    /// em execução — nos outros a execução acabou, e a diferença ⛔ é dinheiro que vai chegar.
+    /// em execução — nos outros a execução acabou, e a diferença não é dinheiro que vai chegar.
     /// </summary>
     [SkippableFact]
     public async Task Municipio_ConveniosDaCidade_ALiberarSoEmExecucao()
@@ -215,7 +215,7 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
         Assert.Equal(Curitiba, Assert.Single(achados).CodigoIbge);
     }
 
-    /// <summary>Código IBGE e TOM têm tamanho fixo; um código errado ⛔ entra.</summary>
+    /// <summary>Código IBGE e TOM têm tamanho fixo; um código errado não entra.</summary>
     [SkippableTheory]
     [InlineData("'411373', '7979'", "ck_municipio_ibge")]
     [InlineData("'4113734', '797'", "ck_municipio_tom")]

@@ -5,12 +5,12 @@
 | Tabela de municípios (TOM ↔ IBGE) | `www.gov.br/receitafederal/dados/municipios.csv` | 234 KB, 5.571 municípios |
 | Cadastro de estabelecimentos | Nextcloud público da Receita, pasta mensal `AAAA-MM` | 10 ZIPs, ~6 GB |
 
-⚠️ O cadastro saiu do servidor de arquivos simples para um Nextcloud. A listagem da página
+ATENÇÃO: O cadastro saiu do servidor de arquivos simples para um Nextcloud. A listagem da página
 precisa de JavaScript; o que funciona sem navegador é o **WebDAV público** do
 compartilhamento, com o token do link como usuário e senha vazia. Conferido em
 2026-09-25: pastas de `2026-06` a `2026-09`.
 
-⚠️ Tudo em **Latin-1**, ⛔ UTF-8.
+ATENÇÃO: Tudo em **Latin-1**, não UTF-8.
 """
 
 import csv
@@ -87,7 +87,7 @@ def ler_tabela_tom(caminho: Path) -> list[dict]:
 def sedes(arquivos: list[Path], alvos: set[str]) -> dict[str, str]:
     """CNPJ → código TOM do município da sede, só para os CNPJs pedidos.
 
-    ⚠️ São ~70 milhões de linhas; ler tudo em pandas estouraria a memória. Lê em fluxo e
+    ATENÇÃO: São ~70 milhões de linhas; ler tudo em pandas estouraria a memória. Lê em fluxo e
     guarda só o que interessa. Colunas do layout da Receita: 0-2 = CNPJ básico, ordem e
     dígito; 20 = município (código TOM).
     """

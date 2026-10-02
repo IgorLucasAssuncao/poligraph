@@ -2,6 +2,9 @@ import { fireEvent, render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { Avatar } from './Avatar';
 
+/**
+ * O comentário dizia "cai para as iniciais", e o código só escondia a imagem.
+ */
 describe('Avatar', () => {
   it('mostra as iniciais mesmo com foto: elas aparecem antes de a foto chegar', () => {
     const { container } = render(<Avatar nome="Ana Ribeiro" fotoUrl="https://www.camara.leg.br/x.jpg" />);
@@ -18,7 +21,6 @@ describe('Avatar', () => {
     expect(foto.getAttribute('decoding')).toBe('async');
   });
 
-  /** O comentário dizia "cai para as iniciais", e o código só escondia a imagem. */
   it('se a foto falha, as iniciais ficam no lugar', () => {
     const { container } = render(<Avatar nome="Ana Ribeiro" fotoUrl="https://www.camara.leg.br/x.jpg" />);
 

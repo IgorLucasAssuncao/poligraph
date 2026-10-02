@@ -4,12 +4,12 @@ import { revogarConsentimento } from '../consentimento';
 /**
  * A página de política de privacidade.
  *
- * 🔴 Ela é obrigatória por dois motivos independentes:
+ * RISCO: Ela é obrigatória por dois motivos independentes:
  *  1. A URL é campo OBRIGATÓRIO da tela de consentimento do Google — sem ela o app
  *     não passa de "Testing" para publicado.
  *  2. LGPD: é onde as finalidades, bases legais e direitos ficam declarados.
  *
- * ⚠️ O texto é rascunho técnico, não peça jurídica revisada. Precisa passar pelo
+ * ATENÇÃO: O texto é rascunho técnico, não peça jurídica revisada. Precisa passar pelo
  * orientador antes de o site ir ao ar.
  */
 export function PoliticaDePrivacidade() {
@@ -40,14 +40,14 @@ export function PoliticaDePrivacidade() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
  * Markdown mínimo → HTML.
  *
- * ⚠️ Deliberadamente sem biblioteca: a entrada é uma constante do próprio código, não
+ * ATENÇÃO: Deliberadamente sem biblioteca: a entrada é uma constante do próprio código, não
  * conteúdo de terceiro. Trazer um parser inteiro para renderizar um texto fixo seria
  * dependência sem problema que a justifique.
+ *
+ * `if (/^\|[\s|:-]+\|$/.test(linha)) continue;`: separador da tabela
  */
 function paraHtml(markdown: string): string {
   const linhas = markdown.split('\n');
@@ -56,7 +56,7 @@ function paraHtml(markdown: string): string {
 
   for (const linha of linhas) {
     if (linha.startsWith('|')) {
-      if (/^\|[\s|:-]+\|$/.test(linha)) continue;   // separador da tabela
+      if (/^\|[\s|:-]+\|$/.test(linha)) continue;
 
       const celulas = linha.split('|').slice(1, -1).map((c) => inline(c.trim()));
       if (!emTabela) {

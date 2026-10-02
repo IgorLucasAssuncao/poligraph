@@ -8,8 +8,8 @@ de centenas de votações às poucas dezenas que valem a leitura.
 
 Tabelas `votacoes`, `votos` e `proposicoes` de uma casa e legislatura.
 
-⭐ A **ementa** vem de `proposicoes`, ligada por `votacoes.proposicao_id`. Sem ela a
-curadoria lê só a descrição da votação, que ⛔ não diz sobre o que a matéria é.
+DECISÃO: A **ementa** vem de `proposicoes`, ligada por `votacoes.proposicao_id`. Sem ela a
+curadoria lê só a descrição da votação, que não diz sobre o que a matéria é.
 
 ## CRITÉRIO
 
@@ -56,14 +56,14 @@ class Candidata:
     nao: int
     polaridade_sugerida: int
 
-    # ⭐ A EMENTA — é ela que torna a leitura humana possível.
+    # DECISÃO: A EMENTA — é ela que torna a leitura humana possível.
     #
-    # 🔴 A `descricao` diz o NÚMERO do projeto e ⛔ não diz sobre o que ele é:
+    # RISCO: A `descricao` diz o NÚMERO do projeto e não diz sobre o que ele é:
     # *"Aprovado o Substitutivo ao Projeto de Lei Complementar nº 80, de 2026, adotado
     # pelo relator da Comissão de…"*. Escrever pergunta em linguagem leiga a partir
     # disso é adivinhação — e a PL11 é o maior bloqueio do projeto.
     #
-    # ⚠️ Nula em 3 das 266 substantivas da 57ª (98,9% têm) — ver achado sobre PL40.
+    # ATENÇÃO: Nula em 3 das 266 substantivas da 57ª (98,9% têm) — ver achado sobre PL40.
     ementa: str | None = None
 
     @property
@@ -87,7 +87,7 @@ def candidatas(
                count(*) FILTER (WHERE v.valor = -1) AS nao
           FROM votacoes vt
           JOIN votos v ON v.votacao_id = vt.id
-          -- 🔴 `AND p.casa = vt.casa` ⛔ NÃO é redundante com a chave estrangeira.
+          -- RISCO: `AND p.casa = vt.casa` NÃO é redundante com a chave estrangeira.
           --    A FK garante que o VÍNCULO seja da mesma casa; ligar apenas por `id`
           --    leria a linha errada assim mesmo, porque as duas fontes numeram no
           --    mesmo espaço e as faixas se sobrepõem. A curadoria mostraria a ementa

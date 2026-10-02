@@ -1,19 +1,19 @@
 """CONFERÊNCIA — regras de plausibilidade sobre o que já está no banco.
 
-Roda DEPOIS da carga e ⛔ escreve nada. Existe porque a restrição do banco e o canário
-de volume ⛔ pegam o número plausível e errado: os 203 senadores da 55ª passaram pelos
+Roda DEPOIS da carga e não escreve nada. Existe porque a restrição do banco e o canário
+de volume não pegam o número plausível e errado: os 203 senadores da 55ª passaram pelos
 dois, e só apareceram quando duas legislaturas foram vistas lado a lado (achado #37).
 
 ## Severidade
 
 | | Efeito |
 |---|---|
-| `ERRO` | O comando termina com falha. O dado ⛔ deve ir à tela assim |
+| `ERRO` | O comando termina com falha. O dado não deve ir à tela assim |
 | `AVISO` | Vai ao relatório. É peculiaridade conhecida da fonte, ou pede olhar humano |
 
-## Os limites são medidos, ⛔ escolhidos
+## Os limites são medidos, não escolhidos
 
-📐 Medido em 2026-10-02, 51ª a 57ª legislatura (ver `plano/09 §5.2`):
+MEDIDO: Medido em 2026-10-02, 51ª a 57ª legislatura (ver `plano/09 §5.2`):
 
 | | Câmara | Senado |
 |---|---:|---:|
@@ -21,7 +21,7 @@ dois, e só apareceram quando duas legislaturas foram vistas lado a lado (achado
 | Quem votou numa legislatura — menor e maior | 556 · 644 | 100 · 111 |
 | Teto adotado | **700** | **125** |
 
-O teto deixa folga para suplentes e ⛔ para o dobro: o Senado com 203 era o erro.
+O teto deixa folga para suplentes e não para o dobro: o Senado com 203 era o erro.
 """
 
 from dataclasses import dataclass
@@ -31,7 +31,7 @@ CADEIRAS = {"CAMARA": 513, "SENADO": 81}
 # Quem votou numa legislatura, contando suplentes e quem assumiu no meio.
 TETO_DE_VOTANTES_NA_LEGISLATURA = {"CAMARA": 700, "SENADO": 125}
 
-# 📐 82 de 81 acontece de verdade: no Senado, titular e suplente aparecem juntos no dia
+# MEDIDO: 82 de 81 acontece de verdade: no Senado, titular e suplente aparecem juntos no dia
 #    da troca (SF-5999, 2019-08-14, Tocantins com 4). Passar de 10% acima é outra coisa.
 FOLGA_DE_VOTANTES_NA_VOTACAO = 1.10
 
@@ -94,7 +94,7 @@ def data_fora_da_legislatura(linhas: list[tuple[str, int, str, str]]) -> list[Ac
     """`(casa, legislatura, votação, data)` já filtradas pela consulta. Toda linha é ERRO."""
     return [
         Achado("data-fora-da-legislatura", "ERRO", casa, legislatura,
-               f"{votacao} em {data} ⛔ cai na {legislatura}ª")
+               f"{votacao} em {data} não cai na {legislatura}ª")
         for casa, legislatura, votacao, data in linhas
     ]
 
@@ -125,9 +125,9 @@ def placar_divergente(linhas: list[tuple[int, str, int, int, int, int]]) -> list
 def sem_posicao_nenhuma(linhas: list[tuple[str, int, str]]) -> list[Achado]:
     """`(casa, legislatura, votação)` com voto registrado e nenhuma posição.
 
-    📐 Na Câmara são 11, quase todas eleição de autoridade ("Eleito o Sr. …"): votação
-    secreta de fato, que a base marca como aberta. Ela ⛔ entra no cálculo — sem posição
-    ⛔ há o que comparar —, mas conta como "aberta" no painel.
+    MEDIDO: Na Câmara são 11, quase todas eleição de autoridade ("Eleito o Sr. …"): votação
+    secreta de fato, que a base marca como aberta. Ela não entra no cálculo — sem posição
+    Não há o que comparar —, mas conta como "aberta" no painel.
     """
     return [
         Achado("sem-posicao-nenhuma", "AVISO", casa, legislatura,
@@ -148,7 +148,7 @@ def votacoes_sem_voto(linhas: list[tuple[str, int, int, int]]) -> list[Achado]:
 
 
 def sem_partido(linhas: list[tuple[str, int, int, int]]) -> list[Achado]:
-    """`(casa, legislatura, votos, sem partido)`. 📐 Era assim que os votos de 1998 apareciam."""
+    """`(casa, legislatura, votos, sem partido)`. MEDIDO: Era assim que os votos de 1998 apareciam."""
     return [
         Achado("sem-partido", "AVISO", casa, legislatura,
                f"{sem} de {total} votos sem partido ({sem / total:.1%})")

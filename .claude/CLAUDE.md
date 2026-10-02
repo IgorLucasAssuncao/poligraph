@@ -147,10 +147,27 @@ inflou a contagem em 8,8% — ver [`04-contratos`](../docs/04-contratos.md).
 | 🔴 Ordem dos membros | **Públicos no topo · privados abaixo, na ordem de uso** |
 | Idioma | **Português** — `ServicoAfinidade`, `CalcularAsync` |
 | 🔴 Comentários | **`///` no membro, ⛔ nunca `//` no meio do corpo** |
-| 🔴 No código-fonte | ⛔ **Sem emoji e sem carga emocional.** Os marcadores desta documentação ⛔ **não** valem para `.cs` |
+| 🔴 No código-fonte | ⛔ **Sem emoji e sem carga emocional.** Ver *Comentários em todo o código*, abaixo |
 | Datas | **`DateTimeOffset`**, nunca `DateTime` |
 
 ⛔ Sem `MediatR`, sem `Repository<T>`, sem camadas Domain/Application/Infra, sem AutoMapper.
+
+### Comentários em todo o código — C#, TypeScript, CSS e Python
+
+> **Decisão do autor (2026-10-02).** Vale para todo arquivo de código, e para todo
+> comentário novo. Os 565 comentários de dentro de corpos do front foram movidos para o
+> JSDoc das declarações, e os ~2.500 marcadores emoji do código viraram palavras.
+
+| Regra | Como |
+|---|---|
+| **Só o equivalente ao `summary`** | C#: `///` no membro. TypeScript: **`/** */` na declaração** — função, componente, tipo, constante de módulo, propriedade de tipo. Python: docstring |
+| **Nunca comentário dentro do corpo** | Sem `//` nem `/* */` dentro de função, sem `{/* */}` no JSX, sem comentário no fim da linha. O porquê vai para o JSDoc da declaração dona do trecho |
+| **Sem emoji** | Nem em comentário, nem em teste, nem em log |
+| **Palavras reservadas no lugar dos marcadores** | `RISCO:` (era o vermelho) · `ATENÇÃO:` · `DECISÃO:` · `MEDIDO:` (número medido, com a data) · `FEITO:` |
+| Exceções | Diretivas de ferramenta (`eslint-disable…`, `@ts-expect-error`) ficam onde a ferramenta exige. Símbolos que aparecem para o usuário (✓, ✕) são interface, ⛔ comentário |
+
+Checagem de tipos do front: **`npx tsc -b`** (o mesmo do `npm run build`). ⚠️ `tsc -p .`
+⛔ checa nada: o `tsconfig.json` da raiz tem `"files": []`.
 
 ---
 

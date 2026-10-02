@@ -3,16 +3,16 @@
    Ver .claude/skills/design-visual/SKILL.md para o porquê de cada
    escolha. O resumo:
 
-   🔴 A cor não pode sugerir espectro político (RNF-16). Daí um ÚNICO
+   RISCO: A cor não pode sugerir espectro político (RNF-16). Daí um ÚNICO
       tom de realce, teal — nenhum partido brasileiro o reivindica, e
       ele lê como instrumento de medição, não como bandeira.
 
-   ⚠️ Três papéis tipográficos: Archivo levemente EXPANDIDA para
+   ATENÇÃO: Três papéis tipográficos: Archivo levemente EXPANDIDA para
       display (placa institucional, não pôster condensado), IBM Plex
       Sans para corpo, IBM Plex Mono para todo número — porque todo
       número aqui vem com a base junto e precisa alinhar.
 
-   🔴 Fontes auto-hospedadas. O CDN do Google entregaria o IP de todo
+   RISCO: Fontes auto-hospedadas. O CDN do Google entregaria o IP de todo
       visitante em toda visita, contra a postura do resto do projeto.
    ═══════════════════════════════════════════════════════════════ */
 
@@ -31,7 +31,7 @@
   --realce: #0f766e;
   --realce-hover: #115e57;
   --realce-fraco: #e6f2f0;
-  /* Escala do mapa das emendas: areia → ocre. Quente e de uma família só; ⛔ passa pelo
+  /* Escala do mapa das emendas: areia → ocre. Quente e de uma família só; Não passa pelo
      vermelho, que lembraria partido (RNF-16). */
   --mapa-0: #eef0f2;
   --mapa-1: #fde9b0;
@@ -41,7 +41,7 @@
   --mapa-5: #8a4210;
   --mapa-contorno: #ffffff;
   --perigo: #a8321f;
-  /* ⚠️ Texto sobre o realce. No claro o teal é escuro e pede branco; no escuro
+  /* ATENÇÃO: Texto sobre o realce. No claro o teal é escuro e pede branco; no escuro
         ele clareia e branco perderia contraste — daí ser token, não literal. */
     --sobre-realce: #ffffff;
   /* Contorno de campo e controle: 3:1 contra --fundo e --painel (WCAG 1.4.11). As
@@ -82,7 +82,7 @@
      devagar e freia forte, que é como objeto físico se move — o olho lê como
      natural. Linear lê como máquina.
 
-     ⚠️ Duração acima de ~400ms deixa de ser suavidade e vira espera. */
+     ATENÇÃO: Duração acima de ~400ms deixa de ser suavidade e vira espera. */
   --curva: cubic-bezier(.2, 0, 0, 1);              /* padrão — a maior parte */
   --curva-entrada: cubic-bezier(.05, .7, .1, 1);   /* algo que CHEGA: freia longo */
   --curva-saida: cubic-bezier(.3, 0, .8, .15);     /* algo que SAI: acelera e some */
@@ -90,7 +90,7 @@
   --t-curto: 160ms;     /* hover, cor, borda */
   --t-medio: 260ms;     /* troca de tela */
   --t-longo: 380ms;     /* pergunta a pergunta, onde a distância é maior */
-  /* ⚠️ O painel é o único lugar onde passar de 400ms se justifica: não é espera, é o
+  /* ATENÇÃO: O painel é o único lugar onde passar de 400ms se justifica: não é espera, é o
         momento de recompensa, e ele acontece enquanto a pessoa ainda lê o resultado. */
   --t-painel: 420ms;
 
@@ -106,17 +106,17 @@
 }
 
 /* ═══ TEMA ═════════════════════════════════════════════════════
-   🔴 São TRÊS estados, ⛔ não dois. O padrão é "sistema", e nesse caso nada é
+   RISCO: São TRÊS estados, não dois. O padrão é "sistema", e nesse caso nada é
    carimbado no elemento raiz — só `prefers-color-scheme` separa claro de escuro.
    Escolher explicitamente carimba `data-tema`, e a escolha precisa vencer o sistema
    nos DOIS sentidos: escuro sobre SO claro e claro sobre SO escuro.
 
-   ⚠️ Por isso a paleta escura aparece duas vezes, com seletores diferentes:
+   ATENÇÃO: Por isso a paleta escura aparece duas vezes, com seletores diferentes:
    · dentro do `@media`, guardada por `:not([data-tema='claro'])` — senão o SO escuro
      ignoraria quem pediu claro
    · fora dele, em `[data-tema='escuro']` — senão a escolha não venceria um SO claro
 
-   ⛔ Nenhuma cor pode ter a ÚNICA definição dentro do `@media`: no estado sem carimbo
+   Nenhuma cor pode ter a ÚNICA definição dentro do `@media`: no estado sem carimbo
    ela nunca se aplicaria, e a tela sairia com o texto de um tema sobre o fundo do
    outro. */
 @media (prefers-color-scheme: dark) {
@@ -177,13 +177,13 @@
     --sombra-flutuante: 0 12px 32px rgb(0 0 0 / 60%);
 }
 
-/* ⚠️ `color-scheme` acompanha a escolha: sem isso a barra de rolagem, o `<select>` e o
+/* ATENÇÃO: `color-scheme` acompanha a escolha: sem isso a barra de rolagem, o `<select>` e o
    seletor de data continuam pintados pelo SO, e o contraste some. */
 :root[data-tema='escuro'] { color-scheme: dark; }
 :root[data-tema='claro'] { color-scheme: light; }
 
 * { box-sizing: border-box; }
-/* ⚠️ O tamanho do texto corrido mora AQUI, e ⛔ no :root. No :root ele virava a base do
+/* ATENÇÃO: O tamanho do texto corrido mora AQUI, e não no :root. No :root ele virava a base do
    `rem`: com 15 px na raiz, toda a escala saía 6% menor — o "13 px" dos rótulos virava
    12,2 px, e de 30% a 48% do texto das telas de dado ficava abaixo de 13 px (medido no
    Edge, 25/09/2026). Com a raiz no padrão do navegador (16 px, ou o que a pessoa escolheu),
@@ -192,7 +192,7 @@ body { margin: 0; background: var(--fundo); font-size: var(--t-2); }
 a { color: inherit; text-decoration: none; }
 
 /**
- * ⭐ Resposta tátil em tudo que é clicável, não só nos botões grandes.
+ * DECISÃO: Resposta tátil em tudo que é clicável, não só nos botões grandes.
  *
  * O recuo é minúsculo (2%) e rápido (90ms) de propósito: acima de ~100ms deixa de ser
  * percebido como "o botão respondeu" e vira animação, que atrasa a próxima ação. Abaixo
@@ -211,7 +211,7 @@ button:active:not(:disabled),
 
 button { font: inherit; cursor: pointer; }
 
-/* ⚠️ Display expandida (wdth 114): ocupa a linha com calma, como placa.
+/* ATENÇÃO: Display expandida (wdth 114): ocupa a linha com calma, como placa.
       Condensada seria o reflexo automático de todo título. */
 h1, h2 {
   font-family: var(--display);
@@ -220,12 +220,12 @@ h1, h2 {
 }
 h3 { line-height: 1.25; }
 
-/* ⭐ Todo número deste produto vem com a base junto ("4 de 5"). Algarismo
+/* DECISÃO: Todo número deste produto vem com a base junto ("4 de 5"). Algarismo
       tabular alinha e faz o número parecer medido, não afirmado. */
 strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 
 /* ═══ FOCO ═════════════════════════════════════════════════════ */
-/* 🔴 Um anel só, em tudo. Sem isto o site é inutilizável no teclado. */
+/* RISCO: Um anel só, em tudo. Sem isto o site é inutilizável no teclado. */
 :focus-visible {
   outline: 3px solid var(--realce);
   outline-offset: 2px;
@@ -235,10 +235,10 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 
 /* ═══ MOLDURA DO SITE ══════════════════════════════════════════ */
 /**
- * ⚠️ Estrutura de serviço público, ⛔ não de rede social: faixa de procedência,
+ * ATENÇÃO: Estrutura de serviço público, não de rede social: faixa de procedência,
  *    cabeçalho de largura total com navegação horizontal, corpo, rodapé.
  *
- * ⭐ Largura total de propósito. A versão centralizada com max-width deixava calha
+ * DECISÃO: Largura total de propósito. A versão centralizada com max-width deixava calha
  *    morta dos dois lados — a assinatura visual do Twitter, que é exatamente o que a
  *    banca levantaria.
  */
@@ -255,15 +255,15 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   view-transition-name: faixa;
 }
 .faixa-procedencia strong { font-weight: 600; }
-/* ⭐ O seletor de período mora na faixa: o mesmo lugar em todo o site. Cores da faixa,
-   ⛔ do conteúdo — senão vira um controle claro numa tira escura. */
+/* DECISÃO: O seletor de período mora na faixa: o mesmo lugar em todo o site. Cores da faixa,
+   Não do conteúdo — senão vira um controle claro numa tira escura. */
 .faixa-procedencia { align-items: center; }
 .faixa-periodo { margin-left: auto; font-variant-numeric: tabular-nums; opacity: .85; }
 
-/* ⭐ Pílula na cor da faixa, ⛔ o select nativo com borda branca e fonte de máquina — que
+/* DECISÃO: Pílula na cor da faixa, não o select nativo com borda branca e fonte de máquina — que
    destoava da tira e "ficou bem feio" (autor, 2026-10-02). A seta é desenhada com dois
    gradientes em `currentColor`: acompanha o tema sem imagem. */
-/* ⭐ A barra do período, no alto do conteúdo (2026-10-02): na faixa, ficava escondida. */
+/* DECISÃO: A barra do período, no alto do conteúdo (2026-10-02): na faixa, ficava escondida. */
 .barra-periodo {
   margin: 0 0 1rem; padding: .7rem 1rem;
   background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio);
@@ -325,7 +325,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   color: var(--suave); margin-top: .12rem;
 }
 
-/* ⚠️ Navegação horizontal com marcador embaixo — o padrão de aba de site
+/* ATENÇÃO: Navegação horizontal com marcador embaixo — o padrão de aba de site
       institucional. O pill vertical era o do Twitter. */
 .nav-principal { display: flex; gap: .25rem; margin-right: auto; overflow-x: auto; }
 .nav-item {
@@ -359,9 +359,9 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .botao-texto:hover { color: var(--realce); background: var(--realce-fraco); }
 
 /* ═══ CORPO ════════════════════════════════════════════════════ */
-/* ⭐ minmax(0, 1fr) na central: sem o 0, conteúdo largo (tabela, código) estoura
+/* DECISÃO: minmax(0, 1fr) na central: sem o 0, conteúdo largo (tabela, código) estoura
       a coluna em vez de rolar dentro dela. */
-/* ⭐ Uma coluna, e a largura vem da ROTA.
+/* DECISÃO: Uma coluna, e a largura vem da ROTA.
    Antes era sempre `1fr + 21rem de sugestões`, com a central travada em 52rem — o
    feed do Twitter. Num monitor de 2560px o grafo desenhava 643 nós em 832px. */
 .corpo {
@@ -372,7 +372,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   min-height: 60vh;
 }
 
-/* ⚠️ Teto de MEDIDA, não de layout: linha de texto acima de ~75ch fica difícil de ler.
+/* ATENÇÃO: Teto de MEDIDA, não de layout: linha de texto acima de ~75ch fica difícil de ler.
       Onde o conteúdo é figura e não texto, o teto some. */
 .corpo[data-largura='estreita'] { max-width: 44rem; }
 .corpo[data-largura='media'] { max-width: 60rem; }
@@ -399,7 +399,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .rodape-site a { color: var(--realce); }
 .rodape-site a:hover { text-decoration: underline; }
 
-/* 🔴 RNF-14 — em toda tela, não só na de resultado. */
+/* RISCO: RNF-14 — em toda tela, não só na de resultado. */
 .rodape-aviso {
   border-top: 1px solid var(--borda);
   padding: 1rem clamp(1rem, 4vw, 3rem);
@@ -408,7 +408,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .rodape-aviso strong { color: var(--texto); }
 
 /* ═══ CABEÇALHO DA COLUNA ══════════════════════════════════════ */
-/* ⚠️ ⛔ NÃO é sticky. Eram duas barras grudadas somando 110px permanentes — 14% de uma
+/* ATENÇÃO: NÃO é sticky. Eram duas barras grudadas somando 110px permanentes — 14% de uma
       janela de 800px, para dizer duas vezes onde a pessoa está. */
 .cabecalho-pagina {
   display: flex; align-items: center; gap: 1.1rem;
@@ -468,7 +468,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   border: 1px solid var(--texto); min-width: 9.5rem;
 }
 .botao-seguir:hover { opacity: .85; }
-/* ⚠️ min-width fixo: o texto do hover é mais longo, e sem isto a linha inteira
+/* ATENÇÃO: min-width fixo: o texto do hover é mais longo, e sem isto a linha inteira
       da timeline reflui a cada passagem do mouse. */
 .botao-seguindo {
   background: transparent; color: var(--texto);
@@ -509,14 +509,14 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .sugestao-texto strong { font-size: var(--t-2); }
 .sugestao-texto strong:hover { text-decoration: underline; }
 .sugestao-texto small { color: var(--suave); font-size: var(--t-2); }
-/* ⚠️ Uma linha cada, com reticências e o nome inteiro no `title`. Com o botão de 9,5rem,
+/* ATENÇÃO: Uma linha cada, com reticências e o nome inteiro no `title`. Com o botão de 9,5rem,
    sobravam ~4rem para o nome: ele quebrava em três linhas e a sigla do partido era
    cortada no meio (2026-10-01). */
 .sugestao-texto strong, .sugestao-texto small {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-/* ⭐ Botão menor só aqui: "Deixar de seguir" ainda cabe em 8rem na letra menor, e a
-   linha ⛔ reflui no hover. */
+/* DECISÃO: Botão menor só aqui: "Deixar de seguir" ainda cabe em 8rem na letra menor, e a
+   linha não reflui no hover. */
 .sugestoes .botao-seguir, .sugestoes .botao-seguindo {
   min-width: 8rem; padding: .3rem .6rem; font-size: var(--t-1);
 }
@@ -586,7 +586,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 }
 
 /* ═══ VOTO ═════════════════════════════════════════════════════ */
-/* ⚠️ Selos NEUTROS. Verde/vermelho leriam como acerto/erro (RNF-16). */
+/* ATENÇÃO: Selos NEUTROS. Verde/vermelho leriam como acerto/erro (RNF-16). */
 .selo {
   display: inline-block; min-width: 5.4rem; text-align: center;
   padding: .14rem .55rem; border-radius: var(--raio);
@@ -621,12 +621,12 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .questionario { padding-bottom: 4rem; }
 .progresso { padding: .75rem 1rem; border-bottom: 1px solid var(--borda); font-size: var(--t-2); color: var(--suave); }
 .barra-progresso { height: 4px; border-radius: var(--raio); background: var(--borda); margin-top: .45rem; overflow: hidden; }
-/* ⚠️ Mesma curva do resto: a barra e o cartão avançam juntos, senão a barra
+/* ATENÇÃO: Mesma curva do resto: a barra e o cartão avançam juntos, senão a barra
       chega antes e a tela parece dessincronizada. */
 .barra-progresso div {
   height: 100%; background: var(--realce);
   transition: width var(--t-longo) var(--curva);
-  /* ⭐ O brilho liga o avanço da barra ao clique que acabou de acontecer — sem ele a
+  /* DECISÃO: O brilho liga o avanço da barra ao clique que acabou de acontecer — sem ele a
         barra cresce sozinha, num canto, e o ganho passa despercebido. */
   box-shadow: 0 0 0 0 var(--realce);
   animation: pulsar-progresso 620ms var(--curva-entrada);
@@ -639,7 +639,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 
 /* ═══ AVALIAÇÃO — modal ════════════════════════════════════════ */
 /**
- * ⚠️ Era um bloco no fim da tela de resultado. Quem não rolava até lá nunca via, e a
+ * ATENÇÃO: Era um bloco no fim da tela de resultado. Quem não rolava até lá nunca via, e a
  *    amostra da pesquisa virava "quem tem paciência de rolar" — recorte enviesado.
  */
 .modal-avaliacao {
@@ -688,7 +688,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   max-width: 68rem; margin: 0 auto; gap: 3rem;
   align-items: center; padding: 2rem 1.5rem;
 }
-/* ⭐ A coluna da marca é decorativa: some primeiro quando falta espaço. */
+/* DECISÃO: A coluna da marca é decorativa: some primeiro quando falta espaço. */
 .login-marca { display: grid; place-items: center; color: var(--realce); opacity: .9; }
 .login-conteudo { max-width: 30rem; }
 .login-titulo {
@@ -698,11 +698,11 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .login-chamada { color: var(--suave); margin: 0 0 1.75rem; font-size: var(--t-3); line-height: 1.5; }
 .login-chamada strong { color: var(--texto); font-weight: 600; }
 
-/* ⭐ O interruptor de tema também aqui: quem chega no escuro e prefere claro ⛔ não
+/* DECISÃO: O interruptor de tema também aqui: quem chega no escuro e prefere claro não
       deveria ter de entrar primeiro para poder trocar. */
 .login-topo { display: flex; justify-content: flex-end; margin-bottom: 1.25rem; }
 
-/* ⭐ A evidência que sustenta a chamada. "Compare com o voto registrado" é promessa;
+/* DECISÃO: A evidência que sustenta a chamada. "Compare com o voto registrado" é promessa;
       643 deputados e 463.994 votos é o que a torna verificável — e é o argumento mais
       forte que esta tela tem para justificar pedir uma conta. */
 .login-base {
@@ -725,8 +725,8 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .o-que-tem { list-style: none; padding: 0; margin: 1.5rem 0; text-align: left; }
 .o-que-tem li { padding: .45rem 0 .45rem 1.5rem; position: relative; font-size: var(--t-2); color: var(--suave); }
 .o-que-tem li::before { content: '—'; position: absolute; left: 0; color: var(--realce); }
-/* ⚠️ Coluna alinhada à esquerda. Era `display: flex` sem eixo declarado: o botão que o
-   SDK do Google injeta ⛔ não tem largura própria, e numa linha flex ele encolhia e
+/* ATENÇÃO: Coluna alinhada à esquerda. Era `display: flex` sem eixo declarado: o botão que o
+   SDK do Google injeta não tem largura própria, e numa linha flex ele encolhia e
    ficava fora de prumo com o texto acima. A mensagem de erro também ia parar ao lado
    dele, em vez de abaixo. */
 .acao-login {
@@ -772,7 +772,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 }
 .banner-consentimento h2 { margin: 0 auto .5rem; font-size: var(--t-3); max-width: 46rem; }
 .banner-consentimento p { margin: .4rem auto; font-size: var(--t-2); max-width: 46rem; color: var(--suave); }
-/* ⚠️ Mesmo peso nos dois botões, de propósito — LGPD art. 9º §3 */
+/* ATENÇÃO: Mesmo peso nos dois botões, de propósito — LGPD art. 9º §3 */
 .banner-acoes { display: flex; gap: .75rem; margin: 1rem auto .5rem; max-width: 46rem; }
 .banner-acoes button {
   flex: 0 1 11rem; padding: .6rem 1rem; border-radius: var(--raio);
@@ -784,10 +784,10 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 
 /* ═══ DOCUMENTO LEGAL ══════════════════════════════════════════ */
 /* ═══ DOCUMENTO LEGAL ══════════════════════════════════════════
-   ⭐ Tratado como documento, ⛔ não como mais uma tela do app: medida de leitura curta,
+   DECISÃO: Tratado como documento, não como mais uma tela do app: medida de leitura curta,
       entrelinha alta, hierarquia por tamanho e espaço em vez de peso e cor.
 
-   ⚠️ A numeração das seções vem do CSS, ⛔ não do texto. Escrita à mão ela sai de
+   ATENÇÃO: A numeração das seções vem do CSS, não do texto. Escrita à mão ela sai de
       ordem na primeira seção inserida no meio — e num documento em que se cita "a
       seção 5" isso deixa de ser detalhe. */
 .documento-legal {
@@ -843,14 +843,14 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   border-bottom: 1px solid var(--borda); padding: .6rem .2rem;
   vertical-align: top;
 }
-/* ⚠️ A primeira coluna é o rótulo do par: sem distingui-la, a tabela de duas colunas
+/* ATENÇÃO: A primeira coluna é o rótulo do par: sem distingui-la, a tabela de duas colunas
       lê como duas frases soltas lado a lado. */
 .documento-legal td:first-child { color: var(--texto); font-weight: 500; width: 42%; }
 .documento-legal td:last-child { color: var(--suave); }
 
 .documento-legal a { color: var(--realce); text-decoration: underline; text-underline-offset: 2px; }
 
-/* ⭐ O bloco de ação fecha o documento e ⛔ não compete com ele: fundo próprio, para
+/* DECISÃO: O bloco de ação fecha o documento e não compete com ele: fundo próprio, para
       quem só quer revogar o consentimento achar sem reler nove seções. */
 .acoes-legais {
   margin-top: 3rem; padding: 1.5rem;
@@ -870,7 +870,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 
 /* ═══ RESULTADO ════════════════════════════════════════════════ */
 /**
- * ⚠️ O primeiro colocado ganha destaque de TAMANHO, ⛔ nunca de cor: a paleta é a
+ * ATENÇÃO: O primeiro colocado ganha destaque de TAMANHO, nunca de cor: a paleta é a
  *    mesma para todo parlamentar (RNF-16).
  */
 .destaque-resultado {
@@ -914,7 +914,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   clip-path: inset(50%); white-space: nowrap; border: 0;
 }
 
-/* 🔴 "Concordaram em 14 de 17" não é conferível sem dizer em QUAIS. Fechado por
+/* RISCO: "Concordaram em 14 de 17" não é conferível sem dizer em QUAIS. Fechado por
    padrão: o número é a resposta, a conta é para quem quiser conferir. */
 .detalhe-conta { margin: 1rem 0 0; max-width: 34rem; text-align: left; }
 .detalhe-conta > summary {
@@ -934,8 +934,8 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   display: grid; grid-template-columns: 1.1rem 1fr; gap: .55rem; align-items: start;
   font-size: var(--t-2); line-height: 1.45;
 }
-/* ⚠️ A cor marca acordo com QUEM RESPONDEU, ⛔ não juízo sobre o parlamentar —
-   e ⛔ não tem relação com o espectro político (RNF-16). */
+/* ATENÇÃO: A cor marca acordo com QUEM RESPONDEU, não juízo sobre o parlamentar —
+   e não tem relação com o espectro político (RNF-16). */
 .lista-detalhe .acordo > span:first-child { color: var(--realce); font-weight: 700; }
 .lista-detalhe .desacordo > span:first-child { color: var(--perigo); font-weight: 700; }
 .lista-detalhe .desacordo { color: var(--suave); }
@@ -946,7 +946,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
    Grafo — teclado e alternativa em texto
    ═══════════════════════════════════════════════════════════════ */
 
-/* 🔴 O canvas é focável (tabIndex=0). Sem anel de foco, quem navega por teclado
+/* RISCO: O canvas é focável (tabIndex=0). Sem anel de foco, quem navega por teclado
    perde o cursor dentro do desenho e não sabe que as setas já funcionam. */
 .grafo-tela canvas:focus-visible {
   outline: 3px solid var(--realce);
@@ -968,8 +968,8 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .lista-grafo {
   list-style: none; margin: 0;
   display: grid; gap: .75rem;
-  /* ⚠️ 643 parlamentares: sem teto a lista empurra o rodapé para longe demais.
-     O contêiner rola, ⛔ não a página. */
+  /* ATENÇÃO: 643 parlamentares: sem teto a lista empurra o rodapé para longe demais.
+     O contêiner rola, não a página. */
   max-height: 26rem; overflow-y: auto;
   border: 1px solid var(--borda); border-radius: var(--raio); padding: .9rem;
 }
@@ -996,11 +996,11 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .resultado-acoes { display: flex; gap: .6rem; flex-wrap: wrap; padding: 1.25rem 1rem 3rem; }
 
 /* ═══ NOTÍCIAS E VOTOS NA TIMELINE ═════════════════════════════ */
-/* ⚠️ Linha sem avatar: o dono do conteúdo já é o perfil da página. */
+/* ATENÇÃO: Linha sem avatar: o dono do conteúdo já é o perfil da página. */
 .linha-simples { padding-inline: 1rem; }
 .voto-descricao { margin: .45rem 0 .2rem; font-size: var(--t-2); }
 
-/* ⚠️ O registro processual fica MENOR e mais apagado que a ementa, de propósito:
+/* ATENÇÃO: O registro processual fica MENOR e mais apagado que a ementa, de propósito:
    ele identifica qual votação daquele projeto foi, e isso é conferência — não é
    o que a pessoa lê para entender o voto. */
 .voto-processual {
@@ -1008,7 +1008,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 .voto-processual strong { font-family: var(--dado); font-weight: 600; color: var(--texto); }
 
-/* 🔴 O marcador de rito vem ANTES do enunciado, não depois: quem lê a linha
+/* RISCO: O marcador de rito vem ANTES do enunciado, não depois: quem lê a linha
    precisa saber que não é voto de mérito antes de ler o que foi votado. */
 .voto-rito {
   margin: .45rem 0 .15rem; font-size: var(--t-1); letter-spacing: .04em;
@@ -1041,10 +1041,10 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 /**
  * Uma marca por parlamentar da base; cheia para quem se posicionou.
  *
- * 🔴 ⛔ Sem direção. As marcas cheias NÃO distinguem Sim de Não — ver
+ * RISCO: Sem direção. As marcas cheias NÃO distinguem Sim de Não — ver
  *    componentes/Painel.tsx. A densidade do bloco é a única informação.
  *
- * ⚠️ Largura fixa e marca de tamanho fixo: é o que faz 300 e 480 marcas
+ * ATENÇÃO: Largura fixa e marca de tamanho fixo: é o que faz 300 e 480 marcas
  *    se diferenciarem a olho. Grid flexível destruiria a comparação.
  */
 .painel-votacao { display: flex; flex-direction: column; align-items: center; gap: .65rem; }
@@ -1057,13 +1057,13 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 
 /**
- * ⭐ O painel ENCHE, da esquerda para a direita, como placar de plenário.
+ * DECISÃO: O painel ENCHE, da esquerda para a direita, como placar de plenário.
  *
- * ⚠️ Uma animação de `clip-path` no contêiner, ⛔ não 500 animações de marca com
+ * ATENÇÃO: Uma animação de `clip-path` no contêiner, não 500 animações de marca com
  *    delay escalonado: o efeito visual é o mesmo e o custo é de um elemento em vez de
  *    quinhentos.
  *
- * ⭐ É aqui que mora o momento de recompensa do questionário. A pausa entre uma
+ * DECISÃO: É aqui que mora o momento de recompensa do questionário. A pausa entre uma
  *    pergunta e a seguinte existia e estava VAZIA — a troca parecia abrupta porque não
  *    havia nada acontecendo nela, não porque fosse rápida demais.
  */
@@ -1076,7 +1076,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   to   { clip-path: inset(0 0 0 0); }
 }
 
-/* ⚠️ A legenda entra DEPOIS da varredura: o número antes do desenho rouba a atenção
+/* ATENÇÃO: A legenda entra DEPOIS da varredura: o número antes do desenho rouba a atenção
       justamente do que o desenho ia mostrar. */
 .retorno.visivel .painel-legenda {
   animation: surgir-legenda 200ms var(--curva-entrada) var(--t-painel) both;
@@ -1098,8 +1098,8 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .painel-legenda strong { color: var(--texto); font-weight: 600; }
 
 /* ═══ SELETOR DE TEMA ══════════════════════════════════════════ */
-/* Três posições, ⛔ não um interruptor: "sistema" é o padrão e o único que continua
-   acompanhando o SO depois — um botão de alternar ⛔ não consegue expressá-lo. */
+/* Três posições, não um interruptor: "sistema" é o padrão e o único que continua
+   acompanhando o SO depois — um botão de alternar não consegue expressá-lo. */
 .seletor-tema {
   display: flex; gap: 1px; padding: 2px;
   background: var(--borda); border-radius: var(--raio);
@@ -1114,7 +1114,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .seletor-tema button.ativo { background: var(--fundo); color: var(--realce); }
 
 /* ═══ ABAS DE VISTA ════════════════════════════════════════════ */
-/* Lista e grafo são duas formas do MESMO conjunto — abas, ⛔ não dois itens de menu. */
+/* Lista e grafo são duas formas do MESMO conjunto — abas, não dois itens de menu. */
 .abas-vista {
   display: flex; gap: 1px; width: fit-content;
   margin-bottom: 1.25rem; padding: 2px;
@@ -1131,8 +1131,8 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 /* ═══ PAINEL — a página inicial ════════════════════════════════ */
 .painel { display: flex; flex-direction: column; gap: 2.5rem; }
 
-/* ⭐ A abertura diz o que o serviço faz antes de mostrar qualquer número. Era um feed
-      vazio: a única tela que ⛔ não mostrava nada do que o trabalho produz. */
+/* DECISÃO: A abertura diz o que o serviço faz antes de mostrar qualquer número. Era um feed
+      vazio: a única tela que não mostrava nada do que o trabalho produz. */
 .painel-abertura { max-width: 44rem; }
 .painel-abertura h1 {
   margin: 0 0 .6rem;
@@ -1156,11 +1156,11 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 .painel-secao > .ajuda { max-width: 46rem; margin-bottom: 1rem; }
 
-/* ⚠️ Era texto solto na cor de realce, logo abaixo de um canvas de 460px — e sumia.
+/* ATENÇÃO: Era texto solto na cor de realce, logo abaixo de um canvas de 460px — e sumia.
    Link discreto funciona dentro de um parágrafo, onde a frase ao redor o sustenta;
-   sozinho sob uma figura grande ele ⛔ não tem escala para competir com ela.
+   sozinho sob uma figura grande ele não tem escala para competir com ela.
 
-   ⭐ Vira uma FAIXA colada no desenho: a borda contínua diz que é continuação do que
+   DECISÃO: Vira uma FAIXA colada no desenho: a borda contínua diz que é continuação do que
    está acima, e não um link qualquer no meio da página. */
 .painel-mais {
   display: flex; align-items: center; justify-content: center; gap: .5rem;
@@ -1184,7 +1184,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   .painel-mais:hover::after { transform: none; }
 }
 
-/* ⭐ Uma coluna por casa, lado a lado: a comparação entre elas É a informação —
+/* DECISÃO: Uma coluna por casa, lado a lado: a comparação entre elas É a informação —
       1.594 votações contra 421, e 0% de sigilo contra 57%. */
 .painel-casas {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
@@ -1212,8 +1212,8 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   font-family: var(--dado); font-size: var(--t-4); font-weight: 600;
   font-variant-numeric: tabular-nums; letter-spacing: -.02em;
 }
-/* 🔴 O sigilo do Senado muda o que aquela figura pode afirmar. Sem esta ressalva as
-      duas casas leem como comparáveis, e ⛔ não são. */
+/* RISCO: O sigilo do Senado muda o que aquela figura pode afirmar. Sem esta ressalva as
+      duas casas leem como comparáveis, e não são. */
 .cartao-casa .cartao-ressalva {
   margin: 1rem 0 0; padding-top: .8rem;
   border-top: 1px solid var(--borda);
@@ -1223,7 +1223,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 /* ═══ BARRA DO GRAFO ═══════════════════════════════════════════ */
 /* O aviso do grafo embutido: a roda rolou a página, e o zoom pede Ctrl. Sobre o desenho,
-   ⛔ empurra nada — aparece e some sem mudar a altura da página. */
+   Não empurra nada — aparece e some sem mudar a altura da página. */
 .grafo-aviso-roda {
   position: absolute; inset: 0; z-index: 2; margin: 0;
   display: flex; align-items: center; justify-content: center;
@@ -1245,7 +1245,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 
 /* ═══ TRILHO DA DIREITA ════════════════════════════════════════ */
-/* ⚠️ É da PÁGINA inicial, ⛔ não da moldura. Como coluna do site ele aparecia no grafo
+/* ATENÇÃO: É da PÁGINA inicial, não da moldura. Como coluna do site ele aparecia no grafo
    também, roubando 20rem de figura para sugerir quem seguir. */
 .painel-com-trilho {
   display: grid;
@@ -1256,11 +1256,11 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .painel-trilho { position: sticky; top: 4.5rem; }
 
 /* ═══ ESQUELETO ════════════════════════════════════════════════ */
-/* 🔴 Forma sem conteúdo. ⛔ Nunca uma manchete de exemplo: numa ferramenta que credita
+/* RISCO: Forma sem conteúdo. Nunca uma manchete de exemplo: numa ferramenta que credita
    a procedência de tudo que exibe, inventar veículo e título para ilustrar o layout
    seria produzir na tela a coisa que o trabalho existe para não fazer.
 
-   ⭐ O brilho atravessa da esquerda para a direita, no sentido da leitura. Só tokens:
+   DECISÃO: O brilho atravessa da esquerda para a direita, no sentido da leitura. Só tokens:
    o mesmo desenho funciona nos dois temas. */
 .esqueleto-area { padding: .25rem 0; }
 .esqueleto-lista { display: flex; flex-direction: column; }
@@ -1289,7 +1289,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .esqueleto-bloco { display: block; width: 100%; border-radius: var(--raio); }
 .grafo-reserva { border-radius: var(--raio); }
 
-/* ⚠️ Com `prefers-reduced-motion`, o cinza fica parado: o brilho que atravessa é
+/* ATENÇÃO: Com `prefers-reduced-motion`, o cinza fica parado: o brilho que atravessa é
    movimento, e esqueleto que se mexe chama mais atenção que o conteúdo chamaria. */
 @media (prefers-reduced-motion: no-preference) {
   .esqueleto-avatar, .esqueleto-barra, .esqueleto-bloco, .mapa-carregando, .grafo-reserva {
@@ -1309,7 +1309,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 
 /* ═══ ALINHAMENTO DE BANCADA ═══════════════════════════════════
-   🔴 ⛔ SEM cor semântica, ⛔ sem seta, ⛔ sem comparação com média. Governismo alto não
+   RISCO: SEM cor semântica, sem seta, sem comparação com média. Governismo alto não
    é elogio nem acusação, e qualquer um dos três transformaria medição em juízo. A
    apresentação é a mesma dos demais números do perfil, de propósito. */
 .alinhamento {
@@ -1328,7 +1328,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   font-family: var(--dado); font-size: var(--t-4); font-weight: 600;
   font-variant-numeric: tabular-nums; letter-spacing: -.02em;
 }
-/* ⭐ A base é parte do número, não nota de rodapé: sem ela o percentual não se lê. */
+/* DECISÃO: A base é parte do número, não nota de rodapé: sem ela o percentual não se lê. */
 .alinhamento small {
   display: block; font-size: var(--t-1); color: var(--suave);
   font-family: var(--corpo); font-weight: 400; letter-spacing: 0;
@@ -1336,8 +1336,8 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 
 /* ═══ LEGENDA DO GRAFO ═════════════════════════════════════════
-   Três frases abaixo do desenho. ⚠️ ⛔ Não é rodapé: é o que impede a leitura errada da
-   figura, então tem fundo próprio para ⛔ não ser pulada. */
+   Três frases abaixo do desenho. ATENÇÃO: Não é rodapé: é o que impede a leitura errada da
+   figura, então tem fundo próprio para não ser pulada. */
 .legenda-grafo {
   margin: 1rem 0 0; padding: .8rem .95rem; max-width: 48rem;
   background: var(--painel);
@@ -1347,8 +1347,8 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .legenda-grafo strong { color: var(--texto); font-weight: 600; }
 
 /* ═══ ORIENTAÇÃO NO VOTO ═══════════════════════════════════════
-   🔴 ⛔ SEM cor semântica. Votar contra a orientação ⛔ não é erro, e verde/vermelho
-   transformaria comportamento em nota. O que distingue é o peso do texto, ⛔ não a cor. */
+   RISCO: SEM cor semântica. Votar contra a orientação não é erro, e verde/vermelho
+   transformaria comportamento em nota. O que distingue é o peso do texto, não a cor. */
 .voto-orientacao b { color: var(--texto); font-weight: 600; }
 .voto-orientacao em {
   font-style: normal; font-weight: 600; color: var(--texto);
@@ -1356,7 +1356,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 /* ═══ RESPONSIVO ═══════════════════════════════════════════════ */
 @media (max-width: 1000px) {
-  /* ⭐ O trilho sai antes de espremer o conteúdo: sugestão é complemento. */
+  /* DECISÃO: O trilho sai antes de espremer o conteúdo: sugestão é complemento. */
   .painel-com-trilho { grid-template-columns: minmax(0, 1fr); }
   .painel-trilho { position: static; }
 }
@@ -1380,7 +1380,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   .rodape-conteudo { padding-inline: 1rem; }
   .nav-principal { gap: 0; }
   .nav-item { padding: 0 .7rem; }
-  /* ⚠️ Sobra só o interruptor de tema em si: o rótulo do botão já é o ícone. */
+  /* ATENÇÃO: Sobra só o interruptor de tema em si: o rótulo do botão já é o ícone. */
   .painel-casas { grid-template-columns: 1fr; }
 }
 
@@ -1390,7 +1390,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   min-height: 24rem;
   display: flex; flex-direction: column;
 }
-/* ⚠️ A entrada do cartão é feita pela View Transition (ver fim do arquivo), não por
+/* ATENÇÃO: A entrada do cartão é feita pela View Transition (ver fim do arquivo), não por
       keyframe local: keyframe só anima quem CHEGA, e sem a saída do cartão anterior a
       troca lê como pisca-pisca em vez de avanço. */
 
@@ -1399,7 +1399,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   font-size: var(--t-1); font-weight: 600;
   text-transform: uppercase; letter-spacing: .12em; color: var(--realce);
 }
-/* ⭐ A afirmação é o herói da tela: display expandida, no maior corpo do site. */
+/* DECISÃO: A afirmação é o herói da tela: display expandida, no maior corpo do site. */
 .texto-pergunta {
   margin: 0 0 2rem; font-size: var(--t-5); font-weight: 700;
   letter-spacing: -.018em; line-height: 1.28;
@@ -1417,7 +1417,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .opcao-grande:disabled { cursor: default; }
 .opcao-grande.opcao-ativa {
   border-color: var(--realce); background: var(--realce); color: var(--sobre-realce);
-  /* ⭐ O pulso é a confirmação do clique: a escolha se firma antes de o cartão sair.
+  /* DECISÃO: O pulso é a confirmação do clique: a escolha se firma antes de o cartão sair.
         Sem ele, o clique e a saída acontecem juntos e a pessoa não vê o que escolheu. */
   animation: fixar 220ms var(--curva) both;
 }
@@ -1428,13 +1428,13 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   100% { transform: scale(1); }
 }
 
-/* ⚠️ As não escolhidas recuam em vez de sumir: sumir é perda, recuar é escolha feita. */
+/* ATENÇÃO: As não escolhidas recuam em vez de sumir: sumir é perda, recuar é escolha feita. */
 .opcoes-grandes:has(.opcao-ativa) .opcao-grande:not(.opcao-ativa) {
   opacity: .38;
   transition: opacity var(--t-curto) var(--curva);
 }
 
-/* ⚠️ O painel CHEGA (curva de entrada) e não some deslizando: ele aparece como
+/* ATENÇÃO: O painel CHEGA (curva de entrada) e não some deslizando: ele aparece como
       resposta ao clique e a pergunta seguinte já leva o cartão inteiro embora. */
 .retorno {
   margin-top: auto; padding-top: 1.5rem;
@@ -1456,20 +1456,20 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 /* ═══ GRAFO ════════════════════════════════════════════════════ */
 /**
- * 🔴 As cores identificam GRUPO e não têm significado político (RNF-16). Paleta
+ * RISCO: As cores identificam GRUPO e não têm significado político (RNF-16). Paleta
  *    categórica de propósito — vermelho→azul seria lido como espectro mesmo sem
  *    nós afirmarmos nada.
  */
 .grafo { border-bottom: 1px solid var(--borda); }
 
-/* ⚠️ Quando a faixa "abrir completo" vem logo abaixo, o desenho perde o canto de baixo
+/* ATENÇÃO: Quando a faixa "abrir completo" vem logo abaixo, o desenho perde o canto de baixo
       para os dois lerem como uma peça só. */
 .painel-secao .grafo { border: 1px solid var(--borda); border-radius: var(--raio) var(--raio) 0 0; }
 .grafo-tela { position: relative; background: var(--painel); }
 .grafo-tela canvas { display: block; cursor: crosshair; }
 
 /* ═══ FERRAMENTAS SOBRE O DESENHO ══════════════════════════════
-   ⭐ Recolhidas de propósito. A faixa de controles abaixo do canvas custava altura de
+   DECISÃO: Recolhidas de propósito. A faixa de controles abaixo do canvas custava altura de
       figura em toda tela, para ajustes que se mexem uma vez e não se olham mais. */
 .grafo-ferramentas {
   position: absolute; left: .75rem; top: .75rem; z-index: 4;
@@ -1538,8 +1538,8 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .grafo-dica span { color: var(--suave); }
 .grafo-dica-meta { font-family: var(--dado); font-size: var(--t-1); }
 
-/* ⚠️ A segunda métrica fica visivelmente em segundo plano: ela existe para a
-      comparação da RF-18, e ⛔ não é o número que a tela pede para o leitor usar. */
+/* ATENÇÃO: A segunda métrica fica visivelmente em segundo plano: ela existe para a
+      comparação da RF-18, e não é o número que a tela pede para o leitor usar. */
 .grafo-dica-secundaria {
   font-family: var(--dado); font-size: var(--t-1);
   color: var(--suave); opacity: .75;
@@ -1587,7 +1587,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   overflow: hidden; text-overflow: ellipsis;
 }
 
-/* ⚠️ Mesma ordem de `CORES` em TelaDoGrafo.tsx — legenda e desenho têm de bater. */
+/* ATENÇÃO: Mesma ordem de `CORES` em TelaDoGrafo.tsx — legenda e desenho têm de bater. */
 .grupo-cor[data-comunidade='0'] { background: #0f766e; }
 .grupo-cor[data-comunidade='1'] { background: #b45309; }
 .grupo-cor[data-comunidade='2'] { background: #4338ca; }
@@ -1624,7 +1624,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 /**
  * View Transitions API: o navegador retrata o DOM antes e depois e anima entre os dois.
  *
- * ⭐ Nomear a moldura é o truque todo. Elemento com `view-transition-name` é retratado
+ * DECISÃO: Nomear a moldura é o truque todo. Elemento com `view-transition-name` é retratado
  *    à parte e, se não mudou, fica PARADO. Sem isto o cabeçalho e o rodapé piscariam
  *    junto com o conteúdo a cada clique no menu — que é justamente o defeito que a
  *    transição deveria resolver.
@@ -1645,23 +1645,23 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 /* ═══ TRANSIÇÃO ENTRE PERGUNTAS ════════════════════════════════ */
 /**
- * ⚠️ Direcional de propósito: a pergunta respondida sai pela ESQUERDA e a próxima
+ * ATENÇÃO: Direcional de propósito: a pergunta respondida sai pela ESQUERDA e a próxima
  *    entra pela DIREITA. Direção é o que transforma um piscar em progresso — a pessoa
  *    vê que avançou, não que a tela recarregou.
  *
- * ⭐ O cartão tem nome próprio, então ele é retratado à parte da coluna e não herda a
+ * DECISÃO: O cartão tem nome próprio, então ele é retratado à parte da coluna e não herda a
  *    fusão vertical de `root`.
  */
 .cartao-pergunta { view-transition-name: cartao; }
 
 /**
- * ⚠️ A saída usa a curva PADRÃO, não a de saída.
+ * ATENÇÃO: A saída usa a curva PADRÃO, não a de saída.
  *
  * `curva-saida` acelera e some — boa para algo que é descartado, e era o que fazia a
  * troca parecer abrupta: o cartão respondido era ARRANCADO da tela. Aqui ele não é
  * descartado, é concluído. A curva padrão o deixa partir sem tranco.
  *
- * ⭐ E a entrada é mais lenta que a saída, de propósito: quem chega merece assentar,
+ * DECISÃO: E a entrada é mais lenta que a saída, de propósito: quem chega merece assentar,
  * quem sai não precisa de cerimônia.
  */
 ::view-transition-old(cartao) {
@@ -1676,10 +1676,10 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 /* ═══ MENOS MOVIMENTO ══════════════════════════════════════════ */
 /**
- * 🔴 Menos movimento ⛔ NÃO é "nenhuma mudança visual": sumir sem transição confunde
+ * RISCO: Menos movimento NÃO é "nenhuma mudança visual": sumir sem transição confunde
  *    tanto quanto deslizar demais. O que sai é o DESLOCAMENTO — a fusão fica, curta.
  *
- * ⚠️ `transicao.ts` já nem inicia a View Transition nesse caso; isto cobre o resto e
+ * ATENÇÃO: `transicao.ts` já nem inicia a View Transition nesse caso; isto cobre o resto e
  *    o que o navegador anima por conta própria.
  */
 @media (prefers-reduced-motion: reduce) {
@@ -1696,7 +1696,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
     scroll-behavior: auto !important;
   }
 
-  /* ⭐ A exceção: a FUSÃO de opacidade continua. Ela ⛔ desloca nada — e cortar seco, sem
+  /* DECISÃO: A exceção: a FUSÃO de opacidade continua. Ela não desloca nada — e cortar seco, sem
      ela, confunde tanto quanto deslizar demais. Só `opacity`: nenhum movimento volta. */
   .tour-destaque,
   .tour-balao,
@@ -1709,11 +1709,11 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 /* ═══ TERMO — explicação de jargão sob demanda ═════════════════ */
 /**
- * 🔴 A RNF-29 proíbe jargão na interface. Isto ⛔ NÃO é licença para trazê-lo de
+ * RISCO: A RNF-29 proíbe jargão na interface. Isto NÃO é licença para trazê-lo de
  *    volta — serve ao caso que a RNF-31 admite: termo que é contexto descritivo e
  *    não tem substituto honesto ("legislatura", "partido", "plenário").
  *
- * ⚠️ Abre por clique e por foco, ⛔ nunca só por :hover. Em telefone não existe
+ * ATENÇÃO: Abre por clique e por foco, nunca só por :hover. Em telefone não existe
  *    hover, e a explicação não existiria para metade dos visitantes.
  */
 .termo { position: relative; display: inline-block; }
@@ -1744,7 +1744,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 /* ═══ GRAFO: NAVEGAÇÃO E AMPLIAÇÃO ═════════════════════════════ */
 
-/* ⭐ Ilha HORIZONTAL, como as ferramentas do topo. A coluna vertical de antes lia como
+/* DECISÃO: Ilha HORIZONTAL, como as ferramentas do topo. A coluna vertical de antes lia como
       um controle de mapa preso na borda; a ilha lê como barra de aplicativo, que é o
       que a prancheta é. */
 .grafo-zoom {
@@ -1763,9 +1763,9 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 .grafo-zoom button:hover { background: var(--realce-fraco); color: var(--realce); }
 
-/* ⭐ O painel de ação aparece SOBRE o desenho, ancorado no canto — as ações do nó
+/* DECISÃO: O painel de ação aparece SOBRE o desenho, ancorado no canto — as ações do nó
       ficam junto do nó, não num menu longe dele. */
-/* ⚠️ Canto INFERIOR esquerdo: o superior é das ferramentas, e as duas caixas
+/* ATENÇÃO: Canto INFERIOR esquerdo: o superior é das ferramentas, e as duas caixas
       ocupando o mesmo ponto se sobrepunham quando um nó era selecionado. */
 .grafo-foco {
   position: absolute; left: .75rem; bottom: .75rem;
@@ -1797,8 +1797,8 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 .grafo-dica strong { display: block; }
 
-/* ⚠️ O grafo não se lê numa coluna de 52rem: 655 pontos viram nuvem. */
-/* ⭐ Prancheta: o desenho ocupa a JANELA INTEIRA, sem moldura, sem barra de título e
+/* ATENÇÃO: O grafo não se lê numa coluna de 52rem: 655 pontos viram nuvem. */
+/* DECISÃO: Prancheta: o desenho ocupa a JANELA INTEIRA, sem moldura, sem barra de título e
       sem canto arredondado. Um grafo de 643 nós não é conteúdo de caixa — é espaço de
       trabalho, e tudo que não for o desenho tira área dele. */
 .grafo-ampliado {
@@ -1809,13 +1809,13 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 .grafo-ampliado::backdrop { background: var(--fundo); }
 
-/* ⚠️ `min-height: 0` nos dois níveis é o que permite o canvas encolher; sem isso o
+/* ATENÇÃO: `min-height: 0` nos dois níveis é o que permite o canvas encolher; sem isso o
       conteúdo empurra a altura e a rolagem volta. */
 .grafo-ampliado .grafo { border-bottom: none; height: 100%; min-height: 0; }
 .grafo-ampliado .grafo-tela { height: 100%; min-height: 0; }
 
-/* ⭐ Sair é um gesto de VOLTAR, não de fechar caixa: numa tela sem moldura um "✕"
-      sozinho ⛔ não diz o que sumiria. Ilha flutuante, como as demais ferramentas. */
+/* DECISÃO: Sair é um gesto de VOLTAR, não de fechar caixa: numa tela sem moldura um "✕"
+      sozinho não diz o que sumiria. Ilha flutuante, como as demais ferramentas. */
 .grafo-voltar {
   position: absolute; z-index: 6; left: .75rem; bottom: .75rem;
   display: inline-flex; align-items: center; gap: .4rem;
@@ -1829,7 +1829,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .grafo-voltar:hover { border-color: var(--realce); color: var(--realce); }
 .grafo-voltar span { font-size: var(--t-2); line-height: 1; }
 
-/* Só para leitor de tela: a prancheta perdeu o título visível, ⛔ não a identificação. */
+/* Só para leitor de tela: a prancheta perdeu o título visível, não a identificação. */
 .apenas-leitor-de-tela {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip-path: inset(50%); white-space: nowrap;
@@ -1856,7 +1856,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .resultado-grafo { border-bottom: 1px solid var(--borda); padding-bottom: 1rem; }
 .resultado-grafo .grafo { border-bottom: none; }
 
-/* ⭐ O "tela cheia" mora SOBRE o desenho, não abaixo dele. Solto na página ele ficava
+/* DECISÃO: O "tela cheia" mora SOBRE o desenho, não abaixo dele. Solto na página ele ficava
       perdido entre os textos explicativos, e ninguém achava. */
 .grafo-ampliar {
   position: absolute; right: .75rem; top: .75rem;
@@ -1871,15 +1871,15 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .grafo-ampliar:hover { border-color: var(--realce); color: var(--realce); }
 .grafo-ampliar span { font-size: var(--t-2); line-height: 1; }
 
-/* ⚠️ Dentro do modal não faz sentido oferecer tela cheia de novo. */
+/* ATENÇÃO: Dentro do modal não faz sentido oferecer tela cheia de novo. */
 .grafo-ampliado .grafo-ampliar { display: none; }
 
-/* ⚠️ Na prancheta o canto inferior esquerdo é do "Voltar"; o painel de foco sobe para
+/* ATENÇÃO: Na prancheta o canto inferior esquerdo é do "Voltar"; o painel de foco sobe para
       não ficar por baixo dele. */
 .grafo-ampliado .grafo-foco { bottom: auto; top: 3.9rem; }
 
 /* ═══ BUSCA NO GRAFO ═══════════════════════════════════════════ */
-/* ⭐ Com 643 nós, achar alguém passando o mouse é inviável. */
+/* DECISÃO: Com 643 nós, achar alguém passando o mouse é inviável. */
 .grafo-busca {
   position: relative;
   display: flex; align-items: center; gap: .45rem;
@@ -1926,7 +1926,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 
 /* ═══ SELETOR DE LAYOUT (PL43) ═════════════════════════════════ */
-/* ⭐ Fica na moldura para dar para comparar os dois sem sair da tela. */
+/* DECISÃO: Fica na moldura para dar para comparar os dois sem sair da tela. */
 .grafo-layout-botoes button {
   padding: .35rem .7rem;
   background: var(--fundo); border: none; color: var(--suave);
@@ -1935,7 +1935,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .grafo-layout-botoes button:hover { color: var(--texto); }
 .grafo-layout-botoes button.ativo { background: var(--realce); color: var(--sobre-realce); }
 
-/* ⚠️ A explicação acompanha o seletor: trocar de layout sem entender a diferença é o
+/* ATENÇÃO: A explicação acompanha o seletor: trocar de layout sem entender a diferença é o
       caminho mais curto para ler espectro onde não há. */
 .grafo-layout-botoes {
   display: flex; gap: 1px; width: fit-content;
@@ -1959,7 +1959,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .gasto-nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gasto-nome small { color: var(--suave); font-family: var(--dado); font-size: var(--t-1); }
 
-/* ⚠️ Proporcional à MAIOR categoria, não ao total: com 15 categorias, proporção do
+/* ATENÇÃO: Proporcional à MAIOR categoria, não ao total: com 15 categorias, proporção do
       total vira fiapo ilegível. */
 .gasto-barra {
   height: 6px; background: var(--borda); border-radius: var(--raio); overflow: hidden;
@@ -1973,8 +1973,8 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 /* ═══ GOVERNO FEDERAL ═════════════════════════════════════════ */
 /* Perfil da gestão e o dinheiro do ano. Um tom só (o realce), e nenhuma cor de bom ou
-   ruim (RNF-16). O pago de anos anteriores se distingue por TEXTURA, ⛔ por um tom mais
-   claro: listra funciona no tema escuro, em impressão e para quem ⛔ distingue cor. */
+   ruim (RNF-16). O pago de anos anteriores se distingue por TEXTURA, não por um tom mais
+   claro: listra funciona no tema escuro, em impressão e para quem não distingue cor. */
 
 .gestao {
   display: grid; gap: .9rem;
@@ -2061,7 +2061,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 /* ═══ FONTES OFICIAIS ═════════════════════════════════════════ */
 /* Todo número leva à fonte. O link é discreto, mas sublinhado: é o que o distingue de
-   texto, e ⛔ depende de cor. */
+   texto, e não depende de cor. */
 /* Quebra linha quando precisa: `nowrap` servia ao link curto ("nota fiscal") e estourava a
    tela do celular com o longo ("tudo o que esta entidade recebeu, no Portal…"). */
 .link-fonte { color: var(--realce); text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
@@ -2199,16 +2199,16 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .orcamento-sem-razao { font-family: var(--corpo); font-size: var(--t-1); color: var(--suave); }
 
 /* ═══ MODAIS — entrada e saída ═════════════════════════════════ */
-/* 🔴 `<dialog>` não anima sozinho: ele aparece e some no mesmo quadro, e a saída é a
+/* RISCO: `<dialog>` não anima sozinho: ele aparece e some no mesmo quadro, e a saída é a
    pior das duas — o conteúdo desaparece antes de o olho registrar que fechou.
 
-   ⚠️ Animar exige TRÊS peças, e faltando qualquer uma só a entrada funciona:
+   ATENÇÃO: Animar exige TRÊS peças, e faltando qualquer uma só a entrada funciona:
    · `@starting-style` — de onde a animação PARTE quando o elemento passa a existir
    · `allow-discrete` em `display` e `overlay` — sem isso o navegador troca os dois de
      uma vez no fim, e a saída não é vista
    · o estado fechado declarado no seletor base, que é para onde ela VAI
 
-   ⭐ Vale para os três diálogos do projeto de uma vez. */
+   DECISÃO: Vale para os três diálogos do projeto de uma vez. */
 .modal-avaliacao,
 .grafo-ampliado {
   opacity: 0;
@@ -2223,7 +2223,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .grafo-ampliado[open] {
   opacity: 1;
   transform: none;
-  /* ⭐ Entrada e saída com curvas DIFERENTES: o que chega freia longo, o que sai
+  /* DECISÃO: Entrada e saída com curvas DIFERENTES: o que chega freia longo, o que sai
      acelera e some. É a distinção que faz o movimento ler como físico. */
   transition-timing-function: var(--curva-entrada);
 }
@@ -2250,14 +2250,14 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .grafo-ampliado[open]::backdrop { opacity: 0; }
 }
 
-/* ⭐ A prancheta SOBE, e é uma entrada mais longa que a dos outros dois.
+/* DECISÃO: A prancheta SOBE, e é uma entrada mais longa que a dos outros dois.
    
    Ela troca a página inteira, não abre uma caixa sobre ela: a mesma transição de 260ms
    que serve a um diálogo de 30rem lê como um corte seco quando o que se move é a tela
    toda. Sobe de mais longe, escala de mais baixo e freia por mais tempo — o olho
    acompanha o desenho crescendo em vez de encontrá-lo já pronto.
    
-   ⚠️ O fundo entra JUNTO, e mais rápido: se ele chegar depois, a prancheta cresce por
+   ATENÇÃO: O fundo entra JUNTO, e mais rápido: se ele chegar depois, a prancheta cresce por
    cima da página antiga e o quadro fica sujo no meio do caminho. */
 .grafo-ampliado {
   transform: translateY(22px) scale(.965);
@@ -2281,7 +2281,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 .grafo-ampliado[open] > * { opacity: 1; }
 
-/* ⚠️ Menos movimento ⛔ não é "nenhuma mudança visual": sumir sem transição confunde
+/* ATENÇÃO: Menos movimento não é "nenhuma mudança visual": sumir sem transição confunde
    tanto quanto deslizar demais. Sai o deslocamento, fica a fusão curta. */
 @media (prefers-reduced-motion: reduce) {
   .modal-avaliacao,
@@ -2298,20 +2298,20 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 
 /* ═══ CONTAS DO MANDATO — a faixa fixa do perfil ═══════════════ */
-/* 🔴 Os três totais lado a lado é o ponto TODO da faixa: campanha na casa dos milhões,
+/* RISCO: Os três totais lado a lado é o ponto TODO da faixa: campanha na casa dos milhões,
    emendas na das dezenas de milhões, cota na das centenas de milhares. Essa diferença
    de ordem de grandeza é a informação, e ela só existe quando os três se veem juntos. */
 /* Os três totais de cara no perfil, com régua acima em vez de borda em volta: solta
    entre dois blocos com borda, a faixa lia como uma tira flutuando.
 
-   ⚠️ O botão fica em LINHA PRÓPRIA. Ao lado dos números ele disputava a largura e
-   comprimia a grade de três colunas contra a esquerda — valor em moeda ⛔ não tem para
+   ATENÇÃO: O botão fica em LINHA PRÓPRIA. Ao lado dos números ele disputava a largura e
+   comprimia a grade de três colunas contra a esquerda — valor em moeda não tem para
    onde encolher. */
 .perfil-contas {
   display: flex; flex-direction: column; gap: .9rem;
   margin-top: 1rem; padding-top: .9rem; border-top: 1px solid var(--borda);
 }
-/* Controle de verdade, ⛔ não link de texto: é a única porta para o detalhe, e como
+/* Controle de verdade, não link de texto: é a única porta para o detalhe, e como
    link discreto ela não se anunciava. */
 
 
@@ -2336,16 +2336,16 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   font-family: var(--display);
   font-size: var(--t-4); font-weight: 700; letter-spacing: -.02em;
   font-variant-numeric: tabular-nums;
-  /* ⚠️ Valor longo (R$ 163.712.480,00) não pode empurrar as três colunas. */
+  /* ATENÇÃO: Valor longo (R$ 163.712.480,00) não pode empurrar as três colunas. */
   overflow-wrap: anywhere;
 }
-/* ⭐ O travessão do "sem registro" fica DISCRETO: ele não é um valor, e destacá-lo com o
+/* DECISÃO: O travessão do "sem registro" fica DISCRETO: ele não é um valor, e destacá-lo com o
       mesmo peso dos outros dois faria a ausência competir com o dado. */
 .conta-ausente { color: var(--suave); font-weight: 500; }
 .conta-nota { font-size: var(--t-1); color: var(--suave); }
 
 /* ═══ CONTAS AMPLIADAS — o modal de detalhe ════════════════════ */
-/* ⚠️ Sem `display:flex` no próprio `<dialog>`: o `margin:auto` que o navegador usa para
+/* ATENÇÃO: Sem `display:flex` no próprio `<dialog>`: o `margin:auto` que o navegador usa para
    centralizar o modal depende do display padrão, e trocá-lo o desloca na tela. O corpo
    rolável é resolvido com `max-height` no filho, não com flex no diálogo. */
 
@@ -2359,34 +2359,34 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 
 
-/* 🔴 Uma única margem esquerda no modal inteiro.
-   ⚠️ As listas e os títulos são reaproveitados do perfil, onde a coluna é mais estreita
+/* RISCO: Uma única margem esquerda no modal inteiro.
+   ATENÇÃO: As listas e os títulos são reaproveitados do perfil, onde a coluna é mais estreita
    e o recuo é 1rem; o cabeçalho e a comparação nascem aqui, com 1,25rem. Misturados, o
    texto do topo ficava recuado em relação a tudo abaixo — lia como desalinhamento. */
 
 
-/* 🔴 As três seções precisam ler como CAPÍTULOS, não como mais três títulos numa
+/* RISCO: As três seções precisam ler como CAPÍTULOS, não como mais três títulos numa
    rolagem longa: sem peso próprio elas se confundem, e o leitor perde de vista que
    trocou de dinheiro. Daí a superfície tinta, a régua forte e a display expandida. */
 
-/* ⭐ Gruda no topo da rolagem: numa lista longa é o que impede o leitor de esquecer
+/* DECISÃO: Gruda no topo da rolagem: numa lista longa é o que impede o leitor de esquecer
    qual dos três dinheiros está vendo. */
 
 
 
-/* ⚠️ Dentro do modal a faixa de resumo de cada fonte é MENOR: ela já não é o topo da
+/* ATENÇÃO: Dentro do modal a faixa de resumo de cada fonte é MENOR: ela já não é o topo da
       tela, e o tamanho original competiria com o título do bloco. */
 
 
 
 /* ═══ EMENDAS E FINANCIAMENTO DE CAMPANHA ══════════════════════ */
-/* 🔴 A execução (pago ÷ empenhado) ganha destaque próprio, e não um número miúdo
+/* RISCO: A execução (pago ÷ empenhado) ganha destaque próprio, e não um número miúdo
    ao lado do total: é ela que distingue emenda anunciada de emenda cumprida. */
 .execucao { padding: .9rem 1rem 1rem; border-bottom: 1px solid var(--borda); }
 .execucao-barra { display: block; height: 8px; margin-bottom: .5rem; }
 .execucao .ajuda { margin: 0; }
 
-/* ⚠️ Os dois fundos lado a lado, cada um com o nome à vista — a diagramação é o
+/* ATENÇÃO: Os dois fundos lado a lado, cada um com o nome à vista — a diagramação é o
    que impede a leitura de "um bloco só de dinheiro público". */
 .fundos {
   list-style: none; margin: 0; padding: 0;
@@ -2448,7 +2448,7 @@ dialog.tour::backdrop { background: transparent; }
 .tour-visivel .tour-balao { opacity: 1; }
 
 /* O texto de cada passo entra com uma fusão curta, junto com o balão em movimento: o balão
-   ⛔ some entre um passo e outro, e o texto ⛔ pisca para vazio. */
+   Não some entre um passo e outro, e o texto não pisca para vazio. */
 .tour-conteudo { animation: tour-texto-entra var(--t-medio) var(--curva-entrada); }
 @keyframes tour-texto-entra {
   from { opacity: 0; translate: 0 4px; }
@@ -2546,7 +2546,7 @@ dialog.tour::backdrop { background: transparent; }
 .mapa svg { display: block; width: 100%; max-width: 34rem; height: auto; margin: 0 auto; touch-action: manipulation; }
 .mapa-carregando { aspect-ratio: 1; max-width: 34rem; margin: .5rem auto 1rem; background: var(--painel); border-radius: var(--raio); }
 
-/* O rótulo acompanha o mouse; ⛔ recebe o ponteiro, senão o hover piscaria entre ele e a área. */
+/* O rótulo acompanha o mouse; Não recebe o ponteiro, senão o hover piscaria entre ele e a área. */
 .mapa-rotulo {
   position: absolute; z-index: 2; pointer-events: none;
   transform: translate(-50%, calc(-100% - 10px));
@@ -2753,7 +2753,7 @@ dialog.tour::backdrop { background: transparent; }
   .marca-texto { display: none; }
   .menu-conta-botao .usuario-mini-nome { display: none; }
 
-  /* 📐 Medido em 2026-10-01 a 390 px: a faixa ocupava três linhas (180 px) antes de
+  /* MEDIDO: Medido em 2026-10-01 a 390 px: a faixa ocupava três linhas (180 px) antes de
      qualquer conteúdo, e o terceiro destino da navegação ficava cortado, só o ícone na
      borda. A faixa vira uma linha; a navegação vira três colunas iguais, com o ícone
      sobre o rótulo, o padrão de barra de abas de aplicativo. Os três continuam com
@@ -2762,7 +2762,7 @@ dialog.tour::backdrop { background: transparent; }
   .faixa-procedencia .faixa-longa { display: none; }
   .faixa-procedencia .faixa-curta { display: inline; }
   /* No celular a faixa é uma linha só: o seletor fica, o texto de procedência encolhe.
-     📐 A 386 px o seletor terminava em 401 px, cortado (2026-10-02): com ele na faixa,
+     MEDIDO: A 386 px o seletor terminava em 401 px, cortado (2026-10-02): com ele na faixa,
      "Câmara e Senado" sai e "Dados públicos" fica. */
   .faixa-procedencia:has(.faixa-periodo) .faixa-curta { display: none; }
 
@@ -2809,12 +2809,12 @@ dialog.tour::backdrop { background: transparent; }
 
 /* ═══ GOVERNO — período, ano a ano e o sigilo com a base ════════ */
 
-/* A nota que fica: uma linha, sem caixa nem borda — ⛔ mais um subtítulo a disputar o olho. */
+/* A nota que fica: uma linha, sem caixa nem borda — não mais um subtítulo a disputar o olho. */
 .nota-curta { margin: .75rem 0 0; font-size: var(--t-2); color: var(--suave); }
 .ano-andamento { color: var(--suave); font-weight: 400; font-size: var(--t-1); }
 .tabela-orcamento td.coluna-gestao { font-family: var(--corpo); color: var(--suave); }
 
-/* Duas partes do mesmo todo: a aberta e a sigilosa. Tons neutro e de tinta — ⛔ vermelho,
+/* Duas partes do mesmo todo: a aberta e a sigilosa. Tons neutro e de tinta — não vermelho,
    que leria como acusação (RNF-16). */
 .barra-dividida { display: flex; height: .9rem; margin: .75rem 0 .4rem; border-radius: var(--raio); overflow: hidden; }
 .barra-dividida > span { display: block; min-width: 2px; }

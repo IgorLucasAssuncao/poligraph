@@ -45,7 +45,7 @@ public class TestesPresenca(FixturePostgres postgres) : BaseIntegracao(postgres)
     }
 
     /// <summary>
-    /// No Senado, a ausência tem linha — e ⛔ conta como presença. Licença e missão saem à parte.
+    /// No Senado, a ausência tem linha — e não conta como presença. Licença e missão saem à parte.
     /// </summary>
     [SkippableFact]
     public async Task Senado_SeparaPresenteAusenteEJustificado()
@@ -71,7 +71,7 @@ public class TestesPresenca(FixturePostgres postgres) : BaseIntegracao(postgres)
         Assert.True(presenca.JustificativaPublicada);
     }
 
-    /// <summary>🔴 O banco recusa voto com posição de quem estava ausente.</summary>
+    /// <summary>RISCO: O banco recusa voto com posição de quem estava ausente.</summary>
     [SkippableFact]
     public async Task VotoComPosicaoDeAusente_ERecusadoPeloBanco()
     {

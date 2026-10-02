@@ -35,13 +35,13 @@ import { IconeExplorar } from '../componentes/Icones';
 const PASSOS_DA_FICHA = passosDaFicha();
 
 /**
- * As abas do perfil, nomeadas pela pergunta — ⛔ pela fonte de dado — e cada uma com endereço.
+ * As abas do perfil, nomeadas pela pergunta — não pela fonte de dado — e cada uma com endereço.
  *
- * ⭐ Os três dinheiros eram um modal único, "Ver as contas", que empilhava 13 blocos numa
+ * DECISÃO: Os três dinheiros eram um modal único, "Ver as contas", que empilhava 13 blocos numa
  * rolagem só, sem endereço para compartilhar. Agora cada um é uma aba: `/parlamentar/194/emendas`
  * abre direto nas emendas, e os três números do topo levam a elas.
  *
- * ⭐ `votos` é o padrão porque é o núcleo do trabalho e sempre tem conteúdo.
+ * DECISÃO: `votos` é o padrão porque é o núcleo do trabalho e sempre tem conteúdo.
  */
 type Aba = 'votos' | 'emendas' | 'cota' | 'campanha';
 
@@ -52,7 +52,38 @@ const ABAS: [Aba, string][] = [
   ['campanha', 'Campanha'],
 ];
 
-/** O perfil do parlamentar — a página mais parecida com "rede social" do site. */
+/**
+ * O perfil do parlamentar — a página mais parecida com "rede social" do site.
+ *
+ * Votou na legislatura corrente — a regra de seguir, a mesma da API.
+ *
+ * Sem conta, ninguém é seguido — e a lista responderia 401 e derrubaria a ficha.
+ *
+ * DECISÃO: O nome aparece UMA vez, ao lado da foto. O cabeçalho da coluna era o nome
+ * de novo, com "845 votações registradas" repetindo o número do bloco abaixo, e
+ * uma capa vazia empurrava o perfil para baixo da dobra no celular (2026-10-01).
+ *
+ * DECISÃO: Seguir é acompanhar quem está no poder (decisão do autor, 2026-10-02): só
+ * para quem votou na legislatura corrente. Quem já segue um ex-parlamentar
+ * continua vendo o botão — para poder deixar de seguir.
+ *
+ * DECISÃO: O porquê de não haver botão, dito na ficha (autor, 2026-10-02): sem isto o perfil
+ * inativo parecia só ter perdido o botão.
+ *
+ * A casa vem primeiro: é o que situa todo o resto. Um "PT · SP" sem ela
+ * deixa o leitor sem saber se está diante de deputado ou senador — e as
+ * duas casas votam matérias diferentes, então o número de votações e o
+ * grafo da pessoa significam coisas distintas.
+ *
+ * RNF-31: termo institucional como contexto, nunca como controle.
+ *
+ * DECISÃO: Tudo o que esta ficha mostra pode ser conferido na casa.
+ *
+ * Os três dinheiros, cada um levando à sua aba.
+ *
+ * DECISÃO: Antes dos votos: a lista de votos tem centenas de itens, e no celular os
+ * "mais parecidos" ficavam depois de ~17 mil pixels (2026-10-01).
+ */
 export function Parlamentar() {
   const { id, aba: abaDoEndereco } = useParams();
   const pessoaId = Number(id);
@@ -68,7 +99,6 @@ export function Parlamentar() {
   );
   const legislaturas = useLegislaturas();
   const corrente = legislaturas?.[0]?.numero;
-  /** Votou na legislatura corrente — a regra de seguir, a mesma da API. */
   const emExercicio =
     corrente !== undefined && (ficha?.mandatos ?? []).some((m) => m.legislatura === corrente);
   const { usuario } = useSessao();
@@ -82,7 +112,6 @@ export function Parlamentar() {
 
     Promise.all([
       obterFicha(pessoaId, legislaturaPedida),
-      // Sem conta, ninguém é seguido — e a lista responderia 401 e derrubaria a ficha.
       usuario ? listarSeguidos() : Promise.resolve([]),
     ])
       .then(([f, seguidos]) => {
@@ -112,9 +141,6 @@ export function Parlamentar() {
 
   return (
     <>
-      {/* ⭐ O nome aparece UMA vez, ao lado da foto. O cabeçalho da coluna era o nome
-          de novo, com "845 votações registradas" repetindo o número do bloco abaixo, e
-          uma capa vazia empurrava o perfil para baixo da dobra no celular (2026-10-01). */}
       <CabecalhoDaColuna titulo="Parlamentar" comVoltar />
 
       <header className="perfil-cabecalho">
@@ -126,16 +152,11 @@ export function Parlamentar() {
             {ficha.nomeCivil !== ficha.nome && <p className="nome-civil">{ficha.nomeCivil}</p>}
           </div>
 
-          {/* ⭐ Seguir é acompanhar quem está no poder (decisão do autor, 2026-10-02): só
-              para quem votou na legislatura corrente. Quem já segue um ex-parlamentar
-              continua vendo o botão — para poder deixar de seguir. */}
           {(seguindo || emExercicio) && (
             <BotaoSeguir pessoaId={pessoaId} seguindo={seguindo} aoAlternar={(_, agora) => setSeguindo(agora)} />
           )}
         </div>
 
-        {/* ⭐ O porquê de ⛔ haver botão, dito na ficha (autor, 2026-10-02): sem isto o perfil
-            inativo parecia só ter perdido o botão. */}
         {!seguindo && !emExercicio && corrente !== undefined && (
           <p className="perfil-inativo" role="note">
             Fora do mandato. Só é possível seguir quem está em exercício na legislatura
@@ -144,10 +165,6 @@ export function Parlamentar() {
         )}
 
         <div className="perfil-chips">
-          {/* A casa vem primeiro: é o que situa todo o resto. Um "PT · SP" sem ela
-              deixa o leitor sem saber se está diante de deputado ou senador — e as
-              duas casas votam matérias diferentes, então o número de votações e o
-              grafo da pessoa significam coisas distintas. */}
           {ficha.casa && (
             <span className="chip chip-casa">
               <Termo nome={ficha.casa === 'SENADO' ? 'senado' : 'camara'}>
@@ -155,7 +172,6 @@ export function Parlamentar() {
               </Termo>
             </span>
           )}
-          {/* RNF-31: termo institucional como contexto, nunca como controle. */}
           {ficha.partido && (
             <span className="chip">
               <Termo nome="partido">{ficha.partido}</Termo>
@@ -166,7 +182,6 @@ export function Parlamentar() {
 
         <MandatosDoParlamentar mandatos={ficha.mandatos ?? []} atual={ficha.legislatura} caminho={pathname} />
 
-        {/* ⭐ Tudo o que esta ficha mostra pode ser conferido na casa. */}
         <p className="perfil-fonte">
           <LinkDeFonte href={ficha.urlFonte}>
             {ficha.casa === 'SENADO' ? 'Página oficial no Senado' : 'Página oficial na Câmara'}
@@ -185,7 +200,6 @@ export function Parlamentar() {
           <FaixaDeAlinhamento alinhamento={ficha.alinhamento} presenca={ficha.presenca} />
         )}
 
-        {/* Os três dinheiros, cada um levando à sua aba. */}
         <FaixaDeContas
           contas={contas}
           base={base}
@@ -213,8 +227,6 @@ export function Parlamentar() {
       {aba === 'campanha' && <AbaCampanha pessoaId={pessoaId} contas={contas} erro={erroDasContas} />}
       {aba === 'votos' && (
         <>
-          {/* ⭐ Antes dos votos: a lista de votos tem centenas de itens, e no celular os
-              "mais parecidos" ficavam depois de ~17 mil pixels (2026-10-01). */}
           <AbaSimilares similares={ficha.maisSimilares} />
           <h2 className="titulo-secao">Votos</h2>
           <AbaVotos
@@ -231,24 +243,26 @@ export function Parlamentar() {
 
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
  * Os votos da legislatura, do mais recente, com "Mostrar mais".
  *
- * ⚠️ A ficha trazia 20 dos ~845 votos do deputado mediano e parava ali, sem dizer que
+ * ATENÇÃO: A ficha trazia 20 dos ~845 votos do deputado mediano e parava ali, sem dizer que
  * havia mais. A contagem de baixo diz quantos são, e quantos deles ficam fora das
- * "votações registradas" do topo por ⛔ terem posição.
+ * "votações registradas" do topo por não terem posição.
  */
-/** Menos que isto ⛔ filtra — a mesma regra do servidor (`TamanhoMinimoDaBusca`). */
+/** Menos que isto não filtra — a mesma regra do servidor (`TamanhoMinimoDaBusca`). */
 const BUSCA_MINIMA = 2;
 
 /**
  * Os votos, com busca.
  *
- * ⭐ A busca existe porque "como fulano votou na reforma X" exigia rolar centenas de
+ * DECISÃO: A busca existe porque "como fulano votou na reforma X" exigia rolar centenas de
  * votos em ordem de data (2026-10-02). Ela procura na ementa — o assunto —, na descrição
  * e na matéria ("PEC 45/2019"), sem diferença de acento: quem digita "tributaria" acha.
+ *
+ * Guardado com o termo que pediu: o resultado de outra busca não aparece sob o termo novo.
+ *
+ * ATENÇÃO: Espera a digitação parar: cada tecla seria uma consulta.
  */
 function AbaVotos({
   pessoaId,
@@ -265,11 +279,9 @@ function AbaVotos({
 }) {
   const [termo, setTermo] = useState('');
   const [busca, setBusca] = useState('');
-  /** Guardado com o termo que pediu: o resultado de outra busca ⛔ aparece sob o termo novo. */
   const [achados, setAchados] = useState<{ de: string; pagina: PaginaDe<VotoNaFicha> } | null>(null);
   const [erroDaBusca, setErroDaBusca] = useState(false);
 
-  // ⚠️ Espera a digitação parar: cada tecla seria uma consulta.
   useEffect(() => {
     const timer = setTimeout(() => setBusca(termo.trim().length >= BUSCA_MINIMA ? termo.trim() : ''), 300);
     return () => clearTimeout(timer);
@@ -442,17 +454,21 @@ function ListaDeVotos({
 /**
  * O enunciado de um voto — e QUAL enunciado depende do que foi votado.
  *
- * 🔴 **A ementa só pode ser a manchete quando o voto foi no MÉRITO.** 📐 Medido em
+ * RISCO: **A ementa só pode ser a manchete quando o voto foi no MÉRITO.** MEDIDO: Medido em
  * 2026-08-29: 43,2% das linhas desta lista são de rito. Nelas a ementa é do projeto em
  * pauta, mas o voto foi num requerimento — e *"Institui o Imposto sobre Bens e
  * Serviços"* ao lado de um "Sim" faria o leitor concluir que a pessoa votou a favor da
  * reforma tributária, quando ela votou sobre **rito**.
  *
- * ⭐ Então a ordem se inverte: no voto de rito a manchete é o que foi de fato votado
+ * DECISÃO: Então a ordem se inverte: no voto de rito a manchete é o que foi de fato votado
  * (*"Rejeitado o Requerimento"*), e a ementa vira contexto — *"sobre PLP 68/2024: …"*.
  *
- * ⛔ Voto de rito ⛔ não é escondido. Ele existe, é público, e some-lo seria editar o
- * histórico. ⚠️ Mas ele **pesa zero** na afinidade, e a tela diz isso.
+ * Não Voto de rito não é escondido. Ele existe, é público, e some-lo seria editar o
+ * histórico. ATENÇÃO: Mas ele **pesa zero** na afinidade, e a tela diz isso.
+ *
+ * ATENÇÃO: A outra metade continua visível: no voto de mérito ela identifica QUAL
+ * votação daquele projeto foi — texto principal, destaque, redação final. Sem
+ * isso, dois votos opostos do mesmo projeto seriam a mesma linha repetida.
  */
 function LinhaDoVoto({ voto }: { voto: VotoNaFicha }) {
   const rito = voto.categoria === 'PROCEDIMENTAL';
@@ -470,9 +486,6 @@ function LinhaDoVoto({ voto }: { voto: VotoNaFicha }) {
         {rito || !temEmenta ? (voto.descricao ?? voto.votacaoId) : voto.ementa}
       </p>
 
-      {/* ⚠️ A outra metade continua visível: no voto de mérito ela identifica QUAL
-          votação daquele projeto foi — texto principal, destaque, redação final. Sem
-          isso, dois votos opostos do mesmo projeto seriam a mesma linha repetida. */}
       {temEmenta && (
         <p className="voto-processual">
           {voto.materia && <strong>{voto.materia}</strong>}{' '}
@@ -486,22 +499,23 @@ function LinhaDoVoto({ voto }: { voto: VotoNaFicha }) {
 /**
  * O que o Governo pediu naquela votação, ao lado do voto.
  *
- * ## 🔴 Sem juízo, ⛔ nem por palavra nem por cor
+ * ## RISCO: Sem juízo, nem por palavra nem por cor
  *
- * ⛔ Nada de "seguiu ✓" e "contrariou ✗", ⛔ nada de verde e vermelho. Acompanhar ou não
- * a orientação ⛔ não é acerto nem erro — é comportamento, e quem julga é quem lê.
+ * Nada de "seguiu ✓" e "contrariou ✗", nada de verde e vermelho. Acompanhar ou não
+ * a orientação não é acerto nem erro — é comportamento, e quem julga é quem lê.
  * Escrito de forma neutra: *"o Governo pediu Não"* e, quando divergiu, *"votou
  * diferente"*, sem adjetivo.
  *
- * ⛔ Silenciosa quando ⛔ não há o que dizer: o Governo não orientou, orientou obstrução
- * ou liberou, ou é o Senado. ⚠️ Uma marca de "sem orientação" em quase toda linha viraria
+ * Não Silenciosa quando não há o que dizer: o Governo não orientou, orientou obstrução
+ * ou liberou, ou é o Senado. ATENÇÃO: Uma marca de "sem orientação" em quase toda linha viraria
  * ruído e esconderia as linhas que importam.
+ *
+ * ATENÇÃO: Só Sim e Não são comparáveis. `Obstrução` é tática de quórum e `Liberado` é
+ * ausência de orientação — nenhuma das duas é posição de mérito.
  */
 function ContraAOrientacao({ voto }: { voto: VotoNaFicha }) {
   const orientacao = voto.orientacaoDoGoverno;
 
-  // ⚠️ Só Sim e Não são comparáveis. `Obstrução` é tática de quórum e `Liberado` é
-  //    ausência de orientação — nenhuma das duas é posição de mérito.
   if (orientacao !== 'Sim' && orientacao !== 'Não') return null;
   if (voto.valor !== 1 && voto.valor !== -1) return null;
 
@@ -521,11 +535,15 @@ function ContraAOrientacao({ voto }: { voto: VotoNaFicha }) {
 /** Quantos "parecidos" aparecem antes do botão: o bastante para ler o grupo, sem empurrar os votos. */
 const SIMILARES_DE_INICIO = 5;
 
+/**
+ * DECISÃO: RF-47: estado vazio honesto. Acontece antes de o ETL analítico rodar.
+ *
+ * nunca percentual — a base aparece junto do número
+ */
 function AbaSimilares({ similares }: { similares: Ficha['maisSimilares'] }) {
   const [todos, setTodos] = useState(false);
 
   if (similares.length === 0) {
-    // ⭐ RF-47: estado vazio honesto. Acontece antes de o ETL analítico rodar.
     return (
       <p className="vazio">A análise de similaridade ainda não rodou para esta legislatura.</p>
     );
@@ -541,7 +559,6 @@ function AbaSimilares({ similares }: { similares: Ficha['maisSimilares'] }) {
           nome={s.nome}
           partido={s.partido}
           uf=""
-          // ⛔ nunca percentual — a base aparece junto do número
           detalhe={
             <>
               votaram igual em <strong>{Math.round(s.valor * s.comuns)}</strong> de{' '}
@@ -564,22 +581,22 @@ function AbaSimilares({ similares }: { similares: Ficha['maisSimilares'] }) {
 /**
  * Governismo e disciplina — com que frequência votou como pediram a ele.
  *
- * ## 🔴 O que este bloco ⛔ NÃO pode fazer
+ * ## RISCO: O que este bloco NÃO pode fazer
  *
- * Governismo alto ⛔ não é elogio nem acusação, e a tela ⛔ não pode sugerir que seja.
- * ⛔ Sem cor semântica, ⛔ sem seta, ⛔ sem comparação com uma média — qualquer um dos
+ * Governismo alto não é elogio nem acusação, e a tela não pode sugerir que seja.
+ * Sem cor semântica, sem seta, sem comparação com uma média — qualquer um dos
  * três transformaria medição em juízo, que é o que a RNF-16 proíbe.
  *
- * ⭐ A base anda junto do percentual, sempre. 80% sobre 15 votações e 80% sobre 900 são
+ * DECISÃO: A base anda junto do percentual, sempre. 80% sobre 15 votações e 80% sobre 900 são
  * afirmações de força muito diferente.
  */
 /**
  * Participação, governismo e disciplina — com que frequência votou, e como pediram a ele.
  *
- * ⭐ A participação vem primeiro: é a pergunta de quem quer saber se o representante trabalha,
- * e ela ⛔ depende de orientação nenhuma. Sempre "X de Y", com o percentual depois.
+ * DECISÃO: A participação vem primeiro: é a pergunta de quem quer saber se o representante trabalha,
+ * e ela não depende de orientação nenhuma. Sempre "X de Y", com o percentual depois.
  *
- * ⚠️ A base fica DENTRO do <dd>: um <small> solto na lista de definições é a violação que o
+ * ATENÇÃO: A base fica DENTRO do <dd>: um <small> solto na lista de definições é a violação que o
  * axe acusava aqui.
  */
 function FaixaDeAlinhamento({ alinhamento, presenca }: { alinhamento: Alinhamento | null; presenca: Presenca | null }) {
@@ -632,13 +649,11 @@ function FaixaDeAlinhamento({ alinhamento, presenca }: { alinhamento: Alinhament
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// AUXILIARES DE FORMATAÇÃO
-// ═══════════════════════════════════════════════════════════════════
-
 /**
- * ⚠️ Rótulo neutro, sem cor de juízo (RNF-16). "Sim" e "Não" descrevem o registro;
+ * ATENÇÃO: Rótulo neutro, sem cor de juízo (RNF-16). "Sim" e "Não" descrevem o registro;
  * verde e vermelho sugeririam acerto e erro.
+ *
+ * AUXILIARES DE FORMATAÇÃO
  */
 function rotuloDoVoto(valor: number | null): string {
   if (valor === 1) return 'Sim';

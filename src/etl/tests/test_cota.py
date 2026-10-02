@@ -1,6 +1,6 @@
 """Cota parlamentar.
 
-🔴 O ponto mais sensível deste módulo não é o parsing — é o CPF. O campo `txtCNPJCPF`
+RISCO: O ponto mais sensível deste módulo não é o parsing — é o CPF. O campo `txtCNPJCPF`
 mistura CNPJ de empresa com **CPF em claro** de fornecedor pessoa física, e a RNF-13
 proíbe o segundo no banco.
 """
@@ -14,7 +14,7 @@ MAPA = {"62881": 7, "204554": 8}
 
 
 def registro(**campos):
-    """⭐ Colunas copiadas do arquivo REAL de 2025, não inventadas."""
+    """DECISÃO: Colunas copiadas do arquivo REAL de 2025, não inventadas."""
     base = {
         "ideCadastro": "62881",
         "numAno": "2025",
@@ -31,14 +31,14 @@ def registro(**campos):
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 CPF — RNF-13
+# RISCO: CPF — RNF-13
 # ═══════════════════════════════════════════════════════════════════
 
 
 def test_cpf_de_fornecedor_e_hasheado():
-    """🔴 RNF-13: CPF ⛔ nunca em claro no banco.
+    """RISCO: RNF-13: CPF nunca em claro no banco.
 
-    ⚠️ Fornecedor pessoa física traz CPF no MESMO campo que a empresa traz CNPJ. Gravar
+    ATENÇÃO: Fornecedor pessoa física traz CPF no MESMO campo que a empresa traz CNPJ. Gravar
     sem distinguir colocaria milhares de CPFs em claro numa tabela pública.
     """
     linha = cota.para_linhas([registro(txtCNPJCPF="123.456.789-09")], MAPA)[0]
@@ -49,9 +49,9 @@ def test_cpf_de_fornecedor_e_hasheado():
 
 
 def test_cnpj_fica_legivel():
-    """⭐ CNPJ é dado público de empresa e PRECISA ficar em claro.
+    """DECISÃO: CNPJ é dado público de empresa e PRECISA ficar em claro.
 
-    ⚠️ Hashear os dois por segurança aparente destruiria a análise que interessa —
+    ATENÇÃO: Hashear os dois por segurança aparente destruiria a análise que interessa —
     cruzar o mesmo fornecedor entre parlamentares.
     """
     linha = cota.para_linhas([registro()], MAPA)[0]
@@ -61,7 +61,7 @@ def test_cnpj_fica_legivel():
 
 
 def test_o_hash_e_estavel():
-    """⚠️ Mesmo CPF, mesmo hash — senão não dá para cruzar nem contar distintos."""
+    """ATENÇÃO: Mesmo CPF, mesmo hash — senão não dá para cruzar nem contar distintos."""
     um = cota.para_linhas([registro(txtCNPJCPF="111.444.777-35")], MAPA)[0]
     outro = cota.para_linhas([registro(txtCNPJCPF="11144477735")], MAPA)[0]
 
@@ -74,7 +74,7 @@ def test_o_hash_e_estavel():
 
 
 def test_sem_ideCadastro_e_descartado():
-    """⚠️ São lideranças e órgãos — 0,4% em 2025. ⛔ Não são pessoas, não têm ficha."""
+    """ATENÇÃO: São lideranças e órgãos — 0,4% em 2025. Não são pessoas, não têm ficha."""
     assert cota.para_linhas([registro(ideCadastro="")], MAPA) == []
 
 
@@ -87,14 +87,14 @@ def test_valor_zero_e_descartado():
 
 
 def test_estorno_e_mantido():
-    """⭐ Valor negativo é estorno, e somá-lo importa para o total do deputado."""
+    """DECISÃO: Valor negativo é estorno, e somá-lo importa para o total do deputado."""
     linha = cota.para_linhas([registro(vlrLiquido="-250.00")], MAPA)[0]
 
     assert linha["valor_liquido"] == -250.0
 
 
 def test_separador_decimal_e_ponto():
-    """⚠️ Conferido no arquivo real: `104.58`, ⛔ não `104,58`."""
+    """ATENÇÃO: Conferido no arquivo real: `104.58`, não `104,58`."""
     assert cota.para_linhas([registro(vlrLiquido="1234.56")], MAPA)[0]["valor_liquido"] == 1234.56
 
 
@@ -105,7 +105,7 @@ def test_data_perde_a_hora():
 
 
 def test_categoria_vazia_vira_rotulo():
-    """⚠️ `NOT NULL` no banco — sem isto a linha inteira seria rejeitada."""
+    """ATENÇÃO: `NOT NULL` no banco — sem isto a linha inteira seria rejeitada."""
     linha = cota.para_linhas([registro(txtDescricao="")], MAPA)[0]
 
     assert linha["categoria"] == "SEM CATEGORIA"
@@ -117,9 +117,9 @@ def test_categoria_vazia_vira_rotulo():
 
 
 def test_arquivo_pequeno_demais_estoura():
-    """⭐ Medido: 209.176 linhas em 2025. Encolher muito significa layout mudado.
+    """DECISÃO: Medido: 209.176 linhas em 2025. Encolher muito significa layout mudado.
 
-    ⚠️ Sem o canário, um arquivo truncado entraria em silêncio e a ficha mostraria
+    ATENÇÃO: Sem o canário, um arquivo truncado entraria em silêncio e a ficha mostraria
     gasto a menos — sem nada acusar.
     """
     with pytest.raises(RuntimeError, match="layout"):
@@ -131,7 +131,7 @@ def test_volume_normal_passa():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 CEAPS — a cota do Senado, na mesma tabela
+# RISCO: CEAPS — a cota do Senado, na mesma tabela
 # ═══════════════════════════════════════════════════════════════════
 
 POR_NOME = {"ALAN RICK": 7}
@@ -169,7 +169,7 @@ def test_ceaps_normaliza_acento_e_caixa_do_nome():
 
 
 def test_ceaps_de_quem_nao_esta_no_de_para_e_descartada():
-    """⛔ Atribuir por semelhança de nome seria inventar dono."""
+    """Não Atribuir por semelhança de nome seria inventar dono."""
     assert cota.para_linhas_do_senado([ceaps(SENADOR="FULANO")], POR_NOME) == []
 
 
@@ -186,7 +186,7 @@ def test_ceaps_data_vazia_nao_derruba_a_linha():
 
 
 def test_ceaps_valor_sem_centavos():
-    """⚠️ O TSE manda `4000`, sem vírgula, na mesma coluna que manda `399,44`."""
+    """ATENÇÃO: O TSE manda `4000`, sem vírgula, na mesma coluna que manda `399,44`."""
     linha = cota.para_linhas_do_senado([ceaps(VALOR_REEMBOLSADO="4000")], POR_NOME)[0]
 
     assert linha["valor_liquido"] == 4000
@@ -197,12 +197,12 @@ def test_ceaps_valor_zero_sai():
 
 
 def test_ceaps_nao_tem_url_de_documento():
-    """A CEAPS publica o número do documento, ⛔ não o link da imagem."""
+    """A CEAPS publica o número do documento, não o link da imagem."""
     assert cota.para_linhas_do_senado([ceaps()], POR_NOME)[0]["url_documento"] is None
 
 
 def test_ler_ceaps_pula_a_linha_de_metadado(tmp_path):
-    """🔴 A armadilha do arquivo: a PRIMEIRA linha ⛔ não é o cabeçalho.
+    """RISCO: A armadilha do arquivo: a PRIMEIRA linha não é o cabeçalho.
 
     Ela é `"ULTIMA ATUALIZACAO";"07/09/2026 02:02"`. Um `DictReader` direto tomaria isso
     como cabeçalho, nenhuma coluna casaria, e a leitura devolveria zero despesa — com
@@ -223,7 +223,7 @@ def test_ler_ceaps_pula_a_linha_de_metadado(tmp_path):
 
 
 def test_ler_ceaps_sem_a_linha_de_metadado_ainda_funciona(tmp_path):
-    """Se o Senado tirar a linha de metadado, o leitor ⛔ não pode perder o cabeçalho."""
+    """Se o Senado tirar a linha de metadado, o leitor não pode perder o cabeçalho."""
     caminho = tmp_path / "ceaps.csv"
     caminho.write_text(
         '"ANO";"MES";"SENADOR";"VALOR_REEMBOLSADO"' + chr(10)

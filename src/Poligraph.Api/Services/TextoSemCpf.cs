@@ -15,7 +15,7 @@ namespace Poligraph.Api.Services;
 /// É a segunda barreira: o ETL já limpa na carga (<c>normalizacao.sem_cpf</c>). Esta cobre
 /// o que foi gravado antes da correção e o que uma fonte nova trouxer sem aviso.
 /// </para>
-/// <para>Casa exatamente 11 dígitos, com ou sem pontuação, fora de uma sequência maior: os 14 dígitos de um CNPJ ⛔ são cortados.</para>
+/// <para>Casa exatamente 11 dígitos, com ou sem pontuação, fora de uma sequência maior: os 14 dígitos de um CNPJ não são cortados.</para>
 /// </remarks>
 public static partial class TextoSemCpf
 {

@@ -121,6 +121,11 @@ beforeEach(() => {
 
 afterEach(() => vi.unstubAllGlobals());
 
+/**
+ * O mapa é por onde se escolhe: o painel da cidade vem depois dele, não o empurra para baixo.
+ *
+ * A cidade guardada abre na chegada, e não prende: "Ver o Brasil" precisa voltar ao Brasil.
+ */
 describe('Emendas no mapa', () => {
   it('declara o que ficou fora do mapa, com valor', async () => {
     renderizar();
@@ -194,7 +199,6 @@ describe('Emendas no mapa', () => {
     expect(within(coletivos).getByText(/Bancada estadual/)).toBeInTheDocument();
   });
 
-  /** O mapa é por onde se escolhe: o painel da cidade vem depois dele, ⛔ o empurra para baixo. */
   it('o painel da cidade fica abaixo do mapa', async () => {
     const { container } = renderizar('/emendas?uf=PR&cidade=4113734');
 
@@ -226,7 +230,6 @@ describe('Emendas no mapa', () => {
     expect(api.obterEmendasDoMunicipio).toHaveBeenCalledWith('4113734', undefined);
   });
 
-  /** A cidade guardada abre na chegada, e ⛔ prende: "Ver o Brasil" precisa voltar ao Brasil. */
   it('com cidade guardada, "Ver o Brasil" volta ao mapa do país', async () => {
     localStorage.setItem('poligraph.minhaCidade', JSON.stringify(LUIZIANA.municipio));
     renderizar();
@@ -263,8 +266,10 @@ describe('faixas do mapa', () => {
   });
 });
 
+/**
+ * DECISÃO: "Quanto já foi liberado?": o que falta liberar, só dos em execução.
+ */
 describe('convênios da cidade', () => {
-  /** ⭐ "Quanto já foi liberado?": o que falta liberar, só dos em execução. */
   it('diz o combinado, o liberado e o que ainda falta liberar, e leva à entidade', async () => {
     renderizar('/emendas?uf=PR&cidade=4113734');
 

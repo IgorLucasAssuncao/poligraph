@@ -1,7 +1,7 @@
 /**
  * "Mostrar mais N" — o botão de toda lista paginada.
  *
- * ⭐ Diz quantos vêm e quantos faltam: um "ver mais" sem número esconde se falta um
+ * DECISÃO: Diz quantos vêm e quantos faltam: um "ver mais" sem número esconde se falta um
  * item ou quinhentos.
  */
 export function BotaoMostrarMais({

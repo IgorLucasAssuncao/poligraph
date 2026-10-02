@@ -3,7 +3,7 @@ import { useState } from 'react';
 /**
  * "Baixar CSV" — para quem quer levar o dado para a planilha.
  *
- * ⭐ `montar` busca o que for preciso na hora do clique: a lista inteira, e ⛔ só a
+ * DECISÃO: `montar` busca o que for preciso na hora do clique: a lista inteira, e não só a
  * página que está na tela.
  */
 export function BotaoBaixarCsv({ rotulo = 'Baixar CSV', montar }: { rotulo?: string; montar: () => Promise<void> | void }) {

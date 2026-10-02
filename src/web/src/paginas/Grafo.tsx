@@ -24,24 +24,38 @@ const CASAS: Casa[] = ['CAMARA', 'SENADO'];
 /**
  * O grafo de similaridade de voto (RF-33).
  *
- * ## 🔴 Um grafo por casa, nunca um só
+ * ## RISCO: Um grafo por casa, nunca um só
  *
- * Deputado e senador ⛔ não votam as mesmas matérias: o par não teria base comum, e o
+ * Deputado e senador não votam as mesmas matérias: o par não teria base comum, e o
  * banco impede a aresta entre casas por restrição. Juntar os dois desenhos produziria
  * duas nuvens sem ligação nenhuma entre elas, o que sugere oposição onde só há ausência
  * de dado.
  *
- * ⚠️ O seletor é permitido aqui e proibido no questionário (RNF-28): a proibição vale
+ * ATENÇÃO: O seletor é permitido aqui e proibido no questionário (RNF-28): a proibição vale
  * onde o *usuário* declararia afinidade por uma casa. Aqui ele só escolhe qual figura
  * olhar.
+ *
+ * `undefined` é "a corrente": a API escolhe, e a tela não adivinha qual é. "Todas" é da
+ * lista — não existe grafo de todas as legislaturas juntas — e aqui vale a corrente.
+ *
+ * ATENÇÃO: Zera antes de buscar: sem isto a tela mostra o grafo da Câmara sob o título do
+ * Senado enquanto a requisição não volta.
+ *
+ * O alinhamento só existe onde a orientação do Governo foi registrada.
+ *
+ * DECISÃO: Estado vazio honesto: acontece antes de o ETL analítico rodar para a casa.
+ *
+ * RISCO: O sigilo do Senado muda o que a figura pode afirmar, e calar isso
+ * faria o leitor comparar as duas casas como se fossem equivalentes.
+ *
+ * O período fica: as duas casas têm as mesmas legislaturas. Se a outra não tem grafo
+ * nele, a tela diz isso e oferece os que tem.
+ *
+ * DECISÃO: A ficha abre no mandato do grafo: no de 2019, o deputado de 2019.
  */
 export function Grafo() {
   const navegar = useNavigate();
   const [casa, setCasa] = useState<Casa>('CAMARA');
-  /**
-   * `undefined` é "a corrente": a API escolhe, e a tela ⛔ adivinha qual é. "Todas" é da
-   * lista — ⛔ existe grafo de todas as legislaturas juntas — e aqui vale a corrente.
-   */
   const [escolha, setLegislatura] = useLegislaturaDaUrl();
   const legislatura = typeof escolha === 'number' ? escolha : undefined;
   const [grafo, setGrafo] = useState<DadosDoGrafo | null>(null);
@@ -51,8 +65,6 @@ export function Grafo() {
   useEffect(() => {
     let atual = true;
 
-    // ⚠️ Zera antes de buscar: sem isto a tela mostra o grafo da Câmara sob o título do
-    //    Senado enquanto a requisição não volta.
     setGrafo(null);
     setErro(null);
 
@@ -68,7 +80,6 @@ export function Grafo() {
   const grupos = useMemo(() => (grafo ? resumirGrupos(grafo.nos) : []), [grafo]);
   const membro = NOME_DA_CASA[casa];
 
-  /** O alinhamento só existe onde a orientação do Governo foi registrada. */
   const passos = useMemo(
     () =>
       grafo && grafo.nos.length > 0
@@ -103,12 +114,11 @@ export function Grafo() {
         </Esqueleto>
       )}
 
-      {/* ⭐ Estado vazio honesto: acontece antes de o ETL analítico rodar para a casa. */}
       {!erro && grafo && grafo.nos.length === 0 && (
         <p className="vazio">
           {grafo.legislaturasComGrafo.length > 0 ? (
             <>
-              {NOME_DA_CASA[casa].nome} ⛔ tem grafo em {periodoDaLegislatura(grafo.legislatura)}:
+              {NOME_DA_CASA[casa].nome} não tem grafo em {periodoDaLegislatura(grafo.legislatura)}:
               havia votações abertas de menos para comparar quem vota com quem. Há grafo em{' '}
               {grafo.legislaturasComGrafo.map((l, i) => (
                 <span key={l}>
@@ -164,8 +174,6 @@ export function Grafo() {
               com poucas votações em comum, votar igual seria coincidência.
             </p>
 
-            {/* 🔴 O sigilo do Senado muda o que a figura pode afirmar, e calar isso
-                faria o leitor comparar as duas casas como se fossem equivalentes. */}
             {casa === 'SENADO' && grafo.secretasDePlenario > 0 && (
               <p className="ajuda">
                 <strong>O Senado vota em segredo com frequência.</strong> Das{' '}
@@ -205,15 +213,10 @@ export function Grafo() {
     </>
   );
 
-  /**
-   * O período fica: as duas casas têm as mesmas legislaturas. Se a outra ⛔ tem grafo
-   * nele, a tela diz isso e oferece os que tem.
-   */
   function trocarDeCasa(nova: Casa) {
     setCasa(nova);
   }
 
-  /** ⭐ A ficha abre no mandato do grafo: no de 2019, o deputado de 2019. */
   function abrirPerfil(no: NoDoGrafo) {
     const naLegislatura = grafo && grafo.legislaturasComGrafo[0] !== grafo.legislatura
       ? `?legislatura=${grafo.legislatura}`
@@ -221,8 +224,6 @@ export function Grafo() {
     navegar(`/parlamentar/${no.id}${naLegislatura}`);
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════
 
 function SeletorDeCasa({ casa, aoTrocar }: { casa: Casa; aoTrocar: (nova: Casa) => void }) {
   return (
@@ -242,7 +243,7 @@ function SeletorDeCasa({ casa, aoTrocar }: { casa: Casa; aoTrocar: (nova: Casa) 
   );
 }
 
-/** ⚠️ Só grupos com mais de um membro: 21 isolados virariam 21 linhas de legenda. */
+/** ATENÇÃO: Só grupos com mais de um membro: 21 isolados virariam 21 linhas de legenda. */
 const MINIMO_PARA_LISTAR = 2;
 
 const PARTIDOS_MOSTRADOS = 5;

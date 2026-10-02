@@ -11,7 +11,7 @@ import type { Topology } from 'topojson-specification';
 /**
  * Os limites entre as cinco faixas, pelos quantis dos valores positivos.
  *
- * ⚠️ Com poucos valores distintos, limites repetidos são descartados: faixa vazia na
+ * ATENÇÃO: Com poucos valores distintos, limites repetidos são descartados: faixa vazia na
  * legenda afirmaria um intervalo que nenhuma área ocupa.
  */
 export function faixasPorQuantil(valores: number[]): number[] {
@@ -39,7 +39,7 @@ export async function areaQueContem(malha: string, ponto: [number, number]): Pro
 
 const malhas = new Map<string, Promise<FeatureCollection>>();
 
-/** Uma vez por arquivo e por visita: a troca de ano ⛔ rebaixa a malha. */
+/** Uma vez por arquivo e por visita: a troca de ano não rebaixa a malha. */
 export function carregarMalha(nome: string): Promise<FeatureCollection> {
   let pendente = malhas.get(nome);
   if (!pendente) {

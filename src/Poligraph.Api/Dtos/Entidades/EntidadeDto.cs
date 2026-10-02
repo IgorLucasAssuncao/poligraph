@@ -6,7 +6,7 @@ namespace Poligraph.Api.Dtos;
 /// <remarks>
 /// <para>
 /// O CNPJ sai aqui, e só aqui: é a chave da página da entidade e dado público de pessoa
-/// jurídica. Empresário individual ⛔ entra na lista — o CNPJ dele é de uma pessoa (ver
+/// jurídica. Empresário individual não entra na lista — o CNPJ dele é de uma pessoa (ver
 /// <c>ServicoEntidades</c>).
 /// </para>
 /// </remarks>
@@ -37,7 +37,7 @@ public enum GrupoDeEntidade
     /// <summary>Sociedade empresária, privada ou estatal.</summary>
     EMPRESA,
 
-    /// <summary>Consórcio público, organismo internacional e o que ⛔ cabe nos outros.</summary>
+    /// <summary>Consórcio público, organismo internacional e o que não cabe nos outros.</summary>
     OUTRO,
 }
 
@@ -65,7 +65,7 @@ public record EntidadeDto(
 /// Um convênio que a entidade assinou com dinheiro de emenda: o que foi combinado e quanto já saiu.
 /// </summary>
 /// <remarks>
-/// <para>Ligado pelo CNPJ do convenente, do arquivo completo de convênios — ⛔ pelo nome, que o de emendas traz escrito de vários jeitos.</para>
+/// <para>Ligado pelo CNPJ do convenente, do arquivo completo de convênios — não pelo nome, que o de emendas traz escrito de vários jeitos.</para>
 /// </remarks>
 public record ConvenioDaEntidadeDto(
     string Numero,
@@ -83,7 +83,7 @@ public record RecebidoNoAnoDto(int Ano, decimal Recebido);
 /// </summary>
 /// <remarks>
 /// <para>
-/// ⚠️ Aparecer nas duas listas ⛔ é indício de nada: a cota paga despesas do escritório à
+/// ATENÇÃO: Aparecer nas duas listas não é indício de nada: a cota paga despesas do escritório à
 /// própria prefeitura, e a emenda vai para a mesma prefeitura. A tela diz isso ao lado (RNF-16).
 /// </para>
 /// </remarks>

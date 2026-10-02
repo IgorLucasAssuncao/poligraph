@@ -8,7 +8,7 @@ namespace Poligraph.Api.Services;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Quem chega com um nome ⛔ sabe se é de parlamentar, cidade ou entidade — "São Paulo" é
+/// Quem chega com um nome não sabe se é de parlamentar, cidade ou entidade — "São Paulo" é
 /// as três coisas. A busca responde nos três, cada um no seu grupo, e a pessoa escolhe.
 /// </para>
 /// <para>Cada grupo reusa a busca da própria página: o resultado do cabeçalho é o mesmo que a página daria.</para>

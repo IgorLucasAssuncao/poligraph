@@ -3,7 +3,7 @@ using Poligraph.Api.Services;
 namespace Poligraph.Tests.Unidade;
 
 /// <summary>
-/// O CPF que vem dentro do nome empresarial de MEI ⛔ sai da API.
+/// O CPF que vem dentro do nome empresarial de MEI não sai da API.
 /// </summary>
 public class TestesTextoSemCpf
 {

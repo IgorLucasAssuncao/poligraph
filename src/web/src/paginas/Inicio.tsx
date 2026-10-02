@@ -20,29 +20,43 @@ import { useLegislaturaDaUrl, useLegislaturas } from '../componentes/useLegislat
 import { BarraDePeriodo } from '../componentes/BarraDePeriodo';
 import { periodoDaLegislatura } from '../formato';
 
-
 /**
  * A porta de entrada.
  *
  * ## Por que deixou de ser um feed
  *
- * Era um feed das notícias de quem a pessoa segue — e o coletor de notícias ⛔ não
+ * Era um feed das notícias de quem a pessoa segue — e o coletor de notícias não
  * existe: `noticias.py` está escrito e testado, mas nenhum comando o executa, e a
  * tabela tem zero linhas. A primeira tela do produto era, por construção, a única que
- * ⛔ não mostrava nada do que o trabalho faz. Enquanto isso 470 mil votos, 5.259
+ * não mostrava nada do que o trabalho faz. Enquanto isso 470 mil votos, 5.259
  * ligações e 17 comunidades ficavam atrás de outras abas.
  *
- * ⭐ Agora ela abre com o tamanho da base e com o desenho.
+ * DECISÃO: Agora ela abre com o tamanho da base e com o desenho.
  *
- * ⛔ **As notícias saíram de vez (2026-10-02)**, por decisão do autor: o coletor, a aba
+ * Não **As notícias saíram de vez (2026-10-02)**, por decisão do autor: o coletor, a aba
  * da ficha e esta seção. Quem a pessoa segue continua aqui, em lista.
+ *
+ * Guardado com a legislatura que pediu: o de outro período não aparece sob o seletor novo.
+ *
+ * O período vem da faixa do topo. "Todas" é da lista de parlamentares; aqui vale a corrente.
+ *
+ * Sem conta não há seguidos, e a lista responderia 401.
+ *
+ * ATENÇÃO: A legislatura do questionário é sempre a corrente, não a escolhida
+ * abaixo: as perguntas não mudam com o período que se olha.
+ *
+ * RISCO: LGPD art. 5º, II — esta lista indica convicção política, e o caminho
+ * para apagá-la anda junto dela.
+ *
+ * DECISÃO: O trilho da direita, como no X. ATENÇÃO: A ordem não é editorial: são os
+ * parlamentares com mais votações registradas, ou seja, os de mais dado
+ * disponível — e a própria tela diz isso, para não ler como destaque nosso
+ * (RNF-16).
  */
 export function Inicio() {
   const { usuario } = useSessao();
-  /** Guardado com a legislatura que pediu: o de outro período ⛔ aparece sob o seletor novo. */
   const [lido, setLido] = useState<{ de?: number; panorama: Panorama | null } | null>(null);
   const [seguidos, setSeguidos] = useState<Parlamentar[]>([]);
-  /** O período vem da faixa do topo. "Todas" é da lista de parlamentares; aqui vale a corrente. */
   const [escolha] = useLegislaturaDaUrl();
   const legislaturas = useLegislaturas();
   const legislatura = typeof escolha === 'number' ? escolha : undefined;
@@ -60,7 +74,6 @@ export function Inicio() {
   }, [legislatura]);
 
   useEffect(() => {
-    // Sem conta não há seguidos, e a lista responderia 401.
     if (!usuario) return;
 
     listarSeguidos().then(setSeguidos).catch(() => setSeguidos([]));
@@ -79,8 +92,6 @@ export function Inicio() {
               <>
                 {' '}Você responde <strong>{panorama.perguntasNoQuestionario} perguntas</strong>,
                 escolhidas entre {panorama.perguntasAtivas} votações nominais reais
-                {/* ⚠️ A legislatura do questionário é sempre a corrente, ⛔ a escolhida
-                    abaixo: as perguntas ⛔ mudam com o período que se olha. */}
                 {corrente ? ` da ${corrente}ª legislatura` : ''}.
               </>
             ) : (
@@ -124,8 +135,6 @@ export function Inicio() {
               />
             ))}
 
-            {/* 🔴 LGPD art. 5º, II — esta lista indica convicção política, e o caminho
-                para apagá-la anda junto dela. */}
             <p className="nota-privacidade">
               🔒 Esta lista indica sua posição política e é tratada como dado sensível. Ela
               não é compartilhada com ninguém. <Link to="/conta">Como apagar tudo</Link>
@@ -135,10 +144,6 @@ export function Inicio() {
 
       </div>
 
-      {/* ⭐ O trilho da direita, como no X. ⚠️ A ordem ⛔ não é editorial: são os
-          parlamentares com mais votações registradas, ou seja, os de mais dado
-          disponível — e a própria tela diz isso, para ⛔ não ler como destaque nosso
-          (RNF-16). */}
       <aside className="painel-trilho">
         <SugestoesParaSeguir />
       </aside>
@@ -146,16 +151,16 @@ export function Inicio() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
  * O grafo da Câmara na página inicial — buscado só quando a seção chega perto da tela.
  *
- * ⚠️ É a maior resposta do site (~580 KB e ~0,6 s medidos em 2026-10-01), e vinha para
+ * ATENÇÃO: É a maior resposta do site (~580 KB e ~0,6 s medidos em 2026-10-01), e vinha para
  * todo visitante, inclusive quem clicava em "Compare seu voto" sem rolar. A seção
- * reserva a altura do desenho enquanto espera, para a página ⛔ pular quando ele chega.
+ * reserva a altura do desenho enquanto espera, para a página não pular quando ele chega.
  *
- * ⭐ Sem `IntersectionObserver` (testes, navegador antigo), busca de imediato.
+ * DECISÃO: Sem `IntersectionObserver` (testes, navegador antigo), busca de imediato.
+ *
+ * ATENÇÃO: Com um período escolhido, sumir calado pareceria defeito.
  */
 function GrafoDaAbertura({ legislatura }: { legislatura?: number }) {
   const marco = useRef<HTMLElement>(null);
@@ -196,7 +201,6 @@ function GrafoDaAbertura({ legislatura }: { legislatura?: number }) {
   }, [visivel, legislatura]);
 
   if (grafo === 'vazio') {
-    // ⚠️ Com um período escolhido, sumir calado pareceria defeito.
     return legislatura ? (
       <section className="painel-secao">
         <h2>Como a Câmara se agrupa</h2>
@@ -232,10 +236,16 @@ function GrafoDaAbertura({ legislatura }: { legislatura?: number }) {
   );
 }
 
-/** O tamanho da base, por casa — o que sustenta tudo o que a tela afirma. */
+/**
+ * O tamanho da base, por casa — o que sustenta tudo o que a tela afirma.
+ *
+ * DECISÃO: Estado honesto do primeiro dia: não inventa número nenhum.
+ *
+ * ATENÇÃO: "55ª legislatura" aqui, e "2015–2019 · 55ª" no seletor logo acima, diziam a
+ * mesma coisa duas vezes. O título diz o período; o número fica no seletor.
+ */
 function Base({ panorama }: { panorama: Panorama }) {
   if (panorama.porCasa.length === 0) {
-    // ⭐ Estado honesto do primeiro dia: ⛔ não inventa número nenhum.
     return (
       <section className="painel-secao">
         <p className="vazio">
@@ -248,8 +258,6 @@ function Base({ panorama }: { panorama: Panorama }) {
 
   return (
     <section className="painel-secao">
-      {/* ⚠️ "55ª legislatura" aqui, e "2015–2019 · 55ª" no seletor logo acima, diziam a
-          mesma coisa duas vezes. O título diz o período; o número fica no seletor. */}
       <h2>
         A base{' '}
         {panorama.legislatura && <small>{periodoDaLegislatura(panorama.legislatura)}</small>}
@@ -264,6 +272,14 @@ function Base({ panorama }: { panorama: Panorama }) {
   );
 }
 
+/**
+ * ATENÇÃO: PL68 — o painel contava toda votação registrada, e a 51ª da Câmara afirmava
+ * 1.548 com 7 de voto nominal. O número acima é o que o cálculo usa; o resto é
+ * dito aqui, não somado calado.
+ *
+ * RISCO: O sigilo muda o que a figura daquela casa pode afirmar, e omiti-lo faria as
+ * duas parecerem comparáveis. É achado do trabalho, não rodapé.
+ */
 function CartaoDaCasa({ casa }: { casa: PanoramaDaCasa }) {
   const nome = NOME_DA_CASA[casa.casa];
   const abertas = casa.votacoes - casa.votacoesSecretas;
@@ -291,9 +307,6 @@ function CartaoDaCasa({ casa }: { casa: PanoramaDaCasa }) {
         </div>
       </dl>
 
-      {/* ⚠️ PL68 — o painel contava toda votação registrada, e a 51ª da Câmara afirmava
-          1.548 com 7 de voto nominal. O número acima é o que o cálculo usa; o resto é
-          dito aqui, ⛔ somado calado. */}
       {casa.votacoesSemVotoNominal > 0 && (
         <p className="cartao-ressalva">
           Outras {casa.votacoesSemVotoNominal.toLocaleString('pt-BR')} votações ficaram fora da
@@ -301,8 +314,6 @@ function CartaoDaCasa({ casa }: { casa: PanoramaDaCasa }) {
         </p>
       )}
 
-      {/* 🔴 O sigilo muda o que a figura daquela casa pode afirmar, e omiti-lo faria as
-          duas parecerem comparáveis. É achado do trabalho, não rodapé. */}
       {casa.votacoesSecretas > 0 && (
         <p className="cartao-ressalva">
           <strong>

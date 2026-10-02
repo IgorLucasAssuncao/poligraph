@@ -15,7 +15,7 @@ const Contexto = createContext<Sessao | null>(null);
 /**
  * Estado de sessão do aplicativo.
  *
- * ⚠️ A verdade sobre "estou logado?" vem do SERVIDOR, sempre. O front pergunta
+ * ATENÇÃO: A verdade sobre "estou logado?" vem do SERVIDOR, sempre. O front pergunta
  * `GET /api/auth/eu` ao carregar; não há flag em `localStorage` dizendo que a pessoa
  * está logada — isso seria mentira contável, já que o cookie pode ter expirado ou a
  * sessão ter sido revogada em outro aparelho.

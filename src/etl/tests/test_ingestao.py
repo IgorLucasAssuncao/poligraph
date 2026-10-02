@@ -41,7 +41,7 @@ def test_votacao_nominal_vira_linha():
 
 
 def test_votacao_simbolica_e_descartada():
-    """⚠️ Sem contagem não há registro individual — não serve para medir afinidade."""
+    """ATENÇÃO: Sem contagem não há registro individual — não serve para medir afinidade."""
     df = pd.DataFrame([_votacao_bruta(votosSim="0", votosNao="0", votosOutros="0")])
 
     assert votacoes_para_linhas(df) == []
@@ -55,7 +55,7 @@ def test_votacao_de_comissao_nao_e_plenario():
 
 
 def test_requerimento_e_classificado_como_procedimental():
-    """⭐ Peso 0 na matriz: mede obstrução, não posição."""
+    """DECISÃO: Peso 0 na matriz: mede obstrução, não posição."""
     df = pd.DataFrame([_votacao_bruta(descricao="Aprovado o Requerimento de urgência")])
     linhas = votacoes_para_linhas(df)
 
@@ -88,7 +88,7 @@ def test_voto_vira_linha_com_id_sintetico():
 
 
 def test_obstrucao_vira_nulo_e_nao_zero():
-    """🔴 Obstrução é manobra de bancada, não abstenção — sai do cálculo."""
+    """RISCO: Obstrução é manobra de bancada, não abstenção — sai do cálculo."""
     df = pd.DataFrame([_voto_bruto(voto="Obstrução")])
     linhas = votos_para_linhas(df, {"204528": 42})
 
@@ -96,7 +96,7 @@ def test_obstrucao_vira_nulo_e_nao_zero():
 
 
 def test_voto_de_pessoa_fora_do_mapa_e_descartado():
-    """⚠️ Descartado, nunca inventado. Volume alto aqui = falha na carga de deputados."""
+    """ATENÇÃO: Descartado, nunca inventado. Volume alto aqui = falha na carga de deputados."""
     df = pd.DataFrame([_voto_bruto(deputado_id="999999")])
 
     assert votos_para_linhas(df, {"204528": 42}) == []
@@ -111,12 +111,12 @@ def test_uf_e_truncada_em_dois_caracteres():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 Deputados — o achado #20
+# RISCO: Deputados — o achado #20
 # ═══════════════════════════════════════════════════════════════════
 
 
 def test_deputado_repetido_por_partido_entra_uma_vez_so():
-    """🔴 Achado #20: o CSV traz 878 linhas para 647 pessoas.
+    """RISCO: Achado #20: o CSV traz 878 linhas para 647 pessoas.
 
     É produto cartesiano de nome × partido — quem trocou de legenda aparece
     várias vezes. Sem a deduplicação, a mesma pessoa viraria vários nós do grafo.
@@ -136,7 +136,7 @@ def test_deputado_repetido_por_partido_entra_uma_vez_so():
 
 
 def test_cpf_hash_fica_nulo_porque_o_csv_nao_traz_cpf():
-    """⚠️ Medido: 0 de 7.889 CPFs preenchidos no CSV. Só a API REST tem.
+    """ATENÇÃO: Medido: 0 de 7.889 CPFs preenchidos no CSV. Só a API REST tem.
 
     Este teste existe para que ninguém "conserte" o campo lendo a coluna vazia e
     ache que conciliou com o TSE.
@@ -154,14 +154,14 @@ def test_deputado_sem_id_e_descartado():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 O id do deputado — descoberto na primeira ingestão real
+# RISCO: O id do deputado — descoberto na primeira ingestão real
 # ═══════════════════════════════════════════════════════════════════
 
 
 def test_id_do_deputado_sai_da_uri():
-    """🔴 `deputados.csv` NÃO tem coluna `id` — tem `uri`, com o id no fim.
+    """RISCO: `deputados.csv` NÃO tem coluna `id` — tem `uri`, com o id no fim.
 
-    ⚠️ Ler `id` devolvia vazio para toda linha e o ETL registrava
+    ATENÇÃO: Ler `id` devolvia vazio para toda linha e o ETL registrava
     `0 deputados no arquivo` em INFO, sem erro. Sem a tabela de-para, os 13.825 votos
     de 2025 também não casavam e o log dizia `0 votos`. Dois zeros plausíveis.
     """
@@ -171,7 +171,7 @@ def test_id_do_deputado_sai_da_uri():
 
 
 def test_id_do_deputado_prefere_a_coluna_id_se_existir():
-    # ⭐ Se a Câmara passar a publicar a coluna, funciona sem mudança.
+    # DECISÃO: Se a Câmara passar a publicar a coluna, funciona sem mudança.
     linha = {"id": "204554", "uri": ".../deputados/220593"}
 
     assert ingestao.id_do_deputado(linha) == "204554"
@@ -183,7 +183,7 @@ def test_id_do_deputado_sem_uri_nem_id_devolve_vazio():
 
 
 def test_deputados_do_formato_real_da_camara_viram_linhas():
-    """⭐ Colunas copiadas do cabeçalho real de `deputados.csv`, não inventadas."""
+    """DECISÃO: Colunas copiadas do cabeçalho real de `deputados.csv`, não inventadas."""
     df = pd.DataFrame(
         [
             {
@@ -201,12 +201,12 @@ def test_deputados_do_formato_real_da_camara_viram_linhas():
     assert len(linhas) == 1
     assert linhas[0]["id_externo"] == "220593"
     assert linhas[0]["nome_exibicao"] == "Abilio Brunini"
-    # ⚠️ A coluna `cpf` do CSV vem vazia — medido: 0 de 7.889 preenchidos.
+    # ATENÇÃO: A coluna `cpf` do CSV vem vazia — medido: 0 de 7.889 preenchidos.
     assert linhas[0]["cpf_hash"] is None
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 A legislatura sai da DATA — descoberto pela pergunta "e quando virar?"
+# RISCO: A legislatura sai da DATA — descoberto pela pergunta "e quando virar?"
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -216,17 +216,17 @@ def test_deputados_do_formato_real_da_camara_viram_linhas():
         ("2023-02-01", 57),   # primeiro dia da 57ª
         ("2025-07-16", 57),
         ("2026-12-31", 57),
-        ("2027-01-31", 57),   # ⚠️ janeiro de 2027 ainda é a 57ª
-        ("2027-02-01", 58),   # 🔴 a posse é em 1º de FEVEREIRO
+        ("2027-01-31", 57),   # ATENÇÃO: janeiro de 2027 ainda é a 57ª
+        ("2027-02-01", 58),   # RISCO: a posse é em 1º de FEVEREIRO
         ("2030-12-01", 58),
         ("2031-02-01", 59),
         ("2019-02-01", 56),   # retroage também
     ],
 )
 def test_legislatura_sai_da_data(data: str, esperada: int):
-    """🔴 Era um `57` chumbado no código.
+    """RISCO: Era um `57` chumbado no código.
 
-    ⚠️ Ingerir 2027 gravaria as votações da 58ª COMO SE FOSSEM DA 57ª — sem erro, e a
+    ATENÇÃO: Ingerir 2027 gravaria as votações da 58ª COMO SE FOSSEM DA 57ª — sem erro, e a
     matriz de similaridade passaria a misturar duas Câmaras diferentes.
     """
     assert ingestao.legislatura_da_data(data) == esperada
@@ -245,9 +245,9 @@ def test_votacao_recebe_a_legislatura_da_propria_data():
 
 
 def test_url_da_foto_e_deterministica():
-    """⭐ Não precisa de requisição: a URL se monta a partir do id.
+    """DECISÃO: Não precisa de requisição: a URL se monta a partir do id.
 
-    ⚠️ O CSV de deputados NÃO traz a foto — só `urlRedeSocial` e `urlWebsite`. Ela existe
+    ATENÇÃO: O CSV de deputados NÃO traz a foto — só `urlRedeSocial` e `urlWebsite`. Ela existe
     em `ultimoStatus.urlFoto` na API REST, um deputado por chamada: 7.889 requisições
     para obter algo que sai de uma f-string.
     """
@@ -267,7 +267,7 @@ def test_deputado_ingerido_ja_vem_com_foto():
 
 
 def test_voto_sem_partido_nem_uf_nao_derruba_a_ingestao():
-    """📐 Em 2010 há voto com a UF vazia, lida como NaN (achado #35)."""
+    """MEDIDO: Em 2010 há voto com a UF vazia, lida como NaN (achado #35)."""
     import pandas as pd
 
     from poligraph_etl.ingestao import votos_para_linhas

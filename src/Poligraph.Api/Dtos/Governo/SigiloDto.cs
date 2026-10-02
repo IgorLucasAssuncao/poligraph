@@ -5,12 +5,12 @@
 /// </summary>
 /// <remarks>
 /// <para>
-/// Duas origens, que ⛔ se somam: no cartão corporativo, a compra sigilosa mostra só o
-/// valor — ⛔ quem comprou, de quem nem quando; na ação de caráter sigiloso, o valor
-/// aparece e a finalidade ⛔. Cada uma vem com a sua base: o cartão sigiloso ao lado do
+/// Duas origens, que não se somam: no cartão corporativo, a compra sigilosa mostra só o
+/// valor — não quem comprou, de quem nem quando; na ação de caráter sigiloso, o valor
+/// aparece e a finalidade não . Cada uma vem com a sua base: o cartão sigiloso ao lado do
 /// cartão inteiro.
 /// </para>
-/// <para>É só o que o Portal MARCA. Órgão de inteligência também gasta em ação de nome comum, e esse gasto ⛔ está aqui.</para>
+/// <para>É só o que o Portal MARCA. Órgão de inteligência também gasta em ação de nome comum, e esse gasto não está aqui.</para>
 /// <para><see cref="Meses"/> diz quantos meses entraram: no ano corrente, menos de 12.</para>
 /// </remarks>
 public record SigiloDto(

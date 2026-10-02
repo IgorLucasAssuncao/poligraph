@@ -32,7 +32,7 @@ public static partial class EndpointsEntidades
         string? busca = null, GrupoDeEntidade? grupo = null, int pagina = 1) =>
         Results.Ok(await servico.ListarAsync(busca, grupo, pagina, ct));
 
-    /// <summary>A página de uma entidade. CNPJ fora do formato ou que ⛔ recebeu emenda: 404.</summary>
+    /// <summary>A página de uma entidade. CNPJ fora do formato ou que não recebeu emenda: 404.</summary>
     private static async Task<IResult> ObterAsync(string cnpj, ServicoEntidades servico, CancellationToken ct) =>
         Cnpj().IsMatch(cnpj) && await servico.ObterAsync(cnpj, ct) is { } entidade
             ? Results.Ok(entidade)

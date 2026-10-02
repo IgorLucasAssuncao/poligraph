@@ -1,9 +1,9 @@
 /**
  * Os conjuntos de dados oficiais de onde a base sai — para a tela dizer "fonte" com link.
  *
- * ⭐ Cada endereço foi aberto e conferido em 2026-09-25. Os links de ITEM (um voto, uma
+ * DECISÃO: Cada endereço foi aberto e conferido em 2026-09-25. Os links de ITEM (um voto, uma
  * emenda, uma nota fiscal) vêm da API, que os monta em `FontesOficiais`; aqui ficam só os
- * de conjunto, que ⛔ dependem de identificador.
+ * de conjunto, que não dependem de identificador.
  */
 export const FONTES = {
   camara: {

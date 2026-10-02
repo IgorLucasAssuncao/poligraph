@@ -12,8 +12,8 @@ import { EsqueletoDeLista } from '../componentes/Esqueleto';
 /**
  * Quem recebeu dinheiro de emenda: prefeituras, governos estaduais, associações, empresas.
  *
- * ⭐ Os grupos substituem as 35 naturezas jurídicas da Receita: a pessoa reconhece
- * "associação ou fundação", ⛔ "Fundação Pública de Direito Privado Municipal". A natureza
+ * DECISÃO: Os grupos substituem as 35 naturezas jurídicas da Receita: a pessoa reconhece
+ * "associação ou fundação", não "Fundação Pública de Direito Privado Municipal". A natureza
  * exata continua na linha, para quem quiser conferir.
  *
  * O filtro e a busca ficam no endereço: o link compartilhado abre o mesmo recorte.

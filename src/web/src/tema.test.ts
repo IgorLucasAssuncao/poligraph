@@ -10,17 +10,17 @@ function sistemaEscuro(escuro: boolean) {
   }));
 }
 
+/**
+ * O grafo pinta em canvas e não tem seletor de CSS. Perguntando só ao sistema, ele
+ * saía com as cores do tema claro sobre a página escura quando a pessoa escolhia o
+ * escuro no botão com o sistema claro.
+ */
 describe('tema efetivo', () => {
   afterEach(() => {
     document.documentElement.removeAttribute('data-tema');
     vi.unstubAllGlobals();
   });
 
-  /**
-   * O grafo pinta em canvas e não tem seletor de CSS. Perguntando só ao sistema, ele
-   * saía com as cores do tema claro sobre a página escura quando a pessoa escolhia o
-   * escuro no botão com o sistema claro.
-   */
   it('a escolha do botão vence o sistema, nos dois sentidos', () => {
     sistemaEscuro(false);
     document.documentElement.setAttribute('data-tema', 'escuro');

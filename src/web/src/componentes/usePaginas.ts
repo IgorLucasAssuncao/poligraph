@@ -2,9 +2,9 @@ import { useState } from 'react';
 import type { PaginaDe } from '../api';
 
 /**
- * Lista que ainda ⛔ trouxe nada: a primeira página vem no primeiro clique.
+ * Lista que ainda não trouxe nada: a primeira página vem no primeiro clique.
  *
- * ⚠️ Precisa ser SEMPRE este mesmo array. Um `[]` escrito na chamada é um array novo a
+ * ATENÇÃO: Precisa ser SEMPRE este mesmo array. Um `[]` escrito na chamada é um array novo a
  * cada desenho, e o hook entenderia que a lista mudou e a zeraria.
  */
 export const NENHUM: never[] = [];
@@ -12,11 +12,11 @@ export const NENHUM: never[] = [];
 /**
  * Uma lista que começa com o que a tela já tem e busca o resto sob demanda.
  *
- * ⭐ `inicial` é a primeira página quando a ficha já a traz, e buscá-la de novo seria uma
+ * DECISÃO: `inicial` é a primeira página quando a ficha já a traz, e buscá-la de novo seria uma
  * chamada à toa. A próxima página sai do que já foi carregado dividido por `porPagina`:
  * com `NENHUM`, o primeiro clique busca a página 1.
  *
- * ⚠️ Mudou `inicial` (outro parlamentar, outro ano), a lista recomeça — ⛔ se somam
+ * ATENÇÃO: Mudou `inicial` (outro parlamentar, outro ano), a lista recomeça — não se somam
  * itens de duas fichas.
  */
 export function usePaginas<T>(

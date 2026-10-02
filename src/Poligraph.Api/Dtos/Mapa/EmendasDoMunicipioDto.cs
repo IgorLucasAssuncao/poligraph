@@ -7,7 +7,7 @@
 /// <para>
 /// A emenda tem três autores possíveis (CF, art. 166): o parlamentar, sozinho; a bancada
 /// do estado, junta; e uma comissão. Só o primeiro é pessoa — por isso os coletivos vêm em
-/// lista própria, e ⛔ misturados aos deputados e senadores.
+/// lista própria, e não misturados aos deputados e senadores.
 /// </para>
 /// <para>
 /// <see cref="NaPropriaCidade"/> é o que foi à prefeitura ou a órgão municipal: nesses
@@ -34,7 +34,7 @@ public record EmendasDoMunicipioDto(
 /// <remarks>
 /// <para>
 /// <see cref="ALiberar"/> soma só os convênios em execução: nos outros a execução acabou, e a
-/// diferença entre o combinado e o liberado ⛔ é dinheiro que ainda vai chegar.
+/// diferença entre o combinado e o liberado não é dinheiro que ainda vai chegar.
 /// </para>
 /// <para>A cidade é a da sede do convenente, pelo CNPJ — a mesma regra do mapa.</para>
 /// </remarks>

@@ -37,7 +37,7 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Equal("CURITIBA", semFins.Itens[0].Sede!.Nome);
     }
 
-    /// <summary>🔴 O CNPJ de empresário individual é de uma pessoa: ⛔ entra na lista.</summary>
+    /// <summary>RISCO: O CNPJ de empresário individual é de uma pessoa: Não entra na lista.</summary>
     [SkippableFact]
     public async Task Lista_DeixaDeForaEmpresarioIndividual()
     {
@@ -66,7 +66,7 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
 
     /// <summary>
     /// A página separa quem é pessoa de quem é grupo, soma por ano e cruza a cota pelo CNPJ —
-    /// ⛔ pelo nome, que na cota vem escrito de outro jeito.
+    /// Não pelo nome, que na cota vem escrito de outro jeito.
     /// </summary>
     [SkippableFact]
     public async Task Pagina_SeparaAutores_SomaPorAno_ECruzaACotaPeloCnpj()

@@ -8,7 +8,7 @@ quem recebeu?"*.
 | | |
 |---|---|
 | Fonte | Download `emendas-parlamentares/UNICO` — ver [`fontes/portal.py`](fontes/portal.py) |
-| 🔑 Autenticação | ⛔ Nenhuma: o download é público. A API de dados pedia a chave pessoal |
+| CHAVE: Autenticação | Nenhuma: o download é público. A API de dados pedia a chave pessoal |
 | Conteúdo | Três CSVs, todos os anos desde 2014: emendas, favorecidos, convênios |
 | Formato | Latin-1; valores em **pt-BR** (`"343000,00"`) |
 
@@ -17,7 +17,7 @@ quem recebeu?"*.
 1. **Emendas:** uma linha por emenda × localidade × ação × plano orçamentário — 55
    emendas de 2023–26 ocupam mais de uma. O código do autor vem em coluna própria e é
    conferido contra o recorte do `codigoEmenda`: divergência é sinal de que a fonte mudou
-2. **Favorecidos:** somados por mês e por quem recebeu. Pessoa ⛔ não é identificada
+2. **Favorecidos:** somados por mês e por quem recebeu. Pessoa não é identificada
 3. **Convênios:** entidade própria. O valor é do convênio inteiro, e um convênio recebe
    até 23 emendas — somar por emenda contaria o mesmo dinheiro 23 vezes
 
@@ -32,15 +32,15 @@ quem recebeu?"*.
 
 ---
 
-🔴 **A chave é o CÓDIGO DO AUTOR, ⛔ não o nome.** O `codigoEmenda` embute um
+RISCO: **A chave é o CÓDIGO DO AUTOR, não o nome.** O `codigoEmenda` embute um
 identificador de **mandato**, estável dentro dele e válido para Câmara **e** Senado — que
-é o motivo de tê-lo escolhido, já que o Senado ⛔ não publica CPF.
+é o motivo de tê-lo escolhido, já que o Senado não publica CPF.
 
-⭐ **`pessoa_id` sai NULO daqui.** Nada é descartado por não ter dono; o vínculo é
+DECISÃO: **`pessoa_id` sai NULO daqui.** Nada é descartado por não ter dono; o vínculo é
 decisão de outro passo.
 
-📐 [achado #24](../../../docs/achados/024-codigo-da-emenda-identifica-o-mandato.md) ·
-📐 [achado #33](../../../docs/achados/033-o-destino-da-emenda.md)
+MEDIDO: [achado #24](../../../docs/achados/024-codigo-da-emenda-identifica-o-mandato.md) ·
+MEDIDO: [achado #33](../../../docs/achados/033-o-destino-da-emenda.md)
 """
 
 import logging
@@ -65,28 +65,28 @@ SEM_INFORMACAO = "Sem informação"
 valor_brasileiro = normalizacao.valor_pt_br
 
 
-# 🔴 Quando o parlamentar deixa o mandato, o SUPLENTE executa a emenda dele — e o Portal
+# RISCO: Quando o parlamentar deixa o mandato, o SUPLENTE executa a emenda dele — e o Portal
 #    passa a escrever o nome assim, citando o artigo da LDO que autoriza:
 #
 #      "TIAGO DIMAS (EX-PARLAMENTAR LAZARO BOTELHO, NOS TERMOS ART. 78 LDO 2025 ...)"
 #
-#    ⚠️ ⛔ Não é variação de grafia: é OUTRA PESSOA no lugar do autor.
+#    ATENÇÃO: Não é variação de grafia: é OUTRA PESSOA no lugar do autor.
 _EX_PARLAMENTAR = re.compile(r"EX-PARLAMENTAR\s+([^,)]+)", re.IGNORECASE)
 
 
 def autor_original(nome_autor: str | None) -> str | None:
     """O nome de quem APRESENTOU a emenda, quando o Portal cita o sucessor.
 
-    ⭐ **⛔ Não é heurística de similaridade** — é ler um rótulo que a própria fonte
+    DECISÃO: **Não é heurística de similaridade** — é ler um rótulo que a própria fonte
     escreve, com a base legal junto (art. 78 da LDO).
 
-    ⚠️ A emenda é do autor, ⛔ não de quem a executa: a pergunta que a ficha responde é
+    ATENÇÃO: A emenda é do autor, não de quem a executa: a pergunta que a ficha responde é
     *"para onde ESTE parlamentar mandou dinheiro"*, e quem mandou foi quem apresentou.
 
-    📐 Medido em 2026-08-29: **14** autores pendentes trazem o padrão, e em **12** o nome
+    MEDIDO: Medido em 2026-08-29: **14** autores pendentes trazem o padrão, e em **12** o nome
     extraído casa com exatamente um deputado da 57ª — 229 emendas, R$ 656 mi.
 
-    ⛔ Devolve `None` quando ⛔ não há o padrão, e quem chama segue com o nome original.
+    Não Devolve `None` quando não há o padrão, e quem chama segue com o nome original.
     """
     if not nome_autor:
         return None
@@ -106,10 +106,10 @@ def codigo_do_autor(codigo_emenda: str | None, numero: str | None) -> str | None
          │   └─────── 4184 = o código do autor
          └─────────── ano
 
-    🔴 O corte usa o número do próprio registro, ⛔ nunca posição fixa: recortar por
+    RISCO: O corte usa o número do próprio registro, nunca posição fixa: recortar por
     índice erraria em silêncio, devolvendo o código de **outro** autor.
 
-    ⭐ O arquivo traz o código do autor em coluna própria. O recorte continua como
+    DECISÃO: O arquivo traz o código do autor em coluna própria. O recorte continua como
     conferência: se os dois divergem, a fonte mudou de formato.
     """
     codigo = (codigo_emenda or "").strip()
@@ -124,11 +124,11 @@ def codigo_do_autor(codigo_emenda: str | None, numero: str | None) -> str | None
 def para_linhas(df: pd.DataFrame, anos: Iterable[int]) -> tuple[list[dict], dict[str, str]]:
     """Converte o CSV de emendas em linhas de `emendas`, e devolve o mapa código → nome.
 
-    ⭐ **Nada é descartado por não ter dono.** Emenda de comissão, de bancada e de
+    DECISÃO: **Nada é descartado por não ter dono.** Emenda de comissão, de bancada e de
     parlamentar de outra legislatura entra com `pessoa_id` nulo, e o vínculo é resolvido
     depois — perder o registro deixaria a reconciliação futura sem o que reconciliar.
 
-    ⚠️ O que se descarta é o registro **incoerente**: código do autor que não bate com o
+    ATENÇÃO: O que se descarta é o registro **incoerente**: código do autor que não bate com o
     recorte do código da emenda. Medido em 2026-09-25: zero em 25.001 linhas de 2023–26.
     """
     anos = {str(a) for a in anos}
@@ -177,20 +177,20 @@ def para_linhas(df: pd.DataFrame, anos: Iterable[int]) -> tuple[list[dict], dict
 # Favorecidos — quem recebeu
 # ═══════════════════════════════════════════════════════════════════
 
-# 🔴 Os valores do CHECK `ck_favorecido_tipo`. O contrato com o EF é conferido em teste.
+# RISCO: Os valores do CHECK `ck_favorecido_tipo`. O contrato com o EF é conferido em teste.
 PESSOA_JURIDICA = "PESSOA_JURIDICA"
 UNIDADE_GESTORA = "UNIDADE_GESTORA"
 PESSOA = "PESSOA"
 SEM_INFORMACAO_TIPO = "SEM_INFORMACAO"
 TIPOS_DE_FAVORECIDO = (PESSOA_JURIDICA, UNIDADE_GESTORA, PESSOA, SEM_INFORMACAO_TIPO)
 
-# 🔴 Natureza jurídica que traz nome de pessoa dentro da razão social. O CNPJ de um
+# RISCO: Natureza jurídica que traz nome de pessoa dentro da razão social. O CNPJ de um
 #    empresário individual identifica a pessoa tanto quanto o CPF — e o nome vem junto.
 NATUREZAS_DE_PESSOA = {"Empresário (Individual)", "Produtor Rural (Pessoa Física)"}
 
-# ⚠️ Raiz de CNPJ de quem recebe para repassar. Medido em 2026-09-24: o Banco do Brasil
+# ATENÇÃO: Raiz de CNPJ de quem recebe para repassar. Medido em 2026-09-24: o Banco do Brasil
 #    aparece como favorecido de R$ 32,57 bi em emendas de 2023–26, sempre em Brasília —
-#    ele ⛔ não é o destino, é o caminho. A Caixa (R$ 0,73 bi) ⛔ entra aqui: sem medir o
+#    ele não é o destino, é o caminho. A Caixa (R$ 0,73 bi) não entra aqui: sem medir o
 #    que é tarifa e o que é repasse, chamá-la de intermediária seria palpite.
 RAIZES_INTERMEDIARIAS = {"00000000"}
 
@@ -198,8 +198,8 @@ RAIZES_INTERMEDIARIAS = {"00000000"}
 def classificar_favorecido(tipo: str, documento: str, natureza: str) -> str:
     """O tipo do favorecido, como `ck_favorecido_identificacao` o entende.
 
-    ⭐ Tipo desconhecido vira `SEM_INFORMACAO`: o dinheiro fica, a identificação ⛔ não.
-    Uma categoria nova no Portal ⛔ derruba a carga, e ⛔ grava identificação que pode
+    DECISÃO: Tipo desconhecido vira `SEM_INFORMACAO`: o dinheiro fica, a identificação não.
+    Uma categoria nova no Portal não derruba a carga, e não grava identificação que pode
     ser de pessoa.
     """
     tipo = tipo.strip()
@@ -218,11 +218,11 @@ def classificar_favorecido(tipo: str, documento: str, natureza: str) -> str:
 def favorecidos_para_linhas(df: pd.DataFrame, codigos: set[str]) -> list[dict]:
     """Soma os pagamentos por emenda, mês e favorecido.
 
-    🔴 **Pessoa ⛔ não é identificada, nem em hash.** O CPF já vem mascarado
-    (`***.444.712-**`), e máscara ⛔ serve de chave; o nome vem em claro. A ficha só
+    RISCO: **Pessoa não é identificada, nem em hash.** O CPF já vem mascarado
+    (`***.444.712-**`), e máscara não serve de chave; o nome vem em claro. A ficha só
     precisa do total que foi a pessoas — então nenhum dos dois é guardado.
 
-    ⚠️ Somar é obrigatório, ⛔ não otimização: sem documento, duas pessoas do mesmo
+    ATENÇÃO: Somar é obrigatório, não otimização: sem documento, duas pessoas do mesmo
     município no mesmo mês viram a mesma chave. Soma que dá zero sai — é estorno que
     anulou o pagamento, e `ck_favorecido_valor` o recusaria.
     """
@@ -267,10 +267,10 @@ def convenios_para_linhas(
 ) -> tuple[list[dict], list[dict]]:
     """Separa os convênios da ligação emenda → convênio.
 
-    🔴 O valor é do **convênio inteiro**, repetido em cada emenda que o financia: um de
+    RISCO: O valor é do **convênio inteiro**, repetido em cada emenda que o financia: um de
     R$ 80 mi aparece em 23. Por isso o convênio vira linha própria, uma vez só.
 
-    ⭐ Medido em 2026-09-25: convenente, objeto, data e valor são os mesmos em todas as
+    DECISÃO: Medido em 2026-09-25: convenente, objeto, data e valor são os mesmos em todas as
     linhas de um mesmo número. O número identifica o convênio.
     """
     convenios: dict[str, dict] = {}
@@ -301,13 +301,13 @@ def convenios_para_linhas(
 
 
 def _texto(bruto: str | None) -> str | None:
-    """Vazio e "Sem informação" viram nulo: os dois dizem que o dado ⛔ existe."""
+    """Vazio e "Sem informação" viram nulo: os dois dizem que o dado não existe."""
     texto = (bruto or "").strip()
     return None if not texto or texto == SEM_INFORMACAO else texto
 
 
 def _ibge(bruto: str | None) -> str | None:
-    """Sete dígitos ou nada. O Portal escreve "Sem informação" quando o destino ⛔ é município."""
+    """Sete dígitos ou nada. O Portal escreve "Sem informação" quando o destino não é município."""
     texto = (bruto or "").strip()
     return texto if re.fullmatch(r"\d{7}", texto) else None
 

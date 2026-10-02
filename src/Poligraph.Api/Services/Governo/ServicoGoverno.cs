@@ -16,7 +16,7 @@ namespace Poligraph.Api.Services;
 /// <para>
 /// O período soma os anos. Somar é legítimo para o que se paga e se arrecada — é dinheiro
 /// que saiu e entrou em cada ano —, e é por isso que o saldo continua fora: ele pediria as
-/// regras de resultado fiscal, que estes dados ⛔ seguem.
+/// regras de resultado fiscal, que estes dados não seguem.
 /// </para>
 /// </remarks>
 public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
@@ -92,14 +92,14 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
             GestoesDisponiveis: await GestoesAsync(anos[0].Ano, anos[^1].Ano, ct));
     }
 
-    /// <summary>O que se gastou de fato: as áreas, os repasses e a dívida paga — ⛔ a rolagem.</summary>
+    /// <summary>O que se gastou de fato: as áreas, os repasses e a dívida paga — não a rolagem.</summary>
     private static decimal Gasto(DespesaDto despesa) =>
         despesa.Areas.Sum(a => a.Pago + a.RestosAPagarPagos)
         + despesa.Encargos.Where(e => e.Grupo != TipoGrupoDeEncargo.REFINANCIAMENTO).Sum(e => e.Pago + e.RestosAPagarPagos);
 
-    /// <summary>O gasto sigiloso do período, por órgão e no total. Nulo se a carga ainda ⛔ trouxe nada dele.</summary>
+    /// <summary>O gasto sigiloso do período, por órgão e no total. Nulo se a carga ainda não trouxe nada dele.</summary>
     /// <remarks>
-    /// <para>Só entra na lista o órgão com algum gasto sigiloso: o cartão de um ministério sem sigilo nenhum ⛔ responde à pergunta da seção.</para>
+    /// <para>Só entra na lista o órgão com algum gasto sigiloso: o cartão de um ministério sem sigilo nenhum não responde à pergunta da seção.</para>
     /// <para><c>Meses</c> é o do ano mais recente do período: é ele que pode estar incompleto.</para>
     /// </remarks>
     private static SigiloDto? Sigilo(IReadOnlyList<GastoSigilosoModel> linhas)

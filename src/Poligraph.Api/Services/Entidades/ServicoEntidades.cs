@@ -16,10 +16,10 @@ namespace Poligraph.Api.Services;
 /// casado por texto.
 /// </para>
 /// <para>
-/// 🔴 Empresário individual ⛔ entra. O CNPJ dele é de uma pessoa, e o nome empresarial de
+/// RISCO: Empresário individual não entra. O CNPJ dele é de uma pessoa, e o nome empresarial de
 /// MEI traz o CPF. Medido em 2026-09-25: nenhum recebeu emenda — a regra é para o que vier.
 /// </para>
-/// <para>Todos os anos carregados: a página de uma entidade responde "o que ela recebeu", ⛔ "o que recebeu num ano".</para>
+/// <para>Todos os anos carregados: a página de uma entidade responde "o que ela recebeu", não "o que recebeu num ano".</para>
 /// </remarks>
 public class ServicoEntidades(
     PoligraphDb db, IMemoryCache cache, ServicoAutoresDeEmenda autores, ServicoParlamentares parlamentares)
@@ -55,7 +55,7 @@ public class ServicoEntidades(
     public async Task<IReadOnlyList<EntidadeNaListaDto>> BuscarAsync(string busca, CancellationToken ct) =>
         [.. Filtrar(await IndiceAsync(ct), busca).Take(ResultadosDaBusca)];
 
-    /// <summary>A página da entidade. Nulo para CNPJ que ⛔ recebeu emenda, e o endpoint responde 404.</summary>
+    /// <summary>A página da entidade. Nulo para CNPJ que não recebeu emenda, e o endpoint responde 404.</summary>
     public async Task<EntidadeDto?> ObterAsync(string cnpj, CancellationToken ct)
     {
         var entidade = await CalculadaAsync(cnpj, ct);
@@ -86,7 +86,7 @@ public class ServicoEntidades(
     /// O grupo que a pessoa reconhece, a partir da natureza jurídica da Receita.
     /// </summary>
     /// <remarks>
-    /// <para>Pelas palavras da natureza, e ⛔ por uma tabela das 35: uma natureza nova cai no grupo certo quando segue o padrão, e em <see cref="GrupoDeEntidade.OUTRO"/> quando ⛔ segue.</para>
+    /// <para>Pelas palavras da natureza, e não por uma tabela das 35: uma natureza nova cai no grupo certo quando segue o padrão, e em <see cref="GrupoDeEntidade.OUTRO"/> quando não segue.</para>
     /// </remarks>
     public static GrupoDeEntidade GrupoDe(string? natureza) => natureza switch
     {

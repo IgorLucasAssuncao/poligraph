@@ -26,12 +26,12 @@ import { passosDoGoverno } from '../tour';
 import { EsqueletoDePainel } from '../componentes/Esqueleto';
 
 /**
- * O governo federal para quem ⛔ lê orçamento: quanto entrou, onde foi parar, o que foi
+ * O governo federal para quem não lê orçamento: quanto entrou, onde foi parar, o que foi
  * gasto em segredo e quem governava.
  *
  * ## Por que assim
  *
- * - **Período, ⛔ ano a ano.** O padrão são todos os anos carregados; a tabela "Ano a ano"
+ * - **Período, não ano a ano.** O padrão são todos os anos carregados; a tabela "Ano a ano"
  *   compara os anos sem trocar o filtro. Escolher um ano por clique obrigava a somar de
  *   cabeça.
  * - **Uma frase por número, curta.** Cada linha miúda de definição era mais uma coisa a
@@ -39,13 +39,13 @@ import { EsqueletoDePainel } from '../componentes/Esqueleto';
  * - **O sigilo com a base.** "R$ 50 mi sigilosos" sozinho fazia parecer que o cartão
  *   inteiro era secreto; a barra mostra as duas partes.
  *
- * ## 🔴 O que a página ⛔ faz
+ * ## RISCO: O que a página não faz
  *
  * - **Qualificar o governo** (RNF-16). Sem nota, sem meta, sem cor de bom e ruim, e sem
- *   saldo: o que entrou e o que saiu ficam separados e ⛔ se subtraem.
+ *   saldo: o que entrou e o que saiu ficam separados e não se subtraem.
  * - **Somar empréstimo à arrecadação**, nem **contar a rolagem como gasto**.
  *
- * ⚠️ A gestão vem depois dos números: em ano eleitoral, o presidente no topo lia como vitrine.
+ * ATENÇÃO: A gestão vem depois dos números: em ano eleitoral, o presidente no topo lia como vitrine.
  */
 export function Governo() {
   const [parametros, setParametros] = useSearchParams();
@@ -135,8 +135,6 @@ export function Governo() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 function totalDoEncargo(encargos: Encargo[], grupo: GrupoDeEncargo): number {
   const encargo = encargos.find((e) => e.grupo === grupo);
   return encargo ? encargo.pago + encargo.restosAPagarPagos : 0;
@@ -145,7 +143,7 @@ function totalDoEncargo(encargos: Encargo[], grupo: GrupoDeEncargo): number {
 /**
  * Uma gestão por botão, com o período dela recortado aos anos que existem.
  *
- * ⭐ Comparar as gestões medidas do mesmo jeito é o que mostra que a página ⛔ é sobre uma
+ * DECISÃO: Comparar as gestões medidas do mesmo jeito é o que mostra que a página não é sobre uma
  * delas — a pergunta de quem desconfia (persona do empresário, rodada 2).
  */
 function atalhosDasGestoes(dados: DadosDoGoverno): { rotulo: string; periodo: Periodo }[] {
@@ -166,7 +164,7 @@ function textoDoPeriodo({ de, ate }: Periodo): string {
   return de === ate ? String(de) : `${de} a ${ate}`;
 }
 
-/** Três números. ⛔ Há um quarto que os junte: o saldo pediria regras fiscais que estes dados ⛔ seguem. */
+/** Três números. Não Há um quarto que os junte: o saldo pediria regras fiscais que estes dados não seguem. */
 function Resumo({ dados }: { dados: DadosDoGoverno }) {
   const gastou = dados.porAno.reduce((soma, a) => soma + a.gastou, 0);
   const numeros: [string, number, string][] = [
@@ -191,7 +189,7 @@ function Resumo({ dados }: { dados: DadosDoGoverno }) {
 /**
  * Os três números de cada ano, lado a lado: a comparação sem trocar o filtro.
  *
- * ⚠️ Valores nominais. Sem correção pela inflação, o ano mais recente parece maior só por ser
+ * ATENÇÃO: Valores nominais. Sem correção pela inflação, o ano mais recente parece maior só por ser
  * mais recente — e comparar gestões assim favoreceria a última. A tabela diz isso.
  */
 function AnoAAno({ dados }: { dados: DadosDoGoverno }) {
@@ -237,7 +235,7 @@ const AREAS_NOMEADAS = 6;
 /**
  * "De cada R$ 100 gastos": a divisão que se entende sem saber o tamanho de um trilhão.
  *
- * ⚠️ As parcelas somam 100 exatos (`partesDeCem`), e cada linha traz o valor em reais.
+ * ATENÇÃO: As parcelas somam 100 exatos (`partesDeCem`), e cada linha traz o valor em reais.
  */
 function CadaCemReais({ dados }: { dados: DadosDoGoverno }) {
   const { areas, encargos } = dados.despesa;
@@ -323,12 +321,10 @@ function DeOndeVeio({ arrecadacao }: { arrecadacao: Arrecadacao }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
  * O que foi gasto sem dizer em quê.
  *
- * ⭐ A resposta a "o cartão é todo secreto?" vem primeiro, e é ⛔: a barra mostra a parte
+ * DECISÃO: A resposta a "o cartão é todo secreto?" vem primeiro, e é não : a barra mostra a parte
  * aberta — que o Portal detalha compra por compra — e a sigilosa, lado a lado. Por órgão,
  * a porcentagem diz onde o sigilo pesa.
  */
@@ -416,8 +412,6 @@ function GastoSigiloso({
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /** Quem governou — depois dos números, e sem foto. */
 function PerfilDaGestao({ gestao }: { gestao: Gestao }) {
   return (
@@ -459,8 +453,6 @@ function PessoaDaGestaoCartao({ papel, pessoa }: { papel: string; pessoa: Pessoa
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 const NOME_DO_GRUPO: Record<GrupoDeEncargo, string> = {
   TRANSFERENCIAS: 'Transferências a estados e municípios',
   SERVICO_DA_DIVIDA: 'Juros e amortização da dívida',
@@ -470,7 +462,7 @@ const NOME_DO_GRUPO: Record<GrupoDeEncargo, string> = {
 
 /**
  * O orçamento no vocabulário dele, recolhido. Quem quer conferir a dotação encontra;
- * quem ⛔ quer, ⛔ tropeça.
+ * quem não quer, não tropeça.
  */
 function Detalhes({ dados }: { dados: DadosDoGoverno }) {
   const areas = dados.despesa.areas.filter((a) => a.pago + a.restosAPagarPagos > 0);

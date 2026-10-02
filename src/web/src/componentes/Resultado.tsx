@@ -26,9 +26,15 @@ const PASSOS_DO_RESULTADO = passosDoResultado();
 /**
  * A tela de resultado.
  *
- * 🔴 RF-29: SEMPRE "concordou em X de Y", NUNCA percentual solto.
+ * RISCO: RF-29: SEMPRE "concordou em X de Y", NUNCA percentual solto.
  * "67%" esconde que a base foram 3 perguntas; "2 de 3" mostra a fragilidade do próprio
  * número — e isso é honestidade metodológica, não detalhe de interface.
+ *
+ * ATENÇÃO: O registro da avaliação exige conta no servidor — é o freio contra quem
+ * enviaria mil avaliações. Sem conta, a avaliação não aparece.
+ *
+ * Refazer sempre disponível: a pessoa muda de ideia, e as perguntas mudam quando
+ * a curadoria acrescenta votações novas.
  */
 export function Resultado({
   resultado,
@@ -40,7 +46,7 @@ export function Resultado({
   /**
    * As perguntas que acabaram de ser respondidas, para o detalhe "em quais".
    *
-   * ⚠️ Vêm de fora e não da resposta da API de propósito: a tela já as tem, e repetir
+   * ATENÇÃO: Vêm de fora e não da resposta da API de propósito: a tela já as tem, e repetir
    * 24 enunciados por parlamentar, para dez parlamentares, inflaria a resposta sem
    * acrescentar nada.
    */
@@ -76,12 +82,8 @@ export function Resultado({
         nenhum parlamentar.
       </p>
 
-      {/* ⚠️ O registro da avaliação exige conta no servidor — é o freio contra quem
-          enviaria mil avaliações. Sem conta, a avaliação ⛔ aparece. */}
       {usuario && <Avaliacao resultado={resultado} />}
 
-      {/* Refazer sempre disponível: a pessoa muda de ideia, e as perguntas mudam quando
-          a curadoria acrescenta votações novas. */}
       <div className="resultado-acoes">
         <button type="button" className="botao-secundario" onClick={aoRefazer}>
           Refazer o questionário
@@ -99,6 +101,11 @@ export function Resultado({
  *
  * O grafo é por casa porque as duas não são comparáveis entre si: nenhuma aresta liga
  * deputado a senador, e a posição do cidadão sai da execução da própria casa.
+ *
+ * DECISÃO: A régua: "8 de 11" só diz se é muito ao lado do parlamentar do meio da lista.
+ * Contagem com base, não percentual (RF-29).
+ *
+ * Sem esta frase a tela afirma uma precisão que o dado não tem.
  */
 function SecaoDaCasa({
   casa,
@@ -133,8 +140,6 @@ function SecaoDaCasa({
         />
       )}
 
-      {/* ⭐ A régua: "8 de 11" só diz se é muito ao lado do parlamentar do meio da lista.
-          Contagem com base, ⛔ percentual (RF-29). */}
       <p className="escala-resultado">
         Entre os <strong>{casa.escala.comparados}</strong> {nome.plural} comparados com você, o
         do meio da lista votou como você em{' '}
@@ -170,7 +175,6 @@ function SecaoDaCasa({
             O losango é você, posicionado entre os{' '}
             <strong>{casa.posicaoNoGrafo.vizinhosUsados}</strong> {nome.plural}{' '}
             com quem você mais concordou.{' '}
-            {/* Sem esta frase a tela afirma uma precisão que o dado não tem. */}
             <strong>
               Sua posição vale sobre {casa.posicaoNoGrafo.baseDeVotacoes} perguntas
             </strong>{' '}
@@ -212,6 +216,8 @@ function SecaoDaCasa({
  *
  * Sem a condição, a tela baixaria o grafo inteiro para descartá-lo — e são centenas de
  * nós e milhares de arestas por casa.
+ *
+ * Falhar em buscar o grafo omite o desenho, nunca a tela: as listas são o resultado, e o grafo é ilustração.
  */
 function useGrafo(precisa: boolean, casa: ResultadoPorCasa['casa']): Grafo | null {
   const [grafo, setGrafo] = useState<Grafo | null>(null);
@@ -227,8 +233,6 @@ function useGrafo(precisa: boolean, casa: ResultadoPorCasa['casa']): Grafo | nul
       .then((recebido) => {
         if (vivo) setGrafo(recebido);
       })
-      // Falhar em buscar o grafo omite o desenho, nunca a tela: as listas são o
-      // resultado, e o grafo é ilustração.
       .catch(() => {
         if (vivo) setGrafo(null);
       });
@@ -242,13 +246,13 @@ function useGrafo(precisa: boolean, casa: ResultadoPorCasa['casa']): Grafo | nul
 }
 
 /**
- * 🔴 A conta por extenso: EM QUAIS perguntas houve acordo.
+ * RISCO: A conta por extenso: EM QUAIS perguntas houve acordo.
  *
  * "Concordaram em 14 de 17" não é conferível — não dá para saber se os 14 foram nas
  * perguntas que importam para quem responde ou nas de data comemorativa. Só a lista
  * transforma o número em conta.
  *
- * ⚠️ Mostra também as que FICARAM DE FORA, com o motivo. O denominador é a parte que
+ * ATENÇÃO: Mostra também as que FICARAM DE FORA, com o motivo. O denominador é a parte que
  * mais engana: 17 não é o número de perguntas do questionário, é quantas os dois
  * responderam. Omitir isso faria "14 de 17" parecer um questionário de 17.
  */
@@ -301,6 +305,9 @@ function DetalheDaConta({
   );
 }
 
+/**
+ * Nunca percentual: "13 de 13" mostra sobre quantas perguntas a conta foi feita.
+ */
 function Destaque({
   parlamentar,
   textos,
@@ -324,7 +331,6 @@ function Destaque({
         </p>
       </Link>
 
-      {/* Nunca percentual: "13 de 13" mostra sobre quantas perguntas a conta foi feita. */}
       <p className="destaque-placar">
         <span className="placar-numero">
           {parlamentar.acordos} de {parlamentar.comparaveis}

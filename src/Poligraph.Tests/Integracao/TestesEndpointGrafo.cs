@@ -169,7 +169,7 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
         Assert.Contains("br", resposta.Content.Headers.ContentEncoding);
     }
 
-    /// <summary>A segunda leitura vem do cache: a execução gravada depois ⛔ aparece na mesma hora.</summary>
+    /// <summary>A segunda leitura vem do cache: a execução gravada depois não aparece na mesma hora.</summary>
     [SkippableFact]
     public async Task Grafo_LidoDuasVezes_VemDoCache()
     {

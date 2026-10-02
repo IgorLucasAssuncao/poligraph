@@ -29,27 +29,33 @@ export default function App() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
+/**
+ * ATENÇÃO: Sem isto, a tela de login pisca antes de a sessão ser verificada — e quem já
+ * está logado vê o próprio site sugerir que não está.
+ *
+ * DECISÃO: A política de privacidade é pública, DE PROPÓSITO: ela precisa estar acessível
+ * a quem ainda não entrou — inclusive para o Google, que exige a URL na tela de
+ * consentimento e a verifica sem estar logado.
+ *
+ * DECISÃO: Com a leitura liberada, a conta é OPCIONAL (2026-10-02, decisão do autor):
+ * o questionário funciona sem ela — as respostas não são gravadas, o cálculo é
+ * na requisição. Só seguir e a própria conta pedem login, e o login volta
+ * para onde a pessoa estava. RISCO: Desligado no período eleitoral (RNF-17).
+ *
+ * ATENÇÃO: Os endereços antigos continuam funcionando. Cinco destinos viraram três,
+ * e quem tiver um link salvo não pode cair num 404 — nem ser mandado para a
+ * home, que perderia a intenção de quem clicou.
+ */
 function Roteador() {
   const { usuario, carregando, leituraPublica } = useSessao();
 
-  // ⚠️ Sem isto, a tela de login pisca antes de a sessão ser verificada — e quem já
-  //    está logado vê o próprio site sugerir que não está.
   if (carregando) return <div className="carregando-inicial">carregando…</div>;
 
-  // ⭐ A política de privacidade é pública, DE PROPÓSITO: ela precisa estar acessível
-  //    a quem ainda não entrou — inclusive para o Google, que exige a URL na tela de
-  //    consentimento e a verifica sem estar logado.
   if (!usuario) {
     return (
       <Routes>
         <Route path="/privacidade" element={<DocumentoPublico><PoliticaDePrivacidade /></DocumentoPublico>} />
         <Route path="/metodologia" element={<DocumentoPublico><Metodologia /></DocumentoPublico>} />
-        {/* ⭐ Com a leitura liberada, a conta é OPCIONAL (2026-10-02, decisão do autor):
-            o questionário funciona sem ela — as respostas ⛔ são gravadas, o cálculo é
-            na requisição. Só seguir e a própria conta pedem login, e o login volta
-            para onde a pessoa estava. 🔴 Desligado no período eleitoral (RNF-17). */}
         {leituraPublica ? (
           <>
             <Route path="/entrar" element={<Login />} />
@@ -81,9 +87,6 @@ function Roteador() {
         <Route path="/privacidade" element={<PoliticaDePrivacidade />} />
         <Route path="/metodologia" element={<Metodologia />} />
 
-        {/* ⚠️ Os endereços antigos continuam funcionando. Cinco destinos viraram três,
-            e quem tiver um link salvo ⛔ não pode cair num 404 — nem ser mandado para a
-            home, que perderia a intenção de quem clicou. */}
         <Route path="/explorar" element={<Navigate to="/parlamentares" replace />} />
         <Route
           path="/grafo"

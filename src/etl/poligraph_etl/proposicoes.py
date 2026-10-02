@@ -8,12 +8,12 @@
 | Tamanho | ~5 MB por ano |
 | Formato | CSV `;`, aspas, `utf-8-sig` |
 
-⭐ **⛔ NÃO é o arquivo `proposicoes`, que tem 90 MB por ano.** O de ligação já traz
+DECISÃO: **NÃO é o arquivo `proposicoes`, que tem 90 MB por ano.** O de ligação já traz
 `proposicao_ementa`, `proposicao_titulo` e o tipo embutidos — 5 MB entregam o que
 interessa, contra 360 MB nos quatro anos para extrair as mesmas ~1.600 linhas.
 
-⚠️ O arquivo grande tem duas colunas que este ⛔ não tem: `keywords` (indexação temática)
-e `ementaDetalhada`. Se a curadoria precisar delas, aí vale pagar os 90 MB — ⛔ não antes.
+ATENÇÃO: O arquivo grande tem duas colunas que este não tem: `keywords` (indexação temática)
+e `ementaDetalhada`. Se a curadoria precisar delas, aí vale pagar os 90 MB — não antes.
 
 ## TRATAMENTO
 
@@ -31,17 +31,17 @@ e `ementaDetalhada`. Se a curadoria precisar delas, aí vale pagar os 90 MB — 
 
 ---
 
-## 🔴 Por que isto destrava a curadoria (PL11)
+## RISCO: Por que isto destrava a curadoria (PL11)
 
 Sem a ementa, quem cura lê só a **descrição da votação**:
 
 > *"Aprovado o Substitutivo ao Projeto de Lei Complementar nº 80, de 2026, adotado pelo
 > relator da Comissão de…"*
 
-Isso diz o **número** do projeto e ⛔ **não diz sobre o que ele é**. Escrever uma pergunta
+Isso diz o **número** do projeto e não **não diz sobre o que ele é**. Escrever uma pergunta
 em linguagem leiga a partir disso é adivinhação — e a PL11 é o maior bloqueio do projeto.
 
-📐 Medido em 2026-08-28: das 266 votações substantivas da 57ª, **263 ganham ementa**
+MEDIDO: Medido em 2026-08-28: das 266 votações substantivas da 57ª, **263 ganham ementa**
 (98,9%). Antes, `proposicao_id` era nulo em **1.594 de 1.594** (100%).
 """
 
@@ -58,15 +58,15 @@ def para_linhas(
 ) -> tuple[list[dict], dict[str, int]]:
     """Devolve as proposições e o de-para `votacao_id -> proposicao_id`.
 
-    ⭐ Os dois juntos porque saem da mesma leitura: separar exigiria percorrer o arquivo
+    DECISÃO: Os dois juntos porque saem da mesma leitura: separar exigiria percorrer o arquivo
     duas vezes para reconstruir o vínculo que a linha já traz.
 
     Descarta, e por quê:
 
     | Caso | Motivo |
     |---|---|
-    | Sem `proposicao_id` | ⛔ Não há proposição a gravar nem a vincular |
-    | Votação fora da base | A ligação apontaria para votação que ⛔ não existe (FK) |
+    | Sem `proposicao_id` | Não há proposição a gravar nem a vincular |
+    | Votação fora da base | A ligação apontaria para votação que não existe (FK) |
     | Votação repetida | A mesma votação com vários objetos — o primeiro vence |
     """
     proposicoes: dict[int, dict] = {}
@@ -88,11 +88,11 @@ def para_linhas(
 
         vinculo[votacao_id] = proposicao_id
 
-        # ⚠️ A proposição repete entre votações — várias votações do mesmo projeto. O
-        #    dicionário deduplica; ⛔ não é acidente que a última leitura vença, porque
+        # ATENÇÃO: A proposição repete entre votações — várias votações do mesmo projeto. O
+        #    dicionário deduplica; não é acidente que a última leitura vença, porque
         #    o conteúdo é idêntico.
         proposicoes[proposicao_id] = {
-            # 🔴 Parte da chave — ver `gravar_proposicoes`. As duas fontes numeram no
+            # RISCO: Parte da chave — ver `gravar_proposicoes`. As duas fontes numeram no
             #    mesmo espaço e as faixas se sobrepõem.
             "casa": CASA,
             "id": proposicao_id,
@@ -109,14 +109,14 @@ def para_linhas(
 def do_senado(materias, vinculo_bruto: dict[str, str]) -> tuple[list[dict], dict[str, int]]:
     """As proposições do Senado, no mesmo formato das da Câmara.
 
-    ⚠️ **A forma da entrada é outra.** Na Câmara o vínculo vem embutido em cada linha do
+    ATENÇÃO: **A forma da entrada é outra.** Na Câmara o vínculo vem embutido em cada linha do
     CSV; aqui vêm duas coisas separadas: as matérias já baixadas de `/materia/{codigo}`
     e o de-para `votacao_id -> codigo_materia` extraído da listagem de votações.
 
-    ⛔ Matéria sem código ou sem ementa é descartada: gravar linha sem ementa ⛔ não
+    Não Matéria sem código ou sem ementa é descartada: gravar linha sem ementa não
     resolve nada — a ficha continuaria mostrando o número.
 
-    📐 Medido em 2026-08-29: 421 votações do Senado apontam para **359 matérias
+    MEDIDO: Medido em 2026-08-29: 421 votações do Senado apontam para **359 matérias
     distintas**.
     """
     proposicoes: dict[int, dict] = {}
@@ -140,7 +140,7 @@ def do_senado(materias, vinculo_bruto: dict[str, str]) -> tuple[list[dict], dict
             "url_inteiro_teor": None,
         }
 
-    # ⭐ Só vincula o que foi de fato gravado: apontar para matéria descartada deixaria
+    # DECISÃO: Só vincula o que foi de fato gravado: apontar para matéria descartada deixaria
     #    `proposicao_id` preenchido e a FK recusaria a linha inteira.
     vinculo = {
         votacao_id: _inteiro_ou_nulo(codigo)
@@ -152,7 +152,7 @@ def do_senado(materias, vinculo_bruto: dict[str, str]) -> tuple[list[dict], dict
 
 
 def _texto(valor) -> str:
-    """⚠️ Colapsa espaço: a ementa vem com quebra de linha DENTRO do campo."""
+    """ATENÇÃO: Colapsa espaço: a ementa vem com quebra de linha DENTRO do campo."""
     return "" if valor is None else " ".join(str(valor).split())
 
 

@@ -1,8 +1,8 @@
 """Emendas parlamentares — o arquivo único do Portal.
 
-🔴 Os pontos sensíveis: a extração do **código do autor** — que é a chave —, a
-conversão de valor em **formato brasileiro**, a **pessoa** que ⛔ pode ser identificada
-entre os favorecidos, e o **convênio** que ⛔ pode ser somado uma vez por emenda.
+RISCO: Os pontos sensíveis: a extração do **código do autor** — que é a chave —, a
+conversão de valor em **formato brasileiro**, a **pessoa** que não pode ser identificada
+entre os favorecidos, e o **convênio** que não pode ser somado uma vez por emenda.
 """
 
 import pandas as pd
@@ -12,7 +12,7 @@ from poligraph_etl import emendas
 
 
 def emenda(**campos) -> dict:
-    """⭐ Campos copiados de uma linha REAL de `EmendasParlamentares.csv`."""
+    """DECISÃO: Campos copiados de uma linha REAL de `EmendasParlamentares.csv`."""
     base = {
         "Código da Emenda": "202541840004",
         "Ano da Emenda": "2025",
@@ -52,7 +52,7 @@ def tabela(*linhas: dict) -> pd.DataFrame:
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 O código do autor — a chave
+# RISCO: O código do autor — a chave
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -62,24 +62,24 @@ def test_extrai_o_codigo_do_autor():
 
 
 def test_numero_de_tamanho_diferente_nao_quebra():
-    """🔴 O corte usa o número do registro, ⛔ não posição fixa.
+    """RISCO: O corte usa o número do registro, não posição fixa.
 
-    ⚠️ Recortar por índice erraria em SILÊNCIO quando o número tivesse outro tamanho —
+    ATENÇÃO: Recortar por índice erraria em SILÊNCIO quando o número tivesse outro tamanho —
     e o código extraído seria de outro autor.
     """
     assert emendas.codigo_do_autor("2025418412", "12") == "4184"
 
 
 def test_codigo_incoerente_devolve_nada():
-    """⚠️ Se o código ⛔ termina com o número, algo mudou na fonte."""
+    """ATENÇÃO: Se o código não termina com o número, algo mudou na fonte."""
     assert emendas.codigo_do_autor("202541840004", "9999") is None
     assert emendas.codigo_do_autor("", "0004") is None
 
 
 def test_coluna_do_autor_que_diverge_do_codigo_e_descartada():
-    """🔴 O arquivo traz o autor em coluna própria; o recorte vira conferência.
+    """RISCO: O arquivo traz o autor em coluna própria; o recorte vira conferência.
 
-    ⚠️ Se os dois divergem, gravar a coluna ligaria a emenda a outro parlamentar.
+    ATENÇÃO: Se os dois divergem, gravar a coluna ligaria a emenda a outro parlamentar.
     """
     linhas, _ = emendas.para_linhas(
         tabela(emenda(), emenda(**{"Código da Emenda": "202541840005",
@@ -92,7 +92,7 @@ def test_coluna_do_autor_que_diverge_do_codigo_e_descartada():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 Valor em formato brasileiro
+# RISCO: Valor em formato brasileiro
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -101,7 +101,7 @@ def test_coluna_do_autor_que_diverge_do_codigo_e_descartada():
     [
         ("12.599,10", 12599.10),        # ponto é MILHAR
         ("- 26.002,00", -26002.00),     # negativo separado do número
-        ("211398,90", 211398.90),       # o arquivo ⛔ tem separador de milhar
+        ("211398,90", 211398.90),       # o arquivo não tem separador de milhar
         ("0,00", 0.0),
         ("1.234.567,89", 1234567.89),
         ("", 0.0),
@@ -114,9 +114,9 @@ def test_valor_brasileiro(bruto, esperado):
 
 
 def test_float_direto_quebraria():
-    """🔴 A razão de a função existir.
+    """RISCO: A razão de a função existir.
 
-    ⚠️ `float("12.599,10")` estoura, e `float("12.599")` daria **12,599** — três ordens
+    ATENÇÃO: `float("12.599,10")` estoura, e `float("12.599")` daria **12,599** — três ordens
     de grandeza abaixo, sem erro nenhum.
     """
     with pytest.raises(ValueError):
@@ -126,7 +126,7 @@ def test_float_direto_quebraria():
 
 
 def test_empenho_negativo_e_mantido():
-    """⭐ Empenho negativo é CANCELAMENTO — caso normal, ⛔ não erro."""
+    """DECISÃO: Empenho negativo é CANCELAMENTO — caso normal, não erro."""
     linhas, _ = emendas.para_linhas(tabela(emenda()), [2025])
 
     assert linhas[0]["valor_empenhado"] == -26002.00
@@ -139,9 +139,9 @@ def test_empenho_negativo_e_mantido():
 
 
 def test_uma_emenda_em_duas_localidades_da_duas_linhas():
-    """🔴 O `DO NOTHING` de antes guardava só a primeira.
+    """RISCO: O `DO NOTHING` de antes guardava só a primeira.
 
-    📐 Medido em 2026-09-25: 55 emendas de 2023–26 ocupam mais de uma linha, R$ 0,18 bi
+    MEDIDO: Medido em 2026-09-25: 55 emendas de 2023–26 ocupam mais de uma linha, R$ 0,18 bi
     empenhados na segunda. As duas precisam chegar ao banco.
     """
     linhas, _ = emendas.para_linhas(
@@ -159,7 +159,7 @@ def test_uma_emenda_em_duas_localidades_da_duas_linhas():
 
 
 def test_so_entram_os_anos_pedidos():
-    """⚠️ O arquivo tem todos os anos desde 2014; a carga pede os da legislatura."""
+    """ATENÇÃO: O arquivo tem todos os anos desde 2014; a carga pede os da legislatura."""
     linhas, _ = emendas.para_linhas(
         tabela(emenda(), emenda(**{"Ano da Emenda": "2019"})), [2025]
     )
@@ -173,9 +173,9 @@ def test_so_entram_os_anos_pedidos():
 
 
 def test_emenda_de_bancada_entra_igual():
-    """⭐ A decisão do autor: ingerir tudo, resolver o vínculo depois.
+    """DECISÃO: A decisão do autor: ingerir tudo, resolver o vínculo depois.
 
-    ⚠️ Perder o registro por não saber ligar seria pior — a reconciliação futura ⛔ não
+    ATENÇÃO: Perder o registro por não saber ligar seria pior — a reconciliação futura não
     teria o que reconciliar.
     """
     linhas, autores = emendas.para_linhas(
@@ -191,7 +191,7 @@ def test_emenda_de_bancada_entra_igual():
 
 
 def test_o_mapa_de_autores_junta_por_codigo():
-    """⚠️ Duas emendas do mesmo autor dão UMA entrada no mapa."""
+    """ATENÇÃO: Duas emendas do mesmo autor dão UMA entrada no mapa."""
     _, autores = emendas.para_linhas(
         tabela(emenda(), emenda(**{"Código da Emenda": "202541840007",
                                    "Número da emenda": "0007"})),
@@ -202,12 +202,12 @@ def test_o_mapa_de_autores_junta_por_codigo():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 Favorecidos — quem recebeu
+# RISCO: Favorecidos — quem recebeu
 # ═══════════════════════════════════════════════════════════════════
 
 
 def favorecido(**campos) -> dict:
-    """⭐ Campos de uma linha REAL de `EmendasParlamentares_PorFavorecido.csv`."""
+    """DECISÃO: Campos de uma linha REAL de `EmendasParlamentares_PorFavorecido.csv`."""
     base = {
         "Código da Emenda": "202541840004",
         "Código do Autor da Emenda": "4184",
@@ -247,9 +247,9 @@ def test_pessoa_juridica_guarda_cnpj_e_nome():
     ],
 )
 def test_pessoa_nao_e_identificada(tipo, documento, natureza):
-    """🔴 LGPD: nome de pessoa ⛔ sai daqui, nem o documento, nem em hash.
+    """RISCO: LGPD: nome de pessoa não sai daqui, nem o documento, nem em hash.
 
-    ⚠️ As três últimas são as que escapariam de um filtro só por "Pessoa Fisica": a
+    ATENÇÃO: As três últimas são as que escapariam de um filtro só por "Pessoa Fisica": a
     inscrição genérica traz o nome da pessoa, e o empresário individual o traz dentro da
     razão social — `"25.995.281 TATIANE GONCALVES NETO"`, do arquivo real.
     """
@@ -266,7 +266,7 @@ def test_pessoa_nao_e_identificada(tipo, documento, natureza):
 
 
 def test_tipo_desconhecido_guarda_o_dinheiro_sem_identificacao():
-    """⭐ Categoria nova no Portal ⛔ derruba a carga — e ⛔ grava nome que pode ser de pessoa."""
+    """DECISÃO: Categoria nova no Portal não derruba a carga — e não grava nome que pode ser de pessoa."""
     [linha] = emendas.favorecidos_para_linhas(
         tabela(favorecido(**{"Tipo Favorecido": "Categoria Nova"})), {"202541840004"}
     )
@@ -277,9 +277,9 @@ def test_tipo_desconhecido_guarda_o_dinheiro_sem_identificacao():
 
 
 def test_banco_do_brasil_e_intermediario():
-    """🔴 R$ 32,57 bi de 2023–26 foram ao Banco do Brasil, em Brasília — que repassa.
+    """RISCO: R$ 32,57 bi de 2023–26 foram ao Banco do Brasil, em Brasília — que repassa.
 
-    ⚠️ Contá-lo como destino faria o DF parecer o maior destino de emenda do país.
+    ATENÇÃO: Contá-lo como destino faria o DF parecer o maior destino de emenda do país.
     """
     linhas = emendas.favorecidos_para_linhas(
         tabela(
@@ -294,7 +294,7 @@ def test_banco_do_brasil_e_intermediario():
 
 
 def test_pagamentos_de_pessoas_no_mesmo_mes_se_somam():
-    """⚠️ Sem documento, duas pessoas do mesmo lugar e mês são a mesma chave.
+    """ATENÇÃO: Sem documento, duas pessoas do mesmo lugar e mês são a mesma chave.
 
     Somar é obrigatório: o índice único recusaria a segunda linha.
     """
@@ -314,7 +314,7 @@ def test_pagamentos_de_pessoas_no_mesmo_mes_se_somam():
 
 
 def test_estorno_que_anula_o_pagamento_sai():
-    """⚠️ Soma zero é linha que o `ck_favorecido_valor` recusaria."""
+    """ATENÇÃO: Soma zero é linha que o `ck_favorecido_valor` recusaria."""
     linhas = emendas.favorecidos_para_linhas(
         tabela(favorecido(), favorecido(**{"Valor Recebido": "-80017,25"})),
         {"202541840004"},
@@ -324,12 +324,12 @@ def test_estorno_que_anula_o_pagamento_sai():
 
 
 def test_favorecido_de_emenda_fora_da_carga_fica_de_fora():
-    """⭐ É o que garante a ligação sem chave estrangeira: só entra código que a carga trouxe."""
+    """DECISÃO: É o que garante a ligação sem chave estrangeira: só entra código que a carga trouxe."""
     assert emendas.favorecidos_para_linhas(tabela(favorecido()), {"202300000001"}) == []
 
 
 def test_tipos_sao_os_do_check():
-    """🔴 Os quatro valores precisam ser exatamente os de `ck_favorecido_tipo`.
+    """RISCO: Os quatro valores precisam ser exatamente os de `ck_favorecido_tipo`.
 
     O contrato com o EF é conferido em `test_contrato_schema.py`; este fixa o Python.
     """
@@ -339,7 +339,7 @@ def test_tipos_sao_os_do_check():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 Convênios — o valor é do convênio, ⛔ da emenda
+# RISCO: Convênios — o valor é do convênio, não da emenda
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -363,10 +363,10 @@ def convenio(**campos) -> dict:
 
 
 def test_convenio_de_varias_emendas_entra_uma_vez():
-    """🔴 O convênio 1AAQKR, de R$ 80 mi, aparece em 23 emendas no arquivo real.
+    """RISCO: O convênio 1AAQKR, de R$ 80 mi, aparece em 23 emendas no arquivo real.
 
-    📐 Somado por emenda, o total de convênios de 2023–26 daria R$ 24,18 bi; contado uma
-    vez, R$ 18,79 bi. São R$ 5,4 bi que ⛔ existem.
+    MEDIDO: Somado por emenda, o total de convênios de 2023–26 daria R$ 24,18 bi; contado uma
+    vez, R$ 18,79 bi. São R$ 5,4 bi que não existem.
     """
     convenios, ligacoes = emendas.convenios_para_linhas(
         tabela(
@@ -384,7 +384,7 @@ def test_convenio_de_varias_emendas_entra_uma_vez():
 
 
 def test_a_mesma_ligacao_repetida_conta_uma_vez():
-    """📐 Medido: uma emenda aparece duas vezes com o mesmo convênio, em localidades diferentes."""
+    """MEDIDO: Medido: uma emenda aparece duas vezes com o mesmo convênio, em localidades diferentes."""
     _, ligacoes = emendas.convenios_para_linhas(
         tabela(convenio(), convenio(**{"Localidade do gasto": "Nacional"})),
         {"202541820013"},
@@ -409,9 +409,9 @@ from poligraph_etl.normalizacao import sem_acento_maiusculo  # noqa: E402
     ],
 )
 def test_grafias_diferentes_convergem(camara: str, portal: str):
-    """⚠️ A Câmara guarda com acento e caixa mista; o Portal manda CAIXA ALTA sem acento.
+    """ATENÇÃO: A Câmara guarda com acento e caixa mista; o Portal manda CAIXA ALTA sem acento.
 
-    ⭐ Isto roda UMA vez, para descobrir de quem é o código. Depois o vínculo vive no
+    DECISÃO: Isto roda UMA vez, para descobrir de quem é o código. Depois o vínculo vive no
     código e a grafia deixa de importar.
     """
     assert sem_acento_maiusculo(camara) == sem_acento_maiusculo(portal)

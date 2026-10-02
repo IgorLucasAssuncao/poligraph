@@ -1,6 +1,6 @@
 """O download do Portal da Transparência.
 
-🔴 Duas coisas que o servidor faz e o código precisa aguentar: responder 405 quando
+RISCO: Duas coisas que o servidor faz e o código precisa aguentar: responder 405 quando
 limita a taxa, e entregar CSV em Latin-1.
 """
 
@@ -33,7 +33,7 @@ class Resposta:
 
 
 def test_405_e_limite_de_taxa_e_tenta_de_novo(tmp_path):
-    """📐 Medido em 2026-09-24: 405 depois de ~18 downloads seguidos, e 200 depois da pausa."""
+    """MEDIDO: Medido em 2026-09-24: 405 depois de ~18 downloads seguidos, e 200 depois da pausa."""
     esperas: list[int] = []
     respostas = iter([Resposta(405), Resposta(200, b"zip")])
 
@@ -45,7 +45,7 @@ def test_405_e_limite_de_taxa_e_tenta_de_novo(tmp_path):
 
 
 def test_desiste_depois_das_tentativas_sem_deixar_cache(tmp_path):
-    """⚠️ Download que falhou ⛔ pode virar cache válido na próxima execução."""
+    """ATENÇÃO: Download que falhou não pode virar cache válido na próxima execução."""
     with mock.patch.object(portal.requests, "get", side_effect=lambda *a, **k: Resposta(405)):
         with pytest.raises(RuntimeError, match="405"):
             portal.baixar("orcamento-despesa/2025", tmp_path / "o.zip", esperar=lambda _: None)
@@ -54,7 +54,7 @@ def test_desiste_depois_das_tentativas_sem_deixar_cache(tmp_path):
 
 
 def test_le_latin1_como_texto(tmp_path):
-    """🔴 Latin-1, ⛔ UTF-8 — e tudo como texto, para `"00SJ"` e `"03101"` ficarem inteiros."""
+    """RISCO: Latin-1, não UTF-8 — e tudo como texto, para `"00SJ"` e `"03101"` ficarem inteiros."""
     arquivo = tmp_path / "a.zip"
     conteudo = '"CÓDIGO AÇÃO";"CÓDIGO UNIDADE"\n"00SJ";"03101"\n'.encode("latin-1")
     with zipfile.ZipFile(arquivo, "w") as zf:

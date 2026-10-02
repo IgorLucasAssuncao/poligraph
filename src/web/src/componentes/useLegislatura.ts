@@ -8,11 +8,11 @@ export type EscolhaDeLegislatura = number | 'todas' | undefined;
 /**
  * A legislatura escolhida, guardada em `?legislatura=`.
  *
- * ⭐ Na URL, ⛔ em estado local: a lista, o grafo e a página inicial leem o mesmo
- * parâmetro, e trocar de aba ⛔ desfaz a escolha. O endereço com o período se guarda e
+ * DECISÃO: Na URL, não em estado local: a lista, o grafo e a página inicial leem o mesmo
+ * parâmetro, e trocar de aba não desfaz a escolha. O endereço com o período se guarda e
  * se compartilha.
  *
- * ⚠️ `replace`, como a troca de vista: cinco trocas de período ⛔ viram cinco toques no
+ * ATENÇÃO: `replace`, como a troca de vista: cinco trocas de período não viram cinco toques no
  * botão de voltar.
  */
 export function useLegislaturaDaUrl(): [EscolhaDeLegislatura, (nova: EscolhaDeLegislatura) => void] {

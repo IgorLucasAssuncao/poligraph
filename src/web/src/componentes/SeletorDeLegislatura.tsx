@@ -4,11 +4,11 @@ import type { EscolhaDeLegislatura } from './useLegislatura';
 /**
  * O seletor de período, igual em todo o site.
  *
- * ⭐ Só o período ("2019–2023"): "56ª legislatura" ⛔ diz nada a quem ⛔ acompanha o
+ * DECISÃO: Só o período ("2019–2023"): "56ª legislatura" Não diz nada a quem não acompanha o
  * Congresso. O número fica no `title`, para quem procura por ele — na opção, ele
  * dobrava a largura da pílula sem ajudar a escolher.
  *
- * ⭐ `<select>` e ⛔ botões: são até sete legislaturas, e sete botões tomariam a linha
+ * DECISÃO: `<select>` e não botões: são até sete legislaturas, e sete botões tomariam a linha
  * dos outros filtros.
  */
 export function SeletorDeLegislatura({

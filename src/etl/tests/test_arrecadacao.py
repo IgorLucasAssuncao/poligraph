@@ -20,7 +20,7 @@ def receita(**campos) -> dict:
 
 
 def test_soma_por_categoria_e_origem_sem_misturar():
-    """🔴 Operação de crédito fica na sua linha: é dívida, ⛔ arrecadação."""
+    """RISCO: Operação de crédito fica na sua linha: é dívida, não arrecadação."""
     linhas = arrecadacao.para_linhas(pd.DataFrame([
         receita(**{"VALOR REALIZADO": "100,50"}),
         receita(**{"VALOR REALIZADO": "50,00"}),

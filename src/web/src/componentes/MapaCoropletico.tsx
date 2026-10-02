@@ -9,29 +9,31 @@ import { carregarMalha, codigoDa, faixaDe, faixasPorQuantil } from '../mapa';
  *
  * ## Por que assim
  *
- * - **d3-geo + topojson-client, ⛔ biblioteca de mapa com fundo.** O mapa é de valor por
- *   área, ⛔ de rua: um fundo de azulejos pediria um serviço externo a cada visita — o
- *   mesmo motivo das fontes auto-hospedadas — e ⛔ acrescentaria nada.
+ * - **d3-geo + topojson-client, não biblioteca de mapa com fundo.** O mapa é de valor por
+ *   área, não de rua: um fundo de azulejos pediria um serviço externo a cada visita — o
+ *   mesmo motivo das fontes auto-hospedadas — e não acrescentaria nada.
  * - **Escala quente, de uma família só, em cinco faixas por quantil.** Do areia ao ocre:
- *   lê como "mais" e "menos", e ⛔ como lados — ⛔ passa pelo vermelho, que lembraria
- *   partido (RNF-16). Quantil, ⛔ faixa linear: o dinheiro se concentra em poucas cidades,
+ *   lê como "mais" e "menos", e não como lados — não passa pelo vermelho, que lembraria
+ *   partido (RNF-16). Quantil, não faixa linear: o dinheiro se concentra em poucas cidades,
  *   e a escala linear pintaria quase tudo da faixa zero.
- * - **Sem valor ⛔ é zero.** Área sem pagamento fica só com o contorno.
+ * - **Sem valor não é zero.** Área sem pagamento fica só com o contorno.
  *
  * ## Por que é rápido
  *
  * - **As áreas são desenhadas uma vez.** Passar o mouse move só o rótulo; as até 853
- *   cidades de Minas ⛔ se redesenham a cada movimento — era o que travava a página.
+ *   cidades de Minas não se redesenham a cada movimento — era o que travava a página.
  * - **Aos poucos.** As áreas entram em lotes, um por quadro, e a página responde enquanto
  *   o estado se desenha.
  * - **Contorno antes do dado.** `valores` nulo desenha o mapa em cinza; as cores entram
- *   quando o dado chega, e a malha ⛔ espera por ele.
+ *   quando o dado chega, e a malha não espera por ele.
  *
- * ⚠️ Com `focavel`, cada área recebe foco e responde a Enter — para as 27 UFs. Os
- * municípios ⛔: seriam até 853 paradas de Tab. A lista ao lado do mapa é a alternativa
+ * ATENÇÃO: Com `focavel`, cada área recebe foco e responde a Enter — para as 27 UFs. Os
+ * municípios não : seriam até 853 paradas de Tab. A lista ao lado do mapa é a alternativa
  * de teclado e de leitor de tela.
  *
- * ⚠️ Quem troca `malha` troca também a `key`: o estado recomeça sem piscar a malha anterior.
+ * ATENÇÃO: Quem troca `malha` troca também a `key`: o estado recomeça sem piscar a malha anterior.
+ *
+ * O código da área sob o evento, pela marca na própria área: um ouvinte só para o mapa todo.
  */
 export function MapaCoropletico({
   malha,
@@ -44,7 +46,7 @@ export function MapaCoropletico({
 }: {
   /** O arquivo em `public/malhas`, sem extensão: `brasil` ou o código da UF. */
   malha: string;
-  /** Valor por código IBGE — o `codarea` da malha. Nulo enquanto o dado ⛔ chegou. */
+  /** Valor por código IBGE — o `codarea` da malha. Nulo enquanto o dado não chegou. */
   valores: Map<string, number> | null;
   nomes: Map<string, string>;
   selecionado?: string | null;
@@ -99,7 +101,6 @@ export function MapaCoropletico({
     return `${nome}: ${valor ? reaisCompacto(valor) : 'nenhum pagamento'}`;
   };
 
-  /** O código da área sob o evento, pela marca na própria área: um ouvinte só para o mapa todo. */
   const codigoDoEvento = (alvo: EventTarget) => (alvo as Element).getAttribute?.('data-codigo');
 
   const posicionar = (codigo: string, x: number, y: number) => {
@@ -163,18 +164,16 @@ export function MapaCoropletico({
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 const LADO = 600;
 
 /** Áreas por quadro. 200 cabem num quadro de 16 ms num telefone médio. */
 const LOTE = 200;
 
 /**
- * As áreas, que só se redesenham quando muda o que elas mostram — ⛔ quando o mouse anda.
+ * As áreas, que só se redesenham quando muda o que elas mostram — não quando o mouse anda.
  *
- * ⚠️ `descrever` só existe no mapa focável, e ali são 27 áreas: no dos municípios ele é
- * nulo, e o `memo` ⛔ perde a comparação a cada desenho do pai.
+ * ATENÇÃO: `descrever` só existe no mapa focável, e ali são 27 áreas: no dos municípios ele é
+ * nulo, e o `memo` não perde a comparação a cada desenho do pai.
  */
 const Areas = memo(function Areas({
   desenho,

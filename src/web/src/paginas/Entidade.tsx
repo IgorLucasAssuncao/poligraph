@@ -21,12 +21,12 @@ import { EsqueletoDePainel } from '../componentes/Esqueleto';
 /**
  * Uma entidade: quanto recebeu de emenda, de quem, em que ano — e se aparece na cota.
  *
- * ## 🔴 A cota ao lado ⛔ é acusação
+ * ## RISCO: A cota ao lado não é acusação
  *
  * Aparecer nas duas listas é, na maior parte, rotina: a cota paga despesas do escritório à
  * própria prefeitura, e a emenda vai para a mesma prefeitura; a companhia aérea vende a
  * passagem e presta serviço contratado com emenda. A seção diz isso antes dos números, e
- * ⛔ destaca nem ordena ninguém por "coincidência" (RNF-16).
+ * Não destaca nem ordena ninguém por "coincidência" (RNF-16).
  */
 export function Entidade() {
   const { cnpj = '' } = useParams();
@@ -205,8 +205,8 @@ function NaCota({ dados }: { dados: DadosDaEntidade }) {
 /**
  * O que foi combinado com o dinheiro: o objeto de cada convênio que a entidade assinou.
  *
- * ⭐ Responde "comprou o quê, construiu o quê" — o que o valor sozinho ⛔ diz. Ligado pelo CNPJ
- * do convenente, ⛔ pelo nome. O liberado vem ao lado do combinado: convênio assinado ⛔ é
+ * DECISÃO: Responde "comprou o quê, construiu o quê" — o que o valor sozinho não diz. Ligado pelo CNPJ
+ * do convenente, não pelo nome. O liberado vem ao lado do combinado: convênio assinado não é
  * dinheiro que chegou.
  */
 function ConveniosAssinados({ dados }: { dados: DadosDaEntidade }) {

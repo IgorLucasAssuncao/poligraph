@@ -82,6 +82,9 @@ describe('Entidades', () => {
   });
 });
 
+/**
+ * RISCO: A cota ao lado não é acusação: a ressalva vem antes dos nomes.
+ */
 describe('Entidade', () => {
   it('separa deputados das bancadas e leva ao perfil', async () => {
     renderizar('/entidades/11222333000144');
@@ -91,7 +94,6 @@ describe('Entidade', () => {
     expect(screen.getByText(/Bancada estadual/)).toBeInTheDocument();
   });
 
-  /** 🔴 A cota ao lado ⛔ é acusação: a ressalva vem antes dos nomes. */
   it('a cota aparece com a ressalva de que não indica irregularidade', async () => {
     renderizar('/entidades/11222333000144');
 
@@ -117,8 +119,10 @@ describe('Entidade', () => {
   });
 });
 
+/**
+ * DECISÃO: O objeto responde "comprou o quê"; o liberado ao lado do combinado diz quanto saiu.
+ */
 describe('o que foi combinado', () => {
-  /** ⭐ O objeto responde "comprou o quê"; o liberado ao lado do combinado diz quanto saiu. */
   it('mostra o objeto, o combinado e o liberado, e leva ao convênio no Portal', async () => {
     renderizar('/entidades/11222333000144');
 

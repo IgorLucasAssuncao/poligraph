@@ -35,14 +35,13 @@ import { Bloco, Esqueleto, EsqueletoDePainel, EsqueletoDeTexto } from '../compon
 /**
  * Para onde foi o dinheiro de emenda, no mapa — e quem o mandou para a sua cidade.
  *
- * ## 🔴 O que a página afirma, e o que ⛔
- *
- * - A cidade é a da **sede de quem recebeu**, ⛔ a da obra. Para a prefeitura e o órgão
- *   municipal as duas coincidem; para uma entidade ou empresa, ⛔ necessariamente. O
+ * ## RISCO: O que a página afirma, e o que não *
+ * - A cidade é a da **sede de quem recebeu**, não a da obra. Para a prefeitura e o órgão
+ *   municipal as duas coincidem; para uma entidade ou empresa, não necessariamente. O
  *   painel da cidade separa as duas partes.
- * - O que ⛔ tem sede some do mapa, ⛔ da conta: o repasse pelo intermediário e o pago a
+ * - O que não tem sede some do mapa, não da conta: o repasse pelo intermediário e o pago a
  *   pessoa ficam declarados, com valor, acima do mapa.
- * - **Bancada e comissão ⛔ são pessoas.** A emenda tem três autores possíveis (CF, art.
+ * - **Bancada e comissão não são pessoas.** A emenda tem três autores possíveis (CF, art.
  *   166), e só o individual é um deputado ou senador. Os outros dois vêm em lista própria,
  *   explicados: misturados, liam como se "Bancada de Minas Gerais" fosse um político.
  * - A ordem das listas é a do valor. Sem cor de partido e sem ranking de "quem mais
@@ -56,9 +55,20 @@ import { Bloco, Esqueleto, EsqueletoDePainel, EsqueletoDeTexto } from '../compon
  *
  * ## Sua cidade
  *
- * O login ⛔ traz cidade, e a página ⛔ pergunta ao servidor onde a pessoa está. A cidade
+ * O login não traz cidade, e a página não pergunta ao servidor onde a pessoa está. A cidade
  * é escolhida na busca ou achada pela localização DENTRO do navegador, contra a própria
  * malha; só o código IBGE vai ao servidor, e fica guardado neste navegador.
+ *
+ * A cidade guardada abre UMA vez, na chegada. Reabri-la toda vez que o endereço fica
+ * sem estado e sem cidade prendia a pessoa nela: "Ver o Brasil" limpa os dois, e a
+ * cidade voltava no mesmo instante.
+ *
+ * O painel da cidade fica ABAIXO do mapa: o mapa é por onde se escolhe, e empurrá-lo
+ * para baixo a cada escolha obrigava a rolar de volta. Escolhida no mapa ou na lista, a
+ * página desce até o painel; chegando com a cidade guardada, não — a pessoa ainda não fez nada.
+ *
+ * ATENÇÃO: Mesmo nome da aba: ela dizia "Sua cidade" e a página abria como "Emendas no
+ * mapa", e quem clicava não sabia se tinha chegado aonde queria (2026-10-01).
  */
 export function Emendas() {
   const [parametros, setParametros] = useSearchParams();
@@ -82,9 +92,6 @@ export function Emendas() {
     };
   }, [periodo]);
 
-  // A cidade guardada abre UMA vez, na chegada. Reabri-la toda vez que o endereço fica
-  // sem estado e sem cidade prendia a pessoa nela: "Ver o Brasil" limpa os dois, e a
-  // cidade voltava no mesmo instante.
   const chegou = useRef(false);
 
   useEffect(() => {
@@ -99,9 +106,6 @@ export function Emendas() {
 
   const mudar = (novos: Record<string, string | null>) => setParametros((p) => comParametros(p, novos));
 
-  // O painel da cidade fica ABAIXO do mapa: o mapa é por onde se escolhe, e empurrá-lo
-  // para baixo a cada escolha obrigava a rolar de volta. Escolhida no mapa ou na lista, a
-  // página desce até o painel; chegando com a cidade guardada, ⛔ — a pessoa ainda ⛔ fez nada.
   const [escolheuAgora, setEscolheuAgora] = useState(false);
   const painel = cidade ? (
     <PainelDaCidade
@@ -117,8 +121,6 @@ export function Emendas() {
   return (
     <>
       <AbasDoDinheiro />
-      {/* ⚠️ Mesmo nome da aba: ela dizia "Sua cidade" e a página abria como "Emendas no
-          mapa", e quem clicava ⛔ sabia se tinha chegado aonde queria (2026-10-01). */}
       <CabecalhoDaColuna titulo="Emendas por cidade" subtitulo="Para onde foi o dinheiro de emenda parlamentar" />
       <div className="barra-do-tour">
         <BotaoDoTour nome="emendas" passos={passos} />
@@ -190,14 +192,13 @@ export function Emendas() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
-/** O que o mapa ⛔ mostra, com valor — somem do desenho, ⛔ da conta. */
+/**
+ * O que o mapa não mostra, com valor — somem do desenho, não da conta.
+ *
+ * ATENÇÃO: A definição diz o que o número É em português de todo dia. "Pelo Banco do Brasil ·
+ * que só repassa" exigia saber que o banco é intermediário de pagamento (2026-10-01).
+ */
 function ForaDoMapa({ brasil }: { brasil: MapaDoBrasil }) {
-  /**
-   * ⚠️ A definição diz o que o número É em português de todo dia. "Pelo Banco do Brasil ·
-   * que só repassa" exigia saber que o banco é intermediário de pagamento (2026-10-01).
-   */
   const numeros: [string, number, string][] = [
     ['Pago em emendas', brasil.recebido, 'das emendas do período, pago até hoje'],
     ['No mapa', brasil.noMapa, 'sabemos em que cidade fica quem recebeu'],
@@ -286,7 +287,7 @@ const CIDADES_POR_VEZ = 15;
 
 /**
  * O estado: o contorno das cidades aparece já, e as cores quando o dado chega — a malha e
- * o dado são pedidos juntos, ⛔ um depois do outro.
+ * o dado são pedidos juntos, não um depois do outro.
  */
 function MapaDaUf({
   uf,
@@ -409,8 +410,6 @@ function MapaDaUf({
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 function PainelDaCidade({
   codigoIbge,
   periodo,
@@ -492,7 +491,7 @@ function PainelDaCidade({
 /**
  * O que foi combinado com quem tem sede na cidade, e o que ainda falta liberar.
  *
- * ⭐ A pergunta do secretário municipal (rodada 2): "o convênio da UBS, quanto já foi
+ * DECISÃO: A pergunta do secretário municipal (rodada 2): "o convênio da UBS, quanto já foi
  * liberado?". "A liberar" soma só os em execução — nos outros a execução acabou.
  */
 function ConveniosDaCidade({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Periodo | undefined }) {
@@ -621,13 +620,11 @@ function QuemRecebeu({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: P
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
  * A busca da cidade e o atalho pela localização.
  *
- * ⚠️ A localização vira código IBGE DENTRO do navegador, contra a malha do próprio site:
- * latitude e longitude ⛔ saem da página.
+ * ATENÇÃO: A localização vira código IBGE DENTRO do navegador, contra a malha do próprio site:
+ * latitude e longitude não saem da página.
  */
 function SuaCidade({ aoEscolher }: { aoEscolher: (m: Municipio) => void }) {
   const [busca, setBusca] = useState('');
@@ -719,8 +716,6 @@ function SuaCidade({ aoEscolher }: { aoEscolher: (m: Municipio) => void }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /** Código IBGE e sigla das 27 UFs — o `codarea` da malha do Brasil. Fixo desde 1988. */
 const UFS: [string, string][] = [
   ['11', 'RO'], ['12', 'AC'], ['13', 'AM'], ['14', 'RR'], ['15', 'PA'], ['16', 'AP'], ['17', 'TO'],
@@ -741,11 +736,13 @@ function lerMinhaCidade(): Municipio | null {
   }
 }
 
+/**
+ * Sem armazenamento, a escolha vale só para esta visita.
+ */
 function guardarMinhaCidade(m: Municipio): void {
   try {
     localStorage.setItem(CHAVE_MINHA_CIDADE, JSON.stringify(m));
   } catch {
-    /* Sem armazenamento, a escolha vale só para esta visita. */
   }
 }
 

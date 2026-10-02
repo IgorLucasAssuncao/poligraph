@@ -16,14 +16,14 @@ Responde *"de quem é a gestão cujo orçamento a página mostra?"*.
 
 ---
 
-⭐ **Da fonte, ⛔ escrito à mão.** Um nome de presidente fixo no código continuaria na
+DECISÃO: **Da fonte, não escrito à mão.** Um nome de presidente fixo no código continuaria na
 tela depois da próxima posse, e a página afirmaria quem governa sem que ninguém
 tivesse conferido.
 
-🔴 O arquivo traz o **CPF** dos candidatos em claro. Ele ⛔ é lido para lugar nenhum: o
+RISCO: O arquivo traz o **CPF** dos candidatos em claro. Ele não é lido para lugar nenhum: o
 projeto só guarda CPF em hash, e aqui nem isso é preciso.
 
-⚠️ O eleito aparece duas vezes — `2º TURNO` na linha do 1º turno e `ELEITO` na do 2º.
+ATENÇÃO: O eleito aparece duas vezes — `2º TURNO` na linha do 1º turno e `ELEITO` na do 2º.
 Vale a de `ELEITO`. O vice é a linha de `VICE-PRESIDENTE` eleita com o mesmo número.
 """
 
@@ -58,7 +58,7 @@ def ler(arquivo_zip: Path, eleicao: int) -> pd.DataFrame:
 def eleitos(df: pd.DataFrame) -> dict:
     """Presidente e vice eleitos, numa linha de `gestoes`.
 
-    ⚠️ O mandato é contado em anos, ⛔ em datas: a posse passou de 1º para 5 de janeiro,
+    ATENÇÃO: O mandato é contado em anos, não em datas: a posse passou de 1º para 5 de janeiro,
     e gravar um dia de fim arrisca afirmar uma data errada. O primeiro ano é o seguinte
     ao da eleição; o mandato tem quatro.
     """

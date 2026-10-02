@@ -10,7 +10,7 @@ Responde *"para que cidade foi o dinheiro desta emenda?"* sem casar nome nem UF.
 | CNPJ → município da sede | código TOM | cadastro de estabelecimentos da Receita |
 | TOM → município do mapa | código IBGE | tabela de municípios da Receita |
 
-📐 Medido em 2026-09-25: 31.576 de 31.576 CNPJs achados no cadastro, 31.574 com IBGE —
+MEDIDO: Medido em 2026-09-25: 31.576 de 31.576 CNPJs achados no cadastro, 31.574 com IBGE —
 100,00% do valor pago a pessoa jurídica fora do intermediário.
 
 ## SAÍDA
@@ -19,7 +19,7 @@ Responde *"para que cidade foi o dinheiro desta emenda?"* sem casar nome nem UF.
 
 ---
 
-⚠️ **É a sede, ⛔ o lugar da obra.** Para 74,9% do valor o favorecido é a própria
+ATENÇÃO: **É a sede, não o lugar da obra.** Para 74,9% do valor o favorecido é a própria
 prefeitura ou um fundo municipal, e a sede é a cidade. Fundo estadual tem sede na
 capital; empresa, onde foi aberta. A tela diz isso.
 """
@@ -31,8 +31,8 @@ from datetime import date
 def municipios_para_linhas(tabela: list[dict]) -> list[dict]:
     """A tabela TOM ↔ IBGE da Receita, em linhas de `municipios`.
 
-    ⚠️ O TOM vem sem zeros à esquerda ("1", "5") e o cadastro de CNPJ o grava com quatro
-    dígitos ("0001"): normaliza para quatro, senão a chave ⛔ casa.
+    ATENÇÃO: O TOM vem sem zeros à esquerda ("1", "5") e o cadastro de CNPJ o grava com quatro
+    dígitos ("0001"): normaliza para quatro, senão a chave não casa.
     """
     linhas = []
     for r in tabela:
@@ -50,7 +50,7 @@ def municipios_para_linhas(tabela: list[dict]) -> list[dict]:
 
 
 def sedes_para_linhas(sedes: dict[str, str], tom_para_ibge: dict[str, str], pasta: str) -> list[dict]:
-    """CNPJ → IBGE, pela sede do cadastro. CNPJ cuja sede ⛔ está na tabela fica de fora.
+    """CNPJ → IBGE, pela sede do cadastro. CNPJ cuja sede não está na tabela fica de fora.
 
     `pasta` é o mês do cadastro (`AAAA-MM`), gravado para dizer de quando é a sede.
     """

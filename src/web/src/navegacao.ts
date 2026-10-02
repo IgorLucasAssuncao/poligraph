@@ -1,5 +1,5 @@
 /**
- * A navegação do site, organizada pelas três intenções de quem usa — ⛔ pelas fontes de dado.
+ * A navegação do site, organizada pelas três intenções de quem usa — não pelas fontes de dado.
  *
  * | Intenção | Destino |
  * |---|---|
@@ -7,7 +7,7 @@
  * | "Com quem eu concordo?" | Compare seu voto |
  * | "Para onde vai o dinheiro?" | Dinheiro público — as três abas abaixo |
  *
- * ⭐ Antes eram cinco destinos e seis controles de conta na mesma barra; "Entidades" seria o
+ * DECISÃO: Antes eram cinco destinos e seis controles de conta na mesma barra; "Entidades" seria o
  * décimo segundo elemento. Uma pergunta, uma porta — as abas dividem a pergunta por dentro.
  */
 export const ABAS_DO_DINHEIRO = [

@@ -20,7 +20,7 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
 
     /// <summary>
     /// Sem período, todos os anos: a área soma os dois, e o ano a ano vem ao lado para a
-    /// comparação ⛔ depender de trocar o filtro.
+    /// comparação não depender de trocar o filtro.
     /// </summary>
     [SkippableFact]
     public async Task SemPeriodo_SomaTodosOsAnos_EDaOAnoAAno()
@@ -38,7 +38,7 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
     }
 
     /// <summary>
-    /// "Gastou" é áreas + repasses + dívida paga, ⛔ a rolagem: dívida paga com dívida nova.
+    /// "Gastou" é áreas + repasses + dívida paga, não a rolagem: dívida paga com dívida nova.
     /// </summary>
     [SkippableFact]
     public async Task AnoAAno_GastouDeixaARolagemDeFora()
@@ -54,7 +54,7 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
     }
 
     /// <summary>
-    /// As gestões disponíveis ⛔ dependem do período: com um ano de uma gestão escolhido, a
+    /// As gestões disponíveis não dependem do período: com um ano de uma gestão escolhido, a
     /// outra continua oferecida como atalho.
     /// </summary>
     [SkippableFact]
@@ -154,7 +154,7 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
 
     /// <summary>
     /// O sigiloso do cartão vem com a base — o cartão inteiro —, e órgão sem sigilo nenhum
-    /// ⛔ entra na lista.
+    /// Não entra na lista.
     /// </summary>
     [SkippableFact]
     public async Task Sigilo_TrazCartaoComBaseEAcao_SoOrgaosComSigilo()
@@ -182,7 +182,7 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
         Assert.Null((await LerAsync(Rota)).Sigilo);
     }
 
-    /// <summary>A ação sigilosa ⛔ tem base à parte nem transação: o banco recusa a linha que finja ter.</summary>
+    /// <summary>A ação sigilosa não tem base à parte nem transação: o banco recusa a linha que finja ter.</summary>
     [SkippableFact]
     public async Task Sigilo_AcaoComTotalDiferente_ERejeitadaPeloBanco()
     {

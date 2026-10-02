@@ -6,10 +6,10 @@ import { Parlamentar } from './Parlamentar';
 /**
  * Leitura sem conta — desligada no período eleitoral (RNF-17), pronta para depois dele.
  *
- * 🔴 O que se protege: sem conta, a ficha abre (a lista de seguidos responderia 401 e a
+ * RISCO: O que se protege: sem conta, a ficha abre (a lista de seguidos responderia 401 e a
  * derrubaria).
  *
- * ⭐ Desde 2026-10-02 a conta é opcional e só serve para seguir: o "Seguir" aparece, e
+ * DECISÃO: Desde 2026-10-02 a conta é opcional e só serve para seguir: o "Seguir" aparece, e
  * leva a entrar — voltando para a mesma ficha.
  */
 vi.mock('../sessao', () => ({
@@ -58,9 +58,9 @@ describe('ficha sem conta', () => {
   });
 });
 
-/** ⭐ Seguir é acompanhar quem está no poder (decisão do autor, 2026-10-02). */
+/** DECISÃO: Seguir é acompanhar quem está no poder (decisão do autor, 2026-10-02). */
 describe('ficha de quem já saiu', () => {
-  it('⛔ oferece "Seguir"', async () => {
+  it('Não oferece "Seguir"', async () => {
     vi.mocked(api.obterFicha).mockResolvedValueOnce({
       ...(await api.obterFicha(1)),
       legislatura: 52,

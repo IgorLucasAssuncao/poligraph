@@ -5,15 +5,15 @@
 /// </summary>
 /// <remarks>
 /// <para>
-/// Sempre com a base: <see cref="Presente"/> de <see cref="Votacoes"/>, ⛔ percentual solto.
-/// Estar presente ⛔ é ter posição: votar secreto ou obstruir contam como presença.
+/// Sempre com a base: <see cref="Presente"/> de <see cref="Votacoes"/>, não percentual solto.
+/// Estar presente não é ter posição: votar secreto ou obstruir contam como presença.
 /// </para>
 /// <para>
 /// As casas registram de jeitos diferentes, e a tela diz isso. O Senado publica a ausência e
 /// a justificativa dela (licença, missão), e <see cref="JustificativaPublicada"/> é verdadeiro.
 /// A Câmara lista só quem votou: a ausência é a falta da linha, contada contra as votações
 /// entre o primeiro e o último voto do deputado — e licença para ser ministro conta como
-/// ausência, porque o registro ⛔ a separa.
+/// ausência, porque o registro não a separa.
 /// </para>
 /// </remarks>
 public record PresencaDto(

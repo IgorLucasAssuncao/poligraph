@@ -24,11 +24,11 @@ const OPCOES: [Resposta, string][] = [
 /**
  * Milissegundos entre responder e a próxima pergunta entrar.
  *
- * ⚠️ Subiu de 620 para 760 e a troca ficou parecendo MAIS rápida, não mais lenta. O que
+ * ATENÇÃO: Subiu de 620 para 760 e a troca ficou parecendo MAIS rápida, não mais lenta. O que
  * incomodava não era a duração: era a pausa estar VAZIA. Agora ela comporta o painel
  * enchendo (420ms) e a legenda entrando (200ms depois), e o tempo passa sendo usado.
  *
- * ⭐ Velocidade percebida é tempo morto, não tempo total.
+ * DECISÃO: Velocidade percebida é tempo morto, não tempo total.
  */
 const PAUSA = 760;
 
@@ -37,13 +37,43 @@ const PASSOS_DO_QUESTIONARIO = passosDoQuestionario();
 /**
  * O questionário, uma pergunta por tela.
  *
- * ⚠️ O formato de lista longa fazia a pessoa varrer tudo de uma vez e responder no
+ * ATENÇÃO: O formato de lista longa fazia a pessoa varrer tudo de uma vez e responder no
  * automático. Um cartão por vez dá peso a cada afirmação — e o retorno imediato entre
  * elas mantém o ritmo até o fim, que é o que decide se o questionário é concluído.
  *
- * 🔴 O retorno mostra o COMPARECIMENTO da votação, ⛔ nunca o placar. Ver
+ * RISCO: O retorno mostra o COMPARECIMENTO da votação, nunca o placar. Ver
  * `PerguntaPublica` na API: revelar a divisão induziria conformidade nas perguntas
  * seguintes, e o instrumento passaria a medir adesão à maioria.
+ *
+ * As perguntas de desempate, buscadas UMA vez, quando falta uma para acabar o bloco
+ * de abertura.
+ *
+ * ATENÇÃO: Buscar na última e não depois dela é o que esconde a rodada: enquanto a pessoa
+ * lê e responde a pergunta que está na tela, as próximas já chegaram. Buscar depois
+ * mostraria "Carregando…" no meio do questionário.
+ *
+ * Não Falha não interrompe: `obterDesempate` devolve `[]`, o questionário termina
+ * com as de abertura, e o mínimo do servidor decide se dá para calcular.
+ *
+ * ATENÇÃO: O denominador é o TOTAL declarado pelo servidor, não `perguntas.length`:
+ * as de desempate entram no meio do caminho, e usar o tamanho da lista faria a
+ * barra andar para trás quando elas chegassem.
+ *
+ * RISCO: `acabou` olha a lista CARREGADA, não o total previsto. Se o desempate falhar,
+ * a lista para em 17 e o total continua 24 — comparar com o total deixaria a
+ * pessoa numa tela sem pergunta e sem encerramento, sem nada a fazer.
+ *
+ * ATENÇÃO: Isto não é título repetido: é a única indicação de quanto falta, e
+ * saiu junto com o cabeçalho da página por descuido.
+ *
+ * ATENÇÃO: A pausa é curta de propósito: longa o bastante para a pessoa ler o painel,
+ * curta o bastante para não virar espera.
+ *
+ * DECISÃO: A View Transition faz a pergunta respondida SAIR pela esquerda enquanto a
+ * próxima entra pela direita. Sem ela só dá para animar quem chega, e a troca
+ * lê como pisca-pisca em vez de avanço.
+ *
+ * DECISÃO: 422 não é erro de sistema: é o cidadão não ter respondido o suficiente
  */
 export function Questionario() {
   const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
@@ -64,17 +94,6 @@ export function Questionario() {
       .catch(() => setErro('Não foi possível carregar as perguntas.'));
   }, []);
 
-  /**
-   * As perguntas de desempate, buscadas UMA vez, quando falta uma para acabar o bloco
-   * de abertura.
-   *
-   * ⚠️ Buscar na última e não depois dela é o que esconde a rodada: enquanto a pessoa
-   * lê e responde a pergunta que está na tela, as próximas já chegaram. Buscar depois
-   * mostraria "Carregando…" no meio do questionário.
-   *
-   * ⛔ Falha ⛔ não interrompe: `obterDesempate` devolve `[]`, o questionário termina
-   * com as de abertura, e o mínimo do servidor decide se dá para calcular.
-   */
   const pediuDesempate = useRef(false);
   const [aguardandoDesempate, setAguardandoDesempate] = useState(false);
 
@@ -114,14 +133,8 @@ export function Questionario() {
     );
   }
 
-  // ⚠️ O denominador é o TOTAL declarado pelo servidor, ⛔ não `perguntas.length`:
-  //    as de desempate entram no meio do caminho, e usar o tamanho da lista faria a
-  //    barra andar para trás quando elas chegassem.
   const previstas = Math.max(total, perguntas.length);
 
-  // 🔴 `acabou` olha a lista CARREGADA, ⛔ não o total previsto. Se o desempate falhar,
-  //    a lista para em 17 e o total continua 24 — comparar com o total deixaria a
-  //    pessoa numa tela sem pergunta e sem encerramento, sem nada a fazer.
   const acabou = indice >= perguntas.length;
   const atual = perguntas[indice];
   const progresso = Math.round((indice / previstas) * 100);
@@ -133,8 +146,6 @@ export function Questionario() {
           <div style={{ width: `${acabou ? 100 : progresso}%` }} />
         </div>
 
-        {/* ⚠️ Isto ⛔ não é título repetido: é a única indicação de quanto falta, e
-            saiu junto com o cabeçalho da página por descuido. */}
         <p className="progresso-contagem">
           {acabou
             ? `${opinadas} de ${perguntas.length} respondidas`
@@ -168,18 +179,11 @@ export function Questionario() {
     </div>
   );
 
-  // ═══════════════════════════════════════════════════════════════
-
   function responder(perguntaId: string, valor: Resposta) {
     setRespostas((atuais) => ({ ...atuais, [perguntaId]: valor }));
     setRevelando(true);
 
-    // ⚠️ A pausa é curta de propósito: longa o bastante para a pessoa ler o painel,
-    //    curta o bastante para não virar espera.
     setTimeout(() => {
-      // ⭐ A View Transition faz a pergunta respondida SAIR pela esquerda enquanto a
-      //    próxima entra pela direita. Sem ela só dá para animar quem chega, e a troca
-      //    lê como pisca-pisca em vez de avanço.
       comTransicao(() => {
         setRevelando(false);
         setIndice((i) => i + 1);
@@ -199,7 +203,6 @@ export function Questionario() {
 
       setResultado(await calcularAfinidade(payload));
     } catch (falha) {
-      // ⭐ 422 não é erro de sistema: é o cidadão não ter respondido o suficiente
       setErro(
         falha instanceof RespostasInsuficientesError
           ? `Responda ao menos ${falha.minimo} perguntas para o resultado fazer sentido.`
@@ -218,8 +221,12 @@ export function Questionario() {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
+/**
+ * DECISÃO: O retorno é o painel: comparecimento, NUNCA a direção do voto.
+ *
+ * ATENÇÃO: Sem placar registrado, calar. "0 deputados se posicionaram" seria falso:
+ * o que falta é o dado, não o comparecimento.
+ */
 function CartaoDePergunta({
   pergunta,
   escolhida,
@@ -252,13 +259,10 @@ function CartaoDePergunta({
         ))}
       </div>
 
-      {/* ⭐ O retorno é o painel: comparecimento, NUNCA a direção do voto. */}
       <div className={`retorno ${revelando ? 'visivel' : ''}`} aria-live="polite">
         {revelando && pergunta.totalVotos > 0 && (
           <Painel posicionados={pergunta.totalVotos} total={pergunta.totalPossivel} />
         )}
-        {/* ⚠️ Sem placar registrado, calar. "0 deputados se posicionaram" seria falso:
-            o que falta é o dado, não o comparecimento. */}
         {revelando && pergunta.totalVotos === 0 && <p>Resposta registrada.</p>}
       </div>
 

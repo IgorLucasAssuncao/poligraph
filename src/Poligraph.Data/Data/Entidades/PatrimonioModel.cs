@@ -5,9 +5,9 @@
 /// </summary>
 /// <remarks>
 /// <para>
-/// 🔴 Só o TIPO e o VALOR. A descrição de cada bem é texto livre e traz endereço ("prédio
-/// comercial situado à rua…"): ⛔ entra no banco. Minimização (LGPD): a pergunta da tela é
-/// quanto, e em quê, ⛔ onde.
+/// RISCO: Só o TIPO e o VALOR. A descrição de cada bem é texto livre e traz endereço ("prédio
+/// comercial situado à rua…"): Não entra no banco. Minimização (LGPD): a pergunta da tela é
+/// quanto, e em quê, não onde.
 /// </para>
 /// <para>
 /// Uma linha por pessoa, eleição e tipo. Quem concorreu em 2018 e 2022 tem as duas, e a

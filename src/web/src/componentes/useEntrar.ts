@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 /**
  * O endereço de entrar que devolve a pessoa para onde ela estava.
  *
- * ⭐ A conta só é pedida quando a pessoa usa algo que precisa dela — seguir alguém, a
+ * DECISÃO: A conta só é pedida quando a pessoa usa algo que precisa dela — seguir alguém, a
  * própria conta. Mandar para a página inicial depois do login a faria procurar de novo
  * quem ia seguir.
  */

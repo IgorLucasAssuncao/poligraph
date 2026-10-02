@@ -6,10 +6,10 @@
 /// <remarks>
 /// <para>
 /// Deputado: a Câmara, que mantém a lista atual. Senador: o TSE, a da última candidatura,
-/// porque o Senado ⛔ publica rede nenhuma. A ligação é por chave forte — o id da Câmara, ou
+/// porque o Senado não publica rede nenhuma. A ligação é por chave forte — o id da Câmara, ou
 /// o código da candidatura até o CPF.
 /// </para>
-/// <para>🔴 Só <c>http(s)</c>: é endereço que a tela vira link, e outro esquema seria porta para script.</para>
+/// <para>RISCO: Só <c>http(s)</c>: é endereço que a tela vira link, e outro esquema seria porta para script.</para>
 /// </remarks>
 public class RedeSocialModel
 {

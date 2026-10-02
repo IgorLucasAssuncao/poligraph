@@ -22,7 +22,7 @@ import { EsqueletoDePainel, EsqueletoDeTexto } from './Esqueleto';
 /**
  * O dinheiro do parlamentar, em três abas — campanha, emendas e cota.
  *
- * ## Por que abas, e ⛔ o modal
+ * ## Por que abas, e não o modal
  *
  * O modal "Ver as contas" empilhava as três fontes numa rolagem só: 13 blocos com o mesmo
  * peso, sem endereço para compartilhar, e no telefone uma rolagem dentro de outra. Cada
@@ -33,15 +33,18 @@ import { EsqueletoDePainel, EsqueletoDeTexto } from './Esqueleto';
  * 2. dois blocos, os que respondem "para onde" e "para quem";
  * 3. o resto em "Ver detalhes", fechado.
  *
- * ⚠️ O argumento antigo para o modal — ver campanha e cota juntas, para cruzar doador e
+ * ATENÇÃO: O argumento antigo para o modal — ver campanha e cota juntas, para cruzar doador e
  * fornecedor — agora é feito pelo DADO, pelo CNPJ, na página da entidade. Medido em
- * 2026-09-25: 3 CNPJs em comum entre cota e campanha; o olho ⛔ achava isso numa rolagem.
+ * 2026-09-25: 3 CNPJs em comum entre cota e campanha; o olho não achava isso numa rolagem.
  */
 
 /**
  * Os três números do topo, cada um levando à sua aba.
  *
- * ⭐ Silêncio enquanto carrega e no erro: a faixa é contexto, ⛔ o conteúdo principal.
+ * DECISÃO: Silêncio enquanto carrega e no erro: a faixa é contexto, não o conteúdo principal.
+ *
+ * ATENÇÃO: Os três vêm de anos diferentes — a eleição, e o ano mais recente de emenda e
+ * de cota. Lado a lado, sem o ano no rótulo, liam como comparáveis (2026-10-01).
  */
 export function FaixaDeContas({
   contas,
@@ -53,7 +56,7 @@ export function FaixaDeContas({
   base: string;
   /** O `?legislatura=` da ficha: o número leva à aba no MESMO mandato. */
   sufixo?: string;
-  /** A legislatura do mandato aberto, quando ⛔ é a corrente — a frase diz de qual. */
+  /** A legislatura do mandato aberto, quando não é a corrente — a frase diz de qual. */
   mandatoPassado?: number | null;
 }) {
   if (!contas) return null;
@@ -64,8 +67,6 @@ export function FaixaDeContas({
 
   return (
     <>
-      {/* ⚠️ Os três vêm de anos diferentes — a eleição, e o ano mais recente de emenda e
-          de cota. Lado a lado, sem o ano no rótulo, liam como comparáveis (2026-10-01). */}
       <p className="contas-aviso">
         {mandatoPassado
           ? `No mandato de ${periodoDaLegislatura(mandatoPassado)}: o ano mais recente de cada um dentro dele.`
@@ -96,8 +97,8 @@ export function FaixaDeContas({
 }
 
 /**
- * 🔴 **Ausente ⛔ é zero.** `R$ 0,00` afirmaria que o parlamentar ⛔ recebeu nada; o que se
- * sabe é que a base ⛔ tem. O travessão diz isso sem mentir.
+ * RISCO: **Ausente não é zero.** `R$ 0,00` afirmaria que o parlamentar não recebeu nada; o que se
+ * sabe é que a base não tem. O travessão diz isso sem mentir.
  */
 function ValorDaConta({ para, rotulo, valor, nota }: { para: string; rotulo: string; valor?: number; nota?: string }) {
   const tem = valor !== undefined && valor > 0;
@@ -111,20 +112,18 @@ function ValorDaConta({ para, rotulo, valor, nota }: { para: string; rotulo: str
   );
 }
 
-/** O que ainda ⛔ chegou, ou ⛔ existe na base, dito do mesmo jeito nas três abas. */
+/** O que ainda não chegou, ou não existe na base, dito do mesmo jeito nas três abas. */
 function Carregando({ contas, erro }: { contas: Contas | null; erro: boolean }) {
   if (erro) return <p className="erro">Não foi possível carregar as contas agora.</p>;
   if (!contas) return <EsqueletoDePainel rotulo="Carregando as contas" />;
   return null;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Emendas
-// ═══════════════════════════════════════════════════════════════════
-
 /**
- * 🔴 **Empenhado e pago, sempre juntos.** Empenhar é reservar; pagar é o dinheiro sair. Só
+ * RISCO: **Empenhado e pago, sempre juntos.** Empenhar é reservar; pagar é o dinheiro sair. Só
  * o empenhado deixaria concluir que o dinheiro chegou — o que quem anuncia emenda gostaria.
+ *
+ * Emendas
  */
 export function AbaEmendas({ pessoaId, contas, erro }: { pessoaId: number; contas: Contas | null; erro: boolean }) {
   const emendas = contas?.emendas;
@@ -249,7 +248,7 @@ function CidadesQueReceberam({ cidades }: { cidades: CidadesDaEmenda }) {
 /**
  * O destino DECLARADO — quatro coisas diferentes na mesma coluna.
  *
- * 🔴 `MÚLTIPLO` ⛔ é um lugar: é o aviso de que a emenda se reparte, e o Portal ⛔ diz onde.
+ * RISCO: `MÚLTIPLO` não é um lugar: é o aviso de que a emenda se reparte, e o Portal não diz onde.
  */
 function Destino({ localidade }: { localidade: string }) {
   if (localidade === 'MÚLTIPLO') {
@@ -283,15 +282,15 @@ function Destino({ localidade }: { localidade: string }) {
   return <>{localidade}</>;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Cota
-// ═══════════════════════════════════════════════════════════════════
-
 /**
  * A cota parlamentar (CEAP e CEAPS).
  *
- * 🔴 Todo valor tem o documento fiscal a um clique, na Câmara — sem isso a tela seria uma
+ * RISCO: Todo valor tem o documento fiscal a um clique, na Câmara — sem isso a tela seria uma
  * afirmação sobre gasto público sem como conferir. Fica em "Ver detalhes": são centenas.
+ *
+ * Cota
+ *
+ * RISCO: RNF-13: o documento de pessoa física é hasheado; a tela diz que é pessoa.
  */
 export function AbaCota({ pessoaId, contas, erro }: { pessoaId: number; contas: Contas | null; erro: boolean }) {
   const gastos = contas?.gastos;
@@ -343,7 +342,6 @@ export function AbaCota({ pessoaId, contas, erro }: { pessoaId: number; contas: 
               <li key={f.nome}>
                 <span className="gasto-nome">
                   {f.nome}
-                  {/* 🔴 RNF-13: o documento de pessoa física é hasheado; a tela diz que é pessoa. */}
                   {f.pessoaFisica && <small> · pessoa física</small>}
                 </span>
                 <span className="gasto-valor">{reais(f.total)}</span>
@@ -413,15 +411,13 @@ function LancamentosDaCota({ pessoaId, ano, total }: { pessoaId: number; ano: nu
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Campanha
-// ═══════════════════════════════════════════════════════════════════
-
 /**
  * O financiamento da campanha que elegeu o parlamentar (TSE).
  *
- * 🔴 O Fundo Especial e o Fundo Partidário aparecem SEPARADOS. A soma dos dois é dita como
- * soma, e ⛔ substitui os dois: somá-los como "dinheiro público" é uma afirmação.
+ * RISCO: O Fundo Especial e o Fundo Partidário aparecem SEPARADOS. A soma dos dois é dita como
+ * soma, e não substitui os dois: somá-los como "dinheiro público" é uma afirmação.
+ *
+ * Campanha
  */
 export function AbaCampanha({ pessoaId, contas, erro }: { pessoaId: number; contas: Contas | null; erro: boolean }) {
   const fin = contas?.fin;
@@ -435,6 +431,9 @@ export function AbaCampanha({ pessoaId, contas, erro }: { pessoaId: number; cont
   );
 }
 
+/**
+ * RISCO: RNF-13: o documento de pessoa física é hasheado no banco.
+ */
 function Financiamento({ fin }: { fin: FinanciamentoDeCampanha }) {
   if (fin.total === 0) {
     return (
@@ -480,7 +479,6 @@ function Financiamento({ fin }: { fin: FinanciamentoDeCampanha }) {
               <li key={d.nome}>
                 <span className="gasto-nome">
                   {d.nome}
-                  {/* 🔴 RNF-13: o documento de pessoa física é hasheado no banco. */}
                   {d.pessoaFisica && <small> · pessoa física</small>}
                 </span>
                 <span className="gasto-valor">{reais(d.total)}</span>
@@ -514,20 +512,19 @@ function Financiamento({ fin }: { fin: FinanciamentoDeCampanha }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// Patrimônio declarado (PP3)
-// ═══════════════════════════════════════════════════════════════════
-
+/**
+ * Patrimônio declarado (PP3)
+ */
 const TIPOS_A_VISTA = 5;
 
 /**
  * O que o parlamentar declarou ter ao se candidatar — a última declaração, e a anterior ao lado.
  *
- * ⚠️ As duas candidaturas aparecem como dois números, ⛔ como variação percentual: "cresceu
+ * ATENÇÃO: As duas candidaturas aparecem como dois números, não como variação percentual: "cresceu
  * 300%" lê como acusação, e a declaração é do próprio candidato, pelo valor que ele deu ao
- * bem — ⛔ uma avaliação de mercado (RNF-16).
+ * bem — não uma avaliação de mercado (RNF-16).
  *
- * 🔴 Só tipo e valor: a descrição de cada bem traz endereço, e ⛔ chega ao site.
+ * RISCO: Só tipo e valor: a descrição de cada bem traz endereço, e não chega ao site.
  */
 function PatrimonioDeclarado({ pessoaId }: { pessoaId: number }) {
   const [declaracoes, setDeclaracoes] = useState<DeclaracaoDeBens[] | null>(null);

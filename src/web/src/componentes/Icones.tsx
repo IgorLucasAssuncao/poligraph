@@ -1,7 +1,7 @@
 /**
  * Ícones em SVG inline.
  *
- * ⚠️ Sem biblioteca de propósito: são seis ícones. Trazer um pacote inteiro para isso
+ * ATENÇÃO: Sem biblioteca de propósito: são seis ícones. Trazer um pacote inteiro para isso
  * somaria centenas de KB ao bundle e uma dependência a justificar na banca.
  */
 
@@ -74,7 +74,7 @@ export function IconeVoltar({ className }: Props) {
   );
 }
 
-/** ⚠️ Marca do projeto — um grafo de três nós, que é o que o site faz. */
+/** ATENÇÃO: Marca do projeto — um grafo de três nós, que é o que o site faz. */
 export function Marca({ className, tamanho = 28 }: Props & { tamanho?: number }) {
   return (
     <svg
@@ -95,7 +95,7 @@ export function Marca({ className, tamanho = 28 }: Props & { tamanho?: number })
   );
 }
 
-/** ⚠️ Três nós ligados — o mesmo desenho da marca, sem o preenchimento. */
+/** ATENÇÃO: Três nós ligados — o mesmo desenho da marca, sem o preenchimento. */
 export function IconeGrafo({ className }: Props) {
   return (
     <svg {...base} className={className} aria-hidden="true">

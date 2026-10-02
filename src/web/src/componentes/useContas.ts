@@ -17,13 +17,13 @@ export type Contas = {
 /**
  * As três contas, carregadas juntas uma vez: a faixa do topo e as abas leem daqui.
  *
- * ⚠️ As três falhando juntas é problema de rede, ⛔ ausência de dado — `erro` diz isso, e
- * a tela ⛔ mostra três traços que mentiriam "não há registro".
+ * ATENÇÃO: As três falhando juntas é problema de rede, não ausência de dado — `erro` diz isso, e
+ * a tela não mostra três traços que mentiriam "não há registro".
  */
 /**
- * ⭐ `mandato` é a legislatura que a ficha mostra: cota, emendas e campanha saem de
+ * DECISÃO: `mandato` é a legislatura que a ficha mostra: cota, emendas e campanha saem de
  * DENTRO dela. Eram "o mais recente que existir", e a ficha de 2015–2019 mostrava os votos
- * de 2015 ao lado da cota de 2026 (2026-10-02). `'aguardando'` enquanto a ficha ⛔ chegou:
+ * de 2015 ao lado da cota de 2026 (2026-10-02). `'aguardando'` enquanto a ficha não chegou:
  * buscar antes traria o período errado e buscaria duas vezes.
  */
 export function useContas(

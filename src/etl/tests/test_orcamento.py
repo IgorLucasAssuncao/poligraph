@@ -1,7 +1,7 @@
 """Execução do orçamento por função.
 
-🔴 O ponto sensível é **onde** se compara empenho com dotação. No elemento de despesa a
-dotação é zero em quase toda linha, e comparar ali acusaria excesso onde ⛔ há.
+RISCO: O ponto sensível é **onde** se compara empenho com dotação. No elemento de despesa a
+dotação é zero em quase toda linha, e comparar ali acusaria excesso onde não há.
 """
 
 from datetime import date
@@ -13,7 +13,7 @@ from poligraph_etl import orcamento
 
 
 def linha(**campos) -> dict:
-    """⭐ Colunas de `2025_OrcamentoDespesa.csv`, com uma programação da Previdência."""
+    """DECISÃO: Colunas de `2025_OrcamentoDespesa.csv`, com uma programação da Previdência."""
     base = {
         "EXERCÍCIO": "2025",
         "CÓDIGO UNIDADE ORÇAMENTÁRIA": "33904",
@@ -37,9 +37,9 @@ def processar(*linhas: dict) -> list[dict]:
 
 
 def test_dotacao_num_elemento_e_empenho_em_outro_nao_e_excesso():
-    """🔴 A dotação costuma estar numa linha e o empenho em outra da mesma programação.
+    """RISCO: A dotação costuma estar numa linha e o empenho em outra da mesma programação.
 
-    ⚠️ Comparar linha a linha acusaria R$ 100 empenhados sem dotação — que ⛔ existe.
+    ATENÇÃO: Comparar linha a linha acusaria R$ 100 empenhados sem dotação — que não existe.
     """
     [funcao] = processar(
         linha(**{"ORÇAMENTO ATUALIZADO (R$)": "100,00"}),
@@ -50,7 +50,7 @@ def test_dotacao_num_elemento_e_empenho_em_outro_nao_e_excesso():
 
 
 def test_empenho_alem_da_dotacao_da_programacao_e_medido():
-    """📐 É o caso de 2025: a ação 00SJ empenhou R$ 129,6 bi além da dotação publicada."""
+    """MEDIDO: É o caso de 2025: a ação 00SJ empenhou R$ 129,6 bi além da dotação publicada."""
     [funcao] = processar(
         linha(**{"ORÇAMENTO ATUALIZADO (R$)": "981,30", "ORÇAMENTO EMPENHADO (R$)": "1110,90"}),
     )
@@ -59,7 +59,7 @@ def test_empenho_alem_da_dotacao_da_programacao_e_medido():
 
 
 def test_folga_de_uma_programacao_nao_cobre_o_excesso_de_outra():
-    """⚠️ Dotação que sobra numa ação ⛔ paga o que outra empenhou além da sua.
+    """ATENÇÃO: Dotação que sobra numa ação não paga o que outra empenhou além da sua.
 
     Somar por função antes de comparar esconderia o excesso: 100 + 0 contra 50 + 50.
     """
@@ -92,7 +92,7 @@ def test_uma_linha_por_funcao_com_a_data_do_arquivo():
 
 
 def test_encargos_especiais_saem_por_subfuncao():
-    """🔴 A função 28 junta rolagem, juros e FPM. A subfunção separa."""
+    """RISCO: A função 28 junta rolagem, juros e FPM. A subfunção separa."""
     linhas = orcamento.encargos_para_linhas(pd.DataFrame([
         linha(**{"CÓDIGO FUNÇÃO": "28", "CÓDIGO SUBFUNÇÃO": "841",
                  "NOME SUBFUNÇÃO": "Refinanciamento da dívida interna",
@@ -115,7 +115,7 @@ def execucao(funcao: str, subfuncao: str, pago: str, restos: str) -> dict:
 
 
 def test_restos_a_pagar_somam_os_meses():
-    """📐 Urbanismo 2025: R$ 2,0 bi pagos do exercício e R$ 6,5 bi de anos anteriores."""
+    """MEDIDO: Urbanismo 2025: R$ 2,0 bi pagos do exercício e R$ 6,5 bi de anos anteriores."""
     janeiro = orcamento.restos_a_pagar_do_mes(pd.DataFrame([
         execucao("15", "451", "1,00", "4,00"),
         execucao("28", "843", "10,00", "2,00"),
@@ -132,7 +132,7 @@ def test_restos_a_pagar_somam_os_meses():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 Limite de taxa ⛔ é "mês não publicado"
+# RISCO: Limite de taxa não é "mês não publicado"
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -145,7 +145,7 @@ def _erro_http(status: int):
 
 
 def test_limite_de_taxa_derruba_a_carga_em_vez_de_encurtar_o_ano(monkeypatch):
-    """📐 Aconteceu na primeira carga: o 405 esgotou as tentativas em maio de 2026, e o
+    """MEDIDO: Aconteceu na primeira carga: o 405 esgotou as tentativas em maio de 2026, e o
     ano foi gravado com 4 meses como se fosse o ano até agora.
     """
     from poligraph_etl import __main__ as principal

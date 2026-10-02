@@ -66,10 +66,12 @@ function decidirConsentimento() {
   );
 }
 
+/**
+ * O jsdom não mede nem rola: sem isto todo alvo teria altura zero e seria pulado.
+ */
 describe('Tour guiado', () => {
   beforeEach(() => {
     localStorage.clear();
-    // O jsdom não mede nem rola: sem isto todo alvo teria altura zero e seria pulado.
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
       top: 100, left: 20, bottom: 140, right: 220, width: 200, height: 40, x: 20, y: 100,
       toJSON: () => ({}),
@@ -218,10 +220,12 @@ describe('Tour guiado', () => {
   });
 });
 
+/**
+ * O número no texto é o da execução, não um literal que envelheceria calado.
+ */
 describe('passos do grafo', () => {
   const base = { singular: 'deputado', plural: 'deputados', vizinhosPorNo: 10 };
 
-  /** O número no texto é o da execução, não um literal que envelheceria calado. */
   it('conta as ligações com o k da execução', () => {
     const texto = passosDoGrafo({ ...base, vizinhosPorNo: 7, temAlinhamento: true })
       .map((p) => p.texto)
@@ -240,6 +244,9 @@ describe('passos do grafo', () => {
   });
 });
 
+/**
+ * "Passo 2 de 3" com um opcional ausente prometeria um passo que não vem, e o botão diria "Próximo".
+ */
 describe('passos opcionais ausentes', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -251,7 +258,6 @@ describe('passos opcionais ausentes', () => {
 
   afterEach(() => vi.restoreAllMocks());
 
-  /** "Passo 2 de 3" com um opcional ausente prometeria um passo que ⛔ vem, e o botão diria "Próximo". */
   it('contam só o que está na página, e o último diz Concluir', async () => {
     const passos: PassoDoTour[] = [
       { rota: null, alvo: 'um', titulo: 'Primeiro', texto: 'a' },

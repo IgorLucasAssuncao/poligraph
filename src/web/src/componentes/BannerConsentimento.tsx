@@ -9,18 +9,29 @@ import {
 } from '../consentimento';
 
 /**
- * 🔴 Banner de consentimento — bloqueante e obrigatório.
+ * RISCO: Banner de consentimento — bloqueante e obrigatório.
  *
  * O script de medição SÓ é carregado depois do aceite. Não basta o banner aparecer:
  * o `clarity.js` não pode ser injetado antes, senão o cookie já foi gravado.
  *
- * ⚠️ O padrão de fábrica do Clarity NÃO cobre o Brasil — o Consent Mode obrigatório
+ * ATENÇÃO: O padrão de fábrica do Clarity NÃO cobre o Brasil — o Consent Mode obrigatório
  * vale para EEA, Reino Unido e Suíça. Aqui é preciso desligar "set cookies by default"
  * no painel e passar o sinal por este componente.
+ *
+ * ATENÇÃO: Lido aqui, não no escopo do módulo — senão o valor congela na importação
+ * e o componente fica impossível de testar.
+ *
+ * DECISÃO: Mudou a versão do texto? O consentimento antigo não cobre o novo (art. 8º §2).
+ *
+ * DECISÃO: Sem ferramenta de medição configurada, não há o que consentir.
+ * Mostrar o banner assim mesmo seria teatro de consentimento: pediria permissão para
+ * algo que não acontece, e treinaria a pessoa a clicar em "aceitar" sem ler — que é
+ * exatamente o hábito que torna o consentimento inútil quando ele passa a importar.
+ *
+ * ATENÇÃO: Mesmo peso visual nos dois botões (LGPD art. 9º §3): recusar não
+ * pode ser mais difícil que aceitar. Sem "aceitar" em destaque.
  */
 export function BannerConsentimento() {
-  // ⚠️ Lido aqui, não no escopo do módulo — senão o valor congela na importação
-  //    e o componente fica impossível de testar.
   const clarityId = import.meta.env.VITE_CLARITY_ID;
   const [escolha, setEscolha] = useState<Escolha | null>(null);
   const [carregado, setCarregado] = useState(false);
@@ -28,7 +39,6 @@ export function BannerConsentimento() {
   useEffect(() => {
     const salvo = lerConsentimento();
 
-    // ⭐ Mudou a versão do texto? O consentimento antigo não cobre o novo (art. 8º §2).
     if (salvo?.versao === VERSAO_CONSENTIMENTO) {
       setEscolha(salvo);
       if (salvo.aceito) ativarMedicao();
@@ -37,11 +47,6 @@ export function BannerConsentimento() {
     setCarregado(true);
   }, []);
 
-  // ⭐ Sem ferramenta de medição configurada, não há o que consentir.
-  //
-  // Mostrar o banner assim mesmo seria teatro de consentimento: pediria permissão para
-  // algo que não acontece, e treinaria a pessoa a clicar em "aceitar" sem ler — que é
-  // exatamente o hábito que torna o consentimento inútil quando ele passa a importar.
   if (!clarityId) return null;
 
   if (!carregado || escolha) return null;
@@ -54,8 +59,6 @@ export function BannerConsentimento() {
         <p key={paragrafo} dangerouslySetInnerHTML={{ __html: negrito(paragrafo) }} />
       ))}
 
-      {/* ⚠️ Mesmo peso visual nos dois botões (LGPD art. 9º §3): recusar não
-          pode ser mais difícil que aceitar. Sem "aceitar" em destaque. */}
       <div className="banner-acoes">
         <button type="button" onClick={() => decidir(true)}>
           {TEXTO_CONSENTIMENTO.aceitar}
@@ -70,8 +73,6 @@ export function BannerConsentimento() {
       </p>
     </aside>
   );
-
-  // ═══════════════════════════════════════════════════════════════
 
   function decidir(aceito: boolean) {
     const nova: Escolha = {
@@ -88,10 +89,8 @@ export function BannerConsentimento() {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
- * ⚠️ Só aqui o script entra na página. Antes disto, nada é carregado.
+ * ATENÇÃO: Só aqui o script entra na página. Antes disto, nada é carregado.
  */
 function ativarMedicao() {
   const id = import.meta.env.VITE_CLARITY_ID;

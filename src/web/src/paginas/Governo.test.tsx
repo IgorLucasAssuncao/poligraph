@@ -22,7 +22,7 @@ function area(codigo: string, nome: string, campos: Partial<AreaDaDespesa> = {})
   };
 }
 
-/** ⭐ A forma de 2025, com os valores medidos arredondados. */
+/** DECISÃO: A forma de 2025, com os valores medidos arredondados. */
 const DE_2025: DadosDoGoverno = {
   gestoes: [{
     eleicao: 2022, primeiroAno: 2023, ultimoAno: 2026,
@@ -92,6 +92,23 @@ function renderizar() {
   );
 }
 
+/**
+ * RISCO: Dívida emitida não é arrecadação: ela aparece à parte, com o motivo.
+ *
+ * RISCO: A rolagem não entra em "áreas de governo" nem nos quatro números do topo.
+ *
+ * DECISÃO: "De cada R$ 100" só é honesto se as parcelas fecharem 100.
+ *
+ * O sigiloso do cartão vem com a base: "R$ 50 mi" sozinho não diz se é muito ou pouco.
+ *
+ * DECISÃO: "O cartão é todo secreto?" — não : o total do cartão vem antes, e a parte sigilosa é uma fração dele.
+ *
+ * ATENÇÃO: Sem o de anos anteriores, Urbanismo mostraria R$ 2 bi — área de obra parada.
+ *
+ * ATENÇÃO: Em ano eleitoral, o presidente no topo lia como vitrine: os números vêm antes.
+ *
+ * DECISÃO: Com mais de um ano, a comparação vem pronta — não depende de trocar o filtro.
+ */
 describe('Governo federal', () => {
   beforeEach(() => {
     vi.mocked(api.obterGoverno).mockResolvedValue(DE_2025);
@@ -107,7 +124,6 @@ describe('Governo federal', () => {
     expect(screen.getByRole('heading', { name: 'Quem governou de 2023 a 2026' })).toBeDefined();
   });
 
-  /** 🔴 Dívida emitida ⛔ é arrecadação: ela aparece à parte, com o motivo. */
   it('mostra a emissão de dívida fora da arrecadação', async () => {
     renderizar();
 
@@ -118,7 +134,6 @@ describe('Governo federal', () => {
     expect(screen.getByText(/pegos emprestados/).textContent).toMatch(/Fora da conta: R\$ 2,46 tri/);
   });
 
-  /** 🔴 A rolagem ⛔ entra em "áreas de governo" nem nos quatro números do topo. */
   it('a rolagem da dívida vai em linha própria', async () => {
     renderizar();
 
@@ -131,7 +146,6 @@ describe('Governo federal', () => {
     expect(nota.textContent).toMatch(/Fora da conta: R\$ 1,41 tri de rolagem da dívida/);
   });
 
-  /** ⭐ "De cada R$ 100" só é honesto se as parcelas fecharem 100. */
   it('as parcelas de cada R$ 100 somam 100', async () => {
     renderizar();
 
@@ -144,11 +158,9 @@ describe('Governo federal', () => {
     expect(document.querySelector('.cada-cem')!.textContent).not.toMatch(/Rolagem/);
   });
 
-  /** O sigiloso do cartão vem com a base: "R$ 50 mi" sozinho ⛔ diz se é muito ou pouco. */
   it('o gasto sigiloso vem com a base do cartão inteiro', async () => {
     renderizar();
 
-    // ⭐ "O cartão é todo secreto?" — ⛔: o total do cartão vem antes, e a parte sigilosa é uma fração dele.
     const destaque = (await screen.findByText(/são sigilosos/)).closest('p')!;
     expect(destaque.textContent).toMatch(/R\$ 122,3 mi/);
     expect(destaque.textContent).toMatch(/41 de cada R\$ 100/);
@@ -165,7 +177,6 @@ describe('Governo federal', () => {
     expect(await screen.findByText(/gastos sigilosos deste período ainda não foram carregados/)).toBeDefined();
   });
 
-  /** ⚠️ Sem o de anos anteriores, Urbanismo mostraria R$ 2 bi — área de obra parada. */
   it('soma o pago de anos anteriores e o mostra à parte', async () => {
     renderizar();
 
@@ -176,7 +187,7 @@ describe('Governo federal', () => {
     expect(within(urbanismo).getByText('R$ 8,5 bi')).toBeDefined();
   });
 
-  it('dotação incompleta ⛔ vira percentual', async () => {
+  it('dotação incompleta não vira percentual', async () => {
     renderizar();
 
     const linha = (await screen.findByRole('rowheader', { name: 'Previdência social' })).closest('tr')!;
@@ -184,7 +195,6 @@ describe('Governo federal', () => {
     expect(linha.textContent).not.toMatch(/%/);
   });
 
-  /** ⚠️ Em ano eleitoral, o presidente no topo lia como vitrine: os números vêm antes. */
   it('a gestão vem depois dos números do ano', async () => {
     renderizar();
 
@@ -202,7 +212,6 @@ describe('Governo federal', () => {
     expect(await screen.findByText(/2026 vai até 22\/09\/2026/)).toBeDefined();
   });
 
-  /** ⭐ Com mais de um ano, a comparação vem pronta — ⛔ depende de trocar o filtro. */
   it('com vários anos, mostra o ano a ano e marca o que está em andamento', async () => {
     vi.mocked(api.obterGoverno).mockResolvedValue({
       ...DE_2025,
@@ -231,8 +240,12 @@ describe('Governo federal', () => {
   });
 });
 
+/**
+ * DECISÃO: Um botão por gestão, recortado aos anos que existem: medir as duas do mesmo jeito.
+ *
+ * ATENÇÃO: Sem correção pela inflação, o ano recente parece maior — a tabela avisa.
+ */
 describe('comparar gestões', () => {
-  /** ⭐ Um botão por gestão, recortado aos anos que existem: medir as duas do mesmo jeito. */
   it('cada gestão é um atalho de período', async () => {
     vi.mocked(api.obterGoverno).mockResolvedValue({ ...DE_2025, anosDisponiveis: [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026] });
     renderizar();
@@ -242,7 +255,6 @@ describe('comparar gestões', () => {
     await vi.waitFor(() => expect(api.obterGoverno).toHaveBeenLastCalledWith({ de: 2019, ate: 2022 }));
   });
 
-  /** ⚠️ Sem correção pela inflação, o ano recente parece maior — a tabela avisa. */
   it('o ano a ano diz a gestão de cada ano e que o valor é nominal', async () => {
     vi.mocked(api.obterGoverno).mockResolvedValue({
       ...DE_2025,

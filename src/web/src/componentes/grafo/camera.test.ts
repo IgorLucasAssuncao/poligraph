@@ -16,10 +16,12 @@ import {
 const TELA = { largura: 800, altura: 500 };
 const NEUTRA: Camera = { escala: 1, x: 0, y: 0 };
 
+/**
+ * RISCO: É a propriedade que faz o arrasto de um nó grudar no cursor. Sem ela o nó
+ * descola do ponteiro conforme o zoom sobe — foi o bug da versão anterior.
+ */
 describe('conversão entre plano e tela', () => {
   it('leva e traz o mesmo ponto, em qualquer câmera', () => {
-    // 🔴 É a propriedade que faz o arrasto de um nó grudar no cursor. Sem ela o nó
-    //    descola do ponteiro conforme o zoom sobe — foi o bug da versão anterior.
     const cameras: Camera[] = [
       NEUTRA,
       { escala: 12, x: -300, y: 140 },
@@ -46,10 +48,12 @@ describe('conversão entre plano e tela', () => {
   });
 });
 
+/**
+ * DECISÃO: É o que faz o zoom parecer natural: aproximar no centro da tela dá a
+ * sensação de que o desenho escapa do cursor.
+ */
 describe('zoom', () => {
   it('mantém fixo o ponto sob o cursor', () => {
-    // ⭐ É o que faz o zoom parecer natural: aproximar no centro da tela dá a
-    //    sensação de que o desenho escapa do cursor.
     const cursor = { x: 610, y: 120 };
     const antes = paraMundo(cursor.x, cursor.y, TELA, NEUTRA);
 
@@ -67,6 +71,11 @@ describe('zoom', () => {
   });
 });
 
+/**
+ * ATENÇÃO: É a diferença entre "enquadrar" e "voltar à escala 1": depois de isolar um
+ * parlamentar sobram poucos pontos, e voltar à escala 1 mostraria o vazio onde
+ * o grafo inteiro costumava estar.
+ */
 describe('enquadrar', () => {
   it('põe a nuvem inteira dentro da tela', () => {
     const pontos = [
@@ -87,9 +96,6 @@ describe('enquadrar', () => {
   });
 
   it('vai atrás de um punhado de nós num canto', () => {
-    // ⚠️ É a diferença entre "enquadrar" e "voltar à escala 1": depois de isolar um
-    //    parlamentar sobram poucos pontos, e voltar à escala 1 mostraria o vazio onde
-    //    o grafo inteiro costumava estar.
     const canto = [
       { x: 0.80, y: 0.80 },
       { x: 0.84, y: 0.86 },
@@ -116,14 +122,16 @@ describe('enquadrar', () => {
   });
 });
 
+/**
+ * Sem prender a projeção ao segmento, a aresta teria alcance infinito e o cursor
+ * acertaria ligações que estão do outro lado da tela.
+ */
 describe('distância ao segmento', () => {
   it('mede a perpendicular quando o pé cai dentro', () => {
     expect(distanciaAoSegmento(5, 3, { x: 0, y: 0 }, { x: 10, y: 0 })).toBeCloseTo(3);
   });
 
   it('mede até a ponta quando o pé cai fora', () => {
-    // Sem prender a projeção ao segmento, a aresta teria alcance infinito e o cursor
-    // acertaria ligações que estão do outro lado da tela.
     expect(distanciaAoSegmento(20, 0, { x: 0, y: 0 }, { x: 10, y: 0 })).toBeCloseTo(10);
   });
 
@@ -132,17 +140,20 @@ describe('distância ao segmento', () => {
   });
 });
 
+/**
+ * Dedos se afastando ao dobro da distância: aproxima 2x.
+ *
+ * DECISÃO: O ponto entre os dedos fica parado: é o que faz a pinça parecer segurar o desenho.
+ */
 describe('pinça de dois dedos', () => {
   const camera = { escala: 1, x: 0, y: 0 };
 
-  /** Dedos se afastando ao dobro da distância: aproxima 2x. */
   it('afastar os dedos aproxima na mesma razão', () => {
     const depois = pinca(camera, [{ x: 90, y: 100 }, { x: 110, y: 100 }], [{ x: 80, y: 100 }, { x: 120, y: 100 }]);
 
     expect(depois.escala).toBeCloseTo(2);
   });
 
-  /** ⭐ O ponto entre os dedos fica parado: é o que faz a pinça parecer segurar o desenho. */
   it('o ponto entre os dedos não sai do lugar', () => {
     const depois = pinca(camera, [{ x: 90, y: 100 }, { x: 110, y: 100 }], [{ x: 80, y: 100 }, { x: 120, y: 100 }]);
     const meio = { x: 100, y: 100 };
@@ -159,8 +170,10 @@ describe('pinça de dois dedos', () => {
   });
 });
 
+/**
+ * MEDIDO: O grafo da Câmara: uma nuvem no meio e uns poucos isolados nas bordas.
+ */
 describe('enquadrarMiolo', () => {
-  /** 📐 O grafo da Câmara: uma nuvem no meio e uns poucos isolados nas bordas. */
   function nuvemComIsolados() {
     const nuvem = Array.from({ length: 200 }, (_, i) => ({
       x: -0.3 + ((i * 37) % 60) / 100,
@@ -172,7 +185,7 @@ describe('enquadrarMiolo', () => {
     return { nuvem, isolados, todos: [...nuvem, ...isolados] };
   }
 
-  it('abre mais perto que enquadrar tudo: os isolados das bordas ⛔ ditam o zoom', () => {
+  it('abre mais perto que enquadrar tudo: os isolados das bordas não ditam o zoom', () => {
     const { todos } = nuvemComIsolados();
 
     expect(enquadrarMiolo(todos, TELA).escala).toBeGreaterThan(enquadrar(todos, TELA).escala * 2);
@@ -191,7 +204,7 @@ describe('enquadrarMiolo', () => {
     }
   });
 
-  it('com poucos pontos, ⛔ corta nada: é o mesmo que enquadrar', () => {
+  it('com poucos pontos, não corta nada: é o mesmo que enquadrar', () => {
     const poucos = [{ x: 0.8, y: 0.8 }, { x: 0.84, y: 0.86 }];
 
     expect(enquadrarMiolo(poucos, TELA)).toEqual(enquadrar(poucos, TELA));

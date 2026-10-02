@@ -5,12 +5,12 @@
 | Deputado | `api/v2/deputados/{id}`, campo `redeSocial` — a lista atual | id da Câmara |
 | Senador | `rede_social_candidato_{ano}.zip` do TSE — a da candidatura | código da candidatura → CPF → hash |
 
-⚠️ O Senado ⛔ publica rede social nenhuma: a API dele traz página e e-mail oficiais, só.
+ATENÇÃO: O Senado não publica rede social nenhuma: a API dele traz página e e-mail oficiais, só.
 Por isso o senador vem do TSE, e a tela diz de quando é.
 
-📐 Medido em 2026-09-25: 16 de 20 deputados sorteados têm rede na Câmara.
+MEDIDO: Medido em 2026-09-25: 16 de 20 deputados sorteados têm rede na Câmara.
 
-🔴 Só `http(s)`. O endereço vira link na tela; outro esquema (`javascript:`) seria porta
+RISCO: Só `http(s)`. O endereço vira link na tela; outro esquema (`javascript:`) seria porta
 para script. O banco recusa também (`ck_rede_url`).
 """
 
@@ -49,7 +49,7 @@ def normalizar(bruto: str | None) -> str | None:
 
 
 def tipo(url: str) -> str:
-    """A rede pelo domínio. Casa o domínio inteiro: `max.com` ⛔ é o X."""
+    """A rede pelo domínio. Casa o domínio inteiro: `max.com` não é o X."""
     dominio = re.sub(r"^https?://", "", url, flags=re.I).split("/")[0].lower()
     dominio = dominio.removeprefix("www.").removeprefix("m.").removeprefix("mobile.")
     for nome, dominios in TIPOS:

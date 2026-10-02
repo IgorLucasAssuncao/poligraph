@@ -14,25 +14,29 @@ import { destinoSeguro } from '../componentes/useEntrar';
  *
  * | Leitura pública (`Acesso:LeituraPublica`) | Esta tela |
  * |---|---|
- * | 🔴 Desligada — o padrão, e o período eleitoral (RNF-17) | Para tudo: o site exige conta |
+ * | RISCO: Desligada — o padrão, e o período eleitoral (RNF-17) | Para tudo: o site exige conta |
  * | Ligada | Só para seguir alguém e para a própria conta. O resto é aberto |
  *
- * ⚠️ O login foi obrigatório de 2026-08-26 a 2026-10-02. Passou a ser opcional por
+ * ATENÇÃO: O login foi obrigatório de 2026-08-26 a 2026-10-02. Passou a ser opcional por
  * decisão do autor: a conta só existe para a lista de quem a pessoa segue, que é dado
- * sensível (LGPD art. 5º, II). Quem ⛔ segue ninguém ⛔ precisa dar dado nenhum.
+ * sensível (LGPD art. 5º, II). Quem não segue ninguém não precisa dar dado nenhum.
  *
  * Por isso esta tela diz, ANTES de entrar, o que vai ser guardado.
  *
- * ## 🔴 Os números são medidos, ⛔ não escritos à mão
+ * ## RISCO: Os números são medidos, não escritos à mão
  *
  * Esta tela afirmava <i>"os 513 deputados federais"</i> — duas vezes. 513 é o número de
  * cadeiras; quem exerceu mandato e votou na 57ª legislatura são <b>643</b>, com
- * suplentes e quem assumiu no meio. E o Senado ⛔ não era mencionado. Número redondo
+ * suplentes e quem assumiu no meio. E o Senado não era mencionado. Número redondo
  * escrito à mão na porta de entrada é exatamente o erro que o trabalho persegue: ele
- * ⛔ não quebra nada, só fica plausível e errado.
+ * não quebra nada, só fica plausível e errado.
  *
- * ⭐ `/api/panorama` é público de propósito — todo número dele vem de registro nominal
- * publicado, e ⛔ não depende de quem está olhando.
+ * DECISÃO: `/api/panorama` é público de propósito — todo número dele vem de registro nominal
+ * publicado, e não depende de quem está olhando.
+ *
+ * DECISÃO: Coluna da esquerda: a marca ocupa o espaço, sem imagem para carregar.
+ *
+ * ATENÇÃO: Dito ANTES de entrar, não depois.
  */
 export function Login() {
   const { entrou, leituraPublica } = useSessao();
@@ -46,7 +50,6 @@ export function Login() {
 
   return (
     <div className="tela-login">
-      {/* ⭐ Coluna da esquerda: a marca ocupa o espaço, sem imagem para carregar. */}
       <div className="login-marca">
         <Marca tamanho={88} />
       </div>
@@ -82,7 +85,6 @@ export function Login() {
           <li>O desenho de quem vota parecido com quem</li>
         </ul>
 
-        {/* ⚠️ Dito ANTES de entrar, não depois. */}
         <p className="aviso-privacidade">
           Ao entrar, guardamos seu nome, e-mail e foto do Google, e a lista de quem você
           seguir. <strong>A lista de quem você segue indica posição política</strong> e é
@@ -100,12 +102,10 @@ export function Login() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
  * O tamanho da base, antes de a pessoa entrar.
  *
- * ⭐ É a evidência que sustenta a chamada. "Compare com o voto registrado" é uma
+ * DECISÃO: É a evidência que sustenta a chamada. "Compare com o voto registrado" é uma
  * promessa; 643 deputados e 463.994 votos são o que a torna verificável — e são o
  * argumento mais forte que esta tela tem para justificar pedir uma conta.
  */

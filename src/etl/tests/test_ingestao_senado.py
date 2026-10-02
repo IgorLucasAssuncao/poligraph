@@ -121,7 +121,7 @@ def test_o_mapeamento_da_camara_nao_serve():
     por acaso — não por decisão. O contrário também: `Artigo 17` é o presidente da
     Câmara; o do Senado vem como prefixo `Presidente`.
 
-    ⚠️ O exemplo era `Obstrução`, "que não existe no Senado". Na 57ª ⛔ existia; em 2011
+    ATENÇÃO: O exemplo era `Obstrução`, "que não existe no Senado". Na 57ª não existia; em 2011
     aparece uma vez (achado #35). Medir uma legislatura e generalizar, de novo.
     """
     from poligraph_etl.normalizacao import normalizar_voto as normalizar_camara
@@ -131,7 +131,7 @@ def test_o_mapeamento_da_camara_nao_serve():
 
 
 def test_siglas_das_legislaturas_anteriores_sao_conhecidas_e_sem_posicao():
-    """📐 Achado #35, com a descrição que a própria fonte publica para cada uma."""
+    """MEDIDO: Achado #35, com a descrição que a própria fonte publica para cada uma."""
     for sigla in ("REP", "P-OD", "LG", "LA", "Obstrução"):
         assert ingestao_senado.eh_sigla_conhecida(sigla), sigla
         assert ingestao_senado.normalizar_voto(sigla) is None, sigla
@@ -144,7 +144,7 @@ def test_presenca_das_siglas_anteriores():
 
 
 def test_merc_continua_desconhecida():
-    """A fonte ⛔ descreve `MERC`. Sem descrição, ⛔ palpite: fica no log."""
+    """A fonte não descreve `MERC`. Sem descrição, não palpite: fica no log."""
     assert ingestao_senado.eh_sigla_conhecida("MERC") is False
 
 
@@ -243,7 +243,7 @@ def test_foto_do_senado_e_o_endereco_final_em_https():
 
 
 def test_senador_que_veio_pelo_voto_tambem_tem_foto():
-    """📐 375 de 458 senadores ficavam sem foto: só a lista de exercício a trazia."""
+    """MEDIDO: 375 de 458 senadores ficavam sem foto: só a lista de exercício a trazia."""
     [linha] = ingestao_senado.senadores_dos_votos(
         [votacao(votos=[voto(codigoParlamentar=70, nomeParlamentar="Fulano")])], ja_conhecidos=set()
     )
@@ -392,9 +392,9 @@ def test_votacao_secreta_tem_placar_zero():
 
 
 def test_senador_ja_trazido_pela_lista_nao_e_recriado_pelo_voto():
-    """🔴 Sem isto, `gravar_pessoas` sobrescreve o nome civil pelo nome parlamentar.
+    """RISCO: Sem isto, `gravar_pessoas` sobrescreve o nome civil pelo nome parlamentar.
 
-    A lista de exercício traz `NomeCompletoParlamentar`; o voto ⛔ não traz. Como o
+    A lista de exercício traz `NomeCompletoParlamentar`; o voto não traz. Como o
     upsert faz `SET nome_civil = ...`, o segundo passo regredia o dado — e foi assim
     que os 104 senadores ficaram sem chave para casar com o TSE.
     """
@@ -423,7 +423,7 @@ def test_senador_ja_trazido_pela_lista_nao_e_recriado_pelo_voto():
         ("AP", "AUSENTE_JUSTIFICADO"),
         ("NCom", "AUSENTE"),
         ("NA", None),
-        # ⚠️ Sigla nova ⛔ vira presença: inflaria o número sem erro.
+        # ATENÇÃO: Sigla nova não vira presença: inflaria o número sem erro.
         ("XYZ", None),
     ],
 )
@@ -463,7 +463,7 @@ def test_ano_sem_lacuna_conhecida_continua_estourando():
 
 
 def test_voto_sem_uf_nem_partido_entra_vazio_e_nao_nulo():
-    """📐 2002: ausência registrada sem UF (achado #35). As colunas são NOT NULL."""
+    """MEDIDO: 2002: ausência registrada sem UF (achado #35). As colunas são NOT NULL."""
     sem_uf = votacao(votos=[voto(siglaUFParlamentar=None, siglaPartidoParlamentar=None, siglaVotoParlamentar="NCom")])
 
     [linha] = ingestao_senado.votos_para_linhas([sem_uf], {"5672": 42})
@@ -477,7 +477,7 @@ def test_voto_sem_uf_nem_partido_entra_vazio_e_nao_nulo():
 
 
 def test_votacao_antiga_com_data_recente_fica_fora():
-    """📐 O registro real: código 1483, matéria de 1998, `dataSessao` 2015-04-01."""
+    """MEDIDO: O registro real: código 1483, matéria de 1998, `dataSessao` 2015-04-01."""
     antiga = votacao(codigoSessaoVotacao=1483, dataSessao="2015-04-01")
     atual = votacao(codigoSessaoVotacao=5560, dataSessao="2016-05-11")
 
@@ -488,7 +488,7 @@ def test_votacao_antiga_com_data_recente_fica_fora():
 
 
 def test_codigo_novo_com_data_antiga_tambem_fica_fora():
-    """📐 2002 trouxe o código 5293, que pela sequência é de 2014."""
+    """MEDIDO: 2002 trouxe o código 5293, que pela sequência é de 2014."""
     validas, fora = ingestao_senado.separar_fora_de_epoca(
         [votacao(codigoSessaoVotacao=5293, dataSessao="2002-06-12")]
     )

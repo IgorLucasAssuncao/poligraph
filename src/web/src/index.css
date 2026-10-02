@@ -1,7 +1,7 @@
 /**
- * Base do documento. ⛔ Nenhuma cor mora aqui.
+ * Base do documento. Nenhuma cor mora aqui.
  *
- * ## 🔴 O que este arquivo era, e o estrago que fazia
+ * ## RISCO: O que este arquivo era, e o estrago que fazia
  *
  * Era o boilerplate do template do Vite, com um sistema de tokens PARALELO ao do
  * projeto — `--text`, `--bg`, `--accent: #aa3bff` — e um `@media (prefers-color-scheme:
@@ -9,17 +9,17 @@
  *
  * 1. **Título branco sobre fundo branco.** `h1, h2 { color: var(--text-h) }`, e
  *    `--text-h` virava `#f3f4f6` sempre que o SO estava escuro — inclusive para quem
- *    tinha escolhido o tema claro, porque a escolha ⛔ não alcançava este arquivo.
+ *    tinha escolhido o tema claro, porque a escolha não alcançava este arquivo.
  * 2. **Teto de 1126px** em `#root`, com `text-align: center` global. A largura por rota
- *    pedia 96rem e nunca passava disso; o grafo ⛔ não conseguia ocupar a tela.
+ *    pedia 96rem e nunca passava disso; o grafo não conseguia ocupar a tela.
  * 3. `h1 { font-size: 56px }` competindo com toda escala tipográfica de `App.css`.
  *
- * ⚠️ A cor e a tipografia vivem em `App.css`, num sistema só. Aqui fica o que é do
- * documento e ⛔ não pertence a componente nenhum.
+ * ATENÇÃO: A cor e a tipografia vivem em `App.css`, num sistema só. Aqui fica o que é do
+ * documento e não pertence a componente nenhum.
  */
 
 :root {
-  /* ⭐ `light dark` para o padrão "sistema"; `data-tema` sobrescreve em `App.css`. */
+  /* DECISÃO: `light dark` para o padrão "sistema"; `data-tema` sobrescreve em `App.css`. */
   color-scheme: light dark;
 
   font-synthesis: none;
@@ -38,7 +38,7 @@ body {
   flex-direction: column;
 }
 
-/* ⚠️ `margin: 0` nos títulos de propósito: cada bloco decide o próprio espaçamento por
+/* ATENÇÃO: `margin: 0` nos títulos de propósito: cada bloco decide o próprio espaçamento por
    `gap`, e margem de heading colapsa de formas difíceis de prever. */
 h1,
 h2,

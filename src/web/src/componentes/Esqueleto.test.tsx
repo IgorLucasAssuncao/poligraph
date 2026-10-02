@@ -2,8 +2,12 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { EsqueletoDeLista, EsqueletoDePainel } from './Esqueleto';
 
+/**
+ * O leitor de tela não vê o cinza: ele precisa ouvir o que está vindo.
+ *
+ * RISCO: Forma sem conteúdo: nenhum número, nome ou manchete de exemplo.
+ */
 describe('Esqueleto', () => {
-  /** O leitor de tela ⛔ vê o cinza: ele precisa ouvir o que está vindo. */
   it('anuncia ao leitor de tela o que está carregando', () => {
     render(<EsqueletoDeLista rotulo="Buscando parlamentares" />);
 
@@ -19,7 +23,6 @@ describe('Esqueleto', () => {
     expect(container.querySelectorAll('.linha.esqueleto')).toHaveLength(3);
   });
 
-  /** 🔴 Forma sem conteúdo: nenhum número, nome ou manchete de exemplo. */
   it('não inventa conteúdo: só o rótulo escondido tem texto', () => {
     const { container } = render(<EsqueletoDePainel rotulo="Carregando o governo" />);
 

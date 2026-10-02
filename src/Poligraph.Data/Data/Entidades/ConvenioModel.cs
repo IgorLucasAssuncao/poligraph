@@ -28,7 +28,7 @@ public class ConvenioModel
     /// traz o nome. É a chave forte que liga o convênio à página da entidade.
     /// </summary>
     /// <remarks>
-    /// <para>Nulo até a carga <c>convenios</c> rodar, e para o convenente que ⛔ é pessoa jurídica.</para>
+    /// <para>Nulo até a carga <c>convenios</c> rodar, e para o convenente que não é pessoa jurídica.</para>
     /// </remarks>
     public string? CnpjConvenente { get; set; }
 

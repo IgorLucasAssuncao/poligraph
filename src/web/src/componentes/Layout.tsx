@@ -10,7 +10,7 @@ import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
 /**
  * A largura útil de uma tela.
  *
- * ⭐ É por página, ⛔ não global. A coluna única de 52rem servia a tudo, e cobrava caro
+ * DECISÃO: É por página, não global. A coluna única de 52rem servia a tudo, e cobrava caro
  * onde não devia: num monitor de 2560px o grafo desenhava 643 nós em 832px, com uma
  * barra de sugestões de 21rem ao lado.
  */
@@ -19,7 +19,7 @@ type Largura = 'ampla' | 'media' | 'estreita';
 /**
  * Quanto espaço cada rota pede.
  *
- * ⚠️ Mora aqui, e ⛔ não numa prop passada por cada página: a moldura já conhece a
+ * ATENÇÃO: Mora aqui, e não numa prop passada por cada página: a moldura já conhece a
  * rota, e obrigar toda tela a declarar a própria largura significa que a próxima
  * esquece — e herda a errada em silêncio.
  */
@@ -37,7 +37,7 @@ const LARGURA: { padrao: Largura; rotas: [string, Largura][] } = {
 /**
  * A moldura do site.
  *
- * ## Uma barra, ⛔ não três
+ * ## Uma barra, não três
  *
  * Havia faixa de procedência, cabeçalho do site e cabeçalho da coluna — 136px antes de
  * qualquer conteúdo, 110px deles grudados na tela para sempre. Numa janela de 800px de
@@ -74,8 +74,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 /**
  * Título de uma tela que precisa de um.
  *
- * ⚠️ A maioria ⛔ não precisa: o item aceso da navegação já diz onde a pessoa está.
- * Sobra para as telas que a navegação ⛔ não alcança — o perfil de um parlamentar, que
+ * ATENÇÃO: A maioria não precisa: o item aceso da navegação já diz onde a pessoa está.
+ * Sobra para as telas que a navegação não alcança — o perfil de um parlamentar, que
  * tem nome próprio e um caminho de volta.
  */
 export function CabecalhoDaColuna({
@@ -110,10 +110,8 @@ export function CabecalhoDaColuna({
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
- * ⭐ As três intenções de quem usa, ⛔ as fontes de dado que temos (ver `navegacao.ts`).
+ * DECISÃO: As três intenções de quem usa, não as fontes de dado que temos (ver `navegacao.ts`).
  *
  * Eram cinco destinos — Início, Parlamentares, Compare seu voto, Emendas, Governo — e
  * "Entidades" seria o sexto. Emendas, Entidades e Governo respondem a mesma pergunta,
@@ -125,20 +123,18 @@ const DESTINOS = [
   { para: '/emendas', rotulo: 'Dinheiro público', icone: <IconeOrcamento /> },
 ];
 
-
 /**
  * Marca, as três intenções, a busca e a conta.
  *
- * ⭐ Eram onze elementos na barra. A busca responde a quem chega com um nome; o resto da
+ * DECISÃO: Eram onze elementos na barra. A busca responde a quem chega com um nome; o resto da
  * conta — tema, tour, sair — foi para o menu, porque se usa uma vez por visita, ou nenhuma.
+ *
+ * DECISÃO: O período escolhido acompanha quem vai do início para os parlamentares e volta.
+ * Sem isto, a escolha feita na faixa se perdia no primeiro clique do menu.
  */
 function CabecalhoDoSite() {
   const { pathname } = useLocation();
   const [escolha] = useLegislaturaDaUrl();
-  /**
-   * ⭐ O período escolhido acompanha quem vai do início para os parlamentares e volta.
-   * Sem isto, a escolha feita na faixa se perdia no primeiro clique do menu.
-   */
   const comPeriodo = (rota: string) => (escolha === undefined ? rota : `${rota}?legislatura=${escolha}`);
 
   return (
@@ -173,12 +169,18 @@ function CabecalhoDoSite() {
 }
 
 /**
- * 🔴 O aviso da RNF-14 vive aqui, e por isso aparece em TODA tela — não só na de
+ * RISCO: O aviso da RNF-14 vive aqui, e por isso aparece em TODA tela — não só na de
  * resultado, que era onde estava antes.
  *
- * ⭐ A procedência do dado desceu para cá. Ela precisa estar dita, e estava numa faixa
+ * DECISÃO: A procedência do dado desceu para cá. Ela precisa estar dita, e estava numa faixa
  * preta no topo de toda página: o lugar de maior custo da tela para uma informação que
  * se lê uma vez.
+ *
+ * RISCO: PL35 — a legislatura vem do DADO, nunca de um literal. Escrita à
+ * mão aqui, ela continuaria dizendo "57ª" depois de a 58ª entrar na base,
+ * e o rodapé creditaria a procedência errada sem nada quebrar.
+ *
+ * ATENÇÃO: Dizia só a corrente. Com o histórico na base, o crédito é do intervalo.
  */
 function RodapeDoSite() {
   const legislaturas = useLegislaturas();
@@ -201,10 +203,6 @@ function RodapeDoSite() {
           <p>
             Registro nominal de votação dos Dados Abertos da Câmara dos Deputados e do
             Senado Federal
-            {/* 🔴 PL35 — a legislatura vem do DADO, ⛔ nunca de um literal. Escrita à
-                mão aqui, ela continuaria dizendo "57ª" depois de a 58ª entrar na base,
-                e o rodapé creditaria a procedência errada sem nada quebrar. */}
-            {/* ⚠️ Dizia só a corrente. Com o histórico na base, o crédito é do intervalo. */}
             {maisAntiga && corrente
               ? maisAntiga === corrente
                 ? `, ${corrente}ª legislatura`

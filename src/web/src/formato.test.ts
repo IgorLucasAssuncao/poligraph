@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { mesCurto, mesesContinuos, partesDeCem, reaisCompacto } from './formato';
 
+/**
+ * ATENÇÃO: Pular o mês sem pagamento encurtaria a espera no desenho.
+ */
 describe('mesesContinuos', () => {
-  /** ⚠️ Pular o mês sem pagamento encurtaria a espera no desenho. */
   it('preenche com zero os meses sem pagamento, atravessando o ano', () => {
     const serie = mesesContinuos([
       { mes: '2025-11-01', valor: 10 },
@@ -18,8 +20,10 @@ describe('mesesContinuos', () => {
   });
 });
 
+/**
+ * ATENÇÃO: Pelo texto, não `Date`: no fuso de Brasília, o dia 1 viraria o último do mês anterior.
+ */
 describe('formatos', () => {
-  /** ⚠️ Pelo texto, ⛔ `Date`: no fuso de Brasília, o dia 1 viraria o último do mês anterior. */
   it('mês curto lê o texto, sem fuso', () => {
     expect(mesCurto('2025-03-01')).toBe('mar/2025');
   });

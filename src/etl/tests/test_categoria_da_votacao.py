@@ -1,6 +1,6 @@
 """Pendência A2 — o classificador de categoria, contra frases REAIS do corpus.
 
-## 🔴 Por que isto é o ponto mais frágil do ETL
+## RISCO: Por que isto é o ponto mais frágil do ETL
 
 A categoria decide **duas coisas**, e as duas em silêncio:
 
@@ -9,23 +9,23 @@ A categoria decide **duas coisas**, e as duas em silêncio:
 | O **peso** na matriz | `DESTAQUE` entra com 0,7 em vez de 1,0 |
 | O **universo da curadoria** | RN-04: só `SUBSTANTIVA` vira pergunta |
 
-⚠️ E ela é decidida por **regex na descrição**, ⛔ não por campo da fonte.
+ATENÇÃO: E ela é decidida por **regex na descrição**, não por campo da fonte.
 
-## ⛔ Foi verificado se a fonte dá o tipo, e ⛔ NÃO dá
+## Não Foi verificado se a fonte dá o tipo, e NÃO dá
 
-📐 Medido em 2026-08-29 contra `votacoesObjetos-{ano}.csv`, que tem
+MEDIDO: Medido em 2026-08-29 contra `votacoesObjetos-{ano}.csv`, que tem
 `proposicao_siglaTipo`:
 
 | | |
 |---|---|
 | Nossas votações da Câmara em 2024-25 com objeto tipado | 954 de 998 (95,6%) |
-| 🔴 Tipos de objeto numa **mesma** votação | até **10** — `DTQ, EMP, PEP, PPP, PRLE, PRLP, RDF, REQ, RPD, SBT` |
-| 🔴 A combinação `PRL, RPD` | **69×** como PROCEDIMENTAL e **18×** como SUBSTANTIVA |
+| RISCO: Tipos de objeto numa **mesma** votação | até **10** — `DTQ, EMP, PEP, PPP, PRLE, PRLP, RDF, REQ, RPD, SBT` |
+| RISCO: A combinação `PRL, RPD` | **69×** como PROCEDIMENTAL e **18×** como SUBSTANTIVA |
 
-⭐ `votacoesObjetos` lista **tudo que estava em pauta na sessão**, ⛔ não o que aquela
-votação decidiu. ⛔ Ele ⛔ não discrimina, e por isso o regex fica.
+DECISÃO: `votacoesObjetos` lista **tudo que estava em pauta na sessão**, não o que aquela
+votação decidiu. Não Ele não discrimina, e por isso o regex fica.
 
-⭐ **A mitigação é o canário**, ⛔ não a esperança: `descricoes_nao_reconhecidas` acusa
+DECISÃO: **A mitigação é o canário**, não a esperança: `descricoes_nao_reconhecidas` acusa
 frase que nenhum padrão alcança, do mesmo jeito que `siglas_desconhecidas` protege o
 domínio do voto do Senado.
 """
@@ -39,7 +39,7 @@ from poligraph_etl.normalizacao import (
     sigla_do_objeto,
 )
 
-# ⭐ Todas são frases REAIS, tiradas do banco com a legislatura 57 ingerida.
+# DECISÃO: Todas são frases REAIS, tiradas do banco com a legislatura 57 ingerida.
 CASOS = [
     # ── rito ────────────────────────────────────────────────────────
     ("Rejeitado o Requerimento de Retirada de Pauta.", "PROCEDIMENTAL"),
@@ -85,12 +85,12 @@ def test_frases_reais_do_corpus(descricao, esperado):
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 Os quatro defeitos que estas frases travam
+# RISCO: Os quatro defeitos que estas frases travam
 # ═══════════════════════════════════════════════════════════════════
 
 
 def test_pec_nao_e_destaque():
-    """🔴 O pior deles: **73 votações de PEC** eram DESTAQUE.
+    """RISCO: O pior deles: **73 votações de PEC** eram DESTAQUE.
 
     "Proposta de **Emenda** à Constituição" contém "emenda", e o padrão casava. O voto
     mais substantivo que existe entrava na matriz com peso 0,7 e ficava **fora** do
@@ -102,7 +102,7 @@ def test_pec_nao_e_destaque():
 
 
 def test_ressalvado_no_singular():
-    """⚠️ O lookbehind cobria só `ressalvados os` — **38 votações** diziam no singular."""
+    """ATENÇÃO: O lookbehind cobria só `ressalvados os` — **38 votações** diziam no singular."""
     assert classificar_categoria(
         "Aprovado o Substitutivo, ressalvado o destaque."
     ) == "SUBSTANTIVA"
@@ -112,16 +112,16 @@ def test_ressalvado_no_singular():
 
 
 def test_subemenda_global_troca_o_texto_inteiro():
-    """⭐ Subemenda **Substitutiva Global** ⛔ não é recorte: substitui tudo."""
+    """DECISÃO: Subemenda **Substitutiva Global** não é recorte: substitui tudo."""
     assert classificar_categoria(
         "Aprovada a Subemenda Substitutiva Global ao PL nº 7.082."
     ) == "SUBSTANTIVA"
 
 
 def test_emenda_do_senado_no_singular_continua_destaque():
-    """🔴 A distinção que a primeira tentativa de conserto perdeu.
+    """RISCO: A distinção que a primeira tentativa de conserto perdeu.
 
-    ⚠️ **Plural** é mérito — votar o conjunto das mudanças da outra casa. **Singular** é
+    ATENÇÃO: **Plural** é mérito — votar o conjunto das mudanças da outra casa. **Singular** é
     destaque — votar UMA emenda separadamente.
     """
     assert classificar_categoria("Aprovadas as Emendas do Senado Federal ao PL nº 327.") == "SUBSTANTIVA"
@@ -129,19 +129,19 @@ def test_emenda_do_senado_no_singular_continua_destaque():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 O canário
+# RISCO: O canário
 # ═══════════════════════════════════════════════════════════════════
 
 
 def test_canario_acusa_frase_que_ninguem_reconhece():
-    """🔴 O default silencioso é o risco de todo classificador por texto.
+    """RISCO: O default silencioso é o risco de todo classificador por texto.
 
-    ⚠️ Se a fonte mudar a redação, tudo vira `SUBSTANTIVA` e ⛔ nada avisa. O canário
-    ⛔ não impede — ele **conta**, como `siglas_desconhecidas` faz com o voto do Senado.
+    ATENÇÃO: Se a fonte mudar a redação, tudo vira `SUBSTANTIVA` e nada avisa. O canário
+    não impede — ele **conta**, como `siglas_desconhecidas` faz com o voto do Senado.
     """
     orfas = descricoes_nao_reconhecidas(
         [
-            "Resultado. Sim: 182; Não: 182; Abstenção: 2.",   # ⛔ ⛔ não diz o que foi votado
+            "Resultado. Sim: 182; Não: 182; Abstenção: 2.",   # Não não diz o que foi votado
             "Aprovado o Projeto de Lei nº 1.",                 # reconhecida
             "Rejeitado o Requerimento.",                       # reconhecida
         ]
@@ -155,42 +155,42 @@ def test_canario_ignora_vazio():
 
 
 def test_o_canario_achou_o_que_a_leitura_humana_tinha_achado():
-    """📐 Na primeira execução: **4 órfãs em 2.015 descrições**.
+    """MEDIDO: Na primeira execução: **4 órfãs em 2.015 descrições**.
 
-    ⭐ Uma delas é a votação do `q-preco-abusivo`, que a curadoria já havia marcado **à
-    mão** como "precisa de conferência" — justamente porque a descrição ⛔ não diz o que
+    DECISÃO: Uma delas é a votação do `q-preco-abusivo`, que a curadoria já havia marcado **à
+    mão** como "precisa de conferência" — justamente porque a descrição não diz o que
     foi votado. O canário chegou sozinho à mesma conclusão.
     """
     assert descricoes_nao_reconhecidas(["Resultado. Sim: 182; Não: 182; Abstenção: 2; Total: 366."])
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 O cruzamento com a sigla da fonte
+# RISCO: O cruzamento com a sigla da fonte
 # ═══════════════════════════════════════════════════════════════════
 
 
 def test_extrai_a_sigla_do_objeto():
-    """⭐ `DTQ` é código CONTROLADO da Câmara — o único sinal estruturado sobre o tipo."""
+    """DECISÃO: `DTQ` é código CONTROLADO da Câmara — o único sinal estruturado sobre o tipo."""
     assert sigla_do_objeto(
         "Votação do DTQ 2 (PL): Destaque de Emenda de Plenário n. 2. (161, II)."
     ) == "DTQ"
 
 
 def test_sem_sigla_devolve_nulo():
-    """⛔ É o caso mais COMUM — 682 de 996 —, e ⛔ não é erro."""
+    """Não É o caso mais COMUM — 682 de 996 —, e não é erro."""
     assert sigla_do_objeto("Votação em turno único.") is None
     assert sigla_do_objeto(None) is None
     assert sigla_do_objeto("") is None
 
 
 def test_divergencia_aparece_quando_a_fonte_diz_destaque_e_nos_nao():
-    """🔴 O caso real que motivou isto.
+    """RISCO: O caso real que motivou isto.
 
-    A votação `2613731-65` tinha descrição *"Resultado. Sim: 182; Não: 182"* — que ⛔ não
+    A votação `2613731-65` tinha descrição *"Resultado. Sim: 182; Não: 182"* — que não
     diz nada — e virou a pergunta `q-preco-abusivo`. A abertura dizia *"Votação do DTQ 2:
-    Destaque de Emenda de Plenário n. 2"*: voto num **destaque**, ⛔ não no projeto.
+    Destaque de Emenda de Plenário n. 2"*: voto num **destaque**, não no projeto.
 
-    ⚠️ A pergunta foi removida da curadoria.
+    ATENÇÃO: A pergunta foi removida da curadoria.
     """
     divergentes = divergencias_de_destaque([
         {"id": "2613731-65", "categoria": "SUBSTANTIVA",
@@ -215,7 +215,7 @@ def test_concordancia_nao_vira_divergencia():
 @pytest.mark.parametrize(
     "descricao",
     [
-        # 📐 Frases REAIS de 2011 a 2016: o destaque supressivo descrito pelo resultado.
+        # MEDIDO: Frases REAIS de 2011 a 2016: o destaque supressivo descrito pelo resultado.
         "Suprimido o artigo: Sim: 156; não: 220; abstenção: 04; total: 380.",
         "Suprimida expressão. Sim: 8; não: 344; total: 352.",
         "Suprimidos o texto. Sim: 36; Não: 392; Total: 428.",
@@ -232,7 +232,7 @@ def test_destaque_supressivo_antigo_e_reconhecido_pelo_canario():
 
 @pytest.mark.parametrize("vazio", [float("nan"), None, "", "   "])
 def test_abertura_vazia_nao_derruba_a_ingestao(vazio):
-    """📐 Em 2003 a célula vem vazia, e o pandas a entrega como NaN — float, e verdadeiro."""
+    """MEDIDO: Em 2003 a célula vem vazia, e o pandas a entrega como NaN — float, e verdadeiro."""
     assert sigla_do_objeto(vazio) is None
 
 

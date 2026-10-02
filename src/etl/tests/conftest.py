@@ -1,12 +1,12 @@
 """Fixtures compartilhadas pelos testes do ETL.
 
-🔴 UM container Postgres para a sessão inteira.
+RISCO: UM container Postgres para a sessão inteira.
 
 A fixture morava dentro de `test_persistencia.py` com `scope="module"`. Passou para cá
 com `scope="session"` para valer para qualquer módulo que venha a precisar de banco —
 e para ficar igual ao lado .NET, onde `FixturePostgres` faz o mesmo papel.
 
-⚠️ O isolamento entre testes continua sendo do `limpar`, que trunca tudo antes de cada
+ATENÇÃO: O isolamento entre testes continua sendo do `limpar`, que trunca tudo antes de cada
 um. A fixture é global; o estado, não.
 """
 
@@ -84,7 +84,7 @@ CREATE TABLE noticias (
     trecho TEXT,
     hash_titulo TEXT NOT NULL,
     coletada_em TIMESTAMPTZ NOT NULL DEFAULT now(),
-    -- 🔴 RF-38 virando constraint: se alguém tentar gravar o corpo da matéria, o
+    -- RISCO: RF-38 virando constraint: se alguém tentar gravar o corpo da matéria, o
     --    banco recusa. É a mesma checagem que o EF cria.
     CHECK (trecho IS NULL OR length(trecho) <= 500)
 );

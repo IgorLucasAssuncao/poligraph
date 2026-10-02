@@ -22,10 +22,8 @@ import { Termo } from './Termo';
  * as outras em "Ver detalhes".
  */
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
- * 🔴 O que sai da lista ⛔ sai da conta. Intermediário, pessoas e registro sem
+ * RISCO: O que sai da lista não sai da conta. Intermediário, pessoas e registro sem
  * identificação aparecem como linhas próprias, com o valor — a soma da seção continua
  * sendo o total recebido.
  */
@@ -89,16 +87,14 @@ function lugar(municipio: string | null, uf: string | null): string | null {
   return municipio ?? uf;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
  * Quando o dinheiro saiu, mês a mês — do primeiro ao último pagamento, sem pular mês.
  *
- * ⭐ A frase vem antes do gráfico: a leitura que importa é "quanto saiu no próprio ano",
- * e ela ⛔ deveria depender de a pessoa medir barras.
+ * DECISÃO: A frase vem antes do gráfico: a leitura que importa é "quanto saiu no próprio ano",
+ * e ela não deveria depender de a pessoa medir barras.
  *
- * ⚠️ Mês com estorno maior que o pago fica com barra zero, e a dica mostra o valor
- * negativo. A tabela logo abaixo traz todos os meses, para quem ⛔ usa o mouse.
+ * ATENÇÃO: Mês com estorno maior que o pago fica com barra zero, e a dica mostra o valor
+ * negativo. A tabela logo abaixo traz todos os meses, para quem não usa o mouse.
  */
 export function QuandoFoiPago({ meses, ano }: { meses: PagamentoPorMes[]; ano: number }) {
   const [emFoco, setEmFoco] = useState<PagamentoPorMes | null>(null);
@@ -168,10 +164,8 @@ export function QuandoFoiPago({ meses, ano }: { meses: PagamentoPorMes[]; ano: n
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
- * 🔴 O valor é do convênio inteiro. Quando ele recebe emenda de mais de um autor, a
+ * RISCO: O valor é do convênio inteiro. Quando ele recebe emenda de mais de um autor, a
  * linha diz de quantas — sem isso, a lista leria como dinheiro deste parlamentar.
  */
 export function Convenios({
@@ -224,12 +218,10 @@ export function Convenios({
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
  * As emendas uma a uma, cada qual com o link no Portal — de onde toda soma acima se confere.
  *
- * ⭐ Fechadas até a pessoa pedir: quem só quer o resumo ⛔ precisa delas, e quem quer
+ * DECISÃO: Fechadas até a pessoa pedir: quem só quer o resumo não precisa delas, e quem quer
  * conferir tem o caminho.
  */
 export function EmendasUmaAUma({ pessoaId, ano, total }: { pessoaId: number; ano: number; total: number }) {

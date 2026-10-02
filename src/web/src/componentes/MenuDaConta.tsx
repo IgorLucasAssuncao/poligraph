@@ -9,15 +9,15 @@ import { SeletorDeTema } from './SeletorDeTema';
 /**
  * A conta, o tema e o tour num botão só.
  *
- * ⭐ Eram quatro controles soltos na barra — "Como funciona", o tema, o nome e "Sair" —
+ * DECISÃO: Eram quatro controles soltos na barra — "Como funciona", o tema, o nome e "Sair" —
  * disputando atenção com a navegação. São coisas que se usam uma vez por visita, ou nenhuma:
  * cabem atrás de um clique.
  *
- * Padrão de revelação (botão que abre um painel), ⛔ `role="menu"`: o painel tem o
- * interruptor de tema, que ⛔ é item de menu, e o padrão de menu do WAI-ARIA exigiria
+ * Padrão de revelação (botão que abre um painel), não `role="menu"`: o painel tem o
+ * interruptor de tema, que não é item de menu, e o padrão de menu do WAI-ARIA exigiria
  * setas para andar entre os itens. Tab e Esc bastam aqui.
  *
- * ⚠️ "Entrar" fica FORA do menu para quem ⛔ entrou: é a ação principal dessa pessoa.
+ * ATENÇÃO: "Entrar" fica FORA do menu para quem não entrou: é a ação principal dessa pessoa.
  */
 export function MenuDaConta() {
   const { usuario, sair } = useSessao();

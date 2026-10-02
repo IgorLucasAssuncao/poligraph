@@ -5,18 +5,18 @@ namespace Poligraph.Data;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Duas origens, que ⛔ se somam sem dizer: o cartão corporativo, em que a transação
+/// Duas origens, que não se somam sem dizer: o cartão corporativo, em que a transação
 /// sigilosa esconde portador, favorecido e data e mostra só o valor; e as ações
-/// orçamentárias de caráter sigiloso, em que o valor aparece e a finalidade ⛔.
+/// orçamentárias de caráter sigiloso, em que o valor aparece e a finalidade não .
 /// </para>
 /// <para>
 /// É só o que o próprio Portal marca como sigiloso. Órgão de inteligência também gasta em
-/// ação de nome comum, e esse gasto ⛔ está aqui.
+/// ação de nome comum, e esse gasto não está aqui.
 /// </para>
 /// </remarks>
 public class GastoSigilosoModel
 {
-    /// <summary>No cartão, o ano do extrato — ⛔ o da compra, que o sigilo esconde.</summary>
+    /// <summary>No cartão, o ano do extrato — não o da compra, que o sigilo esconde.</summary>
     public short Ano { get; set; }
 
     public OrigemDoSigilo Origem { get; set; }
@@ -31,7 +31,7 @@ public class GastoSigilosoModel
     /// </summary>
     public decimal Total { get; set; }
 
-    /// <summary>Quantas transações sigilosas; nulo na ação, que ⛔ tem transação.</summary>
+    /// <summary>Quantas transações sigilosas; nulo na ação, que não tem transação.</summary>
     public int? Lancamentos { get; set; }
 
     /// <summary>Quantos meses do ano entraram — no ano corrente, menos de 12.</summary>

@@ -5,21 +5,23 @@ export type UsuarioLogado = { nome: string | null; fotoUrl: string | null };
 /**
  * Botão "Entrar com Google".
  *
- * ⭐ Depois do login não sobra token nenhum aqui: o `id_token` vai UMA vez para a API,
+ * DECISÃO: Depois do login não sobra token nenhum aqui: o `id_token` vai UMA vez para a API,
  * que devolve um cookie `HttpOnly`. O JavaScript nem consegue lê-lo.
  *
- * ⛔ Sem `localStorage`, sem header `Authorization`, sem lógica de renovação.
+ * Sem `localStorage`, sem header `Authorization`, sem lógica de renovação.
+ *
+ * ATENÇÃO: Lido AQUI, não no escopo do módulo: no escopo, o valor congela na importação
+ * e o componente fica impossível de testar sem Client ID.
+ *
+ * ATENÇÃO: Sem Client ID o botão não existe — e isso é esperado em desenvolvimento.
+ * O resto do site funciona: login só habilita sincronia e e-mail.
  */
 export function BotaoGoogle({ aoEntrar }: { aoEntrar: (usuario: UsuarioLogado) => void }) {
-  // ⚠️ Lido AQUI, não no escopo do módulo: no escopo, o valor congela na importação
-  //    e o componente fica impossível de testar sem Client ID.
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const alvo = useRef<HTMLDivElement>(null);
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    // ⚠️ Sem Client ID o botão não existe — e isso é esperado em desenvolvimento.
-    //    O resto do site funciona: login só habilita sincronia e e-mail.
     if (!clientId) return;
 
     carregarScript().then(() => {
@@ -62,10 +64,8 @@ export function BotaoGoogle({ aoEntrar }: { aoEntrar: (usuario: UsuarioLogado) =
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 /**
- * ⚠️ O `id_token` aparece aqui e some. Vai para a API, que valida contra o Google,
+ * ATENÇÃO: O `id_token` aparece aqui e some. Vai para a API, que valida contra o Google,
  * grava o perfil e devolve o cookie. Nada é guardado no navegador por nós.
  */
 async function entrar(idToken: string): Promise<UsuarioLogado> {
@@ -82,7 +82,7 @@ async function entrar(idToken: string): Promise<UsuarioLogado> {
 }
 
 /**
- * ⚠️ O script do Google só entra na página quando há Client ID configurado.
+ * ATENÇÃO: O script do Google só entra na página quando há Client ID configurado.
  * Carregá-lo sempre significaria contato com servidor do Google mesmo para quem
  * nunca vai entrar.
  */

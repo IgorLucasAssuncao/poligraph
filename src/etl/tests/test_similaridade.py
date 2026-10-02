@@ -1,6 +1,6 @@
 """Testes da similaridade e do grafo.
 
-⚠️ Cada constante testada aqui veio de medição no discovery, não de escolha estética.
+ATENÇÃO: Cada constante testada aqui veio de medição no discovery, não de escolha estética.
 """
 
 import numpy as np
@@ -52,19 +52,19 @@ def test_metade_igual_da_meio():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 O que sai do denominador
+# RISCO: O que sai do denominador
 # ═══════════════════════════════════════════════════════════════════
 
 
 def test_ausencia_sai_da_conta_nao_conta_como_desacordo():
-    """⚠️ Se ausência contasse como desacordo, o grafo mediria presença."""
+    """ATENÇÃO: Se ausência contasse como desacordo, o grafo mediria presença."""
     a = np.array([1.0, 1.0, np.nan, 1.0])
     b = np.array([1.0, 1.0, -1.0, 1.0])
 
     valor, n = concordancia_simples(a, b, np.ones(4))
 
-    assert n == 3                       # ⭐ não 4
-    assert valor == pytest.approx(1.0)  # ⭐ não 0,75
+    assert n == 3                       # DECISÃO: não 4
+    assert valor == pytest.approx(1.0)  # DECISÃO: não 0,75
 
 
 def test_abstencao_sai_da_conta():
@@ -77,7 +77,7 @@ def test_abstencao_sai_da_conta():
 
 
 def test_votacao_procedimental_sai_da_matriz():
-    """⛔ Peso 0: mede obstrução, não posição."""
+    """Não Peso 0: mede obstrução, não posição."""
     a = np.array([1.0, 1.0, 1.0])
     b = np.array([1.0, -1.0, 1.0])
     pesos = np.array([1.0, 0.0, 1.0])   # a do meio é PROCEDIMENTAL
@@ -98,27 +98,27 @@ def test_procedimental_tem_peso_zero():
 
 
 def test_destaque_entra_na_matriz():
-    """🔴 O que sustenta o grafo ⛔ NÃO é o valor do peso: é o destaque estar dentro.
+    """RISCO: O que sustenta o grafo NÃO é o valor do peso: é o destaque estar dentro.
 
-    📐 Medido em 2026-08-29 sobre a matriz real (643 × 1.122), comparando os 10 vizinhos
+    MEDIDO: Medido em 2026-08-29 sobre a matriz real (643 × 1.122), comparando os 10 vizinhos
     mais próximos de cada deputado contra o peso atual:
 
     | Peso | Sobreposição |
     |---|---|
-    | 🔴 **0,0** | **2,00 de 10 (20%)** |
+    | RISCO: **0,0** | **2,00 de 10 (20%)** |
     | 0,3 | 8,28 de 10 (82,8%) |
     | 0,5 | 9,18 de 10 (91,8%) |
     | 0,9 | 9,40 de 10 (94,0%) |
     | 1,0 | 9,23 de 10 (92,3%) |
 
-    ⭐ **Qualquer valor entre 0,3 e 1,0 devolve 83% a 94% da mesma vizinhança** — o `0,7`
-    ⛔ não é escolha delicada. ⛔ **Zerar reescreve o grafo**: sobram 2 dos 10 vizinhos,
+    DECISÃO: **Qualquer valor entre 0,3 e 1,0 devolve 83% a 94% da mesma vizinhança** — o `0,7`
+    não é escolha delicada. Não **Zerar reescreve o grafo**: sobram 2 dos 10 vizinhos,
     porque a matriz tem 422 destaques contra 141 substantivas.
 
-    ⚠️ Este teste ⛔ não trava o VALOR, de propósito — travar 0,7 fingiria uma precisão
+    ATENÇÃO: Este teste não trava o VALOR, de propósito — travar 0,7 fingiria uma precisão
     que a medição desmente. Trava o que ela mostrou importar.
 
-    📐 [achado #30](../../../docs/achados/030-o-destaque-carrega-o-grafo.md)
+    MEDIDO: [achado #30](../../../docs/achados/030-o-destaque-carrega-o-grafo.md)
     """
     assert PESO_CATEGORIA["DESTAQUE"] > 0.0
 
@@ -133,7 +133,7 @@ def test_substantiva_pesa_mais_que_destaque_que_pesa_mais_que_autoridade():
 
 
 def test_recencia_decai_na_razao_medida():
-    """⭐ r = 0,86 vem da correlação de posição entre anos (discovery §7.4.1)."""
+    """DECISÃO: r = 0,86 vem da correlação de posição entre anos (discovery §7.4.1)."""
     assert peso_da_votacao("SUBSTANTIVA", 0) == pytest.approx(1.0)
     assert peso_da_votacao("SUBSTANTIVA", 1) == pytest.approx(RAZAO_RECENCIA)
     assert peso_da_votacao("SUBSTANTIVA", 2) == pytest.approx(RAZAO_RECENCIA**2)
@@ -149,7 +149,7 @@ def test_votacao_recente_pesa_mais_que_antiga():
 
 
 def test_cosseno_fica_no_intervalo_que_o_banco_aceita():
-    """⚠️ `ck_sim_valor` exige [0, 1]. O cosseno cru vive em [-1, 1]."""
+    """ATENÇÃO: `ck_sim_valor` exige [0, 1]. O cosseno cru vive em [-1, 1]."""
     a = np.array([1.0] * 30)
     b = np.array([-1.0] * 30)
 
@@ -198,7 +198,7 @@ def test_par_sai_sempre_com_a_menor_pessoa_primeiro():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# ⭐ kNN — por que não limiar global
+# DECISÃO: kNN — por que não limiar global
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -230,9 +230,9 @@ def test_knn_mantem_a_aresta_mais_forte_de_quem_tem_escolha():
 
 
 def test_knn_e_uniao_nao_intersecao_e_isso_e_deliberado():
-    """🔴 A aresta sobrevive se QUALQUER um dos dois a escolheu.
+    """RISCO: A aresta sobrevive se QUALQUER um dos dois a escolheu.
 
-    ⚠️ Meu teste anterior supunha o contrário: que a aresta fraca (1,4) seria
+    ATENÇÃO: Meu teste anterior supunha o contrário: que a aresta fraca (1,4) seria
     descartada. Não é — e a razão importa para o grafo.
 
     A pessoa 4 tem UMA única aresta possível. Numa regra de interseção (a aresta só
@@ -240,7 +240,7 @@ def test_knn_e_uniao_nao_intersecao_e_isso_e_deliberado():
     visualização por ter votado diferente de todo mundo — que é justamente o caso
     mais interessante de mostrar.
 
-    ⭐ União garante grau ≥ 1 para todo nó. O preço é que um nó popular pode passar
+    DECISÃO: União garante grau ≥ 1 para todo nó. O preço é que um nó popular pode passar
     de k vizinhos, o que é aceitável: o grafo continua esparso e legível.
     """
     pares = [
@@ -284,9 +284,9 @@ def test_knn_nao_produz_aresta_duplicada():
 
 
 def test_parametros_gravados_sao_os_que_o_calculo_usa():
-    """🔴 A metodologia mostra o que a execução gravou — e ela grava as constantes do cálculo.
+    """RISCO: A metodologia mostra o que a execução gravou — e ela grava as constantes do cálculo.
 
-    ⚠️ Se alguém mudar o peso do destaque, a página muda junto, sem ninguém editar texto.
+    ATENÇÃO: Se alguém mudar o peso do destaque, a página muda junto, sem ninguém editar texto.
     """
     from poligraph_etl import similaridade
 

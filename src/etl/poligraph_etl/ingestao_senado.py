@@ -67,21 +67,21 @@ _VOTOS = {
     "ncom": None,         # não compareceu
     "na": None,           # não aplicável
     "lap": None,          # licença paternidade ou ao adotante
-    # 📐 Siglas das legislaturas anteriores (achado #35), com a descrição que a própria
-    #    fonte publica. ⚠️ `MERC` ⛔ entra: vem sem descrição, e fica no log.
+    # MEDIDO: Siglas das legislaturas anteriores (achado #35), com a descrição que a própria
+    #    fonte publica. ATENÇÃO: `MERC` não entra: vem sem descrição, e fica no log.
     "rep": None,          # "Representação em solenidade internac./nac./reg." — 2003 a 2011
-    "p-od": None,         # "Presente – Obstrução Declarada" — obstrução ⛔ é posição
+    "p-od": None,         # "Presente – Obstrução Declarada" — obstrução não é posição
     "obstrução": None,
     "obstrucao": None,
     "lg": None,           # "Licença à gestante" — 59 votos em 2020
     "la": None,           # "Licença à adotante" — 57 votos em 2006
 }
 
-# 📐 Desde 2004, o `codigoSessaoVotacao` cresce com a data — medido em 2026-10-02, ano a
+# MEDIDO: Desde 2004, o `codigoSessaoVotacao` cresce com a data — medido em 2026-10-02, ano a
 #    ano de 2004 a 2026: 2004 começa em 2523, 2014 termina em 5329, 2026 vai a 7105, sem
 #    nenhum código fora da ordem. Antes de 2004 a numeração é outra (2003 vai de 21 a 2503).
 #
-# 🔴 O `/votacao` devolve votações de 1998 e 1999 com `dataSessao` de 2015 a 2017 (achado
+# RISCO: O `/votacao` devolve votações de 1998 e 1999 com `dataSessao` de 2015 a 2017 (achado
 #    #37): a matéria é de 1998, o informe da ata diz 1998, os votantes são Ramez Tebet e
 #    ACM — e a data diz 2015-04-01. Pela data, elas caíam na 55ª legislatura e punham 89
 #    senadores de outra época no grafo dela. O código denuncia: 947 a 1630, no meio de
@@ -94,7 +94,7 @@ _PREFIXO_PRESIDENTE = "presidente"
 
 # A presença de cada sigla — separada da POSIÇÃO de propósito: votar secreto ("Votou") e
 # estar presente sem votar ("P-NRV") são presença sem posição. Só o Senado publica a
-# justificativa da ausência; a Câmara ⛔ lista o ausente.
+# justificativa da ausência; a Câmara não lista o ausente.
 _PRESENCA = {
     "sim": "PRESENTE",
     "não": "PRESENTE",
@@ -120,9 +120,9 @@ _PRESENCA = {
 
 
 def presenca_do_voto(bruto: str | None) -> str | None:
-    """Se o senador estava na votação. `None` para sigla que ⛔ diz nada sobre isso.
+    """Se o senador estava na votação. `None` para sigla que não diz nada sobre isso.
 
-    ⚠️ Sigla desconhecida também vira `None`, ⛔ presente: contar um senador como presente
+    ATENÇÃO: Sigla desconhecida também vira `None`, não presente: contar um senador como presente
     por uma sigla que ninguém mediu inflaria a presença sem erro.
     """
     chave = (bruto or "").strip().lower()
@@ -262,8 +262,8 @@ def descricoes_de_sigla(votacoes: list[dict]) -> dict[str, str]:
 def separar_fora_de_epoca(votacoes: list[dict]) -> tuple[list[dict], list[dict]]:
     """Separa a votação cuja data contradiz o próprio código — ver `PRIMEIRO_CODIGO_DE_2004`.
 
-    Devolve `(validas, fora)`. A de fora ⛔ é re-datada: a data verdadeira só se infere, e
-    uma votação de 1998 cairia na 50ª legislatura, que a base ⛔ tem. O chamador registra
+    Devolve `(validas, fora)`. A de fora não é re-datada: a data verdadeira só se infere, e
+    uma votação de 1998 cairia na 50ª legislatura, que a base não tem. O chamador registra
     a contagem e apaga a que uma carga anterior já tenha gravado.
 
     Sem código ou sem data, fica nas válidas: `votacoes_para_linhas` já a descarta.
@@ -359,7 +359,7 @@ def votos_para_linhas(
                     "pessoa_id": pessoa_id,
                     "valor": normalizar_voto(voto.get("siglaVotoParlamentar")),
                     "presenca": presenca_do_voto(voto.get("siglaVotoParlamentar")),
-                    # ⚠️ Vazio, ⛔ None: as colunas são NOT NULL, como na Câmara. Na 57ª
+                    # ATENÇÃO: Vazio, não None: as colunas são NOT NULL, como na Câmara. Na 57ª
                     #    nunca faltava; em 2002 vem ausência sem UF (achado #35), e o
                     #    banco recusava a carga inteira do ano.
                     "partido_no_voto": _texto(voto.get("siglaPartidoParlamentar")),
@@ -406,15 +406,15 @@ def _texto(valor) -> str:
 def foto_do_senador(codigo: str) -> str:
     """A foto oficial pelo código do senador, no endereço FINAL.
 
-    📐 Medido em 2026-10-01: `UrlFotoParlamentar` aponta para
+    MEDIDO: Medido em 2026-10-01: `UrlFotoParlamentar` aponta para
     `www.senado.leg.br/senadores/img/fotos-oficiais/senador{codigo}.jpg`, que responde
     **301** para este endereço com `Cache-Control: private` — uma requisição a mais por
     foto, em toda visita. O destino responde direto, com CORS e `max-age=600`.
 
-    ⭐ E vale para todo código: só a lista de exercício trazia foto, e 375 dos 458
+    DECISÃO: E vale para todo código: só a lista de exercício trazia foto, e 375 dos 458
     senadores da base (os que vieram pelo voto) ficavam sem rosto.
 
-    ⚠️ Já é HTTPS: a URL antiga vinha em `http://`, conteúdo misto que o navegador
+    ATENÇÃO: Já é HTTPS: a URL antiga vinha em `http://`, conteúdo misto que o navegador
     bloqueava sem erro visível.
     """
     return f"https://legis.senado.leg.br/senadores/fotos-oficiais/{codigo}"

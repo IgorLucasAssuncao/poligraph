@@ -4,12 +4,12 @@ Responde *"quanto o governo gastou sem dizer em quê?"* — até onde o próprio
 
 ## Duas origens
 
-| Origem | O que aparece | O que ⛔ | De onde |
+| Origem | O que aparece | O que não | De onde |
 |---|---|---|---|
 | Cartão corporativo (CPGF) | valor e órgão | portador, favorecido e data | `cpgf/AAAAMM` |
 | Ação de caráter sigiloso | valor, órgão e a ação | a finalidade | `despesas-execucao/AAAAMM` |
 
-📐 Medido em 2026-09-25, meses de 2023 a ago/2026:
+MEDIDO: Medido em 2026-09-25, meses de 2023 a ago/2026:
 
 | Ano | Cartão sigiloso | Cartão total | Ação sigilosa (pago + restos) |
 |---|---:|---:|---:|
@@ -22,13 +22,13 @@ No cartão, o sigiloso é quase só da Presidência e do Ministério da Justiça
 
 ---
 
-⚠️ **É só o que o Portal MARCA.** Órgão de inteligência também gasta em ação de nome
-comum, e esse gasto ⛔ entra aqui. A tela diz isso.
+ATENÇÃO: **É só o que o Portal MARCA.** Órgão de inteligência também gasta em ação de nome
+comum, e esse gasto não entra aqui. A tela diz isso.
 
-⚠️ No cartão o ano é o do **extrato**: a data da compra é justamente o que o sigilo
+ATENÇÃO: No cartão o ano é o do **extrato**: a data da compra é justamente o que o sigilo
 esconde.
 
-🔴 O arquivo do cartão traz o CPF do portador, mascarado. ⛔ É lido: `COLUNAS_DO_CARTAO`
+RISCO: O arquivo do cartão traz o CPF do portador, mascarado. Não É lido: `COLUNAS_DO_CARTAO`
 deixa a coluna de fora.
 """
 
@@ -45,7 +45,7 @@ MARCA_DO_CARTAO = "Sigiloso"
 
 COLUNAS_DA_ACAO = ["Nome Órgão Superior", "Código Ação", "Nome Ação"]
 
-# ⭐ Pelo NOME da ação, ⛔ pelo código: a pergunta é "o que o orçamento declara
+# DECISÃO: Pelo NOME da ação, não pelo código: a pergunta é "o que o orçamento declara
 #    sigiloso", e uma ação sigilosa nova entraria sem mudar código. Hoje é só a 2866.
 MARCA_DA_ACAO = "SIGILOS"
 
@@ -105,7 +105,7 @@ def para_linhas(ano: int, cartao: dict[str, dict], meses_do_cartao: int,
                 acoes: dict[str, float], meses_da_acao: int) -> list[dict]:
     """As linhas de `gastos_sigilosos` de um ano.
 
-    ⚠️ A ação entra só com valor positivo: o órgão "Sem informação" soma estorno de
+    ATENÇÃO: A ação entra só com valor positivo: o órgão "Sem informação" soma estorno de
     centavos, e uma linha negativa afirmaria gasto sigiloso negativo.
     """
     linhas = [

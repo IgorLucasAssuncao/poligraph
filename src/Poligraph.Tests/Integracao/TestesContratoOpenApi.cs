@@ -147,7 +147,7 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     // As cidades pela sede de quem recebeu, e o CNPJ que leva à página da entidade.
     [InlineData("CidadesDaEmendaDto", "quantidade,maiores")]
     [InlineData("FavorecidoDaEmendaDto", "nome,naturezaJuridica,uf,municipio,recebido,cnpj")]
-    // PP4 e PP3: redes na ficha, patrimônio por candidatura — ⛔ a descrição do bem.
+    // PP4 e PP3: redes na ficha, patrimônio por candidatura — não a descrição do bem.
     [InlineData("RedeSocialDto", "rede,url,fonte")]
     [InlineData("DeclaracaoDeBensDto", "anoEleicao,total,bens,porTipo")]
     [InlineData("ConvenioDaEntidadeDto", "numero,objeto,situacao,dataPublicacao,valor,valorLiberado,urlFonte")]

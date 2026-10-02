@@ -12,7 +12,7 @@ namespace Poligraph.Api.Services;
 /// <remarks>
 /// <para>
 /// A emenda tem três autores possíveis (CF, art. 166), e só o individual é uma pessoa.
-/// Separá-los é regra de tela, e ⛔ de uma tela só: o mapa e a página da entidade usam esta
+/// Separá-los é regra de tela, e não de uma tela só: o mapa e a página da entidade usam esta
 /// mesma divisão, e uma cópia em cada uma divergiria no primeiro ajuste.
 /// </para>
 /// </remarks>

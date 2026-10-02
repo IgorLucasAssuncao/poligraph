@@ -3,16 +3,16 @@ import { useState } from 'react';
 /**
  * As iniciais, com a foto oficial por cima quando houver.
  *
- * ⚠️ A foto ⛔ é guardada no banco nem servida por nós: a URL é da Câmara ou do Senado.
+ * ATENÇÃO: A foto não é guardada no banco nem servida por nós: a URL é da Câmara ou do Senado.
  * Rehospedar imagem de pessoa é outra discussão de licença e de LGPD que este trabalho
- * ⛔ abriu. O que se guarda é a cópia no NAVEGADOR do visitante (`fotos-sw.js`).
+ * Não abriu. O que se guarda é a cópia no NAVEGADOR do visitante (`fotos-sw.js`).
  *
- * ⭐ As iniciais ficam POR BAIXO e aparecem na hora. A foto da Câmara tem 30–41 KB e a
+ * DECISÃO: As iniciais ficam POR BAIXO e aparecem na hora. A foto da Câmara tem 30–41 KB e a
  * do Senado 170–330 KB (medido em 2026-10-01), para um quadrado de ~42 px: até ela
  * chegar, o lugar já tem rosto. Se ela falhar, as iniciais continuam — antes o código
  * só escondia a imagem e o espaço ficava vazio, embora o comentário dissesse o contrário.
  *
- * ⭐ `loading="lazy"`: numa lista de 30, só as fotos que aparecem na tela são pedidas.
+ * DECISÃO: `loading="lazy"`: numa lista de 30, só as fotos que aparecem na tela são pedidas.
  */
 export function Avatar({
   nome,
@@ -46,8 +46,6 @@ export function Avatar({
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════
-
 function iniciais(nome: string): string {
   const partes = nome.trim().split(/\s+/);
   if (partes.length === 0) return '?';
@@ -59,7 +57,7 @@ function iniciais(nome: string): string {
 /**
  * Cor derivada do nome — estável entre recarregamentos.
  *
- * ⚠️ Tons neutros de propósito: cor de avatar não pode sugerir espectro político.
+ * ATENÇÃO: Tons neutros de propósito: cor de avatar não pode sugerir espectro político.
  * Verde e vermelho aqui seriam lidos como juízo (RNF-16).
  */
 function corDe(nome: string): string {

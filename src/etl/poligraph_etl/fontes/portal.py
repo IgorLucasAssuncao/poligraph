@@ -1,6 +1,6 @@
 """ENTRADA — downloads de dados abertos do Portal da Transparência.
 
-Os arquivos em bloco do Portal são públicos: ⛔ não pedem a chave pessoal que a API de
+Os arquivos em bloco do Portal são públicos: não pedem a chave pessoal que a API de
 dados exige. O que se faz com o conteúdo fica em [`emendas.py`](../emendas.py) e
 [`orcamento.py`](../orcamento.py).
 
@@ -9,12 +9,12 @@ dados exige. O que se faz com o conteúdo fica em [`emendas.py`](../emendas.py) 
 | `emendas-parlamentares/UNICO` | Três CSVs: emendas, favorecidos, convênios | Diária — o arquivo inteiro é regerado |
 | `orcamento-despesa/{ano}` | Dotação, empenhado e pago por ação e elemento | Diária no ano corrente |
 
-🔴 **O servidor responde 405 depois de ~18 downloads seguidos**, e o 405 ⛔ não é erro
+RISCO: **O servidor responde 405 depois de ~18 downloads seguidos**, e o 405 não é erro
 do pedido: é limite de taxa sem o código certo. Medido em 2026-09-24 — com pausa de
 20 s e nova tentativa, os 45 arquivos de transferências baixaram. Por isso `baixar`
 tenta de novo antes de desistir.
 
-⚠️ Os CSVs vêm em **Latin-1**, ⛔ não UTF-8. Ler como UTF-8 estoura no primeiro "ç".
+ATENÇÃO: Os CSVs vêm em **Latin-1**, não UTF-8. Ler como UTF-8 estoura no primeiro "ç".
 """
 
 import io
@@ -45,7 +45,7 @@ def url(recurso: str) -> str:
 def baixar(recurso: str, destino: Path, *, esperar=time.sleep) -> Path:
     """Baixa em fluxo, com nova tentativa quando o servidor limita a taxa.
 
-    ⚠️ Só renomeia no fim: download interrompido ⛔ não pode virar cache válido.
+    ATENÇÃO: Só renomeia no fim: download interrompido não pode virar cache válido.
     """
     if destino.exists() and destino.stat().st_size > 0:
         log.info("  já em cache: %s (%.0f MB)", destino.name, destino.stat().st_size / 1e6)
@@ -78,10 +78,10 @@ def baixar(recurso: str, destino: Path, *, esperar=time.sleep) -> Path:
 def ler_csv(arquivo_zip: Path, membro: str, colunas: list[str] | None = None) -> pd.DataFrame:
     """Lê um CSV de dentro do ZIP, tudo como texto.
 
-    ⚠️ `dtype=str` pelo mesmo motivo dos CSVs da Câmara: código com zero à esquerda
+    ATENÇÃO: `dtype=str` pelo mesmo motivo dos CSVs da Câmara: código com zero à esquerda
     (`"03101"`, `"00SJ"`) viraria número e perderia o zero.
 
-    ⭐ `colunas` limita a leitura: o arquivo mensal de execução tem 80 MB e 47 colunas, e
+    DECISÃO: `colunas` limita a leitura: o arquivo mensal de execução tem 80 MB e 47 colunas, e
     o que se usa dele são quatro.
     """
     with zipfile.ZipFile(arquivo_zip) as zf:
@@ -99,7 +99,7 @@ def ler_csv(arquivo_zip: Path, membro: str, colunas: list[str] | None = None) ->
 def gerado_em(arquivo_zip: Path, membro: str) -> date:
     """A data em que o Portal gerou o CSV, lida do próprio ZIP.
 
-    ⭐ É ela, ⛔ não a data do download, que diz até onde vai o dado do ano corrente.
+    DECISÃO: É ela, não a data do download, que diz até onde vai o dado do ano corrente.
     """
     with zipfile.ZipFile(arquivo_zip) as zf:
         ano, mes, dia, *_ = zf.getinfo(membro).date_time

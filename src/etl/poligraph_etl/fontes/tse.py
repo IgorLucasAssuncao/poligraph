@@ -3,17 +3,17 @@
 Passa pelo WAF, baixa e abre o ZIP. O que se faz com o conteúdo fica em
 [`receitas.py`](../receitas.py).
 
-🔴 **Duas armadilhas do WAF, e as duas mentem em vez de errar:**
+RISCO: **Duas armadilhas do WAF, e as duas mentem em vez de errar:**
 
-1. É o **conjunto** de headers que passa, ⛔ não o `User-Agent` — e `Accept-Encoding` é
+1. É o **conjunto** de headers que passa, não o `User-Agent` — e `Accept-Encoding` é
    a peça que faltava
 2. **`HEAD` é bloqueado; `GET` na mesma URL passa.** Verificar disponibilidade com `HEAD`
    é o reflexo natural, e aqui leva a concluir que *"o TSE fechou de novo"* quando nada
    fechou. Por isso `existe()` usa `GET` com `Range`
 
-⚠️ Frágil por natureza — daí `ErroDeAcessoAoTse`, que diz o que fazer em vez de estourar.
+ATENÇÃO: Frágil por natureza — daí `ErroDeAcessoAoTse`, que diz o que fazer em vez de estourar.
 
-📐 [`docs/12-fonte-tse.md §2.0`](../../../../docs/12-fonte-tse.md)
+MEDIDO: [`docs/12-fonte-tse.md §2.0`](../../../../docs/12-fonte-tse.md)
 """
 
 import logging
@@ -25,7 +25,7 @@ log = logging.getLogger("poligraph")
 
 CDN = "https://cdn.tse.jus.br/estatistica/sead/odsele"
 
-# 🔴 ⛔ Não remova nenhuma linha "que parece inútil" — é o conjunto que passa.
+# RISCO: Não remova nenhuma linha "que parece inútil" — é o conjunto que passa.
 CABECALHOS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -50,7 +50,7 @@ class ErroDeAcessoAoTse(RuntimeError):
 
 
 def url_de_prestacao_de_contas(ano: int) -> str:
-    """⚠️ Só este nome funciona — as outras três grafias plausíveis dão 404, testadas."""
+    """ATENÇÃO: Só este nome funciona — as outras três grafias plausíveis dão 404, testadas."""
     return (
         f"{CDN}/prestacao_contas/"
         f"prestacao_de_contas_eleitorais_candidatos_{ano}.zip"
@@ -60,7 +60,7 @@ def url_de_prestacao_de_contas(ano: int) -> str:
 def existe(url: str) -> bool:
     """Confere disponibilidade **sem** baixar o arquivo inteiro.
 
-    🔴 `GET` com `Range`, ⛔ nunca `HEAD`: um `HEAD` devolveria 403 e faria o pipeline
+    RISCO: `GET` com `Range`, nunca `HEAD`: um `HEAD` devolveria 403 e faria o pipeline
     concluir o oposto da verdade.
     """
     try:
@@ -74,7 +74,7 @@ def existe(url: str) -> bool:
 
 
 def baixar(url: str, destino: Path) -> Path:
-    """Baixa em fluxo — são **396 MB**, que ⛔ não cabem em memória.
+    """Baixa em fluxo — são **396 MB**, que não cabem em memória.
 
     Não rebaixa se o destino já existe: o arquivo de uma eleição passada nunca muda.
     """
@@ -100,7 +100,7 @@ def baixar(url: str, destino: Path) -> Path:
             for bloco in resposta.iter_content(chunk_size=1 << 20):
                 saida.write(bloco)
 
-    # Só renomeia no fim: download interrompido ⛔ não pode virar cache válido.
+    # Só renomeia no fim: download interrompido não pode virar cache válido.
     parcial.replace(destino)
     log.info("  %s — %.0f MB", destino.name, destino.stat().st_size / 1e6)
 

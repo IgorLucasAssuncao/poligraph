@@ -1,6 +1,6 @@
 """ANÁLISE — comunidade detectada × partido declarado — o objetivo específico #3 (RF-20).
 
-🔴 **A RQ2 perguntava "ARI ou modularidade?". A resposta é as duas, e elas respondem
+RISCO: **A RQ2 perguntava "ARI ou modularidade?". A resposta é as duas, e elas respondem
 perguntas diferentes:**
 
 | Medida | Responde |
@@ -8,12 +8,12 @@ perguntas diferentes:**
 | **ARI** | As comunidades de voto *coincidem* com os partidos? |
 | **Modularidade** | Qual das duas divisões descreve melhor o grafo? |
 
-⭐ Sozinha, a modularidade não compara nada — mede a qualidade de uma partição. Sozinho,
-o ARI diz que duas partições diferem, mas ⛔ não diz qual das duas é melhor. Juntos
+DECISÃO: Sozinha, a modularidade não compara nada — mede a qualidade de uma partição. Sozinho,
+o ARI diz que duas partições diferem, mas não diz qual das duas é melhor. Juntos
 sustentam a afirmação que interessa ao trabalho: *"as comunidades de voto descrevem o
 grafo melhor que os partidos, e diferem deles nesta medida."*
 
-⚠️ Implementados aqui em vez de trazer `scikit-learn`. O ARI são vinte linhas de
+ATENÇÃO: Implementados aqui em vez de trazer `scikit-learn`. O ARI são vinte linhas de
 combinação; a modularidade o `networkx` já tem. Somar uma dependência de 30 MB por uma
 função seria custo sem contrapartida.
 """
@@ -47,7 +47,7 @@ def comparar(
     comunidade_de: dict[int, int],
     partido_de: dict[int, str],
 ) -> Comparacao:
-    """⚠️ Compara só quem tem os dois rótulos — deputado sem partido registrado sai."""
+    """ATENÇÃO: Compara só quem tem os dois rótulos — deputado sem partido registrado sai."""
     pessoas = [
         pessoa for pessoa in grafo.nodes
         if pessoa in comunidade_de and pessoa in partido_de
@@ -69,7 +69,7 @@ def comparar(
 def indice_rand_ajustado(a: list, b: list) -> float:
     """Índice de Rand ajustado entre duas partições dos mesmos elementos.
 
-    🔴 **Ajustado** é a palavra que importa. O Rand simples sobe só por haver muitos
+    RISCO: **Ajustado** é a palavra que importa. O Rand simples sobe só por haver muitos
     grupos: com 20 partidos e 30 comunidades, quase todo par de deputados cai em grupos
     diferentes nas duas partições, e isso conta como "concordância". O ajuste desconta o
     que se esperaria do acaso — por isso 0 significa "nada além do acaso", e não
@@ -100,7 +100,7 @@ def indice_rand_ajustado(a: list, b: list) -> float:
     esperado = soma_linhas * soma_colunas / total_de_pares
     maximo = (soma_linhas + soma_colunas) / 2
 
-    # ⚠️ Partições idênticas E triviais (tudo num grupo só) zeram o denominador.
+    # ATENÇÃO: Partições idênticas E triviais (tudo num grupo só) zeram o denominador.
     if maximo == esperado:
         return 0.0
 
@@ -110,7 +110,7 @@ def indice_rand_ajustado(a: list, b: list) -> float:
 def modularidade(grafo: nx.Graph, pessoas: list[int], rotulos: list) -> float:
     """Modularidade da partição sobre o grafo, ponderada pela similaridade.
 
-    ⭐ Mede quanto das arestas fica DENTRO dos grupos, descontado o que se esperaria
+    DECISÃO: Mede quanto das arestas fica DENTRO dos grupos, descontado o que se esperaria
     de um grafo aleatório com os mesmos graus. Alto = a divisão explica a estrutura.
     """
     grupos: dict = {}
