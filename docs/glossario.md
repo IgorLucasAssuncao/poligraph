@@ -7,6 +7,9 @@
 > ⚠️ Todos os números foram medidos em **2026-08-29**, contra o banco local com a
 > legislatura 57 ingerida.
 
+📐 **Os fluxos** (como a proposição chega ao voto, onde entram destaque e orientação, como a
+emenda vira pagamento) estão em [`fluxos-das-casas.md`](fluxos-das-casas.md).
+
 📐 **Este documento é para quem constrói.** O glossário que o **cidadão** vê é outro:
 `src/web/src/componentes/Termo.tsx`, com verbetes que aparecem sublinhados na própria
 tela. A coluna *No produto?* diz quais dos dois o termo tem.
@@ -141,6 +144,10 @@ quem lê *"quem vota junto fica junto"* imagina projetos, e são emendas supress
 | **Autoridade** | Sabatina — voto em **pessoa**, ⛔ não em política | `categoria` | Peso 0,3. ⛔ Fora do questionário (RN-14) | — |
 | **Orientação** | O que a liderança de cada bancada **pediu** antes de votar | `orientacoes` | ⭐ Permite medir **governismo** e **disciplina**. ⛔ O Senado ⛔ não publica ([#28](achados/028-o-senado-nao-publica-orientacao-de-bancada.md)) | ✅ |
 | **Secreta** | Votação sem registro individual | `votacoes.secreta` | 🔴 **239 de 421** no Senado ([#17](achados/017-senado-maioria-secreta.md)) | — |
+| **Simbólica** | Votação em que o presidente proclama o resultado sem registrar quem votou como | Não está na base | É a regra geral nas duas casas. A base só mede afinidade onde alguém pediu o registro nominal ([fluxos §2](fluxos-das-casas.md)) | — |
+| **Turno** | Cada uma das votações de uma PEC: dois turnos em cada casa (CF art. 60, §2º) | `votacoes.descricao` | Uma PEC aparece como duas votações do mesmo texto: contar votações não é contar proposições | — |
+| **Quórum** | Quantos votos a proposição precisa: maioria simples (PL), absoluta (PLP: 257 e 41) ou três quintos (PEC: 308 e 49) | — | Explica por que PEC e PLP são sempre nominais ([fluxos §1](fluxos-das-casas.md)) | — |
+| **Obstrução** | Presente, recusando-se a dar quórum. Não é abstenção | `votos.valor` nulo | Fora do cálculo; contá-la como abstenção mudaria a concordância | — |
 
 ---
 
@@ -186,6 +193,10 @@ porque o critério do autor foi *o que ⛔ não se associa ao perfil do polític
 | **Empenho** | A promessa de pagar. ⚠️ **Empenhado ⛔ não é pago** | ✅ |
 | **Fundão** (FEFC) | Fundo Eleitoral, dinheiro público de campanha — **R$ 907,7 mi** | ✅ |
 | **Emenda de múltiplo** / **nacional** | Tipos que ⛔ não têm autor individual identificável | ✅ |
+| **Liquidação** | O governo confere que a obra ou o serviço foi entregue: o passo entre o empenho e o pagamento | ✅ |
+| **Pagamento** | O dinheiro que de fato saiu. A ficha mostra "pago de empenhado" | ✅ |
+| **Restos a pagar** | Empenho de um ano pago nos anos seguintes. ATENÇÃO: somá-lo ao pago do ano inflaria o número | ✅ |
+| **Emenda individual** / **de bancada** / **de comissão** / **de relator** | Quem indica. Só a individual tem autor que é uma pessoa; a de relator (RP9) foi extinta pelo STF em 2022 ([fluxos §4](fluxos-das-casas.md)) | ✅ |
 
 ---
 
@@ -196,6 +207,8 @@ porque o critério do autor foi *o que ⛔ não se associa ao perfil do polític
 | **Legislatura** | Os 4 anos entre eleições | ⭐ A matriz é **sempre** filtrada por ela (RN-12) |
 | **Casa** | Câmara ou Senado | 🔴 ⛔ **Nunca** na mesma matriz: elas ⛔ não votam as mesmas matérias ([#7](achados/007-casas-nao-sao-comparaveis.md)) |
 | **Partido no voto** | O partido **no momento** daquele voto | ⚠️ Trocar de partido é comum — 14 trocas em 2025 |
+| **Mandato** | O período para o qual o parlamentar foi eleito: 4 anos na Câmara, **8 no Senado** | O senador aparece em duas legislaturas seguidas, e é a mesma pessoa nas duas |
+| **Suplente** | Quem assume a cadeira do titular licenciado ou que saiu. Na Câmara, o próximo da lista; no Senado, um dos dois eleitos na chapa | Explica por que votaram mais de 513 deputados e mais de 81 senadores numa legislatura (`conferencia.py`) |
 | **`cpf_hash`** | O CPF, guardado **só** como HMAC-SHA256 com chave secreta (PL77). Sem chave seria reversível: há só ~1 bilhão de CPFs | ⛔ **Nunca renderizado.** 0 CPFs em claro (RNF-13) |
 | **Vínculo** | Como um id externo foi ligado a uma pessoa: `CPF`, `FUZZY`, `MANUAL` | ⭐ Ambiguidade ⛔ não vira palpite: fica `NAO_RESOLVIDO` |
 | **Menção** | Ligação entre notícia e parlamentar, com **confiança** | ⚠️ Abaixo de **0,70** ⛔ não vai à tela — mas **vai ao banco** ([#29](achados/029-o-sobrenome-casa-com-a-instituicao.md)) |

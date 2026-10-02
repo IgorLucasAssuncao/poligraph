@@ -73,10 +73,12 @@ plausível. Não há caso como o dos R$ 12 bilhões, mas a regra custa pouco.
 
 ## 2. Procedência por linha (PL72)
 
-> FEITO em 2026-10-02 para votações, votos e orientações (Câmara e Senado). MEDIDO na
-> recarga de 2026: 4 cargas, 100% das linhas com `carga_id`, e o SHA-256 de um novo
-> download da Câmara igual ao gravado. A Câmara manda `ETag` e `Last-Modified`; o Senado,
-> nenhum dos dois.
+> FEITO em 2026-10-02 para votações, votos e orientações (Câmara e Senado) e, no mesmo dia,
+> para as tabelas de dinheiro. MEDIDO depois de recarregar tudo: 100% das linhas com
+> `carga_id` em votos (2.179.300), despesas (5.600.360), emendas, favorecidos, receitas e
+> patrimônios; só `cnpjs_municipio` falta, porque depende da carga `municipios`. O SHA-256
+> de um novo download da Câmara bateu com o gravado. A Câmara manda `ETag` e
+> `Last-Modified`; o Senado, nenhum dos dois.
 
 ### O que se quer poder afirmar
 
@@ -198,8 +200,8 @@ o CPF **mascarado**, com só os 6 dígitos do meio (`***550179**`). Nós guardam
 
 | # | O quê | Pendência |
 |---|---|---|
-| 1 | Tabela `cargas` e `carga_id` na ETL, começando por votações e votos | PL72 |
-| 2 | Modo análise na ficha e no painel do início | PL73 |
-| 3 | Regra de patrimônio fora do comum no `conferir` | PL76 |
-| 4 | "Também recebeu da cota" no favorecido da emenda | PL74 |
+| 1 | Tabela `cargas` e `carga_id` na ETL, começando por votações e votos | PL72, FEITO |
+| 2 | Modo análise na ficha e no painel do início | PL73, primeira versão FEITA |
+| 3 | Regra de patrimônio fora do comum no `conferir` | PL76, FEITO |
+| 4 | "Também recebeu da cota" no favorecido da emenda | PL74, FEITO |
 | 5 | Parlamentar sócio, por nome e 6 dígitos | PL75 |
