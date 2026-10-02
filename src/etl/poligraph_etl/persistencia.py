@@ -257,20 +257,24 @@ def pessoas_sem_cpf(conexao: psycopg.Connection) -> list[tuple[str, int]]:
     ]
 
 
-def senadores_por_nome(conexao: psycopg.Connection) -> dict[str, int]:
-    """Nome parlamentar normalizado -> `pessoa_id`, so de quem votou no Senado.
+def senadores_por_nome(conexao: psycopg.Connection, legislaturas: list[int]) -> dict[str, int]:
+    """Nome parlamentar normalizado -> `pessoa_id`, de quem votou no Senado NAQUELAS legislaturas.
 
     A CEAPS nao publica id de parlamentar; a unica chave e o nome. O recorte por casa
-    evita que um deputado homonimo receba despesa de senador.
+    evita que um deputado homonimo receba despesa de senador; o recorte por legislatura,
+    que o senador de 2003 receba a despesa do homonimo de 2023 (achado #35).
     """
     return {
         sem_acento_maiusculo(linha[0]): linha[1]
         for linha in conexao.execute(
             """
-            SELECT p.nome_exibicao, p.id
+            SELECT DISTINCT p.nome_exibicao, p.id
               FROM pessoas p
-             WHERE """ + na_legislatura_corrente("p.id", "SENADO") + """
-            """
+              JOIN votos v ON v.pessoa_id = p.id
+              JOIN votacoes t ON t.id = v.votacao_id
+             WHERE t.casa = 'SENADO' AND t.legislatura = ANY(%s)
+            """,
+            (legislaturas,),
         ).fetchall()
     }
 

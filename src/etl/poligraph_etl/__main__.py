@@ -1314,13 +1314,18 @@ def _cota_do_senado(conexao: psycopg.Connection, anos: list[int]) -> None:
     O de-para e por NOME parlamentar, porque a CEAPS nao publica id. Quem nao casa e
     descartado: atribuir gasto por semelhanca seria inventar dono.
     """
-    por_nome = persistencia.senadores_por_nome(conexao)
-    if not por_nome:
-        log.info("Nenhum senador no de-para; CEAPS nao foi lida.")
-        return
-
     for ano in anos:
         log.info("CEAPS de %d...", ano)
+
+        # O ano civil atravessa a posse: janeiro ainda é da legislatura anterior. O
+        # de-para é o das duas, e o senador de mandato de 8 anos é a mesma pessoa nelas.
+        legislaturas = sorted(
+            {ingestao.legislatura_da_data(f"{ano}-01-15"), ingestao.legislatura_da_data(f"{ano}-12-15")}
+        )
+        por_nome = persistencia.senadores_por_nome(conexao, legislaturas)
+        if not por_nome:
+            log.info("  nenhum senador votou em %s; CEAPS de %d ⛔ lida.", legislaturas, ano)
+            continue
 
         arquivo = senado.baixar_ceaps(ano, CACHE / f"ceaps-{ano}.csv")
         registros = senado.ler_ceaps(arquivo)

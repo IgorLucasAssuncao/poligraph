@@ -471,3 +471,23 @@ def test_legislatura_com_pouco_dado_fica_sem_grafo(conexao, caplog):
     assert VOTACOES_MINIMAS_PARA_GRAFO > 1
     assert conexao.execute("SELECT count(*) FROM execucoes").fetchone()[0] == 0
     assert "SEM grafo" in caplog.text
+
+
+def test_ceaps_casa_o_nome_so_com_senador_da_legislatura_da_despesa(conexao):
+    """O senador de 2003 ⛔ pode receber a despesa do homônimo de 2023 (achado #35)."""
+    persistencia.gravar_pessoas(
+        conexao,
+        [{**_pessoa("1", "Fulano"), "fonte": "SENADO"}, {**_pessoa("2", "Fulano"), "fonte": "SENADO"}],
+    )
+    antigo, atual = [l[0] for l in conexao.execute("SELECT id FROM pessoas ORDER BY id").fetchall()]
+    persistencia.gravar_votacoes(
+        conexao,
+        [
+            {**_votacao("SF-1"), "casa": "SENADO", "legislatura": 52, "data": "2004-05-04"},
+            {**_votacao("SF-2"), "casa": "SENADO", "legislatura": 57, "data": "2024-05-04"},
+        ],
+    )
+    persistencia.gravar_votos(conexao, [_voto("SF-1", antigo, 1), _voto("SF-2", atual, 1)])
+
+    assert persistencia.senadores_por_nome(conexao, [52]) == {"FULANO": antigo}
+    assert persistencia.senadores_por_nome(conexao, [57]) == {"FULANO": atual}
