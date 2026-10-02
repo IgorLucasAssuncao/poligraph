@@ -13,6 +13,8 @@ cobrem. Cada uma nasceu de uma medição do discovery que virou regra.
 """
 
 import hashlib
+import hmac
+import os
 import re
 import unicodedata
 
@@ -332,8 +334,24 @@ def inferir_polaridade(descricao: str | None) -> int:
 # ═══════════════════════════════════════════════════════════════════
 
 
+VARIAVEL_DA_CHAVE = "POLIGRAPH_CHAVE_CPF"
+
+
 def hash_de_cpf(bruto: str | int | None) -> str | None:
-    """SHA-256 do CPF normalizado — é o que vai para o banco.
+    """HMAC-SHA256 do CPF normalizado, com a chave secreta — é o que vai para o banco.
+
+    RISCO: **SHA-256 sem chave não protege CPF** (PL77, 2026-10-02). Há cerca de 1 bilhão
+    de CPFs; MEDIDO: 0,75 milhão de SHA-256 por segundo num núcleo em Python, 22 minutos
+    para todos. Com HMAC, refazer a conta exige a chave, que fica em
+    `POLIGRAPH_CHAVE_CPF` — user-secrets do AppHost em desenvolvimento, variável do
+    contêiner em produção —, nunca no banco nem no código.
+
+    ATENÇÃO: **Sem a chave, para.** Voltar ao SHA-256 puro em silêncio gravaria hashes que
+    não casam com os do banco e ainda seriam reversíveis.
+
+    ATENÇÃO: **Perder a chave é perder a conciliação**: os hashes novos não casariam com os
+    antigos. Trocar a chave exige recalcular tudo (comando `rechavear-cpf` e as cargas de
+    cota e campanha).
 
     RISCO: **RNF-13: CPF nunca em claro.** Mas o hash **não impede a conciliação**: basta
     hashear os dois lados com o mesmo algoritmo e comparar os hashes. O CPF em claro só
@@ -344,8 +362,23 @@ def hash_de_cpf(bruto: str | int | None) -> str | None:
     a fonte que formata com pontos nunca casaria com a que não formata.
     """
     digitos = normalizar_cpf(bruto)
+    if not digitos:
+        return None
 
-    return hashlib.sha256(digitos.encode()).hexdigest() if digitos else None
+    return hmac.new(_chave_do_cpf(), digitos.encode(), hashlib.sha256).hexdigest()
+
+
+def _chave_do_cpf() -> bytes:
+    """A chave do HMAC do CPF; sem ela, erro explicando onde pôr."""
+    chave = os.environ.get(VARIAVEL_DA_CHAVE, "")
+    if len(chave) < 32:
+        raise RuntimeError(
+            f"Defina {VARIAVEL_DA_CHAVE} com pelo menos 32 caracteres aleatórios: no "
+            "desenvolvimento, `dotnet user-secrets set Parameters:chave-cpf <valor> "
+            "--project src/Poligraph.AppHost`; em produção, a variável do contêiner da ETL. "
+            "Sem a chave o CPF não é gravado (PL77)."
+        )
+    return chave.encode()
 
 
 def normalizar_cpf(bruto: str | int | None) -> str | None:

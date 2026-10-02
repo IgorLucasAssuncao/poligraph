@@ -95,3 +95,44 @@ def test_sem_cpf_tira_o_cpf_do_nome_de_mei(bruto, limpo):
     from poligraph_etl.normalizacao import sem_cpf
 
     assert sem_cpf(bruto) == limpo
+
+
+def test_o_hash_e_hmac_com_a_chave_e_nao_sha256_puro(monkeypatch):
+    """PL77: SHA-256 sem chave se reverte testando ~1 bilhão de CPFs (22 min medidos)."""
+    import hashlib
+    import hmac
+
+    monkeypatch.setenv("POLIGRAPH_CHAVE_CPF", "k" * 40)
+
+    assert hash_de_cpf("01234567890") == hmac.new(b"k" * 40, b"01234567890", hashlib.sha256).hexdigest()
+    assert hash_de_cpf("01234567890") != hashlib.sha256(b"01234567890").hexdigest()
+
+
+def test_chaves_diferentes_dao_hashes_diferentes(monkeypatch):
+    monkeypatch.setenv("POLIGRAPH_CHAVE_CPF", "a" * 40)
+    com_a = hash_de_cpf("01234567890")
+    monkeypatch.setenv("POLIGRAPH_CHAVE_CPF", "b" * 40)
+
+    assert hash_de_cpf("01234567890") != com_a
+
+
+def test_sem_chave_para_em_vez_de_cair_no_sha256(monkeypatch):
+    import pytest
+
+    monkeypatch.delenv("POLIGRAPH_CHAVE_CPF")
+    with pytest.raises(RuntimeError, match="POLIGRAPH_CHAVE_CPF"):
+        hash_de_cpf("01234567890")
+
+
+def test_chave_curta_e_recusada(monkeypatch):
+    import pytest
+
+    monkeypatch.setenv("POLIGRAPH_CHAVE_CPF", "curta")
+    with pytest.raises(RuntimeError):
+        hash_de_cpf("01234567890")
+
+
+def test_cpf_vazio_nao_exige_chave(monkeypatch):
+    monkeypatch.delenv("POLIGRAPH_CHAVE_CPF")
+
+    assert hash_de_cpf(None) is None

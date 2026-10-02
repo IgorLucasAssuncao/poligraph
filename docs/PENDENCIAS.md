@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-10-02 · **99 resolvidas · 72 abertas**
+> **Atualizado:** 2026-10-02 · **102 resolvidas · 69 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -50,7 +50,7 @@ PL41).
 | **PL69** | 🟡 **Votação secreta na Câmara marcada como aberta:** 11 votações, quase todas eleição de autoridade ("Eleito o Sr. …"), têm a presença de cada deputado e **nenhuma posição**. ⛔ Entram no cálculo (sem posição ⛔ há o que comparar), mas contam como abertas no painel e no grafo. Marcar `secreta` na ingestão quando ninguém tem posição | 🟢 Baixa |
 | **PL70** | 🟡 **A busca nos votos ⛔ acha o nome popular:** "reforma tributária" dá 0, porque a ementa oficial da PEC 45/2019 diz "Altera o Sistema Tributário Nacional"; "arcabouço" também dá 0. A Câmara publica palavras-chave por proposição (`keywords`), que ⛔ ingerimos. Ingerir e incluir na busca. 📐 Medido em 2026-10-02: "tributaria" acha 33 votos e "PEC 45/2019", 19 | 🟡 Média |
 | **PL71** | 🟡 **Sede dos favorecidos pela BrasilAPI:** **19.164 de 50.738** CNPJs que receberam emenda estão sem município — **R$ 9,81 bi de R$ 159,49 bi** fora do mapa. `brasilapi.com.br/api/cnpj/v1/{cnpj}` devolve `codigo_municipio_ibge` direto (conferido em 2026-10-02 com a Prefeitura de Cascavel: 4104808). Buscar os que faltam, devagar, gravando em `cnpjs_municipio` com a data e a fonte. ⚠️ Projeto comunitário, sem SLA, que repassa o dado aberto da Receita: a fonte citada continua sendo a Receita. ⛔ Gravar o quadro de sócios (`qsa`): é dado pessoal e ⛔ serve ao trabalho | 🟡 Média |
-| **PL77** | **`cpf_hash` é SHA-256 sem chave, e por isso reversível** (achado de 2026-10-02). Só existe cerca de 1 bilhão de CPFs; MEDIDO: 0,75 milhão de SHA-256 por segundo num núcleo em Python, 22 minutos para todos, segundos numa placa de vídeo. O hash hoje não protege o CPF (RNF-13, LGPD). Trocar por **HMAC-SHA256 com chave secreta** no ambiente (user-secrets e variável do contêiner da ETL), nunca no banco nem no código, e recalcular `pessoas.cpf_hash`, o hash de doador pessoa física e o de fornecedor pessoa física da cota. A conciliação continua: as duas pontas usam a mesma chave. Explicação em https://claude.ai/artifact/Gc11fzR2MEZk85RFMuGjki | Alta |
+| ✅ ~~PL77~~ | **Resolvida (2026-10-02)** — `hash_de_cpf` passou a **HMAC-SHA256** com a chave de `POLIGRAPH_CHAVE_CPF`, que vem do parâmetro secreto `chave-cpf` do AppHost (user-secrets `Parameters:chave-cpf`). Sem a chave, ou com menos de 32 caracteres, a ETL **para** em vez de cair no SHA-256 puro. O comando `rechavear-cpf` refaz tudo: apaga `pessoas.cpf_hash`, roda `cpf` e recarrega cota, campanha e patrimônio nos anos que estão no banco. ATENÇÃO: **perder a chave é perder a conciliação** (os hashes novos não casam com os do banco); trocar a chave exige rodar `rechavear-cpf`. MEDIDO em 2026-10-02, no banco local: 719 de 719 pessoas voltaram a ter `cpf_hash`; campanha (44.171 receitas, 31.657 de pessoa física, 718 parlamentares) e patrimônio (5.840) com as mesmas contagens de antes. Fecha também B7 e ER5, que pediam a mesma decisão. Explicação em https://claude.ai/artifact/Gc11fzR2MEZk85RFMuGjki | — |
 | **PL72** | **Procedência por linha** — pedido do autor. FEITO em 2026-10-02 para **votações, votos e orientações**, das duas casas: tabela `cargas` (fonte, URL exata, data, SHA-256, `ETag` e `Last-Modified` da fonte, comando), `carga_id` nas três tabelas, e o arquivo guardado com o hash no nome. Conferido: os 4 arquivos de 2026 batem com o hash, e baixar de novo da Câmara deu o mesmo SHA-256. FALTA: despesas, emendas, favorecidos, receitas, patrimônios e `cnpjs_municipio`; e recarregar os anos anteriores (só 2026 tem `carga_id`). Desenho em [`plano/10 §2`](plano/10-procedencia-e-modo-analise.md) | Alta |
 | **PL73** | **Modo análise** — pedido do autor (2026-10-02). Um interruptor que torna todo número clicável: de onde veio, como foi contado e as linhas que entraram. Do vídeo, dois campos a mais no painel: a **versão do código** que leu o arquivo e a **base legal** da fonte; e o interruptor fica no cabeçalho. Depende da PL72. Desenho em [`plano/10 §3`](plano/10-procedencia-e-modo-analise.md) | Alta |
 | **PL74** | **"Também recebeu da cota"** ao lado do favorecido da emenda: o mesmo CNPJ como fornecedor da cota e favorecido de emenda do mesmo parlamentar. MEDIDO em 2026-10-02: 897 pares, 443 parlamentares, 424 empresas; os maiores são companhias aéreas e de energia, e 323 empresas ligam-se a um só parlamentar. Fato, sem adjetivo (RNF-16). [`plano/10 §4.1`](plano/10-procedencia-e-modo-analise.md) | Média |
@@ -1363,9 +1363,9 @@ social (PP4)~~, parlamentar com poucos votos (PP5), perfil temático por relator
 </details>
 
 <details>
-<summary><b>Fontes e escopo</b> — B6, B7, C5, TS5, ER5, PL5, PL14, PL15, PL17, A5</summary>
+<summary><b>Fontes e escopo</b> — B6, C5, TS5, PL5, PL14, PL15, PL17, A5</summary>
 
-Base dos Dados como atalho (B6, TS5), política de `cpf_hash` (B7, ER5), *fuzzy match*
+Base dos Dados como atalho (B6, TS5), *fuzzy match*
 (C5), biblioteca do grafo (PL5), retenção de `execucao` (PL14), `casa` em `pessoa` (PL15),
 *cold start* do Postgres (PL17 — **já não se aplica**, o banco é container próprio),
 reescrever objetivos se escolher o Cenário A (A5 — **já não se aplica**, a D3 escolheu o C).
@@ -1389,13 +1389,13 @@ avaliação rodar cedo demais.
 
 ---
 
-## ✅ Resolvidas — 99
+## ✅ Resolvidas — 102
 
-`A1` `A5` `API1` `API2` `API3` `API4` `API6` `B1` `B2` `B3` `B4` `B5` `C1` `C2` `C3` `C4`
+`A1` `A5` `API1` `API2` `API3` `API4` `API6` `B1` `B2` `B3` `B4` `B5` `B7` `C1` `C2` `C3` `C4`
 `C6` `C8` `C13` `C14` `CT1` `CT2` `CT3` `CT4` `CT5` `CT6` `CT7` `D1` `D3` `D5` `ER1` `ER3`
-`ER4` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PL10`
+`ER4` `ER5` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PL10`
 `PL11` `PL12` `PL13` `PL17` `PL28` `PL31` `PL32` `PL35` `PL36` `PL37` `PL38` `PL39` `PL40`
-`PL41` `PL42` `PL43` `PL45` `PL46` `PL47` `PL48` `PL49` `PL50` `PL51` `PL54` `PL55` `PL59` `PL61` `PL66` `PL68` `PL79` `PP1` `PP3` `PP4`
+`PL41` `PL42` `PL43` `PL45` `PL46` `PL47` `PL48` `PL49` `PL50` `PL51` `PL54` `PL55` `PL59` `PL61` `PL66` `PL68` `PL77` `PL79` `PP1` `PP3` `PP4`
 `RE-01` `RQ1` `RQ2` `RQ3` `RQ4` `RQ8` `RQ9` `SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2`
 `TS3` `TS4` `TS6`
 

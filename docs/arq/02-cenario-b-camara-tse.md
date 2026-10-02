@@ -130,5 +130,5 @@ Igual ao Cenário A, mais:
 | ~~B4~~ | ✅ **RESOLVIDA — 2026-08-23.** Desnecessario — o proprio CDN do TSE funciona com o conjunto completo de headers | Reprodutibilidade | 🟡 Média |
 | ~~B5~~ | ✅ **RESOLVIDA — 2026-08-23.** Desnecessario — os arquivos usados somam 13,8 MB | Repositório | 🟡 Média |
 | **B6** | Decidir se usa **Base dos Dados (BigQuery)** como atalho, e como declarar o intermediário no TCC | Metodologia | 🟢 Baixa |
-| **B7** | Definir política de `cpf_hash` (com ou sem salt) | Modelagem / LGPD | 🟢 Baixa |
+| ✅ ~~B7~~ | Resolvida pela PL77 (2026-10-02): **HMAC-SHA256 com chave secreta** fora do banco | Modelagem / LGPD | — |
 | — | Herda todas as pendências **A1–A4** do Cenário A | | |

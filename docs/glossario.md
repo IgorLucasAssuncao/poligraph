@@ -196,7 +196,7 @@ porque o critério do autor foi *o que ⛔ não se associa ao perfil do polític
 | **Legislatura** | Os 4 anos entre eleições | ⭐ A matriz é **sempre** filtrada por ela (RN-12) |
 | **Casa** | Câmara ou Senado | 🔴 ⛔ **Nunca** na mesma matriz: elas ⛔ não votam as mesmas matérias ([#7](achados/007-casas-nao-sao-comparaveis.md)) |
 | **Partido no voto** | O partido **no momento** daquele voto | ⚠️ Trocar de partido é comum — 14 trocas em 2025 |
-| **`cpf_hash`** | O CPF, guardado **só** como hash | ⛔ **Nunca renderizado.** 0 CPFs em claro (RNF-13) |
+| **`cpf_hash`** | O CPF, guardado **só** como HMAC-SHA256 com chave secreta (PL77). Sem chave seria reversível: há só ~1 bilhão de CPFs | ⛔ **Nunca renderizado.** 0 CPFs em claro (RNF-13) |
 | **Vínculo** | Como um id externo foi ligado a uma pessoa: `CPF`, `FUZZY`, `MANUAL` | ⭐ Ambiguidade ⛔ não vira palpite: fica `NAO_RESOLVIDO` |
 | **Menção** | Ligação entre notícia e parlamentar, com **confiança** | ⚠️ Abaixo de **0,70** ⛔ não vai à tela — mas **vai ao banco** ([#29](achados/029-o-sobrenome-casa-com-a-instituicao.md)) |
 

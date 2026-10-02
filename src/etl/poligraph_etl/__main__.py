@@ -87,6 +87,8 @@ def main(argv: list[str] | None = None) -> int:
                 _municipios(conexao, args.diretorio)
             elif args.comando == "cpf":
                 _cpf(conexao)
+            elif args.comando == "rechavear-cpf":
+                _rechavear_cpf(conexao)
             elif args.comando == "cota":
                 _cota(conexao, args.anos)
             elif args.comando == "fundo":
@@ -145,6 +147,10 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     )
 
     sub.add_parser("cpf", help="completa o cpf_hash das duas casas (Câmara: API; Senado: TSE)")
+    sub.add_parser(
+        "rechavear-cpf",
+        help="refaz todo hash de CPF com a chave atual: pessoas, cota, campanha e patrimônio",
+    )
 
     sub.add_parser(
         "convenios",
@@ -1198,6 +1204,45 @@ def _cpf(conexao: psycopg.Connection) -> None:
     _cpf_dos_deputados(conexao)
     _nome_civil_dos_senadores(conexao)
     _cpf_dos_senadores(conexao)
+
+
+def _rechavear_cpf(conexao: psycopg.Connection) -> None:
+    """PL77 — refaz com a chave atual todo hash de CPF que está no banco.
+
+    Serve para a troca do SHA-256 sem chave pelo HMAC, e para a rotação da chave. Um hash
+    não se converte em outro sem o CPF, então cada tabela é recarregada da fonte:
+
+    | Tabela | Coluna | Recarga |
+    |---|---|---|
+    | `pessoas` | `cpf_hash` | `cpf` |
+    | `despesas` | `cnpj_ou_hash` | `cota`, nos anos que estão no banco |
+    | `receitas_de_campanha` | `doador_cnpj_ou_hash` | `fundo`, nas eleições que estão no banco |
+    | `patrimonios` | a ponte pelo `cpf_hash` | `patrimonio`, nas eleições que estão no banco |
+
+    RISCO: Até o fim, as tabelas misturam as duas chaves e o cruzamento entre elas falha em
+    silêncio. Se o comando parar no meio, rode de novo: cada etapa substitui o seu recorte.
+    """
+    anos_da_cota = [linha[0] for linha in conexao.execute(
+        "SELECT DISTINCT ano FROM despesas ORDER BY 1").fetchall()]
+    eleicoes = [linha[0] for linha in conexao.execute(
+        "SELECT DISTINCT ano_eleicao FROM receitas_de_campanha ORDER BY 1").fetchall()]
+    anos_do_patrimonio = [linha[0] for linha in conexao.execute(
+        "SELECT DISTINCT ano_eleicao FROM patrimonios ORDER BY 1").fetchall()]
+
+    apagados = conexao.execute(
+        "UPDATE pessoas SET cpf_hash = NULL WHERE cpf_hash IS NOT NULL").rowcount
+    log.info("cpf_hash apagado de %d pessoas; refazendo com a chave atual.", apagados)
+    _cpf(conexao)
+
+    if anos_da_cota:
+        _cota(conexao, anos_da_cota)
+    for eleicao in eleicoes:
+        _fundo(conexao, eleicao, None)
+    if anos_do_patrimonio:
+        _patrimonio(conexao, anos_do_patrimonio)
+
+    refeitos = conexao.execute("SELECT count(cpf_hash) FROM pessoas").fetchone()[0]
+    log.info("Rechaveado: %d de %d pessoas voltaram a ter cpf_hash.", refeitos, apagados)
 
 
 def _cpf_dos_deputados(conexao: psycopg.Connection) -> None:

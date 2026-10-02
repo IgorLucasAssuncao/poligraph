@@ -70,7 +70,7 @@ CREATE TABLE pessoa (
     nome_exibicao   TEXT NOT NULL,
     data_nascimento DATE,
     sexo            CHAR(1),
-    cpf_hash        VARCHAR(64)                -- ⚠️ NUNCA o CPF em claro (RNF-13)
+    cpf_hash        VARCHAR(64)                -- ⚠️ NUNCA o CPF em claro (RNF-13); HMAC-SHA256 com chave (PL77)
 );
 
 CREATE TABLE pessoa_fonte_id (

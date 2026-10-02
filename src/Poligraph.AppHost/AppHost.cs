@@ -6,6 +6,11 @@ var postgres = builder.AddPostgres("postgres")
 
 var bancoPoligraph = postgres.AddDatabase("poligraph");
 
+// PL77: a chave do HMAC do CPF. Secreta: vem dos user-secrets do AppHost
+// (Parameters:chave-cpf), nunca de arquivo versionado. Perdê-la é perder a
+// conciliação: os hashes novos não casariam com os do banco.
+var chaveCpf = builder.AddParameter("chave-cpf", secret: true);
+
 // ─── migrations: roda ANTES da API e precisa TERMINAR ──────────────
 // DOTNET_ENVIRONMENT, não ASPNETCORE_ENVIRONMENT.
 // O projeto de migrations é console, e `Host.CreateApplicationBuilder` lê
@@ -52,7 +57,8 @@ var etlIngerir = builder.AddDockerfile("etl-ingerir", "../..", "docker/Dockerfil
     .WithArgs("ingerir", "--anos", "2025")
     // O cache sobrevive ao container: reingerir não rebaixa os CSVs.
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
-    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache");
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf);
 
 // Todas as legislaturas que estiverem na base, uma execução por legislatura. A que tiver
 // menos votações que o mínimo fica sem grafo, e a tela não a oferece (achado #35).
@@ -63,6 +69,7 @@ builder.AddDockerfile("etl-analisar", "../..", "docker/Dockerfile.etl")
     .WithArgs("analisar", "--casa", "CAMARA", "--todas")
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
     // Analisar sem ter ingerido monta uma matriz vazia e não avisa direito.
     .WithParentRelationship(etlIngerir);
 
@@ -79,6 +86,7 @@ builder.AddDockerfile("etl-historico-camara", "../..", "docker/Dockerfile.etl")
     .WithArgs(["ingerir", "--anos", .. anosAnteriores])
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
     .WithParentRelationship(etlIngerir);
 
 var etlSenado = builder.AddDockerfile("etl-senado", "../..", "docker/Dockerfile.etl")
@@ -87,7 +95,8 @@ var etlSenado = builder.AddDockerfile("etl-senado", "../..", "docker/Dockerfile.
     .WithExplicitStart()
     .WithArgs(["senado", "--anos", .. anosAnteriores, "2023", "2024", "2025", "2026"])
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
-    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache");
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf);
 
 builder.AddDockerfile("etl-analisar-senado", "../..", "docker/Dockerfile.etl")
     .WithReference(bancoPoligraph)
@@ -96,6 +105,7 @@ builder.AddDockerfile("etl-analisar-senado", "../..", "docker/Dockerfile.etl")
     .WithArgs("analisar", "--casa", "SENADO", "--todas")
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
     .WithParentRelationship(etlSenado);
 
 // ─── O dinheiro do mandato ─────────────────────────────────────────
@@ -114,8 +124,21 @@ var etlCpf = builder.AddDockerfile("etl-cpf", "../..", "docker/Dockerfile.etl")
     .WithArgs("cpf")
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
     // Sem pessoas ingeridas não há a quem buscar CPF.
     .WithParentRelationship(etlIngerir);
+
+// PL77: refaz todo hash de CPF com a chave atual (troca de algoritmo ou rotação da
+// chave). Recarrega cpf, cota, campanha e patrimônio nos anos que já estão no banco.
+builder.AddDockerfile("etl-rechavear-cpf", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs("rechavear-cpf")
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
+    .WithParentRelationship(etlCpf);
 
 builder.AddDockerfile("etl-cota", "../..", "docker/Dockerfile.etl")
     .WithReference(bancoPoligraph)
@@ -124,6 +147,7 @@ builder.AddDockerfile("etl-cota", "../..", "docker/Dockerfile.etl")
     .WithArgs("cota", "--anos", "2025")
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
     .WithParentRelationship(etlIngerir);
 
 builder.AddDockerfile("etl-fundo", "../..", "docker/Dockerfile.etl")
@@ -135,6 +159,7 @@ builder.AddDockerfile("etl-fundo", "../..", "docker/Dockerfile.etl")
     // O volume é o que evita rebaixar 396 MB a cada execução.
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
     .WithParentRelationship(etlCpf);
 
 // Emendas, favorecidos e convênios saem do download público do Portal da
@@ -146,6 +171,7 @@ builder.AddDockerfile("etl-emendas", "../..", "docker/Dockerfile.etl")
     .WithArgs("emendas", "--anos", "2023", "2024", "2025", "2026")
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
     .WithParentRelationship(etlIngerir);
 
 // A cidade da sede de quem recebeu emenda, por CNPJ → TOM → IBGE, para o mapa. Roda
@@ -158,6 +184,7 @@ builder.AddDockerfile("etl-municipios", "../..", "docker/Dockerfile.etl")
     .WithArgs("municipios")
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
     .WithParentRelationship(etlIngerir);
 
 // O CNPJ de quem assinou cada convênio de emenda (arquivo completo de convênios do
@@ -169,6 +196,7 @@ builder.AddDockerfile("etl-convenios", "../..", "docker/Dockerfile.etl")
     .WithArgs("convenios")
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
     .WithParentRelationship(etlIngerir);
 
 // Bens declarados ao TSE (2018 e 2022), por tipo, e as redes sociais: Câmara para
@@ -180,6 +208,7 @@ builder.AddDockerfile("etl-patrimonio", "../..", "docker/Dockerfile.etl")
     .WithArgs("patrimonio")
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
     .WithParentRelationship(etlIngerir);
 
 builder.AddDockerfile("etl-redes", "../..", "docker/Dockerfile.etl")
@@ -189,6 +218,7 @@ builder.AddDockerfile("etl-redes", "../..", "docker/Dockerfile.etl")
     .WithArgs("redes")
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
     .WithParentRelationship(etlIngerir);
 
 // Contexto da legislatura, não dado de parlamentar: quem governa (TSE), o orçamento,
@@ -200,6 +230,7 @@ builder.AddDockerfile("etl-governo", "../..", "docker/Dockerfile.etl")
     .WithArgs("governo", "--anos", "2023", "2024", "2025", "2026")
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
     .WithParentRelationship(etlIngerir);
 
 // PL66 — a conferência depois da carga: só lê, e falha se uma regra der ERRO. É o

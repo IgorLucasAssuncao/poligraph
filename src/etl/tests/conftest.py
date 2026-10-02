@@ -10,7 +10,11 @@ ATENÇÃO: O isolamento entre testes continua sendo do `limpar`, que trunca tudo
 um. A fixture é global; o estado, não.
 """
 
+import os
+
 import pytest
+
+os.environ.setdefault("POLIGRAPH_CHAVE_CPF", "chave-de-teste-com-mais-de-32-caracteres!")
 
 psycopg = pytest.importorskip("psycopg")
 PostgresContainer = pytest.importorskip("testcontainers.postgres").PostgresContainer

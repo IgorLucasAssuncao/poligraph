@@ -91,7 +91,7 @@ Ver [`plano/02 §3.6`](../docs/plano/02-autenticacao-e-metricas.md).
 A tabela `segue` é **registro de convicção política**. Toda mudança que a toque precisa
 respeitar consentimento específico (RNF-12b) e o endpoint de exclusão (art. 18).
 
-⛔ **Nunca renderizar CPF.** A coluna é `cpf_hash`.
+⛔ **Nunca renderizar CPF.** A coluna é `cpf_hash`: **HMAC-SHA256 com chave secreta**, ⛔ nunca SHA-256 puro, que se reverte em minutos (PL77). Perder a chave é perder a conciliação; trocá-la exige `rechavear-cpf`.
 
 ### 4. Regra medida vira *constraint*, não comentário
 
@@ -238,6 +238,7 @@ pedem login (PL65). 🔴 Em produção continua desligado: RNF-17, período elei
 | Segredo | Para quê | Onde |
 |---|---|---|
 | `Google:ClientId` | Login | user-secrets de `Poligraph.Api` |
+| `Parameters:chave-cpf` | Chave do HMAC do CPF (PL77), chega à ETL como `POLIGRAPH_CHAVE_CPF` | user-secrets de `Poligraph.AppHost` |
 
 ⛔ **Nunca em `appsettings.json`** — o arquivo é versionado.
 
