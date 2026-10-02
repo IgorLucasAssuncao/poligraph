@@ -986,6 +986,8 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   margin: .75rem 1rem; padding: .1rem .9rem;
   background: var(--fundo); border: 1px solid var(--borda-controle); border-radius: var(--raio);
 }
+/* Na ficha a busca fica rente à lista de votos, sem o recuo da página de lista. */
+.barra-busca-votos { margin: .5rem 0 .75rem; }
 .barra-busca:focus-within { background: var(--fundo); border-color: var(--realce); }
 .barra-busca:focus-within .icone-busca { color: var(--realce); }
 .icone-busca { display: grid; place-items: center; color: var(--suave); }

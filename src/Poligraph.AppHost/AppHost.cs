@@ -202,4 +202,13 @@ builder.AddDockerfile("etl-governo", "../..", "docker/Dockerfile.etl")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
     .WithParentRelationship(etlIngerir);
 
+// PL66 — a conferência depois da carga: só lê, e falha se uma regra der ERRO. É o
+// botão para apertar depois de qualquer ETL de voto (achado #37).
+builder.AddDockerfile("etl-conferir", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs("conferir")
+    .WithParentRelationship(etlIngerir);
+
 builder.Build().Run();

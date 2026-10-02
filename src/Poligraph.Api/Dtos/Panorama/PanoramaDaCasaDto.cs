@@ -3,6 +3,14 @@
 namespace Poligraph.Api.Dtos;
 
 /// <summary>O tamanho da base de uma casa — o que a página inicial afirma.</summary>
+/// <param name="Votacoes">
+/// Só as votações com voto nominal registrado: são as que o cálculo usa. Contava todas, e
+/// a 51ª da Câmara afirmava 1.548 votações com 7 de voto nominal (PL68).
+/// </param>
+/// <param name="VotacoesSemVotoNominal">
+/// As que ficaram de fora de <c>Votacoes</c>: registradas pela casa sem a lista de quem
+/// votou como. A tela diz quantas são, em vez de somá-las caladas.
+/// </param>
 public record PanoramaDaCasaDto(
     TipoCasa Casa,
     int Parlamentares,
@@ -25,4 +33,5 @@ public record PanoramaDaCasaDto(
     /// </summary>
     int VotosComPosicao,
     int Comunidades,
-    int Ligacoes);
+    int Ligacoes,
+    int VotacoesSemVotoNominal = 0);

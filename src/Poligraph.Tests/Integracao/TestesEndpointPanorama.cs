@@ -67,12 +67,37 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
         var camara = panorama!.PorCasa.Single(c => c.Casa == "CAMARA");
 
         Assert.Equal(
-            await Db.Votacoes.CountAsync(v => v.Casa == TipoCasa.CAMARA),
+            await Db.Votacoes.CountAsync(v => v.Casa == TipoCasa.CAMARA && v.Votos.Any()),
             camara.Votacoes);
 
         Assert.Equal(
             await Db.Perguntas.CountAsync(p => p.Ativa),
             panorama.PerguntasAtivas);
+    }
+
+    /// <summary>
+    /// PL68 — votação sem voto nominal não conta como votação: o cálculo não a usa. A 51ª da
+    /// Câmara afirmava 1.548 votações com 7 de voto nominal. Ela vai para um campo próprio,
+    /// e a tela diz quantas são.
+    /// </summary>
+    [SkippableFact]
+    public async Task VotacaoSemVotoNominal_FicaForaDasVotacoes_EContadaAParte()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var antes = await LerCamaraAsync();
+        Db.Votacoes.Add(new VotacaoModel
+        {
+            Id = "999999-1", Casa = TipoCasa.CAMARA, Legislatura = antes.Legislatura,
+            Data = new DateOnly(2025, 5, 6), Descricao = "Aprovado em votação simbólica.",
+            Categoria = TipoCategoriaDeVotacao.SUBSTANTIVA, Plenario = true
+        });
+        await Db.SaveChangesAsync();
+
+        var depois = await LerCamaraAsync();
+
+        Assert.Equal(antes.Casa.Votacoes, depois.Casa.Votacoes);
+        Assert.Equal(antes.Casa.VotacoesSemVotoNominal + 1, depois.Casa.VotacoesSemVotoNominal);
     }
 
     /// <summary>
@@ -95,9 +120,17 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
 
     private HttpClient CriarCliente() => new FabricaApi(ConnectionString).CreateClient();
 
+    /// <summary>Um cliente novo a cada leitura: o painel fica em cache por instância.</summary>
+    private async Task<(short Legislatura, CasaLida Casa)> LerCamaraAsync()
+    {
+        using var cliente = CriarCliente();
+        var panorama = await cliente.GetFromJsonAsync<PanoramaLido>(Rota);
+        return (panorama!.Legislatura!.Value, panorama.PorCasa.Single(c => c.Casa == "CAMARA"));
+    }
+
     private record PanoramaLido(short? Legislatura, int PerguntasAtivas, List<CasaLida> PorCasa);
 
     private record CasaLida(
         string Casa, int Parlamentares, int Votacoes, int VotacoesSecretas,
-        int VotosComPosicao, int Comunidades, int Ligacoes);
+        int VotosComPosicao, int Comunidades, int Ligacoes, int VotacoesSemVotoNominal);
 }

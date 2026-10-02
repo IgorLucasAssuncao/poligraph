@@ -90,8 +90,9 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
     private async Task<PanoramaDaCasaDto> DaCasaAsync(
         TipoCasa casa, short legislatura, CancellationToken ct)
     {
-        var votacoes = _db.Votacoes.AsNoTracking()
+        var todas = _db.Votacoes.AsNoTracking()
             .Where(v => v.Casa == casa && v.Legislatura == legislatura);
+        var votacoes = todas.Where(v => _db.Votos.Any(o => o.VotacaoId == v.Id));
 
         var votos = _db.Votos.AsNoTracking()
             .Where(v => v.Votacao!.Casa == casa && v.Votacao.Legislatura == legislatura);
@@ -115,6 +116,7 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
                 ? 0
                 : await _db.ArestasGrafo.AsNoTracking()
                     .CountAsync(a => a.ExecucaoId == execucao
-                                  && a.Tipo == TipoDeAresta.SIMILARIDADE_VOTO, ct));
+                                  && a.Tipo == TipoDeAresta.SIMILARIDADE_VOTO, ct),
+            VotacoesSemVotoNominal: await todas.CountAsync(v => !_db.Votos.Any(o => o.VotacaoId == v.Id), ct));
     }
 }

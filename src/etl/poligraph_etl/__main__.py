@@ -27,7 +27,7 @@ from . import (
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
 from .fontes import camara, portal, receita, senado, tse
-from . import convenentes, patrimonio, redes
+from . import conferencia, convenentes, patrimonio, redes
 
 log = logging.getLogger("poligraph")
 
@@ -90,6 +90,8 @@ def main(argv: list[str] | None = None) -> int:
                 _cota(conexao, args.anos)
             elif args.comando == "fundo":
                 _fundo(conexao, args.eleicao, args.arquivo)
+            elif args.comando == "conferir":
+                _conferir(conexao)
             elif args.comando == "validar":
                 _validar(conexao, args.legislatura, args.divisao_minima)
             else:
@@ -197,6 +199,11 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     curar.add_argument("--casa", choices=["CAMARA", "SENADO"], default="SENADO")
     curar.add_argument("--legislatura", type=int, default=57)
     curar.add_argument("--limite", type=int, default=25)
+
+    sub.add_parser(
+        "conferir",
+        help="regras de plausibilidade sobre o que está no banco; falha se houver ERRO",
+    )
 
     validar = sub.add_parser(
         "validar", help="mede discriminação do questionário e comunidade x partido"
@@ -1554,6 +1561,38 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
     )
 
     log.info("  %d matérias gravadas, %d votações vinculadas", len(linhas), ligados)
+
+
+def _conferir(conexao: psycopg.Connection) -> None:
+    """PL66 — confere o banco inteiro. ⛔ Escreve nada; falha se alguma regra der ERRO.
+
+    ⭐ Feito para rodar no fim de toda carga: os 203 senadores da 55ª (achado #37) teriam
+    aparecido aqui no dia, ⛔ por acaso semanas depois.
+    """
+    achados = conferencia.conferir(lambda sql: conexao.execute(sql).fetchall())
+
+    por_regra: dict[tuple[str, str], list] = {}
+    for achado in achados:
+        por_regra.setdefault((achado.severidade, achado.regra), []).append(achado)
+
+    if not achados:
+        log.info("Conferência: nenhuma regra quebrada.")
+        return
+
+    for (severidade, regra), lista in sorted(por_regra.items()):
+        nivel = log.error if severidade == "ERRO" else log.warning
+        nivel("%s %s — %d", severidade, regra, len(lista))
+        for achado in lista[:10]:
+            nivel("    %s %sª · %s", achado.casa, achado.legislatura, achado.detalhe)
+        if len(lista) > 10:
+            nivel("    … e mais %d", len(lista) - 10)
+
+    erros = sum(1 for a in achados if a.severidade == "ERRO")
+    avisos = len(achados) - erros
+    log.info("Conferência: %d erro(s), %d aviso(s).", erros, avisos)
+
+    if erros:
+        raise RuntimeError(f"Conferência encontrou {erros} erro(s) — o dado ⛔ deve ir à tela assim.")
 
 
 def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: float) -> None:

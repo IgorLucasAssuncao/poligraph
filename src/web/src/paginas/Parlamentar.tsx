@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import {
-  deixarDeSeguir,
   listarSeguidos,
   listarVotos,
   obterFicha,
-  seguir,
   type Alinhamento,
   type Ficha,
   type PaginaDe,
@@ -29,7 +27,8 @@ import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 import { Termo } from '../componentes/Termo';
 import { useSessao } from '../sessao';
 import { passosDaFicha } from '../tour';
-import { EsqueletoDeFicha } from '../componentes/Esqueleto';
+import { EsqueletoDeFicha, EsqueletoDeLista } from '../componentes/Esqueleto';
+import { IconeExplorar } from '../componentes/Icones';
 
 const PASSOS_DA_FICHA = passosDaFicha();
 
@@ -212,6 +211,16 @@ export function Parlamentar() {
  * havia mais. A contagem de baixo diz quantos são, e quantos deles ficam fora das
  * "votações registradas" do topo por ⛔ terem posição.
  */
+/** Menos que isto ⛔ filtra — a mesma regra do servidor (`TamanhoMinimoDaBusca`). */
+const BUSCA_MINIMA = 2;
+
+/**
+ * Os votos, com busca.
+ *
+ * ⭐ A busca existe porque "como fulano votou na reforma X" exigia rolar centenas de
+ * votos em ordem de data (2026-10-02). Ela procura na ementa — o assunto —, na descrição
+ * e na matéria ("PEC 45/2019"), sem diferença de acento: quem digita "tributaria" acha.
+ */
 function AbaVotos({
   pessoaId,
   legislatura,
@@ -225,24 +234,135 @@ function AbaVotos({
   total: number;
   comPosicao: number;
 }) {
-  const lista = usePaginas(votos, total, votos.length || 20, (pagina) =>
-    listarVotos(pessoaId, pagina, votos.length || 20, legislatura),
-  );
+  const [termo, setTermo] = useState('');
+  const [busca, setBusca] = useState('');
+  /** Guardado com o termo que pediu: o resultado de outra busca ⛔ aparece sob o termo novo. */
+  const [achados, setAchados] = useState<{ de: string; pagina: PaginaDe<VotoNaFicha> } | null>(null);
+  const [erroDaBusca, setErroDaBusca] = useState(false);
+
+  // ⚠️ Espera a digitação parar: cada tecla seria uma consulta.
+  useEffect(() => {
+    const timer = setTimeout(() => setBusca(termo.trim().length >= BUSCA_MINIMA ? termo.trim() : ''), 300);
+    return () => clearTimeout(timer);
+  }, [termo]);
+
+  useEffect(() => {
+    if (!busca) return;
+    let atual = true;
+    listarVotos(pessoaId, 1, POR_PAGINA_DA_BUSCA, legislatura, busca)
+      .then((pagina) => {
+        if (!atual) return;
+        setErroDaBusca(false);
+        setAchados({ de: busca, pagina });
+      })
+      .catch(() => atual && setErroDaBusca(true));
+    return () => {
+      atual = false;
+    };
+  }, [busca, pessoaId, legislatura]);
 
   if (votos.length === 0) return <p className="vazio">Nenhum voto registrado.</p>;
 
-  const semPosicao = total - comPosicao;
+  const resultado = busca && achados?.de === busca ? achados.pagina : null;
+
+  return (
+    <>
+      <div className="barra-busca barra-busca-votos">
+        <span className="icone-busca" aria-hidden="true">
+          <IconeExplorar />
+        </span>
+        <input
+          type="search"
+          placeholder="Buscar nos votos: assunto, projeto (PEC 45/2019)…"
+          value={termo}
+          onChange={(e) => setTermo(e.target.value)}
+          aria-label="Buscar nos votos"
+        />
+      </div>
+
+      {erroDaBusca && <p className="erro">Não foi possível buscar agora.</p>}
+      {busca && !resultado && !erroDaBusca && <EsqueletoDeLista rotulo="Buscando nos votos" linhas={3} />}
+
+      {busca && resultado ? (
+        <ListaDeVotos
+          key={busca}
+          pessoaId={pessoaId}
+          legislatura={legislatura}
+          busca={busca}
+          votos={resultado.itens}
+          total={resultado.total}
+          porPagina={POR_PAGINA_DA_BUSCA}
+        />
+      ) : (
+        !busca && (
+          <ListaDeVotos
+            pessoaId={pessoaId}
+            legislatura={legislatura}
+            votos={votos}
+            total={total}
+            comPosicao={comPosicao}
+            porPagina={votos.length || 20}
+          />
+        )
+      )}
+    </>
+  );
+}
+
+const POR_PAGINA_DA_BUSCA = 20;
+
+function ListaDeVotos({
+  pessoaId,
+  legislatura,
+  busca,
+  votos,
+  total,
+  comPosicao,
+  porPagina,
+}: {
+  pessoaId: number;
+  legislatura: number | null;
+  busca?: string;
+  votos: VotoNaFicha[];
+  total: number;
+  /** Só sem busca: a ficha sabe quantos têm posição na legislatura inteira. */
+  comPosicao?: number;
+  porPagina: number;
+}) {
+  const lista = usePaginas(votos, total, porPagina, (pagina) =>
+    listarVotos(pessoaId, pagina, porPagina, legislatura, busca),
+  );
+
+  if (busca && total === 0) {
+    return (
+      <p className="vazio">
+        Nenhum voto com “{busca}” nesta legislatura. A busca olha o assunto do projeto, a
+        descrição da votação e o número da matéria.
+      </p>
+    );
+  }
+
+  const semPosicao = comPosicao === undefined ? 0 : total - comPosicao;
 
   return (
     <>
       <p className="contagem-lista" aria-live="polite">
-        {lista.itens.length} de {total} registros de voto
-        {semPosicao > 0 && `, ${semPosicao} deles sem posição (obstrução ou ausência registrada)`}
+        {busca ? (
+          <>
+            {lista.itens.length === total ? total : `${lista.itens.length} de ${total}`}{' '}
+            {total === 1 ? 'voto' : 'votos'} com “{busca}”
+          </>
+        ) : (
+          <>
+            {lista.itens.length} de {total} registros de voto
+            {semPosicao > 0 && `, ${semPosicao} deles sem posição (obstrução ou ausência registrada)`}
+          </>
+        )}
         {' · '}
         <BotaoBaixarCsv
-          rotulo="Baixar todos (CSV)"
+          rotulo={busca ? 'Baixar os encontrados (CSV)' : 'Baixar todos (CSV)'}
           montar={async () => {
-            const todos = await buscarTodas((pagina) => listarVotos(pessoaId, pagina, 100, legislatura));
+            const todos = await buscarTodas((pagina) => listarVotos(pessoaId, pagina, 100, legislatura, busca));
             baixarCsv(
               `votos-${pessoaId}.csv`,
               ['Votação', 'Data', 'Voto', 'Orientação do Governo', 'Matéria', 'Descrição', 'Categoria', 'Proposição', 'Registro'],

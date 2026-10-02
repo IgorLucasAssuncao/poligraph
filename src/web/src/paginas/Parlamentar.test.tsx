@@ -568,8 +568,45 @@ describe('listas da ficha em páginas', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Mostrar mais 1' }));
 
     expect(await screen.findByText('Votação v2')).toBeDefined();
-    expect(vi.mocked(api.listarVotos)).toHaveBeenCalledWith(1, 2, 2, 57);   // a legislatura que a ficha mostra
+    expect(vi.mocked(api.listarVotos)).toHaveBeenCalledWith(1, 2, 2, 57, undefined);   // a legislatura que a ficha mostra
     expect(screen.queryByRole('button', { name: /Mostrar mais/ })).toBeNull();
+  });
+
+  /**
+   * ⭐ "Como fulano votou em X" sem rolar centenas de votos (2026-10-02). A busca vai ao
+   * servidor — a ficha só tem a primeira página — e a contagem diz o que achou.
+   */
+  it('votos: a busca pede ao servidor e diz quantos achou', async () => {
+    vi.mocked(api.listarVotos).mockResolvedValue({ itens: [voto('v9', 1, null)], pagina: 1, tamanho: 20, total: 1 });
+    await renderizarCom({ ...FICHA, votosRecentes: [voto('v0', 1, null)], nVotacoes: 1, nRegistrosDeVoto: 1 });
+
+    await userEvent.type(await screen.findByLabelText('Buscar nos votos'), 'tributaria');
+
+    expect(await screen.findByText('Votação v9')).toBeDefined();
+    expect(await tela()).toMatch(/1 voto com “tributaria”/);
+    expect(vi.mocked(api.listarVotos)).toHaveBeenLastCalledWith(1, 1, 20, 57, 'tributaria');
+    expect(screen.queryByText('Votação v0')).toBeNull();
+  });
+
+  it('votos: uma letra ⛔ busca, e apagar volta à lista da ficha', async () => {
+    vi.mocked(api.listarVotos).mockClear();
+    await renderizarCom({ ...FICHA, votosRecentes: [voto('v0', 1, null)], nVotacoes: 1, nRegistrosDeVoto: 1 });
+
+    const campo = await screen.findByLabelText('Buscar nos votos');
+    await userEvent.type(campo, 'a');
+    await new Promise((r) => setTimeout(r, 400));
+
+    expect(vi.mocked(api.listarVotos)).not.toHaveBeenCalled();
+    expect(screen.getByText('Votação v0')).toBeDefined();
+  });
+
+  it('votos: busca sem resultado diz onde procurou', async () => {
+    vi.mocked(api.listarVotos).mockResolvedValue({ itens: [], pagina: 1, tamanho: 20, total: 0 });
+    await renderizarCom({ ...FICHA, votosRecentes: [voto('v0', 1, null)], nVotacoes: 1, nRegistrosDeVoto: 1 });
+
+    await userEvent.type(await screen.findByLabelText('Buscar nos votos'), 'xyz');
+
+    expect(await screen.findByText(/Nenhum voto com “xyz” nesta legislatura/)).toBeDefined();
   });
 
   it('convênios: o botão diz quantos faltam', async () => {

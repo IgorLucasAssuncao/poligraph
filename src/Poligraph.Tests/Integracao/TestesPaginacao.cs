@@ -36,6 +36,48 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Single(terceira!.Itens);
     }
 
+    /// <summary>
+    /// A busca nos votos da ficha: "como fulano votou na reforma X" sem rolar centenas.
+    /// Procura na ementa, na descrição e na matéria, sem diferença de caixa nem de acento.
+    /// </summary>
+    [SkippableTheory]
+    [InlineData("licenciamento ambiental", "900002-1")]
+    [InlineData("ambiental licenciamento", "900002-1")]
+    [InlineData("PLP 243", "900004-1")]
+    [InlineData("MANIFESTACOES", "900001-1")]
+    [InlineData("PLP 243/2023", "900004-1")]
+    [InlineData("Mantido o texto", "900005-1")]
+    public async Task Votos_Busca_AchaPelaEmentaDescricaoOuMateria(string busca, string esperada)
+    {
+        ExigeDocker();
+        var pessoaId = await SemearAsync();
+        using var cliente = CriarCliente();
+
+        var achados = await cliente.GetFromJsonAsync<PaginaLida<VotoLido>>(
+            $"{Rota}/{pessoaId}/votos?busca={Uri.EscapeDataString(busca)}");
+
+        Assert.Equal(1, achados!.Total);
+        Assert.Equal(esperada, Assert.Single(achados.Itens).VotacaoId);
+    }
+
+    /// <summary>
+    /// Uma letra não filtra, e caractere de expressão regular é procurado ao pé da letra —
+    /// "(" sem escape derrubaria a consulta com erro 500.
+    /// </summary>
+    [SkippableFact]
+    public async Task Votos_Busca_CurtaNaoFiltra_EMetacaractereNaoQuebra()
+    {
+        ExigeDocker();
+        var pessoaId = await SemearAsync();
+        using var cliente = CriarCliente();
+
+        var curta = await cliente.GetFromJsonAsync<PaginaLida<VotoLido>>($"{Rota}/{pessoaId}/votos?busca=a");
+        var estranha = await cliente.GetAsync($"{Rota}/{pessoaId}/votos?busca={Uri.EscapeDataString("pena (80%")}");
+
+        Assert.Equal(5, curta!.Total);
+        Assert.Equal(HttpStatusCode.OK, estranha.StatusCode);
+    }
+
     [SkippableFact]
     public async Task Votos_DeParlamentarInexistente_Respondem404()
     {

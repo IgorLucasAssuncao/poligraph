@@ -303,7 +303,10 @@ export async function sair(): Promise<void> {
 export type PanoramaDaCasa = {
   casa: Casa;
   parlamentares: number;
+  /** Só as com voto nominal — as que o cálculo usa (PL68). */
   votacoes: number;
+  /** Registradas pela casa sem a lista de quem votou como. ⛔ Entram em `votacoes`. */
+  votacoesSemVotoNominal: number;
   /** 🔴 O sigilo do Senado é achado do trabalho, não detalhe: 239 de 421. */
   votacoesSecretas: number;
   votosComPosicao: number;
@@ -397,14 +400,22 @@ export async function obterFicha(id: number, legislatura?: number): Promise<Fich
  */
 export type PaginaDe<T> = { itens: T[]; pagina: number; tamanho: number; total: number };
 
-/** Votos de uma legislatura da pessoa, do mais recente. A página 1 é a que vem na ficha. */
+/**
+ * Votos de uma legislatura da pessoa, do mais recente. A página 1 é a que vem na ficha.
+ *
+ * `busca` procura na ementa, na descrição e na matéria, sem diferença de caixa nem de
+ * acento; com ela, `total` é o dos encontrados. Menos de 2 letras ⛔ filtram.
+ */
 export async function listarVotos(
   id: number,
   pagina: number,
   tamanho: number,
   legislatura?: number | null,
+  busca?: string,
 ): Promise<PaginaDe<VotoNaFicha>> {
-  const filtro = legislatura ? `&legislatura=${legislatura}` : '';
+  const filtro =
+    (legislatura ? `&legislatura=${legislatura}` : '') +
+    (busca ? `&busca=${encodeURIComponent(busca)}` : '');
   return buscar<PaginaDe<VotoNaFicha>>(
     `${BASE}/parlamentares/${id}/votos?pagina=${pagina}&tamanho=${tamanho}${filtro}`,
   );

@@ -1,4 +1,6 @@
 ﻿using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Poligraph.Api.Dtos;
@@ -14,6 +16,9 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
 
     /// <summary>Quantos votos vêm na ficha, e em cada página seguinte.</summary>
     public const int VotosPorPagina = 20;
+
+    /// <summary>Abaixo disto a busca não filtra: uma letra casaria com quase todo voto.</summary>
+    public const int TamanhoMinimoDaBusca = 2;
 
     private const int SimilaresNaFicha = 10;
 
@@ -183,9 +188,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <para>A ficha mostrava 20 dos ~845 votos do deputado mediano, sem dizer que havia mais. A primeira página é a mesma que vem na ficha.</para>
     /// <para><c>Total</c> conta também os registros sem posição (obstrução, ausência registrada), que a lista mostra e as "votações registradas" da ficha não contam. A tela diz a diferença.</para>
     /// <para>Devolve <c>null</c> para pessoa inexistente, e o endpoint responde 404.</para>
+    /// <para><c>busca</c> procura na descrição da votação, na ementa e na matéria ("PEC 45/2019"), sem diferença de caixa nem de acento. Com ela, <c>Total</c> é o dos encontrados.</para>
     /// </remarks>
     public async Task<PaginaDto<VotoNaFichaDto>?> ListarVotosAsync(
-        long id, int pagina, int tamanho, short? legislatura, CancellationToken ct)
+        long id, int pagina, int tamanho, short? legislatura, string? busca, CancellationToken ct)
     {
         if (!await _db.Pessoas.AnyAsync(p => p.Id == id, ct)) return null;
 
@@ -193,12 +199,11 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         tamanho = Math.Clamp(tamanho, 1, TamanhoMaximo);
 
         var alvo = await LegislaturaDaPessoaAsync(id, legislatura, ct);
-        var total = await _db.Votos.CountAsync(
-            v => v.PessoaId == id && v.Votacao!.Legislatura == alvo, ct);
+        var votos = VotosDaPessoa(id, alvo, busca);
 
         return new PaginaDto<VotoNaFichaDto>(
-            await UltimosVotosAsync(id, alvo, (pagina - 1) * tamanho, tamanho, ct),
-            pagina, tamanho, total);
+            await PaginaDeVotosAsync(votos, (pagina - 1) * tamanho, tamanho, ct),
+            pagina, tamanho, await votos.CountAsync(ct));
     }
 
     /// <summary>A pedida, se a pessoa votou nela; senão a última em que votou. Nula sem voto.</summary>
@@ -246,7 +251,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
                 v => v.PessoaId == id && v.Valor != null
                      && v.Votacao!.Legislatura == alvo, ct),
             mandato?.NRegistrosDeVoto ?? 0,
-            await UltimosVotosAsync(id, alvo, 0, VotosPorPagina, ct),
+            await PaginaDeVotosAsync(VotosDaPessoa(id, alvo, null), 0, VotosPorPagina, ct),
             await MaisSimilaresAsync(id, casa, alvo, ct),
             await AlinhamentoAsync(id, casa, alvo, partido, ct),
             await PresencaAsync(id, casa, alvo, ct),
@@ -348,11 +353,78 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <para>Subconsulta, não `join`: a orientação é opcional, e um `join` sem `DefaultIfEmpty` sumiria com as votações que o Governo não orientou — que são justamente as mais comuns na ficha.</para>
     /// <para>"PL 4.133/2023" — a etiqueta curta que permite conferir na fonte. Não é enfeite: sem ela, quem quiser checar a ementa não tem por onde procurar.</para>
     /// </remarks>
-    private async Task<List<VotoNaFichaDto>> UltimosVotosAsync(
-        long id, short? legislatura, int pular, int quantos, CancellationToken ct)
+    /// <summary>Os votos da pessoa na legislatura, filtrados pela busca quando houver.</summary>
+    /// <remarks>
+    /// <para>Expressão regular, e não <c>unaccent</c>: a extensão não está no banco, e instalá-la seria migration para uma busca. A expressão troca cada vogal e o "c" pela classe com as variantes acentuadas — "tributaria" acha "tributária".</para>
+    /// </remarks>
+    private IQueryable<VotoModel> VotosDaPessoa(long id, short? legislatura, string? busca)
     {
-        var votos = await _db.Votos.AsNoTracking()
-            .Where(v => v.PessoaId == id && v.Votacao!.Legislatura == legislatura)
+        var votos = _db.Votos.AsNoTracking()
+            .Where(v => v.PessoaId == id && v.Votacao!.Legislatura == legislatura);
+
+        if (string.IsNullOrWhiteSpace(busca) || busca.Trim().Length < TamanhoMinimoDaBusca) return votos;
+
+        foreach (var palavra in PalavrasDaBusca(busca))
+        {
+            var padrao = PadraoSemAcento(palavra);
+            votos = votos.Where(v =>
+                Regex.IsMatch(v.Votacao!.Descricao ?? "", padrao, RegexOptions.IgnoreCase)
+                || Regex.IsMatch(v.Votacao.Proposicao!.Ementa ?? "", padrao, RegexOptions.IgnoreCase)
+                || Regex.IsMatch(
+                    (v.Votacao.Proposicao!.SiglaTipo ?? "") + " " + v.Votacao.Proposicao.Numero + "/" + v.Votacao.Proposicao.Ano,
+                    padrao, RegexOptions.IgnoreCase));
+        }
+
+        return votos;
+    }
+
+    /// <summary>
+    /// Cada palavra precisa aparecer, em qualquer ordem e em qualquer dos três campos:
+    /// "sistema tributario" acha "Altera o Sistema Tributário Nacional". A matéria fica
+    /// inteira — "PEC 45/2019" — porque separada viraria "PEC" em qualquer emenda.
+    /// </summary>
+    /// <remarks>
+    /// <para>O nome popular ("reforma tributária", "arcabouço") ainda não acha: a ementa oficial não o usa, e as palavras-chave da Câmara não são ingeridas (PL70).</para>
+    /// </remarks>
+    private static IEnumerable<string> PalavrasDaBusca(string busca)
+    {
+        var termo = busca.Trim();
+        if (Regex.IsMatch(termo, @"^[A-Za-z]{2,5}\s*\d+(/\d{2,4})?$")) return [termo];
+
+        return termo.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Where(p => p.Length >= TamanhoMinimoDaBusca);
+    }
+
+    /// <summary>
+    /// O termo como expressão regular que casa com ou sem acento. Os metacaracteres são
+    /// escapados antes: "PEC 45/2019" e "art. 5" são procurados ao pé da letra.
+    /// </summary>
+    private static string PadraoSemAcento(string termo)
+    {
+        var padrao = new StringBuilder();
+        foreach (var letra in Regex.Escape(SemAcento(termo).ToLowerInvariant()))
+            padrao.Append(letra switch
+            {
+                'a' => "[aáàâã]",
+                'e' => "[eéê]",
+                'i' => "[ií]",
+                'o' => "[oóôõ]",
+                'u' => "[uúü]",
+                'c' => "[cç]",
+                _ => letra.ToString(),
+            });
+        return padrao.ToString();
+    }
+
+    private static string SemAcento(string texto) =>
+        new([.. texto.Normalize(NormalizationForm.FormD)
+            .Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c)
+                        != System.Globalization.UnicodeCategory.NonSpacingMark)]);
+
+    private async Task<List<VotoNaFichaDto>> PaginaDeVotosAsync(
+        IQueryable<VotoModel> doFiltro, int pular, int quantos, CancellationToken ct)
+    {
+        var votos = await doFiltro
             .OrderByDescending(v => v.Votacao!.Data)
             .ThenByDescending(v => v.VotacaoId)
             .Skip(pular)

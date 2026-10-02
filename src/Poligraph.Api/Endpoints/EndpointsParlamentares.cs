@@ -79,11 +79,12 @@ public static class EndpointsParlamentares
         long id, ServicoGastosDeCota servico, CancellationToken ct, int? ano = null) =>
         Results.Ok(await servico.ObterAsync(id, ano, ct));
 
-    /// <summary>Os votos de uma legislatura da pessoa, do mais recente, em páginas. Sem legislatura, a última em que votou.</summary>
+    /// <summary>Os votos de uma legislatura da pessoa, do mais recente, em páginas. Sem legislatura, a última em que votou. <c>busca</c> filtra por descrição, ementa e matéria.</summary>
     private static async Task<IResult> ListarVotosAsync(
         long id, ServicoParlamentares servico, CancellationToken ct,
-        int pagina = 1, int tamanho = ServicoParlamentares.VotosPorPagina, short? legislatura = null) =>
-        await servico.ListarVotosAsync(id, pagina, tamanho, legislatura, ct) is { } votos
+        int pagina = 1, int tamanho = ServicoParlamentares.VotosPorPagina, short? legislatura = null,
+        string? busca = null) =>
+        await servico.ListarVotosAsync(id, pagina, tamanho, legislatura, busca, ct) is { } votos
             ? Results.Ok(votos)
             : Results.NotFound();
 

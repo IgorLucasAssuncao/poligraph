@@ -10,7 +10,6 @@ import {
   type PanoramaDaCasa,
   type Parlamentar,
 } from '../api';
-import { Avatar } from '../componentes/Avatar';
 import { LegendaDoGrafo } from '../componentes/LegendaDoGrafo';
 import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 import { SugestoesParaSeguir } from '../componentes/SugestoesParaSeguir';
@@ -288,6 +287,16 @@ function CartaoDaCasa({ casa }: { casa: PanoramaDaCasa }) {
           <dd>{casa.comunidades.toLocaleString('pt-BR')}</dd>
         </div>
       </dl>
+
+      {/* ⚠️ PL68 — o painel contava toda votação registrada, e a 51ª da Câmara afirmava
+          1.548 com 7 de voto nominal. O número acima é o que o cálculo usa; o resto é
+          dito aqui, ⛔ somado calado. */}
+      {casa.votacoesSemVotoNominal > 0 && (
+        <p className="cartao-ressalva">
+          Outras {casa.votacoesSemVotoNominal.toLocaleString('pt-BR')} votações ficaram fora da
+          conta: a casa as registrou sem a lista de quem votou como.
+        </p>
+      )}
 
       {/* 🔴 O sigilo muda o que a figura daquela casa pode afirmar, e omiti-lo faria as
           duas parecerem comparáveis. É achado do trabalho, não rodapé. */}

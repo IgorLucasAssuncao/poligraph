@@ -54,14 +54,15 @@ Nenhum é para copiar. Cada um responde a uma pergunta diferente, e juntos cobre
 |---|---|---|
 | **Lista de parlamentares** | Nome, casa, partido, estado, período (na faixa do topo) | **Filtros aplicados visíveis e um "limpar"**. A ordenação por "mais votações" existe na API e ⛔ na tela. Contagem por opção |
 | **Grafo** | Casa, período, busca de nome, limiar das ligações, layout, fotos, eixos, isolar um nó | **Destacar meu estado / um partido** sem esconder o resto — é a tarefa *relate* sobre o desenho |
-| **Ficha → votos** | Nenhum: lista cronológica, "mostrar mais" | 🔴 **Buscar uma votação** ("reforma tributária") e filtrar por posição (sim, não, ausente). Hoje "como meu deputado votou em X" exige rolar centenas de itens |
+| **Ficha → votos** | ✅ **Busca** (2026-10-02): na ementa, na descrição e na matéria ("PEC 45/2019"), sem diferença de caixa nem de acento; a contagem diz quantos achou e o CSV baixa os encontrados | Filtrar por posição (sim, não, ausente) |
 | **Resultado do questionário** | Nenhum | 🔴 **Só os do meu estado.** "Quem me representa vota como eu?" é a pergunta de quem chega, e hoje a resposta mistura os 643 |
 | Emendas por cidade | Período, estado, cidade | — bom |
 | Entidades | Busca, grupo | — bom |
 | Governo | Período | — |
 
-⭐ As duas lacunas 🔴 são as de maior valor: o filtro por estado no resultado e a busca
-nos votos da ficha. As duas usam dado que já está na tela; nenhuma pede ETL.
+⭐ As duas lacunas 🔴 eram as de maior valor: o filtro por estado no resultado e a busca
+nos votos da ficha. ✅ A busca entrou em 2026-10-02; o filtro por estado continua aberto
+(U15).
 
 ---
 
@@ -72,37 +73,83 @@ Pela pergunta com que ela chega:
 | Pergunta | Hoje | Lacuna |
 |---|---|---|
 | Quem vota como eu? | ✅ Questionário e resultado, por casa, com "X de Y" | Do **meu estado** (§3) |
-| Como fulano votou em X? | 🟡 Lista cronológica de votos | Busca (§3) |
+| Como fulano votou em X? | ✅ Busca nos votos da ficha (2026-10-02) | Filtro por posição |
 | Fulano segue o partido? O governo? | ✅ Disciplina e governismo (Câmara) | Senado ⛔ publica orientação |
 | Ele aparece para votar? | ✅ Presença em plenário | — |
 | Como gasta o dinheiro? | ✅ Cota, emendas, campanha | **Comparar com a casa** (mediana dos pares) |
 | Quem anda com quem? | ✅ Grafo, grupos | Leitura difícil para leigo; nomear os grupos |
-| O que mudou? | ⛔ — as notícias saíram em 2026-10-02 | Notificações (abaixo) |
+| O que mudou? | ⛔ — as notícias saíram em 2026-10-02 | "O que mudou" — decidido, §4.1 |
 | Fulano × beltrano | ⛔ | Comparação de dois |
 
-### 4.1 Notificações no lugar das notícias
+### 4.1 "O que mudou" — os avisos que substituem as notícias
 
-As notícias saíram por falta de tempo para fazê-las bem. O que pode substituí-las sai do
-**dado que já ingerimos** — sem coletor novo, sem associar nome a texto, sem
-confiança de 0,70.
+> ✅ **Decidido pelo autor em 2026-10-02** (PL63): os **cinco avisos** abaixo, numa seção
+> **"O que mudou" dentro do site**, ⛔ por e-mail. Pré-requisito: a carga agendada
+> (PL64). Esta seção é a especificação: a implementação sai dela.
 
-| Aviso, sobre quem a pessoa segue | De onde | Valor |
+As notícias saíram por falta de tempo para fazê-las bem. Os avisos saem do **dado que já
+ingerimos**: sem coletor novo, sem associar nome a texto, sem limiar de confiança. Todo
+aviso é um **fato registrado pela casa**, com a fonte ao lado, como o resto do site.
+
+#### Os cinco avisos
+
+| # | Aviso | Regra | Tabelas e campo de data | Janela | Casas |
+|---|---|---|---|---|---|
+| A1 | **Votou nesta semana** — "votou em 12 votações de plenário; ausente em 3" | Votos da pessoa em votações de plenário com `data` na janela. "Ausente" é a presença `AUSENTE` ou `AUSENTE_JUSTIFICADO`; no Senado, a justificativa vai junto | `votos`, `votacoes.data` | Semana corrida | Câmara e Senado |
+| A2 | **Votou contra o próprio partido** — "votou Não; o PT orientou Sim", com o nome da votação | Voto Sim ou Não oposto à orientação Sim ou Não da bancada do partido **no voto** — a mesma regra da disciplina (federação conta como o partido, bloco ⛔; achado #36). Liberado e obstrução ⛔ contam | `votos`, `orientacoes` | Semana | **Só Câmara**: o Senado ⛔ publica orientação |
+| A3 | **Trocou de partido** — "votou pelo PL; antes, pelo PP" | `partido_no_voto` do voto mais recente diferente do anterior | `votos.partido_no_voto` | Desde a última carga | Câmara e Senado |
+| A4 | **Gastou na cota** — "R$ 38 mil em setembro; o maior gasto, R$ 12 mil com divulgação" | Soma do mês e a maior categoria | `despesas` (`ano`, `mes`) | Mês fechado | Câmara e Senado |
+| A5 | **Emenda paga** — "R$ 1,2 mi pagos em setembro, para Lindoeste (PR)" | Soma das parcelas pagas no mês, com o destino | `emendas_favorecidos` (`competencia`) e `emendas` | Mês | Deputados e senadores com emenda |
+
+⚠️ **A janela é a do dado, ⛔ a do relógio.** A cota chega com semanas de atraso, e a
+emenda é publicada por competência mensal. "Gastou em setembro" é o que a casa publicou
+sobre setembro até a última carga. A tela diz a data da carga.
+
+#### O que ⛔ entra
+
+| Aviso | Por quê |
+|---|---|
+| "Votou diferente de você" | **Impossível por desenho**: as respostas do questionário ⛔ são gravadas. Gravar seria guardar opinião política (LGPD art. 5º, II) |
+| Ranking ("o que mais gastou", "o mais ausente") | Juízo de valor (RNF-16) e comparação sem base comum |
+| Adjetivos ("traiu", "faltou") | RNF-16: o registro, ⛔ a leitura dele |
+
+#### A tela
+
+- Seção **"O que mudou"** no início, só para quem segue alguém, ⛔ substitui a lista de
+  quem a pessoa segue: vem antes dela.
+- Um item por fato, do mais recente; o nome da pessoa leva à ficha, e o fato leva à aba
+  dele (votos, cota, emendas).
+- Cada item com a **fonte** e o **dia da carga**: "Câmara dos Deputados · atualizado em
+  02/10".
+- Vazio honesto: "Nada novo desde a última atualização, em 02/10." ⛔ "Sem novidades
+  hoje": a base ⛔ é de hoje.
+- Sem conta, a seção ⛔ aparece: seguir exige conta (PL65).
+
+#### API
+
+- `GET /api/seguidos/novidades?desde=` — exige conta, como o resto de `/api/seguidos`.
+  `desde` padrão: 7 dias para A1–A3, o último mês fechado para A4–A5.
+- 🔴 Lê a tabela `segue`, que é dado sensível: ⛔ log com nome de seguido, ⛔ cache
+  compartilhado entre usuários. O cache de leitura do site é por chave, e a chave aqui
+  seria a lista de alguém.
+
+#### ⚠️ Pré-requisito — a carga agendada (PL64)
+
+A ETL roda à mão (botões no painel do Aspire). "O que mudou" sem carga agendada é o que
+mudou desde a última vez que alguém apertou o botão, e a tela afirmaria uma atualidade que
+⛔ tem.
+
+| Carga | Frequência | Comando |
 |---|---|---|
-| **Votou nesta semana**: em quantas votações de plenário, ausente em quantas | `votos` | 🔴 Alto — é o núcleo do trabalho |
-| **Votou contra o próprio partido** | `orientacoes` + `votos` (Câmara) | 🔴 Alto — é o que vira notícia, e é medido |
-| **Trocou de partido** | `partido_no_voto` mudando | Médio, raro |
-| **Gastou na cota neste mês**, e o maior fornecedor | `despesas` | Médio |
-| **Emenda paga** e para onde | `emendas` | Médio |
-| ⛔ "Votou diferente de você" | — | **Impossível por desenho**: as respostas ⛔ são gravadas. Gravar seria guardar opinião política (LGPD art. 5º, II) |
+| Votações e votos da Câmara e do Senado, ano corrente | Semanal | `ingerir`, `senado` |
+| Orientações (vêm com a Câmara) | Semanal | `ingerir` |
+| Cota | Mensal | `cota` |
+| Emendas e favorecidos | Mensal | `emendas` |
+| Conferência | Depois de cada carga | `conferir` — falha se houver ERRO |
+| Análise (grafo) | Mensal | `analisar` |
 
-⭐ **Recomendação:** uma seção **"O que mudou"** no início, para quem segue alguém,
-**dentro do site** e ⛔ por e-mail. E-mail exige serviço de envio, consentimento
-próprio e assunto sem nome (o desenho já existiu e foi retirado). O aviso no site usa só
-o que já está no banco.
-
-⚠️ **Pré-requisito:** a ETL hoje roda à mão (botões no painel do Aspire). Aviso semanal
-pede a carga **agendada**: votações toda semana, cota e emendas todo mês. Sem isso, "o
-que mudou" é o que mudou desde a última vez que alguém apertou o botão.
+No VPS, o agendamento é do Coolify (tarefa agendada no contêiner da ETL), ⛔ do Aspire,
+que é só desenvolvimento.
 
 ---
 
@@ -138,15 +185,26 @@ Quatro tipos, do mais barato ao mais caro:
 | Votantes numa votação ≤ cadeiras (validade) | Câmara: máximo 510 de 513. Senado: **1 votação com 82**, na 56ª | 🔴 investigar |
 | Data da votação dentro da legislatura (consistência) | 0 fora | ✅ |
 | Placar gravado = votos contados, Câmara (consistência) | **13 divergências em 6.048** votações com voto | 🟡 investigar as 13 |
-| Votação sem nenhum voto (completude) | Câmara 51ª: **1.541 de 1.548**. Nas outras: 129 a 546 por legislatura | 🟡 a 51ª da Câmara praticamente ⛔ tem voto nominal; as outras são votações simbólicas, e a tela ⛔ as separa |
+| Votação sem nenhum voto (completude) | Câmara 51ª: **1.541 de 1.548**. Nas outras: 129 a 546 por legislatura | ✅ PL68: o painel conta só as com voto nominal e diz quantas ficaram de fora |
 | Partido vazio ou "Sem registro" no voto (completude) | ~0% depois da correção | ✅ |
 | Código do Senado na numeração da data (validade) | 38 fora de época, já descartadas | ✅ virou regra da ingestão |
 
-⭐ **Proposta:** um comando `conferir` na ETL, só de leitura, que roda essas regras para
-toda casa e legislatura, imprime o relatório e **falha** quando uma regra 🔴 quebra.
-Rodado no fim de toda carga, ele faz da descoberta acidental um passo do processo. Num
-segundo momento, o resultado pode ir para a página "Como calculamos": o site dizer o que
-conferiu, e quando, é a mesma regra de mostrar a conta junto do número.
+✅ **Feito em 2026-10-02 (PL66):** `python -m poligraph_etl conferir` — e o botão
+`etl-conferir` no Aspire. Só lê; roda as regras para toda casa e legislatura e **falha**
+quando uma regra de ERRO quebra. Regras e limites em `poligraph_etl/conferencia.py`, com
+os casos reais nos testes.
+
+📐 **A primeira rodada, no banco de 2026-10-02: 0 erros, 29 avisos.**
+
+| Aviso | Quantos | O que é |
+|---|---:|---|
+| `placar-divergente` | 13 | 11 são votação só com presença (abaixo); 2 diferem por um voto (52ª e 53ª) |
+| `sem-posicao-nenhuma` | 11 | Câmara: eleição de autoridade e indicação ("Eleito o Sr. …"), com o voto de cada um ⛔ publicado. **Secreta de fato**, e a base a marca como aberta (PL69) |
+| `votacoes-sem-voto` | 3 | Câmara 51ª (1.541 de 1.548), 52ª (309 de 600) e 54ª (455 de 905) |
+| `votantes-na-votacao` · `senadores-por-uf` | 1 · 1 | SF-5999 (2019-08-14): Tocantins com 4 — titular e suplente no dia da troca. É da fonte |
+
+Num segundo momento, o resultado pode ir para a página "Como calculamos": o site dizer o
+que conferiu, e quando, é a mesma regra de mostrar a conta junto do número.
 
 ### 5.3 Reconciliação — conferir contra o que o órgão publica
 
@@ -180,11 +238,11 @@ sessão. As tarefas 1 e 2 ⛔ são possíveis hoje: elas testam exatamente as la
 
 | # | O quê | Por quê |
 |---|---|---|
-| 1 | `conferir` na ETL (§5.2) | Barato, e protege tudo o que vem depois |
+| ✅ 1 | `conferir` na ETL (§5.2) | Feito em 2026-10-02 |
 | 2 | Filtro por estado no resultado (§3) | Maior valor por esforço; dado já na tela |
-| 3 | Busca nos votos da ficha (§3) | Segunda pergunta de quem chega |
+| ✅ 3 | Busca nos votos da ficha (§3) | Feito em 2026-10-02 |
 | 4 | Amostra manual (§5.3) | Dá ao TCC a frase "conferido contra a fonte oficial" |
-| 5 | "O que mudou" no início + carga agendada (§4.1) | Substitui as notícias |
+| 5 | Carga agendada (PL64), depois "O que mudou" (§4.1, decidido) | Substitui as notícias |
 | 6 | Teste com 5 pessoas (§5.4) | Valida as quatro acima |
 | 7 | Comparação de dois parlamentares; matriz partido × grupo | Desejável |
 
