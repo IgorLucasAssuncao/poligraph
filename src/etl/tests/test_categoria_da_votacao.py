@@ -205,3 +205,38 @@ def test_concordancia_nao_vira_divergencia():
         {"id": "x", "categoria": "DESTAQUE", "abertura": "Votação do DTQ 3: Destaque."},
         {"id": "y", "categoria": "SUBSTANTIVA", "abertura": "Votação em turno único."},
     ]) == []
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Achado #35 — o vocabulário das legislaturas anteriores
+# ═══════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.parametrize(
+    "descricao",
+    [
+        # 📐 Frases REAIS de 2011 a 2016: o destaque supressivo descrito pelo resultado.
+        "Suprimido o artigo: Sim: 156; não: 220; abstenção: 04; total: 380.",
+        "Suprimida expressão. Sim: 8; não: 344; total: 352.",
+        "Suprimidos o texto. Sim: 36; Não: 392; Total: 428.",
+        "Restabelecido o texto da Câmara dos Deputados. Sim: 360; não: 96; abstenção: 1; total: 457.",
+    ],
+)
+def test_destaque_supressivo_antigo_e_destaque(descricao):
+    assert classificar_categoria(descricao) == "DESTAQUE"
+
+
+def test_destaque_supressivo_antigo_e_reconhecido_pelo_canario():
+    assert descricoes_nao_reconhecidas(["Suprimida expressão. Sim: 8; não: 344."]) == []
+
+
+@pytest.mark.parametrize("vazio", [float("nan"), None, "", "   "])
+def test_abertura_vazia_nao_derruba_a_ingestao(vazio):
+    """📐 Em 2003 a célula vem vazia, e o pandas a entrega como NaN — float, e verdadeiro."""
+    assert sigla_do_objeto(vazio) is None
+
+
+def test_divergencia_com_abertura_nan_nao_estoura():
+    votacoes = [{"id": "1", "categoria": "SUBSTANTIVA", "descricao": "x", "abertura": float("nan")}]
+
+    assert divergencias_de_destaque(votacoes) == []

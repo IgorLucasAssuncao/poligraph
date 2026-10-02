@@ -118,12 +118,34 @@ def test_o_mapeamento_da_camara_nao_serve():
     """As duas casas exigem normalizações diferentes.
 
     `Votou` não existe na Câmara, e passá-lo pelo normalizador de lá devolveria `None`
-    por acaso — não por decisão. O contrário é pior: `Obstrução` não existe no Senado.
+    por acaso — não por decisão. O contrário também: `Artigo 17` é o presidente da
+    Câmara; o do Senado vem como prefixo `Presidente`.
+
+    ⚠️ O exemplo era `Obstrução`, "que não existe no Senado". Na 57ª ⛔ existia; em 2011
+    aparece uma vez (achado #35). Medir uma legislatura e generalizar, de novo.
     """
     from poligraph_etl.normalizacao import normalizar_voto as normalizar_camara
 
-    assert normalizar_camara("Obstrução") is None
-    assert ingestao_senado.eh_sigla_conhecida("Obstrução") is False
+    assert normalizar_camara("Artigo 17") is None
+    assert ingestao_senado.eh_sigla_conhecida("Artigo 17") is False
+
+
+def test_siglas_das_legislaturas_anteriores_sao_conhecidas_e_sem_posicao():
+    """📐 Achado #35, com a descrição que a própria fonte publica para cada uma."""
+    for sigla in ("REP", "P-OD", "LG", "Obstrução"):
+        assert ingestao_senado.eh_sigla_conhecida(sigla), sigla
+        assert ingestao_senado.normalizar_voto(sigla) is None, sigla
+
+
+def test_presenca_das_siglas_anteriores():
+    assert ingestao_senado.presenca_do_voto("REP") == "AUSENTE_JUSTIFICADO"
+    assert ingestao_senado.presenca_do_voto("LG") == "AUSENTE_JUSTIFICADO"
+    assert ingestao_senado.presenca_do_voto("P-OD") == "PRESENTE"
+
+
+def test_merc_continua_desconhecida():
+    """A fonte ⛔ descreve `MERC`. Sem descrição, ⛔ palpite: fica no log."""
+    assert ingestao_senado.eh_sigla_conhecida("MERC") is False
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -415,3 +437,32 @@ def test_presenca_pela_sigla(sigla, presenca):
     from poligraph_etl.ingestao_senado import presenca_do_voto
 
     assert presenca_do_voto(sigla) == presenca
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Achado #35 — a lacuna da fonte em 2015 e 2016
+# ═══════════════════════════════════════════════════════════════════
+
+
+def test_lacuna_conhecida_passa_com_aviso(caplog):
+    from poligraph_etl.fontes import senado
+
+    with caplog.at_level("WARNING", logger="poligraph"):
+        senado.conferir_volume([{}] * 13, 2016)
+
+    assert "lacuna conhecida" in caplog.text
+
+
+def test_abaixo_do_piso_da_lacuna_continua_estourando():
+    """A lacuna é um piso: o canário só se cala para o volume que foi MEDIDO."""
+    from poligraph_etl.fontes import senado
+
+    with pytest.raises(RuntimeError):
+        senado.conferir_volume([{}] * 5, 2016)
+
+
+def test_ano_sem_lacuna_conhecida_continua_estourando():
+    from poligraph_etl.fontes import senado
+
+    with pytest.raises(RuntimeError):
+        senado.conferir_volume([{}] * 13, 2021)

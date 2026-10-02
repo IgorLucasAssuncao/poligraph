@@ -42,6 +42,14 @@ CABECALHOS = {"Accept": "application/json"}
 # menos que isto significa recorte errado ou mudança de contrato, não Senado parado.
 MINIMO_POR_ANO = 20
 
+# 📐 Lacunas DA FONTE, medidas em 2026-10-01 (achado #35): o `/votacao` devolve só isto
+#    nos dois anos, contra 100 a 225 nos vizinhos — e 2016 é o ano do impeachment, ⛔ um
+#    Senado parado. O ano entra com o que a fonte tem, e o log diz que é lacuna.
+#
+# ⚠️ É um PISO, ⛔ um valor exato: se o Senado completar o arquivo, o ano passa a cruzar
+#    o mínimo normal e sai daqui sozinho. Abaixo do piso, o canário volta a estourar.
+LACUNAS_CONHECIDAS = {2015: 17, 2016: 13}
+
 
 def baixar_votacoes(ano: int) -> list[dict]:
     """As votações de um ano inteiro, em uma requisição.
@@ -230,11 +238,21 @@ def conferir_volume(votacoes: list[dict], ano: int) -> None:
     200 o tempo todo. Um sucessor que passe a devolver vazio faria a ingestão registrar
     zero votações sem erro.
     """
-    if len(votacoes) < MINIMO_POR_ANO:
-        raise RuntimeError(
-            f"Só {len(votacoes)} votações em {ano} — esperado ao menos {MINIMO_POR_ANO}. "
-            "O contrato do endpoint mudou?"
+    if len(votacoes) >= MINIMO_POR_ANO:
+        return
+
+    if len(votacoes) >= LACUNAS_CONHECIDAS.get(ano, MINIMO_POR_ANO):
+        log.warning(
+            "  só %d votações em %d: lacuna conhecida da fonte (achado #35), ⛔ contrato "
+            "alterado. A legislatura fica com menos dado nesses anos.",
+            len(votacoes), ano,
         )
+        return
+
+    raise RuntimeError(
+        f"Só {len(votacoes)} votações em {ano} — esperado ao menos {MINIMO_POR_ANO}. "
+        "O contrato do endpoint mudou?"
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════

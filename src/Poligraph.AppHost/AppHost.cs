@@ -54,15 +54,49 @@ var etlIngerir = builder.AddDockerfile("etl-ingerir", "../..", "docker/Dockerfil
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache");
 
+// Todas as legislaturas que estiverem na base, uma execução por legislatura. A que tiver
+// menos votações que o mínimo fica sem grafo, e a tela não a oferece (achado #35).
 builder.AddDockerfile("etl-analisar", "../..", "docker/Dockerfile.etl")
     .WithReference(bancoPoligraph)
     .WaitForCompletion(migracoes)
     .WithExplicitStart()
-    .WithArgs("analisar", "--legislatura", "57")
+    .WithArgs("analisar", "--casa", "CAMARA", "--todas")
     .WithVolume("poligraph-etl-cache", "/etl/.cache")
     .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
     // Analisar sem ter ingerido monta uma matriz vazia e não avisa direito.
     .WithParentRelationship(etlIngerir);
+
+// ─── As legislaturas anteriores ────────────────────────────────────
+// A série da Câmara começa em 2001; o Senado responde nos mesmos anos. São centenas de MB
+// de CSV, por isso botões próprios, separados da carga do ano corrente. Depois deles,
+// `etl-analisar` e `etl-analisar-senado` desenham o grafo de cada legislatura.
+string[] anosAnteriores = [.. Enumerable.Range(2001, 22).Select(ano => ano.ToString())];
+
+builder.AddDockerfile("etl-historico-camara", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs(["ingerir", "--anos", .. anosAnteriores])
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithParentRelationship(etlIngerir);
+
+var etlSenado = builder.AddDockerfile("etl-senado", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs(["senado", "--anos", .. anosAnteriores, "2023", "2024", "2025", "2026"])
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache");
+
+builder.AddDockerfile("etl-analisar-senado", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs("analisar", "--casa", "SENADO", "--todas")
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithParentRelationship(etlSenado);
 
 // ─── O dinheiro do mandato ─────────────────────────────────────────
 // **Ramo separado, e é uma distinção de método, não de arrumação.** Nada daqui

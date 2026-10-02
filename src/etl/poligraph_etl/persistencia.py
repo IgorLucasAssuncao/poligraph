@@ -211,6 +211,28 @@ def desconectar_proposicoes_ausentes(
     return desconectadas
 
 
+# 🔴 "Votou na legislatura CORRENTE", ⛔ "tem voto" (achado #35).
+#
+# Com uma legislatura só na base as duas coisas coincidiam, e várias consultas usavam a
+# segunda querendo dizer a primeira. Com o histórico, "tem voto" passa a incluir quem
+# votou em 2003: o CPF seria buscado para milhares, o homônimo antigo ganharia voto e
+# desfaria o desempate da PL47, e a notícia de hoje casaria com ex-parlamentar.
+#
+# ⭐ A corrente é a MAIOR legislatura em `votacoes` — a mesma regra de
+#    `Legislaturas.CorrenteAsync` na API. ⛔ Configurada em lugar nenhum.
+_NA_LEGISLATURA_CORRENTE = """EXISTS (
+                     SELECT 1 FROM votos v
+                      JOIN votacoes t ON t.id = v.votacao_id
+                     WHERE v.pessoa_id = {pessoa}{casa}
+                       AND t.legislatura = (SELECT max(legislatura) FROM votacoes))"""
+
+
+def na_legislatura_corrente(pessoa: str, casa: str | None = None) -> str:
+    """O fragmento `EXISTS` para a coluna `pessoa`, opcionalmente restrito a uma casa."""
+    filtro = f" AND t.casa = '{casa}'" if casa else ""
+    return _NA_LEGISLATURA_CORRENTE.format(pessoa=pessoa, casa=filtro)
+
+
 def pessoas_sem_cpf(conexao: psycopg.Connection) -> list[tuple[str, int]]:
     """Quem tem VOTO mas ainda não tem `cpf_hash`, com o id da Câmara junto.
 
@@ -228,7 +250,7 @@ def pessoas_sem_cpf(conexao: psycopg.Connection) -> list[tuple[str, int]]:
               FROM pessoas p
               JOIN pessoa_fonte_ids f ON f.pessoa_id = p.id AND f.fonte = 'CAMARA'
              WHERE p.cpf_hash IS NULL
-               AND EXISTS (SELECT 1 FROM votos v WHERE v.pessoa_id = p.id)
+               AND """ + na_legislatura_corrente("p.id") + """
              ORDER BY p.id
             """
         ).fetchall()
@@ -247,10 +269,7 @@ def senadores_por_nome(conexao: psycopg.Connection) -> dict[str, int]:
             """
             SELECT p.nome_exibicao, p.id
               FROM pessoas p
-             WHERE EXISTS (
-                     SELECT 1 FROM votos v
-                      JOIN votacoes t ON t.id = v.votacao_id
-                     WHERE v.pessoa_id = p.id AND t.casa = 'SENADO')
+             WHERE """ + na_legislatura_corrente("p.id", "SENADO") + """
             """
         ).fetchall()
     }
@@ -285,7 +304,7 @@ def senadores_sem_nome_civil(conexao: psycopg.Connection) -> list[tuple[str, int
               FROM pessoas p
               JOIN pessoa_fonte_ids f ON f.pessoa_id = p.id AND f.fonte = 'SENADO'
              WHERE p.nome_civil = p.nome_exibicao
-               AND EXISTS (SELECT 1 FROM votos v WHERE v.pessoa_id = p.id)
+               AND """ + na_legislatura_corrente("p.id") + """
              ORDER BY p.id
             """
         ).fetchall()
@@ -317,10 +336,7 @@ def senadores_para_casar(conexao: psycopg.Connection) -> list[tuple[int, str, st
                    )
               FROM pessoas p
              WHERE p.cpf_hash IS NULL
-               AND EXISTS (
-                     SELECT 1 FROM votos v
-                      JOIN votacoes t ON t.id = v.votacao_id
-                     WHERE v.pessoa_id = p.id AND t.casa = 'SENADO')
+               AND """ + na_legislatura_corrente("p.id", "SENADO") + """
              ORDER BY p.id
             """
         ).fetchall()
@@ -1072,7 +1088,7 @@ def hashes_de_pessoas(conexao: psycopg.Connection) -> dict[str, int]:
 
 
 def deputados_da_legislatura(conexao: psycopg.Connection) -> list[tuple[str, int]]:
-    """(id da Câmara, `pessoas.id`) de quem tem voto — o mesmo recorte de `pessoas_sem_cpf`."""
+    """(id da Câmara, `pessoas.id`) de quem votou na legislatura corrente — o recorte de `pessoas_sem_cpf`."""
     return [
         (str(linha[0]), linha[1])
         for linha in conexao.execute(
@@ -1080,7 +1096,7 @@ def deputados_da_legislatura(conexao: psycopg.Connection) -> list[tuple[str, int
             SELECT DISTINCT f.id_externo, f.pessoa_id
               FROM pessoa_fonte_ids f
              WHERE f.fonte = 'CAMARA'
-               AND EXISTS (SELECT 1 FROM votos v WHERE v.pessoa_id = f.pessoa_id)
+               AND """ + na_legislatura_corrente("f.pessoa_id") + """
              ORDER BY f.pessoa_id
             """
         ).fetchall()
@@ -1088,14 +1104,14 @@ def deputados_da_legislatura(conexao: psycopg.Connection) -> list[tuple[str, int
 
 
 def senadores_da_legislatura(conexao: psycopg.Connection) -> set[int]:
-    """`pessoas.id` de quem é senador e tem voto."""
+    """`pessoas.id` de quem é senador e votou na legislatura corrente."""
     return {
         linha[0]
         for linha in conexao.execute(
             """
             SELECT DISTINCT f.pessoa_id FROM pessoa_fonte_ids f
              WHERE f.fonte = 'SENADO'
-               AND EXISTS (SELECT 1 FROM votos v WHERE v.pessoa_id = f.pessoa_id)
+               AND """ + na_legislatura_corrente("f.pessoa_id") + """
             """
         ).fetchall()
     }

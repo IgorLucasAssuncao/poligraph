@@ -84,9 +84,14 @@ _CATEGORIAS: list[tuple[str, str]] = [
         # ⚠️ `destacad[oa]s?` é a forma do SENADO. `votacao nominal do §/art.` também:
         #    votar um dispositivo isolado é destaque, mesmo quando a frase termina em
         #    "…à Proposta de Emenda à Constituição".
+        #
+        # 📐 `suprimid…` e `restabelecido o texto` vieram da 55ª (achado #35): até 2016
+        #    a Câmara descrevia o destaque supressivo pelo RESULTADO — "Suprimido o
+        #    artigo", "Suprimida expressão", "Suprimidos o texto" (sic) — e tudo caía
+        #    no default SUBSTANTIVA. Conferido: ⛔ muda nenhuma votação da 57ª.
         r"(?<!ressalvados os )(?<!ressalvado o )destaques?"
         r"|destacad[oa]s?"
-        r"|mantido o texto|suprimido o texto"
+        r"|mantido o texto|suprimid[oa]s?\b|restabelecid[oa] o texto"
         r"|votacao nominal d[ao] (§|art|paragrafo|inciso|caput|expressao)",
     ),
     (
@@ -193,7 +198,10 @@ def sigla_do_objeto(abertura: str | None) -> str | None:
 
     ⛔ Devolve `None` quando ⛔ não há sigla — que é o caso mais comum, e ⛔ não é erro.
     """
-    if not abertura:
+    # ⚠️ `isinstance`, ⛔ só `not abertura`: célula vazia chega como NaN, que é float e
+    #    é verdadeiro. Na 57ª toda votação nominal tem abertura; em 2003 ⛔, e o
+    #    `.strip()` derrubava a ingestão (achado #35).
+    if not isinstance(abertura, str) or not abertura.strip():
         return None
 
     achado = _SIGLA_DA_ABERTURA.match(abertura.strip())

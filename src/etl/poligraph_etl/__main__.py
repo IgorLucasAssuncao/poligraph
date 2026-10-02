@@ -36,6 +36,14 @@ CACHE = Path(os.environ.get("POLIGRAPH_CACHE", ".cache"))
 # ⚠️ Segundos entre chamadas na busca de CPF — são centenas contra serviço público.
 PAUSA_ENTRE_CHAMADAS = 0.15
 
+# 🔴 Abaixo disto a legislatura fica SEM grafo, e a tela ⛔ a oferece.
+#
+# 📐 O discovery (§4.1.1.1) mediu o intervalo de confiança da concordância de um par:
+#    ~±17 pp com 56 votações, ~±10 pp com 182. Com 100 fica em ~±13 pp. Abaixo disso
+#    o desenho separaria gente por ruído, e um grafo errado com cara de medida é pior
+#    que nenhum. Conta só o que entra na matriz: plenário, nominal, aberta.
+VOTACOES_MINIMAS_PARA_GRAFO = 100
+
 
 def main(argv: list[str] | None = None) -> int:
     args = _argumentos(argv)
@@ -87,7 +95,8 @@ def main(argv: list[str] | None = None) -> int:
             elif args.comando == "validar":
                 _validar(conexao, args.legislatura, args.divisao_minima)
             else:
-                _analisar(conexao, args.legislatura, args.casa)
+                for legislatura in _legislaturas_a_analisar(conexao, args):
+                    _analisar(conexao, legislatura, args.casa)
     except Exception:
         log.exception("ETL falhou")
         return 1
@@ -112,7 +121,13 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     sen.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
 
     analisar = sub.add_parser("analisar", help="calcula similaridade e grafo")
-    analisar.add_argument("--legislatura", type=int, default=57)
+    # ⭐ Sem legislatura, a CORRENTE — a maior em `votacoes`, ⛔ um 57 fixo que
+    #    ficaria velho na posse da 58ª.
+    analisar.add_argument("--legislatura", type=int, nargs="+", default=[])
+    analisar.add_argument(
+        "--todas", action="store_true",
+        help="todas as legislaturas da casa que estão na base",
+    )
     analisar.add_argument(
         "--casa", choices=["CAMARA", "SENADO"], default="CAMARA",
         help="uma casa por execução — as duas não são comparáveis entre si",
@@ -427,10 +442,20 @@ def _analisar(conexao: psycopg.Connection, legislatura: int, casa: str) -> None:
     as duas não votam as mesmas matérias (achado #7).
     """
     pessoas, votacoes, matriz, pesos = _montar_matriz(conexao, legislatura, casa)
-    log.info("Matriz %s: %d pessoas × %d votações", casa, len(pessoas), len(votacoes))
+    log.info(
+        "Matriz %s %dª: %d pessoas × %d votações",
+        casa, legislatura, len(pessoas), len(votacoes),
+    )
 
     if len(pessoas) < 2:
         log.warning("Menos de duas pessoas com voto — nada a calcular.")
+        return
+
+    if len(votacoes) < VOTACOES_MINIMAS_PARA_GRAFO:
+        log.warning(
+            "  %s %dª fica SEM grafo: %d votações de plenário abertas, o mínimo é %d.",
+            casa, legislatura, len(votacoes), VOTACOES_MINIMAS_PARA_GRAFO,
+        )
         return
 
     execucao_id = persistencia.abrir_execucao(
@@ -465,6 +490,24 @@ def _analisar(conexao: psycopg.Connection, legislatura: int, casa: str) -> None:
     except Exception:
         persistencia.fechar_execucao(conexao, execucao_id, sucesso=False)
         raise
+
+
+def _legislaturas_a_analisar(conexao: psycopg.Connection, args) -> list[int]:
+    """As pedidas; com `--todas`, as da casa na base; sem nada, a corrente."""
+    if args.todas:
+        return [
+            linha[0]
+            for linha in conexao.execute(
+                "SELECT DISTINCT legislatura FROM votacoes WHERE casa = %s ORDER BY 1",
+                (args.casa,),
+            ).fetchall()
+        ]
+
+    if args.legislatura:
+        return args.legislatura
+
+    corrente = conexao.execute("SELECT max(legislatura) FROM votacoes").fetchone()[0]
+    return [corrente] if corrente is not None else []
 
 
 def _alinhamento(
@@ -872,9 +915,15 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
     ).fetchall():
         por_nome.setdefault(normalizacao.sem_acento_maiusculo(nome), []).append(pessoa_id)
 
-    # ⭐ Quem tem voto na base. É o desempate da PL47 — ver `_desempatar`.
+    # ⭐ Quem votou na legislatura CORRENTE. É o desempate da PL47 — ver `_desempatar`.
+    #    ⚠️ ⛔ "quem tem voto": com o histórico na base, o homônimo de 2003 também tem,
+    #    e os 14 empates que a regra resolve voltariam (achado #35).
     com_voto = {
-        linha[0] for linha in conexao.execute("SELECT DISTINCT pessoa_id FROM votos")
+        linha[0]
+        for linha in conexao.execute(
+            "SELECT p.id FROM pessoas p WHERE "
+            + persistencia.na_legislatura_corrente("p.id")
+        )
     }
 
     resolvidos = por_sucessor = por_desempate = ambiguos = 0
@@ -1542,18 +1591,17 @@ def _noticias(conexao: psycopg.Connection, limiar_de_exibicao: float) -> None:
 def _nomes_para_casar(conexao: psycopg.Connection) -> dict:
     """Índice `pessoa_id -> nomes`, no formato que `encontrar_mencoes` espera.
 
-    ⚠️ Só quem TEM VOTO. O banco guarda 7.993 pessoas, quase todas de legislaturas
-    antigas; procurá-las todas em cada manchete multiplicaria o custo e traria
-    homônimo de quem ⛔ não está mais em exercício.
+    ⚠️ Só quem votou na legislatura CORRENTE. O banco guarda milhares de pessoas, quase
+    todas de legislaturas antigas — e, com o histórico, muitas delas com voto. Procurá-las
+    em cada manchete traria homônimo de quem ⛔ está mais em exercício.
     """
     with conexao.cursor() as cursor:
         cursor.execute(
             """
-            SELECT DISTINCT p.id, p.nome_civil, p.nome_exibicao
+            SELECT p.id, p.nome_civil, p.nome_exibicao
               FROM pessoas p
-              JOIN votos v ON v.pessoa_id = p.id
              WHERE p.excluido_em IS NULL
-            """
+               AND """ + persistencia.na_legislatura_corrente("p.id")
         )
 
         return {
@@ -1597,8 +1645,15 @@ def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: floa
     _comparar_desempates(matriz, candidatas)
 
     # ═══ 2. Comunidade × partido (RF-20 / RQ2) ═══
+    # ⚠️ Da CÂMARA e da legislatura validada (PL54): "a mais recente" de qualquer casa
+    #    comparava a matriz da Câmara com as comunidades do Senado quando ele rodava por
+    #    último.
     execucao = conexao.execute(
-        "SELECT max(id) FROM execucoes WHERE status = 'CONCLUIDA'"
+        """
+        SELECT max(id) FROM execucoes
+         WHERE status = 'CONCLUIDA' AND casa = 'CAMARA' AND legislatura = %s
+        """,
+        (legislatura,),
     ).fetchone()
     if not execucao or execucao[0] is None:
         log.warning("Nenhuma execução concluída — rode `analisar` antes.")
@@ -1617,7 +1672,7 @@ def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: floa
         log.warning("`nos_metrica` vazia — rode `analisar` com a versão que grava nós.")
         return
 
-    partido_de = _partido_mais_recente(conexao)
+    partido_de = _partido_mais_recente(conexao, legislatura)
     arestas = [
         _Aresta(linha[0], linha[1], linha[2])
         for linha in conexao.execute(
@@ -1689,14 +1744,20 @@ class _Aresta:
     valor: float
 
 
-def _partido_mais_recente(conexao: psycopg.Connection) -> dict[int, str]:
-    """⚠️ Partido vem do voto, não da pessoa: o registro é histórico e deputado troca."""
+def _partido_mais_recente(conexao: psycopg.Connection, legislatura: int) -> dict[int, str]:
+    """⚠️ Partido vem do voto, não da pessoa: o registro é histórico e deputado troca.
+
+    ⚠️ O último voto DENTRO da legislatura validada: comparar comunidade × partido de 2019
+    com a sigla de 2025 mediria a troca de partido, ⛔ o agrupamento.
+    """
     linhas = conexao.execute(
         """
         SELECT DISTINCT ON (x.pessoa_id) x.pessoa_id, x.partido_no_voto
           FROM votos x JOIN votacoes v ON v.id = x.votacao_id
+         WHERE v.legislatura = %s
          ORDER BY x.pessoa_id, v.data DESC
-        """
+        """,
+        (legislatura,),
     ).fetchall()
 
     return {pessoa: partido for pessoa, partido in linhas if partido}

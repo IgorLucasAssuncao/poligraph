@@ -65,6 +65,13 @@ _VOTOS = {
     "ncom": None,         # não compareceu
     "na": None,           # não aplicável
     "lap": None,          # licença paternidade ou ao adotante
+    # 📐 Siglas das legislaturas anteriores (achado #35), com a descrição que a própria
+    #    fonte publica. ⚠️ `MERC` ⛔ entra: vem sem descrição, e fica no log.
+    "rep": None,          # "Representação em solenidade internac./nac./reg." — 2003 a 2011
+    "p-od": None,         # "Presente – Obstrução Declarada" — obstrução ⛔ é posição
+    "obstrução": None,
+    "obstrucao": None,
+    "lg": None,           # "Licença à gestante" — 59 votos em 2020
 }
 
 # O presidente da sessão só vota em desempate — equivale ao "Artigo 17" da Câmara.
@@ -88,6 +95,11 @@ _PRESENCA = {
     "lap": "AUSENTE_JUSTIFICADO",
     "ncom": "AUSENTE",
     "na": None,
+    "rep": "AUSENTE_JUSTIFICADO",
+    "p-od": "PRESENTE",
+    "obstrução": "PRESENTE",
+    "obstrucao": "PRESENTE",
+    "lg": "AUSENTE_JUSTIFICADO",
 }
 
 

@@ -396,3 +396,78 @@ def test_mencao_recoletada_nao_duplica(conexao):
     persistencia.gravar_mencoes(conexao, [linha])
 
     assert conexao.execute("SELECT count(*) FROM noticia_pessoas").fetchone()[0] == 1
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 Achado #35 — "votou na legislatura corrente", ⛔ "tem voto"
+# ═══════════════════════════════════════════════════════════════════
+
+
+def _com_historico(conexao) -> tuple[int, int]:
+    """Uma pessoa que só votou na 56ª e outra que votou na 57ª. Devolve (antiga, atual)."""
+    persistencia.gravar_pessoas(
+        conexao, [_pessoa("100", "Ex Deputado"), _pessoa("200", "Deputada Atual")]
+    )
+    antiga, atual = [
+        linha[0] for linha in conexao.execute("SELECT id FROM pessoas ORDER BY id").fetchall()
+    ]
+    persistencia.gravar_votacoes(
+        conexao,
+        [
+            {**_votacao("2200000-1"), "legislatura": 56, "data": "2021-05-04"},
+            _votacao("2358548-89"),
+        ],
+    )
+    persistencia.gravar_votos(
+        conexao, [_voto("2200000-1", antiga, 1), _voto("2358548-89", atual, 1)]
+    )
+    return antiga, atual
+
+
+def test_cpf_so_e_buscado_para_a_legislatura_corrente(conexao):
+    """Com o histórico, "tem voto" incluiria milhares de ex-deputados."""
+    _, atual = _com_historico(conexao)
+
+    assert [p for _, p in persistencia.pessoas_sem_cpf(conexao)] == [atual]
+    assert [p for _, p in persistencia.deputados_da_legislatura(conexao)] == [atual]
+
+
+def test_desempate_nao_conta_voto_de_legislatura_antiga(conexao):
+    """O homônimo de 2003 também tem voto — e desfaria o desempate da PL47."""
+    _, atual = _com_historico(conexao)
+
+    votantes = {
+        linha[0]
+        for linha in conexao.execute(
+            "SELECT p.id FROM pessoas p WHERE " + persistencia.na_legislatura_corrente("p.id")
+        )
+    }
+
+    assert votantes == {atual}
+
+
+def test_legislatura_corrente_e_a_maior_da_base(conexao):
+    """Antes da 57ª chegar, a 56ª É a corrente — ⛔ um número fixo."""
+    persistencia.gravar_pessoas(conexao, [_pessoa("100", "Ex Deputado")])
+    pessoa = conexao.execute("SELECT id FROM pessoas").fetchone()[0]
+    persistencia.gravar_votacoes(
+        conexao, [{**_votacao("2200000-1"), "legislatura": 56, "data": "2021-05-04"}]
+    )
+    persistencia.gravar_votos(conexao, [_voto("2200000-1", pessoa, 1)])
+
+    assert [p for _, p in persistencia.deputados_da_legislatura(conexao)] == [pessoa]
+
+
+def test_legislatura_com_pouco_dado_fica_sem_grafo(conexao, caplog):
+    """Abaixo de `VOTACOES_MINIMAS_PARA_GRAFO` ⛔ se abre execução: a tela ⛔ a oferece."""
+    from poligraph_etl.__main__ import VOTACOES_MINIMAS_PARA_GRAFO, _analisar
+
+    antiga, atual = _com_historico(conexao)
+    persistencia.gravar_votos(conexao, [_voto("2200000-1", atual, -1)])
+
+    with caplog.at_level("WARNING", logger="poligraph"):
+        _analisar(conexao, 56, "CAMARA")
+
+    assert VOTACOES_MINIMAS_PARA_GRAFO > 1
+    assert conexao.execute("SELECT count(*) FROM execucoes").fetchone()[0] == 0
+    assert "SEM grafo" in caplog.text
