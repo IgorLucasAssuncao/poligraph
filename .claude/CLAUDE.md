@@ -81,7 +81,7 @@ invertido **não aparece na tela** — aparece como um número plausível e erra
 |---|---|
 | `id_token` do Google | Validado e descartado |
 | `refresh_token` | Não existe neste fluxo |
-| Token de sessão | O cookie é assinado, verificado por assinatura |
+| Token de sessão | O cookie é cifrado e autenticado (Data Protection do ASP.NET: AES-256-CBC + HMAC-SHA256); nada de sessão no banco |
 | Senha | A autenticação é sempre delegada ao Google |
 
 Ver [`plano/02 §3.6`](../docs/plano/02-autenticacao-e-metricas.md).

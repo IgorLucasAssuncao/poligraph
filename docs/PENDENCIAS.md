@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-10-02 · **98 resolvidas · 71 abertas**
+> **Atualizado:** 2026-10-02 · **98 resolvidas · 73 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -56,6 +56,8 @@ PL41).
 | **PL74** | **"Também recebeu da cota"** ao lado do favorecido da emenda: o mesmo CNPJ como fornecedor da cota e favorecido de emenda do mesmo parlamentar. MEDIDO em 2026-10-02: 897 pares, 443 parlamentares, 424 empresas; os maiores são companhias aéreas e de energia, e 323 empresas ligam-se a um só parlamentar. Fato, sem adjetivo (RNF-16). [`plano/10 §4.1`](plano/10-procedencia-e-modo-analise.md) | Média |
 | **PL75** | **Parlamentar sócio de empresa**: quadro de sócios cruzado por **nome + os 6 dígitos do meio do CPF** na ETL, gravando só o vínculo parlamentar–CNPJ. Por nome sozinho, não: homônimos. Doador pessoa física fica de fora: é cidadão privado. [`plano/10 §4.2`](plano/10-procedencia-e-modo-analise.md) | Baixa |
 | **PL76** | **Regra de patrimônio fora do comum no `conferir`**: o TSE é autodeclarado, e o "candidato mais rico do Brasil" tem um bem digitado com dígitos a mais (R$ 12 bi). MEDIDO: o maior da nossa base é R$ 240 mi, plausível | Baixa |
+| **PL78** | **Revisão da pasta `docs`** — pedido do autor: "um dicionário de termos, fluxos dentro das casas, pq vou precisar entender tudo isso". Partir de `glossario.md`: termos (votação nominal, simbólica, destaque, orientação, legislatura, mandato, suplente, emenda, empenho, liquidação, pagamento), e os fluxos da Câmara e do Senado (como uma proposição tramita até a votação em plenário, onde entram destaque e orientação, como a emenda vira pagamento). Ainda não feito | Alta |
+| **PL79** | **Comentários da ETL para as docstrings** — pedido do autor em 2026-10-02, a mesma limpeza do front. MEDIDO na simulação: 279 comentários dentro de funções, em `poligraph_etl` e nos testes. Em andamento | Média |
 | **PL67** | 🟡 **Amostra manual contra a fonte oficial**: 20 votações sorteadas por casa e legislatura, conferidas no site da casa. Vira achado ([`plano/09 §5.3`](plano/09-apresentacao-validacao-e-valor.md)) | 🟡 Média |
 | ✅ ~~PL68~~ | **Resolvida (2026-10-02)** — o painel conta como votação só a que tem voto nominal, e o cartão diz quantas ficaram de fora. Não era só a 51ª: a 52ª tem 309 de 600 sem voto nominal, e a 54ª, 455 de 905 | — |
 
@@ -86,8 +88,9 @@ com usuário. Os modelos e a proposta de teste estão em
 | U17 | Lista sem filtros aplicados visíveis nem "limpar"; ordenação por votações só na API | ⛔ aberta |
 | U18 | Grafo: destacar um estado ou partido sem esconder o resto | ⛔ aberta |
 | U19 | Afinidade com base pequena aparece igual à de base grande | ⛔ aberta |
-| U20 | ⚠️ A página inicial com `?legislatura=55` **travou o Chrome duas vezes** na verificação de 2026-10-02 e ⛔ se reproduziu depois. Conferir à mão | ⚠️ a confirmar |
-| U21 | Celular: conferir a faixa com o seletor de período a 390 px | ⛔ a conferir |
+| U22 | **Conferir na tela** a barra de período, a ficha aberta num mandato antigo (cota, emendas e campanha do mandato), o aviso de perfil inativo e a busca nos votos. Feito por teste automatizado; na tela, só a busca foi vista | A conferir |
+| U20 | A página inicial com `?legislatura=55` travou o Chrome duas vezes. Causa provável, achada em 2026-10-02: a roda do mouse sobre o grafo dava zoom e disparava dezenas de fotos e redesenhos. Corrigido (roda com Ctrl no grafo embutido; um redesenho por quadro), mas a reprodução nunca foi confirmada: a janela do Chrome ficava oculta | Corrigido, a confirmar |
+| U21 | Celular: a faixa a 390 px cortava o seletor (terminava em 401 px). Corrigido em 2026-10-02; depois a faixa virou texto e o seletor foi para a barra do conteúdo | FEITO |
 
 ### ⏳ A única com prazo
 
