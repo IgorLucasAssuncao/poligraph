@@ -7,6 +7,7 @@ import {
   comEscala,
   distanciaAoSegmento,
   enquadrar,
+  enquadrarMiolo,
   paraMundo,
   pinca,
   paraTela,
@@ -380,6 +381,37 @@ export function TelaDoGrafo({
     setCamera(enquadrar(pontos, tamanho));
   }, [noDesenho, tamanho]);
 
+  /** O quadro da abertura: o miolo da nuvem, sem os isolados das bordas. */
+  const vistaInicial = useCallback(
+    () => enquadrarMiolo(posicionados.map((n) => ({ x: n.eixoX!, y: n.eixoY! })), tamanho),
+    [posicionados, tamanho],
+  );
+
+  /**
+   * Abre enquadrado no miolo, e volta a ele quando o grafo, o layout ou o tamanho mudam.
+   *
+   * ⚠️ Só enquanto a pessoa ⛔ mexeu na câmera: depois de um zoom ou de arrastar o
+   * desenho, redimensionar a janela ⛔ desfaz o que ela fez.
+   */
+  const cameraAutomatica = useRef<Camera | null>(null);
+  useEffect(() => {
+    const nova = vistaInicial();
+    const anterior = cameraAutomatica.current;
+    cameraAutomatica.current = nova;
+
+    // ⚠️ A função passada a `setCamera` precisa ser PURA: o StrictMode a chama duas
+    //    vezes. Atualizar o ref dentro dela fazia a segunda chamada achar que a pessoa
+    //    tinha mexido, e a câmera ficava presa no tamanho inicial de 800 × 520.
+    setCamera((atual) => {
+      const intocada =
+        anterior === null
+        || (atual.escala === anterior.escala && atual.x === anterior.x && atual.y === anterior.y)
+        || (atual.escala === 1 && atual.x === 0 && atual.y === 0);
+      return intocada ? nova : atual;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só grafo, layout e tamanho; arrastar um nó ⛔ reenquadra
+  }, [grafo, layout, tamanho]);
+
   /**
    * Teclado no desenho: setas movem, mais e menos aproximam, zero enquadra.
    *
@@ -484,7 +516,7 @@ export function TelaDoGrafo({
               setMovidos(new Map()); // ⚠️ devolve o desenho ao retrato do ETL
               setFixado(null);
               setIsolado(null);
-              setCamera({ escala: 1, x: 0, y: 0 });
+              setCamera(vistaInicial());
             }}
             aria-label="Desfazer tudo e voltar ao desenho original"
             title="Voltar ao desenho original do ETL"

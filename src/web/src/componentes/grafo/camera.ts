@@ -115,6 +115,35 @@ export function enquadrar(
   return { escala, x: t.largura / 2 - centro.x, y: t.altura / 2 - centro.y };
 }
 
+/**
+ * A câmera da abertura: enquadra o MIOLO da nuvem, ⛔ os extremos.
+ *
+ * 📐 Medido em 2026-10-01 no grafo da Câmara (57ª): ~12 deputados isolados, que votaram
+ * pouco demais para se ligar a alguém, ficam nas bordas do plano. Enquadrando todos, os
+ * ~630 do miolo viravam um traço no meio do desenho, e a figura principal do site era a
+ * que menos se lia.
+ *
+ * ⭐ O corte é por percentil em cada eixo (2% de cada lado): os isolados continuam no
+ * desenho, só fora do quadro inicial, e "Enquadrar tudo" ainda os alcança. Com poucos
+ * pontos (isolar um parlamentar) ⛔ há o que cortar, e o resultado é o de `enquadrar`.
+ */
+export function enquadrarMiolo(pontos: readonly Ponto[], t: Tamanho, corte = 0.02): Camera {
+  if (pontos.length < 20) return enquadrar(pontos, t);
+
+  const xs = pontos.map((p) => p.x).sort((a, b) => a - b);
+  const ys = pontos.map((p) => p.y).sort((a, b) => a - b);
+  const quantil = (valores: number[], q: number) =>
+    valores[Math.min(valores.length - 1, Math.max(0, Math.round(q * (valores.length - 1))))];
+
+  return enquadrar(
+    [
+      { x: quantil(xs, corte), y: quantil(ys, corte) },
+      { x: quantil(xs, 1 - corte), y: quantil(ys, 1 - corte) },
+    ],
+    t,
+  );
+}
+
 /** Distância de um ponto ao segmento — usada para acertar aresta com o cursor. */
 export function distanciaAoSegmento(x: number, y: number, a: Ponto, b: Ponto): number {
   const dx = b.x - a.x;

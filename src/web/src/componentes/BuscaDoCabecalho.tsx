@@ -73,7 +73,8 @@ export function BuscaDoCabecalho() {
         aria-controls={`${id}-lista`}
         aria-autocomplete="list"
         aria-activedescendant={mostrar && opcoes[ativa] ? `${id}-opcao-${ativa}` : undefined}
-        placeholder="Parlamentar, cidade ou entidade"
+        placeholder="Buscar nome ou cidade"
+        aria-label="Buscar parlamentar, cidade ou entidade"
         autoComplete="off"
         value={termo}
         onChange={(e) => {

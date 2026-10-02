@@ -4,6 +4,7 @@ import {
   comEscala,
   distanciaAoSegmento,
   enquadrar,
+  enquadrarMiolo,
   ESCALA_MAXIMA,
   ESCALA_MINIMA,
   paraMundo,
@@ -155,5 +156,44 @@ describe('pinça de dois dedos', () => {
     expect(depois.escala).toBeCloseTo(1);
     expect(depois.x).toBeCloseTo(5);
     expect(depois.y).toBeCloseTo(7);
+  });
+});
+
+describe('enquadrarMiolo', () => {
+  /** 📐 O grafo da Câmara: uma nuvem no meio e uns poucos isolados nas bordas. */
+  function nuvemComIsolados() {
+    const nuvem = Array.from({ length: 200 }, (_, i) => ({
+      x: -0.3 + ((i * 37) % 60) / 100,
+      y: -0.1 + ((i * 53) % 20) / 100,
+    }));
+    const isolados = [
+      { x: -0.98, y: -0.9 }, { x: 0.97, y: 0.95 }, { x: -0.95, y: 0.9 }, { x: 0.99, y: -0.97 },
+    ];
+    return { nuvem, isolados, todos: [...nuvem, ...isolados] };
+  }
+
+  it('abre mais perto que enquadrar tudo: os isolados das bordas ⛔ ditam o zoom', () => {
+    const { todos } = nuvemComIsolados();
+
+    expect(enquadrarMiolo(todos, TELA).escala).toBeGreaterThan(enquadrar(todos, TELA).escala * 2);
+  });
+
+  it('a nuvem inteira continua dentro da tela', () => {
+    const { nuvem, todos } = nuvemComIsolados();
+    const camera = enquadrarMiolo(todos, TELA);
+
+    for (const ponto of nuvem) {
+      const p = paraTela(ponto.x, ponto.y, TELA, camera);
+      expect(p.x).toBeGreaterThanOrEqual(0);
+      expect(p.x).toBeLessThanOrEqual(TELA.largura);
+      expect(p.y).toBeGreaterThanOrEqual(0);
+      expect(p.y).toBeLessThanOrEqual(TELA.altura);
+    }
+  });
+
+  it('com poucos pontos, ⛔ corta nada: é o mesmo que enquadrar', () => {
+    const poucos = [{ x: 0.8, y: 0.8 }, { x: 0.84, y: 0.86 }];
+
+    expect(enquadrarMiolo(poucos, TELA)).toEqual(enquadrar(poucos, TELA));
   });
 });

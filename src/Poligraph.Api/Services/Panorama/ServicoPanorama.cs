@@ -18,10 +18,11 @@ namespace Poligraph.Api.Services;
 /// proteger — nem a vazar.
 /// </para>
 /// </summary>
-public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura)
+public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQuestionario questionario)
 {
     private readonly PoligraphDb _db = db;
     private readonly CacheDeLeitura _leitura = leitura;
+    private readonly ServicoQuestionario _questionario = questionario;
 
     /// <remarks>
     /// <para>Base vazia devolve panorama vazio, não erro: é o estado do primeiro dia, e a tela tem um texto próprio para ele.</para>
@@ -43,7 +44,8 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura)
             porCasa.Add(await DaCasaAsync(casa, legislatura.Value, ct));
 
         return new PanoramaDto(
-            legislatura, perguntas, [.. porCasa.Where(c => c.Votacoes > 0)]);
+            legislatura, perguntas, [.. porCasa.Where(c => c.Votacoes > 0)],
+            await _questionario.TamanhoAsync(ct));
     }
 
     /// <remarks>

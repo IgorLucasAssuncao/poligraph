@@ -323,8 +323,11 @@ export type PanoramaDaCasa = {
 /** ⚠️ `legislatura` é nula em base sem votação — o estado antes do primeiro ETL. */
 export type Panorama = {
   legislatura: number | null;
+  /** O poço: todas as perguntas curadas. */
   perguntasAtivas: number;
   porCasa: PanoramaDaCasa[];
+  /** Quantas o cidadão responde, tiradas do poço. ⚠️ ⛔ é o mesmo número. */
+  perguntasNoQuestionario: number;
 };
 
 export async function obterPanorama(): Promise<Panorama> {

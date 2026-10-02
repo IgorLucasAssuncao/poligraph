@@ -471,13 +471,14 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .ver-mais:hover { text-decoration: underline; }
 
 /* ═══ PERFIL ═══════════════════════════════════════════════════ */
-.capa-perfil { height: 7rem; background: var(--painel); border-bottom: 1px solid var(--borda); }
-.perfil-cabecalho { padding: 0 1rem 1rem; border-bottom: 1px solid var(--borda); }
+.perfil-cabecalho { padding: 1.25rem 1rem 1rem; border-bottom: 1px solid var(--borda); }
+/* Foto, nome e "Seguir" numa linha: a identidade inteira num olhar. No celular o botão
+   desce para baixo do nome em vez de espremê-lo. */
 .perfil-avatar-linha {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  margin-top: -2.6rem; margin-bottom: .75rem;
+  display: flex; align-items: center; flex-wrap: wrap; gap: .75rem 1rem;
+  margin-bottom: .75rem;
 }
-.perfil-avatar-linha .avatar { border: 4px solid var(--fundo); }
+.perfil-avatar-linha .perfil-identidade { flex: 1 1 12rem; min-width: 0; }
 .perfil-identidade h1 { margin: 0; font-size: var(--t-4); font-weight: 800; letter-spacing: -.01em; }
 .perfil-identidade .nome-civil { margin: .1rem 0 0; color: var(--suave); font-size: var(--t-2); }
 .perfil-chips { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem; }
@@ -2688,9 +2689,28 @@ dialog.tour::backdrop { background: transparent; }
   .busca-resultados { width: min(100vw - 1.5rem, 26rem); }
 }
 
+.faixa-curta { display: none; }
+
 @media (max-width: 560px) {
   .marca-texto { display: none; }
   .menu-conta-botao .usuario-mini-nome { display: none; }
+
+  /* 📐 Medido em 2026-10-01 a 390 px: a faixa ocupava três linhas (180 px) antes de
+     qualquer conteúdo, e o terceiro destino da navegação ficava cortado, só o ícone na
+     borda. A faixa vira uma linha; a navegação vira três colunas iguais, com o ícone
+     sobre o rótulo, o padrão de barra de abas de aplicativo. Os três continuam com
+     nome: ícone sozinho obrigaria a adivinhar. */
+  .faixa-procedencia { flex-wrap: nowrap; gap: .6rem; white-space: nowrap; overflow: hidden; }
+  .faixa-procedencia .faixa-longa { display: none; }
+  .faixa-procedencia .faixa-curta { display: inline; }
+
+  .cabecalho-conteudo .nav-principal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
+  .cabecalho-conteudo .nav-item {
+    flex-direction: column; justify-content: center; gap: .15rem;
+    padding: .45rem .25rem .35rem; text-align: center;
+    font-size: var(--t-1); white-space: normal; line-height: 1.15;
+  }
+  .cabecalho-conteudo .nav-item svg { width: 20px; height: 20px; }
 }
 
 /* ═══ PERFIL — UMA ABA POR DINHEIRO ═════════════════════════════

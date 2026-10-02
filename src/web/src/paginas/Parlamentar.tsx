@@ -22,7 +22,6 @@ import { useContas } from '../componentes/useContas';
 import { BotaoBaixarCsv } from '../componentes/BotaoBaixarCsv';
 import { LinkDeFonte } from '../componentes/LinkDeFonte';
 import { MandatosDoParlamentar } from '../componentes/MandatosDoParlamentar';
-import { periodoDaLegislatura } from '../formato';
 import { RedesDoParlamentar } from '../componentes/RedesDoParlamentar';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { usePaginas } from '../componentes/usePaginas';
@@ -109,22 +108,19 @@ export function Parlamentar() {
 
   return (
     <>
-      <CabecalhoDaColuna
-        titulo={ficha.nome}
-        subtitulo={
-          ficha.legislatura
-            ? `${ficha.nVotacoes} votações registradas em ${periodoDaLegislatura(ficha.legislatura)}`
-            : `${ficha.nVotacoes} votações registradas`
-        }
-        comVoltar
-      />
-
-      {/* ⚠️ Capa em tom neutro único: cor não pode sugerir espectro político (RNF-16). */}
-      <div className="capa-perfil" aria-hidden="true" />
+      {/* ⭐ O nome aparece UMA vez, ao lado da foto. O cabeçalho da coluna era o nome
+          de novo, com "845 votações registradas" repetindo o número do bloco abaixo, e
+          uma capa vazia empurrava o perfil para baixo da dobra no celular (2026-10-01). */}
+      <CabecalhoDaColuna titulo="Parlamentar" comVoltar />
 
       <header className="perfil-cabecalho">
         <div className="perfil-avatar-linha">
           <Avatar nome={ficha.nome} fotoUrl={ficha.urlFoto} tamanho="grande" />
+
+          <div className="perfil-identidade">
+            <h1>{ficha.nome}</h1>
+            {ficha.nomeCivil !== ficha.nome && <p className="nome-civil">{ficha.nomeCivil}</p>}
+          </div>
 
           {usuario && (
           <button
@@ -136,11 +132,6 @@ export function Parlamentar() {
             <span>{seguindo ? 'Seguindo' : 'Seguir'}</span>
           </button>
           )}
-        </div>
-
-        <div className="perfil-identidade">
-          <h1>{ficha.nome}</h1>
-          {ficha.nomeCivil !== ficha.nome && <p className="nome-civil">{ficha.nomeCivil}</p>}
         </div>
 
         <div className="perfil-chips">

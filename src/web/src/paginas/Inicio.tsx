@@ -62,10 +62,10 @@ export function Inicio() {
           <p>
             A afinidade sai do <strong>voto registrado em plenário</strong>, não de
             autodeclaração ideológica.
-            {panorama && panorama.perguntasAtivas > 0 ? (
+            {panorama && panorama.perguntasNoQuestionario > 0 ? (
               <>
-                {' '}São <strong>{panorama.perguntasAtivas} perguntas</strong>, e cada uma
-                vem de uma votação nominal real
+                {' '}Você responde <strong>{panorama.perguntasNoQuestionario} perguntas</strong>,
+                escolhidas entre {panorama.perguntasAtivas} votações nominais reais
                 {panorama.legislatura ? ` da ${panorama.legislatura}ª legislatura` : ''}.
               </>
             ) : (

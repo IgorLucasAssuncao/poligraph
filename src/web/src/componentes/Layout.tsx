@@ -137,7 +137,8 @@ function FaixaDeProcedencia({ legislatura }: { legislatura: number | null }) {
   return (
     <p className="faixa-procedencia" data-tour="procedencia">
       <strong>Dados públicos</strong>
-      <span>Registro nominal de votação da Câmara dos Deputados e do Senado Federal</span>
+      <span className="faixa-longa">Registro nominal de votação da Câmara dos Deputados e do Senado Federal</span>
+      <span className="faixa-curta" aria-hidden="true">Câmara e Senado</span>
       {legislatura && <span>{legislatura}ª legislatura</span>}
     </p>
   );

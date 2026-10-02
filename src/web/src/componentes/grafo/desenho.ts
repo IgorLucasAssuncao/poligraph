@@ -253,6 +253,7 @@ function desenharNos(
   escuro: boolean,
 ) {
   const contorno = escuro ? '#0b0e11' : '#ffffff';
+  const nomes: NomeCandidato[] = [];
 
   for (const no of quadro.nos) {
     const p = paraTela(no.eixoX!, no.eixoY!, t, quadro.camera);
@@ -309,10 +310,67 @@ function desenharNos(
     }
 
     const merece = raioFinal >= RAIO_PARA_NOME || destacado;
-    if (merece && !apagado) desenharNome(ctx, no, p, raioFinal, escuro);
+    if (merece && !apagado) {
+      nomes.push({ no, p, raio: raioFinal, destacado, grau: quadro.graus.get(no.id) ?? 0 });
+    }
   }
 
   ctx.globalAlpha = 1;
+  desenharNomesSemColisao(ctx, nomes, escuro);
+}
+
+type NomeCandidato = {
+  no: NoDoGrafo;
+  p: { x: number; y: number };
+  raio: number;
+  destacado: boolean;
+  grau: number;
+};
+
+/**
+ * Os nomes depois de todos os pontos, e só os que cabem.
+ *
+ * 📐 Com a abertura enquadrada no miolo (2026-10-01), dezenas de pontos passavam do raio
+ * mínimo ao mesmo tempo, e os nomes se empilhavam no meio da nuvem: "sopa de letras",
+ * exatamente o que o limiar de raio existia para evitar.
+ *
+ * ⭐ Vão em ordem de relevância: o destacado sempre, depois quem tem mais ligações. Um
+ * nome que cairia sobre outro já desenhado fica de fora — aproximar o zoom abre espaço e
+ * ele aparece. Desenhados por último, nenhum ponto os cobre.
+ */
+function desenharNomesSemColisao(
+  ctx: CanvasRenderingContext2D,
+  nomes: NomeCandidato[],
+  escuro: boolean,
+) {
+  const ocupados: { x0: number; y0: number; x1: number; y1: number }[] = [];
+  const ordem = [...nomes].sort(
+    (a, b) => Number(b.destacado) - Number(a.destacado) || b.grau - a.grau,
+  );
+
+  for (const { no, p, raio, destacado } of ordem) {
+    const tamanho = tamanhoDoNome(raio);
+    ctx.font = fonteDoNome(tamanho);
+    const largura = ctx.measureText(no.nome).width;
+    const base = p.y + raio + tamanho + 2;
+    const caixa = { x0: p.x - largura / 2 - 3, y0: base - tamanho - 2, x1: p.x + largura / 2 + 3, y1: base + 4 };
+
+    const colide = ocupados.some(
+      (o) => caixa.x0 < o.x1 && caixa.x1 > o.x0 && caixa.y0 < o.y1 && caixa.y1 > o.y0,
+    );
+    if (colide && !destacado) continue;
+
+    ocupados.push(caixa);
+    desenharNome(ctx, no, p, raio, escuro);
+  }
+}
+
+function tamanhoDoNome(raio: number): number {
+  return Math.max(10, Math.min(15, raio * 0.62));
+}
+
+function fonteDoNome(tamanho: number): string {
+  return `500 ${tamanho}px "IBM Plex Sans", system-ui, sans-serif`;
 }
 
 function desenharRosto(
@@ -368,9 +426,9 @@ function desenharNome(
   raio: number,
   escuro: boolean,
 ) {
-  const tamanho = Math.max(10, Math.min(15, raio * 0.62));
+  const tamanho = tamanhoDoNome(raio);
 
-  ctx.font = `500 ${tamanho}px "IBM Plex Sans", system-ui, sans-serif`;
+  ctx.font = fonteDoNome(tamanho);
   ctx.textAlign = 'center';
 
   // ⚠️ Contorno na cor do fundo antes do texto: sem ele o nome sobre uma teia de
