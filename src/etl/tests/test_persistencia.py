@@ -36,7 +36,7 @@ from poligraph_etl.similaridade import ParSimilar  # noqa: E402
 @pytest.fixture(autouse=True)
 def limpar(conexao):
     conexao.execute(
-        "TRUNCATE noticia_pessoas, noticias, similaridades, execucoes, votos, votacoes, "
+        "TRUNCATE noticia_pessoas, noticias, similaridades, execucoes, votos, votacoes, cargas, "
         "pessoa_fonte_ids, pessoas RESTART IDENTITY CASCADE"
     )
 

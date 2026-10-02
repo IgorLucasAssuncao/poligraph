@@ -18,6 +18,9 @@ public class VotoModel
     public required string PartidoNoVoto { get; set; }
     public required string UfNoVoto { get; set; }
 
+    /// <summary>A carga de onde a linha saiu (PL72). Nula nas linhas gravadas antes dela.</summary>
+    public long? CargaId { get; set; }
+
     /// <summary>
     /// Se o parlamentar estava na votação — não o mesmo que ter posição: votar secreto e
     /// obstruir são presença sem posição.

@@ -54,6 +54,11 @@ plausível. Não há caso como o dos R$ 12 bilhões, mas a regra custa pouco.
 
 ## 2. Procedência por linha (PL72)
 
+> FEITO em 2026-10-02 para votações, votos e orientações (Câmara e Senado). MEDIDO na
+> recarga de 2026: 4 cargas, 100% das linhas com `carga_id`, e o SHA-256 de um novo
+> download da Câmara igual ao gravado. A Câmara manda `ETag` e `Last-Modified`; o Senado,
+> nenhum dos dois.
+
 ### O que se quer poder afirmar
 
 "Este número é idêntico ao do arquivo da Câmara baixado em 02/10/2026 às 14:03, cujo
@@ -71,8 +76,8 @@ Uma tabela **`cargas`**, uma linha por arquivo ou resposta baixada:
 | `url` | `text` | O endereço exato pedido, com os parâmetros |
 | `baixado_em` | `timestamptz` | Quando |
 | `sha256` | `char(64)` | Do corpo da resposta ou do arquivo, como veio |
+| `etag_da_fonte`, `modificado_na_fonte` | `text`, `timestamptz` | A identificação que o próprio órgão dá à versão: ele não publica hash |
 | `bytes` | `bigint` | |
-| `linhas_gravadas` | `int` | Quantas linhas do banco saíram dela |
 | `comando` | `text` | O comando da ETL e a versão (commit) |
 
 E uma coluna **`carga_id`** (FK) nas tabelas de dado de fonte: `votacoes`, `votos`,

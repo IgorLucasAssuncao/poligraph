@@ -399,24 +399,50 @@ def gravar_receitas(
     )
 
 
-def gravar_votacoes(conexao: psycopg.Connection, votacoes: Sequence[dict]) -> int:
-    """Grava votações. `ON CONFLICT (id) DO UPDATE` — a Câmara corrige dado retroativo."""
+def registrar_carga(conexao: psycopg.Connection, baixado, comando: str) -> int:
+    """PL72 — grava a carga e devolve o id que as linhas de dado vão levar."""
+    return conexao.execute(
+        """
+        INSERT INTO cargas (fonte, url, baixado_em, sha256, bytes, etag_da_fonte,
+                            modificado_na_fonte, comando)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
+        """,
+        (baixado.fonte, baixado.url, baixado.baixado_em, baixado.sha256,
+         len(baixado.conteudo), baixado.etag, baixado.modificado_na_fonte, comando),
+    ).fetchone()[0]
+
+
+def _com_carga(linhas: Sequence[dict], carga_id: int | None) -> list[dict]:
+    """As linhas com o `carga_id` da carga de onde saíram (PL72)."""
+    return [{**linha, "carga_id": carga_id} for linha in linhas]
+
+
+def gravar_votacoes(
+    conexao: psycopg.Connection, votacoes: Sequence[dict], carga_id: int | None = None
+) -> int:
+    """Grava votações. `ON CONFLICT (id) DO UPDATE` — a Câmara corrige dado retroativo.
+
+    A carga troca na regravação: a procedência é da versão que está no banco. Sem carga
+    (`None`), a que já estava fica.
+    """
     return _executar_em_lotes(
         conexao,
         """
         INSERT INTO votacoes (id, casa, legislatura, data, orgao, descricao,
                              proposicao_id, categoria, secreta, plenario,
-                             votos_sim, votos_nao)
+                             votos_sim, votos_nao, carga_id)
         VALUES (%(id)s, %(casa)s, %(legislatura)s, %(data)s, %(orgao)s, %(descricao)s,
                 %(proposicao_id)s, %(categoria)s, %(secreta)s, %(plenario)s,
-                %(votos_sim)s, %(votos_nao)s)
+                %(votos_sim)s, %(votos_nao)s, %(carga_id)s)
         ON CONFLICT (id) DO UPDATE SET
+            carga_id = COALESCE(EXCLUDED.carga_id, votacoes.carga_id),
             descricao = EXCLUDED.descricao,
             categoria = EXCLUDED.categoria,
             votos_sim = EXCLUDED.votos_sim,
             votos_nao = EXCLUDED.votos_nao
         """,
-        votacoes,
+        _com_carga(votacoes, carga_id),
     )
 
 
@@ -446,18 +472,19 @@ def apagar_votacoes(conexao: psycopg.Connection, ids: Sequence[str]) -> int:
 
 
 def gravar_orientacoes(
-    conexao: psycopg.Connection, orientacoes: Sequence[dict]
+    conexao: psycopg.Connection, orientacoes: Sequence[dict], carga_id: int | None = None
 ) -> int:
     """Grava orientação de bancada. ATENÇÃO: Só a Câmara publica isso."""
     return _executar_em_lotes(
         conexao,
         """
-        INSERT INTO orientacoes (votacao_id, bancada, orientacao)
-        VALUES (%(votacao_id)s, %(bancada)s, %(orientacao)s)
+        INSERT INTO orientacoes (votacao_id, bancada, orientacao, carga_id)
+        VALUES (%(votacao_id)s, %(bancada)s, %(orientacao)s, %(carga_id)s)
         ON CONFLICT (votacao_id, bancada) DO UPDATE SET
-            orientacao = EXCLUDED.orientacao
+            orientacao = EXCLUDED.orientacao,
+            carga_id = COALESCE(EXCLUDED.carga_id, orientacoes.carga_id)
         """,
-        orientacoes,
+        _com_carga(orientacoes, carga_id),
     )
 
 
@@ -482,7 +509,9 @@ def gravar_metricas_de_alinhamento(
     )
 
 
-def gravar_votos(conexao: psycopg.Connection, votos: Sequence[dict]) -> int:
+def gravar_votos(
+    conexao: psycopg.Connection, votos: Sequence[dict], carga_id: int | None = None
+) -> int:
     """Grava votos.
 
     ATENÇÃO: `partido_no_voto` e `uf_no_voto` são atualizados no conflito de propósito:
@@ -493,16 +522,18 @@ def gravar_votos(conexao: psycopg.Connection, votos: Sequence[dict]) -> int:
     return _executar_em_lotes(
         conexao,
         """
-        INSERT INTO votos (votacao_id, pessoa_id, valor, presenca, partido_no_voto, uf_no_voto)
+        INSERT INTO votos (votacao_id, pessoa_id, valor, presenca, partido_no_voto, uf_no_voto,
+                           carga_id)
         VALUES (%(votacao_id)s, %(pessoa_id)s, %(valor)s, %(presenca)s,
-                %(partido_no_voto)s, %(uf_no_voto)s)
+                %(partido_no_voto)s, %(uf_no_voto)s, %(carga_id)s)
         ON CONFLICT (votacao_id, pessoa_id) DO UPDATE SET
             valor = EXCLUDED.valor,
             presenca = EXCLUDED.presenca,
             partido_no_voto = EXCLUDED.partido_no_voto,
-            uf_no_voto = EXCLUDED.uf_no_voto
+            uf_no_voto = EXCLUDED.uf_no_voto,
+            carga_id = COALESCE(EXCLUDED.carga_id, votos.carga_id)
         """,
-        [{**voto, "presenca": voto.get("presenca")} for voto in votos],
+        [{**voto, "presenca": voto.get("presenca")} for voto in _com_carga(votos, carga_id)],
     )
 
 

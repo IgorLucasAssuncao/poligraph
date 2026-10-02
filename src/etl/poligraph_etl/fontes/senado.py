@@ -33,6 +33,8 @@ from pathlib import Path
 
 import requests
 
+from .. import procedencia
+
 log = logging.getLogger("poligraph")
 
 BASE = "https://legis.senado.leg.br/dadosabertos"
@@ -61,6 +63,11 @@ def baixar_votacoes(ano: int) -> list[dict]:
     Devolve o array como veio, incluindo as secretas: filtrar é decisão do tratamento,
     e a contagem de secretas é o próprio achado #17.
     """
+    return baixar_votacoes_com_procedencia(ano)[0]
+
+
+def baixar_votacoes_com_procedencia(ano: int) -> tuple[list[dict], procedencia.Baixado]:
+    """Como `baixar_votacoes`, devolvendo também a impressão digital da resposta (PL72)."""
     resposta = requests.get(
         f"{BASE}/votacao",
         params={"dataInicio": f"{ano}-01-01", "dataFim": f"{ano}-12-31"},
@@ -68,14 +75,15 @@ def baixar_votacoes(ano: int) -> list[dict]:
         timeout=300,
     )
     resposta.raise_for_status()
+    baixado = procedencia.de_resposta("SENADO", resposta)
 
     if not resposta.content.strip():
-        return []
+        return [], baixado
 
     dados = resposta.json() or []
     _registrar_descontinuacao(dados)
 
-    return dados
+    return dados, baixado
 
 
 def baixar_senadores() -> list[dict]:

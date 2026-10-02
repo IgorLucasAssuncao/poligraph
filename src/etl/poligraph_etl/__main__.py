@@ -27,7 +27,7 @@ from . import (
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
 from .fontes import camara, portal, receita, senado, tse
-from . import conferencia, convenentes, patrimonio, redes
+from . import conferencia, convenentes, patrimonio, procedencia, redes
 
 log = logging.getLogger("poligraph")
 
@@ -258,7 +258,7 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
     for ano in anos:
         log.info("Ingerindo %d...", ano)
 
-        arquivo = camara.baixar("votacoes", ano, CACHE / f"votacoes-{ano}.csv")
+        arquivo, carga_votacoes = _baixar_da_camara(conexao, "votacoes", ano)
         df = camara.ler_csv(arquivo)
         camara.conferir_volume(df, ano)      # DECISÃO: canário contra regressão de parsing
 
@@ -299,7 +299,7 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
         # ATENÇÃO: A votação entra SEM proposição: ela é ingerida antes de a proposição
         #    existir, e a FK recusaria a linha. O vínculo vem logo abaixo.
         persistencia.desconectar_proposicoes_ausentes(conexao, votacoes)
-        persistencia.gravar_votacoes(conexao, votacoes)
+        persistencia.gravar_votacoes(conexao, votacoes, carga_votacoes)
         log.info("  %d registros, %d votações nominais", len(df), len(votacoes))
 
         # DECISÃO: A ementa é o que destrava a curadoria (PL11): a DESCRIÇÃO da votação diz o
@@ -319,12 +319,10 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
             sum(1 for p in lista if not p["ementa"]),
         )
 
-        arquivo_votos = camara.baixar(
-            "votacoesVotos", ano, CACHE / f"votacoesVotos-{ano}.csv"
-        )
+        arquivo_votos, carga_votos = _baixar_da_camara(conexao, "votacoesVotos", ano)
         df_votos = camara.ler_csv(arquivo_votos)
         votos = ingestao.votos_para_linhas(df_votos, mapa)
-        persistencia.gravar_votos(conexao, votos)
+        persistencia.gravar_votos(conexao, votos, carga_votos)
         log.info("  %d votos de %d linhas", len(votos), len(df_votos))
 
         # ATENÇÃO: Voto fora do de-para é descartado, não inventado. Em volume, o problema
@@ -342,8 +340,8 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
         #    2026-10-01 (achado #35). Sem elas o ano entra inteiro, e só `governismo` e
         #    `disciplina` ficam nulos — que é o que já acontece no Senado inteiro.
         try:
-            arquivo_orientacoes = camara.baixar(
-                "votacoesOrientacoes", ano, CACHE / f"votacoesOrientacoes-{ano}.csv"
+            arquivo_orientacoes, carga_orientacoes = _baixar_da_camara(
+                conexao, "votacoesOrientacoes", ano
             )
         except requests.HTTPError as erro:
             if erro.response is None or erro.response.status_code != 404:
@@ -354,11 +352,23 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
         linhas = orientacoes.para_linhas(
             df_orientacoes.to_dict("records"), {v["id"] for v in votacoes}
         )
-        persistencia.gravar_orientacoes(conexao, linhas)
+        persistencia.gravar_orientacoes(conexao, linhas, carga_orientacoes)
         log.info(
             "  %d orientações de %d linhas (%d bancadas)",
             len(linhas), len(df_orientacoes), len({l["bancada"] for l in linhas}),
         )
+
+
+def _baixar_da_camara(conexao: psycopg.Connection, recurso: str, ano: int):
+    """Baixa um arquivo da Câmara e registra a carga (PL72): devolve o caminho e o id.
+
+    O arquivo também fica guardado em `procedencia/`, com o hash no nome: é o que deixa
+    qualquer pessoa refazer a conta a partir do mesmo arquivo.
+    """
+    destino = CACHE / f"{recurso}-{ano}.csv"
+    baixado = camara.baixar_com_procedencia(recurso, ano, destino)
+    procedencia.guardar(baixado, CACHE / "procedencia")
+    return destino, persistencia.registrar_carga(conexao, baixado, procedencia.comando())
 
 
 def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
@@ -384,9 +394,10 @@ def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
     for ano in anos:
         log.info("Ingerindo Senado %d...", ano)
 
-        votacoes_brutas, fora = ingestao_senado.separar_fora_de_epoca(
-            senado.baixar_votacoes(ano)
-        )
+        brutas, baixado = senado.baixar_votacoes_com_procedencia(ano)
+        procedencia.guardar(baixado, CACHE / "procedencia")
+        carga = persistencia.registrar_carga(conexao, baixado, procedencia.comando())
+        votacoes_brutas, fora = ingestao_senado.separar_fora_de_epoca(brutas)
         if fora:
             apagadas = persistencia.apagar_votacoes(
                 conexao, [ingestao_senado.id_da_votacao(v) for v in fora]
@@ -414,7 +425,7 @@ def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
         mapa = _mapa_pessoas(conexao, fonte="SENADO")
 
         votacoes = ingestao_senado.votacoes_para_linhas(votacoes_brutas)
-        persistencia.gravar_votacoes(conexao, votacoes)
+        persistencia.gravar_votacoes(conexao, votacoes, carga)
 
         abertas = sum(1 for linha in votacoes if not linha["secreta"])
         log.info(
@@ -424,7 +435,7 @@ def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
         )
 
         votos = ingestao_senado.votos_para_linhas(votacoes_brutas, mapa)
-        persistencia.gravar_votos(conexao, votos)
+        persistencia.gravar_votos(conexao, votos, carga)
 
         com_posicao = sum(1 for linha in votos if linha["valor"] is not None)
         log.info(

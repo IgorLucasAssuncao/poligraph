@@ -30,6 +30,8 @@ from pathlib import Path
 import pandas as pd
 import requests
 
+from .. import procedencia
+
 BASE = "https://dadosabertos.camara.leg.br/arquivos"
 
 # Medido em 2026-08-26 com parser RFC 4180 próprio (infra/analise/csv.awk).
@@ -86,13 +88,19 @@ def baixar(recurso: str, ano: int, destino: Path) -> Path:
     ATENÇÃO: Os arquivos são reconstruídos toda madrugada, TODOS os anos — inclusive os
     fechados (achado #19). Não dá para supor que o de 2023 nunca muda.
     """
+    baixar_com_procedencia(recurso, ano, destino)
+    return destino
+
+
+def baixar_com_procedencia(recurso: str, ano: int, destino: Path) -> procedencia.Baixado:
+    """Como `baixar`, devolvendo também a impressão digital do que veio (PL72)."""
     destino.parent.mkdir(parents=True, exist_ok=True)
 
     resposta = requests.get(url_do_arquivo(recurso, ano), timeout=120)
     resposta.raise_for_status()
     destino.write_bytes(resposta.content)
 
-    return destino
+    return procedencia.de_resposta("CAMARA", resposta)
 
 
 def conferir_volume(df: pd.DataFrame, ano: int) -> None:

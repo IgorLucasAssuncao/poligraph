@@ -137,7 +137,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
 
         var esperadas = new[]
         {
-            "arestas_grafo", "autores_de_emenda", "avaliacoes", "cnpjs_municipio", "consentimentos", "convenios",
+            "arestas_grafo", "autores_de_emenda", "avaliacoes", "cargas", "cnpjs_municipio", "consentimentos", "convenios",
             "despesas", "emendas", "emendas_convenios", "emendas_favorecidos", "encargos_especiais", "execucoes", "gastos_sigilosos", "gestoes",
             "municipios", "noticia_pessoas", "noticia_temas", "orcamento_por_funcao", "patrimonios",
             "noticias", "nos_metrica", "orientacoes", "perguntas", "pessoa_fonte_ids",
@@ -205,6 +205,56 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         // Confere QUAL restrição barrou. Sem isto, um NOT NULL acidental em outra
         // coluna faria o teste passar por um motivo que não é o que ele afirma.
         Assert.Equal(restricao, erro.ConstraintName);
+    }
+
+    /// <summary>
+    /// PL72: a carga só aceita o hash como o ETL o grava, hexadecimal minúsculo de 64, e
+    /// uma fonte conhecida. Um hash em maiúsculas seria outra string, e a comparação com o
+    /// arquivo guardado falharia sem dizer por quê.
+    /// </summary>
+    [SkippableTheory]
+    [InlineData("'CAMARA'", "'ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789'", "ck_carga_sha256")]
+    [InlineData("'CAMARA'", "'abc'", "ck_carga_sha256")]
+    [InlineData("'WIKIPEDIA'", "'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'", "ck_carga_fonte")]
+    public async Task Carga_ComHashOuFonteForaDoDominio_ERejeitadaPeloBanco(
+        string fonte, string sha256, string restricao)
+    {
+        ExigeDocker();
+
+#pragma warning disable EF1002
+        var erro = await Assert.ThrowsAsync<PostgresException>(() =>
+            Db.Database.ExecuteSqlRawAsync(
+                $"INSERT INTO cargas (fonte, url, sha256, bytes, comando) VALUES ({fonte}, 'https://exemplo', {sha256}, 1, 'teste')"));
+#pragma warning restore EF1002
+
+        Assert.Equal(restricao, erro.ConstraintName);
+    }
+
+    /// <summary>
+    /// PL72: carga com linha apontando para ela não se apaga, senão a procedência sumiria.
+    /// </summary>
+    [SkippableFact]
+    public async Task Carga_ComVotacaoApontando_NaoSeApaga()
+    {
+        ExigeDocker();
+        var carga = new CargaModel
+        {
+            Fonte = TipoFonteDeCarga.CAMARA, Url = "https://exemplo/votacoes-2026.csv",
+            Sha256 = new string('a', 64), Bytes = 10, Comando = "teste",
+        };
+        Db.Cargas.Add(carga);
+        await Db.SaveChangesAsync();
+        Db.Votacoes.Add(new VotacaoModel
+        {
+            Id = "carga-1", Casa = TipoCasa.CAMARA, Legislatura = 57, Data = new DateOnly(2026, 3, 1),
+            Categoria = TipoCategoriaDeVotacao.SUBSTANTIVA, Plenario = true, CargaId = carga.Id,
+        });
+        await Db.SaveChangesAsync();
+
+        var erro = await Assert.ThrowsAsync<PostgresException>(() =>
+            Db.Database.ExecuteSqlAsync($"DELETE FROM cargas WHERE id = {carga.Id}"));
+
+        Assert.Equal("23503", erro.SqlState);
     }
 
     /// <summary>

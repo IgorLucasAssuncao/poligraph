@@ -144,6 +144,70 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Data.CargaModel", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("BaixadoEm")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("baixado_em")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<long>("Bytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("bytes");
+
+                    b.Property<string>("Comando")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("comando");
+
+                    b.Property<string>("EtagDaFonte")
+                        .HasColumnType("text")
+                        .HasColumnName("etag_da_fonte");
+
+                    b.Property<string>("Fonte")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("fonte");
+
+                    b.Property<DateTimeOffset?>("ModificadoNaFonte")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modificado_na_fonte");
+
+                    b.Property<string>("Sha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("sha256")
+                        .IsFixedLength();
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("url");
+
+                    b.HasKey("Id")
+                        .HasName("pk_cargas");
+
+                    b.ToTable("cargas", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_carga_bytes", "bytes >= 0");
+
+                            t.HasCheckConstraint("ck_carga_fonte", "fonte IN ('CAMARA','SENADO','TSE','PORTAL_TRANSPARENCIA','RECEITA','IBGE')");
+
+                            t.HasCheckConstraint("ck_carga_sha256", "sha256 ~ '^[0-9a-f]{64}$'");
+
+                            t.HasCheckConstraint("ck_carga_url", "url <> ''");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Data.CnpjMunicipioModel", b =>
                 {
                     b.Property<string>("Cnpj")
@@ -1046,6 +1110,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("bancada");
 
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
                     b.Property<string>("Orientacao")
                         .IsRequired()
                         .HasColumnType("text")
@@ -1053,6 +1121,9 @@ namespace Poligraph.Data.Migrations
 
                     b.HasKey("VotacaoId", "Bancada")
                         .HasName("pk_orientacoes");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_orientacoes_carga_id");
 
                     b.ToTable("orientacoes", null, t =>
                         {
@@ -1576,6 +1647,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("id");
 
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
                     b.Property<string>("Casa")
                         .IsRequired()
                         .HasColumnType("text")
@@ -1625,6 +1700,9 @@ namespace Poligraph.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_votacoes");
 
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_votacoes_carga_id");
+
                     b.HasIndex("Casa", "ProposicaoId")
                         .HasDatabaseName("ix_votacoes_casa_proposicao_id");
 
@@ -1649,6 +1727,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("pessoa_id");
 
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
                     b.Property<string>("PartidoNoVoto")
                         .IsRequired()
                         .HasColumnType("text")
@@ -1671,6 +1753,9 @@ namespace Poligraph.Data.Migrations
 
                     b.HasKey("VotacaoId", "PessoaId")
                         .HasName("pk_votos");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_votos_carga_id");
 
                     b.HasIndex("PessoaId")
                         .HasDatabaseName("ix_votos_pessoa_id");
@@ -1831,6 +1916,12 @@ namespace Poligraph.Data.Migrations
 
             modelBuilder.Entity("Poligraph.Data.OrientacaoModel", b =>
                 {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_orientacoes_cargas_carga_id");
+
                     b.HasOne("Poligraph.Data.VotacaoModel", "Votacao")
                         .WithMany()
                         .HasForeignKey("VotacaoId")
@@ -1956,6 +2047,12 @@ namespace Poligraph.Data.Migrations
 
             modelBuilder.Entity("Poligraph.Data.VotacaoModel", b =>
                 {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_votacoes_cargas_carga_id");
+
                     b.HasOne("Poligraph.Data.ProposicaoModel", "Proposicao")
                         .WithMany()
                         .HasForeignKey("Casa", "ProposicaoId")
@@ -1966,6 +2063,12 @@ namespace Poligraph.Data.Migrations
 
             modelBuilder.Entity("Poligraph.Data.VotoModel", b =>
                 {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_votos_cargas_carga_id");
+
                     b.HasOne("Poligraph.Data.PessoaModel", "Pessoa")
                         .WithMany("Votos")
                         .HasForeignKey("PessoaId")
