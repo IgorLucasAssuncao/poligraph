@@ -53,7 +53,7 @@ export function SugestoesParaSeguir() {
       <ul className="sugestoes">
         {sugestoes.map((p) => (
           <li key={p.id}>
-            <Link to={`/parlamentar/${p.id}`} className="sugestao-link">
+            <Link to={`/parlamentar/${p.id}`} className="sugestao-link" title={`${p.nome} · ${p.partido}${p.uf ? ` · ${p.uf}` : ''}`}>
               <Avatar nome={p.nome} fotoUrl={p.urlFoto} tamanho="medio" />
               <span className="sugestao-texto">
                 <strong>{p.nome}</strong>

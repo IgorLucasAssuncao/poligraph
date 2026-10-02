@@ -38,10 +38,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// </remarks>
     public async Task<PaginaDeParlamentaresDto> ListarAsync(
         string? nome, string? partido, string? uf, TipoCasa? casa, bool anteriores,
-        TipoOrdemDaLista ordem, int pagina, int tamanho, CancellationToken ct)
+        short? legislatura, TipoOrdemDaLista ordem, int pagina, int tamanho, CancellationToken ct)
     {
         var corrente = await Legislaturas.CorrenteAsync(_db, ct);
-        var todos = (anteriores ? await ListaComAnterioresAsync(ct) : await ListaDaLegislaturaAsync(ct))
+        var todos = (anteriores ? await ListaComAnterioresAsync(ct) : await ListaDaLegislaturaAsync(legislatura, ct))
             .Where(p => casa is null || p.Casa == casa)
             .ToList();
 
@@ -215,7 +215,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
 
     /// <summary>Quem votou na legislatura corrente, com casa, partido e UF do último voto. Em cache.</summary>
     public Task<IReadOnlyList<ParlamentarNaListaDto>> ParlamentaresDaLegislaturaAsync(CancellationToken ct) =>
-        ListaDaLegislaturaAsync(ct);
+        ListaDaLegislaturaAsync(null, ct);
 
     /// <summary>
     /// Todo mundo que votou em alguma legislatura da base, cada um com o último mandato.
@@ -256,10 +256,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
             mandatos);
     }
 
-    /// <summary>Quem votou na legislatura corrente, com a filiação do último voto. Em cache.</summary>
-    private async Task<IReadOnlyList<ParlamentarNaListaDto>> ListaDaLegislaturaAsync(CancellationToken ct)
+    /// <summary>Quem votou numa legislatura — sem ela, a corrente —, com a filiação do último voto. Em cache.</summary>
+    private async Task<IReadOnlyList<ParlamentarNaListaDto>> ListaDaLegislaturaAsync(short? pedida, CancellationToken ct)
     {
-        var legislatura = await Legislaturas.CorrenteAsync(_db, ct);
+        var legislatura = pedida ?? await Legislaturas.CorrenteAsync(_db, ct);
         if (legislatura is null) return [];
 
         return await _cache.GetOrCreateAsync(("parlamentares", legislatura.Value), entrada =>

@@ -11,6 +11,11 @@ import { IconeExplorar } from '../componentes/Icones';
 import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 import { useSessao } from '../sessao';
 import { EsqueletoDeLista } from '../componentes/Esqueleto';
+import {
+  SeletorDeLegislatura,
+  useLegislaturaDaUrl,
+  useLegislaturas,
+} from '../componentes/SeletorDeLegislatura';
 
 /** Busca e navegação pelos parlamentares (RF-34). */
 /**
@@ -36,7 +41,8 @@ export function Explorar() {
   const [partido, setPartido] = useState('');
   const [uf, setUf] = useState('');
   const [casa, setCasa] = useState<Casa | ''>('');
-  const [anteriores, setAnteriores] = useState(false);
+  const [escolha, setLegislatura] = useLegislaturaDaUrl();
+  const legislaturas = useLegislaturas();
   const [lista, setLista] = useState<Parlamentar[]>([]);
   const [pagina, setPagina] = useState<PaginaDeParlamentares | null>(null);
   const [seguidos, setSeguidos] = useState<Set<number>>(new Set());
@@ -57,7 +63,9 @@ export function Explorar() {
     const timer = setTimeout(() => {
       setCarregando(true);
       listarParlamentares({
-        nome: termo, partido, uf, casa: casa || undefined, anteriores: anteriores || undefined,
+        nome: termo, partido, uf, casa: casa || undefined,
+        anteriores: escolha === 'todas' || undefined,
+        legislatura: typeof escolha === 'number' ? escolha : undefined,
         tamanho: POR_PAGINA,
       })
         .then((primeira) => {
@@ -72,13 +80,16 @@ export function Explorar() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [termo, partido, uf, casa, anteriores]);
+  }, [termo, partido, uf, casa, escolha]);
 
   // ⭐ As opções vêm da lista inteira, que a API manda junto. Tiradas do que está na
   //    tela, escolher um partido esvaziava a lista de estados.
   const partidos = pagina?.partidos ?? [];
   const ufs = pagina?.ufs ?? [];
   const total = pagina?.total ?? 0;
+  /** O período passado escolhido, para a contagem dizer de quando é a lista. */
+  const passada =
+    typeof escolha === 'number' && escolha !== pagina?.legislaturaCorrente ? escolha : undefined;
 
   return (
     <>
@@ -124,12 +135,17 @@ export function Explorar() {
           ))}
         </select>
 
-        {/* ⭐ Desligado por padrão: o histórico são milhares de nomes, e quem chega
-            procura quem está lá hoje. */}
-        <label className="filtro-marcador">
-          <input type="checkbox" checked={anteriores} onChange={(e) => setAnteriores(e.target.checked)} />
-          Incluir quem já saiu
-        </label>
+        {/* ⭐ A corrente por padrão: o histórico são milhares de nomes, e quem chega
+            procura quem está lá hoje. "Todos os períodos" substituiu a caixa "Incluir
+            quem já saiu", que ⛔ deixava escolher UM período passado. */}
+        {legislaturas && legislaturas.length > 1 && (
+          <SeletorDeLegislatura
+            opcoes={legislaturas.map((l) => l.numero)}
+            atual={escolha ?? legislaturas[0].numero}
+            aoTrocar={setLegislatura}
+            comTodas
+          />
+        )}
       </div>
 
       {carregando && <EsqueletoDeLista rotulo="Buscando parlamentares" linhas={8} />}
@@ -141,6 +157,7 @@ export function Explorar() {
       {!carregando && total > 0 && (
         <p className="contagem-lista" aria-live="polite">
           {lista.length === total ? `${total} parlamentares` : `${lista.length} de ${total} parlamentares`}
+          {passada && ` que votaram em ${periodoDaLegislatura(passada)}`}
         </p>
       )}
 
@@ -160,6 +177,7 @@ export function Explorar() {
              inativo. A causa é o Senado fazer menos votação nominal — e 56,8% delas serem
              secretas —, ⛔ não o senador trabalhar menos. */
           detalhe={detalheDe(p)}
+          legislatura={p.legislatura && p.legislatura !== pagina?.legislaturaCorrente ? p.legislatura : undefined}
           seguindo={seguidos.has(p.id)}
           aoAlternarSeguir={usuario ? alternar : undefined}
         />
@@ -190,16 +208,24 @@ export function Explorar() {
   }
 
   function filtro() {
-    return { nome: termo, partido, uf, casa: casa || undefined, anteriores: anteriores || undefined };
+    return {
+      nome: termo, partido, uf, casa: casa || undefined,
+      anteriores: escolha === 'todas' || undefined,
+      legislatura: typeof escolha === 'number' ? escolha : undefined,
+    };
   }
 
   /**
    * ⚠️ Quem já saiu diz de quando era: "853 votações" sem o período faria um ex-deputado
    * de 2007 parecer tão ativo quanto alguém em exercício.
+   *
+   * ⚠️ Com UM período passado escolhido, ⛔ "Ex-deputado": a lista é toda daquele período,
+   * e quem foi reeleito ainda está lá. A contagem acima diz de quando é.
    */
   function detalheDe(p: Parlamentar) {
     const votacoes = `${p.nVotacoes} votos com posição ${NA_CASA[p.casa]}`.trim();
     const corrente = pagina?.legislaturaCorrente;
+    if (typeof escolha === 'number') return votacoes;
     if (!p.legislatura || !corrente || p.legislatura === corrente) return votacoes;
 
     const quem = p.casa === 'SENADO' ? 'Ex-senador' : 'Ex-deputado';

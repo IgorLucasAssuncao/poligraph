@@ -11,7 +11,7 @@
  * décimo segundo elemento. Uma pergunta, uma porta — as abas dividem a pergunta por dentro.
  */
 export const ABAS_DO_DINHEIRO = [
-  { para: '/emendas', rotulo: 'Sua cidade' },
+  { para: '/emendas', rotulo: 'Emendas por cidade' },
   { para: '/entidades', rotulo: 'Entidades' },
   { para: '/governo', rotulo: 'Governo federal' },
 ] as const;

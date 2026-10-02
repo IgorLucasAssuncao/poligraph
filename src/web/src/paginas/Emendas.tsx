@@ -117,7 +117,9 @@ export function Emendas() {
   return (
     <>
       <AbasDoDinheiro />
-      <CabecalhoDaColuna titulo="Emendas no mapa" subtitulo="Para onde foi o dinheiro de emenda parlamentar" />
+      {/* ⚠️ Mesmo nome da aba: ela dizia "Sua cidade" e a página abria como "Emendas no
+          mapa", e quem clicava ⛔ sabia se tinha chegado aonde queria (2026-10-01). */}
+      <CabecalhoDaColuna titulo="Emendas por cidade" subtitulo="Para onde foi o dinheiro de emenda parlamentar" />
       <div className="barra-do-tour">
         <BotaoDoTour nome="emendas" passos={passos} />
       </div>
@@ -192,11 +194,15 @@ export function Emendas() {
 
 /** O que o mapa ⛔ mostra, com valor — somem do desenho, ⛔ da conta. */
 function ForaDoMapa({ brasil }: { brasil: MapaDoBrasil }) {
+  /**
+   * ⚠️ A definição diz o que o número É em português de todo dia. "Pelo Banco do Brasil ·
+   * que só repassa" exigia saber que o banco é intermediário de pagamento (2026-10-01).
+   */
   const numeros: [string, number, string][] = [
-    ['Pago em emendas', brasil.recebido, 'até hoje'],
-    ['No mapa', brasil.noMapa, 'com cidade conhecida'],
-    ['Pelo Banco do Brasil', brasil.viaIntermediario, 'que só repassa'],
-    ['Sem cidade', brasil.semSede, 'pago a pessoas'],
+    ['Pago em emendas', brasil.recebido, 'das emendas do período, pago até hoje'],
+    ['No mapa', brasil.noMapa, 'sabemos em que cidade fica quem recebeu'],
+    ['Repassado por banco', brasil.viaIntermediario, 'foi ao Banco do Brasil, que paga adiante; o destino final não está no dado'],
+    ['Sem cidade', brasil.semSede, 'pago a pessoas ou a quem não foi identificado'],
   ];
 
   return (

@@ -330,8 +330,24 @@ export type Panorama = {
   perguntasNoQuestionario: number;
 };
 
-export async function obterPanorama(): Promise<Panorama> {
-  return buscar<Panorama>(`${BASE}/panorama`);
+/** Sem legislatura, a corrente. Uma fora da base responde 404. */
+export async function obterPanorama(legislatura?: number): Promise<Panorama> {
+  return buscar<Panorama>(`${BASE}/panorama${legislatura ? `?legislatura=${legislatura}` : ''}`);
+}
+
+/** Uma legislatura da base. Sai das votações: sem votação ingerida, ⛔ aparece. */
+export type Legislatura = {
+  numero: number;
+  anoInicial: number;
+  anoFinal: number;
+  /** A maior da base — a que o site mostra quando ninguém escolhe outra. */
+  corrente: boolean;
+  casas: Casa[];
+};
+
+/** Da mais recente para a mais antiga. */
+export async function listarLegislaturas(): Promise<Legislatura[]> {
+  return buscar<Legislatura[]>(`${BASE}/legislaturas`);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -360,6 +376,8 @@ export type FiltroDaLista = {
   casa?: Casa;
   /** Inclui quem só votou em legislaturas passadas, cada um com o último mandato. */
   anteriores?: boolean;
+  /** Só quem votou nesta legislatura. Sem ela, a corrente. */
+  legislatura?: number;
   /** Mais votações registradas primeiro: quem tem mais dado para comparar. */
   ordem?: 'NOME' | 'VOTACOES';
   /** Começa em 1. */

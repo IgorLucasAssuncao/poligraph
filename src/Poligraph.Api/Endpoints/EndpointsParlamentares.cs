@@ -11,7 +11,8 @@ public static class EndpointsParlamentares
         var grupo = app.MapGroup("/api/parlamentares").WithTags("Parlamentares");
 
         grupo.MapGet("/", ListarAsync)
-             .Produces<PaginaDeParlamentaresDto>();
+             .Produces<PaginaDeParlamentaresDto>()
+             .Produces(StatusCodes.Status404NotFound);
 
         grupo.MapGet("/{id:long}", ObterFichaAsync)
              .Produces<FichaParlamentarDto>()
@@ -49,19 +50,23 @@ public static class EndpointsParlamentares
         return app;
     }
 
-    /// <summary>RF-34 — busca por nome, partido e UF, em páginas. <c>pagina</c> começa em 1.</summary>
+    /// <summary>RF-34 — busca por nome, partido e UF, em páginas. <c>pagina</c> começa em 1. Legislatura fora da base dá 404.</summary>
     private static async Task<IResult> ListarAsync(
         ServicoParlamentares servico,
+        ServicoPanorama panorama,
         CancellationToken ct,
         string? nome = null,
         string? partido = null,
         string? uf = null,
         TipoCasa? casa = null,
         bool anteriores = false,
+        short? legislatura = null,
         TipoOrdemDaLista ordem = TipoOrdemDaLista.NOME,
         int pagina = 1,
         int tamanho = ServicoParlamentares.TamanhoPadrao) =>
-        Results.Ok(await servico.ListarAsync(nome, partido, uf, casa, anteriores, ordem, pagina, tamanho, ct));
+        await panorama.ExisteAsync(legislatura, ct)
+            ? Results.Ok(await servico.ListarAsync(nome, partido, uf, casa, anteriores, legislatura, ordem, pagina, tamanho, ct))
+            : Results.NotFound();
 
     /// <summary>RF-31 — ficha com dados, histórico de votos e mais similares.</summary>
     private static async Task<IResult> ObterFichaAsync(

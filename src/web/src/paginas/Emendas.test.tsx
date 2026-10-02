@@ -126,7 +126,7 @@ describe('Emendas no mapa', () => {
     renderizar();
 
     const numeros = await screen.findByRole('region', { name: 'O dinheiro das emendas do período' });
-    expect(within(numeros).getByText('Pelo Banco do Brasil')).toBeInTheDocument();
+    expect(within(numeros).getByText('Repassado por banco')).toBeInTheDocument();
     expect(within(numeros).getByText('R$ 32,5 bi')).toBeInTheDocument();
     expect(within(numeros).getByText('Sem cidade')).toBeInTheDocument();
   });

@@ -400,8 +400,8 @@ export function passosDasEmendas(): PassoDoTour[] {
       alvo: 'emendas-numeros',
       titulo: 'O que fica fora do mapa',
       texto:
-        'Nem todo dinheiro tem cidade. O que passou pelo Banco do Brasil, que só repassa, ' +
-        'e o que foi pago a pessoas não aparecem no mapa, mas estão somados aqui.',
+        'Nem todo dinheiro tem cidade. O que foi ao Banco do Brasil para ser pago adiante, ' +
+        'e o que foi pago a pessoas, não aparecem no mapa, mas estão somados aqui.',
     },
     {
       rota: null,

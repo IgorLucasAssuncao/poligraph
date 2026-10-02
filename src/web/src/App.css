@@ -466,6 +466,17 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .sugestao-texto strong { font-size: var(--t-2); }
 .sugestao-texto strong:hover { text-decoration: underline; }
 .sugestao-texto small { color: var(--suave); font-size: var(--t-2); }
+/* ⚠️ Uma linha cada, com reticências e o nome inteiro no `title`. Com o botão de 9,5rem,
+   sobravam ~4rem para o nome: ele quebrava em três linhas e a sigla do partido era
+   cortada no meio (2026-10-01). */
+.sugestao-texto strong, .sugestao-texto small {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* ⭐ Botão menor só aqui: "Deixar de seguir" ainda cabe em 8rem na letra menor, e a
+   linha ⛔ reflui no hover. */
+.sugestoes .botao-seguir, .sugestoes .botao-seguindo {
+  min-width: 8rem; padding: .3rem .6rem; font-size: var(--t-1);
+}
 .criterio { margin: .5rem 1rem 0; font-family: var(--dado); font-size: var(--t-1); color: var(--suave); }
 .ver-mais { display: block; padding: .7rem 1rem 0; color: var(--realce); font-size: var(--t-2); }
 .ver-mais:hover { text-decoration: underline; }
@@ -1184,7 +1195,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
    também, roubando 20rem de figura para sugerir quem seguir. */
 .painel-com-trilho {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 20rem;
+  grid-template-columns: minmax(0, 1fr) 22rem;
   gap: clamp(1.5rem, 3vw, 3rem);
   align-items: start;
 }
@@ -1493,12 +1504,13 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 /* O período do grafo: rótulo curto e o select com o contorno de controle (3:1 nos dois
    temas). Fica na mesma linha da casa, que é a escolha principal. */
-.grafo-legislatura {
+.seletor-legislatura {
   display: flex; align-items: center; gap: .4rem;
-  padding: .75rem 0 0;
   font-size: var(--t-2); color: var(--suave);
 }
-.grafo-legislatura select {
+.grafo-barra .seletor-legislatura { padding: .75rem 0 0; }
+.painel-secao > .seletor-legislatura { margin: .2rem 0 1rem; }
+.seletor-legislatura select {
   padding: .3rem .5rem;
   font: inherit; font-family: var(--dado); font-variant-numeric: tabular-nums;
   color: var(--texto); background: var(--fundo);

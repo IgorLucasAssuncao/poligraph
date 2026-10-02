@@ -19,6 +19,12 @@ import { SugestoesParaSeguir } from '../componentes/SugestoesParaSeguir';
 import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
 import { useSessao } from '../sessao';
 import { EsqueletoDePainel } from '../componentes/Esqueleto';
+import {
+  SeletorDeLegislatura,
+  useLegislaturaDaUrl,
+  useLegislaturas,
+} from '../componentes/SeletorDeLegislatura';
+import { periodoDaLegislatura } from '../formato';
 
 
 /**
@@ -37,13 +43,28 @@ import { EsqueletoDePainel } from '../componentes/Esqueleto';
  */
 export function Inicio() {
   const { usuario } = useSessao();
-  const [panorama, setPanorama] = useState<Panorama | null>(null);
+  /** Guardado com a legislatura que pediu: o de outro período ⛔ aparece sob o seletor novo. */
+  const [lido, setLido] = useState<{ de?: number; panorama: Panorama | null } | null>(null);
   const [seguidos, setSeguidos] = useState<Parlamentar[]>([]);
   const [itens, setItens] = useState<NoticiaDeSeguido[]>([]);
+  const [escolha, setLegislatura] = useLegislaturaDaUrl();
+  const legislaturas = useLegislaturas();
+  /** "Todas" é da lista de parlamentares; aqui vale a corrente. */
+  const legislatura = typeof escolha === 'number' ? escolha : undefined;
+  const corrente = legislaturas?.find((l) => l.corrente)?.numero;
+  const panorama = lido && lido.de === legislatura ? lido.panorama : null;
 
   useEffect(() => {
-    obterPanorama().then(setPanorama).catch(() => setPanorama(null));
+    let atual = true;
+    obterPanorama(legislatura)
+      .then((p) => atual && setLido({ de: legislatura, panorama: p }))
+      .catch(() => atual && setLido({ de: legislatura, panorama: null }));
+    return () => {
+      atual = false;
+    };
+  }, [legislatura]);
 
+  useEffect(() => {
     // Sem conta não há seguidos, e a lista responderia 401.
     if (!usuario) return;
 
@@ -66,7 +87,9 @@ export function Inicio() {
               <>
                 {' '}Você responde <strong>{panorama.perguntasNoQuestionario} perguntas</strong>,
                 escolhidas entre {panorama.perguntasAtivas} votações nominais reais
-                {panorama.legislatura ? ` da ${panorama.legislatura}ª legislatura` : ''}.
+                {/* ⚠️ A legislatura do questionário é sempre a corrente, ⛔ a escolhida
+                    abaixo: as perguntas ⛔ mudam com o período que se olha. */}
+                {corrente ? ` da ${corrente}ª legislatura` : ''}.
               </>
             ) : (
               ' Cada pergunta do questionário vem de uma votação nominal real.'
@@ -84,12 +107,23 @@ export function Inicio() {
         </section>
 
         {panorama ? (
-          <Base panorama={panorama} />
+          <Base
+            panorama={panorama}
+            seletor={
+              legislaturas && legislaturas.length > 1 && (
+                <SeletorDeLegislatura
+                  opcoes={legislaturas.map((l) => l.numero)}
+                  atual={legislatura ?? legislaturas[0].numero}
+                  aoTrocar={setLegislatura}
+                />
+              )
+            }
+          />
         ) : (
           <EsqueletoDePainel rotulo="Carregando o tamanho da base" cartoes={2} alturaDoGrafico={0} />
         )}
 
-        <GrafoDaAbertura />
+        <GrafoDaAbertura legislatura={legislatura} />
 
         {seguidos.length > 0 && (
           <section className="painel-secao">
@@ -152,10 +186,11 @@ export function Inicio() {
  *
  * ⭐ Sem `IntersectionObserver` (testes, navegador antigo), busca de imediato.
  */
-function GrafoDaAbertura() {
+function GrafoDaAbertura({ legislatura }: { legislatura?: number }) {
   const marco = useRef<HTMLElement>(null);
   const [visivel, setVisivel] = useState(false);
-  const [grafo, setGrafo] = useState<DadosDoGrafo | null | 'vazio'>(null);
+  const [lido, setLido] = useState<{ de?: number; grafo: DadosDoGrafo | 'vazio' } | null>(null);
+  const grafo = lido && lido.de === legislatura ? lido.grafo : null;
 
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined' || !marco.current) {
@@ -180,16 +215,34 @@ function GrafoDaAbertura() {
   useEffect(() => {
     if (!visivel) return;
 
-    obterGrafo('CAMARA')
-      .then((g) => setGrafo(g.nos.length > 0 ? g : 'vazio'))
-      .catch(() => setGrafo('vazio'));
-  }, [visivel]);
+    let atual = true;
+    obterGrafo('CAMARA', legislatura)
+      .then((g) => atual && setLido({ de: legislatura, grafo: g.nos.length > 0 ? g : 'vazio' }))
+      .catch(() => atual && setLido({ de: legislatura, grafo: 'vazio' }));
+    return () => {
+      atual = false;
+    };
+  }, [visivel, legislatura]);
 
-  if (grafo === 'vazio') return null;
+  if (grafo === 'vazio') {
+    // ⚠️ Com um período escolhido, sumir calado pareceria defeito.
+    return legislatura ? (
+      <section className="painel-secao">
+        <h2>Como a Câmara se agrupa</h2>
+        <p className="vazio">
+          Não há grafo da Câmara em {periodoDaLegislatura(legislatura)}: as votações
+          abertas eram poucas para comparar quem vota com quem.
+        </p>
+      </section>
+    ) : null;
+  }
 
   return (
     <section className="painel-secao" ref={marco}>
-      <h2>Como a Câmara se agrupa</h2>
+      <h2>
+        Como a Câmara se agrupa
+        {grafo && <small>{periodoDaLegislatura(grafo.legislatura)}</small>}
+      </h2>
       {grafo ? (
         <TelaDoGrafo grafo={grafo} altura={460} />
       ) : (
@@ -198,7 +251,10 @@ function GrafoDaAbertura() {
 
       <LegendaDoGrafo />
 
-      <Link to="/parlamentares?vista=grafo" className="painel-mais">
+      <Link
+        to={`/parlamentares?vista=grafo${legislatura ? `&legislatura=${legislatura}` : ''}`}
+        className="painel-mais"
+      >
         Abrir o grafo completo
       </Link>
     </section>
@@ -206,7 +262,7 @@ function GrafoDaAbertura() {
 }
 
 /** O tamanho da base, por casa — o que sustenta tudo o que a tela afirma. */
-function Base({ panorama }: { panorama: Panorama }) {
+function Base({ panorama, seletor }: { panorama: Panorama; seletor?: React.ReactNode }) {
   if (panorama.porCasa.length === 0) {
     // ⭐ Estado honesto do primeiro dia: ⛔ não inventa número nenhum.
     return (
@@ -224,6 +280,7 @@ function Base({ panorama }: { panorama: Panorama }) {
       <h2>
         A base <small>{panorama.legislatura}ª legislatura</small>
       </h2>
+      {seletor}
 
       <div className="painel-casas">
         {panorama.porCasa.map((casa) => (

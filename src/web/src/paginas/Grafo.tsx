@@ -15,6 +15,7 @@ import { Termo } from '../componentes/Termo';
 import { periodoDaLegislatura } from '../formato';
 import { passosDoGrafo } from '../tour';
 import { Bloco, Esqueleto } from '../componentes/Esqueleto';
+import { SeletorDeLegislatura, useLegislaturaDaUrl } from '../componentes/SeletorDeLegislatura';
 
 type Grupo = { comunidade: number; quantos: number; partidos: string[] };
 
@@ -37,8 +38,12 @@ const CASAS: Casa[] = ['CAMARA', 'SENADO'];
 export function Grafo() {
   const navegar = useNavigate();
   const [casa, setCasa] = useState<Casa>('CAMARA');
-  /** `undefined` é "a corrente": a API escolhe, e a tela ⛔ adivinha qual é. */
-  const [legislatura, setLegislatura] = useState<number | undefined>(undefined);
+  /**
+   * `undefined` é "a corrente": a API escolhe, e a tela ⛔ adivinha qual é. "Todas" é da
+   * lista — ⛔ existe grafo de todas as legislaturas juntas — e aqui vale a corrente.
+   */
+  const [escolha, setLegislatura] = useLegislaturaDaUrl();
+  const legislatura = typeof escolha === 'number' ? escolha : undefined;
   const [grafo, setGrafo] = useState<DadosDoGrafo | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [ampliado, setAmpliado] = useState(false);
@@ -192,10 +197,12 @@ export function Grafo() {
     </>
   );
 
-  /** A outra casa tem as próprias legislaturas: volta para a corrente dela. */
+  /**
+   * O período fica: as duas casas têm as mesmas legislaturas. Se a outra ⛔ tem grafo
+   * nele, a tela diz isso e oferece os que tem.
+   */
   function trocarDeCasa(nova: Casa) {
     setCasa(nova);
-    setLegislatura(undefined);
   }
 
   /** ⭐ A ficha abre no mandato do grafo: no de 2019, o deputado de 2019. */
@@ -224,37 +231,6 @@ function SeletorDeCasa({ casa, aoTrocar }: { casa: Casa; aoTrocar: (nova: Casa) 
         </button>
       ))}
     </div>
-  );
-}
-
-/**
- * Qual legislatura desenhar — só as que TÊM grafo. A que ficou sem, por pouco dado,
- * ⛔ aparece: oferecer e mostrar vazio seria pior que ⛔ oferecer.
- *
- * ⭐ `<select>` e ⛔ botões: com o histórico são até seis por casa, e seis botões
- * empurrariam o seletor de casa, que é a escolha principal, para fora da linha.
- */
-function SeletorDeLegislatura({
-  opcoes,
-  atual,
-  aoTrocar,
-}: {
-  opcoes: number[];
-  atual: number;
-  aoTrocar: (nova: number) => void;
-}) {
-  return (
-    <label className="grafo-legislatura">
-      <span>Período</span>
-      <select value={atual} onChange={(e) => aoTrocar(Number(e.target.value))}>
-        {opcoes.map((l, i) => (
-          <option key={l} value={l}>
-            {periodoDaLegislatura(l)}
-            {i === 0 ? ' (atual)' : ''}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }
 

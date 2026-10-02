@@ -38,8 +38,14 @@ export function Parlamentares() {
             onClick={() => {
               // ⚠️ `replace` para a troca de vista ⛔ não empilhar histórico: cinco
               //    alternâncias virariam cinco toques no botão de voltar.
+              //    O período fica: a escolha vale para as duas vistas.
               definirParametros(
-                opcao.chave === 'lista' ? {} : { vista: opcao.chave },
+                (atuais) => {
+                  const proximos = new URLSearchParams(atuais);
+                  if (opcao.chave === 'lista') proximos.delete('vista');
+                  else proximos.set('vista', opcao.chave);
+                  return proximos;
+                },
                 { replace: true },
               );
             }}

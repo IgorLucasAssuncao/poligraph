@@ -17,6 +17,7 @@ export function LinhaParlamentar({
   detalhe,
   seguindo,
   aoAlternarSeguir,
+  legislatura,
 }: {
   id: number;
   nome: string;
@@ -26,16 +27,20 @@ export function LinhaParlamentar({
   detalhe?: React.ReactNode;
   seguindo?: boolean;
   aoAlternarSeguir?: (id: number, seguindoAgora: boolean) => void;
+  /** A ficha abre neste mandato. Sem ela, no mais recente. */
+  legislatura?: number;
 }) {
+  const ficha = `/parlamentar/${id}${legislatura ? `?legislatura=${legislatura}` : ''}`;
+
   return (
     <article className="linha">
-      <Link to={`/parlamentar/${id}`} aria-label={nome}>
+      <Link to={ficha} aria-label={nome}>
         <Avatar nome={nome} fotoUrl={fotoUrl} tamanho="medio" />
       </Link>
 
       <div className="linha-corpo">
         <div className="linha-topo">
-          <Link to={`/parlamentar/${id}`} className="linha-nome">
+          <Link to={ficha} className="linha-nome">
             {nome}
           </Link>
           <span className="linha-meta">

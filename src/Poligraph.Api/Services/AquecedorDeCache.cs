@@ -40,7 +40,8 @@ public sealed class AquecedorDeCache(
             await using var escopo = _escopos.CreateAsyncScope();
             var servicos = escopo.ServiceProvider;
 
-            await servicos.GetRequiredService<ServicoPanorama>().ObterAsync(ct);
+            await servicos.GetRequiredService<ServicoPanorama>().ObterAsync(null, ct);
+            await servicos.GetRequiredService<ServicoPanorama>().LegislaturasAsync(ct);
             await servicos.GetRequiredService<ServicoGrafo>().ObterAsync(TipoCasa.CAMARA, null, ct);
             await servicos.GetRequiredService<ServicoGrafo>().ObterAsync(TipoCasa.SENADO, null, ct);
             await servicos.GetRequiredService<ServicoParlamentares>().ParlamentaresDeTodasAsync(ct);

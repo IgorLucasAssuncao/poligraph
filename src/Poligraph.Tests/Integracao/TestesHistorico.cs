@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
@@ -93,6 +94,70 @@ public class TestesHistorico(FixturePostgres postgres) : BaseIntegracao(postgres
     }
 
     /// <summary>
+    /// Escolhida uma legislatura, a lista é a dela — só quem votou nela —, e não a corrente
+    /// com os ex-parlamentares somados.
+    /// </summary>
+    [SkippableFact]
+    public async Task Lista_DeUmaLegislatura_TrazSoQuemVotouNela()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        await SemearExDeputadoAsync();
+
+        var pagina = await ObterAsync<PaginaLida>($"/api/parlamentares?tamanho=100&legislatura={Anterior}");
+
+        var ex = Assert.Single(pagina.Itens);
+        Assert.Equal("Ex Deputado", ex.Nome);
+        Assert.Equal(Anterior, ex.Legislatura);
+    }
+
+    [SkippableFact]
+    public async Task LegislaturaForaDaBase_Da404_NaListaENoPanorama()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        using var cliente = new FabricaApi(ConnectionString).CreateClient();
+
+        Assert.Equal(HttpStatusCode.NotFound, (await cliente.GetAsync("/api/parlamentares?legislatura=12")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await cliente.GetAsync("/api/panorama?legislatura=12")).StatusCode);
+    }
+
+    /// <summary>
+    /// O seletor do site lista o que a base tem, da mais recente, e só a maior é a corrente.
+    /// </summary>
+    [SkippableFact]
+    public async Task Legislaturas_ListaAsDaBase_ComACorrenteNoTopo()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        await SemearExDeputadoAsync();
+
+        var legislaturas = await ObterAsync<List<LegislaturaLida>>("/api/legislaturas");
+
+        Assert.Equal(2, legislaturas.Count);
+        Assert.True(legislaturas[0].Corrente);
+        Assert.False(legislaturas[1].Corrente);
+        Assert.Equal(Anterior, legislaturas[1].Numero);
+        Assert.Equal(2019, legislaturas[1].AnoInicial);
+        Assert.Equal(["CAMARA"], legislaturas[1].Casas);
+    }
+
+    [SkippableFact]
+    public async Task Panorama_DeUmaLegislatura_ContaSoAsVotacoesDela()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        await SemearExDeputadoAsync();
+
+        var panorama = await ObterAsync<PanoramaLido>($"/api/panorama?legislatura={Anterior}");
+
+        Assert.Equal(Anterior, panorama.Legislatura);
+        var camara = Assert.Single(panorama.PorCasa);
+        Assert.Equal(1, camara.Votacoes);
+        Assert.Equal(1, camara.Parlamentares);
+    }
+
+    /// <summary>
     /// O feed da página inicial numa requisição só, e só de quem o usuário segue.
     /// </summary>
     [SkippableFact]
@@ -185,6 +250,12 @@ public class TestesHistorico(FixturePostgres postgres) : BaseIntegracao(postgres
     private record PaginaLida(List<ParlamentarLido> Itens, int Total, short? LegislaturaCorrente);
 
     private record BuscaLida(List<ParlamentarLido> Parlamentares, short? LegislaturaCorrente);
+
+    private record LegislaturaLida(short Numero, int AnoInicial, bool Corrente, List<string> Casas);
+
+    private record PanoramaLido(short? Legislatura, List<CasaDoPanoramaLida> PorCasa);
+
+    private record CasaDoPanoramaLida(string Casa, int Votacoes, int Parlamentares);
 
     private record NoticiaLida(string Url);
 

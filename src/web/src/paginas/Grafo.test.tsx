@@ -90,7 +90,7 @@ describe('o período do grafo', () => {
 
     const seletor = await screen.findByLabelText('Período');
     expect(within(seletor).getAllByRole('option').map((o) => o.textContent)).toEqual([
-      '2023–2027 (atual)', '2019–2023', '2015–2019',
+      '2023–2027 (atual)', '2019–2023 · 56ª', '2015–2019 · 55ª',
     ]);
 
     await userEvent.selectOptions(seletor, '56');

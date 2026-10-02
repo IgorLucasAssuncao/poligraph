@@ -18,6 +18,10 @@ vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
   listarParlamentares: vi.fn(),
   listarSeguidos: vi.fn(),
+  listarLegislaturas: vi.fn().mockResolvedValue([
+    { numero: 57, anoInicial: 2023, anoFinal: 2027, corrente: true, casas: ['CAMARA', 'SENADO'] },
+    { numero: 56, anoInicial: 2019, anoFinal: 2023, corrente: false, casas: ['CAMARA', 'SENADO'] },
+  ]),
 }));
 
 const api = await import('../api');
@@ -164,11 +168,41 @@ describe('quem já saiu', () => {
 
     expect(vi.mocked(api.listarParlamentares).mock.calls[0][0]?.anteriores).toBeUndefined();
 
-    fireEvent.click(screen.getByLabelText('Incluir quem já saiu'));
+    fireEvent.change(await screen.findByLabelText('Período'), { target: { value: 'todas' } });
 
     await vi.waitFor(() =>
       expect(vi.mocked(api.listarParlamentares).mock.lastCall?.[0]?.anteriores).toBe(true),
     );
+  });
+
+  /**
+   * Um período passado é a lista DELE — e quem foi reeleito ⛔ vira "Ex-deputado" só
+   * por estar numa lista de 2019.
+   */
+  it('um período passado pede a legislatura dele e ⛔ chama ninguém de ex', async () => {
+    renderizar();
+    await screen.findByText(/Ex-deputado/);
+
+    fireEvent.change(await screen.findByLabelText('Período'), { target: { value: '56' } });
+
+    await vi.waitFor(() =>
+      expect(vi.mocked(api.listarParlamentares).mock.lastCall?.[0]).toMatchObject({ legislatura: 56 }),
+    );
+    expect(vi.mocked(api.listarParlamentares).mock.lastCall?.[0]?.anteriores).toBeUndefined();
+    await vi.waitFor(() => expect(screen.queryByText(/Ex-deputado/)).toBeNull());
+    expect(screen.getByText(/que votaram em 2019–2023/)).toBeInTheDocument();
+  });
+
+  it('a ficha abre no mandato de quem já saiu', async () => {
+    renderizar();
+    await screen.findByText(/Ex-deputado/);
+
+    for (const link of screen.getAllByRole('link', { name: 'Bruno Tavares' })) {
+      expect(link).toHaveAttribute('href', '/parlamentar/2?legislatura=55');
+    }
+    for (const link of screen.getAllByRole('link', { name: 'Ana Ribeiro' })) {
+      expect(link).toHaveAttribute('href', '/parlamentar/1');
+    }
   });
 
   it('a casa vira filtro da consulta', async () => {

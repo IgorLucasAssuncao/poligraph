@@ -28,12 +28,24 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
     /// <para>Base vazia devolve panorama vazio, não erro: é o estado do primeiro dia, e a tela tem um texto próprio para ele.</para>
     /// <para>Casa sem nenhuma votação ingerida fica fora — a tela não deve anunciar uma casa que ainda não entrou na base.</para>
     /// </remarks>
-    public Task<PanoramaDto> ObterAsync(CancellationToken ct) =>
-        _leitura.ObterAsync("panorama", () => CalcularAsync(ct));
+    public Task<PanoramaDto> ObterAsync(short? legislatura, CancellationToken ct) =>
+        _leitura.ObterAsync(("panorama", legislatura), () => CalcularAsync(legislatura, ct));
 
-    private async Task<PanoramaDto> CalcularAsync(CancellationToken ct)
+    /// <summary>As legislaturas que a base tem, da mais recente para a mais antiga.</summary>
+    public Task<IReadOnlyList<LegislaturaDto>> LegislaturasAsync(CancellationToken ct) =>
+        _leitura.ObterAsync("legislaturas", () => CalcularLegislaturasAsync(ct));
+
+    /// <summary>
+    /// Se a legislatura pedida existe na base. Nula vale: é "a corrente". Os endpoints
+    /// respondem 404 antes de calcular — senão cada número inventado na URL viraria uma
+    /// entrada vazia no cache.
+    /// </summary>
+    public async Task<bool> ExisteAsync(short? legislatura, CancellationToken ct) =>
+        legislatura is null || (await LegislaturasAsync(ct)).Any(l => l.Numero == legislatura);
+
+    private async Task<PanoramaDto> CalcularAsync(short? pedida, CancellationToken ct)
     {
-        var legislatura = await Legislaturas.CorrenteAsync(_db, ct);
+        var legislatura = pedida ?? await Legislaturas.CorrenteAsync(_db, ct);
 
         if (legislatura is null) return new PanoramaDto(null, 0, []);
 
@@ -46,6 +58,28 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
         return new PanoramaDto(
             legislatura, perguntas, [.. porCasa.Where(c => c.Votacoes > 0)],
             await _questionario.TamanhoAsync(ct));
+    }
+
+    private async Task<IReadOnlyList<LegislaturaDto>> CalcularLegislaturasAsync(CancellationToken ct)
+    {
+        var pares = await _db.Votacoes.AsNoTracking()
+            .Select(v => new { v.Legislatura, v.Casa })
+            .Distinct()
+            .ToListAsync(ct);
+
+        if (pares.Count == 0) return [];
+
+        var corrente = pares.Max(p => p.Legislatura);
+
+        return [.. pares
+            .GroupBy(p => p.Legislatura)
+            .OrderByDescending(g => g.Key)
+            .Select(g => new LegislaturaDto(
+                g.Key,
+                Legislaturas.AnoInicial(g.Key),
+                Legislaturas.AnoInicial(g.Key) + 4,
+                g.Key == corrente,
+                [.. g.Select(p => p.Casa).Order()]))];
     }
 
     /// <remarks>

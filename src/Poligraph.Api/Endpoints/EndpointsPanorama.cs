@@ -9,13 +9,25 @@ public static class EndpointsPanorama
     {
         app.MapGet("/api/panorama", ObterAsync)
            .WithTags("Panorama")
-           .Produces<PanoramaDto>();
+           .Produces<PanoramaDto>()
+           .Produces(StatusCodes.Status404NotFound);
+
+        app.MapGet("/api/legislaturas", ListarLegislaturasAsync)
+           .WithTags("Panorama")
+           .Produces<IReadOnlyList<LegislaturaDto>>();
 
         return app;
     }
 
-    /// <summary>RF-33 — os números da base, para a página inicial.</summary>
+    /// <summary>RF-33 — os números da base de uma legislatura; sem ela, a corrente.</summary>
     private static async Task<IResult> ObterAsync(
+        ServicoPanorama servico, CancellationToken ct, short? legislatura = null) =>
+        await servico.ExisteAsync(legislatura, ct)
+            ? Results.Ok(await servico.ObterAsync(legislatura, ct))
+            : Results.NotFound();
+
+    /// <summary>As legislaturas da base, para o seletor do site.</summary>
+    private static async Task<IResult> ListarLegislaturasAsync(
         ServicoPanorama servico, CancellationToken ct) =>
-        Results.Ok(await servico.ObterAsync(ct));
+        Results.Ok(await servico.LegislaturasAsync(ct));
 }

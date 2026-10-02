@@ -40,6 +40,7 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     public static readonly string[] RotasDoFront =
     [
         "/api/panorama",
+        "/api/legislaturas",
         "/api/governo",
         "/api/parlamentares",
         "/api/parlamentares/{id}",
