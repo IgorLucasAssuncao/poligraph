@@ -34,6 +34,25 @@ E duas lições que ele mesmo tira:
 
 Ele não deixou o site no ar.
 
+### O que aparece na tela e não é dito
+
+Visto em 2026-10-02 pelos quadros do vídeo, extraídos com `ffmpeg`; o arquivo foi apagado
+depois da análise. O sistema dele se chama EloSys, e o código está publicado
+(`github.com/yurirdev/elosys`).
+
+| Tela | O que mostra | Para nós |
+|---|---|---|
+| **Painel de procedência** (7:43) | Um quadro por campo, com **fonte** (o nome do conjunto do TSE), **órgão**, **URL** exata, **coletado em** (data e hora UTC), **SHA-256**, **parser** com versão (`tse.social v1.0`) e **base legal** (a norma que torna o dado público, ex.: Res. TSE 23.610/2019, art. 26-A) | Dois campos que o nosso desenho não tinha: a **versão do código** que transformou o arquivo e a **base legal** da fonte. Entram na PL73 |
+| Botão **"fonte"** no cabeçalho (6:30, 7:34) | O modo análise é um interruptor fixo no cabeçalho, ao lado do seletor "todos os anos" | O mesmo lugar para o nosso: o cabeçalho, visível em toda tela |
+| Página inicial (6:30) | "Cada campo mostra de qual arquivo do TSE ele saiu, quando foi baixado e o hash que comprova que não foi alterado"; contadores da base (1,18 milhão de pessoas, 1,63 milhão de candidaturas) | A promessa dita na entrada, em uma frase |
+| Grafo de um candidato (1:06) | O candidato no centro; doadores à esquerda, com setas chegando; fornecedores à direita, com setas saindo; o valor em cada seta; o ciclo em vermelho tracejado | Um desenho "de onde veio, para onde foi" para a ficha, quando houver despesa de campanha na base |
+| Tabela de gastos (3:42) | Gasto, **% da receita** da campanha e **média dos pares** do mesmo cargo e UF, com "6,5x a média" | Comparar com os pares é o que o `plano/09` pede para o dinheiro da ficha. Como fato, sem alerta (RNF-16) |
+| Tabela de sócios (4:38) | Pessoa, empresa e CNPJ, qualificação e data de entrada na sociedade, valor pago e "a própria campanha" em vermelho | O desenho da PL75 |
+| Ranking de bens (8:04) | O aviso em cima da tabela: "não é indício de nada por si só — mais bens pode ser só mais detalhamento na declaração" | O tom certo para qualquer ordenação que publicarmos |
+
+ATENÇÃO: o sistema dele **busca e mostra CPF** de candidato (o TSE publica). O nosso não: a
+regra do projeto é nunca renderizar CPF, e a PL77 trata de o guardar direito.
+
 ### O que vale para o poligraph
 
 | Ideia | Decisão | Onde |
