@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-10-02 · **98 resolvidas · 64 abertas**
+> **Atualizado:** 2026-10-02 · **98 resolvidas · 65 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -49,6 +49,7 @@ PL41).
 | ✅ ~~PL66~~ | **Resolvida (2026-10-02)** — `conferir` na ETL e o botão `etl-conferir`: regras de plausibilidade depois da carga, ERRO derruba o comando. Primeira rodada: **0 erros, 29 avisos**, todos explicados em [`plano/09 §5.2`](plano/09-apresentacao-validacao-e-valor.md). A votação do Senado com 82 é titular e suplente de TO no dia da troca; dos 13 placares, 11 são votação secreta de fato (PL69) | — |
 | **PL69** | 🟡 **Votação secreta na Câmara marcada como aberta:** 11 votações, quase todas eleição de autoridade ("Eleito o Sr. …"), têm a presença de cada deputado e **nenhuma posição**. ⛔ Entram no cálculo (sem posição ⛔ há o que comparar), mas contam como abertas no painel e no grafo. Marcar `secreta` na ingestão quando ninguém tem posição | 🟢 Baixa |
 | **PL70** | 🟡 **A busca nos votos ⛔ acha o nome popular:** "reforma tributária" dá 0, porque a ementa oficial da PEC 45/2019 diz "Altera o Sistema Tributário Nacional"; "arcabouço" também dá 0. A Câmara publica palavras-chave por proposição (`keywords`), que ⛔ ingerimos. Ingerir e incluir na busca. 📐 Medido em 2026-10-02: "tributaria" acha 33 votos e "PEC 45/2019", 19 | 🟡 Média |
+| **PL71** | 🟡 **Sede dos favorecidos pela BrasilAPI:** **19.164 de 50.738** CNPJs que receberam emenda estão sem município — **R$ 9,81 bi de R$ 159,49 bi** fora do mapa. `brasilapi.com.br/api/cnpj/v1/{cnpj}` devolve `codigo_municipio_ibge` direto (conferido em 2026-10-02 com a Prefeitura de Cascavel: 4104808). Buscar os que faltam, devagar, gravando em `cnpjs_municipio` com a data e a fonte. ⚠️ Projeto comunitário, sem SLA, que repassa o dado aberto da Receita: a fonte citada continua sendo a Receita. ⛔ Gravar o quadro de sócios (`qsa`): é dado pessoal e ⛔ serve ao trabalho | 🟡 Média |
 | **PL67** | 🟡 **Amostra manual contra a fonte oficial**: 20 votações sorteadas por casa e legislatura, conferidas no site da casa. Vira achado ([`plano/09 §5.3`](plano/09-apresentacao-validacao-e-valor.md)) | 🟡 Média |
 | ✅ ~~PL68~~ | **Resolvida (2026-10-02)** — o painel conta como votação só a que tem voto nominal, e o cartão diz quantas ficaram de fora. Não era só a 51ª: a 52ª tem 309 de 600 sem voto nominal, e a 54ª, 455 de 905 | — |
 
