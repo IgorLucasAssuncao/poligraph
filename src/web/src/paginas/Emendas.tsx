@@ -31,6 +31,7 @@ import { minusculas, nomeProprio, reaisCompacto } from '../formato';
 import { areaQueContem } from '../mapa';
 import { passosDasEmendas } from '../tour';
 import { Bloco, Esqueleto, EsqueletoDePainel, EsqueletoDeTexto } from '../componentes/Esqueleto';
+import { UFS } from '../ufs';
 
 /**
  * Para onde foi o dinheiro de emenda, no mapa — e quem o mandou para a sua cidade.
@@ -715,14 +716,6 @@ function SuaCidade({ aoEscolher }: { aoEscolher: (m: Municipio) => void }) {
     </div>
   );
 }
-
-/** Código IBGE e sigla das 27 UFs — o `codarea` da malha do Brasil. Fixo desde 1988. */
-const UFS: [string, string][] = [
-  ['11', 'RO'], ['12', 'AC'], ['13', 'AM'], ['14', 'RR'], ['15', 'PA'], ['16', 'AP'], ['17', 'TO'],
-  ['21', 'MA'], ['22', 'PI'], ['23', 'CE'], ['24', 'RN'], ['25', 'PB'], ['26', 'PE'], ['27', 'AL'],
-  ['28', 'SE'], ['29', 'BA'], ['31', 'MG'], ['32', 'ES'], ['33', 'RJ'], ['35', 'SP'], ['41', 'PR'],
-  ['42', 'SC'], ['43', 'RS'], ['50', 'MS'], ['51', 'MT'], ['52', 'GO'], ['53', 'DF'],
-];
 
 const CHAVE_MINHA_CIDADE = 'poligraph.minhaCidade';
 

@@ -20,6 +20,7 @@ import { useSessao } from '../sessao';
 import { LinkDeFonte } from './LinkDeFonte';
 import { FONTES } from '../fontes';
 import { passosDoResultado } from '../tour';
+import { SIGLAS_DAS_UFS } from '../ufs';
 
 const PASSOS_DO_RESULTADO = passosDoResultado();
 
@@ -40,9 +41,12 @@ export function Resultado({
   resultado,
   aoRefazer,
   perguntas,
+  aoEscolherUf,
 }: {
   resultado: ResultadoAfinidade;
   aoRefazer: () => void;
+  /** U15: recalcula as listas só com o estado escolhido; `undefined` volta ao país inteiro. */
+  aoEscolherUf?: (uf: string | undefined) => Promise<void>;
   /**
    * As perguntas que acabaram de ser respondidas, para o detalhe "em quais".
    *
@@ -54,6 +58,21 @@ export function Resultado({
 }) {
   const textos = new Map(perguntas.map((p) => [p.id, p.texto]));
   const { usuario } = useSessao();
+  const [recalculando, setRecalculando] = useState(false);
+  const [falhou, setFalhou] = useState(false);
+  const uf = resultado.uf ?? '';
+  const casasSemNinguem = (['CAMARA', 'SENADO'] as const).filter(
+    (c) => !resultado.porCasa.some((casa) => casa.casa === c),
+  );
+
+  function escolher(nova: string) {
+    if (!aoEscolherUf) return;
+    setRecalculando(true);
+    setFalhou(false);
+    aoEscolherUf(nova || undefined)
+      .catch(() => setFalhou(true))
+      .finally(() => setRecalculando(false));
+  }
 
   return (
     <>
@@ -72,9 +91,41 @@ export function Resultado({
         comparado separadamente.
       </p>
 
+      {aoEscolherUf && (
+        <div className="filtro-do-resultado">
+          <label>
+            <span>Comparar com</span>
+            <select value={uf} onChange={(e) => escolher(e.target.value)} disabled={recalculando}>
+              <option value="">parlamentares de todo o país</option>
+              {SIGLAS_DAS_UFS.map((sigla) => (
+                <option key={sigla} value={sigla}>
+                  só os de {sigla}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p className="ajuda" aria-live="polite">
+            {recalculando
+              ? 'Recalculando…'
+              : falhou
+                ? 'Não foi possível recalcular agora. Tente de novo.'
+                : uf
+                  ? `A lista e a régua contam só quem votou por ${uf}. O ponto no grafo continua o da casa inteira.`
+                  : 'Escolha um estado para ver só quem votou por ele.'}
+          </p>
+        </div>
+      )}
+
       {resultado.porCasa.map((casa) => (
         <SecaoDaCasa key={casa.casa} casa={casa} textos={textos} />
       ))}
+
+      {uf &&
+        casasSemNinguem.map((c) => (
+          <p key={c} className="vazio">
+            Nenhum {NOME_DA_CASA[c].singular} de {uf} votou nas perguntas que você respondeu.
+          </p>
+        ))}
 
       <p className="aviso" role="note" data-tour="resultado-aviso">
         Esta é uma ferramenta acadêmica de comparação de votos.{' '}
@@ -194,7 +245,7 @@ function SecaoDaCasa({
         <>
           <h3 className="titulo-secao">Também próximos de você</h3>
           {demais.map((p) => (
-            <LinhaAfim key={p.pessoaId} parlamentar={p} />
+            <LinhaAfim key={p.pessoaId} parlamentar={p} respondidasNaCasa={casa.perguntasRespondidas} />
           ))}
         </>
       )}
@@ -203,7 +254,7 @@ function SecaoDaCasa({
         <>
           <h3 className="titulo-secao" data-tour="resultado-distantes">Mais distantes</h3>
           {casa.maisDistantes.map((p) => (
-            <LinhaAfim key={p.pessoaId} parlamentar={p} />
+            <LinhaAfim key={p.pessoaId} parlamentar={p} respondidasNaCasa={casa.perguntasRespondidas} />
           ))}
         </>
       )}
@@ -347,7 +398,11 @@ function Destaque({
   );
 }
 
-function LinhaAfim({ parlamentar }: { parlamentar: ParlamentarAfim }) {
+/**
+ * U19: "8 de 10" e "16 de 20" são a mesma proporção sobre bases diferentes. A linha diz de
+ * quantas perguntas respondidas a base saiu, para a diferença não sumir na ordem da lista.
+ */
+function LinhaAfim({ parlamentar, respondidasNaCasa }: { parlamentar: ParlamentarAfim; respondidasNaCasa: number }) {
   return (
     <LinhaParlamentar
       id={parlamentar.pessoaId}
@@ -358,6 +413,12 @@ function LinhaAfim({ parlamentar }: { parlamentar: ParlamentarAfim }) {
         <>
           concordaram em <strong>{parlamentar.acordos}</strong> de{' '}
           <strong>{parlamentar.comparaveis}</strong> perguntas
+          {parlamentar.comparaveis < respondidasNaCasa && (
+            <span className="base-da-conta">
+              {' '}
+              (das {respondidasNaCasa} que você respondeu nesta casa)
+            </span>
+          )}
         </>
       }
     />

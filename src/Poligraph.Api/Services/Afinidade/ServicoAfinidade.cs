@@ -28,8 +28,9 @@ public class ServicoAfinidade(PoligraphDb db)
     /// <para>O cálculo roda UMA VEZ POR CASA, sobre as perguntas daquela casa. Não é arrumação: o piso de comparáveis é uma fração das perguntas respondidas, e aplicá-lo sobre o total das duas casas eliminaria todos os senadores. Com 21 da Câmara e 7 do Senado, o piso seria 17 e um senador tem no máximo 7.</para>
     /// <para>Nenhuma casa com base comparável é caso de erro, não de resposta vazia: a tela precisa dizer o que houve, e não mostrar duas listas em branco.</para>
     /// </remarks>
+    /// <param name="uf">U15: só os parlamentares deste estado nas listas e na régua. O cálculo e a posição no grafo continuam sobre a casa inteira: o grafo é da casa, e o centroide sai de quem mais concordou com o cidadão em qualquer estado.</param>
     public async Task<RespostaAfinidadeDto?> CalcularAsync(
-        IReadOnlyList<RespostaCidadao> opinadas, CancellationToken ct)
+        IReadOnlyList<RespostaCidadao> opinadas, string? uf, CancellationToken ct)
     {
         var casaDaPergunta = await CasaDasPerguntasAsync(opinadas, ct);
         var votosPorPessoa = await CarregarVotosAsync(opinadas, ct);
@@ -45,23 +46,28 @@ public class ServicoAfinidade(PoligraphDb db)
             if (resultados.Count == 0) continue;
 
             var fichas = await CarregarFichasAsync(resultados, ct);
+            var listados = uf is null
+                ? resultados
+                : [.. resultados.Where(r => fichas.GetValueOrDefault(r.PessoaId).Uf == uf)];
+            if (listados.Count == 0) continue;
 
             porCasa.Add(new ResultadoPorCasaDto(
                 Casa: casa,
                 PerguntasRespondidas: daCasa.Count,
                 MaisProximos: Montar(
-                    resultados.OrderByDescending(r => r.Proporcao), fichas, daCasa, votosPorPessoa),
+                    listados.OrderByDescending(r => r.Proporcao), fichas, daCasa, votosPorPessoa),
                 MaisDistantes: Montar(
-                    resultados.OrderBy(r => r.Proporcao), fichas, daCasa, votosPorPessoa),
+                    listados.OrderBy(r => r.Proporcao), fichas, daCasa, votosPorPessoa),
                 PosicaoNoGrafo: await PosicionarAsync(casa, resultados, daCasa, ct),
-                Escala: Escala(resultados)));
+                Escala: Escala(listados)));
         }
 
         if (porCasa.Count == 0) return null;
 
         return new RespostaAfinidadeDto(
             TotalPerguntasRespondidas: opinadas.Count,
-            PorCasa: porCasa);
+            PorCasa: porCasa,
+            Uf: uf);
     }
 
     /// <summary>

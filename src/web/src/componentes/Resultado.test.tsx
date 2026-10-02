@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { Resultado } from './Resultado';
@@ -251,5 +251,50 @@ describe('a régua do resultado', () => {
 
     expect(await screen.findByText(/Entre os/)).toBeDefined();
     expect(document.body.textContent).toMatch(/12 deputados comparados com você, o do meio da lista votou como você em 1 de 3/);
+  });
+});
+
+/** U15: o estado recalcula as listas; a casa sem ninguém daquele estado é dita, não some calada. */
+describe('o recorte por estado', () => {
+  it('escolher um estado pede o recálculo com a sigla', async () => {
+    const aoEscolherUf = vi.fn().mockResolvedValue(undefined);
+    render(
+      <MemoryRouter>
+        <Resultado resultado={RESULTADO} aoRefazer={vi.fn()} perguntas={PERGUNTAS} aoEscolherUf={aoEscolherUf} />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText('Comparar com'), { target: { value: 'SP' } });
+
+    expect(aoEscolherUf).toHaveBeenCalledWith('SP');
+    await waitFor(() => expect(screen.getByLabelText('Comparar com')).not.toBeDisabled());
+  });
+
+  it('com estado escolhido, diz a casa que ficou sem ninguém dele', () => {
+    render(
+      <MemoryRouter>
+        <Resultado resultado={{ ...RESULTADO, uf: 'AC' }} aoRefazer={vi.fn()} perguntas={PERGUNTAS} aoEscolherUf={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Nenhum senador de AC votou nas perguntas que você respondeu.')).toBeInTheDocument();
+    expect(screen.getByText(/A lista e a régua contam só quem votou por AC/)).toBeInTheDocument();
+  });
+});
+
+/** U19: a linha diz de quantas respondidas a base saiu. */
+describe('a base de cada linha', () => {
+  it('diz das quantas respondidas quando a base é menor', () => {
+    const menor: ResultadoAfinidade = {
+      ...RESULTADO,
+      porCasa: [{ ...RESULTADO.porCasa[0], perguntasRespondidas: 5 }],
+    };
+    render(
+      <MemoryRouter>
+        <Resultado resultado={menor} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText(/das 5 que você respondeu nesta casa/)).toBeInTheDocument();
   });
 });

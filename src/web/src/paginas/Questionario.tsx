@@ -122,7 +122,14 @@ export function Questionario() {
   );
 
   if (resultado) {
-    return <Resultado resultado={resultado} aoRefazer={recomecar} perguntas={perguntas} />;
+    return (
+      <Resultado
+        resultado={resultado}
+        aoRefazer={recomecar}
+        perguntas={perguntas}
+        aoEscolherUf={(uf) => calcularAfinidade(payloadDasRespostas(), uf).then(setResultado)}
+      />
+    );
   }
 
   if (perguntas.length === 0) {
@@ -191,17 +198,16 @@ export function Questionario() {
     }, PAUSA);
   }
 
+  function payloadDasRespostas() {
+    return Object.entries(respostas).map(([perguntaId, valor]) => ({ perguntaId, valor }));
+  }
+
   async function enviar() {
     setEnviando(true);
     setErro(null);
 
     try {
-      const payload = Object.entries(respostas).map(([perguntaId, valor]) => ({
-        perguntaId,
-        valor,
-      }));
-
-      setResultado(await calcularAfinidade(payload));
+      setResultado(await calcularAfinidade(payloadDasRespostas()));
     } catch (falha) {
       setErro(
         falha instanceof RespostasInsuficientesError

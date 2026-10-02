@@ -239,6 +239,7 @@ export function TelaDoGrafo({
   preencher = false,
   aoAmpliar,
   embutido = false,
+  destaque,
 }: {
   grafo: Grafo;
   cidadao?: PosicaoDoCidadao | null;
@@ -264,6 +265,8 @@ export function TelaDoGrafo({
    * crescia — na 55ª, 56 fotos e 40 redesenhos em 3 segundos, e a aba travou duas vezes.
    */
   embutido?: boolean;
+  /** U18: destaca um partido ou um estado sem esconder os outros. A cor continua a da comunidade. */
+  destaque?: { partido?: string; uf?: string };
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const arrastando = useRef<{ x: number; y: number } | null>(null);
@@ -405,6 +408,15 @@ export function TelaDoGrafo({
     [comEixos, posicionados, layout],
   );
 
+  const realcados = useMemo(() => {
+    if (!destaque?.partido && !destaque?.uf) return null;
+    return new Set(
+      grafo.nos
+        .filter((n) => (!destaque.partido || n.partido === destaque.partido) && (!destaque.uf || n.uf === destaque.uf))
+        .map((n) => n.id),
+    );
+  }, [grafo.nos, destaque?.partido, destaque?.uf]);
+
   const quadro = useMemo(
     () => ({
       nos: noDesenho,
@@ -414,13 +426,14 @@ export function TelaDoGrafo({
       arestaEmAlvo: alvo?.tipo === 'aresta' ? alvo.aresta : null,
       emFoco,
       vizinhos,
+      realcados,
       cidadao,
       camera,
       comFotos,
       eixos,
       aoChegarFoto: repintar,
     }),
-    [noDesenho, visiveis, porId, graus, alvo, emFoco, vizinhos, cidadao, camera,
+    [noDesenho, visiveis, porId, graus, alvo, emFoco, vizinhos, realcados, cidadao, camera,
      comFotos, eixos, repintar],
   );
 

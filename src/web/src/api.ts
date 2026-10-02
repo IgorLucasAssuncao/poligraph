@@ -213,6 +213,8 @@ export type ResultadoPorCasa = {
 export type ResultadoAfinidade = {
   totalPerguntasRespondidas: number;
   porCasa: ResultadoPorCasa[];
+  /** U15: o estado das listas; nulo é o país inteiro. */
+  uf?: string | null;
 };
 
 /**
@@ -484,11 +486,12 @@ export async function obterDesempate(
  */
 export async function calcularAfinidade(
   respostas: { perguntaId: string; valor: Resposta }[],
+  uf?: string,
 ): Promise<ResultadoAfinidade> {
   const resposta = await fetch(`${BASE}/afinidade`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ respostas }),
+    body: JSON.stringify(uf ? { respostas, uf } : { respostas }),
     credentials: 'include',
   });
 

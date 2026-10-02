@@ -13,6 +13,8 @@ namespace Poligraph.Api.Dtos;
 /// autoexplicativo e não exige decisão prévia.
 /// </para>
 /// </summary>
+/// <param name="Uf">O estado pedido, ecoado para a tela dizer de que recorte é a lista. Nulo é o país inteiro.</param>
 public record RespostaAfinidadeDto(
     int TotalPerguntasRespondidas,
-    IReadOnlyList<ResultadoPorCasaDto> PorCasa);
+    IReadOnlyList<ResultadoPorCasaDto> PorCasa,
+    string? Uf = null);

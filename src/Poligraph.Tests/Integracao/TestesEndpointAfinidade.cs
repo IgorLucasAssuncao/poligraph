@@ -249,6 +249,54 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
     }
 
     /// <summary>
+    /// U15: com a UF, as listas e a régua só têm parlamentares daquele estado, e a régua
+    /// conta só eles.
+    /// </summary>
+    [SkippableFact]
+    public async Task ComUf_SoParlamentaresDoEstado_NasListasENaRegua()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        using var cliente = CriarCliente();
+
+        var nacional = await LerJsonAsync(cliente, new { respostas = TodasConcordo() });
+        var uf = nacional.RootElement.GetProperty("porCasa")[0].GetProperty("maisProximos")[0].GetProperty("uf").GetString()!;
+
+        using var doEstado = await LerJsonAsync(cliente, new { respostas = TodasConcordo(), uf = uf.ToLowerInvariant() });
+        var casa = doEstado.RootElement.GetProperty("porCasa")[0];
+
+        Assert.Equal(uf, doEstado.RootElement.GetProperty("uf").GetString());
+        var listados = casa.GetProperty("maisProximos").EnumerateArray()
+            .Concat(casa.GetProperty("maisDistantes").EnumerateArray())
+            .Select(p => p.GetProperty("uf").GetString())
+            .ToList();
+        Assert.NotEmpty(listados);
+        Assert.All(listados, u => Assert.Equal(uf, u));
+        Assert.True(casa.GetProperty("escala").GetProperty("comparados").GetInt32()
+            < nacional.RootElement.GetProperty("porCasa")[0].GetProperty("escala").GetProperty("comparados").GetInt32());
+        nacional.Dispose();
+    }
+
+    [SkippableFact]
+    public async Task UfDesconhecida_Retorna400()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        using var cliente = CriarCliente();
+
+        var resposta = await cliente.PostAsJsonAsync(Rota, new { respostas = TodasConcordo(), uf = "XX" });
+
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, resposta.StatusCode);
+    }
+
+    private static async Task<System.Text.Json.JsonDocument> LerJsonAsync(HttpClient cliente, object corpo)
+    {
+        var resposta = await cliente.PostAsJsonAsync(Rota, corpo);
+        resposta.EnsureSuccessStatusCode();
+        return System.Text.Json.JsonDocument.Parse(await resposta.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
     /// O teste de polaridade ponta a ponta — e a forma dele importa.
     ///
     /// A primeira versão perguntava "quem ficou em primeiro votou NÃO na q5?". Estava

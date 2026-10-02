@@ -68,6 +68,11 @@ export type Quadro = {
   arestaEmAlvo: ArestaDoGrafo | null;
   emFoco: NoDoGrafo | null;
   vizinhos: Set<number> | null;
+  /**
+   * U18: o grupo escolhido (um partido, um estado). Quem está fora fica esmaecido, no mesmo
+   * lugar: esconder mudaria a forma da nuvem, que é o que a pessoa está lendo.
+   */
+  realcados?: Set<number> | null;
   cidadao?: { eixoX: number; eixoY: number } | null;
   camera: Camera;
   comFotos: boolean;
@@ -278,7 +283,11 @@ function desenharNos(
     ) continue;
 
     const destacado = quadro.emFoco?.id === no.id;
-    const apagado = quadro.vizinhos ? !quadro.vizinhos.has(no.id) : false;
+    const apagado = quadro.vizinhos
+      ? !quadro.vizinhos.has(no.id)
+      : quadro.realcados
+        ? !quadro.realcados.has(no.id)
+        : false;
     const cor = corDaComunidade(no.comunidade, escuro);
     const raioFinal = destacado ? raio * 1.5 : raio;
 

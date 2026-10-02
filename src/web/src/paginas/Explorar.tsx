@@ -71,6 +71,7 @@ export function Explorar() {
   const [partido, setPartido] = useState('');
   const [uf, setUf] = useState('');
   const [casa, setCasa] = useState<Casa | ''>('');
+  const [ordem, setOrdem] = useState<'NOME' | 'VOTACOES'>('NOME');
   const [escolha] = useLegislaturaDaUrl();
   const [lista, setLista] = useState<Parlamentar[]>([]);
   const [pagina, setPagina] = useState<PaginaDeParlamentares | null>(null);
@@ -91,7 +92,7 @@ export function Explorar() {
     const timer = setTimeout(() => {
       setCarregando(true);
       listarParlamentares({
-        nome: termo, partido, uf, casa: casa || undefined,
+        nome: termo, partido, uf, casa: casa || undefined, ordem,
         anteriores: escolha === 'todas' || undefined,
         legislatura: typeof escolha === 'number' ? escolha : undefined,
         tamanho: POR_PAGINA,
@@ -108,7 +109,16 @@ export function Explorar() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [termo, partido, uf, casa, escolha]);
+  }, [termo, partido, uf, casa, ordem, escolha]);
+
+  const aplicados: [string, string, () => void][] = (
+    [
+      ['nome', termo.trim() && `Nome: ${termo.trim()}`, () => setTermo('')],
+      ['casa', casa && (casa === 'CAMARA' ? 'Só a Câmara' : 'Só o Senado'), () => setCasa('')],
+      ['partido', partido && `Partido: ${partido}`, () => setPartido('')],
+      ['uf', uf && `Estado: ${uf}`, () => setUf('')],
+    ] as [string, string, () => void][]
+  ).filter(([, rotulo]) => rotulo);
 
   const partidos = pagina?.partidos ?? [];
   const ufs = pagina?.ufs ?? [];
@@ -156,7 +166,28 @@ export function Explorar() {
           ))}
         </select>
 
+        <select value={ordem} onChange={(e) => setOrdem(e.target.value as 'NOME' | 'VOTACOES')} aria-label="Ordem">
+          <option value="NOME">Em ordem alfabética</option>
+          <option value="VOTACOES">Mais votos com posição primeiro</option>
+        </select>
       </div>
+
+      {aplicados.length > 0 && (
+        <div className="filtros-aplicados" aria-label="Filtros aplicados">
+          {aplicados.map(([chave, rotulo, limpar]) => (
+            <button key={chave} type="button" className="filtro-aplicado" onClick={limpar}>
+              {rotulo}
+              <span aria-hidden="true"> ✕</span>
+              <span className="sr-apenas"> (remover filtro)</span>
+            </button>
+          ))}
+          {aplicados.length > 1 && (
+            <button type="button" className="filtro-limpar" onClick={limparTudo}>
+              Limpar filtros
+            </button>
+          )}
+        </div>
+      )}
 
       {carregando && <EsqueletoDeLista rotulo="Buscando parlamentares" linhas={8} />}
 
@@ -215,10 +246,17 @@ export function Explorar() {
 
   function filtro() {
     return {
-      nome: termo, partido, uf, casa: casa || undefined,
+      nome: termo, partido, uf, casa: casa || undefined, ordem,
       anteriores: escolha === 'todas' || undefined,
       legislatura: typeof escolha === 'number' ? escolha : undefined,
     };
+  }
+
+  function limparTudo() {
+    setTermo('');
+    setCasa('');
+    setPartido('');
+    setUf('');
   }
 
   function detalheDe(p: Parlamentar) {

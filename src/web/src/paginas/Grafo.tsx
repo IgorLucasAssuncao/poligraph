@@ -19,6 +19,8 @@ import { useLegislaturaDaUrl } from '../componentes/useLegislatura';
 
 type Grupo = { comunidade: number; quantos: number; partidos: string[] };
 
+type Destaque = { partido?: string; uf?: string };
+
 const CASAS: Casa[] = ['CAMARA', 'SENADO'];
 
 /**
@@ -61,12 +63,14 @@ export function Grafo() {
   const [grafo, setGrafo] = useState<DadosDoGrafo | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [ampliado, setAmpliado] = useState(false);
+  const [destaque, setDestaque] = useState<Destaque>({});
 
   useEffect(() => {
     let atual = true;
 
     setGrafo(null);
     setErro(null);
+    setDestaque({});
 
     obterGrafo(casa, legislatura)
       .then((novo) => atual && setGrafo(novo))
@@ -141,10 +145,13 @@ export function Grafo() {
 
       {!erro && grafo && grafo.nos.length > 0 && (
         <>
+          <DestaqueDoGrafo grafo={grafo} destaque={destaque} aoTrocar={setDestaque} />
+
           <TelaDoGrafo
             grafo={grafo}
             aoSelecionar={abrirPerfil}
             aoAmpliar={() => setAmpliado(true)}
+            destaque={destaque}
           />
 
           <GrafoAmpliado
@@ -280,4 +287,68 @@ function partidosMaisComuns(membros: NoDoGrafo[]): string[] {
     .sort((a, b) => b[1] - a[1])
     .slice(0, PARTIDOS_MOSTRADOS)
     .map(([partido]) => partido);
+}
+
+/**
+ * U18: destacar um partido ou um estado sem esconder o resto.
+ *
+ * DECISÃO: Esmaecer, não filtrar: a pergunta é "onde estão os do meu estado na nuvem", e a
+ * nuvem sem os outros perderia a forma que dá sentido à posição. A cor continua a da
+ * comunidade: destacar um partido não pinta o partido (RNF-16).
+ */
+function DestaqueDoGrafo({
+  grafo,
+  destaque,
+  aoTrocar,
+}: {
+  grafo: DadosDoGrafo;
+  destaque: Destaque;
+  aoTrocar: (novo: Destaque) => void;
+}) {
+  const partidos = useMemo(() => [...new Set(grafo.nos.map((n) => n.partido).filter(Boolean))].sort(), [grafo]);
+  const ufs = useMemo(() => [...new Set(grafo.nos.map((n) => n.uf).filter(Boolean))].sort(), [grafo]);
+  const destacados = grafo.nos.filter(
+    (n) => (!destaque.partido || n.partido === destaque.partido) && (!destaque.uf || n.uf === destaque.uf),
+  ).length;
+  const ativo = Boolean(destaque.partido || destaque.uf);
+
+  return (
+    <div className="destaque-do-grafo">
+      <span className="destaque-do-grafo-rotulo">Destacar</span>
+      <select
+        value={destaque.partido ?? ''}
+        onChange={(e) => aoTrocar({ ...destaque, partido: e.target.value || undefined })}
+        aria-label="Destacar um partido"
+      >
+        <option value="">todos os partidos</option>
+        {partidos.map((p) => (
+          <option key={p} value={p}>
+            {p}
+          </option>
+        ))}
+      </select>
+      <select
+        value={destaque.uf ?? ''}
+        onChange={(e) => aoTrocar({ ...destaque, uf: e.target.value || undefined })}
+        aria-label="Destacar um estado"
+      >
+        <option value="">todos os estados</option>
+        {ufs.map((u) => (
+          <option key={u} value={u}>
+            {u}
+          </option>
+        ))}
+      </select>
+      {ativo && (
+        <>
+          <span className="destaque-do-grafo-conta" aria-live="polite">
+            {destacados} de {grafo.nos.length} em destaque
+          </span>
+          <button type="button" className="filtro-limpar" onClick={() => aoTrocar({})}>
+            Tirar o destaque
+          </button>
+        </>
+      )}
+    </div>
+  );
 }
