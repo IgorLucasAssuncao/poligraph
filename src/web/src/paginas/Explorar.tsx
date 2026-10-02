@@ -10,6 +10,7 @@ import { periodoDaLegislatura } from '../formato';
 import { IconeExplorar } from '../componentes/Icones';
 import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 import { useSessao } from '../sessao';
+import { EsqueletoDeLista } from '../componentes/Esqueleto';
 
 /** Busca e navegação pelos parlamentares (RF-34). */
 /**
@@ -131,7 +132,7 @@ export function Explorar() {
         </label>
       </div>
 
-      {carregando && <p className="carregando">Buscando…</p>}
+      {carregando && <EsqueletoDeLista rotulo="Buscando parlamentares" linhas={8} />}
 
       {!carregando && lista.length === 0 && (
         <p className="vazio">Nenhum parlamentar encontrado com esses filtros.</p>

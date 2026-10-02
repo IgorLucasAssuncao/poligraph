@@ -30,6 +30,7 @@ import { FONTES } from '../fontes';
 import { minusculas, nomeProprio, reaisCompacto } from '../formato';
 import { areaQueContem } from '../mapa';
 import { passosDasEmendas } from '../tour';
+import { Bloco, Esqueleto, EsqueletoDePainel, EsqueletoDeTexto } from '../componentes/Esqueleto';
 
 /**
  * Para onde foi o dinheiro de emenda, no mapa — e quem o mandou para a sua cidade.
@@ -130,7 +131,7 @@ export function Emendas() {
       />
 
       {erro && <p className="erro">Não foi possível carregar o mapa das emendas agora.</p>}
-      {!erro && !brasil && <p className="carregando">Carregando…</p>}
+      {!erro && !brasil && <EsqueletoDePainel rotulo="Carregando o mapa das emendas" alturaDoGrafico={420} />}
 
       {brasil && brasil.anosDisponiveis.length === 0 && (
         <p className="vazio">
@@ -354,7 +355,11 @@ function MapaDaUf({
 
       {children}
 
-      {!erro && !estado && <p className="carregando">Carregando as cidades…</p>}
+      {!erro && !estado && (
+        <Esqueleto rotulo="Carregando as cidades">
+          <Bloco altura={360} />
+        </Esqueleto>
+      )}
 
       {estado && (
         <>
@@ -432,7 +437,7 @@ function PainelDaCidade({
   }, [codigoIbge, periodo]);
 
   if (erro) return <p className="erro">Não foi possível carregar essa cidade.</p>;
-  if (!dados) return <p className="carregando">Carregando a cidade…</p>;
+  if (!dados) return <EsqueletoDeTexto rotulo="Carregando a cidade" />;
 
   const nome = nomeProprio(dados.municipio.nome);
   const emEntidades = dados.recebido - dados.naPropriaCidade;

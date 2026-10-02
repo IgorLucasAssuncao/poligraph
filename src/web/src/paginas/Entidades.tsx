@@ -7,6 +7,7 @@ import { CabecalhoDaColuna } from '../componentes/Layout';
 import { LinkDeFonte } from '../componentes/LinkDeFonte';
 import { FONTES } from '../fontes';
 import { nomeProprio, reaisCompacto } from '../formato';
+import { EsqueletoDeLista } from '../componentes/Esqueleto';
 
 /**
  * Quem recebeu dinheiro de emenda: prefeituras, governos estaduais, associações, empresas.
@@ -99,7 +100,7 @@ export function Entidades() {
       </div>
 
       {erro && <p className="erro">Não foi possível carregar as entidades agora.</p>}
-      {!erro && !pagina && <p className="carregando">Carregando…</p>}
+      {!erro && !pagina && <EsqueletoDeLista rotulo="Carregando as entidades" />}
 
       {pagina && (
         <section className="governo-secao">

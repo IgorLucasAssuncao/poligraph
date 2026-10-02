@@ -23,6 +23,7 @@ import { Termo } from '../componentes/Termo';
 import { FONTES } from '../fontes';
 import { dataCurta, nomeProprio, partesDeCem, reaisCompacto } from '../formato';
 import { passosDoGoverno } from '../tour';
+import { EsqueletoDePainel } from '../componentes/Esqueleto';
 
 /**
  * O governo federal para quem ⛔ lê orçamento: quanto entrou, onde foi parar, o que foi
@@ -77,7 +78,7 @@ export function Governo() {
       </div>
 
       {erro && <p className="erro">Não foi possível carregar os dados do governo agora.</p>}
-      {!erro && dados === undefined && <p className="carregando">Carregando…</p>}
+      {!erro && dados === undefined && <EsqueletoDePainel rotulo="Carregando o governo" alturaDoGrafico={260} />}
       {!erro && dados === null && (
         <p className="vazio">
           Os dados do governo ainda não foram carregados. Eles aparecem depois da próxima execução do ETL.

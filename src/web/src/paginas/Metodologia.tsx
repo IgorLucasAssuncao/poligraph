@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NOME_DA_CASA, obterMetodologia, type CasaNaMetodologia, type Metodologia as DadosDaMetodologia } from '../api';
 import { LinkDeFonte } from '../componentes/LinkDeFonte';
 import { FONTES } from '../fontes';
+import { EsqueletoDeTexto } from '../componentes/Esqueleto';
 
 /**
  * "Como calculamos" — o método, com os parâmetros que o cálculo usou.
@@ -34,7 +35,7 @@ export function Metodologia() {
       </p>
 
       {erro && <p className="erro">Não foi possível carregar os parâmetros agora.</p>}
-      {!erro && !dados && <p className="carregando">Carregando…</p>}
+      {!erro && !dados && <EsqueletoDeTexto rotulo="Carregando a metodologia" paragrafos={3} />}
       {dados && <Conteudo dados={dados} />}
     </article>
   );

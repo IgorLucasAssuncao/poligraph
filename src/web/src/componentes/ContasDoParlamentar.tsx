@@ -17,6 +17,7 @@ import { LinkDeFonte } from './LinkDeFonte';
 import { Termo } from './Termo';
 import { NENHUM, usePaginas } from './usePaginas';
 import type { Contas } from './useContas';
+import { EsqueletoDePainel, EsqueletoDeTexto } from './Esqueleto';
 
 /**
  * O dinheiro do parlamentar, em três abas — campanha, emendas e cota.
@@ -92,7 +93,7 @@ function ValorDaConta({ para, rotulo, valor, nota }: { para: string; rotulo: str
 /** O que ainda ⛔ chegou, ou ⛔ existe na base, dito do mesmo jeito nas três abas. */
 function Carregando({ contas, erro }: { contas: Contas | null; erro: boolean }) {
   if (erro) return <p className="erro">Não foi possível carregar as contas agora.</p>;
-  if (!contas) return <p className="carregando">Carregando…</p>;
+  if (!contas) return <EsqueletoDePainel rotulo="Carregando as contas" />;
   return null;
 }
 
@@ -522,7 +523,7 @@ function PatrimonioDeclarado({ pessoaId }: { pessoaId: number }) {
   }, [pessoaId]);
 
   if (erro) return <p className="erro">Não foi possível carregar o patrimônio agora.</p>;
-  if (!declaracoes) return <p className="carregando">Carregando o patrimônio…</p>;
+  if (!declaracoes) return <EsqueletoDeTexto rotulo="Carregando o patrimônio" paragrafos={1} />;
 
   if (declaracoes.length === 0) {
     return (

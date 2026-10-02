@@ -18,6 +18,7 @@ import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 import { SugestoesParaSeguir } from '../componentes/SugestoesParaSeguir';
 import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
 import { useSessao } from '../sessao';
+import { EsqueletoDePainel } from '../componentes/Esqueleto';
 
 
 /**
@@ -82,7 +83,11 @@ export function Inicio() {
           </div>
         </section>
 
-        {panorama && <Base panorama={panorama} />}
+        {panorama ? (
+          <Base panorama={panorama} />
+        ) : (
+          <EsqueletoDePainel rotulo="Carregando o tamanho da base" cartoes={2} alturaDoGrafico={0} />
+        )}
 
         <GrafoDaAbertura />
 

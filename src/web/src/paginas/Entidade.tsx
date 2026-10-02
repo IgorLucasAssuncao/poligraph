@@ -16,6 +16,7 @@ import { Termo } from '../componentes/Termo';
 import { usePaginas } from '../componentes/usePaginas';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { dataCurta, minusculas, nomeProprio, reaisCompacto } from '../formato';
+import { EsqueletoDePainel } from '../componentes/Esqueleto';
 
 /**
  * Uma entidade: quanto recebeu de emenda, de quem, em que ano — e se aparece na cota.
@@ -46,7 +47,7 @@ export function Entidade() {
     <>
       <AbasDoDinheiro />
       {erro && <p className="erro">Não foi possível carregar esta entidade agora.</p>}
-      {!erro && dados === undefined && <p className="carregando">Carregando…</p>}
+      {!erro && dados === undefined && <EsqueletoDePainel rotulo="Carregando a entidade" />}
       {!erro && dados === null && (
         <p className="vazio">
           Este CNPJ não recebeu dinheiro de emenda nos anos carregados.{' '}

@@ -31,6 +31,7 @@ import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 import { Termo } from '../componentes/Termo';
 import { useSessao } from '../sessao';
 import { passosDaFicha } from '../tour';
+import { EsqueletoDeFicha } from '../componentes/Esqueleto';
 
 const PASSOS_DA_FICHA = passosDaFicha();
 
@@ -101,7 +102,7 @@ export function Parlamentar() {
     return (
       <>
         <CabecalhoDaColuna titulo="Parlamentar" comVoltar />
-        <p className="carregando">Carregando…</p>
+        <EsqueletoDeFicha />
       </>
     );
   }

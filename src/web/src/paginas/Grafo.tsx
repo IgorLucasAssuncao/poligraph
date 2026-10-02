@@ -14,6 +14,7 @@ import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
 import { Termo } from '../componentes/Termo';
 import { periodoDaLegislatura } from '../formato';
 import { passosDoGrafo } from '../tour';
+import { Bloco, Esqueleto } from '../componentes/Esqueleto';
 
 type Grupo = { comunidade: number; quantos: number; partidos: string[] };
 
@@ -99,7 +100,11 @@ export function Grafo() {
       </div>
 
       {erro && <p className="erro">{erro}</p>}
-      {!erro && !grafo && <p className="carregando">Carregando…</p>}
+      {!erro && !grafo && (
+        <Esqueleto rotulo="Carregando o grafo">
+          <Bloco altura={520} />
+        </Esqueleto>
+      )}
 
       {/* ⭐ Estado vazio honesto: acontece antes de o ETL analítico rodar para a casa. */}
       {!erro && grafo && grafo.nos.length === 0 && (

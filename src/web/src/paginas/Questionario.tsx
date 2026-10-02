@@ -13,6 +13,7 @@ import { Resultado } from '../componentes/Resultado';
 import { BotaoDoTour } from '../componentes/BotaoDoTour';
 import { passosDoQuestionario } from '../tour';
 import { comTransicao } from '../transicao';
+import { EsqueletoDeTexto } from '../componentes/Esqueleto';
 
 const OPCOES: [Resposta, string][] = [
   [1, 'Concordo'],
@@ -108,7 +109,7 @@ export function Questionario() {
   if (perguntas.length === 0) {
     return (
       <>
-        <p className={erro ? 'erro' : 'carregando'}>{erro ?? 'Carregando…'}</p>
+        {erro ? <p className="erro">{erro}</p> : <EsqueletoDeTexto rotulo="Carregando as perguntas" paragrafos={1} />}
       </>
     );
   }
