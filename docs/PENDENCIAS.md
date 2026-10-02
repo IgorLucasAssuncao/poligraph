@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-10-02 · **106 resolvidas · 66 abertas**
+> **Atualizado:** 2026-10-02 · **107 resolvidas · 65 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -43,7 +43,7 @@ PL41).
 | **PL57** | 🟡 **PR bloqueado:** a credencial do GitHub expirou, o `gh` ⛔ está instalado, e o `origin/main` do último fetch só tem o `Initial commit`, ⛔ ancestral da branch | 🟡 Média |
 | ✅ ~~PL61~~ | **Resolvida (2026-10-02)** — as notícias saíram de vez, por decisão do autor (sem tempo hábil): coletor RSS, comando `noticias`, `etl-noticias` no AppHost, `/api/parlamentares/{id}/noticias`, `/api/seguidos/noticias`, o digest por e-mail, a aba da ficha e a seção do início. A política de privacidade foi para a `v4-2026-10-02` e ⛔ promete mais e-mail | — |
 | **PL62** | 🟡 **Contrair o schema das notícias:** as tabelas `noticias`, `noticia_pessoas` e `noticia_temas` e os modelos do EF ficaram, porque apagar tabela é mudança destrutiva (dois deploys). Migration que as remove, depois de o código sem elas estar em produção. ⚠️ `EMAIL_NOTICIAS` é o único valor de `ck_consentimento_finalidade`: decidir junto com a PL63 | 🟢 Baixa |
-| **PL63** | 🔴 **"O que mudou" — decidido em 2026-10-02:** os cinco avisos (votou na semana, votou contra o partido, trocou de partido, gastou na cota, emenda paga), numa seção do site, ⛔ e-mail. Especificação pronta em [`plano/09 §4.1`](plano/09-apresentacao-validacao-e-valor.md). Falta implementar, **depois** da PL64 | 🔴 Alta |
+| ✅ ~~PL63~~ | **Resolvida (2026-10-02)** — seção "O que mudou" no início, para quem segue alguém, antes da lista de seguidos. `GET /api/seguidos/novidades` (exige conta, sem cache e sem log de nome) com os cinco avisos de [`plano/09 §4.1`](plano/09-apresentacao-validacao-e-valor.md): votou na semana (ausência só no Senado), votou contra a bancada do próprio partido (só Câmara, com a regra da disciplina portada para C# em `BancadaDoPartido`, e um arquivo de casos lido pelas duas suítes de teste), trocou de partido, gastou na cota do último mês fechado, emenda paga na última competência fechada. Cada item com a fonte; a seção diz a janela e a data da carga. MEDIDO em 2026-10-02: a última votação de plenário da base é de 03/09/2026 nas duas casas, então a semana de hoje vai de 28/08 a 03/09 | — |
 | ✅ ~~PL64~~ | **Resolvida (2026-10-02)** — comando `rotina --frequencia semanal|mensal` (`rotina.py` decide as etapas, o `__main__` executa e para na primeira falha): semanal = `ingerir` e `senado` do ano + `conferir`; mensal = as da semanal + `cota`, `emendas`, `analisar` das duas casas + `conferir`. Em janeiro e fevereiro entra o ano anterior. No VPS, duas Scheduled Tasks do Coolify ([`plano/05 §2.3`](plano/05-cicd-e-deploy.md)); no Aspire, os botões `etl-rotina-semanal` e `etl-rotina-mensal`. ATENÇÃO: o agendamento no Coolify só existe quando houver o VPS | — |
 | **PL65** | 🔴 **Login opcional — e a RNF-17.** Feito em 2026-10-02: com `Acesso:LeituraPublica` ligado, só seguir e a conta pedem login, e o login volta para onde a pessoa estava. Ligado **só** em `appsettings.Development.json`. ⚠️ **Em produção continua desligado**: a RNF-17 restringe o acesso no período eleitoral, e o 2º turno é em **25/10/2026**. Ligar em produção é decisão do autor | 🔴 Alta |
 | ✅ ~~PL66~~ | **Resolvida (2026-10-02)** — `conferir` na ETL e o botão `etl-conferir`: regras de plausibilidade depois da carga, ERRO derruba o comando. Primeira rodada: **0 erros, 29 avisos**, todos explicados em [`plano/09 §5.2`](plano/09-apresentacao-validacao-e-valor.md). A votação do Senado com 82 é titular e suplente de TO no dia da troca; dos 13 placares, 11 são votação secreta de fato (PL69) | — |
@@ -1390,13 +1390,13 @@ avaliação rodar cedo demais.
 
 ---
 
-## ✅ Resolvidas — 106
+## ✅ Resolvidas — 107
 
 `A1` `A5` `API1` `API2` `API3` `API4` `API6` `B1` `B2` `B3` `B4` `B5` `B7` `C1` `C2` `C3` `C4`
 `C6` `C8` `C13` `C14` `CT1` `CT2` `CT3` `CT4` `CT5` `CT6` `CT7` `D1` `D3` `D5` `ER1` `ER3`
 `ER4` `ER5` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PL10`
 `PL11` `PL12` `PL13` `PL17` `PL28` `PL31` `PL32` `PL35` `PL36` `PL37` `PL38` `PL39` `PL40`
-`PL41` `PL42` `PL43` `PL45` `PL46` `PL47` `PL48` `PL49` `PL50` `PL51` `PL54` `PL55` `PL59` `PL61` `PL64` `PL66` `PL68` `PL74` `PL76` `PL77` `PL78` `PL79` `PP1` `PP3` `PP4`
+`PL41` `PL42` `PL43` `PL45` `PL46` `PL47` `PL48` `PL49` `PL50` `PL51` `PL54` `PL55` `PL59` `PL61` `PL63` `PL64` `PL66` `PL68` `PL74` `PL76` `PL77` `PL78` `PL79` `PP1` `PP3` `PP4`
 `RE-01` `RQ1` `RQ2` `RQ3` `RQ4` `RQ8` `RQ9` `SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2`
 `TS3` `TS4` `TS6`
 

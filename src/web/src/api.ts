@@ -978,6 +978,38 @@ export type Metodologia = {
   casas: CasaNaMetodologia[];
 };
 
+/** "O que mudou" (PL63): os cinco avisos sobre quem a pessoa segue, cada um na janela do dado. */
+export type Novidades = {
+  /** Os 7 dias que terminam na votação mais recente da base, não no relógio. */
+  semana: { de: string; ate: string };
+  atualizacoes: { fonte: string; orgao: string; ultimaCarga: string }[];
+  votosNaSemana: {
+    pessoaId: number; nome: string; casa: Casa; votou: number;
+    /** Só o Senado registra ausência; na Câmara vem nulo. */
+    ausente: number | null; ausenteJustificado: number | null;
+  }[];
+  contraOPartido: {
+    pessoaId: number; nome: string; votacaoId: string; data: string; proposicao: string | null;
+    descricao: string | null; partido: string; bancada: string; orientacao: string; voto: string;
+    urlFonte: string | null;
+  }[];
+  trocasDePartido: {
+    pessoaId: number; nome: string; casa: Casa; partidoAnterior: string; partidoNovo: string; primeiroVoto: string;
+  }[];
+  gastosNaCota: {
+    pessoaId: number; nome: string; casa: Casa | null; ano: number; mes: number; total: number;
+    maiorCategoria: string; maiorCategoriaValor: number;
+  }[];
+  emendasPagas: {
+    pessoaId: number; nome: string; mes: string; pago: number;
+    maiorDestino: string | null; lugarDoMaiorDestino: string | null;
+  }[];
+};
+
+export async function obterNovidades(): Promise<Novidades> {
+  return buscar<Novidades>(`${BASE}/seguidos/novidades`);
+}
+
 /** O número cuja procedência se pede (PL73). O recorte é o mesmo da tela que o mostra. */
 export type ConsultaDeProcedencia = {
   contexto: 'votos' | 'cota' | 'emendas' | 'campanha' | 'patrimonio' | 'painel';

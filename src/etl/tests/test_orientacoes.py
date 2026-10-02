@@ -4,6 +4,11 @@ RISCO: O risco aqui é o mesmo da polaridade: um alinhamento invertido não apar
 tela. Aparece como um governismo de 0,82 que deveria ser 0,18, e ninguém percebe.
 """
 
+import json
+from pathlib import Path
+
+import pytest
+
 from poligraph_etl import orientacoes
 
 
@@ -210,3 +215,14 @@ def test_votacao_sem_bancada_do_partido_sai_da_base():
     orientacoes = {"v1": {"Bl UniPpPsd...": "Sim"}, "v2": {"PP": "Não"}}
 
     assert disciplina(votos, orientacoes, {"v1": "PP", "v2": "PP"}) == (1, 1)
+
+
+def _casos_compartilhados():
+    """Os casos que a API (C#) também lê: a mesma regra nas duas linguagens."""
+    caminho = Path(__file__).parent / "casos" / "bancada_do_partido.json"
+    return json.loads(caminho.read_text(encoding="utf-8"))["casos"]
+
+
+@pytest.mark.parametrize("caso", _casos_compartilhados(), ids=lambda c: f"{c['partido']}-{c['esperado']}")
+def test_casos_compartilhados_com_a_api(caso):
+    assert bancada_do_partido(caso["partido"], caso["bancadas"]) == caso["esperado"]

@@ -13,6 +13,7 @@ import {
 import { LegendaDoGrafo } from '../componentes/LegendaDoGrafo';
 import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 import { SugestoesParaSeguir } from '../componentes/SugestoesParaSeguir';
+import { OQueMudou } from '../componentes/OQueMudou';
 import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
 import { useSessao } from '../sessao';
 import { EsqueletoDePainel } from '../componentes/Esqueleto';
@@ -119,6 +120,8 @@ export function Inicio() {
         )}
 
         <GrafoDaAbertura legislatura={legislatura} />
+
+        {seguidos.length > 0 && <OQueMudou />}
 
         {seguidos.length > 0 && (
           <section className="painel-secao">

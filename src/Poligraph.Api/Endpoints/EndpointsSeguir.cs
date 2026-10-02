@@ -23,6 +23,8 @@ public static class EndpointsSeguir
 
         grupo.MapGet("/", ListarAsync)
              .Produces<IReadOnlyList<ParlamentarSeguidoDto>>();
+        grupo.MapGet("/novidades", NovidadesAsync)
+             .Produces<NovidadesDto>();
         grupo.MapPut("/{pessoaId:long}", SeguirAsync);
         grupo.MapDelete("/{pessoaId:long}", DeixarDeSeguirAsync);
 
@@ -51,6 +53,11 @@ public static class EndpointsSeguir
             s.PessoaId, s.NomeExibicao, s.Ultimo?.Casa,
             s.Ultimo?.PartidoNoVoto ?? "", s.Ultimo?.UfNoVoto ?? "")));
     }
+
+    /// <summary>"O que mudou" sobre quem a pessoa segue (PL63). Sem cache e sem log de nome: lê a tabela <c>segue</c>.</summary>
+    private static async Task<IResult> NovidadesAsync(
+        DateOnly? desde, ClaimsPrincipal principal, ServicoNovidades servico, CancellationToken ct) =>
+        Results.Ok(await servico.ObterAsync(SessaoDoUsuario.IdDoUsuario(principal), desde, ct));
 
     /// <summary> PUT e não POST: seguir duas vezes tem de ser o mesmo que seguir uma.</summary>
     /// <summary>

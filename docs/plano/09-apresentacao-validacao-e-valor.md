@@ -86,6 +86,11 @@ Pela pergunta com que ela chega:
 > ✅ **Decidido pelo autor em 2026-10-02** (PL63): os **cinco avisos** abaixo, numa seção
 > **"O que mudou" dentro do site**, ⛔ por e-mail. Pré-requisito: a carga agendada
 > (PL64). Esta seção é a especificação: a implementação sai dela.
+>
+> FEITO em 2026-10-02: `ServicoNovidades` na API e `OQueMudou` no front. Duas escolhas que a
+> especificação deixava abertas: o mês da cota e a competência da emenda são os últimos
+> fechados **entre os dados de quem a pessoa segue** (a cota chega em datas diferentes por
+> casa); e o A1 só mostra ausência no Senado, porque na Câmara quem faltou não tem linha.
 
 As notícias saíram por falta de tempo para fazê-las bem. Os avisos saem do **dado que já
 ingerimos**: sem coletor novo, sem associar nome a texto, sem limiar de confiança. Todo
