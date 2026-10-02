@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import {
   deixarDeSeguir,
   listarSeguidos,
@@ -21,6 +21,8 @@ import { AbaCampanha, AbaCota, AbaEmendas, FaixaDeContas } from '../componentes/
 import { useContas } from '../componentes/useContas';
 import { BotaoBaixarCsv } from '../componentes/BotaoBaixarCsv';
 import { LinkDeFonte } from '../componentes/LinkDeFonte';
+import { MandatosDoParlamentar } from '../componentes/MandatosDoParlamentar';
+import { periodoDaLegislatura } from '../formato';
 import { RedesDoParlamentar } from '../componentes/RedesDoParlamentar';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { usePaginas } from '../componentes/usePaginas';
@@ -57,6 +59,9 @@ export function Parlamentar() {
   const pessoaId = Number(id);
   const aba: Aba = ABAS.some(([chave]) => chave === abaDoEndereco) ? (abaDoEndereco as Aba) : 'votos';
   const base = `/parlamentar/${pessoaId}`;
+  const { pathname } = useLocation();
+  const [busca] = useSearchParams();
+  const legislaturaPedida = Number(busca.get('legislatura')) || undefined;
   const { contas, erro: erroDasContas } = useContas(pessoaId);
   const { usuario } = useSessao();
 
@@ -70,7 +75,7 @@ export function Parlamentar() {
     setErro(null);
 
     Promise.all([
-      obterFicha(pessoaId),
+      obterFicha(pessoaId, legislaturaPedida),
       obterNoticias(pessoaId),
       // Sem conta, ninguém é seguido — e a lista responderia 401 e derrubaria a ficha.
       usuario ? listarSeguidos() : Promise.resolve([]),
@@ -81,7 +86,7 @@ export function Parlamentar() {
         setSeguindo(seguidos.some((s) => s.id === pessoaId));
       })
       .catch(() => setErro('Não foi possível carregar este parlamentar.'));
-  }, [pessoaId, usuario]);
+  }, [pessoaId, legislaturaPedida, usuario]);
 
   if (erro) {
     return (
@@ -105,7 +110,11 @@ export function Parlamentar() {
     <>
       <CabecalhoDaColuna
         titulo={ficha.nome}
-        subtitulo={`${ficha.nVotacoes} votações registradas`}
+        subtitulo={
+          ficha.legislatura
+            ? `${ficha.nVotacoes} votações registradas em ${periodoDaLegislatura(ficha.legislatura)}`
+            : `${ficha.nVotacoes} votações registradas`
+        }
         comVoltar
       />
 
@@ -154,6 +163,8 @@ export function Parlamentar() {
           {ficha.uf && <span className="chip">{ficha.uf}</span>}
         </div>
 
+        <MandatosDoParlamentar mandatos={ficha.mandatos ?? []} atual={ficha.legislatura} caminho={pathname} />
+
         {/* ⭐ Tudo o que esta ficha mostra pode ser conferido na casa. */}
         <p className="perfil-fonte">
           <LinkDeFonte href={ficha.urlFonte}>
@@ -181,7 +192,7 @@ export function Parlamentar() {
         {ABAS.map(([chave, rotulo]) => (
           <Link
             key={chave}
-            to={chave === 'votos' ? base : `${base}/${chave}`}
+            to={`${chave === 'votos' ? base : `${base}/${chave}`}${legislaturaPedida ? `?legislatura=${legislaturaPedida}` : ''}`}
             className={`aba ${aba === chave ? 'aba-ativa' : ''}`}
             aria-current={aba === chave ? 'page' : undefined}
             replace
@@ -198,6 +209,7 @@ export function Parlamentar() {
         <>
           <AbaVotos
             pessoaId={pessoaId}
+            legislatura={ficha.legislatura}
             votos={ficha.votosRecentes}
             total={ficha.nRegistrosDeVoto}
             comPosicao={ficha.nVotacoes}
@@ -234,17 +246,19 @@ export function Parlamentar() {
  */
 function AbaVotos({
   pessoaId,
+  legislatura,
   votos,
   total,
   comPosicao,
 }: {
   pessoaId: number;
+  legislatura: number | null;
   votos: Ficha['votosRecentes'];
   total: number;
   comPosicao: number;
 }) {
   const lista = usePaginas(votos, total, votos.length || 20, (pagina) =>
-    listarVotos(pessoaId, pagina, votos.length || 20),
+    listarVotos(pessoaId, pagina, votos.length || 20, legislatura),
   );
 
   if (votos.length === 0) return <p className="vazio">Nenhum voto registrado.</p>;
@@ -260,7 +274,7 @@ function AbaVotos({
         <BotaoBaixarCsv
           rotulo="Baixar todos (CSV)"
           montar={async () => {
-            const todos = await buscarTodas((pagina) => listarVotos(pessoaId, pagina, 100));
+            const todos = await buscarTodas((pagina) => listarVotos(pessoaId, pagina, 100, legislatura));
             baixarCsv(
               `votos-${pessoaId}.csv`,
               ['Votação', 'Data', 'Voto', 'Orientação do Governo', 'Matéria', 'Descrição', 'Categoria', 'Proposição', 'Registro'],

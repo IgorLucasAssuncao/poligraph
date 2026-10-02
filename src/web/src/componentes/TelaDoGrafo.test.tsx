@@ -31,6 +31,9 @@ const GRAFO: Grafo = {
     { de: 1, para: 2, peso: 0.92, votacoesComuns: 137, cosseno: 0.9 },
     { de: 2, para: 3, peso: 0.61, votacoesComuns: 40, cosseno: 0.6 },
   ],
+  legislaturasComGrafo: [57],
+  votacoesDePlenario: 1103,
+  secretasDePlenario: 0,
 };
 
 describe('ferramentas sobre o desenho', () => {

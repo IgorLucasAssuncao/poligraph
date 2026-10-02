@@ -16,4 +16,6 @@ public record PaginaDeParlamentaresDto(
     int Tamanho,
     int Total,
     IReadOnlyList<string> Partidos,
-    IReadOnlyList<string> Ufs);
+    IReadOnlyList<string> Ufs,
+    /// <summary>A legislatura corrente: quem tem outra em <c>Legislatura</c> já saiu.</summary>
+    short? LegislaturaCorrente);

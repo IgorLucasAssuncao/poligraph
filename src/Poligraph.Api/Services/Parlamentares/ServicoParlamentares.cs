@@ -33,12 +33,16 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache)
     /// <para>PL35 — "parlamentar" é quem votou na legislatura CORRENTE. Sem o recorte, a chegada da 58ª faria "explorar" listar ex-deputados junto dos atuais, e `NVotacoes` somaria mandatos diferentes. `null` só acontece em base sem votação nenhuma — antes do primeiro ETL. Aí a lista sai vazia, que é a resposta honesta.</para>
     /// <para>A lista cortava em 100 por ordem alfabética, sem avisar: de 745 parlamentares da 57ª, só os 100 primeiros em ordem alfabética chegavam à tela, e "quem seguir" escolhia o mais ativo entre eles. A página devolve o total, e o corte passa a ser visível.</para>
     /// <para>A busca por nome ignora caixa e acento: "jose" encontra "José".</para>
+    /// <para>Com <c>anteriores</c>, entra também quem só votou em legislaturas passadas, cada um com o último mandato. Sem ele, que é o padrão, a lista é a de quem está em exercício: o histórico ocupa milhares de nomes, e quem chega procurando "meu deputado" não deve ter de atravessá-los.</para>
     /// </remarks>
     public async Task<PaginaDeParlamentaresDto> ListarAsync(
-        string? nome, string? partido, string? uf, TipoOrdemDaLista ordem,
-        int pagina, int tamanho, CancellationToken ct)
+        string? nome, string? partido, string? uf, TipoCasa? casa, bool anteriores,
+        TipoOrdemDaLista ordem, int pagina, int tamanho, CancellationToken ct)
     {
-        var todos = await ListaDaLegislaturaAsync(ct);
+        var corrente = await Legislaturas.CorrenteAsync(_db, ct);
+        var todos = (anteriores ? await ListaComAnterioresAsync(ct) : await ListaDaLegislaturaAsync(ct))
+            .Where(p => casa is null || p.Casa == casa)
+            .ToList();
 
         pagina = Math.Max(pagina, 1);
         tamanho = Math.Clamp(tamanho, 1, TamanhoMaximo);
@@ -60,7 +64,8 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache)
             Tamanho: tamanho,
             Total: lista.Count,
             Partidos: [.. todos.Select(p => p.Partido).Where(v => v != "").Distinct().Order(StringComparer.Ordinal)],
-            Ufs: [.. todos.Select(p => p.Uf).Where(v => v != "").Distinct().Order(StringComparer.Ordinal)]);
+            Ufs: [.. todos.Select(p => p.Uf).Where(v => v != "").Distinct().Order(StringComparer.Ordinal)],
+            LegislaturaCorrente: corrente);
     }
 
     /// <summary>RF-31 — ficha com dados, histórico de votos e mais similares.</summary>
@@ -240,6 +245,13 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache)
     public Task<IReadOnlyList<ParlamentarNaListaDto>> ParlamentaresDaLegislaturaAsync(CancellationToken ct) =>
         ListaDaLegislaturaAsync(ct);
 
+    /// <summary>
+    /// Todo mundo que votou em alguma legislatura da base, cada um com o último mandato.
+    /// Os em exercício primeiro. Em cache, por legislatura.
+    /// </summary>
+    public Task<IReadOnlyList<ParlamentarNaListaDto>> ParlamentaresDeTodasAsync(CancellationToken ct) =>
+        ListaComAnterioresAsync(ct);
+
     /// <summary>Quem votou na legislatura corrente, com a filiação do último voto. Em cache.</summary>
     private async Task<IReadOnlyList<ParlamentarNaListaDto>> ListaDaLegislaturaAsync(CancellationToken ct)
     {
@@ -251,6 +263,34 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache)
             entrada.AbsoluteExpirationRelativeToNow = ValidadeDaLista;
             return MontarListaAsync(legislatura.Value, ct);
         }) ?? [];
+    }
+
+    /// <remarks>
+    /// <para>Monta a partir da lista de cada legislatura, da mais recente para a mais antiga: a primeira em que a pessoa aparece é o último mandato dela. Reaproveita o cache de cada uma.</para>
+    /// </remarks>
+    private async Task<IReadOnlyList<ParlamentarNaListaDto>> ListaComAnterioresAsync(CancellationToken ct)
+    {
+        var legislaturas = await _db.Votacoes.AsNoTracking()
+            .Select(v => v.Legislatura)
+            .Distinct()
+            .OrderByDescending(l => l)
+            .ToListAsync(ct);
+
+        var vistos = new HashSet<long>();
+        var lista = new List<ParlamentarNaListaDto>();
+
+        foreach (var legislatura in legislaturas)
+        {
+            var daLegislatura = await _cache.GetOrCreateAsync(("parlamentares", legislatura), entrada =>
+            {
+                entrada.AbsoluteExpirationRelativeToNow = ValidadeDaLista;
+                return MontarListaAsync(legislatura, ct);
+            }) ?? [];
+
+            lista.AddRange(daLegislatura.Where(p => vistos.Add(p.Id)));
+        }
+
+        return lista;
     }
 
     /// <remarks>
@@ -293,7 +333,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache)
             return new ParlamentarNaListaDto(
                 p.Id, p.NomeExibicao, filiacao?.Casa,
                 filiacao?.PartidoNoVoto ?? "", filiacao?.UfNoVoto ?? "",
-                contagens[p.Id], p.UrlFoto);
+                contagens[p.Id], p.UrlFoto, legislatura);
         })];
     }
 

@@ -35,6 +35,7 @@ function pagina(itens: Parlamentar[], total = itens.length, numero = 1): PaginaD
   return {
     itens, pagina: numero, tamanho: 30, total,
     partidos: ['PARTIDO-A', 'PARTIDO-B'], ufs: ['BA', 'SP'],
+    legislaturaCorrente: 57,
   };
 }
 
@@ -127,5 +128,57 @@ describe('Explorar em páginas', () => {
 
     await screen.findByText('Ana Ribeiro');
     expect(screen.getByRole('option', { name: 'PARTIDO-B' })).toBeInTheDocument();
+  });
+});
+
+/** O histórico (achado #35): fora da lista por padrão, e marcado quando entra. */
+describe('quem já saiu', () => {
+  beforeEach(() => {
+    vi.mocked(api.listarSeguidos).mockResolvedValue([]);
+    vi.mocked(api.listarParlamentares).mockResolvedValue(
+      pagina([
+        { ...parlamentar(1, 'Ana Ribeiro', 'CAMARA', 845), legislatura: 57 },
+        { ...parlamentar(2, 'Bruno Tavares', 'CAMARA', 610), legislatura: 55 },
+      ]),
+    );
+  });
+
+  function renderizar() {
+    return render(
+      <MemoryRouter>
+        <Explorar />
+      </MemoryRouter>,
+    );
+  }
+
+  it('diz de quando era o mandato de quem já saiu, e ⛔ o de quem está', async () => {
+    renderizar();
+
+    expect(await screen.findByText(/Ex-deputado · 2015–2019 · 610 votações/)).toBeInTheDocument();
+    expect(screen.getByText('845 votações registradas na Câmara')).toBeInTheDocument();
+  });
+
+  it('o histórico só entra quando pedido', async () => {
+    renderizar();
+    await screen.findByText(/Ex-deputado/);
+
+    expect(vi.mocked(api.listarParlamentares).mock.calls[0][0]?.anteriores).toBeUndefined();
+
+    fireEvent.click(screen.getByLabelText('Incluir quem já saiu'));
+
+    await vi.waitFor(() =>
+      expect(vi.mocked(api.listarParlamentares).mock.lastCall?.[0]?.anteriores).toBe(true),
+    );
+  });
+
+  it('a casa vira filtro da consulta', async () => {
+    renderizar();
+    await screen.findByText(/Ex-deputado/);
+
+    fireEvent.change(screen.getByLabelText('Casa'), { target: { value: 'SENADO' } });
+
+    await vi.waitFor(() =>
+      expect(vi.mocked(api.listarParlamentares).mock.lastCall?.[0]?.casa).toBe('SENADO'),
+    );
   });
 });

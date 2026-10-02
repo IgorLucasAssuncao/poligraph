@@ -475,6 +475,25 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .perfil-identidade h1 { margin: 0; font-size: var(--t-4); font-weight: 800; letter-spacing: -.01em; }
 .perfil-identidade .nome-civil { margin: .1rem 0 0; color: var(--suave); font-size: var(--t-2); }
 .perfil-chips { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem; }
+
+/* Os mandatos do parlamentar. Um só vira a linha que diz de quando é a ficha; dois ou
+   mais viram links, e o ativo leva o realce como as outras abas. */
+.mandatos-unico { margin: .6rem 0 0; font-size: var(--t-2); color: var(--suave); }
+.mandatos { margin-top: .75rem; }
+.mandatos-rotulo { display: block; margin-bottom: .35rem; font-size: var(--t-1); color: var(--suave); }
+.mandatos ul { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+.mandatos a {
+  display: flex; flex-direction: column; gap: .1rem;
+  padding: .4rem .7rem;
+  border: 1px solid var(--borda-controle); border-radius: var(--raio);
+  color: var(--texto); text-decoration: none;
+  transition: border-color var(--t-curto) var(--curva), background var(--t-curto) var(--curva);
+}
+.mandatos a:hover { border-color: var(--realce); }
+.mandatos a.ativo { border-color: var(--realce); background: var(--realce-fraco); }
+.mandatos-unico .dado, .mandatos a .dado { font-family: var(--dado); font-size: var(--t-2); font-variant-numeric: tabular-nums; }
+.mandatos-detalhe { font-size: var(--t-1); color: var(--suave); }
+
 /* A casa ganha peso próprio: ela situa o resto, e um chip idêntico ao do partido a
    faria ler como mais um atributo entre outros. Cor NÃO — a paleta é única, e nenhum
    realce pode sugerir espectro político (RNF-16). A distinção é de borda e peso. */
@@ -527,6 +546,11 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   background: var(--fundo); color: inherit;
 }
 .filtros input { flex: 1; min-width: 11rem; }
+.filtros .filtro-marcador {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: var(--t-2); color: var(--suave); cursor: pointer;
+}
+.filtros .filtro-marcador input { flex: none; min-width: 0; padding: 0; accent-color: var(--realce); }
 .filtros input:focus, .filtros select:focus {
   border-color: var(--realce); background: var(--fundo);
 }
@@ -1430,6 +1454,20 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .grafo-casas {
   display: flex; gap: .4rem;
   padding: .75rem 1rem 0;
+}
+
+/* O período do grafo: rótulo curto e o select com o contorno de controle (3:1 nos dois
+   temas). Fica na mesma linha da casa, que é a escolha principal. */
+.grafo-legislatura {
+  display: flex; align-items: center; gap: .4rem;
+  padding: .75rem 0 0;
+  font-size: var(--t-2); color: var(--suave);
+}
+.grafo-legislatura select {
+  padding: .3rem .5rem;
+  font: inherit; font-family: var(--dado); font-variant-numeric: tabular-nums;
+  color: var(--texto); background: var(--fundo);
+  border: 1px solid var(--borda-controle); border-radius: var(--raio);
 }
 .grafo-casas button {
   padding: .4rem .85rem;

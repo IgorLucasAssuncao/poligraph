@@ -1,4 +1,5 @@
 ﻿using Poligraph.Api.Dtos;
+using Poligraph.Data;
 using Poligraph.Api.Services;
 
 namespace Poligraph.Api.Endpoints;
@@ -55,10 +56,12 @@ public static class EndpointsParlamentares
         string? nome = null,
         string? partido = null,
         string? uf = null,
+        TipoCasa? casa = null,
+        bool anteriores = false,
         TipoOrdemDaLista ordem = TipoOrdemDaLista.NOME,
         int pagina = 1,
         int tamanho = ServicoParlamentares.TamanhoPadrao) =>
-        Results.Ok(await servico.ListarAsync(nome, partido, uf, ordem, pagina, tamanho, ct));
+        Results.Ok(await servico.ListarAsync(nome, partido, uf, casa, anteriores, ordem, pagina, tamanho, ct));
 
     /// <summary>RF-31 — ficha com dados, histórico de votos e mais similares.</summary>
     private static async Task<IResult> ObterFichaAsync(

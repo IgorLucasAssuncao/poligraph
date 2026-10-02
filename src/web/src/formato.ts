@@ -100,3 +100,14 @@ export function minusculas(texto: string): string {
   const min = texto.toLocaleLowerCase('pt-BR');
   return min.charAt(0).toLocaleUpperCase('pt-BR') + min.slice(1);
 }
+
+/**
+ * `56` → `"2019–2023"`. A 57ª tomou posse em 2023, e cada legislatura dura quatro anos.
+ *
+ * ⭐ É o que o cidadão reconhece: "56ª legislatura" ⛔ diz nada a quem ⛔ acompanha o
+ * Congresso, e o ano diz. O número ordinal vai junto só onde ajuda a conferir.
+ */
+export function periodoDaLegislatura(legislatura: number): string {
+  const posse = 2023 + (legislatura - 57) * 4;
+  return `${posse}–${posse + 4}`;
+}

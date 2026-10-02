@@ -31,10 +31,12 @@ public class ServicoBusca(ServicoParlamentares parlamentares, ServicoMapaDeEmend
 
         var busca = termo.Trim();
 
-        var parlamentares = (await _parlamentares.ParlamentaresDaLegislaturaAsync(ct))
+        var todos = await _parlamentares.ParlamentaresDeTodasAsync(ct);
+        var parlamentares = todos
             .Select(p => new { Parlamentar = p, Posicao = Comparacao.IndexOf(p.Nome, busca, SemCaixaNemAcento) })
             .Where(p => p.Posicao >= 0)
             .OrderBy(p => p.Posicao == 0 ? 0 : 1)
+            .ThenByDescending(p => p.Parlamentar.Legislatura)
             .ThenByDescending(p => p.Parlamentar.NVotacoes)
             .Take(PorGrupo)
             .Select(p => p.Parlamentar)
@@ -43,6 +45,7 @@ public class ServicoBusca(ServicoParlamentares parlamentares, ServicoMapaDeEmend
         return new BuscaDto(
             parlamentares,
             [.. (await _mapa.BuscarAsync(busca, ct)).Take(PorGrupo)],
-            await _entidades.BuscarAsync(busca, ct));
+            await _entidades.BuscarAsync(busca, ct),
+            todos.Count > 0 ? todos[0].Legislatura : null);
     }
 }

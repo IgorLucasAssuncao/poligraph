@@ -12,6 +12,7 @@ import { GrafoAmpliado } from '../componentes/GrafoAmpliado';
 import { LegendaDoGrafo } from '../componentes/LegendaDoGrafo';
 import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
 import { Termo } from '../componentes/Termo';
+import { periodoDaLegislatura } from '../formato';
 import { passosDoGrafo } from '../tour';
 
 type Grupo = { comunidade: number; quantos: number; partidos: string[] };
@@ -35,6 +36,8 @@ const CASAS: Casa[] = ['CAMARA', 'SENADO'];
 export function Grafo() {
   const navegar = useNavigate();
   const [casa, setCasa] = useState<Casa>('CAMARA');
+  /** `undefined` é "a corrente": a API escolhe, e a tela ⛔ adivinha qual é. */
+  const [legislatura, setLegislatura] = useState<number | undefined>(undefined);
   const [grafo, setGrafo] = useState<DadosDoGrafo | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [ampliado, setAmpliado] = useState(false);
@@ -47,14 +50,14 @@ export function Grafo() {
     setGrafo(null);
     setErro(null);
 
-    obterGrafo(casa)
+    obterGrafo(casa, legislatura)
       .then((novo) => atual && setGrafo(novo))
       .catch(() => atual && setErro('Não foi possível carregar o grafo agora.'));
 
     return () => {
       atual = false;
     };
-  }, [casa]);
+  }, [casa, legislatura]);
 
   const grupos = useMemo(() => (grafo ? resumirGrupos(grafo.nos) : []), [grafo]);
   const membro = NOME_DA_CASA[casa];
@@ -76,7 +79,15 @@ export function Grafo() {
   return (
     <>
       <div className="grafo-barra">
-        <SeletorDeCasa casa={casa} aoTrocar={setCasa} />
+        <SeletorDeCasa casa={casa} aoTrocar={trocarDeCasa} />
+
+        {grafo && grafo.legislaturasComGrafo.length > 1 && (
+          <SeletorDeLegislatura
+            opcoes={grafo.legislaturasComGrafo}
+            atual={grafo.legislatura}
+            aoTrocar={setLegislatura}
+          />
+        )}
 
         {grafo && grafo.nos.length > 0 && (
           <p className="grafo-contagem">
@@ -93,8 +104,17 @@ export function Grafo() {
       {/* ⭐ Estado vazio honesto: acontece antes de o ETL analítico rodar para a casa. */}
       {!erro && grafo && grafo.nos.length === 0 && (
         <p className="vazio">
-          A análise ainda não rodou para {NOME_DA_CASA[casa].nome} nesta
-          legislatura. O grafo aparece depois da próxima execução do ETL.
+          {grafo.legislaturasComGrafo.length > 0 ? (
+            <>
+              {NOME_DA_CASA[casa].nome} ⛔ tem grafo em {periodoDaLegislatura(grafo.legislatura)}:
+              havia votações abertas de menos para comparar quem vota com quem.
+            </>
+          ) : (
+            <>
+              A análise ainda não rodou para {NOME_DA_CASA[casa].nome} nesta legislatura.
+              O grafo aparece depois da próxima execução do ETL.
+            </>
+          )}
         </p>
       )}
 
@@ -120,18 +140,21 @@ export function Grafo() {
             <h2>De onde vem</h2>
             <p>
               Só entram votações de <Termo nome="plenario" /> da{' '}
-              <Termo nome="legislatura">{grafo.legislatura}ª legislatura</Termo>. Dois
+              <Termo nome="legislatura">{grafo.legislatura}ª legislatura</Termo>, de{' '}
+              {periodoDaLegislatura(grafo.legislatura)}. Dois
               {' '}{membro.plural} só se ligam se votaram juntos vezes suficientes —
               com poucas votações em comum, votar igual seria coincidência.
             </p>
 
             {/* 🔴 O sigilo do Senado muda o que a figura pode afirmar, e calar isso
                 faria o leitor comparar as duas casas como se fossem equivalentes. */}
-            {casa === 'SENADO' && (
+            {casa === 'SENADO' && grafo.secretasDePlenario > 0 && (
               <p className="ajuda">
-                <strong>O Senado vota em segredo com frequência.</strong> Das 421
-                votações da legislatura, 239 são secretas — e nelas não há voto
-                individual publicado. Este desenho se apoia nas 182 abertas, e é por isso
+                <strong>O Senado vota em segredo com frequência.</strong> Das{' '}
+                {grafo.votacoesDePlenario} votações de plenário da legislatura,{' '}
+                {grafo.secretasDePlenario} são secretas — e nelas não há voto individual
+                publicado. Este desenho se apoia nas{' '}
+                {grafo.votacoesDePlenario - grafo.secretasDePlenario} abertas, e é por isso
                 que ele tem menos ligações e mais pontos soltos que o da Câmara.
               </p>
             )}
@@ -164,8 +187,18 @@ export function Grafo() {
     </>
   );
 
+  /** A outra casa tem as próprias legislaturas: volta para a corrente dela. */
+  function trocarDeCasa(nova: Casa) {
+    setCasa(nova);
+    setLegislatura(undefined);
+  }
+
+  /** ⭐ A ficha abre no mandato do grafo: no de 2019, o deputado de 2019. */
   function abrirPerfil(no: NoDoGrafo) {
-    navegar(`/parlamentar/${no.id}`);
+    const naLegislatura = grafo && grafo.legislaturasComGrafo[0] !== grafo.legislatura
+      ? `?legislatura=${grafo.legislatura}`
+      : '';
+    navegar(`/parlamentar/${no.id}${naLegislatura}`);
   }
 }
 
@@ -186,6 +219,37 @@ function SeletorDeCasa({ casa, aoTrocar }: { casa: Casa; aoTrocar: (nova: Casa) 
         </button>
       ))}
     </div>
+  );
+}
+
+/**
+ * Qual legislatura desenhar — só as que TÊM grafo. A que ficou sem, por pouco dado,
+ * ⛔ aparece: oferecer e mostrar vazio seria pior que ⛔ oferecer.
+ *
+ * ⭐ `<select>` e ⛔ botões: com o histórico são até seis por casa, e seis botões
+ * empurrariam o seletor de casa, que é a escolha principal, para fora da linha.
+ */
+function SeletorDeLegislatura({
+  opcoes,
+  atual,
+  aoTrocar,
+}: {
+  opcoes: number[];
+  atual: number;
+  aoTrocar: (nova: number) => void;
+}) {
+  return (
+    <label className="grafo-legislatura">
+      <span>Período</span>
+      <select value={atual} onChange={(e) => aoTrocar(Number(e.target.value))}>
+        {opcoes.map((l, i) => (
+          <option key={l} value={l}>
+            {periodoDaLegislatura(l)}
+            {i === 0 ? ' (atual)' : ''}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 

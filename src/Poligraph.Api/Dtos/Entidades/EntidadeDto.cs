@@ -92,7 +92,9 @@ public record CotaDaEntidadeDto(decimal Total, int Lancamentos, IReadOnlyList<Pa
 public record ParlamentarNaCotaDto(long PessoaId, string Nome, string? Partido, TipoCasa? Casa, decimal Total, int Lancamentos);
 
 /// <summary>A busca do cabeçalho: um nome, três tipos de resposta.</summary>
+/// <param name="LegislaturaCorrente">Quem tem outra legislatura já saiu, e a tela diz de quando era.</param>
 public record BuscaDto(
     IReadOnlyList<ParlamentarNaListaDto> Parlamentares,
     IReadOnlyList<MunicipioDto> Municipios,
-    IReadOnlyList<EntidadeNaListaDto> Entidades);
+    IReadOnlyList<EntidadeNaListaDto> Entidades,
+    short? LegislaturaCorrente = null);

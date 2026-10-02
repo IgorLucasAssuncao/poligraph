@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  listarNoticiasDosSeguidos,
   listarSeguidos,
   NOME_DA_CASA,
   obterGrafo,
-  obterNoticias,
   obterPanorama,
   type Grafo as DadosDoGrafo,
-  type Noticia,
+  type NoticiaDeSeguido,
   type Panorama,
   type PanoramaDaCasa,
   type Parlamentar,
@@ -19,7 +19,6 @@ import { SugestoesParaSeguir } from '../componentes/SugestoesParaSeguir';
 import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
 import { useSessao } from '../sessao';
 
-type ItemDoFeed = Noticia & { deQuem: Parlamentar };
 
 /**
  * A porta de entrada.
@@ -38,35 +37,19 @@ type ItemDoFeed = Noticia & { deQuem: Parlamentar };
 export function Inicio() {
   const { usuario } = useSessao();
   const [panorama, setPanorama] = useState<Panorama | null>(null);
-  const [grafo, setGrafo] = useState<DadosDoGrafo | null>(null);
   const [seguidos, setSeguidos] = useState<Parlamentar[]>([]);
-  const [itens, setItens] = useState<ItemDoFeed[]>([]);
+  const [itens, setItens] = useState<NoticiaDeSeguido[]>([]);
 
   useEffect(() => {
     obterPanorama().then(setPanorama).catch(() => setPanorama(null));
 
-    // ⚠️ O grafo vem depois e sem bloquear: são alguns MB, e o resto da página ⛔ não
-    //    depende dele para ter sentido.
-    obterGrafo('CAMARA').then(setGrafo).catch(() => setGrafo(null));
-
     // Sem conta não há seguidos, e a lista responderia 401.
     if (!usuario) return;
 
-    listarSeguidos()
-      .then(async (lista) => {
-        setSeguidos(lista);
+    listarSeguidos().then(setSeguidos).catch(() => setSeguidos([]));
 
-        const porParlamentar = await Promise.all(
-          lista.map(async (p) => (await obterNoticias(p.id)).itens.map((n) => ({ ...n, deQuem: p }))),
-        );
-
-        setItens(
-          porParlamentar
-            .flat()
-            .sort((a, b) => +new Date(b.publicadaEm) - +new Date(a.publicadaEm)),
-        );
-      })
-      .catch(() => setSeguidos([]));
+    // ⭐ Uma requisição para o feed inteiro. Eram uma por seguido, juntadas aqui.
+    listarNoticiasDosSeguidos().then(setItens).catch(() => setItens([]));
   }, [usuario]);
 
   return (
@@ -91,7 +74,7 @@ export function Inicio() {
 
           <div className="painel-acoes" data-tour="comecar">
             <Link to="/resultado" className="botao-destaque">
-              Responder o questionário
+              Compare seu voto
             </Link>
             <Link to="/parlamentares" className="botao-secundario">
               Ver os parlamentares
@@ -101,22 +84,11 @@ export function Inicio() {
 
         {panorama && <Base panorama={panorama} />}
 
-        {grafo && grafo.nos.length > 0 && (
-          <section className="painel-secao">
-            <h2>Como a Câmara se agrupa</h2>
-            <TelaDoGrafo grafo={grafo} altura={460} />
-
-            <LegendaDoGrafo />
-
-            <Link to="/parlamentares?vista=grafo" className="painel-mais">
-              Abrir o grafo completo
-            </Link>
-          </section>
-        )}
+        <GrafoDaAbertura />
 
         {seguidos.length > 0 && (
           <section className="painel-secao">
-            <h2>Você acompanha</h2>
+            <h2>Quem você segue</h2>
             {seguidos.slice(0, 5).map((p) => (
               <LinhaParlamentar
                 key={p.id}
@@ -141,9 +113,9 @@ export function Inicio() {
 
         {itens.length > 0 && (
           <section className="painel-secao">
-            <h2>Notícias de quem você acompanha</h2>
+            <h2>Notícias de quem você segue</h2>
             {itens.map((item) => (
-              <ItemDeNoticia key={item.id} item={item} />
+              <ItemDeNoticia key={`${item.pessoaId}-${item.noticia.id}`} item={item} />
             ))}
           </section>
         )}
@@ -165,6 +137,68 @@ export function Inicio() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+
+/**
+ * O grafo da Câmara na página inicial — buscado só quando a seção chega perto da tela.
+ *
+ * ⚠️ É a maior resposta do site (~580 KB e ~0,6 s medidos em 2026-10-01), e vinha para
+ * todo visitante, inclusive quem clicava em "Compare seu voto" sem rolar. A seção
+ * reserva a altura do desenho enquanto espera, para a página ⛔ pular quando ele chega.
+ *
+ * ⭐ Sem `IntersectionObserver` (testes, navegador antigo), busca de imediato.
+ */
+function GrafoDaAbertura() {
+  const marco = useRef<HTMLElement>(null);
+  const [visivel, setVisivel] = useState(false);
+  const [grafo, setGrafo] = useState<DadosDoGrafo | null | 'vazio'>(null);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined' || !marco.current) {
+      setVisivel(true);
+      return;
+    }
+
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        if (entradas.some((e) => e.isIntersecting)) {
+          setVisivel(true);
+          observador.disconnect();
+        }
+      },
+      { rootMargin: '400px 0px' },
+    );
+    observador.observe(marco.current);
+
+    return () => observador.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visivel) return;
+
+    obterGrafo('CAMARA')
+      .then((g) => setGrafo(g.nos.length > 0 ? g : 'vazio'))
+      .catch(() => setGrafo('vazio'));
+  }, [visivel]);
+
+  if (grafo === 'vazio') return null;
+
+  return (
+    <section className="painel-secao" ref={marco}>
+      <h2>Como a Câmara se agrupa</h2>
+      {grafo ? (
+        <TelaDoGrafo grafo={grafo} altura={460} />
+      ) : (
+        <div className="grafo-reserva" style={{ height: 460 }} aria-hidden="true" />
+      )}
+
+      <LegendaDoGrafo />
+
+      <Link to="/parlamentares?vista=grafo" className="painel-mais">
+        Abrir o grafo completo
+      </Link>
+    </section>
+  );
+}
 
 /** O tamanho da base, por casa — o que sustenta tudo o que a tela afirma. */
 function Base({ panorama }: { panorama: Panorama }) {
@@ -239,23 +273,24 @@ function CartaoDaCasa({ casa }: { casa: PanoramaDaCasa }) {
 }
 
 /**
- * O lugar das notícias, antes de existir notícia.
+ * O lugar das notícias, quando nenhuma cita quem a pessoa segue.
  *
  * 🔴 <b>Esqueleto, ⛔ nunca manchete de exemplo.</b> Isto é uma ferramenta que credita
  * a procedência de cada número que exibe; inventar um título e um veículo para mostrar
  * o layout produziria, na tela, exatamente a coisa que o trabalho existe para ⛔ não
  * fazer. As barras cinzas mostram a forma sem afirmar nada.
  *
- * ⚠️ E diz o estado de verdade: o coletor está escrito e testado, e ⛔ não é executado
- * por comando nenhum.
+ * ⚠️ O texto dizia que o coletor "não está em operação". Está desde 2026-08-29: o vazio
+ * agora quer dizer que nenhuma notícia recente citou alguém da lista.
  */
 function NoticiasAindaNao() {
   return (
     <section className="painel-secao">
-      <h2>Notícias de quem você acompanha</h2>
+      <h2>Notícias de quem você segue</h2>
       <p className="ajuda">
-        Ainda não há nada aqui: o coletor de notícias não está em operação. Quando
-        estiver, cada item vai trazer o veículo, a data e o motivo de ter aparecido.
+        Nenhuma notícia recente cita quem você segue. As notícias vêm da Agência
+        Câmara, da Agência Senado e da Agência Brasil; quando uma delas citar alguém da
+        sua lista, aparece aqui com o veículo, a data e o motivo.
       </p>
 
       <div className="esqueleto-lista" aria-hidden="true">
@@ -274,29 +309,31 @@ function NoticiasAindaNao() {
   );
 }
 
-function ItemDeNoticia({ item }: { item: ItemDoFeed }) {
+function ItemDeNoticia({ item }: { item: NoticiaDeSeguido }) {
+  const { noticia } = item;
+
   return (
     <article className="linha">
-      <Link to={`/parlamentar/${item.deQuem.id}`} aria-label={item.deQuem.nome}>
-        <Avatar nome={item.deQuem.nome} fotoUrl={item.deQuem.urlFoto} tamanho="medio" />
+      <Link to={`/parlamentar/${item.pessoaId}`} aria-label={item.nome}>
+        <Avatar nome={item.nome} fotoUrl={item.urlFoto} tamanho="medio" />
       </Link>
 
       <div className="linha-corpo">
         <div className="linha-topo">
-          <Link to={`/parlamentar/${item.deQuem.id}`} className="linha-nome">
-            {item.deQuem.nome}
+          <Link to={`/parlamentar/${item.pessoaId}`} className="linha-nome">
+            {item.nome}
           </Link>
           <span className="linha-meta">
-            {item.veiculo} · {new Date(item.publicadaEm).toLocaleDateString('pt-BR')}
+            {noticia.veiculo} · {new Date(noticia.publicadaEm).toLocaleDateString('pt-BR')}
           </span>
         </div>
 
-        <a className="noticia-titulo" href={item.url} target="_blank" rel="noreferrer noopener">
-          {item.titulo}
+        <a className="noticia-titulo" href={noticia.url} target="_blank" rel="noreferrer noopener">
+          {noticia.titulo}
         </a>
 
         {/* RF-46 — por que isto apareceu */}
-        <span className="linha-detalhe">porque você segue {item.deQuem.nome}</span>
+        <span className="linha-detalhe">porque você segue {item.nome}</span>
       </div>
     </article>
   );

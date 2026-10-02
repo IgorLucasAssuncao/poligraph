@@ -15,6 +15,9 @@ namespace Poligraph.Api.Endpoints;
 /// </summary>
 public static class EndpointsSeguir
 {
+    /// <summary>Quantas notícias o feed da página inicial traz.</summary>
+    public const int NoticiasNoFeed = 30;
+
     public static IEndpointRouteBuilder MapearSeguir(this IEndpointRouteBuilder app)
     {
         var grupo = app.MapGroup("/api/seguidos")
@@ -23,6 +26,8 @@ public static class EndpointsSeguir
 
         grupo.MapGet("/", ListarAsync)
              .Produces<IReadOnlyList<ParlamentarSeguidoDto>>();
+        grupo.MapGet("/noticias", NoticiasAsync)
+             .Produces<IReadOnlyList<NoticiaDeSeguidoDto>>();
         grupo.MapPut("/{pessoaId:long}", SeguirAsync);
         grupo.MapDelete("/{pessoaId:long}", DeixarDeSeguirAsync);
 
@@ -50,6 +55,38 @@ public static class EndpointsSeguir
         return Results.Ok(seguidos.Select(s => new ParlamentarSeguidoDto(
             s.PessoaId, s.NomeExibicao, s.Ultimo?.Casa,
             s.Ultimo?.PartidoNoVoto ?? "", s.Ultimo?.UfNoVoto ?? "")));
+    }
+
+    /// <summary>
+    /// O feed da página inicial: as notícias mais recentes de quem o usuário segue, numa
+    /// consulta só.
+    /// </summary>
+    /// <remarks>
+    /// <para>A tela pedia as notícias de cada seguido, uma requisição por pessoa, e juntava no navegador. Com 30 seguidos eram 31 requisições a cada abertura da página inicial.</para>
+    /// <para>O limiar de confiança é o mesmo da ficha (RF-40): a menção abaixo dele é gravada e não exibida.</para>
+    /// <para>Uma notícia que cita dois seguidos aparece uma vez para cada um: o "porque você segue" é diferente nas duas.</para>
+    /// </remarks>
+    private static async Task<IResult> NoticiasAsync(
+        ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
+    {
+        var id = SessaoDoUsuario.IdDoUsuario(principal);
+
+        var noticias = await db.NoticiaPessoas.AsNoTracking()
+            .Where(np => np.Confianca >= EndpointsNoticias.ConfiancaMinima
+                      && db.Segue.Any(s => s.UsuarioId == id && s.PessoaId == np.PessoaId))
+            .OrderByDescending(np => np.Noticia!.PublicadaEm)
+            .ThenByDescending(np => np.NoticiaId)
+            .Take(NoticiasNoFeed)
+            .Select(np => new NoticiaDeSeguidoDto(
+                np.PessoaId,
+                np.Pessoa!.NomeExibicao,
+                np.Pessoa.UrlFoto,
+                new NoticiaNaFichaDto(
+                    np.Noticia!.Id, np.Noticia.Url, np.Noticia.Titulo,
+                    np.Noticia.Veiculo, np.Noticia.PublicadaEm, np.Noticia.Trecho)))
+            .ToListAsync(ct);
+
+        return Results.Ok(noticias);
     }
 
     /// <summary> PUT e não POST: seguir duas vezes tem de ser o mesmo que seguir uma.</summary>

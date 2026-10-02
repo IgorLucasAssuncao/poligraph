@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { buscarTudo, type Busca } from '../api';
-import { nomeProprio } from '../formato';
+import { nomeProprio, periodoDaLegislatura } from '../formato';
 
 /**
  * Uma caixa, três tipos de resposta: parlamentar, cidade e entidade.
@@ -147,7 +147,15 @@ function opcoesDa(resposta: Busca): Opcao[] {
     ...resposta.parlamentares.map((p) => ({
       grupo: 'parlamentar' as const,
       rotulo: nomeProprio(p.nome),
-      detalhe: [p.partido, p.uf, p.casa === 'SENADO' ? 'Senado' : p.casa === 'CAMARA' ? 'Câmara' : '']
+      detalhe: [
+        p.partido,
+        p.uf,
+        p.casa === 'SENADO' ? 'Senado' : p.casa === 'CAMARA' ? 'Câmara' : '',
+        // ⚠️ O histórico entra na busca, e quem já saiu diz de quando era.
+        p.legislatura && resposta.legislaturaCorrente && p.legislatura !== resposta.legislaturaCorrente
+          ? `até ${periodoDaLegislatura(p.legislatura).split('–')[1]}`
+          : '',
+      ]
         .filter(Boolean)
         .join(' · '),
       destino: `/parlamentar/${p.id}`,

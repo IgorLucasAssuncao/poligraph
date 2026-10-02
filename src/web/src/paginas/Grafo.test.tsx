@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import type { Grafo as DadosDoGrafo, NoDoGrafo } from '../api';
@@ -36,6 +37,9 @@ const GRAFO: DadosDoGrafo = {
   vizinhosPorNo: 10,
   nos: [no(1, 'Ana Ribeiro'), no(2, 'Bruno Tavares')],
   arestas: [{ de: 1, para: 2, peso: 0.9, votacoesComuns: 100, cosseno: 0.9 }],
+  legislaturasComGrafo: [57],
+  votacoesDePlenario: 1103,
+  secretasDePlenario: 0,
 };
 
 describe('o tour do grafo', () => {
@@ -59,5 +63,48 @@ describe('o tour do grafo', () => {
     for (const passo of passos) {
       expect(document.querySelector(`[data-tour="${passo.alvo}"]`), passo.alvo).not.toBeNull();
     }
+  });
+});
+
+function renderizar() {
+  return render(
+    <MemoryRouter>
+      <Grafo />
+    </MemoryRouter>,
+  );
+}
+
+/** O período do grafo (achado #35): só aparece com mais de uma legislatura com grafo. */
+describe('o período do grafo', () => {
+  it('com uma legislatura só, ⛔ há seletor', async () => {
+    vi.mocked(api.obterGrafo).mockResolvedValue(GRAFO);
+    renderizar();
+    await screen.findByRole('button', { name: /Entenda esta tela/ });
+
+    expect(screen.queryByLabelText('Período')).toBeNull();
+  });
+
+  it('com várias, oferece só as que têm grafo e pede a escolhida', async () => {
+    vi.mocked(api.obterGrafo).mockResolvedValue({ ...GRAFO, legislaturasComGrafo: [57, 56, 55] });
+    renderizar();
+
+    const seletor = await screen.findByLabelText('Período');
+    expect(within(seletor).getAllByRole('option').map((o) => o.textContent)).toEqual([
+      '2023–2027 (atual)', '2019–2023', '2015–2019',
+    ]);
+
+    await userEvent.selectOptions(seletor, '56');
+    await waitFor(() => expect(vi.mocked(api.obterGrafo)).toHaveBeenLastCalledWith('CAMARA', 56));
+  });
+
+  it('o sigilo do Senado é dito com os números da legislatura desenhada', async () => {
+    vi.mocked(api.obterGrafo).mockResolvedValue({
+      ...GRAFO, casa: 'SENADO', votacoesDePlenario: 300, secretasDePlenario: 120,
+    });
+    renderizar();
+    await userEvent.click(await screen.findByRole('button', { name: 'Senado Federal' }));
+
+    expect(await screen.findByText(/Das 300 votações de plenário/)).toBeDefined();
+    expect(screen.getByText(/nas 180 abertas/)).toBeDefined();
   });
 });

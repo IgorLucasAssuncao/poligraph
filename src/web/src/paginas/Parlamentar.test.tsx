@@ -47,6 +47,10 @@ const FICHA: Ficha = {
   urlFonte: 'https://www.camara.leg.br/deputados/1',
   redesSociais: [],
   presenca: null,
+  legislatura: 57,
+  mandatos: [
+    { legislatura: 57, casa: 'CAMARA', anoInicial: 2023, partido: 'PARTIDO-A', uf: 'SP', nRegistrosDeVoto: 120 },
+  ],
 };
 
 /**
@@ -566,7 +570,7 @@ describe('listas da ficha em páginas', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Mostrar mais 1' }));
 
     expect(await screen.findByText('Votação v2')).toBeDefined();
-    expect(vi.mocked(api.listarVotos)).toHaveBeenCalledWith(1, 2, 2);
+    expect(vi.mocked(api.listarVotos)).toHaveBeenCalledWith(1, 2, 2, 57);   // a legislatura que a ficha mostra
     expect(screen.queryByRole('button', { name: /Mostrar mais/ })).toBeNull();
   });
 
@@ -713,5 +717,53 @@ describe('participação nas votações', () => {
     await abrirPerfil();
 
     expect(screen.getByText('380 de 421').closest('div')!.textContent).toMatch(/38 ausências com licença ou missão/);
+  });
+});
+
+/**
+ * Os mandatos (achado #35). Com o histórico na base, a ficha abre na legislatura da
+ * PESSOA, e quem teve mais de um mandato escolhe qual ver.
+ */
+describe('os mandatos na ficha', () => {
+  const DOIS_MANDATOS: Ficha = {
+    ...FICHA,
+    mandatos: [
+      { legislatura: 57, casa: 'CAMARA', anoInicial: 2023, partido: 'PARTIDO-A', uf: 'SP', nRegistrosDeVoto: 120 },
+      { legislatura: 56, casa: 'CAMARA', anoInicial: 2019, partido: 'PARTIDO-B', uf: 'SP', nRegistrosDeVoto: 80 },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.mocked(api.obterNoticias).mockResolvedValue({ itens: [], pagina: 1, tamanho: 10, total: 0 });
+    vi.mocked(api.listarSeguidos).mockResolvedValue([]);
+  });
+
+  it('um mandato só vira a linha que diz de quando é a ficha, ⛔ um seletor', async () => {
+    await renderizarCom(FICHA);
+
+    expect(screen.getByText('2023–2027')).toBeDefined();
+    expect(screen.queryByRole('navigation', { name: 'Mandatos' })).toBeNull();
+  });
+
+  it('com dois, cada mandato é um link, com a sigla de então', async () => {
+    await renderizarCom(DOIS_MANDATOS);
+
+    const mandatos = screen.getByRole('navigation', { name: 'Mandatos' });
+    const links = within(mandatos).getAllByRole('link');
+
+    expect(links).toHaveLength(2);
+    expect(links[0].getAttribute('aria-current')).toBe('true');
+    expect(links[1].getAttribute('href')).toBe('/parlamentar/1?legislatura=56');
+    expect(within(mandatos).getByText(/PARTIDO-B/)).toBeDefined();
+  });
+
+  it('escolher um mandato pede a ficha daquela legislatura', async () => {
+    vi.mocked(api.obterFicha).mockResolvedValue(DOIS_MANDATOS);
+    renderizar();
+    await screen.findAllByRole('heading', { name: /Ana Ribeiro/ });
+
+    await userEvent.click(within(screen.getByRole('navigation', { name: 'Mandatos' })).getByText('2019–2023'));
+
+    await waitFor(() => expect(vi.mocked(api.obterFicha)).toHaveBeenLastCalledWith(1, 56));
   });
 });

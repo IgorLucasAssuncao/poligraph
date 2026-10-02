@@ -27,6 +27,11 @@ export type Parlamentar = {
   nVotacoes: number;
   /** 🔴 URL na Câmara — ⛔ a imagem não é rehospedada. */
   urlFoto?: string | null;
+  /**
+   * A última legislatura em que votou — vem na lista e na busca. Menor que a corrente
+   * quer dizer que a pessoa já saiu.
+   */
+  legislatura?: number;
 };
 
 /**
@@ -107,6 +112,23 @@ export type Ficha = {
   urlFonte: string | null;
   /** PP4 — as redes que o parlamentar publicou. Vazia quando ⛔ publicou nenhuma. */
   redesSociais: RedeSocial[];
+  /**
+   * A legislatura que a ficha mostra: a pedida no endereço, se a pessoa votou nela; senão
+   * a última em que votou. ⚠️ ⛔ É a corrente do site: o ex-deputado abre na dele.
+   */
+  legislatura: number | null;
+  /** Todas as legislaturas em que votou, da mais recente para a mais antiga. */
+  mandatos: Mandato[];
+};
+
+/** Uma legislatura em que a pessoa votou. Partido e UF são os do último voto DELA ali. */
+export type Mandato = {
+  legislatura: number;
+  casa: Casa;
+  anoInicial: number;
+  partido: string;
+  uf: string;
+  nRegistrosDeVoto: number;
 };
 
 export type TipoRedeSocial = 'INSTAGRAM' | 'FACEBOOK' | 'X' | 'YOUTUBE' | 'TIKTOK' | 'LINKEDIN' | 'OUTRA';
@@ -324,12 +346,17 @@ export type PaginaDeParlamentares = {
   total: number;
   partidos: string[];
   ufs: string[];
+  /** Quem tem outra em `legislatura` já saiu, e a tela diz de quando era. */
+  legislaturaCorrente: number | null;
 };
 
 export type FiltroDaLista = {
   nome?: string;
   partido?: string;
   uf?: string;
+  casa?: Casa;
+  /** Inclui quem só votou em legislaturas passadas, cada um com o último mandato. */
+  anteriores?: boolean;
   /** Mais votações registradas primeiro: quem tem mais dado para comparar. */
   ordem?: 'NOME' | 'VOTACOES';
   /** Começa em 1. */
@@ -347,8 +374,9 @@ export async function listarParlamentares(filtro: FiltroDaLista = {}): Promise<P
   return buscar<PaginaDeParlamentares>(`${BASE}/parlamentares?${query}`);
 }
 
-export async function obterFicha(id: number): Promise<Ficha> {
-  return buscar<Ficha>(`${BASE}/parlamentares/${id}`);
+export async function obterFicha(id: number, legislatura?: number): Promise<Ficha> {
+  const filtro = legislatura ? `?legislatura=${legislatura}` : '';
+  return buscar<Ficha>(`${BASE}/parlamentares/${id}${filtro}`);
 }
 
 /**
@@ -361,16 +389,35 @@ export async function obterNoticias(id: number, pagina = 1): Promise<PaginaDe<No
   return buscar<PaginaDe<Noticia>>(`${BASE}/parlamentares/${id}/noticias?pagina=${pagina}`);
 }
 
-/** Votos da legislatura corrente, do mais recente. A página 1 é a que vem na ficha. */
-export async function listarVotos(id: number, pagina: number, tamanho: number): Promise<PaginaDe<VotoNaFicha>> {
+/** Votos de uma legislatura da pessoa, do mais recente. A página 1 é a que vem na ficha. */
+export async function listarVotos(
+  id: number,
+  pagina: number,
+  tamanho: number,
+  legislatura?: number | null,
+): Promise<PaginaDe<VotoNaFicha>> {
+  const filtro = legislatura ? `&legislatura=${legislatura}` : '';
   return buscar<PaginaDe<VotoNaFicha>>(
-    `${BASE}/parlamentares/${id}/votos?pagina=${pagina}&tamanho=${tamanho}`,
+    `${BASE}/parlamentares/${id}/votos?pagina=${pagina}&tamanho=${tamanho}${filtro}`,
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════
 // Seguir — 🔴 escreve dado sensível (LGPD art. 5º, II)
 // ═══════════════════════════════════════════════════════════════════
+
+/** Uma notícia do feed da página inicial, com quem a trouxe para o feed. */
+export type NoticiaDeSeguido = {
+  pessoaId: number;
+  nome: string;
+  urlFoto: string | null;
+  noticia: Noticia;
+};
+
+/** As notícias de todos os seguidos numa requisição só — eram uma por seguido. */
+export async function listarNoticiasDosSeguidos(): Promise<NoticiaDeSeguido[]> {
+  return buscar<NoticiaDeSeguido[]>(`${BASE}/seguidos/noticias`);
+}
 
 export async function listarSeguidos(): Promise<Parlamentar[]> {
   const seguidos = await buscar<
@@ -537,6 +584,14 @@ export type Grafo = {
   vizinhosPorNo: number;
   nos: NoDoGrafo[];
   arestas: ArestaDoGrafo[];
+  /**
+   * As legislaturas em que a casa tem grafo, da mais recente. A que ⛔ teve dado suficiente
+   * ⛔ está aqui, e a tela ⛔ a oferece.
+   */
+  legislaturasComGrafo: number[];
+  /** As votações de plenário da legislatura desenhada, e quantas foram secretas. */
+  votacoesDePlenario: number;
+  secretasDePlenario: number;
 };
 
 /**
@@ -546,8 +601,9 @@ export type Grafo = {
  * vale onde o *usuário* decidiria. Na tela de resultado o cliente já sabe qual grafo
  * está desenhando, porque a separação veio do servidor.
  */
-export async function obterGrafo(casa: Casa = 'CAMARA'): Promise<Grafo> {
-  return buscar<Grafo>(`${BASE}/grafo?casa=${casa}`);
+export async function obterGrafo(casa: Casa = 'CAMARA', legislatura?: number): Promise<Grafo> {
+  const filtro = legislatura ? `&legislatura=${legislatura}` : '';
+  return buscar<Grafo>(`${BASE}/grafo?casa=${casa}${filtro}`);
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1113,6 +1169,8 @@ export type Busca = {
   parlamentares: Parlamentar[];
   municipios: Municipio[];
   entidades: EntidadeNaLista[];
+  /** Quem tem outra `legislatura` já saiu. Os em exercício vêm primeiro. */
+  legislaturaCorrente?: number | null;
 };
 
 export async function listarEntidades(filtro: {

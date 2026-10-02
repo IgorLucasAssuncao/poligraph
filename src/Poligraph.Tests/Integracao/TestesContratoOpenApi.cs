@@ -132,7 +132,7 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     // O envelope do questionário — `total` existe para a barra de progresso.
     [InlineData("QuestionarioDto", "perguntas,total")]
     // `vizinhosPorNo` é o `k` da execução: o tour do grafo explica o desenho com ele.
-    [InlineData("GrafoDto", "execucaoId,casa,legislatura,vizinhosPorNo,nos,arestas,legislaturasComGrafo")]
+    [InlineData("GrafoDto", "execucaoId,casa,legislatura,vizinhosPorNo,nos,arestas,legislaturasComGrafo,votacoesDePlenario,secretasDePlenario")]
     // `governismo` é nulo no Senado inteiro (achado #28), mas a PROPRIEDADE existe.
     [InlineData("NoDoGrafoDto", "id,nome,partido,uf,comunidade,eixoX,eixoY,nVotacoes,componente1,componente2,urlFoto,governismo")]
     [InlineData("ArestaDoGrafoDto", "de,para,peso,votacoesComuns,cosseno")]

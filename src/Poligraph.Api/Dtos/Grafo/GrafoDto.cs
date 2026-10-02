@@ -7,6 +7,10 @@ namespace Poligraph.Api.Dtos;
 /// <c>execucoes.k</c>. Vai junto para a tela explicar o desenho com o número que o
 /// desenhou.
 /// </param>
+/// <param name="VotacoesDePlenario">
+/// As votações de plenário da casa na legislatura, e quantas delas foram secretas. A tela
+/// explica o desenho do Senado com elas: a matriz só usa as abertas.
+/// </param>
 /// <param name="LegislaturasComGrafo">
 /// As legislaturas em que a casa tem grafo, da mais recente para a mais antiga. A que não
 /// teve dado suficiente fica de fora, e a tela não a oferece.
@@ -18,4 +22,6 @@ public record GrafoDto(
     short VizinhosPorNo,
     IReadOnlyList<NoDoGrafoDto> Nos,
     IReadOnlyList<ArestaDoGrafoDto> Arestas,
-    IReadOnlyList<short> LegislaturasComGrafo);
+    IReadOnlyList<short> LegislaturasComGrafo,
+    int VotacoesDePlenario,
+    int SecretasDePlenario);
