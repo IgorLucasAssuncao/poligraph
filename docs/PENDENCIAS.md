@@ -1,10 +1,49 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-08-26 · **62 resolvidas · 54 abertas**
+> **Atualizado:** 2026-10-01 · **92 resolvidas · 52 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
 > manual"*, fora dos bloqueios.
+>
+> ⚠️ **Recontado em 2026-10-01, ⛔ incrementado.** O cabeçalho de 26/08 dizia 62
+> resolvidas, e a lista do fim tinha **60** códigos, sem PL10, PL11, CT3, PL35 nem as
+> outras fechadas de 27/08 a 06/09. A contagem agora sai da lista.
+
+---
+
+## 🆕 Estado em 2026-10-01 — comece por aqui
+
+### O que entrou desde a última atualização (07/09 → 25/09)
+
+| Entrega | Fecha |
+|---|---|
+| Ficha com **patrimônio** declarado ao TSE | ✅ **PP3** |
+| Ficha com **redes sociais** (Câmara e TSE) | ✅ **PP4** |
+| Ficha com **casa** e presença no voto | ✅ o resto da **PL42** |
+| Senadores: nome civil, CPF pelo TSE, financiamento; **CEAPS** | — |
+| Governo, emendas por destino, mapa por município, entidades, metodologia | — |
+| Emendas e orçamento pelo **download público** — a chave pessoal do Portal saiu ([#33](achados/033-o-destino-da-emenda.md)) | — |
+
+Também fechadas por estarem obsoletas ou já feitas: ✅ **API3** (o teste existe:
+`Poligraph.Tests/Unidade/TestesPolaridade.cs`) e ✅ **PL31** (o seed foi aposentado na
+PL41).
+
+### 🔴 Novas — achadas em 2026-10-01
+
+| # | Pendência | Prioridade |
+|---|---|---|
+| ✅ ~~PL54~~ | **Resolvida (2026-10-01)** — a ficha de todo deputado mostrava 0 "mais parecidos": `MaisSimilaresAsync` pegava a última execução de **qualquer casa**. A consulta estava repetida em cinco serviços e virou uma, `ExecucaoVigente`, com casa **e** legislatura. O `validar` do ETL tinha o mesmo defeito. `TestesExecucaoVigente` grava a execução errada DEPOIS da certa; mutação conferida | — |
+| **PL53** | 🔴 **Trazer as outras legislaturas** — pedido do autor. ⭐ **Decidido em 2026-10-01: as perguntas ficam só na legislatura mais recente** — o histórico entra na ficha, no grafo e no dinheiro, ⛔ no questionário. 🔄 **Em andamento, na branch `legislaturas-historicas`:** ETL robusto para 2001–2022 (campo vazio, lacuna do Senado em 2015–16, siglas antigas, *"tem voto"* → *"votou na corrente"*), legislatura sem dado suficiente fica **sem grafo** (mínimo de 100 votações de plenário abertas), ficha com mandatos, grafo com seletor de período, lista e busca com quem já saiu. Detalhe em [#35](achados/035-a-57-calibrou-o-etl.md) | 🔴 Alta |
+| **PL56** | 🟡 **Governos anteriores:** `gestoes` é uma linha por eleição (`ck_gestao_posse`), e ⛔ representa Temer (2016–18). Decidir o modelo antes de ingerir eleições anteriores | 🟡 Média |
+| **PL55** | 🟡 **30 arquivos `.cs` com emoji** nos comentários, todos do trabalho de 25/09 — o CLAUDE.md proíbe. No que estava commitado eram 0 | 🟢 Baixa |
+| **PL57** | 🟡 **PR bloqueado:** a credencial do GitHub expirou, o `gh` ⛔ está instalado, e o `origin/main` do último fetch só tem o `Initial commit`, ⛔ ancestral da branch | 🟡 Média |
+
+### ⏳ A única com prazo
+
+**PL44** — a virada para a 58ª, em **fevereiro de 2027**. A PL53 muda o problema: com
+várias legislaturas no banco, a tela precisa de um jeito de dizer **de qual** está
+falando, e esse mesmo mecanismo resolve a virada.
 
 ---
 
@@ -892,9 +931,9 @@ uma só, então o recorte poderia sumir num refactor e tudo continuaria verde.
 
 | # | |
 |---|---|
-| 1 | A ficha e o "explorar" filtram a legislatura corrente, mas ⛔ não distinguem casa |
+| ~~1~~ | ✅ **Resolvido até 2026-09-25** — a ficha e a lista dizem a casa |
 | 2 | A **ponte deputado→senador** (achado #18) segue aberta: 43 nomes aparecem nas duas casas, e o Senado ⛔ não publica CPF |
-| 3 | 7 perguntas do Senado contra 21 da Câmara — o desequilíbrio favorece a Câmara no fluxo misto, e ampliar depende da PL11 |
+| 3 | 🔄 Hoje **9** do Senado contra **40** da Câmara no poço (PL11 resolvida). O questionário oferece as 9 inteiras, então o desequilíbrio é do poço, ⛔ do que o cidadão responde |
 
 ---
 
@@ -1164,7 +1203,7 @@ alinhamento ⛔ não teria coordenada.
 
 ---
 
-### 🟡 PL38 — o grafo é calculado e jogado fora
+### ✅ PL38 (resolvida em 2026-08-26) — o grafo era calculado e jogado fora
 
 `__main__._analisar` faz:
 
@@ -1224,13 +1263,13 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 
 | # | Pendência |
 |---|---|
-| **API3** | Teste de regressão da **polaridade** — o bug mais perigoso do sistema |
+| ✅ ~~API3~~ | **Resolvida** — `TestesPolaridade.cs`. ⭐ A PL53 ⛔ a reabre: a polaridade só serve à curadoria, e as perguntas ficam na legislatura mais recente ([#35 §2](achados/035-a-57-calibrou-o-etl.md)) |
 | **API7** | Medir quanto tempo o job de 207k pares leva de fato |
 | ✅ ~~CT3~~ | **Resolvida (2026-09-06)** — 27 testes conferem rota por rota e campo por campo contra `src/web/src/api.ts`, e o `/scalar` renderiza o mesmo documento. 🔴 **Achou um bug na primeira execução:** `/api/auth/logout` ⛔ não existia no contrato e devolvia 200 em vez de 204 ([achado 032](achados/032-a-rota-que-o-contrato-dizia-nao-existir.md)). Detalhe abaixo |
 | 🟡 **PL52** | **🆕 Teste intermitente** — `TestesAfinidadeDuasCasas.Nenhuma_Lista_Mistura_Parlamentar_Da_Outra_Casa` falhou **1 vez em 3** rodadas da suíte completa (2026-09-06), em **1 ms**, e passa isolado. ⚠️ Duração de 1 ms sugere estado compartilhado entre testes, ⛔ não asserção de dado. **A mensagem ⛔ não foi capturada** — as duas rodadas seguintes passaram |
 | ✅ ~~CT4~~ | **Nova, resolvida (2026-09-06)** — estágio de qualidade (SonarQube Cloud) no `ci.yml`, com cobertura das três linguagens. 🔴 **Depende de repositório público** ou de plano pago. Detalhe abaixo |
 | **PL16** | Como o ETL sinaliza `novas_votacoes` |
-| **PL31** | Definir o conteúdo do seed de desenvolvimento — quantos parlamentares, votações e perguntas |
+| ✅ ~~PL31~~ | **Obsoleta** — o seed foi aposentado na PL41 |
 | ✅ ~~PL48~~ | **Resolvida (2026-08-29)** — consolidadas. Eram **12** arquivos, ⛔ não 8: o número cresceu durante o desenvolvimento. Viraram **uma** `Inicial`, com o schema conferido definição por definição. Detalhe abaixo |
 | ✅ ~~PL49~~ | **Resolvida (2026-09-06)** — as migrations e a `FabricaDesignTime` foram para `Poligraph.Migrations`. O `dotnet ef` agora toma como alvo o projeto que **aplica**, ⛔ não a API, que ⛔ nunca migra. Detalhe abaixo |
 | ~~PL32~~ | 🟢 Rebaixada — só texto principal foi a decisão; o texto das emendas deixou de ser necessário |
@@ -1263,8 +1302,8 @@ vazio (N9), lista final de feeds (N11).
 <details>
 <summary><b>Página do parlamentar</b> — PP2 a PP6</summary>
 
-Assimetria da página de senador (PP2), apresentação de patrimônio (PP3), links de rede
-social (PP4), parlamentar com poucos votos (PP5), perfil temático por relatoria (PP6).
+Assimetria da página de senador (PP2), ✅ ~~apresentação de patrimônio (PP3)~~, ✅ ~~links de rede
+social (PP4)~~, parlamentar com poucos votos (PP5), perfil temático por relatoria (PP6).
 </details>
 
 <details>
@@ -1294,12 +1333,17 @@ avaliação rodar cedo demais.
 
 ---
 
-## ✅ Resolvidas — 62
+## ✅ Resolvidas — 92
 
-`A1` `API1` `API2` `API6` `B1` `B2` `B3` `B4` `B5` `C1` `C2` `C3` `C4` `C6` `C8` `C13`
-`C14` `CT1` `CT2` `CT4` `CT5` `CT6` `D1` `D3` `D5` `ER1` `ER3` `ER4` `N2` `N10` `P1` `P2`
-`P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PL13` `PL28` `PP1` `RE-01` `RQ1` `RQ4` `RQ8` `RQ9`
-`SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2` `TS3` `TS4` `TS6`
+`A1` `A5` `API1` `API2` `API3` `API4` `API6` `B1` `B2` `B3` `B4` `B5` `C1` `C2` `C3` `C4`
+`C6` `C8` `C13` `C14` `CT1` `CT2` `CT3` `CT4` `CT5` `CT6` `CT7` `D1` `D3` `D5` `ER1` `ER3`
+`ER4` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PL10`
+`PL11` `PL12` `PL13` `PL17` `PL28` `PL31` `PL32` `PL35` `PL36` `PL37` `PL38` `PL39` `PL40`
+`PL41` `PL42` `PL43` `PL45` `PL46` `PL47` `PL48` `PL49` `PL50` `PL51` `PL54` `PP1` `PP3` `PP4`
+`RE-01` `RQ1` `RQ2` `RQ3` `RQ4` `RQ8` `RQ9` `SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2`
+`TS3` `TS4` `TS6`
+
+⚠️ `A5` e `PL17` estão aqui por **⛔ se aplicarem mais** — ver *Fontes e escopo* acima.
 
 ⚠️ **Convenção de prefixo** (evita a colisão que existia até 2026-08-23):
 
