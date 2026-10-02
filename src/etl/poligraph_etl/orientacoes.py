@@ -46,6 +46,8 @@ mérito. Conta como orientação existente e ⛔ nunca como voto contrário.
 """
 
 import logging
+import unicodedata
+from collections.abc import Iterable
 
 log = logging.getLogger("poligraph")
 
@@ -134,6 +136,91 @@ def alinhamento(
             seguiu += 1
 
     return seguiu, comparaveis
+
+
+def bancada_do_partido(partido: str, bancadas: Iterable[str]) -> str | None:
+    """Qual bancada orientou o partido nesta votação, ou `None` se nenhuma o representa.
+
+    ## 🔴 Por que existe (achado #36)
+
+    A disciplina comparava o voto com a orientação da bancada de nome IGUAL à sigla. A
+    Câmara quase nunca publica assim. Medido na 57ª:
+
+    | Publicado | Votações | Efeito da comparação exata |
+    |---|---:|---|
+    | `Fdr PT-PCdoB-PV` | 1.277 | PT, PCdoB e PV **nunca** medidos: "PT" sozinho ⛔ aparece |
+    | `NOVO` e `Novo` | 1.261 | Metade perdida pela caixa |
+    | `Solidaried`, `Republican` | — | Cortados pela fonte, ⛔ casavam com a sigla inteira |
+
+    ## A regra — decisão do autor, 2026-10-01
+
+    1. **A própria sigla vence**, sem diferença de caixa ou acento. Nome cortado pela fonte
+       (`Solidaried`) casa com a sigla que ele começa, mas só a partir de 6 letras: `PSD`
+       ⛔ pode casar com `PSDB`.
+    2. **A federação conta como o partido.** A Lei 14.208/2021 manda a federação atuar
+       como se fosse um partido só durante a legislatura.
+    3. **Bloco ⛔ conta.** Bloco é aliança de liderança: o partido pode estar no bloco e
+       votar diferente. E o nome vem cortado (`Bl UniPpFdrPsdbCid...`), sem dizer quem
+       está dentro. Sem bancada que o represente, a votação sai da base, ⛔ entra como
+       desobediência.
+    """
+    alvo = _normal(partido)
+    if not alvo:
+        return None
+
+    da_federacao = None
+    for bancada in bancadas:
+        nome = _normal(bancada)
+        if _mesma_sigla(nome, alvo):
+            return bancada
+        if nome.startswith("FDR ") and any(
+            _mesma_sigla(membro, alvo) for membro in nome[4:].split("-")
+        ):
+            da_federacao = bancada
+
+    return da_federacao
+
+
+def disciplina(
+    votos_da_pessoa: dict[str, int],
+    orientacoes_por_votacao: dict[str, dict[str, str]],
+    partido_por_votacao: dict[str, str],
+) -> tuple[int, int]:
+    """Quantas vezes a pessoa seguiu o próprio partido, e sobre quantas votações.
+
+    ⭐ O partido é o DE CADA VOTO (`partido_no_voto`). Quem trocou de sigla no meio do
+    mandato é medido contra a sigla de então em cada votação, ⛔ contra a última.
+
+    ⚠️ Antes, uma sigla só valia para o mandato inteiro: "a do voto mais recente lido",
+    numa consulta sem ordem. Para quem trocou de partido, a sigla era sorteada.
+    """
+    seguiu = comparaveis = 0
+
+    for votacao_id, valor in votos_da_pessoa.items():
+        if valor not in (1, -1):
+            continue
+
+        da_votacao = orientacoes_por_votacao.get(votacao_id) or {}
+        bancada = bancada_do_partido(partido_por_votacao.get(votacao_id, ""), da_votacao)
+        orientacao = da_votacao.get(bancada) if bancada else None
+        if orientacao not in POSICOES:
+            continue
+
+        comparaveis += 1
+        if (valor == 1) == (orientacao == "Sim"):
+            seguiu += 1
+
+    return seguiu, comparaveis
+
+
+def _normal(texto: str | None) -> str:
+    """Caixa alta, sem acento, sem as reticências do nome cortado, espaço colapsado."""
+    sem_acento = unicodedata.normalize("NFKD", texto or "").encode("ascii", "ignore").decode()
+    return " ".join(sem_acento.upper().replace("...", "").split())
+
+
+def _mesma_sigla(publicada: str, partido: str) -> bool:
+    return publicada == partido or (len(publicada) >= 6 and partido.startswith(publicada))
 
 
 def _texto(valor) -> str:

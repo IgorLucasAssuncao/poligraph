@@ -559,7 +559,7 @@ def _alinhamento(
     # ⚠️ Uma consulta só, e ⛔ não uma por pessoa: são 643 parlamentares, e o laço com
     #    ida ao banco levaria minutos para devolver o que cabe numa varredura.
     votos_por_pessoa: dict[int, dict[str, int]] = {}
-    partido_por_pessoa: dict[int, str] = {}
+    partido_por_voto: dict[int, dict[str, str]] = {}
     for pessoa_id, votacao_id, valor, partido in conexao.execute(
         """
         SELECT vo.pessoa_id, vo.votacao_id, vo.valor, vo.partido_no_voto
@@ -570,9 +570,7 @@ def _alinhamento(
         (casa, legislatura),
     ).fetchall():
         votos_por_pessoa.setdefault(pessoa_id, {})[votacao_id] = valor
-        # O partido do voto MAIS RECENTE lido vence — serve só para escolher contra
-        # qual bancada medir disciplina quando a pessoa trocou de sigla.
-        partido_por_pessoa[pessoa_id] = partido
+        partido_por_voto.setdefault(pessoa_id, {})[votacao_id] = partido
 
     metricas = []
     for pessoa_id in pessoas:
@@ -583,8 +581,8 @@ def _alinhamento(
         segue_gov, base_gov = orientacoes.alinhamento(
             votos, por_votacao, orientacoes.BANCADA_DO_GOVERNO
         )
-        segue_part, base_part = orientacoes.alinhamento(
-            votos, por_votacao, partido_por_pessoa.get(pessoa_id, "")
+        segue_part, base_part = orientacoes.disciplina(
+            votos, por_votacao, partido_por_voto.get(pessoa_id) or {}
         )
 
         # ⛔ Sem base, NULO — ⛔ nunca zero. Zero afirmaria "nunca seguiu o governo",
@@ -594,6 +592,9 @@ def _alinhamento(
                 "pessoa_id": pessoa_id,
                 "governismo": segue_gov / base_gov if base_gov else None,
                 "disciplina": segue_part / base_part if base_part else None,
+                # ⭐ A base vai junto: a API a lia por conta própria, com a regra antiga
+                #    de sigla exata, e mostraria um percentual novo sobre a base velha.
+                "base_disciplina": base_part or None,
             }
         )
 

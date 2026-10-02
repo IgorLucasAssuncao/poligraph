@@ -149,3 +149,64 @@ def test_bancada_inexistente_devolve_base_zero():
     seguiu, base = orientacoes.alinhamento({"a": 1}, {"a": {"Governo": "Sim"}}, "")
 
     assert (seguiu, base) == (0, 0)
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 🔴 Achado #36 — de que bancada é a orientação do partido
+# ═══════════════════════════════════════════════════════════════════
+
+from poligraph_etl.orientacoes import bancada_do_partido, disciplina  # noqa: E402
+
+
+def test_pt_e_medido_pela_federacao():
+    """📐 Na 57ª, "PT" sozinho ⛔ aparece: o PT orienta como `Fdr PT-PCdoB-PV`."""
+    bancadas = ["Governo", "Fdr PT-PCdoB-PV", "PL", "Bl UniPpPsd..."]
+
+    assert bancada_do_partido("PT", bancadas) == "Fdr PT-PCdoB-PV"
+    assert bancada_do_partido("PCdoB", bancadas) == "Fdr PT-PCdoB-PV"
+    assert bancada_do_partido("PV", bancadas) == "Fdr PT-PCdoB-PV"
+
+
+def test_federacao_com_nome_cortado():
+    assert bancada_do_partido("CIDADANIA", ["Fdr PSDB-CIDADAN"]) == "Fdr PSDB-CIDADAN"
+
+
+def test_a_propria_sigla_vence_a_federacao():
+    assert bancada_do_partido("PT", ["Fdr PT-PCdoB-PV", "PT"]) == "PT"
+
+
+def test_caixa_e_acento_nao_importam():
+    assert bancada_do_partido("NOVO", ["Novo"]) == "Novo"
+    assert bancada_do_partido("UNIÃO", ["União"]) == "União"
+
+
+def test_nome_cortado_pela_fonte_casa_com_a_sigla_inteira():
+    assert bancada_do_partido("SOLIDARIEDADE", ["Solidaried"]) == "Solidaried"
+    assert bancada_do_partido("REPUBLICANOS", ["Republican"]) == "Republican"
+
+
+def test_sigla_curta_nao_casa_com_outra_que_comeca_igual():
+    """`PSD` ⛔ pode ser lido como o começo de `PSDB`."""
+    assert bancada_do_partido("PSDB", ["PSD"]) is None
+    assert bancada_do_partido("PSD", ["PSDB"]) is None
+
+
+def test_bloco_nao_conta_como_o_partido():
+    """Decisão do autor: bloco é aliança de liderança, e o nome vem cortado."""
+    assert bancada_do_partido("PP", ["Bl UniPpFdrPsdbCid...", "Governo"]) is None
+
+
+def test_disciplina_usa_o_partido_de_cada_voto():
+    """Quem trocou de sigla é medido contra a de então, em cada votação."""
+    votos = {"v1": 1, "v2": 1}
+    orientacoes = {"v1": {"PL": "Sim", "PP": "Não"}, "v2": {"PL": "Não", "PP": "Sim"}}
+
+    assert disciplina(votos, orientacoes, {"v1": "PL", "v2": "PP"}) == (2, 2)
+
+
+def test_votacao_sem_bancada_do_partido_sai_da_base():
+    """Sem quem represente o partido, ⛔ é desobediência: a votação ⛔ conta."""
+    votos = {"v1": 1, "v2": -1}
+    orientacoes = {"v1": {"Bl UniPpPsd...": "Sim"}, "v2": {"PP": "Não"}}
+
+    assert disciplina(votos, orientacoes, {"v1": "PP", "v2": "PP"}) == (1, 1)

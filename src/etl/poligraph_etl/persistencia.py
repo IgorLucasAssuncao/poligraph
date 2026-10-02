@@ -439,7 +439,7 @@ def gravar_orientacoes(
 def gravar_metricas_de_alinhamento(
     conexao: psycopg.Connection, execucao_id: int, metricas: Sequence[dict]
 ) -> int:
-    """Preenche `governismo` e `disciplina` nos nós já gravados.
+    """Preenche `governismo`, `disciplina` e a base da disciplina nos nós já gravados.
 
     ⚠️ `UPDATE`, ⛔ não `INSERT`: o nó nasce em `gravar_nos_metrica` com comunidade e
     posição, e o alinhamento é calculado depois — depende das orientações, que ⛔ não
@@ -449,10 +449,11 @@ def gravar_metricas_de_alinhamento(
         conexao,
         """
         UPDATE nos_metrica
-           SET governismo = %(governismo)s, disciplina = %(disciplina)s
+           SET governismo = %(governismo)s, disciplina = %(disciplina)s,
+               base_disciplina = %(base_disciplina)s
          WHERE execucao_id = %(execucao_id)s AND pessoa_id = %(pessoa_id)s
         """,
-        [{**m, "execucao_id": execucao_id} for m in metricas],
+        [{"base_disciplina": None, **m, "execucao_id": execucao_id} for m in metricas],
     )
 
 

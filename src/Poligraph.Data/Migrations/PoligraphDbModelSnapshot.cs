@@ -816,6 +816,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("pessoa_id");
 
+                    b.Property<int?>("BaseDisciplina")
+                        .HasColumnType("integer")
+                        .HasColumnName("base_disciplina");
+
                     b.Property<float?>("Componente1")
                         .HasColumnType("real")
                         .HasColumnName("componente1");
@@ -854,7 +858,10 @@ namespace Poligraph.Data.Migrations
                     b.HasIndex("PessoaId")
                         .HasDatabaseName("ix_nos_metrica_pessoa_id");
 
-                    b.ToTable("nos_metrica", (string)null);
+                    b.ToTable("nos_metrica", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_no_base_disciplina", "base_disciplina IS NULL OR base_disciplina > 0");
+                        });
                 });
 
             modelBuilder.Entity("Poligraph.Data.NoticiaModel", b =>

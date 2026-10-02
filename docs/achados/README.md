@@ -95,6 +95,7 @@ ingestão contra a fonte real.
 | [**#33**](033-o-destino-da-emenda.md) | 🔴 O **destino da emenda**: três números que inflavam sem erro | O `DO NOTHING` descartava **55 linhas** de emenda; o convênio somado por emenda inventava **R$ 5,4 bi**; o **Banco do Brasil** (R$ 32,57 bi) aparecia como destino |
 | [**#34**](034-a-dotacao-de-2025-sem-a-regra-de-ouro.md) | 🔴 A **dotação de 2025 publicada sem a regra de ouro** | **R$ 228,6 bi** empenhados além da dotação publicada — o valor condicionado na LOA era R$ 228,5 bi. E o arquivo é só do **Executivo** |
 | [**#35**](035-a-57-calibrou-o-etl.md) | 🔴 A **57ª calibrou o ETL** — as outras legislaturas ⛔ cabem nele sem ajuste | A 56ª tem **403** votações "mantido o texto" (57ª/2023: 45); a ingestão de 2003 **quebra**; o Senado tem só **17 e 13** votações em 2015–16; e os **643 deputados** já aparecem hoje com 0 "mais parecidos" |
+| [**#36**](036-o-partido-orienta-como-federacao.md) | 🔴 O **partido orienta como federação**, e a disciplina não via | Nenhum dos **75** deputados do PT tinha disciplina medida: a Câmara publica `Fdr PT-PCdoB-PV`, ⛔ `PT`. Depois da regra nova, 75 de 75 |
 
 ---
 

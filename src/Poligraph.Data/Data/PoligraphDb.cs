@@ -547,6 +547,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         mb.Entity<NoMetricaModel>(e =>
         {
             e.HasKey(x => new { x.ExecucaoId, x.PessoaId });
+            e.ToTable(t => t.HasCheckConstraint(
+                "ck_no_base_disciplina", "base_disciplina IS NULL OR base_disciplina > 0"));
             e.HasOne<ExecucaoModel>().WithMany().HasForeignKey(x => x.ExecucaoId)
                 .OnDelete(DeleteBehavior.Cascade);
 

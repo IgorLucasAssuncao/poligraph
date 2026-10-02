@@ -463,17 +463,16 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
 
         var metrica = await _db.NosMetrica.AsNoTracking()
             .Where(n => n.PessoaId == id && n.ExecucaoId == execucaoId)
-            .Select(n => new { n.Governismo, n.Disciplina })
+            .Select(n => new { n.Governismo, n.Disciplina, n.BaseDisciplina })
             .FirstOrDefaultAsync(ct);
 
         if (metrica is null) return null;
 
         var baseGoverno = await BaseComparavelAsync(id, legislatura.Value, "Governo", ct);
-        var basePartido = await BaseComparavelAsync(id, legislatura.Value, partido, ct);
 
         return new AlinhamentoDto(
             metrica.Governismo, baseGoverno,
-            metrica.Disciplina, basePartido,
+            metrica.Disciplina, metrica.BaseDisciplina ?? 0,
             metrica.Disciplina is null ? null : partido);
     }
 
