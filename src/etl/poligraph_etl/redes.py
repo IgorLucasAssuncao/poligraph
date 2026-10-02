@@ -32,6 +32,10 @@ def normalizar(bruto: str | None) -> str | None:
     """O endereço como link seguro, ou `None`.
 
     `instagram.com/fulano` ganha `https://`; `javascript:` e texto com espaço são recusados.
+
+    Esquema e domínio em minúsculas — o TSE publica "HTTPS://YOUTUBE.COM/…", e o banco
+    (`ck_rede_url`) exige o esquema como a tela o usa. O caminho fica como veio: ele
+    diferencia maiúsculas ("youtube.com/@Fulano").
     """
     url = (bruto or "").strip()
     if not url or re.search(r"\s", url):
@@ -40,9 +44,6 @@ def normalizar(bruto: str | None) -> str | None:
         url = "https://" + url.lstrip("/")
     if not re.match(r"^https?://[^/\s]+\.[^/\s]+", url, re.I):
         return None
-    # Esquema e domínio em minúsculas — o TSE publica "HTTPS://YOUTUBE.COM/…", e o banco
-    # (`ck_rede_url`) exige o esquema como a tela o usa. O caminho fica como veio: ele
-    # diferencia maiúsculas ("youtube.com/@Fulano").
     esquema, resto = url.split("://", 1)
     dominio, _, caminho = resto.partition("/")
     return f"{esquema.lower()}://{dominio.lower()}" + (f"/{caminho}" if caminho else "")

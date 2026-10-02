@@ -28,11 +28,12 @@ def test_zero_a_esquerda_sobrevive():
 
     ATENÇÃO: `01234567890` viraria `1234567890`, e o join com o TSE perderia a pessoa **em
     silêncio**. É por isso que o ETL lê tudo como texto.
+
+    DECISÃO: e o hash acompanha
     """
     assert normalizar_cpf("01234567890") == "01234567890"
     assert normalizar_cpf(1234567890) == "01234567890"
 
-    # DECISÃO: e o hash acompanha
     assert hash_de_cpf("01234567890") == hash_de_cpf(1234567890)
 
 

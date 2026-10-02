@@ -101,7 +101,8 @@ def tabelas_usadas_pelo_python() -> dict[str, list[str]]:
 
 
 def test_contexto_do_ef_existe():
-    # ATENÇÃO: Se o arquivo mudar de lugar, os testes abaixo passariam vazios e em silêncio.
+    """ATENÇÃO: Se o arquivo mudar de lugar, os testes abaixo passariam vazios e em silêncio.
+    """
     assert CONTEXTO.is_file(), f"não achei {CONTEXTO}"
     assert ENTIDADES, f"nenhuma entidade em {_DATA / 'Entidades'}"
 
@@ -132,26 +133,30 @@ def test_o_parser_de_tabelas_nao_ficou_cego():
     detectar. Este teste fixa os dois lados: o que não **não** é tabela continua fora, e
     o que **é** continua dentro. Sem ele, apagar o corpo do padrão deixaria o contrato
     verde e inútil.
+
+    Não O que não é tabela
+
+    RISCO: O caso que não **não** é coberto pelo `(?!\\.)`: comparação sem alias. Aqui
+    `valor_pago` é COLUNA, e sem o `(?<!DISTINCT )` o parser a acusaria de tabela
+    inexistente. A mutação que apagou o lookbehind passou até esta linha existir.
+
+    RISCO: E o caso que justifica o `(?!\\.)`: `EXTRACT(YEAR FROM d.data)`. O `data` solto
+    já estava em `NAO_SAO_TABELAS`, mas qualificado por alias ele escaparia da
+    lista e viraria uma tabela `d`. Esta linha matou a segunda mutação.
+
+    DECISÃO: O que é — e precisa continuar sendo pego
     """
     achadas = lambda sql: set(PADRAO_TABELA.findall(sql))  # noqa: E731
 
-    # Não O que não é tabela
     assert achadas("WHERE e.pessoa_id IS DISTINCT FROM a.pessoa_id") == set()
     assert achadas("SELECT pessoa_id FROM autores_de_emenda a WHERE a.x = 1") == {
         "autores_de_emenda"
     }
 
-    # RISCO: O caso que não **não** é coberto pelo `(?!\.)`: comparação sem alias. Aqui
-    #    `valor_pago` é COLUNA, e sem o `(?<!DISTINCT )` o parser a acusaria de tabela
-    #    inexistente. A mutação que apagou o lookbehind passou até esta linha existir.
     assert achadas("WHERE valor_empenhado IS DISTINCT FROM valor_pago") == set()
 
-    # RISCO: E o caso que justifica o `(?!\.)`: `EXTRACT(YEAR FROM d.data)`. O `data` solto
-    #    já estava em `NAO_SAO_TABELAS`, mas qualificado por alias ele escaparia da
-    #    lista e viraria uma tabela `d`. Esta linha matou a segunda mutação.
     assert achadas("SELECT EXTRACT(YEAR FROM d.data) FROM despesas d") == {"despesas"}
 
-    # DECISÃO: O que é — e precisa continuar sendo pego
     assert achadas("INSERT INTO emendas (ano)") == {"emendas"}
     assert achadas("UPDATE pessoas SET cpf_hash = %s") == {"pessoas"}
     assert achadas("JOIN pessoa_fonte_ids ON") == {"pessoa_fonte_ids"}
@@ -192,10 +197,16 @@ def snake_case_de_propriedade(nome: str) -> str:
 
 
 def colunas_do_ef() -> dict[str, set[str]]:
-    """Tabela → colunas, lidas das classes de entidade."""
+    """Tabela → colunas, lidas das classes de entidade.
+
+    DbSet<Entidade> Nome  →  qual classe vira qual tabela
+
+    ATENÇÃO: `public required string NomeCivil` tem DOIS termos antes do nome. Sem
+    aceitar modificadores, toda propriedade `required` sumia — e o teste
+    acusava colunas legítimas como inexistentes.
+    """
     fonte = fonte_das_entidades()
 
-    # DbSet<Entidade> Nome  →  qual classe vira qual tabela
     contexto = CONTEXTO.read_text(encoding="utf-8")
     tabela_de = {
         classe: snake_case(dbset)
@@ -210,9 +221,6 @@ def colunas_do_ef() -> dict[str, set[str]]:
         if not tabela:
             continue
 
-        # ATENÇÃO: `public required string NomeCivil` tem DOIS termos antes do nome. Sem
-        #    aceitar modificadores, toda propriedade `required` sumia — e o teste
-        #    acusava colunas legítimas como inexistentes.
         propriedades = re.findall(
             r"public\s+(?:required\s+|virtual\s+)*[\w<>?\[\],\s]+?\s+(\w+)\s*\{\s*get;",
             corpo,
@@ -223,7 +231,8 @@ def colunas_do_ef() -> dict[str, set[str]]:
 
 
 def test_o_parser_de_colunas_funciona():
-    # ATENÇÃO: Sem esta guarda, um parser quebrado faria os testes abaixo passarem vazios.
+    """ATENÇÃO: Sem esta guarda, um parser quebrado faria os testes abaixo passarem vazios.
+    """
     colunas = colunas_do_ef()
 
     assert "nos_metrica" in colunas
@@ -236,6 +245,8 @@ def test_o_sql_do_etl_so_usa_colunas_que_o_ef_cria():
 
     ATENÇÃO: Confere só as colunas dos INSERTs, que é onde o erro é fatal e silencioso até a
     execução. Cobrir todo SELECT exigiria um parser de SQL de verdade.
+
+    ATENÇÃO: tira comentários SQL de dentro da lista de colunas
     """
     do_ef = colunas_do_ef()
     padrao = re.compile(r"INSERT INTO\s+(\w+)\s*\(([^)]*)\)", re.IGNORECASE)
@@ -250,7 +261,6 @@ def test_o_sql_do_etl_so_usa_colunas_que_o_ef_cria():
                 continue
 
             for coluna in lista.split(","):
-                # ATENÇÃO: tira comentários SQL de dentro da lista de colunas
                 coluna = re.sub(r"--.*", "", coluna).strip()
                 if coluna and coluna not in conhecidas:
                     erros.append(f"{arquivo.name}: {tabela}.{coluna}")
@@ -299,12 +309,13 @@ def test_o_metodo_de_reconciliacao_respeita_o_check():
 
     ATENÇÃO: O Python passa o método como string literal. Um valor fora do domínio derruba o
     lote inteiro no banco — e só na execução real, nunca no teste unitário.
+
+    ATENÇÃO: Ancorado no NOME da constraint. Há três `metodo IN (...)` no contexto — em
+    `pessoa_fonte_ids`, aqui e na correlação de notícias — e pegar "a primeira"
+    comparava o domínio errado.
     """
     permitidos = {"AUTOMATICO", "MANUAL", "NAO_RESOLVIDO"}
 
-    # ATENÇÃO: Ancorado no NOME da constraint. Há três `metodo IN (...)` no contexto — em
-    #    `pessoa_fonte_ids`, aqui e na correlação de notícias — e pegar "a primeira"
-    #    comparava o domínio errado.
     fonte = CONTEXTO.read_text(encoding="utf-8")
     achado = re.search(r'"ck_autor_metodo"[^)]*?metodo IN \(([^)]*)\)', fonte, re.DOTALL)
 

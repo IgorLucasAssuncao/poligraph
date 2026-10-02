@@ -68,10 +68,13 @@ def test_divisao_que_segue_a_estrutura_tem_modularidade_maior():
 
 
 def test_comparar_junta_as_duas_medidas():
+    """partido que ATRAVESSA os blocos de voto — o caso que o TCC quer detectar
+
+    DECISÃO: a afirmação que interessa: a comunidade descreve o grafo melhor que o partido
+    """
     g = dois_blocos()
     pessoas = [1, 2, 3, 4, 5, 6]
 
-    # partido que ATRAVESSA os blocos de voto — o caso que o TCC quer detectar
     r = comparacao.comparar(
         g,
         comunidade_de={p: (0 if p <= 3 else 1) for p in pessoas},
@@ -81,17 +84,18 @@ def test_comparar_junta_as_duas_medidas():
     assert r.n_pessoas == 6
     assert r.n_comunidades == 2
     assert r.n_partidos == 2
-    # DECISÃO: a afirmação que interessa: a comunidade descreve o grafo melhor que o partido
     assert r.comunidade_descreve_melhor
 
 
 def test_quem_nao_tem_partido_fica_de_fora():
+    """`partido_de={1: "A", 2: "A", 3: "B"},`: só três têm partido
+    """
     g = dois_blocos()
 
     r = comparacao.comparar(
         g,
         comunidade_de={p: 0 for p in [1, 2, 3, 4, 5, 6]},
-        partido_de={1: "A", 2: "A", 3: "B"},      # só três têm partido
+        partido_de={1: "A", 2: "A", 3: "B"},
     )
 
     assert r.n_pessoas == 3

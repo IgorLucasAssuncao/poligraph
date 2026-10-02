@@ -57,14 +57,19 @@ def test_metade_igual_da_meio():
 
 
 def test_ausencia_sai_da_conta_nao_conta_como_desacordo():
-    """ATENÇÃO: Se ausência contasse como desacordo, o grafo mediria presença."""
+    """ATENÇÃO: Se ausência contasse como desacordo, o grafo mediria presença.
+
+    `assert n == 3`: DECISÃO: não 4
+
+    `assert valor == pytest.approx(1.0)`: DECISÃO: não 0,75
+    """
     a = np.array([1.0, 1.0, np.nan, 1.0])
     b = np.array([1.0, 1.0, -1.0, 1.0])
 
     valor, n = concordancia_simples(a, b, np.ones(4))
 
-    assert n == 3                       # DECISÃO: não 4
-    assert valor == pytest.approx(1.0)  # DECISÃO: não 0,75
+    assert n == 3
+    assert valor == pytest.approx(1.0)
 
 
 def test_abstencao_sai_da_conta():
@@ -77,10 +82,13 @@ def test_abstencao_sai_da_conta():
 
 
 def test_votacao_procedimental_sai_da_matriz():
-    """Não Peso 0: mede obstrução, não posição."""
+    """Não Peso 0: mede obstrução, não posição.
+
+    `pesos = np.array([1.0, 0.0, 1.0])`: a do meio é PROCEDIMENTAL
+    """
     a = np.array([1.0, 1.0, 1.0])
     b = np.array([1.0, -1.0, 1.0])
-    pesos = np.array([1.0, 0.0, 1.0])   # a do meio é PROCEDIMENTAL
+    pesos = np.array([1.0, 0.0, 1.0])
 
     valor, n = concordancia_simples(a, b, pesos)
 
@@ -149,14 +157,17 @@ def test_votacao_recente_pesa_mais_que_antiga():
 
 
 def test_cosseno_fica_no_intervalo_que_o_banco_aceita():
-    """ATENÇÃO: `ck_sim_valor` exige [0, 1]. O cosseno cru vive em [-1, 1]."""
+    """ATENÇÃO: `ck_sim_valor` exige [0, 1]. O cosseno cru vive em [-1, 1].
+
+    `assert valor == pytest.approx(0.0)`: oposto perfeito → 0 após reescala
+    """
     a = np.array([1.0] * 30)
     b = np.array([-1.0] * 30)
 
     valor, _ = cosseno(a, b, UM)
 
     assert 0.0 <= valor <= 1.0
-    assert valor == pytest.approx(0.0)   # oposto perfeito → 0 após reescala
+    assert valor == pytest.approx(0.0)
 
 
 def test_cosseno_de_identicos_da_um():
@@ -203,7 +214,8 @@ def test_par_sai_sempre_com_a_menor_pessoa_primeiro():
 
 
 def test_knn_limita_o_grau_de_cada_no():
-    # 6 pessoas, todos os pares: 15 arestas
+    """6 pessoas, todos os pares: 15 arestas
+    """
     pares = [
         ParSimilar(a, b, "CONCORDANCIA", 0.5 + (a + b) / 100, 30)
         for a in range(1, 7)
@@ -217,6 +229,8 @@ def test_knn_limita_o_grau_de_cada_no():
 
 
 def test_knn_mantem_a_aresta_mais_forte_de_quem_tem_escolha():
+    """a pessoa 1 tem três opções e escolhe a mais forte
+    """
     pares = [
         ParSimilar(1, 2, "CONCORDANCIA", 0.95, 30),
         ParSimilar(1, 3, "CONCORDANCIA", 0.90, 30),
@@ -225,7 +239,6 @@ def test_knn_mantem_a_aresta_mais_forte_de_quem_tem_escolha():
 
     mantidas = arestas_knn(pares, k=1)
 
-    # a pessoa 1 tem três opções e escolhe a mais forte
     assert any(p.valor == 0.95 for p in mantidas)
 
 
@@ -242,11 +255,13 @@ def test_knn_e_uniao_nao_intersecao_e_isso_e_deliberado():
 
     DECISÃO: União garante grau ≥ 1 para todo nó. O preço é que um nó popular pode passar
     de k vizinhos, o que é aceitável: o grafo continua esparso e legível.
+
+    `ParSimilar(1, 4, "CONCORDANCIA", 0.10, 30),`: única aresta da pessoa 4
     """
     pares = [
         ParSimilar(1, 2, "CONCORDANCIA", 0.95, 30),
         ParSimilar(1, 3, "CONCORDANCIA", 0.90, 30),
-        ParSimilar(1, 4, "CONCORDANCIA", 0.10, 30),   # única aresta da pessoa 4
+        ParSimilar(1, 4, "CONCORDANCIA", 0.10, 30),
     ]
 
     mantidas = arestas_knn(pares, k=1)
@@ -256,12 +271,15 @@ def test_knn_e_uniao_nao_intersecao_e_isso_e_deliberado():
 
 
 def test_knn_nao_isola_ninguem():
-    """Todo parlamentar com ao menos um par válido aparece no grafo."""
+    """Todo parlamentar com ao menos um par válido aparece no grafo.
+
+    `ParSimilar(1, 9, "CONCORDANCIA", 0.05, 30),`: o "diferentão"
+    """
     pares = [
         ParSimilar(1, 2, "CONCORDANCIA", 0.99, 30),
         ParSimilar(1, 3, "CONCORDANCIA", 0.98, 30),
         ParSimilar(2, 3, "CONCORDANCIA", 0.97, 30),
-        ParSimilar(1, 9, "CONCORDANCIA", 0.05, 30),   # o "diferentão"
+        ParSimilar(1, 9, "CONCORDANCIA", 0.05, 30),
     ]
 
     mantidas = arestas_knn(pares, k=2)

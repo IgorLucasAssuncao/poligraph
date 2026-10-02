@@ -168,12 +168,16 @@ def para_linhas(
     | Valor zero | DECISÃO: Viola `ck_receita_valor`, e o lote inteiro seria recusado |
 
     RISCO: O CPF em claro do candidato existe só dentro deste laço; o que sai já é hash.
+
+    Filtro barato primeiro: descarta ~85% das linhas (Presidente, Deputado
+    Estadual, Governador) antes de hashear CPF de um arquivo de 396 MB.
+
+    Sem `casa_por_pessoa`, só a Câmara entra — que é o comportamento de antes de o
+    Senado ter cpf_hash.
     """
     linhas: list[dict] = []
 
     for registro in registros:
-        # Filtro barato primeiro: descarta ~85% das linhas (Presidente, Deputado
-        # Estadual, Governador) antes de hashear CPF de um arquivo de 396 MB.
         cargo = _texto(registro.get("DS_CARGO")).upper()
         if cargo not in CARGOS_ACEITOS:
             continue
@@ -183,8 +187,6 @@ def para_linhas(
         if pessoa_id is None:
             continue
 
-        # Sem `casa_por_pessoa`, só a Câmara entra — que é o comportamento de antes de o
-        # Senado ter cpf_hash.
         casa = (casa_por_pessoa or {}).get(pessoa_id, "CAMARA")
         if cargo != CARGO_POR_CASA.get(casa, CARGO):
             continue

@@ -245,13 +245,16 @@ def test_matriz_de_uma_casa_ignora_o_voto_da_outra(conexao):
 
     Aresta cruzando as casas nunca é legítima, nem para essa pessoa: aresta significa
     "estes dois votam parecido", e ela é um nó só, não dois ligados.
+
+    A mesma pessoa com id nas duas casas — o estado que a ponte produziria
+
+    Cada matriz tem só o voto da própria casa, e o valor é o daquela casa
     """
     from poligraph_etl.__main__ import _montar_matriz
 
     persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Ana Ribeiro")])
     pessoa_id = conexao.execute("SELECT id FROM pessoas LIMIT 1").fetchone()[0]
 
-    # A mesma pessoa com id nas duas casas — o estado que a ponte produziria
     conexao.execute(
         """INSERT INTO pessoa_fonte_ids (pessoa_id, fonte, id_externo, metodo, confianca)
            VALUES (%s, 'SENADO', '5672', 'MANUAL', 1.0)""",
@@ -272,7 +275,6 @@ def test_matriz_de_uma_casa_ignora_o_voto_da_outra(conexao):
     assert [v[0] for v in votacoes_camara] == ["2358548-89"]
     assert [v[0] for v in votacoes_senado] == ["SF-6918"]
 
-    # Cada matriz tem só o voto da própria casa, e o valor é o daquela casa
     assert matriz_camara.shape == (1, 1) and matriz_camara[0, 0] == 1
     assert matriz_senado.shape == (1, 1) and matriz_senado[0, 0] == -1
 

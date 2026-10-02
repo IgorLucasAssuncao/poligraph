@@ -296,6 +296,11 @@ def votacoes_para_linhas(votacoes: list[dict]) -> list[dict]:
     A votação secreta **entra na tabela** e sai da matriz: descartá-la aqui apagaria a
     evidência do achado #17, que é justamente quanto do Senado não é analisável. Quem
     filtra é a montagem da matriz, pelo campo `secreta`.
+
+    Contados do array de votos, não lidos do campo: o Senado devolve
+    `totalVotosSim` e `totalVotosNao` como NULL em todas as votações
+    medidas. Sem contar, o painel do questionário — que é a assinatura
+    visual do site — renderizaria vazio para toda pergunta do Senado.
     """
     linhas = []
 
@@ -321,10 +326,6 @@ def votacoes_para_linhas(votacoes: list[dict]) -> list[dict]:
                 "categoria": classificar_categoria(descricao),
                 "secreta": _texto(votacao.get("votacaoSecreta")).upper() == "S",
                 "plenario": True,
-                # Contados do array de votos, não lidos do campo: o Senado devolve
-                # `totalVotosSim` e `totalVotosNao` como NULL em todas as votações
-                # medidas. Sem contar, o painel do questionário — que é a assinatura
-                # visual do site — renderizaria vazio para toda pergunta do Senado.
                 "votos_sim": _contar(votacao, 1),
                 "votos_nao": _contar(votacao, -1),
             }
@@ -340,6 +341,10 @@ def votos_para_linhas(
 
     O partido e a UF são gravados **como estavam no momento do voto**: trocar de partido
     é comum, e guardar só a filiação atual reescreveria o passado.
+
+    ATENÇÃO: Vazio, não None: as colunas são NOT NULL, como na Câmara. Na 57ª
+    nunca faltava; em 2002 vem ausência sem UF (achado #35), e o
+    banco recusava a carga inteira do ano.
     """
     linhas = []
 
@@ -359,9 +364,6 @@ def votos_para_linhas(
                     "pessoa_id": pessoa_id,
                     "valor": normalizar_voto(voto.get("siglaVotoParlamentar")),
                     "presenca": presenca_do_voto(voto.get("siglaVotoParlamentar")),
-                    # ATENÇÃO: Vazio, não None: as colunas são NOT NULL, como na Câmara. Na 57ª
-                    #    nunca faltava; em 2002 vem ausência sem UF (achado #35), e o
-                    #    banco recusava a carga inteira do ano.
                     "partido_no_voto": _texto(voto.get("siglaPartidoParlamentar")),
                     "uf_no_voto": _texto(voto.get("siglaUFParlamentar")),
                 }

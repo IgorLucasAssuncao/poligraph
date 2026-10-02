@@ -256,6 +256,8 @@ def test_usa_o_codigo_parlamentar_nao_o_publico():
 
     O que aparece em `/votacao` é o `CodigoParlamentar`. Escolher o outro quebra o join
     entre senador e voto sem erro nenhum — todos os votos seriam descartados.
+
+    E é esse mesmo código que o voto traz
     """
     linhas = ingestao_senado.senadores_para_linhas(
         [
@@ -269,7 +271,6 @@ def test_usa_o_codigo_parlamentar_nao_o_publico():
 
     assert linhas[0]["id_externo"] == "5672"
 
-    # E é esse mesmo código que o voto traz
     mapa = {linhas[0]["id_externo"]: 42}
     assert ingestao_senado.votos_para_linhas([votacao()], mapa)[0]["pessoa_id"] == 42
 

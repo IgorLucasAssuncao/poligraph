@@ -40,12 +40,14 @@ def test_cpf_de_fornecedor_e_hasheado():
 
     ATENÇÃO: Fornecedor pessoa física traz CPF no MESMO campo que a empresa traz CNPJ. Gravar
     sem distinguir colocaria milhares de CPFs em claro numa tabela pública.
+
+    `assert len(linha["cnpj_ou_hash"]) == 64`: sha256 em hex
     """
     linha = cota.para_linhas([registro(txtCNPJCPF="123.456.789-09")], MAPA)[0]
 
     assert linha["fornecedor_eh_pessoa_fisica"] is True
     assert linha["cnpj_ou_hash"] != "12345678909"
-    assert len(linha["cnpj_ou_hash"]) == 64        # sha256 em hex
+    assert len(linha["cnpj_ou_hash"]) == 64
 
 
 def test_cnpj_fica_legivel():

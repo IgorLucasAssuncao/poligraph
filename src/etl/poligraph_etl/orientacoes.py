@@ -73,6 +73,9 @@ def para_linhas(registros, votacoes_conhecidas: set[str]) -> list[dict]:
     | Votação fora da base | Orientação sem votação não mede alinhamento de ninguém |
     | Orientação vazia | 24% das linhas. Vazio não é "Liberado" — é ausência de dado |
     | Bancada vazia | Não há a quem atribuir |
+
+    ATENÇÃO: A fonte repete o par em votação com mais de um objeto. Deduplicar aqui, e
+    não só no `ON CONFLICT`, mantém a contagem do log verdadeira.
     """
     linhas: list[dict] = []
     vistos: set[tuple[str, str]] = set()
@@ -87,8 +90,6 @@ def para_linhas(registros, votacoes_conhecidas: set[str]) -> list[dict]:
         if votacao_id not in votacoes_conhecidas:
             continue
 
-        # ATENÇÃO: A fonte repete o par em votação com mais de um objeto. Deduplicar aqui, e
-        #    não só no `ON CONFLICT`, mantém a contagem do log verdadeira.
         chave = (votacao_id, bancada)
         if chave in vistos:
             continue
@@ -119,6 +120,8 @@ def alinhamento(
     | A bancada orientou `Obstrução` | É tática de quórum, não posição de mérito |
     | A bancada orientou `Liberado` | Não houve orientação a seguir |
     | A pessoa se absteve ou faltou | Ausência não é desobediência |
+
+    O voto do parlamentar tem de ser Sim (1) ou Não (-1). Abstenção é 0 e sai.
     """
     seguiu = comparaveis = 0
 
@@ -127,7 +130,6 @@ def alinhamento(
         if orientacao not in POSICOES:
             continue
 
-        # O voto do parlamentar tem de ser Sim (1) ou Não (-1). Abstenção é 0 e sai.
         if valor not in (1, -1):
             continue
 

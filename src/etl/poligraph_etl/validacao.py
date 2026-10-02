@@ -56,11 +56,25 @@ def avaliar(
 
     ATENÇÃO: Trabalha em matriz inteira, não em laço por deputado: com 655 pessoas seriam
     429 mil comparações em Python puro. Em NumPy é uma multiplicação.
+
+    ATENÇÃO: Só posicionamento conta. `nan` é ausência e 0 é abstenção — nenhum dos dois
+    é concordância nem discordância.
+
+    concordância = acordos / comparáveis, par a par
+
+    RISCO: O MESMO piso que a API aplica (`TemBaseSuficiente`, 60% do respondido).
+
+    ATENÇÃO: Sem ele o experimento mede outra coisa e mente para cima: quem faltou em
+    15 das 22 e concordou nas 7 que compareceu marca concordância 1,0 e empata
+    com quem respondeu todas. A regra "ausência não é discordância" é correta,
+    mas sozinha infla o empate — foi o que produziu uma primeira medição com
+    empate mediano de 90, contra 8 na conferência direta.
+
+    ATENÇÃO: Tolerância de ponto flutuante: 20/22 e 20/22 podem diferir no último bit,
+    e sem isto o empate não seria detectado.
     """
     recorte = matriz[:, colunas_pergunta]
 
-    # ATENÇÃO: Só posicionamento conta. `nan` é ausência e 0 é abstenção — nenhum dos dois
-    #    é concordância nem discordância.
     opiniao = np.where(np.isnan(recorte), 0, recorte)
     tem_opiniao = opiniao != 0
 
@@ -70,7 +84,6 @@ def avaliar(
     if elegiveis.size == 0:
         return ResultadoDaRodada(len(colunas_pergunta), 0, 0.0, 0.0, 0)
 
-    # concordância = acordos / comparáveis, par a par
     acordos = (opiniao @ opiniao.T + tem_opiniao.astype(float) @ tem_opiniao.T.astype(float)) / 2
     comparaveis = tem_opiniao.astype(float) @ tem_opiniao.T.astype(float)
 
@@ -80,13 +93,6 @@ def avaliar(
     empates = []
     unicos = 0
     for i in elegiveis:
-        # RISCO: O MESMO piso que a API aplica (`TemBaseSuficiente`, 60% do respondido).
-        #
-        # ATENÇÃO: Sem ele o experimento mede outra coisa e mente para cima: quem faltou em
-        #    15 das 22 e concordou nas 7 que compareceu marca concordância 1,0 e empata
-        #    com quem respondeu todas. A regra "ausência não é discordância" é correta,
-        #    mas sozinha infla o empate — foi o que produziu uma primeira medição com
-        #    empate mediano de 90, contra 8 na conferência direta.
         piso = np.ceil(respostas_por_deputado[i] * fracao_minima_comparavel)
         com_base = comparaveis[i] >= piso
 
@@ -96,8 +102,6 @@ def avaliar(
 
         melhor = np.nanmax(linha)
 
-        # ATENÇÃO: Tolerância de ponto flutuante: 20/22 e 20/22 podem diferir no último bit,
-        #    e sem isto o empate não seria detectado.
         no_topo = int(np.sum(linha >= melhor - 1e-9))
         empates.append(no_topo)
         if no_topo == 1:

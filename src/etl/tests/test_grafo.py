@@ -27,11 +27,13 @@ def dois_blocos() -> tuple[list[int], list[Aresta]]:
 
     DECISÃO: É a estrutura mais simples em que "comunidade" tem resposta certa conhecida —
     se o algoritmo não separar isto, não separa nada.
+
+    `arestas.append(Aresta(4, 5, 0.10))`: a única ponte entre os dois
     """
     a, b = [1, 2, 3, 4], [5, 6, 7, 8]
     arestas = [Aresta(x, y, 0.95) for i, x in enumerate(a) for y in a[i + 1 :]]
     arestas += [Aresta(x, y, 0.95) for i, x in enumerate(b) for y in b[i + 1 :]]
-    arestas.append(Aresta(4, 5, 0.10))       # a única ponte entre os dois
+    arestas.append(Aresta(4, 5, 0.10))
 
     return a + b, arestas
 
@@ -56,16 +58,22 @@ def test_duas_execucoes_dao_o_mesmo_resultado():
 
 
 def test_comunidades_numeradas_por_tamanho():
-    """ATENÇÃO: Sem ordem estável, a legenda da tela troca de cor entre execuções."""
+    """ATENÇÃO: Sem ordem estável, a legenda da tela troca de cor entre execuções.
+
+    `Aresta(1, 2, 0.9), Aresta(2, 3, 0.9), Aresta(1, 3, 0.9),`: trio
+
+    `Aresta(4, 5, 0.9),`: dupla
+
+    DECISÃO: 0 é sempre a MAIOR comunidade
+    """
     pessoas = [1, 2, 3, 4, 5]
     arestas = [
-        Aresta(1, 2, 0.9), Aresta(2, 3, 0.9), Aresta(1, 3, 0.9),   # trio
-        Aresta(4, 5, 0.9),                                          # dupla
+        Aresta(1, 2, 0.9), Aresta(2, 3, 0.9), Aresta(1, 3, 0.9),
+        Aresta(4, 5, 0.9),
     ]
 
     comunidades = grafo.detectar_comunidades(grafo.montar(pessoas, arestas))
 
-    # DECISÃO: 0 é sempre a MAIOR comunidade
     assert comunidades[1] == 0
     assert comunidades[4] == 1
 
@@ -118,7 +126,10 @@ import numpy as np
 
 
 def test_componentes_separam_padroes_opostos():
-    """DECISÃO: Quatro padrões de voto distintos viram quatro cantos."""
+    """DECISÃO: Quatro padrões de voto distintos viram quatro cantos.
+
+    os dois primeiros concordam no eixo 1 e discordam no 2
+    """
     matriz = np.array(
         [[1, 1, 1, -1], [1, 1, -1, -1], [-1, -1, 1, 1], [-1, -1, -1, 1]],
         dtype=float,
@@ -126,7 +137,6 @@ def test_componentes_separam_padroes_opostos():
 
     c = grafo.calcular_componentes(matriz)
 
-    # os dois primeiros concordam no eixo 1 e discordam no 2
     assert np.sign(c[0, 0]) == np.sign(c[1, 0])
     assert np.sign(c[0, 0]) != np.sign(c[2, 0])
 
@@ -184,8 +194,9 @@ def test_o_segundo_eixo_fica_menor_quando_explica_menos():
 
     DECISÃO: Com divisor único, a figura fica achatada na proporção em que o segundo eixo
     importa menos. É essa a forma verdadeira.
+
+    dado com muito mais variância no primeiro eixo que no segundo
     """
-    # dado com muito mais variância no primeiro eixo que no segundo
     gerador = np.random.default_rng(11)
     principal = gerador.choice([-1.0, 1.0], size=(60, 1))
     matriz = np.hstack([np.tile(principal, (1, 30)), gerador.normal(0, 0.05, (60, 30))])
@@ -210,9 +221,10 @@ def test_quem_faltou_e_puxado_para_o_centro():
 
     DECISÃO: O teste existe para que a limitação seja EXPLÍCITA. Se alguém trocar o
     preenchimento por imputação, ele falha e obriga a revisitar o texto da tela.
+
+    20 deputados com posição forte, 5 que faltaram em quase tudo
     """
     gerador = np.random.default_rng(5)
-    # 20 deputados com posição forte, 5 que faltaram em quase tudo
     fortes = gerador.choice([-1.0, 1.0], size=(20, 1)) * np.ones((20, 40))
     faltosos = np.full((5, 40), np.nan)
     faltosos[:, :4] = 1.0

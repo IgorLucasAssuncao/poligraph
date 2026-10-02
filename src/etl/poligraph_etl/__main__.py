@@ -46,6 +46,9 @@ VOTACOES_MINIMAS_PARA_GRAFO = 100
 
 
 def main(argv: list[str] | None = None) -> int:
+    """RISCO: O Aspire injeta no formato do Npgsql (`Host=...;Database=...`) e o psycopg
+    fala libpq (`host=... dbname=...`). Sem traduzir, morre antes de conectar.
+    """
     args = _argumentos(argv)
     _configurar_log()
 
@@ -56,8 +59,6 @@ def main(argv: list[str] | None = None) -> int:
         log.error("Defina ConnectionStrings__poligraph (ou POLIGRAPH_CONEXAO).")
         return 2
 
-    # RISCO: O Aspire injeta no formato do Npgsql (`Host=...;Database=...`) e o psycopg
-    #    fala libpq (`host=... dbname=...`). Sem traduzir, morre antes de conectar.
     conexao_str = conexao_mod.normalizar(conexao_str)
 
     inicio = time.monotonic()
@@ -111,6 +112,18 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _argumentos(argv: list[str] | None) -> argparse.Namespace:
+    """DECISÃO: Sem legislatura, a CORRENTE — a maior em `votacoes`, não um 57 fixo que
+    ficaria velho na posse da 58ª.
+
+    ATENÇÃO: ~6 GB por mês. Uma pasta já baixada evita rebaixar o cadastro inteiro.
+
+    ATENÇÃO: Ano da ELEIÇÃO presidencial, não do mandato: 2022 elegeu a gestão 2023–2026.
+
+    A porta da reconciliação MANUAL: sem ela os autores ambíguos ficam sem saída,
+    porque ambiguidade não pode virar palpite automático.
+
+    ATENÇÃO: Ano da ELEIÇÃO, não do exercício. 2022 elegeu a legislatura 57.
+    """
     parser = argparse.ArgumentParser(prog="poligraph_etl")
     sub = parser.add_subparsers(dest="comando", required=True)
 
@@ -121,8 +134,6 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     sen.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
 
     analisar = sub.add_parser("analisar", help="calcula similaridade e grafo")
-    # DECISÃO: Sem legislatura, a CORRENTE — a maior em `votacoes`, não um 57 fixo que
-    #    ficaria velho na posse da 58ª.
     analisar.add_argument("--legislatura", type=int, nargs="+", default=[])
     analisar.add_argument(
         "--todas", action="store_true",
@@ -149,7 +160,6 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         "municipios",
         help="liga quem recebeu emenda à cidade da sede, por CNPJ → TOM → IBGE (Receita)",
     )
-    # ATENÇÃO: ~6 GB por mês. Uma pasta já baixada evita rebaixar o cadastro inteiro.
     mun.add_argument("--diretorio", type=Path, default=None,
                      help="pasta com Estabelecimentos0..9.zip já baixados")
 
@@ -158,15 +168,12 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         help="ingere quem governa (TSE), o orçamento, o pago e a arrecadação (Portal)",
     )
     gov.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
-    # ATENÇÃO: Ano da ELEIÇÃO presidencial, não do mandato: 2022 elegeu a gestão 2023–2026.
     gov.add_argument("--eleicao", type=int, default=2022)
 
     emd = sub.add_parser(
         "emendas", help="ingere emendas, favorecidos e convênios (Portal)"
     )
     emd.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
-    # A porta da reconciliação MANUAL: sem ela os autores ambíguos ficam sem saída,
-    # porque ambiguidade não pode virar palpite automático.
     emd.add_argument(
         "--resolver",
         nargs="+",
@@ -184,7 +191,6 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     fundo = sub.add_parser(
         "fundo", help="ingere o financiamento de campanha, incluindo o fundão (TSE)"
     )
-    # ATENÇÃO: Ano da ELEIÇÃO, não do exercício. 2022 elegeu a legislatura 57.
     fundo.add_argument("--eleicao", type=int, default=2022)
     fundo.add_argument(
         "--arquivo",
@@ -220,9 +226,10 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
 
 
 def _configurar_log() -> None:
-    # RISCO: O console do Windows é cp1252, e `logging` não trata erro de codificação:
-    # imprime um rastro de exceção no lugar da mensagem e segue. `errors="replace"` faz
-    # o texto degradar em vez de sumir; as mensagens evitam o problema na origem.
+    """RISCO: O console do Windows é cp1252, e `logging` não trata erro de codificação:
+    imprime um rastro de exceção no lugar da mensagem e segue. `errors="replace"` faz
+    o texto degradar em vez de sumir; as mensagens evitam o problema na origem.
+    """
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="replace")
 
@@ -234,19 +241,51 @@ def _configurar_log() -> None:
 
 
 def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
-    """RF-01, RF-03, RF-08 — carga com log auditável."""
+    """RF-01, RF-03, RF-08 — carga com log auditável.
+
+    RISCO: Zero aqui NÃO é caso normal — é o arquivo ter mudado de forma.
+
+    ATENÇÃO: Foi exatamente assim que o bug do `uri` sobreviveu: `0 deputados no arquivo`
+    saiu em INFO, o ETL seguiu, e como o de-para ficou vazio os 13.825 votos de
+    2025 também foram descartados, registrando `0 votos`. Dois zeros plausíveis e
+    nenhuma exceção. Parar aqui é o que transforma isso em erro visível.
+
+    `camara.conferir_volume(df, ano)`: DECISÃO: canário contra regressão de parsing
+
+    RISCO: Canário do classificador por texto — ver `descricoes_nao_reconhecidas`.
+    ATENÇÃO: Frase nova não derruba a ingestão, mas não passa em silêncio: sem
+    isto, uma mudança de redação na fonte mandaria tudo para SUBSTANTIVA.
+
+    RISCO: Cruzamento com o ÚNICO sinal estruturado que a fonte dá sobre o tipo do
+    voto: a sigla no começo de `ultimaAberturaVotacao_descricao`.
+
+    ATENÇÃO: NÃO corrige a categoria — o campo é da última abertura da SESSÃO, não
+    da votação. Serve para a divergência aparecer, e foi assim que a votação
+    2613731-65 ("Resultado. Sim: 182; Não: 182") se revelou um destaque de
+    emenda depois de já ter virado pergunta.
+
+    ATENÇÃO: A votação entra SEM proposição: ela é ingerida antes de a proposição
+    existir, e a FK recusaria a linha. O vínculo vem logo abaixo.
+
+    DECISÃO: A ementa é o que destrava a curadoria (PL11): a DESCRIÇÃO da votação diz o
+    número do projeto e não diz sobre o que ele é.
+
+    ATENÇÃO: Voto fora do de-para é descartado, não inventado. Em volume, o problema
+    está na ingestão de deputados — e aí o número precisa aparecer.
+
+    DECISÃO: Orientação de bancada: é o que transforma "votou Sim" em posição. Sem ela,
+    `governismo` e `disciplina` ficam nulos — as colunas existem desde o
+    schema inicial e passaram a legislatura inteira vazias.
+    MEDIDO: A Câmara não publica orientações de 2001 e 2002: 404, conferido em
+    2026-10-01 (achado #35). Sem elas o ano entra inteiro, e só `governismo` e
+    `disciplina` ficam nulos — que é o que já acontece no Senado inteiro.
+    """
     log.info("Ingerindo deputados...")
     caminho = camara.baixar("deputados", anos[0], CACHE / "deputados.csv")
     deputados = ingestao.deputados_para_linhas(camara.ler_csv(caminho))
     novos = persistencia.gravar_pessoas(conexao, deputados)
     log.info("  %d deputados no arquivo, %d novos", len(deputados), novos)
 
-    # RISCO: Zero aqui NÃO é caso normal — é o arquivo ter mudado de forma.
-    #
-    # ATENÇÃO: Foi exatamente assim que o bug do `uri` sobreviveu: `0 deputados no arquivo`
-    #    saiu em INFO, o ETL seguiu, e como o de-para ficou vazio os 13.825 votos de
-    #    2025 também foram descartados, registrando `0 votos`. Dois zeros plausíveis e
-    #    nenhuma exceção. Parar aqui é o que transforma isso em erro visível.
     if not deputados:
         raise RuntimeError(
             f"Nenhum deputado lido de {caminho}. O layout do CSV mudou? "
@@ -260,13 +299,10 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
 
         arquivo, carga_votacoes = _baixar_da_camara(conexao, "votacoes", ano)
         df = camara.ler_csv(arquivo)
-        camara.conferir_volume(df, ano)      # DECISÃO: canário contra regressão de parsing
+        camara.conferir_volume(df, ano)
 
         votacoes = ingestao.votacoes_para_linhas(df)
 
-        # RISCO: Canário do classificador por texto — ver `descricoes_nao_reconhecidas`.
-        #    ATENÇÃO: Frase nova não derruba a ingestão, mas não passa em silêncio: sem
-        #    isto, uma mudança de redação na fonte mandaria tudo para SUBSTANTIVA.
         orfas = normalizacao.descricoes_nao_reconhecidas(
             linha["descricao"] for linha in votacoes
         )
@@ -276,13 +312,6 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
                 len(orfas), (orfas[0] or "")[:90],
             )
 
-        # RISCO: Cruzamento com o ÚNICO sinal estruturado que a fonte dá sobre o tipo do
-        #    voto: a sigla no começo de `ultimaAberturaVotacao_descricao`.
-        #
-        # ATENÇÃO: NÃO corrige a categoria — o campo é da última abertura da SESSÃO, não
-        #    da votação. Serve para a divergência aparecer, e foi assim que a votação
-        #    2613731-65 ("Resultado. Sim: 182; Não: 182") se revelou um destaque de
-        #    emenda depois de já ter virado pergunta.
         aberturas = dict(
             zip(df["id"], df.get("ultimaAberturaVotacao_descricao", []), strict=False)
         )
@@ -296,14 +325,10 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
                 len(divergentes), divergentes[0][0],
             )
 
-        # ATENÇÃO: A votação entra SEM proposição: ela é ingerida antes de a proposição
-        #    existir, e a FK recusaria a linha. O vínculo vem logo abaixo.
         persistencia.desconectar_proposicoes_ausentes(conexao, votacoes)
         persistencia.gravar_votacoes(conexao, votacoes, carga_votacoes)
         log.info("  %d registros, %d votações nominais", len(df), len(votacoes))
 
-        # DECISÃO: A ementa é o que destrava a curadoria (PL11): a DESCRIÇÃO da votação diz o
-        #    número do projeto e não diz sobre o que ele é.
         arquivo_prop = camara.baixar(
             "votacoesProposicoes", ano, CACHE / f"votacoesProposicoes-{ano}.csv"
         )
@@ -325,20 +350,12 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
         persistencia.gravar_votos(conexao, votos, carga_votos)
         log.info("  %d votos de %d linhas", len(votos), len(df_votos))
 
-        # ATENÇÃO: Voto fora do de-para é descartado, não inventado. Em volume, o problema
-        #    está na ingestão de deputados — e aí o número precisa aparecer.
         descartados = len(df_votos) - len(votos)
         if descartados:
             log.warning(
                 "  %d votos descartados: deputado fora do de-para", descartados
             )
 
-        # DECISÃO: Orientação de bancada: é o que transforma "votou Sim" em posição. Sem ela,
-        #    `governismo` e `disciplina` ficam nulos — as colunas existem desde o
-        #    schema inicial e passaram a legislatura inteira vazias.
-        # MEDIDO: A Câmara não publica orientações de 2001 e 2002: 404, conferido em
-        #    2026-10-01 (achado #35). Sem elas o ano entra inteiro, e só `governismo` e
-        #    `disciplina` ficam nulos — que é o que já acontece no Senado inteiro.
         try:
             arquivo_orientacoes, carga_orientacoes = _baixar_da_camara(
                 conexao, "votacoesOrientacoes", ano
@@ -377,14 +394,24 @@ def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
     As duas casas não são comparáveis entre si (achado #7), então isto alimenta um grafo
     próprio: o `analisar` recebe a casa e monta uma matriz separada. Nenhuma aresta liga
     deputado a senador.
+
+    Zero senadores é mudança de contrato, não Senado vazio — e sem o de-para todos os
+    votos seriam descartados em silêncio, como já aconteceu com a Câmara.
+
+    DECISÃO: Depois do descarte: o volume que importa é o do ano de verdade.
+
+    A lista de exercício só tem quem está hoje; os votos alcançam quem saiu,
+    licenciou-se ou devolveu a cadeira. Criá-los a partir do próprio voto evita
+    descartar 10,5% da base por falta de dono.
+
+    Sigla nova é sinal de que o domínio mudou. Ela vira None e a ingestão segue,
+    mas o log precisa denunciar — senão a base encolhe sem ninguém perceber.
     """
     log.info("Ingerindo senadores...")
     senadores = ingestao_senado.senadores_para_linhas(senado.baixar_senadores())
     novos = persistencia.gravar_pessoas(conexao, senadores)
     log.info("  %d senadores em exercício, %d novos", len(senadores), novos)
 
-    # Zero senadores é mudança de contrato, não Senado vazio — e sem o de-para todos os
-    # votos seriam descartados em silêncio, como já aconteceu com a Câmara.
     if not senadores:
         raise RuntimeError(
             "Nenhum senador lido de /senador/lista/atual. O envelope do JSON mudou? "
@@ -408,12 +435,8 @@ def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
                 len(fora), apagadas,
             )
 
-        # DECISÃO: Depois do descarte: o volume que importa é o do ano de verdade.
         senado.conferir_volume(votacoes_brutas, ano)
 
-        # A lista de exercício só tem quem está hoje; os votos alcançam quem saiu,
-        # licenciou-se ou devolveu a cadeira. Criá-los a partir do próprio voto evita
-        # descartar 10,5% da base por falta de dono.
         anteriores = ingestao_senado.senadores_dos_votos(
             votacoes_brutas, ja_conhecidos={s["id_externo"] for s in senadores}
         )
@@ -449,8 +472,6 @@ def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
 
         _materias_do_senado(conexao, votacoes_brutas)
 
-        # Sigla nova é sinal de que o domínio mudou. Ela vira None e a ingestão segue,
-        # mas o log precisa denunciar — senão a base encolhe sem ninguém perceber.
         novas = ingestao_senado.siglas_desconhecidas(votacoes_brutas)
         if novas:
             descricoes = ingestao_senado.descricoes_de_sigla(votacoes_brutas)
@@ -466,6 +487,13 @@ def _analisar(conexao: psycopg.Connection, legislatura: int, casa: str) -> None:
 
     Cada casa gera a própria `execucao`: nenhuma aresta liga deputado a senador, porque
     as duas não votam as mesmas matérias (achado #7).
+
+    ATENÇÃO: O grafo sai da CONCORDANCIA, não do cosseno: é a métrica que a
+    tela explica ("votaram igual em X de Y"). O cosseno fica gravado em
+    `similaridades` para a comparação da RF-18.
+
+    DECISÃO: É aqui que o grafo ganha NÓS. Sem esta parte ele tem ligações e
+    nenhum ponto com comunidade, cor ou posição — nada a desenhar.
     """
     pessoas, votacoes, matriz, pesos = _montar_matriz(conexao, legislatura, casa)
     log.info(
@@ -494,16 +522,11 @@ def _analisar(conexao: psycopg.Connection, legislatura: int, casa: str) -> None:
             persistencia.gravar_similaridades(conexao, execucao_id, pares)
             log.info("  %s: %d pares acima do mínimo", metrica, len(pares))
 
-            # ATENÇÃO: O grafo sai da CONCORDANCIA, não do cosseno: é a métrica que a
-            #    tela explica ("votaram igual em X de Y"). O cosseno fica gravado em
-            #    `similaridades` para a comparação da RF-18.
             if metrica == "CONCORDANCIA":
                 arestas = similaridade.arestas_knn(pares)
                 gravadas = persistencia.gravar_arestas(conexao, execucao_id, arestas)
                 log.info("  grafo kNN: %d arestas gravadas", gravadas)
 
-                # DECISÃO: É aqui que o grafo ganha NÓS. Sem esta parte ele tem ligações e
-                #    nenhum ponto com comunidade, cor ou posição — nada a desenhar.
                 nos = grafo.calcular_nos(
                     pessoas, arestas, _votacoes_por_pessoa(matriz, pessoas, pesos), matriz
                 )
@@ -552,6 +575,15 @@ def _alinhamento(
 
     ATENÇÃO: Sai sem fazer nada no Senado — lá não existe orientação de bancada, e as duas
     colunas continuam nulas de propósito.
+
+    ATENÇÃO: Uma consulta só, e não uma por pessoa: são 643 parlamentares, e o laço com
+    ida ao banco levaria minutos para devolver o que cabe numa varredura.
+
+    Sem base, NULO — nunca zero. Zero afirmaria "nunca seguiu o governo",
+    e o que houve foi não haver votação comparável.
+
+    DECISÃO: A base vai junto: a API a lia por conta própria, com a regra antiga
+    de sigla exata, e mostraria um percentual novo sobre a base velha.
     """
     if casa != orientacoes.CASA:
         log.info("  alinhamento: %s não publica orientação de bancada", casa)
@@ -573,8 +605,6 @@ def _alinhamento(
         log.warning("  alinhamento: nenhuma orientação na base — rode `ingerir`")
         return
 
-    # ATENÇÃO: Uma consulta só, e não uma por pessoa: são 643 parlamentares, e o laço com
-    #    ida ao banco levaria minutos para devolver o que cabe numa varredura.
     votos_por_pessoa: dict[int, dict[str, int]] = {}
     partido_por_voto: dict[int, dict[str, str]] = {}
     for pessoa_id, votacao_id, valor, partido in conexao.execute(
@@ -602,15 +632,11 @@ def _alinhamento(
             votos, por_votacao, partido_por_voto.get(pessoa_id) or {}
         )
 
-        # Sem base, NULO — nunca zero. Zero afirmaria "nunca seguiu o governo",
-        #    e o que houve foi não haver votação comparável.
         metricas.append(
             {
                 "pessoa_id": pessoa_id,
                 "governismo": segue_gov / base_gov if base_gov else None,
                 "disciplina": segue_part / base_part if base_part else None,
-                # DECISÃO: A base vai junto: a API a lia por conta própria, com a regra antiga
-                #    de sigla exata, e mostraria um percentual novo sobre a base velha.
                 "base_disciplina": base_part or None,
             }
         )
@@ -782,7 +808,10 @@ def _patrimonio(conexao: psycopg.Connection, anos: list[int]) -> None:
 
 
 def _redes(conexao: psycopg.Connection, anos: list[int]) -> None:
-    """Redes sociais: a Câmara para deputados, o TSE (candidatura) para senadores."""
+    """Redes sociais: a Câmara para deputados, o TSE (candidatura) para senadores.
+
+    O TSE da eleição MAIS RECENTE de cada senador: por isso os anos vão do último ao primeiro.
+    """
     consultados: list[int] = []
     da_camara: list[dict] = []
     for i, (id_camara, pessoa_id) in enumerate(persistencia.deputados_da_legislatura(conexao), 1):
@@ -795,7 +824,6 @@ def _redes(conexao: psycopg.Connection, anos: list[int]) -> None:
         time.sleep(0.05)
     log.info("  Câmara: %d deputados, %d redes", len(consultados), len(da_camara))
 
-    # O TSE da eleição MAIS RECENTE de cada senador: por isso os anos vão do último ao primeiro.
     senadores = persistencia.senadores_da_legislatura(conexao)
     hashes = {h: p for h, p in persistencia.hashes_de_pessoas(conexao).items() if p in senadores}
     do_tse: dict[int, list[dict]] = {}
@@ -856,6 +884,10 @@ def _restos_a_pagar_do_ano(ano: int) -> dict:
 
     ATENÇÃO: No ano corrente, o mês que o Portal ainda não publicou devolve erro: a soma para no
     último publicado, e `meses` diz até onde foi.
+
+    RISCO: Só 403 e 404 querem dizer "ainda não publicado". O 405 que sobra depois
+    das tentativas é limite de taxa: tratá-lo como fim do ano gravaria 4
+    meses como se fossem o ano até agora — aconteceu na primeira carga.
     """
     hoje = date.today()
     meses: list[dict] = []
@@ -872,9 +904,6 @@ def _restos_a_pagar_do_ano(ano: int) -> dict:
                 CACHE / f"execucao-{ano}{mes:02d}{sufixo}.zip",
             )
         except requests.HTTPError as erro:
-            # RISCO: Só 403 e 404 querem dizer "ainda não publicado". O 405 que sobra depois
-            #    das tentativas é limite de taxa: tratá-lo como fim do ano gravaria 4
-            #    meses como se fossem o ano até agora — aconteceu na primeira carga.
             if erro.response is None or erro.response.status_code not in (403, 404):
                 raise
             log.info("  %d/%02d ainda não publicado — a soma do ano para aqui", ano, mes)
@@ -926,29 +955,38 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
     ATENÇÃO: **Ambiguidade não vira palpite:** se duas pessoas normalizam para o mesmo nome,
     o código fica sem vínculo e aparece na lista de pendências. Chutar seria pior — o
     erro ficaria congelado no código e invisível.
+
+    RISCO: TODAS as pessoas, não só as com `cpf_hash` — filtrar por ele limitava a
+    reconciliação aos 643 votantes da 57ª e deixava 241 autores soltos, gente que
+    apresentou emenda para 2023 ainda na legislatura anterior (a LOA foi votada em
+    2022). A ficha já filtra a legislatura corrente, então autoria antiga não polui.
+
+    DECISÃO: O desempate da PL47 — ver `_desempatar` — com quem votou na legislatura em que
+    a emenda foi APRESENTADA: a de um ano entra na lei orçamentária votada no ano
+    anterior, e o código do autor é de um mandato só (achado #24).
+
+    ATENÇÃO: Era quem votou na legislatura corrente. Com as emendas de 2014 a 2022, isso
+    escolheria o homônimo de hoje para a emenda de 2017 — e a emenda iria para a
+    ficha de outra pessoa, sem erro nenhum.
+
+    RISCO: REGRA B — o Portal renomeia o autor para o SUPLENTE que executa a emenda:
+    "TIAGO DIMAS (EX-PARLAMENTAR LAZARO BOTELHO, NOS TERMOS ART. 78 LDO 2025)".
+    O nome do sucessor não casa com ninguém, e a emenda fica órfã — mas ela é
+    de quem a APRESENTOU. DECISÃO: Não é similaridade: é um rótulo da própria fonte.
+
+    ATENÇÃO: Pendência é NORMAL: senadores e bancadas nunca terão dono na nossa base.
     """
     pendentes = persistencia.autores_nao_resolvidos(conexao)
     if not pendentes:
         log.info("Nenhum autor pendente de reconciliação.")
         return
 
-    # RISCO: TODAS as pessoas, não só as com `cpf_hash` — filtrar por ele limitava a
-    # reconciliação aos 643 votantes da 57ª e deixava 241 autores soltos, gente que
-    # apresentou emenda para 2023 ainda na legislatura anterior (a LOA foi votada em
-    # 2022). A ficha já filtra a legislatura corrente, então autoria antiga não polui.
     por_nome: dict[str, list[int]] = {}
     for pessoa_id, nome in conexao.execute(
         "SELECT id, nome_exibicao FROM pessoas"
     ).fetchall():
         por_nome.setdefault(normalizacao.sem_acento_maiusculo(nome), []).append(pessoa_id)
 
-    # DECISÃO: O desempate da PL47 — ver `_desempatar` — com quem votou na legislatura em que
-    #    a emenda foi APRESENTADA: a de um ano entra na lei orçamentária votada no ano
-    #    anterior, e o código do autor é de um mandato só (achado #24).
-    #
-    #    ATENÇÃO: Era quem votou na legislatura corrente. Com as emendas de 2014 a 2022, isso
-    #    escolheria o homônimo de hoje para a emenda de 2017 — e a emenda iria para a
-    #    ficha de outra pessoa, sem erro nenhum.
     anos_por_autor = persistencia.anos_dos_autores(conexao)
     votantes = persistencia.votantes_por_legislatura(conexao)
     corrente = max(votantes) if votantes else None
@@ -961,10 +999,6 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
     for codigo, nome_autor in pendentes:
         candidatos = por_nome.get(normalizacao.sem_acento_maiusculo(nome_autor), [])
 
-        # RISCO: REGRA B — o Portal renomeia o autor para o SUPLENTE que executa a emenda:
-        #    "TIAGO DIMAS (EX-PARLAMENTAR LAZARO BOTELHO, NOS TERMOS ART. 78 LDO 2025)".
-        #    O nome do sucessor não casa com ninguém, e a emenda fica órfã — mas ela é
-        #    de quem a APRESENTOU. DECISÃO: Não é similaridade: é um rótulo da própria fonte.
         original = None
         if not candidatos:
             original = emendas.autor_original(nome_autor)
@@ -1002,7 +1036,6 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
 
     restantes = len(persistencia.autores_nao_resolvidos(conexao))
     if restantes:
-        # ATENÇÃO: Pendência é NORMAL: senadores e bancadas nunca terão dono na nossa base.
         log.info(
             "  %d autores seguem sem vínculo (senadores, bancadas, outras legislaturas)",
             restantes,
@@ -1084,6 +1117,9 @@ def pares_de_resolucao(entradas: list[str]) -> list[tuple[str, str]]:
 
     RISCO: Entrada malformada **estoura**, não é ignorada: `--resolver 4184` sem o `=`
     seria descartado em silêncio, e a pessoa concluiria que vinculou quando não vinculou.
+
+    ATENÇÃO: O id da fonte é numérico nas três (Câmara, Senado, TSE). Recusar aqui pega
+    o typo com uma mensagem útil, em vez de devolver "ninguém com id_externo".
     """
     pares: list[tuple[str, str]] = []
 
@@ -1094,8 +1130,6 @@ def pares_de_resolucao(entradas: list[str]) -> list[tuple[str, str]]:
                 f"'{entrada}' não é CODIGO=ID_NA_CAMARA. Ex.: --resolver 4184=204521"
             )
 
-        # ATENÇÃO: O id da fonte é numérico nas três (Câmara, Senado, TSE). Recusar aqui pega
-        #    o typo com uma mensagem útil, em vez de devolver "ninguém com id_externo".
         if not externo.strip().isdigit():
             raise ValueError(f"'{externo.strip()}' não é um id da Câmara")
 
@@ -1110,10 +1144,14 @@ def _resolver_a_mao(conexao: psycopg.Connection, entradas: list[str]) -> None:
     Dois parlamentares com o mesmo nome de urna não são separáveis por texto: a
     reconciliação automática desiste de propósito e quem decide é uma pessoa. Fica
     gravado como `MANUAL`, que execução automática posterior nunca sobrescreve.
+
+    RISCO: Resolve o id ESTÁVEL da fonte para a chave interna, na hora de aplicar —
+    nunca o contrário. Ver `pares_de_resolucao`.
+
+    A FK pegaria o id inexistente, mas com mensagem do Postgres; aqui dá para
+    dizer o que fazer.
     """
     for codigo, id_externo in pares_de_resolucao(entradas):
-        # RISCO: Resolve o id ESTÁVEL da fonte para a chave interna, na hora de aplicar —
-        #    nunca o contrário. Ver `pares_de_resolucao`.
         pessoa = conexao.execute(
             """
             SELECT p.id, p.nome_exibicao
@@ -1124,8 +1162,6 @@ def _resolver_a_mao(conexao: psycopg.Connection, entradas: list[str]) -> None:
             (id_externo,),
         ).fetchone()
 
-        # A FK pegaria o id inexistente, mas com mensagem do Postgres; aqui dá para
-        # dizer o que fazer.
         if not pessoa:
             raise RuntimeError(
                 f"ninguém com id_externo {id_externo}. ATENÇÃO: É o id NA CÂMARA (o da URL do "
@@ -1175,6 +1211,11 @@ def _cpf_dos_deputados(conexao: psycopg.Connection) -> None:
     contra 14 de 15 do nome civil.
 
     ATENÇÃO: O CPF em claro existe apenas **em memória** — o que vai para o banco é o hash.
+
+    ATENÇÃO: Uma pausa curta: são centenas de requisições seguidas contra um serviço
+    público, e não há motivo para apertá-lo.
+
+    RISCO: Perda grande significa layout mudado ou bloqueio — não "alguns sem CPF".
     """
     faltantes = persistencia.pessoas_sem_cpf(conexao)
     if not faltantes:
@@ -1192,8 +1233,6 @@ def _cpf_dos_deputados(conexao: psycopg.Connection) -> None:
             persistencia.gravar_cpf_hash(conexao, pessoa_id, hash_cpf)
             achados += 1
 
-        # ATENÇÃO: Uma pausa curta: são centenas de requisições seguidas contra um serviço
-        #    público, e não há motivo para apertá-lo.
         time.sleep(PAUSA_ENTRE_CHAMADAS)
 
         if i % 100 == 0:
@@ -1201,7 +1240,6 @@ def _cpf_dos_deputados(conexao: psycopg.Connection) -> None:
 
     log.info("  %d de %d com CPF", achados, len(faltantes))
 
-    # RISCO: Perda grande significa layout mudado ou bloqueio — não "alguns sem CPF".
     if achados < len(faltantes) * 0.8:
         log.warning(
             "  ATENÇÃO: Menos de 80%% dos deputados tinham CPF. A API mudou ou está limitando?"
@@ -1219,6 +1257,10 @@ def _nome_civil_dos_senadores(conexao: psycopg.Connection) -> int:
     A lista de exercício traz `NomeCompletoParlamentar` dos 81 de hoje; os suplentes que
     devolveram a cadeira só aparecem nos votos, e o voto não tem nome completo. O
     endpoint de detalhe responde para qualquer código.
+
+    Só grava se for DIFERENTE do nome parlamentar: gravar o mesmo texto deixaria a
+    pessoa fora de `senadores_sem_nome_civil` na próxima execução, escondendo que
+    o Senado não tem o dado dela.
     """
     faltantes = persistencia.senadores_sem_nome_civil(conexao)
     if not faltantes:
@@ -1233,9 +1275,6 @@ def _nome_civil_dos_senadores(conexao: psycopg.Connection) -> int:
         completo = (identificacao or {}).get("NomeCompletoParlamentar")
         parlamentar = (identificacao or {}).get("NomeParlamentar")
 
-        # Só grava se for DIFERENTE do nome parlamentar: gravar o mesmo texto deixaria a
-        # pessoa fora de `senadores_sem_nome_civil` na próxima execução, escondendo que
-        # o Senado não tem o dado dela.
         if completo and completo.strip() != (parlamentar or "").strip():
             persistencia.gravar_nome_civil(conexao, pessoa_id, completo.strip())
             achados += 1
@@ -1259,6 +1298,9 @@ def _cpf_dos_senadores(conexao: psycopg.Connection) -> None:
     sem ter sido eleito titular não está no arquivo, e continua sem `cpf_hash`. Isso
     não é falha de carga — é alcance da fonte, e a tela precisa dizer isso em vez de
     mostrar zero como se fosse medida.
+
+    Chave repetida entre as duas eleições com CPF diferente é ambiguidade, e
+    ambiguidade não se resolve escolhendo uma.
     """
     pendentes = persistencia.senadores_para_casar(conexao)
     if not pendentes:
@@ -1279,8 +1321,6 @@ def _cpf_dos_senadores(conexao: psycopg.Connection) -> None:
         log.info("  %d candidatos a Senador em %d", len(do_ano), eleicao)
 
         for chave, cpf in do_ano.items():
-            # Chave repetida entre as duas eleições com CPF diferente é ambiguidade, e
-            # ambiguidade não se resolve escolhendo uma.
             if chave in mapa and mapa[chave] != cpf:
                 mapa[chave] = None
             else:
@@ -1308,7 +1348,11 @@ def _cpf_dos_senadores(conexao: psycopg.Connection) -> None:
 
 
 def _cota(conexao: psycopg.Connection, anos: list[int]) -> None:
-    """Cota parlamentar — o gasto de gabinete que vai para a ficha do deputado."""
+    """Cota parlamentar — o gasto de gabinete que vai para a ficha do deputado.
+
+    ATENÇÃO: O descarte é NORMAL (lideranças, órgãos, valor zero), mas em volume alto
+    significa de-para incompleto — e aí a ficha mostraria gasto a menos.
+    """
     mapa = _mapa_pessoas(conexao)
     if not mapa:
         raise RuntimeError(
@@ -1329,8 +1373,6 @@ def _cota(conexao: psycopg.Connection, anos: list[int]) -> None:
         descartadas = len(registros) - len(linhas)
         log.info("  %d linhas, %d gravadas", len(registros), gravadas)
 
-        # ATENÇÃO: O descarte é NORMAL (lideranças, órgãos, valor zero), mas em volume alto
-        #    significa de-para incompleto — e aí a ficha mostraria gasto a menos.
         if descartadas:
             log.warning(
                 "  %d descartadas: sem `ideCadastro`, fora do de-para, ou valor zero",
@@ -1348,12 +1390,16 @@ def _cota_do_senado(conexao: psycopg.Connection, anos: list[int]) -> None:
 
     O de-para e por NOME parlamentar, porque a CEAPS nao publica id. Quem nao casa e
     descartado: atribuir gasto por semelhanca seria inventar dono.
+
+    O ano civil atravessa a posse: janeiro ainda é da legislatura anterior. O
+    de-para é o das duas, e o senador de mandato de 8 anos é a mesma pessoa nelas.
+
+    Descarte alto significa de-para incompleto ou nome grafado diferente — e a
+    ficha mostraria gasto a menos, sem erro.
     """
     for ano in anos:
         log.info("CEAPS de %d...", ano)
 
-        # O ano civil atravessa a posse: janeiro ainda é da legislatura anterior. O
-        # de-para é o das duas, e o senador de mandato de 8 anos é a mesma pessoa nelas.
         legislaturas = sorted(
             {ingestao.legislatura_da_data(f"{ano}-01-15"), ingestao.legislatura_da_data(f"{ano}-12-15")}
         )
@@ -1372,8 +1418,6 @@ def _cota_do_senado(conexao: psycopg.Connection, anos: list[int]) -> None:
 
         log.info("  %d linhas, %d gravadas", len(registros), gravadas)
 
-        # Descarte alto significa de-para incompleto ou nome grafado diferente — e a
-        # ficha mostraria gasto a menos, sem erro.
         descartadas = len(registros) - len(linhas)
         if descartadas > len(registros) * 0.2:
             nao_casaram = sorted(
@@ -1395,6 +1439,17 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
     RISCO: **Depende de `cpf` ter rodado antes.** Sem `cpf_hash` em `pessoas`, o de-para sai
     vazio e **toda** linha do TSE é descartada — 396 MB lidos para gravar zero, com log
     de sucesso. É exatamente o tipo de falha silenciosa que este projeto já pagou caro.
+
+    Vários arquivos significa que o TSE não publicou o consolidado — e aí o DF fica
+    de fora, ver `receitas.nomes_de_receita`.
+
+    O cargo esperado sai da casa em que a pessoa votou. Sem isto, a campanha ao
+    Senado que um deputado atual PERDEU entraria no financiamento dele.
+
+    RISCO: Separados pelo mesmo motivo que no banco: somá-los é decisão de quem analisa.
+
+    Casar pouco não é erro do TSE, é `cpf` incompleto — e sem o aviso a ficha
+    mostraria financiamento zerado para a maioria, sem ninguém perceber.
     """
     hashes = persistencia.mapa_de_cpf_hash(conexao)
     if not hashes:
@@ -1421,15 +1476,11 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
             "O layout do ZIP mudou?"
         )
 
-    # Vários arquivos significa que o TSE não publicou o consolidado — e aí o DF fica
-    # de fora, ver `receitas.nomes_de_receita`.
     log.info(
         "%d arquivo(s) de receita: %s", len(nomes),
         "consolidado" if len(nomes) == 1 else f"{len(nomes)} estaduais (sem DF)",
     )
 
-    # O cargo esperado sai da casa em que a pessoa votou. Sem isto, a campanha ao
-    # Senado que um deputado atual PERDEU entraria no financiamento dele.
     casas = persistencia.casa_por_pessoa(conexao)
 
     todas: list[dict] = []
@@ -1449,14 +1500,11 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
         "Eleição %d: %d receitas gravadas, %d parlamentares",
         eleicao, gravadas, int(resumo["parlamentares"]),
     )
-    # RISCO: Separados pelo mesmo motivo que no banco: somá-los é decisão de quem analisa.
     log.info(
         "  total R$ %.2f · fundo especial (FEFC) R$ %.2f",
         resumo["total"], resumo["fundo_especial"],
     )
 
-    # Casar pouco não é erro do TSE, é `cpf` incompleto — e sem o aviso a ficha
-    # mostraria financiamento zerado para a maioria, sem ninguém perceber.
     if resumo["parlamentares"] < len(hashes) * 0.5:
         log.warning(
             "  só %d de %d pessoas com CPF casaram. Esperado: a maioria dos eleitos. "
@@ -1471,6 +1519,13 @@ def _curar(conexao: psycopg.Connection, casa: str, legislatura: int, limite: int
     Não grava pergunta nenhuma. A polaridade sugerida é auxílio: atribuí-la
     automaticamente é o erro que este projeto persegue, porque um sinal invertido não
     aparece na tela, aparece como número plausível.
+
+    DECISÃO: A EMENTA primeiro, e a descrição depois. A descrição diz o NÚMERO do
+    projeto; a ementa diz sobre o que ele é — e é dela que sai a pergunta.
+
+    ATENÇÃO: 3 das 266 substantivas não têm proposição vinculada. Dizer isso é
+    melhor que omitir a linha: quem cura precisa saber que vai ter de
+    procurar a matéria à mão.
     """
     curadas = curadoria.ja_curadas(conexao)
     achadas = curadoria.candidatas(conexao, casa, legislatura, limite)
@@ -1493,14 +1548,9 @@ def _curar(conexao: psycopg.Connection, casa: str, legislatura: int, limite: int
             candidata.sim, candidata.nao, candidata.divisao * 100,
             candidata.polaridade_sugerida, marca,
         )
-        # DECISÃO: A EMENTA primeiro, e a descrição depois. A descrição diz o NÚMERO do
-        #    projeto; a ementa diz sobre o que ele é — e é dela que sai a pergunta.
         if candidata.ementa:
             log.info("    ementa: %s", candidata.ementa[:150])
         else:
-            # ATENÇÃO: 3 das 266 substantivas não têm proposição vinculada. Dizer isso é
-            #    melhor que omitir a linha: quem cura precisa saber que vai ter de
-            #    procurar a matéria à mão.
             log.info("    ementa: (sem proposicao vinculada - procure pelo numero)")
         log.info("    votacao: %s", candidata.descricao[:110])
 
@@ -1528,6 +1578,12 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
     Não há arquivo em lote: o Senado publica matéria a matéria. São ~360 chamadas por
     carga completa, e por isso só se baixa o que ainda não está no banco — recarregar
     o ano inteiro toda vez custaria minutos sem trazer nada novo.
+
+    DECISÃO: Só o que falta. A ementa não muda depois de a matéria ser apresentada, e a
+    releitura custaria uma requisição por matéria a cada execução.
+
+    RISCO: O vínculo cobre TODAS as votações do ano, não só as recém-baixadas: matéria
+    já no banco continua precisando ser apontada pelas votações novas.
     """
     codigos = {}
     for votacao in votacoes_brutas:
@@ -1539,8 +1595,6 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
     if not codigos:
         return
 
-    # DECISÃO: Só o que falta. A ementa não muda depois de a matéria ser apresentada, e a
-    #    releitura custaria uma requisição por matéria a cada execução.
     with conexao.cursor() as cursor:
         cursor.execute(
             "SELECT id FROM proposicoes WHERE casa = 'SENADO' AND id = ANY(%s)",
@@ -1562,8 +1616,6 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
     if linhas:
         persistencia.gravar_proposicoes(conexao, linhas)
 
-    # RISCO: O vínculo cobre TODAS as votações do ano, não só as recém-baixadas: matéria
-    #    já no banco continua precisando ser apontada pelas votações novas.
     todas = {v: c for v, c in codigos.items()}
     ligados = persistencia.vincular_proposicoes(
         conexao,
@@ -1607,11 +1659,20 @@ def _conferir(conexao: psycopg.Connection) -> None:
 
 
 def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: float) -> None:
-    """RF-20 e a validação do questionário. Não escreve no banco — é medição."""
+    """RF-20 e a validação do questionário. Não escreve no banco — é medição.
+
+    ═══ 1. Quantas perguntas bastam ═══
+
+    ═══ 1b. Desempate dirigido × aleatório ═══
+
+    ═══ 2. Comunidade × partido (RF-20 / RQ2) ═══
+    ATENÇÃO: Da CÂMARA e da legislatura validada (PL54): "a mais recente" de qualquer casa
+    comparava a matriz da Câmara com as comunidades do Senado quando ele rodava por
+    último.
+    """
     pessoas, votacoes, matriz, _ = _montar_matriz(conexao, legislatura)
     log.info("Matriz: %d pessoas × %d votações", len(pessoas), len(votacoes))
 
-    # ═══ 1. Quantas perguntas bastam ═══
     candidatas = [
         indice
         for indice in range(len(votacoes))
@@ -1637,13 +1698,8 @@ def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: floa
             ponto.deputados_avaliados,
         )
 
-    # ═══ 1b. Desempate dirigido × aleatório ═══
     _comparar_desempates(matriz, candidatas)
 
-    # ═══ 2. Comunidade × partido (RF-20 / RQ2) ═══
-    # ATENÇÃO: Da CÂMARA e da legislatura validada (PL54): "a mais recente" de qualquer casa
-    #    comparava a matriz da Câmara com as comunidades do Senado quando ele rodava por
-    #    último.
     execucao = conexao.execute(
         """
         SELECT max(id) FROM execucoes
@@ -1698,23 +1754,25 @@ def _comparar_desempates(matriz, candidatas: list[int], base_inicial: int = 12) 
     RISCO: O grupo de controle é o que faz isto valer como evidência. Sem ele, o encolhimento
     do empate poderia vir apenas de perguntar mais — e a "contribuição técnica" seria
     só um contador de perguntas.
+
+    ATENÇÃO: Amostra de deputados, não todos: são 655 × 6 rodadas × duas estratégias.
     """
     sorteio = np.random.default_rng(20260826)
     base = sorted(sorteio.choice(candidatas, size=base_inicial, replace=False).tolist())
     restantes = [candidata for candidata in candidatas if candidata not in base]
 
-    # ATENÇÃO: Amostra de deputados, não todos: são 655 × 6 rodadas × duas estratégias.
     quem_avaliar = sorteio.choice(matriz.shape[0], size=120, replace=False)
 
     def media_por_rodada(dirigido: bool) -> list[float]:
+        """ATENÇÃO: Séries têm comprimentos diferentes: quem chega a 1 para antes. O último
+        valor é repetido para a média não subir artificialmente ao perdê-los.
+        """
         series = [
             validacao.simular_desempate(
                 matriz, int(pessoa), base, restantes, rodadas=6, dirigido=dirigido
             )
             for pessoa in quem_avaliar
         ]
-        # ATENÇÃO: Séries têm comprimentos diferentes: quem chega a 1 para antes. O último
-        #    valor é repetido para a média não subir artificialmente ao perdê-los.
         mais_longa = max(len(serie) for serie in series)
         return [
             float(np.mean([serie[min(rodada, len(serie) - 1)] for serie in series]))
@@ -1803,6 +1861,10 @@ def _montar_matriz(conexao: psycopg.Connection, legislatura: int, casa: str = "C
     A casa é parâmetro, e nunca uma matriz só: as duas casas não votam as mesmas
     matérias, então similaridade entre deputado e senador não teria denominador
     (achado #7). São dois grafos independentes.
+
+    As pessoas saem dos votos DESTA casa. Sem o recorte, a matriz ganharia 643
+    deputados de linhas inteiramente vazias ao analisar o Senado — e o kNN passaria a
+    comparar quem não tem voto em comum nenhum.
     """
     votacoes = conexao.execute(
         """
@@ -1814,9 +1876,6 @@ def _montar_matriz(conexao: psycopg.Connection, legislatura: int, casa: str = "C
         (casa, legislatura),
     ).fetchall()
 
-    # As pessoas saem dos votos DESTA casa. Sem o recorte, a matriz ganharia 643
-    # deputados de linhas inteiramente vazias ao analisar o Senado — e o kNN passaria a
-    # comparar quem não tem voto em comum nenhum.
     pessoas = [
         linha[0]
         for linha in conexao.execute(

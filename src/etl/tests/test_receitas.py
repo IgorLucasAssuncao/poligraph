@@ -162,7 +162,10 @@ def test_cnpj_do_doador_fica_legivel(conhecidos):
 
 
 def test_cpf_do_doador_vira_hash(conhecidos):
-    """RISCO: RNF-13 — e o **mesmo** hash da cota, para que os dois lados se comparem."""
+    """RISCO: RNF-13 — e o **mesmo** hash da cota, para que os dois lados se comparem.
+
+    Não E o CPF em claro não sobrou em canto nenhum da linha
+    """
     from poligraph_etl.cota import _identificar_fornecedor
 
     linhas = receitas.para_linhas(
@@ -173,7 +176,6 @@ def test_cpf_do_doador_vira_hash(conhecidos):
     assert linhas[0]["doador_cnpj_ou_hash"] == hash_de_cpf(CPF_ELEITO)
     assert linhas[0]["doador_cnpj_ou_hash"] == _identificar_fornecedor(CPF_ELEITO)[0]
 
-    # Não E o CPF em claro não sobrou em canto nenhum da linha
     assert CPF_ELEITO not in str(linhas[0])
 
 
@@ -246,7 +248,13 @@ def test_ano_de_eleicao_e_o_passado_nao_o_do_registro(conhecidos):
 
 @pytest.fixture
 def zip_do_tse(tmp_path: Path) -> Path:
-    """Um ZIP com a mesma FORMA do real: 5 tipos de arquivo dividindo o mesmo pacote."""
+    """Um ZIP com a mesma FORMA do real: 5 tipos de arquivo dividindo o mesmo pacote.
+
+    ATENÇÃO: **As duas grafias plausíveis do doador originário.** A documentação do TSE
+    lista o tipo como `receitas_candidatos_doador_originario_2022`, mas a
+    posição do ano no nome do arquivo estadual não foi medida no ZIP real.
+    A segunda grafia CASA com o prefixo — é ela que torna `IGNORAR` necessário.
+    """
     caminho = tmp_path / "prestacao.zip"
 
     conteudo = ";".join(COLUNAS) + "\n" + ";".join(
@@ -262,10 +270,6 @@ def zip_do_tse(tmp_path: Path) -> Path:
         zipe.writestr("receitas_candidatos_2022_SP.csv", conteudo.encode("latin-1"))
         zipe.writestr("receitas_candidatos_2022_BRASIL.csv", conteudo.encode("latin-1"))
 
-        # ATENÇÃO: **As duas grafias plausíveis do doador originário.** A documentação do TSE
-        #    lista o tipo como `receitas_candidatos_doador_originario_2022`, mas a
-        #    posição do ano no nome do arquivo estadual não foi medida no ZIP real.
-        #    A segunda grafia CASA com o prefixo — é ela que torna `IGNORAR` necessário.
         zipe.writestr("receitas_candidatos_doador_originario_2022_AP.csv", "x")
         zipe.writestr("receitas_candidatos_2022_doador_originario_AP.csv", "x")
         zipe.writestr("despesas_pagas_candidatos_2022_AP.csv", "x")

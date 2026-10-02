@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-10-02 · **98 resolvidas · 73 abertas**
+> **Atualizado:** 2026-10-02 · **99 resolvidas · 72 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -57,7 +57,7 @@ PL41).
 | **PL75** | **Parlamentar sócio de empresa**: quadro de sócios cruzado por **nome + os 6 dígitos do meio do CPF** na ETL, gravando só o vínculo parlamentar–CNPJ. Por nome sozinho, não: homônimos. Doador pessoa física fica de fora: é cidadão privado. [`plano/10 §4.2`](plano/10-procedencia-e-modo-analise.md) | Baixa |
 | **PL76** | **Regra de patrimônio fora do comum no `conferir`**: o TSE é autodeclarado, e o "candidato mais rico do Brasil" tem um bem digitado com dígitos a mais (R$ 12 bi). MEDIDO: o maior da nossa base é R$ 240 mi, plausível | Baixa |
 | **PL78** | **Revisão da pasta `docs`** — pedido do autor: "um dicionário de termos, fluxos dentro das casas, pq vou precisar entender tudo isso". Partir de `glossario.md`: termos (votação nominal, simbólica, destaque, orientação, legislatura, mandato, suplente, emenda, empenho, liquidação, pagamento), e os fluxos da Câmara e do Senado (como uma proposição tramita até a votação em plenário, onde entram destaque e orientação, como a emenda vira pagamento). Ainda não feito | Alta |
-| **PL79** | **Comentários da ETL para as docstrings** — pedido do autor em 2026-10-02, a mesma limpeza do front. MEDIDO na simulação: 279 comentários dentro de funções, em `poligraph_etl` e nos testes. Em andamento | Média |
+| ✅ ~~PL79~~ | **Resolvida (2026-10-02)** — os 282 comentários de dentro de funções da ETL e dos testes foram para a docstring da função dona; o de fim de linha leva o código que comentava. Ficam só diretivas (`noqa`, `pragma`). Uma trava no script recusava gravar arquivo em que alguma nota não chegasse à docstring | — |
 | **PL67** | 🟡 **Amostra manual contra a fonte oficial**: 20 votações sorteadas por casa e legislatura, conferidas no site da casa. Vira achado ([`plano/09 §5.3`](plano/09-apresentacao-validacao-e-valor.md)) | 🟡 Média |
 | ✅ ~~PL68~~ | **Resolvida (2026-10-02)** — o painel conta como votação só a que tem voto nominal, e o cartão diz quantas ficaram de fora. Não era só a 51ª: a 52ª tem 309 de 600 sem voto nominal, e a 54ª, 455 de 905 | — |
 
@@ -1389,13 +1389,13 @@ avaliação rodar cedo demais.
 
 ---
 
-## ✅ Resolvidas — 98
+## ✅ Resolvidas — 99
 
 `A1` `A5` `API1` `API2` `API3` `API4` `API6` `B1` `B2` `B3` `B4` `B5` `C1` `C2` `C3` `C4`
 `C6` `C8` `C13` `C14` `CT1` `CT2` `CT3` `CT4` `CT5` `CT6` `CT7` `D1` `D3` `D5` `ER1` `ER3`
 `ER4` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PL10`
 `PL11` `PL12` `PL13` `PL17` `PL28` `PL31` `PL32` `PL35` `PL36` `PL37` `PL38` `PL39` `PL40`
-`PL41` `PL42` `PL43` `PL45` `PL46` `PL47` `PL48` `PL49` `PL50` `PL51` `PL54` `PL55` `PL59` `PL61` `PL66` `PL68` `PP1` `PP3` `PP4`
+`PL41` `PL42` `PL43` `PL45` `PL46` `PL47` `PL48` `PL49` `PL50` `PL51` `PL54` `PL55` `PL59` `PL61` `PL66` `PL68` `PL79` `PP1` `PP3` `PP4`
 `RE-01` `RQ1` `RQ2` `RQ3` `RQ4` `RQ8` `RQ9` `SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2`
 `TS3` `TS4` `TS6`
 

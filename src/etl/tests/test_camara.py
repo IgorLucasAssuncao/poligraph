@@ -34,6 +34,10 @@ def test_quebra_de_linha_dentro_do_campo_nao_vira_registro(tmp_path):
 
     Contar por linha daria 4 (5 menos o cabeçalho) — 33% a mais. Foi exatamente
     esse tipo de erro que inflou 2025 em 26% no discovery.
+
+    `assert linhas_do_arquivo == 6`: cabeçalho + 5
+
+    `assert len(df) == 3`: DECISÃO: registros de verdade
     """
     caminho = tmp_path / "votacoes.csv"
     caminho.write_text(CSV_COM_QUEBRA_NO_CAMPO, encoding="utf-8")
@@ -41,11 +45,13 @@ def test_quebra_de_linha_dentro_do_campo_nao_vira_registro(tmp_path):
     linhas_do_arquivo = len(caminho.read_text(encoding="utf-8").splitlines())
     df = ler_csv(caminho)
 
-    assert linhas_do_arquivo == 6      # cabeçalho + 5
-    assert len(df) == 3                # DECISÃO: registros de verdade
+    assert linhas_do_arquivo == 6
+    assert len(df) == 3
 
 
 def test_conteudo_multilinha_e_preservado_inteiro(tmp_path):
+    """`assert descricao.count("\\n") == 2`: as quebras viram conteúdo, não separador
+    """
     caminho = tmp_path / "votacoes.csv"
     caminho.write_text(CSV_COM_QUEBRA_NO_CAMPO, encoding="utf-8")
 
@@ -53,7 +59,7 @@ def test_conteudo_multilinha_e_preservado_inteiro(tmp_path):
     descricao = df.loc[1, "descricao"]
 
     assert "três linhas" in descricao
-    assert descricao.count("\n") == 2   # as quebras viram conteúdo, não separador
+    assert descricao.count("\n") == 2
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -81,11 +87,13 @@ def test_sem_dtype_str_o_cpf_seria_corrompido(tmp_path):
 
     DECISÃO: Este teste documenta o motivo do `dtype=str` melhor que um comentário — se
     alguém remover o parâmetro, o teste acima falha e este explica por quê.
+
+    `ingenuo = pd.read_csv(caminho, sep=";", encoding="utf-8-sig")`: sem dtype=str
     """
     caminho = tmp_path / "votacoes.csv"
     caminho.write_text(CSV_COM_QUEBRA_NO_CAMPO, encoding="utf-8")
 
-    ingenuo = pd.read_csv(caminho, sep=";", encoding="utf-8-sig")   # sem dtype=str
+    ingenuo = pd.read_csv(caminho, sep=";", encoding="utf-8-sig")
 
     assert str(ingenuo.loc[0, "cpf"]) != "01234567890"
 
@@ -112,8 +120,10 @@ def test_bom_nao_gruda_no_nome_da_primeira_coluna(tmp_path):
 
 
 def test_volume_dentro_do_esperado_passa():
+    """`conferir_volume(df, 2025)`: não pode lançar
+    """
     df = pd.DataFrame({"id": range(REGISTROS_ESPERADOS[2025])})
-    conferir_volume(df, 2025)   # não pode lançar
+    conferir_volume(df, 2025)
 
 
 def test_volume_inflado_para_o_etl():

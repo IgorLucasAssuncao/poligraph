@@ -138,12 +138,18 @@ def test_canario_acusa_frase_que_ninguem_reconhece():
 
     ATENÇÃO: Se a fonte mudar a redação, tudo vira `SUBSTANTIVA` e nada avisa. O canário
     não impede — ele **conta**, como `siglas_desconhecidas` faz com o voto do Senado.
+
+    `"Resultado. Sim: 182; Não: 182; Abstenção: 2.",`: Não não diz o que foi votado
+
+    `"Aprovado o Projeto de Lei nº 1.",`: reconhecida
+
+    `"Rejeitado o Requerimento.",`: reconhecida
     """
     orfas = descricoes_nao_reconhecidas(
         [
-            "Resultado. Sim: 182; Não: 182; Abstenção: 2.",   # Não não diz o que foi votado
-            "Aprovado o Projeto de Lei nº 1.",                 # reconhecida
-            "Rejeitado o Requerimento.",                       # reconhecida
+            "Resultado. Sim: 182; Não: 182; Abstenção: 2.",
+            "Aprovado o Projeto de Lei nº 1.",
+            "Rejeitado o Requerimento.",
         ]
     )
 

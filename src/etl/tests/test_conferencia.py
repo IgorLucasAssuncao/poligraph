@@ -30,11 +30,19 @@ def test_82_senadores_numa_votacao_e_aviso_e_muito_acima_e_erro():
 
 
 def test_codigo_antigo_com_data_nova_e_erro_nos_dois_sentidos():
+    """`(55, "SF-1483", "2015-04-01"),`: votação de 1998 datada de 2015
+
+    `(51, "SF-5293", "2002-04-16"),`: votação de 2014 datada de 2002
+
+    `(57, "SF-7105", "2026-06-30"),`: certa
+
+    `(51, "SF-481", "2001-02-21"),`: certa, numeração antiga
+    """
     achados = conferencia.codigo_fora_de_epoca([
-        (55, "SF-1483", "2015-04-01"),   # votação de 1998 datada de 2015
-        (51, "SF-5293", "2002-04-16"),   # votação de 2014 datada de 2002
-        (57, "SF-7105", "2026-06-30"),   # certa
-        (51, "SF-481", "2001-02-21"),    # certa, numeração antiga
+        (55, "SF-1483", "2015-04-01"),
+        (51, "SF-5293", "2002-04-16"),
+        (57, "SF-7105", "2026-06-30"),
+        (51, "SF-481", "2001-02-21"),
     ])
 
     assert [a.detalhe.split()[0] for a in achados] == ["SF-1483", "SF-5293"]

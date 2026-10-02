@@ -50,6 +50,13 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
 
     DECISÃO: O `pessoa_fonte_id` é que dá a idempotência: a chave é (fonte, id_externo),
     então a mesma pessoa reingerida encontra o próprio registro.
+
+    RISCO: `COALESCE` na foto: uma fonte mais pobre não apaga o que uma mais
+    rica já trouxe. Medido — `senadores_dos_votos` roda DEPOIS de
+    `senadores_para_linhas` e devolve os mesmos 81 em exercício com
+    `url_foto` nula, porque o registro de voto não traz foto. Com
+    atribuição direta, os 104 senadores terminavam sem foto no banco,
+    sem erro e sem log.
     """
     inseridas = 0
     with conexao.cursor() as cur:
@@ -64,12 +71,6 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
             existente = cur.fetchone()
 
             if existente:
-                # RISCO: `COALESCE` na foto: uma fonte mais pobre não apaga o que uma mais
-                #    rica já trouxe. Medido — `senadores_dos_votos` roda DEPOIS de
-                #    `senadores_para_linhas` e devolve os mesmos 81 em exercício com
-                #    `url_foto` nula, porque o registro de voto não traz foto. Com
-                #    atribuição direta, os 104 senadores terminavam sem foto no banco,
-                #    sem erro e sem log.
                 cur.execute(
                     """
                     UPDATE pessoas

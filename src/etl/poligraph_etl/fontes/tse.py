@@ -77,6 +77,8 @@ def baixar(url: str, destino: Path) -> Path:
     """Baixa em fluxo — são **396 MB**, que não cabem em memória.
 
     Não rebaixa se o destino já existe: o arquivo de uma eleição passada nunca muda.
+
+    Só renomeia no fim: download interrompido não pode virar cache válido.
     """
     if destino.exists() and destino.stat().st_size > 0:
         log.info("  já em cache: %s (%.0f MB)", destino.name,
@@ -100,7 +102,6 @@ def baixar(url: str, destino: Path) -> Path:
             for bloco in resposta.iter_content(chunk_size=1 << 20):
                 saida.write(bloco)
 
-    # Só renomeia no fim: download interrompido não pode virar cache válido.
     parcial.replace(destino)
     log.info("  %s — %.0f MB", destino.name, destino.stat().st_size / 1e6)
 

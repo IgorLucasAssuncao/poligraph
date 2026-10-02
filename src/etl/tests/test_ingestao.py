@@ -171,7 +171,8 @@ def test_id_do_deputado_sai_da_uri():
 
 
 def test_id_do_deputado_prefere_a_coluna_id_se_existir():
-    # DECISÃO: Se a Câmara passar a publicar a coluna, funciona sem mudança.
+    """DECISÃO: Se a Câmara passar a publicar a coluna, funciona sem mudança.
+    """
     linha = {"id": "204554", "uri": ".../deputados/220593"}
 
     assert ingestao.id_do_deputado(linha) == "204554"
@@ -183,7 +184,10 @@ def test_id_do_deputado_sem_uri_nem_id_devolve_vazio():
 
 
 def test_deputados_do_formato_real_da_camara_viram_linhas():
-    """DECISÃO: Colunas copiadas do cabeçalho real de `deputados.csv`, não inventadas."""
+    """DECISÃO: Colunas copiadas do cabeçalho real de `deputados.csv`, não inventadas.
+
+    ATENÇÃO: A coluna `cpf` do CSV vem vazia — medido: 0 de 7.889 preenchidos.
+    """
     df = pd.DataFrame(
         [
             {
@@ -201,7 +205,6 @@ def test_deputados_do_formato_real_da_camara_viram_linhas():
     assert len(linhas) == 1
     assert linhas[0]["id_externo"] == "220593"
     assert linhas[0]["nome_exibicao"] == "Abilio Brunini"
-    # ATENÇÃO: A coluna `cpf` do CSV vem vazia — medido: 0 de 7.889 preenchidos.
     assert linhas[0]["cpf_hash"] is None
 
 

@@ -74,6 +74,8 @@ def indice_rand_ajustado(a: list, b: list) -> float:
     diferentes nas duas partições, e isso conta como "concordância". O ajuste desconta o
     que se esperaria do acaso — por isso 0 significa "nada além do acaso", e não
     "nenhuma coincidência".
+
+    ATENÇÃO: Partições idênticas E triviais (tudo num grupo só) zeram o denominador.
     """
     if len(a) != len(b):
         raise ValueError("as duas partições precisam ter o mesmo tamanho")
@@ -100,7 +102,6 @@ def indice_rand_ajustado(a: list, b: list) -> float:
     esperado = soma_linhas * soma_colunas / total_de_pares
     maximo = (soma_linhas + soma_colunas) / 2
 
-    # ATENÇÃO: Partições idênticas E triviais (tudo num grupo só) zeram o denominador.
     if maximo == esperado:
         return 0.0
 

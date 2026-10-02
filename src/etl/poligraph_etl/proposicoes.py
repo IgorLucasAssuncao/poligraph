@@ -68,6 +68,13 @@ def para_linhas(
     | Sem `proposicao_id` | Não há proposição a gravar nem a vincular |
     | Votação fora da base | A ligação apontaria para votação que não existe (FK) |
     | Votação repetida | A mesma votação com vários objetos — o primeiro vence |
+
+    ATENÇÃO: A proposição repete entre votações — várias votações do mesmo projeto. O
+    dicionário deduplica; não é acidente que a última leitura vença, porque
+    o conteúdo é idêntico.
+
+    RISCO: Parte da chave — ver `gravar_proposicoes`. As duas fontes numeram no
+    mesmo espaço e as faixas se sobrepõem.
     """
     proposicoes: dict[int, dict] = {}
     vinculo: dict[str, int] = {}
@@ -88,12 +95,7 @@ def para_linhas(
 
         vinculo[votacao_id] = proposicao_id
 
-        # ATENÇÃO: A proposição repete entre votações — várias votações do mesmo projeto. O
-        #    dicionário deduplica; não é acidente que a última leitura vença, porque
-        #    o conteúdo é idêntico.
         proposicoes[proposicao_id] = {
-            # RISCO: Parte da chave — ver `gravar_proposicoes`. As duas fontes numeram no
-            #    mesmo espaço e as faixas se sobrepõem.
             "casa": CASA,
             "id": proposicao_id,
             "sigla_tipo": _texto(registro.get("proposicao_siglaTipo")) or None,
@@ -118,6 +120,9 @@ def do_senado(materias, vinculo_bruto: dict[str, str]) -> tuple[list[dict], dict
 
     MEDIDO: Medido em 2026-08-29: 421 votações do Senado apontam para **359 matérias
     distintas**.
+
+    DECISÃO: Só vincula o que foi de fato gravado: apontar para matéria descartada deixaria
+    `proposicao_id` preenchido e a FK recusaria a linha inteira.
     """
     proposicoes: dict[int, dict] = {}
 
@@ -140,8 +145,6 @@ def do_senado(materias, vinculo_bruto: dict[str, str]) -> tuple[list[dict], dict
             "url_inteiro_teor": None,
         }
 
-    # DECISÃO: Só vincula o que foi de fato gravado: apontar para matéria descartada deixaria
-    #    `proposicao_id` preenchido e a FK recusaria a linha inteira.
     vinculo = {
         votacao_id: _inteiro_ou_nulo(codigo)
         for votacao_id, codigo in vinculo_bruto.items()

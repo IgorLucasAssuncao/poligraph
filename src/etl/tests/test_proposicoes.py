@@ -116,10 +116,11 @@ def test_ementa_vazia_vira_nula_e_nao_string_vazia():
 
 
 def materia(codigo="171682", **campos) -> dict:
+    """ATENÇÃO: A fonte manda com zeros à esquerda.
+    """
     base = {
         "codigo": codigo,
         "sigla_tipo": "PLP",
-        # ATENÇÃO: A fonte manda com zeros à esquerda.
         "numero": "00124",
         "ano": "2022",
         "ementa": "Altera o Código Tributário Nacional.",

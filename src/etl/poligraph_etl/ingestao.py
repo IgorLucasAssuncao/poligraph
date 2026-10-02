@@ -90,13 +90,17 @@ def votacoes_para_linhas(df: pd.DataFrame, legislatura: int | None = None) -> li
 
     DECISÃO: `legislatura=None` (o normal) deduz de cada votação pela data. Passar um valor
     força — serve só para teste.
+
+    `continue`: simbólica: sem registro individual
+
+    `"secreta": False,`: ATENÇÃO: a Câmara não marca; o Senado sim
     """
     linhas: list[dict] = []
 
     for _, registro in df.iterrows():
         sim, nao, outros = inteiro(registro.get("votosSim")), inteiro(registro.get("votosNao")), inteiro(registro.get("votosOutros"))
         if sim + nao + outros == 0:
-            continue                       # simbólica: sem registro individual
+            continue
 
         descricao = _texto(registro.get("descricao"))
         linhas.append(
@@ -111,7 +115,7 @@ def votacoes_para_linhas(df: pd.DataFrame, legislatura: int | None = None) -> li
                     registro.get("ultimaApresentacaoProposicao_idProposicao")
                 ),
                 "categoria": classificar_categoria(descricao),
-                "secreta": False,          # ATENÇÃO: a Câmara não marca; o Senado sim
+                "secreta": False,
                 "plenario": registro.get("siglaOrgao") == "PLEN",
                 "votos_sim": sim,
                 "votos_nao": nao,
@@ -129,6 +133,8 @@ def votos_para_linhas(df: pd.DataFrame, mapa_pessoas: dict[str, int]) -> list[di
     ATENÇÃO: Votos de pessoas fora do mapa são DESCARTADOS, não inventados. Se isso
     acontecer em volume, o problema está na ingestão de deputados — e o resumo
     devolve a contagem para que dê para perceber.
+
+    A Câmara lista só quem estava: toda linha é presença, e o ausente não tem linha.
     """
     linhas: list[dict] = []
 
@@ -143,7 +149,6 @@ def votos_para_linhas(df: pd.DataFrame, mapa_pessoas: dict[str, int]) -> list[di
                 "votacao_id": registro["idVotacao"],
                 "pessoa_id": pessoa_id,
                 "valor": normalizar_voto(registro.get("voto")),
-                # A Câmara lista só quem estava: toda linha é presença, e o ausente não tem linha.
                 "presenca": "PRESENTE",
                 "partido_no_voto": _texto(registro.get("deputado_siglaPartido")),
                 "uf_no_voto": _texto(registro.get("deputado_siglaUf"))[:2],
@@ -169,6 +174,8 @@ def deputados_para_linhas(df: pd.DataFrame) -> list[dict]:
     ATENÇÃO: A coluna `cpf` do CSV vem VAZIA (medido: 0 de 7.889 preenchidos). O CPF só
     existe na API REST, uma chamada por deputado. Por isso `cpf_hash` fica nulo aqui
     e a conciliação com o TSE é feita em passo separado.
+
+    `continue`: ATENÇÃO: o CSV repete a pessoa por partido (achado #20)
     """
     linhas: list[dict] = []
     vistos: set[str] = set()
@@ -176,7 +183,7 @@ def deputados_para_linhas(df: pd.DataFrame) -> list[dict]:
     for _, registro in df.iterrows():
         id_externo = id_do_deputado(registro)
         if not id_externo or id_externo in vistos:
-            continue                       # ATENÇÃO: o CSV repete a pessoa por partido (achado #20)
+            continue
         vistos.add(id_externo)
 
         nome = registro.get("nomeCivil") or registro.get("nome") or ""

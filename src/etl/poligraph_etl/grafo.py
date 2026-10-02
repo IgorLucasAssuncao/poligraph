@@ -115,13 +115,15 @@ def calcular_nos(
     votacoes_por_pessoa: dict[int, int],
     matriz: np.ndarray | None = None,
 ) -> list[NoDoGrafo]:
-    """Junta comunidade, posição, componentes e volume de voto num nó só."""
+    """Junta comunidade, posição, componentes e volume de voto num nó só.
+
+    ATENÇÃO: Sem matriz não há componentes: teste que só exercita o grafo passa None.
+    """
     rede = montar(pessoas, arestas)
 
     comunidades = detectar_comunidades(rede)
     posicoes = calcular_posicoes(rede)
 
-    # ATENÇÃO: Sem matriz não há componentes: teste que só exercita o grafo passa None.
     componentes = calcular_componentes(matriz) if matriz is not None else None
 
     log.info(
@@ -183,6 +185,9 @@ def calcular_componentes(matriz: np.ndarray) -> np.ndarray:
     RISCO: **O SINAL DO SVD É ARBITRÁRIO.** Numericamente, `u` e `-u` são soluções igualmente
     válidas: o desenho sairia espelhado a cada execução, e a "esquerda" da figura viraria
     a "direita" sem nada ter mudado nos dados. Fixado pela convenção abaixo.
+
+    DECISÃO: Quanto cada componente explica é resultado, não diagnóstico: mede o quanto a
+    Câmara se divide ao longo de UMA linha só.
     """
     centrada = np.where(np.isnan(matriz), 0.0, matriz)
     centrada = centrada - centrada.mean(axis=0)
@@ -190,8 +195,6 @@ def calcular_componentes(matriz: np.ndarray) -> np.ndarray:
     u, valores, _ = np.linalg.svd(centrada, full_matrices=False)
     coordenadas = u[:, :2] * valores[:2]
 
-    # DECISÃO: Quanto cada componente explica é resultado, não diagnóstico: mede o quanto a
-    #    Câmara se divide ao longo de UMA linha só.
     explicada = valores**2 / (valores**2).sum()
     log.info(
         "  componentes: 1ª explica %.1f%% da variância, 2ª explica %.1f%%",

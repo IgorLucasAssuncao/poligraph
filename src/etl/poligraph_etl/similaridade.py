@@ -151,6 +151,8 @@ def arestas_knn(pares: list[ParSimilar], k: int = K_VIZINHOS) -> list[ParSimilar
     é 0,663 — deputados concordam muito. Limiar liga quase todo mundo ou ninguém.
     O kNN dá densidade previsível (644 × 10 ≈ 6.440 arestas) e resiste a nó
     "concordante com todos", que num limiar viraria hub artificial.
+
+    a aresta sobrevive se QUALQUER um dos dois a escolheu — o grafo é não-direcionado
     """
     por_pessoa: dict[int, list[ParSimilar]] = {}
     for par in pares:
@@ -162,7 +164,6 @@ def arestas_knn(pares: list[ParSimilar], k: int = K_VIZINHOS) -> list[ParSimilar
         for par in sorted(vizinhos, key=lambda vizinho: vizinho.valor, reverse=True)[:k]:
             escolhidas.add((par.pessoa_a, par.pessoa_b))
 
-    # a aresta sobrevive se QUALQUER um dos dois a escolheu — o grafo é não-direcionado
     return [par for par in pares if (par.pessoa_a, par.pessoa_b) in escolhidas]
 
 
@@ -170,9 +171,12 @@ def arestas_knn(pares: list[ParSimilar], k: int = K_VIZINHOS) -> list[ParSimilar
 
 
 def _mascara_comum(votos_a: np.ndarray, votos_b: np.ndarray, pesos: np.ndarray) -> np.ndarray:
-    """Votações em que ambos se posicionaram e que contam na matriz."""
+    """Votações em que ambos se posicionaram e que contam na matriz.
+
+    `& (pesos > 0)`: PROCEDIMENTAL tem peso 0
+    """
     return (
         ~np.isnan(votos_a) & ~np.isnan(votos_b)
         & (votos_a != 0) & (votos_b != 0)
-        & (pesos > 0)                       # PROCEDIMENTAL tem peso 0
+        & (pesos > 0)
     )

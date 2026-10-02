@@ -153,7 +153,8 @@ def test_voto_vazio_do_pandas_vira_nulo():
 
 
 def test_voto_de_tipo_inesperado_nao_estoura():
-    # ATENÇÃO: Fora do cálculo, nunca discordância — ausência não é "votou contra".
+    """ATENÇÃO: Fora do cálculo, nunca discordância — ausência não é "votou contra".
+    """
     for entrada in (None, 0, 1.5, [], {}):
         assert normalizar_voto(entrada) is None
 

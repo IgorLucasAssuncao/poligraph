@@ -105,6 +105,8 @@ def para_linhas_do_senado(
 
     O resto do layout difere da Camara em tudo: `VALOR_REEMBOLSADO` em pt-BR,
     `DATA` em dd/mm/aaaa, e nao ha URL de documento.
+
+    A CEAPS publica so o numero do documento, nao o link da imagem.
     """
     linhas: list[dict] = []
 
@@ -132,7 +134,6 @@ def para_linhas_do_senado(
                 "fornecedor_eh_pessoa_fisica": pessoa_fisica,
                 "valor_liquido": valor,
                 "data_emissao": _data_iso(registro.get("DATA")),
-                # A CEAPS publica so o numero do documento, nao o link da imagem.
                 "url_documento": None,
             }
         )

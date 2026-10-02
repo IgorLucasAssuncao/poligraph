@@ -149,11 +149,12 @@ def ler_ceaps(caminho: Path) -> list[dict]:
     cabecalho, nenhuma coluna casaria e a leitura devolveria zero despesa sem erro.
 
     Latin-1, como o TSE e ao contrario da Camara.
+
+    O layout mudou: voltar ao inicio e deixar o cabecalho ser lido de la.
     """
     with caminho.open(encoding="latin-1", errors="replace") as arquivo:
         primeira = arquivo.readline()
         if "ULTIMA ATUALIZACAO" not in primeira.upper():
-            # O layout mudou: voltar ao inicio e deixar o cabecalho ser lido de la.
             arquivo.seek(0)
 
         return list(csv.DictReader(arquivo, delimiter=";", quotechar='"'))
@@ -212,6 +213,9 @@ def baixar_materia(codigo_materia: str) -> dict | None:
 
     Não **Devolve `None` em qualquer falha.** São ~360 chamadas por carga; derrubar a
     ingestão inteira porque uma matéria não respondeu seria trocar 359 boas por zero.
+
+    ATENÇÃO: Vem com zeros à esquerda: "00124". `int` cuida disso; guardar o texto
+    faria "PLP 00124/2022" aparecer na tela.
     """
     try:
         resposta = requests.get(
@@ -229,8 +233,6 @@ def baixar_materia(codigo_materia: str) -> dict | None:
     return {
         "codigo": _texto(identificacao.get("CodigoMateria")),
         "sigla_tipo": _texto(identificacao.get("SiglaSubtipoMateria")),
-        # ATENÇÃO: Vem com zeros à esquerda: "00124". `int` cuida disso; guardar o texto
-        #    faria "PLP 00124/2022" aparecer na tela.
         "numero": _texto(identificacao.get("NumeroMateria")),
         "ano": _texto(identificacao.get("AnoMateria")),
         "ementa": _texto(basicos.get("EmentaMateria")),

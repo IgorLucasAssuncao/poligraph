@@ -153,6 +153,9 @@ def classificar_categoria(descricao: str | None) -> str:
 
     ATENÇÃO: Trocar 2 e 3 de lugar quebraria *"Votação nominal do §11 … à Proposta de Emenda à
     Constituição"*, que é destaque de um dispositivo dentro de uma PEC.
+
+    DECISÃO: Os dois rótulos internos não vazam para o banco: um é a mesma coisa
+    que DESTAQUE, o outro é a decisão de NÃO ser destaque.
     """
     if not descricao:
         return "SUBSTANTIVA"
@@ -161,8 +164,6 @@ def classificar_categoria(descricao: str | None) -> str:
 
     for categoria, padrao in _CATEGORIAS:
         if re.search(padrao, texto):
-            # DECISÃO: Os dois rótulos internos não vazam para o banco: um é a mesma coisa
-            #    que DESTAQUE, o outro é a decisão de NÃO ser destaque.
             if categoria == "DESTAQUE_FORTE":
                 return "DESTAQUE"
             if categoria == "MERITO":
@@ -197,10 +198,11 @@ def sigla_do_objeto(abertura: str | None) -> str | None:
     """A sigla do objeto votado, se a descrição da abertura a declarar.
 
     Não Devolve `None` quando não há sigla — que é o caso mais comum, e não é erro.
+
+    ATENÇÃO: `isinstance`, não só `not abertura`: célula vazia chega como NaN, que é float e
+    é verdadeiro. Na 57ª toda votação nominal tem abertura; em 2003 não , e o
+    `.strip()` derrubava a ingestão (achado #35).
     """
-    # ATENÇÃO: `isinstance`, não só `not abertura`: célula vazia chega como NaN, que é float e
-    #    é verdadeiro. Na 57ª toda votação nominal tem abertura; em 2003 não , e o
-    #    `.strip()` derrubava a ingestão (achado #35).
     if not isinstance(abertura, str) or not abertura.strip():
         return None
 
@@ -276,12 +278,13 @@ def descricoes_nao_reconhecidas(descricoes) -> list[str]:
     | *"Votação, em segundo turno, da PEC nº 72/2023"* | PEC escrita pela **sigla**; o padrão só cobria "Proposta de Emenda" por extenso |
 
     DECISÃO: O canário achou sozinho o que a leitura humana tinha achado, e mais um.
+
+    ATENÇÃO: `.strip()`: descrição só com espaço é AUSÊNCIA de descrição, não frase
+    que o padrão deixou passar. Sem isto o canário acusaria o vazio.
     """
     orfas = []
 
     for descricao in descricoes:
-        # ATENÇÃO: `.strip()`: descrição só com espaço é AUSÊNCIA de descrição, não frase
-        #    que o padrão deixou passar. Sem isto o canário acusaria o vazio.
         if not (descricao or "").strip():
             continue
 
@@ -309,14 +312,15 @@ def inferir_polaridade(descricao: str | None) -> int:
 
     ATENÇÃO: Esta função é AUXÍLIO à curadoria, não substituto dela. O valor final de
     `pergunta.polaridade` é atribuído por pessoa (PL11).
+
+    "Mantido o texto" = o destaque supressivo foi REJEITADO.
+    Quem votou Sim quis MANTER, ou seja, votou CONTRA a supressão proposta.
     """
     if not descricao:
         return 1
 
     texto = sem_acento(descricao.lower())
 
-    # "Mantido o texto" = o destaque supressivo foi REJEITADO.
-    # Quem votou Sim quis MANTER, ou seja, votou CONTRA a supressão proposta.
     if "mantido o texto" in texto:
         return -1
 

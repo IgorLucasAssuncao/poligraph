@@ -32,19 +32,23 @@ def test_concordancia_perfeita_deixa_o_topo_lotado():
 
 
 def test_deputado_com_padrao_proprio_fica_sozinho_no_topo():
-    """RISCO: O caso que o instrumento precisa acertar: quem vota diferente é distinguível."""
+    """RISCO: O caso que o instrumento precisa acertar: quem vota diferente é distinguível.
+
+    `[-1, -1, -1, -1],`: o divergente
+
+    o divergente é único no topo; os dois iguais empatam entre si
+    """
     matriz = np.array(
         [
             [1, 1, 1, 1],
             [1, 1, 1, 1],
-            [-1, -1, -1, -1],   # o divergente
+            [-1, -1, -1, -1],
         ],
         dtype=float,
     )
 
     r = validacao.avaliar(matriz, [0, 1, 2, 3])
 
-    # o divergente é único no topo; os dois iguais empatam entre si
     assert r.unicos == 1
 
 
@@ -80,22 +84,25 @@ def test_ausencia_nao_conta_como_discordancia():
     DECISÃO: A afirmação é sobre QUEM FALTOU, não sobre o tamanho do empate: quem respondeu
     2 de 4 e concordou nas 2 continua encontrando par. O piso de base comparável age
     do outro lado — impede que ELE seja oferecido como par a quem respondeu tudo.
+
+    os dois entram na avaliação; ninguém foi eliminado por ter faltado
     """
     ausente = np.array([[1, 1, NAN, NAN], [1, 1, 1, 1]], dtype=float)
 
     r = validacao.avaliar(ausente, [0, 1, 2, 3])
 
-    # os dois entram na avaliação; ninguém foi eliminado por ter faltado
     assert r.deputados_avaliados == 2
 
 
 def test_abstencao_tambem_fica_de_fora():
-    """ATENÇÃO: 0 é abstenção declarada — não é meio-termo entre Sim e Não."""
+    """ATENÇÃO: 0 é abstenção declarada — não é meio-termo entre Sim e Não.
+
+    compara só as colunas 0 e 2, em que ambos se posicionaram
+    """
     matriz = np.array([[1, 0, 1], [1, 1, 1]], dtype=float)
 
     r = validacao.avaliar(matriz, [0, 1, 2])
 
-    # compara só as colunas 0 e 2, em que ambos se posicionaram
     assert r.deputados_avaliados == 2
 
 
@@ -136,19 +143,26 @@ def test_quem_faltou_demais_nao_empata_no_topo():
     conferência direta no banco dava no máximo 8.
 
     DECISÃO: O piso é o MESMO da API (`TemBaseSuficiente`): 60% do que a pessoa respondeu.
+
+    `[1, 1, 1, 1, 1],`: respondeu tudo
+
+    `[-1, -1, -1, -1, -1],`: discorda em tudo
+
+    `[1, NAN, NAN, NAN, NAN],`: concordou em 1 de 5 — não pode empatar
+
+    o primeiro fica SOZINHO no topo: o terceiro não tem base para empatar com ele
     """
     matriz = np.array(
         [
-            [1, 1, 1, 1, 1],          # respondeu tudo
-            [-1, -1, -1, -1, -1],     # discorda em tudo
-            [1, NAN, NAN, NAN, NAN],  # concordou em 1 de 5 — não pode empatar
+            [1, 1, 1, 1, 1],
+            [-1, -1, -1, -1, -1],
+            [1, NAN, NAN, NAN, NAN],
         ],
         dtype=float,
     )
 
     r = validacao.avaliar(matriz, [0, 1, 2, 3, 4])
 
-    # o primeiro fica SOZINHO no topo: o terceiro não tem base para empatar com ele
     assert r.unicos >= 1
 
 
@@ -163,11 +177,15 @@ def test_escolhe_a_pergunta_que_divide_O_GRUPO_nao_a_camara():
     ATENÇÃO: A coluna 0 racha a matriz inteira ao meio, mas é UNÂNIME dentro do grupo que
     empatou — não desempata nada. A coluna 1 é quase unânime no geral e divide o grupo
     exatamente ao meio. Escolher pela divisão global pegaria a errada.
+
+    `[1, 1, 1],`: ┐ o grupo empatado
+
+    `[1, -1, 1],`: ┘
     """
     matriz = np.array(
         [
-            [1, 1, 1],    # ┐ o grupo empatado
-            [1, -1, 1],   # ┘
+            [1, 1, 1],
+            [1, -1, 1],
             [-1, 1, 1],
             [-1, 1, 1],
         ],
@@ -193,11 +211,14 @@ def test_grupo_de_um_nao_precisa_de_desempate():
 
 
 def test_empatados_com_respeita_o_piso_de_base():
-    """RISCO: O mesmo piso da API — quem faltou demais não entra no empate."""
+    """RISCO: O mesmo piso da API — quem faltou demais não entra no empate.
+
+    `[1, NAN, NAN, NAN, NAN],`: concordou em 1 de 5
+    """
     matriz = np.array(
         [
             [1, 1, 1, 1, 1],
-            [1, NAN, NAN, NAN, NAN],   # concordou em 1 de 5
+            [1, NAN, NAN, NAN, NAN],
         ],
         dtype=float,
     )
@@ -208,8 +229,12 @@ def test_empatados_com_respeita_o_piso_de_base():
 
 
 def test_desempate_dirigido_encolhe_o_grupo():
-    """DECISÃO: O efeito que a contribuição do trabalho promete."""
-    # 8 deputados, todos idênticos na coluna 0 e distinguíveis nas demais
+    """DECISÃO: O efeito que a contribuição do trabalho promete.
+
+    8 deputados, todos idênticos na coluna 0 e distinguíveis nas demais
+
+    `assert tamanhos[0] == 8`: com só a coluna 0, todos empatam
+    """
     matriz = np.array(
         [[1] + [1 if (i >> b) & 1 else -1 for b in range(3)] for i in range(8)],
         dtype=float,
@@ -217,5 +242,5 @@ def test_desempate_dirigido_encolhe_o_grupo():
 
     tamanhos = validacao.simular_desempate(matriz, quem=0, base=[0], candidatas=[1, 2, 3])
 
-    assert tamanhos[0] == 8          # com só a coluna 0, todos empatam
+    assert tamanhos[0] == 8
     assert tamanhos[-1] < tamanhos[0]

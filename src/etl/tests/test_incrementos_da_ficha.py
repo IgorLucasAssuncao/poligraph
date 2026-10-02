@@ -92,6 +92,8 @@ def test_candidatura_liga_pelo_hash_do_cpf_e_so_do_congresso(tmp_path):
 
 
 def test_bens_somam_por_tipo_e_nunca_leem_a_descricao():
+    """RISCO: Nenhum pedaço da descrição chega à linha gravada.
+    """
     linhas = [
         {"SQ_CANDIDATO": "111", "DS_TIPO_BEM_CANDIDATO": "Casa", "VR_BEM_CANDIDATO": "300.000,00",
          "DS_BEM_CANDIDATO": "CASA NA RUA DAS FLORES, 10"},
@@ -106,7 +108,6 @@ def test_bens_somam_por_tipo_e_nunca_leem_a_descricao():
 
     assert sorted((l["tipo_bem"], l["valor"], l["quantidade"]) for l in saida) == [
         ("Casa", 500_000.0, 2), ("Veículo", 50_000.0, 1)]
-    # RISCO: Nenhum pedaço da descrição chega à linha gravada.
     assert not any("RUA" in str(v) or "PLACA" in str(v) for l in saida for v in l.values())
 
 

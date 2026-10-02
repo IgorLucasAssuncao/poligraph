@@ -48,6 +48,10 @@ def normalizar(conexao: str) -> str:
 
     DECISÃO: URI e libpq passam intactos: em produção a variável pode vir de qualquer um dos
     três formatos, e converter o que já está certo só criaria uma chance de errar.
+
+    RISCO: Ruidoso de propósito. Descartar em silêncio uma opção desconhecida
+    poderia derrubar `sslmode` — e aí a conexão passa a ir em claro sem
+    ninguém notar.
     """
     texto = conexao.strip()
 
@@ -71,9 +75,6 @@ def normalizar(conexao: str) -> str:
 
         equivalente = EQUIVALENTES.get(chave)
         if equivalente is None:
-            # RISCO: Ruidoso de propósito. Descartar em silêncio uma opção desconhecida
-            #    poderia derrubar `sslmode` — e aí a conexão passa a ir em claro sem
-            #    ninguém notar.
             log.warning(
                 "Opção de conexão sem equivalente no psycopg, ignorada: %r", chave
             )
