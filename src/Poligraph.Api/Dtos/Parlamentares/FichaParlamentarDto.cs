@@ -40,4 +40,11 @@ public record FichaParlamentarDto(
     /// <summary>A página do parlamentar na própria casa — onde tudo o que a ficha mostra pode ser conferido.</summary>
     string? UrlFonte,
     /// <summary>PP4 — as redes que o parlamentar publicou; vazia quando ⛔ publicou nenhuma.</summary>
-    IReadOnlyList<RedeSocialDto> RedesSociais);
+    IReadOnlyList<RedeSocialDto> RedesSociais,
+    /// <summary>
+    /// A legislatura que a ficha mostra: a pedida, se a pessoa votou nela; senão a última
+    /// em que votou. Nula sem voto nenhum.
+    /// </summary>
+    short? Legislatura,
+    /// <summary>Todas as legislaturas em que votou, da mais recente para a mais antiga.</summary>
+    IReadOnlyList<MandatoDto> Mandatos);

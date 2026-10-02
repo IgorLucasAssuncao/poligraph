@@ -16,8 +16,9 @@ public static class EndpointsGrafo
         return app;
     }
 
-    /// <summary>RF-33 — o grafo da execução mais recente da casa.</summary>
+    /// <summary>RF-33 — o grafo de uma casa numa legislatura; sem legislatura, a corrente.</summary>
     private static async Task<IResult> ObterAsync(
-        ServicoGrafo servico, CancellationToken ct, TipoCasa casa = TipoCasa.CAMARA) =>
-        Results.Ok(await servico.ObterAsync(casa, ct));
+        ServicoGrafo servico, CancellationToken ct,
+        TipoCasa casa = TipoCasa.CAMARA, short? legislatura = null) =>
+        Results.Ok(await servico.ObterAsync(casa, legislatura, ct));
 }

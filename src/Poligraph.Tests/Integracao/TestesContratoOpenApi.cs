@@ -124,12 +124,15 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     // `ementa`, `materia` e `categoria` chegaram juntos: sem `categoria` a ementa
     // vira manchete de voto de rito, que é erro de leitura, não de layout.
     [InlineData("VotoNaFichaDto", "votacaoId,data,descricao,valor,orientacaoDoGoverno,ementa,materia,categoria")]
+    // Os mandatos na ficha: a legislatura escolhida e as outras em que a pessoa votou.
+    [InlineData("FichaParlamentarDto", "id,nome,casa,partido,uf,nVotacoes,maisSimilares,legislatura,mandatos")]
+    [InlineData("MandatoDto", "legislatura,casa,anoInicial,partido,uf,nRegistrosDeVoto")]
     // `totalVotos` é comparecimento, nunca o placar (RF-29).
     [InlineData("PerguntaPublicaDto", "id,texto,ordem,totalVotos,totalPossivel")]
     // O envelope do questionário — `total` existe para a barra de progresso.
     [InlineData("QuestionarioDto", "perguntas,total")]
     // `vizinhosPorNo` é o `k` da execução: o tour do grafo explica o desenho com ele.
-    [InlineData("GrafoDto", "execucaoId,casa,legislatura,vizinhosPorNo,nos,arestas")]
+    [InlineData("GrafoDto", "execucaoId,casa,legislatura,vizinhosPorNo,nos,arestas,legislaturasComGrafo")]
     // `governismo` é nulo no Senado inteiro (achado #28), mas a PROPRIEDADE existe.
     [InlineData("NoDoGrafoDto", "id,nome,partido,uf,comunidade,eixoX,eixoY,nVotacoes,componente1,componente2,urlFoto,governismo")]
     [InlineData("ArestaDoGrafoDto", "de,para,peso,votacoesComuns,cosseno")]

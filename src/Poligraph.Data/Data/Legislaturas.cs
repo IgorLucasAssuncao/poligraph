@@ -1,7 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-namespace Poligraph.Data;
-
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace Poligraph.Data;
+
 /// <summary>
 /// De qual legislatura o site está falando — <b>derivado do dado, nunca configurado</b>.
 ///
@@ -17,8 +17,16 @@ namespace Poligraph.Data;
 /// da 58ª, e o erro reapareceria como número plausível.
 /// </para>
 /// </summary>
-public static class Legislaturas
-{
+public static class Legislaturas
+{
+    /// <summary>
+    /// O ano da posse. A 57ª tomou posse em 2023, e cada legislatura dura quatro anos.
+    /// </summary>
+    /// <remarks>
+    /// <para>É a mesma regra de <c>legislatura_da_data</c> no ETL, no sentido inverso.</para>
+    /// </remarks>
+    public static int AnoInicial(short legislatura) => 2023 + (legislatura - 57) * 4;
+
     /// <summary>
     /// A legislatura corrente: a maior que existe em <c>votacoes</c>.
     ///
@@ -27,9 +35,9 @@ public static class Legislaturas
     /// aqui esconderia uma base vazia atrás de um número que parece certo.
     /// </para>
     /// </summary>
-    public static async Task<short?> CorrenteAsync(PoligraphDb db, CancellationToken ct) =>
-        await db.Votacoes.AsNoTracking().MaxAsync(votacao => (short?)votacao.Legislatura, ct);
-
+    public static async Task<short?> CorrenteAsync(PoligraphDb db, CancellationToken ct) =>
+        await db.Votacoes.AsNoTracking().MaxAsync(votacao => (short?)votacao.Legislatura, ct);
+
     /// <summary>
     /// As legislaturas das perguntas <b>ativas</b> — o denominador do painel sai daqui.
     ///
@@ -44,11 +52,11 @@ public static class Legislaturas
     /// possível, e aí o denominador correto é a união.
     /// </para>
     /// </summary>
-    public static async Task<List<short>> DasPerguntasAtivasAsync(
-        PoligraphDb db, CancellationToken ct) =>
-        await db.Perguntas.AsNoTracking()
-            .Where(pergunta => pergunta.Ativa)
-            .Select(pergunta => pergunta.Votacao!.Legislatura)
-            .Distinct()
-            .ToListAsync(ct);
-}
+    public static async Task<List<short>> DasPerguntasAtivasAsync(
+        PoligraphDb db, CancellationToken ct) =>
+        await db.Perguntas.AsNoTracking()
+            .Where(pergunta => pergunta.Ativa)
+            .Select(pergunta => pergunta.Votacao!.Legislatura)
+            .Distinct()
+            .ToListAsync(ct);
+}

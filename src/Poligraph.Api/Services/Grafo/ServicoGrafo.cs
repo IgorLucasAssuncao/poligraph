@@ -5,7 +5,7 @@ using Poligraph.Data;
 namespace Poligraph.Api.Services;
 
 /// <summary>
-/// RF-33 — o grafo da execução mais recente da casa.
+/// RF-33 — o grafo de uma casa numa legislatura.
 ///
 /// Devolve TUDO de uma vez, e isso é decisão consciente: 644 nós e ~6.400 arestas
 /// cabem em poucos MB, e o layout <i>force-directed</i> precisa do grafo inteiro para
@@ -15,26 +15,40 @@ public class ServicoGrafo(PoligraphDb db)
 {
     private readonly PoligraphDb _db = db;
 
+    /// <summary>
+    /// O grafo de uma casa numa legislatura. Sem legislatura, a corrente.
+    /// </summary>
     /// <remarks>
-    /// <para>Primeiro dia, antes de o ETL analítico rodar: grafo vazio, não erro.</para>
+    /// <para>Primeiro dia, antes de o ETL analítico rodar: grafo vazio, não erro. Legislatura sem dado suficiente para o grafo também chega vazia, e a lista de legislaturas com grafo diz à tela quais existem.</para>
     /// </remarks>
-    public async Task<GrafoDto> ObterAsync(TipoCasa casa, CancellationToken ct)
+    public async Task<GrafoDto> ObterAsync(TipoCasa casa, short? legislatura, CancellationToken ct)
     {
-        var execucao = await _db.Execucoes.AsNoTracking()
-            .Where(e => e.Casa == casa && e.Status == TipoStatusDaExecucao.CONCLUIDA)
-            .OrderByDescending(e => e.Id)
-            .Select(e => new { e.Id, e.Casa, e.Legislatura, e.K })
-            .FirstOrDefaultAsync(ct);
+        var comGrafo = await LegislaturasComGrafoAsync(casa, ct);
+        var alvo = legislatura ?? await Legislaturas.CorrenteAsync(_db, ct);
 
-        if (execucao is null) return new GrafoDto(0, casa, 0, 0, [], []);
+        var execucao = alvo is null ? null : await ExecucaoVigente.ObterAsync(_db, casa, alvo.Value, ct);
+
+        if (execucao is null) return new GrafoDto(0, casa, alvo ?? 0, 0, [], [], comGrafo);
 
         return new GrafoDto(
             execucao.Id, execucao.Casa, execucao.Legislatura, execucao.K,
-            await NosAsync(execucao.Id, ct),
-            await ArestasAsync(execucao.Id, ct));
+            await NosAsync(execucao.Id, execucao.Legislatura, ct),
+            await ArestasAsync(execucao.Id, ct),
+            comGrafo);
     }
 
-    private async Task<List<NoDoGrafoDto>> NosAsync(long execucaoId, CancellationToken ct)
+    private async Task<List<short>> LegislaturasComGrafoAsync(TipoCasa casa, CancellationToken ct) =>
+        await _db.Execucoes.AsNoTracking()
+            .Where(e => e.Casa == casa && e.Status == TipoStatusDaExecucao.CONCLUIDA)
+            .Select(e => e.Legislatura)
+            .Distinct()
+            .OrderByDescending(l => l)
+            .ToListAsync(ct);
+
+    /// <remarks>
+    /// <para>Partido e UF do último voto DENTRO da legislatura desenhada: no grafo de 2019, quem trocou de partido em 2023 aparece com a sigla de então.</para>
+    /// </remarks>
+    private async Task<List<NoDoGrafoDto>> NosAsync(long execucaoId, short legislatura, CancellationToken ct)
     {
         var metricas = await _db.NosMetrica.AsNoTracking()
             .Where(n => n.ExecucaoId == execucaoId)
@@ -50,6 +64,7 @@ public class ServicoGrafo(PoligraphDb db)
                 p.NomeExibicao,
                 p.UrlFoto,
                 Ultimo = p.Votos
+                    .Where(v => v.Votacao!.Legislatura == legislatura)
                     .OrderByDescending(v => v.Votacao!.Data)
                     .Select(v => new { v.PartidoNoVoto, v.UfNoVoto })
                     .FirstOrDefault()

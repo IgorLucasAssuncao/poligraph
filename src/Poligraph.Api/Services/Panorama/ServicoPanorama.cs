@@ -56,13 +56,7 @@ public class ServicoPanorama(PoligraphDb db)
         var votos = _db.Votos.AsNoTracking()
             .Where(v => v.Votacao!.Casa == casa && v.Votacao.Legislatura == legislatura);
 
-        var execucao = await _db.Execucoes.AsNoTracking()
-            .Where(e => e.Casa == casa
-                     && e.Legislatura == legislatura
-                     && e.Status == TipoStatusDaExecucao.CONCLUIDA)
-            .OrderByDescending(e => e.Id)
-            .Select(e => (long?)e.Id)
-            .FirstOrDefaultAsync(ct);
+        var execucao = await ExecucaoVigente.IdAsync(_db, casa, legislatura, ct);
 
         return new PanoramaDaCasaDto(
             casa,

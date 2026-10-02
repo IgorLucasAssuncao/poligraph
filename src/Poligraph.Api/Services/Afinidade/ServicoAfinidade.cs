@@ -53,7 +53,7 @@ public class ServicoAfinidade(PoligraphDb db)
                     resultados.OrderByDescending(r => r.Proporcao), fichas, daCasa, votosPorPessoa),
                 MaisDistantes: Montar(
                     resultados.OrderBy(r => r.Proporcao), fichas, daCasa, votosPorPessoa),
-                PosicaoNoGrafo: await PosicionarAsync(casa, resultados, daCasa.Count, ct),
+                PosicaoNoGrafo: await PosicionarAsync(casa, resultados, daCasa, ct),
                 Escala: Escala(resultados)));
         }
 
@@ -209,21 +209,24 @@ public class ServicoAfinidade(PoligraphDb db)
     /// vez de inventar um ponto.
     /// </summary>
     /// <remarks>
-    /// <para>A execução é a mais recente DAQUELA CASA. Antes do Senado havia uma só, e pegar "a mais recente" funcionava por acidente; agora existem duas, e a ordem entre elas depende de qual ETL rodou por último. Posicionar o cidadão no grafo do Senado a partir das respostas da Câmara daria um ponto plausível sobre uma figura que não é a dele.</para>
+    /// <para>A execução é a DAQUELA CASA e da legislatura em que as perguntas respondidas foram votadas. Sem a casa, o cidadão cairia no grafo do Senado a partir das respostas da Câmara; sem a legislatura, a análise de uma legislatura antiga, ou a posse da seguinte antes de as perguntas mudarem, o poria numa figura de outra Câmara.</para>
     /// <para>Todos com concordância zero: dividir daria NaN, e NaN vira `null` no JSON sem erro nenhum — a tela receberia um ponto fantasma.</para>
     /// <para>Quem PESOU, não quem tem métrica: concordância zero não posiciona.</para>
     /// </remarks>
     private async Task<PosicaoDoCidadaoDto?> PosicionarAsync(
         TipoCasa casa,
         List<ResultadoAfinidade> resultados,
-        int perguntasRespondidas,
+        IReadOnlyList<RespostaCidadao> respondidas,
         CancellationToken ct)
     {
-        var execucaoId = await _db.Execucoes.AsNoTracking()
-            .Where(e => e.Status == TipoStatusDaExecucao.CONCLUIDA && e.Casa == casa)
-            .OrderByDescending(e => e.Id)
-            .Select(e => (long?)e.Id)
-            .FirstOrDefaultAsync(ct);
+        var perguntas = respondidas.Select(r => r.PerguntaId).ToList();
+        var legislatura = await _db.Perguntas.AsNoTracking()
+            .Where(p => perguntas.Contains(p.Id))
+            .MaxAsync(p => (short?)p.Votacao!.Legislatura, ct);
+
+        if (legislatura is null) return null;
+
+        var execucaoId = await ExecucaoVigente.IdAsync(_db, casa, legislatura.Value, ct);
 
         if (execucaoId is null) return null;
 
@@ -270,7 +273,7 @@ public class ServicoAfinidade(PoligraphDb db)
                 ? null
                 : comunidades.OrderByDescending(c => c.Value).First().Key,
             VizinhosUsados: contribuiram,
-            BaseDeVotacoes: perguntasRespondidas);
+            BaseDeVotacoes: respondidas.Count);
     }
 
     /// <summary>O parlamentar do meio da lista, pela mesma proporção que ordena os mais próximos.</summary>

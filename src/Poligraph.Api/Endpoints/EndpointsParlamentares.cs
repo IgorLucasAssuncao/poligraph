@@ -62,8 +62,8 @@ public static class EndpointsParlamentares
 
     /// <summary>RF-31 — ficha com dados, histórico de votos e mais similares.</summary>
     private static async Task<IResult> ObterFichaAsync(
-        long id, ServicoParlamentares servico, CancellationToken ct) =>
-        await servico.ObterFichaAsync(id, ct) is { } ficha
+        long id, ServicoParlamentares servico, CancellationToken ct, short? legislatura = null) =>
+        await servico.ObterFichaAsync(id, legislatura, ct) is { } ficha
             ? Results.Ok(ficha)
             : Results.NotFound();
 
@@ -71,11 +71,11 @@ public static class EndpointsParlamentares
         long id, ServicoGastosDeCota servico, CancellationToken ct, int? ano = null) =>
         Results.Ok(await servico.ObterAsync(id, ano, ct));
 
-    /// <summary>Os votos da legislatura corrente, do mais recente, em páginas. A primeira é a da ficha.</summary>
+    /// <summary>Os votos de uma legislatura da pessoa, do mais recente, em páginas. Sem legislatura, a última em que votou.</summary>
     private static async Task<IResult> ListarVotosAsync(
         long id, ServicoParlamentares servico, CancellationToken ct,
-        int pagina = 1, int tamanho = ServicoParlamentares.VotosPorPagina) =>
-        await servico.ListarVotosAsync(id, pagina, tamanho, ct) is { } votos
+        int pagina = 1, int tamanho = ServicoParlamentares.VotosPorPagina, short? legislatura = null) =>
+        await servico.ListarVotosAsync(id, pagina, tamanho, legislatura, ct) is { } votos
             ? Results.Ok(votos)
             : Results.NotFound();
 
