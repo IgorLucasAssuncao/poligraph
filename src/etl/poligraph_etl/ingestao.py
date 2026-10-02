@@ -98,7 +98,7 @@ def votacoes_para_linhas(df: pd.DataFrame, legislatura: int | None = None) -> li
         if sim + nao + outros == 0:
             continue                       # simbólica: sem registro individual
 
-        descricao = registro.get("descricao") or ""
+        descricao = _texto(registro.get("descricao"))
         linhas.append(
             {
                 "id": registro["id"],
@@ -145,12 +145,22 @@ def votos_para_linhas(df: pd.DataFrame, mapa_pessoas: dict[str, int]) -> list[di
                 "valor": normalizar_voto(registro.get("voto")),
                 # A Câmara lista só quem estava: toda linha é presença, e o ausente ⛔ tem linha.
                 "presenca": "PRESENTE",
-                "partido_no_voto": registro.get("deputado_siglaPartido") or "",
-                "uf_no_voto": (registro.get("deputado_siglaUf") or "")[:2],
+                "partido_no_voto": _texto(registro.get("deputado_siglaPartido")),
+                "uf_no_voto": _texto(registro.get("deputado_siglaUf"))[:2],
             }
         )
 
     return linhas
+
+
+def _texto(valor) -> str:
+    """A célula como texto, e vazia quando ⛔ há texto.
+
+    ⚠️ `valor or ""` ⛔ basta: célula vazia chega como NaN, que é float e é verdadeiro.
+    Na 57ª nenhum voto vinha sem partido ou UF; em 2010 vem (achado #35), e o `[:2]`
+    derrubava a ingestão.
+    """
+    return valor if isinstance(valor, str) else ""
 
 
 def deputados_para_linhas(df: pd.DataFrame) -> list[dict]:

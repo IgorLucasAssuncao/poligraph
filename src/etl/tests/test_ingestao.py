@@ -264,3 +264,19 @@ def test_deputado_ingerido_ja_vem_com_foto():
     linha = ingestao.deputados_para_linhas(df)[0]
 
     assert "220593.jpg" in linha["url_foto"]
+
+
+def test_voto_sem_partido_nem_uf_nao_derruba_a_ingestao():
+    """📐 Em 2010 há voto com a UF vazia, lida como NaN (achado #35)."""
+    import pandas as pd
+
+    from poligraph_etl.ingestao import votos_para_linhas
+
+    df = pd.DataFrame(
+        [{"idVotacao": "1-1", "deputado_id": "10", "voto": "Sim",
+          "deputado_siglaPartido": float("nan"), "deputado_siglaUf": float("nan")}]
+    )
+
+    [linha] = votos_para_linhas(df, {"10": 7})
+
+    assert linha["partido_no_voto"] == "" and linha["uf_no_voto"] == ""

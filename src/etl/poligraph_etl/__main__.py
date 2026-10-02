@@ -345,9 +345,18 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
         # ⭐ Orientação de bancada: é o que transforma "votou Sim" em posição. Sem ela,
         #    `governismo` e `disciplina` ficam nulos — as colunas existem desde o
         #    schema inicial e passaram a legislatura inteira vazias.
-        arquivo_orientacoes = camara.baixar(
-            "votacoesOrientacoes", ano, CACHE / f"votacoesOrientacoes-{ano}.csv"
-        )
+        # 📐 A Câmara ⛔ publica orientações de 2001 e 2002: 404, conferido em
+        #    2026-10-01 (achado #35). Sem elas o ano entra inteiro, e só `governismo` e
+        #    `disciplina` ficam nulos — que é o que já acontece no Senado inteiro.
+        try:
+            arquivo_orientacoes = camara.baixar(
+                "votacoesOrientacoes", ano, CACHE / f"votacoesOrientacoes-{ano}.csv"
+            )
+        except requests.HTTPError as erro:
+            if erro.response is None or erro.response.status_code != 404:
+                raise
+            log.warning("  %d sem orientações de bancada publicadas (404)", ano)
+            continue
         df_orientacoes = camara.ler_csv(arquivo_orientacoes)
         linhas = orientacoes.para_linhas(
             df_orientacoes.to_dict("records"), {v["id"] for v in votacoes}
