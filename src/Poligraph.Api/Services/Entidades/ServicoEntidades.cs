@@ -27,7 +27,7 @@ public class ServicoEntidades(
     public const int ItensPorPagina = 20;
     public const int ResultadosDaBusca = 5;
 
-    private static readonly TimeSpan Validade = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan Validade = CacheDeLeitura.Validade;
     private static readonly CompareInfo Comparacao = CultureInfo.GetCultureInfo("pt-BR").CompareInfo;
     private const CompareOptions SemCaixaNemAcento = CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace;
 

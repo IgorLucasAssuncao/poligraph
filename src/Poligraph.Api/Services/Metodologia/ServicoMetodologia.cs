@@ -7,11 +7,15 @@ namespace Poligraph.Api.Services;
 /// <summary>
 /// Os parâmetros do método para a página "Como calculamos", lidos de onde o cálculo os lê.
 /// </summary>
-public class ServicoMetodologia(PoligraphDb db)
+public class ServicoMetodologia(PoligraphDb db, CacheDeLeitura leitura)
 {
     private readonly PoligraphDb _db = db;
+    private readonly CacheDeLeitura _leitura = leitura;
 
-    public async Task<MetodologiaDto> ObterAsync(CancellationToken ct)
+    public Task<MetodologiaDto> ObterAsync(CancellationToken ct) =>
+        _leitura.ObterAsync("metodologia", () => CalcularAsync(ct));
+
+    private async Task<MetodologiaDto> CalcularAsync(CancellationToken ct)
     {
         var doSenado = await _db.Perguntas.AsNoTracking()
             .CountAsync(p => p.Ativa && p.Votacao!.Casa == TipoCasa.SENADO, ct);

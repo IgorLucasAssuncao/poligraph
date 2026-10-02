@@ -11,6 +11,15 @@ import { aplicarTema, temaGuardado } from './tema';
 // tipo de detalhe que faz uma interface parecer improvisada.
 aplicarTema(temaGuardado());
 
+// ⭐ Guarda no navegador as fotos dos parlamentares, que a Câmara manda buscar de novo a
+//    cada visita (`no-cache`). Depois do `load`: registrar antes disputaria a banda com
+//    a própria página. Sem suporte, as fotos seguem vindo da casa, como antes.
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/fotos-sw.js').catch(() => {});
+  });
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

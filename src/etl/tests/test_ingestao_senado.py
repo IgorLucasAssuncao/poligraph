@@ -226,13 +226,8 @@ def test_senador_entra_sem_cpf():
     assert linhas[0]["fonte"] == "SENADO"
 
 
-def test_foto_do_senado_vem_em_http_e_e_promovida_a_https():
-    """🔴 A API do Senado publica a foto em `http://`.
-
-    A página é servida por HTTPS, e imagem em HTTP é conteúdo misto: o navegador
-    bloqueia sem erro visível — o nó simplesmente fica sem rosto. O host responde em
-    HTTPS no mesmo caminho.
-    """
+def test_foto_do_senado_e_o_endereco_final_em_https():
+    """O endereço publicado vem em `http://` e redireciona (301); o final responde direto."""
     linhas = ingestao_senado.senadores_para_linhas(
         [
             {
@@ -244,17 +239,16 @@ def test_foto_do_senado_vem_em_http_e_e_promovida_a_https():
         ]
     )
 
-    assert linhas[0]["url_foto"] == (
-        "https://www.senado.leg.br/senadores/img/fotos-oficiais/senador5672.jpg"
+    assert linhas[0]["url_foto"] == "https://legis.senado.leg.br/senadores/fotos-oficiais/5672"
+
+
+def test_senador_que_veio_pelo_voto_tambem_tem_foto():
+    """📐 375 de 458 senadores ficavam sem foto: só a lista de exercício a trazia."""
+    [linha] = ingestao_senado.senadores_dos_votos(
+        [votacao(votos=[voto(codigoParlamentar=70, nomeParlamentar="Fulano")])], ja_conhecidos=set()
     )
 
-
-def test_foto_ausente_fica_nula_e_nao_vira_string_vazia():
-    linhas = ingestao_senado.senadores_para_linhas(
-        [{"CodigoParlamentar": "5672", "NomeParlamentar": "Alan Rick"}]
-    )
-
-    assert linhas[0]["url_foto"] is None
+    assert linha["url_foto"] == "https://legis.senado.leg.br/senadores/fotos-oficiais/70"
 
 
 def test_usa_o_codigo_parlamentar_nao_o_publico():

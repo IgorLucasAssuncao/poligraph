@@ -19,7 +19,7 @@ namespace Poligraph.Api.Services;
 /// regras de resultado fiscal, que estes dados ⛔ seguem.
 /// </para>
 /// </remarks>
-public class ServicoGoverno(PoligraphDb db)
+public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
 {
     /// <summary>
     /// Quanto do empenho pode passar da dotação publicada sem que ela deixe de valer.
@@ -36,12 +36,16 @@ public class ServicoGoverno(PoligraphDb db)
     private const string OperacoesDeCredito = "Operações de Crédito";
 
     private readonly PoligraphDb _db = db;
+    private readonly CacheDeLeitura _leitura = leitura;
 
     /// <remarks>
     /// <para>Sem período, todos os anos carregados. Ponta fora dos anos é trazida para dentro; ponta invertida, desinvertida.</para>
     /// <para>Sem dado, devolve <c>null</c>, e o endpoint responde 404.</para>
     /// </remarks>
-    public async Task<GovernoDto?> ObterAsync(int? de, int? ate, CancellationToken ct)
+    public Task<GovernoDto?> ObterAsync(int? de, int? ate, CancellationToken ct) =>
+        _leitura.ObterAsync(("governo", de, ate), () => CalcularAsync(de, ate, ct));
+
+    private async Task<GovernoDto?> CalcularAsync(int? de, int? ate, CancellationToken ct)
     {
         var anos = await _db.OrcamentoPorFuncao.AsNoTracking()
             .GroupBy(o => o.Ano)

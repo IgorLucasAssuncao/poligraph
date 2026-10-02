@@ -20,7 +20,7 @@ namespace Poligraph.Api.Services;
 /// "quem mandou dinheiro para a minha cidade" se responde pela legislatura, ⛔ por um ano.
 /// </para>
 /// </remarks>
-public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAutoresDeEmenda autores)
+public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAutoresDeEmenda autores, CacheDeLeitura leitura)
 {
     public const int ItensPorPagina = 10;
 
@@ -29,10 +29,10 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
 
     private const int ResultadosDaBusca = 10;
 
-    private static readonly TimeSpan ValidadeDosMunicipios = TimeSpan.FromHours(6);
+    private static readonly TimeSpan ValidadeDosMunicipios = CacheDeLeitura.Validade;
 
     /// <summary>O dado só muda quando o ETL roda; 10 minutos bastam para as páginas de uma visita.</summary>
-    private static readonly TimeSpan ValidadeDaCidade = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan ValidadeDaCidade = CacheDeLeitura.Validade;
     private static readonly CompareInfo Comparacao = CultureInfo.GetCultureInfo("pt-BR").CompareInfo;
 
     /// <summary>
@@ -54,6 +54,7 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     private readonly PoligraphDb _db = db;
     private readonly IMemoryCache _cache = cache;
     private readonly ServicoAutoresDeEmenda _autores = autores;
+    private readonly CacheDeLeitura _leitura = leitura;
 
     public async Task<MapaDoBrasilDto> ObterBrasilAsync(int? de, int? ate, CancellationToken ct)
     {
@@ -100,27 +101,8 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     /// <remarks>
     /// <para>Traz TODAS as cidades da UF, com zero onde nada chegou: o mapa mostra o nome de cada uma sob o mouse, e cidade sem pagamento também é informação.</para>
     /// </remarks>
-    public async Task<MapaDoEstadoDto> ObterEstadoAsync(string uf, int? de, int? ate, CancellationToken ct)
-    {
-        var (periodo, _, prefixos) = await PeriodoAsync(de, ate, ct);
-        uf = uf.ToUpperInvariant();
-        if (prefixos.Length == 0) return new MapaDoEstadoDto(uf, periodo, 0, []);
-
-        var recebido = await NoMapa(DoPeriodo(prefixos))
-            .Where(p => p.Uf == uf)
-            .GroupBy(p => p.CodigoIbge)
-            .Select(g => new { CodigoIbge = g.Key, Recebido = g.Sum(p => p.Valor) })
-            .ToDictionaryAsync(m => m.CodigoIbge, m => m.Recebido, ct);
-
-        var porMunicipio = (await MunicipiosAsync(ct))
-            .Where(m => m.Uf == uf)
-            .Select(m => new RecebidoNoMunicipioDto(m.CodigoIbge, m.Nome, recebido.GetValueOrDefault(m.CodigoIbge)))
-            .OrderByDescending(m => m.Recebido)
-            .ThenBy(m => m.Nome, StringComparer.Create(CultureInfo.GetCultureInfo("pt-BR"), ignoreCase: true))
-            .ToList();
-
-        return new MapaDoEstadoDto(uf, periodo, recebido.Values.Sum(), porMunicipio);
-    }
+    public Task<MapaDoEstadoDto> ObterEstadoAsync(string uf, int? de, int? ate, CancellationToken ct) =>
+        _leitura.ObterAsync(("mapa:estado", uf.ToUpperInvariant(), de, ate), () => CalcularEstadoAsync(uf, de, ate, ct));
 
     /// <summary>A busca "sua cidade", sem caixa e sem acento. O resultado é o código IBGE.</summary>
     /// <remarks>
@@ -190,6 +172,28 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     public async Task<PaginaDto<FavorecidoDaEmendaDto>?> ListarFavorecidosAsync(
         string codigoIbge, int? de, int? ate, int pagina, CancellationToken ct) =>
         await CidadeAsync(codigoIbge, de, ate, ct) is { } cidade ? Paginar(cidade.Favorecidos, pagina) : null;
+
+    private async Task<MapaDoEstadoDto> CalcularEstadoAsync(string uf, int? de, int? ate, CancellationToken ct)
+    {
+        var (periodo, _, prefixos) = await PeriodoAsync(de, ate, ct);
+        uf = uf.ToUpperInvariant();
+        if (prefixos.Length == 0) return new MapaDoEstadoDto(uf, periodo, 0, []);
+
+        var recebido = await NoMapa(DoPeriodo(prefixos))
+            .Where(p => p.Uf == uf)
+            .GroupBy(p => p.CodigoIbge)
+            .Select(g => new { CodigoIbge = g.Key, Recebido = g.Sum(p => p.Valor) })
+            .ToDictionaryAsync(m => m.CodigoIbge, m => m.Recebido, ct);
+
+        var porMunicipio = (await MunicipiosAsync(ct))
+            .Where(m => m.Uf == uf)
+            .Select(m => new RecebidoNoMunicipioDto(m.CodigoIbge, m.Nome, recebido.GetValueOrDefault(m.CodigoIbge)))
+            .OrderByDescending(m => m.Recebido)
+            .ThenBy(m => m.Nome, StringComparer.Create(CultureInfo.GetCultureInfo("pt-BR"), ignoreCase: true))
+            .ToList();
+
+        return new MapaDoEstadoDto(uf, periodo, recebido.Values.Sum(), porMunicipio);
+    }
 
     /// <summary>Os anos das emendas que têm pagamento registrado. Em cache: é a mesma lista em toda chamada.</summary>
     private async Task<IReadOnlyList<int>> AnosAsync(CancellationToken ct) =>

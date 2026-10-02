@@ -1,9 +1,18 @@
+import { useState } from 'react';
+
 /**
- * Avatar por iniciais.
+ * As iniciais, com a foto oficial por cima quando houver.
  *
- * ⚠️ Não há foto de parlamentar no banco — a Câmara publica, mas coletar e
- * rehospedar imagem de pessoa é outra discussão de licença e de LGPD que este
- * trabalho não abriu. Iniciais resolvem a leitura visual sem custo nenhum.
+ * ⚠️ A foto ⛔ é guardada no banco nem servida por nós: a URL é da Câmara ou do Senado.
+ * Rehospedar imagem de pessoa é outra discussão de licença e de LGPD que este trabalho
+ * ⛔ abriu. O que se guarda é a cópia no NAVEGADOR do visitante (`fotos-sw.js`).
+ *
+ * ⭐ As iniciais ficam POR BAIXO e aparecem na hora. A foto da Câmara tem 30–41 KB e a
+ * do Senado 170–330 KB (medido em 2026-10-01), para um quadrado de ~42 px: até ela
+ * chegar, o lugar já tem rosto. Se ela falhar, as iniciais continuam — antes o código
+ * só escondia a imagem e o espaço ficava vazio, embora o comentário dissesse o contrário.
+ *
+ * ⭐ `loading="lazy"`: numa lista de 30, só as fotos que aparecem na tela são pedidas.
  */
 export function Avatar({
   nome,
@@ -14,17 +23,7 @@ export function Avatar({
   fotoUrl?: string | null;
   tamanho?: 'pequeno' | 'medio' | 'grande';
 }) {
-  if (fotoUrl) {
-    return (
-      <img
-        className={`avatar avatar-${tamanho}`}
-        src={fotoUrl}
-        alt=""
-        // ⚠️ A URL de foto do Google expira e passa a dar 404 — cai para as iniciais.
-        onError={(e) => (e.currentTarget.style.display = 'none')}
-      />
-    );
-  }
+  const [falhou, setFalhou] = useState<string | null>(null);
 
   return (
     <span
@@ -33,6 +32,16 @@ export function Avatar({
       aria-hidden="true"
     >
       {iniciais(nome)}
+      {fotoUrl && falhou !== fotoUrl && (
+        <img
+          className="avatar-foto"
+          src={fotoUrl}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onError={() => setFalhou(fotoUrl)}
+        />
+      )}
     </span>
   );
 }

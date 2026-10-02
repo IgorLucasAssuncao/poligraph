@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Poligraph.Data;
@@ -22,6 +23,9 @@ public class FabricaApi(string connectionString) : WebApplicationFactory<Marcado
     protected override IHost CreateHost(IHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+
+        // O aquecedor guardaria a base vazia: os testes semeiam depois de subir a API.
+        builder.ConfigureHostConfiguration(c => c.AddInMemoryCollection([new("Cache:Aquecer", "false")]));
 
         builder.ConfigureServices(services =>
         {

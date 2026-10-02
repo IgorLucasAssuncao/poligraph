@@ -9,7 +9,7 @@ namespace Poligraph.Api.Services;
 ///
 /// Usa o <see cref="ServicoAfinidade"/>: o desempate precisa saber quem está empatado.
 /// </summary>
-public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
+public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade, CacheDeLeitura leitura)
 {
     /// <summary>
     /// Quantas perguntas da Câmara o questionário tem, ao todo. Medido em 2026-08-29,
@@ -51,6 +51,7 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
 
     private readonly PoligraphDb _db = db;
     private readonly ServicoAfinidade _afinidade = afinidade;
+    private readonly CacheDeLeitura _leitura = leitura;
 
     /// <summary>
     /// O bloco de abertura: as <see cref="BaseDaCamara"/> primeiras da Câmara e TODAS as
@@ -63,25 +64,8 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
     /// <see cref="ObterDesempateAsync"/>, escolhido contra o empate de quem respondeu.
     /// </para>
     /// </summary>
-    public async Task<QuestionarioDto> ObterAsync(CancellationToken ct)
-    {
-        var daCamara = await _db.Perguntas.AsNoTracking()
-            .Where(p => p.Ativa && p.Votacao!.Casa == TipoCasa.CAMARA)
-            .OrderBy(p => p.Ordem)
-            .Take(BaseDaCamara)
-            .Select(p => p.Id)
-            .ToListAsync(ct);
-
-        var doSenado = await _db.Perguntas.AsNoTracking()
-            .Where(p => p.Ativa && p.Votacao!.Casa == TipoCasa.SENADO)
-            .OrderBy(p => p.Ordem)
-            .Select(p => p.Id)
-            .ToListAsync(ct);
-
-        return new QuestionarioDto(
-            await MontarAsync([.. daCamara, .. doSenado], ct),
-            await TamanhoAsync(ct));
-    }
+    public Task<QuestionarioDto> ObterAsync(CancellationToken ct) =>
+        _leitura.ObterAsync("questionario", () => CalcularAsync(ct));
 
     /// <summary>
     /// As próximas perguntas da Câmara, escolhidas contra o empate DESTE cidadão.
@@ -160,6 +144,26 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade)
     /// <summary> 60% do que é OFERECIDO, não do poço curado.</summary>
     public static int MinimoDeRespostas(int tamanhoDoQuestionario) =>
         (int)Math.Ceiling(tamanhoDoQuestionario * FracaoMinimaDeRespostas);
+
+    private async Task<QuestionarioDto> CalcularAsync(CancellationToken ct)
+    {
+        var daCamara = await _db.Perguntas.AsNoTracking()
+            .Where(p => p.Ativa && p.Votacao!.Casa == TipoCasa.CAMARA)
+            .OrderBy(p => p.Ordem)
+            .Take(BaseDaCamara)
+            .Select(p => p.Id)
+            .ToListAsync(ct);
+
+        var doSenado = await _db.Perguntas.AsNoTracking()
+            .Where(p => p.Ativa && p.Votacao!.Casa == TipoCasa.SENADO)
+            .OrderBy(p => p.Ordem)
+            .Select(p => p.Id)
+            .ToListAsync(ct);
+
+        return new QuestionarioDto(
+            await MontarAsync([.. daCamara, .. doSenado], ct),
+            await TamanhoAsync(ct));
+    }
 
     /// <summary>
     /// Quem está empatado na primeira posição depois das respostas de base.

@@ -11,9 +11,10 @@ namespace Poligraph.Api.Services;
 /// cabem em poucos MB, e o layout <i>force-directed</i> precisa do grafo inteiro para
 /// posicionar. Paginar aqui quebraria a visualização.
 /// </summary>
-public class ServicoGrafo(PoligraphDb db)
+public class ServicoGrafo(PoligraphDb db, CacheDeLeitura leitura)
 {
     private readonly PoligraphDb _db = db;
+    private readonly CacheDeLeitura _leitura = leitura;
 
     /// <summary>
     /// O grafo de uma casa numa legislatura. Sem legislatura, a corrente.
@@ -21,7 +22,10 @@ public class ServicoGrafo(PoligraphDb db)
     /// <remarks>
     /// <para>Primeiro dia, antes de o ETL analítico rodar: grafo vazio, não erro. Legislatura sem dado suficiente para o grafo também chega vazia, e a lista de legislaturas com grafo diz à tela quais existem.</para>
     /// </remarks>
-    public async Task<GrafoDto> ObterAsync(TipoCasa casa, short? legislatura, CancellationToken ct)
+    public Task<GrafoDto> ObterAsync(TipoCasa casa, short? legislatura, CancellationToken ct) =>
+        _leitura.ObterAsync(("grafo", casa, legislatura), () => CalcularAsync(casa, legislatura, ct));
+
+    private async Task<GrafoDto> CalcularAsync(TipoCasa casa, short? legislatura, CancellationToken ct)
     {
         var comGrafo = await LegislaturasComGrafoAsync(casa, ct);
         var alvo = legislatura ?? await Legislaturas.CorrenteAsync(_db, ct);

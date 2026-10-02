@@ -17,6 +17,8 @@ builder.Services.AdicionarServicos();
 
 var app = builder.Build();
 
+app.UseResponseCompression();
+
 app.MapDefaultEndpoints();
 app.MapearDocumentacao();
 

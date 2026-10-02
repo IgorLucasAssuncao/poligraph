@@ -14,7 +14,7 @@ namespace Poligraph.Api.Services;
 /// nome seria inventar autoria.
 /// </para>
 /// </summary>
-public class ServicoEmendas(PoligraphDb db)
+public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
 {
     /// <summary>Quantos itens de cada lista vêm na ficha, e em cada página seguinte.</summary>
     public const int ItensPorPagina = 8;
@@ -22,78 +22,15 @@ public class ServicoEmendas(PoligraphDb db)
     private const int TamanhoMaximo = 50;
 
     private readonly PoligraphDb _db = db;
+    private readonly CacheDeLeitura _leitura = leitura;
 
     /// <remarks>
     /// <para>Sem emenda é caso normal: a tela mostra estado vazio, não erro.</para>
     /// <para>Tipo ANÔNIMO, não `record` posicional: o EF não traduz `GroupBy` com construtor posicional e falha em RUNTIME, não na compilação.</para>
     /// <para>Agregação PRÓPRIA, não a soma dos `Take(8)` acima: eles mostrariam um total menor que o real, sem nada na tela indicando o corte.</para>
     /// </remarks>
-    public async Task<EmendasDoParlamentarDto> ObterAsync(long id, int? ano, CancellationToken ct)
-    {
-        var alvo = await AnoAlvoAsync(id, ano, ct);
-
-        if (alvo is null)
-        {
-            return new EmendasDoParlamentarDto(
-                0, 0, 0, 0, [], [], new FavorecidosDaEmendaDto(0, 0, 0, 0, null, 0, []), [],
-                new ConveniosDaEmendaDto(0, []), new CidadesDaEmendaDto(0, []));
-        }
-
-        var doAno = EmendasDoAno(id, alvo.Value);
-
-        var destinos = await doAno
-            .Where(e => e.Localidade != null)
-            .GroupBy(e => e.Localidade!)
-            .Select(g => new
-            {
-                Localidade = g.Key,
-                Empenhado = g.Sum(e => e.ValorEmpenhado),
-                Pago = g.Sum(e => e.ValorPago),
-                Quantidade = g.Select(e => e.CodigoEmenda).Distinct().Count()
-            })
-            .OrderByDescending(d => d.Empenhado)
-            .Take(ItensPorPagina)
-            .ToListAsync(ct);
-
-        var funcoes = await doAno
-            .Where(e => e.Funcao != null)
-            .GroupBy(e => e.Funcao!)
-            .Select(g => new
-            {
-                Funcao = g.Key,
-                Empenhado = g.Sum(e => e.ValorEmpenhado),
-                Pago = g.Sum(e => e.ValorPago)
-            })
-            .OrderByDescending(f => f.Empenhado)
-            .Take(ItensPorPagina)
-            .ToListAsync(ct);
-
-        var totais = await doAno
-            .GroupBy(_ => 1)
-            .Select(g => new
-            {
-                Empenhado = g.Sum(e => e.ValorEmpenhado),
-                Pago = g.Sum(e => e.ValorPago),
-                Quantidade = g.Select(e => e.CodigoEmenda).Distinct().Count()
-            })
-            .FirstOrDefaultAsync(ct);
-
-        var codigos = doAno.Select(e => e.CodigoEmenda).Distinct();
-
-        return new EmendasDoParlamentarDto(
-            Ano: alvo.Value,
-            Empenhado: totais?.Empenhado ?? 0,
-            Pago: totais?.Pago ?? 0,
-            Quantidade: totais?.Quantidade ?? 0,
-            PorDestino: [.. destinos.Select(d =>
-                new EmendaPorDestinoDto(d.Localidade, d.Empenhado, d.Pago, d.Quantidade))],
-            PorFuncao: [.. funcoes.Select(f =>
-                new EmendaPorFuncaoDto(f.Funcao, f.Empenhado, f.Pago))],
-            Favorecidos: await FavorecidosAsync(codigos, ct),
-            PagamentosPorMes: await PagamentosPorMesAsync(codigos, ct),
-            Convenios: await ConveniosAsync(codigos, ct),
-            Cidades: await CidadesAsync(codigos, ct));
-    }
+    public Task<EmendasDoParlamentarDto> ObterAsync(long id, int? ano, CancellationToken ct) =>
+        _leitura.ObterAsync(("emendas", id, ano), () => CalcularAsync(id, ano, ct));
 
     /// <summary>Quem recebeu, em páginas, na mesma ordem da ficha. A primeira página é a da ficha.</summary>
     public async Task<PaginaDto<FavorecidoDaEmendaDto>> ListarFavorecidosAsync(
@@ -172,6 +109,73 @@ public class ServicoEmendas(PoligraphDb db)
                 e.Codigo, e.Tipo, e.Localidade, e.Localidades, e.Funcao, e.Empenhado, e.Pago,
                 FontesOficiais.Emenda(e.Codigo)))],
             pagina, tamanho, await porCodigo.CountAsync(ct));
+    }
+
+    private async Task<EmendasDoParlamentarDto> CalcularAsync(long id, int? ano, CancellationToken ct)
+    {
+        var alvo = await AnoAlvoAsync(id, ano, ct);
+
+        if (alvo is null)
+        {
+            return new EmendasDoParlamentarDto(
+                0, 0, 0, 0, [], [], new FavorecidosDaEmendaDto(0, 0, 0, 0, null, 0, []), [],
+                new ConveniosDaEmendaDto(0, []), new CidadesDaEmendaDto(0, []));
+        }
+
+        var doAno = EmendasDoAno(id, alvo.Value);
+
+        var destinos = await doAno
+            .Where(e => e.Localidade != null)
+            .GroupBy(e => e.Localidade!)
+            .Select(g => new
+            {
+                Localidade = g.Key,
+                Empenhado = g.Sum(e => e.ValorEmpenhado),
+                Pago = g.Sum(e => e.ValorPago),
+                Quantidade = g.Select(e => e.CodigoEmenda).Distinct().Count()
+            })
+            .OrderByDescending(d => d.Empenhado)
+            .Take(ItensPorPagina)
+            .ToListAsync(ct);
+
+        var funcoes = await doAno
+            .Where(e => e.Funcao != null)
+            .GroupBy(e => e.Funcao!)
+            .Select(g => new
+            {
+                Funcao = g.Key,
+                Empenhado = g.Sum(e => e.ValorEmpenhado),
+                Pago = g.Sum(e => e.ValorPago)
+            })
+            .OrderByDescending(f => f.Empenhado)
+            .Take(ItensPorPagina)
+            .ToListAsync(ct);
+
+        var totais = await doAno
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Empenhado = g.Sum(e => e.ValorEmpenhado),
+                Pago = g.Sum(e => e.ValorPago),
+                Quantidade = g.Select(e => e.CodigoEmenda).Distinct().Count()
+            })
+            .FirstOrDefaultAsync(ct);
+
+        var codigos = doAno.Select(e => e.CodigoEmenda).Distinct();
+
+        return new EmendasDoParlamentarDto(
+            Ano: alvo.Value,
+            Empenhado: totais?.Empenhado ?? 0,
+            Pago: totais?.Pago ?? 0,
+            Quantidade: totais?.Quantidade ?? 0,
+            PorDestino: [.. destinos.Select(d =>
+                new EmendaPorDestinoDto(d.Localidade, d.Empenhado, d.Pago, d.Quantidade))],
+            PorFuncao: [.. funcoes.Select(f =>
+                new EmendaPorFuncaoDto(f.Funcao, f.Empenhado, f.Pago))],
+            Favorecidos: await FavorecidosAsync(codigos, ct),
+            PagamentosPorMes: await PagamentosPorMesAsync(codigos, ct),
+            Convenios: await ConveniosAsync(codigos, ct),
+            Cidades: await CidadesAsync(codigos, ct));
     }
 
     /// <summary>O ano pedido; sem ele, o último ano fechado com emenda do parlamentar.</summary>

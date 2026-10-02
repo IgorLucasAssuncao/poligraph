@@ -18,15 +18,19 @@ namespace Poligraph.Api.Services;
 /// proteger — nem a vazar.
 /// </para>
 /// </summary>
-public class ServicoPanorama(PoligraphDb db)
+public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura)
 {
     private readonly PoligraphDb _db = db;
+    private readonly CacheDeLeitura _leitura = leitura;
 
     /// <remarks>
     /// <para>Base vazia devolve panorama vazio, não erro: é o estado do primeiro dia, e a tela tem um texto próprio para ele.</para>
     /// <para>Casa sem nenhuma votação ingerida fica fora — a tela não deve anunciar uma casa que ainda não entrou na base.</para>
     /// </remarks>
-    public async Task<PanoramaDto> ObterAsync(CancellationToken ct)
+    public Task<PanoramaDto> ObterAsync(CancellationToken ct) =>
+        _leitura.ObterAsync("panorama", () => CalcularAsync(ct));
+
+    private async Task<PanoramaDto> CalcularAsync(CancellationToken ct)
     {
         var legislatura = await Legislaturas.CorrenteAsync(_db, ct);
 

@@ -175,7 +175,7 @@ def senadores_para_linhas(identificacoes: list[dict]) -> list[dict]:
                 "nome_civil": _texto(identificacao.get("NomeCompletoParlamentar")) or nome,
                 "nome_exibicao": nome,
                 "cpf_hash": None,
-                "url_foto": _em_https(_texto(identificacao.get("UrlFotoParlamentar"))),
+                "url_foto": foto_do_senador(codigo),
                 "fonte": CASA,
                 "id_externo": codigo,
                 "metodo": "MANUAL",
@@ -217,7 +217,7 @@ def senadores_dos_votos(
                 "nome_civil": nome,
                 "nome_exibicao": nome,
                 "cpf_hash": None,
-                "url_foto": None,
+                "url_foto": foto_do_senador(codigo),
                 "fonte": CASA,
                 "id_externo": codigo,
                 "metodo": "MANUAL",
@@ -360,14 +360,19 @@ def _texto(valor) -> str:
     return "" if valor is None else str(valor).strip()
 
 
-def _em_https(url: str) -> str | None:
-    """🔴 O Senado publica a foto em `http://`, e o navegador bloqueia.
+def foto_do_senador(codigo: str) -> str:
+    """A foto oficial pelo código do senador, no endereço FINAL.
 
-    A página é servida por HTTPS; imagem em HTTP é conteúdo misto e não carrega — sem
-    erro visível, só um nó sem rosto. O host responde em HTTPS com o mesmo caminho.
+    📐 Medido em 2026-10-01: `UrlFotoParlamentar` aponta para
+    `www.senado.leg.br/senadores/img/fotos-oficiais/senador{codigo}.jpg`, que responde
+    **301** para este endereço com `Cache-Control: private` — uma requisição a mais por
+    foto, em toda visita. O destino responde direto, com CORS e `max-age=600`.
+
+    ⭐ E vale para todo código: só a lista de exercício trazia foto, e 375 dos 458
+    senadores da base (os que vieram pelo voto) ficavam sem rosto.
+
+    ⚠️ Já é HTTPS: a URL antiga vinha em `http://`, conteúdo misto que o navegador
+    bloqueava sem erro visível.
     """
-    if not url:
-        return None
-
-    return f"https://{url[len('http://'):]}" if url.startswith("http://") else url
+    return f"https://legis.senado.leg.br/senadores/fotos-oficiais/{codigo}"
 

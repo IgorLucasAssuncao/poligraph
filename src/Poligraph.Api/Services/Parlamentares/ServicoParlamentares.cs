@@ -7,7 +7,7 @@ using Poligraph.Data;
 namespace Poligraph.Api.Services;
 
 /// <summary>Lista e ficha do parlamentar — quem ele é, como votou e com quem se parece.</summary>
-public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache)
+public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLeitura leitura)
 {
     public const int TamanhoPadrao = 30;
     public const int TamanhoMaximo = 100;
@@ -21,12 +21,13 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache)
     /// Quanto a lista da legislatura fica em memória. Ela só muda quando o ETL roda, e
     /// montá-la custa ~260 ms: sem o cache, cada tecla da busca pagaria esse preço.
     /// </summary>
-    private static readonly TimeSpan ValidadeDaLista = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan ValidadeDaLista = CacheDeLeitura.Validade;
 
     private static readonly CompareInfo Comparacao = CultureInfo.GetCultureInfo("pt-BR").CompareInfo;
 
     private readonly PoligraphDb _db = db;
     private readonly IMemoryCache _cache = cache;
+    private readonly CacheDeLeitura _leitura = leitura;
 
     /// <summary>RF-34 — busca por nome, partido e UF, em páginas.</summary>
     /// <remarks>
@@ -75,37 +76,8 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache)
     /// <remarks>
     /// <para>A legislatura é a da PESSOA, não a corrente do site: um ex-deputado que só votou na 56ª abriria a ficha com zero votos. Pedida uma legislatura em que ela não votou, vale a última em que votou.</para>
     /// </remarks>
-    public async Task<FichaParlamentarDto?> ObterFichaAsync(long id, short? legislatura, CancellationToken ct)
-    {
-        var pessoa = await _db.Pessoas.AsNoTracking()
-            .Where(p => p.Id == id)
-            .Select(p => new { p.Id, p.NomeExibicao, p.NomeCivil, p.UrlFoto })
-            .FirstOrDefaultAsync(ct);
-
-        if (pessoa is null) return null;
-
-        var mandatos = await MandatosAsync(id, ct);
-        var mandato = mandatos.FirstOrDefault(m => m.Legislatura == legislatura) ?? mandatos.FirstOrDefault();
-        var alvo = mandato?.Legislatura;
-        var casa = mandato?.Casa;
-        var partido = mandato?.Partido ?? "";
-
-        return new FichaParlamentarDto(
-            pessoa.Id, pessoa.NomeExibicao, casa, pessoa.NomeCivil,
-            partido, mandato?.Uf ?? "", pessoa.UrlFoto,
-            await _db.Votos.CountAsync(
-                v => v.PessoaId == id && v.Valor != null
-                     && v.Votacao!.Legislatura == alvo, ct),
-            mandato?.NRegistrosDeVoto ?? 0,
-            await UltimosVotosAsync(id, alvo, 0, VotosPorPagina, ct),
-            await MaisSimilaresAsync(id, casa, alvo, ct),
-            await AlinhamentoAsync(id, casa, alvo, partido, ct),
-            await PresencaAsync(id, casa, alvo, ct),
-            await PaginaOficialAsync(id, casa, ct),
-            await RedesSociaisAsync(id, ct),
-            alvo,
-            mandatos);
-    }
+    public Task<FichaParlamentarDto?> ObterFichaAsync(long id, short? legislatura, CancellationToken ct) =>
+        _leitura.ObterAsync(("ficha", id, legislatura), () => CalcularFichaAsync(id, legislatura, ct));
 
     /// <summary>As legislaturas em que a pessoa votou, da mais recente, com a filiação do último voto de cada uma.</summary>
     /// <remarks>
@@ -251,6 +223,38 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache)
     /// </summary>
     public Task<IReadOnlyList<ParlamentarNaListaDto>> ParlamentaresDeTodasAsync(CancellationToken ct) =>
         ListaComAnterioresAsync(ct);
+
+    private async Task<FichaParlamentarDto?> CalcularFichaAsync(long id, short? legislatura, CancellationToken ct)
+    {
+        var pessoa = await _db.Pessoas.AsNoTracking()
+            .Where(p => p.Id == id)
+            .Select(p => new { p.Id, p.NomeExibicao, p.NomeCivil, p.UrlFoto })
+            .FirstOrDefaultAsync(ct);
+
+        if (pessoa is null) return null;
+
+        var mandatos = await MandatosAsync(id, ct);
+        var mandato = mandatos.FirstOrDefault(m => m.Legislatura == legislatura) ?? mandatos.FirstOrDefault();
+        var alvo = mandato?.Legislatura;
+        var casa = mandato?.Casa;
+        var partido = mandato?.Partido ?? "";
+
+        return new FichaParlamentarDto(
+            pessoa.Id, pessoa.NomeExibicao, casa, pessoa.NomeCivil,
+            partido, mandato?.Uf ?? "", pessoa.UrlFoto,
+            await _db.Votos.CountAsync(
+                v => v.PessoaId == id && v.Valor != null
+                     && v.Votacao!.Legislatura == alvo, ct),
+            mandato?.NRegistrosDeVoto ?? 0,
+            await UltimosVotosAsync(id, alvo, 0, VotosPorPagina, ct),
+            await MaisSimilaresAsync(id, casa, alvo, ct),
+            await AlinhamentoAsync(id, casa, alvo, partido, ct),
+            await PresencaAsync(id, casa, alvo, ct),
+            await PaginaOficialAsync(id, casa, ct),
+            await RedesSociaisAsync(id, ct),
+            alvo,
+            mandatos);
+    }
 
     /// <summary>Quem votou na legislatura corrente, com a filiação do último voto. Em cache.</summary>
     private async Task<IReadOnlyList<ParlamentarNaListaDto>> ListaDaLegislaturaAsync(CancellationToken ct)

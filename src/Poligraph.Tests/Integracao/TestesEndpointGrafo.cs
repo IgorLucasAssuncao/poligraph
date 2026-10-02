@@ -153,6 +153,39 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
 
     // PRIVADOS — na ordem de uso
 
+    /// <summary>581 KB de JSON viram ~76 KB: o grafo é a maior resposta do site.</summary>
+    [SkippableFact]
+    public async Task Grafo_ComAcceptEncoding_VemComprimido()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        await MontarGrafoAsync();
+        using var cliente = CriarCliente();
+
+        using var pedido = new HttpRequestMessage(HttpMethod.Get, Rota);
+        pedido.Headers.AcceptEncoding.ParseAdd("br");
+        using var resposta = await cliente.SendAsync(pedido);
+
+        Assert.Contains("br", resposta.Content.Headers.ContentEncoding);
+    }
+
+    /// <summary>A segunda leitura vem do cache: a execução gravada depois ⛔ aparece na mesma hora.</summary>
+    [SkippableFact]
+    public async Task Grafo_LidoDuasVezes_VemDoCache()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var primeira = await MontarGrafoAsync();
+        using var cliente = CriarCliente();
+
+        var antes = await cliente.GetFromJsonAsync<GrafoJson>(Rota);
+        await MontarGrafoAsync();
+        var depois = await cliente.GetFromJsonAsync<GrafoJson>(Rota);
+
+        Assert.Equal(primeira, antes!.ExecucaoId);
+        Assert.Equal(primeira, depois!.ExecucaoId);
+    }
+
     private HttpClient CriarCliente() => new FabricaApi(ConnectionString).CreateClient();
 
     private async Task SemearAsync() =>
