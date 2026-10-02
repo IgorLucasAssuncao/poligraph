@@ -6,7 +6,7 @@ vez que alguém apertou o botão. Este módulo só DECIDE as etapas; quem as exe
 
 | Frequência | Etapas |
 |---|---|
-| `semanal` | `ingerir` e `senado` do ano corrente, `conferir` |
+| `semanal` | `ingerir` e `senado` do ano corrente, `palavras-chave` das novas, `conferir` |
 | `mensal` | as da semanal, `cota`, `emendas`, `analisar` das duas casas, `conferir` |
 
 DECISÃO: a janela é a do dado, não a do relógio (plano/09 §4.1). Em janeiro e fevereiro o ano
@@ -54,6 +54,7 @@ def etapas(frequencia: str, hoje: date) -> list[Etapa]:
     lista = [
         Etapa("ingerir", {"anos": anos}),
         Etapa("senado", {"anos": anos}),
+        Etapa("palavras-chave"),
     ]
 
     if frequencia == "mensal":

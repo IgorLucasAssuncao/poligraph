@@ -195,6 +195,27 @@ def redes_do_deputado(id_camara: str) -> list[str] | None:
         return None
 
 
+def palavras_chave_da_proposicao(id_proposicao: int) -> str | None:
+    """As `keywords` da proposição (PL70): onde a Câmara põe o nome popular.
+
+    MEDIDO em 2026-10-02: a ementa da PEC 45/2019 diz "Altera o Sistema Tributário Nacional";
+    as palavras-chave terminam em "_Reforma tributária, tributação". O CSV de
+    `votacoesProposicoes` não traz o campo, e o de `proposicoes-{ano}` tem ~33 MB por ano de
+    apresentação, de 1988 em diante: uma requisição por proposição sai mais barato.
+
+    Devolve `""` quando a Câmara não publica nenhuma, e `None` quando a requisição falha: a
+    próxima execução tenta de novo só as nulas.
+    """
+    try:
+        resposta = requests.get(
+            f"{API}/proposicoes/{id_proposicao}", headers={"Accept": "application/json"}, timeout=30
+        )
+        resposta.raise_for_status()
+        return " ".join(((resposta.json().get("dados") or {}).get("keywords") or "").split())
+    except (requests.RequestException, ValueError):
+        return None
+
+
 def cpf_do_deputado(id_camara: str) -> str | None:
     """Busca o CPF de um deputado. `None` quando não há.
 

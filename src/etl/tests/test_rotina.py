@@ -14,7 +14,7 @@ def _comandos(lista):
 def test_semanal_traz_as_votacoes_do_ano_e_confere():
     lista = rotina.etapas("semanal", date(2026, 10, 5))
 
-    assert _comandos(lista) == ["ingerir --anos 2026", "senado --anos 2026", "conferir"]
+    assert _comandos(lista) == ["ingerir --anos 2026", "senado --anos 2026", "palavras-chave", "conferir"]
 
 
 def test_mensal_acrescenta_dinheiro_e_grafo_e_confere_uma_vez_no_fim():
@@ -23,6 +23,7 @@ def test_mensal_acrescenta_dinheiro_e_grafo_e_confere_uma_vez_no_fim():
     assert _comandos(lista) == [
         "ingerir --anos 2026",
         "senado --anos 2026",
+        "palavras-chave",
         "cota --anos 2026",
         "emendas --anos 2026",
         "analisar --casa CAMARA",
@@ -37,7 +38,7 @@ def test_janeiro_e_fevereiro_olham_o_ano_anterior(mes):
     lista = rotina.etapas("mensal", date(2027, mes, 3))
 
     assert lista[0].argumentos["anos"] == [2026, 2027]
-    assert lista[2].argumentos["anos"] == [2026, 2027]
+    assert lista[3].argumentos["anos"] == [2026, 2027]
 
 
 def test_marco_ja_nao_olha():
@@ -61,11 +62,11 @@ def test_toda_etapa_tem_execucao_no_main(monkeypatch):
             return (57,)
 
     executados = []
-    for nome in ("_ingerir", "_senado", "_cota", "_emendas", "_analisar", "_conferir"):
+    for nome in ("_ingerir", "_senado", "_palavras_chave", "_cota", "_emendas", "_analisar", "_conferir"):
         monkeypatch.setattr(principal, nome, lambda *_, nome=nome: executados.append(nome))
 
     for frequencia in rotina.FREQUENCIAS:
         for etapa in rotina.etapas(frequencia, date(2026, 10, 5)):
             principal._executar_etapa(ConexaoFalsa(), etapa)
 
-    assert set(executados) == {"_ingerir", "_senado", "_cota", "_emendas", "_analisar", "_conferir"}
+    assert set(executados) == {"_ingerir", "_senado", "_palavras_chave", "_cota", "_emendas", "_analisar", "_conferir"}

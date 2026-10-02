@@ -30,4 +30,14 @@ public class ProposicaoModel
     public short? Ano { get; set; }
     public string? Ementa { get; set; }
     public string? UrlInteiroTeor { get; set; }
+
+    /// <summary>
+    /// As palavras-chave da casa (PL70): <c>keywords</c> da Câmara, <c>IndexacaoMateria</c> do
+    /// Senado. É onde aparece o nome popular: a ementa da PEC 45/2019 diz "Altera o Sistema
+    /// Tributário Nacional", e só as palavras-chave dizem "Reforma tributária".
+    /// </summary>
+    /// <remarks>
+    /// <para>Nulo é "ainda não consultada"; vazio é "consultada, e a casa não publica nenhuma". Sem a diferença, a busca de quem falta repetiria as vazias para sempre.</para>
+    /// </remarks>
+    public string? PalavrasChave { get; set; }
 }

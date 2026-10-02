@@ -107,7 +107,8 @@ public static class DadosDeTeste
         new() { Id = 900003, SiglaTipo = "PL",  Numero = 1112, Ano = 2023,
                 Ementa = "Estabelece cumprimento mínimo de 80% da pena para crimes hediondos." },
         new() { Id = 900004, SiglaTipo = "PLP", Numero = 243,  Ano = 2023,
-                Ementa = "Incentivo à permanência de estudantes no ensino médio." },
+                Ementa = "Incentivo à permanência de estudantes no ensino médio.",
+                PalavrasChave = "Ensino médio, incentivo financeiro, _Pé-de-Meia, poupança estudantil." },
         new() { Id = 900005, SiglaTipo = "PL",  Numero = 5496, Ano = 2013,
                 Ementa = "Dispõe sobre o contrato de trabalho por prazo determinado." },
     ];

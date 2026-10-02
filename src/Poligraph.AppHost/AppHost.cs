@@ -242,6 +242,15 @@ builder.AddDockerfile("etl-conferir", "../..", "docker/Dockerfile.etl")
     .WithArgs("conferir")
     .WithParentRelationship(etlIngerir);
 
+// PL70 — as palavras-chave das proposições votadas, só das que faltam. A rotina semanal já
+// chama; o botão é para a primeira carga, que são milhares de requisições.
+builder.AddDockerfile("etl-palavras-chave", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs("palavras-chave")
+    .WithParentRelationship(etlIngerir);
+
 // PL64 — a carga agendada, como botão: no VPS ela é tarefa agendada do Coolify, e aqui é o
 // jeito de ver a mesma cadeia rodar. A mensal precisa da chave do CPF por causa da cota.
 foreach (var frequencia in new[] { "semanal", "mensal" })

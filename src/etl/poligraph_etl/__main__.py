@@ -97,6 +97,8 @@ def main(argv: list[str] | None = None) -> int:
                 _conferir(conexao)
             elif args.comando == "rotina":
                 _rotina(conexao, args.frequencia)
+            elif args.comando == "palavras-chave":
+                _palavras_chave(conexao, args.limite)
             elif args.comando == "validar":
                 _validar(conexao, args.legislatura, args.divisao_minima)
             else:
@@ -149,6 +151,10 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     )
 
     sub.add_parser("cpf", help="completa o cpf_hash das duas casas (Câmara: API; Senado: TSE)")
+    pal = sub.add_parser(
+        "palavras-chave", help="palavras-chave das proposições votadas que ainda não têm (PL70)"
+    )
+    pal.add_argument("--limite", type=int, default=None, help="no máximo tantas, para ir por partes")
     rot = sub.add_parser("rotina", help="a carga agendada (PL64): semanal ou mensal, terminando em conferir")
     rot.add_argument("--frequencia", choices=list(rotina.FREQUENCIAS), required=True)
     sub.add_parser(
@@ -1704,6 +1710,41 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
     log.info("  %d matérias gravadas, %d votações vinculadas", len(linhas), ligados)
 
 
+def _palavras_chave(conexao: psycopg.Connection, limite: int | None) -> None:
+    """PL70 — busca as palavras-chave das proposições votadas que ainda não as têm.
+
+    Câmara pela API (`keywords`), Senado pela matéria (`IndexacaoMateria`). Uma requisição
+    por proposição, com pausa curta, gravando de 100 em 100: interromper no meio não perde o
+    que já veio, e a próxima execução retoma pelas nulas.
+    """
+    pendentes = persistencia.proposicoes_sem_palavras_chave(conexao)
+    if limite is not None:
+        pendentes = pendentes[:limite]
+    log.info("Palavras-chave: %d proposições a consultar", len(pendentes))
+
+    lote: list[tuple[str, int, str]] = []
+    falhas = 0
+    for posicao, (casa, id_proposicao) in enumerate(pendentes, 1):
+        if casa == "CAMARA":
+            palavras = camara.palavras_chave_da_proposicao(id_proposicao)
+        else:
+            materia = senado.baixar_materia(str(id_proposicao))
+            palavras = None if materia is None else materia.get("indexacao") or ""
+        if palavras is None:
+            falhas += 1
+        else:
+            lote.append((casa, id_proposicao, palavras))
+        if len(lote) >= 100:
+            persistencia.gravar_palavras_chave(conexao, lote)
+            lote = []
+            log.info("  %d de %d", posicao, len(pendentes))
+        time.sleep(0.05)
+
+    persistencia.gravar_palavras_chave(conexao, lote)
+    if falhas:
+        log.warning("  %d não responderam; ficam para a próxima execução", falhas)
+
+
 def _rotina(conexao: psycopg.Connection, frequencia: str) -> None:
     """PL64 — roda as etapas da rotina, na ordem, e para na primeira que falhar.
 
@@ -1726,6 +1767,8 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
         _ingerir(conexao, anos)
     elif etapa.comando == "senado":
         _senado(conexao, anos)
+    elif etapa.comando == "palavras-chave":
+        _palavras_chave(conexao, None)
     elif etapa.comando == "cota":
         _cota(conexao, anos)
     elif etapa.comando == "emendas":

@@ -355,6 +355,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// </remarks>
     /// <summary>Os votos da pessoa na legislatura, filtrados pela busca quando houver.</summary>
     /// <remarks>
+    /// <para>Procura na descrição, na ementa, nas palavras-chave da casa e na sigla com número. As palavras-chave (PL70) são onde está o nome popular: "reforma tributária" não aparece na ementa da PEC 45/2019.</para>
     /// <para>Expressão regular, e não <c>unaccent</c>: a extensão não está no banco, e instalá-la seria migration para uma busca. A expressão troca cada vogal e o "c" pela classe com as variantes acentuadas — "tributaria" acha "tributária".</para>
     /// </remarks>
     private IQueryable<VotoModel> VotosDaPessoa(long id, short? legislatura, string? busca)
@@ -370,6 +371,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
             votos = votos.Where(v =>
                 Regex.IsMatch(v.Votacao!.Descricao ?? "", padrao, RegexOptions.IgnoreCase)
                 || Regex.IsMatch(v.Votacao.Proposicao!.Ementa ?? "", padrao, RegexOptions.IgnoreCase)
+                || Regex.IsMatch(v.Votacao.Proposicao!.PalavrasChave ?? "", padrao, RegexOptions.IgnoreCase)
                 || Regex.IsMatch(
                     (v.Votacao.Proposicao!.SiglaTipo ?? "") + " " + v.Votacao.Proposicao.Numero + "/" + v.Votacao.Proposicao.Ano,
                     padrao, RegexOptions.IgnoreCase));

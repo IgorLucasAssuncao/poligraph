@@ -461,6 +461,31 @@ def gravar_votacoes(
     )
 
 
+def proposicoes_sem_palavras_chave(conexao: psycopg.Connection) -> list[tuple[str, int]]:
+    """`(casa, id)` das proposições ligadas a alguma votação e ainda não consultadas (PL70)."""
+    return conexao.execute(
+        """
+        SELECT p.casa, p.id
+          FROM proposicoes p
+         WHERE p.palavras_chave IS NULL
+           AND EXISTS (SELECT 1 FROM votacoes v WHERE v.proposicao_id = p.id AND v.casa = p.casa)
+         ORDER BY p.ano DESC NULLS LAST, p.id
+        """
+    ).fetchall()
+
+
+def gravar_palavras_chave(conexao: psycopg.Connection, linhas: Sequence[tuple[str, int, str]]) -> int:
+    """Grava `(casa, id, palavras)`. Vazio quer dizer consultada e sem palavras; nulo nunca entra aqui."""
+    if not linhas:
+        return 0
+    with conexao.cursor() as cursor:
+        cursor.executemany(
+            "UPDATE proposicoes SET palavras_chave = %s WHERE casa = %s AND id = %s",
+            [(palavras, casa, id_proposicao) for casa, id_proposicao, palavras in linhas],
+        )
+    return len(linhas)
+
+
 def marcar_secretas_de_fato(conexao: psycopg.Connection, casa: str) -> int:
     """PL69 — marca `secreta` na votação que tem votos e nenhum com posição.
 

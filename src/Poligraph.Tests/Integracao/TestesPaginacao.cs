@@ -47,6 +47,7 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
     [InlineData("MANIFESTACOES", "900001-1")]
     [InlineData("PLP 243/2023", "900004-1")]
     [InlineData("Mantido o texto", "900005-1")]
+    [InlineData("poupanca estudantil", "900004-1")]
     public async Task Votos_Busca_AchaPelaEmentaDescricaoOuMateria(string busca, string esperada)
     {
         ExigeDocker();

@@ -1356,6 +1356,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("numero");
 
+                    b.Property<string>("PalavrasChave")
+                        .HasColumnType("text")
+                        .HasColumnName("palavras_chave");
+
                     b.Property<string>("SiglaTipo")
                         .HasColumnType("text")
                         .HasColumnName("sigla_tipo");
