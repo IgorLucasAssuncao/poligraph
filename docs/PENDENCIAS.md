@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-10-02 · **107 resolvidas · 65 abertas**
+> **Atualizado:** 2026-10-02 · **108 resolvidas · 64 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -47,7 +47,7 @@ PL41).
 | ✅ ~~PL64~~ | **Resolvida (2026-10-02)** — comando `rotina --frequencia semanal|mensal` (`rotina.py` decide as etapas, o `__main__` executa e para na primeira falha): semanal = `ingerir` e `senado` do ano + `conferir`; mensal = as da semanal + `cota`, `emendas`, `analisar` das duas casas + `conferir`. Em janeiro e fevereiro entra o ano anterior. No VPS, duas Scheduled Tasks do Coolify ([`plano/05 §2.3`](plano/05-cicd-e-deploy.md)); no Aspire, os botões `etl-rotina-semanal` e `etl-rotina-mensal`. ATENÇÃO: o agendamento no Coolify só existe quando houver o VPS | — |
 | **PL65** | 🔴 **Login opcional — e a RNF-17.** Feito em 2026-10-02: com `Acesso:LeituraPublica` ligado, só seguir e a conta pedem login, e o login volta para onde a pessoa estava. Ligado **só** em `appsettings.Development.json`. ⚠️ **Em produção continua desligado**: a RNF-17 restringe o acesso no período eleitoral, e o 2º turno é em **25/10/2026**. Ligar em produção é decisão do autor | 🔴 Alta |
 | ✅ ~~PL66~~ | **Resolvida (2026-10-02)** — `conferir` na ETL e o botão `etl-conferir`: regras de plausibilidade depois da carga, ERRO derruba o comando. Primeira rodada: **0 erros, 29 avisos**, todos explicados em [`plano/09 §5.2`](plano/09-apresentacao-validacao-e-valor.md). A votação do Senado com 82 é titular e suplente de TO no dia da troca; dos 13 placares, 11 são votação secreta de fato (PL69) | — |
-| **PL69** | 🟡 **Votação secreta na Câmara marcada como aberta:** 11 votações, quase todas eleição de autoridade ("Eleito o Sr. …"), têm a presença de cada deputado e **nenhuma posição**. ⛔ Entram no cálculo (sem posição ⛔ há o que comparar), mas contam como abertas no painel e no grafo. Marcar `secreta` na ingestão quando ninguém tem posição | 🟢 Baixa |
+| ✅ ~~PL69~~ | **Resolvida (2026-10-02)** — `persistencia.marcar_secretas_de_fato` marca `secreta` em toda votação da Câmara com votos e nenhuma posição, no fim de cada `ingerir`, na base inteira (idempotente; a regravação não desfaz a marca). MEDIDO no banco local: **12** votações, uma ou mais em cada legislatura da 52ª à 57ª (a contagem de 11 era de uma medição anterior); o aviso `sem-posicao-nenhuma` do `conferir` caiu de 12 para 0, e a conferência de 31 para 19 avisos. O card do início deixou de dizer "N% das votações são secretas", que daria "0%" na Câmara e era percentual solto (RF-29): agora "2 de 1.597 votações são secretas" | — |
 | **PL70** | 🟡 **A busca nos votos ⛔ acha o nome popular:** "reforma tributária" dá 0, porque a ementa oficial da PEC 45/2019 diz "Altera o Sistema Tributário Nacional"; "arcabouço" também dá 0. A Câmara publica palavras-chave por proposição (`keywords`), que ⛔ ingerimos. Ingerir e incluir na busca. 📐 Medido em 2026-10-02: "tributaria" acha 33 votos e "PEC 45/2019", 19 | 🟡 Média |
 | **PL71** | 🟡 **Sede dos favorecidos pela BrasilAPI:** **19.164 de 50.738** CNPJs que receberam emenda estão sem município — **R$ 9,81 bi de R$ 159,49 bi** fora do mapa. `brasilapi.com.br/api/cnpj/v1/{cnpj}` devolve `codigo_municipio_ibge` direto (conferido em 2026-10-02 com a Prefeitura de Cascavel: 4104808). Buscar os que faltam, devagar, gravando em `cnpjs_municipio` com a data e a fonte. ⚠️ Projeto comunitário, sem SLA, que repassa o dado aberto da Receita: a fonte citada continua sendo a Receita. ⛔ Gravar o quadro de sócios (`qsa`): é dado pessoal e ⛔ serve ao trabalho | 🟡 Média |
 | ✅ ~~PL77~~ | **Resolvida (2026-10-02)** — `hash_de_cpf` passou a **HMAC-SHA256** com a chave de `POLIGRAPH_CHAVE_CPF`, que vem do parâmetro secreto `chave-cpf` do AppHost (user-secrets `Parameters:chave-cpf`). Sem a chave, ou com menos de 32 caracteres, a ETL **para** em vez de cair no SHA-256 puro. O comando `rechavear-cpf` refaz tudo: apaga `pessoas.cpf_hash`, roda `cpf` e recarrega cota, campanha e patrimônio nos anos que estão no banco. ATENÇÃO: **perder a chave é perder a conciliação** (os hashes novos não casam com os do banco); trocar a chave exige rodar `rechavear-cpf`. MEDIDO em 2026-10-02, no banco local: 719 de 719 pessoas voltaram a ter `cpf_hash`; campanha (44.171 receitas, 31.657 de pessoa física, 718 parlamentares) e patrimônio (5.840) com as mesmas contagens de antes. Fecha também B7 e ER5, que pediam a mesma decisão. Explicação em https://claude.ai/artifact/Gc11fzR2MEZk85RFMuGjki | — |
@@ -1390,13 +1390,13 @@ avaliação rodar cedo demais.
 
 ---
 
-## ✅ Resolvidas — 107
+## ✅ Resolvidas — 108
 
 `A1` `A5` `API1` `API2` `API3` `API4` `API6` `B1` `B2` `B3` `B4` `B5` `B7` `C1` `C2` `C3` `C4`
 `C6` `C8` `C13` `C14` `CT1` `CT2` `CT3` `CT4` `CT5` `CT6` `CT7` `D1` `D3` `D5` `ER1` `ER3`
 `ER4` `ER5` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PL10`
 `PL11` `PL12` `PL13` `PL17` `PL28` `PL31` `PL32` `PL35` `PL36` `PL37` `PL38` `PL39` `PL40`
-`PL41` `PL42` `PL43` `PL45` `PL46` `PL47` `PL48` `PL49` `PL50` `PL51` `PL54` `PL55` `PL59` `PL61` `PL63` `PL64` `PL66` `PL68` `PL74` `PL76` `PL77` `PL78` `PL79` `PP1` `PP3` `PP4`
+`PL41` `PL42` `PL43` `PL45` `PL46` `PL47` `PL48` `PL49` `PL50` `PL51` `PL54` `PL55` `PL59` `PL61` `PL63` `PL64` `PL66` `PL68` `PL69` `PL74` `PL76` `PL77` `PL78` `PL79` `PP1` `PP3` `PP4`
 `RE-01` `RQ1` `RQ2` `RQ3` `RQ4` `RQ8` `RQ9` `SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2`
 `TS3` `TS4` `TS6`
 

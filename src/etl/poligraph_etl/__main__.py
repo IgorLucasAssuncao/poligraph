@@ -385,6 +385,10 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
             len(linhas), len(df_orientacoes), len({l["bancada"] for l in linhas}),
         )
 
+    secretas = persistencia.marcar_secretas_de_fato(conexao, "CAMARA")
+    if secretas:
+        log.info("  %d votações sem nenhuma posição marcadas como secretas (PL69)", secretas)
+
 
 def _baixar_da_camara(conexao: psycopg.Connection, recurso: str, ano: int):
     """Baixa um arquivo da Câmara e registra a carga (PL72): devolve o caminho e o id.

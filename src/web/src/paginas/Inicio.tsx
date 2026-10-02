@@ -328,8 +328,8 @@ function CartaoDaCasa({ casa, legislatura }: { casa: PanoramaDaCasa; legislatura
       {casa.votacoesSecretas > 0 && (
         <p className="cartao-ressalva">
           <strong>
-            {Math.round((casa.votacoesSecretas / casa.votacoes) * 100)}% das votações são
-            secretas
+            {casa.votacoesSecretas.toLocaleString('pt-BR')} de {casa.votacoes.toLocaleString('pt-BR')}{' '}
+            {casa.votacoesSecretas === 1 ? 'votação é secreta' : 'votações são secretas'}
           </strong>{' '}
           e não têm voto individual publicado. A comparação se apoia nas {abertas}{' '}
           abertas.

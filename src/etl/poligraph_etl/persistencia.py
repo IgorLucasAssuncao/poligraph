@@ -461,6 +461,28 @@ def gravar_votacoes(
     )
 
 
+def marcar_secretas_de_fato(conexao: psycopg.Connection, casa: str) -> int:
+    """PL69 — marca `secreta` na votação que tem votos e nenhum com posição.
+
+    MEDIDO em 2026-10-02: 11 votações da Câmara, quase todas eleição de autoridade ("Eleito o
+    Sr. ..."), chegam com a presença de cada deputado e nenhum Sim, Não ou abstenção. A Câmara
+    não marca o sigilo; sem esta marca elas contavam como abertas no painel e no grafo.
+
+    DECISÃO: Na base inteira da casa, e não só nos anos da carga: é uma consulta só, e a
+    votação antiga que já estava no banco é corrigida na próxima carga de qualquer ano.
+    A gravação de votações não regrava `secreta` no conflito, então a marca fica.
+    """
+    return conexao.execute(
+        """
+        UPDATE votacoes t SET secreta = true
+         WHERE t.casa = %s AND NOT t.secreta
+           AND EXISTS (SELECT 1 FROM votos v WHERE v.votacao_id = t.id)
+           AND NOT EXISTS (SELECT 1 FROM votos v WHERE v.votacao_id = t.id AND v.valor IS NOT NULL)
+        """,
+        (casa,),
+    ).rowcount
+
+
 def apagar_votacoes(conexao: psycopg.Connection, ids: Sequence[str]) -> int:
     """Apaga votações que a fonte desmentiu, com os votos e orientações delas (cascata).
 
