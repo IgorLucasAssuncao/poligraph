@@ -36,7 +36,8 @@ app.MapearParlamentares()
    .MapearAutenticacao()
    .MapearSeguir()
    .MapearGrafo()
-   .MapearAvaliacao();
+   .MapearAvaliacao()
+   .MapearProcedencia();
 
 app.AvisarSeOLoginEstaDesligado();
 

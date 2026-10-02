@@ -39,6 +39,10 @@ public static class Legislaturas
     public static (int De, int Ate) AnosDeEmenda(short legislatura) =>
         (AnoInicial(legislatura) + 1, AnoInicial(legislatura) + 4);
 
+    /// <summary>A legislatura que apresentou a emenda de um ano: o inverso de <see cref="AnosDeEmenda"/>.</summary>
+    public static short DoAnoDeEmenda(int ano) =>
+        (short)(57 + (int)Math.Floor((ano - AnoInicial(57) - 1) / 4.0));
+
     /// <summary>A eleição que deu o mandato: a do ano anterior à posse.</summary>
     public static int EleicaoDoMandato(short legislatura) => AnoInicial(legislatura) - 1;
 

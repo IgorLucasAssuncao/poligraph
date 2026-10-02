@@ -121,6 +121,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     /// <remarks>
     /// <para>O <c>CHECK</c> do hash aceita só hexadecimal minúsculo de 64 caracteres: um hash em maiúsculas ou cortado seria outra string, e a comparação com o arquivo guardado falharia sem dizer por quê.</para>
     /// <para>Índice nas três tabelas: o modo análise (PL73) lista as linhas de uma carga. Em <c>votos</c>, com 2,2 milhões de linhas, são ~50 MB.</para>
+    /// <para>As tabelas de dinheiro (cota, emendas, campanha, patrimônio, sede de CNPJ) levam a mesma chave, e o índice que o EF cria para toda FK: o modo análise conta quantas linhas vieram de cada arquivo.</para>
     /// </remarks>
     private static void ConfigurarProcedencia(ModelBuilder mb)
     {
@@ -129,6 +130,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasKey(x => x.Id);
             e.Property(x => x.Sha256).HasMaxLength(64).IsFixedLength();
             e.Property(x => x.BaixadoEm).HasDefaultValueSql("now()");
+            e.Property(x => x.Versao).HasMaxLength(64);
             e.ToTable(t =>
             {
                 t.HasCheckConstraint("ck_carga_fonte",
@@ -147,6 +149,19 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         mb.Entity<VotoModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<OrientacaoModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+
+        mb.Entity<DespesaModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<EmendaModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<EmendaFavorecidoModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<ReceitaDeCampanhaModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<PatrimonioModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<CnpjMunicipioModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
     }
 

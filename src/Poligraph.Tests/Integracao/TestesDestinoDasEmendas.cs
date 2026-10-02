@@ -106,6 +106,41 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
     }
 
     /// <summary>
+    /// PL74: a cota do mesmo parlamentar ao mesmo CNPJ, só nos anos de despesa do mandato
+    /// da emenda. A emenda de 2025 é da 57ª, e a cota que conta é a de 2023 a 2026.
+    /// </summary>
+    [SkippableFact]
+    public async Task Favorecido_TambemNaCota_SoDoMesmoParlamentarNoMesmoMandato()
+    {
+        ExigeDocker();
+        var pessoaId = await SemearEmendaAsync();
+        var outro = await Db.Pessoas.AsNoTracking().Where(p => p.Id != pessoaId).Select(p => p.Id).FirstAsync();
+        Db.EmendasFavorecidos.Add(Empresa(new DateOnly(2025, 3, 1), 300m));
+        Db.Despesas.AddRange(
+            Despesa(pessoaId, 2024, 120m),
+            Despesa(pessoaId, 2026, 30m),
+            Despesa(pessoaId, 2022, 1_000m),
+            Despesa(outro, 2024, 5_000m));
+        await Db.SaveChangesAsync();
+
+        var unico = Assert.Single((await LerAsync(pessoaId)).Favorecidos.Maiores);
+
+        Assert.Equal(150m, unico.TambemNaCota);
+    }
+
+    /// <summary>Sem pagamento da cota ao CNPJ, o campo vem nulo e a tela não diz nada.</summary>
+    [SkippableFact]
+    public async Task Favorecido_SemCota_VemNulo()
+    {
+        ExigeDocker();
+        var pessoaId = await SemearEmendaAsync();
+        Db.EmendasFavorecidos.Add(Empresa(new DateOnly(2025, 3, 1), 300m));
+        await Db.SaveChangesAsync();
+
+        Assert.Null(Assert.Single((await LerAsync(pessoaId)).Favorecidos.Maiores).TambemNaCota);
+    }
+
+    /// <summary>
     /// A cidade sai da sede de quem recebeu, pelo CNPJ — não da localidade declarada na emenda.
     /// </summary>
     [SkippableFact]
@@ -207,7 +242,7 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
         Assert.Equal(restricao, erro.ConstraintName);
     }
 
-    private record FavorecidoLido(string Nome, decimal Recebido);
+    private record FavorecidoLido(string Nome, decimal Recebido, decimal? TambemNaCota = null);
 
     private record FavorecidosLidos(
         decimal Recebido, decimal ViaIntermediario, decimal APessoas, decimal SemIdentificacao,
@@ -248,7 +283,13 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
         ValorEmpenhado = empenhado, ValorPago = empenhado / 2
     };
 
-    private static EmendaFavorecidoModel Empresa(DateOnly mes, decimal valor) => new()
+    private static DespesaModel Despesa(long pessoaId, short ano, decimal valor) => new()
+    {
+        PessoaId = pessoaId, Ano = ano, Mes = 5, Categoria = "PASSAGEM AÉREA",
+        Fornecedor = "CONSTRUTORA EXEMPLO LTDA", CnpjOuHash = "12345678000190", ValorLiquido = valor
+    };
+
+        private static EmendaFavorecidoModel Empresa(DateOnly mes, decimal valor) => new()
     {
         CodigoEmenda = Codigo, Competencia = mes, Tipo = TipoFavorecido.PESSOA_JURIDICA,
         Documento = "12345678000190", Nome = "CONSTRUTORA EXEMPLO LTDA",

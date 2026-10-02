@@ -691,6 +691,8 @@ export type FavorecidoDaEmenda = {
   recebido: number;
   /** Só pessoa jurídica que tem página de entidade; empresário individual e unidade gestora vêm sem. */
   cnpj?: string | null;
+  /** PL74: o que a cota do mesmo parlamentar pagou ao mesmo CNPJ, no mandato da emenda. Nulo quando nada. */
+  tambemNaCota?: number | null;
 };
 
 /**
@@ -972,6 +974,52 @@ export type Metodologia = {
   afinidade: { quantidadeExibida: number; vizinhosParaPosicionar: number };
   casas: CasaNaMetodologia[];
 };
+
+/** O número cuja procedência se pede (PL73). O recorte é o mesmo da tela que o mostra. */
+export type ConsultaDeProcedencia = {
+  contexto: 'votos' | 'cota' | 'emendas' | 'campanha' | 'patrimonio' | 'painel';
+  pessoa?: number;
+  legislatura?: number;
+  ano?: number;
+  casa?: 'CAMARA' | 'SENADO';
+};
+
+/** Um arquivo baixado de fonte oficial, com a impressão digital do que veio. */
+export type CargaDeProcedencia = {
+  id: number;
+  fonte: string;
+  orgao: string;
+  baseLegal: string;
+  url: string;
+  baixadoEm: string;
+  sha256: string;
+  bytes: number;
+  etagDaFonte: string | null;
+  modificadoNaFonte: string | null;
+  comando: string;
+  /** A versão da ETL que leu o arquivo: o hash dos fontes dela. */
+  versao: string | null;
+  linhas: number;
+};
+
+/** De onde veio um número e como foi contado. */
+export type Procedencia = {
+  regra: string;
+  linhas: number;
+  /** Gravadas antes da PL72: não dizem de que arquivo vieram, e a tela diz quantas são. */
+  linhasSemCarga: number;
+  cargas: CargaDeProcedencia[];
+};
+
+export async function obterProcedencia(consulta: ConsultaDeProcedencia): Promise<Procedencia> {
+  const { contexto, ...resto } = consulta;
+  const parametros = new URLSearchParams(
+    Object.entries(resto)
+      .filter(([, valor]) => valor !== undefined)
+      .map(([chave, valor]) => [chave, String(valor)]),
+  );
+  return buscar<Procedencia>(`${BASE}/procedencia/${contexto}?${parametros}`);
+}
 
 export async function obterMetodologia(): Promise<Metodologia> {
   return buscar<Metodologia>(`${BASE}/metodologia`);

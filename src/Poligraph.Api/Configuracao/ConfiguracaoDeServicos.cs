@@ -45,6 +45,7 @@ public static class ConfiguracaoDeServicos
         servicos.AddScoped<ServicoMapaDeEmendas>();
         servicos.AddScoped<ServicoEntidades>();
         servicos.AddScoped<ServicoBusca>();
+        servicos.AddScoped<ServicoProcedencia>();
 
         return servicos;
     }

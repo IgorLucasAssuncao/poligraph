@@ -85,6 +85,28 @@ def test_quatro_senadores_de_uma_uf_e_aviso():
     assert [a.detalhe for a in achados] == ["SF-5999: 4 senadores de TO"]
 
 
+def test_o_maior_patrimonio_medido_passa_e_o_digito_a_mais_e_aviso():
+    """PL76: R$ 240 mi é o maior da base; R$ 12 bi foi o bem digitado com dígitos a mais."""
+    achados = conferencia.patrimonio_acima_do_teto([
+        ("Medido", 2018, 239_700_000.0),
+        ("Digitado", 2022, 12_000_000_000.0),
+    ])
+
+    assert [(a.severidade, a.detalhe) for a in achados] == [
+        ("AVISO", "Digitado, eleição de 2022: R$ 12,000.0 mi declarados"),
+    ]
+
+
+def test_salto_de_patrimonio_so_conta_acima_do_minimo():
+    achados = conferencia.salto_de_patrimonio([
+        ("Medido", 2018, 100_000.0, 2022, 1_420_000.0),
+        ("Pequeno", 2018, 1_000.0, 2022, 100_000.0),
+        ("Salto", 2018, 200_000.0, 2022, 20_000_000.0),
+    ])
+
+    assert [a.detalhe.split(":")[0] for a in achados] == ["Salto"]
+
+
 def test_conferir_roda_toda_regra_com_a_consulta_dela():
     """Cada regra tem consulta, e uma base vazia não quebra nada."""
     vistas = []

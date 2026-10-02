@@ -18,6 +18,7 @@ import { useSessao } from '../sessao';
 import { EsqueletoDePainel } from '../componentes/Esqueleto';
 import { useLegislaturaDaUrl, useLegislaturas } from '../componentes/useLegislatura';
 import { BarraDePeriodo } from '../componentes/BarraDePeriodo';
+import { ComProcedencia } from '../componentes/ModoAnalise';
 import { periodoDaLegislatura } from '../formato';
 
 /**
@@ -265,7 +266,7 @@ function Base({ panorama }: { panorama: Panorama }) {
 
       <div className="painel-casas">
         {panorama.porCasa.map((casa) => (
-          <CartaoDaCasa key={casa.casa} casa={casa} />
+          <CartaoDaCasa key={casa.casa} casa={casa} legislatura={panorama.legislatura ?? undefined} />
         ))}
       </div>
     </section>
@@ -280,7 +281,7 @@ function Base({ panorama }: { panorama: Panorama }) {
  * RISCO: O sigilo muda o que a figura daquela casa pode afirmar, e omiti-lo faria as
  * duas parecerem comparáveis. É achado do trabalho, não rodapé.
  */
-function CartaoDaCasa({ casa }: { casa: PanoramaDaCasa }) {
+function CartaoDaCasa({ casa, legislatura }: { casa: PanoramaDaCasa; legislatura?: number }) {
   const nome = NOME_DA_CASA[casa.casa];
   const abertas = casa.votacoes - casa.votacoesSecretas;
 
@@ -295,7 +296,14 @@ function CartaoDaCasa({ casa }: { casa: PanoramaDaCasa }) {
         </div>
         <div>
           <dt>votações</dt>
-          <dd>{casa.votacoes.toLocaleString('pt-BR')}</dd>
+          <dd>
+            <ComProcedencia
+              consulta={{ contexto: 'painel', casa: casa.casa, legislatura }}
+              rotulo={`Votações · ${nome.nome}`}
+            >
+              {casa.votacoes.toLocaleString('pt-BR')}
+            </ComProcedencia>
+          </dd>
         </div>
         <div>
           <dt>votos com posição</dt>

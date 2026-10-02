@@ -44,4 +44,7 @@ public class EmendaFavorecidoModel
     public decimal Valor { get; set; }
 
     public bool Intermediario { get; set; }
+
+    /// <summary>A carga de onde a linha saiu (PL72). Nula nas linhas gravadas antes dela.</summary>
+    public long? CargaId { get; set; }
 }

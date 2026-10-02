@@ -45,7 +45,8 @@ CREATE TABLE cargas (
     bytes BIGINT NOT NULL CHECK (bytes >= 0),
     etag_da_fonte TEXT,
     modificado_na_fonte TIMESTAMPTZ,
-    comando TEXT NOT NULL
+    comando TEXT NOT NULL,
+    versao VARCHAR(64)
 );
 CREATE TABLE votacoes (
     id TEXT PRIMARY KEY,

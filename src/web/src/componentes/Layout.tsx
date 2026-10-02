@@ -4,6 +4,7 @@ import { BuscaDoCabecalho } from './BuscaDoCabecalho';
 import { FaixaDeProcedencia } from './FaixaDeProcedencia';
 import { IconeExplorar, IconeOrcamento, IconeQuestionario, IconeVoltar, Marca } from './Icones';
 import { MenuDaConta } from './MenuDaConta';
+import { InterruptorDoModoAnalise, ProvedorDoModoAnalise } from './ModoAnalise';
 import { ProvedorDoTour } from './Tour';
 import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
 
@@ -57,16 +58,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <ProvedorDoTour>
-      <div className="site">
-        <FaixaDeProcedencia />
-        <CabecalhoDoSite />
+      <ProvedorDoModoAnalise>
+        <div className="site">
+          <FaixaDeProcedencia />
+          <CabecalhoDoSite />
 
-        <main className="corpo" data-largura={largura}>
-          {children}
-        </main>
+          <main className="corpo" data-largura={largura}>
+            {children}
+          </main>
 
-        <RodapeDoSite />
-      </div>
+          <RodapeDoSite />
+        </div>
+      </ProvedorDoModoAnalise>
     </ProvedorDoTour>
   );
 }
@@ -162,6 +165,7 @@ function CabecalhoDoSite() {
         </nav>
 
         <BuscaDoCabecalho />
+        <InterruptorDoModoAnalise />
         <MenuDaConta />
       </div>
     </header>

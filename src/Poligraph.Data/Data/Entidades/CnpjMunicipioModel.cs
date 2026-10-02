@@ -25,4 +25,7 @@ public class CnpjMunicipioModel
     public DateOnly CadastroDe { get; set; }
 
     public MunicipioModel? Municipio { get; set; }
+
+    /// <summary>A carga de onde a linha saiu (PL72). Nula nas linhas gravadas antes dela.</summary>
+    public long? CargaId { get; set; }
 }

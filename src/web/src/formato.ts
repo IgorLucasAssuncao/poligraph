@@ -111,3 +111,14 @@ export function periodoDaLegislatura(legislatura: number): string {
   const posse = 2023 + (legislatura - 57) * 4;
   return `${posse}–${posse + 4}`;
 }
+
+/**
+ * `2025` → `"2023–2026"`: os anos de cota do mandato que apresentou a emenda daquele ano.
+ *
+ * A emenda de um ano é votada no ano anterior (achado #24), então a de 2023 é do mandato
+ * que tomou posse em 2019. Mesma conta de `Legislaturas.DoAnoDeEmenda` na API.
+ */
+export function anosDeCotaDaEmenda(ano: number): string {
+  const posse = 2023 + Math.floor((ano - 2024) / 4) * 4;
+  return `${posse}–${posse + 3}`;
+}

@@ -23,11 +23,13 @@ ATENÇÃO: O recorte do `DELETE` é sempre o **mínimo**: reingerir 2025 não ap
 MEDIDO: [achado #19](../../../docs/achados/019-csv-reconstruido-toda-madrugada.md)
 """
 
+import functools
 from dataclasses import dataclass
 from typing import Iterable, Sequence
 
 import psycopg
 
+from . import procedencia
 from .normalizacao import sem_acento_maiusculo
 
 LOTE = 5_000
@@ -372,7 +374,8 @@ def mapa_de_cpf_hash(conexao: psycopg.Connection) -> dict[str, int]:
 
 
 def gravar_receitas(
-    conexao: psycopg.Connection, ano_eleicao: int, linhas: Sequence[dict]
+    conexao: psycopg.Connection, ano_eleicao: int, linhas: Sequence[dict],
+    carga_id: int | None = None,
 ) -> int:
     """Grava o financiamento, substituindo a eleição que está entrando.
 
@@ -391,12 +394,12 @@ def gravar_receitas(
         """
         INSERT INTO receitas_de_campanha (pessoa_id, ano_eleicao, fonte_receita,
                                           origem_receita, doador, doador_cnpj_ou_hash,
-                                          doador_eh_pessoa_fisica, valor)
+                                          doador_eh_pessoa_fisica, valor, carga_id)
         VALUES (%(pessoa_id)s, %(ano_eleicao)s, %(fonte_receita)s,
                 %(origem_receita)s, %(doador)s, %(doador_cnpj_ou_hash)s,
-                %(doador_eh_pessoa_fisica)s, %(valor)s)
+                %(doador_eh_pessoa_fisica)s, %(valor)s, %(carga_id)s)
         """,
-        linhas,
+        _com_carga(linhas, carga_id),
     )
 
 
@@ -405,18 +408,29 @@ def registrar_carga(conexao: psycopg.Connection, baixado, comando: str) -> int:
     return conexao.execute(
         """
         INSERT INTO cargas (fonte, url, baixado_em, sha256, bytes, etag_da_fonte,
-                            modificado_na_fonte, comando)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                            modificado_na_fonte, comando, versao)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id
         """,
         (baixado.fonte, baixado.url, baixado.baixado_em, baixado.sha256,
-         len(baixado.conteudo), baixado.etag, baixado.modificado_na_fonte, comando),
+         baixado.tamanho, baixado.etag, baixado.modificado_na_fonte, comando,
+         _versao_do_codigo()),
     ).fetchone()[0]
 
 
+@functools.cache
+def _versao_do_codigo() -> str:
+    """Calculada uma vez por execução: são dezenas de arquivos lidos."""
+    return procedencia.versao_do_codigo()
+
+
 def _com_carga(linhas: Sequence[dict], carga_id: int | None) -> list[dict]:
-    """As linhas com o `carga_id` da carga de onde saíram (PL72)."""
-    return [{**linha, "carga_id": carga_id} for linha in linhas]
+    """As linhas com o `carga_id` da carga de onde saíram (PL72).
+
+    A linha que já traz o seu `carga_id` o mantém: o patrimônio grava várias eleições numa
+    chamada, cada uma de um arquivo.
+    """
+    return [{"carga_id": carga_id, **linha} for linha in linhas]
 
 
 def gravar_votacoes(
@@ -571,7 +585,8 @@ def gravar_similaridades(
 
 
 def gravar_despesas(
-    conexao: psycopg.Connection, pessoa_ids: list[int], despesas: Sequence[dict]
+    conexao: psycopg.Connection, pessoa_ids: list[int], despesas: Sequence[dict],
+    carga_id: int | None = None,
 ) -> int:
     """Grava a cota, substituindo o recorte (pessoa, ano) que está entrando."""
     if not despesas:
@@ -589,17 +604,18 @@ def gravar_despesas(
         """
         INSERT INTO despesas (pessoa_id, ano, mes, categoria, fornecedor,
                               cnpj_ou_hash, fornecedor_eh_pessoa_fisica,
-                              valor_liquido, data_emissao, url_documento)
+                              valor_liquido, data_emissao, url_documento, carga_id)
         VALUES (%(pessoa_id)s, %(ano)s, %(mes)s, %(categoria)s, %(fornecedor)s,
                 %(cnpj_ou_hash)s, %(fornecedor_eh_pessoa_fisica)s,
-                %(valor_liquido)s, %(data_emissao)s, %(url_documento)s)
+                %(valor_liquido)s, %(data_emissao)s, %(url_documento)s, %(carga_id)s)
         """,
-        despesas,
+        _com_carga(despesas, carga_id),
     )
 
 
 def gravar_emendas(
-    conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict]
+    conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict],
+    carga_id: int | None = None,
 ) -> int:
     """Grava as emendas, substituindo os anos que estão entrando.
 
@@ -623,19 +639,20 @@ def gravar_emendas(
                              localidade, funcao, subfuncao, codigo_municipio_ibge,
                              codigo_acao, codigo_plano_orcamentario,
                              valor_empenhado, valor_liquidado, valor_pago,
-                             valor_resto_pago)
+                             valor_resto_pago, carga_id)
         VALUES (%(codigo_autor)s, %(nome_autor)s, %(codigo_emenda)s, %(ano)s, %(tipo)s,
                 %(localidade)s, %(funcao)s, %(subfuncao)s, %(codigo_municipio_ibge)s,
                 %(codigo_acao)s, %(codigo_plano_orcamentario)s,
                 %(valor_empenhado)s, %(valor_liquidado)s, %(valor_pago)s,
-                %(valor_resto_pago)s)
+                %(valor_resto_pago)s, %(carga_id)s)
         """,
-        linhas,
+        _com_carga(linhas, carga_id),
     )
 
 
 def gravar_favorecidos(
-    conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict]
+    conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict],
+    carga_id: int | None = None,
 ) -> int:
     """Grava quem recebeu, substituindo as emendas dos anos que estão entrando.
 
@@ -652,12 +669,12 @@ def gravar_favorecidos(
         """
         INSERT INTO emendas_favorecidos (codigo_emenda, competencia, tipo, documento,
                                          nome, natureza_juridica, uf, municipio,
-                                         valor, intermediario)
+                                         valor, intermediario, carga_id)
         VALUES (%(codigo_emenda)s, %(competencia)s, %(tipo)s, %(documento)s,
                 %(nome)s, %(natureza_juridica)s, %(uf)s, %(municipio)s,
-                %(valor)s, %(intermediario)s)
+                %(valor)s, %(intermediario)s, %(carga_id)s)
         """,
-        linhas,
+        _com_carga(linhas, carga_id),
     )
 
 
@@ -816,17 +833,20 @@ def cnpjs_que_receberam_emenda(conexao: psycopg.Connection) -> set[str]:
     }
 
 
-def gravar_cnpjs_municipio(conexao: psycopg.Connection, linhas: Sequence[dict]) -> int:
+def gravar_cnpjs_municipio(
+    conexao: psycopg.Connection, linhas: Sequence[dict], carga_id: int | None = None
+) -> int:
     """Grava a sede de cada CNPJ, substituindo a anterior: a sede muda quando a empresa muda."""
     return _executar_em_lotes(
         conexao,
         """
-        INSERT INTO cnpjs_municipio (cnpj, codigo_ibge, cadastro_de)
-        VALUES (%(cnpj)s, %(codigo_ibge)s, %(cadastro_de)s)
+        INSERT INTO cnpjs_municipio (cnpj, codigo_ibge, cadastro_de, carga_id)
+        VALUES (%(cnpj)s, %(codigo_ibge)s, %(cadastro_de)s, %(carga_id)s)
         ON CONFLICT (cnpj) DO UPDATE SET
-            codigo_ibge = EXCLUDED.codigo_ibge, cadastro_de = EXCLUDED.cadastro_de
+            codigo_ibge = EXCLUDED.codigo_ibge, cadastro_de = EXCLUDED.cadastro_de,
+            carga_id = COALESCE(EXCLUDED.carga_id, cnpjs_municipio.carga_id)
         """,
-        linhas,
+        _com_carga(linhas, carga_id),
     )
 
 
@@ -1153,16 +1173,19 @@ def gravar_redes(conexao: psycopg.Connection, pessoas: list[int], linhas: Sequen
     )
 
 
-def gravar_patrimonios(conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict]) -> int:
+def gravar_patrimonios(
+    conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict],
+    carga_id: int | None = None,
+) -> int:
     """Grava o patrimônio por tipo, substituindo as eleições que estão entrando."""
     conexao.execute("DELETE FROM patrimonios WHERE ano_eleicao = ANY(%s)", (anos,))
     return _executar_em_lotes(
         conexao,
         """
-        INSERT INTO patrimonios (pessoa_id, ano_eleicao, tipo_bem, valor, quantidade)
-        VALUES (%(pessoa_id)s, %(ano_eleicao)s, %(tipo_bem)s, %(valor)s, %(quantidade)s)
+        INSERT INTO patrimonios (pessoa_id, ano_eleicao, tipo_bem, valor, quantidade, carga_id)
+        VALUES (%(pessoa_id)s, %(ano_eleicao)s, %(tipo_bem)s, %(valor)s, %(quantidade)s, %(carga_id)s)
         """,
-        linhas,
+        _com_carga(linhas, carga_id),
     )
 
 

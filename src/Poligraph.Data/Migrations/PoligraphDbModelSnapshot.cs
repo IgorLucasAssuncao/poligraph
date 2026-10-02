@@ -193,6 +193,11 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("url");
 
+                    b.Property<string>("Versao")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("versao");
+
                     b.HasKey("Id")
                         .HasName("pk_cargas");
 
@@ -219,6 +224,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("date")
                         .HasColumnName("cadastro_de");
 
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
                     b.Property<string>("CodigoIbge")
                         .IsRequired()
                         .HasMaxLength(7)
@@ -227,6 +236,9 @@ namespace Poligraph.Data.Migrations
 
                     b.HasKey("Cnpj")
                         .HasName("pk_cnpjs_municipio");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_cnpjs_municipio_carga_id");
 
                     b.HasIndex("CodigoIbge")
                         .HasDatabaseName("ix_cnpj_municipio_ibge");
@@ -350,6 +362,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("smallint")
                         .HasColumnName("ano");
 
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
                     b.Property<string>("Categoria")
                         .IsRequired()
                         .HasColumnType("text")
@@ -392,6 +408,9 @@ namespace Poligraph.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_despesas");
 
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_despesas_carga_id");
+
                     b.HasIndex("PessoaId", "Ano")
                         .HasDatabaseName("ix_despesa_pessoa_ano");
 
@@ -431,6 +450,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
 
                     b.Property<string>("CodigoEmenda")
                         .IsRequired()
@@ -481,6 +504,9 @@ namespace Poligraph.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_emendas_favorecidos");
 
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_emendas_favorecidos_carga_id");
+
                     b.HasIndex("CodigoEmenda")
                         .HasDatabaseName("ix_favorecido_emenda");
 
@@ -516,6 +542,10 @@ namespace Poligraph.Data.Migrations
                     b.Property<short>("Ano")
                         .HasColumnType("smallint")
                         .HasColumnName("ano");
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
 
                     b.Property<string>("CodigoAcao")
                         .HasColumnType("text")
@@ -589,6 +619,9 @@ namespace Poligraph.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_emendas");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_emendas_carga_id");
 
                     b.HasIndex("CodigoEmenda")
                         .HasDatabaseName("ix_emenda_codigo");
@@ -1145,6 +1178,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("tipo_bem");
 
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
                     b.Property<int>("Quantidade")
                         .HasColumnType("integer")
                         .HasColumnName("quantidade");
@@ -1156,6 +1193,9 @@ namespace Poligraph.Data.Migrations
 
                     b.HasKey("PessoaId", "AnoEleicao", "TipoBem")
                         .HasName("pk_patrimonios");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_patrimonios_carga_id");
 
                     b.ToTable("patrimonios", null, t =>
                         {
@@ -1346,6 +1386,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("smallint")
                         .HasColumnName("ano_eleicao");
 
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
                     b.Property<string>("Doador")
                         .HasColumnType("text")
                         .HasColumnName("doador");
@@ -1379,6 +1423,9 @@ namespace Poligraph.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_receitas_de_campanha");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_receitas_de_campanha_carga_id");
 
                     b.HasIndex("PessoaId", "AnoEleicao")
                         .HasDatabaseName("ix_receita_pessoa_eleicao");
@@ -1807,6 +1854,12 @@ namespace Poligraph.Data.Migrations
 
             modelBuilder.Entity("Poligraph.Data.CnpjMunicipioModel", b =>
                 {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_cnpjs_municipio_cargas_carga_id");
+
                     b.HasOne("Poligraph.Data.MunicipioModel", "Municipio")
                         .WithMany()
                         .HasForeignKey("CodigoIbge")
@@ -1831,6 +1884,12 @@ namespace Poligraph.Data.Migrations
 
             modelBuilder.Entity("Poligraph.Data.DespesaModel", b =>
                 {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_despesas_cargas_carga_id");
+
                     b.HasOne("Poligraph.Data.PessoaModel", "Pessoa")
                         .WithMany()
                         .HasForeignKey("PessoaId")
@@ -1853,8 +1912,23 @@ namespace Poligraph.Data.Migrations
                     b.Navigation("Convenio");
                 });
 
+            modelBuilder.Entity("Poligraph.Data.EmendaFavorecidoModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_emendas_favorecidos_cargas_carga_id");
+                });
+
             modelBuilder.Entity("Poligraph.Data.EmendaModel", b =>
                 {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_emendas_cargas_carga_id");
+
                     b.HasOne("Poligraph.Data.PessoaModel", "Pessoa")
                         .WithMany()
                         .HasForeignKey("PessoaId")
@@ -1934,6 +2008,12 @@ namespace Poligraph.Data.Migrations
 
             modelBuilder.Entity("Poligraph.Data.PatrimonioModel", b =>
                 {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_patrimonios_cargas_carga_id");
+
                     b.HasOne("Poligraph.Data.PessoaModel", null)
                         .WithMany()
                         .HasForeignKey("PessoaId")
@@ -1968,6 +2048,12 @@ namespace Poligraph.Data.Migrations
 
             modelBuilder.Entity("Poligraph.Data.ReceitaDeCampanhaModel", b =>
                 {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_receitas_de_campanha_cargas_carga_id");
+
                     b.HasOne("Poligraph.Data.PessoaModel", "Pessoa")
                         .WithMany()
                         .HasForeignKey("PessoaId")

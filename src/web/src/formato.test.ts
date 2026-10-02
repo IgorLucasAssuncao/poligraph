@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mesCurto, mesesContinuos, partesDeCem, reaisCompacto } from './formato';
+import { anosDeCotaDaEmenda, mesCurto, mesesContinuos, partesDeCem, reaisCompacto } from './formato';
 
 /**
  * ATENÇÃO: Pular o mês sem pagamento encurtaria a espera no desenho.
@@ -48,5 +48,16 @@ describe('partesDeCem', () => {
 
   it('sem total, tudo zero', () => {
     expect(partesDeCem([0, 0])).toEqual([0, 0]);
+  });
+});
+
+/** PL74: a mesma conta de `Legislaturas.DoAnoDeEmenda` na API, nos dois lados da virada. */
+describe('anosDeCotaDaEmenda', () => {
+  it('a emenda de um ano é do mandato que tomou posse antes dele', () => {
+    expect(anosDeCotaDaEmenda(2025)).toBe('2023–2026');
+    expect(anosDeCotaDaEmenda(2024)).toBe('2023–2026');
+    expect(anosDeCotaDaEmenda(2027)).toBe('2023–2026');
+    expect(anosDeCotaDaEmenda(2023)).toBe('2019–2022');
+    expect(anosDeCotaDaEmenda(2028)).toBe('2027–2030');
   });
 });

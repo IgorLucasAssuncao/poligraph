@@ -7,7 +7,7 @@ import type {
   PagamentoPorMes,
 } from '../api';
 import { listarConvenios, listarEmendas, listarFavorecidos } from '../api';
-import { dataCurta, mesCurto, mesesContinuos, reais } from '../formato';
+import { anosDeCotaDaEmenda, dataCurta, mesCurto, mesesContinuos, reais } from '../formato';
 import { BotaoBaixarCsv } from './BotaoBaixarCsv';
 import { BotaoMostrarMais } from './BotaoMostrarMais';
 import { baixarCsv, buscarTodas } from '../exportar';
@@ -64,6 +64,12 @@ export function QuemRecebeu({
             <span className="gasto-nome">
               {f.cnpj ? <Link to={`/entidades/${f.cnpj}`}>{f.nome}</Link> : f.nome}
               <small>{[f.naturezaJuridica, lugar(f.municipio, f.uf)].filter(Boolean).join(' · ')}</small>
+              {f.tambemNaCota != null && (
+                <small className="tambem-na-cota">
+                  A cota deste parlamentar também pagou {reais(f.tambemNaCota)} a este CNPJ em{' '}
+                  {anosDeCotaDaEmenda(ano)}
+                </small>
+              )}
             </span>
             <span className="gasto-valor">{reais(f.recebido)}</span>
           </li>

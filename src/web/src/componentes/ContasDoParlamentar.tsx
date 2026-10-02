@@ -15,6 +15,7 @@ import { BotaoMostrarMais } from './BotaoMostrarMais';
 import { Convenios, EmendasUmaAUma, QuandoFoiPago, QuemRecebeu } from './DestinoDasEmendas';
 import { LinkDeFonte } from './LinkDeFonte';
 import { Termo } from './Termo';
+import { ComProcedencia } from './ModoAnalise';
 import { NENHUM, usePaginas } from './usePaginas';
 import type { Contas } from './useContas';
 import { EsqueletoDePainel, EsqueletoDeTexto } from './Esqueleto';
@@ -144,7 +145,13 @@ export function AbaEmendas({ pessoaId, contas, erro }: { pessoaId: number; conta
     <section className="aba-dinheiro" aria-label="Emendas">
       <div className="execucao">
         <p className="frase-resposta">
-          <strong>{reais(emendas.pago)}</strong> pagos de {reais(emendas.empenhado)} empenhados em{' '}
+          <ComProcedencia
+            consulta={{ contexto: 'emendas', pessoa: pessoaId, ano: emendas.ano }}
+            rotulo={`Emendas de ${emendas.ano}`}
+          >
+            <strong>{reais(emendas.pago)}</strong>
+          </ComProcedencia>{' '}
+          pagos de {reais(emendas.empenhado)} empenhados em{' '}
           <strong>{emendas.quantidade}</strong> {emendas.quantidade === 1 ? 'emenda' : 'emendas'} de {emendas.ano} —{' '}
           {(executado * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}% saiu de fato
         </p>
@@ -310,7 +317,14 @@ export function AbaCota({ pessoaId, contas, erro }: { pessoaId: number; contas: 
   return (
     <section className="aba-dinheiro" aria-label="Cota parlamentar">
       <p className="frase-resposta">
-        Gastou <strong>{reais(gastos.total)}</strong> da <Termo nome="cota">cota parlamentar</Termo> em {gastos.ano},
+        Gastou{' '}
+        <ComProcedencia
+          consulta={{ contexto: 'cota', pessoa: pessoaId, ano: gastos.ano }}
+          rotulo={`Cota parlamentar de ${gastos.ano}`}
+        >
+          <strong>{reais(gastos.total)}</strong>
+        </ComProcedencia>{' '}
+        da <Termo nome="cota">cota parlamentar</Termo> em {gastos.ano},
         em <strong>{gastos.lancamentos}</strong> notas
         {principal && (
           <>
@@ -425,7 +439,7 @@ export function AbaCampanha({ pessoaId, contas, erro }: { pessoaId: number; cont
 
   return (
     <>
-      <Financiamento fin={fin} />
+      <Financiamento pessoaId={pessoaId} fin={fin} />
       <PatrimonioDeclarado pessoaId={pessoaId} />
     </>
   );
@@ -434,7 +448,7 @@ export function AbaCampanha({ pessoaId, contas, erro }: { pessoaId: number; cont
 /**
  * RISCO: RNF-13: o documento de pessoa física é hasheado no banco.
  */
-function Financiamento({ fin }: { fin: FinanciamentoDeCampanha }) {
+function Financiamento({ pessoaId, fin }: { pessoaId: number; fin: FinanciamentoDeCampanha }) {
   if (fin.total === 0) {
     return (
       <section className="aba-dinheiro">
@@ -449,7 +463,14 @@ function Financiamento({ fin }: { fin: FinanciamentoDeCampanha }) {
   return (
     <section className="aba-dinheiro" aria-label="Campanha">
       <p className="frase-resposta">
-        Arrecadou <strong>{reais(fin.total)}</strong> na eleição de {fin.anoEleicao}. Juntos, os dois fundos somam{' '}
+        Arrecadou{' '}
+        <ComProcedencia
+          consulta={{ contexto: 'campanha', pessoa: pessoaId, ano: fin.anoEleicao }}
+          rotulo={`Campanha de ${fin.anoEleicao}`}
+        >
+          <strong>{reais(fin.total)}</strong>
+        </ComProcedencia>{' '}
+        na eleição de {fin.anoEleicao}. Juntos, os dois fundos somam{' '}
         <strong>{reais(publico)}</strong> —{' '}
         {((publico / fin.total) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}% do que a campanha
         arrecadou. São fundos <strong>distintos</strong>: o Fundo Especial é eleitoral; o Partidário custeia o partido o
@@ -571,7 +592,14 @@ function PatrimonioDeclarado({ pessoaId }: { pessoaId: number }) {
     <section className="aba-dinheiro" aria-label="Patrimônio declarado">
       <h2 className="titulo-secao">Patrimônio declarado ao TSE</h2>
       <p className="frase-resposta">
-        Declarou <strong>{reais(ultima.total)}</strong> em {ultima.bens} {ultima.bens === 1 ? 'bem' : 'bens'} ao se
+        Declarou{' '}
+        <ComProcedencia
+          consulta={{ contexto: 'patrimonio', pessoa: pessoaId, ano: ultima.anoEleicao }}
+          rotulo={`Bens declarados em ${ultima.anoEleicao}`}
+        >
+          <strong>{reais(ultima.total)}</strong>
+        </ComProcedencia>{' '}
+        em {ultima.bens} {ultima.bens === 1 ? 'bem' : 'bens'} ao se
         candidatar em {ultima.anoEleicao}.
         {anterior && (
           <>

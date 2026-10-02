@@ -394,6 +394,17 @@ def _baixar_da_camara(conexao: psycopg.Connection, recurso: str, ano: int):
     return destino, persistencia.registrar_carga(conexao, baixado, procedencia.comando())
 
 
+def _carga_do_arquivo(conexao: psycopg.Connection, fonte: str, url: str, arquivo: Path) -> int:
+    """Registra a carga de um arquivo que já está no cache (PL72) e devolve o id.
+
+    Mesmo papel de `_baixar_da_camara`, para as cargas que baixam em fluxo: o hash sai do
+    arquivo, e a cópia vai para `procedencia/` quando cabe em `LIMITE_PARA_GUARDAR`.
+    """
+    baixado = procedencia.de_arquivo(fonte, url, arquivo)
+    procedencia.guardar(baixado, CACHE / "procedencia")
+    return persistencia.registrar_carga(conexao, baixado, procedencia.comando())
+
+
 def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
     """Ingestão do Senado — senadores, votações e votos.
 
@@ -674,6 +685,7 @@ def _emendas(conexao: psycopg.Connection, anos: list[int]) -> None:
     arquivo = portal.baixar(
         emendas.RECURSO, CACHE / f"emendas-{date.today():%Y%m%d}.zip"
     )
+    carga = _carga_do_arquivo(conexao, "PORTAL_TRANSPARENCIA", portal.url(emendas.RECURSO), arquivo)
 
     linhas, autores = emendas.para_linhas(
         portal.ler_csv(arquivo, emendas.ARQUIVO_EMENDAS), anos
@@ -689,9 +701,9 @@ def _emendas(conexao: psycopg.Connection, anos: list[int]) -> None:
     )
 
     with conexao.transaction():
-        gravadas = persistencia.gravar_emendas(conexao, anos, linhas)
+        gravadas = persistencia.gravar_emendas(conexao, anos, linhas, carga)
         persistencia.registrar_autores(conexao, autores)
-        persistencia.gravar_favorecidos(conexao, anos, favorecidos)
+        persistencia.gravar_favorecidos(conexao, anos, favorecidos, carga)
         persistencia.gravar_convenios(conexao, anos, convenios, ligacoes)
 
     log.info(
@@ -803,8 +815,13 @@ def _patrimonio(conexao: psycopg.Connection, anos: list[int]) -> None:
         candidatos = tse.baixar(f"{tse.CDN}/{patrimonio.RECURSO_CANDIDATOS.format(ano=ano)}",
                                 CACHE / f"consulta-cand-{ano}.zip")
         ligadas = patrimonio.candidaturas(candidatos, hashes)
-        bens = tse.baixar(f"{tse.CDN}/{patrimonio.RECURSO_BENS.format(ano=ano)}", CACHE / f"bem-candidato-{ano}.zip")
-        linhas = patrimonio.bens_para_linhas(patrimonio.linhas_do_zip(bens), ligadas, ano)
+        url_dos_bens = f"{tse.CDN}/{patrimonio.RECURSO_BENS.format(ano=ano)}"
+        bens = tse.baixar(url_dos_bens, CACHE / f"bem-candidato-{ano}.zip")
+        carga = _carga_do_arquivo(conexao, "TSE", url_dos_bens, bens)
+        linhas = [
+            {**linha, "carga_id": carga}
+            for linha in patrimonio.bens_para_linhas(patrimonio.linhas_do_zip(bens), ligadas, ano)
+        ]
         log.info("  %d: %d candidaturas ligadas, %d pessoas com bem declarado", ano, len(ligadas),
                  len({linha["pessoa_id"] for linha in linhas}))
         todas.extend(linhas)
@@ -869,15 +886,19 @@ def _municipios(conexao: psycopg.Connection, diretorio: Path | None) -> None:
         return
 
     pasta = receita.ultima_pasta()
-    if diretorio:
-        arquivos = [diretorio / nome for nome in receita.ARQUIVOS_DE_ESTABELECIMENTOS]
-    else:
-        arquivos = [
-            receita.baixar(pasta, nome, CACHE / "receita" / pasta / nome)
-            for nome in receita.ARQUIVOS_DE_ESTABELECIMENTOS
-        ]
-
-    sedes = municipios.sedes_para_linhas(receita.sedes(arquivos, alvos), tom_para_ibge, pasta)
+    sedes: list[dict] = []
+    for nome in receita.ARQUIVOS_DE_ESTABELECIMENTOS:
+        if diretorio:
+            arquivo = diretorio / nome
+        else:
+            arquivo = receita.baixar(pasta, nome, CACHE / "receita" / pasta / nome)
+        carga = _carga_do_arquivo(conexao, "RECEITA", f"{receita.WEBDAV}/{pasta}/{nome}", arquivo)
+        sedes.extend(
+            {**linha, "carga_id": carga}
+            for linha in municipios.sedes_para_linhas(
+                receita.sedes([arquivo], alvos), tom_para_ibge, pasta
+            )
+        )
     log.info("  %d de %d CNPJs com município IBGE", len(sedes), len(alvos))
 
     with conexao.transaction():
@@ -1411,9 +1432,10 @@ def _cota(conexao: psycopg.Connection, anos: list[int]) -> None:
         arquivo = camara.baixar_cota(ano, CACHE / f"cota-{ano}.zip")
         registros = camara.ler_cota(arquivo)
         camara.conferir_volume_de_cota(registros, ano)
+        carga = _carga_do_arquivo(conexao, "CAMARA", camara.URL_COTA.format(ano=ano), arquivo)
 
         linhas = cota.para_linhas(registros, mapa)
-        gravadas = persistencia.gravar_despesas(conexao, list(mapa.values()), linhas)
+        gravadas = persistencia.gravar_despesas(conexao, list(mapa.values()), linhas, carga)
 
         descartadas = len(registros) - len(linhas)
         log.info("  %d linhas, %d gravadas", len(registros), gravadas)
@@ -1455,10 +1477,11 @@ def _cota_do_senado(conexao: psycopg.Connection, anos: list[int]) -> None:
 
         arquivo = senado.baixar_ceaps(ano, CACHE / f"ceaps-{ano}.csv")
         registros = senado.ler_ceaps(arquivo)
+        carga = _carga_do_arquivo(conexao, "SENADO", senado.CEAPS.format(ano=ano), arquivo)
 
         linhas = cota.para_linhas_do_senado(registros, por_nome)
         gravadas = persistencia.gravar_despesas(
-            conexao, list(por_nome.values()), linhas
+            conexao, list(por_nome.values()), linhas, carga
         )
 
         log.info("  %d linhas, %d gravadas", len(registros), gravadas)
@@ -1505,14 +1528,16 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
 
     log.info("De-para: %d pessoas com CPF hasheado", len(hashes))
 
+    url = tse.url_de_prestacao_de_contas(eleicao)
     if arquivo is None:
-        url = tse.url_de_prestacao_de_contas(eleicao)
         if not tse.existe(url):
             raise tse.ErroDeAcessoAoTse(
                 f"O TSE não respondeu para {url}. Se for 403, a receita de headers "
                 "caiu; baixe à mão e use --arquivo. Ver docs/12-fonte-tse.md §2.2."
             )
         arquivo = tse.baixar(url, CACHE / f"prestacao-contas-{eleicao}.zip")
+
+    carga = _carga_do_arquivo(conexao, "TSE", url, arquivo)
 
     nomes = receitas.nomes_de_receita(arquivo, eleicao)
     if not nomes:
@@ -1538,7 +1563,7 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
         if linhas:
             log.info("  %s — %d linhas de parlamentar em exercício", nome, len(linhas))
 
-    gravadas = persistencia.gravar_receitas(conexao, eleicao, todas)
+    gravadas = persistencia.gravar_receitas(conexao, eleicao, todas, carga)
     resumo = receitas.resumir(todas)
 
     log.info(
@@ -1691,7 +1716,8 @@ def _conferir(conexao: psycopg.Connection) -> None:
         nivel = log.error if severidade == "ERRO" else log.warning
         nivel("%s %s — %d", severidade, regra, len(lista))
         for achado in lista[:10]:
-            nivel("    %s %sª · %s", achado.casa, achado.legislatura, achado.detalhe)
+            onde = f"{achado.casa} {achado.legislatura}ª" if achado.legislatura else achado.casa
+            nivel("    %s · %s", onde, achado.detalhe)
         if len(lista) > 10:
             nivel("    … e mais %d", len(lista) - 10)
 

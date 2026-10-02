@@ -64,6 +64,67 @@ def test_guardar_usa_o_hash_como_nome_e_nao_duplica(tmp_path):
     assert hashlib.sha256(primeiro.read_bytes()).hexdigest() == baixado.sha256
 
 
+def test_de_arquivo_tem_o_mesmo_hash_que_a_resposta_teria(tmp_path):
+    """As cargas de dinheiro leem do cache: o hash do arquivo tem de bater com o dos bytes."""
+    arquivo = tmp_path / "cota-2025.zip"
+    arquivo.write_bytes(b"x" * (3 << 20))
+
+    baixado = procedencia.de_arquivo("CAMARA", "https://www.camara.leg.br/cotas/Ano-2025.csv.zip", arquivo)
+
+    assert baixado.sha256 == hashlib.sha256(b"x" * (3 << 20)).hexdigest()
+    assert baixado.tamanho == 3 << 20
+    assert baixado.conteudo is None and baixado.arquivo == arquivo
+
+
+def test_de_arquivo_data_e_a_de_chegada_ao_disco(tmp_path):
+    import os
+
+    arquivo = tmp_path / "a.csv"
+    arquivo.write_bytes(b"x")
+    os.utime(arquivo, (1_700_000_000, 1_700_000_000))
+
+    baixado = procedencia.de_arquivo("SENADO", "u", arquivo)
+
+    assert baixado.baixado_em == datetime.fromtimestamp(1_700_000_000, timezone.utc)
+
+
+def test_guardar_copia_e_nao_liga_ao_cache(tmp_path):
+    """O download regrava o cache no mesmo lugar; a cópia guardada não pode mudar junto."""
+    arquivo = tmp_path / "cache.zip"
+    arquivo.write_bytes(b"versao 1")
+    baixado = procedencia.de_arquivo("TSE", "u", arquivo)
+
+    guardado = procedencia.guardar(baixado, tmp_path / "procedencia")
+    arquivo.write_bytes(b"versao 2")
+
+    assert guardado.read_bytes() == b"versao 1"
+
+
+def test_guardar_acima_do_limite_fica_so_o_hash(tmp_path, monkeypatch):
+    monkeypatch.setattr(procedencia, "LIMITE_PARA_GUARDAR", 10)
+    arquivo = tmp_path / "estabelecimentos0.zip"
+    arquivo.write_bytes(b"x" * 11)
+
+    assert procedencia.guardar(procedencia.de_arquivo("RECEITA", "u", arquivo), tmp_path / "p") is None
+    assert not (tmp_path / "p").exists()
+
+
+def test_versao_do_codigo_e_estavel_e_curta():
+    versao = procedencia.versao_do_codigo()
+
+    assert versao == procedencia.versao_do_codigo()
+    assert len(versao) == len("etl-") + 12 and versao.startswith("etl-")
+
+
+def test_a_linha_que_traz_a_sua_carga_a_mantem():
+    """O patrimônio grava duas eleições numa chamada, cada uma de um arquivo."""
+    from poligraph_etl.persistencia import _com_carga
+
+    linhas = _com_carga([{"ano": 2018, "carga_id": 1}, {"ano": 2022}], 7)
+
+    assert [linha["carga_id"] for linha in linhas] == [1, 7]
+
+
 # Banco
 
 
@@ -92,8 +153,10 @@ def test_a_carga_entra_com_o_hash_e_a_linha_aponta_para_ela(limpo):
     carga = persistencia.registrar_carga(limpo, baixado, "poligraph_etl ingerir --anos 2026")
     persistencia.gravar_votacoes(limpo, [_votacao("1-1")], carga)
 
-    sha, url = limpo.execute("SELECT sha256, url FROM cargas WHERE id = %s", (carga,)).fetchone()
+    sha, url, versao = limpo.execute(
+        "SELECT sha256, url, versao FROM cargas WHERE id = %s", (carga,)).fetchone()
     assert sha == baixado.sha256
+    assert versao == procedencia.versao_do_codigo()
     assert url.endswith("votacoes-2026.csv")
     assert limpo.execute("SELECT carga_id FROM votacoes WHERE id = '1-1'").fetchone()[0] == carga
 

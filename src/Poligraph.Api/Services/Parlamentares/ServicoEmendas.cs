@@ -49,8 +49,10 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
             .Take(tamanho)
             .ToListAsync(ct);
 
+        var cota = await CotaDosFavorecidosAsync(id, alvo.Value, itens, ct);
+
         return new PaginaDto<FavorecidoDaEmendaDto>(
-            [.. itens.Select(ParaFavorecido)], pagina, tamanho, await identificados.CountAsync(ct));
+            [.. itens.Select(f => ParaFavorecido(f, cota))], pagina, tamanho, await identificados.CountAsync(ct));
     }
 
     /// <summary>Os convênios, em páginas, na mesma ordem da ficha. A primeira página é a da ficha.</summary>
@@ -173,7 +175,7 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
                 new EmendaPorDestinoDto(d.Localidade, d.Empenhado, d.Pago, d.Quantidade))],
             PorFuncao: [.. funcoes.Select(f =>
                 new EmendaPorFuncaoDto(f.Funcao, f.Empenhado, f.Pago))],
-            Favorecidos: await FavorecidosAsync(codigos, ct),
+            Favorecidos: await FavorecidosAsync(id, alvo.Value, codigos, ct),
             PagamentosPorMes: await PagamentosPorMesAsync(codigos, ct),
             Convenios: await ConveniosAsync(codigos, ct),
             Cidades: await CidadesAsync(codigos, ct));
@@ -213,7 +215,7 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
     /// <para>A lista traz só quem se identifica e recebe como destino: empresa, entidade, órgão público. Intermediário, pessoa e registro sem identificação entram nos totais ao lado, e a soma de tudo continua em <c>Recebido</c>.</para>
     /// </remarks>
     private async Task<FavorecidosDaEmendaDto> FavorecidosAsync(
-        IQueryable<string> codigos, CancellationToken ct)
+        long id, int ano, IQueryable<string> codigos, CancellationToken ct)
     {
         var totais = await _db.EmendasFavorecidos.AsNoTracking()
             .Where(f => codigos.Contains(f.CodigoEmenda))
@@ -231,6 +233,7 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
 
         var identificados = FavorecidosIdentificados(codigos);
         var maiores = await identificados.Take(ItensPorPagina).ToListAsync(ct);
+        var cota = await CotaDosFavorecidosAsync(id, ano, maiores, ct);
 
         return new FavorecidosDaEmendaDto(
             Recebido: totais?.Recebido ?? 0,
@@ -239,7 +242,32 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
             SemIdentificacao: totais?.SemIdentificacao ?? 0,
             UltimoMes: totais?.UltimoMes,
             Identificados: await identificados.CountAsync(ct),
-            Maiores: [.. maiores.Select(ParaFavorecido)]);
+            Maiores: [.. maiores.Select(f => ParaFavorecido(f, cota))]);
+    }
+
+    /// <summary>PL74: quanto a cota do parlamentar pagou a cada CNPJ da lista, no mandato da emenda.</summary>
+    /// <remarks>
+    /// <para>Só CNPJ público: o fornecedor pessoa física da cota guarda hash, e o empresário individual tem CNPJ de pessoa.</para>
+    /// <para>O mandato sai do ano da emenda, não do ano corrente: a emenda de 2023 é da 56ª, e a cota que importa é a de 2019 a 2022.</para>
+    /// </remarks>
+    private async Task<Dictionary<string, decimal>> CotaDosFavorecidosAsync(
+        long id, int anoDaEmenda, IEnumerable<FavorecidoAgrupado> favorecidos, CancellationToken ct)
+    {
+        var cnpjs = favorecidos
+            .Select(f => FavorecidoDaEmendaDto.CnpjPublico(f.Documento, f.NaturezaJuridica))
+            .OfType<string>()
+            .ToList();
+        if (cnpjs.Count == 0) return [];
+
+        var (de, ate) = Legislaturas.AnosDeDespesa(Legislaturas.DoAnoDeEmenda(anoDaEmenda));
+
+        return await _db.Despesas.AsNoTracking()
+            .Where(d => d.PessoaId == id && d.Ano >= de && d.Ano <= ate
+                && !d.FornecedorEhPessoaFisica && cnpjs.Contains(d.CnpjOuHash!))
+            .GroupBy(d => d.CnpjOuHash!)
+            .Select(g => new { Cnpj = g.Key, Pago = g.Sum(d => d.ValorLiquido) })
+            .Where(g => g.Pago > 0)
+            .ToDictionaryAsync(g => g.Cnpj, g => g.Pago, ct);
     }
 
     /// <remarks>
@@ -261,9 +289,12 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
             .OrderByDescending(f => f.Recebido)
             .ThenBy(f => f.Documento);
 
-    private static FavorecidoDaEmendaDto ParaFavorecido(FavorecidoAgrupado f) =>
-        new(TextoSemCpf.Limpar(f.Nome), f.NaturezaJuridica, f.Uf, f.Municipio, f.Recebido,
-            FavorecidoDaEmendaDto.CnpjPublico(f.Documento, f.NaturezaJuridica));
+    private static FavorecidoDaEmendaDto ParaFavorecido(FavorecidoAgrupado f, Dictionary<string, decimal> cota)
+    {
+        var cnpj = FavorecidoDaEmendaDto.CnpjPublico(f.Documento, f.NaturezaJuridica);
+        return new(TextoSemCpf.Limpar(f.Nome), f.NaturezaJuridica, f.Uf, f.Municipio, f.Recebido, cnpj,
+            cnpj is not null && cota.TryGetValue(cnpj, out var pago) ? pago : null);
+    }
 
     /// <summary>As cidades que receberam, pela sede de quem recebeu. Só pessoa jurídica fora do intermediário: é quem tem sede.</summary>
     private async Task<CidadesDaEmendaDto> CidadesAsync(IQueryable<string> codigos, CancellationToken ct)

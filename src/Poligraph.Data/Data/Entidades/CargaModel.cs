@@ -42,4 +42,13 @@ public class CargaModel
 
     /// <summary>O comando do ETL que baixou, com os argumentos.</summary>
     public required string Comando { get; set; }
+
+    /// <summary>
+    /// A versão do código que leu o arquivo: <c>etl-</c> e os 12 primeiros dígitos do SHA-256
+    /// dos fontes da ETL (PL73). Nula nas cargas gravadas antes dela.
+    /// </summary>
+    /// <remarks>
+    /// <para>A imagem da ETL não leva o repositório, então não há commit para ler. O hash dos fontes identifica o parser exato, e muda a cada mudança de código.</para>
+    /// </remarks>
+    public string? Versao { get; set; }
 }

@@ -46,6 +46,15 @@ PROPORCAO_MAXIMA_SEM_PARTIDO = 0.01
 # O mesmo corte da ingestão: desde 2004 o código do Senado cresce com a data (#37).
 PRIMEIRO_CODIGO_DE_2004 = 2523
 
+# PL76. MEDIDO em 2026-10-02, eleições de 2018 e 2022: o maior patrimônio declarado na base é
+# R$ 240 mi, e o percentil 99 fica entre R$ 35 mi e R$ 48 mi. O TSE é autodeclarado, e o
+# "candidato mais rico do Brasil" já foi um bem digitado com dígitos a mais (R$ 12 bi).
+TETO_DE_PATRIMONIO = 500_000_000
+
+# MEDIDO: o maior salto entre 2018 e 2022, entre quem declarou mais de R$ 100 mil, foi de 14 vezes.
+SALTO_DE_PATRIMONIO = 50
+PATRIMONIO_MINIMO_DO_SALTO = 10_000_000
+
 
 @dataclass(frozen=True)
 class Achado:
@@ -167,6 +176,31 @@ def senadores_demais_por_uf(linhas: list[tuple[int, str, str, int]]) -> list[Ach
     ]
 
 
+def patrimonio_acima_do_teto(linhas: list[tuple[str, int, float]]) -> list[Achado]:
+    """`(nome, eleição, total declarado)`. Acima do teto é AVISO: pode ser dígito a mais."""
+    return [
+        Achado("patrimonio-acima-do-teto", "AVISO", "TSE", None,
+               f"{nome}, eleição de {eleicao}: R$ {total / 1e6:,.1f} mi declarados")
+        for nome, eleicao, total in linhas
+        if total > TETO_DE_PATRIMONIO
+    ]
+
+
+def salto_de_patrimonio(linhas: list[tuple[str, int, float, int, float]]) -> list[Achado]:
+    """`(nome, eleição anterior, total, eleição seguinte, total)`. Multiplicar por 50 é AVISO.
+
+    Só conta quando o segundo total passa de `PATRIMONIO_MINIMO_DO_SALTO`: de R$ 1 mil para
+    R$ 100 mil também é 100 vezes, e não diz nada.
+    """
+    return [
+        Achado("salto-de-patrimonio", "AVISO", "TSE", None,
+               f"{nome}: R$ {antes / 1e6:,.2f} mi em {eleicao_antes} → "
+               f"R$ {depois / 1e6:,.1f} mi em {eleicao_depois}")
+        for nome, eleicao_antes, antes, eleicao_depois, depois in linhas
+        if depois > PATRIMONIO_MINIMO_DO_SALTO and antes > 0 and depois / antes >= SALTO_DE_PATRIMONIO
+    ]
+
+
 # ═══════════════════════════════════════════════════════════════════
 # As consultas — uma por regra, na mesma ordem
 # ═══════════════════════════════════════════════════════════════════
@@ -228,6 +262,20 @@ CONSULTAS = {
          GROUP BY 1, 2, 3
         HAVING count(*) > 3
     """,
+    "patrimonio_acima_do_teto": """
+        SELECT p.nome_exibicao, t.ano_eleicao, sum(t.valor)::float
+          FROM patrimonios t JOIN pessoas p ON p.id = t.pessoa_id
+         GROUP BY 1, 2, t.pessoa_id
+    """,
+    "salto_de_patrimonio": """
+        SELECT p.nome_exibicao, a.ano_eleicao, a.valor, b.ano_eleicao, b.valor
+          FROM (SELECT pessoa_id, ano_eleicao, sum(valor)::float AS valor
+                  FROM patrimonios GROUP BY 1, 2) a
+          JOIN (SELECT pessoa_id, ano_eleicao, sum(valor)::float AS valor
+                  FROM patrimonios GROUP BY 1, 2) b
+            ON b.pessoa_id = a.pessoa_id AND b.ano_eleicao = a.ano_eleicao + 4
+          JOIN pessoas p ON p.id = a.pessoa_id
+    """,
 }
 
 REGRAS = {
@@ -240,6 +288,8 @@ REGRAS = {
     "votacoes_sem_voto": votacoes_sem_voto,
     "sem_partido": sem_partido,
     "senadores_demais_por_uf": senadores_demais_por_uf,
+    "patrimonio_acima_do_teto": patrimonio_acima_do_teto,
+    "salto_de_patrimonio": salto_de_patrimonio,
 }
 
 

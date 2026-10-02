@@ -20,6 +20,7 @@ import { useContas } from '../componentes/useContas';
 import { useLegislaturas } from '../componentes/useLegislatura';
 import { BotaoBaixarCsv } from '../componentes/BotaoBaixarCsv';
 import { LinkDeFonte } from '../componentes/LinkDeFonte';
+import { ComProcedencia } from '../componentes/ModoAnalise';
 import { MandatosDoParlamentar } from '../componentes/MandatosDoParlamentar';
 import { RedesDoParlamentar } from '../componentes/RedesDoParlamentar';
 import { baixarCsv, buscarTodas } from '../exportar';
@@ -191,7 +192,13 @@ export function Parlamentar() {
 
         <div className="perfil-numeros" data-tour="ficha-votacoes">
           <span>
-            <strong>{ficha.nVotacoes}</strong> <span>votos com posição, em plenário e comissões</span>
+            <ComProcedencia
+              consulta={{ contexto: 'votos', pessoa: ficha.id, legislatura: ficha.legislatura ?? undefined }}
+              rotulo="Votos com posição"
+            >
+              <strong>{ficha.nVotacoes}</strong>
+            </ComProcedencia>{' '}
+            <span>votos com posição, em plenário e comissões</span>
           </span>
           <BotaoDoTour nome="ficha" passos={PASSOS_DA_FICHA} />
         </div>
