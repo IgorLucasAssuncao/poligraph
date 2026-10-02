@@ -20,6 +20,7 @@
 | [06-perguntas-lote-1.md](06-perguntas-lote-1.md) | 🗳️ **As 22 perguntas** medidas e curadas — PL11 |
 | [07-grafo-e-afinidade.md](07-grafo-e-afinidade.md) | ⭐ **O núcleo técnico** — nó, aresta, pesos e o cálculo da afinidade |
 | [09-apresentacao-validacao-e-valor.md](09-apresentacao-validacao-e-valor.md) | 📊 **Como apresentar e como conferir** — modelos de visualização, filtros, o valor para quem usa, notificações e a validação do dado |
+| [10-procedencia-e-modo-analise.md](10-procedencia-e-modo-analise.md) | Procedência por linha, modo análise e cruzamento por CNPJ — a partir de um vídeo sobre os dados do TSE |
 
 ---
 

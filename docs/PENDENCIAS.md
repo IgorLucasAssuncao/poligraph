@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-10-02 · **98 resolvidas · 65 abertas**
+> **Atualizado:** 2026-10-02 · **98 resolvidas · 70 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -50,6 +50,11 @@ PL41).
 | **PL69** | 🟡 **Votação secreta na Câmara marcada como aberta:** 11 votações, quase todas eleição de autoridade ("Eleito o Sr. …"), têm a presença de cada deputado e **nenhuma posição**. ⛔ Entram no cálculo (sem posição ⛔ há o que comparar), mas contam como abertas no painel e no grafo. Marcar `secreta` na ingestão quando ninguém tem posição | 🟢 Baixa |
 | **PL70** | 🟡 **A busca nos votos ⛔ acha o nome popular:** "reforma tributária" dá 0, porque a ementa oficial da PEC 45/2019 diz "Altera o Sistema Tributário Nacional"; "arcabouço" também dá 0. A Câmara publica palavras-chave por proposição (`keywords`), que ⛔ ingerimos. Ingerir e incluir na busca. 📐 Medido em 2026-10-02: "tributaria" acha 33 votos e "PEC 45/2019", 19 | 🟡 Média |
 | **PL71** | 🟡 **Sede dos favorecidos pela BrasilAPI:** **19.164 de 50.738** CNPJs que receberam emenda estão sem município — **R$ 9,81 bi de R$ 159,49 bi** fora do mapa. `brasilapi.com.br/api/cnpj/v1/{cnpj}` devolve `codigo_municipio_ibge` direto (conferido em 2026-10-02 com a Prefeitura de Cascavel: 4104808). Buscar os que faltam, devagar, gravando em `cnpjs_municipio` com a data e a fonte. ⚠️ Projeto comunitário, sem SLA, que repassa o dado aberto da Receita: a fonte citada continua sendo a Receita. ⛔ Gravar o quadro de sócios (`qsa`): é dado pessoal e ⛔ serve ao trabalho | 🟡 Média |
+| **PL72** | **Procedência por linha** — pedido do autor (2026-10-02). Tabela `cargas` (fonte, URL exata, data do download, SHA-256, comando) e `carga_id` nas tabelas de dado de fonte, para afirmar "este número é idêntico ao arquivo baixado em tal data". Desenho em [`plano/10 §2`](plano/10-procedencia-e-modo-analise.md) | Alta |
+| **PL73** | **Modo análise** — pedido do autor (2026-10-02). Um interruptor que torna todo número clicável: de onde veio, como foi contado e as linhas que entraram. Depende da PL72. Desenho em [`plano/10 §3`](plano/10-procedencia-e-modo-analise.md) | Alta |
+| **PL74** | **"Também recebeu da cota"** ao lado do favorecido da emenda: o mesmo CNPJ como fornecedor da cota e favorecido de emenda do mesmo parlamentar. MEDIDO em 2026-10-02: 897 pares, 443 parlamentares, 424 empresas; os maiores são companhias aéreas e de energia, e 323 empresas ligam-se a um só parlamentar. Fato, sem adjetivo (RNF-16). [`plano/10 §4.1`](plano/10-procedencia-e-modo-analise.md) | Média |
+| **PL75** | **Parlamentar sócio de empresa**: quadro de sócios cruzado por **nome + os 6 dígitos do meio do CPF** na ETL, gravando só o vínculo parlamentar–CNPJ. Por nome sozinho, não: homônimos. Doador pessoa física fica de fora: é cidadão privado. [`plano/10 §4.2`](plano/10-procedencia-e-modo-analise.md) | Baixa |
+| **PL76** | **Regra de patrimônio fora do comum no `conferir`**: o TSE é autodeclarado, e o "candidato mais rico do Brasil" tem um bem digitado com dígitos a mais (R$ 12 bi). MEDIDO: o maior da nossa base é R$ 240 mi, plausível | Baixa |
 | **PL67** | 🟡 **Amostra manual contra a fonte oficial**: 20 votações sorteadas por casa e legislatura, conferidas no site da casa. Vira achado ([`plano/09 §5.3`](plano/09-apresentacao-validacao-e-valor.md)) | 🟡 Média |
 | ✅ ~~PL68~~ | **Resolvida (2026-10-02)** — o painel conta como votação só a que tem voto nominal, e o cartão diz quantas ficaram de fora. Não era só a 51ª: a 52ª tem 309 de 600 sem voto nominal, e a 54ª, 455 de 905 | — |
 
