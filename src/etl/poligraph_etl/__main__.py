@@ -27,7 +27,7 @@ from . import (
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
 from .fontes import camara, portal, receita, senado, tse
-from . import conferencia, convenentes, patrimonio, procedencia, redes
+from . import conferencia, convenentes, patrimonio, procedencia, redes, rotina
 
 log = logging.getLogger("poligraph")
 
@@ -95,6 +95,8 @@ def main(argv: list[str] | None = None) -> int:
                 _fundo(conexao, args.eleicao, args.arquivo)
             elif args.comando == "conferir":
                 _conferir(conexao)
+            elif args.comando == "rotina":
+                _rotina(conexao, args.frequencia)
             elif args.comando == "validar":
                 _validar(conexao, args.legislatura, args.divisao_minima)
             else:
@@ -147,6 +149,8 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     )
 
     sub.add_parser("cpf", help="completa o cpf_hash das duas casas (Câmara: API; Senado: TSE)")
+    rot = sub.add_parser("rotina", help="a carga agendada (PL64): semanal ou mensal, terminando em conferir")
+    rot.add_argument("--frequencia", choices=list(rotina.FREQUENCIAS), required=True)
     sub.add_parser(
         "rechavear-cpf",
         help="refaz todo hash de CPF com a chave atual: pessoas, cota, campanha e patrimônio",
@@ -1694,6 +1698,44 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
     )
 
     log.info("  %d matérias gravadas, %d votações vinculadas", len(linhas), ligados)
+
+
+def _rotina(conexao: psycopg.Connection, frequencia: str) -> None:
+    """PL64 — roda as etapas da rotina, na ordem, e para na primeira que falhar.
+
+    DECISÃO: Parar, e não seguir: depois de uma carga que falhou, o `conferir` julgaria um
+    banco pela metade, e a próxima rotina refaz tudo de qualquer jeito. O Coolify mostra a
+    tarefa como falha, com o log da etapa.
+    """
+    lista = rotina.etapas(frequencia, date.today())
+    log.info("Rotina %s: %s", frequencia, " · ".join(str(etapa) for etapa in lista))
+
+    for numero, etapa in enumerate(lista, 1):
+        log.info("Etapa %d de %d: %s", numero, len(lista), etapa)
+        _executar_etapa(conexao, etapa)
+
+
+def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
+    """Os mesmos comandos da linha de comando; `analisar` vai na legislatura corrente da casa."""
+    anos = etapa.argumentos.get("anos", [])
+    if etapa.comando == "ingerir":
+        _ingerir(conexao, anos)
+    elif etapa.comando == "senado":
+        _senado(conexao, anos)
+    elif etapa.comando == "cota":
+        _cota(conexao, anos)
+    elif etapa.comando == "emendas":
+        _emendas(conexao, anos)
+    elif etapa.comando == "analisar":
+        casa = etapa.argumentos["casa"]
+        corrente = conexao.execute(
+            "SELECT max(legislatura) FROM votacoes WHERE casa = %s", (casa,)).fetchone()[0]
+        if corrente is not None:
+            _analisar(conexao, corrente, casa)
+    elif etapa.comando == "conferir":
+        _conferir(conexao)
+    else:
+        raise ValueError(f"Etapa sem execução: {etapa.comando}")
 
 
 def _conferir(conexao: psycopg.Connection) -> None:

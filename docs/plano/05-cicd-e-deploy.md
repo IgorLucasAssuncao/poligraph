@@ -246,12 +246,23 @@ troca zero-downtime, o container antigo ainda serve com o schema novo aplicado.
 
 ### 2.3 O ETL — Scheduled Task do Coolify
 
-```
-Scheduled Task: etl-diario
-Container:      etl
-Comando:        python main.py ingest && python main.py analyze
-Cron:           0 9 * * *        (após o rebuild dos CSVs, ~07:00 UTC)
-```
+> FEITO em 2026-10-02 (PL64): o comando `rotina` decide as etapas e para na primeira
+> falha. A versão anterior desta seção citava `python main.py ingest`, que nunca existiu.
+
+| Tarefa | Comando no contêiner | Cron (UTC) | Etapas |
+|---|---|---|---|
+| `etl-semanal` | `python -m poligraph_etl rotina --frequencia semanal` | `0 9 * * 1` | `ingerir` e `senado` do ano, `conferir` |
+| `etl-mensal` | `python -m poligraph_etl rotina --frequencia mensal` | `0 10 5 * *` | as da semanal, `cota`, `emendas`, `analisar` das duas casas, `conferir` |
+
+- Às 09:00 UTC: a Câmara regera os CSVs por volta de 07:00 UTC (achado #19).
+- Dia 5 do mês: a cota e as emendas do mês anterior já começaram a sair. Em janeiro e
+  fevereiro a rotina inclui o ano anterior (`rotina.anos_com_dado_novo`).
+- O contêiner da ETL precisa de `ConnectionStrings__poligraph`, de `POLIGRAPH_CHAVE_CPF`
+  (a mesma chave do HMAC do CPF que gerou os hashes do banco, PL77) e de um volume em
+  `POLIGRAPH_CACHE`, onde ficam os downloads e a pasta `procedencia/`.
+- RISCO: sem a chave, a mensal para na `cota`, que hasheia o fornecedor pessoa física. Com
+  uma chave diferente, os hashes novos não casariam com os antigos: rode `rechavear-cpf`.
+- `conferir` com ERRO termina a tarefa com código 1, e o Coolify a mostra como falha.
 
 ✅ **O Postgres nunca sai do VPS.** Foi o motivo de tirar o ETL do GitHub Actions
 ([01-arquitetura §3.5.1.1](01-arquitetura.md)).

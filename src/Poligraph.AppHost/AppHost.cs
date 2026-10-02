@@ -242,4 +242,19 @@ builder.AddDockerfile("etl-conferir", "../..", "docker/Dockerfile.etl")
     .WithArgs("conferir")
     .WithParentRelationship(etlIngerir);
 
+// PL64 — a carga agendada, como botão: no VPS ela é tarefa agendada do Coolify, e aqui é o
+// jeito de ver a mesma cadeia rodar. A mensal precisa da chave do CPF por causa da cota.
+foreach (var frequencia in new[] { "semanal", "mensal" })
+{
+    builder.AddDockerfile($"etl-rotina-{frequencia}", "../..", "docker/Dockerfile.etl")
+        .WithReference(bancoPoligraph)
+        .WaitForCompletion(migracoes)
+        .WithExplicitStart()
+        .WithArgs("rotina", "--frequencia", frequencia)
+        .WithVolume("poligraph-etl-cache", "/etl/.cache")
+        .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+        .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
+        .WithParentRelationship(etlIngerir);
+}
+
 builder.Build().Run();
