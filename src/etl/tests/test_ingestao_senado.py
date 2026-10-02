@@ -132,7 +132,7 @@ def test_o_mapeamento_da_camara_nao_serve():
 
 def test_siglas_das_legislaturas_anteriores_sao_conhecidas_e_sem_posicao():
     """📐 Achado #35, com a descrição que a própria fonte publica para cada uma."""
-    for sigla in ("REP", "P-OD", "LG", "Obstrução"):
+    for sigla in ("REP", "P-OD", "LG", "LA", "Obstrução"):
         assert ingestao_senado.eh_sigla_conhecida(sigla), sigla
         assert ingestao_senado.normalizar_voto(sigla) is None, sigla
 
@@ -466,3 +466,12 @@ def test_ano_sem_lacuna_conhecida_continua_estourando():
 
     with pytest.raises(RuntimeError):
         senado.conferir_volume([{}] * 13, 2021)
+
+
+def test_voto_sem_uf_nem_partido_entra_vazio_e_nao_nulo():
+    """📐 2002: ausência registrada sem UF (achado #35). As colunas são NOT NULL."""
+    sem_uf = votacao(votos=[voto(siglaUFParlamentar=None, siglaPartidoParlamentar=None, siglaVotoParlamentar="NCom")])
+
+    [linha] = ingestao_senado.votos_para_linhas([sem_uf], {"5672": 42})
+
+    assert linha["uf_no_voto"] == "" and linha["partido_no_voto"] == ""

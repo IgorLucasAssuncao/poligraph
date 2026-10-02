@@ -72,6 +72,7 @@ _VOTOS = {
     "obstrução": None,
     "obstrucao": None,
     "lg": None,           # "Licença à gestante" — 59 votos em 2020
+    "la": None,           # "Licença à adotante" — 57 votos em 2006
 }
 
 # O presidente da sessão só vota em desempate — equivale ao "Artigo 17" da Câmara.
@@ -100,6 +101,7 @@ _PRESENCA = {
     "obstrução": "PRESENTE",
     "obstrucao": "PRESENTE",
     "lg": "AUSENTE_JUSTIFICADO",
+    "la": "AUSENTE_JUSTIFICADO",
 }
 
 
@@ -314,8 +316,11 @@ def votos_para_linhas(
                     "pessoa_id": pessoa_id,
                     "valor": normalizar_voto(voto.get("siglaVotoParlamentar")),
                     "presenca": presenca_do_voto(voto.get("siglaVotoParlamentar")),
-                    "partido_no_voto": _texto(voto.get("siglaPartidoParlamentar")) or None,
-                    "uf_no_voto": _texto(voto.get("siglaUFParlamentar")) or None,
+                    # ⚠️ Vazio, ⛔ None: as colunas são NOT NULL, como na Câmara. Na 57ª
+                    #    nunca faltava; em 2002 vem ausência sem UF (achado #35), e o
+                    #    banco recusava a carga inteira do ano.
+                    "partido_no_voto": _texto(voto.get("siglaPartidoParlamentar")),
+                    "uf_no_voto": _texto(voto.get("siglaUFParlamentar")),
                 }
             )
 
