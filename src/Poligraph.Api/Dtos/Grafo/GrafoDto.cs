@@ -11,6 +11,11 @@ namespace Poligraph.Api.Dtos;
 /// As votações de plenário da casa na legislatura, e quantas delas foram secretas. A tela
 /// explica o desenho do Senado com elas: a matriz só usa as abertas.
 /// </param>
+/// <param name="AbertasDesde">
+/// A primeira e a última votação aberta de plenário da legislatura — o recorte que a matriz
+/// usou. Na 55ª do Senado elas vão de 2016 a 2018: a fonte ⛔ tem 2015 (achado #37), e a
+/// tela dizer "2015–2019" afirmaria um período que o desenho ⛔ cobre.
+/// </param>
 /// <param name="LegislaturasComGrafo">
 /// As legislaturas em que a casa tem grafo, da mais recente para a mais antiga. A que não
 /// teve dado suficiente fica de fora, e a tela não a oferece.
@@ -24,4 +29,6 @@ public record GrafoDto(
     IReadOnlyList<ArestaDoGrafoDto> Arestas,
     IReadOnlyList<short> LegislaturasComGrafo,
     int VotacoesDePlenario,
-    int SecretasDePlenario);
+    int SecretasDePlenario,
+    DateOnly? AbertasDesde = null,
+    DateOnly? AbertasAte = null);

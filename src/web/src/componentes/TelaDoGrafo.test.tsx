@@ -34,6 +34,8 @@ const GRAFO: Grafo = {
   legislaturasComGrafo: [57],
   votacoesDePlenario: 1103,
   secretasDePlenario: 0,
+  abertasDesde: null,
+  abertasAte: null,
 };
 
 describe('ferramentas sobre o desenho', () => {

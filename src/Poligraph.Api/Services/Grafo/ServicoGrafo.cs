@@ -34,13 +34,13 @@ public class ServicoGrafo(PoligraphDb db, CacheDeLeitura leitura)
 
         if (execucao is null) return new GrafoDto(0, casa, alvo ?? 0, 0, [], [], comGrafo, 0, 0);
 
-        var (votacoes, secretas) = await VotacoesDePlenarioAsync(casa, execucao.Legislatura, ct);
+        var (votacoes, secretas, desde, ate) = await VotacoesDePlenarioAsync(casa, execucao.Legislatura, ct);
 
         return new GrafoDto(
             execucao.Id, execucao.Casa, execucao.Legislatura, execucao.K,
             await NosAsync(execucao.Id, execucao.Legislatura, ct),
             await ArestasAsync(execucao.Id, ct),
-            comGrafo, votacoes, secretas);
+            comGrafo, votacoes, secretas, desde, ate);
     }
 
     private async Task<List<short>> LegislaturasComGrafoAsync(TipoCasa casa, CancellationToken ct) =>
@@ -51,13 +51,18 @@ public class ServicoGrafo(PoligraphDb db, CacheDeLeitura leitura)
             .OrderByDescending(l => l)
             .ToListAsync(ct);
 
-    private async Task<(int Votacoes, int Secretas)> VotacoesDePlenarioAsync(
+    private async Task<(int Votacoes, int Secretas, DateOnly? Desde, DateOnly? Ate)> VotacoesDePlenarioAsync(
         TipoCasa casa, short legislatura, CancellationToken ct)
     {
         var doPlenario = _db.Votacoes.AsNoTracking()
             .Where(v => v.Casa == casa && v.Legislatura == legislatura && v.Plenario);
+        var abertas = doPlenario.Where(v => !v.Secreta);
 
-        return (await doPlenario.CountAsync(ct), await doPlenario.CountAsync(v => v.Secreta, ct));
+        return (
+            await doPlenario.CountAsync(ct),
+            await doPlenario.CountAsync(v => v.Secreta, ct),
+            await abertas.MinAsync(v => (DateOnly?)v.Data, ct),
+            await abertas.MaxAsync(v => (DateOnly?)v.Data, ct));
     }
 
     /// <remarks>

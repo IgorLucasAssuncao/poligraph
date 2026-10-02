@@ -19,11 +19,8 @@ import { SugestoesParaSeguir } from '../componentes/SugestoesParaSeguir';
 import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
 import { useSessao } from '../sessao';
 import { EsqueletoDePainel } from '../componentes/Esqueleto';
-import {
-  SeletorDeLegislatura,
-  useLegislaturaDaUrl,
-  useLegislaturas,
-} from '../componentes/SeletorDeLegislatura';
+import { SeletorDeLegislatura } from '../componentes/SeletorDeLegislatura';
+import { useLegislaturaDaUrl, useLegislaturas } from '../componentes/useLegislatura';
 import { periodoDaLegislatura } from '../formato';
 
 

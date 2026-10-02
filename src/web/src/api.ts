@@ -613,6 +613,9 @@ export type Grafo = {
   /** As votações de plenário da legislatura desenhada, e quantas foram secretas. */
   votacoesDePlenario: number;
   secretasDePlenario: number;
+  /** A primeira e a última votação aberta de plenário, `YYYY-MM-DD` — o recorte do desenho. */
+  abertasDesde: string | null;
+  abertasAte: string | null;
 };
 
 /**

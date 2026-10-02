@@ -11,11 +11,8 @@ import { IconeExplorar } from '../componentes/Icones';
 import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
 import { useSessao } from '../sessao';
 import { EsqueletoDeLista } from '../componentes/Esqueleto';
-import {
-  SeletorDeLegislatura,
-  useLegislaturaDaUrl,
-  useLegislaturas,
-} from '../componentes/SeletorDeLegislatura';
+import { SeletorDeLegislatura } from '../componentes/SeletorDeLegislatura';
+import { useLegislaturaDaUrl, useLegislaturas } from '../componentes/useLegislatura';
 
 /** Busca e navegação pelos parlamentares (RF-34). */
 /**

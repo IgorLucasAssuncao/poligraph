@@ -420,6 +420,31 @@ def gravar_votacoes(conexao: psycopg.Connection, votacoes: Sequence[dict]) -> in
     )
 
 
+def apagar_votacoes(conexao: psycopg.Connection, ids: Sequence[str]) -> int:
+    """Apaga votações que a fonte desmentiu, com os votos e orientações delas (cascata).
+
+    🔴 Pergunta do questionário ⛔ se apaga em silêncio: a FK também é em cascata, e a
+    pergunta sumiria do poço sem ninguém decidir. Se alguma votação tiver pergunta, nada é
+    apagado e o erro diz qual.
+    """
+    if not ids:
+        return 0
+
+    com_pergunta = [
+        linha[0]
+        for linha in conexao.execute(
+            "SELECT DISTINCT votacao_id FROM perguntas WHERE votacao_id = ANY(%s)", (list(ids),)
+        )
+    ]
+    if com_pergunta:
+        raise RuntimeError(
+            f"Votações com pergunta no questionário: {', '.join(sorted(com_pergunta))}. "
+            "Desative a pergunta antes — apagar a votação a levaria junto."
+        )
+
+    return conexao.execute("DELETE FROM votacoes WHERE id = ANY(%s)", (list(ids),)).rowcount
+
+
 def gravar_orientacoes(
     conexao: psycopg.Connection, orientacoes: Sequence[dict]
 ) -> int:

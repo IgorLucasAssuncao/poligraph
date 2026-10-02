@@ -40,6 +40,8 @@ const GRAFO: DadosDoGrafo = {
   legislaturasComGrafo: [57],
   votacoesDePlenario: 1103,
   secretasDePlenario: 0,
+  abertasDesde: null,
+  abertasAte: null,
 };
 
 describe('o tour do grafo', () => {
@@ -106,5 +108,17 @@ describe('o período do grafo', () => {
 
     expect(await screen.findByText(/Das 300 votações de plenário/)).toBeDefined();
     expect(screen.getByText(/nas 180 abertas/)).toBeDefined();
+  });
+
+  /** 📐 A 55ª do Senado: a legislatura é 2015–2019, e as abertas vão de 2016 a 2018 (achado #37). */
+  it('diz o recorte que o desenho cobre, ⛔ só o período da legislatura', async () => {
+    vi.mocked(api.obterGrafo).mockResolvedValue({
+      ...GRAFO, legislatura: 55, legislaturasComGrafo: [57, 55],
+      abertasDesde: '2016-05-11', abertasAte: '2018-12-12',
+    });
+    renderizar();
+
+    const texto = (await screen.findByText(/as abertas vão de/)).closest('p')!.textContent;
+    expect(texto).toMatch(/2015–2019 — as abertas vão de mai\/2016 a dez\/2018\./);
   });
 });

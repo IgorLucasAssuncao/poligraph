@@ -10,6 +10,8 @@
 
 ## TRATAMENTO
 
+0. Descarta a votação **fora de época** — registro antigo com data recente, ver
+   `separar_fora_de_epoca`
 1. Separa votação **aberta** de **secreta** pelo campo `votacaoSecreta`
 2. Converte o voto para o domínio fechado `{-1, 0, 1, None}` — ver `normalizar_voto`
 3. Descarta voto de senador fora do de-para, e o chamador registra a contagem
@@ -74,6 +76,18 @@ _VOTOS = {
     "lg": None,           # "Licença à gestante" — 59 votos em 2020
     "la": None,           # "Licença à adotante" — 57 votos em 2006
 }
+
+# 📐 Desde 2004, o `codigoSessaoVotacao` cresce com a data — medido em 2026-10-02, ano a
+#    ano de 2004 a 2026: 2004 começa em 2523, 2014 termina em 5329, 2026 vai a 7105, sem
+#    nenhum código fora da ordem. Antes de 2004 a numeração é outra (2003 vai de 21 a 2503).
+#
+# 🔴 O `/votacao` devolve votações de 1998 e 1999 com `dataSessao` de 2015 a 2017 (achado
+#    #37): a matéria é de 1998, o informe da ata diz 1998, os votantes são Ramez Tebet e
+#    ACM — e a data diz 2015-04-01. Pela data, elas caíam na 55ª legislatura e punham 89
+#    senadores de outra época no grafo dela. O código denuncia: 947 a 1630, no meio de
+#    anos em que a sequência estava acima de 5300.
+PRIMEIRO_CODIGO_DE_2004 = 2523
+_ANO_DA_NUMERACAO_ATUAL = 2004
 
 # O presidente da sessão só vota em desempate — equivale ao "Artigo 17" da Câmara.
 _PREFIXO_PRESIDENTE = "presidente"
@@ -245,6 +259,37 @@ def descricoes_de_sigla(votacoes: list[dict]) -> dict[str, str]:
     return achadas
 
 
+def separar_fora_de_epoca(votacoes: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Separa a votação cuja data contradiz o próprio código — ver `PRIMEIRO_CODIGO_DE_2004`.
+
+    Devolve `(validas, fora)`. A de fora ⛔ é re-datada: a data verdadeira só se infere, e
+    uma votação de 1998 cairia na 50ª legislatura, que a base ⛔ tem. O chamador registra
+    a contagem e apaga a que uma carga anterior já tenha gravado.
+
+    Sem código ou sem data, fica nas válidas: `votacoes_para_linhas` já a descarta.
+    """
+    validas, fora = [], []
+
+    for votacao in votacoes:
+        codigo = _texto(votacao.get("codigoSessaoVotacao"))
+        data = _data(votacao)
+
+        if not codigo.isdigit() or not data:
+            validas.append(votacao)
+            continue
+
+        numeracao_atual = int(codigo) >= PRIMEIRO_CODIGO_DE_2004
+        data_atual = int(data[:4]) >= _ANO_DA_NUMERACAO_ATUAL
+        (validas if numeracao_atual == data_atual else fora).append(votacao)
+
+    return validas, fora
+
+
+def id_da_votacao(votacao: dict) -> str:
+    """`SF-` + o código: o prefixo evita colisão com o id da Câmara na mesma tabela."""
+    return f"SF-{_texto(votacao.get('codigoSessaoVotacao'))}"
+
+
 def votacoes_para_linhas(votacoes: list[dict]) -> list[dict]:
     """Converte em linhas de `votacoes`, secretas incluídas.
 
@@ -266,9 +311,7 @@ def votacoes_para_linhas(votacoes: list[dict]) -> list[dict]:
 
         linhas.append(
             {
-                # Prefixo de casa no id: `codigoSessaoVotacao` é um inteiro pequeno e
-                # colidiria com id de votação da Câmara na mesma tabela.
-                "id": f"SF-{codigo}",
+                "id": id_da_votacao(votacao),
                 "casa": CASA,
                 "legislatura": legislatura_da_data(data),
                 "data": data,

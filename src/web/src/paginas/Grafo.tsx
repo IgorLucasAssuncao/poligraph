@@ -12,10 +12,11 @@ import { GrafoAmpliado } from '../componentes/GrafoAmpliado';
 import { LegendaDoGrafo } from '../componentes/LegendaDoGrafo';
 import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
 import { Termo } from '../componentes/Termo';
-import { periodoDaLegislatura } from '../formato';
+import { mesCurto, periodoDaLegislatura } from '../formato';
 import { passosDoGrafo } from '../tour';
 import { Bloco, Esqueleto } from '../componentes/Esqueleto';
-import { SeletorDeLegislatura, useLegislaturaDaUrl } from '../componentes/SeletorDeLegislatura';
+import { SeletorDeLegislatura } from '../componentes/SeletorDeLegislatura';
+import { useLegislaturaDaUrl } from '../componentes/useLegislatura';
 
 type Grupo = { comunidade: number; quantos: number; partidos: string[] };
 
@@ -151,7 +152,14 @@ export function Grafo() {
             <p>
               Só entram votações de <Termo nome="plenario" /> da{' '}
               <Termo nome="legislatura">{grafo.legislatura}ª legislatura</Termo>, de{' '}
-              {periodoDaLegislatura(grafo.legislatura)}. Dois
+              {periodoDaLegislatura(grafo.legislatura)}
+              {grafo.abertasDesde && grafo.abertasAte && (
+                <>
+                  {' '}— as abertas vão de <strong>{mesCurto(grafo.abertasDesde)}</strong> a{' '}
+                  <strong>{mesCurto(grafo.abertasAte)}</strong>
+                </>
+              )}
+              . Dois
               {' '}{membro.plural} só se ligam se votaram juntos vezes suficientes —
               com poucas votações em comum, votar igual seria coincidência.
             </p>

@@ -469,3 +469,56 @@ def test_voto_sem_uf_nem_partido_entra_vazio_e_nao_nulo():
     [linha] = ingestao_senado.votos_para_linhas([sem_uf], {"5672": 42})
 
     assert linha["uf_no_voto"] == "" and linha["partido_no_voto"] == ""
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Achado #37 — votação de 1998 com data de 2015
+# ═══════════════════════════════════════════════════════════════════
+
+
+def test_votacao_antiga_com_data_recente_fica_fora():
+    """📐 O registro real: código 1483, matéria de 1998, `dataSessao` 2015-04-01."""
+    antiga = votacao(codigoSessaoVotacao=1483, dataSessao="2015-04-01")
+    atual = votacao(codigoSessaoVotacao=5560, dataSessao="2016-05-11")
+
+    validas, fora = ingestao_senado.separar_fora_de_epoca([antiga, atual])
+
+    assert validas == [atual]
+    assert fora == [antiga]
+
+
+def test_codigo_novo_com_data_antiga_tambem_fica_fora():
+    """📐 2002 trouxe o código 5293, que pela sequência é de 2014."""
+    validas, fora = ingestao_senado.separar_fora_de_epoca(
+        [votacao(codigoSessaoVotacao=5293, dataSessao="2002-06-12")]
+    )
+
+    assert validas == []
+    assert len(fora) == 1
+
+
+@pytest.mark.parametrize(
+    ("codigo", "data"),
+    [(21, "2003-02-18"), (2503, "2003-12-17"), (2523, "2004-02-10"), (7105, "2026-06-30")],
+)
+def test_as_pontas_medidas_da_numeracao_ficam_dentro(codigo, data):
+    validas, fora = ingestao_senado.separar_fora_de_epoca(
+        [votacao(codigoSessaoVotacao=codigo, dataSessao=data)]
+    )
+
+    assert len(validas) == 1
+    assert fora == []
+
+
+def test_sem_codigo_segue_para_o_descarte_de_sempre():
+    validas, fora = ingestao_senado.separar_fora_de_epoca([votacao(codigoSessaoVotacao=None)])
+
+    assert len(validas) == 1
+    assert fora == []
+    assert ingestao_senado.votacoes_para_linhas(validas) == []
+
+
+def test_o_id_gravado_e_o_que_se_apaga():
+    [linha] = ingestao_senado.votacoes_para_linhas([votacao(codigoSessaoVotacao=1483)])
+
+    assert linha["id"] == ingestao_senado.id_da_votacao(votacao(codigoSessaoVotacao=1483)) == "SF-1483"

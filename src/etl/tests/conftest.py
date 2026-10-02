@@ -44,13 +44,18 @@ CREATE TABLE votacoes (
     votos_sim INT, votos_nao INT
 );
 CREATE TABLE votos (
-    votacao_id TEXT NOT NULL REFERENCES votacoes(id),
+    votacao_id TEXT NOT NULL REFERENCES votacoes(id) ON DELETE CASCADE,
     pessoa_id BIGINT NOT NULL REFERENCES pessoas(id),
     valor SMALLINT CHECK (valor IS NULL OR valor IN (-1,0,1)),
     presenca TEXT CHECK (presenca IS NULL OR presenca IN ('PRESENTE','AUSENTE_JUSTIFICADO','AUSENTE')),
     partido_no_voto TEXT NOT NULL,
     uf_no_voto CHAR(2) NOT NULL,
     PRIMARY KEY (votacao_id, pessoa_id)
+);
+-- Só o que `apagar_votacoes` consulta: a pergunta e a cascata, como no EF.
+CREATE TABLE perguntas (
+    id TEXT PRIMARY KEY,
+    votacao_id TEXT NOT NULL REFERENCES votacoes(id) ON DELETE CASCADE
 );
 CREATE TABLE execucoes (
     id BIGSERIAL PRIMARY KEY,

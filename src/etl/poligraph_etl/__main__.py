@@ -391,7 +391,20 @@ def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
     for ano in anos:
         log.info("Ingerindo Senado %d...", ano)
 
-        votacoes_brutas = senado.baixar_votacoes(ano)
+        votacoes_brutas, fora = ingestao_senado.separar_fora_de_epoca(
+            senado.baixar_votacoes(ano)
+        )
+        if fora:
+            apagadas = persistencia.apagar_votacoes(
+                conexao, [ingestao_senado.id_da_votacao(v) for v in fora]
+            )
+            log.warning(
+                "  %d votações FORA DE ÉPOCA descartadas: o código é de outra numeração "
+                "que a data (achado #37). %d já gravadas por carga anterior, apagadas.",
+                len(fora), apagadas,
+            )
+
+        # ⭐ Depois do descarte: o volume que importa é o do ano de verdade.
         senado.conferir_volume(votacoes_brutas, ano)
 
         # A lista de exercício só tem quem está hoje; os votos alcançam quem saiu,

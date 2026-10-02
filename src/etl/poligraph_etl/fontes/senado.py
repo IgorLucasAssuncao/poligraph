@@ -42,13 +42,17 @@ CABECALHOS = {"Accept": "application/json"}
 # menos que isto significa recorte errado ou mudança de contrato, não Senado parado.
 MINIMO_POR_ANO = 20
 
-# 📐 Lacunas DA FONTE, medidas em 2026-10-01 (achado #35): o `/votacao` devolve só isto
-#    nos dois anos, contra 100 a 225 nos vizinhos — e 2016 é o ano do impeachment, ⛔ um
-#    Senado parado. O ano entra com o que a fonte tem, e o log diz que é lacuna.
+# 📐 Lacunas DA FONTE, medidas em 2026-10-02 (achados #35 e #37), contadas DEPOIS do
+#    descarte das votações fora de época: 2015 tem zero e 2016 tem 6, contra 100 a 225
+#    nos vizinhos — e 2016 é o ano do impeachment, ⛔ um Senado parado. Pela sequência do
+#    código, faltam ~230 votações entre a última de 2014 (5329) e a primeira de 2016 (5560).
+#
+# ⚠️ Eram 17 e 13 — mas as 17 de 2015 e 7 das 13 de 2016 eram votações de 1998 e 1999 com
+#    a data errada. O ano entra com o que a fonte tem, e o log diz que é lacuna.
 #
 # ⚠️ É um PISO, ⛔ um valor exato: se o Senado completar o arquivo, o ano passa a cruzar
 #    o mínimo normal e sai daqui sozinho. Abaixo do piso, o canário volta a estourar.
-LACUNAS_CONHECIDAS = {2015: 17, 2016: 13}
+LACUNAS_CONHECIDAS = {2015: 0, 2016: 6}
 
 
 def baixar_votacoes(ano: int) -> list[dict]:

@@ -491,3 +491,32 @@ def test_ceaps_casa_o_nome_so_com_senador_da_legislatura_da_despesa(conexao):
 
     assert persistencia.senadores_por_nome(conexao, [52]) == {"FULANO": antigo}
     assert persistencia.senadores_por_nome(conexao, [57]) == {"FULANO": atual}
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Achado #37 — apagar o que a fonte desmentiu
+# ═══════════════════════════════════════════════════════════════════
+
+
+def test_apagar_votacoes_leva_os_votos_junto(conexao):
+    pessoa = _preparar_pessoa_e_votacao(conexao)
+    persistencia.gravar_votacoes(conexao, [_votacao("SF-1483")])
+    persistencia.gravar_votos(conexao, [_voto("SF-1483", pessoa, 1), _voto("2358548-89", pessoa, 1)])
+
+    apagadas = persistencia.apagar_votacoes(conexao, ["SF-1483", "SF-9999"])
+
+    assert apagadas == 1
+    assert conexao.execute("SELECT count(*) FROM votos").fetchone()[0] == 1
+    assert conexao.execute("SELECT count(*) FROM votacoes").fetchone()[0] == 1
+
+
+def test_apagar_votacao_com_pergunta_recusa_tudo(conexao):
+    """🔴 A cascata levaria a pergunta do questionário junto, sem ninguém decidir."""
+    _preparar_pessoa_e_votacao(conexao)
+    persistencia.gravar_votacoes(conexao, [_votacao("SF-1483")])
+    conexao.execute("INSERT INTO perguntas (id, votacao_id) VALUES ('q-teste', '2358548-89')")
+
+    with pytest.raises(RuntimeError, match="2358548-89"):
+        persistencia.apagar_votacoes(conexao, ["SF-1483", "2358548-89"])
+
+    assert conexao.execute("SELECT count(*) FROM votacoes").fetchone()[0] == 2
