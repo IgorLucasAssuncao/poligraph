@@ -751,7 +751,7 @@ describe('redes e patrimônio', () => {
     expect(frase.textContent).toMatch(/R\$\s*900\.000,00 em 3 bens ao se candidatar em 2022/);
     expect(frase.textContent).toMatch(/Em 2018, tinha declarado R\$\s*400\.000,00/);
     expect(frase.textContent).not.toMatch(/%/);
-    expect(screen.getByText(/não uma avaliação de mercado/)).toBeInTheDocument();
+    expect(screen.getByText(/sem avaliação de mercado/)).toBeInTheDocument();
   });
 });
 

@@ -167,8 +167,8 @@ describe('painel de ajustes', () => {
 
     await usuario.click(screen.getByRole('button', { name: 'Alinhamento' }));
 
-    expect(screen.getByText(/não é esquerda e direita/)).toBeInTheDocument();
-    expect(screen.getByText(/meio não é moderação/)).toBeInTheDocument();
+    expect(screen.getByText(/nada diz sobre esquerda ou direita/)).toBeInTheDocument();
+    expect(screen.getByText(/sem indicar moderação/)).toBeInTheDocument();
   });
 
   it('os eixos começam desligados e a chave existe', async () => {
@@ -217,7 +217,7 @@ describe('painel de ajustes', () => {
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
     await usuario.click(screen.getByRole('button', { name: 'Alinhamento' }));
 
-    expect(screen.getByText(/a própria medida, não resultado de cálculo/)).toBeInTheDocument();
+    expect(screen.getByText(/a própria medida desse alinhamento/)).toBeInTheDocument();
   });
 
   it('Não a simulação de forças não existe mais', async () => {

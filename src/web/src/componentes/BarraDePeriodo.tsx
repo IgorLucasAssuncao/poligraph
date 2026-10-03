@@ -54,7 +54,7 @@ export function BarraDePeriodo({ comTodas = false }: { comTodas?: boolean }) {
 
       {passada && (
         <p className="barra-periodo-aviso" role="status">
-          Você está vendo <strong>{periodoDaLegislatura(atual)}</strong>, não o período atual.{' '}
+          Você está vendo <strong>{periodoDaLegislatura(atual)}</strong>, um período anterior.{' '}
           <button type="button" className="botao-link" onClick={() => definir(undefined)}>
             Voltar para {periodoDaLegislatura(corrente)}
           </button>

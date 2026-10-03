@@ -51,7 +51,7 @@ describe('a barra de período', () => {
 
   it('num período passado, avisa e oferece voltar', async () => {
     renderizarEm('/?legislatura=55');
-    expect(await screen.findByText(/não o período atual/)).toBeInTheDocument();
+    expect(await screen.findByText(/um período anterior/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Voltar para 2023–2027' }));
     expect(screen.getByTestId('endereco')).toHaveTextContent(/^\/$/);

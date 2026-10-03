@@ -87,7 +87,7 @@ function PaginaDaEntidade({ dados }: { dados: DadosDaEntidade }) {
             )}
           </p>
           <p className="numero-definicao">
-            <Termo nome="sedeDoFavorecido">onde fica registrada</Termo>, e não necessariamente onde aplicou o dinheiro
+            <Termo nome="sedeDoFavorecido">onde fica registrada</Termo>, que pode ser diferente de onde aplicou o dinheiro
           </p>
         </div>
       </section>

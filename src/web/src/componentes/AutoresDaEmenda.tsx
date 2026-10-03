@@ -50,7 +50,7 @@ export function Coletivos({ coletivos }: { coletivos: ColetivoQueMandou[] }) {
     <div data-tour="emendas-coletivos">
       <h3>Bancadas e comissões</h3>
       <p className="ajuda">
-        {reaisCompacto(total)} vieram de grupos, e não de uma pessoa: a{' '}
+        {reaisCompacto(total)} vieram de grupos de parlamentares: a{' '}
         <Termo nome="emendaDeBancada">bancada</Termo> reúne os parlamentares de um estado, e a{' '}
         <Termo nome="emendaDeComissao">comissão</Termo> é um grupo de trabalho do Congresso.
       </p>

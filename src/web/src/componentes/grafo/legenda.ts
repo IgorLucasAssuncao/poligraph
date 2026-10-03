@@ -30,7 +30,7 @@ export function rotulosDoEixo(
     return {
       esquerda: 'quase nunca votou com o Governo',
       direita: 'quase sempre votou com o Governo',
-      legenda: 'a posição horizontal é a própria medida, não resultado de algoritmo',
+      legenda: 'a posição horizontal é a própria medida de alinhamento',
       vertical: 'a vertical não mede nada: é só espaço para os pontos não se sobreporem',
     };
   }

@@ -194,7 +194,7 @@ export function passosDoGrafo({
       texto: temAlinhamento
         ? 'Nas molas, quem vota junto se atrai, e os eixos não significam nada. No ' +
           'alinhamento, a posição horizontal é quanto o parlamentar votou como o Governo ' +
-          'orientou. A posição mede só esse alinhamento com o Governo.'
+          'orientou, e nada diz sobre esquerda ou direita.'
         : 'Aqui os pontos se atraem quando votam junto, e os eixos não significam nada. ' +
           'Os dados desta casa não trazem a orientação do Governo, então só existe esta vista.',
     },

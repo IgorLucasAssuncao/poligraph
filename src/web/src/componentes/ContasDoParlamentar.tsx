@@ -619,7 +619,7 @@ function PatrimonioDeclarado({ pessoaId }: { pessoaId: number }) {
       )}
 
       <p className="nota-curta">
-        O valor é o que o próprio candidato declarou, e não uma avaliação de mercado.{' '}
+        O valor é o que o próprio candidato declarou ao TSE, sem avaliação de mercado.{' '}
         <LinkDeFonte href={FONTES.candidatos.url}>Declarações no TSE</LinkDeFonte>
       </p>
     </section>

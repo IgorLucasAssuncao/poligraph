@@ -144,16 +144,15 @@ function Conteudo({ dados }: { dados: DadosDaMetodologia }) {
       <TabelaDoGrafo casas={casas} />
       <ul>
         <li>
-          Voto de rito (requerimento, adiamento) pesa zero: mede obstrução, e não posição.
+          Voto de rito (requerimento, adiamento) pesa zero: ele mede tática de obstrução.
         </li>
         <li>
           Os grupos, que dão a cor aos pontos, são encontrados pelo algoritmo de Louvain
-          sobre as ligações. Saem do voto, e não do partido: um mesmo partido aparece em
+          sobre as ligações. Saem só do voto, e por isso um mesmo partido aparece em
           vários grupos.
         </li>
         <li>
-          Um ponto solto na borda não é radical: votou pouco demais para ser comparado com
-          alguém.
+          Um ponto solto na borda votou pouco demais para ser comparado com alguém.
         </li>
       </ul>
 

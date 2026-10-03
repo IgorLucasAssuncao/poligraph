@@ -63,7 +63,7 @@ export function Login() {
 
         <p className="login-chamada">
           Compare sua posição com o <strong>voto registrado em plenário</strong> de
-          deputados e senadores. Pelo registro nominal, não pelo discurso.
+          deputados e senadores, votação por votação.
         </p>
 
         <div className="acao-login">

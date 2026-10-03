@@ -132,8 +132,8 @@ export function Avaliacao({
 
           <p className="nota-privacidade">
             🔒 Estas duas respostas são gravadas{' '}
-            <strong>sem ligação com a sua conta</strong>. Servem para medir se o método
-            acerta, não para montar seu perfil.
+            <strong>sem ligação com a sua conta</strong>. Servem só para medir se o método
+            acerta.
           </p>
 
           {erro && <p className="erro">Não foi possível enviar. Tente de novo.</p>}

@@ -88,8 +88,8 @@ export function Inicio() {
           <h1>Quem vota como você</h1>
 
           <p>
-            A afinidade sai do <strong>voto registrado em plenário</strong>, não de
-            autodeclaração ideológica.
+            A afinidade sai do <strong>voto registrado em plenário</strong> de cada
+            parlamentar.
             {panorama && panorama.perguntasNoQuestionario > 0 ? (
               <>
                 {' '}Você responde <strong>{panorama.perguntasNoQuestionario} perguntas</strong>,

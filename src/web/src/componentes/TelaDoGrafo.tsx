@@ -74,8 +74,8 @@ const EXPLICACAO: Record<Layout, { rotulo: string; titulo: string; texto: string
     texto:
       'Cada ponto é colocado conforme votou como o Governo pediu: à esquerda quem ' +
       'quase nunca seguiu, à direita quem quase sempre seguiu. A posição horizontal é ' +
-      'a própria medida, não resultado de cálculo. Atenção: não é esquerda e direita ' +
-      'política, e o meio não é moderação — é onde está a maioria.',
+      'a própria medida desse alinhamento e nada diz sobre esquerda ou direita. O meio do ' +
+      'eixo mostra onde está a maioria, sem indicar moderação.',
   },
 };
 
