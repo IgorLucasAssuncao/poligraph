@@ -11,36 +11,21 @@ import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
 import { GrafoAmpliadoComponent } from '../componentes/GrafoAmpliado';
 import { LegendaDoGrafoComponent } from '../componentes/LegendaDoGrafo';
 import { TelaDoGrafoComponent } from '../componentes/TelaDoGrafo';
-import { TermoComponent } from '../componentes/Termo';
 import { mesCurto, periodoDaLegislatura } from '../formato';
 import { passosDoGrafo } from '../tour';
 import { BlocoComponent, EsqueletoComponent } from '../componentes/Esqueleto';
 import { useLegislaturaDaUrl } from '../componentes/useLegislatura';
 import './grafo.css';
 import { MINIMO_PARA_LISTAR_PARTIDO, PARTIDOS_MOSTRADOS_NO_GRAFO } from '../constantes';
+import { TEXTOS_DO_GRAFO } from '../textos/grafo';
+
+const T = TEXTOS_DO_GRAFO.pagina;
 
 type Grupo = { comunidade: number; quantos: number; partidos: string[] };
 
 type Destaque = { partido?: string; uf?: string };
 
 const CASAS: Casa[] = ['CAMARA', 'SENADO'];
-
-/**
- * Buracos da própria fonte, ditos onde o desenho é afetado (Pendência 58).
- *
- * MEDIDO: Em 2026-10-02 (achado #37): os dados abertos do Senado não têm as votações de 2015 nem
- * as do começo de 2016, em nenhum dos três serviços. A MP 665 e o julgamento final do
- * impeachment não aparecem.
- *
- * DECISÃO (2026-10-03): dizer a lacuna. Digitar as ~230 votações do Diário do Senado seria trazer
- * fonte isolada, que a regra do autor exclui (`.claude/CLAUDE.md`, regra 5).
- */
-const LACUNAS_DO_ACERVO: Record<string, string> = {
-  'SENADO-55':
-    'Os dados abertos do Senado não trazem as votações de 2015 nem as do começo de 2016, ' +
-    'como a da MP 665 e a do julgamento do impeachment. Elas estão só no Diário do Senado, ' +
-    'e este desenho fica sem elas.',
-};
 
 /**
  * O grafo de similaridade de voto (RF-33).
@@ -96,7 +81,7 @@ export function GrafoComponent() {
 
     obterGrafo(casa, legislatura)
       .then((novo) => atual && setLido({ chave, grafo: novo, erro: null }))
-      .catch(() => atual && setLido({ chave, grafo: null, erro: 'Não foi possível carregar o grafo agora.' }));
+      .catch(() => atual && setLido({ chave, grafo: null, erro: T.erro }));
 
     return () => {
       atual = false;
@@ -125,9 +110,7 @@ export function GrafoComponent() {
         <SeletorDeCasaComponent casa={casa} aoTrocar={trocarDeCasa} />
 
         {grafo && grafo.nos.length > 0 && (
-          <p className="grafo-contagem">
-            {grafo.nos.length} {membro.plural} · {grafo.arestas.length} ligações
-          </p>
+          <p className="grafo-contagem">{T.contagem(grafo.nos.length, membro.plural, grafo.arestas.length)}</p>
         )}
 
         {passos && <BotaoDoTourComponent nome="grafo" passos={passos} />}
@@ -135,7 +118,7 @@ export function GrafoComponent() {
 
       {erro && <p className="erro">{erro}</p>}
       {!erro && !grafo && (
-        <EsqueletoComponent rotulo="Carregando o grafo">
+        <EsqueletoComponent rotulo={T.carregando}>
           <BlocoComponent altura={520} />
         </EsqueletoComponent>
       )}
@@ -144,8 +127,7 @@ export function GrafoComponent() {
         <p className="vazio">
           {grafo.legislaturasComGrafo.length > 0 ? (
             <>
-              {NOME_DA_CASA[casa].nome} não tem grafo em {periodoDaLegislatura(grafo.legislatura)}:
-              havia votações abertas de menos para comparar quem vota com quem. Há grafo em{' '}
+              {T.semGrafoNoPeriodo(NOME_DA_CASA[casa].nome, periodoDaLegislatura(grafo.legislatura))}
               {grafo.legislaturasComGrafo.map((l, i) => (
                 <span key={l}>
                   {i > 0 && ', '}
@@ -157,10 +139,7 @@ export function GrafoComponent() {
               .
             </>
           ) : (
-            <>
-              A análise ainda não rodou para {NOME_DA_CASA[casa].nome} nesta legislatura.
-              O grafo aparece depois da próxima execução do ETL.
-            </>
+            T.analiseNaoRodou(NOME_DA_CASA[casa].nome)
           )}
         </p>
       )}
@@ -181,60 +160,43 @@ export function GrafoComponent() {
             aberto={ampliado}
             aoFechar={() => setAmpliado(false)}
             aoSelecionar={abrirPerfil}
-            titulo={`Quem vota com quem · ${NOME_DA_CASA[casa].nome}`}
+            titulo={T.tituloDoAmpliado(NOME_DA_CASA[casa].nome)}
           />
 
           <LegendaDoGrafoComponent />
 
           <section className="grafo-explicacao">
-            <h2>De onde vem</h2>
+            <h2>{T.deOndeVem}</h2>
             <p>
-              Só entram votações de <TermoComponent nome="plenario" /> da{' '}
-              <TermoComponent nome="legislatura">{grafo.legislatura}ª legislatura</TermoComponent>, de{' '}
-              {periodoDaLegislatura(grafo.legislatura)}
-              {grafo.abertasDesde && grafo.abertasAte && (
-                <>
-                  . As abertas vão de <strong>{mesCurto(grafo.abertasDesde)}</strong> a{' '}
-                  <strong>{mesCurto(grafo.abertasAte)}</strong>
-                </>
+              {T.origem(
+                grafo.legislatura,
+                periodoDaLegislatura(grafo.legislatura),
+                grafo.abertasDesde && grafo.abertasAte
+                  ? { desde: mesCurto(grafo.abertasDesde), ate: mesCurto(grafo.abertasAte) }
+                  : null,
+                membro.plural,
               )}
-              . Dois
-              {' '}{membro.plural} só se ligam se votaram juntos vezes suficientes:
-              com poucas votações em comum, votar igual seria coincidência.
             </p>
 
-            {LACUNAS_DO_ACERVO[`${casa}-${grafo.legislatura}`] && (
-              <p className="ajuda">{LACUNAS_DO_ACERVO[`${casa}-${grafo.legislatura}`]}</p>
+            {TEXTOS_DO_GRAFO.lacunasDoAcervo[`${casa}-${grafo.legislatura}`] && (
+              <p className="ajuda">{TEXTOS_DO_GRAFO.lacunasDoAcervo[`${casa}-${grafo.legislatura}`]}</p>
             )}
 
             {casa === 'SENADO' && grafo.secretasDePlenario > 0 && (
-              <p className="ajuda">
-                <strong>O Senado vota em segredo com frequência.</strong> Das{' '}
-                {grafo.votacoesDePlenario} votações de plenário da legislatura,{' '}
-                {grafo.secretasDePlenario} são secretas, e nelas não há voto individual
-                publicado. Este desenho se apoia nas{' '}
-                {grafo.votacoesDePlenario - grafo.secretasDePlenario} abertas, e é por isso
-                que ele tem menos ligações e mais pontos soltos que o da Câmara.
-              </p>
+              <p className="ajuda">{T.sigiloDoSenado(grafo.votacoesDePlenario, grafo.secretasDePlenario)}</p>
             )}
           </section>
 
           <section className="grafo-grupos" data-tour="grafo-grupos">
-            <h2>Os grupos</h2>
-            <p className="ajuda ajuda-espacada">
-              Cada <TermoComponent nome="comunidade" /> é formado pelo <strong>voto</strong>, não
-              pelo <TermoComponent nome="partido" />, e é por isso que um mesmo partido aparece em
-              vários.
-            </p>
+            <h2>{T.osGrupos}</h2>
+            <p className="ajuda ajuda-espacada">{T.gruposAjuda}</p>
 
             <ul>
               {grupos.map((g) => (
                 <li key={g.comunidade}>
                   <span className="grupo-cor" data-comunidade={g.comunidade % 8} />
                   <span className="grupo-corpo">
-                    <strong>
-                      Grupo {g.comunidade + 1} · {g.quantos} {membro.plural}
-                    </strong>
+                    <strong>{T.grupo(g.comunidade + 1, g.quantos, membro.plural)}</strong>
                     <small>{g.partidos.join(' · ')}</small>
                   </span>
                 </li>
@@ -260,7 +222,7 @@ export function GrafoComponent() {
 
 function SeletorDeCasaComponent({ casa, aoTrocar }: { casa: Casa; aoTrocar: (nova: Casa) => void }) {
   return (
-    <div className="grafo-casas" data-tour="grafo-casas" role="group" aria-label="Casa legislativa">
+    <div className="grafo-casas" data-tour="grafo-casas" role="group" aria-label={T.casaLegislativa}>
       {CASAS.map((opcao) => (
         <button
           key={opcao}
@@ -337,13 +299,13 @@ function DestaqueDoGrafoComponent({
 
   return (
     <div className="destaque-do-grafo">
-      <span className="destaque-do-grafo-rotulo">Destacar</span>
+      <span className="destaque-do-grafo-rotulo">{T.destacar}</span>
       <select
         value={destaque.partido ?? ''}
         onChange={(e) => aoTrocar({ ...destaque, partido: e.target.value || undefined })}
-        aria-label="Destacar um partido"
+        aria-label={T.destacarPartido}
       >
-        <option value="">todos os partidos</option>
+        <option value="">{T.todosOsPartidos}</option>
         {partidos.map((p) => (
           <option key={p} value={p}>
             {p}
@@ -353,9 +315,9 @@ function DestaqueDoGrafoComponent({
       <select
         value={destaque.uf ?? ''}
         onChange={(e) => aoTrocar({ ...destaque, uf: e.target.value || undefined })}
-        aria-label="Destacar um estado"
+        aria-label={T.destacarEstado}
       >
-        <option value="">todos os estados</option>
+        <option value="">{T.todosOsEstados}</option>
         {ufs.map((u) => (
           <option key={u} value={u}>
             {u}
@@ -365,10 +327,10 @@ function DestaqueDoGrafoComponent({
       {ativo && (
         <>
           <span className="destaque-do-grafo-conta" aria-live="polite">
-            {destacados} de {grafo.nos.length} em destaque
+            {T.emDestaque(destacados, grafo.nos.length)}
           </span>
           <button type="button" className="filtro-limpar" onClick={() => aoTrocar({})}>
-            Tirar o destaque
+            {T.tirarDestaque}
           </button>
         </>
       )}
