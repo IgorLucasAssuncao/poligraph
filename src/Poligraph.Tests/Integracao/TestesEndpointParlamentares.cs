@@ -356,6 +356,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         Assert.Equal(1_000_000m, emendas.Empenhado);
         Assert.Equal(400_000m, emendas.Pago);
         Assert.NotEqual(emendas.Empenhado, emendas.Pago);
+        Assert.Equal(150_000m, emendas.PagoDepois);
 
         Assert.Equal("Ananindeua - PA", emendas.PorDestino[0].Localidade);
     }
@@ -506,7 +507,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     private record DestinoLido(string Localidade, decimal Empenhado, decimal Pago, int Quantidade);
 
     private record EmendasLidas(
-        int Ano, decimal Empenhado, decimal Pago, int Quantidade,
+        int Ano, decimal Empenhado, decimal Pago, decimal PagoDepois, int Quantidade,
         IReadOnlyList<DestinoLido> PorDestino);
 
     private record FonteLida(string Fonte, decimal Total, int Lancamentos);
@@ -532,7 +533,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
                 PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
                 CodigoEmenda = "202541840002", Ano = 2025,
                 Localidade = "Ananindeua - PA", Funcao = "Saúde",
-                ValorEmpenhado = 300_000m, ValorPago = 100_000m
+                ValorEmpenhado = 300_000m, ValorPago = 100_000m, ValorRestoPago = 150_000m
             },
             new EmendaModel
             {

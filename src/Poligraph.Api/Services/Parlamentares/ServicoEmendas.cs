@@ -121,7 +121,7 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
         if (alvo is null)
         {
             return new EmendasDoParlamentarDto(
-                0, 0, 0, 0, [], [], new FavorecidosDaEmendaDto(0, 0, 0, 0, null, 0, []), [],
+                0, 0, 0, 0, 0, [], [], new FavorecidosDaEmendaDto(0, 0, 0, 0, null, 0, []), [],
                 new ConveniosDaEmendaDto(0, []), new CidadesDaEmendaDto(0, []));
         }
 
@@ -160,6 +160,7 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
             {
                 Empenhado = g.Sum(e => e.ValorEmpenhado),
                 Pago = g.Sum(e => e.ValorPago),
+                PagoDepois = g.Sum(e => e.ValorRestoPago),
                 Quantidade = g.Select(e => e.CodigoEmenda).Distinct().Count()
             })
             .FirstOrDefaultAsync(ct);
@@ -170,6 +171,7 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
             Ano: alvo.Value,
             Empenhado: totais?.Empenhado ?? 0,
             Pago: totais?.Pago ?? 0,
+            PagoDepois: totais?.PagoDepois ?? 0,
             Quantidade: totais?.Quantidade ?? 0,
             PorDestino: [.. destinos.Select(d =>
                 new EmendaPorDestinoDto(d.Localidade, d.Empenhado, d.Pago, d.Quantidade))],

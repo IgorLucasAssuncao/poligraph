@@ -698,6 +698,8 @@ export type EmendasDoParlamentar = {
   ano: number;
   empenhado: number;
   pago: number;
+  /** Restos a pagar pagos: empenho do ano pago nos anos seguintes. */
+  pagoDepois: number;
   quantidade: number;
   porDestino: EmendaPorDestino[];
   porFuncao: EmendaPorFuncao[];

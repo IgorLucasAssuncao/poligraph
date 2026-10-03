@@ -10,11 +10,16 @@ namespace Poligraph.Api.Dtos;
 /// reservar; pagar é o dinheiro sair. Mostrar só um responderia metade da pergunta — e
 /// seria a metade que favorece quem só anuncia.
 /// </para>
+/// <para>
+/// <c>PagoDepois</c> são os restos a pagar pagos: empenho do ano pago nos anos seguintes. A ficha
+/// mostrava só <c>Pago</c>, e uma emenda de 2024 com 98% pago aparecia com 54% (2026-10-03).
+/// </para>
 /// </summary>
 public record EmendasDoParlamentarDto(
     int Ano,
     decimal Empenhado,
     decimal Pago,
+    decimal PagoDepois,
     int Quantidade,
     IReadOnlyList<EmendaPorDestinoDto> PorDestino,
     IReadOnlyList<EmendaPorFuncaoDto> PorFuncao,

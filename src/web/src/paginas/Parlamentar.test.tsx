@@ -80,6 +80,7 @@ const EMENDAS: EmendasDoParlamentar = {
   ano: 2025,
   empenhado: 1_000_000,
   pago: 400_000,
+  pagoDepois: 0,
   quantidade: 3,
   porDestino: [
     { localidade: 'Ananindeua - PA', empenhado: 900_000, pago: 400_000, quantidade: 2 },
@@ -238,9 +239,19 @@ describe('contas — emendas', () => {
     expect(texto).toMatch(/40% saiu de fato/);
   });
 
+  it('soma o que foi pago nos anos seguintes (restos a pagar)', async () => {
+    vi.mocked(api.obterEmendas).mockResolvedValue({ ...EMENDAS, pago: 400_000, pagoDepois: 500_000 });
+    await abrirAba('Emendas');
+
+    const texto = await tela();
+    expect(texto).toMatch(/90% saiu de fato/);
+    expect(texto).toMatch(/pago nos anos seguintes:\s*R\$\s*500\.000,00/);
+    expect(texto).toMatch(/ainda não pago:\s*R\$\s*100\.000,00/);
+  });
+
   it('DECISÃO: estado vazio é honesto, não "R$ 0,00"', async () => {
     vi.mocked(api.obterEmendas).mockResolvedValue({
-      ano: 0, empenhado: 0, pago: 0, quantidade: 0, porDestino: [], porFuncao: [],
+      ano: 0, empenhado: 0, pago: 0, pagoDepois: 0, quantidade: 0, porDestino: [], porFuncao: [],
       ...SEM_DESTINO,
     });
 
@@ -252,7 +263,7 @@ describe('contas — emendas', () => {
 
   it('ATENÇÃO: não divide por zero quando nada foi empenhado', async () => {
     vi.mocked(api.obterEmendas).mockResolvedValue({
-      ...EMENDAS, empenhado: 0, pago: 0, porDestino: [], porFuncao: [],
+      ...EMENDAS, empenhado: 0, pago: 0, pagoDepois: 0, porDestino: [], porFuncao: [],
     });
 
     await abrirAba('Emendas');

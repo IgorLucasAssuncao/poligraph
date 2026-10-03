@@ -376,6 +376,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
       Onde o conteúdo é figura e não texto, o teto some. */
 .corpo[data-largura='estreita'] { max-width: 44rem; }
 .corpo[data-largura='media'] { max-width: 60rem; }
+.corpo[data-largura='larga'] { max-width: 76rem; }
 .corpo[data-largura='ampla'] { max-width: 96rem; }
 
 /* ═══ RODAPÉ DO SITE ═══════════════════════════════════════════ */
@@ -463,11 +464,13 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   padding: .38rem .95rem; font-size: var(--t-2); font-weight: 700;
   border-radius: var(--raio); white-space: nowrap;
 }
+/* DECISÃO (2026-10-03): contorno, e não preto cheio. Oito botões cheios na lista lateral do
+      Início chamavam mais atenção que "Compare seu voto", a ação principal da tela. */
 .botao-seguir {
-  background: var(--texto); color: var(--fundo);
-  border: 1px solid var(--texto); min-width: 9.5rem;
+  background: transparent; color: var(--realce);
+  border: 1px solid var(--realce); min-width: 9.5rem;
 }
-.botao-seguir:hover { opacity: .85; }
+.botao-seguir:hover { background: var(--realce); color: var(--sobre-realce); }
 /* ATENÇÃO: min-width fixo: o texto do hover é mais longo, e sem isto a linha inteira
       da timeline reflui a cada passagem do mouse. */
 .botao-seguindo {
@@ -2384,7 +2387,11 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 /* RISCO: A execução (pago ÷ empenhado) ganha destaque próprio, e não um número miúdo
    ao lado do total: é ela que distingue emenda anunciada de emenda cumprida. */
 .execucao { padding: .9rem 1rem 1rem; border-bottom: 1px solid var(--borda); }
-.execucao-barra { display: block; height: 8px; margin-bottom: .5rem; }
+.execucao-barra { display: flex; height: 8px; margin-bottom: .5rem; }
+.gasto-barra .parte-depois, .amostra-cor.parte-depois { background: color-mix(in srgb, var(--realce) 45%, var(--fundo)); }
+.legenda-execucao { display: flex; flex-wrap: wrap; gap: .3rem 1.25rem; margin: 0; font-size: var(--t-1); color: var(--suave); }
+.amostra-cor { display: inline-block; width: .7rem; height: .7rem; margin-right: .25rem; vertical-align: -1px; border-radius: 1px; background: var(--realce); }
+.amostra-cor.nao-pago { background: var(--borda); }
 .execucao .ajuda { margin: 0; }
 
 /* ATENÇÃO: Os dois fundos lado a lado, cada um com o nome à vista — a diagramação é o

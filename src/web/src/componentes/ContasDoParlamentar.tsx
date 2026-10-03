@@ -138,7 +138,8 @@ export function AbaEmendas({ pessoaId, contas, erro }: { pessoaId: number; conta
     );
   }
 
-  const executado = emendas.empenhado > 0 ? emendas.pago / emendas.empenhado : 0;
+  const pagoTotal = emendas.pago + (emendas.pagoDepois ?? 0);
+  const fracao = (valor: number) => (emendas.empenhado > 0 ? Math.min(valor / emendas.empenhado, 1) : 0);
   const maiorDestino = emendas.porDestino[0]?.empenhado ?? 1;
 
   return (
@@ -149,15 +150,31 @@ export function AbaEmendas({ pessoaId, contas, erro }: { pessoaId: number; conta
             consulta={{ contexto: 'emendas', pessoa: pessoaId, ano: emendas.ano }}
             rotulo={`Emendas de ${emendas.ano}`}
           >
-            <strong>{reais(emendas.pago)}</strong>
+            <strong>{reais(pagoTotal)}</strong>
           </ComProcedencia>{' '}
           pagos de {reais(emendas.empenhado)} empenhados em{' '}
           <strong>{emendas.quantidade}</strong> {emendas.quantidade === 1 ? 'emenda' : 'emendas'} de {emendas.ano}:{' '}
-          {(executado * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}% saiu de fato
+          {(fracao(pagoTotal) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}% saiu de fato
         </p>
         <span className="gasto-barra execucao-barra" aria-hidden="true">
-          <span style={{ width: `${Math.min(executado * 100, 100)}%` }} />
+          <span style={{ width: `${fracao(emendas.pago) * 100}%` }} />
+          {emendas.pagoDepois > 0 && (
+            <span className="parte-depois" style={{ width: `${fracao(emendas.pagoDepois) * 100}%` }} />
+          )}
         </span>
+        <p className="legenda-execucao">
+          <span><span className="amostra-cor" aria-hidden="true" /> pago em {emendas.ano}: {reais(emendas.pago)}</span>
+          {emendas.pagoDepois > 0 && (
+            <span>
+              <span className="amostra-cor parte-depois" aria-hidden="true" /> pago nos anos seguintes:{' '}
+              {reais(emendas.pagoDepois)}
+            </span>
+          )}
+          <span>
+            <span className="amostra-cor nao-pago" aria-hidden="true" /> ainda não pago:{' '}
+            {reais(Math.max(emendas.empenhado - pagoTotal, 0))}
+          </span>
+        </p>
       </div>
 
       <div className="duas-colunas">

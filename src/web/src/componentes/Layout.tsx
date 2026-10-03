@@ -15,7 +15,7 @@ import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
  * onde não devia: num monitor de 2560px o grafo desenhava 643 nós em 832px, com uma
  * barra de sugestões de 21rem ao lado.
  */
-type Largura = 'ampla' | 'media' | 'estreita';
+type Largura = 'ampla' | 'larga' | 'media' | 'estreita';
 
 /**
  * Quanto espaço cada rota pede.
@@ -23,6 +23,9 @@ type Largura = 'ampla' | 'media' | 'estreita';
  * ATENÇÃO: Mora aqui, e não numa prop passada por cada página: a moldura já conhece a
  * rota, e obrigar toda tela a declarar a própria largura significa que a próxima
  * esquece — e herda a errada em silêncio.
+ *
+ * DECISÃO (2026-10-03): `larga` (76rem) para a ficha e as telas de dinheiro. Em 60rem as duas
+ * colunas das abas cortavam nomes de cidade e de doador, e sobrava um quarto da tela de cada lado.
  */
 const LARGURA: { padrao: Largura; rotas: [string, Largura][] } = {
   padrao: 'media',
@@ -30,6 +33,10 @@ const LARGURA: { padrao: Largura; rotas: [string, Largura][] } = {
     ['/', 'ampla'],                 // painel: números e o grafo lado a lado
     ['/parlamentares', 'ampla'],    // lista e grafo, os dois querem largura
     ['/resultado', 'estreita'],     // uma pergunta por vez — largo atrapalha ler
+    ['/parlamentar/', 'larga'],
+    ['/emendas', 'larga'],
+    ['/entidades', 'larga'],
+    ['/governo', 'larga'],
     ['/conta', 'estreita'],
     ['/privacidade', 'estreita'],   // texto corrido
   ],

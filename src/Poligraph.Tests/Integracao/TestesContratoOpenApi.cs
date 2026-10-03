@@ -141,7 +141,7 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     [InlineData("NoDoGrafoDto", "id,nome,partido,uf,comunidade,eixoX,eixoY,nVotacoes,componente1,componente2,urlFoto,governismo")]
     [InlineData("ArestaDoGrafoDto", "de,para,peso,votacoesComuns,cosseno")]
     // Quem recebeu, quando e por qual convênio: a aba de emendas da ficha.
-    [InlineData("EmendasDoParlamentarDto", "ano,empenhado,pago,quantidade,porDestino,porFuncao,favorecidos,pagamentosPorMes,convenios,cidades")]
+    [InlineData("EmendasDoParlamentarDto", "ano,empenhado,pago,pagoDepois,quantidade,porDestino,porFuncao,favorecidos,pagamentosPorMes,convenios,cidades")]
     [InlineData("FavorecidosDaEmendaDto", "recebido,viaIntermediario,aPessoas,semIdentificacao,ultimoMes,identificados,maiores")]
     [InlineData("ConvenioDaEmendaDto", "numero,convenente,objeto,dataPublicacao,valor,emendasQueFinanciam")]
     // O perfil do governo: o período, o ano a ano e o sigilo com a base.
