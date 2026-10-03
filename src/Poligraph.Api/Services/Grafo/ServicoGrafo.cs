@@ -118,7 +118,6 @@ public class ServicoGrafo(PoligraphDb db, CacheDeLeitura leitura)
     /// <para>A base e o cosseno vivem em `similaridades`, não em `arestas_grafo`. A junção acontece no banco: `similaridades` tem 185.908 linhas por métrica nesta execução, e trazê-las para a memória para casar aqui seria ler 370 mil linhas a cada abertura da tela.</para>
     /// <para>`DefaultIfEmpty` porque o par sem linha de similaridade é bug, e o zero aparece na tela como "0 votações" em vez de derrubar a requisição inteira.</para>
     /// </remarks>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0031", Justification = "A consulta vira SQL: árvore de expressão não aceita o operador ?.")]
     private async Task<List<ArestaDoGrafoDto>> ArestasAsync(long execucaoId, CancellationToken ct)
     {
         var arestas =
@@ -141,8 +140,8 @@ public class ServicoGrafo(PoligraphDb db, CacheDeLeitura leitura)
 
             select new ArestaDoGrafoDto(
                 a.PessoaA, a.PessoaB, a.Peso,
-                base_ == null ? 0 : base_.NVotacoesComuns,
-                outra == null ? null : outra.Valor);
+                (int?)base_!.NVotacoesComuns ?? 0,
+                (float?)outra!.Valor);
 
         return await arestas.ToListAsync(ct);
     }
