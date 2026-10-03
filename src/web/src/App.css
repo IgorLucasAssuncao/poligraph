@@ -3119,12 +3119,24 @@ html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
   padding: 1rem; border-bottom: 1px solid var(--borda);
 }
 @media (min-width: 1100px) {
-  .emendas-filtros { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .emendas-filtros { grid-template-columns: minmax(0, 1fr) auto; }
+  .emendas-filtros .seletor-periodo-campos { flex-wrap: nowrap; }
 }
 /* Os dois lados com a mesma forma: o título em cima e os controles logo abaixo, sem borda própria. */
 .emendas-filtros .sua-cidade { padding: 0; border: 0; }
 .emendas-filtros .governo-barra { padding: 0; border: 0; display: block; }
 .filtro-titulo { margin: 0 0 .4rem; font-weight: 700; }
+/* Campo, botão e lista de ano com a mesma altura, para os controles dos dois lados ficarem na mesma linha. */
+.emendas-filtros input,
+.emendas-filtros button,
+.emendas-filtros select { box-sizing: border-box; height: 2.6rem; padding-block: 0; }
+/* A lista do ano mede o ano escolhido, e não "2026 (em andamento)" nas duas. */
+.emendas-filtros select { field-sizing: content; min-width: 5.5rem; }
+@media (max-width: 1099px) {
+  .emendas-filtros { grid-template-columns: minmax(0, 1fr); }
+}
+.emendas-filtros .sua-cidade label,
+.emendas-filtros .filtro-titulo { line-height: 1.4; margin: 0 0 .4rem; }
 .emendas-escopo { margin: .75rem 1rem .75rem; font-size: var(--t-2); color: var(--suave); }
 
 /* ═══ ABAS INTERNAS: o painel da cidade (2026-10-03) ═══════════════
