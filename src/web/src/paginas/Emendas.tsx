@@ -355,6 +355,7 @@ function MapaDaUfComponent({
   const [estado, setEstado] = useState<MapaDoEstado | null>(null);
   const [erro, setErro] = useState(false);
   const [exibidas, setExibidas] = useState(CIDADES_POR_VEZ);
+  const [porHabitante, setPorHabitante] = useState(false);
 
   useEffect(() => {
     let atual = true;
@@ -366,15 +367,25 @@ function MapaDaUfComponent({
     };
   }, [uf, periodo]);
 
+  const comDinheiro = estado?.porMunicipio.filter((m) => m.recebido > 0) ?? [];
+  const temPopulacao = comDinheiro.length > 0 && comDinheiro.every((m) => (m.populacao ?? 0) > 0);
+  const habitante = porHabitante && temPopulacao;
+  const valorDe = useCallback(
+    (m: MapaDoEstado['porMunicipio'][number]) => (habitante ? m.recebido / (m.populacao ?? 1) : m.recebido),
+    [habitante],
+  );
   const valores = useMemo(
-    () => (estado ? new Map(estado.porMunicipio.map((m) => [m.codigoIbge, m.recebido])) : null),
-    [estado],
+    () => (estado ? new Map(estado.porMunicipio.map((m) => [m.codigoIbge, valorDe(m)])) : null),
+    [estado, valorDe],
   );
   const nomes = useMemo(
     () => new Map((estado?.porMunicipio ?? []).map((m) => [m.codigoIbge, nomeProprio(m.nome)])),
     [estado],
   );
-  const receberam = useMemo(() => (estado?.porMunicipio ?? []).filter((m) => m.recebido > 0), [estado]);
+  const receberam = useMemo(
+    () => (estado?.porMunicipio ?? []).filter((m) => m.recebido > 0).sort((a, b) => valorDe(b) - valorDe(a)),
+    [estado, valorDe],
+  );
   const codigoUf = UFS.find(([, sigla]) => sigla === uf)?.[0];
 
   return (
@@ -394,6 +405,20 @@ function MapaDaUfComponent({
         </p>
       )}
 
+      {temPopulacao && (
+        <OpcoesComponent
+          rotulo="Leitura do mapa"
+          opcoes={[
+            { valor: false, rotulo: 'Total recebido' },
+            { valor: true, rotulo: 'Por habitante' },
+          ]}
+          escolhida={habitante}
+          aoEscolher={setPorHabitante}
+        >
+          {habitante && <span className="ajuda">Reais por habitante. Cidade pequena com uma emenda grande sobe muito.</span>}
+        </OpcoesComponent>
+      )}
+
       {codigoUf && (
         <div data-tour="emendas-mapa">
           <MapaCoropleticoComponent
@@ -401,7 +426,8 @@ function MapaDaUfComponent({
             valores={valores}
             nomes={nomes}
             selecionado={cidade}
-            rotulo={`Mapa de ${uf}: dinheiro de emenda por cidade`}
+            formatar={habitante ? (v) => `R$ ${Math.round(v).toLocaleString('pt-BR')}` : undefined}
+            rotulo={`Mapa de ${uf}: dinheiro de emenda por cidade${habitante ? ', por habitante' : ''}`}
             aoEscolher={aoEscolher}
           />
         </div>
@@ -428,7 +454,9 @@ function MapaDaUfComponent({
                 >
                   {nomeProprio(m.nome)}
                 </button>
-                <span className="valor">{reaisCompacto(m.recebido)}</span>
+                <span className="valor">
+                  {habitante ? `${reais(valorDe(m))} por habitante` : reaisCompacto(m.recebido)}
+                </span>
               </li>
             ))}
           </ol>

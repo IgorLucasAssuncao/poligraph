@@ -312,3 +312,24 @@ describe('o mapa por habitante', () => {
     expect(screen.queryByRole('button', { name: 'Por habitante' })).toBeNull();
   });
 });
+
+describe('as cidades por habitante', () => {
+  it('reordena as cidades do estado pelo valor por habitante', async () => {
+    vi.mocked(api.obterMapaDoEstado).mockResolvedValue({
+      ...PARANA,
+      porMunicipio: [
+        { codigoIbge: '4106902', nome: 'CURITIBA', recebido: 300e6, populacao: 1_800_000 },
+        { codigoIbge: '4113734', nome: 'LUIZIANA', recebido: 7e6, populacao: 7_000 },
+        { codigoIbge: '4100103', nome: 'ABATIA', recebido: 0, populacao: 7_500 },
+      ],
+    });
+    renderizar('/emendas?uf=PR');
+
+    const primeira = async () => (await screen.findAllByRole('listitem')).find((li) => li.closest('.lista-cidades'))!.textContent;
+    expect(await primeira()).toMatch(/Curitiba/);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Por habitante' }));
+
+    expect(await primeira()).toMatch(/Luiziana.*1\.000,00 por habitante/);
+  });
+});
