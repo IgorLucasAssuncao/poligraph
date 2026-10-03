@@ -73,7 +73,28 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
         Assert.Equal(carga.Id, Assert.Single(lida.Cargas).Id);
     }
 
+    /// <summary>O total da entidade: os pagamentos diretos ao CNPJ, sem o intermediário, como no índice de entidades.</summary>
+    [SkippableFact]
+    public async Task Entidade_PagamentosDiretosAoCnpj()
+    {
+        ExigeDocker();
+        var carga = Carga('e', "https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares/UNICO");
+        Db.Cargas.Add(carga);
+        await Db.SaveChangesAsync();
+        var intermediario = Favorecido("202541840006", carga.Id);
+        intermediario.Intermediario = true;
+        var outro = Favorecido("202541840007", carga.Id);
+        outro.Documento = "99999999000199";
+        Db.EmendasFavorecidos.AddRange(Favorecido("202541840004", carga.Id), Favorecido("202341840001", null), intermediario, outro);
+        await Db.SaveChangesAsync();
+
+        var lida = await LerAsync("/api/procedencia/entidade?cnpj=12345678000190");
+
+        Assert.Equal((2, 1), (lida.Linhas, lida.LinhasSemCarga));
+    }
+
     [SkippableTheory]
+    [InlineData("/api/procedencia/entidade?cnpj=123")]
     [InlineData("/api/procedencia/pagamentos?de=2025")]
     [InlineData("/api/procedencia/inventado?pessoa=1&legislatura=57")]
     [InlineData("/api/procedencia/cota?legislatura=57")]

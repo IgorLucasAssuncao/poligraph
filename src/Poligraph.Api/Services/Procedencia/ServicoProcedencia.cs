@@ -23,7 +23,7 @@ public class ServicoProcedencia(PoligraphDb db)
 {
     /// <summary>Os contextos que a rota aceita, na ordem em que aparecem na ficha.</summary>
     public static readonly IReadOnlyList<string> Contextos =
-        ["votos", "cota", "emendas", "campanha", "patrimonio", "painel", "pagamentos"];
+        ["votos", "cota", "emendas", "campanha", "patrimonio", "painel", "pagamentos", "entidade"];
 
     private readonly PoligraphDb _db = db;
 
@@ -34,11 +34,14 @@ public class ServicoProcedencia(PoligraphDb db)
     /// <param name="casa">Só em <c>painel</c>.</param>
     /// <param name="de">Só em <c>pagamentos</c>: o primeiro ano da emenda, como no mapa.</param>
     /// <param name="ate">Só em <c>pagamentos</c>: o último ano da emenda.</param>
+    /// <param name="cnpj">Só em <c>entidade</c>: a entidade que recebeu.</param>
     public async Task<ProcedenciaDto?> ObterAsync(
         string contexto, long? pessoa, short? legislatura, int? ano, TipoCasa? casa, int? de, int? ate,
-        CancellationToken ct)
+        string? cnpj, CancellationToken ct)
     {
         if (!Contextos.Contains(contexto)) return null;
+        if (contexto == "entidade")
+            return cnpj is { Length: 14 } c && c.All(char.IsAsciiDigit) ? await MontarAsync(RegraDaEntidade, DaEntidade(c), ct) : null;
         if (contexto == "pagamentos")
             return de is { } inicio && ate is { } fim ? await MontarAsync(RegraDosPagamentos(inicio, fim), Pagamentos(inicio, fim), ct) : null;
         if (contexto != "painel" && pessoa is null) return null;
@@ -147,6 +150,18 @@ public class ServicoProcedencia(PoligraphDb db)
             .Where(f => prefixos.Contains(f.CodigoEmenda.Substring(0, 4)))
             .Select(f => f.CargaId);
     }
+
+    private const string RegraDaEntidade =
+        "Os pagamentos de emenda a este CNPJ, de todos os anos carregados, do Portal da Transparência, "
+        + "uma linha por emenda, mês e favorecido. Repasse feito por intermediário (como o Banco do Brasil) fica de fora.";
+
+    /// <remarks>
+    /// <para>O mesmo filtro do índice de entidades (<c>ServicoEntidades.IndiceAsync</c>): pessoa jurídica que recebeu direto.</para>
+    /// </remarks>
+    private IQueryable<long?> DaEntidade(string cnpj) =>
+        _db.EmendasFavorecidos.AsNoTracking()
+            .Where(f => f.Documento == cnpj && f.Tipo == TipoFavorecido.PESSOA_JURIDICA && !f.Intermediario)
+            .Select(f => f.CargaId);
 
     private (string, IQueryable<long?>) Painel(TipoCasa casa, short legislatura) =>
         ($"As votações de plenário da {legislatura}ª legislatura {(casa == TipoCasa.CAMARA ? "na Câmara" : "no Senado")} com voto nominal "

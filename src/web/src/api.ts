@@ -1039,7 +1039,7 @@ export async function obterNovidades(): Promise<Novidades> {
 
 /** O número cuja procedência se pede (Pendência 73). O recorte é o mesmo da tela que o mostra. */
 export type ConsultaDeProcedencia = {
-  contexto: 'votos' | 'cota' | 'emendas' | 'campanha' | 'patrimonio' | 'painel' | 'pagamentos';
+  contexto: 'votos' | 'cota' | 'emendas' | 'campanha' | 'patrimonio' | 'painel' | 'pagamentos' | 'entidade';
   pessoa?: number;
   legislatura?: number;
   ano?: number;
@@ -1047,6 +1047,8 @@ export type ConsultaDeProcedencia = {
   /** Só em `pagamentos`: o período das emendas, como no mapa. */
   de?: number;
   ate?: number;
+  /** Só em `entidade`. */
+  cnpj?: string;
 };
 
 /** Um arquivo baixado de fonte oficial, com a impressão digital do que veio. */

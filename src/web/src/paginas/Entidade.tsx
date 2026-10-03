@@ -16,6 +16,7 @@ import { Termo } from '../componentes/Termo';
 import { usePaginas } from '../componentes/usePaginas';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { dataCurta, minusculas, nomeProprio, reais, reaisCompacto } from '../formato';
+import { ComProcedencia } from '../componentes/ModoAnalise';
 import { EsqueletoDePainel } from '../componentes/Esqueleto';
 
 /**
@@ -69,7 +70,11 @@ function PaginaDaEntidade({ dados }: { dados: DadosDaEntidade }) {
       <section className="numeros-do-ano" aria-label="O que a entidade recebeu">
         <div className="numero-do-ano">
           <p className="numero-rotulo">Recebeu de emendas</p>
-          <p className="numero-valor">{reaisCompacto(dados.recebido)}</p>
+          <p className="numero-valor">
+            <ComProcedencia consulta={{ contexto: 'entidade', cnpj: dados.cnpj }} rotulo={`Recebido por ${nomeProprio(dados.nome)}`}>
+              {reaisCompacto(dados.recebido)}
+            </ComProcedencia>
+          </p>
           <p className="numero-definicao">
             em {dados.emendas} {dados.emendas === 1 ? 'emenda' : 'emendas'}, de{' '}
             {dados.porAno[0]?.ano ?? '—'} a {dados.porAno[dados.porAno.length - 1]?.ano ?? '—'}

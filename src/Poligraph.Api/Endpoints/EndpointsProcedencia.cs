@@ -18,12 +18,13 @@ public static class EndpointsProcedencia
 
     /// <summary>
     /// De onde veio um número e como foi contado, para o modo análise (Pendência 73). Contextos:
-    /// votos, cota, emendas, campanha, patrimonio (com <c>pessoa</c>) e painel (com <c>casa</c>).
+    /// votos, cota, emendas, campanha, patrimonio (com <c>pessoa</c>), painel (com <c>casa</c>), pagamentos
+    /// (com <c>de</c> e <c>ate</c>) e entidade (com <c>cnpj</c>).
     /// </summary>
     private static async Task<IResult> ObterAsync(
-        string contexto, long? pessoa, short? legislatura, int? ano, TipoCasa? casa, int? de, int? ate,
+        string contexto, long? pessoa, short? legislatura, int? ano, TipoCasa? casa, int? de, int? ate, string? cnpj,
         ServicoProcedencia servico, CancellationToken ct) =>
-        await servico.ObterAsync(contexto, pessoa, legislatura, ano, casa, de, ate, ct) is { } procedencia
+        await servico.ObterAsync(contexto, pessoa, legislatura, ano, casa, de, ate, cnpj, ct) is { } procedencia
             ? Results.Ok(procedencia)
             : Results.Problem(
                 $"Contexto desconhecido ou sem o parâmetro dele. Contextos: {string.Join(", ", ServicoProcedencia.Contextos)}.",
