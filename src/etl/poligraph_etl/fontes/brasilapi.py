@@ -23,6 +23,10 @@ import requests
 
 BASE = "https://brasilapi.com.br/api/cnpj/v1"
 
+CABECALHOS = {"User-Agent": "poligraph-etl/1.0 (TCC; dados abertos)"}
+"""MEDIDO em 2026-10-02: com o user-agent padrão do `requests`, a BrasilAPI responde 429 a todo
+pedido; com um user-agent que diz quem pede, 200. Sem isto, cada CNPJ esperava 30 s e saía vazio."""
+
 TENTATIVAS_COM_LIMITE = 3
 ESPERA_NO_LIMITE = 10.0
 
@@ -37,7 +41,7 @@ def sede(cnpj: str, *, esperar=time.sleep) -> dict | None:
     """
     for _ in range(TENTATIVAS_COM_LIMITE):
         try:
-            resposta = requests.get(f"{BASE}/{cnpj}", timeout=30)
+            resposta = requests.get(f"{BASE}/{cnpj}", headers=CABECALHOS, timeout=30)
         except requests.RequestException:
             return None
         if resposta.status_code == 429:

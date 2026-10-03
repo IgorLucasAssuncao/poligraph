@@ -42,3 +42,14 @@ def test_nao_encontrado_ou_sem_codigo_e_nulo(monkeypatch):
 
     monkeypatch.setattr(brasilapi.requests, "get", lambda *a, **k: _Resposta(200, {"codigo_municipio_ibge": None}))
     assert brasilapi.sede("00000000000000") is None
+
+
+def test_pede_com_user_agent_proprio(monkeypatch):
+    """Com o user-agent padrão do `requests`, a BrasilAPI responde 429 a tudo."""
+    pedidos = []
+    monkeypatch.setattr(brasilapi.requests, "get", lambda *a, **k: pedidos.append(k) or _Resposta(200, CASCAVEL))
+
+    brasilapi.sede("76208867000107")
+
+    assert pedidos[0]["headers"]["User-Agent"].startswith("poligraph-etl")
+
