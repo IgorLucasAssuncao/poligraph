@@ -23,7 +23,6 @@ import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { MapaCoropleticoComponent } from '../componentes/MapaCoropletico';
 import { SeletorDePeriodoComponent } from '../componentes/SeletorDePeriodo';
-import { TermoComponent } from '../componentes/Termo';
 import { usePaginas } from '../componentes/usePaginas';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { FONTES } from '../fontes';
@@ -35,7 +34,8 @@ import { UFS } from '../ufs';
 import { ConfereComOPortalComponent } from '../componentes/ConfereComOPortal';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { AbasComponent, NumeroComponent, OpcoesComponent, type Aba } from '../componentes/Dados';
-import { CHAVE_MINHA_CIDADE, CIDADES_POR_VEZ, ITENS_POR_PAGINA_DA_CIDADE } from '../constantes';
+import { CHAVE_MINHA_CIDADE, CIDADES_POR_VEZ, ESTADOS_A_VISTA, ITENS_POR_PAGINA_DA_CIDADE } from '../constantes';
+import { TEXTOS_DAS_EMENDAS as T } from '../textos/emendas';
 
 /**
  * Para onde foi o dinheiro de emenda, no mapa — e quem o mandou para a sua cidade.
@@ -127,20 +127,16 @@ export function EmendasComponent() {
     <>
       <AbasDoDinheiroComponent />
       <CabecalhoDaColunaComponent
-        titulo="Emendas por cidade"
-        subtitulo="Para onde foi o dinheiro de emenda parlamentar"
+        titulo={T.titulo}
+        subtitulo={T.subtitulo}
         acao={<BotaoDoTourComponent nome="emendas" passos={passos} />}
       />
 
 
-      {erro && <p className="erro">Não foi possível carregar o mapa das emendas agora.</p>}
-      {!erro && !brasil && <EsqueletoDePainelComponent rotulo="Carregando o mapa das emendas" alturaDoGrafico={420} />}
+      {erro && <p className="erro">{T.erro}</p>}
+      {!erro && !brasil && <EsqueletoDePainelComponent rotulo={T.carregando} alturaDoGrafico={420} />}
 
-      {brasil && brasil.anosDisponiveis.length === 0 && (
-        <p className="vazio">
-          As emendas ainda não foram carregadas. Elas aparecem depois da próxima execução do ETL.
-        </p>
-      )}
+      {brasil && brasil.anosDisponiveis.length === 0 && <p className="vazio">{T.semDados}</p>}
 
       {brasil && brasil.anosDisponiveis.length > 0 && (
         <>
@@ -153,11 +149,11 @@ export function EmendasComponent() {
               }}
             />
             <div className="filtro-periodo">
-              <p className="filtro-titulo">Período</p>
+              <p className="filtro-titulo">{T.periodo}</p>
               <SeletorDePeriodoComponent
                 anos={brasil.anosDisponiveis}
                 periodo={brasil.periodo}
-                rotulo="Período das emendas"
+                rotulo={T.periodoDasEmendas}
                 tour="emendas-periodo"
                 aoMudar={(novo) =>
                   mudar(novo ? { de: String(novo.de), ate: String(novo.ate) } : { de: null, ate: null })
@@ -165,10 +161,7 @@ export function EmendasComponent() {
               />
             </div>
           </div>
-          <p className="emendas-escopo">
-            Emendas de <strong>{textoDoPeriodo(brasil.periodo)}</strong>, pagas até hoje. A cidade é a{' '}
-            <TermoComponent nome="sedeDoFavorecido" />.
-          </p>
+          <p className="emendas-escopo">{T.escopo(textoDoPeriodo(brasil.periodo))}</p>
 
           <ForaDoMapaComponent brasil={brasil} />
           <ConfereComOPortalComponent periodo={brasil.periodo} />
@@ -195,8 +188,9 @@ export function EmendasComponent() {
           )}
 
           <p className="fonte-dado">
-            Fontes: <LinkDeFonteComponent href={FONTES.emendas.url}>{FONTES.emendas.nome}</LinkDeFonteComponent>;{' '}
-            <LinkDeFonteComponent href={FONTES.cnpj.url}>{FONTES.cnpj.nome}</LinkDeFonteComponent>, para a sede;{' '}
+            {T.fontes} <LinkDeFonteComponent href={FONTES.emendas.url}>{FONTES.emendas.nome}</LinkDeFonteComponent>;{' '}
+            <LinkDeFonteComponent href={FONTES.cnpj.url}>{FONTES.cnpj.nome}</LinkDeFonteComponent>
+            {T.paraASede}{' '}
             <LinkDeFonteComponent href={FONTES.malhas.url}>{FONTES.malhas.nome}</LinkDeFonteComponent>.
           </p>
         </>
@@ -213,21 +207,22 @@ export function EmendasComponent() {
  */
 function ForaDoMapaComponent({ brasil }: { brasil: MapaDoBrasil }) {
   const periodo = brasil.periodo;
+  const N = T.numeros;
   const numeros: [string, number, string][] = [
-    ['Pago em emendas', brasil.recebido, 'das emendas do período, pago até hoje'],
-    ['No mapa', brasil.noMapa, 'sabemos em que cidade fica quem recebeu'],
-    ['Repassado por banco', brasil.viaIntermediario, 'foi ao Banco do Brasil, que paga adiante; o destino final não está no dado'],
-    ['Sem cidade', brasil.semSede, 'pago a pessoas ou a quem não foi identificado'],
+    [N.pago, brasil.recebido, N.pagoDefinicao],
+    [N.noMapa, brasil.noMapa, N.noMapaDefinicao],
+    [N.porBanco, brasil.viaIntermediario, N.porBancoDefinicao],
+    [N.semCidade, brasil.semSede, N.semCidadeDefinicao],
   ];
 
   return (
-    <section className="numeros-do-ano" aria-label="O dinheiro das emendas do período" data-tour="emendas-numeros">
+    <section className="numeros-do-ano" aria-label={N.rotulo} data-tour="emendas-numeros">
       {numeros.map(([rotulo, valor, definicao]) => (
         <NumeroComponent key={rotulo} rotulo={rotulo} definicao={definicao}>
-          {rotulo === 'Pago em emendas' ? (
+          {rotulo === N.pago ? (
             <ComProcedenciaComponent
               consulta={{ contexto: 'pagamentos', de: periodo.de, ate: periodo.ate }}
-              rotulo={`Pago nas emendas de ${textoDoPeriodo(periodo)}`}
+              rotulo={N.rotuloDaProcedencia(textoDoPeriodo(periodo))}
             >
               {reaisCompacto(valor)}
             </ComProcedenciaComponent>
@@ -258,27 +253,25 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
   const valores = useMemo(() => new Map(brasil.porUf.map((u) => [u.codigoUf, valorDe(u)])), [brasil, valorDe]);
   const siglaPorCodigo = useMemo(() => new Map(UFS), []);
   const ordenadas = [...brasil.porUf].sort((a, b) => valorDe(b) - valorDe(a));
-  const porPessoa = (valor: number) => `R$ ${Math.round(valor).toLocaleString('pt-BR')}`;
+  const porPessoa = (valor: number) => T.leitura.porPessoa(Math.round(valor).toLocaleString('pt-BR'));
   const [todosOsEstados, setTodosOsEstados] = useState(false);
   const periodo = brasil.periodo;
 
   return (
     <section className="governo-secao">
-      <h2>Por estado</h2>
-      <p className="ajuda">Escolha um estado para ver as cidades.</p>
+      <h2>{T.pais.titulo}</h2>
+      <p className="ajuda">{T.pais.ajuda}</p>
       {temPopulacao && (
         <OpcoesComponent
-          rotulo="Leitura do mapa"
+          rotulo={T.leitura.rotulo}
           opcoes={[
-            { valor: false, rotulo: 'Total recebido' },
-            { valor: true, rotulo: 'Por habitante' },
+            { valor: false, rotulo: T.leitura.total },
+            { valor: true, rotulo: T.leitura.porHabitante },
           ]}
           escolhida={habitante}
           aoEscolher={setPorHabitante}
         >
-          {habitante && brasil.anoDaPopulacao && (
-            <span className="ajuda">Reais por habitante, com a população estimada pelo IBGE para {brasil.anoDaPopulacao}.</span>
-          )}
+          {habitante && brasil.anoDaPopulacao && <span className="ajuda">{T.pais.populacao(brasil.anoDaPopulacao)}</span>}
         </OpcoesComponent>
       )}
 
@@ -290,7 +283,7 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
           nomes={siglaPorCodigo}
           focavel
           formatar={habitante ? porPessoa : undefined}
-          rotulo={`Mapa do Brasil: dinheiro de emenda de ${textoDoPeriodo(brasil.periodo)} por estado${habitante ? ', por habitante' : ''}`}
+          rotulo={T.pais.rotuloDoMapa(textoDoPeriodo(brasil.periodo), habitante)}
           aoEscolher={(codigo) => {
             const sigla = siglaPorCodigo.get(codigo);
             if (sigla) aoEscolher(sigla);
@@ -300,18 +293,18 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
 
       <div className="tabela-rolavel lista-ao-lado">
         <table className="tabela-orcamento">
-          <caption className="sr-apenas">Dinheiro de emenda por estado, pela sede de quem recebeu</caption>
+          <caption className="sr-apenas">{T.pais.legenda}</caption>
           <thead>
             <tr>
-              <th scope="col">Estado</th>
-              <th scope="col">Recebido</th>
-              {temPopulacao && <th scope="col">Por habitante</th>}
-              <th scope="col">Cidades</th>
+              <th scope="col">{T.pais.estado}</th>
+              <th scope="col">{T.pais.recebido}</th>
+              {temPopulacao && <th scope="col">{T.pais.porHabitante}</th>}
+              <th scope="col">{T.pais.cidades}</th>
             </tr>
           </thead>
           <tbody>
             {ordenadas.map((u, i) => (
-              <tr key={u.uf} className={i >= 10 ? 'estado-alem-dos-dez' : undefined}>
+              <tr key={u.uf} className={i >= ESTADOS_A_VISTA ? 'estado-alem-dos-dez' : undefined}>
                 <th scope="row">
                   <button type="button" className="link-botao" onClick={() => aoEscolher(u.uf)}>
                     {u.uf}
@@ -320,7 +313,7 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
                 <td>
                   <ComProcedenciaComponent
                     consulta={{ contexto: 'pagamentos', de: periodo.de, ate: periodo.ate, uf: u.uf }}
-                    rotulo={`Emendas de ${textoDoPeriodo(periodo)} com sede em ${u.uf}`}
+                    rotulo={T.pais.rotuloDaProcedencia(textoDoPeriodo(periodo), u.uf)}
                   >
                     {reaisCompacto(u.recebido)}
                   </ComProcedenciaComponent>
@@ -332,19 +325,19 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
           </tbody>
         </table>
       </div>
-      {ordenadas.length > 10 && !todosOsEstados && (
+      {ordenadas.length > ESTADOS_A_VISTA && !todosOsEstados && (
         <button type="button" className="botao-secundario ver-todos-os-estados" onClick={() => setTodosOsEstados(true)}>
-          Ver os {ordenadas.length} estados
+          {T.pais.verTodos(ordenadas.length)}
         </button>
       )}
       </div>
 
       <BotaoBaixarCsvComponent
-        rotulo="Baixar por estado (CSV)"
+        rotulo={T.pais.baixar}
         montar={() =>
           baixarCsv(
-            `emendas-por-estado-${nomeDoArquivo(brasil.periodo)}.csv`,
-            ['UF', 'Código IBGE', 'Recebido', 'População', 'Cidades'],
+            T.pais.arquivo(nomeDoArquivo(brasil.periodo)),
+            [...T.pais.colunas],
             ordenadas.map((u) => [u.uf, u.codigoUf, u.recebido, u.populacao ?? '', u.municipios]),
           )
         }
@@ -415,29 +408,26 @@ function MapaDaUfComponent({
       <div className="mapa-titulo">
         <h2>{uf}</h2>
         <button type="button" className="botao-secundario" onClick={aoVoltar}>
-          Ver o Brasil
+          {T.estado.verOBrasil}
         </button>
       </div>
 
-      {erro && <p className="erro">Não foi possível carregar as cidades de {uf}.</p>}
+      {erro && <p className="erro">{T.estado.erro(uf)}</p>}
       {estado && (
-        <p className="ajuda">
-          {reaisCompacto(estado.recebido)} a quem tem sede em {receberam.length} das {estado.porMunicipio.length}{' '}
-          cidades de {uf}. Escolha uma cidade no mapa ou na lista.
-        </p>
+        <p className="ajuda">{T.estado.ajuda(reaisCompacto(estado.recebido), receberam.length, estado.porMunicipio.length, uf)}</p>
       )}
 
       {temPopulacao && (
         <OpcoesComponent
-          rotulo="Leitura do mapa"
+          rotulo={T.leitura.rotulo}
           opcoes={[
-            { valor: false, rotulo: 'Total recebido' },
-            { valor: true, rotulo: 'Por habitante' },
+            { valor: false, rotulo: T.leitura.total },
+            { valor: true, rotulo: T.leitura.porHabitante },
           ]}
           escolhida={habitante}
           aoEscolher={setPorHabitante}
         >
-          {habitante && <span className="ajuda">Reais por habitante. Cidade pequena com uma emenda grande sobe muito.</span>}
+          {habitante && <span className="ajuda">{T.estado.porHabitante}</span>}
         </OpcoesComponent>
       )}
 
@@ -448,8 +438,8 @@ function MapaDaUfComponent({
             valores={valores}
             nomes={nomes}
             selecionado={cidade}
-            formatar={habitante ? (v) => `R$ ${Math.round(v).toLocaleString('pt-BR')}` : undefined}
-            rotulo={`Mapa de ${uf}: dinheiro de emenda por cidade${habitante ? ', por habitante' : ''}`}
+            formatar={habitante ? (v) => T.leitura.porPessoa(Math.round(v).toLocaleString('pt-BR')) : undefined}
+            rotulo={T.estado.rotuloDoMapa(uf, habitante)}
             aoEscolher={aoEscolher}
           />
         </div>
@@ -458,7 +448,7 @@ function MapaDaUfComponent({
       {children}
 
       {!erro && !estado && (
-        <EsqueletoComponent rotulo="Carregando as cidades">
+        <EsqueletoComponent rotulo={T.estado.carregando}>
           <BlocoComponent altura={360} />
         </EsqueletoComponent>
       )}
@@ -477,7 +467,7 @@ function MapaDaUfComponent({
                   {nomeProprio(m.nome)}
                 </button>
                 <span className="valor">
-                  {habitante ? `${reais(valorDe(m))} por habitante` : reaisCompacto(m.recebido)}
+                  {habitante ? T.estado.porHabitanteNaLista(reais(valorDe(m))) : reaisCompacto(m.recebido)}
                 </span>
               </li>
             ))}
@@ -492,11 +482,11 @@ function MapaDaUfComponent({
           />
 
           <BotaoBaixarCsvComponent
-            rotulo={`Baixar as cidades de ${uf} (CSV)`}
+            rotulo={T.estado.baixar(uf)}
             montar={() =>
               baixarCsv(
-                `emendas-${uf}-${nomeDoArquivo(estado.periodo)}.csv`,
-                ['Código IBGE', 'Cidade', 'Recebido'],
+                T.estado.arquivo(uf, nomeDoArquivo(estado.periodo)),
+                [...T.estado.colunas],
                 estado.porMunicipio.map((m) => [m.codigoIbge, m.nome, m.recebido]),
               )
             }
@@ -539,8 +529,8 @@ function PainelDaCidadeComponent({
     };
   }, [codigoIbge, periodo]);
 
-  if (erro) return <p className="erro">Não foi possível carregar essa cidade.</p>;
-  if (!dados) return <EsqueletoDeTextoComponent rotulo="Carregando a cidade" />;
+  if (erro) return <p className="erro">{T.cidade.erro}</p>;
+  if (!dados) return <EsqueletoDeTextoComponent rotulo={T.cidade.carregando} />;
 
   const nome = nomeProprio(dados.municipio.nome);
   const emEntidades = dados.recebido - dados.naPropriaCidade;
@@ -554,39 +544,40 @@ function PainelDaCidadeComponent({
           {nome} <span className="painel-cidade-uf">{dados.municipio.uf}</span>
         </h2>
         <button type="button" className="botao-secundario" onClick={aoFechar}>
-          Fechar
+          {T.cidade.fechar}
         </button>
       </div>
 
       {dados.recebido === 0 ? (
-        <p className="vazio">
-          Nenhum pagamento das emendas de {textoDoPeriodo(dados.periodo)} chegou a quem tem sede em {nome}.
-        </p>
+        <p className="vazio">{T.cidade.vazio(textoDoPeriodo(dados.periodo), nome)}</p>
       ) : (
         <>
           <p className="painel-cidade-total">
-            <ComProcedenciaComponent
-              consulta={{ contexto: 'pagamentos', de: dados.periodo.de, ate: dados.periodo.ate, municipio: dados.municipio.codigoIbge }}
-              rotulo={`Emendas de ${textoDoPeriodo(dados.periodo)} com sede em ${nome}`}
-            >
-              <span className="numero-valor">{reaisCompacto(dados.recebido)}</span>
-            </ComProcedenciaComponent>{' '}
-            das emendas de{' '}
-            {textoDoPeriodo(dados.periodo)} chegaram a quem tem sede em {nome}.
+            {T.cidade.total(
+              <ComProcedenciaComponent
+                consulta={{ contexto: 'pagamentos', de: dados.periodo.de, ate: dados.periodo.ate, municipio: dados.municipio.codigoIbge }}
+                rotulo={T.cidade.rotuloDaProcedencia(textoDoPeriodo(dados.periodo), nome)}
+              >
+                <span className="numero-valor">{reaisCompacto(dados.recebido)}</span>
+              </ComProcedenciaComponent>,
+              textoDoPeriodo(dados.periodo),
+              nome,
+            )}
           </p>
           <ul className="painel-cidade-partes">
             <li>
-              <strong>{reaisCompacto(dados.naPropriaCidade)}</strong> à prefeitura ou a órgão municipal
+              <strong>{reaisCompacto(dados.naPropriaCidade)}</strong>
+              {T.cidade.naPrefeitura}
             </li>
             <li>
-              <strong>{reaisCompacto(emEntidades)}</strong> a entidades e empresas com sede aqui, que podem
-              ter aplicado em outra cidade
+              <strong>{reaisCompacto(emEntidades)}</strong>
+              {T.cidade.emEntidades}
             </li>
           </ul>
 
           {escolhida && (
             <>
-              <AbasComponent rotulo={`O dinheiro de ${nome}`} abas={abas} escolhida={escolhida} aoEscolher={setAba} />
+              <AbasComponent rotulo={T.cidade.rotuloDasAbas(nome)} abas={abas} escolhida={escolhida} aoEscolher={setAba} />
               <div className="painel-cidade-aba" role="tabpanel" id={`painel-${escolhida}`} aria-labelledby={`aba-${escolhida}`}>
                 {escolhida === 'parlamentares' && <QuemMandouComponent dados={dados} periodo={periodo} />}
                 {escolhida === 'coletivos' && <ColetivosComponent coletivos={dados.coletivos} />}
@@ -608,13 +599,13 @@ type AbaDaCidade = 'parlamentares' | 'coletivos' | 'convenios' | 'recebedores';
 function abasDaCidade(dados: EmendasDoMunicipio): Aba<AbaDaCidade>[] {
   const abas: Aba<AbaDaCidade>[] = [];
   if (dados.parlamentares.total > 0)
-    abas.push({ chave: 'parlamentares', rotulo: 'Deputados e senadores', contagem: dados.parlamentares.total });
+    abas.push({ chave: 'parlamentares', rotulo: T.cidade.abaParlamentares, contagem: dados.parlamentares.total });
   if (dados.coletivos.length > 0)
-    abas.push({ chave: 'coletivos', rotulo: 'Bancadas e comissões', contagem: dados.coletivos.length, tour: 'emendas-coletivos' });
+    abas.push({ chave: 'coletivos', rotulo: T.cidade.abaColetivos, contagem: dados.coletivos.length, tour: 'emendas-coletivos' });
   if (dados.convenios.quantidade > 0)
-    abas.push({ chave: 'convenios', rotulo: 'Convênios', contagem: dados.convenios.quantidade });
+    abas.push({ chave: 'convenios', rotulo: T.cidade.abaConvenios, contagem: dados.convenios.quantidade });
   if (dados.favorecidos.total > 0)
-    abas.push({ chave: 'recebedores', rotulo: 'Quem recebeu', contagem: dados.favorecidos.total });
+    abas.push({ chave: 'recebedores', rotulo: T.cidade.abaRecebedores, contagem: dados.favorecidos.total });
   return abas;
 }
 
@@ -636,27 +627,25 @@ function ConveniosDaCidadeComponent({ dados, periodo }: { dados: EmendasDoMunici
   return (
     <div>
       <p className="ajuda">
-        {convenios.quantidade} {convenios.quantidade === 1 ? 'convênio' : 'convênios'}: {reaisCompacto(convenios.combinado)}{' '}
-        combinados, {reaisCompacto(convenios.liberado)} já liberados. São os convênios com quem tem sede na cidade:
-        na capital entram órgãos do estado, e a obra pode ser em outro município.
-        {convenios.emExecucao > 0 && (
-          <>
-            {' '}
-            {convenios.emExecucao} em execução, com <strong>{reaisCompacto(convenios.aLiberar)} ainda a liberar</strong>.
-          </>
+        {T.convenios.resumo(
+          convenios.quantidade,
+          reaisCompacto(convenios.combinado),
+          reaisCompacto(convenios.liberado),
+          convenios.emExecucao,
+          reaisCompacto(convenios.aLiberar),
         )}
       </p>
       <ul className="lista-convenios-entidade">
         {lista.itens.map((c) => (
           <li key={c.numero}>
-            <p className="convenio-objeto">{c.objeto ? minusculas(c.objeto) : 'Objeto não informado'}</p>
+            <p className="convenio-objeto">{c.objeto ? minusculas(c.objeto) : T.convenios.objetoNaoInformado}</p>
             <p className="convenio-detalhe">
               <Link to={`/entidades/${c.cnpj}`}>{nomeProprio(c.convenente)}</Link>
-              {c.situacao && <> · {minusculas(c.situacao)}</>} · <LinkDeFonteComponent href={c.urlFonte}>convênio {c.numero}</LinkDeFonteComponent>
+              {c.situacao && <> · {minusculas(c.situacao)}</>} · <LinkDeFonteComponent href={c.urlFonte}>{T.convenios.convenio(c.numero)}</LinkDeFonteComponent>
             </p>
             <p className="convenio-valores">
-              <span>{reaisCompacto(c.valor)} combinados</span>
-              {c.valorLiberado !== null && <span>{reaisCompacto(c.valorLiberado)} liberados</span>}
+              <span>{T.convenios.combinados(reaisCompacto(c.valor))}</span>
+              {c.valorLiberado !== null && <span>{T.convenios.liberados(reaisCompacto(c.valorLiberado))}</span>}
             </p>
           </li>
         ))}
@@ -683,10 +672,7 @@ function QuemMandouComponent({ dados, periodo }: { dados: EmendasDoMunicipio; pe
 
   return (
     <div data-tour="emendas-parlamentares">
-      <p className="ajuda">
-        {dados.parlamentares.total} parlamentares, {reaisCompacto(dados.deParlamentares)} em{' '}
-        <TermoComponent nome="emendaIndividual">emendas individuais</TermoComponent>. O nome leva à página de cada um.
-      </p>
+      <p className="ajuda">{T.quemMandou.resumo(dados.parlamentares.total, reaisCompacto(dados.deParlamentares))}</p>
 
       <ul className="lista-autores">
         {lista.itens.map((p) => (
@@ -703,12 +689,12 @@ function QuemMandouComponent({ dados, periodo }: { dados: EmendasDoMunicipio; pe
       />
 
       <BotaoBaixarCsvComponent
-        rotulo="Baixar a lista (CSV)"
+        rotulo={T.quemMandou.baixar}
         montar={async () => {
           const todos = await buscarTodas((pagina) => listarParlamentaresDoMunicipio(codigo, periodo, pagina));
           baixarCsv(
-            `emendas-${codigo}-${nomeDoArquivo(dados.periodo)}-parlamentares.csv`,
-            ['Parlamentar', 'Partido', 'UF', 'Casa', 'Emendas', 'Recebido na cidade'],
+            T.quemMandou.arquivo(codigo, nomeDoArquivo(dados.periodo)),
+            [...T.quemMandou.colunas],
             todos.map((p) => [p.nome, p.partido, p.uf, p.casa, p.emendas, p.recebido]),
           );
         }}
@@ -725,7 +711,7 @@ function QuemRecebeuComponent({ dados, periodo }: { dados: EmendasDoMunicipio; p
 
   return (
     <div>
-      <p className="ajuda">Quem recebeu o dinheiro e tem sede em {nomeProprio(dados.municipio.nome)}, do maior valor ao menor.</p>
+      <p className="ajuda">{T.quemRecebeu.ajuda(nomeProprio(dados.municipio.nome))}</p>
       <ul className="lista-autores">
         {lista.itens.map((f) => (
           <li key={f.nome}>
@@ -782,10 +768,10 @@ function SuaCidadeComponent({ aoEscolher }: { aoEscolher: (m: Municipio) => void
 
   const localizar = () => {
     if (!navigator.geolocation) {
-      setSituacao('Este navegador não informa a localização. Busque a cidade pelo nome.');
+      setSituacao(T.suaCidade.semLocalizacao);
       return;
     }
-    setSituacao('Localizando…');
+    setSituacao(T.suaCidade.localizando);
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         const ponto: [number, number] = [coords.longitude, coords.latitude];
@@ -793,36 +779,36 @@ function SuaCidadeComponent({ aoEscolher }: { aoEscolher: (m: Municipio) => void
         const codigo = codigoUf ? await areaQueContem(codigoUf, ponto) : null;
         const sigla = UFS.find(([c]) => c === codigoUf)?.[1];
         if (!codigo || !sigla) {
-          setSituacao('A localização ficou fora do Brasil. Busque a cidade pelo nome.');
+          setSituacao(T.suaCidade.foraDoBrasil);
           return;
         }
         const dados = await obterEmendasDoMunicipio(codigo).catch(() => null);
         escolher(dados ? dados.municipio : { codigoIbge: codigo, nome: '', uf: sigla });
       },
-      () => setSituacao('A localização não foi permitida. Busque a cidade pelo nome.'),
+      () => setSituacao(T.suaCidade.naoPermitida),
       { maximumAge: 600_000, timeout: 15_000 },
     );
   };
 
   return (
     <div className="sua-cidade" data-tour="emendas-cidade">
-      <label htmlFor="busca-cidade">Sua cidade</label>
+      <label htmlFor="busca-cidade">{T.suaCidade.titulo}</label>
       <div className="sua-cidade-campos">
         <input
           id="busca-cidade"
           type="search"
           value={busca}
-          placeholder="Digite o nome da cidade"
+          placeholder={T.suaCidade.placeholder}
           autoComplete="off"
           onChange={(e) => setBusca(e.target.value)}
         />
         <button type="button" className="botao-secundario" onClick={localizar}>
-          Usar minha localização
+          {T.suaCidade.usarLocalizacao}
         </button>
       </div>
 
       {buscando && achados.length > 0 && (
-        <ul className="sua-cidade-achados" aria-label="Cidades encontradas">
+        <ul className="sua-cidade-achados" aria-label={T.suaCidade.encontradas}>
           {achados.map((m) => (
             <li key={m.codigoIbge}>
               <button type="button" className="link-botao" onClick={() => escolher(m)}>
@@ -838,7 +824,7 @@ function SuaCidadeComponent({ aoEscolher }: { aoEscolher: (m: Municipio) => void
           {situacao}
         </p>
       )}
-      <p className="nota-curta">A cidade fica guardada só neste navegador.</p>
+      <p className="nota-curta">{T.suaCidade.nota}</p>
     </div>
   );
 }
@@ -861,6 +847,7 @@ function guardarMinhaCidade(m: Municipio): void {
   try {
     localStorage.setItem(CHAVE_MINHA_CIDADE, JSON.stringify(m));
   } catch {
+    return;
   }
 }
 

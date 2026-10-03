@@ -95,3 +95,6 @@ export const LOCALIDADE_NACIONAL = 'Nacional';
 
 /** O sufixo que o Portal põe no destino estadual: "PARANÁ (UF)". */
 export const SUFIXO_DE_ESTADO = / \(UF\)$/;
+
+/** Quantos estados a tabela do mapa mostra no celular antes de "Ver os N estados". */
+export const ESTADOS_A_VISTA = 10;
