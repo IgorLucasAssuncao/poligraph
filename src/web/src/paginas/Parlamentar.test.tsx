@@ -897,3 +897,21 @@ describe('votos de rito', () => {
     );
   });
 });
+
+/** Votos seguidos da mesma proposição viram um grupo: a ementa aparece uma vez (2026-10-03). */
+describe('votos agrupados por proposição', () => {
+  it('junta os vizinhos da mesma matéria e mantém os outros sozinhos', async () => {
+    const daPec = (id: string, descricao: string) => ({
+      ...voto(id, 1, null), materia: 'PEC 45/2019', ementa: 'Altera o Sistema Tributário Nacional.', descricao,
+    });
+    await renderizarCom({
+      ...FICHA,
+      votosRecentes: [daPec('a', 'Aprovada em segundo turno'), daPec('b', 'Requerimento de urgência'), voto('c', -1, null)],
+    });
+
+    expect(await screen.findByText('2 votações nesta proposição')).toBeDefined();
+    expect(screen.getAllByText(/Altera o Sistema Tributário Nacional/)).toHaveLength(1);
+    expect(screen.getByText('Aprovada em segundo turno')).toBeDefined();
+    expect(screen.getByText('Votação c')).toBeDefined();
+  });
+});

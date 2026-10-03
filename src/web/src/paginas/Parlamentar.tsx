@@ -437,37 +437,13 @@ function ListaDeVotosComponent({
           }}
         />
       </p>
-      {lista.itens.map((v, i) => (
-        <article
-          key={v.votacaoId}
-          className="linha linha-simples"
-          data-tour={i === 0 ? 'ficha-votos' : undefined}
-        >
-          <div className="linha-corpo">
-            <span className={`selo selo-${classeDoVoto(v.valor)}`}>
-              {v.valor === 0 ? <TermoComponent nome="abstencao">Abstenção</TermoComponent> : rotuloDoVoto(v.valor)}
-            </span>
-            <LinhaDoVotoComponent voto={v} />
-
-            <span className="linha-detalhe">
-              {formatarData(v.data)}
-              <ContraAOrientacaoComponent voto={v} />
-              {v.urlProposicao && (
-                <>
-                  {' · '}
-                  <LinkDeFonteComponent href={v.urlProposicao}>proposição</LinkDeFonteComponent>
-                </>
-              )}
-              {v.urlRegistro && (
-                <>
-                  {' · '}
-                  <LinkDeFonteComponent href={v.urlRegistro}>registro da votação</LinkDeFonteComponent>
-                </>
-              )}
-            </span>
-          </div>
-        </article>
-      ))}
+      {agruparPorProposicao(lista.itens).map((grupo, i) =>
+        grupo.length === 1 ? (
+          <VotoComponent key={grupo[0].votacaoId} voto={grupo[0]} tour={i === 0} />
+        ) : (
+          <GrupoDeVotosComponent key={grupo[0].votacaoId} votos={grupo} tour={i === 0} />
+        ),
+      )}
       <BotaoMostrarMaisComponent {...lista} aoClicar={lista.carregarMais} />
     </>
   );
@@ -732,4 +708,95 @@ function classeDoVoto(valor: number | null): string {
 
 function formatarData(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR');
+}
+
+/**
+ * Votos seguidos sobre a mesma proposição viram um grupo (2026-10-03): a lista repetia a mesma
+ * ementa em cada votação de um projeto (urgência, texto, destaques), e virava parede de texto.
+ * Só junta vizinhos: a ordem continua a das datas.
+ */
+function agruparPorProposicao(votos: VotoNaFicha[]): VotoNaFicha[][] {
+  const grupos: VotoNaFicha[][] = [];
+  for (const voto of votos) {
+    const ultimo = grupos.at(-1);
+    if (ultimo && voto.materia && ultimo[0].materia === voto.materia) ultimo.push(voto);
+    else grupos.push([voto]);
+  }
+  return grupos;
+}
+
+/** Um voto sozinho: o selo, o enunciado e os links. */
+function VotoComponent({ voto: v, tour }: { voto: VotoNaFicha; tour: boolean }) {
+  return (
+    <article className="linha linha-simples" data-tour={tour ? 'ficha-votos' : undefined}>
+      <div className="linha-corpo">
+        <SeloDoVotoComponent voto={v} />
+        <LinhaDoVotoComponent voto={v} />
+        <DetalheDoVotoComponent voto={v} />
+      </div>
+    </article>
+  );
+}
+
+/** Várias votações da mesma proposição: a matéria e a ementa uma vez, e uma linha curta por votação. */
+function GrupoDeVotosComponent({ votos, tour }: { votos: VotoNaFicha[]; tour: boolean }) {
+  const primeiro = votos[0];
+
+  return (
+    <article className="linha linha-simples grupo-de-votos" data-tour={tour ? 'ficha-votos' : undefined}>
+      <div className="linha-corpo">
+        <p className="voto-descricao">
+          <strong>{primeiro.materia}</strong> {primeiro.ementa ?? ''}
+        </p>
+        <p className="grupo-de-votos-conta">{votos.length} votações nesta proposição</p>
+        <ul className="grupo-de-votos-lista">
+          {votos.map((v) => (
+            <li key={v.votacaoId}>
+              <SeloDoVotoComponent voto={v} />
+              <div>
+                {v.categoria === 'PROCEDIMENTAL' && (
+                  <span className="voto-rito">
+                    <TermoComponent nome="procedimental">Questão de rito</TermoComponent>:{' '}
+                  </span>
+                )}
+                <span className="voto-processual">{v.descricao ?? v.votacaoId}</span>
+                <DetalheDoVotoComponent voto={v} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </article>
+  );
+}
+
+/** O selo neutro do voto (RNF-16): Sim e Não se distinguem por borda, nunca por verde e vermelho. */
+function SeloDoVotoComponent({ voto: v }: { voto: VotoNaFicha }) {
+  return (
+    <span className={`selo selo-${classeDoVoto(v.valor)}`}>
+      {v.valor === 0 ? <TermoComponent nome="abstencao">Abstenção</TermoComponent> : rotuloDoVoto(v.valor)}
+    </span>
+  );
+}
+
+/** Data, orientação do Governo e os links da proposição e do registro. */
+function DetalheDoVotoComponent({ voto: v }: { voto: VotoNaFicha }) {
+  return (
+    <span className="linha-detalhe">
+      {formatarData(v.data)}
+      <ContraAOrientacaoComponent voto={v} />
+      {v.urlProposicao && (
+        <>
+          {' · '}
+          <LinkDeFonteComponent href={v.urlProposicao}>proposição</LinkDeFonteComponent>
+        </>
+      )}
+      {v.urlRegistro && (
+        <>
+          {' · '}
+          <LinkDeFonteComponent href={v.urlRegistro}>registro da votação</LinkDeFonteComponent>
+        </>
+      )}
+    </span>
+  );
 }

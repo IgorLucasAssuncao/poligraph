@@ -3019,3 +3019,9 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 .cartao-forma .parte-simbolica { background: var(--borda-forte); }
 .cartao-forma-legenda { display: flex; flex-wrap: wrap; gap: .25rem 1rem; margin: 0; font-size: var(--t-2); }
 .amostra-cor.amostra-simbolica { background: var(--borda-forte); }
+
+/* Votos da mesma proposição agrupados na ficha (2026-10-03). */
+.grupo-de-votos-conta { margin: .1rem 0 .5rem; font-size: var(--t-1); color: var(--suave); }
+.grupo-de-votos-lista { list-style: none; margin: 0; padding: 0 0 0 .75rem; border-left: 2px solid var(--borda); display: grid; gap: .6rem; }
+.grupo-de-votos-lista li { display: grid; grid-template-columns: auto 1fr; gap: .2rem .75rem; align-items: start; }
+.grupo-de-votos-lista .linha-detalhe { display: block; }
