@@ -210,23 +210,26 @@ function RodapeDoSiteComponent() {
         <section>
           <h2>O que é</h2>
           <p>
-            Compara sua posição com o voto registrado em plenário. A afinidade sai do
-            comportamento revelado de voto, não de autodeclaração ideológica.
+            Mostra como cada deputado e senador votou, quem vota parecido com quem e com quem você
+            concorda, a partir do voto registrado. Mostra também o dinheiro do mandato: a cota
+            parlamentar, as emendas e a cidade de quem as recebeu, o financiamento de campanha, o
+            patrimônio declarado e o orçamento do governo federal.
           </p>
         </section>
 
         <section>
           <h2>Procedência</h2>
           <p>
-            Registro nominal de votação dos Dados Abertos da Câmara dos Deputados e do
-            Senado Federal
+            Votos dos Dados Abertos da Câmara dos Deputados e do Senado Federal
             {maisAntiga && corrente
               ? maisAntiga === corrente
                 ? `, ${corrente}ª legislatura`
                 : `, da ${maisAntiga}ª à ${corrente}ª legislatura`
               : ''}
-            . Nenhum voto é editado:
-            a curadoria reescreve a ementa e registra a polaridade da votação.
+            . Emendas, pagamentos e orçamento do Portal da Transparência; campanha e patrimônio do
+            TSE; sede das entidades da Receita Federal; população do IBGE. Nenhum voto é editado: a
+            curadoria reescreve a ementa e registra a polaridade da votação. No modo auditoria, cada
+            número mostra o arquivo de onde veio.
           </p>
         </section>
 
