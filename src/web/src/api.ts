@@ -1125,7 +1125,14 @@ export async function obterAcesso(): Promise<{ leituraPublica: boolean }> {
 export type Periodo = { de: number; ate: number };
 
 /** Uma UF no mapa. `codigoUf` é o código IBGE de dois dígitos, o `codarea` da malha. */
-export type RecebidoNaUf = { uf: string; codigoUf: string; recebido: number; municipios: number };
+export type RecebidoNaUf = {
+  uf: string;
+  codigoUf: string;
+  recebido: number;
+  municipios: number;
+  /** Estimativa do IBGE somada nos municípios da UF; nula sem a carga `populacao`. */
+  populacao?: number | null;
+};
 
 /**
  * RISCO: `noMapa` não é `recebido`. O que passou pelo intermediário (Banco do Brasil) e o pago a
@@ -1139,9 +1146,11 @@ export type MapaDoBrasil = {
   viaIntermediario: number;
   semSede: number;
   porUf: RecebidoNaUf[];
+  /** O ano da estimativa de população usada na leitura por habitante. */
+  anoDaPopulacao?: number | null;
 };
 
-export type RecebidoNoMunicipio = { codigoIbge: string; nome: string; recebido: number };
+export type RecebidoNoMunicipio = { codigoIbge: string; nome: string; recebido: number; populacao?: number | null };
 
 /** TODAS as cidades da UF; a que nada recebeu vem com zero. */
 export type MapaDoEstado = {

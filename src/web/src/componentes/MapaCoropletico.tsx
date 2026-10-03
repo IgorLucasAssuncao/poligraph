@@ -43,6 +43,7 @@ export function MapaCoropletico({
   focavel = false,
   rotulo,
   aoEscolher,
+  formatar = reaisCompacto,
 }: {
   /** O arquivo em `public/malhas`, sem extensão: `brasil` ou o código da UF. */
   malha: string;
@@ -53,6 +54,8 @@ export function MapaCoropletico({
   focavel?: boolean;
   rotulo: string;
   aoEscolher: (codigo: string) => void;
+  /** Como o valor aparece no rótulo e na legenda: reais no total, reais por habitante na outra leitura. */
+  formatar?: (valor: number) => string;
 }) {
   const [areas, setAreas] = useState<FeatureCollection | null>(null);
   const [erro, setErro] = useState(false);
@@ -98,7 +101,7 @@ export function MapaCoropletico({
     const nome = nomes.get(codigo) ?? '';
     if (!valores) return nome;
     const valor = valores.get(codigo);
-    return `${nome}: ${valor ? reaisCompacto(valor) : 'nenhum pagamento'}`;
+    return `${nome}: ${valor ? formatar(valor) : 'nenhum pagamento'}`;
   };
 
   const codigoDoEvento = (alvo: EventTarget) => (alvo as Element).getAttribute?.('data-codigo');
@@ -159,7 +162,7 @@ export function MapaCoropletico({
         </span>
       )}
 
-      {valores && <LegendaDoMapa limites={limites} />}
+      {valores && <LegendaDoMapa limites={limites} formatar={formatar} />}
     </figure>
   );
 }
@@ -212,14 +215,14 @@ const Areas = memo(function Areas({
   );
 });
 
-function LegendaDoMapa({ limites }: { limites: number[] }) {
+function LegendaDoMapa({ limites, formatar }: { limites: number[]; formatar: (valor: number) => string }) {
   if (limites.length === 0) return null;
 
   const faixas = [0, ...limites].map((de, i) => ({
     faixa: i + 1,
-    texto: i < limites.length ? `${reaisCompacto(de)} a ${reaisCompacto(limites[i])}` : `${reaisCompacto(de)} ou mais`,
+    texto: i < limites.length ? `${formatar(de)} a ${formatar(limites[i])}` : `${formatar(de)} ou mais`,
   }));
-  faixas[0].texto = `até ${reaisCompacto(limites[0])}`;
+  faixas[0].texto = `até ${formatar(limites[0])}`;
 
   return (
     <figcaption className="mapa-legenda">

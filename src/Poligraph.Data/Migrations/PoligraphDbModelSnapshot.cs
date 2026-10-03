@@ -888,6 +888,14 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("nome");
 
+                    b.Property<int?>("Populacao")
+                        .HasColumnType("integer")
+                        .HasColumnName("populacao");
+
+                    b.Property<short?>("PopulacaoAno")
+                        .HasColumnType("smallint")
+                        .HasColumnName("populacao_ano");
+
                     b.Property<string>("Uf")
                         .IsRequired()
                         .HasMaxLength(2)
@@ -904,6 +912,8 @@ namespace Poligraph.Data.Migrations
                     b.ToTable("municipios", null, t =>
                         {
                             t.HasCheckConstraint("ck_municipio_ibge", "codigo_ibge ~ '^[0-9]{7}$'");
+
+                            t.HasCheckConstraint("ck_municipio_populacao", "(populacao IS NULL AND populacao_ano IS NULL) OR (populacao > 0 AND populacao_ano BETWEEN 2000 AND 2100)");
 
                             t.HasCheckConstraint("ck_municipio_tom", "codigo_tom ~ '^[0-9]{4}$'");
 

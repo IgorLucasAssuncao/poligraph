@@ -99,6 +99,8 @@ def main(argv: list[str] | None = None) -> int:
                 _fundo(conexao, args.eleicao, args.arquivo)
             elif args.comando == "conferir":
                 _conferir(conexao)
+            elif args.comando == "populacao":
+                _populacao(conexao)
             elif args.comando == "reclassificar":
                 _reclassificar(conexao)
             elif args.comando == "rotina":
@@ -185,6 +187,10 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
                      help="votações sorteadas por casa e legislatura")
     amo.add_argument("--semente", type=int, default=amostra.SEMENTE_PADRAO,
                      help="a mesma semente sorteia as mesmas votações")
+    sub.add_parser(
+        "populacao",
+        help="população estimada de cada município (IBGE, SIDRA 6579), para o mapa por habitante",
+    )
     sub.add_parser(
         "reclassificar",
         help="recalcula a categoria de toda votação pela regra atual e diz o que mudou",
@@ -1785,6 +1791,21 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
     log.info("  %d matérias gravadas, %d votações vinculadas", len(linhas), ligados)
 
 
+def _populacao(conexao: psycopg.Connection) -> None:
+    """A população estimada pelo IBGE em cada município, o divisor do mapa por habitante.
+
+    A carga é do IBGE, com o arquivo da API no cache e na procedência, como as outras.
+    """
+    from .fontes import ibge
+
+    arquivo = ibge.baixar(CACHE / "ibge" / f"populacao-{date.today():%Y%m%d}.json")
+    _carga_do_arquivo(conexao, "IBGE", ibge.URL, arquivo)
+    linhas = ibge.ler(arquivo)
+    com_populacao = persistencia.gravar_populacao(conexao, linhas)
+    ano = max((l["ano"] for l in linhas), default=None)
+    log.info("População %s: %d municípios no arquivo, %d com população na base", ano, len(linhas), com_populacao)
+
+
 def _reclassificar(conexao: psycopg.Connection) -> None:
     """A2 — aplica a regra de categoria atual a toda votação gravada, sem baixar nada.
 
@@ -2006,6 +2027,8 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
         _cota(conexao, anos)
     elif etapa.comando == "emendas":
         _emendas(conexao, anos)
+    elif etapa.comando == "populacao":
+        _populacao(conexao)
     elif etapa.comando == "analisar":
         casa = etapa.argumentos["casa"]
         corrente = conexao.execute(

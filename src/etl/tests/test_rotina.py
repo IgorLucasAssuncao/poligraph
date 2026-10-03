@@ -26,6 +26,7 @@ def test_mensal_acrescenta_dinheiro_e_grafo_e_confere_uma_vez_no_fim():
         "palavras-chave",
         "cota --anos 2026",
         "emendas --anos 2026",
+        "populacao",
         "analisar --casa CAMARA",
         "analisar --casa SENADO",
         "conferir",
@@ -62,11 +63,13 @@ def test_toda_etapa_tem_execucao_no_main(monkeypatch):
             return (57,)
 
     executados = []
-    for nome in ("_ingerir", "_senado", "_palavras_chave", "_cota", "_emendas", "_analisar", "_conferir"):
+    for nome in ("_ingerir", "_senado", "_palavras_chave", "_cota", "_emendas", "_populacao", "_analisar", "_conferir"):
         monkeypatch.setattr(principal, nome, lambda *_, nome=nome: executados.append(nome))
 
     for frequencia in rotina.FREQUENCIAS:
         for etapa in rotina.etapas(frequencia, date(2026, 10, 5)):
             principal._executar_etapa(ConexaoFalsa(), etapa)
 
-    assert set(executados) == {"_ingerir", "_senado", "_palavras_chave", "_cota", "_emendas", "_analisar", "_conferir"}
+    assert set(executados) == {
+        "_ingerir", "_senado", "_palavras_chave", "_cota", "_emendas", "_populacao", "_analisar", "_conferir",
+    }

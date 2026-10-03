@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EmendasDoMunicipio, MapaDoBrasil, MapaDoEstado } from '../api';
@@ -278,5 +279,36 @@ describe('convênios da cidade', () => {
     expect(resumo.textContent).toMatch(/1 em execução, com R\$\s1,8 mi ainda a liberar/);
     expect(screen.getByText('Construcao de unidade basica de saude')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Municipio de Luiziana' })).toHaveAttribute('href', '/entidades/76205954000150');
+  });
+});
+
+/** Em reais absolutos SP fica no topo por ser grande; por habitante, a ordem é outra (2026-10-03). */
+describe('o mapa por habitante', () => {
+  it('reordena a tabela pelo valor por habitante', async () => {
+    vi.mocked(api.obterMapaDoBrasil).mockResolvedValue({
+      ...BRASIL,
+      anoDaPopulacao: 2025,
+      porUf: [
+        { uf: 'PR', codigoUf: '41', recebido: 2e9, municipios: 399, populacao: 11e6 },
+        { uf: 'SP', codigoUf: '35', recebido: 4e9, municipios: 645, populacao: 46e6 },
+      ],
+    });
+    renderizar();
+
+    const primeiraLinha = async () =>
+      (await screen.findAllByRole('row'))[1].querySelector('th')!.textContent;
+    expect(await primeiraLinha()).toBe('SP');
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Por habitante' }));
+
+    expect(await primeiraLinha()).toBe('PR');
+    expect(screen.getByText(/População estimada pelo IBGE para 2025/)).toBeDefined();
+  });
+
+  it('sem população, não oferece a leitura', async () => {
+    renderizar();
+    await screen.findAllByRole('row');
+
+    expect(screen.queryByRole('button', { name: 'Por habitante' })).toBeNull();
   });
 });

@@ -544,6 +544,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
                 t.HasCheckConstraint("ck_municipio_ibge", "codigo_ibge ~ '^[0-9]{7}$'");
                 t.HasCheckConstraint("ck_municipio_tom", "codigo_tom ~ '^[0-9]{4}$'");
                 t.HasCheckConstraint("ck_municipio_uf", "uf ~ '^[A-Z]{2}$'");
+                t.HasCheckConstraint("ck_municipio_populacao",
+                    "(populacao IS NULL AND populacao_ano IS NULL) OR (populacao > 0 AND populacao_ano BETWEEN 2000 AND 2100)");
             });
             e.HasKey(x => x.CodigoIbge);
             e.Property(x => x.CodigoIbge).HasMaxLength(7);

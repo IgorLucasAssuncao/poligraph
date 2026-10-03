@@ -21,4 +21,13 @@ public class MunicipioModel
     public required string Nome { get; set; }
 
     public required string Uf { get; set; }
+
+    /// <summary>População residente estimada pelo IBGE (SIDRA, tabela 6579), recarregada pelo comando <c>populacao</c>.</summary>
+    /// <remarks>
+    /// <para>Serve ao mapa "por habitante": em reais absolutos, SP e MG ficam no topo só por serem grandes (2026-10-03).</para>
+    /// </remarks>
+    public int? Populacao { get; set; }
+
+    /// <summary>O ano da estimativa de <see cref="Populacao"/>.</summary>
+    public short? PopulacaoAno { get; set; }
 }

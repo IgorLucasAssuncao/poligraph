@@ -16,7 +16,8 @@ public record MapaDoBrasilDto(
     decimal NoMapa,
     decimal ViaIntermediario,
     decimal SemSede,
-    IReadOnlyList<RecebidoNaUfDto> PorUf);
+    IReadOnlyList<RecebidoNaUfDto> PorUf,
+    int? AnoDaPopulacao = null);
 
 /// <summary>
 /// Os anos das emendas consideradas, inclusive nas duas pontas. O ano é o da emenda, e não /// o do pagamento.
@@ -27,7 +28,10 @@ public record MapaDoBrasilDto(
 public record PeriodoDto(int De, int Ate);
 
 /// <summary>Uma UF: o código IBGE dela, que liga à malha do mapa, e quanto recebeu.</summary>
-public record RecebidoNaUfDto(string Uf, string CodigoUf, decimal Recebido, int Municipios);
+/// <remarks>
+/// <para><c>Populacao</c> é a soma da estimativa do IBGE nos municípios da UF, o divisor do mapa por habitante. Nula sem a carga <c>populacao</c>.</para>
+/// </remarks>
+public record RecebidoNaUfDto(string Uf, string CodigoUf, decimal Recebido, int Municipios, long? Populacao = null);
 
 /// <summary>
 /// As cidades de uma UF, TODAS, com o código IBGE que liga à malha. A que nada recebeu vem com zero.
@@ -35,7 +39,7 @@ public record RecebidoNaUfDto(string Uf, string CodigoUf, decimal Recebido, int 
 public record MapaDoEstadoDto(
     string Uf, PeriodoDto Periodo, decimal Recebido, IReadOnlyList<RecebidoNoMunicipioDto> PorMunicipio);
 
-public record RecebidoNoMunicipioDto(string CodigoIbge, string Nome, decimal Recebido);
+public record RecebidoNoMunicipioDto(string CodigoIbge, string Nome, decimal Recebido, int? Populacao = null);
 
 /// <summary>Um município para a busca "sua cidade". A escolha vira o código IBGE, chave forte.</summary>
 public record MunicipioDto(string CodigoIbge, string Nome, string Uf);

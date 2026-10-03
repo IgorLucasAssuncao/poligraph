@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   buscarMunicipios,
@@ -27,7 +27,7 @@ import { Termo } from '../componentes/Termo';
 import { usePaginas } from '../componentes/usePaginas';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { FONTES } from '../fontes';
-import { minusculas, nomeProprio, reaisCompacto } from '../formato';
+import { minusculas, nomeProprio, reais, reaisCompacto } from '../formato';
 import { areaQueContem } from '../mapa';
 import { passosDasEmendas } from '../tour';
 import { Bloco, Esqueleto, EsqueletoDePainel, EsqueletoDeTexto } from '../componentes/Esqueleto';
@@ -236,15 +236,43 @@ function ForaDoMapa({ brasil }: { brasil: MapaDoBrasil }) {
   );
 }
 
+/**
+ * O mapa do país em duas leituras: o total recebido, e o recebido por habitante.
+ *
+ * DECISÃO (2026-10-03): em reais absolutos, SP e MG ficam no topo só por serem grandes. Por
+ * habitante (estimativa do IBGE, carga `populacao`) mostra onde a emenda pesa. O total continua
+ * o padrão; a outra leitura só aparece com população para todos os estados.
+ */
 function MapaDoPais({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoEscolher: (sigla: string) => void }) {
-  const valores = useMemo(() => new Map(brasil.porUf.map((u) => [u.codigoUf, u.recebido])), [brasil]);
+  const [porHabitante, setPorHabitante] = useState(false);
+  const temPopulacao = brasil.porUf.length > 0 && brasil.porUf.every((u) => (u.populacao ?? 0) > 0);
+  const habitante = porHabitante && temPopulacao;
+  const valorDe = useCallback(
+    (u: MapaDoBrasil['porUf'][number]) => (habitante ? u.recebido / (u.populacao ?? 1) : u.recebido),
+    [habitante],
+  );
+  const valores = useMemo(() => new Map(brasil.porUf.map((u) => [u.codigoUf, valorDe(u)])), [brasil, valorDe]);
   const siglaPorCodigo = useMemo(() => new Map(UFS), []);
-  const ordenadas = [...brasil.porUf].sort((a, b) => b.recebido - a.recebido);
+  const ordenadas = [...brasil.porUf].sort((a, b) => valorDe(b) - valorDe(a));
+  const porPessoa = (valor: number) => `${reais(valor)} por habitante`;
 
   return (
     <section className="governo-secao">
       <h2>Por estado</h2>
       <p className="ajuda">Escolha um estado para ver as cidades.</p>
+      {temPopulacao && (
+        <div className="seletor-periodo-campos" role="group" aria-label="Leitura do mapa">
+          <button type="button" className={habitante ? '' : 'ativo'} aria-pressed={!habitante} onClick={() => setPorHabitante(false)}>
+            Total recebido
+          </button>
+          <button type="button" className={habitante ? 'ativo' : ''} aria-pressed={habitante} onClick={() => setPorHabitante(true)}>
+            Por habitante
+          </button>
+          {habitante && brasil.anoDaPopulacao && (
+            <span className="ajuda">População estimada pelo IBGE para {brasil.anoDaPopulacao}.</span>
+          )}
+        </div>
+      )}
 
       <div data-tour="emendas-mapa">
         <MapaCoropletico
@@ -252,7 +280,8 @@ function MapaDoPais({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoEscolher: 
           valores={valores}
           nomes={siglaPorCodigo}
           focavel
-          rotulo={`Mapa do Brasil: dinheiro de emenda de ${textoDoPeriodo(brasil.periodo)} por estado`}
+          formatar={habitante ? porPessoa : undefined}
+          rotulo={`Mapa do Brasil: dinheiro de emenda de ${textoDoPeriodo(brasil.periodo)} por estado${habitante ? ', por habitante' : ''}`}
           aoEscolher={(codigo) => {
             const sigla = siglaPorCodigo.get(codigo);
             if (sigla) aoEscolher(sigla);
@@ -267,6 +296,7 @@ function MapaDoPais({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoEscolher: 
             <tr>
               <th scope="col">Estado</th>
               <th scope="col">Recebido</th>
+              {temPopulacao && <th scope="col">Por habitante</th>}
               <th scope="col">Cidades</th>
             </tr>
           </thead>
@@ -279,6 +309,7 @@ function MapaDoPais({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoEscolher: 
                   </button>
                 </th>
                 <td>{reaisCompacto(u.recebido)}</td>
+                {temPopulacao && <td>{reais(u.recebido / (u.populacao ?? 1))}</td>}
                 <td>{u.municipios}</td>
               </tr>
             ))}
@@ -291,8 +322,8 @@ function MapaDoPais({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoEscolher: 
         montar={() =>
           baixarCsv(
             `emendas-por-estado-${nomeDoArquivo(brasil.periodo)}.csv`,
-            ['UF', 'Código IBGE', 'Recebido', 'Cidades'],
-            ordenadas.map((u) => [u.uf, u.codigoUf, u.recebido, u.municipios]),
+            ['UF', 'Código IBGE', 'Recebido', 'População', 'Cidades'],
+            ordenadas.map((u) => [u.uf, u.codigoUf, u.recebido, u.populacao ?? '', u.municipios]),
           )
         }
       />

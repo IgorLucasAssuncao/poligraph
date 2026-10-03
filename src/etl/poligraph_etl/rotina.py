@@ -61,6 +61,7 @@ def etapas(frequencia: str, hoje: date) -> list[Etapa]:
         lista += [
             Etapa("cota", {"anos": anos}),
             Etapa("emendas", {"anos": anos}),
+            Etapa("populacao"),
             Etapa("analisar", {"casa": "CAMARA"}),
             Etapa("analisar", {"casa": "SENADO"}),
         ]

@@ -90,11 +90,19 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
             var recebido = totais?.Recebido ?? 0;
             var viaIntermediario = totais?.ViaIntermediario ?? 0;
             var noMapa = porUf.Sum(u => u.Recebido);
+            var (populacoes, anoDaPopulacao) = await PopulacoesAsync(ct);
+            var porUfPopulacao = (await MunicipiosAsync(ct))
+                .Where(m => populacoes.ContainsKey(m.CodigoIbge))
+                .GroupBy(m => m.Uf)
+                .ToDictionary(g => g.Key, g => g.Sum(m => (long)populacoes[m.CodigoIbge]));
 
             return new MapaDoBrasilDto(
                 periodo, anos, recebido, noMapa, viaIntermediario,
                 SemSede: recebido - noMapa - viaIntermediario,
-                [.. porUf.Select(u => new RecebidoNaUfDto(u.Uf, u.CodigoUf, u.Recebido, u.Municipios))]);
+                [.. porUf.Select(u => new RecebidoNaUfDto(
+                    u.Uf, u.CodigoUf, u.Recebido, u.Municipios,
+                    porUfPopulacao.TryGetValue(u.Uf, out var p) ? p : null))],
+                anoDaPopulacao);
         }) ?? new MapaDoBrasilDto(periodo, anos, 0, 0, 0, 0, []);
     }
 
@@ -185,9 +193,12 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
             .Select(g => new { CodigoIbge = g.Key, Recebido = g.Sum(p => p.Valor) })
             .ToDictionaryAsync(m => m.CodigoIbge, m => m.Recebido, ct);
 
+        var (populacoes, _) = await PopulacoesAsync(ct);
         var porMunicipio = (await MunicipiosAsync(ct))
             .Where(m => m.Uf == uf)
-            .Select(m => new RecebidoNoMunicipioDto(m.CodigoIbge, m.Nome, recebido.GetValueOrDefault(m.CodigoIbge)))
+            .Select(m => new RecebidoNoMunicipioDto(
+                m.CodigoIbge, m.Nome, recebido.GetValueOrDefault(m.CodigoIbge),
+                populacoes.TryGetValue(m.CodigoIbge, out var p) ? p : null))
             .OrderByDescending(m => m.Recebido)
             .ThenBy(m => m.Nome, StringComparer.Create(CultureInfo.GetCultureInfo("pt-BR"), ignoreCase: true))
             .ToList();
@@ -265,6 +276,19 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
                 .Select(m => new MunicipioDto(m.CodigoIbge, m.Nome, m.Uf))
                 .ToListAsync(ct);
         }) ?? [];
+
+    /// <summary>A população estimada de cada município (IBGE) e o ano da estimativa. Em cache, como os municípios.</summary>
+    private async Task<(IReadOnlyDictionary<string, int>, int?)> PopulacoesAsync(CancellationToken ct) =>
+        await _cache.GetOrCreateAsync("populacoes", async entrada =>
+        {
+            entrada.AbsoluteExpirationRelativeToNow = ValidadeDosMunicipios;
+            var linhas = await _db.Municipios.AsNoTracking()
+                .Where(m => m.Populacao != null)
+                .Select(m => new { m.CodigoIbge, Populacao = m.Populacao!.Value, m.PopulacaoAno })
+                .ToListAsync(ct);
+            return ((IReadOnlyDictionary<string, int>)linhas.ToDictionary(l => l.CodigoIbge, l => l.Populacao),
+                    (int?)linhas.Max(l => (int?)l.PopulacaoAno));
+        });
 
     /// <summary>
     /// A cidade num ano, calculada inteira uma vez e guardada: as páginas das listas leem daqui.
