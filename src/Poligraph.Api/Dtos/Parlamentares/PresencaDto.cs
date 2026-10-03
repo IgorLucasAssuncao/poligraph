@@ -23,4 +23,5 @@ public record PresencaDto(
     int? AusenteJustificado,
     bool JustificativaPublicada,
     DateOnly Desde,
-    DateOnly Ate);
+    DateOnly Ate,
+    double? MedianaDaCasa = null);

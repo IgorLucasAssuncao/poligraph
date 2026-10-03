@@ -1417,6 +1417,8 @@ export type Presenca = {
   justificativaPublicada: boolean;
   desde: string;
   ate: string;
+  /** A mediana da presença na casa, com a mesma conta: a escala do número. */
+  medianaDaCasa?: number | null;
 };
 
 export async function listarConveniosDaCidade(

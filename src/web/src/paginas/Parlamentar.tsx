@@ -203,7 +203,7 @@ export function ParlamentarComponent() {
         </div>
 
         {(ficha.alinhamento || ficha.presenca) && (
-          <FaixaDeAlinhamentoComponent alinhamento={ficha.alinhamento} presenca={ficha.presenca} />
+          <FaixaDeAlinhamentoComponent alinhamento={ficha.alinhamento} presenca={ficha.presenca} casa={ficha.casa} />
         )}
 
         <FaixaDeContasComponent
@@ -625,7 +625,15 @@ function AbaSimilaresComponent({ similares }: { similares: Ficha['maisSimilares'
  * vinham como percentual com a base embaixo, e a ficha mostrava "100%" para quem tinha duas
  * votações orientadas pelo partido. Abaixo de `BASE_PEQUENA` a tela diz que é pouco.
  */
-function FaixaDeAlinhamentoComponent({ alinhamento, presenca }: { alinhamento: Alinhamento | null; presenca: Presenca | null }) {
+function FaixaDeAlinhamentoComponent({
+  alinhamento,
+  presenca,
+  casa,
+}: {
+  alinhamento: Alinhamento | null;
+  presenca: Presenca | null;
+  casa: Ficha['casa'];
+}) {
   const governismo = alinhamento?.governismo ?? null;
   const disciplina = alinhamento?.disciplina ?? null;
 
@@ -646,6 +654,9 @@ function FaixaDeAlinhamentoComponent({ alinhamento, presenca }: { alinhamento: A
                 <> · {presenca.ausenteJustificado} ausências com licença ou missão</>
               )}
             </small>
+            {presenca.medianaDaCasa != null && (
+              <small>mediana {casa === 'SENADO' ? 'do Senado' : 'da Câmara'}: {Math.round(presenca.medianaDaCasa * 100)}%</small>
+            )}
           </dd>
         </div>
       )}

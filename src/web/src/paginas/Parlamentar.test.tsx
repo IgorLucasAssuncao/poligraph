@@ -775,13 +775,14 @@ describe('participação nas votações', () => {
   it('diz de quantas votações participou, com a base', async () => {
     vi.mocked(api.obterFicha).mockResolvedValue({
       ...FICHA,
-      presenca: { presente: 812, votacoes: 1015, ausente: 203, ausenteJustificado: null, justificativaPublicada: false, desde: '2023-02-01', ate: '2026-09-10' },
+      presenca: { presente: 812, votacoes: 1015, ausente: 203, ausenteJustificado: null, justificativaPublicada: false, desde: '2023-02-01', ate: '2026-09-10', medianaDaCasa: 0.88 },
     });
     await abrirPerfil();
 
     const bloco = screen.getByText('812 de 1.015').closest('div')!;
     expect(bloco.textContent).toMatch(/Presença no plenário/);
     expect(bloco.textContent).toMatch(/votações \(80%\)/);
+    expect(bloco.textContent).toMatch(/mediana da Câmara: 88%/);
     expect(bloco.textContent).not.toMatch(/licença/);
   });
 

@@ -141,6 +141,8 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         var ate = porPresenca.Max(p => p.Ate);
         int Quantos(PresencaNoVoto presenca) => porPresenca.FirstOrDefault(p => p.Presenca == presenca)?.Quantos ?? 0;
 
+        var mediana = await MedianaDePresencaAsync(casa.Value, legislatura.Value, ct);
+
         if (casa == TipoCasa.SENADO)
         {
             return new PresencaDto(
@@ -149,14 +151,68 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
                 Quantos(PresencaNoVoto.AUSENTE),
                 Quantos(PresencaNoVoto.AUSENTE_JUSTIFICADO),
                 JustificativaPublicada: true,
-                desde, ate);
+                desde, ate, mediana);
         }
 
         var presente = Quantos(PresencaNoVoto.PRESENTE);
         var votacoes = await _db.Votacoes.AsNoTracking().CountAsync(vt =>
             vt.Casa == casa && vt.Legislatura == legislatura && vt.Plenario && vt.Data >= desde && vt.Data <= ate, ct);
 
-        return new PresencaDto(presente, votacoes, votacoes - presente, null, JustificativaPublicada: false, desde, ate);
+        return new PresencaDto(presente, votacoes, votacoes - presente, null, JustificativaPublicada: false, desde, ate, mediana);
+    }
+
+    /// <summary>
+    /// A mediana da presença na casa e na legislatura, com a mesma conta da ficha de cada um. Em cache.
+    /// </summary>
+    /// <remarks>
+    /// <para>Senado: presentes sobre os registros de cada senador. Câmara: presentes sobre as votações de plenário entre o primeiro e o último voto de cada deputado, que é como a ficha conta.</para>
+    /// </remarks>
+    private async Task<double?> MedianaDePresencaAsync(TipoCasa casa, short legislatura, CancellationToken ct) =>
+        await _cache.GetOrCreateAsync(("mediana-presenca", casa, legislatura), async entrada =>
+        {
+            entrada.AbsoluteExpirationRelativeToNow = ValidadeDaLista;
+            var porPessoa = await _db.Votos.AsNoTracking()
+                .Where(v => v.Votacao!.Casa == casa && v.Votacao.Legislatura == legislatura && v.Votacao.Plenario && v.Presenca != null)
+                .GroupBy(v => v.PessoaId)
+                .Select(g => new
+                {
+                    Presentes = g.Count(v => v.Presenca == PresencaNoVoto.PRESENTE),
+                    Registros = g.Count(),
+                    Desde = g.Min(v => v.Votacao!.Data),
+                    Ate = g.Max(v => v.Votacao!.Data),
+                })
+                .ToListAsync(ct);
+            if (porPessoa.Count == 0) return (double?)null;
+
+            if (casa == TipoCasa.SENADO)
+                return Mediana([.. porPessoa.Where(p => p.Registros > 0).Select(p => (double)p.Presentes / p.Registros)]);
+
+            var datas = (await _db.Votacoes.AsNoTracking()
+                    .Where(vt => vt.Casa == casa && vt.Legislatura == legislatura && vt.Plenario)
+                    .Select(vt => vt.Data)
+                    .ToListAsync(ct))
+                .Order()
+                .ToList();
+            int NoIntervalo(DateOnly de, DateOnly ate) =>
+                Indice(datas, ate, depois: true) - Indice(datas, de, depois: false);
+
+            return Mediana([.. porPessoa
+                .Select(p => (p.Presentes, Votacoes: NoIntervalo(p.Desde, p.Ate)))
+                .Where(p => p.Votacoes > 0)
+                .Select(p => (double)p.Presentes / p.Votacoes)]);
+        });
+
+    /// <summary>Quantas datas da lista ordenada são menores que <paramref name="data"/> (ou menores ou iguais, com <paramref name="depois"/>).</summary>
+    private static int Indice(List<DateOnly> datas, DateOnly data, bool depois)
+    {
+        int baixo = 0, alto = datas.Count;
+        while (baixo < alto)
+        {
+            var meio = (baixo + alto) / 2;
+            if (datas[meio] < data || (depois && datas[meio] == data)) baixo = meio + 1;
+            else alto = meio;
+        }
+        return baixo;
     }
 
     /// <summary>O patrimônio declarado em cada candidatura, da mais recente. Nulo para pessoa inexistente.</summary>
