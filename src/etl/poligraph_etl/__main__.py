@@ -762,9 +762,14 @@ def _registrar_o_que_nao_fecha(contas: list[dict]) -> None:
         fora = conta["total_na_fonte"] - conta["total_na_base"]
         if abs(fora) < 0.01:
             continue
-        motivos = ", ".join(f"{m} R$ {v / 1e9:.2f} bi" for m, v in sorted(conta["motivos"].items(), key=lambda i: -i[1]))
-        log.info("  %s %s %d: R$ %.2f bi do Portal fora da base — %s",
-                 conta["conjunto"], conta["medida"], conta["ano"], fora / 1e9, motivos)
+        motivos = ", ".join(f"{m} {_reais(v)}" for m, v in sorted(conta["motivos"].items(), key=lambda i: -i[1]))
+        log.info("  %s %s %d: %s da fonte fora da base — %s",
+                 conta["conjunto"], conta["medida"], conta["ano"], _reais(fora), motivos)
+
+
+def _reais(valor: float) -> str:
+    """Em bi a partir de um bilhão, em mi abaixo: "R$ 0,00 bi" escondia os milhões da cota."""
+    return f"R$ {valor / 1e9:.2f} bi" if abs(valor) >= 1e9 else f"R$ {valor / 1e6:.2f} mi"
 
 
 def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None:
