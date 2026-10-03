@@ -302,7 +302,7 @@ describe('o mapa por habitante', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Por habitante' }));
 
     expect(await primeiraLinha()).toBe('PR');
-    expect(screen.getByText(/População estimada pelo IBGE para 2025/)).toBeDefined();
+    expect(screen.getByText(/com a população estimada pelo IBGE para 2025/)).toBeDefined();
   });
 
   it('sem população, não oferece a leitura', async () => {

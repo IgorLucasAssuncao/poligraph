@@ -251,7 +251,7 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
   const valores = useMemo(() => new Map(brasil.porUf.map((u) => [u.codigoUf, valorDe(u)])), [brasil, valorDe]);
   const siglaPorCodigo = useMemo(() => new Map(UFS), []);
   const ordenadas = [...brasil.porUf].sort((a, b) => valorDe(b) - valorDe(a));
-  const porPessoa = (valor: number) => `${reais(valor)} por habitante`;
+  const porPessoa = (valor: number) => `R$ ${Math.round(valor).toLocaleString('pt-BR')}`;
 
   return (
     <section className="governo-secao">
@@ -268,7 +268,7 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
           aoEscolher={setPorHabitante}
         >
           {habitante && brasil.anoDaPopulacao && (
-            <span className="ajuda">População estimada pelo IBGE para {brasil.anoDaPopulacao}.</span>
+            <span className="ajuda">Reais por habitante, com a população estimada pelo IBGE para {brasil.anoDaPopulacao}.</span>
           )}
         </OpcoesComponent>
       )}
