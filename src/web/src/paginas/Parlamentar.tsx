@@ -287,7 +287,10 @@ function AbaVotos({
 }) {
   const [termo, setTermo] = useState('');
   const [busca, setBusca] = useState('');
+  const [semRito, setSemRito] = useState(false);
   const [achados, setAchados] = useState<{ de: string; pagina: PaginaDe<VotoNaFicha> } | null>(null);
+  const filtrando = Boolean(busca) || semRito;
+  const chave = `${busca}|${semRito}`;
   const [erroDaBusca, setErroDaBusca] = useState(false);
 
   useEffect(() => {
@@ -296,23 +299,23 @@ function AbaVotos({
   }, [termo]);
 
   useEffect(() => {
-    if (!busca) return;
+    if (!busca && !semRito) return;
     let atual = true;
-    listarVotos(pessoaId, 1, POR_PAGINA_DA_BUSCA, legislatura, busca)
+    listarVotos(pessoaId, 1, POR_PAGINA_DA_BUSCA, legislatura, busca || undefined, semRito)
       .then((pagina) => {
         if (!atual) return;
         setErroDaBusca(false);
-        setAchados({ de: busca, pagina });
+        setAchados({ de: `${busca}|${semRito}`, pagina });
       })
       .catch(() => atual && setErroDaBusca(true));
     return () => {
       atual = false;
     };
-  }, [busca, pessoaId, legislatura]);
+  }, [busca, semRito, pessoaId, legislatura]);
 
   if (votos.length === 0) return <p className="vazio">Nenhum voto registrado.</p>;
 
-  const resultado = busca && achados?.de === busca ? achados.pagina : null;
+  const resultado = filtrando && achados?.de === chave ? achados.pagina : null;
 
   return (
     <>
@@ -328,22 +331,27 @@ function AbaVotos({
           aria-label="Buscar nos votos"
         />
       </div>
+      <label className="filtro-rito">
+        <input type="checkbox" checked={semRito} onChange={(e) => setSemRito(e.target.checked)} />
+        Esconder votos de rito (requerimento, urgência, adiamento)
+      </label>
 
       {erroDaBusca && <p className="erro">Não foi possível buscar agora.</p>}
-      {busca && !resultado && !erroDaBusca && <EsqueletoDeLista rotulo="Buscando nos votos" linhas={3} />}
+      {filtrando && !resultado && !erroDaBusca && <EsqueletoDeLista rotulo="Buscando nos votos" linhas={3} />}
 
-      {busca && resultado ? (
+      {filtrando && resultado ? (
         <ListaDeVotos
-          key={busca}
+          key={chave}
           pessoaId={pessoaId}
           legislatura={legislatura}
-          busca={busca}
+          busca={busca || undefined}
+          semRito={semRito}
           votos={resultado.itens}
           total={resultado.total}
           porPagina={POR_PAGINA_DA_BUSCA}
         />
       ) : (
-        !busca && (
+        !filtrando && (
           <ListaDeVotos
             pessoaId={pessoaId}
             legislatura={legislatura}
@@ -364,6 +372,7 @@ function ListaDeVotos({
   pessoaId,
   legislatura,
   busca,
+  semRito = false,
   votos,
   total,
   comPosicao,
@@ -372,6 +381,7 @@ function ListaDeVotos({
   pessoaId: number;
   legislatura: number | null;
   busca?: string;
+  semRito?: boolean;
   votos: VotoNaFicha[];
   total: number;
   /** Só sem busca: a ficha sabe quantos têm posição na legislatura inteira. */
@@ -379,7 +389,7 @@ function ListaDeVotos({
   porPagina: number;
 }) {
   const lista = usePaginas(votos, total, porPagina, (pagina) =>
-    listarVotos(pessoaId, pagina, porPagina, legislatura, busca),
+    listarVotos(pessoaId, pagina, porPagina, legislatura, busca, semRito),
   );
 
   if (busca && total === 0) {
@@ -401,6 +411,10 @@ function ListaDeVotos({
             {lista.itens.length === total ? total : `${lista.itens.length} de ${total}`}{' '}
             {total === 1 ? 'voto' : 'votos'} com “{busca}”
           </>
+        ) : semRito ? (
+          <>
+            {lista.itens.length} de {total} registros de voto, sem os de rito
+          </>
         ) : (
           <>
             {lista.itens.length} de {total} registros de voto
@@ -411,7 +425,7 @@ function ListaDeVotos({
         <BotaoBaixarCsv
           rotulo={busca ? 'Baixar os encontrados (CSV)' : 'Baixar todos (CSV)'}
           montar={async () => {
-            const todos = await buscarTodas((pagina) => listarVotos(pessoaId, pagina, 100, legislatura, busca));
+            const todos = await buscarTodas((pagina) => listarVotos(pessoaId, pagina, 100, legislatura, busca, semRito));
             baixarCsv(
               `votos-${pessoaId}.csv`,
               ['Votação', 'Data', 'Voto', 'Orientação do Governo', 'Matéria', 'Descrição', 'Categoria', 'Proposição', 'Registro'],

@@ -601,7 +601,7 @@ describe('listas da ficha em páginas', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Mostrar mais 1' }));
 
     expect(await screen.findByText('Votação v2')).toBeDefined();
-    expect(vi.mocked(api.listarVotos)).toHaveBeenCalledWith(1, 2, 2, 57, undefined);
+    expect(vi.mocked(api.listarVotos)).toHaveBeenCalledWith(1, 2, 2, 57, undefined, false);
     expect(screen.queryByRole('button', { name: /Mostrar mais/ })).toBeNull();
   });
 
@@ -613,7 +613,7 @@ describe('listas da ficha em páginas', () => {
 
     expect(await screen.findByText('Votação v9')).toBeDefined();
     expect(await tela()).toMatch(/1 voto com “tributaria”/);
-    expect(vi.mocked(api.listarVotos)).toHaveBeenLastCalledWith(1, 1, 20, 57, 'tributaria');
+    expect(vi.mocked(api.listarVotos)).toHaveBeenLastCalledWith(1, 1, 20, 57, 'tributaria', false);
     expect(screen.queryByText('Votação v0')).toBeNull();
   });
 
@@ -876,5 +876,19 @@ describe('o ano da cota', () => {
     expect(await screen.findByText(/em 2024/)).toBeDefined();
     expect(vi.mocked(api.obterGastos)).toHaveBeenLastCalledWith(expect.any(Number), 57, 2024);
     expect(screen.getByRole('button', { name: '2024' })).toHaveAttribute('aria-pressed', 'true');
+  });
+});
+
+/** Os votos de rito são perto de um terço da lista e não entram na afinidade: dá para escondê-los. */
+describe('votos de rito', () => {
+  it('a caixa pede a lista sem eles ao servidor', async () => {
+    vi.mocked(api.listarVotos).mockResolvedValue({ itens: [], pagina: 1, tamanho: 20, total: 0 });
+    await renderizarCom({ ...FICHA, votosRecentes: [voto('v1', 1, 'Sim')] });
+
+    await userEvent.click(screen.getByRole('checkbox', { name: /Esconder votos de rito/ }));
+
+    await waitFor(() =>
+      expect(vi.mocked(api.listarVotos)).toHaveBeenLastCalledWith(1, 1, 20, 57, undefined, true),
+    );
   });
 });

@@ -79,6 +79,23 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Equal(HttpStatusCode.OK, estranha.StatusCode);
     }
 
+    /// <summary><c>semRito</c> tira as votações de rito da lista e do total (2026-10-03).</summary>
+    [SkippableFact]
+    public async Task Votos_SemRito_TiraAsProcedimentais()
+    {
+        ExigeDocker();
+        var pessoaId = await SemearAsync();
+        var votacao = await Db.Votacoes.Where(v => v.Votos.Any(o => o.PessoaId == pessoaId)).OrderBy(v => v.Id).FirstAsync();
+        votacao.Categoria = TipoCategoriaDeVotacao.PROCEDIMENTAL;
+        await Db.SaveChangesAsync();
+        using var cliente = CriarCliente();
+
+        var semRito = await cliente.GetFromJsonAsync<PaginaLida<VotoLido>>($"{Rota}/{pessoaId}/votos?semRito=true");
+
+        Assert.Equal(4, semRito!.Total);
+        Assert.DoesNotContain(votacao.Id, semRito.Itens.Select(v => v.VotacaoId));
+    }
+
     [SkippableFact]
     public async Task Votos_DeParlamentarInexistente_Respondem404()
     {

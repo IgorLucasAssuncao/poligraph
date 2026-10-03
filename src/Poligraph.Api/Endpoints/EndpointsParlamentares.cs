@@ -83,8 +83,8 @@ public static class EndpointsParlamentares
     private static async Task<IResult> ListarVotosAsync(
         long id, ServicoParlamentares servico, CancellationToken ct,
         int pagina = 1, int tamanho = ServicoParlamentares.VotosPorPagina, short? legislatura = null,
-        string? busca = null) =>
-        await servico.ListarVotosAsync(id, pagina, tamanho, legislatura, busca, ct) is { } votos
+        string? busca = null, bool semRito = false) =>
+        await servico.ListarVotosAsync(id, pagina, tamanho, legislatura, busca, semRito, ct) is { } votos
             ? Results.Ok(votos)
             : Results.NotFound();
 

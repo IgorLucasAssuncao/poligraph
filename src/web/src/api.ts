@@ -422,10 +422,12 @@ export async function listarVotos(
   tamanho: number,
   legislatura?: number | null,
   busca?: string,
+  semRito = false,
 ): Promise<PaginaDe<VotoNaFicha>> {
   const filtro =
     (legislatura ? `&legislatura=${legislatura}` : '') +
-    (busca ? `&busca=${encodeURIComponent(busca)}` : '');
+    (busca ? `&busca=${encodeURIComponent(busca)}` : '') +
+    (semRito ? '&semRito=true' : '');
   return buscar<PaginaDe<VotoNaFicha>>(
     `${BASE}/parlamentares/${id}/votos?pagina=${pagina}&tamanho=${tamanho}${filtro}`,
   );

@@ -189,9 +189,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <para><c>Total</c> conta também os registros sem posição (obstrução, ausência registrada), que a lista mostra e as "votações registradas" da ficha não contam. A tela diz a diferença.</para>
     /// <para>Devolve <c>null</c> para pessoa inexistente, e o endpoint responde 404.</para>
     /// <para><c>busca</c> procura na descrição da votação, na ementa e na matéria ("PEC 45/2019"), sem diferença de caixa nem de acento. Com ela, <c>Total</c> é o dos encontrados.</para>
+    /// <para><c>semRito</c> tira as votações de rito (requerimento, urgência, adiamento), que são perto de um terço da lista e não entram na afinidade.</para>
     /// </remarks>
     public async Task<PaginaDto<VotoNaFichaDto>?> ListarVotosAsync(
-        long id, int pagina, int tamanho, short? legislatura, string? busca, CancellationToken ct)
+        long id, int pagina, int tamanho, short? legislatura, string? busca, bool semRito, CancellationToken ct)
     {
         if (!await _db.Pessoas.AnyAsync(p => p.Id == id, ct)) return null;
 
@@ -200,6 +201,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
 
         var alvo = await LegislaturaDaPessoaAsync(id, legislatura, ct);
         var votos = VotosDaPessoa(id, alvo, busca);
+        if (semRito) votos = votos.Where(v => v.Votacao!.Categoria != TipoCategoriaDeVotacao.PROCEDIMENTAL);
 
         return new PaginaDto<VotoNaFichaDto>(
             await PaginaDeVotosAsync(votos, (pagina - 1) * tamanho, tamanho, ct),

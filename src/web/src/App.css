@@ -3000,3 +3000,5 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 
 /* O interruptor no menu só aparece no celular; no resto, ele está no cabeçalho. */
 .menu-conta-painel > .menu-conta-analise { display: none; }
+
+.filtro-rito { display: flex; align-items: center; gap: .45rem; margin: .5rem 0 0; font-size: var(--t-2); color: var(--suave); cursor: pointer; }
