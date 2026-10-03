@@ -5,7 +5,7 @@ using Poligraph.Data;
 namespace Poligraph.Tests.Integracao;
 
 /// <summary>
-/// **PL35 — a segunda legislatura NÃO pode vazar.**
+/// **Pendência 35 — a segunda legislatura NÃO pode vazar.**
 ///
 /// Todo teste desta suíte semeia **uma** legislatura, então o filtro poderia sumir num
 /// refactor e tudo continuaria verde. Estes testes são os únicos que semeiam **duas**, e

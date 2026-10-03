@@ -54,7 +54,7 @@ Todas em português, em `.claude/skills/`. Invoque com a ferramenta Skill.
 |---|---|
 | Front | React + Vite, nginx |
 | API | **C# · ASP.NET Core Minimal API** · **.NET 10 · C# 14** |
-| ORM | **EF Core + migrations** (PL13) |
+| ORM | **EF Core + migrations** (Pendência 13) |
 | ETL e análise | **Python** — pandas, scipy, networkx |
 | Banco | PostgreSQL em container |
 | Hospedagem | **VPS Hostinger KVM 2 + Coolify**, São Paulo |
@@ -91,7 +91,7 @@ Ver [`plano/02 §3.6`](../docs/plano/02-autenticacao-e-metricas.md).
 A tabela `segue` é **registro de convicção política**. Toda mudança que a toque precisa
 respeitar consentimento específico (RNF-12b) e o endpoint de exclusão (art. 18).
 
-⛔ **Nunca renderizar CPF.** A coluna é `cpf_hash`: **HMAC-SHA256 com chave secreta**, ⛔ nunca SHA-256 puro, que se reverte em minutos (PL77). Perder a chave é perder a conciliação; trocá-la exige `rechavear-cpf`.
+⛔ **Nunca renderizar CPF.** A coluna é `cpf_hash`: **HMAC-SHA256 com chave secreta**, ⛔ nunca SHA-256 puro, que se reverte em minutos (Pendência 77). Perder a chave é perder a conciliação; trocá-la exige `rechavear-cpf`.
 
 ### 4. Regra medida vira *constraint*, não comentário
 
@@ -200,7 +200,7 @@ ETL fica como botão no painel, esperando você mandar rodar.
 | ETL | `ingerir` · `analisar` · `cpf` · `cota` · `emendas` · `fundo` · `validar` |
 | Testes | **300 .NET** (Testcontainers com Postgres real) · **562 Python** · **235 front** — conferido em 2026-10-02 |
 
-⭐ **O seed foi aposentado** (PL41). O dado local é a Câmara de verdade. 📐 Conferido
+⭐ **O seed foi aposentado** (Pendência 41). O dado local é a Câmara de verdade. 📐 Conferido
 contra o banco em **2026-09-08**:
 
 | | |
@@ -214,13 +214,13 @@ contra o banco em **2026-09-08**:
 ⚠️ `pessoas` tem **7.993** linhas: é o cadastro de TODAS as legislaturas, ⛔ não os 747
 que votaram na 57ª. Somar as duas casas ou ler o cadastro cru dá número maior e errado.
 
-⭐ **Todas as fontes ingerem** — o Senado desde a PL42. ⛔ **As notícias saíram em
-2026-10-02** (PL61): coletor, aba da ficha e seção do início. O que as substitui é a PL63.
+⭐ **Todas as fontes ingerem** — o Senado desde a Pendência 42. ⛔ **As notícias saíram em
+2026-10-02** (Pendência 61): coletor, aba da ficha e seção do início. O que as substitui é a Pendência 63.
 
 ⭐ **A conta é opcional** quando `Acesso:LeituraPublica` está ligado — só seguir e a conta
-pedem login (PL65). 🔴 Em produção continua desligado: RNF-17, período eleitoral de 2026.
+pedem login (Pendência 65). 🔴 Em produção continua desligado: RNF-17, período eleitoral de 2026.
 
-> ✅ **A PL11 saiu do caminho (2026-08-29).** O poço tem **50 linhas** em `perguntas`,
+> ✅ **A Pendência 11 saiu do caminho (2026-08-29).** O poço tem **50 linhas** em `perguntas`,
 > das quais **49 ativas** — 40 da Câmara e 9 do Senado. O cidadão responde **24**: 8 de
 > abertura, as 9 do Senado e 7 escolhidas contra o empate dele.
 >
@@ -242,7 +242,7 @@ pedem login (PL65). 🔴 Em produção continua desligado: RNF-17, período elei
 | Segredo | Para quê | Onde |
 |---|---|---|
 | `Google:ClientId` | Login | user-secrets de `Poligraph.Api` |
-| `Parameters:chave-cpf` | Chave do HMAC do CPF (PL77), chega à ETL como `POLIGRAPH_CHAVE_CPF` | user-secrets de `Poligraph.AppHost` |
+| `Parameters:chave-cpf` | Chave do HMAC do CPF (Pendência 77), chega à ETL como `POLIGRAPH_CHAVE_CPF` | user-secrets de `Poligraph.AppHost` |
 
 ⛔ **Nunca em `appsettings.json`** — o arquivo é versionado.
 

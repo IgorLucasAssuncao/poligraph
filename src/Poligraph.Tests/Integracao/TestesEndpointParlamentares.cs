@@ -136,7 +136,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     /// </para>
     ///
     /// <para>
-    /// A ementa chegou com a PL40 em 2026-08-28, e a ficha era o lugar que ainda
+    /// A ementa chegou com a Pendência 40 em 2026-08-28, e a ficha era o lugar que ainda
     /// não a usava — o dado estava no banco, sem chegar à tela.
     /// </para>
     /// </summary>

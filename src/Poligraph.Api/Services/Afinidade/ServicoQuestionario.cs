@@ -251,7 +251,7 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade, Cac
     /// reordenar por <c>Ordem</c> aqui desfaria a escolha.
     /// </summary>
     /// <remarks>
-    /// <para>O denominador é recortado por legislatura (PL35) E por casa. A legislatura sai das PERGUNTAS, não do banco: na virada, o pool ainda é da 57ª por um tempo, e o denominador tem de acompanhar as votações mostradas. A casa importa desde que o Senado entrou: sem separar, uma pergunta da Câmara mostrava "439 de 747" — os 747 são deputados MAIS senadores, e os 104 senadores nunca votaram aquela votação. Mesmo formato de erro da PL35.</para>
+    /// <para>O denominador é recortado por legislatura (Pendência 35) E por casa. A legislatura sai das PERGUNTAS, não do banco: na virada, o pool ainda é da 57ª por um tempo, e o denominador tem de acompanhar as votações mostradas. A casa importa desde que o Senado entrou: sem separar, uma pergunta da Câmara mostrava "439 de 747" — os 747 são deputados MAIS senadores, e os 104 senadores nunca votaram aquela votação. Mesmo formato de erro da Pendência 35.</para>
     /// <para>A casa NÃO é serializada: o cidadão nunca escolhe entre Câmara e Senado (RNF-28), e saber de qual casa veio cada pergunta não muda o que ele responde. Ela serve só para escolher o denominador certo.</para>
     /// </remarks>
     private async Task<List<PerguntaPublicaDto>> MontarAsync(

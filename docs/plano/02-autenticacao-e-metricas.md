@@ -40,11 +40,11 @@
 > senha não significa sem sessão.
 > **v1.3:** §3.2 — o passo a passo concreto do login com Google (Google Cloud, escopos,
 > código, esforço).
-> **v1.2:** ✅ PL6 DECIDIDA — Clarity em produção, gravando tudo, com consentimento
-> prévio bloqueante (§4.5). PL8 e PL9 caem junto; nascem PL25 (texto do banner) e PL24 (CEP).
+> **v1.2:** ✅ Pendência 6 DECIDIDA — Clarity em produção, gravando tudo, com consentimento
+> prévio bloqueante (§4.5). Pendência 8 e Pendência 9 caem junto; nascem Pendência 25 (texto do banner) e Pendência 24 (CEP).
 > **v1.1:** §4.2–4.5 reescritas contra a documentação oficial do Clarity. 🔴 Duas
 > mitigações da v1.0 estavam erradas: máscara não esconde clique, e "só heatmap" é pior
-> que gravação. Consent Mode não protege o Brasil por padrão. Nova pendência PL24 (CEP).
+> que gravação. Consent Mode não protege o Brasil por padrão. Nova pendência Pendência 24 (CEP).
 > ⚠️ Este documento contém **a decisão de maior consequência jurídica do projeto**.
 > Leia a §1 antes de implementar qualquer login.
 
@@ -234,8 +234,8 @@ preencher formulário, não em programar.
 |---|---|
 | Custo | **R$ 0.** O Google Identity é gratuito, sem cota relevante |
 | Precisa de cartão? | ⛔ Não. Login não é serviço faturável do Google Cloud |
-| 🔴 **Precisa de domínio** | Sim, para produção. `localhost` funciona no desenvolvimento — mas o *Authorized origin* de produção exige domínio real → **depende da PL3** |
-| 🔴 **Precisa de política de privacidade publicada** | Sim. É **campo obrigatório** da tela de consentimento → **transforma a PL7 em bloqueante** |
+| 🔴 **Precisa de domínio** | Sim, para produção. `localhost` funciona no desenvolvimento — mas o *Authorized origin* de produção exige domínio real → **depende da Pendência 3** |
+| 🔴 **Precisa de política de privacidade publicada** | Sim. É **campo obrigatório** da tela de consentimento → **transforma a Pendência 7 em bloqueante** |
 
 ### 3.2.2 Onde cadastrar — o passo a passo (console verificado em 2026-08-26)
 
@@ -289,8 +289,8 @@ nada além dos três.**
 | Momento | O que já dá para preencher |
 |---|---|
 | ✅ **Agora** | Projeto, `http://localhost` nas origens, escopos, **Client ID em mãos** |
-| ⏳ Quando houver domínio (PL3) | Acrescentar `https://registroaberto.org` às origens |
-| ⏳ Quando houver política (PL7) | A URL no *Branding* — e só então **Publish** |
+| ⏳ Quando houver domínio (Pendência 3) | Acrescentar `https://registroaberto.org` às origens |
+| ⏳ Quando houver política (Pendência 7) | A URL no *Branding* — e só então **Publish** |
 
 ⭐ **O Client ID sai no passo 6 e já serve para desenvolver localmente.** Domínio e política
 de privacidade só bloqueiam a **publicação**, não o desenvolvimento — dá para ter o login
@@ -463,7 +463,7 @@ ALTER TABLE usuario ADD COLUMN sessao_versao SMALLINT NOT NULL DEFAULT 0;
 texto que o usuário controla; só a checagem de assinatura contra as chaves públicas do
 Google o torna confiável. ⛔ **Nunca** decidir identidade por algo que o front afirmou.
 
-→ **PL29:** confirmar B1 e definir a duração da sessão (sugerido: 7 dias).
+→ **Pendência 29:** confirmar B1 e definir a duração da sessão (sugerido: 7 dias).
 
 ### 3.2.5 Esforço real
 
@@ -472,13 +472,13 @@ Google o torna confiável. ⛔ **Nunca** decidir identidade por algo que o front
 | Cadastro no Google Cloud | ~30 min |
 | Botão no front | ~1 h |
 | Validação na API + tabela | ~2 h |
-| Política de privacidade (PL7) | 🔴 **Meio dia** — é texto jurídico, não código |
+| Política de privacidade (Pendência 7) | 🔴 **Meio dia** — é texto jurídico, não código |
 | **Total** | **~1 dia**, dominado pelo item que não é técnico |
 
 ### 3.2.6 ⚠️ O ponto que a decisão não cobre
 
 A opção 2 está decidida (§3). Fica registrado, para o texto do TCC e para a banca, o que
-ela NÃO resolve — porque a PL6 aumentou esse lado:
+ela NÃO resolve — porque a Pendência 6 aumentou esse lado:
 
 > A partir de agora o site **grava a sessão inteira**, incluindo as respostas do
 > questionário. Somar login a isso significa **ligar cada gravação de opinião política a
@@ -488,13 +488,13 @@ ela NÃO resolve — porque a PL6 aumentou esse lado:
 |---|---|
 | Gravação anônima, com consentimento | Gravação **vinculada a uma identidade persistente** |
 | Nenhuma base de convicção política | `usuario_segue` **é** base de convicção política (§1) |
-| PL7 opcional | 🔴 PL7 obrigatória, e mais pesada |
+| Pendência 7 opcional | 🔴 Pendência 7 obrigatória, e mais pesada |
 
 ⚠️ **E o calendário agrava:** eleições gerais em **outubro de 2026**.
 
 > 🔑 **Isso não contradiz a decisão — delimita.** O login com Google zerou o risco de
 > credencial. O risco que resta é o da §1, e ele se trata com a RNF-12b (consentimento
-> específico), o endpoint de exclusão (art. 18) e o backup criptografado (PL20).
+> específico), o endpoint de exclusão (art. 18) e o backup criptografado (Pendência 20).
 > **Três medidas concretas, todas já especificadas.**
 
 ## 3.3 🔴 O que a notificação por e-mail traz junto
@@ -531,7 +531,7 @@ Desde **fevereiro de 2024**, Gmail e Yahoo exigem de quem envia em volume:
 | **DMARC** | Registro TXT `_dmarc` |
 | 🔴 **Descadastro em um clique** | Cabeçalho `List-Unsubscribe` + `List-Unsubscribe-Post` (RFC 8058) |
 
-⚠️ **Isso amarra na PL3.** Não dá para configurar SPF/DKIM/DMARC sem domínio próprio —
+⚠️ **Isso amarra na Pendência 3.** Não dá para configurar SPF/DKIM/DMARC sem domínio próprio —
 e-mail é a segunda coisa (depois do login com Google) que torna o domínio bloqueante.
 
 ### 3.3.3 ✅ Você tem razão sobre a tabela de tokens — mas não a que imagina
@@ -598,7 +598,7 @@ art. 8º §4 — o consentimento é para finalidades determinadas).
 | ⭐ ~~Fluxo de confirmação (double opt-in)~~ | ✅ **Eliminado** pela §3.4.2 — o Google já verifica o e-mail |
 | **Total sobre o login** | **~2 a 3 dias** |
 
-⚠️ **Isso não é pequeno.** Some ao ~1 dia do login e à PL7, e a frente de "conta de
+⚠️ **Isso não é pequeno.** Some ao ~1 dia do login e à Pendência 7, e a frente de "conta de
 usuário" passa de meio dia imaginado para **quase uma semana**. Vale saber disso antes de
 começar, para decidir onde ela entra no cronograma — não para desistir dela.
 
@@ -830,7 +830,7 @@ Guardar tudo remove trabalho — vale registrar, porque não é óbvio:
 | Zerar `email` no descadastro | ⛔ Descadastrar agora só marca `consentimento.revogado_em` |
 | A regra "leia do token, não persista" no front | ⭐ Nome e foto vêm do banco, como qualquer campo |
 
-⭐ **E habilita o que estava travado:** saudar por nome no digest (**PL28 resolvida — sim**),
+⭐ **E habilita o que estava travado:** saudar por nome no digest (**Pendência 28 resolvida — sim**),
 exibir avatar em "meus parlamentares", e uma tela de administração que mostra quem se
 cadastrou.
 
@@ -841,10 +841,10 @@ Não é preferência de projeto — são obrigações que existem independenteme
 | | |
 |---|---|
 | **RNF-12b** | A lista de seguidos continua sendo dado sensível (LGPD art. 5º, II) |
-| **PL7** | Política de privacidade — já era bloqueante pelo Google |
-| **PL25** | Texto do consentimento |
+| **Pendência 7** | Política de privacidade — já era bloqueante pelo Google |
+| **Pendência 25** | Texto do consentimento |
 | **Art. 18** | O endpoint de exclusão continua sendo um `DELETE` com `CASCADE` |
-| **PL20** | O backup contém PII — criptografar no destino |
+| **Pendência 20** | O backup contém PII — criptografar no destino |
 
 ⭐ **O `DELETE` continua sendo um só.** Foi por isso que os `ON DELETE CASCADE` entraram no
 schema, e eles seguem valendo com mais colunas do mesmo jeito.
@@ -1227,7 +1227,7 @@ Duas correções ao que estava neste documento até 2026-08-25:
 > é legítima se o texto do consentimento for específico — daí a §4.5.2 ser obrigatória, e
 > não uma boa prática.
 
-### 4.5 ✅ DECISÃO — PL6 resolvida (2026-08-25)
+### 4.5 ✅ DECISÃO — Pendência 6 resolvida (2026-08-25)
 
 > **Clarity em produção aberta, gravando tudo — inclusive questionário e resultado —
 > com consentimento prévio obrigatório.**
@@ -1316,16 +1316,16 @@ custar meses se ficar para o fim.
 
 | # | Pendência | Prioridade |
 |---|---|---|
-| ~~PL6~~ | ✅ **Produção aberta, gravando tudo, com consentimento prévio obrigatório** (§4.5) | — |
-| **PL7** | Política de privacidade — 🔴 vira BLOQUEANTE se houver login: é campo obrigatório da tela de consentimento do Google (§3.2.1) | 🔴 Alta *(se houver login)* |
-| ~~PL8~~ | ✅ **Todas as telas** — a proteção passou a ser o consentimento, não a máscara | — |
-| **PL24** | Confirmar com o orientador se o TCC precisa de aprovação em CEP (Plataforma Brasil) | 🔴 Alta |
-| ~~PL9~~ | ✅ **Necessário e bloqueante** — decorre da PL6 (§4.5.1) | — |
-| **PL25** | Escrever o texto do banner cobrindo as 5 exigências da §4.5.2 | 🔴 Alta |
-| **PL26** | Escolher o serviço de envio de e-mail (Resend, Brevo, SES) e configurar SPF/DKIM/DMARC | 🔴 Alta |
-| **PL27** | Definir a cadência do digest — diário, semanal, ou por volume de notícia | 🟡 Média |
-| **PL29** | Confirmar a duração do cookie (sugerido: 7 dias, sliding) | 🟡 Média |
-| **PL30** | 🔴 Definir onde persistir as chaves do Data Protection — volume do Coolify ou Postgres (§3.6.4) | 🔴 Alta |
+| ~~Pendência 6~~ | ✅ **Produção aberta, gravando tudo, com consentimento prévio obrigatório** (§4.5) | — |
+| **Pendência 7** | Política de privacidade — 🔴 vira BLOQUEANTE se houver login: é campo obrigatório da tela de consentimento do Google (§3.2.1) | 🔴 Alta *(se houver login)* |
+| ~~Pendência 8~~ | ✅ **Todas as telas** — a proteção passou a ser o consentimento, não a máscara | — |
+| **Pendência 24** | Confirmar com o orientador se o TCC precisa de aprovação em CEP (Plataforma Brasil) | 🔴 Alta |
+| ~~Pendência 9~~ | ✅ **Necessário e bloqueante** — decorre da Pendência 6 (§4.5.1) | — |
+| **Pendência 25** | Escrever o texto do banner cobrindo as 5 exigências da §4.5.2 | 🔴 Alta |
+| **Pendência 26** | Escolher o serviço de envio de e-mail (Resend, Brevo, SES) e configurar SPF/DKIM/DMARC | 🔴 Alta |
+| **Pendência 27** | Definir a cadência do digest — diário, semanal, ou por volume de notícia | 🟡 Média |
+| **Pendência 29** | Confirmar a duração do cookie (sugerido: 7 dias, sliding) | 🟡 Média |
+| **Pendência 30** | 🔴 Definir onde persistir as chaves do Data Protection — volume do Coolify ou Postgres (§3.6.4) | 🔴 Alta |
 
 ---
 

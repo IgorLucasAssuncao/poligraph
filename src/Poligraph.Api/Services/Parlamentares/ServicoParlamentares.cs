@@ -36,7 +36,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
 
     /// <summary>RF-34 — busca por nome, partido e UF, em páginas.</summary>
     /// <remarks>
-    /// <para>PL35 — "parlamentar" é quem votou na legislatura CORRENTE. Sem o recorte, a chegada da 58ª faria "explorar" listar ex-deputados junto dos atuais, e `NVotacoes` somaria mandatos diferentes. `null` só acontece em base sem votação nenhuma — antes do primeiro ETL. Aí a lista sai vazia, que é a resposta honesta.</para>
+    /// <para>Pendência 35 — "parlamentar" é quem votou na legislatura CORRENTE. Sem o recorte, a chegada da 58ª faria "explorar" listar ex-deputados junto dos atuais, e `NVotacoes` somaria mandatos diferentes. `null` só acontece em base sem votação nenhuma — antes do primeiro ETL. Aí a lista sai vazia, que é a resposta honesta.</para>
     /// <para>A lista cortava em 100 por ordem alfabética, sem avisar: de 745 parlamentares da 57ª, só os 100 primeiros em ordem alfabética chegavam à tela, e "quem seguir" escolhia o mais ativo entre eles. A página devolve o total, e o corte passa a ser visível.</para>
     /// <para>A busca por nome ignora caixa e acento: "jose" encontra "José".</para>
     /// <para>Com <c>anteriores</c>, entra também quem só votou em legislaturas passadas, cada um com o último mandato. Sem ele, que é o padrão, a lista é a de quem está em exercício: o histórico ocupa milhares de nomes, e quem chega procurando "meu deputado" não deve ter de atravessá-los.</para>
@@ -76,7 +76,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
 
     /// <summary>RF-31 — ficha com dados, histórico de votos e mais similares.</summary>
     /// <remarks>
-    /// <para>PL35 — só a legislatura corrente, igual à lista. Contar todas daria um número maior na ficha do que na lista, para a mesma pessoa.</para>
+    /// <para>Pendência 35 — só a legislatura corrente, igual à lista. Contar todas daria um número maior na ficha do que na lista, para a mesma pessoa.</para>
     /// </remarks>
     /// <remarks>
     /// <para>A legislatura é a da PESSOA, não a corrente do site: um ex-deputado que só votou na 56ª abriria a ficha com zero votos. Pedida uma legislatura em que ela não votou, vale a última em que votou.</para>
@@ -355,7 +355,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// </remarks>
     /// <summary>Os votos da pessoa na legislatura, filtrados pela busca quando houver.</summary>
     /// <remarks>
-    /// <para>Procura na descrição, na ementa, nas palavras-chave da casa e na sigla com número. As palavras-chave (PL70) são onde está o nome popular: "reforma tributária" não aparece na ementa da PEC 45/2019.</para>
+    /// <para>Procura na descrição, na ementa, nas palavras-chave da casa e na sigla com número. As palavras-chave (Pendência 70) são onde está o nome popular: "reforma tributária" não aparece na ementa da PEC 45/2019.</para>
     /// <para>Expressão regular, e não <c>unaccent</c>: a extensão não está no banco, e instalá-la seria migration para uma busca. A expressão troca cada vogal e o "c" pela classe com as variantes acentuadas — "tributaria" acha "tributária".</para>
     /// </remarks>
     private IQueryable<VotoModel> VotosDaPessoa(long id, short? legislatura, string? busca)
@@ -386,7 +386,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// inteira — "PEC 45/2019" — porque separada viraria "PEC" em qualquer emenda.
     /// </summary>
     /// <remarks>
-    /// <para>O nome popular ("reforma tributária", "arcabouço") ainda não acha: a ementa oficial não o usa, e as palavras-chave da Câmara não são ingeridas (PL70).</para>
+    /// <para>O nome popular ("reforma tributária", "arcabouço") ainda não acha: a ementa oficial não o usa, e as palavras-chave da Câmara não são ingeridas (Pendência 70).</para>
     /// </remarks>
     private static IEnumerable<string> PalavrasDaBusca(string busca)
     {

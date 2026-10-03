@@ -3,7 +3,7 @@ import type { NoDoGrafo } from '../../api';
 /**
  * Como rotular os eixos desenhados sobre a figura.
  *
- * RISCO: **Derivado do dado, nunca escrito à mão.** O sinal do eixo é arbitrário: a
+ * 🔴 **Derivado do dado, ⛔ nunca escrito à mão.** O sinal do eixo é arbitrário: a
  * semente do layout é fixa, então a figura é reproduzível — mas uma reexecução com dado
  * novo pode espelhá-la. Um rótulo fixo dizendo *"à esquerda ficam os governistas"*
  * passaria a mentir em cima do próprio desenho, que é o pior lugar possível.
@@ -15,22 +15,17 @@ export type RotulosDoEixo = {
   direita: string;
   /** A frase que explica o eixo horizontal, embaixo dele. */
   legenda: string;
-  /** ATENÇÃO: O que a vertical mede — quase sempre, nada. */
+  /** ⚠️ O que a vertical mede — quase sempre, nada. */
   vertical: string;
 };
 
-/**
- * DECISÃO: No layout de alinhamento a coordenada É a medida, e o sentido foi definido por
- * nós: menos governismo à esquerda. Não há o que derivar, e derivar aqui seria
- * perguntar ao dado uma coisa que já sabemos.
- *
- * Não Senado: sem orientação de bancada publicada, o eixo não tem nome. Desenhar a
- * linha com rótulo inventado seria pior que não desenhar.
- */
 export function rotulosDoEixo(
   nos: NoDoGrafo[],
   layout: 'molas' | 'componentes' | 'alinhamento',
 ): RotulosDoEixo | null {
+  // ⭐ No layout de alinhamento a coordenada É a medida, e o sentido foi definido por
+  //    nós: menos governismo à esquerda. ⛔ Não há o que derivar, e derivar aqui seria
+  //    perguntar ao dado uma coisa que já sabemos.
   if (layout === 'alinhamento') {
     return {
       esquerda: 'quase nunca votou com o Governo',
@@ -44,6 +39,8 @@ export function rotulosDoEixo(
     (n) => n.eixoX !== null && n.governismo !== null,
   );
 
+  // ⛔ Senado: sem orientação de bancada publicada, o eixo ⛔ não tem nome. Desenhar a
+  //    linha com rótulo inventado seria pior que ⛔ não desenhar.
   if (comAlinhamento.length < 20) return null;
 
   const mediaDe = (filtro: (x: number) => boolean) => {

@@ -1,4 +1,4 @@
-"""PL69 — a votação da Câmara com presença e nenhuma posição é secreta de fato."""
+"""Pendência 69 — a votação da Câmara com presença e nenhuma posição é secreta de fato."""
 
 import pytest
 

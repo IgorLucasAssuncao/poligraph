@@ -5,7 +5,7 @@ import type { CargaDeProcedencia, ConsultaDeProcedencia, Procedencia } from '../
 import { LinkDeFonte } from './LinkDeFonte';
 
 /**
- * Modo análise (PL73): ligado, todo número que tem procedência vira botão e abre o painel
+ * Modo análise (Pendência 73): ligado, todo número que tem procedência vira botão e abre o painel
  * com o arquivo de onde veio, o hash e a regra da conta.
  *
  * DECISÃO: É a regra que o projeto já segue (mostrar o cálculo junto do número, e o número

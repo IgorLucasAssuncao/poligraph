@@ -1,4 +1,4 @@
-"""PL45 e PL47 — a reconciliação manual de autor de emenda.
+"""Pendência 45 e Pendência 47 — a reconciliação manual de autor de emenda.
 
 RISCO: O que este arquivo protege: **entrada malformada tem de ESTOURAR.** `--resolver 4184`
 sem o `=` seria descartado em silêncio, e a pessoa concluiria que vinculou quando não
@@ -10,7 +10,7 @@ propósito e quem decide é uma pessoa.
 
 ## RISCO: O segundo valor mudou em 2026-08-29
 
-Era `pessoas.id`. **Virou o id NA CÂMARA**, depois de o defeito se materializar: a PL47
+Era `pessoas.id`. **Virou o id NA CÂMARA**, depois de o defeito se materializar: a Pendência 47
 registrava `--resolver 4511=43` para o Allan Garcês, e depois de uma reingestão o `43`
 passou a ser **André Ferreira** — `pessoas.id` é `BIGSERIAL` e é reatribuído.
 

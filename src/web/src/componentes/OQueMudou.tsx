@@ -7,7 +7,7 @@ import { dataCurta, mesCurto, minusculas, reais } from '../formato';
 import { LinkDeFonte } from './LinkDeFonte';
 
 /**
- * "O que mudou" (PL63): os cinco avisos sobre quem a pessoa segue, um item por fato, do
+ * "O que mudou" (Pendência 63): os cinco avisos sobre quem a pessoa segue, um item por fato, do
  * mais recente. Especificação em `docs/plano/09 §4.1`.
  *
  * DECISÃO: Fato registrado pela casa, sem adjetivo e sem ranking (RNF-16). "Votou contra o

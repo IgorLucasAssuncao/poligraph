@@ -7,7 +7,7 @@
 > manual"*, fora dos bloqueios.
 >
 > ⚠️ **Recontado em 2026-10-01, ⛔ incrementado.** O cabeçalho de 26/08 dizia 62
-> resolvidas, e a lista do fim tinha **60** códigos, sem PL10, PL11, CT3, PL35 nem as
+> resolvidas, e a lista do fim tinha **60** códigos, sem Pendência 10, Pendência 11, CT3, Pendência 35 nem as
 > outras fechadas de 27/08 a 06/09. A contagem agora sai da lista.
 
 ---
@@ -20,48 +20,48 @@
 |---|---|
 | Ficha com **patrimônio** declarado ao TSE | ✅ **PP3** |
 | Ficha com **redes sociais** (Câmara e TSE) | ✅ **PP4** |
-| Ficha com **casa** e presença no voto | ✅ o resto da **PL42** |
+| Ficha com **casa** e presença no voto | ✅ o resto da **Pendência 42** |
 | Senadores: nome civil, CPF pelo TSE, financiamento; **CEAPS** | — |
 | Governo, emendas por destino, mapa por município, entidades, metodologia | — |
 | Emendas e orçamento pelo **download público** — a chave pessoal do Portal saiu ([#33](achados/033-o-destino-da-emenda.md)) | — |
 
 Também fechadas por estarem obsoletas ou já feitas: ✅ **API3** (o teste existe:
-`Poligraph.Tests/Unidade/TestesPolaridade.cs`) e ✅ **PL31** (o seed foi aposentado na
-PL41).
+`Poligraph.Tests/Unidade/TestesPolaridade.cs`) e ✅ **Pendência 31** (o seed foi aposentado na
+Pendência 41).
 
 ### 🔴 Novas — achadas em 2026-10-01
 
 | # | Pendência | Prioridade |
 |---|---|---|
-| ✅ ~~PL54~~ | **Resolvida (2026-10-01)** — a ficha de todo deputado mostrava 0 "mais parecidos": `MaisSimilaresAsync` pegava a última execução de **qualquer casa**. A consulta estava repetida em cinco serviços e virou uma, `ExecucaoVigente`, com casa **e** legislatura. O `validar` do ETL tinha o mesmo defeito. `TestesExecucaoVigente` grava a execução errada DEPOIS da certa; mutação conferida | — |
-| **PL53** | 🔴 **Trazer as outras legislaturas** — pedido do autor. ⭐ **Decidido em 2026-10-01: as perguntas ficam só na legislatura mais recente** — o histórico entra na ficha, no grafo e no dinheiro, ⛔ no questionário. 🔄 **Quase fechada (2026-10-02):** votos de **2001 a 2026** nas duas casas; grafos da Câmara 52ª–57ª e do Senado 51ª–57ª; cota 2009–2026; emendas **2014–2026**; disciplina pela federação ([#36](achados/036-o-partido-orienta-como-federacao.md)); e a **navegação**: um seletor de período em `?legislatura=`, igual no início, na lista e no grafo (commit `4018075`). ⚠️ Falta o que ⛔ é voto: financiamento e patrimônio antes de 2018, e o CNPJ das prefeituras dos favorecidos novos de 2014–2022. Detalhe em [#35](achados/035-a-57-calibrou-o-etl.md) | 🔴 Alta |
-| **PL58** | 🟡 **O Senado de 2015–2016 ⛔ está nos dados abertos** ([#37](achados/037-a-votacao-de-1998-datada-de-2015.md)). MEDIDO em 2026-10-02: a lacuna é do acervo, e não de um endpoint. `/votacao`, o antigo `/plenario/lista/votacao/{data}` e o histórico por senador (`/senador/{codigo}/votacoes`) têm o mesmo buraco: Randolfe Rodrigues, senador desde 2011, tem **0** votações em 2015 e **6** em 2016; a MP 665 (26/05/2015) e o julgamento final do impeachment (31/08/2016) não aparecem em nenhum. Fonte estruturada não há. **Decisão do autor:** extrair à mão do Diário do Senado Federal (~230 votações), ou deixar a lacuna dita na tela, como o grafo da 55ª já faz pelo período das votações (PL59) | 🟡 Média |
-| ✅ ~~PL59~~ | **Resolvida (2026-10-02)** — o grafo da 55ª do Senado dizia "2015–2019", e as 103 votações abertas que o desenharam vão de mai/2016 a 2018 (3 acima do mínimo). O `GrafoDto` traz `AbertasDesde` e `AbertasAte`, e a tela diz o recorte em todo grafo | — |
-| ✅ ~~PL60~~ | **Resolvida (2026-10-02)** — [achado #38](achados/038-a-emenda-sem-autor.md). Remedido: 17.810 linhas, R$ 35,64 bi empenhados e R$ 19,67 bi pagos, todas em 2014–2020; 2014 é 100% sem autor e 2016, 72%. O código `-99` ("RELATOR GERAL") é de emenda de comissão; a de relator vem como `S/I`. O log da carga deixou de chamá-las de "a fonte mudou?" | — |
-| **PL81** | 🟡 **Gravar a emenda sem autor, ou dizer na tela que falta** ([#38](achados/038-a-emenda-sem-autor.md)): hoje ela é descartada, e o total de emendas de 2016 na tela fica 72% menor que o do Portal, sem aviso. Gravar com `pessoa_id` nulo devolve os totais do país e não muda a ficha | Média |
-| **PL56** | 🟡 **Governos anteriores:** `gestoes` é uma linha por eleição (`ck_gestao_posse`), e ⛔ representa Temer (2016–18). Decidir o modelo antes de ingerir eleições anteriores | 🟡 Média |
-| ✅ ~~PL55~~ | **Resolvida (2026-10-02)** — nenhum emoji no código: os marcadores de `.cs`, `.ts`, `.tsx`, `.css` e `.py` viraram `RISCO:`, `ATENÇÃO:`, `DECISÃO:`, `MEDIDO:`. No front, os comentários de dentro de corpos e do JSX foram para o JSDoc das declarações. Regra em `.claude/CLAUDE.md` | — |
-| **PL57** | 🟡 **PR bloqueado:** a credencial do GitHub expirou, o `gh` ⛔ está instalado, e o `origin/main` do último fetch só tem o `Initial commit`, ⛔ ancestral da branch | 🟡 Média |
-| ✅ ~~PL61~~ | **Resolvida (2026-10-02)** — as notícias saíram de vez, por decisão do autor (sem tempo hábil): coletor RSS, comando `noticias`, `etl-noticias` no AppHost, `/api/parlamentares/{id}/noticias`, `/api/seguidos/noticias`, o digest por e-mail, a aba da ficha e a seção do início. A política de privacidade foi para a `v4-2026-10-02` e ⛔ promete mais e-mail | — |
-| **PL62** | 🟡 **Contrair o schema das notícias:** as tabelas `noticias`, `noticia_pessoas` e `noticia_temas` e os modelos do EF ficaram, porque apagar tabela é mudança destrutiva (dois deploys). Migration que as remove, depois de o código sem elas estar em produção. ⚠️ `EMAIL_NOTICIAS` é o único valor de `ck_consentimento_finalidade`: decidir junto com a PL63 | 🟢 Baixa |
-| ✅ ~~PL63~~ | **Resolvida (2026-10-02)** — seção "O que mudou" no início, para quem segue alguém, antes da lista de seguidos. `GET /api/seguidos/novidades` (exige conta, sem cache e sem log de nome) com os cinco avisos de [`plano/09 §4.1`](plano/09-apresentacao-validacao-e-valor.md): votou na semana (ausência só no Senado), votou contra a bancada do próprio partido (só Câmara, com a regra da disciplina portada para C# em `BancadaDoPartido`, e um arquivo de casos lido pelas duas suítes de teste), trocou de partido, gastou na cota do último mês fechado, emenda paga na última competência fechada. Cada item com a fonte; a seção diz a janela e a data da carga. MEDIDO em 2026-10-02: a última votação de plenário da base é de 03/09/2026 nas duas casas, então a semana de hoje vai de 28/08 a 03/09 | — |
-| ✅ ~~PL64~~ | **Resolvida (2026-10-02)** — comando `rotina --frequencia semanal|mensal` (`rotina.py` decide as etapas, o `__main__` executa e para na primeira falha): semanal = `ingerir` e `senado` do ano + `conferir`; mensal = as da semanal + `cota`, `emendas`, `analisar` das duas casas + `conferir`. Em janeiro e fevereiro entra o ano anterior. No VPS, duas Scheduled Tasks do Coolify ([`plano/05 §2.3`](plano/05-cicd-e-deploy.md)); no Aspire, os botões `etl-rotina-semanal` e `etl-rotina-mensal`. ATENÇÃO: o agendamento no Coolify só existe quando houver o VPS | — |
-| **PL65** | 🔴 **Login opcional — e a RNF-17.** Feito em 2026-10-02: com `Acesso:LeituraPublica` ligado, só seguir e a conta pedem login, e o login volta para onde a pessoa estava. Ligado **só** em `appsettings.Development.json`. ⚠️ **Em produção continua desligado**: a RNF-17 restringe o acesso no período eleitoral, e o 2º turno é em **25/10/2026**. Ligar em produção é decisão do autor | 🔴 Alta |
-| ✅ ~~PL66~~ | **Resolvida (2026-10-02)** — `conferir` na ETL e o botão `etl-conferir`: regras de plausibilidade depois da carga, ERRO derruba o comando. Primeira rodada: **0 erros, 29 avisos**, todos explicados em [`plano/09 §5.2`](plano/09-apresentacao-validacao-e-valor.md). A votação do Senado com 82 é titular e suplente de TO no dia da troca; dos 13 placares, 11 são votação secreta de fato (PL69) | — |
-| ✅ ~~PL69~~ | **Resolvida (2026-10-02)** — `persistencia.marcar_secretas_de_fato` marca `secreta` em toda votação da Câmara com votos e nenhuma posição, no fim de cada `ingerir`, na base inteira (idempotente; a regravação não desfaz a marca). MEDIDO no banco local: **12** votações, uma ou mais em cada legislatura da 52ª à 57ª (a contagem de 11 era de uma medição anterior); o aviso `sem-posicao-nenhuma` do `conferir` caiu de 12 para 0, e a conferência de 31 para 19 avisos. O card do início deixou de dizer "N% das votações são secretas", que daria "0%" na Câmara e era percentual solto (RF-29): agora "2 de 1.597 votações são secretas" | — |
-| **PL70** | 🟡 **A busca nos votos ⛔ acha o nome popular:** "reforma tributária" dá 0, porque a ementa oficial da PEC 45/2019 diz "Altera o Sistema Tributário Nacional"; "arcabouço" também dá 0. A Câmara publica palavras-chave por proposição (`keywords`), que ⛔ ingerimos. Ingerir e incluir na busca. 📐 Medido em 2026-10-02: "tributaria" acha 33 votos e "PEC 45/2019", 19 | 🟡 Média |
-| **PL71** | 🟡 **Sede dos favorecidos pela BrasilAPI:** **19.164 de 50.738** CNPJs que receberam emenda estão sem município — **R$ 9,81 bi de R$ 159,49 bi** fora do mapa. `brasilapi.com.br/api/cnpj/v1/{cnpj}` devolve `codigo_municipio_ibge` direto (conferido em 2026-10-02 com a Prefeitura de Cascavel: 4104808). Buscar os que faltam, devagar, gravando em `cnpjs_municipio` com a data e a fonte. ⚠️ Projeto comunitário, sem SLA, que repassa o dado aberto da Receita: a fonte citada continua sendo a Receita. ⛔ Gravar o quadro de sócios (`qsa`): é dado pessoal e ⛔ serve ao trabalho | 🟡 Média |
-| ✅ ~~PL77~~ | **Resolvida (2026-10-02)** — `hash_de_cpf` passou a **HMAC-SHA256** com a chave de `POLIGRAPH_CHAVE_CPF`, que vem do parâmetro secreto `chave-cpf` do AppHost (user-secrets `Parameters:chave-cpf`). Sem a chave, ou com menos de 32 caracteres, a ETL **para** em vez de cair no SHA-256 puro. O comando `rechavear-cpf` refaz tudo: apaga `pessoas.cpf_hash`, roda `cpf` e recarrega cota, campanha e patrimônio nos anos que estão no banco. ATENÇÃO: **perder a chave é perder a conciliação** (os hashes novos não casam com os do banco); trocar a chave exige rodar `rechavear-cpf`. MEDIDO em 2026-10-02, no banco local: 719 de 719 pessoas voltaram a ter `cpf_hash`; campanha (44.171 receitas, 31.657 de pessoa física, 718 parlamentares) e patrimônio (5.840) com as mesmas contagens de antes. Fecha também B7 e ER5, que pediam a mesma decisão. Explicação em https://claude.ai/artifact/Gc11fzR2MEZk85RFMuGjki | — |
-| **PL72** | **Procedência por linha — quase toda FEITA em 2026-10-02.** Tabela `cargas` (fonte, URL exata, data, SHA-256, `ETag` e `Last-Modified` da fonte, comando e, desde a PL73, a versão da ETL) e `carga_id` com FK RESTRICT em votações, votos, orientações, despesas, emendas, favorecidos, receitas, patrimônios e `cnpjs_municipio`. As cargas de dinheiro leem do cache: o hash sai do arquivo, em blocos, e a data é a de chegada ao disco; a cópia em `procedencia/` só até 600 MB. MEDIDO em 2026-10-02, depois de recarregar tudo: **100%** das linhas com carga em votações (12.436), votos (2.179.300), orientações, despesas (5.600.360), emendas (76.817), favorecidos (621.021), receitas (44.171) e patrimônios (5.840); as contagens de voto por casa e legislatura ficaram idênticas às de antes da recarga. FALTA: `cnpjs_municipio` (0 de 31.574), que só ganha carga ao rodar `municipios`, gigabytes de cadastro da Receita. Desenho em [`plano/10 §2`](plano/10-procedencia-e-modo-analise.md) | Baixa |
-| **PL73** | **Modo análise — primeira versão FEITA em 2026-10-02.** Interruptor "Análise" no cabeçalho, guardado no navegador e válido sem conta. Ligado, o número ganha sublinhado pontilhado e abre um painel lateral: a regra da conta, quantas linhas entraram, quantas não têm carga (gravadas antes da PL72) e, por arquivo, órgão, URL, data UTC, SHA-256, tamanho, `ETag`/`Last-Modified`, **versão do código** (hash dos fontes da ETL, coluna `cargas.versao`), comando e **base legal**. API: `GET /api/procedencia/{contexto}` com `votos`, `cota`, `emendas`, `campanha`, `patrimonio` e `painel`, cada um no MESMO recorte do número da tela. Ligado na ficha (votos com posição, cota, emendas, campanha, patrimônio) e no painel do Início (votações por casa). ABERTO: (1) estender aos outros números (gastos por categoria, mapa, entidades, governo); (2) **o autor conferir as citações de base legal**, que hoje são por órgão (LAI art. 8º; Lei 9.504/1997; LC 131/2009; Decreto 8.777/2016) e não por conjunto de dados; (3) a lista das linhas, para números pequenos, que o plano/10 §3 previa | Média |
-| ✅ ~~PL74~~ | **Resolvida (2026-10-02)** — o favorecido da emenda traz `tambemNaCota`: o que a cota do MESMO parlamentar pagou ao MESMO CNPJ, nos anos de despesa do mandato que apresentou a emenda (`Legislaturas.DoAnoDeEmenda`). A ficha diz "A cota deste parlamentar também pagou R$ X a este CNPJ em 2023–2026", sem adjetivo (RNF-16). Só CNPJ público: o fornecedor pessoa física da cota é hash, e o empresário individual tem CNPJ de pessoa | — |
-| **PL75** | **Parlamentar sócio de empresa**: quadro de sócios cruzado por **nome + os 6 dígitos do meio do CPF** na ETL, gravando só o vínculo parlamentar–CNPJ. Por nome sozinho, não: homônimos. Doador pessoa física fica de fora: é cidadão privado. [`plano/10 §4.2`](plano/10-procedencia-e-modo-analise.md) | Baixa |
-| ✅ ~~PL76~~ | **Resolvida (2026-10-02)** — duas regras de AVISO no `conferir`: patrimônio declarado acima de R$ 500 mi (o dobro do maior medido, R$ 240 mi) e salto de 50 vezes entre eleições quando o segundo total passa de R$ 10 mi (o maior salto medido foi 14 vezes). Na base de hoje, nenhuma das duas dispara | — |
-| **PL80** | 🟡 **"Votos com posição" conta abstenção na ficha e não no painel.** A ficha (`ServicoParlamentares`, `Valor != null`) chama de "votos com posição" uma contagem que inclui a abstenção (`Valor = 0`); o painel do Início (`ServicoPanorama`) diz no código que "abstenção não é posição" e conta só Sim e Não. Achado ao ligar o modo análise, que repete a regra da ficha para o número bater. Decidir um termo e um recorte, e usar os dois nos dois lugares | Média |
-| ✅ ~~PL78~~ | **Resolvida (2026-10-02)** — [`fluxos-das-casas.md`](fluxos-das-casas.md): o caminho da proposição (apresentação, comissões, urgência, plenário, casa revisora, sanção e veto), o quórum por tipo (PL, PLP, PEC em dois turnos, MPV, PDL), a votação em plenário por dentro (simbólica e nominal, destaque e polaridade, orientação, abstenção e obstrução), o que muda no Senado (mandato de 8 anos, dois suplentes, voto secreto de autoridade, sem orientação publicada) e a emenda do empenho ao pagamento, com os tipos de emenda. Cada passo diz onde aparece na base. O glossário ganhou simbólica, turno, quórum, obstrução, liquidação, pagamento, restos a pagar, tipos de emenda, mandato e suplente. As citações de lei são da Constituição e dos regimentos, pelo artigo: conferir antes de levar ao texto do TCC | — |
-| ✅ ~~PL79~~ | **Resolvida (2026-10-02)** — os 282 comentários de dentro de funções da ETL e dos testes foram para a docstring da função dona; o de fim de linha leva o código que comentava. Ficam só diretivas (`noqa`, `pragma`). Uma trava no script recusava gravar arquivo em que alguma nota não chegasse à docstring | — |
-| **PL67** | 🟡 **Amostra manual contra a fonte oficial**: 20 votações sorteadas por casa e legislatura, conferidas no site da casa. Vira achado ([`plano/09 §5.3`](plano/09-apresentacao-validacao-e-valor.md)) | 🟡 Média |
-| ✅ ~~PL68~~ | **Resolvida (2026-10-02)** — o painel conta como votação só a que tem voto nominal, e o cartão diz quantas ficaram de fora. Não era só a 51ª: a 52ª tem 309 de 600 sem voto nominal, e a 54ª, 455 de 905 | — |
+| ✅ ~~Pendência 54~~ | **Resolvida (2026-10-01)** — a ficha de todo deputado mostrava 0 "mais parecidos": `MaisSimilaresAsync` pegava a última execução de **qualquer casa**. A consulta estava repetida em cinco serviços e virou uma, `ExecucaoVigente`, com casa **e** legislatura. O `validar` do ETL tinha o mesmo defeito. `TestesExecucaoVigente` grava a execução errada DEPOIS da certa; mutação conferida | — |
+| **Pendência 53** | 🔴 **Trazer as outras legislaturas** — pedido do autor. ⭐ **Decidido em 2026-10-01: as perguntas ficam só na legislatura mais recente** — o histórico entra na ficha, no grafo e no dinheiro, ⛔ no questionário. 🔄 **Quase fechada (2026-10-02):** votos de **2001 a 2026** nas duas casas; grafos da Câmara 52ª–57ª e do Senado 51ª–57ª; cota 2009–2026; emendas **2014–2026**; disciplina pela federação ([#36](achados/036-o-partido-orienta-como-federacao.md)); e a **navegação**: um seletor de período em `?legislatura=`, igual no início, na lista e no grafo (commit `4018075`). ⚠️ Falta o que ⛔ é voto: financiamento e patrimônio antes de 2018, e o CNPJ das prefeituras dos favorecidos novos de 2014–2022. Detalhe em [#35](achados/035-a-57-calibrou-o-etl.md) | 🔴 Alta |
+| **Pendência 58** | 🟡 **O Senado de 2015–2016 ⛔ está nos dados abertos** ([#37](achados/037-a-votacao-de-1998-datada-de-2015.md)). MEDIDO em 2026-10-02: a lacuna é do acervo, e não de um endpoint. `/votacao`, o antigo `/plenario/lista/votacao/{data}` e o histórico por senador (`/senador/{codigo}/votacoes`) têm o mesmo buraco: Randolfe Rodrigues, senador desde 2011, tem **0** votações em 2015 e **6** em 2016; a MP 665 (26/05/2015) e o julgamento final do impeachment (31/08/2016) não aparecem em nenhum. Fonte estruturada não há. **Decisão do autor:** extrair à mão do Diário do Senado Federal (~230 votações), ou deixar a lacuna dita na tela, como o grafo da 55ª já faz pelo período das votações (Pendência 59) | 🟡 Média |
+| ✅ ~~Pendência 59~~ | **Resolvida (2026-10-02)** — o grafo da 55ª do Senado dizia "2015–2019", e as 103 votações abertas que o desenharam vão de mai/2016 a 2018 (3 acima do mínimo). O `GrafoDto` traz `AbertasDesde` e `AbertasAte`, e a tela diz o recorte em todo grafo | — |
+| ✅ ~~Pendência 60~~ | **Resolvida (2026-10-02)** — [achado #38](achados/038-a-emenda-sem-autor.md). Remedido: 17.810 linhas, R$ 35,64 bi empenhados e R$ 19,67 bi pagos, todas em 2014–2020; 2014 é 100% sem autor e 2016, 72%. O código `-99` ("RELATOR GERAL") é de emenda de comissão; a de relator vem como `S/I`. O log da carga deixou de chamá-las de "a fonte mudou?" | — |
+| **Pendência 81** | 🟡 **Gravar a emenda sem autor, ou dizer na tela que falta** ([#38](achados/038-a-emenda-sem-autor.md)): hoje ela é descartada, e o total de emendas de 2016 na tela fica 72% menor que o do Portal, sem aviso. Gravar com `pessoa_id` nulo devolve os totais do país e não muda a ficha | Média |
+| **Pendência 56** | 🟡 **Governos anteriores:** `gestoes` é uma linha por eleição (`ck_gestao_posse`), e ⛔ representa Temer (2016–18). Decidir o modelo antes de ingerir eleições anteriores | 🟡 Média |
+| ✅ ~~Pendência 55~~ | **Resolvida (2026-10-02)** — nenhum emoji no código: os marcadores de `.cs`, `.ts`, `.tsx`, `.css` e `.py` viraram `RISCO:`, `ATENÇÃO:`, `DECISÃO:`, `MEDIDO:`. No front, os comentários de dentro de corpos e do JSX foram para o JSDoc das declarações. Regra em `.claude/CLAUDE.md` | — |
+| **Pendência 57** | 🟡 **PR bloqueado:** a credencial do GitHub expirou, o `gh` ⛔ está instalado, e o `origin/main` do último fetch só tem o `Initial commit`, ⛔ ancestral da branch | 🟡 Média |
+| ✅ ~~Pendência 61~~ | **Resolvida (2026-10-02)** — as notícias saíram de vez, por decisão do autor (sem tempo hábil): coletor RSS, comando `noticias`, `etl-noticias` no AppHost, `/api/parlamentares/{id}/noticias`, `/api/seguidos/noticias`, o digest por e-mail, a aba da ficha e a seção do início. A política de privacidade foi para a `v4-2026-10-02` e ⛔ promete mais e-mail | — |
+| **Pendência 62** | 🟡 **Contrair o schema das notícias:** as tabelas `noticias`, `noticia_pessoas` e `noticia_temas` e os modelos do EF ficaram, porque apagar tabela é mudança destrutiva (dois deploys). Migration que as remove, depois de o código sem elas estar em produção. ⚠️ `EMAIL_NOTICIAS` é o único valor de `ck_consentimento_finalidade`: decidir junto com a Pendência 63 | 🟢 Baixa |
+| ✅ ~~Pendência 63~~ | **Resolvida (2026-10-02)** — seção "O que mudou" no início, para quem segue alguém, antes da lista de seguidos. `GET /api/seguidos/novidades` (exige conta, sem cache e sem log de nome) com os cinco avisos de [`plano/09 §4.1`](plano/09-apresentacao-validacao-e-valor.md): votou na semana (ausência só no Senado), votou contra a bancada do próprio partido (só Câmara, com a regra da disciplina portada para C# em `BancadaDoPartido`, e um arquivo de casos lido pelas duas suítes de teste), trocou de partido, gastou na cota do último mês fechado, emenda paga na última competência fechada. Cada item com a fonte; a seção diz a janela e a data da carga. MEDIDO em 2026-10-02: a última votação de plenário da base é de 03/09/2026 nas duas casas, então a semana de hoje vai de 28/08 a 03/09 | — |
+| ✅ ~~Pendência 64~~ | **Resolvida (2026-10-02)** — comando `rotina --frequencia semanal|mensal` (`rotina.py` decide as etapas, o `__main__` executa e para na primeira falha): semanal = `ingerir` e `senado` do ano + `conferir`; mensal = as da semanal + `cota`, `emendas`, `analisar` das duas casas + `conferir`. Em janeiro e fevereiro entra o ano anterior. No VPS, duas Scheduled Tasks do Coolify ([`plano/05 §2.3`](plano/05-cicd-e-deploy.md)); no Aspire, os botões `etl-rotina-semanal` e `etl-rotina-mensal`. ATENÇÃO: o agendamento no Coolify só existe quando houver o VPS | — |
+| **Pendência 65** | 🔴 **Login opcional — e a RNF-17.** Feito em 2026-10-02: com `Acesso:LeituraPublica` ligado, só seguir e a conta pedem login, e o login volta para onde a pessoa estava. Ligado **só** em `appsettings.Development.json`. ⚠️ **Em produção continua desligado**: a RNF-17 restringe o acesso no período eleitoral, e o 2º turno é em **25/10/2026**. Ligar em produção é decisão do autor | 🔴 Alta |
+| ✅ ~~Pendência 66~~ | **Resolvida (2026-10-02)** — `conferir` na ETL e o botão `etl-conferir`: regras de plausibilidade depois da carga, ERRO derruba o comando. Primeira rodada: **0 erros, 29 avisos**, todos explicados em [`plano/09 §5.2`](plano/09-apresentacao-validacao-e-valor.md). A votação do Senado com 82 é titular e suplente de TO no dia da troca; dos 13 placares, 11 são votação secreta de fato (Pendência 69) | — |
+| ✅ ~~Pendência 69~~ | **Resolvida (2026-10-02)** — `persistencia.marcar_secretas_de_fato` marca `secreta` em toda votação da Câmara com votos e nenhuma posição, no fim de cada `ingerir`, na base inteira (idempotente; a regravação não desfaz a marca). MEDIDO no banco local: **12** votações, uma ou mais em cada legislatura da 52ª à 57ª (a contagem de 11 era de uma medição anterior); o aviso `sem-posicao-nenhuma` do `conferir` caiu de 12 para 0, e a conferência de 31 para 19 avisos. O card do início deixou de dizer "N% das votações são secretas", que daria "0%" na Câmara e era percentual solto (RF-29): agora "2 de 1.597 votações são secretas" | — |
+| **Pendência 70** | 🟡 **A busca nos votos ⛔ acha o nome popular:** "reforma tributária" dá 0, porque a ementa oficial da PEC 45/2019 diz "Altera o Sistema Tributário Nacional"; "arcabouço" também dá 0. A Câmara publica palavras-chave por proposição (`keywords`), que ⛔ ingerimos. Ingerir e incluir na busca. 📐 Medido em 2026-10-02: "tributaria" acha 33 votos e "PEC 45/2019", 19 | 🟡 Média |
+| **Pendência 71** | 🟡 **Sede dos favorecidos pela BrasilAPI:** **19.164 de 50.738** CNPJs que receberam emenda estão sem município — **R$ 9,81 bi de R$ 159,49 bi** fora do mapa. `brasilapi.com.br/api/cnpj/v1/{cnpj}` devolve `codigo_municipio_ibge` direto (conferido em 2026-10-02 com a Prefeitura de Cascavel: 4104808). Buscar os que faltam, devagar, gravando em `cnpjs_municipio` com a data e a fonte. ⚠️ Projeto comunitário, sem SLA, que repassa o dado aberto da Receita: a fonte citada continua sendo a Receita. ⛔ Gravar o quadro de sócios (`qsa`): é dado pessoal e ⛔ serve ao trabalho | 🟡 Média |
+| ✅ ~~Pendência 77~~ | **Resolvida (2026-10-02)** — `hash_de_cpf` passou a **HMAC-SHA256** com a chave de `POLIGRAPH_CHAVE_CPF`, que vem do parâmetro secreto `chave-cpf` do AppHost (user-secrets `Parameters:chave-cpf`). Sem a chave, ou com menos de 32 caracteres, a ETL **para** em vez de cair no SHA-256 puro. O comando `rechavear-cpf` refaz tudo: apaga `pessoas.cpf_hash`, roda `cpf` e recarrega cota, campanha e patrimônio nos anos que estão no banco. ATENÇÃO: **perder a chave é perder a conciliação** (os hashes novos não casam com os do banco); trocar a chave exige rodar `rechavear-cpf`. MEDIDO em 2026-10-02, no banco local: 719 de 719 pessoas voltaram a ter `cpf_hash`; campanha (44.171 receitas, 31.657 de pessoa física, 718 parlamentares) e patrimônio (5.840) com as mesmas contagens de antes. Fecha também B7 e ER5, que pediam a mesma decisão. Explicação em https://claude.ai/artifact/Gc11fzR2MEZk85RFMuGjki | — |
+| **Pendência 72** | **Procedência por linha — quase toda FEITA em 2026-10-02.** Tabela `cargas` (fonte, URL exata, data, SHA-256, `ETag` e `Last-Modified` da fonte, comando e, desde a Pendência 73, a versão da ETL) e `carga_id` com FK RESTRICT em votações, votos, orientações, despesas, emendas, favorecidos, receitas, patrimônios e `cnpjs_municipio`. As cargas de dinheiro leem do cache: o hash sai do arquivo, em blocos, e a data é a de chegada ao disco; a cópia em `procedencia/` só até 600 MB. MEDIDO em 2026-10-02, depois de recarregar tudo: **100%** das linhas com carga em votações (12.436), votos (2.179.300), orientações, despesas (5.600.360), emendas (76.817), favorecidos (621.021), receitas (44.171) e patrimônios (5.840); as contagens de voto por casa e legislatura ficaram idênticas às de antes da recarga. FALTA: `cnpjs_municipio` (0 de 31.574), que só ganha carga ao rodar `municipios`, gigabytes de cadastro da Receita. Desenho em [`plano/10 §2`](plano/10-procedencia-e-modo-analise.md) | Baixa |
+| **Pendência 73** | **Modo análise — primeira versão FEITA em 2026-10-02.** Interruptor "Análise" no cabeçalho, guardado no navegador e válido sem conta. Ligado, o número ganha sublinhado pontilhado e abre um painel lateral: a regra da conta, quantas linhas entraram, quantas não têm carga (gravadas antes da Pendência 72) e, por arquivo, órgão, URL, data UTC, SHA-256, tamanho, `ETag`/`Last-Modified`, **versão do código** (hash dos fontes da ETL, coluna `cargas.versao`), comando e **base legal**. API: `GET /api/procedencia/{contexto}` com `votos`, `cota`, `emendas`, `campanha`, `patrimonio` e `painel`, cada um no MESMO recorte do número da tela. Ligado na ficha (votos com posição, cota, emendas, campanha, patrimônio) e no painel do Início (votações por casa). ABERTO: (1) estender aos outros números (gastos por categoria, mapa, entidades, governo); (2) **o autor conferir as citações de base legal**, que hoje são por órgão (LAI art. 8º; Lei 9.504/1997; LC 131/2009; Decreto 8.777/2016) e não por conjunto de dados; (3) a lista das linhas, para números pequenos, que o plano/10 §3 previa | Média |
+| ✅ ~~Pendência 74~~ | **Resolvida (2026-10-02)** — o favorecido da emenda traz `tambemNaCota`: o que a cota do MESMO parlamentar pagou ao MESMO CNPJ, nos anos de despesa do mandato que apresentou a emenda (`Legislaturas.DoAnoDeEmenda`). A ficha diz "A cota deste parlamentar também pagou R$ X a este CNPJ em 2023–2026", sem adjetivo (RNF-16). Só CNPJ público: o fornecedor pessoa física da cota é hash, e o empresário individual tem CNPJ de pessoa | — |
+| **Pendência 75** | **Parlamentar sócio de empresa**: quadro de sócios cruzado por **nome + os 6 dígitos do meio do CPF** na ETL, gravando só o vínculo parlamentar–CNPJ. Por nome sozinho, não: homônimos. Doador pessoa física fica de fora: é cidadão privado. [`plano/10 §4.2`](plano/10-procedencia-e-modo-analise.md) | Baixa |
+| ✅ ~~Pendência 76~~ | **Resolvida (2026-10-02)** — duas regras de AVISO no `conferir`: patrimônio declarado acima de R$ 500 mi (o dobro do maior medido, R$ 240 mi) e salto de 50 vezes entre eleições quando o segundo total passa de R$ 10 mi (o maior salto medido foi 14 vezes). Na base de hoje, nenhuma das duas dispara | — |
+| **Pendência 80** | 🟡 **"Votos com posição" conta abstenção na ficha e não no painel.** A ficha (`ServicoParlamentares`, `Valor != null`) chama de "votos com posição" uma contagem que inclui a abstenção (`Valor = 0`); o painel do Início (`ServicoPanorama`) diz no código que "abstenção não é posição" e conta só Sim e Não. Achado ao ligar o modo análise, que repete a regra da ficha para o número bater. Decidir um termo e um recorte, e usar os dois nos dois lugares | Média |
+| ✅ ~~Pendência 78~~ | **Resolvida (2026-10-02)** — [`fluxos-das-casas.md`](fluxos-das-casas.md): o caminho da proposição (apresentação, comissões, urgência, plenário, casa revisora, sanção e veto), o quórum por tipo (PL, PLP, PEC em dois turnos, MPV, PDL), a votação em plenário por dentro (simbólica e nominal, destaque e polaridade, orientação, abstenção e obstrução), o que muda no Senado (mandato de 8 anos, dois suplentes, voto secreto de autoridade, sem orientação publicada) e a emenda do empenho ao pagamento, com os tipos de emenda. Cada passo diz onde aparece na base. O glossário ganhou simbólica, turno, quórum, obstrução, liquidação, pagamento, restos a pagar, tipos de emenda, mandato e suplente. As citações de lei são da Constituição e dos regimentos, pelo artigo: conferir antes de levar ao texto do TCC | — |
+| ✅ ~~Pendência 79~~ | **Resolvida (2026-10-02)** — os 282 comentários de dentro de funções da ETL e dos testes foram para a docstring da função dona; o de fim de linha leva o código que comentava. Ficam só diretivas (`noqa`, `pragma`). Uma trava no script recusava gravar arquivo em que alguma nota não chegasse à docstring | — |
+| **Pendência 67** | 🟡 **Amostra manual contra a fonte oficial**: 20 votações sorteadas por casa e legislatura, conferidas no site da casa. Vira achado ([`plano/09 §5.3`](plano/09-apresentacao-validacao-e-valor.md)) | 🟡 Média |
+| ✅ ~~Pendência 68~~ | **Resolvida (2026-10-02)** — o painel conta como votação só a que tem voto nominal, e o cartão diz quantas ficaram de fora. Não era só a 51ª: a 52ª tem 309 de 600 sem voto nominal, e a 54ª, 455 de 905 | — |
 
 ### 🖥️ Usabilidade — avaliação heurística (2026-10-01 e 02)
 
@@ -96,7 +96,7 @@ com usuário. Os modelos e a proposta de teste estão em
 
 ### ⏳ A única com prazo
 
-**PL44** — a virada para a 58ª, em **fevereiro de 2027**. A PL53 muda o problema: com
+**Pendência 44** — a virada para a 58ª, em **fevereiro de 2027**. A Pendência 53 muda o problema: com
 várias legislaturas no banco, a tela precisa de um jeito de dizer **de qual** está
 falando, e esse mesmo mecanismo resolve a virada. ⭐ O mecanismo existe desde
 2026-10-02: `/api/legislaturas` e o seletor de período. A "corrente" é a maior em
@@ -109,19 +109,19 @@ questionário ⛔ vira junto: as perguntas são da 57ª.
 
 | # | Decisão |
 |---|---|
-| **PL2** | ✅ **Hostinger VPS KVM 2** — 2 vCPU · 8 GB · 100 GB · São Paulo |
-| **PL4** | ✅ Repositório privado |
-| **PL6** | ✅ **Clarity em produção, gravando tudo**, com consentimento prévio bloqueante |
-| **PL8** | ✅ Todas as telas recebem o script — a proteção é o consentimento, não a máscara |
-| **PL9** | ✅ Banner de consentimento **necessário e bloqueante** |
+| **Pendência 2** | ✅ **Hostinger VPS KVM 2** — 2 vCPU · 8 GB · 100 GB · São Paulo |
+| **Pendência 4** | ✅ Repositório privado |
+| **Pendência 6** | ✅ **Clarity em produção, gravando tudo**, com consentimento prévio bloqueante |
+| **Pendência 8** | ✅ Todas as telas recebem o script — a proteção é o consentimento, não a máscara |
+| **Pendência 9** | ✅ Banner de consentimento **necessário e bloqueante** |
 | **RQ9** | ✅ **Login Google + perfil completo em claro** — 🔄 minimização revogada em 2026-08-25 |
-| **PL28** | ✅ Resolvida por consequência — nome e sobrenome estão no banco |
-| **PL13** | ✅ **EF Core migrations** — não script SQL à mão (2026-08-26) |
+| **Pendência 28** | ✅ Resolvida por consequência — nome e sobrenome estão no banco |
+| **Pendência 13** | ✅ **EF Core migrations** — não script SQL à mão (2026-08-26) |
 
 > 🔑 **As duas decisões desta rodada empurram na mesma direção:** o projeto passou a
 > guardar mais coisa (sessão gravada, lista de seguidos no servidor) e a compensar isso
 > com **consentimento explícito**, em vez de com ausência de dado. Isso é defensável, mas
-> transfere o peso para textos que ainda não existem — as **PL7** e **PL25** abaixo.
+> transfere o peso para textos que ainda não existem — as **Pendência 7** e **Pendência 25** abaixo.
 
 ---
 
@@ -129,20 +129,20 @@ questionário ⛔ vira junto: as perguntas são da 57ª.
 
 | # | Pergunta | Onde |
 |---|---|---|
-| **PL25** | 🔴 Escrever o **texto do banner de consentimento** cobrindo as 5 exigências | [plano/02 §4.5.2](plano/02-autenticacao-e-metricas.md) |
-| **PL26** | 🔴 Serviço de envio de e-mail (Resend, Brevo, SES) + **SPF, DKIM e DMARC** no domínio | [plano/02 §3.3.2](plano/02-autenticacao-e-metricas.md) |
-| **PL27** | 🟡 Cadência do digest — diário, semanal, ou por volume | [plano/02 §3.3](plano/02-autenticacao-e-metricas.md) |
-| **PL29** | 🟡 Duração do cookie de sessão (sugerido: 7 dias) | [plano/02 §3.2.4](plano/02-autenticacao-e-metricas.md) |
-| **PL30** | 🔴 Persistir as chaves do Data Protection — senão todo redeploy desloga todo mundo | [plano/02 §3.6.4](plano/02-autenticacao-e-metricas.md) |
-| **PL7** | 🔴 **Política de privacidade** — virou bloqueante: é campo obrigatório da tela do Google | [plano/02 §3.2.1](plano/02-autenticacao-e-metricas.md) |
-| **PL24** | 🔴 Confirmar com o orientador se o TCC precisa de **Comitê de Ética** | [plano/02 §4.5](plano/02-autenticacao-e-metricas.md) |
-| **PL33** | 🔴 **Novo:** os termos do Clarity dizem que ele não deve ser usado em sites dirigidos a menores de 18. No Brasil vota-se aos 16 — decidir junto com a PL24 | [plano/08 §2.2](plano/08-obter-as-chaves.md) |
-| **PL23** | 🔴 CI como **portão** do deploy, ou os dois em paralelo? | [plano/01 §2.1.2](plano/01-arquitetura.md) |
-| **PL3** | 🔴 **Subiu para bloqueante** — o login com Google exige domínio, e o e-mail exige SPF/DKIM/DMARC nele | [plano/01](plano/01-arquitetura.md) |
-| 🔴 **PL11** | **Curar as 15–25 perguntas** — ⚠️ **o maior bloqueio de todos**, detalhado abaixo | [plano/03](plano/03-questionario.md) |
-| 🔴 **RQ3** | **N final de perguntas** — a PL11 não começa sem esta definida | [03-requisitos](03-requisitos.md) |
+| **Pendência 25** | 🔴 Escrever o **texto do banner de consentimento** cobrindo as 5 exigências | [plano/02 §4.5.2](plano/02-autenticacao-e-metricas.md) |
+| **Pendência 26** | 🔴 Serviço de envio de e-mail (Resend, Brevo, SES) + **SPF, DKIM e DMARC** no domínio | [plano/02 §3.3.2](plano/02-autenticacao-e-metricas.md) |
+| **Pendência 27** | 🟡 Cadência do digest — diário, semanal, ou por volume | [plano/02 §3.3](plano/02-autenticacao-e-metricas.md) |
+| **Pendência 29** | 🟡 Duração do cookie de sessão (sugerido: 7 dias) | [plano/02 §3.2.4](plano/02-autenticacao-e-metricas.md) |
+| **Pendência 30** | 🔴 Persistir as chaves do Data Protection — senão todo redeploy desloga todo mundo | [plano/02 §3.6.4](plano/02-autenticacao-e-metricas.md) |
+| **Pendência 7** | 🔴 **Política de privacidade** — virou bloqueante: é campo obrigatório da tela do Google | [plano/02 §3.2.1](plano/02-autenticacao-e-metricas.md) |
+| **Pendência 24** | 🔴 Confirmar com o orientador se o TCC precisa de **Comitê de Ética** | [plano/02 §4.5](plano/02-autenticacao-e-metricas.md) |
+| **Pendência 33** | 🔴 **Novo:** os termos do Clarity dizem que ele não deve ser usado em sites dirigidos a menores de 18. No Brasil vota-se aos 16 — decidir junto com a Pendência 24 | [plano/08 §2.2](plano/08-obter-as-chaves.md) |
+| **Pendência 23** | 🔴 CI como **portão** do deploy, ou os dois em paralelo? | [plano/01 §2.1.2](plano/01-arquitetura.md) |
+| **Pendência 3** | 🔴 **Subiu para bloqueante** — o login com Google exige domínio, e o e-mail exige SPF/DKIM/DMARC nele | [plano/01](plano/01-arquitetura.md) |
+| 🔴 **Pendência 11** | **Curar as 15–25 perguntas** — ⚠️ **o maior bloqueio de todos**, detalhado abaixo | [plano/03](plano/03-questionario.md) |
+| 🔴 **RQ3** | **N final de perguntas** — a Pendência 11 não começa sem esta definida | [03-requisitos](03-requisitos.md) |
 
-⚠️ **PL7 e PL25 são texto jurídico, não código** — e agora estão no caminho crítico do
+⚠️ **Pendência 7 e Pendência 25 são texto jurídico, não código** — e agora estão no caminho crítico do
 login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 
 ---
@@ -156,34 +156,34 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 
 | # | Pendência | Prioridade | Esforço |
 |---|---|---|---|
-| 🟢 **PL11** | ✅ **Resolvida (2026-08-29)** — **50 perguntas no poço**, 41 da Câmara e 9 do Senado. ⛔ O critério ⛔ não foi divisão: 106 das 703 duplas entre as candidatas dividem a Câmara IGUAL, e a seleção gulosa mediu cobertura de pares. Detalhe abaixo | 🟢 Baixa | — |
+| 🟢 **Pendência 11** | ✅ **Resolvida (2026-08-29)** — **50 perguntas no poço**, 41 da Câmara e 9 do Senado. ⛔ O critério ⛔ não foi divisão: 106 das 703 duplas entre as candidatas dividem a Câmara IGUAL, e a seleção gulosa mediu cobertura de pares. Detalhe abaixo | 🟢 Baixa | — |
 | 🟢 **RQ3** | ✅ **Resolvida (2026-08-29)** — **24 perguntas**, sendo 8 de abertura da Câmara, as 9 do Senado e 7 de desempate dirigido. Medido: 15 adaptativas valem 25 fixas | 🟢 Baixa | — |
-| 🟢 **PL10** | ✅ **Virou o desenho, ⛔ não experimento** — o desempate dirigido está no ar. Medido: empate mediano 6 (dirigido) contra 14 (fixo) e 16 (sorteado) | 🟢 Baixa | — |
-| ~~PL12~~ | ✅ **Teste do jantar** — entra se dá para discutir num jantar sem explicar a proposta | — | — |
+| 🟢 **Pendência 10** | ✅ **Virou o desenho, ⛔ não experimento** — o desempate dirigido está no ar. Medido: empate mediano 6 (dirigido) contra 14 (fixo) e 16 (sorteado) | 🟢 Baixa | — |
+| ~~Pendência 12~~ | ✅ **Teste do jantar** — entra se dá para discutir num jantar sem explicar a proposta | — | — |
 | 🟢 **CT7** | ✅ **Resolvida (2026-08-29)** — 60%, mas do que é **OFERECIDO** (24), ⛔ não do poço (50). Sobre o poço daria 30 respostas num questionário de 24, e o resultado seria impossível de obter | 🟢 Baixa | — |
-| **PL18** | Usar LLM para rascunhar a reescrita das ementas? | 🟡 Média | — |
+| **Pendência 18** | Usar LLM para rascunhar a reescrita das ementas? | 🟡 Média | — |
 | **A2** | Regex de `categoria`, validadas contra amostra rotulada à mão | 🟡 Média | 🟡 Horas |
 | **A3** | Deduplicação de PEC em dois turnos | 🟡 Média | — |
 | **A4** | Quantas das 100 proposições sobrevivem ao corte de unanimidade | 🟡 Média | — |
-| **PL34** | 🔵 **Adiada por decisão do autor:** gravar as respostas individuais do questionário, SEM vínculo com a conta, para analisar quais perguntas dividem e quais ninguém entende (§ abaixo) | 🔵 Futuro | — |
+| **Pendência 34** | 🔵 **Adiada por decisão do autor:** gravar as respostas individuais do questionário, SEM vínculo com a conta, para analisar quais perguntas dividem e quais ninguém entende (§ abaixo) | 🔵 Futuro | — |
 | ~~API4~~ | ✅ **Resolvida** — cosseno no grafo, concordância simples na tela (plano/07 §4.5) | — | — |
-| 🟡 **PL44** | 🔄 **Avançou** — a ingestão deduz a legislatura pela data e as **consultas já filtram** (PL35 ✅). ⛔ Falta a parte de **produto**: o que a tela mostra na virada, e o que acontece com quem respondeu o questionário na 57ª. ⏳ **A 57ª termina em janeiro de 2027** | 🟡 Média | 🟢 Decisão |
-| ✅ ~~PL45~~ | **Resolvida (2026-09-06)** — ⭐ sobrou **0**. O desempate da [PL47](#-pl47-a-causa-raiz-nao-era-reconciliacao) resolveu todos: quando só um homônimo tem voto na base, é ele. ⛔ Ninguém a decidir | 🟢 Baixa | — |
-| 🟢 **PL50** | ✅ **Resolvida (2026-08-29)** — 359 matérias do Senado ingeridas, **421 de 421 votações vinculadas (100%)**. A colisão de id foi resolvida com chave composta `(casa, id)`, ⛔ não com deslocamento aritmético. Detalhe abaixo | 🟢 Baixa | — |
-| ✅ ~~PL51~~ | **Resolvida (2026-09-06)** — o autor desligou o Smart App Control. `dotnet test` e `dotnet ef` voltaram a rodar **nativos**. ⚠️ ⛔ Irreversível: no Windows 11 o SAC só religa reinstalando o sistema | 🟢 Baixa | — |
-| 🟢 **PL47** | ✅ **Resolvida até o limite da fonte (2026-08-29)** — as duas regras entraram: **106 → 81** deputados sem emenda, autores pendentes **169 → 101**, e **93,6%** das emendas com dono. ⛔ Os 81 restantes ⛔ não têm emenda no Portal — sondado por nome. Detalhe abaixo | 🟢 Baixa | — |
-| ✅ ~~PL46~~ | **Resolvida (2026-09-06)** — resolveu-se sozinha, como previsto: a PL42 trouxe o Senado e ⭐ **0** dos 101 autores pendentes casa com senador. O código do autor é de **mandato** ([achado #24](achados/024-codigo-da-emenda-identifica-o-mandato.md)) | 🟢 Baixa | — |
-| ~~PL35~~ | ✅ **Resolvida (2026-08-27)** — `Legislaturas` DERIVA a legislatura do dado, nunca de configuração. `TestesLegislatura` semeia **duas** legislaturas e prova que a segunda ⛔ não vaza; as três mutações matam os três filtros. § abaixo mantido como registro | — | — |
-| ~~PL36~~ | ✅ **Resolvida (2026-08-26)** — nomes corrigidos e **verificado rodando o container contra o banco real**: monta a matriz e grava `execucoes`. Estava faltando também traduzir a connection string do Aspire (§ abaixo) | — | — |
-| ~~PL37~~ | ✅ **Resolvida (2026-08-27)** — `test_contrato_schema.py` cobre agora **nomes de tabela, nomes de coluna e os literais combinados** entre os dois lados (`FUNDO ESPECIAL`, `ck_autor_metodo`). ⭐ O próprio parser tem teste que morre sob mutação — sem ele, uma exceção mal posta o deixaria cego e verde | — | — |
-| ~~PL39~~ | ✅ **Resolvida (2026-08-26)** — legislatura 57 inteira ingerida: 470.786 votos, 5.268 arestas | — | — |
-| ✅ ~~PL43~~ | **Resolvida (2026-08-28)** — detalhe abaixo. O índice ficou desatualizado por uma semana, que é o defeito que esta linha corrige | 🟢 Baixa | — |
-| 🟢 **PL42** | ✅ **Resolvida (2026-08-27)** — ingestão, curadoria e produto. 7 perguntas do Senado ativas, questionário misto de 28, resultado com **uma lista por casa**, grafo próprio de cada uma. ⛔ Resta a ficha do parlamentar, que ainda não distingue casa. Detalhe abaixo | 🟢 Baixa | 🟡 Horas |
-| ~~PL41~~ | ✅ **Resolvida (2026-08-26)** — o seed foi **aposentado** por decisão do autor: com o ETL funcional, só o schema precisa ser inicializado. O semeador virou `Poligraph.Tests/Fixtures/DadosDeTeste.cs` | — | — |
-| ✅ ~~PL40~~ | **Resolvida (2026-08-28)** — detalhe abaixo. ⭐ **1.042** proposições no banco (683 Câmara + 359 Senado), e a ementa chegou à ficha e à curadoria | 🟢 Baixa | — |
-| ~~PL38~~ | ✅ **Resolvida (2026-08-26)** — `arestas_grafo` e `nos_metrica` gravadas; Louvain + layout de molas com semente fixa; 30 comunidades em 655 nós. ⚠️ `governismo` e `disciplina` seguem nulos: dependem de `votacoesOrientacoes`, ainda não ingerido | — | — |
+| 🟡 **Pendência 44** | 🔄 **Avançou** — a ingestão deduz a legislatura pela data e as **consultas já filtram** (Pendência 35 ✅). ⛔ Falta a parte de **produto**: o que a tela mostra na virada, e o que acontece com quem respondeu o questionário na 57ª. ⏳ **A 57ª termina em janeiro de 2027** | 🟡 Média | 🟢 Decisão |
+| ✅ ~~Pendência 45~~ | **Resolvida (2026-09-06)** — ⭐ sobrou **0**. O desempate da [Pendência 47](#-pl47-a-causa-raiz-nao-era-reconciliacao) resolveu todos: quando só um homônimo tem voto na base, é ele. ⛔ Ninguém a decidir | 🟢 Baixa | — |
+| 🟢 **Pendência 50** | ✅ **Resolvida (2026-08-29)** — 359 matérias do Senado ingeridas, **421 de 421 votações vinculadas (100%)**. A colisão de id foi resolvida com chave composta `(casa, id)`, ⛔ não com deslocamento aritmético. Detalhe abaixo | 🟢 Baixa | — |
+| ✅ ~~Pendência 51~~ | **Resolvida (2026-09-06)** — o autor desligou o Smart App Control. `dotnet test` e `dotnet ef` voltaram a rodar **nativos**. ⚠️ ⛔ Irreversível: no Windows 11 o SAC só religa reinstalando o sistema | 🟢 Baixa | — |
+| 🟢 **Pendência 47** | ✅ **Resolvida até o limite da fonte (2026-08-29)** — as duas regras entraram: **106 → 81** deputados sem emenda, autores pendentes **169 → 101**, e **93,6%** das emendas com dono. ⛔ Os 81 restantes ⛔ não têm emenda no Portal — sondado por nome. Detalhe abaixo | 🟢 Baixa | — |
+| ✅ ~~Pendência 46~~ | **Resolvida (2026-09-06)** — resolveu-se sozinha, como previsto: a Pendência 42 trouxe o Senado e ⭐ **0** dos 101 autores pendentes casa com senador. O código do autor é de **mandato** ([achado #24](achados/024-codigo-da-emenda-identifica-o-mandato.md)) | 🟢 Baixa | — |
+| ~~Pendência 35~~ | ✅ **Resolvida (2026-08-27)** — `Legislaturas` DERIVA a legislatura do dado, nunca de configuração. `TestesLegislatura` semeia **duas** legislaturas e prova que a segunda ⛔ não vaza; as três mutações matam os três filtros. § abaixo mantido como registro | — | — |
+| ~~Pendência 36~~ | ✅ **Resolvida (2026-08-26)** — nomes corrigidos e **verificado rodando o container contra o banco real**: monta a matriz e grava `execucoes`. Estava faltando também traduzir a connection string do Aspire (§ abaixo) | — | — |
+| ~~Pendência 37~~ | ✅ **Resolvida (2026-08-27)** — `test_contrato_schema.py` cobre agora **nomes de tabela, nomes de coluna e os literais combinados** entre os dois lados (`FUNDO ESPECIAL`, `ck_autor_metodo`). ⭐ O próprio parser tem teste que morre sob mutação — sem ele, uma exceção mal posta o deixaria cego e verde | — | — |
+| ~~Pendência 39~~ | ✅ **Resolvida (2026-08-26)** — legislatura 57 inteira ingerida: 470.786 votos, 5.268 arestas | — | — |
+| ✅ ~~Pendência 43~~ | **Resolvida (2026-08-28)** — detalhe abaixo. O índice ficou desatualizado por uma semana, que é o defeito que esta linha corrige | 🟢 Baixa | — |
+| 🟢 **Pendência 42** | ✅ **Resolvida (2026-08-27)** — ingestão, curadoria e produto. 7 perguntas do Senado ativas, questionário misto de 28, resultado com **uma lista por casa**, grafo próprio de cada uma. ⛔ Resta a ficha do parlamentar, que ainda não distingue casa. Detalhe abaixo | 🟢 Baixa | 🟡 Horas |
+| ~~Pendência 41~~ | ✅ **Resolvida (2026-08-26)** — o seed foi **aposentado** por decisão do autor: com o ETL funcional, só o schema precisa ser inicializado. O semeador virou `Poligraph.Tests/Fixtures/DadosDeTeste.cs` | — | — |
+| ✅ ~~Pendência 40~~ | **Resolvida (2026-08-28)** — detalhe abaixo. ⭐ **1.042** proposições no banco (683 Câmara + 359 Senado), e a ementa chegou à ficha e à curadoria | 🟢 Baixa | — |
+| ~~Pendência 38~~ | ✅ **Resolvida (2026-08-26)** — `arestas_grafo` e `nos_metrica` gravadas; Louvain + layout de molas com semente fixa; 30 comunidades em 655 nós. ⚠️ `governismo` e `disciplina` seguem nulos: dependem de `votacoesOrientacoes`, ainda não ingerido | — | — |
 
-### ✅ PL50 (resolvida em 2026-08-29) — a ementa do Senado entrou
+### ✅ Pendência 50 (resolvida em 2026-08-29) — a ementa do Senado entrou
 
 **Medido em 2026-08-29.**
 
@@ -280,7 +280,7 @@ foram fechados junto:
 
 ---
 
-### ✅ PL48 (resolvida em 2026-08-29) — 12 migrations viraram uma
+### ✅ Pendência 48 (resolvida em 2026-08-29) — 12 migrations viraram uma
 
 Eram **12** arquivos, ⛔ não os 8 que esta pendência registrava — o número cresceu
 durante o desenvolvimento, que é exatamente o argumento para consolidar.
@@ -289,7 +289,7 @@ durante o desenvolvimento, que é exatamente o argumento para consolidar.
 |---|---:|
 | Arquivos de migration | 12 → ⭐ **1** |
 | Linhas | 1.193 → 40 KB numa `Inicial` |
-| 🔴 Deploy já feito? | ⛔ **Não** — a PL3 (domínio) ainda bloqueia |
+| 🔴 Deploy já feito? | ⛔ **Não** — a Pendência 3 (domínio) ainda bloqueia |
 
 ⭐ **A janela estava aberta**, e ⛔ não estaria depois do primeiro deploy.
 
@@ -321,19 +321,19 @@ Os comentários dentro das migrations antigas — como a armadilha do `DROP DEFA
 `ProposicaoPorCasa` — somem. ⭐ Mas eles ⛔ não eram a fonte da verdade: o conteúdo vive
 nos achados e aqui, e o histórico literal segue no git.
 
-#### ⭐ E destravou a PL49
+#### ⭐ E destravou a Pendência 49
 
 ⚠️ Consolidar deixou a mudança seguinte **barata**: mover **um** arquivo, ⛔ não doze com
-doze `Designer` junto. ✅ A [PL49](#-pl49-resolvida-em-2026-09-06--a-migration-foi-para-quem-a-aplica)
+doze `Designer` junto. ✅ A [Pendência 49](#-pl49-resolvida-em-2026-09-06--a-migration-foi-para-quem-a-aplica)
 foi resolvida logo depois.
 
 #### ⚠️ Foi preciso container para gerar
 
-🔴 A **PL51** bloqueou: `dotnet ef migrations add` ⛔ não roda nesta máquina, porque o
+🔴 A **Pendência 51** bloqueou: `dotnet ef migrations add` ⛔ não roda nesta máquina, porque o
 Smart App Control barra o binário recém-compilado. O contorno do rebuild limpo ⛔ **não
 funcionou** desta vez — a geração saiu no container, pela mesma receita dos testes.
 
-⭐ Isso reclassifica a PL51: ela ⛔ não atrapalha só teste, ela **bloqueia trabalho de
+⭐ Isso reclassifica a Pendência 51: ela ⛔ não atrapalha só teste, ela **bloqueia trabalho de
 schema**.
 
 
@@ -349,7 +349,7 @@ Your startup project 'Poligraph.Api' doesn't reference Microsoft.EntityFramework
 ```
 
 O job `migration` chamava `dotnet ef … -p src/Poligraph.Api`. ⚠️ A
-[PL49](#-pl49-resolvida-em-2026-09-06--a-migration-foi-para-quem-a-aplica) tirou o pacote
+[Pendência 49](#-pl49-resolvida-em-2026-09-06--a-migration-foi-para-quem-a-aplica) tirou o pacote
 `Design` da API no mesmo dia e ⛔ não atualizou o CI. Corrigido para
 `-p src/Poligraph.Migrations` — script de **600 linhas, 24 tabelas**, conferido.
 
@@ -367,7 +367,7 @@ pega o `IServiceProvider` e resolve o `PoligraphDb`, com `MigrationsAssembly` e
 
 🔴 **A fábrica só fazia sentido enquanto o alvo era a API** — cujo `Program.cs` precisa da
 connection string do Aspire, do Google e do Data Protection para subir. Quando a
-[PL49](#-pl49-resolvida-em-2026-09-06--a-migration-foi-para-quem-a-aplica) mudou o alvo
+[Pendência 49](#-pl49-resolvida-em-2026-09-06--a-migration-foi-para-quem-a-aplica) mudou o alvo
 para o console, ela virou peso morto. ⛔ Ela foi **movida** em vez de questionada.
 
 ⭐ Sobrou só o `const`, em `Migracoes.Assembly` — que continua necessário: o contexto mora
@@ -603,7 +603,7 @@ de `src/web/src/api.ts`**: se o front passar a ler um campo novo e ninguém o ac
 aqui, o teste ⛔ não acusa. É o custo conhecido do formato.
 ---
 
-### ✅ PL49 (resolvida em 2026-09-06) — a migration foi para quem a aplica
+### ✅ Pendência 49 (resolvida em 2026-09-06) — a migration foi para quem a aplica
 
 O artefato estava no projeto errado: `Poligraph.Api/Data/Migrations`, com a
 `FabricaDesignTime` junto — e é a fábrica que faz o `dotnet ef` eleger o projeto-alvo.
@@ -637,12 +637,12 @@ provam o caminho inteiro, ⛔ não só a compilação.
 
 #### ⭐ Por que agora e ⛔ não antes
 
-A [PL48](#-pl48-resolvida-em-2026-08-29--12-migrations-viraram-uma) tinha acabado de
+A [Pendência 48](#-pl48-resolvida-em-2026-08-29--12-migrations-viraram-uma) tinha acabado de
 consolidar 12 arquivos em 1. ⚠️ Mover **doze** arquivos com doze `Designer` seria a mesma
 mudança com doze vezes mais superfície de erro.
 ---
 
-### ✅ PL51 (resolvida em 2026-09-06) — o Smart App Control foi desligado
+### ✅ Pendência 51 (resolvida em 2026-09-06) — o Smart App Control foi desligado
 
 **Medido em 2026-08-29.**
 
@@ -741,7 +741,7 @@ container da skill `testes` §6.1 continua sendo o caminho conhecido.
 
 ---
 
-### 🟡 PL47 — 92 deputados sem nenhuma emenda vinculada
+### 🟡 Pendência 47 — 92 deputados sem nenhuma emenda vinculada
 
 **Medida em 2026-08-27**, respondendo à pergunta do autor: *"conseguimos todos os
 deputados, ou teve algum caso de erro que precisamos tratar?"*
@@ -796,7 +796,7 @@ Comparando o nome deles contra os 159 autores pendentes, por semelhança:
 
 ⚠️ **1 de 159 ⛔ não sustenta uma heurística.** A regra do projeto é que regra medida vira
 código; **1 caso ⛔ não é medição, é anedota**. O caminho manual da
-[PL45](#-pl45--os-9-autores-de-emenda-ambíguos) já o resolve em uma linha.
+[Pendência 45](#-pl45--os-9-autores-de-emenda-ambíguos) já o resolve em uma linha.
 
 ### 🔄 Análise de 2026-08-29 — a hipótese estava errada, e a causa é outra
 
@@ -925,11 +925,11 @@ python -m poligraph_etl emendas --resolver 4511=43
 python -m poligraph_etl emendas --resolver 4511=204521
 ```
 Confirmar exige comparar os 159 pendentes com os 92 faltantes **um a um, à mão** — é
-trabalho humano, como a PL11, e ⛔ não escala por regra.
+trabalho humano, como a Pendência 11, e ⛔ não escala por regra.
 
 ---
 
-### ✅ PL42 — o Senado, de ponta a ponta
+### ✅ Pendência 42 — o Senado, de ponta a ponta
 
 **Ingerido em 2026-08-27.** O que está no ar:
 
@@ -991,11 +991,11 @@ uma só, então o recorte poderia sumir num refactor e tudo continuaria verde.
 |---|---|
 | ~~1~~ | ✅ **Resolvido até 2026-09-25** — a ficha e a lista dizem a casa |
 | 2 | A **ponte deputado→senador** (achado #18) segue aberta: 43 nomes aparecem nas duas casas, e o Senado ⛔ não publica CPF |
-| 3 | 🔄 Hoje **9** do Senado contra **40** da Câmara no poço (PL11 resolvida). O questionário oferece as 9 inteiras, então o desequilíbrio é do poço, ⛔ do que o cidadão responde |
+| 3 | 🔄 Hoje **9** do Senado contra **40** da Câmara no poço (Pendência 11 resolvida). O questionário oferece as 9 inteiras, então o desequilíbrio é do poço, ⛔ do que o cidadão responde |
 
 ---
 
-### ✅ PL45 (resolvida em 2026-09-06) — sobrou zero ambíguo
+### ✅ Pendência 45 (resolvida em 2026-09-06) — sobrou zero ambíguo
 
 **Medida em 2026-08-27**, na ingestão real das emendas de 2023–2026.
 
@@ -1033,7 +1033,7 @@ sobrescreve. A procedência de cada vínculo é auditável — o que importa par
 
 ---
 
-### ✅ PL35 (resolvida) — a legislatura não era filtrada em consulta nenhuma
+### ✅ Pendência 35 (resolvida) — a legislatura não era filtrada em consulta nenhuma
 
 > ✅ **Resolvida em 2026-08-27.** O que está abaixo é o registro do problema; a
 > solução está em [`Legislaturas.cs`](../src/Poligraph.Api/Data/Legislaturas.cs) e em
@@ -1079,7 +1079,7 @@ histórico — são perguntas diferentes, e 2001–2026 continua disponível.
 
 ---
 
-### ✅ PL36 (resolvida) e 🔄 PL37 (parcial) — o ETL Python e o banco nunca se falaram
+### ✅ Pendência 36 (resolvida) e 🔄 Pendência 37 (parcial) — o ETL Python e o banco nunca se falaram
 
 **Encontradas em 2026-08-26**, a partir da pergunta do autor *"o script em python já
 funciona?"*.
@@ -1099,7 +1099,7 @@ partir do `DbSet` — que é plural. O Python foi escrito no singular:
 ⛔ **Todas as seis.** Qualquer `python -m poligraph_etl` morre no primeiro `SELECT` com
 `relation "votacao" does not exist` — verificado contra o banco em execução.
 
-#### 🔴 Por que ninguém percebeu: os testes provavam a coisa errada (PL37)
+#### 🔴 Por que ninguém percebeu: os testes provavam a coisa errada (Pendência 37)
 
 `tests/test_persistencia.py` faz `CREATE TABLE pessoa (...)`, `CREATE TABLE votacao
 (...)` — **com os nomes errados**. Os 104 testes passam porque testam o Python contra um
@@ -1133,7 +1133,7 @@ O Aspire injeta `ConnectionStrings__poligraph` no formato do **Npgsql**
 
 ---
 
-### ✅ PL11 e RQ3 (resolvidas em 2026-08-29) — o poço e o tamanho do questionário
+### ✅ Pendência 11 e RQ3 (resolvidas em 2026-08-29) — o poço e o tamanho do questionário
 
 ⚠️ **O poço e o questionário ⛔ não são a mesma coisa**, e confundi-los foi o que quase
 fez o trabalho render ao contrário. Com 50 perguntas curadas e o endpoint devolvendo
@@ -1196,7 +1196,7 @@ mesma: *antes de afirmar um número, meça, e diga de onde ele veio*.
 
 ---
 
-### ✅ PL40 (resolvida em 2026-08-28) — a ementa chegou, e destrava a PL11
+### ✅ Pendência 40 (resolvida em 2026-08-28) — a ementa chegou, e destrava a Pendência 11
 
 `proposicoes` tinha **zero linhas**, e `proposicao_id` era nulo em **1.594 de 1.594**
 votações da Câmara (100%). Quem cura lia só a descrição da votação:
@@ -1226,7 +1226,7 @@ quando a votação ⛔ não tem proposição vinculada, para quem cura saber que
 
 ---
 
-### ✅ PL43 (resolvida em 2026-08-28) — um layout, não dois
+### ✅ Pendência 43 (resolvida em 2026-08-28) — um layout, não dois
 
 A pergunta era manter os dois layouts do desenho ou só o de molas. **Resolvida por um
 terceiro que não existia quando ela foi escrita.**
@@ -1261,7 +1261,7 @@ alinhamento ⛔ não teria coordenada.
 
 ---
 
-### ✅ PL38 (resolvida em 2026-08-26) — o grafo era calculado e jogado fora
+### ✅ Pendência 38 (resolvida em 2026-08-26) — o grafo era calculado e jogado fora
 
 `__main__._analisar` faz:
 
@@ -1310,10 +1310,10 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 
 | # | Pendência |
 |---|---|
-| **PL19** | Retenção do Prometheus (ex.: 90 dias) — sem limite ele enche o disco |
-| **PL20** | 🔴 Destino do backup do Postgres — **configurar no primeiro dia**. ⚠️ Com e-mails em claro na base, o backup precisa ser **criptografado** no destino |
-| **PL21** | Grafana público ou só por VPN/túnel |
-| **PL22** | Exposição do painel do Coolify — público com 2FA, allow-list, ou VPN |
+| **Pendência 19** | Retenção do Prometheus (ex.: 90 dias) — sem limite ele enche o disco |
+| **Pendência 20** | 🔴 Destino do backup do Postgres — **configurar no primeiro dia**. ⚠️ Com e-mails em claro na base, o backup precisa ser **criptografado** no destino |
+| **Pendência 21** | Grafana público ou só por VPN/túnel |
+| **Pendência 22** | Exposição do painel do Coolify — público com 2FA, allow-list, ou VPN |
 
 ---
 
@@ -1321,16 +1321,16 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 
 | # | Pendência |
 |---|---|
-| ✅ ~~API3~~ | **Resolvida** — `TestesPolaridade.cs`. ⭐ A PL53 ⛔ a reabre: a polaridade só serve à curadoria, e as perguntas ficam na legislatura mais recente ([#35 §2](achados/035-a-57-calibrou-o-etl.md)) |
+| ✅ ~~API3~~ | **Resolvida** — `TestesPolaridade.cs`. ⭐ A Pendência 53 ⛔ a reabre: a polaridade só serve à curadoria, e as perguntas ficam na legislatura mais recente ([#35 §2](achados/035-a-57-calibrou-o-etl.md)) |
 | **API7** | Medir quanto tempo o job de 207k pares leva de fato |
 | ✅ ~~CT3~~ | **Resolvida (2026-09-06)** — 27 testes conferem rota por rota e campo por campo contra `src/web/src/api.ts`, e o `/scalar` renderiza o mesmo documento. 🔴 **Achou um bug na primeira execução:** `/api/auth/logout` ⛔ não existia no contrato e devolvia 200 em vez de 204 ([achado 032](achados/032-a-rota-que-o-contrato-dizia-nao-existir.md)). Detalhe abaixo |
-| 🟡 **PL52** | **🆕 Teste intermitente** — `TestesAfinidadeDuasCasas.Nenhuma_Lista_Mistura_Parlamentar_Da_Outra_Casa` falhou **1 vez em 3** rodadas da suíte completa (2026-09-06), em **1 ms**, e passa isolado. ⚠️ Duração de 1 ms sugere estado compartilhado entre testes, ⛔ não asserção de dado. **A mensagem ⛔ não foi capturada** — as duas rodadas seguintes passaram |
+| 🟡 **Pendência 52** | **🆕 Teste intermitente** — `TestesAfinidadeDuasCasas.Nenhuma_Lista_Mistura_Parlamentar_Da_Outra_Casa` falhou **1 vez em 3** rodadas da suíte completa (2026-09-06), em **1 ms**, e passa isolado. ⚠️ Duração de 1 ms sugere estado compartilhado entre testes, ⛔ não asserção de dado. **A mensagem ⛔ não foi capturada** — as duas rodadas seguintes passaram |
 | ✅ ~~CT4~~ | **Nova, resolvida (2026-09-06)** — estágio de qualidade (SonarQube Cloud) no `ci.yml`, com cobertura das três linguagens. 🔴 **Depende de repositório público** ou de plano pago. Detalhe abaixo |
-| **PL16** | Como o ETL sinaliza `novas_votacoes` |
-| ✅ ~~PL31~~ | **Obsoleta** — o seed foi aposentado na PL41 |
-| ✅ ~~PL48~~ | **Resolvida (2026-08-29)** — consolidadas. Eram **12** arquivos, ⛔ não 8: o número cresceu durante o desenvolvimento. Viraram **uma** `Inicial`, com o schema conferido definição por definição. Detalhe abaixo |
-| ✅ ~~PL49~~ | **Resolvida (2026-09-06)** — as migrations e a `FabricaDesignTime` foram para `Poligraph.Migrations`. O `dotnet ef` agora toma como alvo o projeto que **aplica**, ⛔ não a API, que ⛔ nunca migra. Detalhe abaixo |
-| ~~PL32~~ | 🟢 Rebaixada — só texto principal foi a decisão; o texto das emendas deixou de ser necessário |
+| **Pendência 16** | Como o ETL sinaliza `novas_votacoes` |
+| ✅ ~~Pendência 31~~ | **Obsoleta** — o seed foi aposentado na Pendência 41 |
+| ✅ ~~Pendência 48~~ | **Resolvida (2026-08-29)** — consolidadas. Eram **12** arquivos, ⛔ não 8: o número cresceu durante o desenvolvimento. Viraram **uma** `Inicial`, com o schema conferido definição por definição. Detalhe abaixo |
+| ✅ ~~Pendência 49~~ | **Resolvida (2026-09-06)** — as migrations e a `FabricaDesignTime` foram para `Poligraph.Migrations`. O `dotnet ef` agora toma como alvo o projeto que **aplica**, ⛔ não a API, que ⛔ nunca migra. Detalhe abaixo |
+| ~~Pendência 32~~ | 🟢 Rebaixada — só texto principal foi a decisão; o texto das emendas deixou de ser necessário |
 | **C15** | Contrato do front — depende do React estar de pé |
 
 ---
@@ -1365,11 +1365,11 @@ social (PP4)~~, parlamentar com poucos votos (PP5), perfil temático por relator
 </details>
 
 <details>
-<summary><b>Fontes e escopo</b> — B6, C5, TS5, PL5, PL14, PL15, PL17, A5</summary>
+<summary><b>Fontes e escopo</b> — B6, C5, TS5, Pendência 5, Pendência 14, Pendência 15, Pendência 17, A5</summary>
 
 Base dos Dados como atalho (B6, TS5), *fuzzy match*
-(C5), biblioteca do grafo (PL5), retenção de `execucao` (PL14), `casa` em `pessoa` (PL15),
-*cold start* do Postgres (PL17 — **já não se aplica**, o banco é container próprio),
+(C5), biblioteca do grafo (Pendência 5), retenção de `execucao` (Pendência 14), `casa` em `pessoa` (Pendência 15),
+*cold start* do Postgres (Pendência 17 — **já não se aplica**, o banco é container próprio),
 reescrever objetivos se escolher o Cenário A (A5 — **já não se aplica**, a D3 escolheu o C).
 </details>
 
@@ -1395,13 +1395,13 @@ avaliação rodar cedo demais.
 
 `A1` `A5` `API1` `API2` `API3` `API4` `API6` `B1` `B2` `B3` `B4` `B5` `B7` `C1` `C2` `C3` `C4`
 `C6` `C8` `C13` `C14` `CT1` `CT2` `CT3` `CT4` `CT5` `CT6` `CT7` `D1` `D3` `D5` `ER1` `ER3`
-`ER4` `ER5` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PL10`
-`PL11` `PL12` `PL13` `PL17` `PL28` `PL31` `PL32` `PL35` `PL36` `PL37` `PL38` `PL39` `PL40`
-`PL41` `PL42` `PL43` `PL45` `PL46` `PL47` `PL48` `PL49` `PL50` `PL51` `PL54` `PL55` `PL59` `PL60` `PL61` `PL63` `PL64` `PL66` `PL68` `PL69` `PL74` `PL76` `PL77` `PL78` `PL79` `PP1` `PP3` `PP4`
+`ER4` `ER5` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `Pendência 1` `Pendência 2` `Pendência 4` `Pendência 6` `Pendência 8` `Pendência 9` `Pendência 10`
+`Pendência 11` `Pendência 12` `Pendência 13` `Pendência 17` `Pendência 28` `Pendência 31` `Pendência 32` `Pendência 35` `Pendência 36` `Pendência 37` `Pendência 38` `Pendência 39` `Pendência 40`
+`Pendência 41` `Pendência 42` `Pendência 43` `Pendência 45` `Pendência 46` `Pendência 47` `Pendência 48` `Pendência 49` `Pendência 50` `Pendência 51` `Pendência 54` `Pendência 55` `Pendência 59` `Pendência 60` `Pendência 61` `Pendência 63` `Pendência 64` `Pendência 66` `Pendência 68` `Pendência 69` `Pendência 74` `Pendência 76` `Pendência 77` `Pendência 78` `Pendência 79` `PP1` `PP3` `PP4`
 `RE-01` `RQ1` `RQ2` `RQ3` `RQ4` `RQ8` `RQ9` `SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2`
 `TS3` `TS4` `TS6`
 
-⚠️ `A5` e `PL17` estão aqui por **⛔ se aplicarem mais** — ver *Fontes e escopo* acima.
+⚠️ `A5` e `Pendência 17` estão aqui por **⛔ se aplicarem mais** — ver *Fontes e escopo* acima.
 
 ⚠️ **Convenção de prefixo** (evita a colisão que existia até 2026-08-23):
 
@@ -1411,7 +1411,7 @@ avaliação rodar cedo demais.
 | `API` | `arq/10-api-e-afinidade` |
 | `N` | `arq/20-crawler-noticias` |
 | `PP` | `arq/30-pagina-do-parlamentar` |
-| `PL` | `plano/*` |
+| **Pendência N**, sem sigla | `plano/*`. Até 2026-10-02 era `PL`, que se confundia com Projeto de Lei; os commits antigos mantêm o nome velho |
 | `RQ` | `03-requisitos` |
 | `CT` | `04-contratos` |
 | `SE` | `11-api-senado` |

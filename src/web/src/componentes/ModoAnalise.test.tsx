@@ -44,7 +44,7 @@ function renderizar() {
   );
 }
 
-/** PL73: desligado, o site fica como está; ligado, o número abre o arquivo de onde veio. */
+/** Pendência 73: desligado, o site fica como está; ligado, o número abre o arquivo de onde veio. */
 describe('o modo análise', () => {
   it('desligado, o número é só texto', () => {
     renderizar();

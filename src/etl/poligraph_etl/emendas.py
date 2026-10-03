@@ -137,7 +137,7 @@ def para_linhas(df: pd.DataFrame, anos: Iterable[int]) -> tuple[list[dict], dict
 
     MEDIDO em 2026-10-02 (achado #38): em 2014–2020 há 17.810 linhas cujo autor é `S/I` ("Sem
     informação") ou `-99` ("RELATOR GERAL", em emendas de comissão). Elas também caem aqui,
-    mas não são erro de leitura: o log as conta à parte. Gravá-las ou não é a PL81.
+    mas não são erro de leitura: o log as conta à parte. Gravá-las ou não é a Pendência 81.
     """
     anos = {str(a) for a in anos}
     linhas: list[dict] = []

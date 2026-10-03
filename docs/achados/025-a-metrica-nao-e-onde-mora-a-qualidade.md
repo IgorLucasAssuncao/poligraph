@@ -88,7 +88,7 @@ Distribuição das 1.122 votações abertas de plenário:
 simples na tela — sobrevive à medição, e o argumento dela era outro: *"você concordou em
 17 de 20"* é auditável por qualquer pessoa; *"cosseno 0,84"* ⛔ não.
 
-⭐ **O esforço rende na curadoria**, que é justamente a PL11 — e o critério de seleção
+⭐ **O esforço rende na curadoria**, que é justamente a Pendência 11 — e o critério de seleção
 merece subir de 25% para algo entre 35% e 40%.
 
 ## Ver também

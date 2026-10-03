@@ -306,7 +306,7 @@ export async function sair(): Promise<void> {
 export type PanoramaDaCasa = {
   casa: Casa;
   parlamentares: number;
-  /** Só as com voto nominal — as que o cálculo usa (PL68). */
+  /** Só as com voto nominal — as que o cálculo usa (Pendência 68). */
   votacoes: number;
   /** Registradas pela casa sem a lista de quem votou como. Não Entram em `votacoes`. */
   votacoesSemVotoNominal: number;
@@ -549,7 +549,7 @@ export type NoDoGrafo = {
   eixoX: number | null;
   eixoY: number | null;
   nVotacoes: number;
-  /** 1ª componente principal (SVD) — DECISÃO: o eixo que SIGNIFICA algo. Ver PL43. */
+  /** 1ª componente principal (SVD) — DECISÃO: o eixo que SIGNIFICA algo. Ver Pendência 43. */
   componente1: number | null;
   componente2: number | null;
   /** Foto oficial da casa. ATENÇÃO: Nula para quem foi criado a partir do próprio voto. */
@@ -694,7 +694,7 @@ export type FavorecidoDaEmenda = {
   recebido: number;
   /** Só pessoa jurídica que tem página de entidade; empresário individual e unidade gestora vêm sem. */
   cnpj?: string | null;
-  /** PL74: o que a cota do mesmo parlamentar pagou ao mesmo CNPJ, no mandato da emenda. Nulo quando nada. */
+  /** Pendência 74: o que a cota do mesmo parlamentar pagou ao mesmo CNPJ, no mandato da emenda. Nulo quando nada. */
   tambemNaCota?: number | null;
 };
 
@@ -978,7 +978,7 @@ export type Metodologia = {
   casas: CasaNaMetodologia[];
 };
 
-/** "O que mudou" (PL63): os cinco avisos sobre quem a pessoa segue, cada um na janela do dado. */
+/** "O que mudou" (Pendência 63): os cinco avisos sobre quem a pessoa segue, cada um na janela do dado. */
 export type Novidades = {
   /** Os 7 dias que terminam na votação mais recente da base, não no relógio. */
   semana: { de: string; ate: string };
@@ -1010,7 +1010,7 @@ export async function obterNovidades(): Promise<Novidades> {
   return buscar<Novidades>(`${BASE}/seguidos/novidades`);
 }
 
-/** O número cuja procedência se pede (PL73). O recorte é o mesmo da tela que o mostra. */
+/** O número cuja procedência se pede (Pendência 73). O recorte é o mesmo da tela que o mostra. */
 export type ConsultaDeProcedencia = {
   contexto: 'votos' | 'cota' | 'emendas' | 'campanha' | 'patrimonio' | 'painel';
   pessoa?: number;
@@ -1041,7 +1041,7 @@ export type CargaDeProcedencia = {
 export type Procedencia = {
   regra: string;
   linhas: number;
-  /** Gravadas antes da PL72: não dizem de que arquivo vieram, e a tela diz quantas são. */
+  /** Gravadas antes da Pendência 72: não dizem de que arquivo vieram, e a tela diz quantas são. */
   linhasSemCarga: number;
   cargas: CargaDeProcedencia[];
 };

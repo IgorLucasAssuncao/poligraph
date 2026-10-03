@@ -1,4 +1,4 @@
-"""PL66 — as regras de plausibilidade, com os casos reais que as motivaram.
+"""Pendência 66 — as regras de plausibilidade, com os casos reais que as motivaram.
 
 Cada teste usa o número medido em 2026-10-02: a regra que não pega o caso real não serve.
 """
@@ -86,7 +86,7 @@ def test_quatro_senadores_de_uma_uf_e_aviso():
 
 
 def test_o_maior_patrimonio_medido_passa_e_o_digito_a_mais_e_aviso():
-    """PL76: R$ 240 mi é o maior da base; R$ 12 bi foi o bem digitado com dígitos a mais."""
+    """Pendência 76: R$ 240 mi é o maior da base; R$ 12 bi foi o bem digitado com dígitos a mais."""
     achados = conferencia.patrimonio_acima_do_teto([
         ("Medido", 2018, 239_700_000.0),
         ("Digitado", 2022, 12_000_000_000.0),

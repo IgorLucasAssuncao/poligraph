@@ -106,7 +106,7 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
     }
 
     /// <summary>
-    /// PL74: a cota do mesmo parlamentar ao mesmo CNPJ, só nos anos de despesa do mandato
+    /// Pendência 74: a cota do mesmo parlamentar ao mesmo CNPJ, só nos anos de despesa do mandato
     /// da emenda. A emenda de 2025 é da 57ª, e a cota que conta é a de 2023 a 2026.
     /// </summary>
     [SkippableFact]

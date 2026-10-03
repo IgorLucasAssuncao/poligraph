@@ -182,7 +182,7 @@ def test_snake_case_reproduz_a_convencao_do_ef(dbset: str, tabela: str):
 
 
 # ═══════════════════════════════════════════════════════════════════
-# RISCO: As COLUNAS — a lacuna da PL37, fechada depois de morder duas vezes
+# RISCO: As COLUNAS — a lacuna da Pendência 37, fechada depois de morder duas vezes
 # ═══════════════════════════════════════════════════════════════════
 
 

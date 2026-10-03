@@ -76,7 +76,7 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
     }
 
     /// <summary>
-    /// PL68 — votação sem voto nominal não conta como votação: o cálculo não a usa. A 51ª da
+    /// Pendência 68 — votação sem voto nominal não conta como votação: o cálculo não a usa. A 51ª da
     /// Câmara afirmava 1.548 votações com 7 de voto nominal. Ela vai para um campo próprio,
     /// e a tela diz quantas são.
     /// </summary>

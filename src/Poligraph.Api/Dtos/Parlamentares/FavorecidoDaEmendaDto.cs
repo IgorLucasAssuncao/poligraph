@@ -8,7 +8,7 @@ namespace Poligraph.Api.Dtos;
 /// Unidade gestora (código de 6 dígitos) e o resto vêm sem, e a tela não faz link.
 /// </para>
 /// <para>
-/// <see cref="TambemNaCota"/> (PL74) é o que a cota do MESMO parlamentar pagou ao MESMO CNPJ,
+/// <see cref="TambemNaCota"/> (Pendência 74) é o que a cota do MESMO parlamentar pagou ao MESMO CNPJ,
 /// nos anos de despesa do mandato que apresentou a emenda. Fato, sem adjetivo (RNF-16):
 /// os maiores pares são companhias aéreas e de energia, que recebem de quase todo gabinete.
 /// Nulo quando a cota não pagou nada a ele, ou quando não há CNPJ público.

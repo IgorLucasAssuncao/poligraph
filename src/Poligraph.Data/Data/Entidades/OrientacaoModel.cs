@@ -39,6 +39,6 @@ public class OrientacaoModel
     /// </summary>
     public required string Orientacao { get; set; }
 
-    /// <summary>A carga de onde a linha saiu (PL72). Nula nas linhas gravadas antes dela.</summary>
+    /// <summary>A carga de onde a linha saiu (Pendência 72). Nula nas linhas gravadas antes dela.</summary>
     public long? CargaId { get; set; }
 }

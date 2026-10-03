@@ -1,6 +1,6 @@
-"""PL47 — as duas regras que tiram autor de emenda do limbo.
+"""Pendência 47 — as duas regras que tiram autor de emenda do limbo.
 
-RISCO: **A hipótese antiga era outra.** A PL47 registrava que o `nomeAutor` do Portal usaria
+RISCO: **A hipótese antiga era outra.** A Pendência 47 registrava que o `nomeAutor` do Portal usaria
 variação de grafia que a igualdade exata não alcançaria. Medido em 2026-08-29: dos 106
 deputados sem emenda, **zero** tinham o nome esperando um casamento mais frouxo, e dos
 169 autores pendentes, **zero** casariam com uma pessoa só. O casamento automático estava

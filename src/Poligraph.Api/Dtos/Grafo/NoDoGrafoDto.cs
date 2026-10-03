@@ -3,7 +3,7 @@
 namespace Poligraph.Api.Dtos;
 
 /// <summary>
-/// **Duas posições, de propósito** (PL43). `EixoX`/`EixoY` vêm do layout de molas e
+/// **Duas posições, de propósito** (Pendência 43). `EixoX`/`EixoY` vêm do layout de molas e
 /// não têm interpretação. `Componente1`/`Componente2` vêm do SVD e têm: são a
 /// direção em que os deputados mais se diferenciam. A tela escolhe qual desenhar.
 /// </summary>

@@ -139,7 +139,7 @@ O eixo agora é nomeado, com duas ressalvas obrigatórias:
 daria ao desenho uma segunda leitura de cor, e a única regra que a figura tem é a
 RNF-16: cor é rótulo de grupo, ⛔ nunca escala política.
 
-### Consequência para a PL43
+### Consequência para a Pendência 43
 
 A pendência era manter os dois layouts ou só molas. Os dois eixos horizontais medem a
 mesma coisa (−0,87 e −0,89), então **⛔ não se contradizem** — a escolha deixa de ser

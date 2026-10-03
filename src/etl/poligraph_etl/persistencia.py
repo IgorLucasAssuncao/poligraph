@@ -184,7 +184,7 @@ def desconectar_proposicoes_ausentes(
 
     DECISÃO: `proposicao_id` é anulável **por desenho**, e nada que o produto faz hoje
     depende dela: afinidade e grafo saem do voto. Quem vai precisar é a RF-30, exibir a
-    ementa original ao lado da pergunta — ver PL40.
+    ementa original ao lado da pergunta — ver Pendência 40.
 
     Não é descarte silencioso: devolve a contagem, e o chamador registra no log.
     """
@@ -219,7 +219,7 @@ def desconectar_proposicoes_ausentes(
 # Com uma legislatura só na base as duas coisas coincidiam, e várias consultas usavam a
 # segunda querendo dizer a primeira. Com o histórico, "tem voto" passa a incluir quem
 # votou em 2003: o CPF seria buscado para milhares, o homônimo antigo ganharia voto e
-# desfaria o desempate da PL47, e a notícia de hoje casaria com ex-parlamentar.
+# desfaria o desempate da Pendência 47, e a notícia de hoje casaria com ex-parlamentar.
 #
 # DECISÃO: A corrente é a MAIOR legislatura em `votacoes` — a mesma regra de
 #    `Legislaturas.CorrenteAsync` na API. Não Configurada em lugar nenhum.
@@ -404,7 +404,7 @@ def gravar_receitas(
 
 
 def registrar_carga(conexao: psycopg.Connection, baixado, comando: str) -> int:
-    """PL72 — grava a carga e devolve o id que as linhas de dado vão levar."""
+    """Pendência 72 — grava a carga e devolve o id que as linhas de dado vão levar."""
     return conexao.execute(
         """
         INSERT INTO cargas (fonte, url, baixado_em, sha256, bytes, etag_da_fonte,
@@ -425,7 +425,7 @@ def _versao_do_codigo() -> str:
 
 
 def _com_carga(linhas: Sequence[dict], carga_id: int | None) -> list[dict]:
-    """As linhas com o `carga_id` da carga de onde saíram (PL72).
+    """As linhas com o `carga_id` da carga de onde saíram (Pendência 72).
 
     A linha que já traz o seu `carga_id` o mantém: o patrimônio grava várias eleições numa
     chamada, cada uma de um arquivo.
@@ -462,7 +462,7 @@ def gravar_votacoes(
 
 
 def proposicoes_sem_palavras_chave(conexao: psycopg.Connection) -> list[tuple[str, int]]:
-    """`(casa, id)` das proposições ligadas a alguma votação e ainda não consultadas (PL70)."""
+    """`(casa, id)` das proposições ligadas a alguma votação e ainda não consultadas (Pendência 70)."""
     return conexao.execute(
         """
         SELECT p.casa, p.id
@@ -487,7 +487,7 @@ def gravar_palavras_chave(conexao: psycopg.Connection, linhas: Sequence[tuple[st
 
 
 def marcar_secretas_de_fato(conexao: psycopg.Connection, casa: str) -> int:
-    """PL69 — marca `secreta` na votação que tem votos e nenhum com posição.
+    """Pendência 69 — marca `secreta` na votação que tem votos e nenhum com posição.
 
     MEDIDO em 2026-10-02: 11 votações da Câmara, quase todas eleição de autoridade ("Eleito o
     Sr. ..."), chegam com a presença de cada deputado e nenhum Sim, Não ou abstenção. A Câmara
@@ -881,7 +881,7 @@ def cnpjs_que_receberam_emenda(conexao: psycopg.Connection) -> set[str]:
 
 
 def cnpjs_sem_sede(conexao: psycopg.Connection) -> list[str]:
-    """PL71 — CNPJs que receberam emenda fora do intermediário e ainda não têm município.
+    """Pendência 71 — CNPJs que receberam emenda fora do intermediário e ainda não têm município.
 
     O de maior valor recebido primeiro: interromper no meio deixa resolvido o que mais pesa no mapa.
     """

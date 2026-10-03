@@ -7,7 +7,7 @@ namespace Poligraph.Data;
 /// daquele par, e nenhuma outra.
 /// </summary>
 /// <remarks>
-/// <para>PL54. A consulta existia repetida em cinco serviços, e duas cópias esqueciam um
+/// <para>Pendência 54. A consulta existia repetida em cinco serviços, e duas cópias esqueciam um
 /// dos filtros. Sem a casa, a ficha de deputado lia o grafo do Senado quando ele rodava por
 /// último e mostrava zero parecidos. Sem a legislatura, analisar uma legislatura antiga
 /// trocaria o grafo da página inicial.</para>

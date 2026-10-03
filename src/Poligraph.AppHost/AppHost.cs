@@ -6,7 +6,7 @@ var postgres = builder.AddPostgres("postgres")
 
 var bancoPoligraph = postgres.AddDatabase("poligraph");
 
-// PL77: a chave do HMAC do CPF. Secreta: vem dos user-secrets do AppHost
+// Pendência 77: a chave do HMAC do CPF. Secreta: vem dos user-secrets do AppHost
 // (Parameters:chave-cpf), nunca de arquivo versionado. Perdê-la é perder a
 // conciliação: os hashes novos não casariam com os do banco.
 var chaveCpf = builder.AddParameter("chave-cpf", secret: true);
@@ -128,7 +128,7 @@ var etlCpf = builder.AddDockerfile("etl-cpf", "../..", "docker/Dockerfile.etl")
     // Sem pessoas ingeridas não há a quem buscar CPF.
     .WithParentRelationship(etlIngerir);
 
-// PL77: refaz todo hash de CPF com a chave atual (troca de algoritmo ou rotação da
+// Pendência 77: refaz todo hash de CPF com a chave atual (troca de algoritmo ou rotação da
 // chave). Recarrega cpf, cota, campanha e patrimônio nos anos que já estão no banco.
 builder.AddDockerfile("etl-rechavear-cpf", "../..", "docker/Dockerfile.etl")
     .WithReference(bancoPoligraph)
@@ -233,7 +233,7 @@ builder.AddDockerfile("etl-governo", "../..", "docker/Dockerfile.etl")
     .WithEnvironment("POLIGRAPH_CHAVE_CPF", chaveCpf)
     .WithParentRelationship(etlIngerir);
 
-// PL66 — a conferência depois da carga: só lê, e falha se uma regra der ERRO. É o
+// Pendência 66 — a conferência depois da carga: só lê, e falha se uma regra der ERRO. É o
 // botão para apertar depois de qualquer ETL de voto (achado #37).
 builder.AddDockerfile("etl-conferir", "../..", "docker/Dockerfile.etl")
     .WithReference(bancoPoligraph)
@@ -242,7 +242,7 @@ builder.AddDockerfile("etl-conferir", "../..", "docker/Dockerfile.etl")
     .WithArgs("conferir")
     .WithParentRelationship(etlIngerir);
 
-// PL70 — as palavras-chave das proposições votadas, só das que faltam. A rotina semanal já
+// Pendência 70 — as palavras-chave das proposições votadas, só das que faltam. A rotina semanal já
 // chama; o botão é para a primeira carga, que são milhares de requisições.
 builder.AddDockerfile("etl-palavras-chave", "../..", "docker/Dockerfile.etl")
     .WithReference(bancoPoligraph)
@@ -251,7 +251,7 @@ builder.AddDockerfile("etl-palavras-chave", "../..", "docker/Dockerfile.etl")
     .WithArgs("palavras-chave")
     .WithParentRelationship(etlIngerir);
 
-// PL64 — a carga agendada, como botão: no VPS ela é tarefa agendada do Coolify, e aqui é o
+// Pendência 64 — a carga agendada, como botão: no VPS ela é tarefa agendada do Coolify, e aqui é o
 // jeito de ver a mesma cadeia rodar. A mensal precisa da chave do CPF por causa da cota.
 foreach (var frequencia in new[] { "semanal", "mensal" })
 {

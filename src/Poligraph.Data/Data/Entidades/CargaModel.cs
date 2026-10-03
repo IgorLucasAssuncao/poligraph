@@ -2,7 +2,7 @@ namespace Poligraph.Data;
 
 /// <summary>
 /// Um arquivo ou resposta baixada de uma fonte oficial, com a impressão digital do que veio
-/// (PL72, plano/10).
+/// (Pendência 72, plano/10).
 ///
 /// <para>
 /// É o que permite afirmar "este número é idêntico ao arquivo da Câmara baixado em tal
@@ -45,7 +45,7 @@ public class CargaModel
 
     /// <summary>
     /// A versão do código que leu o arquivo: <c>etl-</c> e os 12 primeiros dígitos do SHA-256
-    /// dos fontes da ETL (PL73). Nula nas cargas gravadas antes dela.
+    /// dos fontes da ETL (Pendência 73). Nula nas cargas gravadas antes dela.
     /// </summary>
     /// <remarks>
     /// <para>A imagem da ETL não leva o repositório, então não há commit para ler. O hash dos fontes identifica o parser exato, e muda a cada mudança de código.</para>

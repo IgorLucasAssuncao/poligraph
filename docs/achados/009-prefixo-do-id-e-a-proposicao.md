@@ -27,7 +27,7 @@ Se o prefixo de `idVotacao` resolve para uma proposição real.
 ⭐ Liga votação → matéria **sem chamada extra à API**, direto do CSV. É a saída para a
 armadilha do [achado #8](008-uriproposicaocitada-e-armadilha.md).
 
-⚠️ Mas a proposição em si **não é ingerida** — ver PL40 em
+⚠️ Mas a proposição em si **não é ingerida** — ver Pendência 40 em
 [`PENDENCIAS.md`](../PENDENCIAS.md).
 
 ## Onde é citado

@@ -25,7 +25,7 @@ Na linha de comando, o ambiente precisa de:
 | Variável | Para quê | Obrigatória |
 |---|---|---|
 | `ConnectionStrings__poligraph` ou `POLIGRAPH_CONEXAO` | O banco. Aceita o formato do Npgsql (`Host=...;Port=...`) | Sempre |
-| `POLIGRAPH_CHAVE_CPF` | A chave do HMAC do CPF (PL77), a mesma de `Parameters:chave-cpf` nos user-secrets do AppHost | `cpf`, `cota`, `fundo`, `patrimonio`, `rechavear-cpf` |
+| `POLIGRAPH_CHAVE_CPF` | A chave do HMAC do CPF (Pendência 77), a mesma de `Parameters:chave-cpf` nos user-secrets do AppHost | `cpf`, `cota`, `fundo`, `patrimonio`, `rechavear-cpf` |
 | `POLIGRAPH_CACHE` | Pasta dos downloads e de `procedencia/` | Não: o padrão é `.cache` |
 
 RISCO: com outra chave de CPF, os hashes novos não casam com os do banco, e a conciliação
@@ -42,9 +42,9 @@ os testes).
 
 | Comando | O que faz | Argumentos |
 |---|---|---|
-| `ingerir` | Câmara: deputados, votações, votos, proposições e orientações; marca como secretas as votações sem nenhuma posição (PL69) | `--anos 2023 2024 ...` (padrão: 2023 a 2026) |
+| `ingerir` | Câmara: deputados, votações, votos, proposições e orientações; marca como secretas as votações sem nenhuma posição (Pendência 69) | `--anos 2023 2024 ...` (padrão: 2023 a 2026) |
 | `senado` | Senado: senadores, votações, votos e matérias | `--anos ...` (padrão: 2023 a 2026) |
-| `palavras-chave` | Palavras-chave das proposições votadas que ainda não têm (PL70). Retoma de onde parou | `--limite N` |
+| `palavras-chave` | Palavras-chave das proposições votadas que ainda não têm (Pendência 70). Retoma de onde parou | `--limite N` |
 | `analisar` | Similaridade, comunidades, grafo e alinhamento de uma casa | `--casa CAMARA\|SENADO`, `--legislatura 56 57` ou `--todas`; sem nada, a corrente |
 | `curar` | Lista votações candidatas a pergunta do questionário, das mais divididas | `--casa`, `--legislatura`, `--limite` |
 | `validar` | Mede o questionário e comunidade × partido. Só lê | `--legislatura`, `--divisao-minima` |
@@ -60,7 +60,7 @@ os testes).
 | `emendas` | Emendas, favorecidos e convênios (download público do Portal) | `--anos ...`; `--resolver CODIGO=ID_NA_CAMARA` vincula um autor à mão |
 | `convenios` | Completa o CNPJ do convenente dos convênios de emenda | — |
 | `municipios` | Sede de quem recebeu emenda, pelo cadastro da Receita (~6 GB) | `--diretorio` com os `Estabelecimentos*.zip` já baixados |
-| `sedes-brasilapi` | Sede dos CNPJs que o cadastro não resolveu, pela BrasilAPI (PL71). Retoma de onde parou | `--limite N` |
+| `sedes-brasilapi` | Sede dos CNPJs que o cadastro não resolveu, pela BrasilAPI (Pendência 71). Retoma de onde parou | `--limite N` |
 | `fundo` | Receitas de campanha, com o fundo eleitoral (TSE) | `--eleicao 2022`; `--arquivo` com o ZIP baixado à mão |
 | `patrimonio` | Bens declarados ao TSE, por tipo | `--anos 2018 2022` |
 | `redes` | Redes sociais: Câmara para deputados, TSE para senadores | `--anos 2018 2022` |

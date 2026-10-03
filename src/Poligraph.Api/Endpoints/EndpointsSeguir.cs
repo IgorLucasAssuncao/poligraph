@@ -54,7 +54,7 @@ public static class EndpointsSeguir
             s.Ultimo?.PartidoNoVoto ?? "", s.Ultimo?.UfNoVoto ?? "")));
     }
 
-    /// <summary>"O que mudou" sobre quem a pessoa segue (PL63). Sem cache e sem log de nome: lê a tabela <c>segue</c>.</summary>
+    /// <summary>"O que mudou" sobre quem a pessoa segue (Pendência 63). Sem cache e sem log de nome: lê a tabela <c>segue</c>.</summary>
     private static async Task<IResult> NovidadesAsync(
         DateOnly? desde, ClaimsPrincipal principal, ServicoNovidades servico, CancellationToken ct) =>
         Results.Ok(await servico.ObterAsync(SessaoDoUsuario.IdDoUsuario(principal), desde, ct));

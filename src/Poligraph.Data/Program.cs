@@ -19,7 +19,7 @@ builder.AddServiceDefaults();
 builder.AddNpgsqlDbContext<PoligraphDb>(
     connectionName: "poligraph",
     configureDbContextOptions: opcoes => opcoes
-        // PL49 — as migrations moram NESTE projeto, não no da API. O contexto vem
+        // Pendência 49 — as migrations moram NESTE projeto, não no da API. O contexto vem
         // de `Poligraph.Api`, e sem esta linha o EF procuraria migration lá e não
         // acharia nenhuma: `MigrateAsync` não daria erro, criaria um banco VAZIO.
         .UseNpgsql(npgsql => npgsql.MigrationsAssembly(Migracoes.Assembly))

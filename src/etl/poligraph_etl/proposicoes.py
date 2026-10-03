@@ -31,7 +31,7 @@ e `ementaDetalhada`. Se a curadoria precisar delas, aí vale pagar os 90 MB — 
 
 ---
 
-## RISCO: Por que isto destrava a curadoria (PL11)
+## RISCO: Por que isto destrava a curadoria (Pendência 11)
 
 Sem a ementa, quem cura lê só a **descrição da votação**:
 
@@ -39,7 +39,7 @@ Sem a ementa, quem cura lê só a **descrição da votação**:
 > relator da Comissão de…"*
 
 Isso diz o **número** do projeto e não **não diz sobre o que ele é**. Escrever uma pergunta
-em linguagem leiga a partir disso é adivinhação — e a PL11 é o maior bloqueio do projeto.
+em linguagem leiga a partir disso é adivinhação — e a Pendência 11 é o maior bloqueio do projeto.
 
 MEDIDO: Medido em 2026-08-28: das 266 votações substantivas da 57ª, **263 ganham ementa**
 (98,9%). Antes, `proposicao_id` era nulo em **1.594 de 1.594** (100%).

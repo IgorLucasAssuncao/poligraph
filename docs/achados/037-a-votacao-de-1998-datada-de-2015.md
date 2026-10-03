@@ -88,10 +88,10 @@ O grafo das duas foi refeito: 55ª com **100 nós e 613 arestas**, 51ª com **10
 2015 tem **zero** votações e 2016 tem **seis**. Pela sequência do código, faltam ~230
 votações entre a última de 2014 (5.329) e a primeira de 2016 (5.560), e o `/votacao` ⛔ as
 devolve. O grafo passa do mínimo (100 votações abertas de plenário) por **3**, e descreve
-2016–2018, ⛔ a legislatura inteira. Desde a PL59 a tela diz o recorte: "as abertas vão
+2016–2018, ⛔ a legislatura inteira. Desde a Pendência 59 a tela diz o recorte: "as abertas vão
 de mai/2016 a ...", em todo grafo.
 
-⚠️ Outra fonte do Senado para 2015–2016 ainda ⛔ foi procurada. Ver PL58 em
+⚠️ Outra fonte do Senado para 2015–2016 ainda ⛔ foi procurada. Ver Pendência 58 em
 [`PENDENCIAS`](../PENDENCIAS.md).
 
 ## A lição
@@ -102,7 +102,7 @@ apareceram lado a lado, e 203 destoou de 104. É a regra metodológica do projet
 vez: **medir um ano e generalizar**. O `/votacao` foi validado em 2023–2026 e confiado
 para 2001–2022.
 
-## A lacuna de 2015–2016 está no acervo, não num endpoint (PL58)
+## A lacuna de 2015–2016 está no acervo, não num endpoint (Pendência 58)
 
 **Medido em 2026-10-02.** Depois do descarte, o Senado fica com 0 votações em 2015 e 6 em
 2016. Procurei os mesmos anos nos outros serviços de dados abertos do Senado:

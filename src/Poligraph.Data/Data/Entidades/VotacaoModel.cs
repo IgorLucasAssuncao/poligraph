@@ -22,7 +22,7 @@ public class VotacaoModel
     public int? VotosSim { get; set; }
     public int? VotosNao { get; set; }
 
-    /// <summary>A carga de onde a linha saiu (PL72). Nula nas linhas gravadas antes dela.</summary>
+    /// <summary>A carga de onde a linha saiu (Pendência 72). Nula nas linhas gravadas antes dela.</summary>
     public long? CargaId { get; set; }
 
     public List<VotoModel> Votos { get; set; } = [];

@@ -1,7 +1,7 @@
 namespace Poligraph.Data;
 
 /// <summary>
-/// O órgão que publicou o arquivo de uma carga (PL72).
+/// O órgão que publicou o arquivo de uma carga (Pendência 72).
 ///
 /// <para>
 /// Separado de <see cref="TipoFonteDeIdentificador"/>: aquele diz de onde veio o código de

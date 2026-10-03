@@ -52,7 +52,7 @@ RISCO: é o tipo de erro que o projeto já pagou caro: um número plausível, se
 tela. Quem comparar 2016 com 2020 veria o dinheiro de emenda multiplicar, quando o que
 mudou foi a identificação do autor.
 
-## O que decidir (PL81)
+## O que decidir (Pendência 81)
 
 | Opção | Efeito |
 |---|---|

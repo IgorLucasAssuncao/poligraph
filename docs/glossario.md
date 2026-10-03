@@ -66,7 +66,7 @@ flowchart TD
 
 | Confundir… | …com | O que aconteceu |
 |---|---|---|
-| 🔴 **Ementa** | **Descrição da votação** | A ficha listava *"Aprovado o Substitutivo ao Projeto de Lei nº 4.133"* — o **número**, ⛔ não o assunto. Curar pergunta a partir disso era adivinhação (PL40) |
+| 🔴 **Ementa** | **Descrição da votação** | A ficha listava *"Aprovado o Substitutivo ao Projeto de Lei nº 4.133"* — o **número**, ⛔ não o assunto. Curar pergunta a partir disso era adivinhação (Pendência 40) |
 | 🔴 **Ementa** | **O que foi votado** | Corrigido o acima, **43,2%** das linhas passaram a exibir a ementa do projeto sobre um voto de **rito**: *"Institui o IBS"* ao lado de um "Sim" que era sobre requerimento |
 | 🔴 **Votos com posição** | **Votos registrados** | `/api/panorama` afirmava **463.994** contando `valor IS NOT NULL`; a posição real eram **462.867**. A diferença — **1.127** — eram as abstenções |
 | 🔴 **Votações comparáveis** | **Votações registradas** | Sargento Fahur aparecia com **1.134** na lista e **559** no grafo, com a mesma palavra. Os dois certos, contando coisas diferentes |
@@ -209,7 +209,7 @@ porque o critério do autor foi *o que ⛔ não se associa ao perfil do polític
 | **Partido no voto** | O partido **no momento** daquele voto | ⚠️ Trocar de partido é comum — 14 trocas em 2025 |
 | **Mandato** | O período para o qual o parlamentar foi eleito: 4 anos na Câmara, **8 no Senado** | O senador aparece em duas legislaturas seguidas, e é a mesma pessoa nas duas |
 | **Suplente** | Quem assume a cadeira do titular licenciado ou que saiu. Na Câmara, o próximo da lista; no Senado, um dos dois eleitos na chapa | Explica por que votaram mais de 513 deputados e mais de 81 senadores numa legislatura (`conferencia.py`) |
-| **`cpf_hash`** | O CPF, guardado **só** como HMAC-SHA256 com chave secreta (PL77). Sem chave seria reversível: há só ~1 bilhão de CPFs | ⛔ **Nunca renderizado.** 0 CPFs em claro (RNF-13) |
+| **`cpf_hash`** | O CPF, guardado **só** como HMAC-SHA256 com chave secreta (Pendência 77). Sem chave seria reversível: há só ~1 bilhão de CPFs | ⛔ **Nunca renderizado.** 0 CPFs em claro (RNF-13) |
 | **Vínculo** | Como um id externo foi ligado a uma pessoa: `CPF`, `FUZZY`, `MANUAL` | ⭐ Ambiguidade ⛔ não vira palpite: fica `NAO_RESOLVIDO` |
 | **Menção** | Ligação entre notícia e parlamentar, com **confiança** | ⚠️ Abaixo de **0,70** ⛔ não vai à tela — mas **vai ao banco** ([#29](achados/029-o-sobrenome-casa-com-a-instituicao.md)) |
 

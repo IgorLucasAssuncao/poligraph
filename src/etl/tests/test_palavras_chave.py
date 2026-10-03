@@ -1,4 +1,4 @@
-"""PL70 — as palavras-chave da Câmara, onde está o nome popular da proposição."""
+"""Pendência 70 — as palavras-chave da Câmara, onde está o nome popular da proposição."""
 
 import requests
 

@@ -67,7 +67,7 @@ def baixar_votacoes(ano: int) -> list[dict]:
 
 
 def baixar_votacoes_com_procedencia(ano: int) -> tuple[list[dict], procedencia.Baixado]:
-    """Como `baixar_votacoes`, devolvendo também a impressão digital da resposta (PL72)."""
+    """Como `baixar_votacoes`, devolvendo também a impressão digital da resposta (Pendência 72)."""
     resposta = requests.get(
         f"{BASE}/votacao",
         params={"dataInicio": f"{ano}-01-01", "dataFim": f"{ano}-12-31"},

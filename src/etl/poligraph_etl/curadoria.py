@@ -1,7 +1,7 @@
 """ANÁLISE — candidatas a pergunta do questionário.
 
 Não escreve pergunta: **ordena e instrui**. Escrever a afirmação em linguagem leiga é
-leitura humana de ementa por ementa (PL11), e o que este módulo faz é reduzir o universo
+leitura humana de ementa por ementa (Pendência 11), e o que este módulo faz é reduzir o universo
 de centenas de votações às poucas dezenas que valem a leitura.
 
 ## ENTRADA
@@ -61,9 +61,9 @@ class Candidata:
     # RISCO: A `descricao` diz o NÚMERO do projeto e não diz sobre o que ele é:
     # *"Aprovado o Substitutivo ao Projeto de Lei Complementar nº 80, de 2026, adotado
     # pelo relator da Comissão de…"*. Escrever pergunta em linguagem leiga a partir
-    # disso é adivinhação — e a PL11 é o maior bloqueio do projeto.
+    # disso é adivinhação — e a Pendência 11 é o maior bloqueio do projeto.
     #
-    # ATENÇÃO: Nula em 3 das 266 substantivas da 57ª (98,9% têm) — ver achado sobre PL40.
+    # ATENÇÃO: Nula em 3 das 266 substantivas da 57ª (98,9% têm) — ver achado sobre Pendência 40.
     ementa: str | None = None
 
     @property

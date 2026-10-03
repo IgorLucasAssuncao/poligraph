@@ -27,13 +27,13 @@ export type PosicaoDoCidadao = {
 };
 
 /**
- * DECISÃO: PL43 — as duas maneiras de posicionar um parlamentar, lado a lado para comparar.
+ * DECISÃO: Pendência 43 — as duas maneiras de posicionar um parlamentar, lado a lado para comparar.
  *
  * `molas` desenha bem e não interpreta nada. `componentes` (SVD) tem eixo com
  * significado, mas convida o leitor a ler espectro político.
  */
 /**
- * ATENÇÃO: `componentes` (SVD) saiu da TELA e não do dado — PL43 resolvida em 2026-08-28.
+ * ATENÇÃO: `componentes` (SVD) saiu da TELA e não do dado — Pendência 43 resolvida em 2026-08-28.
  *
  * Ele mostrava a MESMA divisão que `alinhamento`: o eixo dele correlaciona −0,87 com o
  * governismo. A diferença é que ali a posição saía de um algoritmo e exigia um parágrafo
@@ -193,13 +193,13 @@ type Alvo = { tipo: 'no'; no: NoDoGrafo } | { tipo: 'aresta'; aresta: ArestaDoGr
  *
  * `setMovidos(new Map());`: ATENÇÃO: devolve o desenho ao retrato do ETL
  *
- * DECISÃO: PL43: o seletor fica NA moldura, para comparar sem sair da tela.
+ * DECISÃO: Pendência 43: o seletor fica NA moldura, para comparar sem sair da tela.
  *
  * DECISÃO: Busca e ajustes moram SOBRE o desenho, recolhidos.
  * Ocupavam uma faixa fixa abaixo do canvas — e essa faixa custava altura de
  * desenho em toda tela, para controles que se usam uma vez.
  *
- * DECISÃO: PL43: o seletor e a ressalva dele andam JUNTOS. RISCO: A do SVD não é
+ * DECISÃO: Pendência 43: o seletor e a ressalva dele andam JUNTOS. RISCO: A do SVD não é
  * opcional — sem ela o leitor lê o centro como moderação, quando ali
  * também está quem faltou a muitas votações.
  *

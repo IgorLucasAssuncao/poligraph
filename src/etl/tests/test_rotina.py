@@ -1,4 +1,4 @@
-"""PL64 — as etapas da carga agendada, decididas pela frequência e pela data."""
+"""Pendência 64 — as etapas da carga agendada, decididas pela frequência e pela data."""
 
 from datetime import date
 

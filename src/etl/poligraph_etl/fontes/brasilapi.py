@@ -1,4 +1,4 @@
-"""BrasilAPI — a sede de um CNPJ pelo código IBGE do município (PL71).
+"""BrasilAPI — a sede de um CNPJ pelo código IBGE do município (Pendência 71).
 
 ## ENTRADA
 

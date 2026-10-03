@@ -93,7 +93,7 @@ def baixar(recurso: str, ano: int, destino: Path) -> Path:
 
 
 def baixar_com_procedencia(recurso: str, ano: int, destino: Path) -> procedencia.Baixado:
-    """Como `baixar`, devolvendo também a impressão digital do que veio (PL72)."""
+    """Como `baixar`, devolvendo também a impressão digital do que veio (Pendência 72)."""
     destino.parent.mkdir(parents=True, exist_ok=True)
 
     resposta = requests.get(url_do_arquivo(recurso, ano), timeout=120)
@@ -196,7 +196,7 @@ def redes_do_deputado(id_camara: str) -> list[str] | None:
 
 
 def palavras_chave_da_proposicao(id_proposicao: int) -> str | None:
-    """As `keywords` da proposição (PL70): onde a Câmara põe o nome popular.
+    """As `keywords` da proposição (Pendência 70): onde a Câmara põe o nome popular.
 
     MEDIDO em 2026-10-02: a ementa da PEC 45/2019 diz "Altera o Sistema Tributário Nacional";
     as palavras-chave terminam em "_Reforma tributária, tributação". O CSV de

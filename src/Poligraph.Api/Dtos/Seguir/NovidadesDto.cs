@@ -3,7 +3,7 @@ using Poligraph.Data;
 namespace Poligraph.Api.Dtos;
 
 /// <summary>
-/// "O que mudou" (PL63): os cinco avisos sobre quem a pessoa segue, cada um com a janela do
+/// "O que mudou" (Pendência 63): os cinco avisos sobre quem a pessoa segue, cada um com a janela do
 /// dado. Especificação em <c>docs/plano/09 §4.1</c>.
 /// </summary>
 /// <param name="Semana">A janela dos avisos de voto: os 7 dias que terminam na votação mais recente da base, não no relógio.</param>

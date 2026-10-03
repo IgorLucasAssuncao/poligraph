@@ -402,7 +402,7 @@ foi para isso que essa tabela existe.
 #### 🔴 Ao ingerir o CPF, ele vira hash
 
 A RNF-13 proíbe CPF em claro. ⭐ Mas o hash **não impede o casamento**: basta hashear os
-dois lados com o mesmo algoritmo **e a mesma chave** (HMAC, PL77) e comparar os hashes — o CPF em claro só precisa existir
+dois lados com o mesmo algoritmo **e a mesma chave** (HMAC, Pendência 77) e comparar os hashes — o CPF em claro só precisa existir
 **em memória**, durante a ingestão.
 
 ⚠️ É o mesmo desenho já usado em `despesas.cnpj_ou_hash`.

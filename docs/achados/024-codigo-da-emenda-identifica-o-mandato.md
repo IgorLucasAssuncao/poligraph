@@ -103,7 +103,7 @@ normal, ⛔ não exceção.
 > **21.349** emendas vinculadas.
 
 ⭐ Vincular autoria antiga ⛔ não polui tela nenhuma: a ficha do parlamentar já filtra a
-legislatura corrente ([PL35](../PENDENCIAS.md)).
+legislatura corrente ([Pendência 35](../PENDENCIAS.md)).
 
 ## Ver também
 

@@ -17,7 +17,7 @@ public static class EndpointsProcedencia
     }
 
     /// <summary>
-    /// De onde veio um número e como foi contado, para o modo análise (PL73). Contextos:
+    /// De onde veio um número e como foi contado, para o modo análise (Pendência 73). Contextos:
     /// votos, cota, emendas, campanha, patrimonio (com <c>pessoa</c>) e painel (com <c>casa</c>).
     /// </summary>
     private static async Task<IResult> ObterAsync(

@@ -29,7 +29,7 @@ function renderizar(novidades: Novidades) {
   );
 }
 
-/** PL63: fato com a fonte e a data da carga, do mais recente; vazio honesto. */
+/** Pendência 63: fato com a fonte e a data da carga, do mais recente; vazio honesto. */
 describe('o que mudou', () => {
   it('vazio diz a data da carga, não "hoje"', async () => {
     renderizar(VAZIAS);

@@ -245,7 +245,7 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
             Maiores: [.. maiores.Select(f => ParaFavorecido(f, cota))]);
     }
 
-    /// <summary>PL74: quanto a cota do parlamentar pagou a cada CNPJ da lista, no mandato da emenda.</summary>
+    /// <summary>Pendência 74: quanto a cota do parlamentar pagou a cada CNPJ da lista, no mandato da emenda.</summary>
     /// <remarks>
     /// <para>Só CNPJ público: o fornecedor pessoa física da cota guarda hash, e o empresário individual tem CNPJ de pessoa.</para>
     /// <para>O mandato sai do ano da emenda, não do ano corrente: a emenda de 2023 é da 56ª, e a cota que importa é a de 2019 a 2022.</para>

@@ -32,7 +32,7 @@ public class ProposicaoModel
     public string? UrlInteiroTeor { get; set; }
 
     /// <summary>
-    /// As palavras-chave da casa (PL70): <c>keywords</c> da Câmara, <c>IndexacaoMateria</c> do
+    /// As palavras-chave da casa (Pendência 70): <c>keywords</c> da Câmara, <c>IndexacaoMateria</c> do
     /// Senado. É onde aparece o nome popular: a ementa da PEC 45/2019 diz "Altera o Sistema
     /// Tributário Nacional", e só as palavras-chave dizem "Reforma tributária".
     /// </summary>

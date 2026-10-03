@@ -5,7 +5,7 @@ using Poligraph.Data;
 namespace Poligraph.Api.Services;
 
 /// <summary>
-/// "O que mudou" (PL63): os cinco avisos sobre quem a pessoa segue. Todo aviso é um fato
+/// "O que mudou" (Pendência 63): os cinco avisos sobre quem a pessoa segue. Todo aviso é um fato
 /// registrado pela casa, tirado do dado que já está na base.
 /// </summary>
 /// <remarks>

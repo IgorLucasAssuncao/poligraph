@@ -29,7 +29,7 @@ namespace Poligraph.Api.Dtos;
 ///
 /// <para>
 /// <c>Ementa</c> é o que o projeto propõe, e é o que torna o voto legível para quem
-/// não acompanha o Congresso. Veio com a PL40; a ficha era o lugar que ainda não a
+/// não acompanha o Congresso. Veio com a Pendência 40; a ficha era o lugar que ainda não a
 /// usava.
 /// </para>
 ///

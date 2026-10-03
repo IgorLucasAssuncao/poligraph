@@ -1,4 +1,4 @@
-"""PL71 — a sede pelo código IBGE, e nada mais da resposta."""
+"""Pendência 71 — a sede pelo código IBGE, e nada mais da resposta."""
 
 from poligraph_etl.fontes import brasilapi
 

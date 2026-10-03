@@ -208,7 +208,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
     }
 
     /// <summary>
-    /// PL72: a carga só aceita o hash como o ETL o grava, hexadecimal minúsculo de 64, e
+    /// Pendência 72: a carga só aceita o hash como o ETL o grava, hexadecimal minúsculo de 64, e
     /// uma fonte conhecida. Um hash em maiúsculas seria outra string, e a comparação com o
     /// arquivo guardado falharia sem dizer por quê.
     /// </summary>
@@ -231,7 +231,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
     }
 
     /// <summary>
-    /// PL72: carga com linha apontando para ela não se apaga, senão a procedência sumiria.
+    /// Pendência 72: carga com linha apontando para ela não se apaga, senão a procedência sumiria.
     /// </summary>
     [SkippableFact]
     public async Task Carga_ComVotacaoApontando_NaoSeApaga()

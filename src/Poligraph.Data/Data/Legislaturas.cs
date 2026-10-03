@@ -6,7 +6,7 @@ namespace Poligraph.Data;
 /// De qual legislatura o site está falando — <b>derivado do dado, nunca configurado</b>.
 ///
 /// <para>
-/// <b>PL35.</b> A decisão "só a 57ª" vivia no documento e não no código: nenhuma
+/// <b>Pendência 35.</b> A decisão "só a 57ª" vivia no documento e não no código: nenhuma
 /// consulta filtrava por legislatura, e passava porque o banco tinha uma só. Com a 58ª,
 /// o painel do questionário mostraria <i>"480 de 900"</i> — número plausível, tela
 /// intacta, mesmo formato do bug de polaridade. A 57ª termina em janeiro de 2027.

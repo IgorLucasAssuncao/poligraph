@@ -51,7 +51,7 @@ describe('partesDeCem', () => {
   });
 });
 
-/** PL74: a mesma conta de `Legislaturas.DoAnoDeEmenda` na API, nos dois lados da virada. */
+/** Pendência 74: a mesma conta de `Legislaturas.DoAnoDeEmenda` na API, nos dois lados da virada. */
 describe('anosDeCotaDaEmenda', () => {
   it('a emenda de um ano é do mandato que tomou posse antes dele', () => {
     expect(anosDeCotaDaEmenda(2025)).toBe('2023–2026');

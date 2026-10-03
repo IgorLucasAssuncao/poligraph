@@ -155,7 +155,7 @@ mais como capítulo de avaliação do que como recurso de produto.
 ⚠️ **Pré-requisito:** o adaptativo exige o pool curado **maior** que o estático — em vez de
 20 perguntas prontas, precisa de 40–60. Isso multiplica o trabalho manual do critério 4.
 
-**Pendência PL10:** decidir se o adaptativo entra como experimento.
+**Pendência Pendência 10:** decidir se o adaptativo entra como experimento.
 
 ---
 
@@ -315,7 +315,7 @@ honesta exige julgamento, não distância vetorial.
 
 ### 3.5.2 Onde um LLM **ajuda de verdade**: rascunhar a reescrita
 
-A PL11 — reescrever ementa em linguagem leiga — **é** o gargalo, e aí sim há ganho:
+A Pendência 11 — reescrever ementa em linguagem leiga — **é** o gargalo, e aí sim há ganho:
 
 ```
 ementa oficial → LLM rascunha a pergunta → 🔴 humano revisa e aprova
@@ -323,7 +323,7 @@ ementa oficial → LLM rascunha a pergunta → 🔴 humano revisa e aprova
 
 | ✅ Ganho | ⚠️ Custo |
 |---|---|
-| Corta a parte mais lenta da PL11 | **Introduz um modelo no método** |
+| Corta a parte mais lenta da Pendência 11 | **Introduz um modelo no método** |
 | Padroniza o tom das perguntas | A banca vai perguntar como você validou |
 | Human-in-the-loop mantém o controle | Reescrita ruim **distorce a pergunta** — problema metodológico, não técnico |
 
@@ -375,8 +375,8 @@ do que a banca perguntar e você não ter considerado.
 
 | # | Pendência | Prioridade |
 |---|---|---|
-| **PL10** | Decidir se o questionário adaptativo entra como experimento comparativo | 🟡 Média |
-| **PL11** | Curar as 15–25 perguntas: selecionar, reescrever, atribuir polaridade | 🔴 **Alta — trabalho manual, não automatizável** |
-| **PL12** | Definir o limiar de "respondível por leigo" e documentá-lo como critério | 🟡 Média |
+| **Pendência 10** | Decidir se o questionário adaptativo entra como experimento comparativo | 🟡 Média |
+| **Pendência 11** | Curar as 15–25 perguntas: selecionar, reescrever, atribuir polaridade | 🔴 **Alta — trabalho manual, não automatizável** |
+| **Pendência 12** | Definir o limiar de "respondível por leigo" e documentá-lo como critério | 🟡 Média |
 | **RQ3** | Definir o N final de perguntas | 🔴 Alta |
 | **CT7** | Definir o mínimo de respostas para o resultado ter significado | 🟡 Média |

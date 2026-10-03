@@ -119,7 +119,7 @@ def test_posicoes_ficam_num_intervalo_desenhavel(atributo: str):
 
 
 # ═══════════════════════════════════════════════════════════════════
-# Componentes principais (SVD) — PL43
+# Componentes principais (SVD) — Pendência 43
 # ═══════════════════════════════════════════════════════════════════
 
 import numpy as np
@@ -174,7 +174,7 @@ def test_ausencia_nao_quebra_o_svd():
 
 
 def test_no_carrega_as_duas_posicoes():
-    """DECISÃO: PL43: molas e componentes convivem, e a tela escolhe."""
+    """DECISÃO: Pendência 43: molas e componentes convivem, e a tela escolhe."""
     pessoas, arestas = dois_blocos()
     matriz = np.random.default_rng(1).choice([-1.0, 1.0], size=(len(pessoas), 25))
 

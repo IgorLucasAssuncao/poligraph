@@ -2,7 +2,7 @@
 
 > **Escrito em 2026-10-02**, a partir de um vídeo indicado pelo autor e da conversa sobre
 > ele. É **plano**: o que está aqui ainda não foi construído, salvo onde dito.
-> Pendências: PL72 a PL76 em [`PENDENCIAS`](../PENDENCIAS.md).
+> Pendências: Pendência 72 a Pendência 76 em [`PENDENCIAS`](../PENDENCIAS.md).
 
 ---
 
@@ -42,24 +42,24 @@ depois da análise. O sistema dele se chama EloSys, e o código está publicado
 
 | Tela | O que mostra | Para nós |
 |---|---|---|
-| **Painel de procedência** (7:43) | Um quadro por campo, com **fonte** (o nome do conjunto do TSE), **órgão**, **URL** exata, **coletado em** (data e hora UTC), **SHA-256**, **parser** com versão (`tse.social v1.0`) e **base legal** (a norma que torna o dado público, ex.: Res. TSE 23.610/2019, art. 26-A) | Dois campos que o nosso desenho não tinha: a **versão do código** que transformou o arquivo e a **base legal** da fonte. Entram na PL73 |
+| **Painel de procedência** (7:43) | Um quadro por campo, com **fonte** (o nome do conjunto do TSE), **órgão**, **URL** exata, **coletado em** (data e hora UTC), **SHA-256**, **parser** com versão (`tse.social v1.0`) e **base legal** (a norma que torna o dado público, ex.: Res. TSE 23.610/2019, art. 26-A) | Dois campos que o nosso desenho não tinha: a **versão do código** que transformou o arquivo e a **base legal** da fonte. Entram na Pendência 73 |
 | Botão **"fonte"** no cabeçalho (6:30, 7:34) | O modo análise é um interruptor fixo no cabeçalho, ao lado do seletor "todos os anos" | O mesmo lugar para o nosso: o cabeçalho, visível em toda tela |
 | Página inicial (6:30) | "Cada campo mostra de qual arquivo do TSE ele saiu, quando foi baixado e o hash que comprova que não foi alterado"; contadores da base (1,18 milhão de pessoas, 1,63 milhão de candidaturas) | A promessa dita na entrada, em uma frase |
 | Grafo de um candidato (1:06) | O candidato no centro; doadores à esquerda, com setas chegando; fornecedores à direita, com setas saindo; o valor em cada seta; o ciclo em vermelho tracejado | Um desenho "de onde veio, para onde foi" para a ficha, quando houver despesa de campanha na base |
 | Tabela de gastos (3:42) | Gasto, **% da receita** da campanha e **média dos pares** do mesmo cargo e UF, com "6,5x a média" | Comparar com os pares é o que o `plano/09` pede para o dinheiro da ficha. Como fato, sem alerta (RNF-16) |
-| Tabela de sócios (4:38) | Pessoa, empresa e CNPJ, qualificação e data de entrada na sociedade, valor pago e "a própria campanha" em vermelho | O desenho da PL75 |
+| Tabela de sócios (4:38) | Pessoa, empresa e CNPJ, qualificação e data de entrada na sociedade, valor pago e "a própria campanha" em vermelho | O desenho da Pendência 75 |
 | Ranking de bens (8:04) | O aviso em cima da tabela: "não é indício de nada por si só — mais bens pode ser só mais detalhamento na declaração" | O tom certo para qualquer ordenação que publicarmos |
 
 ATENÇÃO: o sistema dele **busca e mostra CPF** de candidato (o TSE publica). O nosso não: a
-regra do projeto é nunca renderizar CPF, e a PL77 trata de o guardar direito.
+regra do projeto é nunca renderizar CPF, e a Pendência 77 trata de o guardar direito.
 
 ### O que vale para o poligraph
 
 | Ideia | Decisão | Onde |
 |---|---|---|
-| Procedência por linha | **Adotar** — pedido do autor | §2, PL72 |
-| Modo análise | **Adotar** — pedido do autor | §3, PL73 |
-| Conferir dado autodeclarado | Adotar: regra de patrimônio fora do comum no `conferir` | PL76 |
+| Procedência por linha | **Adotar** — pedido do autor | §2, Pendência 72 |
+| Modo análise | **Adotar** — pedido do autor | §3, Pendência 73 |
+| Conferir dado autodeclarado | Adotar: regra de patrimônio fora do comum no `conferir` | Pendência 76 |
 | Valor de um caminho no grafo | Lição de método: o valor de um caminho é o da **menor** aresta, não a soma | Qualquer agregação sobre ligações |
 | Classificar posts com IA | **Não adotar**: juízo de valor sobre parlamentar (RNF-16), e falso positivo apontado para pessoa real | — |
 | Alerta de gasto suspeito | **Não adotar como alerta.** Contexto factual (onde o gasto fica entre os pares) é possível; "suspeito" é juízo | — |
@@ -71,7 +71,7 @@ plausível. Não há caso como o dos R$ 12 bilhões, mas a regra custa pouco.
 
 ---
 
-## 2. Procedência por linha (PL72)
+## 2. Procedência por linha (Pendência 72)
 
 > FEITO em 2026-10-02 para votações, votos e orientações (Câmara e Senado) e, no mesmo dia,
 > para as tabelas de dinheiro. MEDIDO depois de recarregar tudo: 100% das linhas com
@@ -118,7 +118,7 @@ grava a linha e devolve o id; toda `gravar_*` passa a recebê-lo.
 
 ---
 
-## 3. Modo análise (PL73)
+## 3. Modo análise (Pendência 73)
 
 ### A experiência
 
@@ -145,7 +145,7 @@ número exibido ser o número usado — levada até o arquivo de origem.
 | Front | Um componente `Numero` que, no modo análise, vira botão e abre o painel. Os números passam a ser escritos por ele |
 | Ordem | Começar pela ficha (votos, presença, cota) e pelo painel do início: são os números que o TCC cita |
 
-ATENÇÃO: depende da PL72. Sem a tabela de cargas, o painel só teria o link da fonte que já
+ATENÇÃO: depende da Pendência 72. Sem a tabela de cargas, o painel só teria o link da fonte que já
 existe.
 
 ---
@@ -168,7 +168,7 @@ empresas.
 | Azul, Latam, Gol, distribuidoras de energia | Os maiores: a passagem e a conta de luz pagas pela cota, e pagamentos pequenos de emenda. Coincidência de empresa grande, não vínculo |
 | **323 empresas ligadas a um só parlamentar** | Onde o cruzamento tem o que mostrar |
 
-**Proposta (PL74):** um fato na ficha, não alerta — "esta empresa também recebeu da cota
+**Proposta (Pendência 74):** um fato na ficha, não alerta — "esta empresa também recebeu da cota
 deste parlamentar", ao lado do favorecido da emenda. Sem adjetivo e sem ranking
 (RNF-16). Cruzamento por CNPJ, chave exata.
 
@@ -183,7 +183,7 @@ o CPF **mascarado**, com só os 6 dígitos do meio (`***550179**`). Nós guardam
   calcular o hash (Câmara e TSE). Nesse momento dá para comparar os 6 dígitos e o nome
   com o quadro de sócios, e gravar **só o vínculo** parlamentar–CNPJ, não o CPF.
 - Com isso, "a cota pagou empresa da qual o parlamentar é sócio" vira um fato verificável
-  (PL75). O parlamentar é pessoa pública no exercício do mandato.
+  (Pendência 75). O parlamentar é pessoa pública no exercício do mandato.
 
 ### 4.3 Doadores de campanha
 
@@ -200,8 +200,8 @@ o CPF **mascarado**, com só os 6 dígitos do meio (`***550179**`). Nós guardam
 
 | # | O quê | Pendência |
 |---|---|---|
-| 1 | Tabela `cargas` e `carga_id` na ETL, começando por votações e votos | PL72, FEITO |
-| 2 | Modo análise na ficha e no painel do início | PL73, primeira versão FEITA |
-| 3 | Regra de patrimônio fora do comum no `conferir` | PL76, FEITO |
-| 4 | "Também recebeu da cota" no favorecido da emenda | PL74, FEITO |
-| 5 | Parlamentar sócio, por nome e 6 dígitos | PL75 |
+| 1 | Tabela `cargas` e `carga_id` na ETL, começando por votações e votos | Pendência 72, FEITO |
+| 2 | Modo análise na ficha e no painel do início | Pendência 73, primeira versão FEITA |
+| 3 | Regra de patrimônio fora do comum no `conferir` | Pendência 76, FEITO |
+| 4 | "Também recebeu da cota" no favorecido da emenda | Pendência 74, FEITO |
+| 5 | Parlamentar sócio, por nome e 6 dígitos | Pendência 75 |

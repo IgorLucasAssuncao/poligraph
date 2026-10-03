@@ -208,4 +208,4 @@ para elas:
 | **ER2** | Escolher a biblioteca de *fuzzy match* (Jaro-Winkler vs Levenshtein) e calibrar o limiar | Decisão D1 |
 | ~~ER3~~ | ✅ **RESOLVIDA — 2026-08-23.** Desnecessario — a carga do TSE e automatizavel; o manifesto vira log de carga comum | — |
 | ~~ER4~~ | ✅ **RESOLVIDA — 2026-08-23.** Camara: 2022. Senado: 2018 E 2022, com CD_CARGO IN (5,9,10) | Download do TSE |
-| ✅ ~~ER5~~ | Resolvida pela PL77 (2026-10-02): nem salt nem SHA-256 puro, **HMAC-SHA256 com chave secreta** fora do banco | Modelagem |
+| ✅ ~~ER5~~ | Resolvida pela Pendência 77 (2026-10-02): nem salt nem SHA-256 puro, **HMAC-SHA256 com chave secreta** fora do banco | Modelagem |

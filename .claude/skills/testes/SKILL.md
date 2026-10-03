@@ -208,7 +208,7 @@ tem; sua máquina precisa do Docker Desktop aberto.
 ### 6.1 ⭐ O container, e por que ele existe
 
 ✅ **`dotnet test` nativo VOLTOU a funcionar em 2026-09-06**, quando o Smart App Control
-foi desligado (PL51). ⭐ A receita abaixo continua sendo o que o **CI** usa, e o plano B
+foi desligado (Pendência 51). ⭐ A receita abaixo continua sendo o que o **CI** usa, e o plano B
 se a máquina mudar.
 
 ⚠️ Fica o registro do que aconteceu, porque o sintoma engana e custou tempo — foi lido

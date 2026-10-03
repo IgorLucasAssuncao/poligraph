@@ -163,14 +163,14 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
 
     sub.add_parser("cpf", help="completa o cpf_hash das duas casas (Câmara: API; Senado: TSE)")
     pal = sub.add_parser(
-        "palavras-chave", help="palavras-chave das proposições votadas que ainda não têm (PL70)"
+        "palavras-chave", help="palavras-chave das proposições votadas que ainda não têm (Pendência 70)"
     )
     pal.add_argument("--limite", type=int, default=None, help="no máximo tantas, para ir por partes")
     sed = sub.add_parser(
-        "sedes-brasilapi", help="município da sede dos CNPJs de emenda que faltam, pela BrasilAPI (PL71)"
+        "sedes-brasilapi", help="município da sede dos CNPJs de emenda que faltam, pela BrasilAPI (Pendência 71)"
     )
     sed.add_argument("--limite", type=int, default=None, help="no máximo tantos CNPJs nesta execução")
-    rot = sub.add_parser("rotina", help="a carga agendada (PL64): semanal ou mensal, terminando em conferir")
+    rot = sub.add_parser("rotina", help="a carga agendada (Pendência 64): semanal ou mensal, terminando em conferir")
     rot.add_argument("--frequencia", choices=list(rotina.FREQUENCIAS), required=True)
     sub.add_parser(
         "rechavear-cpf",
@@ -298,7 +298,7 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
     ATENÇÃO: A votação entra SEM proposição: ela é ingerida antes de a proposição
     existir, e a FK recusaria a linha. O vínculo vem logo abaixo.
 
-    DECISÃO: A ementa é o que destrava a curadoria (PL11): a DESCRIÇÃO da votação diz o
+    DECISÃO: A ementa é o que destrava a curadoria (Pendência 11): a DESCRIÇÃO da votação diz o
     número do projeto e não diz sobre o que ele é.
 
     ATENÇÃO: Voto fora do de-para é descartado, não inventado. Em volume, o problema
@@ -408,11 +408,11 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
 
     secretas = persistencia.marcar_secretas_de_fato(conexao, "CAMARA")
     if secretas:
-        log.info("  %d votações sem nenhuma posição marcadas como secretas (PL69)", secretas)
+        log.info("  %d votações sem nenhuma posição marcadas como secretas (Pendência 69)", secretas)
 
 
 def _baixar_da_camara(conexao: psycopg.Connection, recurso: str, ano: int):
-    """Baixa um arquivo da Câmara e registra a carga (PL72): devolve o caminho e o id.
+    """Baixa um arquivo da Câmara e registra a carga (Pendência 72): devolve o caminho e o id.
 
     O arquivo também fica guardado em `procedencia/`, com o hash no nome: é o que deixa
     qualquer pessoa refazer a conta a partir do mesmo arquivo.
@@ -424,7 +424,7 @@ def _baixar_da_camara(conexao: psycopg.Connection, recurso: str, ano: int):
 
 
 def _carga_do_arquivo(conexao: psycopg.Connection, fonte: str, url: str, arquivo: Path) -> int:
-    """Registra a carga de um arquivo que já está no cache (PL72) e devolve o id.
+    """Registra a carga de um arquivo que já está no cache (Pendência 72) e devolve o id.
 
     Mesmo papel de `_baixar_da_camara`, para as cargas que baixam em fluxo: o hash sai do
     arquivo, e a cópia vai para `procedencia/` quando cabe em `LIMITE_PARA_GUARDAR`.
@@ -1017,7 +1017,7 @@ def _reconciliar_autores(conexao: psycopg.Connection) -> None:
     apresentou emenda para 2023 ainda na legislatura anterior (a LOA foi votada em
     2022). A ficha já filtra a legislatura corrente, então autoria antiga não polui.
 
-    DECISÃO: O desempate da PL47 — ver `_desempatar` — com quem votou na legislatura em que
+    DECISÃO: O desempate da Pendência 47 — ver `_desempatar` — com quem votou na legislatura em que
     a emenda foi APRESENTADA: a de um ano entra na lei orçamentária votada no ano
     anterior, e o código do autor é de um mandato só (achado #24).
 
@@ -1156,7 +1156,7 @@ def pares_de_resolucao(entradas: list[str]) -> list[tuple[str, str]]:
 
     ## RISCO: O segundo valor é o id NA CÂMARA, não `pessoas.id`
 
-    ATENÇÃO: **Isto mudou em 2026-08-29, depois de o defeito se materializar.** A PL47
+    ATENÇÃO: **Isto mudou em 2026-08-29, depois de o defeito se materializar.** A Pendência 47
     registrava `--resolver 4511=43` para o Allan Garcês. Depois de uma reingestão:
 
     | | |
@@ -1195,7 +1195,7 @@ def pares_de_resolucao(entradas: list[str]) -> list[tuple[str, str]]:
 
 
 def _resolver_a_mao(conexao: psycopg.Connection, entradas: list[str]) -> None:
-    """PL45 — vincula autor de emenda à mão, a saída dos ambíguos.
+    """Pendência 45 — vincula autor de emenda à mão, a saída dos ambíguos.
 
     Dois parlamentares com o mesmo nome de urna não são separáveis por texto: a
     reconciliação automática desiste de propósito e quem decide é uma pessoa. Fica
@@ -1257,7 +1257,7 @@ def _cpf(conexao: psycopg.Connection) -> None:
 
 
 def _rechavear_cpf(conexao: psycopg.Connection) -> None:
-    """PL77 — refaz com a chave atual todo hash de CPF que está no banco.
+    """Pendência 77 — refaz com a chave atual todo hash de CPF que está no banco.
 
     Serve para a troca do SHA-256 sem chave pelo HMAC, e para a rotação da chave. Um hash
     não se converte em outro sem o CPF, então cada tabela é recarregada da fonte:
@@ -1613,7 +1613,7 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
 
 
 def _curar(conexao: psycopg.Connection, casa: str, legislatura: int, limite: int) -> None:
-    """PL11 — reduz o universo às votações que valem leitura humana.
+    """Pendência 11 — reduz o universo às votações que valem leitura humana.
 
     Não grava pergunta nenhuma. A polaridade sugerida é auxílio: atribuí-la
     automaticamente é o erro que este projeto persegue, porque um sinal invertido não
@@ -1670,7 +1670,7 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
 
     Sem a matéria, os votos do Senado não têm assunto nenhum — a ficha do senador
     lista vinte linhas assim, e a curadoria do questionário vira adivinhação. É o mesmo
-    buraco que a PL40 fechou na Câmara.
+    buraco que a Pendência 40 fechou na Câmara.
 
     ## ATENÇÃO: Uma chamada por matéria
 
@@ -1726,7 +1726,7 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
 
 
 def _palavras_chave(conexao: psycopg.Connection, limite: int | None) -> None:
-    """PL70 — busca as palavras-chave das proposições votadas que ainda não as têm.
+    """Pendência 70 — busca as palavras-chave das proposições votadas que ainda não as têm.
 
     Câmara pela API (`keywords`), Senado pela matéria (`IndexacaoMateria`). Uma requisição
     por proposição, com pausa curta, gravando de 100 em 100: interromper no meio não perde o
@@ -1766,7 +1766,7 @@ PAUSA_ENTRE_CNPJS = 0.35
 
 
 def _sedes_brasilapi(conexao: psycopg.Connection, limite: int | None) -> None:
-    """PL71 — a sede dos CNPJs que o cadastro da Receita em bloco não resolveu.
+    """Pendência 71 — a sede dos CNPJs que o cadastro da Receita em bloco não resolveu.
 
     Em lotes de 500: cada lote vira um arquivo JSONL com os quatro campos (sem sócios), uma
     carga com o hash dele e a gravação. Interromper no meio não perde os lotes gravados, e a
@@ -1821,7 +1821,7 @@ def _sedes_brasilapi(conexao: psycopg.Connection, limite: int | None) -> None:
 
 
 def _rotina(conexao: psycopg.Connection, frequencia: str) -> None:
-    """PL64 — roda as etapas da rotina, na ordem, e para na primeira que falhar.
+    """Pendência 64 — roda as etapas da rotina, na ordem, e para na primeira que falhar.
 
     DECISÃO: Parar, e não seguir: depois de uma carga que falhou, o `conferir` julgaria um
     banco pela metade, e a próxima rotina refaz tudo de qualquer jeito. O Coolify mostra a
@@ -1861,7 +1861,7 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
 
 
 def _conferir(conexao: psycopg.Connection) -> None:
-    """PL66 — confere o banco inteiro. Não Escreve nada; falha se alguma regra der ERRO.
+    """Pendência 66 — confere o banco inteiro. Não Escreve nada; falha se alguma regra der ERRO.
 
     DECISÃO: Feito para rodar no fim de toda carga: os 203 senadores da 55ª (achado #37) teriam
     aparecido aqui no dia, não por acaso semanas depois.
@@ -1901,7 +1901,7 @@ def _validar(conexao: psycopg.Connection, legislatura: int, divisao_minima: floa
     ═══ 1b. Desempate dirigido × aleatório ═══
 
     ═══ 2. Comunidade × partido (RF-20 / RQ2) ═══
-    ATENÇÃO: Da CÂMARA e da legislatura validada (PL54): "a mais recente" de qualquer casa
+    ATENÇÃO: Da CÂMARA e da legislatura validada (Pendência 54): "a mais recente" de qualquer casa
     comparava a matriz da Câmara com as comunidades do Senado quando ele rodava por
     último.
     """

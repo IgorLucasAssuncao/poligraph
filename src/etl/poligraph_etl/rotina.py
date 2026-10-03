@@ -1,6 +1,6 @@
-"""ROTINA — a carga agendada (PL64): o que roda toda semana e todo mês, e em que ordem.
+"""ROTINA — a carga agendada (Pendência 64): o que roda toda semana e todo mês, e em que ordem.
 
-Sem ela, a ETL roda à mão, e qualquer "o que mudou" (PL63) seria o que mudou desde a última
+Sem ela, a ETL roda à mão, e qualquer "o que mudou" (Pendência 63) seria o que mudou desde a última
 vez que alguém apertou o botão. Este módulo só DECIDE as etapas; quem as executa é o
 `__main__`, com os mesmos comandos que já existem.
 

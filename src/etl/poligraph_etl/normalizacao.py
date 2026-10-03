@@ -313,7 +313,7 @@ def inferir_polaridade(descricao: str | None) -> int:
     dizer REJEITAR — e o erro não aparece na tela, aparece como um número plausível.
 
     ATENÇÃO: Esta função é AUXÍLIO à curadoria, não substituto dela. O valor final de
-    `pergunta.polaridade` é atribuído por pessoa (PL11).
+    `pergunta.polaridade` é atribuído por pessoa (Pendência 11).
 
     "Mantido o texto" = o destaque supressivo foi REJEITADO.
     Quem votou Sim quis MANTER, ou seja, votou CONTRA a supressão proposta.
@@ -340,7 +340,7 @@ VARIAVEL_DA_CHAVE = "POLIGRAPH_CHAVE_CPF"
 def hash_de_cpf(bruto: str | int | None) -> str | None:
     """HMAC-SHA256 do CPF normalizado, com a chave secreta — é o que vai para o banco.
 
-    RISCO: **SHA-256 sem chave não protege CPF** (PL77, 2026-10-02). Há cerca de 1 bilhão
+    RISCO: **SHA-256 sem chave não protege CPF** (Pendência 77, 2026-10-02). Há cerca de 1 bilhão
     de CPFs; MEDIDO: 0,75 milhão de SHA-256 por segundo num núcleo em Python, 22 minutos
     para todos. Com HMAC, refazer a conta exige a chave, que fica em
     `POLIGRAPH_CHAVE_CPF` — user-secrets do AppHost em desenvolvimento, variável do
@@ -376,7 +376,7 @@ def _chave_do_cpf() -> bytes:
             f"Defina {VARIAVEL_DA_CHAVE} com pelo menos 32 caracteres aleatórios: no "
             "desenvolvimento, `dotnet user-secrets set Parameters:chave-cpf <valor> "
             "--project src/Poligraph.AppHost`; em produção, a variável do contêiner da ETL. "
-            "Sem a chave o CPF não é gravado (PL77)."
+            "Sem a chave o CPF não é gravado (Pendência 77)."
         )
     return chave.encode()
 

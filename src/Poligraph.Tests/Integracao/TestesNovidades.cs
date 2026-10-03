@@ -9,7 +9,7 @@ using Poligraph.Data;
 namespace Poligraph.Tests.Integracao;
 
 /// <summary>
-/// "O que mudou" (PL63): os cinco avisos, cada um na janela do dado. As votações do teste
+/// "O que mudou" (Pendência 63): os cinco avisos, cada um na janela do dado. As votações do teste
 /// ficam em 2030 para a semana ser só delas; o mês fechado é o anterior ao de hoje.
 /// </summary>
 public class TestesNovidades(FixturePostgres postgres) : BaseIntegracao(postgres)

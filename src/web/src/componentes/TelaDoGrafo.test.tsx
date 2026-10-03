@@ -121,7 +121,7 @@ describe('ferramentas sobre o desenho', () => {
  *
  * É o caso do Senado, que não publica orientação.
  *
- * ATENÇÃO: PL43: o SVD saiu da TELA e não do dado. Ele mostrava a mesma divisão que
+ * ATENÇÃO: Pendência 43: o SVD saiu da TELA e não do dado. Ele mostrava a mesma divisão que
  * Alinhamento (−0,87) e exigia um parágrafo para dizer o que o outro diz sozinho.
  *
  * Sem orientação de bancada publicada, o eixo do governismo não teria coordenada.

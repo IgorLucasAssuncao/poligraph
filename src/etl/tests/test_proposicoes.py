@@ -1,4 +1,4 @@
-"""A ementa que destrava a curadoria (PL11).
+"""A ementa que destrava a curadoria (Pendência 11).
 
 ATENÇÃO: Sem ela, quem cura lê só a descrição da votação — que diz o NÚMERO do projeto e não
 diz sobre o que ele é.

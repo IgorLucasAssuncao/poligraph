@@ -38,7 +38,7 @@ Aceita **só esquema + host (+ porta)**. Sem caminho, sem barra no fim:
 
 | Agora | Depois |
 |---|---|
-| Projeto, escopos, `localhost` nas origens, **Client ID em mãos** | Domínio (PL3) e política publicada (PL7) → só então **Publish** |
+| Projeto, escopos, `localhost` nas origens, **Client ID em mãos** | Domínio (Pendência 3) e política publicada (Pendência 7) → só então **Publish** |
 
 ⭐ **Domínio e política bloqueiam a PUBLICAÇÃO, não o desenvolvimento.**
 
@@ -100,10 +100,10 @@ natureza**, e o TCC pode ser divulgado em escola.
 | Leitura | |
 |---|---|
 | A restrição é sobre **público-alvo**, não sobre visitante eventual | O site não é *dirigido* a menores |
-| Mas o risco existe e é seu | Vale conversar com o orientador junto da **PL24** (Comitê de Ética) |
+| Mas o risco existe e é seu | Vale conversar com o orientador junto da **Pendência 24** (Comitê de Ética) |
 | ⭐ Alternativa conservadora | Usar o Clarity **só na avaliação com voluntários maiores de 18**, e não em produção aberta |
 
-🔑 **Isto reabre parcialmente a PL6.** A decisão foi por produção aberta gravando tudo —
+🔑 **Isto reabre parcialmente a Pendência 6.** A decisão foi por produção aberta gravando tudo —
 ela continua válida, mas agora com este fato à vista, que não estava quando foi tomada.
 
 ---

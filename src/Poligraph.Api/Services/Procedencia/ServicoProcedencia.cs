@@ -5,7 +5,7 @@ using Poligraph.Data;
 namespace Poligraph.Api.Services;
 
 /// <summary>
-/// O modo análise (PL73): para um número da tela, os arquivos de onde vieram as linhas que
+/// O modo análise (Pendência 73): para um número da tela, os arquivos de onde vieram as linhas que
 /// entraram nele e a regra da conta.
 /// </summary>
 /// <remarks>
@@ -15,7 +15,7 @@ namespace Poligraph.Api.Services;
 /// do mandato. Um recorte diferente daria arquivos que não entraram na conta.
 /// </para>
 /// <para>
-/// A linha gravada antes da PL72 não tem carga. Ela entra em <c>LinhasSemCarga</c> e a tela diz
+/// A linha gravada antes da Pendência 72 não tem carga. Ela entra em <c>LinhasSemCarga</c> e a tela diz
 /// quantas são: omiti-la faria parecer que todo o número tem procedência.
 /// </para>
 /// </remarks>

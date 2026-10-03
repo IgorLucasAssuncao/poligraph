@@ -1,4 +1,4 @@
-"""PROCEDÊNCIA — a impressão digital de cada arquivo baixado (PL72, plano/10 §2).
+"""PROCEDÊNCIA — a impressão digital de cada arquivo baixado (Pendência 72, plano/10 §2).
 
 Cada arquivo ou resposta de fonte oficial vira uma linha em `cargas`, com a URL exata,
 quando foi baixado, o SHA-256 dos bytes como chegaram e a identificação que o próprio órgão
@@ -130,7 +130,7 @@ def comando() -> str:
 
 
 def versao_do_codigo() -> str:
-    """`etl-` e os 12 primeiros dígitos do SHA-256 dos fontes da ETL (PL73).
+    """`etl-` e os 12 primeiros dígitos do SHA-256 dos fontes da ETL (Pendência 73).
 
     A imagem não leva o repositório, então não há commit para ler. O hash cobre o caminho e
     o conteúdo de cada `.py`, em ordem: muda a cada mudança de código, e não muda por

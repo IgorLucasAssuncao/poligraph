@@ -1,6 +1,6 @@
 # Fluxos dentro das casas — da proposição ao voto, da emenda ao pagamento
 
-> PL78, pedido do autor: "fluxos dentro das casas, porque vou precisar entender tudo isso".
+> Pendência 78, pedido do autor: "fluxos dentro das casas, porque vou precisar entender tudo isso".
 > Cada passo diz **onde aparece na nossa base**, e o que fica de fora dela. Os termos estão
 > no [`glossario.md`](glossario.md); as contagens medidas, lá e em
 > [`04-contratos.md`](04-contratos.md).
@@ -108,7 +108,7 @@ e o comando `orientacoes` da ETL sai sem fazer nada no Senado (`orientacoes.py`)
 | Ausência | Não votou. Na Câmara **não gera linha**; no Senado vem com a sigla do motivo (licença, missão) | Sem linha, ou `presenca` = AUSENTE / AUSENTE_JUSTIFICADO |
 
 ATENÇÃO: o termo "voto com posição" ainda não é usado do mesmo jeito em toda a tela: a ficha
-conta a abstenção, o painel do início não. Ver PL80 em [`PENDENCIAS.md`](PENDENCIAS.md).
+conta a abstenção, o painel do início não. Ver Pendência 80 em [`PENDENCIAS.md`](PENDENCIAS.md).
 
 ---
 
@@ -177,4 +177,4 @@ semelhança de nome seria inventar autoria (ver `ServicoEmendas`).
 | O que o parlamentar fez com o dinheiro do gabinete? | Cota (não é emenda: é verba do mandato) | `despesas` |
 | Para onde mandou o dinheiro do orçamento? | Emenda individual, do empenho ao pagamento | `emendas`, `emendas_favorecidos` |
 | Quem pagou a campanha? | Prestação de contas ao TSE | `receitas_de_campanha` |
-| De que arquivo veio cada linha? | PL72: a carga de cada download | `cargas`, `carga_id` |
+| De que arquivo veio cada linha? | Pendência 72: a carga de cada download | `cargas`, `carga_id` |

@@ -46,7 +46,7 @@ PROPORCAO_MAXIMA_SEM_PARTIDO = 0.01
 # O mesmo corte da ingestão: desde 2004 o código do Senado cresce com a data (#37).
 PRIMEIRO_CODIGO_DE_2004 = 2523
 
-# PL76. MEDIDO em 2026-10-02, eleições de 2018 e 2022: o maior patrimônio declarado na base é
+# Pendência 76. MEDIDO em 2026-10-02, eleições de 2018 e 2022: o maior patrimônio declarado na base é
 # R$ 240 mi, e o percentil 99 fica entre R$ 35 mi e R$ 48 mi. O TSE é autodeclarado, e o
 # "candidato mais rico do Brasil" já foi um bem digitado com dígitos a mais (R$ 12 bi).
 TETO_DE_PATRIMONIO = 500_000_000

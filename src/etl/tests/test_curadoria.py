@@ -1,7 +1,7 @@
 """Seleção de candidatas a pergunta.
 
 O que estes testes protegem: **este módulo não pode gravar pergunta**. Ele ordena e
-instrui; a afirmação em linguagem leiga e a polaridade final são leitura humana (PL11).
+instrui; a afirmação em linguagem leiga e a polaridade final são leitura humana (Pendência 11).
 
 O critério é discriminação: votação em que todos votaram igual não separa ninguém e
 ocuparia uma das 15 a 25 posições do questionário sem devolver informação.

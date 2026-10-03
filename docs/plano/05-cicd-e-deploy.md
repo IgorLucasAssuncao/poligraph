@@ -3,7 +3,7 @@
 > **Status:** v2.2 — 2026-08-26
 > **v2.2:** §2.2.1 — fluxo das migrations decidido: automático fora de produção (com seed),
 > script aplicado DENTRO do VPS em produção, porque o CI não alcança o Postgres.
-> **v2.1:** §2.0 — direção do webhook e a exposição que ela implica (PL22).
+> **v2.1:** §2.0 — direção do webhook e a exposição que ela implica (Pendência 22).
 > 🔄 **Reescrito** para a arquitetura **VPS + Coolify** (a v1 supunha Azure + Cloudflare
 > Pages + Neon). Ver [01-arquitetura §3.5](01-arquitetura.md).
 
@@ -92,7 +92,7 @@ flowchart LR
 
 ⚠️ 🔴 **Os dois correm em PARALELO, não em sequência.** O mesmo push dispara os dois, e o
 Coolify não espera o teste passar. Se quiser portão, ver
-[01-arquitetura §2.1.2](01-arquitetura.md) e a pendência **PL23**.
+[01-arquitetura §2.1.2](01-arquitetura.md) e a pendência **Pendência 23**.
 
 📐 **O desenho completo da hospedagem** — Traefik, containers, portas, TLS —
 está em [01-arquitetura §2.1](01-arquitetura.md).
@@ -172,7 +172,7 @@ expõe é o painel, não o dado.
 🟡 **Alternativa sem exposição alguma:** um job do Actions que entra por SSH e roda
 `docker compose pull && up`. Mas troca *"painel exposto"* por **"chave SSH do servidor
 guardada no GitHub"** — e devolve a você o pipeline de deploy para escrever à mão. Pior nos
-dois eixos. Ver pendência **PL22**.
+dois eixos. Ver pendência **Pendência 22**.
 
 ### 2.1 O que o Coolify faz sozinho
 
@@ -246,7 +246,7 @@ troca zero-downtime, o container antigo ainda serve com o schema novo aplicado.
 
 ### 2.3 O ETL — Scheduled Task do Coolify
 
-> FEITO em 2026-10-02 (PL64): o comando `rotina` decide as etapas e para na primeira
+> FEITO em 2026-10-02 (Pendência 64): o comando `rotina` decide as etapas e para na primeira
 > falha. A versão anterior desta seção citava `python main.py ingest`, que nunca existiu.
 
 | Tarefa | Comando no contêiner | Cron (UTC) | Etapas |
@@ -258,7 +258,7 @@ troca zero-downtime, o container antigo ainda serve com o schema novo aplicado.
 - Dia 5 do mês: a cota e as emendas do mês anterior já começaram a sair. Em janeiro e
   fevereiro a rotina inclui o ano anterior (`rotina.anos_com_dado_novo`).
 - O contêiner da ETL precisa de `ConnectionStrings__poligraph`, de `POLIGRAPH_CHAVE_CPF`
-  (a mesma chave do HMAC do CPF que gerou os hashes do banco, PL77) e de um volume em
+  (a mesma chave do HMAC do CPF que gerou os hashes do banco, Pendência 77) e de um volume em
   `POLIGRAPH_CACHE`, onde ficam os downloads e a pasta `procedencia/`.
 - RISCO: sem a chave, a mensal para na `cota`, que hasheia o fornecedor pessoa física. Com
   uma chave diferente, os hashes novos não casariam com os antigos: rode `rechavear-cpf`.
@@ -393,11 +393,11 @@ pior cenário possível, e são 10 minutos de configuração.
 
 | # | Pendência | Prioridade |
 |---|---|---|
-| ~~PL2~~ | ✅ **Hostinger VPS KVM 2** | — |
-| ~~PL4~~ | ✅ Repositório privado | — |
-| **PL19** | Escolher retenção do Prometheus e configurar | 🟡 Média |
-| **PL20** | Definir o destino do backup do Postgres (S3, Backblaze, outro VPS) | 🔴 Alta |
-| **PL21** | Decidir se o Grafana fica público ou só por VPN/túnel | 🟡 Média |
-| **PL22** | Postura de exposição do painel do Coolify — público com 2FA, allow-list da Cloudflare, ou VPN (§2.0) | 🟡 Média |
-| **PL23** | 🔴 Fazer o CI ser **portão** do deploy (Actions chama a API do Coolify) ou aceitar os dois em paralelo | 🔴 Alta |
-| **PL3** | Registrar domínio | 🟢 Baixa |
+| ~~Pendência 2~~ | ✅ **Hostinger VPS KVM 2** | — |
+| ~~Pendência 4~~ | ✅ Repositório privado | — |
+| **Pendência 19** | Escolher retenção do Prometheus e configurar | 🟡 Média |
+| **Pendência 20** | Definir o destino do backup do Postgres (S3, Backblaze, outro VPS) | 🔴 Alta |
+| **Pendência 21** | Decidir se o Grafana fica público ou só por VPN/túnel | 🟡 Média |
+| **Pendência 22** | Postura de exposição do painel do Coolify — público com 2FA, allow-list da Cloudflare, ou VPN (§2.0) | 🟡 Média |
+| **Pendência 23** | 🔴 Fazer o CI ser **portão** do deploy (Actions chama a API do Coolify) ou aceitar os dois em paralelo | 🔴 Alta |
+| **Pendência 3** | Registrar domínio | 🟢 Baixa |

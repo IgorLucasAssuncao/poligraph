@@ -108,7 +108,7 @@ Com uma legislatura só, as duas coisas coincidiam. Com várias, ⛔ coincidem m
 
 | Onde | O que acontece com outras legislaturas |
 |---|---|
-| `_desempatar` (PL47, regra A) | O homônimo histórico **passa a ter voto**, e os empates que a regra resolvia voltam |
+| `_desempatar` (Pendência 47, regra A) | O homônimo histórico **passa a ter voto**, e os empates que a regra resolvia voltam |
 | `deputados_da_legislatura`, `pessoas_sem_cpf` | Buscam CPF, redes e patrimônio de **todo** deputado com voto, ⛔ só da 57ª |
 | `senadores_da_legislatura` | Idem para o Senado |
 | Notícias (`_noticias`) | Associa notícia de hoje a **ex-parlamentar** homônimo |
@@ -161,7 +161,7 @@ trás: **32** votações nominais de plenário em 2003 e **108** em 2007, contra
 
 | | Estado |
 |---|---|
-| Consultas de execução com casa **e** legislatura (PL54), na API e no `validar` | ✅ |
+| Consultas de execução com casa **e** legislatura (Pendência 54), na API e no `validar` | ✅ |
 | Campo vazio (`NaN`, `None`) em abertura, descrição, partido, UF, nos dois lados | ✅ |
 | Vocabulário supressivo antigo no classificador — 5 votações mudam, 0 da 57ª | ✅ |
 | *"Tem voto"* → *"votou na legislatura corrente"*; CEAPS pelo da legislatura da despesa | ✅ |
@@ -171,7 +171,7 @@ trás: **32** votações nominais de plenário em 2003 e **108** em 2007, contra
 | Ficha com mandatos · grafo com período · lista e busca com quem já saiu | ✅ |
 | Votações e votos de 2001 a 2022, nas duas casas | ✅ no banco de desenvolvimento |
 | Orçamento do governo 2019–2022 | ✅ já estava na base desde 25/09, com as gestões eleitas em 2018 e 2022 |
-| Orçamento 2015–2018 | ⛔ — a gestão de 2014 ⛔ cabe no modelo (§7, PL56). 2014 sozinho ⛔ entra: "todos os anos" somaria 2014 e 2019–2026 pulando o buraco calado |
+| Orçamento 2015–2018 | ⛔ — a gestão de 2014 ⛔ cabe no modelo (§7, Pendência 56). 2014 sozinho ⛔ entra: "todos os anos" somaria 2014 e 2019–2026 pulando o buraco calado |
 | Emendas antes de 2023 | ⛔ — o desempate de autor homônimo usa quem votou na legislatura corrente; para emenda antiga escolheria o homônimo errado. Precisa do desempate pela legislatura da emenda |
 | Financiamento e patrimônio antes de 2018 | ⛔ — o CPF só é buscado para a legislatura corrente, e o arquivo de contas do TSE muda de nome antes de 2018 |
 

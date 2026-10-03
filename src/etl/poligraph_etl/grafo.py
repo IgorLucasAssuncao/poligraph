@@ -50,7 +50,7 @@ class NoDoGrafo:
     eixo_y: float
     n_votacoes: int
 
-    # DECISÃO: PL43: as duas posições convivem. Molas para desenhar, componentes para o eixo
+    # DECISÃO: Pendência 43: as duas posições convivem. Molas para desenhar, componentes para o eixo
     #    interpretável do TCC. A tela escolhe qual mostrar; o banco guarda as duas.
     componente_1: float = 0.0
     componente_2: float = 0.0
@@ -148,7 +148,7 @@ def calcular_nos(
 
 
 # ═══════════════════════════════════════════════════════════════════
-# Componentes principais — o eixo interpretável (PL43)
+# Componentes principais — o eixo interpretável (Pendência 43)
 # ═══════════════════════════════════════════════════════════════════
 
 

@@ -1,4 +1,4 @@
-"""PL72 — a procedência de cada arquivo baixado: o hash, a carga e o `carga_id` nas linhas."""
+"""Pendência 72 — a procedência de cada arquivo baixado: o hash, a carga e o `carga_id` nas linhas."""
 
 import hashlib
 from datetime import datetime, timezone

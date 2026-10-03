@@ -180,7 +180,7 @@ function CabecalhoDoSite() {
  * preta no topo de toda página: o lugar de maior custo da tela para uma informação que
  * se lê uma vez.
  *
- * RISCO: PL35 — a legislatura vem do DADO, nunca de um literal. Escrita à
+ * RISCO: Pendência 35 — a legislatura vem do DADO, nunca de um literal. Escrita à
  * mão aqui, ela continuaria dizendo "57ª" depois de a 58ª entrar na base,
  * e o rodapé creditaria a procedência errada sem nada quebrar.
  *

@@ -1,6 +1,6 @@
 ﻿namespace Poligraph.Data;
 
-/// <summary>PerguntaModel do questionário. Curadoria manual — PL11.</summary>
+/// <summary>PerguntaModel do questionário. Curadoria manual — Pendência 11.</summary>
 public class PerguntaModel
 {
     /// <summary>"q1" — nunca expor o idVotacao ao cidadão.</summary>

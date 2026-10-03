@@ -277,7 +277,7 @@ function Base({ panorama }: { panorama: Panorama }) {
 }
 
 /**
- * ATENÇÃO: PL68 — o painel contava toda votação registrada, e a 51ª da Câmara afirmava
+ * ATENÇÃO: Pendência 68 — o painel contava toda votação registrada, e a 51ª da Câmara afirmava
  * 1.548 com 7 de voto nominal. O número acima é o que o cálculo usa; o resto é
  * dito aqui, não somado calado.
  *

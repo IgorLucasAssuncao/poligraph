@@ -83,9 +83,9 @@ Pela pergunta com que ela chega:
 
 ### 4.1 "O que mudou" — os avisos que substituem as notícias
 
-> ✅ **Decidido pelo autor em 2026-10-02** (PL63): os **cinco avisos** abaixo, numa seção
+> ✅ **Decidido pelo autor em 2026-10-02** (Pendência 63): os **cinco avisos** abaixo, numa seção
 > **"O que mudou" dentro do site**, ⛔ por e-mail. Pré-requisito: a carga agendada
-> (PL64). Esta seção é a especificação: a implementação sai dela.
+> (Pendência 64). Esta seção é a especificação: a implementação sai dela.
 >
 > FEITO em 2026-10-02: `ServicoNovidades` na API e `OQueMudou` no front. Duas escolhas que a
 > especificação deixava abertas: o mês da cota e a competência da emenda são os últimos
@@ -128,7 +128,7 @@ sobre setembro até a última carga. A tela diz a data da carga.
   02/10".
 - Vazio honesto: "Nada novo desde a última atualização, em 02/10." ⛔ "Sem novidades
   hoje": a base ⛔ é de hoje.
-- Sem conta, a seção ⛔ aparece: seguir exige conta (PL65).
+- Sem conta, a seção ⛔ aparece: seguir exige conta (Pendência 65).
 
 #### API
 
@@ -138,7 +138,7 @@ sobre setembro até a última carga. A tela diz a data da carga.
   compartilhado entre usuários. O cache de leitura do site é por chave, e a chave aqui
   seria a lista de alguém.
 
-#### ⚠️ Pré-requisito — a carga agendada (PL64)
+#### ⚠️ Pré-requisito — a carga agendada (Pendência 64)
 
 A ETL roda à mão (botões no painel do Aspire). "O que mudou" sem carga agendada é o que
 mudou desde a última vez que alguém apertou o botão, e a tela afirmaria uma atualidade que
@@ -190,11 +190,11 @@ Quatro tipos, do mais barato ao mais caro:
 | Votantes numa votação ≤ cadeiras (validade) | Câmara: máximo 510 de 513. Senado: **1 votação com 82**, na 56ª | 🔴 investigar |
 | Data da votação dentro da legislatura (consistência) | 0 fora | ✅ |
 | Placar gravado = votos contados, Câmara (consistência) | **13 divergências em 6.048** votações com voto | 🟡 investigar as 13 |
-| Votação sem nenhum voto (completude) | Câmara 51ª: **1.541 de 1.548**. Nas outras: 129 a 546 por legislatura | ✅ PL68: o painel conta só as com voto nominal e diz quantas ficaram de fora |
+| Votação sem nenhum voto (completude) | Câmara 51ª: **1.541 de 1.548**. Nas outras: 129 a 546 por legislatura | ✅ Pendência 68: o painel conta só as com voto nominal e diz quantas ficaram de fora |
 | Partido vazio ou "Sem registro" no voto (completude) | ~0% depois da correção | ✅ |
 | Código do Senado na numeração da data (validade) | 38 fora de época, já descartadas | ✅ virou regra da ingestão |
 
-✅ **Feito em 2026-10-02 (PL66):** `python -m poligraph_etl conferir` — e o botão
+✅ **Feito em 2026-10-02 (Pendência 66):** `python -m poligraph_etl conferir` — e o botão
 `etl-conferir` no Aspire. Só lê; roda as regras para toda casa e legislatura e **falha**
 quando uma regra de ERRO quebra. Regras e limites em `poligraph_etl/conferencia.py`, com
 os casos reais nos testes.
@@ -204,7 +204,7 @@ os casos reais nos testes.
 | Aviso | Quantos | O que é |
 |---|---:|---|
 | `placar-divergente` | 13 | 11 são votação só com presença (abaixo); 2 diferem por um voto (52ª e 53ª) |
-| `sem-posicao-nenhuma` | 11 | Câmara: eleição de autoridade e indicação ("Eleito o Sr. …"), com o voto de cada um ⛔ publicado. **Secreta de fato**, e a base a marca como aberta (PL69) |
+| `sem-posicao-nenhuma` | 11 | Câmara: eleição de autoridade e indicação ("Eleito o Sr. …"), com o voto de cada um ⛔ publicado. **Secreta de fato**, e a base a marca como aberta (Pendência 69) |
 | `votacoes-sem-voto` | 3 | Câmara 51ª (1.541 de 1.548), 52ª (309 de 600) e 54ª (455 de 905) |
 | `votantes-na-votacao` · `senadores-por-uf` | 1 · 1 | SF-5999 (2019-08-14): Tocantins com 4 — titular e suplente no dia da troca. É da fonte |
 
@@ -247,7 +247,7 @@ sessão. As tarefas 1 e 2 ⛔ são possíveis hoje: elas testam exatamente as la
 | 2 | Filtro por estado no resultado (§3) | Maior valor por esforço; dado já na tela |
 | ✅ 3 | Busca nos votos da ficha (§3) | Feito em 2026-10-02 |
 | 4 | Amostra manual (§5.3) | Dá ao TCC a frase "conferido contra a fonte oficial" |
-| 5 | Carga agendada (PL64), depois "O que mudou" (§4.1, decidido) | Substitui as notícias |
+| 5 | Carga agendada (Pendência 64), depois "O que mudou" (§4.1, decidido) | Substitui as notícias |
 | 6 | Teste com 5 pessoas (§5.4) | Valida as quatro acima |
 | 7 | Comparação de dois parlamentares; matriz partido × grupo | Desejável |
 

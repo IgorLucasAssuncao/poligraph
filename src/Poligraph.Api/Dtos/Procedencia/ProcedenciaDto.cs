@@ -3,11 +3,11 @@ using Poligraph.Data;
 namespace Poligraph.Api.Dtos;
 
 /// <summary>
-/// De onde veio um número da tela e como ele foi contado: o que o modo análise mostra (PL73).
+/// De onde veio um número da tela e como ele foi contado: o que o modo análise mostra (Pendência 73).
 /// </summary>
 /// <param name="Regra">A conta em português, com o recorte: casa, legislatura, ano ou eleição.</param>
 /// <param name="Linhas">As linhas do banco que entraram no recorte.</param>
-/// <param name="LinhasSemCarga">As que foram gravadas antes da PL72 e não sabem de que arquivo vieram. A tela diz quantas são, em vez de esconder.</param>
+/// <param name="LinhasSemCarga">As que foram gravadas antes da Pendência 72 e não sabem de que arquivo vieram. A tela diz quantas são, em vez de esconder.</param>
 /// <param name="Cargas">Os arquivos de onde as outras saíram, o de mais linhas primeiro.</param>
 public record ProcedenciaDto(
     string Regra,
@@ -18,7 +18,7 @@ public record ProcedenciaDto(
 /// <summary>Um arquivo baixado de fonte oficial, com a impressão digital do que veio.</summary>
 /// <param name="Orgao">O órgão que publica, por extenso.</param>
 /// <param name="BaseLegal">A norma que obriga o órgão a publicar o dado.</param>
-/// <param name="Versao">A versão da ETL que leu o arquivo: o hash dos fontes dela. Nula nas cargas anteriores à PL73.</param>
+/// <param name="Versao">A versão da ETL que leu o arquivo: o hash dos fontes dela. Nula nas cargas anteriores à Pendência 73.</param>
 /// <param name="Linhas">Quantas linhas do recorte saíram deste arquivo.</param>
 public record CargaDto(
     long Id,

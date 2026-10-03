@@ -18,7 +18,7 @@ public static class ConfiguracaoDeAutenticacao
     /// <para>
     /// Sem persistir as chaves, todo redeploy desloga todo mundo, e o sintoma engana:
     /// funciona local, funciona em produção, e quebra sozinho depois de um deploy que
-    /// não tocou em autenticação. (PL30)
+    /// não tocou em autenticação. (Pendência 30)
     /// </para>
     /// <para>
     /// Os dois <c>OnRedirect</c> respondem 401 e 403 em vez de redirecionar: é uma API,

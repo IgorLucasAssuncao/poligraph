@@ -98,7 +98,7 @@ def test_sem_cpf_tira_o_cpf_do_nome_de_mei(bruto, limpo):
 
 
 def test_o_hash_e_hmac_com_a_chave_e_nao_sha256_puro(monkeypatch):
-    """PL77: SHA-256 sem chave se reverte testando ~1 bilhão de CPFs (22 min medidos)."""
+    """Pendência 77: SHA-256 sem chave se reverte testando ~1 bilhão de CPFs (22 min medidos)."""
     import hashlib
     import hmac
 

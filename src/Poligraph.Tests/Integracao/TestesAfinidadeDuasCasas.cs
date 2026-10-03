@@ -101,7 +101,7 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
     /// <para>
     /// Sem separar, uma pergunta da Câmara mostrava "439 de 747" — os 747 são deputados
     /// mais senadores, e os senadores nunca votaram aquela votação. Número plausível,
-    /// tela intacta: o mesmo formato da PL35.
+    /// tela intacta: o mesmo formato da Pendência 35.
     /// </para>
     /// </summary>
     [SkippableFact]

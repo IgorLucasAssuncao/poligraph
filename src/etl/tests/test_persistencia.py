@@ -30,7 +30,7 @@ from poligraph_etl.similaridade import ParSimilar  # noqa: E402
 #    conseguido falar com o banco de verdade.
 #
 # DECISÃO: `test_contrato_schema.py` agora lê o `PoligraphDb.cs` e trava os NOMES. O que
-#    continua sem proteção aqui são as COLUNAS — ver PL37.
+#    continua sem proteção aqui são as COLUNAS — ver Pendência 37.
 
 
 @pytest.fixture(autouse=True)
@@ -337,7 +337,7 @@ def test_cpf_so_e_buscado_para_a_legislatura_corrente(conexao):
 
 
 def test_desempate_nao_conta_voto_de_legislatura_antiga(conexao):
-    """O homônimo de 2003 também tem voto — e desfaria o desempate da PL47."""
+    """O homônimo de 2003 também tem voto — e desfaria o desempate da Pendência 47."""
     _, atual = _com_historico(conexao)
 
     votantes = {

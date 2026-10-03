@@ -1925,7 +1925,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   font-size: var(--t-1); color: var(--suave);
 }
 
-/* ═══ SELETOR DE LAYOUT (PL43) ═════════════════════════════════ */
+/* ═══ SELETOR DE LAYOUT (Pendência 43) ═════════════════════════════════ */
 /* DECISÃO: Fica na moldura para dar para comparar os dois sem sair da tela. */
 .grafo-layout-botoes button {
   padding: .35rem .7rem;
@@ -2834,7 +2834,7 @@ dialog.tour::backdrop { background: transparent; }
 .convenio-detalhe { margin: 0; font-size: var(--t-1); color: var(--suave); }
 .convenio-valores { margin: 0; display: flex; flex-wrap: wrap; gap: .25rem 1rem; font-family: var(--dado); font-size: var(--t-2); font-variant-numeric: tabular-nums; }
 
-/* ═══ MODO ANÁLISE — PL73 ═══════════════════════════════════════ */
+/* ═══ MODO ANÁLISE — Pendência 73 ═══════════════════════════════════════ */
 /* DECISÃO: Interruptor com trilho, e não um botão comum: o estado precisa ser lido sem
    clicar, e `aria-pressed` diz o mesmo ao leitor de tela. */
 .interruptor-analise {
@@ -2946,7 +2946,7 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 }
 .destaque-do-grafo-conta { font-family: var(--dado); font-size: var(--t-1); color: var(--suave); font-variant-numeric: tabular-nums; }
 
-/* ═══ O QUE MUDOU — PL63 ═══════════════════════════════════════ */
+/* ═══ O QUE MUDOU — Pendência 63 ═══════════════════════════════════════ */
 /* DECISÃO: Uma linha do tempo curta, com a data em mono à esquerda: é o mesmo desenho do
    resto do site para "quando", e o fato fica no texto, sem selo de cor que o qualifique. */
 .lista-novidades { list-style: none; margin: .75rem 0 0; padding: 0; }

@@ -5,7 +5,7 @@ using Poligraph.Data;
 namespace Poligraph.Tests.Integracao;
 
 /// <summary>
-/// PL54 — qual grafo vale para cada tela, quando há mais de uma execução.
+/// Pendência 54 — qual grafo vale para cada tela, quando há mais de uma execução.
 ///
 /// <para>
 /// Os outros testes gravam uma execução só, e por isso "a mais recente" passava. O

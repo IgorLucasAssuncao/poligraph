@@ -14,7 +14,7 @@ public class NoMetricaModel
     /// <summary>
     /// 1ª componente principal (SVD) — o eixo que SIGNIFICA alguma coisa.
     ///
-    /// Convive com `EixoX` de propósito (PL43): molas desenham bem, componentes
+    /// Convive com `EixoX` de propósito (Pendência 43): molas desenham bem, componentes
     /// interpretam. Qual das duas a tela usa é decisão em aberto.
     /// </summary>
     public float? Componente1 { get; set; }

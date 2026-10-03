@@ -6,7 +6,7 @@ using Poligraph.Data;
 namespace Poligraph.Tests.Integracao;
 
 /// <summary>
-/// O modo análise (PL73): os arquivos de onde vieram as linhas de um número, no mesmo
+/// O modo análise (Pendência 73): os arquivos de onde vieram as linhas de um número, no mesmo
 /// recorte da tela.
 /// </summary>
 public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgres)
