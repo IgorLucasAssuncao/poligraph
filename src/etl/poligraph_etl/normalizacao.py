@@ -130,8 +130,14 @@ _CATEGORIAS: list[tuple[str, str]] = [
     ),
     (
         "AUTORIDADE",
+        # MEDIDO: A amostra de 60 votações de plenário (semente 0.2026, A2, 2026-10-03) achou 4
+        #    sabatinas do Senado como SUBSTANTIVA, todas sem "mensagem" nem "indicação":
+        #    "Escolha do Sr. ... para exercer o cargo de Diretor da ANP", "Votação do Sr. ...
+        #    para exercer o cargo de Ministro do STJ", "Ofício nº 1, de 2026 - ... (CNJ)".
         r"indicacao|mensagem|autoridade|embaixador|nomeacao|prisao preventiva"
-        r"|perda do mandato|representacao|decoro",
+        r"|perda do mandato|representacao|decoro"
+        r"|escolha d[oa] (sr|sra|senhor|senhora|dr|dra)\b|votacao d[oa] (sr|sra|senhor|senhora|dr|dra)\b"
+        r"|para exercer o cargo de|\b(oficio|ofs) n",
     ),
 ]
 

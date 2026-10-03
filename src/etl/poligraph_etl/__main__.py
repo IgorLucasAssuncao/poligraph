@@ -14,6 +14,7 @@ import logging
 import os
 import sys
 import time
+from collections import Counter
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -98,6 +99,8 @@ def main(argv: list[str] | None = None) -> int:
                 _fundo(conexao, args.eleicao, args.arquivo)
             elif args.comando == "conferir":
                 _conferir(conexao)
+            elif args.comando == "reclassificar":
+                _reclassificar(conexao)
             elif args.comando == "rotina":
                 _rotina(conexao, args.frequencia)
             elif args.comando == "palavras-chave":
@@ -182,6 +185,10 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
                      help="votações sorteadas por casa e legislatura")
     amo.add_argument("--semente", type=int, default=amostra.SEMENTE_PADRAO,
                      help="a mesma semente sorteia as mesmas votações")
+    sub.add_parser(
+        "reclassificar",
+        help="recalcula a categoria de toda votação pela regra atual e diz o que mudou",
+    )
     rot = sub.add_parser("rotina", help="a carga agendada (Pendência 64): semanal ou mensal, terminando em conferir")
     rot.add_argument("--frequencia", choices=list(rotina.FREQUENCIAS), required=True)
     sub.add_parser(
@@ -1776,6 +1783,37 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
     )
 
     log.info("  %d matérias gravadas, %d votações vinculadas", len(linhas), ligados)
+
+
+def _reclassificar(conexao: psycopg.Connection) -> None:
+    """A2 — aplica a regra de categoria atual a toda votação gravada, sem baixar nada.
+
+    A categoria muda o peso da votação no grafo; depois de mudar, rode `analisar` nas
+    legislaturas que o log lista. Pergunta do questionário que mudasse de categoria
+    derruba o comando: a curadoria escolheu a votação pela categoria antiga.
+    """
+    from .normalizacao import classificar_categoria
+
+    votacoes = conexao.execute("SELECT id, casa, legislatura, categoria, descricao FROM votacoes").fetchall()
+    perguntas = {linha[0] for linha in conexao.execute("SELECT votacao_id FROM perguntas WHERE ativa").fetchall()}
+
+    mudancas = [
+        (id_, casa, legislatura, antiga, nova)
+        for id_, casa, legislatura, antiga, descricao in votacoes
+        if (nova := classificar_categoria(descricao)) != antiga
+    ]
+    afetadas = [m[0] for m in mudancas if m[0] in perguntas]
+    if afetadas:
+        raise RuntimeError(f"A regra nova muda a categoria de perguntas ativas: {afetadas}")
+
+    with conexao.transaction():
+        for id_, _, _, _, nova in mudancas:
+            conexao.execute("UPDATE votacoes SET categoria = %s WHERE id = %s", (nova, id_))
+
+    contagem = Counter((casa, legislatura, antiga, nova) for _, casa, legislatura, antiga, nova in mudancas)
+    log.info("Reclassificar: %d de %d votações mudaram de categoria", len(mudancas), len(votacoes))
+    for (casa, legislatura, antiga, nova), n in sorted(contagem.items()):
+        log.info("  %s %dª: %d de %s para %s", casa, legislatura, n, antiga, nova)
 
 
 def _palavras_chave(conexao: psycopg.Connection, limite: int | None) -> None:

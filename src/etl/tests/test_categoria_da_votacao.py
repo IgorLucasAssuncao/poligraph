@@ -246,3 +246,29 @@ def test_divergencia_com_abertura_nan_nao_estoura():
     votacoes = [{"id": "1", "categoria": "SUBSTANTIVA", "descricao": "x", "abertura": float("nan")}]
 
     assert divergencias_de_destaque(votacoes) == []
+
+
+@pytest.mark.parametrize(
+    "descricao",
+    [
+        "Escolha do Sr. Haroldo Borges Rodrigues Lima para exercer o cargo de Diretor da Agência Nacional do Petróleo - ANP.",
+        "Escolha do Dr. Pedro Paulo Teixeira Manus para compor o Tribunal Superior do Trabalho.",
+        "Votação do Sr. Raul Araújo Filho, para exercer o cargo de Ministro do Superior Tribunal de Justiça.",
+        "Votação nominal do Ofício nº 1, de 2026 - Kátia Magalhães Arruda (CNJ).",
+    ],
+)
+def test_sabatina_do_senado_sem_mensagem_e_autoridade(descricao):
+    """MEDIDO: A2, amostra de 60 votações (2026-10-03): eram SUBSTANTIVA, e 396 no Senado inteiro."""
+    assert classificar_categoria(descricao) == "AUTORIDADE"
+
+
+@pytest.mark.parametrize(
+    "descricao",
+    [
+        "Aprovado o Projeto de Lei nº 2.695, de 2021. Sim: 390; não: 20; abstenção: 1; total: 411.",
+        "Votação da Medida Provisória nº 330, de 2006.",
+        "Votação da PEC 96-A, de 2003 (1º turno).",
+    ],
+)
+def test_regra_de_sabatina_nao_alcanca_o_merito(descricao):
+    assert classificar_categoria(descricao) == "SUBSTANTIVA"

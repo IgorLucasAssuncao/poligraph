@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-10-02 · **122 resolvidas · 52 abertas**
+> **Atualizado:** 2026-10-02 · **125 resolvidas · 49 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -162,9 +162,9 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | 🟢 **Pendência 10** | ✅ **Virou o desenho, ⛔ não experimento** — o desempate dirigido está no ar. Medido: empate mediano 6 (dirigido) contra 14 (fixo) e 16 (sorteado) | 🟢 Baixa | — |
 | ~~Pendência 12~~ | ✅ **Teste do jantar** — entra se dá para discutir num jantar sem explicar a proposta | — | — |
 | 🟢 **CT7** | ✅ **Resolvida (2026-08-29)** — 60%, mas do que é **OFERECIDO** (24), ⛔ não do poço (50). Sobre o poço daria 30 respostas num questionário de 24, e o resultado seria impossível de obter | 🟢 Baixa | — |
-| **Pendência 18** | Usar LLM para rascunhar a reescrita das ementas? | 🟡 Média | — |
-| **A2** | Regex de `categoria`, validadas contra amostra rotulada à mão | 🟡 Média | 🟡 Horas |
-| **A3** | Deduplicação de PEC em dois turnos | 🟡 Média | — |
+| ~~Pendência 18~~ | **Obsoleta (2026-10-03):** as perguntas foram escritas na Pendência 11. Se alguma teve rascunho de LLM, o texto do TCC declara, como pede o plano/03 §3.5.2 | — | — |
+| ✅ ~~A2~~ | **Resolvida (2026-10-03)** — amostra de 60 votações de plenário das duas casas (sorteio com `setseed(0.2026)`), rotulada lendo a descrição. 55 certas, 4 erradas e 1 discutível. As 4 eram sabatinas do Senado sem "mensagem" nem "indicação" na frase ("Escolha do Sr. … para exercer o cargo", "Ofício nº 1, de 2026 - … (CNJ)") e caíam em SUBSTANTIVA, com peso 1 no grafo em vez de 0,3. A regra ganhou esses padrões; o comando novo `reclassificar` aplicou a regra à base: **396** votações do Senado mudaram, nenhuma da Câmara e nenhuma pergunta; os grafos do Senado foram recalculados. A discutível é "subemenda da CCJ à emenda nº 1 à PEC", que ficou SUBSTANTIVA. ATENÇÃO: a rotulagem foi feita na revisão automatizada, e vale o autor conferir as 60 | — | — |
+| ✅ ~~A3~~ | **Resolvida (2026-10-03)** — MEDIDO no poço: das 49 perguntas ativas, só um par é da mesma proposição: `q-correios` (texto da Câmara, mai/2023) e `q-correios-prioridade` (substitutivo do Senado, nov/2023), ambas do PL 6.385/2016. Ficam as duas: o texto votado mudou (de "obrigados a contratar" para "com prioridade"), e 62 dos 328 deputados que votaram nas duas votaram diferente (19%). Regra para a próxima curadoria: uma pergunta por proposição, salvo quando o texto votado mudou | — | — |
 | ~~A4~~ | **Obsoleta (2026-10-03):** o questionário foi montado na Pendência 11, com 49 perguntas ativas no poço | — | — |
 | **Pendência 34** | 🔵 **Adiada por decisão do autor:** gravar as respostas individuais do questionário, SEM vínculo com a conta, para analisar quais perguntas dividem e quais ninguém entende (§ abaixo) | 🔵 Futuro | — |
 | ~~API4~~ | ✅ **Resolvida** — cosseno no grafo, concordância simples na tela (plano/07 §4.5) | — | — |
