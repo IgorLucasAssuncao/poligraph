@@ -52,11 +52,31 @@ RISCO: é o tipo de erro que o projeto já pagou caro: um número plausível, se
 tela. Quem comparar 2016 com 2020 veria o dinheiro de emenda multiplicar, quando o que
 mudou foi a identificação do autor.
 
+## Dá para achar o autor por outro caminho? (medido em 2026-10-02)
+
+Dentro do arquivo do Portal, não: a linha `S/I` não tem nem código de emenda ("Sem
+informação"), e só 2 das 17.810 têm ação, plano orçamentário e localidade iguais aos de uma
+emenda com autor. O SIOP, sistema de orçamento do governo, também não tem o autor de 2014.
+Por tipo, a resposta muda:
+
+| Tipo | Valor | Caminho | Resultado |
+|---|---:|---|---|
+| **Bancada** (2016–2020) | R$ 6,60 bi | A UF da linha diz de qual bancada estadual é | Validado nas 2.279 emendas de bancada **com** autor e UF: a UF bate com a da bancada em **97,1%** das linhas (97,6% do valor). As exceções são repasses a entidade nacional registrados em "São Paulo (UF)". O autor é a bancada, não uma pessoa |
+| **Individual de 2014** | R$ 6,09 bi | A relação de emendas individuais aprovadas da CMO (PDF do relatório final, 7.787 emendas e 592 autores, extraídas) cruzada por ação e localidade | Validado em 2015, onde o Portal tem o autor: o código do Portal está no PDF em 99,4% dos casos, e quando ação e localidade dão **um autor só**, ele é o certo em **95,5%** das linhas (94,4% do valor). Em 2014 isso cobre **1.322 linhas e R$ 0,96 bi (16%)**; o resto tem vários autores possíveis (R$ 1,52 bi) ou nenhum casamento exato (R$ 3,61 bi). Por ação e UF quase tudo casa, mas 94% com mais de um autor |
+| **Relator** (2016–2020) | R$ 20,38 bi | O autor formal é o relator-geral daquele orçamento | Atribuir ao relator-geral diria que ele escolheu o destino, e não escolheu: a emenda de relator acolhia pedidos de muitos parlamentares sem registrar quais. Para 2020 em diante, depois do STF (ADPF 850), o Congresso publicou listas de quem indicou; para 2016–2017, não há |
+| **Comissão** (`-99`) | R$ 2,56 bi | Nenhum campo diz qual comissão | Não dá |
+
+ATENÇÃO: 95,5% de acerto ainda é 1 erro em 22. Uma emenda de 2014 atribuída por este caminho
+precisaria dizer na ficha que a autoria foi inferida pelo relatório da CMO, e não publicada
+pelo Portal.
+
 ## O que decidir (Pendência 81)
 
 | Opção | Efeito |
 |---|---|
 | Gravar a linha sem autor, com `pessoa_id` nulo e o tipo de emenda | Os totais do país voltam a ser os do Portal; a ficha não muda. É o que a carga já faz com emenda de bancada e de comissão |
+| Gravar a de bancada como da bancada da UF | 97,1% de acerto medido; nenhuma pessoa recebe autoria |
+| Atribuir a individual de 2014 com autor único pela CMO | R$ 0,96 bi, 95,5% de acerto medido em 2015; marcada como autoria inferida |
 | Manter o descarte e dizer na tela | "Em 2016, R$ 18,7 bi de emendas não têm autor identificado no Portal e não entram nesta soma" |
 
 O descarte existia para pegar código **incoerente** por erro de leitura, e cumpriu: em
