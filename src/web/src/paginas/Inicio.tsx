@@ -209,7 +209,7 @@ function GrafoDaAberturaComponent({ legislatura }: { legislatura?: number }) {
   if (grafo === 'vazio') {
     return legislatura ? (
       <section className="painel-secao">
-        <h2>Como a Câmara se agrupa</h2>
+        <h2>Quem vota com quem na Câmara</h2>
         <p className="vazio">
           Não há grafo da Câmara em {periodoDaLegislatura(legislatura)}: as votações
           abertas eram poucas para comparar quem vota com quem.
@@ -221,7 +221,7 @@ function GrafoDaAberturaComponent({ legislatura }: { legislatura?: number }) {
   return (
     <section className="painel-secao" ref={marco}>
       <h2>
-        Como a Câmara se agrupa
+        Quem vota com quem na Câmara
         {grafo && <small>{periodoDaLegislatura(grafo.legislatura)}</small>}
       </h2>
       {grafo ? (
