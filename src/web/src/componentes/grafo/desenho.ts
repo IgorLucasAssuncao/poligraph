@@ -86,6 +86,8 @@ export type Quadro = {
   eixos: RotulosDoEixo | null;
   /** Repinta quando uma foto termina de baixar. */
   aoChegarFoto: () => void;
+  /** Falso de longe: só as ligações do nó em foco são desenhadas. Ausente vale verdadeiro. */
+  ligacoesAVista?: boolean;
 };
 
 /** O raio em pixel de um nó — cresce com o zoom e com o grau, entre limites. */
@@ -240,6 +242,9 @@ function desenharArestas(
     const a = quadro.porId.get(aresta.de);
     const b = quadro.porId.get(aresta.para);
     if (!a || !b) continue;
+
+    const doFoco = quadro.emFoco !== null && (aresta.de === quadro.emFoco.id || aresta.para === quadro.emFoco.id);
+    if (quadro.ligacoesAVista === false && !doFoco) continue;
 
     const naVizinhanca =
       !quadro.vizinhos ||

@@ -150,12 +150,12 @@ describe('painel de ajustes', () => {
     );
   });
 
-  it('o filtro de ligações mostra quantas sobraram', async () => {
+  it('o filtro de ligações abre no quarto mais forte e mostra quantas sobraram', async () => {
     const usuario = userEvent.setup();
     render(<TelaDoGrafoComponent grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
-    expect(screen.getByText('2 de 2')).toBeInTheDocument();
+    expect(screen.getByText('1 de 2')).toBeInTheDocument();
   });
 
   it('RISCO: a ressalva do layout escolhido fica junto do seletor', async () => {

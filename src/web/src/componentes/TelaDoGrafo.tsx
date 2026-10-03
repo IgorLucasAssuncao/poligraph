@@ -277,7 +277,8 @@ export function TelaDoGrafoComponent({
   const [movidos, setMovidos] = useState<Map<number, { x: number; y: number }>>(new Map());
 
   const [camera, setCamera] = useState<Camera>({ escala: 1, x: 0, y: 0 });
-  const [limiar, setLimiar] = useState(0);
+  const cameraAutomatica = useRef<Camera | null>(null);
+  const [limiar, setLimiar] = useState(() => limiarInicial(grafo.arestas));
   const [alvo, setAlvo] = useState<Alvo | null>(null);
   const [fixado, setFixado] = useState<NoDoGrafo | null>(null);
 
@@ -317,27 +318,30 @@ export function TelaDoGrafoComponent({
 
   const porId = useMemo(() => new Map(posicionados.map((n) => [n.id, n])), [posicionados]);
 
+  useEffect(() => setLimiar(limiarInicial(grafo.arestas)), [grafo.arestas]);
+
   const arestasDoLimiar = useMemo(
     () => grafo.arestas.filter((a) => a.peso >= limiar),
     [grafo.arestas, limiar],
   );
 
-  const visiveis = useMemo(() => {
-    if (!isolado) return arestasDoLimiar;
+  const emFoco = isolado ?? fixado ?? (alvo?.tipo === 'no' ? alvo.no : null);
 
-    return arestasDoLimiar.filter((a) => a.de === isolado.id || a.para === isolado.id);
-  }, [arestasDoLimiar, isolado]);
+  const visiveis = useMemo(() => {
+    if (!emFoco) return arestasDoLimiar;
+    const doFoco = grafo.arestas.filter((a) => a.de === emFoco.id || a.para === emFoco.id);
+    if (isolado) return doFoco;
+    return [...new Set([...arestasDoLimiar, ...doFoco])];
+  }, [arestasDoLimiar, grafo.arestas, emFoco, isolado]);
 
   const graus = useMemo(() => {
     const contagem = new Map<number, number>();
-    for (const a of visiveis) {
+    for (const a of grafo.arestas) {
       contagem.set(a.de, (contagem.get(a.de) ?? 0) + 1);
       contagem.set(a.para, (contagem.get(a.para) ?? 0) + 1);
     }
     return contagem;
-  }, [visiveis]);
-
-  const emFoco = isolado ?? fixado ?? (alvo?.tipo === 'no' ? alvo.no : null);
+  }, [grafo.arestas]);
 
   const vizinhos = useMemo(() => {
     if (!emFoco) return null;
@@ -432,6 +436,7 @@ export function TelaDoGrafoComponent({
       comFotos,
       eixos,
       aoChegarFoto: repintar,
+      ligacoesAVista: ligacoesAVista(camera, cameraAutomatica.current),
     }),
     [noDesenho, visiveis, porId, graus, alvo, emFoco, vizinhos, realcados, cidadao, camera,
      comFotos, eixos, repintar],
@@ -517,7 +522,6 @@ export function TelaDoGrafoComponent({
     return enquadrarMiolo(base.map((n) => ({ x: n.eixoX!, y: n.eixoY! })), tamanho);
   }, [posicionados, ligados, tamanho]);
 
-  const cameraAutomatica = useRef<Camera | null>(null);
   useEffect(() => {
     const nova = vistaInicial();
     const anterior = cameraAutomatica.current;
@@ -562,6 +566,11 @@ export function TelaDoGrafoComponent({
   return (
     <div className="grafo">
       <div className="grafo-tela" data-tour="grafo-desenho">
+        {!quadro.ligacoesAVista && !emFoco && grafo.arestas.length > 0 && (
+          <p className="grafo-dica-ligacoes">
+            Aproxime, ou passe o mouse sobre um ponto, para ver as ligações
+          </p>
+        )}
         {avisoDaRoda && (
           <p className="grafo-aviso-roda" role="status">
             Use Ctrl + roda do mouse para aproximar
@@ -592,7 +601,7 @@ export function TelaDoGrafoComponent({
           tabIndex={0}
           role="img"
           aria-label={
-            `Grafo de ${noDesenho.length} parlamentares e ${visiveis.length} ligações. `
+            `Grafo de ${noDesenho.length} parlamentares e ${grafo.arestas.length} ligações, ${visiveis.length} à vista. `
             + 'Use as setas para mover, mais e menos para aproximar, zero para enquadrar. '
             + 'A lista logo abaixo traz a mesma informação em texto.'
           }
@@ -786,7 +795,7 @@ export function TelaDoGrafoComponent({
         )}
       </div>
 
-      <ListaDoGrafoComponent nos={noDesenho} arestas={visiveis} aoSelecionar={irPara} />
+      <ListaDoGrafoComponent nos={noDesenho} arestas={isolado ? visiveis : grafo.arestas} aoSelecionar={irPara} />
     </div>
   );
 
@@ -1150,4 +1159,27 @@ function meioDaAresta(
   const pb = paraTela(b.eixoX!, b.eixoY!, t, c);
 
   return { x: (pa.x + pb.x) / 2, y: (pa.y + pb.y) / 2 };
+}
+
+/**
+ * Opção 2 do levantamento das arestas (2026-10-03, decisão do autor): o grafo abre mostrando só o
+ * quarto mais forte das ligações. Com as 5.269 da Câmara à vista, a nuvem virava um borrão cinza.
+ * O controle "Só ligações mais fortes" continua ajustando, e diz quantas estão à vista.
+ */
+function limiarInicial(arestas: readonly { peso: number }[]): number {
+  if (arestas.length === 0) return 0;
+  const pesos = arestas.map((a) => a.peso).sort((a, b) => a - b);
+  const quartoDeCima = pesos[Math.floor(pesos.length * 0.75)];
+  return Math.floor(quartoDeCima * 20) / 20;
+}
+
+/** Quanto é preciso aproximar, em relação à abertura, para as ligações aparecerem. */
+const ZOOM_PARA_LIGACOES = 1.6;
+
+/**
+ * Opção 1 do levantamento (2026-10-03): de longe, só os pontos e as cores dos grupos; as ligações
+ * aparecem ao aproximar, e as de um parlamentar quando o mouse passa sobre ele.
+ */
+function ligacoesAVista(camera: Camera, abertura: Camera | null): boolean {
+  return abertura === null || camera.escala >= abertura.escala * ZOOM_PARA_LIGACOES;
 }

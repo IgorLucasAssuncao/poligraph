@@ -3055,3 +3055,11 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 .fluxo-sem-destino text, .fluxo-outros text, .fluxo-sem-autor text { fill: var(--suave); font-style: italic; }
 .fluxo-clicavel { cursor: pointer; }
 .fluxo-clicavel:hover text { fill: var(--realce); text-decoration: underline; }
+
+/* Opção 1 das arestas (2026-10-03): de longe só os pontos; a dica diz como ver as ligações. */
+.grafo-dica-ligacoes {
+  position: absolute; left: 50%; bottom: .75rem; transform: translateX(-50%); z-index: 3; margin: 0;
+  padding: .3rem .7rem; border-radius: var(--raio);
+  background: color-mix(in srgb, var(--fundo) 88%, transparent); border: 1px solid var(--borda);
+  font-size: var(--t-1); color: var(--suave); pointer-events: none; white-space: nowrap;
+}
