@@ -301,7 +301,7 @@ function EncerramentoComponent({
       <h2>Pronto</h2>
       <p className="ajuda">
         Você opinou em <strong>{opinadas}</strong> de {total} afirmações. Agora vamos
-        comparar com o voto registrado de cada deputado.
+        comparar com o voto registrado de cada deputado e senador.
       </p>
 
       {erro && <p className="erro">{erro}</p>}

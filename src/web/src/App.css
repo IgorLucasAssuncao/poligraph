@@ -1036,7 +1036,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 
 /* ═══ DOCUMENTO PÚBLICO (sem sessão) ═══════════════════════════ */
-.documento-publico { max-width: 44rem; margin: 0 auto; padding: 0 1.25rem 3rem; }
+.documento-publico { width: 100%; max-width: 44rem; min-width: 0; box-sizing: border-box; margin: 0 auto; padding: 0 1.25rem 3rem; }
 .cabecalho-publico { padding: 1rem 0; border-bottom: 1px solid var(--borda); }
 .cabecalho-publico .marca-link { display: inline-flex; padding: .4rem .75rem; }
 
@@ -3050,7 +3050,8 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
   position: absolute; left: 50%; bottom: .75rem; transform: translateX(-50%); z-index: 3; margin: 0;
   padding: .3rem .7rem; border-radius: var(--raio);
   background: color-mix(in srgb, var(--fundo) 88%, transparent); border: 1px solid var(--borda);
-  font-size: var(--t-1); color: var(--suave); pointer-events: none; white-space: nowrap;
+  font-size: var(--t-1); color: var(--suave); pointer-events: none;
+  width: max-content; max-width: min(60%, 24rem); text-align: center;
 }
 
 /* ═══ GRAFO DO DINHEIRO, na aba Emendas da ficha (Pendência 83) ═══

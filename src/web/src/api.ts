@@ -230,10 +230,10 @@ export type ResultadoAfinidade = {
  */
 export const NOME_DA_CASA: Record<
   Casa,
-  { nome: string; plural: string; singular: string }
+  { nome: string; /** O nome com a preposição: "da Câmara dos Deputados", "do Senado Federal". */ doNome: string; plural: string; singular: string }
 > = {
-  CAMARA: { nome: 'Câmara dos Deputados', plural: 'deputados', singular: 'deputado' },
-  SENADO: { nome: 'Senado Federal', plural: 'senadores', singular: 'senador' },
+  CAMARA: { nome: 'Câmara dos Deputados', doNome: 'da Câmara dos Deputados', plural: 'deputados', singular: 'deputado' },
+  SENADO: { nome: 'Senado Federal', doNome: 'do Senado Federal', plural: 'senadores', singular: 'senador' },
 };
 
 /** A API pediu o consentimento de seguir (428). */

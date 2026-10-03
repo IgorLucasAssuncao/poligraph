@@ -201,7 +201,7 @@ function SecaoDaCasaComponent({
       </p>
 
       <p className="fonte-dado">
-        Fonte: registro nominal de votação da {NOME_DA_CASA[casa.casa].nome}. Cada pergunta
+        Fonte: registro nominal de votação {NOME_DA_CASA[casa.casa].doNome}. Cada pergunta
         corresponde a uma votação em plenário.{' '}
         <LinkDeFonteComponent href={casa.casa === 'SENADO' ? FONTES.senado.url : FONTES.camara.url}>
           Dados abertos da casa
