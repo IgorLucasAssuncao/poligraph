@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { NOME_DA_CASA, obterPanorama, type Panorama } from '../api';
 import { BotaoGoogleComponent } from '../componentes/BotaoGoogle';
 import { MarcaComponent } from '../componentes/Icones';
 import { SeletorDeTemaComponent } from '../componentes/SeletorDeTema';
 import { useSessao } from '../sessao';
 import { destinoSeguro } from '../componentes/useEntrar';
+import { TEXTOS_DA_CONTA } from '../textos/conta';
+
+const T = TEXTOS_DA_CONTA.login;
 
 /**
  * Porta de entrada.
@@ -59,43 +62,30 @@ export function LoginComponent() {
           <SeletorDeTemaComponent />
         </div>
 
-        <h1 className="login-titulo">Quem vota como você?</h1>
+        <h1 className="login-titulo">{T.titulo}</h1>
 
-        <p className="login-chamada">
-          Compare sua posição com o <strong>voto registrado em plenário</strong> de
-          deputados e senadores, votação por votação.
-        </p>
+        <p className="login-chamada">{T.chamada}</p>
 
         <div className="acao-login">
           <BotaoGoogleComponent aoEntrar={entrou} />
         </div>
 
         {leituraPublica && (
-          <p className="login-opcional">
-            A conta serve para <strong>seguir parlamentares</strong>. O questionário e
-            todos os dados funcionam sem ela. <Link to={voltar}>Continuar sem conta</Link>
-          </p>
+          <p className="login-opcional">{T.opcional(voltar)}</p>
         )}
 
         {panorama && panorama.porCasa.length > 0 && <BaseComponent panorama={panorama} />}
 
         <ul className="o-que-tem">
-          <li>Um questionário montado a partir de votações nominais reais</li>
-          <li>O perfil de cada parlamentar, com histórico de votos e gastos do mandato</li>
-          <li>O desenho de quem vota parecido com quem</li>
+          {T.oQueTem.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
         </ul>
 
-        <p className="aviso-privacidade">
-          Ao entrar, guardamos seu nome, e-mail e foto do Google, e a lista de quem você
-          seguir. <strong>A lista de quem você segue indica posição política</strong> e é
-          tratada como dado sensível. Você pode apagar tudo a qualquer momento.{' '}
-          <Link to="/privacidade">Política de privacidade</Link>
-          {' · '}
-          <Link to="/metodologia">Como calculamos</Link>
-        </p>
+        <p className="aviso-privacidade">{T.privacidade}</p>
 
         <p className="aviso-academico">
-          <strong>Não é recomendação de voto.</strong>
+          <strong>{T.naoERecomendacao}</strong>
         </p>
       </div>
     </div>
@@ -116,10 +106,7 @@ function BaseComponent({ panorama }: { panorama: Panorama }) {
         <div key={casa.casa}>
           <dt>{NOME_DA_CASA[casa.casa].plural}</dt>
           <dd>{casa.parlamentares.toLocaleString('pt-BR')}</dd>
-          <small>
-            {casa.votosComPosicao.toLocaleString('pt-BR')} votos em{' '}
-            {casa.votacoes.toLocaleString('pt-BR')} votações
-          </small>
+          <small>{T.base(casa.votosComPosicao.toLocaleString('pt-BR'), casa.votacoes.toLocaleString('pt-BR'))}</small>
         </div>
       ))}
     </dl>

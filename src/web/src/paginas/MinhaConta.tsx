@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { excluirConta, revogarConsentimentoDeSeguir } from '../api';
 import { AvatarComponent } from '../componentes/Avatar';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { useSessao } from '../sessao';
+import { TEXTOS_DA_CONTA } from '../textos/conta';
+
+const T = TEXTOS_DA_CONTA.conta;
 
 /**
  * As operações que a pessoa precisa ter sobre a própria conta.
@@ -21,68 +23,59 @@ export function MinhaContaComponent() {
 
   return (
     <>
-      <CabecalhoDaColunaComponent titulo="Conta" />
+      <CabecalhoDaColunaComponent titulo={T.titulo} />
 
       <section className="conta-identidade">
         <AvatarComponent nome={usuario?.nome ?? '?'} fotoUrl={usuario?.fotoUrl} tamanho="grande" />
         <div>
-          <strong>{usuario?.nome ?? 'Sem nome'}</strong>
-          <p className="ajuda">Entrada feita com a sua conta Google.</p>
+          <strong>{usuario?.nome ?? T.semNome}</strong>
+          <p className="ajuda">{T.entradaGoogle}</p>
         </div>
       </section>
 
       <section className="conta-secao">
-        <h2>Sessão</h2>
+        <h2>{T.sessao}</h2>
         <button type="button" className="botao-secundario" onClick={sair}>
-          Sair deste aparelho
+          {T.sair}
         </button>
       </section>
 
       <section className="conta-secao">
-        <h2>Seus dados</h2>
-        <p className="ajuda">
-          Guardamos seu nome, e-mail e foto do Google, e a lista de quem você segue.{' '}
-          <Link to="/privacidade">Veja o detalhe</Link>.
-        </p>
+        <h2>{T.seusDados}</h2>
+        <p className="ajuda">{T.guardamos}</p>
 
-        <p className="ajuda">
-          Revogar o consentimento de seguir apaga a lista de quem você segue. Para seguir de
-          novo, o site pede o consentimento outra vez.
-        </p>
+        <p className="ajuda">{T.revogarAjuda}</p>
         {revogado ? (
-          <p className="ajuda">Consentimento revogado. A lista foi apagada.</p>
+          <p className="ajuda">{T.revogado}</p>
         ) : (
           <button type="button" className="botao-secundario" onClick={revogar}>
-            Revogar o consentimento de seguir
+            {T.revogar}
           </button>
         )}
 
         {!confirmando ? (
           <button type="button" className="botao-perigo" onClick={() => setConfirmando(true)}>
-            Apagar minha conta
+            {T.apagar}
           </button>
         ) : (
           <div className="confirmacao">
-            <p>
-              <strong>Isto apaga tudo:</strong> sua conta, a lista de quem você segue e seus
-              consentimentos. Não dá para desfazer.
-            </p>
+            <p>{T.confirmacao}</p>
             <div className="confirmacao-acoes">
               <button type="button" className="botao-perigo" onClick={apagar}>
-                Apagar definitivamente
+                {T.apagarDefinitivamente}
               </button>
               <button
                 type="button"
                 className="botao-secundario"
                 onClick={() => setConfirmando(false)}
               >
-                Cancelar
+                {T.cancelar}
               </button>
             </div>
           </div>
         )}
 
-        {erro && <p className="erro">Não foi possível concluir agora. Tente de novo.</p>}
+        {erro && <p className="erro">{T.erro}</p>}
       </section>
     </>
   );
