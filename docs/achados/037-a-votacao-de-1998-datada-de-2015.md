@@ -101,3 +101,20 @@ conhecidos, com ligações, com grupos. Ele só ficou visível quando duas legis
 apareceram lado a lado, e 203 destoou de 104. É a regra metodológica do projeto mais uma
 vez: **medir um ano e generalizar**. O `/votacao` foi validado em 2023–2026 e confiado
 para 2001–2022.
+
+## A lacuna de 2015–2016 está no acervo, não num endpoint (PL58)
+
+**Medido em 2026-10-02.** Depois do descarte, o Senado fica com 0 votações em 2015 e 6 em
+2016. Procurei os mesmos anos nos outros serviços de dados abertos do Senado:
+
+| Serviço | O que devolve para 2015–2016 |
+|---|---|
+| `/votacao?dataInicio&dataFim` (o que a ETL usa) | 17 e 13 registros, todos de 1998–1999 menos 6 de 2016 |
+| `/plenario/lista/votacao/{data}` (antigo, descontinuado em 2026-02-01 mas ainda no ar) | Nada em 26/05/2015 (MP 665) nem em 31/08/2016 (julgamento final do impeachment); em 11/05/2016, só a admissibilidade, código 5.560, que a base já tem |
+| `/senador/{codigo}/votacoes` (histórico do senador) | Randolfe Rodrigues, senador desde 2011: 172 votações em 2011, 79 em 2014, **0 em 2015, 6 em 2016**, 138 em 2017 |
+
+Os três leem o mesmo acervo, e o buraco é o mesmo. Uma fonte estruturada para esses anos não
+existe nos dados abertos do Senado. Sobram as não estruturadas: as listagens de votação
+publicadas no Diário do Senado Federal (PDF) e as páginas de cada matéria. Recuperar ~230
+votações por elas é trabalho de extração à mão, e a decisão de fazê-lo é do autor.
+
