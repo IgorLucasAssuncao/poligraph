@@ -22,7 +22,7 @@ import { BarraDePeriodoComponent } from '../componentes/BarraDePeriodo';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { dataCurta, periodoDaLegislatura } from '../formato';
 import { PainelComponent } from '../componentes/Painel';
-import { TermoComponent } from '../componentes/Termo';
+import { TEXTOS_DO_INICIO as T } from '../textos/inicio';
 
 /**
  * A porta de entrada.
@@ -87,28 +87,22 @@ export function InicioComponent() {
     <div className="painel-com-trilho">
       <div className="painel">
         <section className="painel-abertura">
-          <h1>Quem vota como você</h1>
+          <h1>{T.titulo}</h1>
 
           <p>
-            A afinidade sai do <strong>voto registrado em plenário</strong> de cada
-            parlamentar.
-            {panorama && panorama.perguntasNoQuestionario > 0 ? (
-              <>
-                {' '}Você responde <strong>{panorama.perguntasNoQuestionario} perguntas</strong>,
-                escolhidas entre {panorama.perguntasAtivas} votações nominais reais
-                {corrente ? ` da ${corrente}ª legislatura` : ''}.
-              </>
-            ) : (
-              ' Cada pergunta do questionário vem de uma votação nominal real.'
+            {T.abertura(
+              panorama && panorama.perguntasNoQuestionario > 0 ? panorama.perguntasNoQuestionario : null,
+              panorama?.perguntasAtivas ?? 0,
+              corrente,
             )}
           </p>
 
           <div className="painel-acoes" data-tour="comecar">
             <Link to="/resultado" className="botao-destaque">
-              Compare seu voto
+              {T.compare}
             </Link>
             <Link to="/parlamentares" className="botao-secundario">
-              Ver os parlamentares
+              {T.verParlamentares}
             </Link>
           </div>
         </section>
@@ -118,7 +112,7 @@ export function InicioComponent() {
         {panorama ? (
           <BaseComponent panorama={panorama} />
         ) : (
-          <EsqueletoDePainelComponent rotulo="Carregando o tamanho da base" cartoes={2} alturaDoGrafico={0} />
+          <EsqueletoDePainelComponent rotulo={T.carregandoABase} cartoes={2} alturaDoGrafico={0} />
         )}
 
         <GrafoDaAberturaComponent legislatura={legislatura} />
@@ -127,7 +121,7 @@ export function InicioComponent() {
 
         {seguidos.length > 0 && (
           <section className="painel-secao">
-            <h2>Quem você segue</h2>
+            <h2>{T.quemVoceSegue}</h2>
             {seguidos.slice(0, 5).map((p) => (
               <LinhaParlamentarComponent
                 key={p.id}
@@ -141,10 +135,7 @@ export function InicioComponent() {
               />
             ))}
 
-            <p className="nota-privacidade">
-              Esta lista indica sua posição política e é tratada como dado sensível. Ela
-              não é compartilhada com ninguém. <Link to="/conta">Como apagar tudo</Link>
-            </p>
+            <p className="nota-privacidade">{T.privacidade}</p>
           </section>
         )}
 
@@ -209,11 +200,8 @@ function GrafoDaAberturaComponent({ legislatura }: { legislatura?: number }) {
   if (grafo === 'vazio') {
     return legislatura ? (
       <section className="painel-secao">
-        <h2>Quem vota com quem na Câmara</h2>
-        <p className="vazio">
-          Não há grafo da Câmara em {periodoDaLegislatura(legislatura)}: as votações
-          abertas eram poucas para comparar quem vota com quem.
-        </p>
+        <h2>{T.grafo.titulo}</h2>
+        <p className="vazio">{T.grafo.semGrafo(periodoDaLegislatura(legislatura))}</p>
       </section>
     ) : null;
   }
@@ -221,7 +209,7 @@ function GrafoDaAberturaComponent({ legislatura }: { legislatura?: number }) {
   return (
     <section className="painel-secao" ref={marco}>
       <h2>
-        Quem vota com quem na Câmara
+        {T.grafo.titulo}
         {grafo && <small>{periodoDaLegislatura(grafo.legislatura)}</small>}
       </h2>
       {grafo ? (
@@ -236,7 +224,7 @@ function GrafoDaAberturaComponent({ legislatura }: { legislatura?: number }) {
         to={`/parlamentares?vista=grafo${legislatura ? `&legislatura=${legislatura}` : ''}`}
         className="painel-mais"
       >
-        Abrir o grafo completo
+        {T.grafo.abrir}
       </Link>
     </section>
   );
@@ -254,10 +242,7 @@ function BaseComponent({ panorama }: { panorama: Panorama }) {
   if (panorama.porCasa.length === 0) {
     return (
       <section className="painel-secao">
-        <p className="vazio">
-          A base ainda não foi ingerida. Os números aparecem depois da primeira execução
-          do ETL.
-        </p>
+        <p className="vazio">{T.base.vazio}</p>
       </section>
     );
   }
@@ -265,7 +250,7 @@ function BaseComponent({ panorama }: { panorama: Panorama }) {
   return (
     <section className="painel-secao">
       <h2>
-        A base{' '}
+        {T.base.titulo}{' '}
         {panorama.legislatura && <small>{periodoDaLegislatura(panorama.legislatura)}</small>}
       </h2>
 
@@ -300,43 +285,38 @@ function CartaoDaCasaComponent({ casa, legislatura }: { casa: PanoramaDaCasa; le
           <dd>{casa.parlamentares.toLocaleString('pt-BR')}</dd>
         </div>
         <div>
-          <dt>votações de plenário</dt>
+          <dt>{T.base.votacoes}</dt>
           <dd>
             <ComProcedenciaComponent
               consulta={{ contexto: 'painel', casa: casa.casa, legislatura }}
-              rotulo={`Votações · ${nome.nome}`}
+              rotulo={T.base.rotuloDaProcedencia(nome.nome)}
             >
               {casa.votacoes.toLocaleString('pt-BR')}
             </ComProcedenciaComponent>
           </dd>
         </div>
         <div>
-          <dt>votos com posição</dt>
+          <dt>{T.base.votosComPosicao}</dt>
           <dd>{casa.votosComPosicao.toLocaleString('pt-BR')}</dd>
         </div>
         <div>
-          <dt>
-            <TermoComponent nome="comunidade">grupos de voto</TermoComponent>
-          </dt>
+          <dt>{T.base.grupos}</dt>
           <dd>{casa.comunidades.toLocaleString('pt-BR')}</dd>
         </div>
       </dl>
 
       {casa.votacoesSemVotoNominal > 0 && (
-        <p className="cartao-ressalva">
-          Outras {casa.votacoesSemVotoNominal.toLocaleString('pt-BR')} votações ficaram fora da
-          conta: a casa as registrou sem a lista de quem votou como.
-        </p>
+        <p className="cartao-ressalva">{T.base.semVotoNominal(casa.votacoesSemVotoNominal.toLocaleString('pt-BR'))}</p>
       )}
 
       {casa.votacoesSecretas > 0 && (
         <p className="cartao-ressalva">
-          <strong>
-            {casa.votacoesSecretas.toLocaleString('pt-BR')} de {casa.votacoes.toLocaleString('pt-BR')}{' '}
-            {casa.votacoesSecretas === 1 ? 'votação é secreta' : 'votações são secretas'}
-          </strong>{' '}
-          e não têm voto individual publicado. A comparação se apoia nas {abertas}{' '}
-          abertas.
+          {T.base.secretas(
+            casa.votacoesSecretas,
+            casa.votacoes.toLocaleString('pt-BR'),
+            abertas,
+            casa.votacoesSecretas.toLocaleString('pt-BR'),
+          )}
         </p>
       )}
 
@@ -349,10 +329,7 @@ function CartaoDaCasaComponent({ casa, legislatura }: { casa: PanoramaDaCasa; le
 
       {casa.ultima && (
         <figure className="cartao-ultima">
-          <figcaption>
-            Última votação aberta, {dataCurta(casa.ultima.data)}
-            {casa.ultima.materia && <> · {casa.ultima.materia}</>}
-          </figcaption>
+          <figcaption>{T.base.ultima(dataCurta(casa.ultima.data), casa.ultima.materia)}</figcaption>
           <PainelComponent posicionados={casa.ultima.posicionados} total={casa.ultima.cadeiras} />
         </figure>
       )}
@@ -374,24 +351,22 @@ export function ComoODecidiuComponent({ nominais, simbolicas }: { nominais: numb
 
   return (
     <div className="cartao-forma">
-      <p className="cartao-forma-titulo">Como o plenário decidiu</p>
-      <span className="barra-dividida" role="img" aria-label={`${nominais} nominais e ${simbolicas} simbólicas`}>
+      <p className="cartao-forma-titulo">{T.comoDecidiu.titulo}</p>
+      <span className="barra-dividida" role="img" aria-label={T.comoDecidiu.rotulo(nominais, simbolicas)}>
         <span className="parte-nominal" style={{ width: `${parteNominal}%` }} />
         <span className="parte-simbolica" style={{ width: `${100 - parteNominal}%` }} />
       </span>
       <p className="cartao-forma-legenda">
         <span>
-          <span className="amostra-cor" aria-hidden="true" /> {nominais.toLocaleString('pt-BR')} por{' '}
-          <TermoComponent nome="votacaoNominal" />
+          <span className="amostra-cor" aria-hidden="true" />
+          {T.comoDecidiu.nominais(nominais.toLocaleString('pt-BR'))}
         </span>
         <span>
-          <span className="amostra-cor amostra-simbolica" aria-hidden="true" /> {simbolicas.toLocaleString('pt-BR')} por{' '}
-          <TermoComponent nome="votacaoSimbolica" />
+          <span className="amostra-cor amostra-simbolica" aria-hidden="true" />
+          {T.comoDecidiu.simbolicas(simbolicas.toLocaleString('pt-BR'))}
         </span>
       </p>
-      <p className="cartao-ressalva">
-        Só a nominal registra o voto de cada um, e só ela entra na comparação.
-      </p>
+      <p className="cartao-ressalva">{T.comoDecidiu.ressalva}</p>
     </div>
   );
 }
