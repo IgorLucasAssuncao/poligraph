@@ -50,6 +50,7 @@ def main(argv: list[str] | None = None) -> int:
     """RISCO: O Aspire injeta no formato do Npgsql (`Host=...;Database=...`) e o psycopg
     fala libpq (`host=... dbname=...`). Sem traduzir, morre antes de conectar.
     """
+    _saida_em_utf8()
     args = _argumentos(argv)
     _configurar_log()
 
@@ -118,6 +119,13 @@ def main(argv: list[str] | None = None) -> int:
 # ═══════════════════════════════════════════════════════════════════
 # PRIVADOS — na ordem de uso
 # ═══════════════════════════════════════════════════════════════════
+
+
+def _saida_em_utf8() -> None:
+    """O console do Windows abre em cp1252, e o `--help` tem "—" e "→": sem isto, a ajuda quebra."""
+    for fluxo in (sys.stdout, sys.stderr):
+        if hasattr(fluxo, "reconfigure"):
+            fluxo.reconfigure(encoding="utf-8", errors="replace")
 
 
 def _argumentos(argv: list[str] | None) -> argparse.Namespace:

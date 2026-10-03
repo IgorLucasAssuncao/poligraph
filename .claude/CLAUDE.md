@@ -181,6 +181,10 @@ dotnet ef migrations script --idempotent        # ⭐ conferir ANTES de aplicar
 dotnet test                                     # inclui o teste de polaridade
 ```
 
+📖 **A ETL tem manual próprio:** [`src/etl/README.md`](../src/etl/README.md) — os comandos, a
+ordem, as variáveis de ambiente e a carga do zero. `py -m poligraph_etl <comando> --help`
+mostra os argumentos de cada um.
+
 ---
 
 ## Estado atual — 2026-08-27

@@ -1,6 +1,7 @@
 """ETL do poligraph — **entrada, tratamento e saída**, nesta ordem e sempre separados.
 
-Este pacote é a *"Arquitetura ETL"* do título do TCC. A separação abaixo não é
+Este pacote é a *"Arquitetura ETL"* do título do TCC. O manual de uso (comandos, ordem,
+variáveis de ambiente) está em `src/etl/README.md`. A separação abaixo não é
 organização de arquivo: é o que permite dizer, para cada número que aparece na tela, de
 qual arquivo ele veio, o que foi feito com ele e em que coluna foi parar.
 
@@ -38,7 +39,7 @@ senado                        Senado: idem, e independente da Câmara
 │
 ├── cota                      RISCO: BARRA sem `ingerir`
 │
-├── emendas                   CHAVE: exige chave do Portal
+├── emendas                   download público do Portal (achado #33)
 │   └── emendas --resolver    reconciliação manual dos ambíguos
 │
 └── cpf                       RISCO: grava o HASH, nunca o CPF
@@ -76,7 +77,7 @@ a revisão não dependa de ler o código inteiro:
 | RISCO: `ingestao` | CSVs anuais da Câmara | `id` da Câmara, extraído da `uri` | `votacoes` · `votos` · `pessoas` |
 | `ingestao_senado` | `legis.senado.leg.br/votacao` | `CodigoParlamentar` | `votacoes` · `votos` · `pessoas` |
 | `cota` | `cotas/Ano-{ano}.csv.zip` | `ideCadastro` | `despesas` |
-| `emendas` | `api-de-dados/emendas` CHAVE: | **código do autor** | `emendas` · `autores_de_emenda` |
+| `emendas` | `emendas-parlamentares/UNICO` (download público) | **código do autor** | `emendas` · `autores_de_emenda` |
 | `receitas` | `prestacao_de_contas_*.zip` | **hash de CPF** | `receitas_de_campanha` |
 
 ---
