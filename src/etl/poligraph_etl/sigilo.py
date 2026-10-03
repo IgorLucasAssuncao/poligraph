@@ -84,17 +84,21 @@ def acoes_do_mes(df: pd.DataFrame) -> dict[str, float]:
 
 
 def nomes_de_orgao(df: pd.DataFrame) -> set[str]:
-    """Os nomes de órgão superior de um arquivo de execução, que vêm completos."""
-    return set(df["Nome Órgão Superior"].dropna().str.strip())
+    """Os nomes de órgão superior do arquivo anual do orçamento, que vêm completos.
+
+    MEDIDO em 2026-10-03: o arquivo do cartão e o mensal de execução cortam o nome em 42
+    caracteres; o anual do orçamento (`NOME ÓRGÃO SUPERIOR`) traz o nome inteiro.
+    """
+    return set(df["NOME ÓRGÃO SUPERIOR"].dropna().str.strip())
 
 
 def nome_completo(nome: str, completos: set[str]) -> str:
     """O nome do órgão sem o corte do arquivo do cartão (Pendência 85).
 
     MEDIDO em 2026-10-03: o arquivo do cartão corporativo corta o nome do órgão superior em 42
-    caracteres ("Ministério da Integração e do Desenvolvime"). O arquivo de execução, do mesmo
-    Portal, traz o nome inteiro. Completa só quando um único nome completo começa pelo cortado;
-    havendo nenhum ou mais de um, fica o do cartão.
+    caracteres ("Ministério da Integração e do Desenvolvime"). O arquivo anual do orçamento, do
+    mesmo Portal, traz o nome inteiro. Completa só quando um único nome completo começa pelo
+    cortado; havendo nenhum ou mais de um, fica o do cartão.
     """
     if nome in completos:
         return nome
