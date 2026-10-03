@@ -34,6 +34,7 @@ import { Bloco, Esqueleto, EsqueletoDePainel, EsqueletoDeTexto } from '../compon
 import { UFS } from '../ufs';
 import { ConfereComOPortal } from '../componentes/ConfereComOPortal';
 import { ComProcedencia } from '../componentes/ModoAnalise';
+import { Numero, Opcoes } from '../componentes/Dados';
 
 /**
  * Para onde foi o dinheiro de emenda, no mapa — e quem o mandou para a sua cidade.
@@ -215,22 +216,18 @@ function ForaDoMapa({ brasil }: { brasil: MapaDoBrasil }) {
   return (
     <section className="numeros-do-ano" aria-label="O dinheiro das emendas do período" data-tour="emendas-numeros">
       {numeros.map(([rotulo, valor, definicao]) => (
-        <div key={rotulo} className="numero-do-ano">
-          <p className="numero-rotulo">{rotulo}</p>
-          <p className="numero-valor">
-            {rotulo === 'Pago em emendas' ? (
-              <ComProcedencia
-                consulta={{ contexto: 'pagamentos', de: periodo.de, ate: periodo.ate }}
-                rotulo={`Pago nas emendas de ${textoDoPeriodo(periodo)}`}
-              >
-                {reaisCompacto(valor)}
-              </ComProcedencia>
-            ) : (
-              reaisCompacto(valor)
-            )}
-          </p>
-          <p className="numero-definicao">{definicao}</p>
-        </div>
+        <Numero key={rotulo} rotulo={rotulo} definicao={definicao}>
+          {rotulo === 'Pago em emendas' ? (
+            <ComProcedencia
+              consulta={{ contexto: 'pagamentos', de: periodo.de, ate: periodo.ate }}
+              rotulo={`Pago nas emendas de ${textoDoPeriodo(periodo)}`}
+            >
+              {reaisCompacto(valor)}
+            </ComProcedencia>
+          ) : (
+            reaisCompacto(valor)
+          )}
+        </Numero>
       ))}
     </section>
   );
@@ -261,17 +258,19 @@ function MapaDoPais({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoEscolher: 
       <h2>Por estado</h2>
       <p className="ajuda">Escolha um estado para ver as cidades.</p>
       {temPopulacao && (
-        <div className="seletor-periodo-campos" role="group" aria-label="Leitura do mapa">
-          <button type="button" className={habitante ? '' : 'ativo'} aria-pressed={!habitante} onClick={() => setPorHabitante(false)}>
-            Total recebido
-          </button>
-          <button type="button" className={habitante ? 'ativo' : ''} aria-pressed={habitante} onClick={() => setPorHabitante(true)}>
-            Por habitante
-          </button>
+        <Opcoes
+          rotulo="Leitura do mapa"
+          opcoes={[
+            { valor: false, rotulo: 'Total recebido' },
+            { valor: true, rotulo: 'Por habitante' },
+          ]}
+          escolhida={habitante}
+          aoEscolher={setPorHabitante}
+        >
           {habitante && brasil.anoDaPopulacao && (
             <span className="ajuda">População estimada pelo IBGE para {brasil.anoDaPopulacao}.</span>
           )}
-        </div>
+        </Opcoes>
       )}
 
       <div data-tour="emendas-mapa">

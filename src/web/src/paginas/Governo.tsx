@@ -24,6 +24,7 @@ import { FONTES } from '../fontes';
 import { dataCurta, nomeProprio, partesDeCem, reaisCompacto } from '../formato';
 import { passosDoGoverno } from '../tour';
 import { EsqueletoDePainel } from '../componentes/Esqueleto';
+import { LinhaDeValor, Numero } from '../componentes/Dados';
 
 /**
  * O governo federal para quem não lê orçamento: quanto entrou, onde foi parar, o que foi
@@ -177,11 +178,9 @@ function Resumo({ dados }: { dados: DadosDoGoverno }) {
   return (
     <section className="numeros-do-ano" aria-label={`${textoDoPeriodo(dados.periodo)} em números`} data-tour="governo-resumo">
       {numeros.map(([rotulo, valor, definicao]) => (
-        <div key={rotulo} className="numero-do-ano">
-          <p className="numero-rotulo">{rotulo}</p>
-          <p className="numero-valor">{reaisCompacto(valor)}</p>
-          <p className="numero-definicao">{definicao}</p>
-        </div>
+        <Numero key={rotulo} rotulo={rotulo} definicao={definicao}>
+          {reaisCompacto(valor)}
+        </Numero>
       ))}
     </section>
   );
@@ -305,13 +304,7 @@ function DeOndeVeio({ arrecadacao }: { arrecadacao: Arrecadacao }) {
 
       <ul className="gastos-categorias">
         {grupos.map((g) => (
-          <li key={g.nome}>
-            <span className="gasto-nome">{g.nome}</span>
-            <span className="gasto-barra">
-              <span style={{ width: `${(Math.max(g.valor, 0) / maior) * 100}%` }} />
-            </span>
-            <span className="gasto-valor">{reaisCompacto(g.valor)}</span>
-          </li>
+          <LinhaDeValor key={g.nome} nome={g.nome} valor={g.valor} maior={maior} formatar={reaisCompacto} minimo={0} />
         ))}
       </ul>
 

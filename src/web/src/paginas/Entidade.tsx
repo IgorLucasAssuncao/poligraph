@@ -18,6 +18,7 @@ import { baixarCsv, buscarTodas } from '../exportar';
 import { dataCurta, minusculas, nomeProprio, reais, reaisCompacto } from '../formato';
 import { ComProcedencia } from '../componentes/ModoAnalise';
 import { EsqueletoDePainel } from '../componentes/Esqueleto';
+import { LinhaDeValor, Numero } from '../componentes/Dados';
 
 /**
  * Uma entidade: quanto recebeu de emenda, de quem, em que ano — e se aparece na cota.
@@ -68,46 +69,43 @@ function PaginaDaEntidade({ dados }: { dados: DadosDaEntidade }) {
       <CabecalhoDaColuna titulo={nomeProprio(dados.nome)} subtitulo={dados.naturezaJuridica ?? undefined} comVoltar />
 
       <section className="numeros-do-ano" aria-label="O que a entidade recebeu">
-        <div className="numero-do-ano">
-          <p className="numero-rotulo">Recebeu de emendas</p>
-          <p className="numero-valor">
-            <ComProcedencia consulta={{ contexto: 'entidade', cnpj: dados.cnpj }} rotulo={`Recebido por ${nomeProprio(dados.nome)}`}>
-              {reaisCompacto(dados.recebido)}
-            </ComProcedencia>
-          </p>
-          <p className="numero-definicao">
-            em {dados.emendas} {dados.emendas === 1 ? 'emenda' : 'emendas'}, de{' '}
-            {dados.porAno[0]?.ano ?? '—'} a {dados.porAno[dados.porAno.length - 1]?.ano ?? '—'}
-          </p>
-        </div>
-        <div className="numero-do-ano">
-          <p className="numero-rotulo">Sede</p>
-          <p className="numero-valor numero-texto">
-            {dados.sede ? (
-              <Link to={`/emendas?uf=${dados.sede.uf}&cidade=${dados.sede.codigoIbge}`}>
-                {nomeProprio(dados.sede.nome)} – {dados.sede.uf}
-              </Link>
-            ) : (
-              '—'
-            )}
-          </p>
-          <p className="numero-definicao">
-            <Termo nome="sedeDoFavorecido">onde fica registrada</Termo>, que pode ser diferente de onde aplicou o dinheiro
-          </p>
-        </div>
+        <Numero
+          rotulo="Recebeu de emendas"
+          definicao={
+            <>
+              em {dados.emendas} {dados.emendas === 1 ? 'emenda' : 'emendas'}, de{' '}
+              {dados.porAno[0]?.ano ?? '—'} a {dados.porAno[dados.porAno.length - 1]?.ano ?? '—'}
+            </>
+          }
+        >
+          <ComProcedencia consulta={{ contexto: 'entidade', cnpj: dados.cnpj }} rotulo={`Recebido por ${nomeProprio(dados.nome)}`}>
+            {reaisCompacto(dados.recebido)}
+          </ComProcedencia>
+        </Numero>
+        <Numero
+          rotulo="Sede"
+          texto
+          definicao={
+            <>
+              <Termo nome="sedeDoFavorecido">onde fica registrada</Termo>, que pode ser diferente de onde aplicou o dinheiro
+            </>
+          }
+        >
+          {dados.sede ? (
+            <Link to={`/emendas?uf=${dados.sede.uf}&cidade=${dados.sede.codigoIbge}`}>
+              {nomeProprio(dados.sede.nome)} – {dados.sede.uf}
+            </Link>
+          ) : (
+            '—'
+          )}
+        </Numero>
       </section>
 
       <section className="governo-secao">
         <h2>Por ano</h2>
         <ul className="gastos-categorias">
           {dados.porAno.map((a) => (
-            <li key={a.ano}>
-              <span className="gasto-nome">{a.ano}</span>
-              <span className="gasto-barra">
-                <span style={{ width: `${(a.recebido / maiorAno) * 100}%` }} />
-              </span>
-              <span className="gasto-valor">{reaisCompacto(a.recebido)}</span>
-            </li>
+            <LinhaDeValor key={a.ano} nome={a.ano} valor={a.recebido} maior={maiorAno} formatar={reaisCompacto} minimo={0} />
           ))}
         </ul>
         <p className="ajuda">O ano é o da emenda: uma emenda de 2024 paga em 2025 conta em 2024.</p>

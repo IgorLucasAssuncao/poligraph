@@ -1,5 +1,9 @@
 import type { ReactNode } from 'react';
 import type { Periodo } from '../api';
+import { Opcoes } from './Dados';
+
+/** O valor do botão "Todos os anos" no grupo de opções. */
+const TODOS = '__todos__';
 
 /**
  * "Todos os anos" ou um intervalo, de uma vez — não um ano por clique.
@@ -31,24 +35,21 @@ export function SeletorDePeriodo({
   aoMudar: (novo: Periodo | null) => void;
 }) {
   const todos = periodo.de === anos[0] && periodo.ate === anos[anos.length - 1];
+  const escolhido = todos
+    ? TODOS
+    : (atalhos.find((a) => a.periodo.de === periodo.de && a.periodo.ate === periodo.ate)?.rotulo ?? '');
   const corrente = new Date().getFullYear();
   const rotuloDoAno = (a: number) => (a === corrente ? `${a} (em andamento)` : String(a));
 
   return (
     <div className="governo-barra seletor-periodo" data-tour={tour}>
       {children && <p className="governo-escopo">{children}</p>}
-      <div className="seletor-periodo-campos" role="group" aria-label={rotulo}>
-        <button type="button" className={todos ? 'ativo' : ''} aria-pressed={todos} onClick={() => aoMudar(null)}>
-          Todos os anos
-        </button>
-        {atalhos.map((a) => {
-          const ativo = a.periodo.de === periodo.de && a.periodo.ate === periodo.ate;
-          return (
-            <button key={a.rotulo} type="button" className={ativo ? 'ativo' : ''} aria-pressed={ativo} onClick={() => aoMudar(a.periodo)}>
-              {a.rotulo}
-            </button>
-          );
-        })}
+      <Opcoes
+        rotulo={rotulo}
+        opcoes={[{ valor: TODOS, rotulo: 'Todos os anos' }, ...atalhos.map((a) => ({ valor: a.rotulo, rotulo: a.rotulo }))]}
+        escolhida={escolhido}
+        aoEscolher={(valor) => aoMudar(valor === TODOS ? null : (atalhos.find((a) => a.rotulo === valor)?.periodo ?? null))}
+      >
         <span className="seletor-periodo-intervalo">
           <label>
             De{' '}
@@ -83,7 +84,7 @@ export function SeletorDePeriodo({
             </select>
           </label>
         </span>
-      </div>
+      </Opcoes>
     </div>
   );
 }

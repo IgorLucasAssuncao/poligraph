@@ -21,6 +21,7 @@ import { ComProcedencia } from './ModoAnalise';
 import { NENHUM, usePaginas } from './usePaginas';
 import type { Contas } from './useContas';
 import { EsqueletoDePainel, EsqueletoDeTexto } from './Esqueleto';
+import { LinhaDeValor, Opcoes } from './Dados';
 
 /**
  * O dinheiro do parlamentar, em três abas — campanha, emendas e cota.
@@ -214,15 +215,7 @@ export function AbaEmendas({ pessoaId, contas, erro }: { pessoaId: number; conta
         </p>
         <ul className="gastos-categorias">
           {emendas.porDestino.map((d) => (
-            <li key={d.localidade}>
-              <span className="gasto-nome">
-                <Destino localidade={d.localidade} />
-              </span>
-              <span className="gasto-barra">
-                <span style={{ width: `${Math.max((d.empenhado / maiorDestino) * 100, 2)}%` }} />
-              </span>
-              <span className="gasto-valor">{reais(d.empenhado)}</span>
-            </li>
+            <LinhaDeValor key={d.localidade} nome={<Destino localidade={d.localidade} />} valor={d.empenhado} maior={maiorDestino} />
           ))}
         </ul>
 
@@ -254,17 +247,16 @@ function CidadesQueReceberam({ cidades }: { cidades: CidadesDaEmenda }) {
       </p>
       <ul className="gastos-categorias">
         {cidades.maiores.map((c) => (
-          <li key={c.municipio.codigoIbge}>
-            <span className="gasto-nome">
+          <LinhaDeValor
+            key={c.municipio.codigoIbge}
+            nome={
               <Link to={`/emendas?uf=${c.municipio.uf}&cidade=${c.municipio.codigoIbge}`}>
                 {nomeProprio(c.municipio.nome)} – {c.municipio.uf}
               </Link>
-            </span>
-            <span className="gasto-barra">
-              <span style={{ width: `${Math.max((c.recebido / maior) * 100, 2)}%` }} />
-            </span>
-            <span className="gasto-valor">{reais(c.recebido)}</span>
-          </li>
+            }
+            valor={c.recebido}
+            maior={maior}
+          />
         ))}
       </ul>
     </>
@@ -397,13 +389,7 @@ export function AbaCota({
           <h3 className="titulo-secao">Em quê</h3>
           <ul className="gastos-categorias">
             {gastos.porCategoria.map((c) => (
-              <li key={c.categoria}>
-                <span className="gasto-nome">{minusculas(c.categoria)}</span>
-                <span className="gasto-barra">
-                  <span style={{ width: `${Math.max((c.total / maior) * 100, 2)}%` }} />
-                </span>
-                <span className="gasto-valor">{reais(c.total)}</span>
-              </li>
+              <LinhaDeValor key={c.categoria} nome={minusculas(c.categoria)} valor={c.total} maior={maior} />
             ))}
           </ul>
         </div>
@@ -572,13 +558,7 @@ function Financiamento({ pessoaId, fin }: { pessoaId: number; fin: Financiamento
         <h3 className="titulo-secao">De onde veio</h3>
         <ul className="gastos-categorias">
           {fin.porFonte.map((f) => (
-            <li key={f.fonte}>
-              <span className="gasto-nome">{minusculas(f.fonte)}</span>
-              <span className="gasto-barra">
-                <span style={{ width: `${Math.max((f.total / maior) * 100, 2)}%` }} />
-              </span>
-              <span className="gasto-valor">{reais(f.total)}</span>
-            </li>
+            <LinhaDeValor key={f.fonte} nome={minusculas(f.fonte)} valor={f.total} maior={maior} />
           ))}
         </ul>
       </details>
@@ -634,16 +614,17 @@ function PatrimonioDeclarado({ pessoaId }: { pessoaId: number }) {
   const [ultima, anterior] = declaracoes;
   const maior = ultima.porTipo[0]?.valor || 1;
   const linha = (t: DeclaracaoDeBens['porTipo'][number]) => (
-    <li key={t.tipo}>
-      <span className="gasto-nome">
-        {t.tipo}
-        {t.quantidade > 1 && <small>{t.quantidade} bens</small>}
-      </span>
-      <span className="gasto-barra">
-        <span style={{ width: `${Math.max((t.valor / maior) * 100, 2)}%` }} />
-      </span>
-      <span className="gasto-valor">{reais(t.valor)}</span>
-    </li>
+    <LinhaDeValor
+      key={t.tipo}
+      nome={
+        <>
+          {t.tipo}
+          {t.quantidade > 1 && <small>{t.quantidade} bens</small>}
+        </>
+      }
+      valor={t.valor}
+      maior={maior}
+    />
   );
 
   return (
@@ -703,19 +684,19 @@ function SeletorDeAnoDaCota({
   const anos = [posse, posse + 1, posse + 2, posse + 3].filter((a) => a <= atual);
 
   return (
-    <div className="seletor-periodo-campos" role="group" aria-label="Ano da cota">
-      {anos.map((a) => (
-        <button
-          key={a}
-          type="button"
-          className={a === ano ? 'ativo' : ''}
-          aria-pressed={a === ano}
-          onClick={() => aoEscolher(a)}
-        >
-          {a}
-          {a === atual && <span className="em-andamento"> em andamento</span>}
-        </button>
-      ))}
-    </div>
+    <Opcoes
+      rotulo="Ano da cota"
+      opcoes={anos.map((a) => ({
+        valor: a,
+        rotulo: (
+          <>
+            {a}
+            {a === atual && <span className="em-andamento"> em andamento</span>}
+          </>
+        ),
+      }))}
+      escolhida={ano}
+      aoEscolher={aoEscolher}
+    />
   );
 }
