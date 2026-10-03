@@ -13,7 +13,9 @@ import { BotaoMostrarMaisComponent } from './BotaoMostrarMais';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { LinkDeFonteComponent } from './LinkDeFonte';
 import { NENHUM, useAVista, usePaginas } from './usePaginas';
-import { TermoComponent } from './Termo';
+import { TEXTOS_DAS_CONTAS } from '../textos/contasDoParlamentar';
+
+const T = TEXTOS_DAS_CONTAS.paraOndeFoi;
 
 /**
  * Para onde o dinheiro das emendas foi de fato: quem recebeu, quando e por qual convênio.
@@ -46,18 +48,16 @@ export function QuemRecebeuComponent({
   if (favorecidos.recebido === 0) return null;
 
   const foraDaLista: [string, ReactNode, number][] = [
-    ['intermediario', <TermoComponent key="intermediario" nome="intermediario">Via Banco do Brasil, que repassa</TermoComponent>, favorecidos.viaIntermediario],
-    ['pessoas', <TermoComponent key="pessoas" nome="favorecidoPessoa">A pessoas, sem identificação</TermoComponent>, favorecidos.aPessoas],
-    ['sem', 'Sem identificação na fonte', favorecidos.semIdentificacao],
+    ['intermediario', T.viaBanco, favorecidos.viaIntermediario],
+    ['pessoas', T.aPessoas, favorecidos.aPessoas],
+    ['sem', T.semIdentificacao, favorecidos.semIdentificacao],
   ];
 
   return (
     <>
-      <h3 className="titulo-secao">Quem recebeu</h3>
+      <h3 className="titulo-secao">{T.quemRecebeu}</h3>
       <p className="ajuda ajuda-espacada">
-        <strong>{reais(favorecidos.recebido)}</strong> recebidos pelas emendas de {ano}
-        {favorecidos.ultimoMes && <>, até {mesCurto(favorecidos.ultimoMes)}</>}. Inclui o que
-        foi pago nos anos seguintes.
+        {T.recebidos(reais(favorecidos.recebido), ano, favorecidos.ultimoMes ? mesCurto(favorecidos.ultimoMes) : null)}
       </p>
 
       <ul className="gastos-fornecedores lista-favorecidos">
@@ -67,10 +67,7 @@ export function QuemRecebeuComponent({
               {f.cnpj ? <Link to={`/entidades/${f.cnpj}`}>{nomeProprio(f.nome)}</Link> : nomeProprio(f.nome)}
               <small>{[f.naturezaJuridica, lugar(f.municipio, f.uf)].filter(Boolean).join(' · ')}</small>
               {f.tambemNaCota != null && (
-                <small className="tambem-na-cota">
-                  A cota deste parlamentar também pagou {reais(f.tambemNaCota)} a este CNPJ em{' '}
-                  {anosDeCotaDaEmenda(ano)}
-                </small>
+                <small className="tambem-na-cota">{T.tambemNaCota(reais(f.tambemNaCota), anosDeCotaDaEmenda(ano))}</small>
               )}
             </span>
             <span className="gasto-valor">{reais(f.recebido)}</span>
@@ -117,10 +114,8 @@ export function QuandoFoiPagoComponent({ meses, ano }: { meses: PagamentoPorMes[
 
   return (
     <>
-      <h3 className="titulo-secao">Quando foi pago</h3>
-      <p className="ajuda ajuda-espacada">
-        {reais(noAno)} de {reais(total)} (<strong>{parcela}%</strong>) saíram ainda em {ano}.
-      </p>
+      <h3 className="titulo-secao">{T.quandoFoiPago}</h3>
+      <p className="ajuda ajuda-espacada">{T.noProprioAno(reais(noAno), reais(total), parcela, ano)}</p>
 
       <figure className="grafico-meses">
         <p className="grafico-meses-dica" aria-live="polite">
@@ -147,12 +142,12 @@ export function QuandoFoiPagoComponent({ meses, ano }: { meses: PagamentoPorMes[
         </div>
 
         <details className="grafico-meses-tabela">
-          <summary>Ver os valores em tabela</summary>
+          <summary>{T.verTabela}</summary>
           <table>
             <thead>
               <tr>
-                <th scope="col">Mês</th>
-                <th scope="col">Pago</th>
+                <th scope="col">{T.mes}</th>
+                <th scope="col">{T.pago}</th>
               </tr>
             </thead>
             <tbody>
@@ -194,13 +189,8 @@ export function ConveniosComponent({
 
   return (
     <>
-      <h3 className="titulo-secao">
-        <TermoComponent nome="convenio">Convênios</TermoComponent>
-      </h3>
-      <p className="ajuda ajuda-espacada">
-        {convenios.quantidade} {convenios.quantidade === 1 ? 'convênio financiado' : 'convênios financiados'}{' '}
-        por estas emendas. O valor é o do convênio inteiro.
-      </p>
+      <h3 className="titulo-secao">{T.convenios}</h3>
+      <p className="ajuda ajuda-espacada">{T.conveniosFinanciados(convenios.quantidade)}</p>
 
       <ul className="lista-convenios">
         {lista.itens.map((c) => (
@@ -211,12 +201,10 @@ export function ConveniosComponent({
             </div>
             {c.objeto && <p className="convenio-objeto">{c.objeto}</p>}
             <p className="convenio-meta">
-              Convênio {c.numero} · publicado em {dataCurta(c.dataPublicacao)}
-              {c.emendasQueFinanciam > 1 && (
-                <> · financiado por {c.emendasQueFinanciam} emendas, de um ou mais autores</>
-              )}
+              {T.convenio(c.numero, dataCurta(c.dataPublicacao))}
+              {c.emendasQueFinanciam > 1 && T.financiadoPor(c.emendasQueFinanciam)}
               {' · '}
-              <LinkDeFonteComponent href={c.urlFonte}>no Portal</LinkDeFonteComponent>
+              <LinkDeFonteComponent href={c.urlFonte}>{T.noPortal}</LinkDeFonteComponent>
             </p>
           </li>
         ))}
@@ -238,14 +226,14 @@ export function EmendasUmaAUmaComponent({ pessoaId, ano, total }: { pessoaId: nu
   return (
     <>
       <h3 className="titulo-secao">
-        Emenda por emenda{' '}
+        {T.emendaPorEmenda}{' '}
         <BotaoBaixarCsvComponent
-          rotulo="Baixar todas (CSV)"
+          rotulo={T.baixarTodas}
           montar={async () => {
             const todas = await buscarTodas((pagina) => listarEmendas(pessoaId, ano, pagina, 50));
             baixarCsv(
-              `emendas-${pessoaId}-${ano}.csv`,
-              ['Código', 'Tipo', 'Localidade', 'Localidades', 'Função', 'Empenhado', 'Pago', 'Portal'],
+              T.arquivo(pessoaId, ano),
+              [...T.colunas],
               todas.map((e) => [e.codigo, e.tipo, e.localidade, e.localidades, e.funcao, e.empenhado, e.pago, e.urlFonte]),
             );
           }}
@@ -256,15 +244,15 @@ export function EmendasUmaAUmaComponent({ pessoaId, ano, total }: { pessoaId: nu
           {lista.itens.map((e) => (
             <li key={e.codigo}>
               <span className="gasto-nome">
-                {e.localidade ?? 'Sem localidade'}
-                {e.localidades > 1 && ` e mais ${e.localidades - 1}`}
+                {e.localidade ?? T.semLocalidade}
+                {e.localidades > 1 && T.eMais(e.localidades - 1)}
                 <small>
-                  {e.codigo} · {e.funcao ?? 'sem função'} · {reais(e.pago)} pagos
+                  {e.codigo} · {e.funcao ?? T.semFuncao} · {T.pagos(reais(e.pago))}
                 </small>
               </span>
               <span className="lancamento-fim">
                 <span className="gasto-valor">{reais(e.empenhado)}</span>
-                <LinkDeFonteComponent href={e.urlFonte}>no Portal</LinkDeFonteComponent>
+                <LinkDeFonteComponent href={e.urlFonte}>{T.noPortal}</LinkDeFonteComponent>
               </span>
             </li>
           ))}
@@ -272,7 +260,7 @@ export function EmendasUmaAUmaComponent({ pessoaId, ano, total }: { pessoaId: nu
       )}
       <BotaoMostrarMaisComponent
         {...lista}
-        rotulo={lista.itens.length === 0 ? `Ver as ${total} emendas` : undefined}
+        rotulo={lista.itens.length === 0 ? T.verTodas(total) : undefined}
         aoClicar={lista.carregarMais}
       />
     </>

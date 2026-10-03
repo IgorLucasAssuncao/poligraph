@@ -164,4 +164,43 @@ export const TEXTOS_DAS_CONTAS = {
     nota: 'O valor é o que o próprio candidato declarou ao TSE, sem avaliação de mercado.',
     declaracoesNoTse: 'Declarações no TSE',
   },
+
+  /** As listas de "para onde foi" da aba Emendas: quem recebeu, quando, por qual convênio, emenda por emenda. */
+  paraOndeFoi: {
+    quemRecebeu: 'Quem recebeu',
+    recebidos: (valor: string, ano: number, ate: string | null): ReactNode => (
+      <>
+        <strong>{valor}</strong> recebidos pelas emendas de {ano}
+        {ate && <>, até {ate}</>}. Inclui o que foi pago nos anos seguintes.
+      </>
+    ),
+    viaBanco: <TermoComponent nome="intermediario">Via Banco do Brasil, que repassa</TermoComponent>,
+    aPessoas: <TermoComponent nome="favorecidoPessoa">A pessoas, sem identificação</TermoComponent>,
+    semIdentificacao: 'Sem identificação na fonte',
+    tambemNaCota: (valor: string, anos: string) => `A cota deste parlamentar também pagou ${valor} a este CNPJ em ${anos}`,
+    quandoFoiPago: 'Quando foi pago',
+    noProprioAno: (noAno: string, total: string, parcela: number, ano: number): ReactNode => (
+      <>
+        {noAno} de {total} (<strong>{parcela}%</strong>) saíram ainda em {ano}.
+      </>
+    ),
+    verTabela: 'Ver os valores em tabela',
+    mes: 'Mês',
+    pago: 'Pago',
+    convenios: <TermoComponent nome="convenio">Convênios</TermoComponent>,
+    conveniosFinanciados: (quantos: number) =>
+      `${quantos} ${plural(quantos, 'convênio financiado', 'convênios financiados')} por estas emendas. O valor é o do convênio inteiro.`,
+    convenio: (numero: string, publicado: string) => `Convênio ${numero} · publicado em ${publicado}`,
+    financiadoPor: (emendas: number) => ` · financiado por ${emendas} emendas, de um ou mais autores`,
+    noPortal: 'no Portal',
+    emendaPorEmenda: 'Emenda por emenda',
+    baixarTodas: 'Baixar todas (CSV)',
+    arquivo: (pessoa: number, ano: number) => `emendas-${pessoa}-${ano}.csv`,
+    colunas: ['Código', 'Tipo', 'Localidade', 'Localidades', 'Função', 'Empenhado', 'Pago', 'Portal'],
+    semLocalidade: 'Sem localidade',
+    eMais: (quantas: number) => ` e mais ${quantas}`,
+    semFuncao: 'sem função',
+    pagos: (valor: string) => `${valor} pagos`,
+    verTodas: (total: number) => `Ver as ${total} emendas`,
+  },
 } as const;
