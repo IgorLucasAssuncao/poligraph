@@ -1542,9 +1542,9 @@ namespace Poligraph.Data.Migrations
 
                     b.ToTable("reconciliacoes", null, t =>
                         {
-                            t.HasCheckConstraint("ck_reconciliacao_conjunto", "conjunto IN ('EMENDAS','PAGAMENTOS')");
+                            t.HasCheckConstraint("ck_reconciliacao_conjunto", "conjunto IN ('EMENDAS','PAGAMENTOS','COTA_CAMARA','COTA_SENADO')");
 
-                            t.HasCheckConstraint("ck_reconciliacao_medida", "(conjunto = 'EMENDAS' AND medida IN ('EMPENHADO','PAGO')) OR (conjunto = 'PAGAMENTOS' AND medida = 'RECEBIDO')");
+                            t.HasCheckConstraint("ck_reconciliacao_medida", "(conjunto = 'EMENDAS' AND medida IN ('EMPENHADO','PAGO')) OR (conjunto = 'PAGAMENTOS' AND medida = 'RECEBIDO') OR (conjunto IN ('COTA_CAMARA','COTA_SENADO') AND medida = 'VALOR_LIQUIDO')");
                         });
                 });
 
@@ -1569,7 +1569,7 @@ namespace Poligraph.Data.Migrations
 
                     b.ToTable("reconciliacao_motivos", null, t =>
                         {
-                            t.HasCheckConstraint("ck_reconciliacao_motivo", "motivo IN ('RELATOR_SEM_AUTOR','COMISSAO_SEM_AUTOR','BANCADA_SEM_AUTOR_E_SEM_UF','INDIVIDUAL_SEM_AUTOR','OUTRA_SEM_AUTOR','INCOERENTE','PAGAMENTO_SEM_CODIGO_DE_EMENDA','EMENDA_DE_ANO_NAO_CARREGADO','EMENDA_FORA_DA_BASE')");
+                            t.HasCheckConstraint("ck_reconciliacao_motivo", "motivo IN ('RELATOR_SEM_AUTOR','COMISSAO_SEM_AUTOR','BANCADA_SEM_AUTOR_E_SEM_UF','INDIVIDUAL_SEM_AUTOR','OUTRA_SEM_AUTOR','INCOERENTE','PAGAMENTO_SEM_CODIGO_DE_EMENDA','EMENDA_DE_ANO_NAO_CARREGADO','EMENDA_FORA_DA_BASE','SEM_PARLAMENTAR','FORA_DO_DE_PARA')");
                         });
                 });
 

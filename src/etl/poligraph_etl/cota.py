@@ -94,6 +94,55 @@ def para_linhas(registros: list[dict], mapa_pessoas: dict[str, int]) -> list[dic
 # ═══════════════════════════════════════════════════════════════════
 
 
+def reconciliar_camara(registros: list[dict], mapa_pessoas: dict[str, int], ano: int) -> dict:
+    """O total líquido do arquivo da Câmara num ano, o que entra na base e o que fica fora, por motivo.
+
+    Regra 5 do projeto: o orçamento tem de fechar. Mesmo critério de `para_linhas`: linha sem
+    `ideCadastro` é de liderança ou órgão; com `ideCadastro` fora do de-para, de deputado que a
+    base não tem. Valor zero não muda a conta.
+    """
+    conta = _conta_da_cota("COTA_CAMARA", ano)
+    for registro in registros:
+        valor = _decimal(registro.get("vlrLiquido"))
+        conta["total_na_fonte"] += valor
+        id_camara = (registro.get("ideCadastro") or "").strip()
+        if not id_camara:
+            _somar_motivo(conta, "SEM_PARLAMENTAR", valor)
+        elif id_camara not in mapa_pessoas:
+            _somar_motivo(conta, "FORA_DO_DE_PARA", valor)
+        else:
+            conta["total_na_base"] += valor
+    return _arredondar_conta(conta)
+
+
+def reconciliar_senado(registros: list[dict], por_nome: dict[str, int], ano: int) -> dict:
+    """A mesma conta para a CEAPS: o nome que não casa com quem votou fica fora, com o motivo."""
+    conta = _conta_da_cota("COTA_SENADO", ano)
+    for registro in registros:
+        valor = _decimal(str(registro.get("VALOR_REEMBOLSADO") or "").replace(",", "."))
+        conta["total_na_fonte"] += valor
+        if sem_acento_maiusculo(registro.get("SENADOR")) in por_nome:
+            conta["total_na_base"] += valor
+        else:
+            _somar_motivo(conta, "FORA_DO_DE_PARA", valor)
+    return _arredondar_conta(conta)
+
+
+def _conta_da_cota(conjunto: str, ano: int) -> dict:
+    return {"conjunto": conjunto, "medida": "VALOR_LIQUIDO", "ano": ano, "total_na_fonte": 0.0,
+            "total_na_base": 0.0, "total_inferido": 0.0, "motivos": {}}
+
+
+def _somar_motivo(conta: dict, motivo: str, valor: float) -> None:
+    conta["motivos"][motivo] = conta["motivos"].get(motivo, 0.0) + valor
+
+
+def _arredondar_conta(conta: dict) -> dict:
+    return {**conta, "total_na_fonte": round(conta["total_na_fonte"], 2),
+            "total_na_base": round(conta["total_na_base"], 2),
+            "motivos": {m: round(v, 2) for m, v in conta["motivos"].items() if round(v, 2) != 0}}
+
+
 def para_linhas_do_senado(
     registros: list[dict], por_nome: dict[str, int]
 ) -> list[dict]:

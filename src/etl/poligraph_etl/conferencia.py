@@ -303,6 +303,9 @@ CONSULTAS = {
                        THEN (SELECT sum(e.valor_empenhado) FROM emendas e WHERE e.ano = r.ano)
                    WHEN r.conjunto = 'EMENDAS' AND r.medida = 'PAGO'
                        THEN (SELECT sum(e.valor_pago) FROM emendas e WHERE e.ano = r.ano)
+                   WHEN r.conjunto IN ('COTA_CAMARA', 'COTA_SENADO')
+                       THEN (SELECT sum(d.valor_liquido) FROM despesas d JOIN cargas c ON c.id = d.carga_id
+                              WHERE d.ano = r.ano AND c.fonte = substring(r.conjunto FROM 6))
                    ELSE (SELECT sum(f.valor) FROM emendas_favorecidos f
                           WHERE extract(year FROM f.competencia) = r.ano)
                END, 0)::float

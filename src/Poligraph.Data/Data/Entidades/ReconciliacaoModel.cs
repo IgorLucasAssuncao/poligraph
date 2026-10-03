@@ -12,10 +12,10 @@ public class ReconciliacaoModel
 {
     public long Id { get; set; }
 
-    /// <summary><c>EMENDAS</c> (por ano da emenda) ou <c>PAGAMENTOS</c> (por ano do pagamento).</summary>
+    /// <summary><c>EMENDAS</c> (por ano da emenda), <c>PAGAMENTOS</c> (por ano do pagamento), <c>COTA_CAMARA</c> ou <c>COTA_SENADO</c>.</summary>
     public required string Conjunto { get; set; }
 
-    /// <summary><c>EMPENHADO</c> e <c>PAGO</c> nas emendas; <c>RECEBIDO</c> nos pagamentos.</summary>
+    /// <summary><c>EMPENHADO</c> e <c>PAGO</c> nas emendas; <c>RECEBIDO</c> nos pagamentos; <c>VALOR_LIQUIDO</c> na cota.</summary>
     public required string Medida { get; set; }
 
     public short Ano { get; set; }

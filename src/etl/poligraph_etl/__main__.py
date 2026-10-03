@@ -1489,6 +1489,9 @@ def _cota(conexao: psycopg.Connection, anos: list[int]) -> None:
 
         linhas = cota.para_linhas(registros, mapa)
         gravadas = persistencia.gravar_despesas(conexao, list(mapa.values()), linhas, carga)
+        conta = cota.reconciliar_camara(registros, mapa, ano)
+        persistencia.gravar_reconciliacoes(conexao, [conta], carga)
+        _registrar_o_que_nao_fecha([conta])
 
         descartadas = len(registros) - len(linhas)
         log.info("  %d linhas, %d gravadas", len(registros), gravadas)
@@ -1536,6 +1539,9 @@ def _cota_do_senado(conexao: psycopg.Connection, anos: list[int]) -> None:
         gravadas = persistencia.gravar_despesas(
             conexao, list(por_nome.values()), linhas, carga
         )
+        conta = cota.reconciliar_senado(registros, por_nome, ano)
+        persistencia.gravar_reconciliacoes(conexao, [conta], carga)
+        _registrar_o_que_nao_fecha([conta])
 
         log.info("  %d linhas, %d gravadas", len(registros), gravadas)
 
