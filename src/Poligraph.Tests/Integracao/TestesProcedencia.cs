@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Data;
@@ -175,14 +175,10 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
 
     [SkippableTheory]
     [InlineData("/api/procedencia/governo-gastos?de=2025")]
-    [InlineData("/api/procedencia/entidade?cnpj=123")]
     [InlineData("/api/procedencia/pagamentos?de=2025")]
-    [InlineData("/api/procedencia/pagamentos?de=2025&ate=2025&uf=pr")]
-    [InlineData("/api/procedencia/pagamentos?de=2025&ate=2025&municipio=41")]
-    [InlineData("/api/procedencia/inventado?pessoa=1&legislatura=57")]
     [InlineData("/api/procedencia/cota?legislatura=57")]
     [InlineData("/api/procedencia/painel?legislatura=57")]
-    public async Task ContextoDesconhecidoOuSemParametro_Da404(string rota)
+    public async Task SemOParametroDoContexto_Da404(string rota)
     {
         ExigeDocker();
         using var cliente = new FabricaApi(ConnectionString).CreateClient();
@@ -190,6 +186,23 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
         var resposta = await cliente.GetAsync(rota);
 
         Assert.Equal(HttpStatusCode.NotFound, resposta.StatusCode);
+    }
+
+    /// <summary>Cada parâmetro tem tipo próprio: o formato errado é recusado na entrada, antes do serviço.</summary>
+    [SkippableTheory]
+    [InlineData("/api/procedencia/inventado?pessoa=1&legislatura=57")]
+    [InlineData("/api/procedencia/entidade?cnpj=123")]
+    [InlineData("/api/procedencia/pagamentos?de=2025&ate=2025&uf=XX")]
+    [InlineData("/api/procedencia/pagamentos?de=2025&ate=2025&municipio=41")]
+    [InlineData("/api/procedencia/cota?pessoa=-3&legislatura=57")]
+    public async Task ParametroForaDoFormato_Da400(string rota)
+    {
+        ExigeDocker();
+        using var cliente = new FabricaApi(ConnectionString).CreateClient();
+
+        var resposta = await cliente.GetAsync(rota);
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
     }
 
     private async Task<(long Pessoa, long A, long B)> SemearAsync()

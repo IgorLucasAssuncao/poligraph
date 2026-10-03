@@ -60,7 +60,7 @@ public class ServicoNovidades(PoligraphDb db)
 
         return [.. porFonte
             .OrderByDescending(f => f.Ultima)
-            .Select(f => new AtualizacaoDaFonteDto(f.Fonte, ServicoProcedencia.Orgao(f.Fonte), f.Ultima))];
+            .Select(f => new AtualizacaoDaFonteDto(f.Fonte, Poligraph.Api.Textos.TextosDaProcedencia.Orgao(f.Fonte), f.Ultima))];
     }
 
     /// <summary>A1. A ausência só existe no Senado, que lista todo senador em exercício; na Câmara o campo vem nulo.</summary>
