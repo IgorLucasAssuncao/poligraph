@@ -292,7 +292,9 @@ namespace Poligraph.Data.Migrations
 
                     b.ToTable("consentimentos", null, t =>
                         {
-                            t.HasCheckConstraint("ck_consentimento_finalidade", "finalidade IN ('EMAIL_NOTICIAS')");
+                            t.HasCheckConstraint("ck_consentimento_finalidade", "finalidade IN ('SEGUIR_PARLAMENTARES')");
+
+                            t.HasCheckConstraint("ck_consentimento_versao", "length(versao) BETWEEN 1 AND 40");
                         });
                 });
 
@@ -967,117 +969,6 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Data.NoticiaModel", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTimeOffset>("ColetadaEm")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("coletada_em")
-                        .HasDefaultValueSql("now()");
-
-                    b.Property<string>("HashTitulo")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("hash_titulo");
-
-                    b.Property<DateTimeOffset>("PublicadaEm")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("publicada_em");
-
-                    b.Property<string>("Titulo")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("titulo");
-
-                    b.Property<string>("Trecho")
-                        .HasColumnType("text")
-                        .HasColumnName("trecho");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("url");
-
-                    b.Property<string>("Veiculo")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("veiculo");
-
-                    b.HasKey("Id")
-                        .HasName("pk_noticias");
-
-                    b.HasIndex("HashTitulo")
-                        .HasDatabaseName("ix_noticias_hash_titulo");
-
-                    b.HasIndex("PublicadaEm")
-                        .HasDatabaseName("ix_noticias_publicada_em");
-
-                    b.HasIndex("Url")
-                        .IsUnique()
-                        .HasDatabaseName("ix_noticias_url");
-
-                    b.ToTable("noticias", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_noticia_trecho", "trecho IS NULL OR length(trecho) <= 500");
-                        });
-                });
-
-            modelBuilder.Entity("Poligraph.Data.NoticiaPessoaModel", b =>
-                {
-                    b.Property<long>("NoticiaId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("noticia_id");
-
-                    b.Property<long>("PessoaId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("pessoa_id");
-
-                    b.Property<float>("Confianca")
-                        .HasColumnType("real")
-                        .HasColumnName("confianca");
-
-                    b.Property<string>("Metodo")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("metodo");
-
-                    b.HasKey("NoticiaId", "PessoaId")
-                        .HasName("pk_noticia_pessoas");
-
-                    b.HasIndex("PessoaId")
-                        .HasDatabaseName("ix_noticia_pessoas_pessoa_id");
-
-                    b.ToTable("noticia_pessoas", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_np_confianca", "confianca BETWEEN 0 AND 1");
-
-                            t.HasCheckConstraint("ck_np_metodo", "metodo IN ('NOME_COMPLETO','NOME_PARLAMENTAR','SOBRENOME')");
-                        });
-                });
-
-            modelBuilder.Entity("Poligraph.Data.NoticiaTemaModel", b =>
-                {
-                    b.Property<long>("NoticiaId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("noticia_id");
-
-                    b.Property<string>("Tema")
-                        .HasColumnType("text")
-                        .HasColumnName("tema");
-
-                    b.HasKey("NoticiaId", "Tema")
-                        .HasName("pk_noticia_temas");
-
-                    b.ToTable("noticia_temas", (string)null);
-                });
-
             modelBuilder.Entity("Poligraph.Data.OrcamentoPorFuncaoModel", b =>
                 {
                     b.Property<short>("Ano")
@@ -1680,43 +1571,6 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Data.TokenEmailModel", b =>
-                {
-                    b.Property<string>("Token")
-                        .HasColumnType("text")
-                        .HasColumnName("token");
-
-                    b.Property<DateTimeOffset>("CriadoEm")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("criado_em")
-                        .HasDefaultValueSql("now()");
-
-                    b.Property<string>("Proposito")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("proposito");
-
-                    b.Property<DateTimeOffset?>("UsadoEm")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("usado_em");
-
-                    b.Property<long>("UsuarioId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("usuario_id");
-
-                    b.HasKey("Token")
-                        .HasName("pk_tokens_email");
-
-                    b.HasIndex("UsuarioId")
-                        .HasDatabaseName("ix_tokens_email_usuario_id");
-
-                    b.ToTable("tokens_email", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_token_proposito", "proposito IN ('DESCADASTRO')");
-                        });
-                });
-
             modelBuilder.Entity("Poligraph.Data.UsuarioModel", b =>
                 {
                     b.Property<long>("Id")
@@ -2058,39 +1912,6 @@ namespace Poligraph.Data.Migrations
                         .HasConstraintName("fk_nos_metrica_pessoas_pessoa_id");
                 });
 
-            modelBuilder.Entity("Poligraph.Data.NoticiaPessoaModel", b =>
-                {
-                    b.HasOne("Poligraph.Data.NoticiaModel", "Noticia")
-                        .WithMany("Pessoas")
-                        .HasForeignKey("NoticiaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_noticia_pessoas_noticias_noticia_id");
-
-                    b.HasOne("Poligraph.Data.PessoaModel", "Pessoa")
-                        .WithMany()
-                        .HasForeignKey("PessoaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_noticia_pessoas_pessoas_pessoa_id");
-
-                    b.Navigation("Noticia");
-
-                    b.Navigation("Pessoa");
-                });
-
-            modelBuilder.Entity("Poligraph.Data.NoticiaTemaModel", b =>
-                {
-                    b.HasOne("Poligraph.Data.NoticiaModel", "Noticia")
-                        .WithMany()
-                        .HasForeignKey("NoticiaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_noticia_temas_noticias_noticia_id");
-
-                    b.Navigation("Noticia");
-                });
-
             modelBuilder.Entity("Poligraph.Data.OrientacaoModel", b =>
                 {
                     b.HasOne("Poligraph.Data.CargaModel", null)
@@ -2241,18 +2062,6 @@ namespace Poligraph.Data.Migrations
                         .HasConstraintName("fk_similaridades_pessoas_pessoa_b");
                 });
 
-            modelBuilder.Entity("Poligraph.Data.TokenEmailModel", b =>
-                {
-                    b.HasOne("Poligraph.Data.UsuarioModel", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_tokens_email_usuarios_usuario_id");
-
-                    b.Navigation("Usuario");
-                });
-
             modelBuilder.Entity("Poligraph.Data.VotacaoModel", b =>
                 {
                     b.HasOne("Poligraph.Data.CargaModel", null)
@@ -2294,11 +2103,6 @@ namespace Poligraph.Data.Migrations
                     b.Navigation("Pessoa");
 
                     b.Navigation("Votacao");
-                });
-
-            modelBuilder.Entity("Poligraph.Data.NoticiaModel", b =>
-                {
-                    b.Navigation("Pessoas");
                 });
 
             modelBuilder.Entity("Poligraph.Data.PessoaModel", b =>

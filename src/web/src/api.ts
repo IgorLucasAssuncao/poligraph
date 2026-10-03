@@ -1,3 +1,5 @@
+import { VERSAO_CONSENTIMENTO } from './textos-legais';
+
 /**
  * Cliente da API.
  *
@@ -231,6 +233,13 @@ export const NOME_DA_CASA: Record<
   SENADO: { nome: 'Senado Federal', plural: 'senadores', singular: 'senador' },
 };
 
+/** A API pediu o consentimento de seguir (428). */
+export class ConsentimentoNecessarioError extends Error {
+  constructor() {
+    super('Falta o consentimento para seguir.');
+  }
+}
+
 export class NaoAutenticadoError extends Error {
   constructor() {
     super('Sessão expirada.');
@@ -434,8 +443,26 @@ export async function listarSeguidos(): Promise<Parlamentar[]> {
 }
 
 /** DECISÃO: PUT: seguir duas vezes é o mesmo que seguir uma. */
-export async function seguir(pessoaId: number): Promise<void> {
-  await semCorpo(`${BASE}/seguidos/${pessoaId}`, 'PUT');
+/**
+ * Segue, mandando a versão do texto de consentimento que a tela mostra.
+ *
+ * Sem consentimento vivo nessa versão a API responde 428, que vira {@link ConsentimentoNecessarioError};
+ * a tela pergunta e chama de novo com `aceite`.
+ */
+export async function seguir(pessoaId: number, aceite = false): Promise<void> {
+  const consulta = new URLSearchParams({ versao: VERSAO_CONSENTIMENTO });
+  if (aceite) consulta.set('aceite', 'true');
+  const url = `${BASE}/seguidos/${pessoaId}?${consulta}`;
+  const resposta = await fetch(url, { method: 'PUT', credentials: 'include' });
+
+  if (resposta.status === 428) throw new ConsentimentoNecessarioError();
+  if (resposta.status === 401) throw new NaoAutenticadoError();
+  if (!resposta.ok) throw new Error(`Falha em ${url} (${resposta.status}).`);
+}
+
+/** Revoga o consentimento de seguir; a API apaga a lista junto. */
+export async function revogarConsentimentoDeSeguir(): Promise<void> {
+  await semCorpo(`${BASE}/seguidos/consentimento`, 'DELETE');
 }
 
 export async function deixarDeSeguir(pessoaId: number): Promise<void> {

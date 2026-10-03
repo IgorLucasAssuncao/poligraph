@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { excluirConta } from '../api';
+import { excluirConta, revogarConsentimentoDeSeguir } from '../api';
 import { Avatar } from '../componentes/Avatar';
 import { CabecalhoDaColuna } from '../componentes/Layout';
 import { useSessao } from '../sessao';
@@ -17,6 +17,7 @@ export function MinhaConta() {
   const { usuario, sair } = useSessao();
   const [confirmando, setConfirmando] = useState(false);
   const [erro, setErro] = useState(false);
+  const [revogado, setRevogado] = useState(false);
 
   return (
     <>
@@ -44,6 +45,18 @@ export function MinhaConta() {
           <Link to="/privacidade">Veja o detalhe</Link>.
         </p>
 
+        <p className="ajuda">
+          Revogar o consentimento de seguir apaga a lista de quem você segue. Para seguir de
+          novo, o site pede o consentimento outra vez.
+        </p>
+        {revogado ? (
+          <p className="ajuda">Consentimento revogado. A lista foi apagada.</p>
+        ) : (
+          <button type="button" className="botao-secundario" onClick={revogar}>
+            Revogar o consentimento de seguir
+          </button>
+        )}
+
         {!confirmando ? (
           <button type="button" className="botao-perigo" onClick={() => setConfirmando(true)}>
             Apagar minha conta
@@ -69,10 +82,19 @@ export function MinhaConta() {
           </div>
         )}
 
-        {erro && <p className="erro">Não foi possível apagar agora. Tente de novo.</p>}
+        {erro && <p className="erro">Não foi possível concluir agora. Tente de novo.</p>}
       </section>
     </>
   );
+
+  async function revogar() {
+    try {
+      await revogarConsentimentoDeSeguir();
+      setRevogado(true);
+    } catch {
+      setErro(true);
+    }
+  }
 
   async function apagar() {
     try {

@@ -106,7 +106,6 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         // o id_token foi validado e descartado — nenhuma coluna o contém
         Assert.DoesNotContain("token-valido", usuario.GoogleSub);
         Assert.DoesNotContain("token-valido", usuario.Email);
-        Assert.Equal(0, await db.TokensEmail.CountAsync());
     }
 
     // Cookie e sessão
@@ -197,8 +196,8 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         await EntrarAsync(cliente);
         var pessoaId = await PrimeiraPessoaAsync();
 
-        await cliente.PutAsync($"/api/seguidos/{pessoaId}", null);
-        await cliente.PutAsync($"/api/seguidos/{pessoaId}", null);
+        await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1&aceite=true", null);
+        await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1&aceite=true", null);
 
         await using var db = CriarContexto();
         Assert.Equal(1, await db.Segue.CountAsync());
@@ -211,7 +210,7 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         using var cliente = CriarCliente();
         await EntrarAsync(cliente);
 
-        var resposta = await cliente.PutAsync("/api/seguidos/999999", null);
+        var resposta = await cliente.PutAsync("/api/seguidos/999999?versao=v1&aceite=true", null);
 
         Assert.Equal(HttpStatusCode.NotFound, resposta.StatusCode);
     }
@@ -239,7 +238,7 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         using var cliente = CriarCliente();
         await EntrarAsync(cliente);
 
-        var resposta = await cliente.PutAsync($"/api/seguidos/{ex.Id}", null);
+        var resposta = await cliente.PutAsync($"/api/seguidos/{ex.Id}?versao=v1&aceite=true", null);
 
         Assert.Equal(HttpStatusCode.UnprocessableEntity, resposta.StatusCode);
         await using var db = CriarContexto();
@@ -255,11 +254,80 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         await EntrarAsync(cliente);
         var pessoaId = await PrimeiraPessoaAsync();
 
-        await cliente.PutAsync($"/api/seguidos/{pessoaId}", null);
+        await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1&aceite=true", null);
         await cliente.DeleteAsync($"/api/seguidos/{pessoaId}");
 
         var lista = await cliente.GetFromJsonAsync<List<SeguidoJson>>("/api/seguidos");
         Assert.Empty(lista!);
+    }
+
+    /// <summary>
+    /// Pendência 62: sem consentimento, seguir responde 428 e nada é gravado. A lista de seguidos
+    /// é dado sensível, e a política diz que o consentimento é dado ao seguir.
+    /// </summary>
+    [SkippableFact]
+    public async Task Seguir_SemConsentimento_Retorna428_ENaoGrava()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        using var cliente = CriarCliente();
+        await EntrarAsync(cliente);
+        var pessoaId = await PrimeiraPessoaAsync();
+
+        var semVersao = await cliente.PutAsync($"/api/seguidos/{pessoaId}", null);
+        var semAceite = await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1", null);
+
+        Assert.Equal(HttpStatusCode.PreconditionRequired, semVersao.StatusCode);
+        Assert.Equal(HttpStatusCode.PreconditionRequired, semAceite.StatusCode);
+        await using var db = CriarContexto();
+        Assert.Equal(0, await db.Segue.CountAsync());
+        Assert.Equal(0, await db.Consentimentos.CountAsync());
+    }
+
+    /// <summary>
+    /// O aceite grava a versão do texto. Com o texto mudado, a tela pergunta de novo, e a versão
+    /// anterior fica revogada, com data: é a prova de "consentiu com o quê, e até quando".
+    /// </summary>
+    [SkippableFact]
+    public async Task Seguir_ComAceite_GravaAVersao_ETextoNovoPerguntaDeNovo()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        using var cliente = CriarCliente();
+        await EntrarAsync(cliente);
+        var pessoas = await Db.Votos.Select(v => v.PessoaId).Distinct().OrderBy(p => p).Take(2).ToListAsync();
+
+        (await cliente.PutAsync($"/api/seguidos/{pessoas[0]}?versao=v1&aceite=true", null)).EnsureSuccessStatusCode();
+        var textoNovo = await cliente.PutAsync($"/api/seguidos/{pessoas[1]}?versao=v2", null);
+        (await cliente.PutAsync($"/api/seguidos/{pessoas[1]}?versao=v2&aceite=true", null)).EnsureSuccessStatusCode();
+
+        Assert.Equal(HttpStatusCode.PreconditionRequired, textoNovo.StatusCode);
+        await using var db = CriarContexto();
+        var consentimentos = await db.Consentimentos.OrderBy(c => c.Id).ToListAsync();
+        Assert.Equal(["v1", "v2"], consentimentos.Select(c => c.Versao));
+        Assert.NotNull(consentimentos[0].RevogadoEm);
+        Assert.Null(consentimentos[1].RevogadoEm);
+        Assert.Equal(2, await db.Segue.CountAsync());
+    }
+
+    /// <summary>Revogar apaga a lista e deixa o consentimento com a data em que acabou (LGPD art. 8º, §5º).</summary>
+    [SkippableFact]
+    public async Task RevogarConsentimento_ApagaALista_EMarcaARevogacao()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        using var cliente = CriarCliente();
+        await EntrarAsync(cliente);
+        var pessoaId = await PrimeiraPessoaAsync();
+        (await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1&aceite=true", null)).EnsureSuccessStatusCode();
+
+        (await cliente.DeleteAsync("/api/seguidos/consentimento")).EnsureSuccessStatusCode();
+
+        await using var db = CriarContexto();
+        Assert.Equal(0, await db.Segue.CountAsync());
+        Assert.NotNull((await db.Consentimentos.SingleAsync()).RevogadoEm);
+        Assert.Equal(HttpStatusCode.PreconditionRequired,
+            (await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1", null)).StatusCode);
     }
 
     // PRIVADOS — na ordem de uso

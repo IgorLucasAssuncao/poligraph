@@ -75,6 +75,7 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
         "/api/seguidos",
         "/api/seguidos/novidades",
         "/api/seguidos/{pessoaId}",
+        "/api/seguidos/consentimento",
         "/api/auth/eu",
         "/api/auth/logout",
         "/api/auth/conta",

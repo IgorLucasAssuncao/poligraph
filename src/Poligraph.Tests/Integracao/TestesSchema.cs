@@ -139,12 +139,12 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         {
             "arestas_grafo", "autores_de_emenda", "avaliacoes", "cargas", "cnpjs_municipio", "consentimentos", "convenios",
             "despesas", "emendas", "emendas_convenios", "emendas_favorecidos", "encargos_especiais", "execucoes", "gastos_sigilosos", "gestoes",
-            "municipios", "noticia_pessoas", "noticia_temas", "orcamento_por_funcao", "patrimonios",
-            "noticias", "nos_metrica", "orientacoes", "perguntas", "pessoa_fonte_ids",
+            "municipios", "orcamento_por_funcao", "patrimonios",
+            "nos_metrica", "orientacoes", "perguntas", "pessoa_fonte_ids",
             "pessoas",
             "proposicoes", "receitas_de_campanha", "receitas_por_origem", "reconciliacao_motivos", "reconciliacoes",
             "redes_sociais", "segue", "similaridades",
-            "tokens_email", "usuarios", "votacoes", "votos",
+            "usuarios", "votacoes", "votos",
         };
 
         var noBanco = await Db.Database
@@ -156,7 +156,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
 
         // A ordenação é feita aqui, não no `ORDER BY`: a ordem do Postgres depende
         // do collation do container, e `nos_metrica` vem antes ou depois de
-        // `noticia_pessoas` conforme a regra de intercalação. O teste afirma QUAIS
+        // `orcamento_por_funcao` conforme a regra de intercalação. O teste afirma QUAIS
         // tabelas existem, não em que ordem o banco as lista.
         Assert.Equal(
             esperadas.Order(StringComparer.Ordinal),
@@ -336,7 +336,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
     // LGPD art. 18 — a exclusão precisa ser UM delete
 
     [SkippableFact]
-    public async Task ExcluirUsuario_LevaSegueConsentimentoETokens()
+    public async Task ExcluirUsuario_LevaSegueEConsentimento()
     {
         ExigeDocker();
         var (pessoa, _) = await CriarDuasPessoasAsync();
@@ -348,11 +348,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         Db.Segue.Add(new SegueModel { UsuarioId = usuario.Id, PessoaId = pessoa });
         Db.Consentimentos.Add(new ConsentimentoModel
         {
-            UsuarioId = usuario.Id, Finalidade = TipoFinalidadeDeConsentimento.EMAIL_NOTICIAS, Versao = "v1"
-        });
-        Db.TokensEmail.Add(new TokenEmailModel
-        {
-            Token = "tok-1", UsuarioId = usuario.Id, Proposito = TipoPropositoDeToken.DESCADASTRO
+            UsuarioId = usuario.Id, Finalidade = TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES, Versao = "v1"
         });
         await Db.SaveChangesAsync();
 
@@ -362,7 +358,6 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
 
         Assert.Empty(await Db.Segue.Where(s => s.UsuarioId == usuario.Id).ToListAsync());
         Assert.Empty(await Db.Consentimentos.Where(c => c.UsuarioId == usuario.Id).ToListAsync());
-        Assert.Empty(await Db.TokensEmail.Where(t => t.UsuarioId == usuario.Id).ToListAsync());
     }
 
     // O oposto do CASCADE: apagar parlamentar que alguém segue não pode
@@ -417,13 +412,13 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
 
         Db.Consentimentos.Add(new ConsentimentoModel
         {
-            UsuarioId = usuario.Id, Finalidade = TipoFinalidadeDeConsentimento.EMAIL_NOTICIAS, Versao = "v1"
+            UsuarioId = usuario.Id, Finalidade = TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES, Versao = "v1"
         });
         await Db.SaveChangesAsync();
 
         Db.Consentimentos.Add(new ConsentimentoModel
         {
-            UsuarioId = usuario.Id, Finalidade = TipoFinalidadeDeConsentimento.EMAIL_NOTICIAS, Versao = "v2"
+            UsuarioId = usuario.Id, Finalidade = TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES, Versao = "v2"
         });
 
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());

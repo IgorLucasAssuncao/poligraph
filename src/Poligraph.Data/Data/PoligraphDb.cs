@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Poligraph.Data;
 
@@ -37,10 +37,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<UsuarioModel> Usuarios => Set<UsuarioModel>();
     public DbSet<SegueModel> Segue => Set<SegueModel>();
     public DbSet<ConsentimentoModel> Consentimentos => Set<ConsentimentoModel>();
-    public DbSet<TokenEmailModel> TokensEmail => Set<TokenEmailModel>();
-    public DbSet<NoticiaModel> Noticias => Set<NoticiaModel>();
-    public DbSet<NoticiaPessoaModel> NoticiaPessoas => Set<NoticiaPessoaModel>();
-    public DbSet<NoticiaTemaModel> NoticiaTemas => Set<NoticiaTemaModel>();
     public DbSet<AvaliacaoQuestionarioModel> Avaliacoes => Set<AvaliacaoQuestionarioModel>();
     public DbSet<RedeSocialModel> RedesSociais => Set<RedeSocialModel>();
     public DbSet<PatrimonioModel> Patrimonios => Set<PatrimonioModel>();
@@ -79,7 +75,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         ConfigurarProcedencia(mb);
         ConfigurarReconciliacao(mb);
         ConfigurarUsuario(mb);
-        ConfigurarNoticia(mb);
         ConfigurarAvaliacao(mb);
     }
 
@@ -709,58 +704,11 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             // um consentimento vivo por finalidade
             e.HasIndex(x => new { x.UsuarioId, x.Finalidade })
                 .IsUnique().HasFilter("revogado_em IS NULL");
-            e.ToTable(t => t.HasCheckConstraint(
-                "ck_consentimento_finalidade", "finalidade IN ('EMAIL_NOTICIAS')"));
-        });
-
-        mb.Entity<TokenEmailModel>(e =>
-        {
-            e.HasKey(x => x.Token);
-            e.HasOne(x => x.Usuario).WithMany()
-                .HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Cascade);
-            e.Property(x => x.CriadoEm).HasDefaultValueSql("now()");
-            e.ToTable(t => t.HasCheckConstraint(
-                "ck_token_proposito", "proposito IN ('DESCADASTRO')"));
-        });
-    }
-
-    private static void ConfigurarNoticia(ModelBuilder mb)
-    {
-        mb.Entity<NoticiaModel>(e =>
-        {
-            e.HasKey(x => x.Id);
-            // dedup em duas frentes: mesma URL, e mesma matéria republicada com outra URL
-            e.HasIndex(x => x.Url).IsUnique();
-            e.HasIndex(x => x.HashTitulo);
-            e.HasIndex(x => x.PublicadaEm);
-            e.Property(x => x.ColetadaEm).HasDefaultValueSql("now()");
-            // RF-38: trecho CURTO. O limite é a regra virando constraint —
-            // se alguém tentar gravar o corpo da matéria, o banco recusa.
-            e.ToTable(t => t.HasCheckConstraint(
-                "ck_noticia_trecho", "trecho IS NULL OR length(trecho) <= 500"));
-        });
-
-        mb.Entity<NoticiaPessoaModel>(e =>
-        {
-            e.HasKey(x => new { x.NoticiaId, x.PessoaId });
-            e.HasOne(x => x.Noticia).WithMany(n => n.Pessoas)
-                .HasForeignKey(x => x.NoticiaId).OnDelete(DeleteBehavior.Cascade);
-            e.HasOne(x => x.Pessoa).WithMany()
-                .HasForeignKey(x => x.PessoaId).OnDelete(DeleteBehavior.Cascade);
-            e.HasIndex(x => x.PessoaId);
             e.ToTable(t =>
             {
-                t.HasCheckConstraint("ck_np_confianca", "confianca BETWEEN 0 AND 1");
-                t.HasCheckConstraint("ck_np_metodo",
-                    "metodo IN ('NOME_COMPLETO','NOME_PARLAMENTAR','SOBRENOME')");
+                t.HasCheckConstraint("ck_consentimento_finalidade", "finalidade IN ('SEGUIR_PARLAMENTARES')");
+                t.HasCheckConstraint("ck_consentimento_versao", "length(versao) BETWEEN 1 AND 40");
             });
-        });
-
-        mb.Entity<NoticiaTemaModel>(e =>
-        {
-            e.HasKey(x => new { x.NoticiaId, x.Tema });
-            e.HasOne(x => x.Noticia).WithMany()
-                .HasForeignKey(x => x.NoticiaId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 

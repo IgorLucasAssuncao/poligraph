@@ -56,7 +56,7 @@ public class TestesNovidades(FixturePostgres postgres) : BaseIntegracao(postgres
         var (pessoaId, partidoAntes) = await SemearAsync();
         using var cliente = CriarCliente();
         await EntrarAsync(cliente);
-        (await cliente.PutAsync($"/api/seguidos/{pessoaId}", null)).EnsureSuccessStatusCode();
+        (await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1&aceite=true", null)).EnsureSuccessStatusCode();
 
         var lidas = (await cliente.GetFromJsonAsync<NovidadesLidas>(Rota))!;
 

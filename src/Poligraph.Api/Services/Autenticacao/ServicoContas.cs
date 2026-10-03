@@ -59,7 +59,7 @@ public class ServicoContas(PoligraphDb db)
     /// LGPD art. 18, VI — direito à eliminação.
     ///
     /// É UM <c>DELETE</c>. Os <c>ON DELETE CASCADE</c> do schema levam junto a lista
-    /// de acompanhados, os consentimentos e os tokens de e-mail. Foi para isto que eles
+    /// de acompanhados e os consentimentos. Foi para isto que eles
     /// existem: sem o cascade, esta operação seria uma lista de tabelas que alguém
     /// esqueceria de atualizar ao criar a próxima.
     ///

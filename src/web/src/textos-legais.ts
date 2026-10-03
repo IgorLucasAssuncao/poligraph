@@ -7,7 +7,7 @@
  * responder "consentiu com o quê, exatamente?" — que é a pergunta que a LGPD art. 8º §2
  * joga no colo do controlador, porque o ônus da prova do consentimento é dele.
  */
-export const VERSAO_CONSENTIMENTO = 'v4-2026-10-02';
+export const VERSAO_CONSENTIMENTO = 'v5-2026-10-03';
 
 export const CONTATO = 'igorlucas1217@gmail.com';
 
@@ -19,7 +19,7 @@ export const CONTATO = 'igorlucas1217@gmail.com';
 export const POLITICA_DE_PRIVACIDADE = `
 # Política de Privacidade
 
-**Versão ${VERSAO_CONSENTIMENTO}** · Última atualização: 2 de outubro de 2026.
+**Versão ${VERSAO_CONSENTIMENTO}** · Última atualização: 3 de outubro de 2026.
 
 O Registro Aberto é um trabalho de conclusão de curso. Ele compara as respostas de um
 questionário com o voto registrado em plenário de deputados federais e senadores,
@@ -76,8 +76,10 @@ Esta lista é tratada nessa condição:
 - não alimenta segmentação de nenhum tipo;
 - pode ser apagada a qualquer momento, item a item ou por inteiro.
 
-A base legal é o consentimento (art. 7º, I e art. 11, I), manifestado ao entrar e ao
-seguir alguém, e revogável a qualquer tempo.
+A base legal é o consentimento (art. 7º, I e art. 11, I). Ele é pedido na primeira vez
+que você segue alguém, e de novo quando este texto muda; o site guarda a data e a versão
+do texto aceito. Pode ser revogado a qualquer tempo na página da conta, e a lista é
+apagada junto.
 
 ---
 
@@ -120,8 +122,8 @@ A qualquer momento é possível:
 
 - obter os dados mantidos sobre você;
 - corrigir dado incorreto;
-- apagar tudo, em uma operação que remove conta, lista de acompanhados, consentimentos e tokens;
-- revogar o consentimento, sem efeito sobre tratamentos já realizados licitamente;
+- apagar tudo, em uma operação que remove conta, lista de acompanhados e consentimentos;
+- revogar o consentimento de seguir, na página da conta, o que apaga a lista de acompanhados, sem efeito sobre tratamentos já realizados licitamente;
 - saber com quem há compartilhamento: Google, para o login, e a Microsoft, para a
   medição de uso.
 
@@ -175,3 +177,17 @@ export const TEXTO_CONSENTIMENTO = {
 
   rodape: 'Você pode usar o site normalmente escolhendo qualquer uma das opções.',
 } as const;
+
+/**
+ * O pedido de consentimento que aparece na primeira vez que a pessoa segue alguém
+ * (Pendência 62). A versão gravada com o aceite é `VERSAO_CONSENTIMENTO`.
+ */
+export const TEXTO_CONSENTIMENTO_SEGUIR = {
+  titulo: 'Antes de seguir',
+  texto:
+    'A lista de quem você segue indica posição política, e a lei a trata como dado sensível. ' +
+    'Ela fica na sua conta, serve só para montar a sua lista no site e não é compartilhada. ' +
+    'Você pode deixar de seguir, ou apagar a lista inteira, quando quiser.',
+  aceitar: 'Concordo e quero seguir',
+  recusar: 'Agora não',
+};

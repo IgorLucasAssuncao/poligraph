@@ -93,27 +93,6 @@ CREATE TABLE similaridades (
     PRIMARY KEY (execucao_id, pessoa_a, pessoa_b, metrica),
     CHECK (pessoa_a < pessoa_b)
 );
-CREATE TABLE noticias (
-    id BIGSERIAL PRIMARY KEY,
-    url TEXT NOT NULL UNIQUE,
-    titulo TEXT NOT NULL,
-    veiculo TEXT NOT NULL,
-    publicada_em TIMESTAMPTZ NOT NULL,
-    trecho TEXT,
-    hash_titulo TEXT NOT NULL,
-    coletada_em TIMESTAMPTZ NOT NULL DEFAULT now(),
-    -- RISCO: RF-38 virando constraint: se alguém tentar gravar o corpo da matéria, o
-    --    banco recusa. É a mesma checagem que o EF cria.
-    CHECK (trecho IS NULL OR length(trecho) <= 500)
-);
-CREATE TABLE noticia_pessoas (
-    noticia_id BIGINT NOT NULL REFERENCES noticias(id) ON DELETE CASCADE,
-    pessoa_id BIGINT NOT NULL REFERENCES pessoas(id) ON DELETE CASCADE,
-    confianca REAL NOT NULL CHECK (confianca BETWEEN 0 AND 1),
-    metodo TEXT NOT NULL
-        CHECK (metodo IN ('NOME_COMPLETO','NOME_PARLAMENTAR','SOBRENOME')),
-    PRIMARY KEY (noticia_id, pessoa_id)
-);
 """
 
 

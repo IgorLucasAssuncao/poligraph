@@ -2972,3 +2972,14 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 .motivos-de-fora { list-style: none; margin: .5rem 0; padding: 0; }
 .motivos-de-fora li { display: flex; justify-content: space-between; gap: 1rem; padding: .3rem 0; border-top: 1px solid var(--borda); font-size: var(--t-2); }
 .confere-com-o-portal .dado { font-family: var(--dado); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ═══ CONSENTIMENTO DE SEGUIR (Pendência 62) ════════════════════ */
+.pedido-consentimento {
+  width: min(28rem, calc(100vw - 2rem)); padding: 1.25rem 1.25rem 1rem;
+  background: var(--fundo); color: var(--texto);
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 22%);
+}
+.pedido-consentimento::backdrop { background: rgb(0 0 0 / 45%); }
+.pedido-consentimento h2 { margin: 0 0 .6rem; font-size: var(--t-4); }
+.pedido-consentimento p { margin: 0 0 .6rem; font-size: var(--t-2); line-height: 1.5; }
