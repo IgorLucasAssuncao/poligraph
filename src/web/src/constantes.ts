@@ -86,3 +86,12 @@ export const SIMILARES_DE_INICIO = 5;
  * votou junto em 20 votações ou mais (`ck_sim_minimo`).
  */
 export const BASE_PEQUENA_DO_ALINHAMENTO = 20;
+
+/** O destino que o Portal escreve quando a emenda se reparte sem dizer onde. */
+export const LOCALIDADE_MULTIPLA = 'MÚLTIPLO';
+
+/** O destino que o Portal escreve para emenda de alcance nacional. */
+export const LOCALIDADE_NACIONAL = 'Nacional';
+
+/** O sufixo que o Portal põe no destino estadual: "PARANÁ (UF)". */
+export const SUFIXO_DE_ESTADO = / \(UF\)$/;
