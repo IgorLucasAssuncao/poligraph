@@ -256,22 +256,30 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     /// <para>As três colunas somam o mesmo total, o pago no período (com <paramref name="uf"/>, o pago a quem tem sede nela). Os menores de cada coluna viram um nó "outros", e o que não tem destino vira nó próprio: repasse por banco, pago a pessoas, sem cidade. Nada sai do desenho calado.</para>
     /// <para>O autor sai da emenda, pelo código. Emenda que o Portal publica sem autor fica em "Sem autor no Portal".</para>
     /// </remarks>
-    public async Task<FluxoDeEmendasDto> ObterFluxoAsync(string? uf, int? de, int? ate, CancellationToken ct)
+    /// <param name="pessoa">Só as emendas desse parlamentar: o grafo da aba Emendas da ficha.</param>
+    public async Task<FluxoDeEmendasDto> ObterFluxoAsync(string? uf, int? de, int? ate, long? pessoa, CancellationToken ct)
     {
         var (periodo, _, prefixos) = await PeriodoAsync(de, ate, ct);
         uf = string.IsNullOrWhiteSpace(uf) ? null : uf.Trim().ToUpperInvariant();
         if (prefixos.Length == 0) return new FluxoDeEmendasDto(periodo, uf, 0, [], []);
 
-        return await _cache.GetOrCreateAsync($"mapa:fluxo:{uf}:{periodo.De}-{periodo.Ate}", async entrada =>
+        return await _cache.GetOrCreateAsync($"mapa:fluxo:{uf}:{pessoa}:{periodo.De}-{periodo.Ate}", async entrada =>
         {
             entrada.AbsoluteExpirationRelativeToNow = ValidadeDaCidade;
-            return await CalcularFluxoAsync(uf, periodo, prefixos, ct);
+            return await CalcularFluxoAsync(uf, periodo, prefixos, pessoa, ct);
         }) ?? new FluxoDeEmendasDto(periodo, uf, 0, [], []);
     }
 
-    private async Task<FluxoDeEmendasDto> CalcularFluxoAsync(string? uf, PeriodoDto periodo, string[] prefixos, CancellationToken ct)
+    private async Task<FluxoDeEmendasDto> CalcularFluxoAsync(
+        string? uf, PeriodoDto periodo, string[] prefixos, long? pessoa, CancellationToken ct)
     {
-        var pagamentos = await DoPeriodo(prefixos)
+        var doPeriodo = DoPeriodo(prefixos);
+        if (pessoa is { } id)
+        {
+            var daPessoa = _db.Emendas.AsNoTracking().Where(e => e.PessoaId == id).Select(e => e.CodigoEmenda);
+            doPeriodo = doPeriodo.Where(f => daPessoa.Contains(f.CodigoEmenda));
+        }
+        var pagamentos = await doPeriodo
             .GroupBy(f => new { f.CodigoEmenda, f.Documento, f.Tipo, f.Intermediario })
             .Select(g => new { g.Key.CodigoEmenda, g.Key.Documento, g.Key.Tipo, g.Key.Intermediario, Nome = g.Max(f => f.Nome), Valor = g.Sum(f => f.Valor) })
             .ToListAsync(ct);

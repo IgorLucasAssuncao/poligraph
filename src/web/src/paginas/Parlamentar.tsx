@@ -228,7 +228,17 @@ export function ParlamentarComponent() {
         ))}
       </nav>
 
-      {aba === 'emendas' && <AbaEmendasComponent pessoaId={pessoaId} contas={contas} erro={erroDasContas} />}
+      {aba === 'emendas' && (
+        <AbaEmendasComponent
+          pessoaId={pessoaId}
+          contas={contas}
+          erro={erroDasContas}
+          nome={ficha?.nome ?? ''}
+          descricao={[ficha?.casa === 'SENADO' ? 'Senado' : 'Câmara', [ficha?.partido, ficha?.uf].filter(Boolean).join('-')]
+            .filter(Boolean)
+            .join(' · ')}
+        />
+      )}
       {aba === 'cota' && (
         <AbaCotaComponent pessoaId={pessoaId} contas={contas} erro={erroDasContas} legislatura={ficha?.legislatura} />
       )}

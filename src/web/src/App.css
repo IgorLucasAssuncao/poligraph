@@ -3040,21 +3040,6 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 
 .busca-cabecalho .busca-abrir { display: none; }
 
-/* ═══ CAMINHO DO DINHEIRO (Pendência 83) ═══════════════════════ */
-.fluxo { display: grid; gap: .75rem; justify-items: start; }
-.fluxo-desenho { width: 100%; overflow-x: auto; }
-.fluxo-desenho svg { display: block; width: 100%; min-width: 46rem; height: auto; }
-.fluxo-titulo { font-family: var(--dado); font-size: 12px; fill: var(--suave); text-transform: uppercase; letter-spacing: .08em; }
-.fluxo-aresta { fill: none; stroke: var(--realce); stroke-opacity: .28; transition: stroke-opacity var(--t-curto); }
-.fluxo-aresta:hover { stroke-opacity: .6; }
-.fluxo-apagada { stroke-opacity: .06; }
-.fluxo-ponta { fill: var(--realce); fill-opacity: .7; }
-.fluxo-no rect { fill: var(--texto); }
-.fluxo-no text { font-size: 11px; fill: var(--texto); paint-order: stroke; stroke: var(--fundo); stroke-width: 3px; stroke-linejoin: round; }
-.fluxo-outros rect, .fluxo-sem-destino rect, .fluxo-sem-autor rect { fill: var(--borda-forte); }
-.fluxo-sem-destino text, .fluxo-outros text, .fluxo-sem-autor text { fill: var(--suave); font-style: italic; }
-.fluxo-clicavel { cursor: pointer; }
-.fluxo-clicavel:hover text { fill: var(--realce); text-decoration: underline; }
 
 /* Opção 1 das arestas (2026-10-03): de longe só os pontos; a dica diz como ver as ligações. */
 .grafo-dica-ligacoes {
@@ -3062,4 +3047,40 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
   padding: .3rem .7rem; border-radius: var(--raio);
   background: color-mix(in srgb, var(--fundo) 88%, transparent); border: 1px solid var(--borda);
   font-size: var(--t-1); color: var(--suave); pointer-events: none; white-space: nowrap;
+}
+
+/* ═══ GRAFO DO DINHEIRO, na aba Emendas da ficha (Pendência 83) ═══
+   DECISÃO: o desenho do vídeo da procedência (plano/10 §1): caixas, linhas finas e o valor escrito
+   na seta, sem preenchimento colorido, para ler como documento. */
+.aba-dinheiro-acoes { display: flex; justify-content: flex-end; }
+dialog.grafo-dinheiro {
+  width: min(72rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); padding: 0;
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  background: var(--fundo); color: var(--texto); box-shadow: var(--sombra-flutuante);
+  flex-direction: column; overflow: hidden;
+}
+dialog.grafo-dinheiro[open] { display: flex; }
+dialog.grafo-dinheiro::backdrop { background: var(--veu); }
+html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
+.grafo-dinheiro-topo {
+  flex-shrink: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--borda);
+}
+.grafo-dinheiro-topo h2 { margin: 0; font-size: var(--t-4); }
+.grafo-dinheiro-sobre { margin: 0 0 .2rem; font-family: var(--dado); font-size: var(--t-1); color: var(--suave); text-transform: uppercase; letter-spacing: .08em; }
+.grafo-dinheiro-corpo { flex: 1; min-height: 0; overflow: auto; padding: 1rem 1.25rem 1.5rem; }
+.grafo-dinheiro-corpo svg { display: block; width: 100%; min-width: 46rem; height: auto; }
+.grafo-dinheiro-coluna { font-family: var(--dado); font-size: 12px; fill: var(--suave); text-transform: uppercase; letter-spacing: .06em; }
+.grafo-dinheiro-caixa rect { fill: var(--fundo); stroke: var(--borda-forte); stroke-width: 1; }
+.grafo-dinheiro-caixa text { font-size: 12.5px; fill: var(--texto); }
+.grafo-dinheiro-resto rect { stroke-dasharray: 4 3; }
+.grafo-dinheiro-resto text { fill: var(--suave); }
+.grafo-dinheiro-detalhe { font-size: 11px; fill: var(--suave); }
+.grafo-dinheiro-centro rect { fill: var(--painel); stroke: var(--texto); stroke-width: 1.5; }
+.grafo-dinheiro-nome { font-size: 14px; font-weight: 700; fill: var(--texto); }
+.grafo-dinheiro-seta line { stroke: var(--suave); stroke-width: 1; }
+.grafo-dinheiro-ponta { fill: var(--suave); }
+.grafo-dinheiro-seta text {
+  font-family: var(--dado); font-size: 11px; fill: var(--texto);
+  paint-order: stroke; stroke: var(--fundo); stroke-width: 4px; stroke-linejoin: round;
 }

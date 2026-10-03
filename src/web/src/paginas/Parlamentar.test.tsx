@@ -915,3 +915,16 @@ describe('votos agrupados por proposição', () => {
     expect(screen.getByText('Votação c')).toBeDefined();
   });
 });
+
+/** Pendência 83: o grafo do dinheiro abre num modal da aba Emendas, com a pessoa no centro. */
+describe('o grafo do dinheiro', () => {
+  it('abre com quem financiou a campanha e quem recebeu as emendas', async () => {
+    await abrirAba('Emendas');
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Ver o grafo do dinheiro' }));
+
+    const grafo = await screen.findByRole('img', { name: /Campanha de .*Emendas de 2025/ });
+    expect(grafo.getAttribute('aria-label')).toMatch(/Jose da Silva/);
+    expect(screen.getByRole('heading', { name: 'Ana Ribeiro', level: 2 })).toBeDefined();
+  });
+});

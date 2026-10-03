@@ -35,7 +35,6 @@ import { UFS } from '../ufs';
 import { ConfereComOPortalComponent } from '../componentes/ConfereComOPortal';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { NumeroComponent, OpcoesComponent } from '../componentes/Dados';
-import { FluxoDeEmendasComponent } from '../componentes/FluxoDeEmendas';
 
 /**
  * Para onde foi o dinheiro de emenda, no mapa — e quem o mandou para a sua cidade.
@@ -187,8 +186,6 @@ export function EmendasComponent() {
               {painel}
             </>
           )}
-
-          <VisualizacaoAvancadaComponent periodo={brasil.periodo} uf={uf} />
 
           <p className="fonte-dado">
             Fontes: <LinkDeFonteComponent href={FONTES.emendas.url}>{FONTES.emendas.nome}</LinkDeFonteComponent>;{' '}
@@ -842,23 +839,3 @@ function comParametros(atual: URLSearchParams, novos: Record<string, string | nu
   return proximo;
 }
 
-/**
- * O botão da visualização avançada (Pendência 83, pedido do autor): fechada por padrão, porque o
- * mapa responde à pergunta da maioria, "para onde foi o dinheiro da minha cidade". Aberta, mostra
- * o caminho inteiro do período e do estado escolhidos.
- */
-function VisualizacaoAvancadaComponent({ periodo, uf }: { periodo: Periodo; uf: string | null }) {
-  const [aberta, setAberta] = useState(false);
-
-  return (
-    <section className="governo-secao" data-tour="emendas-fluxo">
-      <div className="mapa-titulo">
-        <h2>Caminho do dinheiro{uf ? ` em ${uf}` : ''}</h2>
-        <button type="button" className="botao-secundario" aria-expanded={aberta} onClick={() => setAberta((a) => !a)}>
-          {aberta ? 'Fechar a visualização avançada' : 'Abrir a visualização avançada'}
-        </button>
-      </div>
-      {aberta && <FluxoDeEmendasComponent periodo={periodo} uf={uf} />}
-    </section>
-  );
-}

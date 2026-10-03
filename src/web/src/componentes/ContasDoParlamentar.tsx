@@ -22,6 +22,7 @@ import { NENHUM, usePaginas } from './usePaginas';
 import type { Contas } from './useContas';
 import { EsqueletoDePainelComponent, EsqueletoDeTextoComponent } from './Esqueleto';
 import { LinhaDeValorComponent, OpcoesComponent } from './Dados';
+import { GrafoDoDinheiroComponent } from './GrafoDoDinheiro';
 
 /**
  * O dinheiro do parlamentar, em três abas — campanha, emendas e cota.
@@ -129,7 +130,21 @@ function CarregandoComponent({ contas, erro }: { contas: Contas | null; erro: bo
  *
  * Emendas
  */
-export function AbaEmendasComponent({ pessoaId, contas, erro }: { pessoaId: number; contas: Contas | null; erro: boolean }) {
+export function AbaEmendasComponent({
+  pessoaId,
+  contas,
+  erro,
+  nome,
+  descricao,
+}: {
+  pessoaId: number;
+  contas: Contas | null;
+  erro: boolean;
+  /** Para o centro do grafo do dinheiro. */
+  nome: string;
+  descricao: string;
+}) {
+  const [grafoAberto, setGrafoAberto] = useState(false);
   const emendas = contas?.emendas;
   if (!emendas) return <CarregandoComponent contas={contas} erro={erro} />;
 
@@ -147,6 +162,19 @@ export function AbaEmendasComponent({ pessoaId, contas, erro }: { pessoaId: numb
 
   return (
     <section className="aba-dinheiro" aria-label="Emendas">
+      <div className="aba-dinheiro-acoes">
+        <button type="button" className="botao-secundario" onClick={() => setGrafoAberto(true)}>
+          Ver o grafo do dinheiro
+        </button>
+      </div>
+      <GrafoDoDinheiroComponent
+        aberto={grafoAberto}
+        aoFechar={() => setGrafoAberto(false)}
+        nome={nome}
+        descricao={descricao}
+        campanha={contas?.fin ?? null}
+        emendas={emendas}
+      />
       <div className="execucao">
         <p className="frase-resposta">
           <ComProcedenciaComponent

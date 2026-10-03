@@ -32,10 +32,11 @@ public static class EndpointsMapa
     }
 
     /// <summary>O dinheiro de emenda por UF, pela sede de quem recebeu.</summary>
-    /// <summary>O caminho do dinheiro de emenda, de quem mandou à cidade de quem recebeu (Pendência 83). Com <c>uf</c>, só o que chegou a quem tem sede nela.</summary>
+    /// <summary>O caminho do dinheiro de emenda, de quem mandou à cidade de quem recebeu (Pendência 83). Com <c>uf</c>, só o que chegou a quem tem sede nela; com <c>pessoa</c>, só as emendas daquele parlamentar.</summary>
     private static async Task<IResult> ObterFluxoAsync(
-        ServicoMapaDeEmendas servico, CancellationToken ct, int? de = null, int? ate = null, string? uf = null) =>
-        Results.Ok(await servico.ObterFluxoAsync(uf, de, ate, ct));
+        ServicoMapaDeEmendas servico, CancellationToken ct, int? de = null, int? ate = null, string? uf = null,
+        long? pessoa = null) =>
+        Results.Ok(await servico.ObterFluxoAsync(uf, de, ate, pessoa, ct));
 
     private static async Task<IResult> ObterBrasilAsync(
         ServicoMapaDeEmendas servico, CancellationToken ct, int? de = null, int? ate = null) =>

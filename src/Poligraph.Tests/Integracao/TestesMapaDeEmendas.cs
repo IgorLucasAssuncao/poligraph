@@ -313,6 +313,22 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
         Assert.Equal(700m, fluxo.Nos.Single(n => n.Id == $"M:{Luiziana}").Valor);
     }
 
+    /// <summary>O grafo da ficha: só as emendas do parlamentar, num nó só na primeira coluna.</summary>
+    [SkippableFact]
+    public async Task Fluxo_DeUmParlamentar_SoAsEmendasDele()
+    {
+        ExigeDocker();
+        var pessoaId = await SemearAsync();
+        var outra = await Db.Pessoas.AsNoTracking().Where(p => p.Id != pessoaId).Select(p => p.Id).FirstAsync();
+
+        var dele = await LerAsync<FluxoLido>($"/api/mapa/emendas/fluxo?de=2025&ate=2025&pessoa={pessoaId}");
+        var deOutro = await LerAsync<FluxoLido>($"/api/mapa/emendas/fluxo?de=2025&ate=2025&pessoa={outra}");
+
+        Assert.Equal(1_560m, dele.Total);
+        Assert.Equal($"P:{pessoaId}", Assert.Single(dele.Nos, n => n.Coluna == 0).Id);
+        Assert.Equal(0m, deOutro.Total);
+    }
+
     private record NoLido(string Id, string Rotulo, int Coluna, string Tipo, decimal Valor, string? Destino);
     private record ArestaLida(string De, string Para, decimal Valor);
     private record FluxoLido(decimal Total, List<NoLido> Nos, List<ArestaLida> Arestas);
