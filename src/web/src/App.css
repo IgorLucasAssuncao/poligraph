@@ -1011,8 +1011,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 /* RISCO: O marcador de rito vem ANTES do enunciado, não depois: quem lê a linha
    precisa saber que não é voto de mérito antes de ler o que foi votado. */
 .voto-rito {
-  margin: .45rem 0 .15rem; font-size: var(--t-1); letter-spacing: .04em;
-  text-transform: uppercase; color: var(--suave);
+  margin: .45rem 0 .15rem; font-size: var(--t-1); color: var(--suave);
 }
 
 /* ═══ BARRA DE BUSCA ═══════════════════════════════════════════ */

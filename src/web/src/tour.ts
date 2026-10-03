@@ -277,16 +277,17 @@ export function passosDaFicha(): PassoDoTour[] {
       alvo: 'ficha-votacoes',
       titulo: 'A base de tudo',
       texto:
-        'São as votações em plenário com o voto desta pessoa registrado. Toda comparação ' +
-        'desta página parte delas, e quanto menor o número, menos firme é a comparação.',
+        'São os votos Sim ou Não desta pessoa na legislatura, em plenário e em comissões. ' +
+        'Abstenção e ausência ficam fora. Quanto menor o número, menos firme é a comparação.',
     },
     {
       rota: null,
       alvo: 'ficha-alinhamento',
-      titulo: 'Com o Governo e com o partido',
+      titulo: 'Presença, Governo e partido',
       texto:
-        'Contam só as votações em que houve orientação de bancada. Embaixo de cada ' +
-        'percentual está o número de votações sobre o qual ele foi calculado.',
+        'A presença conta as votações de plenário em que a pessoa registrou voto. Os outros ' +
+        'dois contam só as votações em que houve orientação de bancada: em quantas ela seguiu ' +
+        'a orientação. Com menos de 20, a tela avisa que é pouco para concluir.',
       opcional: true,
     },
     {

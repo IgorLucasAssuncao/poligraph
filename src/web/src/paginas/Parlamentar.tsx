@@ -485,7 +485,7 @@ function LinhaDoVoto({ voto }: { voto: VotoNaFicha }) {
     <>
       {rito && (
         <p className="voto-rito">
-          <Termo nome="procedimental">questão de rito</Termo>: o voto foi sobre o andamento, e não sobre o mérito
+          <Termo nome="procedimental">Questão de rito</Termo>: votou o andamento da proposta, como urgência ou adiamento
         </p>
       )}
 

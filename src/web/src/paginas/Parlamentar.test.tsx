@@ -529,7 +529,7 @@ describe('voto de rito não pode usar a ementa como manchete', () => {
       votosRecentes: [{ ...voto('v1', 1, null), ...RITO }],
     });
 
-    expect(container.textContent).toMatch(/sobre o andamento, e não sobre o mérito/i);
+    expect(container.textContent).toMatch(/votou o andamento da proposta/i);
   });
 
   it('no voto de mérito a ementa continua sendo a manchete', async () => {
