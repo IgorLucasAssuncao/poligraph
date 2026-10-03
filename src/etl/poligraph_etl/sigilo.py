@@ -83,6 +83,25 @@ def acoes_do_mes(df: pd.DataFrame) -> dict[str, float]:
     return {orgao: float(v) for orgao, v in pago.groupby(linhas["Nome Órgão Superior"].str.strip()).sum().items()}
 
 
+def nomes_de_orgao(df: pd.DataFrame) -> set[str]:
+    """Os nomes de órgão superior de um arquivo de execução, que vêm completos."""
+    return set(df["Nome Órgão Superior"].dropna().str.strip())
+
+
+def nome_completo(nome: str, completos: set[str]) -> str:
+    """O nome do órgão sem o corte do arquivo do cartão (Pendência 85).
+
+    MEDIDO em 2026-10-03: o arquivo do cartão corporativo corta o nome do órgão superior em 42
+    caracteres ("Ministério da Integração e do Desenvolvime"). O arquivo de execução, do mesmo
+    Portal, traz o nome inteiro. Completa só quando um único nome completo começa pelo cortado;
+    havendo nenhum ou mais de um, fica o do cartão.
+    """
+    if nome in completos:
+        return nome
+    candidatos = [c for c in completos if c.startswith(nome)]
+    return candidatos[0] if len(candidatos) == 1 else nome
+
+
 def somar_cartao(meses: list[dict[str, dict]]) -> dict[str, dict]:
     total: dict[str, dict] = {}
     for mes in meses:
@@ -102,14 +121,14 @@ def somar_acoes(meses: list[dict[str, float]]) -> dict[str, float]:
 
 
 def para_linhas(ano: int, cartao: dict[str, dict], meses_do_cartao: int,
-                acoes: dict[str, float], meses_da_acao: int) -> list[dict]:
+                acoes: dict[str, float], meses_da_acao: int, completos: set[str] | None = None) -> list[dict]:
     """As linhas de `gastos_sigilosos` de um ano.
 
     ATENÇÃO: A ação entra só com valor positivo: o órgão "Sem informação" soma estorno de
     centavos, e uma linha negativa afirmaria gasto sigiloso negativo.
     """
     linhas = [
-        {"ano": ano, "origem": "CARTAO_CORPORATIVO", "orgao_superior": orgao,
+        {"ano": ano, "origem": "CARTAO_CORPORATIVO", "orgao_superior": nome_completo(orgao, completos or set()),
          "sigiloso": round(v["sigiloso"], 2), "total": round(v["total"], 2),
          "lancamentos": v["lancamentos"], "meses": meses_do_cartao}
         for orgao, v in cartao.items()

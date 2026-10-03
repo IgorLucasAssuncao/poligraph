@@ -851,7 +851,7 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
                  ano, len(do_ano), sum(restos["por_funcao"].values()) / 1e9, restos["meses"])
 
         cartao, meses_do_cartao = _cartao_do_ano(ano)
-        do_sigilo = sigilo.para_linhas(ano, cartao, meses_do_cartao, restos["sigilosas"], restos["meses"])
+        do_sigilo = sigilo.para_linhas(ano, cartao, meses_do_cartao, restos["sigilosas"], restos["meses"], restos["nomes"])
         log.info("  %d: cartão sigiloso R$ %.1f mi (%d meses); ação sigilosa R$ %.1f mi", ano,
                  sum(l["sigiloso"] for l in do_sigilo if l["origem"] == "CARTAO_CORPORATIVO") / 1e6,
                  meses_do_cartao,
@@ -1009,6 +1009,7 @@ def _restos_a_pagar_do_ano(ano: int) -> dict:
     hoje = date.today()
     meses: list[dict] = []
     sigilosas: list[dict] = []
+    nomes: set[str] = set()
 
     for mes in range(1, 13):
         if (ano, mes) > (hoje.year, hoje.month):
@@ -1032,8 +1033,9 @@ def _restos_a_pagar_do_ano(ano: int) -> dict:
         )
         meses.append(orcamento.restos_a_pagar_do_mes(tabela))
         sigilosas.append(sigilo.acoes_do_mes(tabela))
+        nomes |= sigilo.nomes_de_orgao(tabela)
 
-    return {**orcamento.somar_meses(meses), "meses": len(meses), "sigilosas": sigilo.somar_acoes(sigilosas)}
+    return {**orcamento.somar_meses(meses), "meses": len(meses), "sigilosas": sigilo.somar_acoes(sigilosas), "nomes": nomes}
 
 
 def _cartao_do_ano(ano: int) -> tuple[dict[str, dict], int]:

@@ -64,3 +64,20 @@ def test_acao_com_estorno_nao_vira_linha_negativa():
     linhas = sigilo.para_linhas(2025, {}, 12, {"Ministério da Defesa": 10.0, "Sem informação": -0.01}, 12)
 
     assert [(l["orgao_superior"], l["total"], l["lancamentos"]) for l in linhas] == [("Ministério da Defesa", 10.0, None)]
+
+
+def test_nome_cortado_pelo_cartao_e_completado_pela_execucao():
+    """O cartão corta o nome em 42 letras; a execução traz o inteiro (2026-10-03)."""
+    completos = {"Ministério da Integração e do Desenvolvimento Regional", "Ministério da Saúde"}
+
+    assert sigilo.nome_completo("Ministério da Integração e do Desenvolvime", completos) == (
+        "Ministério da Integração e do Desenvolvimento Regional"
+    )
+    assert sigilo.nome_completo("Ministério da Saúde", completos) == "Ministério da Saúde"
+    assert sigilo.nome_completo("Órgão que não está", completos) == "Órgão que não está"
+
+
+def test_nome_cortado_ambiguo_fica_como_veio():
+    completos = {"Ministério do Desenvolvimento Agrário", "Ministério do Desenvolvimento Social"}
+
+    assert sigilo.nome_completo("Ministério do Desenvolvimento", completos) == "Ministério do Desenvolvimento"
