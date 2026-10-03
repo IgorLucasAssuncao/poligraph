@@ -231,8 +231,9 @@ que votaram na 57ª. Somar as duas casas ou ler o cadastro cru dá número maior
 ⭐ **Todas as fontes ingerem** — o Senado desde a Pendência 42. ⛔ **As notícias saíram em
 2026-10-02** (Pendência 61): coletor, aba da ficha e seção do início. O que as substitui é a Pendência 63.
 
-⭐ **A conta é opcional** quando `Acesso:LeituraPublica` está ligado — só seguir e a conta
-pedem login (Pendência 65). 🔴 Em produção continua desligado: RNF-17, período eleitoral de 2026.
+⭐ **A conta é opcional**, também em produção (decisão do autor, 2026-10-03, Pendência 65):
+`Acesso:LeituraPublica` vale `true` por padrão, e só seguir e a conta pedem login. A RNF-17
+previa acesso restrito no período eleitoral; o autor decidiu publicar aberto.
 
 > ✅ **A Pendência 11 saiu do caminho (2026-08-29).** O poço tem **50 linhas** em `perguntas`,
 > das quais **49 ativas** — 40 da Câmara e 9 do Senado. O cidadão responde **24**: 8 de

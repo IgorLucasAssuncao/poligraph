@@ -374,7 +374,7 @@ Quem quiser isso cai na opção C, que segue **não recomendada**.
 | **RNF-14** | Exibir *disclaimer* em toda tela de resultado: ferramenta acadêmica, **não** recomendação de voto | R7 |
 | **RNF-15** | Não exibir dado de candidatos **não eleitos** | 12-fonte-tse §5 |
 | **RNF-16** | Nenhum juízo de valor sobre parlamentares na interface | Discovery §3 |
-| **RNF-17** | Acesso restrito durante o **período eleitoral de 2026**, ou publicação apenas posterior | R7 |
+| **RNF-17** | ~~Acesso restrito durante o **período eleitoral de 2026**, ou publicação apenas posterior~~ **Revista pelo autor em 2026-10-03:** leitura aberta sem conta (Pendência 65); o aviso de que não é recomendação de voto (RNF-14) continua em toda tela | R7 |
 | **RNF-18** | Crawler respeita `robots.txt`, usa User-Agent identificável e nunca contorna paywall | 20-crawler §5 |
 
 ⚠️ **RNF-17 é o requisito mais fácil de esquecer e o de maior consequência.** As eleições
