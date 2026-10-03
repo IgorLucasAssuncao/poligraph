@@ -17,6 +17,7 @@ import {
 import { densidade, desenhar, raioNaTela, type Quadro } from './grafo/desenho';
 import { rotulosDoEixo } from './grafo/legenda';
 import { aoMudarTema } from '../tema';
+import { SUGESTOES_DA_BUSCA_NO_GRAFO } from '../constantes';
 
 export type PosicaoDoCidadao = {
   eixoX: number;
@@ -361,7 +362,7 @@ export function TelaDoGrafoComponent({
 
     return posicionados
       .filter((n) => n.nome.toLowerCase().includes(termo))
-      .slice(0, MAX_SUGESTOES);
+      .slice(0, SUGESTOES_DA_BUSCA_NO_GRAFO);
   }, [busca, posicionados]);
 
   const noDesenho = useMemo(
@@ -1088,7 +1089,6 @@ function DicaComponent({
   );
 }
 
-const MAX_SUGESTOES = 6;
 
 /**
  * ATENÇÃO: Nó vence aresta: o alvo pequeno tem de ser o mais fácil de acertar.

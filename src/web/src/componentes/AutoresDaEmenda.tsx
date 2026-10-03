@@ -5,6 +5,7 @@ import { nomeProprio, reaisCompacto } from '../formato';
 import { AvatarComponent } from './Avatar';
 import { BotaoMostrarMaisComponent } from './BotaoMostrarMais';
 import { TermoComponent } from './Termo';
+import { COLETIVOS_POR_VEZ } from '../constantes';
 
 /**
  * Quem mandou dinheiro de emenda — a mesma apresentação na cidade e na entidade.
@@ -42,7 +43,6 @@ const ROTULO_DO_COLETIVO: Record<ColetivoQueMandou['tipo'], string> = {
   OUTRO: 'Autor coletivo',
 };
 
-const COLETIVOS_POR_VEZ = 10;
 
 /** Bancadas e comissões: autores que não são pessoas, cada um com o que é. */
 export function ColetivosComponent({ coletivos }: { coletivos: ColetivoQueMandou[] }) {

@@ -33,6 +33,7 @@ import { passosDaFicha } from '../tour';
 import { EsqueletoDeFichaComponent, EsqueletoDeListaComponent } from '../componentes/Esqueleto';
 import { IconeExplorarComponent } from '../componentes/Icones';
 import './parlamentar.css';
+import { BASE_PEQUENA_DO_ALINHAMENTO, BUSCA_MINIMA_NOS_VOTOS, SIMILARES_DE_INICIO, VOTOS_POR_PAGINA_DA_BUSCA } from '../constantes';
 
 const PASSOS_DA_FICHA = passosDaFicha();
 
@@ -273,8 +274,6 @@ export function ParlamentarComponent() {
  * havia mais. A contagem de baixo diz quantos são, e quantos deles ficam fora das
  * "votações registradas" do topo por não terem posição.
  */
-/** Menos que isto não filtra — a mesma regra do servidor (`TamanhoMinimoDaBusca`). */
-const BUSCA_MINIMA = 2;
 
 /**
  * Os votos, com busca.
@@ -309,14 +308,14 @@ function AbaVotosComponent({
   const [erroDaBusca, setErroDaBusca] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setBusca(termo.trim().length >= BUSCA_MINIMA ? termo.trim() : ''), 300);
+    const timer = setTimeout(() => setBusca(termo.trim().length >= BUSCA_MINIMA_NOS_VOTOS ? termo.trim() : ''), 300);
     return () => clearTimeout(timer);
   }, [termo]);
 
   useEffect(() => {
     if (!busca && !semRito) return;
     let atual = true;
-    listarVotos(pessoaId, 1, POR_PAGINA_DA_BUSCA, legislatura, busca || undefined, semRito)
+    listarVotos(pessoaId, 1, VOTOS_POR_PAGINA_DA_BUSCA, legislatura, busca || undefined, semRito)
       .then((pagina) => {
         if (!atual) return;
         setErroDaBusca(false);
@@ -363,7 +362,7 @@ function AbaVotosComponent({
           semRito={semRito}
           votos={resultado.itens}
           total={resultado.total}
-          porPagina={POR_PAGINA_DA_BUSCA}
+          porPagina={VOTOS_POR_PAGINA_DA_BUSCA}
         />
       ) : (
         !filtrando && (
@@ -381,7 +380,6 @@ function AbaVotosComponent({
   );
 }
 
-const POR_PAGINA_DA_BUSCA = 20;
 
 function ListaDeVotosComponent({
   pessoaId,
@@ -545,8 +543,6 @@ function ContraAOrientacaoComponent({ voto }: { voto: VotoNaFicha }) {
   );
 }
 
-/** Quantos "parecidos" aparecem antes do botão: o bastante para ler o grupo, sem empurrar os votos. */
-const SIMILARES_DE_INICIO = 5;
 
 /**
  * DECISÃO: RF-47: estado vazio honesto. Acontece antes de o ETL analítico rodar.
@@ -614,7 +610,7 @@ function AbaSimilaresComponent({ similares }: { similares: Ficha['maisSimilares'
  *
  * DECISÃO (2026-10-03): Os três números com a mesma forma, "X de Y". O governismo e a disciplina
  * vinham como percentual com a base embaixo, e a ficha mostrava "100%" para quem tinha duas
- * votações orientadas pelo partido. Abaixo de `BASE_PEQUENA` a tela diz que é pouco.
+ * votações orientadas pelo partido. Abaixo de `BASE_PEQUENA_DO_ALINHAMENTO` a tela diz que é pouco.
  */
 function FaixaDeAlinhamentoComponent({
   alinhamento,
@@ -671,11 +667,6 @@ function FaixaDeAlinhamentoComponent({
   );
 }
 
-/**
- * Abaixo disto, a proporção diz pouco: a mesma régua da similaridade, que só compara quem
- * votou junto em 20 votações ou mais (`ck_sim_minimo`).
- */
-const BASE_PEQUENA = 20;
 
 /**
  * "540 de 658 votações orientadas (82%)", com o aviso quando a base é pequena e a mediana da
@@ -687,7 +678,7 @@ function ParteDaBaseComponent({ proporcao, base, mediana }: { proporcao: number;
       {inteiro(Math.round(proporcao * base))} de {inteiro(base)}
       <small>
         votações orientadas ({Math.round(proporcao * 100)}%)
-        {base < BASE_PEQUENA && <> · poucas para tirar conclusão</>}
+        {base < BASE_PEQUENA_DO_ALINHAMENTO && <> · poucas para tirar conclusão</>}
       </small>
       {mediana != null && <small>mediana da Câmara: {Math.round(mediana * 100)}%</small>}
     </dd>

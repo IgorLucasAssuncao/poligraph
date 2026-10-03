@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { ArestaDoGrafo, NoDoGrafo } from '../api';
+import { VIZINHOS_NA_LISTA_DO_GRAFO } from '../constantes';
 
-/** Quantos vizinhos por parlamentar. Além disto a lista vira ruído. */
-const VIZINHOS = 5;
 
 /**
  * O grafo dito em palavras.
@@ -73,7 +72,7 @@ export function ListaDoGrafoComponent({
         no,
         proximos: (vizinhos.get(no.id) ?? [])
           .sort((a, b) => b.peso - a.peso)
-          .slice(0, VIZINHOS),
+          .slice(0, VIZINHOS_NA_LISTA_DO_GRAFO),
       }))
       .sort((a, b) => b.proximos.length - a.proximos.length);
   }, [aberta, nos, arestas]);

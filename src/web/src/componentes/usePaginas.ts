@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { PaginaDe } from '../api';
+import { A_VISTA } from '../constantes';
 
 /**
  * Lista que ainda não trouxe nada: a primeira página vem no primeiro clique.
@@ -56,8 +57,6 @@ export function usePaginas<T>(
   };
 }
 
-/** Quantos itens uma lista curta da ficha mostra antes do "Mostrar mais". */
-export const A_VISTA = 5;
 
 /**
  * Corta a lista em {@link A_VISTA} itens até o primeiro "Mostrar mais", que abre o que já veio

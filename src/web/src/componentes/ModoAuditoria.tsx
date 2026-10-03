@@ -7,9 +7,8 @@ import { tourJaVisto } from '../tour';
 import { ContextoDoModoAuditoria, useModoAuditoria } from './contextoDoModoAuditoria';
 import { useTour } from './contextoDoTour';
 import { LinkDeFonteComponent } from './LinkDeFonte';
+import { CHAVE_DO_MODO_AUDITORIA } from '../constantes';
 
-/** ATENÇÃO: a chave guarda o nome antigo, "modo análise": trocá-la apagaria a escolha de quem já ligou. */
-const CHAVE = 'poligraph:modo-analise';
 
 /**
  * Modo auditoria (Pendência 73): ligado, todo número que tem procedência vira botão e abre o painel
@@ -319,7 +318,7 @@ function tamanho(bytes: number): string {
 
 function lerGuardado(): boolean {
   try {
-    return localStorage.getItem(CHAVE) === '1';
+    return localStorage.getItem(CHAVE_DO_MODO_AUDITORIA) === '1';
   } catch {
     return false;
   }
@@ -327,7 +326,7 @@ function lerGuardado(): boolean {
 
 function guardar(ligado: boolean): void {
   try {
-    localStorage.setItem(CHAVE, ligado ? '1' : '0');
+    localStorage.setItem(CHAVE_DO_MODO_AUDITORIA, ligado ? '1' : '0');
   } catch {
     return;
   }

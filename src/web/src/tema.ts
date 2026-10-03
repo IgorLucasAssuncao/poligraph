@@ -1,3 +1,4 @@
+import { CHAVE_DO_TEMA, EVENTO_TEMA } from './constantes';
 /**
  * Claro, escuro ou o que o sistema disser.
  *
@@ -17,7 +18,6 @@
 
 export type Tema = 'sistema' | 'claro' | 'escuro';
 
-const CHAVE = 'poligraph:tema';
 
 export const TEMAS: Tema[] = ['claro', 'sistema', 'escuro'];
 
@@ -36,7 +36,7 @@ export const NOME_DO_TEMA: Record<Tema, string> = {
  */
 export function temaGuardado(): Tema {
   try {
-    const valor = localStorage.getItem(CHAVE);
+    const valor = localStorage.getItem(CHAVE_DO_TEMA);
 
     return valor === 'claro' || valor === 'escuro' ? valor : 'sistema';
   } catch {
@@ -62,13 +62,12 @@ export function aplicarTema(tema: Tema): void {
   window.dispatchEvent(new Event(EVENTO_TEMA));
 
   try {
-    if (tema === 'sistema') localStorage.removeItem(CHAVE);
-    else localStorage.setItem(CHAVE, tema);
+    if (tema === 'sistema') localStorage.removeItem(CHAVE_DO_TEMA);
+    else localStorage.setItem(CHAVE_DO_TEMA, tema);
   } catch {
   }
 }
 
-const EVENTO_TEMA = 'poligraph:tema';
 
 /**
  * Se a tela está escura AGORA, somando a escolha do botão e a do sistema.

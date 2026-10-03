@@ -4,12 +4,8 @@ import { listarParlamentares, listarSeguidos, type Parlamentar } from '../api';
 import { AvatarComponent } from './Avatar';
 import { BotaoSeguirComponent } from './BotaoSeguir';
 import { useSessao } from '../sessao';
+import { SUGESTOES_PARA_SEGUIR } from '../constantes';
 
-/**
- * ATENÇÃO: Eram 3, escolhidos entre os 100 primeiros em ordem alfabética — a lista da API
- * cortava ali, e o "mais ativo" era o mais ativo entre esses 100 nomes.
- */
-const QUANTOS = 8;
 
 /**
  * "Quem seguir" — o cartão lateral.
@@ -35,7 +31,7 @@ export function SugestoesParaSeguirComponent() {
 
   useEffect(() => {
     if (!usuario) {
-      listarParlamentares({ ordem: 'VOTACOES', tamanho: QUANTOS })
+      listarParlamentares({ ordem: 'VOTACOES', tamanho: SUGESTOES_PARA_SEGUIR })
         .then((pagina) => setSugestoes(pagina.itens))
         .catch(() => setSugestoes([]));
       return;
@@ -46,10 +42,10 @@ export function SugestoesParaSeguirComponent() {
         const ids = new Set(jaSeguidos.map((p) => p.id));
         const pagina = await listarParlamentares({
           ordem: 'VOTACOES',
-          tamanho: QUANTOS + ids.size,
+          tamanho: SUGESTOES_PARA_SEGUIR + ids.size,
         });
         setSeguidos(ids);
-        setSugestoes(pagina.itens.filter((p) => !ids.has(p.id)).slice(0, QUANTOS));
+        setSugestoes(pagina.itens.filter((p) => !ids.has(p.id)).slice(0, SUGESTOES_PARA_SEGUIR));
       })
       .catch(() => setSugestoes([]));
   }, [usuario]);

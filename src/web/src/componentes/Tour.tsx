@@ -10,7 +10,8 @@ import {
   type NomeDoTour,
   type PassoDoTour,
 } from '../tour';
-import { EVENTO_CONSENTIMENTO, consentimentoDecidido } from '../consentimento';
+import { EVENTO_CONSENTIMENTO } from '../constantes';
+import { consentimentoDecidido } from '../consentimento';
 import { ContextoDoTour, type TourDaTela } from './contextoDoTour';
 
 /** Folga entre o elemento e a borda do destaque, em px. */

@@ -19,6 +19,7 @@ import { dataCurta, minusculas, nomeProprio, reais, reaisCompacto } from '../for
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { LinhaDeValorComponent, NumeroComponent } from '../componentes/Dados';
+import { ITENS_POR_PAGINA_DA_ENTIDADE } from '../constantes';
 
 /**
  * Uma entidade: quanto recebeu de emenda, de quem, em que ano — e se aparece na cota.
@@ -129,10 +130,9 @@ function PaginaDaEntidadeComponent({ dados }: { dados: DadosDaEntidade }) {
   );
 }
 
-const POR_PAGINA = 20;
 
 function QuemMandouComponent({ dados }: { dados: DadosDaEntidade }) {
-  const lista = usePaginas(dados.parlamentares.itens, dados.parlamentares.total, POR_PAGINA, (pagina) =>
+  const lista = usePaginas(dados.parlamentares.itens, dados.parlamentares.total, ITENS_POR_PAGINA_DA_ENTIDADE, (pagina) =>
     listarParlamentaresDaEntidade(dados.cnpj, pagina),
   );
 

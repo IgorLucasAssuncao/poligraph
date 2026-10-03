@@ -23,6 +23,7 @@ import type { Contas } from './useContas';
 import { EsqueletoDePainelComponent, EsqueletoDeTextoComponent } from './Esqueleto';
 import { LinhaDeValorComponent, OpcoesComponent } from './Dados';
 import { GrafoDoDinheiroComponent } from './GrafoDoDinheiro';
+import { TIPOS_DE_BEM_A_VISTA } from '../constantes';
 
 /**
  * O dinheiro do parlamentar, em três abas — campanha, emendas e cota.
@@ -623,10 +624,6 @@ function FinanciamentoComponent({ pessoaId, fin }: { pessoaId: number; fin: Fina
   );
 }
 
-/**
- * Patrimônio declarado (PP3)
- */
-const TIPOS_A_VISTA = 5;
 
 /**
  * O que o parlamentar declarou ter ao se candidatar — a última declaração, e a anterior ao lado.
@@ -700,12 +697,12 @@ function PatrimonioDeclaradoComponent({ pessoaId }: { pessoaId: number }) {
         )}
       </p>
 
-      <ul className="gastos-categorias">{ultima.porTipo.slice(0, TIPOS_A_VISTA).map(linha)}</ul>
+      <ul className="gastos-categorias">{ultima.porTipo.slice(0, TIPOS_DE_BEM_A_VISTA).map(linha)}</ul>
 
-      {ultima.porTipo.length > TIPOS_A_VISTA && (
+      {ultima.porTipo.length > TIPOS_DE_BEM_A_VISTA && (
         <details className="detalhes-da-aba">
-          <summary>Ver os outros {ultima.porTipo.length - TIPOS_A_VISTA} tipos de bem</summary>
-          <ul className="gastos-categorias">{ultima.porTipo.slice(TIPOS_A_VISTA).map(linha)}</ul>
+          <summary>Ver os outros {ultima.porTipo.length - TIPOS_DE_BEM_A_VISTA} tipos de bem</summary>
+          <ul className="gastos-categorias">{ultima.porTipo.slice(TIPOS_DE_BEM_A_VISTA).map(linha)}</ul>
         </details>
       )}
 

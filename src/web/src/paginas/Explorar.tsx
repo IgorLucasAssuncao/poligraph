@@ -12,6 +12,7 @@ import { LinhaParlamentarComponent } from '../componentes/LinhaParlamentar';
 import { useSessao } from '../sessao';
 import { EsqueletoDeListaComponent } from '../componentes/Esqueleto';
 import { useLegislaturaDaUrl } from '../componentes/useLegislatura';
+import { PARLAMENTARES_POR_PAGINA } from '../constantes';
 
 /** Busca e navegação pelos parlamentares (RF-34). */
 /**
@@ -27,11 +28,6 @@ const NA_CASA: Record<Parlamentar['casa'], string> = {
   '': '',
 };
 
-/**
- * Quantos por vez. ATENÇÃO: A lista cortava em 100 por ordem alfabética, sem avisar: dos 745
- * parlamentares da 57ª, a tela nunca mostrava os outros 645.
- */
-const POR_PAGINA = 30;
 
 /**
  * O período vem da faixa do topo — o seletor é um só, no mesmo lugar em todo o site.
@@ -95,7 +91,7 @@ export function ExplorarComponent() {
         nome: termo, partido, uf, casa: casa || undefined, ordem,
         anteriores: escolha === 'todas' || undefined,
         legislatura: typeof escolha === 'number' ? escolha : undefined,
-        tamanho: POR_PAGINA,
+        tamanho: PARLAMENTARES_POR_PAGINA,
       })
         .then((primeira) => {
           setPagina(primeira);
@@ -223,7 +219,7 @@ export function ExplorarComponent() {
       {!carregando && lista.length < total && (
         <div className="carregar-mais">
           <button type="button" className="botao-secundario" onClick={carregarMais} disabled={carregandoMais}>
-            {carregandoMais ? 'Carregando…' : `Mostrar mais ${Math.min(POR_PAGINA, total - lista.length)}`}
+            {carregandoMais ? 'Carregando…' : `Mostrar mais ${Math.min(PARLAMENTARES_POR_PAGINA, total - lista.length)}`}
           </button>
         </div>
       )}
@@ -235,7 +231,7 @@ export function ExplorarComponent() {
     setCarregandoMais(true);
     try {
       const proxima = await listarParlamentares({
-        ...filtro(), tamanho: POR_PAGINA, pagina: pagina.pagina + 1,
+        ...filtro(), tamanho: PARLAMENTARES_POR_PAGINA, pagina: pagina.pagina + 1,
       });
       setPagina(proxima);
       setLista((atual) => [...atual, ...proxima.itens]);

@@ -1,12 +1,7 @@
 import { useEffect, useState } from 'react';
 import { TEXTO_CONSENTIMENTO, VERSAO_CONSENTIMENTO } from '../textos-legais';
-
-import {
-  CHAVE_CONSENTIMENTO,
-  EVENTO_CONSENTIMENTO,
-  lerConsentimento,
-  type Escolha,
-} from '../consentimento';
+import { CHAVE_CONSENTIMENTO, EVENTO_CONSENTIMENTO } from '../constantes';
+import { lerConsentimento, type Escolha } from '../consentimento';
 
 /**
  * RISCO: Banner de consentimento — bloqueante e obrigatório.

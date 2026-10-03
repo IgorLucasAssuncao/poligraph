@@ -1,15 +1,5 @@
 import { VERSAO_CONSENTIMENTO } from './textos-legais';
-
-/**
- * O consentimento de medição guardado no navegador, fora do componente do banner.
- *
- * Separado para que outras partes da tela (a oferta do tour, a política de privacidade)
- * leiam e revoguem a escolha sem importar o componente.
- */
-export const CHAVE_CONSENTIMENTO = 'poligraph.consentimento';
-
-/** Disparado quando a pessoa responde o banner. */
-export const EVENTO_CONSENTIMENTO = 'poligraph:consentimento';
+import { CHAVE_CONSENTIMENTO } from './constantes';
 
 export type Escolha = { versao: string; aceito: boolean; em: string };
 

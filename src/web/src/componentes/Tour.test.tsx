@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProvedorDoTourComponent } from './Tour';
 import { useTour } from './contextoDoTour';
-import { CHAVE_CONSENTIMENTO, EVENTO_CONSENTIMENTO } from '../consentimento';
+import { CHAVE_CONSENTIMENTO, EVENTO_CONSENTIMENTO } from '../constantes';
 import { VERSAO_CONSENTIMENTO } from '../textos-legais';
 import { PASSOS_DO_SITE, passosDoGrafo, type PassoDoTour } from '../tour';
 import { BotaoDoTourComponent } from './BotaoDoTour';

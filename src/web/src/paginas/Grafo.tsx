@@ -17,6 +17,7 @@ import { passosDoGrafo } from '../tour';
 import { BlocoComponent, EsqueletoComponent } from '../componentes/Esqueleto';
 import { useLegislaturaDaUrl } from '../componentes/useLegislatura';
 import './grafo.css';
+import { MINIMO_PARA_LISTAR_PARTIDO, PARTIDOS_MOSTRADOS_NO_GRAFO } from '../constantes';
 
 type Grupo = { comunidade: number; quantos: number; partidos: string[] };
 
@@ -275,10 +276,7 @@ function SeletorDeCasaComponent({ casa, aoTrocar }: { casa: Casa; aoTrocar: (nov
   );
 }
 
-/** ATENÇÃO: Só grupos com mais de um membro: 21 isolados virariam 21 linhas de legenda. */
-const MINIMO_PARA_LISTAR = 2;
 
-const PARTIDOS_MOSTRADOS = 5;
 
 function resumirGrupos(nos: NoDoGrafo[]): Grupo[] {
   const porComunidade = new Map<number, NoDoGrafo[]>();
@@ -291,7 +289,7 @@ function resumirGrupos(nos: NoDoGrafo[]): Grupo[] {
   }
 
   return [...porComunidade.entries()]
-    .filter(([, membros]) => membros.length >= MINIMO_PARA_LISTAR)
+    .filter(([, membros]) => membros.length >= MINIMO_PARA_LISTAR_PARTIDO)
     .map(([comunidade, membros]) => ({
       comunidade,
       quantos: membros.length,
@@ -310,7 +308,7 @@ function partidosMaisComuns(membros: NoDoGrafo[]): string[] {
 
   return [...contagem.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, PARTIDOS_MOSTRADOS)
+    .slice(0, PARTIDOS_MOSTRADOS_NO_GRAFO)
     .map(([partido]) => partido);
 }
 

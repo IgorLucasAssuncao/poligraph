@@ -35,6 +35,7 @@ import { UFS } from '../ufs';
 import { ConfereComOPortalComponent } from '../componentes/ConfereComOPortal';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { AbasComponent, NumeroComponent, OpcoesComponent, type Aba } from '../componentes/Dados';
+import { CHAVE_MINHA_CIDADE, CIDADES_POR_VEZ, ITENS_POR_PAGINA_DA_CIDADE } from '../constantes';
 
 /**
  * Para onde foi o dinheiro de emenda, no mapa — e quem o mandou para a sua cidade.
@@ -352,7 +353,6 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
   );
 }
 
-const CIDADES_POR_VEZ = 15;
 
 /**
  * O estado: o contorno das cidades aparece já, e as cores quando o dado chega — a malha e
@@ -627,7 +627,7 @@ function abasDaCidade(dados: EmendasDoMunicipio): Aba<AbaDaCidade>[] {
 function ConveniosDaCidadeComponent({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Periodo | undefined }) {
   const convenios = dados.convenios;
   const codigo = dados.municipio.codigoIbge;
-  const lista = usePaginas(convenios.lista.itens, convenios.lista.total, convenios.lista.tamanho || POR_PAGINA, (pagina) =>
+  const lista = usePaginas(convenios.lista.itens, convenios.lista.total, convenios.lista.tamanho || ITENS_POR_PAGINA_DA_CIDADE, (pagina) =>
     listarConveniosDaCidade(codigo, periodo, pagina),
   );
 
@@ -672,11 +672,10 @@ function ConveniosDaCidadeComponent({ dados, periodo }: { dados: EmendasDoMunici
   );
 }
 
-const POR_PAGINA = 10;
 
 function QuemMandouComponent({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Periodo | undefined }) {
   const codigo = dados.municipio.codigoIbge;
-  const lista = usePaginas(dados.parlamentares.itens, dados.parlamentares.total, POR_PAGINA, (pagina) =>
+  const lista = usePaginas(dados.parlamentares.itens, dados.parlamentares.total, ITENS_POR_PAGINA_DA_CIDADE, (pagina) =>
     listarParlamentaresDoMunicipio(codigo, periodo, pagina),
   );
 
@@ -720,7 +719,7 @@ function QuemMandouComponent({ dados, periodo }: { dados: EmendasDoMunicipio; pe
 
 function QuemRecebeuComponent({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Periodo | undefined }) {
   const codigo = dados.municipio.codigoIbge;
-  const lista = usePaginas(dados.favorecidos.itens, dados.favorecidos.total, POR_PAGINA, (pagina) =>
+  const lista = usePaginas(dados.favorecidos.itens, dados.favorecidos.total, ITENS_POR_PAGINA_DA_CIDADE, (pagina) =>
     listarFavorecidosDoMunicipio(codigo, periodo, pagina),
   );
 
@@ -844,7 +843,6 @@ function SuaCidadeComponent({ aoEscolher }: { aoEscolher: (m: Municipio) => void
   );
 }
 
-const CHAVE_MINHA_CIDADE = 'poligraph.minhaCidade';
 
 function lerMinhaCidade(): Municipio | null {
   try {

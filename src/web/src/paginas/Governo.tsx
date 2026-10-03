@@ -26,6 +26,7 @@ import { passosDoGoverno } from '../tour';
 import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { LinhaDeValorComponent, NumeroComponent } from '../componentes/Dados';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
+import { AREAS_DO_ORCAMENTO_NOMEADAS } from '../constantes';
 
 /**
  * O governo federal para quem não lê orçamento: quanto entrou, onde foi parar, o que foi
@@ -233,8 +234,6 @@ function AnoAAnoComponent({ dados }: { dados: DadosDoGoverno }) {
   );
 }
 
-/** Quantas áreas aparecem pelo nome; as demais viram "outras áreas". */
-const AREAS_NOMEADAS = 6;
 
 /**
  * "De cada R$ 100 gastos": a divisão que se entende sem saber o tamanho de um trilhão.
@@ -249,12 +248,12 @@ function CadaCemReaisComponent({ dados }: { dados: DadosDoGoverno }) {
     .sort((a, b) => b.valor - a.valor);
 
   const linhas = [
-    ...porArea.slice(0, AREAS_NOMEADAS),
+    ...porArea.slice(0, AREAS_DO_ORCAMENTO_NOMEADAS),
     { nome: 'Repasses a estados e municípios', valor: totalDoEncargo(encargos, 'TRANSFERENCIAS') },
     { nome: 'Juros e pagamento da dívida', valor: totalDoEncargo(encargos, 'SERVICO_DA_DIVIDA') },
     {
       nome: 'Outras áreas e despesas',
-      valor: porArea.slice(AREAS_NOMEADAS).reduce((soma, a) => soma + a.valor, 0) + totalDoEncargo(encargos, 'OUTROS'),
+      valor: porArea.slice(AREAS_DO_ORCAMENTO_NOMEADAS).reduce((soma, a) => soma + a.valor, 0) + totalDoEncargo(encargos, 'OUTROS'),
     },
   ]
     .filter((l) => l.valor > 0)
