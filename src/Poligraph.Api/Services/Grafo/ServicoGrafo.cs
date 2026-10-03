@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Services;
 
@@ -22,8 +23,8 @@ public class ServicoGrafo(PoligraphDb db, CacheDeLeitura leitura)
     /// <remarks>
     /// <para>Primeiro dia, antes de o ETL analítico rodar: grafo vazio, não erro. Legislatura sem dado suficiente para o grafo também chega vazia, e a lista de legislaturas com grafo diz à tela quais existem.</para>
     /// </remarks>
-    public Task<GrafoDto> ObterAsync(TipoCasa casa, short? legislatura, CancellationToken ct) =>
-        _leitura.ObterAsync(("grafo", casa, legislatura), () => CalcularAsync(casa, legislatura, ct));
+    public Task<GrafoDto> ObterAsync(TipoCasa casa, Legislatura? legislatura, CancellationToken ct) =>
+        _leitura.ObterAsync(("grafo", casa, legislatura?.Numero), () => CalcularAsync(casa, legislatura?.Numero, ct));
 
     private async Task<GrafoDto> CalcularAsync(TipoCasa casa, short? legislatura, CancellationToken ct)
     {

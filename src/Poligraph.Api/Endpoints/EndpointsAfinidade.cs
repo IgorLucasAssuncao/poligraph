@@ -1,5 +1,6 @@
 ﻿using Poligraph.Api.Dtos;
 using Poligraph.Api.Services;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Endpoints;
 
@@ -52,10 +53,15 @@ public static class EndpointsAfinidade
             });
         }
 
-        var uf = requisicao.Uf?.Trim().ToUpperInvariant();
-        if (uf is not null && !Ufs.Todas.Contains(uf))
+        Uf? uf = null;
+        if (requisicao.Uf is not null)
         {
-            return Results.Problem($"UF desconhecida: {uf}.", statusCode: StatusCodes.Status400BadRequest);
+            if (!Uf.TryParse(requisicao.Uf, null, out var lida))
+            {
+                return Results.Problem($"UF desconhecida: {requisicao.Uf}.", statusCode: StatusCodes.Status400BadRequest);
+            }
+
+            uf = lida;
         }
 
         var resposta = await afinidade.CalcularAsync(opinadas, uf, ct);

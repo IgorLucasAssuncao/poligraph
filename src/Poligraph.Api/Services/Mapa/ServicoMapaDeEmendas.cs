@@ -1,8 +1,9 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Services;
 
@@ -56,9 +57,9 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     private readonly ServicoAutoresDeEmenda _autores = autores;
     private readonly CacheDeLeitura _leitura = leitura;
 
-    public async Task<MapaDoBrasilDto> ObterBrasilAsync(int? de, int? ate, CancellationToken ct)
+    public async Task<MapaDoBrasilDto> ObterBrasilAsync(Ano? de, Ano? ate, CancellationToken ct)
     {
-        var (periodo, anos, prefixos) = await PeriodoAsync(de, ate, ct);
+        var (periodo, anos, prefixos) = await PeriodoAsync(de?.Valor, ate?.Valor, ct);
         if (prefixos.Length == 0)
         {
             return new MapaDoBrasilDto(periodo, anos, 0, 0, 0, 0, []);
@@ -112,8 +113,8 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     /// <remarks>
     /// <para>Traz TODAS as cidades da UF, com zero onde nada chegou: o mapa mostra o nome de cada uma sob o mouse, e cidade sem pagamento também é informação.</para>
     /// </remarks>
-    public Task<MapaDoEstadoDto> ObterEstadoAsync(string uf, int? de, int? ate, CancellationToken ct) =>
-        _leitura.ObterAsync(("mapa:estado", uf.ToUpperInvariant(), de, ate), () => CalcularEstadoAsync(uf, de, ate, ct));
+    public Task<MapaDoEstadoDto> ObterEstadoAsync(Uf uf, Ano? de, Ano? ate, CancellationToken ct) =>
+        _leitura.ObterAsync(("mapa:estado", uf.Sigla, de?.Valor, ate?.Valor), () => CalcularEstadoAsync(uf.Sigla, de?.Valor, ate?.Valor, ct));
 
     /// <summary>A busca "sua cidade", sem caixa e sem acento. O resultado é o código IBGE.</summary>
     /// <remarks>
@@ -143,9 +144,9 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     /// <para>Devolve <c>null</c> para código IBGE inexistente, e o endpoint responde 404.</para>
     /// </remarks>
     public async Task<EmendasDoMunicipioDto?> ObterMunicipioAsync(
-        string codigoIbge, int? de, int? ate, CancellationToken ct)
+        CodigoIbge codigoIbge, Ano? de, Ano? ate, CancellationToken ct)
     {
-        var cidade = await CidadeAsync(codigoIbge, de, ate, ct);
+        var cidade = await CidadeAsync(codigoIbge.Digitos, de?.Valor, ate?.Valor, ct);
         if (cidade is null)
         {
             return null;
@@ -162,8 +163,8 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
 
     /// <summary>Os convênios da cidade, em páginas. A primeira é a do painel.</summary>
     public async Task<ConveniosDaCidadeDto?> ListarConveniosAsync(
-        string codigoIbge, int? de, int? ate, int pagina, CancellationToken ct) =>
-        await CidadeAsync(codigoIbge, de, ate, ct) is { } cidade ? ResumoDosConvenios(cidade.Convenios, pagina) : null;
+        CodigoIbge codigoIbge, Ano? de, Ano? ate, int pagina, CancellationToken ct) =>
+        await CidadeAsync(codigoIbge.Digitos, de?.Valor, ate?.Valor, ct) is { } cidade ? ResumoDosConvenios(cidade.Convenios, pagina) : null;
 
     private static ConveniosDaCidadeDto ResumoDosConvenios(IReadOnlyList<ConvenioDaCidadeDto> convenios, int pagina)
     {
@@ -182,13 +183,13 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
 
     /// <summary>Os deputados e senadores que mandaram dinheiro para a cidade, em páginas. A primeira é a do painel.</summary>
     public async Task<PaginaDto<ParlamentarQueMandouDto>?> ListarParlamentaresAsync(
-        string codigoIbge, int? de, int? ate, int pagina, CancellationToken ct) =>
-        await CidadeAsync(codigoIbge, de, ate, ct) is { } cidade ? Paginar(cidade.Parlamentares, pagina) : null;
+        CodigoIbge codigoIbge, Ano? de, Ano? ate, int pagina, CancellationToken ct) =>
+        await CidadeAsync(codigoIbge.Digitos, de?.Valor, ate?.Valor, ct) is { } cidade ? Paginar(cidade.Parlamentares, pagina) : null;
 
     /// <summary>Quem recebeu na cidade, em páginas. A primeira é a do painel.</summary>
     public async Task<PaginaDto<FavorecidoDaEmendaDto>?> ListarFavorecidosAsync(
-        string codigoIbge, int? de, int? ate, int pagina, CancellationToken ct) =>
-        await CidadeAsync(codigoIbge, de, ate, ct) is { } cidade ? Paginar(cidade.Favorecidos, pagina) : null;
+        CodigoIbge codigoIbge, Ano? de, Ano? ate, int pagina, CancellationToken ct) =>
+        await CidadeAsync(codigoIbge.Digitos, de?.Valor, ate?.Valor, ct) is { } cidade ? Paginar(cidade.Favorecidos, pagina) : null;
 
     private async Task<MapaDoEstadoDto> CalcularEstadoAsync(string uf, int? de, int? ate, CancellationToken ct)
     {

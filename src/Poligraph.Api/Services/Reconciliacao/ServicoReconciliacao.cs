@@ -1,6 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Services;
 
@@ -16,8 +17,8 @@ public class ServicoReconciliacao(PoligraphDb db, CacheDeLeitura leitura)
     private readonly CacheDeLeitura _leitura = leitura;
 
     /// <summary>As reconciliações dos anos pedidos, inclusive nas pontas. Sem período, todas.</summary>
-    public Task<IReadOnlyList<ReconciliacaoDto>> ListarAsync(int? de, int? ate, CancellationToken ct) =>
-        _leitura.ObterAsync(("reconciliacao", de, ate), () => CalcularAsync(de, ate, ct));
+    public Task<IReadOnlyList<ReconciliacaoDto>> ListarAsync(Ano? de, Ano? ate, CancellationToken ct) =>
+        _leitura.ObterAsync(("reconciliacao", de?.Valor, ate?.Valor), () => CalcularAsync(de?.Valor, ate?.Valor, ct));
 
     private async Task<IReadOnlyList<ReconciliacaoDto>> CalcularAsync(int? de, int? ate, CancellationToken ct)
     {

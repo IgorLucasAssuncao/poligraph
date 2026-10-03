@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Services;
 
@@ -56,9 +57,9 @@ public class ServicoEntidades(
         [.. Filtrar(await IndiceAsync(ct), busca).Take(ResultadosDaBusca)];
 
     /// <summary>A página da entidade. Nulo para CNPJ que não recebeu emenda, e o endpoint responde 404.</summary>
-    public async Task<EntidadeDto?> ObterAsync(string cnpj, CancellationToken ct)
+    public async Task<EntidadeDto?> ObterAsync(Cnpj cnpj, CancellationToken ct)
     {
-        var entidade = await CalculadaAsync(cnpj, ct);
+        var entidade = await CalculadaAsync(cnpj.Digitos, ct);
         if (entidade is null)
         {
             return null;
@@ -77,13 +78,13 @@ public class ServicoEntidades(
     }
 
     /// <summary>Os convênios da entidade, em páginas. A primeira é a da página.</summary>
-    public async Task<PaginaDto<ConvenioDaEntidadeDto>?> ListarConveniosAsync(string cnpj, int pagina, CancellationToken ct) =>
-        await CalculadaAsync(cnpj, ct) is { } entidade ? Paginar(entidade.Detalhe.Convenios, pagina) : null;
+    public async Task<PaginaDto<ConvenioDaEntidadeDto>?> ListarConveniosAsync(Cnpj cnpj, int pagina, CancellationToken ct) =>
+        await CalculadaAsync(cnpj.Digitos, ct) is { } entidade ? Paginar(entidade.Detalhe.Convenios, pagina) : null;
 
     /// <summary>Os deputados e senadores que mandaram dinheiro para a entidade, em páginas. A primeira é a da página.</summary>
     public async Task<PaginaDto<ParlamentarQueMandouDto>?> ListarParlamentaresAsync(
-        string cnpj, int pagina, CancellationToken ct) =>
-        await CalculadaAsync(cnpj, ct) is { } entidade ? Paginar(entidade.Detalhe.Parlamentares, pagina) : null;
+        Cnpj cnpj, int pagina, CancellationToken ct) =>
+        await CalculadaAsync(cnpj.Digitos, ct) is { } entidade ? Paginar(entidade.Detalhe.Parlamentares, pagina) : null;
 
     /// <summary>
     /// O grupo que a pessoa reconhece, a partir da natureza jurídica da Receita.

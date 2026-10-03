@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Services;
 
@@ -42,8 +43,8 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
     /// <para>Sem período, todos os anos carregados. Ponta fora dos anos é trazida para dentro; ponta invertida, desinvertida.</para>
     /// <para>Sem dado, devolve <c>null</c>, e o endpoint responde 404.</para>
     /// </remarks>
-    public Task<GovernoDto?> ObterAsync(int? de, int? ate, CancellationToken ct) =>
-        _leitura.ObterAsync(("governo", de, ate), () => CalcularAsync(de, ate, ct));
+    public Task<GovernoDto?> ObterAsync(Ano? de, Ano? ate, CancellationToken ct) =>
+        _leitura.ObterAsync(("governo", de?.Valor, ate?.Valor), () => CalcularAsync(de?.Valor, ate?.Valor, ct));
 
     private async Task<GovernoDto?> CalcularAsync(int? de, int? ate, CancellationToken ct)
     {

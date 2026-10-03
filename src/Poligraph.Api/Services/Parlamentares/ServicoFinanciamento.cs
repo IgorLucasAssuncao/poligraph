@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Services;
 
@@ -19,8 +20,11 @@ public class ServicoFinanciamento(PoligraphDb db)
     /// <para>RNF-13: doador pessoa física aparece pelo NOME; o documento é hash e nunca sai da API. Mesma regra de `DespesaModel.CnpjOuHash`.</para>
     /// </remarks>
     /// <param name="legislatura">Sem eleição, a que deu ESTE mandato — e nenhuma outra: a campanha de 2022 na ficha do mandato de 2015 seria a mistura de períodos que a ficha não pode fazer.</param>
-    public async Task<FinanciamentoDeCampanhaDto> ObterAsync(long id, int? eleicao, short? legislatura, CancellationToken ct)
+    public async Task<FinanciamentoDeCampanhaDto> ObterAsync(PessoaId pessoa, Ano? eleicaoPedida, Legislatura? legislaturaPedida, CancellationToken ct)
     {
+        var id = pessoa.Valor;
+        var eleicao = eleicaoPedida?.Valor;
+        var legislatura = legislaturaPedida?.Numero;
         var alvo = eleicao ?? (legislatura is { } l
             ? Legislaturas.EleicaoDoMandato(l)
             : await _db.ReceitasDeCampanha.AsNoTracking()

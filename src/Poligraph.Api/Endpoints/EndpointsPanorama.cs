@@ -1,5 +1,6 @@
 ﻿using Poligraph.Api.Dtos;
 using Poligraph.Api.Services;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Endpoints;
 
@@ -21,7 +22,7 @@ public static class EndpointsPanorama
 
     /// <summary>RF-33 — os números da base de uma legislatura; sem ela, a corrente.</summary>
     private static async Task<IResult> ObterAsync(
-        ServicoPanorama servico, CancellationToken ct, short? legislatura = null) =>
+        ServicoPanorama servico, CancellationToken ct, Legislatura? legislatura = null) =>
         await servico.ExisteAsync(legislatura, ct)
             ? Results.Ok(await servico.ObterAsync(legislatura, ct))
             : Results.NotFound();

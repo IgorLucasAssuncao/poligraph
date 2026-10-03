@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
@@ -89,7 +89,6 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
 
     [SkippableTheory]
     [InlineData("99999999000199")]
-    [InlineData("123")]
     [InlineData(Individual)]
     public async Task Pagina_ForaDaLista_Responde404(string cnpj)
     {
@@ -100,6 +99,18 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
         var resposta = await cliente.GetAsync($"/api/entidades/{cnpj}");
 
         Assert.Equal(HttpStatusCode.NotFound, resposta.StatusCode);
+    }
+
+    /// <summary>O CNPJ tem tipo próprio: fora de 14 dígitos, a rota recusa na entrada.</summary>
+    [SkippableFact]
+    public async Task CnpjForaDoFormato_Responde400()
+    {
+        ExigeDocker();
+
+        using var cliente = CriarCliente();
+        var resposta = await cliente.GetAsync("/api/entidades/123");
+
+        Assert.Equal(HttpStatusCode.BadRequest, resposta.StatusCode);
     }
 
     /// <summary>"Curitiba" é cidade e parte do nome de entidade: a busca responde nos dois grupos.</summary>

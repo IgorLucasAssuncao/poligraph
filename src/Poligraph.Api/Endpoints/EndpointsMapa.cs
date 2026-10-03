@@ -1,5 +1,6 @@
-using Poligraph.Api.Dtos;
+﻿using Poligraph.Api.Dtos;
 using Poligraph.Api.Services;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Endpoints;
 
@@ -32,12 +33,12 @@ public static class EndpointsMapa
 
     /// <summary>O dinheiro de emenda por UF, pela sede de quem recebeu.</summary>
     private static async Task<IResult> ObterBrasilAsync(
-        ServicoMapaDeEmendas servico, CancellationToken ct, int? de = null, int? ate = null) =>
+        ServicoMapaDeEmendas servico, CancellationToken ct, Ano? de = null, Ano? ate = null) =>
         Results.Ok(await servico.ObterBrasilAsync(de, ate, ct));
 
     /// <summary>O dinheiro de emenda por município de uma UF.</summary>
     private static async Task<IResult> ObterEstadoAsync(
-        string uf, ServicoMapaDeEmendas servico, CancellationToken ct, int? de = null, int? ate = null) =>
+        Uf uf, ServicoMapaDeEmendas servico, CancellationToken ct, Ano? de = null, Ano? ate = null) =>
         Results.Ok(await servico.ObterEstadoAsync(uf, de, ate, ct));
 
     /// <summary>A busca "sua cidade". A escolha vira o código IBGE.</summary>
@@ -47,28 +48,28 @@ public static class EndpointsMapa
 
     /// <summary>Quem mandou dinheiro de emenda para a cidade, e quem o recebeu lá.</summary>
     private static async Task<IResult> ObterMunicipioAsync(
-        string codigoIbge, ServicoMapaDeEmendas servico, CancellationToken ct, int? de = null, int? ate = null) =>
+        CodigoIbge codigoIbge, ServicoMapaDeEmendas servico, CancellationToken ct, Ano? de = null, Ano? ate = null) =>
         await servico.ObterMunicipioAsync(codigoIbge, de, ate, ct) is { } municipio
             ? Results.Ok(municipio)
             : Results.NotFound();
 
     /// <summary>Os deputados e senadores que mandaram dinheiro para a cidade, em páginas.</summary>
     private static async Task<IResult> ListarParlamentaresAsync(
-        string codigoIbge, ServicoMapaDeEmendas servico, CancellationToken ct, int? de = null, int? ate = null, int pagina = 1) =>
+        CodigoIbge codigoIbge, ServicoMapaDeEmendas servico, CancellationToken ct, Ano? de = null, Ano? ate = null, int pagina = 1) =>
         await servico.ListarParlamentaresAsync(codigoIbge, de, ate, pagina, ct) is { } lista
             ? Results.Ok(lista)
             : Results.NotFound();
 
     /// <summary>Quem recebeu na cidade, em páginas.</summary>
     private static async Task<IResult> ListarFavorecidosAsync(
-        string codigoIbge, ServicoMapaDeEmendas servico, CancellationToken ct, int? de = null, int? ate = null, int pagina = 1) =>
+        CodigoIbge codigoIbge, ServicoMapaDeEmendas servico, CancellationToken ct, Ano? de = null, Ano? ate = null, int pagina = 1) =>
         await servico.ListarFavorecidosAsync(codigoIbge, de, ate, pagina, ct) is { } lista
             ? Results.Ok(lista)
             : Results.NotFound();
 
     /// <summary>Os convênios da cidade, em páginas: o que foi combinado e o que ainda falta liberar.</summary>
     private static async Task<IResult> ListarConveniosAsync(
-        string codigoIbge, ServicoMapaDeEmendas servico, CancellationToken ct, int? de = null, int? ate = null, int pagina = 1) =>
+        CodigoIbge codigoIbge, ServicoMapaDeEmendas servico, CancellationToken ct, Ano? de = null, Ano? ate = null, int pagina = 1) =>
         await servico.ListarConveniosAsync(codigoIbge, de, ate, pagina, ct) is { } lista
             ? Results.Ok(lista)
             : Results.NotFound();

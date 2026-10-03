@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Services;
 
@@ -30,8 +31,9 @@ public class ServicoAfinidade(PoligraphDb db)
     /// </remarks>
     /// <param name="uf">U15: só os parlamentares deste estado nas listas e na régua. O cálculo e a posição no grafo continuam sobre a casa inteira: o grafo é da casa, e o centroide sai de quem mais concordou com o cidadão em qualquer estado.</param>
     public async Task<RespostaAfinidadeDto?> CalcularAsync(
-        IReadOnlyList<RespostaCidadao> opinadas, string? uf, CancellationToken ct)
+        IReadOnlyList<RespostaCidadao> opinadas, Uf? ufPedida, CancellationToken ct)
     {
+        var uf = ufPedida?.Sigla;
         var casaDaPergunta = await CasaDasPerguntasAsync(opinadas, ct);
         var votosPorPessoa = await CarregarVotosAsync(opinadas, ct);
 

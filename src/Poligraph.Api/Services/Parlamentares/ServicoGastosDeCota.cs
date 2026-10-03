@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Services;
 
@@ -32,8 +33,11 @@ public class ServicoGastosDeCota(PoligraphDb db)
     /// <para>Projeta em tipo ANÔNIMO, não direto no `record`: o EF não traduz `GroupBy` com construtor posicional — devolve `could not be translated` em runtime, não em compilação. O `record` é montado depois, em memória.</para>
     /// </remarks>
     /// <param name="legislatura">Sem ano, o mais recente DENTRO do mandato: a ficha aberta em 2015-2019 não mostra a cota de hoje.</param>
-    public async Task<GastoDeCotaDto> ObterAsync(long id, int? ano, short? legislatura, CancellationToken ct)
+    public async Task<GastoDeCotaDto> ObterAsync(PessoaId pessoa, Ano? anoPedido, Legislatura? legislaturaPedida, CancellationToken ct)
     {
+        var id = pessoa.Valor;
+        var ano = anoPedido?.Valor;
+        var legislatura = legislaturaPedida?.Numero;
         var daPessoa = _db.Despesas.AsNoTracking().Where(d => d.PessoaId == id);
         if (legislatura is { } l)
         {
@@ -96,8 +100,10 @@ public class ServicoGastosDeCota(PoligraphDb db)
     /// <para>É o caminho de volta à fonte: a ficha mostra somas por categoria, e cada soma se confere aqui, nota por nota.</para>
     /// </remarks>
     public async Task<PaginaDto<LancamentoDaCotaDto>> ListarLancamentosAsync(
-        long id, int? ano, int pagina, int tamanho, CancellationToken ct)
+        PessoaId pessoa, Ano? anoPedido, int pagina, int tamanho, CancellationToken ct)
     {
+        var id = pessoa.Valor;
+        var ano = anoPedido?.Valor;
         pagina = Math.Max(pagina, 1);
         tamanho = Math.Clamp(tamanho, 1, TamanhoMaximo);
 

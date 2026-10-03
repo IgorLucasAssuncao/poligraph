@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Services;
 
@@ -28,8 +29,8 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
     /// <para>Base vazia devolve panorama vazio, não erro: é o estado do primeiro dia, e a tela tem um texto próprio para ele.</para>
     /// <para>Casa sem nenhuma votação ingerida fica fora — a tela não deve anunciar uma casa que ainda não entrou na base.</para>
     /// </remarks>
-    public Task<PanoramaDto> ObterAsync(short? legislatura, CancellationToken ct) =>
-        _leitura.ObterAsync(("panorama", legislatura), () => CalcularAsync(legislatura, ct));
+    public Task<PanoramaDto> ObterAsync(Legislatura? legislatura, CancellationToken ct) =>
+        _leitura.ObterAsync(("panorama", legislatura?.Numero), () => CalcularAsync(legislatura?.Numero, ct));
 
     /// <summary>As legislaturas que a base tem, da mais recente para a mais antiga.</summary>
     public Task<IReadOnlyList<LegislaturaDto>> LegislaturasAsync(CancellationToken ct) =>
@@ -40,8 +41,8 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
     /// respondem 404 antes de calcular — senão cada número inventado na URL viraria uma
     /// entrada vazia no cache.
     /// </summary>
-    public async Task<bool> ExisteAsync(short? legislatura, CancellationToken ct) =>
-        legislatura is null || (await LegislaturasAsync(ct)).Any(l => l.Numero == legislatura);
+    public async Task<bool> ExisteAsync(Legislatura? legislatura, CancellationToken ct) =>
+        legislatura is null || (await LegislaturasAsync(ct)).Any(l => l.Numero == legislatura.Value.Numero);
 
     private async Task<PanoramaDto> CalcularAsync(short? pedida, CancellationToken ct)
     {

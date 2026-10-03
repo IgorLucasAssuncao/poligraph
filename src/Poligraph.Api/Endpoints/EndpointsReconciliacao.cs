@@ -1,5 +1,6 @@
-using Poligraph.Api.Dtos;
+﻿using Poligraph.Api.Dtos;
 using Poligraph.Api.Services;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Endpoints;
 
@@ -15,6 +16,6 @@ public static class EndpointsReconciliacao
     }
 
     /// <summary>Quanto o total de emendas da base fecha com o Portal, ano a ano, e o motivo do que fica fora.</summary>
-    private static async Task<IResult> ListarAsync(int? de, int? ate, ServicoReconciliacao servico, CancellationToken ct) =>
+    private static async Task<IResult> ListarAsync(ServicoReconciliacao servico, CancellationToken ct, Ano? de = null, Ano? ate = null) =>
         Results.Ok(await servico.ListarAsync(de, ate, ct));
 }

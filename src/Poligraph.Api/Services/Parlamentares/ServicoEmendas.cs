@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Services;
 
@@ -30,13 +31,16 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
     /// <para>Agregação PRÓPRIA, não a soma dos `Take(8)` acima: eles mostrariam um total menor que o real, sem nada na tela indicando o corte.</para>
     /// </remarks>
     /// <param name="legislatura">Sem ano, o mais recente DENTRO do mandato (ver <c>Legislaturas.AnosDeEmenda</c>).</param>
-    public Task<EmendasDoParlamentarDto> ObterAsync(long id, int? ano, short? legislatura, CancellationToken ct) =>
-        _leitura.ObterAsync(("emendas", id, ano, legislatura), () => CalcularAsync(id, ano, legislatura, ct));
+    public Task<EmendasDoParlamentarDto> ObterAsync(PessoaId pessoa, Ano? ano, Legislatura? legislatura, CancellationToken ct) =>
+        _leitura.ObterAsync(("emendas", pessoa.Valor, ano?.Valor, legislatura?.Numero),
+            () => CalcularAsync(pessoa.Valor, ano?.Valor, legislatura?.Numero, ct));
 
     /// <summary>Quem recebeu, em páginas, na mesma ordem da ficha. A primeira página é a da ficha.</summary>
     public async Task<PaginaDto<FavorecidoDaEmendaDto>> ListarFavorecidosAsync(
-        long id, int? ano, int pagina, int tamanho, CancellationToken ct)
+        PessoaId pessoa, Ano? anoPedido, int pagina, int tamanho, CancellationToken ct)
     {
+        var id = pessoa.Valor;
+        var ano = anoPedido?.Valor;
         (pagina, tamanho) = Normalizar(pagina, tamanho);
 
         var alvo = await AnoAlvoAsync(id, ano, ct);
@@ -60,8 +64,10 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
 
     /// <summary>Os convênios, em páginas, na mesma ordem da ficha. A primeira página é a da ficha.</summary>
     public async Task<PaginaDto<ConvenioDaEmendaDto>> ListarConveniosAsync(
-        long id, int? ano, int pagina, int tamanho, CancellationToken ct)
+        PessoaId pessoa, Ano? anoPedido, int pagina, int tamanho, CancellationToken ct)
     {
+        var id = pessoa.Valor;
+        var ano = anoPedido?.Valor;
         (pagina, tamanho) = Normalizar(pagina, tamanho);
 
         var alvo = await AnoAlvoAsync(id, ano, ct);
@@ -86,8 +92,10 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
     /// <para>É o caminho de volta à fonte: a ficha mostra somas, e cada soma se confere aqui, emenda por emenda.</para>
     /// </remarks>
     public async Task<PaginaDto<EmendaNaListaDto>> ListarEmendasAsync(
-        long id, int? ano, int pagina, int tamanho, CancellationToken ct)
+        PessoaId pessoa, Ano? anoPedido, int pagina, int tamanho, CancellationToken ct)
     {
+        var id = pessoa.Valor;
+        var ano = anoPedido?.Valor;
         (pagina, tamanho) = Normalizar(pagina, tamanho);
 
         var alvo = await AnoAlvoAsync(id, ano, ct);

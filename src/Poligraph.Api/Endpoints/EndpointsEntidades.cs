@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using Poligraph.Api.Dtos;
 using Poligraph.Api.Services;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Endpoints;
 
@@ -33,27 +34,24 @@ public static partial class EndpointsEntidades
         Results.Ok(await servico.ListarAsync(busca, grupo, pagina, ct));
 
     /// <summary>A página de uma entidade. CNPJ fora do formato ou que não recebeu emenda: 404.</summary>
-    private static async Task<IResult> ObterAsync(string cnpj, ServicoEntidades servico, CancellationToken ct) =>
-        Cnpj().IsMatch(cnpj) && await servico.ObterAsync(cnpj, ct) is { } entidade
+    private static async Task<IResult> ObterAsync(Cnpj cnpj, ServicoEntidades servico, CancellationToken ct) =>
+        await servico.ObterAsync(cnpj, ct) is { } entidade
             ? Results.Ok(entidade)
             : Results.NotFound();
 
     private static async Task<IResult> ListarParlamentaresAsync(
-        string cnpj, ServicoEntidades servico, CancellationToken ct, int pagina = 1) =>
-        Cnpj().IsMatch(cnpj) && await servico.ListarParlamentaresAsync(cnpj, pagina, ct) is { } lista
+        Cnpj cnpj, ServicoEntidades servico, CancellationToken ct, int pagina = 1) =>
+        await servico.ListarParlamentaresAsync(cnpj, pagina, ct) is { } lista
             ? Results.Ok(lista)
             : Results.NotFound();
 
     private static async Task<IResult> ListarConveniosAsync(
-        string cnpj, ServicoEntidades servico, CancellationToken ct, int pagina = 1) =>
-        Cnpj().IsMatch(cnpj) && await servico.ListarConveniosAsync(cnpj, pagina, ct) is { } lista
+        Cnpj cnpj, ServicoEntidades servico, CancellationToken ct, int pagina = 1) =>
+        await servico.ListarConveniosAsync(cnpj, pagina, ct) is { } lista
             ? Results.Ok(lista)
             : Results.NotFound();
 
     /// <summary>A busca do cabeçalho: parlamentares, cidades e entidades de uma vez.</summary>
     private static async Task<IResult> BuscarAsync(ServicoBusca servico, CancellationToken ct, string? q = null) =>
         Results.Ok(await servico.BuscarAsync(q, ct));
-
-    [GeneratedRegex("^[0-9]{14}$")]
-    private static partial Regex Cnpj();
 }

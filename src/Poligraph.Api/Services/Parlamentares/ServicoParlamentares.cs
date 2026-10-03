@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Services;
 
@@ -42,9 +43,11 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <para>Com <c>anteriores</c>, entra também quem só votou em legislaturas passadas, cada um com o último mandato. Sem ele, que é o padrão, a lista é a de quem está em exercício: o histórico ocupa milhares de nomes, e quem chega procurando "meu deputado" não deve ter de atravessá-los.</para>
     /// </remarks>
     public async Task<PaginaDeParlamentaresDto> ListarAsync(
-        string? nome, string? partido, string? uf, TipoCasa? casa, bool anteriores,
-        short? legislatura, TipoOrdemDaLista ordem, int pagina, int tamanho, CancellationToken ct)
+        string? nome, string? partido, Uf? ufPedida, TipoCasa? casa, bool anteriores,
+        Legislatura? legislaturaPedida, TipoOrdemDaLista ordem, int pagina, int tamanho, CancellationToken ct)
     {
+        var uf = ufPedida?.Sigla;
+        var legislatura = legislaturaPedida?.Numero;
         var corrente = await Legislaturas.CorrenteAsync(_db, ct);
         var todos = (anteriores ? await ListaComAnterioresAsync(ct) : await ListaDaLegislaturaAsync(legislatura, ct))
             .Where(p => casa is null || p.Casa == casa)
@@ -81,8 +84,8 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <remarks>
     /// <para>A legislatura é a da PESSOA, não a corrente do site: um ex-deputado que só votou na 56ª abriria a ficha com zero votos. Pedida uma legislatura em que ela não votou, vale a última em que votou.</para>
     /// </remarks>
-    public Task<FichaParlamentarDto?> ObterFichaAsync(long id, short? legislatura, CancellationToken ct) =>
-        _leitura.ObterAsync(("ficha", id, legislatura), () => CalcularFichaAsync(id, legislatura, ct));
+    public Task<FichaParlamentarDto?> ObterFichaAsync(PessoaId pessoa, Legislatura? legislatura, CancellationToken ct) =>
+        _leitura.ObterAsync(("ficha", pessoa.Valor, legislatura?.Numero), () => CalcularFichaAsync(pessoa.Valor, legislatura?.Numero, ct));
 
     /// <summary>As legislaturas em que a pessoa votou, da mais recente, com a filiação do último voto de cada uma.</summary>
     /// <remarks>
@@ -233,8 +236,9 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     }
 
     /// <summary>O patrimônio declarado em cada candidatura, da mais recente. Nulo para pessoa inexistente.</summary>
-    public async Task<PatrimonioDoParlamentarDto?> PatrimonioAsync(long id, CancellationToken ct)
+    public async Task<PatrimonioDoParlamentarDto?> PatrimonioAsync(PessoaId pessoa, CancellationToken ct)
     {
+        var id = pessoa.Valor;
         if (!await _db.Pessoas.AnyAsync(p => p.Id == id, ct))
         {
             return null;
@@ -268,8 +272,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <para><c>semRito</c> tira as votações de rito (requerimento, urgência, adiamento), que são perto de um terço da lista e não entram na afinidade.</para>
     /// </remarks>
     public async Task<PaginaDto<VotoNaFichaDto>?> ListarVotosAsync(
-        long id, int pagina, int tamanho, short? legislatura, string? busca, bool semRito, CancellationToken ct)
+        PessoaId pessoa, int pagina, int tamanho, Legislatura? legislaturaPedida, string? busca, bool semRito, CancellationToken ct)
     {
+        var id = pessoa.Valor;
+        var legislatura = legislaturaPedida?.Numero;
         if (!await _db.Pessoas.AnyAsync(p => p.Id == id, ct))
         {
             return null;

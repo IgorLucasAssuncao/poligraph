@@ -1,6 +1,7 @@
 ﻿using Poligraph.Api.Dtos;
 using Poligraph.Api.Services;
 using Poligraph.Data;
+using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Endpoints;
 
@@ -14,36 +15,36 @@ public static class EndpointsParlamentares
              .Produces<PaginaDeParlamentaresDto>()
              .Produces(StatusCodes.Status404NotFound);
 
-        grupo.MapGet("/{id:long}", ObterFichaAsync)
+        grupo.MapGet("/{id}", ObterFichaAsync)
              .Produces<FichaParlamentarDto>()
              .Produces(StatusCodes.Status404NotFound);
 
-        grupo.MapGet("/{id:long}/gastos", ObterGastosAsync)
+        grupo.MapGet("/{id}/gastos", ObterGastosAsync)
              .Produces<GastoDeCotaDto>();
 
-        grupo.MapGet("/{id:long}/votos", ListarVotosAsync)
+        grupo.MapGet("/{id}/votos", ListarVotosAsync)
              .Produces<PaginaDto<VotoNaFichaDto>>()
              .Produces(StatusCodes.Status404NotFound);
 
-        grupo.MapGet("/{id:long}/emendas", ObterEmendasAsync)
+        grupo.MapGet("/{id}/emendas", ObterEmendasAsync)
              .Produces<EmendasDoParlamentarDto>();
 
-        grupo.MapGet("/{id:long}/emendas/lista", ListarEmendasAsync)
+        grupo.MapGet("/{id}/emendas/lista", ListarEmendasAsync)
              .Produces<PaginaDto<EmendaNaListaDto>>();
 
-        grupo.MapGet("/{id:long}/gastos/lancamentos", ListarLancamentosAsync)
+        grupo.MapGet("/{id}/gastos/lancamentos", ListarLancamentosAsync)
              .Produces<PaginaDto<LancamentoDaCotaDto>>();
 
-        grupo.MapGet("/{id:long}/emendas/favorecidos", ListarFavorecidosAsync)
+        grupo.MapGet("/{id}/emendas/favorecidos", ListarFavorecidosAsync)
              .Produces<PaginaDto<FavorecidoDaEmendaDto>>();
 
-        grupo.MapGet("/{id:long}/emendas/convenios", ListarConveniosAsync)
+        grupo.MapGet("/{id}/emendas/convenios", ListarConveniosAsync)
              .Produces<PaginaDto<ConvenioDaEmendaDto>>();
 
-        grupo.MapGet("/{id:long}/financiamento", ObterFinanciamentoAsync)
+        grupo.MapGet("/{id}/financiamento", ObterFinanciamentoAsync)
              .Produces<FinanciamentoDeCampanhaDto>();
 
-        grupo.MapGet("/{id:long}/patrimonio", ObterPatrimonioAsync)
+        grupo.MapGet("/{id}/patrimonio", ObterPatrimonioAsync)
              .Produces<PatrimonioDoParlamentarDto>()
              .Produces(StatusCodes.Status404NotFound);
 
@@ -57,10 +58,10 @@ public static class EndpointsParlamentares
         CancellationToken ct,
         string? nome = null,
         string? partido = null,
-        string? uf = null,
+        Uf? uf = null,
         TipoCasa? casa = null,
         bool anteriores = false,
-        short? legislatura = null,
+        Legislatura? legislatura = null,
         TipoOrdemDaLista ordem = TipoOrdemDaLista.NOME,
         int pagina = 1,
         int tamanho = ServicoParlamentares.TamanhoPadrao) =>
@@ -70,57 +71,57 @@ public static class EndpointsParlamentares
 
     /// <summary>RF-31 — ficha com dados, histórico de votos e mais similares.</summary>
     private static async Task<IResult> ObterFichaAsync(
-        long id, ServicoParlamentares servico, CancellationToken ct, short? legislatura = null) =>
+        PessoaId id, ServicoParlamentares servico, CancellationToken ct, Legislatura? legislatura = null) =>
         await servico.ObterFichaAsync(id, legislatura, ct) is { } ficha
             ? Results.Ok(ficha)
             : Results.NotFound();
 
     private static async Task<IResult> ObterGastosAsync(
-        long id, ServicoGastosDeCota servico, CancellationToken ct, int? ano = null, short? legislatura = null) =>
+        PessoaId id, ServicoGastosDeCota servico, CancellationToken ct, Ano? ano = null, Legislatura? legislatura = null) =>
         Results.Ok(await servico.ObterAsync(id, ano, legislatura, ct));
 
     /// <summary>Os votos de uma legislatura da pessoa, do mais recente, em páginas. Sem legislatura, a última em que votou. <c>busca</c> filtra por descrição, ementa e matéria.</summary>
     private static async Task<IResult> ListarVotosAsync(
-        long id, ServicoParlamentares servico, CancellationToken ct,
-        int pagina = 1, int tamanho = ServicoParlamentares.VotosPorPagina, short? legislatura = null,
+        PessoaId id, ServicoParlamentares servico, CancellationToken ct,
+        int pagina = 1, int tamanho = ServicoParlamentares.VotosPorPagina, Legislatura? legislatura = null,
         string? busca = null, bool semRito = false) =>
         await servico.ListarVotosAsync(id, pagina, tamanho, legislatura, busca, semRito, ct) is { } votos
             ? Results.Ok(votos)
             : Results.NotFound();
 
     private static async Task<IResult> ObterEmendasAsync(
-        long id, ServicoEmendas servico, CancellationToken ct, int? ano = null, short? legislatura = null) =>
+        PessoaId id, ServicoEmendas servico, CancellationToken ct, Ano? ano = null, Legislatura? legislatura = null) =>
         Results.Ok(await servico.ObterAsync(id, ano, legislatura, ct));
 
     /// <summary>As emendas do ano, uma a uma, com o link de cada uma no Portal.</summary>
     private static async Task<IResult> ListarEmendasAsync(
-        long id, ServicoEmendas servico, CancellationToken ct,
-        int? ano = null, int pagina = 1, int tamanho = ServicoEmendas.ItensPorPagina) =>
+        PessoaId id, ServicoEmendas servico, CancellationToken ct,
+        Ano? ano = null, int pagina = 1, int tamanho = ServicoEmendas.ItensPorPagina) =>
         Results.Ok(await servico.ListarEmendasAsync(id, ano, pagina, tamanho, ct));
 
     /// <summary>Os lançamentos da cota no ano, com o documento fiscal de cada um.</summary>
     private static async Task<IResult> ListarLancamentosAsync(
-        long id, ServicoGastosDeCota servico, CancellationToken ct,
-        int? ano = null, int pagina = 1, int tamanho = ServicoGastosDeCota.LancamentosPorPagina) =>
+        PessoaId id, ServicoGastosDeCota servico, CancellationToken ct,
+        Ano? ano = null, int pagina = 1, int tamanho = ServicoGastosDeCota.LancamentosPorPagina) =>
         Results.Ok(await servico.ListarLancamentosAsync(id, ano, pagina, tamanho, ct));
 
     /// <summary>Quem recebeu as emendas do ano, em páginas. A primeira é a da ficha.</summary>
     private static async Task<IResult> ListarFavorecidosAsync(
-        long id, ServicoEmendas servico, CancellationToken ct,
-        int? ano = null, int pagina = 1, int tamanho = ServicoEmendas.ItensPorPagina) =>
+        PessoaId id, ServicoEmendas servico, CancellationToken ct,
+        Ano? ano = null, int pagina = 1, int tamanho = ServicoEmendas.ItensPorPagina) =>
         Results.Ok(await servico.ListarFavorecidosAsync(id, ano, pagina, tamanho, ct));
 
     /// <summary>Os convênios das emendas do ano, em páginas. A primeira é a da ficha.</summary>
     private static async Task<IResult> ListarConveniosAsync(
-        long id, ServicoEmendas servico, CancellationToken ct,
-        int? ano = null, int pagina = 1, int tamanho = ServicoEmendas.ItensPorPagina) =>
+        PessoaId id, ServicoEmendas servico, CancellationToken ct,
+        Ano? ano = null, int pagina = 1, int tamanho = ServicoEmendas.ItensPorPagina) =>
         Results.Ok(await servico.ListarConveniosAsync(id, ano, pagina, tamanho, ct));
 
     private static async Task<IResult> ObterFinanciamentoAsync(
-        long id, ServicoFinanciamento servico, CancellationToken ct, int? eleicao = null, short? legislatura = null) =>
+        PessoaId id, ServicoFinanciamento servico, CancellationToken ct, Ano? eleicao = null, Legislatura? legislatura = null) =>
         Results.Ok(await servico.ObterAsync(id, eleicao, legislatura, ct));
 
     /// <summary>PP3 — o patrimônio declarado ao TSE, por candidatura e tipo de bem.</summary>
-    private static async Task<IResult> ObterPatrimonioAsync(long id, ServicoParlamentares servico, CancellationToken ct) =>
+    private static async Task<IResult> ObterPatrimonioAsync(PessoaId id, ServicoParlamentares servico, CancellationToken ct) =>
         await servico.PatrimonioAsync(id, ct) is { } patrimonio ? Results.Ok(patrimonio) : Results.NotFound();
 }
