@@ -485,7 +485,7 @@ function LinhaDoVoto({ voto }: { voto: VotoNaFicha }) {
     <>
       {rito && (
         <p className="voto-rito">
-          <Termo nome="procedimental">questão de rito</Termo> — não é voto no mérito
+          <Termo nome="procedimental">questão de rito</Termo>: o voto foi sobre o andamento, e não sobre o mérito
         </p>
       )}
 
@@ -533,7 +533,7 @@ function ContraAOrientacao({ voto }: { voto: VotoNaFicha }) {
       {' · '}
       <span className="voto-orientacao">
         Governo pediu <b>{orientacao}</b>
-        {!acompanhou && <em> — votou diferente</em>}
+        {!acompanhou && <em> (votou diferente)</em>}
       </span>
     </>
   );

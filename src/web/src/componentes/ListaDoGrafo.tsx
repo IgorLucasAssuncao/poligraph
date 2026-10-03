@@ -88,7 +88,7 @@ export function ListaDoGrafo({
 
       <p className="ajuda">
         A mesma informação do desenho, em texto: cada parlamentar seguido de quem mais
-        votou junto com ele. Não há ordem política nenhuma nesta lista — quem aparece
+        votou junto com ele. A ordem desta lista não é política: quem aparece
         primeiro é apenas quem tem mais ligações.
       </p>
 
@@ -110,7 +110,7 @@ export function ListaDoGrafo({
 
             {proximos.length === 0 ? (
               <span className="lista-grafo-sem-par">
-                sem ligações — precisa de ao menos 20 votações em comum com alguém
+                sem ligações: precisa de ao menos 20 votações em comum com alguém
               </span>
             ) : (
               <span className="lista-grafo-vizinhos">

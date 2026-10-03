@@ -228,8 +228,8 @@ function SecaoDaCasa({
             com quem você mais concordou.{' '}
             <strong>
               Sua posição vale sobre {casa.posicaoNoGrafo.baseDeVotacoes} perguntas
-            </strong>{' '}
-            — a de cada {nome.singular}, sobre a legislatura inteira.
+            </strong>
+            ; a de cada {nome.singular}, sobre a legislatura inteira.
           </p>
 
           <GrafoAmpliado

@@ -117,7 +117,7 @@ export function QuandoFoiPago({ meses, ano }: { meses: PagamentoPorMes[]; ano: n
     <>
       <h3 className="titulo-secao">Quando foi pago</h3>
       <p className="ajuda ajuda-espacada">
-        {reais(noAno)} de {reais(total)} — <strong>{parcela}%</strong> — saíram ainda em {ano}.
+        {reais(noAno)} de {reais(total)} (<strong>{parcela}%</strong>) saíram ainda em {ano}.
       </p>
 
       <figure className="grafico-meses">

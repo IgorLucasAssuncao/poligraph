@@ -76,7 +76,7 @@ export const GLOSSARIO = {
   legislatura: {
     rotulo: 'legislatura',
     explicacao:
-      ' Os quatro anos do Congresso — Câmara e Senado —, entre uma eleição e a seguinte. ' +
+      ' Os quatro anos do Congresso, na Câmara e no Senado, entre uma eleição e a seguinte. ' +
       'O deputado tem mandato de uma legislatura; o senador, de duas (oito anos), e por isso ' +
       'aparece nas duas. Só comparamos votos dentro da mesma legislatura: quem foi eleito em ' +
       '2022 não votou nada do que veio antes.',
@@ -254,7 +254,7 @@ export const GLOSSARIO = {
   cota: {
     rotulo: 'cota parlamentar',
     explicacao:
-      ' Verba mensal para o deputado manter o mandato — passagem, aluguel de escritório, ' +
+      ' Verba mensal para o deputado manter o mandato: passagem, aluguel de escritório, ' +
       'combustível, divulgação. É separada do salário, varia conforme a distância do ' +
       'estado até Brasília, e cada nota fiscal é pública.',
   },
@@ -283,7 +283,7 @@ export const GLOSSARIO = {
     rotulo: 'convênio',
     explicacao:
       ' O acordo pelo qual o governo federal repassa dinheiro a um município, estado ou ' +
-      'entidade para um objeto definido — uma obra, a compra de um equipamento. Um ' +
+      'entidade para um objeto definido, como uma obra ou a compra de um equipamento. Um ' +
       'convênio pode ser financiado por emendas de vários parlamentares.',
   },
   dotacao: {
@@ -304,7 +304,7 @@ export const GLOSSARIO = {
   restosAPagar: {
     rotulo: 'restos a pagar',
     explicacao:
-      ' Despesa reservada num ano e paga no seguinte — comum em obra, que se paga por ' +
+      ' Despesa reservada num ano e paga no seguinte. É comum em obra, que se paga por ' +
       'etapa. Em 2025, R$ 234,6 bi saíram assim. Sem somá-la, área de obra parece parada: ' +
       'Urbanismo pagou R$ 2,0 bi do próprio ano e R$ 6,5 bi de anos anteriores.',
   },

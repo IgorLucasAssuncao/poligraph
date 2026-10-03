@@ -472,7 +472,7 @@ function Detalhes({ dados }: { dados: DadosDoGoverno }) {
   return (
     <details className="governo-secao governo-detalhes" data-tour="governo-detalhes">
       <summary>
-        <strong>Ver os detalhes</strong> — todas as áreas, a dívida e o orçamento aprovado
+        <strong>Ver os detalhes</strong>: todas as áreas, a dívida e o orçamento aprovado
       </summary>
 
       <h3>Todas as áreas</h3>
@@ -563,7 +563,7 @@ function TabelaDasAreas({ areas, acima }: { areas: AreaDaDespesa[]; acima: numbe
     <>
       {incompletas > 0 && (
         <p className="aviso" role="note">
-          Em {incompletas} áreas o empenhado passou da dotação publicada — {reaisCompacto(acima)} no total. Nelas a
+          Em {incompletas} áreas o empenhado passou da dotação publicada, {reaisCompacto(acima)} no total. Nelas a
           coluna “pago da dotação” fica em branco. <Termo nome="dotacaoIncompleta">Por quê?</Termo>
         </p>
       )}

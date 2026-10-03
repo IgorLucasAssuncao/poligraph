@@ -140,7 +140,7 @@ describe('o período do grafo', () => {
     });
     renderizar();
 
-    const texto = (await screen.findByText(/as abertas vão de/)).closest('p')!.textContent;
-    expect(texto).toMatch(/2015–2019 — as abertas vão de mai\/2016 a dez\/2018\./);
+    const texto = (await screen.findByText(/As abertas vão de/)).closest('p')!.textContent;
+    expect(texto).toMatch(/2015–2019\. As abertas vão de mai\/2016 a dez\/2018\./);
   });
 });

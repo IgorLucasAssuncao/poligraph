@@ -152,7 +152,7 @@ export function AbaEmendas({ pessoaId, contas, erro }: { pessoaId: number; conta
             <strong>{reais(emendas.pago)}</strong>
           </ComProcedencia>{' '}
           pagos de {reais(emendas.empenhado)} empenhados em{' '}
-          <strong>{emendas.quantidade}</strong> {emendas.quantidade === 1 ? 'emenda' : 'emendas'} de {emendas.ano} —{' '}
+          <strong>{emendas.quantidade}</strong> {emendas.quantidade === 1 ? 'emenda' : 'emendas'} de {emendas.ano}:{' '}
           {(executado * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}% saiu de fato
         </p>
         <span className="gasto-barra execucao-barra" aria-hidden="true">
@@ -190,7 +190,7 @@ export function AbaEmendas({ pessoaId, contas, erro }: { pessoaId: number; conta
 
         <h3 className="titulo-secao">Local declarado na emenda</h3>
         <p className="ajuda">
-          O que o autor escreveu ao apresentar a emenda. Em boa parte diz “vários lugares” ou o estado inteiro — a
+          O que o autor escreveu ao apresentar a emenda. Em boa parte diz “vários lugares” ou o estado inteiro, e a
           cidade de verdade está em “Cidades que receberam”.
         </p>
         <ul className="gastos-categorias">
@@ -471,7 +471,7 @@ function Financiamento({ pessoaId, fin }: { pessoaId: number; fin: Financiamento
           <strong>{reais(fin.total)}</strong>
         </ComProcedencia>{' '}
         na eleição de {fin.anoEleicao}. Juntos, os dois fundos somam{' '}
-        <strong>{reais(publico)}</strong> —{' '}
+        <strong>{reais(publico)}</strong>,{' '}
         {((publico / fin.total) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}% do que a campanha
         arrecadou. São fundos <strong>distintos</strong>: o Fundo Especial é eleitoral; o Partidário custeia o partido o
         ano inteiro.

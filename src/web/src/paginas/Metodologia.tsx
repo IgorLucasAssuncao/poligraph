@@ -60,7 +60,7 @@ function Conteudo({ dados }: { dados: DadosDaMetodologia }) {
             {NOME_DA_CASA[c.casa].nome}: <strong>{c.votacoes}</strong> votações em plenário
             {c.votacoesSecretas > 0 && (
               <>
-                , das quais <strong>{c.votacoesSecretas}</strong> secretas — sem voto individual
+                , das quais <strong>{c.votacoesSecretas}</strong> secretas, sem voto individual
                 publicado, elas ficam fora de toda comparação
               </>
             )}

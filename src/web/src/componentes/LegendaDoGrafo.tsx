@@ -19,7 +19,7 @@
 export function LegendaDoGrafo() {
   return (
     <p className="legenda-grafo" data-tour="grafo-legenda">
-      <strong>A posição não indica orientação política</strong> — quem vota junto se
+      <strong>A posição não indica orientação política</strong>: quem vota junto se
       atrai, e é só isso que o desenho mostra. Nas bordas ficam os que votaram pouco
       demais para serem comparados com alguém.
     </p>

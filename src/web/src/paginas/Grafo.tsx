@@ -172,12 +172,12 @@ export function Grafo() {
               {periodoDaLegislatura(grafo.legislatura)}
               {grafo.abertasDesde && grafo.abertasAte && (
                 <>
-                  {' '}— as abertas vão de <strong>{mesCurto(grafo.abertasDesde)}</strong> a{' '}
+                  . As abertas vão de <strong>{mesCurto(grafo.abertasDesde)}</strong> a{' '}
                   <strong>{mesCurto(grafo.abertasAte)}</strong>
                 </>
               )}
               . Dois
-              {' '}{membro.plural} só se ligam se votaram juntos vezes suficientes —
+              {' '}{membro.plural} só se ligam se votaram juntos vezes suficientes:
               com poucas votações em comum, votar igual seria coincidência.
             </p>
 
@@ -185,7 +185,7 @@ export function Grafo() {
               <p className="ajuda">
                 <strong>O Senado vota em segredo com frequência.</strong> Das{' '}
                 {grafo.votacoesDePlenario} votações de plenário da legislatura,{' '}
-                {grafo.secretasDePlenario} são secretas — e nelas não há voto individual
+                {grafo.secretasDePlenario} são secretas, e nelas não há voto individual
                 publicado. Este desenho se apoia nas{' '}
                 {grafo.votacoesDePlenario - grafo.secretasDePlenario} abertas, e é por isso
                 que ele tem menos ligações e mais pontos soltos que o da Câmara.
@@ -197,7 +197,7 @@ export function Grafo() {
             <h2>Os grupos</h2>
             <p className="ajuda ajuda-espacada">
               Cada <Termo nome="comunidade" /> é formado pelo <strong>voto</strong>, não
-              pelo <Termo nome="partido" /> — e é por isso que um mesmo partido aparece em
+              pelo <Termo nome="partido" />, e é por isso que um mesmo partido aparece em
               vários.
             </p>
 

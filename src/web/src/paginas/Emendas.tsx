@@ -489,7 +489,7 @@ function PainelDaCidade({
               <strong>{reaisCompacto(dados.naPropriaCidade)}</strong> à prefeitura ou a órgão municipal
             </li>
             <li>
-              <strong>{reaisCompacto(emEntidades)}</strong> a entidades e empresas com sede aqui — podem
+              <strong>{reaisCompacto(emEntidades)}</strong> a entidades e empresas com sede aqui, que podem
               ter aplicado em outra cidade
             </li>
           </ul>
