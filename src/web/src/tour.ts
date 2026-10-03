@@ -22,7 +22,7 @@ export type PassoDoTour = {
   opcional?: boolean;
 };
 
-export type NomeDoTour = 'site' | 'analise' | 'grafo' | 'ficha' | 'questionario' | 'resultado' | 'emendas' | 'governo';
+export type NomeDoTour = 'site' | 'auditoria' | 'grafo' | 'ficha' | 'questionario' | 'resultado' | 'emendas' | 'governo';
 
 /** Como a oferta do primeiro acesso apresenta cada tour. */
 export const OFERTA_DO_TOUR: Record<NomeDoTour, { titulo: string; texto: string }> = {
@@ -30,8 +30,8 @@ export const OFERTA_DO_TOUR: Record<NomeDoTour, { titulo: string; texto: string 
     titulo: 'Primeira vez por aqui?',
     texto: 'Um tour de um minuto mostra de onde vêm os dados e como o resultado é calculado.',
   },
-  analise: {
-    titulo: 'O modo análise',
+  auditoria: {
+    titulo: 'O modo auditoria',
     texto: 'Como abrir a origem de um número: a regra da conta e os arquivos oficiais de onde ele saiu.',
   },
   grafo: {
@@ -87,10 +87,10 @@ export const PASSOS_DO_SITE: PassoDoTour[] = [
   },
   {
     rota: null,
-    alvo: 'modo-analise',
+    alvo: 'modo-auditoria',
     titulo: 'Confira de onde veio cada número',
     texto:
-      'Ligue o modo análise e os números ganham um sublinhado pontilhado. Clicando em um, ' +
+      'Ligue o modo auditoria e os números ganham um sublinhado pontilhado. Clicando em um, ' +
       'você vê a regra da conta e o arquivo oficial de onde ele saiu.',
   },
   {
@@ -130,16 +130,16 @@ export const PASSOS_DO_SITE: PassoDoTour[] = [
 ];
 
 /**
- * O tour do modo análise, aberto na primeira vez que a pessoa liga o interruptor.
+ * O tour do modo auditoria, aberto na primeira vez que a pessoa liga o interruptor.
  *
  * DECISÃO: Abre sozinho, sem oferta: ligar o modo já é o pedido. São três passos, e o do meio
  * é opcional porque nem toda tela tem número com procedência.
  */
-export const PASSOS_DA_ANALISE: PassoDoTour[] = [
+export const PASSOS_DA_AUDITORIA: PassoDoTour[] = [
   {
     rota: null,
-    alvo: 'modo-analise',
-    titulo: 'Modo análise ligado',
+    alvo: 'modo-auditoria',
+    titulo: 'Modo auditoria ligado',
     texto:
       'Agora os números que têm origem registrada aparecem com sublinhado pontilhado, nesta ' +
       'tela e nas outras.',
@@ -156,7 +156,7 @@ export const PASSOS_DA_ANALISE: PassoDoTour[] = [
   },
   {
     rota: null,
-    alvo: 'modo-analise',
+    alvo: 'modo-auditoria',
     titulo: 'Desligue quando quiser',
     texto:
       'A escolha fica guardada neste navegador, e vale sem conta. Desligado, o site volta a ' +

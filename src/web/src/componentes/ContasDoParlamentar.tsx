@@ -17,7 +17,7 @@ import { BotaoMostrarMaisComponent } from './BotaoMostrarMais';
 import { ConveniosComponent, EmendasUmaAUmaComponent, QuandoFoiPagoComponent, QuemRecebeuComponent } from './DestinoDasEmendas';
 import { LinkDeFonteComponent } from './LinkDeFonte';
 import { TermoComponent } from './Termo';
-import { ComProcedenciaComponent } from './ModoAnalise';
+import { ComProcedenciaComponent } from './ModoAuditoria';
 import { NENHUM, usePaginas } from './usePaginas';
 import type { Contas } from './useContas';
 import { EsqueletoDePainelComponent, EsqueletoDeTextoComponent } from './Esqueleto';

@@ -33,7 +33,7 @@ import { passosDasEmendas } from '../tour';
 import { BlocoComponent, EsqueletoComponent, EsqueletoDePainelComponent, EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
 import { UFS } from '../ufs';
 import { ConfereComOPortalComponent } from '../componentes/ConfereComOPortal';
-import { ComProcedenciaComponent } from '../componentes/ModoAnalise';
+import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { NumeroComponent, OpcoesComponent } from '../componentes/Dados';
 
 /**

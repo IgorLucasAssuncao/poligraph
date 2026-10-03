@@ -7,7 +7,7 @@ import { useTour } from './contextoDoTour';
 import { LinkDeFonteComponent } from './LinkDeFonte';
 
 /**
- * Modo análise (Pendência 73): ligado, todo número que tem procedência vira botão e abre o painel
+ * Modo auditoria (Pendência 73): ligado, todo número que tem procedência vira botão e abre o painel
  * com o arquivo de onde veio, o hash e a regra da conta.
  *
  * DECISÃO: É a regra que o projeto já segue (mostrar o cálculo junto do número, e o número
@@ -22,16 +22,17 @@ type Estado = {
   abrir: (consulta: ConsultaDeProcedencia, rotulo: string) => void;
 };
 
+/** ATENÇÃO: a chave guarda o nome antigo, "modo análise": trocá-la apagaria a escolha de quem já ligou. */
 const CHAVE = 'poligraph:modo-analise';
 
-const ContextoDoModoAnalise = createContext<Estado>({
+const ContextoDoModoAuditoria = createContext<Estado>({
   ligado: false,
   alternar: () => {},
   abrir: () => {},
 });
 
 /** O estado do modo e o painel, um para o site inteiro. */
-export function ProvedorDoModoAnaliseComponent({ children }: { children: ReactNode }) {
+export function ProvedorDoModoAuditoriaComponent({ children }: { children: ReactNode }) {
   const [ligado, setLigado] = useState(lerGuardado);
   const [aberto, setAberto] = useState<{ consulta: ConsultaDeProcedencia; rotulo: string } | null>(null);
 
@@ -50,15 +51,15 @@ export function ProvedorDoModoAnaliseComponent({ children }: { children: ReactNo
   const estado = useMemo(() => ({ ligado, alternar, abrir }), [ligado, alternar, abrir]);
 
   return (
-    <ContextoDoModoAnalise.Provider value={estado}>
+    <ContextoDoModoAuditoria.Provider value={estado}>
       {children}
       <PainelDeProcedenciaComponent aberto={aberto} aoFechar={() => setAberto(null)} />
-    </ContextoDoModoAnalise.Provider>
+    </ContextoDoModoAuditoria.Provider>
   );
 }
 
-export function useModoAnalise(): Estado {
-  return useContext(ContextoDoModoAnalise);
+export function useModoAuditoria(): Estado {
+  return useContext(ContextoDoModoAuditoria);
 }
 
 /**
@@ -67,28 +68,28 @@ export function useModoAnalise(): Estado {
  * DECISÃO: No cabeçalho, visível em toda tela, e não no menu: é o lugar que o sistema do vídeo
  * analisado usa (plano/10 §1), e escondido atrás de um clique ninguém descobre que existe.
  *
- * Na primeira vez que liga, abre o tour do modo (`PASSOS_DA_ANALISE`).
+ * Na primeira vez que liga, abre o tour do modo (`PASSOS_DA_AUDITORIA`).
  */
-export function InterruptorDoModoAnaliseComponent() {
-  const { ligado, alternar } = useModoAnalise();
+export function InterruptorDoModoAuditoriaComponent() {
+  const { ligado, alternar } = useModoAuditoria();
   const { iniciar } = useTour();
 
   const aoClicar = () => {
     alternar();
-    if (!ligado && !tourJaVisto('analise')) iniciar('analise');
+    if (!ligado && !tourJaVisto('auditoria')) iniciar('auditoria');
   };
 
   return (
     <button
       type="button"
-      className="interruptor-analise"
+      className="interruptor-auditoria"
       aria-pressed={ligado}
-      title={ligado ? 'Desligar o modo análise' : 'Ligar o modo análise: cada número mostra de onde veio'}
+      title={ligado ? 'Desligar o modo auditoria' : 'Ligar o modo auditoria: cada número mostra de onde veio'}
       onClick={aoClicar}
-      data-tour="modo-analise"
+      data-tour="modo-auditoria"
     >
-      <span className="interruptor-analise-trilho" aria-hidden="true" />
-      <span>Análise</span>
+      <span className="interruptor-auditoria-trilho" aria-hidden="true" />
+      <span>Auditoria</span>
     </button>
   );
 }
@@ -111,7 +112,7 @@ export function ComProcedenciaComponent({
   rotulo: string;
   children: ReactNode;
 }) {
-  const { ligado, abrir } = useModoAnalise();
+  const { ligado, abrir } = useModoAuditoria();
   if (!ligado) return <>{children}</>;
 
   return (

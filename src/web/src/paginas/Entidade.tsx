@@ -16,7 +16,7 @@ import { TermoComponent } from '../componentes/Termo';
 import { usePaginas } from '../componentes/usePaginas';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { dataCurta, minusculas, nomeProprio, reais, reaisCompacto } from '../formato';
-import { ComProcedenciaComponent } from '../componentes/ModoAnalise';
+import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { LinhaDeValorComponent, NumeroComponent } from '../componentes/Dados';
 

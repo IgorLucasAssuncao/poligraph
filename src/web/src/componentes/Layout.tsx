@@ -5,7 +5,7 @@ import { BuscaDoCabecalhoComponent } from './BuscaDoCabecalho';
 import { FaixaDeProcedenciaComponent } from './FaixaDeProcedencia';
 import { IconeExplorarComponent, IconeOrcamentoComponent, IconeQuestionarioComponent, IconeVoltarComponent, MarcaComponent } from './Icones';
 import { MenuDaContaComponent } from './MenuDaConta';
-import { InterruptorDoModoAnaliseComponent, ProvedorDoModoAnaliseComponent } from './ModoAnalise';
+import { InterruptorDoModoAuditoriaComponent, ProvedorDoModoAuditoriaComponent } from './ModoAuditoria';
 import { ProvedorDoTourComponent } from './Tour';
 import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
 
@@ -66,7 +66,7 @@ export function LayoutComponent({ children }: { children: React.ReactNode }) {
 
   return (
     <ProvedorDoTourComponent>
-      <ProvedorDoModoAnaliseComponent>
+      <ProvedorDoModoAuditoriaComponent>
         <div className="site">
           <FaixaDeProcedenciaComponent />
           <CabecalhoDoSiteComponent />
@@ -77,7 +77,7 @@ export function LayoutComponent({ children }: { children: React.ReactNode }) {
 
           <RodapeDoSiteComponent />
         </div>
-      </ProvedorDoModoAnaliseComponent>
+      </ProvedorDoModoAuditoriaComponent>
     </ProvedorDoTourComponent>
   );
 }
@@ -177,7 +177,7 @@ function CabecalhoDoSiteComponent() {
         </nav>
 
         <BuscaDoCabecalhoComponent />
-        <InterruptorDoModoAnaliseComponent />
+        <InterruptorDoModoAuditoriaComponent />
         <MenuDaContaComponent />
       </div>
     </header>

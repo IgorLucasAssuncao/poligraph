@@ -19,7 +19,7 @@ import { useSessao } from '../sessao';
 import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { useLegislaturaDaUrl, useLegislaturas } from '../componentes/useLegislatura';
 import { BarraDePeriodoComponent } from '../componentes/BarraDePeriodo';
-import { ComProcedenciaComponent } from '../componentes/ModoAnalise';
+import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { dataCurta, periodoDaLegislatura } from '../formato';
 import { PainelComponent } from '../componentes/Painel';
 import { TermoComponent } from '../componentes/Termo';

@@ -96,7 +96,7 @@ export function BotaoSeguirComponent({
 
 /**
  * O pedido de consentimento, num `<dialog>` modal: foco preso e Esc, como o tour e o painel do
- * modo análise. Esc e "Agora não" fecham sem seguir.
+ * modo auditoria. Esc e "Agora não" fecham sem seguir.
  */
 function PedidoDeConsentimentoComponent({ aoAceitar, aoRecusar }: { aoAceitar: () => void; aoRecusar: () => void }) {
   const dialogo = useRef<HTMLDialogElement>(null);

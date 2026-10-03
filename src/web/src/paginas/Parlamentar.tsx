@@ -20,7 +20,7 @@ import { useContas } from '../componentes/useContas';
 import { useLegislaturas } from '../componentes/useLegislatura';
 import { BotaoBaixarCsvComponent } from '../componentes/BotaoBaixarCsv';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
-import { ComProcedenciaComponent } from '../componentes/ModoAnalise';
+import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { MandatosDoParlamentarComponent } from '../componentes/MandatosDoParlamentar';
 import { RedesDoParlamentarComponent } from '../componentes/RedesDoParlamentar';
 import { baixarCsv, buscarTodas } from '../exportar';

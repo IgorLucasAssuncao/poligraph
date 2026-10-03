@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { obterProcedencia } from '../api';
 import { marcarTourVisto } from '../tour';
 import { ContextoDoTour } from './contextoDoTour';
-import { ComProcedenciaComponent, InterruptorDoModoAnaliseComponent, ProvedorDoModoAnaliseComponent } from './ModoAnalise';
+import { ComProcedenciaComponent, InterruptorDoModoAuditoriaComponent, ProvedorDoModoAuditoriaComponent } from './ModoAuditoria';
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -34,20 +34,20 @@ afterEach(() => localStorage.clear());
 
 function renderizar() {
   return render(
-    <ProvedorDoModoAnaliseComponent>
-      <InterruptorDoModoAnaliseComponent />
+    <ProvedorDoModoAuditoriaComponent>
+      <InterruptorDoModoAuditoriaComponent />
       <p>
         Gastou{' '}
         <ComProcedenciaComponent consulta={{ contexto: 'cota', pessoa: 1, ano: 2025 }} rotulo="Cota parlamentar de 2025">
           <strong>R$ 412.000,00</strong>
         </ComProcedenciaComponent>
       </p>
-    </ProvedorDoModoAnaliseComponent>,
+    </ProvedorDoModoAuditoriaComponent>,
   );
 }
 
 /** Pendência 73: desligado, o site fica como está; ligado, o número abre o arquivo de onde veio. */
-describe('o modo análise', () => {
+describe('o modo auditoria', () => {
   it('desligado, o número é só texto', () => {
     renderizar();
     expect(screen.queryByRole('button', { name: /ver de onde veio/ })).toBeNull();
@@ -56,7 +56,7 @@ describe('o modo análise', () => {
 
   it('ligado, o número abre o painel com o hash, a versão e as linhas sem carga', async () => {
     renderizar();
-    fireEvent.click(screen.getByRole('button', { name: /Análise/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Auditoria/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Cota parlamentar de 2025: ver de onde veio' }));
 
     expect(obterProcedencia).toHaveBeenCalledWith({ contexto: 'cota', pessoa: 1, ano: 2025 });
@@ -68,7 +68,7 @@ describe('o modo análise', () => {
 
   it('a escolha fica guardada no navegador', () => {
     renderizar();
-    const interruptor = screen.getByRole('button', { name: /Análise/ });
+    const interruptor = screen.getByRole('button', { name: /Auditoria/ });
     fireEvent.click(interruptor);
     expect(interruptor).toHaveAttribute('aria-pressed', 'true');
     expect(localStorage.getItem('poligraph:modo-analise')).toBe('1');
@@ -76,13 +76,13 @@ describe('o modo análise', () => {
 });
 
 /** O tour do modo abre na primeira vez que a pessoa liga, e só nela. */
-describe('o tour do modo análise', () => {
+describe('o tour do modo auditoria', () => {
   function comTour(iniciar: (nome?: string) => void) {
     return render(
       <ContextoDoTour.Provider value={{ iniciar, registrar: () => () => {} }}>
-        <ProvedorDoModoAnaliseComponent>
-          <InterruptorDoModoAnaliseComponent />
-        </ProvedorDoModoAnaliseComponent>
+        <ProvedorDoModoAuditoriaComponent>
+          <InterruptorDoModoAuditoriaComponent />
+        </ProvedorDoModoAuditoriaComponent>
       </ContextoDoTour.Provider>,
     );
   }
@@ -91,19 +91,19 @@ describe('o tour do modo análise', () => {
     const iniciar = vi.fn();
     comTour(iniciar);
 
-    fireEvent.click(screen.getByRole('button', { name: /Análise/ }));
-    expect(iniciar).toHaveBeenCalledWith('analise');
+    fireEvent.click(screen.getByRole('button', { name: /Auditoria/ }));
+    expect(iniciar).toHaveBeenCalledWith('auditoria');
 
-    fireEvent.click(screen.getByRole('button', { name: /Análise/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Auditoria/ }));
     expect(iniciar).toHaveBeenCalledTimes(1);
   });
 
   it('não abre de novo depois de visto', () => {
-    marcarTourVisto('analise');
+    marcarTourVisto('auditoria');
     const iniciar = vi.fn();
     comTour(iniciar);
 
-    fireEvent.click(screen.getByRole('button', { name: /Análise/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Auditoria/ }));
     expect(iniciar).not.toHaveBeenCalled();
   });
 });
