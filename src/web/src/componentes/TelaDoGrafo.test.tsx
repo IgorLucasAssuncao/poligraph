@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { Grafo, NoDoGrafo } from '../api';
-import { TelaDoGrafo } from './TelaDoGrafo';
+import { TelaDoGrafoComponent } from './TelaDoGrafo';
 
 function no(id: number, nome: string, partido = 'PARTIDO-A'): NoDoGrafo {
   return {
@@ -51,7 +51,7 @@ const GRAFO: Grafo = {
  */
 describe('ferramentas sobre o desenho', () => {
   it('a busca começa recolhida numa lupa', () => {
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
 
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
     expect(
@@ -61,7 +61,7 @@ describe('ferramentas sobre o desenho', () => {
 
   it('clicar na lupa abre o campo já com o foco', async () => {
     const usuario = userEvent.setup();
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
 
     await usuario.click(screen.getByRole('button', { name: /procurar parlamentar/i }));
 
@@ -71,7 +71,7 @@ describe('ferramentas sobre o desenho', () => {
 
   it('digitar sugere pelo nome', async () => {
     const usuario = userEvent.setup();
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
 
     await usuario.click(screen.getByRole('button', { name: /procurar parlamentar/i }));
     await usuario.type(screen.getByRole('searchbox'), 'bru');
@@ -82,7 +82,7 @@ describe('ferramentas sobre o desenho', () => {
 
   it('uma letra só não acusa "nada encontrado"', async () => {
     const usuario = userEvent.setup();
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
 
     await usuario.click(screen.getByRole('button', { name: /procurar parlamentar/i }));
     await usuario.type(screen.getByRole('searchbox'), 'z');
@@ -95,7 +95,7 @@ describe('ferramentas sobre o desenho', () => {
 
   it('Esc fecha a busca e limpa o que foi digitado', async () => {
     const usuario = userEvent.setup();
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
 
     await usuario.click(screen.getByRole('button', { name: /procurar parlamentar/i }));
     await usuario.type(screen.getByRole('searchbox'), 'ana');
@@ -137,7 +137,7 @@ describe('ferramentas sobre o desenho', () => {
 describe('painel de ajustes', () => {
   it('começa fechado e abre pela engrenagem', async () => {
     const usuario = userEvent.setup();
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
 
     expect(screen.queryByLabelText(/Rostos ao aproximar/)).not.toBeInTheDocument();
 
@@ -152,7 +152,7 @@ describe('painel de ajustes', () => {
 
   it('o filtro de ligações mostra quantas sobraram', async () => {
     const usuario = userEvent.setup();
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
     expect(screen.getByText('2 de 2')).toBeInTheDocument();
@@ -160,7 +160,7 @@ describe('painel de ajustes', () => {
 
   it('RISCO: a ressalva do layout escolhido fica junto do seletor', async () => {
     const usuario = userEvent.setup();
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
     expect(screen.getByText(/eixos não significam nada/)).toBeInTheDocument();
@@ -173,7 +173,7 @@ describe('painel de ajustes', () => {
 
   it('os eixos começam desligados e a chave existe', async () => {
     const usuario = userEvent.setup();
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
     expect(screen.getByLabelText(/Mostrar os eixos/)).not.toBeChecked();
@@ -182,7 +182,7 @@ describe('painel de ajustes', () => {
   it('sem orientação de bancada, avisa que o eixo não tem nome', async () => {
     const usuario = userEvent.setup();
     const senado = { ...GRAFO, nos: GRAFO.nos.map((n) => ({ ...n, governismo: null })) };
-    render(<TelaDoGrafo grafo={senado} />);
+    render(<TelaDoGrafoComponent grafo={senado} />);
 
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
     await usuario.click(screen.getByLabelText(/Mostrar os eixos/));
@@ -192,7 +192,7 @@ describe('painel de ajustes', () => {
 
   it('DECISÃO: oferece Molas e Alinhamento, e não Componentes', async () => {
     const usuario = userEvent.setup();
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
     expect(screen.getByRole('button', { name: 'Alinhamento' })).toBeInTheDocument();
@@ -202,7 +202,7 @@ describe('painel de ajustes', () => {
   it('Não esconde o alinhamento no Senado', async () => {
     const usuario = userEvent.setup();
     const senado = { ...GRAFO, nos: GRAFO.nos.map((n) => ({ ...n, governismo: null })) };
-    render(<TelaDoGrafo grafo={senado} />);
+    render(<TelaDoGrafoComponent grafo={senado} />);
 
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
@@ -213,7 +213,7 @@ describe('painel de ajustes', () => {
 
   it('RISCO: no alinhamento a tela declara que a posição não vem de algoritmo', async () => {
     const usuario = userEvent.setup();
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
     await usuario.click(screen.getByRole('button', { name: 'Alinhamento' }));
 
@@ -222,7 +222,7 @@ describe('painel de ajustes', () => {
 
   it('Não a simulação de forças não existe mais', async () => {
     const usuario = userEvent.setup();
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
     await usuario.click(screen.getByRole('button', { name: /ajustes do desenho/i }));
 
     expect(screen.queryByLabelText(/Soltar as molas/)).not.toBeInTheDocument();
@@ -231,7 +231,7 @@ describe('painel de ajustes', () => {
 
 describe('o desenho', () => {
   it('anuncia o que está desenhado para leitor de tela', () => {
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
 
     expect(
       screen.getByRole('img', { name: /3 parlamentares e 2 ligações/ }),
@@ -239,10 +239,10 @@ describe('o desenho', () => {
   });
 
   it('oferece tela cheia só quando quem chama sabe abri-la', () => {
-    const { rerender } = render(<TelaDoGrafo grafo={GRAFO} />);
+    const { rerender } = render(<TelaDoGrafoComponent grafo={GRAFO} />);
     expect(screen.queryByRole('button', { name: /tela cheia/i })).not.toBeInTheDocument();
 
-    rerender(<TelaDoGrafo grafo={GRAFO} aoAmpliar={vi.fn()} />);
+    rerender(<TelaDoGrafoComponent grafo={GRAFO} aoAmpliar={vi.fn()} />);
     expect(screen.getByRole('button', { name: /tela cheia/i })).toBeInTheDocument();
   });
 });
@@ -269,7 +269,7 @@ describe('o desenho', () => {
  */
 describe('acessibilidade do grafo', () => {
   it('o desenho recebe foco pelo teclado', () => {
-    const { container } = render(<TelaDoGrafo grafo={GRAFO} />);
+    const { container } = render(<TelaDoGrafoComponent grafo={GRAFO} />);
 
     const canvas = container.querySelector('canvas')!;
 
@@ -277,7 +277,7 @@ describe('acessibilidade do grafo', () => {
   });
 
   it('o rótulo anuncia as teclas e a alternativa em texto', () => {
-    const { container } = render(<TelaDoGrafo grafo={GRAFO} />);
+    const { container } = render(<TelaDoGrafoComponent grafo={GRAFO} />);
 
     const rotulo = container.querySelector('canvas')!.getAttribute('aria-label')!;
 
@@ -287,7 +287,7 @@ describe('acessibilidade do grafo', () => {
 
   it('não sequestra Tab', async () => {
     const usuario = userEvent.setup();
-    const { container } = render(<TelaDoGrafo grafo={GRAFO} />);
+    const { container } = render(<TelaDoGrafoComponent grafo={GRAFO} />);
 
     const canvas = container.querySelector('canvas')!;
     canvas.focus();
@@ -298,7 +298,7 @@ describe('acessibilidade do grafo', () => {
 
   it('a lista em texto traz quem vota junto com quem', async () => {
     const usuario = userEvent.setup();
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
 
     await usuario.click(screen.getByText(/ver o grafo como lista/i));
 
@@ -311,7 +311,7 @@ describe('acessibilidade do grafo', () => {
     const usuario = userEvent.setup();
     const isolado: Grafo = { ...GRAFO, nos: [...GRAFO.nos, no(9, 'Dora Lima')] };
 
-    render(<TelaDoGrafo grafo={isolado} />);
+    render(<TelaDoGrafoComponent grafo={isolado} />);
     await usuario.click(screen.getByText(/ver o grafo como lista/i));
 
     expect(screen.getByText(/precisa de ao menos 20 votações em comum/i)).toBeInTheDocument();
@@ -319,7 +319,7 @@ describe('acessibilidade do grafo', () => {
 
   it('cada nome da lista é acionável', async () => {
     const usuario = userEvent.setup();
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
 
     await usuario.click(screen.getByText(/ver o grafo como lista/i));
 
@@ -339,7 +339,7 @@ describe('acessibilidade do grafo', () => {
 describe('os dois números de "votações" não podem usar a mesma palavra', () => {
   it('a lista qualifica o número como "comparáveis"', async () => {
     const usuario = userEvent.setup();
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
 
     await usuario.click(screen.getByText(/ver o grafo como lista/i));
 
@@ -360,7 +360,7 @@ describe('a roda num grafo embutido', () => {
   }
 
   it('sem Ctrl, rola a página e avisa como aproximar', async () => {
-    render(<TelaDoGrafo grafo={GRAFO} embutido />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} embutido />);
     const canvas = screen.getByRole('img');
 
     expect(rodar(canvas, false)).toBe(false);
@@ -368,13 +368,13 @@ describe('a roda num grafo embutido', () => {
   });
 
   it('com Ctrl, aproxima — e não deixa a página rolar junto', () => {
-    render(<TelaDoGrafo grafo={GRAFO} embutido />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} embutido />);
 
     expect(rodar(screen.getByRole('img'), true)).toBe(true);
   });
 
   it('fora da página que rola — a aba do grafo —, a roda aproxima sem Ctrl', () => {
-    render(<TelaDoGrafo grafo={GRAFO} />);
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
 
     expect(rodar(screen.getByRole('img'), false)).toBe(true);
     expect(screen.queryByText(/Ctrl \+ roda/)).toBeNull();

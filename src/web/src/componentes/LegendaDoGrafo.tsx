@@ -16,7 +16,7 @@
  *    e nada além disso.
  * 3. A borda não **não** é extremismo, é ausência de dado (achado #27).
  */
-export function LegendaDoGrafo() {
+export function LegendaDoGrafoComponent() {
   return (
     <p className="legenda-grafo" data-tour="grafo-legenda">
       <strong>A posição não indica orientação política</strong>: quem vota junto se

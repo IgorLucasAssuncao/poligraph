@@ -8,7 +8,7 @@ import { ABAS_DO_DINHEIRO } from '../navegacao';
  * intenções de quem usa — parlamentares, comparar o voto, dinheiro público. Cada aba é um
  * endereço próprio, então o link compartilhado e o "voltar" do navegador continuam valendo.
  */
-export function AbasDoDinheiro() {
+export function AbasDoDinheiroComponent() {
   return (
     <nav className="abas-do-dinheiro" aria-label="Dinheiro público">
       {ABAS_DO_DINHEIRO.map((aba) => (

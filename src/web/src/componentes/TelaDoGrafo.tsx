@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 import type { ArestaDoGrafo, Grafo, NoDoGrafo } from '../api';
-import { ListaDoGrafo } from './ListaDoGrafo';
+import { ListaDoGrafoComponent } from './ListaDoGrafo';
 import {
   aproximar,
   comEscala,
@@ -231,7 +231,7 @@ type Alvo = { tipo: 'no'; no: NoDoGrafo } | { tipo: 'aresta'; aresta: ArestaDoGr
  * vendo a mesma nuvem de 643 pontos não resolve nada — a busca precisa entregar a
  * pessoa, não a coordenada dela. É também a escala em que o rosto aparece.
  */
-export function TelaDoGrafo({
+export function TelaDoGrafoComponent({
   grafo,
   cidadao,
   aoSelecionar,
@@ -596,7 +596,7 @@ export function TelaDoGrafo({
           }
         />
 
-        {alvo && <Dica alvo={alvo} porId={porId} tamanho={tamanho} camera={camera} />}
+        {alvo && <DicaComponent alvo={alvo} porId={porId} tamanho={tamanho} camera={camera} />}
 
         <div className="grafo-zoom" data-tour="grafo-zoom">
           <button
@@ -638,7 +638,7 @@ export function TelaDoGrafo({
         )}
 
         <div className="grafo-ferramentas">
-          <Busca
+          <BuscaComponent
             valor={busca}
             aoDigitar={setBusca}
             achados={achados}
@@ -654,7 +654,7 @@ export function TelaDoGrafo({
               title="Ajustes do desenho"
               onClick={() => setAjustesAbertos((aberto) => !aberto)}
             >
-              <IconeEngrenagem />
+              <IconeEngrenagemComponent />
             </button>
 
             {ajustesAbertos && (
@@ -784,7 +784,7 @@ export function TelaDoGrafo({
         )}
       </div>
 
-      <ListaDoGrafo nos={noDesenho} arestas={visiveis} aoSelecionar={irPara} />
+      <ListaDoGrafoComponent nos={noDesenho} arestas={visiveis} aoSelecionar={irPara} />
     </div>
   );
 
@@ -880,7 +880,7 @@ export function TelaDoGrafo({
  * ATENÇÃO: Só avisa quando houve busca de verdade: dizer "nada encontrado" com uma
  * letra digitada é ruído, não informação.
  */
-function Busca({
+function BuscaComponent({
   valor,
   aoDigitar,
   achados,
@@ -908,14 +908,14 @@ function Busca({
         title="Procurar parlamentar"
         onClick={() => setAberta(true)}
       >
-        <IconeLupa />
+        <IconeLupaComponent />
       </button>
     );
   }
 
   return (
     <div className="grafo-busca" data-tour="grafo-busca">
-      <IconeLupa />
+      <IconeLupaComponent />
       <input
         ref={campo}
         type="search"
@@ -974,7 +974,7 @@ function Busca({
  * ATENÇÃO: Desenhados à mão em vez de emoji: 🔍 e ⚙️ mudam de forma e de cor conforme o
  * sistema, e num canto de 2rem sobre o desenho isso vira ruído.
  */
-function IconeLupa() {
+function IconeLupaComponent() {
   return (
     <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false">
       <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
@@ -983,7 +983,7 @@ function IconeLupa() {
   );
 }
 
-function IconeEngrenagem() {
+function IconeEngrenagemComponent() {
   return (
     <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false">
       <circle cx="10" cy="10" r="3" fill="none" stroke="currentColor" strokeWidth="1.8" />
@@ -1014,7 +1014,7 @@ function IconeEngrenagem() {
  * DECISÃO: "comparável" é o vocabulário que a afinidade já usa ("perguntas
  * comparáveis") e que a dica da aresta já segue.
  */
-function Dica({
+function DicaComponent({
   alvo,
   porId,
   tamanho,

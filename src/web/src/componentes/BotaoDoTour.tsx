@@ -8,7 +8,7 @@ import { useTour, type TourDaTela } from './contextoDoTour';
  * tem tour enquanto o botão dele está montado. `passos` precisa vir memorizado, senão
  * cada desenho da tela anunciaria de novo.
  */
-export function BotaoDoTour({ nome, passos }: TourDaTela) {
+export function BotaoDoTourComponent({ nome, passos }: TourDaTela) {
   const { iniciar, registrar } = useTour();
 
   useEffect(() => registrar({ nome, passos }), [registrar, nome, passos]);

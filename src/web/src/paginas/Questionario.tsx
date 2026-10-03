@@ -8,12 +8,12 @@ import {
   type Resposta,
   type ResultadoAfinidade,
 } from '../api';
-import { Painel } from '../componentes/Painel';
-import { Resultado } from '../componentes/Resultado';
-import { BotaoDoTour } from '../componentes/BotaoDoTour';
+import { PainelComponent } from '../componentes/Painel';
+import { ResultadoComponent } from '../componentes/Resultado';
+import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
 import { passosDoQuestionario } from '../tour';
 import { comTransicao } from '../transicao';
-import { EsqueletoDeTexto } from '../componentes/Esqueleto';
+import { EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
 
 const OPCOES: [Resposta, string][] = [
   [1, 'Concordo'],
@@ -75,7 +75,7 @@ const PASSOS_DO_QUESTIONARIO = passosDoQuestionario();
  *
  * DECISÃO: 422 não é erro de sistema: é o cidadão não ter respondido o suficiente
  */
-export function Questionario() {
+export function QuestionarioComponent() {
   const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
   const [total, setTotal] = useState(0);
   const [indice, setIndice] = useState(0);
@@ -123,7 +123,7 @@ export function Questionario() {
 
   if (resultado) {
     return (
-      <Resultado
+      <ResultadoComponent
         resultado={resultado}
         aoRefazer={recomecar}
         perguntas={perguntas}
@@ -135,7 +135,7 @@ export function Questionario() {
   if (perguntas.length === 0) {
     return (
       <>
-        {erro ? <p className="erro">{erro}</p> : <EsqueletoDeTexto rotulo="Carregando as perguntas" paragrafos={1} />}
+        {erro ? <p className="erro">{erro}</p> : <EsqueletoDeTextoComponent rotulo="Carregando as perguntas" paragrafos={1} />}
       </>
     );
   }
@@ -159,13 +159,13 @@ export function Questionario() {
             : `Pergunta ${indice + 1} de ${previstas}`}
         </p>
 
-        <BotaoDoTour nome="questionario" passos={PASSOS_DO_QUESTIONARIO} />
+        <BotaoDoTourComponent nome="questionario" passos={PASSOS_DO_QUESTIONARIO} />
       </div>
 
       {acabou && aguardandoDesempate ? (
         <p className="carregando">Escolhendo as próximas perguntas…</p>
       ) : acabou ? (
-        <Encerramento
+        <EncerramentoComponent
           opinadas={opinadas}
           total={perguntas.length}
           enviando={enviando}
@@ -174,7 +174,7 @@ export function Questionario() {
           aoRever={() => comTransicao(() => setIndice(0))}
         />
       ) : (
-        <CartaoDePergunta
+        <CartaoDePerguntaComponent
           key={atual.id}
           pergunta={atual}
           escolhida={respostas[atual.id]}
@@ -233,7 +233,7 @@ export function Questionario() {
  * ATENÇÃO: Sem placar registrado, calar. "0 deputados se posicionaram" seria falso:
  * o que falta é o dado, não o comparecimento.
  */
-function CartaoDePergunta({
+function CartaoDePerguntaComponent({
   pergunta,
   escolhida,
   revelando,
@@ -267,7 +267,7 @@ function CartaoDePergunta({
 
       <div className={`retorno ${revelando ? 'visivel' : ''}`} aria-live="polite">
         {revelando && pergunta.totalVotos > 0 && (
-          <Painel posicionados={pergunta.totalVotos} total={pergunta.totalPossivel} />
+          <PainelComponent posicionados={pergunta.totalVotos} total={pergunta.totalPossivel} />
         )}
         {revelando && pergunta.totalVotos === 0 && <p>Resposta registrada.</p>}
       </div>
@@ -281,7 +281,7 @@ function CartaoDePergunta({
   );
 }
 
-function Encerramento({
+function EncerramentoComponent({
   opinadas,
   total,
   enviando,

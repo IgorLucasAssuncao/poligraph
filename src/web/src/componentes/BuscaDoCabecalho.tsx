@@ -13,7 +13,7 @@ import { nomeProprio, periodoDaLegislatura } from '../formato';
  * opção ativa (ou a primeira) e Esc fecha. O leitor de tela anuncia a opção pelo
  * `aria-activedescendant`.
  */
-export function BuscaDoCabecalho() {
+export function BuscaDoCabecalhoComponent() {
   const [termo, setTermo] = useState('');
   const [resposta, setResposta] = useState<Busca | null>(null);
   const [aberta, setAberta] = useState(false);

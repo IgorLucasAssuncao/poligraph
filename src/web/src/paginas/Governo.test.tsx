@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AreaDaDespesa, Governo as DadosDoGoverno } from '../api';
-import { Governo } from './Governo';
+import { GovernoComponent } from './Governo';
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -87,7 +87,7 @@ const DE_2025: DadosDoGoverno = {
 function renderizar() {
   return render(
     <MemoryRouter>
-      <Governo />
+      <GovernoComponent />
     </MemoryRouter>,
   );
 }

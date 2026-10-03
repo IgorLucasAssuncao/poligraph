@@ -4,7 +4,7 @@
  * DECISÃO: Diz quantos vêm e quantos faltam: um "ver mais" sem número esconde se falta um
  * item ou quinhentos.
  */
-export function BotaoMostrarMais({
+export function BotaoMostrarMaisComponent({
   proximos,
   restantes,
   carregando,

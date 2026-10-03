@@ -12,7 +12,7 @@ import type { RedeSocial, TipoRedeSocial } from '../api';
  * ATENÇÃO: `nofollow` além de `noopener noreferrer`: o site não recomenda perfil nenhum aos buscadores
  * (RNF-16).
  */
-export function RedesDoParlamentar({ redes }: { redes: RedeSocial[] }) {
+export function RedesDoParlamentarComponent({ redes }: { redes: RedeSocial[] }) {
   const seguras = redes.filter((r) => /^https?:\/\//i.test(r.url));
   if (seguras.length === 0) return null;
 

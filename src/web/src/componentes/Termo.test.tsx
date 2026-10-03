@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { Termo } from './Termo';
+import { TermoComponent } from './Termo';
 
 /**
  * O balão sai da caixa onde o termo está: a faixa de números da ficha tem `overflow: hidden`
@@ -11,7 +11,7 @@ describe('o balão do termo', () => {
   it('abre fora da caixa que contém o termo', async () => {
     render(
       <div data-testid="caixa" style={{ overflow: 'hidden' }}>
-        <Termo nome="orientacao" />
+        <TermoComponent nome="orientacao" />
       </div>,
     );
 
@@ -23,7 +23,7 @@ describe('o balão do termo', () => {
   });
 
   it('fecha com Esc e com clique fora, mas não com clique no próprio balão', async () => {
-    render(<Termo nome="orientacao" />);
+    render(<TermoComponent nome="orientacao" />);
     await userEvent.click(screen.getByRole('button'));
 
     await userEvent.click(screen.getByRole('tooltip'));

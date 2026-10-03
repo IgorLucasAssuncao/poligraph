@@ -11,7 +11,7 @@ import type { EscolhaDeLegislatura } from './useLegislatura';
  * DECISÃO: `<select>` e não botões: são até sete legislaturas, e sete botões tomariam a linha
  * dos outros filtros.
  */
-export function SeletorDeLegislatura({
+export function SeletorDeLegislaturaComponent({
   opcoes,
   atual,
   aoTrocar,

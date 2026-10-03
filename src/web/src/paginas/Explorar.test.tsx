@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Explorar } from './Explorar';
+import { ExplorarComponent } from './Explorar';
 import type { PaginaDeParlamentares, Parlamentar } from '../api';
 
 vi.mock('../sessao', () => ({
@@ -69,7 +69,7 @@ describe('Explorar mistura as casas e precisa dizer qual é qual', () => {
   function renderizar() {
     return render(
       <MemoryRouter>
-        <Explorar />
+        <ExplorarComponent />
       </MemoryRouter>,
     );
   }
@@ -109,7 +109,7 @@ describe('Explorar em páginas', () => {
 
     render(
       <MemoryRouter>
-        <Explorar />
+        <ExplorarComponent />
       </MemoryRouter>,
     );
 
@@ -128,7 +128,7 @@ describe('Explorar em páginas', () => {
 
     render(
       <MemoryRouter>
-        <Explorar />
+        <ExplorarComponent />
       </MemoryRouter>,
     );
 
@@ -159,7 +159,7 @@ describe('quem já saiu', () => {
   function renderizar() {
     return render(
       <MemoryRouter>
-        <Explorar />
+        <ExplorarComponent />
       </MemoryRouter>,
     );
   }
@@ -174,7 +174,7 @@ describe('quem já saiu', () => {
   function renderizarEm(endereco: string) {
     return render(
       <MemoryRouter initialEntries={[endereco]}>
-        <Explorar />
+        <ExplorarComponent />
       </MemoryRouter>,
     );
   }

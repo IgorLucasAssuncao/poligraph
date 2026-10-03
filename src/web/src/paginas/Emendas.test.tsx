@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EmendasDoMunicipio, MapaDoBrasil, MapaDoEstado } from '../api';
 import { faixaDe, faixasPorQuantil } from '../mapa';
-import { Emendas } from './Emendas';
+import { EmendasComponent } from './Emendas';
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -101,7 +101,7 @@ const MALHA = {
 function renderizar(endereco = '/emendas') {
   return render(
     <MemoryRouter initialEntries={[endereco]}>
-      <Emendas />
+      <EmendasComponent />
     </MemoryRouter>,
   );
 }

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { BotaoGoogle } from './BotaoGoogle';
+import { BotaoGoogleComponent } from './BotaoGoogle';
 
 /**
  * Cenário de quem clona o repositório e roda sem configurar nada.
@@ -23,19 +23,19 @@ describe('BotaoGoogle sem Client ID configurado', () => {
   afterEach(() => vi.unstubAllEnvs());
 
   it('não quebra a aplicação', () => {
-    render(<BotaoGoogle aoEntrar={vi.fn()} />);
+    render(<BotaoGoogleComponent aoEntrar={vi.fn()} />);
 
     expect(screen.getByText(/login indisponível/i)).toBeDefined();
   });
 
   it('não carrega o script do Google', () => {
-    render(<BotaoGoogle aoEntrar={vi.fn()} />);
+    render(<BotaoGoogleComponent aoEntrar={vi.fn()} />);
 
     expect(document.getElementById('google-gsi')).toBeNull();
   });
 
   it('explica o que falta e que sem isso não há acesso', () => {
-    const { container } = render(<BotaoGoogle aoEntrar={vi.fn()} />);
+    const { container } = render(<BotaoGoogleComponent aoEntrar={vi.fn()} />);
 
     expect(container.textContent).toMatch(/VITE_GOOGLE_CLIENT_ID/);
     expect(container.textContent).toMatch(/exige conta/i);

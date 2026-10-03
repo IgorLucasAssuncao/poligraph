@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConsentimentoNecessarioError, seguir } from '../api';
-import { BotaoSeguir } from './BotaoSeguir';
+import { BotaoSeguirComponent } from './BotaoSeguir';
 
 vi.mock('../sessao', () => ({ useSessao: () => ({ usuario: { nome: 'Ana' } }) }));
 vi.mock('../api', async (original) => ({
@@ -22,7 +22,7 @@ function Montado() {
   });
   render(
     <MemoryRouter>
-      <BotaoSeguir pessoaId={7} seguindo={false} aoAlternar={aoAlternar} />
+      <BotaoSeguirComponent pessoaId={7} seguindo={false} aoAlternar={aoAlternar} />
     </MemoryRouter>,
   );
   return aoAlternar;

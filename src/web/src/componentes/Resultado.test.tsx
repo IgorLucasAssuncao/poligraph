@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import { Resultado } from './Resultado';
+import { ResultadoComponent } from './Resultado';
 import type { Pergunta, ResultadoAfinidade } from '../api';
 
 /** Sem conta: o resultado funciona igual, e só a avaliação some (ela exige conta no servidor). */
@@ -48,7 +48,7 @@ const RESULTADO: ResultadoAfinidade = {
 function renderizar() {
   return render(
     <MemoryRouter>
-      <Resultado resultado={RESULTADO} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
+      <ResultadoComponent resultado={RESULTADO} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
     </MemoryRouter>,
   );
 }
@@ -116,7 +116,7 @@ describe('Resultado', () => {
 
     const { container } = render(
       <MemoryRouter>
-        <Resultado resultado={comAusencia} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
+        <ResultadoComponent resultado={comAusencia} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
       </MemoryRouter>,
     );
 
@@ -190,7 +190,7 @@ describe('resultado com as duas casas', () => {
   function renderizarDuasCasas() {
     return render(
       <MemoryRouter>
-        <Resultado resultado={DUAS_CASAS} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
+        <ResultadoComponent resultado={DUAS_CASAS} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
       </MemoryRouter>,
     );
   }
@@ -234,7 +234,7 @@ describe('resultado com as duas casas', () => {
 
     const { container } = render(
       <MemoryRouter>
-        <Resultado resultado={semSenado} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
+        <ResultadoComponent resultado={semSenado} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
       </MemoryRouter>,
     );
 
@@ -260,7 +260,7 @@ describe('o recorte por estado', () => {
     const aoEscolherUf = vi.fn().mockResolvedValue(undefined);
     render(
       <MemoryRouter>
-        <Resultado resultado={RESULTADO} aoRefazer={vi.fn()} perguntas={PERGUNTAS} aoEscolherUf={aoEscolherUf} />
+        <ResultadoComponent resultado={RESULTADO} aoRefazer={vi.fn()} perguntas={PERGUNTAS} aoEscolherUf={aoEscolherUf} />
       </MemoryRouter>,
     );
 
@@ -273,7 +273,7 @@ describe('o recorte por estado', () => {
   it('com estado escolhido, diz a casa que ficou sem ninguém dele', () => {
     render(
       <MemoryRouter>
-        <Resultado resultado={{ ...RESULTADO, uf: 'AC' }} aoRefazer={vi.fn()} perguntas={PERGUNTAS} aoEscolherUf={vi.fn()} />
+        <ResultadoComponent resultado={{ ...RESULTADO, uf: 'AC' }} aoRefazer={vi.fn()} perguntas={PERGUNTAS} aoEscolherUf={vi.fn()} />
       </MemoryRouter>,
     );
 
@@ -291,7 +291,7 @@ describe('a base de cada linha', () => {
     };
     render(
       <MemoryRouter>
-        <Resultado resultado={menor} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
+        <ResultadoComponent resultado={menor} aoRefazer={vi.fn()} perguntas={PERGUNTAS} />
       </MemoryRouter>,
     );
 

@@ -20,7 +20,7 @@ const Contexto = createContext<Sessao | null>(null);
  * está logada — isso seria mentira contável, já que o cookie pode ter expirado ou a
  * sessão ter sido revogada em outro aparelho.
  */
-export function ProvedorDeSessao({ children }: { children: React.ReactNode }) {
+export function ProvedorDeSessaoComponent({ children }: { children: React.ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [leituraPublica, setLeituraPublica] = useState(false);
   const [carregando, setCarregando] = useState(true);

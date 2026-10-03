@@ -7,14 +7,14 @@ import {
   type Grafo as DadosDoGrafo,
   type NoDoGrafo,
 } from '../api';
-import { BotaoDoTour } from '../componentes/BotaoDoTour';
-import { GrafoAmpliado } from '../componentes/GrafoAmpliado';
-import { LegendaDoGrafo } from '../componentes/LegendaDoGrafo';
-import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
-import { Termo } from '../componentes/Termo';
+import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
+import { GrafoAmpliadoComponent } from '../componentes/GrafoAmpliado';
+import { LegendaDoGrafoComponent } from '../componentes/LegendaDoGrafo';
+import { TelaDoGrafoComponent } from '../componentes/TelaDoGrafo';
+import { TermoComponent } from '../componentes/Termo';
 import { mesCurto, periodoDaLegislatura } from '../formato';
 import { passosDoGrafo } from '../tour';
-import { Bloco, Esqueleto } from '../componentes/Esqueleto';
+import { BlocoComponent, EsqueletoComponent } from '../componentes/Esqueleto';
 import { useLegislaturaDaUrl } from '../componentes/useLegislatura';
 
 type Grupo = { comunidade: number; quantos: number; partidos: string[] };
@@ -72,7 +72,7 @@ const LACUNAS_DO_ACERVO: Record<string, string> = {
  *
  * DECISÃO: A ficha abre no mandato do grafo: no de 2019, o deputado de 2019.
  */
-export function Grafo() {
+export function GrafoComponent() {
   const navegar = useNavigate();
   const [casa, setCasa] = useState<Casa>('CAMARA');
   const [escolha, setLegislatura] = useLegislaturaDaUrl();
@@ -117,7 +117,7 @@ export function Grafo() {
   return (
     <>
       <div className="grafo-barra">
-        <SeletorDeCasa casa={casa} aoTrocar={trocarDeCasa} />
+        <SeletorDeCasaComponent casa={casa} aoTrocar={trocarDeCasa} />
 
         {grafo && grafo.nos.length > 0 && (
           <p className="grafo-contagem">
@@ -125,14 +125,14 @@ export function Grafo() {
           </p>
         )}
 
-        {passos && <BotaoDoTour nome="grafo" passos={passos} />}
+        {passos && <BotaoDoTourComponent nome="grafo" passos={passos} />}
       </div>
 
       {erro && <p className="erro">{erro}</p>}
       {!erro && !grafo && (
-        <Esqueleto rotulo="Carregando o grafo">
-          <Bloco altura={520} />
-        </Esqueleto>
+        <EsqueletoComponent rotulo="Carregando o grafo">
+          <BlocoComponent altura={520} />
+        </EsqueletoComponent>
       )}
 
       {!erro && grafo && grafo.nos.length === 0 && (
@@ -162,16 +162,16 @@ export function Grafo() {
 
       {!erro && grafo && grafo.nos.length > 0 && (
         <>
-          <DestaqueDoGrafo grafo={grafo} destaque={destaque} aoTrocar={setDestaque} />
+          <DestaqueDoGrafoComponent grafo={grafo} destaque={destaque} aoTrocar={setDestaque} />
 
-          <TelaDoGrafo
+          <TelaDoGrafoComponent
             grafo={grafo}
             aoSelecionar={abrirPerfil}
             aoAmpliar={() => setAmpliado(true)}
             destaque={destaque}
           />
 
-          <GrafoAmpliado
+          <GrafoAmpliadoComponent
             grafo={grafo}
             aberto={ampliado}
             aoFechar={() => setAmpliado(false)}
@@ -179,13 +179,13 @@ export function Grafo() {
             titulo={`Quem vota com quem · ${NOME_DA_CASA[casa].nome}`}
           />
 
-          <LegendaDoGrafo />
+          <LegendaDoGrafoComponent />
 
           <section className="grafo-explicacao">
             <h2>De onde vem</h2>
             <p>
-              Só entram votações de <Termo nome="plenario" /> da{' '}
-              <Termo nome="legislatura">{grafo.legislatura}ª legislatura</Termo>, de{' '}
+              Só entram votações de <TermoComponent nome="plenario" /> da{' '}
+              <TermoComponent nome="legislatura">{grafo.legislatura}ª legislatura</TermoComponent>, de{' '}
               {periodoDaLegislatura(grafo.legislatura)}
               {grafo.abertasDesde && grafo.abertasAte && (
                 <>
@@ -217,8 +217,8 @@ export function Grafo() {
           <section className="grafo-grupos" data-tour="grafo-grupos">
             <h2>Os grupos</h2>
             <p className="ajuda ajuda-espacada">
-              Cada <Termo nome="comunidade" /> é formado pelo <strong>voto</strong>, não
-              pelo <Termo nome="partido" />, e é por isso que um mesmo partido aparece em
+              Cada <TermoComponent nome="comunidade" /> é formado pelo <strong>voto</strong>, não
+              pelo <TermoComponent nome="partido" />, e é por isso que um mesmo partido aparece em
               vários.
             </p>
 
@@ -253,7 +253,7 @@ export function Grafo() {
   }
 }
 
-function SeletorDeCasa({ casa, aoTrocar }: { casa: Casa; aoTrocar: (nova: Casa) => void }) {
+function SeletorDeCasaComponent({ casa, aoTrocar }: { casa: Casa; aoTrocar: (nova: Casa) => void }) {
   return (
     <div className="grafo-casas" data-tour="grafo-casas" role="group" aria-label="Casa legislativa">
       {CASAS.map((opcao) => (
@@ -317,7 +317,7 @@ function partidosMaisComuns(membros: NoDoGrafo[]): string[] {
  * nuvem sem os outros perderia a forma que dá sentido à posição. A cor continua a da
  * comunidade: destacar um partido não pinta o partido (RNF-16).
  */
-function DestaqueDoGrafo({
+function DestaqueDoGrafoComponent({
   grafo,
   destaque,
   aoTrocar,

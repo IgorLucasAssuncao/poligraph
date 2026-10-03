@@ -14,27 +14,27 @@ import {
   type Municipio,
   type Periodo,
 } from '../api';
-import { AbasDoDinheiro } from '../componentes/AbasDoDinheiro';
-import { Coletivos, LinhaDoParlamentar } from '../componentes/AutoresDaEmenda';
-import { BotaoBaixarCsv } from '../componentes/BotaoBaixarCsv';
-import { BotaoDoTour } from '../componentes/BotaoDoTour';
-import { BotaoMostrarMais } from '../componentes/BotaoMostrarMais';
-import { CabecalhoDaColuna } from '../componentes/Layout';
-import { LinkDeFonte } from '../componentes/LinkDeFonte';
-import { MapaCoropletico } from '../componentes/MapaCoropletico';
-import { SeletorDePeriodo } from '../componentes/SeletorDePeriodo';
-import { Termo } from '../componentes/Termo';
+import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
+import { ColetivosComponent, LinhaDoParlamentarComponent } from '../componentes/AutoresDaEmenda';
+import { BotaoBaixarCsvComponent } from '../componentes/BotaoBaixarCsv';
+import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
+import { BotaoMostrarMaisComponent } from '../componentes/BotaoMostrarMais';
+import { CabecalhoDaColunaComponent } from '../componentes/Layout';
+import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
+import { MapaCoropleticoComponent } from '../componentes/MapaCoropletico';
+import { SeletorDePeriodoComponent } from '../componentes/SeletorDePeriodo';
+import { TermoComponent } from '../componentes/Termo';
 import { usePaginas } from '../componentes/usePaginas';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { FONTES } from '../fontes';
 import { minusculas, nomeProprio, reais, reaisCompacto } from '../formato';
 import { areaQueContem } from '../mapa';
 import { passosDasEmendas } from '../tour';
-import { Bloco, Esqueleto, EsqueletoDePainel, EsqueletoDeTexto } from '../componentes/Esqueleto';
+import { BlocoComponent, EsqueletoComponent, EsqueletoDePainelComponent, EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
 import { UFS } from '../ufs';
-import { ConfereComOPortal } from '../componentes/ConfereComOPortal';
-import { ComProcedencia } from '../componentes/ModoAnalise';
-import { Numero, Opcoes } from '../componentes/Dados';
+import { ConfereComOPortalComponent } from '../componentes/ConfereComOPortal';
+import { ComProcedenciaComponent } from '../componentes/ModoAnalise';
+import { NumeroComponent, OpcoesComponent } from '../componentes/Dados';
 
 /**
  * Para onde foi o dinheiro de emenda, no mapa — e quem o mandou para a sua cidade.
@@ -74,7 +74,7 @@ import { Numero, Opcoes } from '../componentes/Dados';
  * ATENÇÃO: Mesmo nome da aba: ela dizia "Sua cidade" e a página abria como "Emendas no
  * mapa", e quem clicava não sabia se tinha chegado aonde queria (2026-10-01).
  */
-export function Emendas() {
+export function EmendasComponent() {
   const [parametros, setParametros] = useSearchParams();
   const de = parametros.get('de');
   const ate = parametros.get('ate');
@@ -112,7 +112,7 @@ export function Emendas() {
 
   const [escolheuAgora, setEscolheuAgora] = useState(false);
   const painel = cidade ? (
-    <PainelDaCidade
+    <PainelDaCidadeComponent
       key={`${cidade}-${chaveDoPeriodo}`}
       codigoIbge={cidade}
       periodo={periodo}
@@ -124,14 +124,14 @@ export function Emendas() {
 
   return (
     <>
-      <AbasDoDinheiro />
-      <CabecalhoDaColuna
+      <AbasDoDinheiroComponent />
+      <CabecalhoDaColunaComponent
         titulo="Emendas por cidade"
         subtitulo="Para onde foi o dinheiro de emenda parlamentar"
-        acao={<BotaoDoTour nome="emendas" passos={passos} />}
+        acao={<BotaoDoTourComponent nome="emendas" passos={passos} />}
       />
 
-      <SuaCidade
+      <SuaCidadeComponent
         aoEscolher={(m) => {
           setEscolheuAgora(true);
           guardarMinhaCidade(m);
@@ -140,7 +140,7 @@ export function Emendas() {
       />
 
       {erro && <p className="erro">Não foi possível carregar o mapa das emendas agora.</p>}
-      {!erro && !brasil && <EsqueletoDePainel rotulo="Carregando o mapa das emendas" alturaDoGrafico={420} />}
+      {!erro && !brasil && <EsqueletoDePainelComponent rotulo="Carregando o mapa das emendas" alturaDoGrafico={420} />}
 
       {brasil && brasil.anosDisponiveis.length === 0 && (
         <p className="vazio">
@@ -150,7 +150,7 @@ export function Emendas() {
 
       {brasil && brasil.anosDisponiveis.length > 0 && (
         <>
-          <SeletorDePeriodo
+          <SeletorDePeriodoComponent
             anos={brasil.anosDisponiveis}
             periodo={brasil.periodo}
             rotulo="Período das emendas"
@@ -160,14 +160,14 @@ export function Emendas() {
             }
           >
             Emendas de <strong>{textoDoPeriodo(brasil.periodo)}</strong>, pagas até hoje. A cidade é a{' '}
-            <Termo nome="sedeDoFavorecido" />.
-          </SeletorDePeriodo>
+            <TermoComponent nome="sedeDoFavorecido" />.
+          </SeletorDePeriodoComponent>
 
-          <ForaDoMapa brasil={brasil} />
-          <ConfereComOPortal periodo={brasil.periodo} />
+          <ForaDoMapaComponent brasil={brasil} />
+          <ConfereComOPortalComponent periodo={brasil.periodo} />
 
           {uf ? (
-            <MapaDaUf
+            <MapaDaUfComponent
               key={`${uf}-${chaveDoPeriodo}`}
               uf={uf}
               periodo={periodo}
@@ -179,18 +179,18 @@ export function Emendas() {
               }}
             >
               {painel}
-            </MapaDaUf>
+            </MapaDaUfComponent>
           ) : (
             <>
-              <MapaDoPais brasil={brasil} aoEscolher={(sigla) => mudar({ uf: sigla, cidade: null })} />
+              <MapaDoPaisComponent brasil={brasil} aoEscolher={(sigla) => mudar({ uf: sigla, cidade: null })} />
               {painel}
             </>
           )}
 
           <p className="fonte-dado">
-            Fontes: <LinkDeFonte href={FONTES.emendas.url}>{FONTES.emendas.nome}</LinkDeFonte>;{' '}
-            <LinkDeFonte href={FONTES.cnpj.url}>{FONTES.cnpj.nome}</LinkDeFonte>, para a sede;{' '}
-            <LinkDeFonte href={FONTES.malhas.url}>{FONTES.malhas.nome}</LinkDeFonte>.
+            Fontes: <LinkDeFonteComponent href={FONTES.emendas.url}>{FONTES.emendas.nome}</LinkDeFonteComponent>;{' '}
+            <LinkDeFonteComponent href={FONTES.cnpj.url}>{FONTES.cnpj.nome}</LinkDeFonteComponent>, para a sede;{' '}
+            <LinkDeFonteComponent href={FONTES.malhas.url}>{FONTES.malhas.nome}</LinkDeFonteComponent>.
           </p>
         </>
       )}
@@ -204,7 +204,7 @@ export function Emendas() {
  * ATENÇÃO: A definição diz o que o número É em português de todo dia. "Pelo Banco do Brasil ·
  * que só repassa" exigia saber que o banco é intermediário de pagamento (2026-10-01).
  */
-function ForaDoMapa({ brasil }: { brasil: MapaDoBrasil }) {
+function ForaDoMapaComponent({ brasil }: { brasil: MapaDoBrasil }) {
   const periodo = brasil.periodo;
   const numeros: [string, number, string][] = [
     ['Pago em emendas', brasil.recebido, 'das emendas do período, pago até hoje'],
@@ -216,18 +216,18 @@ function ForaDoMapa({ brasil }: { brasil: MapaDoBrasil }) {
   return (
     <section className="numeros-do-ano" aria-label="O dinheiro das emendas do período" data-tour="emendas-numeros">
       {numeros.map(([rotulo, valor, definicao]) => (
-        <Numero key={rotulo} rotulo={rotulo} definicao={definicao}>
+        <NumeroComponent key={rotulo} rotulo={rotulo} definicao={definicao}>
           {rotulo === 'Pago em emendas' ? (
-            <ComProcedencia
+            <ComProcedenciaComponent
               consulta={{ contexto: 'pagamentos', de: periodo.de, ate: periodo.ate }}
               rotulo={`Pago nas emendas de ${textoDoPeriodo(periodo)}`}
             >
               {reaisCompacto(valor)}
-            </ComProcedencia>
+            </ComProcedenciaComponent>
           ) : (
             reaisCompacto(valor)
           )}
-        </Numero>
+        </NumeroComponent>
       ))}
     </section>
   );
@@ -240,7 +240,7 @@ function ForaDoMapa({ brasil }: { brasil: MapaDoBrasil }) {
  * habitante (estimativa do IBGE, carga `populacao`) mostra onde a emenda pesa. O total continua
  * o padrão; a outra leitura só aparece com população para todos os estados.
  */
-function MapaDoPais({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoEscolher: (sigla: string) => void }) {
+function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoEscolher: (sigla: string) => void }) {
   const [porHabitante, setPorHabitante] = useState(false);
   const temPopulacao = brasil.porUf.length > 0 && brasil.porUf.every((u) => (u.populacao ?? 0) > 0);
   const habitante = porHabitante && temPopulacao;
@@ -258,7 +258,7 @@ function MapaDoPais({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoEscolher: 
       <h2>Por estado</h2>
       <p className="ajuda">Escolha um estado para ver as cidades.</p>
       {temPopulacao && (
-        <Opcoes
+        <OpcoesComponent
           rotulo="Leitura do mapa"
           opcoes={[
             { valor: false, rotulo: 'Total recebido' },
@@ -270,11 +270,11 @@ function MapaDoPais({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoEscolher: 
           {habitante && brasil.anoDaPopulacao && (
             <span className="ajuda">População estimada pelo IBGE para {brasil.anoDaPopulacao}.</span>
           )}
-        </Opcoes>
+        </OpcoesComponent>
       )}
 
       <div data-tour="emendas-mapa">
-        <MapaCoropletico
+        <MapaCoropleticoComponent
           malha="brasil"
           valores={valores}
           nomes={siglaPorCodigo}
@@ -316,7 +316,7 @@ function MapaDoPais({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoEscolher: 
         </table>
       </div>
 
-      <BotaoBaixarCsv
+      <BotaoBaixarCsvComponent
         rotulo="Baixar por estado (CSV)"
         montar={() =>
           baixarCsv(
@@ -336,7 +336,7 @@ const CIDADES_POR_VEZ = 15;
  * O estado: o contorno das cidades aparece já, e as cores quando o dado chega — a malha e
  * o dado são pedidos juntos, não um depois do outro.
  */
-function MapaDaUf({
+function MapaDaUfComponent({
   uf,
   periodo,
   cidade,
@@ -396,7 +396,7 @@ function MapaDaUf({
 
       {codigoUf && (
         <div data-tour="emendas-mapa">
-          <MapaCoropletico
+          <MapaCoropleticoComponent
             malha={codigoUf}
             valores={valores}
             nomes={nomes}
@@ -410,9 +410,9 @@ function MapaDaUf({
       {children}
 
       {!erro && !estado && (
-        <Esqueleto rotulo="Carregando as cidades">
-          <Bloco altura={360} />
-        </Esqueleto>
+        <EsqueletoComponent rotulo="Carregando as cidades">
+          <BlocoComponent altura={360} />
+        </EsqueletoComponent>
       )}
 
       {estado && (
@@ -433,7 +433,7 @@ function MapaDaUf({
             ))}
           </ol>
 
-          <BotaoMostrarMais
+          <BotaoMostrarMaisComponent
             proximos={Math.min(CIDADES_POR_VEZ, receberam.length - exibidas)}
             restantes={Math.max(0, receberam.length - exibidas)}
             carregando={false}
@@ -441,7 +441,7 @@ function MapaDaUf({
             aoClicar={() => setExibidas((n) => n + CIDADES_POR_VEZ)}
           />
 
-          <BotaoBaixarCsv
+          <BotaoBaixarCsvComponent
             rotulo={`Baixar as cidades de ${uf} (CSV)`}
             montar={() =>
               baixarCsv(
@@ -457,7 +457,7 @@ function MapaDaUf({
   );
 }
 
-function PainelDaCidade({
+function PainelDaCidadeComponent({
   codigoIbge,
   periodo,
   rolarAteAqui,
@@ -489,7 +489,7 @@ function PainelDaCidade({
   }, [codigoIbge, periodo]);
 
   if (erro) return <p className="erro">Não foi possível carregar essa cidade.</p>;
-  if (!dados) return <EsqueletoDeTexto rotulo="Carregando a cidade" />;
+  if (!dados) return <EsqueletoDeTextoComponent rotulo="Carregando a cidade" />;
 
   const nome = nomeProprio(dados.municipio.nome);
   const emEntidades = dados.recebido - dados.naPropriaCidade;
@@ -525,10 +525,10 @@ function PainelDaCidade({
             </li>
           </ul>
 
-          <QuemMandou dados={dados} periodo={periodo} />
-          <Coletivos coletivos={dados.coletivos} />
-          <ConveniosDaCidade dados={dados} periodo={periodo} />
-          <QuemRecebeu dados={dados} periodo={periodo} />
+          <QuemMandouComponent dados={dados} periodo={periodo} />
+          <ColetivosComponent coletivos={dados.coletivos} />
+          <ConveniosDaCidadeComponent dados={dados} periodo={periodo} />
+          <QuemRecebeuComponent dados={dados} periodo={periodo} />
         </>
       )}
     </section>
@@ -541,7 +541,7 @@ function PainelDaCidade({
  * DECISÃO: A pergunta do secretário municipal (rodada 2): "o convênio da UBS, quanto já foi
  * liberado?". "A liberar" soma só os em execução — nos outros a execução acabou.
  */
-function ConveniosDaCidade({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Periodo | undefined }) {
+function ConveniosDaCidadeComponent({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Periodo | undefined }) {
   const convenios = dados.convenios;
   const codigo = dados.municipio.codigoIbge;
   const lista = usePaginas(convenios.lista.itens, convenios.lista.total, convenios.lista.tamanho || POR_PAGINA, (pagina) =>
@@ -570,7 +570,7 @@ function ConveniosDaCidade({ dados, periodo }: { dados: EmendasDoMunicipio; peri
             <p className="convenio-objeto">{c.objeto ? minusculas(c.objeto) : 'Objeto não informado'}</p>
             <p className="convenio-detalhe">
               <Link to={`/entidades/${c.cnpj}`}>{nomeProprio(c.convenente)}</Link>
-              {c.situacao && <> · {minusculas(c.situacao)}</>} · <LinkDeFonte href={c.urlFonte}>convênio {c.numero}</LinkDeFonte>
+              {c.situacao && <> · {minusculas(c.situacao)}</>} · <LinkDeFonteComponent href={c.urlFonte}>convênio {c.numero}</LinkDeFonteComponent>
             </p>
             <p className="convenio-valores">
               <span>{reaisCompacto(c.valor)} combinados</span>
@@ -579,7 +579,7 @@ function ConveniosDaCidade({ dados, periodo }: { dados: EmendasDoMunicipio; peri
           </li>
         ))}
       </ul>
-      <BotaoMostrarMais
+      <BotaoMostrarMaisComponent
         proximos={lista.proximos}
         restantes={lista.restantes}
         carregando={lista.carregando}
@@ -592,7 +592,7 @@ function ConveniosDaCidade({ dados, periodo }: { dados: EmendasDoMunicipio; peri
 
 const POR_PAGINA = 10;
 
-function QuemMandou({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Periodo | undefined }) {
+function QuemMandouComponent({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Periodo | undefined }) {
   const codigo = dados.municipio.codigoIbge;
   const lista = usePaginas(dados.parlamentares.itens, dados.parlamentares.total, POR_PAGINA, (pagina) =>
     listarParlamentaresDoMunicipio(codigo, periodo, pagina),
@@ -605,16 +605,16 @@ function QuemMandou({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Pe
       <h3>Deputados e senadores que mandaram dinheiro</h3>
       <p className="ajuda">
         {dados.parlamentares.total} parlamentares, {reaisCompacto(dados.deParlamentares)} em{' '}
-        <Termo nome="emendaIndividual">emendas individuais</Termo>. O nome leva à página de cada um.
+        <TermoComponent nome="emendaIndividual">emendas individuais</TermoComponent>. O nome leva à página de cada um.
       </p>
 
       <ul className="lista-autores">
         {lista.itens.map((p) => (
-          <LinhaDoParlamentar key={p.pessoaId ?? p.nome} parlamentar={p} />
+          <LinhaDoParlamentarComponent key={p.pessoaId ?? p.nome} parlamentar={p} />
         ))}
       </ul>
 
-      <BotaoMostrarMais
+      <BotaoMostrarMaisComponent
         proximos={lista.proximos}
         restantes={lista.restantes}
         carregando={lista.carregando}
@@ -622,7 +622,7 @@ function QuemMandou({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Pe
         aoClicar={lista.carregarMais}
       />
 
-      <BotaoBaixarCsv
+      <BotaoBaixarCsvComponent
         rotulo="Baixar a lista (CSV)"
         montar={async () => {
           const todos = await buscarTodas((pagina) => listarParlamentaresDoMunicipio(codigo, periodo, pagina));
@@ -637,7 +637,7 @@ function QuemMandou({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Pe
   );
 }
 
-function QuemRecebeu({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Periodo | undefined }) {
+function QuemRecebeuComponent({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Periodo | undefined }) {
   const codigo = dados.municipio.codigoIbge;
   const lista = usePaginas(dados.favorecidos.itens, dados.favorecidos.total, POR_PAGINA, (pagina) =>
     listarFavorecidosDoMunicipio(codigo, periodo, pagina),
@@ -656,7 +656,7 @@ function QuemRecebeu({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: P
         ))}
       </ul>
 
-      <BotaoMostrarMais
+      <BotaoMostrarMaisComponent
         proximos={lista.proximos}
         restantes={lista.restantes}
         carregando={lista.carregando}
@@ -673,7 +673,7 @@ function QuemRecebeu({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: P
  * ATENÇÃO: A localização vira código IBGE DENTRO do navegador, contra a malha do próprio site:
  * latitude e longitude não saem da página.
  */
-function SuaCidade({ aoEscolher }: { aoEscolher: (m: Municipio) => void }) {
+function SuaCidadeComponent({ aoEscolher }: { aoEscolher: (m: Municipio) => void }) {
   const [busca, setBusca] = useState('');
   const [achados, setAchados] = useState<Municipio[]>([]);
   const [situacao, setSituacao] = useState<string | null>(null);

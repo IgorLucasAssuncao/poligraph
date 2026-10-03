@@ -1,6 +1,6 @@
 import { periodoDaLegislatura } from '../formato';
-import { SeletorDeLegislatura } from './SeletorDeLegislatura';
-import { Termo } from './Termo';
+import { SeletorDeLegislaturaComponent } from './SeletorDeLegislatura';
+import { TermoComponent } from './Termo';
 import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
 
 /**
@@ -21,7 +21,7 @@ import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
  * ATENÇÃO: Num período passado, o aviso é forte de propósito: a tela inteira está em 2015–2019,
  * e quem chegou por um link guardado precisa saber que não está vendo o presente.
  */
-export function BarraDePeriodo({ comTodas = false }: { comTodas?: boolean }) {
+export function BarraDePeriodoComponent({ comTodas = false }: { comTodas?: boolean }) {
   const [escolha, definir] = useLegislaturaDaUrl();
   const legislaturas = useLegislaturas();
 
@@ -35,9 +35,9 @@ export function BarraDePeriodo({ comTodas = false }: { comTodas?: boolean }) {
     <section className={`barra-periodo${passada ? ' barra-periodo-passada' : ''}`} aria-label="Período">
       <div className="barra-periodo-linha">
         <span className="barra-periodo-rotulo">
-          <Termo nome="legislatura">Legislatura</Termo>
+          <TermoComponent nome="legislatura">Legislatura</TermoComponent>
         </span>
-        <SeletorDeLegislatura
+        <SeletorDeLegislaturaComponent
           opcoes={legislaturas.map((l) => l.numero)}
           atual={atual}
           aoTrocar={definir}

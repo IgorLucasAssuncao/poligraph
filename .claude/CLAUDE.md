@@ -180,6 +180,15 @@ inflou a contagem em 8,8% — ver [`04-contratos`](../docs/04-contratos.md).
 | **Palavras reservadas no lugar dos marcadores** | `RISCO:` (era o vermelho) · `ATENÇÃO:` · `DECISÃO:` · `MEDIDO:` (número medido, com a data) · `FEITO:` |
 | Exceções | Diretivas de ferramenta (`eslint-disable…`, `@ts-expect-error`) ficam onde a ferramenta exige. Símbolos que aparecem para o usuário (✓, ✕) são interface, ⛔ comentário |
 
+### Front — componentes
+
+> **Decisão do autor (2026-10-03).**
+
+| Regra | Como |
+|---|---|
+| **Todo componente React termina em `Component`** | `BotaoSeguirComponent`, `LinhaDeValorComponent`, inclusive os internos de um arquivo. O nome do arquivo não muda |
+| **Reutilize antes de escrever HTML** | Padrão que aparece em mais de um lugar vira componente. Os de dado ficam em `componentes/Dados.tsx`: `LinhaDeValorComponent` (nome, barra e valor), `OpcoesComponent` (botões de escolha única), `NumeroComponent` (número em destaque) |
+
 Checagem de tipos do front: **`npx tsc -b`** (o mesmo do `npm run build`). ⚠️ `tsc -p .`
 ⛔ checa nada: o `tsconfig.json` da raiz tem `"files": []`.
 

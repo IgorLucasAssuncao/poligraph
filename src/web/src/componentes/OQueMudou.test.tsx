@@ -3,7 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { obterNovidades } from '../api';
 import type { Novidades } from '../api';
-import { OQueMudou } from './OQueMudou';
+import { OQueMudouComponent } from './OQueMudou';
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -24,7 +24,7 @@ function renderizar(novidades: Novidades) {
   vi.mocked(obterNovidades).mockResolvedValue(novidades);
   return render(
     <MemoryRouter>
-      <OQueMudou />
+      <OQueMudouComponent />
     </MemoryRouter>,
   );
 }

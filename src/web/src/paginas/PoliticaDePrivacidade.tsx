@@ -12,7 +12,7 @@ import { revogarConsentimento } from '../consentimento';
  * ATENÇÃO: O texto é rascunho técnico, não peça jurídica revisada. Precisa passar pelo
  * orientador antes de o site ir ao ar.
  */
-export function PoliticaDePrivacidade() {
+export function PoliticaDePrivacidadeComponent() {
   return (
     <article className="documento-legal">
       <div dangerouslySetInnerHTML={{ __html: paraHtml(POLITICA_DE_PRIVACIDADE) }} />

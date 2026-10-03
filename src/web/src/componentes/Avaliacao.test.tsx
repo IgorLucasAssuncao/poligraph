@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Avaliacao } from './Avaliacao';
+import { AvaliacaoComponent } from './Avaliacao';
 import type { ResultadoAfinidade } from '../api';
 
 vi.mock('../api', async () => {
@@ -55,7 +55,7 @@ afterEach(() => vi.useRealTimers());
 async function abrir() {
   const usuario = userEvent.setup();
 
-  render(<Avaliacao resultado={RESULTADO} esperaMs={0} />);
+  render(<AvaliacaoComponent resultado={RESULTADO} esperaMs={0} />);
   await waitFor(() =>
     expect(screen.getByRole('button', { name: 'Agora não' })).toBeDefined(),
   );
@@ -80,7 +80,7 @@ async function abrir() {
 describe('Avaliacao', () => {
   it('abre sozinha, mas só depois de a pessoa ver o resultado', () => {
     vi.useFakeTimers();
-    render(<Avaliacao resultado={RESULTADO} />);
+    render(<AvaliacaoComponent resultado={RESULTADO} />);
 
     expect(HTMLDialogElement.prototype.showModal).not.toHaveBeenCalled();
 
@@ -97,7 +97,7 @@ describe('Avaliacao', () => {
     outro.setAttribute('open', '');
     document.body.append(outro);
 
-    render(<Avaliacao resultado={RESULTADO} />);
+    render(<AvaliacaoComponent resultado={RESULTADO} />);
     vi.advanceTimersByTime(8000);
     expect(HTMLDialogElement.prototype.showModal).not.toHaveBeenCalled();
 
@@ -144,7 +144,7 @@ describe('Avaliacao', () => {
   });
 
   it('avisa que a resposta não fica ligada à conta, na hora de decidir', async () => {
-    const { container } = render(<Avaliacao resultado={RESULTADO} esperaMs={0} />);
+    const { container } = render(<AvaliacaoComponent resultado={RESULTADO} esperaMs={0} />);
     await waitFor(() => expect(container.textContent).toMatch(/Ajude a avaliar/));
 
     expect(container.textContent).toMatch(/sem ligação com a sua conta/i);

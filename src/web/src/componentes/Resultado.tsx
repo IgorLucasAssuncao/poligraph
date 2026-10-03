@@ -9,15 +9,15 @@ import {
   type ResultadoAfinidade,
   type ResultadoPorCasa,
 } from '../api';
-import { Avaliacao } from './Avaliacao';
-import { Avatar } from './Avatar';
-import { BotaoDoTour } from './BotaoDoTour';
-import { CabecalhoDaColuna } from './Layout';
-import { GrafoAmpliado } from './GrafoAmpliado';
-import { LinhaParlamentar } from './LinhaParlamentar';
-import { TelaDoGrafo } from './TelaDoGrafo';
+import { AvaliacaoComponent } from './Avaliacao';
+import { AvatarComponent } from './Avatar';
+import { BotaoDoTourComponent } from './BotaoDoTour';
+import { CabecalhoDaColunaComponent } from './Layout';
+import { GrafoAmpliadoComponent } from './GrafoAmpliado';
+import { LinhaParlamentarComponent } from './LinhaParlamentar';
+import { TelaDoGrafoComponent } from './TelaDoGrafo';
 import { useSessao } from '../sessao';
-import { LinkDeFonte } from './LinkDeFonte';
+import { LinkDeFonteComponent } from './LinkDeFonte';
 import { FONTES } from '../fontes';
 import { passosDoResultado } from '../tour';
 import { SIGLAS_DAS_UFS } from '../ufs';
@@ -37,7 +37,7 @@ const PASSOS_DO_RESULTADO = passosDoResultado();
  * Refazer sempre disponível: a pessoa muda de ideia, e as perguntas mudam quando
  * a curadoria acrescenta votações novas.
  */
-export function Resultado({
+export function ResultadoComponent({
   resultado,
   aoRefazer,
   perguntas,
@@ -76,13 +76,13 @@ export function Resultado({
 
   return (
     <>
-      <CabecalhoDaColuna
+      <CabecalhoDaColunaComponent
         titulo="Quem vota como você"
         subtitulo={`${resultado.totalPerguntasRespondidas} perguntas respondidas`}
       />
 
       <div className="linha-do-tour">
-        <BotaoDoTour nome="resultado" passos={PASSOS_DO_RESULTADO} />
+        <BotaoDoTourComponent nome="resultado" passos={PASSOS_DO_RESULTADO} />
       </div>
 
       <p className="ajuda ajuda-espacada">
@@ -117,7 +117,7 @@ export function Resultado({
       )}
 
       {resultado.porCasa.map((casa) => (
-        <SecaoDaCasa key={casa.casa} casa={casa} textos={textos} />
+        <SecaoDaCasaComponent key={casa.casa} casa={casa} textos={textos} />
       ))}
 
       {uf &&
@@ -133,7 +133,7 @@ export function Resultado({
         nenhum parlamentar.
       </p>
 
-      {usuario && <Avaliacao resultado={resultado} />}
+      {usuario && <AvaliacaoComponent resultado={resultado} />}
 
       <div className="resultado-acoes">
         <button type="button" className="botao-secundario" onClick={aoRefazer}>
@@ -158,7 +158,7 @@ export function Resultado({
  *
  * Sem esta frase a tela afirma uma precisão que o dado não tem.
  */
-function SecaoDaCasa({
+function SecaoDaCasaComponent({
   casa,
   textos,
 }: {
@@ -184,7 +184,7 @@ function SecaoDaCasa({
       </h2>
 
       {primeiro && (
-        <Destaque
+        <DestaqueComponent
           parlamentar={primeiro}
           textos={textos}
           respondidasNaCasa={casa.perguntasRespondidas}
@@ -203,9 +203,9 @@ function SecaoDaCasa({
       <p className="fonte-dado">
         Fonte: registro nominal de votação da {NOME_DA_CASA[casa.casa].nome}. Cada pergunta
         corresponde a uma votação em plenário.{' '}
-        <LinkDeFonte href={casa.casa === 'SENADO' ? FONTES.senado.url : FONTES.camara.url}>
+        <LinkDeFonteComponent href={casa.casa === 'SENADO' ? FONTES.senado.url : FONTES.camara.url}>
           Dados abertos da casa
-        </LinkDeFonte>
+        </LinkDeFonteComponent>
         {' · '}
         <Link to="/metodologia">Como calculamos</Link>
       </p>
@@ -214,7 +214,7 @@ function SecaoDaCasa({
         <div className="resultado-grafo" data-tour="resultado-grafo">
           <h3 className="titulo-secao">Onde você caiu</h3>
 
-          <TelaDoGrafo
+          <TelaDoGrafoComponent
             grafo={grafo}
             cidadao={casa.posicaoNoGrafo}
             altura={320}
@@ -232,7 +232,7 @@ function SecaoDaCasa({
             ; a de cada {nome.singular}, sobre a legislatura inteira.
           </p>
 
-          <GrafoAmpliado
+          <GrafoAmpliadoComponent
             grafo={grafo}
             cidadao={casa.posicaoNoGrafo}
             aberto={ampliado}
@@ -245,7 +245,7 @@ function SecaoDaCasa({
         <>
           <h3 className="titulo-secao">Também próximos de você</h3>
           {demais.map((p) => (
-            <LinhaAfim key={p.pessoaId} parlamentar={p} respondidasNaCasa={casa.perguntasRespondidas} />
+            <LinhaAfimComponent key={p.pessoaId} parlamentar={p} respondidasNaCasa={casa.perguntasRespondidas} />
           ))}
         </>
       )}
@@ -254,7 +254,7 @@ function SecaoDaCasa({
         <>
           <h3 className="titulo-secao" data-tour="resultado-distantes">Mais distantes</h3>
           {casa.maisDistantes.map((p) => (
-            <LinhaAfim key={p.pessoaId} parlamentar={p} respondidasNaCasa={casa.perguntasRespondidas} />
+            <LinhaAfimComponent key={p.pessoaId} parlamentar={p} respondidasNaCasa={casa.perguntasRespondidas} />
           ))}
         </>
       )}
@@ -307,7 +307,7 @@ function useGrafo(precisa: boolean, casa: ResultadoPorCasa['casa']): Grafo | nul
  * mais engana: 17 não é o número de perguntas do questionário, é quantas os dois
  * responderam. Omitir isso faria "14 de 17" parecer um questionário de 17.
  */
-function DetalheDaConta({
+function DetalheDaContaComponent({
   parlamentar,
   textos,
   respondidasNaCasa,
@@ -359,7 +359,7 @@ function DetalheDaConta({
 /**
  * Nunca percentual: "13 de 13" mostra sobre quantas perguntas a conta foi feita.
  */
-function Destaque({
+function DestaqueComponent({
   parlamentar,
   textos,
   respondidasNaCasa,
@@ -373,7 +373,7 @@ function Destaque({
       <p className="rotulo-destaque">Quem mais votou como você</p>
 
       <Link to={`/parlamentar/${parlamentar.pessoaId}`} className="destaque-link">
-        <Avatar nome={parlamentar.nome} tamanho="grande" />
+        <AvatarComponent nome={parlamentar.nome} tamanho="grande" />
 
         <h2>{parlamentar.nome}</h2>
         <p className="perfil-filiacao">
@@ -389,7 +389,7 @@ function Destaque({
         <span className="placar-texto">perguntas comparáveis em que vocês votaram igual</span>
       </p>
 
-      <DetalheDaConta
+      <DetalheDaContaComponent
         parlamentar={parlamentar}
         textos={textos}
         respondidasNaCasa={respondidasNaCasa}
@@ -402,9 +402,9 @@ function Destaque({
  * U19: "8 de 10" e "16 de 20" são a mesma proporção sobre bases diferentes. A linha diz de
  * quantas perguntas respondidas a base saiu, para a diferença não sumir na ordem da lista.
  */
-function LinhaAfim({ parlamentar, respondidasNaCasa }: { parlamentar: ParlamentarAfim; respondidasNaCasa: number }) {
+function LinhaAfimComponent({ parlamentar, respondidasNaCasa }: { parlamentar: ParlamentarAfim; respondidasNaCasa: number }) {
   return (
-    <LinhaParlamentar
+    <LinhaParlamentarComponent
       id={parlamentar.pessoaId}
       nome={parlamentar.nome}
       partido={parlamentar.partido}

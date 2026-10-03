@@ -7,10 +7,10 @@ import {
   type Parlamentar,
 } from '../api';
 import { periodoDaLegislatura } from '../formato';
-import { IconeExplorar } from '../componentes/Icones';
-import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
+import { IconeExplorarComponent } from '../componentes/Icones';
+import { LinhaParlamentarComponent } from '../componentes/LinhaParlamentar';
 import { useSessao } from '../sessao';
-import { EsqueletoDeLista } from '../componentes/Esqueleto';
+import { EsqueletoDeListaComponent } from '../componentes/Esqueleto';
 import { useLegislaturaDaUrl } from '../componentes/useLegislatura';
 
 /** Busca e navegação pelos parlamentares (RF-34). */
@@ -66,7 +66,7 @@ const POR_PAGINA = 30;
  * ATENÇÃO: Com UM período passado escolhido, não "Ex-deputado": a lista é toda daquele período,
  * e quem foi reeleito ainda está lá. A contagem acima diz de quando é.
  */
-export function Explorar() {
+export function ExplorarComponent() {
   const [termo, setTermo] = useState('');
   const [partido, setPartido] = useState('');
   const [uf, setUf] = useState('');
@@ -130,7 +130,7 @@ export function Explorar() {
     <>
       <div className="barra-busca" data-tour="busca">
         <span className="icone-busca" aria-hidden="true">
-          <IconeExplorar />
+          <IconeExplorarComponent />
         </span>
         <input
           type="search"
@@ -189,7 +189,7 @@ export function Explorar() {
         </div>
       )}
 
-      {carregando && <EsqueletoDeLista rotulo="Buscando parlamentares" linhas={8} />}
+      {carregando && <EsqueletoDeListaComponent rotulo="Buscando parlamentares" linhas={8} />}
 
       {!carregando && lista.length === 0 && (
         <p className="vazio">Nenhum parlamentar encontrado com esses filtros.</p>
@@ -204,7 +204,7 @@ export function Explorar() {
       )}
 
       {lista.map((p) => (
-        <LinhaParlamentar
+        <LinhaParlamentarComponent
           key={p.id}
           id={p.id}
           nome={p.nome}

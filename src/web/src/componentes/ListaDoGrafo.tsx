@@ -37,7 +37,7 @@ const VIZINHOS = 5;
  *
  * Quem tem mais ligações primeiro — a mesma regra que dita o tamanho do ponto.
  */
-export function ListaDoGrafo({
+export function ListaDoGrafoComponent({
   nos,
   arestas,
   aoSelecionar,

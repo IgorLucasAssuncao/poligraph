@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { NOME_DA_CASA, obterMetodologia, type CasaNaMetodologia, type Metodologia as DadosDaMetodologia } from '../api';
-import { LinkDeFonte } from '../componentes/LinkDeFonte';
+import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { FONTES } from '../fontes';
-import { EsqueletoDeTexto } from '../componentes/Esqueleto';
+import { EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
 
 /**
  * "Como calculamos" — o método, com os parâmetros que o cálculo usou.
@@ -15,7 +15,7 @@ import { EsqueletoDeTexto } from '../componentes/Esqueleto';
  * DECISÃO: Pública, como a política de privacidade: não mostra dado de ninguém, e é a página
  * que a banca e quem desconfia do site precisam ler antes de entrar.
  */
-export function Metodologia() {
+export function MetodologiaComponent() {
   const [dados, setDados] = useState<DadosDaMetodologia | null>(null);
   const [erro, setErro] = useState(false);
 
@@ -35,13 +35,13 @@ export function Metodologia() {
       </p>
 
       {erro && <p className="erro">Não foi possível carregar os parâmetros agora.</p>}
-      {!erro && !dados && <EsqueletoDeTexto rotulo="Carregando a metodologia" paragrafos={3} />}
-      {dados && <Conteudo dados={dados} />}
+      {!erro && !dados && <EsqueletoDeTextoComponent rotulo="Carregando a metodologia" paragrafos={3} />}
+      {dados && <ConteudoComponent dados={dados} />}
     </article>
   );
 }
 
-function Conteudo({ dados }: { dados: DadosDaMetodologia }) {
+function ConteudoComponent({ dados }: { dados: DadosDaMetodologia }) {
   const { questionario: q, afinidade, casas } = dados;
   const oferecidas = q.perguntasDaCamara + q.perguntasDoSenado;
   const legislatura = casas[0]?.legislatura;
@@ -65,17 +65,17 @@ function Conteudo({ dados }: { dados: DadosDaMetodologia }) {
               </>
             )}
             .{' '}
-            <LinkDeFonte href={c.casa === 'SENADO' ? FONTES.senado.url : FONTES.camara.url}>
+            <LinkDeFonteComponent href={c.casa === 'SENADO' ? FONTES.senado.url : FONTES.camara.url}>
               dados abertos
-            </LinkDeFonte>
+            </LinkDeFonteComponent>
           </li>
         ))}
       </ul>
       <p>
         O dinheiro vem de outras fontes oficiais: a cota parlamentar, da Câmara e do Senado;
-        as emendas, do <LinkDeFonte href={FONTES.emendas.url}>Portal da Transparência</LinkDeFonte>;
+        as emendas, do <LinkDeFonteComponent href={FONTES.emendas.url}>Portal da Transparência</LinkDeFonteComponent>;
         o financiamento de campanha, do{' '}
-        <LinkDeFonte href={FONTES.prestacaoDeContas.url}>TSE</LinkDeFonte>. Cada item no site
+        <LinkDeFonteComponent href={FONTES.prestacaoDeContas.url}>TSE</LinkDeFonteComponent>. Cada item no site
         tem um link <span aria-hidden="true">↗</span> para a página oficial onde pode ser
         conferido.
       </p>
@@ -141,7 +141,7 @@ function Conteudo({ dados }: { dados: DadosDaMetodologia }) {
         Dois parlamentares ficam perto quando votaram igual muitas vezes. A comparação entre
         eles usa a legislatura inteira, com estes pesos:
       </p>
-      <TabelaDoGrafo casas={casas} />
+      <TabelaDoGrafoComponent casas={casas} />
       <ul>
         <li>
           Voto de rito (requerimento, adiamento) pesa zero: ele mede tática de obstrução.
@@ -184,7 +184,7 @@ function Conteudo({ dados }: { dados: DadosDaMetodologia }) {
 }
 
 /** Os parâmetros da execução que desenhou cada grafo — "—" quando a execução é anterior ao registro. */
-function TabelaDoGrafo({ casas }: { casas: CasaNaMetodologia[] }) {
+function TabelaDoGrafoComponent({ casas }: { casas: CasaNaMetodologia[] }) {
   const numero = (valor: number | null, casas = 0) =>
     valor === null ? '—' : valor.toLocaleString('pt-BR', { maximumFractionDigits: casas, minimumFractionDigits: casas });
 

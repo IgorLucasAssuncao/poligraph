@@ -4,7 +4,7 @@ import { obterProcedencia } from '../api';
 import type { CargaDeProcedencia, ConsultaDeProcedencia, Procedencia } from '../api';
 import { tourJaVisto } from '../tour';
 import { useTour } from './contextoDoTour';
-import { LinkDeFonte } from './LinkDeFonte';
+import { LinkDeFonteComponent } from './LinkDeFonte';
 
 /**
  * Modo análise (Pendência 73): ligado, todo número que tem procedência vira botão e abre o painel
@@ -31,7 +31,7 @@ const ContextoDoModoAnalise = createContext<Estado>({
 });
 
 /** O estado do modo e o painel, um para o site inteiro. */
-export function ProvedorDoModoAnalise({ children }: { children: ReactNode }) {
+export function ProvedorDoModoAnaliseComponent({ children }: { children: ReactNode }) {
   const [ligado, setLigado] = useState(lerGuardado);
   const [aberto, setAberto] = useState<{ consulta: ConsultaDeProcedencia; rotulo: string } | null>(null);
 
@@ -52,7 +52,7 @@ export function ProvedorDoModoAnalise({ children }: { children: ReactNode }) {
   return (
     <ContextoDoModoAnalise.Provider value={estado}>
       {children}
-      <PainelDeProcedencia aberto={aberto} aoFechar={() => setAberto(null)} />
+      <PainelDeProcedenciaComponent aberto={aberto} aoFechar={() => setAberto(null)} />
     </ContextoDoModoAnalise.Provider>
   );
 }
@@ -69,7 +69,7 @@ export function useModoAnalise(): Estado {
  *
  * Na primeira vez que liga, abre o tour do modo (`PASSOS_DA_ANALISE`).
  */
-export function InterruptorDoModoAnalise() {
+export function InterruptorDoModoAnaliseComponent() {
   const { ligado, alternar } = useModoAnalise();
   const { iniciar } = useTour();
 
@@ -102,7 +102,7 @@ export function InterruptorDoModoAnalise() {
  * RISCO: `children` precisa ser conteúdo de linha: um `<div>` dentro de `<button>` é HTML
  * inválido, e leitor de tela lê o botão pela metade.
  */
-export function ComProcedencia({
+export function ComProcedenciaComponent({
   consulta,
   rotulo,
   children,
@@ -133,7 +133,7 @@ export function ComProcedencia({
  * DECISÃO: `<dialog>` nativo, como o tour e os modais do projeto: foco preso, Esc e papel de
  * diálogo sem biblioteca.
  */
-function PainelDeProcedencia({
+function PainelDeProcedenciaComponent({
   aberto,
   aoFechar,
 }: {
@@ -185,14 +185,14 @@ function PainelDeProcedencia({
       <div className="painel-procedencia-corpo">
         {erro && <p className="ajuda">Não foi possível ler a procedência agora. Tente de novo em instantes.</p>}
         {!erro && !procedencia && aberto && <p className="ajuda">Lendo os arquivos de origem…</p>}
-        {procedencia && <ConteudoDaProcedencia procedencia={procedencia} />}
+        {procedencia && <ConteudoDaProcedenciaComponent procedencia={procedencia} />}
       </div>
     </dialog>
   );
 }
 
 /** A regra, a contagem e um cartão por arquivo. */
-function ConteudoDaProcedencia({ procedencia }: { procedencia: Procedencia }) {
+function ConteudoDaProcedenciaComponent({ procedencia }: { procedencia: Procedencia }) {
   const comCarga = procedencia.linhas - procedencia.linhasSemCarga;
 
   return (
@@ -227,7 +227,7 @@ function ConteudoDaProcedencia({ procedencia }: { procedencia: Procedencia }) {
         <ul className="lista-cargas">
           {procedencia.cargas.map((carga) => (
             <li key={carga.id}>
-              <CartaoDaCarga carga={carga} />
+              <CartaoDaCargaComponent carga={carga} />
             </li>
           ))}
         </ul>
@@ -240,14 +240,14 @@ function ConteudoDaProcedencia({ procedencia }: { procedencia: Procedencia }) {
  * ATENÇÃO: A data é mostrada em UTC e diz isso: o hash prova a cópia baixada naquele instante,
  * e um horário local sem fuso seria ambíguo para quem confere de outro lugar.
  */
-function CartaoDaCarga({ carga }: { carga: CargaDeProcedencia }) {
+function CartaoDaCargaComponent({ carga }: { carga: CargaDeProcedencia }) {
   return (
     <dl className="cartao-carga">
       <dt>Órgão</dt>
       <dd>{carga.orgao}</dd>
       <dt>Arquivo</dt>
       <dd className="cartao-carga-url">
-        <LinkDeFonte href={carga.url}>{nomeDoArquivo(carga.url)}</LinkDeFonte>
+        <LinkDeFonteComponent href={carga.url}>{nomeDoArquivo(carga.url)}</LinkDeFonteComponent>
       </dd>
       <dt>Baixado em</dt>
       <dd className="dado">{dataHoraUtc(carga.baixadoEm)}</dd>

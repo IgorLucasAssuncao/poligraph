@@ -16,7 +16,7 @@ export type UsuarioLogado = { nome: string | null; fotoUrl: string | null };
  * ATENÇÃO: Sem Client ID o botão não existe — e isso é esperado em desenvolvimento.
  * O resto do site funciona: login só habilita sincronia e e-mail.
  */
-export function BotaoGoogle({ aoEntrar }: { aoEntrar: (usuario: UsuarioLogado) => void }) {
+export function BotaoGoogleComponent({ aoEntrar }: { aoEntrar: (usuario: UsuarioLogado) => void }) {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const alvo = useRef<HTMLDivElement>(null);
   const [erro, setErro] = useState<string | null>(null);

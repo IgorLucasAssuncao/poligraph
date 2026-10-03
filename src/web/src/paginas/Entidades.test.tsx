@@ -2,8 +2,8 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Entidade as DadosDaEntidade, EntidadeNaLista } from '../api';
-import { Entidade } from './Entidade';
-import { Entidades } from './Entidades';
+import { EntidadeComponent } from './Entidade';
+import { EntidadesComponent } from './Entidades';
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -44,8 +44,8 @@ function renderizar(endereco: string) {
   return render(
     <MemoryRouter initialEntries={[endereco]}>
       <Routes>
-        <Route path="/entidades" element={<Entidades />} />
-        <Route path="/entidades/:cnpj" element={<Entidade />} />
+        <Route path="/entidades" element={<EntidadesComponent />} />
+        <Route path="/entidades/:cnpj" element={<EntidadeComponent />} />
       </Routes>
     </MemoryRouter>,
   );

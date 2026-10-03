@@ -14,7 +14,7 @@ import { useState } from 'react';
  *
  * DECISÃO: `loading="lazy"`: numa lista de 30, só as fotos que aparecem na tela são pedidas.
  */
-export function Avatar({
+export function AvatarComponent({
   nome,
   fotoUrl,
   tamanho = 'medio',

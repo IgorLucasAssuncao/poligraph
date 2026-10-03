@@ -15,7 +15,7 @@
  *
  * ATENÇÃO: Sem denominador não há painel: 300 e 480 marcas seriam indistinguíveis a olho.
  */
-export function Painel({
+export function PainelComponent({
   posicionados,
   total,
 }: {

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import { Parlamentar } from './Parlamentar';
+import { ParlamentarComponent } from './Parlamentar';
 
 /**
  * Leitura sem conta — desligada no período eleitoral (RNF-17), pronta para depois dele.
@@ -44,7 +44,7 @@ describe('ficha sem conta', () => {
     render(
       <MemoryRouter initialEntries={['/parlamentar/1']}>
         <Routes>
-          <Route path="/parlamentar/:id" element={<Parlamentar />} />
+          <Route path="/parlamentar/:id" element={<ParlamentarComponent />} />
         </Routes>
       </MemoryRouter>,
     );
@@ -69,7 +69,7 @@ describe('ficha de quem já saiu', () => {
     render(
       <MemoryRouter initialEntries={['/parlamentar/1']}>
         <Routes>
-          <Route path="/parlamentar/:id" element={<Parlamentar />} />
+          <Route path="/parlamentar/:id" element={<ParlamentarComponent />} />
         </Routes>
       </MemoryRouter>,
     );

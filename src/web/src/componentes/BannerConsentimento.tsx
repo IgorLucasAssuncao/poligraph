@@ -31,7 +31,7 @@ import {
  * ATENÇÃO: Mesmo peso visual nos dois botões (LGPD art. 9º §3): recusar não
  * pode ser mais difícil que aceitar. Sem "aceitar" em destaque.
  */
-export function BannerConsentimento() {
+export function BannerConsentimentoComponent() {
   const clarityId = import.meta.env.VITE_CLARITY_ID;
   const [escolha, setEscolha] = useState<Escolha | null>(null);
   const [carregado, setCarregado] = useState(false);

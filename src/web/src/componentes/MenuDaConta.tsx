@@ -2,9 +2,9 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSessao } from '../sessao';
 import { useEntrar } from './useEntrar';
-import { Avatar } from './Avatar';
+import { AvatarComponent } from './Avatar';
 import { useTour } from './contextoDoTour';
-import { SeletorDeTema } from './SeletorDeTema';
+import { SeletorDeTemaComponent } from './SeletorDeTema';
 import { useModoAnalise } from './ModoAnalise';
 
 /**
@@ -23,7 +23,7 @@ import { useModoAnalise } from './ModoAnalise';
  * DECISÃO (2026-10-03): no celular o interruptor do modo análise sai do cabeçalho e aparece
  * aqui, com o estado escrito: na barra estreita ele roubava o espaço da busca e ficava sem rótulo.
  */
-export function MenuDaConta() {
+export function MenuDaContaComponent() {
   const { usuario, sair } = useSessao();
   const entrar = useEntrar();
   const { iniciar } = useTour();
@@ -68,7 +68,7 @@ export function MenuDaConta() {
       >
         {usuario ? (
           <>
-            <Avatar nome={usuario.nome ?? '?'} fotoUrl={usuario.fotoUrl} tamanho="pequeno" />
+            <AvatarComponent nome={usuario.nome ?? '?'} fotoUrl={usuario.fotoUrl} tamanho="pequeno" />
             <span className="usuario-mini-nome">{primeiroNome}</span>
           </>
         ) : (
@@ -100,7 +100,7 @@ export function MenuDaConta() {
           </button>
           <div className="menu-conta-tema">
             <span>Tema</span>
-            <SeletorDeTema />
+            <SeletorDeTemaComponent />
           </div>
           {usuario && (
             <button

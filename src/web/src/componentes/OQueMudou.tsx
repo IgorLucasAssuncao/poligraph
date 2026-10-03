@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { obterNovidades } from '../api';
 import type { Casa, Novidades } from '../api';
 import { dataCurta, mesCurto, minusculas, reais } from '../formato';
-import { LinkDeFonte } from './LinkDeFonte';
+import { LinkDeFonteComponent } from './LinkDeFonte';
 
 /**
  * "O que mudou" (Pendência 63): os cinco avisos sobre quem a pessoa segue, um item por fato, do
@@ -16,7 +16,7 @@ import { LinkDeFonte } from './LinkDeFonte';
  * ATENÇÃO: A data de cada item é a do dado, e a tela diz de quando é a carga: a base não é
  * de hoje, e "sem novidades hoje" afirmaria uma atualidade que ela não tem.
  */
-export function OQueMudou() {
+export function OQueMudouComponent() {
   const [novidades, setNovidades] = useState<Novidades | null>(null);
   const [erro, setErro] = useState(false);
 
@@ -111,7 +111,7 @@ function montarItens(n: Novidades): Item[] {
           {c.urlFonte && (
             <>
               {' · '}
-              <LinkDeFonte href={c.urlFonte}>registro da votação</LinkDeFonte>
+              <LinkDeFonteComponent href={c.urlFonte}>registro da votação</LinkDeFonteComponent>
             </>
           )}
         </>

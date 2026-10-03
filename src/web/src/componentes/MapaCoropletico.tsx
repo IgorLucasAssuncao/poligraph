@@ -35,7 +35,7 @@ import { carregarMalha, codigoDa, faixaDe, faixasPorQuantil } from '../mapa';
  *
  * O código da área sob o evento, pela marca na própria área: um ouvinte só para o mapa todo.
  */
-export function MapaCoropletico({
+export function MapaCoropleticoComponent({
   malha,
   valores,
   nomes,
@@ -142,7 +142,7 @@ export function MapaCoropletico({
         }}
         onBlur={() => setRotuloFlutuante(null)}
       >
-        <Areas
+        <AreasComponent
           desenho={desenho}
           desenhadas={desenhadas}
           faixas={faixas}
@@ -162,7 +162,7 @@ export function MapaCoropletico({
         </span>
       )}
 
-      {valores && <LegendaDoMapa limites={limites} formatar={formatar} />}
+      {valores && <LegendaDoMapaComponent limites={limites} formatar={formatar} />}
     </figure>
   );
 }
@@ -178,7 +178,7 @@ const LOTE = 200;
  * ATENÇÃO: `descrever` só existe no mapa focável, e ali são 27 áreas: no dos municípios ele é
  * nulo, e o `memo` não perde a comparação a cada desenho do pai.
  */
-const Areas = memo(function Areas({
+const AreasComponent = memo(function Areas({
   desenho,
   desenhadas,
   faixas,
@@ -215,7 +215,7 @@ const Areas = memo(function Areas({
   );
 });
 
-function LegendaDoMapa({ limites, formatar }: { limites: number[]; formatar: (valor: number) => string }) {
+function LegendaDoMapaComponent({ limites, formatar }: { limites: number[]; formatar: (valor: number) => string }) {
   if (limites.length === 0) return null;
 
   const faixas = [0, ...limites].map((de, i) => ({

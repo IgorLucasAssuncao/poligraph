@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import type { Grafo as DadosDoGrafo, NoDoGrafo } from '../api';
 import { passosDoGrafo } from '../tour';
-import { Grafo } from './Grafo';
+import { GrafoComponent } from './Grafo';
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -53,7 +53,7 @@ describe('o tour do grafo', () => {
 
     render(
       <MemoryRouter>
-        <Grafo />
+        <GrafoComponent />
       </MemoryRouter>,
     );
     await screen.findByRole('button', { name: /Entenda esta tela/ });
@@ -73,7 +73,7 @@ describe('o tour do grafo', () => {
 function renderizar() {
   return render(
     <MemoryRouter>
-      <Grafo />
+      <GrafoComponent />
     </MemoryRouter>,
   );
 }
@@ -90,7 +90,7 @@ describe('o período do grafo', () => {
     vi.mocked(api.obterGrafo).mockResolvedValue({ ...GRAFO, legislatura: 56, legislaturasComGrafo: [57, 56] });
     render(
       <MemoryRouter initialEntries={['/parlamentares?vista=grafo&legislatura=56']}>
-        <Grafo />
+        <GrafoComponent />
       </MemoryRouter>,
     );
 
@@ -101,7 +101,7 @@ describe('o período do grafo', () => {
     vi.mocked(api.obterGrafo).mockResolvedValue(GRAFO);
     render(
       <MemoryRouter initialEntries={['/parlamentares?vista=grafo&legislatura=todas']}>
-        <Grafo />
+        <GrafoComponent />
       </MemoryRouter>,
     );
 
@@ -114,7 +114,7 @@ describe('o período do grafo', () => {
     });
     render(
       <MemoryRouter initialEntries={['/parlamentares?vista=grafo&legislatura=51']}>
-        <Grafo />
+        <GrafoComponent />
       </MemoryRouter>,
     );
 

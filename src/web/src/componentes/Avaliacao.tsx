@@ -33,7 +33,7 @@ import { registrarAvaliacao, type ResultadoAfinidade } from '../api';
  * O primeiro da PRIMEIRA casa devolvida. A avaliação pergunta "acertou?", e a
  * referência é o parlamentar em destaque no topo da tela — que é esse.
  */
-export function Avaliacao({
+export function AvaliacaoComponent({
   resultado,
   esperaMs = ESPERA,
 }: {

@@ -22,7 +22,7 @@ import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
  * | Ficha | Nada: a ficha mostra os mandatos da pessoa, e qual está aberto |
  * | Dinheiro público e o resto | Nada: lá o recorte é por ano, não por legislatura |
  */
-export function FaixaDeProcedencia() {
+export function FaixaDeProcedenciaComponent() {
   const { pathname } = useLocation();
 
   return (
@@ -30,7 +30,7 @@ export function FaixaDeProcedencia() {
       <strong>Dados públicos</strong>
       <span className="faixa-longa">Registro nominal de votação da Câmara dos Deputados e do Senado Federal</span>
       <span className="faixa-curta" aria-hidden="true">Câmara e Senado</span>
-      <PeriodoDaFaixa pathname={pathname} />
+      <PeriodoDaFaixaComponent pathname={pathname} />
     </div>
   );
 }
@@ -38,7 +38,7 @@ export function FaixaDeProcedencia() {
 /**
  * DECISÃO: "Todos os períodos" só na lista: Não existe grafo nem painel de todas juntas.
  */
-function PeriodoDaFaixa({ pathname }: { pathname: string }) {
+function PeriodoDaFaixaComponent({ pathname }: { pathname: string }) {
   const [parametros] = useSearchParams();
   const [escolha] = useLegislaturaDaUrl();
   const legislaturas = useLegislaturas();

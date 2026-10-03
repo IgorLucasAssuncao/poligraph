@@ -15,7 +15,7 @@ import type { CSSProperties, ReactNode } from 'react';
  * ♿ O leitor de tela não vê cinza: `role="status"` com o texto escondido diz o que está
  * vindo, e o resto é `aria-hidden`.
  */
-export function Esqueleto({ rotulo, children }: { rotulo: string; children: ReactNode }) {
+export function EsqueletoComponent({ rotulo, children }: { rotulo: string; children: ReactNode }) {
   return (
     <div className="esqueleto-area" role="status" aria-busy="true">
       <span className="so-leitor">{rotulo}</span>
@@ -25,12 +25,12 @@ export function Esqueleto({ rotulo, children }: { rotulo: string; children: Reac
 }
 
 /** Uma barra de texto. `largura` em % da linha: variar as larguras é o que lê como texto. */
-export function Barra({ largura = 100, alta = false }: { largura?: number; alta?: boolean }) {
+export function BarraComponent({ largura = 100, alta = false }: { largura?: number; alta?: boolean }) {
   return <span className={`esqueleto-barra${alta ? ' alta' : ''}`} style={{ width: `${largura}%` }} />;
 }
 
 /** Um bloco sólido: gráfico, mapa, cartão. */
-export function Bloco({ altura, estilo }: { altura: number | string; estilo?: CSSProperties }) {
+export function BlocoComponent({ altura, estilo }: { altura: number | string; estilo?: CSSProperties }) {
   return <span className="esqueleto-bloco" style={{ height: altura, ...estilo }} />;
 }
 
@@ -38,44 +38,44 @@ export function Bloco({ altura, estilo }: { altura: number | string; estilo?: CS
 const LARGURAS = [62, 48, 71, 55, 66, 44, 58, 69];
 
 /** Linhas de lista: foto e duas barras, como `LinhaParlamentar`. */
-export function EsqueletoDeLista({ rotulo, linhas = 6 }: { rotulo: string; linhas?: number }) {
+export function EsqueletoDeListaComponent({ rotulo, linhas = 6 }: { rotulo: string; linhas?: number }) {
   return (
-    <Esqueleto rotulo={rotulo}>
+    <EsqueletoComponent rotulo={rotulo}>
       <div className="esqueleto-lista">
         {Array.from({ length: linhas }, (_, i) => (
           <div className="linha esqueleto" key={i}>
             <span className="esqueleto-avatar" />
             <div className="linha-corpo">
-              <Barra largura={LARGURAS[i % LARGURAS.length] - 20} alta />
-              <Barra largura={LARGURAS[(i + 3) % LARGURAS.length]} />
+              <BarraComponent largura={LARGURAS[i % LARGURAS.length] - 20} alta />
+              <BarraComponent largura={LARGURAS[(i + 3) % LARGURAS.length]} />
             </div>
           </div>
         ))}
       </div>
-    </Esqueleto>
+    </EsqueletoComponent>
   );
 }
 
 /** Parágrafos: um título e algumas linhas de texto. */
-export function EsqueletoDeTexto({ rotulo, paragrafos = 2 }: { rotulo: string; paragrafos?: number }) {
+export function EsqueletoDeTextoComponent({ rotulo, paragrafos = 2 }: { rotulo: string; paragrafos?: number }) {
   return (
-    <Esqueleto rotulo={rotulo}>
+    <EsqueletoComponent rotulo={rotulo}>
       <div className="esqueleto-texto">
         {Array.from({ length: paragrafos }, (_, p) => (
           <div className="esqueleto-paragrafo" key={p}>
-            <Barra largura={34} alta />
+            <BarraComponent largura={34} alta />
             {[96, 92, 88, LARGURAS[p % LARGURAS.length]].map((largura, i) => (
-              <Barra key={i} largura={largura} />
+              <BarraComponent key={i} largura={largura} />
             ))}
           </div>
         ))}
       </div>
-    </Esqueleto>
+    </EsqueletoComponent>
   );
 }
 
 /** Números em cartões, lado a lado, e um bloco de gráfico embaixo. */
-export function EsqueletoDePainel({
+export function EsqueletoDePainelComponent({
   rotulo,
   cartoes = 3,
   alturaDoGrafico = 220,
@@ -85,39 +85,39 @@ export function EsqueletoDePainel({
   alturaDoGrafico?: number;
 }) {
   return (
-    <Esqueleto rotulo={rotulo}>
+    <EsqueletoComponent rotulo={rotulo}>
       <div className="esqueleto-cartoes">
         {Array.from({ length: cartoes }, (_, i) => (
           <div className="esqueleto-cartao" key={i}>
-            <Barra largura={50} />
-            <Barra largura={70} alta />
+            <BarraComponent largura={50} />
+            <BarraComponent largura={70} alta />
           </div>
         ))}
       </div>
-      {alturaDoGrafico > 0 && <Bloco altura={alturaDoGrafico} />}
-    </Esqueleto>
+      {alturaDoGrafico > 0 && <BlocoComponent altura={alturaDoGrafico} />}
+    </EsqueletoComponent>
   );
 }
 
 /** O topo do perfil (foto, nome, siglas) e o começo da lista de votos. */
-export function EsqueletoDeFicha() {
+export function EsqueletoDeFichaComponent() {
   return (
-    <Esqueleto rotulo="Carregando o perfil">
+    <EsqueletoComponent rotulo="Carregando o perfil">
       <div className="esqueleto-ficha">
         <span className="esqueleto-avatar esqueleto-avatar-grande" />
-        <Barra largura={45} alta />
-        <Barra largura={28} />
+        <BarraComponent largura={45} alta />
+        <BarraComponent largura={28} />
       </div>
       <div className="esqueleto-lista">
         {[0, 1, 2, 3].map((i) => (
           <div className="linha esqueleto" key={i}>
             <div className="linha-corpo">
-              <Barra largura={LARGURAS[i] - 25} />
-              <Barra largura={LARGURAS[i + 2]} alta />
+              <BarraComponent largura={LARGURAS[i] - 25} />
+              <BarraComponent largura={LARGURAS[i + 2]} alta />
             </div>
           </div>
         ))}
       </div>
-    </Esqueleto>
+    </EsqueletoComponent>
   );
 }

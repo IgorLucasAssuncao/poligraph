@@ -14,7 +14,7 @@ import { reaisCompacto } from '../formato';
  * pagamentos sem código de emenda são por ano do pagamento: o Portal não diz de que emenda
  * eles são, então não cabem em nenhum período de emenda.
  */
-export function ConfereComOPortal({ periodo }: { periodo: Periodo }) {
+export function ConfereComOPortalComponent({ periodo }: { periodo: Periodo }) {
   const [contas, setContas] = useState<Reconciliacao[] | null>(null);
 
   useEffect(() => {

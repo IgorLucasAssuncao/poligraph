@@ -3,8 +3,8 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Busca } from '../api';
 import { ehDinheiroPublico } from '../navegacao';
-import { BuscaDoCabecalho } from './BuscaDoCabecalho';
-import { MenuDaConta } from './MenuDaConta';
+import { BuscaDoCabecalhoComponent } from './BuscaDoCabecalho';
+import { MenuDaContaComponent } from './MenuDaConta';
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -55,7 +55,7 @@ beforeEach(() => {
 
 describe('busca do cabeçalho', () => {
   it('responde nos três grupos', async () => {
-    renderizar(<BuscaDoCabecalho />);
+    renderizar(<BuscaDoCabecalhoComponent />);
 
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 'são paulo' } });
 
@@ -66,7 +66,7 @@ describe('busca do cabeçalho', () => {
   });
 
   it('as setas andam pelas opções e o Enter abre a escolhida', async () => {
-    renderizar(<BuscaDoCabecalho />);
+    renderizar(<BuscaDoCabecalhoComponent />);
     const campo = screen.getByRole('combobox');
 
     fireEvent.change(campo, { target: { value: 'são paulo' } });
@@ -78,7 +78,7 @@ describe('busca do cabeçalho', () => {
   });
 
   it('termo de uma letra não busca', () => {
-    renderizar(<BuscaDoCabecalho />);
+    renderizar(<BuscaDoCabecalhoComponent />);
 
     fireEvent.change(screen.getByRole('combobox'), { target: { value: 's' } });
 
@@ -88,7 +88,7 @@ describe('busca do cabeçalho', () => {
 
 describe('menu da conta', () => {
   it('sem conta, "Entrar" fica fora do menu', () => {
-    renderizar(<MenuDaConta />);
+    renderizar(<MenuDaContaComponent />);
 
     expect(screen.getByRole('link', { name: 'Entrar' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Sair' })).not.toBeInTheDocument();
@@ -96,7 +96,7 @@ describe('menu da conta', () => {
 
   it('abre com tema, tour e conta, e fecha com Esc', () => {
     sessao.usuario = { nome: 'Maria Silva', fotoUrl: null };
-    renderizar(<MenuDaConta />);
+    renderizar(<MenuDaContaComponent />);
 
     const botao = screen.getByRole('button', { name: /Maria/ });
     fireEvent.click(botao);

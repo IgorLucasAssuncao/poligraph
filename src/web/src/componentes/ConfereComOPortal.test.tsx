@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { obterReconciliacao } from '../api';
 import type { Reconciliacao } from '../api';
-import { ConfereComOPortal } from './ConfereComOPortal';
+import { ConfereComOPortalComponent } from './ConfereComOPortal';
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -24,7 +24,7 @@ const PAGAMENTOS_2016: Reconciliacao = {
 describe('confere com o Portal', () => {
   it('diz o total do Portal, o daqui e cada motivo do que ficou fora', async () => {
     vi.mocked(obterReconciliacao).mockResolvedValue([EMPENHADO_2016, PAGAMENTOS_2016]);
-    render(<ConfereComOPortal periodo={{ de: 2016, ate: 2016 }} />);
+    render(<ConfereComOPortalComponent periodo={{ de: 2016, ate: 2016 }} />);
 
     expect(await screen.findByText('Emendas de relator')).toBeInTheDocument();
     expect(screen.getByText('Emendas de comissão, sem dizer qual comissão')).toBeInTheDocument();
@@ -37,7 +37,7 @@ describe('confere com o Portal', () => {
     vi.mocked(obterReconciliacao).mockResolvedValue([
       { ...EMPENHADO_2016, ano: 2023, totalNaFonte: 35.38e9, totalNaBase: 35.38e9, totalInferido: 0, motivos: [] },
     ]);
-    render(<ConfereComOPortal periodo={{ de: 2023, ate: 2023 }} />);
+    render(<ConfereComOPortalComponent periodo={{ de: 2023, ate: 2023 }} />);
 
     expect(await screen.findByText(/é o mesmo do Portal/)).toBeInTheDocument();
   });

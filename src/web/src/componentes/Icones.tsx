@@ -18,7 +18,7 @@ const base = {
   strokeLinejoin: 'round' as const,
 };
 
-export function IconeExplorar({ className }: Props) {
+export function IconeExplorarComponent({ className }: Props) {
   return (
     <svg {...base} className={className} aria-hidden="true">
       <circle cx="11" cy="11" r="7" />
@@ -28,7 +28,7 @@ export function IconeExplorar({ className }: Props) {
 }
 
 /** Colunas sobre uma linha de base: o orçamento por área. */
-export function IconeOrcamento({ className }: Props) {
+export function IconeOrcamentoComponent({ className }: Props) {
   return (
     <svg {...base} className={className} aria-hidden="true">
       <path d="M3 20h18" />
@@ -37,7 +37,7 @@ export function IconeOrcamento({ className }: Props) {
   );
 }
 
-export function IconeSeguindo({ className }: Props) {
+export function IconeSeguindoComponent({ className }: Props) {
   return (
     <svg {...base} className={className} aria-hidden="true">
       <path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20" />
@@ -47,7 +47,7 @@ export function IconeSeguindo({ className }: Props) {
   );
 }
 
-export function IconeQuestionario({ className }: Props) {
+export function IconeQuestionarioComponent({ className }: Props) {
   return (
     <svg {...base} className={className} aria-hidden="true">
       <rect x="4" y="3" width="16" height="18" rx="2" />
@@ -56,7 +56,7 @@ export function IconeQuestionario({ className }: Props) {
   );
 }
 
-export function IconeConta({ className }: Props) {
+export function IconeContaComponent({ className }: Props) {
   return (
     <svg {...base} className={className} aria-hidden="true">
       <circle cx="12" cy="8" r="4" />
@@ -65,7 +65,7 @@ export function IconeConta({ className }: Props) {
   );
 }
 
-export function IconeVoltar({ className }: Props) {
+export function IconeVoltarComponent({ className }: Props) {
   return (
     <svg {...base} className={className} aria-hidden="true">
       <path d="M19 12H5" />
@@ -75,7 +75,7 @@ export function IconeVoltar({ className }: Props) {
 }
 
 /** ATENÇÃO: Marca do projeto — um grafo de três nós, que é o que o site faz. */
-export function Marca({ className, tamanho = 28 }: Props & { tamanho?: number }) {
+export function MarcaComponent({ className, tamanho = 28 }: Props & { tamanho?: number }) {
   return (
     <svg
       className={className}
@@ -96,7 +96,7 @@ export function Marca({ className, tamanho = 28 }: Props & { tamanho?: number })
 }
 
 /** ATENÇÃO: Três nós ligados — o mesmo desenho da marca, sem o preenchimento. */
-export function IconeGrafo({ className }: Props) {
+export function IconeGrafoComponent({ className }: Props) {
   return (
     <svg {...base} className={className} aria-hidden="true">
       <circle cx="5" cy="18" r="2.2" />

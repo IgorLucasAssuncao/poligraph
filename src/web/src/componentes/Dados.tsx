@@ -12,7 +12,7 @@ import { reais } from '../formato';
  *
  * `minimo` é a largura mínima da barra, em %: sem ela, o menor item some ao lado do maior.
  */
-export function LinhaDeValor({
+export function LinhaDeValorComponent({
   nome,
   valor,
   maior,
@@ -38,7 +38,7 @@ export function LinhaDeValor({
   );
 }
 
-/** Uma opção de {@link Opcoes}. */
+/** Uma opção de {@link OpcoesComponent}. */
 export type Opcao<T> = { valor: T; rotulo: ReactNode };
 
 /**
@@ -46,7 +46,7 @@ export type Opcao<T> = { valor: T; rotulo: ReactNode };
  *
  * Cada botão diz se está escolhido com `aria-pressed`, e o grupo tem nome para o leitor de tela.
  */
-export function Opcoes<T extends string | number | boolean | null>({
+export function OpcoesComponent<T extends string | number | boolean | null>({
   rotulo,
   opcoes,
   escolhida,
@@ -79,7 +79,7 @@ export function Opcoes<T extends string | number | boolean | null>({
 }
 
 /** Um número em destaque, com o rótulo em cima e a definição embaixo. Vai dentro de `.numeros-do-ano`. */
-export function Numero({
+export function NumeroComponent({
   rotulo,
   definicao,
   texto = false,

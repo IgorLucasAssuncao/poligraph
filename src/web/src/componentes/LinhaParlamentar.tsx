@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Avatar } from './Avatar';
-import { BotaoSeguir } from './BotaoSeguir';
+import { AvatarComponent } from './Avatar';
+import { BotaoSeguirComponent } from './BotaoSeguir';
 
 /**
  * A linha de parlamentar — unidade visual repetida em toda a timeline.
@@ -8,7 +8,7 @@ import { BotaoSeguir } from './BotaoSeguir';
  * ATENÇÃO: `detalhe` vem formatado pela tela que usa. Na afinidade é "concordaram em X de Y",
  * nunca percentual (RF-29).
  */
-export function LinhaParlamentar({
+export function LinhaParlamentarComponent({
   id,
   nome,
   partido,
@@ -35,7 +35,7 @@ export function LinhaParlamentar({
   return (
     <article className="linha">
       <Link to={ficha} aria-label={nome}>
-        <Avatar nome={nome} fotoUrl={fotoUrl} tamanho="medio" />
+        <AvatarComponent nome={nome} fotoUrl={fotoUrl} tamanho="medio" />
       </Link>
 
       <div className="linha-corpo">
@@ -54,7 +54,7 @@ export function LinhaParlamentar({
 
       {aoAlternarSeguir && (
         <div className="linha-acao">
-          <BotaoSeguir
+          <BotaoSeguirComponent
             pessoaId={id}
             seguindo={seguindo ?? false}
             aoAlternar={aoAlternarSeguir}

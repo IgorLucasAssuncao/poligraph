@@ -48,7 +48,7 @@ const ESPERA_ALVO_MS = 3000;
  * recusada, nenhuma outra aparece na mesma página — a do grafo logo depois de terminar
  * o tour do site leria como insistência.
  */
-export function ProvedorDoTour({ children }: { children: ReactNode }) {
+export function ProvedorDoTourComponent({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const [aberto, setAberto] = useState<{ nome: NomeDoTour; passos: PassoDoTour[] } | null>(null);
   const [tela, setTela] = useState<TourDaTela | null>(null);
@@ -93,7 +93,7 @@ export function ProvedorDoTour({ children }: { children: ReactNode }) {
     <ContextoDoTour.Provider value={contexto}>
       {children}
       {aberto && (
-        <Tour
+        <TourComponent
           key={aberto.nome}
           passos={aberto.passos}
           aoFechar={() => {
@@ -103,7 +103,7 @@ export function ProvedorDoTour({ children }: { children: ReactNode }) {
         />
       )}
       {ofertar && (
-        <OfertaDoTour
+        <OfertaDoTourComponent
           key={ofertar}
           nome={ofertar}
           aoAceitar={() => iniciar(ofertar)}
@@ -118,7 +118,7 @@ export function ProvedorDoTour({ children }: { children: ReactNode }) {
  * A oferta espera a resposta ao banner de consentimento, pelo mesmo motivo por que
  * as ofertas não se somam: uma decisão por vez.
  */
-function OfertaDoTour({
+function OfertaDoTourComponent({
   nome,
   aoAceitar,
   aoRecusar,
@@ -215,7 +215,7 @@ function OfertaDoTour({
  * A `key` refaz o bloco a cada passo, e a entrada curta do CSS roda de novo: o
  * texto novo chega junto com o balão em movimento, sem piscar para vazio.
  */
-function Tour({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: () => void }) {
+function TourComponent({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: () => void }) {
   const dialogo = useRef<HTMLDialogElement>(null);
   const destaque = useRef<HTMLDivElement>(null);
   const balao = useRef<HTMLDivElement>(null);

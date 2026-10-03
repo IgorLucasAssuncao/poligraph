@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { BannerConsentimento } from './BannerConsentimento';
+import { BannerConsentimentoComponent } from './BannerConsentimento';
 import { TEXTO_CONSENTIMENTO, VERSAO_CONSENTIMENTO } from '../textos-legais';
 
 /**
@@ -46,13 +46,13 @@ describe('BannerConsentimento', () => {
   afterEach(() => vi.unstubAllEnvs());
 
   it('aparece quando ainda não houve escolha', () => {
-    render(<BannerConsentimento />);
+    render(<BannerConsentimentoComponent />);
 
     expect(screen.getByRole('dialog')).toBeDefined();
   });
 
   it('oferece aceitar e recusar como botões equivalentes', () => {
-    render(<BannerConsentimento />);
+    render(<BannerConsentimentoComponent />);
 
     const aceitar = screen.getByRole('button', { name: TEXTO_CONSENTIMENTO.aceitar });
     const recusar = screen.getByRole('button', { name: TEXTO_CONSENTIMENTO.recusar });
@@ -61,7 +61,7 @@ describe('BannerConsentimento', () => {
   });
 
   it('diz as cinco coisas obrigatórias', () => {
-    const { container } = render(<BannerConsentimento />);
+    const { container } = render(<BannerConsentimentoComponent />);
     const texto = container.textContent!.toLowerCase();
 
     expect(texto).toMatch(/gravar sua navegação|cliques/);
@@ -72,7 +72,7 @@ describe('BannerConsentimento', () => {
   });
 
   it('avisa que recusar não bloqueia o site', () => {
-    const { container } = render(<BannerConsentimento />);
+    const { container } = render(<BannerConsentimentoComponent />);
 
     expect(container.textContent).toMatch(/usar o site normalmente/i);
   });
@@ -83,7 +83,7 @@ describe('BannerConsentimento', () => {
       JSON.stringify({ versao: VERSAO_CONSENTIMENTO, aceito: false, em: '2026-08-26' }),
     );
 
-    render(<BannerConsentimento />);
+    render(<BannerConsentimentoComponent />);
 
     expect(screen.queryByRole('dialog')).toBeNull();
   });
@@ -94,13 +94,13 @@ describe('BannerConsentimento', () => {
       JSON.stringify({ versao: 'versao-antiga', aceito: true, em: '2026-01-01' }),
     );
 
-    render(<BannerConsentimento />);
+    render(<BannerConsentimentoComponent />);
 
     expect(screen.getByRole('dialog')).toBeDefined();
   });
 
   it('não carrega o script de medição antes do aceite', () => {
-    render(<BannerConsentimento />);
+    render(<BannerConsentimentoComponent />);
 
     expect(document.getElementById('clarity-js')).toBeNull();
   });
@@ -111,7 +111,7 @@ describe('BannerConsentimento', () => {
       JSON.stringify({ versao: VERSAO_CONSENTIMENTO, aceito: false, em: '2026-08-26' }),
     );
 
-    render(<BannerConsentimento />);
+    render(<BannerConsentimentoComponent />);
 
     expect(document.getElementById('clarity-js')).toBeNull();
   });
@@ -119,7 +119,7 @@ describe('BannerConsentimento', () => {
   it('não aparece quando não há ferramenta de medição configurada', () => {
     vi.stubEnv('VITE_CLARITY_ID', '');
 
-    render(<BannerConsentimento />);
+    render(<BannerConsentimentoComponent />);
 
     expect(screen.queryByRole('dialog')).toBeNull();
   });

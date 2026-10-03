@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import { BarraDePeriodo } from './BarraDePeriodo';
+import { BarraDePeriodoComponent } from './BarraDePeriodo';
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -17,7 +17,7 @@ function Endereco() {
   return <p data-testid="endereco">{pathname + search}</p>;
 }
 
-function renderizarEm(endereco: string, elemento: React.ReactNode = <BarraDePeriodo />) {
+function renderizarEm(endereco: string, elemento: React.ReactNode = <BarraDePeriodoComponent />) {
   return render(
     <MemoryRouter initialEntries={[endereco]}>
       <Routes>
@@ -58,7 +58,7 @@ describe('a barra de período', () => {
   });
 
   it('"todos os períodos" só onde pedido', async () => {
-    const { unmount } = renderizarEm('/parlamentares', <BarraDePeriodo comTodas />);
+    const { unmount } = renderizarEm('/parlamentares', <BarraDePeriodoComponent comTodas />);
     expect(await screen.findByRole('option', { name: 'Todos os períodos' })).toBeInTheDocument();
     unmount();
 

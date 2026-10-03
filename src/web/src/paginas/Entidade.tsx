@@ -6,19 +6,19 @@ import {
   obterEntidade,
   type Entidade as DadosDaEntidade,
 } from '../api';
-import { AbasDoDinheiro } from '../componentes/AbasDoDinheiro';
-import { Coletivos, LinhaDoParlamentar } from '../componentes/AutoresDaEmenda';
-import { BotaoBaixarCsv } from '../componentes/BotaoBaixarCsv';
-import { BotaoMostrarMais } from '../componentes/BotaoMostrarMais';
-import { CabecalhoDaColuna } from '../componentes/Layout';
-import { LinkDeFonte } from '../componentes/LinkDeFonte';
-import { Termo } from '../componentes/Termo';
+import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
+import { ColetivosComponent, LinhaDoParlamentarComponent } from '../componentes/AutoresDaEmenda';
+import { BotaoBaixarCsvComponent } from '../componentes/BotaoBaixarCsv';
+import { BotaoMostrarMaisComponent } from '../componentes/BotaoMostrarMais';
+import { CabecalhoDaColunaComponent } from '../componentes/Layout';
+import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
+import { TermoComponent } from '../componentes/Termo';
 import { usePaginas } from '../componentes/usePaginas';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { dataCurta, minusculas, nomeProprio, reais, reaisCompacto } from '../formato';
-import { ComProcedencia } from '../componentes/ModoAnalise';
-import { EsqueletoDePainel } from '../componentes/Esqueleto';
-import { LinhaDeValor, Numero } from '../componentes/Dados';
+import { ComProcedenciaComponent } from '../componentes/ModoAnalise';
+import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
+import { LinhaDeValorComponent, NumeroComponent } from '../componentes/Dados';
 
 /**
  * Uma entidade: quanto recebeu de emenda, de quem, em que ano — e se aparece na cota.
@@ -30,7 +30,7 @@ import { LinhaDeValor, Numero } from '../componentes/Dados';
  * passagem e presta serviço contratado com emenda. A seção diz isso antes dos números, e
  * Não destaca nem ordena ninguém por "coincidência" (RNF-16).
  */
-export function Entidade() {
+export function EntidadeComponent() {
   const { cnpj = '' } = useParams();
   const [dados, setDados] = useState<DadosDaEntidade | null | undefined>(undefined);
   const [erro, setErro] = useState(false);
@@ -47,29 +47,29 @@ export function Entidade() {
 
   return (
     <>
-      <AbasDoDinheiro />
+      <AbasDoDinheiroComponent />
       {erro && <p className="erro">Não foi possível carregar esta entidade agora.</p>}
-      {!erro && dados === undefined && <EsqueletoDePainel rotulo="Carregando a entidade" />}
+      {!erro && dados === undefined && <EsqueletoDePainelComponent rotulo="Carregando a entidade" />}
       {!erro && dados === null && (
         <p className="vazio">
           Este CNPJ não recebeu dinheiro de emenda nos anos carregados.{' '}
           <Link to="/entidades">Ver todas as entidades</Link>
         </p>
       )}
-      {dados && <PaginaDaEntidade dados={dados} />}
+      {dados && <PaginaDaEntidadeComponent dados={dados} />}
     </>
   );
 }
 
-function PaginaDaEntidade({ dados }: { dados: DadosDaEntidade }) {
+function PaginaDaEntidadeComponent({ dados }: { dados: DadosDaEntidade }) {
   const maiorAno = Math.max(...dados.porAno.map((a) => a.recebido), 1);
 
   return (
     <>
-      <CabecalhoDaColuna titulo={nomeProprio(dados.nome)} subtitulo={dados.naturezaJuridica ?? undefined} comVoltar />
+      <CabecalhoDaColunaComponent titulo={nomeProprio(dados.nome)} subtitulo={dados.naturezaJuridica ?? undefined} comVoltar />
 
       <section className="numeros-do-ano" aria-label="O que a entidade recebeu">
-        <Numero
+        <NumeroComponent
           rotulo="Recebeu de emendas"
           definicao={
             <>
@@ -78,16 +78,16 @@ function PaginaDaEntidade({ dados }: { dados: DadosDaEntidade }) {
             </>
           }
         >
-          <ComProcedencia consulta={{ contexto: 'entidade', cnpj: dados.cnpj }} rotulo={`Recebido por ${nomeProprio(dados.nome)}`}>
+          <ComProcedenciaComponent consulta={{ contexto: 'entidade', cnpj: dados.cnpj }} rotulo={`Recebido por ${nomeProprio(dados.nome)}`}>
             {reaisCompacto(dados.recebido)}
-          </ComProcedencia>
-        </Numero>
-        <Numero
+          </ComProcedenciaComponent>
+        </NumeroComponent>
+        <NumeroComponent
           rotulo="Sede"
           texto
           definicao={
             <>
-              <Termo nome="sedeDoFavorecido">onde fica registrada</Termo>, que pode ser diferente de onde aplicou o dinheiro
+              <TermoComponent nome="sedeDoFavorecido">onde fica registrada</TermoComponent>, que pode ser diferente de onde aplicou o dinheiro
             </>
           }
         >
@@ -98,14 +98,14 @@ function PaginaDaEntidade({ dados }: { dados: DadosDaEntidade }) {
           ) : (
             '—'
           )}
-        </Numero>
+        </NumeroComponent>
       </section>
 
       <section className="governo-secao">
         <h2>Por ano</h2>
         <ul className="gastos-categorias">
           {dados.porAno.map((a) => (
-            <LinhaDeValor key={a.ano} nome={a.ano} valor={a.recebido} maior={maiorAno} formatar={reaisCompacto} minimo={0} />
+            <LinhaDeValorComponent key={a.ano} nome={a.ano} valor={a.recebido} maior={maiorAno} formatar={reaisCompacto} minimo={0} />
           ))}
         </ul>
         <p className="ajuda">O ano é o da emenda: uma emenda de 2024 paga em 2025 conta em 2024.</p>
@@ -113,17 +113,17 @@ function PaginaDaEntidade({ dados }: { dados: DadosDaEntidade }) {
 
       <section className="governo-secao">
         <h2>Quem mandou o dinheiro</h2>
-        <QuemMandou dados={dados} />
-        <Coletivos coletivos={dados.coletivos} />
+        <QuemMandouComponent dados={dados} />
+        <ColetivosComponent coletivos={dados.coletivos} />
       </section>
 
-      <ConveniosAssinados dados={dados} />
+      <ConveniosAssinadosComponent dados={dados} />
 
-      {dados.naCota && <NaCota dados={dados} />}
+      {dados.naCota && <NaCotaComponent dados={dados} />}
 
       <p className="fonte-dado">
         CNPJ {formatarCnpj(dados.cnpj)} ·{' '}
-        <LinkDeFonte href={dados.urlFonte}>tudo o que esta entidade recebeu, no Portal da Transparência</LinkDeFonte>
+        <LinkDeFonteComponent href={dados.urlFonte}>tudo o que esta entidade recebeu, no Portal da Transparência</LinkDeFonteComponent>
       </p>
     </>
   );
@@ -131,7 +131,7 @@ function PaginaDaEntidade({ dados }: { dados: DadosDaEntidade }) {
 
 const POR_PAGINA = 20;
 
-function QuemMandou({ dados }: { dados: DadosDaEntidade }) {
+function QuemMandouComponent({ dados }: { dados: DadosDaEntidade }) {
   const lista = usePaginas(dados.parlamentares.itens, dados.parlamentares.total, POR_PAGINA, (pagina) =>
     listarParlamentaresDaEntidade(dados.cnpj, pagina),
   );
@@ -143,21 +143,21 @@ function QuemMandou({ dados }: { dados: DadosDaEntidade }) {
       <h3>Deputados e senadores</h3>
       <p className="ajuda">
         {dados.parlamentares.total} parlamentares, {reaisCompacto(dados.deParlamentares)} em{' '}
-        <Termo nome="emendaIndividual">emendas individuais</Termo>. O nome leva à página de cada um.
+        <TermoComponent nome="emendaIndividual">emendas individuais</TermoComponent>. O nome leva à página de cada um.
       </p>
       <ul className="lista-autores">
         {lista.itens.map((p) => (
-          <LinhaDoParlamentar key={p.pessoaId ?? p.nome} parlamentar={p} />
+          <LinhaDoParlamentarComponent key={p.pessoaId ?? p.nome} parlamentar={p} />
         ))}
       </ul>
-      <BotaoMostrarMais
+      <BotaoMostrarMaisComponent
         proximos={lista.proximos}
         restantes={lista.restantes}
         carregando={lista.carregando}
         erro={lista.erro}
         aoClicar={lista.carregarMais}
       />
-      <BotaoBaixarCsv
+      <BotaoBaixarCsvComponent
         rotulo="Baixar a lista (CSV)"
         montar={async () => {
           const todos = await buscarTodas((pagina) => listarParlamentaresDaEntidade(dados.cnpj, pagina));
@@ -173,7 +173,7 @@ function QuemMandou({ dados }: { dados: DadosDaEntidade }) {
 }
 
 /** O que parlamentares pagaram a esta mesma entidade com a cota — pelo CNPJ, e com a ressalva antes. */
-function NaCota({ dados }: { dados: DadosDaEntidade }) {
+function NaCotaComponent({ dados }: { dados: DadosDaEntidade }) {
   const cota = dados.naCota!;
 
   return (
@@ -181,7 +181,7 @@ function NaCota({ dados }: { dados: DadosDaEntidade }) {
       <h2>Também aparece na cota parlamentar</h2>
       <p className="aviso" role="note">
         Parlamentares pagaram {reaisCompacto(cota.total)} a esta mesma entidade com a{' '}
-        <Termo nome="cota">cota</Termo>, em {cota.lancamentos} {cota.lancamentos === 1 ? 'nota' : 'notas'}. Isso,
+        <TermoComponent nome="cota">cota</TermoComponent>, em {cota.lancamentos} {cota.lancamentos === 1 ? 'nota' : 'notas'}. Isso,
         sozinho, não indica irregularidade: a cota paga despesas do escritório à própria prefeitura, passagens à
         companhia aérea, combustível ao posto.
       </p>
@@ -212,7 +212,7 @@ function NaCota({ dados }: { dados: DadosDaEntidade }) {
  * do convenente, não pelo nome. O liberado vem ao lado do combinado: convênio assinado não é
  * dinheiro que chegou.
  */
-function ConveniosAssinados({ dados }: { dados: DadosDaEntidade }) {
+function ConveniosAssinadosComponent({ dados }: { dados: DadosDaEntidade }) {
   const lista = usePaginas(dados.convenios.itens, dados.convenios.total, dados.convenios.tamanho || 20, (pagina) =>
     listarConveniosDaEntidade(dados.cnpj, pagina),
   );
@@ -234,7 +234,7 @@ function ConveniosAssinados({ dados }: { dados: DadosDaEntidade }) {
               {[c.situacao && minusculas(c.situacao), `assinado em ${dataCurta(c.dataPublicacao)}`]
                 .filter(Boolean)
                 .join(' · ')}{' '}
-              · <LinkDeFonte href={c.urlFonte}>convênio {c.numero}</LinkDeFonte>
+              · <LinkDeFonteComponent href={c.urlFonte}>convênio {c.numero}</LinkDeFonteComponent>
             </p>
             <p className="convenio-valores">
               <span>{reais(c.valor)} combinados</span>
@@ -243,7 +243,7 @@ function ConveniosAssinados({ dados }: { dados: DadosDaEntidade }) {
           </li>
         ))}
       </ul>
-      <BotaoMostrarMais
+      <BotaoMostrarMaisComponent
         proximos={lista.proximos}
         restantes={lista.restantes}
         carregando={lista.carregando}

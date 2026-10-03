@@ -12,19 +12,19 @@ import {
   type PessoaDaGestao,
   type Sigilo,
 } from '../api';
-import { AbasDoDinheiro } from '../componentes/AbasDoDinheiro';
-import { BotaoBaixarCsv } from '../componentes/BotaoBaixarCsv';
-import { BotaoDoTour } from '../componentes/BotaoDoTour';
-import { LinkDeFonte } from '../componentes/LinkDeFonte';
-import { SeletorDePeriodo } from '../componentes/SeletorDePeriodo';
+import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
+import { BotaoBaixarCsvComponent } from '../componentes/BotaoBaixarCsv';
+import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
+import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
+import { SeletorDePeriodoComponent } from '../componentes/SeletorDePeriodo';
 import { baixarCsv } from '../exportar';
-import { CabecalhoDaColuna } from '../componentes/Layout';
-import { Termo } from '../componentes/Termo';
+import { CabecalhoDaColunaComponent } from '../componentes/Layout';
+import { TermoComponent } from '../componentes/Termo';
 import { FONTES } from '../fontes';
 import { dataCurta, nomeProprio, partesDeCem, reaisCompacto } from '../formato';
 import { passosDoGoverno } from '../tour';
-import { EsqueletoDePainel } from '../componentes/Esqueleto';
-import { LinhaDeValor, Numero } from '../componentes/Dados';
+import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
+import { LinhaDeValorComponent, NumeroComponent } from '../componentes/Dados';
 
 /**
  * O governo federal para quem não lê orçamento: quanto entrou, onde foi parar, o que foi
@@ -36,7 +36,7 @@ import { LinhaDeValor, Numero } from '../componentes/Dados';
  *   compara os anos sem trocar o filtro. Escolher um ano por clique obrigava a somar de
  *   cabeça.
  * - **Uma frase por número, curta.** Cada linha miúda de definição era mais uma coisa a
- *   ler antes do dado; o jargão ficou nas dicas clicáveis (`Termo`) e em "Ver os detalhes".
+ *   ler antes do dado; o jargão ficou nas dicas clicáveis (`TermoComponent`) e em "Ver os detalhes".
  * - **O sigilo com a base.** "R$ 50 mi sigilosos" sozinho fazia parecer que o cartão
  *   inteiro era secreto; a barra mostra as duas partes.
  *
@@ -48,7 +48,7 @@ import { LinhaDeValor, Numero } from '../componentes/Dados';
  *
  * ATENÇÃO: A gestão vem depois dos números: em ano eleitoral, o presidente no topo lia como vitrine.
  */
-export function Governo() {
+export function GovernoComponent() {
   const [parametros, setParametros] = useSearchParams();
   const de = parametros.get('de');
   const ate = parametros.get('ate');
@@ -72,15 +72,15 @@ export function Governo() {
 
   return (
     <>
-      <AbasDoDinheiro />
-      <CabecalhoDaColuna
+      <AbasDoDinheiroComponent />
+      <CabecalhoDaColunaComponent
         titulo="Governo federal"
         subtitulo="Quanto entrou, onde foi parar e o que foi gasto em segredo"
-        acao={<BotaoDoTour nome="governo" passos={passos} />}
+        acao={<BotaoDoTourComponent nome="governo" passos={passos} />}
       />
 
       {erro && <p className="erro">Não foi possível carregar os dados do governo agora.</p>}
-      {!erro && dados === undefined && <EsqueletoDePainel rotulo="Carregando o governo" alturaDoGrafico={260} />}
+      {!erro && dados === undefined && <EsqueletoDePainelComponent rotulo="Carregando o governo" alturaDoGrafico={260} />}
       {!erro && dados === null && (
         <p className="vazio">
           Os dados do governo ainda não foram carregados. Eles aparecem depois da próxima execução do ETL.
@@ -89,7 +89,7 @@ export function Governo() {
 
       {dados && (
         <>
-          <SeletorDePeriodo
+          <SeletorDePeriodoComponent
             anos={dados.anosDisponiveis}
             periodo={dados.periodo}
             rotulo="Período"
@@ -107,29 +107,29 @@ export function Governo() {
                 {dados.emAndamento} vai até {dataCurta(dados.geradoEm)}.
               </>
             )}
-          </SeletorDePeriodo>
+          </SeletorDePeriodoComponent>
 
-          <Resumo dados={dados} />
-          {dados.porAno.length > 1 && <AnoAAno dados={dados} />}
-          <CadaCemReais dados={dados} />
-          <DeOndeVeio arrecadacao={dados.arrecadacao} />
-          <GastoSigiloso sigilo={dados.sigilo} periodo={dados.periodo} emAndamento={dados.emAndamento} />
+          <ResumoComponent dados={dados} />
+          {dados.porAno.length > 1 && <AnoAAnoComponent dados={dados} />}
+          <CadaCemReaisComponent dados={dados} />
+          <DeOndeVeioComponent arrecadacao={dados.arrecadacao} />
+          <GastoSigilosoComponent sigilo={dados.sigilo} periodo={dados.periodo} emAndamento={dados.emAndamento} />
           {dados.gestoes.map((g) => (
-            <PerfilDaGestao key={g.eleicao} gestao={g} />
+            <PerfilDaGestaoComponent key={g.eleicao} gestao={g} />
           ))}
-          <Detalhes dados={dados} />
+          <DetalhesComponent dados={dados} />
 
           <p className="fonte-dado">
             Arquivos gerados até {dataCurta(dados.geradoEm)}. Fontes:{' '}
-            <LinkDeFonte href={FONTES.candidatos.url}>TSE</LinkDeFonte>
+            <LinkDeFonteComponent href={FONTES.candidatos.url}>TSE</LinkDeFonteComponent>
             {' · '}
-            <LinkDeFonte href={FONTES.orcamento.url}>orçamento</LinkDeFonte>
+            <LinkDeFonteComponent href={FONTES.orcamento.url}>orçamento</LinkDeFonteComponent>
             {' · '}
-            <LinkDeFonte href={FONTES.execucao.url}>execução mês a mês</LinkDeFonte>
+            <LinkDeFonteComponent href={FONTES.execucao.url}>execução mês a mês</LinkDeFonteComponent>
             {' · '}
-            <LinkDeFonte href={FONTES.receitas.url}>receitas</LinkDeFonte>
+            <LinkDeFonteComponent href={FONTES.receitas.url}>receitas</LinkDeFonteComponent>
             {' · '}
-            <LinkDeFonte href={FONTES.cartao.url}>cartão de pagamento</LinkDeFonte> (Portal da Transparência).
+            <LinkDeFonteComponent href={FONTES.cartao.url}>cartão de pagamento</LinkDeFonteComponent> (Portal da Transparência).
           </p>
         </>
       )}
@@ -167,7 +167,7 @@ function textoDoPeriodo({ de, ate }: Periodo): string {
 }
 
 /** Três números. Não Há um quarto que os junte: o saldo pediria regras fiscais que estes dados não seguem. */
-function Resumo({ dados }: { dados: DadosDoGoverno }) {
+function ResumoComponent({ dados }: { dados: DadosDoGoverno }) {
   const gastou = dados.porAno.reduce((soma, a) => soma + a.gastou, 0);
   const numeros: [string, number, string][] = [
     ['Entrou', dados.arrecadacao.arrecadado, 'impostos e contribuições'],
@@ -178,9 +178,9 @@ function Resumo({ dados }: { dados: DadosDoGoverno }) {
   return (
     <section className="numeros-do-ano" aria-label={`${textoDoPeriodo(dados.periodo)} em números`} data-tour="governo-resumo">
       {numeros.map(([rotulo, valor, definicao]) => (
-        <Numero key={rotulo} rotulo={rotulo} definicao={definicao}>
+        <NumeroComponent key={rotulo} rotulo={rotulo} definicao={definicao}>
           {reaisCompacto(valor)}
-        </Numero>
+        </NumeroComponent>
       ))}
     </section>
   );
@@ -192,7 +192,7 @@ function Resumo({ dados }: { dados: DadosDoGoverno }) {
  * ATENÇÃO: Valores nominais. Sem correção pela inflação, o ano mais recente parece maior só por ser
  * mais recente — e comparar gestões assim favoreceria a última. A tabela diz isso.
  */
-function AnoAAno({ dados }: { dados: DadosDoGoverno }) {
+function AnoAAnoComponent({ dados }: { dados: DadosDoGoverno }) {
   return (
     <section className="governo-secao">
       <h2>Ano a ano</h2>
@@ -237,7 +237,7 @@ const AREAS_NOMEADAS = 6;
  *
  * ATENÇÃO: As parcelas somam 100 exatos (`partesDeCem`), e cada linha traz o valor em reais.
  */
-function CadaCemReais({ dados }: { dados: DadosDoGoverno }) {
+function CadaCemReaisComponent({ dados }: { dados: DadosDoGoverno }) {
   const { areas, encargos } = dados.despesa;
   const porArea = [...areas]
     .map((a) => ({ nome: a.nome, valor: a.pago + a.restosAPagarPagos }))
@@ -280,14 +280,14 @@ function CadaCemReais({ dados }: { dados: DadosDoGoverno }) {
 
       <p className="nota-curta">
         Fora da conta: {reaisCompacto(totalDoEncargo(encargos, 'REFINANCIAMENTO'))} de{' '}
-        <Termo nome="rolagem">rolagem da dívida</Termo>.
+        <TermoComponent nome="rolagem">rolagem da dívida</TermoComponent>.
       </p>
     </section>
   );
 }
 
 /** As origens do Portal em três grupos que se reconhecem. */
-function DeOndeVeio({ arrecadacao }: { arrecadacao: Arrecadacao }) {
+function DeOndeVeioComponent({ arrecadacao }: { arrecadacao: Arrecadacao }) {
   const de = (origem: string) => arrecadacao.porOrigem.find((o) => o.origem === origem)?.realizada ?? 0;
   const impostos = de('Impostos, Taxas e Contribuições de Melhoria');
   const contribuicoes = de('Contribuições');
@@ -304,7 +304,7 @@ function DeOndeVeio({ arrecadacao }: { arrecadacao: Arrecadacao }) {
 
       <ul className="gastos-categorias">
         {grupos.map((g) => (
-          <LinhaDeValor key={g.nome} nome={g.nome} valor={g.valor} maior={maior} formatar={reaisCompacto} minimo={0} />
+          <LinhaDeValorComponent key={g.nome} nome={g.nome} valor={g.valor} maior={maior} formatar={reaisCompacto} minimo={0} />
         ))}
       </ul>
 
@@ -322,7 +322,7 @@ function DeOndeVeio({ arrecadacao }: { arrecadacao: Arrecadacao }) {
  * aberta — que o Portal detalha compra por compra — e a sigilosa, lado a lado. Por órgão,
  * a porcentagem diz onde o sigilo pesa.
  */
-function GastoSigiloso({
+function GastoSigilosoComponent({
   sigilo,
   periodo,
   emAndamento,
@@ -347,7 +347,7 @@ function GastoSigiloso({
     <section className="governo-secao" data-tour="governo-sigilo">
       <h2>Gasto sigiloso</h2>
       <p className="frase-resposta">
-        No <Termo nome="cartaoCorporativo">cartão corporativo</Termo>, {textoDoPeriodo(periodo)}:{' '}
+        No <TermoComponent nome="cartaoCorporativo">cartão corporativo</TermoComponent>, {textoDoPeriodo(periodo)}:{' '}
         <strong>{reaisCompacto(sigilo.cartaoTotal)}</strong>. Desses, <strong>{parteSigilosa} de cada R$ 100</strong>{' '}
         são sigilosos.
         {emAndamento && sigilo.meses < 12 && ` ${emAndamento} até o mês ${sigilo.meses}.`}
@@ -371,7 +371,7 @@ function GastoSigiloso({
               <th scope="col">Cartão sigiloso</th>
               <th scope="col">Do cartão do órgão</th>
               <th scope="col">
-                <Termo nome="acaoSigilosa">Ação sigilosa</Termo>
+                <TermoComponent nome="acaoSigilosa">Ação sigilosa</TermoComponent>
               </th>
             </tr>
           </thead>
@@ -392,7 +392,7 @@ function GastoSigiloso({
         Só o que o Portal marca como sigiloso. Gasto de inteligência em linhas de nome comum não aparece aqui.
       </p>
 
-      <BotaoBaixarCsv
+      <BotaoBaixarCsvComponent
         rotulo="Baixar o gasto sigiloso (CSV)"
         montar={() =>
           baixarCsv(
@@ -407,15 +407,15 @@ function GastoSigiloso({
 }
 
 /** Quem governou — depois dos números, e sem foto. */
-function PerfilDaGestao({ gestao }: { gestao: Gestao }) {
+function PerfilDaGestaoComponent({ gestao }: { gestao: Gestao }) {
   return (
     <section className="gestao" aria-labelledby={`gestao-${gestao.eleicao}`}>
       <h2 id={`gestao-${gestao.eleicao}`} className="gestao-titulo">
         Quem governou de {gestao.primeiroAno} a {gestao.ultimoAno}
       </h2>
       <div className="gestao-pessoas">
-        <PessoaDaGestaoCartao papel="Presidente" pessoa={gestao.presidente} />
-        <PessoaDaGestaoCartao papel="Vice-presidente" pessoa={gestao.vice} />
+        <PessoaDaGestaoCartaoComponent papel="Presidente" pessoa={gestao.presidente} />
+        <PessoaDaGestaoCartaoComponent papel="Vice-presidente" pessoa={gestao.vice} />
       </div>
       <p className="gestao-meta">
         Eleitos em {gestao.eleicao}
@@ -433,7 +433,7 @@ function PerfilDaGestao({ gestao }: { gestao: Gestao }) {
   );
 }
 
-function PessoaDaGestaoCartao({ papel, pessoa }: { papel: string; pessoa: PessoaDaGestao }) {
+function PessoaDaGestaoCartaoComponent({ papel, pessoa }: { papel: string; pessoa: PessoaDaGestao }) {
   return (
     <div className="gestao-pessoa">
       <div>
@@ -458,7 +458,7 @@ const NOME_DO_GRUPO: Record<GrupoDeEncargo, string> = {
  * O orçamento no vocabulário dele, recolhido. Quem quer conferir a dotação encontra;
  * quem não quer, não tropeça.
  */
-function Detalhes({ dados }: { dados: DadosDoGoverno }) {
+function DetalhesComponent({ dados }: { dados: DadosDoGoverno }) {
   const areas = dados.despesa.areas.filter((a) => a.pago + a.restosAPagarPagos > 0);
   const maior = Math.max(...areas.map((a) => a.pago + a.restosAPagarPagos), 1);
   const nome = `${dados.periodo.de}-${dados.periodo.ate}`;
@@ -472,16 +472,16 @@ function Detalhes({ dados }: { dados: DadosDoGoverno }) {
       <h3>Todas as áreas</h3>
       <p className="legenda-barras" aria-hidden="true">
         <span className="amostra amostra-ano" /> do próprio ano
-        <span className="amostra amostra-anteriores" /> <Termo nome="restosAPagar">de anos anteriores</Termo>
+        <span className="amostra amostra-anteriores" /> <TermoComponent nome="restosAPagar">de anos anteriores</TermoComponent>
       </p>
       <ul className="barras-areas">
         {areas.map((a) => (
-          <BarraDaArea key={a.codigo} area={a} maior={maior} />
+          <BarraDaAreaComponent key={a.codigo} area={a} maior={maior} />
         ))}
       </ul>
 
       <h3>
-        Dívida e transferências <Termo nome="encargosEspeciais">(encargos especiais)</Termo>
+        Dívida e transferências <TermoComponent nome="encargosEspeciais">(encargos especiais)</TermoComponent>
       </h3>
       <ul className="lista-encargos">
         {(Object.keys(NOME_DO_GRUPO) as GrupoDeEncargo[]).map((grupo) => (
@@ -495,10 +495,10 @@ function Detalhes({ dados }: { dados: DadosDoGoverno }) {
       </ul>
 
       <h3>Orçamento aprovado e executado</h3>
-      <TabelaDasAreas areas={dados.despesa.areas} acima={dados.despesa.empenhadoAcimaDaDotacao} />
+      <TabelaDasAreasComponent areas={dados.despesa.areas} acima={dados.despesa.empenhadoAcimaDaDotacao} />
 
       <div className="botoes-csv">
-        <BotaoBaixarCsv
+        <BotaoBaixarCsvComponent
           rotulo="Baixar as áreas (CSV)"
           montar={() =>
             baixarCsv(
@@ -511,7 +511,7 @@ function Detalhes({ dados }: { dados: DadosDoGoverno }) {
             )
           }
         />
-        <BotaoBaixarCsv
+        <BotaoBaixarCsvComponent
           rotulo="Baixar ano a ano (CSV)"
           montar={() =>
             baixarCsv(
@@ -526,7 +526,7 @@ function Detalhes({ dados }: { dados: DadosDoGoverno }) {
   );
 }
 
-function BarraDaArea({ area, maior }: { area: AreaDaDespesa; maior: number }) {
+function BarraDaAreaComponent({ area, maior }: { area: AreaDaDespesa; maior: number }) {
   const total = area.pago + area.restosAPagarPagos;
 
   return (
@@ -550,7 +550,7 @@ function BarraDaArea({ area, maior }: { area: AreaDaDespesa; maior: number }) {
   );
 }
 
-function TabelaDasAreas({ areas, acima }: { areas: AreaDaDespesa[]; acima: number }) {
+function TabelaDasAreasComponent({ areas, acima }: { areas: AreaDaDespesa[]; acima: number }) {
   const incompletas = areas.filter((a) => !a.dotacaoCompleta).length;
 
   return (
@@ -558,7 +558,7 @@ function TabelaDasAreas({ areas, acima }: { areas: AreaDaDespesa[]; acima: numbe
       {incompletas > 0 && (
         <p className="aviso" role="note">
           Em {incompletas} áreas o empenhado passou da dotação publicada, {reaisCompacto(acima)} no total. Nelas a
-          coluna “pago da dotação” fica em branco. <Termo nome="dotacaoIncompleta">Por quê?</Termo>
+          coluna “pago da dotação” fica em branco. <TermoComponent nome="dotacaoIncompleta">Por quê?</TermoComponent>
         </p>
       )}
       <div className="tabela-rolavel">
@@ -568,7 +568,7 @@ function TabelaDasAreas({ areas, acima }: { areas: AreaDaDespesa[]; acima: numbe
             <tr>
               <th scope="col">Área</th>
               <th scope="col">
-                <Termo nome="dotacao">Dotação</Termo>
+                <TermoComponent nome="dotacao">Dotação</TermoComponent>
               </th>
               <th scope="col">Empenhado</th>
               <th scope="col">Pago</th>
@@ -583,7 +583,7 @@ function TabelaDasAreas({ areas, acima }: { areas: AreaDaDespesa[]; acima: numbe
                 <td>{reaisCompacto(a.empenhado)}</td>
                 <td>{reaisCompacto(a.pago)}</td>
                 <td>
-                  <PagoDaDotacao area={a} />
+                  <PagoDaDotacaoComponent area={a} />
                 </td>
               </tr>
             ))}
@@ -594,7 +594,7 @@ function TabelaDasAreas({ areas, acima }: { areas: AreaDaDespesa[]; acima: numbe
   );
 }
 
-function PagoDaDotacao({ area }: { area: AreaDaDespesa }) {
+function PagoDaDotacaoComponent({ area }: { area: AreaDaDespesa }) {
   if (!area.dotacaoCompleta) return <span className="orcamento-sem-razao">dotação incompleta</span>;
   if (area.dotacaoAtualizada <= 0) return <span className="orcamento-sem-razao">—</span>;
 

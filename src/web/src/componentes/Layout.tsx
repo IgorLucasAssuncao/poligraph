@@ -1,12 +1,12 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ehDinheiroPublico } from '../navegacao';
 import { useSessao } from '../sessao';
-import { BuscaDoCabecalho } from './BuscaDoCabecalho';
-import { FaixaDeProcedencia } from './FaixaDeProcedencia';
-import { IconeExplorar, IconeOrcamento, IconeQuestionario, IconeVoltar, Marca } from './Icones';
-import { MenuDaConta } from './MenuDaConta';
-import { InterruptorDoModoAnalise, ProvedorDoModoAnalise } from './ModoAnalise';
-import { ProvedorDoTour } from './Tour';
+import { BuscaDoCabecalhoComponent } from './BuscaDoCabecalho';
+import { FaixaDeProcedenciaComponent } from './FaixaDeProcedencia';
+import { IconeExplorarComponent, IconeOrcamentoComponent, IconeQuestionarioComponent, IconeVoltarComponent, MarcaComponent } from './Icones';
+import { MenuDaContaComponent } from './MenuDaConta';
+import { InterruptorDoModoAnaliseComponent, ProvedorDoModoAnaliseComponent } from './ModoAnalise';
+import { ProvedorDoTourComponent } from './Tour';
 import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
 
 /**
@@ -56,7 +56,7 @@ const LARGURA: { padrao: Largura; rotas: [string, Largura][] } = {
  * página saiu: o item aceso da navegação já o diz, e repeti-lo logo abaixo era a
  * própria definição de moldura redundante.
  */
-export function Layout({ children }: { children: React.ReactNode }) {
+export function LayoutComponent({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
 
   const largura =
@@ -65,20 +65,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
     )?.[1] ?? LARGURA.padrao;
 
   return (
-    <ProvedorDoTour>
-      <ProvedorDoModoAnalise>
+    <ProvedorDoTourComponent>
+      <ProvedorDoModoAnaliseComponent>
         <div className="site">
-          <FaixaDeProcedencia />
-          <CabecalhoDoSite />
+          <FaixaDeProcedenciaComponent />
+          <CabecalhoDoSiteComponent />
 
           <main className="corpo" data-largura={largura}>
             {children}
           </main>
 
-          <RodapeDoSite />
+          <RodapeDoSiteComponent />
         </div>
-      </ProvedorDoModoAnalise>
-    </ProvedorDoTour>
+      </ProvedorDoModoAnaliseComponent>
+    </ProvedorDoTourComponent>
   );
 }
 
@@ -89,7 +89,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
  * Sobra para as telas que a navegação não alcança — o perfil de um parlamentar, que
  * tem nome próprio e um caminho de volta.
  */
-export function CabecalhoDaColuna({
+export function CabecalhoDaColunaComponent({
   titulo,
   subtitulo,
   comVoltar,
@@ -112,7 +112,7 @@ export function CabecalhoDaColuna({
           onClick={() => navegar(-1)}
           aria-label="Voltar"
         >
-          <IconeVoltar />
+          <IconeVoltarComponent />
         </button>
       )}
 
@@ -133,9 +133,9 @@ export function CabecalhoDaColuna({
  * "para onde vai o dinheiro", e viraram abas de um destino só. O Início continua na marca.
  */
 const DESTINOS = [
-  { para: '/parlamentares', rotulo: 'Parlamentares', icone: <IconeExplorar /> },
-  { para: '/resultado', rotulo: 'Compare seu voto', icone: <IconeQuestionario /> },
-  { para: '/emendas', rotulo: 'Dinheiro público', icone: <IconeOrcamento /> },
+  { para: '/parlamentares', rotulo: 'Parlamentares', icone: <IconeExplorarComponent /> },
+  { para: '/resultado', rotulo: 'Compare seu voto', icone: <IconeQuestionarioComponent /> },
+  { para: '/emendas', rotulo: 'Dinheiro público', icone: <IconeOrcamentoComponent /> },
 ];
 
 /**
@@ -147,7 +147,7 @@ const DESTINOS = [
  * DECISÃO: O período escolhido acompanha quem vai do início para os parlamentares e volta.
  * Sem isto, a escolha feita na faixa se perdia no primeiro clique do menu.
  */
-function CabecalhoDoSite() {
+function CabecalhoDoSiteComponent() {
   const { pathname } = useLocation();
   const [escolha] = useLegislaturaDaUrl();
   const comPeriodo = (rota: string) => (escolha === undefined ? rota : `${rota}?legislatura=${escolha}`);
@@ -156,7 +156,7 @@ function CabecalhoDoSite() {
     <header className="cabecalho-site">
       <div className="cabecalho-conteudo">
         <Link to={comPeriodo('/')} className="marca-link" aria-label="Registro Aberto — início">
-          <Marca />
+          <MarcaComponent />
           <span className="marca-texto">Registro Aberto</span>
         </Link>
 
@@ -176,9 +176,9 @@ function CabecalhoDoSite() {
           ))}
         </nav>
 
-        <BuscaDoCabecalho />
-        <InterruptorDoModoAnalise />
-        <MenuDaConta />
+        <BuscaDoCabecalhoComponent />
+        <InterruptorDoModoAnaliseComponent />
+        <MenuDaContaComponent />
       </div>
     </header>
   );
@@ -198,7 +198,7 @@ function CabecalhoDoSite() {
  *
  * ATENÇÃO: Dizia só a corrente. Com o histórico na base, o crédito é do intervalo.
  */
-function RodapeDoSite() {
+function RodapeDoSiteComponent() {
   const { usuario } = useSessao();
   const legislaturas = useLegislaturas();
   const maisAntiga = legislaturas?.at(-1)?.numero;

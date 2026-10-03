@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Periodo } from '../api';
-import { Opcoes } from './Dados';
+import { OpcoesComponent } from './Dados';
 
 /** O valor do botão "Todos os anos" no grupo de opções. */
 const TODOS = '__todos__';
@@ -14,7 +14,7 @@ const TODOS = '__todos__';
  * ATENÇÃO: O ano corrente vem marcado: ainda está sendo pago, e somado aos fechados pareceria
  * menor do que vai ser.
  */
-export function SeletorDePeriodo({
+export function SeletorDePeriodoComponent({
   anos,
   periodo,
   rotulo,
@@ -44,7 +44,7 @@ export function SeletorDePeriodo({
   return (
     <div className="governo-barra seletor-periodo" data-tour={tour}>
       {children && <p className="governo-escopo">{children}</p>}
-      <Opcoes
+      <OpcoesComponent
         rotulo={rotulo}
         opcoes={[{ valor: TODOS, rotulo: 'Todos os anos' }, ...atalhos.map((a) => ({ valor: a.rotulo, rotulo: a.rotulo }))]}
         escolhida={escolhido}
@@ -84,7 +84,7 @@ export function SeletorDePeriodo({
             </select>
           </label>
         </span>
-      </Opcoes>
+      </OpcoesComponent>
     </div>
   );
 }

@@ -1,12 +1,12 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ProvedorDoTour } from './Tour';
+import { ProvedorDoTourComponent } from './Tour';
 import { useTour } from './contextoDoTour';
 import { CHAVE_CONSENTIMENTO, EVENTO_CONSENTIMENTO } from '../consentimento';
 import { VERSAO_CONSENTIMENTO } from '../textos-legais';
 import { PASSOS_DO_SITE, passosDoGrafo, type PassoDoTour } from '../tour';
-import { BotaoDoTour } from './BotaoDoTour';
+import { BotaoDoTourComponent } from './BotaoDoTour';
 
 function BotaoDeAbrir() {
   const { iniciar } = useTour();
@@ -33,10 +33,10 @@ function Alvos({ sem = [] }: { sem?: string[] }) {
 function renderizar(sem: string[] = []) {
   return render(
     <MemoryRouter initialEntries={['/']}>
-      <ProvedorDoTour>
+      <ProvedorDoTourComponent>
         <BotaoDeAbrir />
         <Alvos sem={sem} />
-      </ProvedorDoTour>
+      </ProvedorDoTourComponent>
     </MemoryRouter>,
   );
 }
@@ -50,11 +50,11 @@ const PASSOS_DA_TELA: PassoDoTour[] = [
 function renderizarTela() {
   return render(
     <MemoryRouter initialEntries={['/parlamentares']}>
-      <ProvedorDoTour>
-        <BotaoDoTour nome="grafo" passos={PASSOS_DA_TELA} />
+      <ProvedorDoTourComponent>
+        <BotaoDoTourComponent nome="grafo" passos={PASSOS_DA_TELA} />
         <div data-tour="um">um</div>
         <div data-tour="dois">dois</div>
-      </ProvedorDoTour>
+      </ProvedorDoTourComponent>
     </MemoryRouter>,
   );
 }
@@ -266,11 +266,11 @@ describe('passos opcionais ausentes', () => {
     ];
     render(
       <MemoryRouter initialEntries={['/x']}>
-        <ProvedorDoTour>
-          <BotaoDoTour nome="grafo" passos={passos} />
+        <ProvedorDoTourComponent>
+          <BotaoDoTourComponent nome="grafo" passos={passos} />
           <div data-tour="um">um</div>
           <div data-tour="dois">dois</div>
-        </ProvedorDoTour>
+        </ProvedorDoTourComponent>
       </MemoryRouter>,
     );
 

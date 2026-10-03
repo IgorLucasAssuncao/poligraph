@@ -10,16 +10,16 @@ import {
   type PanoramaDaCasa,
   type Parlamentar,
 } from '../api';
-import { LegendaDoGrafo } from '../componentes/LegendaDoGrafo';
-import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
-import { SugestoesParaSeguir } from '../componentes/SugestoesParaSeguir';
-import { OQueMudou } from '../componentes/OQueMudou';
-import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
+import { LegendaDoGrafoComponent } from '../componentes/LegendaDoGrafo';
+import { LinhaParlamentarComponent } from '../componentes/LinhaParlamentar';
+import { SugestoesParaSeguirComponent } from '../componentes/SugestoesParaSeguir';
+import { OQueMudouComponent } from '../componentes/OQueMudou';
+import { TelaDoGrafoComponent } from '../componentes/TelaDoGrafo';
 import { useSessao } from '../sessao';
-import { EsqueletoDePainel } from '../componentes/Esqueleto';
+import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { useLegislaturaDaUrl, useLegislaturas } from '../componentes/useLegislatura';
-import { BarraDePeriodo } from '../componentes/BarraDePeriodo';
-import { ComProcedencia } from '../componentes/ModoAnalise';
+import { BarraDePeriodoComponent } from '../componentes/BarraDePeriodo';
+import { ComProcedenciaComponent } from '../componentes/ModoAnalise';
 import { periodoDaLegislatura } from '../formato';
 
 /**
@@ -55,7 +55,7 @@ import { periodoDaLegislatura } from '../formato';
  * disponível — e a própria tela diz isso, para não ler como destaque nosso
  * (RNF-16).
  */
-export function Inicio() {
+export function InicioComponent() {
   const { usuario } = useSessao();
   const [lido, setLido] = useState<{ de?: number; panorama: Panorama | null } | null>(null);
   const [seguidos, setSeguidos] = useState<Parlamentar[]>([]);
@@ -111,23 +111,23 @@ export function Inicio() {
           </div>
         </section>
 
-        <BarraDePeriodo />
+        <BarraDePeriodoComponent />
 
         {panorama ? (
-          <Base panorama={panorama} />
+          <BaseComponent panorama={panorama} />
         ) : (
-          <EsqueletoDePainel rotulo="Carregando o tamanho da base" cartoes={2} alturaDoGrafico={0} />
+          <EsqueletoDePainelComponent rotulo="Carregando o tamanho da base" cartoes={2} alturaDoGrafico={0} />
         )}
 
-        <GrafoDaAbertura legislatura={legislatura} />
+        <GrafoDaAberturaComponent legislatura={legislatura} />
 
-        {seguidos.length > 0 && <OQueMudou />}
+        {seguidos.length > 0 && <OQueMudouComponent />}
 
         {seguidos.length > 0 && (
           <section className="painel-secao">
             <h2>Quem você segue</h2>
             {seguidos.slice(0, 5).map((p) => (
-              <LinhaParlamentar
+              <LinhaParlamentarComponent
                 key={p.id}
                 id={p.id}
                 nome={p.nome}
@@ -149,7 +149,7 @@ export function Inicio() {
       </div>
 
       <aside className="painel-trilho">
-        <SugestoesParaSeguir />
+        <SugestoesParaSeguirComponent />
       </aside>
     </div>
   );
@@ -166,7 +166,7 @@ export function Inicio() {
  *
  * ATENÇÃO: Com um período escolhido, sumir calado pareceria defeito.
  */
-function GrafoDaAbertura({ legislatura }: { legislatura?: number }) {
+function GrafoDaAberturaComponent({ legislatura }: { legislatura?: number }) {
   const marco = useRef<HTMLElement>(null);
   const [visivel, setVisivel] = useState(false);
   const [lido, setLido] = useState<{ de?: number; grafo: DadosDoGrafo | 'vazio' } | null>(null);
@@ -223,12 +223,12 @@ function GrafoDaAbertura({ legislatura }: { legislatura?: number }) {
         {grafo && <small>{periodoDaLegislatura(grafo.legislatura)}</small>}
       </h2>
       {grafo ? (
-        <TelaDoGrafo grafo={grafo} altura={460} embutido />
+        <TelaDoGrafoComponent grafo={grafo} altura={460} embutido />
       ) : (
         <div className="grafo-reserva" style={{ height: 460 }} aria-hidden="true" />
       )}
 
-      <LegendaDoGrafo />
+      <LegendaDoGrafoComponent />
 
       <Link
         to={`/parlamentares?vista=grafo${legislatura ? `&legislatura=${legislatura}` : ''}`}
@@ -248,7 +248,7 @@ function GrafoDaAbertura({ legislatura }: { legislatura?: number }) {
  * ATENÇÃO: "55ª legislatura" aqui, e "2015–2019 · 55ª" no seletor logo acima, diziam a
  * mesma coisa duas vezes. O título diz o período; o número fica no seletor.
  */
-function Base({ panorama }: { panorama: Panorama }) {
+function BaseComponent({ panorama }: { panorama: Panorama }) {
   if (panorama.porCasa.length === 0) {
     return (
       <section className="painel-secao">
@@ -269,7 +269,7 @@ function Base({ panorama }: { panorama: Panorama }) {
 
       <div className="painel-casas">
         {panorama.porCasa.map((casa) => (
-          <CartaoDaCasa key={casa.casa} casa={casa} legislatura={panorama.legislatura ?? undefined} />
+          <CartaoDaCasaComponent key={casa.casa} casa={casa} legislatura={panorama.legislatura ?? undefined} />
         ))}
       </div>
     </section>
@@ -284,7 +284,7 @@ function Base({ panorama }: { panorama: Panorama }) {
  * RISCO: O sigilo muda o que a figura daquela casa pode afirmar, e omiti-lo faria as
  * duas parecerem comparáveis. É achado do trabalho, não rodapé.
  */
-function CartaoDaCasa({ casa, legislatura }: { casa: PanoramaDaCasa; legislatura?: number }) {
+function CartaoDaCasaComponent({ casa, legislatura }: { casa: PanoramaDaCasa; legislatura?: number }) {
   const nome = NOME_DA_CASA[casa.casa];
   const abertas = casa.votacoes - casa.votacoesSecretas;
 
@@ -300,12 +300,12 @@ function CartaoDaCasa({ casa, legislatura }: { casa: PanoramaDaCasa; legislatura
         <div>
           <dt>votações de plenário</dt>
           <dd>
-            <ComProcedencia
+            <ComProcedenciaComponent
               consulta={{ contexto: 'painel', casa: casa.casa, legislatura }}
               rotulo={`Votações · ${nome.nome}`}
             >
               {casa.votacoes.toLocaleString('pt-BR')}
-            </ComProcedencia>
+            </ComProcedenciaComponent>
           </dd>
         </div>
         <div>

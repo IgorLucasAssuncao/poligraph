@@ -1,30 +1,30 @@
 import type { ReactNode } from 'react';
 import { BrowserRouter, Link, Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import { destinoSeguro } from './componentes/useEntrar';
-import { BannerConsentimento } from './componentes/BannerConsentimento';
-import { Layout } from './componentes/Layout';
-import { Inicio } from './paginas/Inicio';
-import { Login } from './paginas/Login';
-import { Metodologia } from './paginas/Metodologia';
-import { MinhaConta } from './paginas/MinhaConta';
-import { Emendas } from './paginas/Emendas';
-import { Entidade } from './paginas/Entidade';
-import { Entidades } from './paginas/Entidades';
-import { Governo } from './paginas/Governo';
-import { Parlamentar } from './paginas/Parlamentar';
-import { Parlamentares } from './paginas/Parlamentares';
-import { PoliticaDePrivacidade } from './paginas/PoliticaDePrivacidade';
-import { Questionario } from './paginas/Questionario';
-import { ProvedorDeSessao, useSessao } from './sessao';
+import { BannerConsentimentoComponent } from './componentes/BannerConsentimento';
+import { LayoutComponent } from './componentes/Layout';
+import { InicioComponent } from './paginas/Inicio';
+import { LoginComponent } from './paginas/Login';
+import { MetodologiaComponent } from './paginas/Metodologia';
+import { MinhaContaComponent } from './paginas/MinhaConta';
+import { EmendasComponent } from './paginas/Emendas';
+import { EntidadeComponent } from './paginas/Entidade';
+import { EntidadesComponent } from './paginas/Entidades';
+import { GovernoComponent } from './paginas/Governo';
+import { ParlamentarComponent } from './paginas/Parlamentar';
+import { ParlamentaresComponent } from './paginas/Parlamentares';
+import { PoliticaDePrivacidadeComponent } from './paginas/PoliticaDePrivacidade';
+import { QuestionarioComponent } from './paginas/Questionario';
+import { ProvedorDeSessaoComponent, useSessao } from './sessao';
 import './App.css';
 
-export default function App() {
+export default function AppComponent() {
   return (
     <BrowserRouter>
-      <ProvedorDeSessao>
-        <BannerConsentimento />
-        <Roteador />
-      </ProvedorDeSessao>
+      <ProvedorDeSessaoComponent>
+        <BannerConsentimentoComponent />
+        <RoteadorComponent />
+      </ProvedorDeSessaoComponent>
     </BrowserRouter>
   );
 }
@@ -46,7 +46,7 @@ export default function App() {
  * e quem tiver um link salvo não pode cair num 404 — nem ser mandado para a
  * home, que perderia a intenção de quem clicou.
  */
-function Roteador() {
+function RoteadorComponent() {
   const { usuario, carregando, leituraPublica } = useSessao();
 
   if (carregando) return <div className="carregando-inicial">carregando…</div>;
@@ -54,38 +54,38 @@ function Roteador() {
   if (!usuario) {
     return (
       <Routes>
-        <Route path="/privacidade" element={<DocumentoPublico><PoliticaDePrivacidade /></DocumentoPublico>} />
-        <Route path="/metodologia" element={<DocumentoPublico><Metodologia /></DocumentoPublico>} />
+        <Route path="/privacidade" element={<DocumentoPublicoComponent><PoliticaDePrivacidadeComponent /></DocumentoPublicoComponent>} />
+        <Route path="/metodologia" element={<DocumentoPublicoComponent><MetodologiaComponent /></DocumentoPublicoComponent>} />
         {leituraPublica ? (
           <>
-            <Route path="/entrar" element={<Login />} />
-            <Route path="/conta" element={<Login />} />
-            <Route path="*" element={<LeituraSemConta />} />
+            <Route path="/entrar" element={<LoginComponent />} />
+            <Route path="/conta" element={<LoginComponent />} />
+            <Route path="*" element={<LeituraSemContaComponent />} />
           </>
         ) : (
-          <Route path="*" element={<Login />} />
+          <Route path="*" element={<LoginComponent />} />
         )}
       </Routes>
     );
   }
 
   return (
-    <Layout>
+    <LayoutComponent>
       <Routes>
-        <Route path="/" element={<Inicio />} />
-        <Route path="/parlamentares" element={<Parlamentares />} />
-        <Route path="/resultado" element={<Questionario />} />
-        <Route path="/parlamentar/:id/:aba?" element={<Parlamentar />} />
-        <Route path="/governo" element={<Governo />} />
-        <Route path="/emendas" element={<Emendas />} />
-        <Route path="/entidades" element={<Entidades />} />
-        <Route path="/entidades/:cnpj" element={<Entidade />} />
+        <Route path="/" element={<InicioComponent />} />
+        <Route path="/parlamentares" element={<ParlamentaresComponent />} />
+        <Route path="/resultado" element={<QuestionarioComponent />} />
+        <Route path="/parlamentar/:id/:aba?" element={<ParlamentarComponent />} />
+        <Route path="/governo" element={<GovernoComponent />} />
+        <Route path="/emendas" element={<EmendasComponent />} />
+        <Route path="/entidades" element={<EntidadesComponent />} />
+        <Route path="/entidades/:cnpj" element={<EntidadeComponent />} />
         <Route path="/orcamento" element={<Navigate to="/governo" replace />} />
         <Route path="/dinheiro" element={<Navigate to="/emendas" replace />} />
-        <Route path="/conta" element={<MinhaConta />} />
-        <Route path="/entrar" element={<VoltarDepoisDeEntrar />} />
-        <Route path="/privacidade" element={<PoliticaDePrivacidade />} />
-        <Route path="/metodologia" element={<Metodologia />} />
+        <Route path="/conta" element={<MinhaContaComponent />} />
+        <Route path="/entrar" element={<VoltarDepoisDeEntrarComponent />} />
+        <Route path="/privacidade" element={<PoliticaDePrivacidadeComponent />} />
+        <Route path="/metodologia" element={<MetodologiaComponent />} />
 
         <Route path="/explorar" element={<Navigate to="/parlamentares" replace />} />
         <Route
@@ -97,34 +97,34 @@ function Roteador() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Layout>
+    </LayoutComponent>
   );
 }
 
 /** O site para quem não entrou, quando a leitura está liberada: só as páginas de dado público. */
-function LeituraSemConta() {
+function LeituraSemContaComponent() {
   return (
-    <Layout>
+    <LayoutComponent>
       <Routes>
-        <Route path="/" element={<Inicio />} />
-        <Route path="/parlamentares" element={<Parlamentares />} />
-        <Route path="/resultado" element={<Questionario />} />
-        <Route path="/parlamentar/:id/:aba?" element={<Parlamentar />} />
-        <Route path="/governo" element={<Governo />} />
-        <Route path="/emendas" element={<Emendas />} />
-        <Route path="/entidades" element={<Entidades />} />
-        <Route path="/entidades/:cnpj" element={<Entidade />} />
+        <Route path="/" element={<InicioComponent />} />
+        <Route path="/parlamentares" element={<ParlamentaresComponent />} />
+        <Route path="/resultado" element={<QuestionarioComponent />} />
+        <Route path="/parlamentar/:id/:aba?" element={<ParlamentarComponent />} />
+        <Route path="/governo" element={<GovernoComponent />} />
+        <Route path="/emendas" element={<EmendasComponent />} />
+        <Route path="/entidades" element={<EntidadesComponent />} />
+        <Route path="/entidades/:cnpj" element={<EntidadeComponent />} />
         <Route path="/questionario" element={<Navigate to="/resultado" replace />} />
         <Route path="/explorar" element={<Navigate to="/parlamentares" replace />} />
         <Route path="/grafo" element={<Navigate to="/parlamentares?vista=grafo" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Layout>
+    </LayoutComponent>
   );
 }
 
 /** Depois de entrar, de volta para onde a pessoa estava — seguir alguém, a própria conta. */
-function VoltarDepoisDeEntrar() {
+function VoltarDepoisDeEntrarComponent() {
   const [parametros] = useSearchParams();
   return <Navigate to={destinoSeguro(parametros.get('voltar'))} replace />;
 }
@@ -133,7 +133,7 @@ function VoltarDepoisDeEntrar() {
  * Página acessível sem login, com o mínimo de moldura: a política de privacidade e o
  * "Como calculamos". Nenhuma das duas mostra dado de ninguém.
  */
-function DocumentoPublico({ children }: { children: ReactNode }) {
+function DocumentoPublicoComponent({ children }: { children: ReactNode }) {
   return (
     <div className="documento-publico">
       <header className="cabecalho-publico">

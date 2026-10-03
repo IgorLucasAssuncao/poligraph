@@ -8,12 +8,12 @@ import type {
 } from '../api';
 import { listarConvenios, listarEmendas, listarFavorecidos } from '../api';
 import { anosDeCotaDaEmenda, dataCurta, mesCurto, mesesContinuos, nomeProprio, reais } from '../formato';
-import { BotaoBaixarCsv } from './BotaoBaixarCsv';
-import { BotaoMostrarMais } from './BotaoMostrarMais';
+import { BotaoBaixarCsvComponent } from './BotaoBaixarCsv';
+import { BotaoMostrarMaisComponent } from './BotaoMostrarMais';
 import { baixarCsv, buscarTodas } from '../exportar';
-import { LinkDeFonte } from './LinkDeFonte';
+import { LinkDeFonteComponent } from './LinkDeFonte';
 import { NENHUM, usePaginas } from './usePaginas';
-import { Termo } from './Termo';
+import { TermoComponent } from './Termo';
 
 /**
  * Para onde o dinheiro das emendas foi de fato: quem recebeu, quando e por qual convênio.
@@ -27,7 +27,7 @@ import { Termo } from './Termo';
  * identificação aparecem como linhas próprias, com o valor — a soma da seção continua
  * sendo o total recebido.
  */
-export function QuemRecebeu({
+export function QuemRecebeuComponent({
   pessoaId,
   favorecidos,
   ano,
@@ -44,8 +44,8 @@ export function QuemRecebeu({
   if (favorecidos.recebido === 0) return null;
 
   const foraDaLista: [string, ReactNode, number][] = [
-    ['intermediario', <Termo key="intermediario" nome="intermediario">Via Banco do Brasil, que repassa</Termo>, favorecidos.viaIntermediario],
-    ['pessoas', <Termo key="pessoas" nome="favorecidoPessoa">A pessoas, sem identificação</Termo>, favorecidos.aPessoas],
+    ['intermediario', <TermoComponent key="intermediario" nome="intermediario">Via Banco do Brasil, que repassa</TermoComponent>, favorecidos.viaIntermediario],
+    ['pessoas', <TermoComponent key="pessoas" nome="favorecidoPessoa">A pessoas, sem identificação</TermoComponent>, favorecidos.aPessoas],
     ['sem', 'Sem identificação na fonte', favorecidos.semIdentificacao],
   ];
 
@@ -83,7 +83,7 @@ export function QuemRecebeu({
             </li>
           ))}
       </ul>
-      <BotaoMostrarMais {...lista} aoClicar={lista.carregarMais} />
+      <BotaoMostrarMaisComponent {...lista} aoClicar={lista.carregarMais} />
     </>
   );
 }
@@ -102,7 +102,7 @@ function lugar(municipio: string | null, uf: string | null): string | null {
  * ATENÇÃO: Mês com estorno maior que o pago fica com barra zero, e a dica mostra o valor
  * negativo. A tabela logo abaixo traz todos os meses, para quem não usa o mouse.
  */
-export function QuandoFoiPago({ meses, ano }: { meses: PagamentoPorMes[]; ano: number }) {
+export function QuandoFoiPagoComponent({ meses, ano }: { meses: PagamentoPorMes[]; ano: number }) {
   const [emFoco, setEmFoco] = useState<PagamentoPorMes | null>(null);
 
   if (meses.length === 0) return null;
@@ -174,7 +174,7 @@ export function QuandoFoiPago({ meses, ano }: { meses: PagamentoPorMes[]; ano: n
  * RISCO: O valor é do convênio inteiro. Quando ele recebe emenda de mais de um autor, a
  * linha diz de quantas — sem isso, a lista leria como dinheiro deste parlamentar.
  */
-export function Convenios({
+export function ConveniosComponent({
   pessoaId,
   convenios,
   ano,
@@ -193,7 +193,7 @@ export function Convenios({
   return (
     <>
       <h3 className="titulo-secao">
-        <Termo nome="convenio">Convênios</Termo>
+        <TermoComponent nome="convenio">Convênios</TermoComponent>
       </h3>
       <p className="ajuda ajuda-espacada">
         {convenios.quantidade} {convenios.quantidade === 1 ? 'convênio financiado' : 'convênios financiados'}{' '}
@@ -214,12 +214,12 @@ export function Convenios({
                 <> · financiado por {c.emendasQueFinanciam} emendas, de um ou mais autores</>
               )}
               {' · '}
-              <LinkDeFonte href={c.urlFonte}>no Portal</LinkDeFonte>
+              <LinkDeFonteComponent href={c.urlFonte}>no Portal</LinkDeFonteComponent>
             </p>
           </li>
         ))}
       </ul>
-      <BotaoMostrarMais {...lista} aoClicar={lista.carregarMais} />
+      <BotaoMostrarMaisComponent {...lista} aoClicar={lista.carregarMais} />
     </>
   );
 }
@@ -230,14 +230,14 @@ export function Convenios({
  * DECISÃO: Fechadas até a pessoa pedir: quem só quer o resumo não precisa delas, e quem quer
  * conferir tem o caminho.
  */
-export function EmendasUmaAUma({ pessoaId, ano, total }: { pessoaId: number; ano: number; total: number }) {
+export function EmendasUmaAUmaComponent({ pessoaId, ano, total }: { pessoaId: number; ano: number; total: number }) {
   const lista = usePaginas(NENHUM, total, 8, (pagina) => listarEmendas(pessoaId, ano, pagina, 8));
 
   return (
     <>
       <h3 className="titulo-secao">
         Emenda por emenda{' '}
-        <BotaoBaixarCsv
+        <BotaoBaixarCsvComponent
           rotulo="Baixar todas (CSV)"
           montar={async () => {
             const todas = await buscarTodas((pagina) => listarEmendas(pessoaId, ano, pagina, 50));
@@ -262,13 +262,13 @@ export function EmendasUmaAUma({ pessoaId, ano, total }: { pessoaId: number; ano
               </span>
               <span className="lancamento-fim">
                 <span className="gasto-valor">{reais(e.empenhado)}</span>
-                <LinkDeFonte href={e.urlFonte}>no Portal</LinkDeFonte>
+                <LinkDeFonteComponent href={e.urlFonte}>no Portal</LinkDeFonteComponent>
               </span>
             </li>
           ))}
         </ul>
       )}
-      <BotaoMostrarMais
+      <BotaoMostrarMaisComponent
         {...lista}
         rotulo={lista.itens.length === 0 ? `Ver as ${total} emendas` : undefined}
         aoClicar={lista.carregarMais}

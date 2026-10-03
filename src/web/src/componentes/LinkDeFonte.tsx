@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
  * ATENÇÃO: `noopener noreferrer`: a página oficial não recebe de onde a pessoa veio, nem
  * controle sobre esta aba.
  */
-export function LinkDeFonte({ href, children }: { href: string | null | undefined; children: ReactNode }) {
+export function LinkDeFonteComponent({ href, children }: { href: string | null | undefined; children: ReactNode }) {
   if (!href) return null;
 
   return (

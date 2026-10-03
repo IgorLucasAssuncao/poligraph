@@ -6,7 +6,7 @@ import { useState } from 'react';
  * DECISÃO: `montar` busca o que for preciso na hora do clique: a lista inteira, e não só a
  * página que está na tela.
  */
-export function BotaoBaixarCsv({ rotulo = 'Baixar CSV', montar }: { rotulo?: string; montar: () => Promise<void> | void }) {
+export function BotaoBaixarCsvComponent({ rotulo = 'Baixar CSV', montar }: { rotulo?: string; montar: () => Promise<void> | void }) {
   const [baixando, setBaixando] = useState(false);
   const [erro, setErro] = useState(false);
 

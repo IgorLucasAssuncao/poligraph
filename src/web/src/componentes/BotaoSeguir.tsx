@@ -28,7 +28,7 @@ import { useEntrar } from './useEntrar';
  * RISCO: Na primeira vez, a API responde 428 e o botão pergunta o consentimento (Pendência 62).
  * Só com o aceite a chamada volta, e a API grava a versão do texto junto.
  */
-export function BotaoSeguir({
+export function BotaoSeguirComponent({
   pessoaId,
   seguindo,
   aoAlternar,
@@ -62,7 +62,7 @@ export function BotaoSeguir({
         <span>{seguindo ? 'Seguindo' : 'Seguir'}</span>
       </button>
       {perguntando && (
-        <PedidoDeConsentimento
+        <PedidoDeConsentimentoComponent
           aoAceitar={() => {
             setPerguntando(false);
             void executar(true, true);
@@ -98,7 +98,7 @@ export function BotaoSeguir({
  * O pedido de consentimento, num `<dialog>` modal: foco preso e Esc, como o tour e o painel do
  * modo análise. Esc e "Agora não" fecham sem seguir.
  */
-function PedidoDeConsentimento({ aoAceitar, aoRecusar }: { aoAceitar: () => void; aoRecusar: () => void }) {
+function PedidoDeConsentimentoComponent({ aoAceitar, aoRecusar }: { aoAceitar: () => void; aoRecusar: () => void }) {
   const dialogo = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {

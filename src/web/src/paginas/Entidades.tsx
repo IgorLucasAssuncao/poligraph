@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { listarEntidades, type EntidadeNaLista, type GrupoDeEntidade, type PaginaDe } from '../api';
-import { AbasDoDinheiro } from '../componentes/AbasDoDinheiro';
-import { BotaoMostrarMais } from '../componentes/BotaoMostrarMais';
-import { CabecalhoDaColuna } from '../componentes/Layout';
-import { LinkDeFonte } from '../componentes/LinkDeFonte';
+import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
+import { BotaoMostrarMaisComponent } from '../componentes/BotaoMostrarMais';
+import { CabecalhoDaColunaComponent } from '../componentes/Layout';
+import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { FONTES } from '../fontes';
 import { nomeProprio, reaisCompacto } from '../formato';
-import { EsqueletoDeLista } from '../componentes/Esqueleto';
+import { EsqueletoDeListaComponent } from '../componentes/Esqueleto';
 
 /**
  * Quem recebeu dinheiro de emenda: prefeituras, governos estaduais, associações, empresas.
@@ -18,7 +18,7 @@ import { EsqueletoDeLista } from '../componentes/Esqueleto';
  *
  * O filtro e a busca ficam no endereço: o link compartilhado abre o mesmo recorte.
  */
-export function Entidades() {
+export function EntidadesComponent() {
   const [parametros, setParametros] = useSearchParams();
   const grupo = (parametros.get('grupo') as GrupoDeEntidade | null) ?? null;
   const busca = parametros.get('busca') ?? '';
@@ -69,8 +69,8 @@ export function Entidades() {
 
   return (
     <>
-      <AbasDoDinheiro />
-      <CabecalhoDaColuna titulo="Entidades" subtitulo="Quem recebeu dinheiro de emenda parlamentar" />
+      <AbasDoDinheiroComponent />
+      <CabecalhoDaColunaComponent titulo="Entidades" subtitulo="Quem recebeu dinheiro de emenda parlamentar" />
 
       <div className="filtros-entidades">
         <label htmlFor="busca-entidade" className="sr-apenas">
@@ -100,7 +100,7 @@ export function Entidades() {
       </div>
 
       {erro && <p className="erro">Não foi possível carregar as entidades agora.</p>}
-      {!erro && !pagina && <EsqueletoDeLista rotulo="Carregando as entidades" />}
+      {!erro && !pagina && <EsqueletoDeListaComponent rotulo="Carregando as entidades" />}
 
       {pagina && (
         <section className="governo-secao">
@@ -129,7 +129,7 @@ export function Entidades() {
             </ol>
           )}
 
-          <BotaoMostrarMais
+          <BotaoMostrarMaisComponent
             proximos={Math.min(pagina.tamanho, restantes)}
             restantes={restantes}
             carregando={carregando}
@@ -140,8 +140,8 @@ export function Entidades() {
       )}
 
       <p className="fonte-dado">
-        Fontes: <LinkDeFonte href={FONTES.emendas.url}>{FONTES.emendas.nome}</LinkDeFonte>;{' '}
-        <LinkDeFonte href={FONTES.cnpj.url}>{FONTES.cnpj.nome}</LinkDeFonte>, para a sede.
+        Fontes: <LinkDeFonteComponent href={FONTES.emendas.url}>{FONTES.emendas.nome}</LinkDeFonteComponent>;{' '}
+        <LinkDeFonteComponent href={FONTES.cnpj.url}>{FONTES.cnpj.nome}</LinkDeFonteComponent>, para a sede.
       </p>
     </>
   );

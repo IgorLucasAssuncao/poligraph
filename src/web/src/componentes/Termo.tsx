@@ -21,7 +21,7 @@ import { createPortal } from 'react-dom';
  * que aconteceu na faixa de números da ficha (2026-10-03). Dentro de um `<dialog>` aberto, o
  * portal vai para o próprio diálogo: no `<body>` o balão ficaria atrás da camada superior.
  */
-export function Termo({ nome, children }: { nome: keyof typeof GLOSSARIO; children?: React.ReactNode }) {
+export function TermoComponent({ nome, children }: { nome: keyof typeof GLOSSARIO; children?: React.ReactNode }) {
   const [aberto, setAberto] = useState(false);
   const caixa = useRef<HTMLSpanElement>(null);
   const balao = useRef<HTMLSpanElement>(null);

@@ -15,7 +15,7 @@ import { periodoDaLegislatura } from '../formato';
  * ATENÇÃO: "Mandatos" dizia errado no Senado: o mandato de senador tem oito anos e cobre
  * duas legislaturas, e a lista mostrava um mandato só como dois.
  */
-export function MandatosDoParlamentar({
+export function MandatosDoParlamentarComponent({
   mandatos,
   atual,
   caminho,

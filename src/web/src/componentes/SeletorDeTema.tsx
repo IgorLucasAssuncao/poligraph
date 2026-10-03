@@ -8,7 +8,7 @@ import { aplicarTema, NOME_DO_TEMA, TEMAS, temaGuardado, type Tema } from '../te
  * dois valores, e "seguir o sistema" é o terceiro — o mais importante, porque é o
  * padrão e o único que continua acompanhando o SO depois.
  */
-export function SeletorDeTema() {
+export function SeletorDeTemaComponent() {
   const [tema, setTema] = useState<Tema>(temaGuardado);
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export function SeletorDeTema() {
           aria-label={`Tema ${NOME_DO_TEMA[opcao].toLowerCase()}`}
           onClick={() => setTema(opcao)}
         >
-          <Icone tema={opcao} />
+          <IconeComponent tema={opcao} />
         </button>
       ))}
     </div>
@@ -40,7 +40,7 @@ export function SeletorDeTema() {
  *
  * Sistema: a tela do computador — é ele quem decide.
  */
-function Icone({ tema }: { tema: Tema }) {
+function IconeComponent({ tema }: { tema: Tema }) {
   if (tema === 'claro') {
     return (
       <svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true" focusable="false">

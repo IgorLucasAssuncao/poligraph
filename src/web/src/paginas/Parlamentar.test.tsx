@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Parlamentar } from './Parlamentar';
+import { ParlamentarComponent } from './Parlamentar';
 import type { EmendasDoParlamentar, Ficha, FinanciamentoDeCampanha } from '../api';
 
 vi.mock('../sessao', () => ({
@@ -155,7 +155,7 @@ function renderizar() {
   return render(
     <MemoryRouter initialEntries={['/parlamentar/1']}>
       <Routes>
-        <Route path="/parlamentar/:id/:aba?" element={<Parlamentar />} />
+        <Route path="/parlamentar/:id/:aba?" element={<ParlamentarComponent />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -361,7 +361,7 @@ describe('contas — campanha', () => {
   });
 });
 
-/** ATENÇÃO: O texto é quebrado por `<strong>` e `<Termo>` — a checagem é sobre o todo. */
+/** ATENÇÃO: O texto é quebrado por `<strong>` e `<TermoComponent>` — a checagem é sobre o todo. */
 async function tela(): Promise<string> {
   return await waitFor(() => document.body.textContent!.replace(/\s+/g, ' '));
 }

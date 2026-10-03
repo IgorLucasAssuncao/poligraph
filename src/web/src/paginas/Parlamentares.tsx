@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
-import { BarraDePeriodo } from '../componentes/BarraDePeriodo';
-import { Explorar } from './Explorar';
-import { Grafo } from './Grafo';
+import { BarraDePeriodoComponent } from '../componentes/BarraDePeriodo';
+import { ExplorarComponent } from './Explorar';
+import { GrafoComponent } from './Grafo';
 
 type Vista = 'lista' | 'grafo';
 
@@ -31,13 +31,13 @@ const VISTAS: { chave: Vista; rotulo: string; ajuda: string }[] = [
  * Sem montar as duas e esconder uma: o grafo mede o contêiner para
  * dimensionar o canvas, e num contêiner oculto ele nasceria com altura zero.
  */
-export function Parlamentares() {
+export function ParlamentaresComponent() {
   const [parametros, definirParametros] = useSearchParams();
   const vista: Vista = parametros.get('vista') === 'grafo' ? 'grafo' : 'lista';
 
   return (
     <>
-      <BarraDePeriodo comTodas={vista === 'lista'} />
+      <BarraDePeriodoComponent comTodas={vista === 'lista'} />
 
       <div className="abas-vista" data-tour="vistas" role="tablist" aria-label="Como ver os parlamentares">
         {VISTAS.map((opcao) => (
@@ -65,7 +65,7 @@ export function Parlamentares() {
         ))}
       </div>
 
-      {vista === 'lista' ? <Explorar /> : <Grafo />}
+      {vista === 'lista' ? <ExplorarComponent /> : <GrafoComponent />}
     </>
   );
 }

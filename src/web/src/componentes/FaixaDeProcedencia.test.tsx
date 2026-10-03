@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import { FaixaDeProcedencia } from './FaixaDeProcedencia';
+import { FaixaDeProcedenciaComponent } from './FaixaDeProcedencia';
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -21,7 +21,7 @@ function renderizarEm(endereco: string) {
   return render(
     <MemoryRouter initialEntries={[endereco]}>
       <Routes>
-        <Route path="*" element={<><FaixaDeProcedencia /><Endereco /></>} />
+        <Route path="*" element={<><FaixaDeProcedenciaComponent /><Endereco /></>} />
       </Routes>
     </MemoryRouter>,
   );

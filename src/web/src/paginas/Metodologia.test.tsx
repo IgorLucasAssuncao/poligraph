@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Metodologia as DadosDaMetodologia } from '../api';
-import { Metodologia } from './Metodologia';
+import { MetodologiaComponent } from './Metodologia';
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -34,7 +34,7 @@ const DADOS: DadosDaMetodologia = {
 function renderizar() {
   return render(
     <MemoryRouter>
-      <Metodologia />
+      <MetodologiaComponent />
     </MemoryRouter>,
   );
 }

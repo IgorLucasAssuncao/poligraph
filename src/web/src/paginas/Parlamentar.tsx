@@ -10,28 +10,28 @@ import {
   type Presenca,
   type VotoNaFicha,
 } from '../api';
-import { Avatar } from '../componentes/Avatar';
-import { BotaoDoTour } from '../componentes/BotaoDoTour';
+import { AvatarComponent } from '../componentes/Avatar';
+import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
 import { periodoDaLegislatura } from '../formato';
-import { BotaoMostrarMais } from '../componentes/BotaoMostrarMais';
-import { BotaoSeguir } from '../componentes/BotaoSeguir';
-import { AbaCampanha, AbaCota, AbaEmendas, FaixaDeContas } from '../componentes/ContasDoParlamentar';
+import { BotaoMostrarMaisComponent } from '../componentes/BotaoMostrarMais';
+import { BotaoSeguirComponent } from '../componentes/BotaoSeguir';
+import { AbaCampanhaComponent, AbaCotaComponent, AbaEmendasComponent, FaixaDeContasComponent } from '../componentes/ContasDoParlamentar';
 import { useContas } from '../componentes/useContas';
 import { useLegislaturas } from '../componentes/useLegislatura';
-import { BotaoBaixarCsv } from '../componentes/BotaoBaixarCsv';
-import { LinkDeFonte } from '../componentes/LinkDeFonte';
-import { ComProcedencia } from '../componentes/ModoAnalise';
-import { MandatosDoParlamentar } from '../componentes/MandatosDoParlamentar';
-import { RedesDoParlamentar } from '../componentes/RedesDoParlamentar';
+import { BotaoBaixarCsvComponent } from '../componentes/BotaoBaixarCsv';
+import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
+import { ComProcedenciaComponent } from '../componentes/ModoAnalise';
+import { MandatosDoParlamentarComponent } from '../componentes/MandatosDoParlamentar';
+import { RedesDoParlamentarComponent } from '../componentes/RedesDoParlamentar';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { usePaginas } from '../componentes/usePaginas';
-import { CabecalhoDaColuna } from '../componentes/Layout';
-import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
-import { Termo } from '../componentes/Termo';
+import { CabecalhoDaColunaComponent } from '../componentes/Layout';
+import { LinhaParlamentarComponent } from '../componentes/LinhaParlamentar';
+import { TermoComponent } from '../componentes/Termo';
 import { useSessao } from '../sessao';
 import { passosDaFicha } from '../tour';
-import { EsqueletoDeFicha, EsqueletoDeLista } from '../componentes/Esqueleto';
-import { IconeExplorar } from '../componentes/Icones';
+import { EsqueletoDeFichaComponent, EsqueletoDeListaComponent } from '../componentes/Esqueleto';
+import { IconeExplorarComponent } from '../componentes/Icones';
 
 const PASSOS_DA_FICHA = passosDaFicha();
 
@@ -85,7 +85,7 @@ const ABAS: [Aba, string][] = [
  * DECISÃO: Antes dos votos: a lista de votos tem centenas de itens, e no celular os
  * "mais parecidos" ficavam depois de ~17 mil pixels (2026-10-01).
  */
-export function Parlamentar() {
+export function ParlamentarComponent() {
   const { id, aba: abaDoEndereco } = useParams();
   const pessoaId = Number(id);
   const aba: Aba = ABAS.some(([chave]) => chave === abaDoEndereco) ? (abaDoEndereco as Aba) : 'votos';
@@ -125,7 +125,7 @@ export function Parlamentar() {
   if (erro) {
     return (
       <>
-        <CabecalhoDaColuna titulo="Parlamentar" comVoltar />
+        <CabecalhoDaColunaComponent titulo="Parlamentar" comVoltar />
         <p className="erro">{erro}</p>
       </>
     );
@@ -134,19 +134,19 @@ export function Parlamentar() {
   if (!ficha) {
     return (
       <>
-        <CabecalhoDaColuna titulo="Parlamentar" comVoltar />
-        <EsqueletoDeFicha />
+        <CabecalhoDaColunaComponent titulo="Parlamentar" comVoltar />
+        <EsqueletoDeFichaComponent />
       </>
     );
   }
 
   return (
     <>
-      <CabecalhoDaColuna titulo="Parlamentar" comVoltar acao={<BotaoDoTour nome="ficha" passos={PASSOS_DA_FICHA} />} />
+      <CabecalhoDaColunaComponent titulo="Parlamentar" comVoltar acao={<BotaoDoTourComponent nome="ficha" passos={PASSOS_DA_FICHA} />} />
 
       <header className="perfil-cabecalho">
         <div className="perfil-avatar-linha">
-          <Avatar nome={ficha.nome} fotoUrl={ficha.urlFoto} tamanho="grande" />
+          <AvatarComponent nome={ficha.nome} fotoUrl={ficha.urlFoto} tamanho="grande" />
 
           <div className="perfil-identidade">
             <h1>{ficha.nome}</h1>
@@ -154,7 +154,7 @@ export function Parlamentar() {
           </div>
 
           {(seguindo || emExercicio) && (
-            <BotaoSeguir pessoaId={pessoaId} seguindo={seguindo} aoAlternar={(_, agora) => setSeguindo(agora)} />
+            <BotaoSeguirComponent pessoaId={pessoaId} seguindo={seguindo} aoAlternar={(_, agora) => setSeguindo(agora)} />
           )}
         </div>
 
@@ -168,45 +168,45 @@ export function Parlamentar() {
         <div className="perfil-chips">
           {ficha.casa && (
             <span className="chip chip-casa">
-              <Termo nome={ficha.casa === 'SENADO' ? 'senado' : 'camara'}>
+              <TermoComponent nome={ficha.casa === 'SENADO' ? 'senado' : 'camara'}>
                 {ficha.casa === 'SENADO' ? 'Senador' : 'Deputado'}
-              </Termo>
+              </TermoComponent>
             </span>
           )}
           {ficha.partido && (
             <span className="chip">
-              <Termo nome="partido">{ficha.partido}</Termo>
+              <TermoComponent nome="partido">{ficha.partido}</TermoComponent>
             </span>
           )}
           {ficha.uf && <span className="chip">{ficha.uf}</span>}
         </div>
 
-        <MandatosDoParlamentar mandatos={ficha.mandatos ?? []} atual={ficha.legislatura} caminho={pathname} />
+        <MandatosDoParlamentarComponent mandatos={ficha.mandatos ?? []} atual={ficha.legislatura} caminho={pathname} />
 
         <p className="perfil-fonte">
-          <LinkDeFonte href={ficha.urlFonte}>
+          <LinkDeFonteComponent href={ficha.urlFonte}>
             {ficha.casa === 'SENADO' ? 'Página oficial no Senado' : 'Página oficial na Câmara'}
-          </LinkDeFonte>
+          </LinkDeFonteComponent>
         </p>
-        <RedesDoParlamentar redes={ficha.redesSociais ?? []} />
+        <RedesDoParlamentarComponent redes={ficha.redesSociais ?? []} />
 
         <div className="perfil-numeros" data-tour="ficha-votacoes">
           <span>
-            <ComProcedencia
+            <ComProcedenciaComponent
               consulta={{ contexto: 'votos', pessoa: ficha.id, legislatura: ficha.legislatura ?? undefined }}
               rotulo="Votos com posição"
             >
               <strong>{ficha.nVotacoes.toLocaleString('pt-BR')}</strong>
-            </ComProcedencia>{' '}
+            </ComProcedenciaComponent>{' '}
             <span>votos com posição, em plenário e comissões</span>
           </span>
         </div>
 
         {(ficha.alinhamento || ficha.presenca) && (
-          <FaixaDeAlinhamento alinhamento={ficha.alinhamento} presenca={ficha.presenca} />
+          <FaixaDeAlinhamentoComponent alinhamento={ficha.alinhamento} presenca={ficha.presenca} />
         )}
 
-        <FaixaDeContas
+        <FaixaDeContasComponent
           contas={contas}
           base={base}
           sufixo={legislaturaPedida ? `?legislatura=${legislaturaPedida}` : ''}
@@ -228,16 +228,16 @@ export function Parlamentar() {
         ))}
       </nav>
 
-      {aba === 'emendas' && <AbaEmendas pessoaId={pessoaId} contas={contas} erro={erroDasContas} />}
+      {aba === 'emendas' && <AbaEmendasComponent pessoaId={pessoaId} contas={contas} erro={erroDasContas} />}
       {aba === 'cota' && (
-        <AbaCota pessoaId={pessoaId} contas={contas} erro={erroDasContas} legislatura={ficha?.legislatura} />
+        <AbaCotaComponent pessoaId={pessoaId} contas={contas} erro={erroDasContas} legislatura={ficha?.legislatura} />
       )}
-      {aba === 'campanha' && <AbaCampanha pessoaId={pessoaId} contas={contas} erro={erroDasContas} />}
+      {aba === 'campanha' && <AbaCampanhaComponent pessoaId={pessoaId} contas={contas} erro={erroDasContas} />}
       {aba === 'votos' && (
         <>
-          <AbaSimilares similares={ficha.maisSimilares} />
+          <AbaSimilaresComponent similares={ficha.maisSimilares} />
           <h2 className="titulo-secao">Votos</h2>
-          <AbaVotos
+          <AbaVotosComponent
             pessoaId={pessoaId}
             legislatura={ficha.legislatura}
             votos={ficha.votosRecentes}
@@ -272,7 +272,7 @@ const BUSCA_MINIMA = 2;
  *
  * ATENÇÃO: Espera a digitação parar: cada tecla seria uma consulta.
  */
-function AbaVotos({
+function AbaVotosComponent({
   pessoaId,
   legislatura,
   votos,
@@ -321,7 +321,7 @@ function AbaVotos({
     <>
       <div className="barra-busca barra-busca-votos">
         <span className="icone-busca" aria-hidden="true">
-          <IconeExplorar />
+          <IconeExplorarComponent />
         </span>
         <input
           type="search"
@@ -337,10 +337,10 @@ function AbaVotos({
       </label>
 
       {erroDaBusca && <p className="erro">Não foi possível buscar agora.</p>}
-      {filtrando && !resultado && !erroDaBusca && <EsqueletoDeLista rotulo="Buscando nos votos" linhas={3} />}
+      {filtrando && !resultado && !erroDaBusca && <EsqueletoDeListaComponent rotulo="Buscando nos votos" linhas={3} />}
 
       {filtrando && resultado ? (
-        <ListaDeVotos
+        <ListaDeVotosComponent
           key={chave}
           pessoaId={pessoaId}
           legislatura={legislatura}
@@ -352,7 +352,7 @@ function AbaVotos({
         />
       ) : (
         !filtrando && (
-          <ListaDeVotos
+          <ListaDeVotosComponent
             pessoaId={pessoaId}
             legislatura={legislatura}
             votos={votos}
@@ -368,7 +368,7 @@ function AbaVotos({
 
 const POR_PAGINA_DA_BUSCA = 20;
 
-function ListaDeVotos({
+function ListaDeVotosComponent({
   pessoaId,
   legislatura,
   busca,
@@ -422,7 +422,7 @@ function ListaDeVotos({
           </>
         )}
         {' · '}
-        <BotaoBaixarCsv
+        <BotaoBaixarCsvComponent
           rotulo={busca ? 'Baixar os encontrados (CSV)' : 'Baixar todos (CSV)'}
           montar={async () => {
             const todos = await buscarTodas((pagina) => listarVotos(pessoaId, pagina, 100, legislatura, busca, semRito));
@@ -445,30 +445,30 @@ function ListaDeVotos({
         >
           <div className="linha-corpo">
             <span className={`selo selo-${classeDoVoto(v.valor)}`}>
-              {v.valor === 0 ? <Termo nome="abstencao">Abstenção</Termo> : rotuloDoVoto(v.valor)}
+              {v.valor === 0 ? <TermoComponent nome="abstencao">Abstenção</TermoComponent> : rotuloDoVoto(v.valor)}
             </span>
-            <LinhaDoVoto voto={v} />
+            <LinhaDoVotoComponent voto={v} />
 
             <span className="linha-detalhe">
               {formatarData(v.data)}
-              <ContraAOrientacao voto={v} />
+              <ContraAOrientacaoComponent voto={v} />
               {v.urlProposicao && (
                 <>
                   {' · '}
-                  <LinkDeFonte href={v.urlProposicao}>proposição</LinkDeFonte>
+                  <LinkDeFonteComponent href={v.urlProposicao}>proposição</LinkDeFonteComponent>
                 </>
               )}
               {v.urlRegistro && (
                 <>
                   {' · '}
-                  <LinkDeFonte href={v.urlRegistro}>registro da votação</LinkDeFonte>
+                  <LinkDeFonteComponent href={v.urlRegistro}>registro da votação</LinkDeFonteComponent>
                 </>
               )}
             </span>
           </div>
         </article>
       ))}
-      <BotaoMostrarMais {...lista} aoClicar={lista.carregarMais} />
+      <BotaoMostrarMaisComponent {...lista} aoClicar={lista.carregarMais} />
     </>
   );
 }
@@ -492,7 +492,7 @@ function ListaDeVotos({
  * votação daquele projeto foi — texto principal, destaque, redação final. Sem
  * isso, dois votos opostos do mesmo projeto seriam a mesma linha repetida.
  */
-function LinhaDoVoto({ voto }: { voto: VotoNaFicha }) {
+function LinhaDoVotoComponent({ voto }: { voto: VotoNaFicha }) {
   const rito = voto.categoria === 'PROCEDIMENTAL';
   const temEmenta = Boolean(voto.ementa);
 
@@ -500,7 +500,7 @@ function LinhaDoVoto({ voto }: { voto: VotoNaFicha }) {
     <>
       {rito && (
         <p className="voto-rito">
-          <Termo nome="procedimental">Questão de rito</Termo>: votou o andamento da proposta, como urgência ou adiamento
+          <TermoComponent nome="procedimental">Questão de rito</TermoComponent>: votou o andamento da proposta, como urgência ou adiamento
         </p>
       )}
 
@@ -535,7 +535,7 @@ function LinhaDoVoto({ voto }: { voto: VotoNaFicha }) {
  * ATENÇÃO: Só Sim e Não são comparáveis. `Obstrução` é tática de quórum e `Liberado` é
  * ausência de orientação — nenhuma das duas é posição de mérito.
  */
-function ContraAOrientacao({ voto }: { voto: VotoNaFicha }) {
+function ContraAOrientacaoComponent({ voto }: { voto: VotoNaFicha }) {
   const orientacao = voto.orientacaoDoGoverno;
 
   if (orientacao !== 'Sim' && orientacao !== 'Não') return null;
@@ -562,7 +562,7 @@ const SIMILARES_DE_INICIO = 5;
  *
  * nunca percentual — a base aparece junto do número
  */
-function AbaSimilares({ similares }: { similares: Ficha['maisSimilares'] }) {
+function AbaSimilaresComponent({ similares }: { similares: Ficha['maisSimilares'] }) {
   const [todos, setTodos] = useState(false);
 
   if (similares.length === 0) {
@@ -575,7 +575,7 @@ function AbaSimilares({ similares }: { similares: Ficha['maisSimilares'] }) {
     <section data-tour="ficha-similares">
       <h2 className="titulo-secao">Quem vota parecido</h2>
       {similares.slice(0, todos ? similares.length : SIMILARES_DE_INICIO).map((s) => (
-        <LinhaParlamentar
+        <LinhaParlamentarComponent
           key={s.pessoaId}
           id={s.pessoaId}
           nome={s.nome}
@@ -625,7 +625,7 @@ function AbaSimilares({ similares }: { similares: Ficha['maisSimilares'] }) {
  * vinham como percentual com a base embaixo, e a ficha mostrava "100%" para quem tinha duas
  * votações orientadas pelo partido. Abaixo de `BASE_PEQUENA` a tela diz que é pouco.
  */
-function FaixaDeAlinhamento({ alinhamento, presenca }: { alinhamento: Alinhamento | null; presenca: Presenca | null }) {
+function FaixaDeAlinhamentoComponent({ alinhamento, presenca }: { alinhamento: Alinhamento | null; presenca: Presenca | null }) {
   const governismo = alinhamento?.governismo ?? null;
   const disciplina = alinhamento?.disciplina ?? null;
 
@@ -636,7 +636,7 @@ function FaixaDeAlinhamento({ alinhamento, presenca }: { alinhamento: Alinhament
       {presenca && presenca.votacoes > 0 && (
         <div>
           <dt>
-            <Termo nome="participacao">Presença</Termo> no plenário
+            <TermoComponent nome="participacao">Presença</TermoComponent> no plenário
           </dt>
           <dd>
             {inteiro(presenca.presente)} de {inteiro(presenca.votacoes)}
@@ -653,16 +653,16 @@ function FaixaDeAlinhamento({ alinhamento, presenca }: { alinhamento: Alinhament
       {governismo !== null && (
         <div>
           <dt>
-            Seguiu a <Termo nome="orientacao">orientação</Termo> do Governo
+            Seguiu a <TermoComponent nome="orientacao">orientação</TermoComponent> do Governo
           </dt>
-          <ParteDaBase proporcao={governismo} base={alinhamento!.baseGovernismo} mediana={alinhamento!.medianaGovernismo} />
+          <ParteDaBaseComponent proporcao={governismo} base={alinhamento!.baseGovernismo} mediana={alinhamento!.medianaGovernismo} />
         </div>
       )}
 
       {disciplina !== null && (
         <div>
           <dt>Seguiu a orientação do {alinhamento!.partidoMedido}</dt>
-          <ParteDaBase proporcao={disciplina} base={alinhamento!.baseDisciplina} mediana={alinhamento!.medianaDisciplina} />
+          <ParteDaBaseComponent proporcao={disciplina} base={alinhamento!.baseDisciplina} mediana={alinhamento!.medianaDisciplina} />
         </div>
       )}
     </dl>
@@ -679,7 +679,7 @@ const BASE_PEQUENA = 20;
  * "540 de 658 votações orientadas (82%)", com o aviso quando a base é pequena e a mediana da
  * Câmara, que dá a escala do número.
  */
-function ParteDaBase({ proporcao, base, mediana }: { proporcao: number; base: number; mediana?: number | null }) {
+function ParteDaBaseComponent({ proporcao, base, mediana }: { proporcao: number; base: number; mediana?: number | null }) {
   return (
     <dd>
       {inteiro(Math.round(proporcao * base))} de {inteiro(base)}

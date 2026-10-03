@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { NOME_DA_CASA, obterPanorama, type Panorama } from '../api';
-import { BotaoGoogle } from '../componentes/BotaoGoogle';
-import { Marca } from '../componentes/Icones';
-import { SeletorDeTema } from '../componentes/SeletorDeTema';
+import { BotaoGoogleComponent } from '../componentes/BotaoGoogle';
+import { MarcaComponent } from '../componentes/Icones';
+import { SeletorDeTemaComponent } from '../componentes/SeletorDeTema';
 import { useSessao } from '../sessao';
 import { destinoSeguro } from '../componentes/useEntrar';
 
@@ -38,7 +38,7 @@ import { destinoSeguro } from '../componentes/useEntrar';
  *
  * ATENÇÃO: Dito ANTES de entrar, não depois.
  */
-export function Login() {
+export function LoginComponent() {
   const { entrou, leituraPublica } = useSessao();
   const [parametros] = useSearchParams();
   const voltar = destinoSeguro(parametros.get('voltar'));
@@ -51,12 +51,12 @@ export function Login() {
   return (
     <div className="tela-login">
       <div className="login-marca">
-        <Marca tamanho={88} />
+        <MarcaComponent tamanho={88} />
       </div>
 
       <div className="login-conteudo">
         <div className="login-topo">
-          <SeletorDeTema />
+          <SeletorDeTemaComponent />
         </div>
 
         <h1 className="login-titulo">Quem vota como você?</h1>
@@ -67,7 +67,7 @@ export function Login() {
         </p>
 
         <div className="acao-login">
-          <BotaoGoogle aoEntrar={entrou} />
+          <BotaoGoogleComponent aoEntrar={entrou} />
         </div>
 
         {leituraPublica && (
@@ -77,7 +77,7 @@ export function Login() {
           </p>
         )}
 
-        {panorama && panorama.porCasa.length > 0 && <Base panorama={panorama} />}
+        {panorama && panorama.porCasa.length > 0 && <BaseComponent panorama={panorama} />}
 
         <ul className="o-que-tem">
           <li>Um questionário montado a partir de votações nominais reais</li>
@@ -109,7 +109,7 @@ export function Login() {
  * promessa; 643 deputados e 463.994 votos são o que a torna verificável — e são o
  * argumento mais forte que esta tela tem para justificar pedir uma conta.
  */
-function Base({ panorama }: { panorama: Panorama }) {
+function BaseComponent({ panorama }: { panorama: Panorama }) {
   return (
     <dl className="login-base">
       {panorama.porCasa.map((casa) => (

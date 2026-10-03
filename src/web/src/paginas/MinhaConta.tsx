@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { excluirConta, revogarConsentimentoDeSeguir } from '../api';
-import { Avatar } from '../componentes/Avatar';
-import { CabecalhoDaColuna } from '../componentes/Layout';
+import { AvatarComponent } from '../componentes/Avatar';
+import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { useSessao } from '../sessao';
 
 /**
@@ -13,7 +13,7 @@ import { useSessao } from '../sessao';
  *
  * ATENÇÃO: Recarrega do zero: o estado em memória ainda acha que há sessão.
  */
-export function MinhaConta() {
+export function MinhaContaComponent() {
   const { usuario, sair } = useSessao();
   const [confirmando, setConfirmando] = useState(false);
   const [erro, setErro] = useState(false);
@@ -21,10 +21,10 @@ export function MinhaConta() {
 
   return (
     <>
-      <CabecalhoDaColuna titulo="Conta" />
+      <CabecalhoDaColunaComponent titulo="Conta" />
 
       <section className="conta-identidade">
-        <Avatar nome={usuario?.nome ?? '?'} fotoUrl={usuario?.fotoUrl} tamanho="grande" />
+        <AvatarComponent nome={usuario?.nome ?? '?'} fotoUrl={usuario?.fotoUrl} tamanho="grande" />
         <div>
           <strong>{usuario?.nome ?? 'Sem nome'}</strong>
           <p className="ajuda">Entrada feita com a sua conta Google.</p>

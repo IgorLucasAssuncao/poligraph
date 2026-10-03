@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listarParlamentares, listarSeguidos, type Parlamentar } from '../api';
-import { Avatar } from './Avatar';
-import { BotaoSeguir } from './BotaoSeguir';
+import { AvatarComponent } from './Avatar';
+import { BotaoSeguirComponent } from './BotaoSeguir';
 import { useSessao } from '../sessao';
 
 /**
@@ -28,7 +28,7 @@ const QUANTOS = 8;
  *
  * DECISÃO: O critério fica à vista: ordem por dado disponível, não por juízo nosso.
  */
-export function SugestoesParaSeguir() {
+export function SugestoesParaSeguirComponent() {
   const { usuario } = useSessao();
   const [sugestoes, setSugestoes] = useState<Parlamentar[]>([]);
   const [seguidos, setSeguidos] = useState<Set<number>>(new Set());
@@ -64,7 +64,7 @@ export function SugestoesParaSeguir() {
         {sugestoes.map((p) => (
           <li key={p.id}>
             <Link to={`/parlamentar/${p.id}`} className="sugestao-link" title={`${p.nome} · ${p.partido}${p.uf ? ` · ${p.uf}` : ''}`}>
-              <Avatar nome={p.nome} fotoUrl={p.urlFoto} tamanho="medio" />
+              <AvatarComponent nome={p.nome} fotoUrl={p.urlFoto} tamanho="medio" />
               <span className="sugestao-texto">
                 <strong>{p.nome}</strong>
                 <small>
@@ -74,7 +74,7 @@ export function SugestoesParaSeguir() {
               </span>
             </Link>
 
-            <BotaoSeguir
+            <BotaoSeguirComponent
               pessoaId={p.id}
               seguindo={seguidos.has(p.id)}
               aoAlternar={(id, agora) =>

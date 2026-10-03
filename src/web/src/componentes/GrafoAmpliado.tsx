@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NOME_DA_CASA, type Casa, type Grafo, type NoDoGrafo } from '../api';
-import { TelaDoGrafo, type PosicaoDoCidadao } from './TelaDoGrafo';
+import { TelaDoGrafoComponent, type PosicaoDoCidadao } from './TelaDoGrafo';
 
 /**
  * A prancheta: o grafo ocupando a JANELA INTEIRA.
@@ -23,7 +23,7 @@ import { TelaDoGrafo, type PosicaoDoCidadao } from './TelaDoGrafo';
  * ATENÇÃO: Não monta antes da primeira abertura: o Canvas mediria o contêiner com
  * altura zero e desenharia num quadro invisível.
  */
-export function GrafoAmpliado({
+export function GrafoAmpliadoComponent({
   grafo,
   cidadao,
   aberto,
@@ -68,7 +68,7 @@ export function GrafoAmpliado({
       </button>
 
       {jaAbriu && (
-        <TelaDoGrafo
+        <TelaDoGrafoComponent
           grafo={grafo}
           cidadao={cidadao}
           aoSelecionar={aoSelecionar}

@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Questionario } from './Questionario';
+import { QuestionarioComponent } from './Questionario';
 
 vi.mock('../api', async () => {
   const real = await vi.importActual<typeof import('../api')>('../api');
@@ -25,7 +25,7 @@ const PERGUNTAS = [
 function renderizar() {
   return render(
     <MemoryRouter>
-      <Questionario />
+      <QuestionarioComponent />
     </MemoryRouter>,
   );
 }

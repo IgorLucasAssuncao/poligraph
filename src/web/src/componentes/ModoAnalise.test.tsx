@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { obterProcedencia } from '../api';
 import { marcarTourVisto } from '../tour';
 import { ContextoDoTour } from './contextoDoTour';
-import { ComProcedencia, InterruptorDoModoAnalise, ProvedorDoModoAnalise } from './ModoAnalise';
+import { ComProcedenciaComponent, InterruptorDoModoAnaliseComponent, ProvedorDoModoAnaliseComponent } from './ModoAnalise';
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -34,15 +34,15 @@ afterEach(() => localStorage.clear());
 
 function renderizar() {
   return render(
-    <ProvedorDoModoAnalise>
-      <InterruptorDoModoAnalise />
+    <ProvedorDoModoAnaliseComponent>
+      <InterruptorDoModoAnaliseComponent />
       <p>
         Gastou{' '}
-        <ComProcedencia consulta={{ contexto: 'cota', pessoa: 1, ano: 2025 }} rotulo="Cota parlamentar de 2025">
+        <ComProcedenciaComponent consulta={{ contexto: 'cota', pessoa: 1, ano: 2025 }} rotulo="Cota parlamentar de 2025">
           <strong>R$ 412.000,00</strong>
-        </ComProcedencia>
+        </ComProcedenciaComponent>
       </p>
-    </ProvedorDoModoAnalise>,
+    </ProvedorDoModoAnaliseComponent>,
   );
 }
 
@@ -80,9 +80,9 @@ describe('o tour do modo análise', () => {
   function comTour(iniciar: (nome?: string) => void) {
     return render(
       <ContextoDoTour.Provider value={{ iniciar, registrar: () => () => {} }}>
-        <ProvedorDoModoAnalise>
-          <InterruptorDoModoAnalise />
-        </ProvedorDoModoAnalise>
+        <ProvedorDoModoAnaliseComponent>
+          <InterruptorDoModoAnaliseComponent />
+        </ProvedorDoModoAnaliseComponent>
       </ContextoDoTour.Provider>,
     );
   }
