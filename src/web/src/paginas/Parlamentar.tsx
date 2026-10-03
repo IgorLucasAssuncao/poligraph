@@ -196,7 +196,7 @@ export function Parlamentar() {
               consulta={{ contexto: 'votos', pessoa: ficha.id, legislatura: ficha.legislatura ?? undefined }}
               rotulo="Votos com posição"
             >
-              <strong>{ficha.nVotacoes}</strong>
+              <strong>{ficha.nVotacoes.toLocaleString('pt-BR')}</strong>
             </ComProcedencia>{' '}
             <span>votos com posição, em plenário e comissões</span>
           </span>
@@ -403,7 +403,7 @@ function ListaDeVotos({
         ) : (
           <>
             {lista.itens.length} de {total} registros de voto
-            {semPosicao > 0 && `, ${semPosicao} deles sem posição (obstrução ou ausência registrada)`}
+            {semPosicao > 0 && `, ${semPosicao} deles sem posição (abstenção, obstrução ou ausência registrada)`}
           </>
         )}
         {' · '}

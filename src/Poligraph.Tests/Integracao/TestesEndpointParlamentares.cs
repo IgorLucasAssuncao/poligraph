@@ -127,6 +127,28 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     }
 
     /// <summary>
+    /// Pendência 80: "votos com posição" é Sim ou Não. A ficha contava a abstenção, e o painel e a
+    /// afinidade não; o fixture precisa ter abstenção, senão os dois números são iguais.
+    /// </summary>
+    [SkippableFact]
+    public async Task Ficha_VotosComPosicao_NaoContaAbstencao()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var id = await PrimeiroParlamentarAsync();
+        var voto = await Db.Votos.Where(v => v.PessoaId == id && v.Valor != null).OrderBy(v => v.VotacaoId).FirstAsync();
+        voto.Valor = 0;
+        await Db.SaveChangesAsync();
+        using var cliente = CriarCliente();
+
+        var ficha = await cliente.GetFromJsonAsync<FichaJson>($"{Rota}/{id}");
+
+        var legislatura = await Db.Votacoes.Where(v => v.Id == voto.VotacaoId).Select(v => v.Legislatura).FirstAsync();
+        var simOuNao = await Db.Votos.CountAsync(v => v.PessoaId == id && (v.Valor == 1 || v.Valor == -1) && v.Votacao!.Legislatura == legislatura);
+        Assert.Equal(simOuNao, ficha!.NVotacoes);
+    }
+
+    /// <summary>
     /// A ementa é o que torna o voto legível.
     ///
     /// <para>

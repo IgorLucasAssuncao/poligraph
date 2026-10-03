@@ -229,6 +229,9 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     public Task<IReadOnlyList<ParlamentarNaListaDto>> ParlamentaresDeTodasAsync(CancellationToken ct) =>
         ListaComAnterioresAsync(ct);
 
+    /// <remarks>
+    /// <para>Pendência 80 (2026-10-03): "votos com posição" é Sim ou Não, como no painel e na afinidade. A ficha contava a abstenção junto, e a lista também.</para>
+    /// </remarks>
     private async Task<FichaParlamentarDto?> CalcularFichaAsync(long id, short? legislatura, CancellationToken ct)
     {
         var pessoa = await _db.Pessoas.AsNoTracking()
@@ -248,7 +251,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
             pessoa.Id, pessoa.NomeExibicao, casa, pessoa.NomeCivil,
             partido, mandato?.Uf ?? "", pessoa.UrlFoto,
             await _db.Votos.CountAsync(
-                v => v.PessoaId == id && v.Valor != null
+                v => v.PessoaId == id && (v.Valor == 1 || v.Valor == -1)
                      && v.Votacao!.Legislatura == alvo, ct),
             mandato?.NRegistrosDeVoto ?? 0,
             await PaginaDeVotosAsync(VotosDaPessoa(id, alvo, null), 0, VotosPorPagina, ct),
@@ -314,7 +317,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
 
         var contagens = await daLegislatura
             .GroupBy(v => v.PessoaId)
-            .Select(g => new { PessoaId = g.Key, NVotacoes = g.Count(v => v.Valor != null) })
+            .Select(g => new { PessoaId = g.Key, NVotacoes = g.Count(v => v.Valor == 1 || v.Valor == -1) })
             .Where(c => c.NVotacoes > 0)
             .ToDictionaryAsync(c => c.PessoaId, c => c.NVotacoes, ct);
 

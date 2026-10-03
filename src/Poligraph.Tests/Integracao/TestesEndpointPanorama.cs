@@ -67,7 +67,7 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
         var camara = panorama!.PorCasa.Single(c => c.Casa == "CAMARA");
 
         Assert.Equal(
-            await Db.Votacoes.CountAsync(v => v.Casa == TipoCasa.CAMARA && v.Votos.Any()),
+            await Db.Votacoes.CountAsync(v => v.Casa == TipoCasa.CAMARA && v.Plenario && v.Votos.Any()),
             camara.Votacoes);
 
         Assert.Equal(
@@ -98,6 +98,31 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
 
         Assert.Equal(antes.Casa.Votacoes, depois.Casa.Votacoes);
         Assert.Equal(antes.Casa.VotacoesSemVotoNominal + 1, depois.Casa.VotacoesSemVotoNominal);
+    }
+
+    /// <summary>
+    /// O painel conta o que o grafo e o questionário usam: votação de plenário. Contando as de
+    /// comissão, a 57ª da Câmara dizia 1.597 votações e "a comparação se apoia nas 1.595
+    /// abertas", e a conta usava 1.123 (2026-10-03).
+    /// </summary>
+    [SkippableFact]
+    public async Task VotacaoDeComissao_FicaForaDoPainel()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var antes = await LerCamaraAsync();
+        var votacao = await Db.Votacoes
+            .Where(v => v.Casa == TipoCasa.CAMARA && v.Legislatura == antes.Legislatura && v.Votos.Any())
+            .OrderBy(v => v.Id)
+            .FirstAsync();
+        var votosDela = await Db.Votos.CountAsync(v => v.VotacaoId == votacao.Id && (v.Valor == 1 || v.Valor == -1));
+        votacao.Plenario = false;
+        await Db.SaveChangesAsync();
+
+        var depois = await LerCamaraAsync();
+
+        Assert.Equal(antes.Casa.Votacoes - 1, depois.Casa.Votacoes);
+        Assert.Equal(antes.Casa.VotosComPosicao - votosDela, depois.Casa.VotosComPosicao);
     }
 
     /// <summary>

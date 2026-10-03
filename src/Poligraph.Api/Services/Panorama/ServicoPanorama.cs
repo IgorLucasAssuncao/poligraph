@@ -86,16 +86,17 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
     /// <para>Quem VOTOU, e não quem está cadastrado: o cadastro traz 7.889 nomes de todas as legislaturas, e anunciar isso como "deputados" seria falso.</para>
     /// <para>O sigilo do Senado é achado do trabalho, não detalhe — a tela mostra.</para>
     /// <para>`== 1 || == -1`, não `!= null`: abstenção não é posição.</para>
+    /// <para>Só plenário (2026-10-03): o grafo e o questionário só usam votação de plenário. O cartão dizia 1.597 votações na 57ª da Câmara e "a comparação se apoia nas 1.595 abertas"; a conta usava 1.123.</para>
     /// </remarks>
     private async Task<PanoramaDaCasaDto> DaCasaAsync(
         TipoCasa casa, short legislatura, CancellationToken ct)
     {
         var todas = _db.Votacoes.AsNoTracking()
-            .Where(v => v.Casa == casa && v.Legislatura == legislatura);
+            .Where(v => v.Casa == casa && v.Legislatura == legislatura && v.Plenario);
         var votacoes = todas.Where(v => _db.Votos.Any(o => o.VotacaoId == v.Id));
 
         var votos = _db.Votos.AsNoTracking()
-            .Where(v => v.Votacao!.Casa == casa && v.Votacao.Legislatura == legislatura);
+            .Where(v => v.Votacao!.Casa == casa && v.Votacao.Legislatura == legislatura && v.Votacao.Plenario);
 
         var execucao = await ExecucaoVigente.IdAsync(_db, casa, legislatura, ct);
 

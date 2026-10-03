@@ -298,7 +298,7 @@ function CartaoDaCasa({ casa, legislatura }: { casa: PanoramaDaCasa; legislatura
           <dd>{casa.parlamentares.toLocaleString('pt-BR')}</dd>
         </div>
         <div>
-          <dt>votações</dt>
+          <dt>votações de plenário</dt>
           <dd>
             <ComProcedencia
               consulta={{ contexto: 'painel', casa: casa.casa, legislatura }}

@@ -85,10 +85,10 @@ public class ServicoProcedencia(PoligraphDb db)
     };
 
     private (string, IQueryable<long?>) Votos(long pessoa, short legislatura) =>
-        ($"Os votos com posição (Sim, Não ou abstenção) desta pessoa nas votações da {legislatura}ª legislatura, "
+        ($"Os votos com posição (Sim ou Não; abstenção não conta) desta pessoa nas votações da {legislatura}ª legislatura, "
             + "em plenário e comissões, uma linha por votação. É a mesma conta do número da ficha.",
          _db.Votos.AsNoTracking()
-            .Where(v => v.PessoaId == pessoa && v.Valor != null && v.Votacao!.Legislatura == legislatura)
+            .Where(v => v.PessoaId == pessoa && (v.Valor == 1 || v.Valor == -1) && v.Votacao!.Legislatura == legislatura)
             .Select(v => v.CargaId));
 
     private (string, IQueryable<long?>) Cota(long pessoa, short legislatura, int? ano)
@@ -149,10 +149,10 @@ public class ServicoProcedencia(PoligraphDb db)
     }
 
     private (string, IQueryable<long?>) Painel(TipoCasa casa, short legislatura) =>
-        ($"As votações da {legislatura}ª legislatura {(casa == TipoCasa.CAMARA ? "na Câmara" : "no Senado")} com voto nominal "
-            + "registrado, uma linha por votação. É a mesma conta do painel: votação sem voto nominal fica de fora.",
+        ($"As votações de plenário da {legislatura}ª legislatura {(casa == TipoCasa.CAMARA ? "na Câmara" : "no Senado")} com voto nominal "
+            + "registrado, uma linha por votação. É a mesma conta do painel: votação de comissão e votação sem voto nominal ficam de fora.",
          _db.Votacoes.AsNoTracking()
-            .Where(t => t.Casa == casa && t.Legislatura == legislatura && _db.Votos.Any(v => v.VotacaoId == t.Id))
+            .Where(t => t.Casa == casa && t.Legislatura == legislatura && t.Plenario && _db.Votos.Any(v => v.VotacaoId == t.Id))
             .Select(t => t.CargaId));
 
     private async Task<ProcedenciaDto> MontarAsync(string regra, IQueryable<long?> cargas, CancellationToken ct)
