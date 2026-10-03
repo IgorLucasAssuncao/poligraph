@@ -18,6 +18,7 @@ import { densidade, desenhar, raioNaTela, type Quadro } from './grafo/desenho';
 import { rotulosDoEixo } from './grafo/legenda';
 import { aoMudarTema } from '../tema';
 import { SUGESTOES_DA_BUSCA_NO_GRAFO } from '../constantes';
+import { TEXTOS_DO_GRAFO as T } from '../textos/grafo';
 
 export type PosicaoDoCidadao = {
   eixoX: number;
@@ -60,25 +61,7 @@ export type Layout = 'molas' | 'alinhamento';
  * por correlação — e o sinal pode espelhar numa reexecução. Aqui a coordenada É a
  * medida: `x` vem direto do governismo, e quem manda no sentido somos nós.
  */
-const EXPLICACAO: Record<Layout, { rotulo: string; titulo: string; texto: string }> = {
-  molas: {
-    rotulo: 'Molas',
-    titulo: 'Ligações como molas',
-    texto:
-      'Os pontos se atraem quando votam junto e se afastam quando votam diferente. ' +
-      'É a vista que mostra os grupos. Aqui os eixos não significam nada: girar ou ' +
-      'espelhar a figura não muda o que ela diz.',
-  },
-  alinhamento: {
-    rotulo: 'Alinhamento',
-    titulo: 'Alinhamento com o Governo',
-    texto:
-      'Cada ponto é colocado conforme votou como o Governo pediu: à esquerda quem ' +
-      'quase nunca seguiu, à direita quem quase sempre seguiu. A posição horizontal é ' +
-      'a própria medida desse alinhamento e nada diz sobre esquerda ou direita. O meio do ' +
-      'eixo mostra onde está a maioria, sem indicar moderação.',
-  },
-};
+const EXPLICACAO: Record<Layout, { rotulo: string; titulo: string; texto: string }> = T.layouts;
 
 type Alvo = { tipo: 'no'; no: NoDoGrafo } | { tipo: 'aresta'; aresta: ArestaDoGrafo };
 
@@ -568,13 +551,11 @@ export function TelaDoGrafoComponent({
     <div className="grafo">
       <div className="grafo-tela" data-tour="grafo-desenho">
         {!quadro.ligacoesAVista && !emFoco && grafo.arestas.length > 0 && (
-          <p className="grafo-dica-ligacoes">
-            Aproxime, ou passe o mouse sobre um ponto, para ver as ligações
-          </p>
+          <p className="grafo-dica-ligacoes">{T.tela.dicaDasLigacoes}</p>
         )}
         {avisoDaRoda && (
           <p className="grafo-aviso-roda" role="status">
-            Use Ctrl + roda do mouse para aproximar
+            {T.tela.avisoDaRoda}
           </p>
         )}
         <canvas
@@ -601,11 +582,7 @@ export function TelaDoGrafoComponent({
           onKeyDown={aoTeclar}
           tabIndex={0}
           role="img"
-          aria-label={
-            `Grafo de ${noDesenho.length} parlamentares e ${grafo.arestas.length} ligações, ${visiveis.length} à vista. `
-            + 'Use as setas para mover, mais e menos para aproximar, zero para enquadrar. '
-            + 'A lista logo abaixo traz a mesma informação em texto.'
-          }
+          aria-label={T.tela.rotulo(noDesenho.length, grafo.arestas.length, visiveis.length)}
         />
 
         {alvo && <DicaComponent alvo={alvo} porId={porId} tamanho={tamanho} camera={camera} />}
@@ -614,18 +591,18 @@ export function TelaDoGrafoComponent({
           <button
             type="button"
             onClick={() => setCamera((c) => comEscala(c, c.escala * 1.6, tamanho.largura / 2, tamanho.altura / 2))}
-            aria-label="Aproximar"
+            aria-label={T.tela.aproximar}
           >
             +
           </button>
           <button
             type="button"
             onClick={() => setCamera((c) => comEscala(c, c.escala / 1.6, tamanho.largura / 2, tamanho.altura / 2))}
-            aria-label="Afastar"
+            aria-label={T.tela.afastar}
           >
             −
           </button>
-          <button type="button" onClick={enquadrarTudo} aria-label="Enquadrar tudo">
+          <button type="button" onClick={enquadrarTudo} aria-label={T.tela.enquadrar}>
             ⤢
           </button>
           <button
@@ -636,8 +613,8 @@ export function TelaDoGrafoComponent({
               setIsolado(null);
               setCamera(vistaInicial());
             }}
-            aria-label="Desfazer tudo e voltar ao desenho original"
-            title="Voltar ao desenho original do ETL"
+            aria-label={T.tela.desfazer}
+            title={T.tela.desfazerTitulo}
           >
             ↺
           </button>
@@ -645,7 +622,8 @@ export function TelaDoGrafoComponent({
 
         {aoAmpliar && (
           <button type="button" className="grafo-ampliar" onClick={aoAmpliar}>
-            <span aria-hidden="true">⛶</span> Abrir em tela cheia
+            <span aria-hidden="true">⛶</span>
+            {T.tela.telaCheia}
           </button>
         )}
 
@@ -662,21 +640,21 @@ export function TelaDoGrafoComponent({
               type="button"
               className={`grafo-ferramenta ${ajustesAbertos ? 'ativo' : ''}`}
               aria-expanded={ajustesAbertos}
-              aria-label="Ajustes do desenho"
-              title="Ajustes do desenho"
+              aria-label={T.tela.ajustes}
+              title={T.tela.ajustes}
               onClick={() => setAjustesAbertos((aberto) => !aberto)}
             >
               <IconeEngrenagemComponent />
             </button>
 
             {ajustesAbertos && (
-              <div className="grafo-painel" role="group" aria-label="Ajustes do desenho">
+              <div className="grafo-painel" role="group" aria-label={T.tela.ajustes}>
                 {layoutsDisponiveis.length > 1 && (
-                  <p className="grafo-painel-titulo">Como posicionar os pontos</p>
+                  <p className="grafo-painel-titulo">{T.tela.comoPosicionar}</p>
                 )}
 
                 {layoutsDisponiveis.length > 1 && (
-                <div className="grafo-layout-botoes" role="group" aria-label="Como posicionar os pontos">
+                <div className="grafo-layout-botoes" role="group" aria-label={T.tela.comoPosicionar}>
                   {layoutsDisponiveis.map((opcao) => (
                     <button
                       key={opcao}
@@ -697,17 +675,15 @@ export function TelaDoGrafoComponent({
                 )}
 
                 <p className="grafo-painel-ajuda">
-                  <strong>{EXPLICACAO[layout].titulo}.</strong> {EXPLICACAO[layout].texto}
+                  {T.tela.explicacaoDoLayout(EXPLICACAO[layout].titulo, EXPLICACAO[layout].texto)}
                 </p>
 
                 <hr />
 
                 <label className="grafo-painel-faixa">
                   <span>
-                    Só ligações mais fortes
-                    <output>
-                      {visiveis.length} de {grafo.arestas.length}
-                    </output>
+                    {T.tela.soAsFortes}
+                    <output>{T.tela.deTotal(visiveis.length, grafo.arestas.length)}</output>
                   </span>
                   <input
                     type="range"
@@ -725,7 +701,7 @@ export function TelaDoGrafoComponent({
                     checked={comFotos}
                     onChange={(e) => setComFotos(e.target.checked)}
                   />
-                  Rostos ao aproximar
+                  {T.tela.rostos}
                 </label>
 
                 <label className="grafo-painel-chave">
@@ -734,22 +710,16 @@ export function TelaDoGrafoComponent({
                     checked={comEixos}
                     onChange={(e) => setComEixos(e.target.checked)}
                   />
-                  Mostrar os eixos
+                  {T.tela.eixos}
                 </label>
 
                 {comEixos && !eixos && (
-                  <p className="grafo-painel-ajuda">
-                    Esta casa não tem eixo com nome: o Senado não publica a orientação
-                    das bancadas, então não há como dizer o que separa um lado do outro.
-                  </p>
+                  <p className="grafo-painel-ajuda">{T.tela.semEixo}</p>
                 )}
 
                 <hr />
 
-                <p className="grafo-painel-ajuda">
-                  Rolar aproxima · arrastar o fundo move o plano · arrastar um ponto
-                  reposiciona ele · clicar destaca · clicar duas vezes abre o perfil
-                </p>
+                <p className="grafo-painel-ajuda">{T.tela.comoUsar}</p>
               </div>
             )}
           </div>
@@ -761,24 +731,24 @@ export function TelaDoGrafoComponent({
               <strong>{(isolado ?? fixado)!.nome}</strong>
               <span>
                 {(isolado ?? fixado)!.partido}
-                {vizinhos && ` · ${vizinhos.size - 1} ligações`}
+                {vizinhos && T.tela.ligacoes(vizinhos.size - 1)}
               </span>
             </p>
 
             <div className="grafo-foco-acoes">
               {!isolado ? (
                 <button type="button" onClick={() => setIsolado(fixado)}>
-                  Só as conexões dele
+                  {T.tela.soAsConexoes}
                 </button>
               ) : (
                 <button type="button" onClick={() => setIsolado(null)}>
-                  Voltar ao grafo
+                  {T.tela.voltar}
                 </button>
               )}
 
               {aoSelecionar && (
                 <button type="button" onClick={() => aoSelecionar((isolado ?? fixado)!)}>
-                  Abrir perfil
+                  {T.tela.abrirPerfil}
                 </button>
               )}
 
@@ -789,7 +759,7 @@ export function TelaDoGrafoComponent({
                   setIsolado(null);
                 }}
               >
-                Limpar
+                {T.tela.limpar}
               </button>
             </div>
           </div>
@@ -916,8 +886,8 @@ function BuscaComponent({
         type="button"
         className="grafo-ferramenta"
         data-tour="grafo-busca"
-        aria-label="Procurar parlamentar no grafo"
-        title="Procurar parlamentar"
+        aria-label={T.busca.rotulo}
+        title={T.busca.titulo}
         onClick={() => setAberta(true)}
       >
         <IconeLupaComponent />
@@ -933,8 +903,8 @@ function BuscaComponent({
         type="search"
         value={valor}
         onChange={(e) => aoDigitar(e.target.value)}
-        placeholder="Procurar pelo nome"
-        aria-label="Procurar parlamentar no grafo"
+        placeholder={T.busca.placeholder}
+        aria-label={T.busca.rotulo}
         onKeyDown={(e) => {
           if (e.key === 'Escape') fechar();
           if (e.key === 'Enter' && achados.length > 0) {
@@ -944,7 +914,7 @@ function BuscaComponent({
         }}
       />
 
-      <button type="button" className="grafo-busca-fechar" onClick={fechar} aria-label="Fechar busca">
+      <button type="button" className="grafo-busca-fechar" onClick={fechar} aria-label={T.busca.fechar}>
         ✕
       </button>
 
@@ -971,7 +941,7 @@ function BuscaComponent({
       )}
 
       {valor.trim().length >= 2 && achados.length === 0 && (
-        <p className="grafo-sem-achado">Nenhum parlamentar com esse nome.</p>
+        <p className="grafo-sem-achado">{T.busca.nenhum}</p>
       )}
     </div>
   );
@@ -1059,13 +1029,12 @@ function DicaComponent({
         <strong>{b?.nome}</strong>
 
         <span className="grafo-dica-meta">
-          votaram igual em {Math.round(alvo.aresta.peso * 100)}% das{' '}
-          {alvo.aresta.votacoesComuns} votações em que os dois se posicionaram
+          {T.dica.aresta(Math.round(alvo.aresta.peso * 100), alvo.aresta.votacoesComuns)}
         </span>
 
         {alvo.aresta.cosseno !== null && (
           <span className="grafo-dica-secundaria">
-            cosseno {alvo.aresta.cosseno.toFixed(2)}
+            {T.dica.cosseno(alvo.aresta.cosseno.toFixed(2))}
           </span>
         )}
       </div>
@@ -1083,7 +1052,7 @@ function DicaComponent({
         {no.uf && ` · ${no.uf}`}
       </span>
       <span className="grafo-dica-meta">
-        {no.nVotacoes} votações comparáveis · grupo {(no.comunidade ?? 0) + 1}
+        {T.dica.no(no.nVotacoes, (no.comunidade ?? 0) + 1)}
       </span>
     </div>
   );
