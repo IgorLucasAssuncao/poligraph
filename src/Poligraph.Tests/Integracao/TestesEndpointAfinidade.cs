@@ -65,11 +65,7 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
             // no caminho de "sem placar registrado" em desenvolvimento inteiro
             Assert.True(pergunta.TotalVotos > 0);
 
-            // o denominador do painel: ninguém pode se posicionar além da base
-            var naBase = await Db.Votos.AsNoTracking()
-                .Select(v => v.PessoaId).Distinct().CountAsync();
-
-            Assert.Equal(naBase, pergunta.TotalPossivel);
+            Assert.Equal(Cadeiras.Camara, pergunta.TotalPossivel);
             Assert.True(pergunta.TotalVotos <= pergunta.TotalPossivel);
         }
     }

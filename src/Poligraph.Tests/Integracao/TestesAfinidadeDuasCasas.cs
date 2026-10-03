@@ -117,8 +117,7 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
         var denominadores =
             questionario!.Perguntas.Select(p => p.TotalPossivel).Distinct().Order().ToList();
 
-        Assert.Equal([SenadoresSemeados, DeputadosSemeados], denominadores);
-        Assert.DoesNotContain(DeputadosSemeados + SenadoresSemeados, denominadores);
+        Assert.Equal([Cadeiras.Senado, Cadeiras.Camara], denominadores);
     }
 
     /// <summary>

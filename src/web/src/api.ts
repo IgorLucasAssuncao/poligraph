@@ -327,6 +327,8 @@ export type PanoramaDaCasa = {
   votosComPosicao: number;
   comunidades: number;
   ligacoes: number;
+  /** A votação aberta mais recente, para o painel: comparecimento sobre o número de cadeiras, sem direção. */
+  ultima?: { data: string; materia: string | null; ementa: string | null; posicionados: number; cadeiras: number } | null;
 };
 
 /** ATENÇÃO: `legislatura` é nula em base sem votação — o estado antes do primeiro ETL. */

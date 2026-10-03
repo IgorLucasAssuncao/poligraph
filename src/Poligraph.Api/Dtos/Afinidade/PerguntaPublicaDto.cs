@@ -4,7 +4,7 @@ namespace Poligraph.Api.Dtos;
 
 /// <summary>
 /// `TotalVotos` é o comparecimento na votação — quantos deputados se posicionaram.
-/// `TotalPossivel` é quantos parlamentares a base tem, ou seja, o denominador.
+/// `TotalPossivel` é o número de cadeiras da casa (<see cref="Cadeiras"/>), o denominador.
 ///
 /// De propósito NÃO é a divisão (quantos Sim, quantos Não). Mostrar o placar antes
 /// de a pessoa responder induziria conformidade: "a maioria votou Sim, então voto Sim

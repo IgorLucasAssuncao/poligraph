@@ -20,7 +20,8 @@ import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { useLegislaturaDaUrl, useLegislaturas } from '../componentes/useLegislatura';
 import { BarraDePeriodoComponent } from '../componentes/BarraDePeriodo';
 import { ComProcedenciaComponent } from '../componentes/ModoAnalise';
-import { periodoDaLegislatura } from '../formato';
+import { dataCurta, periodoDaLegislatura } from '../formato';
+import { PainelComponent } from '../componentes/Painel';
 
 /**
  * A porta de entrada.
@@ -334,6 +335,16 @@ function CartaoDaCasaComponent({ casa, legislatura }: { casa: PanoramaDaCasa; le
           e não têm voto individual publicado. A comparação se apoia nas {abertas}{' '}
           abertas.
         </p>
+      )}
+
+      {casa.ultima && (
+        <figure className="cartao-ultima">
+          <figcaption>
+            Última votação aberta, {dataCurta(casa.ultima.data)}
+            {casa.ultima.materia && <> · {casa.ultima.materia}</>}
+          </figcaption>
+          <PainelComponent posicionados={casa.ultima.posicionados} total={casa.ultima.cadeiras} />
+        </figure>
       )}
     </article>
   );

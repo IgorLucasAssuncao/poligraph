@@ -34,4 +34,12 @@ public record PanoramaDaCasaDto(
     int VotosComPosicao,
     int Comunidades,
     int Ligacoes,
-    int VotacoesSemVotoNominal = 0);
+    int VotacoesSemVotoNominal = 0,
+    UltimaVotacaoDto? Ultima = null);
+
+/// <summary>
+/// A votação aberta de plenário mais recente da casa, para o painel do Início: quantos se
+/// posicionaram (Sim ou Não, pelo placar da casa) e quantas cadeiras há. Sem direção, como no
+/// questionário.
+/// </summary>
+public record UltimaVotacaoDto(DateOnly Data, string? Materia, string? Ementa, int Posicionados, int Cadeiras);

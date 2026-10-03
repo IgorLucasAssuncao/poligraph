@@ -257,14 +257,6 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade, Cac
     private async Task<List<PerguntaPublicaDto>> MontarAsync(
         List<string> perguntas, CancellationToken ct)
     {
-        var legislaturas = await Legislaturas.DasPerguntasAtivasAsync(_db, ct);
-
-        var possivelPorCasa = await _db.Votos.AsNoTracking()
-            .Where(v => legislaturas.Contains(v.Votacao!.Legislatura))
-            .GroupBy(v => v.Votacao!.Casa)
-            .Select(g => new { Casa = g.Key, Total = g.Select(v => v.PessoaId).Distinct().Count() })
-            .ToDictionaryAsync(x => x.Casa, x => x.Total, ct);
-
         var brutas = await _db.Perguntas
             .AsNoTracking()
             .Where(p => p.Ativa && perguntas.Contains(p.Id))
@@ -285,7 +277,7 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade, Cac
             .Select(id => porId[id])
             .Select(p => new PerguntaPublicaDto(
                 p.Id, p.Texto, p.Ordem, p.TotalVotos,
-                possivelPorCasa.GetValueOrDefault(p.Casa)))
+                Cadeiras.Da(p.Casa)))
             .ToList();
     }
 }

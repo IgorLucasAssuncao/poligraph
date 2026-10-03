@@ -3002,3 +3002,7 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 .menu-conta-painel > .menu-conta-analise { display: none; }
 
 .filtro-rito { display: flex; align-items: center; gap: .45rem; margin: .5rem 0 0; font-size: var(--t-2); color: var(--suave); cursor: pointer; }
+
+/* O painel da última votação no cartão de cada casa: a assinatura do site já no Início (2026-10-03). */
+.cartao-ultima { margin: 1rem 0 0; padding-top: .8rem; border-top: 1px solid var(--borda); }
+.cartao-ultima figcaption { font-size: var(--t-1); color: var(--suave); margin-bottom: .5rem; }

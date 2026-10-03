@@ -118,6 +118,27 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
                 : await _db.ArestasGrafo.AsNoTracking()
                     .CountAsync(a => a.ExecucaoId == execucao
                                   && a.Tipo == TipoDeAresta.SIMILARIDADE_VOTO, ct),
-            VotacoesSemVotoNominal: await todas.CountAsync(v => !_db.Votos.Any(o => o.VotacaoId == v.Id), ct));
+            VotacoesSemVotoNominal: await todas.CountAsync(v => !_db.Votos.Any(o => o.VotacaoId == v.Id), ct),
+            Ultima: await UltimaAsync(votacoes, casa, ct));
+    }
+
+    /// <summary>A votação aberta mais recente com placar, para o painel do Início.</summary>
+    private static async Task<UltimaVotacaoDto?> UltimaAsync(IQueryable<VotacaoModel> votacoes, TipoCasa casa, CancellationToken ct)
+    {
+        var ultima = await votacoes
+            .Where(v => !v.Secreta && v.VotosSim != null && v.VotosNao != null)
+            .OrderByDescending(v => v.Data).ThenByDescending(v => v.Id)
+            .Select(v => new
+            {
+                v.Data,
+                Materia = v.Proposicao == null ? null : v.Proposicao.SiglaTipo + " " + v.Proposicao.Numero + "/" + v.Proposicao.Ano,
+                Ementa = v.Proposicao == null ? null : v.Proposicao.Ementa,
+                Posicionados = v.VotosSim!.Value + v.VotosNao!.Value
+            })
+            .FirstOrDefaultAsync(ct);
+
+        return ultima is null
+            ? null
+            : new UltimaVotacaoDto(ultima.Data, ultima.Materia, ultima.Ementa, ultima.Posicionados, Cadeiras.Da(casa));
     }
 }
