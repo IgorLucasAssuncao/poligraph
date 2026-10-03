@@ -2318,8 +2318,9 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .contas-numeros {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem;
 }
+/* MEDIDO: A 390 px, duas colunas quebravam o valor no meio ("R$ 1.830.047," / "00"), 2026-10-03. */
 @media (width <= 30rem) {
-  .contas-numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .contas-numeros { grid-template-columns: minmax(0, 1fr); gap: .9rem; }
 }
 
 /* A mesma comparação repetida no topo do modal: quem abriu clicando nela precisa
@@ -2332,6 +2333,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   text-transform: uppercase; letter-spacing: .1em; color: var(--suave);
 }
 .conta-numero {
+  white-space: nowrap;
   font-family: var(--display);
   font-size: var(--t-4); font-weight: 700; letter-spacing: -.02em;
   font-variant-numeric: tabular-nums;
@@ -2790,7 +2792,7 @@ dialog.tour::backdrop { background: transparent; }
 .contas-numeros > .conta-valor:hover .conta-rotulo { color: var(--realce); }
 .contas-numeros > .conta-valor:focus-visible { outline: 2px solid var(--realce); outline-offset: 2px; }
 
-.abas .aba { text-decoration: none; }
+.abas .aba { text-decoration: none; white-space: nowrap; }
 
 .aba-dinheiro { padding: 1.25rem 1rem; display: grid; gap: 1rem; }
 .frase-resposta { margin: 0; font-size: var(--t-3); line-height: 1.55; }
