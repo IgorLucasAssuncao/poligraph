@@ -315,7 +315,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   flex-shrink: 0;
 }
 .marca-texto {
-  display: flex; flex-direction: column; line-height: 1.1;
+  display: flex; flex-direction: column; line-height: 1.1; white-space: nowrap;
   font-family: var(--display);
   font-size: var(--t-4); font-weight: 700; letter-spacing: -.022em;
 }
@@ -1320,7 +1320,6 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 .alinhamento > div { flex: 1 1 11rem; background: var(--fundo); padding: .7rem .85rem; }
 .alinhamento dt {
-  display: flex; align-items: baseline; gap: .3rem;
   font-size: var(--t-1); color: var(--suave);
 }
 .alinhamento dd {
@@ -1726,8 +1725,8 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .termo-gatilho:hover, .termo-gatilho[aria-expanded='true'] { color: var(--realce); }
 
 .termo-balao {
-  position: absolute; z-index: 20; left: 0; top: calc(100% + .4rem);
-  display: block; width: max-content; max-width: min(20rem, 80vw);
+  position: fixed; z-index: 60;
+  display: block; width: max-content; max-width: min(20rem, calc(100vw - 1rem));
   padding: .7rem .85rem;
   background: var(--fundo); color: var(--texto);
   border: 1px solid var(--borda-forte); border-radius: var(--raio);
@@ -2654,20 +2653,22 @@ dialog.tour::backdrop { background: transparent; }
 .botoes-csv { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
 
 /* ═══ BARRA: TRÊS INTENÇÕES, BUSCA E CONTA ═══════════════════════
-   Uma linha no desktop: marca · navegação · busca · conta. Abaixo de 900px a navegação
+   Uma linha no desktop: marca · navegação · busca · análise · conta. Abaixo de 1180px a navegação
    desce para uma segunda linha, inteira — três itens com rótulo cabem num telefone, e
    ícone sem rótulo obrigaria a adivinhar. */
 
 .cabecalho-conteudo {
   display: grid;
-  grid-template-columns: auto auto minmax(10rem, 1fr) auto;
-  grid-template-areas: "marca nav busca conta";
+  grid-template-columns: auto auto minmax(10rem, 1fr) auto auto;
+  grid-template-areas: "marca nav busca analise conta";
   align-items: stretch;
+  column-gap: clamp(.75rem, 1.6vw, 1.75rem);
 }
 .cabecalho-conteudo .marca-link { grid-area: marca; }
-.cabecalho-conteudo .nav-principal { grid-area: nav; margin-right: 0; }
+.cabecalho-conteudo .nav-principal { grid-area: nav; margin-right: 0; min-width: max-content; }
 .cabecalho-conteudo .busca-cabecalho { grid-area: busca; }
 .cabecalho-conteudo .menu-conta { grid-area: conta; }
+.cabecalho-conteudo .interruptor-analise { grid-area: analise; align-self: center; }
 
 .busca-cabecalho { position: relative; align-self: center; justify-self: end; width: min(100%, 24rem); }
 .busca-cabecalho input {
@@ -2737,13 +2738,14 @@ dialog.tour::backdrop { background: transparent; }
 .filtros-entidades input:focus-visible { outline: 2px solid var(--realce); outline-offset: 1px; }
 .numero-valor.numero-texto { font-size: var(--t-4); }
 
-@media (max-width: 900px) {
+@media (max-width: 1180px) {
   .cabecalho-conteudo {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas: "marca busca conta" "nav nav nav";
-    column-gap: .75rem;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: "marca busca analise conta" "nav nav nav nav";
+    column-gap: .75rem; row-gap: 0;
   }
   .cabecalho-conteudo .nav-item span { display: inline; }
+  .cabecalho-conteudo .nav-item { padding-block: .45rem .6rem; }
   .busca-cabecalho { width: 100%; }
   .busca-resultados { width: min(100vw - 1.5rem, 26rem); }
 }
@@ -2767,7 +2769,7 @@ dialog.tour::backdrop { background: transparent; }
      "Câmara e Senado" sai e "Dados públicos" fica. */
   .faixa-procedencia:has(.faixa-periodo) .faixa-curta { display: none; }
 
-  .cabecalho-conteudo .nav-principal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
+  .cabecalho-conteudo .nav-principal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; min-width: 0; }
   .cabecalho-conteudo .nav-item {
     flex-direction: column; justify-content: center; gap: .15rem;
     padding: .45rem .25rem .35rem; text-align: center;

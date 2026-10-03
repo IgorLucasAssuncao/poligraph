@@ -768,9 +768,25 @@ describe('participação nas votações', () => {
     });
     await abrirPerfil();
 
-    const bloco = screen.getByText('812 de 1015').closest('div')!;
-    expect(bloco.textContent).toMatch(/votações de plenário \(80%\)/);
+    const bloco = screen.getByText('812 de 1.015').closest('div')!;
+    expect(bloco.textContent).toMatch(/Presença no plenário/);
+    expect(bloco.textContent).toMatch(/votações \(80%\)/);
     expect(bloco.textContent).not.toMatch(/licença/);
+  });
+
+  it('governismo e disciplina vêm como "X de Y", e a base pequena é dita', async () => {
+    vi.mocked(api.obterFicha).mockResolvedValue({
+      ...FICHA,
+      alinhamento: { governismo: 0.82, baseGovernismo: 658, disciplina: 1, baseDisciplina: 2, partidoMedido: 'MDB' },
+    });
+    await abrirPerfil();
+
+    const governo = screen.getByText('540 de 658').closest('div')!;
+    expect(governo.textContent).toMatch(/votações orientadas \(82%\)/);
+    expect(governo.textContent).not.toMatch(/poucas/);
+    const partido = screen.getByText('2 de 2').closest('div')!;
+    expect(partido.textContent).toMatch(/Seguiu a orientação do MDB/);
+    expect(partido.textContent).toMatch(/poucas para tirar conclusão/);
   });
 
   it('no Senado, mostra as ausências com licença ou missão à parte', async () => {

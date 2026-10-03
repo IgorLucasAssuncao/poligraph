@@ -605,6 +605,10 @@ function AbaSimilares({ similares }: { similares: Ficha['maisSimilares'] }) {
  *
  * ATENÇÃO: A base fica DENTRO do <dd>: um <small> solto na lista de definições é a violação que o
  * axe acusava aqui.
+ *
+ * DECISÃO (2026-10-03): Os três números com a mesma forma, "X de Y". O governismo e a disciplina
+ * vinham como percentual com a base embaixo, e a ficha mostrava "100%" para quem tinha duas
+ * votações orientadas pelo partido. Abaixo de `BASE_PEQUENA` a tela diz que é pouco.
  */
 function FaixaDeAlinhamento({ alinhamento, presenca }: { alinhamento: Alinhamento | null; presenca: Presenca | null }) {
   const governismo = alinhamento?.governismo ?? null;
@@ -617,13 +621,12 @@ function FaixaDeAlinhamento({ alinhamento, presenca }: { alinhamento: Alinhament
       {presenca && presenca.votacoes > 0 && (
         <div>
           <dt>
-            Esteve em
-            <Termo nome="participacao" />
+            <Termo nome="participacao">Presença</Termo> no plenário
           </dt>
           <dd>
-            {presenca.presente} de {presenca.votacoes}
+            {inteiro(presenca.presente)} de {inteiro(presenca.votacoes)}
             <small>
-              votações de plenário ({Math.round((presenca.presente / presenca.votacoes) * 100)}%)
+              votações ({Math.round((presenca.presente / presenca.votacoes) * 100)}%)
               {presenca.ausenteJustificado !== null && presenca.ausenteJustificado > 0 && (
                 <> · {presenca.ausenteJustificado} ausências com licença ou missão</>
               )}
@@ -635,25 +638,44 @@ function FaixaDeAlinhamento({ alinhamento, presenca }: { alinhamento: Alinhament
       {governismo !== null && (
         <div>
           <dt>
-            Votou com o Governo
-            <Termo nome="orientacao" />
+            Seguiu a <Termo nome="orientacao">orientação</Termo> do Governo
           </dt>
-          <dd>
-            {Math.round(governismo * 100)}%<small>de {alinhamento!.baseGovernismo} votações orientadas</small>
-          </dd>
+          <ParteDaBase proporcao={governismo} base={alinhamento!.baseGovernismo} />
         </div>
       )}
 
       {disciplina !== null && (
         <div>
-          <dt>Votou com o {alinhamento!.partidoMedido}</dt>
-          <dd>
-            {Math.round(disciplina * 100)}%<small>de {alinhamento!.baseDisciplina} votações orientadas</small>
-          </dd>
+          <dt>Seguiu a orientação do {alinhamento!.partidoMedido}</dt>
+          <ParteDaBase proporcao={disciplina} base={alinhamento!.baseDisciplina} />
         </div>
       )}
     </dl>
   );
+}
+
+/**
+ * Abaixo disto, a proporção diz pouco: a mesma régua da similaridade, que só compara quem
+ * votou junto em 20 votações ou mais (`ck_sim_minimo`).
+ */
+const BASE_PEQUENA = 20;
+
+/** "540 de 658 votações orientadas (82%)", com o aviso quando a base é pequena. */
+function ParteDaBase({ proporcao, base }: { proporcao: number; base: number }) {
+  return (
+    <dd>
+      {inteiro(Math.round(proporcao * base))} de {inteiro(base)}
+      <small>
+        votações orientadas ({Math.round(proporcao * 100)}%)
+        {base < BASE_PEQUENA && <> · poucas para tirar conclusão</>}
+      </small>
+    </dd>
+  );
+}
+
+/** Inteiro com separador de milhar. */
+function inteiro(valor: number): string {
+  return valor.toLocaleString('pt-BR');
 }
 
 /**
