@@ -21,6 +21,7 @@ import { LinkDeFonteComponent } from './LinkDeFonte';
 import { FONTES } from '../fontes';
 import { passosDoResultado } from '../tour';
 import { SIGLAS_DAS_UFS } from '../ufs';
+import { TEXTOS_DO_RESULTADO as T } from '../textos/resultado';
 
 const PASSOS_DO_RESULTADO = passosDoResultado();
 
@@ -77,41 +78,31 @@ export function ResultadoComponent({
   return (
     <>
       <CabecalhoDaColunaComponent
-        titulo="Quem vota como você"
-        subtitulo={`${resultado.totalPerguntasRespondidas} perguntas respondidas`}
+        titulo={T.titulo}
+        subtitulo={T.respondidas(resultado.totalPerguntasRespondidas)}
       />
 
       <div className="linha-do-tour">
         <BotaoDoTourComponent nome="resultado" passos={PASSOS_DO_RESULTADO} />
       </div>
 
-      <p className="ajuda ajuda-espacada">
-        A comparação usa apenas as votações em que o parlamentar esteve presente e se
-        posicionou. Deputados e senadores votam matérias diferentes, então cada grupo é
-        comparado separadamente.
-      </p>
+      <p className="ajuda ajuda-espacada">{T.explicacao}</p>
 
       {aoEscolherUf && (
         <div className="filtro-do-resultado">
           <label>
-            <span>Comparar com</span>
+            <span>{T.compararCom}</span>
             <select value={uf} onChange={(e) => escolher(e.target.value)} disabled={recalculando}>
-              <option value="">parlamentares de todo o país</option>
+              <option value="">{T.todoOPais}</option>
               {SIGLAS_DAS_UFS.map((sigla) => (
                 <option key={sigla} value={sigla}>
-                  só os de {sigla}
+                  {T.soOsDe(sigla)}
                 </option>
               ))}
             </select>
           </label>
           <p className="ajuda" aria-live="polite">
-            {recalculando
-              ? 'Recalculando…'
-              : falhou
-                ? 'Não foi possível recalcular agora. Tente de novo.'
-                : uf
-                  ? `A lista e a régua contam só quem votou por ${uf}. O ponto no grafo continua o da casa inteira.`
-                  : 'Escolha um estado para ver só quem votou por ele.'}
+            {recalculando ? T.recalculando : falhou ? T.falhou : uf ? T.soDoEstado(uf) : T.escolhaUmEstado}
           </p>
         </div>
       )}
@@ -123,21 +114,19 @@ export function ResultadoComponent({
       {uf &&
         casasSemNinguem.map((c) => (
           <p key={c} className="vazio">
-            Nenhum {NOME_DA_CASA[c].singular} de {uf} votou nas perguntas que você respondeu.
+            {T.ninguemDoEstado(NOME_DA_CASA[c].singular, uf)}
           </p>
         ))}
 
       <p className="aviso" role="note" data-tour="resultado-aviso">
-        Esta é uma ferramenta acadêmica de comparação de votos.{' '}
-        <strong>Não é recomendação de voto</strong>, e não representa o programa completo de
-        nenhum parlamentar.
+        {T.aviso}
       </p>
 
       {usuario && <AvaliacaoComponent resultado={resultado} />}
 
       <div className="resultado-acoes">
         <button type="button" className="botao-secundario" onClick={aoRefazer}>
-          Refazer o questionário
+          {T.refazer}
         </button>
       </div>
     </>
@@ -176,11 +165,8 @@ function SecaoDaCasaComponent({
   return (
     <section className="casa-resultado">
       <h2 className="titulo-casa">
-        Os {nome.plural} mais próximos de você
-        <small>
-          {casa.perguntasRespondidas}{' '}
-          {casa.perguntasRespondidas === 1 ? 'pergunta' : 'perguntas'} desta casa
-        </small>
+        {T.casa.titulo(nome.plural)}
+        <small>{T.casa.perguntasDaCasa(casa.perguntasRespondidas)}</small>
       </h2>
 
       {primeiro && (
@@ -192,27 +178,21 @@ function SecaoDaCasaComponent({
       )}
 
       <p className="escala-resultado">
-        Entre os <strong>{casa.escala.comparados}</strong> {nome.plural} comparados com você, o
-        do meio da lista votou como você em{' '}
-        <strong>
-          {casa.escala.medianoAcordos} de {casa.escala.medianoComparaveis}
-        </strong>
-        .
+        {T.casa.escala(casa.escala.comparados, nome.plural, casa.escala.medianoAcordos, casa.escala.medianoComparaveis)}
       </p>
 
       <p className="fonte-dado">
-        Fonte: registro nominal de votação {NOME_DA_CASA[casa.casa].doNome}. Cada pergunta
-        corresponde a uma votação em plenário.{' '}
+        {T.casa.fonte(NOME_DA_CASA[casa.casa].doNome)}{' '}
         <LinkDeFonteComponent href={casa.casa === 'SENADO' ? FONTES.senado.url : FONTES.camara.url}>
-          Dados abertos da casa
+          {T.casa.dadosAbertos}
         </LinkDeFonteComponent>
         {' · '}
-        <Link to="/metodologia">Como calculamos</Link>
+        <Link to="/metodologia">{T.casa.comoCalculamos}</Link>
       </p>
 
       {grafo && casa.posicaoNoGrafo && (
         <div className="resultado-grafo" data-tour="resultado-grafo">
-          <h3 className="titulo-secao">Onde você caiu</h3>
+          <h3 className="titulo-secao">{T.casa.ondeVoceCaiu}</h3>
 
           <TelaDoGrafoComponent
             grafo={grafo}
@@ -223,13 +203,7 @@ function SecaoDaCasaComponent({
           />
 
           <p className="ajuda ajuda-espacada">
-            O losango é você, posicionado entre os{' '}
-            <strong>{casa.posicaoNoGrafo.vizinhosUsados}</strong> {nome.plural}{' '}
-            com quem você mais concordou.{' '}
-            <strong>
-              Sua posição vale sobre {casa.posicaoNoGrafo.baseDeVotacoes} perguntas
-            </strong>
-            ; a de cada {nome.singular}, sobre a legislatura inteira.
+            {T.casa.losango(casa.posicaoNoGrafo.vizinhosUsados, nome.plural, casa.posicaoNoGrafo.baseDeVotacoes, nome.singular)}
           </p>
 
           <GrafoAmpliadoComponent
@@ -243,7 +217,7 @@ function SecaoDaCasaComponent({
 
       {demais.length > 0 && (
         <>
-          <h3 className="titulo-secao">Também próximos de você</h3>
+          <h3 className="titulo-secao">{T.casa.tambemProximos}</h3>
           {demais.map((p) => (
             <LinhaAfimComponent key={p.pessoaId} parlamentar={p} respondidasNaCasa={casa.perguntasRespondidas} />
           ))}
@@ -252,7 +226,7 @@ function SecaoDaCasaComponent({
 
       {casa.maisDistantes.length > 0 && (
         <>
-          <h3 className="titulo-secao" data-tour="resultado-distantes">Mais distantes</h3>
+          <h3 className="titulo-secao" data-tour="resultado-distantes">{T.casa.maisDistantes}</h3>
           {casa.maisDistantes.map((p) => (
             <LinhaAfimComponent key={p.pessoaId} parlamentar={p} respondidasNaCasa={casa.perguntasRespondidas} />
           ))}
@@ -317,14 +291,14 @@ function DetalheDaContaComponent({
 
   return (
     <details className="detalhe-conta">
-      <summary>Ver em quais perguntas</summary>
+      <summary>{T.detalhe.verEmQuais}</summary>
 
       <ul className="lista-detalhe">
         {parlamentar.acordou.map((id) => (
           <li key={id} className="acordo">
             <span aria-hidden="true">✓</span>
             <span>
-              <span className="sr-apenas">Concordaram: </span>
+              <span className="sr-apenas">{T.detalhe.concordaram}</span>
               {textos.get(id) ?? id}
             </span>
           </li>
@@ -334,7 +308,7 @@ function DetalheDaContaComponent({
           <li key={id} className="desacordo">
             <span aria-hidden="true">✗</span>
             <span>
-              <span className="sr-apenas">Discordaram: </span>
+              <span className="sr-apenas">{T.detalhe.discordaram}</span>
               {textos.get(id) ?? id}
             </span>
           </li>
@@ -342,12 +316,7 @@ function DetalheDaContaComponent({
       </ul>
 
       {foraDaConta > 0 && (
-        <p className="ajuda nota-fora-da-conta">
-          Outras <strong>{foraDaConta}</strong>{' '}
-          {foraDaConta === 1 ? 'pergunta ficou' : 'perguntas ficaram'} de fora da conta:
-          {foraDaConta === 1 ? ' ela' : ' elas'} tratam de votações em que{' '}
-          {parlamentar.nome.split(' ')[0]} não votou, ou em que você respondeu “Não sei”.
-        </p>
+        <p className="ajuda nota-fora-da-conta">{T.detalhe.foraDaConta(foraDaConta, parlamentar.nome.split(' ')[0])}</p>
       )}
     </details>
   );
@@ -367,7 +336,7 @@ function DestaqueComponent({
 }) {
   return (
     <section className="destaque-resultado" data-tour="resultado-destaque">
-      <p className="rotulo-destaque">Quem mais votou como você</p>
+      <p className="rotulo-destaque">{T.destaque.rotulo}</p>
 
       <Link to={`/parlamentar/${parlamentar.pessoaId}`} className="destaque-link">
         <AvatarComponent nome={parlamentar.nome} tamanho="grande" />
@@ -380,10 +349,8 @@ function DestaqueComponent({
       </Link>
 
       <p className="destaque-placar">
-        <span className="placar-numero">
-          {parlamentar.acordos} de {parlamentar.comparaveis}
-        </span>{' '}
-        <span className="placar-texto">perguntas comparáveis em que vocês votaram igual</span>
+        <span className="placar-numero">{T.destaque.placar(parlamentar.acordos, parlamentar.comparaveis)}</span>{' '}
+        <span className="placar-texto">{T.destaque.placarTexto}</span>
       </p>
 
       <DetalheDaContaComponent
@@ -406,18 +373,7 @@ function LinhaAfimComponent({ parlamentar, respondidasNaCasa }: { parlamentar: P
       nome={parlamentar.nome}
       partido={parlamentar.partido}
       uf={parlamentar.uf}
-      detalhe={
-        <>
-          concordaram em <strong>{parlamentar.acordos}</strong> de{' '}
-          <strong>{parlamentar.comparaveis}</strong> perguntas
-          {parlamentar.comparaveis < respondidasNaCasa && (
-            <span className="base-da-conta">
-              {' '}
-              (das {respondidasNaCasa} que você respondeu nesta casa)
-            </span>
-          )}
-        </>
-      }
+      detalhe={T.linha.concordaram(parlamentar.acordos, parlamentar.comparaveis, respondidasNaCasa)}
     />
   );
 }
