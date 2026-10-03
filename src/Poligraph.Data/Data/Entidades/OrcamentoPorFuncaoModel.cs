@@ -43,4 +43,7 @@ public class OrcamentoPorFuncaoModel
 
     /// <summary>A data em que o Portal gerou o arquivo. No ano corrente, é até onde vai o dado.</summary>
     public DateOnly GeradoEm { get; set; }
+
+    /// <summary>O arquivo do Portal de onde veio a linha (Pendência 72), para o modo auditoria.</summary>
+    public long? CargaId { get; set; }
 }

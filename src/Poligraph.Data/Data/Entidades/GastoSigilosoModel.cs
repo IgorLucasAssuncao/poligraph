@@ -36,6 +36,9 @@ public class GastoSigilosoModel
 
     /// <summary>Quantos meses do ano entraram — no ano corrente, menos de 12.</summary>
     public short Meses { get; set; }
+
+    /// <summary>O arquivo do Portal de onde veio a linha (Pendência 72), para o modo auditoria.</summary>
+    public long? CargaId { get; set; }
 }
 
 public enum OrigemDoSigilo

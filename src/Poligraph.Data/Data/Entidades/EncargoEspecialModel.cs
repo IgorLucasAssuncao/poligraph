@@ -28,4 +28,7 @@ public class EncargoEspecialModel
 
     /// <summary>Pago no ano por despesa empenhada em anos anteriores.</summary>
     public decimal RestosAPagarPagos { get; set; }
+
+    /// <summary>O arquivo do Portal de onde veio a linha (Pendência 72), para o modo auditoria.</summary>
+    public long? CargaId { get; set; }
 }

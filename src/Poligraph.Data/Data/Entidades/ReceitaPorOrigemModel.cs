@@ -24,4 +24,7 @@ public class ReceitaPorOrigemModel
     public decimal Realizada { get; set; }
 
     public DateOnly GeradoEm { get; set; }
+
+    /// <summary>O arquivo do Portal de onde veio a linha (Pendência 72), para o modo auditoria.</summary>
+    public long? CargaId { get; set; }
 }

@@ -1056,7 +1056,9 @@ export async function obterNovidades(): Promise<Novidades> {
 
 /** O número cuja procedência se pede (Pendência 73). O recorte é o mesmo da tela que o mostra. */
 export type ConsultaDeProcedencia = {
-  contexto: 'votos' | 'cota' | 'emendas' | 'campanha' | 'patrimonio' | 'painel' | 'pagamentos' | 'entidade';
+  contexto:
+    | 'votos' | 'cota' | 'emendas' | 'campanha' | 'patrimonio' | 'painel' | 'pagamentos' | 'entidade'
+    | 'governo-gastos' | 'governo-receitas' | 'governo-sigiloso';
   pessoa?: number;
   legislatura?: number;
   ano?: number;

@@ -832,6 +832,11 @@ def gravar_convenios(
     return gravadas
 
 
+def _carga_ou_nula(linhas: Sequence[dict]) -> list[dict]:
+    """As linhas com `carga_id`, nulo quando quem montou a linha não o pôs (Pendência 84)."""
+    return [{**linha, "carga_id": linha.get("carga_id")} for linha in linhas]
+
+
 def gravar_orcamento(
     conexao: psycopg.Connection, anos: list[int], linhas: Sequence[dict]
 ) -> int:
@@ -844,13 +849,13 @@ def gravar_orcamento(
         INSERT INTO orcamento_por_funcao (ano, codigo_funcao, funcao, dotacao_inicial,
                                           dotacao_atualizada, empenhado, pago,
                                           restos_a_pagar_pagos,
-                                          empenhado_acima_da_dotacao, gerado_em)
+                                          empenhado_acima_da_dotacao, gerado_em, carga_id)
         VALUES (%(ano)s, %(codigo_funcao)s, %(funcao)s, %(dotacao_inicial)s,
                 %(dotacao_atualizada)s, %(empenhado)s, %(pago)s,
                 %(restos_a_pagar_pagos)s,
-                %(empenhado_acima_da_dotacao)s, %(gerado_em)s)
+                %(empenhado_acima_da_dotacao)s, %(gerado_em)s, %(carga_id)s)
         """,
-        linhas,
+        _carga_ou_nula(linhas),
     )
 
 
@@ -865,12 +870,12 @@ def gravar_encargos(
         """
         INSERT INTO encargos_especiais (ano, codigo_subfuncao, subfuncao,
                                         dotacao_atualizada, empenhado, pago,
-                                        restos_a_pagar_pagos)
+                                        restos_a_pagar_pagos, carga_id)
         VALUES (%(ano)s, %(codigo_subfuncao)s, %(subfuncao)s,
                 %(dotacao_atualizada)s, %(empenhado)s, %(pago)s,
-                %(restos_a_pagar_pagos)s)
+                %(restos_a_pagar_pagos)s, %(carga_id)s)
         """,
-        linhas,
+        _carga_ou_nula(linhas),
     )
 
 
@@ -884,11 +889,11 @@ def gravar_sigilosos(
         conexao,
         """
         INSERT INTO gastos_sigilosos (ano, origem, orgao_superior, sigiloso, total,
-                                      lancamentos, meses)
+                                      lancamentos, meses, carga_id)
         VALUES (%(ano)s, %(origem)s, %(orgao_superior)s, %(sigiloso)s, %(total)s,
-                %(lancamentos)s, %(meses)s)
+                %(lancamentos)s, %(meses)s, %(carga_id)s)
         """,
-        linhas,
+        _carga_ou_nula(linhas),
     )
 
 
@@ -902,11 +907,11 @@ def gravar_arrecadacao(
         conexao,
         """
         INSERT INTO receitas_por_origem (ano, categoria, origem, prevista, realizada,
-                                         gerado_em)
+                                         gerado_em, carga_id)
         VALUES (%(ano)s, %(categoria)s, %(origem)s, %(prevista)s, %(realizada)s,
-                %(gerado_em)s)
+                %(gerado_em)s, %(carga_id)s)
         """,
-        linhas,
+        _carga_ou_nula(linhas),
     )
 
 

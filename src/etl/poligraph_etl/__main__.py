@@ -830,8 +830,11 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
         )
         membro = orcamento.arquivo(ano)
         tabela = portal.ler_csv(arquivo, membro)
-        do_ano = orcamento.para_linhas(tabela, portal.gerado_em(arquivo, membro))
-        encargos_do_ano = orcamento.encargos_para_linhas(tabela)
+        carga_orcamento = _carga_do_arquivo(
+            conexao, "PORTAL_TRANSPARENCIA", portal.url(orcamento.RECURSO.format(ano=ano)), arquivo
+        )
+        do_ano = [{**l, "carga_id": carga_orcamento} for l in orcamento.para_linhas(tabela, portal.gerado_em(arquivo, membro))]
+        encargos_do_ano = [{**l, "carga_id": carga_orcamento} for l in orcamento.encargos_para_linhas(tabela)]
 
         restos = _restos_a_pagar_do_ano(ano)
         for linha in do_ano:
@@ -861,7 +864,10 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
             arrecadacao.RECURSO.format(ano=ano), CACHE / f"receitas-{ano}{sufixo}.zip"
         )
         membro_receita = arrecadacao.arquivo(ano)
-        receitas_do_periodo.extend(arrecadacao.para_linhas(
+        carga_receita = _carga_do_arquivo(
+            conexao, "PORTAL_TRANSPARENCIA", portal.url(arrecadacao.RECURSO.format(ano=ano)), arquivo_receita
+        )
+        receitas_do_periodo.extend({**l, "carga_id": carga_receita} for l in arrecadacao.para_linhas(
             portal.ler_csv(arquivo_receita, membro_receita),
             portal.gerado_em(arquivo_receita, membro_receita),
         ))

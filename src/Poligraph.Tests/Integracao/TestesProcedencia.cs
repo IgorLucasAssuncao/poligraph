@@ -93,7 +93,27 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
         Assert.Equal((2, 1), (lida.Linhas, lida.LinhasSemCarga));
     }
 
+    /// <summary>Pendência 84: o gasto do Governo vem do arquivo anual do orçamento, no período da página.</summary>
+    [SkippableFact]
+    public async Task GovernoGastos_SoOsAnosDoPeriodo()
+    {
+        ExigeDocker();
+        var carga = Carga('f', "https://portaldatransparencia.gov.br/download-de-dados/orcamento-despesa/2025");
+        Db.Cargas.Add(carga);
+        await Db.SaveChangesAsync();
+        Db.OrcamentoPorFuncao.AddRange(
+            new OrcamentoPorFuncaoModel { Ano = 2025, CodigoFuncao = "10", Funcao = "Saúde", CargaId = carga.Id },
+            new OrcamentoPorFuncaoModel { Ano = 2024, CodigoFuncao = "10", Funcao = "Saúde" });
+        await Db.SaveChangesAsync();
+
+        var lida = await LerAsync("/api/procedencia/governo-gastos?de=2025&ate=2025");
+
+        Assert.Equal((1, 0), (lida.Linhas, lida.LinhasSemCarga));
+        Assert.Equal(carga.Id, Assert.Single(lida.Cargas).Id);
+    }
+
     [SkippableTheory]
+    [InlineData("/api/procedencia/governo-gastos?de=2025")]
     [InlineData("/api/procedencia/entidade?cnpj=123")]
     [InlineData("/api/procedencia/pagamentos?de=2025")]
     [InlineData("/api/procedencia/inventado?pessoa=1&legislatura=57")]

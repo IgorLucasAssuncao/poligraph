@@ -25,6 +25,7 @@ import { dataCurta, nomeProprio, partesDeCem, reaisCompacto } from '../formato';
 import { passosDoGoverno } from '../tour';
 import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { LinhaDeValorComponent, NumeroComponent } from '../componentes/Dados';
+import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 
 /**
  * O governo federal para quem não lê orçamento: quanto entrou, onde foi parar, o que foi
@@ -169,17 +170,20 @@ function textoDoPeriodo({ de, ate }: Periodo): string {
 /** Três números. Não Há um quarto que os junte: o saldo pediria regras fiscais que estes dados não seguem. */
 function ResumoComponent({ dados }: { dados: DadosDoGoverno }) {
   const gastou = dados.porAno.reduce((soma, a) => soma + a.gastou, 0);
-  const numeros: [string, number, string][] = [
-    ['Entrou', dados.arrecadacao.arrecadado, 'impostos e contribuições'],
-    ['Gastou', gastou, 'serviços, repasses e juros'],
-    ['Pegou emprestado', dados.arrecadacao.emissaoDeDivida, 'em títulos da dívida'],
+  const { de, ate } = dados.periodo;
+  const numeros: [string, number, string, 'governo-receitas' | 'governo-gastos'][] = [
+    ['Entrou', dados.arrecadacao.arrecadado, 'impostos e contribuições', 'governo-receitas'],
+    ['Gastou', gastou, 'serviços, repasses e juros', 'governo-gastos'],
+    ['Pegou emprestado', dados.arrecadacao.emissaoDeDivida, 'em títulos da dívida', 'governo-receitas'],
   ];
 
   return (
     <section className="numeros-do-ano" aria-label={`${textoDoPeriodo(dados.periodo)} em números`} data-tour="governo-resumo">
-      {numeros.map(([rotulo, valor, definicao]) => (
+      {numeros.map(([rotulo, valor, definicao, contexto]) => (
         <NumeroComponent key={rotulo} rotulo={rotulo} definicao={definicao}>
-          {reaisCompacto(valor)}
+          <ComProcedenciaComponent consulta={{ contexto, de, ate }} rotulo={`${rotulo}, ${textoDoPeriodo(dados.periodo)}`}>
+            {reaisCompacto(valor)}
+          </ComProcedenciaComponent>
         </NumeroComponent>
       ))}
     </section>
@@ -348,7 +352,12 @@ function GastoSigilosoComponent({
       <h2>Gasto sigiloso</h2>
       <p className="frase-resposta">
         No <TermoComponent nome="cartaoCorporativo">cartão corporativo</TermoComponent>, {textoDoPeriodo(periodo)}:{' '}
-        <strong>{reaisCompacto(sigilo.cartaoTotal)}</strong>. Desses, <strong>{parteSigilosa} de cada R$ 100</strong>{' '}
+        <ComProcedenciaComponent
+          consulta={{ contexto: 'governo-sigiloso', de: periodo.de, ate: periodo.ate }}
+          rotulo={`Cartão corporativo, ${textoDoPeriodo(periodo)}`}
+        >
+          <strong>{reaisCompacto(sigilo.cartaoTotal)}</strong>
+        </ComProcedenciaComponent>. Desses, <strong>{parteSigilosa} de cada R$ 100</strong>{' '}
         são sigilosos.
         {emAndamento && sigilo.meses < 12 && ` ${emAndamento} até o mês ${sigilo.meses}.`}
       </p>

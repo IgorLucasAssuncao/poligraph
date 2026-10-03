@@ -23,7 +23,8 @@ public class ServicoProcedencia(PoligraphDb db)
 {
     /// <summary>Os contextos que a rota aceita, na ordem em que aparecem na ficha.</summary>
     public static readonly IReadOnlyList<string> Contextos =
-        ["votos", "cota", "emendas", "campanha", "patrimonio", "painel", "pagamentos", "entidade"];
+        ["votos", "cota", "emendas", "campanha", "patrimonio", "painel", "pagamentos", "entidade",
+         "governo-gastos", "governo-receitas", "governo-sigiloso"];
 
     private readonly PoligraphDb _db = db;
 
@@ -40,6 +41,12 @@ public class ServicoProcedencia(PoligraphDb db)
         string? cnpj, CancellationToken ct)
     {
         if (!Contextos.Contains(contexto)) return null;
+        if (contexto.StartsWith("governo-", StringComparison.Ordinal))
+        {
+            if (de is not { } inicio || ate is not { } fim) return null;
+            var (regraDoGoverno, cargasDoGoverno) = DoGoverno(contexto, inicio, fim);
+            return await MontarAsync(regraDoGoverno, cargasDoGoverno, ct);
+        }
         if (contexto == "entidade")
             return cnpj is { Length: 14 } c && c.All(char.IsAsciiDigit) ? await MontarAsync(RegraDaEntidade, DaEntidade(c), ct) : null;
         if (contexto == "pagamentos")
@@ -149,6 +156,31 @@ public class ServicoProcedencia(PoligraphDb db)
         return _db.EmendasFavorecidos.AsNoTracking()
             .Where(f => prefixos.Contains(f.CodigoEmenda.Substring(0, 4)))
             .Select(f => f.CargaId);
+    }
+
+    /// <summary>Os números da página do Governo (Pendência 84), no mesmo período da página.</summary>
+    /// <remarks>
+    /// <para>O gasto soma a execução por função e os Encargos especiais do arquivo anual do orçamento. Os restos a pagar pagos vêm dos arquivos mensais de execução, que não entram como carga das linhas: a regra diz isso.</para>
+    /// <para>O gasto sigiloso combina arquivos mensais do cartão e da execução, e suas linhas ficam sem carga; o painel diz quantas.</para>
+    /// </remarks>
+    private (string, IQueryable<long?>) DoGoverno(string contexto, int de, int ate)
+    {
+        var periodo = de == ate ? $"de {de}" : $"de {de} a {ate}";
+        return contexto switch
+        {
+            "governo-receitas" => (
+                $"A receita realizada do Poder Executivo federal {periodo}, por origem, do arquivo de receitas do Portal da Transparência, uma linha por ano, categoria e origem. "
+                + "O que foi pego emprestado é a origem \"operações de crédito\" desse mesmo arquivo.",
+                _db.ReceitasPorOrigem.AsNoTracking().Where(r => r.Ano >= de && r.Ano <= ate).Select(r => r.CargaId)),
+            "governo-sigiloso" => (
+                $"O gasto sigiloso {periodo}: cartão corporativo e ações marcadas como sigilosas, por órgão, dos arquivos mensais do Portal.",
+                _db.GastosSigilosos.AsNoTracking().Where(g => g.Ano >= de && g.Ano <= ate).Select(g => g.CargaId)),
+            _ => (
+                $"O gasto pago do Poder Executivo federal {periodo}, do arquivo anual do orçamento do Portal da Transparência, uma linha por ano e função, mais os Encargos especiais por subfunção. "
+                + "Os restos a pagar pagos somados vêm dos arquivos mensais de execução.",
+                _db.OrcamentoPorFuncao.AsNoTracking().Where(o => o.Ano >= de && o.Ano <= ate).Select(o => o.CargaId)
+                    .Concat(_db.EncargosEspeciais.AsNoTracking().Where(e => e.Ano >= de && e.Ano <= ate).Select(e => e.CargaId))),
+        };
     }
 
     private const string RegraDaEntidade =
