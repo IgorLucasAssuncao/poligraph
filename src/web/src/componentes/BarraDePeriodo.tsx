@@ -2,6 +2,7 @@ import { periodoDaLegislatura } from '../formato';
 import { SeletorDeLegislaturaComponent } from './SeletorDeLegislatura';
 import { TermoComponent } from './Termo';
 import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
+import { TEXTOS_DO_SITE as T } from '../textos/site';
 
 /**
  * A escolha do período, no alto do conteúdo — o Início e os Parlamentares.
@@ -32,31 +33,29 @@ export function BarraDePeriodoComponent({ comTodas = false }: { comTodas?: boole
   const passada = typeof atual === 'number' && atual !== corrente;
 
   return (
-    <section className={`barra-periodo${passada ? ' barra-periodo-passada' : ''}`} aria-label="Período">
+    <section className={`barra-periodo${passada ? ' barra-periodo-passada' : ''}`} aria-label={T.periodo.rotulo}>
       <div className="barra-periodo-linha">
         <span className="barra-periodo-rotulo">
-          <TermoComponent nome="legislatura">Legislatura</TermoComponent>
+          <TermoComponent nome="legislatura">{T.periodo.legislatura}</TermoComponent>
         </span>
         <SeletorDeLegislaturaComponent
           opcoes={legislaturas.map((l) => l.numero)}
           atual={atual}
           aoTrocar={definir}
           comTodas={comTodas}
-          rotulo="Período de quatro anos do Congresso"
+          rotulo={T.periodo.seletor}
           rotuloVisivel={false}
         />
         <span className="barra-periodo-ajuda">
-          {atual === 'todas'
-            ? 'Cada parlamentar com o último mandato'
-            : `${atual}ª legislatura · Câmara e Senado no mesmo período`}
+          {atual === 'todas' ? T.periodo.todas : T.periodo.mesmoPeriodo(atual)}
         </span>
       </div>
 
       {passada && (
         <p className="barra-periodo-aviso" role="status">
-          Você está vendo <strong>{periodoDaLegislatura(atual)}</strong>, um período anterior.{' '}
+          {T.periodo.anterior(periodoDaLegislatura(atual))}{' '}
           <button type="button" className="botao-link" onClick={() => definir(undefined)}>
-            Voltar para {periodoDaLegislatura(corrente)}
+            {T.periodo.voltarPara(periodoDaLegislatura(corrente))}
           </button>
         </p>
       )}

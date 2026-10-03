@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { buscarTudo, type Busca } from '../api';
 import { nomeProprio, periodoDaLegislatura } from '../formato';
 import { IconeExplorarComponent } from './Icones';
+import { TEXTOS_DO_SITE as T } from '../textos/site';
 
 /**
  * Uma caixa, três tipos de resposta: parlamentar, cidade e entidade.
@@ -68,7 +69,7 @@ export function BuscaDoCabecalhoComponent() {
       <button
         type="button"
         className="busca-abrir botao-icone"
-        aria-label="Abrir a busca"
+        aria-label={T.busca.abrir}
         aria-expanded={expandida}
         onClick={() => {
           setExpandida(true);
@@ -78,7 +79,7 @@ export function BuscaDoCabecalhoComponent() {
         <IconeExplorarComponent />
       </button>
       <label htmlFor={`${id}-campo`} className="sr-apenas">
-        Buscar parlamentar, cidade ou entidade
+        {T.busca.rotulo}
       </label>
       <input
         id={`${id}-campo`}
@@ -89,8 +90,8 @@ export function BuscaDoCabecalhoComponent() {
         aria-controls={`${id}-lista`}
         aria-autocomplete="list"
         aria-activedescendant={mostrar && opcoes[ativa] ? `${id}-opcao-${ativa}` : undefined}
-        placeholder="Buscar nome ou cidade"
-        aria-label="Buscar parlamentar, cidade ou entidade"
+        placeholder={T.busca.placeholder}
+        aria-label={T.busca.rotulo}
         autoComplete="off"
         value={termo}
         onChange={(e) => {
@@ -119,8 +120,8 @@ export function BuscaDoCabecalhoComponent() {
       />
 
       {mostrar && (
-        <div className="busca-resultados" id={`${id}-lista`} role="listbox" aria-label="Resultados da busca">
-          {opcoes.length === 0 && <p className="busca-vazia">Nada encontrado para “{termo.trim()}”.</p>}
+        <div className="busca-resultados" id={`${id}-lista`} role="listbox" aria-label={T.busca.resultados}>
+          {opcoes.length === 0 && <p className="busca-vazia">{T.busca.nada(termo.trim())}</p>}
           {GRUPOS.map(({ grupo, titulo }) => {
             const doGrupo = opcoes.map((o, i) => ({ ...o, i })).filter((o) => o.grupo === grupo);
             if (doGrupo.length === 0) return null;
@@ -158,9 +159,9 @@ export function BuscaDoCabecalhoComponent() {
 type Opcao = { grupo: 'parlamentar' | 'cidade' | 'entidade'; rotulo: string; detalhe: string; destino: string };
 
 const GRUPOS = [
-  { grupo: 'parlamentar', titulo: 'Parlamentares' },
-  { grupo: 'cidade', titulo: 'Cidades' },
-  { grupo: 'entidade', titulo: 'Entidades' },
+  { grupo: 'parlamentar', titulo: T.busca.grupos.parlamentar },
+  { grupo: 'cidade', titulo: T.busca.grupos.cidade },
+  { grupo: 'entidade', titulo: T.busca.grupos.entidade },
 ] as const;
 
 /**
@@ -174,9 +175,9 @@ function opcoesDa(resposta: Busca): Opcao[] {
       detalhe: [
         p.partido,
         p.uf,
-        p.casa === 'SENADO' ? 'Senado' : p.casa === 'CAMARA' ? 'Câmara' : '',
+        p.casa === 'SENADO' ? T.busca.senado : p.casa === 'CAMARA' ? T.busca.camara : '',
         p.legislatura && resposta.legislaturaCorrente && p.legislatura !== resposta.legislaturaCorrente
-          ? `até ${periodoDaLegislatura(p.legislatura).split('–')[1]}`
+          ? T.busca.ate(periodoDaLegislatura(p.legislatura).split('–')[1])
           : '',
       ]
         .filter(Boolean)
@@ -186,7 +187,7 @@ function opcoesDa(resposta: Busca): Opcao[] {
     ...resposta.municipios.map((m) => ({
       grupo: 'cidade' as const,
       rotulo: `${nomeProprio(m.nome)} – ${m.uf}`,
-      detalhe: 'emendas recebidas na cidade',
+      detalhe: T.busca.emendasDaCidade,
       destino: `/emendas?uf=${m.uf}&cidade=${m.codigoIbge}`,
     })),
     ...resposta.entidades.map((e) => ({

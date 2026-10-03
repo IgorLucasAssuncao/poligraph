@@ -22,11 +22,6 @@ export type Tema = 'sistema' | 'claro' | 'escuro';
 export const TEMAS: Tema[] = ['claro', 'sistema', 'escuro'];
 
 /** O rótulo de cada opção na tela. */
-export const NOME_DO_TEMA: Record<Tema, string> = {
-  claro: 'Claro',
-  sistema: 'Sistema',
-  escuro: 'Escuro',
-};
 
 /**
  * O tema guardado, ou `sistema`.

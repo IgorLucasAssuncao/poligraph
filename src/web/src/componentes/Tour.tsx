@@ -13,6 +13,7 @@ import {
 import { EVENTO_CONSENTIMENTO } from '../constantes';
 import { consentimentoDecidido } from '../consentimento';
 import { ContextoDoTour, type TourDaTela } from './contextoDoTour';
+import { TEXTOS_DO_SITE as T } from '../textos/site';
 
 /** Folga entre o elemento e a borda do destaque, em px. */
 const FOLGA = 8;
@@ -150,10 +151,10 @@ function OfertaDoTourComponent({
       <p>{texto}</p>
       <div className="oferta-tour-acoes">
         <button type="button" className="botao-destaque" onClick={aoAceitar}>
-          {nome === 'site' ? 'Ver como funciona' : 'Ver o tour'}
+          {nome === 'site' ? T.tour.verComoFunciona : T.tour.verOTour}
         </button>
         <button type="button" className="botao-texto" onClick={aoRecusar}>
-          Agora não
+          {T.tour.agoraNao}
         </button>
       </div>
     </section>
@@ -452,20 +453,18 @@ function TourComponent({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: 
 
       <div ref={balao} className="tour-balao">
         <div key={indice} aria-live="polite" className="tour-conteudo">
-          <p className="tour-passo">
-            Passo {numero} de {contam.length}
-          </p>
+          <p className="tour-passo">{T.tour.passo(numero, contam.length)}</p>
           <h2 id="tour-titulo">{passo.titulo}</h2>
           <p id="tour-texto">{passo.texto}</p>
         </div>
 
         <div className="tour-controles">
           <button type="button" className="botao-texto" onClick={fechar}>
-            Pular
+            {T.tour.pular}
           </button>
           {indice > 0 && (
             <button type="button" className="botao-secundario" onClick={() => irPara(indice - 1)}>
-              Anterior
+              {T.tour.anterior}
             </button>
           )}
           <button
@@ -474,7 +473,7 @@ function TourComponent({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: 
             className="botao-destaque"
             onClick={() => irPara(indice + 1)}
           >
-            {ultimo ? 'Concluir' : 'Próximo'}
+            {ultimo ? T.tour.concluir : T.tour.proximo}
           </button>
         </div>
       </div>

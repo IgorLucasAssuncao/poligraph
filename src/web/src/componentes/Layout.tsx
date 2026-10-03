@@ -8,6 +8,7 @@ import { MenuDaContaComponent } from './MenuDaConta';
 import { InterruptorDoModoAuditoriaComponent, ProvedorDoModoAuditoriaComponent } from './ModoAuditoria';
 import { ProvedorDoTourComponent } from './Tour';
 import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
+import { TEXTOS_DO_SITE as T } from '../textos/site';
 
 /**
  * A largura útil de uma tela.
@@ -110,7 +111,7 @@ export function CabecalhoDaColunaComponent({
           type="button"
           className="botao-icone"
           onClick={() => navegar(-1)}
-          aria-label="Voltar"
+          aria-label={T.voltar}
         >
           <IconeVoltarComponent />
         </button>
@@ -133,9 +134,9 @@ export function CabecalhoDaColunaComponent({
  * "para onde vai o dinheiro", e viraram abas de um destino só. O Início continua na marca.
  */
 const DESTINOS = [
-  { para: '/parlamentares', rotulo: 'Parlamentares', icone: <IconeExplorarComponent /> },
-  { para: '/resultado', rotulo: 'Compare seu voto', icone: <IconeQuestionarioComponent /> },
-  { para: '/emendas', rotulo: 'Dinheiro público', icone: <IconeOrcamentoComponent /> },
+  { para: '/parlamentares', rotulo: T.destinos.parlamentares, icone: <IconeExplorarComponent /> },
+  { para: '/resultado', rotulo: T.destinos.compare, icone: <IconeQuestionarioComponent /> },
+  { para: '/emendas', rotulo: T.destinos.dinheiro, icone: <IconeOrcamentoComponent /> },
 ];
 
 /**
@@ -155,12 +156,12 @@ function CabecalhoDoSiteComponent() {
   return (
     <header className="cabecalho-site">
       <div className="cabecalho-conteudo">
-        <Link to={comPeriodo('/')} className="marca-link" aria-label="Registro Aberto — início">
+        <Link to={comPeriodo('/')} className="marca-link" aria-label={T.marcaInicio}>
           <MarcaComponent />
-          <span className="marca-texto">Registro Aberto</span>
+          <span className="marca-texto">{T.marca}</span>
         </Link>
 
-        <nav className="nav-principal" aria-label="Navegação principal">
+        <nav className="nav-principal" aria-label={T.navegacao}>
           {DESTINOS.map((destino) => (
             <NavLink
               key={destino.para}
@@ -208,41 +209,25 @@ function RodapeDoSiteComponent() {
     <footer className="rodape-site">
       <div className="rodape-conteudo">
         <section>
-          <h2>O que é</h2>
-          <p>
-            Mostra como cada deputado e senador votou, quem vota parecido com quem e com quem você
-            concorda, a partir do voto registrado. Mostra também o dinheiro do mandato: a cota
-            parlamentar, as emendas e a cidade de quem as recebeu, o financiamento de campanha, o
-            patrimônio declarado e o orçamento do governo federal.
-          </p>
+          <h2>{T.rodape.oQueE}</h2>
+          <p>{T.rodape.oQueETexto}</p>
         </section>
 
         <section>
-          <h2>Procedência</h2>
-          <p>
-            Votos dos Dados Abertos da Câmara dos Deputados e do Senado Federal
-            {maisAntiga && corrente
-              ? maisAntiga === corrente
-                ? `, ${corrente}ª legislatura`
-                : `, da ${maisAntiga}ª à ${corrente}ª legislatura`
-              : ''}
-            . Emendas, pagamentos e orçamento do Portal da Transparência; campanha e patrimônio do
-            TSE; sede das entidades da Receita Federal; população do IBGE. Nenhum voto é editado: a
-            curadoria reescreve a ementa e registra a polaridade da votação. No modo auditoria, cada
-            número mostra o arquivo de onde veio.
-          </p>
+          <h2>{T.rodape.procedencia}</h2>
+          <p>{T.rodape.procedenciaTexto(maisAntiga, corrente)}</p>
         </section>
 
         <section>
-          <h2>Seus dados</h2>
+          <h2>{T.rodape.seusDados}</h2>
           <p>
-            <Link to="/metodologia">Como calculamos</Link>
+            <Link to="/metodologia">{T.rodape.comoCalculamos}</Link>
             <br />
-            <Link to="/privacidade">Política de privacidade</Link>
+            <Link to="/privacidade">{T.rodape.privacidade}</Link>
             {usuario && (
               <>
                 <br />
-                <Link to="/conta">Apagar minha conta</Link>
+                <Link to="/conta">{T.rodape.apagarConta}</Link>
               </>
             )}
           </p>
@@ -250,10 +235,7 @@ function RodapeDoSiteComponent() {
       </div>
 
       <div className="rodape-aviso">
-        <p>
-          <strong>Não é recomendação de voto</strong> e não representa o programa completo
-          de nenhum parlamentar.
-        </p>
+        <p>{T.rodape.aviso}</p>
       </div>
     </footer>
   );

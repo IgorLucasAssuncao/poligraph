@@ -34,11 +34,11 @@ describe('BotaoGoogle sem Client ID configurado', () => {
     expect(document.getElementById('google-gsi')).toBeNull();
   });
 
-  it('explica o que falta e que sem isso não há acesso', () => {
+  it('explica o que falta e que só a entrada fica indisponível', () => {
     const { container } = render(<BotaoGoogleComponent aoEntrar={vi.fn()} />);
 
     expect(container.textContent).toMatch(/VITE_GOOGLE_CLIENT_ID/);
-    expect(container.textContent).toMatch(/exige conta/i);
-    expect(container.textContent).not.toMatch(/funcionam normalmente/i);
+    expect(container.textContent).toMatch(/não há como entrar/i);
+    expect(container.textContent).toMatch(/o resto do site funciona/i);
   });
 });

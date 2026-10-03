@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { aplicarTema, NOME_DO_TEMA, TEMAS, temaGuardado, type Tema } from '../tema';
+import { aplicarTema, TEMAS, temaGuardado, type Tema } from '../tema';
+import { TEXTOS_DO_SITE as T } from '../textos/site';
 
 /**
  * O interruptor de tema — três posições, no cabeçalho.
@@ -16,15 +17,15 @@ export function SeletorDeTemaComponent() {
   }, [tema]);
 
   return (
-    <div className="seletor-tema" role="group" aria-label="Tema da interface">
+    <div className="seletor-tema" role="group" aria-label={T.tema.rotulo}>
       {TEMAS.map((opcao) => (
         <button
           key={opcao}
           type="button"
           className={tema === opcao ? 'ativo' : ''}
           aria-pressed={tema === opcao}
-          title={NOME_DO_TEMA[opcao]}
-          aria-label={`Tema ${NOME_DO_TEMA[opcao].toLowerCase()}`}
+          title={T.tema.nomes[opcao]}
+          aria-label={T.tema.opcao(T.tema.nomes[opcao])}
           onClick={() => setTema(opcao)}
         >
           <IconeComponent tema={opcao} />

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { BASE_DA_API, CABECALHO_DO_SITE } from '../constantes';
+import { TEXTOS_DO_SITE as T } from '../textos/site';
 
 export type UsuarioLogado = { nome: string | null; fotoUrl: string | null };
 
@@ -32,7 +33,7 @@ export function BotaoGoogleComponent({ aoEntrar }: { aoEntrar: (usuario: Usuario
           try {
             aoEntrar(await entrar(resposta.credential));
           } catch {
-            setErro('Não foi possível entrar agora. Tente de novo.');
+            setErro(T.google.erro);
           }
         },
       });
@@ -50,10 +51,7 @@ export function BotaoGoogleComponent({ aoEntrar }: { aoEntrar: (usuario: Usuario
 
   if (!clientId) {
     return (
-      <p className="aviso-config">
-        Login indisponível: falta <code>VITE_GOOGLE_CLIENT_ID</code> no ambiente. Sem
-        ele não há como entrar, e o site inteiro exige conta desde 26/08.
-      </p>
+      <p className="aviso-config">{T.google.semConfiguracao}</p>
     );
   }
 
@@ -77,7 +75,7 @@ async function entrar(idToken: string): Promise<UsuarioLogado> {
     credentials: 'include',
   });
 
-  if (!resposta.ok) throw new Error(`Login falhou (${resposta.status}).`);
+  if (!resposta.ok) throw new Error(T.google.falhou(resposta.status));
 
   return resposta.json();
 }
@@ -97,7 +95,7 @@ function carregarScript(): Promise<void> {
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.onload = () => resolver();
-    script.onerror = () => rejeitar(new Error('Falha ao carregar o Google.'));
+    script.onerror = () => rejeitar(new Error(T.google.scriptFalhou));
     document.head.appendChild(script);
   });
 }

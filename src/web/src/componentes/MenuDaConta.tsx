@@ -6,6 +6,7 @@ import { AvatarComponent } from './Avatar';
 import { useTour } from './contextoDoTour';
 import { SeletorDeTemaComponent } from './SeletorDeTema';
 import { useModoAuditoria } from './contextoDoModoAuditoria';
+import { TEXTOS_DO_SITE as T } from '../textos/site';
 
 /**
  * A conta, o tema e o tour num botão só.
@@ -47,14 +48,14 @@ export function MenuDaContaComponent() {
     };
   }, [aberto]);
 
-  const primeiroNome = usuario?.nome?.split(' ')[0] ?? 'Conta';
+  const primeiroNome = usuario?.nome?.split(' ')[0] ?? T.menu.conta;
   const auditoria = useModoAuditoria();
 
   return (
     <div className="menu-conta" ref={caixa}>
       {!usuario && (
         <Link to={entrar} className="botao-secundario">
-          Entrar
+          {T.menu.entrar}
         </Link>
       )}
 
@@ -72,7 +73,7 @@ export function MenuDaContaComponent() {
             <span className="usuario-mini-nome">{primeiroNome}</span>
           </>
         ) : (
-          <span>Menu</span>
+          <span>{T.menu.menu}</span>
         )}
         <span aria-hidden="true" className="menu-conta-seta">
           ▾
@@ -83,7 +84,7 @@ export function MenuDaContaComponent() {
         <div className="menu-conta-painel" id={id}>
           {usuario && (
             <Link to="/conta" onClick={() => setAberto(false)}>
-              Minha conta
+              {T.menu.minhaConta}
             </Link>
           )}
           <button
@@ -93,13 +94,13 @@ export function MenuDaContaComponent() {
               iniciar();
             }}
           >
-            Como funciona o site
+            {T.menu.comoFunciona}
           </button>
           <button type="button" className="menu-conta-auditoria" aria-pressed={auditoria.ligado} onClick={auditoria.alternar}>
-            Modo auditoria: {auditoria.ligado ? 'ligado' : 'desligado'}
+            {T.menu.auditoria(auditoria.ligado)}
           </button>
           <div className="menu-conta-tema">
-            <span>Tema</span>
+            <span>{T.menu.tema}</span>
             <SeletorDeTemaComponent />
           </div>
           {usuario && (
@@ -110,7 +111,7 @@ export function MenuDaContaComponent() {
                 sair();
               }}
             >
-              Sair
+              {T.menu.sair}
             </button>
           )}
         </div>

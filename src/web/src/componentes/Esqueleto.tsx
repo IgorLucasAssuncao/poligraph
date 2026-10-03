@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { TEXTOS_DO_SITE as T } from '../textos/site';
 
 /**
  * O lugar do conteúdo enquanto ele chega: blocos cinza na forma do que vem, com um
@@ -102,7 +103,7 @@ export function EsqueletoDePainelComponent({
 /** O topo do perfil (foto, nome, siglas) e o começo da lista de votos. */
 export function EsqueletoDeFichaComponent() {
   return (
-    <EsqueletoComponent rotulo="Carregando o perfil">
+    <EsqueletoComponent rotulo={T.carregandoOPerfil}>
       <div className="esqueleto-ficha">
         <span className="esqueleto-avatar esqueleto-avatar-grande" />
         <BarraComponent largura={45} alta />

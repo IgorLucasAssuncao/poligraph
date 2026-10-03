@@ -2,6 +2,7 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import { periodoDaLegislatura } from '../formato';
 import { ehDinheiroPublico } from '../navegacao';
 import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
+import { TEXTOS_DO_SITE as T } from '../textos/site';
 
 /**
  * De onde vem o dado, dito antes de qualquer número — e de QUE PERÍODO.
@@ -27,9 +28,9 @@ export function FaixaDeProcedenciaComponent() {
 
   return (
     <div className="faixa-procedencia" data-tour="procedencia">
-      <strong>Dados públicos</strong>
-      <span className="faixa-longa">Registro nominal de votação da Câmara dos Deputados e do Senado Federal</span>
-      <span className="faixa-curta" aria-hidden="true">Câmara e Senado</span>
+      <strong>{T.faixa.dadosPublicos}</strong>
+      <span className="faixa-longa">{T.faixa.longa}</span>
+      <span className="faixa-curta" aria-hidden="true">{T.faixa.curta}</span>
       <PeriodoDaFaixaComponent pathname={pathname} />
     </div>
   );
@@ -46,7 +47,7 @@ function PeriodoDaFaixaComponent({ pathname }: { pathname: string }) {
   if (!legislaturas || legislaturas.length === 0) return null;
   const corrente = legislaturas[0].numero;
 
-  if (pathname === '/resultado') return <span>Perguntas da {corrente}ª legislatura</span>;
+  if (pathname === '/resultado') return <span>{T.faixa.perguntasDa(corrente)}</span>;
 
   const escolhe = pathname === '/' || pathname === '/parlamentares';
   if (!escolhe || ehDinheiroPublico(pathname)) return null;
@@ -56,9 +57,7 @@ function PeriodoDaFaixaComponent({ pathname }: { pathname: string }) {
 
   return (
     <span className="faixa-periodo">
-      {atual === 'todas'
-        ? 'Todos os períodos'
-        : `${atual}ª legislatura · ${periodoDaLegislatura(atual)}`}
+      {atual === 'todas' ? T.faixa.todos : T.faixa.legislatura(atual, periodoDaLegislatura(atual))}
     </span>
   );
 }

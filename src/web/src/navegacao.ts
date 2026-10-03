@@ -1,3 +1,4 @@
+import { TEXTOS_DO_SITE } from './textos/site';
 /**
  * A navegação do site, organizada pelas três intenções de quem usa — não pelas fontes de dado.
  *
@@ -11,9 +12,9 @@
  * décimo segundo elemento. Uma pergunta, uma porta — as abas dividem a pergunta por dentro.
  */
 export const ABAS_DO_DINHEIRO = [
-  { para: '/emendas', rotulo: 'Emendas por cidade' },
-  { para: '/entidades', rotulo: 'Entidades' },
-  { para: '/governo', rotulo: 'Governo federal' },
+  { para: '/emendas', rotulo: TEXTOS_DO_SITE.abasDoDinheiro.emendas },
+  { para: '/entidades', rotulo: TEXTOS_DO_SITE.abasDoDinheiro.entidades },
+  { para: '/governo', rotulo: TEXTOS_DO_SITE.abasDoDinheiro.governo },
 ] as const;
 
 /** Se o endereço é de uma das abas de Dinheiro público — para o item da barra acender. */

@@ -8,6 +8,7 @@ import { ProvedorDeSessaoComponent } from './componentes/ProvedorDeSessao';
 import { EsqueletoDeTextoComponent } from './componentes/Esqueleto';
 import { useSessao } from './sessao';
 import './App.css';
+import { TEXTOS_DO_SITE as T } from './textos/site';
 
 /**
  * Cada página vem num pacote próprio, baixado na primeira visita a ela (auditoria de 2026-10-03:
@@ -57,11 +58,11 @@ export default function AppComponent() {
 function RoteadorComponent() {
   const { usuario, carregando, leituraPublica } = useSessao();
 
-  if (carregando) return <div className="carregando-inicial">carregando…</div>;
+  if (carregando) return <div className="carregando-inicial">{T.carregando}</div>;
 
   if (!usuario) {
     return (
-      <Suspense fallback={<EsqueletoDeTextoComponent rotulo="Carregando a página" />}>
+      <Suspense fallback={<EsqueletoDeTextoComponent rotulo={T.carregandoAPagina} />}>
       <Routes>
         <Route path="/privacidade" element={<DocumentoPublicoComponent><PoliticaDePrivacidadeComponent /></DocumentoPublicoComponent>} />
         <Route path="/metodologia" element={<DocumentoPublicoComponent><MetodologiaComponent /></DocumentoPublicoComponent>} />
@@ -81,7 +82,7 @@ function RoteadorComponent() {
 
   return (
     <LayoutComponent>
-      <Suspense fallback={<EsqueletoDeTextoComponent rotulo="Carregando a página" />}>
+      <Suspense fallback={<EsqueletoDeTextoComponent rotulo={T.carregandoAPagina} />}>
       <Routes>
         <Route path="/" element={<InicioComponent />} />
         <Route path="/parlamentares" element={<ParlamentaresComponent />} />
@@ -117,7 +118,7 @@ function RoteadorComponent() {
 function LeituraSemContaComponent() {
   return (
     <LayoutComponent>
-      <Suspense fallback={<EsqueletoDeTextoComponent rotulo="Carregando a página" />}>
+      <Suspense fallback={<EsqueletoDeTextoComponent rotulo={T.carregandoAPagina} />}>
       <Routes>
         <Route path="/" element={<InicioComponent />} />
         <Route path="/parlamentares" element={<ParlamentaresComponent />} />
@@ -152,7 +153,7 @@ function DocumentoPublicoComponent({ children }: { children: ReactNode }) {
     <div className="documento-publico">
       <header className="cabecalho-publico">
         <Link to="/" className="marca-link">
-          Registro Aberto
+          {T.marca}
         </Link>
       </header>
       <main>{children}</main>
