@@ -278,10 +278,17 @@ function CartaoDaCargaComponent({ carga }: { carga: CargaDeProcedencia }) {
   );
 }
 
+/**
+ * O fim do caminho da URL. Quando ele é só um ano ou um código curto ("2026", "UNICO"), vem com a
+ * pasta junto ("orcamento-despesa/2026"): sozinho, não diz que arquivo é.
+ */
 function nomeDoArquivo(url: string): string {
   try {
-    const caminho = new URL(url).pathname.split('/').filter(Boolean);
-    return decodeURIComponent(caminho.at(-1) ?? url);
+    const caminho = new URL(url).pathname.split('/').filter(Boolean).map(decodeURIComponent);
+    const ultimo = caminho.at(-1) ?? url;
+    return /^[\w-]{1,8}$/.test(ultimo) && !ultimo.includes('.') && caminho.length > 1
+      ? `${caminho.at(-2)}/${ultimo}`
+      : ultimo;
   } catch {
     return url;
   }
