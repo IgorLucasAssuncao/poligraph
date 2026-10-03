@@ -300,7 +300,7 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
             if (uf is not null && municipio?.Uf != uf) continue;
 
             linhas.Add((NoDoAutor(autores.GetValueOrDefault(p.CodigoEmenda), nomesDePessoa),
-                        NoDaEntidade(p.Tipo, p.Intermediario, p.Documento, p.Nome),
+                        NoDaEntidade(p.Tipo, p.Intermediario, p.Documento, p.Nome, municipio?.Uf),
                         NoDaCidade(municipio),
                         p.Valor));
         }
@@ -351,11 +351,14 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
             : new NoDoFluxoDto($"A:{autor.CodigoAutor}", autor.NomeAutor, 0, "parlamentar", 0, null);
     }
 
-    private static NoDoFluxoDto NoDaEntidade(TipoFavorecido tipo, bool intermediario, string? documento, string? nome) =>
+    /// <remarks>
+    /// <para>A UF da sede vai no rótulo: há um "Fundo Estadual de Saúde" em cada estado, e sem ela os nós não se distinguem.</para>
+    /// </remarks>
+    private static NoDoFluxoDto NoDaEntidade(TipoFavorecido tipo, bool intermediario, string? documento, string? nome, string? uf) =>
         intermediario
             ? new NoDoFluxoDto("INTERMEDIARIO", "Repasse por banco (destino final fora do dado)", 1, "sem-destino", 0, null)
             : tipo == TipoFavorecido.PESSOA_JURIDICA && documento is { Length: 14 }
-                ? new NoDoFluxoDto($"E:{documento}", TextoSemCpf.Limpar(nome ?? documento), 1, "entidade", 0, $"/entidades/{documento}")
+                ? new NoDoFluxoDto($"E:{documento}", TextoSemCpf.Limpar(nome ?? documento) + (uf is null ? "" : $" ({uf})"), 1, "entidade", 0, $"/entidades/{documento}")
                 : new NoDoFluxoDto("PESSOAS", "Pessoas e sem identificação", 1, "sem-destino", 0, null);
 
     private static NoDoFluxoDto NoDaCidade(MunicipioDto? municipio) =>

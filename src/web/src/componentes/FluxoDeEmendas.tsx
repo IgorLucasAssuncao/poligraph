@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { obterFluxoDeEmendas, type FluxoDeEmendas, type NoDoFluxo, type Periodo } from '../api';
-import { reais, reaisCompacto } from '../formato';
+import { nomeProprio, reais, reaisCompacto } from '../formato';
 import { BlocoComponent, EsqueletoComponent } from './Esqueleto';
 
 /** Largura do desenho em unidades do SVG; a tela o encaixa na largura disponível. */
 const LARGURA = 1000;
 const ALTURA = 640;
 const ESPACO_ENTRE_NOS = 8;
+/** A altura mínima de cada nó na coluna: a de uma linha de rótulo. Sem ela, os nós pequenos se encavalam. */
+const VAGA_MINIMA = 18;
 const LARGURA_DO_NO = 14;
 /** Onde fica cada coluna: quem mandou, quem recebeu, cidade. */
 const X_DA_COLUNA = [230, 500, 770];
@@ -75,9 +77,9 @@ export function FluxoDeEmendasComponent({ periodo, uf }: { periodo: Periodo; uf:
         <TabelaDoFluxoComponent fluxo={fluxo} />
       ) : (
         <div className="fluxo-desenho">
-          <svg viewBox={`0 0 ${LARGURA} ${ALTURA + 40}`} role="img" aria-label={`Caminho do dinheiro de emenda: ${fluxo.nos.length} nós e ${fluxo.arestas.length} setas`}>
+          <svg viewBox={`0 0 ${LARGURA} ${desenho.altura + 40}`} role="img" aria-label={`Caminho do dinheiro de emenda: ${fluxo.nos.length} nós e ${fluxo.arestas.length} setas`}>
             <defs>
-              <marker id="fluxo-seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+              <marker id="fluxo-seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">
                 <path d="M0,0 L10,5 L0,10 z" className="fluxo-ponta" />
               </marker>
             </defs>
@@ -116,7 +118,7 @@ export function FluxoDeEmendasComponent({ periodo, uf }: { periodo: Periodo; uf:
                     textAnchor={n.coluna === 0 ? 'end' : 'start'}
                     dominantBaseline="middle"
                   >
-                    {encurtar(n.rotulo, n.coluna === 1 ? 30 : 34)} · {reaisCompacto(n.valor)}
+                    {encurtar(legivel(n), 34)} · {reaisCompacto(n.valor)}
                   </text>
                   <title>{`${n.rotulo}: ${reais(n.valor)}`}</title>
                 </g>
@@ -164,16 +166,18 @@ function TabelaDoFluxoComponent({ fluxo }: { fluxo: FluxoDeEmendas }) {
  */
 function posicionar(fluxo: FluxoDeEmendas) {
   const nos = new Map<string, Posicionado>();
+  let altura = ALTURA;
   for (const coluna of [0, 1, 2]) {
     const daColuna = fluxo.nos.filter((n) => n.coluna === coluna);
     const total = daColuna.reduce((s, n) => s + n.valor, 0) || 1;
     const util = ALTURA - ESPACO_ENTRE_NOS * Math.max(daColuna.length - 1, 0);
     let y = 0;
     for (const n of daColuna) {
-      const altura = Math.max((n.valor / total) * util, 2);
-      nos.set(n.id, { ...n, y, altura });
-      y += altura + ESPACO_ENTRE_NOS;
+      const alturaDoNo = Math.max((n.valor / total) * util, 2);
+      nos.set(n.id, { ...n, y, altura: alturaDoNo });
+      y += Math.max(alturaDoNo, VAGA_MINIMA) + ESPACO_ENTRE_NOS;
     }
+    altura = Math.max(altura, y);
   }
 
   const escala = (id: string) => {
@@ -208,7 +212,18 @@ function posicionar(fluxo: FluxoDeEmendas) {
       };
     });
 
-  return { nos: [...nos.values()], arestas };
+  return { nos: [...nos.values()], arestas, altura };
+}
+
+/**
+ * O rótulo fora da caixa alta do Portal, sem estragar a UF: "LUIZIANA – PR" vira "Luiziana – PR",
+ * e "FUNDO ESTADUAL DE SAUDE (MT)" vira "Fundo Estadual de Saude (MT)". Os nós sem destino e os
+ * "outros" já vêm escritos para a tela.
+ */
+function legivel(no: NoDoFluxo): string {
+  if (!['entidade', 'cidade', 'parlamentar', 'bancada', 'comissao'].includes(no.tipo)) return no.rotulo;
+  const sufixo = no.rotulo.match(/( – [A-Z]{2}| \([A-Z]{2}\))$/)?.[0] ?? '';
+  return nomeProprio(no.rotulo.slice(0, no.rotulo.length - sufixo.length)) + sufixo;
 }
 
 function encurtar(texto: string, maximo: number): string {

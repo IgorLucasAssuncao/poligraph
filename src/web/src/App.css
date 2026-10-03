@@ -3050,7 +3050,7 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 .fluxo-apagada { stroke-opacity: .06; }
 .fluxo-ponta { fill: var(--realce); fill-opacity: .7; }
 .fluxo-no rect { fill: var(--texto); }
-.fluxo-no text { font-size: 11px; fill: var(--texto); }
+.fluxo-no text { font-size: 11px; fill: var(--texto); paint-order: stroke; stroke: var(--fundo); stroke-width: 3px; stroke-linejoin: round; }
 .fluxo-outros rect, .fluxo-sem-destino rect, .fluxo-sem-autor rect { fill: var(--borda-forte); }
 .fluxo-sem-destino text, .fluxo-outros text, .fluxo-sem-autor text { fill: var(--suave); font-style: italic; }
 .fluxo-clicavel { cursor: pointer; }
