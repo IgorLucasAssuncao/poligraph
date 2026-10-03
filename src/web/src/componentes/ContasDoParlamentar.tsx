@@ -18,7 +18,7 @@ import { ConveniosComponent, EmendasUmaAUmaComponent, QuandoFoiPagoComponent, Qu
 import { LinkDeFonteComponent } from './LinkDeFonte';
 import { TermoComponent } from './Termo';
 import { ComProcedenciaComponent } from './ModoAuditoria';
-import { NENHUM, usePaginas } from './usePaginas';
+import { NENHUM, useAVista, usePaginas } from './usePaginas';
 import type { Contas } from './useContas';
 import { EsqueletoDePainelComponent, EsqueletoDeTextoComponent } from './Esqueleto';
 import { LinhaDeValorComponent, OpcoesComponent } from './Dados';
@@ -260,8 +260,21 @@ export function AbaEmendasComponent({
   );
 }
 
-/** Pela sede de quem recebeu — CNPJ → IBGE —, e cada cidade leva ao mapa. */
+/**
+ * Pela sede de quem recebeu — CNPJ → IBGE —, e cada cidade leva ao mapa.
+ *
+ * ATENÇÃO: A API manda só as maiores. O botão diz quantas abre, e não "faltam N": o total de
+ * cidades é maior que a lista.
+ */
 function CidadesQueReceberamComponent({ cidades }: { cidades: CidadesDaEmenda }) {
+  const lista = useAVista({
+    itens: cidades.maiores,
+    restantes: 0,
+    proximos: 0,
+    carregando: false,
+    erro: false,
+    carregarMais: () => {},
+  });
   if (cidades.quantidade === 0) return null;
 
   const maior = cidades.maiores[0]?.recebido ?? 1;
@@ -271,10 +284,11 @@ function CidadesQueReceberamComponent({ cidades }: { cidades: CidadesDaEmenda })
       <h3 className="titulo-secao">Cidades que receberam</h3>
       <p className="ajuda ajuda-espacada">
         {cidades.quantidade} {cidades.quantidade === 1 ? 'cidade' : 'cidades'}, pela{' '}
-        <TermoComponent nome="sedeDoFavorecido">sede de quem recebeu</TermoComponent>.
+        <TermoComponent nome="sedeDoFavorecido">sede de quem recebeu</TermoComponent>
+        {cidades.quantidade > cidades.maiores.length && <>; aqui, as {cidades.maiores.length} que mais receberam</>}.
       </p>
       <ul className="gastos-categorias">
-        {cidades.maiores.map((c) => (
+        {lista.itens.map((c) => (
           <LinhaDeValorComponent
             key={c.municipio.codigoIbge}
             nome={
@@ -287,6 +301,7 @@ function CidadesQueReceberamComponent({ cidades }: { cidades: CidadesDaEmenda })
           />
         ))}
       </ul>
+      <BotaoMostrarMaisComponent {...lista} aoClicar={lista.carregarMais} rotulo={`Ver as ${cidades.maiores.length} que mais receberam`} />
     </>
   );
 }

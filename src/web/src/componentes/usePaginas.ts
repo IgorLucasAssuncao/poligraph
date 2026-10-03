@@ -55,3 +55,29 @@ export function usePaginas<T>(
     carregarMais,
   };
 }
+
+/** Quantos itens uma lista curta da ficha mostra antes do "Mostrar mais". */
+export const A_VISTA = 5;
+
+/**
+ * Corta a lista em {@link A_VISTA} itens até o primeiro "Mostrar mais", que abre o que já veio
+ * carregado; daí em diante o botão segue a paginação de {@link usePaginas}, quando há.
+ *
+ * DECISÃO (2026-10-03, pedido do autor para encurtar a aba Emendas): a API manda oito por página,
+ * e oito linhas em cada lista empurravam o resto da aba para baixo.
+ */
+export function useAVista<T>(
+  lista: { itens: T[]; restantes: number; proximos: number; carregando: boolean; erro: boolean; carregarMais: () => void },
+) {
+  const [aberta, setAberta] = useState(false);
+  const escondidos = aberta ? 0 : Math.max(lista.itens.length - A_VISTA, 0);
+
+  return {
+    itens: escondidos > 0 ? lista.itens.slice(0, A_VISTA) : lista.itens,
+    restantes: lista.restantes + escondidos,
+    proximos: escondidos > 0 ? escondidos : lista.proximos,
+    carregando: lista.carregando,
+    erro: lista.erro,
+    carregarMais: escondidos > 0 ? () => setAberta(true) : lista.carregarMais,
+  };
+}

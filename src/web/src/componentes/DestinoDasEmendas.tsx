@@ -12,7 +12,7 @@ import { BotaoBaixarCsvComponent } from './BotaoBaixarCsv';
 import { BotaoMostrarMaisComponent } from './BotaoMostrarMais';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { LinkDeFonteComponent } from './LinkDeFonte';
-import { NENHUM, usePaginas } from './usePaginas';
+import { NENHUM, useAVista, usePaginas } from './usePaginas';
 import { TermoComponent } from './Termo';
 
 /**
@@ -37,8 +37,10 @@ export function QuemRecebeuComponent({
   ano: number;
 }) {
   const porPagina = favorecidos.maiores.length || 8;
-  const lista = usePaginas(favorecidos.maiores, favorecidos.identificados, porPagina, (pagina) =>
-    listarFavorecidos(pessoaId, ano, pagina, porPagina),
+  const lista = useAVista(
+    usePaginas(favorecidos.maiores, favorecidos.identificados, porPagina, (pagina) =>
+      listarFavorecidos(pessoaId, ano, pagina, porPagina),
+    ),
   );
 
   if (favorecidos.recebido === 0) return null;
