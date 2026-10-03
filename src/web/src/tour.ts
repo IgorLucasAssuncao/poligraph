@@ -32,7 +32,7 @@ export const OFERTA_DO_TOUR: Record<NomeDoTour, { titulo: string; texto: string 
   },
   grafo: {
     titulo: 'Como ler o grafo',
-    texto: 'O que cada ponto, linha e cor quer dizer, e as duas leituras que a figura não permite.',
+    texto: 'O que cada ponto, linha e cor quer dizer, e dois cuidados ao ler a figura.',
   },
   ficha: {
     titulo: 'Como ler a ficha',
@@ -52,7 +52,7 @@ export const OFERTA_DO_TOUR: Record<NomeDoTour, { titulo: string; texto: string 
   },
   resultado: {
     titulo: 'Como ler o resultado',
-    texto: 'O que o número conta, o que o losango no grafo significa e o que o resultado não é.',
+    texto: 'O que o número conta, o que o losango no grafo significa e como usar o resultado.',
   },
 };
 
@@ -173,7 +173,7 @@ export function passosDoGrafo({
     {
       rota: null,
       alvo: 'grafo-grupos',
-      titulo: 'A cor é o grupo de voto, não o partido',
+      titulo: 'A cor mostra o grupo de voto',
       texto:
         'Os grupos são encontrados a partir dos próprios votos: quem vota junto com ' +
         'frequência cai no mesmo grupo. Por isso um partido aparece em vários grupos. ' +
@@ -184,9 +184,8 @@ export function passosDoGrafo({
       alvo: 'grafo-legenda',
       titulo: 'A borda e o centro',
       texto:
-        'Os pontos soltos na borda não são radicais: votaram pouco demais para serem ' +
-        'comparados com alguém e não têm nenhuma ligação. E o centro não reúne os ' +
-        'moderados, e sim quem vota como a maioria.',
+        'Os pontos soltos na borda votaram pouco demais para serem comparados com alguém ' +
+        'e ficaram sem ligação. O centro reúne quem vota como a maioria.',
     },
     {
       rota: null,
@@ -195,7 +194,7 @@ export function passosDoGrafo({
       texto: temAlinhamento
         ? 'Nas molas, quem vota junto se atrai, e os eixos não significam nada. No ' +
           'alinhamento, a posição horizontal é quanto o parlamentar votou como o Governo ' +
-          'orientou. Não é esquerda e direita política.'
+          'orientou. A posição mede só esse alinhamento com o Governo.'
         : 'Aqui os pontos se atraem quando votam junto, e os eixos não significam nada. ' +
           'Os dados desta casa não trazem a orientação do Governo, então só existe esta vista.',
     },
@@ -288,10 +287,10 @@ export function passosDoQuestionario(): PassoDoTour[] {
     {
       rota: null,
       alvo: 'opcoes',
-      titulo: '"Não sei" não conta contra você',
+      titulo: '"Não sei" tira a pergunta da conta',
       texto:
-        'Com "Não sei", a pergunta sai da comparação. Mas é preciso opinar em boa parte ' +
-        'delas para haver resultado.',
+        'Responder "Não sei" não pesa contra ninguém. Para haver resultado, é preciso ' +
+        'opinar em boa parte das perguntas.',
     },
     {
       rota: null,
@@ -341,7 +340,7 @@ export function passosDoResultado(): PassoDoTour[] {
     {
       rota: null,
       alvo: 'resultado-aviso',
-      titulo: 'O que o resultado não é',
+      titulo: 'Como usar o resultado',
       texto:
         'Mostra com quem você votaria igual nestas votações. Não é recomendação de voto ' +
         'nem resume tudo o que um parlamentar defende.',
@@ -425,7 +424,7 @@ export function passosDasEmendas(): PassoDoTour[] {
     {
       rota: null,
       alvo: 'emendas-coletivos',
-      titulo: 'Bancadas e comissões não são pessoas',
+      titulo: 'Bancadas e comissões',
       texto:
         'Parte das emendas é apresentada pelo grupo de parlamentares de um estado ou por ' +
         'uma comissão do Congresso. Elas aparecem separadas, porque não têm um autor só.',
@@ -443,16 +442,16 @@ export function passosDoGoverno(): PassoDoTour[] {
       alvo: 'governo-ano',
       titulo: 'Um ano por vez',
       texto:
-        'Os números são do governo federal — ministérios e órgãos. Congresso e Justiça têm ' +
-        'orçamento próprio e não entram. O ano em andamento vem avisado: os valores ainda crescem.',
+        'Os números são do governo federal: ministérios e órgãos. Congresso e Justiça têm ' +
+        'orçamento próprio e ficam de fora. O ano em andamento vem avisado, porque os valores ainda crescem.',
     },
     {
       rota: null,
       alvo: 'governo-resumo',
       titulo: 'Entrou, gastou, pegou emprestado',
       texto:
-        'Os três números não se subtraem: aqui não há "saldo". O empréstimo fica separado da ' +
-        'arrecadação porque é dinheiro que vai ser devolvido.',
+        'Os três números ficam lado a lado, sem formar um saldo. O empréstimo aparece separado ' +
+        'da arrecadação porque é dinheiro que vai ser devolvido.',
     },
     {
       rota: null,

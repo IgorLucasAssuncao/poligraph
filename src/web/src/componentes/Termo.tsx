@@ -92,32 +92,31 @@ export const GLOSSARIO = {
     rotulo: 'proposição',
     explicacao:
       ' O documento proposto: um projeto de lei, uma emenda à Constituição, uma medida ' +
-      'provisória. É identificado por sigla, número e ano — "PL 4133/2023". Uma mesma ' +
-      'proposição costuma ir a voto VÁRIAS vezes: o texto principal, um trecho ' +
-      'destacado, a redação final. Por isso duas linhas com o mesmo número podem ter ' +
-      'votos opostos sem contradição.',
+      'provisória. É identificado por sigla, número e ano, como "PL 4133/2023". Uma mesma ' +
+      'proposição costuma ir a voto várias vezes: o texto principal, um trecho destacado, ' +
+      'a redação final. Por isso duas linhas com o mesmo número podem ter votos opostos ' +
+      'sem contradição.',
   },
   ementa: {
     rotulo: 'ementa',
     explicacao:
-      ' O parágrafo que resume o que uma proposição faz, escrito por quem a apresentou. ' +
-      'É o que diz o ASSUNTO — o registro da votação diz apenas o número do projeto. ' +
-      'Sem a ementa, "Aprovado o Substitutivo ao Projeto de Lei nº 4.133" não informa ' +
-      'em que a pessoa votou.',
+      ' O parágrafo que resume o que uma proposição faz, escrito por quem a apresentou. O ' +
+      'registro da votação traz só o número do projeto; é a ementa que diz o assunto. ' +
+      '"Aprovado o Substitutivo ao Projeto de Lei nº 4.133", sozinho, não conta em que a ' +
+      'pessoa votou.',
   },
   plenario: {
     rotulo: 'plenário',
     explicacao:
-      ' A sessão com todos os deputados, não a reunião de uma comissão menor. ' +
-      'Só usamos votações de plenário: em comissão a concordância é muito maior, e ' +
-      'misturar as duas achataria a comparação.',
+      ' A sessão com todos os deputados, ou com todos os senadores. As comissões votam em ' +
+      'grupos menores. O questionário usa só votações de plenário, porque nas comissões ' +
+      'quase todos concordam e a comparação perderia a diferença entre as pessoas.',
   },
   votacaoNominal: {
     rotulo: 'votação nominal',
     explicacao:
-      ' Aquela em que fica registrado o voto de cada parlamentar, um a um. ' +
-      'Nas demais só se registra o resultado, então não há como saber quem votou o quê ' +
-      '— e sem isso não dá para comparar ninguém.',
+      ' A votação em que fica registrado o voto de cada parlamentar. Nas outras, o ' +
+      'registro guarda só o resultado, e aí não há como comparar ninguém.',
   },
   abstencao: {
     rotulo: 'abstenção',
@@ -128,34 +127,33 @@ export const GLOSSARIO = {
   procedimental: {
     rotulo: 'questão de rito',
     explicacao:
-      ' Voto sobre o ANDAMENTO dos trabalhos — urgência, retirada de pauta, ordem da ' +
-      'sessão —, não sobre o conteúdo da proposta. São 56% das votações da Câmara, e ' +
-      'costumam separar governo de oposição sem dizer nada sobre o mérito. Por isso ' +
-      'não entram no cálculo de afinidade.',
+      ' Voto sobre o andamento dos trabalhos: urgência, retirada de pauta, ordem da ' +
+      'sessão. O conteúdo da proposta é votado à parte. São 56% das votações da Câmara, e ' +
+      'costumam separar governo de oposição por estratégia. Por isso ficam fora do cálculo ' +
+      'de afinidade.',
   },
   comunidade: {
     rotulo: 'grupo de voto',
     explicacao:
-      ' Conjunto de parlamentares que votam parecido entre si, detectado pelos votos ' +
-      'e não pelo partido. Por isso um mesmo partido aparece em vários grupos, e o ' +
-      'número do grupo é só um rótulo — não indica posição no espectro político.',
+      ' Um conjunto de parlamentares que votam parecido entre si, achado só pelos votos. ' +
+      'Um mesmo partido pode aparecer em vários grupos. O número do grupo é apenas um nome ' +
+      'e não indica posição política.',
   },
   participacao: {
     rotulo: 'participação nas votações',
     explicacao:
-      ' Conta as votações nominais em plenário em que o parlamentar registrou voto — sim, ' +
-      'não, abstenção, obstrução ou voto secreto. Não é a presença na sessão, que a Câmara ' +
-      'registra à parte: dá para estar na sessão e não votar. No Senado, licença e missão ' +
-      'oficial aparecem separadas; na Câmara não, e quem se licenciou para ser ministro, por ' +
-      'exemplo, aparece como ausente nesse período.',
+      ' Conta as votações nominais em plenário em que o parlamentar registrou voto: sim, ' +
+      'não, abstenção, obstrução ou voto secreto. A presença na sessão é outro registro da ' +
+      'Câmara, e dá para estar na sessão sem votar. No Senado, licença e missão oficial ' +
+      'aparecem separadas. Na Câmara elas aparecem como ausência: quem se licenciou para ' +
+      'ser ministro, por exemplo, fica ausente nesse período.',
   },
   orientacao: {
     rotulo: 'orientação de bancada',
     explicacao:
-      ' Antes de uma votação, cada liderança recomenda como sua bancada deve votar. ' +
-      'A do Governo é publicada junto com as dos partidos. Seguir ou não seguir é ' +
-      'decisão de cada parlamentar — a orientação não obriga, e votar contra é comum. ' +
-      'Só a Câmara publica isso; o Senado não.',
+      ' Antes de uma votação, cada liderança recomenda como sua bancada deve votar, e a do ' +
+      'Governo é publicada junto com as dos partidos. A orientação não obriga ninguém, e ' +
+      'votar contra é comum. Só a Câmara publica as orientações.',
   },
   camara: {
     rotulo: 'Câmara dos Deputados',
@@ -167,24 +165,23 @@ export const GLOSSARIO = {
   senado: {
     rotulo: 'Senado Federal',
     explicacao:
-      ' São 81 senadores, três por estado, com mandato de oito anos. Revisa boa parte ' +
-      'do que vem da Câmara — e mais da metade das votações dele é secreta, então há ' +
-      'menos base para comparar senadores entre si do que deputados.',
+      ' São 81 senadores, três por estado, com mandato de oito anos. O Senado revisa boa ' +
+      'parte do que vem da Câmara. Mais da metade das votações dele é secreta, então há ' +
+      'menos votos para comparar senadores entre si do que deputados.',
   },
   fundao: {
     rotulo: 'Fundo Especial',
     explicacao:
-      ' Dinheiro público repassado aos partidos para financiar campanha eleitoral, ' +
-      'criado em 2017 e apelidado de "fundão". Não se confunde com o Fundo ' +
-      'Partidário, que custeia o partido o ano inteiro — os dois aparecem separados ' +
-      'aqui de propósito.',
+      ' Dinheiro público repassado aos partidos para a campanha eleitoral, criado em 2017 ' +
+      'e apelidado de "fundão". O Fundo Partidário é outro: paga as despesas do partido o ' +
+      'ano inteiro. Por isso os dois aparecem em linhas separadas.',
   },
   emenda: {
     rotulo: 'emenda parlamentar',
     explicacao:
-      ' A parte do orçamento federal que cada parlamentar pode direcionar para onde ' +
-      'quiser — em geral obras e serviços no estado dele. É o principal instrumento ' +
-      'de poder orçamentário individual no Congresso.',
+      ' A parte do orçamento federal que cada parlamentar pode mandar para onde quiser, em ' +
+      'geral obras e serviços no próprio estado. É o principal poder individual de um ' +
+      'parlamentar sobre o orçamento.',
   },
   emendaIndividual: {
     rotulo: 'emenda individual',
@@ -196,16 +193,16 @@ export const GLOSSARIO = {
   emendaDeBancada: {
     rotulo: 'emenda de bancada',
     explicacao:
-      ' A emenda que os deputados e senadores de um mesmo estado apresentam juntos — a ' +
-      '"bancada de Minas Gerais" é o grupo inteiro, e não uma pessoa. A Constituição ' +
-      'garante que seja paga (art. 166). Das emendas de 2023 a 2026: R$ 19,4 bi pagos.',
+      ' A emenda que os deputados e senadores de um mesmo estado apresentam juntos. A ' +
+      '"bancada de Minas Gerais" é o grupo inteiro. A Constituição garante que ela seja ' +
+      'paga (art. 166). Das emendas de 2023 a 2026, R$ 19,4 bi foram pagos.',
   },
   emendaDeComissao: {
     rotulo: 'emenda de comissão',
     explicacao:
-      ' A emenda que uma comissão do Congresso apresenta — a de Saúde, a de Agricultura. ' +
-      'É decidida em votação entre os membros da comissão, e por isso não tem um autor ' +
-      'só. Das emendas de 2023 a 2026: R$ 18,1 bi pagos.',
+      ' A emenda que uma comissão do Congresso apresenta, como a de Saúde ou a de ' +
+      'Agricultura. Os membros da comissão decidem em votação, e por isso ela não tem um ' +
+      'autor só. Das emendas de 2023 a 2026, R$ 18,1 bi foram pagos.',
   },
   cartaoCorporativo: {
     rotulo: 'cartão corporativo',
@@ -224,22 +221,23 @@ export const GLOSSARIO = {
   rolagem: {
     rotulo: 'rolagem da dívida',
     explicacao:
-      ' Pagar uma dívida que venceu pegando um empréstimo novo. O dinheiro entra e sai no ' +
-      'mesmo movimento e não paga serviço nenhum — por isso fica fora da conta de "cada R$ 100".',
+      ' Pagar uma dívida que venceu com um empréstimo novo. O dinheiro entra e sai no ' +
+      'mesmo movimento e não paga nenhum serviço, por isso fica fora da conta de "cada R$ ' +
+      '100".',
   },
   sedeDoFavorecido: {
     rotulo: 'sede de quem recebeu',
     explicacao:
       ' A cidade do mapa é onde fica registrado quem recebeu o dinheiro, no cadastro de ' +
-      'CNPJ da Receita. Para a prefeitura, é a própria cidade. Para uma entidade ou ' +
-      'empresa, é onde ela foi aberta — e ela pode ter aplicado o dinheiro em outro lugar.',
+      'CNPJ da Receita. Para a prefeitura, é a própria cidade. Uma entidade ou empresa ' +
+      'aparece na cidade onde foi aberta, e pode ter usado o dinheiro em outro lugar.',
   },
   multiplo: {
     rotulo: 'MÚLTIPLO',
     explicacao:
-      ' Não é um lugar — é o aviso de que a emenda se reparte entre vários municípios ' +
-      'ou estados, e o Portal da Transparência não diz quais. São 4 de cada 10 emendas, ' +
-      'e as maiores: em média oito vezes o valor de uma emenda destinada a uma cidade só.',
+      ' Aparece quando a emenda se reparte entre vários municípios ou estados e o Portal ' +
+      'da Transparência não diz quais. São 4 de cada 10 emendas, e as maiores: em média, ' +
+      'oito vezes o valor de uma emenda que vai para uma cidade só.',
   },
   nacional: {
     rotulo: 'Nacional',
@@ -250,9 +248,8 @@ export const GLOSSARIO = {
   funcaoOrcamentaria: {
     rotulo: 'área do orçamento',
     explicacao:
-      ' A classificação oficial do gasto público — Saúde, Educação, Segurança. ' +
-      '"Encargos especiais" é a exceção que confunde: não é uma área de serviço, e sim ' +
-      'onde entram repasses que o município aplica onde decidir.',
+      ' A classificação oficial do gasto público: Saúde, Educação, Segurança. "Encargos ' +
+      'especiais" é a que confunde: reúne repasses que o município aplica onde decidir.',
   },
   cota: {
     rotulo: 'cota parlamentar',
@@ -264,16 +261,16 @@ export const GLOSSARIO = {
   empenho: {
     rotulo: 'empenhado e pago',
     explicacao:
-      ' Empenhar é reservar o dinheiro no orçamento; pagar é ele de fato sair dos ' +
-      'cofres. Uma emenda pode ser anunciada, empenhada e nunca paga — por isso ' +
-      'mostramos os dois valores, e não só o primeiro.',
+      ' Empenhar é reservar o dinheiro no orçamento; pagar é o dinheiro sair dos cofres. ' +
+      'Uma emenda pode ser anunciada, empenhada e nunca paga. Por isso mostramos os dois ' +
+      'valores.',
   },
   intermediario: {
     rotulo: 'intermediário',
     explicacao:
-      ' Parte das emendas é paga ao Banco do Brasil, em Brasília, que repassa o dinheiro ' +
-      'a quem vai executar. O banco não é o destino — por isso ele fica fora da lista de ' +
-      'quem recebeu, com o valor mostrado à parte.',
+      ' Parte das emendas é paga ao Banco do Brasil, em Brasília, que repassa o dinheiro a ' +
+      'quem vai executar. Como o banco só repassa, ele fica fora da lista de quem recebeu, ' +
+      'e o valor aparece à parte.',
   },
   favorecidoPessoa: {
     rotulo: 'pagamento a pessoas',
@@ -300,9 +297,9 @@ export const GLOSSARIO = {
     rotulo: 'dotação incompleta',
     explicacao:
       ' O governo não pode empenhar além da dotação. Quando o arquivo mostra isso, a ' +
-      'dotação publicada não é a que autorizou o gasto. Em 2025, a lei do orçamento ' +
-      'deixou R$ 228,5 bi condicionados à "regra de ouro" — liberados depois pelo ' +
-      'Congresso —, e o arquivo publica a dotação sem essa parcela.',
+      'dotação publicada está menor que a que autorizou o gasto. Em 2025, a lei do ' +
+      'orçamento deixou R$ 228,5 bi condicionados à "regra de ouro", liberados depois pelo ' +
+      'Congresso, e o arquivo publica a dotação sem essa parcela.',
   },
   restosAPagar: {
     rotulo: 'restos a pagar',
@@ -314,8 +311,8 @@ export const GLOSSARIO = {
   encargosEspeciais: {
     rotulo: 'Encargos especiais',
     explicacao:
-      ' Não é uma área de serviço: reúne a dívida pública e as transferências que a ' +
-      'Constituição obriga a fazer a estados e municípios. É a maior linha do orçamento: ' +
-      'de 60% a 63% da dotação entre 2023 e 2025.',
+      ' Reúne a dívida pública e as transferências que a Constituição obriga a fazer a ' +
+      'estados e municípios. É a maior linha do orçamento: de 60% a 63% da dotação entre ' +
+      '2023 e 2025.',
   },
 } as const;
