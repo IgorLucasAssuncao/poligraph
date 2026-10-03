@@ -7,6 +7,7 @@ import { tourJaVisto } from '../tour';
 import { ContextoDoModoAuditoria, useModoAuditoria } from './contextoDoModoAuditoria';
 import { useTour } from './contextoDoTour';
 import { LinkDeFonteComponent } from './LinkDeFonte';
+import { TEXTOS_DA_AUDITORIA as T } from '../textos/auditoria';
 import { CHAVE_DO_MODO_AUDITORIA } from '../constantes';
 
 
@@ -71,12 +72,12 @@ export function InterruptorDoModoAuditoriaComponent() {
       type="button"
       className="interruptor-auditoria"
       aria-pressed={ligado}
-      title={ligado ? 'Desligar o modo auditoria' : 'Ligar o modo auditoria: cada número mostra de onde veio'}
+      title={ligado ? T.interruptor.desligar : T.interruptor.ligar}
       onClick={aoClicar}
       data-tour="modo-auditoria"
     >
       <span className="interruptor-auditoria-trilho" aria-hidden="true" />
-      <span>Auditoria</span>
+      <span>{T.interruptor.rotulo}</span>
     </button>
   );
 }
@@ -107,7 +108,7 @@ export function ComProcedenciaComponent({
       type="button"
       className="numero-com-procedencia"
       data-tour="numero-com-procedencia"
-      aria-label={`${rotulo}: ver de onde veio`}
+      aria-label={T.verDeOndeVeio(rotulo)}
       onClick={() => abrir(consulta, rotulo)}
     >
       {children}
@@ -162,16 +163,16 @@ function PainelDeProcedenciaComponent({
       <header className="painel-procedencia-topo">
         <div>
           <p className="painel-procedencia-sobre">{aberto?.rotulo}</p>
-          <h2 id="titulo-procedencia">De onde veio este número</h2>
+          <h2 id="titulo-procedencia">{T.painel.titulo}</h2>
         </div>
-        <button type="button" className="botao-icone" aria-label="Fechar" onClick={aoFechar}>
+        <button type="button" className="botao-icone" aria-label={T.painel.fechar} onClick={aoFechar}>
           ✕
         </button>
       </header>
 
       <div className="painel-procedencia-corpo">
-        {erro && <p className="ajuda">Não foi possível ler a procedência agora. Tente de novo em instantes.</p>}
-        {!erro && !procedencia && aberto && <p className="ajuda">Lendo os arquivos de origem…</p>}
+        {erro && <p className="ajuda">{T.painel.erro}</p>}
+        {!erro && !procedencia && aberto && <p className="ajuda">{T.painel.lendo}</p>}
         {procedencia && <ConteudoDaProcedenciaComponent procedencia={procedencia} />}
       </div>
     </dialog>
@@ -185,19 +186,14 @@ function ConteudoDaProcedenciaComponent({ procedencia }: { procedencia: Proceden
   return (
     <>
       <section>
-        <h3>Como foi contado</h3>
+        <h3>{T.painel.comoFoiContado}</h3>
         <p>{procedencia.regra}</p>
         <p className="ajuda">
-          <strong className="dado">{procedencia.linhas.toLocaleString('pt-BR')}</strong>{' '}
-          {procedencia.linhas === 1 ? 'linha entrou' : 'linhas entraram'} na conta;{' '}
-          <strong className="dado">{comCarga.toLocaleString('pt-BR')}</strong> com o arquivo de
-          origem registrado.
+          {T.painel.linhas(procedencia.linhas.toLocaleString('pt-BR'), procedencia.linhas, comCarga.toLocaleString('pt-BR'))}
         </p>
         {procedencia.linhasSemCarga > 0 && (
           <p className="ajuda">
-            {procedencia.linhasSemCarga.toLocaleString('pt-BR')}{' '}
-            {procedencia.linhasSemCarga === 1 ? 'linha foi gravada' : 'linhas foram gravadas'} antes
-            do registro de procedência e não dizem de que arquivo vieram.
+            {T.painel.semCarga(procedencia.linhasSemCarga.toLocaleString('pt-BR'), procedencia.linhasSemCarga)}
           </p>
         )}
       </section>
@@ -205,14 +201,8 @@ function ConteudoDaProcedenciaComponent({ procedencia }: { procedencia: Proceden
       {procedencia.lista && procedencia.lista.length > 0 && <LinhasDaProcedenciaComponent linhas={procedencia.lista} />}
 
       <section>
-        <h3>
-          {procedencia.cargas.length === 1
-            ? 'O arquivo de origem'
-            : `Os ${procedencia.cargas.length} arquivos de origem`}
-        </h3>
-        {procedencia.cargas.length === 0 && (
-          <p className="ajuda">Nenhuma linha deste número tem o arquivo de origem registrado.</p>
-        )}
+        <h3>{T.painel.arquivos(procedencia.cargas.length)}</h3>
+        {procedencia.cargas.length === 0 && <p className="ajuda">{T.painel.nenhumArquivo}</p>}
         <ul className="lista-cargas">
           {procedencia.cargas.map((carga) => (
             <li key={carga.id}>
@@ -231,7 +221,7 @@ function ConteudoDaProcedenciaComponent({ procedencia }: { procedencia: Proceden
 function LinhasDaProcedenciaComponent({ linhas }: { linhas: LinhaDaProcedencia[] }) {
   return (
     <section>
-      <h3>{linhas.length === 1 ? 'A linha' : `As ${linhas.length} linhas`}</h3>
+      <h3>{T.painel.asLinhas(linhas.length)}</h3>
       <ul className="lista-linhas-procedencia">
         {linhas.map((l, i) => (
           <li key={i}>
@@ -254,21 +244,21 @@ function LinhasDaProcedenciaComponent({ linhas }: { linhas: LinhaDaProcedencia[]
 function CartaoDaCargaComponent({ carga }: { carga: CargaDeProcedencia }) {
   return (
     <dl className="cartao-carga">
-      <dt>Órgão</dt>
+      <dt>{T.carga.orgao}</dt>
       <dd>{carga.orgao}</dd>
-      <dt>Arquivo</dt>
+      <dt>{T.carga.arquivo}</dt>
       <dd className="cartao-carga-url">
         <LinkDeFonteComponent href={carga.url}>{nomeDoArquivo(carga.url)}</LinkDeFonteComponent>
       </dd>
-      <dt>Baixado em</dt>
+      <dt>{T.carga.baixadoEm}</dt>
       <dd className="dado">{dataHoraUtc(carga.baixadoEm)}</dd>
-      <dt>SHA-256</dt>
+      <dt>{T.carga.sha256}</dt>
       <dd className="dado cartao-carga-hash">{carga.sha256}</dd>
-      <dt>Tamanho</dt>
+      <dt>{T.carga.tamanho}</dt>
       <dd className="dado">{tamanho(carga.bytes)}</dd>
       {(carga.etagDaFonte || carga.modificadoNaFonte) && (
         <>
-          <dt>Versão na fonte</dt>
+          <dt>{T.carga.versaoNaFonte}</dt>
           <dd className="dado">
             {[carga.modificadoNaFonte && dataHoraUtc(carga.modificadoNaFonte), carga.etagDaFonte]
               .filter(Boolean)
@@ -276,13 +266,13 @@ function CartaoDaCargaComponent({ carga }: { carga: CargaDeProcedencia }) {
           </dd>
         </>
       )}
-      <dt>Código que leu</dt>
-      <dd className="dado">{carga.versao ?? 'anterior ao registro de versão'}</dd>
-      <dt>Comando</dt>
+      <dt>{T.carga.codigoQueLeu}</dt>
+      <dd className="dado">{carga.versao ?? T.carga.semVersao}</dd>
+      <dt>{T.carga.comando}</dt>
       <dd className="dado">{carga.comando}</dd>
-      <dt>Base legal</dt>
+      <dt>{T.carga.baseLegal}</dt>
       <dd>{carga.baseLegal}</dd>
-      <dt>Linhas deste arquivo</dt>
+      <dt>{T.carga.linhasDoArquivo}</dt>
       <dd className="dado">{carga.linhas.toLocaleString('pt-BR')}</dd>
     </dl>
   );
@@ -307,13 +297,13 @@ function nomeDoArquivo(url: string): string {
 function dataHoraUtc(iso: string): string {
   const data = new Date(iso);
   if (Number.isNaN(data.getTime())) return iso;
-  return `${data.toLocaleString('pt-BR', { timeZone: 'UTC', dateStyle: 'short', timeStyle: 'short' })} UTC`;
+  return T.carga.utc(data.toLocaleString('pt-BR', { timeZone: 'UTC', dateStyle: 'short', timeStyle: 'short' }));
 }
 
 function tamanho(bytes: number): string {
-  if (bytes >= 1 << 20) return `${(bytes / (1 << 20)).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} MB`;
-  if (bytes >= 1 << 10) return `${(bytes / (1 << 10)).toLocaleString('pt-BR', { maximumFractionDigits: 0 })} KB`;
-  return `${bytes} bytes`;
+  if (bytes >= 1 << 20) return T.carga.megabytes((bytes / (1 << 20)).toLocaleString('pt-BR', { maximumFractionDigits: 1 }));
+  if (bytes >= 1 << 10) return T.carga.kilobytes((bytes / (1 << 10)).toLocaleString('pt-BR', { maximumFractionDigits: 0 }));
+  return T.carga.bytes(bytes);
 }
 
 function lerGuardado(): boolean {

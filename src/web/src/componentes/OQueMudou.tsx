@@ -6,6 +6,7 @@ import type { Casa, Novidades } from '../api';
 import { dataCurta, mesCurto, minusculas, reais } from '../formato';
 import { LinkDeFonteComponent } from './LinkDeFonte';
 import './oQueMudou.css';
+import { TEXTOS_DO_QUE_MUDOU as T } from '../textos/oQueMudou';
 
 /**
  * "O que mudou" (Pendência 63): os cinco avisos sobre quem a pessoa segue, um item por fato, do
@@ -39,14 +40,11 @@ export function OQueMudouComponent() {
 
   return (
     <section className="painel-secao o-que-mudou" aria-labelledby="titulo-o-que-mudou">
-      <h2 id="titulo-o-que-mudou">O que mudou</h2>
-      <p className="ajuda">
-        Sobre quem você segue. Votos de {dataCurta(novidades.semana.de)} a {dataCurta(novidades.semana.ate)}
-        {carga && <>; base atualizada em {carga}</>}.
-      </p>
+      <h2 id="titulo-o-que-mudou">{T.titulo}</h2>
+      <p className="ajuda">{T.janela(dataCurta(novidades.semana.de), dataCurta(novidades.semana.ate), carga)}</p>
 
       {itens.length === 0 ? (
-        <p className="vazio">Nada novo desde a última atualização{carga ? `, em ${carga}` : ''}.</p>
+        <p className="vazio">{T.nadaNovo(carga)}</p>
       ) : (
         <ul className="lista-novidades">
           {itens.map((item) => (
@@ -64,7 +62,7 @@ export function OQueMudouComponent() {
 
 type Item = { chave: string; ordem: string; quando: string; texto: ReactNode; fonte: ReactNode };
 
-const ORGAO: Record<Casa, string> = { CAMARA: 'Câmara dos Deputados', SENADO: 'Senado Federal' };
+const ORGAO: Record<Casa, string> = T.orgao;
 
 /** Os cinco avisos num feed só, do mais recente. `ordem` é a data ISO do fato. */
 function montarItens(n: Novidades): Item[] {
@@ -75,19 +73,12 @@ function montarItens(n: Novidades): Item[] {
     itens.push({
       chave: `semana-${v.pessoaId}-${v.casa}`,
       ordem: n.semana.ate,
-      quando: `${dataCurta(n.semana.de).slice(0, 5)} a ${dataCurta(n.semana.ate).slice(0, 5)}`,
-      texto: (
-        <>
-          {ficha(v.pessoaId, v.nome)} votou em <strong>{v.votou}</strong>{' '}
-          {v.votou === 1 ? 'votação' : 'votações'} de plenário
-          {v.ausente !== null && v.ausente + (v.ausenteJustificado ?? 0) > 0 && (
-            <>
-              ; ausente em <strong>{v.ausente + (v.ausenteJustificado ?? 0)}</strong>
-              {v.ausenteJustificado ? ` (${v.ausenteJustificado} com justificativa)` : ''}
-            </>
-          )}
-          .
-        </>
+      quando: T.semana(dataCurta(n.semana.de).slice(0, 5), dataCurta(n.semana.ate).slice(0, 5)),
+      texto: T.votouNaSemana(
+        ficha(v.pessoaId, v.nome),
+        v.votou,
+        v.ausente === null ? null : v.ausente + (v.ausenteJustificado ?? 0),
+        v.ausenteJustificado,
       ),
       fonte: ORGAO[v.casa],
     });
@@ -98,21 +89,14 @@ function montarItens(n: Novidades): Item[] {
       chave: `contra-${c.pessoaId}-${c.votacaoId}`,
       ordem: c.data,
       quando: dataCurta(c.data),
-      texto: (
-        <>
-          {ficha(c.pessoaId, c.nome)} votou <strong>{c.voto}</strong>
-          {c.proposicao ? <> na {c.proposicao}</> : ''}; a bancada {c.bancada}, do {c.partido}, orientou{' '}
-          <strong>{c.orientacao}</strong>.
-          {c.descricao && <span className="novidade-detalhe">{c.descricao}</span>}
-        </>
-      ),
+      texto: T.contraOPartido(ficha(c.pessoaId, c.nome), c.voto, c.proposicao, c.bancada, c.partido, c.orientacao, c.descricao),
       fonte: (
         <>
           {ORGAO.CAMARA}
           {c.urlFonte && (
             <>
               {' · '}
-              <LinkDeFonteComponent href={c.urlFonte}>registro da votação</LinkDeFonteComponent>
+              <LinkDeFonteComponent href={c.urlFonte}>{T.registroDaVotacao}</LinkDeFonteComponent>
             </>
           )}
         </>
@@ -125,12 +109,7 @@ function montarItens(n: Novidades): Item[] {
       chave: `troca-${t.pessoaId}`,
       ordem: t.primeiroVoto,
       quando: dataCurta(t.primeiroVoto),
-      texto: (
-        <>
-          {ficha(t.pessoaId, t.nome)} votou pelo <strong>{t.partidoNovo}</strong> a partir de{' '}
-          {dataCurta(t.primeiroVoto)}; antes, pelo {t.partidoAnterior}.
-        </>
-      ),
+      texto: T.trocou(ficha(t.pessoaId, t.nome), t.partidoNovo, dataCurta(t.primeiroVoto), t.partidoAnterior),
       fonte: ORGAO[t.casa],
     });
   }
@@ -141,13 +120,14 @@ function montarItens(n: Novidades): Item[] {
       chave: `cota-${g.pessoaId}-${mes}`,
       ordem: mes,
       quando: mesCurto(mes),
-      texto: (
-        <>
-          {ficha(g.pessoaId, g.nome, '/cota')} gastou <strong>{reais(g.total)}</strong> da cota em{' '}
-          {mesCurto(mes)}; o maior gasto, {reais(g.maiorCategoriaValor)} com {minusculas(g.maiorCategoria)}.
-        </>
+      texto: T.gastouNaCota(
+        ficha(g.pessoaId, g.nome, '/cota'),
+        reais(g.total),
+        mesCurto(mes),
+        reais(g.maiorCategoriaValor),
+        minusculas(g.maiorCategoria),
       ),
-      fonte: g.casa ? `${ORGAO[g.casa]} · ${g.casa === 'SENADO' ? 'CEAPS' : 'CEAP'}` : 'Cota parlamentar',
+      fonte: g.casa ? T.fonteDaCota(ORGAO[g.casa], g.casa === 'SENADO') : T.cotaParlamentar,
     });
   }
 
@@ -156,20 +136,8 @@ function montarItens(n: Novidades): Item[] {
       chave: `emenda-${e.pessoaId}-${e.mes}`,
       ordem: e.mes,
       quando: mesCurto(e.mes),
-      texto: (
-        <>
-          {ficha(e.pessoaId, e.nome, '/emendas')}: <strong>{reais(e.pago)}</strong> pagos em emendas em{' '}
-          {mesCurto(e.mes)}
-          {e.maiorDestino && (
-            <>
-              ; o maior valor para {e.maiorDestino}
-              {e.lugarDoMaiorDestino ? `, ${e.lugarDoMaiorDestino}` : ''}
-            </>
-          )}
-          .
-        </>
-      ),
-      fonte: 'Portal da Transparência',
+      texto: T.emendaPaga(ficha(e.pessoaId, e.nome, '/emendas'), reais(e.pago), mesCurto(e.mes), e.maiorDestino, e.lugarDoMaiorDestino),
+      fonte: T.portal,
     });
   }
 
