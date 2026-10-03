@@ -283,3 +283,23 @@ def test_voto_sem_partido_nem_uf_nao_derruba_a_ingestao():
     [linha] = votos_para_linhas(df, {"10": 7})
 
     assert linha["partido_no_voto"] == "" and linha["uf_no_voto"] == ""
+
+
+def test_simbolicas_sao_as_linhas_sem_voto_contado_por_legislatura_e_orgao():
+    """A simbólica não vira votação, mas é contada: janeiro de 2023 ainda é da 56ª."""
+    import pandas as pd
+    from poligraph_etl.ingestao import simbolicas_por_legislatura
+
+    df = pd.DataFrame([
+        {"data": "2023-01-20", "siglaOrgao": "PLEN", "votosSim": "0", "votosNao": "0", "votosOutros": "0"},
+        {"data": "2023-03-10", "siglaOrgao": "PLEN", "votosSim": "0", "votosNao": "0", "votosOutros": "0"},
+        {"data": "2023-03-11", "siglaOrgao": "PLEN", "votosSim": "0", "votosNao": "0", "votosOutros": "0"},
+        {"data": "2023-03-12", "siglaOrgao": "CCJC", "votosSim": "0", "votosNao": "0", "votosOutros": "0"},
+        {"data": "2023-03-13", "siglaOrgao": "PLEN", "votosSim": "300", "votosNao": "100", "votosOutros": "0"},
+    ])
+
+    assert simbolicas_por_legislatura(df) == [
+        {"legislatura": 56, "plenario": True, "quantidade": 1},
+        {"legislatura": 57, "plenario": False, "quantidade": 1},
+        {"legislatura": 57, "plenario": True, "quantidade": 2},
+    ]

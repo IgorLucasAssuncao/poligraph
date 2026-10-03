@@ -99,6 +99,8 @@ def main(argv: list[str] | None = None) -> int:
                 _fundo(conexao, args.eleicao, args.arquivo)
             elif args.comando == "conferir":
                 _conferir(conexao)
+            elif args.comando == "simbolicas":
+                _simbolicas(conexao, args.anos)
             elif args.comando == "populacao":
                 _populacao(conexao)
             elif args.comando == "reclassificar":
@@ -187,6 +189,11 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
                      help="votações sorteadas por casa e legislatura")
     amo.add_argument("--semente", type=int, default=amostra.SEMENTE_PADRAO,
                      help="a mesma semente sorteia as mesmas votações")
+    sim = sub.add_parser(
+        "simbolicas",
+        help="conta as votações simbólicas da Câmara a partir dos arquivos de votações do cache",
+    )
+    sim.add_argument("--anos", type=int, nargs="+", required=True)
     sub.add_parser(
         "populacao",
         help="população estimada de cada município (IBGE, SIDRA 6579), para o mapa por habitante",
@@ -358,6 +365,10 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
         camara.conferir_volume(df, ano)
 
         votacoes = ingestao.votacoes_para_linhas(df)
+        simbolicas = persistencia.gravar_simbolicas(
+            conexao, "CAMARA", ano, ingestao.simbolicas_por_legislatura(df), carga_votacoes
+        )
+        log.info("  %d votações simbólicas contadas (não entram na comparação)", simbolicas)
 
         orfas = normalizacao.descricoes_nao_reconhecidas(
             linha["descricao"] for linha in votacoes
@@ -1789,6 +1800,21 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
     )
 
     log.info("  %d matérias gravadas, %d votações vinculadas", len(linhas), ligados)
+
+
+def _simbolicas(conexao: psycopg.Connection, anos: list[int]) -> None:
+    """Conta as simbólicas dos anos pedidos sem reingerir os votos: lê o arquivo de votações do
+    cache e baixa só o que faltar. O `ingerir` já conta as do ano que carrega."""
+    for ano in anos:
+        arquivo = CACHE / f"votacoes-{ano}.csv"
+        if arquivo.exists():
+            carga = _carga_do_arquivo(conexao, "CAMARA", camara.url_do_arquivo("votacoes", ano), arquivo)
+        else:
+            arquivo, carga = _baixar_da_camara(conexao, "votacoes", ano)
+        total = persistencia.gravar_simbolicas(
+            conexao, "CAMARA", ano, ingestao.simbolicas_por_legislatura(camara.ler_csv(arquivo)), carga
+        )
+        log.info("  %d: %d votações simbólicas", ano, total)
 
 
 def _populacao(conexao: psycopg.Connection) -> None:

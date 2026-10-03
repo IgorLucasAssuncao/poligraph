@@ -445,6 +445,21 @@ def _com_carga(linhas: Sequence[dict], carga_id: int | None) -> list[dict]:
     return [{"carga_id": carga_id, **linha} for linha in linhas]
 
 
+def gravar_simbolicas(
+    conexao: psycopg.Connection, casa: str, ano: int, linhas: Sequence[dict], carga_id: int | None = None
+) -> int:
+    """Troca a contagem de simbólicas de um ano do arquivo pela nova; devolve o total gravado."""
+    with conexao.transaction():
+        conexao.execute("DELETE FROM votacoes_simbolicas WHERE casa = %s AND ano = %s", (casa, ano))
+        with conexao.cursor() as cursor:
+            cursor.executemany(
+                "INSERT INTO votacoes_simbolicas (casa, ano, legislatura, plenario, quantidade, carga_id) "
+                "VALUES (%(casa)s, %(ano)s, %(legislatura)s, %(plenario)s, %(quantidade)s, %(carga_id)s)",
+                [{**linha, "casa": casa, "ano": ano, "carga_id": carga_id} for linha in linhas],
+            )
+    return sum(linha["quantidade"] for linha in linhas)
+
+
 def gravar_votacoes(
     conexao: psycopg.Connection, votacoes: Sequence[dict], carga_id: int | None = None
 ) -> int:

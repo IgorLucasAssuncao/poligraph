@@ -125,6 +125,26 @@ def votacoes_para_linhas(df: pd.DataFrame, legislatura: int | None = None) -> li
     return linhas
 
 
+def simbolicas_por_legislatura(df: pd.DataFrame) -> list[dict]:
+    """Conta as votações simbólicas do arquivo, por legislatura e por plenário ou não.
+
+    São as linhas que `votacoes_para_linhas` descarta: sem nenhum voto contado. Não viram
+    votação na base, porque não registram quem votou o quê; a contagem deixa a tela dizer
+    quanto das decisões fica fora do voto nominal.
+    """
+    contagem: dict[tuple[int, bool], int] = {}
+    for _, registro in df.iterrows():
+        total = inteiro(registro.get("votosSim")) + inteiro(registro.get("votosNao")) + inteiro(registro.get("votosOutros"))
+        if total != 0:
+            continue
+        chave = (legislatura_da_data(str(registro["data"])), registro.get("siglaOrgao") == "PLEN")
+        contagem[chave] = contagem.get(chave, 0) + 1
+    return [
+        {"legislatura": legislatura, "plenario": plenario, "quantidade": quantidade}
+        for (legislatura, plenario), quantidade in sorted(contagem.items())
+    ]
+
+
 def votos_para_linhas(df: pd.DataFrame, mapa_pessoas: dict[str, int]) -> list[dict]:
     """Converte o CSV de votos nas linhas da tabela `voto`.
 

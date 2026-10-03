@@ -42,6 +42,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<PatrimonioModel> Patrimonios => Set<PatrimonioModel>();
     public DbSet<CargaModel> Cargas => Set<CargaModel>();
     public DbSet<ReconciliacaoModel> Reconciliacoes => Set<ReconciliacaoModel>();
+    public DbSet<VotacoesSimbolicasModel> VotacoesSimbolicas => Set<VotacoesSimbolicasModel>();
     public DbSet<ReconciliacaoMotivoModel> ReconciliacaoMotivos => Set<ReconciliacaoMotivoModel>();
 
     /// <summary>
@@ -74,6 +75,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         ConfigurarAnalise(mb);
         ConfigurarProcedencia(mb);
         ConfigurarReconciliacao(mb);
+        ConfigurarVotacoesSimbolicas(mb);
         ConfigurarUsuario(mb);
         ConfigurarAvaliacao(mb);
     }
@@ -167,6 +169,21 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     /// <remarks>
     /// <para>Os domínios viram <c>CHECK</c>: um motivo escrito errado na ETL seria uma justificativa que nenhuma tela sabe ler.</para>
     /// </remarks>
+    private static void ConfigurarVotacoesSimbolicas(ModelBuilder mb)
+    {
+        mb.Entity<VotacoesSimbolicasModel>(e =>
+        {
+            e.ToTable("votacoes_simbolicas", t =>
+            {
+                t.HasCheckConstraint("ck_simbolicas_casa", "casa IN ('CAMARA','SENADO')");
+                t.HasCheckConstraint("ck_simbolicas_quantidade", "quantidade >= 0");
+                t.HasCheckConstraint("ck_simbolicas_legislatura", "legislatura BETWEEN 40 AND 70");
+            });
+            e.HasKey(x => new { x.Casa, x.Ano, x.Legislatura, x.Plenario });
+            e.HasOne<CargaModel>().WithMany().HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+
     private static void ConfigurarReconciliacao(ModelBuilder mb)
     {
         mb.Entity<ReconciliacaoModel>(e =>

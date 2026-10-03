@@ -1731,6 +1731,48 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Data.VotacoesSimbolicasModel", b =>
+                {
+                    b.Property<string>("Casa")
+                        .HasColumnType("text")
+                        .HasColumnName("casa");
+
+                    b.Property<short>("Ano")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano");
+
+                    b.Property<short>("Legislatura")
+                        .HasColumnType("smallint")
+                        .HasColumnName("legislatura");
+
+                    b.Property<bool>("Plenario")
+                        .HasColumnType("boolean")
+                        .HasColumnName("plenario");
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
+                    b.Property<int>("Quantidade")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantidade");
+
+                    b.HasKey("Casa", "Ano", "Legislatura", "Plenario")
+                        .HasName("pk_votacoes_simbolicas");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_votacoes_simbolicas_carga_id");
+
+                    b.ToTable("votacoes_simbolicas", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_simbolicas_casa", "casa IN ('CAMARA','SENADO')");
+
+                            t.HasCheckConstraint("ck_simbolicas_legislatura", "legislatura BETWEEN 40 AND 70");
+
+                            t.HasCheckConstraint("ck_simbolicas_quantidade", "quantidade >= 0");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Data.VotoModel", b =>
                 {
                     b.Property<string>("VotacaoId")
@@ -2086,6 +2128,15 @@ namespace Poligraph.Data.Migrations
                         .HasConstraintName("fk_votacoes_proposicoes_casa_proposicao_id");
 
                     b.Navigation("Proposicao");
+                });
+
+            modelBuilder.Entity("Poligraph.Data.VotacoesSimbolicasModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_votacoes_simbolicas_cargas_carga_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.VotoModel", b =>
