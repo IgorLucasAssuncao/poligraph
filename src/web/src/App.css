@@ -3039,3 +3039,19 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 .grupo-de-votos-lista .linha-detalhe { display: block; }
 
 .busca-cabecalho .busca-abrir { display: none; }
+
+/* ═══ CAMINHO DO DINHEIRO (Pendência 83) ═══════════════════════ */
+.fluxo { display: grid; gap: .75rem; justify-items: start; }
+.fluxo-desenho { width: 100%; overflow-x: auto; }
+.fluxo-desenho svg { display: block; width: 100%; min-width: 46rem; height: auto; }
+.fluxo-titulo { font-family: var(--dado); font-size: 12px; fill: var(--suave); text-transform: uppercase; letter-spacing: .08em; }
+.fluxo-aresta { fill: none; stroke: var(--realce); stroke-opacity: .28; transition: stroke-opacity var(--t-curto); }
+.fluxo-aresta:hover { stroke-opacity: .6; }
+.fluxo-apagada { stroke-opacity: .06; }
+.fluxo-ponta { fill: var(--realce); fill-opacity: .7; }
+.fluxo-no rect { fill: var(--texto); }
+.fluxo-no text { font-size: 11px; fill: var(--texto); }
+.fluxo-outros rect, .fluxo-sem-destino rect, .fluxo-sem-autor rect { fill: var(--borda-forte); }
+.fluxo-sem-destino text, .fluxo-outros text, .fluxo-sem-autor text { fill: var(--suave); font-style: italic; }
+.fluxo-clicavel { cursor: pointer; }
+.fluxo-clicavel:hover text { fill: var(--realce); text-decoration: underline; }

@@ -1240,6 +1240,31 @@ function comPeriodo(url: string, periodo?: Periodo, extra?: Record<string, strin
   return texto ? `${url}?${texto}` : url;
 }
 
+/** Um nó do caminho do dinheiro: coluna 0 é quem mandou, 1 quem recebeu, 2 a cidade. */
+export type NoDoFluxo = {
+  id: string;
+  rotulo: string;
+  coluna: number;
+  /** parlamentar, bancada, comissao, entidade, cidade, outros, sem-destino ou sem-autor. */
+  tipo: string;
+  valor: number;
+  /** O endereço no site, quando o nó tem página. */
+  destino: string | null;
+};
+
+/** O caminho do dinheiro de emenda (Pendência 83). As três colunas somam `total`. */
+export type FluxoDeEmendas = {
+  periodo: Periodo;
+  uf: string | null;
+  total: number;
+  nos: NoDoFluxo[];
+  arestas: { de: string; para: string; valor: number }[];
+};
+
+export async function obterFluxoDeEmendas(periodo: Periodo, uf: string | null): Promise<FluxoDeEmendas> {
+  return buscar<FluxoDeEmendas>(comPeriodo(`${BASE}/mapa/emendas/fluxo`, periodo, uf ? { uf } : undefined));
+}
+
 export async function obterMapaDoBrasil(periodo?: Periodo): Promise<MapaDoBrasil> {
   return buscar<MapaDoBrasil>(comPeriodo(`${BASE}/mapa/emendas`, periodo));
 }
