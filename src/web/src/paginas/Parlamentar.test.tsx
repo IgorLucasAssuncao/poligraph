@@ -927,4 +927,16 @@ describe('o grafo do dinheiro', () => {
     expect(grafo.getAttribute('aria-label')).toMatch(/Jose da Silva/);
     expect(screen.getByRole('heading', { name: 'Ana Ribeiro', level: 2 })).toBeDefined();
   });
+
+  it('a entidade com página leva a ela, como na lista "Quem recebeu"', async () => {
+    vi.mocked(api.obterEmendas).mockResolvedValue({
+      ...EMENDAS,
+      favorecidos: { ...EMENDAS.favorecidos, maiores: [{ ...EMENDAS.favorecidos.maiores[0], cnpj: '12345678000190' }] },
+    });
+    await abrirAba('Emendas');
+    await userEvent.click(await screen.findByRole('button', { name: 'Ver o grafo do dinheiro' }));
+
+    const link = await screen.findByRole('link', { name: /Construtora Exemplo Ltda: abrir a página da entidade/ });
+    expect(link.getAttribute('href')).toMatch(/^\/entidades\/\d{14}$/);
+  });
 });

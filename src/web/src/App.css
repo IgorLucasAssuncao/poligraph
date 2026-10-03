@@ -3091,3 +3091,8 @@ html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
   font-family: var(--dado); font-size: 11px; fill: var(--texto);
   paint-order: stroke; stroke: var(--fundo); stroke-width: 4px; stroke-linejoin: round;
 }
+
+.grafo-dinheiro-link { cursor: pointer; }
+.grafo-dinheiro-link:hover rect, .grafo-dinheiro-link:focus-visible rect { stroke: var(--realce); stroke-width: 1.5; }
+.grafo-dinheiro-link:hover text:first-of-type { fill: var(--realce); text-decoration: underline; }
+.grafo-dinheiro-link:focus-visible { outline: none; }

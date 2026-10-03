@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { EmendasDoParlamentar, FinanciamentoDeCampanha } from '../api';
 import { nomeProprio, reaisCompacto } from '../formato';
 
@@ -12,7 +13,7 @@ const CENTRO = { largura: 200, altura: 64 };
 /** Quantas caixas cada lado mostra antes de juntar o resto em uma caixa só. */
 const CAIXAS_POR_LADO = 7;
 
-type Caixa = { nome: string; detalhe: string | null; valor: number; resto?: boolean };
+type Caixa = { nome: string; detalhe: string | null; valor: number; resto?: boolean; /** A página da entidade, quando há. */ destino?: string };
 
 /**
  * O grafo do dinheiro do parlamentar, aberto da aba Emendas da ficha num modal (Pendência 83).
@@ -177,9 +178,13 @@ function SetaComponent({
   );
 }
 
-/** Uma caixa de um lado: o nome e, embaixo, o detalhe (a cidade, "pessoa física"). */
+/**
+ * Uma caixa de um lado: o nome e, embaixo, o detalhe (a cidade, "pessoa física"). A entidade com
+ * página leva a ela, o mesmo link da lista "Quem recebeu".
+ */
 function CaixaComponent({ x, y, caixa }: { x: number; y: number; caixa: Caixa }) {
-  return (
+  const navegar = useNavigate();
+  const conteudo = (
     <g className={`grafo-dinheiro-caixa${caixa.resto ? ' grafo-dinheiro-resto' : ''}`}>
       <rect x={x} y={y} width={CAIXA.largura} height={CAIXA.altura} />
       <text x={x + 10} y={y + 17}>{encurtar(caixa.nome, 36)}</text>
@@ -189,6 +194,21 @@ function CaixaComponent({ x, y, caixa }: { x: number; y: number; caixa: Caixa })
         </text>
       )}
     </g>
+  );
+  if (!caixa.destino) return conteudo;
+  const destino = caixa.destino;
+  return (
+    <a
+      href={destino}
+      className="grafo-dinheiro-link"
+      aria-label={`${caixa.nome}: abrir a página da entidade`}
+      onClick={(e) => {
+        e.preventDefault();
+        navegar(destino);
+      }}
+    >
+      {conteudo}
+    </a>
   );
 }
 
@@ -213,6 +233,7 @@ function caixasDasEmendas(emendas: EmendasDoParlamentar): Caixa[] {
     nome: nomeProprio(m.nome),
     detalhe: m.municipio ? `${nomeProprio(m.municipio)}${m.uf ? ` – ${m.uf}` : ''}` : m.uf,
     valor: m.recebido,
+    destino: m.cnpj ? `/entidades/${m.cnpj}` : undefined,
   }));
   const fora = f.viaIntermediario + f.aPessoas + f.semIdentificacao;
   const outros = f.recebido - maiores.reduce((s, m) => s + m.recebido, 0) - fora;
