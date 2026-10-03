@@ -15,7 +15,7 @@ import { LinkDeFonte } from '../componentes/LinkDeFonte';
 import { Termo } from '../componentes/Termo';
 import { usePaginas } from '../componentes/usePaginas';
 import { baixarCsv, buscarTodas } from '../exportar';
-import { dataCurta, minusculas, nomeProprio, reaisCompacto } from '../formato';
+import { dataCurta, minusculas, nomeProprio, reais, reaisCompacto } from '../formato';
 import { EsqueletoDePainel } from '../componentes/Esqueleto';
 
 /**
@@ -234,8 +234,8 @@ function ConveniosAssinados({ dados }: { dados: DadosDaEntidade }) {
               · <LinkDeFonte href={c.urlFonte}>convênio {c.numero}</LinkDeFonte>
             </p>
             <p className="convenio-valores">
-              <span>{reaisCompacto(c.valor)} combinados</span>
-              {c.valorLiberado !== null && <span>{reaisCompacto(c.valorLiberado)} liberados</span>}
+              <span>{reais(c.valor)} combinados</span>
+              {c.valorLiberado !== null && <span>{reais(c.valorLiberado)} liberados</span>}
             </p>
           </li>
         ))}

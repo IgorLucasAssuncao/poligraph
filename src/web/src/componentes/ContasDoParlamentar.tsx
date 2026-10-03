@@ -328,7 +328,7 @@ export function AbaCota({ pessoaId, contas, erro }: { pessoaId: number; contas: 
         em <strong>{gastos.lancamentos}</strong> notas
         {principal && (
           <>
-            . A maior parte em <strong>{minusculas(principal.categoria)}</strong>
+            . A maior parte em <strong>{minusculas(principal.categoria).replace(/\.+$/, '')}</strong>
           </>
         )}
         .
@@ -355,8 +355,8 @@ export function AbaCota({ pessoaId, contas, erro }: { pessoaId: number; contas: 
             {gastos.maioresFornecedores.map((f) => (
               <li key={f.nome}>
                 <span className="gasto-nome">
-                  {f.nome}
-                  {f.pessoaFisica && <small> · pessoa física</small>}
+                  {nomeProprio(f.nome)}
+                  {f.pessoaFisica && <small>pessoa física</small>}
                 </span>
                 <span className="gasto-valor">{reais(f.total)}</span>
               </li>
@@ -499,8 +499,8 @@ function Financiamento({ pessoaId, fin }: { pessoaId: number; fin: Financiamento
             {fin.maioresDoadores.map((d) => (
               <li key={d.nome}>
                 <span className="gasto-nome">
-                  {d.nome}
-                  {d.pessoaFisica && <small> · pessoa física</small>}
+                  {nomeProprio(d.nome)}
+                  {d.pessoaFisica && <small>pessoa física</small>}
                 </span>
                 <span className="gasto-valor">{reais(d.total)}</span>
               </li>
@@ -579,7 +579,7 @@ function PatrimonioDeclarado({ pessoaId }: { pessoaId: number }) {
     <li key={t.tipo}>
       <span className="gasto-nome">
         {t.tipo}
-        {t.quantidade > 1 && <small> · {t.quantidade} bens</small>}
+        {t.quantidade > 1 && <small>{t.quantidade} bens</small>}
       </span>
       <span className="gasto-barra">
         <span style={{ width: `${Math.max((t.valor / maior) * 100, 2)}%` }} />

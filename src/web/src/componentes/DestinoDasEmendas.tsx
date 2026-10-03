@@ -7,7 +7,7 @@ import type {
   PagamentoPorMes,
 } from '../api';
 import { listarConvenios, listarEmendas, listarFavorecidos } from '../api';
-import { anosDeCotaDaEmenda, dataCurta, mesCurto, mesesContinuos, reais } from '../formato';
+import { anosDeCotaDaEmenda, dataCurta, mesCurto, mesesContinuos, nomeProprio, reais } from '../formato';
 import { BotaoBaixarCsv } from './BotaoBaixarCsv';
 import { BotaoMostrarMais } from './BotaoMostrarMais';
 import { baixarCsv, buscarTodas } from '../exportar';
@@ -62,7 +62,7 @@ export function QuemRecebeu({
         {lista.itens.map((f, i) => (
           <li key={`${i}-${f.nome}`}>
             <span className="gasto-nome">
-              {f.cnpj ? <Link to={`/entidades/${f.cnpj}`}>{f.nome}</Link> : f.nome}
+              {f.cnpj ? <Link to={`/entidades/${f.cnpj}`}>{nomeProprio(f.nome)}</Link> : nomeProprio(f.nome)}
               <small>{[f.naturezaJuridica, lugar(f.municipio, f.uf)].filter(Boolean).join(' · ')}</small>
               {f.tambemNaCota != null && (
                 <small className="tambem-na-cota">
@@ -89,7 +89,7 @@ export function QuemRecebeu({
 }
 
 function lugar(municipio: string | null, uf: string | null): string | null {
-  if (municipio && uf) return `${municipio} - ${uf}`;
+  if (municipio && uf) return `${nomeProprio(municipio)} – ${uf}`;
   return municipio ?? uf;
 }
 

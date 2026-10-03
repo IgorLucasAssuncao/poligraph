@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { anosDeCotaDaEmenda, mesCurto, mesesContinuos, partesDeCem, reaisCompacto } from './formato';
+import { anosDeCotaDaEmenda, mesCurto, mesesContinuos, partesDeCem, reais, reaisCompacto } from './formato';
 
 /**
  * ATENÇÃO: Pular o mês sem pagamento encurtaria a espera no desenho.
@@ -31,6 +31,8 @@ describe('formatos', () => {
   it('valor compacto por ordem de grandeza', () => {
     expect(reaisCompacto(185_512_000_000)).toBe('R$ 185,5 bi');
     expect(reaisCompacto(12_300_000)).toBe('R$ 12,3 mi');
+    expect(reaisCompacto(55_038.11)).toBe('R$ 55 mil');
+    expect(reaisCompacto(980.32)).toBe(reais(980.32));
   });
 });
 

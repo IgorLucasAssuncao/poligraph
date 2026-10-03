@@ -27,7 +27,7 @@ export function BotaoMostrarMais({
       <button type="button" className="botao-secundario" onClick={aoClicar} disabled={carregando}>
         {carregando ? 'Carregando…' : (rotulo ?? `Mostrar mais ${proximos}`)}
       </button>
-      {!rotulo && <span className="carregar-mais-resto">{restantes} ainda não mostrados</span>}
+      {!rotulo && <span className="carregar-mais-resto">{restantes.toLocaleString('pt-BR')} ainda não mostrados</span>}
       {erro && <p className="erro">Não foi possível carregar. Tente de novo.</p>}
     </div>
   );

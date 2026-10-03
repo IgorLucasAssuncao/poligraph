@@ -8,7 +8,13 @@ export function reais(valor: number): string {
   return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-/** `185_512_000_000` → `"R$ 185,5 bi"`; trilhão com duas casas; abaixo de um milhão, o valor inteiro. */
+/**
+ * `185_512_000_000` → `"R$ 185,5 bi"`; trilhão com duas casas; milhar como `"R$ 55 mil"`; abaixo de mil,
+ * o valor inteiro.
+ *
+ * DECISÃO (2026-10-03): O milhar entrou porque a mesma coluna mostrava "R$ 144,4 mi" e
+ * "R$ 55.038,11": a escala mudava no meio da tabela.
+ */
 export function reaisCompacto(valor: number): string {
   const absoluto = Math.abs(valor);
   const casa = (n: number) => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
@@ -18,6 +24,7 @@ export function reaisCompacto(valor: number): string {
   }
   if (absoluto >= 1e9) return `R$ ${casa(valor / 1e9)} bi`;
   if (absoluto >= 1e6) return `R$ ${casa(valor / 1e6)} mi`;
+  if (absoluto >= 1e3) return `R$ ${casa(valor / 1e3)} mil`;
   return reais(valor);
 }
 

@@ -1955,8 +1955,8 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .gastos-categorias li { grid-template-columns: minmax(0, 1fr) 6rem auto; }
 .gastos-fornecedores li { grid-template-columns: minmax(0, 1fr) auto; }
 
-.gasto-nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gasto-nome small { color: var(--suave); font-family: var(--dado); font-size: var(--t-1); }
+.gasto-nome { min-width: 0; overflow-wrap: anywhere; line-height: 1.35; }
+.gasto-nome small { display: block; color: var(--suave); font-family: var(--dado); font-size: var(--t-1); }
 
 /* ATENÇÃO: Proporcional à MAIOR categoria, não ao total: com 15 categorias, proporção do
       total vira fiapo ilegível. */
@@ -2721,7 +2721,7 @@ dialog.tour::backdrop { background: transparent; }
 /* As abas de Dinheiro público: o marcador embaixo, como a navegação principal. */
 .abas-do-dinheiro {
   display: flex; gap: .25rem; overflow-x: auto;
-  padding: 0 1rem; border-bottom: 1px solid var(--borda);
+  padding: 0 1rem; border-bottom: 1px solid var(--borda); margin-bottom: 1.5rem;
 }
 .abas-do-dinheiro .aba {
   padding: .7rem .85rem .6rem; border-bottom: 3px solid transparent;
