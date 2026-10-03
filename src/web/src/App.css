@@ -2991,3 +2991,4 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 .pedido-consentimento::backdrop { background: rgb(0 0 0 / 45%); }
 .pedido-consentimento h2 { margin: 0 0 .6rem; font-size: var(--t-4); }
 .pedido-consentimento p { margin: 0 0 .6rem; font-size: var(--t-2); line-height: 1.5; }
+.em-andamento { font-size: var(--t-1); opacity: .8; }

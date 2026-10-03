@@ -670,8 +670,14 @@ function doMandato(legislatura?: number | null): string {
   return legislatura ? `?legislatura=${legislatura}` : '';
 }
 
-export async function obterGastos(pessoaId: number, legislatura?: number | null): Promise<GastoDeCota> {
-  return buscar<GastoDeCota>(`${BASE}/parlamentares/${pessoaId}/gastos${doMandato(legislatura)}`);
+export async function obterGastos(
+  pessoaId: number,
+  legislatura?: number | null,
+  ano?: number,
+): Promise<GastoDeCota> {
+  const consulta = doMandato(legislatura);
+  const doAno = ano ? `${consulta ? '&' : '?'}ano=${ano}` : '';
+  return buscar<GastoDeCota>(`${BASE}/parlamentares/${pessoaId}/gastos${consulta}${doAno}`);
 }
 
 /**

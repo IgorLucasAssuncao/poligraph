@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   listarLancamentos,
+  obterGastos,
   obterPatrimonio,
+  type GastoDeCota,
   type CidadesDaEmenda,
   type DeclaracaoDeBens,
   type FinanciamentoDeCampanha,
@@ -316,14 +318,52 @@ function Destino({ localidade }: { localidade: string }) {
  *
  * RISCO: RNF-13: o documento de pessoa física é hasheado; a tela diz que é pessoa.
  */
-export function AbaCota({ pessoaId, contas, erro }: { pessoaId: number; contas: Contas | null; erro: boolean }) {
-  const gastos = contas?.gastos;
-  if (!gastos) return <Carregando contas={contas} erro={erro} />;
+export function AbaCota({
+  pessoaId,
+  contas,
+  erro,
+  legislatura,
+}: {
+  pessoaId: number;
+  contas: Contas | null;
+  erro: boolean;
+  legislatura?: number | null;
+}) {
+  const [doAno, setDoAno] = useState<{ ano: number; gastos: GastoDeCota | null } | null>(null);
+  const padrao = contas?.gastos;
+  const gastos = doAno?.gastos ?? (doAno ? null : padrao);
+
+  if (!padrao) return <Carregando contas={contas} erro={erro} />;
+
+  const escolher = (ano: number) => {
+    if (ano === padrao.ano) {
+      setDoAno(null);
+      return;
+    }
+    setDoAno({ ano, gastos: null });
+    obterGastos(pessoaId, legislatura, ano)
+      .then((g) => setDoAno((atual) => (atual?.ano === ano ? { ano, gastos: g } : atual)))
+      .catch(() => setDoAno(null));
+  };
+
+  const seletor = legislatura ? (
+    <SeletorDeAnoDaCota legislatura={legislatura} ano={doAno?.ano ?? padrao.ano} aoEscolher={escolher} />
+  ) : null;
+
+  if (!gastos) {
+    return (
+      <section className="aba-dinheiro" aria-label="Cota parlamentar">
+        {seletor}
+        <EsqueletoDeTexto rotulo="Carregando a cota do ano" />
+      </section>
+    );
+  }
 
   if (gastos.lancamentos === 0) {
     return (
       <section className="aba-dinheiro">
-        <p className="vazio">Nenhuma despesa de cota registrada para este parlamentar na base.</p>
+        {seletor}
+        <p className="vazio">Nenhuma despesa de cota registrada {doAno ? `em ${doAno.ano}` : 'para este parlamentar na base'}.</p>
       </section>
     );
   }
@@ -333,6 +373,7 @@ export function AbaCota({ pessoaId, contas, erro }: { pessoaId: number; contas: 
 
   return (
     <section className="aba-dinheiro" aria-label="Cota parlamentar">
+      {seletor}
       <p className="frase-resposta">
         Gastou{' '}
         <ComProcedencia
@@ -643,3 +684,38 @@ function PatrimonioDeclarado({ pessoaId }: { pessoaId: number }) {
   );
 }
 
+
+/**
+ * Os quatro anos de cota do mandato, como botões. O ano corrente diz que está em andamento:
+ * comparar o total dele com o de um ano fechado leria como queda.
+ */
+function SeletorDeAnoDaCota({
+  legislatura,
+  ano,
+  aoEscolher,
+}: {
+  legislatura: number;
+  ano: number;
+  aoEscolher: (ano: number) => void;
+}) {
+  const posse = Number(periodoDaLegislatura(legislatura).slice(0, 4));
+  const atual = new Date().getFullYear();
+  const anos = [posse, posse + 1, posse + 2, posse + 3].filter((a) => a <= atual);
+
+  return (
+    <div className="seletor-periodo-campos" role="group" aria-label="Ano da cota">
+      {anos.map((a) => (
+        <button
+          key={a}
+          type="button"
+          className={a === ano ? 'ativo' : ''}
+          aria-pressed={a === ano}
+          onClick={() => aoEscolher(a)}
+        >
+          {a}
+          {a === atual && <span className="em-andamento"> em andamento</span>}
+        </button>
+      ))}
+    </div>
+  );
+}

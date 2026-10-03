@@ -230,7 +230,9 @@ export function Parlamentar() {
       </nav>
 
       {aba === 'emendas' && <AbaEmendas pessoaId={pessoaId} contas={contas} erro={erroDasContas} />}
-      {aba === 'cota' && <AbaCota pessoaId={pessoaId} contas={contas} erro={erroDasContas} />}
+      {aba === 'cota' && (
+        <AbaCota pessoaId={pessoaId} contas={contas} erro={erroDasContas} legislatura={ficha?.legislatura} />
+      )}
       {aba === 'campanha' && <AbaCampanha pessoaId={pessoaId} contas={contas} erro={erroDasContas} />}
       {aba === 'votos' && (
         <>

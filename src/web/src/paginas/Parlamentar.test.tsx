@@ -858,3 +858,23 @@ describe('os mandatos na ficha', () => {
     await waitFor(() => expect(vi.mocked(api.obterFicha)).toHaveBeenLastCalledWith(1, 56));
   });
 });
+
+/** A cota mostrava só o ano corrente, pela metade. Os anos do mandato viram botões (2026-10-03). */
+describe('o ano da cota', () => {
+  it('troca o ano e pede a cota daquele ano', async () => {
+    const doAno = (ano: number, total: number) => ({
+      ano, total, lancamentos: 3,
+      porCategoria: [{ categoria: 'PASSAGEM AÉREA', total, lancamentos: 3 }],
+      maioresFornecedores: [],
+    });
+    vi.mocked(api.obterGastos).mockImplementation(async (_id, _leg, ano) => (ano === 2024 ? doAno(2024, 9_000) : doAno(2026, 5_000)));
+    await abrirAba('Cota');
+
+    expect(await screen.findByText(/em 2026/)).toBeDefined();
+    await userEvent.click(screen.getByRole('button', { name: '2024' }));
+
+    expect(await screen.findByText(/em 2024/)).toBeDefined();
+    expect(vi.mocked(api.obterGastos)).toHaveBeenLastCalledWith(expect.any(Number), 57, 2024);
+    expect(screen.getByRole('button', { name: '2024' })).toHaveAttribute('aria-pressed', 'true');
+  });
+});
