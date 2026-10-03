@@ -48,10 +48,14 @@ const CORES = [
  * Os mesmos matizes, mais claros, para o fundo escuro. Três dos tons de cima ficavam
  * abaixo de 3:1 contra #0b0e11 (índigo 2,45, marrom 2,07, vinho 2,41) e sumiam no
  * desenho. Aqui todos passam de 3:1 contra o fundo e contra o painel.
+ *
+ * DECISÃO (2026-10-03): tons menos saturados. A versão anterior (verde-limão, ciano, magenta da
+ * paleta do Tailwind) parecia neon e fora do tom institucional do site. MEDIDO: os oito novos
+ * ficam entre 6,7:1 e 7,8:1 contra o fundo escuro.
  */
 const CORES_ESCURO = [
-  '#2dd4bf', '#f59e0b', '#818cf8', '#e879f9',
-  '#22d3ee', '#ea8a5a', '#a3e635', '#fb7185',
+  '#5fa89e', '#c9944a', '#8c93d4', '#c486bf',
+  '#6aa7b8', '#c58a6c', '#97ad69', '#cf8592',
 ];
 
 /** Cinza de quem não tem comunidade. Um só serve aos dois temas: 3,6:1 no claro e 5,3:1

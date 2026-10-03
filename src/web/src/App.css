@@ -127,8 +127,8 @@
     --borda-forte: #39434e;
     --texto: #e6eaee;
     --suave: #8b96a3;
-    --realce: #4dd4c4;
-    --realce-hover: #7ae3d6;
+    --realce: #6fb3a9;
+    --realce-hover: #8cc4bc;
     --realce-fraco: #0e2724;
     --mapa-0: #1b2128;
     --mapa-1: #4a3413;
@@ -143,7 +143,7 @@
     --faixa-fundo: #1d252d;
     --faixa-texto: #e6eaee;
     --veu: rgb(0 0 0 / 72%);
-    --anel-tour: #4dd4c4;
+    --anel-tour: #6fb3a9;
     --brilho-tour: 0 0 28px 6px rgb(77 212 196 / 32%);
     --sombra-flutuante: 0 12px 32px rgb(0 0 0 / 60%);
   }
@@ -156,8 +156,8 @@
   --borda-forte: #39434e;
   --texto: #e6eaee;
   --suave: #8b96a3;
-  --realce: #4dd4c4;
-  --realce-hover: #7ae3d6;
+  --realce: #6fb3a9;
+  --realce-hover: #8cc4bc;
   --realce-fraco: #0e2724;
   --mapa-0: #1b2128;
   --mapa-1: #4a3413;
@@ -172,7 +172,7 @@
     --faixa-fundo: #1d252d;
     --faixa-texto: #e6eaee;
     --veu: rgb(0 0 0 / 72%);
-    --anel-tour: #4dd4c4;
+    --anel-tour: #6fb3a9;
     --brilho-tour: 0 0 28px 6px rgb(77 212 196 / 32%);
     --sombra-flutuante: 0 12px 32px rgb(0 0 0 / 60%);
 }
@@ -1603,23 +1603,23 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
    3:1 contra o fundo e a legenda deixava de corresponder ao desenho. Mesma paleta de
    CORES_ESCURO em grafo/desenho.ts. */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='0'] { background: #2dd4bf; }
-  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='1'] { background: #f59e0b; }
-  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='2'] { background: #818cf8; }
-  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='3'] { background: #e879f9; }
-  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='4'] { background: #22d3ee; }
-  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='5'] { background: #ea8a5a; }
-  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='6'] { background: #a3e635; }
-  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='7'] { background: #fb7185; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='0'] { background: #5fa89e; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='1'] { background: #c9944a; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='2'] { background: #8c93d4; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='3'] { background: #c486bf; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='4'] { background: #6aa7b8; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='5'] { background: #c58a6c; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='6'] { background: #97ad69; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='7'] { background: #cf8592; }
 }
-:root[data-tema='escuro'] .grupo-cor[data-comunidade='0'] { background: #2dd4bf; }
-:root[data-tema='escuro'] .grupo-cor[data-comunidade='1'] { background: #f59e0b; }
-:root[data-tema='escuro'] .grupo-cor[data-comunidade='2'] { background: #818cf8; }
-:root[data-tema='escuro'] .grupo-cor[data-comunidade='3'] { background: #e879f9; }
-:root[data-tema='escuro'] .grupo-cor[data-comunidade='4'] { background: #22d3ee; }
-:root[data-tema='escuro'] .grupo-cor[data-comunidade='5'] { background: #ea8a5a; }
-:root[data-tema='escuro'] .grupo-cor[data-comunidade='6'] { background: #a3e635; }
-:root[data-tema='escuro'] .grupo-cor[data-comunidade='7'] { background: #fb7185; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='0'] { background: #5fa89e; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='1'] { background: #c9944a; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='2'] { background: #8c93d4; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='3'] { background: #c486bf; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='4'] { background: #6aa7b8; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='5'] { background: #c58a6c; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='6'] { background: #97ad69; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='7'] { background: #cf8592; }
 
 
 /* ═══ TRANSIÇÃO ENTRE TELAS ════════════════════════════════════ */
