@@ -107,7 +107,7 @@ export function GrafoDoDinheiroComponent({
             const y2 = centroY + CENTRO.altura / 2;
             return (
               <g key={`e-${c.nome}`}>
-                <SetaComponent x1={x1} y1={y1} x2={x2} y2={y2} valor={c.valor} />
+                <SetaComponent x1={x1} y1={y1} x2={x2} y2={y2} valor={c.valor} rotulo={{ x: x1 + 8, y: y1 - 6, ancora: 'start' }} />
                 <CaixaComponent x={30} y={y} caixa={c} />
               </g>
             );
@@ -121,7 +121,7 @@ export function GrafoDoDinheiroComponent({
             const y2 = y + CAIXA.altura / 2;
             return (
               <g key={`s-${c.nome}`}>
-                <SetaComponent x1={x1} y1={y1} x2={x2} y2={y2} valor={c.valor} />
+                <SetaComponent x1={x1} y1={y1} x2={x2} y2={y2} valor={c.valor} rotulo={{ x: x2 - 12, y: y2 - 6, ancora: 'end' }} />
                 <CaixaComponent x={LARGURA - 30 - CAIXA.largura} y={y} caixa={c} />
               </g>
             );
@@ -148,14 +148,29 @@ export function GrafoDoDinheiroComponent({
   );
 }
 
-/** Uma seta reta da caixa ao centro, com o valor escrito no meio. */
-function SetaComponent({ x1, y1, x2, y2, valor }: { x1: number; y1: number; x2: number; y2: number; valor: number }) {
-  const mx = (x1 + x2) / 2;
-  const my = (y1 + y2) / 2;
+/**
+ * Uma seta reta entre a caixa e o centro. O valor fica junto da caixa: no meio das setas, onde
+ * elas se juntam perto do centro, os números se encavalavam.
+ */
+function SetaComponent({
+  x1,
+  y1,
+  x2,
+  y2,
+  valor,
+  rotulo,
+}: {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  valor: number;
+  rotulo: { x: number; y: number; ancora: 'start' | 'end' };
+}) {
   return (
     <g className="grafo-dinheiro-seta">
       <line x1={x1} y1={y1} x2={x2} y2={y2} markerEnd="url(#grafo-dinheiro-ponta)" />
-      <text x={mx} y={my - 4} textAnchor="middle">
+      <text x={rotulo.x} y={rotulo.y} textAnchor={rotulo.ancora}>
         {reaisCompacto(valor)}
       </text>
     </g>
