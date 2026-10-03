@@ -880,6 +880,31 @@ def cnpjs_que_receberam_emenda(conexao: psycopg.Connection) -> set[str]:
     }
 
 
+def cnpjs_sem_sede(conexao: psycopg.Connection) -> list[str]:
+    """PL71 — CNPJs que receberam emenda fora do intermediário e ainda não têm município.
+
+    O de maior valor recebido primeiro: interromper no meio deixa resolvido o que mais pesa no mapa.
+    """
+    return [
+        linha[0]
+        for linha in conexao.execute(
+            """
+            SELECT f.documento
+              FROM emendas_favorecidos f
+             WHERE f.tipo = 'PESSOA_JURIDICA' AND NOT f.intermediario AND length(f.documento) = 14
+               AND NOT EXISTS (SELECT 1 FROM cnpjs_municipio c WHERE c.cnpj = f.documento)
+             GROUP BY f.documento
+             ORDER BY sum(f.valor) DESC
+            """
+        ).fetchall()
+    ]
+
+
+def codigos_ibge(conexao: psycopg.Connection) -> set[str]:
+    """Os municípios da tabela `municipios`: a sede só entra se o código existir (FK)."""
+    return {linha[0] for linha in conexao.execute("SELECT codigo_ibge FROM municipios").fetchall()}
+
+
 def gravar_cnpjs_municipio(
     conexao: psycopg.Connection, linhas: Sequence[dict], carga_id: int | None = None
 ) -> int:

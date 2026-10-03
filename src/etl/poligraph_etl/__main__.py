@@ -8,6 +8,7 @@ Coolify, dentro do VPS — o Postgres nunca sai de lá.
 """
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -26,7 +27,7 @@ from . import (
     ingestao_senado, municipios, normalizacao, orcamento, orientacoes,
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
-from .fontes import camara, portal, receita, senado, tse
+from .fontes import brasilapi, camara, portal, receita, senado, tse
 from . import conferencia, convenentes, patrimonio, procedencia, redes, rotina
 
 log = logging.getLogger("poligraph")
@@ -99,6 +100,8 @@ def main(argv: list[str] | None = None) -> int:
                 _rotina(conexao, args.frequencia)
             elif args.comando == "palavras-chave":
                 _palavras_chave(conexao, args.limite)
+            elif args.comando == "sedes-brasilapi":
+                _sedes_brasilapi(conexao, args.limite)
             elif args.comando == "validar":
                 _validar(conexao, args.legislatura, args.divisao_minima)
             else:
@@ -155,6 +158,10 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         "palavras-chave", help="palavras-chave das proposições votadas que ainda não têm (PL70)"
     )
     pal.add_argument("--limite", type=int, default=None, help="no máximo tantas, para ir por partes")
+    sed = sub.add_parser(
+        "sedes-brasilapi", help="município da sede dos CNPJs de emenda que faltam, pela BrasilAPI (PL71)"
+    )
+    sed.add_argument("--limite", type=int, default=None, help="no máximo tantos CNPJs nesta execução")
     rot = sub.add_parser("rotina", help="a carga agendada (PL64): semanal ou mensal, terminando em conferir")
     rot.add_argument("--frequencia", choices=list(rotina.FREQUENCIAS), required=True)
     sub.add_parser(
@@ -1743,6 +1750,66 @@ def _palavras_chave(conexao: psycopg.Connection, limite: int | None) -> None:
     persistencia.gravar_palavras_chave(conexao, lote)
     if falhas:
         log.warning("  %d não responderam; ficam para a próxima execução", falhas)
+
+
+TAMANHO_DO_LOTE_DE_SEDES = 500
+
+PAUSA_ENTRE_CNPJS = 0.35
+
+
+def _sedes_brasilapi(conexao: psycopg.Connection, limite: int | None) -> None:
+    """PL71 — a sede dos CNPJs que o cadastro da Receita em bloco não resolveu.
+
+    Em lotes de 500: cada lote vira um arquivo JSONL com os quatro campos (sem sócios), uma
+    carga com o hash dele e a gravação. Interromper no meio não perde os lotes gravados, e a
+    próxima execução retoma pelos que faltam.
+
+    DECISÃO: A carga é da fonte RECEITA, com a URL da BrasilAPI: o dado é o cadastro aberto
+    da Receita, e o caminho por onde ele veio fica escrito.
+    """
+    pendentes = persistencia.cnpjs_sem_sede(conexao)
+    if limite is not None:
+        pendentes = pendentes[:limite]
+    conhecidos = persistencia.codigos_ibge(conexao)
+    log.info("Sedes pela BrasilAPI: %d CNPJs a consultar", len(pendentes))
+
+    hoje = date.today()
+    cadastro_de = hoje.replace(day=1).isoformat()
+    pasta = CACHE / "brasilapi"
+    pasta.mkdir(parents=True, exist_ok=True)
+
+    achadas = sem_resposta = fora_da_tabela = 0
+    for inicio in range(0, len(pendentes), TAMANHO_DO_LOTE_DE_SEDES):
+        lote = pendentes[inicio:inicio + TAMANHO_DO_LOTE_DE_SEDES]
+        respostas = []
+        for cnpj in lote:
+            sede = brasilapi.sede(cnpj)
+            time.sleep(PAUSA_ENTRE_CNPJS)
+            if sede is None:
+                sem_resposta += 1
+            elif sede["codigo_ibge"] not in conhecidos:
+                fora_da_tabela += 1
+            else:
+                respostas.append(sede)
+
+        if respostas:
+            arquivo = pasta / f"sedes-{hoje:%Y%m%d}-{inicio // TAMANHO_DO_LOTE_DE_SEDES:03d}.jsonl"
+            arquivo.write_text(
+                "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in respostas), encoding="utf-8"
+            )
+            carga = _carga_do_arquivo(conexao, "RECEITA", f"{brasilapi.BASE}/", arquivo)
+            persistencia.gravar_cnpjs_municipio(
+                conexao,
+                [{"cnpj": r["cnpj"], "codigo_ibge": r["codigo_ibge"], "cadastro_de": cadastro_de} for r in respostas],
+                carga,
+            )
+            achadas += len(respostas)
+        log.info("  %d de %d: %d com sede gravada", inicio + len(lote), len(pendentes), achadas)
+
+    log.info(
+        "Sedes: %d gravadas, %d sem resposta (ficam para a próxima), %d com município fora da tabela",
+        achadas, sem_resposta, fora_da_tabela,
+    )
 
 
 def _rotina(conexao: psycopg.Connection, frequencia: str) -> None:
