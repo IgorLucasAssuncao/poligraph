@@ -3052,7 +3052,9 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 /* ═══ GRAFO DO DINHEIRO, na aba Emendas da ficha (Pendência 83) ═══
    DECISÃO: o desenho do vídeo da procedência (plano/10 §1): caixas, linhas finas e o valor escrito
    na seta, sem preenchimento colorido, para ler como documento. */
-.aba-dinheiro-acoes { display: flex; justify-content: flex-end; }
+.execucao-cabeca { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.execucao-cabeca .frase-resposta { flex: 1 1 24rem; }
+.execucao-cabeca .botao-secundario { flex-shrink: 0; }
 dialog.grafo-dinheiro {
   width: min(72rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); padding: 0;
   border: 1px solid var(--borda-forte); border-radius: var(--raio);
@@ -3068,8 +3070,13 @@ html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
 }
 .grafo-dinheiro-topo h2 { margin: 0; font-size: var(--t-4); }
 .grafo-dinheiro-sobre { margin: 0 0 .2rem; font-family: var(--dado); font-size: var(--t-1); color: var(--suave); text-transform: uppercase; letter-spacing: .08em; }
-.grafo-dinheiro-corpo { flex: 1; min-height: 0; overflow: auto; padding: 1rem 1.25rem 1.5rem; }
-.grafo-dinheiro-corpo svg { display: block; width: 100%; min-width: 46rem; height: auto; }
+.grafo-dinheiro-corpo {
+  flex: 1; min-height: 0; overflow: hidden; padding: .75rem 1.25rem 1rem;
+  display: flex; flex-direction: column; gap: .5rem;
+}
+/* O desenho cabe inteiro no modal, sem rolagem: encolhe pela altura disponível (2026-10-03). */
+.grafo-dinheiro-corpo svg { display: block; flex: 1; min-height: 0; width: 100%; height: auto; max-height: calc(100dvh - 12rem); }
+.grafo-dinheiro-corpo .ajuda { margin: 0; flex-shrink: 0; }
 .grafo-dinheiro-coluna { font-family: var(--dado); font-size: 12px; fill: var(--suave); text-transform: uppercase; letter-spacing: .06em; }
 .grafo-dinheiro-caixa rect { fill: var(--fundo); stroke: var(--borda-forte); stroke-width: 1; }
 .grafo-dinheiro-caixa text { font-size: 12.5px; fill: var(--texto); }

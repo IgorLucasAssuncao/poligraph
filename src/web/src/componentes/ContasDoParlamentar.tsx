@@ -162,11 +162,6 @@ export function AbaEmendasComponent({
 
   return (
     <section className="aba-dinheiro" aria-label="Emendas">
-      <div className="aba-dinheiro-acoes">
-        <button type="button" className="botao-secundario" onClick={() => setGrafoAberto(true)}>
-          Ver o grafo do dinheiro
-        </button>
-      </div>
       <GrafoDoDinheiroComponent
         aberto={grafoAberto}
         aoFechar={() => setGrafoAberto(false)}
@@ -176,17 +171,22 @@ export function AbaEmendasComponent({
         emendas={emendas}
       />
       <div className="execucao">
-        <p className="frase-resposta">
-          <ComProcedenciaComponent
-            consulta={{ contexto: 'emendas', pessoa: pessoaId, ano: emendas.ano }}
-            rotulo={`Emendas de ${emendas.ano}`}
-          >
-            <strong>{reais(pagoTotal)}</strong>
-          </ComProcedenciaComponent>{' '}
-          pagos de {reais(emendas.empenhado)} empenhados em{' '}
-          <strong>{emendas.quantidade}</strong> {emendas.quantidade === 1 ? 'emenda' : 'emendas'} de {emendas.ano}:{' '}
-          {(fracao(pagoTotal) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}% saiu de fato
-        </p>
+        <div className="execucao-cabeca">
+          <p className="frase-resposta">
+            <ComProcedenciaComponent
+              consulta={{ contexto: 'emendas', pessoa: pessoaId, ano: emendas.ano }}
+              rotulo={`Emendas de ${emendas.ano}`}
+            >
+              <strong>{reais(pagoTotal)}</strong>
+            </ComProcedenciaComponent>{' '}
+            pagos de {reais(emendas.empenhado)} empenhados em{' '}
+            <strong>{emendas.quantidade}</strong> {emendas.quantidade === 1 ? 'emenda' : 'emendas'} de {emendas.ano}:{' '}
+            {(fracao(pagoTotal) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}% saiu de fato
+          </p>
+          <button type="button" className="botao-secundario" onClick={() => setGrafoAberto(true)}>
+            Ver o grafo do dinheiro
+          </button>
+        </div>
         <span className="gasto-barra execucao-barra" aria-hidden="true">
           <span style={{ width: `${fracao(emendas.pago) * 100}%` }} />
           {emendas.pagoDepois > 0 && (

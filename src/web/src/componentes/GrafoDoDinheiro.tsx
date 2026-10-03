@@ -5,8 +5,8 @@ import { nomeProprio, reaisCompacto } from '../formato';
 /** Largura do desenho em unidades do SVG; a tela o encaixa na largura do modal. */
 const LARGURA = 1000;
 /** A altura de cada linha de caixa. */
-const LINHA = 56;
-const TOPO = 56;
+const LINHA = 50;
+const TOPO = 40;
 const CAIXA = { largura: 250, altura: 40 };
 const CENTRO = { largura: 200, altura: 64 };
 /** Quantas caixas cada lado mostra antes de juntar o resto em uma caixa só. */
@@ -59,7 +59,7 @@ export function GrafoDoDinheiroComponent({
   const entrada = campanha && campanha.total > 0 ? caixasDaCampanha(campanha) : [];
   const saida = caixasDasEmendas(emendas);
   const linhas = Math.max(entrada.length, saida.length, 1);
-  const altura = TOPO + linhas * LINHA + 24;
+  const altura = TOPO + linhas * LINHA + 4;
   const centroY = TOPO + (linhas * LINHA) / 2 - CENTRO.altura / 2;
   const centroX = (LARGURA - CENTRO.largura) / 2;
   const yDa = (i: number, total: number) => TOPO + ((linhas - total) * LINHA) / 2 + i * LINHA + (LINHA - CAIXA.altura) / 2;
@@ -91,11 +91,11 @@ export function GrafoDoDinheiroComponent({
           </defs>
 
           {campanha && entrada.length > 0 && (
-            <text x={30} y={22} className="grafo-dinheiro-coluna">
+            <text x={30} y={16} className="grafo-dinheiro-coluna">
               Campanha de {campanha.anoEleicao} · {reaisCompacto(campanha.total)} arrecadados
             </text>
           )}
-          <text x={LARGURA - 30} y={22} textAnchor="end" className="grafo-dinheiro-coluna">
+          <text x={LARGURA - 30} y={16} textAnchor="end" className="grafo-dinheiro-coluna">
             Emendas de {emendas.ano} · {reaisCompacto(emendas.favorecidos.recebido)} recebidos
           </text>
 
