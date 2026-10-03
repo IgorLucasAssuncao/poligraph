@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { BASE_DA_API, CABECALHO_DO_SITE } from '../constantes';
 
 export type UsuarioLogado = { nome: string | null; fotoUrl: string | null };
 
@@ -69,9 +70,9 @@ export function BotaoGoogleComponent({ aoEntrar }: { aoEntrar: (usuario: Usuario
  * grava o perfil e devolve o cookie. Nada é guardado no navegador por nós.
  */
 async function entrar(idToken: string): Promise<UsuarioLogado> {
-  const resposta = await fetch('/api/auth/google', {
+  const resposta = await fetch(`${BASE_DA_API}/auth/google`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...CABECALHO_DO_SITE },
     body: JSON.stringify({ idToken }),
     credentials: 'include',
   });

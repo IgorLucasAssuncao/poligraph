@@ -322,6 +322,22 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
             (await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1", null)).StatusCode);
     }
 
+    /// <summary>Auditoria de 2026-10-03 (CSRF): rota que muda estado recusa o pedido sem o cabeçalho do site.</summary>
+    [SkippableFact]
+    public async Task RotaDeEscrita_SemOCabecalhoDoSite_Da403()
+    {
+        ExigeDocker();
+        using var fabrica = new FabricaApi(ConnectionString);
+        using var semCabecalho = fabrica.Server.CreateClient();
+        using var doSite = fabrica.CreateClient();
+
+        var recusada = await semCabecalho.PostAsync("/api/auth/logout", null);
+        var aceita = await doSite.PostAsync("/api/auth/logout", null);
+
+        Assert.Equal(System.Net.HttpStatusCode.Forbidden, recusada.StatusCode);
+        Assert.Equal(System.Net.HttpStatusCode.NoContent, aceita.StatusCode);
+    }
+
     private HttpClient CriarCliente(
         ValidadorFalso? validador = null, bool seguirRedirecionamento = true)
     {

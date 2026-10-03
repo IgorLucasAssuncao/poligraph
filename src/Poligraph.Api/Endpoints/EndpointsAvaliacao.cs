@@ -1,7 +1,8 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Configuracao;
 
 namespace Poligraph.Api.Endpoints;
 
@@ -12,7 +13,7 @@ public static class EndpointsAvaliacao
     /// </remarks>
     public static IEndpointRouteBuilder MapearAvaliacao(this IEndpointRouteBuilder app)
     {
-        var grupo = app.MapGroup("/api/avaliacao").WithTags("Avaliação");
+        var grupo = app.MapGroup("/api/avaliacao").WithTags("Avaliação").ExigirCabecalhoDoSite();
 
         grupo.MapPost("/", RegistrarAsync).RequireAuthorization();
 

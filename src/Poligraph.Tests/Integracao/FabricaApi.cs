@@ -7,11 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Poligraph.Api;
 using Poligraph.Data;
 
-
-
 namespace Poligraph.Tests.Integracao;
-
-
 
 /// <summary>
 /// Sobe a API de verdade, apontando para o Postgres do Testcontainers.
@@ -21,48 +17,33 @@ namespace Poligraph.Tests.Integracao;
 /// status codes — é o mesmo de produção.
 /// </summary>
 public class FabricaApi(string connectionString) : WebApplicationFactory<MarcadorApi>
-
 {
-
     private readonly string _connectionString = connectionString;
 
-
-
     protected override IHost CreateHost(IHostBuilder builder)
-
     {
-
         builder.UseEnvironment("Development");
-
-
 
         builder.ConfigureHostConfiguration(c => c.AddInMemoryCollection([new("Cache:Aquecer", "false")]));
 
-
-
         builder.ConfigureServices(services =>
-
         {
-
             RemoverRegistrosDoDbContext(services);
 
-
-
             services.AddDbContext<PoligraphDb>(opcoes => opcoes
-
                 .UseNpgsql(_connectionString)
-
                 .UseSnakeCaseNamingConvention());
         });
 
-
-
         return base.CreateHost(builder);
-
     }
 
-
-
+    /// <summary>Todo cliente de teste fala como o site: manda o cabeçalho que as rotas de escrita exigem.</summary>
+    protected override void ConfigureClient(HttpClient client)
+    {
+        base.ConfigureClient(client);
+        client.DefaultRequestHeaders.Add(Poligraph.Api.Configuracao.ProtecaoContraCsrf.Cabecalho, Poligraph.Api.Configuracao.ProtecaoContraCsrf.Valor);
+    }
 
 
     /// <summary>
@@ -75,18 +56,11 @@ public class FabricaApi(string connectionString) : WebApplicationFactory<Marcado
     /// lista de serviços conhecidos.
     /// </summary>
     private static void RemoverRegistrosDoDbContext(IServiceCollection services)
-
     {
-
         var descritores = services
-
             .Where(d => MencionaOContexto(d.ServiceType)
-
                      || (d.ImplementationType is not null && MencionaOContexto(d.ImplementationType)))
-
             .ToList();
-
-
 
         foreach (var descritor in descritores)
         {
@@ -94,22 +68,14 @@ public class FabricaApi(string connectionString) : WebApplicationFactory<Marcado
         }
     }
 
-
-
     private static bool MencionaOContexto(Type tipo)
-
     {
-
         if (tipo == typeof(PoligraphDb))
         {
             return true;
         }
 
         return tipo.IsGenericType
-
             && tipo.GetGenericArguments().Any(a => a == typeof(PoligraphDb));
-
     }
-
 }
-

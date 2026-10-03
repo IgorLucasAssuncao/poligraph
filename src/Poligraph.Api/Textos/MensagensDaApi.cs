@@ -1,4 +1,4 @@
-namespace Poligraph.Api.Textos;
+﻿namespace Poligraph.Api.Textos;
 
 /// <summary>
 /// As mensagens que a API devolve ou registra: erros para quem chama, título da documentação e
@@ -26,6 +26,9 @@ public static class MensagensDaApi
     public const string LoginDesligado =
         "Login com Google DESLIGADO: Google:ClientId não configurado. O site funciona; entrar não. Ver docs/plano/08-obter-as-chaves.md";
     public const string LoginLigado = "Login com Google ligado (Client ID ...{Final}).";
+
+    public const string FaltaCabecalhoDoSite =
+        "Pedido que muda estado precisa vir do próprio site (cabeçalho X-Requested-With).";
 
     public const string CacheAquecido = "Cache aquecido em {Duracao}";
     public const string CacheNaoAquecido = "Aquecimento do cache falhou; as requisições calculam sob demanda";

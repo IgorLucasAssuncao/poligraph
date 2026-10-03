@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Poligraph.Api.Dtos;
 using Poligraph.Api.Services;
+using Poligraph.Api.Configuracao;
 
 namespace Poligraph.Api.Endpoints;
 
@@ -11,7 +12,7 @@ public static class EndpointsAutenticacao
     /// </remarks>
     public static IEndpointRouteBuilder MapearAutenticacao(this IEndpointRouteBuilder app)
     {
-        var grupo = app.MapGroup("/api/auth").WithTags("Autenticação");
+        var grupo = app.MapGroup("/api/auth").WithTags("Autenticação").ExigirCabecalhoDoSite();
 
         grupo.MapPost("/google", EntrarAsync)
              .Produces<UsuarioLogadoDto>()

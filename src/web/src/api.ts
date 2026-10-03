@@ -1,3 +1,4 @@
+import { BASE_DA_API, CABECALHO_DO_SITE } from './constantes';
 import { VERSAO_CONSENTIMENTO } from './textos-legais';
 
 /**
@@ -8,7 +9,7 @@ import { VERSAO_CONSENTIMENTO } from './textos-legais';
  * navegador o envia sozinho. `credentials: 'include'` é tudo que se precisa.
  */
 
-const BASE = '/api';
+const BASE = BASE_DA_API;
 
 /**
  * As duas casas do Congresso. Nunca há um terceiro valor.
@@ -295,7 +296,7 @@ export type Avaliacao = {
 export async function registrarAvaliacao(avaliacao: Avaliacao): Promise<void> {
   const resposta = await fetch(`${BASE}/avaliacao`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...CABECALHO_DO_SITE },
     body: JSON.stringify(avaliacao),
     credentials: 'include',
   });
@@ -309,7 +310,7 @@ export async function excluirConta(): Promise<void> {
 }
 
 export async function sair(): Promise<void> {
-  await fetch(`${BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
+  await fetch(`${BASE}/auth/logout`, { method: 'POST', headers: CABECALHO_DO_SITE, credentials: 'include' });
 }
 
 /**
@@ -462,7 +463,7 @@ export async function seguir(pessoaId: number, aceite = false): Promise<void> {
   const consulta = new URLSearchParams({ versao: VERSAO_CONSENTIMENTO });
   if (aceite) consulta.set('aceite', 'true');
   const url = `${BASE}/seguidos/${pessoaId}?${consulta}`;
-  const resposta = await fetch(url, { method: 'PUT', credentials: 'include' });
+  const resposta = await fetch(url, { method: 'PUT', headers: CABECALHO_DO_SITE, credentials: 'include' });
 
   if (resposta.status === 428) throw new ConsentimentoNecessarioError();
   if (resposta.status === 401) throw new NaoAutenticadoError();
@@ -506,7 +507,7 @@ export async function obterDesempate(
   try {
     const resposta = await fetch(`${BASE}/afinidade/perguntas/desempate`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...CABECALHO_DO_SITE },
       body: JSON.stringify({ respostas }),
       credentials: 'include',
     });
@@ -526,7 +527,7 @@ export async function calcularAfinidade(
 ): Promise<ResultadoAfinidade> {
   const resposta = await fetch(`${BASE}/afinidade`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...CABECALHO_DO_SITE },
     body: JSON.stringify(uf ? { respostas, uf } : { respostas }),
     credentials: 'include',
   });
@@ -554,7 +555,7 @@ async function buscar<T>(url: string): Promise<T> {
 async function enviar<T>(url: string, corpo: unknown): Promise<T> {
   const resposta = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...CABECALHO_DO_SITE },
     body: JSON.stringify(corpo),
     credentials: 'include',
   });
@@ -565,7 +566,7 @@ async function enviar<T>(url: string, corpo: unknown): Promise<T> {
 }
 
 async function semCorpo(url: string, metodo: string): Promise<void> {
-  const resposta = await fetch(url, { method: metodo, credentials: 'include' });
+  const resposta = await fetch(url, { method: metodo, headers: CABECALHO_DO_SITE, credentials: 'include' });
 
   if (resposta.status === 401) throw new NaoAutenticadoError();
   if (!resposta.ok) throw new Error(`Falha em ${url} (${resposta.status}).`);

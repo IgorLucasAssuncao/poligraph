@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using Poligraph.Api.Configuracao;
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Api.Services;
@@ -20,7 +21,8 @@ public static class EndpointsSeguir
     {
         var grupo = app.MapGroup("/api/seguidos")
             .WithTags("Seguir")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .ExigirCabecalhoDoSite();
 
         grupo.MapGet("/", ListarAsync)
              .Produces<IReadOnlyList<ParlamentarSeguidoDto>>();
