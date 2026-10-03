@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { buscarTudo, type Busca } from '../api';
 import { nomeProprio, periodoDaLegislatura } from '../formato';
+import { IconeExplorarComponent } from './Icones';
 
 /**
  * Uma caixa, três tipos de resposta: parlamentar, cidade e entidade.
@@ -18,6 +19,8 @@ export function BuscaDoCabecalhoComponent() {
   const [resposta, setResposta] = useState<Busca | null>(null);
   const [aberta, setAberta] = useState(false);
   const [ativa, setAtiva] = useState(0);
+  const [expandida, setExpandida] = useState(false);
+  const campo = useRef<HTMLInputElement>(null);
   const caixa = useRef<HTMLDivElement>(null);
   const navegar = useNavigate();
   const id = useId();
@@ -61,12 +64,25 @@ export function BuscaDoCabecalhoComponent() {
   };
 
   return (
-    <div className="busca-cabecalho" ref={caixa} data-tour="busca-global">
+    <div className={`busca-cabecalho${expandida ? ' expandida' : ''}`} ref={caixa} data-tour="busca-global">
+      <button
+        type="button"
+        className="busca-abrir botao-icone"
+        aria-label="Abrir a busca"
+        aria-expanded={expandida}
+        onClick={() => {
+          setExpandida(true);
+          setTimeout(() => campo.current?.focus(), 0);
+        }}
+      >
+        <IconeExplorarComponent />
+      </button>
       <label htmlFor={`${id}-campo`} className="sr-apenas">
         Buscar parlamentar, cidade ou entidade
       </label>
       <input
         id={`${id}-campo`}
+        ref={campo}
         type="search"
         role="combobox"
         aria-expanded={mostrar}
@@ -82,6 +98,9 @@ export function BuscaDoCabecalhoComponent() {
           setAberta(true);
         }}
         onFocus={() => setAberta(true)}
+        onBlur={() => {
+          if (!termo.trim()) setExpandida(false);
+        }}
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown') {
             e.preventDefault();
@@ -94,6 +113,7 @@ export function BuscaDoCabecalhoComponent() {
             escolher(opcoes[ativa].destino);
           } else if (e.key === 'Escape') {
             setAberta(false);
+            setExpandida(false);
           }
         }}
       />

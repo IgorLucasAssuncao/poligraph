@@ -2764,6 +2764,16 @@ dialog.tour::backdrop { background: transparent; }
 .faixa-curta { display: none; }
 
 @media (max-width: 560px) {
+  /* A busca vira lupa e, aberta, cobre a linha da marca e da conta (2026-10-03): espremida,
+     ela tinha uns 70 px e mostrava "Busc". */
+  .cabecalho-conteudo { position: relative; }
+  .busca-cabecalho .busca-abrir { display: grid; margin-left: auto; }
+  .busca-cabecalho:not(.expandida) input { display: none; }
+  .busca-cabecalho.expandida {
+    position: absolute; inset: .45rem .75rem auto .75rem; z-index: 35; width: auto;
+  }
+  .busca-cabecalho.expandida .busca-abrir { display: none; }
+  .busca-cabecalho.expandida input { display: block; width: 100%; }
   .cabecalho-conteudo .interruptor-auditoria { display: none; }
   .menu-conta .menu-conta-painel > .menu-conta-auditoria { display: block; }
   .marca-texto { display: none; }
@@ -3025,3 +3035,5 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 .grupo-de-votos-lista { list-style: none; margin: 0; padding: 0 0 0 .75rem; border-left: 2px solid var(--borda); display: grid; gap: .6rem; }
 .grupo-de-votos-lista li { display: grid; grid-template-columns: auto 1fr; gap: .2rem .75rem; align-items: start; }
 .grupo-de-votos-lista .linha-detalhe { display: block; }
+
+.busca-cabecalho .busca-abrir { display: none; }
