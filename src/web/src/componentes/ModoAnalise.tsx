@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from 'react';
 import { obterProcedencia } from '../api';
 import type { CargaDeProcedencia, ConsultaDeProcedencia, Procedencia } from '../api';
+import { tourJaVisto } from '../tour';
+import { useTour } from './contextoDoTour';
 import { LinkDeFonte } from './LinkDeFonte';
 
 /**
@@ -64,9 +66,17 @@ export function useModoAnalise(): Estado {
  *
  * DECISÃO: No cabeçalho, visível em toda tela, e não no menu: é o lugar que o sistema do vídeo
  * analisado usa (plano/10 §1), e escondido atrás de um clique ninguém descobre que existe.
+ *
+ * Na primeira vez que liga, abre o tour do modo (`PASSOS_DA_ANALISE`).
  */
 export function InterruptorDoModoAnalise() {
   const { ligado, alternar } = useModoAnalise();
+  const { iniciar } = useTour();
+
+  const aoClicar = () => {
+    alternar();
+    if (!ligado && !tourJaVisto('analise')) iniciar('analise');
+  };
 
   return (
     <button
@@ -74,7 +84,8 @@ export function InterruptorDoModoAnalise() {
       className="interruptor-analise"
       aria-pressed={ligado}
       title={ligado ? 'Desligar o modo análise' : 'Ligar o modo análise: cada número mostra de onde veio'}
-      onClick={alternar}
+      onClick={aoClicar}
+      data-tour="modo-analise"
     >
       <span className="interruptor-analise-trilho" aria-hidden="true" />
       <span>Análise</span>
@@ -107,6 +118,7 @@ export function ComProcedencia({
     <button
       type="button"
       className="numero-com-procedencia"
+      data-tour="numero-com-procedencia"
       aria-label={`${rotulo}: ver de onde veio`}
       onClick={() => abrir(consulta, rotulo)}
     >

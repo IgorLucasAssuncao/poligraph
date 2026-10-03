@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   OFERTA_DO_TOUR,
+  PASSOS_DA_ANALISE,
   PASSOS_DO_SITE,
   marcarTourVisto,
   tourJaVisto,
@@ -59,8 +60,8 @@ export function ProvedorDoTour({ children }: { children: ReactNode }) {
   }, [tela]);
 
   const iniciar = useCallback((nome: NomeDoTour = 'site') => {
-    if (nome === 'site') {
-      setAberto({ nome, passos: PASSOS_DO_SITE });
+    if (nome === 'site' || nome === 'analise') {
+      setAberto({ nome, passos: nome === 'site' ? PASSOS_DO_SITE : PASSOS_DA_ANALISE });
       return;
     }
     const registrada = telaAtual.current;

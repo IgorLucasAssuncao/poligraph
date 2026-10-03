@@ -22,13 +22,17 @@ export type PassoDoTour = {
   opcional?: boolean;
 };
 
-export type NomeDoTour = 'site' | 'grafo' | 'ficha' | 'questionario' | 'resultado' | 'emendas' | 'governo';
+export type NomeDoTour = 'site' | 'analise' | 'grafo' | 'ficha' | 'questionario' | 'resultado' | 'emendas' | 'governo';
 
 /** Como a oferta do primeiro acesso apresenta cada tour. */
 export const OFERTA_DO_TOUR: Record<NomeDoTour, { titulo: string; texto: string }> = {
   site: {
     titulo: 'Primeira vez por aqui?',
     texto: 'Um tour de um minuto mostra de onde vêm os dados e como o resultado é calculado.',
+  },
+  analise: {
+    titulo: 'O modo análise',
+    texto: 'Como abrir a origem de um número: a regra da conta e os arquivos oficiais de onde ele saiu.',
   },
   grafo: {
     titulo: 'Como ler o grafo',
@@ -82,6 +86,14 @@ export const PASSOS_DO_SITE: PassoDoTour[] = [
       'a busca procura nos três e mostra cada resposta no seu grupo.',
   },
   {
+    rota: null,
+    alvo: 'modo-analise',
+    titulo: 'Confira de onde veio cada número',
+    texto:
+      'Ligue o modo análise e os números ganham um sublinhado pontilhado. Clicando em um, ' +
+      'você vê a regra da conta e o arquivo oficial de onde ele saiu.',
+  },
+  {
     rota: '/parlamentares',
     alvo: 'busca',
     titulo: 'Procure qualquer parlamentar',
@@ -114,6 +126,41 @@ export const PASSOS_DO_SITE: PassoDoTour[] = [
       'Este menu abre o tour outra vez e guarda o tema e a sua conta. Cada tela tem o seu ' +
       '"Entenda esta tela". O resultado mostra com quem você concorda, e não é uma ' +
       'recomendação de voto.',
+  },
+];
+
+/**
+ * O tour do modo análise, aberto na primeira vez que a pessoa liga o interruptor.
+ *
+ * DECISÃO: Abre sozinho, sem oferta: ligar o modo já é o pedido. São três passos, e o do meio
+ * é opcional porque nem toda tela tem número com procedência.
+ */
+export const PASSOS_DA_ANALISE: PassoDoTour[] = [
+  {
+    rota: null,
+    alvo: 'modo-analise',
+    titulo: 'Modo análise ligado',
+    texto:
+      'Agora os números que têm origem registrada aparecem com sublinhado pontilhado, nesta ' +
+      'tela e nas outras.',
+  },
+  {
+    rota: null,
+    alvo: 'numero-com-procedencia',
+    titulo: 'Clique num número sublinhado',
+    texto:
+      'Abre um painel com a regra da conta, quantas linhas entraram e cada arquivo oficial ' +
+      'usado: endereço, data da coleta e o código SHA-256, que permite conferir se o arquivo ' +
+      'é o mesmo publicado pela fonte.',
+    opcional: true,
+  },
+  {
+    rota: null,
+    alvo: 'modo-analise',
+    titulo: 'Desligue quando quiser',
+    texto:
+      'A escolha fica guardada neste navegador, e vale sem conta. Desligado, o site volta a ' +
+      'mostrar só os números.',
   },
 ];
 

@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { obterProcedencia } from '../api';
+import { marcarTourVisto } from '../tour';
+import { ContextoDoTour } from './contextoDoTour';
 import { ComProcedencia, InterruptorDoModoAnalise, ProvedorDoModoAnalise } from './ModoAnalise';
 
 vi.mock('../api', async (original) => ({
@@ -70,5 +72,38 @@ describe('o modo análise', () => {
     fireEvent.click(interruptor);
     expect(interruptor).toHaveAttribute('aria-pressed', 'true');
     expect(localStorage.getItem('poligraph:modo-analise')).toBe('1');
+  });
+});
+
+/** O tour do modo abre na primeira vez que a pessoa liga, e só nela. */
+describe('o tour do modo análise', () => {
+  function comTour(iniciar: (nome?: string) => void) {
+    return render(
+      <ContextoDoTour.Provider value={{ iniciar, registrar: () => () => {} }}>
+        <ProvedorDoModoAnalise>
+          <InterruptorDoModoAnalise />
+        </ProvedorDoModoAnalise>
+      </ContextoDoTour.Provider>,
+    );
+  }
+
+  it('abre ao ligar pela primeira vez, e não ao desligar', () => {
+    const iniciar = vi.fn();
+    comTour(iniciar);
+
+    fireEvent.click(screen.getByRole('button', { name: /Análise/ }));
+    expect(iniciar).toHaveBeenCalledWith('analise');
+
+    fireEvent.click(screen.getByRole('button', { name: /Análise/ }));
+    expect(iniciar).toHaveBeenCalledTimes(1);
+  });
+
+  it('não abre de novo depois de visto', () => {
+    marcarTourVisto('analise');
+    const iniciar = vi.fn();
+    comTour(iniciar);
+
+    fireEvent.click(screen.getByRole('button', { name: /Análise/ }));
+    expect(iniciar).not.toHaveBeenCalled();
   });
 });
