@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { obterReconciliacao } from '../api';
 import type { Periodo, Reconciliacao } from '../api';
 import { reaisCompacto } from '../formato';
+import { TEXTOS_DAS_EMENDAS } from '../textos/emendas';
+
+const T = TEXTOS_DAS_EMENDAS.conferencia;
 
 /**
  * Quanto o total de emendas do período confere com o Portal da Transparência (Pendência 81).
@@ -37,35 +40,27 @@ export function ConfereComOPortalComponent({ periodo }: { periodo: Periodo }) {
   const pagamentos = somar(contas.filter((c) => c.conjunto === 'PAGAMENTOS'));
   const semCodigo = pagamentos.motivos.get('PAGAMENTO_SEM_CODIGO_DE_EMENDA') ?? 0;
   const fora = empenhado.fonte - empenhado.base;
-  const anos = periodo.de === periodo.ate ? `de ${periodo.de}` : `de ${periodo.de} a ${periodo.ate}`;
+  const anos = T.anos(periodo.de, periodo.ate);
 
   return (
     <details className="confere-com-o-portal">
       <summary>
-        <span className="confere-titulo">Confere com o Portal da Transparência:</span>{' '}
-        {fora < 0.5
-          ? `o empenhado ${anos} é o mesmo, ${reaisCompacto(empenhado.base)}.`
-          : `${reaisCompacto(fora)} ficam de fora, cada parte com o motivo.`}{' '}
-        <span className="confere-abrir">Ver o detalhe</span>
+        <span className="confere-titulo">{T.titulo}</span>{' '}
+        {fora < 0.5 ? T.resumoIgual(anos, reaisCompacto(empenhado.base)) : T.resumoFora(reaisCompacto(fora))}{' '}
+        <span className="confere-abrir">{T.verDetalhe}</span>
       </summary>
 
       {fora < 0.5 ? (
-        <p>
-          O empenhado nas emendas {anos} é o mesmo do Portal: <strong>{reaisCompacto(empenhado.base)}</strong>.
-        </p>
+        <p>{T.igual(anos, reaisCompacto(empenhado.base))}</p>
       ) : (
         <>
-          <p>
-            O Portal publica <strong>{reaisCompacto(empenhado.fonte)}</strong> empenhados em emendas {anos}. Aqui
-            estão <strong>{reaisCompacto(empenhado.base)}</strong>. Os outros {reaisCompacto(fora)} ficam de fora
-            porque o Portal publica essas emendas sem dizer quem é o autor:
-          </p>
+          <p>{T.fora(reaisCompacto(empenhado.fonte), anos, reaisCompacto(empenhado.base), reaisCompacto(fora))}</p>
           <ul className="motivos-de-fora">
             {[...empenhado.motivos.entries()]
               .sort((a, b) => b[1] - a[1])
               .map(([motivo, valor]) => (
                 <li key={motivo}>
-                  <span>{MOTIVO[motivo] ?? motivo}</span>
+                  <span>{T.motivos[motivo] ?? motivo}</span>
                   <span className="dado">{reaisCompacto(valor)}</span>
                 </li>
               ))}
@@ -74,31 +69,15 @@ export function ConfereComOPortalComponent({ periodo }: { periodo: Periodo }) {
       )}
 
       {empenhado.inferido > 0.5 && (
-        <p className="ajuda">
-          Entre as que estão aqui, {reaisCompacto(empenhado.inferido)} são emendas de bancada que o Portal publica sem
-          a bancada. A bancada foi deduzida pelo estado para onde o dinheiro foi, o que acerta em 97 de cada 100 casos
-          em que o Portal diz a bancada.
-        </p>
+        <p className="ajuda">{T.inferido(reaisCompacto(empenhado.inferido))}</p>
       )}
 
       {semCodigo > 0.5 && (
-        <p className="ajuda">
-          O Portal também registra {reaisCompacto(semCodigo)} em pagamentos feitos {anos} sem o número da emenda. Eles
-          não entram no mapa, porque não dá para saber de que emenda são.
-        </p>
+        <p className="ajuda">{T.semCodigo(reaisCompacto(semCodigo), anos)}</p>
       )}
     </details>
   );
 }
-
-const MOTIVO: Record<string, string> = {
-  RELATOR_SEM_AUTOR: 'Emendas de relator',
-  COMISSAO_SEM_AUTOR: 'Emendas de comissão, sem dizer qual comissão',
-  BANCADA_SEM_AUTOR_E_SEM_UF: 'Emendas de bancada sem o estado',
-  INDIVIDUAL_SEM_AUTOR: 'Emendas individuais sem o autor',
-  OUTRA_SEM_AUTOR: 'Outras emendas sem autor',
-  INCOERENTE: 'Linhas em que o código do autor não confere com o da emenda',
-};
 
 /** Soma os anos do período; os motivos, por nome. */
 function somar(contas: Reconciliacao[]) {

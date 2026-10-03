@@ -141,4 +141,38 @@ export const TEXTOS_DAS_EMENDAS = {
     encontradas: 'Cidades encontradas',
     nota: 'A cidade fica guardada só neste navegador.',
   },
+
+  /** A conferência com o Portal (Pendência 81): o que fica de fora do empenhado, e por quê. */
+  conferencia: {
+    anos: (de: number, ate: number) => (de === ate ? `de ${de}` : `de ${de} a ${ate}`),
+    titulo: 'Confere com o Portal da Transparência:',
+    resumoIgual: (anos: string, valor: string) => `o empenhado ${anos} é o mesmo, ${valor}.`,
+    resumoFora: (fora: string) => `${fora} ficam de fora, cada parte com o motivo.`,
+    verDetalhe: 'Ver o detalhe',
+    igual: (anos: string, valor: string): ReactNode => (
+      <>
+        O empenhado nas emendas {anos} é o mesmo do Portal: <strong>{valor}</strong>.
+      </>
+    ),
+    fora: (fonte: string, anos: string, base: string, fora: string): ReactNode => (
+      <>
+        O Portal publica <strong>{fonte}</strong> empenhados em emendas {anos}. Aqui estão <strong>{base}</strong>. Os
+        outros {fora} ficam de fora porque o Portal publica essas emendas sem dizer quem é o autor:
+      </>
+    ),
+    inferido: (valor: string) =>
+      `Entre as que estão aqui, ${valor} são emendas de bancada que o Portal publica sem a bancada. A bancada foi ` +
+      'deduzida pelo estado para onde o dinheiro foi, o que acerta em 97 de cada 100 casos em que o Portal diz a bancada.',
+    semCodigo: (valor: string, anos: string) =>
+      `O Portal também registra ${valor} em pagamentos feitos ${anos} sem o número da emenda. Eles não entram no mapa, ` +
+      'porque não dá para saber de que emenda são.',
+    motivos: {
+      RELATOR_SEM_AUTOR: 'Emendas de relator',
+      COMISSAO_SEM_AUTOR: 'Emendas de comissão, sem dizer qual comissão',
+      BANCADA_SEM_AUTOR_E_SEM_UF: 'Emendas de bancada sem o estado',
+      INDIVIDUAL_SEM_AUTOR: 'Emendas individuais sem o autor',
+      OUTRA_SEM_AUTOR: 'Outras emendas sem autor',
+      INCOERENTE: 'Linhas em que o código do autor não confere com o da emenda',
+    } as Record<string, string>,
+  },
 } as const;
