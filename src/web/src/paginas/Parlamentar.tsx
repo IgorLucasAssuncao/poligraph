@@ -33,7 +33,15 @@ import { passosDaFicha } from '../tour';
 import { EsqueletoDeFichaComponent, EsqueletoDeListaComponent } from '../componentes/Esqueleto';
 import { IconeExplorarComponent } from '../componentes/Icones';
 import './parlamentar.css';
-import { BASE_PEQUENA_DO_ALINHAMENTO, BUSCA_MINIMA_NOS_VOTOS, SIMILARES_DE_INICIO, VOTOS_POR_PAGINA_DA_BUSCA } from '../constantes';
+import {
+  BASE_PEQUENA_DO_ALINHAMENTO,
+  BUSCA_MINIMA_NOS_VOTOS,
+  ORIENTACAO_NAO,
+  ORIENTACAO_SIM,
+  SIMILARES_DE_INICIO,
+  VOTOS_POR_PAGINA_DA_BUSCA,
+} from '../constantes';
+import { TEXTOS_DA_FICHA as T } from '../textos/parlamentar';
 
 const PASSOS_DA_FICHA = passosDaFicha();
 
@@ -49,10 +57,10 @@ const PASSOS_DA_FICHA = passosDaFicha();
 type Aba = 'votos' | 'emendas' | 'cota' | 'campanha';
 
 const ABAS: [Aba, string][] = [
-  ['votos', 'Como vota'],
-  ['emendas', 'Emendas'],
-  ['cota', 'Cota'],
-  ['campanha', 'Campanha'],
+  ['votos', T.abas.votos],
+  ['emendas', T.abas.emendas],
+  ['cota', T.abas.cota],
+  ['campanha', T.abas.campanha],
 ];
 
 /**
@@ -122,7 +130,7 @@ export function ParlamentarComponent() {
         setLida({ chave, ficha: f, erro: null });
         setSeguindo(seguidos.some((s) => s.id === pessoaId));
       })
-      .catch(() => atual && setLida({ chave, ficha: null, erro: 'Não foi possível carregar este parlamentar.' }));
+      .catch(() => atual && setLida({ chave, ficha: null, erro: T.erro }));
     return () => {
       atual = false;
     };
@@ -131,7 +139,7 @@ export function ParlamentarComponent() {
   if (erro) {
     return (
       <>
-        <CabecalhoDaColunaComponent titulo="Parlamentar" comVoltar />
+        <CabecalhoDaColunaComponent titulo={T.titulo} comVoltar />
         <p className="erro">{erro}</p>
       </>
     );
@@ -140,7 +148,7 @@ export function ParlamentarComponent() {
   if (!ficha) {
     return (
       <>
-        <CabecalhoDaColunaComponent titulo="Parlamentar" comVoltar />
+        <CabecalhoDaColunaComponent titulo={T.titulo} comVoltar />
         <EsqueletoDeFichaComponent />
       </>
     );
@@ -148,7 +156,7 @@ export function ParlamentarComponent() {
 
   return (
     <>
-      <CabecalhoDaColunaComponent titulo="Parlamentar" comVoltar acao={<BotaoDoTourComponent nome="ficha" passos={PASSOS_DA_FICHA} />} />
+      <CabecalhoDaColunaComponent titulo={T.titulo} comVoltar acao={<BotaoDoTourComponent nome="ficha" passos={PASSOS_DA_FICHA} />} />
 
       <header className="perfil-cabecalho">
         <div className="perfil-avatar-linha">
@@ -166,8 +174,7 @@ export function ParlamentarComponent() {
 
         {!seguindo && !emExercicio && corrente !== undefined && (
           <p className="perfil-inativo" role="note">
-            Fora do mandato. Só é possível seguir quem está em exercício na legislatura
-            atual ({periodoDaLegislatura(corrente)}).
+            {T.foraDoMandato(periodoDaLegislatura(corrente))}
           </p>
         )}
 
@@ -175,7 +182,7 @@ export function ParlamentarComponent() {
           {ficha.casa && (
             <span className="chip chip-casa">
               <TermoComponent nome={ficha.casa === 'SENADO' ? 'senado' : 'camara'}>
-                {ficha.casa === 'SENADO' ? 'Senador' : 'Deputado'}
+                {ficha.casa === 'SENADO' ? T.senador : T.deputado}
               </TermoComponent>
             </span>
           )}
@@ -191,7 +198,7 @@ export function ParlamentarComponent() {
 
         <p className="perfil-fonte">
           <LinkDeFonteComponent href={ficha.urlFonte}>
-            {ficha.casa === 'SENADO' ? 'Página oficial no Senado' : 'Página oficial na Câmara'}
+            {ficha.casa === 'SENADO' ? T.paginaNoSenado : T.paginaNaCamara}
           </LinkDeFonteComponent>
         </p>
         <RedesDoParlamentarComponent redes={ficha.redesSociais ?? []} />
@@ -200,11 +207,11 @@ export function ParlamentarComponent() {
           <span>
             <ComProcedenciaComponent
               consulta={{ contexto: 'votos', pessoa: ficha.id, legislatura: ficha.legislatura ?? undefined }}
-              rotulo="Votos com posição"
+              rotulo={T.votosComPosicao}
             >
               <strong>{ficha.nVotacoes.toLocaleString('pt-BR')}</strong>
             </ComProcedenciaComponent>{' '}
-            <span>votos com posição, em plenário e comissões</span>
+            <span>{T.votosComPosicaoDefinicao}</span>
           </span>
         </div>
 
@@ -220,7 +227,7 @@ export function ParlamentarComponent() {
         />
       </header>
 
-      <nav className="abas" aria-label="Seções do perfil">
+      <nav className="abas" aria-label={T.rotuloDasAbas}>
         {ABAS.map(([chave, rotulo]) => (
           <Link
             key={chave}
@@ -240,7 +247,7 @@ export function ParlamentarComponent() {
           contas={contas}
           erro={erroDasContas}
           nome={ficha?.nome ?? ''}
-          descricao={[ficha?.casa === 'SENADO' ? 'Senado' : 'Câmara', [ficha?.partido, ficha?.uf].filter(Boolean).join('-')]
+          descricao={[T.descricaoDoGrafo(ficha?.casa), [ficha?.partido, ficha?.uf].filter(Boolean).join('-')]
             .filter(Boolean)
             .join(' · ')}
         />
@@ -252,7 +259,7 @@ export function ParlamentarComponent() {
       {aba === 'votos' && (
         <>
           <AbaSimilaresComponent similares={ficha.maisSimilares} />
-          <h2 className="titulo-secao">Votos</h2>
+          <h2 className="titulo-secao">{T.tituloDosVotos}</h2>
           <AbaVotosComponent
             pessoaId={pessoaId}
             legislatura={ficha.legislatura}
@@ -327,7 +334,7 @@ function AbaVotosComponent({
     };
   }, [busca, semRito, pessoaId, legislatura]);
 
-  if (votos.length === 0) return <p className="vazio">Nenhum voto registrado.</p>;
+  if (votos.length === 0) return <p className="vazio">{T.votos.nenhum}</p>;
 
   const resultado = filtrando && achados?.de === chave ? achados.pagina : null;
 
@@ -339,19 +346,19 @@ function AbaVotosComponent({
         </span>
         <input
           type="search"
-          placeholder="Buscar nos votos: assunto, projeto (PEC 45/2019)…"
+          placeholder={T.votos.placeholder}
           value={termo}
           onChange={(e) => setTermo(e.target.value)}
-          aria-label="Buscar nos votos"
+          aria-label={T.votos.rotuloDaBusca}
         />
       </div>
       <label className="filtro-rito">
         <input type="checkbox" checked={semRito} onChange={(e) => setSemRito(e.target.checked)} />
-        Esconder votos de rito (requerimento, urgência, adiamento)
+        {T.votos.semRito}
       </label>
 
-      {erroDaBusca && <p className="erro">Não foi possível buscar agora.</p>}
-      {filtrando && !resultado && !erroDaBusca && <EsqueletoDeListaComponent rotulo="Buscando nos votos" linhas={3} />}
+      {erroDaBusca && <p className="erro">{T.votos.erroDaBusca}</p>}
+      {filtrando && !resultado && !erroDaBusca && <EsqueletoDeListaComponent rotulo={T.votos.buscando} linhas={3} />}
 
       {filtrando && resultado ? (
         <ListaDeVotosComponent
@@ -406,12 +413,7 @@ function ListaDeVotosComponent({
   );
 
   if (busca && total === 0) {
-    return (
-      <p className="vazio">
-        Nenhum voto com “{busca}” nesta legislatura. A busca olha o assunto do projeto, a
-        descrição da votação e o número da matéria.
-      </p>
-    );
+    return <p className="vazio">{T.votos.nenhumComBusca(busca)}</p>;
   }
 
   const semPosicao = comPosicao === undefined ? 0 : total - comPosicao;
@@ -420,28 +422,27 @@ function ListaDeVotosComponent({
     <>
       <p className="contagem-lista" aria-live="polite">
         {busca ? (
-          <>
-            {lista.itens.length === total ? total : `${lista.itens.length} de ${total}`}{' '}
-            {total === 1 ? 'voto' : 'votos'} com “{busca}”
-          </>
+          T.votos.contagemDaBusca(
+            lista.itens.length === total ? String(total) : T.votos.deTotal(lista.itens.length, total),
+            total,
+            busca,
+          )
         ) : semRito ? (
-          <>
-            {lista.itens.length} de {total} registros de voto, sem os de rito
-          </>
+          T.votos.contagemSemRito(lista.itens.length, total)
         ) : (
           <>
-            {lista.itens.length} de {total} registros de voto
-            {semPosicao > 0 && `, ${semPosicao} deles sem posição (abstenção, obstrução ou ausência registrada)`}
+            {T.votos.contagem(lista.itens.length, total)}
+            {semPosicao > 0 && T.votos.semPosicao(semPosicao)}
           </>
         )}
         {' · '}
         <BotaoBaixarCsvComponent
-          rotulo={busca ? 'Baixar os encontrados (CSV)' : 'Baixar todos (CSV)'}
+          rotulo={busca ? T.votos.baixarEncontrados : T.votos.baixarTodos}
           montar={async () => {
             const todos = await buscarTodas((pagina) => listarVotos(pessoaId, pagina, 100, legislatura, busca, semRito));
             baixarCsv(
-              `votos-${pessoaId}.csv`,
-              ['Votação', 'Data', 'Voto', 'Orientação do Governo', 'Matéria', 'Descrição', 'Categoria', 'Proposição', 'Registro'],
+              T.votos.arquivo(pessoaId),
+              [...T.votos.colunas],
               todos.map((v) => [
                 v.votacaoId, v.data, rotuloDoVoto(v.valor), v.orientacaoDoGoverno, v.materia,
                 v.descricao, v.categoria, v.urlProposicao, v.urlRegistro,
@@ -488,9 +489,7 @@ function LinhaDoVotoComponent({ voto }: { voto: VotoNaFicha }) {
   return (
     <>
       {rito && (
-        <p className="voto-rito">
-          <TermoComponent nome="procedimental">Questão de rito</TermoComponent>: votou o andamento da proposta, como urgência ou adiamento
-        </p>
+        <p className="voto-rito">{T.votos.rito}</p>
       )}
 
       <p className="voto-descricao">
@@ -527,18 +526,15 @@ function LinhaDoVotoComponent({ voto }: { voto: VotoNaFicha }) {
 function ContraAOrientacaoComponent({ voto }: { voto: VotoNaFicha }) {
   const orientacao = voto.orientacaoDoGoverno;
 
-  if (orientacao !== 'Sim' && orientacao !== 'Não') return null;
+  if (orientacao !== ORIENTACAO_SIM && orientacao !== ORIENTACAO_NAO) return null;
   if (voto.valor !== 1 && voto.valor !== -1) return null;
 
-  const acompanhou = (voto.valor === 1) === (orientacao === 'Sim');
+  const acompanhou = (voto.valor === 1) === (orientacao === ORIENTACAO_SIM);
 
   return (
     <>
       {' · '}
-      <span className="voto-orientacao">
-        Governo pediu <b>{orientacao}</b>
-        {!acompanhou && <em> (votou diferente)</em>}
-      </span>
+      <span className="voto-orientacao">{T.votos.governoPediu(orientacao, acompanhou)}</span>
     </>
   );
 }
@@ -553,14 +549,12 @@ function AbaSimilaresComponent({ similares }: { similares: Ficha['maisSimilares'
   const [todos, setTodos] = useState(false);
 
   if (similares.length === 0) {
-    return (
-      <p className="vazio">A análise de similaridade ainda não rodou para esta legislatura.</p>
-    );
+    return <p className="vazio">{T.similares.vazio}</p>;
   }
 
   return (
     <section data-tour="ficha-similares">
-      <h2 className="titulo-secao">Quem vota parecido</h2>
+      <h2 className="titulo-secao">{T.similares.titulo}</h2>
       {similares.slice(0, todos ? similares.length : SIMILARES_DE_INICIO).map((s) => (
         <LinhaParlamentarComponent
           key={s.pessoaId}
@@ -568,18 +562,13 @@ function AbaSimilaresComponent({ similares }: { similares: Ficha['maisSimilares'
           nome={s.nome}
           partido={s.partido}
           uf=""
-          detalhe={
-            <>
-              votaram igual em <strong>{Math.round(s.valor * s.comuns)}</strong> de{' '}
-              <strong>{s.comuns}</strong> votações
-            </>
-          }
+          detalhe={T.similares.detalhe(Math.round(s.valor * s.comuns), s.comuns)}
         />
       ))}
       {!todos && similares.length > SIMILARES_DE_INICIO && (
         <div className="carregar-mais">
           <button type="button" className="botao-secundario" onClick={() => setTodos(true)}>
-            Ver os {similares.length}
+            {T.similares.verTodos(similares.length)}
           </button>
         </div>
       )}
@@ -630,19 +619,16 @@ function FaixaDeAlinhamentoComponent({
     <dl className="alinhamento" data-tour="ficha-alinhamento">
       {presenca && presenca.votacoes > 0 && (
         <div>
-          <dt>
-            <TermoComponent nome="participacao">Presença</TermoComponent> no plenário
-          </dt>
+          <dt>{T.alinhamento.presenca}</dt>
           <dd>
             {inteiro(presenca.presente)} de {inteiro(presenca.votacoes)}
             <small>
-              votações ({Math.round((presenca.presente / presenca.votacoes) * 100)}%)
-              {presenca.ausenteJustificado !== null && presenca.ausenteJustificado > 0 && (
-                <> · {presenca.ausenteJustificado} ausências com licença ou missão</>
-              )}
+              {T.alinhamento.votacoes(Math.round((presenca.presente / presenca.votacoes) * 100))}
+              {presenca.ausenteJustificado !== null && presenca.ausenteJustificado > 0 &&
+                T.alinhamento.ausencias(presenca.ausenteJustificado)}
             </small>
             {presenca.medianaDaCasa != null && (
-              <small>mediana {casa === 'SENADO' ? 'do Senado' : 'da Câmara'}: {Math.round(presenca.medianaDaCasa * 100)}%</small>
+              <small>{T.alinhamento.medianaDaCasa(casa, Math.round(presenca.medianaDaCasa * 100))}</small>
             )}
           </dd>
         </div>
@@ -650,16 +636,14 @@ function FaixaDeAlinhamentoComponent({
 
       {governismo !== null && (
         <div>
-          <dt>
-            Seguiu a <TermoComponent nome="orientacao">orientação</TermoComponent> do Governo
-          </dt>
+          <dt>{T.alinhamento.governo}</dt>
           <ParteDaBaseComponent proporcao={governismo} base={alinhamento!.baseGovernismo} mediana={alinhamento!.medianaGovernismo} />
         </div>
       )}
 
       {disciplina !== null && (
         <div>
-          <dt>Seguiu a orientação do {alinhamento!.partidoMedido}</dt>
+          <dt>{T.alinhamento.partido(alinhamento!.partidoMedido)}</dt>
           <ParteDaBaseComponent proporcao={disciplina} base={alinhamento!.baseDisciplina} mediana={alinhamento!.medianaDisciplina} />
         </div>
       )}
@@ -677,10 +661,10 @@ function ParteDaBaseComponent({ proporcao, base, mediana }: { proporcao: number;
     <dd>
       {inteiro(Math.round(proporcao * base))} de {inteiro(base)}
       <small>
-        votações orientadas ({Math.round(proporcao * 100)}%)
-        {base < BASE_PEQUENA_DO_ALINHAMENTO && <> · poucas para tirar conclusão</>}
+        {T.alinhamento.votacoesOrientadas(Math.round(proporcao * 100))}
+        {base < BASE_PEQUENA_DO_ALINHAMENTO && T.alinhamento.basePequena}
       </small>
-      {mediana != null && <small>mediana da Câmara: {Math.round(mediana * 100)}%</small>}
+      {mediana != null && <small>{T.alinhamento.medianaDaCamara(Math.round(mediana * 100))}</small>}
     </dd>
   );
 }
@@ -697,11 +681,11 @@ function inteiro(valor: number): string {
  * AUXILIARES DE FORMATAÇÃO
  */
 function rotuloDoVoto(valor: number | null): string {
-  if (valor === 1) return 'Sim';
-  if (valor === -1) return 'Não';
-  if (valor === 0) return 'Abstenção';
+  if (valor === 1) return T.rotuloDoVoto.sim;
+  if (valor === -1) return T.rotuloDoVoto.nao;
+  if (valor === 0) return T.rotuloDoVoto.abstencao;
 
-  return 'Ausente';
+  return T.rotuloDoVoto.ausente;
 }
 
 function classeDoVoto(valor: number | null): string {
@@ -754,16 +738,14 @@ function GrupoDeVotosComponent({ votos, tour }: { votos: VotoNaFicha[]; tour: bo
         <p className="voto-descricao">
           <strong>{primeiro.materia}</strong> {primeiro.ementa ?? ''}
         </p>
-        <p className="grupo-de-votos-conta">{votos.length} votações nesta proposição</p>
+        <p className="grupo-de-votos-conta">{T.votos.votacoesNaProposicao(votos.length)}</p>
         <ul className="grupo-de-votos-lista">
           {votos.map((v) => (
             <li key={v.votacaoId}>
               <SeloDoVotoComponent voto={v} />
               <div>
                 {v.categoria === 'PROCEDIMENTAL' && (
-                  <span className="voto-rito">
-                    <TermoComponent nome="procedimental">Questão de rito</TermoComponent>:{' '}
-                  </span>
+                  <span className="voto-rito">{T.votos.ritoCurto}</span>
                 )}
                 <span className="voto-processual">{v.descricao ?? v.votacaoId}</span>
                 <DetalheDoVotoComponent voto={v} />
@@ -780,7 +762,7 @@ function GrupoDeVotosComponent({ votos, tour }: { votos: VotoNaFicha[]; tour: bo
 function SeloDoVotoComponent({ voto: v }: { voto: VotoNaFicha }) {
   return (
     <span className={`selo selo-${classeDoVoto(v.valor)}`}>
-      {v.valor === 0 ? <TermoComponent nome="abstencao">Abstenção</TermoComponent> : rotuloDoVoto(v.valor)}
+      {v.valor === 0 ? T.votos.abstencao : rotuloDoVoto(v.valor)}
     </span>
   );
 }
@@ -794,13 +776,13 @@ function DetalheDoVotoComponent({ voto: v }: { voto: VotoNaFicha }) {
       {v.urlProposicao && (
         <>
           {' · '}
-          <LinkDeFonteComponent href={v.urlProposicao}>proposição</LinkDeFonteComponent>
+          <LinkDeFonteComponent href={v.urlProposicao}>{T.votos.proposicao}</LinkDeFonteComponent>
         </>
       )}
       {v.urlRegistro && (
         <>
           {' · '}
-          <LinkDeFonteComponent href={v.urlRegistro}>registro da votação</LinkDeFonteComponent>
+          <LinkDeFonteComponent href={v.urlRegistro}>{T.votos.registro}</LinkDeFonteComponent>
         </>
       )}
     </span>
