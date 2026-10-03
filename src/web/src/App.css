@@ -2996,8 +2996,12 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 }
 
 /* ═══ CONFERE COM O PORTAL — Pendência 81 ═══════════════════════ */
-.confere-com-o-portal { margin: 1rem 0 1.5rem; padding: 1rem 1.25rem; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel); }
-.confere-com-o-portal h2 { margin: 0 0 .5rem; font-size: var(--t-4); }
+.confere-com-o-portal { margin: 1rem 0 1.5rem; padding: .75rem 1.25rem; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel); }
+.confere-com-o-portal > summary { cursor: pointer; font-size: var(--t-2); list-style-position: inside; }
+.confere-com-o-portal .confere-titulo { font-weight: 700; }
+.confere-com-o-portal .confere-abrir { color: var(--realce); text-decoration: underline; }
+.confere-com-o-portal[open] .confere-abrir { display: none; }
+.confere-com-o-portal[open] > summary { margin-bottom: .5rem; }
 .confere-com-o-portal p { margin: .4rem 0; font-size: var(--t-2); }
 .motivos-de-fora { list-style: none; margin: .5rem 0; padding: 0; }
 .motivos-de-fora li { display: flex; justify-content: space-between; gap: 1rem; padding: .3rem 0; border-top: 1px solid var(--borda); font-size: var(--t-2); }
@@ -3096,3 +3100,29 @@ html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
 .grafo-dinheiro-link:hover rect, .grafo-dinheiro-link:focus-visible rect { stroke: var(--realce); stroke-width: 1.5; }
 .grafo-dinheiro-link:hover text:first-of-type { fill: var(--realce); text-decoration: underline; }
 .grafo-dinheiro-link:focus-visible { outline: none; }
+
+/* ═══ EMENDAS: a página mais curta (2026-10-03) ═══════════════════
+   O mapa e a lista lado a lado no computador, com a lista rolando na altura do mapa; no celular,
+   um embaixo do outro, e a lista de estados mostra os dez primeiros. A busca da cidade e o
+   período dividem a mesma faixa. */
+.mapa-e-lista { display: grid; gap: 1.25rem; align-items: start; }
+@media (min-width: 1100px) {
+  .mapa-e-lista { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+  .mapa-e-lista .lista-ao-lado { max-height: 36rem; overflow-y: auto; }
+  .mapa-e-lista .ver-todos-os-estados { display: none; }
+}
+@media (max-width: 1099px) {
+  .mapa-e-lista:not(.todos-os-estados) .estado-alem-dos-dez { display: none; }
+}
+.emendas-filtros {
+  display: grid; gap: 1rem 2rem; align-items: start;
+  padding: 1rem; border-bottom: 1px solid var(--borda);
+}
+@media (min-width: 1100px) {
+  .emendas-filtros { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+/* Os dois lados com a mesma forma: o título em cima e os controles logo abaixo, sem borda própria. */
+.emendas-filtros .sua-cidade { padding: 0; border: 0; }
+.emendas-filtros .governo-barra { padding: 0; border: 0; display: block; }
+.filtro-titulo { margin: 0 0 .4rem; font-weight: 700; }
+.emendas-escopo { margin: .75rem 1rem .75rem; font-size: var(--t-2); color: var(--suave); }

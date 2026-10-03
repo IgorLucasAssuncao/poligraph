@@ -14,6 +14,10 @@ import { reaisCompacto } from '../formato';
  * pagamentos sem código de emenda são por ano do pagamento: o Portal não diz de que emenda
  * eles são, então não cabem em nenhum período de emenda.
  */
+/**
+ * DECISÃO (2026-10-03, pedido do autor para encurtar a página): recolhido numa linha que já diz
+ * quanto fica de fora. O detalhe, com o motivo de cada parte, fica a um clique.
+ */
 export function ConfereComOPortalComponent({ periodo }: { periodo: Periodo }) {
   const [contas, setContas] = useState<Reconciliacao[] | null>(null);
 
@@ -36,8 +40,14 @@ export function ConfereComOPortalComponent({ periodo }: { periodo: Periodo }) {
   const anos = periodo.de === periodo.ate ? `de ${periodo.de}` : `de ${periodo.de} a ${periodo.ate}`;
 
   return (
-    <section className="confere-com-o-portal" aria-labelledby="titulo-confere">
-      <h2 id="titulo-confere">Quanto confere com o Portal da Transparência</h2>
+    <details className="confere-com-o-portal">
+      <summary>
+        <span className="confere-titulo">Confere com o Portal da Transparência:</span>{' '}
+        {fora < 0.5
+          ? `o empenhado ${anos} é o mesmo, ${reaisCompacto(empenhado.base)}.`
+          : `${reaisCompacto(fora)} ficam de fora, cada parte com o motivo.`}{' '}
+        <span className="confere-abrir">Ver o detalhe</span>
+      </summary>
 
       {fora < 0.5 ? (
         <p>
@@ -77,7 +87,7 @@ export function ConfereComOPortalComponent({ periodo }: { periodo: Periodo }) {
           não entram no mapa, porque não dá para saber de que emenda são.
         </p>
       )}
-    </section>
+    </details>
   );
 }
 

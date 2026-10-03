@@ -131,13 +131,6 @@ export function EmendasComponent() {
         acao={<BotaoDoTourComponent nome="emendas" passos={passos} />}
       />
 
-      <SuaCidadeComponent
-        aoEscolher={(m) => {
-          setEscolheuAgora(true);
-          guardarMinhaCidade(m);
-          mudar({ uf: m.uf, cidade: m.codigoIbge });
-        }}
-      />
 
       {erro && <p className="erro">Não foi possível carregar o mapa das emendas agora.</p>}
       {!erro && !brasil && <EsqueletoDePainelComponent rotulo="Carregando o mapa das emendas" alturaDoGrafico={420} />}
@@ -150,18 +143,31 @@ export function EmendasComponent() {
 
       {brasil && brasil.anosDisponiveis.length > 0 && (
         <>
-          <SeletorDePeriodoComponent
-            anos={brasil.anosDisponiveis}
-            periodo={brasil.periodo}
-            rotulo="Período das emendas"
-            tour="emendas-periodo"
-            aoMudar={(novo) =>
-              mudar(novo ? { de: String(novo.de), ate: String(novo.ate) } : { de: null, ate: null })
-            }
-          >
+          <div className="emendas-filtros">
+            <SuaCidadeComponent
+              aoEscolher={(m) => {
+                setEscolheuAgora(true);
+                guardarMinhaCidade(m);
+                mudar({ uf: m.uf, cidade: m.codigoIbge });
+              }}
+            />
+            <div className="filtro-periodo">
+              <p className="filtro-titulo">Período</p>
+              <SeletorDePeriodoComponent
+                anos={brasil.anosDisponiveis}
+                periodo={brasil.periodo}
+                rotulo="Período das emendas"
+                tour="emendas-periodo"
+                aoMudar={(novo) =>
+                  mudar(novo ? { de: String(novo.de), ate: String(novo.ate) } : { de: null, ate: null })
+                }
+              />
+            </div>
+          </div>
+          <p className="emendas-escopo">
             Emendas de <strong>{textoDoPeriodo(brasil.periodo)}</strong>, pagas até hoje. A cidade é a{' '}
             <TermoComponent nome="sedeDoFavorecido" />.
-          </SeletorDePeriodoComponent>
+          </p>
 
           <ForaDoMapaComponent brasil={brasil} />
           <ConfereComOPortalComponent periodo={brasil.periodo} />
@@ -252,6 +258,7 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
   const siglaPorCodigo = useMemo(() => new Map(UFS), []);
   const ordenadas = [...brasil.porUf].sort((a, b) => valorDe(b) - valorDe(a));
   const porPessoa = (valor: number) => `R$ ${Math.round(valor).toLocaleString('pt-BR')}`;
+  const [todosOsEstados, setTodosOsEstados] = useState(false);
 
   return (
     <section className="governo-secao">
@@ -273,6 +280,7 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
         </OpcoesComponent>
       )}
 
+      <div className={`mapa-e-lista${todosOsEstados ? ' todos-os-estados' : ''}`}>
       <div data-tour="emendas-mapa">
         <MapaCoropleticoComponent
           malha="brasil"
@@ -288,7 +296,7 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
         />
       </div>
 
-      <div className="tabela-rolavel">
+      <div className="tabela-rolavel lista-ao-lado">
         <table className="tabela-orcamento">
           <caption className="sr-apenas">Dinheiro de emenda por estado, pela sede de quem recebeu</caption>
           <thead>
@@ -300,8 +308,8 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
             </tr>
           </thead>
           <tbody>
-            {ordenadas.map((u) => (
-              <tr key={u.uf}>
+            {ordenadas.map((u, i) => (
+              <tr key={u.uf} className={i >= 10 ? 'estado-alem-dos-dez' : undefined}>
                 <th scope="row">
                   <button type="button" className="link-botao" onClick={() => aoEscolher(u.uf)}>
                     {u.uf}
@@ -314,6 +322,12 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
             ))}
           </tbody>
         </table>
+      </div>
+      {ordenadas.length > 10 && !todosOsEstados && (
+        <button type="button" className="botao-secundario ver-todos-os-estados" onClick={() => setTodosOsEstados(true)}>
+          Ver os {ordenadas.length} estados
+        </button>
+      )}
       </div>
 
       <BotaoBaixarCsvComponent
