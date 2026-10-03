@@ -2769,9 +2769,11 @@ dialog.tour::backdrop { background: transparent; }
   .cabecalho-conteudo { position: relative; }
   .busca-cabecalho .busca-abrir { display: grid; margin-left: auto; }
   .busca-cabecalho:not(.expandida) input { display: none; }
-  .busca-cabecalho.expandida {
-    position: absolute; inset: .45rem .75rem auto .75rem; z-index: 35; width: auto;
+  .cabecalho-conteudo .busca-cabecalho.expandida {
+    grid-area: 1 / 1 / 2 / -1; justify-self: stretch; align-self: center;
+    position: absolute; inset: 0; margin: auto 0; height: fit-content; z-index: 35; width: auto;
   }
+  .seletor-periodo-intervalo { flex-wrap: wrap; }
   .busca-cabecalho.expandida .busca-abrir { display: none; }
   .busca-cabecalho.expandida input { display: block; width: 100%; }
   .cabecalho-conteudo .interruptor-auditoria { display: none; }
