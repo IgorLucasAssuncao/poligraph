@@ -13,6 +13,7 @@ import { useSessao } from '../sessao';
 import { EsqueletoDeListaComponent } from '../componentes/Esqueleto';
 import { useLegislaturaDaUrl } from '../componentes/useLegislatura';
 import { PARLAMENTARES_POR_PAGINA } from '../constantes';
+import { TEXTOS_DA_LISTA as T } from '../textos/parlamentares';
 
 /** Busca e navegação pelos parlamentares (RF-34). */
 /**
@@ -22,11 +23,7 @@ import { PARLAMENTARES_POR_PAGINA } from '../constantes';
  * Sem voto não há casa, e não há onde. A frase termina em "0 votações
  * registradas", que é exatamente o caso.
  */
-const NA_CASA: Record<Parlamentar['casa'], string> = {
-  CAMARA: 'na Câmara',
-  SENADO: 'no Senado',
-  '': '',
-};
+const NA_CASA: Record<Parlamentar['casa'], string> = T.naCasa;
 
 
 /**
@@ -109,10 +106,10 @@ export function ExplorarComponent() {
 
   const aplicados: [string, string, () => void][] = (
     [
-      ['nome', termo.trim() && `Nome: ${termo.trim()}`, () => setTermo('')],
-      ['casa', casa && (casa === 'CAMARA' ? 'Só a Câmara' : 'Só o Senado'), () => setCasa('')],
-      ['partido', partido && `Partido: ${partido}`, () => setPartido('')],
-      ['uf', uf && `Estado: ${uf}`, () => setUf('')],
+      ['nome', termo.trim() && T.filtroNome(termo.trim()), () => setTermo('')],
+      ['casa', casa && (casa === 'CAMARA' ? T.soACamara : T.soOSenado), () => setCasa('')],
+      ['partido', partido && T.filtroPartido(partido), () => setPartido('')],
+      ['uf', uf && T.filtroEstado(uf), () => setUf('')],
     ] as [string, string, () => void][]
   ).filter(([, rotulo]) => rotulo);
 
@@ -130,22 +127,22 @@ export function ExplorarComponent() {
         </span>
         <input
           type="search"
-          placeholder="Buscar parlamentar por nome"
+          placeholder={T.buscar}
           value={termo}
           onChange={(e) => setTermo(e.target.value)}
-          aria-label="Buscar parlamentar por nome"
+          aria-label={T.buscar}
         />
       </div>
 
       <div className="filtros">
-        <select value={casa} onChange={(e) => setCasa(e.target.value as Casa | '')} aria-label="Casa">
-          <option value="">Câmara e Senado</option>
-          <option value="CAMARA">Só a Câmara</option>
-          <option value="SENADO">Só o Senado</option>
+        <select value={casa} onChange={(e) => setCasa(e.target.value as Casa | '')} aria-label={T.casa}>
+          <option value="">{T.camaraESenado}</option>
+          <option value="CAMARA">{T.soACamara}</option>
+          <option value="SENADO">{T.soOSenado}</option>
         </select>
 
-        <select value={partido} onChange={(e) => setPartido(e.target.value)} aria-label="Partido">
-          <option value="">Todos os partidos</option>
+        <select value={partido} onChange={(e) => setPartido(e.target.value)} aria-label={T.partido}>
+          <option value="">{T.todosOsPartidos}</option>
           {partidos.map((p) => (
             <option key={p} value={p}>
               {p}
@@ -153,8 +150,8 @@ export function ExplorarComponent() {
           ))}
         </select>
 
-        <select value={uf} onChange={(e) => setUf(e.target.value)} aria-label="Estado">
-          <option value="">Todos os estados</option>
+        <select value={uf} onChange={(e) => setUf(e.target.value)} aria-label={T.estado}>
+          <option value="">{T.todosOsEstados}</option>
           {ufs.map((u) => (
             <option key={u} value={u}>
               {u}
@@ -162,40 +159,40 @@ export function ExplorarComponent() {
           ))}
         </select>
 
-        <select value={ordem} onChange={(e) => setOrdem(e.target.value as 'NOME' | 'VOTACOES')} aria-label="Ordem">
-          <option value="NOME">Em ordem alfabética</option>
-          <option value="VOTACOES">Mais votos com posição primeiro</option>
+        <select value={ordem} onChange={(e) => setOrdem(e.target.value as 'NOME' | 'VOTACOES')} aria-label={T.ordem}>
+          <option value="NOME">{T.alfabetica}</option>
+          <option value="VOTACOES">{T.maisVotos}</option>
         </select>
       </div>
 
       {aplicados.length > 0 && (
-        <div className="filtros-aplicados" aria-label="Filtros aplicados">
+        <div className="filtros-aplicados" aria-label={T.aplicados}>
           {aplicados.map(([chave, rotulo, limpar]) => (
             <button key={chave} type="button" className="filtro-aplicado" onClick={limpar}>
               {rotulo}
               <span aria-hidden="true"> ✕</span>
-              <span className="sr-apenas"> (remover filtro)</span>
+              <span className="sr-apenas">{T.remover}</span>
             </button>
           ))}
           {aplicados.length > 1 && (
             <button type="button" className="filtro-limpar" onClick={limparTudo}>
-              Limpar filtros
+              {T.limpar}
             </button>
           )}
         </div>
       )}
 
-      {carregando && <EsqueletoDeListaComponent rotulo="Buscando parlamentares" linhas={8} />}
+      {carregando && <EsqueletoDeListaComponent rotulo={T.buscando} linhas={8} />}
 
       {!carregando && lista.length === 0 && (
-        <p className="vazio">Nenhum parlamentar encontrado com esses filtros.</p>
+        <p className="vazio">{T.nenhum}</p>
       )}
 
       {!carregando && total > 0 && (
         <p className="contagem-lista" aria-live="polite">
-          {lista.length === total ? `${total} parlamentares` : `${lista.length} de ${total} parlamentares`}
-          {passada && ` que votaram em ${periodoDaLegislatura(passada)}`}
-          {escolha === 'todas' && ' de todos os períodos, cada um com o último mandato'}
+          {T.contagem(lista.length, total)}
+          {passada && T.queVotaramEm(periodoDaLegislatura(passada))}
+          {escolha === 'todas' && T.todosOsPeriodos}
         </p>
       )}
 
@@ -219,7 +216,7 @@ export function ExplorarComponent() {
       {!carregando && lista.length < total && (
         <div className="carregar-mais">
           <button type="button" className="botao-secundario" onClick={carregarMais} disabled={carregandoMais}>
-            {carregandoMais ? 'Carregando…' : `Mostrar mais ${Math.min(PARLAMENTARES_POR_PAGINA, total - lista.length)}`}
+            {carregandoMais ? T.carregando : T.mostrarMais(Math.min(PARLAMENTARES_POR_PAGINA, total - lista.length))}
           </button>
         </div>
       )}
@@ -256,13 +253,13 @@ export function ExplorarComponent() {
   }
 
   function detalheDe(p: Parlamentar) {
-    const votacoes = `${p.nVotacoes} votos com posição ${NA_CASA[p.casa]}`.trim();
+    const votacoes = T.votosComPosicao(p.nVotacoes, NA_CASA[p.casa]);
     const corrente = pagina?.legislaturaCorrente;
     if (typeof escolha === 'number') return votacoes;
     if (!p.legislatura || !corrente || p.legislatura === corrente) return votacoes;
 
-    const quem = p.casa === 'SENADO' ? 'Ex-senador' : 'Ex-deputado';
-    return `${quem} · ${periodoDaLegislatura(p.legislatura)} · ${votacoes}`;
+    const quem = p.casa === 'SENADO' ? T.exSenador : T.exDeputado;
+    return T.exParlamentar(quem, periodoDaLegislatura(p.legislatura), votacoes);
   }
 
   function alternar(id: number, seguindoAgora: boolean) {

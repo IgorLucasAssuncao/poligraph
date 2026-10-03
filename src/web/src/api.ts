@@ -1,4 +1,5 @@
 import { BASE_DA_API, CABECALHO_DO_SITE } from './constantes';
+import { TEXTOS_DA_API } from './textos/api';
 import { VERSAO_CONSENTIMENTO } from './textos-legais';
 
 /**
@@ -233,20 +234,20 @@ export const NOME_DA_CASA: Record<
   Casa,
   { nome: string; /** O nome com a preposição: "da Câmara dos Deputados", "do Senado Federal". */ doNome: string; plural: string; singular: string }
 > = {
-  CAMARA: { nome: 'Câmara dos Deputados', doNome: 'da Câmara dos Deputados', plural: 'deputados', singular: 'deputado' },
-  SENADO: { nome: 'Senado Federal', doNome: 'do Senado Federal', plural: 'senadores', singular: 'senador' },
+  CAMARA: TEXTOS_DA_API.casas.CAMARA,
+  SENADO: TEXTOS_DA_API.casas.SENADO,
 };
 
 /** A API pediu o consentimento de seguir (428). */
 export class ConsentimentoNecessarioError extends Error {
   constructor() {
-    super('Falta o consentimento para seguir.');
+    super(TEXTOS_DA_API.erros.faltaConsentimento);
   }
 }
 
 export class NaoAutenticadoError extends Error {
   constructor() {
-    super('Sessão expirada.');
+    super(TEXTOS_DA_API.erros.sessaoExpirada);
   }
 }
 
@@ -257,7 +258,7 @@ export class RespostasInsuficientesError extends Error {
   readonly minimo: number;
 
   constructor(minimo: number) {
-    super('Responda mais perguntas para o resultado ter significado.');
+    super(TEXTOS_DA_API.erros.respostasInsuficientes);
     this.minimo = minimo;
   }
 }
@@ -271,7 +272,7 @@ export async function quemSouEu(): Promise<Usuario | null> {
   const resposta = await fetch(`${BASE}/auth/eu`, { credentials: 'include' });
 
   if (resposta.status === 401) return null;
-  if (!resposta.ok) throw new Error('Falha ao verificar a sessão.');
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.sessaoNaoVerificada);
 
   return resposta.json();
 }
@@ -301,7 +302,7 @@ export async function registrarAvaliacao(avaliacao: Avaliacao): Promise<void> {
     credentials: 'include',
   });
 
-  if (!resposta.ok) throw new Error(`Falha ao registrar avaliação (${resposta.status}).`);
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.avaliacao(resposta.status));
 }
 
 /** RISCO: LGPD art. 18, VI — apaga conta, lista de acompanhados e consentimentos. */
@@ -467,7 +468,7 @@ export async function seguir(pessoaId: number, aceite = false): Promise<void> {
 
   if (resposta.status === 428) throw new ConsentimentoNecessarioError();
   if (resposta.status === 401) throw new NaoAutenticadoError();
-  if (!resposta.ok) throw new Error(`Falha em ${url} (${resposta.status}).`);
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.falhaEm(url, resposta.status));
 }
 
 /** Revoga o consentimento de seguir; a API apaga a lista junto. */
@@ -538,7 +539,7 @@ export async function calcularAfinidade(
   }
 
   if (resposta.status === 401) throw new NaoAutenticadoError();
-  if (!resposta.ok) throw new Error(`Falha ao calcular afinidade (${resposta.status}).`);
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.afinidade(resposta.status));
 
   return resposta.json();
 }
@@ -547,7 +548,7 @@ async function buscar<T>(url: string): Promise<T> {
   const resposta = await fetch(url, { credentials: 'include' });
 
   if (resposta.status === 401) throw new NaoAutenticadoError();
-  if (!resposta.ok) throw new Error(`Falha ao consultar ${url} (${resposta.status}).`);
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.consulta(url, resposta.status));
 
   return resposta.json();
 }
@@ -560,7 +561,7 @@ async function enviar<T>(url: string, corpo: unknown): Promise<T> {
     credentials: 'include',
   });
 
-  if (!resposta.ok) throw new Error(`Falha em ${url} (${resposta.status}).`);
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.falhaEm(url, resposta.status));
 
   return resposta.json();
 }
@@ -569,7 +570,7 @@ async function semCorpo(url: string, metodo: string): Promise<void> {
   const resposta = await fetch(url, { method: metodo, headers: CABECALHO_DO_SITE, credentials: 'include' });
 
   if (resposta.status === 401) throw new NaoAutenticadoError();
-  if (!resposta.ok) throw new Error(`Falha em ${url} (${resposta.status}).`);
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.falhaEm(url, resposta.status));
 }
 
 /**
@@ -948,7 +949,7 @@ export async function obterGoverno(periodo?: Periodo): Promise<Governo | null> {
 
   if (resposta.status === 404) return null;
   if (resposta.status === 401) throw new NaoAutenticadoError();
-  if (!resposta.ok) throw new Error(`Falha ao consultar ${url} (${resposta.status}).`);
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.consulta(url, resposta.status));
 
   return resposta.json();
 }
@@ -1375,7 +1376,7 @@ export async function obterEntidade(cnpj: string): Promise<Entidade | null> {
   const resposta = await fetch(`${BASE}/entidades/${cnpj}`, { credentials: 'include' });
   if (resposta.status === 404) return null;
   if (resposta.status === 401) throw new NaoAutenticadoError();
-  if (!resposta.ok) throw new Error(`Falha ao consultar a entidade (${resposta.status}).`);
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.entidade(resposta.status));
   return resposta.json();
 }
 
