@@ -371,16 +371,31 @@ function GastoSigilosoComponent({
         <span className="amostra parte-sigilosa" /> sigiloso, só o valor: {reaisCompacto(sigilo.cartaoSigiloso)}
       </p>
 
+      <h3 className="titulo-secao">Por órgão</h3>
+      <p className="ajuda">
+        Há dois jeitos de gastar sem dizer em quê, e a tabela mostra os dois para cada órgão. O primeiro
+        é a compra no cartão corporativo marcada como sigilosa; ao lado, quanto isso representa de
+        tudo o que o órgão gastou no cartão. O segundo é o pagamento numa linha do orçamento
+        chamada &quot;ações de caráter sigiloso&quot;, que não passa pelo cartão.
+        {sigilo.porOrgao[0] && sigilo.porOrgao[0].cartaoTotal > 0 && (
+          <>
+            {' '}Na primeira linha: {sigilo.porOrgao[0].orgao} gastou{' '}
+            {reaisCompacto(sigilo.porOrgao[0].cartao)} em compras sigilosas no cartão, que são{' '}
+            {partesDeCem([sigilo.porOrgao[0].cartao, sigilo.porOrgao[0].cartaoTotal - sigilo.porOrgao[0].cartao])[0]}%
+            {' '}do cartão dele no período.
+          </>
+        )}
+      </p>
       <div className="tabela-rolavel">
         <table className="tabela-orcamento">
           <caption className="sr-apenas">Gasto sigiloso por órgão</caption>
           <thead>
             <tr>
               <th scope="col">Órgão</th>
-              <th scope="col">Cartão sigiloso</th>
-              <th scope="col">Do cartão do órgão</th>
+              <th scope="col">Compras sigilosas no cartão</th>
+              <th scope="col">Parte sigilosa do cartão do órgão</th>
               <th scope="col">
-                <TermoComponent nome="acaoSigilosa">Ação sigilosa</TermoComponent>
+                Pago em <TermoComponent nome="acaoSigilosa">ação sigilosa</TermoComponent> do orçamento
               </th>
             </tr>
           </thead>
@@ -426,7 +441,7 @@ function PerfilDaGestaoComponent({ gestao }: { gestao: Gestao }) {
         <PessoaDaGestaoCartaoComponent papel="Presidente" pessoa={gestao.presidente} />
         <PessoaDaGestaoCartaoComponent papel="Vice-presidente" pessoa={gestao.vice} />
       </div>
-      <p className="gestao-meta">
+      <div className="gestao-meta">
         Eleitos em {gestao.eleicao}
         {gestao.coligacao && (
           <>
@@ -437,7 +452,7 @@ function PerfilDaGestaoComponent({ gestao }: { gestao: Gestao }) {
             </details>
           </>
         )}
-      </p>
+      </div>
     </section>
   );
 }
