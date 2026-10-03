@@ -248,7 +248,6 @@ function RodapeDoSiteComponent() {
 
       <div className="rodape-aviso">
         <p>
-          Trabalho de conclusão de curso — ferramenta acadêmica de comparação de votos.{' '}
           <strong>Não é recomendação de voto</strong> e não representa o programa completo
           de nenhum parlamentar.
         </p>

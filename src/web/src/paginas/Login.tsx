@@ -95,7 +95,7 @@ export function LoginComponent() {
         </p>
 
         <p className="aviso-academico">
-          Trabalho de conclusão de curso. <strong>Não é recomendação de voto.</strong>
+          <strong>Não é recomendação de voto.</strong>
         </p>
       </div>
     </div>
