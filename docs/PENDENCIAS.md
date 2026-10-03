@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-10-02 · **110 resolvidas · 63 abertas**
+> **Atualizado:** 2026-10-02 · **110 resolvidas · 64 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -39,6 +39,7 @@ Pendência 41).
 | ✅ ~~Pendência 59~~ | **Resolvida (2026-10-02)** — o grafo da 55ª do Senado dizia "2015–2019", e as 103 votações abertas que o desenharam vão de mai/2016 a 2018 (3 acima do mínimo). O `GrafoDto` traz `AbertasDesde` e `AbertasAte`, e a tela diz o recorte em todo grafo | — |
 | ✅ ~~Pendência 60~~ | **Resolvida (2026-10-02)** — [achado #38](achados/038-a-emenda-sem-autor.md). Remedido: 17.810 linhas, R$ 35,64 bi empenhados e R$ 19,67 bi pagos, todas em 2014–2020; 2014 é 100% sem autor e 2016, 72%. O código `-99` ("RELATOR GERAL") é de emenda de comissão; a de relator vem como `S/I`. O log da carga deixou de chamá-las de "a fonte mudou?" | — |
 | **Pendência 81** | 🟡 **A emenda sem autor: gravar, inferir ou dizer na tela** ([#38](achados/038-a-emenda-sem-autor.md)). Hoje é descartada, e o total de 2016 na tela fica 72% menor que o do Portal. MEDIDO em 2026-10-02 o que dá para recuperar: **bancada** pela UF da linha (R$ 6,6 bi, 97,1% de acerto nas que têm autor); **individual de 2014** pela relação da CMO, só quando ação e localidade dão um autor (R$ 0,96 bi de R$ 6,09 bi, 95,5% de acerto validado em 2015); **relator** e **comissão** não têm como (R$ 22,9 bi). DECISÃO do autor (2026-10-02): o caminho da CMO **não entra**: é um PDF por orçamento, publicado uma vez, sem versão estruturada nem periódica, e recupera só 16% de 2014. A bancada pela UF continua opção, porque sai do próprio arquivo do Portal, que a rotina mensal já baixa | Média |
+| **Pendência 82** | 🟡 **Revisar todos os textos do front** — pedido do autor (2026-10-02). Parte das ajudas, dicas e notas soa escrita por IA: antítese em quase toda frase ("não é X, é Y", "fato, não alerta"), explicação do método onde a pessoa queria só a informação. O texto fala com gente: frase direta, voz ativa, o que a pessoa ganha com aquilo. Inclui os verbetes de `Termo.tsx`, os passos do tour (`tour.ts`), os textos de vazio e de erro, os rótulos do modo análise e da seção "O que mudou" | Média |
 | **Pendência 56** | 🟡 **Governos anteriores:** `gestoes` é uma linha por eleição (`ck_gestao_posse`), e ⛔ representa Temer (2016–18). Decidir o modelo antes de ingerir eleições anteriores | 🟡 Média |
 | ✅ ~~Pendência 55~~ | **Resolvida (2026-10-02)** — nenhum emoji no código: os marcadores de `.cs`, `.ts`, `.tsx`, `.css` e `.py` viraram `RISCO:`, `ATENÇÃO:`, `DECISÃO:`, `MEDIDO:`. No front, os comentários de dentro de corpos e do JSX foram para o JSDoc das declarações. Regra em `.claude/CLAUDE.md` | — |
 | **Pendência 57** | 🟡 **PR bloqueado:** a credencial do GitHub expirou, o `gh` ⛔ está instalado, e o `origin/main` do último fetch só tem o `Initial commit`, ⛔ ancestral da branch | 🟡 Média |
