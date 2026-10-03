@@ -655,14 +655,14 @@ function FaixaDeAlinhamento({ alinhamento, presenca }: { alinhamento: Alinhament
           <dt>
             Seguiu a <Termo nome="orientacao">orientação</Termo> do Governo
           </dt>
-          <ParteDaBase proporcao={governismo} base={alinhamento!.baseGovernismo} />
+          <ParteDaBase proporcao={governismo} base={alinhamento!.baseGovernismo} mediana={alinhamento!.medianaGovernismo} />
         </div>
       )}
 
       {disciplina !== null && (
         <div>
           <dt>Seguiu a orientação do {alinhamento!.partidoMedido}</dt>
-          <ParteDaBase proporcao={disciplina} base={alinhamento!.baseDisciplina} />
+          <ParteDaBase proporcao={disciplina} base={alinhamento!.baseDisciplina} mediana={alinhamento!.medianaDisciplina} />
         </div>
       )}
     </dl>
@@ -675,8 +675,11 @@ function FaixaDeAlinhamento({ alinhamento, presenca }: { alinhamento: Alinhament
  */
 const BASE_PEQUENA = 20;
 
-/** "540 de 658 votações orientadas (82%)", com o aviso quando a base é pequena. */
-function ParteDaBase({ proporcao, base }: { proporcao: number; base: number }) {
+/**
+ * "540 de 658 votações orientadas (82%)", com o aviso quando a base é pequena e a mediana da
+ * Câmara, que dá a escala do número.
+ */
+function ParteDaBase({ proporcao, base, mediana }: { proporcao: number; base: number; mediana?: number | null }) {
   return (
     <dd>
       {inteiro(Math.round(proporcao * base))} de {inteiro(base)}
@@ -684,6 +687,7 @@ function ParteDaBase({ proporcao, base }: { proporcao: number; base: number }) {
         votações orientadas ({Math.round(proporcao * 100)}%)
         {base < BASE_PEQUENA && <> · poucas para tirar conclusão</>}
       </small>
+      {mediana != null && <small>mediana da Câmara: {Math.round(mediana * 100)}%</small>}
     </dd>
   );
 }

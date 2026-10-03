@@ -15,8 +15,15 @@ namespace Poligraph.Api.Dtos;
 /// Nulo para o Senado inteiro: lá não existe orientação de bancada publicada.
 /// Zero afirmaria "nunca seguiu o governo", e o que houve foi não haver o que comparar.
 /// </para>
+///
+/// <para>
+/// As medianas são da casa inteira, no mesmo grafo (2026-10-03): "539 de 658 com o Governo" não
+/// diz se é muito; a mediana ao lado dá a escala, sem juízo.
+/// </para>
 /// </summary>
 public record AlinhamentoDto(
     double? Governismo, int BaseGovernismo,
     double? Disciplina, int BaseDisciplina,
-    string? PartidoMedido);
+    string? PartidoMedido,
+    double? MedianaGovernismo = null,
+    double? MedianaDisciplina = null);

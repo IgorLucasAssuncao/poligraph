@@ -553,11 +553,34 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         if (metrica is null) return null;
 
         var baseGoverno = await BaseComparavelAsync(id, legislatura.Value, "Governo", ct);
+        var (medianaGovernismo, medianaDisciplina) = await MedianasDaCasaAsync(execucaoId.Value, ct);
 
         return new AlinhamentoDto(
             metrica.Governismo, baseGoverno,
             metrica.Disciplina, metrica.BaseDisciplina ?? 0,
-            metrica.Disciplina is null ? null : partido);
+            metrica.Disciplina is null ? null : partido,
+            medianaGovernismo, medianaDisciplina);
+    }
+
+    /// <summary>A mediana de governismo e de disciplina de quem está no grafo. Em cache, por execução.</summary>
+    private async Task<(double?, double?)> MedianasDaCasaAsync(long execucaoId, CancellationToken ct) =>
+        await _cache.GetOrCreateAsync(("medianas", execucaoId), async entrada =>
+        {
+            entrada.AbsoluteExpirationRelativeToNow = ValidadeDaLista;
+            var nos = await _db.NosMetrica.AsNoTracking()
+                .Where(n => n.ExecucaoId == execucaoId)
+                .Select(n => new { n.Governismo, n.Disciplina })
+                .ToListAsync(ct);
+            return (Mediana([.. nos.Where(n => n.Governismo != null).Select(n => n.Governismo!.Value)]),
+                    Mediana([.. nos.Where(n => n.Disciplina != null).Select(n => n.Disciplina!.Value)]));
+        });
+
+    private static double? Mediana(List<double> valores)
+    {
+        if (valores.Count == 0) return null;
+        valores.Sort();
+        var meio = valores.Count / 2;
+        return valores.Count % 2 == 1 ? valores[meio] : (valores[meio - 1] + valores[meio]) / 2;
     }
 
     /// <summary>

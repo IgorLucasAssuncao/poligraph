@@ -91,6 +91,9 @@ export type Alinhamento = {
   baseDisciplina: number;
   /** Contra qual sigla a disciplina foi medida — quem trocou de partido tem a do voto mais recente. */
   partidoMedido: string | null;
+  /** A mediana da casa no mesmo grafo: a escala do número, sem juízo. */
+  medianaGovernismo?: number | null;
+  medianaDisciplina?: number | null;
 };
 
 export type Ficha = {

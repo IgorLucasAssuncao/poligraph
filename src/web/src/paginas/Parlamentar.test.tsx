@@ -788,13 +788,17 @@ describe('participação nas votações', () => {
   it('governismo e disciplina vêm como "X de Y", e a base pequena é dita', async () => {
     vi.mocked(api.obterFicha).mockResolvedValue({
       ...FICHA,
-      alinhamento: { governismo: 0.82, baseGovernismo: 658, disciplina: 1, baseDisciplina: 2, partidoMedido: 'MDB' },
+      alinhamento: {
+        governismo: 0.82, baseGovernismo: 658, disciplina: 1, baseDisciplina: 2, partidoMedido: 'MDB',
+        medianaGovernismo: 0.71, medianaDisciplina: 0.93,
+      },
     });
     await abrirPerfil();
 
     const governo = screen.getByText('540 de 658').closest('div')!;
     expect(governo.textContent).toMatch(/votações orientadas \(82%\)/);
     expect(governo.textContent).not.toMatch(/poucas/);
+    expect(governo.textContent).toMatch(/mediana da Câmara: 71%/);
     const partido = screen.getByText('2 de 2').closest('div')!;
     expect(partido.textContent).toMatch(/Seguiu a orientação do MDB/);
     expect(partido.textContent).toMatch(/poucas para tirar conclusão/);
