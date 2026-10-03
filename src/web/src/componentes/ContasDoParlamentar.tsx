@@ -432,7 +432,16 @@ export function AbaCotaComponent({
           <h3 className="titulo-secao">Em quê</h3>
           <ul className="gastos-categorias">
             {gastos.porCategoria.map((c) => (
-              <LinhaDeValorComponent key={c.categoria} nome={minusculas(c.categoria)} valor={c.total} maior={maior} />
+              <LinhaDeValorComponent
+                key={c.categoria}
+                nome={minusculas(c.categoria)}
+                valor={c.total}
+                maior={maior}
+                procedencia={{
+                  consulta: { contexto: 'cota', pessoa: pessoaId, ano: gastos.ano, categoria: c.categoria },
+                  rotulo: `Cota de ${gastos.ano}: ${minusculas(c.categoria)}`,
+                }}
+              />
             ))}
           </ul>
         </div>

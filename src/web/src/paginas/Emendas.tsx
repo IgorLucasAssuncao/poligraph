@@ -259,6 +259,7 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
   const ordenadas = [...brasil.porUf].sort((a, b) => valorDe(b) - valorDe(a));
   const porPessoa = (valor: number) => `R$ ${Math.round(valor).toLocaleString('pt-BR')}`;
   const [todosOsEstados, setTodosOsEstados] = useState(false);
+  const periodo = brasil.periodo;
 
   return (
     <section className="governo-secao">
@@ -315,7 +316,14 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
                     {u.uf}
                   </button>
                 </th>
-                <td>{reaisCompacto(u.recebido)}</td>
+                <td>
+                  <ComProcedenciaComponent
+                    consulta={{ contexto: 'pagamentos', de: periodo.de, ate: periodo.ate, uf: u.uf }}
+                    rotulo={`Emendas de ${textoDoPeriodo(periodo)} com sede em ${u.uf}`}
+                  >
+                    {reaisCompacto(u.recebido)}
+                  </ComProcedenciaComponent>
+                </td>
                 {temPopulacao && <td>{reais(u.recebido / (u.populacao ?? 1))}</td>}
                 <td>{u.municipios}</td>
               </tr>
@@ -557,7 +565,13 @@ function PainelDaCidadeComponent({
       ) : (
         <>
           <p className="painel-cidade-total">
-            <span className="numero-valor">{reaisCompacto(dados.recebido)}</span> das emendas de{' '}
+            <ComProcedenciaComponent
+              consulta={{ contexto: 'pagamentos', de: dados.periodo.de, ate: dados.periodo.ate, municipio: dados.municipio.codigoIbge }}
+              rotulo={`Emendas de ${textoDoPeriodo(dados.periodo)} com sede em ${nome}`}
+            >
+              <span className="numero-valor">{reaisCompacto(dados.recebido)}</span>
+            </ComProcedenciaComponent>{' '}
+            das emendas de{' '}
             {textoDoPeriodo(dados.periodo)} chegaram a quem tem sede em {nome}.
           </p>
           <ul className="painel-cidade-partes">

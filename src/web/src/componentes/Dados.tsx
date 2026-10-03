@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
+import type { ConsultaDeProcedencia } from '../api';
 import { reais } from '../formato';
+import { ComProcedenciaComponent } from './ModoAuditoria';
 
 /**
  * Peças de apresentação de dado que se repetem pelo site: a linha com barra, o grupo de
@@ -18,12 +20,15 @@ export function LinhaDeValorComponent({
   maior,
   formatar = reais,
   minimo = 2,
+  procedencia,
 }: {
   nome: ReactNode;
   valor: number;
   maior: number;
   formatar?: (valor: number) => string;
   minimo?: number;
+  /** No modo auditoria, o valor abre de onde veio. */
+  procedencia?: { consulta: ConsultaDeProcedencia; rotulo: string };
 }) {
   const largura = maior > 0 ? Math.max((Math.max(valor, 0) / maior) * 100, minimo) : 0;
 
@@ -33,7 +38,15 @@ export function LinhaDeValorComponent({
       <span className="gasto-barra">
         <span style={{ width: `${largura}%` }} />
       </span>
-      <span className="gasto-valor">{formatar(valor)}</span>
+      <span className="gasto-valor">
+        {procedencia ? (
+          <ComProcedenciaComponent consulta={procedencia.consulta} rotulo={procedencia.rotulo}>
+            {formatar(valor)}
+          </ComProcedenciaComponent>
+        ) : (
+          formatar(valor)
+        )}
+      </span>
     </li>
   );
 }

@@ -3147,3 +3147,9 @@ html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
 .painel-cidade .abas-internas { border-bottom-color: var(--borda-forte); }
 .painel-cidade .aba:hover { background: var(--fundo); }
 .painel-cidade-aba > .ajuda:first-child { margin-top: 0; }
+
+/* As linhas de um número pequeno, no painel do modo auditoria (plano/10 §3). */
+.lista-linhas-procedencia { list-style: none; margin: 0; padding: 0; font-size: var(--t-2); }
+.lista-linhas-procedencia li { display: flex; justify-content: space-between; gap: 1rem; padding: .4rem 0; border-bottom: 1px solid var(--borda); }
+.linha-procedencia-nome { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+.linha-procedencia-nome small { color: var(--suave); font-size: var(--t-1); }

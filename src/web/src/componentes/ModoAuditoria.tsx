@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { obterProcedencia } from '../api';
-import type { CargaDeProcedencia, ConsultaDeProcedencia, Procedencia } from '../api';
+import type { CargaDeProcedencia, ConsultaDeProcedencia, LinhaDaProcedencia, Procedencia } from '../api';
+import { dataCurta, reais } from '../formato';
 import { tourJaVisto } from '../tour';
 import { useTour } from './contextoDoTour';
 import { LinkDeFonteComponent } from './LinkDeFonte';
@@ -216,6 +217,8 @@ function ConteudoDaProcedenciaComponent({ procedencia }: { procedencia: Proceden
         )}
       </section>
 
+      {procedencia.lista && procedencia.lista.length > 0 && <LinhasDaProcedenciaComponent linhas={procedencia.lista} />}
+
       <section>
         <h3>
           {procedencia.cargas.length === 1
@@ -234,6 +237,28 @@ function ConteudoDaProcedenciaComponent({ procedencia }: { procedencia: Proceden
         </ul>
       </section>
     </>
+  );
+}
+
+/**
+ * As linhas que entraram no número, quando são poucas (plano/10 §3): quem confere vê cada uma, e não só a contagem.
+ */
+function LinhasDaProcedenciaComponent({ linhas }: { linhas: LinhaDaProcedencia[] }) {
+  return (
+    <section>
+      <h3>{linhas.length === 1 ? 'A linha' : `As ${linhas.length} linhas`}</h3>
+      <ul className="lista-linhas-procedencia">
+        {linhas.map((l, i) => (
+          <li key={i}>
+            <span className="linha-procedencia-nome">
+              {l.url ? <LinkDeFonteComponent href={l.url}>{l.descricao}</LinkDeFonteComponent> : l.descricao}
+              {(l.detalhe || l.data) && <small>{[l.detalhe, l.data && dataCurta(l.data)].filter(Boolean).join(' · ')}</small>}
+            </span>
+            {l.valor !== null && <span className="dado">{reais(l.valor)}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

@@ -1068,6 +1068,22 @@ export type ConsultaDeProcedencia = {
   ate?: number;
   /** Só em `entidade`. */
   cnpj?: string;
+  /** Só em `cota`: uma categoria de despesa. */
+  categoria?: string;
+  /** Só em `pagamentos`: o que chegou a quem tem sede no estado. */
+  uf?: string;
+  /** Só em `pagamentos`: o que chegou a quem tem sede na cidade (código IBGE). */
+  municipio?: string;
+};
+
+/** Uma linha do banco que entrou no número, quando o número é pequeno. */
+export type LinhaDaProcedencia = {
+  descricao: string;
+  detalhe: string | null;
+  data: string | null;
+  valor: number | null;
+  /** O documento na fonte, quando ela publica (a nota fiscal da cota). */
+  url: string | null;
 };
 
 /** Um arquivo baixado de fonte oficial, com a impressão digital do que veio. */
@@ -1095,6 +1111,8 @@ export type Procedencia = {
   /** Gravadas antes da Pendência 72: não dizem de que arquivo vieram, e a tela diz quantas são. */
   linhasSemCarga: number;
   cargas: CargaDeProcedencia[];
+  /** As linhas, uma a uma, quando são até 50; nulo acima disso. */
+  lista: LinhaDaProcedencia[] | null;
 };
 
 export async function obterProcedencia(consulta: ConsultaDeProcedencia): Promise<Procedencia> {

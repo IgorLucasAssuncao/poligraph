@@ -38,7 +38,43 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
         Assert.Equal("Câmara dos Deputados", primeira.Orgao);
         Assert.Equal("etl-0123456789ab", primeira.Versao);
         Assert.Equal(new string('a', 64), primeira.Sha256);
-        Assert.StartsWith("Lei 12.527/2011", primeira.BaseLegal);
+        Assert.StartsWith("Ato da Mesa 43/2009", primeira.BaseLegal);
+    }
+
+    /// <summary>A linha de "Em quê": só a categoria pedida, e a regra diz qual.</summary>
+    [SkippableFact]
+    public async Task Cota_ComCategoria_SoElaComAsLinhas()
+    {
+        ExigeDocker();
+        var (pessoaId, a, _) = await SemearAsync();
+        var combustivel = Despesa(pessoaId, 2025, a);
+        combustivel.Categoria = "COMBUSTÍVEIS";
+        combustivel.Fornecedor = "POSTO 123.456.789-09 LTDA";
+        Db.Despesas.AddRange(Despesa(pessoaId, 2025, a), combustivel);
+        await Db.SaveChangesAsync();
+
+        var lida = await LerAsync($"/api/procedencia/cota?pessoa={pessoaId}&legislatura=57&ano=2025&categoria=COMBUST%C3%8DVEIS");
+
+        Assert.Equal(1, lida.Linhas);
+        Assert.Contains("COMBUSTÍVEIS", lida.Regra);
+        var linha = Assert.Single(lida.Lista!);
+        Assert.Equal(10m, linha.Valor);
+        Assert.DoesNotContain("123.456.789-09", linha.Descricao);
+    }
+
+    /// <summary>Acima do limite, o painel fica só com a contagem e os arquivos.</summary>
+    [SkippableFact]
+    public async Task Lista_AcimaDoLimite_NaoVem()
+    {
+        ExigeDocker();
+        var (pessoaId, a, _) = await SemearAsync();
+        Db.Despesas.AddRange(Enumerable.Range(0, 51).Select(_ => Despesa(pessoaId, 2025, a)));
+        await Db.SaveChangesAsync();
+
+        var lida = await LerAsync($"/api/procedencia/cota?pessoa={pessoaId}&legislatura=57&ano=2025");
+
+        Assert.Equal(51, lida.Linhas);
+        Assert.Null(lida.Lista);
     }
 
     /// <summary>Um ano pedido troca o mandato pelo ano.</summary>
@@ -71,6 +107,31 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
 
         Assert.Equal((2, 0), (lida.Linhas, lida.LinhasSemCarga));
         Assert.Equal(carga.Id, Assert.Single(lida.Cargas).Id);
+    }
+
+    /// <summary>A linha do estado na tabela do mapa: só o que chegou a quem tem sede nele.</summary>
+    [SkippableFact]
+    public async Task Pagamentos_PorUf_PelaSede()
+    {
+        ExigeDocker();
+        var carga = Carga('9', "https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares/UNICO");
+        Db.Cargas.Add(carga);
+        Db.Municipios.Add(new MunicipioModel { CodigoIbge = "4106902", CodigoTom = "7535", Nome = "CURITIBA", Uf = "PR" });
+        Db.CnpjsMunicipio.Add(new CnpjMunicipioModel { Cnpj = "12345678000190", CodigoIbge = "4106902", CadastroDe = new DateOnly(2026, 9, 1) });
+        await Db.SaveChangesAsync();
+        var semSede = Favorecido("202541840005", carga.Id);
+        semSede.Documento = "99999999000199";
+        Db.EmendasFavorecidos.AddRange(Favorecido("202541840004", carga.Id), semSede);
+        await Db.SaveChangesAsync();
+
+        var doPr = await LerAsync("/api/procedencia/pagamentos?de=2025&ate=2025&uf=PR");
+        var deSp = await LerAsync("/api/procedencia/pagamentos?de=2025&ate=2025&uf=SP");
+        var daCidade = await LerAsync("/api/procedencia/pagamentos?de=2025&ate=2025&municipio=4106902");
+
+        Assert.Equal(1, doPr.Linhas);
+        Assert.Contains("sede em PR", doPr.Regra);
+        Assert.Equal(0, deSp.Linhas);
+        Assert.Equal(1, daCidade.Linhas);
     }
 
     /// <summary>O total da entidade: os pagamentos diretos ao CNPJ, sem o intermediário, como no índice de entidades.</summary>
@@ -116,6 +177,8 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
     [InlineData("/api/procedencia/governo-gastos?de=2025")]
     [InlineData("/api/procedencia/entidade?cnpj=123")]
     [InlineData("/api/procedencia/pagamentos?de=2025")]
+    [InlineData("/api/procedencia/pagamentos?de=2025&ate=2025&uf=pr")]
+    [InlineData("/api/procedencia/pagamentos?de=2025&ate=2025&municipio=41")]
     [InlineData("/api/procedencia/inventado?pessoa=1&legislatura=57")]
     [InlineData("/api/procedencia/cota?legislatura=57")]
     [InlineData("/api/procedencia/painel?legislatura=57")]
@@ -167,5 +230,8 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
 
     private record CargaLida(long Id, string Orgao, string BaseLegal, string Sha256, string? Versao, int Linhas);
 
-    private record ProcedenciaLida(string Regra, int Linhas, int LinhasSemCarga, IReadOnlyList<CargaLida> Cargas);
+    private record LinhaLida(string Descricao, string? Detalhe, DateOnly? Data, decimal? Valor, string? Url);
+
+    private record ProcedenciaLida(
+        string Regra, int Linhas, int LinhasSemCarga, IReadOnlyList<CargaLida> Cargas, IReadOnlyList<LinhaLida>? Lista);
 }
