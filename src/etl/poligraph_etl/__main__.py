@@ -2063,6 +2063,22 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
         _emendas(conexao, anos)
     elif etapa.comando == "populacao":
         _populacao(conexao)
+    elif etapa.comando == "simbolicas":
+        _simbolicas(conexao, anos)
+    elif etapa.comando == "sedes-brasilapi":
+        _sedes_brasilapi(conexao, None)
+    elif etapa.comando == "convenios":
+        _convenios(conexao)
+    elif etapa.comando == "governo":
+        _governo(conexao, anos, etapa.argumentos["eleicao"])
+    elif etapa.comando == "municipios":
+        _municipios(conexao, None)
+    elif etapa.comando == "fundo":
+        _fundo(conexao, etapa.argumentos["eleicao"], None)
+    elif etapa.comando == "patrimonio":
+        _patrimonio(conexao, anos)
+    elif etapa.comando == "redes":
+        _redes(conexao, anos)
     elif etapa.comando == "analisar":
         casa = etapa.argumentos["casa"]
         corrente = conexao.execute(
