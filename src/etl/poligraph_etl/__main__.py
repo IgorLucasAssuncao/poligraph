@@ -1641,12 +1641,28 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
         resumo["total"], resumo["fundo_especial"],
     )
 
-    if resumo["parlamentares"] < len(hashes) * 0.5:
+    legislatura = ingestao.legislatura_da_data(f"{eleicao + 1}-03-01")
+    da_legislatura = {
+        linha[0] for linha in conexao.execute(
+            """
+            SELECT DISTINCT p.id FROM pessoas p
+             WHERE p.cpf_hash IS NOT NULL
+               AND EXISTS (SELECT 1 FROM votos v JOIN votacoes t ON t.id = v.votacao_id
+                            WHERE v.pessoa_id = p.id AND t.legislatura = %s)
+            """,
+            (legislatura,),
+        ).fetchall()
+    }
+    eleitos = len(da_legislatura)
+    casados = len({linha["pessoa_id"] for linha in todas} & da_legislatura)
+    if eleitos and casados < eleitos * 0.5:
         log.warning(
-            "  só %d de %d pessoas com CPF casaram. Esperado: a maioria dos eleitos. "
-            "Rode `cpf` de novo, ou confira se a eleição %d é a que elegeu a legislatura.",
-            int(resumo["parlamentares"]), len(hashes), eleicao,
+            "  só %d de %d com CPF e voto na %dª casaram com a eleição de %d. Rode `cpf` de novo, "
+            "ou confira se a eleição é a que elegeu a legislatura.",
+            casados, eleitos, legislatura, eleicao,
         )
+    else:
+        log.info("  %d de %d com CPF e voto na %dª têm receita na eleição de %d", casados, eleitos, legislatura, eleicao)
 
 
 def _curar(conexao: psycopg.Connection, casa: str, legislatura: int, limite: int) -> None:
