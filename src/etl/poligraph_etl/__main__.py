@@ -1884,9 +1884,6 @@ def _amostra(conexao: psycopg.Connection, por_grupo: int, semente: int) -> None:
 
 TAMANHO_DO_LOTE_DE_SEDES = 500
 
-PAUSA_ENTRE_CNPJS = 0.35
-
-
 def _sedes_brasilapi(conexao: psycopg.Connection, limite: int | None) -> None:
     """Pendência 71 — a sede dos CNPJs que o cadastro da Receita em bloco não resolveu.
 
@@ -1909,12 +1906,12 @@ def _sedes_brasilapi(conexao: psycopg.Connection, limite: int | None) -> None:
     pasta.mkdir(parents=True, exist_ok=True)
 
     achadas = sem_resposta = fora_da_tabela = 0
+    ritmo = brasilapi.Ritmo()
     for inicio in range(0, len(pendentes), TAMANHO_DO_LOTE_DE_SEDES):
         lote = pendentes[inicio:inicio + TAMANHO_DO_LOTE_DE_SEDES]
         respostas = []
         for cnpj in lote:
-            sede = brasilapi.sede(cnpj)
-            time.sleep(PAUSA_ENTRE_CNPJS)
+            sede = brasilapi.sede(cnpj, ritmo)
             if sede is None:
                 sem_resposta += 1
             elif sede["codigo_ibge"] not in conhecidos:
@@ -1934,7 +1931,8 @@ def _sedes_brasilapi(conexao: psycopg.Connection, limite: int | None) -> None:
                 carga,
             )
             achadas += len(respostas)
-        log.info("  %d de %d: %d com sede gravada", inicio + len(lote), len(pendentes), achadas)
+        log.info("  %d de %d: %d com sede gravada; pausa %.2f s, %d recusas até aqui",
+                 inicio + len(lote), len(pendentes), achadas, ritmo.pausa, ritmo.recusas)
 
     log.info(
         "Sedes: %d gravadas, %d sem resposta (ficam para a próxima), %d com município fora da tabela",
