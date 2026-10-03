@@ -1,7 +1,8 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Constantes;
 
 namespace Poligraph.Api.Services;
 
@@ -73,9 +74,9 @@ public class ServicoAutoresDeEmenda(PoligraphDb db, ServicoParlamentares parlame
     internal static TipoAutorColetivo? ColetivoDe(string? tipo) => tipo switch
     {
         null => null,
-        _ when tipo.StartsWith("Emenda Individual", StringComparison.OrdinalIgnoreCase) => null,
-        _ when tipo.Contains("Bancada", StringComparison.OrdinalIgnoreCase) => TipoAutorColetivo.BANCADA,
-        _ when tipo.Contains("Comiss", StringComparison.OrdinalIgnoreCase) => TipoAutorColetivo.COMISSAO,
+        _ when tipo.StartsWith(VocabularioDasFontes.EmendaIndividual, StringComparison.OrdinalIgnoreCase) => null,
+        _ when tipo.Contains(VocabularioDasFontes.PalavraBancada, StringComparison.OrdinalIgnoreCase) => TipoAutorColetivo.BANCADA,
+        _ when tipo.Contains(VocabularioDasFontes.InicioComissao, StringComparison.OrdinalIgnoreCase) => TipoAutorColetivo.COMISSAO,
         _ => TipoAutorColetivo.OUTRO,
     };
 }

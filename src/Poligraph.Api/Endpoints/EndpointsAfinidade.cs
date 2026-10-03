@@ -1,6 +1,7 @@
 ﻿using Poligraph.Api.Dtos;
 using Poligraph.Api.Services;
 using Poligraph.Api.Tipos;
+using Poligraph.Api.Textos;
 
 namespace Poligraph.Api.Endpoints;
 
@@ -47,7 +48,7 @@ public static class EndpointsAfinidade
             return Results.UnprocessableEntity(new
             {
                 erro = "respostas_insuficientes",
-                mensagem = "Responda mais perguntas para que o resultado tenha significado.",
+                mensagem = MensagensDaApi.RespostasInsuficientes,
                 respondidas = opinadas.Count,
                 minimo = ServicoQuestionario.MinimoDeRespostas(tamanho)
             });
@@ -58,7 +59,7 @@ public static class EndpointsAfinidade
         {
             if (!Uf.TryParse(requisicao.Uf, null, out var lida))
             {
-                return Results.Problem($"UF desconhecida: {requisicao.Uf}.", statusCode: StatusCodes.Status400BadRequest);
+                return Results.Problem(MensagensDaApi.UfDesconhecida(requisicao.Uf), statusCode: StatusCodes.Status400BadRequest);
             }
 
             uf = lida;
@@ -70,7 +71,7 @@ public static class EndpointsAfinidade
             ? Results.UnprocessableEntity(new
             {
                 erro = "sem_base_comparavel",
-                mensagem = "Nenhum parlamentar votou o suficiente nas perguntas respondidas."
+                mensagem = MensagensDaApi.SemBaseComparavel
             })
             : Results.Ok(resposta);
     }

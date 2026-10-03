@@ -1,6 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Constantes;
 
 namespace Poligraph.Api.Services;
 
@@ -158,7 +159,7 @@ public class ServicoNovidades(PoligraphDb db)
     {
         var votos = await _db.Votos.AsNoTracking()
             .Where(v => ids.Contains(v.PessoaId) && v.Votacao!.Data <= ate
-                && v.PartidoNoVoto != "" && v.PartidoNoVoto != "Sem registro")
+                && v.PartidoNoVoto != "" && v.PartidoNoVoto != VocabularioDasFontes.PartidoSemRegistro)
             .Select(v => new { v.PessoaId, v.PartidoNoVoto, v.Votacao!.Data, v.Votacao.Casa })
             .ToListAsync(ct);
 

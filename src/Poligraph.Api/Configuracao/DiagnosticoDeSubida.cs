@@ -1,4 +1,6 @@
-﻿namespace Poligraph.Api.Configuracao;
+﻿using Poligraph.Api.Textos;
+
+namespace Poligraph.Api.Configuracao;
 
 /// <summary>Avisos de configuração emitidos uma vez, na subida.</summary>
 public static partial class DiagnosticoDeSubida
@@ -41,13 +43,12 @@ public static partial class DiagnosticoDeSubida
     {
         [LoggerMessage(
             Level = LogLevel.Warning,
-            Message = "Login com Google DESLIGADO: Google:ClientId não configurado. "
-                    + "O site funciona; entrar não. Ver docs/plano/08-obter-as-chaves.md")]
+            Message = MensagensDaApi.LoginDesligado)]
         public static partial void LoginDesligado(ILogger logger);
 
         [LoggerMessage(
             Level = LogLevel.Information,
-            Message = "Login com Google ligado (Client ID ...{Final}).")]
+            Message = MensagensDaApi.LoginLigado)]
         public static partial void LoginLigado(ILogger logger, string final);
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
 using Poligraph.Api.Tipos;
+using Poligraph.Api.Constantes;
 
 namespace Poligraph.Api.Services;
 
@@ -95,25 +96,19 @@ public class ServicoEntidades(
     public static GrupoDeEntidade GrupoDe(string? natureza) => natureza switch
     {
         null or "" => GrupoDeEntidade.OUTRO,
-        _ when natureza.Contains("Consórcio Público", StringComparison.OrdinalIgnoreCase) => GrupoDeEntidade.OUTRO,
-        _ when natureza == "Município" || natureza.EndsWith("Municipal", StringComparison.OrdinalIgnoreCase) =>
+        _ when natureza.Contains(VocabularioDasFontes.ConsorcioPublico, StringComparison.OrdinalIgnoreCase) => GrupoDeEntidade.OUTRO,
+        _ when natureza == VocabularioDasFontes.Municipio
+            || natureza.EndsWith(VocabularioDasFontes.SufixoMunicipal, StringComparison.OrdinalIgnoreCase) =>
             GrupoDeEntidade.MUNICIPIO,
-        _ when natureza.StartsWith("Estado ou Distrito Federal", StringComparison.OrdinalIgnoreCase)
-            || natureza.Contains("Estadual", StringComparison.OrdinalIgnoreCase) => GrupoDeEntidade.ESTADO,
-        _ when natureza.StartsWith("Associação Privada", StringComparison.OrdinalIgnoreCase)
-            || natureza.StartsWith("Fundação Privada", StringComparison.OrdinalIgnoreCase)
-            || natureza.StartsWith("Organização Social", StringComparison.OrdinalIgnoreCase)
-            || natureza.StartsWith("Organização Religiosa", StringComparison.OrdinalIgnoreCase)
-            || natureza.StartsWith("Serviço Social Autônomo", StringComparison.OrdinalIgnoreCase)
-            || natureza.StartsWith("Entidade Sindical", StringComparison.OrdinalIgnoreCase)
-            || natureza.StartsWith("Cooperativa", StringComparison.OrdinalIgnoreCase) => GrupoDeEntidade.SEM_FINS_LUCRATIVOS,
-        _ when natureza.StartsWith("Sociedade", StringComparison.OrdinalIgnoreCase)
-            || natureza.StartsWith("Empresa", StringComparison.OrdinalIgnoreCase)
-            || natureza.StartsWith("Consórcio de Sociedades", StringComparison.OrdinalIgnoreCase)
-            || natureza.StartsWith("Estabelecimento, no Brasil, de Sociedade", StringComparison.OrdinalIgnoreCase) =>
-            GrupoDeEntidade.EMPRESA,
+        _ when natureza.StartsWith(VocabularioDasFontes.EstadoOuDistritoFederal, StringComparison.OrdinalIgnoreCase)
+            || natureza.Contains(VocabularioDasFontes.PalavraEstadual, StringComparison.OrdinalIgnoreCase) => GrupoDeEntidade.ESTADO,
+        _ when ComecaCom(natureza, VocabularioDasFontes.InicioSemFinsLucrativos) => GrupoDeEntidade.SEM_FINS_LUCRATIVOS,
+        _ when ComecaCom(natureza, VocabularioDasFontes.InicioDeEmpresa) => GrupoDeEntidade.EMPRESA,
         _ => GrupoDeEntidade.OUTRO,
     };
+
+    private static bool ComecaCom(string natureza, IReadOnlyList<string> inicios) =>
+        inicios.Any(inicio => natureza.StartsWith(inicio, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Por CNPJ, quando a busca tem dígitos que bastem; por nome, sem caixa e sem acento, no resto.</summary>
     /// <remarks>

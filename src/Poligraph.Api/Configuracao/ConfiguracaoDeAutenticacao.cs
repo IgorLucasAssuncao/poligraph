@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Endpoints;
 using Poligraph.Api.Services;
 using Poligraph.Data;
+using Poligraph.Api.Textos;
 
 namespace Poligraph.Api.Configuracao;
 
@@ -35,7 +36,7 @@ public static class ConfiguracaoDeAutenticacao
         if (builder.Environment.IsProduction() && string.IsNullOrWhiteSpace(pastaChaves))
         {
             throw new InvalidOperationException(
-                "DataProtection:Pasta é obrigatória em produção: sem ela, cada deploy troca as chaves e desloga todo mundo.");
+                MensagensDaApi.PastaDeChavesObrigatoria);
         }
 
         if (!string.IsNullOrWhiteSpace(pastaChaves))

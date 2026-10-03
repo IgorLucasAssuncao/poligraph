@@ -1,4 +1,5 @@
-using Poligraph.Data;
+﻿using Poligraph.Data;
+using Poligraph.Api.Textos;
 
 namespace Poligraph.Api.Services;
 
@@ -53,12 +54,12 @@ public sealed class AquecedorDeCache(
             await servicos.GetRequiredService<ServicoGoverno>().ObterAsync(null, null, ct);
             await servicos.GetRequiredService<ServicoMapaDeEmendas>().ObterBrasilAsync(null, null, ct);
 
-            _logger.LogInformation("Cache aquecido em {Duracao}",
+            _logger.LogInformation(MensagensDaApi.CacheAquecido,
                 TimeProvider.System.GetElapsedTime(inicio));
         }
         catch (Exception erro) when (erro is not OperationCanceledException)
         {
-            _logger.LogWarning(erro, "Aquecimento do cache falhou; as requisições calculam sob demanda");
+            _logger.LogWarning(erro, MensagensDaApi.CacheNaoAquecido);
         }
     }
 }

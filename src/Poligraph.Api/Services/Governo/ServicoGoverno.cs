@@ -2,6 +2,7 @@
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
 using Poligraph.Api.Tipos;
+using Poligraph.Api.Constantes;
 
 namespace Poligraph.Api.Services;
 
@@ -32,9 +33,9 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
 
     private const string EncargosEspeciais = "28";
     private const string ReservaDeContingencia = "99";
-    private const string ReceitasCorrentes = "Receitas Correntes";
-    private const string ReceitasDeCapital = "Receitas de Capital";
-    private const string OperacoesDeCredito = "Operações de Crédito";
+    private const string ReceitasCorrentes = VocabularioDasFontes.ReceitasCorrentes;
+    private const string ReceitasDeCapital = VocabularioDasFontes.ReceitasDeCapital;
+    private const string OperacoesDeCredito = VocabularioDasFontes.OperacoesDeCredito;
 
     private readonly PoligraphDb _db = db;
     private readonly CacheDeLeitura _leitura = leitura;

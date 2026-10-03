@@ -4,6 +4,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
 using Poligraph.Api.Tipos;
+using Poligraph.Api.Constantes;
 
 namespace Poligraph.Api.Services;
 
@@ -36,21 +37,8 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     private static readonly TimeSpan ValidadeDaCidade = CacheDeLeitura.Validade;
     private static readonly CompareInfo Comparacao = CultureInfo.GetCultureInfo("pt-BR").CompareInfo;
 
-    /// <summary>
-    /// As naturezas jurídicas da administração municipal: nelas a sede é a própria cidade.
-    /// </summary>
-    /// <remarks>
-    /// <para>Os textos são os do cadastro da Receita, como o Portal os publica. Em 2023–2026, as duas primeiras somam 74,9% do pago a pessoa jurídica; as outras, R$ 31 mi.</para>
-    /// </remarks>
-    private static readonly string[] NaturezasDaCidade =
-    [
-        "Município",
-        "Fundo Público da Administração Direta Municipal",
-        "Órgão Público do Poder Executivo Municipal",
-        "Autarquia Municipal",
-        "Fundação Pública de Direito Público Municipal",
-        "Fundação Pública de Direito Privado Municipal",
-    ];
+    /// <summary>As naturezas jurídicas da administração municipal: nelas a sede é a própria cidade.</summary>
+    private static readonly string[] NaturezasDaCidade = [.. VocabularioDasFontes.NaturezasDaCidade];
 
     private readonly PoligraphDb _db = db;
     private readonly IMemoryCache _cache = cache;

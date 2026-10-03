@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Api.Services;
 using Poligraph.Data;
+using Poligraph.Api.Textos;
 
 namespace Poligraph.Api.Endpoints;
 
@@ -102,16 +103,16 @@ public static class EndpointsSeguir
         {
             return Results.Problem(
                 statusCode: StatusCodes.Status422UnprocessableEntity,
-                title: "Só é possível seguir quem está em exercício.",
-                detail: "A pessoa não votou na legislatura atual. A ficha dela continua aberta para consulta.");
+                title: MensagensDaApi.SoSegueQuemEstaEmExercicio,
+                detail: MensagensDaApi.SoSegueQuemEstaEmExercicioDetalhe);
         }
 
         if (!await ConsentimentoEmDiaAsync(db, usuarioId, versao, aceite == true, ct))
         {
             return Results.Problem(
                 statusCode: StatusCodes.Status428PreconditionRequired,
-                title: "Falta o consentimento para seguir.",
-                detail: "A lista de quem você segue indica posição política, e só é gravada com o seu consentimento.");
+                title: MensagensDaApi.FaltaConsentimentoParaSeguir,
+                detail: MensagensDaApi.FaltaConsentimentoParaSeguirDetalhe);
         }
 
         db.Segue.Add(new SegueModel { UsuarioId = usuarioId, PessoaId = pessoaId });

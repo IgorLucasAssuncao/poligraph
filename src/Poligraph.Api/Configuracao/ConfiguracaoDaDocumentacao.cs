@@ -1,4 +1,5 @@
 ﻿using Scalar.AspNetCore;
+using Poligraph.Api.Textos;
 
 namespace Poligraph.Api.Configuracao;
 
@@ -21,7 +22,7 @@ public static class ConfiguracaoDaDocumentacao
 
         app.MapOpenApi();
         app.MapScalarApiReference(opcoes => opcoes
-            .WithTitle("Registro Aberto — API")
+            .WithTitle(MensagensDaApi.TituloDaDocumentacao)
             .WithTheme(ScalarTheme.BluePlanet));
 
         return app;
