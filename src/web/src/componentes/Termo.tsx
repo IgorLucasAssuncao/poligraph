@@ -175,8 +175,15 @@ export const GLOSSARIO = {
   votacaoNominal: {
     rotulo: 'votação nominal',
     explicacao:
-      ' A votação em que fica registrado o voto de cada parlamentar. Nas outras, o ' +
-      'registro guarda só o resultado, e aí não há como comparar ninguém.',
+      ' Cada parlamentar vota no painel eletrônico, e fica registrado o Sim ou o Não de cada ' +
+      'um. É a única que permite saber como alguém votou, e por isso é a única que este site compara.',
+  },
+  votacaoSimbolica: {
+    rotulo: 'votação simbólica',
+    explicacao:
+      ' O presidente da sessão pede que quem concorda fique como está, olha o plenário e ' +
+      'anuncia o resultado. Fica registrado só se passou ou não, sem o voto de ninguém. ' +
+      'Os líderes podem pedir que ela seja refeita como nominal, a chamada verificação.',
   },
   abstencao: {
     rotulo: 'abstenção',

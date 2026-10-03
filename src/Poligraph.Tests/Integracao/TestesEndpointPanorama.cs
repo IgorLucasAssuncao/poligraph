@@ -126,6 +126,28 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
     }
 
     /// <summary>
+    /// As simbólicas de plenário da legislatura, somadas pelos anos do arquivo; as de comissão
+    /// ficam fora, e a casa sem contagem vem nula, e não zero.
+    /// </summary>
+    [SkippableFact]
+    public async Task Simbolicas_SoAsDePlenario_ENulaSemContagem()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var antes = await LerCamaraAsync();
+        Db.VotacoesSimbolicas.AddRange(
+            new VotacoesSimbolicasModel { Casa = TipoCasa.CAMARA, Ano = 2025, Legislatura = antes.Legislatura, Plenario = true, Quantidade = 10 },
+            new VotacoesSimbolicasModel { Casa = TipoCasa.CAMARA, Ano = 2026, Legislatura = antes.Legislatura, Plenario = true, Quantidade = 4 },
+            new VotacoesSimbolicasModel { Casa = TipoCasa.CAMARA, Ano = 2025, Legislatura = antes.Legislatura, Plenario = false, Quantidade = 99 });
+        await Db.SaveChangesAsync();
+
+        var depois = await LerCamaraAsync();
+
+        Assert.Null(antes.Casa.VotacoesSimbolicas);
+        Assert.Equal(14, depois.Casa.VotacoesSimbolicas);
+    }
+
+    /// <summary>
     /// Público de propósito: é o que a tela de login mostra a quem ainda não entrou.
     /// </summary>
     [SkippableFact]
@@ -157,5 +179,5 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
 
     private record CasaLida(
         string Casa, int Parlamentares, int Votacoes, int VotacoesSecretas,
-        int VotosComPosicao, int Comunidades, int Ligacoes, int VotacoesSemVotoNominal);
+        int VotosComPosicao, int Comunidades, int Ligacoes, int VotacoesSemVotoNominal, int? VotacoesSimbolicas = null);
 }

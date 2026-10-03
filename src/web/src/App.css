@@ -3011,3 +3011,11 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 /* O painel da última votação no cartão de cada casa: a assinatura do site já no Início (2026-10-03). */
 .cartao-ultima { margin: 1rem 0 0; padding-top: .8rem; border-top: 1px solid var(--borda); }
 .cartao-ultima figcaption { font-size: var(--t-1); color: var(--suave); margin-bottom: .5rem; }
+
+.cartao-forma { margin: 1rem 0 0; padding-top: .8rem; border-top: 1px solid var(--borda); }
+.cartao-forma-titulo { margin: 0 0 .4rem; font-size: var(--t-1); color: var(--suave); }
+.cartao-forma .barra-dividida { margin: 0 0 .4rem; }
+.cartao-forma .parte-nominal { background: var(--realce); }
+.cartao-forma .parte-simbolica { background: var(--borda-forte); }
+.cartao-forma-legenda { display: flex; flex-wrap: wrap; gap: .25rem 1rem; margin: 0; font-size: var(--t-2); }
+.amostra-cor.amostra-simbolica { background: var(--borda-forte); }

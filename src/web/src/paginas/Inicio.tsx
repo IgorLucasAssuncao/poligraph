@@ -22,6 +22,7 @@ import { BarraDePeriodoComponent } from '../componentes/BarraDePeriodo';
 import { ComProcedenciaComponent } from '../componentes/ModoAnalise';
 import { dataCurta, periodoDaLegislatura } from '../formato';
 import { PainelComponent } from '../componentes/Painel';
+import { TermoComponent } from '../componentes/Termo';
 
 /**
  * A porta de entrada.
@@ -337,6 +338,13 @@ function CartaoDaCasaComponent({ casa, legislatura }: { casa: PanoramaDaCasa; le
         </p>
       )}
 
+      {casa.votacoesSimbolicas != null && (
+        <ComoODecidiuComponent
+          nominais={casa.votacoes + casa.votacoesSemVotoNominal}
+          simbolicas={casa.votacoesSimbolicas}
+        />
+      )}
+
       {casa.ultima && (
         <figure className="cartao-ultima">
           <figcaption>
@@ -347,5 +355,41 @@ function CartaoDaCasaComponent({ casa, legislatura }: { casa: PanoramaDaCasa; le
         </figure>
       )}
     </article>
+  );
+}
+
+/**
+ * Quanto do plenário decidiu com voto de cada um, e quanto por votação simbólica.
+ *
+ * DECISÃO (2026-10-03, pedido do autor): o site compara só votação nominal, e a maioria das
+ * decisões do plenário é simbólica (MEDIDO: 1.612 contra 429 na Câmara em 2025). Dizer isso no
+ * Início mostra o tamanho do que fica de fora, com a dica de cada termo.
+ */
+export function ComoODecidiuComponent({ nominais, simbolicas }: { nominais: number; simbolicas: number }) {
+  const total = nominais + simbolicas;
+  if (total === 0) return null;
+  const parteNominal = (nominais / total) * 100;
+
+  return (
+    <div className="cartao-forma">
+      <p className="cartao-forma-titulo">Como o plenário decidiu</p>
+      <span className="barra-dividida" role="img" aria-label={`${nominais} nominais e ${simbolicas} simbólicas`}>
+        <span className="parte-nominal" style={{ width: `${parteNominal}%` }} />
+        <span className="parte-simbolica" style={{ width: `${100 - parteNominal}%` }} />
+      </span>
+      <p className="cartao-forma-legenda">
+        <span>
+          <span className="amostra-cor" aria-hidden="true" /> {nominais.toLocaleString('pt-BR')} por{' '}
+          <TermoComponent nome="votacaoNominal" />
+        </span>
+        <span>
+          <span className="amostra-cor amostra-simbolica" aria-hidden="true" /> {simbolicas.toLocaleString('pt-BR')} por{' '}
+          <TermoComponent nome="votacaoSimbolica" />
+        </span>
+      </p>
+      <p className="cartao-ressalva">
+        Só a nominal registra o voto de cada um, e só ela entra na comparação.
+      </p>
+    </div>
   );
 }

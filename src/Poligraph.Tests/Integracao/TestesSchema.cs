@@ -144,7 +144,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
             "pessoas",
             "proposicoes", "receitas_de_campanha", "receitas_por_origem", "reconciliacao_motivos", "reconciliacoes",
             "redes_sociais", "segue", "similaridades",
-            "usuarios", "votacoes", "votos",
+            "usuarios", "votacoes", "votacoes_simbolicas", "votos",
         };
 
         var noBanco = await Db.Database

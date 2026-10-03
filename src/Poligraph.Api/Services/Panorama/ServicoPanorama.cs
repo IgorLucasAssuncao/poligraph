@@ -119,7 +119,16 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
                     .CountAsync(a => a.ExecucaoId == execucao
                                   && a.Tipo == TipoDeAresta.SIMILARIDADE_VOTO, ct),
             VotacoesSemVotoNominal: await todas.CountAsync(v => !_db.Votos.Any(o => o.VotacaoId == v.Id), ct),
-            Ultima: await UltimaAsync(votacoes, casa, ct));
+            Ultima: await UltimaAsync(votacoes, casa, ct),
+            VotacoesSimbolicas: await SimbolicasAsync(casa, legislatura, ct));
+    }
+
+    /// <summary>As simbólicas de plenário da legislatura. Nula sem contagem: zero afirmaria que não houve nenhuma.</summary>
+    private async Task<int?> SimbolicasAsync(TipoCasa casa, short legislatura, CancellationToken ct)
+    {
+        var linhas = _db.VotacoesSimbolicas.AsNoTracking()
+            .Where(s => s.Casa == casa && s.Legislatura == legislatura && s.Plenario);
+        return await linhas.AnyAsync(ct) ? await linhas.SumAsync(s => s.Quantidade, ct) : null;
     }
 
     /// <summary>A votação aberta mais recente com placar, para o painel do Início.</summary>

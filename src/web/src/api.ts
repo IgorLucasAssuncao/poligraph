@@ -327,6 +327,8 @@ export type PanoramaDaCasa = {
   votosComPosicao: number;
   comunidades: number;
   ligacoes: number;
+  /** As de plenário decididas por votação simbólica, sem voto de cada um. Nula sem contagem (o Senado). */
+  votacoesSimbolicas?: number | null;
   /** A votação aberta mais recente, para o painel: comparecimento sobre o número de cadeiras, sem direção. */
   ultima?: { data: string; materia: string | null; ementa: string | null; posicionados: number; cadeiras: number } | null;
 };

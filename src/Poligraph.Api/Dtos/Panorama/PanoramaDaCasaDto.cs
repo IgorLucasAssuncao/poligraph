@@ -11,6 +11,10 @@ namespace Poligraph.Api.Dtos;
 /// As que ficaram de fora de <c>Votacoes</c>: registradas pela casa sem a lista de quem
 /// votou como. A tela diz quantas são, em vez de somá-las caladas.
 /// </param>
+/// <param name="VotacoesSimbolicas">
+/// As de plenário decididas por votação simbólica, sem voto de cada um: contadas pela ETL em
+/// <c>votacoes_simbolicas</c>. Nula quando não há contagem para a casa (hoje, o Senado).
+/// </param>
 public record PanoramaDaCasaDto(
     TipoCasa Casa,
     int Parlamentares,
@@ -35,7 +39,8 @@ public record PanoramaDaCasaDto(
     int Comunidades,
     int Ligacoes,
     int VotacoesSemVotoNominal = 0,
-    UltimaVotacaoDto? Ultima = null);
+    UltimaVotacaoDto? Ultima = null,
+    int? VotacoesSimbolicas = null);
 
 /// <summary>
 /// A votação aberta de plenário mais recente da casa, para o painel do Início: quantos se
