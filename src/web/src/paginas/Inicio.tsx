@@ -315,7 +315,9 @@ function CartaoDaCasaComponent({ casa, legislatura }: { casa: PanoramaDaCasa; le
           <dd>{casa.votosComPosicao.toLocaleString('pt-BR')}</dd>
         </div>
         <div>
-          <dt>grupos de voto</dt>
+          <dt>
+            <TermoComponent nome="comunidade">grupos de voto</TermoComponent>
+          </dt>
           <dd>{casa.comunidades.toLocaleString('pt-BR')}</dd>
         </div>
       </dl>
