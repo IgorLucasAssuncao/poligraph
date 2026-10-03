@@ -8,6 +8,7 @@ public static class EndpointsMapa
     public static IEndpointRouteBuilder MapearMapa(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/mapa/emendas", ObterBrasilAsync).WithTags("Mapa").Produces<MapaDoBrasilDto>();
+        app.MapGet("/api/mapa/emendas/fluxo", ObterFluxoAsync).WithTags("Mapa").Produces<FluxoDeEmendasDto>();
         app.MapGet("/api/mapa/emendas/{uf}", ObterEstadoAsync).WithTags("Mapa").Produces<MapaDoEstadoDto>();
         app.MapGet("/api/municipios", BuscarAsync).WithTags("Mapa").Produces<IReadOnlyList<MunicipioDto>>();
         app.MapGet("/api/municipios/{codigoIbge}/emendas", ObterMunicipioAsync)
@@ -31,6 +32,11 @@ public static class EndpointsMapa
     }
 
     /// <summary>O dinheiro de emenda por UF, pela sede de quem recebeu.</summary>
+    /// <summary>O caminho do dinheiro de emenda, de quem mandou à cidade de quem recebeu (Pendência 83). Com <c>uf</c>, só o que chegou a quem tem sede nela.</summary>
+    private static async Task<IResult> ObterFluxoAsync(
+        ServicoMapaDeEmendas servico, CancellationToken ct, int? de = null, int? ate = null, string? uf = null) =>
+        Results.Ok(await servico.ObterFluxoAsync(uf, de, ate, ct));
+
     private static async Task<IResult> ObterBrasilAsync(
         ServicoMapaDeEmendas servico, CancellationToken ct, int? de = null, int? ate = null) =>
         Results.Ok(await servico.ObterBrasilAsync(de, ate, ct));

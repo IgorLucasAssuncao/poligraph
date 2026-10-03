@@ -244,6 +244,139 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
         return (new PeriodoDto(inicio, fim), anos, prefixos);
     }
 
+    /// <summary>Quantos nós cada coluna do fluxo mostra antes de juntar o resto em "outros".</summary>
+    private const int AutoresNoFluxo = 12;
+    private const int EntidadesNoFluxo = 15;
+    private const int CidadesNoFluxo = 12;
+
+    /// <summary>
+    /// O caminho do dinheiro de emenda no período: quem mandou, quem recebeu e a cidade da sede.
+    /// </summary>
+    /// <remarks>
+    /// <para>As três colunas somam o mesmo total, o pago no período (com <paramref name="uf"/>, o pago a quem tem sede nela). Os menores de cada coluna viram um nó "outros", e o que não tem destino vira nó próprio: repasse por banco, pago a pessoas, sem cidade. Nada sai do desenho calado.</para>
+    /// <para>O autor sai da emenda, pelo código. Emenda que o Portal publica sem autor fica em "Sem autor no Portal".</para>
+    /// </remarks>
+    public async Task<FluxoDeEmendasDto> ObterFluxoAsync(string? uf, int? de, int? ate, CancellationToken ct)
+    {
+        var (periodo, _, prefixos) = await PeriodoAsync(de, ate, ct);
+        uf = string.IsNullOrWhiteSpace(uf) ? null : uf.Trim().ToUpperInvariant();
+        if (prefixos.Length == 0) return new FluxoDeEmendasDto(periodo, uf, 0, [], []);
+
+        return await _cache.GetOrCreateAsync($"mapa:fluxo:{uf}:{periodo.De}-{periodo.Ate}", async entrada =>
+        {
+            entrada.AbsoluteExpirationRelativeToNow = ValidadeDaCidade;
+            return await CalcularFluxoAsync(uf, periodo, prefixos, ct);
+        }) ?? new FluxoDeEmendasDto(periodo, uf, 0, [], []);
+    }
+
+    private async Task<FluxoDeEmendasDto> CalcularFluxoAsync(string? uf, PeriodoDto periodo, string[] prefixos, CancellationToken ct)
+    {
+        var pagamentos = await DoPeriodo(prefixos)
+            .GroupBy(f => new { f.CodigoEmenda, f.Documento, f.Tipo, f.Intermediario })
+            .Select(g => new { g.Key.CodigoEmenda, g.Key.Documento, g.Key.Tipo, g.Key.Intermediario, Nome = g.Max(f => f.Nome), Valor = g.Sum(f => f.Valor) })
+            .ToListAsync(ct);
+
+        var sedes = await _db.CnpjsMunicipio.AsNoTracking().ToDictionaryAsync(c => c.Cnpj, c => c.CodigoIbge, ct);
+        var municipios = (await MunicipiosAsync(ct)).ToDictionary(m => m.CodigoIbge);
+        var codigos = pagamentos.Select(p => p.CodigoEmenda).Distinct().ToList();
+        var autores = (await _db.Emendas.AsNoTracking()
+                .Where(e => codigos.Contains(e.CodigoEmenda))
+                .Select(e => new AutorDaEmenda(e.CodigoEmenda, e.PessoaId, e.CodigoAutor, e.NomeAutor, e.Tipo))
+                .ToListAsync(ct))
+            .GroupBy(e => e.CodigoEmenda)
+            .ToDictionary(g => g.Key, g => g.First());
+        var idsDePessoa = autores.Values.Where(a => a.PessoaId != null).Select(a => a.PessoaId!.Value).Distinct().ToList();
+        var nomesDePessoa = await _db.Pessoas.AsNoTracking()
+            .Where(p => idsDePessoa.Contains(p.Id))
+            .ToDictionaryAsync(p => p.Id, p => p.NomeExibicao, ct);
+
+        var linhas = new List<(NoDoFluxoDto Autor, NoDoFluxoDto Entidade, NoDoFluxoDto Cidade, decimal Valor)>();
+        foreach (var p in pagamentos)
+        {
+            MunicipioDto? municipio = null;
+            if (p.Tipo == TipoFavorecido.PESSOA_JURIDICA && !p.Intermediario && p.Documento is { } cnpj
+                && sedes.TryGetValue(cnpj, out var ibge))
+                municipios.TryGetValue(ibge, out municipio);
+            if (uf is not null && municipio?.Uf != uf) continue;
+
+            linhas.Add((NoDoAutor(autores.GetValueOrDefault(p.CodigoEmenda), nomesDePessoa),
+                        NoDaEntidade(p.Tipo, p.Intermediario, p.Documento, p.Nome),
+                        NoDaCidade(municipio),
+                        p.Valor));
+        }
+
+        var autoresMantidos = Maiores(linhas.Select(l => (l.Autor, l.Valor)), AutoresNoFluxo);
+        var entidadesMantidas = Maiores(linhas.Select(l => (l.Entidade, l.Valor)), EntidadesNoFluxo, ["INTERMEDIARIO", "PESSOAS"]);
+        var cidadesMantidas = Maiores(linhas.Select(l => (l.Cidade, l.Valor)), CidadesNoFluxo, ["SEM_CIDADE"]);
+
+        var outrosAutores = new NoDoFluxoDto("OUTROS_AUTORES", "Outros autores", 0, "outros", 0, null);
+        var outrasEntidades = new NoDoFluxoDto("OUTRAS_ENTIDADES", "Outras entidades", 1, "outros", 0, null);
+        var outrasCidades = new NoDoFluxoDto("OUTRAS_CIDADES", "Outras cidades", 2, "outros", 0, null);
+
+        var dobrados = linhas.Select(l => (
+            Autor: autoresMantidos.Contains(l.Autor.Id) ? l.Autor : outrosAutores,
+            Entidade: entidadesMantidas.Contains(l.Entidade.Id) ? l.Entidade : outrasEntidades,
+            Cidade: cidadesMantidas.Contains(l.Cidade.Id) ? l.Cidade : outrasCidades,
+            l.Valor)).ToList();
+
+        var nos = dobrados.SelectMany(l => new[] { (No: l.Autor, l.Valor), (No: l.Entidade, l.Valor), (No: l.Cidade, l.Valor) })
+            .GroupBy(x => x.No.Id)
+            .Select(g => g.First().No with { Valor = g.Sum(x => x.Valor) })
+            .Where(n => n.Valor > 0)
+            .OrderBy(n => n.Coluna)
+            .ThenBy(n => n.Tipo is "outros" or "sem-destino" or "sem-autor" ? 1 : 0)
+            .ThenByDescending(n => n.Valor)
+            .ToList();
+
+        var arestas = dobrados.Select(l => (De: l.Autor.Id, Para: l.Entidade.Id, l.Valor))
+            .Concat(dobrados.Select(l => (De: l.Entidade.Id, Para: l.Cidade.Id, l.Valor)))
+            .GroupBy(a => (a.De, a.Para))
+            .Select(g => new ArestaDoFluxoDto(g.Key.De, g.Key.Para, g.Sum(a => a.Valor)))
+            .Where(a => a.Valor > 0)
+            .OrderByDescending(a => a.Valor)
+            .ToList();
+
+        return new FluxoDeEmendasDto(periodo, uf, linhas.Sum(l => l.Valor), nos, arestas);
+    }
+
+    private static NoDoFluxoDto NoDoAutor(AutorDaEmenda? autor, IReadOnlyDictionary<long, string> nomes)
+    {
+        if (autor is null) return new NoDoFluxoDto("SEM_AUTOR", "Sem autor no Portal", 0, "sem-autor", 0, null);
+        var coletivo = ServicoAutoresDeEmenda.ColetivoDe(autor.Tipo);
+        if (coletivo is not null)
+            return new NoDoFluxoDto($"C:{autor.CodigoAutor}", autor.NomeAutor, 0,
+                coletivo == TipoAutorColetivo.BANCADA ? "bancada" : "comissao", 0, null);
+        return autor.PessoaId is { } id
+            ? new NoDoFluxoDto($"P:{id}", nomes.GetValueOrDefault(id) ?? autor.NomeAutor, 0, "parlamentar", 0, $"/parlamentar/{id}")
+            : new NoDoFluxoDto($"A:{autor.CodigoAutor}", autor.NomeAutor, 0, "parlamentar", 0, null);
+    }
+
+    private static NoDoFluxoDto NoDaEntidade(TipoFavorecido tipo, bool intermediario, string? documento, string? nome) =>
+        intermediario
+            ? new NoDoFluxoDto("INTERMEDIARIO", "Repasse por banco (destino final fora do dado)", 1, "sem-destino", 0, null)
+            : tipo == TipoFavorecido.PESSOA_JURIDICA && documento is { Length: 14 }
+                ? new NoDoFluxoDto($"E:{documento}", TextoSemCpf.Limpar(nome ?? documento), 1, "entidade", 0, $"/entidades/{documento}")
+                : new NoDoFluxoDto("PESSOAS", "Pessoas e sem identificação", 1, "sem-destino", 0, null);
+
+    private static NoDoFluxoDto NoDaCidade(MunicipioDto? municipio) =>
+        municipio is null
+            ? new NoDoFluxoDto("SEM_CIDADE", "Sem cidade", 2, "sem-destino", 0, null)
+            : new NoDoFluxoDto($"M:{municipio.CodigoIbge}", $"{municipio.Nome} – {municipio.Uf}", 2, "cidade", 0,
+                $"/emendas?uf={municipio.Uf}&cidade={municipio.CodigoIbge}");
+
+    /// <summary>Os ids dos maiores nós de uma coluna, mais os que sempre aparecem (os sem destino).</summary>
+    private static HashSet<string> Maiores(IEnumerable<(NoDoFluxoDto No, decimal Valor)> itens, int quantos, string[]? sempre = null) =>
+        [.. itens.GroupBy(i => i.No.Id)
+            .Select(g => (Id: g.Key, Valor: g.Sum(i => i.Valor)))
+            .Where(x => sempre?.Contains(x.Id) != true)
+            .OrderByDescending(x => x.Valor)
+            .Take(quantos)
+            .Select(x => x.Id)
+            .Concat(sempre ?? [])];
+
+    /// <summary>Quem apresentou uma emenda, como a tabela <c>emendas</c> guarda.</summary>
+    private sealed record AutorDaEmenda(string CodigoEmenda, long? PessoaId, string CodigoAutor, string NomeAutor, string? Tipo);
+
     private IQueryable<EmendaFavorecidoModel> DoPeriodo(string[] prefixos) =>
         _db.EmendasFavorecidos.AsNoTracking().Where(f => prefixos.Contains(f.CodigoEmenda.Substring(0, 4)));
 

@@ -70,7 +70,7 @@ public class ServicoAutoresDeEmenda(PoligraphDb db, ServicoParlamentares parlame
     }
 
     /// <summary>Nulo para a emenda individual, que é de uma pessoa; o tipo do coletivo nas outras.</summary>
-    private static TipoAutorColetivo? ColetivoDe(string? tipo) => tipo switch
+    internal static TipoAutorColetivo? ColetivoDe(string? tipo) => tipo switch
     {
         null => null,
         _ when tipo.StartsWith("Emenda Individual", StringComparison.OrdinalIgnoreCase) => null,

@@ -279,6 +279,44 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
     /// Uma emenda de 2025 que pagou a prefeitura e uma empresa de Luiziana, uma entidade de
     /// Curitiba, o intermediário, uma pessoa e um sem identificação; e uma emenda de 2026.
     /// </summary>
+    /// <summary>
+    /// Pendência 83: o fluxo de emendas fecha. As três colunas somam o pago no período, e o que não
+    /// tem destino (repasse por banco, pessoas, sem cidade) é nó próprio.
+    /// </summary>
+    [SkippableFact]
+    public async Task Fluxo_AsTresColunasSomamOPagoDoPeriodo()
+    {
+        ExigeDocker();
+        await SemearAsync();
+
+        var fluxo = await LerAsync<FluxoLido>("/api/mapa/emendas/fluxo?de=2025&ate=2025");
+
+        Assert.Equal(1_560m, fluxo.Total);
+        foreach (var coluna in new[] { 0, 1, 2 })
+            Assert.Equal(fluxo.Total, fluxo.Nos.Where(n => n.Coluna == coluna).Sum(n => n.Valor));
+        Assert.Equal(500m, fluxo.Nos.Single(n => n.Id == "INTERMEDIARIO").Valor);
+        Assert.Equal(60m, fluxo.Nos.Single(n => n.Id == "PESSOAS").Valor);
+        Assert.Equal(560m, fluxo.Nos.Single(n => n.Id == "SEM_CIDADE").Valor);
+        Assert.Equal(fluxo.Total, fluxo.Arestas.Where(a => a.De.StartsWith("P:", StringComparison.Ordinal)).Sum(a => a.Valor));
+    }
+
+    [SkippableFact]
+    public async Task Fluxo_ComUf_SoOQueChegouAQuemTemSedeNela()
+    {
+        ExigeDocker();
+        await SemearAsync();
+
+        var fluxo = await LerAsync<FluxoLido>("/api/mapa/emendas/fluxo?de=2025&ate=2025&uf=pr");
+
+        Assert.Equal(1_000m, fluxo.Total);
+        Assert.DoesNotContain(fluxo.Nos, n => n.Id is "INTERMEDIARIO" or "SEM_CIDADE");
+        Assert.Equal(700m, fluxo.Nos.Single(n => n.Id == $"M:{Luiziana}").Valor);
+    }
+
+    private record NoLido(string Id, string Rotulo, int Coluna, string Tipo, decimal Valor, string? Destino);
+    private record ArestaLida(string De, string Para, decimal Valor);
+    private record FluxoLido(decimal Total, List<NoLido> Nos, List<ArestaLida> Arestas);
+
     private async Task<long> SemearAsync()
     {
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
