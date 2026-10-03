@@ -124,10 +124,11 @@ export function Emendas() {
   return (
     <>
       <AbasDoDinheiro />
-      <CabecalhoDaColuna titulo="Emendas por cidade" subtitulo="Para onde foi o dinheiro de emenda parlamentar" />
-      <div className="barra-do-tour">
-        <BotaoDoTour nome="emendas" passos={passos} />
-      </div>
+      <CabecalhoDaColuna
+        titulo="Emendas por cidade"
+        subtitulo="Para onde foi o dinheiro de emenda parlamentar"
+        acao={<BotaoDoTour nome="emendas" passos={passos} />}
+      />
 
       <SuaCidade
         aoEscolher={(m) => {

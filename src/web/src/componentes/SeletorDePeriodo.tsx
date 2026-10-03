@@ -49,38 +49,40 @@ export function SeletorDePeriodo({
             </button>
           );
         })}
-        <label>
-          De{' '}
-          <select
-            value={periodo.de}
-            onChange={(e) => {
-              const novo = Number(e.target.value);
-              aoMudar({ de: novo, ate: Math.max(novo, periodo.ate) });
-            }}
-          >
-            {anos.map((a) => (
-              <option key={a} value={a}>
-                {rotuloDoAno(a)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          até{' '}
-          <select
-            value={periodo.ate}
-            onChange={(e) => {
-              const novo = Number(e.target.value);
-              aoMudar({ de: Math.min(periodo.de, novo), ate: novo });
-            }}
-          >
-            {anos.map((a) => (
-              <option key={a} value={a}>
-                {rotuloDoAno(a)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <span className="seletor-periodo-intervalo">
+          <label>
+            De{' '}
+            <select
+              value={periodo.de}
+              onChange={(e) => {
+                const novo = Number(e.target.value);
+                aoMudar({ de: novo, ate: Math.max(novo, periodo.ate) });
+              }}
+            >
+              {anos.map((a) => (
+                <option key={a} value={a}>
+                  {rotuloDoAno(a)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            até{' '}
+            <select
+              value={periodo.ate}
+              onChange={(e) => {
+                const novo = Number(e.target.value);
+                aoMudar({ de: Math.min(periodo.de, novo), ate: novo });
+              }}
+            >
+              {anos.map((a) => (
+                <option key={a} value={a}>
+                  {rotuloDoAno(a)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </span>
       </div>
     </div>
   );

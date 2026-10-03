@@ -142,7 +142,7 @@ export function Parlamentar() {
 
   return (
     <>
-      <CabecalhoDaColuna titulo="Parlamentar" comVoltar />
+      <CabecalhoDaColuna titulo="Parlamentar" comVoltar acao={<BotaoDoTour nome="ficha" passos={PASSOS_DA_FICHA} />} />
 
       <header className="perfil-cabecalho">
         <div className="perfil-avatar-linha">
@@ -200,7 +200,6 @@ export function Parlamentar() {
             </ComProcedencia>{' '}
             <span>votos com posição, em plenário e comissões</span>
           </span>
-          <BotaoDoTour nome="ficha" passos={PASSOS_DA_FICHA} />
         </div>
 
         {(ficha.alinhamento || ficha.presenca) && (

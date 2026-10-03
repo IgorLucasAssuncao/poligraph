@@ -1,5 +1,6 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { ehDinheiroPublico } from '../navegacao';
+import { useSessao } from '../sessao';
 import { BuscaDoCabecalho } from './BuscaDoCabecalho';
 import { FaixaDeProcedencia } from './FaixaDeProcedencia';
 import { IconeExplorar, IconeOrcamento, IconeQuestionario, IconeVoltar, Marca } from './Icones';
@@ -92,10 +93,13 @@ export function CabecalhoDaColuna({
   titulo,
   subtitulo,
   comVoltar,
+  acao,
 }: {
   titulo: string;
   subtitulo?: string;
   comVoltar?: boolean;
+  /** À direita do título, no mesmo lugar em toda tela: o "Entenda esta tela". */
+  acao?: React.ReactNode;
 }) {
   const navegar = useNavigate();
 
@@ -116,6 +120,7 @@ export function CabecalhoDaColuna({
         <h1>{titulo}</h1>
         {subtitulo && <p>{subtitulo}</p>}
       </div>
+      {acao && <div className="cabecalho-pagina-acao">{acao}</div>}
     </header>
   );
 }
@@ -194,6 +199,7 @@ function CabecalhoDoSite() {
  * ATENÇÃO: Dizia só a corrente. Com o histórico na base, o crédito é do intervalo.
  */
 function RodapeDoSite() {
+  const { usuario } = useSessao();
   const legislaturas = useLegislaturas();
   const maisAntiga = legislaturas?.at(-1)?.numero;
   const corrente = legislaturas?.[0]?.numero;
@@ -230,8 +236,12 @@ function RodapeDoSite() {
             <Link to="/metodologia">Como calculamos</Link>
             <br />
             <Link to="/privacidade">Política de privacidade</Link>
-            <br />
-            <Link to="/conta">Apagar minha conta</Link>
+            {usuario && (
+              <>
+                <br />
+                <Link to="/conta">Apagar minha conta</Link>
+              </>
+            )}
           </p>
         </section>
       </div>

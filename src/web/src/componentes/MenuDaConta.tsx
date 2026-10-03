@@ -5,6 +5,7 @@ import { useEntrar } from './useEntrar';
 import { Avatar } from './Avatar';
 import { useTour } from './contextoDoTour';
 import { SeletorDeTema } from './SeletorDeTema';
+import { useModoAnalise } from './ModoAnalise';
 
 /**
  * A conta, o tema e o tour num botão só.
@@ -18,6 +19,9 @@ import { SeletorDeTema } from './SeletorDeTema';
  * setas para andar entre os itens. Tab e Esc bastam aqui.
  *
  * ATENÇÃO: "Entrar" fica FORA do menu para quem não entrou: é a ação principal dessa pessoa.
+ *
+ * DECISÃO (2026-10-03): no celular o interruptor do modo análise sai do cabeçalho e aparece
+ * aqui, com o estado escrito: na barra estreita ele roubava o espaço da busca e ficava sem rótulo.
  */
 export function MenuDaConta() {
   const { usuario, sair } = useSessao();
@@ -44,6 +48,7 @@ export function MenuDaConta() {
   }, [aberto]);
 
   const primeiroNome = usuario?.nome?.split(' ')[0] ?? 'Conta';
+  const analise = useModoAnalise();
 
   return (
     <div className="menu-conta" ref={caixa}>
@@ -89,6 +94,9 @@ export function MenuDaConta() {
             }}
           >
             Como funciona o site
+          </button>
+          <button type="button" className="menu-conta-analise" aria-pressed={analise.ligado} onClick={analise.alternar}>
+            Modo análise: {analise.ligado ? 'ligado' : 'desligado'}
           </button>
           <div className="menu-conta-tema">
             <span>Tema</span>

@@ -72,10 +72,11 @@ export function Governo() {
   return (
     <>
       <AbasDoDinheiro />
-      <CabecalhoDaColuna titulo="Governo federal" subtitulo="Quanto entrou, onde foi parar e o que foi gasto em segredo" />
-      <div className="barra-do-tour">
-        <BotaoDoTour nome="governo" passos={passos} />
-      </div>
+      <CabecalhoDaColuna
+        titulo="Governo federal"
+        subtitulo="Quanto entrou, onde foi parar e o que foi gasto em segredo"
+        acao={<BotaoDoTour nome="governo" passos={passos} />}
+      />
 
       {erro && <p className="erro">Não foi possível carregar os dados do governo agora.</p>}
       {!erro && dados === undefined && <EsqueletoDePainel rotulo="Carregando o governo" alturaDoGrafico={260} />}

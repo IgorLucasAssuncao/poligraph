@@ -420,6 +420,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   font-size: var(--t-5); font-weight: 700; letter-spacing: -.02em;
 }
 .cabecalho-pagina p { margin: .15rem 0 0; font-size: var(--t-2); color: var(--suave); }
+.cabecalho-pagina-acao { margin-left: auto; flex-shrink: 0; }
 .botao-icone {
   display: grid; place-items: center;
   width: 2.2rem; height: 2.2rem; border-radius: var(--raio);
@@ -2623,6 +2624,8 @@ dialog.tour::backdrop { background: transparent; }
 .seletor-periodo-campos button:hover { color: var(--realce); border-color: var(--realce); }
 .seletor-periodo-campos button.ativo { background: var(--realce); border-color: var(--realce); color: var(--sobre-realce); }
 .seletor-periodo-campos label { display: inline-flex; align-items: center; gap: .35rem; font-size: var(--t-2); color: var(--suave); }
+.seletor-periodo-intervalo { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: .75rem; }
+.seletor-periodo-intervalo select { width: auto; }
 .seletor-periodo-campos select {
   padding: .35rem .5rem; font: inherit; font-family: var(--dado); font-variant-numeric: tabular-nums;
   color: var(--texto); background: var(--painel);
@@ -2761,6 +2764,8 @@ dialog.tour::backdrop { background: transparent; }
 .faixa-curta { display: none; }
 
 @media (max-width: 560px) {
+  .cabecalho-conteudo .interruptor-analise { display: none; }
+  .menu-conta .menu-conta-painel > .menu-conta-analise { display: block; }
   .marca-texto { display: none; }
   .menu-conta-botao .usuario-mini-nome { display: none; }
 
@@ -2992,3 +2997,6 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 .pedido-consentimento h2 { margin: 0 0 .6rem; font-size: var(--t-4); }
 .pedido-consentimento p { margin: 0 0 .6rem; font-size: var(--t-2); line-height: 1.5; }
 .em-andamento { font-size: var(--t-1); opacity: .8; }
+
+/* O interruptor no menu só aparece no celular; no resto, ele está no cabeçalho. */
+.menu-conta-painel > .menu-conta-analise { display: none; }
