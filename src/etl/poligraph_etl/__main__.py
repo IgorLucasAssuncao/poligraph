@@ -89,7 +89,7 @@ def main(argv: list[str] | None = None) -> int:
             elif args.comando == "municipios":
                 _municipios(conexao, args.diretorio)
             elif args.comando == "cpf":
-                _cpf(conexao)
+                _cpf(conexao, args.todas_legislaturas)
             elif args.comando == "rechavear-cpf":
                 _rechavear_cpf(conexao)
             elif args.comando == "cota":
@@ -164,7 +164,9 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         help="uma casa por execução — as duas não são comparáveis entre si",
     )
 
-    sub.add_parser("cpf", help="completa o cpf_hash das duas casas (Câmara: API; Senado: TSE)")
+    cpf = sub.add_parser("cpf", help="completa o cpf_hash das duas casas (Câmara: API; Senado: TSE)")
+    cpf.add_argument("--todas-legislaturas", action="store_true",
+                     help="deputados de todas as legislaturas da base, e não só da corrente")
     pal = sub.add_parser(
         "palavras-chave", help="palavras-chave das proposições votadas que ainda não têm (Pendência 70)"
     )
@@ -1273,16 +1275,16 @@ def _resolver_a_mao(conexao: psycopg.Connection, entradas: list[str]) -> None:
     log.info("%d emendas vinculadas", vinculadas)
 
 
-def _cpf(conexao: psycopg.Connection) -> None:
+def _cpf(conexao: psycopg.Connection, todas_as_legislaturas: bool = False) -> None:
     """Completa `cpf_hash` das duas casas — e cada uma tem um caminho.
 
     Câmara: a API REST publica o CPF, uma requisição por deputado.
     Senado: não publica. O caminho é o nome civil contra a prestação de contas do TSE,
     em `_nome_civil_dos_senadores` e `_cpf_dos_senadores`.
     """
-    _cpf_dos_deputados(conexao)
+    _cpf_dos_deputados(conexao, todas_as_legislaturas)
     _nome_civil_dos_senadores(conexao)
-    _cpf_dos_senadores(conexao)
+    _cpf_dos_senadores(conexao, todas_as_legislaturas)
 
 
 def _rechavear_cpf(conexao: psycopg.Connection) -> None:
@@ -1311,7 +1313,7 @@ def _rechavear_cpf(conexao: psycopg.Connection) -> None:
     apagados = conexao.execute(
         "UPDATE pessoas SET cpf_hash = NULL WHERE cpf_hash IS NOT NULL").rowcount
     log.info("cpf_hash apagado de %d pessoas; refazendo com a chave atual.", apagados)
-    _cpf(conexao)
+    _cpf(conexao, todas_as_legislaturas=True)
 
     if anos_da_cota:
         _cota(conexao, anos_da_cota)
@@ -1324,7 +1326,7 @@ def _rechavear_cpf(conexao: psycopg.Connection) -> None:
     log.info("Rechaveado: %d de %d pessoas voltaram a ter cpf_hash.", refeitos, apagados)
 
 
-def _cpf_dos_deputados(conexao: psycopg.Connection) -> None:
+def _cpf_dos_deputados(conexao: psycopg.Connection, todas_as_legislaturas: bool = False) -> None:
     """Completa `cpf_hash` a partir da API REST da Câmara.
 
     RISCO: **Por que existe um comando só para isto:** a coluna `cpf` do CSV em bloco vem
@@ -1341,7 +1343,7 @@ def _cpf_dos_deputados(conexao: psycopg.Connection) -> None:
 
     RISCO: Perda grande significa layout mudado ou bloqueio — não "alguns sem CPF".
     """
-    faltantes = persistencia.pessoas_sem_cpf(conexao)
+    faltantes = persistencia.pessoas_sem_cpf(conexao, todas_as_legislaturas)
     if not faltantes:
         log.info("Todos os deputados com voto já têm cpf_hash.")
         return
@@ -1372,7 +1374,7 @@ def _cpf_dos_deputados(conexao: psycopg.Connection) -> None:
 
 # As duas eleições que compõem a 57ª legislatura do Senado: a Casa renova por terços
 # alternados, então metade das cadeiras vem de 2018 e a outra de 2022.
-ELEICOES_DO_SENADO = (2018, 2022)
+ELEICOES_DO_SENADO = (2010, 2014, 2018, 2022)
 
 
 def _nome_civil_dos_senadores(conexao: psycopg.Connection) -> int:
@@ -1409,7 +1411,7 @@ def _nome_civil_dos_senadores(conexao: psycopg.Connection) -> int:
     return achados
 
 
-def _cpf_dos_senadores(conexao: psycopg.Connection) -> None:
+def _cpf_dos_senadores(conexao: psycopg.Connection, todas_as_legislaturas: bool = False) -> None:
     """Completa `cpf_hash` dos senadores casando o nome civil contra o TSE.
 
     RISCO: **O Senado não publica CPF.** A prestação de contas eleitoral publica: cada
@@ -1426,7 +1428,7 @@ def _cpf_dos_senadores(conexao: psycopg.Connection) -> None:
     Chave repetida entre as duas eleições com CPF diferente é ambiguidade, e
     ambiguidade não se resolve escolhendo uma.
     """
-    pendentes = persistencia.senadores_para_casar(conexao)
+    pendentes = persistencia.senadores_para_casar(conexao, todas_as_legislaturas)
     if not pendentes:
         log.info("Todos os senadores com voto já têm cpf_hash.")
         return

@@ -86,21 +86,28 @@ def nomes_de_receita(caminho: Path, ano: int) -> list[str]:
     prefixo = PREFIXO.format(ano=ano)
 
     with zipfile.ZipFile(caminho) as pacote:
-        candidatos = [
-            nome
-            for nome in pacote.namelist()
-            if nome.startswith(prefixo)
-            and IGNORAR not in nome
-            and nome.lower().endswith(".csv")
-        ]
+        todos = pacote.namelist()
 
-    consolidado = [nome for nome in candidatos if CONSOLIDADO in nome]
+    candidatos = [
+        nome
+        for nome in todos
+        if nome.startswith(prefixo)
+        and IGNORAR not in nome
+        and nome.lower().endswith((".csv", ".txt"))
+    ]
+    if not candidatos:
+        candidatos = [nome for nome in todos if nome.lower().endswith(ARQUIVO_DE_2010.lower())]
+
+    consolidado = [nome for nome in candidatos if CONSOLIDADO.lower() in nome.lower()]
 
     return consolidado or sorted(candidatos)
 
 
 def ler_receitas(caminho: Path, nome_interno: str):
     """Itera as linhas de um CSV de dentro do ZIP, sem carregar tudo em memória.
+
+    O layout antigo (2014 e 2010) vem com as colunas por extenso, e sai daqui com os nomes do
+    atual (`traduzir_layout_antigo`): o resto do módulo lê um layout só.
 
     ATENÇÃO: **Latin-1**, a única fonte do projeto assim — lida como UTF-8, estoura na primeira
     linha acentuada de um arquivo de 396 MB. `errors="replace"` porque uma linha
@@ -109,7 +116,51 @@ def ler_receitas(caminho: Path, nome_interno: str):
     with zipfile.ZipFile(caminho) as pacote, pacote.open(nome_interno) as fluxo:
         texto = io.TextIOWrapper(fluxo, encoding="latin-1", errors="replace")
 
-        yield from csv.DictReader(texto, delimiter=";", quotechar='"')
+        leitor = csv.DictReader(texto, delimiter=";", quotechar='"')
+        if "Valor receita" in (leitor.fieldnames or []):
+            yield from (traduzir_layout_antigo(registro) for registro in leitor)
+        else:
+            yield from leitor
+
+
+ARQUIVO_DE_2010 = "ReceitasCandidatos.txt"
+"""Em 2010 não há o prefixo `receitas_candidatos_`: é um arquivo por UF, em `candidato/{UF}/`."""
+
+COLUNAS_ANTIGAS = {
+    "Cargo": "DS_CARGO",
+    "Nome candidato": "NM_CANDIDATO",
+    "CPF do candidato": "NR_CPF_CANDIDATO",
+    "UF": "SG_UF",
+    "Valor receita": "VR_RECEITA",
+    "CPF/CNPJ do doador": "NR_CPF_CNPJ_DOADOR",
+    "Fonte recurso": "DS_FONTE_RECEITA",
+    "Tipo receita": "DS_ORIGEM_RECEITA",
+    "Nome do doador": "NM_DOADOR",
+}
+"""Pendência 53. MEDIDO em 2026-10-02: as prestações de contas de 2014 e de 2010 têm as nove
+colunas que este módulo usa, com o nome por extenso. A de 2006 é outra, sem o CPF do
+candidato, e fica fora."""
+
+
+def traduzir_layout_antigo(registro: dict) -> dict:
+    """Uma linha do layout antigo com os nomes de coluna do atual, e a fonte no vocabulário de hoje.
+
+    ATENÇÃO: A fonte importa para a tela: o site reconhece os fundos por `FUNDO PARTIDARIO` e
+    `FUNDO ESPECIAL`. Em 2010 o arquivo traz "Fundo Partidáo", com a codificação quebrada; o
+    começo da palavra basta para reconhecer.
+    """
+    traduzido = {novo: registro.get(antigo) for antigo, novo in COLUNAS_ANTIGAS.items()}
+    traduzido["DS_FONTE_RECEITA"] = _fonte_no_vocabulario_atual(traduzido.get("DS_FONTE_RECEITA"))
+    return traduzido
+
+
+def _fonte_no_vocabulario_atual(bruto: str | None) -> str:
+    fonte = sem_acento_maiusculo(bruto)
+    if fonte.startswith("FUNDO PARTID"):
+        return "FUNDO PARTIDARIO"
+    if fonte.startswith("OUTROS RECURSOS"):
+        return "OUTROS RECURSOS"
+    return fonte or "NAO INFORMADA"
 
 
 CARGO_SENADOR = "SENADOR"

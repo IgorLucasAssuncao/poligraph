@@ -49,8 +49,19 @@ class ErroDeAcessoAoTse(RuntimeError):
     """
 
 
+NOMES_ANTIGOS_DA_PRESTACAO = {
+    2014: "prestacao_final_2014.zip",
+    2010: "prestacao_contas_2010.zip",
+}
+"""MEDIDO em 2026-10-02: antes de 2018 o arquivo tem outro nome, e o nome atual dá 404. O de 2006
+existe (`prestacao_contas_2006.zip`), mas sem o CPF do candidato, e por isso não está aqui."""
+
+
 def url_de_prestacao_de_contas(ano: int) -> str:
-    """ATENÇÃO: Só este nome funciona — as outras três grafias plausíveis dão 404, testadas."""
+    """ATENÇÃO: De 2018 em diante, só este nome funciona — as outras três grafias plausíveis dão 404, testadas."""
+    antigo = NOMES_ANTIGOS_DA_PRESTACAO.get(ano)
+    if antigo:
+        return f"{CDN}/prestacao_contas/{antigo}"
     return (
         f"{CDN}/prestacao_contas/"
         f"prestacao_de_contas_eleitorais_candidatos_{ano}.zip"

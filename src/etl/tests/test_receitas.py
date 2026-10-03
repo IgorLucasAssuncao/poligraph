@@ -443,3 +443,23 @@ def test_deputado_nao_entra_no_de_para_de_senador(tmp_path):
     ])
 
     assert receitas.cpf_de_senadores(caminho, 2022) == {}
+
+
+def test_layout_antigo_sai_com_os_nomes_do_atual(tmp_path):
+    """Pendência 53: 2014 e 2010 têm as colunas por extenso; a fonte vira o vocabulário de hoje."""
+    caminho = tmp_path / "prestacao_final_2014.zip"
+    colunas = ["Cargo", "Nome candidato", "CPF do candidato", "UF", "Valor receita",
+               "CPF/CNPJ do doador", "Fonte recurso", "Tipo receita", "Nome do doador"]
+    linha = ["Deputado Federal", "FULANO", CPF_SENADOR, "SP", "1000,50",
+             "12345678000190", "Fundo Partidáo", "Recursos de partido político", "PARTIDO X"]
+    corpo = ";".join(f'"{c}"' for c in colunas) + chr(10) + ";".join(f'"{v}"' for v in linha) + chr(10)
+    with zipfile.ZipFile(caminho, "w") as pacote:
+        pacote.writestr("receitas_candidatos_2014_brasil.txt", corpo.encode("latin-1"))
+
+    nomes = receitas.nomes_de_receita(caminho, 2014)
+    registro = next(receitas.ler_receitas(caminho, nomes[0]))
+
+    assert nomes == ["receitas_candidatos_2014_brasil.txt"]
+    assert (registro["DS_CARGO"], registro["VR_RECEITA"], registro["DS_FONTE_RECEITA"]) == (
+        "Deputado Federal", "1000,50", "FUNDO PARTIDARIO")
+

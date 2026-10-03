@@ -236,7 +236,7 @@ def na_legislatura_corrente(pessoa: str, casa: str | None = None) -> str:
     return _NA_LEGISLATURA_CORRENTE.format(pessoa=pessoa, casa=filtro)
 
 
-def pessoas_sem_cpf(conexao: psycopg.Connection) -> list[tuple[str, int]]:
+def pessoas_sem_cpf(conexao: psycopg.Connection, todas_as_legislaturas: bool = False) -> list[tuple[str, int]]:
     """Quem tem VOTO mas ainda não tem `cpf_hash`, com o id da Câmara junto.
 
     ATENÇÃO: **Só quem votou**, e o recorte importa: são 7.889 pessoas no cadastro contra ~643
@@ -244,7 +244,15 @@ def pessoas_sem_cpf(conexao: psycopg.Connection) -> list[tuple[str, int]]:
     7.246 registros que ninguém consulta.
 
     DECISÃO: E só quem AINDA não tem — reingerir não refaz o trabalho.
+
+    Com `todas_as_legislaturas`, quem votou em qualquer legislatura da base (Pendência 53): é
+    o que liga a campanha e o patrimônio de 2014 para trás. MEDIDO em 2026-10-02: 1.563
+    deputados com voto e sem `cpf_hash`.
     """
+    recorte = (
+        "EXISTS (SELECT 1 FROM votos v WHERE v.pessoa_id = p.id)"
+        if todas_as_legislaturas else na_legislatura_corrente("p.id")
+    )
     return [
         (str(linha[0]), linha[1])
         for linha in conexao.execute(
@@ -253,7 +261,7 @@ def pessoas_sem_cpf(conexao: psycopg.Connection) -> list[tuple[str, int]]:
               FROM pessoas p
               JOIN pessoa_fonte_ids f ON f.pessoa_id = p.id AND f.fonte = 'CAMARA'
              WHERE p.cpf_hash IS NULL
-               AND """ + na_legislatura_corrente("p.id") + """
+               AND """ + recorte + """
              ORDER BY p.id
             """
         ).fetchall()
@@ -325,7 +333,7 @@ def gravar_nome_civil(conexao: psycopg.Connection, pessoa_id: int, nome: str) ->
     )
 
 
-def senadores_para_casar(conexao: psycopg.Connection) -> list[tuple[int, str, str]]:
+def senadores_para_casar(conexao: psycopg.Connection, todas_as_legislaturas: bool = False) -> list[tuple[int, str, str]]:
     """`(pessoa_id, nome_civil, uf)` de quem votou no Senado e ainda não tem `cpf_hash`.
 
     A UF sai do voto mais recente, e serve para desempatar homônimo: dois candidatos a
@@ -343,7 +351,11 @@ def senadores_para_casar(conexao: psycopg.Connection) -> list[tuple[int, str, st
                    )
               FROM pessoas p
              WHERE p.cpf_hash IS NULL
-               AND """ + na_legislatura_corrente("p.id", "SENADO") + """
+               AND """ + (
+                   "EXISTS (SELECT 1 FROM votos v JOIN votacoes t ON t.id = v.votacao_id "
+                   "WHERE v.pessoa_id = p.id AND t.casa = 'SENADO')"
+                   if todas_as_legislaturas else na_legislatura_corrente("p.id", "SENADO")
+               ) + """
              ORDER BY p.id
             """
         ).fetchall()
