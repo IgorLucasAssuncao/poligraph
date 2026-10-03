@@ -22,8 +22,15 @@ public class ServicoReconciliacao(PoligraphDb db, CacheDeLeitura leitura)
     private async Task<IReadOnlyList<ReconciliacaoDto>> CalcularAsync(int? de, int? ate, CancellationToken ct)
     {
         var consulta = _db.Reconciliacoes.AsNoTracking().Include(r => r.Motivos).AsQueryable();
-        if (de is { } inicio) consulta = consulta.Where(r => r.Ano >= inicio);
-        if (ate is { } fim) consulta = consulta.Where(r => r.Ano <= fim);
+        if (de is { } inicio)
+        {
+            consulta = consulta.Where(r => r.Ano >= inicio);
+        }
+
+        if (ate is { } fim)
+        {
+            consulta = consulta.Where(r => r.Ano <= fim);
+        }
 
         var linhas = await consulta
             .OrderBy(r => r.Conjunto).ThenBy(r => r.Medida).ThenBy(r => r.Ano)

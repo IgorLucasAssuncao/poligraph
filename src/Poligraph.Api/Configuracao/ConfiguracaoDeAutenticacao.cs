@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Endpoints;
-using Poligraph.Data;
 using Poligraph.Api.Services;
+using Poligraph.Data;
 
 namespace Poligraph.Api.Configuracao;
 
@@ -33,8 +33,11 @@ public static class ConfiguracaoDeAutenticacao
     {
         var pastaChaves = builder.Configuration["DataProtection:Pasta"];
         if (builder.Environment.IsProduction() && string.IsNullOrWhiteSpace(pastaChaves))
+        {
             throw new InvalidOperationException(
                 "DataProtection:Pasta é obrigatória em produção: sem ela, cada deploy troca as chaves e desloga todo mundo.");
+        }
+
         if (!string.IsNullOrWhiteSpace(pastaChaves))
         {
             builder.Services.AddDataProtection()

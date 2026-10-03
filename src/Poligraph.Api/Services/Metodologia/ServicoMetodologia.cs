@@ -41,7 +41,10 @@ public class ServicoMetodologia(PoligraphDb db, CacheDeLeitura leitura)
     private async Task<IReadOnlyList<CasaNaMetodologiaDto>> CasasAsync(CancellationToken ct)
     {
         var legislatura = await Legislaturas.CorrenteAsync(_db, ct);
-        if (legislatura is null) return [];
+        if (legislatura is null)
+        {
+            return [];
+        }
 
         var votacoes = await _db.Votacoes.AsNoTracking()
             .Where(v => v.Legislatura == legislatura && v.Plenario)

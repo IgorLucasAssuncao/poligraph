@@ -47,13 +47,18 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
     {
         var legislatura = pedida ?? await Legislaturas.CorrenteAsync(_db, ct);
 
-        if (legislatura is null) return new PanoramaDto(null, 0, []);
+        if (legislatura is null)
+        {
+            return new PanoramaDto(null, 0, []);
+        }
 
         var perguntas = await _db.Perguntas.AsNoTracking().CountAsync(p => p.Ativa, ct);
 
         var porCasa = new List<PanoramaDaCasaDto>();
         foreach (var casa in (TipoCasa[])[TipoCasa.CAMARA, TipoCasa.SENADO])
+        {
             porCasa.Add(await DaCasaAsync(casa, legislatura.Value, ct));
+        }
 
         return new PanoramaDto(
             legislatura, perguntas, [.. porCasa.Where(c => c.Votacoes > 0)],
@@ -67,7 +72,10 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
             .Distinct()
             .ToListAsync(ct);
 
-        if (pares.Count == 0) return [];
+        if (pares.Count == 0)
+        {
+            return [];
+        }
 
         var corrente = pares.Max(p => p.Legislatura);
 

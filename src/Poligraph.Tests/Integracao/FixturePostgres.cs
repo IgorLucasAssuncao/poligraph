@@ -61,7 +61,10 @@ public class FixturePostgres : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        if (_postgres is not null) await _postgres.DisposeAsync();
+        if (_postgres is not null)
+        {
+            await _postgres.DisposeAsync();
+        }
     }
 
     public PoligraphDb CriarContexto() =>

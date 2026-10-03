@@ -53,11 +53,17 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
             .OrderBy(a => a.Ano)
             .ToListAsync(ct);
 
-        if (anos.Count == 0) return null;
+        if (anos.Count == 0)
+        {
+            return null;
+        }
 
         var inicio = Math.Clamp(de ?? anos[0].Ano, anos[0].Ano, anos[^1].Ano);
         var fim = Math.Clamp(ate ?? anos[^1].Ano, anos[0].Ano, anos[^1].Ano);
-        if (inicio > fim) (inicio, fim) = (fim, inicio);
+        if (inicio > fim)
+        {
+            (inicio, fim) = (fim, inicio);
+        }
 
         var doPeriodo = anos.Where(a => a.Ano >= inicio && a.Ano <= fim).ToList();
         var lista = doPeriodo.Select(a => (short)a.Ano).ToList();
@@ -104,7 +110,10 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
     /// </remarks>
     private static SigiloDto? Sigilo(IReadOnlyList<GastoSigilosoModel> linhas)
     {
-        if (linhas.Count == 0) return null;
+        if (linhas.Count == 0)
+        {
+            return null;
+        }
 
         var cartao = linhas.Where(l => l.Origem == OrigemDoSigilo.CARTAO_CORPORATIVO).ToList();
         var acao = linhas.Where(l => l.Origem == OrigemDoSigilo.ACAO_SIGILOSA).ToList();

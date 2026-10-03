@@ -1,5 +1,5 @@
-﻿using System.Text.RegularExpressions;
-using System.Text.Json;
+﻿using System.Text.Json;
+using System.Text.RegularExpressions;
 using Poligraph.Data;
 
 namespace Poligraph.Tests.Unidade;
@@ -28,7 +28,10 @@ public partial class TestesArquivosDeCuradoria
     {
         Assert.NotEmpty(Lotes);
 
-        foreach (var (nome, perguntas) in Lotes) Assert.NotEmpty(perguntas);
+        foreach (var (nome, perguntas) in Lotes)
+        {
+            Assert.NotEmpty(perguntas);
+        }
     }
 
     /// <summary>

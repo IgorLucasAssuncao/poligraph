@@ -32,7 +32,10 @@ public class ServicoGrafo(PoligraphDb db, CacheDeLeitura leitura)
 
         var execucao = alvo is null ? null : await ExecucaoVigente.ObterAsync(_db, casa, alvo.Value, ct);
 
-        if (execucao is null) return new GrafoDto(0, casa, alvo ?? 0, 0, [], [], comGrafo, 0, 0);
+        if (execucao is null)
+        {
+            return new GrafoDto(0, casa, alvo ?? 0, 0, [], [], comGrafo, 0, 0);
+        }
 
         var (votacoes, secretas, desde, ate) = await VotacoesDePlenarioAsync(casa, execucao.Legislatura, ct);
 
@@ -115,6 +118,7 @@ public class ServicoGrafo(PoligraphDb db, CacheDeLeitura leitura)
     /// <para>A base e o cosseno vivem em `similaridades`, não em `arestas_grafo`. A junção acontece no banco: `similaridades` tem 185.908 linhas por métrica nesta execução, e trazê-las para a memória para casar aqui seria ler 370 mil linhas a cada abertura da tela.</para>
     /// <para>`DefaultIfEmpty` porque o par sem linha de similaridade é bug, e o zero aparece na tela como "0 votações" em vez de derrubar a requisição inteira.</para>
     /// </remarks>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0031", Justification = "A consulta vira SQL: árvore de expressão não aceita o operador ?.")]
     private async Task<List<ArestaDoGrafoDto>> ArestasAsync(long execucaoId, CancellationToken ct)
     {
         var arestas =

@@ -16,7 +16,11 @@ public class TestesBancadaDoPartido
             File.ReadAllText(caminho), new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
 
         var dados = new TheoryData<string, string[], string?>();
-        foreach (var caso in arquivo.Casos) dados.Add(caso.Partido, caso.Bancadas, caso.Esperado);
+        foreach (var caso in arquivo.Casos)
+        {
+            dados.Add(caso.Partido, caso.Bancadas, caso.Esperado);
+        }
+
         return dados;
     }
 

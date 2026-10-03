@@ -59,7 +59,10 @@ public class ServicoEntidades(
     public async Task<EntidadeDto?> ObterAsync(string cnpj, CancellationToken ct)
     {
         var entidade = await CalculadaAsync(cnpj, ct);
-        if (entidade is null) return null;
+        if (entidade is null)
+        {
+            return null;
+        }
 
         var (lista, detalhe) = entidade.Value;
         return new EntidadeDto(
@@ -117,12 +120,17 @@ public class ServicoEntidades(
     /// </remarks>
     private static IEnumerable<EntidadeNaListaDto> Filtrar(IReadOnlyList<EntidadeNaListaDto> indice, string? busca)
     {
-        if (string.IsNullOrWhiteSpace(busca)) return indice;
+        if (string.IsNullOrWhiteSpace(busca))
+        {
+            return indice;
+        }
 
         var termo = busca.Trim();
         var digitos = new string([.. termo.Where(char.IsDigit)]);
         if (digitos.Length >= 8 && digitos.Length == termo.Count(c => !char.IsWhiteSpace(c) && c is not ('.' or '/' or '-')))
+        {
             return indice.Where(e => e.Cnpj.StartsWith(digitos, StringComparison.Ordinal));
+        }
 
         return indice
             .Select(e => new { Entidade = e, Posicao = Comparacao.IndexOf(e.Nome, termo, SemCaixaNemAcento) })
@@ -169,7 +177,10 @@ public class ServicoEntidades(
     private async Task<(EntidadeNaListaDto Lista, DetalheDaEntidade Detalhe)?> CalculadaAsync(string cnpj, CancellationToken ct)
     {
         var lista = (await IndiceAsync(ct)).FirstOrDefault(e => e.Cnpj == cnpj);
-        if (lista is null) return null;
+        if (lista is null)
+        {
+            return null;
+        }
 
         var detalhe = await _cache.GetOrCreateAsync($"entidades:{cnpj}", async entrada =>
         {
@@ -221,7 +232,10 @@ public class ServicoEntidades(
             .OrderByDescending(p => p.Total)
             .ToListAsync(ct);
 
-        if (porPessoa.Count == 0) return null;
+        if (porPessoa.Count == 0)
+        {
+            return null;
+        }
 
         var legislatura = (await _parlamentares.ParlamentaresDaLegislaturaAsync(ct)).ToDictionary(p => p.Id);
         var ids = porPessoa.Where(p => !legislatura.ContainsKey(p.PessoaId)).Select(p => p.PessoaId).ToList();

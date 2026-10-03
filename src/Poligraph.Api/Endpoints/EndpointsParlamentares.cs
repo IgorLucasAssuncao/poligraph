@@ -1,6 +1,6 @@
 ﻿using Poligraph.Api.Dtos;
-using Poligraph.Data;
 using Poligraph.Api.Services;
+using Poligraph.Data;
 
 namespace Poligraph.Api.Endpoints;
 

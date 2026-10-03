@@ -1,11 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection.Extensions;
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Poligraph.Data;
-using Poligraph.Api.Services;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Poligraph.Api.Dtos;
+using Poligraph.Api.Services;
+using Poligraph.Data;
 
 namespace Poligraph.Tests.Integracao;
 

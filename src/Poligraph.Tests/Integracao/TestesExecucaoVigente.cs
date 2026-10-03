@@ -148,7 +148,10 @@ public class TestesExecucaoVigente(FixturePostgres postgres) : BaseIntegracao(po
                 Comunidade = 0, EixoX = i / 10f, EixoY = 0.5f, NVotacoes = 5
             });
 
-            if (!comSimilaridades) continue;
+            if (!comSimilaridades)
+            {
+                continue;
+            }
 
             for (var j = i + 1; j < ids.Count; j++)
             {

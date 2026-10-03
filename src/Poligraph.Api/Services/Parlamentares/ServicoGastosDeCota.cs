@@ -42,7 +42,10 @@ public class ServicoGastosDeCota(PoligraphDb db)
         }
         var alvo = ano ?? await daPessoa.MaxAsync(d => (int?)d.Ano, ct);
 
-        if (alvo is null) return new GastoDeCotaDto(0, 0, 0, [], []);
+        if (alvo is null)
+        {
+            return new GastoDeCotaDto(0, 0, 0, [], []);
+        }
 
         var doAno = _db.Despesas.AsNoTracking().Where(d => d.PessoaId == id && d.Ano == alvo);
 
@@ -102,7 +105,10 @@ public class ServicoGastosDeCota(PoligraphDb db)
             .Where(d => d.PessoaId == id)
             .MaxAsync(d => (int?)d.Ano, ct);
 
-        if (alvo is null) return new PaginaDto<LancamentoDaCotaDto>([], pagina, tamanho, 0);
+        if (alvo is null)
+        {
+            return new PaginaDto<LancamentoDaCotaDto>([], pagina, tamanho, 0);
+        }
 
         var doAno = _db.Despesas.AsNoTracking().Where(d => d.PessoaId == id && d.Ano == alvo);
 

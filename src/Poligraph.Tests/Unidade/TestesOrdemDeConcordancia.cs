@@ -31,6 +31,9 @@ public class TestesOrdemDeConcordancia
         var limite = OrdemDeConcordancia.LimiteInferior(iguais, @base);
 
         Assert.InRange(limite, 0, 1);
-        if (@base > 0) Assert.True(limite <= (double)iguais / @base);
+        if (@base > 0)
+        {
+            Assert.True(limite <= (double)iguais / @base);
+        }
     }
 }

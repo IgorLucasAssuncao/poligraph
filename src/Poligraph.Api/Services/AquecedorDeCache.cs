@@ -22,7 +22,10 @@ public sealed class AquecedorDeCache(
 
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
-        if (!_configuracao.GetValue("Cache:Aquecer", true)) return;
+        if (!_configuracao.GetValue("Cache:Aquecer", true))
+        {
+            return;
+        }
 
         while (!ct.IsCancellationRequested)
         {

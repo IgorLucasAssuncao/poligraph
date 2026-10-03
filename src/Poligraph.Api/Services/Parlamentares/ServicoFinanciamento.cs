@@ -27,7 +27,10 @@ public class ServicoFinanciamento(PoligraphDb db)
                 .Where(r => r.PessoaId == id)
                 .MaxAsync(r => (int?)r.AnoEleicao, ct));
 
-        if (alvo is null) return new FinanciamentoDeCampanhaDto(0, 0, 0, 0, [], []);
+        if (alvo is null)
+        {
+            return new FinanciamentoDeCampanhaDto(0, 0, 0, 0, [], []);
+        }
 
         var daEleicao = _db.ReceitasDeCampanha.AsNoTracking()
             .Where(r => r.PessoaId == id && r.AnoEleicao == (short)alvo.Value);

@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <!-- As regras de estilo do .editorconfig (chaves em if e for, entre outras) valem no build, e não só no editor. -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- Anotação de nulo ligada em todo projeto, inclusive nos que vierem a ser criados. -->
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+</Project>

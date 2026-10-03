@@ -59,7 +59,10 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     public async Task<MapaDoBrasilDto> ObterBrasilAsync(int? de, int? ate, CancellationToken ct)
     {
         var (periodo, anos, prefixos) = await PeriodoAsync(de, ate, ct);
-        if (prefixos.Length == 0) return new MapaDoBrasilDto(periodo, anos, 0, 0, 0, 0, []);
+        if (prefixos.Length == 0)
+        {
+            return new MapaDoBrasilDto(periodo, anos, 0, 0, 0, 0, []);
+        }
 
         return await _cache.GetOrCreateAsync($"mapa:brasil:{periodo.De}-{periodo.Ate}", async entrada =>
         {
@@ -118,7 +121,10 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     /// </remarks>
     public async Task<IReadOnlyList<MunicipioDto>> BuscarAsync(string? busca, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(busca)) return [];
+        if (string.IsNullOrWhiteSpace(busca))
+        {
+            return [];
+        }
 
         var termo = busca.Trim();
         var opcoes = CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace;
@@ -140,7 +146,10 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
         string codigoIbge, int? de, int? ate, CancellationToken ct)
     {
         var cidade = await CidadeAsync(codigoIbge, de, ate, ct);
-        if (cidade is null) return null;
+        if (cidade is null)
+        {
+            return null;
+        }
 
         return new EmendasDoMunicipioDto(
             cidade.Municipio, cidade.Periodo, cidade.AnosDisponiveis, cidade.Recebido, cidade.NaPropriaCidade,
@@ -185,7 +194,10 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     {
         var (periodo, _, prefixos) = await PeriodoAsync(de, ate, ct);
         uf = uf.ToUpperInvariant();
-        if (prefixos.Length == 0) return new MapaDoEstadoDto(uf, periodo, 0, []);
+        if (prefixos.Length == 0)
+        {
+            return new MapaDoEstadoDto(uf, periodo, 0, []);
+        }
 
         var recebido = await NoMapa(DoPeriodo(prefixos))
             .Where(p => p.Uf == uf)
@@ -230,11 +242,17 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
         int? de, int? ate, CancellationToken ct)
     {
         var anos = await AnosAsync(ct);
-        if (anos.Count == 0) return (new PeriodoDto(0, 0), anos, []);
+        if (anos.Count == 0)
+        {
+            return (new PeriodoDto(0, 0), anos, []);
+        }
 
         var inicio = Math.Clamp(de ?? anos[0], anos[0], anos[^1]);
         var fim = Math.Clamp(ate ?? anos[^1], anos[0], anos[^1]);
-        if (inicio > fim) (inicio, fim) = (fim, inicio);
+        if (inicio > fim)
+        {
+            (inicio, fim) = (fim, inicio);
+        }
 
         var prefixos = anos
             .Where(a => a >= inicio && a <= fim)
@@ -296,7 +314,10 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     private async Task<CidadeCalculada?> CidadeAsync(string codigoIbge, int? de, int? ate, CancellationToken ct)
     {
         var municipio = (await MunicipiosAsync(ct)).FirstOrDefault(m => m.CodigoIbge == codigoIbge);
-        if (municipio is null) return null;
+        if (municipio is null)
+        {
+            return null;
+        }
 
         var (periodo, anos, prefixos) = await PeriodoAsync(de, ate, ct);
 

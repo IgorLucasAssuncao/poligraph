@@ -43,13 +43,19 @@ public class ServicoAfinidade(PoligraphDb db)
                 .ToList();
 
             var resultados = CalcularParaTodos(daCasa, votosPorPessoa);
-            if (resultados.Count == 0) continue;
+            if (resultados.Count == 0)
+            {
+                continue;
+            }
 
             var fichas = await CarregarFichasAsync(resultados, ct);
             var listados = uf is null
                 ? resultados
                 : [.. resultados.Where(r => fichas.GetValueOrDefault(r.PessoaId).Uf == uf)];
-            if (listados.Count == 0) continue;
+            if (listados.Count == 0)
+            {
+                continue;
+            }
 
             porCasa.Add(new ResultadoPorCasaDto(
                 Casa: casa,
@@ -62,7 +68,10 @@ public class ServicoAfinidade(PoligraphDb db)
                 Escala: Escala(listados)));
         }
 
-        if (porCasa.Count == 0) return null;
+        if (porCasa.Count == 0)
+        {
+            return null;
+        }
 
         return new RespostaAfinidadeDto(
             TotalPerguntasRespondidas: opinadas.Count,
@@ -120,7 +129,9 @@ public class ServicoAfinidade(PoligraphDb db)
         foreach (var linha in linhas)
         {
             if (!porPessoa.TryGetValue(linha.PessoaId, out var posicoes))
+            {
                 porPessoa[linha.PessoaId] = posicoes = [];
+            }
 
             posicoes[linha.Id] = new PosicaoParlamentar(linha.Valor, linha.Polaridade);
         }
@@ -142,7 +153,9 @@ public class ServicoAfinidade(PoligraphDb db)
             var resultado = CalculadoraAfinidade.Calcular(pessoaId, opinadas, posicoes);
 
             if (CalculadoraAfinidade.TemBaseSuficiente(resultado, opinadas.Count))
+            {
                 resultados.Add(resultado);
+            }
         }
 
         return resultados;
@@ -230,11 +243,17 @@ public class ServicoAfinidade(PoligraphDb db)
             .Where(p => perguntas.Contains(p.Id))
             .MaxAsync(p => (short?)p.Votacao!.Legislatura, ct);
 
-        if (legislatura is null) return null;
+        if (legislatura is null)
+        {
+            return null;
+        }
 
         var execucaoId = await ExecucaoVigente.IdAsync(_db, casa, legislatura.Value, ct);
 
-        if (execucaoId is null) return null;
+        if (execucaoId is null)
+        {
+            return null;
+        }
 
         var vizinhos = resultados
             .OrderByDescending(r => r.Proporcao)
@@ -248,7 +267,10 @@ public class ServicoAfinidade(PoligraphDb db)
                         && n.EixoX != null && n.EixoY != null)
             .ToDictionaryAsync(n => n.PessoaId, ct);
 
-        if (metricas.Count == 0) return null;
+        if (metricas.Count == 0)
+        {
+            return null;
+        }
 
         double x = 0, y = 0, somaDosPesos = 0;
         var contribuiram = 0;
@@ -256,10 +278,16 @@ public class ServicoAfinidade(PoligraphDb db)
 
         foreach (var vizinho in vizinhos)
         {
-            if (!metricas.TryGetValue(vizinho.PessoaId, out var metrica)) continue;
+            if (!metricas.TryGetValue(vizinho.PessoaId, out var metrica))
+            {
+                continue;
+            }
 
             var peso = vizinho.Proporcao * vizinho.Proporcao;
-            if (peso <= 0) continue;
+            if (peso <= 0)
+            {
+                continue;
+            }
 
             contribuiram++;
             x += metrica.EixoX!.Value * peso;
@@ -267,10 +295,15 @@ public class ServicoAfinidade(PoligraphDb db)
             somaDosPesos += peso;
 
             if (metrica.Comunidade is { } comunidade)
+            {
                 comunidades[comunidade] = comunidades.GetValueOrDefault(comunidade) + peso;
+            }
         }
 
-        if (somaDosPesos <= 0) return null;
+        if (somaDosPesos <= 0)
+        {
+            return null;
+        }
 
         return new PosicaoDoCidadaoDto(
             EixoX: (float)(x / somaDosPesos),

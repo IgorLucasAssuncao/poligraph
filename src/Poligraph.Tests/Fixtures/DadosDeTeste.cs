@@ -27,7 +27,10 @@ public static class DadosDeTeste
     /// </summary>
     public static async Task<string> SemearAsync(PoligraphDb db, CancellationToken ct = default)
     {
-        if (await db.Pessoas.AnyAsync(ct)) return "já semeado.";
+        if (await db.Pessoas.AnyAsync(ct))
+        {
+            return "já semeado.";
+        }
 
         var pessoas = GerarParlamentares();
         db.Pessoas.AddRange(pessoas);
@@ -159,7 +162,10 @@ public static class DadosDeTeste
 
             for (var v = 0; v < votacoes.Count; v++)
             {
-                if (i == 11 && v == 4) continue;
+                if (i == 11 && v == 4)
+                {
+                    continue;
+                }
 
                 var valor = i == 10 && v == 3 ? (short)0 : padrao[bloco][v];
 

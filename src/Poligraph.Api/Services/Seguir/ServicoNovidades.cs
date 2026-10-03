@@ -122,13 +122,22 @@ public class ServicoNovidades(PoligraphDb db)
         var contra = new List<VotoContraOPartidoDto>();
         foreach (var voto in votos)
         {
-            if (!orientacoes.TryGetValue(voto.VotacaoId, out var daVotacao)) continue;
+            if (!orientacoes.TryGetValue(voto.VotacaoId, out var daVotacao))
+            {
+                continue;
+            }
 
             var bancada = BancadaDoPartido.Achar(voto.PartidoNoVoto, daVotacao.Keys);
-            if (bancada is null || !Posicoes.Contains(daVotacao[bancada])) continue;
+            if (bancada is null || !Posicoes.Contains(daVotacao[bancada]))
+            {
+                continue;
+            }
 
             var orientacao = daVotacao[bancada];
-            if ((voto.Valor == 1) == (orientacao == "Sim")) continue;
+            if ((voto.Valor == 1) == (orientacao == "Sim"))
+            {
+                continue;
+            }
 
             contra.Add(new VotoContraOPartidoDto(
                 voto.PessoaId, nomes[voto.PessoaId], voto.VotacaoId, voto.Data,
@@ -159,12 +168,18 @@ public class ServicoNovidades(PoligraphDb db)
             var ordenados = daPessoa.OrderByDescending(v => v.Data).ToList();
             var atual = ordenados[0];
             var anterior = ordenados.FirstOrDefault(v => v.PartidoNoVoto != atual.PartidoNoVoto);
-            if (anterior is null) continue;
+            if (anterior is null)
+            {
+                continue;
+            }
 
             var primeiro = ordenados
                 .Where(v => v.PartidoNoVoto == atual.PartidoNoVoto && v.Data > anterior.Data)
                 .Min(v => v.Data);
-            if (primeiro < de || primeiro > ate) continue;
+            if (primeiro < de || primeiro > ate)
+            {
+                continue;
+            }
 
             trocas.Add(new TrocaDePartidoDto(
                 daPessoa.Key, nomes[daPessoa.Key], atual.Casa, anterior.PartidoNoVoto, atual.PartidoNoVoto, primeiro));
@@ -192,7 +207,10 @@ public class ServicoNovidades(PoligraphDb db)
             .OrderByDescending(d => d.Ano).ThenByDescending(d => d.Mes)
             .Select(d => new { d.Ano, d.Mes })
             .FirstOrDefaultAsync(ct);
-        if (ultimo is null) return [];
+        if (ultimo is null)
+        {
+            return [];
+        }
 
         var (ano, mes) = (ultimo.Ano, ultimo.Mes);
         var casas = await CasaDoVotoMaisRecenteAsync(ids, ct);
@@ -239,14 +257,20 @@ public class ServicoNovidades(PoligraphDb db)
             .Select(e => new { e.CodigoEmenda, PessoaId = e.PessoaId!.Value })
             .Distinct()
             .ToDictionaryAsync(e => e.CodigoEmenda, e => e.PessoaId, ct);
-        if (autorDoCodigo.Count == 0) return [];
+        if (autorDoCodigo.Count == 0)
+        {
+            return [];
+        }
 
         var codigos = autorDoCodigo.Keys.ToList();
         var pagamentos = _db.EmendasFavorecidos.AsNoTracking()
             .Where(f => codigos.Contains(f.CodigoEmenda) && f.Competencia < inicioDoMes);
 
         var mes = await pagamentos.MaxAsync(f => (DateOnly?)f.Competencia, ct);
-        if (mes is null) return [];
+        if (mes is null)
+        {
+            return [];
+        }
 
         var doMes = await pagamentos
             .Where(f => f.Competencia == mes)

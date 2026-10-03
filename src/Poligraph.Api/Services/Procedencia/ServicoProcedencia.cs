@@ -50,23 +50,55 @@ public class ServicoProcedencia(PoligraphDb db)
         string contexto, long? pessoa, short? legislatura, int? ano, TipoCasa? casa, int? de, int? ate,
         string? cnpj, string? categoria, string? uf, string? municipio, CancellationToken ct)
     {
-        if (!Contextos.Contains(contexto)) return null;
+        if (!Contextos.Contains(contexto))
+        {
+            return null;
+        }
+
         if (contexto.StartsWith("governo-", StringComparison.Ordinal))
+        {
             return de.HasValue && ate.HasValue ? await MontarAsync(DoGoverno(contexto, de.Value, ate.Value), ct) : null;
+        }
+
         if (contexto == "entidade")
+        {
             return cnpj?.Length == 14 && cnpj.All(char.IsAsciiDigit) ? await MontarAsync(DaEntidade(cnpj), ct) : null;
+        }
+
         if (contexto == "pagamentos")
         {
-            if (!de.HasValue || !ate.HasValue) return null;
-            if (uf is not null && (uf.Length != 2 || !uf.All(char.IsAsciiLetterUpper))) return null;
-            if (municipio is not null && (municipio.Length != 7 || !municipio.All(char.IsAsciiDigit))) return null;
+            if (!de.HasValue || !ate.HasValue)
+            {
+                return null;
+            }
+
+            if (uf is not null && (uf.Length != 2 || !uf.All(char.IsAsciiLetterUpper)))
+            {
+                return null;
+            }
+
+            if (municipio is not null && (municipio.Length != 7 || !municipio.All(char.IsAsciiDigit)))
+            {
+                return null;
+            }
+
             return await MontarAsync(Pagamentos(de.Value, ate.Value, uf, municipio), ct);
         }
-        if (contexto != "painel" && pessoa is null) return null;
-        if (contexto == "painel" && casa is null) return null;
+        if (contexto != "painel" && pessoa is null)
+        {
+            return null;
+        }
+
+        if (contexto == "painel" && casa is null)
+        {
+            return null;
+        }
 
         var l = legislatura ?? await Legislaturas.CorrenteAsync(_db, ct);
-        if (l is null) return null;
+        if (l is null)
+        {
+            return null;
+        }
 
         var recorte = contexto switch
         {
@@ -132,7 +164,11 @@ public class ServicoProcedencia(PoligraphDb db)
         var (de, ate) = ano.HasValue ? (ano.Value, ano.Value) : Legislaturas.AnosDeDespesa(legislatura);
         var periodo = de == ate ? $"{de}" : $"{de} a {ate}";
         var despesas = _db.Despesas.AsNoTracking().Where(d => d.PessoaId == pessoa && d.Ano >= de && d.Ano <= ate);
-        if (categoria is not null) despesas = despesas.Where(d => d.Categoria == categoria);
+        if (categoria is not null)
+        {
+            despesas = despesas.Where(d => d.Categoria == categoria);
+        }
+
         return new(
             $"Os lançamentos da cota parlamentar desta pessoa em {periodo}"
             + (categoria is null ? "" : $", na categoria \"{categoria}\"")
@@ -278,8 +314,10 @@ public class ServicoProcedencia(PoligraphDb db)
         var total = porCarga.Sum(c => c.Linhas);
         IReadOnlyList<LinhaDaProcedenciaDto>? lista = null;
         if (recorte.Linhas is not null && total <= LimiteDaLista)
+        {
             lista = [.. (await recorte.Linhas.Take(LimiteDaLista).ToListAsync(ct))
                 .Select(l => l with { Descricao = TextoSemCpf.Limpar(l.Descricao) })];
+        }
 
         return new ProcedenciaDto(
             recorte.Regra,

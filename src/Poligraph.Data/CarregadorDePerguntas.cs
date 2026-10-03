@@ -41,11 +41,15 @@ public static class CarregadorDePerguntas
     {
         var pasta = Path.Combine(AppContext.BaseDirectory, Pasta);
         if (!Directory.Exists(pasta))
+        {
             return $"curadoria NÃO carregada: {Pasta} não encontrada.";
+        }
 
         var lotes = Directory.GetFiles(pasta, "perguntas-*.json").OrderBy(a => a).ToList();
         if (lotes.Count == 0)
+        {
             return $"curadoria NÃO carregada: nenhum perguntas-*.json em {Pasta}.";
+        }
 
         var curadas = new List<PerguntaCurada>();
         var vistos = new HashSet<string>();
@@ -54,14 +58,19 @@ public static class CarregadorDePerguntas
             foreach (var curada in Ler(lote))
             {
                 if (!vistos.Add(curada.Id))
+                {
                     throw new InvalidOperationException(
                         $"pergunta '{curada.Id}' aparece em mais de um lote de curadoria.");
+                }
 
                 curadas.Add(curada);
             }
         }
 
-        if (curadas.Count == 0) return "curadoria vazia: nenhuma pergunta nos lotes.";
+        if (curadas.Count == 0)
+        {
+            return "curadoria vazia: nenhuma pergunta nos lotes.";
+        }
 
         var votacoes = curadas.Select(p => p.VotacaoId).ToList();
         var existentes = await db.Votacoes.AsNoTracking()
@@ -137,7 +146,10 @@ public static class CarregadorDePerguntas
 
         foreach (var (id, pergunta) in existentes)
         {
-            if (!ids.Contains(id)) pergunta.Ativa = false;
+            if (!ids.Contains(id))
+            {
+                pergunta.Ativa = false;
+            }
         }
 
         await db.SaveChangesAsync(ct);

@@ -85,7 +85,10 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     public static TheoryData<string> Rotas()
     {
         var dados = new TheoryData<string>();
-        foreach (var rota in RotasDoFront) dados.Add(rota);
+        foreach (var rota in RotasDoFront)
+        {
+            dados.Add(rota);
+        }
 
         return dados;
     }

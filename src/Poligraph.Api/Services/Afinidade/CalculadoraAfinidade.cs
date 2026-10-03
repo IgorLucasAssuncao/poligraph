@@ -24,9 +24,13 @@ public static class CalculadoraAfinidade
     /// </summary>
     public static bool EComparavel(short respostaCidadao, PosicaoParlamentar posicao)
     {
-        if (respostaCidadao == 0) return false;
+        if (respostaCidadao == 0)
+        {
+            return false;
+        }
+
         var efetiva = PosicaoEfetiva(posicao);
-        return efetiva is not null && efetiva != 0;
+        return efetiva is not null and not 0;
     }
 
     /// <summary>Houve acordo nesta pergunta? Só faz sentido se <see cref="EComparavel"/>.</summary>
@@ -46,11 +50,21 @@ public static class CalculadoraAfinidade
 
         foreach (var resposta in respostas)
         {
-            if (!posicoes.TryGetValue(resposta.PerguntaId, out var posicao)) continue;
-            if (!EComparavel(resposta.Valor, posicao)) continue;
+            if (!posicoes.TryGetValue(resposta.PerguntaId, out var posicao))
+            {
+                continue;
+            }
+
+            if (!EComparavel(resposta.Valor, posicao))
+            {
+                continue;
+            }
 
             comparaveis++;
-            if (PosicaoEfetiva(posicao) == resposta.Valor) acordos++;
+            if (PosicaoEfetiva(posicao) == resposta.Valor)
+            {
+                acordos++;
+            }
         }
 
         return new ResultadoAfinidade(pessoaId, acordos, comparaveis);
@@ -84,11 +98,24 @@ public static class CalculadoraAfinidade
 
         foreach (var resposta in respostas)
         {
-            if (!posicoes.TryGetValue(resposta.PerguntaId, out var posicao)) continue;
-            if (!EComparavel(resposta.Valor, posicao)) continue;
+            if (!posicoes.TryGetValue(resposta.PerguntaId, out var posicao))
+            {
+                continue;
+            }
 
-            if (PosicaoEfetiva(posicao) == resposta.Valor) acordou.Add(resposta.PerguntaId);
-            else discordou.Add(resposta.PerguntaId);
+            if (!EComparavel(resposta.Valor, posicao))
+            {
+                continue;
+            }
+
+            if (PosicaoEfetiva(posicao) == resposta.Valor)
+            {
+                acordou.Add(resposta.PerguntaId);
+            }
+            else
+            {
+                discordou.Add(resposta.PerguntaId);
+            }
         }
 
         return new DetalheDaAfinidade(acordou, discordou);

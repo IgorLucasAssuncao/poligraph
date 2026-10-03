@@ -60,9 +60,15 @@ public static class SeletorDeDesempate
         IReadOnlyDictionary<string, IReadOnlyDictionary<long, short>> candidatas,
         int quantidade)
     {
-        if (quantidade <= 0 || candidatas.Count == 0) return [];
+        if (quantidade <= 0 || candidatas.Count == 0)
+        {
+            return [];
+        }
 
-        if (empatados.Count < 2) return candidatas.Keys.Take(quantidade).ToList();
+        if (empatados.Count < 2)
+        {
+            return candidatas.Keys.Take(quantidade).ToList();
+        }
 
         List<List<long>> celulas = [[.. empatados]];
         var restantes = new HashSet<string>(candidatas.Keys);
@@ -100,9 +106,19 @@ public static class SeletorDeDesempate
             long favor = 0, contra = 0;
             foreach (var pessoaId in celula)
             {
-                if (!posicoes.TryGetValue(pessoaId, out var posicao)) continue;
-                if (posicao > 0) favor++;
-                else if (posicao < 0) contra++;
+                if (!posicoes.TryGetValue(pessoaId, out var posicao))
+                {
+                    continue;
+                }
+
+                if (posicao > 0)
+                {
+                    favor++;
+                }
+                else if (posicao < 0)
+                {
+                    contra++;
+                }
             }
 
             total += favor * contra;
@@ -125,15 +141,30 @@ public static class SeletorDeDesempate
 
             foreach (var pessoaId in celula)
             {
-                if (!posicoes.TryGetValue(pessoaId, out var posicao)) ausentes.Add(pessoaId);
-                else if (posicao > 0) favor.Add(pessoaId);
-                else if (posicao < 0) contra.Add(pessoaId);
-                else ausentes.Add(pessoaId);
+                if (!posicoes.TryGetValue(pessoaId, out var posicao))
+                {
+                    ausentes.Add(pessoaId);
+                }
+                else if (posicao > 0)
+                {
+                    favor.Add(pessoaId);
+                }
+                else if (posicao < 0)
+                {
+                    contra.Add(pessoaId);
+                }
+                else
+                {
+                    ausentes.Add(pessoaId);
+                }
             }
 
             foreach (var pedaco in (List<long>[])[favor, contra, ausentes])
             {
-                if (pedaco.Count > 1) novas.Add(pedaco);
+                if (pedaco.Count > 1)
+                {
+                    novas.Add(pedaco);
+                }
             }
         }
 

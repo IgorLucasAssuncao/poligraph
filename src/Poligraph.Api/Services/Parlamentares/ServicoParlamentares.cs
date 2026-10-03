@@ -124,7 +124,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// </remarks>
     private async Task<PresencaDto?> PresencaAsync(long id, TipoCasa? casa, short? legislatura, CancellationToken ct)
     {
-        if (casa is null || legislatura is null) return null;
+        if (casa is null || legislatura is null)
+        {
+            return null;
+        }
 
         var registros = _db.Votos.AsNoTracking().Where(v =>
             v.PessoaId == id && v.Votacao!.Casa == casa && v.Votacao.Legislatura == legislatura && v.Votacao.Plenario);
@@ -135,7 +138,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
             .Select(g => new { Presenca = g.Key, Quantos = g.Count(), Desde = g.Min(v => v.Votacao!.Data), Ate = g.Max(v => v.Votacao!.Data) })
             .ToListAsync(ct);
 
-        if (porPresenca.Count == 0) return null;
+        if (porPresenca.Count == 0)
+        {
+            return null;
+        }
 
         var desde = porPresenca.Min(p => p.Desde);
         var ate = porPresenca.Max(p => p.Ate);
@@ -182,10 +188,15 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
                     Ate = g.Max(v => v.Votacao!.Data),
                 })
                 .ToListAsync(ct);
-            if (porPessoa.Count == 0) return (double?)null;
+            if (porPessoa.Count == 0)
+            {
+                return (double?)null;
+            }
 
             if (casa == TipoCasa.SENADO)
+            {
                 return Mediana([.. porPessoa.Where(p => p.Registros > 0).Select(p => (double)p.Presentes / p.Registros)]);
+            }
 
             var datas = (await _db.Votacoes.AsNoTracking()
                     .Where(vt => vt.Casa == casa && vt.Legislatura == legislatura && vt.Plenario)
@@ -209,8 +220,14 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         while (baixo < alto)
         {
             var meio = (baixo + alto) / 2;
-            if (datas[meio] < data || (depois && datas[meio] == data)) baixo = meio + 1;
-            else alto = meio;
+            if (datas[meio] < data || (depois && datas[meio] == data))
+            {
+                baixo = meio + 1;
+            }
+            else
+            {
+                alto = meio;
+            }
         }
         return baixo;
     }
@@ -218,7 +235,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <summary>O patrimônio declarado em cada candidatura, da mais recente. Nulo para pessoa inexistente.</summary>
     public async Task<PatrimonioDoParlamentarDto?> PatrimonioAsync(long id, CancellationToken ct)
     {
-        if (!await _db.Pessoas.AnyAsync(p => p.Id == id, ct)) return null;
+        if (!await _db.Pessoas.AnyAsync(p => p.Id == id, ct))
+        {
+            return null;
+        }
 
         var linhas = await _db.Patrimonios.AsNoTracking().Where(p => p.PessoaId == id).ToListAsync(ct);
 
@@ -250,14 +270,20 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     public async Task<PaginaDto<VotoNaFichaDto>?> ListarVotosAsync(
         long id, int pagina, int tamanho, short? legislatura, string? busca, bool semRito, CancellationToken ct)
     {
-        if (!await _db.Pessoas.AnyAsync(p => p.Id == id, ct)) return null;
+        if (!await _db.Pessoas.AnyAsync(p => p.Id == id, ct))
+        {
+            return null;
+        }
 
         pagina = Math.Max(pagina, 1);
         tamanho = Math.Clamp(tamanho, 1, TamanhoMaximo);
 
         var alvo = await LegislaturaDaPessoaAsync(id, legislatura, ct);
         var votos = VotosDaPessoa(id, alvo, busca);
-        if (semRito) votos = votos.Where(v => v.Votacao!.Categoria != TipoCategoriaDeVotacao.PROCEDIMENTAL);
+        if (semRito)
+        {
+            votos = votos.Where(v => v.Votacao!.Categoria != TipoCategoriaDeVotacao.PROCEDIMENTAL);
+        }
 
         return new PaginaDto<VotoNaFichaDto>(
             await PaginaDeVotosAsync(votos, (pagina - 1) * tamanho, tamanho, ct),
@@ -271,7 +297,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
             .Where(v => v.PessoaId == id)
             .Select(v => v.Votacao!.Legislatura);
 
-        if (pedida is not null && await daPessoa.AnyAsync(l => l == pedida, ct)) return pedida;
+        if (pedida is not null && await daPessoa.AnyAsync(l => l == pedida, ct))
+        {
+            return pedida;
+        }
 
         return await daPessoa.MaxAsync(l => (short?)l, ct);
     }
@@ -297,7 +326,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
             .Select(p => new { p.Id, p.NomeExibicao, p.NomeCivil, p.UrlFoto })
             .FirstOrDefaultAsync(ct);
 
-        if (pessoa is null) return null;
+        if (pessoa is null)
+        {
+            return null;
+        }
 
         var mandatos = await MandatosAsync(id, ct);
         var mandato = mandatos.FirstOrDefault(m => m.Legislatura == legislatura) ?? mandatos.FirstOrDefault();
@@ -326,7 +358,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     private async Task<IReadOnlyList<ParlamentarNaListaDto>> ListaDaLegislaturaAsync(short? pedida, CancellationToken ct)
     {
         var legislatura = pedida ?? await Legislaturas.CorrenteAsync(_db, ct);
-        if (legislatura is null) return [];
+        if (legislatura is null)
+        {
+            return [];
+        }
 
         return await _cache.GetOrCreateAsync(("parlamentares", legislatura.Value), entrada =>
         {
@@ -424,7 +459,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         var votos = _db.Votos.AsNoTracking()
             .Where(v => v.PessoaId == id && v.Votacao!.Legislatura == legislatura);
 
-        if (string.IsNullOrWhiteSpace(busca) || busca.Trim().Length < TamanhoMinimoDaBusca) return votos;
+        if (string.IsNullOrWhiteSpace(busca) || busca.Trim().Length < TamanhoMinimoDaBusca)
+        {
+            return votos;
+        }
 
         foreach (var palavra in PalavrasDaBusca(busca))
         {
@@ -452,7 +490,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     private static IEnumerable<string> PalavrasDaBusca(string busca)
     {
         var termo = busca.Trim();
-        if (Regex.IsMatch(termo, @"^[A-Za-z]{2,5}\s*\d+(/\d{2,4})?$")) return [termo];
+        if (Regex.IsMatch(termo, @"^[A-Za-z]{2,5}\s*\d+(/\d{2,4})?$"))
+        {
+            return [termo];
+        }
 
         return termo.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .Where(p => p.Length >= TamanhoMinimoDaBusca);
@@ -466,6 +507,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     {
         var padrao = new StringBuilder();
         foreach (var letra in Regex.Escape(SemAcento(termo).ToLowerInvariant()))
+        {
             padrao.Append(letra switch
             {
                 'a' => "[aáàâã]",
@@ -476,6 +518,8 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
                 'c' => "[cç]",
                 _ => letra.ToString(),
             });
+        }
+
         return padrao.ToString();
     }
 
@@ -530,11 +574,17 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     private async Task<List<SimilarNaFichaDto>> MaisSimilaresAsync(
         long id, TipoCasa? casa, short? legislatura, CancellationToken ct)
     {
-        if (casa is null || legislatura is null) return [];
+        if (casa is null || legislatura is null)
+        {
+            return [];
+        }
 
         var execucao = await ExecucaoVigente.IdAsync(_db, casa.Value, legislatura.Value, ct);
 
-        if (execucao is null) return [];
+        if (execucao is null)
+        {
+            return [];
+        }
 
         var pares = await _db.Similaridades.AsNoTracking()
             .Where(s => s.ExecucaoId == execucao
@@ -595,18 +645,27 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         long id, TipoCasa? casa, short? legislatura,
         string partido, CancellationToken ct)
     {
-        if (casa is not TipoCasa.CAMARA || legislatura is null) return null;
+        if (casa is not TipoCasa.CAMARA || legislatura is null)
+        {
+            return null;
+        }
 
         var execucaoId = await ExecucaoVigente.IdAsync(_db, TipoCasa.CAMARA, legislatura.Value, ct);
 
-        if (execucaoId is null) return null;
+        if (execucaoId is null)
+        {
+            return null;
+        }
 
         var metrica = await _db.NosMetrica.AsNoTracking()
             .Where(n => n.PessoaId == id && n.ExecucaoId == execucaoId)
             .Select(n => new { n.Governismo, n.Disciplina, n.BaseDisciplina })
             .FirstOrDefaultAsync(ct);
 
-        if (metrica is null) return null;
+        if (metrica is null)
+        {
+            return null;
+        }
 
         var baseGoverno = await BaseComparavelAsync(id, legislatura.Value, "Governo", ct);
         var (medianaGovernismo, medianaDisciplina) = await MedianasDaCasaAsync(execucaoId.Value, ct);
@@ -633,7 +692,11 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
 
     private static double? Mediana(List<double> valores)
     {
-        if (valores.Count == 0) return null;
+        if (valores.Count == 0)
+        {
+            return null;
+        }
+
         valores.Sort();
         var meio = valores.Count / 2;
         return valores.Count % 2 == 1 ? valores[meio] : (valores[meio - 1] + valores[meio]) / 2;
@@ -675,7 +738,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <summary>A página do parlamentar na casa em que votou por último.</summary>
     private async Task<string?> PaginaOficialAsync(long id, TipoCasa? casa, CancellationToken ct)
     {
-        if (casa is null) return null;
+        if (casa is null)
+        {
+            return null;
+        }
 
         var fonte = casa.Value.ComoFonte();
         var idNaCasa = await _db.PessoaFonteIds.AsNoTracking()

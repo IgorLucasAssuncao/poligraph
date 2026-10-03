@@ -54,7 +54,9 @@ public static class EndpointsAfinidade
 
         var uf = requisicao.Uf?.Trim().ToUpperInvariant();
         if (uf is not null && !Ufs.Todas.Contains(uf))
+        {
             return Results.Problem($"UF desconhecida: {uf}.", statusCode: StatusCodes.Status400BadRequest);
+        }
 
         var resposta = await afinidade.CalcularAsync(opinadas, uf, ct);
 

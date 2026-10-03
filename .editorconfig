@@ -199,3 +199,6 @@ dotnet_diagnostic.CS8618.severity = none    # fixtures inicializam em Initialize
 [**/Migrations/*.cs]
 generated_code = true
 dotnet_analyzer_diagnostic.severity = none
+
+# Chave em todo if, else, for, foreach e while (pedido do autor, 2026-10-03).
+dotnet_diagnostic.IDE0011.severity = warning

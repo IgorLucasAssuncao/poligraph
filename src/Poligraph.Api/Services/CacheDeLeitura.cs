@@ -22,10 +22,16 @@ public sealed class CacheDeLeitura(IMemoryCache cache)
     /// <summary>A resposta guardada, ou a calculada agora e guardada por <see cref="Validade"/>.</summary>
     public async Task<T> ObterAsync<T>(object chave, Func<Task<T>> calcular)
     {
-        if (_cache.TryGetValue(chave, out T? guardado) && guardado is not null) return guardado;
+        if (_cache.TryGetValue(chave, out T? guardado) && guardado is not null)
+        {
+            return guardado;
+        }
 
         var calculado = await calcular();
-        if (calculado is not null) _cache.Set(chave, calculado, Validade);
+        if (calculado is not null)
+        {
+            _cache.Set(chave, calculado, Validade);
+        }
 
         return calculado;
     }

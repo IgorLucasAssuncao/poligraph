@@ -27,7 +27,10 @@ public class ServicoBusca(ServicoParlamentares parlamentares, ServicoMapaDeEmend
 
     public async Task<BuscaDto> BuscarAsync(string? termo, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(termo) || termo.Trim().Length < TamanhoMinimo) return new BuscaDto([], [], []);
+        if (string.IsNullOrWhiteSpace(termo) || termo.Trim().Length < TamanhoMinimo)
+        {
+            return new BuscaDto([], [], []);
+        }
 
         var busca = termo.Trim();
 

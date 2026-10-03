@@ -14,7 +14,10 @@ public static class ConfiguracaoDaDocumentacao
     /// </remarks>
     public static WebApplication MapearDocumentacao(this WebApplication app)
     {
-        if (!app.Environment.IsDevelopment()) return app;
+        if (!app.Environment.IsDevelopment())
+        {
+            return app;
+        }
 
         app.MapOpenApi();
         app.MapScalarApiReference(opcoes => opcoes

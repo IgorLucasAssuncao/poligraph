@@ -40,7 +40,10 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
         (pagina, tamanho) = Normalizar(pagina, tamanho);
 
         var alvo = await AnoAlvoAsync(id, ano, ct);
-        if (alvo is null) return new PaginaDto<FavorecidoDaEmendaDto>([], pagina, tamanho, 0);
+        if (alvo is null)
+        {
+            return new PaginaDto<FavorecidoDaEmendaDto>([], pagina, tamanho, 0);
+        }
 
         var identificados = FavorecidosIdentificados(EmendasDoAno(id, alvo.Value).Select(e => e.CodigoEmenda).Distinct());
 
@@ -62,7 +65,10 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
         (pagina, tamanho) = Normalizar(pagina, tamanho);
 
         var alvo = await AnoAlvoAsync(id, ano, ct);
-        if (alvo is null) return new PaginaDto<ConvenioDaEmendaDto>([], pagina, tamanho, 0);
+        if (alvo is null)
+        {
+            return new PaginaDto<ConvenioDaEmendaDto>([], pagina, tamanho, 0);
+        }
 
         var convenios = ConveniosDasEmendas(EmendasDoAno(id, alvo.Value).Select(e => e.CodigoEmenda).Distinct());
 
@@ -85,7 +91,10 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
         (pagina, tamanho) = Normalizar(pagina, tamanho);
 
         var alvo = await AnoAlvoAsync(id, ano, ct);
-        if (alvo is null) return new PaginaDto<EmendaNaListaDto>([], pagina, tamanho, 0);
+        if (alvo is null)
+        {
+            return new PaginaDto<EmendaNaListaDto>([], pagina, tamanho, 0);
+        }
 
         var porCodigo = EmendasDoAno(id, alvo.Value)
             .GroupBy(e => e.CodigoEmenda)
@@ -189,7 +198,10 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
     /// </remarks>
     private async Task<int?> AnoAlvoAsync(long id, int? ano, CancellationToken ct, short? legislatura = null)
     {
-        if (ano is not null) return ano;
+        if (ano is not null)
+        {
+            return ano;
+        }
 
         var daPessoa = _db.Emendas.AsNoTracking().Where(e => e.PessoaId == id);
         if (legislatura is { } l)
@@ -202,7 +214,10 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
             .Distinct()
             .ToListAsync(ct);
 
-        if (anos.Count == 0) return null;
+        if (anos.Count == 0)
+        {
+            return null;
+        }
 
         var corrente = DateTimeOffset.UtcNow.Year;
         var fechados = anos.Where(a => a < corrente).ToList();
@@ -259,7 +274,10 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
             .Select(f => FavorecidoDaEmendaDto.CnpjPublico(f.Documento, f.NaturezaJuridica))
             .OfType<string>()
             .ToList();
-        if (cnpjs.Count == 0) return [];
+        if (cnpjs.Count == 0)
+        {
+            return [];
+        }
 
         var (de, ate) = Legislaturas.AnosDeDespesa(Legislaturas.DoAnoDeEmenda(anoDaEmenda));
 

@@ -1,8 +1,8 @@
 ﻿using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using Poligraph.Data;
 using Poligraph.Api.Dtos;
 using Poligraph.Api.Services;
+using Poligraph.Data;
 
 namespace Poligraph.Api.Endpoints;
 
@@ -87,24 +87,32 @@ public static class EndpointsSeguir
         long pessoaId, string? versao, bool? aceite, ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
     {
         if (!await db.Pessoas.AnyAsync(p => p.Id == pessoaId, ct))
+        {
             return Results.NotFound();
+        }
 
         var usuarioId = SessaoDoUsuario.IdDoUsuario(principal);
 
         if (await db.Segue.AnyAsync(s => s.UsuarioId == usuarioId && s.PessoaId == pessoaId, ct))
+        {
             return Results.NoContent();
+        }
 
         if (!await EmExercicioAsync(db, pessoaId, ct))
+        {
             return Results.Problem(
                 statusCode: StatusCodes.Status422UnprocessableEntity,
                 title: "Só é possível seguir quem está em exercício.",
                 detail: "A pessoa não votou na legislatura atual. A ficha dela continua aberta para consulta.");
+        }
 
         if (!await ConsentimentoEmDiaAsync(db, usuarioId, versao, aceite == true, ct))
+        {
             return Results.Problem(
                 statusCode: StatusCodes.Status428PreconditionRequired,
                 title: "Falta o consentimento para seguir.",
                 detail: "A lista de quem você segue indica posição política, e só é gravada com o seu consentimento.");
+        }
 
         db.Segue.Add(new SegueModel { UsuarioId = usuarioId, PessoaId = pessoaId });
         await db.SaveChangesAsync(ct);
@@ -126,8 +134,15 @@ public static class EndpointsSeguir
                                    && c.Finalidade == TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES
                                    && c.RevogadoEm == null, ct);
 
-        if (vivo is not null && (versao is null || vivo.Versao == versao)) return true;
-        if (!aceite || string.IsNullOrWhiteSpace(versao) || versao.Length > 40) return false;
+        if (vivo is not null && (versao is null || vivo.Versao == versao))
+        {
+            return true;
+        }
+
+        if (!aceite || string.IsNullOrWhiteSpace(versao) || versao.Length > 40)
+        {
+            return false;
+        }
 
         if (vivo is not null)
         {

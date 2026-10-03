@@ -305,7 +305,10 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
         foreach (var (pessoaId, acordosConcordando) in concordando)
         {
             var votouNaQ5 = await PosicaoNaQ5Async(pessoaId);
-            if (votouNaQ5 is null or 0) continue;
+            if (votouNaQ5 is null or 0)
+            {
+                continue;
+            }
 
             var acordosDiscordando = discordando[pessoaId];
 

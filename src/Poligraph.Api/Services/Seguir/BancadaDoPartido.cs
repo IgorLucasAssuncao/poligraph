@@ -18,16 +18,25 @@ public static class BancadaDoPartido
     public static string? Achar(string? partido, IEnumerable<string> bancadas)
     {
         var alvo = Normal(partido);
-        if (alvo.Length == 0) return null;
+        if (alvo.Length == 0)
+        {
+            return null;
+        }
 
         string? daFederacao = null;
         foreach (var bancada in bancadas)
         {
             var nome = Normal(bancada);
-            if (MesmaSigla(nome, alvo)) return bancada;
+            if (MesmaSigla(nome, alvo))
+            {
+                return bancada;
+            }
+
             if (nome.StartsWith("FDR ", StringComparison.Ordinal)
                 && nome[4..].Split('-').Any(membro => MesmaSigla(membro, alvo)))
+            {
                 daFederacao = bancada;
+            }
         }
 
         return daFederacao;
@@ -40,7 +49,10 @@ public static class BancadaDoPartido
         var semAcento = new StringBuilder(decomposto.Length);
         foreach (var c in decomposto)
         {
-            if (c < 128) semAcento.Append(c);
+            if (c < 128)
+            {
+                semAcento.Append(c);
+            }
         }
 
         var partes = semAcento.ToString().ToUpperInvariant().Replace("...", "")

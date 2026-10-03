@@ -13,7 +13,10 @@ public class ValidadorGoogle(IConfiguration configuracao) : IValidadorGoogle
     public async Task<PerfilGoogleDto?> ValidarAsync(string idToken, CancellationToken ct = default)
     {
         var clientId = _configuracao["Google:ClientId"];
-        if (string.IsNullOrWhiteSpace(clientId)) return null;
+        if (string.IsNullOrWhiteSpace(clientId))
+        {
+            return null;
+        }
 
         try
         {

@@ -51,7 +51,10 @@ public static class EndpointsAutenticacao
         CancellationToken ct)
     {
         var perfil = await validador.ValidarAsync(requisicao.IdToken, ct);
-        if (perfil is null) return Results.Unauthorized();
+        if (perfil is null)
+        {
+            return Results.Unauthorized();
+        }
 
         var usuario = await contas.SalvarPerfilAsync(perfil, ct);
         await SessaoDoUsuario.EmitirAsync(contexto, usuario);

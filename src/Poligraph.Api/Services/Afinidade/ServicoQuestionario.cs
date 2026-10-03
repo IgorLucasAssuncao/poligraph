@@ -98,7 +98,10 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade, Cac
             .Take(DesempateDaCamara * 4)
             .ToListAsync(ct);
 
-        if (candidatas.Count == 0) return [];
+        if (candidatas.Count == 0)
+        {
+            return [];
+        }
 
         var empatados = await EmpatadosNoTopoAsync(respostas, ct);
         var posicoes = await PosicoesAsync(candidatas, ct);
@@ -182,18 +185,27 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade, Cac
         IReadOnlyList<RespostaCidadao> respostas, CancellationToken ct)
     {
         var opinadas = respostas.Where(r => r.Valor != 0).ToList();
-        if (opinadas.Count == 0) return [];
+        if (opinadas.Count == 0)
+        {
+            return [];
+        }
 
         var casaDaPergunta = await _afinidade.CasaDasPerguntasAsync(opinadas, ct);
         var daCamara = opinadas
             .Where(r => casaDaPergunta.GetValueOrDefault(r.PerguntaId) == TipoCasa.CAMARA)
             .ToList();
 
-        if (daCamara.Count == 0) return [];
+        if (daCamara.Count == 0)
+        {
+            return [];
+        }
 
         var votos = await _afinidade.CarregarVotosAsync(daCamara, ct);
         var resultados = _afinidade.CalcularParaTodos(daCamara, votos);
-        if (resultados.Count == 0) return [];
+        if (resultados.Count == 0)
+        {
+            return [];
+        }
 
         var topo = resultados.Max(r => r.Proporcao);
 
@@ -236,7 +248,10 @@ public class ServicoQuestionario(PoligraphDb db, ServicoAfinidade afinidade, Cac
                 var efetiva = CalculadoraAfinidade.PosicaoEfetiva(
                     new PosicaoParlamentar(linha.Valor, linha.Polaridade));
 
-                if (efetiva is not null and not 0) posicoes[linha.PessoaId] = efetiva.Value;
+                if (efetiva is not null and not 0)
+                {
+                    posicoes[linha.PessoaId] = efetiva.Value;
+                }
             }
 
             porPergunta[grupo.Key] = posicoes;

@@ -20,7 +20,10 @@ public abstract class BaseIntegracao(FixturePostgres postgres) : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        if (!postgres.DockerDisponivel) return;
+        if (!postgres.DockerDisponivel)
+        {
+            return;
+        }
 
         await postgres.LimparAsync();
         Db = postgres.CriarContexto();
@@ -28,7 +31,10 @@ public abstract class BaseIntegracao(FixturePostgres postgres) : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        if (Db is not null) await Db.DisposeAsync();
+        if (Db is not null)
+        {
+            await Db.DisposeAsync();
+        }
     }
 
     protected PoligraphDb CriarContexto() => postgres.CriarContexto();

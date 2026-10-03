@@ -15,7 +15,10 @@ public static class OrdemDeConcordancia
     /// <summary>Limite inferior de Wilson para <paramref name="iguais"/> em <paramref name="base"/>. Zero sem base.</summary>
     public static double LimiteInferior(int iguais, int @base)
     {
-        if (@base <= 0) return 0;
+        if (@base <= 0)
+        {
+            return 0;
+        }
 
         var p = (double)iguais / @base;
         var z2 = Z * Z;

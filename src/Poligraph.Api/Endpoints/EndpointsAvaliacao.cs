@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using Poligraph.Data;
 using Poligraph.Api.Dtos;
+using Poligraph.Data;
 
 namespace Poligraph.Api.Endpoints;
 
@@ -37,7 +37,9 @@ public static class EndpointsAvaliacao
         CancellationToken ct)
     {
         if (requisicao.PosicaoAutodeclarada is < -3 or > 3)
+        {
             return Results.BadRequest(new { erro = "posicao_fora_da_escala" });
+        }
 
         db.Avaliacoes.Add(new AvaliacaoQuestionarioModel
         {
