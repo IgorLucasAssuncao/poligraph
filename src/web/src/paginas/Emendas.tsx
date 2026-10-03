@@ -33,6 +33,7 @@ import { passosDasEmendas } from '../tour';
 import { Bloco, Esqueleto, EsqueletoDePainel, EsqueletoDeTexto } from '../componentes/Esqueleto';
 import { UFS } from '../ufs';
 import { ConfereComOPortal } from '../componentes/ConfereComOPortal';
+import { ComProcedencia } from '../componentes/ModoAnalise';
 
 /**
  * Para onde foi o dinheiro de emenda, no mapa — e quem o mandou para a sua cidade.
@@ -202,6 +203,7 @@ export function Emendas() {
  * que só repassa" exigia saber que o banco é intermediário de pagamento (2026-10-01).
  */
 function ForaDoMapa({ brasil }: { brasil: MapaDoBrasil }) {
+  const periodo = brasil.periodo;
   const numeros: [string, number, string][] = [
     ['Pago em emendas', brasil.recebido, 'das emendas do período, pago até hoje'],
     ['No mapa', brasil.noMapa, 'sabemos em que cidade fica quem recebeu'],
@@ -214,7 +216,18 @@ function ForaDoMapa({ brasil }: { brasil: MapaDoBrasil }) {
       {numeros.map(([rotulo, valor, definicao]) => (
         <div key={rotulo} className="numero-do-ano">
           <p className="numero-rotulo">{rotulo}</p>
-          <p className="numero-valor">{reaisCompacto(valor)}</p>
+          <p className="numero-valor">
+            {rotulo === 'Pago em emendas' ? (
+              <ComProcedencia
+                consulta={{ contexto: 'pagamentos', de: periodo.de, ate: periodo.ate }}
+                rotulo={`Pago nas emendas de ${textoDoPeriodo(periodo)}`}
+              >
+                {reaisCompacto(valor)}
+              </ComProcedencia>
+            ) : (
+              reaisCompacto(valor)
+            )}
+          </p>
           <p className="numero-definicao">{definicao}</p>
         </div>
       ))}

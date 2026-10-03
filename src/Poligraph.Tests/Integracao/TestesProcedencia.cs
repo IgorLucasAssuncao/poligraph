@@ -55,7 +55,26 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
         Assert.Equal(b, Assert.Single(lida.Cargas).Id);
     }
 
+    /// <summary>O "Pago em emendas" do mapa: os pagamentos das emendas do período, pelo ano no código.</summary>
+    [SkippableFact]
+    public async Task Pagamentos_DoPeriodoDaEmenda_PeloCodigo()
+    {
+        ExigeDocker();
+        var carga = Carga('d', "https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares/UNICO");
+        Db.Cargas.Add(carga);
+        await Db.SaveChangesAsync();
+        Db.EmendasFavorecidos.AddRange(
+            Favorecido("202541840004", carga.Id), Favorecido("202541840005", carga.Id), Favorecido("202341840001", null));
+        await Db.SaveChangesAsync();
+
+        var lida = await LerAsync("/api/procedencia/pagamentos?de=2025&ate=2025");
+
+        Assert.Equal((2, 0), (lida.Linhas, lida.LinhasSemCarga));
+        Assert.Equal(carga.Id, Assert.Single(lida.Cargas).Id);
+    }
+
     [SkippableTheory]
+    [InlineData("/api/procedencia/pagamentos?de=2025")]
     [InlineData("/api/procedencia/inventado?pessoa=1&legislatura=57")]
     [InlineData("/api/procedencia/cota?legislatura=57")]
     [InlineData("/api/procedencia/painel?legislatura=57")]
@@ -86,6 +105,12 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
     {
         Fonte = TipoFonteDeCarga.CAMARA, Url = url, Sha256 = new string(digito, 64), Bytes = 10,
         Comando = "poligraph_etl cota", Versao = "etl-0123456789ab",
+    };
+
+    private static EmendaFavorecidoModel Favorecido(string codigo, long? carga) => new()
+    {
+        CodigoEmenda = codigo, Competencia = new DateOnly(2025, 3, 1), Tipo = TipoFavorecido.PESSOA_JURIDICA,
+        Documento = "12345678000190", Nome = "EMPRESA", Uf = "PR", Valor = 10m, CargaId = carga
     };
 
     private static DespesaModel Despesa(long pessoaId, short ano, long? carga) => new()

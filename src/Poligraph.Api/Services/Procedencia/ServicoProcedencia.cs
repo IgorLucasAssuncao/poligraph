@@ -23,7 +23,7 @@ public class ServicoProcedencia(PoligraphDb db)
 {
     /// <summary>Os contextos que a rota aceita, na ordem em que aparecem na ficha.</summary>
     public static readonly IReadOnlyList<string> Contextos =
-        ["votos", "cota", "emendas", "campanha", "patrimonio", "painel"];
+        ["votos", "cota", "emendas", "campanha", "patrimonio", "painel", "pagamentos"];
 
     private readonly PoligraphDb _db = db;
 
@@ -32,10 +32,15 @@ public class ServicoProcedencia(PoligraphDb db)
     /// <param name="legislatura">Sem ela, a corrente.</param>
     /// <param name="ano">Em <c>emendas</c> e <c>cota</c>, um ano em vez do mandato inteiro; em <c>campanha</c> e <c>patrimonio</c>, a eleição em vez da que deu o mandato.</param>
     /// <param name="casa">Só em <c>painel</c>.</param>
+    /// <param name="de">Só em <c>pagamentos</c>: o primeiro ano da emenda, como no mapa.</param>
+    /// <param name="ate">Só em <c>pagamentos</c>: o último ano da emenda.</param>
     public async Task<ProcedenciaDto?> ObterAsync(
-        string contexto, long? pessoa, short? legislatura, int? ano, TipoCasa? casa, CancellationToken ct)
+        string contexto, long? pessoa, short? legislatura, int? ano, TipoCasa? casa, int? de, int? ate,
+        CancellationToken ct)
     {
         if (!Contextos.Contains(contexto)) return null;
+        if (contexto == "pagamentos")
+            return de is { } inicio && ate is { } fim ? await MontarAsync(RegraDosPagamentos(inicio, fim), Pagamentos(inicio, fim), ct) : null;
         if (contexto != "painel" && pessoa is null) return null;
         if (contexto == "painel" && casa is null) return null;
 
@@ -126,6 +131,21 @@ public class ServicoProcedencia(PoligraphDb db)
             _db.Patrimonios.AsNoTracking()
                 .Where(p => p.PessoaId == pessoa && p.AnoEleicao == eleicao)
                 .Select(p => p.CargaId));
+    }
+
+    private static string RegraDosPagamentos(int de, int ate) =>
+        $"Os pagamentos das emendas {(de == ate ? $"de {de}" : $"de {de} a {ate}")}, do Portal da Transparência, "
+        + "uma linha por emenda, mês e favorecido. O ano é o da emenda, e o pagamento pode ser de anos depois.";
+
+    /// <remarks>
+    /// <para>O mesmo filtro do mapa (<c>ServicoMapaDeEmendas.DoPeriodo</c>): o ano da emenda são os quatro primeiros dígitos do código.</para>
+    /// </remarks>
+    private IQueryable<long?> Pagamentos(int de, int ate)
+    {
+        var prefixos = Enumerable.Range(de, ate - de + 1).Select(a => a.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+        return _db.EmendasFavorecidos.AsNoTracking()
+            .Where(f => prefixos.Contains(f.CodigoEmenda.Substring(0, 4)))
+            .Select(f => f.CargaId);
     }
 
     private (string, IQueryable<long?>) Painel(TipoCasa casa, short legislatura) =>

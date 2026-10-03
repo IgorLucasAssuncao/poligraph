@@ -21,9 +21,9 @@ public static class EndpointsProcedencia
     /// votos, cota, emendas, campanha, patrimonio (com <c>pessoa</c>) e painel (com <c>casa</c>).
     /// </summary>
     private static async Task<IResult> ObterAsync(
-        string contexto, long? pessoa, short? legislatura, int? ano, TipoCasa? casa,
+        string contexto, long? pessoa, short? legislatura, int? ano, TipoCasa? casa, int? de, int? ate,
         ServicoProcedencia servico, CancellationToken ct) =>
-        await servico.ObterAsync(contexto, pessoa, legislatura, ano, casa, ct) is { } procedencia
+        await servico.ObterAsync(contexto, pessoa, legislatura, ano, casa, de, ate, ct) is { } procedencia
             ? Results.Ok(procedencia)
             : Results.Problem(
                 $"Contexto desconhecido ou sem o parâmetro dele. Contextos: {string.Join(", ", ServicoProcedencia.Contextos)}.",
