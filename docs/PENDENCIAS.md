@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-10-02 · **109 resolvidas · 64 abertas**
+> **Atualizado:** 2026-10-02 · **110 resolvidas · 63 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -60,7 +60,7 @@ Pendência 41).
 | **Pendência 80** | 🟡 **"Votos com posição" conta abstenção na ficha e não no painel.** A ficha (`ServicoParlamentares`, `Valor != null`) chama de "votos com posição" uma contagem que inclui a abstenção (`Valor = 0`); o painel do Início (`ServicoPanorama`) diz no código que "abstenção não é posição" e conta só Sim e Não. Achado ao ligar o modo análise, que repete a regra da ficha para o número bater. Decidir um termo e um recorte, e usar os dois nos dois lugares | Média |
 | ✅ ~~Pendência 78~~ | **Resolvida (2026-10-02)** — [`fluxos-das-casas.md`](fluxos-das-casas.md): o caminho da proposição (apresentação, comissões, urgência, plenário, casa revisora, sanção e veto), o quórum por tipo (PL, PLP, PEC em dois turnos, MPV, PDL), a votação em plenário por dentro (simbólica e nominal, destaque e polaridade, orientação, abstenção e obstrução), o que muda no Senado (mandato de 8 anos, dois suplentes, voto secreto de autoridade, sem orientação publicada) e a emenda do empenho ao pagamento, com os tipos de emenda. Cada passo diz onde aparece na base. O glossário ganhou simbólica, turno, quórum, obstrução, liquidação, pagamento, restos a pagar, tipos de emenda, mandato e suplente. As citações de lei são da Constituição e dos regimentos, pelo artigo: conferir antes de levar ao texto do TCC | — |
 | ✅ ~~Pendência 79~~ | **Resolvida (2026-10-02)** — os 282 comentários de dentro de funções da ETL e dos testes foram para a docstring da função dona; o de fim de linha leva o código que comentava. Ficam só diretivas (`noqa`, `pragma`). Uma trava no script recusava gravar arquivo em que alguma nota não chegasse à docstring | — |
-| **Pendência 67** | 🟡 **Amostra manual contra a fonte oficial**: 20 votações sorteadas por casa e legislatura, conferidas no site da casa. Vira achado ([`plano/09 §5.3`](plano/09-apresentacao-validacao-e-valor.md)) | 🟡 Média |
+| ✅ ~~Pendência 67~~ | **Resolvida (2026-10-02)** — [achado #39](achados/039-a-amostra-confere.md). Comando `amostra` (e botão `etl-amostra`): sorteio com semente fixa, 20 votações por casa e legislatura, conferidas voto a voto contra um segundo serviço oficial (Câmara: API por votação; Senado: lista por data). 267 votações e 49.109 votos, **0 diferenças**. É a versão repetível da amostra manual; a lista sorteada serve também para conferir no site, a olho | — |
 | ✅ ~~Pendência 68~~ | **Resolvida (2026-10-02)** — o painel conta como votação só a que tem voto nominal, e o cartão diz quantas ficaram de fora. Não era só a 51ª: a 52ª tem 309 de 600 sem voto nominal, e a 54ª, 455 de 905 | — |
 
 ### 🖥️ Usabilidade — avaliação heurística (2026-10-01 e 02)
@@ -1391,13 +1391,13 @@ avaliação rodar cedo demais.
 
 ---
 
-## ✅ Resolvidas — 109
+## ✅ Resolvidas — 110
 
 `A1` `A5` `API1` `API2` `API3` `API4` `API6` `B1` `B2` `B3` `B4` `B5` `B7` `C1` `C2` `C3` `C4`
 `C6` `C8` `C13` `C14` `CT1` `CT2` `CT3` `CT4` `CT5` `CT6` `CT7` `D1` `D3` `D5` `ER1` `ER3`
 `ER4` `ER5` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `Pendência 1` `Pendência 2` `Pendência 4` `Pendência 6` `Pendência 8` `Pendência 9` `Pendência 10`
 `Pendência 11` `Pendência 12` `Pendência 13` `Pendência 17` `Pendência 28` `Pendência 31` `Pendência 32` `Pendência 35` `Pendência 36` `Pendência 37` `Pendência 38` `Pendência 39` `Pendência 40`
-`Pendência 41` `Pendência 42` `Pendência 43` `Pendência 45` `Pendência 46` `Pendência 47` `Pendência 48` `Pendência 49` `Pendência 50` `Pendência 51` `Pendência 54` `Pendência 55` `Pendência 59` `Pendência 60` `Pendência 61` `Pendência 63` `Pendência 64` `Pendência 66` `Pendência 68` `Pendência 69` `Pendência 74` `Pendência 76` `Pendência 77` `Pendência 78` `Pendência 79` `PP1` `PP3` `PP4`
+`Pendência 41` `Pendência 42` `Pendência 43` `Pendência 45` `Pendência 46` `Pendência 47` `Pendência 48` `Pendência 49` `Pendência 50` `Pendência 51` `Pendência 54` `Pendência 55` `Pendência 59` `Pendência 60` `Pendência 61` `Pendência 63` `Pendência 64` `Pendência 66` `Pendência 67` `Pendência 68` `Pendência 69` `Pendência 74` `Pendência 76` `Pendência 77` `Pendência 78` `Pendência 79` `PP1` `PP3` `PP4`
 `RE-01` `RQ1` `RQ2` `RQ3` `RQ4` `RQ8` `RQ9` `SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2`
 `TS3` `TS4` `TS6`
 

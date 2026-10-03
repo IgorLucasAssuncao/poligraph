@@ -49,6 +49,7 @@ os testes).
 | `curar` | Lista votações candidatas a pergunta do questionário, das mais divididas | `--casa`, `--legislatura`, `--limite` |
 | `validar` | Mede o questionário e comunidade × partido. Só lê | `--legislatura`, `--divisao-minima` |
 | `conferir` | Regras de plausibilidade sobre o banco inteiro. Falha se alguma der ERRO | — |
+| `amostra` | Sorteia votações e as confere, voto a voto, contra um segundo serviço oficial de cada casa (achado #39) | `--por-grupo 20`, `--semente 2026` |
 
 ### Pessoas e dinheiro — o perfil, fora da afinidade
 

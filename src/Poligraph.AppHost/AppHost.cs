@@ -242,6 +242,17 @@ builder.AddDockerfile("etl-conferir", "../..", "docker/Dockerfile.etl")
     .WithArgs("conferir")
     .WithParentRelationship(etlIngerir);
 
+// Pendência 67 — votações sorteadas conferidas, voto a voto, contra um segundo serviço
+// oficial de cada casa. Só lê o banco; grava o resultado no cache.
+builder.AddDockerfile("etl-amostra", "../..", "docker/Dockerfile.etl")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithExplicitStart()
+    .WithArgs("amostra")
+    .WithVolume("poligraph-etl-cache", "/etl/.cache")
+    .WithEnvironment("POLIGRAPH_CACHE", "/etl/.cache")
+    .WithParentRelationship(etlIngerir);
+
 // Pendência 70 — as palavras-chave das proposições votadas, só das que faltam. A rotina semanal já
 // chama; o botão é para a primeira carga, que são milhares de requisições.
 builder.AddDockerfile("etl-palavras-chave", "../..", "docker/Dockerfile.etl")

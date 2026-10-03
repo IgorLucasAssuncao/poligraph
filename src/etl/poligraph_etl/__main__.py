@@ -8,6 +8,7 @@ Coolify, dentro do VPS — o Postgres nunca sai de lá.
 """
 
 import argparse
+import csv
 import json
 import logging
 import os
@@ -28,7 +29,7 @@ from . import (
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
 from .fontes import brasilapi, camara, portal, receita, senado, tse
-from . import conferencia, convenentes, patrimonio, procedencia, redes, rotina
+from . import amostra, conferencia, convenentes, patrimonio, procedencia, redes, rotina
 
 log = logging.getLogger("poligraph")
 
@@ -103,6 +104,8 @@ def main(argv: list[str] | None = None) -> int:
                 _palavras_chave(conexao, args.limite)
             elif args.comando == "sedes-brasilapi":
                 _sedes_brasilapi(conexao, args.limite)
+            elif args.comando == "amostra":
+                _amostra(conexao, args.por_grupo, args.semente)
             elif args.comando == "validar":
                 _validar(conexao, args.legislatura, args.divisao_minima)
             else:
@@ -170,6 +173,13 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         "sedes-brasilapi", help="município da sede dos CNPJs de emenda que faltam, pela BrasilAPI (Pendência 71)"
     )
     sed.add_argument("--limite", type=int, default=None, help="no máximo tantos CNPJs nesta execução")
+    amo = sub.add_parser(
+        "amostra", help="confere votações sorteadas contra um segundo canal oficial de cada casa (Pendência 67)"
+    )
+    amo.add_argument("--por-grupo", type=int, default=amostra.POR_GRUPO_PADRAO,
+                     help="votações sorteadas por casa e legislatura")
+    amo.add_argument("--semente", type=int, default=amostra.SEMENTE_PADRAO,
+                     help="a mesma semente sorteia as mesmas votações")
     rot = sub.add_parser("rotina", help="a carga agendada (Pendência 64): semanal ou mensal, terminando em conferir")
     rot.add_argument("--frequencia", choices=list(rotina.FREQUENCIAS), required=True)
     sub.add_parser(
@@ -1758,6 +1768,75 @@ def _palavras_chave(conexao: psycopg.Connection, limite: int | None) -> None:
     persistencia.gravar_palavras_chave(conexao, lote)
     if falhas:
         log.warning("  %d não responderam; ficam para a próxima execução", falhas)
+
+
+def _amostra(conexao: psycopg.Connection, por_grupo: int, semente: int) -> None:
+    """Pendência 67 — sorteia votações abertas com voto e as confere, voto a voto, contra o segundo canal.
+
+    Grava `amostra-{data}.csv` no cache, uma linha por votação, e resume por casa e legislatura.
+    A votação que o segundo canal não devolve conta como "sem resposta", e não como erro da base.
+    """
+    grupos: dict[tuple[str, int], list[str]] = {}
+    for casa, legislatura, id_votacao in conexao.execute(
+        """
+        SELECT t.casa, t.legislatura, t.id FROM votacoes t
+         WHERE NOT t.secreta AND EXISTS (SELECT 1 FROM votos v WHERE v.votacao_id = t.id)
+        """
+    ).fetchall():
+        grupos.setdefault((casa, legislatura), []).append(id_votacao)
+
+    linhas = []
+    for (casa, legislatura), ids in sorted(grupos.items()):
+        sorteadas = amostra.sortear(ids, por_grupo, semente, f"{casa}-{legislatura}")
+        conferidas = sem_resposta = com_diferenca = 0
+        cache_do_senado: dict[str, dict | None] = {}
+        for id_votacao in sorteadas:
+            base = {
+                str(id_externo): valor
+                for id_externo, valor in conexao.execute(
+                    """
+                    SELECT f.id_externo, v.valor FROM votos v
+                      JOIN pessoa_fonte_ids f ON f.pessoa_id = v.pessoa_id AND f.fonte = %s
+                     WHERE v.votacao_id = %s
+                    """,
+                    (casa, id_votacao),
+                ).fetchall()
+            }
+            if casa == "CAMARA":
+                brutos = camara.votos_da_votacao(id_votacao)
+                fonte = None if brutos is None else {k: normalizacao.normalizar_voto(v) for k, v in brutos.items()}
+            else:
+                data = conexao.execute("SELECT data::text FROM votacoes WHERE id = %s", (id_votacao,)).fetchone()[0]
+                if data not in cache_do_senado:
+                    cache_do_senado[data] = senado.votos_por_data(data)
+                do_dia = cache_do_senado[data] or {}
+                brutos = do_dia.get(id_votacao.removeprefix("SF-"))
+                fonte = None if brutos is None else {k: ingestao_senado.normalizar_voto(v) for k, v in brutos.items()}
+            time.sleep(0.1)
+
+            if not fonte:
+                sem_resposta += 1
+                linhas.append({"casa": casa, "legislatura": legislatura, "votacao": id_votacao,
+                               "situacao": "SEM_RESPOSTA", "iguais": "", "divergentes": "",
+                               "so_na_base": "", "so_na_fonte": ""})
+                continue
+            resultado = amostra.comparar(base, fonte)
+            conferidas += 1
+            com_diferenca += 0 if resultado.confere else 1
+            linhas.append({"casa": casa, "legislatura": legislatura, "votacao": id_votacao,
+                           "situacao": "CONFERE" if resultado.confere else "DIFERE",
+                           "iguais": resultado.iguais, "divergentes": resultado.divergentes,
+                           "so_na_base": resultado.so_na_base, "so_na_fonte": resultado.so_na_fonte})
+        log.info("  %s %dª: %d sorteadas, %d conferidas, %d com diferença, %d sem resposta",
+                 casa, legislatura, len(sorteadas), conferidas, com_diferenca, sem_resposta)
+
+    saida = CACHE / f"amostra-{date.today():%Y%m%d}.csv"
+    saida.parent.mkdir(parents=True, exist_ok=True)
+    with saida.open("w", newline="", encoding="utf-8") as arquivo:
+        escritor = csv.DictWriter(arquivo, fieldnames=list(linhas[0].keys()) if linhas else ["casa"])
+        escritor.writeheader()
+        escritor.writerows(linhas)
+    log.info("Amostra gravada em %s", saida)
 
 
 TAMANHO_DO_LOTE_DE_SEDES = 500

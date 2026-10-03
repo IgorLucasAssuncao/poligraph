@@ -183,6 +183,33 @@ def baixar_senador(codigo: str) -> dict | None:
     return ((detalhe.get("Parlamentar") or {}).get("IdentificacaoParlamentar")) or None
 
 
+def votos_por_data(data_iso: str) -> dict[str, dict[str, str]] | None:
+    """`codigoSessaoVotacao -> {CodigoParlamentar: Voto}` pelo serviço antigo, por data (Pendência 67).
+
+    ATENÇÃO: O serviço está marcado como descontinuado desde 2026-02-01 e ainda responde. É o
+    segundo canal da conferência; se sair do ar, a conferência do Senado para, e a carga não.
+    """
+    try:
+        resposta = requests.get(
+            f"{BASE}/plenario/lista/votacao/{data_iso.replace('-', '')}", headers=CABECALHOS, timeout=60
+        )
+        resposta.raise_for_status()
+        lista = (resposta.json().get("ListaVotacoes") or {}).get("Votacoes") or {}
+    except (requests.RequestException, ValueError, AttributeError):
+        return None
+
+    votacoes = lista.get("Votacao") or []
+    votacoes = votacoes if isinstance(votacoes, list) else [votacoes]
+    por_sessao: dict[str, dict[str, str]] = {}
+    for votacao in votacoes:
+        votos = (votacao.get("Votos") or {}).get("VotoParlamentar") or []
+        votos = votos if isinstance(votos, list) else [votos]
+        por_sessao[str(votacao.get("CodigoSessaoVotacao"))] = {
+            str(voto.get("CodigoParlamentar")): voto.get("Voto") or "" for voto in votos
+        }
+    return por_sessao
+
+
 def baixar_materia(codigo_materia: str) -> dict | None:
     """A matéria inteira: ementa, identificação e indexação.
 

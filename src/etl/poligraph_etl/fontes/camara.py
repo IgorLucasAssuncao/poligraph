@@ -216,6 +216,24 @@ def palavras_chave_da_proposicao(id_proposicao: int) -> str | None:
         return None
 
 
+def votos_da_votacao(id_votacao: str) -> dict[str, str] | None:
+    """`id do deputado -> tipoVoto` pela API REST, um canal diferente do CSV em bloco (Pendência 67).
+
+    `None` quando a requisição falha; dicionário vazio quando a API não tem votos.
+    """
+    try:
+        resposta = requests.get(
+            f"{API}/votacoes/{id_votacao}/votos", headers={"Accept": "application/json"}, timeout=60
+        )
+        resposta.raise_for_status()
+        return {
+            str((item.get("deputado_") or {}).get("id")): item.get("tipoVoto") or ""
+            for item in resposta.json().get("dados") or []
+        }
+    except (requests.RequestException, ValueError):
+        return None
+
+
 def cpf_do_deputado(id_camara: str) -> str | None:
     """Busca o CPF de um deputado. `None` quando não há.
 

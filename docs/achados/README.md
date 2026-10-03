@@ -98,6 +98,7 @@ ingestão contra a fonte real.
 | [**#36**](036-o-partido-orienta-como-federacao.md) | 🔴 O **partido orienta como federação**, e a disciplina não via | Nenhum dos **75** deputados do PT tinha disciplina medida: a Câmara publica `Fdr PT-PCdoB-PV`, ⛔ `PT`. Depois da regra nova, 75 de 75 |
 | [**#37**](037-a-votacao-de-1998-datada-de-2015.md) | 🔴 A **votação de 1998 datada de 2015** — o Senado devolve registros antigos com data nova | **38** votações fora de época punham **203** senadores na 55ª; pelo código, que cresce com o tempo desde 2004, elas saem. 2015 fica com **zero** votações |
 | [**#38**](038-a-emenda-sem-autor.md) | A **emenda sem autor** — `S/I` e `-99` no arquivo do Portal, 2014–2020 | **17.810** linhas e **R$ 35,6 bi** empenhados fora da carga; em 2016, **72%** do ano. O código "RELATOR GERAL" está em emendas de comissão, e a de relator vem como "Sem informação" |
+| [**#39**](039-a-amostra-confere.md) | A **amostra confere**: votações sorteadas contra um segundo serviço oficial de cada casa | **49.109** votos de **267** votações, da 51ª à 57ª nas duas casas, e **nenhuma** diferença |
 
 ---
 
