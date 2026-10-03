@@ -17,7 +17,13 @@ import type { RotulosDoEixo } from './legenda';
 import { temaEfetivoEscuro } from '../../tema';
 
 /** ATENÇÃO: Retina: sem isto o desenho sai borrado em tela de alta densidade. */
-export const DENSIDADE = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
+/**
+ * A densidade de pixels da tela, lida a cada desenho: muda quando a pessoa dá zoom no navegador ou
+ * leva a janela para outro monitor, e um valor guardado deixava o canvas desfocado (2026-10-03).
+ */
+export function densidade(): number {
+  return typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
+}
 
 const RAIO_BASE = 3.4;
 const RAIO_MINIMO = 1.8;
@@ -100,10 +106,11 @@ export function desenhar(
   canvas: HTMLCanvasElement,
   quadro: Quadro,
 ) {
-  const t = { largura: canvas.width / DENSIDADE, altura: canvas.height / DENSIDADE };
+  const d = densidade();
+  const t = { largura: canvas.width / d, altura: canvas.height / d };
   const escuro = temaEfetivoEscuro();
 
-  ctx.setTransform(DENSIDADE, 0, 0, DENSIDADE, 0, 0);
+  ctx.setTransform(d, 0, 0, d, 0, 0);
   ctx.clearRect(0, 0, t.largura, t.altura);
 
   desenharGrade(ctx, t, quadro.camera, escuro);
@@ -305,8 +312,13 @@ function desenharNos(
       ctx.beginPath();
       ctx.arc(p.x, p.y, raioFinal, 0, Math.PI * 2);
       ctx.fillStyle = cor;
-      ctx.globalAlpha = apagado ? 0.12 : destacado ? 1 : 0.85;
+      ctx.globalAlpha = apagado ? 0.12 : 1;
       ctx.fill();
+      if (!apagado && raioFinal >= 2) {
+        ctx.lineWidth = Math.min(1, raioFinal * 0.25);
+        ctx.strokeStyle = contorno;
+        ctx.stroke();
+      }
     }
 
     if (raioFinal >= RAIO_PARA_FOTO && !apagado) {

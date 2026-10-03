@@ -129,6 +129,10 @@ export function enquadrar(
  * DECISÃO: O corte é por percentil em cada eixo (2% de cada lado): os isolados continuam no
  * desenho, só fora do quadro inicial, e "Enquadrar tudo" ainda os alcança. Com poucos
  * pontos (isolar um parlamentar) não há o que cortar, e o resultado é o de `enquadrar`.
+ *
+ * MEDIDO: Em 2026-10-03, no Senado (57ª): uns 20 dos 104 senadores ficam sem ligação e o layout
+ * os espalha num anel largo. Com 20% de isolados, o corte de 2% não os tirava, e a nuvem abria
+ * minúscula no meio. Por isso a tela passa só os nós que têm ao menos uma ligação.
  */
 export function enquadrarMiolo(pontos: readonly Ponto[], t: Tamanho, corte = 0.02): Camera {
   if (pontos.length < 20) return enquadrar(pontos, t);

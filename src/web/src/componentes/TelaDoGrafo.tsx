@@ -14,7 +14,7 @@ import {
   type Camera,
   type Tamanho,
 } from './grafo/camera';
-import { DENSIDADE, desenhar, raioNaTela, type Quadro } from './grafo/desenho';
+import { densidade, desenhar, raioNaTela, type Quadro } from './grafo/desenho';
 import { rotulosDoEixo } from './grafo/legenda';
 import { aoMudarTema } from '../tema';
 
@@ -510,10 +510,12 @@ export function TelaDoGrafoComponent({
     setCamera(enquadrar(pontos, tamanho));
   }, [noDesenho, tamanho]);
 
-  const vistaInicial = useCallback(
-    () => enquadrarMiolo(posicionados.map((n) => ({ x: n.eixoX!, y: n.eixoY! })), tamanho),
-    [posicionados, tamanho],
-  );
+  const ligados = useMemo(() => new Set(grafo.arestas.flatMap((a) => [a.de, a.para])), [grafo.arestas]);
+  const vistaInicial = useCallback(() => {
+    const comLigacao = posicionados.filter((n) => ligados.has(n.id));
+    const base = comLigacao.length >= 2 ? comLigacao : posicionados;
+    return enquadrarMiolo(base.map((n) => ({ x: n.eixoX!, y: n.eixoY! })), tamanho);
+  }, [posicionados, ligados, tamanho]);
 
   const cameraAutomatica = useRef<Camera | null>(null);
   useEffect(() => {
@@ -567,8 +569,8 @@ export function TelaDoGrafoComponent({
         )}
         <canvas
           ref={canvasRef}
-          width={tamanho.largura * DENSIDADE}
-          height={tamanho.altura * DENSIDADE}
+          width={tamanho.largura * densidade()}
+          height={tamanho.altura * densidade()}
           style={{
             width: '100%',
             height: tamanho.altura,
