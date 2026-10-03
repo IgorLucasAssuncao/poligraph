@@ -123,8 +123,6 @@ public class TestesExecucaoVigente(FixturePostgres postgres) : BaseIntegracao(po
         Assert.Equal(1, votos.Total);
     }
 
-    // PRIVADOS — na ordem de uso
-
     private async Task SemearAsync() =>
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
 

@@ -25,7 +25,6 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
 
         var json = await cliente.GetStringAsync($"{Rota}/perguntas");
 
-        // expor a polaridade deixaria o cidadão inferir o voto ANTES de responder
         Assert.DoesNotContain("olaridade", json);
         Assert.DoesNotContain("otacaoId", json);
         Assert.Contains("q1", json);
@@ -61,8 +60,6 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
 
             Assert.Equal(posicionados, pergunta.TotalVotos);
 
-            // zero significaria que o seed não contabilizou nada — e a tela cairia
-            // no caminho de "sem placar registrado" em desenvolvimento inteiro
             Assert.True(pergunta.TotalVotos > 0);
 
             Assert.Equal(Cadeiras.Camara, pergunta.TotalPossivel);
@@ -106,18 +103,11 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
         var posicao = lido.PosicaoNoGrafo;
         var eixos = await Db.NosMetrica.AsNoTracking().Select(n => n.EixoX!.Value).ToListAsync();
 
-        // dentro da nuvem, não fora dela
         Assert.InRange(posicao.EixoX, eixos.Min(), eixos.Max());
         Assert.True(posicao.VizinhosUsados > 1, "um vizinho só não é centroide");
 
-        // A asserção que importa: o cidadão NÃO cai em cima de ninguém.
-        // A primeira versão deste teste só conferia o intervalo, e por isso passava
-        // mesmo com a implementação copiando a posição do primeiro colocado —
-        // verificado por mutação. Intervalo não distingue centroide de cópia.
         Assert.DoesNotContain(eixos, e => Math.Abs(e - posicao.EixoX) < 1e-6);
 
-        // A base precisa vir junto: é o que permite a tela ser franca sobre a
-        // diferença entre 22 perguntas e a legislatura inteira.
         Assert.Equal(lido.TotalPerguntasRespondidas, posicao.BaseDeVotacoes);
     }
 
@@ -189,7 +179,6 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
         await SemearAsync();
         using var cliente = CriarCliente();
 
-        // 1 de 5 perguntas — abaixo do piso de 60% (CT7)
         var resposta = await cliente.PostAsJsonAsync(Rota, new
         {
             respostas = new[] { new { perguntaId = "q1", valor = 1 } }
@@ -212,7 +201,6 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
 
         Assert.Contains("acordos", json, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("comparaveis", json, StringComparison.OrdinalIgnoreCase);
-        // RF-29: a frase "X de Y" é montada na tela. A API não devolve proporção.
         Assert.DoesNotContain("proporcao", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("percentual", json, StringComparison.OrdinalIgnoreCase);
     }
@@ -317,14 +305,12 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
         foreach (var (pessoaId, acordosConcordando) in concordando)
         {
             var votouNaQ5 = await PosicaoNaQ5Async(pessoaId);
-            if (votouNaQ5 is null or 0) continue;          // ausente ou abstenção: fora da conta
+            if (votouNaQ5 is null or 0) continue;
 
             var acordosDiscordando = discordando[pessoaId];
 
-            // polaridade -1: quem votou SIM está REJEITANDO a afirmação.
-            // Logo, discordar da afirmação é que concorda com ele.
             var esperado = votouNaQ5 == 1
-                ? acordosConcordando + 1                    // discordar acrescenta um acordo
+                ? acordosConcordando + 1
                 : acordosConcordando - 1;
 
             Assert.Equal(esperado, acordosDiscordando);
@@ -343,17 +329,14 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
 
         Assert.NotNull(resultado);
         Assert.NotEmpty(resultado!.MaisProximos);
-        Assert.NotEmpty(resultado.MaisDistantes);   // RF-28
+        Assert.NotEmpty(resultado.MaisDistantes);
 
-        // o mais próximo concorda mais que o mais distante
         var proximo = resultado.MaisProximos[0];
         var distante = resultado.MaisDistantes[0];
         Assert.True(
             (double)proximo.Acordos / proximo.Comparaveis
             >= (double)distante.Acordos / distante.Comparaveis);
     }
-
-    // PRIVADOS — na ordem de uso
 
     private async Task SemearAsync() =>
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);

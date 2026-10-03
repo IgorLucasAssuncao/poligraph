@@ -1,16 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { obterAcesso, quemSouEu, sair as sairDaApi, type Usuario } from './api';
-
-type Sessao = {
-  usuario: Usuario | null;
-  carregando: boolean;
-  /** Se quem não entrou pode ler o site. Desligado no período eleitoral (RNF-17). */
-  leituraPublica: boolean;
-  entrou: (usuario: Usuario) => void;
-  sair: () => Promise<void>;
-};
-
-const Contexto = createContext<Sessao | null>(null);
+import { useCallback, useEffect, useState } from 'react';
+import { obterAcesso, quemSouEu, sair as sairDaApi, type Usuario } from '../api';
+import { ContextoDaSessao } from '../sessao';
 
 /**
  * Estado de sessão do aplicativo.
@@ -38,15 +28,9 @@ export function ProvedorDeSessaoComponent({ children }: { children: React.ReactN
   }, []);
 
   return (
-    <Contexto.Provider value={{ usuario, carregando, leituraPublica, entrou: setUsuario, sair }}>
+    <ContextoDaSessao.Provider value={{ usuario, carregando, leituraPublica, entrou: setUsuario, sair }}>
       {children}
-    </Contexto.Provider>
+    </ContextoDaSessao.Provider>
   );
 }
 
-export function useSessao(): Sessao {
-  const sessao = useContext(Contexto);
-  if (!sessao) throw new Error('useSessao precisa estar dentro de ProvedorDeSessao.');
-
-  return sessao;
-}

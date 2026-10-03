@@ -35,7 +35,7 @@ export function SeletorDeTemaComponent() {
 }
 
 /**
- * ATENÇÃO: Desenhados à mão em vez de emoji: ☀️ e 🌙 mudam de forma e de cor conforme o
+ * ATENÇÃO: Desenhados à mão em vez de emoji: o sol e a lua mudam de forma e de cor conforme o
  * sistema, e num interruptor de 1,7rem isso vira ruído.
  *
  * Sistema: a tela do computador — é ele quem decide.

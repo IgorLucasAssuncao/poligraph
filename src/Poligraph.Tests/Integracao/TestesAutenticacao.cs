@@ -90,8 +90,6 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         Assert.Equal("outro@exemplo.com", (await db.Usuarios.FirstAsync()).Email);
     }
 
-    // Nenhum token é armazenado
-
     [SkippableFact]
     public async Task Login_NaoGuardaOIdTokenEmLugarNenhum()
     {
@@ -103,12 +101,9 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         await using var db = CriarContexto();
         var usuario = await db.Usuarios.FirstAsync();
 
-        // o id_token foi validado e descartado — nenhuma coluna o contém
         Assert.DoesNotContain("token-valido", usuario.GoogleSub);
         Assert.DoesNotContain("token-valido", usuario.Email);
     }
-
-    // Cookie e sessão
 
     [SkippableFact]
     public async Task SemCookie_EndpointProtegidoRetorna401_NaoRedireciona()
@@ -118,7 +113,6 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
 
         var resposta = await cliente.GetAsync("/api/seguidos");
 
-        // 401, não 302: o front espera JSON, não HTML de tela de login
         Assert.Equal(HttpStatusCode.Unauthorized, resposta.StatusCode);
     }
 
@@ -184,8 +178,6 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         var resposta = await notebook.GetAsync("/api/seguidos");
         Assert.Equal(HttpStatusCode.Unauthorized, resposta.StatusCode);
     }
-
-    // Seguir — escreve dado sensível (LGPD art. 5º, II)
 
     [SkippableFact]
     public async Task Seguir_DuasVezes_EIdempotente()
@@ -329,8 +321,6 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         Assert.Equal(HttpStatusCode.PreconditionRequired,
             (await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1", null)).StatusCode);
     }
-
-    // PRIVADOS — na ordem de uso
 
     private HttpClient CriarCliente(
         ValidadorFalso? validador = null, bool seguirRedirecionamento = true)

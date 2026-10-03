@@ -95,26 +95,27 @@ export function QuestionarioComponent() {
   }, []);
 
   const pediuDesempate = useRef(false);
-  const [aguardandoDesempate, setAguardandoDesempate] = useState(false);
+  const [desempateRespondido, setDesempateRespondido] = useState(false);
+  const precisaDeDesempate =
+    perguntas.length > 0 && perguntas.length < total && indice >= perguntas.length - 1;
+  const aguardandoDesempate = precisaDeDesempate && !desempateRespondido;
 
   useEffect(() => {
-    if (pediuDesempate.current) return;
-    if (perguntas.length === 0 || perguntas.length >= total) return;
-    if (indice < perguntas.length - 1) return;
-
+    if (pediuDesempate.current || !precisaDeDesempate) return;
     pediuDesempate.current = true;
-    setAguardandoDesempate(true);
 
     const respondidas = Object.entries(respostas).map(([perguntaId, valor]) => ({
       perguntaId,
       valor,
     }));
 
-    obterDesempate(respondidas).then((extras) => {
-      if (extras.length > 0) setPerguntas((atuais) => [...atuais, ...extras]);
-      setAguardandoDesempate(false);
-    });
-  }, [indice, perguntas.length, total, respostas]);
+    obterDesempate(respondidas)
+      .then((extras) => {
+        if (extras.length > 0) setPerguntas((atuais) => [...atuais, ...extras]);
+      })
+      .catch(() => undefined)
+      .finally(() => setDesempateRespondido(true));
+  }, [precisaDeDesempate, respostas]);
 
   const opinadas = useMemo(
     () => Object.values(respostas).filter((v) => v !== 0).length,

@@ -982,7 +982,7 @@ function BuscaComponent({
 }
 
 /**
- * ATENÇÃO: Desenhados à mão em vez de emoji: 🔍 e ⚙️ mudam de forma e de cor conforme o
+ * ATENÇÃO: Desenhados à mão em vez de emoji: a lupa e a engrenagem mudam de forma e de cor conforme o
  * sistema, e num canto de 2rem sobre o desenho isso vira ruído.
  */
 function IconeLupaComponent() {

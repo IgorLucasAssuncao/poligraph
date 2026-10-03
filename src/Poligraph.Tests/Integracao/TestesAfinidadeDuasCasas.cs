@@ -149,7 +149,6 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
         await SemearDuasCasasAsync(perguntasCamara: 6, perguntasSenado: 2);
         using var cliente = CriarCliente();
 
-        // Responde só as da Câmara
         var respostas = Enumerable.Range(1, 6)
             .Select(i => new { perguntaId = $"cam-{i}", valor = 1 })
             .ToArray();
@@ -178,8 +177,6 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
         ExigeDocker();
         await SemearDuasCasasAsync(perguntasCamara: 6, perguntasSenado: 2);
 
-        // Eixos bem separados por casa: se a posição vier da execução errada, ela cai
-        // na faixa da outra casa e a asserção denuncia.
         await SemearGrafoAsync(TipoCasa.CAMARA, eixoBase: 0f);
         await SemearGrafoAsync(TipoCasa.SENADO, eixoBase: 100f);
 
@@ -220,7 +217,6 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
         var questionario = await cliente.GetFromJsonAsync<QuestionarioLido>(
             "/api/afinidade/perguntas");
 
-        // 8 da Câmara + as 2 do Senado, que não têm desempate: são o poço inteiro.
         Assert.Equal(10, questionario!.Perguntas.Count);
     }
 
@@ -239,7 +235,6 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
         var questionario = await cliente.GetFromJsonAsync<QuestionarioLido>(
             "/api/afinidade/perguntas");
 
-        // 15 da Câmara (8 de abertura + 7 de desempate) mais as 2 do Senado.
         Assert.Equal(17, questionario!.Total);
         Assert.True(questionario.Total > questionario.Perguntas.Count);
     }
@@ -308,8 +303,6 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
         Assert.NotEqual(HttpStatusCode.UnprocessableEntity, resultado.StatusCode);
         resultado.EnsureSuccessStatusCode();
     }
-
-    // PRIVADOS — na ordem de uso
 
     private const int DeputadosSemeados = 5;
     private const int SenadoresSemeados = 3;
@@ -384,8 +377,6 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
             {
                 Id = $"{prefixo}-{i}",
                 VotacaoId = votacaoId,
-                // O texto não pode citar a casa: `Pergunta_NaoRevela_De_Qual_Casa_Veio`
-                // varre o JSON inteiro, e um fixture que a mencione anula a asserção.
                 Texto = $"Afirmação {prefixo} número {i}.",
                 Polaridade = 1,
                 Ordem = (short)i,

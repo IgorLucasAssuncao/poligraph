@@ -1,5 +1,5 @@
 # Aplicador de migrations. Roda, aplica e MORRE — não é serviço.
-# 🔴 Em produção é executado ANTES do deploy da API, por um executor só:
+# RISCO: Em produção é executado ANTES do deploy da API, por um executor só:
 #    o zero-downtime do Coolify sobe dois containers da API ao mesmo tempo,
 #    e Migrate() concorrente teria corrida.
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build

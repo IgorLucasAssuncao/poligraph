@@ -116,42 +116,26 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     /// </para>
     /// </summary>
     [SkippableTheory]
-    // O painel da página inicial e da tela de login.
     [InlineData("PanoramaDaCasaDto", "casa,parlamentares,votacoes,votacoesSecretas,votosComPosicao,comunidades,ligacoes")]
-    // A lista de "explorar" — `casa` entrou quando a lista passou a misturar as duas.
     [InlineData("ParlamentarNaListaDto", "id,nome,casa,partido,uf,nVotacoes,urlFoto")]
-    // A lista vem em páginas; `partidos` e `ufs` são as opções dos filtros.
     [InlineData("PaginaDeParlamentaresDto", "itens,pagina,tamanho,total,partidos,ufs")]
-    // `acordou`/`discordou` são o "por que este resultado": sem eles o número não é
-    // conferível.
     [InlineData("ParlamentarAfimDto", "pessoaId,nome,partido,uf,acordos,comparaveis,acordou,discordou")]
-    // `ementa`, `materia` e `categoria` chegaram juntos: sem `categoria` a ementa
-    // vira manchete de voto de rito, que é erro de leitura, não de layout.
     [InlineData("VotoNaFichaDto", "votacaoId,data,descricao,valor,orientacaoDoGoverno,ementa,materia,categoria")]
-    // Os mandatos na ficha: a legislatura escolhida e as outras em que a pessoa votou.
     [InlineData("FichaParlamentarDto", "id,nome,casa,partido,uf,nVotacoes,maisSimilares,legislatura,mandatos")]
     [InlineData("MandatoDto", "legislatura,casa,anoInicial,partido,uf,nRegistrosDeVoto")]
-    // `totalVotos` é comparecimento, nunca o placar (RF-29).
     [InlineData("PerguntaPublicaDto", "id,texto,ordem,totalVotos,totalPossivel")]
-    // O envelope do questionário — `total` existe para a barra de progresso.
     [InlineData("QuestionarioDto", "perguntas,total")]
-    // `vizinhosPorNo` é o `k` da execução: o tour do grafo explica o desenho com ele.
     [InlineData("GrafoDto", "execucaoId,casa,legislatura,vizinhosPorNo,nos,arestas,legislaturasComGrafo,votacoesDePlenario,secretasDePlenario,abertasDesde,abertasAte")]
-    // `governismo` é nulo no Senado inteiro (achado #28), mas a PROPRIEDADE existe.
     [InlineData("NoDoGrafoDto", "id,nome,partido,uf,comunidade,eixoX,eixoY,nVotacoes,componente1,componente2,urlFoto,governismo")]
     [InlineData("ArestaDoGrafoDto", "de,para,peso,votacoesComuns,cosseno")]
-    // Quem recebeu, quando e por qual convênio: a aba de emendas da ficha.
     [InlineData("EmendasDoParlamentarDto", "ano,empenhado,pago,pagoDepois,quantidade,porDestino,porFuncao,favorecidos,pagamentosPorMes,convenios,cidades")]
     [InlineData("FavorecidosDaEmendaDto", "recebido,viaIntermediario,aPessoas,semIdentificacao,ultimoMes,identificados,maiores")]
     [InlineData("ConvenioDaEmendaDto", "numero,convenente,objeto,dataPublicacao,valor,emendasQueFinanciam")]
-    // O perfil do governo: o período, o ano a ano e o sigilo com a base.
     [InlineData("GovernoDto", "gestoes,periodo,geradoEm,emAndamento,anosDisponiveis,arrecadacao,despesa,sigilo,porAno,gestoesDisponiveis")]
     [InlineData("GovernoNoAnoDto", "ano,arrecadou,gastou,pegouEmprestado,fechado")]
     [InlineData("SigiloDto", "cartaoSigiloso,cartaoTotal,transacoesSigilosas,acaoSigilosa,meses,porOrgao")]
-    // As cidades pela sede de quem recebeu, e o CNPJ que leva à página da entidade.
     [InlineData("CidadesDaEmendaDto", "quantidade,maiores")]
     [InlineData("FavorecidoDaEmendaDto", "nome,naturezaJuridica,uf,municipio,recebido,cnpj")]
-    // PP4 e PP3: redes na ficha, patrimônio por candidatura — não a descrição do bem.
     [InlineData("RedeSocialDto", "rede,url,fonte")]
     [InlineData("DeclaracaoDeBensDto", "anoEleicao,total,bens,porTipo")]
     [InlineData("ConvenioDaEntidadeDto", "numero,objeto,situacao,dataPublicacao,valor,valorLiberado,urlFonte")]
@@ -209,14 +193,10 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
 
         var casa = documento.RootElement
             .GetProperty("components").GetProperty("schemas")
-            // O nome do esquema segue o nome do TIPO em C#. Renomear o enum
-            // muda esta chave — mas NÃO muda os valores, que são o que o
-            // front compara.
             .GetProperty("TipoCasa");
 
         var valores = casa.GetProperty("enum").EnumerateArray().ToList();
 
-        // O ordinal apareceria aqui como `Number`, e é ESTE o erro que o teste pega.
         Assert.All(valores, v => Assert.Equal(JsonValueKind.String, v.ValueKind));
         Assert.Equal(["CAMARA", "SENADO"], valores.Select(v => v.GetString()));
     }

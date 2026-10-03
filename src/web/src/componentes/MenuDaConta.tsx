@@ -5,7 +5,7 @@ import { useEntrar } from './useEntrar';
 import { AvatarComponent } from './Avatar';
 import { useTour } from './contextoDoTour';
 import { SeletorDeTemaComponent } from './SeletorDeTema';
-import { useModoAuditoria } from './ModoAuditoria';
+import { useModoAuditoria } from './contextoDoModoAuditoria';
 
 /**
  * A conta, o tema e o tour num botão só.

@@ -33,23 +33,18 @@ import {
  */
 export function BannerConsentimentoComponent() {
   const clarityId = import.meta.env.VITE_CLARITY_ID;
-  const [escolha, setEscolha] = useState<Escolha | null>(null);
-  const [carregado, setCarregado] = useState(false);
+  const [escolha, setEscolha] = useState<Escolha | null>(() => {
+    const salvo = lerConsentimento();
+    return salvo?.versao === VERSAO_CONSENTIMENTO ? salvo : null;
+  });
 
   useEffect(() => {
-    const salvo = lerConsentimento();
-
-    if (salvo?.versao === VERSAO_CONSENTIMENTO) {
-      setEscolha(salvo);
-      if (salvo.aceito) ativarMedicao();
-    }
-
-    setCarregado(true);
-  }, []);
+    if (escolha?.aceito) ativarMedicao();
+  }, [escolha]);
 
   if (!clarityId) return null;
 
-  if (!carregado || escolha) return null;
+  if (escolha) return null;
 
   return (
     <aside className="banner-consentimento" role="dialog" aria-labelledby="banner-titulo">
@@ -81,11 +76,18 @@ export function BannerConsentimentoComponent() {
       em: new Date().toISOString(),
     };
 
-    localStorage.setItem(CHAVE_CONSENTIMENTO, JSON.stringify(nova));
+    guardarEscolha(nova);
     setEscolha(nova);
     window.dispatchEvent(new Event(EVENTO_CONSENTIMENTO));
+  }
+}
 
-    if (aceito) ativarMedicao();
+/** Sem armazenamento no navegador, a escolha vale só nesta visita. */
+function guardarEscolha(escolha: Escolha): void {
+  try {
+    localStorage.setItem(CHAVE_CONSENTIMENTO, JSON.stringify(escolha));
+  } catch {
+    return;
   }
 }
 

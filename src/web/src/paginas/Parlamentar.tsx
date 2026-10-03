@@ -93,7 +93,11 @@ export function ParlamentarComponent() {
   const { pathname } = useLocation();
   const [busca] = useSearchParams();
   const legislaturaPedida = Number(busca.get('legislatura')) || undefined;
-  const [ficha, setFicha] = useState<Ficha | null>(null);
+  const { usuario } = useSessao();
+  const chave = `${pessoaId}:${legislaturaPedida ?? ''}:${usuario ? 'conta' : ''}`;
+  const [lida, setLida] = useState<{ chave: string; ficha: Ficha | null; erro: string | null } | null>(null);
+  const ficha = lida?.chave === chave ? lida.ficha : null;
+  const erro = lida?.chave === chave ? lida.erro : null;
   const { contas, erro: erroDasContas } = useContas(
     pessoaId,
     ficha === null ? 'aguardando' : ficha.legislatura,
@@ -102,25 +106,25 @@ export function ParlamentarComponent() {
   const corrente = legislaturas?.[0]?.numero;
   const emExercicio =
     corrente !== undefined && (ficha?.mandatos ?? []).some((m) => m.legislatura === corrente);
-  const { usuario } = useSessao();
 
   const [seguindo, setSeguindo] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    setFicha(null);
-    setErro(null);
-
+    let atual = true;
     Promise.all([
       obterFicha(pessoaId, legislaturaPedida),
       usuario ? listarSeguidos() : Promise.resolve([]),
     ])
       .then(([f, seguidos]) => {
-        setFicha(f);
+        if (!atual) return;
+        setLida({ chave, ficha: f, erro: null });
         setSeguindo(seguidos.some((s) => s.id === pessoaId));
       })
-      .catch(() => setErro('Não foi possível carregar este parlamentar.'));
-  }, [pessoaId, legislaturaPedida, usuario]);
+      .catch(() => atual && setLida({ chave, ficha: null, erro: 'Não foi possível carregar este parlamentar.' }));
+    return () => {
+      atual = false;
+    };
+  }, [pessoaId, legislaturaPedida, usuario, chave]);
 
   if (erro) {
     return (

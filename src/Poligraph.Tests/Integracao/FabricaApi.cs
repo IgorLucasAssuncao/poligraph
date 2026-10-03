@@ -24,7 +24,6 @@ public class FabricaApi(string connectionString) : WebApplicationFactory<Marcado
     {
         builder.UseEnvironment("Development");
 
-        // O aquecedor guardaria a base vazia: os testes semeiam depois de subir a API.
         builder.ConfigureHostConfiguration(c => c.AddInMemoryCollection([new("Cache:Aquecer", "false")]));
 
         builder.ConfigureServices(services =>
@@ -33,7 +32,7 @@ public class FabricaApi(string connectionString) : WebApplicationFactory<Marcado
 
             services.AddDbContext<PoligraphDb>(opcoes => opcoes
                 .UseNpgsql(_connectionString)
-                .UseSnakeCaseNamingConvention());   // igual à produção
+                .UseSnakeCaseNamingConvention());
         });
 
         return base.CreateHost(builder);

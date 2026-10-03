@@ -33,7 +33,7 @@ public class ValidadorGoogle(IConfiguration configuracao) : IValidadorGoogle
         }
         catch (InvalidJwtException)
         {
-            return null;   // token forjado, vencido, ou de outro app
+            return null;
         }
     }
 }

@@ -80,8 +80,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         ConfigurarAvaliacao(mb);
     }
 
-    // Cada regra medida vira CHECK. Comentário não rejeita INSERT errado.
-
     private static void ConfigurarIdentidade(ModelBuilder mb)
     {
         mb.Entity<PessoaModel>(e =>
@@ -91,11 +89,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.ToTable(t => t.HasCheckConstraint(
                 "ck_pessoa_sexo", "sexo IS NULL OR sexo IN ('M','F')"));
 
-            // Exclusão lógica: quem tem `excluido_em` some de TODA consulta do EF,
-            // sem que cada endpoint precise lembrar do filtro.
-            // O ETL Python NÃO enxerga este filtro — ele fala SQL direto. É
-            // proposital: a análise trabalha sobre o registro histórico completo, e
-            // é a API que decide o que mostrar ao cidadão.
             e.HasQueryFilter(x => x.ExcluidoEm == null);
         });
 
@@ -232,19 +225,10 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         mb.Entity<VotacaoModel>(e =>
         {
             e.HasKey(x => x.Id);
-            // Chave estrangeira COMPOSTA — ver `ProposicaoModel.Casa`. A `Casa` da
-            // votação entra na chave, e com isso uma votação do Senado não
-            // alcança proposição da Câmara nem por acidente.
-            // `MATCH SIMPLE` é o padrão do Postgres: com `proposicao_id` nulo a
-            // chave não é cobrada, que é o caso das 7 votações sem vínculo.
             e.HasOne(x => x.Proposicao)
                 .WithMany()
                 .HasForeignKey(x => new { x.Casa, x.ProposicaoId })
                 .HasPrincipalKey(p => new { p.Casa, p.Id });
-            // Guardado como TEXTO, nunca como inteiro. A coluna é lida e escrita
-            // pelo ETL Python, e um enum persistido por ordinal transformaria
-            // 'CAMARA' em 0 — a restrição do banco recusaria toda inserção, e o ETL
-            // pararia de escrever sem que nada em C# quebrasse.
             e.HasIndex(x => new { x.Casa, x.Legislatura, x.Plenario, x.Categoria })
                 .HasDatabaseName("ix_votacao_matriz");
             e.ToTable(t =>
@@ -261,7 +245,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasOne(x => x.Votacao).WithMany(v => v.Votos).HasForeignKey(x => x.VotacaoId);
             e.HasOne(x => x.Pessoa).WithMany(p => p.Votos).HasForeignKey(x => x.PessoaId);
             e.Property(x => x.UfNoVoto).HasMaxLength(2);
-            // RN-03: domínio fechado
             e.Property(x => x.Presenca).HasMaxLength(20);
             e.ToTable(t =>
             {
@@ -274,11 +257,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
 
         mb.Entity<ProposicaoModel>(e =>
         {
-            // (casa, id), não id. As duas fontes numeram no mesmo espaço e as
-            // faixas se sobrepõem — ver `ProposicaoModel.Casa`.
             e.HasKey(x => new { x.Casa, x.Id });
             e.Property(x => x.Id).ValueGeneratedNever();
-            // ano = 0 sinaliza PPP/parecer, não matéria real
             e.ToTable(t => t.HasCheckConstraint("ck_proposicao_ano", "ano IS NULL OR ano <> 0"));
         });
     }
@@ -290,7 +270,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasKey(x => x.Id);
             e.HasOne(x => x.Votacao).WithMany().HasForeignKey(x => x.VotacaoId);
             e.HasIndex(x => x.VotacaoId).IsUnique();
-            // RN-08: sem polaridade não entra pergunta nenhuma
             e.ToTable(t => t.HasCheckConstraint(
                 "ck_pergunta_polaridade", "polaridade IN (-1, 1)"));
         });
@@ -304,7 +283,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasOne(x => x.Pessoa).WithMany().HasForeignKey(x => x.PessoaId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // A consulta da ficha é sempre "as despesas DESTE deputado, por ano".
             e.HasIndex(x => new { x.PessoaId, x.Ano })
                 .HasDatabaseName("ix_despesa_pessoa_ano");
 
@@ -314,7 +292,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.ToTable(t =>
             {
                 t.HasCheckConstraint("ck_despesa_mes", "mes BETWEEN 1 AND 12");
-                // Valor negativo existe: é estorno. Zero não.
                 t.HasCheckConstraint("ck_despesa_valor", "valor_liquido <> 0");
             });
         });
@@ -334,7 +311,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.Property(x => x.Valor).HasPrecision(14, 2);
             e.Property(x => x.DoadorCnpjOuHash).HasMaxLength(64);
 
-            // Receita zero é linha administrativa; negativa é estorno e FICA.
             e.ToTable(t => t.HasCheckConstraint("ck_receita_valor", "valor <> 0"));
         });
 
@@ -342,13 +318,9 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         {
             e.HasKey(x => x.Id);
 
-            // `SetNull`, não `Cascade`: apagar a pessoa não pode apagar a emenda.
-            // O gasto público continua tendo existido — o que se perde é o vínculo.
             e.HasOne(x => x.Pessoa).WithMany().HasForeignKey(x => x.PessoaId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // Uma emenda ocupa uma linha por localidade, ação e plano orçamentário.
-            // `pessoa_id` fica fora da chave: pode ser nulo e mudar na reconciliação.
             e.HasIndex(x => new { x.CodigoEmenda, x.Localidade, x.CodigoAcao, x.CodigoPlanoOrcamentario })
                 .IsUnique()
                 .AreNullsDistinct(false)
@@ -600,11 +572,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.Property(x => x.IniciadaEm).HasDefaultValueSql("now()");
             e.ToTable(t =>
             {
-                // Esta faltava. `votacoes.casa` era protegida desde o início e
-                // `execucoes.casa` não — e é o ETL Python quem escreve as duas. Um
-                // erro de digitação aqui produzia execução que nenhuma consulta
-                // encontra: a tela mostraria "a análise ainda não rodou", que é
-                // exatamente a mensagem do caso legítimo.
                 t.HasCheckConstraint("ck_execucao_casa", "casa IN ('CAMARA','SENADO')");
                 t.HasCheckConstraint(
                     "ck_execucao_status", "status IN ('EM_ANDAMENTO','CONCLUIDA','FALHOU')");
@@ -619,8 +586,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
 
         mb.Entity<OrientacaoModel>(e =>
         {
-            // A chave é (votação, bancada): uma bancada orienta uma vez por votação.
-            // Reingerir o ano não duplica.
             e.HasKey(x => new { x.VotacaoId, x.Bancada });
             e.HasOne(x => x.Votacao).WithMany()
                 .HasForeignKey(x => x.VotacaoId).OnDelete(DeleteBehavior.Cascade);
@@ -634,7 +599,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasOne<ExecucaoModel>().WithMany().HasForeignKey(x => x.ExecucaoId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Os DOIS lados apontam para `pessoas` — ver a nota em `NoMetricaModel`.
             e.HasOne<PessoaModel>().WithMany().HasForeignKey(x => x.PessoaA)
                 .OnDelete(DeleteBehavior.Cascade);
             e.HasOne<PessoaModel>().WithMany().HasForeignKey(x => x.PessoaB)
@@ -643,8 +607,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             {
                 t.HasCheckConstraint("ck_sim_metrica", "metrica IN ('CONCORDANCIA','COSSENO')");
                 t.HasCheckConstraint("ck_sim_valor", "valor BETWEEN 0 AND 1");
-                t.HasCheckConstraint("ck_sim_minimo", "n_votacoes_comuns >= 20");   // RN-02
-                t.HasCheckConstraint("ck_sim_ordem", "pessoa_a < pessoa_b");        // I3
+                t.HasCheckConstraint("ck_sim_minimo", "n_votacoes_comuns >= 20");
+                t.HasCheckConstraint("ck_sim_ordem", "pessoa_a < pessoa_b");
             });
         });
 
@@ -654,7 +618,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasOne<ExecucaoModel>().WithMany().HasForeignKey(x => x.ExecucaoId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Aresta para quem não existe vira ponto sem nome no desenho.
             e.HasOne<PessoaModel>().WithMany().HasForeignKey(x => x.PessoaA)
                 .OnDelete(DeleteBehavior.Cascade);
             e.HasOne<PessoaModel>().WithMany().HasForeignKey(x => x.PessoaB)
@@ -663,7 +626,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             {
                 t.HasCheckConstraint("ck_aresta_tipo",
                     "tipo IN ('SIMILARIDADE_VOTO','COMISSAO_COMUM','COAUTORIA')");
-                t.HasCheckConstraint("ck_aresta_ordem", "pessoa_a < pessoa_b");     // I3
+                t.HasCheckConstraint("ck_aresta_ordem", "pessoa_a < pessoa_b");
             });
         });
 
@@ -675,14 +638,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasOne<ExecucaoModel>().WithMany().HasForeignKey(x => x.ExecucaoId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // FK para `pessoas` — faltava, e o furo apareceu de verdade.
-            // Ao remover 12 parlamentares fictícios do banco, seus nós ficaram em
-            // `nos_metrica` sem ninguém do outro lado. O grafo desenhou 12 pontos
-            // SEM NOME e nada acusou — o banco aceitou calado. É o formato de bug
-            // que este projeto mais teme: não quebra, produz resultado plausível.
-            // CASCADE, e não RESTRICT: métrica é retrato derivado, e apagar a pessoa
-            // deve levar junto o que se calculou sobre ela. É o oposto de `segue`,
-            // que é registro de convicção e por isso BARRA a exclusão.
             e.HasOne<PessoaModel>().WithMany().HasForeignKey(x => x.PessoaId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
@@ -703,19 +658,10 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
 
         mb.Entity<SegueModel>(e =>
         {
-            // Nome da tabela FIXADO, e é a única do schema que precisa disto.
-            // As demais tiram o nome do DbSet no plural (`Pessoas` -> `pessoas`), que
-            // não colide com o nome da classe. Aqui o DbSet chama `Segue`, igual à
-            // classe — e renomear a classe para `SegueModel` renomeou o DbSet junto,
-            // gerando um `RenameTable` para `segue_model`. Numa tabela que é registro
-            // de convicção política (LGPD art. 5º, II), migrar por acidente de
-            // nomenclatura é inaceitável.
             e.ToTable("segue");
             e.HasKey(x => new { x.UsuarioId, x.PessoaId });
-            // CASCADE: a exclusão da LGPD art. 18 é UM DELETE
             e.HasOne(x => x.Usuario).WithMany(u => u.Segue)
                 .HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Cascade);
-            // RESTRICT: nunca apagar parlamentar que alguém segue
             e.HasOne(x => x.Pessoa).WithMany()
                 .HasForeignKey(x => x.PessoaId).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => x.PessoaId);
@@ -728,7 +674,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasOne(x => x.Usuario).WithMany(u => u.Consentimentos)
                 .HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Cascade);
             e.Property(x => x.AceitoEm).HasDefaultValueSql("now()");
-            // um consentimento vivo por finalidade
             e.HasIndex(x => new { x.UsuarioId, x.Finalidade })
                 .IsUnique().HasFilter("revogado_em IS NULL");
             e.ToTable(t =>
@@ -746,15 +691,10 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasKey(x => x.Id);
             e.Property(x => x.RegistradaEm).HasDefaultValueSql("now()");
 
-            // A escala tem limite fechado. Sem o CHECK, um front com bug gravaria
-            // valores fora da escala e a análise do TCC sairia errada em silêncio.
             e.ToTable(t => t.HasCheckConstraint(
                 "ck_avaliacao_posicao",
                 "posicao_autodeclarada IS NULL OR posicao_autodeclarada BETWEEN -3 AND 3"));
         });
 
-        // Nenhuma relação com `usuario` — ver o comentário da entidade.
-        // Se alguém acrescentar um `usuario_id` aqui, a tabela deixa de ser amostra
-        // de pesquisa e vira cadastro de ideologia por pessoa identificada.
     }
 }

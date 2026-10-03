@@ -13,11 +13,10 @@ namespace Poligraph.Tests.Unidade;
 /// </summary>
 public class TestesPolaridade
 {
-    // Polaridade +1 — texto principal. "Sim" aprova a afirmação.
 
     [Theory]
-    [InlineData( 1,  1, true )]   // parlamentar Sim   · cidadão concorda → acordo
-    [InlineData(-1,  1, false)]   // parlamentar Não   · cidadão concorda → desacordo
+    [InlineData( 1,  1, true )]
+    [InlineData(-1,  1, false)]
     [InlineData( 1, -1, false)]
     [InlineData(-1, -1, true )]
     public void PolaridadePositiva_VotoEspelhaAAfirmacao(
@@ -27,13 +26,10 @@ public class TestesPolaridade
         Assert.Equal(esperado, CalculadoraAfinidade.Concordam(resposta, posicao));
     }
 
-    // Polaridade -1 — destaque supressivo. "Sim" REJEITA a afirmação.
-    // Estes quatro casos são a razão de existir deste arquivo.
-
     [Theory]
-    [InlineData( 1,  1, false)]   // parlamentar Sim = rejeitar · cidadão concorda → DESACORDO
-    [InlineData( 1, -1, true )]   // parlamentar Sim = rejeitar · cidadão discorda → ACORDO
-    [InlineData(-1,  1, true )]   // parlamentar Não = manter · cidadão concorda → ACORDO
+    [InlineData( 1,  1, false)]
+    [InlineData( 1, -1, true )]
+    [InlineData(-1,  1, true )]
     [InlineData(-1, -1, false)]
     public void PolaridadeNegativa_VotoInverteOSentidoDaAfirmacao(
         short voto, short resposta, bool esperado)
@@ -58,8 +54,6 @@ public class TestesPolaridade
 
         Assert.NotEqual(positiva, negativa);
     }
-
-    // Comparabilidade — o que sai do DENOMINADOR
 
     [Fact]
     public void CidadaoRespondeuNaoSei_PerguntaSaiDaConta()
@@ -92,17 +86,15 @@ public class TestesPolaridade
         var respostas = new[] { new RespostaCidadao("q1", 1), new RespostaCidadao("q2", 1) };
         var posicoes = new Dictionary<string, PosicaoParlamentar>
         {
-            ["q1"] = new(1, 1),        // votou e concordou
-            ["q2"] = new(null, 1)      // ausente
+            ["q1"] = new(1, 1),
+            ["q2"] = new(null, 1)
         };
 
         var resultado = CalculadoraAfinidade.Calcular(42, respostas, posicoes);
 
         Assert.Equal(1, resultado.Acordos);
-        Assert.Equal(1, resultado.Comparaveis);   // não 2
+        Assert.Equal(1, resultado.Comparaveis);
     }
-
-    // O detalhe — "em quais perguntas"
 
     /// <summary>
     /// O detalhe corre o MESMO risco de polaridade que o total, e é pior quando erra:
@@ -115,8 +107,6 @@ public class TestesPolaridade
         var respostas = new[] { new RespostaCidadao("q1", 1) };
         var posicoes = new Dictionary<string, PosicaoParlamentar>
         {
-            // Votou "Sim" numa votação em que Sim REJEITA a afirmação: discorda de quem
-            // respondeu "concordo".
             ["q1"] = new(1, -1)
         };
 
@@ -138,16 +128,16 @@ public class TestesPolaridade
         {
             new RespostaCidadao("q1", 1),
             new RespostaCidadao("q2", 1),
-            new RespostaCidadao("q3", 0),      // não sei
+            new RespostaCidadao("q3", 0),
             new RespostaCidadao("q4", 1)
         };
 
         var posicoes = new Dictionary<string, PosicaoParlamentar>
         {
-            ["q1"] = new(1, 1),                // acordo
-            ["q2"] = new(-1, 1),               // desacordo
-            ["q3"] = new(1, 1),                // fora: o cidadão não opinou
-            ["q4"] = new(null, 1)              // fora: ausente
+            ["q1"] = new(1, 1),
+            ["q2"] = new(-1, 1),
+            ["q3"] = new(1, 1),
+            ["q4"] = new(null, 1)
         };
 
         var resultado = CalculadoraAfinidade.Calcular(42, respostas, posicoes);

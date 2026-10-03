@@ -54,8 +54,6 @@ public class FixturePostgres : IAsyncLifetime
 
         await using var db = CriarContexto();
 
-        // Migration DE VERDADE, uma vez só. Se um CHECK sumir na tradução para EF,
-        // TestesSchema acusa.
         await db.Database.MigrateAsync();
 
         _limpeza = MontarLimpeza(db);
@@ -92,8 +90,6 @@ public class FixturePostgres : IAsyncLifetime
             .Distinct()
             .Select(nome => $"\"{nome}\"");
 
-        // RESTART IDENTITY porque há teste que conta com id previsível; CASCADE porque
-        // as FKs entre as tabelas impediriam o TRUNCATE parcial.
         return $"TRUNCATE {string.Join(", ", tabelas)} RESTART IDENTITY CASCADE";
     }
 }

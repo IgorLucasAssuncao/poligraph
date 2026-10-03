@@ -42,8 +42,6 @@ public class TestesSeletorDeDesempate
     [Fact]
     public void AusenteNaoConta_ComoLado()
     {
-        // "quase" separa 1 par (1 x 2). "ausentes" teria 2 x 2 se os ausentes
-        // contassem como "não", e 0 na conta correta.
         var escolhidas = SeletorDeDesempate.Escolher(
             [1, 2, 3, 4],
             new Dictionary<string, IReadOnlyDictionary<long, short>>

@@ -1,8 +1,8 @@
-# ETL Python. ⚠️ Não é serviço: roda como Scheduled Task do Coolify, executa e morre.
+# ETL Python. ATENÇÃO: Não é serviço: roda como Scheduled Task do Coolify, executa e morre.
 FROM python:3.13-slim
 WORKDIR /etl
 
-# ⭐ dependências antes do código: o pip install vira camada cacheada
+# dependências antes do código: o pip install vira camada cacheada
 COPY src/etl/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

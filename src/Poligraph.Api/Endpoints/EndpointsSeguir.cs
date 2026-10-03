@@ -92,7 +92,7 @@ public static class EndpointsSeguir
         var usuarioId = SessaoDoUsuario.IdDoUsuario(principal);
 
         if (await db.Segue.AnyAsync(s => s.UsuarioId == usuarioId && s.PessoaId == pessoaId, ct))
-            return Results.NoContent();   // idempotente
+            return Results.NoContent();
 
         if (!await EmExercicioAsync(db, pessoaId, ct))
             return Results.Problem(

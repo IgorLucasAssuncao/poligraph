@@ -271,21 +271,18 @@ function SecaoDaCasaComponent({
  * Falhar em buscar o grafo omite o desenho, nunca a tela: as listas são o resultado, e o grafo é ilustração.
  */
 function useGrafo(precisa: boolean, casa: ResultadoPorCasa['casa']): Grafo | null {
-  const [grafo, setGrafo] = useState<Grafo | null>(null);
+  const [lido, setLido] = useState<{ casa: ResultadoPorCasa['casa']; grafo: Grafo | null } | null>(null);
 
   useEffect(() => {
-    if (!precisa) {
-      setGrafo(null);
-      return;
-    }
+    if (!precisa) return;
 
     let vivo = true;
     obterGrafo(casa)
       .then((recebido) => {
-        if (vivo) setGrafo(recebido);
+        if (vivo) setLido({ casa, grafo: recebido });
       })
       .catch(() => {
-        if (vivo) setGrafo(null);
+        if (vivo) setLido({ casa, grafo: null });
       });
 
     return () => {
@@ -293,7 +290,7 @@ function useGrafo(precisa: boolean, casa: ResultadoPorCasa['casa']): Grafo | nul
     };
   }, [precisa, casa]);
 
-  return grafo;
+  return precisa && lido?.casa === casa ? lido.grafo : null;
 }
 
 /**

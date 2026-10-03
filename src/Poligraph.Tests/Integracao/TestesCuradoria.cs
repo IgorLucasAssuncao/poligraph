@@ -100,8 +100,6 @@ public class TestesCuradoria(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Equal(2, await Db.Perguntas.CountAsync());
     }
 
-    // PRIVADOS — na ordem de uso
-
     private async Task SemearVotacoesAsync(params string[] ids)
     {
         foreach (var id in ids)

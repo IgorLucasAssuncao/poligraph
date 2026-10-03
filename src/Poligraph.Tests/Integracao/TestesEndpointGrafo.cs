@@ -147,11 +147,8 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
         var no = grafo!.Nos.Single(n => n.Id == alguem.Id);
         Assert.Equal(alguem.UrlFoto, no.UrlFoto);
 
-        // Quem não tem foto publicada chega nulo — a tela cai nas iniciais.
         Assert.Contains(grafo.Nos, n => n.UrlFoto is null);
     }
-
-    // PRIVADOS — na ordem de uso
 
     /// <summary>581 KB de JSON viram ~76 KB: o grafo é a maior resposta do site.</summary>
     [SkippableFact]
@@ -210,7 +207,7 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
             {
                 ExecucaoId = execucao.Id,
                 PessoaId = ids[i],
-                Comunidade = (short)(i / 4),      // três blocos, como no seed
+                Comunidade = (short)(i / 4),
                 EixoX = i / 10f,
                 EixoY = 0.5f,
                 NVotacoes = 5
@@ -221,7 +218,7 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
                 Db.ArestasGrafo.Add(new ArestaGrafoModel
                 {
                     ExecucaoId = execucao.Id,
-                    PessoaA = ids[i - 1],          // I3: menor primeiro
+                    PessoaA = ids[i - 1],
                     PessoaB = ids[i],
                     Tipo = TipoDeAresta.SIMILARIDADE_VOTO,
                     Peso = 0.8f
@@ -236,8 +233,6 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
     private async Task AcrescentarSimilaridadesAsync(
         long execucaoId, int comuns, float cosseno)
     {
-        // As DUAS métricas, porque o endpoint junta com cada uma por um caminho
-        // diferente: a base sai da concordância, o valor comparativo do cosseno.
         var arestas = await Db.ArestasGrafo.AsNoTracking()
             .Where(a => a.ExecucaoId == execucaoId && a.Tipo == TipoDeAresta.SIMILARIDADE_VOTO)
             .Select(a => new { a.PessoaA, a.PessoaB })

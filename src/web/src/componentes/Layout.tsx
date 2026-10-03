@@ -31,15 +31,15 @@ type Largura = 'ampla' | 'larga' | 'media' | 'estreita';
 const LARGURA: { padrao: Largura; rotas: [string, Largura][] } = {
   padrao: 'media',
   rotas: [
-    ['/', 'ampla'],                 // painel: números e o grafo lado a lado
-    ['/parlamentares', 'ampla'],    // lista e grafo, os dois querem largura
-    ['/resultado', 'estreita'],     // uma pergunta por vez — largo atrapalha ler
+    ['/', 'ampla'],
+    ['/parlamentares', 'ampla'],
+    ['/resultado', 'estreita'],
     ['/parlamentar/', 'larga'],
     ['/emendas', 'larga'],
     ['/entidades', 'larga'],
     ['/governo', 'larga'],
     ['/conta', 'estreita'],
-    ['/privacidade', 'estreita'],   // texto corrido
+    ['/privacidade', 'estreita'],
   ],
 };
 

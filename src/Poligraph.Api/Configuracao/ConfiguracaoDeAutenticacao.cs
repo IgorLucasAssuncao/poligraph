@@ -46,12 +46,12 @@ public static class ConfiguracaoDeAutenticacao
             .AddCookie(opcoes =>
             {
                 opcoes.Cookie.Name = "sid";
-                opcoes.Cookie.HttpOnly = true;   // JavaScript não lê
+                opcoes.Cookie.HttpOnly = true;
                 opcoes.Cookie.SameSite = SameSiteMode.Lax;
                 opcoes.ExpireTimeSpan = TimeSpan.FromDays(7);
                 opcoes.SlidingExpiration = true;
                 opcoes.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-                    ? CookieSecurePolicy.SameAsRequest   // Always quebra em http://localhost
+                    ? CookieSecurePolicy.SameAsRequest
                     : CookieSecurePolicy.Always;
 
                 opcoes.Events.OnRedirectToLogin = c =>

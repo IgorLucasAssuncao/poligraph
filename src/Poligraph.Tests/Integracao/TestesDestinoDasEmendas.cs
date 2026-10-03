@@ -231,13 +231,13 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
     {
         ExigeDocker();
 
-#pragma warning disable EF1002
+#pragma warning disable EF1002, EF1003
         var erro = await Assert.ThrowsAsync<PostgresException>(() =>
             Db.Database.ExecuteSqlRawAsync(
                 "INSERT INTO emendas_favorecidos (codigo_emenda, competencia, tipo, documento, "
                 + "nome, intermediario, valor) "
                 + $"VALUES ('202541840004', DATE '2025-03-01', {valores}, 10)"));
-#pragma warning restore EF1002
+#pragma warning restore EF1002, EF1003
 
         Assert.Equal(restricao, erro.ConstraintName);
     }

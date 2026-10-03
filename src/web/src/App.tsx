@@ -15,7 +15,8 @@ import { ParlamentarComponent } from './paginas/Parlamentar';
 import { ParlamentaresComponent } from './paginas/Parlamentares';
 import { PoliticaDePrivacidadeComponent } from './paginas/PoliticaDePrivacidade';
 import { QuestionarioComponent } from './paginas/Questionario';
-import { ProvedorDeSessaoComponent, useSessao } from './sessao';
+import { ProvedorDeSessaoComponent } from './componentes/ProvedorDeSessao';
+import { useSessao } from './sessao';
 import './App.css';
 
 export default function AppComponent() {

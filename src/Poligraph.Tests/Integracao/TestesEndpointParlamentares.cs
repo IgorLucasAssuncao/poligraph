@@ -225,7 +225,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         var fichaMaior = await cliente.GetFromJsonAsync<FichaJson>($"{Rota}/{maior}");
 
         Assert.NotEmpty(fichaMenor!.MaisSimilares);
-        Assert.NotEmpty(fichaMaior!.MaisSimilares);   // o que quebraria com meio join
+        Assert.NotEmpty(fichaMaior!.MaisSimilares);
     }
 
     [SkippableFact]
@@ -239,7 +239,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         var ficha = await cliente.GetFromJsonAsync<FichaJson>($"{Rota}/{id}");
 
         Assert.NotNull(ficha);
-        Assert.Empty(ficha!.MaisSimilares);   // lista vazia, não erro
+        Assert.Empty(ficha!.MaisSimilares);
     }
 
     /// <summary>
@@ -267,7 +267,6 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         Assert.Equal(3, gastos.Lancamentos);
         Assert.Equal(450m, gastos.Total);
 
-        // Duas categorias, e a maior vem primeiro
         Assert.Equal(2, gastos.PorCategoria.Count);
         Assert.Equal("PASSAGEM AÉREA", gastos.PorCategoria[0].Categoria);
         Assert.Equal(300m, gastos.PorCategoria[0].Total);
@@ -324,13 +323,9 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
 
         var json = await cliente.GetStringAsync($"{Rota}/{pessoaId}/gastos");
 
-        // O endpoint não devolve o campo de documento de jeito nenhum — nem hash.
-        // A ficha precisa do NOME do fornecedor, não do CNPJ dele.
         Assert.DoesNotContain("cnpj", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("12345678909", json);
     }
-
-    // Emendas — o dinheiro que o parlamentar DIRECIONA
 
     /// <summary>
     /// Mesmo risco do `GroupBy` da cota: compila e estoura em runtime.
@@ -351,8 +346,6 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         Assert.Equal(2025, emendas!.Ano);
         Assert.Equal(3, emendas.Quantidade);
 
-        // A distância entre os dois é a informação. Um endpoint que devolvesse só
-        // o empenhado passaria num teste que só olhasse o total.
         Assert.Equal(1_000_000m, emendas.Empenhado);
         Assert.Equal(400_000m, emendas.Pago);
         Assert.NotEqual(emendas.Empenhado, emendas.Pago);
@@ -390,8 +383,8 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         using var cliente = CriarCliente();
         var emendas = await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{pessoaId}/emendas");
 
-        Assert.Equal(8, emendas!.PorDestino.Count);          // a lista é cortada…
-        Assert.Equal(12, emendas.Quantidade);                // …e o total, não
+        Assert.Equal(8, emendas!.PorDestino.Count);
+        Assert.Equal(12, emendas.Quantidade);
         Assert.Equal(1_200m, emendas.Empenhado);
     }
 
@@ -425,7 +418,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
 
         Db.Emendas.Add(new EmendaModel
         {
-            PessoaId = null,   // sem dono
+            PessoaId = null,
             CodigoAutor = "9999", NomeAutor = "BANCADA DO PARA",
             CodigoEmenda = "202599990001", Ano = 2025,
             Localidade = "Ananindeua - PA",
@@ -437,10 +430,8 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         var emendas = await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{pessoaId}/emendas");
 
         Assert.Equal(3, emendas!.Quantidade);
-        Assert.Equal(1_000_000m, emendas.Empenhado);   // os 50 milhões ficaram fora
+        Assert.Equal(1_000_000m, emendas.Empenhado);
     }
-
-    // Financiamento — o dinheiro que ELEGEU o parlamentar
 
     /// <summary>
     /// Fundo Especial e Fundo Partidário são fundos DIFERENTES.
@@ -466,7 +457,6 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         Assert.Equal(200_000m, fin.FundoPartidario);
         Assert.Equal(3_250_000m, fin.Total);
 
-        // A soma dos dois NÃO é o total — há dinheiro privado no meio.
         Assert.NotEqual(fin.Total, fin.FundoEspecial + fin.FundoPartidario);
     }
 
@@ -485,7 +475,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
 
         Assert.DoesNotContain("cnpj", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("11122233344", json);
-        Assert.DoesNotContain(new string('b', 64), json);   // nem o hash
+        Assert.DoesNotContain(new string('b', 64), json);
     }
 
     /// <summary> Sem receita é caso normal — o TSE pode não ter sido ingerido.</summary>
@@ -540,7 +530,6 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
                 PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
                 CodigoEmenda = "202541840003", Ano = 2025,
                 Localidade = "Belém - PA", Funcao = "Educação",
-                // empenhada e nunca paga — é o caso que a ficha precisa deixar visível
                 ValorEmpenhado = 100_000m, ValorPago = 0m
             });
 
@@ -573,7 +562,6 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
                 PessoaId = pessoaId, AnoEleicao = 2022,
                 FonteReceita = "OUTROS RECURSOS",
                 Doador = "JOSE DA SILVA",
-                // hash, como o ETL grava — o CPF em claro nunca chega ao banco
                 DoadorCnpjOuHash = new string('b', 64), DoadorEhPessoaFisica = true,
                 Valor = 50_000m
             });
@@ -610,7 +598,6 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
             {
                 PessoaId = pessoaId, Ano = 2025, Mes = 5,
                 Categoria = "COMBUSTÍVEIS", Fornecedor = "POSTO",
-                // hash de CPF, como o ETL grava — nunca o número
                 CnpjOuHash = new string('a', 64), FornecedorEhPessoaFisica = true,
                 ValorLiquido = 150m
             });
@@ -619,8 +606,6 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
 
         return pessoaId;
     }
-
-    // PRIVADOS — na ordem de uso
 
     private async Task SemearAsync() =>
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
@@ -652,7 +637,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
                 Db.Similaridades.Add(new SimilaridadeModel
                 {
                     ExecucaoId = execucao.Id,
-                    PessoaA = ids[i],          // I3: menor primeiro
+                    PessoaA = ids[i],
                     PessoaB = ids[j],
                     Metrica = TipoMetrica.CONCORDANCIA,
                     Valor = 0.5f + (i + j) / 100f,

@@ -1,11 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { obterProcedencia } from '../api';
 import type { CargaDeProcedencia, ConsultaDeProcedencia, LinhaDaProcedencia, Procedencia } from '../api';
 import { dataCurta, reais } from '../formato';
 import { tourJaVisto } from '../tour';
+import { ContextoDoModoAuditoria, useModoAuditoria } from './contextoDoModoAuditoria';
 import { useTour } from './contextoDoTour';
 import { LinkDeFonteComponent } from './LinkDeFonte';
+
+/** ATENÇÃO: a chave guarda o nome antigo, "modo análise": trocá-la apagaria a escolha de quem já ligou. */
+const CHAVE = 'poligraph:modo-analise';
 
 /**
  * Modo auditoria (Pendência 73): ligado, todo número que tem procedência vira botão e abre o painel
@@ -16,23 +20,9 @@ import { LinkDeFonteComponent } from './LinkDeFonte';
  *
  * ATENÇÃO: A escolha fica no navegador, não na conta: vale para quem não entrou, e não é
  * dado pessoal que precise ir ao servidor.
+ *
+ * O estado do modo e o painel, um para o site inteiro.
  */
-type Estado = {
-  ligado: boolean;
-  alternar: () => void;
-  abrir: (consulta: ConsultaDeProcedencia, rotulo: string) => void;
-};
-
-/** ATENÇÃO: a chave guarda o nome antigo, "modo análise": trocá-la apagaria a escolha de quem já ligou. */
-const CHAVE = 'poligraph:modo-analise';
-
-const ContextoDoModoAuditoria = createContext<Estado>({
-  ligado: false,
-  alternar: () => {},
-  abrir: () => {},
-});
-
-/** O estado do modo e o painel, um para o site inteiro. */
 export function ProvedorDoModoAuditoriaComponent({ children }: { children: ReactNode }) {
   const [ligado, setLigado] = useState(lerGuardado);
   const [aberto, setAberto] = useState<{ consulta: ConsultaDeProcedencia; rotulo: string } | null>(null);
@@ -59,9 +49,6 @@ export function ProvedorDoModoAuditoriaComponent({ children }: { children: React
   );
 }
 
-export function useModoAuditoria(): Estado {
-  return useContext(ContextoDoModoAuditoria);
-}
 
 /**
  * O interruptor do cabeçalho.
@@ -143,8 +130,9 @@ function PainelDeProcedenciaComponent({
   aoFechar: () => void;
 }) {
   const dialogo = useRef<HTMLDialogElement>(null);
-  const [procedencia, setProcedencia] = useState<Procedencia | null>(null);
-  const [erro, setErro] = useState(false);
+  const [lida, setLida] = useState<{ de: typeof aberto; procedencia: Procedencia | null; erro: boolean } | null>(null);
+  const procedencia = lida && lida.de === aberto ? lida.procedencia : null;
+  const erro = lida !== null && lida.de === aberto && lida.erro;
 
   useEffect(() => {
     const elemento = dialogo.current;
@@ -156,11 +144,9 @@ function PainelDeProcedenciaComponent({
   useEffect(() => {
     if (!aberto) return;
     let ativo = true;
-    setProcedencia(null);
-    setErro(false);
     obterProcedencia(aberto.consulta)
-      .then((p) => ativo && setProcedencia(p))
-      .catch(() => ativo && setErro(true));
+      .then((p) => ativo && setLida({ de: aberto, procedencia: p, erro: false }))
+      .catch(() => ativo && setLida({ de: aberto, procedencia: null, erro: true }));
     return () => {
       ativo = false;
     };

@@ -80,7 +80,8 @@ export function SugestoesParaSeguirComponent() {
               aoAlternar={(id, agora) =>
                 setSeguidos((atual) => {
                   const novo = new Set(atual);
-                  agora ? novo.add(id) : novo.delete(id);
+                  if (agora) novo.add(id);
+                  else novo.delete(id);
                   return novo;
                 })
               }

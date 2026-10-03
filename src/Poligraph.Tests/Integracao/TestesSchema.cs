@@ -13,7 +13,6 @@ namespace Poligraph.Tests.Integracao;
 /// </summary>
 public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
-    // RN-02 — mínimo de 20 votações comuns
 
     [SkippableFact]
     public async Task Similaridade_ComMenosDe20VotacoesComuns_ERejeitada()
@@ -29,7 +28,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
             PessoaB = b,
             Metrica = TipoMetrica.CONCORDANCIA,
             Valor = 0.9f,
-            NVotacoesComuns = 19   // um abaixo do mínimo
+            NVotacoesComuns = 19
         });
 
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
@@ -48,10 +47,8 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
             Metrica = TipoMetrica.CONCORDANCIA, Valor = 0.9f, NVotacoesComuns = 20
         });
 
-        await Db.SaveChangesAsync();      // não pode lançar
+        await Db.SaveChangesAsync();
     }
-
-    // I3 — aresta não-direcionada, gravada uma vez só
 
     [SkippableFact]
     public async Task Similaridade_ComParForaDeOrdem_ERejeitada()
@@ -63,15 +60,13 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         Db.Similaridades.Add(new SimilaridadeModel
         {
             ExecucaoId = execucao,
-            PessoaA = b,   // invertido: b > a
+            PessoaA = b,
             PessoaB = a,
             Metrica = TipoMetrica.CONCORDANCIA, Valor = 0.9f, NVotacoesComuns = 30
         });
 
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
     }
-
-    // RN-03 — domínio fechado do voto
 
     [SkippableTheory]
     [InlineData((short)2)]
@@ -92,9 +87,6 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
     }
 
-    // RN-08 — polaridade. O CHECK é a última linha de defesa do bug
-    // mais perigoso do sistema.
-
     [SkippableTheory]
     [InlineData((short)0)]
     [InlineData((short)2)]
@@ -111,8 +103,6 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
 
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
     }
-
-    // Nomes de tabela — o ETL Python depende deles
 
     /// <summary>
     /// <b>A lista é literal de propósito.</b>

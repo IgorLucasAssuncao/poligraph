@@ -1,7 +1,7 @@
 /**
  * Cópia das fotos dos parlamentares NO NAVEGADOR do visitante.
  *
- * As fotos vêm da Câmara e do Senado, e ⛔ são hospedadas por nós (licença e LGPD).
+ * As fotos vêm da Câmara e do Senado, e não são hospedadas por nós (licença e LGPD).
  * Mas as duas casas pedem que o navegador as busque de novo a cada visita:
  *
  * | Casa   | Medido em 2026-10-01                                         |
@@ -10,13 +10,13 @@
  * | Senado | 170–330 KB, `max-age=600`                                    |
  *
  * Este service worker serve a foto já vista do cache do próprio navegador e só vai à
- * casa na primeira vez. A cópia fica no aparelho de quem visitou, ⛔ num servidor.
+ * casa na primeira vez. A cópia fica no aparelho de quem visitou, não num servidor.
  *
- * ⚠️ A Câmara ⛔ manda CORS, então a resposta é OPACA, e o Chrome conta cada uma como
+ * ATENÇÃO: A Câmara não manda CORS, então a resposta é OPACA, e o Chrome conta cada uma como
  * ~7 MB de cota. Por isso o limite de entradas: as mais antigas saem primeiro.
  *
- * ⚠️ O cache tem o mês no nome. Na virada do mês ele recomeça: foto trocada pela casa
- * aparece em até um mês, e o que ninguém mais viu ⛔ fica ocupando espaço.
+ * ATENÇÃO: O cache tem o mês no nome. Na virada do mês ele recomeça: foto trocada pela casa
+ * aparece em até um mês, e o que ninguém mais viu não fica ocupando espaço.
  */
 const PREFIXO = 'fotos-parlamentares-';
 const MAXIMO_DE_FOTOS = 300;

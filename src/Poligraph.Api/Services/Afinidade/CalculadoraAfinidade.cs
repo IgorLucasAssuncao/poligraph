@@ -24,9 +24,9 @@ public static class CalculadoraAfinidade
     /// </summary>
     public static bool EComparavel(short respostaCidadao, PosicaoParlamentar posicao)
     {
-        if (respostaCidadao == 0) return false;             // cidadão não opinou
+        if (respostaCidadao == 0) return false;
         var efetiva = PosicaoEfetiva(posicao);
-        return efetiva is not null && efetiva != 0;          // parlamentar votou e não se absteve
+        return efetiva is not null && efetiva != 0;
     }
 
     /// <summary>Houve acordo nesta pergunta? Só faz sentido se <see cref="EComparavel"/>.</summary>

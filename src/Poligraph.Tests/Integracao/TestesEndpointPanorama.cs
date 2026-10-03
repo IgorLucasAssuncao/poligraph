@@ -45,8 +45,6 @@ public class TestesEndpointPanorama(FixturePostgres postgres) : BaseIntegracao(p
         var naoNulos = await Db.Votos
             .CountAsync(v => v.Valor != null && v.Votacao!.Casa == TipoCasa.CAMARA);
 
-        // O teste só vale se o fixture TIVER abstenção — senão os dois números são
-        // iguais e a asserção passaria com o código errado.
         Assert.True(naoNulos > comPosicao, "o fixture precisa de ao menos uma abstenção");
         Assert.Equal(comPosicao, camara.VotosComPosicao);
     }

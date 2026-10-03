@@ -1,15 +1,15 @@
 {
   "_leia": [
-    "🔴 CONTEÚDO CURADO, NÃO DADO DE TESTE. Entra em todo ambiente, produção incluída.",
+    "RISCO: CONTEÚDO CURADO, NÃO DADO DE TESTE. Entra em todo ambiente, produção incluída.",
     "Origem: docs/plano/06-perguntas-lote-1.md §5. Cada afirmação foi reescrita a partir",
     "da ementa — o CSV da Câmara não serve como pergunta (RNF-29 proíbe jargão).",
     "",
-    "⚠️ POLARIDADE: +1 significa que 'Sim' do parlamentar = concordar com a afirmação.",
+    "ATENÇÃO: POLARIDADE: +1 significa que 'Sim' do parlamentar = concordar com a afirmação.",
     "Conferida uma a uma contra a descrição REAL da votação no banco, não herdada do",
     "documento. Todas as 21 começam com 'Aprovado/Aprovada o/a ...', que é o caso +1 da",
     "regra em plano/06 §2. Nenhuma é 'Mantido o texto' (que seria -1).",
     "",
-    "⛔ A votação 2525122-81 (perda de mandato, REP 2/2025) FICOU DE FORA: é categoria",
+    "A votação 2525122-81 (perda de mandato, REP 2/2025) FICOU DE FORA: é categoria",
     "AUTORIDADE, e a RN-14 mantém sabatina e representação fora do questionário. Além",
     "disso é a única que não começa com 'Aprovado' — a descrição é 'Rejeitado o Parecer',",
     "e o que 'Sim' significou ali precisa de leitura humana."

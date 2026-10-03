@@ -27,13 +27,6 @@ public static class DadosDeTeste
     /// </summary>
     public static async Task<string> SemearAsync(PoligraphDb db, CancellationToken ct = default)
     {
-        // Só semeia com a tabela VAZIA DE VERDADE.
-        // A armadilha não é semear duas vezes — é semear ANTES do ETL. O seed roda
-        // no `dotnet run`, o ETL depois, e aí 12 deputados fictícios passam a
-        // conviver com 551 reais numa mesma listagem, indistinguíveis na tela.
-        // Eles não entram no grafo (5 votações não passam do mínimo de 20 da
-        // RN-02), mas apareceriam numa demonstração para a banca.
-        // guarda de idempotência: já semeado, sai
         if (await db.Pessoas.AnyAsync(ct)) return "já semeado.";
 
         var pessoas = GerarParlamentares();
@@ -81,7 +74,6 @@ public static class DadosDeTeste
 
     private static List<PessoaModel> GerarParlamentares()
     {
-        // 12 deputados fictícios em 3 blocos de voto, para o grafo ter estrutura visível
         string[] nomes =
         [
             "Ana Ribeiro", "Bruno Tavares", "Carla Nunes", "Diego Salles",
@@ -123,7 +115,6 @@ public static class DadosDeTeste
                 "Aprovado o Substitutivo ao Projeto de Lei nº 1.112, de 2023."),
         VotacaoModel("900004-1", proposicoes[3], TipoCategoriaDeVotacao.SUBSTANTIVA, new(2023, 12, 13),
                 "Aprovado o Projeto de Lei Complementar nº 243, de 2023."),
-        // DESTAQUE: aqui "Sim" significa MANTER o texto, ou seja, REJEITAR a supressão
         VotacaoModel("900005-1", proposicoes[4], TipoCategoriaDeVotacao.DESTAQUE, new(2023, 11, 21),
                 "Mantido o texto. Sim: 8; Não: 4."),
     ];
@@ -150,12 +141,11 @@ public static class DadosDeTeste
     /// </summary>
     private static List<VotoModel> GerarVotos(List<PessoaModel> pessoas, List<VotacaoModel> votacoes)
     {
-        // padrão de voto por bloco, uma coluna por votação
         short[][] padrao =
         [
-            [ 1,  1,  1, -1,  1],   // bloco 0
-            [-1, -1,  1,  1, -1],   // bloco 1
-            [ 1, -1, -1,  1, -1],   // bloco 2
+            [ 1,  1,  1, -1,  1],
+            [-1, -1,  1,  1, -1],
+            [ 1, -1, -1,  1, -1],
         ];
 
         string[] partidos = ["PARTIDO-A", "PARTIDO-B", "PARTIDO-C"];
@@ -169,14 +159,8 @@ public static class DadosDeTeste
 
             for (var v = 0; v < votacoes.Count; v++)
             {
-                // um ausente de propósito: exercita "ausência não é discordância"
                 if (i == 11 && v == 4) continue;
 
-                // E um ABSTIDO de propósito. Sem ele, `/api/panorama` afirmou
-                // 463.994 "votos com posição" na Câmara enquanto a posição de
-                // verdade eram 462.867 — contava `Valor != null`, e as 1.127 de
-                // diferença eram exatamente as abstenções. Nenhum teste pegou
-                // porque o fixture não tinha nenhuma.
                 var valor = i == 10 && v == 3 ? (short)0 : padrao[bloco][v];
 
                 votos.Add(new VotoModel

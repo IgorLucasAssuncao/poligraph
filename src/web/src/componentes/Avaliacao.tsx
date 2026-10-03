@@ -131,7 +131,7 @@ export function AvaliacaoComponent({
           </fieldset>
 
           <p className="nota-privacidade">
-            🔒 Estas duas respostas são gravadas{' '}
+            Estas duas respostas são gravadas{' '}
             <strong>sem ligação com a sua conta</strong>. Servem só para medir se o método
             acerta.
           </p>

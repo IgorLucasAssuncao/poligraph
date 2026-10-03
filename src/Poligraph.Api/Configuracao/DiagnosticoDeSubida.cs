@@ -28,8 +28,6 @@ public static partial class DiagnosticoDeSubida
             return app;
         }
 
-        // Um Client ID do Google tem ~72 caracteres, mas um valor curto de teste faria
-        // o corte estourar com ArgumentOutOfRangeException na subida.
         Avisos.LoginLigado(log, clientId.Length <= 24 ? clientId : clientId[^24..]);
 
         return app;

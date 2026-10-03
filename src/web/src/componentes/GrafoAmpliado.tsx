@@ -41,14 +41,14 @@ export function GrafoAmpliadoComponent({
 }) {
   const dialogo = useRef<HTMLDialogElement>(null);
 
-  const [jaAbriu, setJaAbriu] = useState(false);
+  const [jaAbriu, setJaAbriu] = useState(aberto);
+  if (aberto && !jaAbriu) setJaAbriu(true);
 
   useEffect(() => {
     const elemento = dialogo.current;
     if (!elemento) return;
 
     if (aberto) {
-      setJaAbriu(true);
       if (!elemento.open) elemento.showModal();
     } else if (elemento.open) {
       elemento.close();

@@ -208,7 +208,7 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
     private static EmendaModel Emenda(string codigo, long? pessoaId, string codigoAutor, string nomeAutor, string tipo) => new()
     {
         PessoaId = pessoaId, CodigoAutor = codigoAutor, NomeAutor = nomeAutor, Tipo = tipo,
-        CodigoEmenda = codigo, Ano = short.Parse(codigo[..4]), Localidade = "CURITIBA - PR",
+        CodigoEmenda = codigo, Ano = short.Parse(codigo[..4], System.Globalization.CultureInfo.InvariantCulture), Localidade = "CURITIBA - PR",
         CodigoAcao = "20XV", CodigoPlanoOrcamentario = "0000", ValorEmpenhado = 10_000m, ValorPago = 10_000m
     };
 

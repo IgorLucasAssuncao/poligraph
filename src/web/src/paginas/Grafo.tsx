@@ -77,26 +77,29 @@ export function GrafoComponent() {
   const [casa, setCasa] = useState<Casa>('CAMARA');
   const [escolha, setLegislatura] = useLegislaturaDaUrl();
   const legislatura = typeof escolha === 'number' ? escolha : undefined;
-  const [grafo, setGrafo] = useState<DadosDoGrafo | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
+  const chave = `${casa}:${legislatura ?? ''}`;
+  const [lido, setLido] = useState<{ chave: string; grafo: DadosDoGrafo | null; erro: string | null } | null>(null);
+  const grafo = lido?.chave === chave ? lido.grafo : null;
+  const erro = lido?.chave === chave ? lido.erro : null;
   const [ampliado, setAmpliado] = useState(false);
   const [destaque, setDestaque] = useState<Destaque>({});
+  const [chaveDoDestaque, setChaveDoDestaque] = useState(chave);
+  if (chaveDoDestaque !== chave) {
+    setChaveDoDestaque(chave);
+    setDestaque({});
+  }
 
   useEffect(() => {
     let atual = true;
 
-    setGrafo(null);
-    setErro(null);
-    setDestaque({});
-
     obterGrafo(casa, legislatura)
-      .then((novo) => atual && setGrafo(novo))
-      .catch(() => atual && setErro('Não foi possível carregar o grafo agora.'));
+      .then((novo) => atual && setLido({ chave, grafo: novo, erro: null }))
+      .catch(() => atual && setLido({ chave, grafo: null, erro: 'Não foi possível carregar o grafo agora.' }));
 
     return () => {
       atual = false;
     };
-  }, [casa, legislatura]);
+  }, [casa, legislatura, chave]);
 
   const grupos = useMemo(() => (grafo ? resumirGrupos(grafo.nos) : []), [grafo]);
   const membro = NOME_DA_CASA[casa];

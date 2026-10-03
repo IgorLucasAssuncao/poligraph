@@ -142,7 +142,7 @@ export function InicioComponent() {
             ))}
 
             <p className="nota-privacidade">
-              🔒 Esta lista indica sua posição política e é tratada como dado sensível. Ela
+              Esta lista indica sua posição política e é tratada como dado sensível. Ela
               não é compartilhada com ninguém. <Link to="/conta">Como apagar tudo</Link>
             </p>
           </section>

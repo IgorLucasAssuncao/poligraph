@@ -153,8 +153,6 @@ public class TestesHistorico(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Equal(1, camara.Parlamentares);
     }
 
-    // PRIVADOS — na ordem de uso
-
     private async Task SemearAsync() =>
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
 

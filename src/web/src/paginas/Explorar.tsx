@@ -272,7 +272,8 @@ export function ExplorarComponent() {
   function alternar(id: number, seguindoAgora: boolean) {
     setSeguidos((atual) => {
       const novo = new Set(atual);
-      seguindoAgora ? novo.add(id) : novo.delete(id);
+      if (seguindoAgora) novo.add(id);
+      else novo.delete(id);
       return novo;
     });
   }

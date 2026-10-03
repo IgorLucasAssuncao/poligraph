@@ -47,8 +47,6 @@ public static class CarregadorDePerguntas
         if (lotes.Count == 0)
             return $"curadoria NÃO carregada: nenhum perguntas-*.json em {Pasta}.";
 
-        // Id repetido entre lotes seria a última leitura vencendo em silêncio, e a
-        // pergunta do outro lote sumindo da tela sem explicação.
         var curadas = new List<PerguntaCurada>();
         var vistos = new HashSet<string>();
         foreach (var lote in lotes)
@@ -65,9 +63,6 @@ public static class CarregadorDePerguntas
 
         if (curadas.Count == 0) return "curadoria vazia: nenhuma pergunta nos lotes.";
 
-        // PerguntaModel sem a votação no banco viraria violação de chave estrangeira. É
-        // caso NORMAL, não erro: a curadoria pode citar 2023 antes de 2023 ser
-        // ingerido. Fica de fora e o número aparece no log.
         var votacoes = curadas.Select(p => p.VotacaoId).ToList();
         var existentes = await db.Votacoes.AsNoTracking()
             .Where(v => votacoes.Contains(v.Id))
