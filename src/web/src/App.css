@@ -342,7 +342,6 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 }
 .nav-item.active svg { color: var(--realce); }
 
-.cabecalho-conta { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
 .usuario-mini {
   display: flex; align-items: center; gap: .5rem;
   padding: .4rem .6rem; border-radius: var(--raio); min-width: 0;
@@ -612,11 +611,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   background: var(--fundo); color: inherit;
 }
 .filtros input { flex: 1; min-width: 11rem; }
-.filtros .filtro-marcador {
-  display: flex; align-items: center; gap: .4rem;
-  font-size: var(--t-2); color: var(--suave); cursor: pointer;
-}
-.filtros .filtro-marcador input { flex: none; min-width: 0; padding: 0; accent-color: var(--realce); }
+
 .filtros input:focus, .filtros select:focus {
   border-color: var(--realce); background: var(--fundo);
 }
@@ -999,25 +994,6 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .ajuda-espacada { padding: 1rem; margin: 0; border-bottom: 1px solid var(--borda); }
 .resultado-acoes { display: flex; gap: .6rem; flex-wrap: wrap; padding: 1.25rem 1rem 3rem; }
 
-/* ═══ NOTÍCIAS E VOTOS NA TIMELINE ═════════════════════════════ */
-/* ATENÇÃO: Linha sem avatar: o dono do conteúdo já é o perfil da página. */
-.linha-simples { padding-inline: 1rem; }
-.voto-descricao { margin: .45rem 0 .2rem; font-size: var(--t-2); }
-
-/* ATENÇÃO: O registro processual fica MENOR e mais apagado que a ementa, de propósito:
-   ele identifica qual votação daquele projeto foi, e isso é conferência — não é
-   o que a pessoa lê para entender o voto. */
-.voto-processual {
-  margin: 0 0 .2rem; font-size: var(--t-2); color: var(--suave); line-height: 1.4;
-}
-.voto-processual strong { font-family: var(--dado); font-weight: 600; color: var(--texto); }
-
-/* RISCO: O marcador de rito vem ANTES do enunciado, não depois: quem lê a linha
-   precisa saber que não é voto de mérito antes de ler o que foi votado. */
-.voto-rito {
-  margin: .45rem 0 .15rem; font-size: var(--t-1); color: var(--suave);
-}
-
 /* ═══ BARRA DE BUSCA ═══════════════════════════════════════════ */
 .barra-busca {
   display: flex; align-items: center; gap: .6rem;
@@ -1310,7 +1286,6 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 
-
 /* ═══ ALINHAMENTO DE BANCADA ═══════════════════════════════════
    RISCO: SEM cor semântica, sem seta, sem comparação com média. Governismo alto não
    é elogio nem acusação, e qualquer um dos três transformaria medição em juízo. A
@@ -1335,25 +1310,6 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   display: block; font-size: var(--t-1); color: var(--suave);
   font-family: var(--corpo); font-weight: 400; letter-spacing: 0;
   font-variant-numeric: tabular-nums;
-}
-
-/* ═══ LEGENDA DO GRAFO ═════════════════════════════════════════
-   Três frases abaixo do desenho. ATENÇÃO: Não é rodapé: é o que impede a leitura errada da
-   figura, então tem fundo próprio para não ser pulada. */
-.legenda-grafo {
-  margin: 1rem 0 0; padding: .8rem .95rem; max-width: 48rem;
-  background: var(--painel);
-  border-left: 3px solid var(--borda-forte); border-radius: 0 var(--raio) var(--raio) 0;
-  font-size: var(--t-2); line-height: 1.55; color: var(--suave);
-}
-.legenda-grafo strong { color: var(--texto); font-weight: 600; }
-
-/* ═══ ORIENTAÇÃO NO VOTO ═══════════════════════════════════════
-   RISCO: SEM cor semântica. Votar contra a orientação não é erro, e verde/vermelho
-   transformaria comportamento em nota. O que distingue é o peso do texto, não a cor. */
-.voto-orientacao b { color: var(--texto); font-weight: 600; }
-.voto-orientacao em {
-  font-style: normal; font-weight: 600; color: var(--texto);
 }
 
 /* ═══ RESPONSIVO ═══════════════════════════════════════════════ */
@@ -1620,7 +1576,6 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 :root[data-tema='escuro'] .grupo-cor[data-comunidade='5'] { background: #c58a6c; }
 :root[data-tema='escuro'] .grupo-cor[data-comunidade='6'] { background: #97ad69; }
 :root[data-tema='escuro'] .grupo-cor[data-comunidade='7'] { background: #cf8592; }
-
 
 /* ═══ TRANSIÇÃO ENTRE TELAS ════════════════════════════════════ */
 /**
@@ -2044,10 +1999,6 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .barra-area-trilho > span { display: block; height: 100%; min-width: 0; }
 .barra-area-trilho > span:last-child { border-radius: 0 4px 4px 0; }
 
-.governo-detalhe { margin-top: 1rem; }
-.governo-detalhe summary { cursor: pointer; color: var(--realce); font-size: var(--t-2); font-weight: 600; }
-.governo-detalhe[open] summary { margin-bottom: .75rem; }
-
 .lista-encargos { list-style: none; margin: 0; padding: 0; }
 .lista-encargos li {
   display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
@@ -2076,7 +2027,6 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 .lista-lancamentos .gasto-nome small { display: block; }
 .lancamento-fim { display: grid; justify-items: end; gap: .1rem; font-size: var(--t-1); }
-
 
 /* ═══ EXPORTAR ═══ */
 .baixar-csv { display: inline-flex; align-items: center; gap: .4rem; font-weight: 400; }
@@ -2158,24 +2108,11 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 .convenio-meta { margin: 0; font-family: var(--dado); font-size: var(--t-1); color: var(--suave); }
 
-
-
 /* ═══ ORÇAMENTO FEDERAL ════════════════════════════════════════ */
 /* Contexto da legislatura. Sem cor além do realce, e na ordem do código da função:
    qualquer outra ordem viraria ranking de área (RNF-16). */
 
 .orcamento-barra { padding: .75rem 1rem 0; }
-.seletor-ano { display: flex; flex-wrap: wrap; gap: .4rem; }
-.seletor-ano button {
-  padding: .4rem .85rem;
-  background: transparent; color: var(--suave);
-  border: 1px solid var(--borda-controle); border-radius: var(--raio);
-  font-family: var(--dado); font-size: var(--t-2); font-variant-numeric: tabular-nums;
-}
-.seletor-ano button:hover { color: var(--realce); border-color: var(--realce); }
-.seletor-ano button.ativo {
-  background: var(--realce); border-color: var(--realce); color: var(--sobre-realce);
-}
 
 .tabela-rolavel { overflow-x: auto; }
 .tabela-orcamento {
@@ -2197,8 +2134,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .tabela-orcamento tfoot th, .tabela-orcamento tfoot td {
   font-weight: 700; border-top: 1px solid var(--borda-forte); border-bottom: none;
 }
-.orcamento-razao { display: inline-flex; align-items: center; gap: .5rem; }
-.orcamento-razao .gasto-barra { width: 4rem; }
+
 .orcamento-sem-razao { font-family: var(--corpo); font-size: var(--t-1); color: var(--suave); }
 
 /* ═══ MODAIS — entrada e saída ═════════════════════════════════ */
@@ -2317,8 +2253,6 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 /* Controle de verdade, não link de texto: é a única porta para o detalhe, e como
    link discreto ela não se anunciava. */
 
-
-
 .contas-numeros {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem;
 }
@@ -2329,7 +2263,6 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 /* A mesma comparação repetida no topo do modal: quem abriu clicando nela precisa
    reencontrá-la, senão o modal parece outro assunto. */
-
 
 .conta-valor { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
 .conta-rotulo {
@@ -2348,41 +2281,6 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
       mesmo peso dos outros dois faria a ausência competir com o dado. */
 .conta-ausente { color: var(--suave); font-weight: 500; }
 .conta-nota { font-size: var(--t-1); color: var(--suave); }
-
-/* ═══ CONTAS AMPLIADAS — o modal de detalhe ════════════════════ */
-/* ATENÇÃO: Sem `display:flex` no próprio `<dialog>`: o `margin:auto` que o navegador usa para
-   centralizar o modal depende do display padrão, e trocá-lo o desloca na tela. O corpo
-   rolável é resolvido com `max-height` no filho, não com flex no diálogo. */
-
-
-/* O bloco de título ocupa a largura; sem `flex: 1` ele encolhia até o texto e o ✕
-   ficava a meia tela de distância, deixando a barra com um vazio à direita. */
-
-
-
-
-
-
-
-/* RISCO: Uma única margem esquerda no modal inteiro.
-   ATENÇÃO: As listas e os títulos são reaproveitados do perfil, onde a coluna é mais estreita
-   e o recuo é 1rem; o cabeçalho e a comparação nascem aqui, com 1,25rem. Misturados, o
-   texto do topo ficava recuado em relação a tudo abaixo — lia como desalinhamento. */
-
-
-/* RISCO: As três seções precisam ler como CAPÍTULOS, não como mais três títulos numa
-   rolagem longa: sem peso próprio elas se confundem, e o leitor perde de vista que
-   trocou de dinheiro. Daí a superfície tinta, a régua forte e a display expandida. */
-
-/* DECISÃO: Gruda no topo da rolagem: numa lista longa é o que impede o leitor de esquecer
-   qual dos três dinheiros está vendo. */
-
-
-
-/* ATENÇÃO: Dentro do modal a faixa de resumo de cada fonte é MENOR: ela já não é o topo da
-      tela, e o tamanho original competiria com o título do bloco. */
-
-
 
 /* ═══ EMENDAS E FINANCIAMENTO DE CAMPANHA ══════════════════════ */
 /* RISCO: A execução (pago ÷ empenhado) ganha destaque próprio, e não um número miúdo
@@ -2470,7 +2368,6 @@ dialog.tour::backdrop { background: transparent; }
 }
 .tour-controles { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
 .tour-controles .botao-destaque { margin-left: auto; min-width: 7.5rem; }
-
 
 /* Oferta do primeiro acesso: canto inferior, sem cobrir o conteúdo. */
 /* "Entenda esta tela": texto com a marca de ajuda, no tom de realce e com borda de
@@ -2614,8 +2511,6 @@ dialog.tour::backdrop { background: transparent; }
 .painel-cidade-partes { margin: .3rem 0 0; padding-left: 1.1rem; font-size: var(--t-2); color: var(--suave); }
 .painel-cidade-partes strong { color: var(--texto); font-family: var(--dado); }
 
-.barra-do-tour { display: flex; justify-content: flex-end; padding: .5rem 1rem 0; }
-
 .seletor-periodo-campos { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; }
 .seletor-periodo-campos button {
   padding: .4rem .85rem; background: transparent; color: var(--suave);
@@ -2652,11 +2547,6 @@ dialog.tour::backdrop { background: transparent; }
 .cada-cem-nome small { font-family: var(--dado); font-weight: 400; color: var(--suave); font-size: var(--t-1); }
 .cada-cem-trilho { height: .5rem; background: var(--painel); border-radius: 2px; overflow: hidden; }
 .cada-cem-trilho span { display: block; height: 100%; background: var(--realce); }
-
-.gasto-explicacao { display: block; color: var(--suave); font-size: var(--t-1); font-weight: 400; }
-
-.sigilo-destaque { margin: .4rem 0; }
-.sigilo-destaque .numero-valor { display: inline; font-size: var(--t-5); }
 
 .governo-detalhes > summary { cursor: pointer; padding: .2rem 0; }
 .governo-detalhes > summary:focus-visible { outline: 2px solid var(--realce); outline-offset: 2px; }
@@ -2969,32 +2859,6 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 .filtro-aplicado:hover { border-color: var(--realce); }
 .filtro-limpar { padding: .2rem .4rem; background: none; border: 0; color: var(--realce); font-size: var(--t-1); text-decoration: underline; }
 
-/* ═══ GRAFO — destaque de partido ou estado (U18) ════════════════ */
-.destaque-do-grafo { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 0 0 .6rem; font-size: var(--t-2); }
-.destaque-do-grafo-rotulo { font-weight: 600; }
-.destaque-do-grafo select {
-  padding: .3rem .5rem; border: 1px solid var(--borda-controle); border-radius: var(--raio);
-  background: var(--fundo); color: var(--texto); font: inherit;
-}
-.destaque-do-grafo-conta { font-family: var(--dado); font-size: var(--t-1); color: var(--suave); font-variant-numeric: tabular-nums; }
-
-/* ═══ O QUE MUDOU — Pendência 63 ═══════════════════════════════════════ */
-/* DECISÃO: Uma linha do tempo curta, com a data em mono à esquerda: é o mesmo desenho do
-   resto do site para "quando", e o fato fica no texto, sem selo de cor que o qualifique. */
-.lista-novidades { list-style: none; margin: .75rem 0 0; padding: 0; }
-.lista-novidades li {
-  display: grid; grid-template-columns: 6.5rem 1fr; gap: .15rem 1rem;
-  padding: .7rem 0; border-top: 1px solid var(--borda);
-}
-.novidade-data { grid-row: span 2; font-family: var(--dado); font-size: var(--t-1); color: var(--suave); font-variant-numeric: tabular-nums; }
-.novidade-texto { margin: 0; font-size: var(--t-2); }
-.novidade-detalhe { display: block; margin-top: .2rem; color: var(--suave); font-size: var(--t-1); }
-.novidade-fonte { margin: 0; font-size: var(--t-1); color: var(--suave); }
-@media (max-width: 700px) {
-  .lista-novidades li { grid-template-columns: 1fr; }
-  .novidade-data { grid-row: auto; }
-}
-
 /* ═══ CONFERE COM O PORTAL — Pendência 81 ═══════════════════════ */
 .confere-com-o-portal { margin: 1rem 0 1.5rem; padding: .75rem 1.25rem; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel); }
 .confere-com-o-portal > summary { cursor: pointer; font-size: var(--t-2); list-style-position: inside; }
@@ -3043,7 +2907,6 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 .grupo-de-votos-lista .linha-detalhe { display: block; }
 
 .busca-cabecalho .busca-abrir { display: none; }
-
 
 /* Opção 1 das arestas (2026-10-03): de longe só os pontos; a dica diz como ver as ligações. */
 .grafo-dica-ligacoes {

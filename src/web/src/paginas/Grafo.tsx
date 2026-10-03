@@ -16,6 +16,7 @@ import { mesCurto, periodoDaLegislatura } from '../formato';
 import { passosDoGrafo } from '../tour';
 import { BlocoComponent, EsqueletoComponent } from '../componentes/Esqueleto';
 import { useLegislaturaDaUrl } from '../componentes/useLegislatura';
+import './grafo.css';
 
 type Grupo = { comunidade: number; quantos: number; partidos: string[] };
 

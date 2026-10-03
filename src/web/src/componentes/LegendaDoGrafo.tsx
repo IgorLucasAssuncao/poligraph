@@ -1,3 +1,4 @@
+import './legendaDoGrafo.css';
 /**
  * O que a figura mostra, em três frases.
  *

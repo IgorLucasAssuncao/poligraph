@@ -1,23 +1,30 @@
+import { lazy, Suspense } from 'react';
 import type { ReactNode } from 'react';
 import { BrowserRouter, Link, Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import { destinoSeguro } from './componentes/useEntrar';
 import { BannerConsentimentoComponent } from './componentes/BannerConsentimento';
 import { LayoutComponent } from './componentes/Layout';
-import { InicioComponent } from './paginas/Inicio';
-import { LoginComponent } from './paginas/Login';
-import { MetodologiaComponent } from './paginas/Metodologia';
-import { MinhaContaComponent } from './paginas/MinhaConta';
-import { EmendasComponent } from './paginas/Emendas';
-import { EntidadeComponent } from './paginas/Entidade';
-import { EntidadesComponent } from './paginas/Entidades';
-import { GovernoComponent } from './paginas/Governo';
-import { ParlamentarComponent } from './paginas/Parlamentar';
-import { ParlamentaresComponent } from './paginas/Parlamentares';
-import { PoliticaDePrivacidadeComponent } from './paginas/PoliticaDePrivacidade';
-import { QuestionarioComponent } from './paginas/Questionario';
 import { ProvedorDeSessaoComponent } from './componentes/ProvedorDeSessao';
+import { EsqueletoDeTextoComponent } from './componentes/Esqueleto';
 import { useSessao } from './sessao';
 import './App.css';
+
+/**
+ * Cada página vem num pacote próprio, baixado na primeira visita a ela (auditoria de 2026-10-03:
+ * o pacote único tinha 507 KB, e quem abria só a ficha baixava também o grafo, o mapa e o governo).
+ */
+const InicioComponent = lazy(() => import('./paginas/Inicio').then((m) => ({ default: m.InicioComponent })));
+const LoginComponent = lazy(() => import('./paginas/Login').then((m) => ({ default: m.LoginComponent })));
+const MetodologiaComponent = lazy(() => import('./paginas/Metodologia').then((m) => ({ default: m.MetodologiaComponent })));
+const MinhaContaComponent = lazy(() => import('./paginas/MinhaConta').then((m) => ({ default: m.MinhaContaComponent })));
+const EmendasComponent = lazy(() => import('./paginas/Emendas').then((m) => ({ default: m.EmendasComponent })));
+const EntidadeComponent = lazy(() => import('./paginas/Entidade').then((m) => ({ default: m.EntidadeComponent })));
+const EntidadesComponent = lazy(() => import('./paginas/Entidades').then((m) => ({ default: m.EntidadesComponent })));
+const GovernoComponent = lazy(() => import('./paginas/Governo').then((m) => ({ default: m.GovernoComponent })));
+const ParlamentarComponent = lazy(() => import('./paginas/Parlamentar').then((m) => ({ default: m.ParlamentarComponent })));
+const ParlamentaresComponent = lazy(() => import('./paginas/Parlamentares').then((m) => ({ default: m.ParlamentaresComponent })));
+const PoliticaDePrivacidadeComponent = lazy(() => import('./paginas/PoliticaDePrivacidade').then((m) => ({ default: m.PoliticaDePrivacidadeComponent })));
+const QuestionarioComponent = lazy(() => import('./paginas/Questionario').then((m) => ({ default: m.QuestionarioComponent })));
 
 export default function AppComponent() {
   return (
@@ -54,6 +61,7 @@ function RoteadorComponent() {
 
   if (!usuario) {
     return (
+      <Suspense fallback={<EsqueletoDeTextoComponent rotulo="Carregando a página" />}>
       <Routes>
         <Route path="/privacidade" element={<DocumentoPublicoComponent><PoliticaDePrivacidadeComponent /></DocumentoPublicoComponent>} />
         <Route path="/metodologia" element={<DocumentoPublicoComponent><MetodologiaComponent /></DocumentoPublicoComponent>} />
@@ -67,11 +75,13 @@ function RoteadorComponent() {
           <Route path="*" element={<LoginComponent />} />
         )}
       </Routes>
+      </Suspense>
     );
   }
 
   return (
     <LayoutComponent>
+      <Suspense fallback={<EsqueletoDeTextoComponent rotulo="Carregando a página" />}>
       <Routes>
         <Route path="/" element={<InicioComponent />} />
         <Route path="/parlamentares" element={<ParlamentaresComponent />} />
@@ -98,6 +108,7 @@ function RoteadorComponent() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </LayoutComponent>
   );
 }
@@ -106,6 +117,7 @@ function RoteadorComponent() {
 function LeituraSemContaComponent() {
   return (
     <LayoutComponent>
+      <Suspense fallback={<EsqueletoDeTextoComponent rotulo="Carregando a página" />}>
       <Routes>
         <Route path="/" element={<InicioComponent />} />
         <Route path="/parlamentares" element={<ParlamentaresComponent />} />
@@ -120,6 +132,7 @@ function LeituraSemContaComponent() {
         <Route path="/grafo" element={<Navigate to="/parlamentares?vista=grafo" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </LayoutComponent>
   );
 }

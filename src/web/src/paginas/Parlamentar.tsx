@@ -32,6 +32,7 @@ import { useSessao } from '../sessao';
 import { passosDaFicha } from '../tour';
 import { EsqueletoDeFichaComponent, EsqueletoDeListaComponent } from '../componentes/Esqueleto';
 import { IconeExplorarComponent } from '../componentes/Icones';
+import './parlamentar.css';
 
 const PASSOS_DA_FICHA = passosDaFicha();
 

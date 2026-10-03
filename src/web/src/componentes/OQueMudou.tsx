@@ -5,6 +5,7 @@ import { obterNovidades } from '../api';
 import type { Casa, Novidades } from '../api';
 import { dataCurta, mesCurto, minusculas, reais } from '../formato';
 import { LinkDeFonteComponent } from './LinkDeFonte';
+import './oQueMudou.css';
 
 /**
  * "O que mudou" (Pendência 63): os cinco avisos sobre quem a pessoa segue, um item por fato, do
