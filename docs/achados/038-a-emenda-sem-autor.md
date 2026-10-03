@@ -76,7 +76,7 @@ pelo Portal.
 |---|---|
 | Gravar a linha sem autor, com `pessoa_id` nulo e o tipo de emenda | Os totais do país voltam a ser os do Portal; a ficha não muda. É o que a carga já faz com emenda de bancada e de comissão |
 | Gravar a de bancada como da bancada da UF | 97,1% de acerto medido; nenhuma pessoa recebe autoria |
-| Atribuir a individual de 2014 com autor único pela CMO | R$ 0,96 bi, 95,5% de acerto medido em 2015; marcada como autoria inferida |
+| ~~Atribuir a individual de 2014 com autor único pela CMO~~ | Descartada pelo autor em 2026-10-02: a fonte é um PDF isolado por orçamento, sem carga periódica possível, para recuperar R$ 0,96 bi |
 | Manter o descarte e dizer na tela | "Em 2016, R$ 18,7 bi de emendas não têm autor identificado no Portal e não entram nesta soma" |
 
 O descarte existia para pegar código **incoerente** por erro de leitura, e cumpriu: em
