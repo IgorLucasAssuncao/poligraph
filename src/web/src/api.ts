@@ -1184,6 +1184,23 @@ export async function obterMapaDoBrasil(periodo?: Periodo): Promise<MapaDoBrasil
   return buscar<MapaDoBrasil>(comPeriodo(`${BASE}/mapa/emendas`, periodo));
 }
 
+/** Um total de emendas num ano, comparado com o Portal: fonte, base e o que ficou fora, por motivo (Pendência 81). */
+export type Reconciliacao = {
+  /** `EMENDAS` é por ano da emenda; `PAGAMENTOS`, por ano do pagamento. */
+  conjunto: 'EMENDAS' | 'PAGAMENTOS';
+  medida: 'EMPENHADO' | 'PAGO' | 'RECEBIDO';
+  ano: number;
+  totalNaFonte: number;
+  totalNaBase: number;
+  /** A parte da base com a bancada deduzida pelo estado. Já está em `totalNaBase`. */
+  totalInferido: number;
+  motivos: { motivo: string; valor: number }[];
+};
+
+export async function obterReconciliacao(periodo?: Periodo): Promise<Reconciliacao[]> {
+  return buscar<Reconciliacao[]>(comPeriodo(`${BASE}/emendas/reconciliacao`, periodo));
+}
+
 export async function obterMapaDoEstado(uf: string, periodo?: Periodo): Promise<MapaDoEstado> {
   return buscar<MapaDoEstado>(comPeriodo(`${BASE}/mapa/emendas/${uf}`, periodo));
 }

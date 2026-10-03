@@ -726,15 +726,13 @@ def _emendas(conexao: psycopg.Connection, anos: list[int]) -> None:
     )
     carga = _carga_do_arquivo(conexao, "PORTAL_TRANSPARENCIA", portal.url(emendas.RECURSO), arquivo)
 
-    linhas, autores = emendas.para_linhas(
-        portal.ler_csv(arquivo, emendas.ARQUIVO_EMENDAS), anos
-    )
+    tabela_de_emendas = portal.ler_csv(arquivo, emendas.ARQUIVO_EMENDAS)
+    linhas, autores = emendas.para_linhas(tabela_de_emendas, anos)
     codigos = {linha["codigo_emenda"] for linha in linhas}
     log.info("  %d linhas, %d emendas, %d autores", len(linhas), len(codigos), len(autores))
 
-    favorecidos = emendas.favorecidos_para_linhas(
-        portal.ler_csv(arquivo, emendas.ARQUIVO_FAVORECIDOS), codigos
-    )
+    tabela_de_favorecidos = portal.ler_csv(arquivo, emendas.ARQUIVO_FAVORECIDOS)
+    favorecidos = emendas.favorecidos_para_linhas(tabela_de_favorecidos, codigos)
     convenios, ligacoes = emendas.convenios_para_linhas(
         portal.ler_csv(arquivo, emendas.ARQUIVO_CONVENIOS), codigos
     )
@@ -744,6 +742,11 @@ def _emendas(conexao: psycopg.Connection, anos: list[int]) -> None:
         persistencia.registrar_autores(conexao, autores)
         persistencia.gravar_favorecidos(conexao, anos, favorecidos, carga)
         persistencia.gravar_convenios(conexao, anos, convenios, ligacoes)
+        codigos_na_base, anos_na_base = persistencia.codigos_e_anos_de_emenda(conexao)
+        contas = (emendas.reconciliar_emendas(tabela_de_emendas, anos)
+                  + emendas.reconciliar_pagamentos(tabela_de_favorecidos, codigos_na_base, anos_na_base))
+        persistencia.gravar_reconciliacoes(conexao, contas, carga)
+    _registrar_o_que_nao_fecha(contas)
 
     log.info(
         "%d linhas de emenda, %d pagamentos a favorecidos, %d convênios (%d ligações)",
@@ -751,6 +754,17 @@ def _emendas(conexao: psycopg.Connection, anos: list[int]) -> None:
     )
 
     _reconciliar_autores(conexao)
+
+
+def _registrar_o_que_nao_fecha(contas: list[dict]) -> None:
+    """Diz no log, por ano, quanto do total do Portal ficou fora da base e por quê (Pendência 81)."""
+    for conta in contas:
+        fora = conta["total_na_fonte"] - conta["total_na_base"]
+        if abs(fora) < 0.01:
+            continue
+        motivos = ", ".join(f"{m} R$ {v / 1e9:.2f} bi" for m, v in sorted(conta["motivos"].items(), key=lambda i: -i[1]))
+        log.info("  %s %s %d: R$ %.2f bi do Portal fora da base — %s",
+                 conta["conjunto"], conta["medida"], conta["ano"], fora / 1e9, motivos)
 
 
 def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None:

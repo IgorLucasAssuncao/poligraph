@@ -8,6 +8,7 @@ import { Emendas } from './Emendas';
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
   obterMapaDoBrasil: vi.fn(),
+  obterReconciliacao: vi.fn().mockResolvedValue([]),
   obterMapaDoEstado: vi.fn(),
   obterEmendasDoMunicipio: vi.fn(),
   listarParlamentaresDoMunicipio: vi.fn(),

@@ -52,6 +52,7 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
         "/api/parlamentares/{id}/emendas/lista",
         "/api/parlamentares/{id}/gastos/lancamentos",
         "/api/metodologia",
+        "/api/emendas/reconciliacao",
         "/api/procedencia/{contexto}",
         "/api/mapa/emendas",
         "/api/mapa/emendas/{uf}",

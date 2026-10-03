@@ -82,3 +82,12 @@ pelo Portal.
 O descarte existia para pegar código **incoerente** por erro de leitura, e cumpriu: em
 2021–2026, zero. A linha sem autor é outra coisa, e o log não deveria chamá-la de mudança
 da fonte.
+
+## O que foi feito (2026-10-02)
+
+| | |
+|---|---|
+| Bancada sem autor | Entra com a bancada deduzida pela UF: 1.221 linhas, R$ 6,39 bi. Marcada como `autoria_inferida` |
+| O resto | Fica fora, e a diferença é dita: a cada carga, a reconciliação grava por ano o total do Portal, o da base e o que ficou fora por motivo. A página de emendas mostra a conta |
+| Pagamentos sem código de emenda | R$ 28,85 bi no arquivo de favorecidos, de 2014 a 2026, sem o número da emenda. Também entram na reconciliação, por ano do pagamento |
+

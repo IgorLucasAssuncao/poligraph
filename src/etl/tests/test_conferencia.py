@@ -107,6 +107,24 @@ def test_salto_de_patrimonio_so_conta_acima_do_minimo():
     assert [a.detalhe.split(":")[0] for a in achados] == ["Salto"]
 
 
+def test_reconciliacao_que_nao_fecha_e_erro_e_centavos_nao():
+    achados = conferencia.reconciliacao_nao_fecha([
+        ("EMENDAS", "EMPENHADO", 2016, 0.4),
+        ("PAGAMENTOS", "RECEBIDO", 2017, 1_500.0),
+    ])
+
+    assert [(a.severidade, a.detalhe.split(":")[0]) for a in achados] == [("ERRO", "RECEBIDO de 2017")]
+
+
+def test_base_que_mudou_depois_da_reconciliacao_e_erro():
+    achados = conferencia.base_mudou_depois_da_reconciliacao([
+        ("EMENDAS", "PAGO", 2020, 100.0, 100.0),
+        ("EMENDAS", "EMPENHADO", 2020, 100.0, 90.0),
+    ])
+
+    assert [a.detalhe.split(":")[0] for a in achados] == ["EMPENHADO de 2020"]
+
+
 def test_conferir_roda_toda_regra_com_a_consulta_dela():
     """Cada regra tem consulta, e uma base vazia não quebra nada."""
     vistas = []

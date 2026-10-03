@@ -543,6 +543,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("smallint")
                         .HasColumnName("ano");
 
+                    b.Property<bool>("AutoriaInferida")
+                        .HasColumnType("boolean")
+                        .HasColumnName("autoria_inferida");
+
                     b.Property<long?>("CargaId")
                         .HasColumnType("bigint")
                         .HasColumnName("carga_id");
@@ -637,6 +641,8 @@ namespace Poligraph.Data.Migrations
 
                     b.ToTable("emendas", null, t =>
                         {
+                            t.HasCheckConstraint("ck_emenda_autoria_inferida", "NOT autoria_inferida OR (pessoa_id IS NULL AND codigo_emenda ~ '^[0-9]+I[0-9]+$')");
+
                             t.HasCheckConstraint("ck_emenda_municipio_ibge", "codigo_municipio_ibge IS NULL OR codigo_municipio_ibge ~ '^[0-9]{7}$'");
                         });
                 });
@@ -1474,6 +1480,99 @@ namespace Poligraph.Data.Migrations
                     b.ToTable("receitas_por_origem", (string)null);
                 });
 
+            modelBuilder.Entity("Poligraph.Data.ReconciliacaoModel", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<short>("Ano")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano");
+
+                    b.Property<DateTimeOffset>("CalculadoEm")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("calculado_em")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
+                    b.Property<string>("Conjunto")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("conjunto");
+
+                    b.Property<string>("Medida")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("medida");
+
+                    b.Property<decimal>("TotalInferido")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_inferido");
+
+                    b.Property<decimal>("TotalNaBase")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_na_base");
+
+                    b.Property<decimal>("TotalNaFonte")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("total_na_fonte");
+
+                    b.HasKey("Id")
+                        .HasName("pk_reconciliacoes");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_reconciliacoes_carga_id");
+
+                    b.HasIndex("Conjunto", "Medida", "Ano")
+                        .IsUnique()
+                        .HasDatabaseName("ux_reconciliacao");
+
+                    b.ToTable("reconciliacoes", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_reconciliacao_conjunto", "conjunto IN ('EMENDAS','PAGAMENTOS')");
+
+                            t.HasCheckConstraint("ck_reconciliacao_medida", "(conjunto = 'EMENDAS' AND medida IN ('EMPENHADO','PAGO')) OR (conjunto = 'PAGAMENTOS' AND medida = 'RECEBIDO')");
+                        });
+                });
+
+            modelBuilder.Entity("Poligraph.Data.ReconciliacaoMotivoModel", b =>
+                {
+                    b.Property<long>("ReconciliacaoId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("reconciliacao_id");
+
+                    b.Property<string>("Motivo")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("motivo");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("valor");
+
+                    b.HasKey("ReconciliacaoId", "Motivo")
+                        .HasName("pk_reconciliacao_motivos");
+
+                    b.ToTable("reconciliacao_motivos", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_reconciliacao_motivo", "motivo IN ('RELATOR_SEM_AUTOR','COMISSAO_SEM_AUTOR','BANCADA_SEM_AUTOR_E_SEM_UF','INDIVIDUAL_SEM_AUTOR','OUTRA_SEM_AUTOR','INCOERENTE','PAGAMENTO_SEM_CODIGO_DE_EMENDA','EMENDA_DE_ANO_NAO_CARREGADO','EMENDA_FORA_DA_BASE')");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Data.RedeSocialModel", b =>
                 {
                     b.Property<long>("PessoaId")
@@ -2068,6 +2167,25 @@ namespace Poligraph.Data.Migrations
                     b.Navigation("Pessoa");
                 });
 
+            modelBuilder.Entity("Poligraph.Data.ReconciliacaoModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_reconciliacoes_cargas_carga_id");
+                });
+
+            modelBuilder.Entity("Poligraph.Data.ReconciliacaoMotivoModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.ReconciliacaoModel", null)
+                        .WithMany("Motivos")
+                        .HasForeignKey("ReconciliacaoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_reconciliacao_motivos_reconciliacoes_reconciliacao_id");
+                });
+
             modelBuilder.Entity("Poligraph.Data.RedeSocialModel", b =>
                 {
                     b.HasOne("Poligraph.Data.PessoaModel", null)
@@ -2188,6 +2306,11 @@ namespace Poligraph.Data.Migrations
                     b.Navigation("FontesId");
 
                     b.Navigation("Votos");
+                });
+
+            modelBuilder.Entity("Poligraph.Data.ReconciliacaoModel", b =>
+                {
+                    b.Navigation("Motivos");
                 });
 
             modelBuilder.Entity("Poligraph.Data.UsuarioModel", b =>

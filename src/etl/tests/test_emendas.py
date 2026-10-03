@@ -105,6 +105,90 @@ def test_emenda_sem_autor_e_contada_a_parte_e_nao_como_mudanca_da_fonte(caplog):
     assert "a fonte mudou" not in caplog.text
 
 
+def _bancada_com_autor():
+    return emenda(**{"Código da Emenda": "201971060001", "Ano da Emenda": "2019", "Número da emenda": "0001",
+                     "Tipo de Emenda": "Emenda de Bancada", "Código do Autor da Emenda": "7106",
+                     "Nome do Autor da Emenda": "BANCADA DA BAHIA", "UF": "BAHIA",
+                     "Localidade de aplicação do recurso": "BAHIA (UF)"})
+
+
+def _bancada_sem_autor(**campos):
+    base = {"Código da Emenda": "Sem informação", "Ano da Emenda": "2017", "Número da emenda": "S/I",
+            "Tipo de Emenda": "Emenda de Bancada", "Código do Autor da Emenda": "S/I",
+            "Nome do Autor da Emenda": "Sem informação", "UF": "BAHIA",
+            "Localidade de aplicação do recurso": "SALVADOR - BA"}
+    return emenda(**{**base, **campos})
+
+
+def test_bancada_sem_autor_entra_com_a_bancada_da_uf_e_marcada():
+    """Pendência 81: a UF da linha dá a bancada, com o código que a própria bancada usa nos outros anos."""
+    linhas, autores = emendas.para_linhas(
+        tabela(_bancada_com_autor(), _bancada_sem_autor()), [2017],
+    )
+
+    inferida = linhas[0]
+    assert (inferida["codigo_autor"], inferida["nome_autor"]) == ("7106", "BANCADA DA BAHIA")
+    assert inferida["autoria_inferida"] is True
+    assert inferida["codigo_emenda"] == "20177106I0001"
+    assert autores == {"7106": "BANCADA DA BAHIA"}
+
+
+def test_so_bancada_e_so_com_uf_conhecida():
+    """Relator, comissão e bancada sem UF continuam fora: para eles a UF não diz o autor."""
+    linhas, _ = emendas.para_linhas(
+        tabela(_bancada_com_autor(),
+               _bancada_sem_autor(**{"Tipo de Emenda": "Emenda de Relator"}),
+               _bancada_sem_autor(**{"UF": "Sem informação"})),
+        [2017],
+    )
+
+    assert linhas == []
+
+
+def test_codigo_inferido_e_estavel_pela_ordem_dos_campos_e_nao_do_arquivo():
+    a = _bancada_sem_autor(**{"Código Ação": "AAAA"})
+    b = _bancada_sem_autor(**{"Código Ação": "BBBB"})
+
+    uma, _ = emendas.para_linhas(tabela(_bancada_com_autor(), a, b), [2017])
+    outra, _ = emendas.para_linhas(tabela(_bancada_com_autor(), b, a), [2017])
+
+    assert {(l["codigo_acao"], l["codigo_emenda"]) for l in uma} == {(l["codigo_acao"], l["codigo_emenda"]) for l in outra}
+
+
+def test_reconciliacao_fecha_e_diz_o_motivo_de_cada_real_fora():
+    """Regra do autor: o orçamento fecha, e o que não fecha tem justificativa (Pendência 81)."""
+    relator = _bancada_sem_autor(**{"Tipo de Emenda": "Emenda de Relator", "Valor Empenhado": "500,00"})
+    bancada = _bancada_sem_autor(**{"Valor Empenhado": "300,00"})
+    contas = emendas.reconciliar_emendas(tabela(_bancada_com_autor(), relator, bancada), [2017])
+
+    empenhado = next(c for c in contas if c["medida"] == "EMPENHADO")
+    assert empenhado["total_na_fonte"] == 800.0
+    assert empenhado["total_na_base"] == 300.0
+    assert empenhado["total_inferido"] == 300.0
+    assert empenhado["motivos"] == {"RELATOR_SEM_AUTOR": 500.0}
+    assert empenhado["total_na_fonte"] == empenhado["total_na_base"] + sum(empenhado["motivos"].values())
+
+
+def test_motivos_sao_os_do_check_do_banco():
+    """Um motivo escrito diferente do `CHECK` seria recusado na gravação, e a carga inteira cairia."""
+    assert set(emendas.MOTIVOS_DE_FORA) <= {
+        "RELATOR_SEM_AUTOR", "COMISSAO_SEM_AUTOR", "BANCADA_SEM_AUTOR_E_SEM_UF", "INDIVIDUAL_SEM_AUTOR",
+        "OUTRA_SEM_AUTOR", "INCOERENTE"}
+
+
+def test_pagamento_sem_codigo_e_de_ano_nao_carregado_ficam_fora_com_motivo():
+    pagamentos = tabela(
+        {"Código da Emenda": "202541840004", "Ano/Mês": "2025/03", "Valor Recebido": "100,00"},
+        {"Código da Emenda": "Sem informação", "Ano/Mês": "2025/04", "Valor Recebido": "40,00"},
+        {"Código da Emenda": "201241840001", "Ano/Mês": "2025/05", "Valor Recebido": "7,00"},
+    )
+
+    conta = emendas.reconciliar_pagamentos(pagamentos, {"202541840004"}, [2025])[0]
+
+    assert (conta["ano"], conta["total_na_fonte"], conta["total_na_base"]) == (2025, 147.0, 100.0)
+    assert conta["motivos"] == {"PAGAMENTO_SEM_CODIGO_DE_EMENDA": 40.0, "EMENDA_DE_ANO_NAO_CARREGADO": 7.0}
+
+
 # ═══════════════════════════════════════════════════════════════════
 # RISCO: Valor em formato brasileiro
 # ═══════════════════════════════════════════════════════════════════

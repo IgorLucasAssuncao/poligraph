@@ -32,6 +32,7 @@ import { areaQueContem } from '../mapa';
 import { passosDasEmendas } from '../tour';
 import { Bloco, Esqueleto, EsqueletoDePainel, EsqueletoDeTexto } from '../componentes/Esqueleto';
 import { UFS } from '../ufs';
+import { ConfereComOPortal } from '../componentes/ConfereComOPortal';
 
 /**
  * Para onde foi o dinheiro de emenda, no mapa — e quem o mandou para a sua cidade.
@@ -160,6 +161,7 @@ export function Emendas() {
           </SeletorDePeriodo>
 
           <ForaDoMapa brasil={brasil} />
+          <ConfereComOPortal periodo={brasil.periodo} />
 
           {uf ? (
             <MapaDaUf

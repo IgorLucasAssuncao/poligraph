@@ -142,7 +142,8 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
             "municipios", "noticia_pessoas", "noticia_temas", "orcamento_por_funcao", "patrimonios",
             "noticias", "nos_metrica", "orientacoes", "perguntas", "pessoa_fonte_ids",
             "pessoas",
-            "proposicoes", "receitas_de_campanha", "receitas_por_origem", "redes_sociais", "segue", "similaridades",
+            "proposicoes", "receitas_de_campanha", "receitas_por_origem", "reconciliacao_motivos", "reconciliacoes",
+            "redes_sociais", "segue", "similaridades",
             "tokens_email", "usuarios", "votacoes", "votos",
         };
 
@@ -228,6 +229,41 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
 #pragma warning restore EF1002
 
         Assert.Equal(restricao, erro.ConstraintName);
+    }
+
+    /// <summary>
+    /// Pendência 81: a autoria inferida nunca tem pessoa, e o código dela tem o "I" que nenhum
+    /// código do Portal tem. Inferir para uma pessoa, ou com código do Portal, o banco recusa.
+    /// </summary>
+    [SkippableTheory]
+    [InlineData("20177106I0001", false, true)]
+    [InlineData("201771060001", false, false)]
+    [InlineData("20177106I0001", true, false)]
+    public async Task EmendaInferida_SoSemPessoaEComCodigoProprio(string codigo, bool comPessoa, bool aceita)
+    {
+        ExigeDocker();
+        long? pessoaId = null;
+        if (comPessoa)
+        {
+            var pessoa = new PessoaModel { NomeExibicao = "Fulano", NomeCivil = "FULANO" };
+            Db.Pessoas.Add(pessoa);
+            await Db.SaveChangesAsync();
+            pessoaId = pessoa.Id;
+        }
+        Db.Emendas.Add(new EmendaModel
+        {
+            PessoaId = pessoaId, CodigoAutor = "7106", NomeAutor = "BANCADA DA BAHIA", CodigoEmenda = codigo,
+            Ano = 2017, Localidade = "SALVADOR - BA", CodigoAcao = "20XV", CodigoPlanoOrcamentario = "0000",
+            ValorEmpenhado = 10m, AutoriaInferida = true
+        });
+
+        if (aceita)
+        {
+            await Db.SaveChangesAsync();
+            return;
+        }
+        var erro = await Assert.ThrowsAsync<Microsoft.EntityFrameworkCore.DbUpdateException>(() => Db.SaveChangesAsync());
+        Assert.Equal("ck_emenda_autoria_inferida", ((PostgresException)erro.InnerException!).ConstraintName);
     }
 
     /// <summary>

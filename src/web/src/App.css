@@ -2962,3 +2962,11 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
   .lista-novidades li { grid-template-columns: 1fr; }
   .novidade-data { grid-row: auto; }
 }
+
+/* ═══ CONFERE COM O PORTAL — Pendência 81 ═══════════════════════ */
+.confere-com-o-portal { margin: 1rem 0 1.5rem; padding: 1rem 1.25rem; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel); }
+.confere-com-o-portal h2 { margin: 0 0 .5rem; font-size: var(--t-4); }
+.confere-com-o-portal p { margin: .4rem 0; font-size: var(--t-2); }
+.motivos-de-fora { list-style: none; margin: .5rem 0; padding: 0; }
+.motivos-de-fora li { display: flex; justify-content: space-between; gap: 1rem; padding: .3rem 0; border-top: 1px solid var(--borda); font-size: var(--t-2); }
+.confere-com-o-portal .dado { font-family: var(--dado); font-variant-numeric: tabular-nums; white-space: nowrap; }

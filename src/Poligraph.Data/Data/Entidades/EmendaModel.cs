@@ -74,6 +74,15 @@ public class EmendaModel
     /// </summary>
     public decimal ValorRestoPago { get; set; }
 
+    /// <summary>
+    /// O autor não veio do Portal: é a bancada da UF da linha, numa emenda de bancada que o
+    /// Portal publica como "Sem informação" (Pendência 81, achado #38).
+    /// </summary>
+    /// <remarks>
+    /// <para>MEDIDO em 2026-10-02: nas emendas de bancada com autor, a UF da linha é a da bancada em 97,1% das linhas. O código da emenda inferida tem um "I" e não existe no Portal.</para>
+    /// </remarks>
+    public bool AutoriaInferida { get; set; }
+
     public PessoaModel? Pessoa { get; set; }
 
     /// <summary>A carga de onde a linha saiu (Pendência 72). Nula nas linhas gravadas antes dela.</summary>

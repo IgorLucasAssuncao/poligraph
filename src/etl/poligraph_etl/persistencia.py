@@ -461,6 +461,36 @@ def gravar_votacoes(
     )
 
 
+def gravar_reconciliacoes(conexao: psycopg.Connection, contas: Sequence[dict], carga_id: int | None) -> int:
+    """Substitui a reconciliação de cada (conjunto, medida, ano) que a carga recalculou. Os motivos vão em cascata."""
+    for conta in contas:
+        conexao.execute(
+            "DELETE FROM reconciliacoes WHERE conjunto = %s AND medida = %s AND ano = %s",
+            (conta["conjunto"], conta["medida"], conta["ano"]),
+        )
+        reconciliacao_id = conexao.execute(
+            """
+            INSERT INTO reconciliacoes (conjunto, medida, ano, total_na_fonte, total_na_base, total_inferido, carga_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+            """,
+            (conta["conjunto"], conta["medida"], conta["ano"], conta["total_na_fonte"],
+             conta["total_na_base"], conta["total_inferido"], carga_id),
+        ).fetchone()[0]
+        for motivo, valor in conta["motivos"].items():
+            conexao.execute(
+                "INSERT INTO reconciliacao_motivos (reconciliacao_id, motivo, valor) VALUES (%s, %s, %s)",
+                (reconciliacao_id, motivo, valor),
+            )
+    return len(contas)
+
+
+def codigos_e_anos_de_emenda(conexao: psycopg.Connection) -> tuple[set[str], set[int]]:
+    """Os códigos de emenda e os anos que estão na base, para reconciliar os pagamentos contra ela."""
+    linhas = conexao.execute("SELECT DISTINCT codigo_emenda, ano FROM emendas").fetchall()
+    return {linha[0] for linha in linhas}, {linha[1] for linha in linhas}
+
+
 def proposicoes_sem_palavras_chave(conexao: psycopg.Connection) -> list[tuple[str, int]]:
     """`(casa, id)` das proposições ligadas a alguma votação e ainda não consultadas (Pendência 70)."""
     return conexao.execute(
@@ -686,12 +716,12 @@ def gravar_emendas(
                              localidade, funcao, subfuncao, codigo_municipio_ibge,
                              codigo_acao, codigo_plano_orcamentario,
                              valor_empenhado, valor_liquidado, valor_pago,
-                             valor_resto_pago, carga_id)
+                             valor_resto_pago, autoria_inferida, carga_id)
         VALUES (%(codigo_autor)s, %(nome_autor)s, %(codigo_emenda)s, %(ano)s, %(tipo)s,
                 %(localidade)s, %(funcao)s, %(subfuncao)s, %(codigo_municipio_ibge)s,
                 %(codigo_acao)s, %(codigo_plano_orcamentario)s,
                 %(valor_empenhado)s, %(valor_liquidado)s, %(valor_pago)s,
-                %(valor_resto_pago)s, %(carga_id)s)
+                %(valor_resto_pago)s, %(autoria_inferida)s, %(carga_id)s)
         """,
         _com_carga(linhas, carga_id),
     )

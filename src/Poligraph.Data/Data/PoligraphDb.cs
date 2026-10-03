@@ -45,6 +45,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<RedeSocialModel> RedesSociais => Set<RedeSocialModel>();
     public DbSet<PatrimonioModel> Patrimonios => Set<PatrimonioModel>();
     public DbSet<CargaModel> Cargas => Set<CargaModel>();
+    public DbSet<ReconciliacaoModel> Reconciliacoes => Set<ReconciliacaoModel>();
+    public DbSet<ReconciliacaoMotivoModel> ReconciliacaoMotivos => Set<ReconciliacaoMotivoModel>();
 
     /// <summary>
     /// <b>Todo enum é gravado como TEXTO.</b>
@@ -75,6 +77,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         ConfigurarDinheiro(mb);
         ConfigurarAnalise(mb);
         ConfigurarProcedencia(mb);
+        ConfigurarReconciliacao(mb);
         ConfigurarUsuario(mb);
         ConfigurarNoticia(mb);
         ConfigurarAvaliacao(mb);
@@ -163,6 +166,43 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<CnpjMunicipioModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+    }
+
+    /// <summary>A reconciliação dos totais de dinheiro com a fonte (Pendência 81).</summary>
+    /// <remarks>
+    /// <para>Os domínios viram <c>CHECK</c>: um motivo escrito errado na ETL seria uma justificativa que nenhuma tela sabe ler.</para>
+    /// </remarks>
+    private static void ConfigurarReconciliacao(ModelBuilder mb)
+    {
+        mb.Entity<ReconciliacaoModel>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.Conjunto, x.Medida, x.Ano }).IsUnique().HasDatabaseName("ux_reconciliacao");
+            e.Property(x => x.Conjunto).HasMaxLength(16);
+            e.Property(x => x.Medida).HasMaxLength(16);
+            e.Property(x => x.TotalNaFonte).HasPrecision(18, 2);
+            e.Property(x => x.TotalNaBase).HasPrecision(18, 2);
+            e.Property(x => x.TotalInferido).HasPrecision(18, 2);
+            e.Property(x => x.CalculadoEm).HasDefaultValueSql("now()");
+            e.HasOne<CargaModel>().WithMany().HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+            e.HasMany(x => x.Motivos).WithOne().HasForeignKey(x => x.ReconciliacaoId).OnDelete(DeleteBehavior.Cascade);
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_reconciliacao_conjunto", "conjunto IN ('EMENDAS','PAGAMENTOS')");
+                t.HasCheckConstraint("ck_reconciliacao_medida",
+                    "(conjunto = 'EMENDAS' AND medida IN ('EMPENHADO','PAGO')) OR (conjunto = 'PAGAMENTOS' AND medida = 'RECEBIDO')");
+            });
+        });
+
+        mb.Entity<ReconciliacaoMotivoModel>(e =>
+        {
+            e.HasKey(x => new { x.ReconciliacaoId, x.Motivo });
+            e.Property(x => x.Motivo).HasMaxLength(40);
+            e.Property(x => x.Valor).HasPrecision(18, 2);
+            e.ToTable(t => t.HasCheckConstraint("ck_reconciliacao_motivo",
+                "motivo IN ('RELATOR_SEM_AUTOR','COMISSAO_SEM_AUTOR','BANCADA_SEM_AUTOR_E_SEM_UF','INDIVIDUAL_SEM_AUTOR',"
+                + "'OUTRA_SEM_AUTOR','INCOERENTE','PAGAMENTO_SEM_CODIGO_DE_EMENDA','EMENDA_DE_ANO_NAO_CARREGADO','EMENDA_FORA_DA_BASE')"));
+        });
     }
 
     private static void ConfigurarVotacao(ModelBuilder mb)
@@ -295,9 +335,15 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
 
             e.Property(x => x.CodigoEmenda).HasMaxLength(16);
             e.Property(x => x.CodigoMunicipioIbge).HasMaxLength(7);
-            e.ToTable(t => t.HasCheckConstraint(
-                "ck_emenda_municipio_ibge",
-                "codigo_municipio_ibge IS NULL OR codigo_municipio_ibge ~ '^[0-9]{7}$'"));
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "ck_emenda_municipio_ibge",
+                    "codigo_municipio_ibge IS NULL OR codigo_municipio_ibge ~ '^[0-9]{7}$'");
+                t.HasCheckConstraint(
+                    "ck_emenda_autoria_inferida",
+                    "NOT autoria_inferida OR (pessoa_id IS NULL AND codigo_emenda ~ '^[0-9]+I[0-9]+$')");
+            });
 
             e.Property(x => x.CodigoAutor).HasMaxLength(16);
             e.HasIndex(x => x.PessoaId).HasDatabaseName("ix_emenda_pessoa");

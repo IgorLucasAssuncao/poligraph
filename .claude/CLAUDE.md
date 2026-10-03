@@ -100,6 +100,18 @@ respeitar consentimento específico (RNF-12b) e o endpoint de exclusão (art. 18
 Um bug que o banco rejeita custa minutos; um que ele aceita custa um capítulo do TCC. No EF
 Core isso significa **`HasCheckConstraint`** — ver [`plano/04 §2.4`](../docs/plano/04-esqueleto.md).
 
+### 5. O orçamento tem de fechar
+
+> **Decisão do autor (2026-10-02).** Todo total de dinheiro fecha com o total da fonte, e o
+> que não fecha tem motivo e valor à vista de quem lê.
+
+Nas emendas isso é a tabela `reconciliacoes`: por ano, o total do Portal, o da base e o que
+ficou fora, por motivo. O `conferir` dá ERRO se a conta não fechar. ⛔ **Descarte calado** é
+o número plausível e errado de novo.
+
+⛔ **Fonte isolada não entra** (um PDF de relatório, uma planilha avulsa): é difícil de
+justificar e envelhece. Só fonte que a ETL recarrega periodicamente.
+
 ---
 
 ## Convenções técnicas

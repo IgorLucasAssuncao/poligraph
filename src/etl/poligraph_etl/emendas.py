@@ -136,55 +136,234 @@ def para_linhas(df: pd.DataFrame, anos: Iterable[int]) -> tuple[list[dict], dict
     recorte do código da emenda. Medido em 2026-09-25: zero em 25.001 linhas de 2023–26.
 
     MEDIDO em 2026-10-02 (achado #38): em 2014–2020 há 17.810 linhas cujo autor é `S/I` ("Sem
-    informação") ou `-99` ("RELATOR GERAL", em emendas de comissão). Elas também caem aqui,
-    mas não são erro de leitura: o log as conta à parte. Gravá-las ou não é a Pendência 81.
+    informação") ou `-99` ("RELATOR GERAL", em emendas de comissão).
+
+    DECISÃO do autor (2026-10-02, Pendência 81): a linha `S/I` de **emenda de bancada** entra,
+    com a bancada inferida pela UF da própria linha (`inferir_bancada`) e `autoria_inferida`
+    verdadeiro. As outras sem autor (relator, comissão `-99`, individual de 2014) continuam
+    fora, contadas no log.
     """
     anos = {str(a) for a in anos}
+    bancadas = bancadas_por_uf(df)
     linhas: list[dict] = []
+    inferidas: list[dict] = []
     autores: dict[str, str] = {}
     incoerentes = 0
     sem_autor = 0
 
     for r in df[df["Ano da Emenda"].isin(anos)].to_dict("records"):
-        codigo_emenda = r["Código da Emenda"].strip()
-        codigo_autor = r["Código do Autor da Emenda"].strip()
-
-        if codigo_do_autor(codigo_emenda, r["Número da emenda"]) != codigo_autor:
-            if codigo_autor in CODIGOS_SEM_AUTOR:
-                sem_autor += 1
-            else:
-                incoerentes += 1
+        destino, bancada = destino_da_linha(r, bancadas)
+        if destino == INFERIDA:
+            inferidas.append(_linha(r, *bancada, codigo_emenda="", inferida=True))
+            continue
+        if destino == INCOERENTE:
+            incoerentes += 1
+            continue
+        if destino != NA_BASE:
+            sem_autor += 1
             continue
 
+        codigo_emenda = r["Código da Emenda"].strip()
+        codigo_autor = r["Código do Autor da Emenda"].strip()
         nome = r["Nome do Autor da Emenda"].strip()
         autores.setdefault(codigo_autor, nome)
+        linhas.append(_linha(r, codigo_autor, nome, codigo_emenda=codigo_emenda, inferida=False))
 
-        linhas.append(
-            {
-                "codigo_autor": codigo_autor,
-                "nome_autor": nome,
-                "codigo_emenda": codigo_emenda,
-                "ano": int(r["Ano da Emenda"]),
-                "tipo": _texto(r["Tipo de Emenda"]),
-                "localidade": _texto(r["Localidade de aplicação do recurso"]),
-                "funcao": _texto(r["Nome Função"]),
-                "subfuncao": _texto(r["Nome Subfunção"]),
-                "codigo_municipio_ibge": _ibge(r["Código Município IBGE"]),
-                "codigo_acao": _texto(r["Código Ação"]),
-                "codigo_plano_orcamentario": _texto(r["Código Plano Orçamentário"]),
-                "valor_empenhado": valor_brasileiro(r["Valor Empenhado"]),
-                "valor_liquidado": valor_brasileiro(r["Valor Liquidado"]),
-                "valor_pago": valor_brasileiro(r["Valor Pago"]),
-                "valor_resto_pago": valor_brasileiro(r["Valor Restos A Pagar Pagos"]),
-            }
-        )
+    _numerar_inferidas(inferidas)
+    for linha in inferidas:
+        autores.setdefault(linha["codigo_autor"], linha["nome_autor"])
 
+    if inferidas:
+        log.info("  %d linhas de emenda de bancada sem autor no Portal, com a bancada inferida pela UF (Pendência 81)",
+                 len(inferidas))
     if sem_autor:
         log.info("  %d emendas sem autor identificado no Portal (S/I, -99), fora da carga: achado #38", sem_autor)
     if incoerentes:
         log.warning("  %d emendas com código de autor incoerente — a fonte mudou?", incoerentes)
 
-    return linhas, autores
+    return linhas + inferidas, autores
+
+
+NA_BASE = "NA_BASE"
+INFERIDA = "INFERIDA"
+INCOERENTE = "INCOERENTE"
+MOTIVOS_DE_FORA = ("RELATOR_SEM_AUTOR", "COMISSAO_SEM_AUTOR", "BANCADA_SEM_AUTOR_E_SEM_UF",
+                   "INDIVIDUAL_SEM_AUTOR", "OUTRA_SEM_AUTOR", INCOERENTE)
+"""Os motivos de uma linha do Portal ficar fora da base. A lista é o `CHECK` de `reconciliacao_motivos`."""
+
+
+def destino_da_linha(r: dict, bancadas: dict[str, tuple[str, str]]) -> tuple[str, tuple[str, str] | None]:
+    """Para onde vai uma linha do arquivo de emendas: a base, a base com autoria inferida, ou um motivo de ficar fora.
+
+    É a mesma decisão para a carga e para a reconciliação (Pendência 81): se as duas usassem
+    regras próprias, a conta deixaria de fechar no primeiro ajuste de uma delas.
+    """
+    codigo_emenda = (r.get("Código da Emenda") or "").strip()
+    codigo_autor = (r.get("Código do Autor da Emenda") or "").strip()
+    if codigo_do_autor(codigo_emenda, r.get("Número da emenda") or "") == codigo_autor:
+        return NA_BASE, None
+    if codigo_autor not in CODIGOS_SEM_AUTOR:
+        return INCOERENTE, None
+
+    tipo = r.get("Tipo de Emenda") or ""
+    if codigo_autor == "S/I" and "Bancada" in tipo:
+        bancada = inferir_bancada(r, bancadas)
+        return (INFERIDA, bancada) if bancada else ("BANCADA_SEM_AUTOR_E_SEM_UF", None)
+    if "Relator" in tipo:
+        return "RELATOR_SEM_AUTOR", None
+    if "Comiss" in tipo:
+        return "COMISSAO_SEM_AUTOR", None
+    if "Individual" in tipo:
+        return "INDIVIDUAL_SEM_AUTOR", None
+    return "OUTRA_SEM_AUTOR", None
+
+
+def reconciliar_emendas(df: pd.DataFrame, anos: Iterable[int]) -> list[dict]:
+    """Por ano da emenda, o empenhado e o pago: total do Portal, total que entra na base e o que fica fora, por motivo.
+
+    A conta fecha por construção: toda linha do arquivo cai em exatamente um destino. O que
+    a reconciliação acrescenta é deixar o motivo de cada real fora da base à vista, e permitir
+    ao `conferir` notar se a base mudou depois.
+    """
+    anos = {str(a) for a in anos}
+    bancadas = bancadas_por_uf(df)
+    contas: dict[tuple[str, int], dict] = {}
+    for r in df[df["Ano da Emenda"].isin(anos)].to_dict("records"):
+        destino, _ = destino_da_linha(r, bancadas)
+        for medida, coluna in (("EMPENHADO", "Valor Empenhado"), ("PAGO", "Valor Pago")):
+            valor = valor_brasileiro(r[coluna])
+            conta = contas.setdefault((medida, int(r["Ano da Emenda"])), _conta_vazia("EMENDAS", medida, int(r["Ano da Emenda"])))
+            conta["total_na_fonte"] += valor
+            if destino in (NA_BASE, INFERIDA):
+                conta["total_na_base"] += valor
+                if destino == INFERIDA:
+                    conta["total_inferido"] += valor
+            else:
+                conta["motivos"][destino] = conta["motivos"].get(destino, 0.0) + valor
+    return _arredondar(contas.values())
+
+
+def reconciliar_pagamentos(df: pd.DataFrame, codigos: set[str], anos: Iterable[int]) -> list[dict]:
+    """Por ano do pagamento, o recebido pelos favorecidos: o que entra na base e o que fica fora, por motivo.
+
+    RISCO: `codigos` e `anos` são os que estão **no banco** depois da carga, e não só os da
+    carga: uma carga de 2016–2020 não pode tratar como "não carregada" a emenda de 2023 que uma
+    carga anterior gravou.
+
+    | Motivo | O que é |
+    |---|---|
+    | `PAGAMENTO_SEM_CODIGO_DE_EMENDA` | O Portal publica o pagamento com "Sem informação" no lugar da emenda: não há a que ligá-lo |
+    | `EMENDA_DE_ANO_NAO_CARREGADO` | A emenda é de um ano fora da carga (o pagamento de hoje de uma emenda de 2014, por exemplo) |
+    | `EMENDA_FORA_DA_BASE` | A emenda é de ano carregado, mas ficou fora da base por um dos motivos de `reconciliar_emendas` |
+    """
+    anos_carregados = {str(a) for a in anos}
+    contas: dict[tuple[str, int], dict] = {}
+    for r in df.to_dict("records"):
+        ano_do_pagamento = (r.get("Ano/Mês") or "")[:4]
+        if ano_do_pagamento not in anos_carregados:
+            continue
+        codigo = (r.get("Código da Emenda") or "").strip()
+        valor = valor_brasileiro(r["Valor Recebido"])
+        conta = contas.setdefault(("RECEBIDO", int(ano_do_pagamento)), _conta_vazia("PAGAMENTOS", "RECEBIDO", int(ano_do_pagamento)))
+        conta["total_na_fonte"] += valor
+        if codigo in codigos:
+            conta["total_na_base"] += valor
+            continue
+        if not codigo[:4].isdigit():
+            motivo = "PAGAMENTO_SEM_CODIGO_DE_EMENDA"
+        elif codigo[:4] not in anos_carregados:
+            motivo = "EMENDA_DE_ANO_NAO_CARREGADO"
+        else:
+            motivo = "EMENDA_FORA_DA_BASE"
+        conta["motivos"][motivo] = conta["motivos"].get(motivo, 0.0) + valor
+    return _arredondar(contas.values())
+
+
+def _conta_vazia(conjunto: str, medida: str, ano: int) -> dict:
+    return {"conjunto": conjunto, "medida": medida, "ano": ano, "total_na_fonte": 0.0,
+            "total_na_base": 0.0, "total_inferido": 0.0, "motivos": {}}
+
+
+def _arredondar(contas) -> list[dict]:
+    """Centavos, como o banco grava. O resíduo de arredondamento fica abaixo de um centavo por motivo."""
+    saida = []
+    for conta in sorted(contas, key=lambda c: (c["conjunto"], c["medida"], c["ano"])):
+        saida.append({
+            **conta,
+            "total_na_fonte": round(conta["total_na_fonte"], 2),
+            "total_na_base": round(conta["total_na_base"], 2),
+            "total_inferido": round(conta["total_inferido"], 2),
+            "motivos": {m: round(v, 2) for m, v in conta["motivos"].items() if round(v, 2) != 0},
+        })
+    return saida
+
+
+def bancadas_por_uf(df: pd.DataFrame) -> dict[str, tuple[str, str]]:
+    """UF por extenso, sem acento → `(código, nome)` da bancada, tirado das linhas com autor do próprio arquivo.
+
+    MEDIDO em 2026-10-02: 27 bancadas, um código cada, estável entre os anos ("BANCADA DA
+    BAHIA" é sempre 7106).
+    """
+    mapa: dict[str, tuple[str, str]] = {}
+    for r in df[df["Tipo de Emenda"].str.contains("Bancada", na=False)].to_dict("records"):
+        codigo = r["Código do Autor da Emenda"].strip()
+        if codigo in CODIGOS_SEM_AUTOR:
+            continue
+        nome = r["Nome do Autor da Emenda"].strip()
+        estado = re.sub(r"^BANCADA D[AEO] ", "", normalizacao.sem_acento_maiusculo(nome))
+        mapa.setdefault(estado, (codigo, nome))
+    return mapa
+
+
+def inferir_bancada(registro: dict, bancadas: dict[str, tuple[str, str]]) -> tuple[str, str] | None:
+    """A bancada da emenda `S/I` de bancada, pela UF da linha. Nulo fora da emenda de bancada ou sem UF.
+
+    MEDIDO em 2026-10-02, nas 2.279 emendas de bancada **com** autor e UF: a UF da linha é a da
+    bancada em 97,1% das linhas (97,6% do valor). As exceções são repasses a entidade nacional
+    registrados em "São Paulo (UF)".
+    """
+    if "Bancada" not in (registro.get("Tipo de Emenda") or ""):
+        return None
+    return bancadas.get(normalizacao.sem_acento_maiusculo(registro.get("UF")))
+
+
+def _linha(r: dict, codigo_autor: str, nome: str, *, codigo_emenda: str, inferida: bool) -> dict:
+    return {
+        "codigo_autor": codigo_autor,
+        "nome_autor": nome,
+        "codigo_emenda": codigo_emenda,
+        "ano": int(r["Ano da Emenda"]),
+        "tipo": _texto(r["Tipo de Emenda"]),
+        "localidade": _texto(r["Localidade de aplicação do recurso"]),
+        "funcao": _texto(r["Nome Função"]),
+        "subfuncao": _texto(r["Nome Subfunção"]),
+        "codigo_municipio_ibge": _ibge(r["Código Município IBGE"]),
+        "codigo_acao": _texto(r["Código Ação"]),
+        "codigo_plano_orcamentario": _texto(r["Código Plano Orçamentário"]),
+        "valor_empenhado": valor_brasileiro(r["Valor Empenhado"]),
+        "valor_liquidado": valor_brasileiro(r["Valor Liquidado"]),
+        "valor_pago": valor_brasileiro(r["Valor Pago"]),
+        "valor_resto_pago": valor_brasileiro(r["Valor Restos A Pagar Pagos"]),
+        "autoria_inferida": inferida,
+    }
+
+
+def _numerar_inferidas(inferidas: list[dict]) -> None:
+    """Dá à linha inferida um código próprio: ano, código da bancada, "I" e a ordem dela.
+
+    DECISÃO: A linha `S/I` não tem código de emenda, e a chave única pede um. O "I" separa o
+    código inventado do código do Portal: nenhum código real tem letra, e a tela não monta
+    link do Portal com ele. A ordem sai dos campos da própria linha, então a mesma carga dá
+    os mesmos códigos.
+    """
+    por_bancada: dict[tuple[int, str], list[dict]] = {}
+    for linha in inferidas:
+        por_bancada.setdefault((linha["ano"], linha["codigo_autor"]), []).append(linha)
+    for (ano, codigo), grupo in por_bancada.items():
+        grupo.sort(key=lambda l: (l["codigo_acao"] or "", l["codigo_plano_orcamentario"] or "",
+                                  l["localidade"] or "", l["valor_empenhado"], l["valor_pago"]))
+        for ordem, linha in enumerate(grupo, 1):
+            linha["codigo_emenda"] = f"{ano}{codigo}I{ordem:04d}"
 
 
 # ═══════════════════════════════════════════════════════════════════

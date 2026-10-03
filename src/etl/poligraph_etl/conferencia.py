@@ -55,6 +55,9 @@ TETO_DE_PATRIMONIO = 500_000_000
 SALTO_DE_PATRIMONIO = 50
 PATRIMONIO_MINIMO_DO_SALTO = 10_000_000
 
+# Pendência 81. Um real de folga: a reconciliação arredonda cada motivo para centavos.
+TOLERANCIA_DA_RECONCILIACAO = 1.0
+
 
 @dataclass(frozen=True)
 class Achado:
@@ -201,6 +204,26 @@ def salto_de_patrimonio(linhas: list[tuple[str, int, float, int, float]]) -> lis
     ]
 
 
+def reconciliacao_nao_fecha(linhas: list[tuple[str, str, int, float]]) -> list[Achado]:
+    """`(conjunto, medida, ano, resíduo)`. Fonte − base − motivos acima de R$ 1 é ERRO: diferença sem justificativa."""
+    return [
+        Achado("reconciliacao-nao-fecha", "ERRO", conjunto, None,
+               f"{medida} de {ano}: R$ {residuo:,.2f} entre o Portal e a base sem motivo")
+        for conjunto, medida, ano, residuo in linhas
+        if abs(residuo) > TOLERANCIA_DA_RECONCILIACAO
+    ]
+
+
+def base_mudou_depois_da_reconciliacao(linhas: list[tuple[str, str, int, float, float]]) -> list[Achado]:
+    """`(conjunto, medida, ano, registrado, na base hoje)`. A base mudou depois da carga, e a justificativa ficou velha."""
+    return [
+        Achado("base-mudou-depois-da-reconciliacao", "ERRO", conjunto, None,
+               f"{medida} de {ano}: reconciliado R$ {registrado:,.2f}, na base hoje R$ {hoje:,.2f}")
+        for conjunto, medida, ano, registrado, hoje in linhas
+        if abs(registrado - hoje) > TOLERANCIA_DA_RECONCILIACAO
+    ]
+
+
 # ═══════════════════════════════════════════════════════════════════
 # As consultas — uma por regra, na mesma ordem
 # ═══════════════════════════════════════════════════════════════════
@@ -267,6 +290,24 @@ CONSULTAS = {
           FROM patrimonios t JOIN pessoas p ON p.id = t.pessoa_id
          GROUP BY 1, 2, t.pessoa_id
     """,
+    "reconciliacao_nao_fecha": """
+        SELECT r.conjunto, r.medida, r.ano,
+               (r.total_na_fonte - r.total_na_base - coalesce(sum(m.valor), 0))::float
+          FROM reconciliacoes r LEFT JOIN reconciliacao_motivos m ON m.reconciliacao_id = r.id
+         GROUP BY r.id, r.conjunto, r.medida, r.ano, r.total_na_fonte, r.total_na_base
+    """,
+    "base_mudou_depois_da_reconciliacao": """
+        SELECT r.conjunto, r.medida, r.ano, r.total_na_base::float,
+               coalesce(CASE
+                   WHEN r.conjunto = 'EMENDAS' AND r.medida = 'EMPENHADO'
+                       THEN (SELECT sum(e.valor_empenhado) FROM emendas e WHERE e.ano = r.ano)
+                   WHEN r.conjunto = 'EMENDAS' AND r.medida = 'PAGO'
+                       THEN (SELECT sum(e.valor_pago) FROM emendas e WHERE e.ano = r.ano)
+                   ELSE (SELECT sum(f.valor) FROM emendas_favorecidos f
+                          WHERE extract(year FROM f.competencia) = r.ano)
+               END, 0)::float
+          FROM reconciliacoes r
+    """,
     "salto_de_patrimonio": """
         SELECT p.nome_exibicao, a.ano_eleicao, a.valor, b.ano_eleicao, b.valor
           FROM (SELECT pessoa_id, ano_eleicao, sum(valor)::float AS valor
@@ -290,6 +331,8 @@ REGRAS = {
     "senadores_demais_por_uf": senadores_demais_por_uf,
     "patrimonio_acima_do_teto": patrimonio_acima_do_teto,
     "salto_de_patrimonio": salto_de_patrimonio,
+    "reconciliacao_nao_fecha": reconciliacao_nao_fecha,
+    "base_mudou_depois_da_reconciliacao": base_mudou_depois_da_reconciliacao,
 }
 
 
