@@ -22,5 +22,9 @@ WORKDIR /app
 COPY --from=build /app .
 
 USER $APP_UID
+# Pendência 30: as chaves do Data Protection ficam num volume persistente montado aqui.
+# Sem a variável, a API se recusa a subir em produção.
+ENV DataProtection__Pasta=/home/app/chaves
+VOLUME ["/home/app/chaves"]
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "Poligraph.Api.dll"]

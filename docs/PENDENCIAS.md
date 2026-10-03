@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-10-02 · **120 resolvidas · 54 abertas**
+> **Atualizado:** 2026-10-02 · **122 resolvidas · 52 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -133,8 +133,8 @@ questionário ⛔ vira junto: as perguntas são da 57ª.
 | **Pendência 25** | 🔴 Escrever o **texto do banner de consentimento** cobrindo as 5 exigências | [plano/02 §4.5.2](plano/02-autenticacao-e-metricas.md) |
 | ~~Pendência 26~~ | **Obsoleta (2026-10-02):** a Pendência 63 decidiu por nenhum e-mail. 🔴 Serviço de envio de e-mail (Resend, Brevo, SES) + **SPF, DKIM e DMARC** no domínio | [plano/02 §3.3.2](plano/02-autenticacao-e-metricas.md) |
 | ~~Pendência 27~~ | **Obsoleta (2026-10-02):** a Pendência 63 decidiu por nenhum e-mail. 🟡 Cadência do digest — diário, semanal, ou por volume | [plano/02 §3.3](plano/02-autenticacao-e-metricas.md) |
-| **Pendência 29** | 🟡 Duração do cookie de sessão (sugerido: 7 dias) | [plano/02 §3.2.4](plano/02-autenticacao-e-metricas.md) |
-| **Pendência 30** | 🔴 Persistir as chaves do Data Protection — senão todo redeploy desloga todo mundo | [plano/02 §3.6.4](plano/02-autenticacao-e-metricas.md) |
+| ✅ ~~Pendência 29~~ | **Resolvida (2026-10-03)** — 7 dias, renovados a cada uso (`ExpireTimeSpan` e `SlidingExpiration` em `ConfiguracaoDeAutenticacao`), o valor sugerido. A sessão ainda cai antes se `sessao_versao` mudar | [plano/02 §3.2.4](plano/02-autenticacao-e-metricas.md) |
+| ✅ ~~Pendência 30~~ | **Resolvida (2026-10-03)** — as chaves vão para `DataProtection:Pasta`; a imagem da API define `/home/app/chaves` e o declara como volume, e em produção a API se recusa a subir sem a pasta. No Coolify falta só montar um volume persistente nesse caminho | [plano/02 §3.6.4](plano/02-autenticacao-e-metricas.md) |
 | **Pendência 7** | 🔴 **Política de privacidade** — virou bloqueante: é campo obrigatório da tela do Google | [plano/02 §3.2.1](plano/02-autenticacao-e-metricas.md) |
 | **Pendência 24** | 🔴 Confirmar com o orientador se o TCC precisa de **Comitê de Ética** | [plano/02 §4.5](plano/02-autenticacao-e-metricas.md) |
 | **Pendência 33** | 🔴 **Novo:** os termos do Clarity dizem que ele não deve ser usado em sites dirigidos a menores de 18. No Brasil vota-se aos 16 — decidir junto com a Pendência 24 | [plano/08 §2.2](plano/08-obter-as-chaves.md) |

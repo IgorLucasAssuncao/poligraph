@@ -32,6 +32,9 @@ public static class ConfiguracaoDeAutenticacao
     public static WebApplicationBuilder AdicionarAutenticacao(this WebApplicationBuilder builder)
     {
         var pastaChaves = builder.Configuration["DataProtection:Pasta"];
+        if (builder.Environment.IsProduction() && string.IsNullOrWhiteSpace(pastaChaves))
+            throw new InvalidOperationException(
+                "DataProtection:Pasta é obrigatória em produção: sem ela, cada deploy troca as chaves e desloga todo mundo.");
         if (!string.IsNullOrWhiteSpace(pastaChaves))
         {
             builder.Services.AddDataProtection()
