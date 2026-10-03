@@ -24,6 +24,23 @@ type Destaque = { partido?: string; uf?: string };
 const CASAS: Casa[] = ['CAMARA', 'SENADO'];
 
 /**
+ * Buracos da própria fonte, ditos onde o desenho é afetado (Pendência 58).
+ *
+ * MEDIDO: Em 2026-10-02 (achado #37): os dados abertos do Senado não têm as votações de 2015 nem
+ * as do começo de 2016, em nenhum dos três serviços. A MP 665 e o julgamento final do
+ * impeachment não aparecem.
+ *
+ * DECISÃO (2026-10-03): dizer a lacuna. Digitar as ~230 votações do Diário do Senado seria trazer
+ * fonte isolada, que a regra do autor exclui (`.claude/CLAUDE.md`, regra 5).
+ */
+const LACUNAS_DO_ACERVO: Record<string, string> = {
+  'SENADO-55':
+    'Os dados abertos do Senado não trazem as votações de 2015 nem as do começo de 2016, ' +
+    'como a da MP 665 e a do julgamento do impeachment. Elas estão só no Diário do Senado, ' +
+    'e este desenho fica sem elas.',
+};
+
+/**
  * O grafo de similaridade de voto (RF-33).
  *
  * ## RISCO: Um grafo por casa, nunca um só
@@ -180,6 +197,10 @@ export function Grafo() {
               {' '}{membro.plural} só se ligam se votaram juntos vezes suficientes:
               com poucas votações em comum, votar igual seria coincidência.
             </p>
+
+            {LACUNAS_DO_ACERVO[`${casa}-${grafo.legislatura}`] && (
+              <p className="ajuda">{LACUNAS_DO_ACERVO[`${casa}-${grafo.legislatura}`]}</p>
+            )}
 
             {casa === 'SENADO' && grafo.secretasDePlenario > 0 && (
               <p className="ajuda">

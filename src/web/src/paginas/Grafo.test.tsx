@@ -144,3 +144,23 @@ describe('o período do grafo', () => {
     expect(texto).toMatch(/2015–2019\. As abertas vão de mai\/2016 a dez\/2018\./);
   });
 });
+
+/** Pendência 58: a lacuna do acervo do Senado na 55ª é dita na tela, e só lá. */
+describe('a lacuna do acervo', () => {
+  it('aparece no grafo da 55ª do Senado', async () => {
+    vi.mocked(api.obterGrafo).mockResolvedValue({ ...GRAFO, casa: 'SENADO', legislatura: 55 });
+    renderizar();
+    await userEvent.click(await screen.findByRole('button', { name: 'Senado Federal' }));
+
+    expect(await screen.findByText(/não trazem as votações de 2015/)).toBeDefined();
+  });
+
+  it('não aparece nas outras', async () => {
+    vi.mocked(api.obterGrafo).mockResolvedValue({ ...GRAFO, casa: 'SENADO', legislatura: 56 });
+    renderizar();
+    await userEvent.click(await screen.findByRole('button', { name: 'Senado Federal' }));
+    await screen.findByText(/De onde vem/);
+
+    expect(screen.queryByText(/não trazem as votações de 2015/)).toBeNull();
+  });
+});
