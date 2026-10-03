@@ -99,3 +99,45 @@ export function NumeroComponent({
     </div>
   );
 }
+
+/** Uma aba de {@link AbasComponent}. */
+export type Aba<T> = { chave: T; rotulo: string; contagem?: number; /** O alvo do tour, quando a aba é um passo dele. */ tour?: string };
+
+/**
+ * Abas dentro de uma seção: uma lista por vez, com o nome e o tamanho de cada uma no topo.
+ *
+ * DECISÃO (2026-10-03, pedido do autor): o painel da cidade empilhava quatro listas longas, e os
+ * títulos se perdiam no meio delas. A aba vira o título, e a contagem diz o tamanho antes do clique.
+ */
+export function AbasComponent<T extends string>({
+  rotulo,
+  abas,
+  escolhida,
+  aoEscolher,
+}: {
+  rotulo: string;
+  abas: Aba<T>[];
+  escolhida: T;
+  aoEscolher: (chave: T) => void;
+}) {
+  return (
+    <div className="abas abas-internas" role="tablist" aria-label={rotulo}>
+      {abas.map((a) => (
+        <button
+          key={a.chave}
+          type="button"
+          role="tab"
+          id={`aba-${a.chave}`}
+          aria-selected={a.chave === escolhida}
+          aria-controls={`painel-${a.chave}`}
+          className={`aba${a.chave === escolhida ? ' aba-ativa' : ''}`}
+          data-tour={a.tour}
+          onClick={() => aoEscolher(a.chave)}
+        >
+          {a.rotulo}
+          {a.contagem !== undefined && <span className="aba-contagem">{a.contagem.toLocaleString('pt-BR')}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}

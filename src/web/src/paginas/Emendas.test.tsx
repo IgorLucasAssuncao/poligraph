@@ -193,12 +193,13 @@ describe('Emendas no mapa', () => {
     renderizar('/emendas?uf=PR&cidade=4113734');
 
     const painel = await screen.findByRole('region', { name: /Luiziana/ });
-    const parlamentares = within(painel).getByRole('heading', { name: /Deputados e senadores/ }).parentElement!;
+    const parlamentares = within(painel).getByRole('tabpanel');
+    expect(within(painel).getByRole('tab', { name: /Deputados e senadores/ })).toHaveAttribute('aria-selected', 'true');
     expect(within(parlamentares).getByRole('link', { name: /Fulano/ })).toHaveAttribute('href', '/parlamentar/42');
     expect(within(parlamentares).queryByText(/Bancada do Parana/i)).not.toBeInTheDocument();
 
-    const coletivos = within(painel).getByRole('heading', { name: 'Bancadas e comissões' }).parentElement!;
-    expect(within(coletivos).getByText(/Bancada estadual/)).toBeInTheDocument();
+    fireEvent.click(within(painel).getByRole('tab', { name: /Bancadas e comissões/ }));
+    expect(within(within(painel).getByRole('tabpanel')).getByText(/Bancada estadual/)).toBeInTheDocument();
   });
 
   it('o painel da cidade fica abaixo do mapa', async () => {
@@ -275,6 +276,7 @@ describe('convênios da cidade', () => {
   it('diz o combinado, o liberado e o que ainda falta liberar, e leva à entidade', async () => {
     renderizar('/emendas?uf=PR&cidade=4113734');
 
+    fireEvent.click(await screen.findByRole('tab', { name: /Convênios/ }));
     const resumo = (await screen.findByText(/R\$\s3 mi combinados, R\$\s1,2 mi já liberados/)).closest('p')!;
     expect(resumo.textContent).toMatch(/1 em execução, com R\$\s1,8 mi ainda a liberar/);
     expect(screen.getByText('Construcao de unidade basica de saude')).toBeInTheDocument();

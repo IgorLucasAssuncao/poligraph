@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { ColetivoQueMandou, ParlamentarQueMandou } from '../api';
 import { nomeProprio, reaisCompacto } from '../formato';
 import { AvatarComponent } from './Avatar';
+import { BotaoMostrarMaisComponent } from './BotaoMostrarMais';
 import { TermoComponent } from './Termo';
 
 /**
@@ -40,15 +42,17 @@ const ROTULO_DO_COLETIVO: Record<ColetivoQueMandou['tipo'], string> = {
   OUTRO: 'Autor coletivo',
 };
 
+const COLETIVOS_POR_VEZ = 10;
+
 /** Bancadas e comissões: autores que não são pessoas, cada um com o que é. */
 export function ColetivosComponent({ coletivos }: { coletivos: ColetivoQueMandou[] }) {
+  const [exibidos, setExibidos] = useState(COLETIVOS_POR_VEZ);
   if (coletivos.length === 0) return null;
 
   const total = coletivos.reduce((soma, c) => soma + c.recebido, 0);
 
   return (
-    <div data-tour="emendas-coletivos">
-      <h3>Bancadas e comissões</h3>
+    <div>
       <p className="ajuda">
         {reaisCompacto(total)} vieram de grupos de parlamentares: a{' '}
         <TermoComponent nome="emendaDeBancada">bancada</TermoComponent> reúne os parlamentares de um estado, e a{' '}
@@ -56,7 +60,7 @@ export function ColetivosComponent({ coletivos }: { coletivos: ColetivoQueMandou
       </p>
 
       <ul className="lista-autores">
-        {coletivos.map((c) => (
+        {coletivos.slice(0, exibidos).map((c) => (
           <li key={`${c.tipo}-${c.nome}`}>
             <span className="autor-nome">{nomeProprio(c.nome)}</span>
             <span className="autor-detalhe">
@@ -66,6 +70,14 @@ export function ColetivosComponent({ coletivos }: { coletivos: ColetivoQueMandou
           </li>
         ))}
       </ul>
+
+      <BotaoMostrarMaisComponent
+        proximos={Math.min(COLETIVOS_POR_VEZ, coletivos.length - exibidos)}
+        restantes={Math.max(0, coletivos.length - exibidos)}
+        carregando={false}
+        erro={false}
+        aoClicar={() => setExibidos((n) => n + COLETIVOS_POR_VEZ)}
+      />
     </div>
   );
 }

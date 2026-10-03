@@ -3126,3 +3126,12 @@ html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
 .emendas-filtros .governo-barra { padding: 0; border: 0; display: block; }
 .filtro-titulo { margin: 0 0 .4rem; font-weight: 700; }
 .emendas-escopo { margin: .75rem 1rem .75rem; font-size: var(--t-2); color: var(--suave); }
+
+/* ═══ ABAS INTERNAS: o painel da cidade (2026-10-03) ═══════════════
+   Uma lista por vez; a aba é o título da lista, e a contagem diz o tamanho. */
+.abas-internas { margin: 1.25rem 0 .75rem; overflow-x: auto; }
+.abas-internas .aba { flex: 0 0 auto; padding: .7rem 1rem; }
+.aba-contagem { margin-left: .45rem; font-family: var(--dado); font-weight: 400; font-size: var(--t-1); color: var(--suave); }
+.painel-cidade .abas-internas { border-bottom-color: var(--borda-forte); }
+.painel-cidade .aba:hover { background: var(--fundo); }
+.painel-cidade-aba > .ajuda:first-child { margin-top: 0; }

@@ -34,7 +34,7 @@ import { BlocoComponent, EsqueletoComponent, EsqueletoDePainelComponent, Esquele
 import { UFS } from '../ufs';
 import { ConfereComOPortalComponent } from '../componentes/ConfereComOPortal';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
-import { NumeroComponent, OpcoesComponent } from '../componentes/Dados';
+import { AbasComponent, NumeroComponent, OpcoesComponent, type Aba } from '../componentes/Dados';
 
 /**
  * Para onde foi o dinheiro de emenda, no mapa — e quem o mandou para a sua cidade.
@@ -512,6 +512,7 @@ function PainelDaCidadeComponent({
 }) {
   const [dados, setDados] = useState<EmendasDoMunicipio | null>(null);
   const [erro, setErro] = useState(false);
+  const [aba, setAba] = useState<AbaDaCidade | null>(null);
   const secao = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -535,6 +536,8 @@ function PainelDaCidadeComponent({
 
   const nome = nomeProprio(dados.municipio.nome);
   const emEntidades = dados.recebido - dados.naPropriaCidade;
+  const abas = abasDaCidade(dados);
+  const escolhida = abas.find((a) => a.chave === aba)?.chave ?? abas[0]?.chave;
 
   return (
     <section ref={secao} className="governo-secao painel-cidade" aria-labelledby="cidade-titulo">
@@ -567,14 +570,38 @@ function PainelDaCidadeComponent({
             </li>
           </ul>
 
-          <QuemMandouComponent dados={dados} periodo={periodo} />
-          <ColetivosComponent coletivos={dados.coletivos} />
-          <ConveniosDaCidadeComponent dados={dados} periodo={periodo} />
-          <QuemRecebeuComponent dados={dados} periodo={periodo} />
+          {escolhida && (
+            <>
+              <AbasComponent rotulo={`O dinheiro de ${nome}`} abas={abas} escolhida={escolhida} aoEscolher={setAba} />
+              <div className="painel-cidade-aba" role="tabpanel" id={`painel-${escolhida}`} aria-labelledby={`aba-${escolhida}`}>
+                {escolhida === 'parlamentares' && <QuemMandouComponent dados={dados} periodo={periodo} />}
+                {escolhida === 'coletivos' && <ColetivosComponent coletivos={dados.coletivos} />}
+                {escolhida === 'convenios' && <ConveniosDaCidadeComponent dados={dados} periodo={periodo} />}
+                {escolhida === 'recebedores' && <QuemRecebeuComponent dados={dados} periodo={periodo} />}
+              </div>
+            </>
+          )}
         </>
       )}
     </section>
   );
+}
+
+/** As listas do painel da cidade, uma por aba. */
+type AbaDaCidade = 'parlamentares' | 'coletivos' | 'convenios' | 'recebedores';
+
+/** Só as abas com algo dentro, na ordem da pergunta: quem mandou, o que foi combinado, quem recebeu. */
+function abasDaCidade(dados: EmendasDoMunicipio): Aba<AbaDaCidade>[] {
+  const abas: Aba<AbaDaCidade>[] = [];
+  if (dados.parlamentares.total > 0)
+    abas.push({ chave: 'parlamentares', rotulo: 'Deputados e senadores', contagem: dados.parlamentares.total });
+  if (dados.coletivos.length > 0)
+    abas.push({ chave: 'coletivos', rotulo: 'Bancadas e comissões', contagem: dados.coletivos.length, tour: 'emendas-coletivos' });
+  if (dados.convenios.quantidade > 0)
+    abas.push({ chave: 'convenios', rotulo: 'Convênios', contagem: dados.convenios.quantidade });
+  if (dados.favorecidos.total > 0)
+    abas.push({ chave: 'recebedores', rotulo: 'Quem recebeu', contagem: dados.favorecidos.total });
+  return abas;
 }
 
 /**
@@ -594,11 +621,10 @@ function ConveniosDaCidadeComponent({ dados, periodo }: { dados: EmendasDoMunici
 
   return (
     <div>
-      <h3>O que foi combinado</h3>
-      <p className="nota-curta">Com quem tem sede na cidade: na capital entram órgãos do estado, e a obra pode ser em outro município.</p>
       <p className="ajuda">
         {convenios.quantidade} {convenios.quantidade === 1 ? 'convênio' : 'convênios'}: {reaisCompacto(convenios.combinado)}{' '}
-        combinados, {reaisCompacto(convenios.liberado)} já liberados.
+        combinados, {reaisCompacto(convenios.liberado)} já liberados. São os convênios com quem tem sede na cidade:
+        na capital entram órgãos do estado, e a obra pode ser em outro município.
         {convenios.emExecucao > 0 && (
           <>
             {' '}
@@ -644,7 +670,6 @@ function QuemMandouComponent({ dados, periodo }: { dados: EmendasDoMunicipio; pe
 
   return (
     <div data-tour="emendas-parlamentares">
-      <h3>Deputados e senadores que mandaram dinheiro</h3>
       <p className="ajuda">
         {dados.parlamentares.total} parlamentares, {reaisCompacto(dados.deParlamentares)} em{' '}
         <TermoComponent nome="emendaIndividual">emendas individuais</TermoComponent>. O nome leva à página de cada um.
@@ -687,7 +712,7 @@ function QuemRecebeuComponent({ dados, periodo }: { dados: EmendasDoMunicipio; p
 
   return (
     <div>
-      <h3>Quem recebeu</h3>
+      <p className="ajuda">Quem recebeu o dinheiro e tem sede em {nomeProprio(dados.municipio.nome)}, do maior valor ao menor.</p>
       <ul className="lista-autores">
         {lista.itens.map((f) => (
           <li key={f.nome}>

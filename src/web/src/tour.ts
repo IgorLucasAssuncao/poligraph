@@ -475,7 +475,7 @@ export function passosDasEmendas(): PassoDoTour[] {
       titulo: 'Bancadas e comissões',
       texto:
         'Parte das emendas é apresentada pelo grupo de parlamentares de um estado ou por ' +
-        'uma comissão do Congresso. Elas aparecem separadas, porque não têm um autor só.',
+        'uma comissão do Congresso. Elas ficam numa aba própria, porque não têm um autor só.',
       opcional: true,
     },
   ];
