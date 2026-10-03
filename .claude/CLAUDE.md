@@ -105,8 +105,10 @@ Core isso significa **`HasCheckConstraint`** — ver [`plano/04 §2.4`](../docs/
 > **Decisão do autor (2026-10-02).** Todo total de dinheiro fecha com o total da fonte, e o
 > que não fecha tem motivo e valor à vista de quem lê.
 
-Nas emendas isso é a tabela `reconciliacoes`: por ano, o total do Portal, o da base e o que
-ficou fora, por motivo. O `conferir` dá ERRO se a conta não fechar. ⛔ **Descarte calado** é
+Isso é a tabela `reconciliacoes`: por ano, o total da fonte, o da base e o que ficou fora,
+por motivo. Cobre as emendas (empenhado, pago e pagamentos) e a cota (CEAP e CEAPS). O
+`conferir` dá ERRO se a conta não fechar. 📐 Em 2026-10-02: fora da cota da Câmara,
+R$ 10,84 mi de lideranças e órgãos (2009–2026); da CEAPS, R$ 8,97 mi de nomes sem de-para. ⛔ **Descarte calado** é
 o número plausível e errado de novo.
 
 ⛔ **Fonte isolada não entra** (um PDF de relatório, uma planilha avulsa): é difícil de
