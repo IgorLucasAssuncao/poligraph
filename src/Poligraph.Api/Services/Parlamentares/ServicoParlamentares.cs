@@ -466,6 +466,9 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// Por isso a consulta precisa olhar os DOIS lados — senão metade dos vizinhos
     /// some, e some justamente para quem tem id alto.
     /// </summary>
+    /// <remarks>
+    /// <para>A ordem é a de <see cref="OrdemDeConcordancia"/>: lê todos os pares da pessoa (no máximo um por parlamentar da casa) e ordena em memória.</para>
+    /// </remarks>
     private async Task<List<SimilarNaFichaDto>> MaisSimilaresAsync(
         long id, TipoCasa? casa, short? legislatura, CancellationToken ct)
     {
@@ -479,8 +482,6 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
             .Where(s => s.ExecucaoId == execucao
                      && s.Metrica == TipoMetrica.CONCORDANCIA
                      && (s.PessoaA == id || s.PessoaB == id))
-            .OrderByDescending(s => s.Valor)
-            .Take(SimilaresNaFicha)
             .Select(s => new
             {
                 Outro = s.PessoaA == id ? s.PessoaB : s.PessoaA,
@@ -488,6 +489,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
                 s.NVotacoesComuns
             })
             .ToListAsync(ct);
+        pares = [.. pares
+            .OrderByDescending(p => OrdemDeConcordancia.LimiteInferior(
+                (int)Math.Round(p.Valor * p.NVotacoesComuns), p.NVotacoesComuns))
+            .Take(SimilaresNaFicha)];
 
         var ids = pares.Select(p => p.Outro).ToList();
         var fichas = await _db.Pessoas.AsNoTracking()
