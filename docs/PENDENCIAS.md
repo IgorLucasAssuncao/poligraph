@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-10-02 · **113 resolvidas · 61 abertas**
+> **Atualizado:** 2026-10-02 · **117 resolvidas · 57 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -165,7 +165,7 @@ login e do Clarity. São o tipo de tarefa que não dá para fazer na véspera.
 | **Pendência 18** | Usar LLM para rascunhar a reescrita das ementas? | 🟡 Média | — |
 | **A2** | Regex de `categoria`, validadas contra amostra rotulada à mão | 🟡 Média | 🟡 Horas |
 | **A3** | Deduplicação de PEC em dois turnos | 🟡 Média | — |
-| **A4** | Quantas das 100 proposições sobrevivem ao corte de unanimidade | 🟡 Média | — |
+| ~~A4~~ | **Obsoleta (2026-10-03):** o questionário foi montado na Pendência 11, com 49 perguntas ativas no poço | — | — |
 | **Pendência 34** | 🔵 **Adiada por decisão do autor:** gravar as respostas individuais do questionário, SEM vínculo com a conta, para analisar quais perguntas dividem e quais ninguém entende (§ abaixo) | 🔵 Futuro | — |
 | ~~API4~~ | ✅ **Resolvida** — cosseno no grafo, concordância simples na tela (plano/07 §4.5) | — | — |
 | 🟡 **Pendência 44** | 🔄 **Avançou** — a ingestão deduz a legislatura pela data e as **consultas já filtram** (Pendência 35 ✅). ⛔ Falta a parte de **produto**: o que a tela mostra na virada, e o que acontece com quem respondeu o questionário na 57ª. ⏳ **A 57ª termina em janeiro de 2027** | 🟡 Média | 🟢 Decisão |
@@ -1323,16 +1323,16 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 | # | Pendência |
 |---|---|
 | ✅ ~~API3~~ | **Resolvida** — `TestesPolaridade.cs`. ⭐ A Pendência 53 ⛔ a reabre: a polaridade só serve à curadoria, e as perguntas ficam na legislatura mais recente ([#35 §2](achados/035-a-57-calibrou-o-etl.md)) |
-| **API7** | Medir quanto tempo o job de 207k pares leva de fato |
+| ✅ ~~API7~~ | **Medido (2026-10-03)** na tabela `execucoes`: a análise da Câmara leva de **32 a 57 s** por legislatura (278 mil a 372 mil pares; a 57ª, 52 s para 371.816), e a do Senado, cerca de **1 s** (6 a 8 mil pares). A estimativa de 207 mil pares era de antes do histórico |
 | ✅ ~~CT3~~ | **Resolvida (2026-09-06)** — 27 testes conferem rota por rota e campo por campo contra `src/web/src/api.ts`, e o `/scalar` renderiza o mesmo documento. 🔴 **Achou um bug na primeira execução:** `/api/auth/logout` ⛔ não existia no contrato e devolvia 200 em vez de 204 ([achado 032](achados/032-a-rota-que-o-contrato-dizia-nao-existir.md)). Detalhe abaixo |
 | 🟡 **Pendência 52** | **🆕 Teste intermitente** — `TestesAfinidadeDuasCasas.Nenhuma_Lista_Mistura_Parlamentar_Da_Outra_Casa` falhou **1 vez em 3** rodadas da suíte completa (2026-09-06), em **1 ms**, e passa isolado. ⚠️ Duração de 1 ms sugere estado compartilhado entre testes, ⛔ não asserção de dado. **A mensagem ⛔ não foi capturada** — as duas rodadas seguintes passaram |
 | ✅ ~~CT4~~ | **Nova, resolvida (2026-09-06)** — estágio de qualidade (SonarQube Cloud) no `ci.yml`, com cobertura das três linguagens. 🔴 **Depende de repositório público** ou de plano pago. Detalhe abaixo |
-| **Pendência 16** | Como o ETL sinaliza `novas_votacoes` |
+| ~~Pendência 16~~ | **Obsoleta (2026-10-03):** a rotina agendada (Pendência 64) e o "O que mudou" (Pendência 63) leem o dado direto; não é preciso o ETL sinalizar votação nova |
 | ✅ ~~Pendência 31~~ | **Obsoleta** — o seed foi aposentado na Pendência 41 |
 | ✅ ~~Pendência 48~~ | **Resolvida (2026-08-29)** — consolidadas. Eram **12** arquivos, ⛔ não 8: o número cresceu durante o desenvolvimento. Viraram **uma** `Inicial`, com o schema conferido definição por definição. Detalhe abaixo |
 | ✅ ~~Pendência 49~~ | **Resolvida (2026-09-06)** — as migrations e a `FabricaDesignTime` foram para `Poligraph.Migrations`. O `dotnet ef` agora toma como alvo o projeto que **aplica**, ⛔ não a API, que ⛔ nunca migra. Detalhe abaixo |
 | ~~Pendência 32~~ | 🟢 Rebaixada — só texto principal foi a decisão; o texto das emendas deixou de ser necessário |
-| **C15** | Contrato do front — depende do React estar de pé |
+| ✅ ~~C15~~ | **Resolvida:** o front está de pé, e `TestesContratoOpenApi` confere que cada rota chamada em `api.ts` existe no OpenAPI da API |
 
 ---
 
@@ -1392,12 +1392,12 @@ avaliação rodar cedo demais.
 
 ---
 
-## ✅ Resolvidas — 113
+## ✅ Resolvidas — 117
 
-`A1` `A5` `API1` `API2` `API3` `API4` `API6` `B1` `B2` `B3` `B4` `B5` `B7` `C1` `C2` `C3` `C4`
-`C6` `C8` `C13` `C14` `CT1` `CT2` `CT3` `CT4` `CT5` `CT6` `CT7` `D1` `D3` `D5` `ER1` `ER3`
+`A1` `A4` `A5` `API1` `API2` `API3` `API4` `API6` `API7` `B1` `B2` `B3` `B4` `B5` `B7` `C1` `C2` `C3` `C4`
+`C6` `C8` `C13` `C14` `C15` `CT1` `CT2` `CT3` `CT4` `CT5` `CT6` `CT7` `D1` `D3` `D5` `ER1` `ER3`
 `ER4` `ER5` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `Pendência 1` `Pendência 2` `Pendência 4` `Pendência 6` `Pendência 8` `Pendência 9` `Pendência 10`
-`Pendência 11` `Pendência 12` `Pendência 13` `Pendência 17` `Pendência 28` `Pendência 31` `Pendência 32` `Pendência 35` `Pendência 36` `Pendência 37` `Pendência 38` `Pendência 39` `Pendência 40`
+`Pendência 11` `Pendência 12` `Pendência 13` `Pendência 16` `Pendência 17` `Pendência 28` `Pendência 31` `Pendência 32` `Pendência 35` `Pendência 36` `Pendência 37` `Pendência 38` `Pendência 39` `Pendência 40`
 `Pendência 41` `Pendência 42` `Pendência 43` `Pendência 45` `Pendência 46` `Pendência 47` `Pendência 48` `Pendência 49` `Pendência 50` `Pendência 51` `Pendência 53` `Pendência 54` `Pendência 55` `Pendência 59` `Pendência 60` `Pendência 61` `Pendência 63` `Pendência 64` `Pendência 66` `Pendência 67` `Pendência 68` `Pendência 69` `Pendência 70` `Pendência 74` `Pendência 76` `Pendência 77` `Pendência 78` `Pendência 79` `Pendência 81` `PP1` `PP3` `PP4`
 `RE-01` `RQ1` `RQ2` `RQ3` `RQ4` `RQ8` `RQ9` `SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2`
 `TS3` `TS4` `TS6`
