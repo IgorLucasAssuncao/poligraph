@@ -91,6 +91,20 @@ def test_coluna_do_autor_que_diverge_do_codigo_e_descartada():
     assert [l["codigo_emenda"] for l in linhas] == ["202541840004"]
 
 
+def test_emenda_sem_autor_e_contada_a_parte_e_nao_como_mudanca_da_fonte(caplog):
+    """Achado #38: `S/I` e `-99` não são erro de leitura; o log não pode chamá-los de mudança da fonte."""
+    caplog.set_level("INFO", logger="poligraph")
+    linhas, _ = emendas.para_linhas(
+        tabela(emenda(), emenda(**{"Código da Emenda": "202599990001", "Número da emenda": "0001",
+                                   "Código do Autor da Emenda": "S/I"})),
+        [2025],
+    )
+
+    assert [l["codigo_emenda"] for l in linhas] == ["202541840004"]
+    assert "sem autor identificado" in caplog.text
+    assert "a fonte mudou" not in caplog.text
+
+
 # ═══════════════════════════════════════════════════════════════════
 # RISCO: Valor em formato brasileiro
 # ═══════════════════════════════════════════════════════════════════

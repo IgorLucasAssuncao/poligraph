@@ -1,6 +1,6 @@
 # Pendências — visão consolidada
 
-> **Atualizado:** 2026-10-02 · **108 resolvidas · 64 abertas**
+> **Atualizado:** 2026-10-02 · **109 resolvidas · 64 abertas**
 > As pendências vivem espalhadas por 11 documentos. Esta é a visão única, agrupada
 > **pelo que destrava cada uma** — que é o que importa na hora de decidir o que fazer.
 > 🔴 **O questionário ganhou seção própria** — estava subestimado num bloco de *"trabalho
@@ -37,7 +37,8 @@ PL41).
 | **PL53** | 🔴 **Trazer as outras legislaturas** — pedido do autor. ⭐ **Decidido em 2026-10-01: as perguntas ficam só na legislatura mais recente** — o histórico entra na ficha, no grafo e no dinheiro, ⛔ no questionário. 🔄 **Quase fechada (2026-10-02):** votos de **2001 a 2026** nas duas casas; grafos da Câmara 52ª–57ª e do Senado 51ª–57ª; cota 2009–2026; emendas **2014–2026**; disciplina pela federação ([#36](achados/036-o-partido-orienta-como-federacao.md)); e a **navegação**: um seletor de período em `?legislatura=`, igual no início, na lista e no grafo (commit `4018075`). ⚠️ Falta o que ⛔ é voto: financiamento e patrimônio antes de 2018, e o CNPJ das prefeituras dos favorecidos novos de 2014–2022. Detalhe em [#35](achados/035-a-57-calibrou-o-etl.md) | 🔴 Alta |
 | **PL58** | 🔴 **O Senado de 2015–2016 ⛔ está na base** ([#37](achados/037-a-votacao-de-1998-datada-de-2015.md)). O `/votacao` devolvia 17 e 13 votações nesses anos, e 24 delas eram de **1998–1999 com a data errada** — punham 203 senadores na 55ª. Descartadas pelo código; sobram **0** em 2015 e **6** em 2016, e faltam ~230 pela sequência. Procurar outra fonte do Senado para esses dois anos | 🔴 Alta |
 | ✅ ~~PL59~~ | **Resolvida (2026-10-02)** — o grafo da 55ª do Senado dizia "2015–2019", e as 103 votações abertas que o desenharam vão de mai/2016 a 2018 (3 acima do mínimo). O `GrafoDto` traz `AbertasDesde` e `AbertasAte`, e a tela diz o recorte em todo grafo | — |
-| **PL60** | 🟡 **Escrever o achado das emendas sem código**: na carga de 2014–2022, **17.810** linhas "Sem informação" de autor foram descartadas — **R$ 35,6 bi**, dos quais R$ 20,4 bi de relator, quase tudo em 2016–2017 | 🟢 Baixa |
+| ✅ ~~PL60~~ | **Resolvida (2026-10-02)** — [achado #38](achados/038-a-emenda-sem-autor.md). Remedido: 17.810 linhas, R$ 35,64 bi empenhados e R$ 19,67 bi pagos, todas em 2014–2020; 2014 é 100% sem autor e 2016, 72%. O código `-99` ("RELATOR GERAL") é de emenda de comissão; a de relator vem como `S/I`. O log da carga deixou de chamá-las de "a fonte mudou?" | — |
+| **PL81** | 🟡 **Gravar a emenda sem autor, ou dizer na tela que falta** ([#38](achados/038-a-emenda-sem-autor.md)): hoje ela é descartada, e o total de emendas de 2016 na tela fica 72% menor que o do Portal, sem aviso. Gravar com `pessoa_id` nulo devolve os totais do país e não muda a ficha | Média |
 | **PL56** | 🟡 **Governos anteriores:** `gestoes` é uma linha por eleição (`ck_gestao_posse`), e ⛔ representa Temer (2016–18). Decidir o modelo antes de ingerir eleições anteriores | 🟡 Média |
 | ✅ ~~PL55~~ | **Resolvida (2026-10-02)** — nenhum emoji no código: os marcadores de `.cs`, `.ts`, `.tsx`, `.css` e `.py` viraram `RISCO:`, `ATENÇÃO:`, `DECISÃO:`, `MEDIDO:`. No front, os comentários de dentro de corpos e do JSX foram para o JSDoc das declarações. Regra em `.claude/CLAUDE.md` | — |
 | **PL57** | 🟡 **PR bloqueado:** a credencial do GitHub expirou, o `gh` ⛔ está instalado, e o `origin/main` do último fetch só tem o `Initial commit`, ⛔ ancestral da branch | 🟡 Média |
@@ -1390,13 +1391,13 @@ avaliação rodar cedo demais.
 
 ---
 
-## ✅ Resolvidas — 108
+## ✅ Resolvidas — 109
 
 `A1` `A5` `API1` `API2` `API3` `API4` `API6` `B1` `B2` `B3` `B4` `B5` `B7` `C1` `C2` `C3` `C4`
 `C6` `C8` `C13` `C14` `CT1` `CT2` `CT3` `CT4` `CT5` `CT6` `CT7` `D1` `D3` `D5` `ER1` `ER3`
 `ER4` `ER5` `N2` `N10` `P1` `P2` `P3` `P4` `P6` `PL1` `PL2` `PL4` `PL6` `PL8` `PL9` `PL10`
 `PL11` `PL12` `PL13` `PL17` `PL28` `PL31` `PL32` `PL35` `PL36` `PL37` `PL38` `PL39` `PL40`
-`PL41` `PL42` `PL43` `PL45` `PL46` `PL47` `PL48` `PL49` `PL50` `PL51` `PL54` `PL55` `PL59` `PL61` `PL63` `PL64` `PL66` `PL68` `PL69` `PL74` `PL76` `PL77` `PL78` `PL79` `PP1` `PP3` `PP4`
+`PL41` `PL42` `PL43` `PL45` `PL46` `PL47` `PL48` `PL49` `PL50` `PL51` `PL54` `PL55` `PL59` `PL60` `PL61` `PL63` `PL64` `PL66` `PL68` `PL69` `PL74` `PL76` `PL77` `PL78` `PL79` `PP1` `PP3` `PP4`
 `RE-01` `RQ1` `RQ2` `RQ3` `RQ4` `RQ8` `RQ9` `SE1` `SE2` `SE3` `SE4` `SE5` `SE6` `TS1` `TS2`
 `TS3` `TS4` `TS6`
 

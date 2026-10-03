@@ -121,6 +121,10 @@ def codigo_do_autor(codigo_emenda: str | None, numero: str | None) -> str | None
     return codigo[4:-len(numero)] or None
 
 
+CODIGOS_SEM_AUTOR = {"S/I", "-99"}
+"""Os dois códigos que o Portal usa quando a emenda não tem autor parlamentar (achado #38)."""
+
+
 def para_linhas(df: pd.DataFrame, anos: Iterable[int]) -> tuple[list[dict], dict[str, str]]:
     """Converte o CSV de emendas em linhas de `emendas`, e devolve o mapa código → nome.
 
@@ -130,18 +134,26 @@ def para_linhas(df: pd.DataFrame, anos: Iterable[int]) -> tuple[list[dict], dict
 
     ATENÇÃO: O que se descarta é o registro **incoerente**: código do autor que não bate com o
     recorte do código da emenda. Medido em 2026-09-25: zero em 25.001 linhas de 2023–26.
+
+    MEDIDO em 2026-10-02 (achado #38): em 2014–2020 há 17.810 linhas cujo autor é `S/I` ("Sem
+    informação") ou `-99` ("RELATOR GERAL", em emendas de comissão). Elas também caem aqui,
+    mas não são erro de leitura: o log as conta à parte. Gravá-las ou não é a PL81.
     """
     anos = {str(a) for a in anos}
     linhas: list[dict] = []
     autores: dict[str, str] = {}
     incoerentes = 0
+    sem_autor = 0
 
     for r in df[df["Ano da Emenda"].isin(anos)].to_dict("records"):
         codigo_emenda = r["Código da Emenda"].strip()
         codigo_autor = r["Código do Autor da Emenda"].strip()
 
         if codigo_do_autor(codigo_emenda, r["Número da emenda"]) != codigo_autor:
-            incoerentes += 1
+            if codigo_autor in CODIGOS_SEM_AUTOR:
+                sem_autor += 1
+            else:
+                incoerentes += 1
             continue
 
         nome = r["Nome do Autor da Emenda"].strip()
@@ -167,6 +179,8 @@ def para_linhas(df: pd.DataFrame, anos: Iterable[int]) -> tuple[list[dict], dict
             }
         )
 
+    if sem_autor:
+        log.info("  %d emendas sem autor identificado no Portal (S/I, -99), fora da carga: achado #38", sem_autor)
     if incoerentes:
         log.warning("  %d emendas com código de autor incoerente — a fonte mudou?", incoerentes)
 
