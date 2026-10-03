@@ -8,6 +8,9 @@ import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { FONTES } from '../fontes';
 import { nomeProprio, reaisCompacto } from '../formato';
 import { EsqueletoDeListaComponent } from '../componentes/Esqueleto';
+import { TEXTOS_DAS_ENTIDADES } from '../textos/entidades';
+
+const T = TEXTOS_DAS_ENTIDADES.lista;
 
 /**
  * Quem recebeu dinheiro de emenda: prefeituras, governos estaduais, associações, empresas.
@@ -70,21 +73,21 @@ export function EntidadesComponent() {
   return (
     <>
       <AbasDoDinheiroComponent />
-      <CabecalhoDaColunaComponent titulo="Entidades" subtitulo="Quem recebeu dinheiro de emenda parlamentar" />
+      <CabecalhoDaColunaComponent titulo={T.titulo} subtitulo={T.subtitulo} />
 
       <div className="filtros-entidades">
         <label htmlFor="busca-entidade" className="sr-apenas">
-          Buscar entidade
+          {T.buscar}
         </label>
         <input
           id="busca-entidade"
           type="search"
           value={digitado}
-          placeholder="Nome ou CNPJ"
+          placeholder={T.placeholder}
           autoComplete="off"
           onChange={(e) => setDigitado(e.target.value)}
         />
-        <div className="seletor-periodo-campos" role="group" aria-label="Tipo de entidade">
+        <div className="seletor-periodo-campos" role="group" aria-label={T.tipo}>
           {GRUPOS.map(([valor, rotulo]) => (
             <button
               key={rotulo}
@@ -99,18 +102,15 @@ export function EntidadesComponent() {
         </div>
       </div>
 
-      {erro && <p className="erro">Não foi possível carregar as entidades agora.</p>}
-      {!erro && !pagina && <EsqueletoDeListaComponent rotulo="Carregando as entidades" />}
+      {erro && <p className="erro">{T.erro}</p>}
+      {!erro && !pagina && <EsqueletoDeListaComponent rotulo={T.carregando} />}
 
       {pagina && (
         <section className="governo-secao">
-          <p className="ajuda">
-            {pagina.total.toLocaleString('pt-BR')} {pagina.total === 1 ? 'entidade' : 'entidades'}, da que
-            mais recebeu à que menos recebeu, somando as emendas de todos os anos carregados.
-          </p>
+          <p className="ajuda">{T.quantas(pagina.total.toLocaleString('pt-BR'), pagina.total)}</p>
 
           {pagina.total === 0 ? (
-            <p className="vazio">Nenhuma entidade com esse nome recebeu dinheiro de emenda.</p>
+            <p className="vazio">{T.nenhuma}</p>
           ) : (
             <ol className="lista-autores lista-entidades">
               {itens.map((e) => (
@@ -140,20 +140,21 @@ export function EntidadesComponent() {
       )}
 
       <p className="fonte-dado">
-        Fontes: <LinkDeFonteComponent href={FONTES.emendas.url}>{FONTES.emendas.nome}</LinkDeFonteComponent>;{' '}
-        <LinkDeFonteComponent href={FONTES.cnpj.url}>{FONTES.cnpj.nome}</LinkDeFonteComponent>, para a sede.
+        {T.fontes} <LinkDeFonteComponent href={FONTES.emendas.url}>{FONTES.emendas.nome}</LinkDeFonteComponent>;{' '}
+        <LinkDeFonteComponent href={FONTES.cnpj.url}>{FONTES.cnpj.nome}</LinkDeFonteComponent>
+        {T.paraASede}
       </p>
     </>
   );
 }
 
 const GRUPOS: [GrupoDeEntidade | null, string][] = [
-  [null, 'Todas'],
-  ['SEM_FINS_LUCRATIVOS', 'Associações e fundações'],
-  ['EMPRESA', 'Empresas'],
-  ['MUNICIPIO', 'Prefeituras'],
-  ['ESTADO', 'Governos estaduais'],
-  ['OUTRO', 'Outras'],
+  [null, T.grupos.todas],
+  ['SEM_FINS_LUCRATIVOS', T.grupos.semFinsLucrativos],
+  ['EMPRESA', T.grupos.empresas],
+  ['MUNICIPIO', T.grupos.prefeituras],
+  ['ESTADO', T.grupos.governosEstaduais],
+  ['OUTRO', T.grupos.outras],
 ];
 
 function comParametro(atual: URLSearchParams, chave: string, valor: string | null): URLSearchParams {
