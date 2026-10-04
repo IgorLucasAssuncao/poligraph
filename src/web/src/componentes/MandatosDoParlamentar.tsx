@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Mandato } from '../api';
 import { periodoDaLegislatura } from '../formato';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
  * Os mandatos do parlamentar, e qual deles a ficha está mostrando.
@@ -31,18 +32,17 @@ export function MandatosDoParlamentarComponent({
     const [unico] = mandatos;
     return (
       <p className="mandatos-unico">
-        Votou em <span className="dado">{periodoDaLegislatura(unico.legislatura)}</span>
+        {T.mandatos.votouEm}
+        <span className="dado">{periodoDaLegislatura(unico.legislatura)}</span>
       </p>
     );
   }
 
   return (
-    <nav className="mandatos" aria-label="Legislaturas em que votou">
+    <nav className="mandatos" aria-label={T.mandatos.rotulo}>
       <span className="mandatos-rotulo">
-        Legislaturas em que votou
-        {mandatos.some((m) => m.casa === 'SENADO') && (
-          <small> · no Senado, um mandato cobre duas</small>
-        )}
+        {T.mandatos.rotulo}
+        {mandatos.some((m) => m.casa === 'SENADO') && <small>{T.mandatos.senadoCobreDuas}</small>}
       </span>
       <ul>
         {mandatos.map((m, i) => {
@@ -59,7 +59,7 @@ export function MandatosDoParlamentarComponent({
               >
                 <span className="dado">{periodoDaLegislatura(m.legislatura)}</span>
                 <span className="mandatos-detalhe">
-                  {m.casa === 'SENADO' ? 'Senado' : 'Câmara'}
+                  {m.casa === 'SENADO' ? T.mandatos.senado : T.mandatos.camara}
                   {m.partido && ` · ${m.partido}`}
                   {m.uf && `-${m.uf}`}
                 </span>

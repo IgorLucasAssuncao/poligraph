@@ -5,6 +5,7 @@ import { AvatarComponent } from './Avatar';
 import { BotaoSeguirComponent } from './BotaoSeguir';
 import { useSessao } from '../sessao';
 import { SUGESTOES_PARA_SEGUIR } from '../constantes';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 
 /**
@@ -54,12 +55,12 @@ export function SugestoesParaSeguirComponent() {
 
   return (
     <section className="cartao-lateral">
-      <h2>Quem seguir</h2>
+      <h2>{T.sugestoes.titulo}</h2>
 
       <ul className="sugestoes">
         {sugestoes.map((p) => (
           <li key={p.id}>
-            <Link to={`/parlamentar/${p.id}`} className="sugestao-link" title={`${p.nome} · ${p.partido}${p.uf ? ` · ${p.uf}` : ''}`}>
+            <Link to={`/parlamentar/${p.id}`} className="sugestao-link" title={T.sugestoes.dica(p.nome, p.partido, p.uf)}>
               <AvatarComponent nome={p.nome} fotoUrl={p.urlFoto} tamanho="medio" />
               <span className="sugestao-texto">
                 <strong>{p.nome}</strong>
@@ -86,10 +87,10 @@ export function SugestoesParaSeguirComponent() {
         ))}
       </ul>
 
-      <p className="criterio">Ordenado por número de votações registradas.</p>
+      <p className="criterio">{T.sugestoes.criterio}</p>
 
       <Link to="/parlamentares" className="ver-mais">
-        Ver todos
+        {T.sugestoes.verTodos}
       </Link>
     </section>
   );

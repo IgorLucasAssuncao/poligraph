@@ -4,8 +4,8 @@ import type { ColetivoQueMandou, ParlamentarQueMandou } from '../api';
 import { nomeProprio, reaisCompacto } from '../formato';
 import { AvatarComponent } from './Avatar';
 import { BotaoMostrarMaisComponent } from './BotaoMostrarMais';
-import { TermoComponent } from './Termo';
 import { COLETIVOS_POR_VEZ } from '../constantes';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
  * Quem mandou dinheiro de emenda — a mesma apresentação na cidade e na entidade.
@@ -14,7 +14,7 @@ import { COLETIVOS_POR_VEZ } from '../constantes';
  * deputados, "Bancada de Minas Gerais" lia como o nome de um político.
  */
 export function LinhaDoParlamentarComponent({ parlamentar: p }: { parlamentar: ParlamentarQueMandou }) {
-  const casa = p.casa === 'SENADO' ? 'Senado' : p.casa === 'CAMARA' ? 'Câmara' : null;
+  const casa = p.casa === 'SENADO' ? T.autores.senado : p.casa === 'CAMARA' ? T.autores.camara : null;
   const detalhe = [p.partido, p.uf, casa].filter(Boolean).join(' · ');
 
   return (
@@ -29,7 +29,7 @@ export function LinhaDoParlamentarComponent({ parlamentar: p }: { parlamentar: P
           <span className="autor-nome">{nomeProprio(p.nome)}</span>
         )}
         <span className="autor-detalhe">
-          {detalhe || 'Sem página neste site'} · {p.emendas} {p.emendas === 1 ? 'emenda' : 'emendas'}
+          {detalhe || T.autores.semPagina} · {T.autores.emendas(p.emendas)}
         </span>
       </span>
       <span className="valor">{reaisCompacto(p.recebido)}</span>
@@ -38,9 +38,9 @@ export function LinhaDoParlamentarComponent({ parlamentar: p }: { parlamentar: P
 }
 
 const ROTULO_DO_COLETIVO: Record<ColetivoQueMandou['tipo'], string> = {
-  BANCADA: 'Bancada estadual',
-  COMISSAO: 'Comissão',
-  OUTRO: 'Autor coletivo',
+  BANCADA: T.autores.coletivos.BANCADA,
+  COMISSAO: T.autores.coletivos.COMISSAO,
+  OUTRO: T.autores.coletivos.OUTRO,
 };
 
 
@@ -53,11 +53,7 @@ export function ColetivosComponent({ coletivos }: { coletivos: ColetivoQueMandou
 
   return (
     <div>
-      <p className="ajuda">
-        {reaisCompacto(total)} vieram de grupos de parlamentares: a{' '}
-        <TermoComponent nome="emendaDeBancada">bancada</TermoComponent> reúne os parlamentares de um estado, e a{' '}
-        <TermoComponent nome="emendaDeComissao">comissão</TermoComponent> é um grupo de trabalho do Congresso.
-      </p>
+      <p className="ajuda">{T.autores.grupos(reaisCompacto(total))}</p>
 
       <ul className="lista-autores">
         {coletivos.slice(0, exibidos).map((c) => (

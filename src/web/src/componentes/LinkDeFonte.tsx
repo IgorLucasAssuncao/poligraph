@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
  * Link para a fonte oficial de um dado — a Câmara, o Senado, o Portal, o TSE.
@@ -16,7 +17,7 @@ export function LinkDeFonteComponent({ href, children }: { href: string | null |
     <a className="link-fonte" href={href} target="_blank" rel="noopener noreferrer">
       {children}
       <span aria-hidden="true"> ↗</span>
-      <span className="sr-apenas"> (abre o site oficial em nova aba)</span>
+      <span className="sr-apenas">{T.linkDeFonte}</span>
     </a>
   );
 }

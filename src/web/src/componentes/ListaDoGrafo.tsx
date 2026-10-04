@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { ArestaDoGrafo, NoDoGrafo } from '../api';
 import { VIZINHOS_NA_LISTA_DO_GRAFO } from '../constantes';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 
 /**
@@ -83,13 +84,9 @@ export function ListaDoGrafoComponent({
       data-tour="grafo-lista"
       onToggle={(e) => setAberta((e.currentTarget as HTMLDetailsElement).open)}
     >
-      <summary>Ver o grafo como lista</summary>
+      <summary>{T.listaDoGrafo.resumo}</summary>
 
-      <p className="ajuda">
-        A mesma informação do desenho, em texto: cada parlamentar seguido de quem mais
-        votou junto com ele. A ordem desta lista não é política: quem aparece
-        primeiro é apenas quem tem mais ligações.
-      </p>
+      <p className="ajuda">{T.listaDoGrafo.ajuda}</p>
 
       <ul className="lista-grafo">
         {linhas.map(({ no, proximos }) => (
@@ -104,16 +101,15 @@ export function ListaDoGrafoComponent({
 
             <span className="lista-grafo-filiacao">
               {no.partido}
-              {no.uf && ` · ${no.uf}`} · {no.nVotacoes} votações comparáveis
+              {no.uf && ` · ${no.uf}`}
+              {T.listaDoGrafo.comparaveis(no.nVotacoes)}
             </span>
 
             {proximos.length === 0 ? (
-              <span className="lista-grafo-sem-par">
-                sem ligações: precisa de ao menos 20 votações em comum com alguém
-              </span>
+              <span className="lista-grafo-sem-par">{T.listaDoGrafo.semLigacoes}</span>
             ) : (
               <span className="lista-grafo-vizinhos">
-                vota junto com {proximos.map((v) => v.no.nome).join(', ')}
+                {T.listaDoGrafo.votaJuntoCom(proximos.map((v) => v.no.nome).join(', '))}
               </span>
             )}
           </li>

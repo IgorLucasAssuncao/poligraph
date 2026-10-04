@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { ABAS_DO_DINHEIRO } from '../navegacao';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
  * As três portas para "para onde vai o dinheiro": a cidade, quem recebeu e o governo.
@@ -10,7 +11,7 @@ import { ABAS_DO_DINHEIRO } from '../navegacao';
  */
 export function AbasDoDinheiroComponent() {
   return (
-    <nav className="abas-do-dinheiro" aria-label="Dinheiro público">
+    <nav className="abas-do-dinheiro" aria-label={T.abasDoDinheiro}>
       {ABAS_DO_DINHEIRO.map((aba) => (
         <NavLink key={aba.para} to={aba.para} className="aba" viewTransition>
           {aba.rotulo}

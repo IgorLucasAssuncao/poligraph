@@ -1,3 +1,4 @@
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 /**
  * O painel — o elemento-assinatura do poligraph.
  *
@@ -31,16 +32,14 @@ export function PainelComponent({
       <div
         className="painel-marcas"
         role="img"
-        aria-label={`${posicionados} de ${total} parlamentares se posicionaram nesta votação`}
+        aria-label={T.painel.rotulo(posicionados, total)}
       >
         {marcas.map((cheia, i) => (
           <span key={i} className={cheia ? 'marca marca-cheia' : 'marca'} />
         ))}
       </div>
 
-      <p className="painel-legenda">
-        <strong>{posicionados}</strong> de {total} se posicionaram
-      </p>
+      <p className="painel-legenda">{T.painel.legenda(posicionados, total)}</p>
     </div>
   );
 }

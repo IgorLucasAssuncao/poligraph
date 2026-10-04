@@ -4,6 +4,7 @@ import { ConsentimentoNecessarioError, deixarDeSeguir, seguir } from '../api';
 import { useSessao } from '../sessao';
 import { TEXTO_CONSENTIMENTO_SEGUIR } from '../textos-legais';
 import { useEntrar } from './useEntrar';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
  * RISCO: Este botão escreve na tabela `segue`, que é REGISTRO DE CONVICÇÃO POLÍTICA
@@ -44,8 +45,8 @@ export function BotaoSeguirComponent({
 
   if (!usuario) {
     return (
-      <Link to={entrar} className="botao-seguir" title="Entre com o Google para seguir">
-        <span>Seguir</span>
+      <Link to={entrar} className="botao-seguir" title={T.seguir.entreParaSeguir}>
+        <span>{T.seguir.seguir}</span>
       </Link>
     );
   }
@@ -119,7 +120,7 @@ function PedidoDeConsentimentoComponent({ aoAceitar, aoRecusar }: { aoAceitar: (
       <h2 id="titulo-consentimento-seguir">{TEXTO_CONSENTIMENTO_SEGUIR.titulo}</h2>
       <p>{TEXTO_CONSENTIMENTO_SEGUIR.texto}</p>
       <p className="ajuda">
-        <Link to="/privacidade">Política de privacidade</Link>
+        <Link to="/privacidade">{T.seguir.privacidade}</Link>
       </p>
       <div className="confirmacao-acoes">
         <button type="button" className="botao-destaque" onClick={aoAceitar}>

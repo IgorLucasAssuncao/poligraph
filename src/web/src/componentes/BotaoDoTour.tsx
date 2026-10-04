@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useTour, type TourDaTela } from './contextoDoTour';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
  * "Entenda esta tela": anuncia o tour da tela ao provedor e o abre quando clicado.
@@ -15,7 +16,8 @@ export function BotaoDoTourComponent({ nome, passos }: TourDaTela) {
 
   return (
     <button type="button" className="botao-tour" onClick={() => iniciar(nome)}>
-      <span aria-hidden="true">?</span> Entenda esta tela
+      <span aria-hidden="true">?</span>
+      {T.entendaEstaTela}
     </button>
   );
 }

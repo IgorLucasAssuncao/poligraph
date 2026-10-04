@@ -1,4 +1,5 @@
 import type { RedeSocial, TipoRedeSocial } from '../api';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
  * As redes que o parlamentar publicou — à Câmara, ou ao TSE na candidatura (PP4).
@@ -20,13 +21,13 @@ export function RedesDoParlamentarComponent({ redes }: { redes: RedeSocial[] }) 
 
   return (
     <p className="perfil-redes">
-      <span className="perfil-redes-rotulo">{daCamara ? 'Redes publicadas na Câmara' : 'Redes declaradas ao TSE'}:</span>{' '}
+      <span className="perfil-redes-rotulo">{daCamara ? T.redes.daCamara : T.redes.doTse}:</span>{' '}
       {seguras.map((r, i) => (
         <span key={r.url}>
           {i > 0 && ' · '}
           <a href={r.url} target="_blank" rel="noopener noreferrer nofollow">
             {rotulo(r)}
-            <span className="sr-apenas"> (abre em nova aba)</span>
+            <span className="sr-apenas">{T.novaAba}</span>
           </a>
         </span>
       ))}
@@ -35,11 +36,11 @@ export function RedesDoParlamentarComponent({ redes }: { redes: RedeSocial[] }) 
 }
 
 const NOME: Record<TipoRedeSocial, string> = {
-  INSTAGRAM: 'Instagram',
-  FACEBOOK: 'Facebook',
-  X: 'X (Twitter)',
-  YOUTUBE: 'YouTube',
-  TIKTOK: 'TikTok',
+  INSTAGRAM: T.redes.nomes.INSTAGRAM,
+  FACEBOOK: T.redes.nomes.FACEBOOK,
+  X: T.redes.nomes.X,
+  YOUTUBE: T.redes.nomes.YOUTUBE,
+  TIKTOK: T.redes.nomes.TIKTOK,
   LINKEDIN: 'LinkedIn',
   OUTRA: 'Site',
 };

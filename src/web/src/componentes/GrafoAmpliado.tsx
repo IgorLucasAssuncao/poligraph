@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { NOME_DA_CASA, type Casa, type Grafo, type NoDoGrafo } from '../api';
 import { TelaDoGrafoComponent, type PosicaoDoCidadao } from './TelaDoGrafo';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
  * A prancheta: o grafo ocupando a JANELA INTEIRA.
@@ -29,7 +30,7 @@ export function GrafoAmpliadoComponent({
   aberto,
   aoFechar,
   aoSelecionar,
-  titulo = 'Quem vota com quem',
+  titulo = T.grafoAmpliado.titulo,
 }: {
   grafo: Grafo;
   cidadao?: PosicaoDoCidadao | null;
@@ -58,13 +59,17 @@ export function GrafoAmpliadoComponent({
   return (
     <dialog ref={dialogo} className="grafo-ampliado" onClose={aoFechar} onCancel={aoFechar}>
       <h2 className="apenas-leitor-de-tela">
-        {titulo} — {grafo.nos.length}{' '}
-        {NOME_DA_CASA[grafo.casa as Casa]?.plural ?? 'parlamentares'},{' '}
-        {grafo.arestas.length} ligações
+        {T.grafoAmpliado.resumo(
+          titulo,
+          grafo.nos.length,
+          NOME_DA_CASA[grafo.casa as Casa]?.plural ?? T.grafoAmpliado.parlamentares,
+          grafo.arestas.length,
+        )}
       </h2>
 
       <button type="button" className="grafo-voltar" onClick={aoFechar}>
-        <span aria-hidden="true">←</span> Voltar
+        <span aria-hidden="true">←</span>
+        {T.grafoAmpliado.voltar}
       </button>
 
       {jaAbriu && (

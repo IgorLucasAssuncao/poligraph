@@ -1,3 +1,4 @@
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 /**
  * "Mostrar mais N" — o botão de toda lista paginada.
  *
@@ -25,10 +26,10 @@ export function BotaoMostrarMaisComponent({
   return (
     <div className="carregar-mais">
       <button type="button" className="botao-secundario" onClick={aoClicar} disabled={carregando}>
-        {carregando ? 'Carregando…' : (rotulo ?? `Mostrar mais ${proximos}`)}
+        {carregando ? T.mostrarMais.carregando : (rotulo ?? T.mostrarMais.rotulo(proximos))}
       </button>
-      {!rotulo && <span className="carregar-mais-resto">{restantes.toLocaleString('pt-BR')} ainda não mostrados</span>}
-      {erro && <p className="erro">Não foi possível carregar. Tente de novo.</p>}
+      {!rotulo && <span className="carregar-mais-resto">{T.mostrarMais.restantes(restantes.toLocaleString('pt-BR'))}</span>}
+      {erro && <p className="erro">{T.mostrarMais.erro}</p>}
     </div>
   );
 }

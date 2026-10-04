@@ -1,4 +1,5 @@
 import './legendaDoGrafo.css';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 /**
  * O que a figura mostra, em três frases.
  *
@@ -20,9 +21,7 @@ import './legendaDoGrafo.css';
 export function LegendaDoGrafoComponent() {
   return (
     <p className="legenda-grafo" data-tour="grafo-legenda">
-      <strong>A posição não indica orientação política</strong>: quem vota junto se
-      atrai, e é só isso que o desenho mostra. Nas bordas ficam os que votaram pouco
-      demais para serem comparados com alguém.
+      {T.legendaDoGrafo}
     </p>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { TEXTO_CONSENTIMENTO, VERSAO_CONSENTIMENTO } from '../textos-legais';
 import { CHAVE_CONSENTIMENTO, EVENTO_CONSENTIMENTO } from '../constantes';
 import { lerConsentimento, type Escolha } from '../consentimento';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
  * RISCO: Banner de consentimento — bloqueante e obrigatório.
@@ -59,7 +60,7 @@ export function BannerConsentimentoComponent() {
       </div>
 
       <p className="banner-rodape">
-        {TEXTO_CONSENTIMENTO.rodape} <a href="/privacidade">Política de privacidade</a>
+        {TEXTO_CONSENTIMENTO.rodape} <a href="/privacidade">{T.privacidade}</a>
       </p>
     </aside>
   );

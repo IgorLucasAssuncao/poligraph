@@ -2,12 +2,13 @@ import { useSearchParams } from 'react-router-dom';
 import { BarraDePeriodoComponent } from '../componentes/BarraDePeriodo';
 import { ExplorarComponent } from './Explorar';
 import { GrafoComponent } from './Grafo';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 type Vista = 'lista' | 'grafo';
 
 const VISTAS: { chave: Vista; rotulo: string; ajuda: string }[] = [
-  { chave: 'lista', rotulo: 'Lista', ajuda: 'Procurar por nome, partido ou estado' },
-  { chave: 'grafo', rotulo: 'Grafo', ajuda: 'Quem vota com quem' },
+  { chave: 'lista', rotulo: T.vistas.lista, ajuda: T.vistas.listaAjuda },
+  { chave: 'grafo', rotulo: T.vistas.grafo, ajuda: T.vistas.grafoAjuda },
 ];
 
 /**
@@ -39,7 +40,7 @@ export function ParlamentaresComponent() {
     <>
       <BarraDePeriodoComponent comTodas={vista === 'lista'} />
 
-      <div className="abas-vista" data-tour="vistas" role="tablist" aria-label="Como ver os parlamentares">
+      <div className="abas-vista" data-tour="vistas" role="tablist" aria-label={T.vistas.rotulo}>
         {VISTAS.map((opcao) => (
           <button
             key={opcao.chave}

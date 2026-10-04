@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Periodo } from '../api';
 import { OpcoesComponent } from './Dados';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /** O valor do botão "Todos os anos" no grupo de opções. */
 const TODOS = '__todos__';
@@ -39,20 +40,20 @@ export function SeletorDePeriodoComponent({
     ? TODOS
     : (atalhos.find((a) => a.periodo.de === periodo.de && a.periodo.ate === periodo.ate)?.rotulo ?? '');
   const corrente = new Date().getFullYear();
-  const rotuloDoAno = (a: number) => (a === corrente ? `${a} (em andamento)` : String(a));
+  const rotuloDoAno = (a: number) => (a === corrente ? T.periodo.emAndamento(a) : String(a));
 
   return (
     <div className="governo-barra seletor-periodo" data-tour={tour}>
       {children && <p className="governo-escopo">{children}</p>}
       <OpcoesComponent
         rotulo={rotulo}
-        opcoes={[{ valor: TODOS, rotulo: 'Todos os anos' }, ...atalhos.map((a) => ({ valor: a.rotulo, rotulo: a.rotulo }))]}
+        opcoes={[{ valor: TODOS, rotulo: T.periodo.todosOsAnos }, ...atalhos.map((a) => ({ valor: a.rotulo, rotulo: a.rotulo }))]}
         escolhida={escolhido}
         aoEscolher={(valor) => aoMudar(valor === TODOS ? null : (atalhos.find((a) => a.rotulo === valor)?.periodo ?? null))}
       >
         <span className="seletor-periodo-intervalo">
           <label>
-            De{' '}
+            {T.periodo.de}{' '}
             <select
               value={periodo.de}
               onChange={(e) => {
@@ -68,7 +69,7 @@ export function SeletorDePeriodoComponent({
             </select>
           </label>
           <label>
-            até{' '}
+            {T.periodo.ate}{' '}
             <select
               value={periodo.ate}
               onChange={(e) => {

@@ -1,5 +1,6 @@
 import { CONTATO, POLITICA_DE_PRIVACIDADE, VERSAO_CONSENTIMENTO } from '../textos-legais';
 import { revogarConsentimento } from '../consentimento';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
  * A página de política de privacidade.
@@ -20,19 +21,16 @@ export function PoliticaDePrivacidadeComponent() {
       <hr />
 
       <section className="acoes-legais">
-        <h2>Suas escolhas</h2>
+        <h2>{T.privacidadePagina.escolhas}</h2>
 
-        <p>
-          Você aceitou a versão <code>{VERSAO_CONSENTIMENTO}</code> deste texto. Se mudar
-          de ideia sobre a medição de uso, pode refazer a escolha:
-        </p>
+        <p>{T.privacidadePagina.versao(VERSAO_CONSENTIMENTO)}</p>
 
         <button type="button" onClick={revogarConsentimento}>
-          Rever meu consentimento
+          {T.privacidadePagina.rever}
         </button>
 
         <p>
-          Para pedir seus dados ou a exclusão da conta, escreva para{' '}
+          {T.privacidadePagina.contato}{' '}
           <a href={`mailto:${CONTATO}`}>{CONTATO}</a>.
         </p>
       </section>

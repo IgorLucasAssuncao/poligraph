@@ -15,6 +15,7 @@ import { paraTela, type Camera, type Tamanho } from './camera';
 import { foto, iniciais } from './fotos';
 import type { RotulosDoEixo } from './legenda';
 import { temaEfetivoEscuro } from '../../tema';
+import { TEXTOS_DOS_COMPONENTES as T } from '../../textos/componentes';
 
 /** ATENÇÃO: Retina: sem isto o desenho sai borrado em tela de alta densidade. */
 /**
@@ -516,5 +517,5 @@ function desenharCidadao(
   ctx.font = '600 11px "IBM Plex Sans", system-ui, sans-serif';
   ctx.fillStyle = escuro ? '#e6eaee' : '#12161b';
   ctx.textAlign = 'center';
-  ctx.fillText('você', p.x, p.y + raio + 13);
+  ctx.fillText(T.eixos.voce, p.x, p.y + raio + 13);
 }

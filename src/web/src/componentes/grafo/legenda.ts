@@ -1,4 +1,5 @@
 import type { NoDoGrafo } from '../../api';
+import { TEXTOS_DOS_COMPONENTES as T } from '../../textos/componentes';
 
 /**
  * Como rotular os eixos desenhados sobre a figura.
@@ -25,10 +26,10 @@ export function rotulosDoEixo(
 ): RotulosDoEixo | null {
   if (layout === 'alinhamento') {
     return {
-      esquerda: 'quase nunca votou com o Governo',
-      direita: 'quase sempre votou com o Governo',
-      legenda: 'a posição horizontal é a própria medida de alinhamento',
-      vertical: 'a vertical não mede nada: é só espaço para os pontos não se sobreporem',
+      esquerda: T.eixos.alinhamento.esquerda,
+      direita: T.eixos.alinhamento.direita,
+      legenda: T.eixos.alinhamento.legenda,
+      vertical: T.eixos.verticalSemMedida,
     };
   }
 
@@ -47,16 +48,13 @@ export function rotulosDoEixo(
 
   const negativoEhGovernista = mediaDe((x) => x < 0) >= mediaDe((x) => x > 0);
 
-  const maisGoverno = 'vota MAIS com o Governo';
-  const menosGoverno = 'vota MENOS com o Governo';
+  const maisGoverno = T.eixos.maisGoverno;
+  const menosGoverno = T.eixos.menosGoverno;
 
   return {
     esquerda: negativoEhGovernista ? maisGoverno : menosGoverno,
     direita: negativoEhGovernista ? menosGoverno : maisGoverno,
-    legenda: 'quanto o parlamentar votou como a bancada do Governo orientou',
-    vertical:
-      layout === 'molas'
-        ? 'a vertical não mede nada: é só espaço para os pontos não se sobreporem'
-        : 'a vertical é a segunda maior diferença, e explica bem menos que a horizontal',
+    legenda: T.eixos.legenda,
+    vertical: layout === 'molas' ? T.eixos.verticalSemMedida : T.eixos.verticalSegunda,
   };
 }

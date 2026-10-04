@@ -1,5 +1,6 @@
 import { periodoDaLegislatura } from '../formato';
 import type { EscolhaDeLegislatura } from './useLegislatura';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
  * O seletor de período, igual em todo o site.
@@ -16,7 +17,7 @@ export function SeletorDeLegislaturaComponent({
   atual,
   aoTrocar,
   comTodas = false,
-  rotulo = 'Período',
+  rotulo = T.legislatura.rotulo,
   rotuloVisivel = true,
 }: {
   /** Da mais recente para a mais antiga; a primeira é a corrente. */
@@ -34,7 +35,7 @@ export function SeletorDeLegislaturaComponent({
       <span className={rotuloVisivel ? undefined : 'so-leitor'}>{rotulo}</span>
       <select
         value={String(atual)}
-        title={atual === 'todas' ? 'Todos os períodos' : `${atual}ª legislatura`}
+        title={atual === 'todas' ? T.legislatura.todos : T.legislatura.numero(atual)}
         onChange={(e) => {
           const valor = e.target.value;
           if (valor === 'todas') aoTrocar('todas');
@@ -44,10 +45,10 @@ export function SeletorDeLegislaturaComponent({
         {opcoes.map((l, i) => (
           <option key={l} value={l}>
             {periodoDaLegislatura(l)}
-            {i === 0 ? ' · atual' : ''}
+            {i === 0 ? T.legislatura.atual : ''}
           </option>
         ))}
-        {comTodas && <option value="todas">Todos os períodos</option>}
+        {comTodas && <option value="todas">{T.legislatura.todos}</option>}
       </select>
     </label>
   );

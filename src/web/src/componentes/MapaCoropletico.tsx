@@ -3,6 +3,7 @@ import { geoMercator, geoPath } from 'd3-geo';
 import type { FeatureCollection } from 'geojson';
 import { reaisCompacto } from '../formato';
 import { carregarMalha, codigoDa, faixaDe, faixasPorQuantil } from '../mapa';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
  * Mapa coroplético das malhas do IBGE, servidas pelo próprio site (`public/malhas`).
@@ -94,14 +95,14 @@ export function MapaCoropleticoComponent({
     return new Map(desenho.map(({ codigo }) => [codigo, faixaDe(valores.get(codigo), limites)]));
   }, [valores, limites, desenho]);
 
-  if (erro) return <p className="erro">Não foi possível carregar o mapa.</p>;
+  if (erro) return <p className="erro">{T.mapa.erro}</p>;
   if (!areas) return <div className="mapa-carregando" aria-hidden="true" />;
 
   const descrever = (codigo: string) => {
     const nome = nomes.get(codigo) ?? '';
     if (!valores) return nome;
     const valor = valores.get(codigo);
-    return `${nome}: ${valor ? formatar(valor) : 'nenhum pagamento'}`;
+    return T.mapa.descricao(nome, valor ? formatar(valor) : null);
   };
 
   const codigoDoEvento = (alvo: EventTarget) => (alvo as Element).getAttribute?.('data-codigo');
@@ -220,14 +221,15 @@ function LegendaDoMapaComponent({ limites, formatar }: { limites: number[]; form
 
   const faixas = [0, ...limites].map((de, i) => ({
     faixa: i + 1,
-    texto: i < limites.length ? `${formatar(de)} a ${formatar(limites[i])}` : `${formatar(de)} ou mais`,
+    texto: i < limites.length ? T.mapa.faixa(formatar(de), formatar(limites[i])) : T.mapa.ouMais(formatar(de)),
   }));
-  faixas[0].texto = `até ${formatar(limites[0])}`;
+  faixas[0].texto = T.mapa.ate(formatar(limites[0]));
 
   return (
     <figcaption className="mapa-legenda">
       <span className="mapa-legenda-item">
-        <span className="mapa-amostra mapa-faixa-0" aria-hidden="true" /> sem pagamento
+        <span className="mapa-amostra mapa-faixa-0" aria-hidden="true" />
+        {T.mapa.semPagamento}
       </span>
       {faixas.map(({ faixa, texto }) => (
         <span key={faixa} className="mapa-legenda-item">
