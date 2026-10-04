@@ -61,6 +61,14 @@ jobs:
       - name: Migration gera script válido
         run: dotnet ef migrations script --idempotent -p src/Poligraph.Data -o migration.sql
 
+      # Os testes da ETL criam o banco com este script. Migration nova sem o script
+      # regerado faria a ETL testar contra o schema velho, sem erro nenhum.
+      - name: Schema dos testes da ETL em dia com as migrations
+        run: |
+          dotnet ef migrations script -p src/Poligraph.Data -o schema_gerado.sql
+          diff <(tr -d '\r' < schema_gerado.sql) <(tr -d '\r' < src/etl/tests/schema_do_ef.sql) \
+            || { echo "::error::src/etl/tests/schema_do_ef.sql desatualizado. Rode: dotnet ef migrations script -p src/Poligraph.Data -o src/etl/tests/schema_do_ef.sql"; exit 1; }
+
       - uses: actions/upload-artifact@v4
         with:
           name: migration-sql

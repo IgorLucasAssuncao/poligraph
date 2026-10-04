@@ -418,7 +418,10 @@ def test_apagar_votacao_com_pergunta_recusa_tudo(conexao):
     """RISCO: A cascata levaria a pergunta do questionário junto, sem ninguém decidir."""
     _preparar_pessoa_e_votacao(conexao)
     persistencia.gravar_votacoes(conexao, [_votacao("SF-1483")])
-    conexao.execute("INSERT INTO perguntas (id, votacao_id) VALUES ('q-teste', '2358548-89')")
+    conexao.execute(
+        "INSERT INTO perguntas (id, votacao_id, texto, polaridade, ordem, ativa) "
+        "VALUES ('q-teste', '2358548-89', 'Afirmação de teste', 1, 1, true)"
+    )
 
     with pytest.raises(RuntimeError, match="2358548-89"):
         persistencia.apagar_votacoes(conexao, ["SF-1483", "2358548-89"])

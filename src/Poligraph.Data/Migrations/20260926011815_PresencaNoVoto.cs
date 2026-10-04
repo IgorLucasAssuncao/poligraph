@@ -21,7 +21,7 @@ namespace Poligraph.Data.Migrations
                 """
                 UPDATE votos SET presenca = 'PRESENTE'
                   FROM votacoes
-                 WHERE votos.votacao_id = votacoes.id AND votacoes.casa = 'CAMARA'
+                 WHERE votos.votacao_id = votacoes.id AND votacoes.casa = 'CAMARA';
                 """);
 
             migrationBuilder.AddCheckConstraint(
