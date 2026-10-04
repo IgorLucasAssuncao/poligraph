@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Grafo, NoDoGrafo } from '../api';
 import { TelaDoGrafoComponent } from './TelaDoGrafo';
 
@@ -378,5 +378,88 @@ describe('a roda num grafo embutido', () => {
 
     expect(rodar(screen.getByRole('img'), false)).toBe(true);
     expect(screen.queryByText(/Ctrl \+ roda/)).toBeNull();
+  });
+});
+
+/**
+ * Um contexto 2D que só anota o que foi pedido. O jsdom não desenha: sem isto, o desenho do
+ * grafo nunca roda nos testes, e um erro nele só aparece na tela de quem usa.
+ */
+function contextoQueAnota() {
+  const chamadas: { metodo: string; argumentos: unknown[] }[] = [];
+  const estado: Record<string, unknown> = {};
+  const contexto = new Proxy(estado, {
+    get(alvo, nome: string) {
+      if (nome in alvo) return alvo[nome];
+      if (nome === 'measureText') return (texto: string) => ({ width: texto.length * 6 });
+      if (nome === 'createLinearGradient' || nome === 'createRadialGradient') return () => ({ addColorStop: () => undefined });
+      return (...argumentos: unknown[]) => {
+        chamadas.push({ metodo: nome, argumentos });
+      };
+    },
+    set(alvo, nome: string, valor) {
+      alvo[nome] = valor;
+      return true;
+    },
+  });
+  return { contexto, chamadas };
+}
+
+describe('o desenho do grafo', () => {
+  let anotado: ReturnType<typeof contextoQueAnota>;
+
+  beforeEach(() => {
+    anotado = contextoQueAnota();
+    HTMLCanvasElement.prototype.getContext = vi.fn(() => anotado.contexto) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+  });
+
+  /** Quantas vezes um método do contexto foi chamado. */
+  const vezes = (metodo: string) => anotado.chamadas.filter((c) => c.metodo === metodo).length;
+
+  it('desenha um círculo por parlamentar e as ligações entre eles', async () => {
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
+
+    await waitFor(() => expect(vezes('arc')).toBeGreaterThanOrEqual(GRAFO.nos.length));
+    expect(vezes('stroke')).toBeGreaterThan(0);
+    expect(vezes('clearRect')).toBeGreaterThan(0);
+  });
+
+  it('desenha também o ponto do cidadão, com o rótulo', async () => {
+    render(
+      <TelaDoGrafoComponent
+        grafo={GRAFO}
+        cidadao={{ eixoX: 0.2, eixoY: 0.2, comunidade: 0, vizinhosUsados: 3, baseDeVotacoes: 24 }}
+      />,
+    );
+
+    await waitFor(() => expect(anotado.chamadas.some((c) => c.metodo === 'fillText' && /você/i.test(String(c.argumentos[0])))).toBe(true));
+  });
+
+  it('procurar alguém redesenha com o escolhido em destaque', async () => {
+    const usuario = userEvent.setup();
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
+    await waitFor(() => expect(vezes('arc')).toBeGreaterThan(0));
+    const antes = anotado.chamadas.length;
+
+    await usuario.click(screen.getByRole('button', { name: /procurar parlamentar/i }));
+    await usuario.type(screen.getByRole('searchbox'), 'bru');
+    await usuario.keyboard('{Enter}');
+
+    await waitFor(() => expect(anotado.chamadas.length).toBeGreaterThan(antes));
+  });
+
+  it('o ponteiro sobre o desenho e a roda com Ctrl redesenham sem erro', async () => {
+    render(<TelaDoGrafoComponent grafo={GRAFO} />);
+    const desenho = screen.getByRole('img');
+    await waitFor(() => expect(vezes('arc')).toBeGreaterThan(0));
+    const antes = anotado.chamadas.length;
+
+    fireEvent.pointerMove(desenho, { clientX: 150, clientY: 75 });
+    fireEvent.wheel(desenho, { deltaY: -120, ctrlKey: true, clientX: 150, clientY: 75 });
+    fireEvent.pointerDown(desenho, { clientX: 150, clientY: 75, pointerId: 1 });
+    fireEvent.pointerMove(desenho, { clientX: 180, clientY: 90, pointerId: 1 });
+    fireEvent.pointerUp(desenho, { clientX: 180, clientY: 90, pointerId: 1 });
+
+    await waitFor(() => expect(anotado.chamadas.length).toBeGreaterThan(antes));
   });
 });

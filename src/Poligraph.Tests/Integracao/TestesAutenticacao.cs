@@ -338,6 +338,45 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         Assert.Equal(System.Net.HttpStatusCode.NoContent, aceita.StatusCode);
     }
 
+    /// <summary>A avaliação do resultado: exige sessão, mas é gravada sem nenhuma ligação com a conta.</summary>
+    [SkippableFact]
+    public async Task Avaliacao_Logado_GravaSemLigacaoComAConta()
+    {
+        ExigeDocker();
+        using var cliente = CriarCliente();
+        await cliente.PostAsJsonAsync("/api/auth/google", new { idToken = "token-valido" });
+
+        var resposta = await cliente.PostAsJsonAsync("/api/avaliacao", new
+        {
+            perguntasRespondidas = 24, acordosDoPrimeiro = 17, comparaveisDoPrimeiro = 20, acertou = true, posicaoAutodeclarada = (short)-1
+        });
+
+        Assert.Equal(HttpStatusCode.NoContent, resposta.StatusCode);
+        await using var db = CriarContexto();
+        var gravada = await db.Avaliacoes.SingleAsync();
+        Assert.Equal((24, 17, 20, true, (short?)-1), (gravada.PerguntasRespondidas, gravada.AcordosDoPrimeiro, gravada.ComparaveisDoPrimeiro, gravada.Acertou, gravada.PosicaoAutodeclarada));
+    }
+
+    [SkippableFact]
+    public async Task Avaliacao_PosicaoForaDaEscala_Da400_ESemSessao_Da401()
+    {
+        ExigeDocker();
+        using var anonimo = CriarCliente();
+        var semSessao = await anonimo.PostAsJsonAsync("/api/avaliacao", new { perguntasRespondidas = 24, acordosDoPrimeiro = 1, comparaveisDoPrimeiro = 2 });
+
+        using var cliente = CriarCliente();
+        await cliente.PostAsJsonAsync("/api/auth/google", new { idToken = "token-valido" });
+        var foraDaEscala = await cliente.PostAsJsonAsync("/api/avaliacao", new
+        {
+            perguntasRespondidas = 24, acordosDoPrimeiro = 1, comparaveisDoPrimeiro = 2, posicaoAutodeclarada = (short)4
+        });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, semSessao.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, foraDaEscala.StatusCode);
+        await using var db = CriarContexto();
+        Assert.Equal(0, await db.Avaliacoes.CountAsync());
+    }
+
     private HttpClient CriarCliente(
         ValidadorFalso? validador = null, bool seguirRedirecionamento = true)
     {

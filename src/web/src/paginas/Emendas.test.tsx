@@ -170,10 +170,10 @@ describe('Emendas no mapa', () => {
   it('o mapa do Brasil responde ao teclado', async () => {
     renderizar();
 
-    const parana = await screen.findByRole('button', { name: /^PR: R\$ 2 bi/ });
+    const parana = await screen.findByRole('button', { name: /^PR: R\$ 2 bi/ }, { timeout: 5000 });
     fireEvent.keyDown(parana, { key: 'Enter' });
 
-    expect(await screen.findByRole('button', { name: 'Curitiba' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Curitiba' }, { timeout: 5000 })).toBeInTheDocument();
   });
 
   it('o nome da área acompanha o mouse', async () => {

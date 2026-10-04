@@ -133,12 +133,15 @@ jobs:
         run: dotnet tool install --global dotnet-sonarscanner
 
       # O scanner de C# precisa ENVOLVER o build: ele lê a saída do compilador.
+      # A cobertura vem da suíte INTEIRA: os de integração sobem um Postgres pelo
+      # Testcontainers, e o runner do GitHub tem Docker. Só com os unitários, todo
+      # serviço e endpoint aparecia com 0%, embora tenha teste.
       - name: Analisar
         if: env.SONAR_TOKEN != ''
         run: |
           dotnet-sonarscanner begin /k:"$SONAR_PROJETO" /o:"$SONAR_ORG" /d:sonar.token="$SONAR_TOKEN" /d:sonar.scanner.scanAll=false /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" /d:sonar.exclusions="**/bin/**,**/obj/**,**/TestResults/**,src/Poligraph.Data/Migrations/**,src/Poligraph.Data/curadoria/**,src/Poligraph.ServiceDefaults/**" /d:sonar.coverage.exclusions="src/Poligraph.Api/Dtos/**,src/Poligraph.Api/Configuracao/**,src/Poligraph.Api/Program.cs,src/Poligraph.Data/Data/Entidades/**,src/Poligraph.Data/Data/Enums/**,src/Poligraph.Data/Program.cs,src/Poligraph.AppHost/**"
 
           dotnet build -c Release
-          dotnet test --no-build -c Release --filter "FullyQualifiedName~Unidade" --collect:"XPlat Code Coverage;Format=opencover"
+          dotnet test --no-build -c Release --collect:"XPlat Code Coverage;Format=opencover"
 
           dotnet-sonarscanner end /d:sonar.token="$SONAR_TOKEN"

@@ -65,12 +65,14 @@ jobs:
           cache: pip
           cache-dependency-path: src/etl/requirements*.txt
 
+      # Sem o filtro de integração: a persistência só é exercida contra um Postgres real,
+      # e o runner do GitHub tem Docker para o Testcontainers.
       - name: Testes com cobertura
         if: env.SONAR_TOKEN != ''
         working-directory: src/etl
         run: |
           pip install --only-binary :all: -r requirements-dev.txt
-          pytest -q -m "not integracao" --cov=poligraph_etl --cov-report=xml
+          pytest -q --cov=poligraph_etl --cov-report=xml
 
       - name: Analisar
         if: env.SONAR_TOKEN != ''

@@ -188,6 +188,73 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
         Assert.Equal(HttpStatusCode.NotFound, resposta.StatusCode);
     }
 
+    /// <summary>
+    /// Os outros números da ficha: votos, emendas, campanha e patrimônio contam no recorte do mandato,
+    /// e o ano pedido troca o recorte.
+    /// </summary>
+    [SkippableFact]
+    public async Task Ficha_VotosEmendasCampanhaEPatrimonio_NoRecorteDoMandato()
+    {
+        ExigeDocker();
+        var (idPessoa, a, _) = await SemearAsync();
+        Db.Emendas.Add(new EmendaModel
+        {
+            PessoaId = idPessoa, CodigoAutor = "1", NomeAutor = "AUTOR", CodigoEmenda = "202500010001", Ano = 2025,
+            ValorEmpenhado = 100m, Localidade = "CURITIBA - PR", CargaId = a,
+        });
+        Db.ReceitasDeCampanha.Add(new ReceitaDeCampanhaModel
+        {
+            PessoaId = idPessoa, AnoEleicao = 2022, FonteReceita = "FUNDO ESPECIAL", Doador = "Direção Nacional", Valor = 1000m, CargaId = a,
+        });
+        Db.Patrimonios.Add(new PatrimonioModel { PessoaId = idPessoa, AnoEleicao = 2022, TipoBem = "Casa", Valor = 500m, Quantidade = 1, CargaId = a });
+        await Db.SaveChangesAsync();
+        var votosNoBanco = await Db.Votos.CountAsync(v => v.PessoaId == idPessoa && (v.Valor == 1 || v.Valor == -1) && v.Votacao!.Legislatura == 57);
+
+        var votos = await LerAsync($"/api/procedencia/votos?idPessoa={idPessoa}&legislatura=57");
+        var emendas = await LerAsync($"/api/procedencia/emendas?idPessoa={idPessoa}&legislatura=57");
+        var emendasDe2024 = await LerAsync($"/api/procedencia/emendas?idPessoa={idPessoa}&legislatura=57&anoDaEmenda=2024");
+        var campanha = await LerAsync($"/api/procedencia/campanha?idPessoa={idPessoa}&legislatura=57");
+        var patrimonio = await LerAsync($"/api/procedencia/patrimonio?idPessoa={idPessoa}&legislatura=57");
+        var patrimonioDe2018 = await LerAsync($"/api/procedencia/patrimonio?idPessoa={idPessoa}&legislatura=57&anoDaEleicao=2018");
+
+        Assert.Equal(votosNoBanco, votos.Linhas);
+        Assert.Contains("57ª legislatura", votos.Regra);
+        Assert.Equal(1, emendas.Linhas);
+        Assert.Equal("Emenda 202500010001", Assert.Single(emendas.Lista!).Descricao);
+        Assert.Equal(0, emendasDe2024.Linhas);
+        Assert.Contains("de 2024", emendasDe2024.Regra);
+        Assert.Equal(1, campanha.Linhas);
+        Assert.Contains("campanha de 2022", campanha.Regra);
+        Assert.Equal(1, patrimonio.Linhas);
+        Assert.Equal(0, patrimonioDe2018.Linhas);
+        Assert.Contains("2018", patrimonioDe2018.Regra);
+    }
+
+    /// <summary>A receita e o gasto sigiloso do Governo, no período do orçamento; "ano" vale pelas duas pontas.</summary>
+    [SkippableFact]
+    public async Task Governo_ReceitasESigiloso_NoPeriodoDoOrcamento()
+    {
+        ExigeDocker();
+        var carga = Carga('7', "https://portaldatransparencia.gov.br/download-de-dados/receitas/2025");
+        Db.Cargas.Add(carga);
+        await Db.SaveChangesAsync();
+        Db.ReceitasPorOrigem.AddRange(
+            new ReceitaPorOrigemModel { Ano = 2025, Categoria = "Receitas Correntes", Origem = "Impostos", Prevista = 1m, Realizada = 1m, GeradoEm = new DateOnly(2026, 1, 10), CargaId = carga.Id },
+            new ReceitaPorOrigemModel { Ano = 2024, Categoria = "Receitas Correntes", Origem = "Impostos", Prevista = 1m, Realizada = 1m, GeradoEm = new DateOnly(2025, 1, 10), CargaId = carga.Id });
+        Db.GastosSigilosos.Add(new GastoSigilosoModel
+        {
+            Ano = 2025, Origem = OrigemDoSigilo.CARTAO_CORPORATIVO, OrgaoSuperior = "Presidência da República", Sigiloso = 1m, Total = 2m, Lancamentos = 1, Meses = 12,
+        });
+        await Db.SaveChangesAsync();
+
+        var receitas = await LerAsync("/api/procedencia/governo-receitas?de=2025&ate=2025");
+        var sigiloso = await LerAsync("/api/procedencia/governo-sigiloso?ano=2025");
+
+        Assert.Equal((1, 0), (receitas.Linhas, receitas.LinhasSemCarga));
+        Assert.Contains("de 2025", receitas.Regra);
+        Assert.Equal((1, 1), (sigiloso.Linhas, sigiloso.LinhasSemCarga));
+    }
+
     /// <summary>Cada parâmetro tem tipo próprio: o formato errado é recusado na entrada, antes do serviço.</summary>
     [SkippableTheory]
     [InlineData("/api/procedencia/inventado?idPessoa=1&legislatura=57")]
