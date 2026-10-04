@@ -89,4 +89,4 @@ def test_emendas_e_cota_usam_a_fonte_unica():
     from poligraph_etl import cota, emendas
 
     assert emendas.valor_brasileiro is valor_pt_br
-    assert cota._decimal is valor_com_ponto
+    assert cota._decimal_com_ponto is valor_com_ponto

@@ -34,6 +34,8 @@ from pathlib import Path
 import requests
 
 from .. import procedencia
+from ..contratos import entrada
+from ..contratos.senado import LinhaDaCotaDoSenado
 
 log = logging.getLogger("poligraph")
 
@@ -141,8 +143,8 @@ def baixar_ceaps(ano: int, destino: Path) -> Path:
     return destino
 
 
-def ler_ceaps(caminho: Path) -> list[dict]:
-    """As linhas da CEAPS, ja sem a linha de metadado do topo.
+def ler_ceaps(caminho: Path) -> list[LinhaDaCotaDoSenado]:
+    """As linhas da CEAPS no contrato de entrada, ja sem a linha de metadado do topo.
 
     O arquivo NAO comeca pelo cabecalho: a primeira linha e
     `"ULTIMA ATUALIZACAO";"07/09/2026 02:02"`. Um `DictReader` direto tomaria isso como
@@ -157,7 +159,7 @@ def ler_ceaps(caminho: Path) -> list[dict]:
         if "ULTIMA ATUALIZACAO" not in primeira.upper():
             arquivo.seek(0)
 
-        return list(csv.DictReader(arquivo, delimiter=";", quotechar='"'))
+        return entrada.ler(LinhaDaCotaDoSenado, csv.DictReader(arquivo, delimiter=";", quotechar='"'))
 
 
 def baixar_senador(codigo: str) -> dict | None:

@@ -1522,23 +1522,21 @@ def _cota(conexao: psycopg.Connection, anos: list[int]) -> None:
         log.info("Cota de %d...", ano)
 
         arquivo = camara.baixar_cota(ano, CACHE / f"cota-{ano}.zip")
-        registros = camara.ler_cota(arquivo)
-        camara.conferir_volume_de_cota(registros, ano)
+        linhas = camara.ler_cota(arquivo)
+        camara.conferir_volume_de_cota(linhas, ano)
         carga = _carga_do_arquivo(conexao, "CAMARA", camara.URL_COTA.format(ano=ano), arquivo)
 
-        linhas = cota.para_linhas(registros, mapa)
-        gravadas = persistencia.gravar_despesas(conexao, list(mapa.values()), linhas, carga)
-        conta = cota.reconciliar_camara(registros, mapa, ano)
+        transformado = cota.transformar_camara(linhas, mapa)
+        gravadas = persistencia.gravar_despesas(conexao, list(mapa.values()), transformado.despesas, carga)
+        conta = cota.reconciliar(transformado, "COTA_CAMARA", ano)
         persistencia.gravar_reconciliacoes(conexao, [conta], carga)
         _registrar_o_que_nao_fecha([conta])
 
-        descartadas = len(registros) - len(linhas)
-        log.info("  %d linhas, %d gravadas", len(registros), gravadas)
-
-        if descartadas:
+        log.info("  %d linhas, %d gravadas", len(linhas), gravadas)
+        if transformado.descartes:
             log.warning(
-                "  %d descartadas: sem `ideCadastro`, fora do de-para, ou valor zero",
-                descartadas,
+                "  %d descartadas, por motivo: %s",
+                len(transformado.descartes), dict(Counter(d.motivo for d in transformado.descartes)),
             )
 
     _cota_do_senado(conexao, anos)
@@ -1571,31 +1569,28 @@ def _cota_do_senado(conexao: psycopg.Connection, anos: list[int]) -> None:
             continue
 
         arquivo = senado.baixar_ceaps(ano, CACHE / f"ceaps-{ano}.csv")
-        registros = senado.ler_ceaps(arquivo)
+        linhas = senado.ler_ceaps(arquivo)
         carga = _carga_do_arquivo(conexao, "SENADO", senado.CEAPS.format(ano=ano), arquivo)
 
-        linhas = cota.para_linhas_do_senado(registros, por_nome)
-        gravadas = persistencia.gravar_despesas(
-            conexao, list(por_nome.values()), linhas, carga
-        )
-        conta = cota.reconciliar_senado(registros, por_nome, ano)
+        transformado = cota.transformar_senado(linhas, por_nome)
+        gravadas = persistencia.gravar_despesas(conexao, list(por_nome.values()), transformado.despesas, carga)
+        conta = cota.reconciliar(transformado, "COTA_SENADO", ano)
         persistencia.gravar_reconciliacoes(conexao, [conta], carga)
         _registrar_o_que_nao_fecha([conta])
 
-        log.info("  %d linhas, %d gravadas", len(registros), gravadas)
+        log.info("  %d linhas, %d gravadas", len(linhas), gravadas)
 
-        descartadas = len(registros) - len(linhas)
-        if descartadas > len(registros) * 0.2:
+        if len(transformado.descartes) > len(linhas) * 0.2:
             nao_casaram = sorted(
                 {
-                    normalizacao.sem_acento_maiusculo(r.get("SENADOR"))
-                    for r in registros
-                    if normalizacao.sem_acento_maiusculo(r.get("SENADOR")) not in por_nome
+                    normalizacao.sem_acento_maiusculo(linha.nome_do_senador)
+                    for linha in linhas
+                    if normalizacao.sem_acento_maiusculo(linha.nome_do_senador) not in por_nome
                 }
             )
             log.warning(
                 "  %d de %d descartadas. Nomes sem de-para: %s",
-                descartadas, len(registros), ", ".join(nao_casaram[:10]) or "-",
+                len(transformado.descartes), len(linhas), ", ".join(nao_casaram[:10]) or "-",
             )
 
 

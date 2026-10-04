@@ -65,9 +65,9 @@ def test_a_cota_usa_o_mesmo_hash_das_pessoas():
     ATENÇÃO: Enquanto `cota.py` tinha o próprio `sha256`, nada garantia que os dois lados
     usassem a mesma normalização — e a divergência só apareceria como "não casa".
     """
-    from poligraph_etl.cota import _identificar_fornecedor
+    from poligraph_etl.cota import identificar_fornecedor
 
-    documento, pessoa_fisica = _identificar_fornecedor("012.345.678-90")
+    documento, pessoa_fisica = identificar_fornecedor("012.345.678-90")
 
     assert pessoa_fisica is True
     assert documento == hash_de_cpf("01234567890")

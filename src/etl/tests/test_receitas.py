@@ -166,7 +166,7 @@ def test_cpf_do_doador_vira_hash(conhecidos):
 
     Não E o CPF em claro não sobrou em canto nenhum da linha
     """
-    from poligraph_etl.cota import _identificar_fornecedor
+    from poligraph_etl.cota import identificar_fornecedor
 
     linhas = receitas.para_linhas(
         [linha(NR_CPF_CNPJ_DOADOR="012.345.678-90")], conhecidos, 2022
@@ -174,7 +174,7 @@ def test_cpf_do_doador_vira_hash(conhecidos):
 
     assert linhas[0]["doador_eh_pessoa_fisica"] is True
     assert linhas[0]["doador_cnpj_ou_hash"] == hash_de_cpf(CPF_ELEITO)
-    assert linhas[0]["doador_cnpj_ou_hash"] == _identificar_fornecedor(CPF_ELEITO)[0]
+    assert linhas[0]["doador_cnpj_ou_hash"] == identificar_fornecedor(CPF_ELEITO)[0]
 
     assert CPF_ELEITO not in str(linhas[0])
 

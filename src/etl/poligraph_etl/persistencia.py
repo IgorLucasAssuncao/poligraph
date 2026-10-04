@@ -24,12 +24,14 @@ MEDIDO: [achado #19](../../../docs/achados/019-csv-reconstruido-toda-madrugada.m
 """
 
 import functools
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, fields
 from typing import Iterable, Sequence
 
 import psycopg
+from psycopg import sql
 
 from . import procedencia
+from .contratos.banco import Despesa
 from .normalizacao import sem_acento_maiusculo
 
 LOTE = 5_000
@@ -689,32 +691,41 @@ def gravar_similaridades(
 
 
 def gravar_despesas(
-    conexao: psycopg.Connection, pessoa_ids: list[int], despesas: Sequence[dict],
+    conexao: psycopg.Connection, pessoa_ids: list[int], despesas: Sequence[Despesa],
     carga_id: int | None = None,
 ) -> int:
     """Grava a cota, substituindo o recorte (pessoa, ano) que está entrando."""
     if not despesas:
         return 0
 
-    anos = sorted({despesa["ano"] for despesa in despesas})
+    anos = sorted({despesa.ano for despesa in despesas})
 
     conexao.execute(
         "DELETE FROM despesas WHERE pessoa_id = ANY(%s) AND ano = ANY(%s)",
         (pessoa_ids, anos),
     )
 
-    return _executar_em_lotes(
-        conexao,
-        """
-        INSERT INTO despesas (pessoa_id, ano, mes, categoria, fornecedor,
-                              cnpj_ou_hash, fornecedor_eh_pessoa_fisica,
-                              valor_liquido, data_emissao, url_documento, carga_id)
-        VALUES (%(pessoa_id)s, %(ano)s, %(mes)s, %(categoria)s, %(fornecedor)s,
-                %(cnpj_ou_hash)s, %(fornecedor_eh_pessoa_fisica)s,
-                %(valor_liquido)s, %(data_emissao)s, %(url_documento)s, %(carga_id)s)
-        """,
-        _com_carga(despesas, carga_id),
+    return gravar_contratos(conexao, despesas, carga_id)
+
+
+def gravar_contratos(conexao: psycopg.Connection, linhas: Sequence, carga_id: int | None) -> int:
+    """Insere linhas de um contrato de saída (`contratos.banco`) na tabela dele, com a carga.
+
+    As colunas são os campos do contrato, e o `test_contratos` confere que todos existem na
+    tabela que o EF cria. O comando é composto com `psycopg.sql`: nome de tabela e coluna
+    entram como identificador, nunca como texto colado.
+    """
+    if not linhas:
+        return 0
+
+    contrato = type(linhas[0])
+    colunas = [campo.name for campo in fields(contrato)] + ["carga_id"]
+    comando = sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(
+        sql.Identifier(contrato.TABELA),
+        sql.SQL(", ").join(sql.Identifier(c) for c in colunas),
+        sql.SQL(", ").join(sql.Placeholder(c) for c in colunas),
     )
+    return _executar_em_lotes(conexao, comando, [{**asdict(linha), "carga_id": carga_id} for linha in linhas])
 
 
 def gravar_emendas(
@@ -1244,7 +1255,7 @@ def fechar_execucao(conexao: psycopg.Connection, execucao_id: int, sucesso: bool
 
 
 def _executar_em_lotes(
-    conexao: psycopg.Connection, comando: str, linhas: Sequence[dict]
+    conexao: psycopg.Connection, comando: str | sql.Composable, linhas: Sequence[dict]
 ) -> int:
     """Executa em lotes. ATENÇÃO: 463 mil votos numa transação só estouraria a memória."""
     if not linhas:

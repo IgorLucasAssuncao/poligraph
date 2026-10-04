@@ -31,6 +31,8 @@ import pandas as pd
 import requests
 
 from .. import procedencia
+from ..contratos import entrada
+from ..contratos.camara import LinhaDaCotaDaCamara
 
 BASE = "https://dadosabertos.camara.leg.br/arquivos"
 
@@ -148,8 +150,8 @@ def baixar_cota(ano: int, destino: Path) -> Path:
     return destino
 
 
-def ler_cota(caminho: Path) -> list[dict]:
-    """Lê o CSV de dentro do ZIP.
+def ler_cota(caminho: Path) -> list[LinhaDaCotaDaCamara]:
+    """Lê o CSV de dentro do ZIP, no contrato de entrada da cota.
 
     Não reutiliza `ler_csv`: aqui a fonte é ZIP, e carregar 233 mil linhas num
     DataFrame para depois iterar seria desperdício.
@@ -159,7 +161,7 @@ def ler_cota(caminho: Path) -> list[dict]:
         with arquivo.open(nome) as fluxo:
             texto = io.TextIOWrapper(fluxo, encoding="utf-8-sig")
 
-            return list(csv.DictReader(texto, delimiter=";", quotechar='"'))
+            return entrada.ler(LinhaDaCotaDaCamara, csv.DictReader(texto, delimiter=";", quotechar='"'))
 
 
 def conferir_volume_de_cota(registros: list[dict], ano: int) -> None:

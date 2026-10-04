@@ -52,7 +52,7 @@ PADRAO_TABELA = re.compile(
     #    uma tabela chamada `a`, que ninguém jamais criaria.
     r"(?<!DISTINCT )"
     r"\b(?:FROM|INTO|UPDATE|JOIN|CREATE\s+TABLE|REFERENCES|TRUNCATE)\s+"
-    r"([a-z_][a-z0-9_]*)(?!\.)"
+    r"([a-z_][a-z0-9_]*)\b(?!\.)"
 )
 
 # ATENÇÃO: `TRUNCATE a, b, c` só teria a primeira capturada pelo padrão acima. Esta segunda
