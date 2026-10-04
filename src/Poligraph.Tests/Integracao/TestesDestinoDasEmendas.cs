@@ -27,11 +27,11 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
     public async Task EmendaEmDuasLinhas_ContaUmaVezComOValorDasDuas()
     {
         ExigeDocker();
-        var pessoaId = await SemearEmendaAsync();
-        Db.Emendas.Add(Emenda(pessoaId, "PARANÁ (UF)", 400_000m));
+        var idPessoa = await SemearEmendaAsync();
+        Db.Emendas.Add(Emenda(idPessoa, "PARANÁ (UF)", 400_000m));
         await Db.SaveChangesAsync();
 
-        var emendas = await LerAsync(pessoaId);
+        var emendas = await LerAsync(idPessoa);
 
         Assert.Equal(1, emendas.Quantidade);
         Assert.Equal(1_200_000m, emendas.Empenhado);
@@ -44,7 +44,7 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
     public async Task Favorecidos_SeparamIntermediarioPessoaESemIdentificacao()
     {
         ExigeDocker();
-        var pessoaId = await SemearEmendaAsync();
+        var idPessoa = await SemearEmendaAsync();
         Db.EmendasFavorecidos.AddRange(
             Empresa(new DateOnly(2025, 3, 1), 300m),
             Empresa(new DateOnly(2025, 7, 1), 100m),
@@ -66,7 +66,7 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
             });
         await Db.SaveChangesAsync();
 
-        var favorecidos = (await LerAsync(pessoaId)).Favorecidos;
+        var favorecidos = (await LerAsync(idPessoa)).Favorecidos;
 
         Assert.Equal(960m, favorecidos.Recebido);
         Assert.Equal(500m, favorecidos.ViaIntermediario);
@@ -87,7 +87,7 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
     public async Task Favorecidos_SoSaiCnpjDePessoaJuridica()
     {
         ExigeDocker();
-        var pessoaId = await SemearEmendaAsync();
+        var idPessoa = await SemearEmendaAsync();
         Db.EmendasFavorecidos.AddRange(
             Empresa(new DateOnly(2025, 3, 1), 300m),
             new EmendaFavorecidoModel
@@ -99,7 +99,7 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
         await Db.SaveChangesAsync();
 
         using var cliente = CriarCliente();
-        var json = await cliente.GetStringAsync($"{Rota}/{pessoaId}/emendas");
+        var json = await cliente.GetStringAsync($"{Rota}/{idPessoa}/emendas");
 
         Assert.Contains("12345678000190", json);
         Assert.DoesNotContain("22333444000155", json);
@@ -113,17 +113,17 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
     public async Task Favorecido_TambemNaCota_SoDoMesmoParlamentarNoMesmoMandato()
     {
         ExigeDocker();
-        var pessoaId = await SemearEmendaAsync();
-        var outro = await Db.Pessoas.AsNoTracking().Where(p => p.Id != pessoaId).Select(p => p.Id).FirstAsync();
+        var idPessoa = await SemearEmendaAsync();
+        var outro = await Db.Pessoas.AsNoTracking().Where(p => p.Id != idPessoa).Select(p => p.Id).FirstAsync();
         Db.EmendasFavorecidos.Add(Empresa(new DateOnly(2025, 3, 1), 300m));
         Db.Despesas.AddRange(
-            Despesa(pessoaId, 2024, 120m),
-            Despesa(pessoaId, 2026, 30m),
-            Despesa(pessoaId, 2022, 1_000m),
+            Despesa(idPessoa, 2024, 120m),
+            Despesa(idPessoa, 2026, 30m),
+            Despesa(idPessoa, 2022, 1_000m),
             Despesa(outro, 2024, 5_000m));
         await Db.SaveChangesAsync();
 
-        var unico = Assert.Single((await LerAsync(pessoaId)).Favorecidos.Maiores);
+        var unico = Assert.Single((await LerAsync(idPessoa)).Favorecidos.Maiores);
 
         Assert.Equal(150m, unico.TambemNaCota);
     }
@@ -133,11 +133,11 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
     public async Task Favorecido_SemCota_VemNulo()
     {
         ExigeDocker();
-        var pessoaId = await SemearEmendaAsync();
+        var idPessoa = await SemearEmendaAsync();
         Db.EmendasFavorecidos.Add(Empresa(new DateOnly(2025, 3, 1), 300m));
         await Db.SaveChangesAsync();
 
-        Assert.Null(Assert.Single((await LerAsync(pessoaId)).Favorecidos.Maiores).TambemNaCota);
+        Assert.Null(Assert.Single((await LerAsync(idPessoa)).Favorecidos.Maiores).TambemNaCota);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
     public async Task Cidades_SaemDaSedeDeQuemRecebeu()
     {
         ExigeDocker();
-        var pessoaId = await SemearEmendaAsync();
+        var idPessoa = await SemearEmendaAsync();
         Db.Municipios.Add(new MunicipioModel { CodigoIbge = "4106902", CodigoTom = "7535", Nome = "CURITIBA", Uf = "PR" });
         Db.CnpjsMunicipio.Add(new CnpjMunicipioModel
         {
@@ -158,7 +158,7 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
             Empresa(new DateOnly(2025, 7, 1), 100m));
         await Db.SaveChangesAsync();
 
-        var cidades = (await LerAsync(pessoaId)).Cidades;
+        var cidades = (await LerAsync(idPessoa)).Cidades;
 
         var curitiba = Assert.Single(cidades.Maiores);
         Assert.Equal(("4106902", 400m), (curitiba.Municipio.CodigoIbge, curitiba.Recebido));
@@ -169,7 +169,7 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
     public async Task PagamentosPorMes_VemEmOrdemESomados()
     {
         ExigeDocker();
-        var pessoaId = await SemearEmendaAsync();
+        var idPessoa = await SemearEmendaAsync();
         Db.EmendasFavorecidos.AddRange(
             Empresa(new DateOnly(2025, 12, 1), 70m),
             Empresa(new DateOnly(2025, 3, 1), 30m),
@@ -180,7 +180,7 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
             });
         await Db.SaveChangesAsync();
 
-        var meses = (await LerAsync(pessoaId)).PagamentosPorMes;
+        var meses = (await LerAsync(idPessoa)).PagamentosPorMes;
 
         Assert.Equal(
             [(new DateOnly(2025, 3, 1), 35m), (new DateOnly(2025, 12, 1), 70m)],
@@ -195,7 +195,7 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
     public async Task Convenio_DeDuasEmendas_DizQuantasOFinanciam()
     {
         ExigeDocker();
-        var pessoaId = await SemearEmendaAsync();
+        var idPessoa = await SemearEmendaAsync();
         Db.Convenios.Add(new ConvenioModel
         {
             Numero = "1AAQKR", Convenente = "MUNICIPIO DE LINDOESTE",
@@ -207,7 +207,7 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
             new EmendaConvenioModel { CodigoEmenda = "202599990001", NumeroConvenio = "1AAQKR" });
         await Db.SaveChangesAsync();
 
-        var convenios = (await LerAsync(pessoaId)).Convenios;
+        var convenios = (await LerAsync(idPessoa)).Convenios;
 
         Assert.Equal(1, convenios.Quantidade);
         var convenio = Assert.Single(convenios.Maiores);
@@ -267,25 +267,25 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
     private async Task<long> SemearEmendaAsync()
     {
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
-        var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+        var idPessoa = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
 
-        Db.Emendas.Add(Emenda(pessoaId, "LINDOESTE - PR", 800_000m));
+        Db.Emendas.Add(Emenda(idPessoa, "LINDOESTE - PR", 800_000m));
         await Db.SaveChangesAsync();
 
-        return pessoaId;
+        return idPessoa;
     }
 
-    private static EmendaModel Emenda(long pessoaId, string localidade, decimal empenhado) => new()
+    private static EmendaModel Emenda(long idPessoa, string localidade, decimal empenhado) => new()
     {
-        PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
+        PessoaId = idPessoa, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
         CodigoEmenda = Codigo, Ano = 2025, Localidade = localidade,
         CodigoAcao = "20XV", CodigoPlanoOrcamentario = "0000",
         ValorEmpenhado = empenhado, ValorPago = empenhado / 2
     };
 
-    private static DespesaModel Despesa(long pessoaId, short ano, decimal valor) => new()
+    private static DespesaModel Despesa(long idPessoa, short ano, decimal valor) => new()
     {
-        PessoaId = pessoaId, Ano = ano, Mes = 5, Categoria = "PASSAGEM AÉREA",
+        PessoaId = idPessoa, Ano = ano, Mes = 5, Categoria = "PASSAGEM AÉREA",
         Fornecedor = "CONSTRUTORA EXEMPLO LTDA", CnpjOuHash = "12345678000190", ValorLiquido = valor
     };
 
@@ -297,10 +297,10 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
         Municipio = "LINDOESTE", Valor = valor
     };
 
-    private async Task<EmendasLidas> LerAsync(long pessoaId)
+    private async Task<EmendasLidas> LerAsync(long idPessoa)
     {
         using var cliente = CriarCliente();
-        return (await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{pessoaId}/emendas"))!;
+        return (await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{idPessoa}/emendas"))!;
     }
 
     private HttpClient CriarCliente() => new FabricaApi(ConnectionString).CreateClient();

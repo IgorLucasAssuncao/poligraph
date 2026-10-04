@@ -205,7 +205,7 @@ function ConteudoDaProcedenciaComponent({ procedencia }: { procedencia: Proceden
         {procedencia.cargas.length === 0 && <p className="ajuda">{T.painel.nenhumArquivo}</p>}
         <ul className="lista-cargas">
           {procedencia.cargas.map((carga) => (
-            <li key={carga.id}>
+            <li key={carga.idCarga}>
               <CartaoDaCargaComponent carga={carga} />
             </li>
           ))}

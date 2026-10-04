@@ -16,4 +16,4 @@ namespace Poligraph.Api.Dtos;
 /// seriam indistinguíveis a olho.
 /// </summary>
 public record PerguntaPublicaDto(
-    string Id, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
+    string IdPergunta, string Texto, short Ordem, int TotalVotos, int TotalPossivel);

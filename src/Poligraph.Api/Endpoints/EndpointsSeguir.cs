@@ -28,8 +28,8 @@ public static class EndpointsSeguir
              .Produces<IReadOnlyList<ParlamentarSeguidoDto>>();
         grupo.MapGet("/novidades", NovidadesAsync)
              .Produces<NovidadesDto>();
-        grupo.MapPut("/{pessoaId:long}", SeguirAsync);
-        grupo.MapDelete("/{pessoaId:long}", DeixarDeSeguirAsync);
+        grupo.MapPut("/{idPessoa:long}", SeguirAsync);
+        grupo.MapDelete("/{idPessoa:long}", DeixarDeSeguirAsync);
         grupo.MapDelete("/consentimento", RevogarConsentimentoAsync);
 
         return app;
@@ -38,10 +38,10 @@ public static class EndpointsSeguir
     private static async Task<IResult> ListarAsync(
         ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
     {
-        var id = SessaoDoUsuario.IdDoUsuario(principal);
+        var idUsuario = SessaoDoUsuario.IdDoUsuario(principal);
 
         var seguidos = await db.Segue.AsNoTracking()
-            .Where(s => s.UsuarioId == id)
+            .Where(s => s.UsuarioId == idUsuario)
             .Select(s => new
             {
                 s.PessoaId,
@@ -72,10 +72,10 @@ public static class EndpointsSeguir
     /// <remarks>
     /// <para>"Em exercício" é ter votado na legislatura corrente, a mesma regra da lista. Quem já é seguido continua na lista e pode deixar de ser seguido.</para>
     /// </remarks>
-    private static async Task<bool> EmExercicioAsync(PoligraphDb db, long pessoaId, CancellationToken ct)
+    private static async Task<bool> EmExercicioAsync(PoligraphDb db, long idPessoa, CancellationToken ct)
     {
         var corrente = await Legislaturas.CorrenteAsync(db, ct);
-        return await db.Votos.AnyAsync(v => v.PessoaId == pessoaId && v.Votacao!.Legislatura == corrente, ct);
+        return await db.Votos.AnyAsync(v => v.PessoaId == idPessoa && v.Votacao!.Legislatura == corrente, ct);
     }
 
     /// <summary>
@@ -87,21 +87,21 @@ public static class EndpointsSeguir
     /// <param name="versao">A versão do texto de consentimento que a tela mostra (<c>VERSAO_CONSENTIMENTO</c> do front).</param>
     /// <param name="aceite">Verdadeiro só depois de a pessoa aceitar o texto daquela versão.</param>
     private static async Task<IResult> SeguirAsync(
-        long pessoaId, string? versao, bool? aceite, ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
+        long idPessoa, string? versao, bool? aceite, ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
     {
-        if (!await db.Pessoas.AnyAsync(p => p.Id == pessoaId, ct))
+        if (!await db.Pessoas.AnyAsync(p => p.Id == idPessoa, ct))
         {
             return Results.NotFound();
         }
 
         var usuarioId = SessaoDoUsuario.IdDoUsuario(principal);
 
-        if (await db.Segue.AnyAsync(s => s.UsuarioId == usuarioId && s.PessoaId == pessoaId, ct))
+        if (await db.Segue.AnyAsync(s => s.UsuarioId == usuarioId && s.PessoaId == idPessoa, ct))
         {
             return Results.NoContent();
         }
 
-        if (!await EmExercicioAsync(db, pessoaId, ct))
+        if (!await EmExercicioAsync(db, idPessoa, ct))
         {
             return Results.Problem(
                 statusCode: StatusCodes.Status422UnprocessableEntity,
@@ -117,7 +117,7 @@ public static class EndpointsSeguir
                 detail: MensagensDaApi.FaltaConsentimentoParaSeguirDetalhe);
         }
 
-        db.Segue.Add(new SegueModel { UsuarioId = usuarioId, PessoaId = pessoaId });
+        db.Segue.Add(new SegueModel { UsuarioId = usuarioId, PessoaId = idPessoa });
         await db.SaveChangesAsync(ct);
 
         return Results.NoContent();
@@ -173,12 +173,12 @@ public static class EndpointsSeguir
     /// pediu para desfazer. Ver a nota em `ExcluirContaAsync`.
     /// </summary>
     private static async Task<IResult> DeixarDeSeguirAsync(
-        long pessoaId, ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
+        long idPessoa, ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
     {
         var usuarioId = SessaoDoUsuario.IdDoUsuario(principal);
 
         await db.Segue
-            .Where(s => s.UsuarioId == usuarioId && s.PessoaId == pessoaId)
+            .Where(s => s.UsuarioId == usuarioId && s.PessoaId == idPessoa)
             .ExecuteDeleteAsync(ct);
 
         return Results.NoContent();

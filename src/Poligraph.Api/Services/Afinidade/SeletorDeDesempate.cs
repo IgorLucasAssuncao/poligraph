@@ -104,9 +104,9 @@ public static class SeletorDeDesempate
         foreach (var celula in celulas)
         {
             long favor = 0, contra = 0;
-            foreach (var pessoaId in celula)
+            foreach (var idPessoa in celula)
             {
-                if (!posicoes.TryGetValue(pessoaId, out var posicao))
+                if (!posicoes.TryGetValue(idPessoa, out var posicao))
                 {
                     continue;
                 }
@@ -139,23 +139,23 @@ public static class SeletorDeDesempate
         {
             List<long> favor = [], contra = [], ausentes = [];
 
-            foreach (var pessoaId in celula)
+            foreach (var idPessoa in celula)
             {
-                if (!posicoes.TryGetValue(pessoaId, out var posicao))
+                if (!posicoes.TryGetValue(idPessoa, out var posicao))
                 {
-                    ausentes.Add(pessoaId);
+                    ausentes.Add(idPessoa);
                 }
                 else if (posicao > 0)
                 {
-                    favor.Add(pessoaId);
+                    favor.Add(idPessoa);
                 }
                 else if (posicao < 0)
                 {
-                    contra.Add(pessoaId);
+                    contra.Add(idPessoa);
                 }
                 else
                 {
-                    ausentes.Add(pessoaId);
+                    ausentes.Add(idPessoa);
                 }
             }
 

@@ -16,7 +16,7 @@ namespace Poligraph.Api.Dtos;
 /// </para>
 /// </summary>
 public record EmendasDoParlamentarDto(
-    int Ano,
+    int AnoDaEmenda,
     decimal Empenhado,
     decimal Pago,
     decimal PagoDepois,

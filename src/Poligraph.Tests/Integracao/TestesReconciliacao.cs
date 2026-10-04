@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using Npgsql;
 using Poligraph.Data;
 
@@ -23,7 +23,7 @@ public class TestesReconciliacao(FixturePostgres postgres) : BaseIntegracao(post
         var lidas = (await cliente.GetFromJsonAsync<List<ReconciliacaoLida>>("/api/emendas/reconciliacao?de=2016&ate=2016"))!;
 
         var ano = Assert.Single(lidas);
-        Assert.Equal((2016, 25_920m, 10_820m, 3_600m), (ano.Ano, ano.TotalNaFonte, ano.TotalNaBase, ano.TotalInferido));
+        Assert.Equal((2016, 25_920m, 10_820m, 3_600m), (ano.AnoDaFonte, ano.TotalNaFonte, ano.TotalNaBase, ano.TotalInferido));
         Assert.Equal(["RELATOR_SEM_AUTOR", "COMISSAO_SEM_AUTOR", "BANCADA_SEM_AUTOR_E_SEM_UF"], ano.Motivos.Select(m => m.Motivo));
         Assert.Equal(ano.TotalNaFonte, ano.TotalNaBase + ano.Motivos.Sum(m => m.Valor));
     }
@@ -50,6 +50,6 @@ public class TestesReconciliacao(FixturePostgres postgres) : BaseIntegracao(post
 
     private record MotivoLido(string Motivo, decimal Valor);
 
-    private record ReconciliacaoLida(string Conjunto, string Medida, int Ano, decimal TotalNaFonte, decimal TotalNaBase,
+    private record ReconciliacaoLida(string Conjunto, string Medida, int AnoDaFonte, decimal TotalNaFonte, decimal TotalNaBase,
         decimal TotalInferido, List<MotivoLido> Motivos);
 }

@@ -76,7 +76,7 @@ public record ConvenioDaEntidadeDto(
     decimal? ValorLiberado,
     string UrlFonte);
 
-public record RecebidoNoAnoDto(int Ano, decimal Recebido);
+public record RecebidoNoAnoDto(int AnoDaEmenda, decimal Recebido);
 
 /// <summary>
 /// O que parlamentares pagaram a esta mesma pessoa jurídica com a cota, pelo CNPJ.
@@ -89,7 +89,7 @@ public record RecebidoNoAnoDto(int Ano, decimal Recebido);
 /// </remarks>
 public record CotaDaEntidadeDto(decimal Total, int Lancamentos, IReadOnlyList<ParlamentarNaCotaDto> PorParlamentar);
 
-public record ParlamentarNaCotaDto(long PessoaId, string Nome, string? Partido, TipoCasa? Casa, decimal Total, int Lancamentos);
+public record ParlamentarNaCotaDto(long IdPessoa, string Nome, string? Partido, TipoCasa? Casa, decimal Total, int Lancamentos);
 
 /// <summary>A busca do cabeçalho: um nome, três tipos de resposta.</summary>
 /// <param name="LegislaturaCorrente">Quem tem outra legislatura já saiu, e a tela diz de quando era.</param>

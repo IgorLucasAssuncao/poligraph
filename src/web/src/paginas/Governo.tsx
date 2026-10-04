@@ -54,11 +54,11 @@ import { TEXTOS_DO_GOVERNO as T } from '../textos/governo';
  */
 export function GovernoComponent() {
   const [parametros, setParametros] = useSearchParams();
-  const de = parametros.get('de');
-  const ate = parametros.get('ate');
+  const deNaUrl = parametros.get('de');
+  const ateNaUrl = parametros.get('ate');
   const periodo = useMemo<Periodo | undefined>(
-    () => (de && ate ? { de: Number(de), ate: Number(ate) } : undefined),
-    [de, ate],
+    () => (deNaUrl && ateNaUrl ? { primeiroAno: Number(deNaUrl), ultimoAno: Number(ateNaUrl) } : undefined),
+    [deNaUrl, ateNaUrl],
   );
   const [dados, setDados] = useState<DadosDoGoverno | null | undefined>(undefined);
   const [erro, setErro] = useState(false);
@@ -96,7 +96,7 @@ export function GovernoComponent() {
             tour="governo-ano"
             atalhos={atalhosDasGestoes(dados)}
             aoMudar={(novo) =>
-              setParametros(novo ? { de: String(novo.de), ate: String(novo.ate) } : {}, { replace: true })
+              setParametros(novo ? { de: String(novo.primeiroAno), ate: String(novo.ultimoAno) } : {}, { replace: true })
             }
           >
             {T.escopo(textoDoPeriodo(dados.periodo), dados.emAndamento, dataCurta(dados.geradoEm))}
@@ -108,7 +108,7 @@ export function GovernoComponent() {
           <DeOndeVeioComponent arrecadacao={dados.arrecadacao} />
           <GastoSigilosoComponent sigilo={dados.sigilo} periodo={dados.periodo} emAndamento={dados.emAndamento} />
           {dados.gestoes.map((g) => (
-            <PerfilDaGestaoComponent key={g.eleicao} gestao={g} />
+            <PerfilDaGestaoComponent key={g.anoDaEleicao} gestao={g} />
           ))}
           <DetalhesComponent dados={dados} />
 
@@ -146,23 +146,23 @@ function atalhosDasGestoes(dados: DadosDoGoverno): { rotulo: string; periodo: Pe
   const ultimo = dados.anosDisponiveis[dados.anosDisponiveis.length - 1];
   return dados.gestoesDisponiveis.map((g) => ({
     rotulo: `${nomeProprio(g.presidente.nomeDeUrna)} (${g.primeiroAno}–${g.ultimoAno})`,
-    periodo: { de: Math.max(g.primeiroAno, primeiro), ate: Math.min(g.ultimoAno, ultimo) },
+    periodo: { primeiroAno: Math.max(g.primeiroAno, primeiro), ultimoAno: Math.min(g.ultimoAno, ultimo) },
   }));
 }
 
-function gestaoDoAno(dados: DadosDoGoverno, ano: number): string {
-  const g = dados.gestoesDisponiveis.find((x) => x.primeiroAno <= ano && x.ultimoAno >= ano);
+function gestaoDoAno(dados: DadosDoGoverno, anoDoOrcamento: number): string {
+  const g = dados.gestoesDisponiveis.find((x) => x.primeiroAno <= anoDoOrcamento && x.ultimoAno >= anoDoOrcamento);
   return g ? nomeProprio(g.presidente.nomeDeUrna) : T.semGestao;
 }
 
-function textoDoPeriodo({ de, ate }: Periodo): string {
-  return de === ate ? String(de) : `${de} a ${ate}`;
+function textoDoPeriodo({ primeiroAno, ultimoAno }: Periodo): string {
+  return primeiroAno === ultimoAno ? String(primeiroAno) : `${primeiroAno} a ${ultimoAno}`;
 }
 
 /** Três números. Não Há um quarto que os junte: o saldo pediria regras fiscais que estes dados não seguem. */
 function ResumoComponent({ dados }: { dados: DadosDoGoverno }) {
   const gastou = dados.porAno.reduce((soma, a) => soma + a.gastou, 0);
-  const { de, ate } = dados.periodo;
+  const { primeiroAno, ultimoAno } = dados.periodo;
   const R = T.resumo;
   const numeros: [string, number, string, 'governo-receitas' | 'governo-gastos'][] = [
     [R.entrou, dados.arrecadacao.arrecadado, R.entrouDefinicao, 'governo-receitas'],
@@ -174,7 +174,7 @@ function ResumoComponent({ dados }: { dados: DadosDoGoverno }) {
     <section className="numeros-do-ano" aria-label={R.rotuloDaSecao(textoDoPeriodo(dados.periodo))} data-tour="governo-resumo">
       {numeros.map(([rotulo, valor, definicao, contexto]) => (
         <NumeroComponent key={rotulo} rotulo={rotulo} definicao={definicao}>
-          <ComProcedenciaComponent consulta={{ contexto, de, ate }} rotulo={R.rotuloDaProcedencia(rotulo, textoDoPeriodo(dados.periodo))}>
+          <ComProcedenciaComponent consulta={{ contexto, de: primeiroAno, ate: ultimoAno }} rotulo={R.rotuloDaProcedencia(rotulo, textoDoPeriodo(dados.periodo))}>
             {reaisCompacto(valor)}
           </ComProcedenciaComponent>
         </NumeroComponent>
@@ -209,12 +209,12 @@ function AnoAAnoComponent({ dados }: { dados: DadosDoGoverno }) {
           </thead>
           <tbody>
             {dados.porAno.map((a) => (
-              <tr key={a.ano}>
+              <tr key={a.anoDoOrcamento}>
                 <th scope="row">
-                  {a.ano}
+                  {a.anoDoOrcamento}
                   {!a.fechado && <small className="ano-andamento">{A.emAndamento}</small>}
                 </th>
-                <td className="coluna-gestao">{gestaoDoAno(dados, a.ano)}</td>
+                <td className="coluna-gestao">{gestaoDoAno(dados, a.anoDoOrcamento)}</td>
                 <td>{reaisCompacto(a.arrecadou)}</td>
                 <td>{reaisCompacto(a.gastou)}</td>
                 <td>{reaisCompacto(a.pegouEmprestado)}</td>
@@ -282,9 +282,9 @@ function CadaCemReaisComponent({ dados }: { dados: DadosDoGoverno }) {
 /** As origens do Portal em três grupos que se reconhecem. */
 function DeOndeVeioComponent({ arrecadacao }: { arrecadacao: Arrecadacao }) {
   const D = T.deOndeVeio;
-  const de = (origem: string) => arrecadacao.porOrigem.find((o) => o.origem === origem)?.realizada ?? 0;
-  const impostos = de(D.origemDosImpostos);
-  const contribuicoes = de(D.origemDasContribuicoes);
+  const realizadaNaOrigem = (origem: string) => arrecadacao.porOrigem.find((o) => o.origem === origem)?.realizada ?? 0;
+  const impostos = realizadaNaOrigem(D.origemDosImpostos);
+  const contribuicoes = realizadaNaOrigem(D.origemDasContribuicoes);
   const grupos = [
     { nome: D.impostos, valor: impostos },
     { nome: D.contribuicoes, valor: contribuicoes },
@@ -344,7 +344,7 @@ function GastoSigilosoComponent({
         {S.resposta(
           textoDoPeriodo(periodo),
           <ComProcedenciaComponent
-            consulta={{ contexto: 'governo-sigiloso', de: periodo.de, ate: periodo.ate }}
+            consulta={{ contexto: 'governo-sigiloso', de: periodo.primeiroAno, ate: periodo.ultimoAno }}
             rotulo={S.rotuloDaProcedencia(textoDoPeriodo(periodo))}
           >
             <strong>{reaisCompacto(sigilo.cartaoTotal)}</strong>
@@ -401,7 +401,7 @@ function GastoSigilosoComponent({
         rotulo={S.baixar}
         montar={() =>
           baixarCsv(
-            S.arquivo(periodo.de, periodo.ate),
+            S.arquivo(periodo.primeiroAno, periodo.ultimoAno),
             [...S.colunas],
             sigilo.porOrgao.map((o) => [o.orgao, o.cartao, o.cartaoTotal, o.acao]),
           )
@@ -415,8 +415,8 @@ function GastoSigilosoComponent({
 function PerfilDaGestaoComponent({ gestao }: { gestao: Gestao }) {
   const G = T.gestao;
   return (
-    <section className="gestao" aria-labelledby={`gestao-${gestao.eleicao}`}>
-      <h2 id={`gestao-${gestao.eleicao}`} className="gestao-titulo">
+    <section className="gestao" aria-labelledby={`gestao-${gestao.anoDaEleicao}`}>
+      <h2 id={`gestao-${gestao.anoDaEleicao}`} className="gestao-titulo">
         {G.titulo(gestao.primeiroAno, gestao.ultimoAno)}
       </h2>
       <div className="gestao-pessoas">
@@ -424,7 +424,7 @@ function PerfilDaGestaoComponent({ gestao }: { gestao: Gestao }) {
         <PessoaDaGestaoCartaoComponent papel={G.vice} pessoa={gestao.vice} />
       </div>
       <div className="gestao-meta">
-        {G.eleitosEm(gestao.eleicao)}
+        {G.eleitosEm(gestao.anoDaEleicao)}
         {gestao.coligacao && (
           <>
             {' · '}
@@ -461,7 +461,7 @@ function DetalhesComponent({ dados }: { dados: DadosDoGoverno }) {
   const D = T.detalhes;
   const areas = dados.despesa.areas.filter((a) => a.pago + a.restosAPagarPagos > 0);
   const maior = Math.max(...areas.map((a) => a.pago + a.restosAPagarPagos), 1);
-  const nome = `${dados.periodo.de}-${dados.periodo.ate}`;
+  const nome = `${dados.periodo.primeiroAno}-${dados.periodo.ultimoAno}`;
 
   return (
     <details className="governo-secao governo-detalhes" data-tour="governo-detalhes">
@@ -475,7 +475,7 @@ function DetalhesComponent({ dados }: { dados: DadosDoGoverno }) {
       </p>
       <ul className="barras-areas">
         {areas.map((a) => (
-          <BarraDaAreaComponent key={a.codigo} area={a} maior={maior} />
+          <BarraDaAreaComponent key={a.codigoDaFuncao} area={a} maior={maior} />
         ))}
       </ul>
 
@@ -502,7 +502,7 @@ function DetalhesComponent({ dados }: { dados: DadosDoGoverno }) {
               D.arquivoDasAreas(nome),
               [...D.colunasDasAreas],
               dados.despesa.areas.map((a) => [
-                a.codigo, a.nome, a.dotacaoAtualizada, a.empenhado, a.pago, a.restosAPagarPagos,
+                a.codigoDaFuncao, a.nome, a.dotacaoAtualizada, a.empenhado, a.pago, a.restosAPagarPagos,
                 a.dotacaoCompleta ? D.sim : D.nao,
               ]),
             )
@@ -514,7 +514,7 @@ function DetalhesComponent({ dados }: { dados: DadosDoGoverno }) {
             baixarCsv(
               D.arquivoDoAnoAAno(nome),
               [...D.colunasDoAnoAAno],
-              dados.porAno.map((a) => [a.ano, a.arrecadou, a.gastou, a.pegouEmprestado, a.fechado ? D.sim : D.nao]),
+              dados.porAno.map((a) => [a.anoDoOrcamento, a.arrecadou, a.gastou, a.pegouEmprestado, a.fechado ? D.sim : D.nao]),
             )
           }
         />
@@ -572,7 +572,7 @@ function TabelaDasAreasComponent({ areas, acima }: { areas: AreaDaDespesa[]; aci
           </thead>
           <tbody>
             {areas.map((a) => (
-              <tr key={a.codigo}>
+              <tr key={a.codigoDaFuncao}>
                 <th scope="row">{a.nome}</th>
                 <td>{reaisCompacto(a.dotacaoAtualizada)}</td>
                 <td>{reaisCompacto(a.empenhado)}</td>

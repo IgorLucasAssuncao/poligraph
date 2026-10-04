@@ -17,7 +17,7 @@ namespace Poligraph.Api.Dtos;
 /// </para>
 /// </summary>
 public record ParlamentarAfimDto(
-    long PessoaId,
+    long IdPessoa,
     string Nome,
     string Partido,
     string Uf,

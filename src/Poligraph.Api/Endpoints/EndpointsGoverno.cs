@@ -18,8 +18,8 @@ public static class EndpointsGoverno
 
     /// <summary>O perfil do governo federal num período. Sem período, todos os anos; <c>ano</c> é atalho para um ano só.</summary>
     private static async Task<IResult> ObterAsync(
-        ServicoGoverno servico, CancellationToken ct, Ano? de = null, Ano? ate = null, Ano? ano = null) =>
-        await servico.ObterAsync(de ?? ano, ate ?? ano, ct) is { } governo
+        ServicoGoverno servico, CancellationToken ct, Periodo<AnoDoOrcamento> periodoDoOrcamento) =>
+        await servico.ObterAsync(periodoDoOrcamento, ct) is { } governo
             ? Results.Ok(governo)
             : Results.NotFound();
 }

@@ -29,13 +29,13 @@ public class ServicoGrafo(PoligraphDb db, CacheDeLeitura leitura)
     private async Task<GrafoDto> CalcularAsync(TipoCasa casa, short? legislatura, CancellationToken ct)
     {
         var comGrafo = await LegislaturasComGrafoAsync(casa, ct);
-        var alvo = legislatura ?? await Legislaturas.CorrenteAsync(_db, ct);
+        var legislaturaMostrada = legislatura ?? await Legislaturas.CorrenteAsync(_db, ct);
 
-        var execucao = alvo is null ? null : await ExecucaoVigente.ObterAsync(_db, casa, alvo.Value, ct);
+        var execucao = legislaturaMostrada is null ? null : await ExecucaoVigente.ObterAsync(_db, casa, legislaturaMostrada.Value, ct);
 
         if (execucao is null)
         {
-            return new GrafoDto(0, casa, alvo ?? 0, 0, [], [], comGrafo, 0, 0);
+            return new GrafoDto(0, casa, legislaturaMostrada ?? 0, 0, [], [], comGrafo, 0, 0);
         }
 
         var (votacoes, secretas, desde, ate) = await VotacoesDePlenarioAsync(casa, execucao.Legislatura, ct);

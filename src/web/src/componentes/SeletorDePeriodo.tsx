@@ -35,10 +35,10 @@ export function SeletorDePeriodoComponent({
   atalhos?: { rotulo: string; periodo: Periodo }[];
   aoMudar: (novo: Periodo | null) => void;
 }) {
-  const todos = periodo.de === anos[0] && periodo.ate === anos[anos.length - 1];
+  const todos = periodo.primeiroAno === anos[0] && periodo.ultimoAno === anos[anos.length - 1];
   const escolhido = todos
     ? TODOS
-    : (atalhos.find((a) => a.periodo.de === periodo.de && a.periodo.ate === periodo.ate)?.rotulo ?? '');
+    : (atalhos.find((a) => a.periodo.primeiroAno === periodo.primeiroAno && a.periodo.ultimoAno === periodo.ultimoAno)?.rotulo ?? '');
   const corrente = new Date().getFullYear();
   const rotuloDoAno = (a: number) => (a === corrente ? T.periodo.emAndamento(a) : String(a));
 
@@ -55,10 +55,10 @@ export function SeletorDePeriodoComponent({
           <label>
             {T.periodo.de}{' '}
             <select
-              value={periodo.de}
+              value={periodo.primeiroAno}
               onChange={(e) => {
                 const novo = Number(e.target.value);
-                aoMudar({ de: novo, ate: Math.max(novo, periodo.ate) });
+                aoMudar({ primeiroAno: novo, ultimoAno: Math.max(novo, periodo.ultimoAno) });
               }}
             >
               {anos.map((a) => (
@@ -71,10 +71,10 @@ export function SeletorDePeriodoComponent({
           <label>
             {T.periodo.ate}{' '}
             <select
-              value={periodo.ate}
+              value={periodo.ultimoAno}
               onChange={(e) => {
                 const novo = Number(e.target.value);
-                aoMudar({ de: Math.min(periodo.de, novo), ate: novo });
+                aoMudar({ primeiroAno: Math.min(periodo.primeiroAno, novo), ultimoAno: novo });
               }}
             >
               {anos.map((a) => (

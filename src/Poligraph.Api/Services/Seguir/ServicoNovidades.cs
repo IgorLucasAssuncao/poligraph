@@ -29,27 +29,27 @@ public class ServicoNovidades(PoligraphDb db)
             .Where(s => s.UsuarioId == usuarioId)
             .Select(s => new { s.PessoaId, s.Pessoa!.NomeExibicao })
             .ToDictionaryAsync(s => s.PessoaId, s => s.NomeExibicao, ct);
-        var ids = seguidos.Keys.ToList();
+        var idsPessoasSeguidas = seguidos.Keys.ToList();
 
         var hoje = DateTimeOffset.UtcNow;
-        var ate = await _db.Votacoes.AsNoTracking().Where(v => v.Plenario).MaxAsync(v => (DateOnly?)v.Data, ct)
+        var ultimoDia = await _db.Votacoes.AsNoTracking().Where(v => v.Plenario).MaxAsync(v => (DateOnly?)v.Data, ct)
             ?? new DateOnly(hoje.Year, hoje.Month, hoje.Day);
-        var de = desde ?? ate.AddDays(-(DiasDaSemana - 1));
+        var primeiroDia = desde ?? ultimoDia.AddDays(-(DiasDaSemana - 1));
         var inicioDoMes = new DateOnly(hoje.Year, hoje.Month, 1);
 
-        if (ids.Count == 0)
+        if (idsPessoasSeguidas.Count == 0)
         {
-            return new NovidadesDto(new PeriodoDeDiasDto(de, ate), await AtualizacoesAsync(ct), [], [], [], [], []);
+            return new NovidadesDto(new PeriodoDeDiasDto(primeiroDia, ultimoDia), await AtualizacoesAsync(ct), [], [], [], [], []);
         }
 
         return new NovidadesDto(
-            new PeriodoDeDiasDto(de, ate),
+            new PeriodoDeDiasDto(primeiroDia, ultimoDia),
             await AtualizacoesAsync(ct),
-            await VotosNaSemanaAsync(ids, seguidos, de, ate, ct),
-            await ContraOPartidoAsync(ids, seguidos, de, ate, ct),
-            await TrocasDePartidoAsync(ids, seguidos, de, ate, ct),
-            await GastosNaCotaAsync(ids, seguidos, inicioDoMes, ct),
-            await EmendasPagasAsync(ids, seguidos, inicioDoMes, ct));
+            await VotosNaSemanaAsync(idsPessoasSeguidas, seguidos, primeiroDia, ultimoDia, ct),
+            await ContraOPartidoAsync(idsPessoasSeguidas, seguidos, primeiroDia, ultimoDia, ct),
+            await TrocasDePartidoAsync(idsPessoasSeguidas, seguidos, primeiroDia, ultimoDia, ct),
+            await GastosNaCotaAsync(idsPessoasSeguidas, seguidos, inicioDoMes, ct),
+            await EmendasPagasAsync(idsPessoasSeguidas, seguidos, inicioDoMes, ct));
     }
 
     private async Task<IReadOnlyList<AtualizacaoDaFonteDto>> AtualizacoesAsync(CancellationToken ct)
@@ -66,11 +66,11 @@ public class ServicoNovidades(PoligraphDb db)
 
     /// <summary>A1. A ausência só existe no Senado, que lista todo senador em exercício; na Câmara o campo vem nulo.</summary>
     private async Task<IReadOnlyList<VotosNaSemanaDto>> VotosNaSemanaAsync(
-        List<long> ids, Dictionary<long, string> nomes, DateOnly de, DateOnly ate, CancellationToken ct)
+        List<long> idsPessoasSeguidas, Dictionary<long, string> nomes, DateOnly primeiroDia, DateOnly ultimoDia, CancellationToken ct)
     {
         var contagens = await _db.Votos.AsNoTracking()
-            .Where(v => ids.Contains(v.PessoaId) && v.Votacao!.Plenario
-                && v.Votacao.Data >= de && v.Votacao.Data <= ate)
+            .Where(v => idsPessoasSeguidas.Contains(v.PessoaId) && v.Votacao!.Plenario
+                && v.Votacao.Data >= primeiroDia && v.Votacao.Data <= ultimoDia)
             .GroupBy(v => new { v.PessoaId, v.Votacao!.Casa })
             .Select(g => new
             {
@@ -93,11 +93,11 @@ public class ServicoNovidades(PoligraphDb db)
 
     /// <summary>A2. A mesma regra da disciplina: <see cref="BancadaDoPartido"/>, e só orientação Sim ou Não conta.</summary>
     private async Task<IReadOnlyList<VotoContraOPartidoDto>> ContraOPartidoAsync(
-        List<long> ids, Dictionary<long, string> nomes, DateOnly de, DateOnly ate, CancellationToken ct)
+        List<long> idsPessoasSeguidas, Dictionary<long, string> nomes, DateOnly primeiroDia, DateOnly ultimoDia, CancellationToken ct)
     {
         var votos = await _db.Votos.AsNoTracking()
-            .Where(v => ids.Contains(v.PessoaId) && v.Votacao!.Casa == TipoCasa.CAMARA && v.Votacao.Plenario
-                && v.Votacao.Data >= de && v.Votacao.Data <= ate && (v.Valor == 1 || v.Valor == -1))
+            .Where(v => idsPessoasSeguidas.Contains(v.PessoaId) && v.Votacao!.Casa == TipoCasa.CAMARA && v.Votacao.Plenario
+                && v.Votacao.Data >= primeiroDia && v.Votacao.Data <= ultimoDia && (v.Valor == 1 || v.Valor == -1))
             .Select(v => new
             {
                 v.PessoaId,
@@ -155,10 +155,10 @@ public class ServicoNovidades(PoligraphDb db)
     /// <para>Sigla vazia e "Sem registro" ficam de fora: era assim que os votos de 1998 sem partido apareciam, e contariam como troca.</para>
     /// </remarks>
     private async Task<IReadOnlyList<TrocaDePartidoDto>> TrocasDePartidoAsync(
-        List<long> ids, Dictionary<long, string> nomes, DateOnly de, DateOnly ate, CancellationToken ct)
+        List<long> idsPessoasSeguidas, Dictionary<long, string> nomes, DateOnly primeiroDia, DateOnly ultimoDia, CancellationToken ct)
     {
         var votos = await _db.Votos.AsNoTracking()
-            .Where(v => ids.Contains(v.PessoaId) && v.Votacao!.Data <= ate
+            .Where(v => idsPessoasSeguidas.Contains(v.PessoaId) && v.Votacao!.Data <= ultimoDia
                 && v.PartidoNoVoto != "" && v.PartidoNoVoto != VocabularioDasFontes.PartidoSemRegistro)
             .Select(v => new { v.PessoaId, v.PartidoNoVoto, v.Votacao!.Data, v.Votacao.Casa })
             .ToListAsync(ct);
@@ -177,7 +177,7 @@ public class ServicoNovidades(PoligraphDb db)
             var primeiro = ordenados
                 .Where(v => v.PartidoNoVoto == atual.PartidoNoVoto && v.Data > anterior.Data)
                 .Min(v => v.Data);
-            if (primeiro < de || primeiro > ate)
+            if (primeiro < primeiroDia || primeiro > ultimoDia)
             {
                 continue;
             }
@@ -194,14 +194,14 @@ public class ServicoNovidades(PoligraphDb db)
     /// <para>RISCO: ano e mês comparados em separado. <c>ano * 100 + mes</c> contra um parâmetro faz o EF tipá-lo como <c>smallint</c>, e 202610 estoura antes de chegar ao banco.</para>
     /// </remarks>
     private async Task<IReadOnlyList<GastoNaCotaDto>> GastosNaCotaAsync(
-        List<long> ids, Dictionary<long, string> nomes, DateOnly inicioDoMes, CancellationToken ct)
+        List<long> idsPessoasSeguidas, Dictionary<long, string> nomes, DateOnly inicioDoMes, CancellationToken ct)
     {
         var anoAberto = (short)inicioDoMes.Year;
         var mesAberto = (short)inicioDoMes.Month;
         var anoMinimo = (short)(inicioDoMes.Year - 1);
 
         var doPeriodo = _db.Despesas.AsNoTracking()
-            .Where(d => ids.Contains(d.PessoaId) && d.Ano >= anoMinimo
+            .Where(d => idsPessoasSeguidas.Contains(d.PessoaId) && d.Ano >= anoMinimo
                 && (d.Ano < anoAberto || (d.Ano == anoAberto && d.Mes < mesAberto)));
 
         var ultimo = await doPeriodo
@@ -214,7 +214,7 @@ public class ServicoNovidades(PoligraphDb db)
         }
 
         var (ano, mes) = (ultimo.Ano, ultimo.Mes);
-        var casas = await CasaDoVotoMaisRecenteAsync(ids, ct);
+        var casas = await CasaDoVotoMaisRecenteAsync(idsPessoasSeguidas, ct);
         var porCategoria = await doPeriodo
             .Where(d => d.Ano == ano && d.Mes == mes)
             .GroupBy(d => new { d.PessoaId, d.Categoria })
@@ -233,10 +233,10 @@ public class ServicoNovidades(PoligraphDb db)
             .OrderByDescending(g => g.Total)];
     }
 
-    private async Task<Dictionary<long, TipoCasa?>> CasaDoVotoMaisRecenteAsync(List<long> ids, CancellationToken ct)
+    private async Task<Dictionary<long, TipoCasa?>> CasaDoVotoMaisRecenteAsync(List<long> idsPessoasSeguidas, CancellationToken ct)
     {
         var porCasa = await _db.Votos.AsNoTracking()
-            .Where(v => ids.Contains(v.PessoaId))
+            .Where(v => idsPessoasSeguidas.Contains(v.PessoaId))
             .GroupBy(v => new { v.PessoaId, v.Votacao!.Casa })
             .Select(g => new { g.Key.PessoaId, g.Key.Casa, Ultimo = g.Max(v => v.Votacao!.Data) })
             .ToListAsync(ct);
@@ -251,10 +251,10 @@ public class ServicoNovidades(PoligraphDb db)
     /// <para>As emendas entram pelo código, distinto: a mesma emenda tem uma linha por localidade, e juntar pela tabela de emendas contaria o pagamento uma vez por localidade.</para>
     /// </remarks>
     private async Task<IReadOnlyList<EmendaPagaDto>> EmendasPagasAsync(
-        List<long> ids, Dictionary<long, string> nomes, DateOnly inicioDoMes, CancellationToken ct)
+        List<long> idsPessoasSeguidas, Dictionary<long, string> nomes, DateOnly inicioDoMes, CancellationToken ct)
     {
         var autorDoCodigo = await _db.Emendas.AsNoTracking()
-            .Where(e => e.PessoaId != null && ids.Contains(e.PessoaId.Value))
+            .Where(e => e.PessoaId != null && idsPessoasSeguidas.Contains(e.PessoaId.Value))
             .Select(e => new { e.CodigoEmenda, PessoaId = e.PessoaId!.Value })
             .Distinct()
             .ToDictionaryAsync(e => e.CodigoEmenda, e => e.PessoaId, ct);

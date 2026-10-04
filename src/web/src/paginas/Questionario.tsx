@@ -175,9 +175,9 @@ export function QuestionarioComponent() {
         />
       ) : (
         <CartaoDePerguntaComponent
-          key={atual.id}
+          key={atual.idPergunta}
           pergunta={atual}
-          escolhida={respostas[atual.id]}
+          escolhida={respostas[atual.idPergunta]}
           revelando={revelando}
           aoResponder={responder}
           aoVoltar={indice > 0 ? () => comTransicao(() => setIndice(indice - 1)) : undefined}
@@ -258,7 +258,7 @@ function CartaoDePerguntaComponent({
             type="button"
             className={`opcao-grande ${escolhida === valor ? 'opcao-ativa' : ''}`}
             disabled={revelando}
-            onClick={() => aoResponder(pergunta.id, valor)}
+            onClick={() => aoResponder(pergunta.idPergunta, valor)}
           >
             {rotulo}
           </button>

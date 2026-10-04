@@ -182,7 +182,7 @@ function opcoesDa(resposta: Busca): Opcao[] {
       ]
         .filter(Boolean)
         .join(' · '),
-      destino: `/parlamentar/${p.id}`,
+      destino: `/parlamentar/${p.idPessoa}`,
     })),
     ...resposta.municipios.map((m) => ({
       grupo: 'cidade' as const,

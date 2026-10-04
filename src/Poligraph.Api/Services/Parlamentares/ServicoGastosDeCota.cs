@@ -33,25 +33,23 @@ public class ServicoGastosDeCota(PoligraphDb db)
     /// <para>Projeta em tipo ANÔNIMO, não direto no `record`: o EF não traduz `GroupBy` com construtor posicional — devolve `could not be translated` em runtime, não em compilação. O `record` é montado depois, em memória.</para>
     /// </remarks>
     /// <param name="legislatura">Sem ano, o mais recente DENTRO do mandato: a ficha aberta em 2015-2019 não mostra a cota de hoje.</param>
-    public async Task<GastoDeCotaDto> ObterAsync(PessoaId pessoa, Ano? anoPedido, Legislatura? legislaturaPedida, CancellationToken ct)
+    public async Task<GastoDeCotaDto> ObterAsync(IdPessoa idPessoa, AnoDaDespesa? anoDaDespesaPedido, Legislatura? legislaturaPedida, CancellationToken ct)
     {
-        var id = pessoa.Valor;
-        var ano = anoPedido?.Valor;
         var legislatura = legislaturaPedida?.Numero;
-        var daPessoa = _db.Despesas.AsNoTracking().Where(d => d.PessoaId == id);
+        var daPessoa = _db.Despesas.AsNoTracking().Where(d => d.PessoaId == idPessoa.Valor);
         if (legislatura is { } l)
         {
             var (de, ate) = Legislaturas.AnosDeDespesa(l);
             daPessoa = daPessoa.Where(d => d.Ano >= de && d.Ano <= ate);
         }
-        var alvo = ano ?? await daPessoa.MaxAsync(d => (int?)d.Ano, ct);
+        var anoDaDespesa = anoDaDespesaPedido?.Valor ?? await daPessoa.MaxAsync(d => (int?)d.Ano, ct);
 
-        if (alvo is null)
+        if (anoDaDespesa is null)
         {
             return new GastoDeCotaDto(0, 0, 0, [], []);
         }
 
-        var doAno = _db.Despesas.AsNoTracking().Where(d => d.PessoaId == id && d.Ano == alvo);
+        var doAno = _db.Despesas.AsNoTracking().Where(d => d.PessoaId == idPessoa.Valor && d.Ano == anoDaDespesa);
 
         var categorias = await doAno
             .GroupBy(d => d.Categoria)
@@ -88,7 +86,7 @@ public class ServicoGastosDeCota(PoligraphDb db)
             .ToList();
 
         return new GastoDeCotaDto(
-            Ano: alvo.Value,
+            AnoDaDespesa: anoDaDespesa.Value,
             Total: porCategoria.Sum(c => c.Total),
             Lancamentos: porCategoria.Sum(c => c.Lancamentos),
             PorCategoria: porCategoria,
@@ -100,23 +98,21 @@ public class ServicoGastosDeCota(PoligraphDb db)
     /// <para>É o caminho de volta à fonte: a ficha mostra somas por categoria, e cada soma se confere aqui, nota por nota.</para>
     /// </remarks>
     public async Task<PaginaDto<LancamentoDaCotaDto>> ListarLancamentosAsync(
-        PessoaId pessoa, Ano? anoPedido, int pagina, int tamanho, CancellationToken ct)
+        IdPessoa idPessoa, AnoDaDespesa? anoDaDespesaPedido, int pagina, int tamanho, CancellationToken ct)
     {
-        var id = pessoa.Valor;
-        var ano = anoPedido?.Valor;
         pagina = Math.Max(pagina, 1);
         tamanho = Math.Clamp(tamanho, 1, TamanhoMaximo);
 
-        var alvo = ano ?? await _db.Despesas.AsNoTracking()
-            .Where(d => d.PessoaId == id)
+        var anoDaDespesa = anoDaDespesaPedido?.Valor ?? await _db.Despesas.AsNoTracking()
+            .Where(d => d.PessoaId == idPessoa.Valor)
             .MaxAsync(d => (int?)d.Ano, ct);
 
-        if (alvo is null)
+        if (anoDaDespesa is null)
         {
             return new PaginaDto<LancamentoDaCotaDto>([], pagina, tamanho, 0);
         }
 
-        var doAno = _db.Despesas.AsNoTracking().Where(d => d.PessoaId == id && d.Ano == alvo);
+        var doAno = _db.Despesas.AsNoTracking().Where(d => d.PessoaId == idPessoa.Valor && d.Ano == anoDaDespesa);
 
         var itens = await doAno
             .OrderByDescending(d => d.Mes)

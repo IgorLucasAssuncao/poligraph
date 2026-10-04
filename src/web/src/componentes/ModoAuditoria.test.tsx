@@ -38,7 +38,7 @@ function renderizar() {
       <InterruptorDoModoAuditoriaComponent />
       <p>
         Gastou{' '}
-        <ComProcedenciaComponent consulta={{ contexto: 'cota', pessoa: 1, ano: 2025 }} rotulo="Cota parlamentar de 2025">
+        <ComProcedenciaComponent consulta={{ contexto: 'cota', idPessoa: 1, anoDaDespesa: 2025 }} rotulo="Cota parlamentar de 2025">
           <strong>R$ 412.000,00</strong>
         </ComProcedenciaComponent>
       </p>
@@ -59,7 +59,7 @@ describe('o modo auditoria', () => {
     fireEvent.click(screen.getByRole('button', { name: /Auditoria/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Cota parlamentar de 2025: ver de onde veio' }));
 
-    expect(obterProcedencia).toHaveBeenCalledWith({ contexto: 'cota', pessoa: 1, ano: 2025 });
+    expect(obterProcedencia).toHaveBeenCalledWith({ contexto: 'cota', idPessoa: 1, anoDaDespesa: 2025 });
     expect(await screen.findByText('a'.repeat(64))).toBeInTheDocument();
     expect(screen.getByText('etl-0123456789ab')).toBeInTheDocument();
     expect(screen.getByText(/12 linhas foram gravadas antes do registro de procedência/)).toBeInTheDocument();

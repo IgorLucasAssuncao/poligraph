@@ -44,60 +44,60 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
     /// <para>Sem período, todos os anos carregados. Ponta fora dos anos é trazida para dentro; ponta invertida, desinvertida.</para>
     /// <para>Sem dado, devolve <c>null</c>, e o endpoint responde 404.</para>
     /// </remarks>
-    public Task<GovernoDto?> ObterAsync(Ano? de, Ano? ate, CancellationToken ct) =>
-        _leitura.ObterAsync(("governo", de?.Valor, ate?.Valor), () => CalcularAsync(de?.Valor, ate?.Valor, ct));
+    public Task<GovernoDto?> ObterAsync(Periodo<AnoDoOrcamento> periodoPedido, CancellationToken ct) =>
+        _leitura.ObterAsync(("governo", periodoPedido), () => CalcularAsync(periodoPedido, ct));
 
-    private async Task<GovernoDto?> CalcularAsync(int? de, int? ate, CancellationToken ct)
+    private async Task<GovernoDto?> CalcularAsync(Periodo<AnoDoOrcamento> periodoPedido, CancellationToken ct)
     {
-        var anos = await _db.OrcamentoPorFuncao.AsNoTracking()
+        var anosDoOrcamentoCarregados = await _db.OrcamentoPorFuncao.AsNoTracking()
             .GroupBy(o => o.Ano)
             .Select(g => new { Ano = (int)g.Key, GeradoEm = g.Max(o => o.GeradoEm) })
             .OrderBy(a => a.Ano)
             .ToListAsync(ct);
 
-        if (anos.Count == 0)
+        if (anosDoOrcamentoCarregados.Count == 0)
         {
             return null;
         }
 
-        var inicio = Math.Clamp(de ?? anos[0].Ano, anos[0].Ano, anos[^1].Ano);
-        var fim = Math.Clamp(ate ?? anos[^1].Ano, anos[0].Ano, anos[^1].Ano);
-        if (inicio > fim)
+        var primeiroAnoDoOrcamento = Math.Clamp(periodoPedido.Primeiro?.Valor ?? anosDoOrcamentoCarregados[0].Ano, anosDoOrcamentoCarregados[0].Ano, anosDoOrcamentoCarregados[^1].Ano);
+        var ultimoAnoDoOrcamento = Math.Clamp(periodoPedido.Ultimo?.Valor ?? anosDoOrcamentoCarregados[^1].Ano, anosDoOrcamentoCarregados[0].Ano, anosDoOrcamentoCarregados[^1].Ano);
+        if (primeiroAnoDoOrcamento > ultimoAnoDoOrcamento)
         {
-            (inicio, fim) = (fim, inicio);
+            (primeiroAnoDoOrcamento, ultimoAnoDoOrcamento) = (ultimoAnoDoOrcamento, primeiroAnoDoOrcamento);
         }
 
-        var doPeriodo = anos.Where(a => a.Ano >= inicio && a.Ano <= fim).ToList();
-        var lista = doPeriodo.Select(a => (short)a.Ano).ToList();
+        var anosMostrados = anosDoOrcamentoCarregados.Where(a => a.Ano >= primeiroAnoDoOrcamento && a.Ano <= ultimoAnoDoOrcamento).ToList();
+        var anosMostradosParaConsulta = anosMostrados.Select(a => (short)a.Ano).ToList();
 
-        var funcoes = await _db.OrcamentoPorFuncao.AsNoTracking().Where(o => lista.Contains(o.Ano)).ToListAsync(ct);
-        var encargos = await _db.EncargosEspeciais.AsNoTracking().Where(e => lista.Contains(e.Ano)).ToListAsync(ct);
-        var receitas = await _db.ReceitasPorOrigem.AsNoTracking().Where(r => lista.Contains(r.Ano)).ToListAsync(ct);
-        var sigilosos = await _db.GastosSigilosos.AsNoTracking().Where(g => lista.Contains(g.Ano)).ToListAsync(ct);
+        var funcoes = await _db.OrcamentoPorFuncao.AsNoTracking().Where(o => anosMostradosParaConsulta.Contains(o.Ano)).ToListAsync(ct);
+        var encargos = await _db.EncargosEspeciais.AsNoTracking().Where(e => anosMostradosParaConsulta.Contains(e.Ano)).ToListAsync(ct);
+        var receitas = await _db.ReceitasPorOrigem.AsNoTracking().Where(r => anosMostradosParaConsulta.Contains(r.Ano)).ToListAsync(ct);
+        var sigilosos = await _db.GastosSigilosos.AsNoTracking().Where(g => anosMostradosParaConsulta.Contains(g.Ano)).ToListAsync(ct);
 
-        var emAndamento = doPeriodo.LastOrDefault(a => !AnoFechado(a.Ano, a.GeradoEm))?.Ano;
+        var emAndamento = anosMostrados.LastOrDefault(a => !AnoFechado(a.Ano, a.GeradoEm))?.Ano;
 
         return new GovernoDto(
-            Gestoes: await GestoesAsync(inicio, fim, ct),
-            Periodo: new PeriodoDto(inicio, fim),
-            GeradoEm: doPeriodo.Max(a => a.GeradoEm),
+            Gestoes: await GestoesAsync(primeiroAnoDoOrcamento, ultimoAnoDoOrcamento, ct),
+            Periodo: new PeriodoDto(primeiroAnoDoOrcamento, ultimoAnoDoOrcamento),
+            GeradoEm: anosMostrados.Max(a => a.GeradoEm),
             EmAndamento: emAndamento,
-            AnosDisponiveis: [.. anos.Select(a => a.Ano)],
+            AnosDisponiveis: [.. anosDoOrcamentoCarregados.Select(a => a.Ano)],
             Arrecadacao: Arrecadacao(receitas),
             Despesa: Despesa(funcoes, encargos),
             Sigilo: Sigilo(sigilosos),
-            PorAno: [.. doPeriodo.Select(a =>
+            PorAno: [.. anosMostrados.Select(a =>
             {
-                var ano = (short)a.Ano;
-                var doAno = Arrecadacao([.. receitas.Where(r => r.Ano == ano)]);
+                var anoDoOrcamento = (short)a.Ano;
+                var doAno = Arrecadacao([.. receitas.Where(r => r.Ano == anoDoOrcamento)]);
                 return new GovernoNoAnoDto(
                     a.Ano,
                     doAno.Arrecadado,
-                    Gasto(Despesa([.. funcoes.Where(f => f.Ano == ano)], [.. encargos.Where(e => e.Ano == ano)])),
+                    Gasto(Despesa([.. funcoes.Where(f => f.Ano == anoDoOrcamento)], [.. encargos.Where(e => e.Ano == anoDoOrcamento)])),
                     doAno.EmissaoDeDivida,
                     AnoFechado(a.Ano, a.GeradoEm));
             })],
-            GestoesDisponiveis: await GestoesAsync(anos[0].Ano, anos[^1].Ano, ct));
+            GestoesDisponiveis: await GestoesAsync(anosDoOrcamentoCarregados[0].Ano, anosDoOrcamentoCarregados[^1].Ano, ct));
     }
 
     /// <summary>O que se gastou de fato: as áreas, os repasses e a dívida paga — não a rolagem.</summary>
@@ -142,13 +142,13 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
     }
 
     /// <summary>O ano está fechado quando o arquivo foi gerado depois de 31 de dezembro dele.</summary>
-    private static bool AnoFechado(int ano, DateOnly geradoEm) => geradoEm.Year > ano;
+    private static bool AnoFechado(int anoDoOrcamento, DateOnly geradoEm) => geradoEm.Year > anoDoOrcamento;
 
     /// <summary>As gestões que cobrem o período — mais de uma quando ele atravessa uma posse.</summary>
-    private async Task<IReadOnlyList<GestaoDto>> GestoesAsync(int de, int ate, CancellationToken ct)
+    private async Task<IReadOnlyList<GestaoDto>> GestoesAsync(int primeiroAnoDoOrcamento, int ultimoAnoDoOrcamento, CancellationToken ct)
     {
         var gestoes = await _db.Gestoes.AsNoTracking()
-            .Where(g => g.PrimeiroAno <= ate && g.UltimoAno >= de)
+            .Where(g => g.PrimeiroAno <= ultimoAnoDoOrcamento && g.UltimoAno >= primeiroAnoDoOrcamento)
             .OrderBy(g => g.PrimeiroAno)
             .ToListAsync(ct);
 

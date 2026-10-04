@@ -32,4 +32,4 @@ public record GovernoDto(
 /// <remarks>
 /// <para><see cref="Gastou"/> é o que se pagou nas áreas, nos repasses a estados e municípios e na dívida — não a rolagem, que é dívida paga com dívida.</para>
 /// </remarks>
-public record GovernoNoAnoDto(int Ano, decimal Arrecadou, decimal Gastou, decimal PegouEmprestado, bool Fechado);
+public record GovernoNoAnoDto(int AnoDoOrcamento, decimal Arrecadou, decimal Gastou, decimal PegouEmprestado, bool Fechado);

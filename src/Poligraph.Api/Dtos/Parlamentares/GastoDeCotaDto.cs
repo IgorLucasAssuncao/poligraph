@@ -3,7 +3,7 @@
 namespace Poligraph.Api.Dtos;
 
 public record GastoDeCotaDto(
-    int Ano,
+    int AnoDaDespesa,
     decimal Total,
     int Lancamentos,
     IReadOnlyList<GastoPorCategoriaDto> PorCategoria,

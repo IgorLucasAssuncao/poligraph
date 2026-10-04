@@ -27,10 +27,10 @@ export type Contas = {
  * buscar antes traria o período errado e buscaria duas vezes.
  */
 export function useContas(
-  pessoaId: number,
+  idPessoa: number,
   mandato: number | null | 'aguardando' = null,
 ): { contas: Contas | null; erro: boolean } {
-  const chave = `${pessoaId}-${mandato}`;
+  const chave = `${idPessoa}-${mandato}`;
   const [estado, setEstado] = useState<{ chave: string; contas: Contas | null; erro: boolean }>({
     chave,
     contas: null,
@@ -42,9 +42,9 @@ export function useContas(
     let vivo = true;
 
     Promise.allSettled([
-      obterGastos(pessoaId, mandato),
-      obterEmendas(pessoaId, mandato),
-      obterFinanciamento(pessoaId, mandato),
+      obterGastos(idPessoa, mandato),
+      obterEmendas(idPessoa, mandato),
+      obterFinanciamento(idPessoa, mandato),
     ]).then(
       ([g, e, f]) => {
         if (!vivo) return;
@@ -67,7 +67,7 @@ export function useContas(
     return () => {
       vivo = false;
     };
-  }, [pessoaId, mandato, chave]);
+  }, [idPessoa, mandato, chave]);
 
   return estado.chave === chave ? estado : { contas: null, erro: false };
 }

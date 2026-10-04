@@ -2,7 +2,7 @@
 
 /// <summary>Presidente e vice eleitos, segundo o TSE, e os anos do mandato.</summary>
 public record GestaoDto(
-    int Eleicao,
+    int AnoDaEleicao,
     int PrimeiroAno,
     int UltimoAno,
     PessoaDaGestaoDto Presidente,

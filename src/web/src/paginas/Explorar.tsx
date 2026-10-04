@@ -77,7 +77,7 @@ export function ExplorarComponent() {
   useEffect(() => {
     if (!usuario) return;
     listarSeguidos()
-      .then((s) => setSeguidos(new Set(s.map((p) => p.id))))
+      .then((s) => setSeguidos(new Set(s.map((p) => p.idPessoa))))
       .catch(() => setSeguidos(new Set()));
   }, [usuario]);
 
@@ -198,17 +198,17 @@ export function ExplorarComponent() {
 
       {lista.map((p) => (
         <LinhaParlamentarComponent
-          key={p.id}
-          id={p.id}
+          key={p.idPessoa}
+          id={p.idPessoa}
           nome={p.nome}
           partido={p.partido}
           uf={p.uf}
           fotoUrl={p.urlFoto}
           detalhe={detalheDe(p)}
           legislatura={p.legislatura && p.legislatura !== pagina?.legislaturaCorrente ? p.legislatura : undefined}
-          seguindo={seguidos.has(p.id)}
+          seguindo={seguidos.has(p.idPessoa)}
           aoAlternarSeguir={
-            p.legislatura === pagina?.legislaturaCorrente || seguidos.has(p.id) ? alternar : undefined
+            p.legislatura === pagina?.legislaturaCorrente || seguidos.has(p.idPessoa) ? alternar : undefined
           }
         />
       ))}
@@ -262,11 +262,11 @@ export function ExplorarComponent() {
     return T.exParlamentar(quem, periodoDaLegislatura(p.legislatura), votacoes);
   }
 
-  function alternar(id: number, seguindoAgora: boolean) {
+  function alternar(idPessoa: number, seguindoAgora: boolean) {
     setSeguidos((atual) => {
       const novo = new Set(atual);
-      if (seguindoAgora) novo.add(id);
-      else novo.delete(id);
+      if (seguindoAgora) novo.add(idPessoa);
+      else novo.delete(idPessoa);
       return novo;
     });
   }

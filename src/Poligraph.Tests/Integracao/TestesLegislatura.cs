@@ -160,13 +160,13 @@ public class TestesLegislatura(FixturePostgres postgres) : BaseIntegracao(postgr
         await Db.SaveChangesAsync();
     }
 
-    private record ParlamentarLido(long Id, string Nome, string Partido, string Uf, int NVotacoes);
+    private record ParlamentarLido(long IdPessoa, string Nome, string Partido, string Uf, int NVotacoes);
 
     private record PaginaLida(List<ParlamentarLido> Itens, int Total);
 
-    private record FichaLida(long Id, string Nome, int NVotacoes);
+    private record FichaLida(long IdPessoa, string Nome, int NVotacoes);
 
-    private record PerguntaLida(string Id, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
+    private record PerguntaLida(string IdPergunta, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
 
     private record QuestionarioLido(List<PerguntaLida> Perguntas, int Total);
 }

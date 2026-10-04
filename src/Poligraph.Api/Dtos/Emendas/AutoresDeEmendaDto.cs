@@ -4,10 +4,10 @@ namespace Poligraph.Api.Dtos;
 
 /// <summary>Um deputado ou senador que mandou dinheiro de emenda — para uma cidade ou uma entidade.</summary>
 /// <remarks>
-/// <para><see cref="PessoaId"/> é nulo quando o código do autor ainda não foi ligado a um parlamentar: o nome vem da emenda, e a tela não tem ficha para onde levar.</para>
+/// <para><see cref="IdPessoa"/> é nulo quando o código do autor ainda não foi ligado a um parlamentar: o nome vem da emenda, e a tela não tem ficha para onde levar.</para>
 /// </remarks>
 public record ParlamentarQueMandouDto(
-    long? PessoaId,
+    long? IdPessoa,
     string Nome,
     string? Partido,
     string? Uf,

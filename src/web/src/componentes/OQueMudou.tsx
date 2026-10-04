@@ -71,11 +71,11 @@ function montarItens(n: Novidades): Item[] {
 
   for (const v of n.votosNaSemana) {
     itens.push({
-      chave: `semana-${v.pessoaId}-${v.casa}`,
+      chave: `semana-${v.idPessoa}-${v.casa}`,
       ordem: n.semana.ate,
       quando: T.semana(dataCurta(n.semana.de).slice(0, 5), dataCurta(n.semana.ate).slice(0, 5)),
       texto: T.votouNaSemana(
-        ficha(v.pessoaId, v.nome),
+        ficha(v.idPessoa, v.nome),
         v.votou,
         v.ausente === null ? null : v.ausente + (v.ausenteJustificado ?? 0),
         v.ausenteJustificado,
@@ -86,10 +86,10 @@ function montarItens(n: Novidades): Item[] {
 
   for (const c of n.contraOPartido) {
     itens.push({
-      chave: `contra-${c.pessoaId}-${c.votacaoId}`,
+      chave: `contra-${c.idPessoa}-${c.votacaoId}`,
       ordem: c.data,
       quando: dataCurta(c.data),
-      texto: T.contraOPartido(ficha(c.pessoaId, c.nome), c.voto, c.proposicao, c.bancada, c.partido, c.orientacao, c.descricao),
+      texto: T.contraOPartido(ficha(c.idPessoa, c.nome), c.voto, c.proposicao, c.bancada, c.partido, c.orientacao, c.descricao),
       fonte: (
         <>
           {ORGAO.CAMARA}
@@ -106,22 +106,22 @@ function montarItens(n: Novidades): Item[] {
 
   for (const t of n.trocasDePartido) {
     itens.push({
-      chave: `troca-${t.pessoaId}`,
+      chave: `troca-${t.idPessoa}`,
       ordem: t.primeiroVoto,
       quando: dataCurta(t.primeiroVoto),
-      texto: T.trocou(ficha(t.pessoaId, t.nome), t.partidoNovo, dataCurta(t.primeiroVoto), t.partidoAnterior),
+      texto: T.trocou(ficha(t.idPessoa, t.nome), t.partidoNovo, dataCurta(t.primeiroVoto), t.partidoAnterior),
       fonte: ORGAO[t.casa],
     });
   }
 
   for (const g of n.gastosNaCota) {
-    const mes = `${g.ano}-${String(g.mes).padStart(2, '0')}-01`;
+    const mes = `${g.anoDaDespesa}-${String(g.mes).padStart(2, '0')}-01`;
     itens.push({
-      chave: `cota-${g.pessoaId}-${mes}`,
+      chave: `cota-${g.idPessoa}-${mes}`,
       ordem: mes,
       quando: mesCurto(mes),
       texto: T.gastouNaCota(
-        ficha(g.pessoaId, g.nome, '/cota'),
+        ficha(g.idPessoa, g.nome, '/cota'),
         reais(g.total),
         mesCurto(mes),
         reais(g.maiorCategoriaValor),
@@ -133,10 +133,10 @@ function montarItens(n: Novidades): Item[] {
 
   for (const e of n.emendasPagas) {
     itens.push({
-      chave: `emenda-${e.pessoaId}-${e.mes}`,
+      chave: `emenda-${e.idPessoa}-${e.mes}`,
       ordem: e.mes,
       quando: mesCurto(e.mes),
-      texto: T.emendaPaga(ficha(e.pessoaId, e.nome, '/emendas'), reais(e.pago), mesCurto(e.mes), e.maiorDestino, e.lugarDoMaiorDestino),
+      texto: T.emendaPaga(ficha(e.idPessoa, e.nome, '/emendas'), reais(e.pago), mesCurto(e.mes), e.maiorDestino, e.lugarDoMaiorDestino),
       fonte: T.portal,
     });
   }

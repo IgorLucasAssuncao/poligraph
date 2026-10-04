@@ -8,5 +8,5 @@ namespace Poligraph.Api.Dtos;
 /// </param>
 /// <param name="NVotacoes">Votos com posição NAQUELA legislatura, nunca a soma de mandatos.</param>
 public record ParlamentarNaListaDto(
-    long Id, string Nome, TipoCasa? Casa, string Partido, string Uf, int NVotacoes, string? UrlFoto,
+    long IdPessoa, string Nome, TipoCasa? Casa, string Partido, string Uf, int NVotacoes, string? UrlFoto,
     short Legislatura);

@@ -24,7 +24,7 @@ vi.mock('../componentes/contextoDoTour', () => ({
 const api = await import('../api');
 
 const BRASIL: MapaDoBrasil = {
-  periodo: { de: 2023, ate: 2026 },
+  periodo: { primeiroAno: 2023, ultimoAno: 2026 },
   anosDisponiveis: [2023, 2024, 2025, 2026],
   recebido: 70e9,
   noMapa: 37.2e9,
@@ -38,7 +38,7 @@ const BRASIL: MapaDoBrasil = {
 
 const PARANA: MapaDoEstado = {
   uf: 'PR',
-  periodo: { de: 2023, ate: 2026 },
+  periodo: { primeiroAno: 2023, ultimoAno: 2026 },
   recebido: 2e9,
   porMunicipio: [
     { codigoIbge: '4106902', nome: 'CURITIBA', recebido: 300e6 },
@@ -49,16 +49,16 @@ const PARANA: MapaDoEstado = {
 
 const LUIZIANA: EmendasDoMunicipio = {
   municipio: { codigoIbge: '4113734', nome: 'LUIZIANA', uf: 'PR' },
-  periodo: { de: 2023, ate: 2026 },
+  periodo: { primeiroAno: 2023, ultimoAno: 2026 },
   anosDisponiveis: [2023, 2024, 2025, 2026],
   recebido: 7e6,
   naPropriaCidade: 5e6,
   deParlamentares: 4e6,
   parlamentares: {
     itens: [
-      { pessoaId: 42, nome: 'Fulano de Tal', partido: 'XYZ', uf: 'PR', casa: 'CAMARA', urlFoto: null, recebido: 4e6, emendas: 2 },
+      { idPessoa: 42, nome: 'Fulano de Tal', partido: 'XYZ', uf: 'PR', casa: 'CAMARA', urlFoto: null, recebido: 4e6, emendas: 2 },
       ...Array.from({ length: 9 }, (_, i) => ({
-        pessoaId: 100 + i, nome: `Parlamentar ${i}`, partido: 'XYZ', uf: 'PR', casa: 'CAMARA' as const,
+        idPessoa: 100 + i, nome: `Parlamentar ${i}`, partido: 'XYZ', uf: 'PR', casa: 'CAMARA' as const,
         urlFoto: null, recebido: 1e5, emendas: 1,
       })),
     ],
@@ -113,7 +113,7 @@ beforeEach(() => {
   vi.mocked(api.obterMapaDoEstado).mockResolvedValue(PARANA);
   vi.mocked(api.obterEmendasDoMunicipio).mockResolvedValue(LUIZIANA);
   vi.mocked(api.listarParlamentaresDoMunicipio).mockResolvedValue({
-    itens: [{ pessoaId: 7, nome: 'Beltrana', partido: 'ABC', uf: 'PR', casa: 'SENADO', urlFoto: null, recebido: 1e6, emendas: 1 }],
+    itens: [{ idPessoa: 7, nome: 'Beltrana', partido: 'ABC', uf: 'PR', casa: 'SENADO', urlFoto: null, recebido: 1e6, emendas: 1 }],
     pagina: 2,
     tamanho: 10,
     total: 11,
@@ -147,7 +147,7 @@ describe('Emendas no mapa', () => {
 
     fireEvent.change(screen.getByLabelText(/^De/), { target: { value: '2025' } });
 
-    await vi.waitFor(() => expect(api.obterMapaDoBrasil).toHaveBeenLastCalledWith({ de: 2025, ate: 2026 }));
+    await vi.waitFor(() => expect(api.obterMapaDoBrasil).toHaveBeenLastCalledWith({ primeiroAno: 2025, ultimoAno: 2026 }));
   });
 
   it('lista os estados pelo valor recebido', async () => {

@@ -31,32 +31,30 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
     /// <para>Agregação PRÓPRIA, não a soma dos `Take(8)` acima: eles mostrariam um total menor que o real, sem nada na tela indicando o corte.</para>
     /// </remarks>
     /// <param name="legislatura">Sem ano, o mais recente DENTRO do mandato (ver <c>Legislaturas.AnosDeEmenda</c>).</param>
-    public Task<EmendasDoParlamentarDto> ObterAsync(PessoaId pessoa, Ano? ano, Legislatura? legislatura, CancellationToken ct) =>
-        _leitura.ObterAsync(("emendas", pessoa.Valor, ano?.Valor, legislatura?.Numero),
-            () => CalcularAsync(pessoa.Valor, ano?.Valor, legislatura?.Numero, ct));
+    public Task<EmendasDoParlamentarDto> ObterAsync(IdPessoa idPessoa, AnoDaEmenda? anoDaEmendaPedido, Legislatura? legislatura, CancellationToken ct) =>
+        _leitura.ObterAsync(("emendas", idPessoa.Valor, anoDaEmendaPedido?.Valor, legislatura?.Numero),
+            () => CalcularAsync(idPessoa.Valor, anoDaEmendaPedido?.Valor, legislatura?.Numero, ct));
 
     /// <summary>Quem recebeu, em páginas, na mesma ordem da ficha. A primeira página é a da ficha.</summary>
     public async Task<PaginaDto<FavorecidoDaEmendaDto>> ListarFavorecidosAsync(
-        PessoaId pessoa, Ano? anoPedido, int pagina, int tamanho, CancellationToken ct)
+        IdPessoa idPessoa, AnoDaEmenda? anoDaEmendaPedido, int pagina, int tamanho, CancellationToken ct)
     {
-        var id = pessoa.Valor;
-        var ano = anoPedido?.Valor;
         (pagina, tamanho) = Normalizar(pagina, tamanho);
 
-        var alvo = await AnoAlvoAsync(id, ano, ct);
-        if (alvo is null)
+        var anoDaEmenda = await AnoDaEmendaMostradoAsync(idPessoa.Valor, anoDaEmendaPedido?.Valor, ct);
+        if (anoDaEmenda is null)
         {
             return new PaginaDto<FavorecidoDaEmendaDto>([], pagina, tamanho, 0);
         }
 
-        var identificados = FavorecidosIdentificados(EmendasDoAno(id, alvo.Value).Select(e => e.CodigoEmenda).Distinct());
+        var identificados = FavorecidosIdentificados(EmendasDoAno(idPessoa.Valor, anoDaEmenda.Value).Select(e => e.CodigoEmenda).Distinct());
 
         var itens = await identificados
             .Skip((pagina - 1) * tamanho)
             .Take(tamanho)
             .ToListAsync(ct);
 
-        var cota = await CotaDosFavorecidosAsync(id, alvo.Value, itens, ct);
+        var cota = await CotaDosFavorecidosAsync(idPessoa.Valor, anoDaEmenda.Value, itens, ct);
 
         return new PaginaDto<FavorecidoDaEmendaDto>(
             [.. itens.Select(f => ParaFavorecido(f, cota))], pagina, tamanho, await identificados.CountAsync(ct));
@@ -64,19 +62,17 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
 
     /// <summary>Os convênios, em páginas, na mesma ordem da ficha. A primeira página é a da ficha.</summary>
     public async Task<PaginaDto<ConvenioDaEmendaDto>> ListarConveniosAsync(
-        PessoaId pessoa, Ano? anoPedido, int pagina, int tamanho, CancellationToken ct)
+        IdPessoa idPessoa, AnoDaEmenda? anoDaEmendaPedido, int pagina, int tamanho, CancellationToken ct)
     {
-        var id = pessoa.Valor;
-        var ano = anoPedido?.Valor;
         (pagina, tamanho) = Normalizar(pagina, tamanho);
 
-        var alvo = await AnoAlvoAsync(id, ano, ct);
-        if (alvo is null)
+        var anoDaEmenda = await AnoDaEmendaMostradoAsync(idPessoa.Valor, anoDaEmendaPedido?.Valor, ct);
+        if (anoDaEmenda is null)
         {
             return new PaginaDto<ConvenioDaEmendaDto>([], pagina, tamanho, 0);
         }
 
-        var convenios = ConveniosDasEmendas(EmendasDoAno(id, alvo.Value).Select(e => e.CodigoEmenda).Distinct());
+        var convenios = ConveniosDasEmendas(EmendasDoAno(idPessoa.Valor, anoDaEmenda.Value).Select(e => e.CodigoEmenda).Distinct());
 
         var itens = await convenios
             .Skip((pagina - 1) * tamanho)
@@ -92,19 +88,17 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
     /// <para>É o caminho de volta à fonte: a ficha mostra somas, e cada soma se confere aqui, emenda por emenda.</para>
     /// </remarks>
     public async Task<PaginaDto<EmendaNaListaDto>> ListarEmendasAsync(
-        PessoaId pessoa, Ano? anoPedido, int pagina, int tamanho, CancellationToken ct)
+        IdPessoa idPessoa, AnoDaEmenda? anoDaEmendaPedido, int pagina, int tamanho, CancellationToken ct)
     {
-        var id = pessoa.Valor;
-        var ano = anoPedido?.Valor;
         (pagina, tamanho) = Normalizar(pagina, tamanho);
 
-        var alvo = await AnoAlvoAsync(id, ano, ct);
-        if (alvo is null)
+        var anoDaEmenda = await AnoDaEmendaMostradoAsync(idPessoa.Valor, anoDaEmendaPedido?.Valor, ct);
+        if (anoDaEmenda is null)
         {
             return new PaginaDto<EmendaNaListaDto>([], pagina, tamanho, 0);
         }
 
-        var porCodigo = EmendasDoAno(id, alvo.Value)
+        var porCodigo = EmendasDoAno(idPessoa.Valor, anoDaEmenda.Value)
             .GroupBy(e => e.CodigoEmenda)
             .Select(g => new
             {
@@ -131,18 +125,18 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
             pagina, tamanho, await porCodigo.CountAsync(ct));
     }
 
-    private async Task<EmendasDoParlamentarDto> CalcularAsync(long id, int? ano, short? legislatura, CancellationToken ct)
+    private async Task<EmendasDoParlamentarDto> CalcularAsync(long idPessoa, int? anoDaEmendaPedido, short? legislatura, CancellationToken ct)
     {
-        var alvo = await AnoAlvoAsync(id, ano, ct, legislatura);
+        var anoDaEmenda = await AnoDaEmendaMostradoAsync(idPessoa, anoDaEmendaPedido, ct, legislatura);
 
-        if (alvo is null)
+        if (anoDaEmenda is null)
         {
             return new EmendasDoParlamentarDto(
                 0, 0, 0, 0, 0, [], [], new FavorecidosDaEmendaDto(0, 0, 0, 0, null, 0, []), [],
                 new ConveniosDaEmendaDto(0, []), new CidadesDaEmendaDto(0, []));
         }
 
-        var doAno = EmendasDoAno(id, alvo.Value);
+        var doAno = EmendasDoAno(idPessoa, anoDaEmenda.Value);
 
         var destinos = await doAno
             .Where(e => e.Localidade != null)
@@ -185,7 +179,7 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
         var codigos = doAno.Select(e => e.CodigoEmenda).Distinct();
 
         return new EmendasDoParlamentarDto(
-            Ano: alvo.Value,
+            AnoDaEmenda: anoDaEmenda.Value,
             Empenhado: totais?.Empenhado ?? 0,
             Pago: totais?.Pago ?? 0,
             PagoDepois: totais?.PagoDepois ?? 0,
@@ -194,7 +188,7 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
                 new EmendaPorDestinoDto(d.Localidade, d.Empenhado, d.Pago, d.Quantidade))],
             PorFuncao: [.. funcoes.Select(f =>
                 new EmendaPorFuncaoDto(f.Funcao, f.Empenhado, f.Pago))],
-            Favorecidos: await FavorecidosAsync(id, alvo.Value, codigos, ct),
+            Favorecidos: await FavorecidosAsync(idPessoa, anoDaEmenda.Value, codigos, ct),
             PagamentosPorMes: await PagamentosPorMesAsync(codigos, ct),
             Convenios: await ConveniosAsync(codigos, ct),
             Cidades: await CidadesAsync(codigos, ct));
@@ -204,43 +198,43 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
     /// <remarks>
     /// <para>Abria no mais recente, que é o ano em andamento: valores parciais, que pareciam baixos só por estarem incompletos. O ano corrente só abre quando é o único que o parlamentar tem, e a tela o marca.</para>
     /// </remarks>
-    private async Task<int?> AnoAlvoAsync(long id, int? ano, CancellationToken ct, short? legislatura = null)
+    private async Task<int?> AnoDaEmendaMostradoAsync(long idPessoa, int? anoDaEmendaPedido, CancellationToken ct, short? legislatura = null)
     {
-        if (ano is not null)
+        if (anoDaEmendaPedido is not null)
         {
-            return ano;
+            return anoDaEmendaPedido;
         }
 
-        var daPessoa = _db.Emendas.AsNoTracking().Where(e => e.PessoaId == id);
+        var daPessoa = _db.Emendas.AsNoTracking().Where(e => e.PessoaId == idPessoa);
         if (legislatura is { } l)
         {
             var (de, ate) = Legislaturas.AnosDeEmenda(l);
             daPessoa = daPessoa.Where(e => e.Ano >= de && e.Ano <= ate);
         }
-        var anos = await daPessoa
+        var anosDaEmenda = await daPessoa
             .Select(e => (int)e.Ano)
             .Distinct()
             .ToListAsync(ct);
 
-        if (anos.Count == 0)
+        if (anosDaEmenda.Count == 0)
         {
             return null;
         }
 
         var corrente = DateTimeOffset.UtcNow.Year;
-        var fechados = anos.Where(a => a < corrente).ToList();
+        var fechados = anosDaEmenda.Where(a => a < corrente).ToList();
 
-        return fechados.Count > 0 ? fechados.Max() : anos.Max();
+        return fechados.Count > 0 ? fechados.Max() : anosDaEmenda.Max();
     }
 
-    private IQueryable<EmendaModel> EmendasDoAno(long id, int ano) =>
-        _db.Emendas.AsNoTracking().Where(e => e.PessoaId == id && e.Ano == (short)ano);
+    private IQueryable<EmendaModel> EmendasDoAno(long idPessoa, int anoDaEmenda) =>
+        _db.Emendas.AsNoTracking().Where(e => e.PessoaId == idPessoa && e.Ano == (short)anoDaEmenda);
 
     /// <remarks>
     /// <para>A lista traz só quem se identifica e recebe como destino: empresa, entidade, órgão público. Intermediário, pessoa e registro sem identificação entram nos totais ao lado, e a soma de tudo continua em <c>Recebido</c>.</para>
     /// </remarks>
     private async Task<FavorecidosDaEmendaDto> FavorecidosAsync(
-        long id, int ano, IQueryable<string> codigos, CancellationToken ct)
+        long idPessoa, int anoDaEmenda, IQueryable<string> codigos, CancellationToken ct)
     {
         var totais = await _db.EmendasFavorecidos.AsNoTracking()
             .Where(f => codigos.Contains(f.CodigoEmenda))
@@ -258,7 +252,7 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
 
         var identificados = FavorecidosIdentificados(codigos);
         var maiores = await identificados.Take(ItensPorPagina).ToListAsync(ct);
-        var cota = await CotaDosFavorecidosAsync(id, ano, maiores, ct);
+        var cota = await CotaDosFavorecidosAsync(idPessoa, anoDaEmenda, maiores, ct);
 
         return new FavorecidosDaEmendaDto(
             Recebido: totais?.Recebido ?? 0,
@@ -276,7 +270,7 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
     /// <para>O mandato sai do ano da emenda, não do ano corrente: a emenda de 2023 é da 56ª, e a cota que importa é a de 2019 a 2022.</para>
     /// </remarks>
     private async Task<Dictionary<string, decimal>> CotaDosFavorecidosAsync(
-        long id, int anoDaEmenda, IEnumerable<FavorecidoAgrupado> favorecidos, CancellationToken ct)
+        long idPessoa, int anoDaEmenda, IEnumerable<FavorecidoAgrupado> favorecidos, CancellationToken ct)
     {
         var cnpjs = favorecidos
             .Select(f => FavorecidoDaEmendaDto.CnpjPublico(f.Documento, f.NaturezaJuridica))
@@ -290,7 +284,7 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
         var (de, ate) = Legislaturas.AnosDeDespesa(Legislaturas.DoAnoDeEmenda(anoDaEmenda));
 
         return await _db.Despesas.AsNoTracking()
-            .Where(d => d.PessoaId == id && d.Ano >= de && d.Ano <= ate
+            .Where(d => d.PessoaId == idPessoa && d.Ano >= de && d.Ano <= ate
                 && !d.FornecedorEhPessoaFisica && cnpjs.Contains(d.CnpjOuHash!))
             .GroupBy(d => d.CnpjOuHash!)
             .Select(g => new { Cnpj = g.Key, Pago = g.Sum(d => d.ValorLiquido) })

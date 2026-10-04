@@ -254,16 +254,16 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     {
         ExigeDocker();
         await SemearAsync();
-        var pessoaId = await SemearDespesasAsync();
+        var idPessoa = await SemearDespesasAsync();
         using var cliente = CriarCliente();
 
-        var resposta = await cliente.GetAsync($"{Rota}/{pessoaId}/gastos");
+        var resposta = await cliente.GetAsync($"{Rota}/{idPessoa}/gastos");
         resposta.EnsureSuccessStatusCode();
 
         var gastos = await resposta.Content.ReadFromJsonAsync<GastoLido>();
 
         Assert.NotNull(gastos);
-        Assert.Equal(2025, gastos.Ano);
+        Assert.Equal(2025, gastos.AnoDaDespesa);
         Assert.Equal(3, gastos.Lancamentos);
         Assert.Equal(450m, gastos.Total);
 
@@ -281,14 +281,14 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     {
         ExigeDocker();
         await SemearAsync();
-        var pessoaId = await SemearDespesasAsync();
+        var idPessoa = await SemearDespesasAsync();
         using var cliente = CriarCliente();
 
-        var doMandato = await cliente.GetFromJsonAsync<GastoLido>($"{Rota}/{pessoaId}/gastos?legislatura=57");
-        var deOutro = await cliente.GetFromJsonAsync<GastoLido>($"{Rota}/{pessoaId}/gastos?legislatura=56");
+        var doMandato = await cliente.GetFromJsonAsync<GastoLido>($"{Rota}/{idPessoa}/gastos?legislatura=57");
+        var deOutro = await cliente.GetFromJsonAsync<GastoLido>($"{Rota}/{idPessoa}/gastos?legislatura=56");
 
-        Assert.Equal(2025, doMandato!.Ano);
-        Assert.Equal(0, deOutro!.Ano);
+        Assert.Equal(2025, doMandato!.AnoDaDespesa);
+        Assert.Equal(0, deOutro!.AnoDaDespesa);
         Assert.Equal(0, deOutro.Lancamentos);
     }
 
@@ -318,10 +318,10 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     {
         ExigeDocker();
         await SemearAsync();
-        var pessoaId = await SemearDespesasAsync();
+        var idPessoa = await SemearDespesasAsync();
         using var cliente = CriarCliente();
 
-        var json = await cliente.GetStringAsync($"{Rota}/{pessoaId}/gastos");
+        var json = await cliente.GetStringAsync($"{Rota}/{idPessoa}/gastos");
 
         Assert.DoesNotContain("cnpj", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("12345678909", json);
@@ -337,13 +337,13 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     {
         ExigeDocker();
         await SemearAsync();
-        var pessoaId = await SemearEmendasAsync();
+        var idPessoa = await SemearEmendasAsync();
         using var cliente = CriarCliente();
 
-        var emendas = await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{pessoaId}/emendas");
+        var emendas = await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{idPessoa}/emendas");
 
         Assert.NotNull(emendas);
-        Assert.Equal(2025, emendas!.Ano);
+        Assert.Equal(2025, emendas!.AnoDaEmenda);
         Assert.Equal(3, emendas.Quantidade);
 
         Assert.Equal(1_000_000m, emendas.Empenhado);
@@ -366,13 +366,13 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     {
         ExigeDocker();
         await SemearAsync();
-        var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+        var idPessoa = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
 
         for (var i = 0; i < 12; i++)
         {
             Db.Emendas.Add(new EmendaModel
             {
-                PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO",
+                PessoaId = idPessoa, CodigoAutor = "4184", NomeAutor = "FULANO",
                 CodigoEmenda = $"20255184{i:D4}", Ano = 2025,
                 Localidade = $"Municipio {i} - PA",
                 ValorEmpenhado = 100m, ValorPago = 100m
@@ -381,7 +381,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         await Db.SaveChangesAsync();
 
         using var cliente = CriarCliente();
-        var emendas = await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{pessoaId}/emendas");
+        var emendas = await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{idPessoa}/emendas");
 
         Assert.Equal(8, emendas!.PorDestino.Count);
         Assert.Equal(12, emendas.Quantidade);
@@ -414,7 +414,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     {
         ExigeDocker();
         await SemearAsync();
-        var pessoaId = await SemearEmendasAsync();
+        var idPessoa = await SemearEmendasAsync();
 
         Db.Emendas.Add(new EmendaModel
         {
@@ -427,7 +427,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         await Db.SaveChangesAsync();
 
         using var cliente = CriarCliente();
-        var emendas = await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{pessoaId}/emendas");
+        var emendas = await cliente.GetFromJsonAsync<EmendasLidas>($"{Rota}/{idPessoa}/emendas");
 
         Assert.Equal(3, emendas!.Quantidade);
         Assert.Equal(1_000_000m, emendas.Empenhado);
@@ -444,11 +444,11 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     {
         ExigeDocker();
         await SemearAsync();
-        var pessoaId = await SemearReceitasAsync();
+        var idPessoa = await SemearReceitasAsync();
         using var cliente = CriarCliente();
 
         var fin = await cliente.GetFromJsonAsync<FinanciamentoLido>(
-            $"{Rota}/{pessoaId}/financiamento");
+            $"{Rota}/{idPessoa}/financiamento");
 
         Assert.NotNull(fin);
         Assert.Equal(2022, fin!.AnoEleicao);
@@ -468,10 +468,10 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     {
         ExigeDocker();
         await SemearAsync();
-        var pessoaId = await SemearReceitasAsync();
+        var idPessoa = await SemearReceitasAsync();
         using var cliente = CriarCliente();
 
-        var json = await cliente.GetStringAsync($"{Rota}/{pessoaId}/financiamento");
+        var json = await cliente.GetStringAsync($"{Rota}/{idPessoa}/financiamento");
 
         Assert.DoesNotContain("cnpj", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("11122233344", json);
@@ -497,7 +497,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     private record DestinoLido(string Localidade, decimal Empenhado, decimal Pago, int Quantidade);
 
     private record EmendasLidas(
-        int Ano, decimal Empenhado, decimal Pago, decimal PagoDepois, int Quantidade,
+        int AnoDaEmenda, decimal Empenhado, decimal Pago, decimal PagoDepois, int Quantidade,
         IReadOnlyList<DestinoLido> PorDestino);
 
     private record FonteLida(string Fonte, decimal Total, int Lancamentos);
@@ -508,26 +508,26 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
 
     private async Task<long> SemearEmendasAsync()
     {
-        var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+        var idPessoa = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
 
         Db.Emendas.AddRange(
             new EmendaModel
             {
-                PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
+                PessoaId = idPessoa, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
                 CodigoEmenda = "202541840001", Ano = 2025,
                 Localidade = "Ananindeua - PA", Funcao = "Saúde",
                 ValorEmpenhado = 600_000m, ValorPago = 300_000m
             },
             new EmendaModel
             {
-                PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
+                PessoaId = idPessoa, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
                 CodigoEmenda = "202541840002", Ano = 2025,
                 Localidade = "Ananindeua - PA", Funcao = "Saúde",
                 ValorEmpenhado = 300_000m, ValorPago = 100_000m, ValorRestoPago = 150_000m
             },
             new EmendaModel
             {
-                PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
+                PessoaId = idPessoa, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
                 CodigoEmenda = "202541840003", Ano = 2025,
                 Localidade = "Belém - PA", Funcao = "Educação",
                 ValorEmpenhado = 100_000m, ValorPago = 0m
@@ -535,31 +535,31 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
 
         await Db.SaveChangesAsync();
 
-        return pessoaId;
+        return idPessoa;
     }
 
     private async Task<long> SemearReceitasAsync()
     {
-        var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+        var idPessoa = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
 
         Db.ReceitasDeCampanha.AddRange(
             new ReceitaDeCampanhaModel
             {
-                PessoaId = pessoaId, AnoEleicao = 2022,
+                PessoaId = idPessoa, AnoEleicao = 2022,
                 FonteReceita = ReceitaDeCampanhaModel.FonteFundoEspecial,
                 Doador = "PARTIDO EXEMPLO", DoadorCnpjOuHash = "12345678000199",
                 Valor = 3_000_000m
             },
             new ReceitaDeCampanhaModel
             {
-                PessoaId = pessoaId, AnoEleicao = 2022,
+                PessoaId = idPessoa, AnoEleicao = 2022,
                 FonteReceita = ReceitaDeCampanhaModel.FonteFundoPartidario,
                 Doador = "PARTIDO EXEMPLO", DoadorCnpjOuHash = "12345678000199",
                 Valor = 200_000m
             },
             new ReceitaDeCampanhaModel
             {
-                PessoaId = pessoaId, AnoEleicao = 2022,
+                PessoaId = idPessoa, AnoEleicao = 2022,
                 FonteReceita = "OUTROS RECURSOS",
                 Doador = "JOSE DA SILVA",
                 DoadorCnpjOuHash = new string('b', 64), DoadorEhPessoaFisica = true,
@@ -568,35 +568,35 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
 
         await Db.SaveChangesAsync();
 
-        return pessoaId;
+        return idPessoa;
     }
 
     private record CategoriaLida(string Categoria, decimal Total, int Lancamentos);
 
     private record GastoLido(
-        int Ano, decimal Total, int Lancamentos,
+        int AnoDaDespesa, decimal Total, int Lancamentos,
         IReadOnlyList<CategoriaLida> PorCategoria);
 
     private async Task<long> SemearDespesasAsync()
     {
-        var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+        var idPessoa = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
 
         Db.Despesas.AddRange(
             new DespesaModel
             {
-                PessoaId = pessoaId, Ano = 2025, Mes = 3,
+                PessoaId = idPessoa, Ano = 2025, Mes = 3,
                 Categoria = "PASSAGEM AÉREA", Fornecedor = "CIA AEREA",
                 CnpjOuHash = "12345678000199", ValorLiquido = 200m
             },
             new DespesaModel
             {
-                PessoaId = pessoaId, Ano = 2025, Mes = 4,
+                PessoaId = idPessoa, Ano = 2025, Mes = 4,
                 Categoria = "PASSAGEM AÉREA", Fornecedor = "CIA AEREA",
                 CnpjOuHash = "12345678000199", ValorLiquido = 100m
             },
             new DespesaModel
             {
-                PessoaId = pessoaId, Ano = 2025, Mes = 5,
+                PessoaId = idPessoa, Ano = 2025, Mes = 5,
                 Categoria = "COMBUSTÍVEIS", Fornecedor = "POSTO",
                 CnpjOuHash = new string('a', 64), FornecedorEhPessoaFisica = true,
                 ValorLiquido = 150m
@@ -604,7 +604,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
 
         await Db.SaveChangesAsync();
 
-        return pessoaId;
+        return idPessoa;
     }
 
     private async Task SemearAsync() =>
@@ -649,7 +649,7 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         await Db.SaveChangesAsync();
     }
 
-    private record ParlamentarJson(long Id, string Nome, string Partido, string Uf, int NVotacoes);
+    private record ParlamentarJson(long IdPessoa, string Nome, string Partido, string Uf, int NVotacoes);
 
     private record PaginaJson(
         List<ParlamentarJson> Itens, int Pagina, int Tamanho, int Total,
@@ -660,9 +660,9 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         using var cliente = CriarCliente();
         return (await cliente.GetFromJsonAsync<PaginaJson>(rota))!;
     }
-    private record SimilarJson(long PessoaId, string Nome, string Partido, float Valor, int Comuns);
+    private record SimilarJson(long IdPessoa, string Nome, string Partido, float Valor, int Comuns);
     private record FichaJson(
-        long Id, string Nome, string NomeCivil, string Partido, string Uf, int NVotacoes,
+        long IdPessoa, string Nome, string NomeCivil, string Partido, string Uf, int NVotacoes,
         List<VotoJson> VotosRecentes, List<SimilarJson> MaisSimilares);
     private record VotoJson(
         string VotacaoId, DateOnly Data, string? Descricao, short? Valor,

@@ -25,7 +25,7 @@ public record MapaDoBrasilDto(
 /// <remarks>
 /// <para>Sem dado carregado, <c>(0, 0)</c>.</para>
 /// </remarks>
-public record PeriodoDto(int De, int Ate);
+public record PeriodoDto(int PrimeiroAno, int UltimoAno);
 
 /// <summary>Uma UF: o código IBGE dela, que liga à malha do mapa, e quanto recebeu.</summary>
 /// <remarks>

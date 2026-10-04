@@ -75,7 +75,7 @@ public static class ConfiguracaoDeAutenticacao
                     var idBruto = principal?.FindFirst(SessaoDoUsuario.ClaimUsuario)?.Value;
                     var versaoBruta = principal?.FindFirst(SessaoDoUsuario.ClaimSessao)?.Value;
 
-                    if (!long.TryParse(idBruto, out var id) || !short.TryParse(versaoBruta, out var versao))
+                    if (!long.TryParse(idBruto, out var idUsuario) || !short.TryParse(versaoBruta, out var versao))
                     {
                         contexto.RejectPrincipal();
                         return;
@@ -83,7 +83,7 @@ public static class ConfiguracaoDeAutenticacao
 
                     var db = contexto.HttpContext.RequestServices.GetRequiredService<PoligraphDb>();
                     var atual = await db.Usuarios.AsNoTracking()
-                        .Where(u => u.Id == id)
+                        .Where(u => u.Id == idUsuario)
                         .Select(u => (short?)u.SessaoVersao)
                         .FirstOrDefaultAsync();
 

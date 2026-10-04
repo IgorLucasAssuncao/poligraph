@@ -100,7 +100,7 @@ export function GrafoDoDinheiroComponent({
             </text>
           )}
           <text x={LARGURA - 30} y={16} textAnchor="end" className="grafo-dinheiro-coluna">
-            {T.emendas(emendas.ano, reaisCompacto(emendas.favorecidos.recebido))}
+            {T.emendas(emendas.anoDaEmenda, reaisCompacto(emendas.favorecidos.recebido))}
           </text>
 
           {entrada.map((c, i) => {
@@ -254,7 +254,7 @@ function descreverParaLeitor(
 ): string {
   const recebeu = entrada.map((c) => T.item(c.nome, reaisCompacto(c.valor))).join('; ');
   const mandou = saida.map((c) => T.item(c.nome, reaisCompacto(c.valor))).join('; ');
-  return (campanha && entrada.length ? T.leitorCampanha(campanha.anoEleicao, nome, recebeu) : '') + T.leitorEmendas(emendas.ano, mandou);
+  return (campanha && entrada.length ? T.leitorCampanha(campanha.anoEleicao, nome, recebeu) : '') + T.leitorEmendas(emendas.anoDaEmenda, mandou);
 }
 
 function encurtar(texto: string, maximo: number): string {

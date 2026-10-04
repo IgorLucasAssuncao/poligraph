@@ -144,7 +144,7 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
         using var cliente = CriarCliente();
         var grafo = await cliente.GetFromJsonAsync<GrafoJson>(Rota);
 
-        var no = grafo!.Nos.Single(n => n.Id == alguem.Id);
+        var no = grafo!.Nos.Single(n => n.IdPessoa == alguem.Id);
         Assert.Equal(alguem.UrlFoto, no.UrlFoto);
 
         Assert.Contains(grafo.Nos, n => n.UrlFoto is null);
@@ -282,12 +282,12 @@ public class TestesEndpointGrafo(FixturePostgres postgres) : BaseIntegracao(post
     }
 
     private record NoJson(
-        long Id, string Nome, string Partido, string Uf,
+        long IdPessoa, string Nome, string Partido, string Uf,
         short? Comunidade, float? EixoX, float? EixoY, int NVotacoes,
         string? UrlFoto);
 
     private record ArestaJson(
-        long De, long Para, float Peso, int VotacoesComuns, float? Cosseno);
+        long IdPessoaDe, long IdPessoaPara, float Peso, int VotacoesComuns, float? Cosseno);
 
     private record GrafoJson(
         long ExecucaoId, string Casa, short Legislatura,

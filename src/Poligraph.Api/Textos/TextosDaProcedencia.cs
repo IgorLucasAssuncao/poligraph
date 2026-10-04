@@ -1,4 +1,4 @@
-using Poligraph.Api.Tipos;
+﻿using Poligraph.Api.Tipos;
 using Poligraph.Data;
 
 namespace Poligraph.Api.Textos;
@@ -23,40 +23,40 @@ public static class TextosDaProcedencia
         $"Os votos com posição (Sim ou Não; abstenção não conta) desta pessoa nas votações da {legislatura}ª legislatura, "
         + "em plenário e comissões, uma linha por votação. É a mesma conta do número da ficha.";
 
-    public static string Cota(int de, int ate, CategoriaDeDespesa? categoria) =>
-        $"Os lançamentos da cota parlamentar desta pessoa em {(de == ate ? $"{de}" : $"{de} a {ate}")}"
+    public static string Cota(int primeiroAnoDaDespesa, int ultimoAnoDaDespesa, CategoriaDeDespesa? categoria) =>
+        $"Os lançamentos da cota parlamentar desta pessoa em {(primeiroAnoDaDespesa == ultimoAnoDaDespesa ? $"{primeiroAnoDaDespesa}" : $"{primeiroAnoDaDespesa} a {ultimoAnoDaDespesa}")}"
         + (categoria is null ? "" : $", na categoria \"{categoria}\"")
         + ", pelo valor líquido. Estorno entra negativo.";
 
-    public static string Emendas(int de, int ate) =>
-        $"As emendas {(de == ate ? $"de {de}" : $"de {de} a {ate}")} atribuídas a esta pessoa pelo código de autor, uma linha por "
+    public static string Emendas(int primeiroAnoDaEmenda, int ultimoAnoDaEmenda) =>
+        $"As emendas {(primeiroAnoDaEmenda == ultimoAnoDaEmenda ? $"de {primeiroAnoDaEmenda}" : $"de {primeiroAnoDaEmenda} a {ultimoAnoDaEmenda}")} atribuídas a esta pessoa pelo código de autor, uma linha por "
         + "emenda e localidade, pelo valor empenhado. Só entra emenda com autor reconciliado.";
 
-    public static string Campanha(int eleicao) =>
-        $"As receitas da campanha de {eleicao} desta pessoa, ao cargo da casa em que ela votou. "
+    public static string Campanha(int anoDaEleicao) =>
+        $"As receitas da campanha de {anoDaEleicao} desta pessoa, ao cargo da casa em que ela votou. "
         + "O documento do doador pessoa física fica guardado só como hash.";
 
-    public static string Patrimonio(int eleicao) =>
-        $"Os bens declarados ao TSE na candidatura de {eleicao}, somados por tipo. "
+    public static string Patrimonio(int anoDaEleicao) =>
+        $"Os bens declarados ao TSE na candidatura de {anoDaEleicao}, somados por tipo. "
         + "É autodeclaração: o TSE publica o que o candidato informou.";
 
-    public static string Pagamentos(Periodo periodo, Uf? uf, CodigoIbge? municipio)
+    public static string Pagamentos(Periodo<AnoDaEmenda> periodoDasEmendas, Uf? uf, CodigoIbge? municipio)
     {
-        var lugar = municipio is not null ? ", a quem tem sede nesta cidade" : uf is { } sigla ? $", a quem tem sede em {sigla}" : "";
-        return $"Os pagamentos das emendas {periodo.Texto}{lugar}, do Portal da Transparência, "
+        var ondeFicaASede = municipio is not null ? ", a quem tem sede nesta cidade" : uf is { } ufDaSede ? $", a quem tem sede em {ufDaSede}" : "";
+        return $"Os pagamentos das emendas {periodoDasEmendas.Texto}{ondeFicaASede}, do Portal da Transparência, "
             + "uma linha por emenda, mês e favorecido. O ano é o da emenda, e o pagamento pode ser de anos depois."
-            + (lugar == "" ? "" : " A sede vem do cadastro de CNPJ da Receita Federal.");
+            + (ondeFicaASede == "" ? "" : " A sede vem do cadastro de CNPJ da Receita Federal.");
     }
 
-    public static string GovernoReceitas(Periodo periodo) =>
-        $"A receita realizada do Poder Executivo federal {periodo.Texto}, por origem, do arquivo de receitas do Portal da Transparência, uma linha por ano, categoria e origem. "
+    public static string GovernoReceitas(Periodo<AnoDoOrcamento> periodoDoOrcamento) =>
+        $"A receita realizada do Poder Executivo federal {periodoDoOrcamento.Texto}, por origem, do arquivo de receitas do Portal da Transparência, uma linha por ano, categoria e origem. "
         + "O que foi pego emprestado é a origem \"operações de crédito\" desse mesmo arquivo.";
 
-    public static string GovernoSigiloso(Periodo periodo) =>
-        $"O gasto sigiloso {periodo.Texto}: cartão corporativo e ações marcadas como sigilosas, por órgão, dos arquivos mensais do Portal.";
+    public static string GovernoSigiloso(Periodo<AnoDoOrcamento> periodoDoOrcamento) =>
+        $"O gasto sigiloso {periodoDoOrcamento.Texto}: cartão corporativo e ações marcadas como sigilosas, por órgão, dos arquivos mensais do Portal.";
 
-    public static string GovernoGastos(Periodo periodo) =>
-        $"O gasto pago do Poder Executivo federal {periodo.Texto}, do arquivo anual do orçamento do Portal da Transparência, uma linha por ano e função, mais os Encargos especiais por subfunção. "
+    public static string GovernoGastos(Periodo<AnoDoOrcamento> periodoDoOrcamento) =>
+        $"O gasto pago do Poder Executivo federal {periodoDoOrcamento.Texto}, do arquivo anual do orçamento do Portal da Transparência, uma linha por ano e função, mais os Encargos especiais por subfunção. "
         + "Os restos a pagar pagos somados vêm dos arquivos mensais de execução.";
 
     public const string Entidade =
@@ -101,5 +101,5 @@ public static class TextosDaProcedencia
     };
 
     public const string ContextoSemParametro =
-        "O contexto pedido precisa de um parâmetro que não veio: pessoa, casa, período ou CNPJ.";
+        "O contexto pedido precisa de um parâmetro que não veio: idPessoa, casa, período ou CNPJ.";
 }

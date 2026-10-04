@@ -11,4 +11,4 @@ namespace Poligraph.Api.Dtos;
 /// junto para que a comparação entre as duas seja verificável na própria interface.
 /// </summary>
 public record ArestaDoGrafoDto(
-    long De, long Para, float Peso, int VotacoesComuns, float? Cosseno);
+    long IdPessoaDe, long IdPessoaPara, float Peso, int VotacoesComuns, float? Cosseno);

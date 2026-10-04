@@ -27,7 +27,7 @@ public record LinhaDaProcedenciaDto(string Descricao, string? Detalhe, DateOnly?
 /// <param name="Versao">A versão da ETL que leu o arquivo: o hash dos fontes dela. Nula nas cargas anteriores à Pendência 73.</param>
 /// <param name="Linhas">Quantas linhas do recorte saíram deste arquivo.</param>
 public record CargaDto(
-    long Id,
+    long IdCarga,
     TipoFonteDeCarga Fonte,
     string Orgao,
     string BaseLegal,

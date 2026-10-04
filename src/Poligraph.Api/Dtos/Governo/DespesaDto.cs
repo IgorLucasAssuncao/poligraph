@@ -22,7 +22,7 @@ public record DespesaDto(
 /// <para><see cref="DotacaoCompleta"/> é falso quando se empenhou além da dotação publicada: ela não é a que autorizou o gasto, e a razão entre pago e dotação não pode ser mostrada.</para>
 /// </remarks>
 public record AreaDaDespesaDto(
-    string Codigo,
+    string CodigoDaFuncao,
     string Nome,
     decimal DotacaoAtualizada,
     decimal Empenhado,

@@ -85,13 +85,13 @@ export function FaixaDeContasComponent({
         />
         <ValorDaContaComponent
           para={`${base}/emendas${sufixo}`}
-          rotulo={T.faixa.emendas(emendas?.ano)}
+          rotulo={T.faixa.emendas(emendas?.anoDaEmenda)}
           valor={emendas?.empenhado}
           nota={T.faixa.emendasNota}
         />
         <ValorDaContaComponent
           para={`${base}/cota${sufixo}`}
-          rotulo={T.faixa.cota(gastos?.ano)}
+          rotulo={T.faixa.cota(gastos?.anoDaDespesa)}
           valor={gastos?.total}
           nota={T.faixa.cotaNota}
         />
@@ -133,13 +133,13 @@ function CarregandoComponent({ contas, erro }: { contas: Contas | null; erro: bo
  * Emendas
  */
 export function AbaEmendasComponent({
-  pessoaId,
+  idPessoa,
   contas,
   erro,
   nome,
   descricao,
 }: {
-  pessoaId: number;
+  idPessoa: number;
   contas: Contas | null;
   erro: boolean;
   /** Para o centro do grafo do dinheiro. */
@@ -177,14 +177,14 @@ export function AbaEmendasComponent({
           <p className="frase-resposta">
             {T.emendas.resposta(
               <ComProcedenciaComponent
-                consulta={{ contexto: 'emendas', pessoa: pessoaId, ano: emendas.ano }}
-                rotulo={T.emendas.rotuloDaProcedencia(emendas.ano)}
+                consulta={{ contexto: 'emendas', idPessoa: idPessoa, anoDaEmenda: emendas.anoDaEmenda }}
+                rotulo={T.emendas.rotuloDaProcedencia(emendas.anoDaEmenda)}
               >
                 <strong>{reais(pagoTotal)}</strong>
               </ComProcedenciaComponent>,
               reais(emendas.empenhado),
               emendas.quantidade,
-              emendas.ano,
+              emendas.anoDaEmenda,
               (fracao(pagoTotal) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 }),
             )}
           </p>
@@ -201,7 +201,7 @@ export function AbaEmendasComponent({
         <p className="legenda-execucao">
           <span>
             <span className="amostra-cor" aria-hidden="true" />
-            {T.emendas.pagoNoAno(emendas.ano, reais(emendas.pago))}
+            {T.emendas.pagoNoAno(emendas.anoDaEmenda, reais(emendas.pago))}
           </span>
           {emendas.pagoDepois > 0 && (
             <span>
@@ -221,7 +221,7 @@ export function AbaEmendasComponent({
           <CidadesQueReceberamComponent cidades={emendas.cidades} />
         </div>
         <div>
-          <QuemRecebeuComponent pessoaId={pessoaId} favorecidos={emendas.favorecidos} ano={emendas.ano} />
+          <QuemRecebeuComponent idPessoa={idPessoa} favorecidos={emendas.favorecidos} anoDaEmenda={emendas.anoDaEmenda} />
         </div>
       </div>
 
@@ -250,9 +250,9 @@ export function AbaEmendasComponent({
           ))}
         </ul>
 
-        <QuandoFoiPagoComponent meses={emendas.pagamentosPorMes} ano={emendas.ano} />
-        <ConveniosComponent pessoaId={pessoaId} convenios={emendas.convenios} ano={emendas.ano} />
-        <EmendasUmaAUmaComponent pessoaId={pessoaId} ano={emendas.ano} total={emendas.quantidade} />
+        <QuandoFoiPagoComponent meses={emendas.pagamentosPorMes} anoDaEmenda={emendas.anoDaEmenda} />
+        <ConveniosComponent idPessoa={idPessoa} convenios={emendas.convenios} anoDaEmenda={emendas.anoDaEmenda} />
+        <EmendasUmaAUmaComponent idPessoa={idPessoa} anoDaEmenda={emendas.anoDaEmenda} total={emendas.quantidade} />
       </details>
 
       <p className="ajuda ajuda-espacada">{T.emendas.fonte}</p>
@@ -349,35 +349,35 @@ function DestinoComponent({ localidade }: { localidade: string }) {
  * RISCO: RNF-13: o documento de pessoa física é hasheado; a tela diz que é pessoa.
  */
 export function AbaCotaComponent({
-  pessoaId,
+  idPessoa,
   contas,
   erro,
   legislatura,
 }: {
-  pessoaId: number;
+  idPessoa: number;
   contas: Contas | null;
   erro: boolean;
   legislatura?: number | null;
 }) {
-  const [doAno, setDoAno] = useState<{ ano: number; gastos: GastoDeCota | null } | null>(null);
+  const [doAno, setDoAno] = useState<{ anoDaDespesa: number; gastos: GastoDeCota | null } | null>(null);
   const padrao = contas?.gastos;
   const gastos = doAno?.gastos ?? (doAno ? null : padrao);
 
   if (!padrao) return <CarregandoComponent contas={contas} erro={erro} />;
 
-  const escolher = (ano: number) => {
-    if (ano === padrao.ano) {
+  const escolher = (anoDaDespesa: number) => {
+    if (anoDaDespesa === padrao.anoDaDespesa) {
       setDoAno(null);
       return;
     }
-    setDoAno({ ano, gastos: null });
-    obterGastos(pessoaId, legislatura, ano)
-      .then((g) => setDoAno((atual) => (atual?.ano === ano ? { ano, gastos: g } : atual)))
+    setDoAno({ anoDaDespesa, gastos: null });
+    obterGastos(idPessoa, legislatura, anoDaDespesa)
+      .then((g) => setDoAno((atual) => (atual?.anoDaDespesa === anoDaDespesa ? { anoDaDespesa, gastos: g } : atual)))
       .catch(() => setDoAno(null));
   };
 
   const seletor = legislatura ? (
-    <SeletorDeAnoDaCotaComponent legislatura={legislatura} ano={doAno?.ano ?? padrao.ano} aoEscolher={escolher} />
+    <SeletorDeAnoDaCotaComponent legislatura={legislatura} anoDaDespesa={doAno?.anoDaDespesa ?? padrao.anoDaDespesa} aoEscolher={escolher} />
   ) : null;
 
   if (!gastos) {
@@ -393,7 +393,7 @@ export function AbaCotaComponent({
     return (
       <section className="aba-dinheiro">
         {seletor}
-        <p className="vazio">{T.cota.vazio(doAno ? doAno.ano : null)}</p>
+        <p className="vazio">{T.cota.vazio(doAno ? doAno.anoDaDespesa : null)}</p>
       </section>
     );
   }
@@ -407,12 +407,12 @@ export function AbaCotaComponent({
       <p className="frase-resposta">
         {T.cota.resposta(
           <ComProcedenciaComponent
-            consulta={{ contexto: 'cota', pessoa: pessoaId, ano: gastos.ano }}
-            rotulo={T.cota.rotuloDaProcedencia(gastos.ano)}
+            consulta={{ contexto: 'cota', idPessoa: idPessoa, anoDaDespesa: gastos.anoDaDespesa }}
+            rotulo={T.cota.rotuloDaProcedencia(gastos.anoDaDespesa)}
           >
             <strong>{reais(gastos.total)}</strong>
           </ComProcedenciaComponent>,
-          gastos.ano,
+          gastos.anoDaDespesa,
           gastos.lancamentos,
           principal ? minusculas(principal.categoria).replace(/\.+$/, '') : null,
         )}
@@ -429,8 +429,8 @@ export function AbaCotaComponent({
                 valor={c.total}
                 maior={maior}
                 procedencia={{
-                  consulta: { contexto: 'cota', pessoa: pessoaId, ano: gastos.ano, categoria: c.categoria },
-                  rotulo: T.cota.rotuloDaCategoria(gastos.ano, minusculas(c.categoria)),
+                  consulta: { contexto: 'cota', idPessoa: idPessoa, anoDaDespesa: gastos.anoDaDespesa, categoria: c.categoria },
+                  rotulo: T.cota.rotuloDaCategoria(gastos.anoDaDespesa, minusculas(c.categoria)),
                 }}
               />
             ))}
@@ -454,7 +454,7 @@ export function AbaCotaComponent({
 
       <details className="detalhes-da-aba">
         <summary>{T.cota.verDetalhes}</summary>
-        <LancamentosDaCotaComponent pessoaId={pessoaId} ano={gastos.ano} total={gastos.lancamentos} />
+        <LancamentosDaCotaComponent idPessoa={idPessoa} anoDaDespesa={gastos.anoDaDespesa} total={gastos.lancamentos} />
       </details>
 
       <p className="ajuda ajuda-espacada">{T.cota.fonte}</p>
@@ -463,8 +463,8 @@ export function AbaCotaComponent({
 }
 
 /** Os lançamentos, nota por nota — o caminho de volta de cada soma à fonte. */
-function LancamentosDaCotaComponent({ pessoaId, ano, total }: { pessoaId: number; ano: number; total: number }) {
-  const lista = usePaginas(NENHUM, total, 20, (pagina) => listarLancamentos(pessoaId, ano, pagina, 20));
+function LancamentosDaCotaComponent({ idPessoa, anoDaDespesa, total }: { idPessoa: number; anoDaDespesa: number; total: number }) {
+  const lista = usePaginas(NENHUM, total, 20, (pagina) => listarLancamentos(idPessoa, anoDaDespesa, pagina, 20));
 
   return (
     <>
@@ -473,9 +473,9 @@ function LancamentosDaCotaComponent({ pessoaId, ano, total }: { pessoaId: number
         <BotaoBaixarCsvComponent
           rotulo={T.lancamentos.baixar}
           montar={async () => {
-            const todas = await buscarTodas((pagina) => listarLancamentos(pessoaId, ano, pagina, 100));
+            const todas = await buscarTodas((pagina) => listarLancamentos(idPessoa, anoDaDespesa, pagina, 100));
             baixarCsv(
-              T.lancamentos.arquivo(pessoaId, ano),
+              T.lancamentos.arquivo(idPessoa, anoDaDespesa),
               [...T.lancamentos.colunas],
               todas.map((l) => [l.data, l.mes, l.categoria, l.fornecedor, l.valor, l.urlDocumento]),
             );
@@ -517,14 +517,14 @@ function LancamentosDaCotaComponent({ pessoaId, ano, total }: { pessoaId: number
  *
  * Campanha
  */
-export function AbaCampanhaComponent({ pessoaId, contas, erro }: { pessoaId: number; contas: Contas | null; erro: boolean }) {
+export function AbaCampanhaComponent({ idPessoa, contas, erro }: { idPessoa: number; contas: Contas | null; erro: boolean }) {
   const fin = contas?.fin;
   if (!fin) return <CarregandoComponent contas={contas} erro={erro} />;
 
   return (
     <>
-      <FinanciamentoComponent pessoaId={pessoaId} fin={fin} />
-      <PatrimonioDeclaradoComponent pessoaId={pessoaId} />
+      <FinanciamentoComponent idPessoa={idPessoa} fin={fin} />
+      <PatrimonioDeclaradoComponent idPessoa={idPessoa} />
     </>
   );
 }
@@ -532,7 +532,7 @@ export function AbaCampanhaComponent({ pessoaId, contas, erro }: { pessoaId: num
 /**
  * RISCO: RNF-13: o documento de pessoa física é hasheado no banco.
  */
-function FinanciamentoComponent({ pessoaId, fin }: { pessoaId: number; fin: FinanciamentoDeCampanha }) {
+function FinanciamentoComponent({ idPessoa, fin }: { idPessoa: number; fin: FinanciamentoDeCampanha }) {
   if (fin.total === 0) {
     return (
       <section className="aba-dinheiro">
@@ -549,7 +549,7 @@ function FinanciamentoComponent({ pessoaId, fin }: { pessoaId: number; fin: Fina
       <p className="frase-resposta">
         {T.campanha.resposta(
           <ComProcedenciaComponent
-            consulta={{ contexto: 'campanha', pessoa: pessoaId, ano: fin.anoEleicao }}
+            consulta={{ contexto: 'campanha', idPessoa: idPessoa, anoDaEleicao: fin.anoEleicao }}
             rotulo={T.campanha.rotuloDaProcedencia(fin.anoEleicao)}
           >
             <strong>{reais(fin.total)}</strong>
@@ -618,19 +618,19 @@ function FinanciamentoComponent({ pessoaId, fin }: { pessoaId: number; fin: Fina
  *
  * RISCO: Só tipo e valor: a descrição de cada bem traz endereço, e não chega ao site.
  */
-function PatrimonioDeclaradoComponent({ pessoaId }: { pessoaId: number }) {
+function PatrimonioDeclaradoComponent({ idPessoa }: { idPessoa: number }) {
   const [declaracoes, setDeclaracoes] = useState<DeclaracaoDeBens[] | null>(null);
   const [erro, setErro] = useState(false);
 
   useEffect(() => {
     let atual = true;
-    obterPatrimonio(pessoaId)
+    obterPatrimonio(idPessoa)
       .then((lidas) => atual && setDeclaracoes(lidas))
       .catch(() => atual && setErro(true));
     return () => {
       atual = false;
     };
-  }, [pessoaId]);
+  }, [idPessoa]);
 
   if (erro) return <p className="erro">{T.patrimonio.erro}</p>;
   if (!declaracoes) return <EsqueletoDeTextoComponent rotulo={T.patrimonio.carregando} paragrafos={1} />;
@@ -666,14 +666,14 @@ function PatrimonioDeclaradoComponent({ pessoaId }: { pessoaId: number }) {
       <p className="frase-resposta">
         {T.patrimonio.resposta(
           <ComProcedenciaComponent
-            consulta={{ contexto: 'patrimonio', pessoa: pessoaId, ano: ultima.anoEleicao }}
+            consulta={{ contexto: 'patrimonio', idPessoa: idPessoa, anoDaEleicao: ultima.anoEleicao }}
             rotulo={T.patrimonio.rotuloDaProcedencia(ultima.anoEleicao)}
           >
             <strong>{reais(ultima.total)}</strong>
           </ComProcedenciaComponent>,
           ultima.bens,
           ultima.anoEleicao,
-          anterior ? { ano: anterior.anoEleicao, total: reais(anterior.total) } : null,
+          anterior ? { anoDaEleicao: anterior.anoEleicao, total: reais(anterior.total) } : null,
         )}
       </p>
 
@@ -701,12 +701,12 @@ function PatrimonioDeclaradoComponent({ pessoaId }: { pessoaId: number }) {
  */
 function SeletorDeAnoDaCotaComponent({
   legislatura,
-  ano,
+  anoDaDespesa,
   aoEscolher,
 }: {
   legislatura: number;
-  ano: number;
-  aoEscolher: (ano: number) => void;
+  anoDaDespesa: number;
+  aoEscolher: (anoDaDespesa: number) => void;
 }) {
   const posse = Number(periodoDaLegislatura(legislatura).slice(0, 4));
   const atual = new Date().getFullYear();
@@ -724,7 +724,7 @@ function SeletorDeAnoDaCotaComponent({
           </>
         ),
       }))}
-      escolhida={ano}
+      escolhida={anoDaDespesa}
       aoEscolher={aoEscolher}
     />
   );

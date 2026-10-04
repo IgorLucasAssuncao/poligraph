@@ -45,19 +45,19 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     private readonly ServicoAutoresDeEmenda _autores = autores;
     private readonly CacheDeLeitura _leitura = leitura;
 
-    public async Task<MapaDoBrasilDto> ObterBrasilAsync(Ano? de, Ano? ate, CancellationToken ct)
+    public async Task<MapaDoBrasilDto> ObterBrasilAsync(Periodo<AnoDaEmenda> periodoPedido, CancellationToken ct)
     {
-        var (periodo, anos, prefixos) = await PeriodoAsync(de?.Valor, ate?.Valor, ct);
-        if (prefixos.Length == 0)
+        var (periodoMostrado, anosDaEmendaCarregados, prefixosDoCodigoDaEmenda) = await PeriodoAsync(periodoPedido, ct);
+        if (prefixosDoCodigoDaEmenda.Length == 0)
         {
-            return new MapaDoBrasilDto(periodo, anos, 0, 0, 0, 0, []);
+            return new MapaDoBrasilDto(periodoMostrado, anosDaEmendaCarregados, 0, 0, 0, 0, []);
         }
 
-        return await _cache.GetOrCreateAsync($"mapa:brasil:{periodo.De}-{periodo.Ate}", async entrada =>
+        return await _cache.GetOrCreateAsync($"mapa:brasil:{periodoMostrado.PrimeiroAno}-{periodoMostrado.UltimoAno}", async entrada =>
         {
             entrada.AbsoluteExpirationRelativeToNow = ValidadeDaCidade;
 
-            var doPeriodo = DoPeriodo(prefixos);
+            var doPeriodo = DoPeriodo(prefixosDoCodigoDaEmenda);
             var totais = await doPeriodo
                 .GroupBy(_ => 1)
                 .Select(g => new
@@ -89,20 +89,20 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
                 .ToDictionary(g => g.Key, g => g.Sum(m => (long)populacoes[m.CodigoIbge]));
 
             return new MapaDoBrasilDto(
-                periodo, anos, recebido, noMapa, viaIntermediario,
+                periodoMostrado, anosDaEmendaCarregados, recebido, noMapa, viaIntermediario,
                 SemSede: recebido - noMapa - viaIntermediario,
                 [.. porUf.Select(u => new RecebidoNaUfDto(
                     u.Uf, u.CodigoUf, u.Recebido, u.Municipios,
                     porUfPopulacao.TryGetValue(u.Uf, out var p) ? p : null))],
                 anoDaPopulacao);
-        }) ?? new MapaDoBrasilDto(periodo, anos, 0, 0, 0, 0, []);
+        }) ?? new MapaDoBrasilDto(periodoMostrado, anosDaEmendaCarregados, 0, 0, 0, 0, []);
     }
 
     /// <remarks>
     /// <para>Traz TODAS as cidades da UF, com zero onde nada chegou: o mapa mostra o nome de cada uma sob o mouse, e cidade sem pagamento também é informação.</para>
     /// </remarks>
-    public Task<MapaDoEstadoDto> ObterEstadoAsync(Uf uf, Ano? de, Ano? ate, CancellationToken ct) =>
-        _leitura.ObterAsync(("mapa:estado", uf.Sigla, de?.Valor, ate?.Valor), () => CalcularEstadoAsync(uf.Sigla, de?.Valor, ate?.Valor, ct));
+    public Task<MapaDoEstadoDto> ObterEstadoAsync(Uf uf, Periodo<AnoDaEmenda> periodoPedido, CancellationToken ct) =>
+        _leitura.ObterAsync(("mapa:estado", uf.Sigla, periodoPedido), () => CalcularEstadoAsync(uf.Sigla, periodoPedido, ct));
 
     /// <summary>A busca "sua cidade", sem caixa e sem acento. O resultado é o código IBGE.</summary>
     /// <remarks>
@@ -132,9 +132,9 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     /// <para>Devolve <c>null</c> para código IBGE inexistente, e o endpoint responde 404.</para>
     /// </remarks>
     public async Task<EmendasDoMunicipioDto?> ObterMunicipioAsync(
-        CodigoIbge codigoIbge, Ano? de, Ano? ate, CancellationToken ct)
+        CodigoIbge codigoIbge, Periodo<AnoDaEmenda> periodoPedido, CancellationToken ct)
     {
-        var cidade = await CidadeAsync(codigoIbge.Digitos, de?.Valor, ate?.Valor, ct);
+        var cidade = await CidadeAsync(codigoIbge.Digitos, periodoPedido, ct);
         if (cidade is null)
         {
             return null;
@@ -151,8 +151,8 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
 
     /// <summary>Os convênios da cidade, em páginas. A primeira é a do painel.</summary>
     public async Task<ConveniosDaCidadeDto?> ListarConveniosAsync(
-        CodigoIbge codigoIbge, Ano? de, Ano? ate, int pagina, CancellationToken ct) =>
-        await CidadeAsync(codigoIbge.Digitos, de?.Valor, ate?.Valor, ct) is { } cidade ? ResumoDosConvenios(cidade.Convenios, pagina) : null;
+        CodigoIbge codigoIbge, Periodo<AnoDaEmenda> periodoPedido, int pagina, CancellationToken ct) =>
+        await CidadeAsync(codigoIbge.Digitos, periodoPedido, ct) is { } cidade ? ResumoDosConvenios(cidade.Convenios, pagina) : null;
 
     private static ConveniosDaCidadeDto ResumoDosConvenios(IReadOnlyList<ConvenioDaCidadeDto> convenios, int pagina)
     {
@@ -171,32 +171,31 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
 
     /// <summary>Os deputados e senadores que mandaram dinheiro para a cidade, em páginas. A primeira é a do painel.</summary>
     public async Task<PaginaDto<ParlamentarQueMandouDto>?> ListarParlamentaresAsync(
-        CodigoIbge codigoIbge, Ano? de, Ano? ate, int pagina, CancellationToken ct) =>
-        await CidadeAsync(codigoIbge.Digitos, de?.Valor, ate?.Valor, ct) is { } cidade ? Paginar(cidade.Parlamentares, pagina) : null;
+        CodigoIbge codigoIbge, Periodo<AnoDaEmenda> periodoPedido, int pagina, CancellationToken ct) =>
+        await CidadeAsync(codigoIbge.Digitos, periodoPedido, ct) is { } cidade ? Paginar(cidade.Parlamentares, pagina) : null;
 
     /// <summary>Quem recebeu na cidade, em páginas. A primeira é a do painel.</summary>
     public async Task<PaginaDto<FavorecidoDaEmendaDto>?> ListarFavorecidosAsync(
-        CodigoIbge codigoIbge, Ano? de, Ano? ate, int pagina, CancellationToken ct) =>
-        await CidadeAsync(codigoIbge.Digitos, de?.Valor, ate?.Valor, ct) is { } cidade ? Paginar(cidade.Favorecidos, pagina) : null;
+        CodigoIbge codigoIbge, Periodo<AnoDaEmenda> periodoPedido, int pagina, CancellationToken ct) =>
+        await CidadeAsync(codigoIbge.Digitos, periodoPedido, ct) is { } cidade ? Paginar(cidade.Favorecidos, pagina) : null;
 
-    private async Task<MapaDoEstadoDto> CalcularEstadoAsync(string uf, int? de, int? ate, CancellationToken ct)
+    private async Task<MapaDoEstadoDto> CalcularEstadoAsync(string siglaDaUf, Periodo<AnoDaEmenda> periodoPedido, CancellationToken ct)
     {
-        var (periodo, _, prefixos) = await PeriodoAsync(de, ate, ct);
-        uf = uf.ToUpperInvariant();
-        if (prefixos.Length == 0)
+        var (periodoMostrado, _, prefixosDoCodigoDaEmenda) = await PeriodoAsync(periodoPedido, ct);
+        if (prefixosDoCodigoDaEmenda.Length == 0)
         {
-            return new MapaDoEstadoDto(uf, periodo, 0, []);
+            return new MapaDoEstadoDto(siglaDaUf, periodoMostrado, 0, []);
         }
 
-        var recebido = await NoMapa(DoPeriodo(prefixos))
-            .Where(p => p.Uf == uf)
+        var recebido = await NoMapa(DoPeriodo(prefixosDoCodigoDaEmenda))
+            .Where(p => p.Uf == siglaDaUf)
             .GroupBy(p => p.CodigoIbge)
             .Select(g => new { CodigoIbge = g.Key, Recebido = g.Sum(p => p.Valor) })
             .ToDictionaryAsync(m => m.CodigoIbge, m => m.Recebido, ct);
 
         var (populacoes, _) = await PopulacoesAsync(ct);
         var porMunicipio = (await MunicipiosAsync(ct))
-            .Where(m => m.Uf == uf)
+            .Where(m => m.Uf == siglaDaUf)
             .Select(m => new RecebidoNoMunicipioDto(
                 m.CodigoIbge, m.Nome, recebido.GetValueOrDefault(m.CodigoIbge),
                 populacoes.TryGetValue(m.CodigoIbge, out var p) ? p : null))
@@ -204,7 +203,7 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
             .ThenBy(m => m.Nome, StringComparer.Create(CultureInfo.GetCultureInfo("pt-BR"), ignoreCase: true))
             .ToList();
 
-        return new MapaDoEstadoDto(uf, periodo, recebido.Values.Sum(), porMunicipio);
+        return new MapaDoEstadoDto(siglaDaUf, periodoMostrado, recebido.Values.Sum(), porMunicipio);
     }
 
     /// <summary>Os anos das emendas que têm pagamento registrado. Em cache: é a mesma lista em toda chamada.</summary>
@@ -212,12 +211,12 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
         await _cache.GetOrCreateAsync("mapa:anos", async entrada =>
         {
             entrada.AbsoluteExpirationRelativeToNow = ValidadeDaCidade;
-            var prefixos = await _db.EmendasFavorecidos.AsNoTracking()
+            var prefixosDoCodigoDaEmenda = await _db.EmendasFavorecidos.AsNoTracking()
                 .Select(f => f.CodigoEmenda.Substring(0, 4))
                 .Distinct()
                 .ToListAsync(ct);
 
-            return (IReadOnlyList<int>)[.. prefixos.Select(p => int.Parse(p, CultureInfo.InvariantCulture)).Order()];
+            return (IReadOnlyList<int>)[.. prefixosDoCodigoDaEmenda.Select(p => int.Parse(p, CultureInfo.InvariantCulture)).Order()];
         }) ?? [];
 
     /// <summary>
@@ -228,31 +227,31 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     /// <para><c>Prefixos</c> são os anos do período como texto: o ano da emenda são os quatro primeiros dígitos do código dela.</para>
     /// </remarks>
     private async Task<(PeriodoDto Periodo, IReadOnlyList<int> Anos, string[] Prefixos)> PeriodoAsync(
-        int? de, int? ate, CancellationToken ct)
+        Periodo<AnoDaEmenda> periodoPedido, CancellationToken ct)
     {
-        var anos = await AnosAsync(ct);
-        if (anos.Count == 0)
+        var anosDaEmendaCarregados = await AnosAsync(ct);
+        if (anosDaEmendaCarregados.Count == 0)
         {
-            return (new PeriodoDto(0, 0), anos, []);
+            return (new PeriodoDto(0, 0), anosDaEmendaCarregados, []);
         }
 
-        var inicio = Math.Clamp(de ?? anos[0], anos[0], anos[^1]);
-        var fim = Math.Clamp(ate ?? anos[^1], anos[0], anos[^1]);
-        if (inicio > fim)
+        var primeiroAnoDaEmenda = Math.Clamp(periodoPedido.Primeiro?.Valor ?? anosDaEmendaCarregados[0], anosDaEmendaCarregados[0], anosDaEmendaCarregados[^1]);
+        var ultimoAnoDaEmenda = Math.Clamp(periodoPedido.Ultimo?.Valor ?? anosDaEmendaCarregados[^1], anosDaEmendaCarregados[0], anosDaEmendaCarregados[^1]);
+        if (primeiroAnoDaEmenda > ultimoAnoDaEmenda)
         {
-            (inicio, fim) = (fim, inicio);
+            (primeiroAnoDaEmenda, ultimoAnoDaEmenda) = (ultimoAnoDaEmenda, primeiroAnoDaEmenda);
         }
 
-        var prefixos = anos
-            .Where(a => a >= inicio && a <= fim)
+        var prefixosDoCodigoDaEmenda = anosDaEmendaCarregados
+            .Where(a => a >= primeiroAnoDaEmenda && a <= ultimoAnoDaEmenda)
             .Select(a => a.ToString(CultureInfo.InvariantCulture))
             .ToArray();
 
-        return (new PeriodoDto(inicio, fim), anos, prefixos);
+        return (new PeriodoDto(primeiroAnoDaEmenda, ultimoAnoDaEmenda), anosDaEmendaCarregados, prefixosDoCodigoDaEmenda);
     }
 
-    private IQueryable<EmendaFavorecidoModel> DoPeriodo(string[] prefixos) =>
-        _db.EmendasFavorecidos.AsNoTracking().Where(f => prefixos.Contains(f.CodigoEmenda.Substring(0, 4)));
+    private IQueryable<EmendaFavorecidoModel> DoPeriodo(string[] prefixosDoCodigoDaEmenda) =>
+        _db.EmendasFavorecidos.AsNoTracking().Where(f => prefixosDoCodigoDaEmenda.Contains(f.CodigoEmenda.Substring(0, 4)));
 
     /// <summary>
     /// Os pagamentos que o mapa localiza: pessoa jurídica fora do intermediário, com a sede
@@ -300,7 +299,7 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     /// <summary>
     /// A cidade num ano, calculada inteira uma vez e guardada: as páginas das listas leem daqui.
     /// </summary>
-    private async Task<CidadeCalculada?> CidadeAsync(string codigoIbge, int? de, int? ate, CancellationToken ct)
+    private async Task<CidadeCalculada?> CidadeAsync(string codigoIbge, Periodo<AnoDaEmenda> periodoPedido, CancellationToken ct)
     {
         var municipio = (await MunicipiosAsync(ct)).FirstOrDefault(m => m.CodigoIbge == codigoIbge);
         if (municipio is null)
@@ -308,19 +307,19 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
             return null;
         }
 
-        var (periodo, anos, prefixos) = await PeriodoAsync(de, ate, ct);
+        var (periodoMostrado, anosDaEmendaCarregados, prefixosDoCodigoDaEmenda) = await PeriodoAsync(periodoPedido, ct);
 
-        return await _cache.GetOrCreateAsync($"mapa:cidade:{codigoIbge}:{periodo.De}-{periodo.Ate}", async entrada =>
+        return await _cache.GetOrCreateAsync($"mapa:cidade:{codigoIbge}:{periodoMostrado.PrimeiroAno}-{periodoMostrado.UltimoAno}", async entrada =>
         {
             entrada.AbsoluteExpirationRelativeToNow = ValidadeDaCidade;
-            return await CalcularCidadeAsync(municipio, periodo, anos, prefixos, ct);
+            return await CalcularCidadeAsync(municipio, periodoMostrado, anosDaEmendaCarregados, prefixosDoCodigoDaEmenda, ct);
         });
     }
 
     private async Task<CidadeCalculada> CalcularCidadeAsync(
-        MunicipioDto municipio, PeriodoDto periodo, IReadOnlyList<int> anos, string[] prefixos, CancellationToken ct)
+        MunicipioDto municipio, PeriodoDto periodoMostrado, IReadOnlyList<int> anosDaEmendaCarregados, string[] prefixosDoCodigoDaEmenda, CancellationToken ct)
     {
-        var naCidade = NoMapa(DoPeriodo(prefixos)).Where(p => p.CodigoIbge == municipio.CodigoIbge);
+        var naCidade = NoMapa(DoPeriodo(prefixosDoCodigoDaEmenda)).Where(p => p.CodigoIbge == municipio.CodigoIbge);
 
         var porEmenda = await naCidade
             .GroupBy(p => p.CodigoEmenda)
@@ -344,10 +343,10 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
             .SumAsync(p => p.Valor, ct);
 
         var (parlamentares, coletivos) = await _autores.AgruparAsync([.. porEmenda.Select(e => (e.Codigo, e.Recebido))], ct);
-        var convenios = await ConveniosDaCidadeAsync(municipio.CodigoIbge, prefixos, ct);
+        var convenios = await ConveniosDaCidadeAsync(municipio.CodigoIbge, prefixosDoCodigoDaEmenda, ct);
 
         return new CidadeCalculada(
-            municipio, periodo, anos, porEmenda.Sum(e => e.Recebido), naPropriaCidade, parlamentares, coletivos,
+            municipio, periodoMostrado, anosDaEmendaCarregados, porEmenda.Sum(e => e.Recebido), naPropriaCidade, parlamentares, coletivos,
             convenios,
             [.. favorecidos.Select(f =>
                 new FavorecidoDaEmendaDto(
@@ -362,11 +361,11 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     /// <para>Em execução primeiro, pelo que ainda falta liberar; depois os demais, pelo valor. É a ordem da pergunta de quem acompanha: o que ainda vai chegar.</para>
     /// </remarks>
     private async Task<IReadOnlyList<ConvenioDaCidadeDto>> ConveniosDaCidadeAsync(
-        string codigoIbge, string[] prefixos, CancellationToken ct)
+        string codigoIbge, string[] prefixosDoCodigoDaEmenda, CancellationToken ct)
     {
         var cnpjs = _db.CnpjsMunicipio.Where(c => c.CodigoIbge == codigoIbge).Select(c => c.Cnpj);
         var numeros = _db.EmendasConvenios
-            .Where(e => prefixos.Contains(e.CodigoEmenda.Substring(0, 4)))
+            .Where(e => prefixosDoCodigoDaEmenda.Contains(e.CodigoEmenda.Substring(0, 4)))
             .Select(e => e.NumeroConvenio);
 
         var convenios = await _db.Convenios.AsNoTracking()

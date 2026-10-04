@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using Poligraph.Data;
 
 namespace Poligraph.Tests.Integracao;
@@ -87,7 +87,7 @@ public class TestesPresenca(FixturePostgres postgres) : BaseIntegracao(postgres)
 
     private record PresencaLida(int Presente, int Votacoes, int Ausente, int? AusenteJustificado, bool JustificativaPublicada);
 
-    private record FichaLida(long Id, PresencaLida? Presenca);
+    private record FichaLida(long IdPessoa, PresencaLida? Presenca);
 
     private async Task<long> PessoaAsync(string nome)
     {

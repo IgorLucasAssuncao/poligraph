@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Data;
@@ -24,12 +24,12 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
     public async Task Votos_PaginamComTotal_EAPrimeiraEAdaFicha()
     {
         ExigeDocker();
-        var pessoaId = await SemearAsync();
+        var idPessoa = await SemearAsync();
         using var cliente = CriarCliente();
 
-        var ficha = await cliente.GetFromJsonAsync<FichaLida>($"{Rota}/{pessoaId}");
-        var primeira = await cliente.GetFromJsonAsync<PaginaLida<VotoLido>>($"{Rota}/{pessoaId}/votos?tamanho=2");
-        var terceira = await cliente.GetFromJsonAsync<PaginaLida<VotoLido>>($"{Rota}/{pessoaId}/votos?tamanho=2&pagina=3");
+        var ficha = await cliente.GetFromJsonAsync<FichaLida>($"{Rota}/{idPessoa}");
+        var primeira = await cliente.GetFromJsonAsync<PaginaLida<VotoLido>>($"{Rota}/{idPessoa}/votos?tamanho=2");
+        var terceira = await cliente.GetFromJsonAsync<PaginaLida<VotoLido>>($"{Rota}/{idPessoa}/votos?tamanho=2&pagina=3");
 
         Assert.Equal(5, primeira!.Total);
         Assert.Equal(ficha!.VotosRecentes.Take(2).Select(v => v.VotacaoId), primeira.Itens.Select(v => v.VotacaoId));
@@ -51,11 +51,11 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
     public async Task Votos_Busca_AchaPelaEmentaDescricaoOuMateria(string busca, string esperada)
     {
         ExigeDocker();
-        var pessoaId = await SemearAsync();
+        var idPessoa = await SemearAsync();
         using var cliente = CriarCliente();
 
         var achados = await cliente.GetFromJsonAsync<PaginaLida<VotoLido>>(
-            $"{Rota}/{pessoaId}/votos?busca={Uri.EscapeDataString(busca)}");
+            $"{Rota}/{idPessoa}/votos?busca={Uri.EscapeDataString(busca)}");
 
         Assert.Equal(1, achados!.Total);
         Assert.Equal(esperada, Assert.Single(achados.Itens).VotacaoId);
@@ -69,11 +69,11 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
     public async Task Votos_Busca_CurtaNaoFiltra_EMetacaractereNaoQuebra()
     {
         ExigeDocker();
-        var pessoaId = await SemearAsync();
+        var idPessoa = await SemearAsync();
         using var cliente = CriarCliente();
 
-        var curta = await cliente.GetFromJsonAsync<PaginaLida<VotoLido>>($"{Rota}/{pessoaId}/votos?busca=a");
-        var estranha = await cliente.GetAsync($"{Rota}/{pessoaId}/votos?busca={Uri.EscapeDataString("pena (80%")}");
+        var curta = await cliente.GetFromJsonAsync<PaginaLida<VotoLido>>($"{Rota}/{idPessoa}/votos?busca=a");
+        var estranha = await cliente.GetAsync($"{Rota}/{idPessoa}/votos?busca={Uri.EscapeDataString("pena (80%")}");
 
         Assert.Equal(5, curta!.Total);
         Assert.Equal(HttpStatusCode.OK, estranha.StatusCode);
@@ -84,13 +84,13 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
     public async Task Votos_SemRito_TiraAsProcedimentais()
     {
         ExigeDocker();
-        var pessoaId = await SemearAsync();
-        var votacao = await Db.Votacoes.Where(v => v.Votos.Any(o => o.PessoaId == pessoaId)).OrderBy(v => v.Id).FirstAsync();
+        var idPessoa = await SemearAsync();
+        var votacao = await Db.Votacoes.Where(v => v.Votos.Any(o => o.PessoaId == idPessoa)).OrderBy(v => v.Id).FirstAsync();
         votacao.Categoria = TipoCategoriaDeVotacao.PROCEDIMENTAL;
         await Db.SaveChangesAsync();
         using var cliente = CriarCliente();
 
-        var semRito = await cliente.GetFromJsonAsync<PaginaLida<VotoLido>>($"{Rota}/{pessoaId}/votos?semRito=true");
+        var semRito = await cliente.GetFromJsonAsync<PaginaLida<VotoLido>>($"{Rota}/{idPessoa}/votos?semRito=true");
 
         Assert.Equal(4, semRito!.Total);
         Assert.DoesNotContain(votacao.Id, semRito.Itens.Select(v => v.VotacaoId));
@@ -114,7 +114,7 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
     public async Task Favorecidos_PaginamSemOIntermediario()
     {
         ExigeDocker();
-        var pessoaId = await SemearAsync();
+        var idPessoa = await SemearAsync();
         Db.EmendasFavorecidos.AddRange(
             Empresa("11111111000191", "EMPRESA A", 300m),
             Empresa("22222222000191", "EMPRESA B", 200m),
@@ -129,7 +129,7 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
         using var cliente = CriarCliente();
 
         var segunda = await cliente.GetFromJsonAsync<PaginaLida<FavorecidoLido>>(
-            $"{Rota}/{pessoaId}/emendas/favorecidos?tamanho=2&pagina=2");
+            $"{Rota}/{idPessoa}/emendas/favorecidos?tamanho=2&pagina=2");
 
         Assert.Equal(3, segunda!.Total);
         Assert.Equal("EMPRESA C", Assert.Single(segunda.Itens).Nome);
@@ -139,7 +139,7 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
     public async Task Convenios_PaginamPeloValor()
     {
         ExigeDocker();
-        var pessoaId = await SemearAsync();
+        var idPessoa = await SemearAsync();
         foreach (var (numero, valor) in new[] { ("AAA001", 30m), ("AAA002", 20m), ("AAA003", 10m) })
         {
             Db.Convenios.Add(new ConvenioModel
@@ -153,9 +153,9 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
         using var cliente = CriarCliente();
 
         var primeira = await cliente.GetFromJsonAsync<PaginaLida<ConvenioLido>>(
-            $"{Rota}/{pessoaId}/emendas/convenios?tamanho=2");
+            $"{Rota}/{idPessoa}/emendas/convenios?tamanho=2");
         var segunda = await cliente.GetFromJsonAsync<PaginaLida<ConvenioLido>>(
-            $"{Rota}/{pessoaId}/emendas/convenios?tamanho=2&pagina=2");
+            $"{Rota}/{idPessoa}/emendas/convenios?tamanho=2&pagina=2");
 
         Assert.Equal(3, primeira!.Total);
         Assert.Equal(["AAA001", "AAA002"], primeira.Itens.Select(c => c.Numero));
@@ -167,17 +167,17 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
     public async Task Emendas_UmaAUma_SomamAsLinhasELevamAoPortal()
     {
         ExigeDocker();
-        var pessoaId = await SemearAsync();
+        var idPessoa = await SemearAsync();
         Db.Emendas.Add(new EmendaModel
         {
-            PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO",
+            PessoaId = idPessoa, CodigoAutor = "4184", NomeAutor = "FULANO",
             CodigoEmenda = Codigo, Ano = 2025, Localidade = "PARANÁ (UF)",
             ValorEmpenhado = 500m, ValorPago = 100m
         });
         await Db.SaveChangesAsync();
         using var cliente = CriarCliente();
 
-        var pagina = await cliente.GetFromJsonAsync<PaginaLida<EmendaLida>>($"{Rota}/{pessoaId}/emendas/lista?ano=2025");
+        var pagina = await cliente.GetFromJsonAsync<PaginaLida<EmendaLida>>($"{Rota}/{idPessoa}/emendas/lista?anoDaEmenda=2025");
 
         var emenda = Assert.Single(pagina!.Itens);
         Assert.Equal(1_500m, emenda.Empenhado);
@@ -190,15 +190,15 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
     public async Task Lancamentos_TrazemODocumentoFiscal()
     {
         ExigeDocker();
-        var pessoaId = await SemearAsync();
+        var idPessoa = await SemearAsync();
         Db.Despesas.AddRange(
-            new DespesaModel { PessoaId = pessoaId, Ano = 2025, Mes = 3, Categoria = "COMBUSTÍVEIS", ValorLiquido = 100m,
+            new DespesaModel { PessoaId = idPessoa, Ano = 2025, Mes = 3, Categoria = "COMBUSTÍVEIS", ValorLiquido = 100m,
                 UrlDocumento = "https://www.camara.leg.br/cota-parlamentar/nota-fiscal-eletronica?ideDocumentoFiscal=1" },
-            new DespesaModel { PessoaId = pessoaId, Ano = 2025, Mes = 5, Categoria = "PASSAGEM AÉREA", ValorLiquido = 200m });
+            new DespesaModel { PessoaId = idPessoa, Ano = 2025, Mes = 5, Categoria = "PASSAGEM AÉREA", ValorLiquido = 200m });
         await Db.SaveChangesAsync();
         using var cliente = CriarCliente();
 
-        var pagina = await cliente.GetFromJsonAsync<PaginaLida<LancamentoLido>>($"{Rota}/{pessoaId}/gastos/lancamentos?ano=2025");
+        var pagina = await cliente.GetFromJsonAsync<PaginaLida<LancamentoLido>>($"{Rota}/{idPessoa}/gastos/lancamentos?anoDaDespesa=2025");
 
         Assert.Equal(2, pagina!.Total);
         Assert.Equal([5, 3], pagina.Itens.Select(l => l.Mes));
@@ -212,23 +212,23 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
     public async Task Emendas_SemAno_AbremNoUltimoAnoFechado()
     {
         ExigeDocker();
-        var pessoaId = await SemearAsync();
+        var idPessoa = await SemearAsync();
         var corrente = (short)DateTimeOffset.UtcNow.Year;
         Db.Emendas.Add(new EmendaModel
         {
-            PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO",
+            PessoaId = idPessoa, CodigoAutor = "4184", NomeAutor = "FULANO",
             CodigoEmenda = $"{corrente}41840001", Ano = corrente, Localidade = "BRASÍLIA - DF",
             ValorEmpenhado = 10m, ValorPago = 1m
         });
         await Db.SaveChangesAsync();
         using var cliente = CriarCliente();
 
-        var emendas = await cliente.GetFromJsonAsync<AnoLido>($"{Rota}/{pessoaId}/emendas");
+        var emendas = await cliente.GetFromJsonAsync<AnoLido>($"{Rota}/{idPessoa}/emendas");
 
-        Assert.Equal(2025, emendas!.Ano);
+        Assert.Equal(2025, emendas!.AnoDaEmenda);
     }
 
-    private record AnoLido(int Ano);
+    private record AnoLido(int AnoDaEmenda);
 
     private record PaginaLida<T>(List<T> Itens, int Pagina, int Tamanho, int Total);
 
@@ -240,24 +240,24 @@ public class TestesPaginacao(FixturePostgres postgres) : BaseIntegracao(postgres
 
     private record ConvenioLido(string Numero, decimal Valor);
 
-    private record EmendaLida(string Codigo, decimal Empenhado, int Localidades, string UrlFonte);
+    private record EmendaLida(string CodigoEmenda, decimal Empenhado, int Localidades, string UrlFonte);
 
     private record LancamentoLido(int Mes, decimal Valor, string? UrlDocumento);
 
     private async Task<long> SemearAsync()
     {
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
-        var pessoaId = await Db.Pessoas.AsNoTracking().OrderBy(p => p.Id).Select(p => p.Id).FirstAsync();
+        var idPessoa = await Db.Pessoas.AsNoTracking().OrderBy(p => p.Id).Select(p => p.Id).FirstAsync();
 
         Db.Emendas.Add(new EmendaModel
         {
-            PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO",
+            PessoaId = idPessoa, CodigoAutor = "4184", NomeAutor = "FULANO",
             CodigoEmenda = Codigo, Ano = 2025, Localidade = "LINDOESTE - PR",
             ValorEmpenhado = 1_000m, ValorPago = 500m
         });
         await Db.SaveChangesAsync();
 
-        return pessoaId;
+        return idPessoa;
     }
 
     private static EmendaFavorecidoModel Empresa(string documento, string nome, decimal valor) => new()

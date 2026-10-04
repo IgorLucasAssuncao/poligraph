@@ -96,20 +96,20 @@ const ABAS: [Aba, string][] = [
  * "mais parecidos" ficavam depois de ~17 mil pixels (2026-10-01).
  */
 export function ParlamentarComponent() {
-  const { id, aba: abaDoEndereco } = useParams();
-  const pessoaId = Number(id);
+  const { idPessoa: idPessoaNaUrl, aba: abaDoEndereco } = useParams();
+  const idPessoa = Number(idPessoaNaUrl);
   const aba: Aba = ABAS.some(([chave]) => chave === abaDoEndereco) ? (abaDoEndereco as Aba) : 'votos';
-  const base = `/parlamentar/${pessoaId}`;
+  const base = `/parlamentar/${idPessoa}`;
   const { pathname } = useLocation();
   const [busca] = useSearchParams();
   const legislaturaPedida = Number(busca.get('legislatura')) || undefined;
   const { usuario } = useSessao();
-  const chave = `${pessoaId}:${legislaturaPedida ?? ''}:${usuario ? 'conta' : ''}`;
+  const chave = `${idPessoa}:${legislaturaPedida ?? ''}:${usuario ? 'conta' : ''}`;
   const [lida, setLida] = useState<{ chave: string; ficha: Ficha | null; erro: string | null } | null>(null);
   const ficha = lida?.chave === chave ? lida.ficha : null;
   const erro = lida?.chave === chave ? lida.erro : null;
   const { contas, erro: erroDasContas } = useContas(
-    pessoaId,
+    idPessoa,
     ficha === null ? 'aguardando' : ficha.legislatura,
   );
   const legislaturas = useLegislaturas();
@@ -122,19 +122,19 @@ export function ParlamentarComponent() {
   useEffect(() => {
     let atual = true;
     Promise.all([
-      obterFicha(pessoaId, legislaturaPedida),
+      obterFicha(idPessoa, legislaturaPedida),
       usuario ? listarSeguidos() : Promise.resolve([]),
     ])
       .then(([f, seguidos]) => {
         if (!atual) return;
         setLida({ chave, ficha: f, erro: null });
-        setSeguindo(seguidos.some((s) => s.id === pessoaId));
+        setSeguindo(seguidos.some((s) => s.idPessoa === idPessoa));
       })
       .catch(() => atual && setLida({ chave, ficha: null, erro: T.erro }));
     return () => {
       atual = false;
     };
-  }, [pessoaId, legislaturaPedida, usuario, chave]);
+  }, [idPessoa, legislaturaPedida, usuario, chave]);
 
   if (erro) {
     return (
@@ -168,7 +168,7 @@ export function ParlamentarComponent() {
           </div>
 
           {(seguindo || emExercicio) && (
-            <BotaoSeguirComponent pessoaId={pessoaId} seguindo={seguindo} aoAlternar={(_, agora) => setSeguindo(agora)} />
+            <BotaoSeguirComponent idPessoa={idPessoa} seguindo={seguindo} aoAlternar={(_, agora) => setSeguindo(agora)} />
           )}
         </div>
 
@@ -206,7 +206,7 @@ export function ParlamentarComponent() {
         <div className="perfil-numeros" data-tour="ficha-votacoes">
           <span>
             <ComProcedenciaComponent
-              consulta={{ contexto: 'votos', pessoa: ficha.id, legislatura: ficha.legislatura ?? undefined }}
+              consulta={{ contexto: 'votos', idPessoa: ficha.idPessoa, legislatura: ficha.legislatura ?? undefined }}
               rotulo={T.votosComPosicao}
             >
               <strong>{ficha.nVotacoes.toLocaleString('pt-BR')}</strong>
@@ -243,7 +243,7 @@ export function ParlamentarComponent() {
 
       {aba === 'emendas' && (
         <AbaEmendasComponent
-          pessoaId={pessoaId}
+          idPessoa={idPessoa}
           contas={contas}
           erro={erroDasContas}
           nome={ficha?.nome ?? ''}
@@ -253,15 +253,15 @@ export function ParlamentarComponent() {
         />
       )}
       {aba === 'cota' && (
-        <AbaCotaComponent pessoaId={pessoaId} contas={contas} erro={erroDasContas} legislatura={ficha?.legislatura} />
+        <AbaCotaComponent idPessoa={idPessoa} contas={contas} erro={erroDasContas} legislatura={ficha?.legislatura} />
       )}
-      {aba === 'campanha' && <AbaCampanhaComponent pessoaId={pessoaId} contas={contas} erro={erroDasContas} />}
+      {aba === 'campanha' && <AbaCampanhaComponent idPessoa={idPessoa} contas={contas} erro={erroDasContas} />}
       {aba === 'votos' && (
         <>
           <AbaSimilaresComponent similares={ficha.maisSimilares} />
           <h2 className="titulo-secao">{T.tituloDosVotos}</h2>
           <AbaVotosComponent
-            pessoaId={pessoaId}
+            idPessoa={idPessoa}
             legislatura={ficha.legislatura}
             votos={ficha.votosRecentes}
             total={ficha.nRegistrosDeVoto}
@@ -294,13 +294,13 @@ export function ParlamentarComponent() {
  * ATENÇÃO: Espera a digitação parar: cada tecla seria uma consulta.
  */
 function AbaVotosComponent({
-  pessoaId,
+  idPessoa,
   legislatura,
   votos,
   total,
   comPosicao,
 }: {
-  pessoaId: number;
+  idPessoa: number;
   legislatura: number | null;
   votos: Ficha['votosRecentes'];
   total: number;
@@ -309,7 +309,7 @@ function AbaVotosComponent({
   const [termo, setTermo] = useState('');
   const [busca, setBusca] = useState('');
   const [semRito, setSemRito] = useState(false);
-  const [achados, setAchados] = useState<{ de: string; pagina: PaginaDe<VotoNaFicha> } | null>(null);
+  const [achados, setAchados] = useState<{ chave: string; pagina: PaginaDe<VotoNaFicha> } | null>(null);
   const filtrando = Boolean(busca) || semRito;
   const chave = `${busca}|${semRito}`;
   const [erroDaBusca, setErroDaBusca] = useState(false);
@@ -322,21 +322,21 @@ function AbaVotosComponent({
   useEffect(() => {
     if (!busca && !semRito) return;
     let atual = true;
-    listarVotos(pessoaId, 1, VOTOS_POR_PAGINA_DA_BUSCA, legislatura, busca || undefined, semRito)
+    listarVotos(idPessoa, 1, VOTOS_POR_PAGINA_DA_BUSCA, legislatura, busca || undefined, semRito)
       .then((pagina) => {
         if (!atual) return;
         setErroDaBusca(false);
-        setAchados({ de: `${busca}|${semRito}`, pagina });
+        setAchados({ chave: `${busca}|${semRito}`, pagina });
       })
       .catch(() => atual && setErroDaBusca(true));
     return () => {
       atual = false;
     };
-  }, [busca, semRito, pessoaId, legislatura]);
+  }, [busca, semRito, idPessoa, legislatura]);
 
   if (votos.length === 0) return <p className="vazio">{T.votos.nenhum}</p>;
 
-  const resultado = filtrando && achados?.de === chave ? achados.pagina : null;
+  const resultado = filtrando && achados?.chave === chave ? achados.pagina : null;
 
   return (
     <>
@@ -363,7 +363,7 @@ function AbaVotosComponent({
       {filtrando && resultado ? (
         <ListaDeVotosComponent
           key={chave}
-          pessoaId={pessoaId}
+          idPessoa={idPessoa}
           legislatura={legislatura}
           busca={busca || undefined}
           semRito={semRito}
@@ -374,7 +374,7 @@ function AbaVotosComponent({
       ) : (
         !filtrando && (
           <ListaDeVotosComponent
-            pessoaId={pessoaId}
+            idPessoa={idPessoa}
             legislatura={legislatura}
             votos={votos}
             total={total}
@@ -389,7 +389,7 @@ function AbaVotosComponent({
 
 
 function ListaDeVotosComponent({
-  pessoaId,
+  idPessoa,
   legislatura,
   busca,
   semRito = false,
@@ -398,7 +398,7 @@ function ListaDeVotosComponent({
   comPosicao,
   porPagina,
 }: {
-  pessoaId: number;
+  idPessoa: number;
   legislatura: number | null;
   busca?: string;
   semRito?: boolean;
@@ -409,7 +409,7 @@ function ListaDeVotosComponent({
   porPagina: number;
 }) {
   const lista = usePaginas(votos, total, porPagina, (pagina) =>
-    listarVotos(pessoaId, pagina, porPagina, legislatura, busca, semRito),
+    listarVotos(idPessoa, pagina, porPagina, legislatura, busca, semRito),
   );
 
   if (busca && total === 0) {
@@ -439,9 +439,9 @@ function ListaDeVotosComponent({
         <BotaoBaixarCsvComponent
           rotulo={busca ? T.votos.baixarEncontrados : T.votos.baixarTodos}
           montar={async () => {
-            const todos = await buscarTodas((pagina) => listarVotos(pessoaId, pagina, 100, legislatura, busca, semRito));
+            const todos = await buscarTodas((pagina) => listarVotos(idPessoa, pagina, 100, legislatura, busca, semRito));
             baixarCsv(
-              T.votos.arquivo(pessoaId),
+              T.votos.arquivo(idPessoa),
               [...T.votos.colunas],
               todos.map((v) => [
                 v.votacaoId, v.data, rotuloDoVoto(v.valor), v.orientacaoDoGoverno, v.materia,
@@ -557,8 +557,8 @@ function AbaSimilaresComponent({ similares }: { similares: Ficha['maisSimilares'
       <h2 className="titulo-secao">{T.similares.titulo}</h2>
       {similares.slice(0, todos ? similares.length : SIMILARES_DE_INICIO).map((s) => (
         <LinhaParlamentarComponent
-          key={s.pessoaId}
-          id={s.pessoaId}
+          key={s.idPessoa}
+          id={s.idPessoa}
           nome={s.nome}
           partido={s.partido}
           uf=""

@@ -25,11 +25,11 @@ public record AtualizacaoDaFonteDto(TipoFonteDeCarga Fonte, string Orgao, DateTi
 /// <param name="Votou">Votos com posição: Sim, Não ou abstenção.</param>
 /// <param name="Ausente">Só o Senado registra a ausência; na Câmara quem faltou não tem linha, e o campo vem nulo em vez de um zero que seria falso.</param>
 public record VotosNaSemanaDto(
-    long PessoaId, string Nome, TipoCasa Casa, int Votou, int? Ausente, int? AusenteJustificado);
+    long IdPessoa, string Nome, TipoCasa Casa, int Votou, int? Ausente, int? AusenteJustificado);
 
 /// <summary>A2: Sim ou Não oposto à orientação Sim ou Não da bancada do próprio partido no voto. Só Câmara.</summary>
 public record VotoContraOPartidoDto(
-    long PessoaId,
+    long IdPessoa,
     string Nome,
     string VotacaoId,
     DateOnly Data,
@@ -43,14 +43,14 @@ public record VotoContraOPartidoDto(
 
 /// <summary>A3: o partido do voto mudou, e o primeiro voto pela sigla nova caiu na janela.</summary>
 public record TrocaDePartidoDto(
-    long PessoaId, string Nome, TipoCasa Casa, string PartidoAnterior, string PartidoNovo, DateOnly PrimeiroVoto);
+    long IdPessoa, string Nome, TipoCasa Casa, string PartidoAnterior, string PartidoNovo, DateOnly PrimeiroVoto);
 
 /// <summary>A4: a cota do último mês fechado que a base tem, com a maior categoria.</summary>
 /// <param name="Casa">A casa do voto mais recente: diz se a cota é a da Câmara (CEAP) ou a do Senado (CEAPS), e de qual órgão é a data da carga.</param>
 public record GastoNaCotaDto(
-    long PessoaId, string Nome, TipoCasa? Casa, int Ano, int Mes, decimal Total, string MaiorCategoria, decimal MaiorCategoriaValor);
+    long IdPessoa, string Nome, TipoCasa? Casa, int AnoDaDespesa, int Mes, decimal Total, string MaiorCategoria, decimal MaiorCategoriaValor);
 
 /// <summary>A5: o pago às emendas da pessoa na última competência fechada, com o maior destino.</summary>
 /// <param name="MaiorDestino">Quem mais recebeu, fora o intermediário (Banco do Brasil): o banco repassa, e nomeá-lo como destino diria o contrário.</param>
 public record EmendaPagaDto(
-    long PessoaId, string Nome, DateOnly Mes, decimal Pago, string? MaiorDestino, string? LugarDoMaiorDestino);
+    long IdPessoa, string Nome, DateOnly Mes, decimal Pago, string? MaiorDestino, string? LugarDoMaiorDestino);

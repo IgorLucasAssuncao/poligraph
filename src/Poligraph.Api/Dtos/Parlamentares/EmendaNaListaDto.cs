@@ -7,7 +7,7 @@
 /// <para><see cref="Localidades"/> passa de 1 quando a emenda se reparte entre destinos: 55 emendas de 2023 a 2026.</para>
 /// </remarks>
 public record EmendaNaListaDto(
-    string Codigo,
+    string CodigoEmenda,
     string? Tipo,
     string? Localidade,
     int Localidades,

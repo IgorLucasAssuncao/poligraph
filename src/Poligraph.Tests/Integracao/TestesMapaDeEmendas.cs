@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -98,7 +98,7 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
     public async Task Municipio_DizQuemMandouEQuantoFoiParaAPrefeitura()
     {
         ExigeDocker();
-        var pessoaId = await SemearAsync();
+        var idPessoa = await SemearAsync();
 
         var cidade = await LerAsync<MunicipioLido>($"/api/municipios/{Luiziana}/emendas?de=2025&ate=2025");
 
@@ -107,7 +107,7 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
         Assert.Equal(500m, cidade.NaPropriaCidade);
 
         var autor = Assert.Single(cidade.Parlamentares.Itens);
-        Assert.Equal((pessoaId, 700m, 1), (autor.PessoaId, autor.Recebido, autor.Emendas));
+        Assert.Equal((idPessoa, 700m, 1), (autor.IdPessoa, autor.Recebido, autor.Emendas));
         Assert.Equal(2, cidade.Favorecidos.Total);
         Assert.Empty(cidade.Coletivos);
     }
@@ -232,7 +232,7 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
         Assert.Equal(restricao, erro.ConstraintName);
     }
 
-    private record PeriodoLido(int De, int Ate);
+    private record PeriodoLido(int PrimeiroAno, int UltimoAno);
 
     private record BrasilLido(
         PeriodoLido Periodo, decimal Recebido, decimal NoMapa, decimal ViaIntermediario, decimal SemSede,
@@ -246,7 +246,7 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
 
     private record MunicipioDaBusca(string CodigoIbge, string Nome, string Uf);
 
-    private record AutorLido(long? PessoaId, decimal Recebido, int Emendas);
+    private record AutorLido(long? IdPessoa, decimal Recebido, int Emendas);
 
     private record ColetivoLido(string Tipo, string Nome, decimal Recebido);
 
@@ -282,7 +282,7 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
     private async Task<long> SemearAsync()
     {
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
-        var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+        var idPessoa = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
 
         Db.Municipios.AddRange(
             new MunicipioModel { CodigoIbge = Luiziana, CodigoTom = "7979", Nome = "LUIZIANA", Uf = "PR" },
@@ -290,7 +290,7 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
 
         Db.Emendas.Add(new EmendaModel
         {
-            PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
+            PessoaId = idPessoa, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL",
             CodigoEmenda = Codigo, Ano = 2025, Localidade = "LUIZIANA - PR",
             CodigoAcao = "20XV", CodigoPlanoOrcamentario = "0000",
             ValorEmpenhado = 2_000m, ValorPago = 1_600m
@@ -325,7 +325,7 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
             });
 
         await Db.SaveChangesAsync();
-        return pessoaId;
+        return idPessoa;
     }
 
     private static EmendaFavorecidoModel Juridica(

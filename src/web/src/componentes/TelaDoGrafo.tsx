@@ -295,12 +295,12 @@ export function TelaDoGrafoComponent({
     return comLayout
       .filter((n) => n.eixoX !== null && n.eixoY !== null)
       .map((n) => {
-        const movido = movidos.get(n.id);
+        const movido = movidos.get(n.idPessoa);
         return movido ? { ...n, eixoX: movido.x, eixoY: movido.y } : n;
       });
   }, [grafo.nos, movidos, layout]);
 
-  const porId = useMemo(() => new Map(posicionados.map((n) => [n.id, n])), [posicionados]);
+  const porId = useMemo(() => new Map(posicionados.map((n) => [n.idPessoa, n])), [posicionados]);
 
   useEffect(() => setLimiar(limiarInicial(grafo.arestas)), [grafo.arestas]);
 
@@ -313,7 +313,7 @@ export function TelaDoGrafoComponent({
 
   const visiveis = useMemo(() => {
     if (!emFoco) return arestasDoLimiar;
-    const doFoco = grafo.arestas.filter((a) => a.de === emFoco.id || a.para === emFoco.id);
+    const doFoco = grafo.arestas.filter((a) => a.idPessoaDe === emFoco.idPessoa || a.idPessoaPara === emFoco.idPessoa);
     if (isolado) return doFoco;
     return [...new Set([...arestasDoLimiar, ...doFoco])];
   }, [arestasDoLimiar, grafo.arestas, emFoco, isolado]);
@@ -321,8 +321,8 @@ export function TelaDoGrafoComponent({
   const graus = useMemo(() => {
     const contagem = new Map<number, number>();
     for (const a of grafo.arestas) {
-      contagem.set(a.de, (contagem.get(a.de) ?? 0) + 1);
-      contagem.set(a.para, (contagem.get(a.para) ?? 0) + 1);
+      contagem.set(a.idPessoaDe, (contagem.get(a.idPessoaDe) ?? 0) + 1);
+      contagem.set(a.idPessoaPara, (contagem.get(a.idPessoaPara) ?? 0) + 1);
     }
     return contagem;
   }, [grafo.arestas]);
@@ -330,10 +330,10 @@ export function TelaDoGrafoComponent({
   const vizinhos = useMemo(() => {
     if (!emFoco) return null;
 
-    const conjunto = new Set<number>([emFoco.id]);
+    const conjunto = new Set<number>([emFoco.idPessoa]);
     for (const a of visiveis) {
-      if (a.de === emFoco.id) conjunto.add(a.para);
-      else if (a.para === emFoco.id) conjunto.add(a.de);
+      if (a.idPessoaDe === emFoco.idPessoa) conjunto.add(a.idPessoaPara);
+      else if (a.idPessoaPara === emFoco.idPessoa) conjunto.add(a.idPessoaDe);
     }
 
     return conjunto;
@@ -350,7 +350,7 @@ export function TelaDoGrafoComponent({
 
   const noDesenho = useMemo(
     () =>
-      isolado && vizinhos ? posicionados.filter((n) => vizinhos.has(n.id)) : posicionados,
+      isolado && vizinhos ? posicionados.filter((n) => vizinhos.has(n.idPessoa)) : posicionados,
     [isolado, vizinhos, posicionados],
   );
 
@@ -401,7 +401,7 @@ export function TelaDoGrafoComponent({
     return new Set(
       grafo.nos
         .filter((n) => (!destaque.partido || n.partido === destaque.partido) && (!destaque.uf || n.uf === destaque.uf))
-        .map((n) => n.id),
+        .map((n) => n.idPessoa),
     );
   }, [grafo.nos, destaque?.partido, destaque?.uf]);
 
@@ -481,7 +481,7 @@ export function TelaDoGrafoComponent({
         const no = arrastandoNo.current;
         if (no) {
           const destino = paraMundo(px, py, tamanho, camera);
-          setMovidos((atual) => new Map(atual).set(no.id, destino));
+          setMovidos((atual) => new Map(atual).set(no.idPessoa, destino));
           return;
         }
 
@@ -499,9 +499,9 @@ export function TelaDoGrafoComponent({
     setCamera(enquadrar(pontos, tamanho));
   }, [noDesenho, tamanho]);
 
-  const ligados = useMemo(() => new Set(grafo.arestas.flatMap((a) => [a.de, a.para])), [grafo.arestas]);
+  const ligados = useMemo(() => new Set(grafo.arestas.flatMap((a) => [a.idPessoaDe, a.idPessoaPara])), [grafo.arestas]);
   const vistaInicial = useCallback(() => {
-    const comLigacao = posicionados.filter((n) => ligados.has(n.id));
+    const comLigacao = posicionados.filter((n) => ligados.has(n.idPessoa));
     const base = comLigacao.length >= 2 ? comLigacao : posicionados;
     return enquadrarMiolo(base.map((n) => ({ x: n.eixoX!, y: n.eixoY! })), tamanho);
   }, [posicionados, ligados, tamanho]);
@@ -842,7 +842,7 @@ export function TelaDoGrafoComponent({
   function aoClicar() {
     if (alvo?.tipo !== 'no') return;
 
-    setFixado((atual) => (atual?.id === alvo.no.id ? null : alvo.no));
+    setFixado((atual) => (atual?.idPessoa === alvo.no.idPessoa ? null : alvo.no));
   }
 }
 
@@ -921,7 +921,7 @@ function BuscaComponent({
       {achados.length > 0 && (
         <ul className="grafo-sugestoes">
           {achados.map((no) => (
-            <li key={no.id}>
+            <li key={no.idPessoa}>
               <button
                 type="button"
                 onClick={() => {
@@ -1020,8 +1020,8 @@ function DicaComponent({
       : { left: ancora.x + 16, top: ancora.y - 12 };
 
   if (alvo.tipo === 'aresta') {
-    const a = porId.get(alvo.aresta.de);
-    const b = porId.get(alvo.aresta.para);
+    const a = porId.get(alvo.aresta.idPessoaDe);
+    const b = porId.get(alvo.aresta.idPessoaPara);
 
     return (
       <div className="grafo-dica" style={estilo}>
@@ -1095,8 +1095,8 @@ function alvoSob(
   let menorDistancia = 5;
 
   for (const aresta of quadro.arestas) {
-    const a = quadro.porId.get(aresta.de);
-    const b = quadro.porId.get(aresta.para);
+    const a = quadro.porId.get(aresta.idPessoaDe);
+    const b = quadro.porId.get(aresta.idPessoaPara);
     if (!a || !b) continue;
 
     const distancia = distanciaAoSegmento(
@@ -1120,8 +1120,8 @@ function meioDaAresta(
   t: Tamanho,
   c: Camera,
 ) {
-  const a = porId.get(aresta.de);
-  const b = porId.get(aresta.para);
+  const a = porId.get(aresta.idPessoaDe);
+  const b = porId.get(aresta.idPessoaPara);
   if (!a || !b) return null;
 
   const pa = paraTela(a.eixoX!, a.eixoY!, t, c);

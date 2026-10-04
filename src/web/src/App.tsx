@@ -87,7 +87,7 @@ function RoteadorComponent() {
         <Route path="/" element={<InicioComponent />} />
         <Route path="/parlamentares" element={<ParlamentaresComponent />} />
         <Route path="/resultado" element={<QuestionarioComponent />} />
-        <Route path="/parlamentar/:id/:aba?" element={<ParlamentarComponent />} />
+        <Route path="/parlamentar/:idPessoa/:aba?" element={<ParlamentarComponent />} />
         <Route path="/governo" element={<GovernoComponent />} />
         <Route path="/emendas" element={<EmendasComponent />} />
         <Route path="/entidades" element={<EntidadesComponent />} />
@@ -123,7 +123,7 @@ function LeituraSemContaComponent() {
         <Route path="/" element={<InicioComponent />} />
         <Route path="/parlamentares" element={<ParlamentaresComponent />} />
         <Route path="/resultado" element={<QuestionarioComponent />} />
-        <Route path="/parlamentar/:id/:aba?" element={<ParlamentarComponent />} />
+        <Route path="/parlamentar/:idPessoa/:aba?" element={<ParlamentarComponent />} />
         <Route path="/governo" element={<GovernoComponent />} />
         <Route path="/emendas" element={<EmendasComponent />} />
         <Route path="/entidades" element={<EntidadesComponent />} />

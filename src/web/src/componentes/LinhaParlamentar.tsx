@@ -55,7 +55,7 @@ export function LinhaParlamentarComponent({
       {aoAlternarSeguir && (
         <div className="linha-acao">
           <BotaoSeguirComponent
-            pessoaId={id}
+            idPessoa={id}
             seguindo={seguindo ?? false}
             aoAlternar={aoAlternarSeguir}
           />

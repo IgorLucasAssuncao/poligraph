@@ -32,9 +32,9 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
 
         Assert.Equal(new PeriodoLido(2025, 2026), governo.Periodo);
         Assert.Equal([2025, 2026], governo.AnosDisponiveis);
-        Assert.Equal(250m + 130m, governo.Despesa.Areas.Single(a => a.Codigo == "10").Pago
-            + governo.Despesa.Areas.Single(a => a.Codigo == "10").RestosAPagarPagos);
-        Assert.Equal([2025, 2026], governo.PorAno.Select(a => a.Ano));
+        Assert.Equal(250m + 130m, governo.Despesa.Areas.Single(a => a.CodigoDaFuncao == "10").Pago
+            + governo.Despesa.Areas.Single(a => a.CodigoDaFuncao == "10").RestosAPagarPagos);
+        Assert.Equal([2025, 2026], governo.PorAno.Select(a => a.AnoDoOrcamento));
     }
 
     /// <summary>
@@ -46,7 +46,7 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
         ExigeDocker();
         await SemearAsync();
 
-        var ano2025 = (await LerAsync(Rota)).PorAno.Single(a => a.Ano == 2025);
+        var ano2025 = (await LerAsync(Rota)).PorAno.Single(a => a.AnoDoOrcamento == 2025);
 
         Assert.Equal(1_160m + 250m + 300m + 600m, ano2025.Gastou);
         Assert.Equal(2_500m, ano2025.Arrecadou);
@@ -73,8 +73,8 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
 
         var governo = await LerAsync($"{Rota}?ano=2025");
 
-        Assert.Equal([2022], governo.Gestoes.Select(g => g.Eleicao));
-        Assert.Equal([2018, 2022], governo.GestoesDisponiveis.Select(g => g.Eleicao));
+        Assert.Equal([2022], governo.Gestoes.Select(g => g.AnoDaEleicao));
+        Assert.Equal([2018, 2022], governo.GestoesDisponiveis.Select(g => g.AnoDaEleicao));
     }
 
     [SkippableFact]
@@ -130,7 +130,7 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
 
         var despesa = (await LerAsync($"{Rota}?ano=2025")).Despesa;
 
-        Assert.DoesNotContain(despesa.Areas, a => a.Codigo == "28");
+        Assert.DoesNotContain(despesa.Areas, a => a.CodigoDaFuncao == "28");
         Assert.Equal(1_400m, despesa.Encargos.Single(e => e.Grupo == "REFINANCIAMENTO").Pago);
         Assert.Equal(600m, despesa.Encargos.Single(e => e.Grupo == "SERVICO_DA_DIVIDA").Pago);
         Assert.Equal(0m, despesa.Encargos.Single(e => e.Grupo == "OUTROS").Pago);
@@ -148,8 +148,8 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
 
         var areas = (await LerAsync($"{Rota}?ano=2025")).Despesa.Areas;
 
-        Assert.Equal(["09", "15", "10"], areas.Select(a => a.Codigo));
-        Assert.False(areas.Single(a => a.Codigo == "09").DotacaoCompleta);
+        Assert.Equal(["09", "15", "10"], areas.Select(a => a.CodigoDaFuncao));
+        Assert.False(areas.Single(a => a.CodigoDaFuncao == "09").DotacaoCompleta);
     }
 
     /// <summary>
@@ -207,13 +207,13 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
 
     private record PessoaLida(string Nome, string NomeDeUrna, string Partido);
 
-    private record GestaoLida(int Eleicao, int PrimeiroAno, int UltimoAno, PessoaLida Presidente, PessoaLida Vice);
+    private record GestaoLida(int AnoDaEleicao, int PrimeiroAno, int UltimoAno, PessoaLida Presidente, PessoaLida Vice);
 
     private record OrigemLida(string Origem, decimal Realizada);
 
     private record ArrecadacaoLida(decimal Arrecadado, List<OrigemLida> PorOrigem, decimal EmissaoDeDivida);
 
-    private record AreaLida(string Codigo, decimal Pago, decimal RestosAPagarPagos, bool DotacaoCompleta);
+    private record AreaLida(string CodigoDaFuncao, decimal Pago, decimal RestosAPagarPagos, bool DotacaoCompleta);
 
     private record EncargoLido(string Grupo, decimal Pago);
 
@@ -224,9 +224,9 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
     private record SigiloLido(
         decimal CartaoSigiloso, decimal CartaoTotal, int TransacoesSigilosas, decimal AcaoSigilosa, List<OrgaoLido> PorOrgao);
 
-    private record PeriodoLido(int De, int Ate);
+    private record PeriodoLido(int PrimeiroAno, int UltimoAno);
 
-    private record AnoLido(int Ano, decimal Arrecadou, decimal Gastou, decimal PegouEmprestado, bool Fechado);
+    private record AnoLido(int AnoDoOrcamento, decimal Arrecadou, decimal Gastou, decimal PegouEmprestado, bool Fechado);
 
     private record GovernoLido(
         List<GestaoLida> Gestoes, PeriodoLido Periodo, int? EmAndamento, List<int> AnosDisponiveis,

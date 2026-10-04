@@ -72,19 +72,19 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
     public async Task Pagina_SeparaAutores_SomaPorAno_ECruzaACotaPeloCnpj()
     {
         ExigeDocker();
-        var pessoaId = await SemearAsync();
+        var idPessoa = await SemearAsync();
 
         var entidade = await LerAsync<EntidadeLidaCompleta>($"/api/entidades/{Associacao}");
 
         Assert.Equal(1_300m, entidade.Recebido);
-        Assert.Equal([(2025, 300m), (2026, 1_000m)], entidade.PorAno.Select(a => (a.Ano, a.Recebido)));
-        Assert.Equal((pessoaId, 300m), (Assert.Single(entidade.Parlamentares.Itens).PessoaId, entidade.DeParlamentares));
+        Assert.Equal([(2025, 300m), (2026, 1_000m)], entidade.PorAno.Select(a => (a.AnoDaEmenda, a.Recebido)));
+        Assert.Equal((idPessoa, 300m), (Assert.Single(entidade.Parlamentares.Itens).IdPessoa, entidade.DeParlamentares));
         Assert.Equal("BANCADA", Assert.Single(entidade.Coletivos).Tipo);
         Assert.Equal($"https://portaldatransparencia.gov.br/busca/pessoa-juridica/{Associacao}", entidade.UrlFonte);
 
         var cota = entidade.NaCota!;
         Assert.Equal((150m, 2), (cota.Total, cota.Lancamentos));
-        Assert.Equal(pessoaId, Assert.Single(cota.PorParlamentar).PessoaId);
+        Assert.Equal(idPessoa, Assert.Single(cota.PorParlamentar).IdPessoa);
     }
 
     [SkippableTheory]
@@ -160,13 +160,13 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
 
     private record EntidadeLida(string Cnpj, string Nome, string Grupo, SedeLida? Sede, decimal Recebido);
 
-    private record AnoLido(int Ano, decimal Recebido);
+    private record AnoLido(int AnoDaEmenda, decimal Recebido);
 
-    private record AutorLido(long? PessoaId, decimal Recebido);
+    private record AutorLido(long? IdPessoa, decimal Recebido);
 
     private record ColetivoLido(string Tipo, decimal Recebido);
 
-    private record CotaPorParlamentarLida(long PessoaId, decimal Total);
+    private record CotaPorParlamentarLida(long IdPessoa, decimal Total);
 
     private record CotaLida(decimal Total, int Lancamentos, List<CotaPorParlamentarLida> PorParlamentar);
 
@@ -187,7 +187,7 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
     private async Task<long> SemearAsync()
     {
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
-        var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+        var idPessoa = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
 
         Db.Municipios.AddRange(
             new MunicipioModel { CodigoIbge = "4106902", CodigoTom = "7535", Nome = "CURITIBA", Uf = "PR" },
@@ -199,7 +199,7 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
             new CnpjMunicipioModel { Cnpj = Prefeitura, CodigoIbge = "4113734", CadastroDe = cadastro });
 
         Db.Emendas.AddRange(
-            Emenda("202541840004", pessoaId, "4184", "FULANO DE TAL", "Emenda Individual - Transferências com Finalidade Definida"),
+            Emenda("202541840004", idPessoa, "4184", "FULANO DE TAL", "Emenda Individual - Transferências com Finalidade Definida"),
             Emenda("202671240001", null, "7124", "BANCADA DO PARANA", "Emenda de Bancada"));
 
         Db.EmendasFavorecidos.AddRange(
@@ -209,16 +209,16 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
             Juridica("202541840004", Individual, "FULANA DE TAL", "Empresário (Individual)", 50m));
 
         Db.Despesas.AddRange(
-            Cota(pessoaId, Associacao, "ASSOC EXEMPLO", 100m),
-            Cota(pessoaId, Associacao, "ASSOCIACAO EXEMPLO CWB", 50m));
+            Cota(idPessoa, Associacao, "ASSOC EXEMPLO", 100m),
+            Cota(idPessoa, Associacao, "ASSOCIACAO EXEMPLO CWB", 50m));
 
         await Db.SaveChangesAsync();
-        return pessoaId;
+        return idPessoa;
     }
 
-    private static EmendaModel Emenda(string codigo, long? pessoaId, string codigoAutor, string nomeAutor, string tipo) => new()
+    private static EmendaModel Emenda(string codigo, long? idPessoa, string codigoAutor, string nomeAutor, string tipo) => new()
     {
-        PessoaId = pessoaId, CodigoAutor = codigoAutor, NomeAutor = nomeAutor, Tipo = tipo,
+        PessoaId = idPessoa, CodigoAutor = codigoAutor, NomeAutor = nomeAutor, Tipo = tipo,
         CodigoEmenda = codigo, Ano = short.Parse(codigo[..4], System.Globalization.CultureInfo.InvariantCulture), Localidade = "CURITIBA - PR",
         CodigoAcao = "20XV", CodigoPlanoOrcamentario = "0000", ValorEmpenhado = 10_000m, ValorPago = 10_000m
     };
@@ -229,9 +229,9 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
         Documento = cnpj, Nome = nome, NaturezaJuridica = natureza, Uf = "PR", Valor = valor
     };
 
-    private static DespesaModel Cota(long pessoaId, string cnpj, string fornecedor, decimal valor) => new()
+    private static DespesaModel Cota(long idPessoa, string cnpj, string fornecedor, decimal valor) => new()
     {
-        PessoaId = pessoaId, Ano = 2025, Mes = 3, Categoria = "MANUTENÇÃO DE ESCRITÓRIO DE APOIO À ATIVIDADE PARLAMENTAR",
+        PessoaId = idPessoa, Ano = 2025, Mes = 3, Categoria = "MANUTENÇÃO DE ESCRITÓRIO DE APOIO À ATIVIDADE PARLAMENTAR",
         Fornecedor = fornecedor, CnpjOuHash = cnpj, FornecedorEhPessoaFisica = false, ValorLiquido = valor
     };
 

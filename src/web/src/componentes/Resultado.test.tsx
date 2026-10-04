@@ -9,9 +9,9 @@ const sessao = { usuario: null as { nome: string } | null };
 vi.mock('../sessao', () => ({ useSessao: () => sessao }));
 
 const PERGUNTAS: Pergunta[] = [
-  { id: 'q1', texto: 'Primeira afirmação.', ordem: 1, totalVotos: 400, totalPossivel: 513 },
-  { id: 'q2', texto: 'Segunda afirmação.', ordem: 2, totalVotos: 410, totalPossivel: 513 },
-  { id: 'q3', texto: 'Terceira afirmação.', ordem: 3, totalVotos: 420, totalPossivel: 513 },
+  { idPergunta: 'q1', texto: 'Primeira afirmação.', ordem: 1, totalVotos: 400, totalPossivel: 513 },
+  { idPergunta: 'q2', texto: 'Segunda afirmação.', ordem: 2, totalVotos: 410, totalPossivel: 513 },
+  { idPergunta: 'q3', texto: 'Terceira afirmação.', ordem: 3, totalVotos: 420, totalPossivel: 513 },
 ];
 
 /**
@@ -25,7 +25,7 @@ const RESULTADO: ResultadoAfinidade = {
       perguntasRespondidas: 3,
       maisProximos: [
         {
-          pessoaId: 1,
+          idPessoa: 1,
           nome: 'Ana Ribeiro',
           partido: 'PARTIDO-A',
           uf: 'SP',
@@ -36,7 +36,7 @@ const RESULTADO: ResultadoAfinidade = {
         },
       ],
       maisDistantes: [
-        { pessoaId: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', uf: 'MG', acordos: 0, comparaveis: 3, acordou: [], discordou: [] },
+        { idPessoa: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', uf: 'MG', acordos: 0, comparaveis: 3, acordou: [], discordou: [] },
       ],
       posicaoNoGrafo: null,
       escala: { comparados: 12, medianoAcordos: 1, medianoComparaveis: 3 },
@@ -161,10 +161,10 @@ const DUAS_CASAS: ResultadoAfinidade = {
       casa: 'CAMARA',
       perguntasRespondidas: 6,
       maisProximos: [
-        { pessoaId: 1, nome: 'Ana Ribeiro', partido: 'PARTIDO-A', uf: 'SP', acordos: 5, comparaveis: 6, acordou: [], discordou: [] },
+        { idPessoa: 1, nome: 'Ana Ribeiro', partido: 'PARTIDO-A', uf: 'SP', acordos: 5, comparaveis: 6, acordou: [], discordou: [] },
       ],
       maisDistantes: [
-        { pessoaId: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', uf: 'MG', acordos: 1, comparaveis: 6, acordou: [], discordou: [] },
+        { idPessoa: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', uf: 'MG', acordos: 1, comparaveis: 6, acordou: [], discordou: [] },
       ],
       posicaoNoGrafo: null,
       escala: { comparados: 12, medianoAcordos: 1, medianoComparaveis: 3 },
@@ -173,7 +173,7 @@ const DUAS_CASAS: ResultadoAfinidade = {
       casa: 'SENADO',
       perguntasRespondidas: 2,
       maisProximos: [
-        { pessoaId: 9, nome: 'Célia Nunes', partido: 'PARTIDO-C', uf: 'BA', acordos: 2, comparaveis: 2, acordou: [], discordou: [] },
+        { idPessoa: 9, nome: 'Célia Nunes', partido: 'PARTIDO-C', uf: 'BA', acordos: 2, comparaveis: 2, acordou: [], discordou: [] },
       ],
       maisDistantes: [],
       posicaoNoGrafo: null,

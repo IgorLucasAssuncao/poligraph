@@ -41,7 +41,7 @@ public static class CalculadoraAfinidade
     /// Calcula a afinidade de um parlamentar. As posições vêm indexadas por pergunta.
     /// </summary>
     public static ResultadoAfinidade Calcular(
-        long pessoaId,
+        long idPessoa,
         IReadOnlyList<RespostaCidadao> respostas,
         IReadOnlyDictionary<string, PosicaoParlamentar> posicoes)
     {
@@ -67,7 +67,7 @@ public static class CalculadoraAfinidade
             }
         }
 
-        return new ResultadoAfinidade(pessoaId, acordos, comparaveis);
+        return new ResultadoAfinidade(idPessoa, acordos, comparaveis);
     }
 
     /// <summary>

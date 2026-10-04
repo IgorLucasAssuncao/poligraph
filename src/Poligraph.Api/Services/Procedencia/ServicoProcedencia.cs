@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Api.Textos;
@@ -52,11 +52,11 @@ public class ServicoProcedencia(PoligraphDb db)
             case TipoDeContexto.GovernoGastos:
             case TipoDeContexto.GovernoReceitas:
             case TipoDeContexto.GovernoSigiloso:
-                return consulta.Periodo is { } periodoDoGoverno ? DoGoverno(consulta.Contexto.Tipo, periodoDoGoverno) : null;
+                return consulta.PeriodoDoOrcamento.Completo ? DoGoverno(consulta.Contexto.Tipo, consulta.PeriodoDoOrcamento) : null;
             case TipoDeContexto.Entidade:
                 return consulta.Cnpj is { } cnpj ? DaEntidade(cnpj) : null;
             case TipoDeContexto.Pagamentos:
-                return consulta.Periodo is { } periodo ? Pagamentos(periodo, consulta.Uf, consulta.Municipio) : null;
+                return consulta.PeriodoDasEmendas.Completo ? Pagamentos(consulta.PeriodoDasEmendas, consulta.Uf, consulta.Municipio) : null;
         }
 
         var legislatura = consulta.Legislatura ?? await LegislaturaCorrenteAsync(ct);
@@ -70,28 +70,28 @@ public class ServicoProcedencia(PoligraphDb db)
             return consulta.Casa is { } casa ? Painel(casa, legislatura.Value) : null;
         }
 
-        if (consulta.Pessoa is not { } pessoa)
+        if (consulta.IdPessoa is not { } idPessoa)
         {
             return null;
         }
 
         return consulta.Contexto.Tipo switch
         {
-            TipoDeContexto.Votos => Votos(pessoa, legislatura.Value),
-            TipoDeContexto.Cota => Cota(pessoa, legislatura.Value, consulta.Ano, consulta.Categoria),
-            TipoDeContexto.Emendas => Emendas(pessoa, legislatura.Value, consulta.Ano),
-            TipoDeContexto.Campanha => Campanha(pessoa, legislatura.Value, consulta.Ano),
-            _ => Patrimonio(pessoa, legislatura.Value, consulta.Ano),
+            TipoDeContexto.Votos => Votos(idPessoa, legislatura.Value),
+            TipoDeContexto.Cota => Cota(idPessoa, legislatura.Value, consulta.AnoDaDespesa, consulta.Categoria),
+            TipoDeContexto.Emendas => Emendas(idPessoa, legislatura.Value, consulta.AnoDaEmenda),
+            TipoDeContexto.Campanha => Campanha(idPessoa, legislatura.Value, consulta.AnoDaEleicao),
+            _ => Patrimonio(idPessoa, legislatura.Value, consulta.AnoDaEleicao),
         };
     }
 
     private async Task<Legislatura?> LegislaturaCorrenteAsync(CancellationToken ct) =>
         await Legislaturas.CorrenteAsync(_db, ct) is { } numero ? new Legislatura(numero) : null;
 
-    private Recorte Votos(PessoaId pessoa, Legislatura legislatura)
+    private Recorte Votos(IdPessoa idPessoa, Legislatura legislatura)
     {
         var votos = _db.Votos.AsNoTracking()
-            .Where(v => v.PessoaId == pessoa.Valor && (v.Valor == 1 || v.Valor == -1) && v.Votacao!.Legislatura == legislatura.Numero);
+            .Where(v => v.PessoaId == idPessoa.Valor && (v.Valor == 1 || v.Valor == -1) && v.Votacao!.Legislatura == legislatura.Numero);
         return new(
             TextosDaProcedencia.Votos(legislatura),
             votos.Select(v => v.CargaId),
@@ -102,52 +102,54 @@ public class ServicoProcedencia(PoligraphDb db)
                     v.Votacao.Data, null, null)));
     }
 
-    private Recorte Cota(PessoaId pessoa, Legislatura legislatura, Ano? ano, CategoriaDeDespesa? categoria)
+    private Recorte Cota(IdPessoa idPessoa, Legislatura legislatura, AnoDaDespesa? anoDaDespesa, CategoriaDeDespesa? categoria)
     {
-        var (de, ate) = ano.HasValue ? (ano.Value.Valor, ano.Value.Valor) : Legislaturas.AnosDeDespesa(legislatura.Numero);
-        var despesas = _db.Despesas.AsNoTracking().Where(d => d.PessoaId == pessoa.Valor && d.Ano >= de && d.Ano <= ate);
+        var (primeiroAnoDaDespesa, ultimoAnoDaDespesa) = anoDaDespesa is { } unico ? (unico.Valor, unico.Valor) : Legislaturas.AnosDeDespesa(legislatura.Numero);
+        var despesas = _db.Despesas.AsNoTracking()
+            .Where(d => d.PessoaId == idPessoa.Valor && d.Ano >= primeiroAnoDaDespesa && d.Ano <= ultimoAnoDaDespesa);
         if (categoria is { } escolhida)
         {
             despesas = despesas.Where(d => d.Categoria == escolhida.Nome);
         }
 
         return new(
-            TextosDaProcedencia.Cota(de, ate, categoria),
+            TextosDaProcedencia.Cota(primeiroAnoDaDespesa, ultimoAnoDaDespesa, categoria),
             despesas.Select(d => d.CargaId),
             despesas.OrderByDescending(d => d.ValorLiquido)
                 .Select(d => new LinhaDaProcedenciaDto(
                     d.Fornecedor ?? TextosDaProcedencia.FornecedorNaoInformado, d.Categoria, d.DataEmissao, d.ValorLiquido, d.UrlDocumento)));
     }
 
-    private Recorte Emendas(PessoaId pessoa, Legislatura legislatura, Ano? ano)
+    private Recorte Emendas(IdPessoa idPessoa, Legislatura legislatura, AnoDaEmenda? anoDaEmenda)
     {
-        var (de, ate) = ano.HasValue ? (ano.Value.Valor, ano.Value.Valor) : Legislaturas.AnosDeEmenda(legislatura.Numero);
-        var emendas = _db.Emendas.AsNoTracking().Where(e => e.PessoaId == pessoa.Valor && e.Ano >= de && e.Ano <= ate);
+        var (primeiroAnoDaEmenda, ultimoAnoDaEmenda) = anoDaEmenda is { } unico ? (unico.Valor, unico.Valor) : Legislaturas.AnosDeEmenda(legislatura.Numero);
+        var emendas = _db.Emendas.AsNoTracking()
+            .Where(e => e.PessoaId == idPessoa.Valor && e.Ano >= primeiroAnoDaEmenda && e.Ano <= ultimoAnoDaEmenda);
         return new(
-            TextosDaProcedencia.Emendas(de, ate),
+            TextosDaProcedencia.Emendas(primeiroAnoDaEmenda, ultimoAnoDaEmenda),
             emendas.Select(e => e.CargaId),
             emendas.OrderByDescending(e => e.ValorEmpenhado)
                 .Select(e => new LinhaDaProcedenciaDto(
                     TextosDaProcedencia.Emenda(e.CodigoEmenda), e.Localidade ?? e.Funcao, null, e.ValorEmpenhado, null)));
     }
 
-    private Recorte Campanha(PessoaId pessoa, Legislatura legislatura, Ano? ano)
+    private Recorte Campanha(IdPessoa idPessoa, Legislatura legislatura, AnoDaEleicao? anoDaEleicaoPedido)
     {
-        var eleicao = (short)(ano?.Valor ?? Legislaturas.EleicaoDoMandato(legislatura.Numero));
-        var receitas = _db.ReceitasDeCampanha.AsNoTracking().Where(r => r.PessoaId == pessoa.Valor && r.AnoEleicao == eleicao);
+        var anoDaEleicao = (short)(anoDaEleicaoPedido?.Valor ?? Legislaturas.EleicaoDoMandato(legislatura.Numero));
+        var receitas = _db.ReceitasDeCampanha.AsNoTracking().Where(r => r.PessoaId == idPessoa.Valor && r.AnoEleicao == anoDaEleicao);
         return new(
-            TextosDaProcedencia.Campanha(eleicao),
+            TextosDaProcedencia.Campanha(anoDaEleicao),
             receitas.Select(r => r.CargaId),
             receitas.OrderByDescending(r => r.Valor)
                 .Select(r => new LinhaDaProcedenciaDto(r.Doador ?? TextosDaProcedencia.DoadorNaoInformado, r.FonteReceita, null, r.Valor, null)));
     }
 
-    private Recorte Patrimonio(PessoaId pessoa, Legislatura legislatura, Ano? ano)
+    private Recorte Patrimonio(IdPessoa idPessoa, Legislatura legislatura, AnoDaEleicao? anoDaEleicaoPedido)
     {
-        var eleicao = (short)(ano?.Valor ?? Legislaturas.EleicaoDoMandato(legislatura.Numero));
-        var bens = _db.Patrimonios.AsNoTracking().Where(p => p.PessoaId == pessoa.Valor && p.AnoEleicao == eleicao);
+        var anoDaEleicao = (short)(anoDaEleicaoPedido?.Valor ?? Legislaturas.EleicaoDoMandato(legislatura.Numero));
+        var bens = _db.Patrimonios.AsNoTracking().Where(p => p.PessoaId == idPessoa.Valor && p.AnoEleicao == anoDaEleicao);
         return new(
-            TextosDaProcedencia.Patrimonio(eleicao),
+            TextosDaProcedencia.Patrimonio(anoDaEleicao),
             bens.Select(p => p.CargaId),
             bens.OrderByDescending(p => p.Valor)
                 .Select(p => new LinhaDaProcedenciaDto(p.TipoBem, null, null, p.Valor, null)));
@@ -156,23 +158,23 @@ public class ServicoProcedencia(PoligraphDb db)
     /// <remarks>
     /// <para>O mesmo filtro do mapa (<c>ServicoMapaDeEmendas.DoPeriodo</c> e <c>NoMapa</c>): o ano da emenda são os quatro primeiros dígitos do código; com estado ou cidade, só pessoa jurídica fora do intermediário, com a sede ligada por CNPJ.</para>
     /// </remarks>
-    private Recorte Pagamentos(Periodo periodo, Uf? uf, CodigoIbge? municipio)
+    private Recorte Pagamentos(Periodo<AnoDaEmenda> periodoDasEmendas, Uf? uf, CodigoIbge? municipio)
     {
-        var prefixos = periodo.Anos.Select(a => a.ToString(CultureInfo.InvariantCulture)).ToArray();
-        var pagamentos = _db.EmendasFavorecidos.AsNoTracking().Where(f => prefixos.Contains(f.CodigoEmenda.Substring(0, 4)));
-        if (municipio is { } cidade)
+        var prefixosDoCodigoDaEmenda = periodoDasEmendas.Anos.Select(a => a.ToString(CultureInfo.InvariantCulture)).ToArray();
+        var pagamentos = _db.EmendasFavorecidos.AsNoTracking().Where(f => prefixosDoCodigoDaEmenda.Contains(f.CodigoEmenda.Substring(0, 4)));
+        if (municipio is { } municipioDaSede)
         {
             pagamentos = pagamentos.Where(f => f.Tipo == TipoFavorecido.PESSOA_JURIDICA && !f.Intermediario
-                && _db.CnpjsMunicipio.Any(c => c.Cnpj == f.Documento && c.CodigoIbge == cidade.Digitos));
+                && _db.CnpjsMunicipio.Any(c => c.Cnpj == f.Documento && c.CodigoIbge == municipioDaSede.Digitos));
         }
-        else if (uf is { } estado)
+        else if (uf is { } ufDaSede)
         {
             pagamentos = pagamentos.Where(f => f.Tipo == TipoFavorecido.PESSOA_JURIDICA && !f.Intermediario
-                && _db.CnpjsMunicipio.Any(c => c.Cnpj == f.Documento && c.Municipio!.Uf == estado.Sigla));
+                && _db.CnpjsMunicipio.Any(c => c.Cnpj == f.Documento && c.Municipio!.Uf == ufDaSede.Sigla));
         }
 
         return new(
-            TextosDaProcedencia.Pagamentos(periodo, uf, municipio),
+            TextosDaProcedencia.Pagamentos(periodoDasEmendas, uf, municipio),
             pagamentos.Select(f => f.CargaId),
             pagamentos.OrderByDescending(f => f.Valor)
                 .Select(f => new LinhaDaProcedenciaDto(
@@ -184,21 +186,21 @@ public class ServicoProcedencia(PoligraphDb db)
     /// <para>O gasto soma a execução por função e os Encargos especiais do arquivo anual do orçamento. Os restos a pagar pagos vêm dos arquivos mensais de execução, que não entram como carga das linhas: a regra diz isso.</para>
     /// <para>O gasto sigiloso combina arquivos mensais do cartão e da execução, e suas linhas ficam sem carga; o painel diz quantas.</para>
     /// </remarks>
-    private Recorte DoGoverno(TipoDeContexto contexto, Periodo periodo)
+    private Recorte DoGoverno(TipoDeContexto contexto, Periodo<AnoDoOrcamento> periodoDoOrcamento)
     {
-        var (de, ate) = (periodo.De.Valor, periodo.Ate.Valor);
+        var (primeiroAnoDoOrcamento, ultimoAnoDoOrcamento) = (periodoDoOrcamento.Primeiro.GetValueOrDefault().Valor, periodoDoOrcamento.Ultimo.GetValueOrDefault().Valor);
         return contexto switch
         {
             TipoDeContexto.GovernoReceitas => new(
-                TextosDaProcedencia.GovernoReceitas(periodo),
-                _db.ReceitasPorOrigem.AsNoTracking().Where(r => r.Ano >= de && r.Ano <= ate).Select(r => r.CargaId), null),
+                TextosDaProcedencia.GovernoReceitas(periodoDoOrcamento),
+                _db.ReceitasPorOrigem.AsNoTracking().Where(r => r.Ano >= primeiroAnoDoOrcamento && r.Ano <= ultimoAnoDoOrcamento).Select(r => r.CargaId), null),
             TipoDeContexto.GovernoSigiloso => new(
-                TextosDaProcedencia.GovernoSigiloso(periodo),
-                _db.GastosSigilosos.AsNoTracking().Where(g => g.Ano >= de && g.Ano <= ate).Select(g => g.CargaId), null),
+                TextosDaProcedencia.GovernoSigiloso(periodoDoOrcamento),
+                _db.GastosSigilosos.AsNoTracking().Where(g => g.Ano >= primeiroAnoDoOrcamento && g.Ano <= ultimoAnoDoOrcamento).Select(g => g.CargaId), null),
             _ => new(
-                TextosDaProcedencia.GovernoGastos(periodo),
-                _db.OrcamentoPorFuncao.AsNoTracking().Where(o => o.Ano >= de && o.Ano <= ate).Select(o => o.CargaId)
-                    .Concat(_db.EncargosEspeciais.AsNoTracking().Where(e => e.Ano >= de && e.Ano <= ate).Select(e => e.CargaId)), null),
+                TextosDaProcedencia.GovernoGastos(periodoDoOrcamento),
+                _db.OrcamentoPorFuncao.AsNoTracking().Where(o => o.Ano >= primeiroAnoDoOrcamento && o.Ano <= ultimoAnoDoOrcamento).Select(o => o.CargaId)
+                    .Concat(_db.EncargosEspeciais.AsNoTracking().Where(e => e.Ano >= primeiroAnoDoOrcamento && e.Ano <= ultimoAnoDoOrcamento).Select(e => e.CargaId)), null),
         };
     }
 
@@ -234,7 +236,7 @@ public class ServicoProcedencia(PoligraphDb db)
     private async Task<ProcedenciaDto> MontarAsync(Recorte recorte, CancellationToken ct)
     {
         var porCarga = await recorte.Cargas
-            .GroupBy(id => id)
+            .GroupBy(idCarga => idCarga)
             .Select(g => new { Id = g.Key, Linhas = g.Count() })
             .ToListAsync(ct);
 

@@ -3,7 +3,7 @@
 namespace Poligraph.Api.Dtos;
 
 public record FichaParlamentarDto(
-    long Id,
+    long IdPessoa,
     string Nome,
     /// <summary>
     /// CAMARA ou SENADO, derivado do voto mais recente — como partido e UF.

@@ -51,7 +51,7 @@ export function ListaDoGrafoComponent({
   const linhas = useMemo(() => {
     if (!aberta) return [];
 
-    const porId = new Map(nos.map((n) => [n.id, n]));
+    const porId = new Map(nos.map((n) => [n.idPessoa, n]));
     const vizinhos = new Map<number, { no: NoDoGrafo; peso: number }[]>();
 
     const juntar = (de: number, para: number, peso: number) => {
@@ -64,14 +64,14 @@ export function ListaDoGrafoComponent({
     };
 
     for (const a of arestas) {
-      juntar(a.de, a.para, a.peso);
-      juntar(a.para, a.de, a.peso);
+      juntar(a.idPessoaDe, a.idPessoaPara, a.peso);
+      juntar(a.idPessoaPara, a.idPessoaDe, a.peso);
     }
 
     return nos
       .map((no) => ({
         no,
-        proximos: (vizinhos.get(no.id) ?? [])
+        proximos: (vizinhos.get(no.idPessoa) ?? [])
           .sort((a, b) => b.peso - a.peso)
           .slice(0, VIZINHOS_NA_LISTA_DO_GRAFO),
       }))
@@ -90,7 +90,7 @@ export function ListaDoGrafoComponent({
 
       <ul className="lista-grafo">
         {linhas.map(({ no, proximos }) => (
-          <li key={no.id}>
+          <li key={no.idPessoa}>
             {aoSelecionar ? (
               <button type="button" className="lista-grafo-nome" onClick={() => aoSelecionar(no)}>
                 {no.nome}

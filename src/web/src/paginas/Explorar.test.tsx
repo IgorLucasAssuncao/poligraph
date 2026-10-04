@@ -27,12 +27,12 @@ vi.mock('../api', async (original) => ({
 const api = await import('../api');
 
 function parlamentar(
-  id: number,
+  idPessoa: number,
   nome: string,
   casa: Parlamentar['casa'],
   nVotacoes: number,
 ): Parlamentar {
-  return { id, nome, casa, partido: 'PARTIDO-A', uf: 'SP', nVotacoes, urlFoto: null };
+  return { idPessoa, nome, casa, partido: 'PARTIDO-A', uf: 'SP', nVotacoes, urlFoto: null };
 }
 
 function pagina(itens: Parlamentar[], total = itens.length, numero = 1): PaginaDeParlamentares {

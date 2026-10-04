@@ -15,20 +15,20 @@ namespace Poligraph.Api.Services;
 public static class FontesOficiais
 {
     /// <summary>A página do deputado ou do senador na própria casa.</summary>
-    public static string? Parlamentar(TipoCasa? casa, string? idNaCasa) => (casa, idNaCasa) switch
+    public static string? Parlamentar(TipoCasa? casa, string? idPessoaNaCasa) => (casa, idPessoaNaCasa) switch
     {
         (_, null or "") => null,
-        (TipoCasa.CAMARA, var id) => $"https://www.camara.leg.br/deputados/{id}",
-        (TipoCasa.SENADO, var id) => $"https://www25.senado.leg.br/web/senadores/senador/-/perfil/{id}",
+        (TipoCasa.CAMARA, var idDeputadoNaCamara) => $"https://www.camara.leg.br/deputados/{idDeputadoNaCamara}",
+        (TipoCasa.SENADO, var codigoSenadorNoSenado) => $"https://www25.senado.leg.br/web/senadores/senador/-/perfil/{codigoSenadorNoSenado}",
         _ => null,
     };
 
     /// <summary>A ficha de tramitação da proposição votada.</summary>
-    public static string? Proposicao(TipoCasa casa, long? proposicaoId) => (casa, proposicaoId) switch
+    public static string? Proposicao(TipoCasa casa, long? idProposicaoNaCasa) => (casa, idProposicaoNaCasa) switch
     {
         (_, null) => null,
-        (TipoCasa.CAMARA, var id) => $"https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao={id}",
-        (TipoCasa.SENADO, var id) => $"https://www25.senado.leg.br/web/atividade/materias/-/materia/{id}",
+        (TipoCasa.CAMARA, var idProposicaoNaCamara) => $"https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao={idProposicaoNaCamara}",
+        (TipoCasa.SENADO, var codigoMateriaNoSenado) => $"https://www25.senado.leg.br/web/atividade/materias/-/materia/{codigoMateriaNoSenado}",
         _ => null,
     };
 

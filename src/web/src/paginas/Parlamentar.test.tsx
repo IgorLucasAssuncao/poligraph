@@ -31,7 +31,7 @@ vi.mock('../api', async (original) => ({
 const api = await import('../api');
 
 const FICHA: Ficha = {
-  id: 1,
+  idPessoa: 1,
   nome: 'Ana Ribeiro',
   casa: 'CAMARA',
   nomeCivil: 'ANA RIBEIRO',
@@ -77,7 +77,7 @@ function voto(
 
 /** DECISÃO: Empenhado ≠ pago, e a razão entre eles é 40%. */
 const EMENDAS: EmendasDoParlamentar = {
-  ano: 2025,
+  anoDaEmenda: 2025,
   empenhado: 1_000_000,
   pago: 400_000,
   pagoDepois: 0,
@@ -155,7 +155,7 @@ function renderizar() {
   return render(
     <MemoryRouter initialEntries={['/parlamentar/1']}>
       <Routes>
-        <Route path="/parlamentar/:id/:aba?" element={<ParlamentarComponent />} />
+        <Route path="/parlamentar/:idPessoa/:aba?" element={<ParlamentarComponent />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -251,7 +251,7 @@ describe('contas — emendas', () => {
 
   it('DECISÃO: estado vazio é honesto, não "R$ 0,00"', async () => {
     vi.mocked(api.obterEmendas).mockResolvedValue({
-      ano: 0, empenhado: 0, pago: 0, pagoDepois: 0, quantidade: 0, porDestino: [], porFuncao: [],
+      anoDaEmenda: 0, empenhado: 0, pago: 0, pagoDepois: 0, quantidade: 0, porDestino: [], porFuncao: [],
       ...SEM_DESTINO,
     });
 
@@ -563,7 +563,7 @@ describe('o tour da ficha', () => {
     await renderizarCom({
       ...FICHA,
       votosRecentes: [voto('v1', 1, 'Sim')],
-      maisSimilares: [{ pessoaId: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', valor: 0.9, comuns: 100 }],
+      maisSimilares: [{ idPessoa: 2, nome: 'Bruno Tavares', partido: 'PARTIDO-B', valor: 0.9, comuns: 100 }],
       alinhamento: {
         governismo: 0.8,
         baseGovernismo: 50,
@@ -868,7 +868,7 @@ describe('os mandatos na ficha', () => {
 describe('o ano da cota', () => {
   it('troca o ano e pede a cota daquele ano', async () => {
     const doAno = (ano: number, total: number) => ({
-      ano, total, lancamentos: 3,
+      anoDaDespesa: ano, total, lancamentos: 3,
       porCategoria: [{ categoria: 'PASSAGEM AÉREA', total, lancamentos: 3 }],
       maioresFornecedores: [],
     });

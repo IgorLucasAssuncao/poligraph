@@ -21,7 +21,7 @@ const api = await import('../api');
 
 const RESPOSTA: Busca = {
   parlamentares: [
-    { id: 42, nome: 'Fulano de São Paulo', partido: 'XYZ', uf: 'SP', casa: 'CAMARA', nVotacoes: 500 },
+    { idPessoa: 42, nome: 'Fulano de São Paulo', partido: 'XYZ', uf: 'SP', casa: 'CAMARA', nVotacoes: 500 },
   ],
   municipios: [{ codigoIbge: '3550308', nome: 'SÃO PAULO', uf: 'SP' }],
   entidades: [

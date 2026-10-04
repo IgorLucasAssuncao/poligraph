@@ -10,11 +10,11 @@ export const TEXTOS_DAS_CONTAS = {
     noMandato: (periodo: string) => `No mandato de ${periodo}: o ano mais recente de cada um dentro dele.`,
     maisRecente: 'O valor mais recente de cada um. Os anos são diferentes.',
     rotulo: 'Contas do mandato',
-    campanha: (ano?: number | null) => (ano ? `Campanha de ${ano}` : 'Campanha'),
+    campanha: (anoDaEleicao?: number | null) => (anoDaEleicao ? `Campanha de ${anoDaEleicao}` : 'Campanha'),
     campanhaNota: 'arrecadado na eleição',
-    emendas: (ano?: number | null) => (ano ? `Emendas de ${ano}` : 'Emendas'),
+    emendas: (anoDaEmenda?: number | null) => (anoDaEmenda ? `Emendas de ${anoDaEmenda}` : 'Emendas'),
     emendasNota: 'empenhado no ano',
-    cota: (ano?: number | null) => (ano ? `Cota de ${ano}` : 'Cota'),
+    cota: (anoDaDespesa?: number | null) => (anoDaDespesa ? `Cota de ${anoDaDespesa}` : 'Cota'),
     cotaNota: 'gasto no ano',
     seta: ' →',
     ausente: '—',
@@ -29,15 +29,15 @@ export const TEXTOS_DAS_CONTAS = {
   emendas: {
     vazio: 'Nenhuma emenda atribuída a este parlamentar na base.',
     rotulo: 'Emendas',
-    rotuloDaProcedencia: (ano: number) => `Emendas de ${ano}`,
-    resposta: (pago: ReactNode, empenhado: string, quantidade: number, ano: number, porcento: string): ReactNode => (
+    rotuloDaProcedencia: (anoDaEmenda: number) => `Emendas de ${anoDaEmenda}`,
+    resposta: (pago: ReactNode, empenhado: string, quantidade: number, anoDaEmenda: number, porcento: string): ReactNode => (
       <>
         {pago} pagos de {empenhado} empenhados em <strong>{quantidade}</strong> {plural(quantidade, 'emenda', 'emendas')} de{' '}
-        {ano}: {porcento}% saiu de fato
+        {anoDaEmenda}: {porcento}% saiu de fato
       </>
     ),
     verOGrafo: 'Ver o grafo do dinheiro',
-    pagoNoAno: (ano: number, valor: string) => ` pago em ${ano}: ${valor}`,
+    pagoNoAno: (anoDaEmenda: number, valor: string) => ` pago em ${anoDaEmenda}: ${valor}`,
     pagoDepois: (valor: string) => ` pago nos anos seguintes: ${valor}`,
     naoPago: (valor: string) => ` ainda não pago: ${valor}`,
     verDetalhes: 'Ver detalhes: áreas do orçamento, local declarado, mês a mês, convênios e emenda por emenda',
@@ -81,12 +81,12 @@ export const TEXTOS_DAS_CONTAS = {
   cota: {
     rotulo: 'Cota parlamentar',
     carregandoOAno: 'Carregando a cota do ano',
-    vazio: (ano: number | null) =>
-      `Nenhuma despesa de cota registrada ${ano ? `em ${ano}` : 'para este parlamentar na base'}.`,
-    rotuloDaProcedencia: (ano: number) => `Cota parlamentar de ${ano}`,
-    resposta: (total: ReactNode, ano: number, notas: number, maiorParte: string | null): ReactNode => (
+    vazio: (anoDaDespesa: number | null) =>
+      `Nenhuma despesa de cota registrada ${anoDaDespesa ? `em ${anoDaDespesa}` : 'para este parlamentar na base'}.`,
+    rotuloDaProcedencia: (anoDaDespesa: number) => `Cota parlamentar de ${anoDaDespesa}`,
+    resposta: (total: ReactNode, anoDaDespesa: number, notas: number, maiorParte: string | null): ReactNode => (
       <>
-        Gastou {total} da <TermoComponent nome="cota">cota parlamentar</TermoComponent> em {ano}, em <strong>{notas}</strong>{' '}
+        Gastou {total} da <TermoComponent nome="cota">cota parlamentar</TermoComponent> em {anoDaDespesa}, em <strong>{notas}</strong>{' '}
         notas
         {maiorParte && (
           <>
@@ -97,7 +97,7 @@ export const TEXTOS_DAS_CONTAS = {
       </>
     ),
     emQue: 'Em quê',
-    rotuloDaCategoria: (ano: number, categoria: string) => `Cota de ${ano}: ${categoria}`,
+    rotuloDaCategoria: (anoDaDespesa: number, categoria: string) => `Cota de ${anoDaDespesa}: ${categoria}`,
     quemRecebeu: 'Quem recebeu',
     pessoaFisica: 'pessoa física',
     verDetalhes: 'Ver detalhes: nota por nota, com o documento fiscal',
@@ -111,7 +111,7 @@ export const TEXTOS_DAS_CONTAS = {
   lancamentos: {
     titulo: 'Nota por nota',
     baixar: 'Baixar todas (CSV)',
-    arquivo: (pessoa: number, ano: number) => `cota-${pessoa}-${ano}.csv`,
+    arquivo: (idPessoa: number, anoDaDespesa: number) => `cota-${idPessoa}-${anoDaDespesa}.csv`,
     colunas: ['Data', 'Mês', 'Categoria', 'Fornecedor', 'Valor', 'Documento fiscal'],
     fornecedorNaoInformado: 'Fornecedor não informado',
     mes: (mes: number) => `mês ${mes}`,
@@ -122,10 +122,10 @@ export const TEXTOS_DAS_CONTAS = {
   campanha: {
     vazio: 'Nenhuma receita de campanha registrada para este parlamentar na base.',
     rotulo: 'Campanha',
-    rotuloDaProcedencia: (ano: number) => `Campanha de ${ano}`,
-    resposta: (total: ReactNode, ano: number, publico: string, porcento: string): ReactNode => (
+    rotuloDaProcedencia: (anoDaEleicao: number) => `Campanha de ${anoDaEleicao}`,
+    resposta: (total: ReactNode, anoDaEleicao: number, publico: string, porcento: string): ReactNode => (
       <>
-        Arrecadou {total} na eleição de {ano}. Juntos, os dois fundos somam <strong>{publico}</strong>, {porcento}% do que a
+        Arrecadou {total} na eleição de {anoDaEleicao}. Juntos, os dois fundos somam <strong>{publico}</strong>, {porcento}% do que a
         campanha arrecadou. São fundos <strong>distintos</strong>: o Fundo Especial é eleitoral; o Partidário custeia o
         partido o ano inteiro.
       </>
@@ -148,14 +148,14 @@ export const TEXTOS_DAS_CONTAS = {
     titulo: 'Patrimônio declarado ao TSE',
     vazio: 'Nenhuma declaração de bens deste parlamentar ao TSE na base.',
     bens: (quantidade: number) => `${quantidade} bens`,
-    rotuloDaProcedencia: (ano: number) => `Bens declarados em ${ano}`,
-    resposta: (total: ReactNode, bens: number, ano: number, anterior: { ano: number; total: string } | null): ReactNode => (
+    rotuloDaProcedencia: (anoDaEleicao: number) => `Bens declarados em ${anoDaEleicao}`,
+    resposta: (total: ReactNode, bens: number, anoDaEleicao: number, anterior: { anoDaEleicao: number; total: string } | null): ReactNode => (
       <>
-        Declarou {total} em {bens} {plural(bens, 'bem', 'bens')} ao se candidatar em {ano}.
+        Declarou {total} em {bens} {plural(bens, 'bem', 'bens')} ao se candidatar em {anoDaEleicao}.
         {anterior && (
           <>
             {' '}
-            Em {anterior.ano}, tinha declarado <strong>{anterior.total}</strong>.
+            Em {anterior.anoDaEleicao}, tinha declarado <strong>{anterior.total}</strong>.
           </>
         )}
       </>
@@ -168,10 +168,10 @@ export const TEXTOS_DAS_CONTAS = {
   /** As listas de "para onde foi" da aba Emendas: quem recebeu, quando, por qual convênio, emenda por emenda. */
   paraOndeFoi: {
     quemRecebeu: 'Quem recebeu',
-    recebidos: (valor: string, ano: number, ate: string | null): ReactNode => (
+    recebidos: (valor: string, anoDaEmenda: number, ultimoMesPago: string | null): ReactNode => (
       <>
-        <strong>{valor}</strong> recebidos pelas emendas de {ano}
-        {ate && <>, até {ate}</>}. Inclui o que foi pago nos anos seguintes.
+        <strong>{valor}</strong> recebidos pelas emendas de {anoDaEmenda}
+        {ultimoMesPago && <>, até {ultimoMesPago}</>}. Inclui o que foi pago nos anos seguintes.
       </>
     ),
     viaBanco: <TermoComponent nome="intermediario">Via Banco do Brasil, que repassa</TermoComponent>,
@@ -179,9 +179,9 @@ export const TEXTOS_DAS_CONTAS = {
     semIdentificacao: 'Sem identificação na fonte',
     tambemNaCota: (valor: string, anos: string) => `A cota deste parlamentar também pagou ${valor} a este CNPJ em ${anos}`,
     quandoFoiPago: 'Quando foi pago',
-    noProprioAno: (noAno: string, total: string, parcela: number, ano: number): ReactNode => (
+    noProprioAno: (noAno: string, total: string, parcela: number, anoDaEmenda: number): ReactNode => (
       <>
-        {noAno} de {total} (<strong>{parcela}%</strong>) saíram ainda em {ano}.
+        {noAno} de {total} (<strong>{parcela}%</strong>) saíram ainda em {anoDaEmenda}.
       </>
     ),
     verTabela: 'Ver os valores em tabela',
@@ -195,7 +195,7 @@ export const TEXTOS_DAS_CONTAS = {
     noPortal: 'no Portal',
     emendaPorEmenda: 'Emenda por emenda',
     baixarTodas: 'Baixar todas (CSV)',
-    arquivo: (pessoa: number, ano: number) => `emendas-${pessoa}-${ano}.csv`,
+    arquivo: (idPessoa: number, anoDaEmenda: number) => `emendas-${idPessoa}-${anoDaEmenda}.csv`,
     colunas: ['Código', 'Tipo', 'Localidade', 'Localidades', 'Função', 'Empenhado', 'Pago', 'Portal'],
     semLocalidade: 'Sem localidade',
     eMais: (quantas: number) => ` e mais ${quantas}`,
@@ -208,8 +208,8 @@ export const TEXTOS_DAS_CONTAS = {
   grafoDoDinheiro: {
     sobre: 'De onde veio e para onde foi',
     fechar: 'Fechar',
-    campanha: (ano: number, total: string) => `Campanha de ${ano} · ${total} arrecadados`,
-    emendas: (ano: number, total: string) => `Emendas de ${ano} · ${total} recebidos`,
+    campanha: (anoDaEleicao: number, total: string) => `Campanha de ${anoDaEleicao} · ${total} arrecadados`,
+    emendas: (anoDaEmenda: number, total: string) => `Emendas de ${anoDaEmenda} · ${total} recebidos`,
     ajuda:
       'As setas da esquerda são as receitas da campanha, segundo a prestação de contas ao TSE; as da direita, quem ' +
       'recebeu o dinheiro das emendas daquele ano, segundo o Portal da Transparência, até o último pagamento. Os dois ' +
@@ -223,7 +223,7 @@ export const TEXTOS_DAS_CONTAS = {
     destinoForaDoDado: 'o destino final não está no dado',
     pessoasESemIdentificacao: 'Pessoas e sem identificação',
     item: (nome: string, valor: string) => `${nome}, ${valor}`,
-    leitorCampanha: (ano: number, nome: string, itens: string) => `Campanha de ${ano} de ${nome}: ${itens}. `,
-    leitorEmendas: (ano: number, itens: string) => `Emendas de ${ano}: ${itens}.`,
+    leitorCampanha: (anoDaEleicao: number, nome: string, itens: string) => `Campanha de ${anoDaEleicao} de ${nome}: ${itens}. `,
+    leitorEmendas: (anoDaEmenda: number, itens: string) => `Emendas de ${anoDaEmenda}: ${itens}.`,
   },
 } as const;

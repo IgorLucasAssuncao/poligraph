@@ -21,8 +21,8 @@ export function LinhaDoParlamentarComponent({ parlamentar: p }: { parlamentar: P
     <li className="autor-com-foto">
       <AvatarComponent nome={p.nome} fotoUrl={p.urlFoto} tamanho="pequeno" />
       <span className="autor-texto">
-        {p.pessoaId ? (
-          <Link className="autor-nome" to={`/parlamentar/${p.pessoaId}`}>
+        {p.idPessoa ? (
+          <Link className="autor-nome" to={`/parlamentar/${p.idPessoa}`}>
             {nomeProprio(p.nome)}
           </Link>
         ) : (

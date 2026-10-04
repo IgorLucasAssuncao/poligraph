@@ -18,8 +18,8 @@ vi.mock('../api', async () => {
 const { calcularAfinidade, obterDesempate, obterPerguntas } = await import('../api');
 
 const PERGUNTAS = [
-  { id: 'q1', texto: 'Primeira afirmação', ordem: 1, totalVotos: 480, totalPossivel: 513 },
-  { id: 'q2', texto: 'Segunda afirmação', ordem: 2, totalVotos: 501, totalPossivel: 513 },
+  { idPergunta: 'q1', texto: 'Primeira afirmação', ordem: 1, totalVotos: 480, totalPossivel: 513 },
+  { idPergunta: 'q2', texto: 'Segunda afirmação', ordem: 2, totalVotos: 501, totalPossivel: 513 },
 ];
 
 function renderizar() {
@@ -121,7 +121,7 @@ describe('Questionario', () => {
   it('emenda as perguntas de desempate sem o cidadão perceber', async () => {
     vi.mocked(obterPerguntas).mockResolvedValue({ perguntas: PERGUNTAS, total: 3 });
     vi.mocked(obterDesempate).mockResolvedValue([
-      { id: 'q9', texto: 'Afirmação escolhida para desempatar', ordem: 9, totalVotos: 400, totalPossivel: 513 },
+      { idPergunta: 'q9', texto: 'Afirmação escolhida para desempatar', ordem: 9, totalVotos: 400, totalPossivel: 513 },
     ]);
 
     const usuario = userEvent.setup();

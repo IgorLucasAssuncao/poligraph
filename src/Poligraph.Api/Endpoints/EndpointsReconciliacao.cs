@@ -16,6 +16,6 @@ public static class EndpointsReconciliacao
     }
 
     /// <summary>Quanto o total de emendas da base fecha com o Portal, ano a ano, e o motivo do que fica fora.</summary>
-    private static async Task<IResult> ListarAsync(ServicoReconciliacao servico, CancellationToken ct, Ano? de = null, Ano? ate = null) =>
-        Results.Ok(await servico.ListarAsync(de, ate, ct));
+    private static async Task<IResult> ListarAsync(ServicoReconciliacao servico, CancellationToken ct, Periodo<AnoDaReconciliacao> periodoDaReconciliacao) =>
+        Results.Ok(await servico.ListarAsync(periodoDaReconciliacao, ct));
 }

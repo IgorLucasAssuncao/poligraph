@@ -41,7 +41,7 @@ describe('o que mudou', () => {
     renderizar({
       ...VAZIAS,
       contraOPartido: [{
-        pessoaId: 7, nome: 'Ana Ribeiro', votacaoId: '2645346-18', data: '2026-10-01', proposicao: 'PL 2630/2020',
+        idPessoa: 7, nome: 'Ana Ribeiro', votacaoId: '2645346-18', data: '2026-10-01', proposicao: 'PL 2630/2020',
         descricao: 'Aprovado o Projeto', partido: 'PT', bancada: 'Fdr PT-PCdoB-PV', orientacao: 'Não', voto: 'Sim',
         urlFonte: 'https://www.camara.leg.br/presenca-comissoes/votacao-portal?reuniao=1',
       }],
@@ -56,11 +56,11 @@ describe('o que mudou', () => {
     renderizar({
       ...VAZIAS,
       votosNaSemana: [
-        { pessoaId: 1, nome: 'Deputada A', casa: 'CAMARA', votou: 12, ausente: null, ausenteJustificado: null },
-        { pessoaId: 2, nome: 'Senador B', casa: 'SENADO', votou: 4, ausente: 2, ausenteJustificado: 1 },
+        { idPessoa: 1, nome: 'Deputada A', casa: 'CAMARA', votou: 12, ausente: null, ausenteJustificado: null },
+        { idPessoa: 2, nome: 'Senador B', casa: 'SENADO', votou: 4, ausente: 2, ausenteJustificado: 1 },
       ],
       gastosNaCota: [{
-        pessoaId: 1, nome: 'Deputada A', casa: 'CAMARA', ano: 2026, mes: 9, total: 38000,
+        idPessoa: 1, nome: 'Deputada A', casa: 'CAMARA', anoDaDespesa: 2026, mes: 9, total: 38000,
         maiorCategoria: 'DIVULGAÇÃO DA ATIVIDADE PARLAMENTAR', maiorCategoriaValor: 12000,
       }],
     });

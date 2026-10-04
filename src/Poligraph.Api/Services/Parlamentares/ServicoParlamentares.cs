@@ -46,7 +46,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         string? nome, string? partido, Uf? ufPedida, TipoCasa? casa, bool anteriores,
         Legislatura? legislaturaPedida, TipoOrdemDaLista ordem, int pagina, int tamanho, CancellationToken ct)
     {
-        var uf = ufPedida?.Sigla;
+        var siglaDaUf = ufPedida?.Sigla;
         var legislatura = legislaturaPedida?.Numero;
         var corrente = await Legislaturas.CorrenteAsync(_db, ct);
         var todos = (anteriores ? await ListaComAnterioresAsync(ct) : await ListaDaLegislaturaAsync(legislatura, ct))
@@ -59,7 +59,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         var filtrados = todos.Where(p =>
             (string.IsNullOrWhiteSpace(nome) || ContemNome(p.Nome, nome))
             && (string.IsNullOrWhiteSpace(partido) || p.Partido == partido)
-            && (string.IsNullOrWhiteSpace(uf) || p.Uf == uf));
+            && (string.IsNullOrWhiteSpace(siglaDaUf) || p.Uf == siglaDaUf));
 
         var ordenados = ordem == TipoOrdemDaLista.VOTACOES
             ? filtrados.OrderByDescending(p => p.NVotacoes).ThenBy(p => p.Nome, Comparacao.GetStringComparer(CompareOptions.IgnoreCase))
@@ -84,18 +84,18 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <remarks>
     /// <para>A legislatura é a da PESSOA, não a corrente do site: um ex-deputado que só votou na 56ª abriria a ficha com zero votos. Pedida uma legislatura em que ela não votou, vale a última em que votou.</para>
     /// </remarks>
-    public Task<FichaParlamentarDto?> ObterFichaAsync(PessoaId pessoa, Legislatura? legislatura, CancellationToken ct) =>
-        _leitura.ObterAsync(("ficha", pessoa.Valor, legislatura?.Numero), () => CalcularFichaAsync(pessoa.Valor, legislatura?.Numero, ct));
+    public Task<FichaParlamentarDto?> ObterFichaAsync(IdPessoa idPessoa, Legislatura? legislatura, CancellationToken ct) =>
+        _leitura.ObterAsync(("ficha", idPessoa.Valor, legislatura?.Numero), () => CalcularFichaAsync(idPessoa.Valor, legislatura?.Numero, ct));
 
     /// <summary>As legislaturas em que a pessoa votou, da mais recente, com a filiação do último voto de cada uma.</summary>
     /// <remarks>
     /// <para>Uma consulta por mandato para a filiação: são poucos por pessoa, e o último voto de cada grupo não se traduz numa consulta só.</para>
     /// <para>A casa entra no agrupamento: a casa é do mandato, não da pessoa.</para>
     /// </remarks>
-    private async Task<List<MandatoDto>> MandatosAsync(long id, CancellationToken ct)
+    private async Task<List<MandatoDto>> MandatosAsync(long idPessoa, CancellationToken ct)
     {
         var grupos = await _db.Votos.AsNoTracking()
-            .Where(v => v.PessoaId == id)
+            .Where(v => v.PessoaId == idPessoa)
             .GroupBy(v => new { v.Votacao!.Legislatura, v.Votacao.Casa })
             .Select(g => new { g.Key.Legislatura, g.Key.Casa, Quantos = g.Count() })
             .OrderByDescending(g => g.Legislatura)
@@ -105,7 +105,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         foreach (var grupo in grupos)
         {
             var ultimo = await _db.Votos.AsNoTracking()
-                .Where(v => v.PessoaId == id
+                .Where(v => v.PessoaId == idPessoa
                          && v.Votacao!.Legislatura == grupo.Legislatura
                          && v.Votacao.Casa == grupo.Casa)
                 .OrderByDescending(v => v.Votacao!.Data)
@@ -125,7 +125,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <para>Só plenário: na comissão vota quem é membro, e contar as dela como falta acusaria ausência de quem nem podia votar.</para>
     /// <para>Senado: a casa registra presença e ausência de cada senador em exercício, e a conta sai das linhas. Câmara: só quem votou tem linha, e a base são as votações de plenário entre o primeiro e o último voto do deputado.</para>
     /// </remarks>
-    private async Task<PresencaDto?> PresencaAsync(long id, TipoCasa? casa, short? legislatura, CancellationToken ct)
+    private async Task<PresencaDto?> PresencaAsync(long idPessoa, TipoCasa? casa, short? legislatura, CancellationToken ct)
     {
         if (casa is null || legislatura is null)
         {
@@ -133,7 +133,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         }
 
         var registros = _db.Votos.AsNoTracking().Where(v =>
-            v.PessoaId == id && v.Votacao!.Casa == casa && v.Votacao.Legislatura == legislatura && v.Votacao.Plenario);
+            v.PessoaId == idPessoa && v.Votacao!.Casa == casa && v.Votacao.Legislatura == legislatura && v.Votacao.Plenario);
 
         var porPresenca = await registros
             .Where(v => v.Presenca != null)
@@ -146,8 +146,8 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
             return null;
         }
 
-        var desde = porPresenca.Min(p => p.Desde);
-        var ate = porPresenca.Max(p => p.Ate);
+        var primeiraVotacao = porPresenca.Min(p => p.Desde);
+        var ultimaVotacao = porPresenca.Max(p => p.Ate);
         int Quantos(PresencaNoVoto presenca) => porPresenca.FirstOrDefault(p => p.Presenca == presenca)?.Quantos ?? 0;
 
         var mediana = await MedianaDePresencaAsync(casa.Value, legislatura.Value, ct);
@@ -160,14 +160,14 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
                 Quantos(PresencaNoVoto.AUSENTE),
                 Quantos(PresencaNoVoto.AUSENTE_JUSTIFICADO),
                 JustificativaPublicada: true,
-                desde, ate, mediana);
+                primeiraVotacao, ultimaVotacao, mediana);
         }
 
         var presente = Quantos(PresencaNoVoto.PRESENTE);
         var votacoes = await _db.Votacoes.AsNoTracking().CountAsync(vt =>
-            vt.Casa == casa && vt.Legislatura == legislatura && vt.Plenario && vt.Data >= desde && vt.Data <= ate, ct);
+            vt.Casa == casa && vt.Legislatura == legislatura && vt.Plenario && vt.Data >= primeiraVotacao && vt.Data <= ultimaVotacao, ct);
 
-        return new PresencaDto(presente, votacoes, votacoes - presente, null, JustificativaPublicada: false, desde, ate, mediana);
+        return new PresencaDto(presente, votacoes, votacoes - presente, null, JustificativaPublicada: false, primeiraVotacao, ultimaVotacao, mediana);
     }
 
     /// <summary>
@@ -207,8 +207,8 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
                     .ToListAsync(ct))
                 .Order()
                 .ToList();
-            int NoIntervalo(DateOnly de, DateOnly ate) =>
-                Indice(datas, ate, depois: true) - Indice(datas, de, depois: false);
+            int NoIntervalo(DateOnly primeiroDia, DateOnly ultimoDia) =>
+                Indice(datas, ultimoDia, depois: true) - Indice(datas, primeiroDia, depois: false);
 
             return Mediana([.. porPessoa
                 .Select(p => (p.Presentes, Votacoes: NoIntervalo(p.Desde, p.Ate)))
@@ -236,15 +236,14 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     }
 
     /// <summary>O patrimônio declarado em cada candidatura, da mais recente. Nulo para pessoa inexistente.</summary>
-    public async Task<PatrimonioDoParlamentarDto?> PatrimonioAsync(PessoaId pessoa, CancellationToken ct)
+    public async Task<PatrimonioDoParlamentarDto?> PatrimonioAsync(IdPessoa idPessoa, CancellationToken ct)
     {
-        var id = pessoa.Valor;
-        if (!await _db.Pessoas.AnyAsync(p => p.Id == id, ct))
+        if (!await _db.Pessoas.AnyAsync(p => p.Id == idPessoa.Valor, ct))
         {
             return null;
         }
 
-        var linhas = await _db.Patrimonios.AsNoTracking().Where(p => p.PessoaId == id).ToListAsync(ct);
+        var linhas = await _db.Patrimonios.AsNoTracking().Where(p => p.PessoaId == idPessoa.Valor).ToListAsync(ct);
 
         return new PatrimonioDoParlamentarDto([.. linhas
             .GroupBy(l => l.AnoEleicao)
@@ -257,8 +256,8 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     }
 
     /// <summary>As redes na ordem em que se reconhecem: as grandes primeiro, o site próprio por último.</summary>
-    private async Task<IReadOnlyList<RedeSocialDto>> RedesSociaisAsync(long id, CancellationToken ct) =>
-        [.. (await _db.RedesSociais.AsNoTracking().Where(r => r.PessoaId == id).ToListAsync(ct))
+    private async Task<IReadOnlyList<RedeSocialDto>> RedesSociaisAsync(long idPessoa, CancellationToken ct) =>
+        [.. (await _db.RedesSociais.AsNoTracking().Where(r => r.PessoaId == idPessoa).ToListAsync(ct))
             .OrderBy(r => r.Rede)
             .ThenBy(r => r.Url, StringComparer.Ordinal)
             .Select(r => new RedeSocialDto(r.Rede, r.Url, r.Fonte))];
@@ -272,11 +271,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <para><c>semRito</c> tira as votações de rito (requerimento, urgência, adiamento), que são perto de um terço da lista e não entram na afinidade.</para>
     /// </remarks>
     public async Task<PaginaDto<VotoNaFichaDto>?> ListarVotosAsync(
-        PessoaId pessoa, int pagina, int tamanho, Legislatura? legislaturaPedida, string? busca, bool semRito, CancellationToken ct)
+        IdPessoa idPessoa, int pagina, int tamanho, Legislatura? legislaturaPedida, string? busca, bool semRito, CancellationToken ct)
     {
-        var id = pessoa.Valor;
         var legislatura = legislaturaPedida?.Numero;
-        if (!await _db.Pessoas.AnyAsync(p => p.Id == id, ct))
+        if (!await _db.Pessoas.AnyAsync(p => p.Id == idPessoa.Valor, ct))
         {
             return null;
         }
@@ -284,8 +282,8 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         pagina = Math.Max(pagina, 1);
         tamanho = Math.Clamp(tamanho, 1, TamanhoMaximo);
 
-        var alvo = await LegislaturaDaPessoaAsync(id, legislatura, ct);
-        var votos = VotosDaPessoa(id, alvo, busca);
+        var legislaturaMostrada = await LegislaturaDaPessoaAsync(idPessoa.Valor, legislatura, ct);
+        var votos = VotosDaPessoa(idPessoa.Valor, legislaturaMostrada, busca);
         if (semRito)
         {
             votos = votos.Where(v => v.Votacao!.Categoria != TipoCategoriaDeVotacao.PROCEDIMENTAL);
@@ -297,10 +295,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     }
 
     /// <summary>A pedida, se a pessoa votou nela; senão a última em que votou. Nula sem voto.</summary>
-    private async Task<short?> LegislaturaDaPessoaAsync(long id, short? pedida, CancellationToken ct)
+    private async Task<short?> LegislaturaDaPessoaAsync(long idPessoa, short? pedida, CancellationToken ct)
     {
         var daPessoa = _db.Votos.AsNoTracking()
-            .Where(v => v.PessoaId == id)
+            .Where(v => v.PessoaId == idPessoa)
             .Select(v => v.Votacao!.Legislatura);
 
         if (pedida is not null && await daPessoa.AnyAsync(l => l == pedida, ct))
@@ -325,10 +323,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <remarks>
     /// <para>Pendência 80 (2026-10-03): "votos com posição" é Sim ou Não, como no painel e na afinidade. A ficha contava a abstenção junto, e a lista também.</para>
     /// </remarks>
-    private async Task<FichaParlamentarDto?> CalcularFichaAsync(long id, short? legislatura, CancellationToken ct)
+    private async Task<FichaParlamentarDto?> CalcularFichaAsync(long idPessoa, short? legislatura, CancellationToken ct)
     {
         var pessoa = await _db.Pessoas.AsNoTracking()
-            .Where(p => p.Id == id)
+            .Where(p => p.Id == idPessoa)
             .Select(p => new { p.Id, p.NomeExibicao, p.NomeCivil, p.UrlFoto })
             .FirstOrDefaultAsync(ct);
 
@@ -337,9 +335,9 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
             return null;
         }
 
-        var mandatos = await MandatosAsync(id, ct);
+        var mandatos = await MandatosAsync(idPessoa, ct);
         var mandato = mandatos.FirstOrDefault(m => m.Legislatura == legislatura) ?? mandatos.FirstOrDefault();
-        var alvo = mandato?.Legislatura;
+        var legislaturaMostrada = mandato?.Legislatura;
         var casa = mandato?.Casa;
         var partido = mandato?.Partido ?? "";
 
@@ -347,16 +345,16 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
             pessoa.Id, pessoa.NomeExibicao, casa, pessoa.NomeCivil,
             partido, mandato?.Uf ?? "", pessoa.UrlFoto,
             await _db.Votos.CountAsync(
-                v => v.PessoaId == id && (v.Valor == 1 || v.Valor == -1)
-                     && v.Votacao!.Legislatura == alvo, ct),
+                v => v.PessoaId == idPessoa && (v.Valor == 1 || v.Valor == -1)
+                     && v.Votacao!.Legislatura == legislaturaMostrada, ct),
             mandato?.NRegistrosDeVoto ?? 0,
-            await PaginaDeVotosAsync(VotosDaPessoa(id, alvo, null), 0, VotosPorPagina, ct),
-            await MaisSimilaresAsync(id, casa, alvo, ct),
-            await AlinhamentoAsync(id, casa, alvo, partido, ct),
-            await PresencaAsync(id, casa, alvo, ct),
-            await PaginaOficialAsync(id, casa, ct),
-            await RedesSociaisAsync(id, ct),
-            alvo,
+            await PaginaDeVotosAsync(VotosDaPessoa(idPessoa, legislaturaMostrada, null), 0, VotosPorPagina, ct),
+            await MaisSimilaresAsync(idPessoa, casa, legislaturaMostrada, ct),
+            await AlinhamentoAsync(idPessoa, casa, legislaturaMostrada, partido, ct),
+            await PresencaAsync(idPessoa, casa, legislaturaMostrada, ct),
+            await PaginaOficialAsync(idPessoa, casa, ct),
+            await RedesSociaisAsync(idPessoa, ct),
+            legislaturaMostrada,
             mandatos);
     }
 
@@ -398,7 +396,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
                 return MontarListaAsync(legislatura, ct);
             }) ?? [];
 
-            lista.AddRange(daLegislatura.Where(p => vistos.Add(p.Id)));
+            lista.AddRange(daLegislatura.Where(p => vistos.Add(p.IdPessoa)));
         }
 
         return lista;
@@ -460,10 +458,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <para>Procura na descrição, na ementa, nas palavras-chave da casa e na sigla com número. As palavras-chave (Pendência 70) são onde está o nome popular: "reforma tributária" não aparece na ementa da PEC 45/2019.</para>
     /// <para>Expressão regular, e não <c>unaccent</c>: a extensão não está no banco, e instalá-la seria migration para uma busca. A expressão troca cada vogal e o "c" pela classe com as variantes acentuadas — "tributaria" acha "tributária".</para>
     /// </remarks>
-    private IQueryable<VotoModel> VotosDaPessoa(long id, short? legislatura, string? busca)
+    private IQueryable<VotoModel> VotosDaPessoa(long idPessoa, short? legislatura, string? busca)
     {
         var votos = _db.Votos.AsNoTracking()
-            .Where(v => v.PessoaId == id && v.Votacao!.Legislatura == legislatura);
+            .Where(v => v.PessoaId == idPessoa && v.Votacao!.Legislatura == legislatura);
 
         if (string.IsNullOrWhiteSpace(busca) || busca.Trim().Length < TamanhoMinimoDaBusca)
         {
@@ -578,7 +576,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <para>A ordem é a de <see cref="OrdemDeConcordancia"/>: lê todos os pares da pessoa (no máximo um por parlamentar da casa) e ordena em memória.</para>
     /// </remarks>
     private async Task<List<SimilarNaFichaDto>> MaisSimilaresAsync(
-        long id, TipoCasa? casa, short? legislatura, CancellationToken ct)
+        long idPessoa, TipoCasa? casa, short? legislatura, CancellationToken ct)
     {
         if (casa is null || legislatura is null)
         {
@@ -595,10 +593,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         var pares = await _db.Similaridades.AsNoTracking()
             .Where(s => s.ExecucaoId == execucao
                      && s.Metrica == TipoMetrica.CONCORDANCIA
-                     && (s.PessoaA == id || s.PessoaB == id))
+                     && (s.PessoaA == idPessoa || s.PessoaB == idPessoa))
             .Select(s => new
             {
-                Outro = s.PessoaA == id ? s.PessoaB : s.PessoaA,
+                Outro = s.PessoaA == idPessoa ? s.PessoaB : s.PessoaA,
                 s.Valor,
                 s.NVotacoesComuns
             })
@@ -648,7 +646,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// <para>Diz CONTRA QUAL sigla a disciplina foi medida. Quem trocou de partido no meio do mandato tem a medida feita contra a do voto mais recente, e omitir isso deixaria o número sem referência.</para>
     /// </remarks>
     private async Task<AlinhamentoDto?> AlinhamentoAsync(
-        long id, TipoCasa? casa, short? legislatura,
+        long idPessoa, TipoCasa? casa, short? legislatura,
         string partido, CancellationToken ct)
     {
         if (casa is not TipoCasa.CAMARA || legislatura is null)
@@ -664,7 +662,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         }
 
         var metrica = await _db.NosMetrica.AsNoTracking()
-            .Where(n => n.PessoaId == id && n.ExecucaoId == execucaoId)
+            .Where(n => n.PessoaId == idPessoa && n.ExecucaoId == execucaoId)
             .Select(n => new { n.Governismo, n.Disciplina, n.BaseDisciplina })
             .FirstOrDefaultAsync(ct);
 
@@ -673,7 +671,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
             return null;
         }
 
-        var baseGoverno = await BaseComparavelAsync(id, legislatura.Value, "Governo", ct);
+        var baseGoverno = await BaseComparavelAsync(idPessoa, legislatura.Value, "Governo", ct);
         var (medianaGovernismo, medianaDisciplina) = await MedianasDaCasaAsync(execucaoId.Value, ct);
 
         return new AlinhamentoDto(
@@ -715,11 +713,11 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// quórum, a segunda é ausência de orientação. Nenhuma das duas é posição de mérito.
     /// </summary>
     private async Task<int> BaseComparavelAsync(
-        long id, short legislatura, string bancada, CancellationToken ct) =>
+        long idPessoa, short legislatura, string bancada, CancellationToken ct) =>
         string.IsNullOrEmpty(bancada)
             ? 0
             : await _db.Votos.AsNoTracking()
-                .CountAsync(v => v.PessoaId == id
+                .CountAsync(v => v.PessoaId == idPessoa
                               && v.Valor != null && v.Valor != 0
                               && v.Votacao!.Legislatura == legislatura
                               && _db.Orientacoes.Any(o => o.VotacaoId == v.VotacaoId
@@ -742,7 +740,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     /// </para>
     /// </summary>
     /// <summary>A página do parlamentar na casa em que votou por último.</summary>
-    private async Task<string?> PaginaOficialAsync(long id, TipoCasa? casa, CancellationToken ct)
+    private async Task<string?> PaginaOficialAsync(long idPessoa, TipoCasa? casa, CancellationToken ct)
     {
         if (casa is null)
         {
@@ -750,12 +748,12 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         }
 
         var fonte = casa.Value.ComoFonte();
-        var idNaCasa = await _db.PessoaFonteIds.AsNoTracking()
-            .Where(f => f.PessoaId == id && f.Fonte == fonte)
+        var idPessoaNaCasa = await _db.PessoaFonteIds.AsNoTracking()
+            .Where(f => f.PessoaId == idPessoa && f.Fonte == fonte)
             .Select(f => f.IdExterno)
             .FirstOrDefaultAsync(ct);
 
-        return FontesOficiais.Parlamentar(casa, idNaCasa);
+        return FontesOficiais.Parlamentar(casa, idPessoaNaCasa);
     }
 
 }

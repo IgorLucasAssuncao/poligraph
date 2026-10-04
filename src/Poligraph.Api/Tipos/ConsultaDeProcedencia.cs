@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Poligraph.Data;
 
 namespace Poligraph.Api.Tipos;
@@ -67,22 +67,28 @@ public readonly record struct ContextoDeProcedencia(TipoDeContexto Tipo) : IPars
 /// O número cuja procedência se pede, com o recorte da tela que o mostra.
 /// </summary>
 /// <param name="Contexto">Qual número da tela.</param>
-/// <param name="Pessoa">Obrigatória em votos, cota, emendas, campanha e patrimônio.</param>
+/// <param name="IdPessoa">Obrigatório em votos, cota, emendas, campanha e patrimônio.</param>
 /// <param name="Legislatura">Sem ela, a corrente.</param>
-/// <param name="Ano">Em emendas e cota, um ano em vez do mandato inteiro; em campanha e patrimônio, a eleição em vez da que deu o mandato.</param>
+/// <param name="AnoDaDespesa">Só na cota: um ano em vez do mandato inteiro.</param>
+/// <param name="AnoDaEmenda">Só nas emendas: um ano em vez do mandato inteiro.</param>
+/// <param name="AnoDaEleicao">Só na campanha e no patrimônio: a eleição em vez da que deu o mandato.</param>
 /// <param name="Casa">Só no painel.</param>
-/// <param name="Periodo">Nos pagamentos e no governo: os anos da página.</param>
+/// <param name="PeriodoDasEmendas">Só nos pagamentos: os anos de emenda da página.</param>
+/// <param name="PeriodoDoOrcamento">Só no governo: os anos do orçamento da página.</param>
 /// <param name="Cnpj">Só na entidade.</param>
 /// <param name="Categoria">Só na cota: uma linha de "Em quê".</param>
 /// <param name="Uf">Só nos pagamentos: o que chegou a quem tem sede no estado.</param>
 /// <param name="Municipio">Só nos pagamentos: o que chegou a quem tem sede na cidade.</param>
 public record ConsultaDeProcedencia(
     ContextoDeProcedencia Contexto,
-    PessoaId? Pessoa,
+    IdPessoa? IdPessoa,
     Legislatura? Legislatura,
-    Ano? Ano,
+    AnoDaDespesa? AnoDaDespesa,
+    AnoDaEmenda? AnoDaEmenda,
+    AnoDaEleicao? AnoDaEleicao,
     TipoCasa? Casa,
-    Periodo? Periodo,
+    Periodo<AnoDaEmenda> PeriodoDasEmendas,
+    Periodo<AnoDoOrcamento> PeriodoDoOrcamento,
     Cnpj? Cnpj,
     CategoriaDeDespesa? Categoria,
     Uf? Uf,

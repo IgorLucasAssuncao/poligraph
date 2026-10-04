@@ -71,8 +71,8 @@ function PaginaDaEntidadeComponent({ dados }: { dados: DadosDaEntidade }) {
           rotulo={T.entidade.recebeu}
           definicao={T.entidade.recebeuDefinicao(
             dados.emendas,
-            dados.porAno[0]?.ano ?? T.entidade.semAno,
-            dados.porAno[dados.porAno.length - 1]?.ano ?? T.entidade.semAno,
+            dados.porAno[0]?.anoDaEmenda ?? T.entidade.semAno,
+            dados.porAno[dados.porAno.length - 1]?.anoDaEmenda ?? T.entidade.semAno,
           )}
         >
           <ComProcedenciaComponent consulta={{ contexto: 'entidade', cnpj: dados.cnpj }} rotulo={T.entidade.rotuloDaProcedencia(nomeProprio(dados.nome))}>
@@ -98,7 +98,7 @@ function PaginaDaEntidadeComponent({ dados }: { dados: DadosDaEntidade }) {
         <h2>{T.entidade.porAno}</h2>
         <ul className="gastos-categorias">
           {dados.porAno.map((a) => (
-            <LinhaDeValorComponent key={a.ano} nome={a.ano} valor={a.recebido} maior={maiorAno} formatar={reaisCompacto} minimo={0} />
+            <LinhaDeValorComponent key={a.anoDaEmenda} nome={a.anoDaEmenda} valor={a.recebido} maior={maiorAno} formatar={reaisCompacto} minimo={0} />
           ))}
         </ul>
         <p className="ajuda">{T.entidade.porAnoAjuda}</p>
@@ -136,7 +136,7 @@ function QuemMandouComponent({ dados }: { dados: DadosDaEntidade }) {
       <p className="ajuda">{T.parlamentares.resumo(dados.parlamentares.total, reaisCompacto(dados.deParlamentares))}</p>
       <ul className="lista-autores">
         {lista.itens.map((p) => (
-          <LinhaDoParlamentarComponent key={p.pessoaId ?? p.nome} parlamentar={p} />
+          <LinhaDoParlamentarComponent key={p.idPessoa ?? p.nome} parlamentar={p} />
         ))}
       </ul>
       <BotaoMostrarMaisComponent
@@ -173,8 +173,8 @@ function NaCotaComponent({ dados }: { dados: DadosDaEntidade }) {
       </p>
       <ul className="lista-autores">
         {cota.porParlamentar.map((p) => (
-          <li key={p.pessoaId}>
-            <Link className="autor-nome" to={`/parlamentar/${p.pessoaId}`}>
+          <li key={p.idPessoa}>
+            <Link className="autor-nome" to={`/parlamentar/${p.idPessoa}`}>
               {nomeProprio(p.nome)}
             </Link>
             <span className="autor-detalhe">

@@ -8,7 +8,7 @@ namespace Poligraph.Api.Dtos;
 /// direção em que os deputados mais se diferenciam. A tela escolhe qual desenhar.
 /// </summary>
 public record NoDoGrafoDto(
-    long Id, string Nome, string Partido, string Uf,
+    long IdPessoa, string Nome, string Partido, string Uf,
     short? Comunidade, float? EixoX, float? EixoY, int NVotacoes,
     float? Componente1, float? Componente2, string? UrlFoto,
     /// <summary>

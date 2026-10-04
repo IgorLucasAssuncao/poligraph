@@ -40,7 +40,7 @@ export function ConfereComOPortalComponent({ periodo }: { periodo: Periodo }) {
   const pagamentos = somar(contas.filter((c) => c.conjunto === 'PAGAMENTOS'));
   const semCodigo = pagamentos.motivos.get('PAGAMENTO_SEM_CODIGO_DE_EMENDA') ?? 0;
   const fora = empenhado.fonte - empenhado.base;
-  const anos = T.anos(periodo.de, periodo.ate);
+  const anos = T.anos(periodo.primeiroAno, periodo.ultimoAno);
 
   return (
     <details className="confere-com-o-portal">

@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,10 +53,10 @@ public class TestesNovidades(FixturePostgres postgres) : BaseIntegracao(postgres
     public async Task OsCincoAvisos_NaJanelaDoDado()
     {
         ExigeDocker();
-        var (pessoaId, partidoAntes) = await SemearAsync();
+        var (idPessoa, partidoAntes) = await SemearAsync();
         using var cliente = CriarCliente();
         await EntrarAsync(cliente);
-        (await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1&aceite=true", null)).EnsureSuccessStatusCode();
+        (await cliente.PutAsync($"/api/seguidos/{idPessoa}?versao=v1&aceite=true", null)).EnsureSuccessStatusCode();
 
         var lidas = (await cliente.GetFromJsonAsync<NovidadesLidas>(Rota))!;
 
@@ -80,7 +80,7 @@ public class TestesNovidades(FixturePostgres postgres) : BaseIntegracao(postgres
         }
 
         var cota = Assert.Single(lidas.GastosNaCota);
-        Assert.Equal((MesFechado.Year, MesFechado.Month), (cota.Ano, cota.Mes));
+        Assert.Equal((MesFechado.Year, MesFechado.Month), (cota.AnoDaDespesa, cota.Mes));
         Assert.Equal(150m, cota.Total);
         Assert.Equal(("DIVULGAÇÃO", 100m), (cota.MaiorCategoria, cota.MaiorCategoriaValor));
 
@@ -105,11 +105,11 @@ public class TestesNovidades(FixturePostgres postgres) : BaseIntegracao(postgres
     {
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
         var corrente = await Db.Votacoes.MaxAsync(v => v.Legislatura);
-        var pessoaId = await Db.Votos.AsNoTracking()
+        var idPessoa = await Db.Votos.AsNoTracking()
             .Where(v => v.Votacao!.Legislatura == corrente && v.Votacao.Casa == TipoCasa.CAMARA)
             .OrderBy(v => v.PessoaId).Select(v => v.PessoaId).FirstAsync();
         var partidoAntes = await Db.Votos.AsNoTracking()
-            .Where(v => v.PessoaId == pessoaId).OrderByDescending(v => v.Votacao!.Data)
+            .Where(v => v.PessoaId == idPessoa).OrderByDescending(v => v.Votacao!.Data)
             .Select(v => v.PartidoNoVoto).FirstAsync();
 
         Db.Votacoes.AddRange(
@@ -118,29 +118,29 @@ public class TestesNovidades(FixturePostgres postgres) : BaseIntegracao(postgres
         await Db.SaveChangesAsync();
 
         Db.Votos.AddRange(
-            new VotoModel { VotacaoId = "novidade-1", PessoaId = pessoaId, Valor = 1, PartidoNoVoto = "PT", UfNoVoto = "SP" },
-            new VotoModel { VotacaoId = "novidade-2", PessoaId = pessoaId, Valor = -1, PartidoNoVoto = "PT", UfNoVoto = "SP" });
+            new VotoModel { VotacaoId = "novidade-1", PessoaId = idPessoa, Valor = 1, PartidoNoVoto = "PT", UfNoVoto = "SP" },
+            new VotoModel { VotacaoId = "novidade-2", PessoaId = idPessoa, Valor = -1, PartidoNoVoto = "PT", UfNoVoto = "SP" });
         Db.Orientacoes.AddRange(
             new OrientacaoModel { VotacaoId = "novidade-1", Bancada = "Fdr PT-PCdoB-PV", Orientacao = "Não" },
             new OrientacaoModel { VotacaoId = "novidade-1", Bancada = "Governo", Orientacao = "Sim" },
             new OrientacaoModel { VotacaoId = "novidade-2", Bancada = "Fdr PT-PCdoB-PV", Orientacao = "Não" });
 
         Db.Despesas.AddRange(
-            Despesa(pessoaId, MesFechado, "DIVULGAÇÃO", 100m),
-            Despesa(pessoaId, MesFechado, "COMBUSTÍVEL", 50m),
-            Despesa(pessoaId, MesAberto, "DIVULGAÇÃO", 999m));
+            Despesa(idPessoa, MesFechado, "DIVULGAÇÃO", 100m),
+            Despesa(idPessoa, MesFechado, "COMBUSTÍVEL", 50m),
+            Despesa(idPessoa, MesAberto, "DIVULGAÇÃO", 999m));
 
         const string codigo = "202512340001";
         Db.Emendas.AddRange(
-            Emenda(pessoaId, codigo, "LINDOESTE - PR"),
-            Emenda(pessoaId, codigo, "CASCAVEL - PR"));
+            Emenda(idPessoa, codigo, "LINDOESTE - PR"),
+            Emenda(idPessoa, codigo, "CASCAVEL - PR"));
         Db.EmendasFavorecidos.AddRange(
             Favorecido(codigo, MesFechado, "BANCO DO BRASIL SA", 500m, intermediario: true),
             Favorecido(codigo, MesFechado, "CONSTRUTORA EXEMPLO LTDA", 300m, intermediario: false),
             Favorecido(codigo, MesAberto, "CONSTRUTORA EXEMPLO LTDA", 999m, intermediario: false));
         await Db.SaveChangesAsync();
 
-        return (pessoaId, partidoAntes);
+        return (idPessoa, partidoAntes);
     }
 
     private static VotacaoModel Votacao(string id, DateOnly data, short legislatura) => new()
@@ -149,14 +149,14 @@ public class TestesNovidades(FixturePostgres postgres) : BaseIntegracao(postgres
         Categoria = TipoCategoriaDeVotacao.SUBSTANTIVA, Plenario = true
     };
 
-    private static DespesaModel Despesa(long pessoaId, DateOnly mes, string categoria, decimal valor) => new()
+    private static DespesaModel Despesa(long idPessoa, DateOnly mes, string categoria, decimal valor) => new()
     {
-        PessoaId = pessoaId, Ano = (short)mes.Year, Mes = (short)mes.Month, Categoria = categoria, ValorLiquido = valor
+        PessoaId = idPessoa, Ano = (short)mes.Year, Mes = (short)mes.Month, Categoria = categoria, ValorLiquido = valor
     };
 
-    private static EmendaModel Emenda(long pessoaId, string codigo, string localidade) => new()
+    private static EmendaModel Emenda(long idPessoa, string codigo, string localidade) => new()
     {
-        PessoaId = pessoaId, CodigoAutor = "1234", NomeAutor = "FULANO", CodigoEmenda = codigo, Ano = 2025,
+        PessoaId = idPessoa, CodigoAutor = "1234", NomeAutor = "FULANO", CodigoEmenda = codigo, Ano = 2025,
         Localidade = localidade, CodigoAcao = "20XV", CodigoPlanoOrcamentario = "0000",
         ValorEmpenhado = 1000m, ValorPago = 500m
     };
@@ -193,13 +193,13 @@ public class TestesNovidades(FixturePostgres postgres) : BaseIntegracao(postgres
 
     private record AtualizacaoLida(string Fonte, string Orgao, DateTimeOffset UltimaCarga);
 
-    private record SemanaLida(long PessoaId, int Votou, int? Ausente);
+    private record SemanaLida(long IdPessoa, int Votou, int? Ausente);
 
     private record ContraLido(string VotacaoId, string Bancada, string Orientacao, string Voto);
 
     private record TrocaLida(string PartidoAnterior, string PartidoNovo, DateOnly PrimeiroVoto);
 
-    private record CotaLida(int Ano, int Mes, decimal Total, string MaiorCategoria, decimal MaiorCategoriaValor);
+    private record CotaLida(int AnoDaDespesa, int Mes, decimal Total, string MaiorCategoria, decimal MaiorCategoriaValor);
 
     private record EmendaLida(DateOnly Mes, decimal Pago, string? MaiorDestino, string? LugarDoMaiorDestino);
 

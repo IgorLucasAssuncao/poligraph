@@ -51,8 +51,8 @@ public sealed class AquecedorDeCache(
             await servicos.GetRequiredService<ServicoParlamentares>().ParlamentaresDeTodasAsync(ct);
             await servicos.GetRequiredService<ServicoQuestionario>().ObterAsync(ct);
             await servicos.GetRequiredService<ServicoMetodologia>().ObterAsync(ct);
-            await servicos.GetRequiredService<ServicoGoverno>().ObterAsync(null, null, ct);
-            await servicos.GetRequiredService<ServicoMapaDeEmendas>().ObterBrasilAsync(null, null, ct);
+            await servicos.GetRequiredService<ServicoGoverno>().ObterAsync(default, ct);
+            await servicos.GetRequiredService<ServicoMapaDeEmendas>().ObterBrasilAsync(default, ct);
 
             _logger.LogInformation(MensagensDaApi.CacheAquecido,
                 TimeProvider.System.GetElapsedTime(inicio));

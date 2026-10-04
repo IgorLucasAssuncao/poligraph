@@ -22,7 +22,7 @@ function Montado() {
   });
   render(
     <MemoryRouter>
-      <BotaoSeguirComponent pessoaId={7} seguindo={false} aoAlternar={aoAlternar} />
+      <BotaoSeguirComponent idPessoa={7} seguindo={false} aoAlternar={aoAlternar} />
     </MemoryRouter>,
   );
   return aoAlternar;

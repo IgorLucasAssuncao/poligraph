@@ -19,18 +19,18 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
     public async Task Cota_ContaPorArquivo_NoRecorteDoMandato()
     {
         ExigeDocker();
-        var (pessoaId, a, b) = await SemearAsync();
+        var (idPessoa, a, b) = await SemearAsync();
         Db.Despesas.AddRange(
-            Despesa(pessoaId, 2024, a), Despesa(pessoaId, 2025, a),
-            Despesa(pessoaId, 2025, b), Despesa(pessoaId, 2026, null),
-            Despesa(pessoaId, 2022, b));
+            Despesa(idPessoa, 2024, a), Despesa(idPessoa, 2025, a),
+            Despesa(idPessoa, 2025, b), Despesa(idPessoa, 2026, null),
+            Despesa(idPessoa, 2022, b));
         await Db.SaveChangesAsync();
 
-        var lida = await LerAsync($"/api/procedencia/cota?pessoa={pessoaId}&legislatura=57");
+        var lida = await LerAsync($"/api/procedencia/cota?idPessoa={idPessoa}&legislatura=57");
 
         Assert.Equal(4, lida.Linhas);
         Assert.Equal(1, lida.LinhasSemCarga);
-        Assert.Equal([a, b], lida.Cargas.Select(c => c.Id));
+        Assert.Equal([a, b], lida.Cargas.Select(c => c.IdCarga));
         Assert.Equal([2, 1], lida.Cargas.Select(c => c.Linhas));
         Assert.Contains("2023 a 2026", lida.Regra);
 
@@ -46,14 +46,14 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
     public async Task Cota_ComCategoria_SoElaComAsLinhas()
     {
         ExigeDocker();
-        var (pessoaId, a, _) = await SemearAsync();
-        var combustivel = Despesa(pessoaId, 2025, a);
+        var (idPessoa, a, _) = await SemearAsync();
+        var combustivel = Despesa(idPessoa, 2025, a);
         combustivel.Categoria = "COMBUSTÍVEIS";
         combustivel.Fornecedor = "POSTO 123.456.789-09 LTDA";
-        Db.Despesas.AddRange(Despesa(pessoaId, 2025, a), combustivel);
+        Db.Despesas.AddRange(Despesa(idPessoa, 2025, a), combustivel);
         await Db.SaveChangesAsync();
 
-        var lida = await LerAsync($"/api/procedencia/cota?pessoa={pessoaId}&legislatura=57&ano=2025&categoria=COMBUST%C3%8DVEIS");
+        var lida = await LerAsync($"/api/procedencia/cota?idPessoa={idPessoa}&legislatura=57&anoDaDespesa=2025&categoria=COMBUST%C3%8DVEIS");
 
         Assert.Equal(1, lida.Linhas);
         Assert.Contains("COMBUSTÍVEIS", lida.Regra);
@@ -67,11 +67,11 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
     public async Task Lista_AcimaDoLimite_NaoVem()
     {
         ExigeDocker();
-        var (pessoaId, a, _) = await SemearAsync();
-        Db.Despesas.AddRange(Enumerable.Range(0, 51).Select(_ => Despesa(pessoaId, 2025, a)));
+        var (idPessoa, a, _) = await SemearAsync();
+        Db.Despesas.AddRange(Enumerable.Range(0, 51).Select(_ => Despesa(idPessoa, 2025, a)));
         await Db.SaveChangesAsync();
 
-        var lida = await LerAsync($"/api/procedencia/cota?pessoa={pessoaId}&legislatura=57&ano=2025");
+        var lida = await LerAsync($"/api/procedencia/cota?idPessoa={idPessoa}&legislatura=57&anoDaDespesa=2025");
 
         Assert.Equal(51, lida.Linhas);
         Assert.Null(lida.Lista);
@@ -82,13 +82,13 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
     public async Task Cota_ComAno_SoAquele()
     {
         ExigeDocker();
-        var (pessoaId, a, b) = await SemearAsync();
-        Db.Despesas.AddRange(Despesa(pessoaId, 2024, a), Despesa(pessoaId, 2025, b));
+        var (idPessoa, a, b) = await SemearAsync();
+        Db.Despesas.AddRange(Despesa(idPessoa, 2024, a), Despesa(idPessoa, 2025, b));
         await Db.SaveChangesAsync();
 
-        var lida = await LerAsync($"/api/procedencia/cota?pessoa={pessoaId}&legislatura=57&ano=2025");
+        var lida = await LerAsync($"/api/procedencia/cota?idPessoa={idPessoa}&legislatura=57&anoDaDespesa=2025");
 
-        Assert.Equal(b, Assert.Single(lida.Cargas).Id);
+        Assert.Equal(b, Assert.Single(lida.Cargas).IdCarga);
     }
 
     /// <summary>O "Pago em emendas" do mapa: os pagamentos das emendas do período, pelo ano no código.</summary>
@@ -106,7 +106,7 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
         var lida = await LerAsync("/api/procedencia/pagamentos?de=2025&ate=2025");
 
         Assert.Equal((2, 0), (lida.Linhas, lida.LinhasSemCarga));
-        Assert.Equal(carga.Id, Assert.Single(lida.Cargas).Id);
+        Assert.Equal(carga.Id, Assert.Single(lida.Cargas).IdCarga);
     }
 
     /// <summary>A linha do estado na tabela do mapa: só o que chegou a quem tem sede nele.</summary>
@@ -170,7 +170,7 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
         var lida = await LerAsync("/api/procedencia/governo-gastos?de=2025&ate=2025");
 
         Assert.Equal((1, 0), (lida.Linhas, lida.LinhasSemCarga));
-        Assert.Equal(carga.Id, Assert.Single(lida.Cargas).Id);
+        Assert.Equal(carga.Id, Assert.Single(lida.Cargas).IdCarga);
     }
 
     [SkippableTheory]
@@ -190,11 +190,11 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
 
     /// <summary>Cada parâmetro tem tipo próprio: o formato errado é recusado na entrada, antes do serviço.</summary>
     [SkippableTheory]
-    [InlineData("/api/procedencia/inventado?pessoa=1&legislatura=57")]
+    [InlineData("/api/procedencia/inventado?idPessoa=1&legislatura=57")]
     [InlineData("/api/procedencia/entidade?cnpj=123")]
     [InlineData("/api/procedencia/pagamentos?de=2025&ate=2025&uf=XX")]
     [InlineData("/api/procedencia/pagamentos?de=2025&ate=2025&municipio=41")]
-    [InlineData("/api/procedencia/cota?pessoa=-3&legislatura=57")]
+    [InlineData("/api/procedencia/cota?idPessoa=-3&legislatura=57")]
     public async Task ParametroForaDoFormato_Da400(string rota)
     {
         ExigeDocker();
@@ -208,14 +208,14 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
     private async Task<(long Pessoa, long A, long B)> SemearAsync()
     {
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
-        var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+        var idPessoa = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
 
         var a = Carga('a', "https://www.camara.leg.br/cotas/Ano-2025.csv.zip");
         var b = Carga('b', "https://www.camara.leg.br/cotas/Ano-2024.csv.zip");
         Db.Cargas.AddRange(a, b);
         await Db.SaveChangesAsync();
 
-        return (pessoaId, a.Id, b.Id);
+        return (idPessoa, a.Id, b.Id);
     }
 
     private static CargaModel Carga(char digito, string url) => new()
@@ -230,9 +230,9 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
         Documento = "12345678000190", Nome = "EMPRESA", Uf = "PR", Valor = 10m, CargaId = carga
     };
 
-    private static DespesaModel Despesa(long pessoaId, short ano, long? carga) => new()
+    private static DespesaModel Despesa(long idPessoa, short ano, long? carga) => new()
     {
-        PessoaId = pessoaId, Ano = ano, Mes = 3, Categoria = "PASSAGEM AÉREA", ValorLiquido = 10m, CargaId = carga
+        PessoaId = idPessoa, Ano = ano, Mes = 3, Categoria = "PASSAGEM AÉREA", ValorLiquido = 10m, CargaId = carga
     };
 
     private async Task<ProcedenciaLida> LerAsync(string rota)
@@ -241,7 +241,7 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
         return (await cliente.GetFromJsonAsync<ProcedenciaLida>(rota))!;
     }
 
-    private record CargaLida(long Id, string Orgao, string BaseLegal, string Sha256, string? Versao, int Linhas);
+    private record CargaLida(long IdCarga, string Orgao, string BaseLegal, string Sha256, string? Versao, int Linhas);
 
     private record LinhaLida(string Descricao, string? Detalhe, DateOnly? Data, decimal? Valor, string? Url);
 

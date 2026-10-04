@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Data;
@@ -55,7 +55,7 @@ public class TestesHistorico(FixturePostgres postgres) : BaseIntegracao(postgres
 
         var pagina = await ObterAsync<PaginaLida>("/api/parlamentares?tamanho=100&anteriores=true");
 
-        var linha = Assert.Single(pagina.Itens, p => p.Id == reeleito);
+        var linha = Assert.Single(pagina.Itens, p => p.IdPessoa == reeleito);
         Assert.Equal(pagina.LegislaturaCorrente, linha.Legislatura);
     }
 
@@ -83,7 +83,7 @@ public class TestesHistorico(FixturePostgres postgres) : BaseIntegracao(postgres
 
         var busca = await ObterAsync<BuscaLida>($"/api/busca?q={Uri.EscapeDataString(atual.NomeExibicao)}");
 
-        Assert.Equal(atual.Id, busca.Parlamentares[0].Id);
+        Assert.Equal(atual.Id, busca.Parlamentares[0].IdPessoa);
         var ex = Assert.Single(busca.Parlamentares, p => p.Nome.EndsWith("Antigo", StringComparison.Ordinal));
         Assert.Equal(Anterior, ex.Legislatura);
         Assert.NotEqual(busca.LegislaturaCorrente, ex.Legislatura);
@@ -170,7 +170,7 @@ public class TestesHistorico(FixturePostgres postgres) : BaseIntegracao(postgres
         return (await cliente.GetFromJsonAsync<T>(rota))!;
     }
 
-    private async Task VotarNaAnteriorAsync(long pessoaId)
+    private async Task VotarNaAnteriorAsync(long idPessoa)
     {
         if (await Db.Votacoes.FindAsync("8888888-1") is null)
         {
@@ -184,14 +184,14 @@ public class TestesHistorico(FixturePostgres postgres) : BaseIntegracao(postgres
 
         Db.Votos.Add(new VotoModel
         {
-            VotacaoId = "8888888-1", PessoaId = pessoaId, Valor = 1,
+            VotacaoId = "8888888-1", PessoaId = idPessoa, Valor = 1,
             PartidoNoVoto = "PARTIDO-ANTIGO", UfNoVoto = "AC"
         });
 
         await Db.SaveChangesAsync();
     }
 
-    private record ParlamentarLido(long Id, string Nome, string? Casa, int NVotacoes, short Legislatura);
+    private record ParlamentarLido(long IdPessoa, string Nome, string? Casa, int NVotacoes, short Legislatura);
 
     private record PaginaLida(List<ParlamentarLido> Itens, int Total, short? LegislaturaCorrente);
 

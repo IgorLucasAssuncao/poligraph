@@ -20,24 +20,22 @@ public class ServicoFinanciamento(PoligraphDb db)
     /// <para>RNF-13: doador pessoa física aparece pelo NOME; o documento é hash e nunca sai da API. Mesma regra de `DespesaModel.CnpjOuHash`.</para>
     /// </remarks>
     /// <param name="legislatura">Sem eleição, a que deu ESTE mandato — e nenhuma outra: a campanha de 2022 na ficha do mandato de 2015 seria a mistura de períodos que a ficha não pode fazer.</param>
-    public async Task<FinanciamentoDeCampanhaDto> ObterAsync(PessoaId pessoa, Ano? eleicaoPedida, Legislatura? legislaturaPedida, CancellationToken ct)
+    public async Task<FinanciamentoDeCampanhaDto> ObterAsync(IdPessoa idPessoa, AnoDaEleicao? anoDaEleicaoPedido, Legislatura? legislaturaPedida, CancellationToken ct)
     {
-        var id = pessoa.Valor;
-        var eleicao = eleicaoPedida?.Valor;
         var legislatura = legislaturaPedida?.Numero;
-        var alvo = eleicao ?? (legislatura is { } l
+        var anoDaEleicao = anoDaEleicaoPedido?.Valor ?? (legislatura is { } l
             ? Legislaturas.EleicaoDoMandato(l)
             : await _db.ReceitasDeCampanha.AsNoTracking()
-                .Where(r => r.PessoaId == id)
+                .Where(r => r.PessoaId == idPessoa.Valor)
                 .MaxAsync(r => (int?)r.AnoEleicao, ct));
 
-        if (alvo is null)
+        if (anoDaEleicao is null)
         {
             return new FinanciamentoDeCampanhaDto(0, 0, 0, 0, [], []);
         }
 
         var daEleicao = _db.ReceitasDeCampanha.AsNoTracking()
-            .Where(r => r.PessoaId == id && r.AnoEleicao == (short)alvo.Value);
+            .Where(r => r.PessoaId == idPessoa.Valor && r.AnoEleicao == (short)anoDaEleicao.Value);
 
         var fontes = await daEleicao
             .GroupBy(r => r.FonteReceita)
@@ -64,7 +62,7 @@ public class ServicoFinanciamento(PoligraphDb db)
             .ToListAsync(ct);
 
         return new FinanciamentoDeCampanhaDto(
-            AnoEleicao: alvo.Value,
+            AnoEleicao: anoDaEleicao.Value,
             Total: fontes.Sum(f => f.Total),
             FundoEspecial: fontes
                 .Where(f => f.Fonte == ReceitaDeCampanhaModel.FonteFundoEspecial)

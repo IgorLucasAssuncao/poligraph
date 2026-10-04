@@ -9,7 +9,7 @@ namespace Poligraph.Api.Dtos;
 public record ReconciliacaoDto(
     string Conjunto,
     string Medida,
-    int Ano,
+    int AnoDaFonte,
     decimal TotalNaFonte,
     decimal TotalNaBase,
     decimal TotalInferido,

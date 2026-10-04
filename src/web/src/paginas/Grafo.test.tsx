@@ -13,14 +13,14 @@ vi.mock('../api', async (original) => ({
 
 const api = await import('../api');
 
-function no(id: number, nome: string): NoDoGrafo {
+function no(idPessoa: number, nome: string): NoDoGrafo {
   return {
-    id,
+    idPessoa,
     nome,
     partido: 'PARTIDO-A',
     uf: 'SP',
     comunidade: 0,
-    eixoX: id / 10,
+    eixoX: idPessoa / 10,
     eixoY: 0.2,
     nVotacoes: 500,
     componente1: null,
@@ -36,7 +36,7 @@ const GRAFO: DadosDoGrafo = {
   legislatura: 57,
   vizinhosPorNo: 10,
   nos: [no(1, 'Ana Ribeiro'), no(2, 'Bruno Tavares')],
-  arestas: [{ de: 1, para: 2, peso: 0.9, votacoesComuns: 100, cosseno: 0.9 }],
+  arestas: [{ idPessoaDe: 1, idPessoaPara: 2, peso: 0.9, votacoesComuns: 100, cosseno: 0.9 }],
   legislaturasComGrafo: [57],
   votacoesDePlenario: 1103,
   secretasDePlenario: 0,

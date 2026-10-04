@@ -186,10 +186,10 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         await SemearAsync();
         using var cliente = CriarCliente();
         await EntrarAsync(cliente);
-        var pessoaId = await PrimeiraPessoaAsync();
+        var idPessoa = await PrimeiraPessoaAsync();
 
-        await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1&aceite=true", null);
-        await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1&aceite=true", null);
+        await cliente.PutAsync($"/api/seguidos/{idPessoa}?versao=v1&aceite=true", null);
+        await cliente.PutAsync($"/api/seguidos/{idPessoa}?versao=v1&aceite=true", null);
 
         await using var db = CriarContexto();
         Assert.Equal(1, await db.Segue.CountAsync());
@@ -244,10 +244,10 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         await SemearAsync();
         using var cliente = CriarCliente();
         await EntrarAsync(cliente);
-        var pessoaId = await PrimeiraPessoaAsync();
+        var idPessoa = await PrimeiraPessoaAsync();
 
-        await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1&aceite=true", null);
-        await cliente.DeleteAsync($"/api/seguidos/{pessoaId}");
+        await cliente.PutAsync($"/api/seguidos/{idPessoa}?versao=v1&aceite=true", null);
+        await cliente.DeleteAsync($"/api/seguidos/{idPessoa}");
 
         var lista = await cliente.GetFromJsonAsync<List<SeguidoJson>>("/api/seguidos");
         Assert.Empty(lista!);
@@ -264,10 +264,10 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         await SemearAsync();
         using var cliente = CriarCliente();
         await EntrarAsync(cliente);
-        var pessoaId = await PrimeiraPessoaAsync();
+        var idPessoa = await PrimeiraPessoaAsync();
 
-        var semVersao = await cliente.PutAsync($"/api/seguidos/{pessoaId}", null);
-        var semAceite = await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1", null);
+        var semVersao = await cliente.PutAsync($"/api/seguidos/{idPessoa}", null);
+        var semAceite = await cliente.PutAsync($"/api/seguidos/{idPessoa}?versao=v1", null);
 
         Assert.Equal(HttpStatusCode.PreconditionRequired, semVersao.StatusCode);
         Assert.Equal(HttpStatusCode.PreconditionRequired, semAceite.StatusCode);
@@ -310,8 +310,8 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         await SemearAsync();
         using var cliente = CriarCliente();
         await EntrarAsync(cliente);
-        var pessoaId = await PrimeiraPessoaAsync();
-        (await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1&aceite=true", null)).EnsureSuccessStatusCode();
+        var idPessoa = await PrimeiraPessoaAsync();
+        (await cliente.PutAsync($"/api/seguidos/{idPessoa}?versao=v1&aceite=true", null)).EnsureSuccessStatusCode();
 
         (await cliente.DeleteAsync("/api/seguidos/consentimento")).EnsureSuccessStatusCode();
 
@@ -319,7 +319,7 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
         Assert.Equal(0, await db.Segue.CountAsync());
         Assert.NotNull((await db.Consentimentos.SingleAsync()).RevogadoEm);
         Assert.Equal(HttpStatusCode.PreconditionRequired,
-            (await cliente.PutAsync($"/api/seguidos/{pessoaId}?versao=v1", null)).StatusCode);
+            (await cliente.PutAsync($"/api/seguidos/{idPessoa}?versao=v1", null)).StatusCode);
     }
 
     /// <summary>Auditoria de 2026-10-03 (CSRF): rota que muda estado recusa o pedido sem o cabeçalho do site.</summary>
@@ -368,5 +368,5 @@ public class TestesAutenticacao(FixturePostgres postgres) : BaseIntegracao(postg
     private async Task<long> PrimeiraPessoaAsync() =>
         await Db.Pessoas.AsNoTracking().OrderBy(p => p.Id).Select(p => p.Id).FirstAsync();
 
-    private record SeguidoJson(long PessoaId, string Nome, string Partido, string Uf);
+    private record SeguidoJson(long IdPessoa, string Nome, string Partido, string Uf);
 }

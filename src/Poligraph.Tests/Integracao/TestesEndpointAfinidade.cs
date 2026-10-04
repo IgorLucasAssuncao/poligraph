@@ -51,7 +51,7 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
         foreach (var pergunta in questionario.Perguntas)
         {
             var votacaoId = await Db.Perguntas.AsNoTracking()
-                .Where(p => p.Id == pergunta.Id)
+                .Where(p => p.Id == pergunta.IdPergunta)
                 .Select(p => p.VotacaoId)
                 .SingleAsync();
 
@@ -76,7 +76,7 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
     private record QuestionarioLido(List<PerguntaLida> Perguntas, int Total);
 
     private record PerguntaLida(
-        string Id, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
+        string IdPergunta, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
 
     /// <summary>
     /// A posição do cidadão é o CENTROIDE de quem ele mais concorda, nunca a
@@ -302,15 +302,15 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
         var concordando = await AcordosPorPessoaAsync(cliente, respostaQ5: 1);
         var discordando = await AcordosPorPessoaAsync(cliente, respostaQ5: -1);
 
-        foreach (var (pessoaId, acordosConcordando) in concordando)
+        foreach (var (idPessoa, acordosConcordando) in concordando)
         {
-            var votouNaQ5 = await PosicaoNaQ5Async(pessoaId);
+            var votouNaQ5 = await PosicaoNaQ5Async(idPessoa);
             if (votouNaQ5 is null or 0)
             {
                 continue;
             }
 
-            var acordosDiscordando = discordando[pessoaId];
+            var acordosDiscordando = discordando[idPessoa];
 
             var esperado = votouNaQ5 == 1
                 ? acordosConcordando + 1
@@ -380,21 +380,21 @@ public class TestesEndpointAfinidade(FixturePostgres postgres) : BaseIntegracao(
 
         return resultado!.MaisProximos
             .Concat(resultado.MaisDistantes)
-            .GroupBy(p => p.PessoaId)
+            .GroupBy(p => p.IdPessoa)
             .ToDictionary(g => g.Key, g => g.First().Acordos);
     }
 
-    private async Task<short?> PosicaoNaQ5Async(long pessoaId)
+    private async Task<short?> PosicaoNaQ5Async(long idPessoa)
     {
         await using var db = CriarContexto();
         var pergunta = await db.Perguntas.AsNoTracking().FirstAsync(p => p.Id == "q5");
         var voto = await db.Votos.AsNoTracking()
-            .FirstOrDefaultAsync(v => v.VotacaoId == pergunta.VotacaoId && v.PessoaId == pessoaId);
+            .FirstOrDefaultAsync(v => v.VotacaoId == pergunta.VotacaoId && v.PessoaId == idPessoa);
 
         return voto?.Valor;
     }
 
-    private record ParlamentarJson(long PessoaId, string Nome, int Acordos, int Comparaveis);
+    private record ParlamentarJson(long IdPessoa, string Nome, int Acordos, int Comparaveis);
 
     private record CasaJson(
         string Casa,

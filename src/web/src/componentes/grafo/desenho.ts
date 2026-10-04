@@ -97,7 +97,7 @@ export type Quadro = {
 
 /** O raio em pixel de um nó — cresce com o zoom e com o grau, entre limites. */
 export function raioNaTela(no: NoDoGrafo, quadro: Quadro): number {
-  const grau = quadro.graus.get(no.id) ?? 0;
+  const grau = quadro.graus.get(no.idPessoa) ?? 0;
   const porGrau = 0.72 + Math.min(grau, 40) / 40 * 0.55;
   const porZoom = Math.pow(quadro.camera.escala, 0.55);
 
@@ -244,16 +244,16 @@ function desenharArestas(
   escuro: boolean,
 ) {
   for (const aresta of quadro.arestas) {
-    const a = quadro.porId.get(aresta.de);
-    const b = quadro.porId.get(aresta.para);
+    const a = quadro.porId.get(aresta.idPessoaDe);
+    const b = quadro.porId.get(aresta.idPessoaPara);
     if (!a || !b) continue;
 
-    const doFoco = quadro.emFoco !== null && (aresta.de === quadro.emFoco.id || aresta.para === quadro.emFoco.id);
+    const doFoco = quadro.emFoco !== null && (aresta.idPessoaDe === quadro.emFoco.idPessoa || aresta.idPessoaPara === quadro.emFoco.idPessoa);
     if (quadro.ligacoesAVista === false && !doFoco) continue;
 
     const naVizinhanca =
       !quadro.vizinhos ||
-      (quadro.vizinhos.has(aresta.de) && quadro.vizinhos.has(aresta.para));
+      (quadro.vizinhos.has(aresta.idPessoaDe) && quadro.vizinhos.has(aresta.idPessoaPara));
     const destacada = quadro.arestaEmAlvo === aresta;
 
     const pa = paraTela(a.eixoX!, a.eixoY!, t, quadro.camera);
@@ -299,11 +299,11 @@ function desenharNos(
       p.y < -raio * 2 || p.y > t.altura + raio * 2
     ) continue;
 
-    const destacado = quadro.emFoco?.id === no.id;
+    const destacado = quadro.emFoco?.idPessoa === no.idPessoa;
     const apagado = quadro.vizinhos
-      ? !quadro.vizinhos.has(no.id)
+      ? !quadro.vizinhos.has(no.idPessoa)
       : quadro.realcados
-        ? !quadro.realcados.has(no.id)
+        ? !quadro.realcados.has(no.idPessoa)
         : false;
     const cor = corDaComunidade(no.comunidade, escuro);
     const raioFinal = destacado ? raio * 1.5 : raio;
@@ -351,7 +351,7 @@ function desenharNos(
 
     const merece = raioFinal >= RAIO_PARA_NOME || destacado;
     if (merece && !apagado) {
-      nomes.push({ no, p, raio: raioFinal, destacado, grau: quadro.graus.get(no.id) ?? 0 });
+      nomes.push({ no, p, raio: raioFinal, destacado, grau: quadro.graus.get(no.idPessoa) ?? 0 });
     }
   }
 

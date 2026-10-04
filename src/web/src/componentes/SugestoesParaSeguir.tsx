@@ -40,13 +40,13 @@ export function SugestoesParaSeguirComponent() {
 
     listarSeguidos()
       .then(async (jaSeguidos) => {
-        const ids = new Set(jaSeguidos.map((p) => p.id));
+        const ids = new Set(jaSeguidos.map((p) => p.idPessoa));
         const pagina = await listarParlamentares({
           ordem: 'VOTACOES',
           tamanho: SUGESTOES_PARA_SEGUIR + ids.size,
         });
         setSeguidos(ids);
-        setSugestoes(pagina.itens.filter((p) => !ids.has(p.id)).slice(0, SUGESTOES_PARA_SEGUIR));
+        setSugestoes(pagina.itens.filter((p) => !ids.has(p.idPessoa)).slice(0, SUGESTOES_PARA_SEGUIR));
       })
       .catch(() => setSugestoes([]));
   }, [usuario]);
@@ -59,8 +59,8 @@ export function SugestoesParaSeguirComponent() {
 
       <ul className="sugestoes">
         {sugestoes.map((p) => (
-          <li key={p.id}>
-            <Link to={`/parlamentar/${p.id}`} className="sugestao-link" title={T.sugestoes.dica(p.nome, p.partido, p.uf)}>
+          <li key={p.idPessoa}>
+            <Link to={`/parlamentar/${p.idPessoa}`} className="sugestao-link" title={T.sugestoes.dica(p.nome, p.partido, p.uf)}>
               <AvatarComponent nome={p.nome} fotoUrl={p.urlFoto} tamanho="medio" />
               <span className="sugestao-texto">
                 <strong>{p.nome}</strong>
@@ -72,13 +72,13 @@ export function SugestoesParaSeguirComponent() {
             </Link>
 
             <BotaoSeguirComponent
-              pessoaId={p.id}
-              seguindo={seguidos.has(p.id)}
-              aoAlternar={(id, agora) =>
+              idPessoa={p.idPessoa}
+              seguindo={seguidos.has(p.idPessoa)}
+              aoAlternar={(idPessoa, agora) =>
                 setSeguidos((atual) => {
                   const novo = new Set(atual);
-                  if (agora) novo.add(id);
-                  else novo.delete(id);
+                  if (agora) novo.add(idPessoa);
+                  else novo.delete(idPessoa);
                   return novo;
                 })
               }

@@ -15,9 +15,9 @@ vi.mock('../componentes/contextoDoTour', () => ({
 
 const api = await import('../api');
 
-function area(codigo: string, nome: string, campos: Partial<AreaDaDespesa> = {}): AreaDaDespesa {
+function area(codigoDaFuncao: string, nome: string, campos: Partial<AreaDaDespesa> = {}): AreaDaDespesa {
   return {
-    codigo, nome, dotacaoAtualizada: 100e9, empenhado: 90e9, pago: 80e9,
+    codigoDaFuncao, nome, dotacaoAtualizada: 100e9, empenhado: 90e9, pago: 80e9,
     restosAPagarPagos: 0, dotacaoCompleta: true, ...campos,
   };
 }
@@ -25,24 +25,24 @@ function area(codigo: string, nome: string, campos: Partial<AreaDaDespesa> = {})
 /** DECISÃO: A forma de 2025, com os valores medidos arredondados. */
 const DE_2025: DadosDoGoverno = {
   gestoes: [{
-    eleicao: 2022, primeiroAno: 2023, ultimoAno: 2026,
+    anoDaEleicao: 2022, primeiroAno: 2023, ultimoAno: 2026,
     presidente: { nome: 'LUIZ INÁCIO LULA DA SILVA', nomeDeUrna: 'LULA', partido: 'PT' },
     vice: { nome: 'GERALDO JOSÉ RODRIGUES ALCKMIN FILHO', nomeDeUrna: 'GERALDO ALCKMIN', partido: 'PSB' },
     coligacao: 'Federação Brasil da Esperança',
   }],
-  periodo: { de: 2025, ate: 2025 },
+  periodo: { primeiroAno: 2025, ultimoAno: 2025 },
   geradoEm: '2026-09-22',
   emAndamento: null,
-  porAno: [{ ano: 2025, arrecadou: 2.88e12, gastou: 2.5e12, pegouEmprestado: 2.46e12, fechado: true }],
+  porAno: [{ anoDoOrcamento: 2025, arrecadou: 2.88e12, gastou: 2.5e12, pegouEmprestado: 2.46e12, fechado: true }],
   gestoesDisponiveis: [
     {
-      eleicao: 2018, primeiroAno: 2019, ultimoAno: 2022,
+      anoDaEleicao: 2018, primeiroAno: 2019, ultimoAno: 2022,
       presidente: { nome: 'JAIR MESSIAS BOLSONARO', nomeDeUrna: 'JAIR BOLSONARO', partido: 'PSL' },
       vice: { nome: 'ANTONIO HAMILTON MARTINS MOURÃO', nomeDeUrna: 'GENERAL MOURÃO', partido: 'PRTB' },
       coligacao: null,
     },
     {
-      eleicao: 2022, primeiroAno: 2023, ultimoAno: 2026,
+      anoDaEleicao: 2022, primeiroAno: 2023, ultimoAno: 2026,
       presidente: { nome: 'LUIZ INÁCIO LULA DA SILVA', nomeDeUrna: 'LULA', partido: 'PT' },
       vice: { nome: 'GERALDO JOSÉ RODRIGUES ALCKMIN FILHO', nomeDeUrna: 'GERALDO ALCKMIN', partido: 'PSB' },
       coligacao: 'Federação Brasil da Esperança',
@@ -205,7 +205,7 @@ describe('Governo federal', () => {
   });
 
   it('ano em andamento abre avisado', async () => {
-    vi.mocked(api.obterGoverno).mockResolvedValue({ ...DE_2025, periodo: { de: 2026, ate: 2026 }, emAndamento: 2026 });
+    vi.mocked(api.obterGoverno).mockResolvedValue({ ...DE_2025, periodo: { primeiroAno: 2026, ultimoAno: 2026 }, emAndamento: 2026 });
 
     renderizar();
 
@@ -215,11 +215,11 @@ describe('Governo federal', () => {
   it('com vários anos, mostra o ano a ano e marca o que está em andamento', async () => {
     vi.mocked(api.obterGoverno).mockResolvedValue({
       ...DE_2025,
-      periodo: { de: 2025, ate: 2026 },
+      periodo: { primeiroAno: 2025, ultimoAno: 2026 },
       emAndamento: 2026,
       porAno: [
-        { ano: 2025, arrecadou: 2.88e12, gastou: 2.5e12, pegouEmprestado: 2.46e12, fechado: true },
-        { ano: 2026, arrecadou: 2.1e12, gastou: 1.9e12, pegouEmprestado: 1.2e12, fechado: false },
+        { anoDoOrcamento: 2025, arrecadou: 2.88e12, gastou: 2.5e12, pegouEmprestado: 2.46e12, fechado: true },
+        { anoDoOrcamento: 2026, arrecadou: 2.1e12, gastou: 1.9e12, pegouEmprestado: 1.2e12, fechado: false },
       ],
     });
 
@@ -252,16 +252,16 @@ describe('comparar gestões', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Jair Bolsonaro (2019–2022)' }));
 
-    await vi.waitFor(() => expect(api.obterGoverno).toHaveBeenLastCalledWith({ de: 2019, ate: 2022 }));
+    await vi.waitFor(() => expect(api.obterGoverno).toHaveBeenLastCalledWith({ primeiroAno: 2019, ultimoAno: 2022 }));
   });
 
   it('o ano a ano diz a gestão de cada ano e que o valor é nominal', async () => {
     vi.mocked(api.obterGoverno).mockResolvedValue({
       ...DE_2025,
-      periodo: { de: 2022, ate: 2023 },
+      periodo: { primeiroAno: 2022, ultimoAno: 2023 },
       porAno: [
-        { ano: 2022, arrecadou: 2.2e12, gastou: 2.9e12, pegouEmprestado: 1.7e12, fechado: true },
-        { ano: 2023, arrecadou: 2.3e12, gastou: 2.9e12, pegouEmprestado: 1.8e12, fechado: true },
+        { anoDoOrcamento: 2022, arrecadou: 2.2e12, gastou: 2.9e12, pegouEmprestado: 1.7e12, fechado: true },
+        { anoDoOrcamento: 2023, arrecadou: 2.3e12, gastou: 2.9e12, pegouEmprestado: 1.8e12, fechado: true },
       ],
     });
     renderizar();

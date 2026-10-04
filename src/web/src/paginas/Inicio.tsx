@@ -124,14 +124,14 @@ export function InicioComponent() {
             <h2>{T.quemVoceSegue}</h2>
             {seguidos.slice(0, 5).map((p) => (
               <LinhaParlamentarComponent
-                key={p.id}
-                id={p.id}
+                key={p.idPessoa}
+                id={p.idPessoa}
                 nome={p.nome}
                 partido={p.partido}
                 uf={p.uf}
                 fotoUrl={p.urlFoto}
                 seguindo
-                aoAlternarSeguir={(id) => setSeguidos((l) => l.filter((x) => x.id !== id))}
+                aoAlternarSeguir={(id) => setSeguidos((l) => l.filter((x) => x.idPessoa !== id))}
               />
             ))}
 

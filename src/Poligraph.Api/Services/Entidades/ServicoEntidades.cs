@@ -200,7 +200,7 @@ public class ServicoEntidades(
         var porAno = porEmenda
             .GroupBy(e => int.Parse(e.Codigo[..4], CultureInfo.InvariantCulture))
             .Select(g => new RecebidoNoAnoDto(g.Key, g.Sum(e => e.Recebido)))
-            .OrderBy(a => a.Ano)
+            .OrderBy(a => a.AnoDaEmenda)
             .ToList();
 
         var (parlamentares, coletivos) = await _autores.AgruparAsync([.. porEmenda.Select(e => (e.Codigo, e.Recebido))], ct);
@@ -233,7 +233,7 @@ public class ServicoEntidades(
             return null;
         }
 
-        var legislatura = (await _parlamentares.ParlamentaresDaLegislaturaAsync(ct)).ToDictionary(p => p.Id);
+        var legislatura = (await _parlamentares.ParlamentaresDaLegislaturaAsync(ct)).ToDictionary(p => p.IdPessoa);
         var ids = porPessoa.Where(p => !legislatura.ContainsKey(p.PessoaId)).Select(p => p.PessoaId).ToList();
         var foraDaLista = await _db.Pessoas.AsNoTracking()
             .Where(p => ids.Contains(p.Id))

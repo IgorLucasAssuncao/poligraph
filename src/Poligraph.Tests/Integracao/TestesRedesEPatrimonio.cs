@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -24,13 +24,13 @@ public class TestesRedesEPatrimonio(FixturePostgres postgres) : BaseIntegracao(p
     public async Task Ficha_TrazAsRedesDoParlamentar()
     {
         ExigeDocker();
-        var pessoaId = await SemearAsync();
+        var idPessoa = await SemearAsync();
         Db.RedesSociais.AddRange(
-            new RedeSocialModel { PessoaId = pessoaId, Url = "https://x.com/fulano", Rede = TipoRedeSocial.X, Fonte = FonteDaRedeSocial.CAMARA },
-            new RedeSocialModel { PessoaId = pessoaId, Url = "https://instagram.com/fulano", Rede = TipoRedeSocial.INSTAGRAM, Fonte = FonteDaRedeSocial.CAMARA });
+            new RedeSocialModel { PessoaId = idPessoa, Url = "https://x.com/fulano", Rede = TipoRedeSocial.X, Fonte = FonteDaRedeSocial.CAMARA },
+            new RedeSocialModel { PessoaId = idPessoa, Url = "https://instagram.com/fulano", Rede = TipoRedeSocial.INSTAGRAM, Fonte = FonteDaRedeSocial.CAMARA });
         await Db.SaveChangesAsync();
 
-        var ficha = await LerAsync<FichaLida>($"/api/parlamentares/{pessoaId}");
+        var ficha = await LerAsync<FichaLida>($"/api/parlamentares/{idPessoa}");
 
         Assert.Equal(["INSTAGRAM", "X"], ficha.RedesSociais.Select(r => r.Rede));
     }
@@ -43,8 +43,8 @@ public class TestesRedesEPatrimonio(FixturePostgres postgres) : BaseIntegracao(p
     public async Task Rede_ComEnderecoQueNaoEhHttp_ERejeitadaPeloBanco(string url)
     {
         ExigeDocker();
-        var pessoaId = await SemearAsync();
-        Db.RedesSociais.Add(new RedeSocialModel { PessoaId = pessoaId, Url = url, Rede = TipoRedeSocial.OUTRA, Fonte = FonteDaRedeSocial.TSE });
+        var idPessoa = await SemearAsync();
+        Db.RedesSociais.Add(new RedeSocialModel { PessoaId = idPessoa, Url = url, Rede = TipoRedeSocial.OUTRA, Fonte = FonteDaRedeSocial.TSE });
 
         var erro = await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
 
@@ -55,14 +55,14 @@ public class TestesRedesEPatrimonio(FixturePostgres postgres) : BaseIntegracao(p
     public async Task Patrimonio_PorCandidatura_DaMaisRecente_ComOsTiposDoMaiorAoMenor()
     {
         ExigeDocker();
-        var pessoaId = await SemearAsync();
+        var idPessoa = await SemearAsync();
         Db.Patrimonios.AddRange(
-            new PatrimonioModel { PessoaId = pessoaId, AnoEleicao = 2018, TipoBem = "Casa", Valor = 300m, Quantidade = 1 },
-            new PatrimonioModel { PessoaId = pessoaId, AnoEleicao = 2022, TipoBem = "Casa", Valor = 400m, Quantidade = 1 },
-            new PatrimonioModel { PessoaId = pessoaId, AnoEleicao = 2022, TipoBem = "Veículo", Valor = 900m, Quantidade = 2 });
+            new PatrimonioModel { PessoaId = idPessoa, AnoEleicao = 2018, TipoBem = "Casa", Valor = 300m, Quantidade = 1 },
+            new PatrimonioModel { PessoaId = idPessoa, AnoEleicao = 2022, TipoBem = "Casa", Valor = 400m, Quantidade = 1 },
+            new PatrimonioModel { PessoaId = idPessoa, AnoEleicao = 2022, TipoBem = "Veículo", Valor = 900m, Quantidade = 2 });
         await Db.SaveChangesAsync();
 
-        var patrimonio = await LerAsync<PatrimonioLido>($"/api/parlamentares/{pessoaId}/patrimonio");
+        var patrimonio = await LerAsync<PatrimonioLido>($"/api/parlamentares/{idPessoa}/patrimonio");
 
         Assert.Equal([2022, 2018], patrimonio.Declaracoes.Select(d => d.AnoEleicao));
         var ultima = patrimonio.Declaracoes[0];
@@ -128,7 +128,7 @@ public class TestesRedesEPatrimonio(FixturePostgres postgres) : BaseIntegracao(p
 
     private record RedeLida(string Rede, string Url, string Fonte);
 
-    private record FichaLida(long Id, List<RedeLida> RedesSociais);
+    private record FichaLida(long IdPessoa, List<RedeLida> RedesSociais);
 
     private record TipoLido(string Tipo, decimal Valor, int Quantidade);
 
@@ -146,11 +146,11 @@ public class TestesRedesEPatrimonio(FixturePostgres postgres) : BaseIntegracao(p
     private async Task<long> SemearAsync()
     {
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
-        var pessoaId = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
+        var idPessoa = await Db.Pessoas.AsNoTracking().Select(p => p.Id).FirstAsync();
 
         Db.Emendas.Add(new EmendaModel
         {
-            PessoaId = pessoaId, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL", Tipo = "Emenda Individual",
+            PessoaId = idPessoa, CodigoAutor = "4184", NomeAutor = "FULANO DE TAL", Tipo = "Emenda Individual",
             CodigoEmenda = "202541840004", Ano = 2025, Localidade = "CURITIBA - PR",
             CodigoAcao = "20XV", CodigoPlanoOrcamentario = "0000", ValorEmpenhado = 1_000m, ValorPago = 1_000m
         });
@@ -160,7 +160,7 @@ public class TestesRedesEPatrimonio(FixturePostgres postgres) : BaseIntegracao(p
             Documento = Associacao, Nome = "ASSOCIACAO EXEMPLO", NaturezaJuridica = "Associação Privada", Uf = "PR", Valor = 300m
         });
         await Db.SaveChangesAsync();
-        return pessoaId;
+        return idPessoa;
     }
 
     private async Task<T> LerAsync<T>(string url)

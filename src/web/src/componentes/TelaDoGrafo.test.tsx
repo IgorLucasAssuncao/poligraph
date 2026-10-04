@@ -4,20 +4,20 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Grafo, NoDoGrafo } from '../api';
 import { TelaDoGrafoComponent } from './TelaDoGrafo';
 
-function no(id: number, nome: string, partido = 'PARTIDO-A'): NoDoGrafo {
+function no(idPessoa: number, nome: string, partido = 'PARTIDO-A'): NoDoGrafo {
   return {
-    id,
+    idPessoa,
     nome,
     partido,
     uf: 'SP',
     comunidade: 0,
-    eixoX: id / 10,
+    eixoX: idPessoa / 10,
     eixoY: 0.2,
     nVotacoes: 500,
     componente1: 0.1,
     componente2: -0.1,
     urlFoto: null,
-    governismo: id / 4,
+    governismo: idPessoa / 4,
   };
 }
 
@@ -28,8 +28,8 @@ const GRAFO: Grafo = {
   vizinhosPorNo: 10,
   nos: [no(1, 'Ana Ribeiro'), no(2, 'Bruno Tavares'), no(3, 'Célia Nunes')],
   arestas: [
-    { de: 1, para: 2, peso: 0.92, votacoesComuns: 137, cosseno: 0.9 },
-    { de: 2, para: 3, peso: 0.61, votacoesComuns: 40, cosseno: 0.6 },
+    { idPessoaDe: 1, idPessoaPara: 2, peso: 0.92, votacoesComuns: 137, cosseno: 0.9 },
+    { idPessoaDe: 2, idPessoaPara: 3, peso: 0.61, votacoesComuns: 40, cosseno: 0.6 },
   ],
   legislaturasComGrafo: [57],
   votacoesDePlenario: 1103,

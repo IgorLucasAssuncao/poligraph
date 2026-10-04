@@ -39,9 +39,9 @@ public class ServicoContas(PoligraphDb db)
         return usuario;
     }
 
-    public async Task<UsuarioLogadoDto?> ObterAsync(long id, CancellationToken ct) =>
+    public async Task<UsuarioLogadoDto?> ObterAsync(long idUsuario, CancellationToken ct) =>
         await _db.Usuarios.AsNoTracking()
-            .Where(u => u.Id == id)
+            .Where(u => u.Id == idUsuario)
             .Select(u => new UsuarioLogadoDto(u.Nome, u.FotoUrl))
             .FirstOrDefaultAsync(ct);
 
@@ -49,9 +49,9 @@ public class ServicoContas(PoligraphDb db)
     /// "Sair de todos os aparelhos" sem tabela de sessão: incrementar uma coluna
     /// invalida todos os cookies daquela pessoa, em todo lugar, na hora.
     /// </summary>
-    public Task InvalidarSessoesAsync(long id, CancellationToken ct) =>
+    public Task InvalidarSessoesAsync(long idUsuario, CancellationToken ct) =>
         _db.Usuarios
-            .Where(u => u.Id == id)
+            .Where(u => u.Id == idUsuario)
             .ExecuteUpdateAsync(
                 s => s.SetProperty(u => u.SessaoVersao, u => (short)(u.SessaoVersao + 1)), ct);
 
@@ -75,6 +75,6 @@ public class ServicoContas(PoligraphDb db)
     /// Quem for adotar exclusão lógica em novas tabelas precisa decidir, uma a uma,
     /// se a tabela guarda dado PESSOAL. Se guarda, o <c>DELETE</c> é físico.
     /// </summary>
-    public Task ExcluirAsync(long id, CancellationToken ct) =>
-        _db.Usuarios.Where(u => u.Id == id).ExecuteDeleteAsync(ct);
+    public Task ExcluirAsync(long idUsuario, CancellationToken ct) =>
+        _db.Usuarios.Where(u => u.Id == idUsuario).ExecuteDeleteAsync(ct);
 }

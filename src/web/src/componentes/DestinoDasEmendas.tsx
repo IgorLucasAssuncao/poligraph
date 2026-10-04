@@ -30,18 +30,18 @@ const T = TEXTOS_DAS_CONTAS.paraOndeFoi;
  * sendo o total recebido.
  */
 export function QuemRecebeuComponent({
-  pessoaId,
+  idPessoa,
   favorecidos,
-  ano,
+  anoDaEmenda,
 }: {
-  pessoaId: number;
+  idPessoa: number;
   favorecidos: FavorecidosDaEmenda;
-  ano: number;
+  anoDaEmenda: number;
 }) {
   const porPagina = favorecidos.maiores.length || 8;
   const lista = useAVista(
     usePaginas(favorecidos.maiores, favorecidos.identificados, porPagina, (pagina) =>
-      listarFavorecidos(pessoaId, ano, pagina, porPagina),
+      listarFavorecidos(idPessoa, anoDaEmenda, pagina, porPagina),
     ),
   );
 
@@ -57,7 +57,7 @@ export function QuemRecebeuComponent({
     <>
       <h3 className="titulo-secao">{T.quemRecebeu}</h3>
       <p className="ajuda ajuda-espacada">
-        {T.recebidos(reais(favorecidos.recebido), ano, favorecidos.ultimoMes ? mesCurto(favorecidos.ultimoMes) : null)}
+        {T.recebidos(reais(favorecidos.recebido), anoDaEmenda, favorecidos.ultimoMes ? mesCurto(favorecidos.ultimoMes) : null)}
       </p>
 
       <ul className="gastos-fornecedores lista-favorecidos">
@@ -67,7 +67,7 @@ export function QuemRecebeuComponent({
               {f.cnpj ? <Link to={`/entidades/${f.cnpj}`}>{nomeProprio(f.nome)}</Link> : nomeProprio(f.nome)}
               <small>{[f.naturezaJuridica, lugar(f.municipio, f.uf)].filter(Boolean).join(' · ')}</small>
               {f.tambemNaCota != null && (
-                <small className="tambem-na-cota">{T.tambemNaCota(reais(f.tambemNaCota), anosDeCotaDaEmenda(ano))}</small>
+                <small className="tambem-na-cota">{T.tambemNaCota(reais(f.tambemNaCota), anosDeCotaDaEmenda(anoDaEmenda))}</small>
               )}
             </span>
             <span className="gasto-valor">{reais(f.recebido)}</span>
@@ -101,21 +101,21 @@ function lugar(municipio: string | null, uf: string | null): string | null {
  * ATENÇÃO: Mês com estorno maior que o pago fica com barra zero, e a dica mostra o valor
  * negativo. A tabela logo abaixo traz todos os meses, para quem não usa o mouse.
  */
-export function QuandoFoiPagoComponent({ meses, ano }: { meses: PagamentoPorMes[]; ano: number }) {
+export function QuandoFoiPagoComponent({ meses, anoDaEmenda }: { meses: PagamentoPorMes[]; anoDaEmenda: number }) {
   const [emFoco, setEmFoco] = useState<PagamentoPorMes | null>(null);
 
   if (meses.length === 0) return null;
 
   const serie = mesesContinuos(meses);
   const total = serie.reduce((soma, m) => soma + m.valor, 0);
-  const noAno = serie.filter((m) => m.mes.startsWith(`${ano}-`)).reduce((s, m) => s + m.valor, 0);
+  const noAno = serie.filter((m) => m.mes.startsWith(`${anoDaEmenda}-`)).reduce((s, m) => s + m.valor, 0);
   const maior = Math.max(...serie.map((m) => m.valor), 1);
   const parcela = total > 0 ? Math.round((noAno / total) * 100) : 0;
 
   return (
     <>
       <h3 className="titulo-secao">{T.quandoFoiPago}</h3>
-      <p className="ajuda ajuda-espacada">{T.noProprioAno(reais(noAno), reais(total), parcela, ano)}</p>
+      <p className="ajuda ajuda-espacada">{T.noProprioAno(reais(noAno), reais(total), parcela, anoDaEmenda)}</p>
 
       <figure className="grafico-meses">
         <p className="grafico-meses-dica" aria-live="polite">
@@ -172,17 +172,17 @@ export function QuandoFoiPagoComponent({ meses, ano }: { meses: PagamentoPorMes[
  * linha diz de quantas — sem isso, a lista leria como dinheiro deste parlamentar.
  */
 export function ConveniosComponent({
-  pessoaId,
+  idPessoa,
   convenios,
-  ano,
+  anoDaEmenda,
 }: {
-  pessoaId: number;
+  idPessoa: number;
   convenios: ConveniosDaEmenda;
-  ano: number;
+  anoDaEmenda: number;
 }) {
   const porPagina = convenios.maiores.length || 8;
   const lista = usePaginas(convenios.maiores, convenios.quantidade, porPagina, (pagina) =>
-    listarConvenios(pessoaId, ano, pagina, porPagina),
+    listarConvenios(idPessoa, anoDaEmenda, pagina, porPagina),
   );
 
   if (convenios.quantidade === 0) return null;
@@ -220,8 +220,8 @@ export function ConveniosComponent({
  * DECISÃO: Fechadas até a pessoa pedir: quem só quer o resumo não precisa delas, e quem quer
  * conferir tem o caminho.
  */
-export function EmendasUmaAUmaComponent({ pessoaId, ano, total }: { pessoaId: number; ano: number; total: number }) {
-  const lista = usePaginas(NENHUM, total, 8, (pagina) => listarEmendas(pessoaId, ano, pagina, 8));
+export function EmendasUmaAUmaComponent({ idPessoa, anoDaEmenda, total }: { idPessoa: number; anoDaEmenda: number; total: number }) {
+  const lista = usePaginas(NENHUM, total, 8, (pagina) => listarEmendas(idPessoa, anoDaEmenda, pagina, 8));
 
   return (
     <>
@@ -230,11 +230,11 @@ export function EmendasUmaAUmaComponent({ pessoaId, ano, total }: { pessoaId: nu
         <BotaoBaixarCsvComponent
           rotulo={T.baixarTodas}
           montar={async () => {
-            const todas = await buscarTodas((pagina) => listarEmendas(pessoaId, ano, pagina, 50));
+            const todas = await buscarTodas((pagina) => listarEmendas(idPessoa, anoDaEmenda, pagina, 50));
             baixarCsv(
-              T.arquivo(pessoaId, ano),
+              T.arquivo(idPessoa, anoDaEmenda),
               [...T.colunas],
-              todas.map((e) => [e.codigo, e.tipo, e.localidade, e.localidades, e.funcao, e.empenhado, e.pago, e.urlFonte]),
+              todas.map((e) => [e.codigoEmenda, e.tipo, e.localidade, e.localidades, e.funcao, e.empenhado, e.pago, e.urlFonte]),
             );
           }}
         />
@@ -242,12 +242,12 @@ export function EmendasUmaAUmaComponent({ pessoaId, ano, total }: { pessoaId: nu
       {lista.itens.length > 0 && (
         <ul className="lista-lancamentos">
           {lista.itens.map((e) => (
-            <li key={e.codigo}>
+            <li key={e.codigoEmenda}>
               <span className="gasto-nome">
                 {e.localidade ?? T.semLocalidade}
                 {e.localidades > 1 && T.eMais(e.localidades - 1)}
                 <small>
-                  {e.codigo} · {e.funcao ?? T.semFuncao} · {T.pagos(reais(e.pago))}
+                  {e.codigoEmenda} · {e.funcao ?? T.semFuncao} · {T.pagos(reais(e.pago))}
                 </small>
               </span>
               <span className="lancamento-fim">

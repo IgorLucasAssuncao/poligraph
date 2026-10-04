@@ -232,17 +232,17 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
     public async Task EmendaInferida_SoSemPessoaEComCodigoProprio(string codigo, bool comPessoa, bool aceita)
     {
         ExigeDocker();
-        long? pessoaId = null;
+        long? idPessoa = null;
         if (comPessoa)
         {
             var pessoa = new PessoaModel { NomeExibicao = "Fulano", NomeCivil = "FULANO" };
             Db.Pessoas.Add(pessoa);
             await Db.SaveChangesAsync();
-            pessoaId = pessoa.Id;
+            idPessoa = pessoa.Id;
         }
         Db.Emendas.Add(new EmendaModel
         {
-            PessoaId = pessoaId, CodigoAutor = "7106", NomeAutor = "BANCADA DA BAHIA", CodigoEmenda = codigo,
+            PessoaId = idPessoa, CodigoAutor = "7106", NomeAutor = "BANCADA DA BAHIA", CodigoEmenda = codigo,
             Ano = 2017, Localidade = "SALVADOR - BA", CodigoAcao = "20XV", CodigoPlanoOrcamentario = "0000",
             ValorEmpenhado = 10m, AutoriaInferida = true
         });

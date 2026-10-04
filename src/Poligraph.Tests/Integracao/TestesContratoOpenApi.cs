@@ -34,7 +34,7 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     private const string Documento = "/openapi/v1.json";
 
     /// <summary>
-    /// Toda rota que `src/web/src/api.ts` chama. `{id}` é como o OpenAPI nomeia o
+    /// Toda rota que `src/web/src/api.ts` chama. `{idPessoa}` é como o OpenAPI nomeia o
     /// parâmetro; o front monta com template string.
     /// </summary>
     public static readonly string[] RotasDoFront =
@@ -43,14 +43,14 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
         "/api/legislaturas",
         "/api/governo",
         "/api/parlamentares",
-        "/api/parlamentares/{id}",
-        "/api/parlamentares/{id}/gastos",
-        "/api/parlamentares/{id}/emendas",
-        "/api/parlamentares/{id}/emendas/favorecidos",
-        "/api/parlamentares/{id}/emendas/convenios",
-        "/api/parlamentares/{id}/votos",
-        "/api/parlamentares/{id}/emendas/lista",
-        "/api/parlamentares/{id}/gastos/lancamentos",
+        "/api/parlamentares/{idPessoa}",
+        "/api/parlamentares/{idPessoa}/gastos",
+        "/api/parlamentares/{idPessoa}/emendas",
+        "/api/parlamentares/{idPessoa}/emendas/favorecidos",
+        "/api/parlamentares/{idPessoa}/emendas/convenios",
+        "/api/parlamentares/{idPessoa}/votos",
+        "/api/parlamentares/{idPessoa}/emendas/lista",
+        "/api/parlamentares/{idPessoa}/gastos/lancamentos",
         "/api/metodologia",
         "/api/emendas/reconciliacao",
         "/api/procedencia/{contexto}",
@@ -65,16 +65,16 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
         "/api/entidades/{cnpj}",
         "/api/entidades/{cnpj}/parlamentares",
         "/api/entidades/{cnpj}/convenios",
-        "/api/parlamentares/{id}/patrimonio",
+        "/api/parlamentares/{idPessoa}/patrimonio",
         "/api/busca",
-        "/api/parlamentares/{id}/financiamento",
+        "/api/parlamentares/{idPessoa}/financiamento",
         "/api/afinidade",
         "/api/afinidade/perguntas",
         "/api/afinidade/perguntas/desempate",
         "/api/grafo",
         "/api/seguidos",
         "/api/seguidos/novidades",
-        "/api/seguidos/{pessoaId}",
+        "/api/seguidos/{idPessoa}",
         "/api/seguidos/consentimento",
         "/api/auth/eu",
         "/api/auth/logout",
@@ -120,22 +120,22 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     /// </summary>
     [SkippableTheory]
     [InlineData("PanoramaDaCasaDto", "casa,parlamentares,votacoes,votacoesSecretas,votosComPosicao,comunidades,ligacoes")]
-    [InlineData("ParlamentarNaListaDto", "id,nome,casa,partido,uf,nVotacoes,urlFoto")]
+    [InlineData("ParlamentarNaListaDto", "idPessoa,nome,casa,partido,uf,nVotacoes,urlFoto")]
     [InlineData("PaginaDeParlamentaresDto", "itens,pagina,tamanho,total,partidos,ufs")]
-    [InlineData("ParlamentarAfimDto", "pessoaId,nome,partido,uf,acordos,comparaveis,acordou,discordou")]
+    [InlineData("ParlamentarAfimDto", "idPessoa,nome,partido,uf,acordos,comparaveis,acordou,discordou")]
     [InlineData("VotoNaFichaDto", "votacaoId,data,descricao,valor,orientacaoDoGoverno,ementa,materia,categoria")]
-    [InlineData("FichaParlamentarDto", "id,nome,casa,partido,uf,nVotacoes,maisSimilares,legislatura,mandatos")]
+    [InlineData("FichaParlamentarDto", "idPessoa,nome,casa,partido,uf,nVotacoes,maisSimilares,legislatura,mandatos")]
     [InlineData("MandatoDto", "legislatura,casa,anoInicial,partido,uf,nRegistrosDeVoto")]
-    [InlineData("PerguntaPublicaDto", "id,texto,ordem,totalVotos,totalPossivel")]
+    [InlineData("PerguntaPublicaDto", "idPergunta,texto,ordem,totalVotos,totalPossivel")]
     [InlineData("QuestionarioDto", "perguntas,total")]
     [InlineData("GrafoDto", "execucaoId,casa,legislatura,vizinhosPorNo,nos,arestas,legislaturasComGrafo,votacoesDePlenario,secretasDePlenario,abertasDesde,abertasAte")]
-    [InlineData("NoDoGrafoDto", "id,nome,partido,uf,comunidade,eixoX,eixoY,nVotacoes,componente1,componente2,urlFoto,governismo")]
-    [InlineData("ArestaDoGrafoDto", "de,para,peso,votacoesComuns,cosseno")]
-    [InlineData("EmendasDoParlamentarDto", "ano,empenhado,pago,pagoDepois,quantidade,porDestino,porFuncao,favorecidos,pagamentosPorMes,convenios,cidades")]
+    [InlineData("NoDoGrafoDto", "idPessoa,nome,partido,uf,comunidade,eixoX,eixoY,nVotacoes,componente1,componente2,urlFoto,governismo")]
+    [InlineData("ArestaDoGrafoDto", "idPessoaDe,idPessoaPara,peso,votacoesComuns,cosseno")]
+    [InlineData("EmendasDoParlamentarDto", "anoDaEmenda,empenhado,pago,pagoDepois,quantidade,porDestino,porFuncao,favorecidos,pagamentosPorMes,convenios,cidades")]
     [InlineData("FavorecidosDaEmendaDto", "recebido,viaIntermediario,aPessoas,semIdentificacao,ultimoMes,identificados,maiores")]
     [InlineData("ConvenioDaEmendaDto", "numero,convenente,objeto,dataPublicacao,valor,emendasQueFinanciam")]
     [InlineData("GovernoDto", "gestoes,periodo,geradoEm,emAndamento,anosDisponiveis,arrecadacao,despesa,sigilo,porAno,gestoesDisponiveis")]
-    [InlineData("GovernoNoAnoDto", "ano,arrecadou,gastou,pegouEmprestado,fechado")]
+    [InlineData("GovernoNoAnoDto", "anoDoOrcamento,arrecadou,gastou,pegouEmprestado,fechado")]
     [InlineData("SigiloDto", "cartaoSigiloso,cartaoTotal,transacoesSigilosas,acaoSigilosa,meses,porOrgao")]
     [InlineData("CidadesDaEmendaDto", "quantidade,maiores")]
     [InlineData("FavorecidoDaEmendaDto", "nome,naturezaJuridica,uf,municipio,recebido,cnpj")]
@@ -143,7 +143,7 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     [InlineData("DeclaracaoDeBensDto", "anoEleicao,total,bens,porTipo")]
     [InlineData("ConvenioDaEntidadeDto", "numero,objeto,situacao,dataPublicacao,valor,valorLiberado,urlFonte")]
     [InlineData("ArrecadacaoDto", "arrecadado,porOrigem,emissaoDeDivida,outrasReceitasDeCapital")]
-    [InlineData("AreaDaDespesaDto", "codigo,nome,dotacaoAtualizada,empenhado,pago,restosAPagarPagos,dotacaoCompleta")]
+    [InlineData("AreaDaDespesaDto", "codigoDaFuncao,nome,dotacaoAtualizada,empenhado,pago,restosAPagarPagos,dotacaoCompleta")]
     [InlineData("EncargoDto", "grupo,pago,restosAPagarPagos")]
     public async Task Dto_TemOsCamposQueOFrontLe(string dto, string campos)
     {

@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace Poligraph.Api.Services;
 
@@ -17,8 +17,8 @@ public static class BancadaDoPartido
     /// <summary>A bancada que representa o partido entre as publicadas, ou nulo.</summary>
     public static string? Achar(string? partido, IEnumerable<string> bancadas)
     {
-        var alvo = Normal(partido);
-        if (alvo.Length == 0)
+        var partidoNormalizado = Normal(partido);
+        if (partidoNormalizado.Length == 0)
         {
             return null;
         }
@@ -27,13 +27,13 @@ public static class BancadaDoPartido
         foreach (var bancada in bancadas)
         {
             var nome = Normal(bancada);
-            if (MesmaSigla(nome, alvo))
+            if (MesmaSigla(nome, partidoNormalizado))
             {
                 return bancada;
             }
 
             if (nome.StartsWith("FDR ", StringComparison.Ordinal)
-                && nome[4..].Split('-').Any(membro => MesmaSigla(membro, alvo)))
+                && nome[4..].Split('-').Any(membro => MesmaSigla(membro, partidoNormalizado)))
             {
                 daFederacao = bancada;
             }

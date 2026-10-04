@@ -54,14 +54,14 @@ export function MapaCoropleticoComponent({
   selecionado?: string | null;
   focavel?: boolean;
   rotulo: string;
-  aoEscolher: (codigo: string) => void;
+  aoEscolher: (codigoIbge: string) => void;
   /** Como o valor aparece no rótulo e na legenda: reais no total, reais por habitante na outra leitura. */
   formatar?: (valor: number) => string;
 }) {
   const [areas, setAreas] = useState<FeatureCollection | null>(null);
   const [erro, setErro] = useState(false);
   const [desenhadas, setDesenhadas] = useState(LOTE);
-  const [rotuloFlutuante, setRotuloFlutuante] = useState<{ codigo: string; x: number; y: number } | null>(null);
+  const [rotuloFlutuante, setRotuloFlutuante] = useState<{ codigoIbge: string; x: number; y: number } | null>(null);
   const figura = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -80,7 +80,7 @@ export function MapaCoropleticoComponent({
     if (!areas) return [];
     const projecao = geoMercator().fitExtent([[4, 4], [LADO - 4, LADO - 4]], areas);
     const caminho = geoPath(projecao);
-    return areas.features.map((f) => ({ codigo: codigoDa(f), d: caminho(f) ?? '' }));
+    return areas.features.map((f) => ({ codigoIbge: codigoDa(f), d: caminho(f) ?? '' }));
   }, [areas]);
 
   useEffect(() => {
@@ -92,24 +92,24 @@ export function MapaCoropleticoComponent({
   const limites = useMemo(() => faixasPorQuantil(valores ? [...valores.values()] : []), [valores]);
   const faixas = useMemo(() => {
     if (!valores) return null;
-    return new Map(desenho.map(({ codigo }) => [codigo, faixaDe(valores.get(codigo), limites)]));
+    return new Map(desenho.map(({ codigoIbge }) => [codigoIbge, faixaDe(valores.get(codigoIbge), limites)]));
   }, [valores, limites, desenho]);
 
   if (erro) return <p className="erro">{T.mapa.erro}</p>;
   if (!areas) return <div className="mapa-carregando" aria-hidden="true" />;
 
-  const descrever = (codigo: string) => {
-    const nome = nomes.get(codigo) ?? '';
+  const descrever = (codigoIbge: string) => {
+    const nome = nomes.get(codigoIbge) ?? '';
     if (!valores) return nome;
-    const valor = valores.get(codigo);
+    const valor = valores.get(codigoIbge);
     return T.mapa.descricao(nome, valor ? formatar(valor) : null);
   };
 
-  const codigoDoEvento = (alvo: EventTarget) => (alvo as Element).getAttribute?.('data-codigo');
+  const codigoDoEvento = (elemento: EventTarget) => (elemento as Element).getAttribute?.('data-codigo');
 
-  const posicionar = (codigo: string, x: number, y: number) => {
+  const posicionar = (codigoIbge: string, x: number, y: number) => {
     const caixa = figura.current?.getBoundingClientRect();
-    if (caixa) setRotuloFlutuante({ codigo, x: x - caixa.left, y: y - caixa.top });
+    if (caixa) setRotuloFlutuante({ codigoIbge, x: x - caixa.left, y: y - caixa.top });
   };
 
   return (
@@ -120,26 +120,26 @@ export function MapaCoropleticoComponent({
         aria-label={rotulo}
         aria-busy={desenhadas < desenho.length || !valores}
         onClick={(e) => {
-          const codigo = codigoDoEvento(e.target);
-          if (codigo) aoEscolher(codigo);
+          const codigoIbge = codigoDoEvento(e.target);
+          if (codigoIbge) aoEscolher(codigoIbge);
         }}
         onKeyDown={(e) => {
-          const codigo = codigoDoEvento(e.target);
-          if (focavel && codigo && (e.key === 'Enter' || e.key === ' ')) {
+          const codigoIbge = codigoDoEvento(e.target);
+          if (focavel && codigoIbge && (e.key === 'Enter' || e.key === ' ')) {
             e.preventDefault();
-            aoEscolher(codigo);
+            aoEscolher(codigoIbge);
           }
         }}
         onPointerMove={(e) => {
-          const codigo = codigoDoEvento(e.target);
-          if (codigo) posicionar(codigo, e.clientX, e.clientY);
+          const codigoIbge = codigoDoEvento(e.target);
+          if (codigoIbge) posicionar(codigoIbge, e.clientX, e.clientY);
           else setRotuloFlutuante(null);
         }}
         onPointerLeave={() => setRotuloFlutuante(null)}
         onFocus={(e) => {
-          const codigo = codigoDoEvento(e.target);
+          const codigoIbge = codigoDoEvento(e.target);
           const caixa = (e.target as Element).getBoundingClientRect();
-          if (codigo) posicionar(codigo, caixa.left + caixa.width / 2, caixa.top + caixa.height / 2);
+          if (codigoIbge) posicionar(codigoIbge, caixa.left + caixa.width / 2, caixa.top + caixa.height / 2);
         }}
         onBlur={() => setRotuloFlutuante(null)}
       >
@@ -159,7 +159,7 @@ export function MapaCoropleticoComponent({
           style={{ left: rotuloFlutuante.x, top: rotuloFlutuante.y }}
           aria-hidden="true"
         >
-          {descrever(rotuloFlutuante.codigo)}
+          {descrever(rotuloFlutuante.codigoIbge)}
         </span>
       )}
 
@@ -187,29 +187,29 @@ const AreasComponent = memo(function Areas({
   focavel,
   descrever,
 }: {
-  desenho: { codigo: string; d: string }[];
+  desenho: { codigoIbge: string; d: string }[];
   desenhadas: number;
   faixas: Map<string, number> | null;
   selecionado: string | null;
   focavel: boolean;
-  descrever: ((codigo: string) => string) | null;
+  descrever: ((codigoIbge: string) => string) | null;
 }) {
   return (
     <>
-      {desenho.slice(0, desenhadas).map(({ codigo, d }) => (
+      {desenho.slice(0, desenhadas).map(({ codigoIbge, d }) => (
         <path
-          key={codigo}
+          key={codigoIbge}
           d={d}
-          data-codigo={codigo}
+          data-codigo={codigoIbge}
           className={[
             'mapa-area',
-            faixas ? `mapa-faixa-${faixas.get(codigo) ?? 0}` : 'mapa-sem-dado',
-            codigo === selecionado ? 'mapa-selecionada' : '',
+            faixas ? `mapa-faixa-${faixas.get(codigoIbge) ?? 0}` : 'mapa-sem-dado',
+            codigoIbge === selecionado ? 'mapa-selecionada' : '',
           ].join(' ')}
           tabIndex={focavel ? 0 : undefined}
           role={focavel ? 'button' : undefined}
-          aria-label={descrever ? descrever(codigo) : undefined}
-          aria-pressed={focavel ? codigo === selecionado : undefined}
+          aria-label={descrever ? descrever(codigoIbge) : undefined}
+          aria-pressed={focavel ? codigoIbge === selecionado : undefined}
         />
       ))}
     </>
@@ -219,9 +219,9 @@ const AreasComponent = memo(function Areas({
 function LegendaDoMapaComponent({ limites, formatar }: { limites: number[]; formatar: (valor: number) => string }) {
   if (limites.length === 0) return null;
 
-  const faixas = [0, ...limites].map((de, i) => ({
+  const faixas = [0, ...limites].map((limiteInferior, i) => ({
     faixa: i + 1,
-    texto: i < limites.length ? T.mapa.faixa(formatar(de), formatar(limites[i])) : T.mapa.ouMais(formatar(de)),
+    texto: i < limites.length ? T.mapa.faixa(formatar(limiteInferior), formatar(limites[i])) : T.mapa.ouMais(formatar(limiteInferior)),
   }));
   faixas[0].texto = T.mapa.ate(formatar(limites[0]));
 

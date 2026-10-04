@@ -23,14 +23,14 @@ const ASSOCIACAO: EntidadeNaLista = {
 const COMPLETA: DadosDaEntidade = {
   ...ASSOCIACAO,
   urlFonte: 'https://portaldatransparencia.gov.br/busca/pessoa-juridica/11222333000144',
-  porAno: [{ ano: 2025, recebido: 300_000 }, { ano: 2026, recebido: 1_000_000 }],
+  porAno: [{ anoDaEmenda: 2025, recebido: 300_000 }, { anoDaEmenda: 2026, recebido: 1_000_000 }],
   deParlamentares: 300_000,
   parlamentares: {
-    itens: [{ pessoaId: 42, nome: 'Fulano de Tal', partido: 'XYZ', uf: 'PR', casa: 'CAMARA', urlFoto: null, recebido: 300_000, emendas: 1 }],
+    itens: [{ idPessoa: 42, nome: 'Fulano de Tal', partido: 'XYZ', uf: 'PR', casa: 'CAMARA', urlFoto: null, recebido: 300_000, emendas: 1 }],
     pagina: 1, tamanho: 20, total: 1,
   },
   coletivos: [{ tipo: 'BANCADA', nome: 'BANCADA DO PARANA', recebido: 1_000_000, emendas: 1 }],
-  naCota: { total: 150, lancamentos: 2, porParlamentar: [{ pessoaId: 42, nome: 'Fulano de Tal', partido: 'XYZ', casa: 'CAMARA', total: 150, lancamentos: 2 }] },
+  naCota: { total: 150, lancamentos: 2, porParlamentar: [{ idPessoa: 42, nome: 'Fulano de Tal', partido: 'XYZ', casa: 'CAMARA', total: 150, lancamentos: 2 }] },
   convenios: {
     itens: [{
       numero: '1AAQKR', objeto: 'AQUISICAO DE AMBULANCIA', situacao: 'EM EXECUÇÃO', dataPublicacao: '2025-01-16',

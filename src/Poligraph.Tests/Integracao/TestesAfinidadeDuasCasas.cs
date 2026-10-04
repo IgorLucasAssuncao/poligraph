@@ -83,7 +83,7 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
         foreach (var casa in lido!.PorCasa)
         {
             var ids = casa.MaisProximos.Concat(casa.MaisDistantes)
-                .Select(p => p.PessoaId).Distinct().ToList();
+                .Select(p => p.IdPessoa).Distinct().ToList();
 
             var fontes = await Db.PessoaFonteIds.AsNoTracking()
                 .Where(f => ids.Contains(f.PessoaId))
@@ -253,7 +253,7 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
         var questionario = await cliente.GetFromJsonAsync<QuestionarioLido>(
             "/api/afinidade/perguntas");
 
-        var respondidas = questionario!.Perguntas.Select(p => p.Id).ToHashSet();
+        var respondidas = questionario!.Perguntas.Select(p => p.IdPergunta).ToHashSet();
         var respostas = respondidas.Select(id => new { perguntaId = id, valor = 1 }).ToArray();
 
         var resposta = await cliente.PostAsJsonAsync(
@@ -263,7 +263,7 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
         var extras = await resposta.Content.ReadFromJsonAsync<List<PerguntaLida>>();
 
         Assert.Equal(7, extras!.Count);
-        Assert.DoesNotContain(extras, p => respondidas.Contains(p.Id));
+        Assert.DoesNotContain(extras, p => respondidas.Contains(p.IdPergunta));
     }
 
     /// <summary>
@@ -287,14 +287,14 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
             "/api/afinidade/perguntas");
 
         var respostas = questionario!.Perguntas
-            .Select(p => new { perguntaId = p.Id, valor = 1 })
+            .Select(p => new { perguntaId = p.IdPergunta, valor = 1 })
             .ToList();
 
         var desempate = await cliente.PostAsJsonAsync(
             "/api/afinidade/perguntas/desempate", new { respostas });
 
         var extras = await desempate.Content.ReadFromJsonAsync<List<PerguntaLida>>();
-        respostas.AddRange(extras!.Select(p => new { perguntaId = p.Id, valor = 1 }));
+        respostas.AddRange(extras!.Select(p => new { perguntaId = p.IdPergunta, valor = 1 }));
 
         Assert.Equal(questionario.Total, respostas.Count);
 
@@ -385,12 +385,12 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
 
             await Db.SaveChangesAsync();
 
-            foreach (var pessoaId in pessoas)
+            foreach (var idPessoa in pessoas)
             {
                 Db.Votos.Add(new VotoModel
                 {
                     VotacaoId = votacaoId,
-                    PessoaId = pessoaId,
+                    PessoaId = idPessoa,
                     Valor = 1,
                     PartidoNoVoto = "PARTIDO-A",
                     UfNoVoto = "SP"
@@ -440,7 +440,7 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
             "/api/afinidade/perguntas");
 
         var respostas = questionario!.Perguntas
-            .Select(p => new { perguntaId = p.Id, valor = 1 })
+            .Select(p => new { perguntaId = p.IdPergunta, valor = 1 })
             .ToArray();
         var resposta = await cliente.PostAsJsonAsync(Rota, new { respostas });
         resposta.EnsureSuccessStatusCode();
@@ -448,7 +448,7 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
         return await resposta.Content.ReadFromJsonAsync<RespostaLida>();
     }
 
-    private record PerguntaLida(string Id, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
+    private record PerguntaLida(string IdPergunta, string Texto, short Ordem, int TotalVotos, int TotalPossivel);
 
     /// <summary>
     /// <c>Total</c> é o tamanho do questionário INTEIRO, e é maior que
@@ -457,7 +457,7 @@ public class TestesAfinidadeDuasCasas(FixturePostgres postgres) : BaseIntegracao
     /// </summary>
     private record QuestionarioLido(List<PerguntaLida> Perguntas, int Total);
 
-    private record ParlamentarLido(long PessoaId, string Nome, int Acordos, int Comparaveis);
+    private record ParlamentarLido(long IdPessoa, string Nome, int Acordos, int Comparaveis);
 
     private record PosicaoLida(float EixoX, float EixoY, short? Comunidade);
 

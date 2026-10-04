@@ -22,19 +22,19 @@ import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
  *
  * `evento.stopPropagation();`: o cartão inteiro é um link
  *
- * `aoAlternar(pessoaId, proximo);`: otimista
+ * `aoAlternar(idPessoa, proximo);`: otimista
  *
- * `aoAlternar(pessoaId, !proximo);`: desfaz
+ * `aoAlternar(idPessoa, !proximo);`: desfaz
  *
  * RISCO: Na primeira vez, a API responde 428 e o botão pergunta o consentimento (Pendência 62).
  * Só com o aceite a chamada volta, e a API grava a versão do texto junto.
  */
 export function BotaoSeguirComponent({
-  pessoaId,
+  idPessoa,
   seguindo,
   aoAlternar,
 }: {
-  pessoaId: number;
+  idPessoa: number;
   seguindo: boolean;
   aoAlternar: (id: number, seguindoAgora: boolean) => void;
 }) {
@@ -82,12 +82,12 @@ export function BotaoSeguirComponent({
 
   async function executar(proximo: boolean, aceite: boolean) {
     setOcupado(true);
-    aoAlternar(pessoaId, proximo);
+    aoAlternar(idPessoa, proximo);
 
     try {
-      await (proximo ? seguir(pessoaId, aceite) : deixarDeSeguir(pessoaId));
+      await (proximo ? seguir(idPessoa, aceite) : deixarDeSeguir(idPessoa));
     } catch (erro) {
-      aoAlternar(pessoaId, !proximo);
+      aoAlternar(idPessoa, !proximo);
       if (erro instanceof ConsentimentoNecessarioError) setPerguntando(true);
     } finally {
       setOcupado(false);

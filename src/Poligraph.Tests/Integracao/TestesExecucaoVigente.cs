@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Data;
 
@@ -173,7 +173,7 @@ public class TestesExecucaoVigente(FixturePostgres postgres) : BaseIntegracao(po
         return (await cliente.GetFromJsonAsync<T>(rota))!;
     }
 
-    private async Task VotarNaAnteriorAsync(long pessoaId)
+    private async Task VotarNaAnteriorAsync(long idPessoa)
     {
         var votacao = await Db.Votacoes.FindAsync("8888888-1");
         if (votacao is null)
@@ -189,24 +189,24 @@ public class TestesExecucaoVigente(FixturePostgres postgres) : BaseIntegracao(po
 
         Db.Votos.Add(new VotoModel
         {
-            VotacaoId = votacao.Id, PessoaId = pessoaId, Valor = 1,
+            VotacaoId = votacao.Id, PessoaId = idPessoa, Valor = 1,
             PartidoNoVoto = "PARTIDO-ANTIGO", UfNoVoto = "AC"
         });
 
         await Db.SaveChangesAsync();
     }
 
-    private record SimilarLido(long PessoaId);
+    private record SimilarLido(long IdPessoa);
 
     private record MandatoLido(short Legislatura, string Casa, int AnoInicial, string Partido);
 
     private record FichaLida(
-        long Id, string Partido, int NVotacoes, short? Legislatura,
+        long IdPessoa, string Partido, int NVotacoes, short? Legislatura,
         List<SimilarLido> MaisSimilares, List<MandatoLido> Mandatos);
 
     private record PaginaDeVotosLida(int Total);
 
-    private record NoLido(long Id);
+    private record NoLido(long IdPessoa);
 
     private record GrafoLido(long ExecucaoId, short Legislatura, List<NoLido> Nos, List<short> LegislaturasComGrafo);
 }

@@ -57,7 +57,7 @@ export function ResultadoComponent({
    */
   perguntas: Pergunta[];
 }) {
-  const textos = new Map(perguntas.map((p) => [p.id, p.texto]));
+  const textos = new Map(perguntas.map((p) => [p.idPergunta, p.texto]));
   const { usuario } = useSessao();
   const [recalculando, setRecalculando] = useState(false);
   const [falhou, setFalhou] = useState(false);
@@ -219,7 +219,7 @@ function SecaoDaCasaComponent({
         <>
           <h3 className="titulo-secao">{T.casa.tambemProximos}</h3>
           {demais.map((p) => (
-            <LinhaAfimComponent key={p.pessoaId} parlamentar={p} respondidasNaCasa={casa.perguntasRespondidas} />
+            <LinhaAfimComponent key={p.idPessoa} parlamentar={p} respondidasNaCasa={casa.perguntasRespondidas} />
           ))}
         </>
       )}
@@ -228,7 +228,7 @@ function SecaoDaCasaComponent({
         <>
           <h3 className="titulo-secao" data-tour="resultado-distantes">{T.casa.maisDistantes}</h3>
           {casa.maisDistantes.map((p) => (
-            <LinhaAfimComponent key={p.pessoaId} parlamentar={p} respondidasNaCasa={casa.perguntasRespondidas} />
+            <LinhaAfimComponent key={p.idPessoa} parlamentar={p} respondidasNaCasa={casa.perguntasRespondidas} />
           ))}
         </>
       )}
@@ -294,22 +294,22 @@ function DetalheDaContaComponent({
       <summary>{T.detalhe.verEmQuais}</summary>
 
       <ul className="lista-detalhe">
-        {parlamentar.acordou.map((id) => (
-          <li key={id} className="acordo">
+        {parlamentar.acordou.map((idPergunta) => (
+          <li key={idPergunta} className="acordo">
             <span aria-hidden="true">✓</span>
             <span>
               <span className="sr-apenas">{T.detalhe.concordaram}</span>
-              {textos.get(id) ?? id}
+              {textos.get(idPergunta) ?? idPergunta}
             </span>
           </li>
         ))}
 
-        {parlamentar.discordou.map((id) => (
-          <li key={id} className="desacordo">
+        {parlamentar.discordou.map((idPergunta) => (
+          <li key={idPergunta} className="desacordo">
             <span aria-hidden="true">✗</span>
             <span>
               <span className="sr-apenas">{T.detalhe.discordaram}</span>
-              {textos.get(id) ?? id}
+              {textos.get(idPergunta) ?? idPergunta}
             </span>
           </li>
         ))}
@@ -338,7 +338,7 @@ function DestaqueComponent({
     <section className="destaque-resultado" data-tour="resultado-destaque">
       <p className="rotulo-destaque">{T.destaque.rotulo}</p>
 
-      <Link to={`/parlamentar/${parlamentar.pessoaId}`} className="destaque-link">
+      <Link to={`/parlamentar/${parlamentar.idPessoa}`} className="destaque-link">
         <AvatarComponent nome={parlamentar.nome} tamanho="grande" />
 
         <h2>{parlamentar.nome}</h2>
@@ -369,7 +369,7 @@ function DestaqueComponent({
 function LinhaAfimComponent({ parlamentar, respondidasNaCasa }: { parlamentar: ParlamentarAfim; respondidasNaCasa: number }) {
   return (
     <LinhaParlamentarComponent
-      id={parlamentar.pessoaId}
+      id={parlamentar.idPessoa}
       nome={parlamentar.nome}
       partido={parlamentar.partido}
       uf={parlamentar.uf}

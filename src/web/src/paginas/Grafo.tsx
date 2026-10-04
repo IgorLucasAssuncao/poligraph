@@ -216,7 +216,7 @@ export function GrafoComponent() {
     const naLegislatura = grafo && grafo.legislaturasComGrafo[0] !== grafo.legislatura
       ? `?legislatura=${grafo.legislatura}`
       : '';
-    navegar(`/parlamentar/${no.id}${naLegislatura}`);
+    navegar(`/parlamentar/${no.idPessoa}${naLegislatura}`);
   }
 }
 

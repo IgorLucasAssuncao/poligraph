@@ -33,7 +33,7 @@ public class ServicoAfinidade(PoligraphDb db)
     public async Task<RespostaAfinidadeDto?> CalcularAsync(
         IReadOnlyList<RespostaCidadao> opinadas, Uf? ufPedida, CancellationToken ct)
     {
-        var uf = ufPedida?.Sigla;
+        var siglaDaUf = ufPedida?.Sigla;
         var casaDaPergunta = await CasaDasPerguntasAsync(opinadas, ct);
         var votosPorPessoa = await CarregarVotosAsync(opinadas, ct);
 
@@ -51,9 +51,9 @@ public class ServicoAfinidade(PoligraphDb db)
             }
 
             var fichas = await CarregarFichasAsync(resultados, ct);
-            var listados = uf is null
+            var listados = siglaDaUf is null
                 ? resultados
-                : [.. resultados.Where(r => fichas.GetValueOrDefault(r.PessoaId).Uf == uf)];
+                : [.. resultados.Where(r => fichas.GetValueOrDefault(r.PessoaId).Uf == siglaDaUf)];
             if (listados.Count == 0)
             {
                 continue;
@@ -78,7 +78,7 @@ public class ServicoAfinidade(PoligraphDb db)
         return new RespostaAfinidadeDto(
             TotalPerguntasRespondidas: opinadas.Count,
             PorCasa: porCasa,
-            Uf: uf);
+            Uf: siglaDaUf);
     }
 
     /// <summary>
@@ -150,9 +150,9 @@ public class ServicoAfinidade(PoligraphDb db)
     {
         var resultados = new List<ResultadoAfinidade>();
 
-        foreach (var (pessoaId, posicoes) in votosPorPessoa)
+        foreach (var (idPessoa, posicoes) in votosPorPessoa)
         {
-            var resultado = CalculadoraAfinidade.Calcular(pessoaId, opinadas, posicoes);
+            var resultado = CalculadoraAfinidade.Calcular(idPessoa, opinadas, posicoes);
 
             if (CalculadoraAfinidade.TemBaseSuficiente(resultado, opinadas.Count))
             {

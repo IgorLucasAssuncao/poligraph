@@ -17,20 +17,20 @@ public class ServicoReconciliacao(PoligraphDb db, CacheDeLeitura leitura)
     private readonly CacheDeLeitura _leitura = leitura;
 
     /// <summary>As reconciliações dos anos pedidos, inclusive nas pontas. Sem período, todas.</summary>
-    public Task<IReadOnlyList<ReconciliacaoDto>> ListarAsync(Ano? de, Ano? ate, CancellationToken ct) =>
-        _leitura.ObterAsync(("reconciliacao", de?.Valor, ate?.Valor), () => CalcularAsync(de?.Valor, ate?.Valor, ct));
+    public Task<IReadOnlyList<ReconciliacaoDto>> ListarAsync(Periodo<AnoDaReconciliacao> periodoPedido, CancellationToken ct) =>
+        _leitura.ObterAsync(("reconciliacao", periodoPedido), () => CalcularAsync(periodoPedido, ct));
 
-    private async Task<IReadOnlyList<ReconciliacaoDto>> CalcularAsync(int? de, int? ate, CancellationToken ct)
+    private async Task<IReadOnlyList<ReconciliacaoDto>> CalcularAsync(Periodo<AnoDaReconciliacao> periodoPedido, CancellationToken ct)
     {
         var consulta = _db.Reconciliacoes.AsNoTracking().Include(r => r.Motivos).AsQueryable();
-        if (de is { } inicio)
+        if (periodoPedido.Primeiro is { } primeiroAno)
         {
-            consulta = consulta.Where(r => r.Ano >= inicio);
+            consulta = consulta.Where(r => r.Ano >= primeiroAno.Valor);
         }
 
-        if (ate is { } fim)
+        if (periodoPedido.Ultimo is { } ultimoAno)
         {
-            consulta = consulta.Where(r => r.Ano <= fim);
+            consulta = consulta.Where(r => r.Ano <= ultimoAno.Valor);
         }
 
         var linhas = await consulta

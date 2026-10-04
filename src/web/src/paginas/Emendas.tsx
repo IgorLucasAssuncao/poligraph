@@ -80,7 +80,7 @@ export function EmendasComponent() {
   const de = parametros.get('de');
   const ate = parametros.get('ate');
   const periodo = useMemo(() => periodoDoEndereco(de, ate), [de, ate]);
-  const chaveDoPeriodo = periodo ? `${periodo.de}-${periodo.ate}` : 'todos';
+  const chaveDoPeriodo = periodo ? `${periodo.primeiroAno}-${periodo.ultimoAno}` : 'todos';
   const uf = parametros.get('uf');
   const cidade = parametros.get('cidade');
 
@@ -156,7 +156,7 @@ export function EmendasComponent() {
                 rotulo={T.periodoDasEmendas}
                 tour="emendas-periodo"
                 aoMudar={(novo) =>
-                  mudar(novo ? { de: String(novo.de), ate: String(novo.ate) } : { de: null, ate: null })
+                  mudar(novo ? { de: String(novo.primeiroAno), ate: String(novo.ultimoAno) } : { de: null, ate: null })
                 }
               />
             </div>
@@ -173,9 +173,9 @@ export function EmendasComponent() {
               periodo={periodo}
               cidade={cidade}
               aoVoltar={() => mudar({ uf: null, cidade: null })}
-              aoEscolher={(codigo) => {
+              aoEscolher={(codigoIbge) => {
                 setEscolheuAgora(true);
-                mudar({ cidade: codigo });
+                mudar({ cidade: codigoIbge });
               }}
             >
               {painel}
@@ -221,7 +221,7 @@ function ForaDoMapaComponent({ brasil }: { brasil: MapaDoBrasil }) {
         <NumeroComponent key={rotulo} rotulo={rotulo} definicao={definicao}>
           {rotulo === N.pago ? (
             <ComProcedenciaComponent
-              consulta={{ contexto: 'pagamentos', de: periodo.de, ate: periodo.ate }}
+              consulta={{ contexto: 'pagamentos', de: periodo.primeiroAno, ate: periodo.ultimoAno }}
               rotulo={N.rotuloDaProcedencia(textoDoPeriodo(periodo))}
             >
               {reaisCompacto(valor)}
@@ -284,8 +284,8 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
           focavel
           formatar={habitante ? porPessoa : undefined}
           rotulo={T.pais.rotuloDoMapa(textoDoPeriodo(brasil.periodo), habitante)}
-          aoEscolher={(codigo) => {
-            const sigla = siglaPorCodigo.get(codigo);
+          aoEscolher={(codigoIbge) => {
+            const sigla = siglaPorCodigo.get(codigoIbge);
             if (sigla) aoEscolher(sigla);
           }}
         />
@@ -312,7 +312,7 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
                 </th>
                 <td>
                   <ComProcedenciaComponent
-                    consulta={{ contexto: 'pagamentos', de: periodo.de, ate: periodo.ate, uf: u.uf }}
+                    consulta={{ contexto: 'pagamentos', de: periodo.primeiroAno, ate: periodo.ultimoAno, uf: u.uf }}
                     rotulo={T.pais.rotuloDaProcedencia(textoDoPeriodo(periodo), u.uf)}
                   >
                     {reaisCompacto(u.recebido)}
@@ -363,7 +363,7 @@ function MapaDaUfComponent({
   periodo: Periodo | undefined;
   cidade: string | null;
   aoVoltar: () => void;
-  aoEscolher: (codigo: string) => void;
+  aoEscolher: (codigoIbge: string) => void;
   /** O painel da cidade escolhida: entre o mapa e a lista, perto de onde se clicou. */
   children?: ReactNode;
 }) {
@@ -555,7 +555,7 @@ function PainelDaCidadeComponent({
           <p className="painel-cidade-total">
             {T.cidade.total(
               <ComProcedenciaComponent
-                consulta={{ contexto: 'pagamentos', de: dados.periodo.de, ate: dados.periodo.ate, municipio: dados.municipio.codigoIbge }}
+                consulta={{ contexto: 'pagamentos', de: dados.periodo.primeiroAno, ate: dados.periodo.ultimoAno, municipio: dados.municipio.codigoIbge }}
                 rotulo={T.cidade.rotuloDaProcedencia(textoDoPeriodo(dados.periodo), nome)}
               >
                 <span className="numero-valor">{reaisCompacto(dados.recebido)}</span>
@@ -617,9 +617,9 @@ function abasDaCidade(dados: EmendasDoMunicipio): Aba<AbaDaCidade>[] {
  */
 function ConveniosDaCidadeComponent({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Periodo | undefined }) {
   const convenios = dados.convenios;
-  const codigo = dados.municipio.codigoIbge;
+  const codigoIbge = dados.municipio.codigoIbge;
   const lista = usePaginas(convenios.lista.itens, convenios.lista.total, convenios.lista.tamanho || ITENS_POR_PAGINA_DA_CIDADE, (pagina) =>
-    listarConveniosDaCidade(codigo, periodo, pagina),
+    listarConveniosDaCidade(codigoIbge, periodo, pagina),
   );
 
   if (convenios.quantidade === 0) return null;
@@ -663,9 +663,9 @@ function ConveniosDaCidadeComponent({ dados, periodo }: { dados: EmendasDoMunici
 
 
 function QuemMandouComponent({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Periodo | undefined }) {
-  const codigo = dados.municipio.codigoIbge;
+  const codigoIbge = dados.municipio.codigoIbge;
   const lista = usePaginas(dados.parlamentares.itens, dados.parlamentares.total, ITENS_POR_PAGINA_DA_CIDADE, (pagina) =>
-    listarParlamentaresDoMunicipio(codigo, periodo, pagina),
+    listarParlamentaresDoMunicipio(codigoIbge, periodo, pagina),
   );
 
   if (dados.parlamentares.total === 0) return null;
@@ -676,7 +676,7 @@ function QuemMandouComponent({ dados, periodo }: { dados: EmendasDoMunicipio; pe
 
       <ul className="lista-autores">
         {lista.itens.map((p) => (
-          <LinhaDoParlamentarComponent key={p.pessoaId ?? p.nome} parlamentar={p} />
+          <LinhaDoParlamentarComponent key={p.idPessoa ?? p.nome} parlamentar={p} />
         ))}
       </ul>
 
@@ -691,9 +691,9 @@ function QuemMandouComponent({ dados, periodo }: { dados: EmendasDoMunicipio; pe
       <BotaoBaixarCsvComponent
         rotulo={T.quemMandou.baixar}
         montar={async () => {
-          const todos = await buscarTodas((pagina) => listarParlamentaresDoMunicipio(codigo, periodo, pagina));
+          const todos = await buscarTodas((pagina) => listarParlamentaresDoMunicipio(codigoIbge, periodo, pagina));
           baixarCsv(
-            T.quemMandou.arquivo(codigo, nomeDoArquivo(dados.periodo)),
+            T.quemMandou.arquivo(codigoIbge, nomeDoArquivo(dados.periodo)),
             [...T.quemMandou.colunas],
             todos.map((p) => [p.nome, p.partido, p.uf, p.casa, p.emendas, p.recebido]),
           );
@@ -704,9 +704,9 @@ function QuemMandouComponent({ dados, periodo }: { dados: EmendasDoMunicipio; pe
 }
 
 function QuemRecebeuComponent({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Periodo | undefined }) {
-  const codigo = dados.municipio.codigoIbge;
+  const codigoIbge = dados.municipio.codigoIbge;
   const lista = usePaginas(dados.favorecidos.itens, dados.favorecidos.total, ITENS_POR_PAGINA_DA_CIDADE, (pagina) =>
-    listarFavorecidosDoMunicipio(codigo, periodo, pagina),
+    listarFavorecidosDoMunicipio(codigoIbge, periodo, pagina),
   );
 
   return (
@@ -776,14 +776,14 @@ function SuaCidadeComponent({ aoEscolher }: { aoEscolher: (m: Municipio) => void
       async ({ coords }) => {
         const ponto: [number, number] = [coords.longitude, coords.latitude];
         const codigoUf = await areaQueContem('brasil', ponto);
-        const codigo = codigoUf ? await areaQueContem(codigoUf, ponto) : null;
+        const codigoIbge = codigoUf ? await areaQueContem(codigoUf, ponto) : null;
         const sigla = UFS.find(([c]) => c === codigoUf)?.[1];
-        if (!codigo || !sigla) {
+        if (!codigoIbge || !sigla) {
           setSituacao(T.suaCidade.foraDoBrasil);
           return;
         }
-        const dados = await obterEmendasDoMunicipio(codigo).catch(() => null);
-        escolher(dados ? dados.municipio : { codigoIbge: codigo, nome: '', uf: sigla });
+        const dados = await obterEmendasDoMunicipio(codigoIbge).catch(() => null);
+        escolher(dados ? dados.municipio : { codigoIbge, nome: '', uf: sigla });
       },
       () => setSituacao(T.suaCidade.naoPermitida),
       { maximumAge: 600_000, timeout: 15_000 },
@@ -852,20 +852,20 @@ function guardarMinhaCidade(m: Municipio): void {
 }
 
 /** O período do endereço; sem `de` e `ate` válidos, todos os anos. */
-function periodoDoEndereco(de: string | null, ate: string | null): Periodo | undefined {
-  const inicio = Number(de);
-  const fim = Number(ate);
+function periodoDoEndereco(deNaUrl: string | null, ateNaUrl: string | null): Periodo | undefined {
+  const inicio = Number(deNaUrl);
+  const fim = Number(ateNaUrl);
   return Number.isInteger(inicio) && Number.isInteger(fim) && inicio > 0 && fim > 0
-    ? { de: inicio, ate: fim }
+    ? { primeiroAno: inicio, ultimoAno: fim }
     : undefined;
 }
 
-function textoDoPeriodo({ de, ate }: Periodo): string {
-  return de === ate ? String(de) : `${de} a ${ate}`;
+function textoDoPeriodo({ primeiroAno, ultimoAno }: Periodo): string {
+  return primeiroAno === ultimoAno ? String(primeiroAno) : `${primeiroAno} a ${ultimoAno}`;
 }
 
-function nomeDoArquivo({ de, ate }: Periodo): string {
-  return de === ate ? String(de) : `${de}-${ate}`;
+function nomeDoArquivo({ primeiroAno, ultimoAno }: Periodo): string {
+  return primeiroAno === ultimoAno ? String(primeiroAno) : `${primeiroAno}-${ultimoAno}`;
 }
 
 function comParametros(atual: URLSearchParams, novos: Record<string, string | null>): URLSearchParams {

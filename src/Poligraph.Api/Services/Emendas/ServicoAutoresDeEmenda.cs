@@ -38,7 +38,7 @@ public class ServicoAutoresDeEmenda(PoligraphDb db, ServicoParlamentares parlame
             .GroupBy(e => e.CodigoEmenda)
             .ToDictionary(g => g.Key, g => g.First());
 
-        var pessoas = (await _parlamentares.ParlamentaresDaLegislaturaAsync(ct)).ToDictionary(p => p.Id);
+        var pessoas = (await _parlamentares.ParlamentaresDaLegislaturaAsync(ct)).ToDictionary(p => p.IdPessoa);
         var comAutor = porEmenda.Where(e => autores.ContainsKey(e.Codigo)).ToList();
 
         var individuais = comAutor
@@ -47,7 +47,7 @@ public class ServicoAutoresDeEmenda(PoligraphDb db, ServicoParlamentares parlame
             .Select(g =>
             {
                 var autor = autores[g.First().Codigo];
-                var pessoa = autor.PessoaId is { } id ? pessoas.GetValueOrDefault(id) : null;
+                var pessoa = autor.PessoaId is { } idPessoa ? pessoas.GetValueOrDefault(idPessoa) : null;
                 return new ParlamentarQueMandouDto(
                     autor.PessoaId, pessoa?.Nome ?? autor.NomeAutor, pessoa?.Partido, pessoa?.Uf, pessoa?.Casa,
                     pessoa?.UrlFoto, g.Sum(e => e.Recebido), g.Count());
