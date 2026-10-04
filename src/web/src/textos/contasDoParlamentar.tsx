@@ -203,4 +203,27 @@ export const TEXTOS_DAS_CONTAS = {
     pagos: (valor: string) => `${valor} pagos`,
     verTodas: (total: number) => `Ver as ${total} emendas`,
   },
+
+  /** O modal do grafo do dinheiro (Pendência 83). */
+  grafoDoDinheiro: {
+    sobre: 'De onde veio e para onde foi',
+    fechar: 'Fechar',
+    campanha: (ano: number, total: string) => `Campanha de ${ano} · ${total} arrecadados`,
+    emendas: (ano: number, total: string) => `Emendas de ${ano} · ${total} recebidos`,
+    ajuda:
+      'As setas da esquerda são as receitas da campanha, segundo a prestação de contas ao TSE; as da direita, quem ' +
+      'recebeu o dinheiro das emendas daquele ano, segundo o Portal da Transparência, até o último pagamento. Os dois ' +
+      'lados são de anos diferentes e não se somam.',
+    abrirEntidade: (nome: string) => `${nome}: abrir a página da entidade`,
+    pessoaFisica: 'pessoa física',
+    outrasReceitas: 'Outras receitas',
+    restoDoArrecadado: 'o resto do arrecadado',
+    outrosRecebedores: 'Outros recebedores',
+    repassePorBanco: 'Repasse por banco',
+    destinoForaDoDado: 'o destino final não está no dado',
+    pessoasESemIdentificacao: 'Pessoas e sem identificação',
+    item: (nome: string, valor: string) => `${nome}, ${valor}`,
+    leitorCampanha: (ano: number, nome: string, itens: string) => `Campanha de ${ano} de ${nome}: ${itens}. `,
+    leitorEmendas: (ano: number, itens: string) => `Emendas de ${ano}: ${itens}.`,
+  },
 } as const;

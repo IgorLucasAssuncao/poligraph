@@ -2,6 +2,9 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { EmendasDoParlamentar, FinanciamentoDeCampanha } from '../api';
 import { nomeProprio, reaisCompacto } from '../formato';
+import { TEXTOS_DAS_CONTAS } from '../textos/contasDoParlamentar';
+
+const T = TEXTOS_DAS_CONTAS.grafoDoDinheiro;
 
 /** Largura do desenho em unidades do SVG; a tela o encaixa na largura do modal. */
 const LARGURA = 1000;
@@ -75,10 +78,10 @@ export function GrafoDoDinheiroComponent({
     >
       <header className="grafo-dinheiro-topo">
         <div>
-          <p className="grafo-dinheiro-sobre">De onde veio e para onde foi</p>
+          <p className="grafo-dinheiro-sobre">{T.sobre}</p>
           <h2 id="titulo-grafo-dinheiro">{nome}</h2>
         </div>
-        <button type="button" className="botao-icone" aria-label="Fechar" onClick={aoFechar}>
+        <button type="button" className="botao-icone" aria-label={T.fechar} onClick={aoFechar}>
           ✕
         </button>
       </header>
@@ -93,11 +96,11 @@ export function GrafoDoDinheiroComponent({
 
           {campanha && entrada.length > 0 && (
             <text x={30} y={16} className="grafo-dinheiro-coluna">
-              Campanha de {campanha.anoEleicao} · {reaisCompacto(campanha.total)} arrecadados
+              {T.campanha(campanha.anoEleicao, reaisCompacto(campanha.total))}
             </text>
           )}
           <text x={LARGURA - 30} y={16} textAnchor="end" className="grafo-dinheiro-coluna">
-            Emendas de {emendas.ano} · {reaisCompacto(emendas.favorecidos.recebido)} recebidos
+            {T.emendas(emendas.ano, reaisCompacto(emendas.favorecidos.recebido))}
           </text>
 
           {entrada.map((c, i) => {
@@ -139,11 +142,7 @@ export function GrafoDoDinheiroComponent({
           </g>
         </svg>
 
-        <p className="ajuda">
-          As setas da esquerda são as receitas da campanha, segundo a prestação de contas ao TSE; as da direita, quem
-          recebeu o dinheiro das emendas daquele ano, segundo o Portal da Transparência, até o último pagamento. Os
-          dois lados são de anos diferentes e não se somam.
-        </p>
+        <p className="ajuda">{T.ajuda}</p>
       </div>
     </dialog>
   );
@@ -201,7 +200,7 @@ function CaixaComponent({ x, y, caixa }: { x: number; y: number; caixa: Caixa })
     <a
       href={destino}
       className="grafo-dinheiro-link"
-      aria-label={`${caixa.nome}: abrir a página da entidade`}
+      aria-label={T.abrirEntidade(caixa.nome)}
       onClick={(e) => {
         e.preventDefault();
         navegar(destino);
@@ -217,11 +216,11 @@ function caixasDaCampanha(campanha: FinanciamentoDeCampanha): Caixa[] {
   const maiores = campanha.maioresDoadores.slice(0, CAIXAS_POR_LADO);
   const caixas: Caixa[] = maiores.map((d) => ({
     nome: nomeProprio(d.nome),
-    detalhe: d.pessoaFisica ? 'pessoa física' : null,
+    detalhe: d.pessoaFisica ? T.pessoaFisica : null,
     valor: d.total,
   }));
   const resto = campanha.total - maiores.reduce((s, d) => s + d.total, 0);
-  if (resto > 0.5) caixas.push({ nome: 'Outras receitas', detalhe: 'o resto do arrecadado', valor: resto, resto: true });
+  if (resto > 0.5) caixas.push({ nome: T.outrasReceitas, detalhe: T.restoDoArrecadado, valor: resto, resto: true });
   return caixas;
 }
 
@@ -237,11 +236,11 @@ function caixasDasEmendas(emendas: EmendasDoParlamentar): Caixa[] {
   }));
   const fora = f.viaIntermediario + f.aPessoas + f.semIdentificacao;
   const outros = f.recebido - maiores.reduce((s, m) => s + m.recebido, 0) - fora;
-  if (outros > 0.5) caixas.push({ nome: 'Outros recebedores', detalhe: null, valor: outros, resto: true });
+  if (outros > 0.5) caixas.push({ nome: T.outrosRecebedores, detalhe: null, valor: outros, resto: true });
   if (f.viaIntermediario > 0)
-    caixas.push({ nome: 'Repasse por banco', detalhe: 'o destino final não está no dado', valor: f.viaIntermediario, resto: true });
+    caixas.push({ nome: T.repassePorBanco, detalhe: T.destinoForaDoDado, valor: f.viaIntermediario, resto: true });
   if (f.aPessoas + f.semIdentificacao > 0)
-    caixas.push({ nome: 'Pessoas e sem identificação', detalhe: null, valor: f.aPessoas + f.semIdentificacao, resto: true });
+    caixas.push({ nome: T.pessoasESemIdentificacao, detalhe: null, valor: f.aPessoas + f.semIdentificacao, resto: true });
   return caixas;
 }
 
@@ -253,12 +252,9 @@ function descreverParaLeitor(
   emendas: EmendasDoParlamentar,
   saida: Caixa[],
 ): string {
-  const recebeu = entrada.map((c) => `${c.nome}, ${reaisCompacto(c.valor)}`).join('; ');
-  const mandou = saida.map((c) => `${c.nome}, ${reaisCompacto(c.valor)}`).join('; ');
-  return (
-    (campanha && entrada.length ? `Campanha de ${campanha.anoEleicao} de ${nome}: ${recebeu}. ` : '')
-    + `Emendas de ${emendas.ano}: ${mandou}.`
-  );
+  const recebeu = entrada.map((c) => T.item(c.nome, reaisCompacto(c.valor))).join('; ');
+  const mandou = saida.map((c) => T.item(c.nome, reaisCompacto(c.valor))).join('; ');
+  return (campanha && entrada.length ? T.leitorCampanha(campanha.anoEleicao, nome, recebeu) : '') + T.leitorEmendas(emendas.ano, mandou);
 }
 
 function encurtar(texto: string, maximo: number): string {

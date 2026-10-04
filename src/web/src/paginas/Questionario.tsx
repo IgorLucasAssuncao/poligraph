@@ -14,11 +14,12 @@ import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
 import { passosDoQuestionario } from '../tour';
 import { comTransicao } from '../transicao';
 import { EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
+import { TEXTOS_DO_QUESTIONARIO as T } from '../textos/questionario';
 
 const OPCOES: [Resposta, string][] = [
-  [1, 'Concordo'],
-  [-1, 'Discordo'],
-  [0, 'Não sei'],
+  [1, T.opcoes.concordo],
+  [-1, T.opcoes.discordo],
+  [0, T.opcoes.naoSei],
 ];
 
 /**
@@ -91,7 +92,7 @@ export function QuestionarioComponent() {
         setPerguntas(iniciais);
         setTotal(tamanho);
       })
-      .catch(() => setErro('Não foi possível carregar as perguntas.'));
+      .catch(() => setErro(T.erroAoCarregar));
   }, []);
 
   const pediuDesempate = useRef(false);
@@ -136,7 +137,7 @@ export function QuestionarioComponent() {
   if (perguntas.length === 0) {
     return (
       <>
-        {erro ? <p className="erro">{erro}</p> : <EsqueletoDeTextoComponent rotulo="Carregando as perguntas" paragrafos={1} />}
+        {erro ? <p className="erro">{erro}</p> : <EsqueletoDeTextoComponent rotulo={T.carregando} paragrafos={1} />}
       </>
     );
   }
@@ -155,16 +156,14 @@ export function QuestionarioComponent() {
         </div>
 
         <p className="progresso-contagem">
-          {acabou
-            ? `${opinadas} de ${perguntas.length} respondidas`
-            : `Pergunta ${indice + 1} de ${previstas}`}
+          {acabou ? T.respondidas(opinadas, perguntas.length) : T.pergunta(indice + 1, previstas)}
         </p>
 
         <BotaoDoTourComponent nome="questionario" passos={PASSOS_DO_QUESTIONARIO} />
       </div>
 
       {acabou && aguardandoDesempate ? (
-        <p className="carregando">Escolhendo as próximas perguntas…</p>
+        <p className="carregando">{T.escolhendo}</p>
       ) : acabou ? (
         <EncerramentoComponent
           opinadas={opinadas}
@@ -212,8 +211,8 @@ export function QuestionarioComponent() {
     } catch (falha) {
       setErro(
         falha instanceof RespostasInsuficientesError
-          ? `Responda ao menos ${falha.minimo} perguntas para o resultado fazer sentido.`
-          : 'Não foi possível calcular agora. Tente de novo.',
+          ? T.respostasInsuficientes(falha.minimo)
+          : T.erroAoCalcular,
       );
     } finally {
       setEnviando(false);
@@ -249,7 +248,7 @@ function CartaoDePerguntaComponent({
 }) {
   return (
     <div className="cartao-pergunta" data-tour="pergunta">
-      <p className="rotulo-pergunta">Você concorda?</p>
+      <p className="rotulo-pergunta">{T.voceConcorda}</p>
       <h2 className="texto-pergunta">{pergunta.texto}</h2>
 
       <div className="opcoes-grandes" data-tour="opcoes">
@@ -270,12 +269,12 @@ function CartaoDePerguntaComponent({
         {revelando && pergunta.totalVotos > 0 && (
           <PainelComponent posicionados={pergunta.totalVotos} total={pergunta.totalPossivel} />
         )}
-        {revelando && pergunta.totalVotos === 0 && <p>Resposta registrada.</p>}
+        {revelando && pergunta.totalVotos === 0 && <p>{T.respostaRegistrada}</p>}
       </div>
 
       {aoVoltar && !revelando && (
         <button type="button" className="botao-texto voltar-pergunta" onClick={aoVoltar}>
-          ← Voltar
+          {T.voltar}
         </button>
       )}
     </div>
@@ -299,20 +298,17 @@ function EncerramentoComponent({
 }) {
   return (
     <div className="encerramento">
-      <h2>Pronto</h2>
-      <p className="ajuda">
-        Você opinou em <strong>{opinadas}</strong> de {total} afirmações. Agora vamos
-        comparar com o voto registrado de cada deputado e senador.
-      </p>
+      <h2>{T.pronto}</h2>
+      <p className="ajuda">{T.opinou(opinadas, total)}</p>
 
       {erro && <p className="erro">{erro}</p>}
 
       <div className="encerramento-acoes">
         <button type="button" className="botao-destaque" disabled={enviando} onClick={aoEnviar}>
-          {enviando ? 'Calculando…' : 'Ver meu resultado'}
+          {enviando ? T.calculando : T.verResultado}
         </button>
         <button type="button" className="botao-secundario" onClick={aoRever}>
-          Rever respostas
+          {T.rever}
         </button>
       </div>
     </div>

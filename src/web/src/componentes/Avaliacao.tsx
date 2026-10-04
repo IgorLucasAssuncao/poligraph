@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { registrarAvaliacao, type ResultadoAfinidade } from '../api';
+import { TEXTOS_DO_QUESTIONARIO } from '../textos/questionario';
+
+const A = TEXTOS_DO_QUESTIONARIO.avaliacao;
 
 /**
  * Avaliação do questionário — o feedback que valida o método.
@@ -84,24 +87,24 @@ export function AvaliacaoComponent({
     <dialog ref={dialogo} className="modal-avaliacao" onCancel={fechar}>
       {enviado ? (
         <div className="avaliacao-pronta">
-          <p>✓ Obrigado. Sua avaliação ajuda a medir se o método funciona.</p>
+          <p>{A.obrigado}</p>
           <button type="button" className="botao-destaque" onClick={fechar}>
-            Voltar ao resultado
+            {A.voltar}
           </button>
         </div>
       ) : (
         <form method="dialog" onSubmit={(e) => e.preventDefault()}>
           <header>
-            <h2>Ajude a avaliar</h2>
-            <p className="ajuda">Duas perguntas rápidas e opcionais, para a pesquisa.</p>
+            <h2>{A.titulo}</h2>
+            <p className="ajuda">{A.subtitulo}</p>
           </header>
 
           <fieldset>
-            <legend>O resultado combinou com o que você esperava?</legend>
+            <legend>{A.combinou}</legend>
             <div className="opcoes-avaliacao">
               {[
-                [true, 'Combinou'],
-                [false, 'Não combinou'],
+                [true, A.sim],
+                [false, A.nao],
               ].map(([valor, rotulo]) => (
                 <label
                   key={String(valor)}
@@ -119,7 +122,7 @@ export function AvaliacaoComponent({
           </fieldset>
 
           <fieldset>
-            <legend>Como você descreveria sua posição política?</legend>
+            <legend>{A.posicao}</legend>
             <div className="escala">
               {ESCALA.map(([valor, rotulo]) => (
                 <label key={valor} className={posicao === valor ? 'escala-ativa' : ''}>
@@ -130,13 +133,9 @@ export function AvaliacaoComponent({
             </div>
           </fieldset>
 
-          <p className="nota-privacidade">
-            Estas duas respostas são gravadas{' '}
-            <strong>sem ligação com a sua conta</strong>. Servem só para medir se o método
-            acerta.
-          </p>
+          <p className="nota-privacidade">{A.privacidade}</p>
 
-          {erro && <p className="erro">Não foi possível enviar. Tente de novo.</p>}
+          {erro && <p className="erro">{A.erro}</p>}
 
           <div className="modal-acoes">
             <button
@@ -145,10 +144,10 @@ export function AvaliacaoComponent({
               onClick={enviar}
               disabled={acertou === null && posicao === null}
             >
-              Enviar avaliação
+              {A.enviar}
             </button>
             <button type="button" className="botao-secundario" onClick={fechar}>
-              Agora não
+              {A.agoraNao}
             </button>
           </div>
         </form>
@@ -194,12 +193,4 @@ const ESPERA = 8000;
  * Sem um "centro" explícito, quem não se identifica com nenhum lado ou não responde ou
  * escolhe arbitrariamente — e os dois casos sujam a amostra.
  */
-const ESCALA: [number, string][] = [
-  [-3, 'Esquerda'],
-  [-2, 'Centro-esquerda'],
-  [-1, 'Centro-esq. leve'],
-  [0, 'Centro'],
-  [1, 'Centro-dir. leve'],
-  [2, 'Centro-direita'],
-  [3, 'Direita'],
-];
+const ESCALA: [number, string][] = A.escala;
