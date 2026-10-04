@@ -19,7 +19,7 @@ export const TEXTOS_DA_METODOLOGIA = {
     votos: (legislatura: number | undefined): ReactNode => (
       <>
         Os votos são o <strong>registro nominal de plenário</strong>
-        {legislatura && <> da {legislatura}ª legislatura</>}: cada deputado e senador, cada votação, como a casa publicou.
+        {legislatura !== undefined && <> da {legislatura}ª legislatura</>}: cada deputado e senador, cada votação, como a casa publicou.
       </>
     ),
     casa: (nome: string, votacoes: number, secretas: number): ReactNode => (

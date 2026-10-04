@@ -558,7 +558,7 @@ function AbaSimilaresComponent({ similares }: { similares: Ficha['maisSimilares'
       {similares.slice(0, todos ? similares.length : SIMILARES_DE_INICIO).map((s) => (
         <LinhaParlamentarComponent
           key={s.idPessoa}
-          id={s.idPessoa}
+          idPessoa={s.idPessoa}
           nome={s.nome}
           partido={s.partido}
           uf=""

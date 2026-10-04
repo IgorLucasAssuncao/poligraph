@@ -203,7 +203,7 @@ function CaixaComponent({ x, y, caixa }: { x: number; y: number; caixa: Caixa })
       aria-label={T.abrirEntidade(caixa.nome)}
       onClick={(e) => {
         e.preventDefault();
-        navegar(destino);
+        void navegar(destino);
       }}
     >
       {conteudo}

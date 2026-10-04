@@ -69,7 +69,7 @@ def test_de_arquivo_tem_o_mesmo_hash_que_a_resposta_teria(tmp_path):
     arquivo = tmp_path / "cota-2025.zip"
     arquivo.write_bytes(b"x" * (3 << 20))
 
-    baixado = procedencia.de_arquivo("CAMARA", "https://www.camara.leg.br/cotas/Ano-2025.csv.zip", arquivo)
+    baixado = procedencia.de_arquivo("CAMARA", "https://www.camara.leg.br/cotas/Ano-2025.csv.zip", arquivo, tmp_path)
 
     assert baixado.sha256 == hashlib.sha256(b"x" * (3 << 20)).hexdigest()
     assert baixado.tamanho == 3 << 20
@@ -83,7 +83,7 @@ def test_de_arquivo_data_e_a_de_chegada_ao_disco(tmp_path):
     arquivo.write_bytes(b"x")
     os.utime(arquivo, (1_700_000_000, 1_700_000_000))
 
-    baixado = procedencia.de_arquivo("SENADO", "u", arquivo)
+    baixado = procedencia.de_arquivo("SENADO", "u", arquivo, tmp_path)
 
     assert baixado.baixado_em == datetime.fromtimestamp(1_700_000_000, timezone.utc)
 
@@ -92,7 +92,7 @@ def test_guardar_copia_e_nao_liga_ao_cache(tmp_path):
     """O download regrava o cache no mesmo lugar; a cópia guardada não pode mudar junto."""
     arquivo = tmp_path / "cache.zip"
     arquivo.write_bytes(b"versao 1")
-    baixado = procedencia.de_arquivo("TSE", "u", arquivo)
+    baixado = procedencia.de_arquivo("TSE", "u", arquivo, tmp_path)
 
     guardado = procedencia.guardar(baixado, tmp_path / "procedencia")
     arquivo.write_bytes(b"versao 2")
@@ -105,7 +105,7 @@ def test_guardar_acima_do_limite_fica_so_o_hash(tmp_path, monkeypatch):
     arquivo = tmp_path / "estabelecimentos0.zip"
     arquivo.write_bytes(b"x" * 11)
 
-    assert procedencia.guardar(procedencia.de_arquivo("RECEITA", "u", arquivo), tmp_path / "p") is None
+    assert procedencia.guardar(procedencia.de_arquivo("RECEITA", "u", arquivo, tmp_path), tmp_path / "p") is None
     assert not (tmp_path / "p").exists()
 
 
@@ -183,3 +183,19 @@ def test_o_banco_recusa_hash_que_nao_e_hexadecimal_de_64(limpo):
             "INSERT INTO cargas (fonte, url, sha256, bytes, comando) VALUES ('CAMARA', 'u', %s, 1, 'c')",
             ("A" * 64,),
         )
+
+
+def test_de_arquivo_recusa_caminho_fora_da_pasta(tmp_path):
+    """RISCO: o caminho vem da linha de comando; `..` não pode levar a carga para fora do cache."""
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    fora = tmp_path / "fora.zip"
+    fora.write_bytes(b"x")
+
+    with pytest.raises(ValueError):
+        procedencia.de_arquivo("TSE", "u", cache / ".." / "fora.zip", cache)
+
+
+def test_de_arquivo_recusa_pasta_no_lugar_de_arquivo(tmp_path):
+    with pytest.raises(ValueError):
+        procedencia.de_arquivo("TSE", "u", tmp_path, tmp_path)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { anosDeCotaDaEmenda, mesCurto, mesesContinuos, partesDeCem, reais, reaisCompacto } from './formato';
+import { anosDeCotaDaEmenda, mesCurto, mesesContinuos, partesDeCem, reais, reaisCompacto, semPontosNoFim } from './formato';
 
 /**
  * ATENÇÃO: Pular o mês sem pagamento encurtaria a espera no desenho.
@@ -61,5 +61,14 @@ describe('anosDeCotaDaEmenda', () => {
     expect(anosDeCotaDaEmenda(2027)).toBe('2023–2026');
     expect(anosDeCotaDaEmenda(2023)).toBe('2019–2022');
     expect(anosDeCotaDaEmenda(2028)).toBe('2027–2030');
+  });
+});
+
+describe('semPontosNoFim', () => {
+  it('tira só os pontos do fim, e o texto sem ponto fica igual', () => {
+    expect(semPontosNoFim('passagem aérea...')).toBe('passagem aérea');
+    expect(semPontosNoFim('a.b.c')).toBe('a.b.c');
+    expect(semPontosNoFim('...')).toBe('');
+    expect(semPontosNoFim('')).toBe('');
   });
 });

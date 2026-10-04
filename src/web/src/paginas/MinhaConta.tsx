@@ -35,7 +35,7 @@ export function MinhaContaComponent() {
 
       <section className="conta-secao">
         <h2>{T.sessao}</h2>
-        <button type="button" className="botao-secundario" onClick={sair}>
+        <button type="button" className="botao-secundario" onClick={() => sair().catch(() => setErro(true))}>
           {T.sair}
         </button>
       </section>

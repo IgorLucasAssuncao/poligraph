@@ -7,4 +7,4 @@ export const UFS: [string, string][] = [
 ];
 
 /** As siglas em ordem alfabética, para escolher numa lista. */
-export const SIGLAS_DAS_UFS: string[] = UFS.map(([, sigla]) => sigla).sort();
+export const SIGLAS_DAS_UFS: string[] = UFS.map(([, sigla]) => sigla).sort((a, b) => a.localeCompare(b, 'pt-BR'));

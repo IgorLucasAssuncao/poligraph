@@ -125,13 +125,13 @@ export function InicioComponent() {
             {seguidos.slice(0, 5).map((p) => (
               <LinhaParlamentarComponent
                 key={p.idPessoa}
-                id={p.idPessoa}
+                idPessoa={p.idPessoa}
                 nome={p.nome}
                 partido={p.partido}
                 uf={p.uf}
                 fotoUrl={p.urlFoto}
                 seguindo
-                aoAlternarSeguir={(id) => setSeguidos((l) => l.filter((x) => x.idPessoa !== id))}
+                aoAlternarSeguir={(idPessoa) => setSeguidos((l) => l.filter((x) => x.idPessoa !== idPessoa))}
               />
             ))}
 
@@ -251,7 +251,7 @@ function BaseComponent({ panorama }: { panorama: Panorama }) {
     <section className="painel-secao">
       <h2>
         {T.base.titulo}{' '}
-        {panorama.legislatura && <small>{periodoDaLegislatura(panorama.legislatura)}</small>}
+        {panorama.legislatura != null && <small>{periodoDaLegislatura(panorama.legislatura)}</small>}
       </h2>
 
       <div className="painel-casas">

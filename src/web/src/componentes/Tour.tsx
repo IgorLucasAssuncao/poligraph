@@ -285,11 +285,11 @@ function TourComponent({ passos, aoFechar }: { passos: PassoDoTour[]; aoFechar: 
     let cancelado = false;
 
     const trocaDePagina = Boolean(passo.rota && passo.rota !== rotaAtual.current);
-    if (trocaDePagina) navegar(passo.rota!);
+    if (trocaDePagina) void navegar(passo.rota!);
 
     const achado = trocaDePagina ? esperarAlvo(passo.alvo) : Promise.resolve(alvoVisivel(passo.alvo));
 
-    achado.then((alvo) => {
+    achado.catch(() => null).then((alvo) => {
       if (cancelado) return;
 
       if (!alvo) {

@@ -103,6 +103,13 @@ export function partesDeCem(valores: number[]): number[] {
 }
 
 /** `"PASSAGEM AÉREA"` → `"Passagem aérea"`. ATENÇÃO: Os arquivos oficiais vêm em CAIXA ALTA, ilegível em bloco. */
+/** O texto sem os pontos do fim, num laço e não numa expressão regular: `/\.+$/` volta atrás em texto com muitos pontos no meio. */
+export function semPontosNoFim(texto: string): string {
+  let fim = texto.length;
+  while (fim > 0 && texto[fim - 1] === '.') fim--;
+  return texto.slice(0, fim);
+}
+
 export function minusculas(texto: string): string {
   const min = texto.toLocaleLowerCase('pt-BR');
   return min.charAt(0).toLocaleUpperCase('pt-BR') + min.slice(1);

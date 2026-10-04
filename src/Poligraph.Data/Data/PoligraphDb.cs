@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Poligraph.Data;
 
@@ -78,6 +78,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         ConfigurarVotacoesSimbolicas(mb);
         ConfigurarUsuario(mb);
         ConfigurarAvaliacao(mb);
+        ConfigurarFuncoes(mb);
     }
 
     private static void ConfigurarIdentidade(ModelBuilder mb)
@@ -697,4 +698,10 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         });
 
     }
+
+    /// <summary>As funções do Postgres que as consultas chamam: ver <see cref="FuncoesDoBanco"/>.</summary>
+    private static void ConfigurarFuncoes(ModelBuilder mb) =>
+        mb.HasDbFunction(typeof(FuncoesDoBanco).GetMethod(nameof(FuncoesDoBanco.CasaComPadrao))!)
+          .HasName("regexp_like")
+          .IsBuiltIn();
 }

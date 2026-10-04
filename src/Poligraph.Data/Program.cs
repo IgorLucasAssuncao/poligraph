@@ -25,12 +25,17 @@ await db.Database.MigrateAsync();
 log.LogInformation("Migrations aplicadas.");
 
 var curadoria = await CarregadorDePerguntas.CarregarAsync(db);
-log.LogInformation("{Curadoria}", curadoria);
+if (log.IsEnabled(LogLevel.Information))
+{
+    log.LogInformation("{Curadoria}", curadoria);
+}
 
 var perguntas = await db.Perguntas.CountAsync(p => p.Ativa);
 var pessoas = await db.Pessoas.CountAsync();
-log.LogInformation("Banco: {Pessoas} parlamentares, {Perguntas} perguntas ativas.",
-    pessoas, perguntas);
+if (log.IsEnabled(LogLevel.Information))
+{
+    log.LogInformation("Banco: {Pessoas} parlamentares, {Perguntas} perguntas ativas.", pessoas, perguntas);
+}
 
 if (pessoas == 0)
 {

@@ -26,27 +26,29 @@ export function BotaoGoogleComponent({ aoEntrar }: { aoEntrar: (usuario: Usuario
   useEffect(() => {
     if (!clientId) return;
 
-    carregarScript().then(() => {
-      window.google?.accounts.id.initialize({
-        client_id: clientId,
-        callback: async (resposta) => {
-          try {
-            aoEntrar(await entrar(resposta.credential));
-          } catch {
-            setErro(T.google.erro);
-          }
-        },
-      });
-
-      if (alvo.current) {
-        window.google?.accounts.id.renderButton(alvo.current, {
-          theme: 'outline',
-          size: 'large',
-          text: 'signin_with',
-          locale: 'pt-BR',
+    carregarScript()
+      .then(() => {
+        window.google?.accounts.id.initialize({
+          client_id: clientId,
+          callback: async (resposta) => {
+            try {
+              aoEntrar(await entrar(resposta.credential));
+            } catch {
+              setErro(T.google.erro);
+            }
+          },
         });
-      }
-    });
+
+        if (alvo.current) {
+          window.google?.accounts.id.renderButton(alvo.current, {
+            theme: 'outline',
+            size: 'large',
+            text: 'signin_with',
+            locale: 'pt-BR',
+          });
+        }
+      })
+      .catch(() => setErro(T.google.scriptFalhou));
   }, [aoEntrar, clientId]);
 
   if (!clientId) {

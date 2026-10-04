@@ -108,7 +108,7 @@ export function MenuDaContaComponent() {
               type="button"
               onClick={() => {
                 setAberto(false);
-                sair();
+                sair().catch(() => setAberto(true));
               }}
             >
               {T.menu.sair}

@@ -72,7 +72,7 @@ def de_resposta(fonte: str, resposta) -> Baixado:
     )
 
 
-def de_arquivo(fonte: str, url: str, caminho: Path) -> Baixado:
+def de_arquivo(fonte: str, url: str, caminho: Path, pasta_permitida: Path) -> Baixado:
     """Monta o `Baixado` de um arquivo que já está no cache.
 
     As cargas de dinheiro baixam em fluxo e reaproveitam o cache, então não há resposta
@@ -82,6 +82,7 @@ def de_arquivo(fonte: str, url: str, caminho: Path) -> Baixado:
     O hash é calculado em blocos de 1 MB: o ZIP de prestação de contas do TSE tem ~400 MB.
     """
     _conferir_fonte(fonte)
+    caminho = dentro_da_pasta(caminho, pasta_permitida)
     resumo = hashlib.sha256()
     with caminho.open("rb") as entrada:
         for bloco in iter(lambda: entrada.read(1 << 20), b""):
@@ -96,6 +97,19 @@ def de_arquivo(fonte: str, url: str, caminho: Path) -> Baixado:
         baixado_em=datetime.fromtimestamp(estado.st_mtime, timezone.utc),
         arquivo=caminho,
     )
+
+
+def dentro_da_pasta(caminho: Path, pasta: Path) -> Path:
+    """O caminho resolvido, só se for um arquivo que existe dentro da pasta.
+
+    RISCO: `--arquivo` e `--diretorio` chegam da linha de comando. Sem esta conferência, um
+    caminho com `..` ou um link levaria a carga a ler, guardar e registrar um arquivo de
+    qualquer lugar do disco como se fosse da fonte.
+    """
+    resolvido = caminho.resolve(strict=True)
+    if not resolvido.is_relative_to(pasta.resolve()) or not resolvido.is_file():
+        raise ValueError(f"{caminho} não é um arquivo dentro de {pasta}: as cargas só leem a pasta de cache.")
+    return resolvido
 
 
 def guardar(baixado: Baixado, pasta: Path) -> Path | None:

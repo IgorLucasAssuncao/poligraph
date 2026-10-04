@@ -54,8 +54,10 @@ public sealed class AquecedorDeCache(
             await servicos.GetRequiredService<ServicoGoverno>().ObterAsync(default, ct);
             await servicos.GetRequiredService<ServicoMapaDeEmendas>().ObterBrasilAsync(default, ct);
 
-            _logger.LogInformation(MensagensDaApi.CacheAquecido,
-                TimeProvider.System.GetElapsedTime(inicio));
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation(MensagensDaApi.CacheAquecido, TimeProvider.System.GetElapsedTime(inicio));
+            }
         }
         catch (Exception erro) when (erro is not OperationCanceledException)
         {

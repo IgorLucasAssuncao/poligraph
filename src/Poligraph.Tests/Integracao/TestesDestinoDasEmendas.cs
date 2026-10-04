@@ -223,21 +223,18 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
     /// <para>O domínio de <c>tipo</c> fica no teste de contrato do Python: um tipo inventado também viola a identificação, e o Postgres reporta a que avalia primeiro.</para>
     /// </remarks>
     [SkippableTheory]
-    [InlineData("'PESSOA', NULL, 'FULANA DE TAL', false", "ck_favorecido_identificacao")]
-    [InlineData("'PESSOA_JURIDICA', '123', 'EMPRESA', false", "ck_favorecido_identificacao")]
-    [InlineData("'PESSOA', NULL, NULL, true", "ck_favorecido_intermediario")]
-    [InlineData("'PESSOA_JURIDICA', '12345678000190', NULL, false", "ck_favorecido_identificacao")]
-    public async Task Favorecido_ForaDaRegra_ERejeitadoPeloBanco(string valores, string restricao)
+    [InlineData("PESSOA", null, "FULANA DE TAL", false, "ck_favorecido_identificacao")]
+    [InlineData("PESSOA_JURIDICA", "123", "EMPRESA", false, "ck_favorecido_identificacao")]
+    [InlineData("PESSOA", null, null, true, "ck_favorecido_intermediario")]
+    [InlineData("PESSOA_JURIDICA", "12345678000190", null, false, "ck_favorecido_identificacao")]
+    public async Task Favorecido_ForaDaRegra_ERejeitadoPeloBanco(
+        string tipo, string? documento, string? nome, bool intermediario, string restricao)
     {
         ExigeDocker();
 
-#pragma warning disable EF1002, EF1003
         var erro = await Assert.ThrowsAsync<PostgresException>(() =>
-            Db.Database.ExecuteSqlRawAsync(
-                "INSERT INTO emendas_favorecidos (codigo_emenda, competencia, tipo, documento, "
-                + "nome, intermediario, valor) "
-                + $"VALUES ('202541840004', DATE '2025-03-01', {valores}, 10)"));
-#pragma warning restore EF1002, EF1003
+            Db.Database.ExecuteSqlAsync(
+                $"INSERT INTO emendas_favorecidos (codigo_emenda, competencia, tipo, documento, nome, intermediario, valor) VALUES ('202541840004', DATE '2025-03-01', {tipo}, {documento}, {nome}, {intermediario}, 10)"));
 
         Assert.Equal(restricao, erro.ConstraintName);
     }

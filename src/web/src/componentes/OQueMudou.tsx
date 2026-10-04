@@ -146,6 +146,6 @@ function montarItens(n: Novidades): Item[] {
 
 /** A carga mais recente, em `dd/mm`, ou nulo sem carga registrada. */
 function ultimaCarga(n: Novidades): string | null {
-  const mais = n.atualizacoes.map((a) => a.ultimaCarga).sort().at(-1);
+  const mais = n.atualizacoes.map((a) => a.ultimaCarga).sort((a, b) => a.localeCompare(b)).at(-1);
   return mais ? dataCurta(mais.slice(0, 10)).slice(0, 5) : null;
 }

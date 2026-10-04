@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Poligraph.Api.Services;
 
 namespace Poligraph.Tests.Unidade;
@@ -9,11 +9,14 @@ namespace Poligraph.Tests.Unidade;
 /// </summary>
 public class TestesBancadaDoPartido
 {
+    /// <summary>A mesma configuração de leitura para todos os casos: criá-la a cada chamada desperdiça o cache do serializador.</summary>
+    private static readonly JsonSerializerOptions LeituraDosCasos = new() { PropertyNameCaseInsensitive = true };
+
     public static TheoryData<string, string[], string?> Casos()
     {
         var caminho = Path.Combine(Raiz(), "src", "etl", "tests", "casos", "bancada_do_partido.json");
         var arquivo = JsonSerializer.Deserialize<ArquivoDeCasos>(
-            File.ReadAllText(caminho), new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            File.ReadAllText(caminho), LeituraDosCasos)!;
 
         var dados = new TheoryData<string, string[], string?>();
         foreach (var caso in arquivo.Casos)

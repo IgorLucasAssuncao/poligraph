@@ -110,7 +110,7 @@ export function CabecalhoDaColunaComponent({
         <button
           type="button"
           className="botao-icone"
-          onClick={() => navegar(-1)}
+          onClick={() => void navegar(-1)}
           aria-label={T.voltar}
         >
           <IconeVoltarComponent />

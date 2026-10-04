@@ -450,7 +450,7 @@ export async function listarSeguidos(): Promise<Parlamentar[]> {
     { idPessoa: number; nome: string; casa: Parlamentar['casa']; partido: string; uf: string }[]
   >(`${BASE}/seguidos`);
 
-  return seguidos.map((s) => ({ ...s, id: s.idPessoa, nVotacoes: 0 }));
+  return seguidos.map((s) => ({ ...s, nVotacoes: 0 }));
 }
 
 /** DECISÃO: PUT: seguir duas vezes é o mesmo que seguir uma. */

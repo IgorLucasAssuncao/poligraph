@@ -224,7 +224,7 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         help="liga quem recebeu emenda à cidade da sede, por CNPJ → TOM → IBGE (Receita)",
     )
     mun.add_argument("--diretorio", type=Path, default=None,
-                     help="pasta com Estabelecimentos0..9.zip já baixados")
+                     help="pasta com Estabelecimentos0..9.zip já baixados, dentro da pasta de cache (POLIGRAPH_CACHE)")
 
     gov = sub.add_parser(
         "governo",
@@ -259,7 +259,7 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         "--arquivo",
         type=Path,
         default=None,
-        help="ZIP baixado à mão — o plano B para quando o WAF do TSE endurecer",
+        help="ZIP baixado à mão, dentro da pasta de cache (POLIGRAPH_CACHE): o plano B para quando o WAF do TSE endurecer",
     )
 
     curar = sub.add_parser(
@@ -465,7 +465,7 @@ def _carga_do_arquivo(conexao: psycopg.Connection, fonte: str, url: str, arquivo
     Mesmo papel de `_baixar_da_camara`, para as cargas que baixam em fluxo: o hash sai do
     arquivo, e a cópia vai para `procedencia/` quando cabe em `LIMITE_PARA_GUARDAR`.
     """
-    baixado = procedencia.de_arquivo(fonte, url, arquivo)
+    baixado = procedencia.de_arquivo(fonte, url, arquivo, CACHE)
     procedencia.guardar(baixado, CACHE / "procedencia")
     return persistencia.registrar_carga(conexao, baixado, procedencia.comando())
 

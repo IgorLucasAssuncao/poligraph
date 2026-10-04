@@ -61,7 +61,7 @@ export function BuscaDoCabecalhoComponent() {
     setAberta(false);
     setTermo('');
     setResposta(null);
-    navegar(destino);
+    void navegar(destino);
   };
 
   return (
@@ -135,6 +135,7 @@ export function BuscaDoCabecalhoComponent() {
                     key={o.destino}
                     id={`${id}-opcao-${o.i}`}
                     role="option"
+                    tabIndex={-1}
                     aria-selected={o.i === ativa}
                     className={`busca-opcao ${o.i === ativa ? 'ativa' : ''}`}
                     onMouseEnter={() => setAtiva(o.i)}

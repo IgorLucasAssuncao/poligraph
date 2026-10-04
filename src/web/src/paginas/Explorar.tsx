@@ -199,7 +199,7 @@ export function ExplorarComponent() {
       {lista.map((p) => (
         <LinhaParlamentarComponent
           key={p.idPessoa}
-          id={p.idPessoa}
+          idPessoa={p.idPessoa}
           nome={p.nome}
           partido={p.partido}
           uf={p.uf}

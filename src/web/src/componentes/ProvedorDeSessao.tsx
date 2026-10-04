@@ -16,9 +16,9 @@ export function ProvedorDeSessaoComponent({ children }: { children: React.ReactN
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    Promise.all([
+    void Promise.all([
       quemSouEu().then(setUsuario).catch(() => setUsuario(null)),
-      obterAcesso().then((a) => setLeituraPublica(a.leituraPublica)),
+      obterAcesso().then((a) => setLeituraPublica(a.leituraPublica)).catch(() => setLeituraPublica(false)),
     ]).finally(() => setCarregando(false));
   }, []);
 

@@ -46,14 +46,24 @@ export function PoliticaDePrivacidadeComponent() {
  * dependência sem problema que a justifique.
  *
  * `if (/^\|[\s|:-]+\|$/.test(linha)) continue;`: separador da tabela
+ *
+ * Linhas seguidas de texto formam um parágrafo só, como no Markdown: o negrito que começa
+ * numa linha e termina na seguinte precisa ver as duas juntas, senão os asteriscos vão
+ * para a tela.
  */
 function paraHtml(markdown: string): string {
-  const linhas = markdown.split('\n');
   const saida: string[] = [];
+  let paragrafo: string[] = [];
   let emTabela = false;
 
-  for (const linha of linhas) {
+  const fecharParagrafo = () => {
+    if (paragrafo.length > 0) saida.push(`<p>${inline(paragrafo.join(' '))}</p>`);
+    paragrafo = [];
+  };
+
+  for (const linha of markdown.split('\n')) {
     if (linha.startsWith('|')) {
+      fecharParagrafo();
       if (/^\|[\s|:-]+\|$/.test(linha)) continue;
 
       const celulas = linha.split('|').slice(1, -1).map((c) => inline(c.trim()));
@@ -70,14 +80,17 @@ function paraHtml(markdown: string): string {
       emTabela = false;
     }
 
+    if (linha.startsWith('#') || linha.startsWith('- ') || linha.startsWith('---') || !linha.trim()) fecharParagrafo();
+
     if (linha.startsWith('### ')) saida.push(`<h3>${inline(linha.slice(4))}</h3>`);
     else if (linha.startsWith('## ')) saida.push(`<h2>${inline(linha.slice(3))}</h2>`);
     else if (linha.startsWith('# ')) saida.push(`<h1>${inline(linha.slice(2))}</h1>`);
     else if (linha.startsWith('- ')) saida.push(`<li>${inline(linha.slice(2))}</li>`);
     else if (linha.startsWith('---')) saida.push('<hr />');
-    else if (linha.trim()) saida.push(`<p>${inline(linha)}</p>`);
+    else if (linha.trim()) paragrafo.push(linha.trim());
   }
 
+  fecharParagrafo();
   if (emTabela) saida.push('</tbody></table>');
 
   return saida.join('\n');

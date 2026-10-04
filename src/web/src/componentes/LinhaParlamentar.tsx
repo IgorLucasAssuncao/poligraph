@@ -9,7 +9,7 @@ import { BotaoSeguirComponent } from './BotaoSeguir';
  * nunca percentual (RF-29).
  */
 export function LinhaParlamentarComponent({
-  id,
+  idPessoa,
   nome,
   partido,
   uf,
@@ -19,18 +19,18 @@ export function LinhaParlamentarComponent({
   aoAlternarSeguir,
   legislatura,
 }: {
-  id: number;
+  idPessoa: number;
   nome: string;
   partido: string;
   uf: string;
   fotoUrl?: string | null;
   detalhe?: React.ReactNode;
   seguindo?: boolean;
-  aoAlternarSeguir?: (id: number, seguindoAgora: boolean) => void;
+  aoAlternarSeguir?: (idPessoa: number, seguindoAgora: boolean) => void;
   /** A ficha abre neste mandato. Sem ela, no mais recente. */
   legislatura?: number;
 }) {
-  const ficha = `/parlamentar/${id}${legislatura ? `?legislatura=${legislatura}` : ''}`;
+  const ficha = `/parlamentar/${idPessoa}${legislatura ? `?legislatura=${legislatura}` : ''}`;
 
   return (
     <article className="linha">
@@ -55,7 +55,7 @@ export function LinhaParlamentarComponent({
       {aoAlternarSeguir && (
         <div className="linha-acao">
           <BotaoSeguirComponent
-            idPessoa={id}
+            idPessoa={idPessoa}
             seguindo={seguindo ?? false}
             aoAlternar={aoAlternarSeguir}
           />

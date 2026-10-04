@@ -216,7 +216,7 @@ export function GrafoComponent() {
     const naLegislatura = grafo && grafo.legislaturasComGrafo[0] !== grafo.legislatura
       ? `?legislatura=${grafo.legislatura}`
       : '';
-    navegar(`/parlamentar/${no.idPessoa}${naLegislatura}`);
+    void navegar(`/parlamentar/${no.idPessoa}${naLegislatura}`);
   }
 }
 
@@ -290,8 +290,8 @@ function DestaqueDoGrafoComponent({
   destaque: Destaque;
   aoTrocar: (novo: Destaque) => void;
 }) {
-  const partidos = useMemo(() => [...new Set(grafo.nos.map((n) => n.partido).filter(Boolean))].sort(), [grafo]);
-  const ufs = useMemo(() => [...new Set(grafo.nos.map((n) => n.uf).filter(Boolean))].sort(), [grafo]);
+  const partidos = useMemo(() => [...new Set(grafo.nos.map((n) => n.partido).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR')), [grafo]);
+  const ufs = useMemo(() => [...new Set(grafo.nos.map((n) => n.uf).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR')), [grafo]);
   const destacados = grafo.nos.filter(
     (n) => (!destaque.partido || n.partido === destaque.partido) && (!destaque.uf || n.uf === destaque.uf),
   ).length;

@@ -11,7 +11,7 @@ import {
 } from '../api';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { FONTES } from '../fontes';
-import { dataCurta, minusculas, nomeProprio, periodoDaLegislatura, reais } from '../formato';
+import { dataCurta, minusculas, nomeProprio, periodoDaLegislatura, reais, semPontosNoFim } from '../formato';
 import { BotaoBaixarCsvComponent } from './BotaoBaixarCsv';
 import { BotaoMostrarMaisComponent } from './BotaoMostrarMais';
 import { ConveniosComponent, EmendasUmaAUmaComponent, QuandoFoiPagoComponent, QuemRecebeuComponent } from './DestinoDasEmendas';
@@ -414,7 +414,7 @@ export function AbaCotaComponent({
           </ComProcedenciaComponent>,
           gastos.anoDaDespesa,
           gastos.lancamentos,
-          principal ? minusculas(principal.categoria).replace(/\.+$/, '') : null,
+          principal ? semPontosNoFim(minusculas(principal.categoria)) : null,
         )}
       </p>
 

@@ -41,7 +41,7 @@ export function useContas(
     if (mandato === 'aguardando') return;
     let vivo = true;
 
-    Promise.allSettled([
+    void Promise.allSettled([
       obterGastos(idPessoa, mandato),
       obterEmendas(idPessoa, mandato),
       obterFinanciamento(idPessoa, mandato),

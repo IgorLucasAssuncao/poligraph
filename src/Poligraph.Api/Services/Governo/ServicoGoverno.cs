@@ -110,7 +110,7 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
     /// <para>Só entra na lista o órgão com algum gasto sigiloso: o cartão de um ministério sem sigilo nenhum não responde à pergunta da seção.</para>
     /// <para><c>Meses</c> é o do ano mais recente do período: é ele que pode estar incompleto.</para>
     /// </remarks>
-    private static SigiloDto? Sigilo(IReadOnlyList<GastoSigilosoModel> linhas)
+    private static SigiloDto? Sigilo(List<GastoSigilosoModel> linhas)
     {
         if (linhas.Count == 0)
         {

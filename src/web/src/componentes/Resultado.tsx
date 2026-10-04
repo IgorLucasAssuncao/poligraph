@@ -70,7 +70,7 @@ export function ResultadoComponent({
     if (!aoEscolherUf) return;
     setRecalculando(true);
     setFalhou(false);
-    aoEscolherUf(nova || undefined)
+    void aoEscolherUf(nova || undefined)
       .catch(() => setFalhou(true))
       .finally(() => setRecalculando(false));
   }
@@ -369,7 +369,7 @@ function DestaqueComponent({
 function LinhaAfimComponent({ parlamentar, respondidasNaCasa }: { parlamentar: ParlamentarAfim; respondidasNaCasa: number }) {
   return (
     <LinhaParlamentarComponent
-      id={parlamentar.idPessoa}
+      idPessoa={parlamentar.idPessoa}
       nome={parlamentar.nome}
       partido={parlamentar.partido}
       uf={parlamentar.uf}

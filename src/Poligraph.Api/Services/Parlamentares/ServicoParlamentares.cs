@@ -10,7 +10,7 @@ using Poligraph.Api.Tipos;
 namespace Poligraph.Api.Services;
 
 /// <summary>Lista e ficha do parlamentar — quem ele é, como votou e com quem se parece.</summary>
-public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLeitura leitura)
+public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLeitura leitura)
 {
     public const int TamanhoPadrao = 30;
     public const int TamanhoMaximo = 100;
@@ -22,6 +22,12 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     public const int TamanhoMinimoDaBusca = 2;
 
     private const int SimilaresNaFicha = 10;
+
+    /// <summary>A opção do <c>regexp_like</c> que ignora a diferença entre maiúscula e minúscula.</summary>
+    private const string SemDiferencaDeCaixa = "i";
+
+    /// <summary>Tempo máximo de uma expressão regular rodada na API, em milissegundos.</summary>
+    private const int TempoMaximoDaExpressao = 100;
 
     /// <summary>
     /// Quanto a lista da legislatura fica em memória. Ela só muda quando o ETL roda, e
@@ -472,12 +478,12 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         {
             var padrao = PadraoSemAcento(palavra);
             votos = votos.Where(v =>
-                Regex.IsMatch(v.Votacao!.Descricao ?? "", padrao, RegexOptions.IgnoreCase)
-                || Regex.IsMatch(v.Votacao.Proposicao!.Ementa ?? "", padrao, RegexOptions.IgnoreCase)
-                || Regex.IsMatch(v.Votacao.Proposicao!.PalavrasChave ?? "", padrao, RegexOptions.IgnoreCase)
-                || Regex.IsMatch(
+                FuncoesDoBanco.CasaComPadrao(v.Votacao!.Descricao ?? "", padrao, SemDiferencaDeCaixa)
+                || FuncoesDoBanco.CasaComPadrao(v.Votacao.Proposicao!.Ementa ?? "", padrao, SemDiferencaDeCaixa)
+                || FuncoesDoBanco.CasaComPadrao(v.Votacao.Proposicao!.PalavrasChave ?? "", padrao, SemDiferencaDeCaixa)
+                || FuncoesDoBanco.CasaComPadrao(
                     (v.Votacao.Proposicao!.SiglaTipo ?? "") + " " + v.Votacao.Proposicao.Numero + "/" + v.Votacao.Proposicao.Ano,
-                    padrao, RegexOptions.IgnoreCase));
+                    padrao, SemDiferencaDeCaixa));
         }
 
         return votos;
@@ -494,7 +500,7 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
     private static IEnumerable<string> PalavrasDaBusca(string busca)
     {
         var termo = busca.Trim();
-        if (Regex.IsMatch(termo, @"^[A-Za-z]{2,5}\s*\d+(/\d{2,4})?$"))
+        if (PadraoDeMateria().IsMatch(termo))
         {
             return [termo];
         }
@@ -502,6 +508,10 @@ public class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLei
         return termo.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .Where(p => p.Length >= TamanhoMinimoDaBusca);
     }
+
+    /// <summary>Sigla com número, com ou sem ano: "PEC 45/2019", "PL 2253". Procurada inteira, sem separar as palavras.</summary>
+    [GeneratedRegex(@"^[A-Za-z]{2,5}\s*\d+(/\d{2,4})?$", RegexOptions.None, TempoMaximoDaExpressao)]
+    private static partial Regex PadraoDeMateria();
 
     /// <summary>
     /// O termo como expressão regular que casa com ou sem acento. Os metacaracteres são

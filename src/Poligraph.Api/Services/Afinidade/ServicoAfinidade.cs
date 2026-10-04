@@ -237,7 +237,7 @@ public class ServicoAfinidade(PoligraphDb db)
     private async Task<PosicaoDoCidadaoDto?> PosicionarAsync(
         TipoCasa casa,
         List<ResultadoAfinidade> resultados,
-        IReadOnlyList<RespostaCidadao> respondidas,
+        List<RespostaCidadao> respondidas,
         CancellationToken ct)
     {
         var perguntas = respondidas.Select(r => r.PerguntaId).ToList();
@@ -321,7 +321,7 @@ public class ServicoAfinidade(PoligraphDb db)
     /// <remarks>
     /// <para>Não recalcula nada: lê o resultado que já existe para todos os parlamentares da casa.</para>
     /// </remarks>
-    private static EscalaDaCasaDto Escala(IReadOnlyList<ResultadoAfinidade> resultados)
+    private static EscalaDaCasaDto Escala(List<ResultadoAfinidade> resultados)
     {
         var mediano = resultados.OrderBy(r => r.Proporcao).ElementAt(resultados.Count / 2);
         return new EscalaDaCasaDto(resultados.Count, mediano.Acordos, mediano.Comparaveis);

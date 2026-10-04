@@ -51,7 +51,7 @@ export function useLegislaturas(): Legislatura[] | null {
       pedido = null;
       return [];
     });
-    pedido.then((l) => atual && setLegislaturas(l));
+    void pedido.then((l) => atual && setLegislaturas(l));
     return () => {
       atual = false;
     };
