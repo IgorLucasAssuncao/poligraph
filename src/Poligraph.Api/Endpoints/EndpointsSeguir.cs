@@ -94,9 +94,9 @@ public static class EndpointsSeguir
             return Results.NotFound();
         }
 
-        var usuarioId = SessaoDoUsuario.IdDoUsuario(principal);
+        var idUsuario = SessaoDoUsuario.IdDoUsuario(principal);
 
-        if (await db.Segue.AnyAsync(s => s.UsuarioId == usuarioId && s.PessoaId == idPessoa, ct))
+        if (await db.Segue.AnyAsync(s => s.UsuarioId == idUsuario && s.PessoaId == idPessoa, ct))
         {
             return Results.NoContent();
         }
@@ -109,7 +109,7 @@ public static class EndpointsSeguir
                 detail: MensagensDaApi.SoSegueQuemEstaEmExercicioDetalhe);
         }
 
-        if (!await ConsentimentoEmDiaAsync(db, usuarioId, versao, aceite == true, ct))
+        if (!await ConsentimentoEmDiaAsync(db, idUsuario, versao, aceite == true, ct))
         {
             return Results.Problem(
                 statusCode: StatusCodes.Status428PreconditionRequired,
@@ -117,7 +117,7 @@ public static class EndpointsSeguir
                 detail: MensagensDaApi.FaltaConsentimentoParaSeguirDetalhe);
         }
 
-        db.Segue.Add(new SegueModel { UsuarioId = usuarioId, PessoaId = idPessoa });
+        db.Segue.Add(new SegueModel { UsuarioId = idUsuario, PessoaId = idPessoa });
         await db.SaveChangesAsync(ct);
 
         return Results.NoContent();
@@ -130,10 +130,10 @@ public static class EndpointsSeguir
     /// <para>Versão nova revoga a anterior antes de gravar: o índice único só admite um vivo por finalidade.</para>
     /// </remarks>
     private static async Task<bool> ConsentimentoEmDiaAsync(
-        PoligraphDb db, long usuarioId, string? versao, bool aceite, CancellationToken ct)
+        PoligraphDb db, long idUsuario, string? versao, bool aceite, CancellationToken ct)
     {
         var vivo = await db.Consentimentos
-            .FirstOrDefaultAsync(c => c.UsuarioId == usuarioId
+            .FirstOrDefaultAsync(c => c.UsuarioId == idUsuario
                                    && c.Finalidade == TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES
                                    && c.RevogadoEm == null, ct);
 
@@ -155,7 +155,7 @@ public static class EndpointsSeguir
 
         db.Consentimentos.Add(new ConsentimentoModel
         {
-            UsuarioId = usuarioId,
+            UsuarioId = idUsuario,
             Finalidade = TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES,
             Versao = versao,
         });
@@ -175,10 +175,10 @@ public static class EndpointsSeguir
     private static async Task<IResult> DeixarDeSeguirAsync(
         long idPessoa, ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
     {
-        var usuarioId = SessaoDoUsuario.IdDoUsuario(principal);
+        var idUsuario = SessaoDoUsuario.IdDoUsuario(principal);
 
         await db.Segue
-            .Where(s => s.UsuarioId == usuarioId && s.PessoaId == idPessoa)
+            .Where(s => s.UsuarioId == idUsuario && s.PessoaId == idPessoa)
             .ExecuteDeleteAsync(ct);
 
         return Results.NoContent();
@@ -193,11 +193,11 @@ public static class EndpointsSeguir
     private static async Task<IResult> RevogarConsentimentoAsync(
         ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
     {
-        var usuarioId = SessaoDoUsuario.IdDoUsuario(principal);
+        var idUsuario = SessaoDoUsuario.IdDoUsuario(principal);
 
-        await db.Segue.Where(s => s.UsuarioId == usuarioId).ExecuteDeleteAsync(ct);
+        await db.Segue.Where(s => s.UsuarioId == idUsuario).ExecuteDeleteAsync(ct);
         await db.Consentimentos
-            .Where(c => c.UsuarioId == usuarioId
+            .Where(c => c.UsuarioId == idUsuario
                      && c.Finalidade == TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES
                      && c.RevogadoEm == null)
             .ExecuteUpdateAsync(s => s.SetProperty(c => c.RevogadoEm, DateTimeOffset.UtcNow), ct);

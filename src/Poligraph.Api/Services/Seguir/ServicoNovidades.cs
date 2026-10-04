@@ -23,10 +23,10 @@ public class ServicoNovidades(PoligraphDb db)
     private readonly PoligraphDb _db = db;
 
     /// <param name="desde">Início da janela dos avisos de voto; sem ele, os 7 dias que terminam na votação mais recente.</param>
-    public async Task<NovidadesDto> ObterAsync(long usuarioId, DateOnly? desde, CancellationToken ct)
+    public async Task<NovidadesDto> ObterAsync(long idUsuario, DateOnly? desde, CancellationToken ct)
     {
         var seguidos = await _db.Segue.AsNoTracking()
-            .Where(s => s.UsuarioId == usuarioId)
+            .Where(s => s.UsuarioId == idUsuario)
             .Select(s => new { s.PessoaId, s.Pessoa!.NomeExibicao })
             .ToDictionaryAsync(s => s.PessoaId, s => s.NomeExibicao, ct);
         var idsPessoasSeguidas = seguidos.Keys.ToList();
