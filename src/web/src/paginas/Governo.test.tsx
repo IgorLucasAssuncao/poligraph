@@ -71,6 +71,7 @@ const DE_2025: DadosDoGoverno = {
       { grupo: 'OUTROS', pago: 230e9, restosAPagarPagos: 0 },
     ],
   },
+  defesaCivil: null,
   sigilo: {
     cartaoSigiloso: 50.6e6,
     cartaoTotal: 122.3e6,
@@ -167,6 +168,26 @@ describe('Governo federal', () => {
     expect(screen.getByText(/com detalhe, compra por compra: R\$ 71,7 mi/)).toBeDefined();
     expect(screen.getByRole('rowheader', { name: 'Ministério da Defesa' })).toBeDefined();
     expect(screen.getByText(/Só o que o Portal marca como sigiloso/)).toBeDefined();
+  });
+
+  it('o cartão da Defesa Civil fica à parte e nomeia o mês que o Portal não publicou', async () => {
+    vi.mocked(api.obterGoverno).mockResolvedValue({
+      ...DE_2025,
+      defesaCivil: {
+        total: 420e6, estadual: 100e6, naoInformado: 0, transacoes: 900, executores: 312,
+        porAno: [{ anoDoExtrato: 2025, valor: 420e6, meses: 11 }],
+        porUf: [{ uf: 'RS', valor: 300e6, executores: 90 }, { uf: 'SC', valor: 120e6, executores: 40 }],
+        mesesSemArquivo: ['2025-11'],
+      },
+    });
+
+    renderizar();
+
+    expect(await screen.findByText('Cartão da Defesa Civil')).toBeDefined();
+    const texto = document.body.textContent ?? '';
+    expect(texto).toMatch(/gastaram R\$\s*420\s*mi de dinheiro federal, em 312 prefeituras e governos/);
+    expect(texto).toMatch(/não publicou o extrato de nov\/2025/);
+    expect(texto).toMatch(/fica fora do cartão corporativo/);
   });
 
   it('sem carga do sigilo, diz isso em vez de mostrar zero', async () => {

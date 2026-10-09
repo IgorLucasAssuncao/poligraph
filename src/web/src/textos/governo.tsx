@@ -81,6 +81,24 @@ export const TEXTOS_DO_GOVERNO = {
     foraDaConta: (emprestado: string) => `Fora da conta: ${emprestado} pegos emprestados, que voltam com juros.`,
   },
 
+  defesaCivil: {
+    titulo: 'Cartão da Defesa Civil',
+    resposta: (periodo: string, total: string, executores: number): ReactNode => (
+      <>
+        Com o cartão de pagamento da Defesa Civil, {periodo}, estados e municípios atingidos por desastre gastaram{' '}
+        <strong>{total}</strong> de dinheiro federal, em {executores.toLocaleString('pt-BR')} prefeituras e governos.
+      </>
+    ),
+    diferente:
+      'Quem compra com este cartão é a prefeitura ou o governo do estado, não um órgão federal. Por isso ele fica fora do cartão corporativo acima.',
+    estadual: (valor: string) => `Os governos dos estados gastaram ${valor}; o resto, as prefeituras.`,
+    naoInformado: (valor: string) => `${valor} vieram do Portal sem dizer quem gastou nem em que estado.`,
+    semArquivo: (meses: string) => `O Portal não publicou o extrato de ${meses}. O total desses anos é menor do que o gasto foi.`,
+    porAno: 'Por ano',
+    porUf: 'Por estado',
+    meses: (meses: number) => (meses < 12 ? ` (${meses} meses)` : ''),
+  },
+
   sigilo: {
     titulo: 'Gasto sigiloso',
     vazio: 'Os gastos sigilosos deste período ainda não foram carregados.',

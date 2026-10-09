@@ -17,13 +17,13 @@ import pytest
 
 from poligraph_etl import __main__ as etl
 from poligraph_etl import persistencia
-from poligraph_etl.contratos import banco, camara as contratos_da_camara, senado as contratos_do_senado
+from poligraph_etl.contratos import banco, camara as contratos_da_camara, portal as contratos_do_portal, senado as contratos_do_senado
 from poligraph_etl.contratos.entrada import colunas_da_fonte
 from poligraph_etl.fontes import camara, senado
 
 CONTRATOS_DE_SAIDA = [c for _, c in inspect.getmembers(banco, inspect.isclass) if is_dataclass(c) and hasattr(c, "TABELA")]
 CONTRATOS_DE_ENTRADA = [
-    c for modulo in (contratos_da_camara, contratos_do_senado)
+    c for modulo in (contratos_da_camara, contratos_do_senado, contratos_do_portal)
     for _, c in inspect.getmembers(modulo, inspect.isclass) if is_dataclass(c) and c.__module__ == modulo.__name__
 ]
 

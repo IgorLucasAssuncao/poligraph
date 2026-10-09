@@ -25,6 +25,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<OrcamentoPorFuncaoModel> OrcamentoPorFuncao => Set<OrcamentoPorFuncaoModel>();
     public DbSet<EncargoEspecialModel> EncargosEspeciais => Set<EncargoEspecialModel>();
     public DbSet<GastoSigilosoModel> GastosSigilosos => Set<GastoSigilosoModel>();
+    public DbSet<GastoDaDefesaCivilModel> GastosDaDefesaCivil => Set<GastoDaDefesaCivilModel>();
     public DbSet<ReceitaPorOrigemModel> ReceitasPorOrigem => Set<ReceitaPorOrigemModel>();
     public DbSet<GestaoModel> Gestoes => Set<GestaoModel>();
     public DbSet<MunicipioModel> Municipios => Set<MunicipioModel>();
@@ -164,6 +165,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         mb.Entity<ReceitaPorOrigemModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<GastoSigilosoModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<GastoDaDefesaCivilModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
     }
 
@@ -515,6 +518,27 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.Property(x => x.Origem).HasMaxLength(20);
             e.Property(x => x.Sigiloso).HasPrecision(18, 2);
             e.Property(x => x.Total).HasPrecision(18, 2);
+        });
+
+        mb.Entity<GastoDaDefesaCivilModel>(e =>
+        {
+            e.ToTable("gastos_da_defesa_civil", t =>
+            {
+                t.HasCheckConstraint("ck_defesa_civil_mes", "mes BETWEEN 1 AND 12");
+                t.HasCheckConstraint("ck_defesa_civil_esfera", "esfera IN ('MUNICIPAL','ESTADUAL','NAO_INFORMADA')");
+                t.HasCheckConstraint("ck_defesa_civil_uf",
+                    "(esfera = 'NAO_INFORMADA' AND uf IS NULL) OR (esfera <> 'NAO_INFORMADA' AND uf ~ '^[A-Z]{2}$')");
+                t.HasCheckConstraint("ck_defesa_civil_cnpj", "cnpj_convenente ~ '^[0-9]{14}$'");
+                t.HasCheckConstraint("ck_defesa_civil_transacoes", "transacoes > 0");
+            });
+
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.Ano, x.Mes, x.Executor, x.Uf, x.CnpjConvenente })
+                .IsUnique().AreNullsDistinct(false).HasDatabaseName("ux_defesa_civil_mes_executor");
+            e.Property(x => x.Uf).HasMaxLength(2);
+            e.Property(x => x.Esfera).HasMaxLength(13);
+            e.Property(x => x.CnpjConvenente).HasMaxLength(14);
+            e.Property(x => x.Valor).HasPrecision(18, 2);
         });
 
         mb.Entity<ReceitaPorOrigemModel>(e =>

@@ -7,7 +7,7 @@ vez que alguém apertou o botão. Este módulo só DECIDE as etapas; quem as exe
 | Frequência | Etapas |
 |---|---|
 | `semanal` | `ingerir`, `senado` e `simbolicas` do ano corrente, `palavras-chave` das novas, `conferir` |
-| `mensal` | as da semanal, `cota`, `emendas`, `sedes-brasilapi` (CNPJs novos das emendas), `convenios`, `governo`, `populacao`, `analisar` das duas casas, `conferir` |
+| `mensal` | as da semanal, `cota`, `emendas`, `sedes-brasilapi` (CNPJs novos das emendas), `convenios`, `governo`, `defesa-civil`, `populacao`, `analisar` das duas casas, `conferir` |
 | mensal de jan, abr, jul e out | também `municipios`: o cadastro de CNPJ da Receita, gigabytes, uma vez por trimestre |
 | mensal de nov e dez de ano de eleição geral | também `fundo`, `patrimonio` e `redes` da eleição: o TSE fecha a prestação de contas depois do segundo turno |
 
@@ -79,6 +79,7 @@ def etapas(frequencia: str, hoje: date) -> list[Etapa]:
             Etapa("sedes-brasilapi"),
             Etapa("convenios"),
             Etapa("governo", {"anos": anos, "eleicao": ultima_eleicao_geral(hoje)}),
+            Etapa("defesa-civil", {"anos": anos}),
             Etapa("populacao"),
         ]
         if hoje.month in MESES_DO_CADASTRO_DA_RECEITA:

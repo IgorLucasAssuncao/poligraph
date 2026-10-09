@@ -194,6 +194,47 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
         Assert.Equal("ck_sigilo_base", ((Npgsql.PostgresException)erro.InnerException!).ConstraintName);
     }
 
+    /// <summary>
+    /// O cartão da Defesa Civil soma por ano e por UF, separa o governo do estado e diz o mês que
+    /// o Portal não publicou. Os meses depois do último do ano corrente não contam como falta.
+    /// </summary>
+    [SkippableFact]
+    public async Task DefesaCivil_SomaPorAnoEUf_EDizOMesSemArquivo()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        for (short mes = 1; mes <= 12; mes++)
+        {
+            if (mes != 11)
+            {
+                Db.GastosDaDefesaCivil.Add(DaDefesaCivil(2025, mes, "PORTO ALEGRE", "RS", "MUNICIPAL", 10m));
+            }
+        }
+
+        Db.GastosDaDefesaCivil.AddRange(
+            DaDefesaCivil(2025, 5, "GOVERNO DO ESTADO", "RS", "ESTADUAL", 50m),
+            DaDefesaCivil(2026, 1, "ASSIS BRASIL", "AC", "MUNICIPAL", 7m),
+            DaDefesaCivil(2026, 2, "ASSIS BRASIL", "AC", "MUNICIPAL", -2m),
+            DaDefesaCivil(2025, 8, "Sem informação", null, "NAO_INFORMADA", 4m));
+        await Db.SaveChangesAsync();
+
+        var defesaCivil = (await LerAsync(Rota)).DefesaCivil!;
+
+        Assert.Equal((169m, 50m, 4m, 4), (defesaCivil.Total, defesaCivil.Estadual, defesaCivil.NaoInformado, defesaCivil.Executores));
+        Assert.Equal([(2025, 164m, 11), (2026, 5m, 2)], defesaCivil.PorAno.Select(a => (a.AnoDoExtrato, a.Valor, a.Meses)));
+        Assert.Equal([("RS", 160m), ("AC", 5m)], defesaCivil.PorUf.Select(u => (u.Uf, u.Valor)));
+        Assert.Equal(["2025-11"], defesaCivil.MesesSemArquivo);
+    }
+
+    [SkippableFact]
+    public async Task DefesaCivil_SemCarga_VemNulo()
+    {
+        ExigeDocker();
+        await SemearAsync();
+
+        Assert.Null((await LerAsync(Rota)).DefesaCivil);
+    }
+
     [SkippableFact]
     public async Task SemDado_Responde404()
     {
@@ -224,13 +265,21 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
     private record SigiloLido(
         decimal CartaoSigiloso, decimal CartaoTotal, int TransacoesSigilosas, decimal AcaoSigilosa, List<OrgaoLido> PorOrgao);
 
+    private record DefesaCivilNoAnoLido(int AnoDoExtrato, decimal Valor, int Meses);
+
+    private record DefesaCivilNaUfLida(string Uf, decimal Valor, int Executores);
+
+    private record DefesaCivilLida(
+        decimal Total, decimal Estadual, decimal NaoInformado, int Executores, List<DefesaCivilNoAnoLido> PorAno, List<DefesaCivilNaUfLida> PorUf,
+        List<string> MesesSemArquivo);
+
     private record PeriodoLido(int PrimeiroAno, int UltimoAno);
 
     private record AnoLido(int AnoDoOrcamento, decimal Arrecadou, decimal Gastou, decimal PegouEmprestado, bool Fechado);
 
     private record GovernoLido(
         List<GestaoLida> Gestoes, PeriodoLido Periodo, int? EmAndamento, List<int> AnosDisponiveis,
-        ArrecadacaoLida Arrecadacao, DespesaLida Despesa, SigiloLido? Sigilo, List<AnoLido> PorAno,
+        ArrecadacaoLida Arrecadacao, DespesaLida Despesa, SigiloLido? Sigilo, DefesaCivilLida? DefesaCivil, List<AnoLido> PorAno,
         List<GestaoLida> GestoesDisponiveis);
 
     private static GastoSigilosoModel Sigiloso(
@@ -238,6 +287,12 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
     {
         Ano = 2025, Origem = origem, OrgaoSuperior = orgao, Sigiloso = sigiloso, Total = total,
         Lancamentos = lancamentos, Meses = 12
+    };
+
+    private static GastoDaDefesaCivilModel DaDefesaCivil(short ano, short mes, string executor, string? uf, string esfera, decimal valor) => new()
+    {
+        Ano = ano, Mes = mes, Executor = executor, Uf = uf, Esfera = esfera,
+        CnpjConvenente = "92958800000138", Valor = valor, Transacoes = 1
     };
 
     private async Task SemearAsync()

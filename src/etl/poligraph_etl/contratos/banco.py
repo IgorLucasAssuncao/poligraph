@@ -29,3 +29,19 @@ class Despesa:
     valor_liquido: float
     data_emissao: str | None
     url_documento: str | None
+
+
+@dataclass(frozen=True)
+class GastoDaDefesaCivil:
+    """Uma linha de `gastos_da_defesa_civil` (GastoDaDefesaCivilModel): o cartão da Defesa Civil num mês, por executor."""
+
+    TABELA: ClassVar[str] = "gastos_da_defesa_civil"
+
+    ano: int
+    mes: int
+    executor: str
+    uf: str | None
+    esfera: str
+    cnpj_convenente: str
+    valor: float
+    transacoes: int

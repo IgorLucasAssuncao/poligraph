@@ -4,6 +4,7 @@ import {
   obterGoverno,
   type AreaDaDespesa,
   type Arrecadacao,
+  type DefesaCivil,
   type Encargo,
   type Gestao,
   type GrupoDeEncargo,
@@ -20,7 +21,7 @@ import { SeletorDePeriodoComponent } from '../componentes/SeletorDePeriodo';
 import { baixarCsv } from '../exportar';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { FONTES } from '../fontes';
-import { dataCurta, nomeProprio, partesDeCem, reaisCompacto } from '../formato';
+import { dataCurta, mesCurto, nomeProprio, partesDeCem, reaisCompacto } from '../formato';
 import { passosDoGoverno } from '../tour';
 import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { LinhaDeValorComponent, NumeroComponent } from '../componentes/Dados';
@@ -107,6 +108,7 @@ export function GovernoComponent() {
           <CadaCemReaisComponent dados={dados} />
           <DeOndeVeioComponent arrecadacao={dados.arrecadacao} />
           <GastoSigilosoComponent sigilo={dados.sigilo} periodo={dados.periodo} emAndamento={dados.emAndamento} />
+          {dados.defesaCivil && <DefesaCivilComponent defesaCivil={dados.defesaCivil} periodo={dados.periodo} />}
           {dados.gestoes.map((g) => (
             <PerfilDaGestaoComponent key={g.anoDaEleicao} gestao={g} />
           ))}
@@ -423,6 +425,50 @@ function parteSigilosaDoCartao(sigiloso: number, total: number): string {
   if (total <= 0) return T.sigilo.vazioNaCelula;
   const [parte] = partesDeCem([sigiloso, total - sigiloso]);
   return sigiloso > 0 && parte === 0 ? T.sigilo.menosDeUmPorcento : `${parte}%`;
+}
+
+/**
+ * O cartão da Defesa Civil, ao lado do corporativo e sem somar com ele: quem compra é o ente local.
+ *
+ * RISCO: o Portal não publicou meses inteiros (jan/2023, nov/2025). A seção os nomeia, senão o
+ * ano com mês faltando pareceria um ano de gasto menor.
+ */
+function DefesaCivilComponent({ defesaCivil, periodo }: { defesaCivil: DefesaCivil; periodo: Periodo }) {
+  const D = T.defesaCivil;
+  const maiorAno = Math.max(...defesaCivil.porAno.map((a) => a.valor));
+  const maiorUf = defesaCivil.porUf[0]?.valor ?? 0;
+  const semArquivo = defesaCivil.mesesSemArquivo.map(mesCurto).join(', ');
+
+  return (
+    <section className="governo-secao">
+      <h2>{D.titulo}</h2>
+      <p className="frase-resposta">{D.resposta(textoDoPeriodo(periodo), reaisCompacto(defesaCivil.total), defesaCivil.executores)}</p>
+      <p className="nota-curta">{D.diferente}</p>
+      <p className="nota-curta">{D.estadual(reaisCompacto(defesaCivil.estadual))}</p>
+      {defesaCivil.naoInformado !== 0 && <p className="nota-curta">{D.naoInformado(reaisCompacto(defesaCivil.naoInformado))}</p>}
+      {semArquivo && <p className="nota-curta">{D.semArquivo(semArquivo)}</p>}
+
+      {defesaCivil.porAno.length > 1 && (
+        <>
+          <h3>{D.porAno}</h3>
+          {defesaCivil.porAno.map((a) => (
+            <LinhaDeValorComponent
+              key={a.anoDoExtrato}
+              nome={`${a.anoDoExtrato}${D.meses(a.meses)}`}
+              valor={a.valor}
+              maior={maiorAno}
+              formatar={reaisCompacto}
+            />
+          ))}
+        </>
+      )}
+
+      <h3>{D.porUf}</h3>
+      {defesaCivil.porUf.slice(0, 10).map((u) => (
+        <LinhaDeValorComponent key={u.uf} nome={u.uf} valor={u.valor} maior={maiorUf} formatar={reaisCompacto} />
+      ))}
+    </section>
+  );
 }
 
 function PerfilDaGestaoComponent({ gestao }: { gestao: Gestao }) {

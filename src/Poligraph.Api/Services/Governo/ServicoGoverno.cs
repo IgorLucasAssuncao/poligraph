@@ -31,6 +31,12 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
     /// </remarks>
     public const decimal ToleranciaAcimaDaDotacao = 0.005m;
 
+    /// <summary>Doze meses de extrato num ano fechado.</summary>
+    public const short MesesNoAno = 12;
+
+    /// <summary>O valor de <see cref="GastoDaDefesaCivilModel.Esfera"/> para o governo do estado.</summary>
+    public const string EsferaEstadual = "ESTADUAL";
+
     private const string EncargosEspeciais = "28";
     private const string ReservaDeContingencia = "99";
     private const string ReceitasCorrentes = VocabularioDasFontes.ReceitasCorrentes;
@@ -74,6 +80,7 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
         var encargos = await _db.EncargosEspeciais.AsNoTracking().Where(e => anosMostradosParaConsulta.Contains(e.Ano)).ToListAsync(ct);
         var receitas = await _db.ReceitasPorOrigem.AsNoTracking().Where(r => anosMostradosParaConsulta.Contains(r.Ano)).ToListAsync(ct);
         var sigilosos = await _db.GastosSigilosos.AsNoTracking().Where(g => anosMostradosParaConsulta.Contains(g.Ano)).ToListAsync(ct);
+        var defesaCivil = await _db.GastosDaDefesaCivil.AsNoTracking().Where(g => anosMostradosParaConsulta.Contains(g.Ano)).ToListAsync(ct);
 
         var emAndamento = anosMostrados.LastOrDefault(a => !AnoFechado(a.Ano, a.GeradoEm))?.Ano;
 
@@ -86,6 +93,7 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
             Arrecadacao: Arrecadacao(receitas),
             Despesa: Despesa(funcoes, encargos),
             Sigilo: Sigilo(sigilosos),
+            DefesaCivil: DefesaCivil(defesaCivil),
             PorAno: [.. anosMostrados.Select(a =>
             {
                 var anoDoOrcamento = (short)a.Ano;
@@ -139,6 +147,55 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
             AcaoSigilosa: acao.Sum(l => l.Sigiloso),
             Meses: linhas.Where(l => l.Ano == ultimoAno).Min(l => l.Meses),
             PorOrgao: porOrgao);
+    }
+
+    /// <summary>O cartão da Defesa Civil no período, por ano e por UF. Nulo se a carga ainda não trouxe nada dele.</summary>
+    /// <remarks>
+    /// <para>Mês sem arquivo: dentro de um ano com dado, até o último mês com extrato daquele ano. Os meses depois do último do ano corrente ainda não saíram, e não contam como falta.</para>
+    /// </remarks>
+    private static DefesaCivilDto? DefesaCivil(List<GastoDaDefesaCivilModel> linhas)
+    {
+        if (linhas.Count == 0)
+        {
+            return null;
+        }
+
+        var porAno = linhas
+            .GroupBy(l => l.Ano)
+            .OrderBy(g => g.Key)
+            .Select(g => new DefesaCivilNoAnoDto(g.Key, g.Sum(l => l.Valor), g.Select(l => l.Mes).Distinct().Count()))
+            .ToList();
+
+        var semArquivo = new List<string>();
+        foreach (var doAno in linhas.GroupBy(l => l.Ano).OrderBy(g => g.Key))
+        {
+            var meses = doAno.Select(l => l.Mes).ToHashSet();
+            var ultimoComDado = doAno.Key == linhas.Max(l => l.Ano) ? meses.Max() : MesesNoAno;
+            for (short mes = 1; mes <= ultimoComDado; mes++)
+            {
+                if (!meses.Contains(mes))
+                {
+                    semArquivo.Add($"{doAno.Key}-{mes:00}");
+                }
+            }
+        }
+
+        var porUf = linhas
+            .Where(l => l.Uf is not null)
+            .GroupBy(l => l.Uf!)
+            .Select(g => new DefesaCivilNaUfDto(g.Key, g.Sum(l => l.Valor), g.Select(l => (l.Executor, l.CnpjConvenente)).Distinct().Count()))
+            .OrderByDescending(u => u.Valor)
+            .ToList();
+
+        return new DefesaCivilDto(
+            Total: linhas.Sum(l => l.Valor),
+            Estadual: linhas.Where(l => l.Esfera == EsferaEstadual).Sum(l => l.Valor),
+            NaoInformado: linhas.Where(l => l.Uf is null).Sum(l => l.Valor),
+            Transacoes: linhas.Sum(l => l.Transacoes),
+            Executores: linhas.Select(l => (l.Executor, l.Uf)).Distinct().Count(),
+            PorAno: porAno,
+            PorUf: porUf,
+            MesesSemArquivo: semArquivo);
     }
 
     /// <summary>O ano está fechado quando o arquivo foi gerado depois de 31 de dezembro dele.</summary>

@@ -30,7 +30,10 @@ from . import (
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
 from .fontes import brasilapi, camara, portal, receita, senado, tse
-from . import amostra, conferencia, convenentes, patrimonio, procedencia, redes, rotina
+from . import amostra, conferencia, convenentes, defesa_civil, patrimonio, procedencia, redes, rotina
+from .contratos import entrada
+from .contratos.entrada import colunas_da_fonte
+from .contratos.portal import LinhaDoCartaoDaDefesaCivil
 
 log = logging.getLogger("poligraph")
 
@@ -81,6 +84,8 @@ def main(argv: list[str] | None = None) -> int:
                     _emendas(conexao, args.anos)
             elif args.comando == "governo":
                 _governo(conexao, args.anos, args.eleicao)
+            elif args.comando == "defesa-civil":
+                _defesa_civil(conexao, args.anos)
             elif args.comando == "convenios":
                 _convenios(conexao)
             elif args.comando == "patrimonio":
@@ -232,6 +237,12 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     )
     gov.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
     gov.add_argument("--eleicao", type=int, default=2022)
+
+    dfc = sub.add_parser(
+        "defesa-civil",
+        help="cartão de pagamento da Defesa Civil: o gasto federal de estados e municípios em desastres (Portal)",
+    )
+    dfc.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
 
     emd = sub.add_parser(
         "emendas", help="ingere emendas, favorecidos e convênios (Portal)"
@@ -1064,6 +1075,53 @@ def _cartao_do_ano(ano: int) -> tuple[dict[str, dict], int]:
         )))
 
     return sigilo.somar_cartao(meses), len(meses)
+
+
+def _defesa_civil(conexao: psycopg.Connection, anos: list[int]) -> None:
+    """O cartão de pagamento da Defesa Civil, mês a mês (ver `defesa_civil.py`).
+
+    ATENÇÃO: mês com 403 ou 404 é pulado, e não encerra o ano como no cartão corporativo: o
+    Portal deixou de publicar meses no meio da série (jan/2023, nov/2025), e parar ali perderia
+    o resto do ano. O log diz quais faltaram.
+
+    Cada mês troca sozinho, numa transação, com a carga do arquivo dele.
+    """
+    hoje = date.today()
+    faltaram: list[str] = []
+    publicados: list[tuple[int, int]] = []
+    for ano in anos:
+        for mes in range(1, 13):
+            if (ano, mes) > (hoje.year, hoje.month):
+                break
+            recurso = defesa_civil.RECURSO.format(ano=ano, mes=mes)
+            sufixo = f"-{hoje:%Y%m%d}" if (ano, mes) >= (hoje.year, hoje.month - 1) else ""
+            try:
+                arquivo = portal.baixar(recurso, CACHE / f"cpdc-{ano}{mes:02d}{sufixo}.zip")
+            except requests.HTTPError as erro:
+                if erro.response is None or erro.response.status_code not in (403, 404):
+                    raise
+                faltaram.append(f"{mes:02d}/{ano}")
+                continue
+
+            publicados.append((ano, mes))
+            carga = _carga_do_arquivo(conexao, "PORTAL_TRANSPARENCIA", portal.url(recurso), arquivo)
+            tabela = portal.ler_csv(arquivo, defesa_civil.arquivo_do_mes(ano, mes),
+                                    colunas=list(colunas_da_fonte(LinhaDoCartaoDaDefesaCivil).values()))
+            gastos = defesa_civil.transformar(entrada.ler(LinhaDoCartaoDaDefesaCivil, tabela.to_dict("records")))
+            with conexao.transaction():
+                gravados = persistencia.gravar_defesa_civil(conexao, ano, mes, gastos, carga)
+            log.info("  %02d/%d: R$ %.1f mi em %d executores", mes, ano,
+                     sum(g.valor for g in gastos) / 1e6, gravados)
+
+    buracos = [mes for mes in faltaram if _antes_do_ultimo_publicado(mes, publicados)]
+    if buracos:
+        log.warning("Extratos do cartão da Defesa Civil que o Portal não publicou: %s", ", ".join(buracos))
+
+
+def _antes_do_ultimo_publicado(mes_ano: str, publicados: list[tuple[int, int]]) -> bool:
+    """Mês que falta antes do último publicado é buraco; depois dele, é só o que ainda não saiu."""
+    mes, ano = (int(parte) for parte in mes_ano.split("/"))
+    return bool(publicados) and (ano, mes) < max(publicados)
 
 
 def _reconciliar_autores(conexao: psycopg.Connection) -> None:
@@ -2067,6 +2125,8 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
         _convenios(conexao)
     elif etapa.comando == "governo":
         _governo(conexao, anos, etapa.argumentos["eleicao"])
+    elif etapa.comando == "defesa-civil":
+        _defesa_civil(conexao, anos)
     elif etapa.comando == "municipios":
         _municipios(conexao, None)
     elif etapa.comando == "fundo":

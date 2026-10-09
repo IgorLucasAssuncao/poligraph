@@ -924,6 +924,8 @@ export type Governo = {
   despesa: Despesa;
   /** Nulo enquanto a carga do gasto sigiloso ainda não rodou para o período. */
   sigilo: Sigilo | null;
+  /** Nulo enquanto a carga do cartão da Defesa Civil não rodou para o período. */
+  defesaCivil: DefesaCivil | null;
   porAno: GovernoNoAno[];
   /** Todas as gestões com dado, qualquer que seja o período: os atalhos do seletor. */
   gestoesDisponiveis: Gestao[];
@@ -936,6 +938,21 @@ export type GovernoNoAno = { anoDoOrcamento: number; arrecadou: number; gastou: 
  * O gasto que o Portal publica sem dizer em quê. Cartão e ação não se somam: o cartão
  * sigiloso esconde quem comprou, de quem e quando; a ação sigilosa esconde a finalidade.
  */
+/**
+ * O Cartão de Pagamento da Defesa Civil: dinheiro federal que estados e municípios gastam em desastres.
+ * Não se soma ao cartão corporativo. `mesesSemArquivo` traz `"2023-01"` para o mês que o Portal não publicou.
+ */
+export type DefesaCivil = {
+  total: number;
+  estadual: number;
+  naoInformado: number;
+  transacoes: number;
+  executores: number;
+  porAno: { anoDoExtrato: number; valor: number; meses: number }[];
+  porUf: { uf: string; valor: number; executores: number }[];
+  mesesSemArquivo: string[];
+};
+
 export type Sigilo = {
   cartaoSigiloso: number;
   cartaoTotal: number;

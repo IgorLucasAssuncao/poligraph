@@ -772,6 +772,84 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Data.GastoDaDefesaCivilModel", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<short>("Ano")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano");
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
+                    b.Property<string>("CnpjConvenente")
+                        .IsRequired()
+                        .HasMaxLength(14)
+                        .HasColumnType("character varying(14)")
+                        .HasColumnName("cnpj_convenente");
+
+                    b.Property<string>("Esfera")
+                        .IsRequired()
+                        .HasMaxLength(13)
+                        .HasColumnType("character varying(13)")
+                        .HasColumnName("esfera");
+
+                    b.Property<string>("Executor")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("executor");
+
+                    b.Property<short>("Mes")
+                        .HasColumnType("smallint")
+                        .HasColumnName("mes");
+
+                    b.Property<int>("Transacoes")
+                        .HasColumnType("integer")
+                        .HasColumnName("transacoes");
+
+                    b.Property<string>("Uf")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)")
+                        .HasColumnName("uf");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("valor");
+
+                    b.HasKey("Id")
+                        .HasName("pk_gastos_da_defesa_civil");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_gastos_da_defesa_civil_carga_id");
+
+                    b.HasIndex("Ano", "Mes", "Executor", "Uf", "CnpjConvenente")
+                        .IsUnique()
+                        .HasDatabaseName("ux_defesa_civil_mes_executor");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("Ano", "Mes", "Executor", "Uf", "CnpjConvenente"), false);
+
+                    b.ToTable("gastos_da_defesa_civil", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_defesa_civil_cnpj", "cnpj_convenente ~ '^[0-9]{14}$'");
+
+                            t.HasCheckConstraint("ck_defesa_civil_esfera", "esfera IN ('MUNICIPAL','ESTADUAL','NAO_INFORMADA')");
+
+                            t.HasCheckConstraint("ck_defesa_civil_mes", "mes BETWEEN 1 AND 12");
+
+                            t.HasCheckConstraint("ck_defesa_civil_transacoes", "transacoes > 0");
+
+                            t.HasCheckConstraint("ck_defesa_civil_uf", "(esfera = 'NAO_INFORMADA' AND uf IS NULL) OR (esfera <> 'NAO_INFORMADA' AND uf ~ '^[A-Z]{2}$')");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Data.GastoSigilosoModel", b =>
                 {
                     b.Property<short>("Ano")
@@ -1982,6 +2060,15 @@ namespace Poligraph.Data.Migrations
                         .HasForeignKey("CargaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_encargos_especiais_cargas_carga_id");
+                });
+
+            modelBuilder.Entity("Poligraph.Data.GastoDaDefesaCivilModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_gastos_da_defesa_civil_cargas_carga_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.GastoSigilosoModel", b =>
