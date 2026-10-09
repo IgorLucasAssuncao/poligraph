@@ -45,7 +45,7 @@ export const TEXTOS_DO_INICIO = {
     grupos: <TermoComponent nome="comunidade">grupos de voto</TermoComponent>,
     semVotoNominal: (quantas: string) =>
       `Outras ${quantas} votações ficaram fora da conta: a casa as registrou sem a lista de quem votou como.`,
-    secretas: (secretas: number, total: string, abertas: number, secretasTexto: string): ReactNode => (
+    secretas: (secretas: number, total: string, abertas: string, secretasTexto: string): ReactNode => (
       <>
         <strong>
           {secretasTexto} de {total} {secretas === 1 ? 'votação é secreta' : 'votações são secretas'}

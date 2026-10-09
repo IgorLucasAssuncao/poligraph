@@ -106,7 +106,9 @@ export const TEXTOS_DOS_COMPONENTES = {
   },
 
   mandatos: {
-    votouEm: 'Votou em ',
+    votouDe: 'Votou de ',
+    ate: ' a ',
+    naLegislatura: ', na legislatura ',
     rotulo: 'Legislaturas em que votou',
     senadoCobreDuas: ' · no Senado, um mandato cobre duas',
     senado: 'Senado',

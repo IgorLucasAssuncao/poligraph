@@ -136,6 +136,9 @@ export type Mandato = {
   partido: string;
   uf: string;
   nRegistrosDeVoto: number;
+  /** `"2023-03-14"`. Quem saiu antes do fim ou entrou como suplente não votou a legislatura inteira. */
+  primeiroVoto: string;
+  ultimoVoto: string;
 };
 
 export type TipoRedeSocial = 'INSTAGRAM' | 'FACEBOOK' | 'X' | 'YOUTUBE' | 'TIKTOK' | 'LINKEDIN' | 'OUTRA';

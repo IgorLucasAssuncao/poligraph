@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Mandato } from '../api';
-import { periodoDaLegislatura } from '../formato';
+import { mesCurto, periodoDaLegislatura } from '../formato';
 import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
@@ -12,6 +12,10 @@ import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
  *
  * ATENÇÃO: Partido e UF são os do último voto DAQUELE mandato: quem trocou de partido aparece
  * com a sigla de então, não com a de hoje.
+ *
+ * ATENÇÃO: O período é o do primeiro ao último voto, e não o da legislatura. MEDIDO (2026-10-09):
+ * na 57ª, 122 dos 643 deputados pararam de votar mais de 90 dias antes da última votação da casa e
+ * 142 começaram depois de março de 2023; "Votou em 2023–2027" estava errado para eles.
  *
  * ATENÇÃO: "Mandatos" dizia errado no Senado: o mandato de senador tem oito anos e cobre
  * duas legislaturas, e a lista mostrava um mandato só como dois.
@@ -32,7 +36,11 @@ export function MandatosDoParlamentarComponent({
     const [unico] = mandatos;
     return (
       <p className="mandatos-unico">
-        {T.mandatos.votouEm}
+        {T.mandatos.votouDe}
+        <span className="dado">{mesCurto(unico.primeiroVoto)}</span>
+        {T.mandatos.ate}
+        <span className="dado">{mesCurto(unico.ultimoVoto)}</span>
+        {T.mandatos.naLegislatura}
         <span className="dado">{periodoDaLegislatura(unico.legislatura)}</span>
       </p>
     );
@@ -62,6 +70,7 @@ export function MandatosDoParlamentarComponent({
                   {m.casa === 'SENADO' ? T.mandatos.senado : T.mandatos.camara}
                   {m.partido && ` · ${m.partido}`}
                   {m.uf && `-${m.uf}`}
+                  {` · ${mesCurto(m.primeiroVoto)}${T.mandatos.ate}${mesCurto(m.ultimoVoto)}`}
                 </span>
               </Link>
             </li>

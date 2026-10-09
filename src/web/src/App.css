@@ -410,8 +410,10 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 /* ═══ CABEÇALHO DA COLUNA ══════════════════════════════════════ */
 /* ATENÇÃO: NÃO é sticky. Eram duas barras grudadas somando 110px permanentes — 14% de uma
       janela de 800px, para dizer duas vezes onde a pessoa está. */
+/* ATENÇÃO: quebra a linha. No celular, voltar, "Parlamentar" e "Entenda esta tela" somavam 372 px
+      em 358 px, e o botão, que não encolhe, passava da borda. */
 .cabecalho-pagina {
-  display: flex; align-items: center; gap: 1.1rem;
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.1rem;
   margin-bottom: 1.25rem;
 }
 .cabecalho-pagina h1 {

@@ -103,7 +103,14 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
         var grupos = await _db.Votos.AsNoTracking()
             .Where(v => v.PessoaId == idPessoa)
             .GroupBy(v => new { v.Votacao!.Legislatura, v.Votacao.Casa })
-            .Select(g => new { g.Key.Legislatura, g.Key.Casa, Quantos = g.Count() })
+            .Select(g => new
+            {
+                g.Key.Legislatura,
+                g.Key.Casa,
+                Quantos = g.Count(),
+                Primeiro = g.Min(v => v.Votacao!.Data),
+                Ultimo = g.Max(v => v.Votacao!.Data),
+            })
             .OrderByDescending(g => g.Legislatura)
             .ToListAsync(ct);
 
@@ -120,7 +127,7 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
 
             mandatos.Add(new MandatoDto(
                 grupo.Legislatura, grupo.Casa, Legislaturas.AnoInicial(grupo.Legislatura),
-                ultimo.PartidoNoVoto ?? "", ultimo.UfNoVoto ?? "", grupo.Quantos));
+                ultimo.PartidoNoVoto ?? "", ultimo.UfNoVoto ?? "", grupo.Quantos, grupo.Primeiro, grupo.Ultimo));
         }
 
         return mandatos;

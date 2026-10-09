@@ -387,7 +387,7 @@ function GastoSigilosoComponent({
               <tr key={o.orgao}>
                 <th scope="row">{o.orgao}</th>
                 <td>{o.cartao > 0 ? reaisCompacto(o.cartao) : S.vazioNaCelula}</td>
-                <td>{o.cartaoTotal > 0 ? `${partesDeCem([o.cartao, o.cartaoTotal - o.cartao])[0]}%` : S.vazioNaCelula}</td>
+                <td>{parteSigilosaDoCartao(o.cartao, o.cartaoTotal)}</td>
                 <td>{o.acao > 0 ? reaisCompacto(o.acao) : S.vazioNaCelula}</td>
               </tr>
             ))}
@@ -412,6 +412,19 @@ function GastoSigilosoComponent({
 }
 
 /** Quem governou — depois dos números, e sem foto. */
+/**
+ * A parte sigilosa do cartão do órgão, em porcento.
+ *
+ * ATENÇÃO: compra sigilosa pequena num cartão grande arredondava para "0%" ao lado de um valor
+ * sigiloso na mesma linha (Defesa: R$ 55 mil, 2019 a 2026). Abaixo de meio por cento a célula diz
+ * "menos de 1%".
+ */
+function parteSigilosaDoCartao(sigiloso: number, total: number): string {
+  if (total <= 0) return T.sigilo.vazioNaCelula;
+  const [parte] = partesDeCem([sigiloso, total - sigiloso]);
+  return sigiloso > 0 && parte === 0 ? T.sigilo.menosDeUmPorcento : `${parte}%`;
+}
+
 function PerfilDaGestaoComponent({ gestao }: { gestao: Gestao }) {
   const G = T.gestao;
   return (

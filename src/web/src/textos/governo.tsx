@@ -114,6 +114,7 @@ export const TEXTOS_DO_GOVERNO = {
       </>
     ),
     vazioNaCelula: '—',
+    menosDeUmPorcento: 'menos de 1%',
     nota: 'Só o que o Portal marca como sigiloso. Gasto de inteligência em linhas de nome comum não aparece aqui.',
     baixar: 'Baixar o gasto sigiloso (CSV)',
     arquivo: (de: number, ate: number) => `governo-sigiloso-${de}-${ate}.csv`,

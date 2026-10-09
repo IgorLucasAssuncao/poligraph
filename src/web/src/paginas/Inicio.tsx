@@ -314,7 +314,7 @@ function CartaoDaCasaComponent({ casa, legislatura }: { casa: PanoramaDaCasa; le
           {T.base.secretas(
             casa.votacoesSecretas,
             casa.votacoes.toLocaleString('pt-BR'),
-            abertas,
+            abertas.toLocaleString('pt-BR'),
             casa.votacoesSecretas.toLocaleString('pt-BR'),
           )}
         </p>

@@ -48,7 +48,7 @@ const FICHA: Ficha = {
   presenca: null,
   legislatura: 57,
   mandatos: [
-    { legislatura: 57, casa: 'CAMARA', anoInicial: 2023, partido: 'PARTIDO-A', uf: 'SP', nRegistrosDeVoto: 120 },
+    { legislatura: 57, casa: 'CAMARA', anoInicial: 2023, partido: 'PARTIDO-A', uf: 'SP', nRegistrosDeVoto: 120, primeiroVoto: '2023-02-01', ultimoVoto: '2026-12-01' },
   ],
 };
 
@@ -247,6 +247,21 @@ describe('contas — emendas', () => {
     expect(texto).toMatch(/90% saiu de fato/);
     expect(texto).toMatch(/pago nos anos seguintes:\s*R\$\s*500\.000,00/);
     expect(texto).toMatch(/ainda não pago:\s*R\$\s*100\.000,00/);
+  });
+
+  it('recebido diferente do pago diz quanto e por quê', async () => {
+    await abrirAba('Emendas');
+
+    const texto = await tela();
+    expect(texto).toMatch(/São R\$\s*300\.000,00 a mais que o pago registrado nas emendas/);
+  });
+
+  it('recebido igual ao pago não ganha a frase da diferença', async () => {
+    vi.mocked(api.obterEmendas).mockResolvedValue({ ...EMENDAS, pago: 400_000, pagoDepois: 300_000 });
+    await abrirAba('Emendas');
+
+    const texto = await tela();
+    expect(texto).not.toMatch(/que o pago registrado nas emendas/);
   });
 
   it('DECISÃO: estado vazio é honesto, não "R$ 0,00"', async () => {
@@ -825,8 +840,8 @@ describe('os mandatos na ficha', () => {
   const DOIS_MANDATOS: Ficha = {
     ...FICHA,
     mandatos: [
-      { legislatura: 57, casa: 'CAMARA', anoInicial: 2023, partido: 'PARTIDO-A', uf: 'SP', nRegistrosDeVoto: 120 },
-      { legislatura: 56, casa: 'CAMARA', anoInicial: 2019, partido: 'PARTIDO-B', uf: 'SP', nRegistrosDeVoto: 80 },
+      { legislatura: 57, casa: 'CAMARA', anoInicial: 2023, partido: 'PARTIDO-A', uf: 'SP', nRegistrosDeVoto: 120, primeiroVoto: '2023-02-01', ultimoVoto: '2026-12-01' },
+      { legislatura: 56, casa: 'CAMARA', anoInicial: 2019, partido: 'PARTIDO-B', uf: 'SP', nRegistrosDeVoto: 80, primeiroVoto: '2019-02-01', ultimoVoto: '2022-12-01' },
     ],
   };
 
@@ -839,6 +854,16 @@ describe('os mandatos na ficha', () => {
 
     expect(screen.getByText('2023–2027')).toBeDefined();
     expect(screen.queryByRole('navigation', { name: 'Legislaturas em que votou' })).toBeNull();
+  });
+
+  it('quem saiu antes do fim mostra o período em que votou, não a legislatura inteira', async () => {
+    await renderizarCom({
+      ...FICHA,
+      mandatos: [{ ...FICHA.mandatos[0], primeiroVoto: '2023-03-14', ultimoVoto: '2024-12-17' }],
+    });
+
+    const linha = document.querySelector('.mandatos-unico');
+    expect(linha?.textContent).toBe('Votou de mar/2023 a dez/2024, na legislatura 2023–2027');
   });
 
   it('com dois, cada mandato é um link, com a sigla de então', async () => {

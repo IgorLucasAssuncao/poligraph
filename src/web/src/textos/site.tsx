@@ -65,7 +65,7 @@ export const TEXTOS_DO_SITE = {
   busca: {
     abrir: 'Abrir a busca',
     rotulo: 'Buscar parlamentar, cidade ou entidade',
-    placeholder: 'Buscar nome ou cidade',
+    placeholder: 'Nome ou cidade',
     resultados: 'Resultados da busca',
     nada: (termo: string) => `Nada encontrado para “${termo}”.`,
     grupos: { parlamentar: 'Parlamentares', cidade: 'Cidades', entidade: 'Entidades' },

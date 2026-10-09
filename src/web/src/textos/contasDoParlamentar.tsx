@@ -174,6 +174,8 @@ export const TEXTOS_DAS_CONTAS = {
         {ultimoMesPago && <>, até {ultimoMesPago}</>}. Inclui o que foi pago nos anos seguintes.
       </>
     ),
+    diferencaDoPago: (valor: string, aMais: boolean) =>
+      `São ${valor} ${aMais ? 'a mais' : 'a menos'} que o pago registrado nas emendas. O Portal da Transparência publica as emendas e os pagamentos em arquivos separados, e para estas emendas os dois não batem.`,
     viaBanco: <TermoComponent nome="intermediario">Via Banco do Brasil, que repassa</TermoComponent>,
     aPessoas: <TermoComponent nome="favorecidoPessoa">A pessoas, sem identificação</TermoComponent>,
     semIdentificacao: 'Sem identificação na fonte',

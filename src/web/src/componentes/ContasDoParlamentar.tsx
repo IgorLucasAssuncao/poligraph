@@ -221,7 +221,12 @@ export function AbaEmendasComponent({
           <CidadesQueReceberamComponent cidades={emendas.cidades} />
         </div>
         <div>
-          <QuemRecebeuComponent idPessoa={idPessoa} favorecidos={emendas.favorecidos} anoDaEmenda={emendas.anoDaEmenda} />
+          <QuemRecebeuComponent
+            idPessoa={idPessoa}
+            favorecidos={emendas.favorecidos}
+            anoDaEmenda={emendas.anoDaEmenda}
+            pagoNasEmendas={emendas.pago + emendas.pagoDepois}
+          />
         </div>
       </div>
 

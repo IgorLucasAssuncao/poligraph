@@ -28,15 +28,24 @@ const T = TEXTOS_DAS_CONTAS.paraOndeFoi;
  * RISCO: O que sai da lista não sai da conta. Intermediário, pessoas e registro sem
  * identificação aparecem como linhas próprias, com o valor — a soma da seção continua
  * sendo o total recebido.
+ *
+ * RISCO: o recebido sai do arquivo de pagamentos por favorecido, e o pago da barra acima sai
+ * do arquivo de emendas. O Portal não faz os dois baterem. MEDIDO (2026-10-09): nas emendas de
+ * 2025, 565 têm R$ 942,6 mi recebidos acima do pago e 608 têm R$ 257,3 mi abaixo. Quando a
+ * diferença passa de um real, a tela diz o valor e o motivo, em vez de mostrar dois totais
+ * que não fecham.
  */
 export function QuemRecebeuComponent({
   idPessoa,
   favorecidos,
   anoDaEmenda,
+  pagoNasEmendas,
 }: {
   idPessoa: number;
   favorecidos: FavorecidosDaEmenda;
   anoDaEmenda: number;
+  /** Pago no ano mais pago nos anos seguintes, pelo arquivo de emendas: o total da barra. */
+  pagoNasEmendas: number;
 }) {
   const porPagina = favorecidos.maiores.length || 8;
   const lista = useAVista(
@@ -46,6 +55,8 @@ export function QuemRecebeuComponent({
   );
 
   if (favorecidos.recebido === 0) return null;
+
+  const diferenca = favorecidos.recebido - pagoNasEmendas;
 
   const foraDaLista: [string, ReactNode, number][] = [
     ['intermediario', T.viaBanco, favorecidos.viaIntermediario],
@@ -59,6 +70,9 @@ export function QuemRecebeuComponent({
       <p className="ajuda ajuda-espacada">
         {T.recebidos(reais(favorecidos.recebido), anoDaEmenda, favorecidos.ultimoMes ? mesCurto(favorecidos.ultimoMes) : null)}
       </p>
+      {Math.abs(diferenca) >= 1 && (
+        <p className="ajuda ajuda-espacada">{T.diferencaDoPago(reais(Math.abs(diferenca)), diferenca > 0)}</p>
+      )}
 
       <ul className="gastos-fornecedores lista-favorecidos">
         {lista.itens.map((f, i) => (
