@@ -11,7 +11,7 @@ namespace Poligraph.Api.Services;
 /// As três primitivas públicas — casa de cada pergunta, votos e cálculo em lote — servem
 /// também ao <see cref="ServicoQuestionario"/>.
 /// </summary>
-public class ServicoAfinidade(PoligraphDb db)
+public class ServicoAfinidade(PoligraphDb db, CacheDeLeitura leitura)
 {
     public const int QuantidadeExibida = 5;
 
@@ -19,6 +19,7 @@ public class ServicoAfinidade(PoligraphDb db)
     public const int VizinhosParaPosicionar = 10;
 
     private readonly PoligraphDb _db = db;
+    private readonly CacheDeLeitura _leitura = leitura;
 
     /// <summary>
     /// Devolve <c>null</c> quando nenhuma casa tem base comparável — é caso de
@@ -50,7 +51,13 @@ public class ServicoAfinidade(PoligraphDb db)
                 continue;
             }
 
-            var fichas = await CarregarFichasAsync(resultados, ct);
+            var legislatura = await LegislaturaDasPerguntasAsync(daCasa, ct);
+            if (legislatura is null)
+            {
+                continue;
+            }
+
+            var fichas = await FichasAsync(casa, legislatura.Value, ct);
             var listados = siglaDaUf is null
                 ? resultados
                 : [.. resultados.Where(r => fichas.GetValueOrDefault(r.PessoaId).Uf == siglaDaUf)];
@@ -66,7 +73,7 @@ public class ServicoAfinidade(PoligraphDb db)
                     listados.OrderByDescending(r => r.Proporcao), fichas, daCasa, votosPorPessoa),
                 MaisDistantes: Montar(
                     listados.OrderBy(r => r.Proporcao), fichas, daCasa, votosPorPessoa),
-                PosicaoNoGrafo: await PosicionarAsync(casa, resultados, daCasa, ct),
+                PosicaoNoGrafo: await PosicionarAsync(casa, legislatura.Value, resultados, daCasa, ct),
                 Escala: Escala(listados)));
         }
 
@@ -163,31 +170,53 @@ public class ServicoAfinidade(PoligraphDb db)
         return resultados;
     }
 
-    /// <remarks>
-    /// <para>partido e UF vêm do voto mais recente — é o registro histórico</para>
-    /// </remarks>
-    private async Task<Dictionary<long, (string Nome, string Partido, string Uf)>>
-        CarregarFichasAsync(
-            List<ResultadoAfinidade> resultados, CancellationToken ct)
+    /// <summary>Calcula as fichas de cada casa na legislatura das perguntas ativas, para o primeiro questionário enviado não pagar a consulta.</summary>
+    public async Task AquecerFichasAsync(CancellationToken ct)
     {
-        var ids = resultados.Select(r => r.PessoaId).ToList();
-
-        var fichas = await _db.Pessoas.AsNoTracking()
-            .Where(p => ids.Contains(p.Id))
-            .Select(p => new
-            {
-                p.Id,
-                p.NomeExibicao,
-                Ultimo = p.Votos
-                    .OrderByDescending(v => v.Votacao!.Data)
-                    .Select(v => new { v.PartidoNoVoto, v.UfNoVoto })
-                    .FirstOrDefault()
-            })
+        var legislaturas = await _db.Perguntas.AsNoTracking()
+            .Where(p => p.Ativa)
+            .GroupBy(p => p.Votacao!.Casa)
+            .Select(g => new { Casa = g.Key, Legislatura = g.Max(p => p.Votacao!.Legislatura) })
             .ToListAsync(ct);
 
-        return fichas.ToDictionary(
-            f => f.Id,
-            f => (f.NomeExibicao, f.Ultimo?.PartidoNoVoto ?? "", f.Ultimo?.UfNoVoto ?? ""));
+        foreach (var daCasa in legislaturas)
+        {
+            await FichasAsync(daCasa.Casa, daCasa.Legislatura, ct);
+        }
+    }
+
+    /// <summary>A legislatura em que as perguntas respondidas foram votadas: a mais recente delas.</summary>
+    private async Task<short?> LegislaturaDasPerguntasAsync(List<RespostaCidadao> respondidas, CancellationToken ct)
+    {
+        var perguntas = respondidas.Select(r => r.PerguntaId).ToList();
+
+        return await _db.Perguntas.AsNoTracking()
+            .Where(p => perguntas.Contains(p.Id))
+            .MaxAsync(p => (short?)p.Votacao!.Legislatura, ct);
+    }
+
+    /// <summary>Nome, partido e UF de todos que votaram na casa e na legislatura, guardados no <see cref="CacheDeLeitura"/>.</summary>
+    /// <remarks>
+    /// <para>MEDIDO (2026-10-09, base local): calculada a cada envio, a consulta do último voto lia 1,1 milhão de votos e levava cerca de 4 s por casa; o resultado do questionário saía em 8 a 10 s. A ficha só muda quando a ETL roda, e é a mesma para todo visitante.</para>
+    /// <para>Partido e UF são os do último voto naquela casa e legislatura: a sigla de então, como no grafo.</para>
+    /// </remarks>
+    private Task<Dictionary<long, (string Nome, string Partido, string Uf)>> FichasAsync(
+        TipoCasa casa, short legislatura, CancellationToken ct) =>
+        _leitura.ObterAsync(("fichas-da-afinidade", casa, legislatura), () => CalcularFichasAsync(casa, legislatura, ct));
+
+    private async Task<Dictionary<long, (string Nome, string Partido, string Uf)>> CalcularFichasAsync(
+        TipoCasa casa, short legislatura, CancellationToken ct)
+    {
+        var ultimos = await _db.Votos.AsNoTracking()
+            .Where(v => v.Votacao!.Casa == casa && v.Votacao.Legislatura == legislatura)
+            .GroupBy(v => v.PessoaId)
+            .Select(g => g
+                .OrderByDescending(v => v.Votacao!.Data)
+                .Select(v => new { v.PessoaId, v.Pessoa!.NomeExibicao, v.PartidoNoVoto, v.UfNoVoto })
+                .First())
+            .ToListAsync(ct);
+
+        return ultimos.ToDictionary(u => u.PessoaId, u => (u.NomeExibicao, u.PartidoNoVoto, u.UfNoVoto));
     }
 
     /// <summary>
@@ -236,21 +265,12 @@ public class ServicoAfinidade(PoligraphDb db)
     /// </remarks>
     private async Task<PosicaoDoCidadaoDto?> PosicionarAsync(
         TipoCasa casa,
+        short legislatura,
         List<ResultadoAfinidade> resultados,
         List<RespostaCidadao> respondidas,
         CancellationToken ct)
     {
-        var perguntas = respondidas.Select(r => r.PerguntaId).ToList();
-        var legislatura = await _db.Perguntas.AsNoTracking()
-            .Where(p => perguntas.Contains(p.Id))
-            .MaxAsync(p => (short?)p.Votacao!.Legislatura, ct);
-
-        if (legislatura is null)
-        {
-            return null;
-        }
-
-        var execucaoId = await ExecucaoVigente.IdAsync(_db, casa, legislatura.Value, ct);
+        var execucaoId = await ExecucaoVigente.IdAsync(_db, casa, legislatura, ct);
 
         if (execucaoId is null)
         {

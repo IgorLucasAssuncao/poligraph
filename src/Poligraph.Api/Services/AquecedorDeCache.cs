@@ -50,6 +50,7 @@ public sealed class AquecedorDeCache(
             await servicos.GetRequiredService<ServicoGrafo>().ObterAsync(TipoCasa.SENADO, null, ct);
             await servicos.GetRequiredService<ServicoParlamentares>().ParlamentaresDeTodasAsync(ct);
             await servicos.GetRequiredService<ServicoQuestionario>().ObterAsync(ct);
+            await servicos.GetRequiredService<ServicoAfinidade>().AquecerFichasAsync(ct);
             await servicos.GetRequiredService<ServicoMetodologia>().ObterAsync(ct);
             await servicos.GetRequiredService<ServicoGoverno>().ObterAsync(default, ct);
             await servicos.GetRequiredService<ServicoMapaDeEmendas>().ObterBrasilAsync(default, ct);
