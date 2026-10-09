@@ -189,6 +189,50 @@ def test_pagamento_sem_codigo_e_de_ano_nao_carregado_ficam_fora_com_motivo():
     assert conta["motivos"] == {"PAGAMENTO_SEM_CODIGO_DE_EMENDA": 40.0, "EMENDA_DE_ANO_NAO_CARREGADO": 7.0}
 
 
+def test_pago_contra_recebido_fecha_com_as_duas_direcoes_da_diferenca():
+    """Regra 5: o pago do arquivo de emendas contra o recebido do arquivo de pagamentos, emenda a emenda.
+
+    Uma emenda paga sem recebedor publicado (positivo), uma recebida acima do pago (negativo) e uma que bate.
+    """
+    contas = emendas.reconciliar_pago_e_recebido([
+        (2025, 500_000.0, 0.0),
+        (2025, 0.0, 330_000.0),
+        (2025, 1_500_000.0, 1_500_000.0),
+        (2024, 10.0, 10.0),
+    ])
+
+    conta = next(c for c in contas if c["ano"] == 2025)
+    assert (conta["conjunto"], conta["medida"]) == ("PAGO_X_RECEBIDO", "PAGO")
+    assert (conta["total_na_fonte"], conta["total_na_base"]) == (2_000_000.0, 1_830_000.0)
+    assert conta["motivos"] == {"PAGO_SEM_RECEBEDOR": 500_000.0, "RECEBIDO_ACIMA_DO_PAGO": -330_000.0}
+    assert conta["total_na_fonte"] == conta["total_na_base"] + sum(conta["motivos"].values())
+    assert next(c for c in contas if c["ano"] == 2024)["motivos"] == {}
+
+
+@pytest.mark.integracao
+def test_pago_e_recebido_soma_a_emenda_antes_de_juntar(conexao):
+    """RISCO: emenda com duas linhas no arquivo (duas ações) contaria o recebido duas vezes se a junção viesse antes da soma."""
+    from poligraph_etl import persistencia
+
+    conexao.execute("TRUNCATE emendas, emendas_favorecidos RESTART IDENTITY CASCADE")
+    for acao, pago in (("20XV", 300.0), ("2E89", 200.0)):
+        conexao.execute(
+            "INSERT INTO emendas (codigo_autor, nome_autor, codigo_emenda, ano, codigo_acao, valor_empenhado,"
+            " valor_liquidado, valor_pago, valor_resto_pago) VALUES ('4184', 'AUTOR', '202541840004', 2025, %s,"
+            " 500, 500, %s, 100)",
+            (acao, pago),
+        )
+    conexao.execute(
+        "INSERT INTO emendas_favorecidos (codigo_emenda, competencia, tipo, valor, intermediario)"
+        " VALUES ('202541840004', '2025-06-01', 'PESSOA', 650, false)"
+    )
+
+    linhas = persistencia.pago_e_recebido_por_emenda(conexao, [2025])
+
+    assert linhas == [(2025, 700.0, 650.0)]
+    assert emendas.reconciliar_pago_e_recebido(linhas)[0]["motivos"] == {"PAGO_SEM_RECEBEDOR": 50.0}
+
+
 # ═══════════════════════════════════════════════════════════════════
 # RISCO: Valor em formato brasileiro
 # ═══════════════════════════════════════════════════════════════════

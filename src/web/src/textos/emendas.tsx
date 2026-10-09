@@ -166,6 +166,10 @@ export const TEXTOS_DAS_EMENDAS = {
     semCodigo: (valor: string, anos: string) =>
       `O Portal também registra ${valor} em pagamentos feitos ${anos} sem o número da emenda. Eles não entram no mapa, ` +
       'porque não dá para saber de que emenda são.',
+    pagoXRecebido: (anos: string, semRecebedor: string, acimaDoPago: string) =>
+      `O Portal publica as emendas e os pagamentos em arquivos separados, e os dois não batem. Nas emendas ${anos}, ` +
+      `${semRecebedor} constam como pagos sem o pagamento ao favorecido publicado, e ${acimaDoPago} foram recebidos ` +
+      'acima do que a emenda registra como pago.',
     motivos: {
       RELATOR_SEM_AUTOR: 'Emendas de relator',
       COMISSAO_SEM_AUTOR: 'Emendas de comissão, sem dizer qual comissão',

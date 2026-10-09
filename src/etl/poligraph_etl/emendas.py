@@ -279,6 +279,38 @@ def reconciliar_pagamentos(df: pd.DataFrame, codigos: set[str], anos: Iterable[i
     return _arredondar(contas.values())
 
 
+PAGO_SEM_RECEBEDOR = "PAGO_SEM_RECEBEDOR"
+RECEBIDO_ACIMA_DO_PAGO = "RECEBIDO_ACIMA_DO_PAGO"
+
+
+def reconciliar_pago_e_recebido(emendas_da_base: Iterable[tuple[int, float, float]]) -> list[dict]:
+    """Por ano da emenda, o pago do arquivo de emendas contra o recebido do arquivo de pagamentos.
+
+    Os dois arquivos são do Portal e falam das mesmas emendas, mas não batem. MEDIDO (2026-10-09):
+    nas emendas de 2025, 565 têm R$ 942,6 mi recebidos acima do pago e 608 têm R$ 257,3 mi pagos
+    sem recebedor publicado. Cada arquivo fecha com a própria fonte (`EMENDAS` e `PAGAMENTOS`);
+    este conjunto deixa à vista o quanto um difere do outro (regra 5).
+
+    | Motivo | Valor | O que é |
+    |---|---|---|
+    | `PAGO_SEM_RECEBEDOR` | positivo | Emenda com pago acima do recebido: o pagamento ao favorecido não foi publicado, ou saiu depois do arquivo |
+    | `RECEBIDO_ACIMA_DO_PAGO` | negativo | Emenda com recebido acima do pago: o arquivo de emendas registra menos do que os favorecidos receberam |
+
+    A conta fecha por construção: pago = recebido + soma das diferenças, emenda a emenda.
+    """
+    contas: dict[int, dict] = {}
+    for ano, pago, recebido in emendas_da_base:
+        conta = contas.setdefault(ano, _conta_vazia("PAGO_X_RECEBIDO", "PAGO", ano))
+        conta["total_na_fonte"] += pago
+        conta["total_na_base"] += recebido
+        diferenca = pago - recebido
+        if diferenca > 0:
+            conta["motivos"][PAGO_SEM_RECEBEDOR] = conta["motivos"].get(PAGO_SEM_RECEBEDOR, 0.0) + diferenca
+        elif diferenca < 0:
+            conta["motivos"][RECEBIDO_ACIMA_DO_PAGO] = conta["motivos"].get(RECEBIDO_ACIMA_DO_PAGO, 0.0) + diferenca
+    return _arredondar(contas.values())
+
+
 def _conta_vazia(conjunto: str, medida: str, ano: int) -> dict:
     return {"conjunto": conjunto, "medida": medida, "ano": ano, "total_na_fonte": 0.0,
             "total_na_base": 0.0, "total_inferido": 0.0, "motivos": {}}

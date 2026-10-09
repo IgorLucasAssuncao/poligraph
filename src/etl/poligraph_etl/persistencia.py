@@ -520,6 +520,29 @@ def codigos_e_anos_de_emenda(conexao: psycopg.Connection) -> tuple[set[str], set
     return {linha[0] for linha in linhas}, {linha[1] for linha in linhas}
 
 
+def pago_e_recebido_por_emenda(conexao: psycopg.Connection, anos: Iterable[int]) -> list[tuple[int, float, float]]:
+    """`(ano, pago, recebido)` de cada emenda da base nos anos pedidos, para cruzar os dois arquivos do Portal.
+
+    O pago é o do arquivo de emendas: no ano mais o pago nos anos seguintes (`valor_resto_pago`). O
+    recebido é a soma dos pagamentos aos favorecidos da mesma emenda, de qualquer mês. A emenda é
+    somada antes da junção: com mais de uma linha por código, juntar primeiro contaria o recebido
+    uma vez por linha.
+    """
+    return [
+        (ano, float(pago), float(recebido))
+        for ano, pago, recebido in conexao.execute(
+            """
+            SELECT e.ano, e.pago, coalesce(f.recebido, 0)
+              FROM (SELECT codigo_emenda, min(ano) AS ano, sum(valor_pago + valor_resto_pago) AS pago
+                      FROM emendas WHERE ano = ANY(%s) GROUP BY codigo_emenda) e
+              LEFT JOIN (SELECT codigo_emenda, sum(valor) AS recebido
+                           FROM emendas_favorecidos GROUP BY codigo_emenda) f USING (codigo_emenda)
+            """,
+            (list(anos),),
+        ).fetchall()
+    ]
+
+
 def proposicoes_sem_palavras_chave(conexao: psycopg.Connection) -> list[tuple[str, int]]:
     """`(casa, id)` das proposições ligadas a alguma votação e ainda não consultadas (Pendência 70)."""
     return conexao.execute(

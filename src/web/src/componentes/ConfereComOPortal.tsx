@@ -13,6 +13,9 @@ const T = TEXTOS_DAS_EMENDAS.conferencia;
  * justificativa à vista. A ETL grava, por ano, o total do Portal, o da base e o que ficou fora
  * por motivo; o `conferir` garante que Portal = base + motivos.
  *
+ * RISCO: o pago do arquivo de emendas e o recebido do arquivo de pagamentos não batem, e a ficha
+ * mostra os dois. O conjunto `PAGO_X_RECEBIDO` diz quanto, nas duas direções.
+ *
  * ATENÇÃO: Dois recortes. O empenhado é por ano da emenda, como o resto da página. Os
  * pagamentos sem código de emenda são por ano do pagamento: o Portal não diz de que emenda
  * eles são, então não cabem em nenhum período de emenda.
@@ -39,6 +42,9 @@ export function ConfereComOPortalComponent({ periodo }: { periodo: Periodo }) {
   const empenhado = somar(contas.filter((c) => c.conjunto === 'EMENDAS' && c.medida === 'EMPENHADO'));
   const pagamentos = somar(contas.filter((c) => c.conjunto === 'PAGAMENTOS'));
   const semCodigo = pagamentos.motivos.get('PAGAMENTO_SEM_CODIGO_DE_EMENDA') ?? 0;
+  const cruzamento = somar(contas.filter((c) => c.conjunto === 'PAGO_X_RECEBIDO'));
+  const semRecebedor = cruzamento.motivos.get('PAGO_SEM_RECEBEDOR') ?? 0;
+  const acimaDoPago = -(cruzamento.motivos.get('RECEBIDO_ACIMA_DO_PAGO') ?? 0);
   const fora = empenhado.fonte - empenhado.base;
   const anos = T.anos(periodo.primeiroAno, periodo.ultimoAno);
 
@@ -74,6 +80,10 @@ export function ConfereComOPortalComponent({ periodo }: { periodo: Periodo }) {
 
       {semCodigo > 0.5 && (
         <p className="ajuda">{T.semCodigo(reaisCompacto(semCodigo), anos)}</p>
+      )}
+
+      {(semRecebedor > 0.5 || acimaDoPago > 0.5) && (
+        <p className="ajuda">{T.pagoXRecebido(anos, reaisCompacto(semRecebedor), reaisCompacto(acimaDoPago))}</p>
       )}
     </details>
   );

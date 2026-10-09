@@ -33,6 +33,22 @@ describe('confere com o Portal', () => {
     expect(document.body.textContent).toMatch(/12,6\s*bi em pagamentos feitos de 2016 sem o número da emenda/);
   });
 
+  it('diz quanto o pago das emendas e o recebido pelos favorecidos divergem, nas duas direções', async () => {
+    vi.mocked(obterReconciliacao).mockResolvedValue([
+      EMPENHADO_2016,
+      {
+        conjunto: 'PAGO_X_RECEBIDO', medida: 'PAGO', anoDaFonte: 2016,
+        totalNaFonte: 9.13e9, totalNaBase: 6.13e9, totalInferido: 0,
+        motivos: [{ motivo: 'PAGO_SEM_RECEBEDOR', valor: 3.0e9 }, { motivo: 'RECEBIDO_ACIMA_DO_PAGO', valor: -3.3e6 }],
+      },
+    ]);
+    render(<ConfereComOPortalComponent periodo={{ primeiroAno: 2016, ultimoAno: 2016 }} />);
+
+    await screen.findByText('Emendas de relator');
+    expect(document.body.textContent).toMatch(/R\$\s*3\s*bi constam como pagos sem o pagamento ao favorecido publicado/);
+    expect(document.body.textContent).toMatch(/R\$\s*3,3\s*mi foram recebidos acima do que a emenda registra como pago/);
+  });
+
   it('quando fecha, diz que é o mesmo do Portal', async () => {
     vi.mocked(obterReconciliacao).mockResolvedValue([
       { ...EMPENHADO_2016, anoDaFonte: 2023, totalNaFonte: 35.38e9, totalNaBase: 35.38e9, totalInferido: 0, motivos: [] },

@@ -12,10 +12,13 @@ public class ReconciliacaoModel
 {
     public long Id { get; set; }
 
-    /// <summary><c>EMENDAS</c> (por ano da emenda), <c>PAGAMENTOS</c> (por ano do pagamento), <c>COTA_CAMARA</c> ou <c>COTA_SENADO</c>.</summary>
+    /// <summary><c>EMENDAS</c> (por ano da emenda), <c>PAGAMENTOS</c> (por ano do pagamento), <c>PAGO_X_RECEBIDO</c> (por ano da emenda), <c>COTA_CAMARA</c> ou <c>COTA_SENADO</c>.</summary>
+    /// <remarks>
+    /// <para><c>PAGO_X_RECEBIDO</c> cruza dois arquivos do Portal sobre as mesmas emendas da base: a fonte é o pago do arquivo de emendas (no ano e nos seguintes), a base é o recebido pelos favorecidos no arquivo de pagamentos. O Portal não faz os dois baterem; os motivos dizem, emenda a emenda somada, quanto foi pago sem recebedor publicado e quanto foi recebido acima do pago (este com valor negativo).</para>
+    /// </remarks>
     public required string Conjunto { get; set; }
 
-    /// <summary><c>EMPENHADO</c> e <c>PAGO</c> nas emendas; <c>RECEBIDO</c> nos pagamentos; <c>VALOR_LIQUIDO</c> na cota.</summary>
+    /// <summary><c>EMPENHADO</c> e <c>PAGO</c> nas emendas; <c>RECEBIDO</c> nos pagamentos; <c>PAGO</c> no cruzamento; <c>VALOR_LIQUIDO</c> na cota.</summary>
     public required string Medida { get; set; }
 
     public short Ano { get; set; }

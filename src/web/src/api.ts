@@ -1274,9 +1274,12 @@ export async function obterMapaDoBrasil(periodo?: Periodo): Promise<MapaDoBrasil
 
 /** Um total de emendas num ano, comparado com o Portal: fonte, base e o que ficou fora, por motivo (Pendência 81). */
 export type Reconciliacao = {
-  /** `EMENDAS` é por ano da emenda; `PAGAMENTOS`, por ano do pagamento. */
-  conjunto: 'EMENDAS' | 'PAGAMENTOS';
-  medida: 'EMPENHADO' | 'PAGO' | 'RECEBIDO';
+  /**
+   * `EMENDAS` e `PAGO_X_RECEBIDO` são por ano da emenda; `PAGAMENTOS`, por ano do pagamento; a cota, por ano da despesa.
+   * `PAGO_X_RECEBIDO` cruza o pago do arquivo de emendas com o recebido do arquivo de pagamentos.
+   */
+  conjunto: 'EMENDAS' | 'PAGAMENTOS' | 'PAGO_X_RECEBIDO' | 'COTA_CAMARA' | 'COTA_SENADO';
+  medida: 'EMPENHADO' | 'PAGO' | 'RECEBIDO' | 'VALOR_LIQUIDO';
   anoDaFonte: number;
   totalNaFonte: number;
   totalNaBase: number;

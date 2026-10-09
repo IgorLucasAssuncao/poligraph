@@ -770,7 +770,8 @@ def _emendas(conexao: psycopg.Connection, anos: list[int]) -> None:
         persistencia.gravar_convenios(conexao, anos, convenios, ligacoes)
         codigos_na_base, anos_na_base = persistencia.codigos_e_anos_de_emenda(conexao)
         contas = (emendas.reconciliar_emendas(tabela_de_emendas, anos)
-                  + emendas.reconciliar_pagamentos(tabela_de_favorecidos, codigos_na_base, anos_na_base))
+                  + emendas.reconciliar_pagamentos(tabela_de_favorecidos, codigos_na_base, anos_na_base)
+                  + emendas.reconciliar_pago_e_recebido(persistencia.pago_e_recebido_por_emenda(conexao, anos)))
         persistencia.gravar_reconciliacoes(conexao, contas, carga)
     _registrar_o_que_nao_fecha(contas)
 
