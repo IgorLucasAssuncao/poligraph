@@ -31,7 +31,7 @@ import psycopg
 from psycopg import sql
 
 from . import procedencia
-from .contratos.banco import Despesa, GastoDaDefesaCivil
+from .contratos.banco import DestinoDeViagem, Despesa, GastoDaDefesaCivil, ViagensDoOrgao
 from .normalizacao import sem_acento_maiusculo
 
 LOTE = 5_000
@@ -737,6 +737,16 @@ def gravar_defesa_civil(
     """Grava o mês do cartão da Defesa Civil, substituindo o que havia dele."""
     conexao.execute("DELETE FROM gastos_da_defesa_civil WHERE ano = %s AND mes = %s", (ano, mes))
     return gravar_contratos(conexao, gastos, carga_id)
+
+
+def gravar_viagens(
+    conexao: psycopg.Connection, ano: int, orgaos: Sequence[ViagensDoOrgao], destinos: Sequence[DestinoDeViagem],
+    carga_id: int | None,
+) -> int:
+    """Grava as viagens do ano, substituindo o ano inteiro nas duas tabelas."""
+    conexao.execute("DELETE FROM viagens_do_orgao WHERE ano = %s", (ano,))
+    conexao.execute("DELETE FROM destinos_de_viagem WHERE ano = %s", (ano,))
+    return gravar_contratos(conexao, orgaos, carga_id) + gravar_contratos(conexao, destinos, carga_id)
 
 
 def gravar_contratos(conexao: psycopg.Connection, linhas: Sequence, carga_id: int | None) -> int:

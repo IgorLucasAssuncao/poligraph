@@ -209,19 +209,20 @@ def test_pago_contra_recebido_fecha_com_as_duas_direcoes_da_diferenca():
     assert next(c for c in contas if c["ano"] == 2024)["motivos"] == {}
 
 
+INSERIR_EMENDA = """
+    INSERT INTO emendas (codigo_autor, nome_autor, codigo_emenda, ano, codigo_acao, valor_empenhado, valor_liquidado, valor_pago, valor_resto_pago)
+    VALUES ('4184', 'AUTOR', '202541840004', 2025, %s, 500, 500, %s, 100)
+"""
+
+
 @pytest.mark.integracao
 def test_pago_e_recebido_soma_a_emenda_antes_de_juntar(conexao):
     """RISCO: emenda com duas linhas no arquivo (duas ações) contaria o recebido duas vezes se a junção viesse antes da soma."""
     from poligraph_etl import persistencia
 
-    conexao.execute("TRUNCATE emendas, emendas_favorecidos RESTART IDENTITY CASCADE")
+    conexao.execute("TRUNCATE emendas, emendas_favorecidos" " CASCADE")
     for acao, pago in (("20XV", 300.0), ("2E89", 200.0)):
-        conexao.execute(
-            "INSERT INTO emendas (codigo_autor, nome_autor, codigo_emenda, ano, codigo_acao, valor_empenhado,"
-            " valor_liquidado, valor_pago, valor_resto_pago) VALUES ('4184', 'AUTOR', '202541840004', 2025, %s,"
-            " 500, 500, %s, 100)",
-            (acao, pago),
-        )
+        conexao.execute(INSERIR_EMENDA, (acao, pago))
     conexao.execute(
         "INSERT INTO emendas_favorecidos (codigo_emenda, competencia, tipo, valor, intermediario)"
         " VALUES ('202541840004', '2025-06-01', 'PESSOA', 650, false)"

@@ -22,6 +22,11 @@
 > **medir um ano e generalizar foi a origem de quase todos os erros cometidos aqui.**
 > Antes de afirmar um número, meça — e diga sobre qual período.
 
+> **Decisão do autor (2026-10-09). O mapa do sistema é o documento central:**
+> [`mapa_do_sistema.html`](../mapa_do_sistema.html), na raiz. Toda mudança em fonte, comando
+> da ETL, etapa da rotina, tabela, relação entre tabelas ou rota da API é sincronizada nele
+> **no mesmo commit**. Mudança que não chega ao mapa está incompleta.
+
 ---
 
 ## Skills disponíveis

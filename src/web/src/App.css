@@ -2633,6 +2633,15 @@ dialog.tour::backdrop { background: transparent; }
 .abas-do-dinheiro .aba:hover { color: var(--texto); }
 .abas-do-dinheiro .aba.active { color: var(--texto); font-weight: 600; border-bottom-color: var(--realce); }
 
+/* As abas de Governo federal: um nível abaixo das de Dinheiro público, mais baixas e sem a linha cheia. */
+.abas-do-governo { display: flex; gap: .25rem; overflow-x: auto; margin: -.5rem 0 1.25rem; }
+.abas-do-governo .aba {
+  padding: .35rem .75rem; border: 1px solid var(--borda); border-radius: var(--raio);
+  color: var(--suave); font-size: var(--t-2); white-space: nowrap; text-decoration: none;
+}
+.abas-do-governo .aba:hover { color: var(--texto); border-color: var(--borda-controle); }
+.abas-do-governo .aba.active { color: var(--texto); font-weight: 600; border-color: var(--realce); }
+
 .filtros-entidades { display: grid; gap: .75rem; padding: 1rem; border-bottom: 1px solid var(--borda); }
 .filtros-entidades input {
   padding: .5rem .75rem; font: inherit; color: var(--texto); background: var(--painel);

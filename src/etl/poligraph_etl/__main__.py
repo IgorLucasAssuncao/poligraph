@@ -30,10 +30,12 @@ from . import (
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
 from .fontes import brasilapi, camara, portal, receita, senado, tse
-from . import amostra, conferencia, convenentes, defesa_civil, patrimonio, procedencia, redes, rotina
+from . import amostra, conferencia, convenentes, defesa_civil, patrimonio, procedencia, redes, rotina, viagens
 from .contratos import entrada
 from .contratos.entrada import colunas_da_fonte
-from .contratos.portal import LinhaDoCartaoDaDefesaCivil
+from .contratos.portal import (
+    LinhaDeTrechoDeViagem, LinhaDeViagem, LinhaDePagamentoDeViagem, LinhaDoCartaoDaDefesaCivil,
+)
 
 log = logging.getLogger("poligraph")
 
@@ -86,6 +88,8 @@ def main(argv: list[str] | None = None) -> int:
                 _governo(conexao, args.anos, args.eleicao)
             elif args.comando == "defesa-civil":
                 _defesa_civil(conexao, args.anos)
+            elif args.comando == "viagens":
+                _viagens(conexao, args.anos)
             elif args.comando == "convenios":
                 _convenios(conexao)
             elif args.comando == "patrimonio":
@@ -243,6 +247,12 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         help="cartão de pagamento da Defesa Civil: o gasto federal de estados e municípios em desastres (Portal)",
     )
     dfc.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
+
+    vgm = sub.add_parser(
+        "viagens",
+        help="viagens a serviço do Executivo federal: diárias e passagens por órgão, e destinos (Portal)",
+    )
+    vgm.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
 
     emd = sub.add_parser(
         "emendas", help="ingere emendas, favorecidos e convênios (Portal)"
@@ -1116,6 +1126,32 @@ def _defesa_civil(conexao: psycopg.Connection, anos: list[int]) -> None:
     buracos = [mes for mes in faltaram if _antes_do_ultimo_publicado(mes, publicados)]
     if buracos:
         log.warning("Extratos do cartão da Defesa Civil que o Portal não publicou: %s", ", ".join(buracos))
+
+
+def _viagens(conexao: psycopg.Connection, anos: list[int]) -> None:
+    """As viagens a serviço de cada ano (ver `viagens.py`). Um ZIP por ano, que o Portal regera.
+
+    ATENÇÃO: o ZIP do ano tem centenas de MB. Cada membro é lido só nas colunas do contrato, e o
+    ano troca inteiro numa transação.
+    """
+    hoje = date.today()
+    for ano in anos:
+        recurso = viagens.RECURSO.format(ano=ano)
+        sufixo = f"-{hoje:%Y%m%d}" if ano >= hoje.year - 1 else ""
+        arquivo = portal.baixar(recurso, CACHE / f"viagens-{ano}{sufixo}.zip")
+        carga = _carga_do_arquivo(conexao, "PORTAL_TRANSPARENCIA", portal.url(recurso), arquivo)
+
+        def ler(qual: str, contrato: type):
+            tabela = portal.ler_csv(arquivo, viagens.membro(ano, qual), colunas=list(colunas_da_fonte(contrato).values()))
+            return entrada.ler(contrato, tabela.to_dict("records"))
+
+        orgaos = viagens.por_orgao(ano, ler("pagamento", LinhaDePagamentoDeViagem), ler("viagem", LinhaDeViagem))
+        destinos = viagens.destinos(ano, ler("trecho", LinhaDeTrechoDeViagem))
+        with conexao.transaction():
+            persistencia.gravar_viagens(conexao, ano, orgaos, destinos, carga)
+        log.info("  %d: R$ %.1f mi em diárias, R$ %.1f mi em passagens, %d viagens, %d destinos", ano,
+                 sum(o.diarias for o in orgaos) / 1e6, sum(o.passagens for o in orgaos) / 1e6,
+                 sum(o.viagens for o in orgaos), len(destinos))
 
 
 def _antes_do_ultimo_publicado(mes_ano: str, publicados: list[tuple[int, int]]) -> bool:
@@ -2127,6 +2163,8 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
         _governo(conexao, anos, etapa.argumentos["eleicao"])
     elif etapa.comando == "defesa-civil":
         _defesa_civil(conexao, anos)
+    elif etapa.comando == "viagens":
+        _viagens(conexao, anos)
     elif etapa.comando == "municipios":
         _municipios(conexao, None)
     elif etapa.comando == "fundo":

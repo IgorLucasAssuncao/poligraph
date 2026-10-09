@@ -26,6 +26,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<EncargoEspecialModel> EncargosEspeciais => Set<EncargoEspecialModel>();
     public DbSet<GastoSigilosoModel> GastosSigilosos => Set<GastoSigilosoModel>();
     public DbSet<GastoDaDefesaCivilModel> GastosDaDefesaCivil => Set<GastoDaDefesaCivilModel>();
+    public DbSet<ViagensDoOrgaoModel> ViagensDoOrgao => Set<ViagensDoOrgaoModel>();
+    public DbSet<DestinoDeViagemModel> DestinosDeViagem => Set<DestinoDeViagemModel>();
     public DbSet<ReceitaPorOrigemModel> ReceitasPorOrigem => Set<ReceitaPorOrigemModel>();
     public DbSet<GestaoModel> Gestoes => Set<GestaoModel>();
     public DbSet<MunicipioModel> Municipios => Set<MunicipioModel>();
@@ -167,6 +169,10 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         mb.Entity<GastoSigilosoModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<GastoDaDefesaCivilModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<ViagensDoOrgaoModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<DestinoDeViagemModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
     }
 
@@ -539,6 +545,33 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.Property(x => x.Esfera).HasMaxLength(13);
             e.Property(x => x.CnpjConvenente).HasMaxLength(14);
             e.Property(x => x.Valor).HasPrecision(18, 2);
+        });
+
+        mb.Entity<ViagensDoOrgaoModel>(e =>
+        {
+            e.ToTable("viagens_do_orgao", t =>
+            {
+                t.HasCheckConstraint("ck_viagens_contagens", "viagens >= 0 AND urgentes BETWEEN 0 AND viagens AND nao_realizadas BETWEEN 0 AND viagens");
+                t.HasCheckConstraint("ck_viagens_valores", "diarias >= 0 AND passagens >= 0 AND restituicao >= 0 AND seguro >= 0");
+            });
+            e.HasKey(x => new { x.Ano, x.OrgaoSuperior });
+            e.Property(x => x.Diarias).HasPrecision(18, 2);
+            e.Property(x => x.Passagens).HasPrecision(18, 2);
+            e.Property(x => x.Restituicao).HasPrecision(18, 2);
+            e.Property(x => x.Seguro).HasPrecision(18, 2);
+        });
+
+        mb.Entity<DestinoDeViagemModel>(e =>
+        {
+            e.ToTable("destinos_de_viagem", t =>
+            {
+                t.HasCheckConstraint("ck_destino_chegadas", "chegadas > 0");
+                t.HasCheckConstraint("ck_destino_uf_no_brasil", "(pais = 'Brasil') = (uf IS NOT NULL)");
+            });
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.Ano, x.Pais, x.Uf, x.Cidade })
+                .IsUnique().AreNullsDistinct(false).HasDatabaseName("ux_destino_de_viagem");
+            e.Property(x => x.NumeroDeDiarias).HasPrecision(12, 2);
         });
 
         mb.Entity<ReceitaPorOrigemModel>(e =>

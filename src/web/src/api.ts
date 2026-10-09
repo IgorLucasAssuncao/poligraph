@@ -963,6 +963,43 @@ export type Sigilo = {
 };
 
 /** Sem período, todos os anos. `null` quando a carga ainda não rodou. */
+/**
+ * As viagens a serviço do Executivo federal no período. Hospedagem não tem valor próprio: está nas diárias.
+ * `sigiloso` é o que o Portal publica com o órgão "Sigiloso"; `destinos` contam chegadas, não pessoas.
+ */
+export type ViagensDoGoverno = {
+  periodo: Periodo;
+  anosDisponiveis: number[];
+  total: number;
+  diarias: number;
+  passagens: number;
+  restituicao: number;
+  seguro: number;
+  viagens: number;
+  urgentes: number;
+  naoRealizadas: number;
+  sigiloso: number;
+  porAno: { anoDaViagem: number; diarias: number; passagens: number; total: number; viagens: number }[];
+  porOrgao: { orgao: string; total: number; diarias: number; passagens: number; viagens: number; urgentes: number }[];
+  destinos: DestinoDeViagem[];
+  destinosNoExterior: DestinoDeViagem[];
+};
+
+/** Um destino no período; `uf` por extenso, nula fora do Brasil. */
+export type DestinoDeViagem = { pais: string; uf: string | null; cidade: string; chegadas: number };
+
+export async function obterViagensDoGoverno(periodo?: Periodo): Promise<ViagensDoGoverno | null> {
+  const url = periodo
+    ? `${BASE}/governo/viagens?de=${periodo.primeiroAno}&ate=${periodo.ultimoAno}`
+    : `${BASE}/governo/viagens`;
+  const resposta = await fetch(url, { credentials: 'include' });
+
+  if (resposta.status === 404) return null;
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.consulta(url, resposta.status));
+
+  return resposta.json();
+}
+
 export async function obterGoverno(periodo?: Periodo): Promise<Governo | null> {
   const url = periodo ? `${BASE}/governo?de=${periodo.primeiroAno}&ate=${periodo.ultimoAno}` : `${BASE}/governo`;
   const resposta = await fetch(url, { credentials: 'include' });

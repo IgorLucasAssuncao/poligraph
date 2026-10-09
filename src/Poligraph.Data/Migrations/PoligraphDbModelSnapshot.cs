@@ -424,6 +424,66 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Data.DestinoDeViagemModel", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<short>("Ano")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano");
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
+                    b.Property<int>("Chegadas")
+                        .HasColumnType("integer")
+                        .HasColumnName("chegadas");
+
+                    b.Property<string>("Cidade")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("cidade");
+
+                    b.Property<decimal>("NumeroDeDiarias")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("numero_de_diarias");
+
+                    b.Property<string>("Pais")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("pais");
+
+                    b.Property<string>("Uf")
+                        .HasColumnType("text")
+                        .HasColumnName("uf");
+
+                    b.HasKey("Id")
+                        .HasName("pk_destinos_de_viagem");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_destinos_de_viagem_carga_id");
+
+                    b.HasIndex("Ano", "Pais", "Uf", "Cidade")
+                        .IsUnique()
+                        .HasDatabaseName("ux_destino_de_viagem");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("Ano", "Pais", "Uf", "Cidade"), false);
+
+                    b.ToTable("destinos_de_viagem", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_destino_chegadas", "chegadas > 0");
+
+                            t.HasCheckConstraint("ck_destino_uf_no_brasil", "(pais = 'Brasil') = (uf IS NOT NULL)");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Data.EmendaConvenioModel", b =>
                 {
                     b.Property<string>("CodigoEmenda")
@@ -1761,6 +1821,66 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Data.ViagensDoOrgaoModel", b =>
+                {
+                    b.Property<short>("Ano")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano");
+
+                    b.Property<string>("OrgaoSuperior")
+                        .HasColumnType("text")
+                        .HasColumnName("orgao_superior");
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
+                    b.Property<decimal>("Diarias")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("diarias");
+
+                    b.Property<int>("NaoRealizadas")
+                        .HasColumnType("integer")
+                        .HasColumnName("nao_realizadas");
+
+                    b.Property<decimal>("Passagens")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("passagens");
+
+                    b.Property<decimal>("Restituicao")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("restituicao");
+
+                    b.Property<decimal>("Seguro")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("seguro");
+
+                    b.Property<int>("Urgentes")
+                        .HasColumnType("integer")
+                        .HasColumnName("urgentes");
+
+                    b.Property<int>("Viagens")
+                        .HasColumnType("integer")
+                        .HasColumnName("viagens");
+
+                    b.HasKey("Ano", "OrgaoSuperior")
+                        .HasName("pk_viagens_do_orgao");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_viagens_do_orgao_carga_id");
+
+                    b.ToTable("viagens_do_orgao", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_viagens_contagens", "viagens >= 0 AND urgentes BETWEEN 0 AND viagens AND nao_realizadas BETWEEN 0 AND viagens");
+
+                            t.HasCheckConstraint("ck_viagens_valores", "diarias >= 0 AND passagens >= 0 AND restituicao >= 0 AND seguro >= 0");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Data.VotacaoModel", b =>
                 {
                     b.Property<string>("Id")
@@ -2015,6 +2135,15 @@ namespace Poligraph.Data.Migrations
                     b.Navigation("Pessoa");
                 });
 
+            modelBuilder.Entity("Poligraph.Data.DestinoDeViagemModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_destinos_de_viagem_cargas_carga_id");
+                });
+
             modelBuilder.Entity("Poligraph.Data.EmendaConvenioModel", b =>
                 {
                     b.HasOne("Poligraph.Data.ConvenioModel", "Convenio")
@@ -2263,6 +2392,15 @@ namespace Poligraph.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_similaridades_pessoas_pessoa_b");
+                });
+
+            modelBuilder.Entity("Poligraph.Data.ViagensDoOrgaoModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_viagens_do_orgao_cargas_carga_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.VotacaoModel", b =>

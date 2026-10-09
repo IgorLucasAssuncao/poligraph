@@ -13,6 +13,11 @@ public static class EndpointsGoverno
            .Produces<GovernoDto>()
            .Produces(StatusCodes.Status404NotFound);
 
+        app.MapGet("/api/governo/viagens", ObterViagensAsync)
+           .WithTags("Governo")
+           .Produces<ViagensDoGovernoDto>()
+           .Produces(StatusCodes.Status404NotFound);
+
         return app;
     }
 
@@ -21,5 +26,12 @@ public static class EndpointsGoverno
         ServicoGoverno servico, CancellationToken ct, Periodo<AnoDoOrcamento> periodoDoOrcamento) =>
         await servico.ObterAsync(periodoDoOrcamento, ct) is { } governo
             ? Results.Ok(governo)
+            : Results.NotFound();
+
+    /// <summary>As viagens a serviço do Executivo federal num período. Sem período, todos os anos.</summary>
+    private static async Task<IResult> ObterViagensAsync(
+        ServicoViagensDoGoverno servico, CancellationToken ct, Periodo<AnoDoOrcamento> periodoDaViagem) =>
+        await servico.ObterAsync(periodoDaViagem, ct) is { } viagens
+            ? Results.Ok(viagens)
             : Results.NotFound();
 }

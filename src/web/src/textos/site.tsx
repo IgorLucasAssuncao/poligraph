@@ -22,6 +22,12 @@ export const TEXTOS_DO_SITE = {
     entidades: 'Entidades',
     governo: 'Governo federal',
   },
+  abasDoGoverno: {
+    rotulo: 'Gastos do governo federal',
+    orcamento: 'Orçamento',
+    cartoes: 'Cartões',
+    viagens: 'Viagens',
+  },
 
   rodape: {
     oQueE: 'O que é',

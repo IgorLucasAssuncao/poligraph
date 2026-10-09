@@ -38,6 +38,14 @@ export const FONTES = {
     nome: 'TSE — candidatos de 2022',
     url: 'https://dadosabertos.tse.jus.br/dataset/candidatos-2022',
   },
+  viagens: {
+    nome: 'Portal da Transparência — viagens a serviço',
+    url: 'https://portaldatransparencia.gov.br/download-de-dados/viagens',
+  },
+  defesaCivil: {
+    nome: 'Portal da Transparência — cartão de pagamento da Defesa Civil',
+    url: 'https://portaldatransparencia.gov.br/download-de-dados/cpdc',
+  },
   cartao: {
     nome: 'Portal da Transparência — cartão de pagamento do governo federal',
     url: 'https://portaldatransparencia.gov.br/download-de-dados/cpgf',

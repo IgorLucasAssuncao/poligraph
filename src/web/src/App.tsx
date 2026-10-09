@@ -22,6 +22,7 @@ const EmendasComponent = lazy(() => import('./paginas/Emendas').then((m) => ({ d
 const EntidadeComponent = lazy(() => import('./paginas/Entidade').then((m) => ({ default: m.EntidadeComponent })));
 const EntidadesComponent = lazy(() => import('./paginas/Entidades').then((m) => ({ default: m.EntidadesComponent })));
 const GovernoComponent = lazy(() => import('./paginas/Governo').then((m) => ({ default: m.GovernoComponent })));
+const ViagensDoGovernoComponent = lazy(() => import('./paginas/ViagensDoGoverno').then((m) => ({ default: m.ViagensDoGovernoComponent })));
 const ParlamentarComponent = lazy(() => import('./paginas/Parlamentar').then((m) => ({ default: m.ParlamentarComponent })));
 const ParlamentaresComponent = lazy(() => import('./paginas/Parlamentares').then((m) => ({ default: m.ParlamentaresComponent })));
 const PoliticaDePrivacidadeComponent = lazy(() => import('./paginas/PoliticaDePrivacidade').then((m) => ({ default: m.PoliticaDePrivacidadeComponent })));
@@ -89,6 +90,8 @@ function RoteadorComponent() {
         <Route path="/resultado" element={<QuestionarioComponent />} />
         <Route path="/parlamentar/:idPessoa/:aba?" element={<ParlamentarComponent />} />
         <Route path="/governo" element={<GovernoComponent />} />
+        <Route path="/governo/cartoes" element={<GovernoComponent secao="cartoes" />} />
+        <Route path="/governo/viagens" element={<ViagensDoGovernoComponent />} />
         <Route path="/emendas" element={<EmendasComponent />} />
         <Route path="/entidades" element={<EntidadesComponent />} />
         <Route path="/entidades/:cnpj" element={<EntidadeComponent />} />
@@ -125,6 +128,8 @@ function LeituraSemContaComponent() {
         <Route path="/resultado" element={<QuestionarioComponent />} />
         <Route path="/parlamentar/:idPessoa/:aba?" element={<ParlamentarComponent />} />
         <Route path="/governo" element={<GovernoComponent />} />
+        <Route path="/governo/cartoes" element={<GovernoComponent secao="cartoes" />} />
+        <Route path="/governo/viagens" element={<ViagensDoGovernoComponent />} />
         <Route path="/emendas" element={<EmendasComponent />} />
         <Route path="/entidades" element={<EntidadesComponent />} />
         <Route path="/entidades/:cnpj" element={<EntidadeComponent />} />

@@ -85,10 +85,10 @@ const DE_2025: DadosDoGoverno = {
   },
 };
 
-function renderizar() {
+function renderizar(secao: 'orcamento' | 'cartoes' = 'orcamento') {
   return render(
     <MemoryRouter>
-      <GovernoComponent />
+      <GovernoComponent secao={secao} />
     </MemoryRouter>,
   );
 }
@@ -160,7 +160,7 @@ describe('Governo federal', () => {
   });
 
   it('o gasto sigiloso vem com a base do cartão inteiro', async () => {
-    renderizar();
+    renderizar('cartoes');
 
     const destaque = (await screen.findByText(/são sigilosos/)).closest('p')!;
     expect(destaque.textContent).toMatch(/R\$ 122,3 mi/);
@@ -181,7 +181,7 @@ describe('Governo federal', () => {
       },
     });
 
-    renderizar();
+    renderizar('cartoes');
 
     expect(await screen.findByText('Cartão da Defesa Civil')).toBeDefined();
     const texto = document.body.textContent ?? '';
@@ -193,9 +193,17 @@ describe('Governo federal', () => {
   it('sem carga do sigilo, diz isso em vez de mostrar zero', async () => {
     vi.mocked(api.obterGoverno).mockResolvedValue({ ...DE_2025, sigilo: null });
 
-    renderizar();
+    renderizar('cartoes');
 
     expect(await screen.findByText(/gastos sigilosos deste período ainda não foram carregados/)).toBeDefined();
+  });
+
+  it('a aba Orçamento não traz os cartões, que têm aba própria', async () => {
+    renderizar();
+
+    await screen.findAllByText('Urbanismo');
+    expect(screen.queryByText('Gasto sigiloso')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Cartões' }).getAttribute('href')).toBe('/governo/cartoes');
   });
 
   it('soma o pago de anos anteriores e o mostra à parte', async () => {

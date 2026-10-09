@@ -87,7 +87,7 @@ def _zip_do_mes(destino, ano: int, mes: int, linhas: list[dict]):
 @pytest.mark.integracao
 def test_comando_grava_os_meses_publicados_e_pula_o_que_falta(conexao, tmp_path, monkeypatch):
     """O Portal não publicou jan/2023 e nov/2025: o mês que falta não pode encerrar o ano."""
-    conexao.execute("TRUNCATE gastos_da_defesa_civil, cargas RESTART IDENTITY CASCADE")
+    conexao.execute("TRUNCATE cargas, gastos_da_defesa_civil" " CASCADE")
 
     def baixar(recurso, destino, **_):
         ano, mes = int(recurso[-6:-2]), int(recurso[-2:])

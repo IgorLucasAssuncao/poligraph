@@ -42,6 +42,7 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
         "/api/panorama",
         "/api/legislaturas",
         "/api/governo",
+        "/api/governo/viagens",
         "/api/parlamentares",
         "/api/parlamentares/{idPessoa}",
         "/api/parlamentares/{idPessoa}/gastos",
@@ -138,6 +139,9 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     [InlineData("DefesaCivilDto", "total,estadual,naoInformado,transacoes,executores,porAno,porUf,mesesSemArquivo")]
     [InlineData("DefesaCivilNoAnoDto", "anoDoExtrato,valor,meses")]
     [InlineData("DefesaCivilNaUfDto", "uf,valor,executores")]
+    [InlineData("ViagensDoGovernoDto", "periodo,anosDisponiveis,total,diarias,passagens,restituicao,seguro,viagens,urgentes,naoRealizadas,sigiloso,porAno,porOrgao,destinos,destinosNoExterior")]
+    [InlineData("ViagensDoOrgaoDto", "orgao,total,diarias,passagens,viagens,urgentes")]
+    [InlineData("DestinoDeViagemDto", "pais,uf,cidade,chegadas")]
     [InlineData("GovernoNoAnoDto", "anoDoOrcamento,arrecadou,gastou,pegouEmprestado,fechado")]
     [InlineData("SigiloDto", "cartaoSigiloso,cartaoTotal,transacoesSigilosas,acaoSigilosa,meses,porOrgao")]
     [InlineData("CidadesDaEmendaDto", "quantidade,maiores")]

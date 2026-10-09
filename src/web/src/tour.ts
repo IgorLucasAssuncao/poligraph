@@ -511,11 +511,11 @@ export function passosDoGoverno(): PassoDoTour[] {
     },
     {
       rota: null,
-      alvo: 'governo-sigilo',
-      titulo: 'O que foi gasto em segredo',
+      alvo: 'governo-abas',
+      titulo: 'Cada gasto na sua página',
       texto:
-        'Compras no cartão corporativo e uma linha do orçamento que o Portal publica sem dizer ' +
-        'em quê. É só o que o Portal marca como sigiloso.',
+        'Aqui está o orçamento inteiro. Em Cartões ficam o cartão corporativo, o que foi comprado em segredo e o ' +
+        'cartão da Defesa Civil; em Viagens, diárias e passagens de cada órgão.',
     },
     {
       rota: null,

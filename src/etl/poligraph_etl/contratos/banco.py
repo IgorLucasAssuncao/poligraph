@@ -45,3 +45,34 @@ class GastoDaDefesaCivil:
     cnpj_convenente: str
     valor: float
     transacoes: int
+
+
+@dataclass(frozen=True)
+class ViagensDoOrgao:
+    """Uma linha de `viagens_do_orgao` (ViagensDoOrgaoModel): as viagens de um órgão superior num ano."""
+
+    TABELA: ClassVar[str] = "viagens_do_orgao"
+
+    ano: int
+    orgao_superior: str
+    viagens: int
+    urgentes: int
+    nao_realizadas: int
+    diarias: float
+    passagens: float
+    restituicao: float
+    seguro: float
+
+
+@dataclass(frozen=True)
+class DestinoDeViagem:
+    """Uma linha de `destinos_de_viagem` (DestinoDeViagemModel): chegadas a uma cidade num ano."""
+
+    TABELA: ClassVar[str] = "destinos_de_viagem"
+
+    ano: int
+    pais: str
+    uf: str | None
+    cidade: str
+    chegadas: int
+    numero_de_diarias: float

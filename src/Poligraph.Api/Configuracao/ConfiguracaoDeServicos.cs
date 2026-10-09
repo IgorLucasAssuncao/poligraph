@@ -40,6 +40,7 @@ public static class ConfiguracaoDeServicos
         servicos.AddScoped<ServicoGrafo>();
         servicos.AddScoped<ServicoPanorama>();
         servicos.AddScoped<ServicoGoverno>();
+        servicos.AddScoped<ServicoViagensDoGoverno>();
         servicos.AddScoped<ServicoMetodologia>();
         servicos.AddScoped<ServicoAutoresDeEmenda>();
         servicos.AddScoped<ServicoMapaDeEmendas>();

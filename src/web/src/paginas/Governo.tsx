@@ -14,6 +14,7 @@ import {
   type Sigilo,
 } from '../api';
 import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
+import { AbasDoGovernoComponent } from '../componentes/AbasDoGoverno';
 import { BotaoBaixarCsvComponent } from '../componentes/BotaoBaixarCsv';
 import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
@@ -53,7 +54,7 @@ import { TEXTOS_DO_GOVERNO as T } from '../textos/governo';
  *
  * O texto da página fica em `textos/governo.tsx`.
  */
-export function GovernoComponent() {
+export function GovernoComponent({ secao = 'orcamento' }: { secao?: 'orcamento' | 'cartoes' }) {
   const [parametros, setParametros] = useSearchParams();
   const deNaUrl = parametros.get('de');
   const ateNaUrl = parametros.get('ate');
@@ -83,6 +84,7 @@ export function GovernoComponent() {
         subtitulo={T.subtitulo}
         acao={<BotaoDoTourComponent nome="governo" passos={passos} />}
       />
+      <AbasDoGovernoComponent busca={parametros.toString() ? `?${parametros.toString()}` : ''} />
 
       {erro && <p className="erro">{T.erro}</p>}
       {!erro && dados === undefined && <EsqueletoDePainelComponent rotulo={T.carregando} alturaDoGrafico={260} />}
@@ -103,16 +105,23 @@ export function GovernoComponent() {
             {T.escopo(textoDoPeriodo(dados.periodo), dados.emAndamento, dataCurta(dados.geradoEm))}
           </SeletorDePeriodoComponent>
 
-          <ResumoComponent dados={dados} />
-          {dados.porAno.length > 1 && <AnoAAnoComponent dados={dados} />}
-          <CadaCemReaisComponent dados={dados} />
-          <DeOndeVeioComponent arrecadacao={dados.arrecadacao} />
-          <GastoSigilosoComponent sigilo={dados.sigilo} periodo={dados.periodo} emAndamento={dados.emAndamento} />
-          {dados.defesaCivil && <DefesaCivilComponent defesaCivil={dados.defesaCivil} periodo={dados.periodo} />}
-          {dados.gestoes.map((g) => (
-            <PerfilDaGestaoComponent key={g.anoDaEleicao} gestao={g} />
-          ))}
-          <DetalhesComponent dados={dados} />
+          {secao === 'orcamento' ? (
+            <>
+              <ResumoComponent dados={dados} />
+              {dados.porAno.length > 1 && <AnoAAnoComponent dados={dados} />}
+              <CadaCemReaisComponent dados={dados} />
+              <DeOndeVeioComponent arrecadacao={dados.arrecadacao} />
+              {dados.gestoes.map((g) => (
+                <PerfilDaGestaoComponent key={g.anoDaEleicao} gestao={g} />
+              ))}
+              <DetalhesComponent dados={dados} />
+            </>
+          ) : (
+            <>
+              <GastoSigilosoComponent sigilo={dados.sigilo} periodo={dados.periodo} emAndamento={dados.emAndamento} />
+              {dados.defesaCivil && <DefesaCivilComponent defesaCivil={dados.defesaCivil} periodo={dados.periodo} />}
+            </>
+          )}
 
           <p className="fonte-dado">
             {T.arquivosGeradosAte(dataCurta(dados.geradoEm))}{' '}
