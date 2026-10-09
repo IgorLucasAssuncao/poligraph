@@ -26,6 +26,8 @@
 > [`mapa_do_sistema.html`](../mapa_do_sistema.html), na raiz. Toda mudança em fonte, comando
 > da ETL, etapa da rotina, tabela, relação entre tabelas ou rota da API é sincronizada nele
 > **no mesmo commit**. Mudança que não chega ao mapa está incompleta.
+> Modelo do banco e rotas se regeneram com `py infra/mapa/atualizar.py`; fontes, comandos,
+> etapas, entradas e saídas da ETL são editados à mão no próprio HTML.
 
 ---
 
