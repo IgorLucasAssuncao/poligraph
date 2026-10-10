@@ -2062,7 +2062,7 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
 
     with conexao.cursor() as cursor:
         cursor.execute(
-            "SELECT id FROM proposicoes WHERE casa = 'SENADO' AND id = ANY(%s)",
+            "SELECT id FROM proposicoes WHERE casa = 'SENADO' AND id = ANY(%s) AND carga_id IS NOT NULL",
             ([int(c) for c in set(codigos.values()) if c.isdigit()],),
         )
         ja_temos = {str(linha[0]) for linha in cursor.fetchall()}
