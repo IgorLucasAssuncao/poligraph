@@ -2770,6 +2770,9 @@ dialog.tour::backdrop { background: transparent; }
 .legenda-barras .amostra.parte-sigilosa { background: var(--texto); }
 
 /* ═══ PERFIL — redes; ENTIDADE — o que foi combinado ═══════════ */
+/** Ao trocar de legislatura a ficha anterior fica na tela, apagada, até a nova chegar. */
+.ficha-conteudo[data-atualizando] { opacity: .55; }
+.ficha-conteudo { transition: opacity var(--t-curto) var(--curva); }
 .perfil-links {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem 1.25rem;
   margin: .5rem 0 0; font-size: var(--t-2);

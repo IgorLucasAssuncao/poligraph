@@ -41,7 +41,11 @@ const CURVA_DA_ENTRADA = 'cubic-bezier(.05, .7, .1, 1)';
  * miolo da página, com a Web Animations API, sem desmontar nada: cabeçalho, faixa e rodapé ficam
  * parados. A primeira tela, a da carga, não anima.
  *
- * ATENÇÃO: quem pediu menos movimento vê só a fusão curta, sem deslocamento.
+ * ATENÇÃO: quem pediu menos movimento vê só a fusão, sem deslocamento. É o caso de todo Windows
+ * com "Efeitos de animação" desligado; a fusão começava em 60% e não se via.
+ *
+ * A `chave` pode ser qualquer coisa que mude quando o conteúdo muda: o endereço, ou o dado que
+ * acabou de chegar.
  */
 export function useEntradaAoNavegar(elemento: RefObject<HTMLElement | null>, chave: string): void {
   const primeira = useRef(true);
@@ -54,7 +58,7 @@ export function useEntradaAoNavegar(elemento: RefObject<HTMLElement | null>, cha
     const alvo = elemento.current;
     if (!alvo?.animate) return;
     const quadros = preferemMenosMovimento()
-      ? [{ opacity: 0.6 }, { opacity: 1 }]
+      ? [{ opacity: 0 }, { opacity: 1 }]
       : [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }];
     alvo.animate(quadros, { duration: DURACAO_DA_ENTRADA, easing: CURVA_DA_ENTRADA });
   }, [elemento, chave]);

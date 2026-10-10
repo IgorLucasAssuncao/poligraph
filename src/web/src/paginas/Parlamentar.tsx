@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useEntradaAoNavegar } from '../transicao';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import {
   listarSeguidos,
@@ -104,10 +105,13 @@ export function ParlamentarComponent() {
   const [busca] = useSearchParams();
   const legislaturaPedida = Number(busca.get('legislatura')) || undefined;
   const { usuario } = useSessao();
-  const chave = `${idPessoa}:${legislaturaPedida ?? ''}:${usuario ? 'conta' : ''}`;
+  const chave = `${idPessoa}:${legislaturaPedida ?? ''}`;
   const [lida, setLida] = useState<{ chave: string; ficha: Ficha | null; erro: string | null } | null>(null);
-  const ficha = lida?.chave === chave ? lida.ficha : null;
+  const ficha = lida?.chave.startsWith(`${idPessoa}:`) ? lida.ficha : null;
   const erro = lida?.chave === chave ? lida.erro : null;
+  const atualizando = ficha !== null && lida?.chave !== chave;
+  const conteudo = useRef<HTMLDivElement>(null);
+  useEntradaAoNavegar(conteudo, lida?.ficha ? lida.chave : '');
   const { contas, erro: erroDasContas } = useContas(
     idPessoa,
     ficha === null ? 'aguardando' : ficha.legislatura,
@@ -158,7 +162,7 @@ export function ParlamentarComponent() {
   }
 
   return (
-    <>
+    <div ref={conteudo} className="ficha-conteudo" data-atualizando={atualizando || undefined} aria-busy={atualizando}>
       <CabecalhoDaColunaComponent titulo={T.titulo} comVoltar acao={<BotaoDoTourComponent nome="ficha" passos={PASSOS_DA_FICHA} />} />
 
       <header className="perfil-cabecalho">
@@ -272,7 +276,7 @@ export function ParlamentarComponent() {
           />
         </>
       )}
-    </>
+    </div>
   );
 
 }

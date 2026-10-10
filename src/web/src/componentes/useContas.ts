@@ -25,6 +25,9 @@ export type Contas = {
  * DENTRO dela. Eram "o mais recente que existir", e a ficha de 2015–2019 mostrava os votos
  * de 2015 ao lado da cota de 2026 (2026-10-02). `'aguardando'` enquanto a ficha não chegou:
  * buscar antes traria o período errado e buscaria duas vezes.
+ *
+ * DECISÃO (2026-10-10): ao trocar de legislatura, as contas da anterior ficam na tela até as novas
+ * chegarem, em vez de a ficha voltar ao esqueleto.
  */
 export function useContas(
   idPessoa: number,
@@ -69,5 +72,8 @@ export function useContas(
     };
   }, [idPessoa, mandato, chave]);
 
-  return estado.chave === chave ? estado : { contas: null, erro: false };
+  if (estado.chave === chave) {
+    return estado;
+  }
+  return estado.chave.startsWith(`${idPessoa}-`) ? { contas: estado.contas, erro: false } : { contas: null, erro: false };
 }
