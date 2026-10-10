@@ -32,6 +32,7 @@
 | **44** | A virada para a 58ª (fev/2027): o que a tela mostra na troca | Muda a regra de legislatura corrente em todas as rotas |
 | novo | Juntar as migrations numa `Inicial` antes do primeiro deploy | Só dá antes de existir banco de produção |
 | **86** | Cache e limite de taxa na Cloudflare para `/api` | Exposição na borda. A API já marca com `Cache-Control: public, max-age=300` todo GET 200 de rota que não exige login (`CacheNoNavegador`). Falta a regra na Cloudflare que guarda essas respostas e o limite de taxa. RISCO: a regra guarda só rota sem login; `seguidos` e `auth/eu` leem o usuário, e guardadas na borda entregariam a lista de quem uma pessoa segue a outra |
+| **87** | Primeira carga de produção: cópia do banco local (decisão do autor, 2026-10-10) | Publicação. Passos: (1) juntar as migrations numa `Inicial` antes; (2) produção na mesma migration que o local; (3) `pg_dump --data-only` só das tabelas de fonte, sem `usuarios`, `segue`, `consentimentos` e `avaliacoes`; (4) mesma `chave-cpf` em produção, ou `rechavear-cpf` depois; (5) `pg_restore` no VPS; (6) `conferir` em produção antes de abrir o site; (7) ligar a rotina periódica da ETL. ATENÇÃO: as cópias dos arquivos de origem (`.cache/procedencia`) não vão no dump; o hash continua conferível baixando de novo da fonte |
 
 ### Abertas: dependem do autor, não de código
 
