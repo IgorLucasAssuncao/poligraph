@@ -93,8 +93,8 @@ anos elevou a cobertura a 642. A limitação era parâmetro do comando, não da 
 2015, então um deputado de mandato inteiro sem nenhuma é suspeito. Dos 12 com mais de 600
 votos, a checagem manual achou **um** caso real de nome divergente — `DR. ALLAN GARCES` no
 Portal, *Allan Garcês* na Câmara — resolvido pelo caminho manual da
-[PL45](docs/PENDENCIAS.md). Os demais aparentes foram **ruído de casamento aproximado**:
-senadores homônimos. [PL47](docs/PENDENCIAS.md) segue o resto.
+[Pendência 45](docs/PENDENCIAS.md). Os demais aparentes foram **ruído de casamento aproximado**:
+senadores homônimos. [Pendência 47](docs/PENDENCIAS.md) segue o resto.
 
 | | |
 |---|---|
@@ -103,7 +103,7 @@ senadores homônimos. [PL47](docs/PENDENCIAS.md) segue o resto.
 
 O questionário mistura perguntas das duas casas e o resultado devolve duas listas
 (RNF-28). A página do parlamentar ainda não distingue casa — ver
-[PL42](docs/PENDENCIAS.md).
+[Pendência 42](docs/PENDENCIAS.md).
 **O único deputado sem receita de campanha** é um suplente com 6 votos, que não foi
 candidato a deputado federal em 2022. 642 de 643 é o teto real, não uma falha.
 
@@ -186,7 +186,7 @@ dotnet user-secrets set "PortalTransparencia:Chave" "SUA_CHAVE" --project src/Po
 | `cpf` | Completa `cpf_hash` — chave para conciliar com o TSE | ~4 min |
 | `emendas --anos 2023 2024 2025 2026` | Emendas + reconciliação de autor | ~10 min |
 | `fundo --eleicao 2022` | Financiamento de campanha e fundão | ~2 min |
-| `emendas --resolver 2815=883` | Vincula autor de emenda **à mão** — [PL45](docs/PENDENCIAS.md) | instantâneo |
+| `emendas --resolver 2815=883` | Vincula autor de emenda **à mão** — [Pendência 45](docs/PENDENCIAS.md) | instantâneo |
 | `senado --anos 2023 2024 2025 2026` | Senadores, votações e votos do Senado | ~5 s |
 | `validar --legislatura 57` | Mede discriminação e comunidade × partido | ~2 s |
 
