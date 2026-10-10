@@ -549,7 +549,27 @@ export async function calcularAfinidade(
   return resposta.json();
 }
 
-async function buscar<T>(url: string): Promise<T> {
+/**
+ * Os GET em andamento, por endereço. Quem pede o mesmo endereço antes da resposta chegar recebe a
+ * mesma promessa, e o servidor calcula uma vez só.
+ *
+ * MEDIDO (2026-10-10): toda ficha de parlamentar saía duas vezes, cada uma de 3 a 5 s a frio.
+ */
+const EM_ANDAMENTO = new Map<string, Promise<unknown>>();
+
+/** GET com credenciais; pedidos simultâneos ao mesmo endereço viram um só. */
+function buscar<T>(url: string): Promise<T> {
+  const existente = EM_ANDAMENTO.get(url);
+  if (existente) {
+    return existente as Promise<T>;
+  }
+  const pedido = buscarUmaVez<T>(url).finally(() => EM_ANDAMENTO.delete(url));
+  EM_ANDAMENTO.set(url, pedido);
+  return pedido;
+}
+
+/** Faz o GET e traduz 401 e erro de status. */
+async function buscarUmaVez<T>(url: string): Promise<T> {
   const resposta = await fetch(url, { credentials: 'include' });
 
   if (resposta.status === 401) throw new NaoAutenticadoError();
