@@ -19,12 +19,13 @@ export function reaisCompacto(valor: number): string {
   const absoluto = Math.abs(valor);
   const casa = (n: number) => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
 
-  if (absoluto >= 1e12) {
+  const escala = absoluto >= 999_950_000_000 ? 1e12 : absoluto >= 999_950_000 ? 1e9 : absoluto >= 999_950 ? 1e6 : absoluto >= 1e3 ? 1e3 : 1;
+  if (escala === 1e12) {
     return `R$ ${(valor / 1e12).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} tri`;
   }
-  if (absoluto >= 1e9) return `R$ ${casa(valor / 1e9)} bi`;
-  if (absoluto >= 1e6) return `R$ ${casa(valor / 1e6)} mi`;
-  if (absoluto >= 1e3) return `R$ ${casa(valor / 1e3)} mil`;
+  if (escala === 1e9) return `R$ ${casa(valor / 1e9)} bi`;
+  if (escala === 1e6) return `R$ ${casa(valor / 1e6)} mi`;
+  if (escala === 1e3) return `R$ ${casa(valor / 1e3)} mil`;
   return reais(valor);
 }
 

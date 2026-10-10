@@ -64,6 +64,20 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Equal(Associacao, Assert.Single(achadas.Itens).Cnpj);
     }
 
+    /// <summary>Empresa que só contratou com o governo tem página, sem a parte das emendas.</summary>
+    [SkippableFact]
+    public async Task Pagina_DeQuemSoContratouComOGoverno()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        Db.ContratadosDoGoverno.Add(new ContratadoDoGovernoModel { Ano = 2024, Cnpj = "20289238000196", Nome = "IDV BRASIL LTDA.", Contratos = 1, Valor = 7_580m });
+        await Db.SaveChangesAsync();
+
+        var entidade = await LerAsync<EntidadeLidaCompleta>("/api/entidades/20289238000196");
+
+        Assert.Equal((0m, 1, 7_580m), (entidade.Recebido, entidade.ComOGoverno!.Contratos, entidade.ComOGoverno.Valor));
+    }
+
     /// <summary>
     /// A entidade sancionada mostra a sanção, vigente ou não, e os contratos com o governo federal.
     /// </summary>

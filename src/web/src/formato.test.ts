@@ -4,6 +4,14 @@ import { anosDeCotaDaEmenda, mesCurto, mesesContinuos, partesDeCem, reais, reais
 /**
  * ATENÇÃO: Pular o mês sem pagamento encurtaria a espera no desenho.
  */
+describe('reaisCompacto na fronteira da escala', () => {
+  it('R$ 999.999,99 vira R$ 1 mi, não R$ 1.000 mil', () => {
+    expect(reaisCompacto(999_999.99)).toBe('R$ 1 mi');
+    expect(reaisCompacto(999_999_999)).toBe('R$ 1 bi');
+    expect(reaisCompacto(999_900)).toBe('R$ 999,9 mil');
+  });
+});
+
 describe('mesesContinuos', () => {
   it('preenche com zero os meses sem pagamento, atravessando o ano', () => {
     const serie = mesesContinuos([

@@ -67,49 +67,53 @@ function PaginaDaEntidadeComponent({ dados }: { dados: DadosDaEntidade }) {
     <>
       <CabecalhoDaColunaComponent titulo={nomeProprio(dados.nome)} subtitulo={dados.naturezaJuridica ?? undefined} comVoltar />
 
-      <section className="numeros-do-ano" aria-label={T.entidade.rotuloDosNumeros}>
-        <NumeroComponent
-          rotulo={T.entidade.recebeu}
-          definicao={T.entidade.recebeuDefinicao(
-            dados.emendas,
-            dados.porAno[0]?.anoDaEmenda ?? T.entidade.semAno,
-            dados.porAno[dados.porAno.length - 1]?.anoDaEmenda ?? T.entidade.semAno,
-          )}
-        >
-          <ComProcedenciaComponent consulta={{ contexto: 'entidade', cnpj: dados.cnpj }} rotulo={T.entidade.rotuloDaProcedencia(nomeProprio(dados.nome))}>
-            {reaisCompacto(dados.recebido)}
-          </ComProcedenciaComponent>
-        </NumeroComponent>
-        <NumeroComponent
-          rotulo={T.entidade.sede}
-          texto
-          definicao={T.entidade.sedeDefinicao}
-        >
-          {dados.sede ? (
-            <Link to={`/emendas?uf=${dados.sede.uf}&cidade=${dados.sede.codigoIbge}`}>
-              {nomeProprio(dados.sede.nome)} – {dados.sede.uf}
-            </Link>
-          ) : (
-            T.entidade.semSede
-          )}
-        </NumeroComponent>
-      </section>
+      {dados.emendas > 0 && (
+        <>
+          <section className="numeros-do-ano" aria-label={T.entidade.rotuloDosNumeros}>
+            <NumeroComponent
+              rotulo={T.entidade.recebeu}
+              definicao={T.entidade.recebeuDefinicao(
+                dados.emendas,
+                dados.porAno[0]?.anoDaEmenda ?? T.entidade.semAno,
+                dados.porAno[dados.porAno.length - 1]?.anoDaEmenda ?? T.entidade.semAno,
+              )}
+            >
+              <ComProcedenciaComponent consulta={{ contexto: 'entidade', cnpj: dados.cnpj }} rotulo={T.entidade.rotuloDaProcedencia(nomeProprio(dados.nome))}>
+                {reaisCompacto(dados.recebido)}
+              </ComProcedenciaComponent>
+            </NumeroComponent>
+            <NumeroComponent
+              rotulo={T.entidade.sede}
+              texto
+              definicao={T.entidade.sedeDefinicao}
+            >
+              {dados.sede ? (
+                <Link to={`/emendas?uf=${dados.sede.uf}&cidade=${dados.sede.codigoIbge}`}>
+                  {nomeProprio(dados.sede.nome)} – {dados.sede.uf}
+                </Link>
+              ) : (
+                T.entidade.semSede
+              )}
+            </NumeroComponent>
+          </section>
 
-      <section className="governo-secao">
-        <h2>{T.entidade.porAno}</h2>
-        <ul className="gastos-categorias">
-          {dados.porAno.map((a) => (
-            <LinhaDeValorComponent key={a.anoDaEmenda} nome={a.anoDaEmenda} valor={a.recebido} maior={maiorAno} formatar={reaisCompacto} minimo={0} />
-          ))}
-        </ul>
-        <p className="ajuda">{T.entidade.porAnoAjuda}</p>
-      </section>
+          <section className="governo-secao">
+            <h2>{T.entidade.porAno}</h2>
+            <ul className="gastos-categorias">
+              {dados.porAno.map((a) => (
+                <LinhaDeValorComponent key={a.anoDaEmenda} nome={a.anoDaEmenda} valor={a.recebido} maior={maiorAno} formatar={reaisCompacto} minimo={0} />
+              ))}
+            </ul>
+            <p className="ajuda">{T.entidade.porAnoAjuda}</p>
+          </section>
 
-      <section className="governo-secao">
-        <h2>{T.entidade.quemMandou}</h2>
-        <QuemMandouComponent dados={dados} />
-        <ColetivosComponent coletivos={dados.coletivos} />
-      </section>
+          <section className="governo-secao">
+            <h2>{T.entidade.quemMandou}</h2>
+            <QuemMandouComponent dados={dados} />
+            <ColetivosComponent coletivos={dados.coletivos} />
+          </section>
+        </>
+      )}
 
       {dados.sancoes.length > 0 && <SancoesComponent sancoes={dados.sancoes} />}
       {dados.comOGoverno && (

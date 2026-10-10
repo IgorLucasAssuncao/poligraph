@@ -57,13 +57,16 @@ public class ServicoEntidades(
     public async Task<IReadOnlyList<EntidadeNaListaDto>> BuscarAsync(string busca, CancellationToken ct) =>
         [.. Filtrar(await IndiceAsync(ct), busca).Take(ResultadosDaBusca)];
 
-    /// <summary>A página da entidade. Nulo para CNPJ que não recebeu emenda, e o endpoint responde 404.</summary>
+    /// <summary>A página da entidade. Nulo para CNPJ sem emenda, sem contrato federal e sem sanção, e o endpoint responde 404.</summary>
+    /// <remarks>
+    /// <para>Empresa que só contratou com o governo, ou só foi sancionada, também tem página: a lista de compras e a sanção levam a ela. MEDIDO (2026-10-10): 4 das 15 maiores contratadas não receberam emenda, e o link dava 404.</para>
+    /// </remarks>
     public async Task<EntidadeDto?> ObterAsync(Cnpj cnpj, CancellationToken ct)
     {
         var entidade = await CalculadaAsync(cnpj.Digitos, ct);
         if (entidade is null)
         {
-            return null;
+            return await SemEmendaAsync(cnpj.Digitos, ct);
         }
 
         var (lista, detalhe) = entidade.Value;
@@ -78,6 +81,29 @@ public class ServicoEntidades(
             Convenios: Paginar(detalhe.Convenios, 1),
             Sancoes: await SancoesAsync(cnpj.Digitos, ct),
             ComOGoverno: await ContratosComOGovernoAsync(cnpj.Digitos, ct));
+    }
+
+    /// <summary>A página de quem não recebeu emenda: só os contratos com o governo e as sanções. Nulo quando não há nenhum dos dois.</summary>
+    private async Task<EntidadeDto?> SemEmendaAsync(string cnpj, CancellationToken ct)
+    {
+        var sancoes = await SancoesAsync(cnpj, ct);
+        var contratos = await ContratosComOGovernoAsync(cnpj, ct);
+        if (sancoes.Count == 0 && contratos is null)
+        {
+            return null;
+        }
+
+        var nome = await _db.ContratadosDoGoverno.AsNoTracking().Where(c => c.Cnpj == cnpj)
+                       .OrderByDescending(c => c.Ano).Select(c => c.Nome).FirstOrDefaultAsync(ct)
+                   ?? await _db.SancoesDeEmpresas.AsNoTracking().Where(s => s.Cnpj == cnpj)
+                       .Select(s => s.Nome).FirstOrDefaultAsync(ct)
+                   ?? cnpj;
+
+        return new EntidadeDto(
+            cnpj, nome, null, GrupoDeEntidade.EMPRESA, null, FontesOficiais.PessoaJuridica(cnpj),
+            0, 0, [], DeParlamentares: 0, Parlamentares: new PaginaDto<ParlamentarQueMandouDto>([], 1, ItensPorPagina, 0),
+            Coletivos: [], NaCota: null, Convenios: new PaginaDto<ConvenioDaEntidadeDto>([], 1, ItensPorPagina, 0),
+            Sancoes: sancoes, ComOGoverno: contratos);
     }
 
     /// <summary>As sanções do CEIS e do CNEP à entidade, da mais recente. Vigente quando não tem fim ou o fim não passou.</summary>
