@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { AtualizandoComponent, useCarga } from '../componentes/Atualizando';
+import { AtualizandoComponent } from '../componentes/Atualizando';
+import { useCarga } from '../componentes/useCarga';
 import { Link, useSearchParams } from 'react-router-dom';
 import { obterComprasDoGoverno, type ComprasDoGoverno, type Periodo } from '../api';
 import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';

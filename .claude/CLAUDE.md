@@ -104,6 +104,7 @@ Estrutura **Tier 2 sem MediatR**: `Api`, `Data`, `Tests`, `AppHost`.
 | Marcadores | `RISCO:` · `ATENÇÃO:` · `DECISÃO:` · `MEDIDO:` (com data) · `FEITO:`. ⛔ emoji no código |
 | C# | `_camelCase` em campo privado; públicos no topo, privados na ordem de uso; chave em todo `if`/`for`; ⛔ `[SuppressMessage]` |
 | Front | Todo componente React termina em `Component`; padrão repetido vira componente (`componentes/Dados.tsx`); texto em `textos/*`, constante em `constantes.ts` |
+| Leitura da API no front | `useCarga` ou `useLista` (`componentes/useCarga.ts`, sobre o TanStack Query), ⛔ `useEffect` com `fetch`. Dado que troca com filtro vai dentro de `AtualizandoComponent`. Dado da pessoa (quem ela segue) fica fora do cache |
 | Texto de tela | Fala com gente: sem antítese em série, sem travessão no meio da frase, sem CAIXA ALTA de ênfase |
 | Checagem do front | `npx tsc -b` (`tsc -p .` não checa nada) |
 

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { AtualizandoComponent, useCarga } from '../componentes/Atualizando';
+import { AtualizandoComponent } from '../componentes/Atualizando';
+import { useCarga } from '../componentes/useCarga';
 import { useNavigate } from 'react-router-dom';
 import {
   NOME_DA_CASA,

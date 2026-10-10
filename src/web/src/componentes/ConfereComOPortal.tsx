@@ -1,4 +1,4 @@
-import { useCarga } from './Atualizando';
+import { useCarga } from './useCarga';
 import { obterReconciliacao } from '../api';
 import type { Periodo, Reconciliacao } from '../api';
 import { reaisCompacto } from '../formato';

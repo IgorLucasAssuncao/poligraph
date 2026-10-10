@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AtualizandoComponent } from './Atualizando';
+import { useCarga } from './useCarga';
 import { Link } from 'react-router-dom';
 import {
   listarLancamentos,
   obterGastos,
   obterPatrimonio,
-  type GastoDeCota,
   type CidadesDaEmenda,
   type DeclaracaoDeBens,
   type FinanciamentoDeCampanha,
@@ -365,27 +365,23 @@ export function AbaCotaComponent({
   erro: boolean;
   legislatura?: number | null;
 }) {
-  const [doAno, setDoAno] = useState<{ anoDaDespesa: number; gastos: GastoDeCota | null; carregando: boolean } | null>(null);
+  const [anoEscolhido, setAnoEscolhido] = useState<number | null>(null);
+  const doAno = useCarga(
+    ['gastos-do-ano', idPessoa, legislatura ?? null, anoEscolhido],
+    () => obterGastos(idPessoa, legislatura, anoEscolhido ?? undefined),
+    { ativo: anoEscolhido !== null, manter: 3 },
+  );
   const padrao = contas?.gastos;
-  const gastos = doAno?.gastos ?? padrao;
+  const gastos = anoEscolhido === null ? padrao : (doAno.dados ?? padrao);
+  const trocandoDeAno = anoEscolhido !== null && (doAno.atualizando || doAno.dados === undefined);
 
   if (!padrao) return <CarregandoComponent contas={contas} erro={erro} />;
 
-  const escolher = (anoDaDespesa: number) => {
-    if (anoDaDespesa === padrao.anoDaDespesa) {
-      setDoAno(null);
-      return;
-    }
-    setDoAno((antes) => ({ anoDaDespesa, gastos: antes?.gastos ?? padrao, carregando: true }));
-    obterGastos(idPessoa, legislatura, anoDaDespesa)
-      .then((g) =>
-        setDoAno((atual) => (atual?.anoDaDespesa === anoDaDespesa ? { anoDaDespesa, gastos: g, carregando: false } : atual)),
-      )
-      .catch(() => setDoAno(null));
-  };
+  const escolher = (anoDaDespesa: number) =>
+    setAnoEscolhido(anoDaDespesa === padrao.anoDaDespesa ? null : anoDaDespesa);
 
   const seletor = legislatura ? (
-    <SeletorDeAnoDaCotaComponent legislatura={legislatura} anoDaDespesa={doAno?.anoDaDespesa ?? padrao.anoDaDespesa} aoEscolher={escolher} />
+    <SeletorDeAnoDaCotaComponent legislatura={legislatura} anoDaDespesa={anoEscolhido ?? padrao.anoDaDespesa} aoEscolher={escolher} />
   ) : null;
 
   if (!gastos) {
@@ -401,7 +397,7 @@ export function AbaCotaComponent({
     return (
       <section className="aba-dinheiro">
         {seletor}
-        <p className="vazio">{T.cota.vazio(doAno ? doAno.anoDaDespesa : null)}</p>
+        <p className="vazio">{T.cota.vazio(anoEscolhido)}</p>
       </section>
     );
   }
@@ -412,7 +408,7 @@ export function AbaCotaComponent({
   return (
     <section className="aba-dinheiro" aria-label={T.cota.rotulo}>
       {seletor}
-      <AtualizandoComponent atualizando={doAno?.carregando ?? false} chave={String(gastos.anoDaDespesa)}>
+      <AtualizandoComponent atualizando={trocandoDeAno} chave={String(gastos.anoDaDespesa)}>
       <p className="frase-resposta">
         {T.cota.resposta(
           <ComProcedenciaComponent
@@ -629,18 +625,9 @@ function FinanciamentoComponent({ idPessoa, fin }: { idPessoa: number; fin: Fina
  * RISCO: Só tipo e valor: a descrição de cada bem traz endereço, e não chega ao site.
  */
 function PatrimonioDeclaradoComponent({ idPessoa }: { idPessoa: number }) {
-  const [declaracoes, setDeclaracoes] = useState<DeclaracaoDeBens[] | null>(null);
-  const [erro, setErro] = useState(false);
-
-  useEffect(() => {
-    let atual = true;
-    obterPatrimonio(idPessoa)
-      .then((lidas) => atual && setDeclaracoes(lidas))
-      .catch(() => atual && setErro(true));
-    return () => {
-      atual = false;
-    };
-  }, [idPessoa]);
+  const lidas = useCarga(['patrimonio', idPessoa], () => obterPatrimonio(idPessoa), { manter: 2 });
+  const declaracoes = lidas.atualizando ? null : (lidas.dados ?? null);
+  const erro = lidas.erro;
 
   if (erro) return <p className="erro">{T.patrimonio.erro}</p>;
   if (!declaracoes) return <EsqueletoDeTextoComponent rotulo={T.patrimonio.carregando} paragrafos={1} />;

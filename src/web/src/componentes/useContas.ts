@@ -1,4 +1,4 @@
-import { useCarga } from './Atualizando';
+import { useCarga } from './useCarga';
 import {
   obterEmendas,
   obterFinanciamento,

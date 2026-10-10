@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useCarga } from '../componentes/Atualizando';
+import { useCarga } from '../componentes/useCarga';
 import { Link } from 'react-router-dom';
 import {
   listarSeguidos,

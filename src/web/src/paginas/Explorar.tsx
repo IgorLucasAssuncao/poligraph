@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { AtualizandoComponent, useLista } from '../componentes/Atualizando';
+import { AtualizandoComponent } from '../componentes/Atualizando';
+import { useLista } from '../componentes/useCarga';
 import { useAdiado } from '../componentes/useAdiado';
 import {
   listarParlamentares,

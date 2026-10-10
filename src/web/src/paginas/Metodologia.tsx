@@ -1,4 +1,4 @@
-import { useCarga } from '../componentes/Atualizando';
+import { useCarga } from '../componentes/useCarga';
 import { NOME_DA_CASA, obterMetodologia, type CasaNaMetodologia, type Metodologia as DadosDaMetodologia } from '../api';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { FONTES } from '../fontes';

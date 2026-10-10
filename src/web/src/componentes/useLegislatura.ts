@@ -1,4 +1,4 @@
-import { useCarga } from './Atualizando';
+import { useCarga } from './useCarga';
 import { useSearchParams } from 'react-router-dom';
 import { listarLegislaturas, type Legislatura } from '../api';
 

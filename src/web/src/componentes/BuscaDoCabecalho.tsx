@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { buscarTudo, type Busca } from '../api';
-import { useCarga } from './Atualizando';
+import { useCarga } from './useCarga';
 import { useAdiado } from './useAdiado';
 import { nomeProprio, periodoDaLegislatura } from '../formato';
 import { IconeExplorarComponent } from './Icones';

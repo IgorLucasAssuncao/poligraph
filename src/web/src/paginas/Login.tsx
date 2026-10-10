@@ -1,4 +1,4 @@
-import { useCarga } from '../componentes/Atualizando';
+import { useCarga } from '../componentes/useCarga';
 import { Link, useSearchParams } from 'react-router-dom';
 import { NOME_DA_CASA, obterPanorama, type Panorama } from '../api';
 import { reaisCompacto } from '../formato';

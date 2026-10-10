@@ -4,7 +4,7 @@ import { obterProcedencia } from '../api';
 import type { CargaDeProcedencia, ConsultaDeProcedencia, LinhaDaProcedencia, Procedencia } from '../api';
 import { dataCurta, reais } from '../formato';
 import { tourJaVisto } from '../tour';
-import { useCarga } from './Atualizando';
+import { useCarga } from './useCarga';
 import { ContextoDoModoAuditoria, useModoAuditoria } from './contextoDoModoAuditoria';
 import { useTour } from './contextoDoTour';
 import { LinkDeFonteComponent } from './LinkDeFonte';

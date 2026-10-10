@@ -1,4 +1,4 @@
-import { useCarga } from '../componentes/Atualizando';
+import { useCarga } from '../componentes/useCarga';
 import { Link, useParams } from 'react-router-dom';
 import {
   type SancaoDaEntidade,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useCarga } from './Atualizando';
+import { useCarga } from './useCarga';
 import {
   NOME_DA_CASA,
   obterGrafo,

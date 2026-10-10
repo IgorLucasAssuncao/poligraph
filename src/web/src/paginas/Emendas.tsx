@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AtualizandoComponent, useCarga } from '../componentes/Atualizando';
+import { AtualizandoComponent } from '../componentes/Atualizando';
+import { useCarga } from '../componentes/useCarga';
+import { useAdiado } from '../componentes/useAdiado';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   buscarMunicipios,
@@ -719,27 +721,14 @@ function QuemRecebeuComponent({ dados, periodo }: { dados: EmendasDoMunicipio; p
  */
 function SuaCidadeComponent({ aoEscolher }: { aoEscolher: (m: Municipio) => void }) {
   const [busca, setBusca] = useState('');
-  const [achados, setAchados] = useState<Municipio[]>([]);
   const [situacao, setSituacao] = useState<string | null>(null);
   const buscando = busca.trim().length >= 2;
-
-  useEffect(() => {
-    if (!buscando) return;
-    let atual = true;
-    const espera = setTimeout(() => {
-      buscarMunicipios(busca)
-        .then((novos) => atual && setAchados(novos))
-        .catch(() => atual && setAchados([]));
-    }, 250);
-    return () => {
-      atual = false;
-      clearTimeout(espera);
-    };
-  }, [busca, buscando]);
+  const adiada = useAdiado(busca, 250);
+  const lidos = useCarga(['municipios', adiada], () => buscarMunicipios(adiada), { ativo: adiada.trim().length >= 2 });
+  const achados: Municipio[] = lidos.erro ? [] : (lidos.dados ?? []);
 
   const escolher = (m: Municipio) => {
     setBusca('');
-    setAchados([]);
     setSituacao(null);
     aoEscolher(m);
   };

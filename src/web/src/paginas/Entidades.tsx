@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { listarEntidades, type GrupoDeEntidade } from '../api';
-import { AtualizandoComponent, useLista } from '../componentes/Atualizando';
+import { AtualizandoComponent } from '../componentes/Atualizando';
+import { useLista } from '../componentes/useCarga';
 import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
 import { BotaoMostrarMaisComponent } from '../componentes/BotaoMostrarMais';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';

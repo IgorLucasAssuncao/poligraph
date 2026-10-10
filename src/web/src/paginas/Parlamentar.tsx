@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { AtualizandoComponent, useCarga } from '../componentes/Atualizando';
+import { AtualizandoComponent } from '../componentes/Atualizando';
+import { useCarga } from '../componentes/useCarga';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import {
   listarSeguidos,
@@ -311,34 +312,22 @@ function AbaVotosComponent({
   const [termo, setTermo] = useState('');
   const [busca, setBusca] = useState('');
   const [semRito, setSemRito] = useState(false);
-  const [achados, setAchados] = useState<{ chave: string; pagina: PaginaDe<VotoNaFicha> } | null>(null);
   const filtrando = Boolean(busca) || semRito;
-  const chave = `${busca}|${semRito}`;
-  const [erroDaBusca, setErroDaBusca] = useState(false);
+  const achados = useCarga(
+    ['votos-buscados', idPessoa, legislatura, busca, semRito],
+    () => listarVotos(idPessoa, 1, VOTOS_POR_PAGINA_DA_BUSCA, legislatura, busca || undefined, semRito),
+    { ativo: filtrando, manter: 3 },
+  );
+  const erroDaBusca = achados.erro;
 
   useEffect(() => {
     const timer = setTimeout(() => setBusca(termo.trim().length >= BUSCA_MINIMA_NOS_VOTOS ? termo.trim() : ''), 300);
     return () => clearTimeout(timer);
   }, [termo]);
 
-  useEffect(() => {
-    if (!busca && !semRito) return;
-    let atual = true;
-    listarVotos(idPessoa, 1, VOTOS_POR_PAGINA_DA_BUSCA, legislatura, busca || undefined, semRito)
-      .then((pagina) => {
-        if (!atual) return;
-        setErroDaBusca(false);
-        setAchados({ chave: `${busca}|${semRito}`, pagina });
-      })
-      .catch(() => atual && setErroDaBusca(true));
-    return () => {
-      atual = false;
-    };
-  }, [busca, semRito, idPessoa, legislatura]);
-
   if (votos.length === 0) return <p className="vazio">{T.votos.nenhum}</p>;
 
-  const resultado = filtrando && achados?.chave === chave ? achados.pagina : null;
+  const resultado: PaginaDe<VotoNaFicha> | null = filtrando && !achados.atualizando ? (achados.dados ?? null) : null;
 
   return (
     <>
@@ -364,7 +353,7 @@ function AbaVotosComponent({
 
       {filtrando && resultado ? (
         <ListaDeVotosComponent
-          key={chave}
+          key={`${busca}|${semRito}`}
           idPessoa={idPessoa}
           legislatura={legislatura}
           busca={busca || undefined}
