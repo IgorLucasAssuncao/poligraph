@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { AtualizandoComponent, useCarga } from '../componentes/Atualizando';
 import { useSearchParams } from 'react-router-dom';
 import {
   obterGoverno,
@@ -62,19 +63,9 @@ export function GovernoComponent({ secao = 'orcamento' }: { secao?: 'orcamento' 
     () => (deNaUrl && ateNaUrl ? { primeiroAno: Number(deNaUrl), ultimoAno: Number(ateNaUrl) } : undefined),
     [deNaUrl, ateNaUrl],
   );
-  const [dados, setDados] = useState<DadosDoGoverno | null | undefined>(undefined);
-  const [erro, setErro] = useState(false);
+  const { dados, erro, atualizando, chaveDoDado } = useCarga(`${deNaUrl}-${ateNaUrl}`, () => obterGoverno(periodo));
   const passos = useMemo(() => passosDoGoverno(), []);
 
-  useEffect(() => {
-    let atual = true;
-    obterGoverno(periodo)
-      .then((novo) => atual && setDados(novo))
-      .catch(() => atual && setErro(true));
-    return () => {
-      atual = false;
-    };
-  }, [periodo]);
 
   return (
     <>
@@ -91,7 +82,7 @@ export function GovernoComponent({ secao = 'orcamento' }: { secao?: 'orcamento' 
       {!erro && dados === null && <p className="vazio">{T.semDados}</p>}
 
       {dados && (
-        <>
+        <AtualizandoComponent atualizando={atualizando} chave={chaveDoDado}>
           <SeletorDePeriodoComponent
             anos={dados.anosDisponiveis}
             periodo={dados.periodo}
@@ -138,7 +129,7 @@ export function GovernoComponent({ secao = 'orcamento' }: { secao?: 'orcamento' 
             {' · '}
             <LinkDeFonteComponent href={FONTES.cartao.url}>{T.fonteCartao}</LinkDeFonteComponent> {T.portalDaTransparencia}
           </p>
-        </>
+        </AtualizandoComponent>
       )}
     </>
   );

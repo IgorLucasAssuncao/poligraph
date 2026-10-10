@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { AtualizandoComponent } from '../componentes/Atualizando';
 import { useNavigate } from 'react-router-dom';
 import {
   NOME_DA_CASA,
@@ -66,7 +67,8 @@ export function GrafoComponent() {
   const legislatura = typeof escolha === 'number' ? escolha : undefined;
   const chave = `${casa}:${legislatura ?? ''}`;
   const [lido, setLido] = useState<{ chave: string; grafo: DadosDoGrafo | null; erro: string | null } | null>(null);
-  const grafo = lido?.chave === chave ? lido.grafo : null;
+  const grafo = lido?.grafo ?? null;
+  const atualizando = grafo !== null && lido?.chave !== chave;
   const erro = lido?.chave === chave ? lido.erro : null;
   const [ampliado, setAmpliado] = useState(false);
   const [destaque, setDestaque] = useState<Destaque>({});
@@ -145,7 +147,7 @@ export function GrafoComponent() {
       )}
 
       {!erro && grafo && grafo.nos.length > 0 && (
-        <>
+        <AtualizandoComponent atualizando={atualizando} chave={lido?.chave}>
           <DestaqueDoGrafoComponent grafo={grafo} destaque={destaque} aoTrocar={setDestaque} />
 
           <TelaDoGrafoComponent
@@ -203,7 +205,7 @@ export function GrafoComponent() {
               ))}
             </ul>
           </section>
-        </>
+        </AtualizandoComponent>
       )}
     </>
   );

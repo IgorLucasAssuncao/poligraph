@@ -32,7 +32,7 @@ export type Contas = {
 export function useContas(
   idPessoa: number,
   mandato: number | null | 'aguardando' = null,
-): { contas: Contas | null; erro: boolean } {
+): { contas: Contas | null; erro: boolean; atualizando: boolean; chaveDasContas: string } {
   const chave = `${idPessoa}-${mandato}`;
   const [estado, setEstado] = useState<{ chave: string; contas: Contas | null; erro: boolean }>({
     chave,
@@ -73,7 +73,8 @@ export function useContas(
   }, [idPessoa, mandato, chave]);
 
   if (estado.chave === chave) {
-    return estado;
+    return { ...estado, atualizando: false, chaveDasContas: estado.chave };
   }
-  return estado.chave.startsWith(`${idPessoa}-`) ? { contas: estado.contas, erro: false } : { contas: null, erro: false };
+  const anteriores = estado.chave.startsWith(`${idPessoa}-`) ? estado.contas : null;
+  return { contas: anteriores, erro: false, atualizando: anteriores !== null, chaveDasContas: estado.chave };
 }

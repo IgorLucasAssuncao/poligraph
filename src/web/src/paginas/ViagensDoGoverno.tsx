@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { AtualizandoComponent, useCarga } from '../componentes/Atualizando';
 import { useSearchParams } from 'react-router-dom';
 import { obterViagensDoGoverno, type Periodo, type ViagensDoGoverno } from '../api';
 import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
@@ -32,18 +33,8 @@ export function ViagensDoGovernoComponent() {
     () => (deNaUrl && ateNaUrl ? { primeiroAno: Number(deNaUrl), ultimoAno: Number(ateNaUrl) } : undefined),
     [deNaUrl, ateNaUrl],
   );
-  const [dados, setDados] = useState<ViagensDoGoverno | null | undefined>(undefined);
-  const [erro, setErro] = useState(false);
+  const { dados, erro, atualizando, chaveDoDado } = useCarga(`${deNaUrl}-${ateNaUrl}`, () => obterViagensDoGoverno(periodo));
 
-  useEffect(() => {
-    let atual = true;
-    obterViagensDoGoverno(periodo)
-      .then((novo) => atual && setDados(novo))
-      .catch(() => atual && setErro(true));
-    return () => {
-      atual = false;
-    };
-  }, [periodo]);
 
   return (
     <>
@@ -56,7 +47,7 @@ export function ViagensDoGovernoComponent() {
       {!erro && dados === null && <p className="vazio">{T.semDados}</p>}
 
       {dados && (
-        <>
+        <AtualizandoComponent atualizando={atualizando} chave={chaveDoDado}>
           <SeletorDePeriodoComponent
             anos={dados.anosDisponiveis}
             periodo={dados.periodo}
@@ -76,7 +67,7 @@ export function ViagensDoGovernoComponent() {
           <p className="fonte-dado">
             <LinkDeFonteComponent href={FONTES.viagens.url}>{T.fonte}</LinkDeFonteComponent> {T.portal}
           </p>
-        </>
+        </AtualizandoComponent>
       )}
     </>
   );

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { useEntradaAoNavegar } from '../transicao';
+import { useEffect, useState } from 'react';
+import { AtualizandoComponent } from '../componentes/Atualizando';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import {
   listarSeguidos,
@@ -110,9 +110,7 @@ export function ParlamentarComponent() {
   const ficha = lida?.chave.startsWith(`${idPessoa}:`) ? lida.ficha : null;
   const erro = lida?.chave === chave ? lida.erro : null;
   const atualizando = ficha !== null && lida?.chave !== chave;
-  const conteudo = useRef<HTMLDivElement>(null);
-  useEntradaAoNavegar(conteudo, lida?.ficha ? lida.chave : '');
-  const { contas, erro: erroDasContas } = useContas(
+  const { contas, erro: erroDasContas, atualizando: contasAtualizando, chaveDasContas } = useContas(
     idPessoa,
     ficha === null ? 'aguardando' : ficha.legislatura,
   );
@@ -162,7 +160,7 @@ export function ParlamentarComponent() {
   }
 
   return (
-    <div ref={conteudo} className="ficha-conteudo" data-atualizando={atualizando || undefined} aria-busy={atualizando}>
+    <>
       <CabecalhoDaColunaComponent titulo={T.titulo} comVoltar acao={<BotaoDoTourComponent nome="ficha" passos={PASSOS_DA_FICHA} />} />
 
       <header className="perfil-cabecalho">
@@ -210,7 +208,7 @@ export function ParlamentarComponent() {
           <RedesDoParlamentarComponent redes={ficha.redesSociais ?? []} />
         </div>
 
-        <div className="perfil-numeros" data-tour="ficha-votacoes">
+        <div className="perfil-numeros atualizavel" data-atualizando={atualizando || undefined} data-tour="ficha-votacoes">
           <span>
             <ComProcedenciaComponent
               consulta={{ contexto: 'votos', idPessoa: ficha.idPessoa, legislatura: ficha.legislatura ?? undefined }}
@@ -233,6 +231,11 @@ export function ParlamentarComponent() {
           mandatoPassado={ficha.legislatura && corrente && ficha.legislatura !== corrente ? ficha.legislatura : null}
         />
       </header>
+
+      <AtualizandoComponent
+        atualizando={atualizando || contasAtualizando}
+        chave={lida?.ficha ? `${lida.chave}|${contas ? chaveDasContas : ''}` : undefined}
+      >
 
       <nav className="abas" aria-label={T.rotuloDasAbas}>
         {ABAS.map(([chave, rotulo]) => (
@@ -276,7 +279,8 @@ export function ParlamentarComponent() {
           />
         </>
       )}
-    </div>
+      </AtualizandoComponent>
+    </>
   );
 
 }
