@@ -37,9 +37,9 @@ describe('compras e contratos', () => {
     expect(await screen.findByText('Por modalidade de compra')).toBeDefined();
     const texto = document.body.textContent ?? '';
     expect(texto).toMatch(/Em 2022, o governo federal publicou 35\.607 contratos, que somam R\$\s*75,1\s*bi/);
-    expect(texto).toMatch(/Em 9 contratos o Portal publica um valor inicial e um final que diferem mais de 100 vezes/);
-    expect(texto).toMatch(/R\$\s*64,2\s*bi do maior ficam fora da soma/);
-    expect(texto).toMatch(/sem a modalidade de compra: não dá para saber se houve licitação/);
+    expect(texto).toMatch(/9 contratos têm erro de digitação no valor/);
+    expect(texto).toMatch(/os R\$\s*64,2\s*bi a mais ficam fora/);
+    expect(texto).toMatch(/não diz a modalidade de compra, então não dá para saber se houve licitação/);
   });
 
   it('a empresa leva à página da entidade', async () => {

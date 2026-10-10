@@ -156,6 +156,33 @@ export const GLOSSARIO = {
       'quem comprou, nem de quem, nem quando. A lei permite o sigilo quando a informação ' +
       'põe em risco a segurança do Estado ou do presidente (Lei de Acesso à Informação, art. 23).',
   },
+  aditivo: {
+    rotulo: 'aditivo',
+    explicacao:
+      ' Uma mudança no contrato depois de assinado: mais prazo, mais quantidade ou outro preço. ' +
+      'Por isso o valor final pode ser maior que o inicial. A lei limita o acréscimo a 25% na ' +
+      'maioria dos contratos (Lei 14.133/2021, art. 125).',
+  },
+  modalidadeDeCompra: {
+    rotulo: 'modalidade de compra',
+    explicacao:
+      ' O jeito como o governo escolheu o fornecedor: pregão e concorrência são licitação; ' +
+      'dispensa e inexigibilidade são compra sem licitação, que a lei permite em casos ' +
+      'definidos, como emergência ou fornecedor único.',
+  },
+  contratoSigiloso: {
+    rotulo: 'contrato sigiloso',
+    explicacao:
+      ' O Portal publica o valor, mas esconde a empresa e o que foi comprado. A lei permite ' +
+      'quando a informação põe em risco a segurança do Estado (Lei de Acesso à Informação, art. 23).',
+  },
+  erroDeDigitacao: {
+    rotulo: 'erro de digitação',
+    explicacao:
+      ' Um contrato de R$ 1,4 milhão aparece no Portal com valor inicial de R$ 1,96 trilhão: ' +
+      'vírgula no lugar errado. Quando os dois valores do contrato diferem mais de 100 vezes, ' +
+      'contamos o menor. Aditivo de verdade não multiplica um contrato por 100.',
+  },
   acaoSigilosa: {
     rotulo: 'ação sigilosa',
     explicacao:
