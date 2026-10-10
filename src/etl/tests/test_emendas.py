@@ -562,3 +562,25 @@ def test_grafias_diferentes_convergem(camara: str, portal: str):
 
 def test_nomes_diferentes_nao_convergem():
     assert sem_acento_maiusculo("Ana Silva") != sem_acento_maiusculo("Ana Silveira")
+
+
+@pytest.mark.integracao
+def test_cnpj_sem_sede_ou_com_sede_sem_carga_volta_para_a_fila(conexao):
+    """MEDIDO (2026-10-10): 31.574 sedes do cadastro de 2026-09 sem carga; sem ela não se sabe o arquivo."""
+    from poligraph_etl import persistencia
+
+    conexao.execute("TRUNCATE emendas_favorecidos, cnpjs_municipio, municipios, cargas" " CASCADE")
+    conexao.execute("INSERT INTO municipios (codigo_ibge, codigo_tom, nome, uf) VALUES ('4314902', '8801', 'Porto Alegre', 'RS')")
+    for cnpj, valor in (("11111111000111", 300), ("22222222000122", 200), ("33333333000133", 100)):
+        conexao.execute(
+            "INSERT INTO emendas_favorecidos (codigo_emenda, competencia, tipo, documento, nome, valor, intermediario)"
+            " VALUES ('202541840004', '2025-06-01', 'PESSOA_JURIDICA', %s, 'EMPRESA', %s, false)",
+            (cnpj, valor),
+        )
+    carga = conexao.execute(
+        "INSERT INTO cargas (fonte, url, sha256, bytes, comando) VALUES ('RECEITA', 'u', repeat('a', 64), 1, 'c') RETURNING id"
+    ).fetchone()[0]
+    conexao.execute("INSERT INTO cnpjs_municipio (cnpj, codigo_ibge, cadastro_de, carga_id) VALUES ('11111111000111', '4314902', '2026-09-01', NULL)")
+    conexao.execute("INSERT INTO cnpjs_municipio (cnpj, codigo_ibge, cadastro_de, carga_id) VALUES ('22222222000122', '4314902', '2026-10-01', %s)", (carga,))
+
+    assert persistencia.cnpjs_sem_sede(conexao) == ["11111111000111", "33333333000133"]

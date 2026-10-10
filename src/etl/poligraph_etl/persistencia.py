@@ -1026,6 +1026,10 @@ def cnpjs_sem_sede(conexao: psycopg.Connection) -> list[str]:
     """Pendência 71 — CNPJs que receberam emenda fora do intermediário e ainda não têm município.
 
     O de maior valor recebido primeiro: interromper no meio deixa resolvido o que mais pesa no mapa.
+
+    DECISÃO (2026-10-10): entra também o CNPJ com município e sem carga. MEDIDO no mesmo dia: 31.574
+    sedes do cadastro de 2026-09 foram gravadas antes de a tabela guardar a carga, e sem ela não há
+    como dizer de que arquivo vieram.
     """
     return [
         linha[0]
@@ -1034,7 +1038,7 @@ def cnpjs_sem_sede(conexao: psycopg.Connection) -> list[str]:
             SELECT f.documento
               FROM emendas_favorecidos f
              WHERE f.tipo = 'PESSOA_JURIDICA' AND NOT f.intermediario AND length(f.documento) = 14
-               AND NOT EXISTS (SELECT 1 FROM cnpjs_municipio c WHERE c.cnpj = f.documento)
+               AND NOT EXISTS (SELECT 1 FROM cnpjs_municipio c WHERE c.cnpj = f.documento AND c.carga_id IS NOT NULL)
              GROUP BY f.documento
              ORDER BY sum(f.valor) DESC
             """
