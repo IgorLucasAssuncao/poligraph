@@ -12,6 +12,7 @@ cobrem. Cada uma nasceu de uma medição do discovery que virou regra.
 | Dinheiro | RISCO: **Duas convenções incompatíveis** convivem: `"1.234"` vale 1234 numa e 1,234 na outra |
 """
 
+from functools import lru_cache
 import hashlib
 import hmac
 import os
@@ -423,6 +424,7 @@ def normalizar_cpf(bruto: str | int | None) -> str | None:
 # convenção, não a fonte: escolher a errada tem de ser uma escolha visível.
 
 
+@lru_cache(maxsize=262_144)
 def valor_pt_br(bruto: str | None) -> float:
     """`"- 26.002,00"` → `-26002.0`. Ponto é MILHAR, vírgula é decimal.
 
@@ -467,6 +469,7 @@ def valor_com_ponto(bruto: str | None) -> float:
 
 # ═══════════════════════════════════════════════════════════════════
 
+@lru_cache(maxsize=65_536)
 def sem_acento_maiusculo(texto: str | None) -> str:
     """Forma canônica para comparar nomes entre fontes.
 

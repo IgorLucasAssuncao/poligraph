@@ -41,6 +41,26 @@ def ler(contrato: type[Contrato], registros: Iterable[dict]) -> list[Contrato]:
     return linhas
 
 
+def ler_tabela(contrato: type[Contrato], tabela) -> list[Contrato]:
+    """A tabela lida do arquivo (pandas), como linhas do contrato, coluna a coluna.
+
+    DECISÃO (2026-10-10): o mesmo resultado de `ler(contrato, tabela.to_dict("records"))`, sem
+    montar um dicionário por linha. MEDIDO no mesmo dia, num ano de viagens (4 milhões de linhas):
+    o `to_dict` sozinho levava 48 s de 138 s.
+
+    A conferência das colunas é no cabeçalho; tabela vazia devolve lista vazia, como em `ler`.
+    """
+    mapa = colunas_da_fonte(contrato)
+    if len(tabela) == 0:
+        return []
+    faltam = sorted(nome for nome in mapa.values() if nome not in tabela.columns)
+    if faltam:
+        raise LayoutMudou(f"{contrato.__name__}: a fonte não traz mais {', '.join(faltam)}.")
+    campos = list(mapa)
+    colunas = [tabela[nome].tolist() for nome in mapa.values()]
+    return [contrato(**dict(zip(campos, map(_limpo, valores)))) for valores in zip(*colunas)]
+
+
 def _limpo(valor: object) -> str | None:
     """Texto sem espaço nas pontas; vazio vira `None`."""
     texto = "" if valor is None else str(valor).strip()

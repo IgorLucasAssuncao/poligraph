@@ -1209,7 +1209,7 @@ def _defesa_civil(conexao: psycopg.Connection, anos: list[int]) -> None:
             carga = _carga_do_arquivo(conexao, "PORTAL_TRANSPARENCIA", portal.url(recurso), arquivo)
             tabela = portal.ler_csv(arquivo, defesa_civil.arquivo_do_mes(ano, mes),
                                     colunas=list(colunas_da_fonte(LinhaDoCartaoDaDefesaCivil).values()))
-            gastos = defesa_civil.transformar(entrada.ler(LinhaDoCartaoDaDefesaCivil, tabela.to_dict("records")))
+            gastos = defesa_civil.transformar(entrada.ler_tabela(LinhaDoCartaoDaDefesaCivil, tabela))
             with conexao.transaction():
                 gravados = persistencia.gravar_defesa_civil(conexao, ano, mes, gastos, carga)
             log.info("  %02d/%d: R$ %.1f mi em %d executores", mes, ano,
@@ -1235,7 +1235,7 @@ def _viagens(conexao: psycopg.Connection, anos: list[int]) -> None:
 
         def ler(qual: str, contrato: type):
             tabela = portal.ler_csv(arquivo, viagens.membro(ano, qual), colunas=list(colunas_da_fonte(contrato).values()))
-            return entrada.ler(contrato, tabela.to_dict("records"))
+            return entrada.ler_tabela(contrato, tabela)
 
         lidas = ler("viagem", LinhaDeViagem)
         orgaos = viagens.por_orgao(ano, ler("pagamento", LinhaDePagamentoDeViagem), lidas)
@@ -1271,7 +1271,7 @@ def _compras(conexao: psycopg.Connection, anos: list[int]) -> None:
                 continue
             cargas[mes] = _carga_do_arquivo(conexao, "PORTAL_TRANSPARENCIA", portal.url(recurso), arquivo)
             tabela = portal.ler_csv(arquivo, compras.membro(ano, mes), colunas=list(colunas_da_fonte(LinhaDeCompra).values()))
-            linhas = entrada.ler(LinhaDeCompra, tabela.to_dict("records"))
+            linhas = entrada.ler_tabela(LinhaDeCompra, tabela)
             por_orgao.append((cargas[mes], compras.por_orgao(ano, mes, linhas)))
             linhas_do_ano.extend(linhas)
 
@@ -1303,7 +1303,7 @@ def _compras_centralizadas(conexao: psycopg.Connection, anos: list[int]) -> None
             tabela = portal.ler_csv(arquivo, compras_centralizadas.arquivo_do_mes(ano, mes),
                                     colunas=list(colunas_da_fonte(LinhaDeCompraCentralizadaNoCartao).values()))
             linhas = compras_centralizadas.transformar(
-                entrada.ler(LinhaDeCompraCentralizadaNoCartao, tabela.to_dict("records")))
+                entrada.ler_tabela(LinhaDeCompraCentralizadaNoCartao, tabela))
             with conexao.transaction():
                 persistencia.gravar_compras_centralizadas(conexao, ano, mes, linhas, carga)
             meses += 1
@@ -1323,7 +1323,7 @@ def _sancoes(conexao: psycopg.Connection) -> None:
         cargas.append(_carga_do_arquivo(conexao, "PORTAL_TRANSPARENCIA", portal.url(f"{cadastro}/{data}"), arquivo))
         colunas = list(colunas_da_fonte(LinhaDeSancao).values()) + (["VALOR DA MULTA"] if cadastro == "cnep" else [])
         tabela = portal.ler_csv(arquivo, sancoes.membro(cadastro, data), colunas=colunas)
-        linhas = entrada.ler(LinhaDeSancao, tabela.to_dict("records"))
+        linhas = entrada.ler_tabela(LinhaDeSancao, tabela)
         multas = tabela["VALOR DA MULTA"].tolist() if cadastro == "cnep" else None
         todas.extend(sancoes.para_empresas(linhas, multas))
         log.info("  %s de %s: %d linhas, %d sanções a empresa", cadastro.upper(), data, len(linhas),

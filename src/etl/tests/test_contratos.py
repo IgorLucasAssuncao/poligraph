@@ -152,3 +152,35 @@ def test_cota_da_camara_grava_as_despesas_e_fecha_com_a_fonte(conexao, limpar, t
 def test_cota_sem_de_para_recusa_em_vez_de_descartar_tudo(conexao, limpar):
     with pytest.raises(RuntimeError, match="ingerir"):
         etl._cota(conexao, [2025])
+
+
+def test_ler_tabela_da_o_mesmo_que_ler_registro_a_registro():
+    """O leitor por coluna é só mais rápido: célula vazia, espaço nas pontas e coluna a mais saem iguais."""
+    import pandas as pd
+    from dataclasses import dataclass
+    from poligraph_etl.contratos.entrada import coluna, ler, ler_tabela
+
+    @dataclass(frozen=True)
+    class Linha:
+        nome: str | None = coluna("Nome")
+        valor: str | None = coluna("Valor")
+
+    tabela = pd.DataFrame({"Nome": [" Ana ", "", "Bia"], "Valor": ["1,50", " ", "2"], "Sobra": ["x", "y", "z"]}, dtype=str)
+
+    assert ler_tabela(Linha, tabela) == ler(Linha, tabela.to_dict("records"))
+    assert ler_tabela(Linha, tabela)[1] == Linha(nome=None, valor=None)
+    assert ler_tabela(Linha, tabela.iloc[0:0]) == []
+
+
+def test_ler_tabela_sem_a_coluna_derruba_a_carga():
+    import pandas as pd
+    import pytest
+    from dataclasses import dataclass
+    from poligraph_etl.contratos.entrada import LayoutMudou, coluna, ler_tabela
+
+    @dataclass(frozen=True)
+    class Linha:
+        nome: str | None = coluna("Nome")
+
+    with pytest.raises(LayoutMudou, match="Nome"):
+        ler_tabela(Linha, pd.DataFrame({"Outra": ["a"]}, dtype=str))
