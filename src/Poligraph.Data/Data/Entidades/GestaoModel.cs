@@ -34,4 +34,7 @@ public class GestaoModel
     public required string VicePartido { get; set; }
 
     public string? Coligacao { get; set; }
+
+    /// <summary>O arquivo de candidatos do TSE que gravou a linha.</summary>
+    public long? CargaId { get; set; }
 }

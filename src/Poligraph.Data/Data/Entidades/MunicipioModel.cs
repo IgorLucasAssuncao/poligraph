@@ -30,4 +30,7 @@ public class MunicipioModel
 
     /// <summary>O ano da estimativa de <see cref="Populacao"/>.</summary>
     public short? PopulacaoAno { get; set; }
+
+    /// <summary>A tabela de municípios (TOM e IBGE) que gravou a linha por último; a população tem fonte própria.</summary>
+    public long? CargaId { get; set; }
 }

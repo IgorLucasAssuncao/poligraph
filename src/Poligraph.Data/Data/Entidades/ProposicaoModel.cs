@@ -40,4 +40,7 @@ public class ProposicaoModel
     /// <para>Nulo é "ainda não consultada"; vazio é "consultada, e a casa não publica nenhuma". Sem a diferença, a busca de quem falta repetiria as vazias para sempre.</para>
     /// </remarks>
     public string? PalavrasChave { get; set; }
+
+    /// <summary>O arquivo da Câmara ou do Senado que gravou a linha por último.</summary>
+    public long? CargaId { get; set; }
 }

@@ -39,4 +39,7 @@ public class PessoaModel
 
     public List<PessoaFonteIdModel> FontesId { get; set; } = [];
     public List<VotoModel> Votos { get; set; } = [];
+
+    /// <summary>O arquivo que gravou a linha por último. Mais de uma fonte escreve aqui (Câmara, Senado, TSE), e os IDs de cada uma ficam em pessoa_fonte_ids.</summary>
+    public long? CargaId { get; set; }
 }

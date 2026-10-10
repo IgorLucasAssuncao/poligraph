@@ -1068,3 +1068,57 @@ VALUES ('20261010041926_OrgaoNasViagens', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+ALTER TABLE redes_sociais ADD carga_id bigint;
+
+ALTER TABLE proposicoes ADD carga_id bigint;
+
+ALTER TABLE pessoas ADD carga_id bigint;
+
+ALTER TABLE municipios ADD carga_id bigint;
+
+ALTER TABLE gestoes ADD carga_id bigint;
+
+ALTER TABLE emendas_convenios ADD carga_id bigint;
+
+ALTER TABLE convenios ADD carga_id bigint;
+
+ALTER TABLE autores_de_emenda ADD carga_id bigint;
+
+CREATE INDEX ix_redes_sociais_carga_id ON redes_sociais (carga_id);
+
+CREATE INDEX ix_proposicoes_carga_id ON proposicoes (carga_id);
+
+CREATE INDEX ix_pessoas_carga_id ON pessoas (carga_id);
+
+CREATE INDEX ix_municipios_carga_id ON municipios (carga_id);
+
+CREATE INDEX ix_gestoes_carga_id ON gestoes (carga_id);
+
+CREATE INDEX ix_emendas_convenios_carga_id ON emendas_convenios (carga_id);
+
+CREATE INDEX ix_convenios_carga_id ON convenios (carga_id);
+
+CREATE INDEX ix_autores_de_emenda_carga_id ON autores_de_emenda (carga_id);
+
+ALTER TABLE autores_de_emenda ADD CONSTRAINT fk_autores_de_emenda_cargas_carga_id FOREIGN KEY (carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+ALTER TABLE convenios ADD CONSTRAINT fk_convenios_cargas_carga_id FOREIGN KEY (carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+ALTER TABLE emendas_convenios ADD CONSTRAINT fk_emendas_convenios_cargas_carga_id FOREIGN KEY (carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+ALTER TABLE gestoes ADD CONSTRAINT fk_gestoes_cargas_carga_id FOREIGN KEY (carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+ALTER TABLE municipios ADD CONSTRAINT fk_municipios_cargas_carga_id FOREIGN KEY (carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+ALTER TABLE pessoas ADD CONSTRAINT fk_pessoas_cargas_carga_id FOREIGN KEY (carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+ALTER TABLE proposicoes ADD CONSTRAINT fk_proposicoes_cargas_carga_id FOREIGN KEY (carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+ALTER TABLE redes_sociais ADD CONSTRAINT fk_redes_sociais_cargas_carga_id FOREIGN KEY (carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261010155238_OrigemEmTodasAsTabelas', '10.0.11');
+
+COMMIT;
+

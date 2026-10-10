@@ -37,4 +37,7 @@ public class ConvenioModel
 
     /// <summary>Quanto do convênio o governo já transferiu. O valor é o combinado; o liberado, o que saiu.</summary>
     public decimal? ValorLiberado { get; set; }
+
+    /// <summary>O arquivo de convênios do Portal que gravou a linha por último.</summary>
+    public long? CargaId { get; set; }
 }

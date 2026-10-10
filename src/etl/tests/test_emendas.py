@@ -584,3 +584,25 @@ def test_cnpj_sem_sede_ou_com_sede_sem_carga_volta_para_a_fila(conexao):
     conexao.execute("INSERT INTO cnpjs_municipio (cnpj, codigo_ibge, cadastro_de, carga_id) VALUES ('22222222000122', '4314902', '2026-10-01', %s)", (carga,))
 
     assert persistencia.cnpjs_sem_sede(conexao) == ["11111111000111", "33333333000133"]
+
+
+@pytest.mark.integracao
+def test_convenio_ligacao_e_autor_saem_com_o_arquivo_de_origem(conexao):
+    """Convênio, ligação e autor vêm do mesmo ZIP de emendas; os três apontam para a carga dele."""
+    from poligraph_etl import persistencia
+
+    conexao.execute("TRUNCATE emendas_convenios, convenios, autores_de_emenda, cargas" " CASCADE")
+    carga = conexao.execute(
+        "INSERT INTO cargas (fonte, url, sha256, bytes, comando) VALUES ('PORTAL_TRANSPARENCIA', 'u', repeat('b', 64), 1, 'c') RETURNING id"
+    ).fetchone()[0]
+
+    persistencia.gravar_convenios(
+        conexao, [2025],
+        [{"numero": "900001", "convenente": "PREFEITURA", "objeto": None, "data_publicacao": "2025-03-01", "valor": 1000}],
+        [{"codigo_emenda": "202541840004", "numero_convenio": "900001"}],
+        carga,
+    )
+    persistencia.registrar_autores(conexao, {"4184": "AUTOR"}, carga)
+
+    for tabela in ("convenios", "emendas_convenios", "autores_de_emenda"):
+        assert conexao.execute(f"SELECT array_agg(DISTINCT carga_id) FROM {tabela}").fetchone()[0] == [carga]

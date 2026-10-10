@@ -8,4 +8,7 @@ public class EmendaConvenioModel
     public required string NumeroConvenio { get; set; }
 
     public ConvenioModel? Convenio { get; set; }
+
+    /// <summary>O arquivo de convênios do Portal que ligou a emenda ao convênio.</summary>
+    public long? CargaId { get; set; }
 }

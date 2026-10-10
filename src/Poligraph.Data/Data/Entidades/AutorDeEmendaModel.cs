@@ -26,4 +26,7 @@ public class AutorDeEmendaModel
     public DateTimeOffset AtualizadoEm { get; set; }
 
     public PessoaModel? Pessoa { get; set; }
+
+    /// <summary>O arquivo de emendas do Portal que gravou o código e o nome por último. A ligação à pessoa é nossa, e o método diz como foi feita.</summary>
+    public long? CargaId { get; set; }
 }

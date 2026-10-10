@@ -20,6 +20,9 @@ public class RedeSocialModel
     public TipoRedeSocial Rede { get; set; }
 
     public FonteDaRedeSocial Fonte { get; set; }
+
+    /// <summary>O arquivo da Câmara ou do TSE de onde a rede veio.</summary>
+    public long? CargaId { get; set; }
 }
 
 public enum TipoRedeSocial

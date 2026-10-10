@@ -867,6 +867,7 @@ def gravar_convenios(
     anos: list[int],
     convenios: Sequence[dict],
     ligacoes: Sequence[dict],
+    carga_id: int | None = None,
 ) -> int:
     """Grava os convênios e a ligação com as emendas dos anos que estão entrando.
 
@@ -881,24 +882,25 @@ def gravar_convenios(
     _executar_em_lotes(
         conexao,
         """
-        INSERT INTO convenios (numero, convenente, objeto, data_publicacao, valor)
-        VALUES (%(numero)s, %(convenente)s, %(objeto)s, %(data_publicacao)s, %(valor)s)
+        INSERT INTO convenios (numero, convenente, objeto, data_publicacao, valor, carga_id)
+        VALUES (%(numero)s, %(convenente)s, %(objeto)s, %(data_publicacao)s, %(valor)s, %(carga_id)s)
         ON CONFLICT (numero) DO UPDATE SET
             convenente = EXCLUDED.convenente,
             objeto = EXCLUDED.objeto,
             data_publicacao = EXCLUDED.data_publicacao,
-            valor = EXCLUDED.valor
+            valor = EXCLUDED.valor,
+            carga_id = COALESCE(EXCLUDED.carga_id, convenios.carga_id)
         """,
-        convenios,
+        _com_carga(convenios, carga_id),
     )
 
     gravadas = _executar_em_lotes(
         conexao,
         """
-        INSERT INTO emendas_convenios (codigo_emenda, numero_convenio)
-        VALUES (%(codigo_emenda)s, %(numero_convenio)s)
+        INSERT INTO emendas_convenios (codigo_emenda, numero_convenio, carga_id)
+        VALUES (%(codigo_emenda)s, %(numero_convenio)s, %(carga_id)s)
         """,
-        ligacoes,
+        _com_carga(ligacoes, carga_id),
     )
 
     conexao.execute(
@@ -1107,7 +1109,7 @@ def gravar_gestao(conexao: psycopg.Connection, gestao: dict) -> None:
     )
 
 
-def registrar_autores(conexao: psycopg.Connection, autores: dict[str, str]) -> int:
+def registrar_autores(conexao: psycopg.Connection, autores: dict[str, str], carga_id: int | None = None) -> int:
     """Registra os códigos de autor vistos, sem resolver o vínculo.
 
     DECISÃO: É a lista de pendências de reconciliação. Código sem `pessoa_id` fica **visível**,
@@ -1120,16 +1122,17 @@ def registrar_autores(conexao: psycopg.Connection, autores: dict[str, str]) -> i
         return 0
 
     linhas = [
-        {"codigo": codigo, "nome_autor": nome}
+        {"codigo": codigo, "nome_autor": nome, "carga_id": carga_id}
         for codigo, nome in autores.items()
     ]
 
     return _executar_em_lotes(
         conexao,
         """
-        INSERT INTO autores_de_emenda (codigo, nome_autor, metodo)
-        VALUES (%(codigo)s, %(nome_autor)s, 'NAO_RESOLVIDO')
-        ON CONFLICT (codigo) DO UPDATE SET nome_autor = EXCLUDED.nome_autor
+        INSERT INTO autores_de_emenda (codigo, nome_autor, metodo, carga_id)
+        VALUES (%(codigo)s, %(nome_autor)s, 'NAO_RESOLVIDO', %(carga_id)s)
+        ON CONFLICT (codigo) DO UPDATE SET nome_autor = EXCLUDED.nome_autor,
+            carga_id = COALESCE(EXCLUDED.carga_id, autores_de_emenda.carga_id)
         """,
         linhas,
     )
