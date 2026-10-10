@@ -241,6 +241,7 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
 
         Assert.Equal((704m, 4), (cpcc.Total, cpcc.Transacoes));
         Assert.Equal([("Ministério da Educação", 604m), ("Ministério da Saúde", 100m)], cpcc.PorOrgao.Select(o => (o.Orgao, o.Valor)));
+        Assert.Equal([.. Enumerable.Range(3, 10).Select(m => $"2025-{m:00}")], cpcc.MesesSemArquivo);
     }
 
     [SkippableFact]
@@ -292,7 +293,7 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
 
     private record CpccOrgaoLido(string Orgao, decimal Valor);
 
-    private record CpccLido(decimal Total, int Transacoes, List<CpccOrgaoLido> PorOrgao);
+    private record CpccLido(decimal Total, int Transacoes, List<CpccOrgaoLido> PorOrgao, List<string> MesesSemArquivo);
 
     private record PeriodoLido(int PrimeiroAno, int UltimoAno);
 

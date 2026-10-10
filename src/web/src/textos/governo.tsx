@@ -88,6 +88,8 @@ export const TEXTOS_DO_GOVERNO = {
     nota:
       'É o cartão do governo federal usado em compras feitas de forma centralizada, como passagens. Fica ao lado do ' +
       'cartão corporativo, sem somar com ele.',
+    semArquivo: (meses: string) =>
+      `O Portal não publicou o arquivo de ${meses}, mesmo depois de novas tentativas. O total é só dos outros meses.`,
     porOrgao: 'Por órgão',
   },
 

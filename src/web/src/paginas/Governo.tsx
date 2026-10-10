@@ -503,6 +503,9 @@ function ComprasCentralizadasComponent({
         {C.resposta(textoDoPeriodo(periodo), reaisCompacto(cpcc.total), cpcc.transacoes.toLocaleString('pt-BR'))}
       </p>
       <p className="nota-curta">{C.nota}</p>
+      {cpcc.mesesSemArquivo.length > 0 && (
+        <p className="nota-curta">{C.semArquivo(cpcc.mesesSemArquivo.map(mesCurto).join(', '))}</p>
+      )}
       <h3>{C.porOrgao}</h3>
       <ul className="gastos-categorias">
         {cpcc.porOrgao.slice(0, 10).map((o) => (

@@ -200,16 +200,40 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
             MesesSemArquivo: semArquivo);
     }
 
-    /// <summary>O CPCC do período, por órgão. Nulo se a carga ainda não trouxe nada dele.</summary>
-    private static ComprasCentralizadasDto? ComprasCentralizadas(List<CompraCentralizadaNoCartaoModel> linhas) =>
-        linhas.Count == 0
-            ? null
-            : new ComprasCentralizadasDto(
-                linhas.Sum(l => l.Valor),
-                linhas.Sum(l => l.Transacoes),
-                [.. linhas.GroupBy(l => l.OrgaoSuperior)
-                    .Select(g => new CompraCentralizadaDoOrgaoDto(g.Key, g.Sum(l => l.Valor), g.Sum(l => l.Transacoes)))
-                    .OrderByDescending(o => o.Valor)]);
+    /// <summary>O CPCC do período, por órgão, e os meses que o Portal não publicou. Nulo se a carga ainda não trouxe nada dele.</summary>
+    /// <remarks>
+    /// <para>MEDIDO (2026-10-10): os 53 meses com arquivo baixado são os 53 com linha na base; mês sem linha é mês que o Portal não publicou (403 ou 404 depois das novas tentativas), e não mês sem compra.</para>
+    /// </remarks>
+    private static ComprasCentralizadasDto? ComprasCentralizadas(List<CompraCentralizadaNoCartaoModel> linhas)
+    {
+        if (linhas.Count == 0)
+        {
+            return null;
+        }
+
+        var semArquivo = new List<string>();
+        var ultimoAno = linhas.Max(l => l.Ano);
+        foreach (var doAno in linhas.GroupBy(l => l.Ano).OrderBy(g => g.Key))
+        {
+            var meses = doAno.Select(l => l.Mes).ToHashSet();
+            var ultimoComDado = doAno.Key == ultimoAno ? meses.Max() : MesesNoAno;
+            for (short mes = 1; mes <= ultimoComDado; mes++)
+            {
+                if (!meses.Contains(mes))
+                {
+                    semArquivo.Add($"{doAno.Key}-{mes:00}");
+                }
+            }
+        }
+
+        return new ComprasCentralizadasDto(
+            linhas.Sum(l => l.Valor),
+            linhas.Sum(l => l.Transacoes),
+            [.. linhas.GroupBy(l => l.OrgaoSuperior)
+                .Select(g => new CompraCentralizadaDoOrgaoDto(g.Key, g.Sum(l => l.Valor), g.Sum(l => l.Transacoes)))
+                .OrderByDescending(o => o.Valor)],
+            semArquivo);
+    }
 
     /// <summary>O ano está fechado quando o arquivo foi gerado depois de 31 de dezembro dele.</summary>
     private static bool AnoFechado(int anoDoOrcamento, DateOnly geradoEm) => geradoEm.Year > anoDoOrcamento;
