@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCarga } from '../componentes/Atualizando';
 import { Link, useParams } from 'react-router-dom';
 import {
   type SancaoDaEntidade,
@@ -36,18 +36,7 @@ const T = TEXTOS_DAS_ENTIDADES;
  */
 export function EntidadeComponent() {
   const { cnpj = '' } = useParams();
-  const [dados, setDados] = useState<DadosDaEntidade | null | undefined>(undefined);
-  const [erro, setErro] = useState(false);
-
-  useEffect(() => {
-    let atual = true;
-    obterEntidade(cnpj)
-      .then((nova) => atual && setDados(nova))
-      .catch(() => atual && setErro(true));
-    return () => {
-      atual = false;
-    };
-  }, [cnpj]);
+  const { dados, erro } = useCarga(['entidade', cnpj], () => obterEntidade(cnpj), { manter: 2 });
 
   return (
     <>

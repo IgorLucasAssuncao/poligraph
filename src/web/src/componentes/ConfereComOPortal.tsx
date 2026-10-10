@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCarga } from './Atualizando';
 import { obterReconciliacao } from '../api';
 import type { Periodo, Reconciliacao } from '../api';
 import { reaisCompacto } from '../formato';
@@ -25,17 +25,7 @@ const T = TEXTOS_DAS_EMENDAS.conferencia;
  * quanto fica de fora. O detalhe, com o motivo de cada parte, fica a um clique.
  */
 export function ConfereComOPortalComponent({ periodo }: { periodo: Periodo }) {
-  const [contas, setContas] = useState<Reconciliacao[] | null>(null);
-
-  useEffect(() => {
-    let atual = true;
-    obterReconciliacao(periodo)
-      .then((c) => atual && setContas(c))
-      .catch(() => atual && setContas(null));
-    return () => {
-      atual = false;
-    };
-  }, [periodo]);
+  const contas = useCarga(['reconciliacao', periodo.primeiroAno, periodo.ultimoAno], () => obterReconciliacao(periodo)).dados;
 
   if (!contas || contas.length === 0) return null;
 

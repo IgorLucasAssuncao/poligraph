@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCarga } from './Atualizando';
 import { useSearchParams } from 'react-router-dom';
 import { listarLegislaturas, type Legislatura } from '../api';
 
@@ -37,25 +37,14 @@ export function useLegislaturaDaUrl(): [EscolhaDeLegislatura, (nova: EscolhaDeLe
 }
 
 /**
- * As legislaturas da base. Uma requisição por carga da página: a lista só muda quando o
- * ETL ingere uma legislatura nova.
+ * As legislaturas da base, guardadas no cache de leituras: a lista só muda quando o ETL ingere
+ * uma legislatura nova. Sem resposta, a lista é vazia.
  */
-let pedido: Promise<Legislatura[]> | null = null;
-
 export function useLegislaturas(): Legislatura[] | null {
-  const [legislaturas, setLegislaturas] = useState<Legislatura[] | null>(null);
+  const { dados, erro } = useCarga(['legislaturas'], listarLegislaturas);
+  if (erro) {
+    return [];
+  }
+  return dados ?? null;
 
-  useEffect(() => {
-    let atual = true;
-    pedido ??= listarLegislaturas().catch(() => {
-      pedido = null;
-      return [];
-    });
-    void pedido.then((l) => atual && setLegislaturas(l));
-    return () => {
-      atual = false;
-    };
-  }, []);
-
-  return legislaturas;
 }

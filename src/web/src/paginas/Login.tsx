@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCarga } from '../componentes/Atualizando';
 import { Link, useSearchParams } from 'react-router-dom';
 import { NOME_DA_CASA, obterPanorama, type Panorama } from '../api';
 import { reaisCompacto } from '../formato';
@@ -46,11 +46,7 @@ export function LoginComponent() {
   const { entrou, leituraPublica } = useSessao();
   const [parametros] = useSearchParams();
   const voltar = destinoSeguro(parametros.get('voltar'));
-  const [panorama, setPanorama] = useState<Panorama | null>(null);
-
-  useEffect(() => {
-    obterPanorama().then(setPanorama).catch(() => setPanorama(null));
-  }, []);
+  const panorama = useCarga(['panorama', null], () => obterPanorama()).dados ?? null;
 
   return (
     <div className="tela-login">

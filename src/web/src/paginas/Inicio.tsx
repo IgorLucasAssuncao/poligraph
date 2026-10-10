@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useCarga } from '../componentes/Atualizando';
 import { Link } from 'react-router-dom';
 import {
   listarSeguidos,
@@ -59,23 +60,13 @@ import { TEXTOS_DO_INICIO as T } from '../textos/inicio';
  */
 export function InicioComponent() {
   const { usuario } = useSessao();
-  const [lido, setLido] = useState<{ de?: number; panorama: Panorama | null } | null>(null);
   const [seguidos, setSeguidos] = useState<Parlamentar[]>([]);
   const [escolha] = useLegislaturaDaUrl();
   const legislaturas = useLegislaturas();
   const legislatura = typeof escolha === 'number' ? escolha : undefined;
   const corrente = legislaturas?.find((l) => l.corrente)?.numero;
-  const panorama = lido && lido.de === legislatura ? lido.panorama : null;
-
-  useEffect(() => {
-    let atual = true;
-    obterPanorama(legislatura)
-      .then((p) => atual && setLido({ de: legislatura, panorama: p }))
-      .catch(() => atual && setLido({ de: legislatura, panorama: null }));
-    return () => {
-      atual = false;
-    };
-  }, [legislatura]);
+  const lido = useCarga(['panorama', legislatura ?? null], () => obterPanorama(legislatura));
+  const panorama = lido.atualizando ? null : (lido.dados ?? null);
 
   useEffect(() => {
     if (!usuario) return;
@@ -162,8 +153,14 @@ export function InicioComponent() {
 function GrafoDaAberturaComponent({ legislatura }: { legislatura?: number }) {
   const marco = useRef<HTMLElement>(null);
   const [visivel, setVisivel] = useState(false);
-  const [lido, setLido] = useState<{ de?: number; grafo: DadosDoGrafo | 'vazio' } | null>(null);
-  const grafo = lido && lido.de === legislatura ? lido.grafo : null;
+  const lido = useCarga(['grafo', 'CAMARA', legislatura ?? null], () => obterGrafo('CAMARA', legislatura), {
+    ativo: visivel,
+  });
+  const grafo: DadosDoGrafo | 'vazio' | null = lido.atualizando
+    ? null
+    : lido.erro || (lido.dados && lido.dados.nos.length === 0)
+      ? 'vazio'
+      : (lido.dados ?? null);
 
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined' || !marco.current) {
@@ -184,18 +181,6 @@ function GrafoDaAberturaComponent({ legislatura }: { legislatura?: number }) {
 
     return () => observador.disconnect();
   }, []);
-
-  useEffect(() => {
-    if (!visivel) return;
-
-    let atual = true;
-    obterGrafo('CAMARA', legislatura)
-      .then((g) => atual && setLido({ de: legislatura, grafo: g.nos.length > 0 ? g : 'vazio' }))
-      .catch(() => atual && setLido({ de: legislatura, grafo: 'vazio' }));
-    return () => {
-      atual = false;
-    };
-  }, [visivel, legislatura]);
 
   if (grafo === 'vazio') {
     return legislatura ? (

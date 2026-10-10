@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { AtualizandoComponent } from '../componentes/Atualizando';
+import { useMemo, useState } from 'react';
+import { AtualizandoComponent, useCarga } from '../componentes/Atualizando';
 import { useNavigate } from 'react-router-dom';
 import {
   NOME_DA_CASA,
@@ -66,10 +66,10 @@ export function GrafoComponent() {
   const [escolha, setLegislatura] = useLegislaturaDaUrl();
   const legislatura = typeof escolha === 'number' ? escolha : undefined;
   const chave = `${casa}:${legislatura ?? ''}`;
-  const [lido, setLido] = useState<{ chave: string; grafo: DadosDoGrafo | null; erro: string | null } | null>(null);
-  const grafo = lido?.grafo ?? null;
-  const atualizando = grafo !== null && lido?.chave !== chave;
-  const erro = lido?.chave === chave ? lido.erro : null;
+  const lido = useCarga(['grafo', casa, legislatura ?? null], () => obterGrafo(casa, legislatura));
+  const grafo = lido.dados ?? null;
+  const atualizando = lido.atualizando;
+  const erro = lido.erro ? T.erro : null;
   const [ampliado, setAmpliado] = useState(false);
   const [destaque, setDestaque] = useState<Destaque>({});
   const [chaveDoDestaque, setChaveDoDestaque] = useState(chave);
@@ -78,17 +78,6 @@ export function GrafoComponent() {
     setDestaque({});
   }
 
-  useEffect(() => {
-    let atual = true;
-
-    obterGrafo(casa, legislatura)
-      .then((novo) => atual && setLido({ chave, grafo: novo, erro: null }))
-      .catch(() => atual && setLido({ chave, grafo: null, erro: T.erro }));
-
-    return () => {
-      atual = false;
-    };
-  }, [casa, legislatura, chave]);
 
   const grupos = useMemo(() => (grafo ? resumirGrupos(grafo.nos) : []), [grafo]);
   const membro = NOME_DA_CASA[casa];
@@ -147,7 +136,7 @@ export function GrafoComponent() {
       )}
 
       {!erro && grafo && grafo.nos.length > 0 && (
-        <AtualizandoComponent atualizando={atualizando} chave={lido?.chave}>
+        <AtualizandoComponent atualizando={atualizando} chave={lido.chaveDoDado}>
           <DestaqueDoGrafoComponent grafo={grafo} destaque={destaque} aoTrocar={setDestaque} />
 
           <TelaDoGrafoComponent

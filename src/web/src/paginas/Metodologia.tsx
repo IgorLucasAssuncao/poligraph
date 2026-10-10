@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCarga } from '../componentes/Atualizando';
 import { NOME_DA_CASA, obterMetodologia, type CasaNaMetodologia, type Metodologia as DadosDaMetodologia } from '../api';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { FONTES } from '../fontes';
@@ -17,14 +17,7 @@ import { TEXTOS_DA_METODOLOGIA as T } from '../textos/metodologia';
  * que a banca e quem desconfia do site precisam ler antes de entrar.
  */
 export function MetodologiaComponent() {
-  const [dados, setDados] = useState<DadosDaMetodologia | null>(null);
-  const [erro, setErro] = useState(false);
-
-  useEffect(() => {
-    obterMetodologia()
-      .then(setDados)
-      .catch(() => setErro(true));
-  }, []);
+  const { dados, erro } = useCarga(['metodologia'], obterMetodologia);
 
   return (
     <article className="documento-legal metodologia">

@@ -4,6 +4,7 @@ import { obterProcedencia } from '../api';
 import type { CargaDeProcedencia, ConsultaDeProcedencia, LinhaDaProcedencia, Procedencia } from '../api';
 import { dataCurta, reais } from '../formato';
 import { tourJaVisto } from '../tour';
+import { useCarga } from './Atualizando';
 import { ContextoDoModoAuditoria, useModoAuditoria } from './contextoDoModoAuditoria';
 import { useTour } from './contextoDoTour';
 import { LinkDeFonteComponent } from './LinkDeFonte';
@@ -130,9 +131,13 @@ function PainelDeProcedenciaComponent({
   aoFechar: () => void;
 }) {
   const dialogo = useRef<HTMLDialogElement>(null);
-  const [lida, setLida] = useState<{ de: typeof aberto; procedencia: Procedencia | null; erro: boolean } | null>(null);
-  const procedencia = lida && lida.de === aberto ? lida.procedencia : null;
-  const erro = lida !== null && lida.de === aberto && lida.erro;
+  const lida = useCarga(
+    ['procedencia', aberto?.consulta ?? null],
+    () => obterProcedencia(aberto!.consulta),
+    { ativo: aberto !== null, manter: 2 },
+  );
+  const procedencia = lida.atualizando ? null : (lida.dados ?? null);
+  const erro = lida.erro;
 
   useEffect(() => {
     const elemento = dialogo.current;
@@ -141,16 +146,6 @@ function PainelDeProcedenciaComponent({
     if (!aberto && elemento.open) elemento.close();
   }, [aberto]);
 
-  useEffect(() => {
-    if (!aberto) return;
-    let ativo = true;
-    obterProcedencia(aberto.consulta)
-      .then((p) => ativo && setLida({ de: aberto, procedencia: p, erro: false }))
-      .catch(() => ativo && setLida({ de: aberto, procedencia: null, erro: true }));
-    return () => {
-      ativo = false;
-    };
-  }, [aberto]);
 
   return (
     <dialog
