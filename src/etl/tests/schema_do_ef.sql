@@ -1031,3 +1031,24 @@ VALUES ('20261010013128_SancoesDeEmpresas', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+CREATE TABLE compras_centralizadas_no_cartao (
+    ano smallint NOT NULL,
+    mes smallint NOT NULL,
+    orgao_superior text NOT NULL,
+    valor numeric(18,2) NOT NULL,
+    transacoes integer NOT NULL,
+    carga_id bigint,
+    CONSTRAINT pk_compras_centralizadas_no_cartao PRIMARY KEY (ano, mes, orgao_superior),
+    CONSTRAINT ck_cpcc_mes CHECK (mes BETWEEN 1 AND 12),
+    CONSTRAINT ck_cpcc_transacoes CHECK (transacoes > 0),
+    CONSTRAINT fk_compras_centralizadas_no_cartao_cargas_carga_id FOREIGN KEY (carga_id) REFERENCES cargas (id) ON DELETE RESTRICT
+);
+
+CREATE INDEX ix_compras_centralizadas_no_cartao_carga_id ON compras_centralizadas_no_cartao (carga_id);
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261010014035_ComprasCentralizadasNoCartao', '10.0.11');
+
+COMMIT;
+

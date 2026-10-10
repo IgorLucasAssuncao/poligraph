@@ -120,6 +120,9 @@ export function GovernoComponent({ secao = 'orcamento' }: { secao?: 'orcamento' 
             <>
               <GastoSigilosoComponent sigilo={dados.sigilo} periodo={dados.periodo} emAndamento={dados.emAndamento} />
               {dados.defesaCivil && <DefesaCivilComponent defesaCivil={dados.defesaCivil} periodo={dados.periodo} />}
+              {dados.comprasCentralizadas && (
+                <ComprasCentralizadasComponent cpcc={dados.comprasCentralizadas} periodo={dados.periodo} />
+              )}
             </>
           )}
 
@@ -475,6 +478,31 @@ function DefesaCivilComponent({ defesaCivil, periodo }: { defesaCivil: DefesaCiv
       <h3>{D.porUf}</h3>
       {defesaCivil.porUf.slice(0, 10).map((u) => (
         <LinhaDeValorComponent key={u.uf} nome={u.uf} valor={u.valor} maior={maiorUf} formatar={reaisCompacto} />
+      ))}
+    </section>
+  );
+}
+
+/** O cartão de compras centralizadas, por órgão: os dez maiores. */
+function ComprasCentralizadasComponent({
+  cpcc,
+  periodo,
+}: {
+  cpcc: NonNullable<DadosDoGoverno['comprasCentralizadas']>;
+  periodo: Periodo;
+}) {
+  const C = T.comprasCentralizadas;
+  const maior = cpcc.porOrgao[0]?.valor ?? 0;
+  return (
+    <section className="governo-secao">
+      <h2>{C.titulo}</h2>
+      <p className="frase-resposta">
+        {C.resposta(textoDoPeriodo(periodo), reaisCompacto(cpcc.total), cpcc.transacoes.toLocaleString('pt-BR'))}
+      </p>
+      <p className="nota-curta">{C.nota}</p>
+      <h3>{C.porOrgao}</h3>
+      {cpcc.porOrgao.slice(0, 10).map((o) => (
+        <LinhaDeValorComponent key={o.orgao} nome={o.orgao} valor={o.valor} maior={maior} formatar={reaisCompacto} />
       ))}
     </section>
   );

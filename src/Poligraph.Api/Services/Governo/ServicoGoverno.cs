@@ -80,6 +80,7 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
         var encargos = await _db.EncargosEspeciais.AsNoTracking().Where(e => anosMostradosParaConsulta.Contains(e.Ano)).ToListAsync(ct);
         var receitas = await _db.ReceitasPorOrigem.AsNoTracking().Where(r => anosMostradosParaConsulta.Contains(r.Ano)).ToListAsync(ct);
         var sigilosos = await _db.GastosSigilosos.AsNoTracking().Where(g => anosMostradosParaConsulta.Contains(g.Ano)).ToListAsync(ct);
+        var comprasCentralizadas = await _db.ComprasCentralizadasNoCartao.AsNoTracking().Where(c => anosMostradosParaConsulta.Contains(c.Ano)).ToListAsync(ct);
         var defesaCivil = await _db.GastosDaDefesaCivil.AsNoTracking().Where(g => anosMostradosParaConsulta.Contains(g.Ano)).ToListAsync(ct);
 
         var emAndamento = anosMostrados.LastOrDefault(a => !AnoFechado(a.Ano, a.GeradoEm))?.Ano;
@@ -94,6 +95,7 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
             Despesa: Despesa(funcoes, encargos),
             Sigilo: Sigilo(sigilosos),
             DefesaCivil: DefesaCivil(defesaCivil),
+            ComprasCentralizadas: ComprasCentralizadas(comprasCentralizadas),
             PorAno: [.. anosMostrados.Select(a =>
             {
                 var anoDoOrcamento = (short)a.Ano;
@@ -197,6 +199,17 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
             PorUf: porUf,
             MesesSemArquivo: semArquivo);
     }
+
+    /// <summary>O CPCC do período, por órgão. Nulo se a carga ainda não trouxe nada dele.</summary>
+    private static ComprasCentralizadasDto? ComprasCentralizadas(List<CompraCentralizadaNoCartaoModel> linhas) =>
+        linhas.Count == 0
+            ? null
+            : new ComprasCentralizadasDto(
+                linhas.Sum(l => l.Valor),
+                linhas.Sum(l => l.Transacoes),
+                [.. linhas.GroupBy(l => l.OrgaoSuperior)
+                    .Select(g => new CompraCentralizadaDoOrgaoDto(g.Key, g.Sum(l => l.Valor), g.Sum(l => l.Transacoes)))
+                    .OrderByDescending(o => o.Valor)]);
 
     /// <summary>O ano está fechado quando o arquivo foi gerado depois de 31 de dezembro dele.</summary>
     private static bool AnoFechado(int anoDoOrcamento, DateOnly geradoEm) => geradoEm.Year > anoDoOrcamento;

@@ -72,6 +72,7 @@ const DE_2025: DadosDoGoverno = {
     ],
   },
   defesaCivil: null,
+  comprasCentralizadas: null,
   sigilo: {
     cartaoSigiloso: 50.6e6,
     cartaoTotal: 122.3e6,

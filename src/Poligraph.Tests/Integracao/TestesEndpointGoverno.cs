@@ -227,6 +227,23 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
     }
 
     [SkippableFact]
+    public async Task ComprasCentralizadas_SomaPorOrgao_DoMaior()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        Db.ComprasCentralizadasNoCartao.AddRange(
+            new CompraCentralizadaNoCartaoModel { Ano = 2025, Mes = 1, OrgaoSuperior = "Ministério da Educação", Valor = 290m, Transacoes = 1 },
+            new CompraCentralizadaNoCartaoModel { Ano = 2025, Mes = 2, OrgaoSuperior = "Ministério da Educação", Valor = 314m, Transacoes = 1 },
+            new CompraCentralizadaNoCartaoModel { Ano = 2026, Mes = 1, OrgaoSuperior = "Ministério da Saúde", Valor = 100m, Transacoes = 2 });
+        await Db.SaveChangesAsync();
+
+        var cpcc = (await LerAsync(Rota)).ComprasCentralizadas!;
+
+        Assert.Equal((704m, 4), (cpcc.Total, cpcc.Transacoes));
+        Assert.Equal([("Ministério da Educação", 604m), ("Ministério da Saúde", 100m)], cpcc.PorOrgao.Select(o => (o.Orgao, o.Valor)));
+    }
+
+    [SkippableFact]
     public async Task DefesaCivil_SemCarga_VemNulo()
     {
         ExigeDocker();
@@ -273,13 +290,17 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
         decimal Total, decimal Estadual, decimal NaoInformado, int Executores, List<DefesaCivilNoAnoLido> PorAno, List<DefesaCivilNaUfLida> PorUf,
         List<string> MesesSemArquivo);
 
+    private record CpccOrgaoLido(string Orgao, decimal Valor);
+
+    private record CpccLido(decimal Total, int Transacoes, List<CpccOrgaoLido> PorOrgao);
+
     private record PeriodoLido(int PrimeiroAno, int UltimoAno);
 
     private record AnoLido(int AnoDoOrcamento, decimal Arrecadou, decimal Gastou, decimal PegouEmprestado, bool Fechado);
 
     private record GovernoLido(
         List<GestaoLida> Gestoes, PeriodoLido Periodo, int? EmAndamento, List<int> AnosDisponiveis,
-        ArrecadacaoLida Arrecadacao, DespesaLida Despesa, SigiloLido? Sigilo, DefesaCivilLida? DefesaCivil, List<AnoLido> PorAno,
+        ArrecadacaoLida Arrecadacao, DespesaLida Despesa, SigiloLido? Sigilo, DefesaCivilLida? DefesaCivil, CpccLido? ComprasCentralizadas, List<AnoLido> PorAno,
         List<GestaoLida> GestoesDisponiveis);
 
     private static GastoSigilosoModel Sigiloso(

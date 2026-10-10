@@ -926,6 +926,8 @@ export type Governo = {
   sigilo: Sigilo | null;
   /** Nulo enquanto a carga do cartão da Defesa Civil não rodou para o período. */
   defesaCivil: DefesaCivil | null;
+  /** O cartão de compras centralizadas, por órgão; nulo sem carga. Não se soma ao corporativo. */
+  comprasCentralizadas: { total: number; transacoes: number; porOrgao: { orgao: string; valor: number; transacoes: number }[] } | null;
   porAno: GovernoNoAno[];
   /** Todas as gestões com dado, qualquer que seja o período: os atalhos do seletor. */
   gestoesDisponiveis: Gestao[];

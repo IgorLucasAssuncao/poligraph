@@ -94,3 +94,16 @@ class LinhaDeSancao:
     orgao_sancionador: str | None = coluna("ÓRGÃO SANCIONADOR")
     esfera: str | None = coluna("ESFERA ÓRGÃO SANCIONADOR")
     fundamentacao_legal: str | None = coluna("FUNDAMENTAÇÃO LEGAL")
+
+
+@dataclass(frozen=True)
+class LinhaDeCompraCentralizadaNoCartao:
+    """Uma transação do Cartão de Pagamento de Compras Centralizadas: `download-de-dados/cpcc/AAAAMM`.
+
+    RISCO: o arquivo traz o CPF do favorecido pessoa física sem máscara. Ele não está aqui.
+    """
+
+    ano_do_extrato: str | None = coluna("ANO EXTRATO")
+    mes_do_extrato: str | None = coluna("MÊS EXTRATO")
+    orgao_superior: str | None = coluna("NOME ÓRGÃO SUPERIOR")
+    valor: str | None = coluna("VALOR TRANSAÇÃO")

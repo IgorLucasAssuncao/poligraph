@@ -31,6 +31,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<ContratacoesDoOrgaoModel> ContratacoesDoOrgao => Set<ContratacoesDoOrgaoModel>();
     public DbSet<ContratadoDoGovernoModel> ContratadosDoGoverno => Set<ContratadoDoGovernoModel>();
     public DbSet<SancaoDeEmpresaModel> SancoesDeEmpresas => Set<SancaoDeEmpresaModel>();
+    public DbSet<CompraCentralizadaNoCartaoModel> ComprasCentralizadasNoCartao => Set<CompraCentralizadaNoCartaoModel>();
     public DbSet<ReceitaPorOrigemModel> ReceitasPorOrigem => Set<ReceitaPorOrigemModel>();
     public DbSet<GestaoModel> Gestoes => Set<GestaoModel>();
     public DbSet<MunicipioModel> Municipios => Set<MunicipioModel>();
@@ -182,6 +183,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         mb.Entity<ContratadoDoGovernoModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<SancaoDeEmpresaModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<CompraCentralizadaNoCartaoModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
     }
 
@@ -626,6 +629,17 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.Property(x => x.Cnpj).HasMaxLength(14);
             e.Property(x => x.Esfera).HasMaxLength(9);
             e.Property(x => x.ValorDaMulta).HasPrecision(18, 2);
+        });
+
+        mb.Entity<CompraCentralizadaNoCartaoModel>(e =>
+        {
+            e.ToTable("compras_centralizadas_no_cartao", t =>
+            {
+                t.HasCheckConstraint("ck_cpcc_mes", "mes BETWEEN 1 AND 12");
+                t.HasCheckConstraint("ck_cpcc_transacoes", "transacoes > 0");
+            });
+            e.HasKey(x => new { x.Ano, x.Mes, x.OrgaoSuperior });
+            e.Property(x => x.Valor).HasPrecision(18, 2);
         });
 
         mb.Entity<ReceitaPorOrigemModel>(e =>

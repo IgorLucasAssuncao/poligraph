@@ -15,6 +15,7 @@
 /// </para>
 /// <para><see cref="GestoesDisponiveis"/> são todas as gestões com dado, independentes do período: a tela oferece uma por uma como atalho, e comparar gestões medidas do mesmo jeito é o que mostra que a página não é sobre uma delas.</para>
 /// <para><see cref="Sigilo"/> é nulo enquanto a carga do gasto sigiloso ainda não rodou para o período.</para>
+/// <para><see cref="ComprasCentralizadas"/> é nulo enquanto a carga do CPCC não rodou para o período.</para>
 /// <para><see cref="DefesaCivil"/> é nulo enquanto a carga do cartão da Defesa Civil ainda não rodou para o período.</para>
 /// </remarks>
 public record GovernoDto(
@@ -27,6 +28,7 @@ public record GovernoDto(
     DespesaDto Despesa,
     SigiloDto? Sigilo,
     DefesaCivilDto? DefesaCivil,
+    ComprasCentralizadasDto? ComprasCentralizadas,
     IReadOnlyList<GovernoNoAnoDto> PorAno,
     IReadOnlyList<GestaoDto> GestoesDisponiveis);
 

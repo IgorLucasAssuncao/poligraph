@@ -249,6 +249,47 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Data.CompraCentralizadaNoCartaoModel", b =>
+                {
+                    b.Property<short>("Ano")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano");
+
+                    b.Property<short>("Mes")
+                        .HasColumnType("smallint")
+                        .HasColumnName("mes");
+
+                    b.Property<string>("OrgaoSuperior")
+                        .HasColumnType("text")
+                        .HasColumnName("orgao_superior");
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
+                    b.Property<int>("Transacoes")
+                        .HasColumnType("integer")
+                        .HasColumnName("transacoes");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("valor");
+
+                    b.HasKey("Ano", "Mes", "OrgaoSuperior")
+                        .HasName("pk_compras_centralizadas_no_cartao");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_compras_centralizadas_no_cartao_carga_id");
+
+                    b.ToTable("compras_centralizadas_no_cartao", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_cpcc_mes", "mes BETWEEN 1 AND 12");
+
+                            t.HasCheckConstraint("ck_cpcc_transacoes", "transacoes > 0");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Data.ConsentimentoModel", b =>
                 {
                     b.Property<long>("Id")
@@ -2300,6 +2341,15 @@ namespace Poligraph.Data.Migrations
                         .HasConstraintName("fk_cnpjs_municipio_municipios_codigo_ibge");
 
                     b.Navigation("Municipio");
+                });
+
+            modelBuilder.Entity("Poligraph.Data.CompraCentralizadaNoCartaoModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_compras_centralizadas_no_cartao_cargas_carga_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.ConsentimentoModel", b =>

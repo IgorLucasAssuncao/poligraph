@@ -81,6 +81,16 @@ export const TEXTOS_DO_GOVERNO = {
     foraDaConta: (emprestado: string) => `Fora da conta: ${emprestado} pegos emprestados, que voltam com juros.`,
   },
 
+  comprasCentralizadas: {
+    titulo: 'Cartão de compras centralizadas',
+    resposta: (periodo: string, total: string, transacoes: string) =>
+      `No cartão de compras centralizadas, ${periodo}, o governo federal gastou ${total} em ${transacoes} compras.`,
+    nota:
+      'É o cartão do governo federal usado em compras feitas de forma centralizada, como passagens. Fica ao lado do ' +
+      'cartão corporativo, sem somar com ele.',
+    porOrgao: 'Por órgão',
+  },
+
   defesaCivil: {
     titulo: 'Cartão da Defesa Civil',
     resposta: (periodo: string, total: string, executores: number): ReactNode => (

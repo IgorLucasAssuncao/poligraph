@@ -125,3 +125,16 @@ class SancaoDeEmpresa:
     esfera: str | None
     fundamentacao_legal: str | None
     valor_da_multa: float | None
+
+
+@dataclass(frozen=True)
+class CompraCentralizadaNoCartao:
+    """Uma linha de `compras_centralizadas_no_cartao` (CompraCentralizadaNoCartaoModel): um órgão num mês."""
+
+    TABELA: ClassVar[str] = "compras_centralizadas_no_cartao"
+
+    ano: int
+    mes: int
+    orgao_superior: str
+    valor: float
+    transacoes: int

@@ -30,11 +30,11 @@ from . import (
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
 from .fontes import brasilapi, camara, portal, receita, senado, tse
-from . import amostra, compras, conferencia, convenentes, defesa_civil, patrimonio, procedencia, redes, rotina, sancoes, viagens
+from . import amostra, compras, compras_centralizadas, conferencia, convenentes, defesa_civil, patrimonio, procedencia, redes, rotina, sancoes, viagens
 from .contratos import entrada
 from .contratos.entrada import colunas_da_fonte
 from .contratos.portal import (
-    LinhaDeCompra, LinhaDeSancao, LinhaDeTrechoDeViagem, LinhaDeViagem, LinhaDePagamentoDeViagem, LinhaDoCartaoDaDefesaCivil,
+    LinhaDeCompra, LinhaDeCompraCentralizadaNoCartao, LinhaDeSancao, LinhaDeTrechoDeViagem, LinhaDeViagem, LinhaDePagamentoDeViagem, LinhaDoCartaoDaDefesaCivil,
 )
 
 log = logging.getLogger("poligraph")
@@ -94,6 +94,8 @@ def main(argv: list[str] | None = None) -> int:
                 _compras(conexao, args.anos)
             elif args.comando == "sancoes":
                 _sancoes(conexao)
+            elif args.comando == "compras-centralizadas":
+                _compras_centralizadas(conexao, args.anos)
             elif args.comando == "convenios":
                 _convenios(conexao)
             elif args.comando == "patrimonio":
@@ -265,6 +267,11 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     cmp.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
 
     sub.add_parser("sancoes", help="empresas sancionadas no CEIS e no CNEP, pelo CNPJ (Portal)")
+
+    cpcc = sub.add_parser(
+        "compras-centralizadas", help="cartão de pagamento de compras centralizadas (CPCC), por órgão e mês (Portal)"
+    )
+    cpcc.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
 
     emd = sub.add_parser(
         "emendas", help="ingere emendas, favorecidos e convênios (Portal)"
@@ -1206,6 +1213,33 @@ def _compras(conexao: psycopg.Connection, anos: list[int]) -> None:
                  sum(c.contratos for _, linhas in por_orgao for c in linhas),
                  sum(c.valor for _, linhas in por_orgao for c in linhas) / 1e6, len(contratados),
                  f"; o Portal não publicou {', '.join(faltaram)}" if faltaram else "")
+
+
+def _compras_centralizadas(conexao: psycopg.Connection, anos: list[int]) -> None:
+    """O CPCC mês a mês (ver `compras_centralizadas.py`). Mês com 403 ou 404 é pulado, como no CPDC."""
+    hoje = date.today()
+    for ano in anos:
+        meses = 0
+        for mes in range(1, 13):
+            if (ano, mes) > (hoje.year, hoje.month):
+                break
+            recurso = compras_centralizadas.RECURSO.format(ano=ano, mes=mes)
+            sufixo = f"-{hoje:%Y%m%d}" if (ano, mes) >= (hoje.year, hoje.month - 1) else ""
+            try:
+                arquivo = portal.baixar(recurso, CACHE / f"cpcc-{ano}{mes:02d}{sufixo}.zip")
+            except requests.HTTPError as erro:
+                if erro.response is None or erro.response.status_code not in (403, 404):
+                    raise
+                continue
+            carga = _carga_do_arquivo(conexao, "PORTAL_TRANSPARENCIA", portal.url(recurso), arquivo)
+            tabela = portal.ler_csv(arquivo, compras_centralizadas.arquivo_do_mes(ano, mes),
+                                    colunas=list(colunas_da_fonte(LinhaDeCompraCentralizadaNoCartao).values()))
+            linhas = compras_centralizadas.transformar(
+                entrada.ler(LinhaDeCompraCentralizadaNoCartao, tabela.to_dict("records")))
+            with conexao.transaction():
+                persistencia.gravar_compras_centralizadas(conexao, ano, mes, linhas, carga)
+            meses += 1
+        log.info("  %d: CPCC de %d meses", ano, meses)
 
 
 DIAS_PARA_TRAS_DO_RETRATO = 7
@@ -2257,6 +2291,8 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
         _compras(conexao, anos)
     elif etapa.comando == "sancoes":
         _sancoes(conexao)
+    elif etapa.comando == "compras-centralizadas":
+        _compras_centralizadas(conexao, anos)
     elif etapa.comando == "municipios":
         _municipios(conexao, None)
     elif etapa.comando == "fundo":
