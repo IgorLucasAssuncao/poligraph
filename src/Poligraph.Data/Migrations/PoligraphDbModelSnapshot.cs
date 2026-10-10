@@ -1791,6 +1791,87 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Data.SancaoDeEmpresaModel", b =>
+                {
+                    b.Property<string>("Cadastro")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("cadastro");
+
+                    b.Property<string>("CodigoDaSancao")
+                        .HasColumnType("text")
+                        .HasColumnName("codigo_da_sancao");
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("categoria");
+
+                    b.Property<string>("Cnpj")
+                        .IsRequired()
+                        .HasMaxLength(14)
+                        .HasColumnType("character varying(14)")
+                        .HasColumnName("cnpj");
+
+                    b.Property<string>("Esfera")
+                        .HasMaxLength(9)
+                        .HasColumnType("character varying(9)")
+                        .HasColumnName("esfera");
+
+                    b.Property<DateOnly?>("Fim")
+                        .HasColumnType("date")
+                        .HasColumnName("fim");
+
+                    b.Property<string>("FundamentacaoLegal")
+                        .HasColumnType("text")
+                        .HasColumnName("fundamentacao_legal");
+
+                    b.Property<DateOnly?>("Inicio")
+                        .HasColumnType("date")
+                        .HasColumnName("inicio");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nome");
+
+                    b.Property<string>("OrgaoSancionador")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("orgao_sancionador");
+
+                    b.Property<decimal?>("ValorDaMulta")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("valor_da_multa");
+
+                    b.HasKey("Cadastro", "CodigoDaSancao")
+                        .HasName("pk_sancoes_de_empresas");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_sancoes_de_empresas_carga_id");
+
+                    b.HasIndex("Cnpj")
+                        .HasDatabaseName("ix_sancao_cnpj");
+
+                    b.ToTable("sancoes_de_empresas", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_sancao_cadastro", "cadastro IN ('CEIS','CNEP')");
+
+                            t.HasCheckConstraint("ck_sancao_cnpj", "cnpj ~ '^[0-9]{14}$'");
+
+                            t.HasCheckConstraint("ck_sancao_esfera", "esfera IS NULL OR esfera IN ('FEDERAL','ESTADUAL','MUNICIPAL')");
+
+                            t.HasCheckConstraint("ck_sancao_multa", "valor_da_multa IS NULL OR cadastro = 'CNEP'");
+
+                            t.HasCheckConstraint("ck_sancao_periodo", "fim IS NULL OR inicio IS NULL OR fim >= inicio");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Data.SegueModel", b =>
                 {
                     b.Property<long>("UsuarioId")
@@ -2481,6 +2562,15 @@ namespace Poligraph.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_redes_sociais_pessoas_pessoa_id");
+                });
+
+            modelBuilder.Entity("Poligraph.Data.SancaoDeEmpresaModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_sancoes_de_empresas_cargas_carga_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.SegueModel", b =>

@@ -2633,6 +2633,15 @@ dialog.tour::backdrop { background: transparent; }
 .abas-do-dinheiro .aba:hover { color: var(--texto); }
 .abas-do-dinheiro .aba.active { color: var(--texto); font-weight: 600; border-bottom-color: var(--realce); }
 
+/* As sanções da entidade: uma por linha, a categoria em destaque e o selo de vigente em contorno. */
+.lista-de-sancoes { list-style: none; margin: .5rem 0; padding: 0; display: grid; gap: .6rem; }
+.lista-de-sancoes li { display: grid; gap: .15rem; padding-bottom: .6rem; border-bottom: 1px solid var(--borda); }
+.lista-de-sancoes small { color: var(--suave); font-size: var(--t-1); }
+.selo-vigente {
+  justify-self: start; padding: 0 .4rem; font: 600 var(--t-1) var(--dado);
+  border: 1px solid var(--texto); border-radius: var(--raio);
+}
+
 /* As abas de Governo federal: um nível abaixo das de Dinheiro público, mais baixas e sem a linha cheia. */
 .abas-do-governo { display: flex; gap: .25rem; overflow-x: auto; margin: -.5rem 0 1.25rem; }
 .abas-do-governo .aba {

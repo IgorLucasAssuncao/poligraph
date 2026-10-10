@@ -30,6 +30,8 @@ const COMPLETA: DadosDaEntidade = {
     pagina: 1, tamanho: 20, total: 1,
   },
   coletivos: [{ tipo: 'BANCADA', nome: 'BANCADA DO PARANA', recebido: 1_000_000, emendas: 1 }],
+  sancoes: [],
+  comOGoverno: null,
   naCota: { total: 150, lancamentos: 2, porParlamentar: [{ idPessoa: 42, nome: 'Fulano de Tal', partido: 'XYZ', casa: 'CAMARA', total: 150, lancamentos: 2 }] },
   convenios: {
     itens: [{
@@ -101,6 +103,26 @@ describe('Entidade', () => {
     const secao = aviso.closest('section')!;
     expect(aviso.compareDocumentPosition(within(secao).getByRole('link', { name: /Fulano/ })) &
       Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('as sanções dizem quantas estão em vigor, quem puniu e quando', async () => {
+    vi.mocked(api.obterEntidade).mockResolvedValue({
+      ...COMPLETA,
+      sancoes: [
+        { cadastro: 'CNEP', categoria: 'Multa', inicio: '2022-03-09', fim: null, vigente: true, orgaoSancionador: 'Petróleo Brasileiro S.A.',
+          esfera: 'FEDERAL', fundamentacaoLegal: 'LEI 12846 - ART. 6º, I', valorDaMulta: 137260.07 },
+        { cadastro: 'CEIS', categoria: 'Inidoneidade', inicio: '2019-01-10', fim: '2021-01-10', vigente: false, orgaoSancionador: 'CGU',
+          esfera: 'FEDERAL', fundamentacaoLegal: null, valorDaMulta: null },
+      ],
+      comOGoverno: { contratos: 3, valor: 75e6, primeiroAno: 2024, ultimoAno: 2025 },
+    });
+    renderizar('/entidades/11222333000144');
+
+    expect(await screen.findByText('Sanções no cadastro de empresas punidas')).toBeDefined();
+    const texto = document.body.textContent ?? '';
+    expect(texto).toMatch(/2 sanções registradas, 1 ainda em vigor/);
+    expect(texto).toMatch(/desde 09\/03\/2022, sem data de fim · Petróleo Brasileiro S\.A\. · multa de R\$\s*137\.260,07/);
+    expect(texto).toMatch(/3 contratos publicados no Diário Oficial de 2024 a 2025, que somam R\$\s*75\s*mi/);
   });
 
   it('liga à fonte oficial e à cidade da sede', async () => {

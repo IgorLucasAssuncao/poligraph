@@ -30,11 +30,11 @@ from . import (
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
 from .fontes import brasilapi, camara, portal, receita, senado, tse
-from . import amostra, compras, conferencia, convenentes, defesa_civil, patrimonio, procedencia, redes, rotina, viagens
+from . import amostra, compras, conferencia, convenentes, defesa_civil, patrimonio, procedencia, redes, rotina, sancoes, viagens
 from .contratos import entrada
 from .contratos.entrada import colunas_da_fonte
 from .contratos.portal import (
-    LinhaDeCompra, LinhaDeTrechoDeViagem, LinhaDeViagem, LinhaDePagamentoDeViagem, LinhaDoCartaoDaDefesaCivil,
+    LinhaDeCompra, LinhaDeSancao, LinhaDeTrechoDeViagem, LinhaDeViagem, LinhaDePagamentoDeViagem, LinhaDoCartaoDaDefesaCivil,
 )
 
 log = logging.getLogger("poligraph")
@@ -92,6 +92,8 @@ def main(argv: list[str] | None = None) -> int:
                 _viagens(conexao, args.anos)
             elif args.comando == "compras":
                 _compras(conexao, args.anos)
+            elif args.comando == "sancoes":
+                _sancoes(conexao)
             elif args.comando == "convenios":
                 _convenios(conexao)
             elif args.comando == "patrimonio":
@@ -261,6 +263,8 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         help="contratos do Executivo federal publicados no Diário Oficial: por órgão, modalidade e contratado (Portal)",
     )
     cmp.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
+
+    sub.add_parser("sancoes", help="empresas sancionadas no CEIS e no CNEP, pelo CNPJ (Portal)")
 
     emd = sub.add_parser(
         "emendas", help="ingere emendas, favorecidos e convênios (Portal)"
@@ -1202,6 +1206,40 @@ def _compras(conexao: psycopg.Connection, anos: list[int]) -> None:
                  sum(c.contratos for _, linhas in por_orgao for c in linhas),
                  sum(c.valor for _, linhas in por_orgao for c in linhas) / 1e6, len(contratados),
                  f"; o Portal não publicou {', '.join(faltaram)}" if faltaram else "")
+
+
+DIAS_PARA_TRAS_DO_RETRATO = 7
+"""O retrato do CEIS e do CNEP sai de um dia para o outro; se o de hoje ainda não saiu, vale o mais recente da semana."""
+
+
+def _sancoes(conexao: psycopg.Connection) -> None:
+    """O CEIS e o CNEP do dia (ver `sancoes.py`). Os dois cadastros trocam juntos, numa transação."""
+    todas: list = []
+    cargas: list[int] = []
+    for cadastro in sancoes.CADASTROS:
+        arquivo, data = _retrato_mais_recente(cadastro)
+        cargas.append(_carga_do_arquivo(conexao, "PORTAL_TRANSPARENCIA", portal.url(f"{cadastro}/{data}"), arquivo))
+        colunas = list(colunas_da_fonte(LinhaDeSancao).values()) + (["VALOR DA MULTA"] if cadastro == "cnep" else [])
+        tabela = portal.ler_csv(arquivo, sancoes.membro(cadastro, data), colunas=colunas)
+        linhas = entrada.ler(LinhaDeSancao, tabela.to_dict("records"))
+        multas = tabela["VALOR DA MULTA"].tolist() if cadastro == "cnep" else None
+        todas.extend(sancoes.para_empresas(linhas, multas))
+        log.info("  %s de %s: %d linhas, %d sanções a empresa", cadastro.upper(), data, len(linhas),
+                 sum(1 for s in todas if s.cadastro == cadastro.upper()))
+    with conexao.transaction():
+        persistencia.gravar_sancoes(conexao, todas, max(cargas))
+
+
+def _retrato_mais_recente(cadastro: str) -> tuple[Path, str]:
+    """O ZIP mais recente do cadastro, voltando dia a dia até `DIAS_PARA_TRAS_DO_RETRATO`."""
+    for dias in range(DIAS_PARA_TRAS_DO_RETRATO + 1):
+        data = f"{date.fromordinal(date.today().toordinal() - dias):%Y%m%d}"
+        try:
+            return portal.baixar(f"{cadastro}/{data}", CACHE / f"{cadastro}-{data}.zip"), data
+        except requests.HTTPError as erro:
+            if erro.response is None or erro.response.status_code not in (403, 404):
+                raise
+    raise RuntimeError(f"Nenhum retrato do {cadastro.upper()} nos últimos {DIAS_PARA_TRAS_DO_RETRATO} dias.")
 
 
 def _antes_do_ultimo_publicado(mes_ano: str, publicados: list[tuple[int, int]]) -> bool:
@@ -2217,6 +2255,8 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
         _viagens(conexao, anos)
     elif etapa.comando == "compras":
         _compras(conexao, anos)
+    elif etapa.comando == "sancoes":
+        _sancoes(conexao)
     elif etapa.comando == "municipios":
         _municipios(conexao, None)
     elif etapa.comando == "fundo":

@@ -106,3 +106,22 @@ class ContratadoDoGoverno:
     nome: str
     contratos: int
     valor: float
+
+
+@dataclass(frozen=True)
+class SancaoDeEmpresa:
+    """Uma linha de `sancoes_de_empresas` (SancaoDeEmpresaModel): uma sanção a empresa, pelo CNPJ."""
+
+    TABELA: ClassVar[str] = "sancoes_de_empresas"
+
+    cadastro: str
+    codigo_da_sancao: str
+    cnpj: str
+    nome: str
+    categoria: str
+    inicio: str | None
+    fim: str | None
+    orgao_sancionador: str
+    esfera: str | None
+    fundamentacao_legal: str | None
+    valor_da_multa: float | None

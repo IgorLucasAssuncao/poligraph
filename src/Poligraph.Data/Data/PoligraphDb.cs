@@ -30,6 +30,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<DestinoDeViagemModel> DestinosDeViagem => Set<DestinoDeViagemModel>();
     public DbSet<ContratacoesDoOrgaoModel> ContratacoesDoOrgao => Set<ContratacoesDoOrgaoModel>();
     public DbSet<ContratadoDoGovernoModel> ContratadosDoGoverno => Set<ContratadoDoGovernoModel>();
+    public DbSet<SancaoDeEmpresaModel> SancoesDeEmpresas => Set<SancaoDeEmpresaModel>();
     public DbSet<ReceitaPorOrigemModel> ReceitasPorOrigem => Set<ReceitaPorOrigemModel>();
     public DbSet<GestaoModel> Gestoes => Set<GestaoModel>();
     public DbSet<MunicipioModel> Municipios => Set<MunicipioModel>();
@@ -179,6 +180,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         mb.Entity<ContratacoesDoOrgaoModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<ContratadoDoGovernoModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<SancaoDeEmpresaModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
     }
 
@@ -605,6 +608,24 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasKey(x => new { x.Ano, x.Cnpj });
             e.Property(x => x.Cnpj).HasMaxLength(14);
             e.Property(x => x.Valor).HasPrecision(18, 2);
+        });
+
+        mb.Entity<SancaoDeEmpresaModel>(e =>
+        {
+            e.ToTable("sancoes_de_empresas", t =>
+            {
+                t.HasCheckConstraint("ck_sancao_cadastro", "cadastro IN ('CEIS','CNEP')");
+                t.HasCheckConstraint("ck_sancao_cnpj", "cnpj ~ '^[0-9]{14}$'");
+                t.HasCheckConstraint("ck_sancao_esfera", "esfera IS NULL OR esfera IN ('FEDERAL','ESTADUAL','MUNICIPAL')");
+                t.HasCheckConstraint("ck_sancao_periodo", "fim IS NULL OR inicio IS NULL OR fim >= inicio");
+                t.HasCheckConstraint("ck_sancao_multa", "valor_da_multa IS NULL OR cadastro = 'CNEP'");
+            });
+            e.HasKey(x => new { x.Cadastro, x.CodigoDaSancao });
+            e.HasIndex(x => x.Cnpj).HasDatabaseName("ix_sancao_cnpj");
+            e.Property(x => x.Cadastro).HasMaxLength(4);
+            e.Property(x => x.Cnpj).HasMaxLength(14);
+            e.Property(x => x.Esfera).HasMaxLength(9);
+            e.Property(x => x.ValorDaMulta).HasPrecision(18, 2);
         });
 
         mb.Entity<ReceitaPorOrigemModel>(e =>

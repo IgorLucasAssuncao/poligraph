@@ -145,6 +145,7 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
     [InlineData("DestinoDeViagemDto", "pais,uf,cidade,chegadas")]
     [InlineData("ComprasDoGovernoDto", "periodo,anosDisponiveis,contratos,valor,sigilosos,valorSigiloso,semModalidade,divergentes,valorDescartado,porAno,porModalidade,porOrgao,contratados")]
     [InlineData("ContratadoDto", "cnpj,nome,contratos,valor")]
+    [InlineData("SancaoDaEntidadeDto", "cadastro,categoria,inicio,fim,vigente,orgaoSancionador,esfera,fundamentacaoLegal,valorDaMulta")]
     [InlineData("GovernoNoAnoDto", "anoDoOrcamento,arrecadou,gastou,pegouEmprestado,fechado")]
     [InlineData("SigiloDto", "cartaoSigiloso,cartaoTotal,transacoesSigilosas,acaoSigilosa,meses,porOrgao")]
     [InlineData("CidadesDaEmendaDto", "quantidade,maiores")]

@@ -73,3 +73,24 @@ class LinhaDeCompra:
     nome_do_contratado: str | None = coluna("Nome Contratado")
     valor_inicial: str | None = coluna("Valor Inicial Compra")
     valor_final: str | None = coluna("Valor Final Compra")
+
+
+@dataclass(frozen=True)
+class LinhaDeSancao:
+    """Uma sanção do CEIS ou do CNEP: `download-de-dados/ceis/AAAAMMDD` e `cnep/AAAAMMDD`.
+
+    RISCO: `documento` traz CNPJ de empresa e também CPF de pessoa física, sem máscara. Ele é lido
+    só para separar os dois: `sancoes.para_empresas` descarta toda linha que não é CNPJ antes de
+    qualquer gravação.
+    """
+
+    cadastro: str | None = coluna("CADASTRO")
+    codigo_da_sancao: str | None = coluna("CÓDIGO DA SANÇÃO")
+    documento: str | None = coluna("CPF OU CNPJ DO SANCIONADO")
+    nome: str | None = coluna("NOME DO SANCIONADO")
+    categoria: str | None = coluna("CATEGORIA DA SANÇÃO")
+    inicio: str | None = coluna("DATA INÍCIO SANÇÃO")
+    fim: str | None = coluna("DATA FINAL SANÇÃO")
+    orgao_sancionador: str | None = coluna("ÓRGÃO SANCIONADOR")
+    esfera: str | None = coluna("ESFERA ÓRGÃO SANCIONADOR")
+    fundamentacao_legal: str | None = coluna("FUNDAMENTAÇÃO LEGAL")

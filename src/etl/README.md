@@ -75,6 +75,7 @@ os testes).
 | `governo` | Quem governa (TSE), orçamento, pago, arrecadação e gasto sigiloso (Portal) | `--anos ...`, `--eleicao` |
 | `defesa-civil` | Cartão da Defesa Civil (CPDC), mês a mês. Mês que o Portal não publicou é pulado e nomeado no log | `--anos ...` |
 | `viagens` | Viagens a serviço do Executivo federal: diárias, passagens, seguro e restituição por órgão, e destinos | `--anos ...` |
+| `sancoes` | Empresas sancionadas no CEIS e no CNEP, pelo CNPJ; pessoa física é descartada antes de gravar | — |
 | `compras` | Contratos publicados no Diário Oficial, por órgão, modalidade e empresa. Valor inicial e final com erro de digitação: entra o menor quando divergem mais de 100 vezes | `--anos ...` |
 
 RISCO: `--arquivo` (`fundo`) e `--diretorio` (`municipios`) só aceitam caminho dentro da pasta
@@ -86,7 +87,7 @@ haveria como refazer a carga a partir dele. Fora da pasta, o comando recusa ante
 | Comando | O que faz |
 |---|---|
 | `rotina --frequencia semanal` | `ingerir`, `senado` e `simbolicas` do ano, `palavras-chave`, `conferir` |
-| `rotina --frequencia mensal` | A semanal, mais `cota`, `emendas`, `sedes-brasilapi`, `convenios`, `governo`, `defesa-civil`, `viagens`, `compras`, `populacao`, `analisar` das duas casas, `conferir` |
+| `rotina --frequencia mensal` | A semanal, mais `cota`, `emendas`, `sedes-brasilapi`, `convenios`, `governo`, `defesa-civil`, `viagens`, `compras`, `sancoes`, `populacao`, `analisar` das duas casas, `conferir` |
 | mensal de jan, abr, jul e out | Também `municipios`: o cadastro da Receita muda por trimestre e pesa gigabytes |
 | mensal de nov e dez de ano de eleição geral | Também `fundo`, `patrimonio` e `redes` da eleição: o TSE fecha a prestação de contas depois do segundo turno |
 
@@ -103,7 +104,7 @@ uma etapa, a ordem não importa.
 
 | Etapa | Comandos | Espera |
 |---|---|---|
-| 1 | `ingerir`, `senado`, `governo`, `defesa-civil`, `viagens`, `compras` | Nada |
+| 1 | `ingerir`, `senado`, `governo`, `defesa-civil`, `viagens`, `compras`, `sancoes` | Nada |
 | 2 | `simbolicas`, `palavras-chave`, `analisar`, `cpf`, `cota`, `emendas` | O voto e o cadastro das duas casas (`simbolicas` só da Câmara) |
 | 3 | `fundo`, `patrimonio`, `redes` | `cpf`: é a chave para casar com o TSE |
 | 3 | `convenios`, `municipios` | `emendas`: são os CNPJs que eles procuram |
@@ -158,7 +159,7 @@ As legislaturas anteriores: `ingerir` e `senado` com `--anos 2001 ... 2022`, e d
 ## 5. Contratos: o que a fonte manda e o que o banco recebe
 
 Os contratos ficam em [`poligraph_etl/contratos/`](poligraph_etl/contratos/). Cota, cartão da
-Defesa Civil, viagens e compras passam por eles; as outras fontes migram para o mesmo formato.
+Defesa Civil, viagens, compras e sanções passam por eles; as outras fontes migram para o mesmo formato.
 
 | Arquivo | O que declara |
 |---|---|

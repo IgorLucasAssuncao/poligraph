@@ -65,6 +65,38 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
     }
 
     /// <summary>
+    /// A entidade sancionada mostra a sanção, vigente ou não, e os contratos com o governo federal.
+    /// </summary>
+    [SkippableFact]
+    public async Task Pagina_MostraSancoesEContratosComOGoverno()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        Db.SancoesDeEmpresas.AddRange(
+            new SancaoDeEmpresaModel
+            {
+                Cadastro = "CEIS", CodigoDaSancao = "1", Cnpj = Associacao, Nome = "ASSOCIACAO", Categoria = "Inidoneidade",
+                Inicio = new DateOnly(2020, 1, 1), Fim = new DateOnly(2021, 1, 1), OrgaoSancionador = "CGU"
+            },
+            new SancaoDeEmpresaModel
+            {
+                Cadastro = "CNEP", CodigoDaSancao = "2", Cnpj = Associacao, Nome = "ASSOCIACAO", Categoria = "Multa",
+                Inicio = new DateOnly(2024, 1, 1), OrgaoSancionador = "Petrobras", ValorDaMulta = 1_000m
+            });
+        Db.ContratadosDoGoverno.AddRange(
+            new ContratadoDoGovernoModel { Ano = 2024, Cnpj = Associacao, Nome = "ASSOCIACAO", Contratos = 2, Valor = 50m },
+            new ContratadoDoGovernoModel { Ano = 2025, Cnpj = Associacao, Nome = "ASSOCIACAO", Contratos = 1, Valor = 25m });
+        await Db.SaveChangesAsync();
+
+        var entidade = await LerAsync<EntidadeLidaCompleta>($"/api/entidades/{Associacao}");
+
+        Assert.Equal([("CNEP", true, 1_000m), ("CEIS", false, (decimal?)null)],
+            entidade.Sancoes.Select(s => (s.Cadastro, s.Vigente, s.ValorDaMulta)));
+        Assert.Equal((3, 75m, 2024, 2025), (entidade.ComOGoverno!.Contratos, entidade.ComOGoverno.Valor,
+            entidade.ComOGoverno.PrimeiroAno, entidade.ComOGoverno.UltimoAno));
+    }
+
+    /// <summary>
     /// A página separa quem é pessoa de quem é grupo, soma por ano e cruza a cota pelo CNPJ —
     /// Não pelo nome, que na cota vem escrito de outro jeito.
     /// </summary>
@@ -172,7 +204,12 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
 
     private record EntidadeLidaCompleta(
         string Cnpj, decimal Recebido, string UrlFonte, List<AnoLido> PorAno, decimal DeParlamentares,
-        PaginaLida<AutorLido> Parlamentares, List<ColetivoLido> Coletivos, CotaLida? NaCota);
+        PaginaLida<AutorLido> Parlamentares, List<ColetivoLido> Coletivos, CotaLida? NaCota,
+        List<SancaoLida> Sancoes, ContratosLidos? ComOGoverno);
+
+    private record SancaoLida(string Cadastro, bool Vigente, decimal? ValorDaMulta);
+
+    private record ContratosLidos(int Contratos, decimal Valor, int PrimeiroAno, int UltimoAno);
 
     private record MunicipioLido(string CodigoIbge);
 

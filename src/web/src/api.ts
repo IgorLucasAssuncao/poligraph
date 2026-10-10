@@ -989,6 +989,19 @@ export type ViagensDoGoverno = {
  * Os contratos publicados pelo Executivo federal no período. `valor` é o final de cada contrato, salvo
  * quando ele e o inicial divergem mais de 100 vezes: aí entra o menor, e `valorDescartado` diz quanto ficou de fora.
  */
+/** Uma sanção do CEIS ou do CNEP. */
+export type SancaoDaEntidade = {
+  cadastro: 'CEIS' | 'CNEP';
+  categoria: string;
+  inicio: string | null;
+  fim: string | null;
+  vigente: boolean;
+  orgaoSancionador: string;
+  esfera: string | null;
+  fundamentacaoLegal: string | null;
+  valorDaMulta: number | null;
+};
+
 export type ComprasDoGoverno = {
   periodo: Periodo;
   anosDisponiveis: number[];
@@ -1445,6 +1458,10 @@ export type Entidade = EntidadeNaLista & {
   coletivos: ColetivoQueMandou[];
   naCota: CotaDaEntidade | null;
   convenios: PaginaDe<ConvenioDaEntidade>;
+  /** CEIS e CNEP, do retrato mais recente. `vigente` compara o fim com hoje; sem fim, vigente. */
+  sancoes: SancaoDaEntidade[];
+  /** Contratos com o Executivo federal; nulo quando não há. */
+  comOGoverno: { contratos: number; valor: number; primeiroAno: number; ultimoAno: number } | null;
 };
 
 export type Busca = {

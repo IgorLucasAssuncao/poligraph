@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
+  type SancaoDaEntidade,
   listarConveniosDaEntidade,
   listarParlamentaresDaEntidade,
   obterEntidade,
@@ -110,6 +111,22 @@ function PaginaDaEntidadeComponent({ dados }: { dados: DadosDaEntidade }) {
         <ColetivosComponent coletivos={dados.coletivos} />
       </section>
 
+      {dados.sancoes.length > 0 && <SancoesComponent sancoes={dados.sancoes} />}
+      {dados.comOGoverno && (
+        <section className="governo-secao">
+          <h2>{T.comOGoverno.titulo}</h2>
+          <p>
+            {T.comOGoverno.resumo(
+              dados.comOGoverno.contratos.toLocaleString('pt-BR'),
+              reaisCompacto(dados.comOGoverno.valor),
+              dados.comOGoverno.primeiroAno,
+              dados.comOGoverno.ultimoAno,
+            )}{' '}
+            <Link to="/governo/compras">{T.comOGoverno.verTodos}</Link>
+          </p>
+        </section>
+      )}
+
       <ConveniosAssinadosComponent dados={dados} />
 
       {dados.naCota && <NaCotaComponent dados={dados} />}
@@ -162,6 +179,40 @@ function QuemMandouComponent({ dados }: { dados: DadosDaEntidade }) {
 }
 
 /** O que parlamentares pagaram a esta mesma entidade com a cota — pelo CNPJ, e com a ressalva antes. */
+/**
+ * As sanções do CEIS e do CNEP. Diz quantas estão em vigor e, de cada uma, quem puniu, quando e
+ * por qual lei, sem adjetivo: a categoria da sanção é a informação.
+ */
+function SancoesComponent({ sancoes }: { sancoes: SancaoDaEntidade[] }) {
+  const S = T.sancoes;
+  return (
+    <section className="governo-secao">
+      <h2>{S.titulo}</h2>
+      <p>{S.resumo(sancoes.filter((s) => s.vigente).length, sancoes.length)}</p>
+      <ul className="lista-de-sancoes">
+        {sancoes.map((s, i) => (
+          <li key={`${s.cadastro}-${i}`}>
+            <strong>{s.categoria}</strong>
+            {s.vigente && <span className="selo-vigente">{S.emVigor}</span>}
+            <small>
+              {[
+                S.cadastros[s.cadastro] ?? s.cadastro,
+                s.inicio ? S.periodo(dataCurta(s.inicio), s.fim ? dataCurta(s.fim) : null) : null,
+                s.orgaoSancionador,
+                s.valorDaMulta ? S.multa(reais(s.valorDaMulta)) : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </small>
+            {s.fundamentacaoLegal && <small>{s.fundamentacaoLegal}</small>}
+          </li>
+        ))}
+      </ul>
+      <p className="ajuda">{S.nota}</p>
+    </section>
+  );
+}
+
 function NaCotaComponent({ dados }: { dados: DadosDaEntidade }) {
   const cota = dados.naCota!;
 

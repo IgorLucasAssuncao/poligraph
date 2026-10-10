@@ -51,6 +51,31 @@ export const TEXTOS_DAS_ENTIDADES = {
     colunas: ['Parlamentar', 'Partido', 'UF', 'Casa', 'Emendas', 'Recebido'],
   },
 
+  sancoes: {
+    titulo: 'Sanções no cadastro de empresas punidas',
+    resumo: (vigentes: number, total: number) =>
+      vigentes > 0
+        ? `${total} ${total === 1 ? 'sanção registrada' : 'sanções registradas'}, ${vigentes} ainda em vigor.`
+        : `${total} ${total === 1 ? 'sanção registrada' : 'sanções registradas'}, nenhuma em vigor hoje.`,
+    cadastros: {
+      CEIS: 'CEIS, empresas inidôneas e suspensas',
+      CNEP: 'CNEP, empresas punidas pela Lei Anticorrupção',
+    } as Record<string, string>,
+    periodo: (inicio: string, fim: string | null) => (fim ? `de ${inicio} a ${fim}` : `desde ${inicio}, sem data de fim`),
+    emVigor: 'em vigor',
+    multa: (valor: string) => `multa de ${valor}`,
+    nota:
+      'O cadastro é do Portal da Transparência. Sanção não impede receber emenda já empenhada; o que ela proíbe ' +
+      'depende da categoria e do órgão que puniu.',
+  },
+
+  comOGoverno: {
+    titulo: 'Contratos com o governo federal',
+    resumo: (contratos: string, valor: string, de: number, ate: number) =>
+      `${contratos} contratos publicados no Diário Oficial de ${de} a ${ate}, que somam ${valor}.`,
+    verTodos: 'Ver compras e contratos',
+  },
+
   naCota: {
     titulo: 'Também aparece na cota parlamentar',
     aviso: (total: string, notas: number): ReactNode => (

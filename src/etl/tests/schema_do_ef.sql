@@ -999,3 +999,35 @@ VALUES ('20261010001054_ComprasDoGoverno', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+CREATE TABLE sancoes_de_empresas (
+    cadastro character varying(4) NOT NULL,
+    codigo_da_sancao text NOT NULL,
+    cnpj character varying(14) NOT NULL,
+    nome text NOT NULL,
+    categoria text NOT NULL,
+    inicio date,
+    fim date,
+    orgao_sancionador text NOT NULL,
+    esfera character varying(9),
+    fundamentacao_legal text,
+    valor_da_multa numeric(18,2),
+    carga_id bigint,
+    CONSTRAINT pk_sancoes_de_empresas PRIMARY KEY (cadastro, codigo_da_sancao),
+    CONSTRAINT ck_sancao_cadastro CHECK (cadastro IN ('CEIS','CNEP')),
+    CONSTRAINT ck_sancao_cnpj CHECK (cnpj ~ '^[0-9]{14}$'),
+    CONSTRAINT ck_sancao_esfera CHECK (esfera IS NULL OR esfera IN ('FEDERAL','ESTADUAL','MUNICIPAL')),
+    CONSTRAINT ck_sancao_multa CHECK (valor_da_multa IS NULL OR cadastro = 'CNEP'),
+    CONSTRAINT ck_sancao_periodo CHECK (fim IS NULL OR inicio IS NULL OR fim >= inicio),
+    CONSTRAINT fk_sancoes_de_empresas_cargas_carga_id FOREIGN KEY (carga_id) REFERENCES cargas (id) ON DELETE RESTRICT
+);
+
+CREATE INDEX ix_sancao_cnpj ON sancoes_de_empresas (cnpj);
+
+CREATE INDEX ix_sancoes_de_empresas_carga_id ON sancoes_de_empresas (carga_id);
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261010013128_SancoesDeEmpresas', '10.0.11');
+
+COMMIT;
+

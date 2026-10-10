@@ -75,7 +75,32 @@ public class ServicoEntidades(
             Parlamentares: Paginar(detalhe.Parlamentares, 1),
             Coletivos: detalhe.Coletivos,
             NaCota: detalhe.NaCota,
-            Convenios: Paginar(detalhe.Convenios, 1));
+            Convenios: Paginar(detalhe.Convenios, 1),
+            Sancoes: await SancoesAsync(cnpj.Digitos, ct),
+            ComOGoverno: await ContratosComOGovernoAsync(cnpj.Digitos, ct));
+    }
+
+    /// <summary>As sanções do CEIS e do CNEP à entidade, da mais recente. Vigente quando não tem fim ou o fim não passou.</summary>
+    private async Task<IReadOnlyList<SancaoDaEntidadeDto>> SancoesAsync(string cnpj, CancellationToken ct)
+    {
+        var hoje = DateOnly.FromDateTime(TimeProvider.System.GetUtcNow().UtcDateTime);
+        var linhas = await _db.SancoesDeEmpresas.AsNoTracking()
+            .Where(s => s.Cnpj == cnpj)
+            .OrderByDescending(s => s.Inicio)
+            .ToListAsync(ct);
+
+        return [.. linhas.Select(s => new SancaoDaEntidadeDto(
+            s.Cadastro, s.Categoria, s.Inicio, s.Fim, s.Fim is null || s.Fim >= hoje, s.OrgaoSancionador,
+            s.Esfera, s.FundamentacaoLegal, s.ValorDaMulta))];
+    }
+
+    /// <summary>Os contratos da entidade com o Executivo federal. Nulo quando não tem nenhum.</summary>
+    private async Task<ContratosComOGovernoDto?> ContratosComOGovernoAsync(string cnpj, CancellationToken ct)
+    {
+        var anos = await _db.ContratadosDoGoverno.AsNoTracking().Where(c => c.Cnpj == cnpj).ToListAsync(ct);
+        return anos.Count == 0
+            ? null
+            : new ContratosComOGovernoDto(anos.Sum(a => a.Contratos), anos.Sum(a => a.Valor), anos.Min(a => a.Ano), anos.Max(a => a.Ano));
     }
 
     /// <summary>Os convênios da entidade, em páginas. A primeira é a da página.</summary>

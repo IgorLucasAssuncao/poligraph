@@ -133,7 +133,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
             "nos_metrica", "orientacoes", "perguntas", "pessoa_fonte_ids",
             "pessoas",
             "proposicoes", "receitas_de_campanha", "receitas_por_origem", "reconciliacao_motivos", "reconciliacoes",
-            "redes_sociais", "segue", "similaridades",
+            "redes_sociais", "sancoes_de_empresas", "segue", "similaridades",
             "usuarios", "votacoes", "votacoes_simbolicas", "votos",
         };
 

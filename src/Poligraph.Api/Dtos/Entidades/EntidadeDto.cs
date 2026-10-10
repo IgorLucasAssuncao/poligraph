@@ -44,6 +44,7 @@ public enum GrupoDeEntidade
 /// <summary>A página de uma entidade: quanto recebeu de emenda, de quem, e se aparece na cota.</summary>
 /// <remarks>
 /// <para>Todos os anos carregados, com a divisão por ano ao lado. O ano é o da emenda.</para>
+/// <para><see cref="Sancoes"/> são as do CEIS e do CNEP no retrato mais recente; <see cref="ComOGoverno"/>, os contratos com o Executivo federal. Nulo ou vazio quando não há.</para>
 /// </remarks>
 public record EntidadeDto(
     string Cnpj,
@@ -59,7 +60,17 @@ public record EntidadeDto(
     PaginaDto<ParlamentarQueMandouDto> Parlamentares,
     IReadOnlyList<ColetivoQueMandouDto> Coletivos,
     CotaDaEntidadeDto? NaCota,
-    PaginaDto<ConvenioDaEntidadeDto> Convenios);
+    PaginaDto<ConvenioDaEntidadeDto> Convenios,
+    IReadOnlyList<SancaoDaEntidadeDto> Sancoes,
+    ContratosComOGovernoDto? ComOGoverno);
+
+/// <summary>Uma sanção do CEIS ou do CNEP à entidade. <see cref="Vigente"/> compara o fim com a data de hoje.</summary>
+public record SancaoDaEntidadeDto(
+    string Cadastro, string Categoria, DateOnly? Inicio, DateOnly? Fim, bool Vigente, string OrgaoSancionador,
+    string? Esfera, string? FundamentacaoLegal, decimal? ValorDaMulta);
+
+/// <summary>Os contratos da entidade com o Executivo federal, somando os anos carregados.</summary>
+public record ContratosComOGovernoDto(int Contratos, decimal Valor, int PrimeiroAno, int UltimoAno);
 
 /// <summary>
 /// Um convênio que a entidade assinou com dinheiro de emenda: o que foi combinado e quanto já saiu.
