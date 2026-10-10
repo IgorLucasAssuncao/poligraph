@@ -346,6 +346,8 @@ export type Panorama = {
   porCasa: PanoramaDaCasa[];
   /** Quantas o cidadão responde, tiradas do poço. ATENÇÃO: não é o mesmo número. */
   perguntasNoQuestionario: number;
+  /** A cota e o pago em emendas nos anos da legislatura, das duas casas; nulo sem carga. */
+  dinheiro: { primeiroAno: number; ultimoAno: number; cota: number; emendasPagas: number } | null;
 };
 
 /** Sem legislatura, a corrente. Uma fora da base responde 404. */

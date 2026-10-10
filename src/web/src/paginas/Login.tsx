@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { NOME_DA_CASA, obterPanorama, type Panorama } from '../api';
+import { reaisCompacto } from '../formato';
 import { BotaoGoogleComponent } from '../componentes/BotaoGoogle';
 import { MarcaComponent } from '../componentes/Icones';
 import { SeletorDeTemaComponent } from '../componentes/SeletorDeTema';
@@ -53,9 +54,9 @@ export function LoginComponent() {
 
   return (
     <div className="tela-login">
-      <div className="login-marca">
+      <Link to="/" className="login-marca" aria-label={T.paraOInicio}>
         <MarcaComponent tamanho={88} />
-      </div>
+      </Link>
 
       <div className="login-conteudo">
         <div className="login-topo">
@@ -68,11 +69,14 @@ export function LoginComponent() {
 
         <div className="acao-login">
           <BotaoGoogleComponent aoEntrar={entrou} />
+          {leituraPublica && (
+            <Link to={voltar} className="botao-sem-conta">
+              {T.semConta}
+            </Link>
+          )}
         </div>
 
-        {leituraPublica && (
-          <p className="login-opcional">{T.opcional(voltar)}</p>
-        )}
+        {leituraPublica && <p className="login-opcional">{T.opcional}</p>}
 
         {panorama && panorama.porCasa.length > 0 && <BaseComponent panorama={panorama} />}
 
@@ -109,6 +113,20 @@ function BaseComponent({ panorama }: { panorama: Panorama }) {
           <small>{T.base(casa.votosComPosicao.toLocaleString('pt-BR'), casa.votacoes.toLocaleString('pt-BR'))}</small>
         </div>
       ))}
+      {panorama.dinheiro && (
+        <div>
+          <dt>{T.dinheiro}</dt>
+          <dd>{reaisCompacto(panorama.dinheiro.cota + panorama.dinheiro.emendasPagas)}</dd>
+          <small>
+            {T.dinheiroDetalhe(
+              reaisCompacto(panorama.dinheiro.cota),
+              reaisCompacto(panorama.dinheiro.emendasPagas),
+              panorama.dinheiro.primeiroAno,
+              panorama.dinheiro.ultimoAno,
+            )}
+          </small>
+        </div>
+      )}
     </dl>
   );
 }

@@ -16,4 +16,11 @@ public record PanoramaDto(
     short? Legislatura,
     int PerguntasAtivas,
     IReadOnlyList<PanoramaDaCasaDto> PorCasa,
-    int PerguntasNoQuestionario = 0);
+    int PerguntasNoQuestionario = 0,
+    DinheiroDaLegislaturaDto? Dinheiro = null);
+
+/// <summary>O dinheiro do mandato na legislatura: a cota gasta e o pago em emendas, das duas casas, nos anos dela.</summary>
+/// <remarks>
+/// <para>O pago em emendas soma o pago no ano e o pago nos anos seguintes das emendas desses anos, como a ficha.</para>
+/// </remarks>
+public record DinheiroDaLegislaturaDto(int PrimeiroAno, int UltimoAno, decimal Cota, decimal EmendasPagas);

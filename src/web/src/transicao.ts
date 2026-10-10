@@ -1,3 +1,4 @@
+import { useEffect, useRef, type RefObject } from 'react';
 import { flushSync } from 'react-dom';
 
 /**
@@ -24,6 +25,39 @@ export function comTransicao(mudar: () => void): void {
     }
 
     document.startViewTransition(() => flushSync(mudar));
+}
+
+/** Quanto dura a entrada de uma tela: o `--t-medio` do CSS. */
+const DURACAO_DA_ENTRADA = 260;
+
+/** A curva `--curva-entrada` do CSS: algo que chega acelera rápido e freia longo. */
+const CURVA_DA_ENTRADA = 'cubic-bezier(.05, .7, .1, 1)';
+
+/**
+ * Anima a chegada do conteúdo a cada troca de endereço: sobe 8 px e aparece em 260 ms.
+ *
+ * DECISÃO (2026-10-10): o site usa `BrowserRouter`, o modo declarativo do React Router 7, e nele o
+ * `viewTransition` do link não tem efeito; a troca de tela era instantânea. A animação vai no
+ * miolo da página, com a Web Animations API, sem desmontar nada: cabeçalho, faixa e rodapé ficam
+ * parados. A primeira tela, a da carga, não anima.
+ *
+ * ATENÇÃO: quem pediu menos movimento vê só a fusão curta, sem deslocamento.
+ */
+export function useEntradaAoNavegar(elemento: RefObject<HTMLElement | null>, chave: string): void {
+  const primeira = useRef(true);
+
+  useEffect(() => {
+    if (primeira.current) {
+      primeira.current = false;
+      return;
+    }
+    const alvo = elemento.current;
+    if (!alvo?.animate) return;
+    const quadros = preferemMenosMovimento()
+      ? [{ opacity: 0.6 }, { opacity: 1 }]
+      : [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }];
+    alvo.animate(quadros, { duration: DURACAO_DA_ENTRADA, easing: CURVA_DA_ENTRADA });
+  }, [elemento, chave]);
 }
 
 /**

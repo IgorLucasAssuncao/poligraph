@@ -9,6 +9,8 @@ import { InterruptorDoModoAuditoriaComponent, ProvedorDoModoAuditoriaComponent }
 import { ProvedorDoTourComponent } from './Tour';
 import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
 import { TEXTOS_DO_SITE as T } from '../textos/site';
+import { useRef } from 'react';
+import { useEntradaAoNavegar } from '../transicao';
 
 /**
  * A largura útil de uma tela.
@@ -59,6 +61,8 @@ const LARGURA: { padrao: Largura; rotas: [string, Largura][] } = {
  */
 export function LayoutComponent({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
+  const corpo = useRef<HTMLElement>(null);
+  useEntradaAoNavegar(corpo, pathname);
 
   const largura =
     LARGURA.rotas.find(([rota]) =>
@@ -72,7 +76,7 @@ export function LayoutComponent({ children }: { children: React.ReactNode }) {
           <FaixaDeProcedenciaComponent />
           <CabecalhoDoSiteComponent />
 
-          <main className="corpo" data-largura={largura}>
+          <main ref={corpo} className="corpo" data-largura={largura}>
             {children}
           </main>
 

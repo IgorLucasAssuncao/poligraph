@@ -35,6 +35,7 @@ const PANORAMA: Panorama = {
   legislatura: 57,
   perguntasAtivas: 49,
   perguntasNoQuestionario: 24,
+  dinheiro: null,
   porCasa: [
     {
       casa: 'CAMARA', parlamentares: 513, votacoes: 1123, votacoesSemVotoNominal: 4, votacoesSecretas: 2,

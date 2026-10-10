@@ -740,7 +740,15 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   background: var(--painel); border-left: 3px solid var(--perigo); border-radius: 0 var(--raio) var(--raio) 0;
   font-size: var(--t-2); line-height: 1.5; color: var(--suave);
 }
-.login-opcional { margin: .9rem 0 0; color: var(--suave); font-size: var(--t-2); }
+.login-opcional { margin: .6rem 0 0; color: var(--suave); font-size: var(--t-2); }
+/* O caminho sem conta, logo abaixo do login: mesma largura de botão, em contorno, para não competir com ele. */
+.botao-sem-conta {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 40px; min-width: 228px;
+  padding: 0 1rem; border: 1px solid var(--realce); border-radius: var(--raio);
+  color: var(--realce); font-size: var(--t-2); font-weight: 600; text-decoration: none;
+}
+.botao-sem-conta:hover { background: var(--realce); color: var(--sobre-realce); }
+.botao-sem-conta:focus-visible { outline: 3px solid var(--realce); outline-offset: 2px; }
 .login-opcional a { color: var(--realce); }
 .aviso-privacidade {
   font-size: var(--t-1); color: var(--suave);

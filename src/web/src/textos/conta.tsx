@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 /** O texto da tela de entrada e da página da conta. */
@@ -7,20 +6,18 @@ export const TEXTOS_DA_CONTA = {
     titulo: 'Quem vota como você?',
     chamada: (
       <>
-        Compare sua posição com o <strong>voto registrado em plenário</strong> de deputados e senadores, votação por
-        votação.
+        Compare seu voto com o <strong>voto registrado</strong> de deputados e senadores e veja para onde vai o
+        dinheiro público.
       </>
     ),
-    opcional: (voltar: string): ReactNode => (
-      <>
-        A conta serve para <strong>seguir parlamentares</strong>. O questionário e todos os dados funcionam sem ela.{' '}
-        <Link to={voltar}>Continuar sem conta</Link>
-      </>
-    ),
+    opcional: 'Só precisa entrar para seguir parlamentares.',
+    semConta: 'Continuar sem conta',
+    paraOInicio: 'Ir para a página inicial',
     oQueTem: [
-      'Um questionário montado a partir de votações nominais reais',
-      'O perfil de cada parlamentar, com histórico de votos e gastos do mandato',
-      'O desenho de quem vota parecido com quem',
+      'Um questionário com votações reais do plenário',
+      'Votos, cota, emendas e campanha de cada parlamentar',
+      'Quem vota parecido com quem',
+      'Emendas por cidade e gastos do governo federal',
     ],
     privacidade: (
       <>
@@ -33,6 +30,9 @@ export const TEXTOS_DA_CONTA = {
     ),
     naoERecomendacao: 'Não é recomendação de voto.',
     base: (votos: string, votacoes: string) => `${votos} votos em ${votacoes} votações`,
+    dinheiro: 'dinheiro do mandato',
+    dinheiroDetalhe: (cota: string, emendas: string, de: number, ate: number) =>
+      `${cota} de cota e ${emendas} pagos em emendas, ${de} a ${ate}`,
   },
 
   conta: {

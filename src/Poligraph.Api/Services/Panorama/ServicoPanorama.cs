@@ -63,7 +63,23 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
 
         return new PanoramaDto(
             legislatura, perguntas, [.. porCasa.Where(c => c.Votacoes > 0)],
-            await _questionario.TamanhoAsync(ct));
+            await _questionario.TamanhoAsync(ct),
+            await DinheiroAsync(legislatura.Value, ct));
+    }
+
+    /// <summary>A cota e o pago em emendas nos anos da legislatura. Nulo quando a base não tem nenhum dos dois.</summary>
+    private async Task<DinheiroDaLegislaturaDto?> DinheiroAsync(short legislatura, CancellationToken ct)
+    {
+        var primeiro = (short)Legislaturas.AnoInicial(legislatura);
+        var ultimo = (short)(primeiro + 3);
+        var cota = await _db.Despesas.AsNoTracking()
+            .Where(d => d.Ano >= primeiro && d.Ano <= ultimo)
+            .SumAsync(d => (decimal?)d.ValorLiquido, ct) ?? 0;
+        var emendas = await _db.Emendas.AsNoTracking()
+            .Where(e => e.Ano >= primeiro && e.Ano <= ultimo)
+            .SumAsync(e => (decimal?)(e.ValorPago + e.ValorRestoPago), ct) ?? 0;
+
+        return cota == 0 && emendas == 0 ? null : new DinheiroDaLegislaturaDto(primeiro, ultimo, cota, emendas);
     }
 
     private async Task<IReadOnlyList<LegislaturaDto>> CalcularLegislaturasAsync(CancellationToken ct)
