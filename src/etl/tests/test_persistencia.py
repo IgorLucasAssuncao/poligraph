@@ -427,3 +427,33 @@ def test_apagar_votacao_com_pergunta_recusa_tudo(conexao):
         persistencia.apagar_votacoes(conexao, ["SF-1483", "2358548-89"])
 
     assert conexao.execute("SELECT count(*) FROM votacoes").fetchone()[0] == 2
+
+
+def _carga(conexao, url: str) -> int:
+    return conexao.execute(
+        "INSERT INTO cargas (fonte, url, sha256, bytes, comando) VALUES ('CAMARA', %s, repeat('d', 64), 1, 'c') RETURNING id",
+        (url,),
+    ).fetchone()[0]
+
+
+def test_pessoa_proposicao_e_rede_saem_com_o_arquivo_de_origem(conexao):
+    """A pessoa guarda o arquivo que a gravou por último; uma gravação sem carga não apaga a que havia."""
+    deputados = _carga(conexao, "deputados.csv")
+    proposicoes = _carga(conexao, "votacoesProposicoes-2025.csv")
+    redes = _carga(conexao, "deputados/{id}")
+
+    persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Ana Ribeiro")], deputados)
+    persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Ana Ribeiro")])
+    pessoa_id = conexao.execute("SELECT id FROM pessoas").fetchone()[0]
+    persistencia.gravar_proposicoes(conexao, [{
+        "casa": "CAMARA", "id": 2_400_000, "sigla_tipo": "PL", "numero": 1, "ano": 2025,
+        "ementa": "Ementa", "url_inteiro_teor": None,
+    }], proposicoes)
+    persistencia.gravar_redes(
+        conexao, [pessoa_id], [{"pessoa_id": pessoa_id, "url": "https://instagram.com/ana", "rede": "INSTAGRAM", "fonte": "CAMARA"}],
+        "CAMARA", redes,
+    )
+
+    assert conexao.execute("SELECT carga_id FROM pessoas").fetchone()[0] == deputados
+    assert conexao.execute("SELECT carga_id FROM proposicoes").fetchone()[0] == proposicoes
+    assert conexao.execute("SELECT carga_id FROM redes_sociais").fetchone()[0] == redes

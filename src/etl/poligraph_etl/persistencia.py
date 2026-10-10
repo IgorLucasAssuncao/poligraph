@@ -52,7 +52,7 @@ class ResumoCarga:
 # ═══════════════════════════════════════════════════════════════════
 
 
-def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
+def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict], carga_id: int | None = None) -> int:
     """Insere ou atualiza pessoas, casando pelo ID externo da fonte.
 
     DECISÃO: O `pessoa_fonte_id` é que dá a idempotência: a chave é (fonte, id_externo),
@@ -64,10 +64,12 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
     `url_foto` nula, porque o registro de voto não traz foto. Com
     atribuição direta, os 104 senadores terminavam sem foto no banco,
     sem erro e sem log.
+
+    A carga é a do arquivo que gravou a linha por último; a pessoa que já trazia a sua a mantém.
     """
     inseridas = 0
     with conexao.cursor() as cur:
-        for pessoa in pessoas:
+        for pessoa in _com_carga(pessoas, carga_id):
             cur.execute(
                 """
                 SELECT pessoa_id FROM pessoa_fonte_ids
@@ -83,7 +85,8 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
                     UPDATE pessoas
                        SET nome_civil = %(nome_civil)s,
                            nome_exibicao = %(nome_exibicao)s,
-                           url_foto = COALESCE(%(url_foto)s, url_foto)
+                           url_foto = COALESCE(%(url_foto)s, url_foto),
+                           carga_id = COALESCE(%(carga_id)s, carga_id)
                      WHERE id = %(id)s
                     """,
                     {**pessoa, "id": existente[0]},
@@ -92,8 +95,8 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
 
             cur.execute(
                 """
-                INSERT INTO pessoas (nome_civil, nome_exibicao, cpf_hash, url_foto)
-                VALUES (%(nome_civil)s, %(nome_exibicao)s, %(cpf_hash)s, %(url_foto)s)
+                INSERT INTO pessoas (nome_civil, nome_exibicao, cpf_hash, url_foto, carga_id)
+                VALUES (%(nome_civil)s, %(nome_exibicao)s, %(cpf_hash)s, %(url_foto)s, %(carga_id)s)
                 RETURNING id
                 """,
                 pessoa,
@@ -114,7 +117,7 @@ def gravar_pessoas(conexao: psycopg.Connection, pessoas: Sequence[dict]) -> int:
 
 
 def gravar_proposicoes(
-    conexao: psycopg.Connection, proposicoes: Sequence[dict]
+    conexao: psycopg.Connection, proposicoes: Sequence[dict], carga_id: int | None = None
 ) -> int:
     """Grava proposições. `ON CONFLICT DO UPDATE` — a Câmara corrige ementa retroativa.
 
@@ -127,16 +130,17 @@ def gravar_proposicoes(
         conexao,
         """
         INSERT INTO proposicoes (casa, id, sigla_tipo, numero, ano, ementa,
-                                 url_inteiro_teor)
+                                 url_inteiro_teor, carga_id)
         VALUES (%(casa)s, %(id)s, %(sigla_tipo)s, %(numero)s, %(ano)s, %(ementa)s,
-                %(url_inteiro_teor)s)
+                %(url_inteiro_teor)s, %(carga_id)s)
         ON CONFLICT (casa, id) DO UPDATE SET
             sigla_tipo = EXCLUDED.sigla_tipo,
             numero = EXCLUDED.numero,
             ano = EXCLUDED.ano,
-            ementa = EXCLUDED.ementa
+            ementa = EXCLUDED.ementa,
+            carga_id = COALESCE(EXCLUDED.carga_id, proposicoes.carga_id)
         """,
-        proposicoes,
+        _com_carga(proposicoes, carga_id),
     )
 
 
@@ -1392,7 +1396,9 @@ def senadores_da_legislatura(conexao: psycopg.Connection) -> set[int]:
     }
 
 
-def gravar_redes(conexao: psycopg.Connection, pessoas: list[int], linhas: Sequence[dict], fonte: str) -> int:
+def gravar_redes(
+    conexao: psycopg.Connection, pessoas: list[int], linhas: Sequence[dict], fonte: str, carga_id: int | None = None
+) -> int:
     """Substitui as redes da fonte para as pessoas consultadas — e só para elas.
 
     ATENÇÃO: Quem não foi consultado (a requisição falhou) mantém o que tinha: apagar tudo da fonte
@@ -1402,11 +1408,11 @@ def gravar_redes(conexao: psycopg.Connection, pessoas: list[int], linhas: Sequen
     return _executar_em_lotes(
         conexao,
         """
-        INSERT INTO redes_sociais (pessoa_id, url, rede, fonte)
-        VALUES (%(pessoa_id)s, %(url)s, %(rede)s, %(fonte)s)
+        INSERT INTO redes_sociais (pessoa_id, url, rede, fonte, carga_id)
+        VALUES (%(pessoa_id)s, %(url)s, %(rede)s, %(fonte)s, %(carga_id)s)
         ON CONFLICT (pessoa_id, url) DO NOTHING
         """,
-        linhas,
+        _com_carga(linhas, carga_id),
     )
 
 

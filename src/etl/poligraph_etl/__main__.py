@@ -386,8 +386,9 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
     """
     log.info("Ingerindo deputados...")
     caminho = camara.baixar("deputados", anos[0], CACHE / "deputados.csv")
+    carga_dos_deputados = _carga_do_arquivo(conexao, "CAMARA", camara.url_do_arquivo("deputados", anos[0]), caminho)
     deputados = ingestao.deputados_para_linhas(camara.ler_csv(caminho))
-    novos = persistencia.gravar_pessoas(conexao, deputados)
+    novos = persistencia.gravar_pessoas(conexao, deputados, carga_dos_deputados)
     log.info("  %d deputados no arquivo, %d novos", len(deputados), novos)
 
     if not deputados:
@@ -444,7 +445,10 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
             camara.ler_csv(arquivo_prop).to_dict("records"),
             {v["id"] for v in votacoes},
         )
-        persistencia.gravar_proposicoes(conexao, lista)
+        persistencia.gravar_proposicoes(
+            conexao, lista,
+            _carga_do_arquivo(conexao, "CAMARA", camara.url_do_arquivo("votacoesProposicoes", ano), arquivo_prop),
+        )
         vinculadas = persistencia.vincular_proposicoes(conexao, vinculo)
         log.info(
             "  %d proposições, %d votações vinculadas (%d sem ementa)",
@@ -523,6 +527,17 @@ def _carga_de_varios(
     return _carga_do_arquivo(conexao, fonte, url, indice)
 
 
+def _carga_de_resposta(conexao: psycopg.Connection, fonte: str, url: str, conteudo, arquivo: Path) -> int:
+    """Grava em arquivo o que uma API devolveu e registra esse arquivo, com o hash dele.
+
+    Para o dado que não vem de arquivo publicado, como os senadores em exercício ou a rede de cada
+    deputado: sem isto, a linha não teria de onde dizer que veio.
+    """
+    arquivo.parent.mkdir(parents=True, exist_ok=True)
+    arquivo.write_text(json.dumps(conteudo, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+    return _carga_do_arquivo(conexao, fonte, url, arquivo)
+
+
 def _carga_do_arquivo(conexao: psycopg.Connection, fonte: str, url: str, arquivo: Path) -> int:
     """Registra a carga de um arquivo que já está no cache (Pendência 72) e devolve o id.
 
@@ -554,8 +569,13 @@ def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
     mas o log precisa denunciar — senão a base encolhe sem ninguém perceber.
     """
     log.info("Ingerindo senadores...")
-    senadores = ingestao_senado.senadores_para_linhas(senado.baixar_senadores())
-    novos = persistencia.gravar_pessoas(conexao, senadores)
+    em_exercicio = senado.baixar_senadores()
+    carga_dos_senadores = _carga_de_resposta(
+        conexao, "SENADO", f"{senado.BASE}/senador/lista/atual", em_exercicio,
+        CACHE / "respostas" / f"senadores-{date.today():%Y%m%d}.json",
+    )
+    senadores = ingestao_senado.senadores_para_linhas(em_exercicio)
+    novos = persistencia.gravar_pessoas(conexao, senadores, carga_dos_senadores)
     log.info("  %d senadores em exercício, %d novos", len(senadores), novos)
 
     if not senadores:
@@ -586,7 +606,7 @@ def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
         anteriores = ingestao_senado.senadores_dos_votos(
             votacoes_brutas, ja_conhecidos={s["id_externo"] for s in senadores}
         )
-        recuperados = persistencia.gravar_pessoas(conexao, anteriores)
+        recuperados = persistencia.gravar_pessoas(conexao, anteriores, carga)
         if recuperados:
             log.info("  %d senadores fora da lista de exercício, criados pelo voto",
                      recuperados)
@@ -1008,10 +1028,12 @@ def _redes(conexao: psycopg.Connection, anos: list[int]) -> None:
     """
     consultados: list[int] = []
     da_camara: list[dict] = []
+    respostas_da_camara: dict[str, list[str]] = {}
     for i, (id_camara, pessoa_id) in enumerate(persistencia.deputados_da_legislatura(conexao), 1):
         urls = camara.redes_do_deputado(id_camara)
         if urls is not None:
             consultados.append(pessoa_id)
+            respostas_da_camara[id_camara] = urls
             da_camara.extend(redes.para_linhas(pessoa_id, urls, "CAMARA"))
         if i % 100 == 0:
             log.info("  %d deputados consultados", i)
@@ -1026,17 +1048,22 @@ def _redes(conexao: psycopg.Connection, anos: list[int]) -> None:
                                 CACHE / f"consulta-cand-{ano}.zip")
         ligadas = patrimonio.candidaturas(candidatos, hashes, {"5"})
         arquivo = tse.baixar(f"{tse.CDN}/{redes.RECURSO_TSE.format(ano=ano)}", CACHE / f"rede-social-{ano}.zip")
+        carga_do_ano = _carga_do_arquivo(conexao, "TSE", f"{tse.CDN}/{redes.RECURSO_TSE.format(ano=ano)}", arquivo)
         por_pessoa: dict[int, list[str]] = {}
         for linha in patrimonio.linhas_do_zip(arquivo):
             pessoa = ligadas.get(linha.get("SQ_CANDIDATO"))
             if pessoa is not None and pessoa not in do_tse:
                 por_pessoa.setdefault(pessoa, []).append(redes.url_da_linha(linha))
         for pessoa, urls in por_pessoa.items():
-            do_tse[pessoa] = redes.para_linhas(pessoa, urls, "TSE")
+            do_tse[pessoa] = [{**linha, "carga_id": carga_do_ano} for linha in redes.para_linhas(pessoa, urls, "TSE")]
     log.info("  TSE: %d senadores com rede", len(do_tse))
 
+    carga_da_camara = _carga_de_resposta(
+        conexao, "CAMARA", f"{camara.API}/deputados/{{id}}", respostas_da_camara,
+        CACHE / "respostas" / f"redes-camara-{date.today():%Y%m%d}.json",
+    )
     with conexao.transaction():
-        persistencia.gravar_redes(conexao, consultados, da_camara, "CAMARA")
+        persistencia.gravar_redes(conexao, consultados, da_camara, "CAMARA", carga_da_camara)
         persistencia.gravar_redes(conexao, list(senadores), [l for ls in do_tse.values() for l in ls], "TSE")
 
 
@@ -2052,7 +2079,11 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
     linhas, vinculo = proposicoes.do_senado(materias, codigos)
 
     if linhas:
-        persistencia.gravar_proposicoes(conexao, linhas)
+        carga_das_materias = _carga_de_resposta(
+            conexao, "SENADO", f"{senado.BASE}/materia/", [m for m in materias if m is not None],
+            CACHE / "respostas" / f"materias-{date.today():%Y%m%d-%H%M%S}.json",
+        )
+        persistencia.gravar_proposicoes(conexao, linhas, carga_das_materias)
 
     todas = {v: c for v, c in codigos.items()}
     ligados = persistencia.vincular_proposicoes(
