@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useCarga } from './Atualizando';
 import {
   NOME_DA_CASA,
   obterGrafo,
@@ -245,26 +246,8 @@ function SecaoDaCasaComponent({
  * Falhar em buscar o grafo omite o desenho, nunca a tela: as listas são o resultado, e o grafo é ilustração.
  */
 function useGrafo(precisa: boolean, casa: ResultadoPorCasa['casa']): Grafo | null {
-  const [lido, setLido] = useState<{ casa: ResultadoPorCasa['casa']; grafo: Grafo | null } | null>(null);
-
-  useEffect(() => {
-    if (!precisa) return;
-
-    let vivo = true;
-    obterGrafo(casa)
-      .then((recebido) => {
-        if (vivo) setLido({ casa, grafo: recebido });
-      })
-      .catch(() => {
-        if (vivo) setLido({ casa, grafo: null });
-      });
-
-    return () => {
-      vivo = false;
-    };
-  }, [precisa, casa]);
-
-  return precisa && lido?.casa === casa ? lido.grafo : null;
+  const lido = useCarga(['grafo', casa, null], () => obterGrafo(casa), { ativo: precisa, manter: 2 });
+  return precisa && !lido.atualizando ? (lido.dados ?? null) : null;
 }
 
 /**

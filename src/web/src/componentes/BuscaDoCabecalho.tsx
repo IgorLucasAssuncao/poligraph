@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { buscarTudo, type Busca } from '../api';
+import { useCarga } from './Atualizando';
+import { useAdiado } from './useAdiado';
 import { nomeProprio, periodoDaLegislatura } from '../formato';
 import { IconeExplorarComponent } from './Icones';
 import { TEXTOS_DO_SITE as T } from '../textos/site';
@@ -17,7 +19,6 @@ import { TEXTOS_DO_SITE as T } from '../textos/site';
  */
 export function BuscaDoCabecalhoComponent() {
   const [termo, setTermo] = useState('');
-  const [resposta, setResposta] = useState<Busca | null>(null);
   const [aberta, setAberta] = useState(false);
   const [ativa, setAtiva] = useState(0);
   const [expandida, setExpandida] = useState(false);
@@ -26,24 +27,15 @@ export function BuscaDoCabecalhoComponent() {
   const navegar = useNavigate();
   const id = useId();
   const buscando = termo.trim().length >= 2;
+  const adiado = useAdiado(termo.trim(), 250);
+  const lida = useCarga(['busca', adiado], () => buscarTudo(adiado), { ativo: adiado.length >= 2 });
+  const resposta: Busca | null = lida.erro ? null : (lida.dados ?? null);
+  const [chaveDaResposta, setChaveDaResposta] = useState(lida.chaveDoDado);
+  if (chaveDaResposta !== lida.chaveDoDado) {
+    setChaveDaResposta(lida.chaveDoDado);
+    setAtiva(0);
+  }
 
-  useEffect(() => {
-    if (!buscando) return;
-    let atual = true;
-    const espera = setTimeout(() => {
-      buscarTudo(termo.trim())
-        .then((nova) => {
-          if (!atual) return;
-          setResposta(nova);
-          setAtiva(0);
-        })
-        .catch(() => atual && setResposta(null));
-    }, 250);
-    return () => {
-      atual = false;
-      clearTimeout(espera);
-    };
-  }, [termo, buscando]);
 
   useEffect(() => {
     if (!aberta) return;
@@ -60,7 +52,6 @@ export function BuscaDoCabecalhoComponent() {
   const escolher = (destino: string) => {
     setAberta(false);
     setTermo('');
-    setResposta(null);
     void navegar(destino);
   };
 
