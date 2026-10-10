@@ -10,6 +10,7 @@ import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { SeletorDePeriodoComponent } from '../componentes/SeletorDePeriodo';
+import { ColunasPorAnoComponent } from '../componentes/Graficos';
 import { atalhosDasGestoes } from '../componentes/atalhosDasGestoes';
 import { FONTES } from '../fontes';
 import { nomeProprio, reaisCompacto } from '../formato';
@@ -64,11 +65,32 @@ export function ComprasDoGovernoComponent() {
 
           <ResumoDasComprasComponent dados={dados} />
           {dados.porAno.length > 1 && (
-            <ListaDeValoresComponent
-              titulo={T.porAno}
-              nota={T.porAnoNota}
-              linhas={dados.porAno.map((a) => ({ chave: String(a.anoDaPublicacao), nome: String(a.anoDaPublicacao), valor: a.valor }))}
-            />
+            <section className="governo-secao">
+              <h2>{T.porAno}</h2>
+              <p className="nota-curta">{T.porAnoNota}</p>
+              <ColunasPorAnoComponent
+                rotulo={T.porAno}
+                series={[T.valorDosContratos]}
+                anos={dados.porAno.map((a) => ({
+                  ano: a.anoDaPublicacao,
+                  valores: [a.valor],
+                  nota: T.contratosNoAno(a.contratos.toLocaleString('pt-BR')),
+                }))}
+                formatar={reaisCompacto}
+                anoEscolhido={dados.periodo.primeiroAno === dados.periodo.ultimoAno ? dados.periodo.primeiroAno : null}
+                aoEscolher={(ano) =>
+                        setParametros(
+                          (p) => {
+                            const proximos = new URLSearchParams(p);
+                            proximos.set('de', String(ano));
+                            proximos.set('ate', String(ano));
+                            return proximos;
+                          },
+                          { replace: true },
+                        )
+                      }
+              />
+            </section>
           )}
           <ListaDeValoresComponent
             titulo={T.porModalidade}

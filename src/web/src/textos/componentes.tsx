@@ -105,6 +105,14 @@ export const TEXTOS_DOS_COMPONENTES = {
     voce: 'você',
   },
 
+  graficos: {
+    dica: 'Passe o mouse ou use Tab para ver o valor de cada ano.',
+    dicaComEscolha: 'Passe o mouse para ver o valor. Clique num ano para ver só ele.',
+    verTabela: 'Ver como tabela',
+    ano: 'Ano',
+    deCadaCem: (parte: number) => `${parte} de cada R$ 100`,
+  },
+
   mandatos: {
     votouDe: 'Votou de ',
     ate: ' a ',

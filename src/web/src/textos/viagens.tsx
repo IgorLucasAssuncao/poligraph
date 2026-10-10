@@ -36,6 +36,7 @@ export const TEXTOS_DAS_VIAGENS = {
     'cada uma foi, e o valor está somado nele.',
   urgentes: (urgentes: string, viagens: string) => `${urgentes} de ${viagens} viagens foram marcadas como urgentes.`,
 
+  composicao: 'Para onde foi o dinheiro das viagens',
   porAno: 'Por ano',
   porAnoNota: 'Em reais de cada ano, sem correção pela inflação.',
   porOrgao: 'Por órgão',

@@ -42,7 +42,7 @@ describe('viagens a serviço', () => {
     vi.mocked(api.obterViagensDoGoverno).mockResolvedValue(VIAGENS);
     renderizar();
 
-    expect(await screen.findByText('Diárias')).toBeDefined();
+    expect((await screen.findAllByText('Diárias')).length).toBeGreaterThan(0);
     const texto = document.body.textContent ?? '';
     expect(texto).toMatch(/De 2025 a 2026, o governo federal pagou R\$\s*2,4\s*bi em 900\.000 viagens a serviço/);
     expect(texto).toMatch(/Hospedagem não aparece separada: no serviço público federal ela é paga pela diária/);

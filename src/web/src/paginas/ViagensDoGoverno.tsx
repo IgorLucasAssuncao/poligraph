@@ -5,7 +5,8 @@ import { useSearchParams } from 'react-router-dom';
 import { obterViagensDoGoverno, type Periodo, type ViagensDoGoverno } from '../api';
 import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
 import { AbasDoGovernoComponent } from '../componentes/AbasDoGoverno';
-import { LinhaDeValorComponent, NumeroComponent } from '../componentes/Dados';
+import { LinhaDeValorComponent } from '../componentes/Dados';
+import { ColunasPorAnoComponent, ComposicaoComponent } from '../componentes/Graficos';
 import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
@@ -112,7 +113,22 @@ export function ViagensDoGovernoComponent() {
           <p className="nota-curta">{T.soOExecutivo}</p>
 
           <ResumoDasViagensComponent dados={dados} />
-          {dados.porAno.length > 1 && <ViagensPorAnoComponent dados={dados} />}
+          {dados.porAno.length > 1 && (
+            <ViagensPorAnoComponent
+              dados={dados}
+              aoEscolher={(ano) =>
+                    setParametros(
+                      (p) => {
+                        const proximos = new URLSearchParams(p);
+                        proximos.set('de', String(ano));
+                        proximos.set('ate', String(ano));
+                        return proximos;
+                      },
+                      { replace: true },
+                    )
+                  }
+            />
+          )}
           {!dados.orgao && <ViagensPorOrgaoComponent dados={dados} />}
           <DestinosComponent dados={dados} />
 
@@ -138,13 +154,15 @@ function ResumoDasViagensComponent({ dados }: { dados: ViagensDoGoverno }) {
       <p className="frase-resposta">
         {T.resposta(periodo.charAt(0).toUpperCase() + periodo.slice(1), reaisCompacto(dados.total), contagem(dados.viagens))}
       </p>
-      <div className="numeros-do-ano">
-        <NumeroComponent rotulo={T.diarias} definicao={T.diariasDefinicao}>{reaisCompacto(dados.diarias)}</NumeroComponent>
-        <NumeroComponent rotulo={T.passagens} definicao={T.passagensDefinicao}>{reaisCompacto(dados.passagens)}</NumeroComponent>
-        <NumeroComponent rotulo={T.outros} definicao={T.outrosDefinicao}>
-          {reaisCompacto(dados.seguro + dados.restituicao)}
-        </NumeroComponent>
-      </div>
+      <ComposicaoComponent
+        rotulo={T.composicao}
+        formatar={reaisCompacto}
+        partes={[
+          { nome: T.diarias, valor: dados.diarias, definicao: T.diariasDefinicao },
+          { nome: T.passagens, valor: dados.passagens, definicao: T.passagensDefinicao },
+          { nome: T.outros, valor: dados.seguro + dados.restituicao, definicao: T.outrosDefinicao },
+        ]}
+      />
       <p className="nota-curta">{T.hospedagem}</p>
       {dados.pagoComOrgaoSigiloso > 0 && (
         <p className="nota-curta">{T.sigilosoAtribuido(reaisCompacto(dados.pagoComOrgaoSigiloso))}</p>
@@ -155,17 +173,19 @@ function ResumoDasViagensComponent({ dados }: { dados: ViagensDoGoverno }) {
   );
 }
 
-function ViagensPorAnoComponent({ dados }: { dados: ViagensDoGoverno }) {
-  const maior = Math.max(...dados.porAno.map((a) => a.total));
+function ViagensPorAnoComponent({ dados, aoEscolher }: { dados: ViagensDoGoverno; aoEscolher: (ano: number) => void }) {
   return (
     <section className="governo-secao">
       <h2>{T.porAno}</h2>
       <p className="nota-curta">{T.porAnoNota}</p>
-      <ul className="gastos-categorias">
-        {dados.porAno.map((a) => (
-          <LinhaDeValorComponent key={a.anoDaViagem} nome={String(a.anoDaViagem)} valor={a.total} maior={maior} formatar={reaisCompacto} />
-        ))}
-      </ul>
+      <ColunasPorAnoComponent
+        rotulo={T.porAno}
+        series={[T.diarias, T.passagens]}
+        anos={dados.porAno.map((a) => ({ ano: a.anoDaViagem, valores: [a.diarias, a.passagens] }))}
+        formatar={reaisCompacto}
+        anoEscolhido={dados.periodo.primeiroAno === dados.periodo.ultimoAno ? dados.periodo.primeiroAno : null}
+        aoEscolher={aoEscolher}
+      />
     </section>
   );
 }

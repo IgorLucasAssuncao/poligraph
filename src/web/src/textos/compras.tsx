@@ -40,6 +40,8 @@ export const TEXTOS_DAS_COMPRAS = {
     </>
   ),
 
+  valorDosContratos: 'Valor dos contratos',
+  contratosNoAno: (contratos: string) => `${contratos} contratos`,
   porAno: 'Por ano',
   porAnoNota: 'Em reais de cada ano, sem correção pela inflação.',
   porModalidade: 'Por modalidade de compra',

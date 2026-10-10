@@ -2063,6 +2063,78 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 /* Uma série só: o tom de realce, sem legenda — o título nomeia. Barras finas, 2px de
    intervalo, ponta arredondada só do lado do valor. */
+/**
+ * Colunas por ano e barra de composição (componentes/Graficos.tsx). Um teal só, em tons: série e
+ * parte se distinguem pelo tom e pela legenda, nunca por cor de partido.
+ */
+.grafico-colunas, .grafico-composicao { margin: .75rem 0 1rem; }
+.grafico-dica {
+  margin: 0 0 .4rem; min-height: 1.3em; color: var(--suave);
+  font-family: var(--dado); font-size: var(--t-1); font-variant-numeric: tabular-nums;
+}
+.grafico-colunas-area {
+  display: flex; align-items: stretch; gap: .5rem; height: 8rem;
+  border-bottom: 1px solid var(--borda-forte);
+}
+.grafico-colunas-ano { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.grafico-colunas-barras { flex: 1; display: flex; align-items: flex-end; gap: 2px; }
+.grafico-colunas-barra {
+  flex: 1; min-width: 0; height: 100%; display: flex; align-items: flex-end;
+  padding: 0; background: none; border: none; border-radius: 0; cursor: pointer;
+}
+.grafico-colunas-barra span {
+  display: block; width: 100%; min-height: 1px; border-radius: var(--raio) var(--raio) 0 0;
+  transition: opacity var(--t-curto) var(--curva), height var(--t-medio) var(--curva-entrada);
+}
+.grafico-colunas-area:hover .grafico-colunas-barra span { opacity: .45; }
+.grafico-colunas-area .grafico-colunas-barra:hover span,
+.grafico-colunas-barra:focus-visible span,
+.grafico-colunas-ano.escolhido .grafico-colunas-barra span { opacity: 1; }
+.grafico-colunas-barra:focus-visible { outline: 3px solid var(--realce); outline-offset: 2px; }
+.grafico-colunas-rotulo {
+  position: relative; top: calc(100% + .3rem); height: 0; text-align: center; white-space: nowrap;
+  font-family: var(--dado); font-size: var(--t-1); color: var(--suave);
+}
+.grafico-colunas-ano.escolhido .grafico-colunas-rotulo { color: var(--texto); font-weight: 600; }
+.grafico-colunas-area { margin-bottom: 1.6rem; }
+.tom-0, .grafico-colunas-barra.tom-0 span { background: var(--realce); }
+.tom-1, .grafico-colunas-barra.tom-1 span { background: color-mix(in srgb, var(--realce) 62%, var(--fundo)); }
+.tom-2, .grafico-colunas-barra.tom-2 span { background: color-mix(in srgb, var(--realce) 32%, var(--fundo)); }
+.tom-3, .grafico-colunas-barra.tom-3 span { background: color-mix(in srgb, var(--realce) 15%, var(--fundo)); }
+.grafico-legenda { list-style: none; margin: .5rem 0 0; padding: 0; font-size: var(--t-2); }
+.grafico-legenda-series { display: flex; flex-wrap: wrap; gap: .3rem 1rem; color: var(--suave); }
+.grafico-legenda-series li { display: inline-flex; align-items: center; gap: .4rem; }
+.grafico-amostra {
+  display: inline-block; flex: none; width: .8rem; height: .8rem; border-radius: var(--raio);
+  border: 1px solid var(--borda-controle);
+}
+.grafico-composicao-barra {
+  display: flex; gap: 2px; height: 1.5rem; border-radius: var(--raio); overflow: hidden;
+}
+.grafico-composicao-parte {
+  min-width: 3px; padding: 0; border: none; border-radius: 0; cursor: default;
+  transition: opacity var(--t-curto) var(--curva);
+}
+.grafico-composicao:hover .grafico-composicao-parte { opacity: .5; }
+.grafico-composicao .grafico-composicao-parte.em-foco { opacity: 1; }
+.grafico-composicao-parte:focus-visible { outline: 3px solid var(--texto); outline-offset: -3px; opacity: 1; }
+.grafico-composicao-legenda li {
+  display: flex; align-items: baseline; gap: .6rem; padding: .35rem 0; border-bottom: 1px solid var(--borda);
+  transition: background var(--t-curto) var(--curva);
+}
+.grafico-composicao-legenda li.em-foco { background: var(--painel); }
+.grafico-legenda-nome { flex: 1; display: flex; flex-direction: column; }
+.grafico-legenda-nome small, .grafico-legenda-valor small { color: var(--suave); font-size: var(--t-1); }
+.grafico-legenda-valor {
+  display: flex; flex-direction: column; align-items: flex-end;
+  font-family: var(--dado); font-variant-numeric: tabular-nums;
+}
+.grafico-tabela { margin-top: .4rem; font-size: var(--t-2); }
+.grafico-tabela summary { cursor: pointer; color: var(--suave); }
+.grafico-tabela table { margin-top: .4rem; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.grafico-tabela th, .grafico-tabela td { padding: .2rem .8rem .2rem 0; text-align: left; }
+.grafico-tabela td { font-family: var(--dado); }
+
 .grafico-meses { margin: 0; padding: .75rem 1rem 1rem; border-bottom: 1px solid var(--borda); }
 .grafico-meses-dica {
   margin: 0 0 .4rem; min-height: 1.3em;
