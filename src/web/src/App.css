@@ -2072,12 +2072,12 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   margin: 0 0 .4rem; min-height: 1.3em; color: var(--suave);
   font-family: var(--dado); font-size: var(--t-1); font-variant-numeric: tabular-nums;
 }
-.grafico-colunas-area {
-  display: flex; align-items: stretch; gap: .5rem; height: 8rem;
+.grafico-colunas-area { display: flex; align-items: stretch; gap: .5rem; }
+.grafico-colunas-ano { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.grafico-colunas-barras {
+  height: 8rem; display: flex; align-items: flex-end; gap: 2px;
   border-bottom: 1px solid var(--borda-forte);
 }
-.grafico-colunas-ano { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.grafico-colunas-barras { flex: 1; display: flex; align-items: flex-end; gap: 2px; }
 .grafico-colunas-barra {
   flex: 1; min-width: 0; height: 100%; display: flex; align-items: flex-end;
   padding: 0; background: none; border: none; border-radius: 0; cursor: pointer;
@@ -2092,16 +2092,16 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .grafico-colunas-ano.escolhido .grafico-colunas-barra span { opacity: 1; }
 .grafico-colunas-barra:focus-visible { outline: 3px solid var(--realce); outline-offset: 2px; }
 .grafico-colunas-rotulo {
-  position: relative; top: calc(100% + .3rem); height: 0; text-align: center; white-space: nowrap;
+  margin-top: .3rem; text-align: center; white-space: nowrap;
   font-family: var(--dado); font-size: var(--t-1); color: var(--suave);
 }
 .grafico-colunas-ano.escolhido .grafico-colunas-rotulo { color: var(--texto); font-weight: 600; }
-.grafico-colunas-area { margin-bottom: 1.6rem; }
-.tom-0, .grafico-colunas-barra.tom-0 span { background: var(--realce); }
-.tom-1, .grafico-colunas-barra.tom-1 span { background: color-mix(in srgb, var(--realce) 62%, var(--fundo)); }
-.tom-2, .grafico-colunas-barra.tom-2 span { background: color-mix(in srgb, var(--realce) 32%, var(--fundo)); }
-.tom-3, .grafico-colunas-barra.tom-3 span { background: color-mix(in srgb, var(--realce) 15%, var(--fundo)); }
-.tom-4, .grafico-colunas-barra.tom-4 span { background: var(--borda-forte); }
+/** O tom pinta a amostra da legenda, a parte da composição e a barra dentro da coluna; nunca o botão da coluna, que ocupa a altura toda. */
+.grafico-amostra.tom-0, .grafico-composicao-parte.tom-0, .grafico-colunas-barra.tom-0 span { background: var(--realce); }
+.grafico-amostra.tom-1, .grafico-composicao-parte.tom-1, .grafico-colunas-barra.tom-1 span { background: color-mix(in srgb, var(--realce) 60%, var(--texto)); }
+.grafico-amostra.tom-2, .grafico-composicao-parte.tom-2, .grafico-colunas-barra.tom-2 span { background: color-mix(in srgb, var(--realce) 30%, var(--texto)); }
+.grafico-amostra.tom-3, .grafico-composicao-parte.tom-3, .grafico-colunas-barra.tom-3 span { background: color-mix(in srgb, var(--realce) 40%, var(--fundo)); }
+.grafico-amostra.tom-4, .grafico-composicao-parte.tom-4, .grafico-colunas-barra.tom-4 span { background: var(--borda-forte); }
 .grafico-legenda { list-style: none; margin: .5rem 0 0; padding: 0; font-size: var(--t-2); }
 .grafico-legenda-series { display: flex; flex-wrap: wrap; gap: .3rem 1rem; color: var(--suave); }
 .grafico-legenda-series li { display: inline-flex; align-items: center; gap: .4rem; }
