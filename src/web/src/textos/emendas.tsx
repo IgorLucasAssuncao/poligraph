@@ -12,6 +12,8 @@ export const TEXTOS_DAS_EMENDAS = {
   semDados: 'As emendas ainda não foram carregadas. Elas aparecem depois da próxima execução do ETL.',
   periodo: 'Período',
   periodoDasEmendas: 'Período das emendas',
+  porAno: 'Recebido pelas emendas de cada ano',
+  recebidoNoAno: 'Recebido',
   escopo: (periodo: string): ReactNode => (
     <>
       Emendas de <strong>{periodo}</strong>, pagas até hoje. A cidade é a <TermoComponent nome="sedeDoFavorecido" />.

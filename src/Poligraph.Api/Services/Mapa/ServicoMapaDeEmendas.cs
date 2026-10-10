@@ -94,8 +94,22 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
                 [.. porUf.Select(u => new RecebidoNaUfDto(
                     u.Uf, u.CodigoUf, u.Recebido, u.Municipios,
                     porUfPopulacao.TryGetValue(u.Uf, out var p) ? p : null))],
-                anoDaPopulacao);
+                anoDaPopulacao,
+                await PorAnoAsync(anosDaEmendaCarregados, ct));
         }) ?? new MapaDoBrasilDto(periodoMostrado, anosDaEmendaCarregados, 0, 0, 0, 0, []);
+    }
+
+    /// <summary>O recebido de cada ano da emenda carregado, para o gráfico de colunas da página.</summary>
+    private async Task<IReadOnlyList<RecebidoNoAnoDaEmendaDto>> PorAnoAsync(IReadOnlyList<int> anosDaEmendaCarregados, CancellationToken ct)
+    {
+        var prefixos = anosDaEmendaCarregados.Select(a => a.ToString(CultureInfo.InvariantCulture)).ToArray();
+        var porAno = await DoPeriodo(prefixos)
+            .GroupBy(f => f.CodigoEmenda.Substring(0, 4))
+            .Select(g => new { Ano = g.Key, Recebido = g.Sum(f => f.Valor) })
+            .ToListAsync(ct);
+        return [.. porAno
+            .Select(a => new RecebidoNoAnoDaEmendaDto(int.Parse(a.Ano, CultureInfo.InvariantCulture), a.Recebido))
+            .OrderBy(a => a.AnoDaEmenda)];
     }
 
     /// <remarks>

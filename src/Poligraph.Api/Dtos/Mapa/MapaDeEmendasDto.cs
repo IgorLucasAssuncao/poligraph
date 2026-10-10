@@ -17,7 +17,14 @@ public record MapaDoBrasilDto(
     decimal ViaIntermediario,
     decimal SemSede,
     IReadOnlyList<RecebidoNaUfDto> PorUf,
-    int? AnoDaPopulacao = null);
+    int? AnoDaPopulacao = null,
+    IReadOnlyList<RecebidoNoAnoDaEmendaDto>? PorAno = null);
+
+/// <summary>O recebido pelas emendas de um ano, em todos os anos carregados, independente do período.</summary>
+/// <remarks>
+/// <para>Por ano da emenda, como o resto da página: o pagamento de 2024 de uma emenda de 2020 conta em 2020.</para>
+/// </remarks>
+public record RecebidoNoAnoDaEmendaDto(int AnoDaEmenda, decimal Recebido);
 
 /// <summary>
 /// Os anos das emendas consideradas, inclusive nas duas pontas. O ano é o da emenda, e não /// o do pagamento.

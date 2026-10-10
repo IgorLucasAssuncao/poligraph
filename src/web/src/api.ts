@@ -1318,6 +1318,8 @@ export type MapaDoBrasil = {
   porUf: RecebidoNaUf[];
   /** O ano da estimativa de população usada na leitura por habitante. */
   anoDaPopulacao?: number | null;
+  /** O recebido por ano da emenda, em todos os anos carregados. */
+  porAno?: { anoDaEmenda: number; recebido: number }[] | null;
 };
 
 export type RecebidoNoMunicipio = { codigoIbge: string; nome: string; recebido: number; populacao?: number | null };

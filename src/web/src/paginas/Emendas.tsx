@@ -35,6 +35,7 @@ import { passosDasEmendas } from '../tour';
 import { BlocoComponent, EsqueletoComponent, EsqueletoDePainelComponent, EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
 import { UFS } from '../ufs';
 import { ConfereComOPortalComponent } from '../componentes/ConfereComOPortal';
+import { ColunasPorAnoComponent } from '../componentes/Graficos';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { AbasComponent, NumeroComponent, OpcoesComponent, type Aba } from '../componentes/Dados';
 import { CHAVE_MINHA_CIDADE, CIDADES_POR_VEZ, ESTADOS_A_VISTA, ITENS_POR_PAGINA_DA_CIDADE } from '../constantes';
@@ -156,6 +157,17 @@ export function EmendasComponent() {
             </div>
           </div>
           <p className="emendas-escopo">{T.escopo(textoDoPeriodo(brasil.periodo))}</p>
+
+          {brasil.porAno && brasil.porAno.length > 1 && (
+            <ColunasPorAnoComponent
+              rotulo={T.porAno}
+              series={[T.recebidoNoAno]}
+              anos={brasil.porAno.map((a) => ({ ano: a.anoDaEmenda, valores: [a.recebido] }))}
+              formatar={reaisCompacto}
+              anoEscolhido={brasil.periodo.primeiroAno === brasil.periodo.ultimoAno ? brasil.periodo.primeiroAno : null}
+              aoEscolher={(ano) => mudar({ de: String(ano), ate: String(ano) })}
+            />
+          )}
 
           <ForaDoMapaComponent brasil={brasil} />
           <ConfereComOPortalComponent periodo={brasil.periodo} />

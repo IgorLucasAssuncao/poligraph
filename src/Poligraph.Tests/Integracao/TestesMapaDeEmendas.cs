@@ -52,6 +52,20 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
         Assert.Equal(10_000m, mapa.NoMapa);
     }
 
+    /// <summary>A série por ano traz todos os anos carregados, mesmo com um período de um ano só, e soma o recebido.</summary>
+    [SkippableFact]
+    public async Task Brasil_PorAno_TrazTodosOsAnosESomaORecebido()
+    {
+        ExigeDocker();
+        await SemearAsync();
+
+        var todos = await LerAsync<BrasilLido>("/api/mapa/emendas");
+        var deUmAno = await LerAsync<BrasilLido>("/api/mapa/emendas?ano=2025");
+
+        Assert.Equal([2025, 2026], deUmAno.PorAno!.Select(a => a.AnoDaEmenda));
+        Assert.Equal(todos.Recebido, todos.PorAno!.Sum(a => a.Recebido));
+    }
+
     /// <summary>Ponta invertida é desinvertida, e ano fora dos carregados é trazido para dentro.</summary>
     [SkippableFact]
     public async Task Brasil_PeriodoInvertidoOuForaDosAnos_EhAjustado()
@@ -236,7 +250,9 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
 
     private record BrasilLido(
         PeriodoLido Periodo, decimal Recebido, decimal NoMapa, decimal ViaIntermediario, decimal SemSede,
-        IReadOnlyList<UfLida> PorUf);
+        IReadOnlyList<UfLida> PorUf, IReadOnlyList<AnoLido>? PorAno = null);
+
+    private record AnoLido(int AnoDaEmenda, decimal Recebido);
 
     private record UfLida(string Uf, string CodigoUf, decimal Recebido, int Municipios);
 
