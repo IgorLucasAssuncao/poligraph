@@ -683,15 +683,15 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .avaliacao-pronta p { margin: 0; }
 
 /* ═══ LOGIN ════════════════════════════════════════════════════ */
-/* DECISÃO (2026-10-10, pedido do autor): uma coluna só, no centro da tela e sem rolagem. A marca
-      fica acima do título, o tema vai para o canto, e o respiro cabe numa tela de 768 px. */
+/* DECISÃO (2026-10-10, pedido do autor): a marca à esquerda e as informações à direita, as duas
+      no centro da tela e sem rolagem. O tema vai para o canto, e o respiro cabe numa tela de 768 px. */
 .tela-login {
   position: relative; box-sizing: border-box; min-height: 100dvh;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 1.25rem 1rem; text-align: center;
+  display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 3rem;
+  max-width: 68rem; margin: 0 auto; padding: 1.25rem 1.5rem;
 }
 /* DECISÃO: A coluna da marca é decorativa: some primeiro quando falta espaço. */
-.login-marca { display: grid; place-items: center; margin-bottom: .9rem; }
+.login-marca { display: grid; place-items: center; }
 .login-conteudo { max-width: 32rem; width: 100%; }
 .login-titulo {
   margin: 0 0 .75rem; font-size: var(--t-6); font-weight: 700;
@@ -709,7 +709,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
       forte que esta tela tem para justificar pedir uma conta. */
 .login-base {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: 1px; margin: 1.1rem 0 0; text-align: left;
+  gap: 1px; margin: 1.1rem 0 0;
   background: var(--borda); border: 1px solid var(--borda); border-radius: var(--raio);
   overflow: hidden;
 }
@@ -732,7 +732,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
    ficava fora de prumo com o texto acima. A mensagem de erro também ia parar ao lado
    dele, em vez de abaixo. */
 .acao-login {
-  display: flex; flex-direction: column; align-items: center;
+  display: flex; flex-direction: column; align-items: flex-start;
   gap: .6rem; min-height: 44px;
 }
 .aviso-config {
@@ -1330,6 +1330,8 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 
 @media (max-width: 860px) {
+  .tela-login { grid-template-columns: 1fr; gap: 0; }
+  .login-marca { display: none; }
   .login-titulo { font-size: var(--t-6); }
 }
 
