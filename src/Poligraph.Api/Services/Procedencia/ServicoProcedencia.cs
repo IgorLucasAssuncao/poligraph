@@ -59,6 +59,14 @@ public class ServicoProcedencia(PoligraphDb db)
                 return consulta.PeriodoDoOrcamento.Completo ? DoGoverno(consulta.Contexto.Tipo, consulta.PeriodoDoOrcamento) : null;
             case TipoDeContexto.Entidade:
                 return consulta.Cnpj is { } cnpj ? DaEntidade(cnpj) : null;
+            case TipoDeContexto.Sancoes:
+                return consulta.Cnpj is { } sancionada ? Sancoes(sancionada) : null;
+            case TipoDeContexto.Convenios when consulta.Cnpj is { } convenente:
+                return ConveniosDaEntidade(convenente);
+            case TipoDeContexto.Parlamentar:
+                return consulta.IdPessoa is { } doCadastro ? DoParlamentar(doCadastro) : null;
+            case TipoDeContexto.Gestoes:
+                return consulta.PeriodoDoOrcamento.Completo ? Gestoes(consulta.PeriodoDoOrcamento) : null;
             case TipoDeContexto.Pagamentos:
                 return consulta.PeriodoDasEmendas.Completo ? Pagamentos(consulta.PeriodoDasEmendas, consulta.Uf, consulta.Municipio) : null;
         }
@@ -85,6 +93,7 @@ public class ServicoProcedencia(PoligraphDb db)
             TipoDeContexto.Cota => Cota(idPessoa, legislatura.Value, consulta.AnoDaDespesa, consulta.Categoria),
             TipoDeContexto.Emendas => Emendas(idPessoa, legislatura.Value, consulta.AnoDaEmenda),
             TipoDeContexto.Campanha => Campanha(idPessoa, legislatura.Value, consulta.AnoDaEleicao),
+            TipoDeContexto.Convenios => ConveniosDoParlamentar(idPessoa, legislatura.Value, consulta.AnoDaEmenda),
             _ => Patrimonio(idPessoa, legislatura.Value, consulta.AnoDaEleicao),
         };
     }
@@ -233,6 +242,67 @@ public class ServicoProcedencia(PoligraphDb db)
             pagamentos.Select(f => f.CargaId),
             pagamentos.OrderByDescending(f => f.Competencia)
                 .Select(f => new LinhaDaProcedenciaDto(TextosDaProcedencia.Emenda(f.CodigoEmenda), null, f.Competencia, f.Valor, null)));
+    }
+
+    private Recorte Sancoes(Cnpj cnpj)
+    {
+        var sancoes = _db.SancoesDeEmpresas.AsNoTracking().Where(s => s.Cnpj == cnpj.Digitos);
+        return new(
+            TextosDaProcedencia.Sancoes,
+            sancoes.Select(s => s.CargaId),
+            sancoes.OrderByDescending(s => s.Inicio)
+                .Select(s => new LinhaDaProcedenciaDto(s.Categoria, s.OrgaoSancionador, s.Inicio, s.ValorDaMulta, null)));
+    }
+
+    private Recorte ConveniosDaEntidade(Cnpj cnpj)
+    {
+        var convenios = _db.Convenios.AsNoTracking().Where(c => c.CnpjConvenente == cnpj.Digitos);
+        return new(
+            TextosDaProcedencia.ConveniosDaEntidade,
+            convenios.Select(c => c.CargaId),
+            convenios.OrderByDescending(c => c.DataPublicacao)
+                .Select(c => new LinhaDaProcedenciaDto(c.Numero, c.Objeto, c.DataPublicacao, c.Valor, null)));
+    }
+
+    /// <remarks>
+    /// <para>Os convênios das emendas do parlamentar no recorte, pela ligação emenda e convênio que o Portal publica.</para>
+    /// </remarks>
+    private Recorte ConveniosDoParlamentar(IdPessoa idPessoa, Legislatura legislatura, AnoDaEmenda? anoDaEmenda)
+    {
+        var (primeiroAnoDaEmenda, ultimoAnoDaEmenda) = anoDaEmenda is { } unico ? (unico.Valor, unico.Valor) : Legislaturas.AnosDeEmenda(legislatura.Numero);
+        var codigos = _db.Emendas.AsNoTracking()
+            .Where(e => e.PessoaId == idPessoa.Valor && e.Ano >= primeiroAnoDaEmenda && e.Ano <= ultimoAnoDaEmenda)
+            .Select(e => e.CodigoEmenda);
+        var convenios = _db.Convenios.AsNoTracking()
+            .Where(c => _db.EmendasConvenios.Any(ec => ec.NumeroConvenio == c.Numero && codigos.Contains(ec.CodigoEmenda)));
+        return new(
+            TextosDaProcedencia.ConveniosDoParlamentar(primeiroAnoDaEmenda, ultimoAnoDaEmenda),
+            convenios.Select(c => c.CargaId),
+            convenios.OrderByDescending(c => c.Valor)
+                .Select(c => new LinhaDaProcedenciaDto(c.Convenente, c.Objeto, c.DataPublicacao, c.Valor, null)));
+    }
+
+    /// <remarks>
+    /// <para>A linha do parlamentar e as redes dele: cada uma aponta para o arquivo que a gravou.</para>
+    /// </remarks>
+    private Recorte DoParlamentar(IdPessoa idPessoa)
+    {
+        var redes = _db.RedesSociais.AsNoTracking().Where(r => r.PessoaId == idPessoa.Valor);
+        return new(
+            TextosDaProcedencia.Parlamentar,
+            _db.Pessoas.AsNoTracking().Where(p => p.Id == idPessoa.Valor).Select(p => p.CargaId).Concat(redes.Select(r => r.CargaId)),
+            redes.OrderBy(r => r.Url).Select(r => new LinhaDaProcedenciaDto(r.Url, r.Fonte.ToString(), null, null, r.Url)));
+    }
+
+    private Recorte Gestoes(Periodo<AnoDoOrcamento> periodo)
+    {
+        var (primeiro, ultimo) = (periodo.Primeiro.GetValueOrDefault().Valor, periodo.Ultimo.GetValueOrDefault().Valor);
+        var gestoes = _db.Gestoes.AsNoTracking().Where(g => g.PrimeiroAno <= ultimo && g.UltimoAno >= primeiro);
+        return new(
+            TextosDaProcedencia.Gestoes(periodo),
+            gestoes.Select(g => g.CargaId),
+            gestoes.OrderBy(g => g.PrimeiroAno)
+                .Select(g => new LinhaDaProcedenciaDto(g.PresidenteNome, g.ViceNome, null, null, null)));
     }
 
     private Recorte Painel(TipoCasa casa, Legislatura legislatura)

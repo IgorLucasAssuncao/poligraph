@@ -1,3 +1,4 @@
+import { ComProcedenciaComponent } from './ModoAuditoria';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
@@ -203,7 +204,11 @@ export function ConveniosComponent({
 
   return (
     <>
-      <h3 className="titulo-secao">{T.convenios}</h3>
+      <h3 className="titulo-secao">
+        <ComProcedenciaComponent consulta={{ contexto: 'convenios', idPessoa, anoDaEmenda }} rotulo={T.rotuloDosConvenios}>
+          {T.convenios}
+        </ComProcedenciaComponent>
+      </h3>
       <p className="ajuda ajuda-espacada">{T.conveniosFinanciados(convenios.quantidade)}</p>
 
       <ul className="lista-convenios">

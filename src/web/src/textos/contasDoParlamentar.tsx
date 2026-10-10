@@ -171,6 +171,7 @@ export const TEXTOS_DAS_CONTAS = {
 
   /** As listas de "para onde foi" da aba Emendas: quem recebeu, quando, por qual convênio, emenda por emenda. */
   paraOndeFoi: {
+    rotuloDosConvenios: 'Convênios das emendas',
     quemRecebeu: 'Quem recebeu',
     recebidos: (valor: string, anoDaEmenda: number, ultimoMesPago: string | null): ReactNode => (
       <>

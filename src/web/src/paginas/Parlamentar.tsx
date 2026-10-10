@@ -160,7 +160,11 @@ export function ParlamentarComponent() {
           <AvatarComponent nome={ficha.nome} fotoUrl={ficha.urlFoto} tamanho="grande" />
 
           <div className="perfil-identidade">
-            <h1>{ficha.nome}</h1>
+            <h1>
+              <ComProcedenciaComponent consulta={{ contexto: 'parlamentar', idPessoa }} rotulo={ficha.nome}>
+                {ficha.nome}
+              </ComProcedenciaComponent>
+            </h1>
             {ficha.nomeCivil !== ficha.nome && <p className="nome-civil">{ficha.nomeCivil}</p>}
           </div>
 

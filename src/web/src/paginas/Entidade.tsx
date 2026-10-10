@@ -104,7 +104,7 @@ function PaginaDaEntidadeComponent({ dados }: { dados: DadosDaEntidade }) {
         </>
       )}
 
-      {dados.sancoes.length > 0 && <SancoesComponent sancoes={dados.sancoes} />}
+      {dados.sancoes.length > 0 && <SancoesComponent sancoes={dados.sancoes} cnpj={dados.cnpj} />}
       {dados.comOGoverno && (
         <section className="governo-secao">
           <h2>{T.comOGoverno.titulo}</h2>
@@ -176,11 +176,15 @@ function QuemMandouComponent({ dados }: { dados: DadosDaEntidade }) {
  * As sanções do CEIS e do CNEP. Diz quantas estão em vigor e, de cada uma, quem puniu, quando e
  * por qual lei, sem adjetivo: a categoria da sanção é a informação.
  */
-function SancoesComponent({ sancoes }: { sancoes: SancaoDaEntidade[] }) {
+function SancoesComponent({ sancoes, cnpj }: { sancoes: SancaoDaEntidade[]; cnpj: string }) {
   const S = T.sancoes;
   return (
     <section className="governo-secao">
-      <h2>{S.titulo}</h2>
+      <h2>
+        <ComProcedenciaComponent consulta={{ contexto: 'sancoes', cnpj }} rotulo={S.titulo}>
+          {S.titulo}
+        </ComProcedenciaComponent>
+      </h2>
       <p>{S.resumo(sancoes.filter((s) => s.vigente).length, sancoes.length)}</p>
       <ul className="lista-de-sancoes">
         {sancoes.map((s, i) => (
@@ -251,7 +255,11 @@ function ConveniosAssinadosComponent({ dados }: { dados: DadosDaEntidade }) {
 
   return (
     <section className="governo-secao">
-      <h2>{T.convenios.titulo}</h2>
+      <h2>
+        <ComProcedenciaComponent consulta={{ contexto: 'convenios', cnpj: dados.cnpj }} rotulo={T.convenios.titulo}>
+          {T.convenios.titulo}
+        </ComProcedenciaComponent>
+      </h2>
       <p className="ajuda">{T.convenios.assinados(dados.convenios.total)}</p>
       <ul className="lista-convenios-entidade">
         {lista.itens.map((c) => (

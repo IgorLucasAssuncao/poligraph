@@ -644,7 +644,12 @@ function PerfilDaGestaoComponent({ gestao }: { gestao: Gestao }) {
   return (
     <section className="gestao" aria-labelledby={`gestao-${gestao.anoDaEleicao}`}>
       <h2 id={`gestao-${gestao.anoDaEleicao}`} className="gestao-titulo">
-        {G.titulo(gestao.primeiroAno, gestao.ultimoAno)}
+        <ComProcedenciaComponent
+          consulta={{ contexto: 'gestoes', de: gestao.primeiroAno, ate: gestao.ultimoAno }}
+          rotulo={G.titulo(gestao.primeiroAno, gestao.ultimoAno)}
+        >
+          {G.titulo(gestao.primeiroAno, gestao.ultimoAno)}
+        </ComProcedenciaComponent>
       </h2>
       <div className="gestao-pessoas">
         <PessoaDaGestaoCartaoComponent papel={G.presidente} pessoa={gestao.presidente} />

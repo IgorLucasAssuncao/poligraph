@@ -69,6 +69,21 @@ public static class TextosDaProcedencia
     public static string GovernoComprasCentralizadas(Periodo<AnoDoOrcamento> periodo) =>
         $"O cartão de compras centralizadas {periodo.Texto}, dos arquivos mensais do Portal da Transparência, uma linha por mês e órgão.";
 
+    public const string Sancoes =
+        "As sanções da empresa no Cadastro de Empresas Inidôneas e Suspensas (CEIS) e no Cadastro Nacional de Empresas Punidas (CNEP), do retrato mais recente que o Portal da Transparência publica.";
+
+    public const string ConveniosDaEntidade =
+        "Os convênios em que a entidade é a convenente e que receberam emenda, do arquivo de emendas do Portal da Transparência.";
+
+    public static string ConveniosDoParlamentar(int primeiroAnoDaEmenda, int ultimoAnoDaEmenda) =>
+        $"Os convênios ligados às emendas do parlamentar {(primeiroAnoDaEmenda == ultimoAnoDaEmenda ? $"de {primeiroAnoDaEmenda}" : $"de {primeiroAnoDaEmenda} a {ultimoAnoDaEmenda}")}, do arquivo de emendas do Portal da Transparência.";
+
+    public const string Parlamentar =
+        "O cadastro do parlamentar (nome, foto e identificação na fonte), do arquivo da Câmara ou da lista do Senado que o gravou por último, e as redes sociais, da Câmara para deputados e do TSE para senadores.";
+
+    public static string Gestoes(Periodo<AnoDoOrcamento> periodo) =>
+        $"Quem governou {periodo.Texto}: presidente, vice, partidos e coligação, do arquivo de candidatos do TSE da eleição de cada gestão.";
+
     public static string GovernoGastos(Periodo<AnoDoOrcamento> periodoDoOrcamento) =>
         $"O gasto pago do Poder Executivo federal {periodoDoOrcamento.Texto}, do arquivo anual do orçamento do Portal da Transparência, uma linha por ano e função, mais os Encargos especiais por subfunção. "
         + "Os restos a pagar pagos somados vêm dos arquivos mensais de execução.";

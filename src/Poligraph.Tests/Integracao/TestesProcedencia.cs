@@ -255,6 +255,42 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
         Assert.Equal((1, 1), (sigiloso.Linhas, sigiloso.LinhasSemCarga));
     }
 
+    /// <summary>Sanções, cadastro do parlamentar com as redes, e gestões: cada um leva ao arquivo que o gravou.</summary>
+    [SkippableFact]
+    public async Task SancoesParlamentarEGestoes_LevamAoArquivo()
+    {
+        ExigeDocker();
+        var carga = Carga('9', "https://portaldatransparencia.gov.br/download-de-dados/ceis");
+        Db.Cargas.Add(carga);
+        await Db.SaveChangesAsync();
+        Db.SancoesDeEmpresas.Add(new SancaoDeEmpresaModel
+        {
+            Cadastro = "CEIS", CodigoDaSancao = "1", Cnpj = "11222333000181", Nome = "EMPRESA", Categoria = "Impedimento",
+            OrgaoSancionador = "Ministério X", CargaId = carga.Id,
+        });
+        var pessoa = new PessoaModel { NomeCivil = "Ana", NomeExibicao = "Ana", CargaId = carga.Id };
+        Db.Pessoas.Add(pessoa);
+        Db.Gestoes.Add(new GestaoModel
+        {
+            Eleicao = 2022, PrimeiroAno = 2023, UltimoAno = 2026, PresidenteNome = "P", PresidenteNomeDeUrna = "P", PresidentePartido = "X",
+            ViceNome = "V", ViceNomeDeUrna = "V", VicePartido = "Y", CargaId = carga.Id,
+        });
+        await Db.SaveChangesAsync();
+        Db.RedesSociais.Add(new RedeSocialModel
+        {
+            PessoaId = pessoa.Id, Url = "https://instagram.com/ana", Rede = TipoRedeSocial.INSTAGRAM, Fonte = FonteDaRedeSocial.CAMARA, CargaId = carga.Id,
+        });
+        await Db.SaveChangesAsync();
+
+        var sancoes = await LerAsync("/api/procedencia/sancoes?cnpj=11222333000181");
+        var parlamentar = await LerAsync($"/api/procedencia/parlamentar?idPessoa={pessoa.Id}");
+        var gestoes = await LerAsync("/api/procedencia/gestoes?de=2025&ate=2025");
+
+        Assert.Equal((1, 0), (sancoes.Linhas, sancoes.LinhasSemCarga));
+        Assert.Equal((2, 0), (parlamentar.Linhas, parlamentar.LinhasSemCarga));
+        Assert.Equal((1, 0), (gestoes.Linhas, gestoes.LinhasSemCarga));
+    }
+
     /// <summary>Viagens, compras, Defesa Civil e compras centralizadas: cada total da aba leva aos arquivos do período.</summary>
     [SkippableFact]
     public async Task AbasDoGoverno_LevamAosArquivosDoPeriodo()
