@@ -42,6 +42,10 @@ export const FONTES = {
     nome: 'Portal da Transparência — viagens a serviço',
     url: 'https://portaldatransparencia.gov.br/download-de-dados/viagens',
   },
+  compras: {
+    nome: 'Portal da Transparência — compras e contratos',
+    url: 'https://portaldatransparencia.gov.br/download-de-dados/compras',
+  },
   defesaCivil: {
     nome: 'Portal da Transparência — cartão de pagamento da Defesa Civil',
     url: 'https://portaldatransparencia.gov.br/download-de-dados/cpdc',

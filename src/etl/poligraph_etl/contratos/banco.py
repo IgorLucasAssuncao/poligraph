@@ -76,3 +76,33 @@ class DestinoDeViagem:
     cidade: str
     chegadas: int
     numero_de_diarias: float
+
+
+@dataclass(frozen=True)
+class ContratacoesDoOrgao:
+    """Uma linha de `contratacoes_do_orgao` (ContratacoesDoOrgaoModel): um mês, órgão e modalidade."""
+
+    TABELA: ClassVar[str] = "contratacoes_do_orgao"
+
+    ano: int
+    mes: int
+    orgao_superior: str
+    modalidade: str
+    contratos: int
+    sigilosos: int
+    valor: float
+    divergentes: int
+    valor_descartado: float
+
+
+@dataclass(frozen=True)
+class ContratadoDoGoverno:
+    """Uma linha de `contratados_do_governo` (ContratadoDoGovernoModel): uma empresa num ano."""
+
+    TABELA: ClassVar[str] = "contratados_do_governo"
+
+    ano: int
+    cnpj: str
+    nome: str
+    contratos: int
+    valor: float

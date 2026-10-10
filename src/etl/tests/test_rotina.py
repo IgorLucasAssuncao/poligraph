@@ -34,6 +34,7 @@ def test_mensal_acrescenta_dinheiro_e_grafo_e_confere_uma_vez_no_fim():
         "governo --anos 2026 --eleicao 2022",
         "defesa-civil --anos 2026",
         "viagens --anos 2026",
+        "compras --anos 2026",
         "populacao",
         "municipios",
         "analisar --casa CAMARA",
@@ -94,7 +95,7 @@ def test_toda_etapa_tem_execucao_no_main(monkeypatch):
     executados = []
     nomes = (
         "_ingerir", "_senado", "_simbolicas", "_palavras_chave", "_cota", "_emendas", "_sedes_brasilapi", "_convenios",
-        "_governo", "_defesa_civil", "_viagens", "_municipios", "_fundo", "_patrimonio", "_redes", "_populacao", "_analisar", "_conferir",
+        "_governo", "_defesa_civil", "_viagens", "_compras", "_municipios", "_fundo", "_patrimonio", "_redes", "_populacao", "_analisar", "_conferir",
     )
     for nome in nomes:
         monkeypatch.setattr(principal, nome, lambda *_, nome=nome: executados.append(nome))

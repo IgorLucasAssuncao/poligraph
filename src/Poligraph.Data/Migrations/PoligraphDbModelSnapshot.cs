@@ -298,6 +298,122 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Data.ContratacoesDoOrgaoModel", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<short>("Ano")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano");
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
+                    b.Property<int>("Contratos")
+                        .HasColumnType("integer")
+                        .HasColumnName("contratos");
+
+                    b.Property<int>("Divergentes")
+                        .HasColumnType("integer")
+                        .HasColumnName("divergentes");
+
+                    b.Property<short>("Mes")
+                        .HasColumnType("smallint")
+                        .HasColumnName("mes");
+
+                    b.Property<string>("Modalidade")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("modalidade");
+
+                    b.Property<string>("OrgaoSuperior")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("orgao_superior");
+
+                    b.Property<int>("Sigilosos")
+                        .HasColumnType("integer")
+                        .HasColumnName("sigilosos");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("valor");
+
+                    b.Property<decimal>("ValorDescartado")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("valor_descartado");
+
+                    b.HasKey("Id")
+                        .HasName("pk_contratacoes_do_orgao");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_contratacoes_do_orgao_carga_id");
+
+                    b.HasIndex("Ano", "Mes", "OrgaoSuperior", "Modalidade")
+                        .IsUnique()
+                        .HasDatabaseName("ux_contratacoes_mes_orgao_modalidade");
+
+                    b.ToTable("contratacoes_do_orgao", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_contratacoes_contagens", "contratos > 0 AND sigilosos BETWEEN 0 AND contratos AND divergentes BETWEEN 0 AND contratos");
+
+                            t.HasCheckConstraint("ck_contratacoes_descartado", "valor_descartado >= 0 AND (divergentes > 0 OR valor_descartado = 0)");
+
+                            t.HasCheckConstraint("ck_contratacoes_mes", "mes BETWEEN 1 AND 12");
+                        });
+                });
+
+            modelBuilder.Entity("Poligraph.Data.ContratadoDoGovernoModel", b =>
+                {
+                    b.Property<short>("Ano")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano");
+
+                    b.Property<string>("Cnpj")
+                        .HasMaxLength(14)
+                        .HasColumnType("character varying(14)")
+                        .HasColumnName("cnpj");
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
+                    b.Property<int>("Contratos")
+                        .HasColumnType("integer")
+                        .HasColumnName("contratos");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nome");
+
+                    b.Property<decimal>("Valor")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("valor");
+
+                    b.HasKey("Ano", "Cnpj")
+                        .HasName("pk_contratados_do_governo");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_contratados_do_governo_carga_id");
+
+                    b.ToTable("contratados_do_governo", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_contratado_cnpj", "cnpj ~ '^[0-9]{14}$'");
+
+                            t.HasCheckConstraint("ck_contratado_contratos", "contratos > 0");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Data.ConvenioModel", b =>
                 {
                     b.Property<string>("Numero")
@@ -2115,6 +2231,24 @@ namespace Poligraph.Data.Migrations
                         .HasConstraintName("fk_consentimentos_usuarios_usuario_id");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Poligraph.Data.ContratacoesDoOrgaoModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_contratacoes_do_orgao_cargas_carga_id");
+                });
+
+            modelBuilder.Entity("Poligraph.Data.ContratadoDoGovernoModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_contratados_do_governo_cargas_carga_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.DespesaModel", b =>

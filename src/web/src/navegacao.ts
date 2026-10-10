@@ -25,6 +25,7 @@ export const ABAS_DO_GOVERNO = [
   { para: '/governo', rotulo: TEXTOS_DO_SITE.abasDoGoverno.orcamento, fim: true },
   { para: '/governo/cartoes', rotulo: TEXTOS_DO_SITE.abasDoGoverno.cartoes, fim: false },
   { para: '/governo/viagens', rotulo: TEXTOS_DO_SITE.abasDoGoverno.viagens, fim: false },
+  { para: '/governo/compras', rotulo: TEXTOS_DO_SITE.abasDoGoverno.compras, fim: false },
 ] as const;
 
 /** Se o endereço é de uma das abas de Dinheiro público — para o item da barra acender. */

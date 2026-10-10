@@ -985,6 +985,38 @@ export type ViagensDoGoverno = {
   destinosNoExterior: DestinoDeViagem[];
 };
 
+/**
+ * Os contratos publicados pelo Executivo federal no período. `valor` é o final de cada contrato, salvo
+ * quando ele e o inicial divergem mais de 100 vezes: aí entra o menor, e `valorDescartado` diz quanto ficou de fora.
+ */
+export type ComprasDoGoverno = {
+  periodo: Periodo;
+  anosDisponiveis: number[];
+  contratos: number;
+  valor: number;
+  sigilosos: number;
+  valorSigiloso: number;
+  semModalidade: number;
+  divergentes: number;
+  valorDescartado: number;
+  porAno: { anoDaPublicacao: number; contratos: number; valor: number }[];
+  porModalidade: { modalidade: string; contratos: number; valor: number }[];
+  porOrgao: { orgao: string; contratos: number; valor: number; sigilosos: number }[];
+  contratados: { cnpj: string; nome: string; contratos: number; valor: number }[];
+};
+
+export async function obterComprasDoGoverno(periodo?: Periodo): Promise<ComprasDoGoverno | null> {
+  const url = periodo
+    ? `${BASE}/governo/compras?de=${periodo.primeiroAno}&ate=${periodo.ultimoAno}`
+    : `${BASE}/governo/compras`;
+  const resposta = await fetch(url, { credentials: 'include' });
+
+  if (resposta.status === 404) return null;
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.consulta(url, resposta.status));
+
+  return resposta.json();
+}
+
 /** Um destino no período; `uf` por extenso, nula fora do Brasil. */
 export type DestinoDeViagem = { pais: string; uf: string | null; cidade: string; chegadas: number };
 

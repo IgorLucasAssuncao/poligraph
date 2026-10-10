@@ -22,6 +22,7 @@ const EmendasComponent = lazy(() => import('./paginas/Emendas').then((m) => ({ d
 const EntidadeComponent = lazy(() => import('./paginas/Entidade').then((m) => ({ default: m.EntidadeComponent })));
 const EntidadesComponent = lazy(() => import('./paginas/Entidades').then((m) => ({ default: m.EntidadesComponent })));
 const GovernoComponent = lazy(() => import('./paginas/Governo').then((m) => ({ default: m.GovernoComponent })));
+const ComprasDoGovernoComponent = lazy(() => import('./paginas/ComprasDoGoverno').then((m) => ({ default: m.ComprasDoGovernoComponent })));
 const ViagensDoGovernoComponent = lazy(() => import('./paginas/ViagensDoGoverno').then((m) => ({ default: m.ViagensDoGovernoComponent })));
 const ParlamentarComponent = lazy(() => import('./paginas/Parlamentar').then((m) => ({ default: m.ParlamentarComponent })));
 const ParlamentaresComponent = lazy(() => import('./paginas/Parlamentares').then((m) => ({ default: m.ParlamentaresComponent })));
@@ -92,6 +93,7 @@ function RoteadorComponent() {
         <Route path="/governo" element={<GovernoComponent />} />
         <Route path="/governo/cartoes" element={<GovernoComponent secao="cartoes" />} />
         <Route path="/governo/viagens" element={<ViagensDoGovernoComponent />} />
+        <Route path="/governo/compras" element={<ComprasDoGovernoComponent />} />
         <Route path="/emendas" element={<EmendasComponent />} />
         <Route path="/entidades" element={<EntidadesComponent />} />
         <Route path="/entidades/:cnpj" element={<EntidadeComponent />} />
@@ -130,6 +132,7 @@ function LeituraSemContaComponent() {
         <Route path="/governo" element={<GovernoComponent />} />
         <Route path="/governo/cartoes" element={<GovernoComponent secao="cartoes" />} />
         <Route path="/governo/viagens" element={<ViagensDoGovernoComponent />} />
+        <Route path="/governo/compras" element={<ComprasDoGovernoComponent />} />
         <Route path="/emendas" element={<EmendasComponent />} />
         <Route path="/entidades" element={<EntidadesComponent />} />
         <Route path="/entidades/:cnpj" element={<EntidadeComponent />} />

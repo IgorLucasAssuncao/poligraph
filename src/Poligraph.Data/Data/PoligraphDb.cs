@@ -28,6 +28,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<GastoDaDefesaCivilModel> GastosDaDefesaCivil => Set<GastoDaDefesaCivilModel>();
     public DbSet<ViagensDoOrgaoModel> ViagensDoOrgao => Set<ViagensDoOrgaoModel>();
     public DbSet<DestinoDeViagemModel> DestinosDeViagem => Set<DestinoDeViagemModel>();
+    public DbSet<ContratacoesDoOrgaoModel> ContratacoesDoOrgao => Set<ContratacoesDoOrgaoModel>();
+    public DbSet<ContratadoDoGovernoModel> ContratadosDoGoverno => Set<ContratadoDoGovernoModel>();
     public DbSet<ReceitaPorOrigemModel> ReceitasPorOrigem => Set<ReceitaPorOrigemModel>();
     public DbSet<GestaoModel> Gestoes => Set<GestaoModel>();
     public DbSet<MunicipioModel> Municipios => Set<MunicipioModel>();
@@ -173,6 +175,10 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         mb.Entity<ViagensDoOrgaoModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<DestinoDeViagemModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<ContratacoesDoOrgaoModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<ContratadoDoGovernoModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
     }
 
@@ -572,6 +578,33 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasIndex(x => new { x.Ano, x.Pais, x.Uf, x.Cidade })
                 .IsUnique().AreNullsDistinct(false).HasDatabaseName("ux_destino_de_viagem");
             e.Property(x => x.NumeroDeDiarias).HasPrecision(12, 2);
+        });
+
+        mb.Entity<ContratacoesDoOrgaoModel>(e =>
+        {
+            e.ToTable("contratacoes_do_orgao", t =>
+            {
+                t.HasCheckConstraint("ck_contratacoes_mes", "mes BETWEEN 1 AND 12");
+                t.HasCheckConstraint("ck_contratacoes_contagens",
+                    "contratos > 0 AND sigilosos BETWEEN 0 AND contratos AND divergentes BETWEEN 0 AND contratos");
+                t.HasCheckConstraint("ck_contratacoes_descartado", "valor_descartado >= 0 AND (divergentes > 0 OR valor_descartado = 0)");
+            });
+            e.HasKey(x => x.Id);
+            e.HasIndex(x => new { x.Ano, x.Mes, x.OrgaoSuperior, x.Modalidade }).IsUnique().HasDatabaseName("ux_contratacoes_mes_orgao_modalidade");
+            e.Property(x => x.Valor).HasPrecision(18, 2);
+            e.Property(x => x.ValorDescartado).HasPrecision(18, 2);
+        });
+
+        mb.Entity<ContratadoDoGovernoModel>(e =>
+        {
+            e.ToTable("contratados_do_governo", t =>
+            {
+                t.HasCheckConstraint("ck_contratado_cnpj", "cnpj ~ '^[0-9]{14}$'");
+                t.HasCheckConstraint("ck_contratado_contratos", "contratos > 0");
+            });
+            e.HasKey(x => new { x.Ano, x.Cnpj });
+            e.Property(x => x.Cnpj).HasMaxLength(14);
+            e.Property(x => x.Valor).HasPrecision(18, 2);
         });
 
         mb.Entity<ReceitaPorOrigemModel>(e =>

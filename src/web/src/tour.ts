@@ -515,7 +515,8 @@ export function passosDoGoverno(): PassoDoTour[] {
       titulo: 'Cada gasto na sua página',
       texto:
         'Aqui está o orçamento inteiro. Em Cartões ficam o cartão corporativo, o que foi comprado em segredo e o ' +
-        'cartão da Defesa Civil; em Viagens, diárias e passagens de cada órgão.',
+        'cartão da Defesa Civil; em Viagens, diárias e passagens de cada órgão; em Compras e contratos, quem o ' +
+        'governo contratou e de que modo.',
     },
     {
       rota: null,

@@ -27,6 +27,7 @@ export const TEXTOS_DO_SITE = {
     orcamento: 'Orçamento',
     cartoes: 'Cartões',
     viagens: 'Viagens',
+    compras: 'Compras e contratos',
   },
 
   rodape: {

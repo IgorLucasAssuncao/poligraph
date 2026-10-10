@@ -30,11 +30,11 @@ from . import (
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
 from .fontes import brasilapi, camara, portal, receita, senado, tse
-from . import amostra, conferencia, convenentes, defesa_civil, patrimonio, procedencia, redes, rotina, viagens
+from . import amostra, compras, conferencia, convenentes, defesa_civil, patrimonio, procedencia, redes, rotina, viagens
 from .contratos import entrada
 from .contratos.entrada import colunas_da_fonte
 from .contratos.portal import (
-    LinhaDeTrechoDeViagem, LinhaDeViagem, LinhaDePagamentoDeViagem, LinhaDoCartaoDaDefesaCivil,
+    LinhaDeCompra, LinhaDeTrechoDeViagem, LinhaDeViagem, LinhaDePagamentoDeViagem, LinhaDoCartaoDaDefesaCivil,
 )
 
 log = logging.getLogger("poligraph")
@@ -90,6 +90,8 @@ def main(argv: list[str] | None = None) -> int:
                 _defesa_civil(conexao, args.anos)
             elif args.comando == "viagens":
                 _viagens(conexao, args.anos)
+            elif args.comando == "compras":
+                _compras(conexao, args.anos)
             elif args.comando == "convenios":
                 _convenios(conexao)
             elif args.comando == "patrimonio":
@@ -253,6 +255,12 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         help="viagens a serviço do Executivo federal: diárias e passagens por órgão, e destinos (Portal)",
     )
     vgm.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
+
+    cmp = sub.add_parser(
+        "compras",
+        help="contratos do Executivo federal publicados no Diário Oficial: por órgão, modalidade e contratado (Portal)",
+    )
+    cmp.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
 
     emd = sub.add_parser(
         "emendas", help="ingere emendas, favorecidos e convênios (Portal)"
@@ -1152,6 +1160,48 @@ def _viagens(conexao: psycopg.Connection, anos: list[int]) -> None:
         log.info("  %d: R$ %.1f mi em diárias, R$ %.1f mi em passagens, %d viagens, %d destinos", ano,
                  sum(o.diarias for o in orgaos) / 1e6, sum(o.passagens for o in orgaos) / 1e6,
                  sum(o.viagens for o in orgaos), len(destinos))
+
+
+def _compras(conexao: psycopg.Connection, anos: list[int]) -> None:
+    """Os contratos publicados de cada ano, mês a mês (ver `compras.py`).
+
+    Mês com 403 ou 404 é pulado e nomeado no log, como no cartão da Defesa Civil. O ano troca
+    inteiro numa transação; a carga de cada linha é a do arquivo do mês dela, e a dos contratados,
+    a do último mês lido.
+    """
+    hoje = date.today()
+    for ano in anos:
+        por_orgao: list = []
+        linhas_do_ano: list = []
+        cargas: dict[int, int] = {}
+        faltaram: list[str] = []
+        for mes in range(1, 13):
+            if (ano, mes) > (hoje.year, hoje.month):
+                break
+            recurso = compras.RECURSO.format(ano=ano, mes=mes)
+            sufixo = f"-{hoje:%Y%m%d}" if (ano, mes) >= (hoje.year, hoje.month - 1) else ""
+            try:
+                arquivo = portal.baixar(recurso, CACHE / f"compras-{ano}{mes:02d}{sufixo}.zip")
+            except requests.HTTPError as erro:
+                if erro.response is None or erro.response.status_code not in (403, 404):
+                    raise
+                faltaram.append(f"{mes:02d}/{ano}")
+                continue
+            cargas[mes] = _carga_do_arquivo(conexao, "PORTAL_TRANSPARENCIA", portal.url(recurso), arquivo)
+            tabela = portal.ler_csv(arquivo, compras.membro(ano, mes), colunas=list(colunas_da_fonte(LinhaDeCompra).values()))
+            linhas = entrada.ler(LinhaDeCompra, tabela.to_dict("records"))
+            por_orgao.append((cargas[mes], compras.por_orgao(ano, mes, linhas)))
+            linhas_do_ano.extend(linhas)
+
+        if not cargas:
+            continue
+        contratados = compras.contratados(ano, linhas_do_ano)
+        with conexao.transaction():
+            persistencia.gravar_compras(conexao, ano, por_orgao, contratados, cargas[max(cargas)])
+        log.info("  %d: %d contratos, R$ %.1f mi pelo valor final, %d contratados%s", ano,
+                 sum(c.contratos for _, linhas in por_orgao for c in linhas),
+                 sum(c.valor for _, linhas in por_orgao for c in linhas) / 1e6, len(contratados),
+                 f"; o Portal não publicou {', '.join(faltaram)}" if faltaram else "")
 
 
 def _antes_do_ultimo_publicado(mes_ano: str, publicados: list[tuple[int, int]]) -> bool:
@@ -2165,6 +2215,8 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
         _defesa_civil(conexao, anos)
     elif etapa.comando == "viagens":
         _viagens(conexao, anos)
+    elif etapa.comando == "compras":
+        _compras(conexao, anos)
     elif etapa.comando == "municipios":
         _municipios(conexao, None)
     elif etapa.comando == "fundo":

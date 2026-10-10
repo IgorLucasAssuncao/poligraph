@@ -31,7 +31,9 @@ import psycopg
 from psycopg import sql
 
 from . import procedencia
-from .contratos.banco import DestinoDeViagem, Despesa, GastoDaDefesaCivil, ViagensDoOrgao
+from .contratos.banco import (
+    ContratacoesDoOrgao, ContratadoDoGoverno, DestinoDeViagem, Despesa, GastoDaDefesaCivil, ViagensDoOrgao,
+)
 from .normalizacao import sem_acento_maiusculo
 
 LOTE = 5_000
@@ -747,6 +749,17 @@ def gravar_viagens(
     conexao.execute("DELETE FROM viagens_do_orgao WHERE ano = %s", (ano,))
     conexao.execute("DELETE FROM destinos_de_viagem WHERE ano = %s", (ano,))
     return gravar_contratos(conexao, orgaos, carga_id) + gravar_contratos(conexao, destinos, carga_id)
+
+
+def gravar_compras(
+    conexao: psycopg.Connection, ano: int, por_orgao: Sequence[tuple[int, Sequence[ContratacoesDoOrgao]]],
+    contratados: Sequence[ContratadoDoGoverno], carga_dos_contratados: int | None,
+) -> int:
+    """Grava as compras do ano: cada mês com a carga do arquivo dele, e os contratados com a do último mês."""
+    conexao.execute("DELETE FROM contratacoes_do_orgao WHERE ano = %s", (ano,))
+    conexao.execute("DELETE FROM contratados_do_governo WHERE ano = %s", (ano,))
+    gravadas = sum(gravar_contratos(conexao, linhas, carga) for carga, linhas in por_orgao)
+    return gravadas + gravar_contratos(conexao, contratados, carga_dos_contratados)
 
 
 def gravar_contratos(conexao: psycopg.Connection, linhas: Sequence, carga_id: int | None) -> int:

@@ -57,3 +57,19 @@ class LinhaDeTrechoDeViagem:
     uf_de_destino: str | None = coluna("Destino - UF")
     cidade_de_destino: str | None = coluna("Destino - Cidade")
     numero_de_diarias: str | None = coluna("Número Diárias")
+
+
+@dataclass(frozen=True)
+class LinhaDeCompra:
+    """Um contrato publicado no Diário Oficial: `download-de-dados/compras/AAAAMM`, membro `AAAAMM_Compras.csv`.
+
+    ATENÇÃO: os dois valores vêm com erro de digitação na fonte, um ou outro (ver
+    `compras.valor_do_contrato`). Contrato sigiloso vem com contratado `-11` e nome `Sigiloso`.
+    """
+
+    orgao_superior: str | None = coluna("Nome Órgão Superior")
+    modalidade: str | None = coluna("Modalidade Compra")
+    codigo_do_contratado: str | None = coluna("Código Contratado")
+    nome_do_contratado: str | None = coluna("Nome Contratado")
+    valor_inicial: str | None = coluna("Valor Inicial Compra")
+    valor_final: str | None = coluna("Valor Final Compra")

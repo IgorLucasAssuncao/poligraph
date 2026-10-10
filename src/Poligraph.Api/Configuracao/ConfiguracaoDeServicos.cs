@@ -41,6 +41,7 @@ public static class ConfiguracaoDeServicos
         servicos.AddScoped<ServicoPanorama>();
         servicos.AddScoped<ServicoGoverno>();
         servicos.AddScoped<ServicoViagensDoGoverno>();
+        servicos.AddScoped<ServicoComprasDoGoverno>();
         servicos.AddScoped<ServicoMetodologia>();
         servicos.AddScoped<ServicoAutoresDeEmenda>();
         servicos.AddScoped<ServicoMapaDeEmendas>();
