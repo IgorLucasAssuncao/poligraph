@@ -309,6 +309,7 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
 
         Assert.Equal((1, 0), (sancoes.Linhas, sancoes.LinhasSemCarga));
         Assert.Equal((2, 0), (parlamentar.Linhas, parlamentar.LinhasSemCarga));
+        Assert.Equal(["Ana", "https://instagram.com/ana"], parlamentar.Lista!.Select(l => l.Descricao));
         Assert.Equal((1, 0), (gestoes.Linhas, gestoes.LinhasSemCarga));
     }
 

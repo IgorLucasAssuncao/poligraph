@@ -81,6 +81,8 @@ public static class TextosDaProcedencia
     public const string Parlamentar =
         "O cadastro do parlamentar (nome, foto e identificação na fonte), do arquivo da Câmara ou da lista do Senado que o gravou por último, e as redes sociais, da Câmara para deputados e do TSE para senadores.";
 
+    public const string CadastroDoParlamentar = "cadastro: nome, foto e identificação na fonte";
+
     public static string Gestoes(Periodo<AnoDoOrcamento> periodo) =>
         $"Quem governou {periodo.Texto}: presidente, vice, partidos e coligação, do arquivo de candidatos do TSE da eleição de cada gestão.";
 

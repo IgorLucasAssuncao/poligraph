@@ -294,7 +294,9 @@ public class ServicoProcedencia(PoligraphDb db)
         return new(
             TextosDaProcedencia.Parlamentar,
             _db.Pessoas.AsNoTracking().Where(p => p.Id == idPessoa.Valor).Select(p => p.CargaId).Concat(redes.Select(r => r.CargaId)),
-            redes.OrderBy(r => r.Url).Select(r => new LinhaDaProcedenciaDto(r.Url, r.Fonte.ToString(), null, null, r.Url)));
+            redes.OrderBy(r => r.Url).Select(r => new LinhaDaProcedenciaDto(r.Url, r.Fonte == FonteDaRedeSocial.CAMARA ? "Câmara" : "TSE", null, null, r.Url)),
+            _db.Pessoas.AsNoTracking().Where(p => p.Id == idPessoa.Valor)
+                .Select(p => new LinhaDaProcedenciaDto(p.NomeCivil, TextosDaProcedencia.CadastroDoParlamentar, null, null, null)));
     }
 
     /// <remarks>
@@ -373,7 +375,8 @@ public class ServicoProcedencia(PoligraphDb db)
         IReadOnlyList<LinhaDaProcedenciaDto>? lista = null;
         if (recorte.Linhas is not null && total <= LimiteDaLista)
         {
-            lista = [.. (await recorte.Linhas.Take(LimiteDaLista).ToListAsync(ct))
+            var antes = recorte.Antes is null ? [] : await recorte.Antes.Take(LimiteDaLista).ToListAsync(ct);
+            lista = [.. antes.Concat(await recorte.Linhas.Take(LimiteDaLista - antes.Count).ToListAsync(ct))
                 .Select(l => l with { Descricao = TextoSemCpf.Limpar(l.Descricao) })];
         }
 
@@ -391,5 +394,6 @@ public class ServicoProcedencia(PoligraphDb db)
     }
 
     /// <summary>Um número: a regra, as cargas das linhas que entraram e, quando dá para listar, as linhas.</summary>
-    private sealed record Recorte(string Regra, IQueryable<long?> Cargas, IQueryable<LinhaDaProcedenciaDto>? Linhas);
+    /// <param name="Antes">Linhas de outra tabela que vêm antes na lista, consultadas à parte: o Postgres não une consultas com campos vazios sem tipo.</param>
+    private sealed record Recorte(string Regra, IQueryable<long?> Cargas, IQueryable<LinhaDaProcedenciaDto>? Linhas, IQueryable<LinhaDaProcedenciaDto>? Antes = null);
 }

@@ -1059,7 +1059,7 @@ def _redes(conexao: psycopg.Connection, anos: list[int]) -> None:
     log.info("  TSE: %d senadores com rede", len(do_tse))
 
     carga_da_camara = _carga_de_resposta(
-        conexao, "CAMARA", f"{camara.API}/deputados/{{id}}", respostas_da_camara,
+        conexao, "CAMARA", f"{camara.API}/deputados", respostas_da_camara,
         CACHE / "respostas" / f"redes-camara-{date.today():%Y%m%d}.json",
     )
     with conexao.transaction():
