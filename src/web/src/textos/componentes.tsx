@@ -108,7 +108,7 @@ export const TEXTOS_DOS_COMPONENTES = {
   mandatos: {
     votouDe: 'Votou de ',
     ate: ' a ',
-    naLegislatura: ', na legislatura ',
+    naLegislatura: ' · legislatura ',
     rotulo: 'Legislaturas em que votou',
     senadoCobreDuas: ' · no Senado, um mandato cobre duas',
     senado: 'Senado',
@@ -116,7 +116,7 @@ export const TEXTOS_DOS_COMPONENTES = {
   },
 
   redes: {
-    daCamara: 'Redes publicadas na Câmara',
+    daCamara: 'Redes',
     doTse: 'Redes declaradas ao TSE',
     nomes: {
       INSTAGRAM: 'Instagram',

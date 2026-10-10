@@ -196,12 +196,12 @@ export function ParlamentarComponent() {
 
         <MandatosDoParlamentarComponent mandatos={ficha.mandatos ?? []} atual={ficha.legislatura} caminho={pathname} />
 
-        <p className="perfil-fonte">
+        <div className="perfil-links">
           <LinkDeFonteComponent href={ficha.urlFonte}>
             {ficha.casa === 'SENADO' ? T.paginaNoSenado : T.paginaNaCamara}
           </LinkDeFonteComponent>
-        </p>
-        <RedesDoParlamentarComponent redes={ficha.redesSociais ?? []} />
+          <RedesDoParlamentarComponent redes={ficha.redesSociais ?? []} />
+        </div>
 
         <div className="perfil-numeros" data-tour="ficha-votacoes">
           <span>

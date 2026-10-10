@@ -767,7 +767,7 @@ describe('redes e patrimônio', () => {
     expect(link).toHaveAttribute('href', 'https://instagram.com/ana');
     expect(link.getAttribute('rel')).toContain('nofollow');
     expect(document.querySelector('a[href^="javascript"]')).toBeNull();
-    expect(screen.getByText(/Redes publicadas na Câmara/)).toBeInTheDocument();
+    expect(screen.getByText(/^Redes:/)).toBeInTheDocument();
   });
 
   it('o patrimônio mostra a última declaração e a anterior, sem porcentagem', async () => {
@@ -863,7 +863,7 @@ describe('os mandatos na ficha', () => {
     });
 
     const linha = document.querySelector('.mandatos-unico');
-    expect(linha?.textContent).toBe('Votou de mar/2023 a dez/2024, na legislatura 2023–2027');
+    expect(linha?.textContent).toBe('Votou de mar/2023 a dez/2024 · legislatura 2023–2027');
   });
 
   it('com dois, cada mandato é um link, com a sigla de então', async () => {

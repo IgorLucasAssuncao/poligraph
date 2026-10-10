@@ -2030,7 +2030,6 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
    tela do celular com o longo ("tudo o que esta entidade recebeu, no Portal…"). */
 .link-fonte { color: var(--realce); text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
 .link-fonte:hover { text-decoration-thickness: 2px; }
-.perfil-fonte { margin: .5rem 0 0; font-size: var(--t-2); }
 .lista-lancamentos { list-style: none; margin: 0; padding: 0; }
 .lista-lancamentos li {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .75rem;
@@ -2771,7 +2770,11 @@ dialog.tour::backdrop { background: transparent; }
 .legenda-barras .amostra.parte-sigilosa { background: var(--texto); }
 
 /* ═══ PERFIL — redes; ENTIDADE — o que foi combinado ═══════════ */
-.perfil-redes { margin: .35rem 0 0; font-size: var(--t-2); }
+.perfil-links {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem 1.25rem;
+  margin: .5rem 0 0; font-size: var(--t-2);
+}
+.perfil-redes { font-size: var(--t-2); }
 .perfil-redes-rotulo { color: var(--suave); }
 
 .lista-convenios-entidade { list-style: none; margin: .5rem 0 0; padding: 0; }

@@ -20,7 +20,7 @@ export function RedesDoParlamentarComponent({ redes }: { redes: RedeSocial[] }) 
   const daCamara = seguras.every((r) => r.fonte === 'CAMARA');
 
   return (
-    <p className="perfil-redes">
+    <span className="perfil-redes">
       <span className="perfil-redes-rotulo">{daCamara ? T.redes.daCamara : T.redes.doTse}:</span>{' '}
       {seguras.map((r, i) => (
         <span key={r.url}>
@@ -31,7 +31,7 @@ export function RedesDoParlamentarComponent({ redes }: { redes: RedeSocial[] }) 
           </a>
         </span>
       ))}
-    </p>
+    </span>
   );
 }
 
