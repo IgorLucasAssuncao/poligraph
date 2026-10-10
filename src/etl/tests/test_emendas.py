@@ -606,3 +606,25 @@ def test_convenio_ligacao_e_autor_saem_com_o_arquivo_de_origem(conexao):
 
     for tabela in ("convenios", "emendas_convenios", "autores_de_emenda"):
         assert conexao.execute(f"SELECT array_agg(DISTINCT carga_id) FROM {tabela}").fetchone()[0] == [carga]
+
+
+@pytest.mark.integracao
+def test_municipio_e_gestao_saem_com_o_arquivo_de_origem(conexao):
+    """A tabela TOM da Receita e o arquivo de candidatos do TSE entram em `cargas`, e as linhas apontam para eles."""
+    from poligraph_etl import persistencia
+
+    conexao.execute("TRUNCATE gestoes, cnpjs_municipio, municipios, cargas" " CASCADE")
+    carga = conexao.execute(
+        "INSERT INTO cargas (fonte, url, sha256, bytes, comando) VALUES ('RECEITA', 'u', repeat('c', 64), 1, 'c') RETURNING id"
+    ).fetchone()[0]
+
+    persistencia.gravar_municipios(
+        conexao, [{"codigo_ibge": "4314902", "codigo_tom": "8801", "nome": "Porto Alegre", "uf": "RS"}], carga)
+    persistencia.gravar_gestao(conexao, {
+        "eleicao": 2022, "primeiro_ano": 2023, "ultimo_ano": 2026,
+        "presidente_nome": "P", "presidente_nome_de_urna": "P", "presidente_partido": "X",
+        "vice_nome": "V", "vice_nome_de_urna": "V", "vice_partido": "Y", "coligacao": "X / Y",
+    }, carga)
+
+    assert conexao.execute("SELECT carga_id FROM municipios").fetchone()[0] == carga
+    assert conexao.execute("SELECT carga_id FROM gestoes").fetchone()[0] == carga

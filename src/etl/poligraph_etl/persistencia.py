@@ -997,17 +997,18 @@ def gravar_arrecadacao(
     )
 
 
-def gravar_municipios(conexao: psycopg.Connection, linhas: Sequence[dict]) -> int:
+def gravar_municipios(conexao: psycopg.Connection, linhas: Sequence[dict], carga_id: int | None = None) -> int:
     """Grava a tabela TOM ↔ IBGE. Atualiza em vez de apagar: `cnpjs_municipio` aponta para ela."""
     return _executar_em_lotes(
         conexao,
         """
-        INSERT INTO municipios (codigo_ibge, codigo_tom, nome, uf)
-        VALUES (%(codigo_ibge)s, %(codigo_tom)s, %(nome)s, %(uf)s)
+        INSERT INTO municipios (codigo_ibge, codigo_tom, nome, uf, carga_id)
+        VALUES (%(codigo_ibge)s, %(codigo_tom)s, %(nome)s, %(uf)s, %(carga_id)s)
         ON CONFLICT (codigo_ibge) DO UPDATE SET
-            codigo_tom = EXCLUDED.codigo_tom, nome = EXCLUDED.nome, uf = EXCLUDED.uf
+            codigo_tom = EXCLUDED.codigo_tom, nome = EXCLUDED.nome, uf = EXCLUDED.uf,
+            carga_id = COALESCE(EXCLUDED.carga_id, municipios.carga_id)
         """,
-        linhas,
+        _com_carga(linhas, carga_id),
     )
 
 
@@ -1084,16 +1085,16 @@ def gravar_cnpjs_municipio(
     )
 
 
-def gravar_gestao(conexao: psycopg.Connection, gestao: dict) -> None:
+def gravar_gestao(conexao: psycopg.Connection, gestao: dict, carga_id: int | None = None) -> None:
     """Grava presidente e vice de uma eleição, substituindo a linha dela."""
     conexao.execute(
         """
         INSERT INTO gestoes (eleicao, primeiro_ano, ultimo_ano, presidente_nome,
                              presidente_nome_de_urna, presidente_partido, vice_nome,
-                             vice_nome_de_urna, vice_partido, coligacao)
+                             vice_nome_de_urna, vice_partido, coligacao, carga_id)
         VALUES (%(eleicao)s, %(primeiro_ano)s, %(ultimo_ano)s, %(presidente_nome)s,
                 %(presidente_nome_de_urna)s, %(presidente_partido)s, %(vice_nome)s,
-                %(vice_nome_de_urna)s, %(vice_partido)s, %(coligacao)s)
+                %(vice_nome_de_urna)s, %(vice_partido)s, %(coligacao)s, %(carga_id)s)
         ON CONFLICT (eleicao) DO UPDATE SET
             primeiro_ano = EXCLUDED.primeiro_ano,
             ultimo_ano = EXCLUDED.ultimo_ano,
@@ -1103,9 +1104,10 @@ def gravar_gestao(conexao: psycopg.Connection, gestao: dict) -> None:
             vice_nome = EXCLUDED.vice_nome,
             vice_nome_de_urna = EXCLUDED.vice_nome_de_urna,
             vice_partido = EXCLUDED.vice_partido,
-            coligacao = EXCLUDED.coligacao
+            coligacao = EXCLUDED.coligacao,
+            carga_id = COALESCE(EXCLUDED.carga_id, gestoes.carga_id)
         """,
-        gestao,
+        {"carga_id": carga_id, **gestao},
     )
 
 

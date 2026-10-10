@@ -877,6 +877,9 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
         CACHE / f"consulta-cand-{eleicao}.zip",
     )
     gestao_eleita = gestao.eleitos(gestao.ler(zip_tse, eleicao))
+    carga_da_gestao = _carga_do_arquivo(
+        conexao, "TSE", f"{tse.CDN}/{gestao.RECURSO.format(eleicao=eleicao)}", zip_tse
+    )
     log.info("  gestão %d–%d: %s (%s) e %s (%s)",
              gestao_eleita["primeiro_ano"], gestao_eleita["ultimo_ano"],
              gestao_eleita["presidente_nome_de_urna"], gestao_eleita["presidente_partido"],
@@ -951,7 +954,7 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
         ))
 
     with conexao.transaction():
-        persistencia.gravar_gestao(conexao, gestao_eleita)
+        persistencia.gravar_gestao(conexao, gestao_eleita, carga_da_gestao)
         persistencia.gravar_orcamento(conexao, anos, funcoes)
         persistencia.gravar_encargos(conexao, anos, encargos)
         persistencia.gravar_arrecadacao(conexao, anos, receitas_do_periodo)
@@ -1043,7 +1046,9 @@ def _municipios(conexao: psycopg.Connection, diretorio: Path | None) -> None:
     ATENÇÃO: Rode depois de `emendas`: os CNPJs procurados são os que estão em
     `emendas_favorecidos`. Sem eles, o cadastro inteiro é lido para gravar nada.
     """
-    tabela = receita.ler_tabela_tom(receita.baixar_tabela_tom(CACHE / "receita-municipios.csv"))
+    arquivo_tom = receita.baixar_tabela_tom(CACHE / "receita-municipios.csv")
+    carga_tom = _carga_do_arquivo(conexao, "RECEITA", receita.TABELA_TOM, arquivo_tom)
+    tabela = receita.ler_tabela_tom(arquivo_tom)
     linhas_municipios = municipios.municipios_para_linhas(tabela)
     tom_para_ibge = {m["codigo_tom"]: m["codigo_ibge"] for m in linhas_municipios}
     log.info("  %d municípios na tabela TOM ↔ IBGE", len(linhas_municipios))
@@ -1070,7 +1075,7 @@ def _municipios(conexao: psycopg.Connection, diretorio: Path | None) -> None:
     log.info("  %d de %d CNPJs com município IBGE", len(sedes), len(alvos))
 
     with conexao.transaction():
-        persistencia.gravar_municipios(conexao, linhas_municipios)
+        persistencia.gravar_municipios(conexao, linhas_municipios, carga_tom)
         persistencia.gravar_cnpjs_municipio(conexao, sedes)
 
 
