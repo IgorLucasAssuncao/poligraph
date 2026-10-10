@@ -264,39 +264,28 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
    destoava da tira e "ficou bem feio" (autor, 2026-10-02). A seta é desenhada com dois
    gradientes em `currentColor`: acompanha o tema sem imagem. */
 /* DECISÃO: A barra do período, no alto do conteúdo (2026-10-02): na faixa, ficava escondida. */
-.barra-periodo {
-  margin: 0 0 1rem; padding: .7rem 1rem;
-  background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio);
-}
+/* DECISÃO (2026-10-10): mesma faixa do seletor de período do Governo, sem caixa cinza em volta. */
+.barra-periodo { margin: 0 0 1rem; padding: .9rem 0; border-bottom: 1px solid var(--borda); }
 .barra-periodo-linha { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .9rem; }
 .barra-periodo-rotulo { font-weight: 700; font-size: var(--t-3); }
 .barra-periodo-ajuda { color: var(--suave); font-size: var(--t-2); }
 /* Período passado: a tela inteira é de outro tempo, e isso precisa ser visto. */
-.barra-periodo-passada { border-color: var(--realce); border-left-width: 4px; }
+.barra-periodo-passada { padding-left: .9rem; border-left: 4px solid var(--realce); }
 .barra-periodo-aviso { margin: .5rem 0 0; font-size: var(--t-2); }
 
 .seletor-legislatura {
   display: inline-flex; align-items: center; gap: .45rem;
   color: var(--texto); font-size: var(--t-3);
 }
+/* O mesmo controle do seletor de período do Governo: borda, raio de 3px e o período na fonte de dado. */
 .seletor-legislatura select {
-  appearance: none; -webkit-appearance: none;
-  padding: .2rem 1.7rem .2rem .75rem;
-  font: inherit; font-weight: 600; font-variant-numeric: tabular-nums;
-  color: inherit; cursor: pointer;
-  background-color: color-mix(in srgb, var(--faixa-texto) 12%, transparent);
-  background-image:
-    linear-gradient(45deg, transparent 50%, currentColor 50%),
-    linear-gradient(135deg, currentColor 50%, transparent 50%);
-  background-position: calc(100% - 13px) 52%, calc(100% - 8px) 52%;
-  background-size: 5px 5px;
-  background-repeat: no-repeat;
-  border: 1px solid transparent; border-radius: 999px;
-  transition: background-color var(--t-curto) var(--curva);
+  padding: .35rem .5rem; font: inherit; font-size: var(--t-2); font-family: var(--dado); font-variant-numeric: tabular-nums;
+  color: var(--texto); background: var(--painel); cursor: pointer;
+  border: 1px solid var(--borda-controle); border-radius: var(--raio);
+  transition: border-color var(--t-curto) var(--curva);
 }
-.seletor-legislatura select:hover { background-color: color-mix(in srgb, var(--faixa-texto) 20%, transparent); }
-.seletor-legislatura select:focus-visible { outline: 2px solid var(--realce); outline-offset: 2px; }
-/* A lista aberta herda a faixa: sem isto, texto claro em fundo branco do sistema. */
+.seletor-legislatura select:hover { border-color: var(--realce); }
+.seletor-legislatura select:focus-visible { outline: 2px solid var(--realce); outline-offset: 1px; }
 .seletor-legislatura option { color: var(--texto); background: var(--fundo); font-weight: 400; }
 
 .cabecalho-site {
