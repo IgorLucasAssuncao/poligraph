@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useRef, type ReactNode } from 'react';
 import { clienteDeConsultas } from '../consultas';
 import { useEntradaAoNavegar } from '../transicao';
@@ -44,6 +44,60 @@ export function useCarga<T>(
     erro: consulta.isError && !consulta.isPlaceholderData,
     atualizando: consulta.isPlaceholderData,
     chaveDoDado: consulta.data === undefined ? undefined : ultima.current,
+  };
+}
+
+/** Uma página de lista: os itens dela, qual é, de que tamanho, e o total da lista inteira. */
+type PaginaDeLista<I> = { itens: I[]; pagina: number; tamanho: number; total: number };
+
+/**
+ * Uma lista em páginas, com "mostrar mais": a primeira página e as que vierem depois ficam juntas
+ * no cache de leituras, e voltar à lista mostra tudo o que já tinha sido aberto.
+ *
+ * DECISÃO (2026-10-10): `useInfiniteQuery`, o padrão do TanStack para listas que crescem. Trocar
+ * um filtro segura a lista anterior apagada, como o `useCarga`.
+ */
+export function useLista<P extends PaginaDeLista<unknown>>(
+  chave: readonly unknown[],
+  buscarPagina: (pagina: number) => Promise<P>,
+): {
+  primeira: P | undefined;
+  itens: P['itens'][number][];
+  total: number;
+  erro: boolean;
+  atualizando: boolean;
+  chaveDoDado: string | undefined;
+  carregandoMais: boolean;
+  carregarMais: () => void;
+} {
+  const consulta = useInfiniteQuery(
+    {
+      queryKey: chave,
+      queryFn: ({ pageParam }) => buscarPagina(pageParam),
+      initialPageParam: 1,
+      getNextPageParam: (ultima: P, todas: P[]) =>
+        todas.reduce((soma, p) => soma + p.itens.length, 0) < ultima.total ? ultima.pagina + 1 : undefined,
+      placeholderData: (anterior, consultaAnterior) =>
+        consultaAnterior && mesmoComeco(consultaAnterior.queryKey, chave, 1) ? anterior : undefined,
+    },
+    clienteDeConsultas,
+  );
+  const chaveAtual = JSON.stringify(chave);
+  const ultima = useRef<string | undefined>(undefined);
+  if (consulta.data !== undefined && !consulta.isPlaceholderData) {
+    ultima.current = chaveAtual;
+  }
+  const paginas = consulta.data?.pages ?? [];
+
+  return {
+    primeira: paginas[0],
+    itens: paginas.flatMap((p) => p.itens as P['itens'][number][]),
+    total: paginas[0]?.total ?? 0,
+    erro: consulta.isError && !consulta.isPlaceholderData,
+    atualizando: consulta.isPlaceholderData,
+    chaveDoDado: consulta.data === undefined ? undefined : ultima.current,
+    carregandoMais: consulta.isFetchingNextPage,
+    carregarMais: () => void consulta.fetchNextPage(),
   };
 }
 

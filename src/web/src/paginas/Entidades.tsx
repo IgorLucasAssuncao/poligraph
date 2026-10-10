@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { listarEntidades, type EntidadeNaLista, type GrupoDeEntidade, type PaginaDe } from '../api';
+import { listarEntidades, type GrupoDeEntidade } from '../api';
+import { AtualizandoComponent, useLista } from '../componentes/Atualizando';
 import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
 import { BotaoMostrarMaisComponent } from '../componentes/BotaoMostrarMais';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
@@ -27,24 +28,10 @@ export function EntidadesComponent() {
   const busca = parametros.get('busca') ?? '';
 
   const [digitado, setDigitado] = useState(busca);
-  const [pagina, setPagina] = useState<PaginaDe<EntidadeNaLista> | null>(null);
-  const [extras, setExtras] = useState<EntidadeNaLista[]>([]);
-  const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState(false);
-
-  useEffect(() => {
-    let atual = true;
-    listarEntidades({ busca, grupo })
-      .then((nova) => {
-        if (!atual) return;
-        setPagina(nova);
-        setExtras([]);
-      })
-      .catch(() => atual && setErro(true));
-    return () => {
-      atual = false;
-    };
-  }, [busca, grupo]);
+  const lista = useLista(['entidades', busca, grupo], (numero) =>
+    listarEntidades(numero > 1 ? { busca, grupo, pagina: numero } : { busca, grupo }),);
+  const pagina = lista.primeira ?? null;
+  const erro = lista.erro;
 
   useEffect(() => {
     const espera = setTimeout(() => {
@@ -54,21 +41,8 @@ export function EntidadesComponent() {
     return () => clearTimeout(espera);
   }, [digitado, busca, setParametros]);
 
-  const itens = [...(pagina?.itens ?? []), ...extras];
+  const itens = lista.itens;
   const restantes = Math.max((pagina?.total ?? 0) - itens.length, 0);
-
-  const carregarMais = async () => {
-    if (!pagina) return;
-    setCarregando(true);
-    try {
-      const proxima = await listarEntidades({ busca, grupo, pagina: Math.floor(itens.length / pagina.tamanho) + 1 });
-      setExtras((atuais) => [...atuais, ...proxima.itens]);
-    } catch {
-      setErro(true);
-    } finally {
-      setCarregando(false);
-    }
-  };
 
   return (
     <>
@@ -106,6 +80,7 @@ export function EntidadesComponent() {
       {!erro && !pagina && <EsqueletoDeListaComponent rotulo={T.carregando} />}
 
       {pagina && (
+        <AtualizandoComponent atualizando={lista.atualizando} chave={lista.chaveDoDado}>
         <section className="governo-secao">
           <p className="ajuda">{T.quantas(pagina.total.toLocaleString('pt-BR'), pagina.total)}</p>
 
@@ -132,11 +107,12 @@ export function EntidadesComponent() {
           <BotaoMostrarMaisComponent
             proximos={Math.min(pagina.tamanho, restantes)}
             restantes={restantes}
-            carregando={carregando}
+            carregando={lista.carregandoMais}
             erro={false}
-            aoClicar={carregarMais}
+            aoClicar={lista.carregarMais}
           />
         </section>
+        </AtualizandoComponent>
       )}
 
       <p className="fonte-dado">

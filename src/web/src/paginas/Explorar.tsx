@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { AtualizandoComponent } from '../componentes/Atualizando';
+import { AtualizandoComponent, useLista } from '../componentes/Atualizando';
+import { useAdiado } from '../componentes/useAdiado';
 import {
   listarParlamentares,
   listarSeguidos,
   type Casa,
-  type PaginaDeParlamentares,
   type Parlamentar,
 } from '../api';
 import { periodoDaLegislatura } from '../formato';
@@ -67,12 +67,7 @@ export function ExplorarComponent() {
   const [casa, setCasa] = useState<Casa | ''>('');
   const [ordem, setOrdem] = useState<'NOME' | 'VOTACOES'>('NOME');
   const [escolha] = useLegislaturaDaUrl();
-  const [lista, setLista] = useState<Parlamentar[]>([]);
-  const [pagina, setPagina] = useState<PaginaDeParlamentares | null>(null);
   const [seguidos, setSeguidos] = useState<Set<number>>(new Set());
-  const [carregando, setCarregando] = useState(true);
-  const [versao, setVersao] = useState(0);
-  const [carregandoMais, setCarregandoMais] = useState(false);
 
   const { usuario } = useSessao();
 
@@ -83,29 +78,14 @@ export function ExplorarComponent() {
       .catch(() => setSeguidos(new Set()));
   }, [usuario]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCarregando(true);
-      listarParlamentares({
-        nome: termo, partido, uf, casa: casa || undefined, ordem,
-        anteriores: escolha === 'todas' || undefined,
-        legislatura: typeof escolha === 'number' ? escolha : undefined,
-        tamanho: PARLAMENTARES_POR_PAGINA,
-      })
-        .then((primeira) => {
-          setPagina(primeira);
-          setLista(primeira.itens);
-          setVersao((v) => v + 1);
-        })
-        .catch(() => {
-          setPagina(null);
-          setLista([]);
-        })
-        .finally(() => setCarregando(false));
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [termo, partido, uf, casa, ordem, escolha]);
+  const filtroAdiado = useAdiado(JSON.stringify(filtro()), 300);
+  const consulta = useLista(['parlamentares', filtroAdiado], (numero) =>
+    listarParlamentares({ ...JSON.parse(filtroAdiado), tamanho: PARLAMENTARES_POR_PAGINA, ...(numero > 1 && { pagina: numero }) }),
+  );
+  const pagina = consulta.primeira ?? null;
+  const lista = consulta.itens;
+  const carregando = pagina === null && !consulta.erro;
+  const atualizando = consulta.atualizando || filtroAdiado !== JSON.stringify(filtro());
 
   const aplicados: [string, string, () => void][] = (
     [
@@ -185,13 +165,13 @@ export function ExplorarComponent() {
         </div>
       )}
 
-      {carregando && versao === 0 && <EsqueletoDeListaComponent rotulo={T.buscando} linhas={8} />}
+      {carregando && <EsqueletoDeListaComponent rotulo={T.buscando} linhas={8} />}
 
       {!carregando && lista.length === 0 && (
         <p className="vazio">{T.nenhum}</p>
       )}
 
-      {versao > 0 && total > 0 && (
+      {pagina && total > 0 && (
         <p className="contagem-lista" aria-live="polite">
           {T.contagem(lista.length, total)}
           {passada && T.queVotaramEm(periodoDaLegislatura(passada))}
@@ -199,7 +179,7 @@ export function ExplorarComponent() {
         </p>
       )}
 
-      <AtualizandoComponent atualizando={carregando && versao > 0} chave={String(versao)}>
+      <AtualizandoComponent atualizando={atualizando} chave={consulta.chaveDoDado}>
       {lista.map((p) => (
         <LinhaParlamentarComponent
           key={p.idPessoa}
@@ -220,27 +200,13 @@ export function ExplorarComponent() {
 
       {!carregando && lista.length < total && (
         <div className="carregar-mais">
-          <button type="button" className="botao-secundario" onClick={carregarMais} disabled={carregandoMais}>
-            {carregandoMais ? T.carregando : T.mostrarMais(Math.min(PARLAMENTARES_POR_PAGINA, total - lista.length))}
+          <button type="button" className="botao-secundario" onClick={consulta.carregarMais} disabled={consulta.carregandoMais}>
+            {consulta.carregandoMais ? T.carregando : T.mostrarMais(Math.min(PARLAMENTARES_POR_PAGINA, total - lista.length))}
           </button>
         </div>
       )}
     </>
   );
-
-  async function carregarMais() {
-    if (!pagina) return;
-    setCarregandoMais(true);
-    try {
-      const proxima = await listarParlamentares({
-        ...filtro(), tamanho: PARLAMENTARES_POR_PAGINA, pagina: pagina.pagina + 1,
-      });
-      setPagina(proxima);
-      setLista((atual) => [...atual, ...proxima.itens]);
-    } finally {
-      setCarregandoMais(false);
-    }
-  }
 
   function filtro() {
     return {
