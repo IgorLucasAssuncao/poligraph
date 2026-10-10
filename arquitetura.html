@@ -230,7 +230,7 @@
       <tr><td>API</td><td class="sim">Sim</td><td>Pela Cloudflare, porta 443, caminho <code>/api</code></td><td></td></tr>
       <tr><td>PostgreSQL</td><td class="nao">Nunca</td><td>Porta 5432 só dentro da rede do Docker</td><td></td></tr>
       <tr><td>Carga de dados</td><td class="nao">Não</td><td>Não recebe conexão; só sai para baixar das fontes</td><td></td></tr>
-      <tr><td>Painel do Coolify</td><td>A decidir</td><td>Público com 2FA, lista de IPs ou VPN</td><td class="pend">P22</td></tr>
+      <tr><td>Painel do Coolify</td><td class="nao">Não (recomendado)</td><td>Sem endereço público; aberto por túnel SSH. Ver abaixo</td><td class="pend">P22</td></tr>
       <tr><td>Grafana</td><td>A decidir</td><td>Público ou por túnel</td><td class="pend">P21</td></tr>
       <tr><td>SSH (porta 22)</td><td>Só para o autor</td><td>Direto, sem Cloudflare: chave, sem senha, sem root, de preferência só do seu IP</td><td></td></tr>
     </tbody>
@@ -279,6 +279,26 @@
   </ol>
   <p>A Hostinger oferece, ao criar o VPS, modelos de sistema com aplicativos já instalados; vale conferir se o Coolify está
     entre eles. Depois da instalação, o painel não deve ficar aberto à internet (P22).</p>
+
+  <h3>O painel do Coolify não fica exposto</h3>
+  <p>O painel tem poder total sobre o servidor: sobe e apaga containers, lê todos os segredos e alcança o banco. Quem entrar
+    nele leva tudo. Por isso ele não deve ter endereço na internet.</p>
+  <table>
+    <thead><tr><th>Opção</th><th>Como</th><th>Avaliação</th></tr></thead>
+    <tbody>
+      <tr><td><span class="rec">Sem endereço público</span><br><span class="pend">recomendada</span></td>
+        <td>O painel não ganha domínio. O autor o abre por um túnel SSH e usa no próprio navegador:
+          <pre>ssh -L 8000:localhost:8000 usuario@IP-do-VPS</pre>e então <code>http://localhost:8000</code>.</td>
+        <td>O painel não existe para a internet. O SSH já fica restrito ao IP do autor, só com chave.</td></tr>
+      <tr><td>Atrás do Cloudflare Access</td>
+        <td>Com o túnel da Cloudflare (P88), o painel ganha um endereço que pede login pela Cloudflare (e-mail e código) antes de chegar ao Coolify.</td>
+        <td>Boa, se o túnel for a escolha da P88. Grátis para poucos usuários.</td></tr>
+      <tr><td>Público, com 2FA</td>
+        <td>Endereço aberto, protegido pela senha e pelo segundo fator do próprio Coolify.</td>
+        <td>Funciona, mas fica exposto a qualquer falha do Coolify e a tentativas de senha.</td></tr>
+    </tbody>
+  </table>
+  <p>O deploy automático não depende do painel público: é o CI chamando a API do Coolify com um token, por um caminho próprio e mais restrito.</p>
 
   <h2 id="cicd">CI e CD</h2>
   <p><strong>CI</strong> (integração contínua) é conferir: a cada <code>git push</code>, o GitHub Actions baixa o código e
@@ -336,7 +356,8 @@
     <tbody>
       <tr><td class="pend">P3</td><td>Domínio. Sem ele, o login do Google não funciona em produção.</td></tr>
       <tr><td class="pend">P20</td><td>Para onde vai o backup do banco, criptografado.</td></tr>
-      <tr><td class="pend">P21 · P22</td><td>Como se chega ao Grafana e ao painel do Coolify.</td></tr>
+      <tr><td class="pend">P21</td><td>Como se chega ao Grafana.</td></tr>
+      <tr><td class="pend">P22</td><td>Painel do Coolify sem endereço público, aberto por túnel SSH (recomendado), ou atrás do Cloudflare Access.</td></tr>
       <tr><td class="pend">P23</td><td>Os testes como portão do deploy: o CI publica as imagens no <code>ghcr.io</code> e só então chama o Coolify.</td></tr>
       <tr><td class="pend">P86</td><td>Cache da API e limite de taxa na Cloudflare.</td></tr>
       <tr><td class="pend">P87</td><td>Primeira carga de produção, pela cópia do banco local.</td></tr>
