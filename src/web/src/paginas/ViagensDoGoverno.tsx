@@ -201,6 +201,8 @@ function ViagensPorOrgaoComponent({ dados }: { dados: ViagensDoGoverno }) {
         formatar={reaisCompacto}
         partes={partesComOutros(dados.porOrgao, (o) => o.orgao, (o) => o.total, T.outrosOrgaos)}
       />
+      <details className="detalhes-da-aba">
+      <summary>{T.verOsOrgaos(Math.min(dados.porOrgao.length, ORGAOS_EXIBIDOS))}</summary>
       <ul className="gastos-categorias">
         {dados.porOrgao.slice(0, ORGAOS_EXIBIDOS).map((o) => (
           <LinhaDeValorComponent
@@ -217,6 +219,7 @@ function ViagensPorOrgaoComponent({ dados }: { dados: ViagensDoGoverno }) {
           />
         ))}
       </ul>
+      </details>
     </section>
   );
 }

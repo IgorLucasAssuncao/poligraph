@@ -172,6 +172,27 @@ function ListaDeValoresComponent({
           partes={partesComOutros(linhas, (l) => l.texto ?? l.chave, (l) => l.valor, T.outros, composicao.total)}
         />
       )}
+      {composicao ? (
+        <details className="detalhes-da-aba">
+          <summary>{T.verTodos(linhas.length)}</summary>
+          <ListaComponent linhas={linhas} maior={maior} />
+        </details>
+      ) : (
+        <ListaComponent linhas={linhas} maior={maior} />
+      )}
+    </section>
+  );
+}
+
+/** As linhas de uma lista de valores, com a barra de cada uma. */
+function ListaComponent({
+  linhas,
+  maior,
+}: {
+  linhas: { chave: string; nome: React.ReactNode; valor: number; contratos?: number }[];
+  maior: number;
+}) {
+  return (
       <ul className="gastos-categorias">
         {linhas.map((l) => (
           <LinhaDeValorComponent
@@ -188,6 +209,5 @@ function ListaDeValoresComponent({
           />
         ))}
       </ul>
-    </section>
   );
 }

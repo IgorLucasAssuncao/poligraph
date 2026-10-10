@@ -183,6 +183,18 @@ export const GLOSSARIO = {
       'vírgula no lugar errado. Quando os dois valores do contrato diferem mais de 100 vezes, ' +
       'contamos o menor. Aditivo de verdade não multiplica um contrato por 100.',
   },
+  diaria: {
+    rotulo: 'diária',
+    explicacao:
+      ' O valor por dia que o servidor recebe fora da cidade dele. Paga hospedagem, alimentação ' +
+      'e deslocamento na cidade de destino (Decreto 5.992/2006). Por isso a hospedagem não aparece separada.',
+  },
+  orgaoSigiloso: {
+    rotulo: 'órgão "Sigiloso"',
+    explicacao:
+      ' No arquivo de pagamentos, o Portal esconde o órgão de parte das viagens. O arquivo das ' +
+      'viagens mostra esse órgão aberto, e o valor é somado nele.',
+  },
   cartaoDaDefesaCivil: {
     rotulo: 'cartão da Defesa Civil',
     explicacao:

@@ -45,7 +45,7 @@ describe('viagens a serviço', () => {
     expect((await screen.findAllByText('Diárias')).length).toBeGreaterThan(0);
     const texto = document.body.textContent ?? '';
     expect(texto).toMatch(/De 2025 a 2026, o governo federal pagou R\$\s*2,4\s*bi em 900\.000 viagens a serviço/);
-    expect(texto).toMatch(/Hospedagem não aparece separada: no serviço público federal ela é paga pela diária/);
+    expect(texto).toMatch(/A hospedagem está dentro da diária/);
   });
 
   it('diz quanto o Portal publicou como Sigiloso e foi somado ao órgão da viagem', async () => {
@@ -53,7 +53,7 @@ describe('viagens a serviço', () => {
     renderizar();
 
     await screen.findByText('Por órgão');
-    expect(document.body.textContent).toMatch(/O Portal publica R\$\s*235\s*mi desses pagamentos com o órgão "Sigiloso"/);
+    expect(document.body.textContent).toMatch(/R\$\s*235\s*mi vieram com o órgão "Sigiloso" e estão somados no órgão/);
     expect(document.body.textContent).not.toMatch(/não deu para atribuir/);
   });
 

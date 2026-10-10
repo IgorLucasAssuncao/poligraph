@@ -326,17 +326,11 @@ function DeOndeVeioComponent({ arrecadacao }: { arrecadacao: Arrecadacao }) {
     { nome: D.contribuicoes, valor: contribuicoes },
     { nome: D.outras, valor: arrecadacao.arrecadado - impostos - contribuicoes },
   ];
-  const maior = Math.max(...grupos.map((g) => g.valor), 1);
 
   return (
     <section className="governo-secao" data-tour="governo-origem">
       <h2>{D.titulo}</h2>
-
-      <ul className="gastos-categorias">
-        {grupos.map((g) => (
-          <LinhaDeValorComponent key={g.nome} nome={g.nome} valor={g.valor} maior={maior} formatar={reaisCompacto} minimo={0} />
-        ))}
-      </ul>
+      <ComposicaoComponent rotulo={D.titulo} formatar={reaisCompacto} partes={grupos} />
 
       <p className="nota-curta">{D.foraDaConta(reaisCompacto(arrecadacao.emissaoDeDivida))}</p>
     </section>
