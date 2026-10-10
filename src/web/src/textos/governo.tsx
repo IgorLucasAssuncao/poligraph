@@ -94,7 +94,7 @@ export const TEXTOS_DO_GOVERNO = {
         Paga as <TermoComponent nome="compraCentralizada">compras centralizadas</TermoComponent> do governo federal.
       </>
     ),
-    resposta: (periodo: string, total: string, transacoes: string): ReactNode => (
+    resposta: (periodo: string, total: ReactNode, transacoes: string): ReactNode => (
       <>
         {periodo}, foram <strong>{total}</strong> em {transacoes} compras.
       </>
@@ -104,6 +104,7 @@ export const TEXTOS_DO_GOVERNO = {
       'Quase tudo foi passagem aérea paga direto às companhias, de maio a agosto de 2019. Depois disso, o cartão ' +
       'quase não foi usado.',
     semArquivo: (meses: string) => `O Portal não publicou ${meses}. O total é só dos outros meses.`,
+    rotuloDaProcedencia: (periodo: string) => `Cartão de compras centralizadas, ${periodo}`,
     porOrgao: 'Por órgão',
     outrosOrgaos: 'os demais órgãos',
     meses: (meses: number) => (meses < 12 ? `${meses} meses publicados` : ''),
@@ -117,7 +118,7 @@ export const TEXTOS_DO_GOVERNO = {
         <TermoComponent nome="cartaoDaDefesaCivil">cartão da Defesa Civil</TermoComponent>.
       </>
     ),
-    resposta: (periodo: string, total: string, executores: number): ReactNode => (
+    resposta: (periodo: string, total: ReactNode, executores: number): ReactNode => (
       <>
         {periodo}, foram <strong>{total}</strong>, gastos por {executores.toLocaleString('pt-BR')} prefeituras e governos
         estaduais.
@@ -127,6 +128,7 @@ export const TEXTOS_DO_GOVERNO = {
     estados: 'Governos estaduais',
     semQuem: 'Sem dizer quem gastou',
     semArquivo: (meses: string) => `O Portal não publicou ${meses}. O total desses anos é menor do que o gasto foi.`,
+    rotuloDaProcedencia: (periodo: string) => `Cartão da Defesa Civil, ${periodo}`,
     porAno: 'Por ano',
     porUf: 'Por estado',
     valor: 'Valor',

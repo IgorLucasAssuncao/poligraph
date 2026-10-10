@@ -1209,7 +1209,8 @@ export async function obterNovidades(): Promise<Novidades> {
 export type ConsultaDeProcedencia = {
   contexto:
     | 'votos' | 'cota' | 'emendas' | 'campanha' | 'patrimonio' | 'painel' | 'pagamentos' | 'entidade'
-    | 'governo-gastos' | 'governo-receitas' | 'governo-sigiloso';
+    | 'governo-gastos' | 'governo-receitas' | 'governo-sigiloso'
+    | 'governo-viagens' | 'governo-compras' | 'governo-defesa-civil' | 'governo-compras-centralizadas';
   idPessoa?: number;
   legislatura?: number;
   /** Só em `cota`: um ano de despesa em vez do mandato. */

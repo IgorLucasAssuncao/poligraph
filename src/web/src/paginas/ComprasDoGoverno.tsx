@@ -11,6 +11,7 @@ import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { SeletorDePeriodoComponent } from '../componentes/SeletorDePeriodo';
 import { ColunasPorAnoComponent, ComposicaoComponent } from '../componentes/Graficos';
+import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { partesComOutros } from '../componentes/partesComOutros';
 import { atalhosDasGestoes } from '../componentes/atalhosDasGestoes';
 import { FONTES } from '../fontes';
@@ -133,7 +134,16 @@ function ResumoDasComprasComponent({ dados }: { dados: ComprasDoGoverno }) {
   return (
     <section className="governo-secao">
       <p className="frase-resposta">
-        {T.resposta(periodo.charAt(0).toUpperCase() + periodo.slice(1), contagem(dados.contratos), reaisCompacto(dados.valor))}
+        {T.resposta(
+          periodo.charAt(0).toUpperCase() + periodo.slice(1),
+          contagem(dados.contratos),
+          <ComProcedenciaComponent
+            consulta={{ contexto: 'governo-compras', de: dados.periodo.primeiroAno, ate: dados.periodo.ultimoAno }}
+            rotulo={T.rotuloDaProcedencia(periodo)}
+          >
+            {reaisCompacto(dados.valor)}
+          </ComProcedenciaComponent>,
+        )}
       </p>
       <p className="nota-curta">{T.valorDoContrato}</p>
       {dados.semModalidade > 0 && <p className="nota-curta">{T.semModalidade(reaisCompacto(dados.semModalidade))}</p>}

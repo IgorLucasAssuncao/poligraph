@@ -525,7 +525,18 @@ function DefesaCivilComponent({
 
   return (
     <BlocoDoCartaoComponent titulo={D.titulo} oQueE={D.oQueE}>
-      <p className="frase-resposta">{D.resposta(maiuscula(textoDoPeriodo(periodo)), reaisCompacto(defesaCivil.total), defesaCivil.executores)}</p>
+      <p className="frase-resposta">
+        {D.resposta(
+          maiuscula(textoDoPeriodo(periodo)),
+          <ComProcedenciaComponent
+            consulta={{ contexto: 'governo-defesa-civil', de: periodo.primeiroAno, ate: periodo.ultimoAno }}
+            rotulo={D.rotuloDaProcedencia(textoDoPeriodo(periodo))}
+          >
+            {reaisCompacto(defesaCivil.total)}
+          </ComProcedenciaComponent>,
+          defesaCivil.executores,
+        )}
+      </p>
       <ComposicaoComponent
         rotulo={D.titulo}
         formatar={reaisCompacto}
@@ -583,7 +594,16 @@ function ComprasCentralizadasComponent({
   return (
     <BlocoDoCartaoComponent titulo={C.titulo} oQueE={C.oQueE}>
       <p className="frase-resposta">
-        {C.resposta(maiuscula(textoDoPeriodo(periodo)), reaisCompacto(cpcc.total), cpcc.transacoes.toLocaleString('pt-BR'))}
+        {C.resposta(
+          maiuscula(textoDoPeriodo(periodo)),
+          <ComProcedenciaComponent
+            consulta={{ contexto: 'governo-compras-centralizadas', de: periodo.primeiroAno, ate: periodo.ultimoAno }}
+            rotulo={C.rotuloDaProcedencia(textoDoPeriodo(periodo))}
+          >
+            {reaisCompacto(cpcc.total)}
+          </ComProcedenciaComponent>,
+          cpcc.transacoes.toLocaleString('pt-BR'),
+        )}
       </p>
       <ComposicaoComponent
         rotulo={C.titulo}

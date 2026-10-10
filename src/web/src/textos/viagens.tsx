@@ -14,7 +14,7 @@ export const TEXTOS_DAS_VIAGENS = {
   soOExecutivo: 'Só o Executivo federal. Câmara, Senado e Judiciário publicam as viagens deles em outro lugar.',
   escopo: (periodo: string) => `Viagens a serviço do Executivo federal ${periodo}, pelo que foi pago.`,
 
-  resposta: (periodo: string, total: string, viagens: string): ReactNode => (
+  resposta: (periodo: string, total: ReactNode, viagens: string): ReactNode => (
     <>
       {periodo}, o governo federal pagou <strong>{total}</strong> em {viagens} viagens a serviço.
     </>
@@ -51,6 +51,7 @@ export const TEXTOS_DAS_VIAGENS = {
   destinosNoExterior: 'Para onde mais foram, no exterior',
   chegadas: (chegadas: string) => `${chegadas} chegadas`,
   notaDosDestinos: 'Conta chegadas: uma viagem de ida e volta conta duas.',
+  rotuloDaProcedencia: (periodo: string) => `Viagens a serviço, ${periodo}`,
   fonte: 'Viagens a serviço',
   portal: '(Portal da Transparência).',
 } as const;

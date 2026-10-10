@@ -17,6 +17,10 @@ public enum TipoDeContexto
     GovernoGastos,
     GovernoReceitas,
     GovernoSigiloso,
+    GovernoViagens,
+    GovernoCompras,
+    GovernoDefesaCivil,
+    GovernoComprasCentralizadas,
 }
 
 /// <summary>
@@ -39,6 +43,10 @@ public readonly record struct ContextoDeProcedencia(TipoDeContexto Tipo) : IPars
         ["governo-gastos"] = TipoDeContexto.GovernoGastos,
         ["governo-receitas"] = TipoDeContexto.GovernoReceitas,
         ["governo-sigiloso"] = TipoDeContexto.GovernoSigiloso,
+        ["governo-viagens"] = TipoDeContexto.GovernoViagens,
+        ["governo-compras"] = TipoDeContexto.GovernoCompras,
+        ["governo-defesa-civil"] = TipoDeContexto.GovernoDefesaCivil,
+        ["governo-compras-centralizadas"] = TipoDeContexto.GovernoComprasCentralizadas,
     };
 
     public static ContextoDeProcedencia Parse(string s, IFormatProvider? provider) =>

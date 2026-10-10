@@ -6,6 +6,7 @@ import { obterViagensDoGoverno, type Periodo, type ViagensDoGoverno } from '../a
 import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
 import { AbasDoGovernoComponent } from '../componentes/AbasDoGoverno';
 import { LinhaDeValorComponent } from '../componentes/Dados';
+import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { ColunasPorAnoComponent, ComposicaoComponent } from '../componentes/Graficos';
 import { partesComOutros } from '../componentes/partesComOutros';
 import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
@@ -153,7 +154,16 @@ function ResumoDasViagensComponent({ dados }: { dados: ViagensDoGoverno }) {
   return (
     <section className="governo-secao">
       <p className="frase-resposta">
-        {T.resposta(periodo.charAt(0).toUpperCase() + periodo.slice(1), reaisCompacto(dados.total), contagem(dados.viagens))}
+        {T.resposta(
+          periodo.charAt(0).toUpperCase() + periodo.slice(1),
+          <ComProcedenciaComponent
+            consulta={{ contexto: 'governo-viagens', de: dados.periodo.primeiroAno, ate: dados.periodo.ultimoAno }}
+            rotulo={T.rotuloDaProcedencia(periodo)}
+          >
+            {reaisCompacto(dados.total)}
+          </ComProcedenciaComponent>,
+          contagem(dados.viagens),
+        )}
       </p>
       <ComposicaoComponent
         rotulo={T.composicao}

@@ -55,6 +55,20 @@ public static class TextosDaProcedencia
     public static string GovernoSigiloso(Periodo<AnoDoOrcamento> periodoDoOrcamento) =>
         $"O gasto sigiloso {periodoDoOrcamento.Texto}: cartão corporativo e ações marcadas como sigilosas, por órgão, dos arquivos mensais do Portal.";
 
+    public static string GovernoViagens(Periodo<AnoDoOrcamento> periodo) =>
+        $"As viagens a serviço do Executivo federal {periodo.Texto}: diárias, passagens, seguro e restituição por órgão, do arquivo anual de viagens do Portal da Transparência. "
+        + "O pagamento publicado com órgão \"Sigiloso\" vai para o órgão da viagem, pelo identificador do processo.";
+
+    public static string GovernoCompras(Periodo<AnoDoOrcamento> periodo) =>
+        $"Os contratos do Executivo federal publicados {periodo.Texto}, por órgão e modalidade, dos arquivos mensais de compras do Portal da Transparência, uma linha por mês, órgão e modalidade. "
+        + "Quando o valor inicial e o final diferem mais de 100 vezes, conta o menor.";
+
+    public static string GovernoDefesaCivil(Periodo<AnoDoOrcamento> periodo) =>
+        $"O cartão de pagamento da Defesa Civil {periodo.Texto}, dos extratos mensais do Portal da Transparência, uma linha por mês, executor e município.";
+
+    public static string GovernoComprasCentralizadas(Periodo<AnoDoOrcamento> periodo) =>
+        $"O cartão de compras centralizadas {periodo.Texto}, dos arquivos mensais do Portal da Transparência, uma linha por mês e órgão.";
+
     public static string GovernoGastos(Periodo<AnoDoOrcamento> periodoDoOrcamento) =>
         $"O gasto pago do Poder Executivo federal {periodoDoOrcamento.Texto}, do arquivo anual do orçamento do Portal da Transparência, uma linha por ano e função, mais os Encargos especiais por subfunção. "
         + "Os restos a pagar pagos somados vêm dos arquivos mensais de execução.";

@@ -11,7 +11,7 @@ export const TEXTOS_DAS_COMPRAS = {
   rotuloDoPeriodo: 'Período dos contratos',
   escopo: (periodo: string) => `Contratos do Executivo federal publicados ${periodo}.`,
 
-  resposta: (periodo: string, contratos: string, valor: string): ReactNode => (
+  resposta: (periodo: string, contratos: string, valor: ReactNode): ReactNode => (
     <>
       {periodo}, o governo federal publicou <strong>{contratos} contratos</strong>, que somam <strong>{valor}</strong>.
     </>
@@ -50,6 +50,7 @@ export const TEXTOS_DAS_COMPRAS = {
   porOrgao: 'Por órgão',
   contratados: 'Empresas com mais dinheiro em contrato',
   contratos: (n: string) => `${n} contratos`,
+  rotuloDaProcedencia: (periodo: string) => `Contratos publicados, ${periodo}`,
   fonte: 'Compras e contratos',
   portal: '(Portal da Transparência).',
 } as const;

@@ -255,6 +255,33 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
         Assert.Equal((1, 1), (sigiloso.Linhas, sigiloso.LinhasSemCarga));
     }
 
+    /// <summary>Viagens, compras, Defesa Civil e compras centralizadas: cada total da aba leva aos arquivos do período.</summary>
+    [SkippableFact]
+    public async Task AbasDoGoverno_LevamAosArquivosDoPeriodo()
+    {
+        ExigeDocker();
+        var carga = Carga('8', "https://portaldatransparencia.gov.br/download-de-dados/viagens/2025");
+        Db.Cargas.Add(carga);
+        await Db.SaveChangesAsync();
+        Db.ViagensDoOrgao.AddRange(
+            new ViagensDoOrgaoModel { Ano = 2025, OrgaoSuperior = "Ministério da Saúde", Viagens = 1, Diarias = 10m, CargaId = carga.Id },
+            new ViagensDoOrgaoModel { Ano = 2024, OrgaoSuperior = "Ministério da Saúde", Viagens = 1, Diarias = 10m, CargaId = carga.Id });
+        Db.ComprasCentralizadasNoCartao.Add(new CompraCentralizadaNoCartaoModel
+        {
+            Ano = 2025, Mes = 1, OrgaoSuperior = "Ministério da Educação", Valor = 5m, Transacoes = 1, CargaId = carga.Id,
+        });
+        await Db.SaveChangesAsync();
+
+        var viagens = await LerAsync("/api/procedencia/governo-viagens?de=2025&ate=2025");
+        var centralizadas = await LerAsync("/api/procedencia/governo-compras-centralizadas?de=2025&ate=2025");
+        var compras = await LerAsync("/api/procedencia/governo-compras?de=2025&ate=2025");
+
+        Assert.Equal((1, 0, new string('8', 64)), (viagens.Linhas, viagens.LinhasSemCarga, viagens.Cargas.Single().Sha256));
+        Assert.Contains("Sigiloso", viagens.Regra);
+        Assert.Equal((1, 0), (centralizadas.Linhas, centralizadas.LinhasSemCarga));
+        Assert.Equal(0, compras.Linhas);
+    }
+
     /// <summary>Cada parâmetro tem tipo próprio: o formato errado é recusado na entrada, antes do serviço.</summary>
     [SkippableTheory]
     [InlineData("/api/procedencia/inventado?idPessoa=1&legislatura=57")]

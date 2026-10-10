@@ -52,6 +52,10 @@ public class ServicoProcedencia(PoligraphDb db)
             case TipoDeContexto.GovernoGastos:
             case TipoDeContexto.GovernoReceitas:
             case TipoDeContexto.GovernoSigiloso:
+            case TipoDeContexto.GovernoViagens:
+            case TipoDeContexto.GovernoCompras:
+            case TipoDeContexto.GovernoDefesaCivil:
+            case TipoDeContexto.GovernoComprasCentralizadas:
                 return consulta.PeriodoDoOrcamento.Completo ? DoGoverno(consulta.Contexto.Tipo, consulta.PeriodoDoOrcamento) : null;
             case TipoDeContexto.Entidade:
                 return consulta.Cnpj is { } cnpj ? DaEntidade(cnpj) : null;
@@ -184,7 +188,8 @@ public class ServicoProcedencia(PoligraphDb db)
     /// <summary>Os números da página do Governo (Pendência 84), no mesmo período da página.</summary>
     /// <remarks>
     /// <para>O gasto soma a execução por função e os Encargos especiais do arquivo anual do orçamento. Os restos a pagar pagos vêm dos arquivos mensais de execução, que não entram como carga das linhas: a regra diz isso.</para>
-    /// <para>O gasto sigiloso combina arquivos mensais do cartão e da execução, e suas linhas ficam sem carga; o painel diz quantas.</para>
+    /// <para>O gasto sigiloso soma por ano os arquivos mensais do cartão e da execução; cada linha aponta para o índice desses arquivos, que lista o hash de cada um.</para>
+    /// <para>Viagens, compras, Defesa Civil e compras centralizadas usam o mesmo período da página, pelo ano do arquivo de cada uma.</para>
     /// </remarks>
     private Recorte DoGoverno(TipoDeContexto contexto, Periodo<AnoDoOrcamento> periodoDoOrcamento)
     {
@@ -197,6 +202,18 @@ public class ServicoProcedencia(PoligraphDb db)
             TipoDeContexto.GovernoSigiloso => new(
                 TextosDaProcedencia.GovernoSigiloso(periodoDoOrcamento),
                 _db.GastosSigilosos.AsNoTracking().Where(g => g.Ano >= primeiroAnoDoOrcamento && g.Ano <= ultimoAnoDoOrcamento).Select(g => g.CargaId), null),
+            TipoDeContexto.GovernoViagens => new(
+                TextosDaProcedencia.GovernoViagens(periodoDoOrcamento),
+                _db.ViagensDoOrgao.AsNoTracking().Where(v => v.Ano >= primeiroAnoDoOrcamento && v.Ano <= ultimoAnoDoOrcamento).Select(v => v.CargaId), null),
+            TipoDeContexto.GovernoCompras => new(
+                TextosDaProcedencia.GovernoCompras(periodoDoOrcamento),
+                _db.ContratacoesDoOrgao.AsNoTracking().Where(c => c.Ano >= primeiroAnoDoOrcamento && c.Ano <= ultimoAnoDoOrcamento).Select(c => c.CargaId), null),
+            TipoDeContexto.GovernoDefesaCivil => new(
+                TextosDaProcedencia.GovernoDefesaCivil(periodoDoOrcamento),
+                _db.GastosDaDefesaCivil.AsNoTracking().Where(d => d.Ano >= primeiroAnoDoOrcamento && d.Ano <= ultimoAnoDoOrcamento).Select(d => d.CargaId), null),
+            TipoDeContexto.GovernoComprasCentralizadas => new(
+                TextosDaProcedencia.GovernoComprasCentralizadas(periodoDoOrcamento),
+                _db.ComprasCentralizadasNoCartao.AsNoTracking().Where(c => c.Ano >= primeiroAnoDoOrcamento && c.Ano <= ultimoAnoDoOrcamento).Select(c => c.CargaId), null),
             _ => new(
                 TextosDaProcedencia.GovernoGastos(periodoDoOrcamento),
                 _db.OrcamentoPorFuncao.AsNoTracking().Where(o => o.Ano >= primeiroAnoDoOrcamento && o.Ano <= ultimoAnoDoOrcamento).Select(o => o.CargaId)
