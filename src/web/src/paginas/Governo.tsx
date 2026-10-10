@@ -29,6 +29,7 @@ import { dataCurta, mesCurto, nomeProprio, partesDeCem, reaisCompacto } from '..
 import { passosDoGoverno } from '../tour';
 import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { LinhaDeValorComponent, NumeroComponent } from '../componentes/Dados';
+import { ColunasPorAnoComponent } from '../componentes/Graficos';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { AREAS_DO_ORCAMENTO_NOMEADAS } from '../constantes';
 import { TEXTOS_DO_GOVERNO as T } from '../textos/governo';
@@ -101,7 +102,12 @@ export function GovernoComponent({ secao = 'orcamento' }: { secao?: 'orcamento' 
           {secao === 'orcamento' ? (
             <>
               <ResumoComponent dados={dados} />
-              {dados.porAno.length > 1 && <AnoAAnoComponent dados={dados} />}
+              {dados.porAno.length > 1 && (
+                <AnoAAnoComponent
+                  dados={dados}
+                  aoEscolher={(ano) => setParametros({ de: String(ano), ate: String(ano) }, { replace: true })}
+                />
+              )}
               <CadaCemReaisComponent dados={dados} />
               <DeOndeVeioComponent arrecadacao={dados.arrecadacao} />
               {dados.gestoes.map((g) => (
@@ -187,12 +193,9 @@ function ResumoComponent({ dados }: { dados: DadosDoGoverno }) {
  * ATENÇÃO: Valores nominais. Sem correção pela inflação, o ano mais recente parece maior só por ser
  * mais recente — e comparar gestões assim favoreceria a última. A tabela diz isso.
  */
-function AnoAAnoComponent({ dados }: { dados: DadosDoGoverno }) {
+function AnoAAnoComponent({ dados, aoEscolher }: { dados: DadosDoGoverno; aoEscolher: (ano: number) => void }) {
   const A = T.anoAAno;
-  return (
-    <section className="governo-secao">
-      <h2>{A.titulo}</h2>
-      <p className="nota-curta">{A.nota}</p>
+  const tabela = (
       <div className="tabela-rolavel">
         <table className="tabela-orcamento">
           <caption className="sr-apenas">{A.legenda}</caption>
@@ -221,6 +224,24 @@ function AnoAAnoComponent({ dados }: { dados: DadosDoGoverno }) {
           </tbody>
         </table>
       </div>
+  );
+  return (
+    <section className="governo-secao">
+      <h2>{A.titulo}</h2>
+      <p className="nota-curta">{A.nota}</p>
+      <ColunasPorAnoComponent
+        rotulo={A.titulo}
+        series={[A.entrou, A.gastou, A.pegouEmprestado]}
+        anos={dados.porAno.map((a) => ({
+          ano: a.anoDoOrcamento,
+          valores: [a.arrecadou, a.gastou, a.pegouEmprestado],
+          nota: a.fechado ? gestaoDoAno(dados, a.anoDoOrcamento) : `${gestaoDoAno(dados, a.anoDoOrcamento)},${A.emAndamento}`,
+        }))}
+        formatar={reaisCompacto}
+        anoEscolhido={dados.periodo.primeiroAno === dados.periodo.ultimoAno ? dados.periodo.primeiroAno : null}
+        aoEscolher={aoEscolher}
+        tabela={tabela}
+      />
     </section>
   );
 }
@@ -431,7 +452,6 @@ function parteSigilosaDoCartao(sigiloso: number, total: number): string {
  */
 function DefesaCivilComponent({ defesaCivil, periodo }: { defesaCivil: DefesaCivil; periodo: Periodo }) {
   const D = T.defesaCivil;
-  const maiorAno = Math.max(...defesaCivil.porAno.map((a) => a.valor));
   const maiorUf = defesaCivil.porUf[0]?.valor ?? 0;
   const semArquivo = defesaCivil.mesesSemArquivo.map(mesCurto).join(', ');
 
@@ -447,17 +467,12 @@ function DefesaCivilComponent({ defesaCivil, periodo }: { defesaCivil: DefesaCiv
       {defesaCivil.porAno.length > 1 && (
         <>
           <h3>{D.porAno}</h3>
-          <ul className="gastos-categorias">
-            {defesaCivil.porAno.map((a) => (
-              <LinhaDeValorComponent
-                key={a.anoDoExtrato}
-                nome={`${a.anoDoExtrato}${D.meses(a.meses)}`}
-                valor={a.valor}
-                maior={maiorAno}
-                formatar={reaisCompacto}
-              />
-            ))}
-          </ul>
+          <ColunasPorAnoComponent
+            rotulo={D.porAno}
+            series={[D.titulo]}
+            anos={defesaCivil.porAno.map((a) => ({ ano: a.anoDoExtrato, valores: [a.valor], nota: D.meses(a.meses).trim() || undefined }))}
+            formatar={reaisCompacto}
+          />
         </>
       )}
 
