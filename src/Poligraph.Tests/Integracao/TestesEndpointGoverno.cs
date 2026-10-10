@@ -171,6 +171,7 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
 
         Assert.Equal((20m, 100m, 5, 8m), (sigilo.CartaoSigiloso, sigilo.CartaoTotal, sigilo.TransacoesSigilosas, sigilo.AcaoSigilosa));
         Assert.Equal(["Presidência da República", "Ministério da Defesa"], sigilo.PorOrgao.Select(o => o.Orgao));
+        Assert.Equal([new SigiloNoAnoLido(2025, 20m, 8m)], sigilo.PorAno);
     }
 
     [SkippableFact]
@@ -242,6 +243,7 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
         Assert.Equal((704m, 4), (cpcc.Total, cpcc.Transacoes));
         Assert.Equal([("Ministério da Educação", 604m), ("Ministério da Saúde", 100m)], cpcc.PorOrgao.Select(o => (o.Orgao, o.Valor)));
         Assert.Equal([.. Enumerable.Range(3, 10).Select(m => $"2025-{m:00}")], cpcc.MesesSemArquivo);
+        Assert.Equal([new CpccNoAnoLido(2025, 604m, 2), new CpccNoAnoLido(2026, 100m, 1)], cpcc.PorAno);
     }
 
     [SkippableFact]
@@ -281,7 +283,12 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
     private record OrgaoLido(string Orgao);
 
     private record SigiloLido(
-        decimal CartaoSigiloso, decimal CartaoTotal, int TransacoesSigilosas, decimal AcaoSigilosa, List<OrgaoLido> PorOrgao);
+        decimal CartaoSigiloso, decimal CartaoTotal, int TransacoesSigilosas, decimal AcaoSigilosa, List<OrgaoLido> PorOrgao,
+        List<SigiloNoAnoLido> PorAno);
+
+    private record SigiloNoAnoLido(int Ano, decimal Cartao, decimal Acao);
+
+    private record CpccNoAnoLido(int Ano, decimal Valor, int Meses);
 
     private record DefesaCivilNoAnoLido(int AnoDoExtrato, decimal Valor, int Meses);
 
@@ -293,7 +300,8 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
 
     private record CpccOrgaoLido(string Orgao, decimal Valor);
 
-    private record CpccLido(decimal Total, int Transacoes, List<CpccOrgaoLido> PorOrgao, List<string> MesesSemArquivo);
+    private record CpccLido(
+        decimal Total, int Transacoes, List<CpccOrgaoLido> PorOrgao, List<string> MesesSemArquivo, List<CpccNoAnoLido> PorAno);
 
     private record PeriodoLido(int PrimeiroAno, int UltimoAno);
 

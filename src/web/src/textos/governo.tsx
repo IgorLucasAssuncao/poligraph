@@ -81,44 +81,78 @@ export const TEXTOS_DO_GOVERNO = {
     foraDaConta: (emprestado: string) => `Fora da conta: ${emprestado} pegos emprestados, que voltam com juros.`,
   },
 
+  cartoes: {
+    abertura: 'São três cartões diferentes. Cada um tem quem compra e regras próprias, e os valores não se somam.',
+    porAno: 'Por ano',
+    rotulo: 'Cartão',
+  },
+
   comprasCentralizadas: {
     titulo: 'Cartão de compras centralizadas',
-    resposta: (periodo: string, total: string, transacoes: string) =>
-      `No cartão de compras centralizadas, ${periodo}, o governo federal gastou ${total} em ${transacoes} compras.`,
-    nota:
-      'É o cartão do governo federal usado em compras feitas de forma centralizada, como passagens. Fica ao lado do ' +
-      'cartão corporativo, sem somar com ele.',
-    semArquivo: (meses: string) =>
-      `O Portal não publicou o arquivo de ${meses}, mesmo depois de novas tentativas. O total é só dos outros meses.`,
+    oQueE: (
+      <>
+        Paga as <TermoComponent nome="compraCentralizada">compras centralizadas</TermoComponent> do governo federal.
+      </>
+    ),
+    resposta: (periodo: string, total: string, transacoes: string): ReactNode => (
+      <>
+        {periodo}, foram <strong>{total}</strong> em {transacoes} compras.
+      </>
+    ),
+    valor: 'Valor',
+    semArquivo: (meses: string) => `O Portal não publicou ${meses}. O total é só dos outros meses.`,
     porOrgao: 'Por órgão',
+    outrosOrgaos: 'os demais órgãos',
+    meses: (meses: number) => (meses < 12 ? `${meses} meses publicados` : ''),
   },
 
   defesaCivil: {
     titulo: 'Cartão da Defesa Civil',
-    resposta: (periodo: string, total: string, executores: number): ReactNode => (
+    oQueE: (
       <>
-        Com o cartão de pagamento da Defesa Civil, {periodo}, estados e municípios atingidos por desastre gastaram{' '}
-        <strong>{total}</strong> de dinheiro federal, em {executores.toLocaleString('pt-BR')} prefeituras e governos.
+        Usado por estados e prefeituras depois de um desastre, com dinheiro federal. Veja o que é o{' '}
+        <TermoComponent nome="cartaoDaDefesaCivil">cartão da Defesa Civil</TermoComponent>.
       </>
     ),
-    diferente:
-      'Quem compra com este cartão é a prefeitura ou o governo do estado, não um órgão federal. Por isso ele fica fora do cartão corporativo acima.',
-    estadual: (valor: string) => `Os governos dos estados gastaram ${valor}; o resto, as prefeituras.`,
-    naoInformado: (valor: string) => `${valor} vieram do Portal sem dizer quem gastou nem em que estado.`,
-    semArquivo: (meses: string) => `O Portal não publicou o extrato de ${meses}. O total desses anos é menor do que o gasto foi.`,
+    resposta: (periodo: string, total: string, executores: number): ReactNode => (
+      <>
+        {periodo}, foram <strong>{total}</strong>, gastos por {executores.toLocaleString('pt-BR')} prefeituras e governos
+        estaduais.
+      </>
+    ),
+    prefeituras: 'Prefeituras',
+    estados: 'Governos estaduais',
+    semQuem: 'Sem dizer quem gastou',
+    semArquivo: (meses: string) => `O Portal não publicou ${meses}. O total desses anos é menor do que o gasto foi.`,
     porAno: 'Por ano',
     porUf: 'Por estado',
-    meses: (meses: number) => (meses < 12 ? ` (${meses} meses)` : ''),
+    valor: 'Valor',
+    meses: (meses: number) => (meses < 12 ? `${meses} meses publicados` : ''),
   },
 
   sigilo: {
-    titulo: 'Gasto sigiloso',
+    titulo: 'Cartão corporativo',
+    oQueE: (
+      <>
+        O <TermoComponent nome="cartaoCorporativo">cartão corporativo</TermoComponent> é o de servidores federais, para
+        compras pequenas e urgentes. Parte delas é sigilosa.
+      </>
+    ),
     vazio: 'Os gastos sigilosos deste período ainda não foram carregados.',
     resposta: (periodo: string, total: ReactNode, parteSigilosa: number, ateOMes: string | null): ReactNode => (
       <>
-        No <TermoComponent nome="cartaoCorporativo">cartão corporativo</TermoComponent>, {periodo}: {total}. Desses,{' '}
-        <strong>{parteSigilosa} de cada R$ 100</strong> são sigilosos.
+        {periodo}, foram {total}. Desses, <strong>{parteSigilosa} de cada R$ 100</strong> são sigilosos.
         {ateOMes}
+      </>
+    ),
+    comDetalheNaBarra: 'Com detalhe',
+    comDetalheDefinicao: 'O Portal mostra quem comprou, de quem e quando',
+    sigilosoNaBarra: 'Sigiloso',
+    sigilosoDefinicao: 'O Portal mostra só o valor',
+    acaoForaDoCartao: (valor: string): ReactNode => (
+      <>
+        Fora do cartão, mais {valor} foram pagos em <TermoComponent nome="acaoSigilosa">ações sigilosas</TermoComponent>{' '}
+        do orçamento.
       </>
     ),
     ateOMes: (ano: number, mes: number) => ` ${ano} até o mês ${mes}.`,
@@ -126,14 +160,12 @@ export const TEXTOS_DO_GOVERNO = {
     rotuloDaBarra: (aberto: string, sigiloso: string) => `${aberto} com detalhe; ${sigiloso} sigilosos`,
     comDetalhe: (valor: string) => ` com detalhe, compra por compra: ${valor}`,
     sigiloso: (valor: string) => ` sigiloso, só o valor: ${valor}`,
+    porAno: 'Por ano',
+    noCartao: 'Sigiloso no cartão',
+    naAcao: 'Ações de caráter sigiloso',
     porOrgao: 'Por órgão',
-    explicacao:
-      'Há dois jeitos de gastar sem dizer em quê, e a tabela mostra os dois para cada órgão. O primeiro ' +
-      'é a compra no cartão corporativo marcada como sigilosa; ao lado, quanto isso representa de ' +
-      'tudo o que o órgão gastou no cartão. O segundo é o pagamento numa linha do orçamento ' +
-      'chamada "ações de caráter sigiloso", que não passa pelo cartão.',
-    exemplo: (orgao: string, valor: string, parte: number) =>
-      ` Na primeira linha: ${orgao} gastou ${valor} em compras sigilosas no cartão, que são ${parte}% do cartão dele no período.`,
+    explicacao: (orgao: string, valor: string, parte: number) =>
+      `Na primeira linha, ${orgao} gastou ${valor} em compras sigilosas, ${parte}% do que gastou no cartão.`,
     legenda: 'Gasto sigiloso por órgão',
     orgao: 'Órgão',
     comprasSigilosas: 'Compras sigilosas no cartão',

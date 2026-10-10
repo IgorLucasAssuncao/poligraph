@@ -83,6 +83,7 @@ const DE_2025: DadosDoGoverno = {
       { orgao: 'Ministério da Justiça e Segurança Pública', cartao: 27e6, cartaoTotal: 40e6, acao: 0 },
       { orgao: 'Ministério da Defesa', cartao: 0, cartaoTotal: 0, acao: 7.8e6 },
     ],
+    porAno: [{ ano: 2025, cartao: 50.6e6, acao: 7.8e6 }],
   },
 };
 
@@ -166,7 +167,9 @@ describe('Governo federal', () => {
     const destaque = (await screen.findByText(/são sigilosos/)).closest('p')!;
     expect(destaque.textContent).toMatch(/R\$ 122,3 mi/);
     expect(destaque.textContent).toMatch(/41 de cada R\$ 100/);
-    expect(screen.getByText(/com detalhe, compra por compra: R\$ 71,7 mi/)).toBeDefined();
+    const composicao = document.querySelector('.grafico-composicao')!.textContent ?? '';
+    expect(composicao).toMatch(/Com detalhe.*R\$ 71,7 mi/);
+    expect(composicao).toMatch(/Sigiloso.*R\$ 50,6 mi/);
     expect(screen.getByRole('rowheader', { name: 'Ministério da Defesa' })).toBeDefined();
     expect(screen.getByText(/Só o que o Portal marca como sigiloso/)).toBeDefined();
   });
@@ -186,9 +189,9 @@ describe('Governo federal', () => {
 
     expect(await screen.findByText('Cartão da Defesa Civil')).toBeDefined();
     const texto = document.body.textContent ?? '';
-    expect(texto).toMatch(/gastaram R\$\s*420\s*mi de dinheiro federal, em 312 prefeituras e governos/);
-    expect(texto).toMatch(/não publicou o extrato de nov\/2025/);
-    expect(texto).toMatch(/fica fora do cartão corporativo/);
+    expect(texto).toMatch(/foram R\$\s*420\s*mi, gastos por 312 prefeituras e governos estaduais/);
+    expect(texto).toMatch(/não publicou nov\/2025/);
+    expect(texto).toMatch(/os valores não se somam/);
   });
 
   it('sem carga do sigilo, diz isso em vez de mostrar zero', async () => {

@@ -148,7 +148,11 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
             TransacoesSigilosas: cartao.Sum(l => l.Lancamentos ?? 0),
             AcaoSigilosa: acao.Sum(l => l.Sigiloso),
             Meses: linhas.Where(l => l.Ano == ultimoAno).Min(l => l.Meses),
-            PorOrgao: porOrgao);
+            PorOrgao: porOrgao,
+            PorAno: [.. linhas.GroupBy(l => (int)l.Ano).OrderBy(g => g.Key).Select(g => new SigiloNoAnoDto(
+                g.Key,
+                g.Where(l => l.Origem == OrigemDoSigilo.CARTAO_CORPORATIVO).Sum(l => l.Sigiloso),
+                g.Where(l => l.Origem == OrigemDoSigilo.ACAO_SIGILOSA).Sum(l => l.Sigiloso)))]);
     }
 
     /// <summary>O cartão da Defesa Civil no período, por ano e por UF. Nulo se a carga ainda não trouxe nada dele.</summary>
@@ -232,7 +236,9 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
             [.. linhas.GroupBy(l => l.OrgaoSuperior)
                 .Select(g => new CompraCentralizadaDoOrgaoDto(g.Key, g.Sum(l => l.Valor), g.Sum(l => l.Transacoes)))
                 .OrderByDescending(o => o.Valor)],
-            semArquivo);
+            semArquivo,
+            [.. linhas.GroupBy(l => (int)l.Ano).OrderBy(g => g.Key)
+                .Select(g => new CompraCentralizadaNoAnoDto(g.Key, g.Sum(l => l.Valor), g.Select(l => l.Mes).Distinct().Count()))]);
     }
 
     /// <summary>O ano está fechado quando o arquivo foi gerado depois de 31 de dezembro dele.</summary>

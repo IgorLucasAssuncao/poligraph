@@ -183,6 +183,19 @@ export const GLOSSARIO = {
       'vírgula no lugar errado. Quando os dois valores do contrato diferem mais de 100 vezes, ' +
       'contamos o menor. Aditivo de verdade não multiplica um contrato por 100.',
   },
+  cartaoDaDefesaCivil: {
+    rotulo: 'cartão da Defesa Civil',
+    explicacao:
+      ' Um cartão que o governo federal entrega a estados e prefeituras atingidos por enchente, ' +
+      'seca ou outro desastre. Quem compra é o governo local, com dinheiro federal, em coisas como ' +
+      'água, comida e abrigo.',
+  },
+  compraCentralizada: {
+    rotulo: 'compra centralizada',
+    explicacao:
+      ' Compra que uma central do governo faz para vários órgãos de uma vez, como passagens aéreas. ' +
+      'O cartão de compras centralizadas paga essas compras.',
+  },
   acaoSigilosa: {
     rotulo: 'ação sigilosa',
     explicacao:

@@ -955,6 +955,8 @@ export type Governo = {
     porOrgao: { orgao: string; valor: number; transacoes: number }[];
     /** Os meses do período que o Portal não publicou, `AAAA-MM`. */
     mesesSemArquivo: string[];
+    /** O valor de cada ano do período e quantos meses dele o Portal publicou. */
+    porAno: { ano: number; valor: number; meses: number }[];
   } | null;
   porAno: GovernoNoAno[];
   /** Todas as gestões com dado, qualquer que seja o período: os atalhos do seletor. */
@@ -990,6 +992,8 @@ export type Sigilo = {
   acaoSigilosa: number;
   meses: number;
   porOrgao: { orgao: string; cartao: number; cartaoTotal: number; acao: number }[];
+  /** O gasto sigiloso de cada ano do período, no cartão e nas ações de caráter sigiloso. */
+  porAno: { ano: number; cartao: number; acao: number }[];
 };
 
 /** Sem período, todos os anos. `null` quando a carga ainda não rodou. */

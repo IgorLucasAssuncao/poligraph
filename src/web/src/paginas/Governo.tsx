@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { AtualizandoComponent } from '../componentes/Atualizando';
 import { useCarga } from '../componentes/useCarga';
 import { useSearchParams } from 'react-router-dom';
@@ -29,7 +29,8 @@ import { dataCurta, mesCurto, nomeProprio, partesDeCem, reaisCompacto } from '..
 import { passosDoGoverno } from '../tour';
 import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { LinhaDeValorComponent, NumeroComponent } from '../componentes/Dados';
-import { ColunasPorAnoComponent } from '../componentes/Graficos';
+import { ColunasPorAnoComponent, ComposicaoComponent } from '../componentes/Graficos';
+import { partesComOutros } from '../componentes/partesComOutros';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { AREAS_DO_ORCAMENTO_NOMEADAS } from '../constantes';
 import { TEXTOS_DO_GOVERNO as T } from '../textos/governo';
@@ -117,10 +118,26 @@ export function GovernoComponent({ secao = 'orcamento' }: { secao?: 'orcamento' 
             </>
           ) : (
             <>
-              <GastoSigilosoComponent sigilo={dados.sigilo} periodo={dados.periodo} emAndamento={dados.emAndamento} />
-              {dados.defesaCivil && <DefesaCivilComponent defesaCivil={dados.defesaCivil} periodo={dados.periodo} />}
+              <p className="nota-curta">{T.cartoes.abertura}</p>
+              <GastoSigilosoComponent
+                sigilo={dados.sigilo}
+                periodo={dados.periodo}
+                emAndamento={dados.emAndamento}
+                aoEscolher={(ano) => setParametros({ de: String(ano), ate: String(ano) }, { replace: true })}
+              />
+              {dados.defesaCivil && (
+                <DefesaCivilComponent
+                  defesaCivil={dados.defesaCivil}
+                  periodo={dados.periodo}
+                  aoEscolher={(ano) => setParametros({ de: String(ano), ate: String(ano) }, { replace: true })}
+                />
+              )}
               {dados.comprasCentralizadas && (
-                <ComprasCentralizadasComponent cpcc={dados.comprasCentralizadas} periodo={dados.periodo} />
+                <ComprasCentralizadasComponent
+                  cpcc={dados.comprasCentralizadas}
+                  periodo={dados.periodo}
+                  aoEscolher={(ano) => setParametros({ de: String(ano), ate: String(ano) }, { replace: true })}
+                />
               )}
             </>
           )}
@@ -337,18 +354,19 @@ function GastoSigilosoComponent({
   sigilo,
   periodo,
   emAndamento,
+  aoEscolher,
 }: {
   sigilo: Sigilo | null;
   periodo: Periodo;
   emAndamento: number | null;
+  aoEscolher: (ano: number) => void;
 }) {
   const S = T.sigilo;
   if (!sigilo) {
     return (
-      <section className="governo-secao" data-tour="governo-sigilo">
-        <h2>{S.titulo}</h2>
+      <BlocoDoCartaoComponent titulo={S.titulo} oQueE={S.oQueE} tour="governo-sigilo">
         <p className="vazio">{S.vazio}</p>
-      </section>
+      </BlocoDoCartaoComponent>
     );
   }
 
@@ -357,11 +375,10 @@ function GastoSigilosoComponent({
   const primeiro = sigilo.porOrgao[0];
 
   return (
-    <section className="governo-secao" data-tour="governo-sigilo">
-      <h2>{S.titulo}</h2>
+    <BlocoDoCartaoComponent titulo={S.titulo} oQueE={S.oQueE} tour="governo-sigilo">
       <p className="frase-resposta">
         {S.resposta(
-          textoDoPeriodo(periodo),
+          maiuscula(textoDoPeriodo(periodo)),
           <ComProcedenciaComponent
             consulta={{ contexto: 'governo-sigiloso', de: periodo.primeiroAno, ate: periodo.ultimoAno }}
             rotulo={S.rotuloDaProcedencia(textoDoPeriodo(periodo))}
@@ -373,23 +390,36 @@ function GastoSigilosoComponent({
         )}
       </p>
 
-      <div className="barra-dividida" role="img" aria-label={S.rotuloDaBarra(reaisCompacto(aberto), reaisCompacto(sigilo.cartaoSigiloso))}>
-        <span className="parte-aberta" style={{ flexGrow: aberto }} />
-        <span className="parte-sigilosa" style={{ flexGrow: sigilo.cartaoSigiloso }} />
-      </div>
-      <p className="legenda-barras">
-        <span className="amostra parte-aberta" />
-        {S.comDetalhe(reaisCompacto(aberto))}
-        <span className="amostra parte-sigilosa" />
-        {S.sigiloso(reaisCompacto(sigilo.cartaoSigiloso))}
-      </p>
+      <ComposicaoComponent
+        rotulo={S.titulo}
+        formatar={reaisCompacto}
+        partes={[
+          { nome: S.comDetalheNaBarra, valor: aberto, definicao: S.comDetalheDefinicao },
+          { nome: S.sigilosoNaBarra, valor: sigilo.cartaoSigiloso, definicao: S.sigilosoDefinicao },
+        ]}
+      />
+      {sigilo.acaoSigilosa > 0 && <p className="nota-curta">{S.acaoForaDoCartao(reaisCompacto(sigilo.acaoSigilosa))}</p>}
+
+      {sigilo.porAno.length > 1 && (
+        <>
+          <h3 className="titulo-secao">{T.cartoes.porAno}</h3>
+          <ColunasPorAnoComponent
+            rotulo={S.porAno}
+            series={[S.noCartao, S.naAcao]}
+            anos={sigilo.porAno.map((a) => ({ ano: a.ano, valores: [a.cartao, a.acao] }))}
+            formatar={reaisCompacto}
+            anoEscolhido={periodo.primeiroAno === periodo.ultimoAno ? periodo.primeiroAno : null}
+            aoEscolher={aoEscolher}
+          />
+        </>
+      )}
 
       <h3 className="titulo-secao">{S.porOrgao}</h3>
-      <p className="ajuda">
-        {S.explicacao}
-        {primeiro && primeiro.cartaoTotal > 0 &&
-          S.exemplo(primeiro.orgao, reaisCompacto(primeiro.cartao), partesDeCem([primeiro.cartao, primeiro.cartaoTotal - primeiro.cartao])[0])}
-      </p>
+      {primeiro && primeiro.cartaoTotal > 0 && (
+        <p className="ajuda">
+          {S.explicacao(primeiro.orgao, reaisCompacto(primeiro.cartao), partesDeCem([primeiro.cartao, primeiro.cartaoTotal - primeiro.cartao])[0])}
+        </p>
+      )}
       <div className="tabela-rolavel">
         <table className="tabela-orcamento">
           <caption className="sr-apenas">{S.legenda}</caption>
@@ -426,8 +456,43 @@ function GastoSigilosoComponent({
           )
         }
       />
+    </BlocoDoCartaoComponent>
+  );
+}
+
+/**
+ * Um dos três cartões da aba, num bloco próprio: o nome, o que ele é e, abaixo, sempre na mesma
+ * ordem, o total, a composição, os anos e a lista.
+ *
+ * DECISÃO (2026-10-10): pedido do autor, que não via onde um cartão acabava e o outro começava, e
+ * achava que cada um tinha um formato. Os três não se somam, e o bloco separado diz isso sem texto.
+ */
+function BlocoDoCartaoComponent({
+  titulo,
+  oQueE,
+  tour,
+  children,
+}: {
+  titulo: string;
+  oQueE: ReactNode;
+  tour?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="governo-secao cartao-bloco" data-tour={tour} aria-label={titulo}>
+      <header className="cartao-bloco-topo">
+        <p className="cartao-bloco-rotulo">{T.cartoes.rotulo}</p>
+        <h2>{titulo}</h2>
+        <p className="cartao-bloco-o-que-e">{oQueE}</p>
+      </header>
+      {children}
     </section>
   );
+}
+
+/** A primeira letra em maiúscula: o período abre a frase. */
+function maiuscula(texto: string): string {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
 /** Quem governou — depois dos números, e sem foto. */
@@ -447,72 +512,108 @@ function parteSigilosaDoCartao(sigiloso: number, total: number): string {
 /**
  * O cartão da Defesa Civil, ao lado do corporativo e sem somar com ele: quem compra é o ente local.
  *
- * RISCO: o Portal não publicou meses inteiros (jan/2023, nov/2025). A seção os nomeia, senão o
+ * RISCO: o Portal não publicou meses inteiros (jan/2023, nov/2025). O bloco os nomeia, senão o
  * ano com mês faltando pareceria um ano de gasto menor.
  */
-function DefesaCivilComponent({ defesaCivil, periodo }: { defesaCivil: DefesaCivil; periodo: Periodo }) {
+function DefesaCivilComponent({
+  defesaCivil,
+  periodo,
+  aoEscolher,
+}: {
+  defesaCivil: DefesaCivil;
+  periodo: Periodo;
+  aoEscolher: (ano: number) => void;
+}) {
   const D = T.defesaCivil;
   const maiorUf = defesaCivil.porUf[0]?.valor ?? 0;
   const semArquivo = defesaCivil.mesesSemArquivo.map(mesCurto).join(', ');
+  const prefeituras = defesaCivil.total - defesaCivil.estadual - defesaCivil.naoInformado;
 
   return (
-    <section className="governo-secao">
-      <h2>{D.titulo}</h2>
-      <p className="frase-resposta">{D.resposta(textoDoPeriodo(periodo), reaisCompacto(defesaCivil.total), defesaCivil.executores)}</p>
-      <p className="nota-curta">{D.diferente}</p>
-      <p className="nota-curta">{D.estadual(reaisCompacto(defesaCivil.estadual))}</p>
-      {defesaCivil.naoInformado !== 0 && <p className="nota-curta">{D.naoInformado(reaisCompacto(defesaCivil.naoInformado))}</p>}
-      {semArquivo && <p className="nota-curta">{D.semArquivo(semArquivo)}</p>}
+    <BlocoDoCartaoComponent titulo={D.titulo} oQueE={D.oQueE}>
+      <p className="frase-resposta">{D.resposta(maiuscula(textoDoPeriodo(periodo)), reaisCompacto(defesaCivil.total), defesaCivil.executores)}</p>
+      <ComposicaoComponent
+        rotulo={D.titulo}
+        formatar={reaisCompacto}
+        partes={[
+          { nome: D.prefeituras, valor: prefeituras },
+          { nome: D.estados, valor: defesaCivil.estadual },
+          ...(defesaCivil.naoInformado > 0 ? [{ nome: D.semQuem, valor: defesaCivil.naoInformado }] : []),
+        ]}
+      />
 
       {defesaCivil.porAno.length > 1 && (
         <>
-          <h3>{D.porAno}</h3>
+          <h3 className="titulo-secao">{T.cartoes.porAno}</h3>
           <ColunasPorAnoComponent
             rotulo={D.porAno}
-            series={[D.titulo]}
-            anos={defesaCivil.porAno.map((a) => ({ ano: a.anoDoExtrato, valores: [a.valor], nota: D.meses(a.meses).trim() || undefined }))}
+            series={[D.valor]}
+            anos={defesaCivil.porAno.map((a) => ({ ano: a.anoDoExtrato, valores: [a.valor], nota: D.meses(a.meses) || undefined }))}
             formatar={reaisCompacto}
+            anoEscolhido={periodo.primeiroAno === periodo.ultimoAno ? periodo.primeiroAno : null}
+            aoEscolher={aoEscolher}
           />
         </>
       )}
 
-      <h3>{D.porUf}</h3>
+      <h3 className="titulo-secao">{D.porUf}</h3>
       <ul className="gastos-categorias">
         {defesaCivil.porUf.slice(0, 10).map((u) => (
           <LinhaDeValorComponent key={u.uf} nome={u.uf} valor={u.valor} maior={maiorUf} formatar={reaisCompacto} />
         ))}
       </ul>
-    </section>
+      {semArquivo && <p className="nota-curta">{D.semArquivo(semArquivo)}</p>}
+    </BlocoDoCartaoComponent>
   );
 }
 
-/** O cartão de compras centralizadas, por órgão: os dez maiores. */
+/** O cartão de compras centralizadas: total, composição por órgão, anos e os dez maiores. */
 function ComprasCentralizadasComponent({
   cpcc,
   periodo,
+  aoEscolher,
 }: {
   cpcc: NonNullable<DadosDoGoverno['comprasCentralizadas']>;
   periodo: Periodo;
+  aoEscolher: (ano: number) => void;
 }) {
   const C = T.comprasCentralizadas;
   const maior = cpcc.porOrgao[0]?.valor ?? 0;
   return (
-    <section className="governo-secao">
-      <h2>{C.titulo}</h2>
+    <BlocoDoCartaoComponent titulo={C.titulo} oQueE={C.oQueE}>
       <p className="frase-resposta">
-        {C.resposta(textoDoPeriodo(periodo), reaisCompacto(cpcc.total), cpcc.transacoes.toLocaleString('pt-BR'))}
+        {C.resposta(maiuscula(textoDoPeriodo(periodo)), reaisCompacto(cpcc.total), cpcc.transacoes.toLocaleString('pt-BR'))}
       </p>
-      <p className="nota-curta">{C.nota}</p>
-      {cpcc.mesesSemArquivo.length > 0 && (
-        <p className="nota-curta">{C.semArquivo(cpcc.mesesSemArquivo.map(mesCurto).join(', '))}</p>
+      <ComposicaoComponent
+        rotulo={C.titulo}
+        formatar={reaisCompacto}
+        partes={partesComOutros(cpcc.porOrgao, (o) => o.orgao, (o) => o.valor, C.outrosOrgaos, cpcc.total)}
+      />
+
+      {cpcc.porAno.length > 1 && (
+        <>
+          <h3 className="titulo-secao">{T.cartoes.porAno}</h3>
+          <ColunasPorAnoComponent
+            rotulo={C.titulo}
+            series={[C.valor]}
+            anos={cpcc.porAno.map((a) => ({ ano: a.ano, valores: [a.valor], nota: C.meses(a.meses) || undefined }))}
+            formatar={reaisCompacto}
+            anoEscolhido={periodo.primeiroAno === periodo.ultimoAno ? periodo.primeiroAno : null}
+            aoEscolher={aoEscolher}
+          />
+        </>
       )}
-      <h3>{C.porOrgao}</h3>
+
+      <h3 className="titulo-secao">{C.porOrgao}</h3>
       <ul className="gastos-categorias">
         {cpcc.porOrgao.slice(0, 10).map((o) => (
           <LinhaDeValorComponent key={o.orgao} nome={o.orgao} valor={o.valor} maior={maior} formatar={reaisCompacto} />
         ))}
       </ul>
-    </section>
+      {cpcc.mesesSemArquivo.length > 0 && (
+        <p className="nota-curta">{C.semArquivo(cpcc.mesesSemArquivo.map(mesCurto).join(', '))}</p>
+      )}
+    </BlocoDoCartaoComponent>
   );
 }
 

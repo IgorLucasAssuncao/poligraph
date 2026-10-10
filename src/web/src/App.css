@@ -2063,6 +2063,19 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 
 /* Uma série só: o tom de realce, sem legenda — o título nomeia. Barras finas, 2px de
    intervalo, ponta arredondada só do lado do valor. */
+/** Cada cartão da aba Cartões num bloco próprio, com o nome em cima: os três não se somam. */
+.cartao-bloco {
+  margin: 1.5rem 0; padding: 1.1rem 1.25rem 1.25rem;
+  border: 1px solid var(--borda-controle); border-top: 4px solid var(--realce); border-radius: var(--raio);
+}
+.cartao-bloco-topo { margin-bottom: .9rem; }
+.cartao-bloco-topo h2 { margin: 0; }
+.cartao-bloco-rotulo {
+  margin: 0 0 .15rem; color: var(--suave); font-size: var(--t-1);
+  font-family: var(--dado); text-transform: uppercase; letter-spacing: .06em;
+}
+.cartao-bloco-o-que-e { margin: .3rem 0 0; color: var(--suave); font-size: var(--t-2); }
+
 /**
  * Colunas por ano e barra de composição (componentes/Graficos.tsx). Um teal só, em tons: série e
  * parte se distinguem pelo tom e pela legenda, nunca por cor de partido.

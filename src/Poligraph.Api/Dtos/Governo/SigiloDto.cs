@@ -19,7 +19,11 @@ public record SigiloDto(
     int TransacoesSigilosas,
     decimal AcaoSigilosa,
     int Meses,
-    IReadOnlyList<SigiloDoOrgaoDto> PorOrgao);
+    IReadOnlyList<SigiloDoOrgaoDto> PorOrgao,
+    IReadOnlyList<SigiloNoAnoDto> PorAno);
+
+/// <summary>O gasto sigiloso de um ano do período: no cartão e nas ações de caráter sigiloso.</summary>
+public record SigiloNoAnoDto(int Ano, decimal Cartao, decimal Acao);
 
 /// <summary>Um órgão com gasto sigiloso no ano, em cada origem.</summary>
 public record SigiloDoOrgaoDto(string Orgao, decimal Cartao, decimal CartaoTotal, decimal Acao);
