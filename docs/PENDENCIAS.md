@@ -12,6 +12,53 @@
 
 ---
 
+## Estado em 2026-10-10: o que está aberto
+
+> Pedido do autor (2026-10-09): o produto fica redondo, e só as pendências de arquitetura
+> continuam abertas. Abaixo, a lista curta. O histórico das seções seguintes fica como registro.
+
+### Abertas: arquitetura e publicação
+
+| # | Pendência | Por que é de arquitetura |
+|---|---|---|
+| **3** | Domínio | Bloqueia o login do Google em produção e a política publicada |
+| **19** | Retenção do Prometheus | Configuração da VPS |
+| **20** | Destino do backup do Postgres, criptografado | Configuração da VPS; primeiro dia |
+| **21** | Grafana público ou por túnel | Exposição na VPS |
+| **22** | Painel do Coolify: público com 2FA, allow-list ou VPN | Exposição na VPS |
+| **23** | CI como portão do deploy | `deploy.yaml` proposto no roteiro de publicação |
+| **57** | Credencial do GitHub e PR | Processo de entrega |
+| **56** | Modelo de `gestoes` para governos sem eleição (Temer) | Muda o schema |
+| **44** | A virada para a 58ª (fev/2027): o que a tela mostra na troca | Muda a regra de legislatura corrente em todas as rotas |
+| novo | Juntar as migrations numa `Inicial` antes do primeiro deploy | Só dá antes de existir banco de produção |
+
+### Abertas: dependem do autor, não de código
+
+| # | O que falta |
+|---|---|
+| **24, 33** | Comitê de ética e o Clarity com público de 16 e 17 anos, com o orientador |
+| **73** | Conferir artigo por artigo as citações de base legal do modo auditoria |
+| **82** | Ler a tela do resultado do questionário depois de respondido |
+| **75** | Decidir se o quadro de sócios da Receita entra (parlamentar sócio de empresa) |
+| C7, RQ6, RQ7, ER2 | Itens do texto do TCC |
+
+### Fechadas nesta rodada (2026-10-09 e 10)
+
+| Entrega | Commit |
+|---|---|
+| Reconciliação entre o pago das emendas e o recebido pelos favorecidos (`PAGO_X_RECEBIDO`) | `c8784da` |
+| Cartão da Defesa Civil (CPDC) | `dba8db0` |
+| Viagens a serviço e as abas de Governo federal; mapa sincronizado pelo código | `768d460` |
+| Compras e contratos, com a regra do valor digitado errado | `2d7c65d` |
+| Sanções do CEIS e do CNEP na página da entidade | `8d4ac53` |
+| Cartão de compras centralizadas (CPCC) | `b6570a5` |
+| 403 do Portal só conta como mês não publicado se persistir | `6a6c061` |
+| Resultado do questionário de 8 a 10 s para 0,2 s | `e29aa43` |
+| Ficha diz o período em que o parlamentar votou | `de948ea` |
+| ✅ **Pendência 52**: o teste intermitente não reproduziu em 10 rodadas da suíte completa nesta rodada (424 a 442 testes) | — |
+
+---
+
 ## 🆕 Estado em 2026-10-01 — comece por aqui
 
 ### O que entrou desde a última atualização (07/09 → 25/09)
