@@ -9,6 +9,7 @@ Coolify, dentro do VPS — o Postgres nunca sai de lá.
 
 import argparse
 import csv
+import hashlib
 import json
 import logging
 import os
@@ -499,6 +500,29 @@ def _baixar_da_camara(conexao: psycopg.Connection, recurso: str, ano: int):
     return destino, persistencia.registrar_carga(conexao, baixado, procedencia.comando())
 
 
+def _carga_de_varios(
+    conexao: psycopg.Connection, fonte: str, url: str, arquivos: list[tuple[str, Path]], indice: Path
+) -> int | None:
+    """Registra cada arquivo e um índice que lista todos, e devolve o id da carga do índice.
+
+    DECISÃO (2026-10-10): para linha que soma vários arquivos, como o gasto sigiloso de um ano, que
+    junta 12 extratos mensais. Cada arquivo entra em `cargas` com o próprio hash; o índice guarda a
+    URL, o hash e a carga de cada um, e é para ele que a linha aponta. Sem arquivo, não há carga.
+    """
+    if not arquivos:
+        return None
+    partes = []
+    for url_do_arquivo, arquivo in arquivos:
+        partes.append({
+            "url": url_do_arquivo,
+            "sha256": hashlib.sha256(arquivo.read_bytes()).hexdigest(),
+            "carga_id": _carga_do_arquivo(conexao, fonte, url_do_arquivo, arquivo),
+        })
+    indice.parent.mkdir(parents=True, exist_ok=True)
+    indice.write_text(json.dumps({"url": url, "arquivos": partes}, ensure_ascii=False, indent=1), encoding="utf-8")
+    return _carga_do_arquivo(conexao, fonte, url, indice)
+
+
 def _carga_do_arquivo(conexao: psycopg.Connection, fonte: str, url: str, arquivo: Path) -> int:
     """Registra a carga de um arquivo que já está no cache (Pendência 72) e devolve o id.
 
@@ -878,6 +902,10 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
         encargos_do_ano = [{**l, "carga_id": carga_orcamento} for l in orcamento.encargos_para_linhas(tabela)]
 
         restos = _restos_a_pagar_do_ano(ano)
+        carga_das_acoes = _carga_de_varios(
+            conexao, "PORTAL_TRANSPARENCIA", f"{portal.url(orcamento.EXECUCAO.format(ano=ano, mes=1))[:-2]}*",
+            restos["arquivos"], CACHE / "indices" / f"execucao-{ano}.json",
+        )
         for linha in do_ano:
             linha["restos_a_pagar_pagos"] = round(restos["por_funcao"].get(linha["codigo_funcao"], 0.0), 2)
         for linha in encargos_do_ano:
@@ -891,10 +919,17 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
         log.info("  %d: %d funções; restos a pagar pagos R$ %.1f bi (%d meses)",
                  ano, len(do_ano), sum(restos["por_funcao"].values()) / 1e9, restos["meses"])
 
-        cartao, meses_do_cartao = _cartao_do_ano(ano)
-        do_sigilo = sigilo.para_linhas(
-            ano, cartao, meses_do_cartao, restos["sigilosas"], restos["meses"], sigilo.nomes_de_orgao(tabela)
+        cartao, meses_do_cartao, arquivos_do_cartao = _cartao_do_ano(ano)
+        carga_do_cartao = _carga_de_varios(
+            conexao, "PORTAL_TRANSPARENCIA", f"{portal.url(sigilo.RECURSO_DO_CARTAO.format(ano=ano, mes=1))[:-2]}*",
+            arquivos_do_cartao, CACHE / "indices" / f"cpgf-{ano}.json",
         )
+        do_sigilo = [
+            {**linha, "carga_id": carga_do_cartao if linha["origem"] == "CARTAO_CORPORATIVO" else carga_das_acoes}
+            for linha in sigilo.para_linhas(
+                ano, cartao, meses_do_cartao, restos["sigilosas"], restos["meses"], sigilo.nomes_de_orgao(tabela)
+            )
+        ]
         log.info("  %d: cartão sigiloso R$ %.1f mi (%d meses); ação sigilosa R$ %.1f mi", ano,
                  sum(l["sigiloso"] for l in do_sigilo if l["origem"] == "CARTAO_CORPORATIVO") / 1e6,
                  meses_do_cartao,
@@ -1052,6 +1087,7 @@ def _restos_a_pagar_do_ano(ano: int) -> dict:
     hoje = date.today()
     meses: list[dict] = []
     sigilosas: list[dict] = []
+    arquivos: list[tuple[str, Path]] = []
 
     for mes in range(1, 13):
         if (ano, mes) > (hoje.year, hoje.month):
@@ -1075,14 +1111,22 @@ def _restos_a_pagar_do_ano(ano: int) -> dict:
         )
         meses.append(orcamento.restos_a_pagar_do_mes(tabela))
         sigilosas.append(sigilo.acoes_do_mes(tabela))
+        arquivos.append((portal.url(orcamento.EXECUCAO.format(ano=ano, mes=mes)), arquivo))
 
-    return {**orcamento.somar_meses(meses), "meses": len(meses), "sigilosas": sigilo.somar_acoes(sigilosas)}
+    return {
+        **orcamento.somar_meses(meses), "meses": len(meses), "sigilosas": sigilo.somar_acoes(sigilosas),
+        "arquivos": arquivos,
+    }
 
 
-def _cartao_do_ano(ano: int) -> tuple[dict[str, dict], int]:
-    """Soma os extratos mensais do cartão corporativo. Mesma regra de parada da execução."""
+def _cartao_do_ano(ano: int) -> tuple[dict[str, dict], int, list[tuple[str, Path]]]:
+    """Soma os extratos mensais do cartão corporativo. Mesma regra de parada da execução.
+
+    Devolve também os arquivos lidos, para a carga registrar cada um.
+    """
     hoje = date.today()
     meses: list[dict] = []
+    arquivos: list[tuple[str, Path]] = []
 
     for mes in range(1, 13):
         if (ano, mes) > (hoje.year, hoje.month):
@@ -1102,8 +1146,9 @@ def _cartao_do_ano(ano: int) -> tuple[dict[str, dict], int]:
         meses.append(sigilo.cartao_do_mes(portal.ler_csv(
             arquivo, sigilo.arquivo_do_cartao(ano, mes), colunas=sigilo.COLUNAS_DO_CARTAO,
         )))
+        arquivos.append((portal.url(sigilo.RECURSO_DO_CARTAO.format(ano=ano, mes=mes)), arquivo))
 
-    return sigilo.somar_cartao(meses), len(meses)
+    return sigilo.somar_cartao(meses), len(meses), arquivos
 
 
 def _defesa_civil(conexao: psycopg.Connection, anos: list[int]) -> None:

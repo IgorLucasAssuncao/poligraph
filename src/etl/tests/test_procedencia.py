@@ -1,6 +1,7 @@
 """Pendência 72 — a procedência de cada arquivo baixado: o hash, a carga e o `carga_id` nas linhas."""
 
 import hashlib
+import json
 from datetime import datetime, timezone
 
 import pytest
@@ -199,3 +200,31 @@ def test_de_arquivo_recusa_caminho_fora_da_pasta(tmp_path):
 def test_de_arquivo_recusa_pasta_no_lugar_de_arquivo(tmp_path):
     with pytest.raises(ValueError):
         procedencia.de_arquivo("TSE", "u", tmp_path, tmp_path)
+
+
+def test_linha_que_soma_varios_arquivos_aponta_para_um_indice_deles(limpo, tmp_path, monkeypatch):
+    """O gasto sigiloso de um ano junta 12 extratos: cada um entra com o hash, e o índice lista todos."""
+    from poligraph_etl import __main__ as principal
+
+    monkeypatch.setattr(principal, "CACHE", tmp_path)
+    janeiro, fevereiro = tmp_path / "cpgf-202501.zip", tmp_path / "cpgf-202502.zip"
+    janeiro.write_bytes(b"janeiro")
+    fevereiro.write_bytes(b"fevereiro")
+
+    carga = principal._carga_de_varios(
+        limpo, "PORTAL_TRANSPARENCIA", "https://portal/cpgf/2025*",
+        [("https://portal/cpgf/202501", janeiro), ("https://portal/cpgf/202502", fevereiro)],
+        tmp_path / "indices" / "cpgf-2025.json",
+    )
+
+    indice = json.loads((tmp_path / "indices" / "cpgf-2025.json").read_text(encoding="utf-8"))
+    assert [a["url"] for a in indice["arquivos"]] == ["https://portal/cpgf/202501", "https://portal/cpgf/202502"]
+    assert indice["arquivos"][0]["sha256"] == hashlib.sha256(b"janeiro").hexdigest()
+    assert limpo.execute("SELECT count(*) FROM cargas").fetchone()[0] == 3
+    assert limpo.execute("SELECT url FROM cargas WHERE id = %s", (carga,)).fetchone()[0] == "https://portal/cpgf/2025*"
+
+
+def test_sem_arquivo_nao_ha_carga(limpo, tmp_path):
+    from poligraph_etl import __main__ as principal
+
+    assert principal._carga_de_varios(limpo, "PORTAL_TRANSPARENCIA", "u", [], tmp_path / "i.json") is None
