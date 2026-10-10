@@ -23,6 +23,10 @@ const T = TEXTOS_DAS_EMENDAS.conferencia;
 /**
  * DECISÃO (2026-10-03, pedido do autor para encurtar a página): recolhido numa linha que já diz
  * quanto fica de fora. O detalhe, com o motivo de cada parte, fica a um clique.
+ *
+ * DECISÃO (2026-10-10): a linha diz também o pago fora, porque o total do topo da página é pago.
+ * MEDIDO (2026-10-10): de 2015 a 2026, R$ 18 bi pagos ficam fora, quase todos emendas de relator de
+ * 2016 e 2017 que o Portal publica sem autor (R$ 12,9 bi só em 2016).
  */
 export function ConfereComOPortalComponent({ periodo }: { periodo: Periodo }) {
   const contas = useCarga(['reconciliacao', periodo.primeiroAno, periodo.ultimoAno], () => obterReconciliacao(periodo)).dados;
@@ -30,6 +34,8 @@ export function ConfereComOPortalComponent({ periodo }: { periodo: Periodo }) {
   if (!contas || contas.length === 0) return null;
 
   const empenhado = somar(contas.filter((c) => c.conjunto === 'EMENDAS' && c.medida === 'EMPENHADO'));
+  const pago = somar(contas.filter((c) => c.conjunto === 'EMENDAS' && c.medida === 'PAGO'));
+  const pagoFora = pago.fonte - pago.base;
   const pagamentos = somar(contas.filter((c) => c.conjunto === 'PAGAMENTOS'));
   const semCodigo = pagamentos.motivos.get('PAGAMENTO_SEM_CODIGO_DE_EMENDA') ?? 0;
   const cruzamento = somar(contas.filter((c) => c.conjunto === 'PAGO_X_RECEBIDO'));
@@ -42,7 +48,9 @@ export function ConfereComOPortalComponent({ periodo }: { periodo: Periodo }) {
     <details className="confere-com-o-portal">
       <summary>
         <span className="confere-titulo">{T.titulo}</span>{' '}
-        {fora < 0.5 ? T.resumoIgual(anos, reaisCompacto(empenhado.base)) : T.resumoFora(reaisCompacto(fora))}{' '}
+        {fora < 0.5
+          ? T.resumoIgual(anos, reaisCompacto(empenhado.base))
+          : T.resumoFora(reaisCompacto(fora), reaisCompacto(Math.max(pagoFora, 0)))}{' '}
         <span className="confere-abrir">{T.verDetalhe}</span>
       </summary>
 

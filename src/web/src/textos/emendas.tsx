@@ -147,7 +147,8 @@ export const TEXTOS_DAS_EMENDAS = {
     anos: (de: number, ate: number) => (de === ate ? `de ${de}` : `de ${de} a ${ate}`),
     titulo: 'Confere com o Portal da Transparência:',
     resumoIgual: (anos: string, valor: string) => `o empenhado ${anos} é o mesmo, ${valor}.`,
-    resumoFora: (fora: string) => `${fora} ficam de fora, cada parte com o motivo.`,
+    resumoFora: (empenhado: string, pago: string) =>
+      `${empenhado} empenhados e ${pago} pagos ficam de fora, porque o Portal publica essas emendas sem o autor.`,
     verDetalhe: 'Ver o detalhe',
     igual: (anos: string, valor: string): ReactNode => (
       <>
