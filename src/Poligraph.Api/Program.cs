@@ -24,6 +24,7 @@ app.MapearDocumentacao();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCacheNoNavegador();
 
 app.MapearParlamentares()
    .MapearPanorama()

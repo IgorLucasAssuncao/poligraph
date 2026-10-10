@@ -31,6 +31,7 @@
 | **56** | Modelo de `gestoes` para governos sem eleição (Temer) | Muda o schema |
 | **44** | A virada para a 58ª (fev/2027): o que a tela mostra na troca | Muda a regra de legislatura corrente em todas as rotas |
 | novo | Juntar as migrations numa `Inicial` antes do primeiro deploy | Só dá antes de existir banco de produção |
+| **86** | Cache e limite de taxa na Cloudflare para `/api` | Exposição na borda. A API já marca com `Cache-Control: public, max-age=300` todo GET 200 de rota que não exige login (`CacheNoNavegador`). Falta a regra na Cloudflare que guarda essas respostas e o limite de taxa. RISCO: a regra guarda só rota sem login; `seguidos` e `auth/eu` leem o usuário, e guardadas na borda entregariam a lista de quem uma pessoa segue a outra |
 
 ### Abertas: dependem do autor, não de código
 
