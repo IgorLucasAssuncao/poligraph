@@ -21,6 +21,7 @@ import { BotaoBaixarCsvComponent } from '../componentes/BotaoBaixarCsv';
 import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { SeletorDePeriodoComponent } from '../componentes/SeletorDePeriodo';
+import { atalhosDasGestoes } from '../componentes/atalhosDasGestoes';
 import { baixarCsv } from '../exportar';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { FONTES } from '../fontes';
@@ -147,15 +148,6 @@ function totalDoEncargo(encargos: Encargo[], grupo: GrupoDeEncargo): number {
  * DECISÃO: Comparar as gestões medidas do mesmo jeito é o que mostra que a página não é sobre uma
  * delas — a pergunta de quem desconfia (persona do empresário, rodada 2).
  */
-function atalhosDasGestoes(dados: DadosDoGoverno): { rotulo: string; periodo: Periodo }[] {
-  const primeiro = dados.anosDisponiveis[0];
-  const ultimo = dados.anosDisponiveis[dados.anosDisponiveis.length - 1];
-  return dados.gestoesDisponiveis.map((g) => ({
-    rotulo: `${nomeProprio(g.presidente.nomeDeUrna)} (${g.primeiroAno}–${g.ultimoAno})`,
-    periodo: { primeiroAno: Math.max(g.primeiroAno, primeiro), ultimoAno: Math.min(g.ultimoAno, ultimo) },
-  }));
-}
-
 function gestaoDoAno(dados: DadosDoGoverno, anoDoOrcamento: number): string {
   const g = dados.gestoesDisponiveis.find((x) => x.primeiroAno <= anoDoOrcamento && x.ultimoAno >= anoDoOrcamento);
   return g ? nomeProprio(g.presidente.nomeDeUrna) : T.semGestao;

@@ -86,7 +86,7 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
         var emAndamento = anosMostrados.LastOrDefault(a => !AnoFechado(a.Ano, a.GeradoEm))?.Ano;
 
         return new GovernoDto(
-            Gestoes: await GestoesAsync(primeiroAnoDoOrcamento, ultimoAnoDoOrcamento, ct),
+            Gestoes: await GestoesDoPeriodo.ListarAsync(_db, primeiroAnoDoOrcamento, ultimoAnoDoOrcamento, ct),
             Periodo: new PeriodoDto(primeiroAnoDoOrcamento, ultimoAnoDoOrcamento),
             GeradoEm: anosMostrados.Max(a => a.GeradoEm),
             EmAndamento: emAndamento,
@@ -107,7 +107,7 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
                     doAno.EmissaoDeDivida,
                     AnoFechado(a.Ano, a.GeradoEm));
             })],
-            GestoesDisponiveis: await GestoesAsync(anosDoOrcamentoCarregados[0].Ano, anosDoOrcamentoCarregados[^1].Ano, ct));
+            GestoesDisponiveis: await GestoesDoPeriodo.ListarAsync(_db, anosDoOrcamentoCarregados[0].Ano, anosDoOrcamentoCarregados[^1].Ano, ct));
     }
 
     /// <summary>O que se gastou de fato: as áreas, os repasses e a dívida paga — não a rolagem.</summary>
@@ -213,21 +213,6 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
 
     /// <summary>O ano está fechado quando o arquivo foi gerado depois de 31 de dezembro dele.</summary>
     private static bool AnoFechado(int anoDoOrcamento, DateOnly geradoEm) => geradoEm.Year > anoDoOrcamento;
-
-    /// <summary>As gestões que cobrem o período — mais de uma quando ele atravessa uma posse.</summary>
-    private async Task<IReadOnlyList<GestaoDto>> GestoesAsync(int primeiroAnoDoOrcamento, int ultimoAnoDoOrcamento, CancellationToken ct)
-    {
-        var gestoes = await _db.Gestoes.AsNoTracking()
-            .Where(g => g.PrimeiroAno <= ultimoAnoDoOrcamento && g.UltimoAno >= primeiroAnoDoOrcamento)
-            .OrderBy(g => g.PrimeiroAno)
-            .ToListAsync(ct);
-
-        return [.. gestoes.Select(g => new GestaoDto(
-            g.Eleicao, g.PrimeiroAno, g.UltimoAno,
-            new PessoaDaGestaoDto(g.PresidenteNome, g.PresidenteNomeDeUrna, g.PresidentePartido),
-            new PessoaDaGestaoDto(g.ViceNome, g.ViceNomeDeUrna, g.VicePartido),
-            g.Coligacao))];
-    }
 
     /// <remarks>
     /// <para>Arrecadado são as receitas correntes. A operação de crédito vai à parte: é dívida emitida, e em 2025 quase iguala tudo o que se arrecadou.</para>

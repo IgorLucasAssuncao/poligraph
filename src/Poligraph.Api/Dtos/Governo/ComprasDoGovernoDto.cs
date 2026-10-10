@@ -11,6 +11,7 @@ namespace Poligraph.Api.Dtos;
 public record ComprasDoGovernoDto(
     PeriodoDto Periodo,
     IReadOnlyList<int> AnosDisponiveis,
+    IReadOnlyList<GestaoDto> GestoesDisponiveis,
     int Contratos,
     decimal Valor,
     int Sigilosos,

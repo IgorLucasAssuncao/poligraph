@@ -8,6 +8,11 @@ export const TEXTOS_DAS_VIAGENS = {
   erro: 'Não foi possível carregar as viagens agora. Tente de novo em alguns minutos.',
   semDados: 'As viagens ainda não foram carregadas.',
   rotuloDoPeriodo: 'Período das viagens',
+  rotuloDoOrgao: 'Órgão',
+  todosOsOrgaos: 'Todos os órgãos',
+  soOExecutivo:
+    'Só o Executivo federal: Presidência, ministérios e o que está abaixo deles. Câmara, Senado e Judiciário ' +
+    'publicam as viagens deles em outros lugares.',
   escopo: (periodo: string) => `Viagens a serviço do Executivo federal ${periodo}, pelo que foi pago.`,
 
   resposta: (periodo: string, total: string, viagens: string): ReactNode => (
@@ -25,7 +30,10 @@ export const TEXTOS_DAS_VIAGENS = {
     'Hospedagem não aparece separada: no serviço público federal ela é paga pela diária, junto com alimentação e ' +
     'deslocamento na cidade (Decreto 5.992/2006).',
   sigiloso: (valor: string) =>
-    `${valor} foram pagos em viagens que o Portal publica com o órgão "Sigiloso": o valor aparece, quem viajou e de que órgão não.`,
+    `${valor} foram pagos em viagens que o Portal publica com o órgão "Sigiloso" e que não deu para atribuir a nenhum órgão.`,
+  sigilosoAtribuido: (valor: string) =>
+    `O Portal publica ${valor} desses pagamentos com o órgão "Sigiloso". O arquivo das viagens diz de que órgão ` +
+    'cada uma foi, e o valor está somado nele.',
   urgentes: (urgentes: string, viagens: string) => `${urgentes} de ${viagens} viagens foram marcadas como urgentes.`,
 
   porAno: 'Por ano',

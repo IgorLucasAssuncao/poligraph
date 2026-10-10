@@ -10,6 +10,7 @@ import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { SeletorDePeriodoComponent } from '../componentes/SeletorDePeriodo';
+import { atalhosDasGestoes } from '../componentes/atalhosDasGestoes';
 import { FONTES } from '../fontes';
 import { nomeProprio, reaisCompacto } from '../formato';
 import { TEXTOS_DAS_COMPRAS as T } from '../textos/compras';
@@ -53,6 +54,7 @@ export function ComprasDoGovernoComponent() {
             anos={dados.anosDisponiveis}
             periodo={dados.periodo}
             rotulo={T.rotuloDoPeriodo}
+            atalhos={atalhosDasGestoes(dados)}
             aoMudar={(novo) =>
               setParametros(novo ? { de: String(novo.primeiroAno), ate: String(novo.ultimoAno) } : {}, { replace: true })
             }

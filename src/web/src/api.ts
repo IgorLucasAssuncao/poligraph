@@ -994,6 +994,9 @@ export type Sigilo = {
 export type ViagensDoGoverno = {
   periodo: Periodo;
   anosDisponiveis: number[];
+  gestoesDisponiveis: Gestao[];
+  /** O órgão escolhido; nulo mostra todos. `porOrgao` traz sempre todos, para a escolha. */
+  orgao: string | null;
   total: number;
   diarias: number;
   passagens: number;
@@ -1002,7 +1005,10 @@ export type ViagensDoGoverno = {
   viagens: number;
   urgentes: number;
   naoRealizadas: number;
+  /** O que continua sem órgão: o Portal esconde o órgão no pagamento e na viagem. */
   sigiloso: number;
+  /** O que o Portal publicou com órgão "Sigiloso" no pagamento e foi para o órgão da viagem. */
+  pagoComOrgaoSigiloso: number;
   porAno: { anoDaViagem: number; diarias: number; passagens: number; total: number; viagens: number }[];
   porOrgao: { orgao: string; total: number; diarias: number; passagens: number; viagens: number; urgentes: number }[];
   destinos: DestinoDeViagem[];
@@ -1029,6 +1035,7 @@ export type SancaoDaEntidade = {
 export type ComprasDoGoverno = {
   periodo: Periodo;
   anosDisponiveis: number[];
+  gestoesDisponiveis: Gestao[];
   contratos: number;
   valor: number;
   sigilosos: number;
@@ -1057,10 +1064,16 @@ export async function obterComprasDoGoverno(periodo?: Periodo): Promise<ComprasD
 /** Um destino no período; `uf` por extenso, nula fora do Brasil. */
 export type DestinoDeViagem = { pais: string; uf: string | null; cidade: string; chegadas: number };
 
-export async function obterViagensDoGoverno(periodo?: Periodo): Promise<ViagensDoGoverno | null> {
-  const url = periodo
-    ? `${BASE}/governo/viagens?de=${periodo.primeiroAno}&ate=${periodo.ultimoAno}`
-    : `${BASE}/governo/viagens`;
+export async function obterViagensDoGoverno(periodo?: Periodo, orgao?: string): Promise<ViagensDoGoverno | null> {
+  const consulta = new URLSearchParams();
+  if (periodo) {
+    consulta.set('de', String(periodo.primeiroAno));
+    consulta.set('ate', String(periodo.ultimoAno));
+  }
+  if (orgao) {
+    consulta.set('orgao', orgao);
+  }
+  const url = consulta.size > 0 ? `${BASE}/governo/viagens?${consulta}` : `${BASE}/governo/viagens`;
   const resposta = await fetch(url, { credentials: 'include' });
 
   if (resposta.status === 404) return null;

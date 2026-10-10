@@ -13,6 +13,7 @@ vi.mock('../api', async (original) => ({
 const COMPRAS: ComprasDoGoverno = {
   periodo: { primeiroAno: 2022, ultimoAno: 2022 },
   anosDisponiveis: [2022],
+  gestoesDisponiveis: [],
   contratos: 35_607, valor: 75.1e9, sigilosos: 120, valorSigiloso: 40e6, semModalidade: 50e9,
   divergentes: 9, valorDescartado: 64.2e9,
   porAno: [{ anoDaPublicacao: 2022, contratos: 35_607, valor: 75.1e9 }],

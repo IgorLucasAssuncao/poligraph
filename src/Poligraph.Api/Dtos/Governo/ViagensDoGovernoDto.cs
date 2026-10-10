@@ -12,6 +12,7 @@ namespace Poligraph.Api.Dtos;
 public record ViagensDoGovernoDto(
     PeriodoDto Periodo,
     IReadOnlyList<int> AnosDisponiveis,
+    IReadOnlyList<GestaoDto> GestoesDisponiveis,
     string? Orgao,
     decimal Total,
     decimal Diarias,

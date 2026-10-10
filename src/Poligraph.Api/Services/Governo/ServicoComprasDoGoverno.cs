@@ -51,6 +51,7 @@ public class ServicoComprasDoGoverno(PoligraphDb db, CacheDeLeitura leitura)
         return new ComprasDoGovernoDto(
             Periodo: new PeriodoDto(primeiro, ultimo),
             AnosDisponiveis: anos,
+            GestoesDisponiveis: await GestoesDoPeriodo.ListarAsync(_db, anos[0], anos[^1], ct),
             Contratos: linhas.Sum(l => l.Contratos),
             Valor: linhas.Sum(l => l.Valor),
             Sigilosos: linhas.Sum(l => l.Sigilosos),

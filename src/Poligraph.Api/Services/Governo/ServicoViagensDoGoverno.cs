@@ -57,6 +57,7 @@ public class ServicoViagensDoGoverno(PoligraphDb db, CacheDeLeitura leitura)
         return new ViagensDoGovernoDto(
             Periodo: new PeriodoDto(primeiro, ultimo),
             AnosDisponiveis: anos,
+            GestoesDisponiveis: await GestoesDoPeriodo.ListarAsync(_db, anos[0], anos[^1], ct),
             Orgao: escolhido,
             Total: orgaos.Sum(Total),
             Diarias: orgaos.Sum(o => o.Diarias),

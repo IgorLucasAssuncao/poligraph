@@ -10,6 +10,7 @@ import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { SeletorDePeriodoComponent } from '../componentes/SeletorDePeriodo';
+import { atalhosDasGestoes } from '../componentes/atalhosDasGestoes';
 import { FONTES } from '../fontes';
 import { reaisCompacto } from '../formato';
 import { TEXTOS_DAS_VIAGENS as T } from '../textos/viagens';
@@ -21,8 +22,11 @@ const ORGAOS_EXIBIDOS = 12;
  * As viagens a serviço do Executivo federal: quanto custaram, quem viajou mais e para onde.
  *
  * ATENÇÃO: hospedagem não tem valor próprio, e quem procura por ela precisa achar a resposta: a
- * página diz que a diária a paga. O órgão "Sigiloso" entra na lista como os outros e ganha frase
- * própria, porque é a maior linha do arquivo de 2026.
+ * página diz que a diária a paga.
+ *
+ * DECISÃO (2026-10-10): o órgão escolhido fica em `?orgao=`, ao lado do período, e filtra totais,
+ * anos e destinos. O pagamento que o Portal publica com órgão "Sigiloso" já chega somado ao órgão
+ * da viagem, e a página diz quanto veio assim. Legislativo e Judiciário não estão no arquivo.
  *
  * O texto da página fica em `textos/viagens.tsx`.
  */
@@ -34,7 +38,10 @@ export function ViagensDoGovernoComponent() {
     () => (deNaUrl && ateNaUrl ? { primeiroAno: Number(deNaUrl), ultimoAno: Number(ateNaUrl) } : undefined),
     [deNaUrl, ateNaUrl],
   );
-  const { dados, erro, atualizando, chaveDoDado } = useCarga(['viagens', deNaUrl, ateNaUrl], () => obterViagensDoGoverno(periodo));
+  const orgao = parametros.get('orgao') ?? undefined;
+  const { dados, erro, atualizando, chaveDoDado } = useCarga(['viagens', deNaUrl, ateNaUrl, orgao ?? null], () =>
+    obterViagensDoGoverno(periodo, orgao),
+  );
 
 
   return (
@@ -53,16 +60,60 @@ export function ViagensDoGovernoComponent() {
             anos={dados.anosDisponiveis}
             periodo={dados.periodo}
             rotulo={T.rotuloDoPeriodo}
+            atalhos={atalhosDasGestoes(dados)}
             aoMudar={(novo) =>
-              setParametros(novo ? { de: String(novo.primeiroAno), ate: String(novo.ultimoAno) } : {}, { replace: true })
+              setParametros(
+                (p) => {
+                  const proximos = new URLSearchParams(p);
+                  proximos.delete('de');
+                  proximos.delete('ate');
+                  if (novo) {
+                    proximos.set('de', String(novo.primeiroAno));
+                    proximos.set('ate', String(novo.ultimoAno));
+                  }
+                  return proximos;
+                },
+                { replace: true },
+              )
             }
           >
             {T.escopo(textoDoPeriodo(dados.periodo))}
           </SeletorDePeriodoComponent>
 
+          <div className="filtros">
+            <select
+              value={dados.orgao ?? ''}
+              aria-label={T.rotuloDoOrgao}
+              onChange={(e) =>
+                setParametros(
+                  (p) => {
+                    const proximos = new URLSearchParams(p);
+                    if (e.target.value) {
+                      proximos.set('orgao', e.target.value);
+                    } else {
+                      proximos.delete('orgao');
+                    }
+                    return proximos;
+                  },
+                  { replace: true },
+                )
+              }
+            >
+              <option value="">{T.todosOsOrgaos}</option>
+              {[...dados.porOrgao]
+                .sort((a, b) => a.orgao.localeCompare(b.orgao, 'pt-BR'))
+                .map((o) => (
+                  <option key={o.orgao} value={o.orgao}>
+                    {o.orgao}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <p className="nota-curta">{T.soOExecutivo}</p>
+
           <ResumoDasViagensComponent dados={dados} />
           {dados.porAno.length > 1 && <ViagensPorAnoComponent dados={dados} />}
-          <ViagensPorOrgaoComponent dados={dados} />
+          {!dados.orgao && <ViagensPorOrgaoComponent dados={dados} />}
           <DestinosComponent dados={dados} />
 
           <p className="fonte-dado">
@@ -95,6 +146,9 @@ function ResumoDasViagensComponent({ dados }: { dados: ViagensDoGoverno }) {
         </NumeroComponent>
       </div>
       <p className="nota-curta">{T.hospedagem}</p>
+      {dados.pagoComOrgaoSigiloso > 0 && (
+        <p className="nota-curta">{T.sigilosoAtribuido(reaisCompacto(dados.pagoComOrgaoSigiloso))}</p>
+      )}
       {dados.sigiloso > 0 && <p className="nota-curta">{T.sigiloso(reaisCompacto(dados.sigiloso))}</p>}
       {dados.urgentes > 0 && <p className="nota-curta">{T.urgentes(contagem(dados.urgentes), contagem(dados.viagens))}</p>}
     </section>
