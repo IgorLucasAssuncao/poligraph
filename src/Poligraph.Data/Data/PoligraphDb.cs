@@ -565,12 +565,14 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             {
                 t.HasCheckConstraint("ck_viagens_contagens", "viagens >= 0 AND urgentes BETWEEN 0 AND viagens AND nao_realizadas BETWEEN 0 AND viagens");
                 t.HasCheckConstraint("ck_viagens_valores", "diarias >= 0 AND passagens >= 0 AND restituicao >= 0 AND seguro >= 0");
+                t.HasCheckConstraint("ck_viagens_sigiloso", "pago_com_orgao_sigiloso BETWEEN 0 AND diarias + passagens + restituicao + seguro");
             });
             e.HasKey(x => new { x.Ano, x.OrgaoSuperior });
             e.Property(x => x.Diarias).HasPrecision(18, 2);
             e.Property(x => x.Passagens).HasPrecision(18, 2);
             e.Property(x => x.Restituicao).HasPrecision(18, 2);
             e.Property(x => x.Seguro).HasPrecision(18, 2);
+            e.Property(x => x.PagoComOrgaoSigiloso).HasPrecision(18, 2);
         });
 
         mb.Entity<DestinoDeViagemModel>(e =>
@@ -581,7 +583,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
                 t.HasCheckConstraint("ck_destino_uf_no_brasil", "(pais = 'Brasil') = (uf IS NOT NULL)");
             });
             e.HasKey(x => x.Id);
-            e.HasIndex(x => new { x.Ano, x.Pais, x.Uf, x.Cidade })
+            e.HasIndex(x => new { x.Ano, x.OrgaoSuperior, x.Pais, x.Uf, x.Cidade })
                 .IsUnique().AreNullsDistinct(false).HasDatabaseName("ux_destino_de_viagem");
             e.Property(x => x.NumeroDeDiarias).HasPrecision(12, 2);
         });

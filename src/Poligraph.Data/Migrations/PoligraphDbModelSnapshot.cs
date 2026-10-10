@@ -612,6 +612,11 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("numeric(12,2)")
                         .HasColumnName("numero_de_diarias");
 
+                    b.Property<string>("OrgaoSuperior")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("orgao_superior");
+
                     b.Property<string>("Pais")
                         .IsRequired()
                         .HasColumnType("text")
@@ -627,11 +632,11 @@ namespace Poligraph.Data.Migrations
                     b.HasIndex("CargaId")
                         .HasDatabaseName("ix_destinos_de_viagem_carga_id");
 
-                    b.HasIndex("Ano", "Pais", "Uf", "Cidade")
+                    b.HasIndex("Ano", "OrgaoSuperior", "Pais", "Uf", "Cidade")
                         .IsUnique()
                         .HasDatabaseName("ux_destino_de_viagem");
 
-                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("Ano", "Pais", "Uf", "Cidade"), false);
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("Ano", "OrgaoSuperior", "Pais", "Uf", "Cidade"), false);
 
                     b.ToTable("destinos_de_viagem", null, t =>
                         {
@@ -2082,6 +2087,11 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("nao_realizadas");
 
+                    b.Property<decimal>("PagoComOrgaoSigiloso")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("pago_com_orgao_sigiloso");
+
                     b.Property<decimal>("Passagens")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)")
@@ -2114,6 +2124,8 @@ namespace Poligraph.Data.Migrations
                     b.ToTable("viagens_do_orgao", null, t =>
                         {
                             t.HasCheckConstraint("ck_viagens_contagens", "viagens >= 0 AND urgentes BETWEEN 0 AND viagens AND nao_realizadas BETWEEN 0 AND viagens");
+
+                            t.HasCheckConstraint("ck_viagens_sigiloso", "pago_com_orgao_sigiloso BETWEEN 0 AND diarias + passagens + restituicao + seguro");
 
                             t.HasCheckConstraint("ck_viagens_valores", "diarias >= 0 AND passagens >= 0 AND restituicao >= 0 AND seguro >= 0");
                         });

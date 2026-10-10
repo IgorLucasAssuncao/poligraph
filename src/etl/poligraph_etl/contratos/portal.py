@@ -31,6 +31,7 @@ class LinhaDePagamentoDeViagem:
     `RESTITUIO`). O tipo é reconhecido pelo começo da palavra em `viagens.tipo_do_pagamento`.
     """
 
+    identificador: str | None = coluna("Identificador do processo de viagem")
     orgao_superior: str | None = coluna("Nome do órgão superior")
     tipo: str | None = coluna("Tipo de pagamento")
     valor: str | None = coluna("Valor")
@@ -44,6 +45,7 @@ class LinhaDeViagem:
     a tela mostra o órgão, não a pessoa.
     """
 
+    identificador: str | None = coluna("Identificador do processo de viagem")
     orgao_superior: str | None = coluna("Nome do órgão superior")
     situacao: str | None = coluna("Situação")
     urgente: str | None = coluna("Viagem Urgente")
@@ -51,8 +53,12 @@ class LinhaDeViagem:
 
 @dataclass(frozen=True)
 class LinhaDeTrechoDeViagem:
-    """Um trecho de viagem: membro `AAAA_Trecho.csv`. A UF vem por extenso; fora do Brasil, vazia."""
+    """Um trecho de viagem: membro `AAAA_Trecho.csv`. A UF vem por extenso; fora do Brasil, vazia.
 
+    ATENÇÃO: neste arquivo o nome da coluna do identificador termina com um espaço.
+    """
+
+    identificador: str | None = coluna("Identificador do processo de viagem ")
     pais_de_destino: str | None = coluna("Destino - País")
     uf_de_destino: str | None = coluna("Destino - UF")
     cidade_de_destino: str | None = coluna("Destino - Cidade")

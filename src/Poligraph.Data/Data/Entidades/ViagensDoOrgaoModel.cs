@@ -7,13 +7,14 @@ namespace Poligraph.Data;
 /// <para>Fonte: <c>download-de-dados/viagens/AAAA</c>. As contagens saem de <c>Viagem.csv</c>; os valores, de <c>Pagamento.csv</c>, que é o que o governo pagou.</para>
 /// <para>Não há valor de hospedagem: no serviço público federal a diária paga hospedagem, alimentação e deslocamento urbano (Decreto 5.992/2006).</para>
 /// <para>MEDIDO (2026-10-09): em 2026, até setembro, R$ 1,34 bi pagos, dos quais R$ 235 mi com o órgão publicado como <c>Sigiloso</c>. O nome do viajante e o CPF mascarado não são lidos.</para>
+/// <para>DECISÃO (2026-10-10): o pagamento publicado com órgão <c>Sigiloso</c> vai para o órgão da viagem, pelo identificador do processo, que <c>Viagem.csv</c> publica aberto. Só fica em <c>Sigiloso</c> o que a viagem também esconde.</para>
 /// </remarks>
 public class ViagensDoOrgaoModel
 {
     /// <summary>O ano do arquivo do Portal: o do início da viagem.</summary>
     public short Ano { get; set; }
 
-    /// <summary>Como o Portal publica, inclusive <c>Sigiloso</c>.</summary>
+    /// <summary>O da viagem em <c>Viagem.csv</c>; <c>Sigiloso</c> só quando a viagem também o esconde.</summary>
     public required string OrgaoSuperior { get; set; }
 
     public int Viagens { get; set; }
@@ -31,6 +32,9 @@ public class ViagensDoOrgaoModel
 
     /// <summary>Serviço correlato: seguro de viagem.</summary>
     public decimal Seguro { get; set; }
+
+    /// <summary>A parte dos quatro valores que o Portal publicou com órgão <c>Sigiloso</c> e veio para este órgão pela viagem.</summary>
+    public decimal PagoComOrgaoSigiloso { get; set; }
 
     public long? CargaId { get; set; }
 }
@@ -52,6 +56,9 @@ public class DestinoDeViagemModel
     public string? Uf { get; set; }
 
     public required string Cidade { get; set; }
+
+    /// <summary>O órgão superior da viagem do trecho, pelo identificador do processo.</summary>
+    public required string OrgaoSuperior { get; set; }
 
     public int Chegadas { get; set; }
 

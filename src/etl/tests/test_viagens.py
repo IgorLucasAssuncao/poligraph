@@ -14,17 +14,19 @@ from poligraph_etl.contratos.portal import LinhaDePagamentoDeViagem, LinhaDeTrec
 from poligraph_etl.fontes import portal
 
 
-def pagamento(orgao: str, tipo: str, valor: str) -> dict:
-    return {"Nome do órgão superior": orgao, "Tipo de pagamento": tipo, "Valor": valor}
+def pagamento(orgao: str, tipo: str, valor: str, identificador: str = "") -> dict:
+    return {"Identificador do processo de viagem": identificador, "Nome do órgão superior": orgao,
+            "Tipo de pagamento": tipo, "Valor": valor}
 
 
-def viagem(orgao: str, situacao: str = "Realizada", urgente: str = "NÃO") -> dict:
-    return {"Nome do órgão superior": orgao, "Situação": situacao, "Viagem Urgente": urgente,
-            "Nome": "SERVIDOR", "CPF viajante": "***.240.140-**"}
+def viagem(orgao: str, situacao: str = "Realizada", urgente: str = "NÃO", identificador: str = "") -> dict:
+    return {"Identificador do processo de viagem": identificador, "Nome do órgão superior": orgao,
+            "Situação": situacao, "Viagem Urgente": urgente, "Nome": "SERVIDOR", "CPF viajante": "***.240.140-**"}
 
 
-def trecho(pais: str, uf: str, cidade: str, diarias: str = "1,50") -> dict:
-    return {"Destino - País": pais, "Destino - UF": uf, "Destino - Cidade": cidade, "Número Diárias": diarias}
+def trecho(pais: str, uf: str, cidade: str, diarias: str = "1,50", identificador: str = "") -> dict:
+    return {"Identificador do processo de viagem ": identificador, "Destino - País": pais, "Destino - UF": uf,
+            "Destino - Cidade": cidade, "Número Diárias": diarias}
 
 
 @pytest.mark.parametrize(
@@ -66,6 +68,40 @@ def test_soma_por_orgao_sem_perder_pagamento():
     assert sum(o.diarias + o.passagens + o.restituicao + o.seguro for o in orgaos) == 3810.0
 
 
+def test_pagamento_sigiloso_vai_para_o_orgao_da_viagem():
+    """MEDIDO (2026-10-09): em 2026 todo pagamento `Sigiloso` tem a viagem em `Viagem.csv`, e 66.625
+    deles são do Ministério da Justiça. Só fica em `Sigiloso` o que a viagem também esconde."""
+    pagamentos = entrada.ler(LinhaDePagamentoDeViagem, [
+        pagamento("Sigiloso", "DIÁRIAS", "400,00", identificador="1"),
+        pagamento("Ministério da Justiça e Segurança Pública", "PASSAGEM", "100,00", identificador="2"),
+        pagamento("Sigiloso", "PASSAGEM", "50,00", identificador="3"),
+    ])
+    lidas = entrada.ler(LinhaDeViagem, [
+        viagem("Ministério da Justiça e Segurança Pública", identificador="1"),
+        viagem("Ministério da Justiça e Segurança Pública", identificador="2"),
+        viagem("Sigiloso", identificador="3"),
+    ])
+
+    orgaos = {o.orgao_superior: o for o in viagens.por_orgao(2026, pagamentos, lidas)}
+
+    justica = orgaos["Ministério da Justiça e Segurança Pública"]
+    assert (justica.diarias, justica.passagens, justica.pago_com_orgao_sigiloso) == (400.0, 100.0, 400.0)
+    assert (orgaos["Sigiloso"].passagens, orgaos["Sigiloso"].pago_com_orgao_sigiloso) == (50.0, 0.0)
+
+
+def test_destino_leva_o_orgao_da_viagem():
+    lidas = entrada.ler(LinhaDeViagem, [viagem("Presidência da República", identificador="7")])
+    trechos = entrada.ler(LinhaDeTrechoDeViagem, [
+        trecho("Brasil", "Bahia", "Salvador", identificador="7"),
+        trecho("Brasil", "Bahia", "Salvador", identificador="99"),
+    ])
+
+    destinos = viagens.destinos(2026, trechos, viagens.orgao_da_viagem(lidas))
+
+    assert [(d.orgao_superior, d.chegadas) for d in destinos] == [
+        ("Presidência da República", 1), (viagens.SEM_VIAGEM, 1)]
+
+
 def test_o_contrato_nao_le_quem_viajou():
     """A tela mostra o órgão, não a pessoa: nome, CPF, cargo e motivo ficam no arquivo."""
     lidas = set(entrada.colunas_da_fonte(LinhaDeViagem).values())
@@ -80,10 +116,11 @@ def test_destinos_tem_uf_so_no_brasil():
         trecho("Inválido", "Inválido", "Inválido", "0,00"),
     ])
 
-    assert viagens.destinos(2026, trechos) == [
-        DestinoDeViagem(ano=2026, pais="Brasil", uf="Rio Grande do Sul", cidade="Pelotas", chegadas=2,
-                        numero_de_diarias=2.0),
-        DestinoDeViagem(ano=2026, pais="Inválido", uf=None, cidade="Inválido", chegadas=1, numero_de_diarias=0.0),
+    assert viagens.destinos(2026, trechos, {}) == [
+        DestinoDeViagem(ano=2026, pais="Brasil", uf="Rio Grande do Sul", cidade="Pelotas",
+                        orgao_superior=viagens.SEM_VIAGEM, chegadas=2, numero_de_diarias=2.0),
+        DestinoDeViagem(ano=2026, pais="Inválido", uf=None, cidade="Inválido",
+                        orgao_superior=viagens.SEM_VIAGEM, chegadas=1, numero_de_diarias=0.0),
     ]
 
 
@@ -101,9 +138,9 @@ def test_comando_grava_o_ano_nas_duas_tabelas(conexao, tmp_path, monkeypatch):
 
     def baixar(recurso, destino, **_):
         with zipfile.ZipFile(destino, "w") as arquivo:
-            arquivo.writestr(viagens.membro(2024, "pagamento"), _csv([pagamento("Sigiloso", "DIÁRIAS", "250,00")]))
-            arquivo.writestr(viagens.membro(2024, "viagem"), _csv([viagem("Sigiloso", urgente="SIM")]))
-            arquivo.writestr(viagens.membro(2024, "trecho"), _csv([trecho("França", "", "Paris", "3,00")]))
+            arquivo.writestr(viagens.membro(2024, "pagamento"), _csv([pagamento("Sigiloso", "DIÁRIAS", "250,00", "5")]))
+            arquivo.writestr(viagens.membro(2024, "viagem"), _csv([viagem("Sigiloso", urgente="SIM", identificador="5")]))
+            arquivo.writestr(viagens.membro(2024, "trecho"), _csv([trecho("França", "", "Paris", "3,00", "5")]))
         return destino
 
     monkeypatch.setattr(etl, "CACHE", tmp_path)
@@ -114,5 +151,5 @@ def test_comando_grava_o_ano_nas_duas_tabelas(conexao, tmp_path, monkeypatch):
     assert conexao.execute(
         "SELECT orgao_superior, viagens, urgentes, diarias::float, carga_id IS NOT NULL FROM viagens_do_orgao"
     ).fetchall() == [("Sigiloso", 1, 1, 250.0, True)]
-    assert conexao.execute("SELECT pais, uf, cidade, chegadas FROM destinos_de_viagem").fetchall() == [
-        ("França", None, "Paris", 1)]
+    assert conexao.execute("SELECT orgao_superior, pais, uf, cidade, chegadas FROM destinos_de_viagem").fetchall() == [
+        ("Sigiloso", "França", None, "Paris", 1)]

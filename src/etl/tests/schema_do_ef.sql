@@ -1052,3 +1052,19 @@ VALUES ('20261010014035_ComprasCentralizadasNoCartao', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+DROP INDEX ux_destino_de_viagem;
+
+ALTER TABLE viagens_do_orgao ADD pago_com_orgao_sigiloso numeric(18,2) NOT NULL DEFAULT 0.0;
+
+ALTER TABLE destinos_de_viagem ADD orgao_superior text NOT NULL DEFAULT '';
+
+ALTER TABLE viagens_do_orgao ADD CONSTRAINT ck_viagens_sigiloso CHECK (pago_com_orgao_sigiloso BETWEEN 0 AND diarias + passagens + restituicao + seguro);
+
+CREATE UNIQUE INDEX ux_destino_de_viagem ON destinos_de_viagem (ano, orgao_superior, pais, uf, cidade) NULLS NOT DISTINCT;
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261010041926_OrgaoNasViagens', '10.0.11');
+
+COMMIT;
+

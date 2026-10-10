@@ -62,6 +62,7 @@ class ViagensDoOrgao:
     passagens: float
     restituicao: float
     seguro: float
+    pago_com_orgao_sigiloso: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -74,6 +75,7 @@ class DestinoDeViagem:
     pais: str
     uf: str | None
     cidade: str
+    orgao_superior: str
     chegadas: int
     numero_de_diarias: float
 

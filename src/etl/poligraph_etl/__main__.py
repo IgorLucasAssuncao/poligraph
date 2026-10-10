@@ -1161,8 +1161,9 @@ def _viagens(conexao: psycopg.Connection, anos: list[int]) -> None:
             tabela = portal.ler_csv(arquivo, viagens.membro(ano, qual), colunas=list(colunas_da_fonte(contrato).values()))
             return entrada.ler(contrato, tabela.to_dict("records"))
 
-        orgaos = viagens.por_orgao(ano, ler("pagamento", LinhaDePagamentoDeViagem), ler("viagem", LinhaDeViagem))
-        destinos = viagens.destinos(ano, ler("trecho", LinhaDeTrechoDeViagem))
+        lidas = ler("viagem", LinhaDeViagem)
+        orgaos = viagens.por_orgao(ano, ler("pagamento", LinhaDePagamentoDeViagem), lidas)
+        destinos = viagens.destinos(ano, ler("trecho", LinhaDeTrechoDeViagem), viagens.orgao_da_viagem(lidas))
         with conexao.transaction():
             persistencia.gravar_viagens(conexao, ano, orgaos, destinos, carga)
         log.info("  %d: R$ %.1f mi em diárias, R$ %.1f mi em passagens, %d viagens, %d destinos", ano,

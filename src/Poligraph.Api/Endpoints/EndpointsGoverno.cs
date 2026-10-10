@@ -42,8 +42,8 @@ public static class EndpointsGoverno
 
     /// <summary>As viagens a serviço do Executivo federal num período. Sem período, todos os anos.</summary>
     private static async Task<IResult> ObterViagensAsync(
-        ServicoViagensDoGoverno servico, CancellationToken ct, Periodo<AnoDoOrcamento> periodoDaViagem) =>
-        await servico.ObterAsync(periodoDaViagem, ct) is { } viagens
+        ServicoViagensDoGoverno servico, CancellationToken ct, Periodo<AnoDoOrcamento> periodoDaViagem, string? orgao) =>
+        await servico.ObterAsync(periodoDaViagem, orgao, ct) is { } viagens
             ? Results.Ok(viagens)
             : Results.NotFound();
 }

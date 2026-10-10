@@ -5,12 +5,14 @@ namespace Poligraph.Api.Dtos;
 /// </summary>
 /// <remarks>
 /// <para>Os valores são os pagos (arquivo de pagamentos do Portal). Hospedagem não tem valor próprio: a diária paga hospedagem, alimentação e deslocamento urbano.</para>
-/// <para><see cref="Sigiloso"/> é o que o Portal publica com o órgão <c>Sigiloso</c>; está em <see cref="PorOrgao"/> como as outras linhas.</para>
+/// <para><see cref="Sigiloso"/> é o que continua sem órgão: o Portal publica <c>Sigiloso</c> no pagamento e também na viagem. O que a viagem publica aberto foi para o órgão dela, e a soma está em <see cref="PagoComOrgaoSigiloso"/>.</para>
+/// <para>Com <see cref="Orgao"/>, totais, anos e destinos são só desse órgão; <see cref="PorOrgao"/> continua com todos, para a escolha.</para>
 /// <para><see cref="Destinos"/> conta chegadas (trechos), não pessoas: uma viagem de ida e volta chega a dois lugares.</para>
 /// </remarks>
 public record ViagensDoGovernoDto(
     PeriodoDto Periodo,
     IReadOnlyList<int> AnosDisponiveis,
+    string? Orgao,
     decimal Total,
     decimal Diarias,
     decimal Passagens,
@@ -20,6 +22,7 @@ public record ViagensDoGovernoDto(
     int Urgentes,
     int NaoRealizadas,
     decimal Sigiloso,
+    decimal PagoComOrgaoSigiloso,
     IReadOnlyList<ViagensNoAnoDto> PorAno,
     IReadOnlyList<ViagensDoOrgaoDto> PorOrgao,
     IReadOnlyList<DestinoDeViagemDto> Destinos,

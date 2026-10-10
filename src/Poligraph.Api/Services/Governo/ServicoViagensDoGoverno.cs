@@ -24,10 +24,13 @@ public class ServicoViagensDoGoverno(PoligraphDb db, CacheDeLeitura leitura)
     public const string Brasil = "Brasil";
 
     /// <summary>Sem período, todos os anos carregados. Ponta fora dos anos é trazida para dentro. Sem dado, <c>null</c>.</summary>
-    public Task<ViagensDoGovernoDto?> ObterAsync(Periodo<AnoDoOrcamento> periodoPedido, CancellationToken ct) =>
-        _leitura.ObterAsync(("viagens", periodoPedido), () => CalcularAsync(periodoPedido, ct));
+    /// <remarks>
+    /// <para>Com <paramref name="orgao"/>, só as viagens desse órgão superior, com o nome como o Portal publica.</para>
+    /// </remarks>
+    public Task<ViagensDoGovernoDto?> ObterAsync(Periodo<AnoDoOrcamento> periodoPedido, string? orgao, CancellationToken ct) =>
+        _leitura.ObterAsync(("viagens", periodoPedido, orgao), () => CalcularAsync(periodoPedido, orgao, ct));
 
-    private async Task<ViagensDoGovernoDto?> CalcularAsync(Periodo<AnoDoOrcamento> periodoPedido, CancellationToken ct)
+    private async Task<ViagensDoGovernoDto?> CalcularAsync(Periodo<AnoDoOrcamento> periodoPedido, string? orgao, CancellationToken ct)
     {
         var anos = await _db.ViagensDoOrgao.AsNoTracking().Select(v => (int)v.Ano).Distinct().OrderBy(a => a).ToListAsync(ct);
         if (anos.Count == 0)
@@ -42,9 +45,11 @@ public class ServicoViagensDoGoverno(PoligraphDb db, CacheDeLeitura leitura)
             (primeiro, ultimo) = (ultimo, primeiro);
         }
 
-        var orgaos = await _db.ViagensDoOrgao.AsNoTracking().Where(v => v.Ano >= primeiro && v.Ano <= ultimo).ToListAsync(ct);
+        var todos = await _db.ViagensDoOrgao.AsNoTracking().Where(v => v.Ano >= primeiro && v.Ano <= ultimo).ToListAsync(ct);
+        var escolhido = orgao is not null && todos.Any(o => o.OrgaoSuperior == orgao) ? orgao : null;
+        var orgaos = escolhido is null ? todos : [.. todos.Where(o => o.OrgaoSuperior == escolhido)];
         var destinos = await _db.DestinosDeViagem.AsNoTracking()
-            .Where(d => d.Ano >= primeiro && d.Ano <= ultimo)
+            .Where(d => d.Ano >= primeiro && d.Ano <= ultimo && (escolhido == null || d.OrgaoSuperior == escolhido))
             .GroupBy(d => new { d.Pais, d.Uf, d.Cidade })
             .Select(g => new DestinoDeViagemDto(g.Key.Pais, g.Key.Uf, g.Key.Cidade, g.Sum(d => d.Chegadas)))
             .ToListAsync(ct);
@@ -52,6 +57,7 @@ public class ServicoViagensDoGoverno(PoligraphDb db, CacheDeLeitura leitura)
         return new ViagensDoGovernoDto(
             Periodo: new PeriodoDto(primeiro, ultimo),
             AnosDisponiveis: anos,
+            Orgao: escolhido,
             Total: orgaos.Sum(Total),
             Diarias: orgaos.Sum(o => o.Diarias),
             Passagens: orgaos.Sum(o => o.Passagens),
@@ -61,9 +67,10 @@ public class ServicoViagensDoGoverno(PoligraphDb db, CacheDeLeitura leitura)
             Urgentes: orgaos.Sum(o => o.Urgentes),
             NaoRealizadas: orgaos.Sum(o => o.NaoRealizadas),
             Sigiloso: orgaos.Where(o => o.OrgaoSuperior == OrgaoSigiloso).Sum(Total),
+            PagoComOrgaoSigiloso: orgaos.Sum(o => o.PagoComOrgaoSigiloso),
             PorAno: [.. orgaos.GroupBy(o => o.Ano).OrderBy(g => g.Key).Select(g => new ViagensNoAnoDto(
                 g.Key, g.Sum(o => o.Diarias), g.Sum(o => o.Passagens), g.Sum(Total), g.Sum(o => o.Viagens)))],
-            PorOrgao: [.. orgaos.GroupBy(o => o.OrgaoSuperior)
+            PorOrgao: [.. todos.GroupBy(o => o.OrgaoSuperior)
                 .Select(g => new ViagensDoOrgaoDto(
                     g.Key, g.Sum(Total), g.Sum(o => o.Diarias), g.Sum(o => o.Passagens), g.Sum(o => o.Viagens), g.Sum(o => o.Urgentes)))
                 .OrderByDescending(o => o.Total)],
