@@ -255,6 +255,27 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
         Assert.Equal((1, 1), (sigiloso.Linhas, sigiloso.LinhasSemCarga));
     }
 
+    /// <summary>A população do mapa por habitante leva ao arquivo do IBGE, não à tabela de códigos da Receita.</summary>
+    [SkippableFact]
+    public async Task Populacao_LevaAoArquivoDoIbge()
+    {
+        ExigeDocker();
+        var receita = Carga('a', "https://www.gov.br/receitafederal/dados/municipios.csv");
+        var ibge = Carga('b', "https://apisidra.ibge.gov.br/values/t/6579");
+        Db.Cargas.AddRange(receita, ibge);
+        await Db.SaveChangesAsync();
+        Db.Municipios.AddRange(
+            new MunicipioModel { CodigoIbge = "4314902", CodigoTom = "8801", Nome = "Porto Alegre", Uf = "RS", Populacao = 1_332_570, PopulacaoAno = 2025, CargaId = receita.Id, PopulacaoCargaId = ibge.Id },
+            new MunicipioModel { CodigoIbge = "3550308", CodigoTom = "7107", Nome = "São Paulo", Uf = "SP", Populacao = 11_895_578, PopulacaoAno = 2025, CargaId = receita.Id, PopulacaoCargaId = ibge.Id });
+        await Db.SaveChangesAsync();
+
+        var brasil = await LerAsync("/api/procedencia/populacao");
+        var rs = await LerAsync("/api/procedencia/populacao?uf=RS");
+
+        Assert.Equal((2, 0, new string('b', 64)), (brasil.Linhas, brasil.LinhasSemCarga, brasil.Cargas.Single().Sha256));
+        Assert.Equal(1, rs.Linhas);
+    }
+
     /// <summary>Sanções, cadastro do parlamentar com as redes, e gestões: cada um leva ao arquivo que o gravou.</summary>
     [SkippableFact]
     public async Task SancoesParlamentarEGestoes_LevamAoArquivo()

@@ -1242,6 +1242,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("smallint")
                         .HasColumnName("populacao_ano");
 
+                    b.Property<long?>("PopulacaoCargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("populacao_carga_id");
+
                     b.Property<string>("Uf")
                         .IsRequired()
                         .HasMaxLength(2)
@@ -1257,6 +1261,9 @@ namespace Poligraph.Data.Migrations
                     b.HasIndex("CodigoTom")
                         .IsUnique()
                         .HasDatabaseName("ux_municipio_tom");
+
+                    b.HasIndex("PopulacaoCargaId")
+                        .HasDatabaseName("ix_municipios_populacao_carga_id");
 
                     b.ToTable("municipios", null, t =>
                         {
@@ -2579,6 +2586,12 @@ namespace Poligraph.Data.Migrations
                         .HasForeignKey("CargaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_municipios_cargas_carga_id");
+
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("PopulacaoCargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_municipios_cargas_populacao_carga_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.NoMetricaModel", b =>

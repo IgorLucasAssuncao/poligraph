@@ -170,6 +170,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<MunicipioModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<MunicipioModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.PopulacaoCargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<GestaoModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<PessoaModel>().HasOne<CargaModel>().WithMany()

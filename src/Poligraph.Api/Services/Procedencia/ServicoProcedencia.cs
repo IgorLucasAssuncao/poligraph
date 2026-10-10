@@ -65,6 +65,8 @@ public class ServicoProcedencia(PoligraphDb db)
                 return ConveniosDaEntidade(convenente);
             case TipoDeContexto.Parlamentar:
                 return consulta.IdPessoa is { } doCadastro ? DoParlamentar(doCadastro) : null;
+            case TipoDeContexto.Populacao:
+                return Populacao(consulta.Uf);
             case TipoDeContexto.Gestoes:
                 return consulta.PeriodoDoOrcamento.Completo ? Gestoes(consulta.PeriodoDoOrcamento) : null;
             case TipoDeContexto.Pagamentos:
@@ -93,6 +95,7 @@ public class ServicoProcedencia(PoligraphDb db)
             TipoDeContexto.Cota => Cota(idPessoa, legislatura.Value, consulta.AnoDaDespesa, consulta.Categoria),
             TipoDeContexto.Emendas => Emendas(idPessoa, legislatura.Value, consulta.AnoDaEmenda),
             TipoDeContexto.Campanha => Campanha(idPessoa, legislatura.Value, consulta.AnoDaEleicao),
+            TipoDeContexto.Ementas => Ementas(idPessoa, legislatura.Value),
             TipoDeContexto.Convenios => ConveniosDoParlamentar(idPessoa, legislatura.Value, consulta.AnoDaEmenda),
             _ => Patrimonio(idPessoa, legislatura.Value, consulta.AnoDaEleicao),
         };
@@ -292,6 +295,38 @@ public class ServicoProcedencia(PoligraphDb db)
             TextosDaProcedencia.Parlamentar,
             _db.Pessoas.AsNoTracking().Where(p => p.Id == idPessoa.Valor).Select(p => p.CargaId).Concat(redes.Select(r => r.CargaId)),
             redes.OrderBy(r => r.Url).Select(r => new LinhaDaProcedenciaDto(r.Url, r.Fonte.ToString(), null, null, r.Url)));
+    }
+
+    /// <remarks>
+    /// <para>As proposições ligadas às votações em que a pessoa votou na legislatura, uma vez cada.</para>
+    /// </remarks>
+    private Recorte Ementas(IdPessoa idPessoa, Legislatura legislatura)
+    {
+        var votacoes = _db.Votos.AsNoTracking()
+            .Where(v => v.PessoaId == idPessoa.Valor && v.Votacao!.Legislatura == legislatura.Numero && v.Votacao.ProposicaoId != null)
+            .Select(v => new { v.Votacao!.Casa, v.Votacao.ProposicaoId });
+        var proposicoes = _db.Proposicoes.AsNoTracking()
+            .Where(p => votacoes.Any(v => v.Casa == p.Casa && v.ProposicaoId == p.Id));
+        return new(
+            TextosDaProcedencia.Ementas(legislatura),
+            proposicoes.Select(p => p.CargaId),
+            proposicoes.OrderByDescending(p => p.Ano)
+                .Select(p => new LinhaDaProcedenciaDto((p.SiglaTipo ?? "") + " " + p.Numero + "/" + p.Ano, p.Ementa, null, null, null)));
+    }
+
+    private Recorte Populacao(Uf? uf)
+    {
+        var municipios = _db.Municipios.AsNoTracking().Where(m => m.Populacao != null);
+        if (uf is { } escolhida)
+        {
+            municipios = municipios.Where(m => m.Uf == escolhida.Sigla);
+        }
+
+        return new(
+            TextosDaProcedencia.Populacao(uf),
+            municipios.Select(m => m.PopulacaoCargaId),
+            municipios.OrderByDescending(m => m.Populacao)
+                .Select(m => new LinhaDaProcedenciaDto(m.Nome, m.Uf + " · " + m.Populacao + " habitantes", null, null, null)));
     }
 
     private Recorte Gestoes(Periodo<AnoDoOrcamento> periodo)

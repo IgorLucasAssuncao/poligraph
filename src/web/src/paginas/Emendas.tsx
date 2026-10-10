@@ -277,7 +277,13 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
           escolhida={habitante}
           aoEscolher={setPorHabitante}
         >
-          {habitante && brasil.anoDaPopulacao && <span className="ajuda">{T.pais.populacao(brasil.anoDaPopulacao)}</span>}
+          {habitante && brasil.anoDaPopulacao && (
+            <span className="ajuda">
+              <ComProcedenciaComponent consulta={{ contexto: 'populacao' }} rotulo={T.pais.populacao(brasil.anoDaPopulacao)}>
+                {T.pais.populacao(brasil.anoDaPopulacao)}
+              </ComProcedenciaComponent>
+            </span>
+          )}
         </OpcoesComponent>
       )}
 

@@ -1058,7 +1058,7 @@ def codigos_ibge(conexao: psycopg.Connection) -> set[str]:
     return {linha[0] for linha in conexao.execute("SELECT codigo_ibge FROM municipios").fetchall()}
 
 
-def gravar_populacao(conexao: psycopg.Connection, linhas: Sequence[dict]) -> int:
+def gravar_populacao(conexao: psycopg.Connection, linhas: Sequence[dict], carga_id: int | None = None) -> int:
     """Grava a população estimada nos municípios que existem na tabela; devolve quantos mudaram.
 
     Município que não está em `municipios` fica de fora: a tabela vem da Receita, e a ETL não
@@ -1066,8 +1066,9 @@ def gravar_populacao(conexao: psycopg.Connection, linhas: Sequence[dict]) -> int
     """
     with conexao.cursor() as cursor:
         cursor.executemany(
-            "UPDATE municipios SET populacao = %(populacao)s, populacao_ano = %(ano)s WHERE codigo_ibge = %(codigo_ibge)s",
-            linhas,
+            "UPDATE municipios SET populacao = %(populacao)s, populacao_ano = %(ano)s,"
+            " populacao_carga_id = %(carga_id)s WHERE codigo_ibge = %(codigo_ibge)s",
+            _com_carga(linhas, carga_id),
         )
     return conexao.execute("SELECT count(*) FROM municipios WHERE populacao IS NOT NULL").fetchone()[0]
 

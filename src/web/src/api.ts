@@ -1211,7 +1211,7 @@ export type ConsultaDeProcedencia = {
     | 'votos' | 'cota' | 'emendas' | 'campanha' | 'patrimonio' | 'painel' | 'pagamentos' | 'entidade'
     | 'governo-gastos' | 'governo-receitas' | 'governo-sigiloso'
     | 'governo-viagens' | 'governo-compras' | 'governo-defesa-civil' | 'governo-compras-centralizadas'
-    | 'sancoes' | 'convenios' | 'parlamentar' | 'gestoes';
+    | 'sancoes' | 'convenios' | 'parlamentar' | 'gestoes' | 'ementas' | 'populacao';
   idPessoa?: number;
   legislatura?: number;
   /** Só em `cota`: um ano de despesa em vez do mandato. */

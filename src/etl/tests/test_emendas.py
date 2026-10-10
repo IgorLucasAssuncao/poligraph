@@ -628,3 +628,18 @@ def test_municipio_e_gestao_saem_com_o_arquivo_de_origem(conexao):
 
     assert conexao.execute("SELECT carga_id FROM municipios").fetchone()[0] == carga
     assert conexao.execute("SELECT carga_id FROM gestoes").fetchone()[0] == carga
+
+
+@pytest.mark.integracao
+def test_populacao_aponta_para_o_arquivo_do_ibge(conexao):
+    """O município tem duas fontes: o código vem da Receita e a população do IBGE, cada uma com a sua carga."""
+    from poligraph_etl import persistencia
+
+    conexao.execute("TRUNCATE cnpjs_municipio, municipios, cargas" " CASCADE")
+    carga = conexao.execute(
+        "INSERT INTO cargas (fonte, url, sha256, bytes, comando) VALUES ('IBGE', 'u', repeat('e', 64), 1, 'c') RETURNING id"
+    ).fetchone()[0]
+    persistencia.gravar_municipios(conexao, [{"codigo_ibge": "4314902", "codigo_tom": "8801", "nome": "Porto Alegre", "uf": "RS"}])
+    persistencia.gravar_populacao(conexao, [{"codigo_ibge": "4314902", "populacao": 1_332_570, "ano": 2025}], carga)
+
+    assert conexao.execute("SELECT populacao_carga_id FROM municipios").fetchone()[0] == carga

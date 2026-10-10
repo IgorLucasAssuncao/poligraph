@@ -31,6 +31,9 @@ public class MunicipioModel
     /// <summary>O ano da estimativa de <see cref="Populacao"/>.</summary>
     public short? PopulacaoAno { get; set; }
 
+    /// <summary>O arquivo do IBGE de onde veio a população. A linha tem duas fontes: o código e o nome vêm da Receita (<see cref="CargaId"/>), a população do IBGE.</summary>
+    public long? PopulacaoCargaId { get; set; }
+
     /// <summary>A tabela de municípios (TOM e IBGE) que gravou a linha por último; a população tem fonte própria.</summary>
     public long? CargaId { get; set; }
 }

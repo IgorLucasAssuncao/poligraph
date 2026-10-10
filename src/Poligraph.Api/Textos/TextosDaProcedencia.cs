@@ -84,6 +84,12 @@ public static class TextosDaProcedencia
     public static string Gestoes(Periodo<AnoDoOrcamento> periodo) =>
         $"Quem governou {periodo.Texto}: presidente, vice, partidos e coligação, do arquivo de candidatos do TSE da eleição de cada gestão.";
 
+    public static string Ementas(Legislatura legislatura) =>
+        $"As proposições das votações em que esta pessoa votou na {legislatura}ª legislatura: número, ementa e assunto, do arquivo de proposições votadas da Câmara ou das matérias do Senado.";
+
+    public static string Populacao(Uf? uf) =>
+        $"A população estimada pelo IBGE em cada município{(uf is { } escolhida ? $" de {escolhida.Sigla}" : " do país")}, o divisor do mapa por habitante, da tabela 6579 do SIDRA.";
+
     public static string GovernoGastos(Periodo<AnoDoOrcamento> periodoDoOrcamento) =>
         $"O gasto pago do Poder Executivo federal {periodoDoOrcamento.Texto}, do arquivo anual do orçamento do Portal da Transparência, uma linha por ano e função, mais os Encargos especiais por subfunção. "
         + "Os restos a pagar pagos somados vêm dos arquivos mensais de execução.";

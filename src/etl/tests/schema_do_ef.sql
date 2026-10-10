@@ -1122,3 +1122,15 @@ VALUES ('20261010155238_OrigemEmTodasAsTabelas', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+ALTER TABLE municipios ADD populacao_carga_id bigint;
+
+CREATE INDEX ix_municipios_populacao_carga_id ON municipios (populacao_carga_id);
+
+ALTER TABLE municipios ADD CONSTRAINT fk_municipios_cargas_populacao_carga_id FOREIGN KEY (populacao_carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261010185733_OrigemDaPopulacao', '10.0.11');
+
+COMMIT;
+

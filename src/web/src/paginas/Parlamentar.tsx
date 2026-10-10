@@ -265,7 +265,14 @@ export function ParlamentarComponent() {
       {aba === 'votos' && (
         <>
           <AbaSimilaresComponent similares={ficha.maisSimilares} />
-          <h2 className="titulo-secao">{T.tituloDosVotos}</h2>
+          <h2 className="titulo-secao">
+            <ComProcedenciaComponent
+              consulta={{ contexto: 'ementas', idPessoa, legislatura: ficha.legislatura ?? undefined }}
+              rotulo={T.tituloDosVotos}
+            >
+              {T.tituloDosVotos}
+            </ComProcedenciaComponent>
+          </h2>
           <AbaVotosComponent
             idPessoa={idPessoa}
             legislatura={ficha.legislatura}

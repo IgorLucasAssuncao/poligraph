@@ -25,6 +25,8 @@ public enum TipoDeContexto
     Convenios,
     Parlamentar,
     Gestoes,
+    Ementas,
+    Populacao,
 }
 
 /// <summary>
@@ -55,6 +57,8 @@ public readonly record struct ContextoDeProcedencia(TipoDeContexto Tipo) : IPars
         ["convenios"] = TipoDeContexto.Convenios,
         ["parlamentar"] = TipoDeContexto.Parlamentar,
         ["gestoes"] = TipoDeContexto.Gestoes,
+        ["ementas"] = TipoDeContexto.Ementas,
+        ["populacao"] = TipoDeContexto.Populacao,
     };
 
     public static ContextoDeProcedencia Parse(string s, IFormatProvider? provider) =>

@@ -2118,9 +2118,9 @@ def _populacao(conexao: psycopg.Connection) -> None:
     from .fontes import ibge
 
     arquivo = ibge.baixar(CACHE / "ibge" / f"populacao-{date.today():%Y%m%d}.json")
-    _carga_do_arquivo(conexao, "IBGE", ibge.URL, arquivo)
+    carga = _carga_do_arquivo(conexao, "IBGE", ibge.URL, arquivo)
     linhas = ibge.ler(arquivo)
-    com_populacao = persistencia.gravar_populacao(conexao, linhas)
+    com_populacao = persistencia.gravar_populacao(conexao, linhas, carga)
     ano = max((l["ano"] for l in linhas), default=None)
     log.info("População %s: %d municípios no arquivo, %d com população na base", ano, len(linhas), com_populacao)
 
