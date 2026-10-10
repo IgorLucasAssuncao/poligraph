@@ -155,23 +155,33 @@ def votos_para_linhas(df: pd.DataFrame, mapa_pessoas: dict[str, int]) -> list[di
     devolve a contagem para que dê para perceber.
 
     A Câmara lista só quem estava: toda linha é presença, e o ausente não tem linha.
+
+    MEDIDO (2026-10-10): percorrer com `iterrows()` levava 16 de 25 s em 175 mil votos de 2025;
+    agora percorre as colunas, com o mesmo resultado.
     """
     linhas: list[dict] = []
+    vazia = [None] * len(df)
 
-    for _, registro in df.iterrows():
-        id_camara = str(registro.get("deputado_id") or "")
-        pessoa_id = mapa_pessoas.get(id_camara)
+    def coluna(nome: str) -> list:
+        """A coluna como lista; a que falta no arquivo vira coluna vazia, como o `registro.get` de antes."""
+        return df[nome].tolist() if nome in df.columns else vazia
+
+    for id_votacao, deputado, voto, partido, uf in zip(
+        coluna("idVotacao"), coluna("deputado_id"), coluna("voto"),
+        coluna("deputado_siglaPartido"), coluna("deputado_siglaUf"),
+    ):
+        pessoa_id = mapa_pessoas.get(str(deputado or ""))
         if pessoa_id is None:
             continue
 
         linhas.append(
             {
-                "votacao_id": registro["idVotacao"],
+                "votacao_id": id_votacao,
                 "pessoa_id": pessoa_id,
-                "valor": normalizar_voto(registro.get("voto")),
+                "valor": normalizar_voto(voto),
                 "presenca": "PRESENTE",
-                "partido_no_voto": _texto(registro.get("deputado_siglaPartido")),
-                "uf_no_voto": _texto(registro.get("deputado_siglaUf"))[:2],
+                "partido_no_voto": _texto(partido),
+                "uf_no_voto": _texto(uf)[:2],
             }
         )
 

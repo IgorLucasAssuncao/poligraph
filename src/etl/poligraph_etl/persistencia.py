@@ -676,27 +676,38 @@ def gravar_votos(
 ) -> int:
     """Grava votos.
 
+    DECISÃO (2026-10-10): `COPY` numa tabela temporária e um `INSERT ... SELECT` com a mesma regra
+    de conflito. MEDIDO no mesmo dia, 175 mil votos de 2025: o `executemany` levava 11 s.
+
     ATENÇÃO: `partido_no_voto` e `uf_no_voto` são atualizados no conflito de propósito:
     são registro histórico do momento do voto, e a Câmara corrige filiação
     retroativamente. Normalizar para o partido atual destruiria a informação —
     14 deputados trocaram de partido só em 2025.
     """
-    return _executar_em_lotes(
-        conexao,
+    colunas = ["votacao_id", "pessoa_id", "valor", "presenca", "partido_no_voto", "uf_no_voto", "carga_id"]
+    conexao.execute(
+        "CREATE TEMP TABLE IF NOT EXISTS votos_entrando AS"
+        " SELECT votacao_id, pessoa_id, valor, presenca, partido_no_voto, uf_no_voto, carga_id FROM votos WITH NO DATA"
+    )
+    conexao.execute("TRUNCATE votos_entrando")
+    gravados = _copiar(
+        conexao, "votos_entrando", colunas,
+        (tuple(voto.get(coluna) for coluna in colunas) for voto in _com_carga(votos, carga_id)),
+    )
+    conexao.execute(
         """
-        INSERT INTO votos (votacao_id, pessoa_id, valor, presenca, partido_no_voto, uf_no_voto,
-                           carga_id)
-        VALUES (%(votacao_id)s, %(pessoa_id)s, %(valor)s, %(presenca)s,
-                %(partido_no_voto)s, %(uf_no_voto)s, %(carga_id)s)
+        INSERT INTO votos (votacao_id, pessoa_id, valor, presenca, partido_no_voto, uf_no_voto, carga_id)
+        SELECT votacao_id, pessoa_id, valor, presenca, partido_no_voto, uf_no_voto, carga_id FROM votos_entrando
         ON CONFLICT (votacao_id, pessoa_id) DO UPDATE SET
             valor = EXCLUDED.valor,
             presenca = EXCLUDED.presenca,
             partido_no_voto = EXCLUDED.partido_no_voto,
             uf_no_voto = EXCLUDED.uf_no_voto,
             carga_id = COALESCE(EXCLUDED.carga_id, votos.carga_id)
-        """,
-        [{**voto, "presenca": voto.get("presenca")} for voto in _com_carga(votos, carga_id)],
+        """
     )
+    conexao.execute("TRUNCATE votos_entrando")
+    return gravados
 
 
 def gravar_similaridades(
@@ -795,6 +806,8 @@ def gravar_sancoes(conexao: psycopg.Connection, sancoes: Sequence[SancaoDeEmpres
 def gravar_contratos(conexao: psycopg.Connection, linhas: Sequence, carga_id: int | None) -> int:
     """Insere linhas de um contrato de saída (`contratos.banco`) na tabela dele, com a carga.
 
+    Por `COPY`: quem chama já apagou o recorte que entra, então não há conflito a tratar.
+
     As colunas são os campos do contrato, e o `test_contratos` confere que todos existem na
     tabela que o EF cria. O comando é composto com `psycopg.sql`: nome de tabela e coluna
     entram como identificador, nunca como texto colado.
@@ -803,13 +816,11 @@ def gravar_contratos(conexao: psycopg.Connection, linhas: Sequence, carga_id: in
         return 0
 
     contrato = type(linhas[0])
-    colunas = [campo.name for campo in fields(contrato)] + ["carga_id"]
-    comando = sql.SQL("INSERT INTO {} ({}) VALUES ({})").format(
-        sql.Identifier(contrato.TABELA),
-        sql.SQL(", ").join(sql.Identifier(c) for c in colunas),
-        sql.SQL(", ").join(sql.Placeholder(c) for c in colunas),
+    campos = [campo.name for campo in fields(contrato)]
+    return _copiar(
+        conexao, contrato.TABELA, [*campos, "carga_id"],
+        ((*(getattr(linha, campo) for campo in campos), carga_id) for linha in linhas),
     )
-    return _executar_em_lotes(conexao, comando, [{**asdict(linha), "carga_id": carga_id} for linha in linhas])
 
 
 def gravar_emendas(
@@ -1346,6 +1357,22 @@ def fechar_execucao(conexao: psycopg.Connection, execucao_id: int, sucesso: bool
 # ═══════════════════════════════════════════════════════════════════
 # PRIVADOS
 # ═══════════════════════════════════════════════════════════════════
+
+
+def _copiar(conexao: psycopg.Connection, tabela: str, colunas: Sequence[str], linhas: Iterable[tuple]) -> int:
+    """Grava as linhas por `COPY`, o caminho mais rápido do Postgres para muitas linhas.
+
+    MEDIDO (2026-10-10): 231 mil despesas de 2025 levavam 12,7 s no `executemany`.
+    """
+    comando = sql.SQL("COPY {} ({}) FROM STDIN").format(
+        sql.Identifier(tabela), sql.SQL(", ").join(sql.Identifier(c) for c in colunas)
+    )
+    total = 0
+    with conexao.cursor() as cursor, cursor.copy(comando) as copia:
+        for linha in linhas:
+            copia.write_row(linha)
+            total += 1
+    return total
 
 
 def _executar_em_lotes(

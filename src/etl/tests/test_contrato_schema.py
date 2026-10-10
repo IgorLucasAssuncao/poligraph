@@ -45,6 +45,10 @@ FONTES_PYTHON = sorted(
 # ATENÇÃO: `FROM data` aparece em `EXTRACT(YEAR FROM data)` — é coluna, não tabela.
 NAO_SAO_TABELAS = {"data"}
 
+PADRAO_TEMPORARIA = re.compile(r"CREATE TEMP TABLE (?:IF NOT EXISTS )?(\w+)", re.IGNORECASE)
+"""DECISÃO (2026-10-10): tabela `TEMP` criada no próprio código não é esquema. Ela vive só na conexão,
+serve de entrada para o `COPY` com `ON CONFLICT` (votos) e some sozinha; o esquema continua do EF."""
+
 PADRAO_TABELA = re.compile(
     # ATENÇÃO: `(?<!DISTINCT )` — em `e.pessoa_id IS DISTINCT FROM a.pessoa_id` o `FROM`
     #    não introduz tabela nenhuma; é operador de comparação.
@@ -89,13 +93,16 @@ def tabelas_usadas_pelo_python() -> dict[str, list[str]]:
 
     for arquivo in FONTES_PYTHON:
         texto = arquivo.read_text(encoding="utf-8")
+        temporarias = set(PADRAO_TEMPORARIA.findall(texto))
 
         for tabela in padrao.findall(texto):
-            anotar(tabela, arquivo)
+            if tabela not in temporarias:
+                anotar(tabela, arquivo)
 
         for lista in lista_apos_truncate.findall(texto):
             for tabela in lista.split(","):
-                anotar(tabela.strip(), arquivo)
+                if tabela.strip() not in temporarias:
+                    anotar(tabela.strip(), arquivo)
 
     return encontradas
 
