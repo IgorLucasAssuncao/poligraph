@@ -74,23 +74,20 @@ export function IconeVoltarComponent({ className }: Props) {
   );
 }
 
-/** ATENÇÃO: Marca do projeto — um grafo de três nós, que é o que o site faz. */
+/**
+ * Marca do projeto: a forma da bandeira (losango, esfera e faixa) no teal do site, o mesmo desenho do
+ * favicon. DECISÃO do autor (2026-10-09): sem o verde-amarelo, pela RNF-16.
+ */
 export function MarcaComponent({ className, tamanho = 28 }: Props & { tamanho?: number }) {
   return (
-    <svg
-      className={className}
-      width={tamanho}
-      height={tamanho}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      aria-hidden="true"
-    >
-      <circle cx="6" cy="17" r="2.6" />
-      <circle cx="18" cy="17" r="2.6" />
-      <circle cx="12" cy="6" r="2.6" />
-      <path d="M8.4 15.4 10.4 8m3.2 0 2 7.4M8.6 17h6.8" />
+    <svg className={className} width={tamanho} height={tamanho} viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="4" fill="var(--realce)" />
+      <path d="M16 4.5 29 16 16 27.5 3 16Z" fill="var(--sobre-realce)" />
+      <clipPath id="marca-esfera">
+        <circle cx="16" cy="16" r="6.6" />
+      </clipPath>
+      <circle cx="16" cy="16" r="6.6" fill="var(--realce)" />
+      <path d="M8.5 17.4Q15 12.2 23.5 15.4" fill="none" stroke="var(--sobre-realce)" strokeWidth="1.4" clipPath="url(#marca-esfera)" />
     </svg>
   );
 }
