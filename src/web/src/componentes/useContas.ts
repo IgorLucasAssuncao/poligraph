@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCarga } from './Atualizando';
 import {
   obterEmendas,
   obterFinanciamento,
@@ -33,48 +33,31 @@ export function useContas(
   idPessoa: number,
   mandato: number | null | 'aguardando' = null,
 ): { contas: Contas | null; erro: boolean; atualizando: boolean; chaveDasContas: string } {
-  const chave = `${idPessoa}-${mandato}`;
-  const [estado, setEstado] = useState<{ chave: string; contas: Contas | null; erro: boolean }>({
-    chave,
-    contas: null,
-    erro: false,
+  const carga = useCarga(['contas', idPessoa, mandato], () => lerContas(idPessoa, mandato === 'aguardando' ? null : mandato), {
+    ativo: mandato !== 'aguardando',
+    manter: 2,
   });
+  return {
+    contas: carga.dados ?? null,
+    erro: carga.erro,
+    atualizando: carga.atualizando,
+    chaveDasContas: carga.chaveDoDado ?? '',
+  };
+}
 
-  useEffect(() => {
-    if (mandato === 'aguardando') return;
-    let vivo = true;
-
-    void Promise.allSettled([
-      obterGastos(idPessoa, mandato),
-      obterEmendas(idPessoa, mandato),
-      obterFinanciamento(idPessoa, mandato),
-    ]).then(
-      ([g, e, f]) => {
-        if (!vivo) return;
-        if (g.status === 'rejected' && e.status === 'rejected' && f.status === 'rejected') {
-          setEstado({ chave, contas: null, erro: true });
-          return;
-        }
-        setEstado({
-          chave,
-          erro: false,
-          contas: {
-            gastos: g.status === 'fulfilled' ? g.value : null,
-            emendas: e.status === 'fulfilled' ? e.value : null,
-            fin: f.status === 'fulfilled' ? f.value : null,
-          },
-        });
-      },
-    );
-
-    return () => {
-      vivo = false;
-    };
-  }, [idPessoa, mandato, chave]);
-
-  if (estado.chave === chave) {
-    return { ...estado, atualizando: false, chaveDasContas: estado.chave };
+/** As três juntas; só falha quando as três falham, que é problema de rede e não falta de dado. */
+async function lerContas(idPessoa: number, mandato: number | null): Promise<Contas> {
+  const [g, e, f] = await Promise.allSettled([
+    obterGastos(idPessoa, mandato),
+    obterEmendas(idPessoa, mandato),
+    obterFinanciamento(idPessoa, mandato),
+  ]);
+  if (g.status === 'rejected' && e.status === 'rejected' && f.status === 'rejected') {
+    throw g.reason;
   }
-  const anteriores = estado.chave.startsWith(`${idPessoa}-`) ? estado.contas : null;
-  return { contas: anteriores, erro: false, atualizando: anteriores !== null, chaveDasContas: estado.chave };
+  return {
+    gastos: g.status === 'fulfilled' ? g.value : null,
+    emendas: e.status === 'fulfilled' ? e.value : null,
+    fin: f.status === 'fulfilled' ? f.value : null,
+  };
 }

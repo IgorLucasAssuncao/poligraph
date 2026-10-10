@@ -1,40 +1,55 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useRef, type ReactNode } from 'react';
+import { clienteDeConsultas } from '../consultas';
 import { useEntradaAoNavegar } from '../transicao';
 
 /**
- * Busca o dado de uma `chave` e segura o anterior na tela enquanto o novo não chega.
+ * Lê um dado da API pela `chave` e segura o anterior na tela enquanto o novo não chega.
  *
  * DECISÃO (2026-10-10): trocar um filtro (período, legislatura, casa) não volta a tela ao
  * esqueleto. O esqueleto aparece só na primeira carga; depois, `atualizando` diz que o que está
- * na tela é o da chave anterior.
+ * na tela é o da chave anterior. O dado fica no `clienteDeConsultas`: voltar à página não pede de
+ * novo.
  *
- * ATENÇÃO: `buscar` não entra nas dependências: a chave é quem diz quando buscar de novo.
+ * ATENÇÃO: a chave precisa ser única no site inteiro; começa pelo nome da leitura
+ * (`['governo', de, ate]`). `ativo: false` espera, sem buscar, até a chave estar completa.
+ *
+ * RISCO: `manter` diz quantos itens do começo da chave precisam ser iguais para o dado anterior
+ * ficar na tela. Na ficha são dois (`['ficha', idPessoa]`): trocar de legislatura mantém, abrir
+ * outro parlamentar não, senão a foto e o nome de um apareceriam no lugar do outro.
  */
 export function useCarga<T>(
-  chave: string,
+  chave: readonly unknown[],
   buscar: () => Promise<T>,
+  opcoes: { ativo?: boolean; manter?: number } = {},
 ): { dados: T | undefined; erro: boolean; atualizando: boolean; chaveDoDado: string | undefined } {
-  const [lido, setLido] = useState<{ chave: string; dados?: T; erro: boolean } | null>(null);
-  const busca = useRef(buscar);
-  busca.current = buscar;
+  const consulta = useQuery(
+    {
+      queryKey: chave,
+      queryFn: buscar,
+      placeholderData: (anterior, consultaAnterior) =>
+        consultaAnterior && mesmoComeco(consultaAnterior.queryKey, chave, opcoes.manter ?? 1) ? anterior : undefined,
+      enabled: opcoes.ativo ?? true,
+    },
+    clienteDeConsultas,
+  );
+  const chaveAtual = JSON.stringify(chave);
+  const ultima = useRef<string | undefined>(undefined);
+  if (consulta.data !== undefined && !consulta.isPlaceholderData) {
+    ultima.current = chaveAtual;
+  }
 
-  useEffect(() => {
-    let atual = true;
-    busca.current()
-      .then((dados) => atual && setLido({ chave, dados, erro: false }))
-      .catch(() => atual && setLido((antes) => ({ chave, dados: antes?.dados, erro: true })));
-    return () => {
-      atual = false;
-    };
-  }, [chave]);
-
-  const temDado = lido !== null && lido.dados !== undefined;
   return {
-    dados: lido?.dados,
-    erro: lido?.chave === chave && lido.erro,
-    atualizando: temDado && lido.chave !== chave,
-    chaveDoDado: temDado ? lido.chave : undefined,
+    dados: consulta.data,
+    erro: consulta.isError && !consulta.isPlaceholderData,
+    atualizando: consulta.isPlaceholderData,
+    chaveDoDado: consulta.data === undefined ? undefined : ultima.current,
   };
+}
+
+/** As duas chaves começam pelos mesmos `n` itens. */
+function mesmoComeco(a: readonly unknown[], b: readonly unknown[], n: number): boolean {
+  return JSON.stringify(a.slice(0, n)) === JSON.stringify(b.slice(0, n));
 }
 
 /**

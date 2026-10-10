@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AtualizandoComponent } from '../componentes/Atualizando';
+import { AtualizandoComponent, useCarga } from '../componentes/Atualizando';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import {
   listarSeguidos,
@@ -105,11 +105,12 @@ export function ParlamentarComponent() {
   const [busca] = useSearchParams();
   const legislaturaPedida = Number(busca.get('legislatura')) || undefined;
   const { usuario } = useSessao();
-  const chave = `${idPessoa}:${legislaturaPedida ?? ''}`;
-  const [lida, setLida] = useState<{ chave: string; ficha: Ficha | null; erro: string | null } | null>(null);
-  const ficha = lida?.chave.startsWith(`${idPessoa}:`) ? lida.ficha : null;
-  const erro = lida?.chave === chave ? lida.erro : null;
-  const atualizando = ficha !== null && lida?.chave !== chave;
+  const lida = useCarga(['ficha', idPessoa, legislaturaPedida ?? null], () => obterFicha(idPessoa, legislaturaPedida), {
+    manter: 2,
+  });
+  const ficha = lida.dados ?? null;
+  const erro = lida.erro ? T.erro : null;
+  const atualizando = lida.atualizando;
   const { contas, erro: erroDasContas, atualizando: contasAtualizando, chaveDasContas } = useContas(
     idPessoa,
     ficha === null ? 'aguardando' : ficha.legislatura,
@@ -120,16 +121,6 @@ export function ParlamentarComponent() {
     corrente !== undefined && (ficha?.mandatos ?? []).some((m) => m.legislatura === corrente);
 
   const [seguindo, setSeguindo] = useState(false);
-
-  useEffect(() => {
-    let atual = true;
-    obterFicha(idPessoa, legislaturaPedida)
-      .then((f) => atual && setLida({ chave, ficha: f, erro: null }))
-      .catch(() => atual && setLida({ chave, ficha: null, erro: T.erro }));
-    return () => {
-      atual = false;
-    };
-  }, [idPessoa, legislaturaPedida, chave]);
 
   useEffect(() => {
     let atual = true;
@@ -234,7 +225,7 @@ export function ParlamentarComponent() {
 
       <AtualizandoComponent
         atualizando={atualizando || contasAtualizando}
-        chave={lida?.ficha ? `${lida.chave}|${contas ? chaveDasContas : ''}|${aba}` : undefined}
+        chave={lida.chaveDoDado ? `${lida.chaveDoDado}|${contas ? chaveDasContas : ''}|${aba}` : undefined}
       >
 
       <nav className="abas" aria-label={T.rotuloDasAbas}>

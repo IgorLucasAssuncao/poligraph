@@ -63,7 +63,7 @@ export function GovernoComponent({ secao = 'orcamento' }: { secao?: 'orcamento' 
     () => (deNaUrl && ateNaUrl ? { primeiroAno: Number(deNaUrl), ultimoAno: Number(ateNaUrl) } : undefined),
     [deNaUrl, ateNaUrl],
   );
-  const { dados, erro, atualizando, chaveDoDado } = useCarga(`${deNaUrl}-${ateNaUrl}`, () => obterGoverno(periodo));
+  const { dados, erro, atualizando, chaveDoDado } = useCarga(['governo', deNaUrl, ateNaUrl], () => obterGoverno(periodo));
   const passos = useMemo(() => passosDoGoverno(), []);
 
 

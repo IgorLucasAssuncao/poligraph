@@ -1,7 +1,9 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import AppComponent from './App.tsx';
+import { clienteDeConsultas } from './consultas';
 import { aplicarTema, temaGuardado } from './tema';
 
 /**
@@ -25,6 +27,8 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AppComponent />
+    <QueryClientProvider client={clienteDeConsultas}>
+      <AppComponent />
+    </QueryClientProvider>
   </StrictMode>,
 );

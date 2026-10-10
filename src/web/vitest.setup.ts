@@ -1,5 +1,9 @@
 import '@testing-library/jest-dom/vitest';
 import { beforeEach, vi } from 'vitest';
+import { clienteDeConsultas } from './src/consultas';
+
+/** Cada teste começa sem nada guardado: o dublê da API de um teste não vaza para o seguinte. */
+beforeEach(() => clienteDeConsultas.clear());
 
 /**
  * O jsdom não implementa `showModal` nem `close`, que são do `<dialog>` nativo — sem

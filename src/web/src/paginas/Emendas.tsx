@@ -85,7 +85,7 @@ export function EmendasComponent() {
   const uf = parametros.get('uf');
   const cidade = parametros.get('cidade');
 
-  const carga = useCarga(`${de}-${ate}`, () => obterMapaDoBrasil(periodo));
+  const carga = useCarga(['mapa-brasil', de, ate], () => obterMapaDoBrasil(periodo));
   const brasil = carga.dados ?? null;
   const erro = carga.erro;
 
@@ -359,7 +359,7 @@ function MapaDaUfComponent({
   /** O painel da cidade escolhida: entre o mapa e a lista, perto de onde se clicou. */
   children?: ReactNode;
 }) {
-  const carga = useCarga(`${uf}:${periodo?.primeiroAno}-${periodo?.ultimoAno}`, () => obterMapaDoEstado(uf, periodo));
+  const carga = useCarga(['mapa-estado', uf, periodo?.primeiroAno, periodo?.ultimoAno], () => obterMapaDoEstado(uf, periodo));
   const estado = carga.dados ?? null;
   const erro = carga.erro;
   const [exibidas, setExibidas] = useState(CIDADES_POR_VEZ);
@@ -492,7 +492,7 @@ function PainelDaCidadeComponent({
   rolarAteAqui: boolean;
   aoFechar: () => void;
 }) {
-  const carga = useCarga(`${codigoIbge}:${periodo?.primeiroAno}-${periodo?.ultimoAno}`, () =>
+  const carga = useCarga(['municipio', codigoIbge, periodo?.primeiroAno, periodo?.ultimoAno], () =>
     obterEmendasDoMunicipio(codigoIbge, periodo),
   );
   const dados = carga.dados ?? null;

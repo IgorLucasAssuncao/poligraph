@@ -33,7 +33,7 @@ export function ComprasDoGovernoComponent() {
     () => (deNaUrl && ateNaUrl ? { primeiroAno: Number(deNaUrl), ultimoAno: Number(ateNaUrl) } : undefined),
     [deNaUrl, ateNaUrl],
   );
-  const { dados, erro, atualizando, chaveDoDado } = useCarga(`${deNaUrl}-${ateNaUrl}`, () => obterComprasDoGoverno(periodo));
+  const { dados, erro, atualizando, chaveDoDado } = useCarga(['compras', deNaUrl, ateNaUrl], () => obterComprasDoGoverno(periodo));
 
 
   return (

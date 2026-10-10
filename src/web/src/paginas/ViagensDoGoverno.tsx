@@ -33,7 +33,7 @@ export function ViagensDoGovernoComponent() {
     () => (deNaUrl && ateNaUrl ? { primeiroAno: Number(deNaUrl), ultimoAno: Number(ateNaUrl) } : undefined),
     [deNaUrl, ateNaUrl],
   );
-  const { dados, erro, atualizando, chaveDoDado } = useCarga(`${deNaUrl}-${ateNaUrl}`, () => obterViagensDoGoverno(periodo));
+  const { dados, erro, atualizando, chaveDoDado } = useCarga(['viagens', deNaUrl, ateNaUrl], () => obterViagensDoGoverno(periodo));
 
 
   return (
