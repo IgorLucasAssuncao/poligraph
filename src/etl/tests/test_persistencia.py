@@ -457,3 +457,35 @@ def test_pessoa_proposicao_e_rede_saem_com_o_arquivo_de_origem(conexao):
     assert conexao.execute("SELECT carga_id FROM pessoas").fetchone()[0] == deputados
     assert conexao.execute("SELECT carga_id FROM proposicoes").fetchone()[0] == proposicoes
     assert conexao.execute("SELECT carga_id FROM redes_sociais").fetchone()[0] == redes
+
+
+def test_palavras_chave_guardam_a_origem_e_voltam_para_a_fila_sem_ela(conexao):
+    """MEDIDO (2026-10-10): 7.447 proposições tinham palavras-chave sem origem; elas voltam para a consulta."""
+    respostas = _carga(conexao, "camara/proposicoes")
+    persistencia.gravar_votacoes(conexao, [{**_votacao("1-1"), "proposicao_id": None}], respostas)
+    persistencia.gravar_proposicoes(conexao, [{
+        "casa": "CAMARA", "id": 2_400_000, "sigla_tipo": "PL", "numero": 1, "ano": 2025,
+        "ementa": "Ementa", "url_inteiro_teor": None,
+    }], respostas)
+    conexao.execute("UPDATE votacoes SET proposicao_id = 2400000")
+    conexao.execute("UPDATE proposicoes SET palavras_chave = 'antiga'")
+
+    assert persistencia.proposicoes_sem_palavras_chave(conexao) == [("CAMARA", 2_400_000)]
+    persistencia.gravar_palavras_chave(conexao, [("CAMARA", 2_400_000, "saúde")], respostas)
+
+    assert conexao.execute("SELECT palavras_chave, palavras_chave_carga_id FROM proposicoes").fetchone() == ("saúde", respostas)
+    assert persistencia.proposicoes_sem_palavras_chave(conexao) == []
+
+
+def test_cpf_e_nome_civil_guardam_a_origem(conexao):
+    """O hash do CPF e o nome civil vêm de outra fonte que o cadastro; cada um guarda a sua."""
+    cadastro = _carga(conexao, "deputados.csv")
+    tse = _carga(conexao, "prestacao_de_contas_eleitorais_candidatos_2022.zip")
+    persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Ana Ribeiro")], cadastro)
+    pessoa_id = conexao.execute("SELECT id FROM pessoas").fetchone()[0]
+
+    persistencia.gravar_cpf_hash(conexao, pessoa_id, "a" * 64, tse)
+    persistencia.gravar_nome_civil(conexao, pessoa_id, "Ana Maria Ribeiro", tse)
+
+    assert conexao.execute(
+        "SELECT carga_id, cpf_carga_id, nome_civil_carga_id FROM pessoas").fetchone() == (cadastro, tse, tse)

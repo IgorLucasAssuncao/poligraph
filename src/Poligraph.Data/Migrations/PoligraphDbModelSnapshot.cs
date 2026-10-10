@@ -478,6 +478,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("character varying(14)")
                         .HasColumnName("cnpj_convenente");
 
+                    b.Property<long?>("ComplementoCargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("complemento_carga_id");
+
                     b.Property<string>("Convenente")
                         .IsRequired()
                         .HasColumnType("text")
@@ -513,6 +517,9 @@ namespace Poligraph.Data.Migrations
 
                     b.HasIndex("CnpjConvenente")
                         .HasDatabaseName("ix_convenios_cnpj_convenente");
+
+                    b.HasIndex("ComplementoCargaId")
+                        .HasDatabaseName("ix_convenios_complemento_carga_id");
 
                     b.ToTable("convenios", null, t =>
                         {
@@ -1568,6 +1575,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("carga_id");
 
+                    b.Property<long?>("CpfCargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("cpf_carga_id");
+
                     b.Property<string>("CpfHash")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
@@ -1585,6 +1596,10 @@ namespace Poligraph.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("nome_civil");
+
+                    b.Property<long?>("NomeCivilCargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("nome_civil_carga_id");
 
                     b.Property<string>("NomeExibicao")
                         .IsRequired()
@@ -1604,6 +1619,12 @@ namespace Poligraph.Data.Migrations
 
                     b.HasIndex("CargaId")
                         .HasDatabaseName("ix_pessoas_carga_id");
+
+                    b.HasIndex("CpfCargaId")
+                        .HasDatabaseName("ix_pessoas_cpf_carga_id");
+
+                    b.HasIndex("NomeCivilCargaId")
+                        .HasDatabaseName("ix_pessoas_nome_civil_carga_id");
 
                     b.ToTable("pessoas", null, t =>
                         {
@@ -1641,6 +1662,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("palavras_chave");
 
+                    b.Property<long?>("PalavrasChaveCargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("palavras_chave_carga_id");
+
                     b.Property<string>("SiglaTipo")
                         .HasColumnType("text")
                         .HasColumnName("sigla_tipo");
@@ -1654,6 +1679,9 @@ namespace Poligraph.Data.Migrations
 
                     b.HasIndex("CargaId")
                         .HasDatabaseName("ix_proposicoes_carga_id");
+
+                    b.HasIndex("PalavrasChaveCargaId")
+                        .HasDatabaseName("ix_proposicoes_palavras_chave_carga_id");
 
                     b.ToTable("proposicoes", null, t =>
                         {
@@ -2234,6 +2262,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("plenario");
 
+                    b.Property<long?>("ProposicaoCargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("proposicao_carga_id");
+
                     b.Property<long?>("ProposicaoId")
                         .HasColumnType("bigint")
                         .HasColumnName("proposicao_id");
@@ -2255,6 +2287,9 @@ namespace Poligraph.Data.Migrations
 
                     b.HasIndex("CargaId")
                         .HasDatabaseName("ix_votacoes_carga_id");
+
+                    b.HasIndex("ProposicaoCargaId")
+                        .HasDatabaseName("ix_votacoes_proposicao_carga_id");
 
                     b.HasIndex("Casa", "ProposicaoId")
                         .HasDatabaseName("ix_votacoes_casa_proposicao_id");
@@ -2470,6 +2505,12 @@ namespace Poligraph.Data.Migrations
                         .HasForeignKey("CargaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_convenios_cargas_carga_id");
+
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("ComplementoCargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_convenios_cargas_complemento_carga_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.DespesaModel", b =>
@@ -2685,6 +2726,18 @@ namespace Poligraph.Data.Migrations
                         .HasForeignKey("CargaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_pessoas_cargas_carga_id");
+
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CpfCargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_pessoas_cargas_cpf_carga_id");
+
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("NomeCivilCargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_pessoas_cargas_nome_civil_carga_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.ProposicaoModel", b =>
@@ -2694,6 +2747,12 @@ namespace Poligraph.Data.Migrations
                         .HasForeignKey("CargaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_proposicoes_cargas_carga_id");
+
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("PalavrasChaveCargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_proposicoes_cargas_palavras_chave_carga_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.ReceitaDeCampanhaModel", b =>
@@ -2828,6 +2887,12 @@ namespace Poligraph.Data.Migrations
                         .HasForeignKey("CargaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_votacoes_cargas_carga_id");
+
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("ProposicaoCargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_votacoes_cargas_proposicao_carga_id");
 
                     b.HasOne("Poligraph.Data.ProposicaoModel", "Proposicao")
                         .WithMany()

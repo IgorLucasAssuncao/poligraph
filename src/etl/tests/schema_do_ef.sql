@@ -1134,3 +1134,39 @@ VALUES ('20261010185733_OrigemDaPopulacao', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+ALTER TABLE votacoes ADD proposicao_carga_id bigint;
+
+ALTER TABLE proposicoes ADD palavras_chave_carga_id bigint;
+
+ALTER TABLE pessoas ADD cpf_carga_id bigint;
+
+ALTER TABLE pessoas ADD nome_civil_carga_id bigint;
+
+ALTER TABLE convenios ADD complemento_carga_id bigint;
+
+CREATE INDEX ix_votacoes_proposicao_carga_id ON votacoes (proposicao_carga_id);
+
+CREATE INDEX ix_proposicoes_palavras_chave_carga_id ON proposicoes (palavras_chave_carga_id);
+
+CREATE INDEX ix_pessoas_cpf_carga_id ON pessoas (cpf_carga_id);
+
+CREATE INDEX ix_pessoas_nome_civil_carga_id ON pessoas (nome_civil_carga_id);
+
+CREATE INDEX ix_convenios_complemento_carga_id ON convenios (complemento_carga_id);
+
+ALTER TABLE convenios ADD CONSTRAINT fk_convenios_cargas_complemento_carga_id FOREIGN KEY (complemento_carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+ALTER TABLE pessoas ADD CONSTRAINT fk_pessoas_cargas_cpf_carga_id FOREIGN KEY (cpf_carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+ALTER TABLE pessoas ADD CONSTRAINT fk_pessoas_cargas_nome_civil_carga_id FOREIGN KEY (nome_civil_carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+ALTER TABLE proposicoes ADD CONSTRAINT fk_proposicoes_cargas_palavras_chave_carga_id FOREIGN KEY (palavras_chave_carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+ALTER TABLE votacoes ADD CONSTRAINT fk_votacoes_cargas_proposicao_carga_id FOREIGN KEY (proposicao_carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261010210639_OrigemPorColuna', '10.0.11');
+
+COMMIT;
+

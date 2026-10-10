@@ -17,7 +17,7 @@ import sys
 import time
 from collections import Counter
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import numpy as np
@@ -445,11 +445,9 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
             camara.ler_csv(arquivo_prop).to_dict("records"),
             {v["id"] for v in votacoes},
         )
-        persistencia.gravar_proposicoes(
-            conexao, lista,
-            _carga_do_arquivo(conexao, "CAMARA", camara.url_do_arquivo("votacoesProposicoes", ano), arquivo_prop),
-        )
-        vinculadas = persistencia.vincular_proposicoes(conexao, vinculo)
+        carga_prop = _carga_do_arquivo(conexao, "CAMARA", camara.url_do_arquivo("votacoesProposicoes", ano), arquivo_prop)
+        persistencia.gravar_proposicoes(conexao, lista, carga_prop)
+        vinculadas = persistencia.vincular_proposicoes(conexao, vinculo, carga_id=carga_prop)
         log.info(
             "  %d proposições, %d votações vinculadas (%d sem ementa)",
             len(lista), vinculadas,
@@ -990,12 +988,13 @@ def _convenios(conexao: psycopg.Connection) -> None:
 
     data = convenentes.ultimo_retrato()
     arquivo = portal.baixar(convenentes.RECURSO.format(data=data), CACHE / f"convenios-{data}.zip")
+    carga = _carga_do_arquivo(conexao, "PORTAL_TRANSPARENCIA", portal.url(convenentes.RECURSO.format(data=data)), arquivo)
     linhas = convenentes.ler(arquivo, numeros)
     log.info("  retrato de %s: %d de %d convênios achados, %d com CNPJ", data, len(linhas), len(numeros),
              sum(1 for linha in linhas if linha["cnpj_convenente"]))
 
     with conexao.transaction():
-        persistencia.gravar_convenentes(conexao, linhas)
+        persistencia.gravar_convenentes(conexao, linhas, carga)
 
 
 def _patrimonio(conexao: psycopg.Connection, anos: list[int]) -> None:
@@ -1656,6 +1655,9 @@ def _cpf_dos_deputados(conexao: psycopg.Connection, todas_as_legislaturas: bool 
 
     ATENÇÃO: O CPF em claro existe apenas **em memória** — o que vai para o banco é o hash.
 
+    RISCO: a origem registrada é um índice das consultas (deputado e endereço), SEM a resposta: ela
+    traz o CPF em claro, que o projeto não grava em lugar nenhum. O hash prova o índice, não a resposta.
+
     ATENÇÃO: Uma pausa curta: são centenas de requisições seguidas contra um serviço
     público, e não há motivo para apertá-lo.
 
@@ -1668,20 +1670,28 @@ def _cpf_dos_deputados(conexao: psycopg.Connection, todas_as_legislaturas: bool 
 
     log.info("Buscando CPF de %d deputados...", len(faltantes))
 
-    achados = 0
+    achados_com_hash: list[tuple[int, str]] = []
+    consultados: list[dict] = []
     for i, (id_camara, pessoa_id) in enumerate(faltantes, 1):
         cpf = camara.cpf_do_deputado(id_camara)
         hash_cpf = normalizacao.hash_de_cpf(cpf)
+        consultados.append({"id_camara": id_camara, "url": f"{camara.API}/deputados/{id_camara}"})
 
         if hash_cpf:
-            persistencia.gravar_cpf_hash(conexao, pessoa_id, hash_cpf)
-            achados += 1
+            achados_com_hash.append((pessoa_id, hash_cpf))
 
         time.sleep(PAUSA_ENTRE_CHAMADAS)
 
         if i % 100 == 0:
             log.info("  %d de %d...", i, len(faltantes))
 
+    carga = _carga_de_resposta(
+        conexao, "CAMARA", f"{camara.API}/deputados", consultados,
+        CACHE / "respostas" / f"cpf-deputados-{datetime.now():%Y%m%d-%H%M%S}.json",
+    )
+    for pessoa_id, hash_cpf in achados_com_hash:
+        persistencia.gravar_cpf_hash(conexao, pessoa_id, hash_cpf, carga)
+    achados = len(achados_com_hash)
     log.info("  %d de %d com CPF", achados, len(faltantes))
 
     if achados < len(faltantes) * 0.8:
@@ -1713,17 +1723,26 @@ def _nome_civil_dos_senadores(conexao: psycopg.Connection) -> int:
 
     log.info("Buscando nome civil de %d senadores...", len(faltantes))
 
-    achados = 0
+    respostas: dict[str, dict | None] = {}
+    nomes: list[tuple[int, str]] = []
     for codigo, pessoa_id in faltantes:
         identificacao = senado.baixar_senador(codigo)
+        respostas[codigo] = identificacao
         completo = (identificacao or {}).get("NomeCompletoParlamentar")
         parlamentar = (identificacao or {}).get("NomeParlamentar")
 
         if completo and completo.strip() != (parlamentar or "").strip():
-            persistencia.gravar_nome_civil(conexao, pessoa_id, completo.strip())
-            achados += 1
+            nomes.append((pessoa_id, completo.strip()))
 
         time.sleep(PAUSA_ENTRE_CHAMADAS)
+
+    carga = _carga_de_resposta(
+        conexao, "SENADO", f"{senado.BASE}/senador/", respostas,
+        CACHE / "respostas" / f"senadores-detalhe-{datetime.now():%Y%m%d-%H%M%S}.json",
+    )
+    for pessoa_id, nome in nomes:
+        persistencia.gravar_nome_civil(conexao, pessoa_id, nome, carga)
+    achados = len(nomes)
 
     log.info("  %d de %d com nome civil", achados, len(faltantes))
     return achados
@@ -1751,7 +1770,7 @@ def _cpf_dos_senadores(conexao: psycopg.Connection, todas_as_legislaturas: bool 
         log.info("Todos os senadores com voto já têm cpf_hash.")
         return
 
-    mapa: dict[tuple[str, str], str | None] = {}
+    mapa: dict[tuple[str, str], tuple[str, int] | None] = {}
     for eleicao in ELEICOES_DO_SENADO:
         arquivo = CACHE / f"prestacao-contas-{eleicao}.zip"
         if not arquivo.exists():
@@ -1762,13 +1781,14 @@ def _cpf_dos_senadores(conexao: psycopg.Connection, todas_as_legislaturas: bool 
             arquivo = tse.baixar(url, arquivo)
 
         do_ano = receitas.cpf_de_senadores(arquivo, eleicao)
+        carga_do_ano = _carga_do_arquivo(conexao, "TSE", tse.url_de_prestacao_de_contas(eleicao), arquivo)
         log.info("  %d candidatos a Senador em %d", len(do_ano), eleicao)
 
         for chave, cpf in do_ano.items():
-            if chave in mapa and mapa[chave] != cpf:
+            if chave in mapa and (mapa[chave] is None or mapa[chave][0] != cpf):
                 mapa[chave] = None
             else:
-                mapa.setdefault(chave, cpf)
+                mapa.setdefault(chave, (cpf, carga_do_ano))
 
     if not mapa:
         log.warning("Nenhum candidato a Senador lido do TSE; cpf_hash não foi tocado.")
@@ -1776,14 +1796,15 @@ def _cpf_dos_senadores(conexao: psycopg.Connection, todas_as_legislaturas: bool 
 
     casados = ambiguos = 0
     for pessoa_id, nome_civil, uf in pendentes:
-        cpf = mapa.get((normalizacao.sem_acento_maiusculo(nome_civil), uf.upper()))
-        if cpf is None:
+        achado = mapa.get((normalizacao.sem_acento_maiusculo(nome_civil), uf.upper()))
+        if achado is None:
             ambiguos += (normalizacao.sem_acento_maiusculo(nome_civil), uf.upper()) in mapa
             continue
 
+        cpf, carga_do_cpf = achado
         hash_cpf = normalizacao.hash_de_cpf(cpf)
         if hash_cpf:
-            persistencia.gravar_cpf_hash(conexao, pessoa_id, hash_cpf)
+            persistencia.gravar_cpf_hash(conexao, pessoa_id, hash_cpf, carga_do_cpf)
             casados += 1
 
     log.info("  %d de %d senadores casados por nome civil + UF", casados, len(pendentes))
@@ -2170,6 +2191,20 @@ def _palavras_chave(conexao: psycopg.Connection, limite: int | None) -> None:
 
     lote: list[tuple[str, int, str]] = []
     falhas = 0
+
+    def gravar(lote: list[tuple[str, int, str]]) -> None:
+        """Cada lote, por casa, vira um arquivo com as respostas, registrado com o hash antes de gravar."""
+        for casa in ("CAMARA", "SENADO"):
+            da_casa = [linha for linha in lote if linha[0] == casa]
+            if not da_casa:
+                continue
+            url = f"{camara.API}/proposicoes" if casa == "CAMARA" else f"{senado.BASE}/materia/"
+            carga = _carga_de_resposta(
+                conexao, casa, url, [{"id": id_, "palavras_chave": p} for _, id_, p in da_casa],
+                CACHE / "respostas" / f"palavras-chave-{casa.lower()}-{datetime.now():%Y%m%d-%H%M%S-%f}.json",
+            )
+            persistencia.gravar_palavras_chave(conexao, da_casa, carga)
+
     for posicao, (casa, id_proposicao) in enumerate(pendentes, 1):
         if casa == "CAMARA":
             palavras = camara.palavras_chave_da_proposicao(id_proposicao)
@@ -2181,12 +2216,12 @@ def _palavras_chave(conexao: psycopg.Connection, limite: int | None) -> None:
         else:
             lote.append((casa, id_proposicao, palavras))
         if len(lote) >= 100:
-            persistencia.gravar_palavras_chave(conexao, lote)
+            gravar(lote)
             lote = []
             log.info("  %d de %d", posicao, len(pendentes))
         time.sleep(0.05)
 
-    persistencia.gravar_palavras_chave(conexao, lote)
+    gravar(lote)
     if falhas:
         log.warning("  %d não responderam; ficam para a próxima execução", falhas)
 

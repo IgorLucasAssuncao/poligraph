@@ -145,9 +145,12 @@ def gravar_proposicoes(
 
 
 def vincular_proposicoes(
-    conexao: psycopg.Connection, vinculo: dict[str, int], casa: str = "CAMARA"
+    conexao: psycopg.Connection, vinculo: dict[str, int], casa: str = "CAMARA", carga_id: int | None = None
 ) -> int:
     """Liga cada votação à sua proposição.
+
+    A origem da ligação vai em `proposicao_carga_id`: na Câmara, o arquivo de proposições votadas
+    (`carga_id`); no Senado, sem `carga_id`, a da própria votação, que traz o código da matéria.
 
     ATENÇÃO: Passo SEPARADO da gravação das votações, e não uma coluna a mais no `INSERT`
     delas. A votação é ingerida antes de a proposição existir — a FK recusaria a linha,
@@ -161,14 +164,15 @@ def vincular_proposicoes(
     return _executar_em_lotes(
         conexao,
         """
-        UPDATE votacoes SET proposicao_id = %(proposicao_id)s
+        UPDATE votacoes SET proposicao_id = %(proposicao_id)s,
+               proposicao_carga_id = COALESCE(%(carga_id)s, carga_id)
          WHERE id = %(votacao_id)s
            AND casa = %(casa)s
            AND EXISTS (SELECT 1 FROM proposicoes p
                         WHERE p.id = %(proposicao_id)s AND p.casa = %(casa)s)
         """,
         [
-            {"votacao_id": v, "proposicao_id": p, "casa": casa}
+            {"votacao_id": v, "proposicao_id": p, "casa": casa, "carga_id": carga_id}
             for v, p in vinculo.items()
         ],
     )
@@ -252,7 +256,8 @@ def pessoas_sem_cpf(conexao: psycopg.Connection, todas_as_legislaturas: bool = F
     com voto na legislatura. Buscar CPF de todas seriam 7.889 requisições para preencher
     7.246 registros que ninguém consulta.
 
-    DECISÃO: E só quem AINDA não tem — reingerir não refaz o trabalho.
+    DECISÃO: E só quem AINDA não tem — reingerir não refaz o trabalho. Entra também quem tem o hash
+    sem a origem registrada (2026-10-10): 2.294 hashes foram gravados antes da coluna da origem.
 
     Com `todas_as_legislaturas`, quem votou em qualquer legislatura da base (Pendência 53): é
     o que liga a campanha e o patrimônio de 2014 para trás. MEDIDO em 2026-10-02: 1.563
@@ -269,7 +274,7 @@ def pessoas_sem_cpf(conexao: psycopg.Connection, todas_as_legislaturas: bool = F
             SELECT DISTINCT f.id_externo, p.id
               FROM pessoas p
               JOIN pessoa_fonte_ids f ON f.pessoa_id = p.id AND f.fonte = 'CAMARA'
-             WHERE p.cpf_hash IS NULL
+             WHERE (p.cpf_hash IS NULL OR p.cpf_carga_id IS NULL)
                AND """ + recorte + """
              ORDER BY p.id
             """
@@ -327,7 +332,7 @@ def senadores_sem_nome_civil(conexao: psycopg.Connection) -> list[tuple[str, int
             SELECT f.id_externo, p.id
               FROM pessoas p
               JOIN pessoa_fonte_ids f ON f.pessoa_id = p.id AND f.fonte = 'SENADO'
-             WHERE p.nome_civil = p.nome_exibicao
+             WHERE (p.nome_civil = p.nome_exibicao OR p.nome_civil_carga_id IS NULL)
                AND """ + na_legislatura_corrente("p.id") + """
              ORDER BY p.id
             """
@@ -335,10 +340,10 @@ def senadores_sem_nome_civil(conexao: psycopg.Connection) -> list[tuple[str, int
     ]
 
 
-def gravar_nome_civil(conexao: psycopg.Connection, pessoa_id: int, nome: str) -> None:
+def gravar_nome_civil(conexao: psycopg.Connection, pessoa_id: int, nome: str, carga_id: int | None = None) -> None:
     """O nome civil é a chave de casamento com o TSE — ver `senadores_sem_nome_civil`."""
     conexao.execute(
-        "UPDATE pessoas SET nome_civil = %s WHERE id = %s", (nome, pessoa_id)
+        "UPDATE pessoas SET nome_civil = %s, nome_civil_carga_id = %s WHERE id = %s", (nome, carga_id, pessoa_id)
     )
 
 
@@ -371,10 +376,10 @@ def senadores_para_casar(conexao: psycopg.Connection, todas_as_legislaturas: boo
     ]
 
 
-def gravar_cpf_hash(conexao: psycopg.Connection, pessoa_id: int, hash_cpf: str) -> None:
-    """RISCO: Grava o HASH, nunca o CPF. RNF-13."""
+def gravar_cpf_hash(conexao: psycopg.Connection, pessoa_id: int, hash_cpf: str, carga_id: int | None = None) -> None:
+    """RISCO: Grava o HASH, nunca o CPF. RNF-13. `carga_id` é a origem do CPF que gerou o hash."""
     conexao.execute(
-        "UPDATE pessoas SET cpf_hash = %s WHERE id = %s", (hash_cpf, pessoa_id)
+        "UPDATE pessoas SET cpf_hash = %s, cpf_carga_id = %s WHERE id = %s", (hash_cpf, carga_id, pessoa_id)
     )
 
 
@@ -551,26 +556,32 @@ def pago_e_recebido_por_emenda(conexao: psycopg.Connection, anos: Iterable[int])
 
 
 def proposicoes_sem_palavras_chave(conexao: psycopg.Connection) -> list[tuple[str, int]]:
-    """`(casa, id)` das proposições ligadas a alguma votação e ainda não consultadas (Pendência 70)."""
+    """`(casa, id)` das proposições ligadas a alguma votação e ainda não consultadas (Pendência 70).
+
+    DECISÃO (2026-10-10): entra também a já consultada sem origem registrada; MEDIDO no mesmo dia,
+    as 7.447 com palavras-chave foram gravadas antes de a coluna guardar a carga.
+    """
     return conexao.execute(
         """
         SELECT p.casa, p.id
           FROM proposicoes p
-         WHERE p.palavras_chave IS NULL
+         WHERE (p.palavras_chave IS NULL OR p.palavras_chave_carga_id IS NULL)
            AND EXISTS (SELECT 1 FROM votacoes v WHERE v.proposicao_id = p.id AND v.casa = p.casa)
          ORDER BY p.ano DESC NULLS LAST, p.id
         """
     ).fetchall()
 
 
-def gravar_palavras_chave(conexao: psycopg.Connection, linhas: Sequence[tuple[str, int, str]]) -> int:
+def gravar_palavras_chave(
+    conexao: psycopg.Connection, linhas: Sequence[tuple[str, int, str]], carga_id: int | None = None
+) -> int:
     """Grava `(casa, id, palavras)`. Vazio quer dizer consultada e sem palavras; nulo nunca entra aqui."""
     if not linhas:
         return 0
     with conexao.cursor() as cursor:
         cursor.executemany(
-            "UPDATE proposicoes SET palavras_chave = %s WHERE casa = %s AND id = %s",
-            [(palavras, casa, id_proposicao) for casa, id_proposicao, palavras in linhas],
+            "UPDATE proposicoes SET palavras_chave = %s, palavras_chave_carga_id = %s WHERE casa = %s AND id = %s",
+            [(palavras, carga_id, casa, id_proposicao) for casa, id_proposicao, palavras in linhas],
         )
     return len(linhas)
 
@@ -1437,17 +1448,21 @@ def numeros_de_convenio(conexao: psycopg.Connection) -> set[str]:
     return {linha[0] for linha in conexao.execute("SELECT numero FROM convenios").fetchall()}
 
 
-def gravar_convenentes(conexao: psycopg.Connection, linhas: Sequence[dict]) -> int:
-    """Completa CNPJ, situação e liberado de cada convênio — pelo número, chave forte."""
+def gravar_convenentes(conexao: psycopg.Connection, linhas: Sequence[dict], carga_id: int | None = None) -> int:
+    """Completa CNPJ, situação e liberado de cada convênio — pelo número, chave forte.
+
+    O complemento vem de outro arquivo que o resto da linha, e guarda a carga dele à parte.
+    """
     return _executar_em_lotes(
         conexao,
         """
         UPDATE convenios
            SET cnpj_convenente = %(cnpj_convenente)s,
                situacao = %(situacao)s,
-               valor_liberado = %(valor_liberado)s
+               valor_liberado = %(valor_liberado)s,
+               complemento_carga_id = %(carga_id)s
          WHERE numero = %(numero)s
         """,
-        linhas,
+        _com_carga(linhas, carga_id),
     )
 

@@ -643,3 +643,28 @@ def test_populacao_aponta_para_o_arquivo_do_ibge(conexao):
     persistencia.gravar_populacao(conexao, [{"codigo_ibge": "4314902", "populacao": 1_332_570, "ano": 2025}], carga)
 
     assert conexao.execute("SELECT populacao_carga_id FROM municipios").fetchone()[0] == carga
+
+
+@pytest.mark.integracao
+def test_complemento_do_convenio_aponta_para_o_arquivo_de_convenios(conexao):
+    """O convênio vem do arquivo de emendas; CNPJ, situação e liberado vêm do arquivo de convênios, com carga própria."""
+    from poligraph_etl import persistencia
+
+    conexao.execute("TRUNCATE emendas_convenios, convenios, cargas" " CASCADE")
+    emendas, convenios = (
+        conexao.execute(
+            "INSERT INTO cargas (fonte, url, sha256, bytes, comando) VALUES ('PORTAL_TRANSPARENCIA', %s, repeat(%s, 64), 1, 'c') RETURNING id",
+            (url, letra),
+        ).fetchone()[0]
+        for url, letra in (("emendas", "1"), ("convenios", "2"))
+    )
+    persistencia.gravar_convenios(
+        conexao, [2025],
+        [{"numero": "900001", "convenente": "PREFEITURA", "objeto": None, "data_publicacao": "2025-03-01", "valor": 1000}],
+        [{"codigo_emenda": "202541840004", "numero_convenio": "900001"}],
+        emendas,
+    )
+    persistencia.gravar_convenentes(
+        conexao, [{"numero": "900001", "cnpj_convenente": "11222333000181", "situacao": "Em execução", "valor_liberado": 500}], convenios)
+
+    assert conexao.execute("SELECT carga_id, complemento_carga_id FROM convenios").fetchone() == (emendas, convenios)

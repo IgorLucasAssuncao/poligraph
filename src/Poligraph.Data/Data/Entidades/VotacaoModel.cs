@@ -25,5 +25,8 @@ public class VotacaoModel
     /// <summary>A carga de onde a linha saiu (Pendência 72). Nula nas linhas gravadas antes dela.</summary>
     public long? CargaId { get; set; }
 
+    /// <summary>O arquivo que ligou a votação à proposição: o de proposições votadas da Câmara ou as matérias do Senado.</summary>
+    public long? ProposicaoCargaId { get; set; }
+
     public List<VotoModel> Votos { get; set; } = [];
 }

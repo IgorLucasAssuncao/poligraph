@@ -40,4 +40,7 @@ public class ConvenioModel
 
     /// <summary>O arquivo de convênios do Portal que gravou a linha por último.</summary>
     public long? CargaId { get; set; }
+
+    /// <summary>O arquivo de convênios do Portal de onde vieram o CNPJ do convenente, a situação e o valor liberado. A linha tem duas fontes: o resto vem do arquivo de emendas (<see cref="CargaId"/>).</summary>
+    public long? ComplementoCargaId { get; set; }
 }

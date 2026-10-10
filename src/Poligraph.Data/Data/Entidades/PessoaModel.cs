@@ -42,4 +42,10 @@ public class PessoaModel
 
     /// <summary>O arquivo que gravou a linha por último. Mais de uma fonte escreve aqui (Câmara, Senado, TSE), e os IDs de cada uma ficam em pessoa_fonte_ids.</summary>
     public long? CargaId { get; set; }
+
+    /// <summary>De onde veio o CPF que gerou o <see cref="CpfHash"/>: a API da Câmara ou o arquivo de candidatos do TSE. RISCO: o arquivo traz o CPF em claro; o painel de auditoria não o lista.</summary>
+    public long? CpfCargaId { get; set; }
+
+    /// <summary>De onde veio o nome civil completo do senador: o arquivo de candidatos do TSE.</summary>
+    public long? NomeCivilCargaId { get; set; }
 }

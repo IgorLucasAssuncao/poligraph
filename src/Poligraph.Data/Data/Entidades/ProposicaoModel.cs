@@ -43,4 +43,7 @@ public class ProposicaoModel
 
     /// <summary>O arquivo da Câmara ou do Senado que gravou a linha por último.</summary>
     public long? CargaId { get; set; }
+
+    /// <summary>As respostas da API da Câmara de onde vieram as palavras-chave.</summary>
+    public long? PalavrasChaveCargaId { get; set; }
 }

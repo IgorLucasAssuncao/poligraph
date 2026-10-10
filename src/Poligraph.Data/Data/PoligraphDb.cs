@@ -165,6 +165,16 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         mb.Entity<CnpjMunicipioModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<ConvenioModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.ComplementoCargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<PessoaModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CpfCargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<PessoaModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.NomeCivilCargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<ProposicaoModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.PalavrasChaveCargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<VotacaoModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.ProposicaoCargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<ConvenioModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<EmendaConvenioModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
