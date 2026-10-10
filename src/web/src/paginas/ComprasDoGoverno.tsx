@@ -143,20 +143,22 @@ function ListaDeValoresComponent({
     <section className="governo-secao">
       <h2>{titulo}</h2>
       {nota && <p className="nota-curta">{nota}</p>}
-      {linhas.map((l) => (
-        <LinhaDeValorComponent
-          key={l.chave}
-          nome={
-            <>
-              {l.nome}
-              {l.contratos !== undefined && <small>{T.contratos(l.contratos.toLocaleString('pt-BR'))}</small>}
-            </>
-          }
-          valor={l.valor}
-          maior={maior}
-          formatar={reaisCompacto}
-        />
-      ))}
+      <ul className="gastos-categorias">
+        {linhas.map((l) => (
+          <LinhaDeValorComponent
+            key={l.chave}
+            nome={
+              <>
+                {l.nome}
+                {l.contratos !== undefined && <small>{T.contratos(l.contratos.toLocaleString('pt-BR'))}</small>}
+              </>
+            }
+            valor={l.valor}
+            maior={maior}
+            formatar={reaisCompacto}
+          />
+        ))}
+      </ul>
     </section>
   );
 }

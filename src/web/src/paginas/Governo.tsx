@@ -463,22 +463,26 @@ function DefesaCivilComponent({ defesaCivil, periodo }: { defesaCivil: DefesaCiv
       {defesaCivil.porAno.length > 1 && (
         <>
           <h3>{D.porAno}</h3>
-          {defesaCivil.porAno.map((a) => (
-            <LinhaDeValorComponent
-              key={a.anoDoExtrato}
-              nome={`${a.anoDoExtrato}${D.meses(a.meses)}`}
-              valor={a.valor}
-              maior={maiorAno}
-              formatar={reaisCompacto}
-            />
-          ))}
+          <ul className="gastos-categorias">
+            {defesaCivil.porAno.map((a) => (
+              <LinhaDeValorComponent
+                key={a.anoDoExtrato}
+                nome={`${a.anoDoExtrato}${D.meses(a.meses)}`}
+                valor={a.valor}
+                maior={maiorAno}
+                formatar={reaisCompacto}
+              />
+            ))}
+          </ul>
         </>
       )}
 
       <h3>{D.porUf}</h3>
-      {defesaCivil.porUf.slice(0, 10).map((u) => (
-        <LinhaDeValorComponent key={u.uf} nome={u.uf} valor={u.valor} maior={maiorUf} formatar={reaisCompacto} />
-      ))}
+      <ul className="gastos-categorias">
+        {defesaCivil.porUf.slice(0, 10).map((u) => (
+          <LinhaDeValorComponent key={u.uf} nome={u.uf} valor={u.valor} maior={maiorUf} formatar={reaisCompacto} />
+        ))}
+      </ul>
     </section>
   );
 }
@@ -501,9 +505,11 @@ function ComprasCentralizadasComponent({
       </p>
       <p className="nota-curta">{C.nota}</p>
       <h3>{C.porOrgao}</h3>
-      {cpcc.porOrgao.slice(0, 10).map((o) => (
-        <LinhaDeValorComponent key={o.orgao} nome={o.orgao} valor={o.valor} maior={maior} formatar={reaisCompacto} />
-      ))}
+      <ul className="gastos-categorias">
+        {cpcc.porOrgao.slice(0, 10).map((o) => (
+          <LinhaDeValorComponent key={o.orgao} nome={o.orgao} valor={o.valor} maior={maior} formatar={reaisCompacto} />
+        ))}
+      </ul>
     </section>
   );
 }

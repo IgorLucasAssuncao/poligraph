@@ -115,9 +115,11 @@ function ViagensPorAnoComponent({ dados }: { dados: ViagensDoGoverno }) {
     <section className="governo-secao">
       <h2>{T.porAno}</h2>
       <p className="nota-curta">{T.porAnoNota}</p>
-      {dados.porAno.map((a) => (
-        <LinhaDeValorComponent key={a.anoDaViagem} nome={String(a.anoDaViagem)} valor={a.total} maior={maior} formatar={reaisCompacto} />
-      ))}
+      <ul className="gastos-categorias">
+        {dados.porAno.map((a) => (
+          <LinhaDeValorComponent key={a.anoDaViagem} nome={String(a.anoDaViagem)} valor={a.total} maior={maior} formatar={reaisCompacto} />
+        ))}
+      </ul>
     </section>
   );
 }
@@ -127,20 +129,22 @@ function ViagensPorOrgaoComponent({ dados }: { dados: ViagensDoGoverno }) {
   return (
     <section className="governo-secao">
       <h2>{T.porOrgao}</h2>
-      {dados.porOrgao.slice(0, ORGAOS_EXIBIDOS).map((o) => (
-        <LinhaDeValorComponent
-          key={o.orgao}
-          nome={
-            <>
-              {o.orgao}
-              <small>{T.linhaDoOrgao(o.viagens.toLocaleString('pt-BR'))}</small>
-            </>
-          }
-          valor={o.total}
-          maior={maior}
-          formatar={reaisCompacto}
-        />
-      ))}
+      <ul className="gastos-categorias">
+        {dados.porOrgao.slice(0, ORGAOS_EXIBIDOS).map((o) => (
+          <LinhaDeValorComponent
+            key={o.orgao}
+            nome={
+              <>
+                {o.orgao}
+                <small>{T.linhaDoOrgao(o.viagens.toLocaleString('pt-BR'))}</small>
+              </>
+            }
+            valor={o.total}
+            maior={maior}
+            formatar={reaisCompacto}
+          />
+        ))}
+      </ul>
     </section>
   );
 }
@@ -158,15 +162,17 @@ function DestinosComponent({ dados }: { dados: ViagensDoGoverno }) {
           destinos.length > 0 && (
             <div key={titulo}>
               <h2>{titulo}</h2>
-              {destinos.map((d) => (
-                <LinhaDeValorComponent
-                  key={`${d.pais}-${d.uf}-${d.cidade}`}
-                  nome={`${d.cidade}, ${d.uf ?? d.pais}`}
-                  valor={d.chegadas}
-                  maior={maior}
-                  formatar={(n) => T.chegadas(n.toLocaleString('pt-BR'))}
-                />
-              ))}
+              <ul className="gastos-categorias">
+                {destinos.map((d) => (
+                  <LinhaDeValorComponent
+                    key={`${d.pais}-${d.uf}-${d.cidade}`}
+                    nome={`${d.cidade}, ${d.uf ?? d.pais}`}
+                    valor={d.chegadas}
+                    maior={maior}
+                    formatar={(n) => T.chegadas(n.toLocaleString('pt-BR'))}
+                  />
+                ))}
+              </ul>
             </div>
           )
         );
