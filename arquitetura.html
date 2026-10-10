@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arquitetura de produção</title>
+<meta name="description" content="Registro Aberto em produção: o cidadão, a Cloudflare, o VPS da Hostinger e, dentro dele, o site, a API e o banco, que não tem endereço na internet.">
+<style>
+  :root {
+    --fundo: #ffffff; --painel: #f3f5f7; --texto: #12161b; --suave: #4d5966;
+    --borda: #dde2e7; --borda-forte: #8a96a3; --realce: #0f766e; --sobre-realce: #ffffff;
+    --externo: #e8ecf0; --cf: #f38020; --vps: #1b2430; --sobre-vps: #e8edf2;
+    --banco: #336791; --perigo: #a8321f;
+    --dado: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --texto-fonte: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --raio: 3px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --fundo: #0b0e11; --painel: #151b22; --texto: #e8edf2; --suave: #a3afbb;
+      --borda: #27313c; --borda-forte: #5c6977; --realce: #5eb7ac; --sobre-realce: #0b0e11;
+      --externo: #1c242d; --vps: #10161d; --sobre-vps: #e8edf2;
+    }
+  }
+  :root[data-theme="dark"] {
+    --fundo: #0b0e11; --painel: #151b22; --texto: #e8edf2; --suave: #a3afbb;
+    --borda: #27313c; --borda-forte: #5c6977; --realce: #5eb7ac; --sobre-realce: #0b0e11;
+    --externo: #1c242d; --vps: #10161d; --sobre-vps: #e8edf2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fundo); color: var(--texto);
+    font-family: var(--texto-fonte); font-size: 16px; line-height: 1.55;
+  }
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 34px; line-height: 1.15; margin: 0 0 8px; }
+  h2 { font-size: 20px; margin: 40px 0 12px; }
+  p { margin: 0 0 12px; max-width: 72ch; }
+  .sub { color: var(--suave); font-size: 15px; margin-bottom: 24px; }
+  figure { margin: 0; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel); padding: 16px; overflow-x: auto; }
+  figcaption { color: var(--suave); font-size: 13px; margin-top: 8px; }
+  svg { display: block; width: 100%; min-width: 760px; height: auto; font-family: var(--texto-fonte); }
+  svg .t { fill: var(--texto); font-size: 15px; font-weight: 700; }
+  svg .s { fill: var(--suave); font-size: 12px; }
+  svg .d { fill: var(--suave); font-size: 11.5px; font-family: var(--dado); }
+  svg .tv { fill: var(--sobre-vps); font-size: 15px; font-weight: 700; }
+  svg .sv { fill: #a9b6c3; font-size: 12px; }
+  svg .dv { fill: #a9b6c3; font-size: 11.5px; font-family: var(--dado); }
+  svg .rotulo-seta { fill: var(--texto); font-size: 11.5px; font-family: var(--dado); }
+  svg .rotulo-seta-vps { fill: #cfd8e1; font-size: 11.5px; font-family: var(--dado); }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--borda); vertical-align: top; }
+  th { font-size: 13px; color: var(--suave); font-weight: 600; }
+  td code, p code { font-family: var(--dado); font-size: 13px; }
+  .sim { color: var(--realce); font-weight: 700; }
+  .nao { color: var(--perigo); font-weight: 700; }
+  .pend { font-family: var(--dado); font-size: 12px; color: var(--suave); white-space: nowrap; }
+  .legenda { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 12px; font-size: 13px; color: var(--suave); }
+  .legenda span { display: inline-flex; align-items: center; gap: 6px; }
+  .amostra { width: 22px; height: 0; border-top: 2px solid var(--realce); }
+  .amostra.tracejada { border-top: 2px dashed var(--borda-forte); }
+  .amostra.bloqueio { border-top: 2px solid var(--perigo); }
+  ol.passos { margin: 0 0 12px; padding-left: 22px; max-width: 72ch; }
+  ol.passos li { margin: 4px 0; }
+  pre { margin: 8px 0 14px; padding: 10px 12px; background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio);
+        font-family: var(--dado); font-size: 13px; overflow-x: auto; }
+  .aviso { border-left: 4px solid var(--realce); background: var(--painel); padding: 10px 14px; margin: 12px 0; max-width: 72ch; }
+  .aviso.risco { border-left-color: var(--perigo); }
+  .aviso p:last-child { margin-bottom: 0; }
+  .rec { font-weight: 700; color: var(--realce); }
+  nav.indice { margin: 0 0 24px; font-size: 14px; }
+  nav.indice a { color: var(--realce); margin-right: 14px; white-space: nowrap; }
+  @media (max-width: 700px) { h1 { font-size: 26px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Arquitetura de produção</h1>
+  <p class="sub">Registro Aberto no ar: do navegador do cidadão até o banco de dados. Desenho macro, a partir do
+    <code>docs/plano/01-arquitetura.md</code> §2.1.</p>
+
+  <nav class="indice" aria-label="Nesta página">
+    <a href="#visita">O caminho de uma visita</a>
+    <a href="#exposto">O que fica exposto</a>
+    <a href="#desvio">Chamar o VPS direto</a>
+    <a href="#pecas">Traefik e Coolify</a>
+    <a href="#cicd">CI e CD</a>
+    <a href="#segredos">Segredos</a>
+    <a href="#falta">O que falta decidir</a>
+  </nav>
+
+  <figure>
+    <svg viewBox="0 0 1080 640" role="img" aria-labelledby="titulo-desenho desc-desenho">
+      <title id="titulo-desenho">Usuário, Cloudflare, VPS da Hostinger e a aplicação</title>
+      <desc id="desc-desenho">O usuário acessa a Cloudflare, que encaminha pela porta 443 ao VPS da Hostinger. No VPS, o firewall deixa passar só 443, 80 e 22; o Traefik encaminha ao site e à API. A API e a carga de dados falam com o banco pela rede interna, e o banco não tem porta na internet.</desc>
+      <defs>
+        <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--realce)"/>
+        </marker>
+        <marker id="seta-cinza" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--borda-forte)"/>
+        </marker>
+        <marker id="x" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="12" markerHeight="12">
+          <path d="M1,1 L9,9 M9,1 L1,9" stroke="var(--perigo)" stroke-width="2"/>
+        </marker>
+      </defs>
+
+      <rect x="20" y="250" width="150" height="110" rx="3" fill="var(--externo)" stroke="var(--borda-forte)"/>
+      <text class="t" x="95" y="290" text-anchor="middle">Cidadão</text>
+      <text class="s" x="95" y="310" text-anchor="middle">navegador</text>
+      <text class="d" x="95" y="332" text-anchor="middle">registroaberto.org</text>
+
+      <rect x="215" y="215" width="170" height="180" rx="3" fill="var(--cf)" fill-opacity=".14" stroke="var(--cf)" stroke-width="1.5"/>
+      <text class="t" x="300" y="248" text-anchor="middle">Cloudflare</text>
+      <text class="s" x="300" y="268" text-anchor="middle">a borda; nada roda aqui</text>
+      <text class="d" x="300" y="296" text-anchor="middle">DNS · TLS</text>
+      <text class="d" x="300" y="314" text-anchor="middle">CDN · WAF</text>
+      <text class="d" x="300" y="332" text-anchor="middle">esconde o IP do VPS</text>
+      <text class="d" x="300" y="360" text-anchor="middle">cache e limite</text>
+      <text class="d" x="300" y="376" text-anchor="middle">de taxa: P86</text>
+
+      <path d="M170 305 H 208" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+      <text class="rotulo-seta" x="189" y="296" text-anchor="middle">https</text>
+
+      <rect x="430" y="40" width="630" height="580" rx="3" fill="var(--vps)"/>
+      <text class="tv" x="452" y="70">VPS Hostinger KVM 2</text>
+      <text class="sv" x="452" y="90">2 vCPU · 8 GB · São Paulo · Coolify orquestra os containers</text>
+
+      <rect x="452" y="230" width="22" height="150" rx="3" fill="var(--perigo)" fill-opacity=".85"/>
+      <text class="dv" x="452" y="398">firewall</text>
+      <text class="dv" x="452" y="414">443 · 80 · 22</text>
+
+      <path d="M385 305 H 445" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+      <text class="rotulo-seta" x="415" y="296" text-anchor="middle">443</text>
+
+      <rect x="500" y="250" width="140" height="110" rx="3" fill="#24303d" stroke="#5c6977"/>
+      <text class="tv" x="570" y="288" text-anchor="middle">Traefik</text>
+      <text class="sv" x="570" y="308" text-anchor="middle">proxy do Coolify</text>
+      <text class="dv" x="570" y="330" text-anchor="middle">roteia por domínio</text>
+      <text class="dv" x="570" y="346" text-anchor="middle">e por caminho</text>
+      <path d="M474 305 H 493" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+
+      <rect x="670" y="115" width="370" height="250" rx="3" fill="none" stroke="#5eb7ac" stroke-dasharray="5 4"/>
+      <text class="dv" x="1026" y="135" text-anchor="end">exposto, só pelo Traefik</text>
+
+      <rect x="690" y="150" width="155" height="95" rx="3" fill="#24303d" stroke="#5eb7ac"/>
+      <text class="tv" x="767" y="183" text-anchor="middle">site</text>
+      <text class="sv" x="767" y="203" text-anchor="middle">nginx + React</text>
+      <text class="dv" x="767" y="225" text-anchor="middle">/</text>
+
+      <rect x="690" y="260" width="155" height="95" rx="3" fill="#24303d" stroke="#5eb7ac"/>
+      <text class="tv" x="767" y="293" text-anchor="middle">API</text>
+      <text class="sv" x="767" y="313" text-anchor="middle">ASP.NET Core</text>
+      <text class="dv" x="767" y="335" text-anchor="middle">/api/*</text>
+
+      <path d="M640 290 C 665 290 665 200 683 200" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+      <path d="M640 312 H 683" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+
+      <rect x="870" y="150" width="150" height="95" rx="3" fill="#24303d" stroke="#5c6977"/>
+      <text class="tv" x="945" y="183" text-anchor="middle">painel Coolify</text>
+      <text class="sv" x="945" y="203" text-anchor="middle">deploy e logs</text>
+      <text class="dv" x="945" y="225" text-anchor="middle">acesso: P22</text>
+
+      <rect x="870" y="260" width="150" height="95" rx="3" fill="#24303d" stroke="#5c6977"/>
+      <text class="tv" x="945" y="293" text-anchor="middle">Grafana</text>
+      <text class="sv" x="945" y="313" text-anchor="middle">métricas</text>
+      <text class="dv" x="945" y="335" text-anchor="middle">acesso: P21</text>
+
+      <rect x="670" y="395" width="370" height="205" rx="3" fill="none" stroke="#a8321f" stroke-dasharray="5 4"/>
+      <text class="dv" x="1026" y="415" text-anchor="end">rede interna: sem porta na internet</text>
+
+      <rect x="690" y="430" width="155" height="150" rx="3" fill="var(--banco)" fill-opacity=".35" stroke="#7aa6d1"/>
+      <text class="tv" x="767" y="470" text-anchor="middle">PostgreSQL</text>
+      <text class="sv" x="767" y="490" text-anchor="middle">postgres:5432</text>
+      <text class="dv" x="767" y="514" text-anchor="middle">só pelo nome do</text>
+      <text class="dv" x="767" y="530" text-anchor="middle">container</text>
+      <text class="dv" x="767" y="560" text-anchor="middle">backup: P20</text>
+
+      <rect x="870" y="430" width="150" height="150" rx="3" fill="#24303d" stroke="#5c6977"/>
+      <text class="tv" x="945" y="470" text-anchor="middle">carga de dados</text>
+      <text class="sv" x="945" y="490" text-anchor="middle">ETL em Python</text>
+      <text class="dv" x="945" y="514" text-anchor="middle">rotina periódica</text>
+      <text class="dv" x="945" y="530" text-anchor="middle">só sai: baixa das</text>
+      <text class="dv" x="945" y="546" text-anchor="middle">fontes oficiais</text>
+
+      <path d="M767 355 V 423" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+      <text class="rotulo-seta-vps" x="775" y="382">SQL</text>
+      <path d="M870 505 H 852" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+
+      <rect x="215" y="480" width="170" height="110" rx="3" fill="var(--externo)" stroke="var(--borda-forte)"/>
+      <text class="t" x="300" y="515" text-anchor="middle">Fontes oficiais</text>
+      <text class="s" x="300" y="537" text-anchor="middle">Câmara · Senado · TSE</text>
+      <text class="s" x="300" y="555" text-anchor="middle">Portal da Transparência</text>
+      <text class="s" x="300" y="573" text-anchor="middle">Receita · IBGE</text>
+      <path d="M945 580 V 612 H 300 V 597" stroke="var(--borda-forte)" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#seta-cinza)"/>
+      <text class="rotulo-seta-vps" x="620" y="606" text-anchor="middle">a carga busca os arquivos (saída)</text>
+
+      <path d="M385 375 C 520 470 600 505 683 505" stroke="var(--perigo)" stroke-width="2" stroke-dasharray="4 4" fill="none"/>
+      <circle cx="612" cy="490" r="11" fill="var(--vps)" stroke="var(--perigo)" stroke-width="2"/>
+      <path d="M606 484 L618 496 M618 484 L606 496" stroke="var(--perigo)" stroke-width="2"/>
+      <text class="rotulo-seta-vps" x="560" y="455" text-anchor="middle">sem rota da internet</text>
+      <text class="rotulo-seta-vps" x="560" y="471" text-anchor="middle">para o banco</text>
+    </svg>
+    <div class="legenda">
+      <span><i class="amostra"></i>caminho de uma visita</span>
+      <span><i class="amostra tracejada"></i>a carga de dados buscando os arquivos</span>
+      <span><i class="amostra bloqueio"></i>caminho que não existe</span>
+      <span>P20, P21, P22, P86: pendências abertas em <code>docs/PENDENCIAS.md</code></span>
+    </div>
+    <figcaption>O banco não é protegido por uma regra de firewall: ele simplesmente não tem endereço na internet. A API e a carga de dados o encontram pelo nome do container, dentro da rede do Docker.</figcaption>
+  </figure>
+
+  <h2 id="visita">O caminho de uma visita</h2>
+  <table>
+    <thead><tr><th>#</th><th>Onde</th><th>O que acontece</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Cidadão</td><td>Digita <code>registroaberto.org</code>. O DNS responde com um IP da Cloudflare, não o do VPS.</td></tr>
+      <tr><td>2</td><td>Cloudflare</td><td>Cifra a conexão, entrega do cache o que já tem e barra ataque e robô.</td></tr>
+      <tr><td>3</td><td>Firewall do VPS</td><td>Só a porta 443 recebe visitas. A 80 só redireciona para a 443.</td></tr>
+      <tr><td>4</td><td>Traefik</td><td>Manda <code>/api/*</code> para a API e o resto para o site.</td></tr>
+      <tr><td>5</td><td>API</td><td>Consulta o banco pela rede interna e devolve os dados.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="exposto">O que fica exposto</h2>
+  <table>
+    <thead><tr><th>Peça</th><th>Na internet?</th><th>Como</th><th></th></tr></thead>
+    <tbody>
+      <tr><td>Site</td><td class="sim">Sim</td><td>Pela Cloudflare, porta 443</td><td></td></tr>
+      <tr><td>API</td><td class="sim">Sim</td><td>Pela Cloudflare, porta 443, caminho <code>/api</code></td><td></td></tr>
+      <tr><td>PostgreSQL</td><td class="nao">Nunca</td><td>Porta 5432 só dentro da rede do Docker</td><td></td></tr>
+      <tr><td>Carga de dados</td><td class="nao">Não</td><td>Não recebe conexão; só sai para baixar das fontes</td><td></td></tr>
+      <tr><td>Painel do Coolify</td><td>A decidir</td><td>Público com 2FA, lista de IPs ou VPN</td><td class="pend">P22</td></tr>
+      <tr><td>Grafana</td><td>A decidir</td><td>Público ou por túnel</td><td class="pend">P21</td></tr>
+      <tr><td>SSH (porta 22)</td><td>Só para o autor</td><td>Direto, sem Cloudflare: chave, sem senha, sem root, de preferência só do seu IP</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="desvio">Chamar o VPS direto, sem passar pela Cloudflare</h2>
+  <div class="aviso risco">
+    <p>A Cloudflare esconde o endereço do VPS, mas esconder não é bloquear. Com o firewall aceitando a porta 443 de
+      qualquer lugar, quem descobrir o endereço chama o VPS direto e pula a Cloudflare: sem filtro de ataque, sem cache e
+      sem limite de taxa. O endereço vaza com facilidade: históricos de DNS, e-mail enviado pelo próprio servidor,
+      varreduras que testam os endereços da Hostinger.</p>
+    <p>O banco continua inalcançável em qualquer caso. O risco é para o site e a API.</p>
+  </div>
+  <table>
+    <thead><tr><th>Forma</th><th>Como funciona</th><th>Prós e contras</th></tr></thead>
+    <tbody>
+      <tr><td><span class="rec">1. Túnel da Cloudflare</span><br><span class="pend">recomendada</span></td>
+        <td>Um programa da Cloudflare dentro do VPS abre uma conexão de saída até ela, e as visitas chegam por esse túnel.
+          As portas 80 e 443 ficam fechadas para a internet inteira.</td>
+        <td>Não existe caminho direto para ninguém, mesmo sabendo o endereço. Gratuito, com suporte pronto no Coolify.
+          Contra: a rota e o certificado passam a depender da Cloudflare.</td></tr>
+      <tr><td>2. Firewall só com os endereços da Cloudflare</td>
+        <td>O firewall da Hostinger aceita a 443 apenas das faixas de IP que a Cloudflare publica.</td>
+        <td>Simples e comum. Contra: a lista muda de vez em quando, e qualquer conta da Cloudflare sai pelos mesmos endereços.</td></tr>
+      <tr><td>3. Certificado de cliente da Cloudflare</td>
+        <td>A Cloudflare apresenta um certificado próprio em cada conexão (Authenticated Origin Pulls), e o Traefik recusa quem não o tiver.</td>
+        <td>Fecha a brecha da forma 2; as duas juntas são a alternativa ao túnel. Contra: mais uma configuração no Traefik.</td></tr>
+    </tbody>
+  </table>
+  <p>Em qualquer forma: o Traefik só responde aos domínios do site. Quem chamar pelo número de IP não é encaminhado a lugar nenhum.
+    E o SSH (porta 22) fica restrito ao IP do autor, com chave e sem senha.</p>
+
+  <h2 id="pecas">Traefik e Coolify</h2>
+  <p><strong>Traefik</strong> é a porta de entrada dentro do VPS: todo acesso passa por ele, e ele decide para onde mandar.
+    <code>/api/*</code> vai para a API, o resto para o site, o endereço do painel para o Coolify. Ele também guarda o
+    certificado do HTTPS do lado do servidor e troca a versão no deploy sem derrubar o site.</p>
+  <p><strong>Coolify</strong> é o painel que sobe e derruba os containers no VPS: liga o repositório, cria a API, o site e o
+    banco, guarda os segredos e publica cada versão nova. O Traefik vem com ele: não se instala nem se configura à parte, as
+    rotas se definem no painel. (O Coolify também aceita o Caddy no lugar do Traefik; o padrão, e o plano, é o Traefik.)</p>
+  <p>Instalação, uma vez, no VPS recém-criado com Ubuntu LTS:</p>
+  <ol class="passos">
+    <li>Entrar no VPS por SSH com o usuário administrador.</li>
+    <li>Rodar o instalador oficial, que instala o Docker se faltar e sobe os containers do Coolify (painel, banco e cache dele, e o Traefik):
+      <pre>curl -fsSL https://cdn.coollabs.io/coolify/install.sh | sudo bash</pre></li>
+    <li>Abrir <code>http://IP-do-VPS:8000</code> e criar a conta de administrador <strong>logo em seguida</strong>: até ela existir, quem abrir o painel primeiro a cria.</li>
+  </ol>
+  <p>A Hostinger oferece, ao criar o VPS, modelos de sistema com aplicativos já instalados; vale conferir se o Coolify está
+    entre eles. Depois da instalação, o painel não deve ficar aberto à internet (P22).</p>
+
+  <h2 id="cicd">CI e CD</h2>
+  <p><strong>CI</strong> (integração contínua) é conferir: a cada <code>git push</code>, o GitHub Actions baixa o código e
+    verifica se ele presta. Os roteiros já existem em <code>.github/workflows/</code>:</p>
+  <table>
+    <thead><tr><th>Roteiro</th><th>O que confere</th></tr></thead>
+    <tbody>
+      <tr><td>Back (.NET)</td><td>Compila a API, roda os testes de unidade (entre eles o da polaridade dos votos), gera o script da migration e monta as imagens da API e da migration</td></tr>
+      <tr><td>ETL (Python)</td><td>Roda os testes que não precisam de banco e monta a imagem da ETL</td></tr>
+      <tr><td>Front (React)</td><td>Verifica os tipos, roda os testes e monta o site</td></tr>
+    </tbody>
+  </table>
+  <p>Os testes de integração, que sobem um Postgres de verdade, rodam na máquina do autor, não no CI.</p>
+  <p><strong>CD</strong> (entrega contínua) é publicar: o Coolify recebe a versão nova, sobe ao lado da antiga, confere que
+    ela responde, faz o Traefik mandar as visitas para a nova e desliga a antiga. O site não sai do ar.</p>
+  <div class="aviso risco">
+    <p><strong>Do jeito padrão, os dois começam juntos no mesmo push, e o Coolify publica sem esperar os testes (P23).</strong>
+      Neste projeto isso pesa: um erro na polaridade dos votos não aparece na tela, aparece como uma afinidade plausível e errada.</p>
+  </div>
+  <p>O fluxo recomendado, numa fila só:</p>
+  <ol class="passos">
+    <li>O push dispara o CI: testes e montagem das imagens.</li>
+    <li>Só se tudo passou, o CI publica as imagens no registro do GitHub (<code>ghcr.io</code>), com a etiqueta do commit.</li>
+    <li>No fim, o CI chama o Coolify para publicar aquela etiqueta. A publicação automática do Coolify fica desligada.</li>
+    <li>No VPS, a migration do banco roda antes de a API nova subir. A API nunca migra o banco sozinha.</li>
+  </ol>
+  <table>
+    <thead><tr><th></th><th>Coolify monta a imagem</th><th>CI publica no registro <span class="pend">recomendado</span></th></tr></thead>
+    <tbody>
+      <tr><td>Como</td><td>O Coolify baixa o código e roda o Dockerfile no VPS</td><td>O CI monta, publica em <code>ghcr.io</code>, e o Coolify só baixa a imagem pronta</td></tr>
+      <tr><td>A favor</td><td>Nada a configurar além do repositório</td><td>Vai ao ar exatamente a imagem que passou nos testes. O VPS não gasta memória montando. Voltar uma versão é trocar a etiqueta</td></tr>
+      <tr><td>Contra</td><td>A imagem testada e a publicada são montadas em lugares diferentes; a montagem pesa no VPS com o site no ar</td><td>Um passo a mais no CI e um acesso de leitura ao registro no Coolify</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="segredos">Segredos</h2>
+  <p>Nenhum segredo fica no repositório nem dentro da imagem. Os que o servidor usa ficam no Coolify, cifrados no banco dele,
+    como variáveis de ambiente de cada aplicação. Os que o CI usa ficam nos segredos do GitHub.</p>
+  <table>
+    <thead><tr><th>Onde fica</th><th>Variável</th><th>Quem usa</th><th>Para quê</th></tr></thead>
+    <tbody>
+      <tr><td>Coolify</td><td><code>Google__ClientId</code></td><td>API</td><td>Login com o Google. No ambiente, os dois-pontos da configuração viram dois sublinhados</td></tr>
+      <tr><td>Coolify</td><td><code>DataProtection__Pasta</code></td><td>API</td><td>Pasta das chaves que cifram o cookie de sessão, num <strong>volume persistente</strong>: sem ele, cada deploy troca as chaves e desloga todo mundo. A API não sobe em produção sem essa configuração</td></tr>
+      <tr><td>Coolify</td><td><code>ConnectionStrings__poligraph</code></td><td>API, ETL e migration</td><td>Conexão com o banco, pelo nome interno do container. O Coolify cria o Postgres e gera a senha</td></tr>
+      <tr><td>Coolify</td><td><code>POLIGRAPH_CHAVE_CPF</code></td><td>ETL</td><td>Chave do HMAC do CPF. A mesma do banco local, se o banco for copiado (P87); trocá-la exige o <code>rechavear-cpf</code></td></tr>
+      <tr><td>GitHub</td><td><code>SONAR_TOKEN</code></td><td>CI</td><td>Análise de qualidade do código</td></tr>
+      <tr><td>GitHub</td><td>token de deploy do Coolify</td><td>CI</td><td>Mandar o Coolify publicar só depois dos testes (P23)</td></tr>
+      <tr><td>GitHub e Coolify</td><td>acesso ao <code>ghcr.io</code></td><td>CI publica, Coolify baixa</td><td>As imagens do site, da API, da migration e da ETL</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="falta">O que falta decidir para subir</h2>
+  <table>
+    <thead><tr><th></th><th>Pendência</th></tr></thead>
+    <tbody>
+      <tr><td class="pend">P3</td><td>Domínio. Sem ele, o login do Google não funciona em produção.</td></tr>
+      <tr><td class="pend">P20</td><td>Para onde vai o backup do banco, criptografado.</td></tr>
+      <tr><td class="pend">P21 · P22</td><td>Como se chega ao Grafana e ao painel do Coolify.</td></tr>
+      <tr><td class="pend">P23</td><td>Os testes como portão do deploy: o CI publica as imagens no <code>ghcr.io</code> e só então chama o Coolify.</td></tr>
+      <tr><td class="pend">P86</td><td>Cache da API e limite de taxa na Cloudflare.</td></tr>
+      <tr><td class="pend">P87</td><td>Primeira carga de produção, pela cópia do banco local.</td></tr>
+      <tr><td class="pend">P88</td><td>Fechar o acesso direto ao VPS: túnel da Cloudflare (recomendado) ou firewall com os endereços da Cloudflare e o certificado de cliente.</td></tr>
+    </tbody>
+  </table>
+</main>
+</body>
+</html>
