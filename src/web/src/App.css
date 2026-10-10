@@ -683,32 +683,33 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .avaliacao-pronta p { margin: 0; }
 
 /* ═══ LOGIN ════════════════════════════════════════════════════ */
+/* DECISÃO (2026-10-10, pedido do autor): uma coluna só, no centro da tela e sem rolagem. A marca
+      fica acima do título, o tema vai para o canto, e o respiro cabe numa tela de 768 px. */
 .tela-login {
-  min-height: 100vh;
-  display: grid; grid-template-columns: 1fr 1fr;
-  max-width: 68rem; margin: 0 auto; gap: 3rem;
-  align-items: center; padding: 2rem 1.5rem;
+  position: relative; box-sizing: border-box; min-height: 100dvh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 1.25rem 1rem; text-align: center;
 }
 /* DECISÃO: A coluna da marca é decorativa: some primeiro quando falta espaço. */
-.login-marca { display: grid; place-items: center; color: var(--realce); opacity: .9; }
-.login-conteudo { max-width: 30rem; }
+.login-marca { display: grid; place-items: center; margin-bottom: .9rem; }
+.login-conteudo { max-width: 32rem; width: 100%; }
 .login-titulo {
   margin: 0 0 .75rem; font-size: var(--t-6); font-weight: 700;
   letter-spacing: -.03em; line-height: 1.06;
 }
-.login-chamada { color: var(--suave); margin: 0 0 1.75rem; font-size: var(--t-3); line-height: 1.5; }
+.login-chamada { color: var(--suave); margin: 0 0 1.1rem; font-size: var(--t-3); line-height: 1.5; }
 .login-chamada strong { color: var(--texto); font-weight: 600; }
 
 /* DECISÃO: O interruptor de tema também aqui: quem chega no escuro e prefere claro não
       deveria ter de entrar primeiro para poder trocar. */
-.login-topo { display: flex; justify-content: flex-end; margin-bottom: 1.25rem; }
+.login-topo { position: absolute; top: 1rem; right: 1rem; }
 
 /* DECISÃO: A evidência que sustenta a chamada. "Compare com o voto registrado" é promessa;
       643 deputados e 463.994 votos é o que a torna verificável — e é o argumento mais
       forte que esta tela tem para justificar pedir uma conta. */
 .login-base {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: 1px; margin: 1.75rem 0 0;
+  gap: 1px; margin: 1.1rem 0 0; text-align: left;
   background: var(--borda); border: 1px solid var(--borda); border-radius: var(--raio);
   overflow: hidden;
 }
@@ -723,15 +724,15 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   display: block; font-size: var(--t-1); line-height: 1.4; color: var(--suave);
   font-variant-numeric: tabular-nums;
 }
-.o-que-tem { list-style: none; padding: 0; margin: 1.5rem 0; text-align: left; }
-.o-que-tem li { padding: .45rem 0 .45rem 1.5rem; position: relative; font-size: var(--t-2); color: var(--suave); }
+.o-que-tem { list-style: none; padding: 0; margin: 1rem 0; text-align: left; }
+.o-que-tem li { padding: .2rem 0 .2rem 1.5rem; position: relative; font-size: var(--t-2); color: var(--suave); }
 .o-que-tem li::before { content: '—'; position: absolute; left: 0; color: var(--realce); }
 /* ATENÇÃO: Coluna alinhada à esquerda. Era `display: flex` sem eixo declarado: o botão que o
    SDK do Google injeta não tem largura própria, e numa linha flex ele encolhia e
    ficava fora de prumo com o texto acima. A mensagem de erro também ia parar ao lado
    dele, em vez de abaixo. */
 .acao-login {
-  display: flex; flex-direction: column; align-items: flex-start;
+  display: flex; flex-direction: column; align-items: center;
   gap: .6rem; min-height: 44px;
 }
 .aviso-config {
@@ -742,11 +743,11 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .login-opcional { margin: .9rem 0 0; color: var(--suave); font-size: var(--t-2); }
 .login-opcional a { color: var(--realce); }
 .aviso-privacidade {
-  font-size: var(--t-1); color: var(--suave); text-align: left;
-  border-top: 1px solid var(--borda); padding-top: 1rem; line-height: 1.5;
+  font-size: var(--t-1); color: var(--suave);
+  border-top: 1px solid var(--borda); padding-top: .75rem; line-height: 1.5;
 }
 .aviso-privacidade a { color: var(--realce); }
-.aviso-academico { font-size: var(--t-1); color: var(--suave); margin-top: 1rem; }
+.aviso-academico { font-size: var(--t-1); color: var(--suave); margin: .6rem 0 0; }
 
 /* ═══ CONTA ════════════════════════════════════════════════════ */
 .conta-identidade { display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1rem; border-bottom: 1px solid var(--borda); }
@@ -1329,8 +1330,6 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 
 @media (max-width: 860px) {
-  .tela-login { grid-template-columns: 1fr; gap: 1.5rem; }
-  .login-marca { display: none; }
   .login-titulo { font-size: var(--t-6); }
 }
 

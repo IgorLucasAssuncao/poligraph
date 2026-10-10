@@ -54,7 +54,7 @@ export function LoginComponent() {
   return (
     <div className="tela-login">
       <div className="login-marca">
-        <MarcaComponent tamanho={88} />
+        <MarcaComponent tamanho={52} />
       </div>
 
       <div className="login-conteudo">
