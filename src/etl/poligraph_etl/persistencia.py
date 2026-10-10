@@ -364,7 +364,7 @@ def senadores_para_casar(conexao: psycopg.Connection, todas_as_legislaturas: boo
                      ORDER BY t.data DESC LIMIT 1
                    )
               FROM pessoas p
-             WHERE p.cpf_hash IS NULL
+             WHERE (p.cpf_hash IS NULL OR p.cpf_carga_id IS NULL)
                AND """ + (
                    "EXISTS (SELECT 1 FROM votos v JOIN votacoes t ON t.id = v.votacao_id "
                    "WHERE v.pessoa_id = p.id AND t.casa = 'SENADO')"
