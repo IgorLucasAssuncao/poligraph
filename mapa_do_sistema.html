@@ -325,7 +325,7 @@ const COMANDOS = [
   { id: 'compras', faz: 'Contratos do Executivo federal publicados no Diário Oficial, por órgão, modalidade e empresa. Valor inicial e final com erro de digitação: entra o menor quando divergem mais de 100 vezes.', ritmo: 'mensal', depende: [] },
   { id: 'compras-centralizadas', faz: 'Cartão de compras centralizadas (CPCC), por órgão e mês. O CPF do favorecido, sem máscara na fonte, não é lido.', ritmo: 'mensal', depende: [] },
   { id: 'sancoes', faz: 'Empresas sancionadas no CEIS e no CNEP, pelo CNPJ: retrato do dia, a tabela troca inteira. Pessoa física (CPF sem máscara na fonte) é descartada antes de gravar.', ritmo: 'mensal', depende: [] },
-  { id: 'viagens', faz: 'Viagens a serviço do Executivo federal: diárias, passagens, seguro e restituição por órgão, e os destinos.', ritmo: 'mensal', depende: [] },
+  { id: 'viagens', faz: 'Viagens a serviço do Executivo federal: diárias, passagens, seguro e restituição por órgão, e os destinos por órgão. O identificador do processo liga pagamento, viagem e trecho: o pagamento publicado com órgão "Sigiloso" vai para o órgão da viagem.', ritmo: 'mensal', depende: [] },
   { id: 'conferir', faz: 'Regras de plausibilidade e o fechamento dos totais. ERRO derruba a rotina.', ritmo: 'semanal', depende: [] },
 ];
 
@@ -488,13 +488,14 @@ const ENTRADAS = [
   ] },
   { de: 'portal', para: 'viagens', modelos: [
     { arquivo: '…/download-de-dados/viagens/2026 (2026_Pagamento.csv)', real: true, linha: {
-      'Nome do órgão superior': 'Ministério da Educação', 'Tipo de pagamento': 'DIÁRIAS', 'Valor': '107,83' },
+      'Identificador do processo de viagem': '0000000000021116870', 'Nome do órgão superior': 'Ministério da Educação', 'Tipo de pagamento': 'DIÁRIAS', 'Valor': '107,83' },
       nota: 'Parte das linhas traz o tipo com a letra acentuada faltando (DIRIAS, RESTITUIO): o tipo é lido pelo começo da palavra.' },
     { arquivo: '…/viagens/2026 (2026_Viagem.csv)', real: true, linha: {
-      'Nome do órgão superior': 'Ministério da Educação', 'Situação': 'Realizada', 'Viagem Urgente': 'SIM' },
+      'Identificador do processo de viagem': '0000000000021116870', 'Nome do órgão superior': 'Ministério da Educação', 'Situação': 'Realizada', 'Viagem Urgente': 'SIM' },
       nota: 'Nome, CPF mascarado, cargo e motivo do viajante estão no arquivo e não são lidos.' },
     { arquivo: '…/viagens/2026 (2026_Trecho.csv)', real: true, linha: {
-      'Destino - País': 'Brasil', 'Destino - UF': 'Rio Grande do Sul', 'Destino - Cidade': 'Venâncio Aires', 'Número Diárias': '0,00' } },
+      'Identificador do processo de viagem ': '0000000000021116870', 'Destino - País': 'Brasil', 'Destino - UF': 'Rio Grande do Sul', 'Destino - Cidade': 'Venâncio Aires', 'Número Diárias': '0,00' },
+      nota: 'Neste arquivo o nome da coluna do identificador termina com um espaço.' },
   ] },
   { de: 'portal', para: 'governo', modelos: [
     { arquivo: '…/download-de-dados/orcamento-despesa/2025', real: true, linha: {
@@ -553,10 +554,10 @@ const SAIDAS = [
   { de: 'defesa-civil', para: 'gastos_da_defesa_civil', linha: { ano: 2024, mes: 5, executor: 'GOVERNO DO ESTADO', uf: 'RS', esfera: 'ESTADUAL', cnpj_convenente: '87934675000196', valor: 9491745.32, transacoes: 6 }, nota: 'Uma linha por mês, executor e convenente. Executor "Sem informação / -1" (2019) entra sem UF, com esfera NAO_INFORMADA.' },
   { de: 'compras', para: 'contratacoes_do_orgao', linha: { ano: 2025, mes: 1, orgao_superior: 'Ministério da Defesa', modalidade: 'Sem Informação', contratos: 845, sigilosos: 0, valor: 818266238.96, divergentes: 8, valor_descartado: 2490157499599.00 }, nota: 'R$ 2,49 tri descartados em 8 contratos: o maior dos dois valores, quando divergem mais de 100 vezes.' },
   { de: 'compras', para: 'contratados_do_governo', linha: { ano: 2024, cnpj: '61189445000156', nome: 'FUNDACAO BUTANTAN', contratos: 8, valor: 9089962523.00 }, nota: 'Só CNPJ. Contratado sigiloso conta na tabela por órgão, não aqui.' },
-  { de: 'compras-centralizadas', para: 'compras_centralizadas_no_cartao', linha: { ano: 2023, mes: 5, orgao_superior: 'Ministério da Educação', valor: 604.30, transacoes: 2 }, nota: 'MEDIDO em 2026-10-10: R$ 96,3 mi em 2019 e menos de R$ 25 mil por ano depois. Meses com 403 ou 405 ficaram fora e são recarregados quando o Portal libera.' },
+  { de: 'compras-centralizadas', para: 'compras_centralizadas_no_cartao', linha: { ano: 2023, mes: 5, orgao_superior: 'Ministério da Educação', valor: 604.30, transacoes: 2 }, nota: 'MEDIDO em 2026-10-10, depois da recarga com novas tentativas: R$ 96,3 mi em 2019 e de R$ 6 mil a R$ 21 mil por ano depois. Ficaram 54 meses: 9 em 2019, 10 em 2020, 4 em 2021 e 2022, 8 em 2023 e 2024, 5 em 2025, 6 em 2026. A aba Cartões nomeia os meses que o Portal não publicou.' },
   { de: 'sancoes', para: 'sancoes_de_empresas', linha: { cadastro: 'CNEP', codigo_da_sancao: '133076', cnpj: '14286903000195', categoria: 'Multa', inicio: '2022-03-09', fim: null, orgao_sancionador: 'Petróleo Brasileiro S.A.', esfera: 'FEDERAL', valor_da_multa: 137260.07 }, nota: 'MEDIDO em 2026-10-09: das empresas sancionadas, 1.832 receberam emenda, 186 foram pagas pela cota e 2.625 têm contrato federal. A página da entidade mostra a sanção.' },
-  { de: 'viagens', para: 'viagens_do_orgao', linha: { ano: 2025, orgao_superior: 'Ministério da Justiça e Segurança Pública', viagens: 174001, urgentes: 40924, nao_realizadas: 1033, diarias: 375950589.05, passagens: 29404682.88, restituicao: 6149.15, seguro: 59246.05 }, nota: 'Hospedagem não tem valor próprio: a diária a paga. O órgão "Sigiloso" entra como está.' },
-  { de: 'viagens', para: 'destinos_de_viagem', linha: { ano: 2025, pais: 'Brasil', uf: 'Distrito Federal', cidade: 'Brasília', chegadas: 183527, numero_de_diarias: 569853.90 }, nota: 'Conta chegadas (trechos), não pessoas.' },
+  { de: 'viagens', para: 'viagens_do_orgao', linha: { ano: 2025, orgao_superior: 'Ministério da Justiça e Segurança Pública', viagens: 174001, urgentes: 40924, nao_realizadas: 1033, diarias: 375950589.05, passagens: 29404682.88, restituicao: 6149.15, seguro: 59246.05, pago_com_orgao_sigiloso: 0 }, nota: 'Hospedagem não tem valor próprio: a diária a paga. MEDIDO em 2026-10-10: de 2019 a 2026, todo pagamento publicado com órgão "Sigiloso" achou o órgão da viagem (de R$ 133 mi em 2020 a R$ 429 mi em 2025); pago_com_orgao_sigiloso diz quanto veio assim.' },
+  { de: 'viagens', para: 'destinos_de_viagem', linha: { ano: 2025, pais: 'Brasil', uf: 'Distrito Federal', cidade: 'Brasília', orgao_superior: 'Ministério da Justiça e Segurança Pública', chegadas: 183527, numero_de_diarias: 569853.90 }, nota: 'Conta chegadas (trechos), não pessoas. O órgão é o da viagem do trecho; trecho sem viagem no arquivo iria para "Sem viagem no arquivo", e em 2019 a 2026 não houve nenhum.' },
   { de: 'governo', para: 'gestoes', linha: { eleicao: 2018, primeiro_ano: 2019, ultimo_ano: 2022, presidente_nome_de_urna: 'JAIR BOLSONARO', presidente_partido: 'PSL', vice_nome_de_urna: 'GENERAL MOURÃO', coligacao: 'PSL / PRTB' } },
   { de: 'governo', para: 'orcamento_por_funcao', linha: { ano: 2019, codigo_funcao: '01', funcao: 'Legislativa', dotacao_atualizada: 0.00, empenhado: 756622.86, pago: 631798.93, restos_a_pagar_pagos: 228755.40, gerado_em: '2026-10-02' } },
   { de: 'governo', para: 'encargos_especiais', linha: { ano: 2019, codigo_subfuncao: '122', subfuncao: 'Administração geral', dotacao_atualizada: 2931182385.00, pago: 2285119915.12 } },
@@ -631,7 +632,7 @@ const PAPEL = {
   gastos_sigilosos: { papel: 'FATO AGREGADO', texto: 'Grão: ano, origem (cartão ou ação) e órgão.' },
   gastos_da_defesa_civil: { papel: 'FATO AGREGADO', texto: 'Grão: mês do extrato, executor e CNPJ do convenente.' },
   viagens_do_orgao: { papel: 'FATO AGREGADO', texto: 'Grão: ano e órgão superior.' },
-  destinos_de_viagem: { papel: 'FATO AGREGADO', texto: 'Grão: ano e cidade de destino.' },
+  destinos_de_viagem: { papel: 'FATO AGREGADO', texto: 'Grão: ano, órgão superior e cidade de destino.' },
   contratacoes_do_orgao: { papel: 'FATO AGREGADO', texto: 'Grão: mês da publicação, órgão superior e modalidade.' },
   compras_centralizadas_no_cartao: { papel: 'FATO AGREGADO', texto: 'Grão: mês do extrato e órgão superior.' },
   sancoes_de_empresas: { papel: 'DIMENSÃO', texto: 'Retrato do cadastro de empresas punidas, pelo CNPJ. Liga à entidade.' },

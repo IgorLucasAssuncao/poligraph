@@ -202,7 +202,7 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
 
     /// <summary>O CPCC do período, por órgão, e os meses que o Portal não publicou. Nulo se a carga ainda não trouxe nada dele.</summary>
     /// <remarks>
-    /// <para>MEDIDO (2026-10-10): os 53 meses com arquivo baixado são os 53 com linha na base; mês sem linha é mês que o Portal não publicou (403 ou 404 depois das novas tentativas), e não mês sem compra.</para>
+    /// <para>MEDIDO (2026-10-10): os 54 meses com arquivo baixado são os 54 com linha na base; mês sem linha é mês que o Portal não publicou (403 ou 404 depois das novas tentativas), e não mês sem compra.</para>
     /// </remarks>
     private static ComprasCentralizadasDto? ComprasCentralizadas(List<CompraCentralizadaNoCartaoModel> linhas)
     {
