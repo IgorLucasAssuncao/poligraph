@@ -121,20 +121,23 @@ export function ParlamentarComponent() {
 
   useEffect(() => {
     let atual = true;
-    Promise.all([
-      obterFicha(idPessoa, legislaturaPedida),
-      usuario ? listarSeguidos() : Promise.resolve([]),
-    ])
-      .then(([f, seguidos]) => {
-        if (!atual) return;
-        setLida({ chave, ficha: f, erro: null });
-        setSeguindo(seguidos.some((s) => s.idPessoa === idPessoa));
-      })
+    obterFicha(idPessoa, legislaturaPedida)
+      .then((f) => atual && setLida({ chave, ficha: f, erro: null }))
       .catch(() => atual && setLida({ chave, ficha: null, erro: T.erro }));
     return () => {
       atual = false;
     };
-  }, [idPessoa, legislaturaPedida, usuario, chave]);
+  }, [idPessoa, legislaturaPedida, chave]);
+
+  useEffect(() => {
+    let atual = true;
+    (usuario ? listarSeguidos() : Promise.resolve([]))
+      .then((seguidos) => atual && setSeguindo(seguidos.some((s) => s.idPessoa === idPessoa)))
+      .catch(() => atual && setSeguindo(false));
+    return () => {
+      atual = false;
+    };
+  }, [idPessoa, usuario]);
 
   if (erro) {
     return (
