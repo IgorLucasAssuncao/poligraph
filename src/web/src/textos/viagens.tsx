@@ -40,6 +40,7 @@ export const TEXTOS_DAS_VIAGENS = {
   porAno: 'Por ano',
   porAnoNota: 'Em reais de cada ano, sem correção pela inflação.',
   porOrgao: 'Por órgão',
+  outrosOrgaos: 'os demais órgãos',
   linhaDoOrgao: (viagens: string) => `${viagens} viagens`,
   destinos: 'Para onde mais foram, no Brasil',
   destinosNoExterior: 'Para onde mais foram, no exterior',

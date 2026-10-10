@@ -7,6 +7,7 @@ import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
 import { AbasDoGovernoComponent } from '../componentes/AbasDoGoverno';
 import { LinhaDeValorComponent } from '../componentes/Dados';
 import { ColunasPorAnoComponent, ComposicaoComponent } from '../componentes/Graficos';
+import { partesComOutros } from '../componentes/partesComOutros';
 import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
@@ -195,6 +196,11 @@ function ViagensPorOrgaoComponent({ dados }: { dados: ViagensDoGoverno }) {
   return (
     <section className="governo-secao">
       <h2>{T.porOrgao}</h2>
+      <ComposicaoComponent
+        rotulo={T.porOrgao}
+        formatar={reaisCompacto}
+        partes={partesComOutros(dados.porOrgao, (o) => o.orgao, (o) => o.total, T.outrosOrgaos)}
+      />
       <ul className="gastos-categorias">
         {dados.porOrgao.slice(0, ORGAOS_EXIBIDOS).map((o) => (
           <LinhaDeValorComponent

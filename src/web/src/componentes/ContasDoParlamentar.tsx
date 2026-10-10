@@ -22,7 +22,8 @@ import { NENHUM, useAVista, usePaginas } from './usePaginas';
 import type { Contas } from './useContas';
 import { EsqueletoDePainelComponent, EsqueletoDeTextoComponent } from './Esqueleto';
 import { LinhaDeValorComponent, OpcoesComponent } from './Dados';
-import { ComposicaoComponent, type ParteDoTodo } from './Graficos';
+import { ComposicaoComponent } from './Graficos';
+import { partesComOutros } from './partesComOutros';
 import { GrafoDoDinheiroComponent } from './GrafoDoDinheiro';
 import { LOCALIDADE_MULTIPLA, LOCALIDADE_NACIONAL, SUFIXO_DE_ESTADO, TIPOS_DE_BEM_A_VISTA } from '../constantes';
 import { TEXTOS_DAS_CONTAS as T } from '../textos/contasDoParlamentar';
@@ -251,6 +252,13 @@ export function AbaEmendasComponent({
 
         <h3 className="titulo-secao">{T.emendas.localDeclarado}</h3>
         <p className="ajuda">{T.emendas.localDeclaradoAjuda}</p>
+        {emendas.porDestino.length > 1 && (
+          <ComposicaoComponent
+            rotulo={T.emendas.localDeclarado}
+            formatar={reais}
+            partes={partesComOutros(emendas.porDestino, (d) => d.localidade, (d) => d.empenhado, T.emendas.outrosDestinos, emendas.empenhado)}
+          />
+        )}
         <ul className="gastos-categorias">
           {emendas.porDestino.map((d) => (
             <LinhaDeValorComponent key={d.localidade} nome={<DestinoComponent localidade={d.localidade} />} valor={d.empenhado} maior={maiorDestino} />
@@ -430,7 +438,7 @@ export function AbaCotaComponent({
           <ComposicaoComponent
             rotulo={T.cota.emQue}
             formatar={reais}
-            partes={partesDaCota(gastos.porCategoria)}
+            partes={partesComOutros(gastos.porCategoria, (c) => semPontosNoFim(minusculas(c.categoria)), (c) => c.total, T.cota.outrasCategorias)}
           />
           <details className="detalhes-da-aba">
           <summary>{T.cota.todasAsCategorias(gastos.porCategoria.length)}</summary>
@@ -478,16 +486,6 @@ export function AbaCotaComponent({
 }
 
 /** Os lançamentos, nota por nota — o caminho de volta de cada soma à fonte. */
-/** Quantas categorias da cota a barra de composição mostra; o resto vira "outras". */
-const CATEGORIAS_NA_BARRA = 4;
-
-/** As maiores categorias da cota e o resto somado, para a barra de composição. */
-function partesDaCota(categorias: { categoria: string; total: number }[]): ParteDoTodo[] {
-  const maiores = categorias.slice(0, CATEGORIAS_NA_BARRA).map((c) => ({ nome: semPontosNoFim(minusculas(c.categoria)), valor: c.total }));
-  const resto = categorias.slice(CATEGORIAS_NA_BARRA).reduce((s, c) => s + c.total, 0);
-  return resto > 0 ? [...maiores, { nome: T.cota.outrasCategorias, valor: resto }] : maiores;
-}
-
 function LancamentosDaCotaComponent({ idPessoa, anoDaDespesa, total }: { idPessoa: number; anoDaDespesa: number; total: number }) {
   const lista = usePaginas(NENHUM, total, 20, (pagina) => listarLancamentos(idPessoa, anoDaDespesa, pagina, 20));
 
@@ -615,9 +613,15 @@ function FinanciamentoComponent({ idPessoa, fin }: { idPessoa: number; fin: Fina
         </div>
       </div>
 
+      <h3 className="titulo-secao">{T.campanha.deOndeVeio}</h3>
+      <ComposicaoComponent
+        rotulo={T.campanha.deOndeVeio}
+        formatar={reais}
+        partes={partesComOutros(fin.porFonte, (f) => minusculas(f.fonte), (f) => f.total, T.campanha.outrasFontes)}
+      />
+
       <details className="detalhes-da-aba">
         <summary>{T.campanha.verDetalhes}</summary>
-        <h3 className="titulo-secao">{T.campanha.deOndeVeio}</h3>
         <ul className="gastos-categorias">
           {fin.porFonte.map((f) => (
             <LinhaDeValorComponent key={f.fonte} nome={minusculas(f.fonte)} valor={f.total} maior={maior} />

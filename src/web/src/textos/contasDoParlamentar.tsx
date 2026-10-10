@@ -47,6 +47,7 @@ export const TEXTOS_DAS_CONTAS = {
       </>
     ),
     localDeclarado: 'Local declarado na emenda',
+    outrosDestinos: 'outros lugares ou sem local',
     localDeclaradoAjuda:
       'O que o autor escreveu ao apresentar a emenda. Em boa parte diz “vários lugares” ou o estado inteiro, e a ' +
       'cidade de verdade está em “Cidades que receberam”.',
@@ -139,6 +140,7 @@ export const TEXTOS_DAS_CONTAS = {
     pessoaFisica: 'pessoa física',
     verDetalhes: 'Ver detalhes: todas as fontes de receita',
     deOndeVeio: 'De onde veio',
+    outrasFontes: 'outras fontes',
     fonte: 'Prestação de contas eleitorais publicada pelo TSE.',
     conjuntoNoTse: 'Conjunto de dados no TSE',
   },

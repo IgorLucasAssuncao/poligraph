@@ -10,7 +10,8 @@ import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { SeletorDePeriodoComponent } from '../componentes/SeletorDePeriodo';
-import { ColunasPorAnoComponent } from '../componentes/Graficos';
+import { ColunasPorAnoComponent, ComposicaoComponent } from '../componentes/Graficos';
+import { partesComOutros } from '../componentes/partesComOutros';
 import { atalhosDasGestoes } from '../componentes/atalhosDasGestoes';
 import { FONTES } from '../fontes';
 import { nomeProprio, reaisCompacto } from '../formato';
@@ -94,10 +95,12 @@ export function ComprasDoGovernoComponent() {
           )}
           <ListaDeValoresComponent
             titulo={T.porModalidade}
+            composicao={{ total: dados.valor }}
             linhas={dados.porModalidade.map((m) => ({ chave: m.modalidade, nome: m.modalidade, valor: m.valor, contratos: m.contratos }))}
           />
           <ListaDeValoresComponent
             titulo={T.porOrgao}
+            composicao={{ total: dados.valor }}
             linhas={dados.porOrgao.map((o) => ({ chave: o.orgao, nome: o.orgao, valor: o.valor, contratos: o.contratos }))}
           />
           <ListaDeValoresComponent
@@ -149,16 +152,26 @@ function ListaDeValoresComponent({
   titulo,
   nota,
   linhas,
+  composicao,
 }: {
   titulo: string;
   nota?: string;
-  linhas: { chave: string; nome: React.ReactNode; valor: number; contratos?: number }[];
+  linhas: { chave: string; nome: React.ReactNode; texto?: string; valor: number; contratos?: number }[];
+  /** Com a barra de composição: o total do período, para a lista cortada pela API. */
+  composicao?: { total: number };
 }) {
   const maior = Math.max(0, ...linhas.map((l) => l.valor));
   return (
     <section className="governo-secao">
       <h2>{titulo}</h2>
       {nota && <p className="nota-curta">{nota}</p>}
+      {composicao && linhas.length > 1 && (
+        <ComposicaoComponent
+          rotulo={titulo}
+          formatar={reaisCompacto}
+          partes={partesComOutros(linhas, (l) => l.texto ?? l.chave, (l) => l.valor, T.outros, composicao.total)}
+        />
+      )}
       <ul className="gastos-categorias">
         {linhas.map((l) => (
           <LinhaDeValorComponent
