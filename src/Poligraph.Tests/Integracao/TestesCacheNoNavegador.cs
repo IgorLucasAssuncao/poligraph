@@ -30,10 +30,10 @@ public class TestesCacheNoNavegador(FixturePostgres postgres) : BaseIntegracao(p
         ExigeDocker();
         using var cliente = new FabricaApi(ConnectionString).CreateClient();
 
-        var resposta = await cliente.GetAsync("/api/legislaturas");
+        var resposta = await cliente.GetAsync("/api/entidades");
 
         var tempo = Assert.Single(resposta.Headers.GetValues("Server-Timing"));
-        Assert.Matches(@"^db;dur=[\d.]+;desc=""\d+ consultas"", total;dur=[\d.]+$", tempo);
+        Assert.Matches(@"^db;dur=[\d.]+;desc=""[1-9]\d* consultas"", total;dur=[\d.]+$", tempo);
     }
 
     [SkippableFact]

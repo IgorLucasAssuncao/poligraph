@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Poligraph.Api;
+using Poligraph.Api.Configuracao;
 using Poligraph.Data;
 
 namespace Poligraph.Tests.Integracao;
@@ -30,9 +31,7 @@ public class FabricaApi(string connectionString) : WebApplicationFactory<Marcado
         {
             RemoverRegistrosDoDbContext(services);
 
-            services.AddDbContext<PoligraphDb>(opcoes => opcoes
-                .UseNpgsql(_connectionString)
-                .UseSnakeCaseNamingConvention());
+            services.AddDbContext<PoligraphDb>(opcoes => TempoDoRequest.ConfigurarBanco(opcoes.UseNpgsql(_connectionString)));
         });
 
         return base.CreateHost(builder);

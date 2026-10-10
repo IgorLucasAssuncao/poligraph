@@ -10,9 +10,7 @@ builder.Services.AddOpenApi();
 
 builder.AddNpgsqlDbContext<PoligraphDb>(
     connectionName: "poligraph",
-    configureDbContextOptions: opcoes => opcoes
-        .UseSnakeCaseNamingConvention()
-        .AddInterceptors(new TempoDoRequest.Interceptador(new HttpContextAccessor())));
+    configureDbContextOptions: opcoes => TempoDoRequest.ConfigurarBanco(opcoes));
 
 builder.AdicionarAutenticacao();
 builder.Services.AdicionarServicos();

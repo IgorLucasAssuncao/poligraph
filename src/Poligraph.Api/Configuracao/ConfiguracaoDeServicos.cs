@@ -15,6 +15,7 @@ public static class ConfiguracaoDeServicos
             opcoes.SerializerOptions.Converters.Add(
                 new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
+        servicos.AddHttpContextAccessor();
         servicos.AddMemoryCache();
         servicos.AddSingleton<CacheDeLeitura>();
         servicos.AddHostedService<AquecedorDeCache>();
