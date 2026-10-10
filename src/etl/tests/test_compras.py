@@ -97,6 +97,7 @@ def test_comando_grava_o_ano_e_pula_o_mes_que_falta(conexao, tmp_path, monkeypat
 
     monkeypatch.setattr(etl, "CACHE", tmp_path)
     monkeypatch.setattr(portal, "baixar", baixar)
+    monkeypatch.setattr(portal, "ESPERA_DO_403", 0)
 
     etl._compras(conexao, [2024])
 

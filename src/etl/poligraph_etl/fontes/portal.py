@@ -75,6 +75,36 @@ def baixar(recurso: str, destino: Path, *, esperar=time.sleep) -> Path:
     return destino
 
 
+TENTATIVAS_DO_403 = 4
+"""Quantas vezes um 403 é tentado de novo antes de o mês contar como não publicado."""
+
+ESPERA_DO_403 = 30
+"""Segundos de espera antes da primeira nova tentativa de um 403; dobra a cada uma."""
+
+
+def baixar_publicado(recurso: str, destino: Path, *, esperar=time.sleep) -> Path | None:
+    """O arquivo do mês, ou `None` se o Portal não o publicou.
+
+    RISCO: o Portal responde 403 tanto para arquivo que não existe quanto quando está limitando o
+    ritmo. MEDIDO (2026-10-10): `cpcc/202102` deu 403 na carga e 200 minutos depois. Tratar o primeiro
+    403 como "não publicado" perdia meses calado; agora ele só vale depois de `TENTATIVAS_DO_403`
+    tentativas espaçadas. 404 é ausência na hora.
+    """
+    for tentativa in range(1, TENTATIVAS_DO_403 + 1):
+        try:
+            return baixar(recurso, destino, esperar=esperar)
+        except requests.HTTPError as erro:
+            codigo = erro.response.status_code if erro.response is not None else None
+            if codigo == 404:
+                return None
+            if codigo != 403:
+                raise
+            if tentativa < TENTATIVAS_DO_403:
+                log.warning("  403 em %s; nova tentativa em %d s", recurso, ESPERA_DO_403 * 2 ** (tentativa - 1))
+                esperar(ESPERA_DO_403 * 2 ** (tentativa - 1))
+    return None
+
+
 def ler_csv(arquivo_zip: Path, membro: str, colunas: list[str] | None = None) -> pd.DataFrame:
     """Lê um CSV de dentro do ZIP, tudo como texto.
 

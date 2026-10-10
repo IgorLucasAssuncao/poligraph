@@ -103,6 +103,7 @@ def test_comando_grava_os_meses_publicados_e_pula_o_que_falta(conexao, tmp_path,
 
     monkeypatch.setattr(etl, "CACHE", tmp_path)
     monkeypatch.setattr(portal, "baixar", baixar)
+    monkeypatch.setattr(portal, "ESPERA_DO_403", 0)
 
     etl._defesa_civil(conexao, [2024])
 

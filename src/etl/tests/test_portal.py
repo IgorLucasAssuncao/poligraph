@@ -9,6 +9,7 @@ from datetime import date
 from unittest import mock
 
 import pytest
+import requests
 
 from poligraph_etl.fontes import portal
 
@@ -65,3 +66,38 @@ def test_le_latin1_como_texto(tmp_path):
 
     assert df.to_dict("records") == [{"CÓDIGO AÇÃO": "00SJ", "CÓDIGO UNIDADE": "03101"}]
     assert portal.gerado_em(arquivo, "2025_OrcamentoDespesa.csv") == date(2026, 9, 22)
+
+
+def test_403_passageiro_nao_vira_mes_nao_publicado(monkeypatch, tmp_path):
+    """RISCO: o Portal responde 403 também quando limita o ritmo; o mês só falta se o 403 persistir."""
+    respostas = iter([403, 403, 200])
+
+    def baixar(recurso, destino, **_):
+        codigo = next(respostas)
+        if codigo == 403:
+            resposta = requests.Response()
+            resposta.status_code = 403
+            raise requests.HTTPError(response=resposta)
+        destino.write_bytes(b"ok")
+        return destino
+
+    monkeypatch.setattr(portal, "baixar", baixar)
+    esperas: list[int] = []
+
+    assert portal.baixar_publicado("cpcc/202102", tmp_path / "a.zip", esperar=esperas.append) == tmp_path / "a.zip"
+    assert esperas == [portal.ESPERA_DO_403, portal.ESPERA_DO_403 * 2]
+
+
+def test_403_que_persiste_e_404_sao_mes_nao_publicado(monkeypatch, tmp_path):
+    def baixar_com(codigo):
+        def baixar(recurso, destino, **_):
+            resposta = requests.Response()
+            resposta.status_code = codigo
+            raise requests.HTTPError(response=resposta)
+        return baixar
+
+    monkeypatch.setattr(portal, "baixar", baixar_com(403))
+    assert portal.baixar_publicado("cpdc/202301", tmp_path / "a.zip", esperar=lambda _: None) is None
+    monkeypatch.setattr(portal, "baixar", baixar_com(404))
+    assert portal.baixar_publicado("cpdc/202301", tmp_path / "a.zip", esperar=lambda _: None) is None
+

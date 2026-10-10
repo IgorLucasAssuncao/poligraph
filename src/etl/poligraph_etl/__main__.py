@@ -1124,11 +1124,8 @@ def _defesa_civil(conexao: psycopg.Connection, anos: list[int]) -> None:
                 break
             recurso = defesa_civil.RECURSO.format(ano=ano, mes=mes)
             sufixo = f"-{hoje:%Y%m%d}" if (ano, mes) >= (hoje.year, hoje.month - 1) else ""
-            try:
-                arquivo = portal.baixar(recurso, CACHE / f"cpdc-{ano}{mes:02d}{sufixo}.zip")
-            except requests.HTTPError as erro:
-                if erro.response is None or erro.response.status_code not in (403, 404):
-                    raise
+            arquivo = portal.baixar_publicado(recurso, CACHE / f"cpdc-{ano}{mes:02d}{sufixo}.zip")
+            if arquivo is None:
                 faltaram.append(f"{mes:02d}/{ano}")
                 continue
 
@@ -1191,11 +1188,8 @@ def _compras(conexao: psycopg.Connection, anos: list[int]) -> None:
                 break
             recurso = compras.RECURSO.format(ano=ano, mes=mes)
             sufixo = f"-{hoje:%Y%m%d}" if (ano, mes) >= (hoje.year, hoje.month - 1) else ""
-            try:
-                arquivo = portal.baixar(recurso, CACHE / f"compras-{ano}{mes:02d}{sufixo}.zip")
-            except requests.HTTPError as erro:
-                if erro.response is None or erro.response.status_code not in (403, 404):
-                    raise
+            arquivo = portal.baixar_publicado(recurso, CACHE / f"compras-{ano}{mes:02d}{sufixo}.zip")
+            if arquivo is None:
                 faltaram.append(f"{mes:02d}/{ano}")
                 continue
             cargas[mes] = _carga_do_arquivo(conexao, "PORTAL_TRANSPARENCIA", portal.url(recurso), arquivo)
@@ -1225,11 +1219,8 @@ def _compras_centralizadas(conexao: psycopg.Connection, anos: list[int]) -> None
                 break
             recurso = compras_centralizadas.RECURSO.format(ano=ano, mes=mes)
             sufixo = f"-{hoje:%Y%m%d}" if (ano, mes) >= (hoje.year, hoje.month - 1) else ""
-            try:
-                arquivo = portal.baixar(recurso, CACHE / f"cpcc-{ano}{mes:02d}{sufixo}.zip")
-            except requests.HTTPError as erro:
-                if erro.response is None or erro.response.status_code not in (403, 404):
-                    raise
+            arquivo = portal.baixar_publicado(recurso, CACHE / f"cpcc-{ano}{mes:02d}{sufixo}.zip")
+            if arquivo is None:
                 continue
             carga = _carga_do_arquivo(conexao, "PORTAL_TRANSPARENCIA", portal.url(recurso), arquivo)
             tabela = portal.ler_csv(arquivo, compras_centralizadas.arquivo_do_mes(ano, mes),
