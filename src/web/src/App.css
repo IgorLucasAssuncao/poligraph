@@ -2101,6 +2101,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .tom-1, .grafico-colunas-barra.tom-1 span { background: color-mix(in srgb, var(--realce) 62%, var(--fundo)); }
 .tom-2, .grafico-colunas-barra.tom-2 span { background: color-mix(in srgb, var(--realce) 32%, var(--fundo)); }
 .tom-3, .grafico-colunas-barra.tom-3 span { background: color-mix(in srgb, var(--realce) 15%, var(--fundo)); }
+.tom-4, .grafico-colunas-barra.tom-4 span { background: var(--borda-forte); }
 .grafico-legenda { list-style: none; margin: .5rem 0 0; padding: 0; font-size: var(--t-2); }
 .grafico-legenda-series { display: flex; flex-wrap: wrap; gap: .3rem 1rem; color: var(--suave); }
 .grafico-legenda-series li { display: inline-flex; align-items: center; gap: .4rem; }

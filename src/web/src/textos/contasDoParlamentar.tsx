@@ -97,6 +97,8 @@ export const TEXTOS_DAS_CONTAS = {
       </>
     ),
     emQue: 'Em quê',
+    outrasCategorias: 'outras categorias',
+    todasAsCategorias: (quantas: number) => `Ver as ${quantas} categorias`,
     rotuloDaCategoria: (anoDaDespesa: number, categoria: string) => `Cota de ${anoDaDespesa}: ${categoria}`,
     quemRecebeu: 'Quem recebeu',
     pessoaFisica: 'pessoa física',

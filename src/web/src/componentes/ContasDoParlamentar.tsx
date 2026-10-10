@@ -22,6 +22,7 @@ import { NENHUM, useAVista, usePaginas } from './usePaginas';
 import type { Contas } from './useContas';
 import { EsqueletoDePainelComponent, EsqueletoDeTextoComponent } from './Esqueleto';
 import { LinhaDeValorComponent, OpcoesComponent } from './Dados';
+import { ComposicaoComponent, type ParteDoTodo } from './Graficos';
 import { GrafoDoDinheiroComponent } from './GrafoDoDinheiro';
 import { LOCALIDADE_MULTIPLA, LOCALIDADE_NACIONAL, SUFIXO_DE_ESTADO, TIPOS_DE_BEM_A_VISTA } from '../constantes';
 import { TEXTOS_DAS_CONTAS as T } from '../textos/contasDoParlamentar';
@@ -426,6 +427,13 @@ export function AbaCotaComponent({
       <div className="duas-colunas">
         <div>
           <h3 className="titulo-secao">{T.cota.emQue}</h3>
+          <ComposicaoComponent
+            rotulo={T.cota.emQue}
+            formatar={reais}
+            partes={partesDaCota(gastos.porCategoria)}
+          />
+          <details className="detalhes-da-aba">
+          <summary>{T.cota.todasAsCategorias(gastos.porCategoria.length)}</summary>
           <ul className="gastos-categorias">
             {gastos.porCategoria.map((c) => (
               <LinhaDeValorComponent
@@ -440,6 +448,7 @@ export function AbaCotaComponent({
               />
             ))}
           </ul>
+          </details>
         </div>
         <div>
           <h3 className="titulo-secao">{T.cota.quemRecebeu}</h3>
@@ -469,6 +478,16 @@ export function AbaCotaComponent({
 }
 
 /** Os lançamentos, nota por nota — o caminho de volta de cada soma à fonte. */
+/** Quantas categorias da cota a barra de composição mostra; o resto vira "outras". */
+const CATEGORIAS_NA_BARRA = 4;
+
+/** As maiores categorias da cota e o resto somado, para a barra de composição. */
+function partesDaCota(categorias: { categoria: string; total: number }[]): ParteDoTodo[] {
+  const maiores = categorias.slice(0, CATEGORIAS_NA_BARRA).map((c) => ({ nome: semPontosNoFim(minusculas(c.categoria)), valor: c.total }));
+  const resto = categorias.slice(CATEGORIAS_NA_BARRA).reduce((s, c) => s + c.total, 0);
+  return resto > 0 ? [...maiores, { nome: T.cota.outrasCategorias, valor: resto }] : maiores;
+}
+
 function LancamentosDaCotaComponent({ idPessoa, anoDaDespesa, total }: { idPessoa: number; anoDaDespesa: number; total: number }) {
   const lista = usePaginas(NENHUM, total, 20, (pagina) => listarLancamentos(idPessoa, anoDaDespesa, pagina, 20));
 
