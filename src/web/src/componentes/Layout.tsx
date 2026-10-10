@@ -59,10 +59,21 @@ const LARGURA: { padrao: Largura; rotas: [string, Largura][] } = {
  * página saiu: o item aceso da navegação já o diz, e repeti-lo logo abaixo era a
  * própria definição de moldura redundante.
  */
+/**
+ * A página de um endereço, sem a aba: `/parlamentar/154/cota` e `/parlamentar/154` são a mesma.
+ *
+ * DECISÃO (2026-10-10): trocar de aba não anima a página inteira; quem anima é o conteúdo da aba,
+ * com o `AtualizandoComponent`.
+ */
+function paginaDoEndereco(pathname: string): string {
+  const [primeiro, segundo] = pathname.split('/').filter(Boolean);
+  return /^\d+$/.test(segundo ?? '') ? `${primeiro}/${segundo}` : (primeiro ?? '');
+}
+
 export function LayoutComponent({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   const corpo = useRef<HTMLElement>(null);
-  useEntradaAoNavegar(corpo, pathname);
+  useEntradaAoNavegar(corpo, paginaDoEndereco(pathname));
 
   const largura =
     LARGURA.rotas.find(([rota]) =>

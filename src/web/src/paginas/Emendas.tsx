@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { AtualizandoComponent, useCarga } from '../componentes/Atualizando';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   buscarMunicipios,
@@ -84,18 +85,9 @@ export function EmendasComponent() {
   const uf = parametros.get('uf');
   const cidade = parametros.get('cidade');
 
-  const [brasil, setBrasil] = useState<MapaDoBrasil | null>(null);
-  const [erro, setErro] = useState(false);
-
-  useEffect(() => {
-    let atual = true;
-    obterMapaDoBrasil(periodo)
-      .then((novo) => atual && setBrasil(novo))
-      .catch(() => atual && setErro(true));
-    return () => {
-      atual = false;
-    };
-  }, [periodo]);
+  const carga = useCarga(`${de}-${ate}`, () => obterMapaDoBrasil(periodo));
+  const brasil = carga.dados ?? null;
+  const erro = carga.erro;
 
   const chegou = useRef(false);
 
@@ -139,7 +131,7 @@ export function EmendasComponent() {
       {brasil && brasil.anosDisponiveis.length === 0 && <p className="vazio">{T.semDados}</p>}
 
       {brasil && brasil.anosDisponiveis.length > 0 && (
-        <>
+        <AtualizandoComponent atualizando={carga.atualizando} chave={carga.chaveDoDado}>
           <div className="emendas-filtros">
             <SuaCidadeComponent
               aoEscolher={(m) => {
@@ -193,7 +185,7 @@ export function EmendasComponent() {
             {T.paraASede}{' '}
             <LinkDeFonteComponent href={FONTES.malhas.url}>{FONTES.malhas.nome}</LinkDeFonteComponent>.
           </p>
-        </>
+        </AtualizandoComponent>
       )}
     </>
   );
@@ -367,20 +359,12 @@ function MapaDaUfComponent({
   /** O painel da cidade escolhida: entre o mapa e a lista, perto de onde se clicou. */
   children?: ReactNode;
 }) {
-  const [estado, setEstado] = useState<MapaDoEstado | null>(null);
-  const [erro, setErro] = useState(false);
+  const carga = useCarga(`${uf}:${periodo?.primeiroAno}-${periodo?.ultimoAno}`, () => obterMapaDoEstado(uf, periodo));
+  const estado = carga.dados ?? null;
+  const erro = carga.erro;
   const [exibidas, setExibidas] = useState(CIDADES_POR_VEZ);
   const [porHabitante, setPorHabitante] = useState(false);
 
-  useEffect(() => {
-    let atual = true;
-    obterMapaDoEstado(uf, periodo)
-      .then((novo) => atual && setEstado(novo))
-      .catch(() => atual && setErro(true));
-    return () => {
-      atual = false;
-    };
-  }, [uf, periodo]);
 
   const comDinheiro = estado?.porMunicipio.filter((m) => m.recebido > 0) ?? [];
   const temPopulacao = comDinheiro.length > 0 && comDinheiro.every((m) => (m.populacao ?? 0) > 0);
@@ -454,7 +438,7 @@ function MapaDaUfComponent({
       )}
 
       {estado && (
-        <>
+        <AtualizandoComponent atualizando={carga.atualizando} chave={carga.chaveDoDado}>
           <ol className="lista-cidades">
             {receberam.slice(0, exibidas).map((m) => (
               <li key={m.codigoIbge}>
@@ -491,7 +475,7 @@ function MapaDaUfComponent({
               )
             }
           />
-        </>
+        </AtualizandoComponent>
       )}
     </section>
   );
@@ -508,8 +492,11 @@ function PainelDaCidadeComponent({
   rolarAteAqui: boolean;
   aoFechar: () => void;
 }) {
-  const [dados, setDados] = useState<EmendasDoMunicipio | null>(null);
-  const [erro, setErro] = useState(false);
+  const carga = useCarga(`${codigoIbge}:${periodo?.primeiroAno}-${periodo?.ultimoAno}`, () =>
+    obterEmendasDoMunicipio(codigoIbge, periodo),
+  );
+  const dados = carga.dados ?? null;
+  const erro = carga.erro;
   const [aba, setAba] = useState<AbaDaCidade | null>(null);
   const secao = useRef<HTMLElement>(null);
 
@@ -519,15 +506,6 @@ function PainelDaCidadeComponent({
     secao.current?.scrollIntoView?.({ block: 'start', behavior: reduzido ? 'auto' : 'smooth' });
   }, [dados, rolarAteAqui]);
 
-  useEffect(() => {
-    let atual = true;
-    obterEmendasDoMunicipio(codigoIbge, periodo)
-      .then((novo) => atual && setDados(novo))
-      .catch(() => atual && setErro(true));
-    return () => {
-      atual = false;
-    };
-  }, [codigoIbge, periodo]);
 
   if (erro) return <p className="erro">{T.cidade.erro}</p>;
   if (!dados) return <EsqueletoDeTextoComponent rotulo={T.cidade.carregando} />;

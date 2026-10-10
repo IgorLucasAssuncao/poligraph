@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { AtualizandoComponent } from '../componentes/Atualizando';
 import {
   listarParlamentares,
   listarSeguidos,
@@ -70,6 +71,7 @@ export function ExplorarComponent() {
   const [pagina, setPagina] = useState<PaginaDeParlamentares | null>(null);
   const [seguidos, setSeguidos] = useState<Set<number>>(new Set());
   const [carregando, setCarregando] = useState(true);
+  const [versao, setVersao] = useState(0);
   const [carregandoMais, setCarregandoMais] = useState(false);
 
   const { usuario } = useSessao();
@@ -93,6 +95,7 @@ export function ExplorarComponent() {
         .then((primeira) => {
           setPagina(primeira);
           setLista(primeira.itens);
+          setVersao((v) => v + 1);
         })
         .catch(() => {
           setPagina(null);
@@ -182,13 +185,13 @@ export function ExplorarComponent() {
         </div>
       )}
 
-      {carregando && <EsqueletoDeListaComponent rotulo={T.buscando} linhas={8} />}
+      {carregando && versao === 0 && <EsqueletoDeListaComponent rotulo={T.buscando} linhas={8} />}
 
       {!carregando && lista.length === 0 && (
         <p className="vazio">{T.nenhum}</p>
       )}
 
-      {!carregando && total > 0 && (
+      {versao > 0 && total > 0 && (
         <p className="contagem-lista" aria-live="polite">
           {T.contagem(lista.length, total)}
           {passada && T.queVotaramEm(periodoDaLegislatura(passada))}
@@ -196,6 +199,7 @@ export function ExplorarComponent() {
         </p>
       )}
 
+      <AtualizandoComponent atualizando={carregando && versao > 0} chave={String(versao)}>
       {lista.map((p) => (
         <LinhaParlamentarComponent
           key={p.idPessoa}
@@ -212,6 +216,7 @@ export function ExplorarComponent() {
           }
         />
       ))}
+      </AtualizandoComponent>
 
       {!carregando && lista.length < total && (
         <div className="carregar-mais">

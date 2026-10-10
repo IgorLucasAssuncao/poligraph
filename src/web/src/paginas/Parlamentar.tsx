@@ -234,7 +234,7 @@ export function ParlamentarComponent() {
 
       <AtualizandoComponent
         atualizando={atualizando || contasAtualizando}
-        chave={lida?.ficha ? `${lida.chave}|${contas ? chaveDasContas : ''}` : undefined}
+        chave={lida?.ficha ? `${lida.chave}|${contas ? chaveDasContas : ''}|${aba}` : undefined}
       >
 
       <nav className="abas" aria-label={T.rotuloDasAbas}>

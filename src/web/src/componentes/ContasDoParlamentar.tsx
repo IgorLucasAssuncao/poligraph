@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { AtualizandoComponent } from './Atualizando';
 import { Link } from 'react-router-dom';
 import {
   listarLancamentos,
@@ -364,9 +365,9 @@ export function AbaCotaComponent({
   erro: boolean;
   legislatura?: number | null;
 }) {
-  const [doAno, setDoAno] = useState<{ anoDaDespesa: number; gastos: GastoDeCota | null } | null>(null);
+  const [doAno, setDoAno] = useState<{ anoDaDespesa: number; gastos: GastoDeCota | null; carregando: boolean } | null>(null);
   const padrao = contas?.gastos;
-  const gastos = doAno?.gastos ?? (doAno ? null : padrao);
+  const gastos = doAno?.gastos ?? padrao;
 
   if (!padrao) return <CarregandoComponent contas={contas} erro={erro} />;
 
@@ -375,9 +376,11 @@ export function AbaCotaComponent({
       setDoAno(null);
       return;
     }
-    setDoAno({ anoDaDespesa, gastos: null });
+    setDoAno((antes) => ({ anoDaDespesa, gastos: antes?.gastos ?? padrao, carregando: true }));
     obterGastos(idPessoa, legislatura, anoDaDespesa)
-      .then((g) => setDoAno((atual) => (atual?.anoDaDespesa === anoDaDespesa ? { anoDaDespesa, gastos: g } : atual)))
+      .then((g) =>
+        setDoAno((atual) => (atual?.anoDaDespesa === anoDaDespesa ? { anoDaDespesa, gastos: g, carregando: false } : atual)),
+      )
       .catch(() => setDoAno(null));
   };
 
@@ -409,6 +412,7 @@ export function AbaCotaComponent({
   return (
     <section className="aba-dinheiro" aria-label={T.cota.rotulo}>
       {seletor}
+      <AtualizandoComponent atualizando={doAno?.carregando ?? false} chave={String(gastos.anoDaDespesa)}>
       <p className="frase-resposta">
         {T.cota.resposta(
           <ComProcedenciaComponent
@@ -463,6 +467,7 @@ export function AbaCotaComponent({
       </details>
 
       <p className="ajuda ajuda-espacada">{T.cota.fonte}</p>
+      </AtualizandoComponent>
     </section>
   );
 }
