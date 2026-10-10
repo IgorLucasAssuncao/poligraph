@@ -100,6 +100,9 @@ export const TEXTOS_DO_GOVERNO = {
       </>
     ),
     valor: 'Valor',
+    quaseTudoEm2019:
+      'Quase tudo foi passagem aérea paga direto às companhias, de maio a agosto de 2019. Depois disso, o cartão ' +
+      'quase não foi usado.',
     semArquivo: (meses: string) => `O Portal não publicou ${meses}. O total é só dos outros meses.`,
     porOrgao: 'Por órgão',
     outrosOrgaos: 'os demais órgãos',

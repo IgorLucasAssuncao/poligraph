@@ -561,7 +561,14 @@ function DefesaCivilComponent({
   );
 }
 
-/** O cartão de compras centralizadas: total, composição por órgão, anos e os dez maiores. */
+/**
+ * O cartão de compras centralizadas: total, composição por órgão, anos e os dez maiores.
+ *
+ * MEDIDO (2026-10-10): de maio a agosto de 2019, R$ 96,2 mi, 99,7% em passagem aérea paga direto à
+ * Gol, à Latam e à Azul (coluna TIPO AQUISIÇÃO e favorecido do arquivo). De 2020 a 2026, de R$ 6 mil
+ * a R$ 21 mil por ano. A nota aparece quando o período inclui 2019 e anos depois dele, que é quando
+ * a coluna de 2019 parece dado faltando nos outros anos.
+ */
 function ComprasCentralizadasComponent({
   cpcc,
   periodo,
@@ -583,6 +590,7 @@ function ComprasCentralizadasComponent({
         formatar={reaisCompacto}
         partes={partesComOutros(cpcc.porOrgao, (o) => o.orgao, (o) => o.valor, C.outrosOrgaos, cpcc.total)}
       />
+      {periodo.primeiroAno <= 2019 && periodo.ultimoAno > 2019 && <p className="nota-curta">{C.quaseTudoEm2019}</p>}
 
       {cpcc.porAno.length > 1 && (
         <>
