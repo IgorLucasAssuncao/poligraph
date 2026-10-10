@@ -23,6 +23,19 @@ public class TestesCacheNoNavegador(FixturePostgres postgres) : BaseIntegracao(p
         Assert.Equal(TimeSpan.FromMinutes(5), resposta.Headers.CacheControl?.MaxAge);
     }
 
+    /// <summary>O tempo do banco e o do request vão no cabeçalho, para a aba Rede do navegador.</summary>
+    [SkippableFact]
+    public async Task RespostaDaApi_DizOTempoDoBancoEDoRequest()
+    {
+        ExigeDocker();
+        using var cliente = new FabricaApi(ConnectionString).CreateClient();
+
+        var resposta = await cliente.GetAsync("/api/legislaturas");
+
+        var tempo = Assert.Single(resposta.Headers.GetValues("Server-Timing"));
+        Assert.Matches(@"^db;dur=[\d.]+;desc=""\d+ consultas"", total;dur=[\d.]+$", tempo);
+    }
+
     [SkippableFact]
     public async Task RotaDoUsuario_NaoEhGuardada()
     {
