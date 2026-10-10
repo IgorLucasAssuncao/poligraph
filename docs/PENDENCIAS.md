@@ -25,7 +25,7 @@
 | **19** | Retenção do Prometheus | Configuração da VPS |
 | **20** | Destino do backup do Postgres, criptografado | Configuração da VPS; primeiro dia |
 | **21** | Grafana público ou por túnel | Exposição na VPS |
-| **22** | Painel do Coolify: sem endereço público, aberto por túnel SSH (recomendado) | Exposição na VPS. O painel sobe e apaga containers, lê todos os segredos e alcança o banco. Opções: (1) sem domínio, `ssh -L 8000:localhost:8000` com o SSH só por chave e do IP do autor (recomendada); (2) atrás do Cloudflare Access, se a P88 escolher o túnel; (3) público com 2FA, a menos segura. O deploy pelo CI usa a API do Coolify com token e não depende do painel público. Detalhe em `arquitetura.html` |
+| **22** | Painel do Coolify: sem endereço público, aberto por túnel SSH (recomendado) | Exposição na VPS. O painel sobe e apaga containers, lê todos os segredos e alcança o banco. Opções: (1) sem domínio, `ssh -L 8000:localhost:8000` com o SSH só por chave, sem root e com fail2ban, aberto a qualquer IP porque o autor viaja (decisão do autor, 2026-10-10) (recomendada); (2) atrás do Cloudflare Access, se a P88 escolher o túnel; (3) público com 2FA, a menos segura. O deploy pelo CI usa a API do Coolify com token e não depende do painel público. Detalhe em `arquitetura.html` |
 | **23** | CI como portão do deploy | `deploy.yaml` proposto no roteiro de publicação |
 | **57** | Credencial do GitHub e PR | Processo de entrega |
 | **56** | Modelo de `gestoes` para governos sem eleição (Temer) | Muda o schema |
