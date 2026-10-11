@@ -4,573 +4,1392 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Guia técnico</title>
-<meta name="description" content="Como o Registro Aberto funciona por dentro: de onde vêm os dados, como o voto vira grafo, que algoritmos são usados e por quê, como a afinidade é calculada e as regras de dinheiro, origem e privacidade.">
+<meta name="description" content="Como o Registro Aberto funciona por dentro, para mexer: o caminho do dado, o peso de cada voto, a similaridade, o grafo kNN, as comunidades de Louvain, a afinidade com polaridade e as regras do dinheiro e da origem.">
 <style>
   :root {
-    --fundo: #ffffff; --painel: #f3f5f7; --texto: #12161b; --suave: #4d5966;
-    --borda: #dde2e7; --borda-forte: #8a96a3; --realce: #0f766e; --sobre-realce: #ffffff;
-    --realce-fraco: #e3f1ef; --perigo: #a8321f;
+    --fundo: #f7f8f9; --papel: #ffffff; --painel: #f3f5f7; --texto: #12161b; --suave: #4a5561;
+    --borda: #e4e8ec; --borda-forte: #8a96a3; --realce: #0f766e; --sobre-realce: #ffffff;
+    --realce-fraco: #e3f1ef; --perigo: #a8321f; --perigo-fraco: #f8e9e6;
+    --sombra: 0 6px 24px rgba(18, 22, 27, .10);
     --dado: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
     --texto-fonte: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --raio: 3px;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --fundo: #0b0e11; --painel: #151b22; --texto: #e8edf2; --suave: #a3afbb;
-      --borda: #27313c; --borda-forte: #5c6977; --realce: #5eb7ac; --sobre-realce: #0b0e11;
-      --realce-fraco: #12302d; --perigo: #e0826f;
+      --fundo: #0f1316; --papel: #161c21; --painel: #1d252c; --texto: #e7ecf0; --suave: #a7b2bc;
+      --borda: #2a343c; --borda-forte: #5c6977; --realce: #4fc1b4; --sobre-realce: #0b0e11;
+      --realce-fraco: #12302d; --perigo: #f08c77; --perigo-fraco: #3a1f1a;
+      --sombra: 0 6px 24px rgba(0, 0, 0, .5);
     }
   }
   :root[data-theme="dark"] {
-    --fundo: #0b0e11; --painel: #151b22; --texto: #e8edf2; --suave: #a3afbb;
-    --borda: #27313c; --borda-forte: #5c6977; --realce: #5eb7ac; --sobre-realce: #0b0e11;
-    --realce-fraco: #12302d; --perigo: #e0826f;
+    --fundo: #0f1316; --papel: #161c21; --painel: #1d252c; --texto: #e7ecf0; --suave: #a7b2bc;
+    --borda: #2a343c; --borda-forte: #5c6977; --realce: #4fc1b4; --sobre-realce: #0b0e11;
+    --realce-fraco: #12302d; --perigo: #f08c77; --perigo-fraco: #3a1f1a;
+    --sombra: 0 6px 24px rgba(0, 0, 0, .5);
   }
   * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--fundo); color: var(--texto);
-    font-family: var(--texto-fonte); font-size: 16px; line-height: 1.55;
-  }
-  main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; background: var(--fundo); color: var(--texto); font: 16px/1.55 var(--texto-fonte); }
+  a { color: var(--realce); }
+  code { font-family: var(--dado); font-size: 13px; }
+  button, select, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--realce); outline-offset: 2px; }
+
+  .topo { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+          background: var(--papel); border-bottom: 1px solid var(--borda); }
+  .topo strong { font-size: 15px; }
+  .topo .links { font-size: 13px; color: var(--suave); }
+  .topo .links a { margin-left: 10px; }
+  .topo .tema { margin-left: auto; }
+  .botao { background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio); padding: 6px 10px;
+           cursor: pointer; font-size: 13px; font-weight: 600; transition: border-color 160ms, background 160ms; }
+  .botao:hover { border-color: var(--realce); }
+  .botao[aria-pressed="true"], .botao.ativo { background: var(--realce); border-color: var(--realce); color: var(--sobre-realce); }
+
+  .casca { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 32px; max-width: 1240px; margin: 0 auto; padding: 24px 16px 80px; }
+  nav.indice { position: sticky; top: 64px; align-self: start; max-height: calc(100vh - 80px); overflow: auto; font-size: 14px; }
+  nav.indice ol { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  nav.indice li { counter-increment: s; }
+  nav.indice a { display: block; padding: 5px 10px; border-left: 2px solid var(--borda); color: var(--suave); text-decoration: none; }
+  nav.indice a::before { content: counter(s) " "; font-family: var(--dado); font-size: 12px; color: var(--borda-forte); }
+  nav.indice a:hover { color: var(--texto); }
+  nav.indice a.atual { border-left-color: var(--realce); color: var(--realce); font-weight: 600; background: var(--realce-fraco); }
+
+  main { min-width: 0; }
   h1 { font-size: 34px; line-height: 1.15; margin: 0 0 8px; }
-  h2 { font-size: 26px; margin: 56px 0 12px; padding-top: 16px; border-top: 1px solid var(--borda); }
+  h2 { font-size: 26px; margin: 0 0 12px; }
   h3 { font-size: 20px; margin: 28px 0 10px; }
-  p, ul, ol { margin: 0 0 12px; max-width: 72ch; }
+  section { padding: 40px 0 8px; border-top: 1px solid var(--borda); scroll-margin-top: 56px; }
+  section:first-of-type { border-top: 0; padding-top: 0; }
+  p, ul, ol { margin: 0 0 12px; max-width: 74ch; }
   li { margin: 4px 0; }
-  .sub { color: var(--suave); font-size: 15px; margin-bottom: 24px; }
+  .sub { color: var(--suave); font-size: 15px; margin-bottom: 20px; }
   .num { font-family: var(--dado); color: var(--realce); font-size: 15px; margin-right: 8px; }
-  figure { margin: 16px 0; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel); padding: 16px; overflow-x: auto; }
-  figcaption { color: var(--suave); font-size: 13px; margin-top: 8px; }
-  svg { display: block; width: 100%; min-width: 760px; height: auto; font-family: var(--texto-fonte); }
-  svg .t { fill: var(--texto); font-size: 15px; font-weight: 700; }
-  svg .s { fill: var(--suave); font-size: 12px; }
-  svg .d { fill: var(--suave); font-size: 11.5px; font-family: var(--dado); }
-  svg .caixa { fill: var(--fundo); stroke: var(--borda-forte); }
-  svg .caixa-realce { fill: var(--realce-fraco); stroke: var(--realce); stroke-width: 1.5; }
-  svg .linha { stroke: var(--realce); stroke-width: 2; fill: none; }
-  svg .no { fill: var(--fundo); stroke: var(--texto); stroke-width: 1.5; }
-  svg .no-a { fill: var(--realce); }
-  svg .aresta { stroke: var(--borda-forte); stroke-width: 1.5; }
-  svg .aresta-forte { stroke: var(--realce); stroke-width: 2.5; }
+  .medido { font-family: var(--dado); font-size: 12px; color: var(--suave); }
+  .aviso { border-left: 4px solid var(--realce); background: var(--papel); padding: 10px 14px; margin: 14px 0; max-width: 78ch; }
+  .aviso.risco { border-left-color: var(--perigo); }
+  .aviso p:last-child { margin-bottom: 0; }
+  .aviso strong:first-child { display: block; margin-bottom: 4px; }
+  pre { margin: 8px 0 14px; padding: 10px 12px; background: var(--papel); border: 1px solid var(--borda); border-radius: var(--raio);
+        font-family: var(--dado); font-size: 13px; overflow-x: auto; line-height: 1.6; }
+
   .tabela { overflow-x: auto; margin: 8px 0 16px; }
-  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; background: var(--papel); }
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--borda); vertical-align: top; }
   th { font-size: 13px; color: var(--suave); font-weight: 600; }
-  td.n { font-family: var(--dado); white-space: nowrap; }
-  code { font-family: var(--dado); font-size: 13px; }
-  pre { margin: 8px 0 14px; padding: 10px 12px; background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio);
-        font-family: var(--dado); font-size: 13px; overflow-x: auto; line-height: 1.6; }
-  .aviso { border-left: 4px solid var(--realce); background: var(--painel); padding: 10px 14px; margin: 14px 0; max-width: 76ch; }
-  .aviso.risco { border-left-color: var(--perigo); }
-  .aviso p:last-child, .aviso ul:last-child { margin-bottom: 0; }
-  .aviso strong:first-child { display: block; margin-bottom: 4px; }
-  .medido { font-family: var(--dado); font-size: 12px; color: var(--suave); }
-  nav.indice { margin: 0 0 24px; padding: 14px 16px; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel); }
-  nav.indice ol { margin: 0; padding-left: 22px; columns: 2; column-gap: 32px; max-width: none; font-size: 15px; }
-  nav.indice a { color: var(--realce); }
-  .lado { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .lado > div { border: 1px solid var(--borda); border-radius: var(--raio); padding: 12px 14px; }
-  .lado h4 { margin: 0 0 6px; font-size: 16px; }
-  .lado p:last-child { margin-bottom: 0; }
-  a { color: var(--realce); }
+  td.n, th.n { font-family: var(--dado); white-space: nowrap; text-align: right; }
+
+  .demo { background: var(--papel); border: 1px solid var(--borda); border-radius: var(--raio); box-shadow: var(--sombra); margin: 18px 0 22px; }
+  .demo > header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 10px 14px; border-bottom: 1px solid var(--borda); background: var(--painel); }
+  .demo > header .rotulo { font: 600 11px var(--dado); color: var(--realce); letter-spacing: .06em; }
+  .demo > header h4 { margin: 0; font-size: 16px; }
+  .demo > header .dica { font-size: 13px; color: var(--suave); }
+  .demo .corpo { padding: 14px; }
+  .controles { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 12px; font-size: 14px; }
+  .controles label[hidden] { display: none; }
+  .controles label { display: inline-flex; align-items: center; gap: 8px; }
+  .seg { display: inline-flex; border: 1px solid var(--borda); border-radius: var(--raio); overflow: hidden; }
+  .seg button { border: 0; border-right: 1px solid var(--borda); background: var(--painel); padding: 6px 10px; cursor: pointer; font-size: 13px; font-weight: 600; }
+  .seg button:last-child { border-right: 0; }
+  .seg button[aria-pressed="true"] { background: var(--realce); color: var(--sobre-realce); }
+  input[type="range"] { accent-color: var(--realce); width: 160px; }
+  input[type="checkbox"] { accent-color: var(--realce); width: 16px; height: 16px; }
+  input[type="text"] { max-width: 100%; min-width: 0; }
+  select, input[type="text"] { background: var(--painel); border: 1px solid var(--borda-forte); border-radius: var(--raio); padding: 5px 8px; font-size: 14px; }
+  .saida { font-family: var(--dado); font-size: 14px; }
+  .forte { font-family: var(--dado); font-size: 26px; font-weight: 700; color: var(--realce); }
+  .conta { font-family: var(--dado); font-size: 13px; background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio); padding: 8px 10px; margin: 8px 0 0; white-space: pre-wrap; }
+  .placar { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 0; }
+  .placar div { flex: 1 1 130px; border: 1px solid var(--borda); border-radius: var(--raio); padding: 8px 10px; background: var(--painel); }
+  .placar span { display: block; font-size: 12px; color: var(--suave); }
+  .placar b { font: 700 20px var(--dado); }
+  .placar .ruim b { color: var(--perigo); }
+  .placar .bom b { color: var(--realce); }
+
+  .fluxo { display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch; }
+  .fluxo button { position: relative; flex: 1 1 92px; text-align: left; background: var(--painel); border: 1px solid var(--borda);
+                  border-radius: var(--raio); padding: 8px 10px; cursor: pointer; transition: border-color 160ms, background 160ms; }
+  .fluxo button small { display: block; font: 600 11px var(--dado); color: var(--suave); }
+  .fluxo button span { display: block; font-size: 14px; font-weight: 600; line-height: 1.25; }
+  .fluxo button:hover { border-color: var(--realce); }
+  .fluxo button[aria-pressed="true"] { background: var(--realce-fraco); border-color: var(--realce); }
+  .fluxo button[aria-pressed="true"] small { color: var(--realce); }
+  .cartao-etapa { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
+  .cartao-etapa h5 { margin: 0 0 2px; font-size: 12px; color: var(--suave); font-weight: 600; letter-spacing: .03em; }
+  .cartao-etapa p { margin: 0; font-size: 15px; }
+  .cartao-etapa .largo { grid-column: 1 / -1; }
+  .cartao-etapa .risco p { color: var(--perigo); }
+
+  .grade-votos { border-collapse: separate; border-spacing: 3px; width: auto; background: none; }
+  .grade-votos th, .grade-votos td { border: 0; padding: 0; text-align: center; vertical-align: middle; }
+  .grade-votos th { font: 600 11px var(--dado); padding: 0 4px; }
+  .grade-votos th.linha { text-align: right; font-size: 13px; padding-right: 8px; }
+  .voto { width: 44px; height: 32px; border: 1px solid var(--borda-forte); border-radius: var(--raio); background: var(--papel); cursor: pointer; font: 600 12px var(--dado); }
+  .voto.sim { border-width: 2px; border-color: var(--texto); }
+  .voto.nao { border-width: 2px; border-color: var(--texto); border-style: dashed; }
+  .voto.abs, .voto.aus { color: var(--suave); background: var(--painel); }
+  .situacao { font: 11px var(--dado); color: var(--suave); }
+  .situacao.entra { color: var(--realce); font-weight: 600; }
+  .cat { font: 10.5px var(--dado); color: var(--suave); }
+
+  .lab { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 14px; }
+  .lab .palco { position: relative; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--fundo); }
+  .lab svg { display: block; width: 100%; height: auto; touch-action: manipulation; }
+  .lab .lateral { font-size: 14px; }
+  .lab .lateral h5 { margin: 0 0 6px; font-size: 13px; color: var(--suave); }
+  .lab .vizinhos { list-style: none; padding: 0; margin: 0; max-height: 300px; overflow: auto; }
+  .lab .vizinhos li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--borda); font-size: 13px; }
+  .lab .vizinhos .quem { font-family: var(--dado); font-size: 11px; color: var(--suave); }
+  .aresta-g { stroke: var(--borda-forte); stroke-opacity: .55; }
+  .aresta-g.acesa { stroke: var(--realce); stroke-opacity: 1; }
+  .aresta-g.apagada { stroke-opacity: .08; }
+  .no-g { stroke: var(--papel); stroke-width: 1.5; cursor: pointer; transition: opacity 160ms; }
+  .no-g.apagado { opacity: .2; }
+  .no-g.escolhido { stroke: var(--texto); stroke-width: 3; }
+  .anel { fill: none; stroke: var(--perigo); stroke-width: 2; stroke-dasharray: 3 2; pointer-events: none; }
+  .eixo { stroke: var(--borda-forte); stroke-dasharray: 4 4; }
+  .rotulo-eixo { fill: var(--suave); font: 11px var(--dado); }
+  .dica-no { position: absolute; pointer-events: none; background: var(--papel); border: 1px solid var(--borda-forte); border-radius: var(--raio);
+             box-shadow: var(--sombra); padding: 6px 8px; font-size: 12px; line-height: 1.4; white-space: nowrap; z-index: 5; }
+  .dica-no[hidden] { display: none; }
+  .legenda-cores { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--suave); margin-top: 8px; }
+  .legenda-cores i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+
+  .perguntas { display: grid; gap: 8px; }
+  .pergunta { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; border: 1px solid var(--borda); border-radius: var(--raio); padding: 8px 10px; background: var(--painel); }
+  .pergunta p { margin: 0; font-size: 14px; }
+  .pergunta .pol { font: 11px var(--dado); color: var(--suave); }
+  .pergunta .pol b { color: var(--texto); }
+  .pergunta .pol.neg b { color: var(--perigo); }
+  .ranking td.n { text-align: right; }
+  .ranking tr.fora td { color: var(--suave); }
+  .ranking tr.mudou td:first-child { box-shadow: inset 3px 0 0 var(--perigo); }
+  .ranking details summary { cursor: pointer; font-size: 12px; color: var(--realce); }
+  .ranking .detalhe { font: 12px var(--dado); white-space: pre; overflow-x: auto; margin-top: 4px; color: var(--suave); }
+  .duas { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 14px; align-items: start; }
+
+  .termo { border: 0; padding: 0; background: none; color: inherit; font: inherit; cursor: help; border-bottom: 1px dotted var(--realce); }
+  .balao { position: absolute; z-index: 30; max-width: 320px; background: var(--papel); border: 1px solid var(--borda-forte); border-radius: var(--raio);
+           box-shadow: var(--sombra); padding: 8px 10px; font-size: 13px; line-height: 1.45; }
+  .balao b { display: block; margin-bottom: 2px; }
+  .balao[hidden] { display: none; }
+  .arquivo { border: 2px dashed var(--borda-forte); border-radius: var(--raio); padding: 18px; text-align: center; color: var(--suave); font-size: 14px; cursor: pointer; }
+  .arquivo.sobre { border-color: var(--realce); background: var(--realce-fraco); }
+  .hash { font: 12px var(--dado); word-break: break-all; white-space: pre-wrap; }
+
+  @media (max-width: 1000px) {
+    .casca { grid-template-columns: minmax(0, 1fr); }
+    nav.indice { position: static; max-height: none; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--papel); padding: 8px; }
+    nav.indice ol { columns: 2; }
+    .lab, .duas { grid-template-columns: minmax(0, 1fr); }
+  }
   @media (max-width: 700px) {
     h1 { font-size: 26px; } h2 { font-size: 20px; }
     nav.indice ol { columns: 1; }
-    .lado { grid-template-columns: 1fr; }
+    .cartao-etapa { grid-template-columns: 1fr; }
+    .topo .links { display: none; }
+    .pergunta { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
-<main>
-  <h1>Guia técnico</h1>
-  <p class="sub">Como o Registro Aberto funciona por dentro: de onde vem cada dado, como o voto vira grafo, que algoritmo
-    é usado em cada etapa e por que ele e não outro. Complementa o <a href="mapa_do_sistema.html">mapa do sistema</a>
-    (comandos, tabelas e rotas) e a <a href="arquitetura.html">arquitetura de produção</a> (onde tudo roda).</p>
+<header class="topo">
+  <strong>Registro Aberto · guia técnico</strong>
+  <span class="links"><a href="mapa_do_sistema.html">Mapa do sistema</a><a href="arquitetura.html">Arquitetura</a></span>
+  <button class="botao tema" id="tema" type="button" aria-label="Trocar o tema">Tema: sistema</button>
+</header>
 
-  <div class="aviso">
-    <strong>A ideia em uma frase</strong>
-    <p>Afinidade política medida pelo que o parlamentar <em>votou</em>, não pelo que ele diz nem pelo partido em que está.
-      Tudo o que aparece na tela é calculado a partir do registro nominal de votação da Câmara e do Senado, e cada
-      número pode ser seguido até o arquivo oficial de onde saiu.</p>
-  </div>
-
+<div class="casca">
   <nav class="indice" aria-label="Nesta página">
     <ol>
-      <li><a href="#visao">Visão geral: do arquivo oficial à tela</a></li>
-      <li><a href="#etl">A carga de dados (ETL)</a></li>
-      <li><a href="#matriz">Do voto à matriz</a></li>
-      <li><a href="#similaridade">Similaridade entre parlamentares</a></li>
-      <li><a href="#grafo">O grafo: kNN</a></li>
-      <li><a href="#comunidades">Comunidades: Louvain</a></li>
-      <li><a href="#comparacao">Comunidade × partido: ARI e modularidade</a></li>
-      <li><a href="#desenho">O desenho: molas e SVD</a></li>
+      <li><a href="#visao">O caminho do dado</a></li>
+      <li><a href="#peso">O peso de cada voto</a></li>
+      <li><a href="#similaridade">Similaridade</a></li>
+      <li><a href="#grafo">O grafo</a></li>
       <li><a href="#alinhamento">Governismo e disciplina</a></li>
       <li><a href="#questionario">O questionário</a></li>
-      <li><a href="#polaridade">Polaridade</a></li>
-      <li><a href="#afinidade">A afinidade do cidadão</a></li>
+      <li><a href="#afinidade">Afinidade e polaridade</a></li>
       <li><a href="#dinheiro">Regras do dinheiro</a></li>
-      <li><a href="#origem">Origem e auditoria</a></li>
+      <li><a href="#origem">Origem e hash</a></li>
       <li><a href="#privacidade">Privacidade e LGPD</a></li>
       <li><a href="#desempenho">Desempenho e cache</a></li>
-      <li><a href="#numeros">Os números, numa tabela</a></li>
+      <li><a href="#numeros">Os números</a></li>
     </ol>
   </nav>
 
-  <h2 id="visao"><span class="num">1</span>Visão geral: do arquivo oficial à tela</h2>
-  <p>São três peças com papéis separados. A carga de dados, em Python, baixa e transforma; o banco guarda; a API, em C#,
-    só lê e responde. O cálculo pesado (similaridade, grafo, comunidades) acontece uma vez, na carga. O que depende
-    do cidadão (a afinidade) é calculado na hora, na API, e não é gravado.</p>
+  <main>
+  <section id="visao">
+    <h1>Guia técnico</h1>
+    <p class="sub">Como o Registro Aberto funciona por dentro, para mexer. Cada regra vem com um exemplo que você pode
+      alterar e ver a conta mudar. Os comandos, as tabelas e as rotas estão no <a href="mapa_do_sistema.html">mapa do
+      sistema</a>; onde tudo roda, na <a href="arquitetura.html">arquitetura</a>.</p>
 
-  <figure>
-    <svg viewBox="0 0 1080 300" role="img" aria-labelledby="t-visao d-visao">
-      <title id="t-visao">Caminho do dado</title>
-      <desc id="d-visao">Fontes oficiais alimentam a carga de dados em Python, que grava no Postgres. A API em C# lê o banco e responde ao site em React.</desc>
-      <defs>
-        <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" fill="var(--realce)"/>
-        </marker>
-      </defs>
-      <rect class="caixa" x="20" y="40" width="190" height="220" rx="3"/>
-      <text class="t" x="115" y="72" text-anchor="middle">Fontes oficiais</text>
-      <text class="d" x="115" y="100" text-anchor="middle">Câmara (dados abertos)</text>
-      <text class="d" x="115" y="120" text-anchor="middle">Senado (API)</text>
-      <text class="d" x="115" y="140" text-anchor="middle">TSE</text>
-      <text class="d" x="115" y="160" text-anchor="middle">Portal da Transparência</text>
-      <text class="d" x="115" y="180" text-anchor="middle">Tesouro · SIOP</text>
-      <text class="d" x="115" y="200" text-anchor="middle">IBGE · Receita</text>
-      <text class="s" x="115" y="236" text-anchor="middle">só fonte periódica</text>
-
-      <path class="linha" d="M210 150 H 258" marker-end="url(#seta)"/>
-
-      <rect class="caixa-realce" x="262" y="40" width="250" height="220" rx="3"/>
-      <text class="t" x="387" y="72" text-anchor="middle">Carga de dados (Python)</text>
-      <text class="d" x="387" y="100" text-anchor="middle">1. baixa e registra o hash</text>
-      <text class="d" x="387" y="120" text-anchor="middle">2. contrato de entrada</text>
-      <text class="d" x="387" y="140" text-anchor="middle">3. transformação pura</text>
-      <text class="d" x="387" y="160" text-anchor="middle">4. contrato de saída</text>
-      <text class="d" x="387" y="180" text-anchor="middle">5. grava com carga_id</text>
-      <text class="d" x="387" y="208" text-anchor="middle">6. similaridade, grafo,</text>
-      <text class="d" x="387" y="226" text-anchor="middle">comunidades, desenho</text>
-
-      <path class="linha" d="M512 150 H 560" marker-end="url(#seta)"/>
-
-      <rect class="caixa" x="564" y="70" width="170" height="160" rx="3"/>
-      <text class="t" x="649" y="102" text-anchor="middle">PostgreSQL</text>
-      <text class="d" x="649" y="130" text-anchor="middle">schema do EF</text>
-      <text class="d" x="649" y="150" text-anchor="middle">CHECK · UNIQUE · FK</text>
-      <text class="d" x="649" y="170" text-anchor="middle">execucoes, arestas,</text>
-      <text class="d" x="649" y="190" text-anchor="middle">nos_metrica, cargas</text>
-
-      <path class="linha" d="M734 150 H 782" marker-end="url(#seta)"/>
-
-      <rect class="caixa" x="786" y="70" width="130" height="160" rx="3"/>
-      <text class="t" x="851" y="102" text-anchor="middle">API (C#)</text>
-      <text class="d" x="851" y="130" text-anchor="middle">só lê</text>
-      <text class="d" x="851" y="150" text-anchor="middle">afinidade</text>
-      <text class="d" x="851" y="170" text-anchor="middle">na hora</text>
-      <text class="d" x="851" y="190" text-anchor="middle">cache 5 min</text>
-
-      <path class="linha" d="M916 150 H 944" marker-end="url(#seta)"/>
-
-      <rect class="caixa" x="948" y="70" width="112" height="160" rx="3"/>
-      <text class="t" x="1004" y="102" text-anchor="middle">Site</text>
-      <text class="d" x="1004" y="130" text-anchor="middle">React</text>
-      <text class="d" x="1004" y="150" text-anchor="middle">grafo,</text>
-      <text class="d" x="1004" y="170" text-anchor="middle">perfis,</text>
-      <text class="d" x="1004" y="190" text-anchor="middle">orçamento</text>
-    </svg>
-    <figcaption>O schema do banco pertence ao EF Core (as migrations do projeto Poligraph.Data). O Python nunca cria tabela: lê e grava nas que o EF criou, todas em snake_case.</figcaption>
-  </figure>
-
-  <div class="aviso">
-    <strong>Por que o cálculo do grafo fica na carga e não na API</strong>
-    <p>Similaridade entre todos os pares de uma casa é cara (mais de 200 mil pares na Câmara, que teve 644 deputados passando pela 57ª) e só muda quando chegam votos
-      novos. Calcular uma vez por carga e guardar o resultado numa <code>execucao</code> deixa a API leve e torna o grafo
-      reproduzível: toda execução grava os parâmetros que usou. Um cálculo de similaridade aparecendo no C# é tratado como
-      regressão de arquitetura.</p>
-  </div>
-
-  <h2 id="etl"><span class="num">2</span>A carga de dados (ETL)</h2>
-  <p>ETL quer dizer extrair, transformar e carregar. Aqui ela é uma série de comandos Python (<code>py -m poligraph_etl &lt;comando&gt;</code>),
-    um por fonte, encadeados pela rotina diária. O manual completo está em <code>src/etl/README.md</code>.</p>
-
-  <h3>Regras que valem para toda fonte</h3>
-  <div class="tabela"><table>
-    <thead><tr><th>Regra</th><th>Como</th><th>Por quê</th></tr></thead>
-    <tbody>
-      <tr><td>Só fonte periódica</td><td>Só entra o que a carga consegue baixar de novo sozinha</td><td>PDF ou planilha avulsa envelhece e não dá para justificar nem refazer</td></tr>
-      <tr><td>Contrato de entrada</td><td><code>contratos/&lt;fonte&gt;.py</code> lista só as colunas lidas</td><td>Coluna que some derruba a carga com <code>LayoutMudou</code>, em vez de virar nulo calado</td></tr>
-      <tr><td>Transformação pura</td><td>Função que recebe linhas e devolve linhas, sem banco</td><td>Testável sem rede e sem Postgres</td></tr>
-      <tr><td>Contrato de saída</td><td><code>contratos/banco.py</code>, igual à tabela</td><td>Um teste compara com o schema gerado pelo EF</td></tr>
-      <tr><td>CSV lido de verdade</td><td><code>pd.read_csv(dtype=str)</code></td><td>Os CSV da Câmara têm quebra de linha dentro do campo; ler texto evita que pandas adivinhe tipo</td></tr>
-      <tr><td>Regra medida vira restrição</td><td><code>CHECK</code>, <code>UNIQUE</code>, <code>FK</code> no EF</td><td>Um erro que o banco recusa custa minutos; um que ele aceita custa um capítulo</td></tr>
-    </tbody>
-  </table></div>
-
-  <h3>A legislatura sai da data do voto</h3>
-  <p>A legislatura de uma votação é calculada pela data, e a virada é em <strong>fevereiro</strong>, não em janeiro, porque
-    a posse é em 1º de fevereiro. Uma votação de janeiro de 2027 ainda é da 57ª. Comparar parlamentares só dentro da mesma
-    legislatura evita misturar mandatos diferentes, com bancadas diferentes.</p>
-
-  <h3>Sincronizar, não acumular</h3>
-  <p>Cada comando apaga o recorte que vai recarregar (um ano, um mês) e grava de novo. Rodar duas vezes dá o mesmo banco.
-    Para escrever rápido, as tabelas grandes usam <code>COPY</code> do Postgres; os votos passam por uma tabela temporária
-    e um <code>INSERT … ON CONFLICT</code>, porque precisam atualizar quem já existe.</p>
-
-  <h2 id="matriz"><span class="num">3</span>Do voto à matriz</h2>
-  <p>Para comparar parlamentares, os votos de uma casa e legislatura viram uma tabela: uma linha por parlamentar, uma coluna
-    por votação. Cada célula é um número.</p>
-
-  <div class="lado">
-    <div>
-      <h4>O que entra</h4>
-      <ul>
-        <li>Votação de <strong>plenário</strong> (comissão não)</li>
-        <li><strong>Aberta</strong> (secreta não tem voto individual)</li>
-        <li>Mesma casa e mesma legislatura</li>
-        <li>Pelo menos <strong>100 votações</strong> na legislatura, ou ela fica sem grafo</li>
-      </ul>
+    <div class="aviso">
+      <strong>A ideia em uma frase</strong>
+      <p>Afinidade política medida pelo que o parlamentar <em>votou</em>, não pelo que ele diz nem pelo partido em que está.
+        Tudo vem do registro nominal de votação da Câmara e do Senado, e cada número pode ser seguido até o arquivo oficial.</p>
     </div>
-    <div>
-      <h4>O valor de cada célula</h4>
-      <ul>
-        <li><code>+1</code> Sim · <code>−1</code> Não</li>
-        <li><code>0</code> abstenção, obstrução, presidente: não conta</li>
-        <li>vazio: ausente, não conta</li>
-      </ul>
-      <p>Ausência não é discordância. Contar a falta como "votou diferente" puniria quem faltou, não quem pensa diferente.</p>
+
+    <h2><span class="num">1</span>O caminho do dado</h2>
+    <p>Três peças com papéis separados: a <button class="termo" type="button" data-g="etl">carga de dados</button> em Python
+      baixa e transforma, o banco guarda, a API em C# só lê. O cálculo pesado acontece uma vez, na carga. A afinidade, que
+      depende das respostas de cada pessoa, é calculada na hora e não é gravada.</p>
+
+    <div class="demo">
+      <header><span class="rotulo">CLIQUE</span><h4>Do arquivo oficial à tela</h4><span class="dica">Cada etapa abre o que ela faz e por quê. As setas do teclado também andam.</span></header>
+      <div class="corpo">
+        <div class="fluxo" id="fluxo" role="toolbar" aria-label="Etapas"></div>
+        <div class="cartao-etapa" id="etapa" aria-live="polite"></div>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <h3>Peso de cada votação</h3>
-  <p>Nem toda votação diz o mesmo sobre uma pessoa. O peso é <strong>categoria × recência</strong>:</p>
-  <pre>peso = peso_da_categoria × 0,86 ^ anos_desde_a_votação</pre>
-  <div class="tabela"><table>
-    <thead><tr><th>Categoria</th><th>Peso</th><th>Por quê</th></tr></thead>
-    <tbody>
-      <tr><td>Substantiva</td><td class="n">1,0</td><td>Votação do mérito da matéria: o sinal mais forte</td></tr>
-      <tr><td>Destaque</td><td class="n">0,7</td><td>Mérito, mas de um trecho, não do projeto inteiro</td></tr>
-      <tr><td>Autoridade</td><td class="n">0,3</td><td>Voto em pessoa (indicação, sabatina), não em política</td></tr>
-      <tr><td>Procedimental</td><td class="n">0</td><td>Requerimento de rito mede obstrução, não posição; fica fora</td></tr>
-    </tbody>
-  </table></div>
-  <p>A razão <strong>0,86</strong> não foi escolhida no olho: é a correlação medida da posição dos mesmos deputados entre
-    anos dentro da legislatura (r = 0,862, entre 2023 e 2025). Um voto de três anos atrás vale 0,86³ ≈ 0,64 de um voto de hoje.</p>
+  <section id="peso">
+    <h2><span class="num">2</span>O peso de cada voto</h2>
+    <p>Para comparar parlamentares, os votos de uma casa e legislatura viram uma tabela: uma linha por parlamentar, uma coluna
+      por votação. Entra só votação de <strong>plenário</strong> e <strong>aberta</strong>, da mesma casa e da mesma
+      legislatura, que sai da data do voto com a virada em <strong>fevereiro</strong> (a posse é em 1º de fevereiro). A
+      legislatura precisa de pelo menos 100 votações assim, ou fica sem grafo.</p>
+    <p>Cada célula vale <code>+1</code> (Sim), <code>−1</code> (Não), <code>0</code> (abstenção, obstrução) ou fica vazia
+      (ausente). Zero e vazio não contam: faltar não é discordar. E nem toda votação diz o mesmo sobre alguém, por isso cada
+      uma tem um peso.</p>
 
-  <h2 id="similaridade"><span class="num">4</span>Similaridade entre parlamentares</h2>
-  <p>Para cada par da mesma casa, a carga calcula duas medidas, sobre as votações em que <strong>os dois</strong> se
-    posicionaram (Sim ou Não).</p>
-
-  <div class="lado">
-    <div>
-      <h4>Concordância simples</h4>
-      <pre>Σ peso × [votaram igual]
-─────────────────────────
-       Σ peso</pre>
-      <p>Lê-se como "votaram igual em 82% das vezes". É a que vai para a tela <strong>e a que monta o grafo</strong>.</p>
+    <div class="demo">
+      <header><span class="rotulo">EXPERIMENTE</span><h4>Categoria × recência</h4><span class="dica">peso = peso da categoria × 0,86 elevado aos anos desde a votação</span></header>
+      <div class="corpo duas">
+        <div>
+          <div class="controles">
+            <div class="seg" id="peso-cat" role="group" aria-label="Categoria"></div>
+            <label>Anos atrás <input type="range" id="peso-anos" min="0" max="8" step="1" value="3"><span class="saida" id="peso-anos-v">3</span></label>
+          </div>
+          <div class="forte" id="peso-v">0,64</div>
+          <div class="conta" id="peso-conta"></div>
+          <p class="dica" id="peso-porque" style="margin-top:10px;font-size:14px"></p>
+        </div>
+        <svg id="peso-curva" viewBox="0 0 280 190" role="img" aria-label="Curva do peso pelos anos"></svg>
+      </div>
     </div>
-    <div>
-      <h4>Cosseno ponderado</h4>
-      <pre>(cos(a·w, b·w) + 1) / 2</pre>
-      <p>O cosseno vai de −1 a 1; somar 1 e dividir por 2 leva para 0 a 1, que é o que o banco aceita (<code>ck_sim_valor</code>).
-        Fica gravado para comparação metodológica, mas não vira aresta.</p>
+    <p>O <strong>0,86</strong> não foi escolhido no olho: é a correlação medida da posição dos mesmos deputados entre anos
+      dentro da legislatura (r = 0,862, Câmara, 2023 a 2025).</p>
+  </section>
+
+  <section id="similaridade">
+    <h2><span class="num">3</span>Similaridade entre parlamentares</h2>
+    <p>Para cada par da mesma casa, a carga calcula duas medidas sobre as votações em que <strong>os dois</strong> votaram
+      Sim ou Não. A <strong>concordância simples</strong> ("votaram igual em 82% das vezes") vai para a tela e monta o grafo.
+      O <button class="termo" type="button" data-g="cosseno">cosseno</button> fica gravado para comparação metodológica.</p>
+
+    <div class="demo">
+      <header><span class="rotulo">EXPERIMENTE</span><h4>Dois parlamentares, doze votações</h4><span class="dica">Clique num voto para trocar: Sim, Não, Abstenção, Ausente.</span></header>
+      <div class="corpo">
+        <div class="controles">
+          <span style="font-size:13px;color:var(--suave)">Começar de:</span>
+          <div class="seg" id="sim-presets" role="group" aria-label="Exemplos"></div>
+        </div>
+        <div class="tabela"><table class="grade-votos" id="sim-grade"></table></div>
+        <div class="placar">
+          <div class="bom"><span>Concordância simples</span><b id="sim-conc">–</b></div>
+          <div><span>Cosseno reescalado</span><b id="sim-cos">–</b></div>
+          <div><span>Votações em comum</span><b id="sim-n">–</b></div>
+        </div>
+        <div class="conta" id="sim-conta"></div>
+      </div>
     </div>
-  </div>
 
-  <div class="aviso risco">
-    <strong>Mínimo de 20 votações em comum</strong>
-    <p>Par com menos de 20 votações em comum é descartado. Com 5 votações, "concordam em 100%" pode ser sorte. A regra está
-      no código e também no banco (<code>CHECK ck_sim_minimo</code>): se alguém mudar o código, o banco recusa a gravação.</p>
-  </div>
+    <div class="aviso risco">
+      <strong>Mínimo de 20 votações em comum</strong>
+      <p>Com cinco votações, "concordam em 100%" pode ser sorte. O par com menos de 20 é descartado, e a regra está no código e
+        no banco (<code>CHECK ck_sim_minimo</code>): se o código mudar, o banco recusa a gravação. No exemplo acima, com doze
+        colunas, o par sempre seria descartado no sistema.</p>
+    </div>
+  </section>
 
-  <h2 id="grafo"><span class="num">5</span>O grafo: kNN</h2>
-  <p>Cada parlamentar é um nó. A aresta liga dois parlamentares que votam parecido, com a concordância como peso. A questão é
-    <em>quais</em> pares ligar.</p>
+  <section id="grafo">
+    <h2><span class="num">4</span>O grafo: kNN, Louvain, molas e SVD</h2>
+    <p>Cada parlamentar é um nó, e a aresta liga quem vota parecido. São quatro decisões, e todas podem ser vistas no
+      laboratório abaixo, que roda os mesmos algoritmos sobre 40 parlamentares inventados.</p>
 
-  <h3>Por que não um corte fixo ("liga se concordam mais de 80%")</h3>
-  <p>Foi medido e não funciona: deputados concordam muito entre si. A concordância média entre dois deputados quaisquer é
-    <strong>0,663</strong>, e mesmo com o corte em 0,90 o grafo ainda tem <strong>11,6%</strong> de todas as arestas
-    possíveis, um borrão onde tudo liga em tudo. Um corte fixo também cria "hubs" artificiais: quem concorda moderadamente
-    com todo mundo ganha centenas de arestas.</p>
+    <div class="demo" id="lab">
+      <header><span class="rotulo">LABORATÓRIO</span><h4>Grafo de exemplo, 40 parlamentares e 80 votações</h4><span class="dica">Passe o mouse num nó; clique para ver os vizinhos dele.</span></header>
+      <div class="corpo">
+        <div class="controles">
+          <label>Arestas
+            <span class="seg" id="lab-modo" role="group" aria-label="Como ligar"><button type="button" data-v="knn" aria-pressed="true">k vizinhos</button><button type="button" data-v="limiar" aria-pressed="false">corte fixo</button></span>
+          </label>
+          <label id="lab-k-l">k <input type="range" id="lab-k" min="1" max="10" value="4"><span class="saida" id="lab-k-v">4</span></label>
+          <label id="lab-lim-l" hidden>corte <input type="range" id="lab-lim" min="0.50" max="0.95" step="0.01" value="0.80"><span class="saida" id="lab-lim-v">0,80</span></label>
+        </div>
+        <div class="controles">
+          <label>Cor
+            <span class="seg" id="lab-cor" role="group" aria-label="Cor dos nós"><button type="button" data-v="comunidade" aria-pressed="true">comunidade</button><button type="button" data-v="partido" aria-pressed="false">partido</button><button type="button" data-v="nenhuma" aria-pressed="false">nenhuma</button></span>
+          </label>
+          <label>Desenho
+            <span class="seg" id="lab-desenho" role="group" aria-label="Desenho"><button type="button" data-v="molas" aria-pressed="true">molas</button><button type="button" data-v="svd" aria-pressed="false">SVD</button></span>
+          </label>
+          <label><input type="checkbox" id="lab-faltas"> destacar quem faltou muito</label>
+          <button class="botao" type="button" id="lab-sacudir">Desenhar de novo</button>
+        </div>
+        <div class="lab">
+          <div class="palco">
+            <svg id="lab-svg" viewBox="0 0 720 460" role="img" aria-label="Grafo de exemplo"></svg>
+            <div class="dica-no" id="lab-dica" hidden></div>
+          </div>
+          <div class="lateral" id="lab-lateral"></div>
+        </div>
+        <div class="legenda-cores" id="lab-legenda"></div>
+        <div class="placar" id="lab-placar"></div>
+      </div>
+    </div>
 
-  <h3>O que é usado: os k vizinhos mais próximos, com k = 10</h3>
-  <p>Cada parlamentar escolhe os 10 colegas com quem mais concorda. A aresta existe se <strong>qualquer um dos dois</strong>
-    escolheu o outro (união), porque o grafo não tem direção. O resultado tem densidade previsível (no máximo 644 × 10 arestas
-    na Câmara, menos as escolhidas pelos dois lados) e cada pessoa aparece ligada ao seu entorno real, não a quem concorda com todo mundo.</p>
+    <h3 id="knn">Por que k vizinhos e não um corte fixo</h3>
+    <p>Deputados concordam muito entre si: a concordância média entre dois deputados quaisquer é <strong>0,663</strong>, e mesmo
+      cortando em 0,90 o grafo tem <strong>11,6%</strong> de todas as arestas possíveis. Um corte fixo liga quase todo mundo
+      ou quase ninguém, e quem concorda moderadamente com todos vira um centro artificial. No laboratório, troque para
+      <em>corte fixo</em> e mova o corte: a densidade salta de um borrão para nós soltos.</p>
+    <p>Com <button class="termo" type="button" data-g="knn">kNN</button>, cada parlamentar escolhe os k colegas com quem mais
+      concorda (no sistema, <strong>k = 10</strong>), e a aresta existe se <strong>qualquer um dos dois</strong> escolheu o
+      outro, porque o grafo não tem direção. Clique num nó: a lista mostra quem ele escolheu, quem o escolheu e quando foram
+      os dois.</p>
+    <ul>
+      <li><strong>Nenhuma aresta entre casas:</strong> deputado e senador não votam as mesmas matérias.</li>
+      <li><strong>Aresta guardada uma vez só</strong>, sempre com <code>pessoa_a &lt; pessoa_b</code>, com <code>CHECK</code> no banco.</li>
+      <li>Toda aresta pertence a uma <strong>execução</strong>, que grava k, a versão e os parâmetros usados.</li>
+    </ul>
 
-  <figure>
-    <svg viewBox="0 0 1080 230" role="img" aria-labelledby="t-knn d-knn">
-      <title id="t-knn">Corte fixo contra k vizinhos</title>
-      <desc id="d-knn">À esquerda, com um corte fixo, quase todos os nós ficam ligados entre si. À direita, com k vizinhos, cada nó fica ligado só aos mais próximos, e os grupos aparecem.</desc>
-      <text class="t" x="270" y="24" text-anchor="middle">Corte fixo em 0,80</text>
-      <g>
-        <line class="aresta" x1="120" y1="80" x2="200" y2="60"/><line class="aresta" x1="120" y1="80" x2="160" y2="150"/>
-        <line class="aresta" x1="120" y1="80" x2="330" y2="90"/><line class="aresta" x1="120" y1="80" x2="400" y2="170"/>
-        <line class="aresta" x1="200" y1="60" x2="160" y2="150"/><line class="aresta" x1="200" y1="60" x2="330" y2="90"/>
-        <line class="aresta" x1="200" y1="60" x2="380" y2="60"/><line class="aresta" x1="160" y1="150" x2="330" y2="90"/>
-        <line class="aresta" x1="160" y1="150" x2="400" y2="170"/><line class="aresta" x1="160" y1="150" x2="250" y2="190"/>
-        <line class="aresta" x1="330" y1="90" x2="380" y2="60"/><line class="aresta" x1="330" y1="90" x2="400" y2="170"/>
-        <line class="aresta" x1="330" y1="90" x2="250" y2="190"/><line class="aresta" x1="380" y1="60" x2="400" y2="170"/>
-        <line class="aresta" x1="250" y1="190" x2="400" y2="170"/><line class="aresta" x1="250" y1="190" x2="120" y2="80"/>
-        <line class="aresta" x1="270" y1="120" x2="120" y2="80"/><line class="aresta" x1="270" y1="120" x2="380" y2="60"/>
-        <line class="aresta" x1="270" y1="120" x2="160" y2="150"/><line class="aresta" x1="270" y1="120" x2="400" y2="170"/>
-        <line class="aresta" x1="270" y1="120" x2="200" y2="60"/><line class="aresta" x1="270" y1="120" x2="250" y2="190"/>
-      </g>
-      <circle class="no" cx="120" cy="80" r="9"/><circle class="no" cx="200" cy="60" r="9"/><circle class="no" cx="160" cy="150" r="9"/>
-      <circle class="no" cx="330" cy="90" r="9"/><circle class="no" cx="380" cy="60" r="9"/><circle class="no" cx="400" cy="170" r="9"/>
-      <circle class="no" cx="250" cy="190" r="9"/><circle class="no no-a" cx="270" cy="120" r="9"/>
-      <text class="s" x="270" y="222" text-anchor="middle">o nó do meio concorda "um pouco" com todos e vira hub</text>
+    <h3 id="louvain">Comunidades: por que Louvain</h3>
+    <ul>
+      <li><strong>Usa o peso</strong> das arestas: concordar 95% pesa mais que 75%.</li>
+      <li><strong>Não pede o número de grupos.</strong> No k-means alguém teria de dizer "quero 5 blocos". O
+        <button class="termo" type="button" data-g="louvain">Louvain</button> descobre quantos existem; mude o k no laboratório
+        e veja o número de comunidades mudar sozinho.</li>
+      <li><strong>Maximiza a <button class="termo" type="button" data-g="modularidade">modularidade</button></strong>, a mesma
+        medida usada depois para comparar com os partidos.</li>
+      <li><strong>Semente fixa (20260826):</strong> a ordem de visita dos nós é sorteada, e a semente faz a mesma entrada dar
+        sempre a mesma saída. As comunidades são numeradas por tamanho, a 1 é a maior.</li>
+    </ul>
 
-      <text class="t" x="810" y="24" text-anchor="middle">k vizinhos (k = 10 no sistema)</text>
-      <g>
-        <line class="aresta-forte" x1="660" y1="80" x2="740" y2="60"/><line class="aresta-forte" x1="660" y1="80" x2="700" y2="150"/>
-        <line class="aresta-forte" x1="740" y1="60" x2="700" y2="150"/>
-        <line class="aresta-forte" x1="870" y1="90" x2="920" y2="60"/><line class="aresta-forte" x1="870" y1="90" x2="940" y2="170"/>
-        <line class="aresta-forte" x1="920" y1="60" x2="940" y2="170"/><line class="aresta-forte" x1="790" y1="190" x2="940" y2="170"/>
-        <line class="aresta" x1="810" y1="120" x2="700" y2="150"/><line class="aresta" x1="810" y1="120" x2="870" y2="90"/>
-      </g>
-      <circle class="no" cx="660" cy="80" r="9"/><circle class="no" cx="740" cy="60" r="9"/><circle class="no" cx="700" cy="150" r="9"/>
-      <circle class="no" cx="870" cy="90" r="9"/><circle class="no" cx="920" cy="60" r="9"/><circle class="no" cx="940" cy="170" r="9"/>
-      <circle class="no" cx="790" cy="190" r="9"/><circle class="no no-a" cx="810" cy="120" r="9"/>
-      <text class="s" x="810" y="222" text-anchor="middle">cada um fica ligado ao seu entorno; os grupos aparecem</text>
-    </svg>
-    <figcaption>Ilustração com 8 nós e k = 2. No sistema, k = 10 e o grafo da Câmara da 57ª tem 644 nós (os 513 titulares e quem os substituiu).</figcaption>
-  </figure>
+    <h3 id="ari">Comunidade × partido: ARI e modularidade</h3>
+    <p>As duas medidas respondem perguntas diferentes. O <button class="termo" type="button" data-g="ari">ARI</button> diz se as
+      comunidades <em>coincidem</em> com os partidos; a modularidade diz qual das duas divisões descreve melhor o grafo. No
+      laboratório, alterne a cor entre comunidade e partido e compare os números no placar.</p>
+    <div class="tabela"><table>
+      <thead><tr><th>Medida, no sistema</th><th class="n">Valor</th></tr></thead>
+      <tbody>
+        <tr><td>ARI comunidade × partido</td><td class="n">0,277</td></tr>
+        <tr><td>Modularidade das comunidades</td><td class="n">0,558</td></tr>
+        <tr><td>Modularidade dos partidos</td><td class="n">0,288</td></tr>
+      </tbody>
+    </table></div>
+    <p class="medido">MEDIDO em 2026-08, Câmara, 57ª legislatura.</p>
+    <p>A frase do trabalho: as comunidades de voto descrevem o grafo quase duas vezes melhor que os partidos, e coincidem pouco
+      com eles. O União Brasil aparece espalhado em quatro das seis comunidades. No exemplo, o "Partido C" faz esse papel.</p>
 
-  <h3>Regras que o banco garante</h3>
-  <ul>
-    <li><strong>Nenhuma aresta entre casas.</strong> Deputado e senador não votam as mesmas matérias no mesmo dia; compará-los não faz sentido.</li>
-    <li><strong>Aresta sem direção, guardada uma vez só:</strong> sempre com <code>pessoa_a &lt; pessoa_b</code>, com <code>CHECK</code> no banco.</li>
-    <li>Toda aresta pertence a uma <strong>execução</strong>, que guarda k, a versão e os parâmetros usados.</li>
-  </ul>
+    <h3 id="desenho">O desenho: molas, e por que os eixos não significam nada</h3>
+    <p>O desenho do site é de <strong>molas</strong> (Fruchterman-Reingold): cada aresta puxa os dois nós, todo par se repele, e
+      o sistema roda 120 iterações até se acomodar. Clique em <em>Desenhar de novo</em> para ver a acomodação. Esquerda e
+      direita na figura não são esquerda e direita política: girar o desenho não muda nada, o que importa é quem está perto de quem.</p>
+    <p>Em paralelo, a carga calcula o <button class="termo" type="button" data-g="svd">SVD</button>, que dá eixos com
+      significado: o primeiro é a direção que mais separa os votos e explica <strong>34,6%</strong> da variação na Câmara
+      (2026-08, 57ª).</p>
+    <div class="aviso risco">
+      <strong>O centro não é moderação</strong>
+      <p>Quem faltou muito tem pouca informação e cai perto do centro. No laboratório, escolha <em>SVD</em> e marque
+        <em>destacar quem faltou muito</em>: os três que votaram em cerca de um terço das votações ficam, em média, a metade
+        da distância ao centro que os outros (o placar mostra a razão), sem ser mais moderados que o próprio grupo. No sistema, a correlação entre distância do centro e número de votações é r = 0,566.</p>
+    </div>
+  </section>
 
-  <h2 id="comunidades"><span class="num">6</span>Comunidades: Louvain</h2>
-  <p>Comunidade é um grupo de parlamentares que se ligam mais entre si do que com o resto do grafo. A cor de cada nó na tela
-    é a comunidade dele.</p>
+  <section id="alinhamento">
+    <h2><span class="num">5</span>Governismo e disciplina</h2>
+    <p>Duas medidas por parlamentar, a partir da orientação de bancada que a Câmara publica em cada votação.
+      <strong>Governismo</strong> é seguir a orientação do Governo; <strong>disciplina</strong> é seguir a do próprio partido.</p>
+    <p>O partido é o do <strong>momento do voto</strong> (<code>votos.partido_no_voto</code>), não o de hoje: medir contra a
+      filiação atual reescreveria o passado de quem trocou de partido. As duas são guardadas como par ("12 de 15"), nunca só a
+      porcentagem, porque 12 de 15 e 800 de 1.000 dão 80% e não dizem a mesma coisa.</p>
+  </section>
 
-  <h3>Por que Louvain</h3>
-  <ul>
-    <li><strong>Usa o peso das arestas.</strong> Concordar 95% pesa mais que concordar 75%.</li>
-    <li><strong>Não pede o número de grupos.</strong> Diferente do k-means, ninguém diz "quero 5 blocos": o algoritmo descobre
-      quantos existem. Pedir um número seria impor uma resposta.</li>
-    <li><strong>Maximiza a modularidade</strong>, a medida-padrão de "quão bem uma divisão separa o grafo", que é exatamente
-      o que se quer comparar com os partidos depois.</li>
-    <li>É rápido para grafos deste tamanho e está pronto no <code>networkx</code>, sem dependência nova.</li>
-  </ul>
+  <section id="questionario">
+    <h2><span class="num">6</span>O questionário</h2>
+    <p>O cidadão responde a afirmações sobre votações reais, com a ementa reescrita em linguagem comum.</p>
+    <ol>
+      <li>A carga ordena as candidatas (<code>curadoria.py</code>): plenário, aberta, substantiva, com quórum, ordenadas pela
+        <strong>divisão</strong>, <code>min(sim, não) / total</code>. Votação em que todos votaram igual não separa ninguém.</li>
+      <li>Uma pessoa lê cada uma, escreve a afirmação e atribui a <strong>polaridade</strong>. É trabalho humano de propósito.</li>
+      <li>O poço tem <strong>49 perguntas ativas</strong>, 40 da Câmara e 9 do Senado.</li>
+    </ol>
+    <div class="tabela"><table>
+      <thead><tr><th>Bloco</th><th class="n">Quantas</th><th>Como são escolhidas</th></tr></thead>
+      <tbody>
+        <tr><td>Abertura, Câmara</td><td class="n">8</td><td>As 8 que mais separam deputados, em ordem gulosa de cobertura de pares</td></tr>
+        <tr><td>Senado</td><td class="n">9</td><td>O poço inteiro: das substantivas abertas da 57ª, quase todas tiveram divisão abaixo de 5% e as outras foram secretas</td></tr>
+        <tr><td>Desempate, Câmara</td><td class="n">7</td><td>Escolhidas depois das 8 primeiras, contra o empate desta pessoa</td></tr>
+      </tbody>
+    </table></div>
+    <p><strong>O desempate dirigido.</strong> Depois das 8 primeiras, muitos deputados empatam com a pessoa. O sistema escolhe as
+      7 perguntas que mais separam <em>esses</em> deputados. Medido: 15 perguntas com desempate dirigido valem 25 fixas. Sortear
+      não ajudaria. As 7 vêm de uma vez, para não fazer sete idas ao servidor no meio do questionário.</p>
+    <div class="aviso">
+      <strong>O painel não mostra direção</strong>
+      <p>Entre uma pergunta e outra o site mostra quem compareceu à votação, nunca quem votou Sim ou Não. Mostrar o placar
+        induziria a pessoa a seguir a maioria.</p>
+    </div>
+  </section>
 
-  <h3>Semente fixa: 20260826</h3>
-  <p>O Louvain percorre os nós numa ordem aleatória, e ordens diferentes podem dar divisões um pouco diferentes. Com a semente
-    fixa, a mesma entrada dá sempre a mesma saída: a figura do TCC pode ser refeita. Trocar a semente muda o resultado
-    publicado, por isso ela só muda junto com uma nova versão da carga. As comunidades são numeradas por tamanho (a 1 é a maior).</p>
+  <section id="afinidade">
+    <h2><span class="num">7</span>Afinidade e polaridade</h2>
+    <p>Em cerca de <strong>14%</strong> das votações nominais, votar "Sim" significa <strong>rejeitar</strong> a ideia. O caso
+      típico é o destaque, em que se vota um trecho: dependendo de como foi apresentado, "Sim" mantém o texto ou o derruba.
+      Por isso cada pergunta tem uma <button class="termo" type="button" data-g="polaridade">polaridade</button>, e o voto vira
+      posição efetiva:</p>
+    <pre>posição efetiva = voto × polaridade          (Sim = +1, Não = −1)
+comparável      = cidadão respondeu, parlamentar votou Sim ou Não
+afinidade       = concordâncias ÷ comparáveis, mostrada como "X de Y"</pre>
 
-  <h2 id="comparacao"><span class="num">7</span>Comunidade × partido: ARI e modularidade</h2>
-  <p>A pergunta do trabalho é se o voto agrupa os parlamentares do mesmo jeito que o partido. Duas medidas, porque cada uma
-    responde uma coisa:</p>
-  <div class="tabela"><table>
-    <thead><tr><th>Medida</th><th>Responde</th><th>Medido</th></tr></thead>
-    <tbody>
-      <tr><td><strong>ARI</strong> (índice de Rand ajustado)</td><td>As comunidades coincidem com os partidos? 1 é igual, 0 é o que o acaso daria</td><td class="n">0,277</td></tr>
-      <tr><td><strong>Modularidade</strong> das comunidades</td><td>A divisão por voto descreve bem o grafo?</td><td class="n">0,558</td></tr>
-      <tr><td><strong>Modularidade</strong> dos partidos</td><td>E a divisão por partido, no mesmo grafo?</td><td class="n">0,288</td></tr>
-    </tbody>
-  </table></div>
-  <p class="medido">MEDIDO em 2026-08 na Câmara, 57ª legislatura, com os votos disponíveis na época.</p>
-  <p>Sozinha, a modularidade não compara nada; sozinho, o ARI diz que as divisões diferem mas não qual é melhor. Juntas
-    sustentam a frase do trabalho: as comunidades de voto descrevem o grafo quase duas vezes melhor que os partidos, e
-    coincidem pouco com eles. Um exemplo: o União Brasil aparece espalhado em quatro das seis comunidades.</p>
+    <div class="demo">
+      <header><span class="rotulo">EXPERIMENTE</span><h4>Um questionário de seis perguntas</h4><span class="dica">Afirmações e parlamentares inventados. Responda e veja o ranking.</span></header>
+      <div class="corpo">
+        <div class="perguntas" id="af-perguntas"></div>
+        <div class="controles" style="margin-top:12px">
+          <label><input type="checkbox" id="af-sem-pol"> Esquecer a polaridade (o erro que o teste API3 pega)</label>
+        </div>
+        <div class="duas">
+          <div class="tabela"><table class="ranking" id="af-ranking"></table></div>
+          <div>
+            <svg id="af-mapa" viewBox="0 0 280 220" role="img" aria-label="Posição do cidadão entre os parlamentares"></svg>
+            <div class="conta" id="af-posicao"></div>
+          </div>
+        </div>
+        <p class="dica" id="af-aviso" style="font-size:14px"></p>
+      </div>
+    </div>
 
-  <h2 id="desenho"><span class="num">8</span>O desenho: molas e SVD</h2>
-  <p>O grafo na tela é desenhado pelo algoritmo de <strong>molas</strong> (Fruchterman-Reingold): toda aresta puxa os dois nós
-    um para o outro, todo par de nós se repele, e o sistema roda 120 iterações até se acomodar. Quem vota junto fica perto.
-    A semente é a mesma do Louvain, para o desenho ser o mesmo a cada carga.</p>
+    <div class="tabela"><table>
+      <thead><tr><th>Regra</th><th>Por quê</th></tr></thead>
+      <tbody>
+        <tr><td>Sempre "X de Y"</td><td>"80%" esconde se a base foi 5 ou 20 perguntas</td></tr>
+        <tr><td>Piso: comparáveis ≥ 60% das oferecidas</td><td>Quem faltou à maioria das votações do questionário teria afinidade sobre quase nada</td></tr>
+        <tr><td>Mostra os 5 primeiros, com empates</td><td>Empate aparece como empate, sem critério escondido</td></tr>
+        <tr><td>Posição no grafo: média dos 10 mais parecidos, peso = afinidade²</td><td>O quadrado puxa o ponto para quem concorda mais: 90% pesa quase o dobro de 65%</td></tr>
+        <tr><td>Não é recomendação de voto</td><td>A frase aparece na tela de resultado</td></tr>
+      </tbody>
+    </table></div>
+    <div class="aviso risco">
+      <strong>O campo mais perigoso do sistema</strong>
+      <p>Uma polaridade errada não quebra a tela: vira um número plausível e invertido. Marque "esquecer a polaridade" acima e
+        veja o ranking virar sem nenhum erro aparente. Por isso ela é atribuída por uma pessoa, e nenhuma mudança no cálculo de
+        afinidade entra sem o teste de regressão <code>TestesPolaridade.cs</code> (API3), em que os casos de polaridade −1 são
+        o teste de verdade: os de +1 passam mesmo com o código errado.</p>
+    </div>
+  </section>
 
-  <div class="aviso risco">
-    <strong>Os eixos do desenho não significam nada</strong>
-    <p>Esquerda e direita, cima e baixo na figura não são esquerda e direita política. Girar o desenho não muda o que ele diz;
-      o que importa é quem está perto de quem. Por isso a tela não tem rótulo nos eixos.</p>
-  </div>
+  <section id="dinheiro">
+    <h2><span class="num">8</span>Regras do dinheiro</h2>
+    <p>Nas páginas de orçamento vale uma regra do autor: <strong>o total da base fecha com o da fonte</strong>. O que não fecha
+      fica nas tabelas <code>reconciliacoes</code> e <code>reconciliacao_motivos</code>, com motivo e valor, e o comando
+      <code>conferir</code> cobra. Linha com erro entra corrigida por regra escrita, nunca some calada.</p>
 
-  <p>Em paralelo, a carga calcula o <strong>SVD</strong> (decomposição em valores singulares, parente do PCA) da matriz de
-    votos. Ele dá eixos com significado: o primeiro componente é a direção que mais separa os votos e explica
-    <strong>34,6%</strong> da variação. Fica gravado em <code>nos_metrica</code> para a análise do trabalho.</p>
+    <div class="demo">
+      <header><span class="rotulo">EXPERIMENTE</span><h4>Erro de digitação em contrato</h4><span class="dica">Acima de 100 vezes entre o valor inicial e o final, um dos dois foi digitado errado.</span></header>
+      <div class="corpo">
+        <div class="controles">
+          <label>Valor inicial <input type="text" id="ct-ini" value="80.000,00" inputmode="decimal" size="14"></label>
+          <label>Valor final <input type="text" id="ct-fim" value="80.000.000,00" inputmode="decimal" size="16"></label>
+          <div class="seg" id="ct-ex" role="group" aria-label="Exemplos"><button type="button" data-i="100.000,00" data-f="125.000,00">aditivo normal</button><button type="button" data-i="80.000,00" data-f="80.000.000,00">vírgula fora do lugar</button><button type="button" data-i="1.500.000,00" data-f="1.500,00">zeros a menos</button></div>
+        </div>
+        <div class="placar">
+          <div class="bom"><span>Entra no total</span><b id="ct-entra">–</b></div>
+          <div class="ruim"><span>Fica à vista como descartado</span><b id="ct-desc">–</b></div>
+          <div><span>Razão entre os dois</span><b id="ct-razao">–</b></div>
+        </div>
+        <div class="conta" id="ct-conta"></div>
+      </div>
+    </div>
 
-  <div class="aviso risco">
-    <strong>O centro não é moderação</strong>
-    <p>Quem faltou a muitas votações tem pouca informação e cai perto do centro, em qualquer dos dois desenhos. A correlação
-      entre distância do centro e número de votações é r = 0,566. Um nó no meio pode ser um moderado ou alguém que quase
-      não votou.</p>
-  </div>
-  <p class="medido">MEDIDO em 2026-08 na Câmara, 57ª legislatura.</p>
+    <div class="demo">
+      <header><span class="rotulo">EXPERIMENTE</span><h4>O mesmo texto, dois números</h4><span class="dica">"1.234" vale mil duzentos e trinta e quatro no Portal e um vírgula dois três quatro na cota da Câmara.</span></header>
+      <div class="corpo">
+        <div class="controles"><label>Texto do arquivo <input type="text" id="lt-txt" value="1.234" size="14"></label></div>
+        <div class="placar">
+          <div><span>Leitor pt-BR (Portal, TSE)</span><b id="lt-br">–</b></div>
+          <div><span>Leitor de ponto decimal (cota da Câmara)</span><b id="lt-pt">–</b></div>
+          <div class="ruim"><span>Diferença se trocar o leitor</span><b id="lt-x">–</b></div>
+        </div>
+        <p class="dica" style="font-size:14px;margin-top:10px">Cada fonte tem o seu leitor, e trocar daria um total mil vezes diferente sem erro nenhum.</p>
+      </div>
+    </div>
+    <p><strong>Sigiloso.</strong> Quando o contratado é protegido, o Portal escreve <code>-11</code> no código e "Sigiloso" no
+      nome. O contrato entra no total e é contado também à parte, como sigiloso.</p>
+  </section>
 
-  <h2 id="alinhamento"><span class="num">9</span>Governismo e disciplina</h2>
-  <p>Duas medidas por parlamentar, a partir da orientação de bancada que a Câmara publica em cada votação:</p>
-  <ul>
-    <li><strong>Governismo:</strong> em quantas votações seguiu a orientação do Governo.</li>
-    <li><strong>Disciplina:</strong> em quantas seguiu a orientação do próprio partido.</li>
-  </ul>
-  <p>O partido é o do <strong>momento do voto</strong> (<code>votos.partido_no_voto</code>), não o de hoje. Trocar de partido
-    é comum; medir contra a filiação atual reescreveria o passado. As duas são guardadas como par ("12 de 15"), nunca só a
-    porcentagem, porque 12 de 15 e 800 de 1.000 dão 80% e não dizem a mesma coisa.</p>
+  <section id="origem">
+    <h2><span class="num">9</span>Origem e hash</h2>
+    <p>Todo número da tela pode ser seguido até o arquivo de onde saiu: é o <strong>modo Auditoria</strong> do site.</p>
+    <ul>
+      <li><strong>Tabela <code>cargas</code>:</strong> cada arquivo baixado é registrado com endereço, data, comando e o
+        <button class="termo" type="button" data-g="sha256">sha256</button> do conteúdo.</li>
+      <li><strong><code>carga_id</code> em 30 tabelas:</strong> cada linha aponta para a carga que a gravou.</li>
+      <li><strong>Origem por coluna:</strong> quando a linha tem duas fontes, cada coluna guarda a sua
+        (<code>cpf_carga_id</code>, <code>nome_civil_carga_id</code>, <code>palavras_chave_carga_id</code>,
+        <code>populacao_carga_id</code> e outras).</li>
+      <li><strong>Respostas de API</strong> são salvas em arquivo e registradas do mesmo jeito, com hash.</li>
+    </ul>
+    <div class="demo">
+      <header><span class="rotulo">CONFIRA</span><h4>Calcular o sha256 de um arquivo</h4><span class="dica">Baixe da fonte o arquivo que o modo Auditoria indica e compare. O arquivo não sai do seu computador.</span></header>
+      <div class="corpo">
+        <label class="arquivo" id="hs-alvo" tabindex="0">Arraste um arquivo aqui ou clique para escolher<input type="file" id="hs-arq" hidden></label>
+        <p class="hash" id="hs-saida" aria-live="polite" style="margin-top:10px"></p>
+        <div class="controles"><label style="flex-wrap:wrap;max-width:100%">Hash do modo Auditoria <input type="text" id="hs-esperado" size="40" placeholder="cole aqui para comparar"></label><span class="saida" id="hs-veredito"></span></div>
+      </div>
+    </div>
+  </section>
 
-  <h2 id="questionario"><span class="num">10</span>O questionário</h2>
-  <p>O cidadão responde a afirmações sobre votações reais. Cada pergunta é uma votação nominal com a ementa reescrita em
-    linguagem comum.</p>
+  <section id="privacidade">
+    <h2><span class="num">10</span>Privacidade e LGPD</h2>
+    <div class="tabela"><table>
+      <thead><tr><th>Dado</th><th>Regra</th></tr></thead>
+      <tbody>
+        <tr><td>CPF</td><td>Nunca gravado nem mostrado. A coluna é <code>cpf_hash</code>, <button class="termo" type="button" data-g="hmac">HMAC</button>-SHA256 com chave secreta (<code>POLIGRAPH_CHAVE_CPF</code>)</td></tr>
+        <tr><td>Fontes com CPF em claro</td><td>CEIS, CNEP, cartões, o detalhe do deputado na API da Câmara e os arquivos do TSE: o contrato não lê a coluna ou descarta antes de gravar. A resposta da API não é salva; a origem fica só como índice das consultas</td></tr>
+        <tr><td>Seguir parlamentar</td><td>Registro de convicção política, dado sensível na LGPD: consentimento específico, e a conta pode ser apagada</td></tr>
+        <tr><td>Login</td><td>Só Google. O <code>id_token</code> é validado e descartado; nenhum token nem senha vai para o banco</td></tr>
+        <tr><td>Conta</td><td>Opcional. Ler é público; só seguir e a própria conta pedem login</td></tr>
+      </tbody>
+    </table></div>
+  </section>
 
-  <h3>De onde saem as perguntas</h3>
-  <ol>
-    <li>A carga ordena as candidatas (<code>curadoria.py</code>): só plenário, aberta, substantiva, com quórum, ordenadas pela
-      <strong>divisão</strong> (<code>min(sim, não) / total</code>; 50% é o máximo). Votação em que todos votaram igual
-      não separa ninguém.</li>
-    <li>Uma pessoa lê cada candidata, escreve a afirmação e atribui a polaridade. Isso é trabalho humano de propósito
-      (ver a próxima seção).</li>
-    <li>O poço hoje tem <strong>49 perguntas ativas</strong>: 40 da Câmara e 9 do Senado.</li>
-  </ol>
+  <section id="desempenho">
+    <h2><span class="num">11</span>Desempenho e cache</h2>
+    <div class="tabela"><table>
+      <thead><tr><th>Camada</th><th>O que faz</th></tr></thead>
+      <tbody>
+        <tr><td>Site</td><td>TanStack Query guarda cada resposta por 5 minutos: voltar a uma página já vista não refaz o request</td></tr>
+        <tr><td>Navegador e Cloudflare</td><td><code>Cache-Control: public, max-age=300</code> em todo GET público com sucesso, sem login</td></tr>
+        <tr><td>API</td><td>Cache em memória em cada cópia da aplicação, com uma consulta só por chave mesmo com vários requests ao mesmo tempo. Sem Redis</td></tr>
+        <tr><td>Warmup de cache</td><td>Ao subir e de hora em hora, a API pré-calcula as páginas mais pesadas</td></tr>
+        <tr><td>Carga de dados</td><td><code>COPY</code> do Postgres nas tabelas grandes; votos por tabela temporária e <code>INSERT … ON CONFLICT</code></td></tr>
+        <tr><td>Medição</td><td>Cabeçalho <code>Server-Timing</code> com o tempo do request e quantas consultas ao banco ele fez</td></tr>
+      </tbody>
+    </table></div>
+  </section>
 
-  <h3>Quais perguntas a pessoa vê: 24</h3>
-  <div class="tabela"><table>
-    <thead><tr><th>Bloco</th><th>Quantas</th><th>Como são escolhidas</th></tr></thead>
-    <tbody>
-      <tr><td>Abertura, Câmara</td><td class="n">8</td><td>As 8 que mais separam deputados, em ordem gulosa de cobertura de pares</td></tr>
-      <tr><td>Senado</td><td class="n">9</td><td>O poço inteiro: das votações substantivas abertas da 57ª, quase todas tiveram divisão abaixo de 5% e as outras foram secretas</td></tr>
-      <tr><td>Desempate, Câmara</td><td class="n">7</td><td>Escolhidas depois das 8 primeiras, contra o empate <em>desta</em> pessoa</td></tr>
-    </tbody>
-  </table></div>
+  <section id="numeros">
+    <h2><span class="num">12</span>Os números</h2>
+    <p>Parâmetros conferidos no código em 2026-10-10. Medidas com a data e o recorte.</p>
+    <div class="tabela"><table>
+      <thead><tr><th>Número</th><th class="n">Valor</th><th>Onde</th></tr></thead>
+      <tbody>
+        <tr><td>Peso por categoria</td><td class="n">1,0 · 0,7 · 0,3 · 0</td><td><code>similaridade.PESO_CATEGORIA</code></td></tr>
+        <tr><td>Razão de recência por ano</td><td class="n">0,86</td><td><code>similaridade.RAZAO_RECENCIA</code></td></tr>
+        <tr><td>Votações em comum, mínimo</td><td class="n">20</td><td><code>MINIMO_VOTACOES_COMUNS</code>, <code>ck_sim_minimo</code></td></tr>
+        <tr><td>Vizinhos por nó (k)</td><td class="n">10</td><td><code>similaridade.K_VIZINHOS</code></td></tr>
+        <tr><td>Votações para ter grafo</td><td class="n">100</td><td><code>VOTACOES_MINIMAS_PARA_GRAFO</code></td></tr>
+        <tr><td>Semente</td><td class="n">20260826</td><td><code>grafo.SEMENTE</code></td></tr>
+        <tr><td>Iterações das molas</td><td class="n">120</td><td><code>grafo.ITERACOES_LAYOUT</code></td></tr>
+        <tr><td>Perguntas: abertura + Senado + desempate</td><td class="n">8 + 9 + 7</td><td><code>ServicoQuestionario</code></td></tr>
+        <tr><td>Comparáveis, mínimo</td><td class="n">60%</td><td><code>FracaoMinimaDeRespostas</code></td></tr>
+        <tr><td>Parlamentares mostrados</td><td class="n">5</td><td><code>ServicoAfinidade.QuantidadeExibida</code></td></tr>
+        <tr><td>Vizinhos para posicionar o cidadão</td><td class="n">10</td><td><code>ServicoAfinidade.VizinhosParaPosicionar</code></td></tr>
+        <tr><td>Divergência que indica erro de digitação</td><td class="n">100×</td><td><code>compras.LIMITE_DE_DIVERGENCIA</code></td></tr>
+        <tr><td>Correlação entre anos</td><td class="n">0,862</td><td>Câmara, 2023 a 2025</td></tr>
+        <tr><td>Concordância média entre dois deputados</td><td class="n">0,663</td><td>Câmara, 57ª, 2026-08</td></tr>
+        <tr><td>ARI · modularidade comunidade · partido</td><td class="n">0,277 · 0,558 · 0,288</td><td>Câmara, 57ª, 2026-08</td></tr>
+        <tr><td>Variação explicada pelo 1º eixo do SVD</td><td class="n">34,6%</td><td>Câmara, 57ª, 2026-08</td></tr>
+        <tr><td>Votações em que "Sim" rejeita</td><td class="n">≈ 14%</td><td>Votações nominais da Câmara</td></tr>
+      </tbody>
+    </table></div>
+    <p class="medido">As medidas de 2026-08 são do plano 07. Votos chegaram depois; refazer a conta pode mudar a segunda casa
+      decimal. Os números do laboratório e dos exemplos vêm de dados inventados e não são do sistema.</p>
+  </section>
+  </main>
+</div>
+<div class="balao" id="balao" role="tooltip" hidden></div>
 
-  <h3>O desempate dirigido</h3>
-  <p>Depois das 8 primeiras, muitos deputados empatam com a pessoa. O sistema olha quem está empatado no topo e escolhe as 7
-    perguntas que mais separam <em>esses</em> deputados. Medido: 15 perguntas com desempate dirigido valem 25 perguntas
-    fixas, e o empate no topo cai para cerca de 6. Sortear as perguntas não ajudaria: ficaria igual a não adaptar. As 7 são
-    escolhidas de uma vez, e não uma a uma, para não fazer sete idas ao servidor no meio do questionário.</p>
+<script>
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const fmt = (x, d = 2) => x.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
+const reais = x => "R$ " + x.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const SVG = "http://www.w3.org/2000/svg";
+function el(tag, attrs = {}, pai) {
+  const e = document.createElementNS(SVG, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (pai) pai.appendChild(e);
+  return e;
+}
+function sorteio(s) {
+  return function () {
+    s = s + 0x6D2B79F5 | 0;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-  <div class="aviso">
-    <strong>O painel não mostra direção</strong>
-    <p>Entre uma pergunta e outra o site mostra quem compareceu à votação, nunca quem votou Sim ou Não. Mostrar o placar antes
-      das próximas respostas induziria a pessoa a seguir a maioria, e o instrumento passaria a medir adesão, não opinião.</p>
-  </div>
+const TEMAS = ["sistema", "claro", "escuro"];
+let tema = "sistema";
+try { tema = localStorage.getItem("guia-tema") || "sistema"; } catch (e) {}
+function escuro() {
+  if (tema === "escuro") return true;
+  if (tema === "claro") return false;
+  return matchMedia("(prefers-color-scheme: dark)").matches;
+}
+const aoMudarTema = [];
+function aplicarTema() {
+  const raiz = document.documentElement;
+  if (tema === "sistema") raiz.removeAttribute("data-theme");
+  else raiz.dataset.theme = tema === "escuro" ? "dark" : "light";
+  $("#tema").textContent = "Tema: " + tema;
+  aoMudarTema.forEach(f => f());
+}
+$("#tema").addEventListener("click", () => {
+  tema = TEMAS[(TEMAS.indexOf(tema) + 1) % TEMAS.length];
+  try { localStorage.setItem("guia-tema", tema); } catch (e) {}
+  aplicarTema();
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (tema === "sistema") aplicarTema(); });
 
-  <h2 id="polaridade"><span class="num">11</span>Polaridade</h2>
-  <p>Em cerca de <strong>14%</strong> das votações nominais, votar "Sim" significa <strong>rejeitar</strong> a ideia. O caso típico
-    é o destaque, em que se vota um trecho: dependendo de como o destaque foi apresentado, "Sim" pode manter o texto
-    ou derrubá-lo.</p>
-  <p>Cada pergunta tem uma polaridade, atribuída à mão:</p>
-  <ul>
-    <li><code>+1</code>: votar Sim concorda com a afirmação.</li>
-    <li><code>−1</code>: votar Sim rejeita a afirmação.</li>
-  </ul>
-  <pre>posição_efetiva = voto × polaridade      (Sim = +1, Não = −1)</pre>
+const GLOSSARIO = {
+  etl: ["Carga de dados (ETL)", "Extrair, transformar e carregar. Aqui, comandos Python que baixam cada fonte, conferem o formato, transformam e gravam no banco, um por fonte, encadeados pela rotina diária."],
+  cosseno: ["Cosseno", "Trata os votos de cada um como um vetor e mede o ângulo entre os dois. Vai de −1 (opostos) a 1 (iguais); somando 1 e dividindo por 2 fica entre 0 e 1, que é o que o banco aceita."],
+  knn: ["kNN", "k vizinhos mais próximos. Cada nó fica ligado só aos k com quem mais se parece, em vez de a todos acima de um corte."],
+  louvain: ["Louvain", "Algoritmo que junta nós em grupos tentando aumentar a modularidade: move cada nó para o grupo vizinho que mais ganha, depois trata cada grupo como um nó só e repete."],
+  modularidade: ["Modularidade", "Quanto do peso das arestas fica dentro dos grupos, descontado o que se esperaria por acaso. Perto de 0 é divisão aleatória; acima de 0,3 já é estrutura clara."],
+  ari: ["ARI", "Índice de Rand ajustado. Compara duas divisões dos mesmos nós: 1 é idêntica, 0 é o que o acaso daria."],
+  svd: ["SVD", "Decomposição em valores singulares, parente do PCA. Acha as direções que mais separam as linhas da matriz de votos; o primeiro eixo é a maior divisão."],
+  polaridade: ["Polaridade", "+1 quando votar Sim concorda com a afirmação da pergunta, −1 quando votar Sim a rejeita. Atribuída à mão, uma a uma."],
+  sha256: ["sha256", "Impressão digital de um arquivo: qualquer byte diferente muda o resultado inteiro. Quem baixar o mesmo arquivo da fonte chega ao mesmo hash."],
+  hmac: ["HMAC", "Hash com chave secreta. Um sha256 simples do CPF poderia ser revertido testando todos os CPFs possíveis; com a chave, não dá."]
+};
+const balao = $("#balao");
+function mostrarBalao(alvo) {
+  const [t, d] = GLOSSARIO[alvo.dataset.g] || [];
+  if (!t) return;
+  balao.innerHTML = "<b>" + esc(t) + "</b>" + esc(d);
+  balao.hidden = false;
+  const r = alvo.getBoundingClientRect();
+  const largura = Math.min(320, innerWidth - 32);
+  balao.style.left = Math.max(16, Math.min(r.left + scrollX, scrollX + innerWidth - largura - 16)) + "px";
+  balao.style.top = (r.bottom + scrollY + 6) + "px";
+}
+$$(".termo").forEach(b => {
+  b.addEventListener("mouseenter", () => mostrarBalao(b));
+  b.addEventListener("focus", () => mostrarBalao(b));
+  b.addEventListener("click", () => mostrarBalao(b));
+  b.addEventListener("mouseleave", () => { balao.hidden = true; });
+  b.addEventListener("blur", () => { balao.hidden = true; });
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") balao.hidden = true; });
 
-  <div class="aviso risco">
-    <strong>O campo mais perigoso do sistema</strong>
-    <p>Uma polaridade errada não quebra nada na tela: vira um número plausível e invertido. Por isso ela é atribuída por uma
-      pessoa, e nenhuma mudança no cálculo de afinidade entra sem passar pelo teste de regressão de polaridade (API3,
-      <code>TestesPolaridade.cs</code>). Os casos de polaridade −1 são o teste de verdade: os de +1 passam mesmo com o
-      código errado.</p>
-  </div>
+const links = $$("nav.indice a");
+const observador = new IntersectionObserver(entradas => {
+  entradas.forEach(en => {
+    if (en.isIntersecting) links.forEach(a => a.classList.toggle("atual", a.getAttribute("href") === "#" + en.target.id));
+  });
+}, { rootMargin: "-30% 0px -60% 0px" });
+$$("main section").forEach(s => observador.observe(s));
 
-  <h2 id="afinidade"><span class="num">12</span>A afinidade do cidadão</h2>
-  <p>Calculada na API, na hora, a partir das respostas. Nada disso é gravado.</p>
+const ETAPAS = [
+  { nome: "Fonte oficial", oque: "Câmara (dados abertos), Senado (API), TSE, Portal da Transparência, Tesouro e SIOP, IBGE, Receita.", porque: "Só entra fonte periódica, que a carga consegue baixar de novo sozinha. PDF ou planilha avulsa envelhece e não dá para refazer.", onde: "src/etl/poligraph_etl/fontes/", risco: "O Portal responde 403 também quando limita o ritmo; baixar_publicado tenta de novo antes de dizer que um mês falta." },
+  { nome: "Download e hash", oque: "Baixa o arquivo, guarda em cache e registra na tabela cargas: endereço, data, comando e sha256 do conteúdo.", porque: "Provar de onde veio cada linha. Qualquer pessoa pode baixar de novo e conferir o hash.", onde: "procedencia.py · tabela cargas", risco: "Resposta de API que traz CPF em claro não é salva: a origem fica como índice das consultas." },
+  { nome: "Contrato de entrada", oque: "contratos/<fonte>.py lista só as colunas que a carga lê. O CSV é lido como texto (dtype=str).", porque: "Os CSV da Câmara têm quebra de linha dentro do campo, e ler texto evita que o pandas adivinhe tipo.", onde: "contratos/<fonte>.py · contratos/entrada.py", risco: "Coluna que some derruba a carga com LayoutMudou, em vez de virar nulo calado." },
+  { nome: "Transformação", oque: "Função pura: recebe linhas e devolve linhas, sem banco. Normaliza nomes, valores e datas; tira a legislatura da data do voto.", porque: "Testável sem rede e sem Postgres.", onde: "normalizacao.py · ingestao.py · um módulo por fonte", risco: "A legislatura vira em fevereiro, não em janeiro. Cada fonte tem seu leitor de número: trocar dá um total mil vezes diferente." },
+  { nome: "Gravação", oque: "Apaga o recorte que vai recarregar (um ano, um mês) e grava de novo, com carga_id em cada linha. Tabelas grandes por COPY.", porque: "Rodar duas vezes dá o mesmo banco. O EF é dono do schema; o Python nunca cria tabela.", onde: "contratos/banco.py · persistencia.py", risco: "Regra medida vira CHECK, UNIQUE ou FK: o banco recusa o que o código errar." },
+  { nome: "Conferência", oque: "Compara o total gravado com o total da fonte, por fonte e período, e registra cada diferença com motivo.", porque: "O dinheiro fecha com a fonte. O que não fecha aparece na tela com motivo e valor.", onde: "conferencia.py · tabelas reconciliacoes e reconciliacao_motivos", risco: "Descarte calado é proibido: linha com erro entra corrigida por regra escrita." },
+  { nome: "Análise", oque: "Matriz de votos, similaridade de todos os pares, kNN, Louvain, molas e SVD. Tudo dentro de uma execução que grava os parâmetros.", porque: "Cálculo caro que só muda com voto novo: uma vez por carga, reproduzível pela semente.", onde: "similaridade.py · grafo.py · comparacao.py", risco: "Cálculo de similaridade aparecendo no C# é regressão de arquitetura." },
+  { nome: "API", oque: "ASP.NET Core em C#. Só lê. Calcula a afinidade na hora a partir das respostas, sem gravar.", porque: "O que depende do cidadão não precisa ficar no banco; o resto já está pronto.", onde: "src/Poligraph.Api · ServicoAfinidade · ServicoQuestionario", risco: "Nenhuma mudança na afinidade sem o teste de polaridade (API3)." },
+  { nome: "Site", oque: "React. Grafo, perfil do parlamentar, questionário, orçamento, modo Auditoria.", porque: "Cada número leva à fonte; o modo Auditoria mostra o arquivo e o hash.", onde: "src/web", risco: "Texto de tela fala com gente: nada de porcentagem solta, sempre \"X de Y\"." }
+];
+const fluxo = $("#fluxo");
+ETAPAS.forEach((e, i) => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.setAttribute("aria-pressed", "false");
+  b.innerHTML = "<small>" + (i + 1) + "</small><span>" + esc(e.nome) + "</span>";
+  b.addEventListener("click", () => abrirEtapa(i));
+  b.addEventListener("keydown", ev => {
+    if (ev.key === "ArrowRight" || ev.key === "ArrowLeft") {
+      const j = (i + (ev.key === "ArrowRight" ? 1 : ETAPAS.length - 1)) % ETAPAS.length;
+      abrirEtapa(j);
+      fluxo.children[j].focus();
+      ev.preventDefault();
+    }
+  });
+  fluxo.appendChild(b);
+});
+function abrirEtapa(i) {
+  [...fluxo.children].forEach((b, j) => b.setAttribute("aria-pressed", String(i === j)));
+  const e = ETAPAS[i];
+  $("#etapa").innerHTML =
+    '<div class="largo"><h5>O QUE FAZ</h5><p>' + esc(e.oque) + "</p></div>" +
+    "<div><h5>POR QUÊ</h5><p>" + esc(e.porque) + "</p></div>" +
+    "<div><h5>ONDE</h5><p><code>" + esc(e.onde) + "</code></p></div>" +
+    '<div class="largo risco"><h5>O QUE PODE DAR ERRADO</h5><p>' + esc(e.risco) + "</p></div>";
+}
+abrirEtapa(0);
 
-  <h3>A conta</h3>
-  <ol>
-    <li>Para cada pergunta, a resposta do cidadão vira <code>+1</code> (concordo) ou <code>−1</code> (discordo); "não sei" vira <code>0</code>.</li>
-    <li>O voto do parlamentar vira a posição efetiva (voto × polaridade).</li>
-    <li>A pergunta é <strong>comparável</strong> se o cidadão respondeu, o parlamentar votou Sim ou Não, e nenhum dos dois é 0.</li>
-    <li>Afinidade = concordâncias ÷ comparáveis.</li>
-  </ol>
-  <pre>afinidade = perguntas em que concordaram / perguntas comparáveis
-tela:       "concordou em 11 de 14"</pre>
+const PESO_CATEGORIA = { SUBSTANTIVA: 1, DESTAQUE: 0.7, AUTORIDADE: 0.3, PROCEDIMENTAL: 0 };
+const NOME_CATEGORIA = { SUBSTANTIVA: "Substantiva", DESTAQUE: "Destaque", AUTORIDADE: "Autoridade", PROCEDIMENTAL: "Procedimental" };
+const PORQUE_CATEGORIA = {
+  SUBSTANTIVA: "Votação do mérito da matéria: o sinal mais forte sobre a posição de alguém.",
+  DESTAQUE: "Mérito, mas de um trecho, não do projeto inteiro. É também onde a polaridade costuma inverter.",
+  AUTORIDADE: "Voto em pessoa (indicação, sabatina), não em política.",
+  PROCEDIMENTAL: "Requerimento de rito mede obstrução, não posição. Fica fora da matriz."
+};
+const RAZAO = 0.86;
+const peso = (cat, anos) => PESO_CATEGORIA[cat] * Math.pow(RAZAO, Math.max(anos, 0));
+let pesoCat = "SUBSTANTIVA";
+const segCat = $("#peso-cat");
+Object.keys(PESO_CATEGORIA).forEach(c => {
+  const b = document.createElement("button");
+  b.type = "button"; b.textContent = NOME_CATEGORIA[c]; b.dataset.v = c;
+  b.setAttribute("aria-pressed", String(c === pesoCat));
+  b.addEventListener("click", () => { pesoCat = c; desenharPeso(); });
+  segCat.appendChild(b);
+});
+$("#peso-anos").addEventListener("input", desenharPeso);
+function desenharPeso() {
+  const anos = +$("#peso-anos").value;
+  $$("button", segCat).forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === pesoCat)));
+  $("#peso-anos-v").textContent = anos;
+  const p = peso(pesoCat, anos);
+  $("#peso-v").textContent = fmt(p);
+  $("#peso-conta").textContent = fmt(PESO_CATEGORIA[pesoCat], 1) + " × 0,86^" + anos + " = " + fmt(PESO_CATEGORIA[pesoCat], 1) + " × " + fmt(Math.pow(RAZAO, anos), 3) + " = " + fmt(p, 3);
+  $("#peso-porque").textContent = PORQUE_CATEGORIA[pesoCat];
+  const s = $("#peso-curva");
+  s.innerHTML = "";
+  const x = t => 34 + t * 29, y = v => 160 - v * 140;
+  el("line", { x1: 34, y1: 160, x2: 266, y2: 160, class: "eixo" }, s);
+  [0, 0.5, 1].forEach(v => { const t = el("text", { x: 28, y: y(v) + 4, "text-anchor": "end", class: "rotulo-eixo" }, s); t.textContent = fmt(v, 1); });
+  [0, 2, 4, 6, 8].forEach(a => { const t = el("text", { x: x(a), y: 176, "text-anchor": "middle", class: "rotulo-eixo" }, s); t.textContent = a; });
+  const tt = el("text", { x: 150, y: 188, "text-anchor": "middle", class: "rotulo-eixo" }, s); tt.textContent = "anos desde a votação";
+  Object.keys(PESO_CATEGORIA).forEach(c => {
+    const pts = [];
+    for (let t = 0; t <= 8; t += 0.25) pts.push(x(t) + "," + y(peso(c, t)));
+    el("polyline", { points: pts.join(" "), fill: "none", stroke: c === pesoCat ? "var(--realce)" : "var(--borda-forte)", "stroke-width": c === pesoCat ? 2.5 : 1, "stroke-opacity": c === pesoCat ? 1 : 0.5 }, s);
+  });
+  el("circle", { cx: x(anos), cy: y(p), r: 5, fill: "var(--realce)", stroke: "var(--papel)", "stroke-width": 2 }, s);
+}
+desenharPeso();
 
-  <div class="tabela"><table>
-    <thead><tr><th>Regra</th><th>Por quê</th></tr></thead>
-    <tbody>
-      <tr><td>Sempre "X de Y", nunca a porcentagem sozinha</td><td>"80%" esconde se a base foi 5 ou 20 perguntas</td></tr>
-      <tr><td>Piso: comparáveis ≥ 60% das perguntas oferecidas</td><td>Quem faltou à maioria das votações do questionário não entra no ranking; teria afinidade sobre quase nada</td></tr>
-      <tr><td>Mostra os 5 primeiros, com empates</td><td>Empate é mostrado como empate, sem desempatar por critério escondido</td></tr>
-      <tr><td>Não é recomendação de voto</td><td>A frase aparece na tela de resultado</td></tr>
-    </tbody>
-  </table></div>
+const SIM_VOTACOES = [
+  ["SUBSTANTIVA", 0], ["SUBSTANTIVA", 0], ["DESTAQUE", 0], ["PROCEDIMENTAL", 0], ["SUBSTANTIVA", 1], ["AUTORIDADE", 1],
+  ["DESTAQUE", 1], ["SUBSTANTIVA", 2], ["SUBSTANTIVA", 2], ["DESTAQUE", 2], ["SUBSTANTIVA", 3], ["AUTORIDADE", 3]
+];
+const CICLO = [1, -1, 0, null];
+const ROTULO_VOTO = v => v === 1 ? "Sim" : v === -1 ? "Não" : v === 0 ? "Abst." : "Aus.";
+const CLASSE_VOTO = v => v === 1 ? "sim" : v === -1 ? "nao" : v === 0 ? "abs" : "aus";
+const SIM_PRESETS = {
+  "quase iguais": [[1, 1, -1, 1, 1, 1, -1, 1, -1, 1, 1, -1], [1, 1, -1, -1, 1, 1, -1, 1, 1, 1, 1, -1]],
+  "opostos": [[1, -1, 1, 1, 1, -1, 1, -1, 1, 1, -1, 1], [-1, 1, -1, 1, -1, 1, -1, 1, -1, 1, 1, -1]],
+  "um faltou muito": [[1, 1, -1, 1, 1, 1, -1, 1, -1, 1, 1, -1], [1, null, null, null, 1, null, 0, null, -1, null, null, 1]]
+};
+let simVotos = SIM_PRESETS["quase iguais"].map(l => l.slice());
+const segPre = $("#sim-presets");
+Object.keys(SIM_PRESETS).forEach(n => {
+  const b = document.createElement("button");
+  b.type = "button"; b.textContent = n;
+  b.addEventListener("click", () => { simVotos = SIM_PRESETS[n].map(l => l.slice()); desenharSim(); });
+  segPre.appendChild(b);
+});
+function desenharSim() {
+  const g = $("#sim-grade");
+  let h = "<tr><th></th>" + SIM_VOTACOES.map((v, j) => "<th>V" + (j + 1) + '<br><span class="cat">' + v[0].slice(0, 4).toLowerCase() + " · " + v[1] + "a</span></th>").join("") + "</tr>";
+  ["Parlamentar A", "Parlamentar B"].forEach((nome, i) => {
+    h += '<tr><th class="linha">' + nome + "</th>" + simVotos[i].map((v, j) =>
+      '<td><button type="button" class="voto ' + CLASSE_VOTO(v) + '" data-i="' + i + '" data-j="' + j + '" aria-label="' + nome + ", votação " + (j + 1) + ": " + ROTULO_VOTO(v) + '">' + ROTULO_VOTO(v) + "</button></td>").join("") + "</tr>";
+  });
+  const linhas = [];
+  let somaIg = 0, soma = 0, ab = 0, aa = 0, bb = 0, n = 0;
+  const situ = SIM_VOTACOES.map(([cat, anos], j) => {
+    const a = simVotos[0][j], b = simVotos[1][j], w = peso(cat, anos);
+    if (w === 0) return ["sai", "peso 0"];
+    if (a === null || b === null) return ["sai", "ausente"];
+    if (a === 0 || b === 0) return ["sai", "abstenção"];
+    n++; soma += w; if (a === b) somaIg += w;
+    ab += a * w * b * w; aa += (a * w) ** 2; bb += (b * w) ** 2;
+    linhas.push("V" + (j + 1) + "  peso " + fmt(w, 3) + "  " + (a === b ? "igual" : "diferente"));
+    return ["entra", a === b ? "igual" : "diferente"];
+  });
+  h += '<tr><th class="linha">Conta?</th>' + situ.map(s => '<td><span class="situacao ' + s[0] + '">' + s[0] + "<br>" + s[1] + "</span></td>").join("") + "</tr>";
+  g.innerHTML = h;
+  $$(".voto", g).forEach(b => b.addEventListener("click", () => {
+    const i = +b.dataset.i, j = +b.dataset.j;
+    simVotos[i][j] = CICLO[(CICLO.indexOf(simVotos[i][j]) + 1) % CICLO.length];
+    desenharSim();
+    $('.voto[data-i="' + i + '"][data-j="' + j + '"]', g).focus();
+  }));
+  const conc = soma ? somaIg / soma : 0;
+  const cos = n && aa && bb ? (ab / Math.sqrt(aa * bb) + 1) / 2 : 0.5;
+  $("#sim-conc").textContent = n ? fmt(conc) : "–";
+  $("#sim-cos").textContent = n ? fmt(cos) : "–";
+  $("#sim-n").textContent = n + " de 12";
+  $("#sim-conta").textContent = n
+    ? "Concordância = soma dos pesos onde votaram igual ÷ soma dos pesos\n           = " + fmt(somaIg, 3) + " ÷ " + fmt(soma, 3) + " = " + fmt(conc, 3) +
+      "\nNo sistema: " + n + " votações em comum, abaixo do mínimo de 20, o par seria descartado."
+    : "Nenhuma votação em que os dois votaram Sim ou Não: não há o que comparar.";
+}
+desenharSim();
 
-  <h3>Onde o cidadão aparece no grafo</h3>
-  <p>O cidadão não tem voto em todas as votações, então não entra no cálculo de molas. A posição dele é a <strong>média
-    ponderada</strong> das posições dos 10 parlamentares com maior afinidade, com peso igual ao <strong>quadrado</strong> da
-    afinidade. O quadrado puxa o ponto para quem concorda mais: um parlamentar com 90% pesa quase o dobro de um com 65%.</p>
+const CORES = ["#0f766e", "#b45309", "#4338ca", "#a21caf", "#0e7490", "#7c2d12", "#4d7c0f", "#9f1239"];
+const CORES_ESCURO = ["#5fa89e", "#c9944a", "#8c93d4", "#c486bf", "#6aa7b8", "#c58a6c", "#97ad69", "#cf8592"];
+const SEM_COR = "#7b8794";
+const cor = i => (escuro() ? CORES_ESCURO : CORES)[i % 8];
 
-  <h2 id="dinheiro"><span class="num">13</span>Regras do dinheiro</h2>
-  <p>As páginas de orçamento (emendas, cota, cartões, viagens, compras) seguem uma regra do autor: <strong>o total da base fecha
-    com o da fonte</strong>. O que não fecha tem motivo e valor à vista.</p>
-  <div class="tabela"><table>
-    <thead><tr><th>Regra</th><th>Como funciona</th></tr></thead>
-    <tbody>
-      <tr><td>Reconciliação</td><td>Tabelas <code>reconciliacoes</code> e <code>reconciliacao_motivos</code>: para cada fonte e período, o total da fonte, o total gravado e cada diferença com o motivo. O comando <code>conferir</code> cobra que tudo feche</td></tr>
-      <tr><td>Erro de digitação em contrato</td><td>Se o valor inicial e o final de um contrato divergem mais de <strong>100 vezes</strong>, um dos dois foi digitado errado (vírgula fora do lugar multiplica por 1.000). Entra o menor, e a diferença aparece como descartada na tela. Aditivo de verdade raramente multiplica um contrato por 100</td></tr>
-      <tr><td>Nenhum descarte calado</td><td>Linha com erro entra corrigida pela regra escrita, nunca some</td></tr>
-      <tr><td>Ponto e vírgula</td><td>"1.234" vale mil e duzentos no Portal e no TSE, e um vírgula dois três quatro na cota da Câmara. Cada fonte tem seu leitor de número; usar o errado daria um total mil vezes diferente, sem erro</td></tr>
-      <tr><td>Sigiloso</td><td>O Portal escreve <code>-11</code> no código e "Sigiloso" no nome quando o contratado é protegido. O contrato entra no total e é contado também à parte, como sigiloso</td></tr>
-    </tbody>
-  </table></div>
+const LAB = (() => {
+  const r = sorteio(20260826);
+  const N = 40, V = 80;
+  const tamanhos = [16, 14, 10];
+  const bloco = [], partido = [];
+  const PARTIDOS_DO_BLOCO = [["A", 10, "C", 6], ["B", 8, "C", 4, "D", 2], ["E", 6, "C", 2, "D", 2]];
+  tamanhos.forEach((t, b) => {
+    const lista = [];
+    const p = PARTIDOS_DO_BLOCO[b];
+    for (let i = 0; i < p.length; i += 2) for (let k = 0; k < p[i + 1]; k++) lista.push(p[i]);
+    for (let k = 0; k < t; k++) { bloco.push(b); partido.push(lista[k]); }
+  });
+  const faltosos = new Set([5, 21, 33]);
+  const cats = [], anos = [], pesos = [];
+  const votos = Array.from({ length: N }, () => new Array(V).fill(null));
+  for (let v = 0; v < V; v++) {
+    const u = r();
+    const cat = u < 0.55 ? "SUBSTANTIVA" : u < 0.8 ? "DESTAQUE" : u < 0.9 ? "AUTORIDADE" : "PROCEDIMENTAL";
+    const ano = Math.floor(r() * 4);
+    cats.push(cat); anos.push(ano); pesos.push(peso(cat, ano));
+    let dir;
+    if (r() < 0.35) { const d = r() < 0.85 ? 1 : -1; dir = [d, d, d]; }
+    else { const b0 = r() < 0.5 ? 1 : -1; const b1 = r() < 0.8 ? -b0 : b0; dir = [b0, b1, r() < 0.5 ? 1 : -1]; }
+    for (let i = 0; i < N; i++) {
+      const presenca = faltosos.has(i) ? 0.35 : 0.93;
+      if (r() > presenca) continue;
+      if (r() < 0.03) { votos[i][v] = 0; continue; }
+      const segue = partido[i] === "C" ? 0.72 : 0.88;
+      votos[i][v] = r() < segue ? dir[bloco[i]] : -dir[bloco[i]];
+    }
+  }
+  const pares = [];
+  let descartados = 0, somaConc = 0;
+  const conc = Array.from({ length: N }, () => new Array(N).fill(null));
+  for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
+    let n = 0, s = 0, ig = 0;
+    for (let v = 0; v < V; v++) {
+      const a = votos[i][v], b = votos[j][v], w = pesos[v];
+      if (w === 0 || a === null || b === null || a === 0 || b === 0) continue;
+      n++; s += w; if (a === b) ig += w;
+    }
+    if (n < 20) { descartados++; continue; }
+    const c = ig / s;
+    conc[i][j] = conc[j][i] = c;
+    pares.push({ a: i, b: j, w: c, n });
+    somaConc += c;
+  }
+  const presentes = votos.map(l => l.filter((x, v) => x !== null && pesos[v] > 0).length);
+  const validas = pesos.filter(w => w > 0).length;
+  return { N, V, bloco, partido, faltosos, votos, pesos, pares, conc, descartados, mediaConc: somaConc / pares.length, presentes, validas };
+})();
 
-  <h2 id="origem"><span class="num">14</span>Origem e auditoria</h2>
-  <p>Todo número na tela pode ser seguido até o arquivo de onde saiu. É o modo Auditoria do site.</p>
-  <ul>
-    <li><strong>Tabela <code>cargas</code>:</strong> cada arquivo baixado é registrado com endereço, data, comando e o
-      <strong>sha256</strong> do conteúdo. O hash prova que o arquivo é aquele: qualquer pessoa pode baixar de novo e conferir.</li>
-    <li><strong><code>carga_id</code> em 30 tabelas:</strong> cada linha aponta para a carga que a gravou.</li>
-    <li><strong>Origem por coluna:</strong> quando uma linha tem duas fontes (o cadastro do deputado vem da Câmara e o CPF do TSE,
-      por exemplo), cada coluna guarda a sua carga: <code>cpf_carga_id</code>, <code>nome_civil_carga_id</code>,
-      <code>palavras_chave_carga_id</code>, <code>populacao_carga_id</code> e outras.</li>
-    <li><strong>Respostas de API</strong> (que não são arquivo) são salvas em arquivo e registradas da mesma forma, com hash.</li>
-  </ul>
+function arestasKnn(k) {
+  const escolheu = Array.from({ length: LAB.N }, () => new Set());
+  for (let i = 0; i < LAB.N; i++) {
+    const viz = [];
+    for (let j = 0; j < LAB.N; j++) if (j !== i && LAB.conc[i][j] !== null) viz.push([j, LAB.conc[i][j]]);
+    viz.sort((x, y) => y[1] - x[1]).slice(0, k).forEach(([j]) => escolheu[i].add(j));
+  }
+  return { arestas: LAB.pares.filter(p => escolheu[p.a].has(p.b) || escolheu[p.b].has(p.a)), escolheu };
+}
+function arestasLimiar(lim) { return { arestas: LAB.pares.filter(p => p.w >= lim), escolheu: null }; }
 
-  <h2 id="privacidade"><span class="num">15</span>Privacidade e LGPD</h2>
-  <div class="tabela"><table>
-    <thead><tr><th>Dado</th><th>Regra</th></tr></thead>
-    <tbody>
-      <tr><td>CPF</td><td>Nunca gravado nem mostrado. A coluna é <code>cpf_hash</code>: HMAC-SHA256 com chave secreta (<code>POLIGRAPH_CHAVE_CPF</code>). Sem a chave, o hash não pode ser revertido testando os CPFs possíveis, como daria com um SHA256 simples</td></tr>
-      <tr><td>Fontes com CPF em claro</td><td>CEIS, CNEP, cartões, o detalhe do deputado na API da Câmara e os arquivos do TSE: o contrato não lê a coluna ou descarta antes de gravar. A resposta da API não é salva; a origem fica só como índice das consultas</td></tr>
-      <tr><td>Seguir parlamentar</td><td>É registro de convicção política (dado sensível na LGPD): pede consentimento específico, e a conta pode ser apagada</td></tr>
-      <tr><td>Login</td><td>Só Google. O <code>id_token</code> é validado e descartado; nenhum token nem senha vai para o banco. A sessão é um cookie protegido pelo Data Protection</td></tr>
-      <tr><td>Conta</td><td>Opcional. Ler tudo é público; só seguir e a própria conta pedem login</td></tr>
-    </tbody>
-  </table></div>
+function louvain(n, arestas, r) {
+  let lista = arestas.map(e => [e.a, e.b, e.w]);
+  let nos = n;
+  let membros = Array.from({ length: n }, (_, i) => [i]);
+  for (let nivel = 0; nivel < 20; nivel++) {
+    const adj = Array.from({ length: nos }, () => new Map());
+    const grau = new Array(nos).fill(0);
+    let m2 = 0;
+    for (const [a, b, w] of lista) {
+      if (a === b) { grau[a] += 2 * w; m2 += 2 * w; continue; }
+      adj[a].set(b, (adj[a].get(b) || 0) + w);
+      adj[b].set(a, (adj[b].get(a) || 0) + w);
+      grau[a] += w; grau[b] += w; m2 += 2 * w;
+    }
+    if (m2 === 0) break;
+    const com = Array.from({ length: nos }, (_, i) => i);
+    const tot = grau.slice();
+    let melhorou = false, mexeu = true, voltas = 0;
+    while (mexeu && voltas++ < 50) {
+      mexeu = false;
+      const ordem = Array.from({ length: nos }, (_, i) => i);
+      for (let i = ordem.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [ordem[i], ordem[j]] = [ordem[j], ordem[i]]; }
+      for (const i of ordem) {
+        const ci = com[i];
+        const pesoPara = new Map();
+        for (const [j, w] of adj[i]) pesoPara.set(com[j], (pesoPara.get(com[j]) || 0) + w);
+        tot[ci] -= grau[i];
+        let melhor = ci, ganho = (pesoPara.get(ci) || 0) - tot[ci] * grau[i] / m2;
+        for (const [c, w] of pesoPara) {
+          const g = w - tot[c] * grau[i] / m2;
+          if (g > ganho + 1e-12) { ganho = g; melhor = c; }
+        }
+        com[i] = melhor; tot[melhor] += grau[i];
+        if (melhor !== ci) { mexeu = true; melhorou = true; }
+      }
+    }
+    if (!melhorou) break;
+    const novo = new Map();
+    com.forEach(c => { if (!novo.has(c)) novo.set(c, novo.size); });
+    const novosMembros = Array.from({ length: novo.size }, () => []);
+    membros.forEach((ms, i) => novosMembros[novo.get(com[i])].push(...ms));
+    const agregado = new Map();
+    for (const [a, b, w] of lista) {
+      let x = novo.get(com[a]), y = novo.get(com[b]);
+      if (x > y) [x, y] = [y, x];
+      const ch = x + "," + y;
+      agregado.set(ch, (agregado.get(ch) || 0) + w);
+    }
+    lista = [...agregado].map(([ch, w]) => { const [a, b] = ch.split(",").map(Number); return [a, b, w]; });
+    membros = novosMembros; nos = novo.size;
+  }
+  membros.sort((x, y) => y.length - x.length || x[0] - y[0]);
+  const rotulo = new Array(n);
+  membros.forEach((ms, c) => ms.forEach(i => { rotulo[i] = c; }));
+  return rotulo;
+}
+function modularidade(rotulo, arestas) {
+  let m = 0;
+  const dentro = new Map(), grau = new Map();
+  for (const e of arestas) {
+    m += e.w;
+    grau.set(rotulo[e.a], (grau.get(rotulo[e.a]) || 0) + e.w);
+    grau.set(rotulo[e.b], (grau.get(rotulo[e.b]) || 0) + e.w);
+    if (rotulo[e.a] === rotulo[e.b]) dentro.set(rotulo[e.a], (dentro.get(rotulo[e.a]) || 0) + e.w);
+  }
+  if (m === 0) return 0;
+  let q = 0;
+  for (const [c, d] of grau) q += (dentro.get(c) || 0) / m - (d / (2 * m)) ** 2;
+  return q;
+}
+function ari(x, y) {
+  const n = x.length, tab = new Map(), lx = new Map(), ly = new Map();
+  for (let i = 0; i < n; i++) {
+    const ch = x[i] + "|" + y[i];
+    tab.set(ch, (tab.get(ch) || 0) + 1);
+    lx.set(x[i], (lx.get(x[i]) || 0) + 1);
+    ly.set(y[i], (ly.get(y[i]) || 0) + 1);
+  }
+  const c2 = k => k * (k - 1) / 2;
+  let sij = 0, sa = 0, sb = 0;
+  tab.forEach(v => { sij += c2(v); });
+  lx.forEach(v => { sa += c2(v); });
+  ly.forEach(v => { sb += c2(v); });
+  const esperado = sa * sb / c2(n), maximo = (sa + sb) / 2;
+  return maximo === esperado ? 0 : (sij - esperado) / (maximo - esperado);
+}
+function svd2() {
+  const { N, V, votos, pesos } = LAB;
+  const X = Array.from({ length: N }, () => new Array(V).fill(0));
+  for (let v = 0; v < V; v++) {
+    let s = 0, c = 0;
+    for (let i = 0; i < N; i++) if (votos[i][v] !== null && votos[i][v] !== 0) { s += votos[i][v] * pesos[v]; c++; }
+    const media = c ? s / c : 0;
+    for (let i = 0; i < N; i++) if (votos[i][v] !== null && votos[i][v] !== 0) X[i][v] = votos[i][v] * pesos[v] - media;
+  }
+  let total = 0;
+  X.forEach(l => l.forEach(x => { total += x * x; }));
+  const r = sorteio(7), comps = [], lambdas = [];
+  for (let c = 0; c < 2; c++) {
+    let v = Array.from({ length: V }, () => r() - 0.5);
+    let lambda = 0;
+    for (let it = 0; it < 200; it++) {
+      const xv = X.map(l => l.reduce((s, x, j) => s + x * v[j], 0));
+      let w = new Array(V).fill(0);
+      X.forEach((l, i) => l.forEach((x, j) => { w[j] += x * xv[i]; }));
+      comps.forEach(u => { const d = w.reduce((s, x, j) => s + x * u[j], 0); w = w.map((x, j) => x - d * u[j]); });
+      const norma = Math.hypot(...w);
+      lambda = norma;
+      v = w.map(x => x / norma);
+    }
+    comps.push(v); lambdas.push(lambda);
+  }
+  const coords = X.map(l => comps.map(v => l.reduce((s, x, j) => s + x * v[j], 0)));
+  return { coords, explicada: lambdas.map(l => l / total) };
+}
+const SVD = svd2();
 
-  <h2 id="desempenho"><span class="num">16</span>Desempenho e cache</h2>
-  <div class="tabela"><table>
-    <thead><tr><th>Camada</th><th>O que faz</th></tr></thead>
-    <tbody>
-      <tr><td>Site</td><td>TanStack Query guarda cada resposta por 5 minutos. Voltar a uma página já vista não refaz o request</td></tr>
-      <tr><td>Navegador e Cloudflare</td><td><code>Cache-Control: public, max-age=300</code> em todo GET público com sucesso, sem login</td></tr>
-      <tr><td>API</td><td>Cache em memória por cópia da aplicação, com uma única consulta por chave mesmo com vários requests ao mesmo tempo. Sem Redis: cada cópia tem o seu</td></tr>
-      <tr><td>Warmup de cache</td><td>Ao subir e de hora em hora, a API pré-calcula as páginas mais pesadas</td></tr>
-      <tr><td>Medição</td><td>Cabeçalho <code>Server-Timing</code> com o tempo do request e quantas consultas ao banco ele fez</td></tr>
-    </tbody>
-  </table></div>
+const lab = { modo: "knn", k: 4, lim: 0.8, cor: "comunidade", desenho: "molas", faltas: false, escolhido: null, pos: null, animacao: 0 };
+const W = 720, H = 460, M = 28;
+function molas(arestas, inicio, passos, aoPasso) {
+  const n = LAB.N, r = sorteio(20260826);
+  const pos = inicio ? inicio.map(p => p.slice()) : Array.from({ length: n }, () => [M + r() * (W - 2 * M), M + r() * (H - 2 * M)]);
+  const k = Math.sqrt((W - 2 * M) * (H - 2 * M) / n) * 0.9;
+  let passo = 0;
+  const um = () => {
+    const temp = (W / 12) * (1 - passo / passos) + 1;
+    const d = Array.from({ length: n }, () => [0, 0]);
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      let dx = pos[i][0] - pos[j][0], dy = pos[i][1] - pos[j][1];
+      const dist = Math.max(Math.hypot(dx, dy), 0.5);
+      const f = k * k / dist;
+      dx /= dist; dy /= dist;
+      d[i][0] += dx * f; d[i][1] += dy * f; d[j][0] -= dx * f; d[j][1] -= dy * f;
+    }
+    for (const e of arestas) {
+      let dx = pos[e.a][0] - pos[e.b][0], dy = pos[e.a][1] - pos[e.b][1];
+      const dist = Math.max(Math.hypot(dx, dy), 0.5);
+      const f = dist * dist / k * (e.w * e.w);
+      dx /= dist; dy /= dist;
+      d[e.a][0] -= dx * f; d[e.a][1] -= dy * f; d[e.b][0] += dx * f; d[e.b][1] += dy * f;
+    }
+    for (let i = 0; i < n; i++) {
+      d[i][0] += (W / 2 - pos[i][0]) * 0.02 * k; d[i][1] += (H / 2 - pos[i][1]) * 0.02 * k;
+      const len = Math.max(Math.hypot(d[i][0], d[i][1]), 0.01);
+      pos[i][0] = Math.min(W - M, Math.max(M, pos[i][0] + d[i][0] / len * Math.min(len, temp)));
+      pos[i][1] = Math.min(H - M, Math.max(M, pos[i][1] + d[i][1] / len * Math.min(len, temp)));
+    }
+    passo++;
+  };
+  const reduzido = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!aoPasso || reduzido) { while (passo < passos) um(); if (aoPasso) aoPasso(pos, true); return pos; }
+  const id = ++lab.animacao;
+  const quadro = () => {
+    if (id !== lab.animacao) return;
+    for (let s = 0; s < 4 && passo < passos; s++) um();
+    aoPasso(pos, passo >= passos);
+    if (passo < passos) requestAnimationFrame(quadro);
+  };
+  requestAnimationFrame(quadro);
+  return pos;
+}
+function posicoesSvd() {
+  const xs = SVD.coords.map(c => c[0]), ys = SVD.coords.map(c => c[1]);
+  const mx = Math.max(...xs.map(Math.abs)) || 1, my = Math.max(...ys.map(Math.abs)) || 1;
+  return SVD.coords.map(([x, y]) => [W / 2 + x / mx * (W / 2 - M - 10), H / 2 + y / my * (H / 2 - M - 10)]);
+}
 
-  <h2 id="numeros"><span class="num">17</span>Os números, numa tabela</h2>
-  <p>Parâmetros conferidos no código em 2026-10-10. Medidas com a data e o recorte em que foram feitas.</p>
-  <div class="tabela"><table>
-    <thead><tr><th>Número</th><th>Valor</th><th>Onde</th></tr></thead>
-    <tbody>
-      <tr><td>Peso por categoria</td><td class="n">1,0 · 0,7 · 0,3 · 0</td><td><code>similaridade.PESO_CATEGORIA</code></td></tr>
-      <tr><td>Razão de recência por ano</td><td class="n">0,86</td><td><code>similaridade.RAZAO_RECENCIA</code></td></tr>
-      <tr><td>Votações em comum, mínimo</td><td class="n">20</td><td><code>MINIMO_VOTACOES_COMUNS</code> e <code>ck_sim_minimo</code></td></tr>
-      <tr><td>Vizinhos por nó (k)</td><td class="n">10</td><td><code>similaridade.K_VIZINHOS</code></td></tr>
-      <tr><td>Votações para ter grafo</td><td class="n">100</td><td><code>VOTACOES_MINIMAS_PARA_GRAFO</code></td></tr>
-      <tr><td>Semente</td><td class="n">20260826</td><td><code>grafo.SEMENTE</code></td></tr>
-      <tr><td>Iterações das molas</td><td class="n">120</td><td><code>grafo.ITERACOES_LAYOUT</code></td></tr>
-      <tr><td>Perguntas: abertura + Senado + desempate</td><td class="n">8 + 9 + 7 = 24</td><td><code>ServicoQuestionario</code></td></tr>
-      <tr><td>Respostas comparáveis, mínimo</td><td class="n">60%</td><td><code>FracaoMinimaDeRespostas</code></td></tr>
-      <tr><td>Parlamentares mostrados</td><td class="n">5</td><td><code>ServicoAfinidade.QuantidadeExibida</code></td></tr>
-      <tr><td>Vizinhos para posicionar o cidadão</td><td class="n">10</td><td><code>ServicoAfinidade.VizinhosParaPosicionar</code></td></tr>
-      <tr><td>Divergência que indica erro de digitação</td><td class="n">100×</td><td><code>compras.LIMITE_DE_DIVERGENCIA</code></td></tr>
-      <tr><td>Correlação entre anos (base do 0,86)</td><td class="n">r = 0,862</td><td>Câmara, 2023 a 2025</td></tr>
-      <tr><td>Concordância média entre dois deputados</td><td class="n">0,663</td><td>Câmara, 57ª, 2026-08</td></tr>
-      <tr><td>ARI · modularidade comunidade · partido</td><td class="n">0,277 · 0,558 · 0,288</td><td>Câmara, 57ª, 2026-08</td></tr>
-      <tr><td>Variação explicada pelo 1º eixo do SVD</td><td class="n">34,6%</td><td>Câmara, 57ª, 2026-08</td></tr>
-      <tr><td>Votações em que "Sim" rejeita</td><td class="n">≈ 14%</td><td>Votações nominais da Câmara</td></tr>
-    </tbody>
-  </table></div>
-  <p class="medido">As medidas de 2026-08 são do plano 07 (<code>docs/plano/07-grafo-e-afinidade.md</code>). Votos chegaram depois
-    disso; refazer a conta pode mudar a segunda casa decimal.</p>
-</main>
+let estado = null;
+function recalcular(redesenhar) {
+  const { arestas, escolheu } = lab.modo === "knn" ? arestasKnn(lab.k) : arestasLimiar(lab.lim);
+  const comunidade = louvain(LAB.N, arestas, sorteio(20260826));
+  const partidos = [...new Set(LAB.partido)].sort();
+  const rotuloPartido = LAB.partido.map(p => partidos.indexOf(p));
+  const grau = new Array(LAB.N).fill(0);
+  arestas.forEach(e => { grau[e.a]++; grau[e.b]++; });
+  estado = { arestas, escolheu, comunidade, rotuloPartido, partidos, grau, nComunidades: new Set(comunidade).size };
+  if (lab.desenho === "svd") { lab.animacao++; lab.pos = posicoesSvd(); desenharLab(); }
+  else if (redesenhar || !lab.pos) lab.pos = molas(arestas, null, 120, p => { lab.pos = p; desenharLab(); });
+  else lab.pos = molas(arestas, lab.pos, 60, p => { lab.pos = p; desenharLab(); });
+  placarLab();
+}
+function corDoNo(i) {
+  if (lab.cor === "nenhuma") return SEM_COR;
+  if (lab.cor === "partido") return cor(estado.rotuloPartido[i] + 1);
+  return estado.grau[i] === 0 ? SEM_COR : cor(estado.comunidade[i]);
+}
+function desenharLab() {
+  const s = $("#lab-svg");
+  s.innerHTML = "";
+  const pos = lab.pos;
+  if (lab.desenho === "svd") {
+    el("line", { x1: M, y1: H / 2, x2: W - M, y2: H / 2, class: "eixo" }, s);
+    el("line", { x1: W / 2, y1: M, x2: W / 2, y2: H - M, class: "eixo" }, s);
+    const t1 = el("text", { x: W - M, y: H / 2 - 6, "text-anchor": "end", class: "rotulo-eixo" }, s);
+    t1.textContent = "1º eixo, " + fmt(SVD.explicada[0] * 100, 1) + "% da variação";
+    const t2 = el("text", { x: W / 2 + 6, y: M + 4, class: "rotulo-eixo" }, s);
+    t2.textContent = "2º eixo, " + fmt(SVD.explicada[1] * 100, 1) + "%";
+  }
+  const sel = lab.escolhido;
+  const vizinhosSel = new Set();
+  const ga = el("g", {}, s);
+  estado.arestas.forEach(e => {
+    const toca = sel !== null && (e.a === sel || e.b === sel);
+    if (toca) vizinhosSel.add(e.a === sel ? e.b : e.a);
+    el("line", { x1: pos[e.a][0], y1: pos[e.a][1], x2: pos[e.b][0], y2: pos[e.b][1], class: "aresta-g" + (toca ? " acesa" : sel !== null ? " apagada" : ""), "stroke-width": toca ? 2.2 : 0.4 + (e.w - 0.5) * 3 }, ga);
+  });
+  for (let i = 0; i < LAB.N; i++) {
+    const apagado = sel !== null && i !== sel && !vizinhosSel.has(i);
+    const c = el("circle", { cx: pos[i][0], cy: pos[i][1], r: i === sel ? 9 : 7, fill: corDoNo(i), class: "no-g" + (apagado ? " apagado" : "") + (i === sel ? " escolhido" : ""), tabindex: 0, role: "button", "aria-label": nomeLab(i) }, s);
+    c.addEventListener("mouseenter", ev => dicaLab(i, ev));
+    c.addEventListener("mousemove", ev => dicaLab(i, ev));
+    c.addEventListener("mouseleave", () => { $("#lab-dica").hidden = true; });
+    c.addEventListener("click", () => escolherNo(i));
+    c.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); escolherNo(i); } });
+    if (lab.faltas && LAB.faltosos.has(i)) el("circle", { cx: pos[i][0], cy: pos[i][1], r: 13, class: "anel" }, s);
+  }
+  legendaLab();
+}
+const nomeLab = i => "Parlamentar " + String(i + 1).padStart(2, "0");
+function dicaLab(i, ev) {
+  const d = $("#lab-dica"), palco = $("#lab .palco").getBoundingClientRect();
+  d.innerHTML = "<b>" + nomeLab(i) + "</b><br>Partido " + LAB.partido[i] + " · comunidade " + (estado.grau[i] ? estado.comunidade[i] + 1 : "nenhuma") +
+    "<br>votou em " + LAB.presentes[i] + " de " + LAB.validas + " votações que contam<br>" + estado.grau[i] + " arestas";
+  d.hidden = false;
+  const x = ev.clientX - palco.left + 12, y = ev.clientY - palco.top + 12;
+  d.style.left = Math.min(x, palco.width - 210) + "px";
+  d.style.top = Math.min(y, palco.height - 90) + "px";
+}
+function escolherNo(i) {
+  lab.escolhido = lab.escolhido === i ? null : i;
+  desenharLab(); lateralLab();
+}
+function lateralLab() {
+  const L = $("#lab-lateral"), i = lab.escolhido;
+  if (i === null) {
+    L.innerHTML = "<h5>NENHUM NÓ ESCOLHIDO</h5><p>Clique num nó para ver com quem ele está ligado e por quê.</p>" +
+      "<p>Os três com anel tracejado (quando marcado) votaram em cerca de um terço das votações.</p>";
+    return;
+  }
+  const ligados = estado.arestas.filter(e => e.a === i || e.b === i).map(e => {
+    const j = e.a === i ? e.b : e.a;
+    let quem = "";
+    if (estado.escolheu) {
+      const eu = estado.escolheu[i].has(j), ele = estado.escolheu[j].has(i);
+      quem = eu && ele ? "os dois escolheram" : eu ? "escolhido por " + nomeLab(i).slice(-2) : "escolheu " + nomeLab(i).slice(-2);
+    }
+    return { j, w: e.w, quem };
+  }).sort((a, b) => b.w - a.w);
+  L.innerHTML = "<h5>" + nomeLab(i).toUpperCase() + " · PARTIDO " + LAB.partido[i] + "</h5>" +
+    "<p>" + ligados.length + " arestas" + (lab.modo === "knn" ? ", com k = " + lab.k + "." + (ligados.length > lab.k ? " Passa de k pela união: outros também o escolheram." : "") : " acima do corte.") + "</p>" +
+    '<ul class="vizinhos">' + ligados.map(l => "<li><span>" + nomeLab(l.j) + ' <span class="quem">' + esc(l.quem) + "</span></span><b>" + fmt(l.w) + "</b></li>").join("") + "</ul>";
+}
+function legendaLab() {
+  const L = $("#lab-legenda");
+  if (lab.cor === "nenhuma") { L.innerHTML = ""; return; }
+  if (lab.cor === "partido") {
+    L.innerHTML = estado.partidos.map((p, k) => '<span><i style="background:' + cor(k + 1) + '"></i>Partido ' + p + "</span>").join("");
+    return;
+  }
+  const tam = new Map();
+  estado.comunidade.forEach((c, i) => { if (estado.grau[i]) tam.set(c, (tam.get(c) || 0) + 1); });
+  L.innerHTML = [...tam].sort((a, b) => a[0] - b[0]).map(([c, t]) => '<span><i style="background:' + cor(c) + '"></i>Comunidade ' + (c + 1) + " · " + t + "</span>").join("");
+}
+function placarLab() {
+  const n = LAB.N, possiveis = n * (n - 1) / 2;
+  const dens = estado.arestas.length / possiveis;
+  const maior = Math.max(...estado.grau);
+  const isolados = estado.grau.filter(g => g === 0).length;
+  const qc = modularidade(estado.comunidade, estado.arestas), qp = modularidade(estado.rotuloPartido, estado.arestas);
+  const conectados = [...Array(n).keys()].filter(i => estado.grau[i] > 0);
+  const a = ari(conectados.map(i => estado.comunidade[i]), conectados.map(i => estado.rotuloPartido[i]));
+  const cx = (rotulo, classe, valor) => '<div class="' + classe + '"><span>' + rotulo + "</span><b>" + valor + "</b></div>";
+  $("#lab-placar").innerHTML =
+    cx("Arestas", "", estado.arestas.length) +
+    cx("Densidade", dens > 0.3 ? "ruim" : "", fmt(dens * 100, 1) + "%") +
+    cx("Maior número de arestas num nó", "", maior) +
+    cx("Nós soltos", isolados ? "ruim" : "", isolados) +
+    cx("Comunidades (Louvain)", "bom", estado.nComunidades - isolados) +
+    cx("Modularidade, comunidades", "bom", fmt(qc, 3)) +
+    cx("Modularidade, partidos", "", fmt(qp, 3)) +
+    cx("ARI comunidade × partido", "", fmt(a, 3)) +
+    cx("Concordância média, todos os pares", "", fmt(LAB.mediaConc, 3)) +
+    cx("Pares com menos de 20 em comum", LAB.descartados ? "ruim" : "", LAB.descartados) +
+    (lab.desenho === "svd" ? cx("Distância ao centro, quem faltou ÷ média dos outros", "ruim", fmt(distanciaDosFaltosos(), 2) + "×") : "");
+}
+function distanciaDosFaltosos() {
+  const d = SVD.coords.map(c => Math.hypot(c[0], c[1]));
+  const outros = d.filter((_, i) => !LAB.faltosos.has(i));
+  const faltosos = d.filter((_, i) => LAB.faltosos.has(i));
+  const media = l => l.reduce((x, y) => x + y, 0) / l.length;
+  return media(faltosos) / media(outros);
+}
+function segmento(id, chave, aoMudar) {
+  $$("button", $(id)).forEach(b => b.addEventListener("click", () => {
+    lab[chave] = b.dataset.v;
+    $$("button", $(id)).forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    aoMudar();
+  }));
+}
+segmento("#lab-modo", "modo", () => {
+  $("#lab-k-l").hidden = lab.modo !== "knn";
+  $("#lab-lim-l").hidden = lab.modo !== "limiar";
+  recalcular(false); lateralLab();
+});
+segmento("#lab-cor", "cor", desenharLab);
+segmento("#lab-desenho", "desenho", () => recalcular(lab.desenho === "molas"));
+$("#lab-k").addEventListener("input", e => { lab.k = +e.target.value; $("#lab-k-v").textContent = lab.k; recalcular(false); lateralLab(); });
+$("#lab-lim").addEventListener("input", e => { lab.lim = +e.target.value; $("#lab-lim-v").textContent = fmt(lab.lim); recalcular(false); lateralLab(); });
+$("#lab-faltas").addEventListener("change", e => { lab.faltas = e.target.checked; desenharLab(); });
+$("#lab-sacudir").addEventListener("click", () => {
+  if (lab.desenho !== "molas") { lab.desenho = "molas"; $$("button", $("#lab-desenho")).forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === "molas"))); }
+  recalcular(true);
+});
+aoMudarTema.push(() => { if (estado) desenharLab(); });
+recalcular(true); lateralLab();
+
+const AF_PERGUNTAS = [
+  { t: "Afirmação 1. O projeto deveria ser aprovado.", pol: 1, porque: "Votar Sim aprova o projeto." },
+  { t: "Afirmação 2. O trecho destacado deveria sair do texto.", pol: -1, porque: "Destaque: votar Sim mantém o trecho, o contrário da afirmação." },
+  { t: "Afirmação 3. A medida provisória deveria virar lei.", pol: 1, porque: "Votar Sim converte a medida em lei." },
+  { t: "Afirmação 4. A emenda que amplia o prazo deveria ser rejeitada.", pol: -1, porque: "Votar Sim aprova a emenda que a afirmação quer rejeitar." },
+  { t: "Afirmação 5. O texto do Senado deveria prevalecer.", pol: 1, porque: "Votar Sim acolhe o texto do Senado." },
+  { t: "Afirmação 6. O veto deveria ser mantido.", pol: -1, porque: "Na sessão de vetos, votar Sim derruba o veto." }
+];
+const AF_PARL = [
+  { nome: "Parlamentar A", votos: [1, -1, 1, -1, 1, -1], xy: [60, 60] },
+  { nome: "Parlamentar B", votos: [1, 1, 1, 1, 1, 1], xy: [220, 50] },
+  { nome: "Parlamentar C", votos: [-1, 1, -1, 1, -1, 1], xy: [230, 180] },
+  { nome: "Parlamentar D", votos: [1, -1, -1, -1, 1, 1], xy: [70, 170] },
+  { nome: "Parlamentar E", votos: [1, null, null, -1, null, 0], xy: [150, 110] }
+];
+const RESPOSTAS = [["Concordo", 1], ["Discordo", -1], ["Não sei", 0]];
+const afResp = [1, 1, 1, 1, -1, 1];
+const caixaP = $("#af-perguntas");
+AF_PERGUNTAS.forEach((p, i) => {
+  const d = document.createElement("div");
+  d.className = "pergunta";
+  d.innerHTML = "<div><p>" + esc(p.t) + '</p><span class="pol' + (p.pol < 0 ? " neg" : "") + '">polaridade <b>' + (p.pol > 0 ? "+1" : "−1") + "</b> · " + esc(p.porque) + "</span></div>" +
+    '<div class="seg" role="group" aria-label="Resposta à afirmação ' + (i + 1) + '">' +
+    RESPOSTAS.map(([r, v]) => '<button type="button" data-i="' + i + '" data-v="' + v + '" aria-pressed="' + (afResp[i] === v) + '">' + r + "</button>").join("") + "</div>";
+  caixaP.appendChild(d);
+});
+$$("button", caixaP).forEach(b => b.addEventListener("click", () => {
+  afResp[+b.dataset.i] = +b.dataset.v;
+  $$('button[data-i="' + b.dataset.i + '"]', caixaP).forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  calcularAf();
+}));
+$("#af-sem-pol").addEventListener("change", calcularAf);
+function afinidades(semPol) {
+  const oferecidas = AF_PERGUNTAS.length, minimo = Math.ceil(oferecidas * 0.6 - 1e-9);
+  return AF_PARL.map(p => {
+    let comp = 0, conc = 0;
+    const linhas = AF_PERGUNTAS.map((q, i) => {
+      const v = p.votos[i], r = afResp[i];
+      const ef = v === null || v === 0 ? null : v * (semPol ? 1 : q.pol);
+      const ok = r !== 0 && ef !== null;
+      if (ok) { comp++; if (ef === r) conc++; }
+      return "P" + (i + 1) + "  resposta " + (r === 1 ? "+1" : r === -1 ? "−1" : " 0") + "  voto " + (v === null ? "aus." : v === 0 ? "abst." : v > 0 ? "Sim " : "Não ") +
+        "  × pol " + (semPol ? "+1 (esquecida)" : q.pol > 0 ? "+1" : "−1") + "  = " + (ef === null ? "–" : ef > 0 ? "+1" : "−1") + "  " + (ok ? (ef === r ? "concorda" : "discorda") : "fora da conta");
+    });
+    return { p, comp, conc, af: comp ? conc / comp : 0, entra: comp >= minimo, linhas, minimo };
+  });
+}
+function ordenar(lista) {
+  const dentro = lista.filter(x => x.entra).sort((a, b) => b.af - a.af || b.comp - a.comp);
+  let pos = 0;
+  dentro.forEach((x, i) => { if (i === 0 || x.af !== dentro[i - 1].af) pos = i + 1; x.pos = pos; });
+  return dentro.concat(lista.filter(x => !x.entra));
+}
+function calcularAf() {
+  const semPol = $("#af-sem-pol").checked;
+  const certo = ordenar(afinidades(false)), usado = semPol ? ordenar(afinidades(true)) : certo;
+  const posCerta = new Map(certo.map(x => [x.p.nome, x.pos]));
+  const empates = new Map();
+  usado.forEach(x => { if (x.entra) empates.set(x.pos, (empates.get(x.pos) || 0) + 1); });
+  let h = '<thead><tr><th>#</th><th>Parlamentar</th><th class="n">Resultado</th><th>Situação</th></tr></thead><tbody>';
+  usado.forEach(x => {
+    const mudou = semPol && x.entra && posCerta.get(x.p.nome) !== x.pos;
+    h += '<tr class="' + (x.entra ? "" : "fora") + (mudou ? " mudou" : "") + '"><td class="n">' + (x.entra ? x.pos + (empates.get(x.pos) > 1 ? "=" : "") : "–") + "</td><td>" + x.p.nome +
+      "<details><summary>ver a conta</summary><div class=\"detalhe\">" + esc(x.linhas.join("\n")) + "</div></details></td>" +
+      '<td class="n">' + (x.comp ? "concordou em " + x.conc + " de " + x.comp : "–") + "</td><td>" +
+      (x.entra ? (mudou ? "posição errada: era " + posCerta.get(x.p.nome) + "º" : "entra") : "fora: " + x.comp + " comparáveis, mínimo " + x.minimo) + "</td></tr>";
+  });
+  $("#af-ranking").innerHTML = h + "</tbody>";
+  $("#af-aviso").textContent = semPol
+    ? "Sem a polaridade, as perguntas de polaridade −1 contam ao contrário. Nada quebra e nenhum número parece estranho: o ranking só está errado."
+    : "O piso é 60% das " + AF_PERGUNTAS.length + " perguntas oferecidas, arredondado para cima: " + Math.ceil(AF_PERGUNTAS.length * 0.6) + " comparáveis. Empate aparece com \"=\".";
+  mapaAf(usado);
+}
+function mapaAf(lista) {
+  const s = $("#af-mapa");
+  s.innerHTML = "";
+  el("rect", { x: 1, y: 1, width: 278, height: 218, fill: "var(--fundo)", stroke: "var(--borda)" }, s);
+  const usados = lista.filter(x => x.entra && x.af > 0);
+  let sx = 0, sy = 0, sw = 0;
+  usados.forEach(x => { const w = x.af * x.af; sx += x.p.xy[0] * w; sy += x.p.xy[1] * w; sw += w; });
+  const cid = sw ? [sx / sw, sy / sw] : null;
+  AF_PARL.forEach(p => {
+    const dentro = usados.find(x => x.p === p);
+    if (cid && dentro) el("line", { x1: cid[0], y1: cid[1], x2: p.xy[0], y2: p.xy[1], stroke: "var(--realce)", "stroke-opacity": 0.25 + 0.75 * dentro.af ** 2, "stroke-width": 1 + 3 * dentro.af ** 2 }, s);
+  });
+  AF_PARL.forEach((p, i) => {
+    el("circle", { cx: p.xy[0], cy: p.xy[1], r: 8, fill: cor(i), stroke: "var(--papel)", "stroke-width": 1.5 }, s);
+    const t = el("text", { x: p.xy[0], y: p.xy[1] - 12, "text-anchor": "middle", class: "rotulo-eixo" }, s);
+    t.textContent = p.nome.slice(-1);
+  });
+  if (cid) {
+    el("rect", { x: cid[0] - 7, y: cid[1] - 7, width: 14, height: 14, fill: "var(--texto)", stroke: "var(--papel)", "stroke-width": 2, transform: "rotate(45 " + cid[0] + " " + cid[1] + ")" }, s);
+    const t = el("text", { x: cid[0], y: cid[1] + 22, "text-anchor": "middle", class: "rotulo-eixo" }, s);
+    t.textContent = "você";
+  }
+  $("#af-posicao").textContent = cid
+    ? "posição = Σ (afinidade² × posição) ÷ Σ afinidade²\n" + usados.map(x => x.p.nome + ": " + fmt(x.af) + "² = " + fmt(x.af ** 2, 3)).join("\n")
+    : "Sem afinidade acima de zero, não há onde pôr o ponto.";
+}
+calcularAf();
+aoMudarTema.push(calcularAf);
+
+function lerPtBr(txt) {
+  const limpo = String(txt).trim().replace(/\s|R\$/g, "").replace(/\./g, "").replace(",", ".");
+  const v = Number(limpo);
+  return Number.isFinite(v) && limpo !== "" ? v : NaN;
+}
+function lerPonto(txt) {
+  const limpo = String(txt).trim().replace(/\s|R\$/g, "").replace(/,/g, "");
+  const v = Number(limpo);
+  return Number.isFinite(v) && limpo !== "" ? v : NaN;
+}
+function contrato() {
+  const ini = lerPtBr($("#ct-ini").value), fim = lerPtBr($("#ct-fim").value);
+  if (isNaN(ini) || isNaN(fim)) { $("#ct-conta").textContent = "Escreva os valores no formato 1.234,56."; return; }
+  const menor = Math.min(Math.abs(ini), Math.abs(fim)), maior = Math.max(Math.abs(ini), Math.abs(fim));
+  const razao = menor > 0 ? maior / menor : Infinity;
+  let entra, desc, porque;
+  if (menor > 0 && razao > 100) {
+    entra = Math.abs(ini) === menor ? ini : fim; desc = maior - menor;
+    porque = "A razão passa de 100: um dos dois foi digitado errado. Entra o menor, e a diferença fica à vista na tela como descartada.";
+  } else {
+    entra = fim; desc = 0;
+    porque = "A razão está dentro de 100: é aditivo ou reajuste de verdade. Entra o valor final.";
+  }
+  $("#ct-entra").textContent = reais(entra);
+  $("#ct-desc").textContent = reais(desc);
+  $("#ct-razao").textContent = isFinite(razao) ? fmt(razao, razao < 10 ? 2 : 0) + "×" : "–";
+  $("#ct-conta").textContent = "maior ÷ menor = " + reais(maior) + " ÷ " + reais(menor) + " = " + (isFinite(razao) ? fmt(razao, 2) : "–") + "\n" + porque;
+}
+["#ct-ini", "#ct-fim"].forEach(s => $(s).addEventListener("input", contrato));
+$$("button", $("#ct-ex")).forEach(b => b.addEventListener("click", () => { $("#ct-ini").value = b.dataset.i; $("#ct-fim").value = b.dataset.f; contrato(); }));
+contrato();
+
+function leitores() {
+  const t = $("#lt-txt").value, a = lerPtBr(t), b = lerPonto(t);
+  const num = x => isNaN(x) ? "não é número" : x.toLocaleString("pt-BR", { maximumFractionDigits: 6 });
+  $("#lt-br").textContent = num(a);
+  $("#lt-pt").textContent = num(b);
+  $("#lt-x").textContent = isNaN(a) || isNaN(b) || !a || !b ? "–" : a === b ? "nenhuma" : fmt(Math.max(a, b) / Math.min(a, b), 0) + "×";
+}
+$("#lt-txt").addEventListener("input", leitores);
+leitores();
+
+const alvo = $("#hs-alvo"), arq = $("#hs-arq");
+let hashAtual = "";
+async function calcularHash(f) {
+  if (!f) return;
+  if (!(window.crypto && crypto.subtle)) { $("#hs-saida").textContent = "Este navegador não oferece o cálculo de hash nesta página."; return; }
+  $("#hs-saida").textContent = "Calculando " + f.name + "…";
+  const buf = await f.arrayBuffer();
+  const h = await crypto.subtle.digest("SHA-256", buf);
+  hashAtual = [...new Uint8Array(h)].map(b => b.toString(16).padStart(2, "0")).join("");
+  $("#hs-saida").textContent = f.name + " · " + f.size.toLocaleString("pt-BR") + " bytes\nsha256 " + hashAtual;
+  comparar();
+}
+function comparar() {
+  const esperado = $("#hs-esperado").value.trim().toLowerCase(), v = $("#hs-veredito");
+  if (!esperado || !hashAtual) { v.textContent = ""; return; }
+  const igual = esperado === hashAtual;
+  v.textContent = igual ? "igual: é o mesmo arquivo" : "diferente: não é o mesmo arquivo";
+  v.style.color = igual ? "var(--realce)" : "var(--perigo)";
+}
+arq.addEventListener("change", () => calcularHash(arq.files[0]));
+alvo.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); arq.click(); } });
+alvo.addEventListener("dragover", e => { e.preventDefault(); alvo.classList.add("sobre"); });
+alvo.addEventListener("dragleave", () => alvo.classList.remove("sobre"));
+alvo.addEventListener("drop", e => { e.preventDefault(); alvo.classList.remove("sobre"); calcularHash(e.dataTransfer.files[0]); });
+$("#hs-esperado").addEventListener("input", comparar);
+
+aplicarTema();
+</script>
 </body>
 </html>
