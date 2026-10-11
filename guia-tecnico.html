@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guia técnico</title>
+<meta name="description" content="Como o Registro Aberto funciona por dentro: de onde vêm os dados, como o voto vira grafo, que algoritmos são usados e por quê, como a afinidade é calculada e as regras de dinheiro, origem e privacidade.">
+<style>
+  :root {
+    --fundo: #ffffff; --painel: #f3f5f7; --texto: #12161b; --suave: #4d5966;
+    --borda: #dde2e7; --borda-forte: #8a96a3; --realce: #0f766e; --sobre-realce: #ffffff;
+    --realce-fraco: #e3f1ef; --perigo: #a8321f;
+    --dado: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --texto-fonte: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --raio: 3px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --fundo: #0b0e11; --painel: #151b22; --texto: #e8edf2; --suave: #a3afbb;
+      --borda: #27313c; --borda-forte: #5c6977; --realce: #5eb7ac; --sobre-realce: #0b0e11;
+      --realce-fraco: #12302d; --perigo: #e0826f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --fundo: #0b0e11; --painel: #151b22; --texto: #e8edf2; --suave: #a3afbb;
+    --borda: #27313c; --borda-forte: #5c6977; --realce: #5eb7ac; --sobre-realce: #0b0e11;
+    --realce-fraco: #12302d; --perigo: #e0826f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fundo); color: var(--texto);
+    font-family: var(--texto-fonte); font-size: 16px; line-height: 1.55;
+  }
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 34px; line-height: 1.15; margin: 0 0 8px; }
+  h2 { font-size: 26px; margin: 56px 0 12px; padding-top: 16px; border-top: 1px solid var(--borda); }
+  h3 { font-size: 20px; margin: 28px 0 10px; }
+  p, ul, ol { margin: 0 0 12px; max-width: 72ch; }
+  li { margin: 4px 0; }
+  .sub { color: var(--suave); font-size: 15px; margin-bottom: 24px; }
+  .num { font-family: var(--dado); color: var(--realce); font-size: 15px; margin-right: 8px; }
+  figure { margin: 16px 0; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel); padding: 16px; overflow-x: auto; }
+  figcaption { color: var(--suave); font-size: 13px; margin-top: 8px; }
+  svg { display: block; width: 100%; min-width: 760px; height: auto; font-family: var(--texto-fonte); }
+  svg .t { fill: var(--texto); font-size: 15px; font-weight: 700; }
+  svg .s { fill: var(--suave); font-size: 12px; }
+  svg .d { fill: var(--suave); font-size: 11.5px; font-family: var(--dado); }
+  svg .caixa { fill: var(--fundo); stroke: var(--borda-forte); }
+  svg .caixa-realce { fill: var(--realce-fraco); stroke: var(--realce); stroke-width: 1.5; }
+  svg .linha { stroke: var(--realce); stroke-width: 2; fill: none; }
+  svg .no { fill: var(--fundo); stroke: var(--texto); stroke-width: 1.5; }
+  svg .no-a { fill: var(--realce); }
+  svg .aresta { stroke: var(--borda-forte); stroke-width: 1.5; }
+  svg .aresta-forte { stroke: var(--realce); stroke-width: 2.5; }
+  .tabela { overflow-x: auto; margin: 8px 0 16px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--borda); vertical-align: top; }
+  th { font-size: 13px; color: var(--suave); font-weight: 600; }
+  td.n { font-family: var(--dado); white-space: nowrap; }
+  code { font-family: var(--dado); font-size: 13px; }
+  pre { margin: 8px 0 14px; padding: 10px 12px; background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio);
+        font-family: var(--dado); font-size: 13px; overflow-x: auto; line-height: 1.6; }
+  .aviso { border-left: 4px solid var(--realce); background: var(--painel); padding: 10px 14px; margin: 14px 0; max-width: 76ch; }
+  .aviso.risco { border-left-color: var(--perigo); }
+  .aviso p:last-child, .aviso ul:last-child { margin-bottom: 0; }
+  .aviso strong:first-child { display: block; margin-bottom: 4px; }
+  .medido { font-family: var(--dado); font-size: 12px; color: var(--suave); }
+  nav.indice { margin: 0 0 24px; padding: 14px 16px; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel); }
+  nav.indice ol { margin: 0; padding-left: 22px; columns: 2; column-gap: 32px; max-width: none; font-size: 15px; }
+  nav.indice a { color: var(--realce); }
+  .lado { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .lado > div { border: 1px solid var(--borda); border-radius: var(--raio); padding: 12px 14px; }
+  .lado h4 { margin: 0 0 6px; font-size: 16px; }
+  .lado p:last-child { margin-bottom: 0; }
+  a { color: var(--realce); }
+  @media (max-width: 700px) {
+    h1 { font-size: 26px; } h2 { font-size: 20px; }
+    nav.indice ol { columns: 1; }
+    .lado { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Guia técnico</h1>
+  <p class="sub">Como o Registro Aberto funciona por dentro: de onde vem cada dado, como o voto vira grafo, que algoritmo
+    é usado em cada etapa e por que ele e não outro. Complementa o <a href="mapa_do_sistema.html">mapa do sistema</a>
+    (comandos, tabelas e rotas) e a <a href="arquitetura.html">arquitetura de produção</a> (onde tudo roda).</p>
+
+  <div class="aviso">
+    <strong>A ideia em uma frase</strong>
+    <p>Afinidade política medida pelo que o parlamentar <em>votou</em>, não pelo que ele diz nem pelo partido em que está.
+      Tudo o que aparece na tela é calculado a partir do registro nominal de votação da Câmara e do Senado, e cada
+      número pode ser seguido até o arquivo oficial de onde saiu.</p>
+  </div>
+
+  <nav class="indice" aria-label="Nesta página">
+    <ol>
+      <li><a href="#visao">Visão geral: do arquivo oficial à tela</a></li>
+      <li><a href="#etl">A carga de dados (ETL)</a></li>
+      <li><a href="#matriz">Do voto à matriz</a></li>
+      <li><a href="#similaridade">Similaridade entre parlamentares</a></li>
+      <li><a href="#grafo">O grafo: kNN</a></li>
+      <li><a href="#comunidades">Comunidades: Louvain</a></li>
+      <li><a href="#comparacao">Comunidade × partido: ARI e modularidade</a></li>
+      <li><a href="#desenho">O desenho: molas e SVD</a></li>
+      <li><a href="#alinhamento">Governismo e disciplina</a></li>
+      <li><a href="#questionario">O questionário</a></li>
+      <li><a href="#polaridade">Polaridade</a></li>
+      <li><a href="#afinidade">A afinidade do cidadão</a></li>
+      <li><a href="#dinheiro">Regras do dinheiro</a></li>
+      <li><a href="#origem">Origem e auditoria</a></li>
+      <li><a href="#privacidade">Privacidade e LGPD</a></li>
+      <li><a href="#desempenho">Desempenho e cache</a></li>
+      <li><a href="#numeros">Os números, numa tabela</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="visao"><span class="num">1</span>Visão geral: do arquivo oficial à tela</h2>
+  <p>São três peças com papéis separados. A carga de dados, em Python, baixa e transforma; o banco guarda; a API, em C#,
+    só lê e responde. O cálculo pesado (similaridade, grafo, comunidades) acontece uma vez, na carga. O que depende
+    do cidadão (a afinidade) é calculado na hora, na API, e não é gravado.</p>
+
+  <figure>
+    <svg viewBox="0 0 1080 300" role="img" aria-labelledby="t-visao d-visao">
+      <title id="t-visao">Caminho do dado</title>
+      <desc id="d-visao">Fontes oficiais alimentam a carga de dados em Python, que grava no Postgres. A API em C# lê o banco e responde ao site em React.</desc>
+      <defs>
+        <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--realce)"/>
+        </marker>
+      </defs>
+      <rect class="caixa" x="20" y="40" width="190" height="220" rx="3"/>
+      <text class="t" x="115" y="72" text-anchor="middle">Fontes oficiais</text>
+      <text class="d" x="115" y="100" text-anchor="middle">Câmara (dados abertos)</text>
+      <text class="d" x="115" y="120" text-anchor="middle">Senado (API)</text>
+      <text class="d" x="115" y="140" text-anchor="middle">TSE</text>
+      <text class="d" x="115" y="160" text-anchor="middle">Portal da Transparência</text>
+      <text class="d" x="115" y="180" text-anchor="middle">Tesouro · SIOP</text>
+      <text class="d" x="115" y="200" text-anchor="middle">IBGE · Receita</text>
+      <text class="s" x="115" y="236" text-anchor="middle">só fonte periódica</text>
+
+      <path class="linha" d="M210 150 H 258" marker-end="url(#seta)"/>
+
+      <rect class="caixa-realce" x="262" y="40" width="250" height="220" rx="3"/>
+      <text class="t" x="387" y="72" text-anchor="middle">Carga de dados (Python)</text>
+      <text class="d" x="387" y="100" text-anchor="middle">1. baixa e registra o hash</text>
+      <text class="d" x="387" y="120" text-anchor="middle">2. contrato de entrada</text>
+      <text class="d" x="387" y="140" text-anchor="middle">3. transformação pura</text>
+      <text class="d" x="387" y="160" text-anchor="middle">4. contrato de saída</text>
+      <text class="d" x="387" y="180" text-anchor="middle">5. grava com carga_id</text>
+      <text class="d" x="387" y="208" text-anchor="middle">6. similaridade, grafo,</text>
+      <text class="d" x="387" y="226" text-anchor="middle">comunidades, desenho</text>
+
+      <path class="linha" d="M512 150 H 560" marker-end="url(#seta)"/>
+
+      <rect class="caixa" x="564" y="70" width="170" height="160" rx="3"/>
+      <text class="t" x="649" y="102" text-anchor="middle">PostgreSQL</text>
+      <text class="d" x="649" y="130" text-anchor="middle">schema do EF</text>
+      <text class="d" x="649" y="150" text-anchor="middle">CHECK · UNIQUE · FK</text>
+      <text class="d" x="649" y="170" text-anchor="middle">execucoes, arestas,</text>
+      <text class="d" x="649" y="190" text-anchor="middle">nos_metrica, cargas</text>
+
+      <path class="linha" d="M734 150 H 782" marker-end="url(#seta)"/>
+
+      <rect class="caixa" x="786" y="70" width="130" height="160" rx="3"/>
+      <text class="t" x="851" y="102" text-anchor="middle">API (C#)</text>
+      <text class="d" x="851" y="130" text-anchor="middle">só lê</text>
+      <text class="d" x="851" y="150" text-anchor="middle">afinidade</text>
+      <text class="d" x="851" y="170" text-anchor="middle">na hora</text>
+      <text class="d" x="851" y="190" text-anchor="middle">cache 5 min</text>
+
+      <path class="linha" d="M916 150 H 944" marker-end="url(#seta)"/>
+
+      <rect class="caixa" x="948" y="70" width="112" height="160" rx="3"/>
+      <text class="t" x="1004" y="102" text-anchor="middle">Site</text>
+      <text class="d" x="1004" y="130" text-anchor="middle">React</text>
+      <text class="d" x="1004" y="150" text-anchor="middle">grafo,</text>
+      <text class="d" x="1004" y="170" text-anchor="middle">perfis,</text>
+      <text class="d" x="1004" y="190" text-anchor="middle">orçamento</text>
+    </svg>
+    <figcaption>O schema do banco pertence ao EF Core (as migrations do projeto Poligraph.Data). O Python nunca cria tabela: lê e grava nas que o EF criou, todas em snake_case.</figcaption>
+  </figure>
+
+  <div class="aviso">
+    <strong>Por que o cálculo do grafo fica na carga e não na API</strong>
+    <p>Similaridade entre todos os pares de uma casa é cara (mais de 200 mil pares na Câmara, que teve 644 deputados passando pela 57ª) e só muda quando chegam votos
+      novos. Calcular uma vez por carga e guardar o resultado numa <code>execucao</code> deixa a API leve e torna o grafo
+      reproduzível: toda execução grava os parâmetros que usou. Um cálculo de similaridade aparecendo no C# é tratado como
+      regressão de arquitetura.</p>
+  </div>
+
+  <h2 id="etl"><span class="num">2</span>A carga de dados (ETL)</h2>
+  <p>ETL quer dizer extrair, transformar e carregar. Aqui ela é uma série de comandos Python (<code>py -m poligraph_etl &lt;comando&gt;</code>),
+    um por fonte, encadeados pela rotina diária. O manual completo está em <code>src/etl/README.md</code>.</p>
+
+  <h3>Regras que valem para toda fonte</h3>
+  <div class="tabela"><table>
+    <thead><tr><th>Regra</th><th>Como</th><th>Por quê</th></tr></thead>
+    <tbody>
+      <tr><td>Só fonte periódica</td><td>Só entra o que a carga consegue baixar de novo sozinha</td><td>PDF ou planilha avulsa envelhece e não dá para justificar nem refazer</td></tr>
+      <tr><td>Contrato de entrada</td><td><code>contratos/&lt;fonte&gt;.py</code> lista só as colunas lidas</td><td>Coluna que some derruba a carga com <code>LayoutMudou</code>, em vez de virar nulo calado</td></tr>
+      <tr><td>Transformação pura</td><td>Função que recebe linhas e devolve linhas, sem banco</td><td>Testável sem rede e sem Postgres</td></tr>
+      <tr><td>Contrato de saída</td><td><code>contratos/banco.py</code>, igual à tabela</td><td>Um teste compara com o schema gerado pelo EF</td></tr>
+      <tr><td>CSV lido de verdade</td><td><code>pd.read_csv(dtype=str)</code></td><td>Os CSV da Câmara têm quebra de linha dentro do campo; ler texto evita que pandas adivinhe tipo</td></tr>
+      <tr><td>Regra medida vira restrição</td><td><code>CHECK</code>, <code>UNIQUE</code>, <code>FK</code> no EF</td><td>Um erro que o banco recusa custa minutos; um que ele aceita custa um capítulo</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>A legislatura sai da data do voto</h3>
+  <p>A legislatura de uma votação é calculada pela data, e a virada é em <strong>fevereiro</strong>, não em janeiro, porque
+    a posse é em 1º de fevereiro. Uma votação de janeiro de 2027 ainda é da 57ª. Comparar parlamentares só dentro da mesma
+    legislatura evita misturar mandatos diferentes, com bancadas diferentes.</p>
+
+  <h3>Sincronizar, não acumular</h3>
+  <p>Cada comando apaga o recorte que vai recarregar (um ano, um mês) e grava de novo. Rodar duas vezes dá o mesmo banco.
+    Para escrever rápido, as tabelas grandes usam <code>COPY</code> do Postgres; os votos passam por uma tabela temporária
+    e um <code>INSERT … ON CONFLICT</code>, porque precisam atualizar quem já existe.</p>
+
+  <h2 id="matriz"><span class="num">3</span>Do voto à matriz</h2>
+  <p>Para comparar parlamentares, os votos de uma casa e legislatura viram uma tabela: uma linha por parlamentar, uma coluna
+    por votação. Cada célula é um número.</p>
+
+  <div class="lado">
+    <div>
+      <h4>O que entra</h4>
+      <ul>
+        <li>Votação de <strong>plenário</strong> (comissão não)</li>
+        <li><strong>Aberta</strong> (secreta não tem voto individual)</li>
+        <li>Mesma casa e mesma legislatura</li>
+        <li>Pelo menos <strong>100 votações</strong> na legislatura, ou ela fica sem grafo</li>
+      </ul>
+    </div>
+    <div>
+      <h4>O valor de cada célula</h4>
+      <ul>
+        <li><code>+1</code> Sim · <code>−1</code> Não</li>
+        <li><code>0</code> abstenção, obstrução, presidente: não conta</li>
+        <li>vazio: ausente, não conta</li>
+      </ul>
+      <p>Ausência não é discordância. Contar a falta como "votou diferente" puniria quem faltou, não quem pensa diferente.</p>
+    </div>
+  </div>
+
+  <h3>Peso de cada votação</h3>
+  <p>Nem toda votação diz o mesmo sobre uma pessoa. O peso é <strong>categoria × recência</strong>:</p>
+  <pre>peso = peso_da_categoria × 0,86 ^ anos_desde_a_votação</pre>
+  <div class="tabela"><table>
+    <thead><tr><th>Categoria</th><th>Peso</th><th>Por quê</th></tr></thead>
+    <tbody>
+      <tr><td>Substantiva</td><td class="n">1,0</td><td>Votação do mérito da matéria: o sinal mais forte</td></tr>
+      <tr><td>Destaque</td><td class="n">0,7</td><td>Mérito, mas de um trecho, não do projeto inteiro</td></tr>
+      <tr><td>Autoridade</td><td class="n">0,3</td><td>Voto em pessoa (indicação, sabatina), não em política</td></tr>
+      <tr><td>Procedimental</td><td class="n">0</td><td>Requerimento de rito mede obstrução, não posição; fica fora</td></tr>
+    </tbody>
+  </table></div>
+  <p>A razão <strong>0,86</strong> não foi escolhida no olho: é a correlação medida da posição dos mesmos deputados entre
+    anos dentro da legislatura (r = 0,862, entre 2023 e 2025). Um voto de três anos atrás vale 0,86³ ≈ 0,64 de um voto de hoje.</p>
+
+  <h2 id="similaridade"><span class="num">4</span>Similaridade entre parlamentares</h2>
+  <p>Para cada par da mesma casa, a carga calcula duas medidas, sobre as votações em que <strong>os dois</strong> se
+    posicionaram (Sim ou Não).</p>
+
+  <div class="lado">
+    <div>
+      <h4>Concordância simples</h4>
+      <pre>Σ peso × [votaram igual]
+─────────────────────────
+       Σ peso</pre>
+      <p>Lê-se como "votaram igual em 82% das vezes". É a que vai para a tela <strong>e a que monta o grafo</strong>.</p>
+    </div>
+    <div>
+      <h4>Cosseno ponderado</h4>
+      <pre>(cos(a·w, b·w) + 1) / 2</pre>
+      <p>O cosseno vai de −1 a 1; somar 1 e dividir por 2 leva para 0 a 1, que é o que o banco aceita (<code>ck_sim_valor</code>).
+        Fica gravado para comparação metodológica, mas não vira aresta.</p>
+    </div>
+  </div>
+
+  <div class="aviso risco">
+    <strong>Mínimo de 20 votações em comum</strong>
+    <p>Par com menos de 20 votações em comum é descartado. Com 5 votações, "concordam em 100%" pode ser sorte. A regra está
+      no código e também no banco (<code>CHECK ck_sim_minimo</code>): se alguém mudar o código, o banco recusa a gravação.</p>
+  </div>
+
+  <h2 id="grafo"><span class="num">5</span>O grafo: kNN</h2>
+  <p>Cada parlamentar é um nó. A aresta liga dois parlamentares que votam parecido, com a concordância como peso. A questão é
+    <em>quais</em> pares ligar.</p>
+
+  <h3>Por que não um corte fixo ("liga se concordam mais de 80%")</h3>
+  <p>Foi medido e não funciona: deputados concordam muito entre si. A concordância média entre dois deputados quaisquer é
+    <strong>0,663</strong>, e mesmo com o corte em 0,90 o grafo ainda tem <strong>11,6%</strong> de todas as arestas
+    possíveis, um borrão onde tudo liga em tudo. Um corte fixo também cria "hubs" artificiais: quem concorda moderadamente
+    com todo mundo ganha centenas de arestas.</p>
+
+  <h3>O que é usado: os k vizinhos mais próximos, com k = 10</h3>
+  <p>Cada parlamentar escolhe os 10 colegas com quem mais concorda. A aresta existe se <strong>qualquer um dos dois</strong>
+    escolheu o outro (união), porque o grafo não tem direção. O resultado tem densidade previsível (no máximo 644 × 10 arestas
+    na Câmara, menos as escolhidas pelos dois lados) e cada pessoa aparece ligada ao seu entorno real, não a quem concorda com todo mundo.</p>
+
+  <figure>
+    <svg viewBox="0 0 1080 230" role="img" aria-labelledby="t-knn d-knn">
+      <title id="t-knn">Corte fixo contra k vizinhos</title>
+      <desc id="d-knn">À esquerda, com um corte fixo, quase todos os nós ficam ligados entre si. À direita, com k vizinhos, cada nó fica ligado só aos mais próximos, e os grupos aparecem.</desc>
+      <text class="t" x="270" y="24" text-anchor="middle">Corte fixo em 0,80</text>
+      <g>
+        <line class="aresta" x1="120" y1="80" x2="200" y2="60"/><line class="aresta" x1="120" y1="80" x2="160" y2="150"/>
+        <line class="aresta" x1="120" y1="80" x2="330" y2="90"/><line class="aresta" x1="120" y1="80" x2="400" y2="170"/>
+        <line class="aresta" x1="200" y1="60" x2="160" y2="150"/><line class="aresta" x1="200" y1="60" x2="330" y2="90"/>
+        <line class="aresta" x1="200" y1="60" x2="380" y2="60"/><line class="aresta" x1="160" y1="150" x2="330" y2="90"/>
+        <line class="aresta" x1="160" y1="150" x2="400" y2="170"/><line class="aresta" x1="160" y1="150" x2="250" y2="190"/>
+        <line class="aresta" x1="330" y1="90" x2="380" y2="60"/><line class="aresta" x1="330" y1="90" x2="400" y2="170"/>
+        <line class="aresta" x1="330" y1="90" x2="250" y2="190"/><line class="aresta" x1="380" y1="60" x2="400" y2="170"/>
+        <line class="aresta" x1="250" y1="190" x2="400" y2="170"/><line class="aresta" x1="250" y1="190" x2="120" y2="80"/>
+        <line class="aresta" x1="270" y1="120" x2="120" y2="80"/><line class="aresta" x1="270" y1="120" x2="380" y2="60"/>
+        <line class="aresta" x1="270" y1="120" x2="160" y2="150"/><line class="aresta" x1="270" y1="120" x2="400" y2="170"/>
+        <line class="aresta" x1="270" y1="120" x2="200" y2="60"/><line class="aresta" x1="270" y1="120" x2="250" y2="190"/>
+      </g>
+      <circle class="no" cx="120" cy="80" r="9"/><circle class="no" cx="200" cy="60" r="9"/><circle class="no" cx="160" cy="150" r="9"/>
+      <circle class="no" cx="330" cy="90" r="9"/><circle class="no" cx="380" cy="60" r="9"/><circle class="no" cx="400" cy="170" r="9"/>
+      <circle class="no" cx="250" cy="190" r="9"/><circle class="no no-a" cx="270" cy="120" r="9"/>
+      <text class="s" x="270" y="222" text-anchor="middle">o nó do meio concorda "um pouco" com todos e vira hub</text>
+
+      <text class="t" x="810" y="24" text-anchor="middle">k vizinhos (k = 10 no sistema)</text>
+      <g>
+        <line class="aresta-forte" x1="660" y1="80" x2="740" y2="60"/><line class="aresta-forte" x1="660" y1="80" x2="700" y2="150"/>
+        <line class="aresta-forte" x1="740" y1="60" x2="700" y2="150"/>
+        <line class="aresta-forte" x1="870" y1="90" x2="920" y2="60"/><line class="aresta-forte" x1="870" y1="90" x2="940" y2="170"/>
+        <line class="aresta-forte" x1="920" y1="60" x2="940" y2="170"/><line class="aresta-forte" x1="790" y1="190" x2="940" y2="170"/>
+        <line class="aresta" x1="810" y1="120" x2="700" y2="150"/><line class="aresta" x1="810" y1="120" x2="870" y2="90"/>
+      </g>
+      <circle class="no" cx="660" cy="80" r="9"/><circle class="no" cx="740" cy="60" r="9"/><circle class="no" cx="700" cy="150" r="9"/>
+      <circle class="no" cx="870" cy="90" r="9"/><circle class="no" cx="920" cy="60" r="9"/><circle class="no" cx="940" cy="170" r="9"/>
+      <circle class="no" cx="790" cy="190" r="9"/><circle class="no no-a" cx="810" cy="120" r="9"/>
+      <text class="s" x="810" y="222" text-anchor="middle">cada um fica ligado ao seu entorno; os grupos aparecem</text>
+    </svg>
+    <figcaption>Ilustração com 8 nós e k = 2. No sistema, k = 10 e o grafo da Câmara da 57ª tem 644 nós (os 513 titulares e quem os substituiu).</figcaption>
+  </figure>
+
+  <h3>Regras que o banco garante</h3>
+  <ul>
+    <li><strong>Nenhuma aresta entre casas.</strong> Deputado e senador não votam as mesmas matérias no mesmo dia; compará-los não faz sentido.</li>
+    <li><strong>Aresta sem direção, guardada uma vez só:</strong> sempre com <code>pessoa_a &lt; pessoa_b</code>, com <code>CHECK</code> no banco.</li>
+    <li>Toda aresta pertence a uma <strong>execução</strong>, que guarda k, a versão e os parâmetros usados.</li>
+  </ul>
+
+  <h2 id="comunidades"><span class="num">6</span>Comunidades: Louvain</h2>
+  <p>Comunidade é um grupo de parlamentares que se ligam mais entre si do que com o resto do grafo. A cor de cada nó na tela
+    é a comunidade dele.</p>
+
+  <h3>Por que Louvain</h3>
+  <ul>
+    <li><strong>Usa o peso das arestas.</strong> Concordar 95% pesa mais que concordar 75%.</li>
+    <li><strong>Não pede o número de grupos.</strong> Diferente do k-means, ninguém diz "quero 5 blocos": o algoritmo descobre
+      quantos existem. Pedir um número seria impor uma resposta.</li>
+    <li><strong>Maximiza a modularidade</strong>, a medida-padrão de "quão bem uma divisão separa o grafo", que é exatamente
+      o que se quer comparar com os partidos depois.</li>
+    <li>É rápido para grafos deste tamanho e está pronto no <code>networkx</code>, sem dependência nova.</li>
+  </ul>
+
+  <h3>Semente fixa: 20260826</h3>
+  <p>O Louvain percorre os nós numa ordem aleatória, e ordens diferentes podem dar divisões um pouco diferentes. Com a semente
+    fixa, a mesma entrada dá sempre a mesma saída: a figura do TCC pode ser refeita. Trocar a semente muda o resultado
+    publicado, por isso ela só muda junto com uma nova versão da carga. As comunidades são numeradas por tamanho (a 1 é a maior).</p>
+
+  <h2 id="comparacao"><span class="num">7</span>Comunidade × partido: ARI e modularidade</h2>
+  <p>A pergunta do trabalho é se o voto agrupa os parlamentares do mesmo jeito que o partido. Duas medidas, porque cada uma
+    responde uma coisa:</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Medida</th><th>Responde</th><th>Medido</th></tr></thead>
+    <tbody>
+      <tr><td><strong>ARI</strong> (índice de Rand ajustado)</td><td>As comunidades coincidem com os partidos? 1 é igual, 0 é o que o acaso daria</td><td class="n">0,277</td></tr>
+      <tr><td><strong>Modularidade</strong> das comunidades</td><td>A divisão por voto descreve bem o grafo?</td><td class="n">0,558</td></tr>
+      <tr><td><strong>Modularidade</strong> dos partidos</td><td>E a divisão por partido, no mesmo grafo?</td><td class="n">0,288</td></tr>
+    </tbody>
+  </table></div>
+  <p class="medido">MEDIDO em 2026-08 na Câmara, 57ª legislatura, com os votos disponíveis na época.</p>
+  <p>Sozinha, a modularidade não compara nada; sozinho, o ARI diz que as divisões diferem mas não qual é melhor. Juntas
+    sustentam a frase do trabalho: as comunidades de voto descrevem o grafo quase duas vezes melhor que os partidos, e
+    coincidem pouco com eles. Um exemplo: o União Brasil aparece espalhado em quatro das seis comunidades.</p>
+
+  <h2 id="desenho"><span class="num">8</span>O desenho: molas e SVD</h2>
+  <p>O grafo na tela é desenhado pelo algoritmo de <strong>molas</strong> (Fruchterman-Reingold): toda aresta puxa os dois nós
+    um para o outro, todo par de nós se repele, e o sistema roda 120 iterações até se acomodar. Quem vota junto fica perto.
+    A semente é a mesma do Louvain, para o desenho ser o mesmo a cada carga.</p>
+
+  <div class="aviso risco">
+    <strong>Os eixos do desenho não significam nada</strong>
+    <p>Esquerda e direita, cima e baixo na figura não são esquerda e direita política. Girar o desenho não muda o que ele diz;
+      o que importa é quem está perto de quem. Por isso a tela não tem rótulo nos eixos.</p>
+  </div>
+
+  <p>Em paralelo, a carga calcula o <strong>SVD</strong> (decomposição em valores singulares, parente do PCA) da matriz de
+    votos. Ele dá eixos com significado: o primeiro componente é a direção que mais separa os votos e explica
+    <strong>34,6%</strong> da variação. Fica gravado em <code>nos_metrica</code> para a análise do trabalho.</p>
+
+  <div class="aviso risco">
+    <strong>O centro não é moderação</strong>
+    <p>Quem faltou a muitas votações tem pouca informação e cai perto do centro, em qualquer dos dois desenhos. A correlação
+      entre distância do centro e número de votações é r = 0,566. Um nó no meio pode ser um moderado ou alguém que quase
+      não votou.</p>
+  </div>
+  <p class="medido">MEDIDO em 2026-08 na Câmara, 57ª legislatura.</p>
+
+  <h2 id="alinhamento"><span class="num">9</span>Governismo e disciplina</h2>
+  <p>Duas medidas por parlamentar, a partir da orientação de bancada que a Câmara publica em cada votação:</p>
+  <ul>
+    <li><strong>Governismo:</strong> em quantas votações seguiu a orientação do Governo.</li>
+    <li><strong>Disciplina:</strong> em quantas seguiu a orientação do próprio partido.</li>
+  </ul>
+  <p>O partido é o do <strong>momento do voto</strong> (<code>votos.partido_no_voto</code>), não o de hoje. Trocar de partido
+    é comum; medir contra a filiação atual reescreveria o passado. As duas são guardadas como par ("12 de 15"), nunca só a
+    porcentagem, porque 12 de 15 e 800 de 1.000 dão 80% e não dizem a mesma coisa.</p>
+
+  <h2 id="questionario"><span class="num">10</span>O questionário</h2>
+  <p>O cidadão responde a afirmações sobre votações reais. Cada pergunta é uma votação nominal com a ementa reescrita em
+    linguagem comum.</p>
+
+  <h3>De onde saem as perguntas</h3>
+  <ol>
+    <li>A carga ordena as candidatas (<code>curadoria.py</code>): só plenário, aberta, substantiva, com quórum, ordenadas pela
+      <strong>divisão</strong> (<code>min(sim, não) / total</code>; 50% é o máximo). Votação em que todos votaram igual
+      não separa ninguém.</li>
+    <li>Uma pessoa lê cada candidata, escreve a afirmação e atribui a polaridade. Isso é trabalho humano de propósito
+      (ver a próxima seção).</li>
+    <li>O poço hoje tem <strong>49 perguntas ativas</strong>: 40 da Câmara e 9 do Senado.</li>
+  </ol>
+
+  <h3>Quais perguntas a pessoa vê: 24</h3>
+  <div class="tabela"><table>
+    <thead><tr><th>Bloco</th><th>Quantas</th><th>Como são escolhidas</th></tr></thead>
+    <tbody>
+      <tr><td>Abertura, Câmara</td><td class="n">8</td><td>As 8 que mais separam deputados, em ordem gulosa de cobertura de pares</td></tr>
+      <tr><td>Senado</td><td class="n">9</td><td>O poço inteiro: das votações substantivas abertas da 57ª, quase todas tiveram divisão abaixo de 5% e as outras foram secretas</td></tr>
+      <tr><td>Desempate, Câmara</td><td class="n">7</td><td>Escolhidas depois das 8 primeiras, contra o empate <em>desta</em> pessoa</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>O desempate dirigido</h3>
+  <p>Depois das 8 primeiras, muitos deputados empatam com a pessoa. O sistema olha quem está empatado no topo e escolhe as 7
+    perguntas que mais separam <em>esses</em> deputados. Medido: 15 perguntas com desempate dirigido valem 25 perguntas
+    fixas, e o empate no topo cai para cerca de 6. Sortear as perguntas não ajudaria: ficaria igual a não adaptar. As 7 são
+    escolhidas de uma vez, e não uma a uma, para não fazer sete idas ao servidor no meio do questionário.</p>
+
+  <div class="aviso">
+    <strong>O painel não mostra direção</strong>
+    <p>Entre uma pergunta e outra o site mostra quem compareceu à votação, nunca quem votou Sim ou Não. Mostrar o placar antes
+      das próximas respostas induziria a pessoa a seguir a maioria, e o instrumento passaria a medir adesão, não opinião.</p>
+  </div>
+
+  <h2 id="polaridade"><span class="num">11</span>Polaridade</h2>
+  <p>Em cerca de <strong>14%</strong> das votações nominais, votar "Sim" significa <strong>rejeitar</strong> a ideia. O caso típico
+    é o destaque, em que se vota um trecho: dependendo de como o destaque foi apresentado, "Sim" pode manter o texto
+    ou derrubá-lo.</p>
+  <p>Cada pergunta tem uma polaridade, atribuída à mão:</p>
+  <ul>
+    <li><code>+1</code>: votar Sim concorda com a afirmação.</li>
+    <li><code>−1</code>: votar Sim rejeita a afirmação.</li>
+  </ul>
+  <pre>posição_efetiva = voto × polaridade      (Sim = +1, Não = −1)</pre>
+
+  <div class="aviso risco">
+    <strong>O campo mais perigoso do sistema</strong>
+    <p>Uma polaridade errada não quebra nada na tela: vira um número plausível e invertido. Por isso ela é atribuída por uma
+      pessoa, e nenhuma mudança no cálculo de afinidade entra sem passar pelo teste de regressão de polaridade (API3,
+      <code>TestesPolaridade.cs</code>). Os casos de polaridade −1 são o teste de verdade: os de +1 passam mesmo com o
+      código errado.</p>
+  </div>
+
+  <h2 id="afinidade"><span class="num">12</span>A afinidade do cidadão</h2>
+  <p>Calculada na API, na hora, a partir das respostas. Nada disso é gravado.</p>
+
+  <h3>A conta</h3>
+  <ol>
+    <li>Para cada pergunta, a resposta do cidadão vira <code>+1</code> (concordo) ou <code>−1</code> (discordo); "não sei" vira <code>0</code>.</li>
+    <li>O voto do parlamentar vira a posição efetiva (voto × polaridade).</li>
+    <li>A pergunta é <strong>comparável</strong> se o cidadão respondeu, o parlamentar votou Sim ou Não, e nenhum dos dois é 0.</li>
+    <li>Afinidade = concordâncias ÷ comparáveis.</li>
+  </ol>
+  <pre>afinidade = perguntas em que concordaram / perguntas comparáveis
+tela:       "concordou em 11 de 14"</pre>
+
+  <div class="tabela"><table>
+    <thead><tr><th>Regra</th><th>Por quê</th></tr></thead>
+    <tbody>
+      <tr><td>Sempre "X de Y", nunca a porcentagem sozinha</td><td>"80%" esconde se a base foi 5 ou 20 perguntas</td></tr>
+      <tr><td>Piso: comparáveis ≥ 60% das perguntas oferecidas</td><td>Quem faltou à maioria das votações do questionário não entra no ranking; teria afinidade sobre quase nada</td></tr>
+      <tr><td>Mostra os 5 primeiros, com empates</td><td>Empate é mostrado como empate, sem desempatar por critério escondido</td></tr>
+      <tr><td>Não é recomendação de voto</td><td>A frase aparece na tela de resultado</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Onde o cidadão aparece no grafo</h3>
+  <p>O cidadão não tem voto em todas as votações, então não entra no cálculo de molas. A posição dele é a <strong>média
+    ponderada</strong> das posições dos 10 parlamentares com maior afinidade, com peso igual ao <strong>quadrado</strong> da
+    afinidade. O quadrado puxa o ponto para quem concorda mais: um parlamentar com 90% pesa quase o dobro de um com 65%.</p>
+
+  <h2 id="dinheiro"><span class="num">13</span>Regras do dinheiro</h2>
+  <p>As páginas de orçamento (emendas, cota, cartões, viagens, compras) seguem uma regra do autor: <strong>o total da base fecha
+    com o da fonte</strong>. O que não fecha tem motivo e valor à vista.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Regra</th><th>Como funciona</th></tr></thead>
+    <tbody>
+      <tr><td>Reconciliação</td><td>Tabelas <code>reconciliacoes</code> e <code>reconciliacao_motivos</code>: para cada fonte e período, o total da fonte, o total gravado e cada diferença com o motivo. O comando <code>conferir</code> cobra que tudo feche</td></tr>
+      <tr><td>Erro de digitação em contrato</td><td>Se o valor inicial e o final de um contrato divergem mais de <strong>100 vezes</strong>, um dos dois foi digitado errado (vírgula fora do lugar multiplica por 1.000). Entra o menor, e a diferença aparece como descartada na tela. Aditivo de verdade raramente multiplica um contrato por 100</td></tr>
+      <tr><td>Nenhum descarte calado</td><td>Linha com erro entra corrigida pela regra escrita, nunca some</td></tr>
+      <tr><td>Ponto e vírgula</td><td>"1.234" vale mil e duzentos no Portal e no TSE, e um vírgula dois três quatro na cota da Câmara. Cada fonte tem seu leitor de número; usar o errado daria um total mil vezes diferente, sem erro</td></tr>
+      <tr><td>Sigiloso</td><td>O Portal escreve <code>-11</code> no código e "Sigiloso" no nome quando o contratado é protegido. O contrato entra no total e é contado também à parte, como sigiloso</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="origem"><span class="num">14</span>Origem e auditoria</h2>
+  <p>Todo número na tela pode ser seguido até o arquivo de onde saiu. É o modo Auditoria do site.</p>
+  <ul>
+    <li><strong>Tabela <code>cargas</code>:</strong> cada arquivo baixado é registrado com endereço, data, comando e o
+      <strong>sha256</strong> do conteúdo. O hash prova que o arquivo é aquele: qualquer pessoa pode baixar de novo e conferir.</li>
+    <li><strong><code>carga_id</code> em 30 tabelas:</strong> cada linha aponta para a carga que a gravou.</li>
+    <li><strong>Origem por coluna:</strong> quando uma linha tem duas fontes (o cadastro do deputado vem da Câmara e o CPF do TSE,
+      por exemplo), cada coluna guarda a sua carga: <code>cpf_carga_id</code>, <code>nome_civil_carga_id</code>,
+      <code>palavras_chave_carga_id</code>, <code>populacao_carga_id</code> e outras.</li>
+    <li><strong>Respostas de API</strong> (que não são arquivo) são salvas em arquivo e registradas da mesma forma, com hash.</li>
+  </ul>
+
+  <h2 id="privacidade"><span class="num">15</span>Privacidade e LGPD</h2>
+  <div class="tabela"><table>
+    <thead><tr><th>Dado</th><th>Regra</th></tr></thead>
+    <tbody>
+      <tr><td>CPF</td><td>Nunca gravado nem mostrado. A coluna é <code>cpf_hash</code>: HMAC-SHA256 com chave secreta (<code>POLIGRAPH_CHAVE_CPF</code>). Sem a chave, o hash não pode ser revertido testando os CPFs possíveis, como daria com um SHA256 simples</td></tr>
+      <tr><td>Fontes com CPF em claro</td><td>CEIS, CNEP, cartões, o detalhe do deputado na API da Câmara e os arquivos do TSE: o contrato não lê a coluna ou descarta antes de gravar. A resposta da API não é salva; a origem fica só como índice das consultas</td></tr>
+      <tr><td>Seguir parlamentar</td><td>É registro de convicção política (dado sensível na LGPD): pede consentimento específico, e a conta pode ser apagada</td></tr>
+      <tr><td>Login</td><td>Só Google. O <code>id_token</code> é validado e descartado; nenhum token nem senha vai para o banco. A sessão é um cookie protegido pelo Data Protection</td></tr>
+      <tr><td>Conta</td><td>Opcional. Ler tudo é público; só seguir e a própria conta pedem login</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="desempenho"><span class="num">16</span>Desempenho e cache</h2>
+  <div class="tabela"><table>
+    <thead><tr><th>Camada</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td>Site</td><td>TanStack Query guarda cada resposta por 5 minutos. Voltar a uma página já vista não refaz o request</td></tr>
+      <tr><td>Navegador e Cloudflare</td><td><code>Cache-Control: public, max-age=300</code> em todo GET público com sucesso, sem login</td></tr>
+      <tr><td>API</td><td>Cache em memória por cópia da aplicação, com uma única consulta por chave mesmo com vários requests ao mesmo tempo. Sem Redis: cada cópia tem o seu</td></tr>
+      <tr><td>Warmup de cache</td><td>Ao subir e de hora em hora, a API pré-calcula as páginas mais pesadas</td></tr>
+      <tr><td>Medição</td><td>Cabeçalho <code>Server-Timing</code> com o tempo do request e quantas consultas ao banco ele fez</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="numeros"><span class="num">17</span>Os números, numa tabela</h2>
+  <p>Parâmetros conferidos no código em 2026-10-10. Medidas com a data e o recorte em que foram feitas.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Número</th><th>Valor</th><th>Onde</th></tr></thead>
+    <tbody>
+      <tr><td>Peso por categoria</td><td class="n">1,0 · 0,7 · 0,3 · 0</td><td><code>similaridade.PESO_CATEGORIA</code></td></tr>
+      <tr><td>Razão de recência por ano</td><td class="n">0,86</td><td><code>similaridade.RAZAO_RECENCIA</code></td></tr>
+      <tr><td>Votações em comum, mínimo</td><td class="n">20</td><td><code>MINIMO_VOTACOES_COMUNS</code> e <code>ck_sim_minimo</code></td></tr>
+      <tr><td>Vizinhos por nó (k)</td><td class="n">10</td><td><code>similaridade.K_VIZINHOS</code></td></tr>
+      <tr><td>Votações para ter grafo</td><td class="n">100</td><td><code>VOTACOES_MINIMAS_PARA_GRAFO</code></td></tr>
+      <tr><td>Semente</td><td class="n">20260826</td><td><code>grafo.SEMENTE</code></td></tr>
+      <tr><td>Iterações das molas</td><td class="n">120</td><td><code>grafo.ITERACOES_LAYOUT</code></td></tr>
+      <tr><td>Perguntas: abertura + Senado + desempate</td><td class="n">8 + 9 + 7 = 24</td><td><code>ServicoQuestionario</code></td></tr>
+      <tr><td>Respostas comparáveis, mínimo</td><td class="n">60%</td><td><code>FracaoMinimaDeRespostas</code></td></tr>
+      <tr><td>Parlamentares mostrados</td><td class="n">5</td><td><code>ServicoAfinidade.QuantidadeExibida</code></td></tr>
+      <tr><td>Vizinhos para posicionar o cidadão</td><td class="n">10</td><td><code>ServicoAfinidade.VizinhosParaPosicionar</code></td></tr>
+      <tr><td>Divergência que indica erro de digitação</td><td class="n">100×</td><td><code>compras.LIMITE_DE_DIVERGENCIA</code></td></tr>
+      <tr><td>Correlação entre anos (base do 0,86)</td><td class="n">r = 0,862</td><td>Câmara, 2023 a 2025</td></tr>
+      <tr><td>Concordância média entre dois deputados</td><td class="n">0,663</td><td>Câmara, 57ª, 2026-08</td></tr>
+      <tr><td>ARI · modularidade comunidade · partido</td><td class="n">0,277 · 0,558 · 0,288</td><td>Câmara, 57ª, 2026-08</td></tr>
+      <tr><td>Variação explicada pelo 1º eixo do SVD</td><td class="n">34,6%</td><td>Câmara, 57ª, 2026-08</td></tr>
+      <tr><td>Votações em que "Sim" rejeita</td><td class="n">≈ 14%</td><td>Votações nominais da Câmara</td></tr>
+    </tbody>
+  </table></div>
+  <p class="medido">As medidas de 2026-08 são do plano 07 (<code>docs/plano/07-grafo-e-afinidade.md</code>). Votos chegaram depois
+    disso; refazer a conta pode mudar a segunda casa decimal.</p>
+</main>
+</body>
+</html>
