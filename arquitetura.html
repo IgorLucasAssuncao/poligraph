@@ -461,7 +461,57 @@ curl -fsSL https://cdn.coollabs.io/coolify/install.sh | sudo bash</pre>
       <tr><td><code>bind: address already in use</code></td><td>A porta já está ocupada no computador do autor. Trocar o lado esquerdo (<code>LocalForward 9000 localhost:8000</code>) e abrir <code>localhost:9000</code></td></tr>
     </tbody>
   </table>
-  <p>Depois do painel: banco, API, site e <a href="#segredos">segredos</a> no Coolify, e a cópia do banco local (P87).</p>
+  <h3>10. Proteger o painel</h3>
+  <p>Em Settings: o domínio da instância fica vazio (o painel continua só pelo túnel) e "Registration allowed" desligado. No
+    perfil, a verificação em duas etapas ligada. Em Sources, o GitHub App com acesso só ao repositório <code>poligraph</code>.</p>
+
+  <h3>11. O banco</h3>
+  <p>No projeto <code>registro-aberto</code>, ambiente <code>production</code>: + New, Database, PostgreSQL, com a mesma versão
+    maior do banco local (a cópia da P87 não volta para versão mais antiga). Banco <code>poligraph</code>, usuário
+    <code>poligraph</code>, senha gerada pelo Coolify, e <strong>"Make it publicly available" desligado</strong>. Da
+    <em>Postgres URL (internal)</em> sai a connection string no formato do .NET:</p>
+  <pre>postgres://poligraph:SENHA@NOME:5432/poligraph
+Host=NOME;Port=5432;Database=poligraph;Username=poligraph;Password=SENHA</pre>
+  <p>O <code>NOME</code> é o do container na rede <code>coolify</code>, não um IP. A senha não passa por chat nem por arquivo:
+    vai do painel do banco direto para a variável.</p>
+
+  <h3>12. As variáveis</h3>
+  <p>Em <code>production</code>, Shared Variables: um lugar só para o que a API, a migration e o site usam. Na aplicação, cada
+    variável aponta para a compartilhada com <code>{{environment.NOME}}</code>.</p>
+  <table>
+    <thead><tr><th>Variável</th><th>Quem usa</th><th>Valor</th></tr></thead>
+    <tbody>
+      <tr><td><code>ConnectionStrings__poligraph</code></td><td>api, migrations</td><td>A do passo 11. Segredo</td></tr>
+      <tr><td><code>Google__ClientId</code></td><td>api</td><td>O client ID do Google de produção. Dois sublinhados: com um só, a API não acha o ID e o login fica desligado sem erro</td></tr>
+      <tr><td><code>VITE_GOOGLE_CLIENT_ID</code></td><td>web, na montagem</td><td>O mesmo ID. Entra pelo <code>args</code> do compose, porque o Vite grava o valor nos arquivos do site ao montar</td></tr>
+      <tr><td><code>AllowedHosts</code></td><td>api</td><td>Só sem domínio: o endereço de teste do site. Sem ela, vale <code>registroaberto.org</code></td></tr>
+    </tbody>
+  </table>
+  <p>O client ID de produção é um segundo client no mesmo projeto do Google, com a origem <code>https://registroaberto.org</code>
+    e nenhuma de <code>localhost</code>. O <em>client secret</em> que o Google mostra não se usa nem se guarda.</p>
+
+  <h3>13. A aplicação</h3>
+  <p>+ New, Docker Compose, repositório <code>poligraph</code>, branch <code>master</code>, arquivo
+    <code>/docker-compose.prod.yaml</code>. Ele monta três serviços a partir dos Dockerfiles de <code>docker/</code>:</p>
+  <ol class="passos">
+    <li><code>migrations</code> aplica as migrations e as perguntas da curadoria e termina. Roda a cada deploy; sem migration nova, só confere.</li>
+    <li><code>api</code> sobe só depois de a migration terminar bem, com o volume <code>chaves-da-sessao</code>: sem ele, cada deploy troca as chaves e desloga todo mundo.</li>
+    <li><code>web</code> é o site, o único com domínio. O nginx dele manda <code>/api/</code> ao serviço <code>api</code>.</li>
+  </ol>
+  <p>No Coolify, o domínio vai só no <code>web</code>, com a porta do nginx: <code>https://registroaberto.org:8080</code> (a porta
+    diz ao Traefik onde o container escuta; o visitante continua na 443). <strong>"Connect to Predefined Network" fica
+    desligado</strong>: ligado, o Coolify renomeia os serviços e o site deixa de achar a <code>api</code>. A rede do banco já
+    entra pelo próprio compose.</p>
+  <p><strong>Antes do primeiro deploy, a cópia do banco local (P87)</strong>, com o banco vazio: se a migration rodar antes,
+    as tabelas já existem e o <code>pg_restore</code> entra em conflito.</p>
+  <pre>PS&gt; pg_dump -Fc --no-owner --no-acl -h localhost -p PORTA -U postgres -d poligraph -f poligraph.dump
+PS&gt; scp poligraph.dump igor@IP-do-VPS:/tmp/
+docker cp /tmp/poligraph.dump CONTAINER_DO_BANCO:/tmp/
+docker exec -it CONTAINER_DO_BANCO pg_restore --no-owner --no-acl -U poligraph -d poligraph /tmp/poligraph.dump</pre>
+  <p>Depois, apagar o <code>.dump</code> nas duas pontas. A <code>POLIGRAPH_CHAVE_CPF</code> da ETL em produção tem de ser a
+    mesma do local: os <code>cpf_hash</code> copiados foram calculados com ela.</p>
+  <p>Compose processa os três serviços a cada deploy, com alguns segundos sem API. É a escolha para subir rápido
+    (decisão do autor, 2026-10-15); quando o CI publicar as imagens (P23), cada peça vira aplicação própria, sem queda.</p>
 </main>
 </body>
 </html>

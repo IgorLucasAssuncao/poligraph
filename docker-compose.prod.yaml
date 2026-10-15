@@ -1,0 +1,65 @@
+# Produção no Coolify: migration, API e site, montados a partir deste repositório.
+#
+# O banco NÃO está aqui: é um recurso próprio do Coolify, com volume e backup, que um
+# deploy não recria. A API e a migration o alcançam pela rede `coolify`.
+#
+# Variáveis, preenchidas no painel (nunca neste arquivo):
+#   ConnectionStrings__poligraph   Host=<container do banco>;Port=5432;Database=...;Username=...;Password=...
+#   Google__ClientId               client ID do Google de produção
+#   VITE_GOOGLE_CLIENT_ID          o mesmo ID; entra na MONTAGEM do site (args), não no container
+#   AllowedHosts                   só enquanto não houver domínio: o endereço de teste do site
+#
+# ATENÇÃO: no Coolify, deixar DESLIGADO "Connect to Predefined Network". Ligado, ele renomeia os
+#   serviços para <nome>-<uuid>, e o nginx do site deixa de achar o `api` do nginx.conf. A rede
+#   do banco entra pela declaração `coolify` abaixo, só nos serviços que falam com ele.
+#
+# DECISÃO (2026-10-15): compose para subir rápido. Todo deploy processa os três serviços, com
+#   alguns segundos sem API. Com o CI publicando imagens (P23), cada peça vira aplicação própria.
+
+services:
+  migrations:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.migrations
+    environment:
+      ConnectionStrings__poligraph: ${ConnectionStrings__poligraph}
+    networks:
+      - default
+      - coolify
+    restart: "no"
+    exclude_from_hc: true
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    environment:
+      ConnectionStrings__poligraph: ${ConnectionStrings__poligraph}
+      Google__ClientId: ${Google__ClientId}
+      AllowedHosts: ${AllowedHosts:-registroaberto.org;api.registroaberto.org}
+    volumes:
+      - chaves-da-sessao:/home/app/chaves
+    networks:
+      - default
+      - coolify
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  chaves-da-sessao:
+
+networks:
+  coolify:
+    external: true
