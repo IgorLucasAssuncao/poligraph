@@ -2639,8 +2639,10 @@ dialog.tour::backdrop { background: transparent; }
 .botoes-csv { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
 
 /* ═══ BARRA: TRÊS INTENÇÕES, BUSCA E CONTA ═══════════════════════
-   Uma linha no desktop: marca · navegação · busca · análise · conta. Abaixo de 1180px a navegação
-   desce para uma segunda linha, inteira — três itens com rótulo cabem num telefone, e
+   Uma linha no desktop: marca · navegação · busca · análise · conta. Abaixo de 1320px a navegação
+   desce para uma segunda linha, inteira. MEDIDO em 2026-10-15: a linha única precisa de ~1300px
+   desde que o interruptor da auditoria entrou; com o corte em 1180, de 1190 a 1290px o menu da
+   conta saía da tela e abria barra de rolagem lateral (notebook de 1366px com zoom de 110%) — três itens com rótulo cabem num telefone, e
    ícone sem rótulo obrigaria a adivinhar. */
 
 .cabecalho-conteudo {
@@ -2742,7 +2744,7 @@ dialog.tour::backdrop { background: transparent; }
 .filtros-entidades input:focus-visible { outline: 2px solid var(--realce); outline-offset: 1px; }
 .numero-valor.numero-texto { font-size: var(--t-4); }
 
-@media (max-width: 1180px) {
+@media (max-width: 1320px) {
   .cabecalho-conteudo {
     grid-template-columns: auto minmax(0, 1fr) auto auto;
     grid-template-areas: "marca busca analise conta" "nav nav nav nav";
