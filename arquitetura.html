@@ -377,7 +377,7 @@
       <tr><td>Nameservers</td><td><code>gemma</code> e <code>paul.ns.cloudflare.com</code>, definidos na Hostinger</td><td>Dizem ao mundo quem responde pelo domínio. Apontar para a Cloudflare é o que faz os registros dela valerem</td><td>Voltando aos da Hostinger, tudo o que está na Cloudflare deixa de valer</td></tr>
       <tr><td>Registro <code>A</code> <code>@</code></td><td>IP do VPS</td><td>O endereço principal leva ao servidor</td><td>Um IP errado leva a outro lugar; o da compra (<code>2.57.91.91</code>) é a página de estacionamento da Hostinger</td></tr>
       <tr><td>Registro <code>CNAME</code> <code>www</code></td><td><code>registroaberto.org</code></td><td>O <code>www</code> segue o principal: trocar o IP num lugar troca nos dois</td><td>Sem ele, <code>www.registroaberto.org</code> não abre</td></tr>
-      <tr><td>Nuvem dos registros</td><td>Cinza para o primeiro certificado; laranja depois</td><td>Laranja põe a Cloudflare na frente: esconde o IP, guarda cache e barra ataque. Cinza deixa o Let's Encrypt falar direto com o VPS na primeira emissão</td><td>Cinza para sempre: o IP do VPS fica público e a Cloudflare não protege nada</td></tr>
+      <tr><td>Nuvem dos registros</td><td>Laranja (Proxied), desde o início</td><td>Põe a Cloudflare na frente: esconde o IP, guarda cache e barra ataque. O desafio do Let's Encrypt passa por ela, pela porta 80</td><td>Cinza (DNS only): o IP do VPS fica público e a Cloudflare não protege nada</td></tr>
     </tbody>
   </table>
 
@@ -387,7 +387,7 @@
     <tbody>
       <tr><td>Certificado do VPS</td><td>Let's Encrypt, tirado e renovado pelo Traefik</td><td>Grátis, automático, vale 90 dias e se renova uns 30 dias antes. O Let's Encrypt prova que o domínio é do servidor visitando <code>/.well-known/acme-challenge/…</code> pela porta 80</td><td>Sem DNS apontando para o VPS, a prova falha; cada falha conta num limite de 5 por hora</td></tr>
       <tr><td>Porta 80 aberta</td><td>No firewall da Hostinger</td><td>Serve a dois usos: mandar quem chega por <code>http</code> para <code>https</code>, e a prova do Let's Encrypt</td><td>Fechada, a renovação do certificado falha em até 90 dias</td></tr>
-      <tr><td>SSL/TLS da Cloudflare</td><td><strong>Full (strict)</strong></td><td>A Cloudflare fala com o VPS em HTTPS e confere que o certificado dele é válido</td><td><em>Flexible</em> fala com o VPS em <code>http</code>, o Traefik manda para <code>https</code>, e a visita entra em laço sem fim. <em>Full</em> sem strict aceita qualquer certificado, até um falso</td></tr>
+      <tr><td>SSL/TLS da Cloudflare</td><td><strong>Full</strong> até o primeiro certificado; depois <strong>Full (strict)</strong></td><td>A Cloudflare fala com o VPS em HTTPS e confere que o certificado dele é válido</td><td><em>Flexible</em> fala com o VPS em <code>http</code>, o Traefik manda para <code>https</code>, e a visita entra em laço sem fim. <em>Full</em> sem strict aceita qualquer certificado, até um falso: serve só no intervalo em que o Traefik ainda mostra o certificado provisório, que o strict recusaria com erro 526</td></tr>
       <tr><td>Always Use HTTPS</td><td><strong>Desligado</strong> na Cloudflare</td><td>O Traefik já manda de <code>http</code> para <code>https</code>. Ligado na Cloudflare, ela responde a porta 80 antes de a visita chegar ao VPS, e a prova do Let's Encrypt pode não chegar</td><td>Ligado, a renovação automática pode falhar sem aviso, e o site cai quando o certificado vence</td></tr>
       <tr><td>TLS mínimo</td><td>1.2</td><td>As versões 1.0 e 1.1 têm falhas conhecidas; todo navegador atual fala 1.2</td><td>Abaixo, aceita conexões fracas; acima (1.3 só), deixa de fora aparelhos antigos</td></tr>
       <tr><td>HSTS</td><td>Desligado por enquanto</td><td>Manda o navegador nunca mais tentar <code>http</code> naquele domínio, por meses. Bom, mas difícil de desfazer: espera-se uma semana com tudo estável</td><td>Ligado com o HTTPS quebrado, o site fica inacessível para quem já visitou até o prazo vencer</td></tr>
@@ -649,8 +649,9 @@ PS&gt; scp C:\Users\igorl\poligraph.dump igor@IP-do-VPS:/tmp/</pre>
   <h3>15. Domínio e HTTPS</h3>
   <ol class="passos">
     <li>Na Cloudflare, Connect a domain: <code>registroaberto.org</code>, plano Free. Registros <code>A @ → IP-do-VPS</code> e
-      <code>CNAME www → registroaberto.org</code>, <strong>DNS only</strong> (nuvem cinza). Apagar o que ela importar da
-      Hostinger: o <code>2.57.91.91</code> é a página de estacionamento.</li>
+      <code>CNAME www → registroaberto.org</code>, <strong>Proxied</strong> (nuvem laranja). Apagar o que ela importar da
+      Hostinger: o <code>2.57.91.91</code> é a página de estacionamento. Em SSL/TLS, modo <strong>Full</strong> e
+      <strong>Always Use HTTPS desligado</strong>: o desafio do Let's Encrypt chega pela porta 80 e precisa alcançar o Traefik.</li>
     <li>Na Hostinger, em Domínios, nameservers personalizados: os dois da Cloudflare.</li>
     <li>Esperar o registro do <code>.org</code> mostrar os nameservers novos e a Cloudflare marcar o domínio como Active:
       <pre>PS&gt; nslookup -type=NS registroaberto.org 1.1.1.1
@@ -658,8 +659,8 @@ PS&gt; nslookup registroaberto.org gemma.ns.cloudflare.com</pre></li>
     <li>No Coolify, só depois do DNS: domínio do <code>web</code>
       <code>https://registroaberto.org:8080,https://www.registroaberto.org:8080</code> e Deploy. Antes do DNS, cada tentativa
       do Let's Encrypt falha e conta num limite de 5 por hora.</li>
-    <li>Com o cadeado funcionando: nuvem laranja nos dois registros, SSL/TLS em <strong>Full (strict)</strong>,
-      <strong>Always Use HTTPS desligado</strong>, TLS mínimo 1.2, HSTS só depois de uma semana estável.</li>
+    <li>Com o cadeado funcionando: SSL/TLS em <strong>Full (strict)</strong>, Always Use HTTPS continua desligado, TLS
+      mínimo 1.2, HSTS só depois de uma semana estável.</li>
   </ol>
 
   <h3>16. Google</h3>
