@@ -51,7 +51,8 @@
   table { border-collapse: collapse; width: 100%; font-size: 15px; }
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--borda); vertical-align: top; }
   th { font-size: 13px; color: var(--suave); font-weight: 600; }
-  td code, p code { font-family: var(--dado); font-size: 13px; }
+  td code, p code, li code { font-family: var(--dado); font-size: 13px; }
+  p code, li code { overflow-wrap: anywhere; }
   .sim { color: var(--realce); font-weight: 700; }
   .nao { color: var(--perigo); font-weight: 700; }
   .pend { font-family: var(--dado); font-size: 12px; color: var(--suave); white-space: nowrap; }
@@ -87,6 +88,7 @@
     <a href="#cicd">CI e CD</a>
     <a href="#segredos">Segredos</a>
     <a href="#falta">O que falta decidir</a>
+    <a href="#explicacao">Cada configuração, explicada</a>
     <a href="#roteiro">Roteiro do servidor</a>
   </nav>
 
@@ -138,29 +140,29 @@
       <text class="tv" x="570" y="288" text-anchor="middle">Traefik</text>
       <text class="sv" x="570" y="308" text-anchor="middle">proxy do Coolify</text>
       <text class="dv" x="570" y="330" text-anchor="middle">roteia por domínio</text>
-      <text class="dv" x="570" y="346" text-anchor="middle">e por caminho</text>
+      <text class="dv" x="570" y="346" text-anchor="middle">e abre o HTTPS</text>
       <path d="M474 305 H 493" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
 
       <rect x="670" y="115" width="370" height="250" rx="3" fill="none" stroke="#5eb7ac" stroke-dasharray="5 4"/>
-      <text class="dv" x="1026" y="135" text-anchor="end">exposto, só pelo Traefik</text>
+      <text class="dv" x="1026" y="135" text-anchor="end">exposto: só o site, pelo Traefik</text>
 
       <rect x="690" y="150" width="155" height="95" rx="3" fill="#24303d" stroke="#5eb7ac"/>
       <text class="tv" x="767" y="183" text-anchor="middle">site</text>
       <text class="sv" x="767" y="203" text-anchor="middle">nginx + React</text>
-      <text class="dv" x="767" y="225" text-anchor="middle">/</text>
+      <text class="dv" x="767" y="225" text-anchor="middle">/ e repassa /api/</text>
 
       <rect x="690" y="260" width="155" height="95" rx="3" fill="#24303d" stroke="#5eb7ac"/>
       <text class="tv" x="767" y="293" text-anchor="middle">API</text>
       <text class="sv" x="767" y="313" text-anchor="middle">ASP.NET Core</text>
-      <text class="dv" x="767" y="335" text-anchor="middle">/api/*</text>
+      <text class="dv" x="767" y="335" text-anchor="middle">só pelo nginx</text>
 
       <path d="M640 290 C 665 290 665 200 683 200" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
-      <path d="M640 312 H 683" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+      <path d="M767 245 V 254" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
 
       <rect x="870" y="150" width="150" height="95" rx="3" fill="#24303d" stroke="#5c6977"/>
       <text class="tv" x="945" y="183" text-anchor="middle">painel Coolify</text>
       <text class="sv" x="945" y="203" text-anchor="middle">deploy e logs</text>
-      <text class="dv" x="945" y="225" text-anchor="middle">acesso: P22</text>
+      <text class="dv" x="945" y="225" text-anchor="middle">só por túnel SSH</text>
 
       <rect x="870" y="260" width="150" height="95" rx="3" fill="#24303d" stroke="#5c6977"/>
       <text class="tv" x="945" y="293" text-anchor="middle">Grafana</text>
@@ -212,16 +214,20 @@
   </figure>
 
   <h2 id="visita">O caminho de uma visita</h2>
+  <p>Uma visita a <code>https://registroaberto.org/parlamentares</code>, e o pedido de dados que a tela faz em seguida.</p>
   <table>
-    <thead><tr><th>#</th><th>Onde</th><th>O que acontece</th></tr></thead>
+    <thead><tr><th>#</th><th>Onde</th><th>O que acontece</th><th>Depende de</th></tr></thead>
     <tbody>
-      <tr><td>1</td><td>Cidadão</td><td>Digita <code>registroaberto.org</code>. O DNS responde com um IP da Cloudflare, não o do VPS.</td></tr>
-      <tr><td>2</td><td>Cloudflare</td><td>Cifra a conexão, entrega do cache o que já tem e barra ataque e robô.</td></tr>
-      <tr><td>3</td><td>Firewall do VPS</td><td>Só a porta 443 recebe visitas. A 80 só redireciona para a 443.</td></tr>
-      <tr><td>4</td><td>Traefik</td><td>Manda <code>/api/*</code> para a API e o resto para o site.</td></tr>
-      <tr><td>5</td><td>API</td><td>Consulta o banco pela rede interna e devolve os dados.</td></tr>
+      <tr><td>1</td><td>DNS</td><td>O navegador pergunta o IP de <code>registroaberto.org</code>. Com a nuvem laranja, a Cloudflare responde com um IP dela, não o do VPS.</td><td>Nameservers e registros na Cloudflare</td></tr>
+      <tr><td>2</td><td>Cloudflare</td><td>Abre o HTTPS com o certificado dela, entrega do cache o que já tem, barra ataque e robô, e repassa ao VPS em HTTPS, na 443.</td><td>Nuvem laranja, SSL Full (strict)</td></tr>
+      <tr><td>3</td><td>Firewall da Hostinger</td><td>A 443 está liberada. Também a 80, que só serve para mandar ao HTTPS e para o desafio do Let's Encrypt.</td><td>Painel da Hostinger</td></tr>
+      <tr><td>4</td><td>Traefik</td><td>Abre o HTTPS com o certificado do Let's Encrypt, olha o endereço pedido e acha o router do site. Repassa ao container <code>web</code>, porta 8080, pela rede interna do Docker.</td><td>Campo de domínio do <code>web</code> no Coolify</td></tr>
+      <tr><td>5</td><td>nginx, no <code>web</code></td><td><code>/parlamentares</code> não é arquivo: devolve o <code>index.html</code>, e o React monta a tela no navegador.</td><td><code>docker/nginx.conf</code></td></tr>
+      <tr><td>6</td><td>nginx, de novo</td><td>A tela pede <code>/api/parlamentares</code>. O caminho começa com <code>/api/</code>, e o nginx repassa a <code>http://api:8080</code>: o Docker traduz o nome <code>api</code> no IP do container da API.</td><td><code>nginx.conf</code> e o nome do serviço no compose</td></tr>
+      <tr><td>7</td><td>API</td><td>Confere o endereço pedido em <code>AllowedHosts</code>, consulta o banco pelo nome do container, na rede <code>coolify</code>, e devolve o JSON. A resposta volta pelo mesmo caminho.</td><td><code>AllowedHosts</code>, <code>ConnectionStrings__poligraph</code></td></tr>
     </tbody>
   </table>
+  <p>Visita por <code>http://</code> chega na 80: o Traefik responde "vá para <code>https://</code>", e o navegador refaz pelo caminho de cima.</p>
 
   <h2 id="exposto">O que fica exposto</h2>
   <table>
@@ -231,7 +237,7 @@
       <tr><td>API</td><td class="sim">Sim</td><td>Pela Cloudflare, porta 443, caminho <code>/api</code></td><td></td></tr>
       <tr><td>PostgreSQL</td><td class="nao">Nunca</td><td>Porta 5432 só dentro da rede do Docker</td><td></td></tr>
       <tr><td>Carga de dados</td><td class="nao">Não</td><td>Não recebe conexão; só sai para baixar das fontes</td><td></td></tr>
-      <tr><td>Painel do Coolify</td><td class="nao">Não (recomendado)</td><td>Sem endereço público; aberto por túnel SSH. Ver abaixo</td><td class="pend">P22</td></tr>
+      <tr><td>Painel do Coolify</td><td class="nao">Não</td><td>Sem endereço público; aberto por túnel SSH. Ver abaixo</td><td class="pend">P22</td></tr>
       <tr><td>Grafana</td><td>A decidir</td><td>Público ou por túnel</td><td class="pend">P21</td></tr>
       <tr><td>SSH (porta 22)</td><td>Só para o autor</td><td>Direto, sem Cloudflare: só chave, sem senha, root só por chave (o Coolify precisa), com fail2ban. Sem restrição de IP, porque o autor viaja. Ver abaixo</td><td></td></tr>
     </tbody>
@@ -265,12 +271,13 @@
     O SSH (porta 22) fica aberto a qualquer endereço, porque o autor viaja e um IP fixo o trancaria fora; a proteção vem da chave, como abaixo.</p>
 
   <h2 id="pecas">Traefik e Coolify</h2>
-  <p><strong>Traefik</strong> é a porta de entrada dentro do VPS: todo acesso passa por ele, e ele decide para onde mandar.
-    <code>/api/*</code> vai para a API, o resto para o site, o endereço do painel para o Coolify. Ele também guarda o
-    certificado do HTTPS do lado do servidor e troca a versão no deploy sem derrubar o site.</p>
+  <p><strong>Traefik</strong> é a porta de entrada dentro do VPS: todo acesso nas portas 80 e 443 passa por ele, e ele
+    decide pelo endereço pedido para qual container mandar. Hoje só o site tem endereço; a API recebe o que o nginx do site
+    repassa em <code>/api/</code>. Ele também tira e renova o certificado do HTTPS com o Let's Encrypt.</p>
   <p><strong>Coolify</strong> é o painel que sobe e derruba os containers no VPS: liga o repositório, cria a API, o site e o
-    banco, guarda os segredos e publica cada versão nova. O Traefik vem com ele: não se instala nem se configura à parte, as
-    rotas se definem no painel. (O Coolify também aceita o Caddy no lugar do Traefik; o padrão, e o plano, é o Traefik.)</p>
+    banco, guarda os segredos e publica cada versão nova. Ele controla o Docker, e só: usuários, SSH, firewall e
+    atualizações do sistema continuam com o autor. O Traefik vem com ele, e as rotas nascem do campo de domínio de cada
+    serviço no painel. Como funciona cada peça está em <a href="#explicacao">Cada configuração, explicada</a>.</p>
   <p>O passo a passo, do VPS vazio ao painel aberto, está no <a href="#roteiro">Roteiro do servidor</a>, no fim desta página.</p>
 
   <h3>O painel do Coolify não fica exposto</h3>
@@ -347,14 +354,133 @@
   <table>
     <thead><tr><th></th><th>Pendência</th></tr></thead>
     <tbody>
-      <tr><td class="pend">P3</td><td>Domínio. Sem ele, o login do Google não funciona em produção.</td></tr>
+      <tr><td class="pend">P3</td><td>Domínio <code>registroaberto.org</code> comprado; falta a Cloudflare ativar a zona, o HTTPS e as origens do Google.</td></tr>
       <tr><td class="pend">P20</td><td>Para onde vai o backup do banco, criptografado.</td></tr>
       <tr><td class="pend">P21</td><td>Como se chega ao Grafana.</td></tr>
-      <tr><td class="pend">P22</td><td>Painel do Coolify sem endereço público, aberto por túnel SSH (recomendado), ou atrás do Cloudflare Access.</td></tr>
+      <tr><td class="pend">P22</td><td>Decidido: painel sem endereço público, aberto por túnel SSH.</td></tr>
       <tr><td class="pend">P23</td><td>Os testes como portão do deploy: o CI publica as imagens no <code>ghcr.io</code> e só então chama o Coolify.</td></tr>
       <tr><td class="pend">P86</td><td>Cache da API e limite de taxa na Cloudflare.</td></tr>
-      <tr><td class="pend">P87</td><td>Primeira carga de produção, pela cópia do banco local.</td></tr>
+      <tr><td class="pend">P87</td><td>Banco copiado em 2026-10-15. Faltam apagar as tabelas de usuários que vieram junto, o <code>conferir</code> em produção e a ETL agendada.</td></tr>
       <tr><td class="pend">P88</td><td>Fechar o acesso direto ao VPS: túnel da Cloudflare (recomendado) ou firewall com os endereços da Cloudflare e o certificado de cliente.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="explicacao">Cada configuração, explicada</h2>
+  <p>O que cada peça faz, por que está assim e o que quebra se mudar, camada por camada, de fora para dentro. A parte de
+    HTTPS e Cloudflare foi escrita antes de o domínio responder (2026-10-15) e se confere quando ele estiver no ar.</p>
+
+  <h3>Domínio e DNS</h3>
+  <table>
+    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
+    <tbody>
+      <tr><td>Domínio</td><td><code>registroaberto.org</code>, comprado na Hostinger</td><td>Quem vende o domínio é o registrador. A Cloudflare não precisa vendê-lo para cuidar do DNS</td><td>Com outro domínio, mudam o <code>AllowedHosts</code> do compose e do <code>appsettings.Production.json</code>, o campo de domínio no Coolify e as origens do Google</td></tr>
+      <tr><td>Nameservers</td><td><code>gemma</code> e <code>paul.ns.cloudflare.com</code>, definidos na Hostinger</td><td>Dizem ao mundo quem responde pelo domínio. Apontar para a Cloudflare é o que faz os registros dela valerem</td><td>Voltando aos da Hostinger, tudo o que está na Cloudflare deixa de valer</td></tr>
+      <tr><td>Registro <code>A</code> <code>@</code></td><td>IP do VPS</td><td>O endereço principal leva ao servidor</td><td>Um IP errado leva a outro lugar; o da compra (<code>2.57.91.91</code>) é a página de estacionamento da Hostinger</td></tr>
+      <tr><td>Registro <code>CNAME</code> <code>www</code></td><td><code>registroaberto.org</code></td><td>O <code>www</code> segue o principal: trocar o IP num lugar troca nos dois</td><td>Sem ele, <code>www.registroaberto.org</code> não abre</td></tr>
+      <tr><td>Nuvem dos registros</td><td>Cinza para o primeiro certificado; laranja depois</td><td>Laranja põe a Cloudflare na frente: esconde o IP, guarda cache e barra ataque. Cinza deixa o Let's Encrypt falar direto com o VPS na primeira emissão</td><td>Cinza para sempre: o IP do VPS fica público e a Cloudflare não protege nada</td></tr>
+    </tbody>
+  </table>
+
+  <h3>HTTPS e certificados</h3>
+  <table>
+    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
+    <tbody>
+      <tr><td>Certificado do VPS</td><td>Let's Encrypt, tirado e renovado pelo Traefik</td><td>Grátis, automático, vale 90 dias e se renova uns 30 dias antes. O Let's Encrypt prova que o domínio é do servidor visitando <code>/.well-known/acme-challenge/…</code> pela porta 80</td><td>Sem DNS apontando para o VPS, a prova falha; cada falha conta num limite de 5 por hora</td></tr>
+      <tr><td>Porta 80 aberta</td><td>No firewall da Hostinger</td><td>Serve a dois usos: mandar quem chega por <code>http</code> para <code>https</code>, e a prova do Let's Encrypt</td><td>Fechada, a renovação do certificado falha em até 90 dias</td></tr>
+      <tr><td>SSL/TLS da Cloudflare</td><td><strong>Full (strict)</strong></td><td>A Cloudflare fala com o VPS em HTTPS e confere que o certificado dele é válido</td><td><em>Flexible</em> fala com o VPS em <code>http</code>, o Traefik manda para <code>https</code>, e a visita entra em laço sem fim. <em>Full</em> sem strict aceita qualquer certificado, até um falso</td></tr>
+      <tr><td>Always Use HTTPS</td><td><strong>Desligado</strong> na Cloudflare</td><td>O Traefik já manda de <code>http</code> para <code>https</code>. Ligado na Cloudflare, ela responde a porta 80 antes de a visita chegar ao VPS, e a prova do Let's Encrypt pode não chegar</td><td>Ligado, a renovação automática pode falhar sem aviso, e o site cai quando o certificado vence</td></tr>
+      <tr><td>TLS mínimo</td><td>1.2</td><td>As versões 1.0 e 1.1 têm falhas conhecidas; todo navegador atual fala 1.2</td><td>Abaixo, aceita conexões fracas; acima (1.3 só), deixa de fora aparelhos antigos</td></tr>
+      <tr><td>HSTS</td><td>Desligado por enquanto</td><td>Manda o navegador nunca mais tentar <code>http</code> naquele domínio, por meses. Bom, mas difícil de desfazer: espera-se uma semana com tudo estável</td><td>Ligado com o HTTPS quebrado, o site fica inacessível para quem já visitou até o prazo vencer</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Traefik</h3>
+  <p>É o container <code>coolify-proxy</code>, o único que escuta nas portas 80 e 443. Não tem arquivo com as rotas do site:
+    ele observa o Docker, e cada container leva nos rótulos (<em>labels</em>) as regras dele. Quem escreve os rótulos é o
+    Coolify, a partir do campo de domínio do serviço.</p>
+  <table>
+    <thead><tr><th>Peça</th><th>No nosso caso</th></tr></thead>
+    <tbody>
+      <tr><td>Entrypoints, as portas em que ele escuta</td><td><code>http</code> na 80 e <code>https</code> na 443</td></tr>
+      <tr><td>Router, a regra de endereço</td><td><code>Host(`registroaberto.org`) || Host(`www.registroaberto.org`)</code>, nascido do campo de domínio do <code>web</code>. A <code>api</code> e a <code>migrations</code> não têm domínio, então não têm router</td></tr>
+      <tr><td>Middleware, um ajuste no caminho</td><td>Mandar de <code>http</code> para <code>https</code>, criado porque o domínio foi cadastrado com <code>https://</code>; comprimir a resposta</td></tr>
+      <tr><td>Service, o destino</td><td>O container <code>web</code>, porta 8080. É o <code>:8080</code> do campo de domínio: a porta dentro do container, não uma porta da internet</td></tr>
+    </tbody>
+  </table>
+  <p>A configuração própria dele (portas e conta do Let's Encrypt) fica em <code>/data/coolify/proxy/</code>, editável pelo
+    Coolify em Servers, localhost, Proxy; os certificados, em <code>acme.json</code>. Nada disso se edita à mão: o Coolify
+    reescreve no próximo deploy. Para ver as regras de verdade:</p>
+  <pre>docker inspect $(docker ps -q --filter "name=web-") --format '{{range $k,$v := .Config.Labels}}{{println $k "=" $v}}{{end}}' | grep traefik</pre>
+
+  <h3>Coolify</h3>
+  <table>
+    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
+    <tbody>
+      <tr><td>O que ele controla</td><td>Docker: containers, imagens, redes, volumes, o Traefik, deploys, backups</td><td>Usuários, SSH, firewall e atualizações do sistema continuam com o autor (<code>infra/vps/configurar-vps.sh</code>)</td><td>—</td></tr>
+      <tr><td>Como ele chega ao servidor</td><td>SSH como root, com chave própria em <code>/root/.ssh/authorized_keys</code></td><td>É assim que ele comanda qualquer servidor, inclusive o dele mesmo</td><td>Com <code>PermitRootLogin no</code>, ele perde o acesso e marca o servidor como inalcançável. O certo é <code>prohibit-password</code></td></tr>
+      <tr><td>O painel</td><td>Sem domínio, só pelo túnel SSH; cadastro desligado; duas etapas no login</td><td>Tem poder total: lê todos os segredos e alcança o banco</td><td>Com endereço público, fica exposto a tentativa de senha e a qualquer falha do próprio Coolify</td></tr>
+      <tr><td>Projeto e ambiente</td><td><code>registro-aberto</code>, <code>production</code></td><td>Agrupam o banco e a aplicação, e as variáveis compartilhadas</td><td>—</td></tr>
+      <tr><td>Shared Variables</td><td>No ambiente, lidas pela aplicação com <code>{{environment.NOME}}</code></td><td>A senha e o client ID ficam num lugar só: trocar uma vez vale para todos</td><td>Um nome digitado diferente (um sublinhado a menos) e a aplicação recebe vazio</td></tr>
+      <tr><td>A aplicação</td><td>Docker Compose do repositório, branch <code>master</code></td><td>Um arquivo junta migration, API e site, e garante o nome <code>api</code> que o nginx procura</td><td>Cada deploy processa os três serviços e a API fica segundos fora; com o CI publicando imagens (P23), viram aplicações separadas</td></tr>
+      <tr><td>Rede da aplicação</td><td>Isolated network only</td><td>Mantém os nomes dos serviços. O banco entra pela rede <code>coolify</code>, declarada no compose só na API e na migration</td><td>A rede predefinida renomeia os serviços para <code>api-&lt;código&gt;</code>, e o site não acha a API</td></tr>
+    </tbody>
+  </table>
+
+  <h3>As imagens</h3>
+  <table>
+    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
+    <tbody>
+      <tr><td>Base da API</td><td><code>aspnet:10.0-noble-chiseled-extra</code></td><td>Enxuta (sem shell, sem pacote extra), com os dados de idioma e fuso. A API compara nomes sem acento com a cultura <code>pt-BR</code></td><td>Na chiseled comum, a API dá erro 500 em toda lista com nomes</td></tr>
+      <tr><td>Base da migration</td><td><code>aspnet:10.0-noble-chiseled</code></td><td>O projeto da migration usa o <code>ServiceDefaults</code>, que traz o ASP.NET Core</td><td>Na base <code>runtime</code>, a migration nem abre, e a API espera para sempre</td></tr>
+      <tr><td>Pasta das chaves da sessão</td><td><code>/home/app/chaves</code>, do usuário 1654, num volume</td><td>A API roda sem privilégios. O cookie de sessão é cifrado com essas chaves, que precisam sobreviver ao deploy</td><td>Sem o volume, cada deploy desloga todo mundo; sem o dono certo, a API não grava as chaves</td></tr>
+      <tr><td>Site</td><td>nginx sem root, na porta 8080</td><td>Serve o React e repassa <code>/api/</code> à API, na mesma origem: sem CORS, e o cookie fica <code>SameSite=Lax</code></td><td>Mudar a porta exige mudar o <code>:8080</code> do campo de domínio</td></tr>
+      <tr><td>Client ID do Google no site</td><td>Argumento de montagem (<code>args</code>)</td><td>O Vite grava o valor nos arquivos ao montar; como variável comum, chegaria tarde</td><td>Sem ele, o botão do Google não aparece, sem erro nenhum</td></tr>
+      <tr><td><code>.dockerignore</code></td><td>Exclui <code>.cache</code>, <code>node_modules</code>, <code>bin</code>, <code>obj</code></td><td>Os downloads da ETL têm gigabytes e não entram em imagem</td><td>Montar no computador do autor estoura a memória</td></tr>
+    </tbody>
+  </table>
+
+  <h3>A API em produção</h3>
+  <table>
+    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
+    <tbody>
+      <tr><td><code>ConnectionStrings__poligraph</code></td><td><code>Host=…;Port=5432;Database=poligraph;Username=poligraph;Password=…</code></td><td>Formato do .NET. A ETL lê a mesma variável e a traduz para o formato do Python</td><td>Um espaço a mais num nome de opção derruba a conexão; opção do Npgsql sem equivalente é ignorada pela ETL com aviso</td></tr>
+      <tr><td><code>AllowedHosts</code></td><td><code>registroaberto.org;www.registroaberto.org</code></td><td>A API só responde a visitas endereçadas ao domínio. Aceitar qualquer endereço permite envenenar o cabeçalho <code>Host</code></td><td>Sem o <code>www</code>, quem entra por ele recebe erro 400</td></tr>
+      <tr><td><code>DataProtection__Pasta</code></td><td>Já vem na imagem</td><td>A pasta das chaves do cookie. A API recusa subir em produção sem ela</td><td>—</td></tr>
+      <tr><td><code>Google__ClientId</code></td><td>Client de produção</td><td>Confere o <code>id_token</code> do login e o descarta; não há segredo do Google no projeto</td><td>Vazio, o login fica desligado; o site continua funcionando sem conta</td></tr>
+    </tbody>
+  </table>
+
+  <h3>O banco</h3>
+  <table>
+    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
+    <tbody>
+      <tr><td>Recurso próprio do Coolify</td><td>Fora do compose</td><td>Um deploy da aplicação não recria o banco, e o backup é dele</td><td>Dentro do compose, refazer a aplicação arriscaria os dados</td></tr>
+      <tr><td>Versão</td><td>Postgres 18, a mesma do local</td><td>A cópia (P87) não volta para versão mais antiga</td><td>Mudar de versão maior exige dump e restore</td></tr>
+      <tr><td>Acesso público</td><td>Desligado</td><td>Sem porta no VPS: só os containers da rede <code>coolify</code> o alcançam</td><td>Ligado, a porta 5432 abre no servidor</td></tr>
+      <tr><td>Usuário</td><td><code>poligraph</code>, dono do banco</td><td>É o usuário criado na instalação do container</td><td>Separar um usuário só de leitura para a API fica como melhoria</td></tr>
+      <tr><td>Backup</td><td>A decidir (P20)</td><td>Hoje não existe cópia fora do container</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Google</h3>
+  <table>
+    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
+    <tbody>
+      <tr><td>Client de produção</td><td>Separado do de desenvolvimento, mesmo projeto</td><td>O de produção não aceita <code>localhost</code>: o ID, que é público, não serve a outro endereço</td><td>—</td></tr>
+      <tr><td>Origens</td><td><code>https://registroaberto.org</code> e <code>https://www.registroaberto.org</code></td><td>O botão só funciona nas páginas servidas desses endereços</td><td>Sem o <code>www</code>, o login falha para quem entra por ele</td></tr>
+      <tr><td>Redirect URI e client secret</td><td>Nenhum</td><td>O botão devolve o <code>id_token</code> na própria página</td><td>—</td></tr>
+      <tr><td>Publicação</td><td>Testing até abrir ao público</td><td>Em Testing, só entram os e-mails cadastrados. Com só <code>openid</code>, <code>email</code> e <code>profile</code>, publicar não exige revisão</td><td>Aberto ao público ainda em Testing, todo visitante vê acesso negado</td></tr>
+    </tbody>
+  </table>
+
+  <h3>O servidor</h3>
+  <table>
+    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
+    <tbody>
+      <tr><td>Usuário</td><td><code>igor</code>, com sudo e a chave SSH</td><td>Não trabalhar como root. A senha dele só serve ao <code>sudo</code></td><td>—</td></tr>
+      <tr><td>SSH</td><td>Sem senha; root só por chave</td><td>Chave não se adivinha; o Coolify precisa do root por chave</td><td>Com senha ligada, o servidor fica exposto a tentativas de força bruta</td></tr>
+      <tr><td>fail2ban</td><td>Padrão, cobrindo o SSH</td><td>Bloqueia por um tempo quem erra o login várias vezes</td><td>—</td></tr>
+      <tr><td>Firewall</td><td>No painel da Hostinger: 22, 80 e 443</td><td>O Docker passa por cima do <code>ufw</code> do sistema; o do painel fica fora da máquina</td><td>Abrir a 8000 expõe o painel do Coolify</td></tr>
     </tbody>
   </table>
 
@@ -456,6 +582,92 @@ curl -fsSL https://cdn.coollabs.io/coolify/install.sh | sudo bash</pre>
     (estado do deploy, logs) e a 6002 o terminal dele; só com a 8000, o painel abre mas não se atualiza sozinho.
     <strong>Criar a conta de administrador logo em seguida</strong>: até ela existir, quem abrir o painel primeiro a cria.</p>
 
+  <h3>10. Proteger o painel</h3>
+  <p>Em Settings: o domínio da instância fica vazio (o painel continua só pelo túnel) e "Registration allowed" desligado. No
+    perfil, a verificação em duas etapas ligada. Em Sources, o GitHub App com acesso só ao repositório <code>poligraph</code>.</p>
+
+  <h3>11. O banco</h3>
+  <p>No projeto <code>registro-aberto</code>, ambiente <code>production</code>: + New, Database, PostgreSQL. A versão é a
+    mesma maior do banco local, hoje a <strong>18</strong> (<code>postgres:18-alpine</code>): o dump do 18 não restaura no 17.
+    Banco <code>poligraph</code>, usuário <code>poligraph</code>, senha gerada pelo Coolify, e <strong>"Make it publicly
+    available" desligado</strong>. Da <em>Postgres URL (internal)</em> sai a connection string no formato do .NET:</p>
+  <pre>postgres://poligraph:SENHA@NOME:5432/poligraph
+Host=NOME;Port=5432;Database=poligraph;Username=poligraph;Password=SENHA</pre>
+  <p>O <code>NOME</code> é o do container na rede <code>coolify</code>, não um IP; é também o que o <code>docker ps</code>
+    mostra para a imagem <code>postgres:18-alpine</code>. O <code>coolify-db</code> que aparece junto é o banco do próprio
+    painel e não se toca. Usuário e banco reais, sem mostrar a senha:</p>
+  <pre>docker exec NOME env | grep -E '^POSTGRES_(USER|DB)='</pre>
+
+  <h3>12. A cópia do banco local (P87), antes do primeiro deploy</h3>
+  <p>Com o banco de produção vazio: se a migration rodar antes, as tabelas já existem e o restore entra em conflito. No
+    computador do autor, com o Aspire parado, um Postgres 18 temporário abre o mesmo volume e gera o dump; a senha vem dos
+    user-secrets do AppHost (<code>Parameters:postgres-password</code>), sem aparecer na tela:</p>
+  <pre>PS&gt; podman run -d --name pg-dump-tmp -v &lt;volume do Aspire&gt;:/var/lib/postgresql postgres:18.3
+PS&gt; podman exec -e PGPASSWORD=… pg-dump-tmp pg_dump -U postgres -d poligraph -Fc --no-owner --no-acl -f /tmp/poligraph.dump
+PS&gt; podman cp pg-dump-tmp:/tmp/poligraph.dump C:\Users\igorl\poligraph.dump
+PS&gt; podman rm -f pg-dump-tmp
+PS&gt; scp C:\Users\igorl\poligraph.dump igor@IP-do-VPS:/tmp/</pre>
+  <p>No VPS, <code>infra/vps/restaurar-banco.sh</code> confere o sha256, acha o container, o usuário e o banco, recusa banco
+    que não esteja vazio, restaura, mostra as contagens e apaga o dump. Em 2026-10-15: 3,6 GB no local, dump de 193 MB,
+    8.319 parlamentares e 2.179.300 votos dos dois lados. Depois, apagar a cópia do computador. A
+    <code>POLIGRAPH_CHAVE_CPF</code> da ETL em produção tem de ser a mesma do local: os <code>cpf_hash</code> copiados foram
+    calculados com ela.</p>
+
+  <h3>13. As variáveis</h3>
+  <p>Em <code>production</code>, Shared Variables: um lugar só para o que a API, a migration e o site usam. Na aplicação, cada
+    variável aponta para a compartilhada com <code>{{environment.NOME}}</code>. Valor numa linha só, sem espaço nas pontas;
+    apagar o antigo inteiro antes de colar o novo.</p>
+  <table>
+    <thead><tr><th>Variável</th><th>Quem usa</th><th>Valor</th></tr></thead>
+    <tbody>
+      <tr><td><code>ConnectionStrings__poligraph</code></td><td>api, migrations</td><td>A do passo 11. Segredo</td></tr>
+      <tr><td><code>Google__ClientId</code></td><td>api</td><td>O client ID do Google de produção. Dois sublinhados: com um só, a API não acha o ID e o login fica desligado sem erro</td></tr>
+      <tr><td><code>VITE_GOOGLE_CLIENT_ID</code></td><td>web, na montagem</td><td>O mesmo ID. Entra pelo <code>args</code> do compose, porque o Vite grava o valor nos arquivos do site ao montar</td></tr>
+      <tr><td><code>AllowedHosts</code></td><td>api</td><td>Não se cria com domínio: vale o padrão do compose, <code>registroaberto.org;www.registroaberto.org</code>. Só se usa num endereço de teste</td></tr>
+    </tbody>
+  </table>
+
+  <h3>14. A aplicação</h3>
+  <p>+ New, Public Repository, com o branch no endereço, para o Coolify não supor <code>main</code>:</p>
+  <pre>https://github.com/IgorLucasAssuncao/poligraph/tree/master</pre>
+  <p>Build Pack <strong>Docker Compose</strong>, Base directory <code>/</code>, Docker compose location
+    <code>/docker-compose.prod.yaml</code>. O nome da aplicação tem de sair com <code>master</code>, e o campo do compose,
+    preenchido. Os campos de comando (build, start, pre e post-deployment) ficam vazios: o que aparece neles é exemplo em
+    cinza. O compose monta três serviços a partir dos Dockerfiles de <code>docker/</code>:</p>
+  <ol class="passos">
+    <li><code>migrations</code> aplica as migrations e as perguntas da curadoria e termina. Roda a cada deploy; sem migration nova, só confere.</li>
+    <li><code>api</code> sobe só depois de a migration terminar bem, com o volume <code>chaves-da-sessao</code>: sem ele, cada deploy troca as chaves e desloga todo mundo.</li>
+    <li><code>web</code> é o site, o único com domínio. O nginx dele manda <code>/api/</code> ao serviço <code>api</code>.</li>
+  </ol>
+  <p>Em Advanced, a rede fica em <strong>"Isolated network only"</strong>: a opção da rede predefinida renomeia os serviços, e o
+    site deixa de achar a <code>api</code>. A rede do banco já entra pelo próprio compose. Deploy: o primeiro leva vários
+    minutos, porque o VPS monta o .NET, o site e a migration. A migration termina com
+    <code>Banco: 8319 parlamentares, … perguntas ativas.</code></p>
+  <p>Compose processa os três serviços a cada deploy, com alguns segundos sem API. É a escolha para subir rápido
+    (decisão do autor, 2026-10-15); quando o CI publicar as imagens (P23), cada peça vira aplicação própria, sem queda.</p>
+
+  <h3>15. Domínio e HTTPS</h3>
+  <ol class="passos">
+    <li>Na Cloudflare, Connect a domain: <code>registroaberto.org</code>, plano Free. Registros <code>A @ → IP-do-VPS</code> e
+      <code>CNAME www → registroaberto.org</code>, <strong>DNS only</strong> (nuvem cinza). Apagar o que ela importar da
+      Hostinger: o <code>2.57.91.91</code> é a página de estacionamento.</li>
+    <li>Na Hostinger, em Domínios, nameservers personalizados: os dois da Cloudflare.</li>
+    <li>Esperar o registro do <code>.org</code> mostrar os nameservers novos e a Cloudflare marcar o domínio como Active:
+      <pre>PS&gt; nslookup -type=NS registroaberto.org 1.1.1.1
+PS&gt; nslookup registroaberto.org gemma.ns.cloudflare.com</pre></li>
+    <li>No Coolify, só depois do DNS: domínio do <code>web</code>
+      <code>https://registroaberto.org:8080,https://www.registroaberto.org:8080</code> e Deploy. Antes do DNS, cada tentativa
+      do Let's Encrypt falha e conta num limite de 5 por hora.</li>
+    <li>Com o cadeado funcionando: nuvem laranja nos dois registros, SSL/TLS em <strong>Full (strict)</strong>,
+      <strong>Always Use HTTPS desligado</strong>, TLS mínimo 1.2, HSTS só depois de uma semana estável.</li>
+  </ol>
+
+  <h3>16. Google</h3>
+  <p>Client de produção, separado do de desenvolvimento, no mesmo projeto: origens <code>https://registroaberto.org</code> e
+    <code>https://www.registroaberto.org</code>, sem <code>localhost</code> e sem redirect URI. Branding com o domínio
+    autorizado e a política em <code>https://registroaberto.org/privacidade</code>. Em Testing, só entram os e-mails
+    cadastrados como teste; publicar quando o site abrir ao público.</p>
+
   <h3>Mensagens que já apareceram</h3>
   <table>
     <thead><tr><th>Mensagem</th><th>Quer dizer</th></tr></thead>
@@ -464,59 +676,20 @@ curl -fsSL https://cdn.coollabs.io/coolify/install.sh | sudo bash</pre>
       <tr><td>Pede <code>password</code> depois de configurar a chave</td><td>A chave não foi aceita: usuário inexistente, chave não cadastrada nele, ou chave com outro nome de arquivo (<code>-i</code> ou <code>IdentityFile</code>). <code>ssh -v</code> mostra qual chave foi oferecida</td></tr>
       <tr><td><code>channel N: open failed: connect failed: Connection refused</code></td><td>O túnel funciona, mas nada escuta naquela porta no VPS: o Coolify não está instalado ou ainda está subindo</td></tr>
       <tr><td><code>bind: address already in use</code></td><td>A porta já está ocupada no computador do autor. Trocar o lado esquerdo (<code>LocalForward 9000 localhost:8000</code>) e abrir <code>localhost:9000</code></td></tr>
+      <tr><td><code>nano</code> e <code>vi</code> não existem no PowerShell</td><td>Gravar o <code>~/.ssh/config</code> com <code>Set-Content -Encoding ascii</code> ou abrir no VS Code; o Bloco de Notas salva como <code>config.txt</code></td></tr>
+      <tr><td>Um <code>traefik-traefik-1</code> no <code>docker ps</code></td><td>O modelo de sistema da Hostinger trouxe um Traefik avulso, que disputa as portas 80 e 443 com o do Coolify. Sai antes de instalar</td></tr>
+      <tr><td>Aplicação com nome <code>…:main-…</code> e compose vazio</td><td>O Coolify supôs o branch <code>main</code>, que não existe. Recriar com <code>…/tree/master</code> no endereço</td></tr>
+      <tr><td><code>pg_restore: option requires an argument: d</code></td><td>O comando quebrou em duas linhas ao colar. Colar numa linha só</td></tr>
+      <tr><td><code>role "postgres" does not exist</code></td><td>O banco foi criado com outro usuário. Ver os reais com <code>printenv POSTGRES_USER</code> e <code>POSTGRES_DB</code></td></tr>
+      <tr><td><code>No frameworks were found</code>, na migration</td><td>A imagem da migration estava na base <code>runtime</code>, sem o ASP.NET Core que o <code>ServiceDefaults</code> traz. Corrigido: base <code>aspnet</code></td></tr>
+      <tr><td><code>password authentication failed for user "postgres"</code>, com saída 139</td><td>A connection string ainda tinha o usuário e o banco padrão. A saída 139 sumiu com a string certa</td></tr>
+      <tr><td><code>Couldn't set gss encryption mode</code></td><td>Dois espaços dentro do nome da opção. A opção não é necessária e saiu da string</td></tr>
+      <tr><td><code>Access to the path '/home/app/chaves/…' is denied</code></td><td>O volume das chaves nasceu do root. Corrigido na imagem; no volume que já existia, <code>docker run --rm -v VOLUME:/v alpine chown 1654:1654 /v</code></td></tr>
+      <tr><td><code>pt-br is an invalid culture identifier</code>, erro 500 em <code>/api/parlamentares</code></td><td>A imagem chiseled roda sem dados de idioma. Corrigido: base <code>chiseled-extra</code></td></tr>
+      <tr><td>O site não abre com <code>:8080</code> no endereço</td><td>O <code>:8080</code> do campo de domínio é a porta dentro do container, não da internet. No navegador, o endereço vai sem porta</td></tr>
+      <tr><td>Domínio "adicionado" na Cloudflare sem ter sido comprado</td><td>Add a domain só cria a ficha de DNS; o domínio é comprado num registrador. O <code>.org.br</code> exige CNPJ de instituição sem fins lucrativos</td></tr>
     </tbody>
   </table>
-  <h3>10. Proteger o painel</h3>
-  <p>Em Settings: o domínio da instância fica vazio (o painel continua só pelo túnel) e "Registration allowed" desligado. No
-    perfil, a verificação em duas etapas ligada. Em Sources, o GitHub App com acesso só ao repositório <code>poligraph</code>.</p>
-
-  <h3>11. O banco</h3>
-  <p>No projeto <code>registro-aberto</code>, ambiente <code>production</code>: + New, Database, PostgreSQL, com a mesma versão
-    maior do banco local (a cópia da P87 não volta para versão mais antiga). Banco <code>poligraph</code>, usuário
-    <code>poligraph</code>, senha gerada pelo Coolify, e <strong>"Make it publicly available" desligado</strong>. Da
-    <em>Postgres URL (internal)</em> sai a connection string no formato do .NET:</p>
-  <pre>postgres://poligraph:SENHA@NOME:5432/poligraph
-Host=NOME;Port=5432;Database=poligraph;Username=poligraph;Password=SENHA</pre>
-  <p>O <code>NOME</code> é o do container na rede <code>coolify</code>, não um IP. A senha não passa por chat nem por arquivo:
-    vai do painel do banco direto para a variável.</p>
-
-  <h3>12. As variáveis</h3>
-  <p>Em <code>production</code>, Shared Variables: um lugar só para o que a API, a migration e o site usam. Na aplicação, cada
-    variável aponta para a compartilhada com <code>{{environment.NOME}}</code>.</p>
-  <table>
-    <thead><tr><th>Variável</th><th>Quem usa</th><th>Valor</th></tr></thead>
-    <tbody>
-      <tr><td><code>ConnectionStrings__poligraph</code></td><td>api, migrations</td><td>A do passo 11. Segredo</td></tr>
-      <tr><td><code>Google__ClientId</code></td><td>api</td><td>O client ID do Google de produção. Dois sublinhados: com um só, a API não acha o ID e o login fica desligado sem erro</td></tr>
-      <tr><td><code>VITE_GOOGLE_CLIENT_ID</code></td><td>web, na montagem</td><td>O mesmo ID. Entra pelo <code>args</code> do compose, porque o Vite grava o valor nos arquivos do site ao montar</td></tr>
-      <tr><td><code>AllowedHosts</code></td><td>api</td><td>Só sem domínio: o endereço de teste do site. Sem ela, vale <code>registroaberto.org</code></td></tr>
-    </tbody>
-  </table>
-  <p>O client ID de produção é um segundo client no mesmo projeto do Google, com a origem <code>https://registroaberto.org</code>
-    e nenhuma de <code>localhost</code>. O <em>client secret</em> que o Google mostra não se usa nem se guarda.</p>
-
-  <h3>13. A aplicação</h3>
-  <p>+ New, Docker Compose, repositório <code>poligraph</code>, branch <code>master</code>, arquivo
-    <code>/docker-compose.prod.yaml</code>. Ele monta três serviços a partir dos Dockerfiles de <code>docker/</code>:</p>
-  <ol class="passos">
-    <li><code>migrations</code> aplica as migrations e as perguntas da curadoria e termina. Roda a cada deploy; sem migration nova, só confere.</li>
-    <li><code>api</code> sobe só depois de a migration terminar bem, com o volume <code>chaves-da-sessao</code>: sem ele, cada deploy troca as chaves e desloga todo mundo.</li>
-    <li><code>web</code> é o site, o único com domínio. O nginx dele manda <code>/api/</code> ao serviço <code>api</code>.</li>
-  </ol>
-  <p>No Coolify, o domínio vai só no <code>web</code>, com a porta do nginx: <code>https://registroaberto.org:8080</code> (a porta
-    diz ao Traefik onde o container escuta; o visitante continua na 443). <strong>"Connect to Predefined Network" fica
-    desligado</strong>: ligado, o Coolify renomeia os serviços e o site deixa de achar a <code>api</code>. A rede do banco já
-    entra pelo próprio compose.</p>
-  <p><strong>Antes do primeiro deploy, a cópia do banco local (P87)</strong>, com o banco vazio: se a migration rodar antes,
-    as tabelas já existem e o <code>pg_restore</code> entra em conflito.</p>
-  <pre>PS&gt; pg_dump -Fc --no-owner --no-acl -h localhost -p PORTA -U postgres -d poligraph -f poligraph.dump
-PS&gt; scp poligraph.dump igor@IP-do-VPS:/tmp/
-docker cp /tmp/poligraph.dump CONTAINER_DO_BANCO:/tmp/
-docker exec -it CONTAINER_DO_BANCO pg_restore --no-owner --no-acl -U poligraph -d poligraph /tmp/poligraph.dump</pre>
-  <p>Depois, apagar o <code>.dump</code> nas duas pontas. A <code>POLIGRAPH_CHAVE_CPF</code> da ETL em produção tem de ser a
-    mesma do local: os <code>cpf_hash</code> copiados foram calculados com ela.</p>
-  <p>Compose processa os três serviços a cada deploy, com alguns segundos sem API. É a escolha para subir rápido
-    (decisão do autor, 2026-10-15); quando o CI publicar as imagens (P23), cada peça vira aplicação própria, sem queda.</p>
 </main>
 </body>
 </html>
