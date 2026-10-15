@@ -149,6 +149,20 @@ instalar_tunel() {
     systemctl --no-pager --lines=0 status cloudflared | head -3
 }
 
+# O atalho "conteineres": os containers pelo nome do serviço, legível, em vez do código do Coolify.
+# DECISÃO (2026-10-15): o nome do container fica o do Coolify (serviço, código da aplicação, horário
+# do deploy). Um nome fixo no compose arrisca o Coolify não achar o container para as tarefas
+# agendadas, os logs e o terminal.
+instalar_atalhos() {
+    etapa "8. Atalho conteineres"
+    cat > /etc/profile.d/registroaberto.sh <<'ATALHO'
+conteineres() {
+    docker ps --format 'table {{.Label "com.docker.compose.service"}}	{{.Image}}	{{.Status}}	{{.Names}}'
+}
+ATALHO
+    echo "em /etc/profile.d/registroaberto.sh; vale a partir do próximo login"
+}
+
 # O que conferir depois, de fora da máquina.
 resumo() {
     etapa "Pronto. Falta conferir de fora:"
@@ -172,4 +186,5 @@ endurecer_ssh
 instalar_fail2ban
 instalar_coolify
 instalar_tunel
+instalar_atalhos
 resumo
