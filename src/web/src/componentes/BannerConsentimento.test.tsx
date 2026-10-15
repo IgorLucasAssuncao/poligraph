@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BannerConsentimentoComponent } from './BannerConsentimento';
 import { TEXTO_CONSENTIMENTO, VERSAO_CONSENTIMENTO } from '../textos-legais';
@@ -42,6 +42,7 @@ describe('BannerConsentimento', () => {
   beforeEach(() => {
     localStorage.clear();
     document.getElementById('clarity-js')?.remove();
+    delete window.clarity;
     vi.stubEnv('VITE_CLARITY_ID', 'abcdefghij');
   });
 
@@ -104,6 +105,15 @@ describe('BannerConsentimento', () => {
     render(<BannerConsentimentoComponent />);
 
     expect(document.getElementById('clarity-js')).toBeNull();
+  });
+
+  it('no aceite, cria a fila do Clarity com o consentimento antes do script', () => {
+    render(<BannerConsentimentoComponent />);
+
+    fireEvent.click(screen.getByRole('button', { name: TEXTO_CONSENTIMENTO.aceitar }));
+
+    expect(window.clarity?.q).toEqual([['consent', true]]);
+    expect(document.getElementById('clarity-js')?.getAttribute('src')).toBe('https://www.clarity.ms/tag/abcdefghij');
   });
 
   it('não carrega o script se a pessoa recusou', () => {

@@ -89,26 +89,40 @@ function guardarEscolha(escolha: Escolha): void {
 
 /**
  * ATENÇÃO: Só aqui o script entra na página. Antes disto, nada é carregado.
+ *
+ * RISCO: a fila `window.clarity` existe ANTES do script, como no snippet oficial. O script do
+ * Clarity lê essa fila ao chegar; sem ela, quebra com "Cannot read properties of undefined
+ * (reading 'v')", e o consentimento dado antes de ele carregar se perderia. MEDIDO em produção,
+ * 2026-10-15.
  */
 function ativarMedicao() {
   const id = import.meta.env.VITE_CLARITY_ID;
   if (!id || document.getElementById('clarity-js')) return;
+
+  if (!window.clarity) {
+    const fila: ClarityFila = (...args: unknown[]) => {
+      (fila.q ??= []).push(args);
+    };
+    window.clarity = fila;
+  }
+  window.clarity('consent', true);
 
   const script = document.createElement('script');
   script.id = 'clarity-js';
   script.async = true;
   script.src = `https://www.clarity.ms/tag/${id}`;
   document.head.appendChild(script);
-
-  window.clarity?.('consent', true);
 }
 
 function negrito(texto: string): string {
   return texto.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
+/** A função que o snippet do Clarity cria antes do script: guarda os comandos em `q` até ele chegar. */
+type ClarityFila = ((comando: string, ...args: unknown[]) => void) & { q?: unknown[][] };
+
 declare global {
   interface Window {
-    clarity?: (comando: string, ...args: unknown[]) => void;
+    clarity?: ClarityFila;
   }
 }
