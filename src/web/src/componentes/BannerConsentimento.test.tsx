@@ -12,14 +12,16 @@ import { TEXTO_CONSENTIMENTO, VERSAO_CONSENTIMENTO } from '../textos-legais';
  *
  * mesmo elemento, mesmo tipo — nenhum é link disfarçado nem está escondido
  *
- * RISCO: As cinco coisas que o texto PRECISA dizer (plano/02 §4.5.2).
+ * RISCO: As quatro coisas que o texto PRECISA dizer (plano/02 §4.5.2).
  * Um "usamos cookies para melhorar sua experiência" não autoriza o que é gravado aqui.
  *
  * `expect(texto).toMatch(/gravar sua navegação|cliques/);`: 1. o que é gravado
  *
  * `expect(texto).toMatch(/posição política/);`: 2. revela opinião
  *
- * `expect(texto).toMatch(/apresentação e na defesa/);`: 3. exibido na banca
+ * DECISÃO (2026-10-15): o aviso deixou de dizer que as gravações podem ser exibidas na
+ * apresentação e na defesa, a pedido do autor. Sem isso no aviso, gravação do Clarity não se mostra
+ * na banca; números agregados (conclusão, abandono) podem.
  *
  * `expect(texto).toMatch(/clarity|fora do brasil/);`: 4. quem recebe
  *
@@ -60,13 +62,12 @@ describe('BannerConsentimento', () => {
     expect(aceitar.tagName).toBe(recusar.tagName);
   });
 
-  it('diz as cinco coisas obrigatórias', () => {
+  it('diz as quatro coisas obrigatórias', () => {
     const { container } = render(<BannerConsentimentoComponent />);
     const texto = container.textContent!.toLowerCase();
 
     expect(texto).toMatch(/gravar sua navegação|cliques/);
     expect(texto).toMatch(/posição política/);
-    expect(texto).toMatch(/apresentação e na defesa/);
     expect(texto).toMatch(/clarity|fora do brasil/);
     expect(texto).toMatch(/30 dias|9 meses/);
   });

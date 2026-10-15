@@ -152,7 +152,7 @@ daquela pessoa nas perguntas apresentadas, e nada além disso.
 `.trim();
 
 /**
- * RISCO: O banner precisa dizer CINCO coisas (plano/02 §4.5.2). Um "usamos cookies para
+ * RISCO: O banner precisa dizer QUATRO coisas (plano/02 §4.5.2, menos a exibição na banca). Um "usamos cookies para
  * melhorar sua experiência" genérico NÃO autoriza o que este site grava.
  *
  * ATENÇÃO: Os dois botões têm o MESMO peso visual, de propósito (LGPD art. 9º §3):
@@ -165,7 +165,7 @@ export const TEXTO_CONSENTIMENTO = {
   titulo: 'Antes de continuar',
 
   corpo: [
-    'Usamos sua navegação, como cliques e respostas do questionário, para melhorar a ferramenta. Trechos podem aparecer na apresentação e na defesa do projeto.',
+    'Usamos sua navegação, como cliques e respostas do questionário, para melhorar a ferramenta.',
     'As respostas indicam posição política, por isso só gravamos se você aceitar.',
     'Os dados ficam no Microsoft Clarity, fora do Brasil: gravações por 30 dias, cliques por 9 meses.',
   ],
