@@ -233,7 +233,7 @@
       <tr><td>Carga de dados</td><td class="nao">Não</td><td>Não recebe conexão; só sai para baixar das fontes</td><td></td></tr>
       <tr><td>Painel do Coolify</td><td class="nao">Não (recomendado)</td><td>Sem endereço público; aberto por túnel SSH. Ver abaixo</td><td class="pend">P22</td></tr>
       <tr><td>Grafana</td><td>A decidir</td><td>Público ou por túnel</td><td class="pend">P21</td></tr>
-      <tr><td>SSH (porta 22)</td><td>Só para o autor</td><td>Direto, sem Cloudflare: só chave, sem senha, sem root, com fail2ban. Sem restrição de IP, porque o autor viaja. Ver abaixo</td><td></td></tr>
+      <tr><td>SSH (porta 22)</td><td>Só para o autor</td><td>Direto, sem Cloudflare: só chave, sem senha, root só por chave (o Coolify precisa), com fail2ban. Sem restrição de IP, porque o autor viaja. Ver abaixo</td><td></td></tr>
     </tbody>
   </table>
 
@@ -403,14 +403,19 @@ chmod 700 /home/igor/.ssh &amp;&amp; chmod 600 /home/igor/.ssh/authorized_keys</
     primeira:</strong> <code>ssh igor@IP-do-VPS</code> entra sem pedir senha, e <code>sudo whoami</code> responde
     <code>root</code>.</p>
 
-  <h3>5. Desligar o login de root e o login por senha</h3>
+  <h3>5. Desligar o login por senha</h3>
   <pre>sudo nano /etc/ssh/sshd_config.d/99-endurecer.conf</pre>
-  <pre>PermitRootLogin no
+  <pre>PermitRootLogin prohibit-password
 PasswordAuthentication no
 KbdInteractiveAuthentication no</pre>
   <pre>sudo sshd -t &amp;&amp; sudo systemctl restart ssh</pre>
   <p>O <code>sshd -t</code> recusa arquivo com erro antes de reiniciar. Conferir numa janela nova: <code>ssh igor@…</code>
-    entra e <code>ssh root@…</code> é recusado.</p>
+    entra sem senha, e nenhuma conta aceita senha pela rede.</p>
+  <p><strong>Root só por chave, e não <code>PermitRootLogin no</code>:</strong> o Coolify comanda o próprio servidor por SSH
+    como root, com uma chave que ele mesmo põe em <code>/root/.ssh/authorized_keys</code>. Com <code>no</code>, ele perde o
+    acesso e marca o servidor como inalcançável. Com <code>prohibit-password</code>, a senha de root não vale pela rede, e a
+    chave dele continua valendo.</p>
+  <p>Os passos 3 a 8 estão em <code>infra/vps/configurar-vps.sh</code>, que pode rodar de novo sem estragar nada.</p>
 
   <h3>6. fail2ban</h3>
   <pre>sudo apt install -y fail2ban

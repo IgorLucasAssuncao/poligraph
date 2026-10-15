@@ -1,0 +1,16 @@
+# Atalho do computador do autor para o VPS e para o painel do Coolify.
+#
+# Copie para C:\Users\<voce>\.ssh\config (sem extensão) e troque IP-DO-VPS. No PowerShell, grave
+# com -Encoding ascii: o BOM do UTF-8 faz o SSH não entender a primeira linha.
+#
+# "ssh coolify" entra como igor e abre o túnel do painel: com a janela aberta, o Coolify fica em
+# http://localhost:8000. A 6001 leva as atualizações ao vivo do painel; a 6002, o terminal dele.
+# As três ficam fechadas no firewall: só o túnel chega a elas.
+
+Host coolify
+    HostName IP-DO-VPS
+    User igor
+    IdentityFile ~/.ssh/id_ed25519
+    LocalForward 8000 localhost:8000
+    LocalForward 6001 localhost:6001
+    LocalForward 6002 localhost:6002
