@@ -78,3 +78,12 @@ src/etl/.cache/
 **/.cache/
 *.zip
 *.csv.gz
+
+# Cobertura — gerada pelo CI e pelo `--coverage` local
+TestResults/
+coverage/
+coverage.xml
+.coverage
+
+# O artigo do TCC fica fora do repositório (decisão do autor, 2026-10-02).
+docs/artigo/

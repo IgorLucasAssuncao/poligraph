@@ -1,8 +1,8 @@
 # Lote 1 de perguntas — candidatas medidas
 
-> **Status:** v2.0 — 2026-08-26 · **PL11 em andamento**
+> **Status:** v2.0 — 2026-08-26 · **Pendência 11 em andamento**
 > **v2.0:** decisões do autor aplicadas — só texto principal, formato afirmação, casos
-> nominais incluídos, PL12 resolvida. **22 perguntas.**
+> nominais incluídos, Pendência 12 resolvida. **22 perguntas.**
 > Extraído dos CSVs da Câmara com parser RFC 4180 próprio, validado contra os números
 > documentados em [`04-contratos`](../04-contratos.md).
 > ⚠️ **Nada aqui está aprovado.** É o primeiro lote para curadoria do autor.
@@ -95,7 +95,7 @@ são perguntas diferentes, e o 2001–2026 continua disponível.
 | **1** | ⭐ **Só votações de texto principal** | Polaridade **sempre +1**. Universo cai de 224 para **58** |
 | **2** | **Casos nominais entram** | Anistia do 8/1 e representações contra parlamentares ficam |
 | **3** | ⭐ **Formato afirmação** | *"X deve ser Y."* → **Concordo · Discordo · Não sei** |
-| **4** | ✅ **PL12 resolvida — "teste do jantar"** | Entra se dá para discutir num jantar de família **sem explicar o que é a proposta** |
+| **4** | ✅ **Pendência 12 resolvida — "teste do jantar"** | Entra se dá para discutir num jantar de família **sem explicar o que é a proposta** |
 
 ### 4.1 ⭐ A decisão 1 elimina o bug mais perigoso do sistema
 
@@ -122,7 +122,7 @@ Saem do questionário os temas mais reconhecíveis da legislatura:
 > 🔑 **É troca consciente: menos cobertura temática, zero risco de sinal invertido.**
 > Um questionário com 22 perguntas certas vale mais que um com 30 e um número trocado.
 
-### 4.3 ✅ O "teste do jantar" — o critério da PL12
+### 4.3 ✅ O "teste do jantar" — o critério da Pendência 12
 
 | ✅ Passa | ⛔ Não passa |
 |---|---|
@@ -227,8 +227,8 @@ por construção.
 
 | # | Pendência |
 |---|---|
-| **PL11** | 🔄 Lote 1 pronto — aguarda revisão pergunta a pergunta |
-| ~~PL12~~ | ✅ **Teste do jantar** (§4.3) |
-| **PL32** | 🟢 **Rebaixada** — o texto das emendas deixou de ser necessário com a decisão 1 |
+| **Pendência 11** | 🔄 Lote 1 pronto — aguarda revisão pergunta a pergunta |
+| ~~Pendência 12~~ | ✅ **Teste do jantar** (§4.3) |
+| **Pendência 32** | 🟢 **Rebaixada** — o texto das emendas deixou de ser necessário com a decisão 1 |
 | **RQ3** | N final |
 | **A3** | Deduplicação |

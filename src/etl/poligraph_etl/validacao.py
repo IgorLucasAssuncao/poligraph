@@ -1,11 +1,11 @@
 """ANÁLISE — validação do instrumento — o deputado consegue se encontrar?
 
-🔴 A ideia, do autor: **se um deputado usar o app e responder segundo os próprios
+RISCO: A ideia, do autor: **se um deputado usar o app e responder segundo os próprios
 votos, ele tem de aparecer em primeiro lugar.** É verdade-terreno de graça — não
 depende de opinião, painel humano nem rótulo externo. Se o método não recupera quem
 tem resposta conhecida, não mede afinidade de quem não tem.
 
-⭐ E o mesmo experimento responde à outra pergunta, a de quantas perguntas bastam.
+DECISÃO: E o mesmo experimento responde à outra pergunta, a de quantas perguntas bastam.
 Repare no que realmente falha quando há poucas perguntas: **não é o deputado sair do
 topo** — ele nunca sai, porque casa com os próprios votos por construção. O que falha é
 o topo ficar LOTADO. Com 8 perguntas, dezenas de deputados podem ter respondido igual a
@@ -13,8 +13,8 @@ ele, e o app não consegue distingui-los.
 
 Por isso a medida é o **tamanho do empate no topo**, não a posição.
 
-⚠️ A polaridade não interfere aqui, e isso não é descuido: ela é aplicada dos dois
-lados da comparação e se cancela. O experimento mede poder de discriminação, ⛔ não a
+ATENÇÃO: A polaridade não interfere aqui, e isso não é descuido: ela é aplicada dos dois
+lados da comparação e se cancela. O experimento mede poder de discriminação, não a
 correção do sinal — essa continua sendo responsabilidade do teste de regressão de
 polaridade (API3).
 """
@@ -54,13 +54,27 @@ def avaliar(
     `matriz` é pessoa × votação, com `nan` onde não houve voto.
     `colunas_pergunta` são os índices das votações usadas como perguntas.
 
-    ⚠️ Trabalha em matriz inteira, ⛔ não em laço por deputado: com 655 pessoas seriam
+    ATENÇÃO: Trabalha em matriz inteira, não em laço por deputado: com 655 pessoas seriam
     429 mil comparações em Python puro. Em NumPy é uma multiplicação.
+
+    ATENÇÃO: Só posicionamento conta. `nan` é ausência e 0 é abstenção — nenhum dos dois
+    é concordância nem discordância.
+
+    concordância = acordos / comparáveis, par a par
+
+    RISCO: O MESMO piso que a API aplica (`TemBaseSuficiente`, 60% do respondido).
+
+    ATENÇÃO: Sem ele o experimento mede outra coisa e mente para cima: quem faltou em
+    15 das 22 e concordou nas 7 que compareceu marca concordância 1,0 e empata
+    com quem respondeu todas. A regra "ausência não é discordância" é correta,
+    mas sozinha infla o empate — foi o que produziu uma primeira medição com
+    empate mediano de 90, contra 8 na conferência direta.
+
+    ATENÇÃO: Tolerância de ponto flutuante: 20/22 e 20/22 podem diferir no último bit,
+    e sem isto o empate não seria detectado.
     """
     recorte = matriz[:, colunas_pergunta]
 
-    # ⚠️ Só posicionamento conta. `nan` é ausência e 0 é abstenção — nenhum dos dois
-    #    é concordância nem discordância.
     opiniao = np.where(np.isnan(recorte), 0, recorte)
     tem_opiniao = opiniao != 0
 
@@ -70,7 +84,6 @@ def avaliar(
     if elegiveis.size == 0:
         return ResultadoDaRodada(len(colunas_pergunta), 0, 0.0, 0.0, 0)
 
-    # concordância = acordos / comparáveis, par a par
     acordos = (opiniao @ opiniao.T + tem_opiniao.astype(float) @ tem_opiniao.T.astype(float)) / 2
     comparaveis = tem_opiniao.astype(float) @ tem_opiniao.T.astype(float)
 
@@ -80,13 +93,6 @@ def avaliar(
     empates = []
     unicos = 0
     for i in elegiveis:
-        # 🔴 O MESMO piso que a API aplica (`TemBaseSuficiente`, 60% do respondido).
-        #
-        # ⚠️ Sem ele o experimento mede outra coisa e mente para cima: quem faltou em
-        #    15 das 22 e concordou nas 7 que compareceu marca concordância 1,0 e empata
-        #    com quem respondeu todas. A regra "ausência não é discordância" é correta,
-        #    mas sozinha infla o empate — foi o que produziu uma primeira medição com
-        #    empate mediano de 90, contra 8 na conferência direta.
         piso = np.ceil(respostas_por_deputado[i] * fracao_minima_comparavel)
         com_base = comparaveis[i] >= piso
 
@@ -96,8 +102,6 @@ def avaliar(
 
         melhor = np.nanmax(linha)
 
-        # ⚠️ Tolerância de ponto flutuante: 20/22 e 20/22 podem diferir no último bit,
-        #    e sem isto o empate não seria detectado.
         no_topo = int(np.sum(linha >= melhor - 1e-9))
         empates.append(no_topo)
         if no_topo == 1:
@@ -123,7 +127,7 @@ def curva_de_discriminacao(
 ) -> list[ResultadoDaRodada]:
     """Quanto o topo desafoga conforme entram mais perguntas.
 
-    ⚠️ As perguntas de cada rodada são sorteadas do conjunto candidato, com semente
+    ATENÇÃO: As perguntas de cada rodada são sorteadas do conjunto candidato, com semente
     fixa. Pegar sempre as `k` primeiras mediria a ordem da curadoria, não o efeito da
     quantidade.
     """
@@ -143,7 +147,7 @@ def curva_de_discriminacao(
 def divisao(matriz: np.ndarray, coluna: int) -> float:
     """Quão dividida foi a votação: 0 = unânime, 0,5 = meio a meio.
 
-    ⭐ É a medida de quanto uma pergunta INFORMA. Votação em que 95% votaram igual não
+    DECISÃO: É a medida de quanto uma pergunta INFORMA. Votação em que 95% votaram igual não
     separa ninguém — a pessoa responde e o ranking não muda.
     """
     valores = matriz[:, coluna]
@@ -196,12 +200,12 @@ def melhor_pergunta_para_dividir(
 ) -> int | None:
     """A votação que mais divide **este grupo** — não a Câmara inteira.
 
-    🔴 É a diferença entre o nível A e o nível C do `plano/03`. Uma votação que racha a
+    RISCO: É a diferença entre o nível A e o nível C do `plano/03`. Uma votação que racha a
     Câmara ao meio pode ser unânime dentro do grupo que empatou com você — e aí ela não
     desempata nada. O que importa é a divisão LOCAL.
 
-    ⚠️ Devolve `None` quando nenhuma candidata divide o grupo. Acontece de verdade: se
-    os empatados votaram idêntico em tudo que existe, ⛔ não há pergunta que os separe,
+    ATENÇÃO: Devolve `None` quando nenhuma candidata divide o grupo. Acontece de verdade: se
+    os empatados votaram idêntico em tudo que existe, não há pergunta que os separe,
     e insistir seria fazer a pessoa responder à toa.
     """
     if grupo.size < 2:
@@ -233,7 +237,7 @@ def simular_desempate(
 ) -> list[int]:
     """Tamanho do empate a cada pergunta adicional, para UM deputado.
 
-    ⭐ `dirigido=False` sorteia a próxima pergunta. É o grupo de controle: sem ele, não
+    DECISÃO: `dirigido=False` sorteia a próxima pergunta. É o grupo de controle: sem ele, não
     dá para afirmar que o ganho veio da escolha e não de simplesmente perguntar mais.
     """
     sorteio = np.random.default_rng(semente + quem)

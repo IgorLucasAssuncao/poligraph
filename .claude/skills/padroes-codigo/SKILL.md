@@ -68,12 +68,37 @@ public class ServicoAfinidade(PoligraphDb db, ILogger<ServicoAfinidade> logger)
 ```csharp
 builder.Services.AddDbContext<PoligraphDb>(o => o
     .UseNpgsql(cs)
-    .UseSnakeCaseNamingConvention());   // 🔴 não remover
+    .UseSnakeCaseNamingConvention());
 ```
 
 ⚠️ **Remover essa linha quebra o ETL inteiro sem erro de compilação.**
 
 ---
+
+## 0. 🔴 Comentários — a regra que vem antes das outras
+
+| | |
+|---|---|
+| ⭐ **Onde** | `/// <summary>` no membro. `<remarks>` para o porquê |
+| ⛔ **Nunca** | `//` no meio de um corpo de método |
+| ⛔ **Nunca** | Emoji em arquivo `.cs` |
+| ⛔ **Nunca** | Carga emocional — *"não é preciosismo"*, *"o bug de uma hora perdida"*, *"horrendo"* |
+| ⛔ **Nunca** | Decisão de arquitetura como `<summary>` — isso é `docs/`, ⛔ não documentação de membro |
+
+> ⚠️ **Os marcadores 🔴 ⚠️ ⛔ ⭐ 📐 valem para esta documentação, e ⛔ NÃO para o código.**
+> Em 2026-09-07 foram removidos de **103 arquivos** `.cs`.
+
+### A mesma regra no front e na ETL (2026-10-02)
+
+| | |
+|---|---|
+| ⭐ **TypeScript** | `/** */` na declaração: função, componente, tipo, constante de módulo, propriedade de tipo. ⛔ `//`, `/* */` ou `{/* */}` dentro do corpo ou do JSX |
+| ⭐ **Python** | Docstring. ⛔ comentário no meio da função |
+| ⭐ **No lugar dos marcadores** | `RISCO:` · `ATENÇÃO:` · `DECISÃO:` · `MEDIDO:` · `FEITO:` — em qualquer código, teste ou log |
+| Exceção | Diretiva de ferramenta (`eslint-disable…`, `@ts-expect-error`) |
+
+Detalhe em [`.claude/CLAUDE.md`](../../CLAUDE.md), *Comentários em todo o código*.
+
 
 ## 2. 🔴 Ordem dos membros dentro da classe
 

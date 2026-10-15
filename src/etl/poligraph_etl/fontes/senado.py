@@ -27,9 +27,15 @@ direita. Tudo passa por `strip()`.
 Documentação: [`docs/11-api-senado.md`](../../../../docs/11-api-senado.md)
 """
 
+import csv
 import logging
+from pathlib import Path
 
 import requests
+
+from .. import procedencia
+from ..contratos import entrada
+from ..contratos.senado import LinhaDaCotaDoSenado
 
 log = logging.getLogger("poligraph")
 
@@ -40,6 +46,18 @@ CABECALHOS = {"Accept": "application/json"}
 # menos que isto significa recorte errado ou mudança de contrato, não Senado parado.
 MINIMO_POR_ANO = 20
 
+# MEDIDO: Lacunas DA FONTE, medidas em 2026-10-02 (achados #35 e #37), contadas DEPOIS do
+#    descarte das votações fora de época: 2015 tem zero e 2016 tem 6, contra 100 a 225
+#    nos vizinhos — e 2016 é o ano do impeachment, não um Senado parado. Pela sequência do
+#    código, faltam ~230 votações entre a última de 2014 (5329) e a primeira de 2016 (5560).
+#
+# ATENÇÃO: Eram 17 e 13 — mas as 17 de 2015 e 7 das 13 de 2016 eram votações de 1998 e 1999 com
+#    a data errada. O ano entra com o que a fonte tem, e o log diz que é lacuna.
+#
+# ATENÇÃO: É um PISO, não um valor exato: se o Senado completar o arquivo, o ano passa a cruzar
+#    o mínimo normal e sai daqui sozinho. Abaixo do piso, o canário volta a estourar.
+LACUNAS_CONHECIDAS = {2015: 0, 2016: 6}
+
 
 def baixar_votacoes(ano: int) -> list[dict]:
     """As votações de um ano inteiro, em uma requisição.
@@ -47,6 +65,11 @@ def baixar_votacoes(ano: int) -> list[dict]:
     Devolve o array como veio, incluindo as secretas: filtrar é decisão do tratamento,
     e a contagem de secretas é o próprio achado #17.
     """
+    return baixar_votacoes_com_procedencia(ano)[0]
+
+
+def baixar_votacoes_com_procedencia(ano: int) -> tuple[list[dict], procedencia.Baixado]:
+    """Como `baixar_votacoes`, devolvendo também a impressão digital da resposta (Pendência 72)."""
     resposta = requests.get(
         f"{BASE}/votacao",
         params={"dataInicio": f"{ano}-01-01", "dataFim": f"{ano}-12-31"},
@@ -54,14 +77,15 @@ def baixar_votacoes(ano: int) -> list[dict]:
         timeout=300,
     )
     resposta.raise_for_status()
+    baixado = procedencia.de_resposta("SENADO", resposta)
 
     if not resposta.content.strip():
-        return []
+        return [], baixado
 
     dados = resposta.json() or []
     _registrar_descontinuacao(dados)
 
-    return dados
+    return dados, baixado
 
 
 def baixar_senadores() -> list[dict]:
@@ -88,35 +112,166 @@ def baixar_senadores() -> list[dict]:
     ]
 
 
-def baixar_indexacao(codigo_materia: int) -> str:
-    """A indexação temática da matéria — o que a ementa quase nunca diz.
+CEAPS = "https://www.senado.gov.br/transparencia/LAI/verba/despesa_ceaps_{ano}.csv"
 
-    A ementa costuma ser a lista de leis alteradas: *"Altera dispositivos da Lei nº
-    7.210 (Lei de Execução Penal) e do Decreto-Lei nº 2.848 (Código Penal)"*. Isso não
-    permite escrever pergunta nenhuma.
+# O CSV NAO aceita os CABECALHOS do modulo: eles pedem `application/json`, e o portal da
+# transparencia responde 406 Not Acceptable. Medido em 2026-09-08.
+CABECALHOS_CSV = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/csv,application/octet-stream,*/*",
+}
 
-    `IndexacaoMateria` é o vocabulário controlado do Senado e diz o assunto:
-    *"CAUSA DE DIMINUIÇÃO DE PENA, CRIME CONTRA AS INSTITUIÇÕES DEMOCRÁTICAS"* — que é a
-    dosimetria dos atos de 8 de janeiro, e aí a pergunta se escreve.
 
-    Devolve string vazia em qualquer falha: é insumo de curadoria, e derrubar a listagem
-    inteira porque uma matéria não respondeu seria pior que listá-la sem indexação.
+def baixar_ceaps(ano: int, destino: Path) -> Path:
+    """A cota do Senado (CEAPS) do ano, em CSV. Reaproveita o cache."""
+    if destino.exists():
+        log.info("  ja em cache: %s", destino.name)
+        return destino
+
+    url = CEAPS.format(ano=ano)
+    log.info("  baixando %s", url)
+
+    resposta = requests.get(url, headers=CABECALHOS_CSV, timeout=300)
+    resposta.raise_for_status()
+
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    destino.write_bytes(resposta.content)
+
+    return destino
+
+
+def ler_ceaps(caminho: Path) -> list[LinhaDaCotaDoSenado]:
+    """As linhas da CEAPS no contrato de entrada, ja sem a linha de metadado do topo.
+
+    O arquivo NAO comeca pelo cabecalho: a primeira linha e
+    `"ULTIMA ATUALIZACAO";"07/09/2026 02:02"`. Um `DictReader` direto tomaria isso como
+    cabecalho, nenhuma coluna casaria e a leitura devolveria zero despesa sem erro.
+
+    Latin-1, como o TSE e ao contrario da Camara.
+
+    O layout mudou: voltar ao inicio e deixar o cabecalho ser lido de la.
+    """
+    with caminho.open(encoding="latin-1", errors="replace") as arquivo:
+        primeira = arquivo.readline()
+        if "ULTIMA ATUALIZACAO" not in primeira.upper():
+            arquivo.seek(0)
+
+        return entrada.ler(LinhaDaCotaDoSenado, csv.DictReader(arquivo, delimiter=";", quotechar='"'))
+
+
+def baixar_senador(codigo: str) -> dict | None:
+    """A identificação de UM senador, que é onde vive o nome civil.
+
+    A lista de exercício traz `NomeCompletoParlamentar`, mas só dos 81 de hoje. Os
+    suplentes que devolveram a cadeira aparecem nos votos e não naquela lista, e o
+    registro de voto não tem nome completo — sem isto, ficam sem chave para o TSE.
+
+    Devolve `None` quando o código não existe, para o chamador registrar e seguir em vez
+    de derrubar o lote inteiro por um senador.
+    """
+    resposta = requests.get(
+        f"{BASE}/senador/{codigo}", headers=CABECALHOS, timeout=120
+    )
+    if resposta.status_code == 404:
+        return None
+    resposta.raise_for_status()
+
+    detalhe = (resposta.json() or {}).get("DetalheParlamentar") or {}
+    _registrar_descontinuacao(detalhe)
+
+    return ((detalhe.get("Parlamentar") or {}).get("IdentificacaoParlamentar")) or None
+
+
+def votos_por_data(data_iso: str) -> dict[str, dict[str, str]] | None:
+    """`codigoSessaoVotacao -> {CodigoParlamentar: Voto}` pelo serviço antigo, por data (Pendência 67).
+
+    ATENÇÃO: O serviço está marcado como descontinuado desde 2026-02-01 e ainda responde. É o
+    segundo canal da conferência; se sair do ar, a conferência do Senado para, e a carga não.
+    """
+    try:
+        resposta = requests.get(
+            f"{BASE}/plenario/lista/votacao/{data_iso.replace('-', '')}", headers=CABECALHOS, timeout=60
+        )
+        resposta.raise_for_status()
+        lista = (resposta.json().get("ListaVotacoes") or {}).get("Votacoes") or {}
+    except (requests.RequestException, ValueError, AttributeError):
+        return None
+
+    votacoes = lista.get("Votacao") or []
+    votacoes = votacoes if isinstance(votacoes, list) else [votacoes]
+    por_sessao: dict[str, dict[str, str]] = {}
+    for votacao in votacoes:
+        votos = (votacao.get("Votos") or {}).get("VotoParlamentar") or []
+        votos = votos if isinstance(votos, list) else [votos]
+        por_sessao[str(votacao.get("CodigoSessaoVotacao"))] = {
+            str(voto.get("CodigoParlamentar")): voto.get("Voto") or "" for voto in votos
+        }
+    return por_sessao
+
+
+def baixar_materia(codigo_materia: str) -> dict | None:
+    """A matéria inteira: ementa, identificação e indexação.
+
+    ## RISCO: Por que isto existe
+
+    A descrição da votação do Senado não **não diz sobre o que ela é**:
+
+    > *"Votação nominal do Substitutivo da Câmara dos Deputados ao Projeto de Lei
+    > Complementar nº 124, de 2022, na forma do texto consolidado apresentado pelo
+    > parecer."*
+
+    Isso diz o **número**. A matéria diz o assunto:
+
+    > *"Altera o Código Tributário Nacional, a fim de estabelecer normas gerais sobre
+    > solução de controvérsias, consensualidade e processo administrativo em matéria
+    > tributária e aduaneira."*
+
+    DECISÃO: **`IndexacaoMateria` é o vocabulário controlado do Senado** e a Câmara não tem
+    equivalente no CSV — aqui o Senado publica **mais**, não menos.
+
+    ## O que devolve
+
+    | Chave | De onde vem |
+    |---|---|
+    | `sigla_tipo` · `numero` · `ano` | `IdentificacaoMateria` |
+    | `ementa` | `DadosBasicosMateria.EmentaMateria` |
+    | `indexacao` | `DadosBasicosMateria.IndexacaoMateria` |
+
+    Não **Devolve `None` em qualquer falha.** São ~360 chamadas por carga; derrubar a
+    ingestão inteira porque uma matéria não respondeu seria trocar 359 boas por zero.
+
+    ATENÇÃO: Vem com zeros à esquerda: "00124". `int` cuida disso; guardar o texto
+    faria "PLP 00124/2022" aparecer na tela.
     """
     try:
         resposta = requests.get(
             f"{BASE}/materia/{codigo_materia}", headers=CABECALHOS, timeout=60
         )
         resposta.raise_for_status()
-        basicos = (
-            resposta.json()
-            .get("DetalheMateria", {})
-            .get("Materia", {})
-            .get("DadosBasicosMateria", {})
-        )
-    except (requests.RequestException, ValueError, AttributeError):
-        return ""
+        materia = resposta.json().get("DetalheMateria", {}).get("Materia", {})
+    except (requests.RequestException, ValueError, AttributeError) as erro:
+        log.warning("matéria %s não respondeu: %s", codigo_materia, erro)
+        return None
 
-    return " ".join((basicos.get("IndexacaoMateria") or "").split())
+    identificacao = materia.get("IdentificacaoMateria") or {}
+    basicos = materia.get("DadosBasicosMateria") or {}
+
+    return {
+        "codigo": _texto(identificacao.get("CodigoMateria")),
+        "sigla_tipo": _texto(identificacao.get("SiglaSubtipoMateria")),
+        "numero": _texto(identificacao.get("NumeroMateria")),
+        "ano": _texto(identificacao.get("AnoMateria")),
+        "ementa": _texto(basicos.get("EmentaMateria")),
+        "indexacao": _texto(basicos.get("IndexacaoMateria")),
+    }
+
+
+def _texto(valor) -> str:
+    """ATENÇÃO: Colapsa espaço: a ementa vem com quebra de linha DENTRO do campo."""
+    return "" if valor is None else " ".join(str(valor).split())
 
 
 def conferir_volume(votacoes: list[dict], ano: int) -> None:
@@ -126,11 +281,21 @@ def conferir_volume(votacoes: list[dict], ano: int) -> None:
     200 o tempo todo. Um sucessor que passe a devolver vazio faria a ingestão registrar
     zero votações sem erro.
     """
-    if len(votacoes) < MINIMO_POR_ANO:
-        raise RuntimeError(
-            f"Só {len(votacoes)} votações em {ano} — esperado ao menos {MINIMO_POR_ANO}. "
-            "O contrato do endpoint mudou?"
+    if len(votacoes) >= MINIMO_POR_ANO:
+        return
+
+    if len(votacoes) >= LACUNAS_CONHECIDAS.get(ano, MINIMO_POR_ANO):
+        log.warning(
+            "  só %d votações em %d: lacuna conhecida da fonte (achado #35), não contrato "
+            "alterado. A legislatura fica com menos dado nesses anos.",
+            len(votacoes), ano,
         )
+        return
+
+    raise RuntimeError(
+        f"Só {len(votacoes)} votações em {ano} — esperado ao menos {MINIMO_POR_ANO}. "
+        "O contrato do endpoint mudou?"
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════

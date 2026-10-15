@@ -52,7 +52,7 @@ igual a produção.
 |---|---|---|
 | **Login com Google** | `VITE_GOOGLE_CLIENT_ID` + `Google:ClientId` | O botão não aparece; um aviso explica |
 | **Medição de uso** | `VITE_CLARITY_ID` | ⭐ O banner **não aparece** — sem ferramenta, não há o que consentir |
-| **Digest por e-mail** | Serviço de envio (PL26) | O digest é montado, mas não sai |
+| **Digest por e-mail** | Serviço de envio (Pendência 26) | O digest é montado, mas não sai |
 
 > 🔑 **Nada disso bloqueia o resto.** Questionário, resultado, fichas, busca e grafo
 > funcionam sem login — por decisão de projeto, não por acaso.

@@ -1,0 +1,25 @@
+/* ═══ NOTÍCIAS E VOTOS NA TIMELINE ═════════════════════════════ */
+/* ATENÇÃO: Linha sem avatar: o dono do conteúdo já é o perfil da página. */
+.linha-simples { padding-inline: 1rem; }
+.voto-descricao { margin: .45rem 0 .2rem; font-size: var(--t-2); }
+
+/* ATENÇÃO: O registro processual fica MENOR e mais apagado que a ementa, de propósito:
+   ele identifica qual votação daquele projeto foi, e isso é conferência — não é
+   o que a pessoa lê para entender o voto. */
+.voto-processual {
+  margin: 0 0 .2rem; font-size: var(--t-2); color: var(--suave); line-height: 1.4;
+}
+.voto-processual strong { font-family: var(--dado); font-weight: 600; color: var(--texto); }
+
+/* RISCO: O marcador de rito vem ANTES do enunciado, não depois: quem lê a linha
+   precisa saber que não é voto de mérito antes de ler o que foi votado. */
+.voto-rito {
+  margin: .45rem 0 .15rem; font-size: var(--t-1); color: var(--suave);
+}
+/* ═══ ORIENTAÇÃO NO VOTO ═══════════════════════════════════════
+   RISCO: SEM cor semântica. Votar contra a orientação não é erro, e verde/vermelho
+   transformaria comportamento em nota. O que distingue é o peso do texto, não a cor. */
+.voto-orientacao b { color: var(--texto); font-weight: 600; }
+.voto-orientacao em {
+  font-style: normal; font-weight: 600; color: var(--texto);
+}

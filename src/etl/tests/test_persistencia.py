@@ -1,117 +1,48 @@
 """Testes de integração da gravação, contra Postgres real.
 
-🔴 O que estes testes provam e nenhum unitário provaria: que a carga é IDEMPOTENTE.
+RISCO: O que estes testes provam e nenhum unitário provaria: que a carga é IDEMPOTENTE.
 
 O ETL roda todo dia sobre os mesmos arquivos — a Câmara os reconstrói toda madrugada,
 inclusive os anos fechados (achado #19). Sem idempotência o banco dobraria de tamanho
 por dia, e ninguém perceberia até o disco encher.
 
-⚠️ Exigem Docker. Sem ele, são PULADOS — teste vermelho por falta de ambiente treina
+ATENÇÃO: Exigem Docker. Sem ele, são PULADOS — teste vermelho por falta de ambiente treina
 a pessoa a ignorar vermelho.
 """
 
 import pytest
 
+# Marca o módulo inteiro: é o único do ETL que exige Docker, e o CI o desmarca
+# com `-m "not integracao"`.
+pytestmark = pytest.mark.integracao
+
+# Ainda usado nos testes de CheckViolation; a fixture `conexao` mora no conftest.
 psycopg = pytest.importorskip("psycopg")
-PostgresContainer = pytest.importorskip(
-    "testcontainers.postgres"
-).PostgresContainer
 
 from poligraph_etl import persistencia  # noqa: E402
 from poligraph_etl.similaridade import ParSimilar  # noqa: E402
 
-# 🔴 Schema mínimo espelhando o que o EF cria. ⛔ NÃO é a fonte da verdade.
+# RISCO: Schema mínimo espelhando o que o EF cria. NÃO é a fonte da verdade.
 #
-# ⚠️ Escrever este DDL à mão já custou caro: durante todo o desenvolvimento ele usou os
+# ATENÇÃO: Escrever este DDL à mão já custou caro: durante todo o desenvolvimento ele usou os
 #    nomes NO SINGULAR (`votacao`, `voto`, `pessoa`) enquanto o EF criava no plural. Os
 #    testes passavam contra um banco que este arquivo inventava, e o ETL nunca havia
 #    conseguido falar com o banco de verdade.
 #
-# ⭐ `test_contrato_schema.py` agora lê o `PoligraphDb.cs` e trava os NOMES. O que
-#    continua sem proteção aqui são as COLUNAS — ver PL37.
-SCHEMA = """
-CREATE TABLE pessoas (
-    id BIGSERIAL PRIMARY KEY,
-    nome_civil TEXT NOT NULL,
-    nome_exibicao TEXT NOT NULL,
-    cpf_hash TEXT,
-    url_foto TEXT,
-    excluido_em TIMESTAMPTZ
-);
-CREATE TABLE pessoa_fonte_ids (
-    pessoa_id BIGINT NOT NULL REFERENCES pessoas(id),
-    fonte TEXT NOT NULL,
-    id_externo TEXT NOT NULL,
-    metodo TEXT NOT NULL,
-    confianca REAL,
-    PRIMARY KEY (fonte, id_externo)
-);
-CREATE TABLE votacoes (
-    id TEXT PRIMARY KEY,
-    casa TEXT NOT NULL,
-    legislatura SMALLINT NOT NULL,
-    data DATE NOT NULL,
-    orgao TEXT, descricao TEXT, proposicao_id BIGINT,
-    categoria TEXT NOT NULL,
-    secreta BOOLEAN NOT NULL DEFAULT FALSE,
-    plenario BOOLEAN NOT NULL,
-    votos_sim INT, votos_nao INT
-);
-CREATE TABLE votos (
-    votacao_id TEXT NOT NULL REFERENCES votacoes(id),
-    pessoa_id BIGINT NOT NULL REFERENCES pessoas(id),
-    valor SMALLINT CHECK (valor IS NULL OR valor IN (-1,0,1)),
-    partido_no_voto TEXT NOT NULL,
-    uf_no_voto CHAR(2) NOT NULL,
-    PRIMARY KEY (votacao_id, pessoa_id)
-);
-CREATE TABLE execucoes (
-    id BIGSERIAL PRIMARY KEY,
-    casa TEXT NOT NULL, legislatura SMALLINT NOT NULL, k SMALLINT NOT NULL,
-    versao_carga TEXT NOT NULL,
-    iniciada_em TIMESTAMPTZ NOT NULL DEFAULT now(),
-    concluida_em TIMESTAMPTZ,
-    status TEXT NOT NULL
-);
-CREATE TABLE similaridades (
-    execucao_id BIGINT NOT NULL REFERENCES execucoes(id) ON DELETE CASCADE,
-    pessoa_a BIGINT NOT NULL, pessoa_b BIGINT NOT NULL,
-    metrica TEXT NOT NULL, valor REAL NOT NULL,
-    n_votacoes_comuns INT NOT NULL CHECK (n_votacoes_comuns >= 20),
-    PRIMARY KEY (execucao_id, pessoa_a, pessoa_b, metrica),
-    CHECK (pessoa_a < pessoa_b)
-);
-"""
-
-
-@pytest.fixture(scope="module")
-def conexao():
-    try:
-        container = PostgresContainer("postgres:17-alpine")
-        container.start()
-    except Exception as erro:                      # pragma: no cover
-        pytest.skip(f"Docker indisponível: {erro}")
-
-    url = container.get_connection_url().replace("postgresql+psycopg2", "postgresql")
-    conn = psycopg.connect(url, autocommit=True)
-    conn.execute(SCHEMA)
-
-    yield conn
-
-    conn.close()
-    container.stop()
+# DECISÃO: `test_contrato_schema.py` agora lê o `PoligraphDb.cs` e trava os NOMES. O que
+#    continua sem proteção aqui são as COLUNAS — ver Pendência 37.
 
 
 @pytest.fixture(autouse=True)
 def limpar(conexao):
     conexao.execute(
-        "TRUNCATE similaridades, execucoes, votos, votacoes, pessoa_fonte_ids, pessoas "
-        "RESTART IDENTITY CASCADE"
+        "TRUNCATE similaridades, execucoes, votos, votacoes, cargas, "
+        "pessoa_fonte_ids, pessoas RESTART IDENTITY CASCADE"
     )
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 RF-09 — idempotência
+# RISCO: RF-09 — idempotência
 # ═══════════════════════════════════════════════════════════════════
 
 
@@ -133,6 +64,39 @@ def test_pessoa_reingerida_com_nome_novo_atualiza(conexao):
 
     nome = conexao.execute("SELECT nome_exibicao FROM pessoas").fetchone()[0]
     assert nome == "Ana Ribeiro Sobrinho"
+
+
+def test_fonte_sem_foto_nao_apaga_a_foto_ja_gravada(conexao):
+    """RISCO: A regressão que deixou os 104 senadores sem rosto no banco.
+
+    `ingerir_senado` grava DUAS vezes a mesma pessoa: primeiro pela lista de exercício,
+    que traz `UrlFotoParlamentar`, e depois por `senadores_dos_votos`, que devolve os
+    mesmos senadores com `url_foto` nula — porque o registro de voto não tem foto.
+
+    Com atribuição direta a segunda passada apagava a primeira, sem erro e sem log.
+    """
+    com_foto = _pessoa("5672", "Alan Rick")
+    com_foto["url_foto"] = "https://www.senado.leg.br/senadores/img/senador5672.jpg"
+    persistencia.gravar_pessoas(conexao, [com_foto])
+
+    persistencia.gravar_pessoas(conexao, [_pessoa("5672", "Alan Rick")])
+
+    foto = conexao.execute("SELECT url_foto FROM pessoas").fetchone()[0]
+    assert foto == com_foto["url_foto"]
+
+
+def test_foto_nova_substitui_a_antiga(conexao):
+    """ATENÇÃO: O COALESCE preserva, não congela: foto nova continua entrando."""
+    antiga = _pessoa("204528", "Ana Ribeiro")
+    antiga["url_foto"] = "https://camara.leg.br/bandep/antiga.jpg"
+    persistencia.gravar_pessoas(conexao, [antiga])
+
+    nova = _pessoa("204528", "Ana Ribeiro")
+    nova["url_foto"] = "https://camara.leg.br/bandep/nova.jpg"
+    persistencia.gravar_pessoas(conexao, [nova])
+
+    foto = conexao.execute("SELECT url_foto FROM pessoas").fetchone()[0]
+    assert foto == "https://camara.leg.br/bandep/nova.jpg"
 
 
 def test_votacao_reingerida_nao_duplica(conexao):
@@ -157,7 +121,7 @@ def test_voto_reingerido_nao_duplica(conexao):
 
 
 def test_voto_corrigido_pela_camara_e_atualizado(conexao):
-    """⚠️ Sem o DO UPDATE, uma correção da Câmara seria ignorada em silêncio."""
+    """ATENÇÃO: Sem o DO UPDATE, uma correção da Câmara seria ignorada em silêncio."""
     pessoa_id = _preparar_pessoa_e_votacao(conexao)
 
     persistencia.gravar_votos(conexao, [_voto("2358548-89", pessoa_id, 1)])
@@ -168,7 +132,7 @@ def test_voto_corrigido_pela_camara_e_atualizado(conexao):
 
 
 def test_partido_no_voto_e_historico_e_acompanha_correcao(conexao):
-    """⭐ 14 deputados trocaram de partido só em 2025 — o campo é registro do momento."""
+    """DECISÃO: 14 deputados trocaram de partido só em 2025 — o campo é registro do momento."""
     pessoa_id = _preparar_pessoa_e_votacao(conexao)
 
     persistencia.gravar_votos(conexao, [_voto("2358548-89", pessoa_id, 1, partido="PARTIDO-A")])
@@ -201,7 +165,7 @@ def test_execucao_abre_em_andamento_e_fecha_concluida(conexao):
 
 
 def test_similaridade_abaixo_do_minimo_e_rejeitada_pelo_banco(conexao):
-    """🔴 RN-02 no banco. O Python pode ter bug; o CHECK não deixa passar."""
+    """RISCO: RN-02 no banco. O Python pode ter bug; o CHECK não deixa passar."""
     pessoa_id = _preparar_pessoa_e_votacao(conexao)
     outro = persistencia.gravar_pessoas(conexao, [_pessoa("204529", "Bruno Tavares")])
     ids = [r[0] for r in conexao.execute("SELECT id FROM pessoas ORDER BY id").fetchall()]
@@ -214,7 +178,7 @@ def test_similaridade_abaixo_do_minimo_e_rejeitada_pelo_banco(conexao):
 
 
 def test_duas_execucoes_convivem_sem_conflito(conexao):
-    """⭐ Cada execução é um retrato independente — é o que dá reprodutibilidade."""
+    """DECISÃO: Cada execução é um retrato independente — é o que dá reprodutibilidade."""
     _preparar_pessoa_e_votacao(conexao)
     persistencia.gravar_pessoas(conexao, [_pessoa("204529", "Bruno Tavares")])
     ids = [r[0] for r in conexao.execute("SELECT id FROM pessoas ORDER BY id").fetchall()]
@@ -281,13 +245,16 @@ def test_matriz_de_uma_casa_ignora_o_voto_da_outra(conexao):
 
     Aresta cruzando as casas nunca é legítima, nem para essa pessoa: aresta significa
     "estes dois votam parecido", e ela é um nó só, não dois ligados.
+
+    A mesma pessoa com id nas duas casas — o estado que a ponte produziria
+
+    Cada matriz tem só o voto da própria casa, e o valor é o daquela casa
     """
     from poligraph_etl.__main__ import _montar_matriz
 
     persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Ana Ribeiro")])
     pessoa_id = conexao.execute("SELECT id FROM pessoas LIMIT 1").fetchone()[0]
 
-    # A mesma pessoa com id nas duas casas — o estado que a ponte produziria
     conexao.execute(
         """INSERT INTO pessoa_fonte_ids (pessoa_id, fonte, id_externo, metodo, confianca)
            VALUES (%s, 'SENADO', '5672', 'MANUAL', 1.0)""",
@@ -308,7 +275,6 @@ def test_matriz_de_uma_casa_ignora_o_voto_da_outra(conexao):
     assert [v[0] for v in votacoes_camara] == ["2358548-89"]
     assert [v[0] for v in votacoes_senado] == ["SF-6918"]
 
-    # Cada matriz tem só o voto da própria casa, e o valor é o daquela casa
     assert matriz_camara.shape == (1, 1) and matriz_camara[0, 0] == 1
     assert matriz_senado.shape == (1, 1) and matriz_senado[0, 0] == -1
 
@@ -334,3 +300,192 @@ def test_quem_so_vota_numa_casa_nao_entra_na_matriz_da_outra(conexao):
 
     assert pessoas_camara == [deputada]
     assert pessoas_senado == []
+
+
+# ═══════════════════════════════════════════════════════════════════
+# RISCO: Achado #35 — "votou na legislatura corrente", não "tem voto"
+# ═══════════════════════════════════════════════════════════════════
+
+
+def _com_historico(conexao) -> tuple[int, int]:
+    """Uma pessoa que só votou na 56ª e outra que votou na 57ª. Devolve (antiga, atual)."""
+    persistencia.gravar_pessoas(
+        conexao, [_pessoa("100", "Ex Deputado"), _pessoa("200", "Deputada Atual")]
+    )
+    antiga, atual = [
+        linha[0] for linha in conexao.execute("SELECT id FROM pessoas ORDER BY id").fetchall()
+    ]
+    persistencia.gravar_votacoes(
+        conexao,
+        [
+            {**_votacao("2200000-1"), "legislatura": 56, "data": "2021-05-04"},
+            _votacao("2358548-89"),
+        ],
+    )
+    persistencia.gravar_votos(
+        conexao, [_voto("2200000-1", antiga, 1), _voto("2358548-89", atual, 1)]
+    )
+    return antiga, atual
+
+
+def test_cpf_so_e_buscado_para_a_legislatura_corrente(conexao):
+    """Com o histórico, "tem voto" incluiria milhares de ex-deputados."""
+    _, atual = _com_historico(conexao)
+
+    assert [p for _, p in persistencia.pessoas_sem_cpf(conexao)] == [atual]
+    assert [p for _, p in persistencia.deputados_da_legislatura(conexao)] == [atual]
+
+
+def test_desempate_nao_conta_voto_de_legislatura_antiga(conexao):
+    """O homônimo de 2003 também tem voto — e desfaria o desempate da Pendência 47."""
+    _, atual = _com_historico(conexao)
+
+    votantes = {
+        linha[0]
+        for linha in conexao.execute(
+            "SELECT p.id FROM pessoas p WHERE " + persistencia.na_legislatura_corrente("p.id")
+        )
+    }
+
+    assert votantes == {atual}
+
+
+def test_legislatura_corrente_e_a_maior_da_base(conexao):
+    """Antes da 57ª chegar, a 56ª É a corrente — não um número fixo."""
+    persistencia.gravar_pessoas(conexao, [_pessoa("100", "Ex Deputado")])
+    pessoa = conexao.execute("SELECT id FROM pessoas").fetchone()[0]
+    persistencia.gravar_votacoes(
+        conexao, [{**_votacao("2200000-1"), "legislatura": 56, "data": "2021-05-04"}]
+    )
+    persistencia.gravar_votos(conexao, [_voto("2200000-1", pessoa, 1)])
+
+    assert [p for _, p in persistencia.deputados_da_legislatura(conexao)] == [pessoa]
+
+
+def test_legislatura_com_pouco_dado_fica_sem_grafo(conexao, caplog):
+    """Abaixo de `VOTACOES_MINIMAS_PARA_GRAFO` não se abre execução: a tela não a oferece."""
+    from poligraph_etl.__main__ import VOTACOES_MINIMAS_PARA_GRAFO, _analisar
+
+    antiga, atual = _com_historico(conexao)
+    persistencia.gravar_votos(conexao, [_voto("2200000-1", atual, -1)])
+
+    with caplog.at_level("WARNING", logger="poligraph"):
+        _analisar(conexao, 56, "CAMARA")
+
+    assert VOTACOES_MINIMAS_PARA_GRAFO > 1
+    assert conexao.execute("SELECT count(*) FROM execucoes").fetchone()[0] == 0
+    assert "SEM grafo" in caplog.text
+
+
+def test_ceaps_casa_o_nome_so_com_senador_da_legislatura_da_despesa(conexao):
+    """O senador de 2003 não pode receber a despesa do homônimo de 2023 (achado #35)."""
+    persistencia.gravar_pessoas(
+        conexao,
+        [{**_pessoa("1", "Fulano"), "fonte": "SENADO"}, {**_pessoa("2", "Fulano"), "fonte": "SENADO"}],
+    )
+    antigo, atual = [l[0] for l in conexao.execute("SELECT id FROM pessoas ORDER BY id").fetchall()]
+    persistencia.gravar_votacoes(
+        conexao,
+        [
+            {**_votacao("SF-1"), "casa": "SENADO", "legislatura": 52, "data": "2004-05-04"},
+            {**_votacao("SF-2"), "casa": "SENADO", "legislatura": 57, "data": "2024-05-04"},
+        ],
+    )
+    persistencia.gravar_votos(conexao, [_voto("SF-1", antigo, 1), _voto("SF-2", atual, 1)])
+
+    assert persistencia.senadores_por_nome(conexao, [52]) == {"FULANO": antigo}
+    assert persistencia.senadores_por_nome(conexao, [57]) == {"FULANO": atual}
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Achado #37 — apagar o que a fonte desmentiu
+# ═══════════════════════════════════════════════════════════════════
+
+
+def test_apagar_votacoes_leva_os_votos_junto(conexao):
+    pessoa = _preparar_pessoa_e_votacao(conexao)
+    persistencia.gravar_votacoes(conexao, [_votacao("SF-1483")])
+    persistencia.gravar_votos(conexao, [_voto("SF-1483", pessoa, 1), _voto("2358548-89", pessoa, 1)])
+
+    apagadas = persistencia.apagar_votacoes(conexao, ["SF-1483", "SF-9999"])
+
+    assert apagadas == 1
+    assert conexao.execute("SELECT count(*) FROM votos").fetchone()[0] == 1
+    assert conexao.execute("SELECT count(*) FROM votacoes").fetchone()[0] == 1
+
+
+def test_apagar_votacao_com_pergunta_recusa_tudo(conexao):
+    """RISCO: A cascata levaria a pergunta do questionário junto, sem ninguém decidir."""
+    _preparar_pessoa_e_votacao(conexao)
+    persistencia.gravar_votacoes(conexao, [_votacao("SF-1483")])
+    conexao.execute(
+        "INSERT INTO perguntas (id, votacao_id, texto, polaridade, ordem, ativa) "
+        "VALUES ('q-teste', '2358548-89', 'Afirmação de teste', 1, 1, true)"
+    )
+
+    with pytest.raises(RuntimeError, match="2358548-89"):
+        persistencia.apagar_votacoes(conexao, ["SF-1483", "2358548-89"])
+
+    assert conexao.execute("SELECT count(*) FROM votacoes").fetchone()[0] == 2
+
+
+def _carga(conexao, url: str) -> int:
+    return conexao.execute(
+        "INSERT INTO cargas (fonte, url, sha256, bytes, comando) VALUES ('CAMARA', %s, repeat('d', 64), 1, 'c') RETURNING id",
+        (url,),
+    ).fetchone()[0]
+
+
+def test_pessoa_proposicao_e_rede_saem_com_o_arquivo_de_origem(conexao):
+    """A pessoa guarda o arquivo que a gravou por último; uma gravação sem carga não apaga a que havia."""
+    deputados = _carga(conexao, "deputados.csv")
+    proposicoes = _carga(conexao, "votacoesProposicoes-2025.csv")
+    redes = _carga(conexao, "deputados/{id}")
+
+    persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Ana Ribeiro")], deputados)
+    persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Ana Ribeiro")])
+    pessoa_id = conexao.execute("SELECT id FROM pessoas").fetchone()[0]
+    persistencia.gravar_proposicoes(conexao, [{
+        "casa": "CAMARA", "id": 2_400_000, "sigla_tipo": "PL", "numero": 1, "ano": 2025,
+        "ementa": "Ementa", "url_inteiro_teor": None,
+    }], proposicoes)
+    persistencia.gravar_redes(
+        conexao, [pessoa_id], [{"pessoa_id": pessoa_id, "url": "https://instagram.com/ana", "rede": "INSTAGRAM", "fonte": "CAMARA"}],
+        "CAMARA", redes,
+    )
+
+    assert conexao.execute("SELECT carga_id FROM pessoas").fetchone()[0] == deputados
+    assert conexao.execute("SELECT carga_id FROM proposicoes").fetchone()[0] == proposicoes
+    assert conexao.execute("SELECT carga_id FROM redes_sociais").fetchone()[0] == redes
+
+
+def test_palavras_chave_guardam_a_origem_e_voltam_para_a_fila_sem_ela(conexao):
+    """MEDIDO (2026-10-10): 7.447 proposições tinham palavras-chave sem origem; elas voltam para a consulta."""
+    respostas = _carga(conexao, "camara/proposicoes")
+    persistencia.gravar_votacoes(conexao, [{**_votacao("1-1"), "proposicao_id": None}], respostas)
+    persistencia.gravar_proposicoes(conexao, [{
+        "casa": "CAMARA", "id": 2_400_000, "sigla_tipo": "PL", "numero": 1, "ano": 2025,
+        "ementa": "Ementa", "url_inteiro_teor": None,
+    }], respostas)
+    conexao.execute("UPDATE votacoes SET proposicao_id = 2400000")
+    conexao.execute("UPDATE proposicoes SET palavras_chave = 'antiga'")
+
+    assert persistencia.proposicoes_sem_palavras_chave(conexao) == [("CAMARA", 2_400_000)]
+    persistencia.gravar_palavras_chave(conexao, [("CAMARA", 2_400_000, "saúde")], respostas)
+
+    assert conexao.execute("SELECT palavras_chave, palavras_chave_carga_id FROM proposicoes").fetchone() == ("saúde", respostas)
+    assert persistencia.proposicoes_sem_palavras_chave(conexao) == []
+
+
+def test_cpf_e_nome_civil_guardam_a_origem(conexao):
+    """O hash do CPF e o nome civil vêm de outra fonte que o cadastro; cada um guarda a sua."""
+    cadastro = _carga(conexao, "deputados.csv")
+    tse = _carga(conexao, "prestacao_de_contas_eleitorais_candidatos_2022.zip")
+    persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Ana Ribeiro")], cadastro)
+    pessoa_id = conexao.execute("SELECT id FROM pessoas").fetchone()[0]
+
+    persistencia.gravar_cpf_hash(conexao, pessoa_id, "a" * 64, tse)
+    persistencia.gravar_nome_civil(conexao, pessoa_id, "Ana Maria Ribeiro", tse)
+
+    assert conexao.execute(
+        "SELECT carga_id, cpf_carga_id, nome_civil_carga_id FROM pessoas").fetchone() == (cadastro, tse, tse)

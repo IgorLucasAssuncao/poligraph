@@ -1,17 +1,17 @@
 # Aplicador de migrations. Roda, aplica e MORRE — não é serviço.
-# 🔴 Em produção é executado ANTES do deploy da API, por um executor só:
+# RISCO: Em produção é executado ANTES do deploy da API, por um executor só:
 #    o zero-downtime do Coolify sobe dois containers da API ao mesmo tempo,
 #    e Migrate() concorrente teria corrida.
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY ["src/Poligraph.Migrations/Poligraph.Migrations.csproj", "src/Poligraph.Migrations/"]
-COPY ["src/Poligraph.Api/Poligraph.Api.csproj",               "src/Poligraph.Api/"]
-COPY ["src/Poligraph.ServiceDefaults/Poligraph.ServiceDefaults.csproj","src/Poligraph.ServiceDefaults/"]
-RUN dotnet restore "src/Poligraph.Migrations/Poligraph.Migrations.csproj"
+# Não copia mais a API: com a dependência invertida, Data não depende dela.
+COPY ["src/Poligraph.Data/Poligraph.Data.csproj",                        "src/Poligraph.Data/"]
+COPY ["src/Poligraph.ServiceDefaults/Poligraph.ServiceDefaults.csproj", "src/Poligraph.ServiceDefaults/"]
+RUN dotnet restore "src/Poligraph.Data/Poligraph.Data.csproj"
 
 COPY src/ src/
-RUN dotnet publish "src/Poligraph.Migrations/Poligraph.Migrations.csproj" \
+RUN dotnet publish "src/Poligraph.Data/Poligraph.Data.csproj" \
     -c Release -o /app --no-restore
 
 FROM mcr.microsoft.com/dotnet/runtime:10.0-noble-chiseled AS final
@@ -19,4 +19,4 @@ WORKDIR /app
 COPY --from=build /app .
 
 USER $APP_UID
-ENTRYPOINT ["dotnet", "Poligraph.Migrations.dll"]
+ENTRYPOINT ["dotnet", "Poligraph.Data.dll"]

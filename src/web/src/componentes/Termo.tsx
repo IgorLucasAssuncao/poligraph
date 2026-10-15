@@ -1,23 +1,36 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { GLOSSARIO } from '../textos/glossario';
 
 /**
  * Explicação de termo institucional, sob demanda.
  *
- * 🔴 A **RNF-29 proíbe jargão na interface do cidadão** — *votação nominal*, *destaque*,
+ * RISCO: A **RNF-29 proíbe jargão na interface do cidadão** — *votação nominal*, *destaque*,
  * *requerimento*, *proposição*, *substitutivo*, *polaridade*, *obstrução*. Este
- * componente ⛔ NÃO é licença para trazer essas palavras de volta.
+ * componente NÃO é licença para trazer essas palavras de volta.
  *
- * ⭐ Ele serve ao caso que a **RNF-31** admite: o termo que é *contexto descritivo* e
+ * DECISÃO: Ele serve ao caso que a **RNF-31** admite: o termo que é *contexto descritivo* e
  * não tem substituto honesto — "legislatura", "partido", "plenário". Trocar por
  * aproximação ("período", "grupo") seria impreciso; deixar sem explicação exclui quem
  * não acompanha política, que é justamente o público do trabalho.
  *
- * ⚠️ Abre por clique e por foco, ⛔ nunca só por `:hover`. Em telefone não existe hover,
+ * ATENÇÃO: Abre por clique e por foco, nunca só por `:hover`. Em telefone não existe hover,
  * e a explicação simplesmente não existiria para metade dos visitantes.
+ *
+ * DECISÃO: O balão vai para o fim do `<body>` (portal), com posição fixa calculada a partir do
+ * gatilho. Dentro do texto, qualquer caixa com `overflow: hidden` em volta o cortava: foi o
+ * que aconteceu na faixa de números da ficha (2026-10-03). Dentro de um `<dialog>` aberto, o
+ * portal vai para o próprio diálogo: no `<body>` o balão ficaria atrás da camada superior.
  */
-export function Termo({ nome, children }: { nome: keyof typeof GLOSSARIO; children?: React.ReactNode }) {
-  const [aberto, setAberto] = useState(false);
+export function TermoComponent({ nome, children }: { nome: keyof typeof GLOSSARIO; children?: React.ReactNode }) {
+  const [destino, setDestino] = useState<Element | null>(null);
+  const aberto = destino !== null;
+  const setAberto = (valor: boolean) => {
+    if (!valor) setDestino(null);
+  };
   const caixa = useRef<HTMLSpanElement>(null);
+  const balao = useRef<HTMLSpanElement>(null);
+  const posicao = usePosicaoDoBalao(aberto, caixa, balao);
   const id = useId();
 
   const verbete = GLOSSARIO[nome];
@@ -26,7 +39,8 @@ export function Termo({ nome, children }: { nome: keyof typeof GLOSSARIO; childr
     if (!aberto) return;
 
     function aoClicarFora(evento: MouseEvent) {
-      if (!caixa.current?.contains(evento.target as Node)) setAberto(false);
+      const alvo = evento.target as Node;
+      if (!caixa.current?.contains(alvo) && !balao.current?.contains(alvo)) setAberto(false);
     }
     function aoTeclar(evento: KeyboardEvent) {
       if (evento.key === 'Escape') setAberto(false);
@@ -48,133 +62,68 @@ export function Termo({ nome, children }: { nome: keyof typeof GLOSSARIO; childr
         className="termo-gatilho"
         aria-expanded={aberto}
         aria-describedby={aberto ? id : undefined}
-        onClick={() => setAberto((a) => !a)}
+        onClick={(e) => setDestino(aberto ? null : (e.currentTarget.closest('dialog') ?? document.body))}
       >
         {children ?? verbete.rotulo}
       </button>
 
-      {aberto && (
-        <span className="termo-balao" id={id} role="tooltip">
-          <strong>{verbete.rotulo}</strong>
-          {verbete.explicacao}
-        </span>
-      )}
+      {aberto &&
+        createPortal(
+          <span
+            className="termo-balao"
+            id={id}
+            role="tooltip"
+            ref={balao}
+            style={{ left: posicao.left, top: posicao.top, visibility: posicao.medido ? 'visible' : 'hidden' }}
+          >
+            <strong>{verbete.rotulo}</strong>
+            {verbete.explicacao}
+          </span>,
+          destino,
+        )}
     </span>
   );
 }
 
+/** A folga, em pixels, entre o balão e o gatilho, e entre o balão e a borda da janela. */
+const FOLGA = 8;
+
 /**
- * ⚠️ Explicações escritas para quem **não acompanha política** — é o público do
- * trabalho. Sem "conforme o regimento", sem remissão a artigo de lei: o verbete que
- * exige outro verbete não explicou nada.
- *
- * ⭐ Cada uma diz também **por que aquilo importa aqui**, não só o que é. Saber que
- * legislatura dura quatro anos não ajuda; saber que por isso não dá para comparar
- * deputado de mandatos diferentes, ajuda.
+ * Onde o balão fica: abaixo do gatilho, alinhado à esquerda dele, sem sair da janela. Sem espaço
+ * embaixo, sobe para cima do gatilho. Acompanha rolagem e redimensionamento enquanto aberto.
  */
-export const GLOSSARIO = {
-  legislatura: {
-    rotulo: 'legislatura',
-    explicacao:
-      ' Os quatro anos de mandato de uma Câmara, entre uma eleição e a seguinte. ' +
-      'A 57ª começou em 2023. Só comparamos votos dentro da mesma legislatura: quem ' +
-      'foi eleito em 2022 não votou nada do que veio antes.',
-  },
-  partido: {
-    rotulo: 'partido',
-    explicacao:
-      ' A legenda pela qual o parlamentar foi eleito, ou para a qual mudou depois. ' +
-      'Mostramos o partido do voto mais recente, porque trocar de partido é comum e ' +
-      'o registro de cada voto guarda o partido daquele momento.',
-  },
-  plenario: {
-    rotulo: 'plenário',
-    explicacao:
-      ' A sessão com todos os deputados, não a reunião de uma comissão menor. ' +
-      'Só usamos votações de plenário: em comissão a concordância é muito maior, e ' +
-      'misturar as duas achataria a comparação.',
-  },
-  votacaoNominal: {
-    rotulo: 'votação nominal',
-    explicacao:
-      ' Aquela em que fica registrado o voto de cada parlamentar, um a um. ' +
-      'Nas demais só se registra o resultado, então não há como saber quem votou o quê ' +
-      '— e sem isso não dá para comparar ninguém.',
-  },
-  abstencao: {
-    rotulo: 'abstenção',
-    explicacao:
-      ' O parlamentar estava presente e registrou que não queria tomar partido. ' +
-      'Não conta como concordância nem como discordância: fica de fora da conta.',
-  },
-  comunidade: {
-    rotulo: 'grupo de voto',
-    explicacao:
-      ' Conjunto de parlamentares que votam parecido entre si, detectado pelos votos ' +
-      'e não pelo partido. Por isso um mesmo partido aparece em vários grupos, e o ' +
-      'número do grupo é só um rótulo — não indica posição no espectro político.',
-  },
-  camara: {
-    rotulo: 'Câmara dos Deputados',
-    explicacao:
-      ' São 513 deputados, eleitos a cada quatro anos por estado, na proporção da ' +
-      'população. É onde a maioria dos projetos começa, e onde há mais votação com o ' +
-      'voto de cada um registrado.',
-  },
-  senado: {
-    rotulo: 'Senado Federal',
-    explicacao:
-      ' São 81 senadores, três por estado, com mandato de oito anos. Revisa boa parte ' +
-      'do que vem da Câmara — e mais da metade das votações dele é secreta, então há ' +
-      'menos base para comparar senadores entre si do que deputados.',
-  },
-  fundao: {
-    rotulo: 'Fundo Especial',
-    explicacao:
-      ' Dinheiro público repassado aos partidos para financiar campanha eleitoral, ' +
-      'criado em 2017 e apelidado de "fundão". Não se confunde com o Fundo ' +
-      'Partidário, que custeia o partido o ano inteiro — os dois aparecem separados ' +
-      'aqui de propósito.',
-  },
-  emenda: {
-    rotulo: 'emenda parlamentar',
-    explicacao:
-      ' A parte do orçamento federal que cada parlamentar pode direcionar para onde ' +
-      'quiser — em geral obras e serviços no estado dele. É o principal instrumento ' +
-      'de poder orçamentário individual no Congresso.',
-  },
-  multiplo: {
-    rotulo: 'MÚLTIPLO',
-    explicacao:
-      ' Não é um lugar — é o aviso de que a emenda se reparte entre vários municípios ' +
-      'ou estados, e o Portal da Transparência não diz quais. São 4 de cada 10 emendas, ' +
-      'e as maiores: em média oito vezes o valor de uma emenda destinada a uma cidade só.',
-  },
-  nacional: {
-    rotulo: 'Nacional',
-    explicacao:
-      ' A emenda não tem destino territorial: financia algo de alcance federal, como um ' +
-      'programa ou um órgão, em vez de uma obra num lugar determinado.',
-  },
-  funcaoOrcamentaria: {
-    rotulo: 'área do orçamento',
-    explicacao:
-      ' A classificação oficial do gasto público — Saúde, Educação, Segurança. ' +
-      '"Encargos especiais" é a exceção que confunde: não é uma área de serviço, e sim ' +
-      'onde entram repasses que o município aplica onde decidir.',
-  },
-  cota: {
-    rotulo: 'cota parlamentar',
-    explicacao:
-      ' Verba mensal para o deputado manter o mandato — passagem, aluguel de escritório, ' +
-      'combustível, divulgação. É separada do salário, varia conforme a distância do ' +
-      'estado até Brasília, e cada nota fiscal é pública.',
-  },
-  empenho: {
-    rotulo: 'empenhado e pago',
-    explicacao:
-      ' Empenhar é reservar o dinheiro no orçamento; pagar é ele de fato sair dos ' +
-      'cofres. Uma emenda pode ser anunciada, empenhada e nunca paga — por isso ' +
-      'mostramos os dois valores, e não só o primeiro.',
-  },
-} as const;
+function usePosicaoDoBalao(
+  aberto: boolean,
+  caixa: React.RefObject<HTMLSpanElement | null>,
+  balao: React.RefObject<HTMLSpanElement | null>,
+) {
+  const [posicao, setPosicao] = useState({ left: 0, top: 0, medido: false });
+
+  useLayoutEffect(() => {
+    if (!aberto) return;
+
+    function medir() {
+      const gatilho = caixa.current?.getBoundingClientRect();
+      const proprio = balao.current?.getBoundingClientRect();
+      if (!gatilho || !proprio) return;
+      const largura = document.documentElement.clientWidth;
+      const altura = window.innerHeight;
+      const left = Math.max(FOLGA, Math.min(gatilho.left, largura - proprio.width - FOLGA));
+      const cabeEmbaixo = gatilho.bottom + FOLGA + proprio.height <= altura;
+      const top = cabeEmbaixo || gatilho.top < proprio.height + FOLGA
+        ? gatilho.bottom + FOLGA
+        : gatilho.top - FOLGA - proprio.height;
+      setPosicao({ left, top, medido: true });
+    }
+
+    medir();
+    window.addEventListener('scroll', medir, true);
+    window.addEventListener('resize', medir);
+    return () => {
+      window.removeEventListener('scroll', medir, true);
+      window.removeEventListener('resize', medir);
+    };
+  }, [aberto, caixa, balao]);
+
+  return posicao;
+}

@@ -365,7 +365,7 @@ Quem quiser isso cai na opção C, que segue **não recomendada**.
 | **RNF-12** | 🔄 **Revisto pela RQ9.** **Não persistir no servidor as respostas do questionário** — isso continua valendo integralmente. A lista de seguidos passou a ser persistida sob as condições da RNF-12b e RNF-12c | R7 / LGPD |
 | ~~RNF-12a~~ | ⛔ **REVOGADO pela RQ9.** A API passa a receber a lista de seguidos, por definição do cross-device. O que substitui esta garantia é a RNF-12c | §2.7.2 |
 | **RNF-12c** | 🔄 **REVISTO em 2026-08-25 — minimização revogada.** Persistir o **perfil completo** do Google em claro: `google_sub`, `email`, nome, sobrenome, foto, locale. ⛔ Nenhum token armazenado. Endpoint de exclusão total (art. 18) segue obrigatório | [plano/02 §3.5](plano/02-autenticacao-e-metricas.md) |
-| **RNF-12g** | 🔴 A base guarda **PII em claro** (e-mail, nome, foto). Backup criptografado no destino (PL20) é **requisito**, não boa prática | [plano/02 §3.5.4](plano/02-autenticacao-e-metricas.md) |
+| **RNF-12g** | 🔴 A base guarda **PII em claro** (e-mail, nome, foto). Backup criptografado no destino (Pendência 20) é **requisito**, não boa prática | [plano/02 §3.5.4](plano/02-autenticacao-e-metricas.md) |
 | **RNF-12e** | ⛔ Não enviar e-mail a partir do VPS. Usar serviço de envio com **SPF, DKIM e DMARC** configurados no domínio | [plano/02 §3.3](plano/02-autenticacao-e-metricas.md) |
 | **RNF-12f** | 🔄 **REVISTO.** O perfil é gravado e **atualizado a cada login** (`ON CONFLICT DO UPDATE`). A chave é `google_sub`, ⛔ **nunca o e-mail**, que pode mudar | [plano/02 §3.5](plano/02-autenticacao-e-metricas.md) |
 | **RNF-12d** | ⛔ **Nenhum token armazenado** — sem senha, sem `refresh_token`, sem `id_token`, sem tabela de sessão. A sessão é um cookie assinado. ⭐ **É a única restrição de armazenamento que sobrevive à revisão de 2026-08-25** | Decisão do autor |
@@ -374,7 +374,7 @@ Quem quiser isso cai na opção C, que segue **não recomendada**.
 | **RNF-14** | Exibir *disclaimer* em toda tela de resultado: ferramenta acadêmica, **não** recomendação de voto | R7 |
 | **RNF-15** | Não exibir dado de candidatos **não eleitos** | 12-fonte-tse §5 |
 | **RNF-16** | Nenhum juízo de valor sobre parlamentares na interface | Discovery §3 |
-| **RNF-17** | Acesso restrito durante o **período eleitoral de 2026**, ou publicação apenas posterior | R7 |
+| **RNF-17** | ~~Acesso restrito durante o **período eleitoral de 2026**, ou publicação apenas posterior~~ **Revista pelo autor em 2026-10-03:** leitura aberta sem conta (Pendência 65); o aviso de que não é recomendação de voto (RNF-14) continua em toda tela | R7 |
 | **RNF-18** | Crawler respeita `robots.txt`, usa User-Agent identificável e nunca contorna paywall | 20-crawler §5 |
 
 ⚠️ **RNF-17 é o requisito mais fácil de esquecer e o de maior consequência.** As eleições

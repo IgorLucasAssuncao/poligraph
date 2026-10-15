@@ -205,6 +205,46 @@ dotnet test --filter FullyQualifiedName~Integracao # precisa de Docker rodando
 ⚠️ **A integração exige Docker de pé** — local e no CI. O runner do GitHub Actions já
 tem; sua máquina precisa do Docker Desktop aberto.
 
+### 6.1 ⭐ O container, e por que ele existe
+
+✅ **`dotnet test` nativo VOLTOU a funcionar em 2026-09-06**, quando o Smart App Control
+foi desligado (Pendência 51). ⭐ A receita abaixo continua sendo o que o **CI** usa, e o plano B
+se a máquina mudar.
+
+⚠️ Fica o registro do que aconteceu, porque o sintoma engana e custou tempo — foi lido
+como lentidão mais de uma vez. Medido em 2026-08-29, eram dois bloqueios
+**independentes**:
+
+| Bloqueio | Sintoma | Causa |
+|---|---|---|
+| **Aspire de pé** | `MSB3021 … arquivo é bloqueado por Poligraph.Api` | a API segura o `.dll` que o build precisa reescrever |
+| 🔴 **Smart App Control** | `FileLoadException … Uma política de Controle de Aplicativo bloqueou (0x800711C7)` | está em **imposição** (`VerifiedAndReputablePolicyState = 1`) e recusa binário recém-compilado, sem reputação |
+
+⚠️ **Parar o Aspire ⛔ não bastava** — o segundo bloqueio aparecia logo em seguida. O
+autor acabou desligando o SAC, decisão ⛔ **irreversível** e que ⛔ não se recomenda numa
+máquina qualquer.
+
+🔴 **O primeiro bloqueio continua valendo:** com o Aspire de pé, o build falha com
+`MSB3021`. ⭐ Rodar no container resolve os dois de uma vez, sem parar o ambiente:
+
+```bash
+podman run --rm --network host   -v "$PWD:/repo:ro"   -v "/run/user/1000/podman/podman.sock:/var/run/docker.sock"   -e DOCKER_HOST=unix:///var/run/docker.sock   -e TESTCONTAINERS_RYUK_DISABLED=true   mcr.microsoft.com/dotnet/sdk:10.0   bash -lc 'cp -r /repo /work && cd /work && rm -rf src/*/bin src/*/obj && dotnet test src/Poligraph.Tests'
+```
+
+📐 Cada pedaço resolve um problema medido, ⛔ nenhum é decoração:
+
+| Trecho | Por quê |
+|---|---|
+| 🔴 `--network host` | O Postgres do Testcontainers publica na VM do Podman. Sem isto: **94 de 125 falham** com `Failed to connect to 127.0.0.1:44701` |
+| `podman.sock` montado | O Testcontainers precisa falar com o runtime para criar o Postgres |
+| `:ro` + `cp -r /repo /work` | ⛔ O `obj/` do Linux ⛔ não pode contaminar o do Windows |
+| `rm -rf src/*/bin src/*/obj` | Restos do build do Windows quebram a compilação no Linux |
+| `TESTCONTAINERS_RYUK_DISABLED` | O Ryuk ⛔ não sobe bem com socket montado |
+
+⛔ **⛔ Não redirecione `BaseOutputPath` para contornar o Aspire.** Foi tentado: o SAC
+bloqueia igual, e apontar `BaseIntermediateOutputPath` junto faz todos os projetos
+compartilharem um `obj/`, gerando `CS0579 Duplicar atributo`.
+
 ---
 
 ## 7. No CI

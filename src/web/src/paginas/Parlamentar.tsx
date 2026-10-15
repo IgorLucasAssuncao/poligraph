@@ -1,83 +1,142 @@
-import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { AtualizandoComponent } from '../componentes/Atualizando';
+import { useCarga } from '../componentes/useCarga';
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import {
-  deixarDeSeguir,
-  obterEmendas,
-  obterFinanciamento,
-  obterGastos,
   listarSeguidos,
+  listarVotos,
   obterFicha,
-  obterNoticias,
-  seguir,
-  type EmendasDoParlamentar,
+  type Alinhamento,
   type Ficha,
-  type FinanciamentoDeCampanha,
-  type GastoDeCota,
-  type Noticia,
+  type PaginaDe,
+  type Presenca,
+  type VotoNaFicha,
 } from '../api';
-import { Avatar } from '../componentes/Avatar';
-import { CabecalhoDaColuna } from '../componentes/Layout';
-import { LinhaParlamentar } from '../componentes/LinhaParlamentar';
-import { Termo } from '../componentes/Termo';
+import { AvatarComponent } from '../componentes/Avatar';
+import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
+import { periodoDaLegislatura } from '../formato';
+import { BotaoMostrarMaisComponent } from '../componentes/BotaoMostrarMais';
+import { BotaoSeguirComponent } from '../componentes/BotaoSeguir';
+import { AbaCampanhaComponent, AbaCotaComponent, AbaEmendasComponent, FaixaDeContasComponent } from '../componentes/ContasDoParlamentar';
+import { useContas } from '../componentes/useContas';
+import { useLegislaturas } from '../componentes/useLegislatura';
+import { BotaoBaixarCsvComponent } from '../componentes/BotaoBaixarCsv';
+import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
+import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
+import { MandatosDoParlamentarComponent } from '../componentes/MandatosDoParlamentar';
+import { RedesDoParlamentarComponent } from '../componentes/RedesDoParlamentar';
+import { baixarCsv, buscarTodas } from '../exportar';
+import { usePaginas } from '../componentes/usePaginas';
+import { CabecalhoDaColunaComponent } from '../componentes/Layout';
+import { LinhaParlamentarComponent } from '../componentes/LinhaParlamentar';
+import { TermoComponent } from '../componentes/Termo';
+import { useSessao } from '../sessao';
+import { passosDaFicha } from '../tour';
+import { EsqueletoDeFichaComponent, EsqueletoDeListaComponent } from '../componentes/Esqueleto';
+import { IconeExplorarComponent } from '../componentes/Icones';
+import './parlamentar.css';
+import {
+  BASE_PEQUENA_DO_ALINHAMENTO,
+  BUSCA_MINIMA_NOS_VOTOS,
+  ORIENTACAO_NAO,
+  ORIENTACAO_SIM,
+  SIMILARES_DE_INICIO,
+  VOTOS_POR_PAGINA_DA_BUSCA,
+} from '../constantes';
+import { TEXTOS_DA_FICHA as T } from '../textos/parlamentar';
+
+const PASSOS_DA_FICHA = passosDaFicha();
 
 /**
- * 🔴 **Três abas, nomeadas pela PERGUNTA — ⛔ não pela fonte de dado.**
+ * As abas do perfil, nomeadas pela pergunta — não pela fonte de dado — e cada uma com endereço.
  *
- * ⚠️ Eram seis, e três delas (*Gastos*, *Emendas*, *Campanha*) nomeavam **datasets**.
- * Ninguém chega a esta página querendo *"ver o dataset de emendas"*: chega querendo saber
- * **quanto dinheiro passa por esse parlamentar**. Nomear pela fonte é nomear pelo jeito
- * como o sistema foi construído.
+ * DECISÃO: Os três dinheiros eram um modal único, "Ver as contas", que empilhava 13 blocos numa
+ * rolagem só, sem endereço para compartilhar. Agora cada um é uma aba: `/parlamentar/194/emendas`
+ * abre direto nas emendas, e os três números do topo levam a elas.
  *
- * 🔴 **E separar as três destruía o achado que justifica ingeri-las.** O cruzamento que
- * o projeto documentou — *"este deputado paga, com verba de gabinete, empresas que
- * financiaram a campanha dele?"* — exige ver **campanha e cota ao mesmo tempo**. Em abas
- * diferentes, isso era impossível por construção.
- *
- * ⭐ **E as contas ⛔ não viraram aba.** Elas são uma **faixa fixa** logo abaixo da
- * identidade, com três números lado a lado; o detalhe abre em **modal**. Aba esconderia
- * de novo o que a fusão veio resolver — e o perfil ⛔ não pode virar quatro telas de
- * rolagem para acomodar profundidade que só parte dos leitores quer.
- *
- * ⭐ `atuacao` é o padrão porque é o núcleo do trabalho **e** porque sempre tem conteúdo.
- * ⚠️ O padrão anterior era `noticias`, e o coletor ⛔ ainda não rodou: a primeira coisa
- * que a página mostrava era estado vazio.
+ * DECISÃO: `votos` é o padrão porque é o núcleo do trabalho e sempre tem conteúdo.
  */
-type Aba = 'atuacao' | 'noticias';
+type Aba = 'votos' | 'emendas' | 'cota' | 'campanha';
 
 const ABAS: [Aba, string][] = [
-  ['atuacao', 'Como vota'],
-  ['noticias', 'Notícias'],
+  ['votos', T.abas.votos],
+  ['emendas', T.abas.emendas],
+  ['cota', T.abas.cota],
+  ['campanha', T.abas.campanha],
 ];
 
-/** O perfil do parlamentar — a página mais parecida com "rede social" do site. */
-export function Parlamentar() {
-  const { id } = useParams();
-  const pessoaId = Number(id);
+/**
+ * O perfil do parlamentar — a página mais parecida com "rede social" do site.
+ *
+ * Votou na legislatura corrente — a regra de seguir, a mesma da API.
+ *
+ * Sem conta, ninguém é seguido — e a lista responderia 401 e derrubaria a ficha.
+ *
+ * DECISÃO: O nome aparece UMA vez, ao lado da foto. O cabeçalho da coluna era o nome
+ * de novo, com "845 votações registradas" repetindo o número do bloco abaixo, e
+ * uma capa vazia empurrava o perfil para baixo da dobra no celular (2026-10-01).
+ *
+ * DECISÃO: Seguir é acompanhar quem está no poder (decisão do autor, 2026-10-02): só
+ * para quem votou na legislatura corrente. Quem já segue um ex-parlamentar
+ * continua vendo o botão — para poder deixar de seguir.
+ *
+ * DECISÃO: O porquê de não haver botão, dito na ficha (autor, 2026-10-02): sem isto o perfil
+ * inativo parecia só ter perdido o botão.
+ *
+ * A casa vem primeiro: é o que situa todo o resto. Um "PT · SP" sem ela
+ * deixa o leitor sem saber se está diante de deputado ou senador — e as
+ * duas casas votam matérias diferentes, então o número de votações e o
+ * grafo da pessoa significam coisas distintas.
+ *
+ * RNF-31: termo institucional como contexto, nunca como controle.
+ *
+ * DECISÃO: Tudo o que esta ficha mostra pode ser conferido na casa.
+ *
+ * Os três dinheiros, cada um levando à sua aba.
+ *
+ * DECISÃO: Antes dos votos: a lista de votos tem centenas de itens, e no celular os
+ * "mais parecidos" ficavam depois de ~17 mil pixels (2026-10-01).
+ */
+export function ParlamentarComponent() {
+  const { idPessoa: idPessoaNaUrl, aba: abaDoEndereco } = useParams();
+  const idPessoa = Number(idPessoaNaUrl);
+  const aba: Aba = ABAS.some(([chave]) => chave === abaDoEndereco) ? (abaDoEndereco as Aba) : 'votos';
+  const base = `/parlamentar/${idPessoa}`;
+  const { pathname } = useLocation();
+  const [busca] = useSearchParams();
+  const legislaturaPedida = Number(busca.get('legislatura')) || undefined;
+  const { usuario } = useSessao();
+  const lida = useCarga(['ficha', idPessoa, legislaturaPedida ?? null], () => obterFicha(idPessoa, legislaturaPedida), {
+    manter: 2,
+  });
+  const ficha = lida.dados ?? null;
+  const erro = lida.erro ? T.erro : null;
+  const atualizando = lida.atualizando;
+  const { contas, erro: erroDasContas, atualizando: contasAtualizando, chaveDasContas } = useContas(
+    idPessoa,
+    ficha === null ? 'aguardando' : ficha.legislatura,
+  );
+  const legislaturas = useLegislaturas();
+  const corrente = legislaturas?.[0]?.numero;
+  const emExercicio =
+    corrente !== undefined && (ficha?.mandatos ?? []).some((m) => m.legislatura === corrente);
 
-  const [ficha, setFicha] = useState<Ficha | null>(null);
-  const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [seguindo, setSeguindo] = useState(false);
-  const [aba, setAba] = useState<Aba>('atuacao');
-  const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    setFicha(null);
-    setErro(null);
-    setAba('atuacao');
-
-    Promise.all([obterFicha(pessoaId), obterNoticias(pessoaId), listarSeguidos()])
-      .then(([f, n, seguidos]) => {
-        setFicha(f);
-        setNoticias(n);
-        setSeguindo(seguidos.some((s) => s.id === pessoaId));
-      })
-      .catch(() => setErro('Não foi possível carregar este parlamentar.'));
-  }, [pessoaId]);
+    let atual = true;
+    (usuario ? listarSeguidos() : Promise.resolve([]))
+      .then((seguidos) => atual && setSeguindo(seguidos.some((s) => s.idPessoa === idPessoa)))
+      .catch(() => atual && setSeguindo(false));
+    return () => {
+      atual = false;
+    };
+  }, [idPessoa, usuario]);
 
   if (erro) {
     return (
       <>
-        <CabecalhoDaColuna titulo="Parlamentar" comVoltar />
+        <CabecalhoDaColunaComponent titulo={T.titulo} comVoltar />
         <p className="erro">{erro}</p>
       </>
     );
@@ -86,754 +145,549 @@ export function Parlamentar() {
   if (!ficha) {
     return (
       <>
-        <CabecalhoDaColuna titulo="Parlamentar" comVoltar />
-        <p className="carregando">Carregando…</p>
+        <CabecalhoDaColunaComponent titulo={T.titulo} comVoltar />
+        <EsqueletoDeFichaComponent />
       </>
     );
   }
 
   return (
     <>
-      <CabecalhoDaColuna
-        titulo={ficha.nome}
-        subtitulo={`${ficha.nVotacoes} votações registradas`}
-        comVoltar
-      />
-
-      {/* ⚠️ Capa em tom neutro único: cor não pode sugerir espectro político (RNF-16). */}
-      <div className="capa-perfil" aria-hidden="true" />
+      <CabecalhoDaColunaComponent titulo={T.titulo} comVoltar acao={<BotaoDoTourComponent nome="ficha" passos={PASSOS_DA_FICHA} />} />
 
       <header className="perfil-cabecalho">
         <div className="perfil-avatar-linha">
-          <Avatar nome={ficha.nome} fotoUrl={ficha.urlFoto} tamanho="grande" />
+          <AvatarComponent nome={ficha.nome} fotoUrl={ficha.urlFoto} tamanho="grande" />
 
-          <button
-            type="button"
-            className={seguindo ? 'botao-seguindo' : 'botao-seguir'}
-            aria-pressed={seguindo}
-            onClick={alternarSeguir}
-          >
-            <span>{seguindo ? 'Seguindo' : 'Seguir'}</span>
-          </button>
+          <div className="perfil-identidade">
+            <h1>
+              <ComProcedenciaComponent consulta={{ contexto: 'parlamentar', idPessoa }} rotulo={ficha.nome}>
+                {ficha.nome}
+              </ComProcedenciaComponent>
+            </h1>
+            {ficha.nomeCivil !== ficha.nome && <p className="nome-civil">{ficha.nomeCivil}</p>}
+          </div>
+
+          {(seguindo || emExercicio) && (
+            <BotaoSeguirComponent idPessoa={idPessoa} seguindo={seguindo} aoAlternar={(_, agora) => setSeguindo(agora)} />
+          )}
         </div>
 
-        <div className="perfil-identidade">
-          <h1>{ficha.nome}</h1>
-          {ficha.nomeCivil !== ficha.nome && <p className="nome-civil">{ficha.nomeCivil}</p>}
-        </div>
+        {!seguindo && !emExercicio && corrente !== undefined && (
+          <p className="perfil-inativo" role="note">
+            {T.foraDoMandato(periodoDaLegislatura(corrente))}
+          </p>
+        )}
 
         <div className="perfil-chips">
-          {/* A casa vem primeiro: é o que situa todo o resto. Um "PT · SP" sem ela
-              deixa o leitor sem saber se está diante de deputado ou senador — e as
-              duas casas votam matérias diferentes, então o número de votações e o
-              grafo da pessoa significam coisas distintas. */}
           {ficha.casa && (
             <span className="chip chip-casa">
-              <Termo nome={ficha.casa === 'SENADO' ? 'senado' : 'camara'}>
-                {ficha.casa === 'SENADO' ? 'Senador' : 'Deputado'}
-              </Termo>
+              <TermoComponent nome={ficha.casa === 'SENADO' ? 'senado' : 'camara'}>
+                {ficha.casa === 'SENADO' ? T.senador : T.deputado}
+              </TermoComponent>
             </span>
           )}
-          {/* RNF-31: termo institucional como contexto, nunca como controle. */}
           {ficha.partido && (
             <span className="chip">
-              <Termo nome="partido">{ficha.partido}</Termo>
+              <TermoComponent nome="partido">{ficha.partido}</TermoComponent>
             </span>
           )}
           {ficha.uf && <span className="chip">{ficha.uf}</span>}
         </div>
 
-        <div className="perfil-numeros">
+        <MandatosDoParlamentarComponent mandatos={ficha.mandatos ?? []} atual={ficha.legislatura} caminho={pathname} />
+
+        <div className="perfil-links">
+          <LinkDeFonteComponent href={ficha.urlFonte}>
+            {ficha.casa === 'SENADO' ? T.paginaNoSenado : T.paginaNaCamara}
+          </LinkDeFonteComponent>
+          <RedesDoParlamentarComponent redes={ficha.redesSociais ?? []} />
+        </div>
+
+        <div className="perfil-numeros atualizavel" data-atualizando={atualizando || undefined} data-tour="ficha-votacoes">
           <span>
-            <strong>{ficha.nVotacoes}</strong> <span>votações registradas</span>
+            <ComProcedenciaComponent
+              consulta={{ contexto: 'votos', idPessoa: ficha.idPessoa, legislatura: ficha.legislatura ?? undefined }}
+              rotulo={T.votosComPosicao}
+            >
+              <strong>{ficha.nVotacoes.toLocaleString('pt-BR')}</strong>
+            </ComProcedenciaComponent>{' '}
+            <span>{T.votosComPosicaoDefinicao}</span>
           </span>
         </div>
 
-        {/* Dentro do cabeçalho, e não entre ele e as abas: as contas são parte de quem
-            a pessoa é, não uma das seções entre as quais se escolhe. */}
-        <PainelDeContas pessoaId={pessoaId} />
+        {(ficha.alinhamento || ficha.presenca) && (
+          <FaixaDeAlinhamentoComponent alinhamento={ficha.alinhamento} presenca={ficha.presenca} casa={ficha.casa} />
+        )}
+
+        <FaixaDeContasComponent
+          contas={contas}
+          base={base}
+          sufixo={legislaturaPedida ? `?legislatura=${legislaturaPedida}` : ''}
+          mandatoPassado={ficha.legislatura && corrente && ficha.legislatura !== corrente ? ficha.legislatura : null}
+        />
       </header>
 
-      <nav className="abas" aria-label="Seções do perfil">
+      <AtualizandoComponent
+        atualizando={atualizando || contasAtualizando}
+        chave={lida.chaveDoDado ? `${lida.chaveDoDado}|${contas ? chaveDasContas : ''}|${aba}` : undefined}
+      >
+
+      <nav className="abas" aria-label={T.rotuloDasAbas}>
         {ABAS.map(([chave, rotulo]) => (
-          <button
+          <Link
             key={chave}
-            type="button"
+            to={`${chave === 'votos' ? base : `${base}/${chave}`}${legislaturaPedida ? `?legislatura=${legislaturaPedida}` : ''}`}
             className={`aba ${aba === chave ? 'aba-ativa' : ''}`}
-            aria-current={aba === chave}
-            onClick={() => setAba(chave)}
+            aria-current={aba === chave ? 'page' : undefined}
+            replace
           >
             {rotulo}
-          </button>
+          </Link>
         ))}
       </nav>
 
-      {aba === 'atuacao' && (
+      {aba === 'emendas' && (
+        <AbaEmendasComponent
+          idPessoa={idPessoa}
+          contas={contas}
+          erro={erroDasContas}
+          nome={ficha?.nome ?? ''}
+          descricao={[T.descricaoDoGrafo(ficha?.casa), [ficha?.partido, ficha?.uf].filter(Boolean).join('-')]
+            .filter(Boolean)
+            .join(' · ')}
+        />
+      )}
+      {aba === 'cota' && (
+        <AbaCotaComponent idPessoa={idPessoa} contas={contas} erro={erroDasContas} legislatura={ficha?.legislatura} />
+      )}
+      {aba === 'campanha' && <AbaCampanhaComponent idPessoa={idPessoa} contas={contas} erro={erroDasContas} />}
+      {aba === 'votos' && (
         <>
-          <AbaVotos votos={ficha.votosRecentes} />
-          <AbaSimilares similares={ficha.maisSimilares} />
+          <AbaSimilaresComponent similares={ficha.maisSimilares} />
+          <h2 className="titulo-secao">
+            <ComProcedenciaComponent
+              consulta={{ contexto: 'ementas', idPessoa, legislatura: ficha.legislatura ?? undefined }}
+              rotulo={T.tituloDosVotos}
+            >
+              {T.tituloDosVotos}
+            </ComProcedenciaComponent>
+          </h2>
+          <AbaVotosComponent
+            idPessoa={idPessoa}
+            legislatura={ficha.legislatura}
+            votos={ficha.votosRecentes}
+            total={ficha.nRegistrosDeVoto}
+            comPosicao={ficha.nVotacoes}
+          />
         </>
       )}
-      {aba === 'noticias' && <AbaNoticias noticias={noticias} />}
+      </AtualizandoComponent>
     </>
   );
 
-  // ═══════════════════════════════════════════════════════════════
-
-  async function alternarSeguir() {
-    const proximo = !seguindo;
-    setSeguindo(proximo);
-
-    try {
-      await (proximo ? seguir(pessoaId) : deixarDeSeguir(pessoaId));
-    } catch {
-      setSeguindo(!proximo);
-    }
-  }
 }
 
-// ═══════════════════════════════════════════════════════════════════
+/**
+ * Os votos da legislatura, do mais recente, com "Mostrar mais".
+ *
+ * ATENÇÃO: A ficha trazia 20 dos ~845 votos do deputado mediano e parava ali, sem dizer que
+ * havia mais. A contagem de baixo diz quantos são, e quantos deles ficam fora das
+ * "votações registradas" do topo por não terem posição.
+ */
 
-function AbaVotos({ votos }: { votos: Ficha['votosRecentes'] }) {
-  if (votos.length === 0) return <p className="vazio">Nenhum voto registrado.</p>;
+/**
+ * Os votos, com busca.
+ *
+ * DECISÃO: A busca existe porque "como fulano votou na reforma X" exigia rolar centenas de
+ * votos em ordem de data (2026-10-02). Ela procura na ementa — o assunto —, na descrição
+ * e na matéria ("PEC 45/2019"), sem diferença de acento: quem digita "tributaria" acha.
+ *
+ * Guardado com o termo que pediu: o resultado de outra busca não aparece sob o termo novo.
+ *
+ * ATENÇÃO: Espera a digitação parar: cada tecla seria uma consulta.
+ */
+function AbaVotosComponent({
+  idPessoa,
+  legislatura,
+  votos,
+  total,
+  comPosicao,
+}: {
+  idPessoa: number;
+  legislatura: number | null;
+  votos: Ficha['votosRecentes'];
+  total: number;
+  comPosicao: number;
+}) {
+  const [termo, setTermo] = useState('');
+  const [busca, setBusca] = useState('');
+  const [semRito, setSemRito] = useState(false);
+  const filtrando = Boolean(busca) || semRito;
+  const achados = useCarga(
+    ['votos-buscados', idPessoa, legislatura, busca, semRito],
+    () => listarVotos(idPessoa, 1, VOTOS_POR_PAGINA_DA_BUSCA, legislatura, busca || undefined, semRito),
+    { ativo: filtrando, manter: 3 },
+  );
+  const erroDaBusca = achados.erro;
+
+  useEffect(() => {
+    const timer = setTimeout(() => setBusca(termo.trim().length >= BUSCA_MINIMA_NOS_VOTOS ? termo.trim() : ''), 300);
+    return () => clearTimeout(timer);
+  }, [termo]);
+
+  if (votos.length === 0) return <p className="vazio">{T.votos.nenhum}</p>;
+
+  const resultado: PaginaDe<VotoNaFicha> | null = filtrando && !achados.atualizando ? (achados.dados ?? null) : null;
 
   return (
     <>
-      {votos.map((v) => (
-        <article key={v.votacaoId} className="linha linha-simples">
-          <div className="linha-corpo">
-            <span className={`selo selo-${classeDoVoto(v.valor)}`}>
-              {v.valor === 0 ? <Termo nome="abstencao">Abstenção</Termo> : rotuloDoVoto(v.valor)}
-            </span>
-            <p className="voto-descricao">{v.descricao ?? v.votacaoId}</p>
-            <span className="linha-detalhe">{formatarData(v.data)}</span>
-          </div>
-        </article>
-      ))}
+      <div className="barra-busca barra-busca-votos">
+        <span className="icone-busca" aria-hidden="true">
+          <IconeExplorarComponent />
+        </span>
+        <input
+          type="search"
+          placeholder={T.votos.placeholder}
+          value={termo}
+          onChange={(e) => setTermo(e.target.value)}
+          aria-label={T.votos.rotuloDaBusca}
+        />
+      </div>
+      <label className="filtro-rito">
+        <input type="checkbox" checked={semRito} onChange={(e) => setSemRito(e.target.checked)} />
+        {T.votos.semRito}
+      </label>
+
+      {erroDaBusca && <p className="erro">{T.votos.erroDaBusca}</p>}
+      {filtrando && !resultado && !erroDaBusca && <EsqueletoDeListaComponent rotulo={T.votos.buscando} linhas={3} />}
+
+      {filtrando && resultado ? (
+        <ListaDeVotosComponent
+          key={`${busca}|${semRito}`}
+          idPessoa={idPessoa}
+          legislatura={legislatura}
+          busca={busca || undefined}
+          semRito={semRito}
+          votos={resultado.itens}
+          total={resultado.total}
+          porPagina={VOTOS_POR_PAGINA_DA_BUSCA}
+        />
+      ) : (
+        !filtrando && (
+          <ListaDeVotosComponent
+            idPessoa={idPessoa}
+            legislatura={legislatura}
+            votos={votos}
+            total={total}
+            comPosicao={comPosicao}
+            porPagina={votos.length || 20}
+          />
+        )
+      )}
     </>
   );
 }
 
-function AbaSimilares({ similares }: { similares: Ficha['maisSimilares'] }) {
+
+function ListaDeVotosComponent({
+  idPessoa,
+  legislatura,
+  busca,
+  semRito = false,
+  votos,
+  total,
+  comPosicao,
+  porPagina,
+}: {
+  idPessoa: number;
+  legislatura: number | null;
+  busca?: string;
+  semRito?: boolean;
+  votos: VotoNaFicha[];
+  total: number;
+  /** Só sem busca: a ficha sabe quantos têm posição na legislatura inteira. */
+  comPosicao?: number;
+  porPagina: number;
+}) {
+  const lista = usePaginas(votos, total, porPagina, (pagina) =>
+    listarVotos(idPessoa, pagina, porPagina, legislatura, busca, semRito),
+  );
+
+  if (busca && total === 0) {
+    return <p className="vazio">{T.votos.nenhumComBusca(busca)}</p>;
+  }
+
+  const semPosicao = comPosicao === undefined ? 0 : total - comPosicao;
+
+  return (
+    <>
+      <p className="contagem-lista" aria-live="polite">
+        {busca ? (
+          T.votos.contagemDaBusca(
+            lista.itens.length === total ? String(total) : T.votos.deTotal(lista.itens.length, total),
+            total,
+            busca,
+          )
+        ) : semRito ? (
+          T.votos.contagemSemRito(lista.itens.length, total)
+        ) : (
+          <>
+            {T.votos.contagem(lista.itens.length, total)}
+            {semPosicao > 0 && T.votos.semPosicao(semPosicao)}
+          </>
+        )}
+        {' · '}
+        <BotaoBaixarCsvComponent
+          rotulo={busca ? T.votos.baixarEncontrados : T.votos.baixarTodos}
+          montar={async () => {
+            const todos = await buscarTodas((pagina) => listarVotos(idPessoa, pagina, 100, legislatura, busca, semRito));
+            baixarCsv(
+              T.votos.arquivo(idPessoa),
+              [...T.votos.colunas],
+              todos.map((v) => [
+                v.votacaoId, v.data, rotuloDoVoto(v.valor), v.orientacaoDoGoverno, v.materia,
+                v.descricao, v.categoria, v.urlProposicao, v.urlRegistro,
+              ]),
+            );
+          }}
+        />
+      </p>
+      {agruparPorProposicao(lista.itens).map((grupo, i) =>
+        grupo.length === 1 ? (
+          <VotoComponent key={grupo[0].votacaoId} voto={grupo[0]} tour={i === 0} />
+        ) : (
+          <GrupoDeVotosComponent key={grupo[0].votacaoId} votos={grupo} tour={i === 0} />
+        ),
+      )}
+      <BotaoMostrarMaisComponent {...lista} aoClicar={lista.carregarMais} />
+    </>
+  );
+}
+
+/**
+ * O enunciado de um voto — e QUAL enunciado depende do que foi votado.
+ *
+ * RISCO: **A ementa só pode ser a manchete quando o voto foi no MÉRITO.** MEDIDO: Medido em
+ * 2026-08-29: 43,2% das linhas desta lista são de rito. Nelas a ementa é do projeto em
+ * pauta, mas o voto foi num requerimento — e *"Institui o Imposto sobre Bens e
+ * Serviços"* ao lado de um "Sim" faria o leitor concluir que a pessoa votou a favor da
+ * reforma tributária, quando ela votou sobre **rito**.
+ *
+ * DECISÃO: Então a ordem se inverte: no voto de rito a manchete é o que foi de fato votado
+ * (*"Rejeitado o Requerimento"*), e a ementa vira contexto — *"sobre PLP 68/2024: …"*.
+ *
+ * Não Voto de rito não é escondido. Ele existe, é público, e some-lo seria editar o
+ * histórico. ATENÇÃO: Mas ele **pesa zero** na afinidade, e a tela diz isso.
+ *
+ * ATENÇÃO: A outra metade continua visível: no voto de mérito ela identifica QUAL
+ * votação daquele projeto foi — texto principal, destaque, redação final. Sem
+ * isso, dois votos opostos do mesmo projeto seriam a mesma linha repetida.
+ */
+function LinhaDoVotoComponent({ voto }: { voto: VotoNaFicha }) {
+  const rito = voto.categoria === 'PROCEDIMENTAL';
+  const temEmenta = Boolean(voto.ementa);
+
+  return (
+    <>
+      {rito && (
+        <p className="voto-rito">{T.votos.rito}</p>
+      )}
+
+      <p className="voto-descricao">
+        {rito || !temEmenta ? (voto.descricao ?? voto.votacaoId) : voto.ementa}
+      </p>
+
+      {temEmenta && (
+        <p className="voto-processual">
+          {voto.materia && <strong>{voto.materia}</strong>}{' '}
+          {rito ? voto.ementa : voto.descricao}
+        </p>
+      )}
+    </>
+  );
+}
+
+/**
+ * O que o Governo pediu naquela votação, ao lado do voto.
+ *
+ * ## RISCO: Sem juízo, nem por palavra nem por cor
+ *
+ * Nada de "seguiu ✓" e "contrariou ✗", nada de verde e vermelho. Acompanhar ou não
+ * a orientação não é acerto nem erro — é comportamento, e quem julga é quem lê.
+ * Escrito de forma neutra: *"o Governo pediu Não"* e, quando divergiu, *"votou
+ * diferente"*, sem adjetivo.
+ *
+ * Não Silenciosa quando não há o que dizer: o Governo não orientou, orientou obstrução
+ * ou liberou, ou é o Senado. ATENÇÃO: Uma marca de "sem orientação" em quase toda linha viraria
+ * ruído e esconderia as linhas que importam.
+ *
+ * ATENÇÃO: Só Sim e Não são comparáveis. `Obstrução` é tática de quórum e `Liberado` é
+ * ausência de orientação — nenhuma das duas é posição de mérito.
+ */
+function ContraAOrientacaoComponent({ voto }: { voto: VotoNaFicha }) {
+  const orientacao = voto.orientacaoDoGoverno;
+
+  if (orientacao !== ORIENTACAO_SIM && orientacao !== ORIENTACAO_NAO) return null;
+  if (voto.valor !== 1 && voto.valor !== -1) return null;
+
+  const acompanhou = (voto.valor === 1) === (orientacao === ORIENTACAO_SIM);
+
+  return (
+    <>
+      {' · '}
+      <span className="voto-orientacao">{T.votos.governoPediu(orientacao, acompanhou)}</span>
+    </>
+  );
+}
+
+
+/**
+ * DECISÃO: RF-47: estado vazio honesto. Acontece antes de o ETL analítico rodar.
+ *
+ * nunca percentual — a base aparece junto do número
+ */
+function AbaSimilaresComponent({ similares }: { similares: Ficha['maisSimilares'] }) {
+  const [todos, setTodos] = useState(false);
+
   if (similares.length === 0) {
-    // ⭐ RF-47: estado vazio honesto. Acontece antes de o ETL analítico rodar.
-    return (
-      <p className="vazio">A análise de similaridade ainda não rodou para esta legislatura.</p>
-    );
+    return <p className="vazio">{T.similares.vazio}</p>;
   }
 
   return (
-    <>
-      {similares.map((s) => (
-        <LinhaParlamentar
-          key={s.pessoaId}
-          id={s.pessoaId}
+    <section data-tour="ficha-similares">
+      <h2 className="titulo-secao">{T.similares.titulo}</h2>
+      {similares.slice(0, todos ? similares.length : SIMILARES_DE_INICIO).map((s) => (
+        <LinhaParlamentarComponent
+          key={s.idPessoa}
+          idPessoa={s.idPessoa}
           nome={s.nome}
           partido={s.partido}
           uf=""
-          // ⛔ nunca percentual — a base aparece junto do número
-          detalhe={
-            <>
-              votaram igual em <strong>{Math.round(s.valor * s.comuns)}</strong> de{' '}
-              <strong>{s.comuns}</strong> votações
-            </>
-          }
+          detalhe={T.similares.detalhe(Math.round(s.valor * s.comuns), s.comuns)}
         />
       ))}
-    </>
-  );
-}
-
-/**
- * **As contas do mandato** — faixa fixa no perfil, detalhe em modal.
- *
- * 🔴 **Eram três abas** (*Gastos*, *Emendas*, *Campanha*), e separá-las destruía o achado
- * que justifica ingerir as três. A pergunta que o projeto documentou — *"este deputado
- * paga, com verba de gabinete, empresas que financiaram a campanha dele?"* — exige **ver
- * os três ao mesmo tempo**. Em abas isso era impossível por construção, ⛔ não por falta
- * de recurso.
- *
- * 🔴 **E juntá-las numa aba única resolvia metade.** A comparação voltava, mas o detalhe
- * das três empilhado dava quatro telas de rolagem — profundidade que só parte dos
- * leitores quer, ocupando o espaço de todos.
- *
- * ⭐ **A separação que funciona é por PROFUNDIDADE, ⛔ não por fonte:** os três totais
- * ficam **sempre visíveis**, lado a lado, porque é aí que a comparação acontece; o
- * detalhe abre em `<dialog>`, que devolve o leitor exatamente onde ele estava.
- *
- * ⭐ **Uma busca, três respostas.** `Promise.allSettled` em vez de três `useEffect`
- * disparados conforme a pessoa clica — antes eram três viagens **sequenciais**, cada uma
- * com o seu *"Carregando…"*.
- *
- * ⚠️ `allSettled`, ⛔ não `all`: falha de uma fonte ⛔ não pode apagar as outras duas.
- */
-function PainelDeContas({ pessoaId }: { pessoaId: number }) {
-  const [dados, setDados] = useState<{
-    gastos: GastoDeCota | null;
-    emendas: EmendasDoParlamentar | null;
-    fin: FinanciamentoDeCampanha | null;
-  } | null>(null);
-  const [erro, setErro] = useState(false);
-  const [aberto, setAberto] = useState(false);
-
-  useEffect(() => {
-    let vivo = true;
-    setDados(null);
-    setErro(false);
-    setAberto(false);
-
-    Promise.allSettled([
-      obterGastos(pessoaId),
-      obterEmendas(pessoaId),
-      obterFinanciamento(pessoaId),
-    ]).then(([g, e, f]) => {
-      if (!vivo) return;
-
-      // ⚠️ As três falhando juntas é problema de rede, ⛔ não ausência de dado — e aí a
-      //    mensagem tem de ser de erro, não três traços que mentem "não há registro".
-      if (g.status === 'rejected' && e.status === 'rejected' && f.status === 'rejected') {
-        setErro(true);
-        return;
-      }
-
-      setDados({
-        gastos: g.status === 'fulfilled' ? g.value : null,
-        emendas: e.status === 'fulfilled' ? e.value : null,
-        fin: f.status === 'fulfilled' ? f.value : null,
-      });
-    });
-
-    return () => {
-      vivo = false;
-    };
-  }, [pessoaId]);
-
-  // ⭐ Silêncio enquanto carrega, e silêncio no erro: a faixa é **contexto**, ⛔ não o
-  //    conteúdo principal. Um "Carregando…" ou um erro vermelho aqui empurraria os votos
-  //    para baixo e chamaria atenção para o que menos importa nesta página.
-  if (erro || !dados) return null;
-
-  const { gastos, emendas, fin } = dados;
-
-  // Sem nada a mostrar, a linha inteira some: oferecer um modal com três estados vazios
-  // é pior do que não oferecer.
-  const temAlgo =
-    (fin?.total ?? 0) > 0 || (emendas?.quantidade ?? 0) > 0 || (gastos?.lancamentos ?? 0) > 0;
-  if (!temAlgo) return null;
-
-  return (
-    <>
-      <section className="perfil-contas" aria-label="Contas do mandato">
-        <div className="contas-numeros">
-          <ValorDaConta
-            rotulo="Campanha"
-            valor={fin?.total}
-            nota={fin?.anoEleicao ? `eleição de ${fin.anoEleicao}` : undefined}
-          />
-          <ValorDaConta
-            rotulo="Emendas"
-            valor={emendas?.empenhado}
-            nota={emendas?.ano ? `empenhado em ${emendas.ano}` : undefined}
-          />
-          <ValorDaConta
-            rotulo="Cota"
-            valor={gastos?.total}
-            nota={gastos?.ano ? `gasto em ${gastos.ano}` : undefined}
-          />
-        </div>
-
-        <button type="button" className="botao-contas" onClick={() => setAberto(true)}>
-          Ver as contas
-        </button>
-      </section>
-
-      <ContasAmpliadas
-        aberto={aberto}
-        aoFechar={() => setAberto(false)}
-        gastos={gastos}
-        emendas={emendas}
-        fin={fin}
-      />
-    </>
-  );
-}
-
-/**
- * Um número da faixa de contas.
- *
- * 🔴 **Ausente ⛔ NÃO é zero.** `R$ 0,00` afirmaria que o parlamentar ⛔ não recebeu nada;
- * o que se sabe é que **a base ⛔ não tem** — pode ser suplente, pode ser autor de emenda
- * ainda não reconciliado. O travessão diz isso sem mentir, e a nota diz por quê.
- */
-function ValorDaConta({
-  rotulo,
-  valor,
-  nota,
-}: {
-  rotulo: string;
-  valor?: number;
-  nota?: string;
-}) {
-  const tem = valor !== undefined && valor > 0;
-
-  return (
-    <div className="conta-valor">
-      <span className="conta-rotulo">{rotulo}</span>
-      <span className={`conta-numero ${tem ? '' : 'conta-ausente'}`}>
-        {tem ? reais(valor) : '—'}
-      </span>
-      <span className="conta-nota">{tem ? nota : 'sem registro na base'}</span>
-    </div>
-  );
-}
-
-/**
- * O detalhe das três fontes, em `<dialog>`.
- *
- * ⭐ `<dialog>` nativo, como em `GrafoAmpliado`: Esc, captura de foco e o resto da página
- * inerte vêm de graça — três coisas que uma `div` sobreposta exigiria reimplementar, e
- * que costumam ficar pela metade.
- */
-function ContasAmpliadas({
-  aberto,
-  aoFechar,
-  gastos,
-  emendas,
-  fin,
-}: {
-  aberto: boolean;
-  aoFechar: () => void;
-  gastos: GastoDeCota | null;
-  emendas: EmendasDoParlamentar | null;
-  fin: FinanciamentoDeCampanha | null;
-}) {
-  const dialogo = useRef<HTMLDialogElement>(null);
-
-  // Monta na primeira abertura e ⛔ não desmonta ao fechar. Duas razões: fora do modal
-  // são três subárvores grandes que ninguém está vendo, e desmontá-las no clique de
-  // fechar faria a animação de saída acontecer sobre uma caixa VAZIA.
-  const [jaAbriu, setJaAbriu] = useState(false);
-
-  useEffect(() => {
-    const elemento = dialogo.current;
-    if (!elemento) return;
-
-    if (aberto) {
-      setJaAbriu(true);
-      if (!elemento.open) elemento.showModal();
-    } else if (elemento.open) {
-      elemento.close();
-    }
-  }, [aberto]);
-
-  return (
-    <dialog ref={dialogo} className="contas-ampliadas" onClose={aoFechar} onCancel={aoFechar}>
-      <header>
-        <div>
-          <h2>Contas do mandato</h2>
-          <p className="ajuda">Três dinheiros diferentes — que não se somam.</p>
-        </div>
-
-        <button type="button" className="botao-icone" onClick={aoFechar} aria-label="Fechar">
-          ✕
-        </button>
-      </header>
-
-      {jaAbriu && (
-        <div className="contas-corpo">
-          {/* 🔴 A comparação vive AQUI, com a largura do modal — é o único lugar em que
-              as três ordens de grandeza cabem lado a lado sem se atropelar. */}
-          <div className="contas-comparacao">
-            <ValorDaConta
-              rotulo="Campanha"
-              valor={fin?.total}
-              nota={fin?.anoEleicao ? `eleição de ${fin.anoEleicao}` : undefined}
-            />
-            <ValorDaConta
-              rotulo="Emendas"
-              valor={emendas?.empenhado}
-              nota={emendas?.ano ? `empenhado em ${emendas.ano}` : undefined}
-            />
-            <ValorDaConta
-              rotulo="Cota"
-              valor={gastos?.total}
-              nota={gastos?.ano ? `gasto em ${gastos.ano}` : undefined}
-            />
-          </div>
-
-          <BlocoDeConta
-            titulo="Campanha"
-            resumo="O dinheiro que elegeu o parlamentar."
-            vazio="Nenhuma receita de campanha registrada para este parlamentar na base."
-          >
-            {fin && fin.total > 0 ? <DetalheCampanha fin={fin} /> : null}
-          </BlocoDeConta>
-
-          <BlocoDeConta
-            titulo="Emendas"
-            resumo="O que ele direciona do orçamento federal."
-            vazio="Nenhuma emenda atribuída a este parlamentar na base."
-          >
-            {emendas && emendas.quantidade > 0 ? <DetalheEmendas emendas={emendas} /> : null}
-          </BlocoDeConta>
-
-          <BlocoDeConta
-            titulo="Cota parlamentar"
-            resumo="O que ele gasta para manter o mandato."
-            vazio="Nenhuma despesa de cota registrada para este parlamentar na base."
-          >
-            {gastos && gastos.lancamentos > 0 ? <DetalheGastos gastos={gastos} /> : null}
-          </BlocoDeConta>
+      {!todos && similares.length > SIMILARES_DE_INICIO && (
+        <div className="carregar-mais">
+          <button type="button" className="botao-secundario" onClick={() => setTodos(true)}>
+            {T.similares.verTodos(similares.length)}
+          </button>
         </div>
       )}
-    </dialog>
-  );
-}
-
-/**
- * ⭐ O bloco existe mesmo **sem** dado, e é de propósito: num modal único, uma seção que
- * simplesmente some deixaria o leitor sem saber que aquela fonte foi consultada. Estado
- * vazio é uma informação, ⛔ não a falta de uma.
- */
-function BlocoDeConta({
-  titulo,
-  resumo,
-  vazio,
-  children,
-}: {
-  titulo: string;
-  resumo: string;
-  vazio: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="bloco-conta">
-      <header className="cabecalho-bloco">
-        <h3 className="titulo-bloco">{titulo}</h3>
-        <p className="ajuda">{resumo}</p>
-      </header>
-      {children ?? <p className="vazio">{vazio}</p>}
     </section>
   );
 }
 
 /**
- * O financiamento da campanha que elegeu o parlamentar (TSE).
+ * Governismo e disciplina — com que frequência votou como pediram a ele.
  *
- * 🔴 **O fundão e o fundo partidário aparecem SEPARADOS.** São fundos diferentes: o
- * Fundo Especial (FEFC) é eleitoral, criado em 2017; o Fundo Partidário é o
- * financiamento permanente dos partidos. Somá-los como "dinheiro público" é
- * defensável — mas é uma afirmação, e a tela ⛔ não a faz pelo leitor.
+ * ## RISCO: O que este bloco NÃO pode fazer
+ *
+ * Governismo alto não é elogio nem acusação, e a tela não pode sugerir que seja.
+ * Sem cor semântica, sem seta, sem comparação com uma média — qualquer um dos
+ * três transformaria medição em juízo, que é o que a RNF-16 proíbe.
+ *
+ * DECISÃO: A base anda junto do percentual, sempre. 80% sobre 15 votações e 80% sobre 900 são
+ * afirmações de força muito diferente.
  */
-function DetalheCampanha({ fin }: { fin: FinanciamentoDeCampanha }) {
-  if (fin.total === 0) {
-    return (
-      <p className="vazio">
-        Nenhuma receita de campanha registrada para este parlamentar na base.
-      </p>
-    );
-  }
-
-  const publico = fin.fundoEspecial + fin.fundoPartidario;
-  const maior = fin.porFonte[0]?.total ?? 1;
-
-  return (
-    <>
-      {/* 🔴 Os dois fundos, lado a lado e nomeados — ⛔ nunca somados num só número. */}
-      <ul className="fundos">
-        <li>
-          <span className="fundo-rotulo">
-            <Termo nome="fundao">Fundo Especial</Termo>
-          </span>
-          <span className="fundo-valor">{reais(fin.fundoEspecial)}</span>
-        </li>
-        <li>
-          <span className="fundo-rotulo">Fundo Partidário</span>
-          <span className="fundo-valor">{reais(fin.fundoPartidario)}</span>
-        </li>
-      </ul>
-
-      <p className="ajuda ajuda-espacada">
-        Juntos, os dois fundos somam <strong>{reais(publico)}</strong> —{' '}
-        {((publico / fin.total) * 100).toLocaleString('pt-BR', {
-          maximumFractionDigits: 0,
-        })}
-        % do que a campanha arrecadou. São fundos <strong>distintos</strong>: o Fundo
-        Especial é eleitoral; o Partidário custeia o partido o ano inteiro.
-      </p>
-
-      <h3 className="titulo-secao">De onde veio</h3>
-      <ul className="gastos-categorias">
-        {fin.porFonte.map((f) => (
-          <li key={f.fonte}>
-            <span className="gasto-nome">{minusculas(f.fonte)}</span>
-            <span className="gasto-barra">
-              <span style={{ width: `${Math.max((f.total / maior) * 100, 2)}%` }} />
-            </span>
-            <span className="gasto-valor">{reais(f.total)}</span>
-          </li>
-        ))}
-      </ul>
-
-      <h3 className="titulo-secao">Maiores doadores</h3>
-      <ul className="gastos-fornecedores">
-        {fin.maioresDoadores.map((d) => (
-          <li key={d.nome}>
-            <span className="gasto-nome">
-              {d.nome}
-              {/* 🔴 RNF-13: o documento de pessoa física é hasheado no banco. */}
-              {d.pessoaFisica && <small> · pessoa física</small>}
-            </span>
-            <span className="gasto-valor">{reais(d.total)}</span>
-          </li>
-        ))}
-      </ul>
-
-      <p className="ajuda ajuda-espacada">
-        Prestação de contas eleitorais publicada pelo TSE.
-      </p>
-    </>
-  );
-}
-
 /**
- * As emendas parlamentares na ficha (Portal da Transparência).
+ * Participação, governismo e disciplina — com que frequência votou, e como pediram a ele.
  *
- * 🔴 **Empenhado e pago são coisas diferentes, e a tela mostra os dois.** Empenhar é
- * reservar; pagar é o dinheiro sair. Um painel que exibisse só o empenhado deixaria a
- * pessoa concluir que o dinheiro chegou — que é exatamente o que quem anuncia emenda
- * gostaria que ela concluísse.
+ * DECISÃO: A participação vem primeiro: é a pergunta de quem quer saber se o representante trabalha,
+ * e ela não depende de orientação nenhuma. Sempre "X de Y", com o percentual depois.
+ *
+ * ATENÇÃO: A base fica DENTRO do <dd>: um <small> solto na lista de definições é a violação que o
+ * axe acusava aqui.
+ *
+ * DECISÃO (2026-10-03): Os três números com a mesma forma, "X de Y". O governismo e a disciplina
+ * vinham como percentual com a base embaixo, e a ficha mostrava "100%" para quem tinha duas
+ * votações orientadas pelo partido. Abaixo de `BASE_PEQUENA_DO_ALINHAMENTO` a tela diz que é pouco.
  */
-function DetalheEmendas({ emendas }: { emendas: EmendasDoParlamentar }) {
-  // ⭐ Vazio HONESTO: pode ser parlamentar sem emenda, ou autor ainda não reconciliado
-  //    na base. ⛔ Nunca "R$ 0,00", que afirmaria o que não se sabe.
-  if (emendas.quantidade === 0) {
-    return (
-      <p className="vazio">
-        Nenhuma emenda atribuída a este parlamentar na base.
-      </p>
-    );
-  }
+function FaixaDeAlinhamentoComponent({
+  alinhamento,
+  presenca,
+  casa,
+}: {
+  alinhamento: Alinhamento | null;
+  presenca: Presenca | null;
+  casa: Ficha['casa'];
+}) {
+  const governismo = alinhamento?.governismo ?? null;
+  const disciplina = alinhamento?.disciplina ?? null;
 
-  const maior = emendas.porDestino[0]?.empenhado ?? 1;
-  const executado = emendas.empenhado > 0 ? emendas.pago / emendas.empenhado : 0;
+  if (governismo === null && disciplina === null && !presenca) return null;
 
   return (
-    <>
-      {/* 🔴 A execução ⛔ não é um total — é a razão entre dois, e é a informação que
-          distingue emenda anunciada de emenda cumprida. Por isso sobrevive ao corte que
-          tirou os totais daqui: eles já estão na comparação do topo. */}
-      <section className="execucao">
-        <span className="gasto-barra execucao-barra">
-          <span style={{ width: `${Math.min(executado * 100, 100)}%` }} />
-        </span>
-        <p className="ajuda">
-          <strong>{reais(emendas.pago)}</strong> pagos de{' '}
-          {reais(emendas.empenhado)} empenhados em{' '}
-          <strong>{emendas.quantidade}</strong>{' '}
-          {emendas.quantidade === 1 ? 'emenda' : 'emendas'} —{' '}
-          {(executado * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}% saiu
-          de fato
-        </p>
-      </section>
-
-      <h3 className="titulo-secao">Para onde foi</h3>
-      <ul className="gastos-categorias">
-        {emendas.porDestino.map((d) => (
-          <li key={d.localidade}>
-            <span className="gasto-nome">
-              <Destino localidade={d.localidade} />
-            </span>
-            <span className="gasto-barra">
-              {/* ⚠️ Proporcional ao MAIOR destino, não ao total — mesma razão da cota. */}
-              <span style={{ width: `${Math.max((d.empenhado / maior) * 100, 2)}%` }} />
-            </span>
-            <span className="gasto-valor">{reais(d.empenhado)}</span>
-          </li>
-        ))}
-      </ul>
-
-      {emendas.porFuncao.length > 0 && (
-        <>
-          <h3 className="titulo-secao">
-            Em quê <Termo nome="funcaoOrcamentaria">(área do orçamento)</Termo>
-          </h3>
-          <ul className="gastos-fornecedores">
-            {emendas.porFuncao.map((f) => (
-              <li key={f.funcao}>
-                <span className="gasto-nome">{f.funcao}</span>
-                <span className="gasto-valor">{reais(f.empenhado)}</span>
-              </li>
-            ))}
-          </ul>
-        </>
+    <dl className="alinhamento" data-tour="ficha-alinhamento">
+      {presenca && presenca.votacoes > 0 && (
+        <div>
+          <dt>{T.alinhamento.presenca}</dt>
+          <dd>
+            {inteiro(presenca.presente)} de {inteiro(presenca.votacoes)}
+            <small>
+              {T.alinhamento.votacoes(Math.round((presenca.presente / presenca.votacoes) * 100))}
+              {presenca.ausenteJustificado !== null && presenca.ausenteJustificado > 0 &&
+                T.alinhamento.ausencias(presenca.ausenteJustificado)}
+            </small>
+            {presenca.medianaDaCasa != null && (
+              <small>{T.alinhamento.medianaDaCasa(casa, Math.round(presenca.medianaDaCasa * 100))}</small>
+            )}
+          </dd>
+        </div>
       )}
 
-      <p className="ajuda ajuda-espacada">
-        <Termo nome="emenda">Emendas parlamentares</Termo> publicadas pelo Portal da
-        Transparência. A diferença entre{' '}
-        <Termo nome="empenho">empenhado e pago</Termo> é o que a barra acima mostra.
-      </p>
-    </>
+      {governismo !== null && (
+        <div>
+          <dt>{T.alinhamento.governo}</dt>
+          <ParteDaBaseComponent proporcao={governismo} base={alinhamento!.baseGovernismo} mediana={alinhamento!.medianaGovernismo} />
+        </div>
+      )}
+
+      {disciplina !== null && (
+        <div>
+          <dt>{T.alinhamento.partido(alinhamento!.partidoMedido)}</dt>
+          <ParteDaBaseComponent proporcao={disciplina} base={alinhamento!.baseDisciplina} mediana={alinhamento!.medianaDisciplina} />
+        </div>
+      )}
+    </dl>
   );
 }
 
+
 /**
- * O destino de uma emenda — **quatro coisas diferentes na mesma coluna**.
- *
- * 🔴 `MÚLTIPLO` ⛔ **não é um lugar.** É o aviso de que a emenda se reparte entre vários
- * municípios, e o Portal ⛔ não diz quais. Listá-lo em texto puro, entre nomes de cidade,
- * faria o leitor tomá-lo por uma — e é a forma **mais comum** (4 de cada 10 emendas) e a
- * de **maior valor** (R$ 11,6 mi por emenda, oito vezes a de município).
- *
- * ⚠️ `Nacional` tem o mesmo problema em menor grau. Os dois ganham marcação própria e
- * explicação sob demanda; UF e município aparecem como o que são.
+ * "540 de 658 votações orientadas (82%)", com o aviso quando a base é pequena e a mediana da
+ * Câmara, que dá a escala do número.
  */
-function Destino({ localidade }: { localidade: string }) {
-  if (localidade === 'MÚLTIPLO') {
-    return (
-      <>
-        <Termo nome="multiplo">Vários lugares</Termo>
-        <small> · o Portal não detalha quais</small>
-      </>
-    );
-  }
-
-  if (localidade === 'Nacional') {
-    return (
-      <>
-        <Termo nome="nacional">Alcance nacional</Termo>
-        <small> · sem destino territorial</small>
-      </>
-    );
-  }
-
-  // ⭐ "SÃO PAULO (UF)" → o estado inteiro, ⛔ não a capital. O sufixo é do Portal e não
-  //    diz nada ao leitor; o que ele precisa saber é que abrange o estado todo.
-  const uf = localidade.match(/^(.*) \(UF\)$/);
-  if (uf) {
-    return (
-      <>
-        {minusculas(uf[1])}
-        <small> · estado inteiro</small>
-      </>
-    );
-  }
-
-  return <>{localidade}</>;
-}
-
-/**
- * A cota parlamentar na ficha (CEAP).
- *
- * ⚠️ **Não é sobre voto** — é o outro eixo do perfil. O título do TCC fala de afinidade
- * por voto; esta aba responde outra pergunta sobre a mesma pessoa.
- *
- * 🔴 Todo valor vem com o **link do documento fiscal** a um clique na Câmara. Sem isso a
- * tela seria uma afirmação sobre gasto público sem como conferir.
- */
-function DetalheGastos({ gastos }: { gastos: GastoDeCota }) {
-  // ⭐ Estado vazio HONESTO: pode ser deputado que não usou cota, ou ano ainda não
-  //    ingerido. ⛔ Nunca "R$ 0,00", que afirmaria o que não se sabe.
-  if (gastos.lancamentos === 0) {
-    return (
-      <p className="vazio">
-        Nenhuma despesa de cota registrada para este parlamentar na base.
-      </p>
-    );
-  }
-
-  const maior = gastos.porCategoria[0]?.total ?? 1;
-
+function ParteDaBaseComponent({ proporcao, base, mediana }: { proporcao: number; base: number; mediana?: number | null }) {
   return (
-    <>
-      <p className="ajuda ajuda-espacada">
-        <Termo nome="cota">Cota parlamentar</Termo> de {gastos.ano}, em{' '}
-        <strong>{gastos.lancamentos}</strong> lançamentos.
-      </p>
-
-      <h3 className="titulo-secao">Em quê</h3>
-      <ul className="gastos-categorias">
-        {gastos.porCategoria.map((c) => (
-          <li key={c.categoria}>
-            <span className="gasto-nome">{minusculas(c.categoria)}</span>
-            <span className="gasto-barra">
-              {/* ⚠️ Barra proporcional à MAIOR categoria, não ao total: com 15
-                  categorias, proporção do total vira fiapo ilegível. */}
-              <span style={{ width: `${Math.max((c.total / maior) * 100, 2)}%` }} />
-            </span>
-            <span className="gasto-valor">{reais(c.total)}</span>
-          </li>
-        ))}
-      </ul>
-
-      <h3 className="titulo-secao">Quem recebeu</h3>
-      <ul className="gastos-fornecedores">
-        {gastos.maioresFornecedores.map((f) => (
-          <li key={f.nome}>
-            <span className="gasto-nome">
-              {f.nome}
-              {/* 🔴 RNF-13: o documento de pessoa física é hasheado no banco, e a tela
-                  diz isso em vez de fingir que não existe fornecedor pessoa física. */}
-              {f.pessoaFisica && <small> · pessoa física</small>}
-            </span>
-            <span className="gasto-valor">{reais(f.total)}</span>
-          </li>
-        ))}
-      </ul>
-
-      <p className="ajuda ajuda-espacada">
-        Cota para o Exercício da Atividade Parlamentar, publicada pela Câmara dos
-        Deputados. Valores já descontada a glosa.
-      </p>
-    </>
+    <dd>
+      {inteiro(Math.round(proporcao * base))} de {inteiro(base)}
+      <small>
+        {T.alinhamento.votacoesOrientadas(Math.round(proporcao * 100))}
+        {base < BASE_PEQUENA_DO_ALINHAMENTO && T.alinhamento.basePequena}
+      </small>
+      {mediana != null && <small>{T.alinhamento.medianaDaCamara(Math.round(mediana * 100))}</small>}
+    </dd>
   );
 }
 
-function AbaNoticias({ noticias }: { noticias: Noticia[] }) {
-  if (noticias.length === 0) {
-    return (
-      <p className="vazio">
-        Nenhuma notícia recente. Parlamentares de menor projeção passam semanas sem aparecer
-        na imprensa — isso não é erro.
-      </p>
-    );
-  }
-
-  return (
-    <>
-      {noticias.map((n) => (
-        <article key={n.id} className="linha linha-simples">
-          <div className="linha-corpo">
-            {/* ⚠️ Link para o veículo. ⛔ Nunca reproduzimos o texto da matéria. */}
-            <a className="noticia-titulo" href={n.url} target="_blank" rel="noreferrer noopener">
-              {n.titulo}
-            </a>
-            <span className="linha-detalhe">
-              {n.veiculo} · {formatarData(n.publicadaEm)}
-            </span>
-            {n.trecho && <p className="noticia-trecho">{n.trecho}</p>}
-          </div>
-        </article>
-      ))}
-    </>
-  );
+/** Inteiro com separador de milhar. */
+function inteiro(valor: number): string {
+  return valor.toLocaleString('pt-BR');
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// AUXILIARES DE FORMATAÇÃO
-// ═══════════════════════════════════════════════════════════════════
-
 /**
- * ⚠️ Rótulo neutro, sem cor de juízo (RNF-16). "Sim" e "Não" descrevem o registro;
+ * ATENÇÃO: Rótulo neutro, sem cor de juízo (RNF-16). "Sim" e "Não" descrevem o registro;
  * verde e vermelho sugeririam acerto e erro.
+ *
+ * AUXILIARES DE FORMATAÇÃO
  */
 function rotuloDoVoto(valor: number | null): string {
-  if (valor === 1) return 'Sim';
-  if (valor === -1) return 'Não';
-  if (valor === 0) return 'Abstenção';
+  if (valor === 1) return T.rotuloDoVoto.sim;
+  if (valor === -1) return T.rotuloDoVoto.nao;
+  if (valor === 0) return T.rotuloDoVoto.abstencao;
 
-  return 'Ausente';
+  return T.rotuloDoVoto.ausente;
 }
 
 function classeDoVoto(valor: number | null): string {
@@ -848,13 +702,91 @@ function formatarData(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR');
 }
 
-/** ⚠️ O arquivo vem em CAIXA ALTA — ilegível em bloco na tela. */
-function minusculas(texto: string): string {
-  const min = texto.toLocaleLowerCase('pt-BR');
-
-  return min.charAt(0).toLocaleUpperCase('pt-BR') + min.slice(1);
+/**
+ * Votos seguidos sobre a mesma proposição viram um grupo (2026-10-03): a lista repetia a mesma
+ * ementa em cada votação de um projeto (urgência, texto, destaques), e virava parede de texto.
+ * Só junta vizinhos: a ordem continua a das datas.
+ */
+function agruparPorProposicao(votos: VotoNaFicha[]): VotoNaFicha[][] {
+  const grupos: VotoNaFicha[][] = [];
+  for (const voto of votos) {
+    const ultimo = grupos.at(-1);
+    if (ultimo && voto.materia && ultimo[0].materia === voto.materia) ultimo.push(voto);
+    else grupos.push([voto]);
+  }
+  return grupos;
 }
 
-function reais(valor: number): string {
-  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+/** Um voto sozinho: o selo, o enunciado e os links. */
+function VotoComponent({ voto: v, tour }: { voto: VotoNaFicha; tour: boolean }) {
+  return (
+    <article className="linha linha-simples" data-tour={tour ? 'ficha-votos' : undefined}>
+      <div className="linha-corpo">
+        <SeloDoVotoComponent voto={v} />
+        <LinhaDoVotoComponent voto={v} />
+        <DetalheDoVotoComponent voto={v} />
+      </div>
+    </article>
+  );
+}
+
+/** Várias votações da mesma proposição: a matéria e a ementa uma vez, e uma linha curta por votação. */
+function GrupoDeVotosComponent({ votos, tour }: { votos: VotoNaFicha[]; tour: boolean }) {
+  const primeiro = votos[0];
+
+  return (
+    <article className="linha linha-simples grupo-de-votos" data-tour={tour ? 'ficha-votos' : undefined}>
+      <div className="linha-corpo">
+        <p className="voto-descricao">
+          <strong>{primeiro.materia}</strong> {primeiro.ementa ?? ''}
+        </p>
+        <p className="grupo-de-votos-conta">{T.votos.votacoesNaProposicao(votos.length)}</p>
+        <ul className="grupo-de-votos-lista">
+          {votos.map((v) => (
+            <li key={v.votacaoId}>
+              <SeloDoVotoComponent voto={v} />
+              <div>
+                {v.categoria === 'PROCEDIMENTAL' && (
+                  <span className="voto-rito">{T.votos.ritoCurto}</span>
+                )}
+                <span className="voto-processual">{v.descricao ?? v.votacaoId}</span>
+                <DetalheDoVotoComponent voto={v} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </article>
+  );
+}
+
+/** O selo neutro do voto (RNF-16): Sim e Não se distinguem por borda, nunca por verde e vermelho. */
+function SeloDoVotoComponent({ voto: v }: { voto: VotoNaFicha }) {
+  return (
+    <span className={`selo selo-${classeDoVoto(v.valor)}`}>
+      {v.valor === 0 ? T.votos.abstencao : rotuloDoVoto(v.valor)}
+    </span>
+  );
+}
+
+/** Data, orientação do Governo e os links da proposição e do registro. */
+function DetalheDoVotoComponent({ voto: v }: { voto: VotoNaFicha }) {
+  return (
+    <span className="linha-detalhe">
+      {formatarData(v.data)}
+      <ContraAOrientacaoComponent voto={v} />
+      {v.urlProposicao && (
+        <>
+          {' · '}
+          <LinkDeFonteComponent href={v.urlProposicao}>{T.votos.proposicao}</LinkDeFonteComponent>
+        </>
+      )}
+      {v.urlRegistro && (
+        <>
+          {' · '}
+          <LinkDeFonteComponent href={v.urlRegistro}>{T.votos.registro}</LinkDeFonteComponent>
+        </>
+      )}
+    </span>
+  );
 }

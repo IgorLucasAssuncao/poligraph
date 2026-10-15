@@ -1,0 +1,8 @@
+/* ═══ GRAFO — destaque de partido ou estado (U18) ════════════════ */
+.destaque-do-grafo { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 0 0 .6rem; font-size: var(--t-2); }
+.destaque-do-grafo-rotulo { font-weight: 600; }
+.destaque-do-grafo select {
+  padding: .3rem .5rem; border: 1px solid var(--borda-controle); border-radius: var(--raio);
+  background: var(--fundo); color: var(--texto); font: inherit;
+}
+.destaque-do-grafo-conta { font-family: var(--dado); font-size: var(--t-1); color: var(--suave); font-variant-numeric: tabular-nums; }

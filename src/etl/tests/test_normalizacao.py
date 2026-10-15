@@ -1,6 +1,6 @@
 """Testes da normalização — o equivalente Python do API3.
 
-⚠️ Cada caso aqui vem de uma MEDIÇÃO do discovery, não de suposição.
+ATENÇÃO: Cada caso aqui vem de uma MEDIÇÃO do discovery, não de suposição.
 """
 
 import pytest
@@ -34,12 +34,12 @@ def test_voto_no_dominio_fechado(bruto, esperado):
 
 @pytest.mark.parametrize("bruto", ["Obstrução", "Artigo 17", "Branco", "", None, "xyz"])
 def test_voto_fora_do_calculo_vira_none(bruto):
-    """⚠️ None = fora do cálculo. NÃO é discordância, e NÃO é abstenção."""
+    """ATENÇÃO: None = fora do cálculo. NÃO é discordância, e NÃO é abstenção."""
     assert normalizar_voto(bruto) is None
 
 
 def test_obstrucao_nao_e_abstencao():
-    """🔴 Em 2023 obstrução foi 2,50% dos votos — medir só 2025 (0,2%) enganaria.
+    """RISCO: Em 2023 obstrução foi 2,50% dos votos — medir só 2025 (0,2%) enganaria.
 
     É manobra de bancada: o parlamentar está presente e se recusa a votar.
     Contá-la como abstenção poria uma decisão de bancada dentro da matriz.
@@ -75,7 +75,7 @@ def test_categoria(descricao, esperado):
 
 
 def test_urgencia_de_projeto_e_procedimental_nao_substantiva():
-    """⚠️ A ordem das regex importa: a descrição contém as duas palavras.
+    """ATENÇÃO: A ordem das regex importa: a descrição contém as duas palavras.
 
     Se SUBSTANTIVA casasse primeiro, requerimentos entrariam na matriz com peso
     1,0 — e a similaridade passaria a medir obstrução, não posição.
@@ -86,12 +86,12 @@ def test_urgencia_de_projeto_e_procedimental_nao_substantiva():
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 Achado #12 — polaridade
+# RISCO: Achado #12 — polaridade
 # ═══════════════════════════════════════════════════════════════════
 
 
 def test_mantido_o_texto_inverte_a_polaridade():
-    """🔴 "Mantido o texto" = o destaque supressivo foi rejeitado.
+    """RISCO: "Mantido o texto" = o destaque supressivo foi rejeitado.
 
     Quem votou Sim quis MANTER o texto — votou CONTRA a supressão proposta.
     """
@@ -117,7 +117,7 @@ def test_texto_principal_tem_polaridade_positiva(descricao):
 
 
 def test_cpf_preserva_zero_a_esquerda():
-    """⚠️ O erro clássico: ler CPF como número perde o zero e o join falha em silêncio."""
+    """ATENÇÃO: O erro clássico: ler CPF como número perde o zero e o join falha em silêncio."""
     assert normalizar_cpf("01234567890") == "01234567890"
     assert normalizar_cpf(1234567890) == "01234567890"
 
@@ -138,14 +138,14 @@ def test_cpf(bruto, esperado):
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 O que o pandas realmente entrega — descoberto na ingestão real
+# RISCO: O que o pandas realmente entrega — descoberto na ingestão real
 # ═══════════════════════════════════════════════════════════════════
 
 
 def test_voto_vazio_do_pandas_vira_nulo():
-    """🔴 Célula vazia no CSV vira `float('nan')`, não `None` nem `""`.
+    """RISCO: Célula vazia no CSV vira `float('nan')`, não `None` nem `""`.
 
-    ⚠️ O `dtype=str` do `read_csv` não alcança o que o `na_values` já transformou em
+    ATENÇÃO: O `dtype=str` do `read_csv` não alcança o que o `na_values` já transformou em
     nulo. A ingestão de 2025 morreu aqui com
     `'float' object has no attribute 'strip'`.
     """
@@ -153,20 +153,21 @@ def test_voto_vazio_do_pandas_vira_nulo():
 
 
 def test_voto_de_tipo_inesperado_nao_estoura():
-    # ⚠️ Fora do cálculo, ⛔ nunca discordância — ausência não é "votou contra".
+    """ATENÇÃO: Fora do cálculo, nunca discordância — ausência não é "votou contra".
+    """
     for entrada in (None, 0, 1.5, [], {}):
         assert normalizar_voto(entrada) is None
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 "ressalvados os destaques" — achado de 2026-08-26
+# RISCO: "ressalvados os destaques" — achado de 2026-08-26
 # ═══════════════════════════════════════════════════════════════════
 
 
 def test_ressalvados_os_destaques_e_voto_no_texto_principal():
-    """🔴 A frase cita destaque para dizer que ele NÃO estava em jogo.
+    """RISCO: A frase cita destaque para dizer que ele NÃO estava em jogo.
 
-    ⚠️ Classificar como DESTAQUE tinha duas consequências silenciosas: a votação entrava
+    ATENÇÃO: Classificar como DESTAQUE tinha duas consequências silenciosas: a votação entrava
     na matriz com peso 0,7 em vez de 1,0, e o filtro "só texto principal" da curadoria a
     descartava. Eram 69 votações de mérito da legislatura 57.
     """
@@ -179,27 +180,27 @@ def test_ressalvados_os_destaques_e_voto_no_texto_principal():
 
 
 def test_destaque_de_verdade_continua_sendo_destaque():
-    """⚠️ A exceção não pode abrir buraco: votação de destaque real continua marcada."""
+    """ATENÇÃO: A exceção não pode abrir buraco: votação de destaque real continua marcada."""
     assert classificar_categoria("Aprovado o Destaque nº 3 do PL 1234.") == "DESTAQUE"
     assert classificar_categoria("Mantido o texto, rejeitado o destaque.") == "DESTAQUE"
     assert classificar_categoria("Aprovada a Emenda nº 12.") == "DESTAQUE"
 
 
 def test_a_polaridade_nao_muda_com_a_correcao():
-    """⭐ `inferir_polaridade` olha "mantido o texto", não a categoria — segue intacta."""
+    """DECISÃO: `inferir_polaridade` olha "mantido o texto", não a categoria — segue intacta."""
     assert inferir_polaridade("Aprovado o Substitutivo, ressalvados os destaques.") == 1
     assert inferir_polaridade("Mantido o texto.") == -1
 
 
 def test_destacado_no_particípio_tambem_e_destaque():
-    """🔴 A forma que o SENADO usa, e que o padrão original deixava passar.
+    """RISCO: A forma que o SENADO usa, e que o padrão original deixava passar.
 
-    ⚠️ O padrão cobria só o substantivo (`destaque`/`destaques`). O Senado escreve
+    ATENÇÃO: O padrão cobria só o substantivo (`destaque`/`destaques`). O Senado escreve
     *"Votação nominal do Art. 21 …, destacado"* — particípio. Resultado medido: 14
     votações do Senado e 2 da Câmara entravam como SUBSTANTIVA, com peso 1,0 em vez de
     0,7 na matriz, e elegíveis como pergunta do questionário.
 
-    🔴 As duas da Câmara são as piores do conjunto: *"Rejeitada a matéria destacada"* é
+    RISCO: As duas da Câmara são as piores do conjunto: *"Rejeitada a matéria destacada"* é
     destaque **e** tem polaridade invertida.
     """
     for descricao in [
@@ -213,9 +214,9 @@ def test_destacado_no_particípio_tambem_e_destaque():
 
 
 def test_a_excecao_do_ressalvados_sobrevive_a_correcao():
-    """⚠️ A guarda de "ressalvados os destaques" continua valendo.
+    """ATENÇÃO: A guarda de "ressalvados os destaques" continua valendo.
 
-    ⛔ Ampliar o padrão não pode reintroduzir o erro que a exceção corrigiu — eram 69
+    Não Ampliar o padrão não pode reintroduzir o erro que a exceção corrigiu — eram 69
     votações de mérito classificadas como destaque.
     """
     assert classificar_categoria(

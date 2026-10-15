@@ -262,7 +262,7 @@ mais sofisticada é desnecessária.
 
 | # | Pendência | Prioridade |
 |---|---|---|
-| ~~API1~~ | ✅ **RESOLVIDA — 2026-08-23.** D5 decidida: **React + Vite**. Biblioteca do grafo em aberto (PL5) | — |
+| ~~API1~~ | ✅ **RESOLVIDA — 2026-08-23.** D5 decidida: **React + Vite**. Biblioteca do grafo em aberto (Pendência 5) | — |
 | ~~API2~~ | ✅ **RESOLVIDA — 2026-08-23.** Limiar global descartado: mesmo a 0,90 a densidade é 11,6% (~24k arestas). Adotado **kNN com k=10** — [04-contratos §9](../04-contratos.md) | — |
 | **API3** | Escrever o teste de regressão da **polaridade** | 🔴 Alta |
 | **API4** | Definir se a métrica exibida ao usuário é concordância simples ou cosseno (ou ambas) | 🟡 Média |

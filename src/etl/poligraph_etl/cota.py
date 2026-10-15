@@ -1,164 +1,206 @@
-"""Cota parlamentar (CEAP) — a despesa de gabinete de cada deputado.
+"""Cota parlamentar — a despesa de gabinete de cada deputado (CEAP) e de cada senador (CEAPS).
 
 ## ENTRADA
 
-| | |
+| | Câmara | Senado |
+|---|---|---|
+| Contrato | `contratos.camara.LinhaDaCotaDaCamara` | `contratos.senado.LinhaDaCotaDoSenado` |
+| Leitura | `fontes.camara.ler_cota` | `fontes.senado.ler_ceaps` |
+| Tamanho | ~6,6 MB compactado, ~233 mil linhas por ano | ~16 mil linhas por ano |
+| Decimal | **PONTO** | vírgula |
+| Dono | `ideCadastro`, o id do deputado na Câmara | o nome do senador, normalizado |
+
+ATENÇÃO: `GET /deputados/{id}/despesas` da API da Câmara responde **200** com `"dados": []`;
+por isso a cota vem do arquivo em bloco.
+
+## TRANSFORMAÇÃO
+
+Cada linha vira uma `Despesa` ou um `Descarte` com motivo:
+
+| Motivo | Quando |
 |---|---|
-| Fonte | `www.camara.leg.br/cotas/Ano-{ano}.csv.zip` — ⚠️ **fora** de `dadosabertos` |
-| Tamanho | ~6,6 MB compactado, ~233 mil linhas por ano |
-| Formato | CSV `;`, aspas, `utf-8-sig` |
-| Decimal | **PONTO** — o oposto do Portal e do TSE |
-| ⛔ O que ⛔ não serve | `GET /deputados/{id}/despesas` responde **200** com `"dados": []` |
+| `SEM_PARLAMENTAR` | Câmara: linha sem `ideCadastro`, de liderança ou órgão (0,4%) |
+| `FORA_DO_DE_PARA` | O id ou o nome não liga a ninguém da base |
+| `VALOR_ZERO` | Linha sem efeito financeiro; violaria `ck_despesa_valor` |
 
-## TRATAMENTO
-
-1. Casa `ideCadastro` contra o de-para de `pessoa_fonte_ids` — quem ⛔ não casa sai
-2. Descarta valor zero, que violaria `ck_despesa_valor`
-3. Separa CNPJ (legível) de CPF de fornecedor (**hasheado**)
-4. ⚠️ Confere o **volume** contra o mínimo medido: arquivo encolhido = layout mudou
+A reconciliação (regra 5) soma os mesmos descartes: o que não entra na base aparece com o
+motivo e o valor, e a regra de descarte existe num lugar só.
 
 ## SAÍDA
 
 | | |
 |---|---|
-| Tabela | `despesas` |
-| Chave de ligação | `pessoa_id`, via `ideCadastro` |
+| Contrato | `contratos.banco.Despesa` → tabela `despesas` |
 | Constraint do banco | `ck_despesa_valor` (`valor_liquido <> 0`) · FK `CASCADE` |
 | Idempotência | `DELETE` por (pessoa, ano) antes do `INSERT` |
 
 ---
 
-⭐ Valor **negativo é estorno** e é mantido — somá-lo importa para o total.
+DECISÃO: Valor **negativo é estorno** e é mantido — somá-lo importa para o total.
 
-🔴 `txtCNPJCPF` mistura CNPJ de empresa com **CPF em claro** de pessoa física; a RNF-13
-proíbe o segundo. Hashear os dois destruiria a análise: sem CNPJ legível ⛔ não dá para
+RISCO: `txtCNPJCPF` e `CNPJ_CPF` misturam CNPJ de empresa com **CPF em claro** de pessoa física;
+a RNF-13 proíbe o segundo. Hashear os dois destruiria a análise: sem CNPJ legível não dá para
 cruzar o mesmo fornecedor entre parlamentares.
 
-📐 [`docs/14-fontes-de-gasto.md §1`](../../../docs/14-fontes-de-gasto.md)
+MEDIDO: [`docs/14-fontes-de-gasto.md §1`](../../../docs/14-fontes-de-gasto.md)
 """
 
-import csv
-import io
-import logging
-import zipfile
-from pathlib import Path
+from dataclasses import dataclass, field
 
-import requests
+from .contratos.banco import Despesa
+from .contratos.camara import LinhaDaCotaDaCamara
+from .contratos.senado import LinhaDaCotaDoSenado
+from .normalizacao import hash_de_cpf, inteiro, sem_acento_maiusculo, sem_cpf, valor_com_ponto
 
-from .normalizacao import hash_de_cpf, valor_com_ponto
+SEM_PARLAMENTAR = "SEM_PARLAMENTAR"
+FORA_DO_DE_PARA = "FORA_DO_DE_PARA"
+VALOR_ZERO = "VALOR_ZERO"
 
-log = logging.getLogger("poligraph")
+SEM_CATEGORIA = "SEM CATEGORIA"
 
-URL = "https://www.camara.leg.br/cotas/Ano-{ano}.csv.zip"
-
-# Medido: ~233 mil linhas por ano, 99,6% com `ideCadastro`.
-MINIMO_ESPERADO = 50_000
-
-
-def baixar(ano: int, destino: Path) -> Path:
-    """⚠️ ~6,6 MB compactado. Vale cachear entre execuções."""
-    destino.parent.mkdir(parents=True, exist_ok=True)
-
-    resposta = requests.get(URL.format(ano=ano), timeout=300)
-    resposta.raise_for_status()
-    destino.write_bytes(resposta.content)
-
-    return destino
+_decimal_com_ponto = valor_com_ponto
+"""RISCO: ponto DECIMAL, o oposto do Portal e do TSE. `valor_pt_br` aqui daria um total mil vezes
+menor, sem erro: o apelido direto é o que impede a troca calada (`test_dinheiro`)."""
 
 
-def ler(caminho: Path) -> list[dict]:
-    """Lê o CSV de dentro do ZIP.
+@dataclass(frozen=True)
+class Descarte:
+    """Uma linha da fonte que não entra na base, com o motivo e o valor que ela levava."""
 
-    ⛔ Não reutiliza `camara.ler_csv`: aqui a fonte é ZIP, e carregar 233 mil linhas num
-    DataFrame para depois iterar seria desperdício.
+    motivo: str
+    valor: float
+
+
+@dataclass
+class Transformado:
+    """O arquivo inteiro depois da transformação: o que entra e o que fica fora."""
+
+    despesas: list[Despesa] = field(default_factory=list)
+    descartes: list[Descarte] = field(default_factory=list)
+
+    @property
+    def total_na_fonte(self) -> float:
+        return sum(d.valor_liquido for d in self.despesas) + sum(d.valor for d in self.descartes)
+
+
+def despesa_da_camara(linha: LinhaDaCotaDaCamara, id_pessoa_por_id_na_camara: dict[str, int]) -> Despesa | Descarte:
+    """Uma nota da Câmara como despesa da base, ou o motivo de ela ficar fora."""
+    valor = _decimal_com_ponto(linha.valor_liquido)
+    if not linha.id_deputado_na_camara:
+        return Descarte(SEM_PARLAMENTAR, valor)
+
+    id_pessoa = id_pessoa_por_id_na_camara.get(linha.id_deputado_na_camara)
+    if id_pessoa is None:
+        return Descarte(FORA_DO_DE_PARA, valor)
+    if valor == 0:
+        return Descarte(VALOR_ZERO, valor)
+
+    documento, pessoa_fisica = identificar_fornecedor(linha.cnpj_ou_cpf_do_fornecedor)
+    return Despesa(
+        pessoa_id=id_pessoa,
+        ano=inteiro(linha.ano_da_despesa),
+        mes=inteiro(linha.mes_da_despesa),
+        categoria=linha.categoria or SEM_CATEGORIA,
+        fornecedor=sem_cpf(linha.fornecedor),
+        cnpj_ou_hash=documento,
+        fornecedor_eh_pessoa_fisica=pessoa_fisica,
+        valor_liquido=valor,
+        data_emissao=(linha.data_de_emissao or "")[:10] or None,
+        url_documento=linha.url_do_documento,
+    )
+
+
+def despesa_do_senado(linha: LinhaDaCotaDoSenado, id_pessoa_por_nome: dict[str, int]) -> Despesa | Descarte:
+    """Uma despesa da CEAPS como despesa da base, ou o motivo de ela ficar fora.
+
+    A CEAPS não tem id de senador: o dono é o nome, normalizado sem acento e em caixa alta.
+    Quem não casa fica fora: atribuir gasto por semelhança de nome seria inventar dono.
     """
-    with zipfile.ZipFile(caminho) as arquivo:
-        nome = arquivo.namelist()[0]
-        with arquivo.open(nome) as fluxo:
-            texto = io.TextIOWrapper(fluxo, encoding="utf-8-sig")
+    valor = _decimal_com_virgula(linha.valor_reembolsado)
+    id_pessoa = id_pessoa_por_nome.get(sem_acento_maiusculo(linha.nome_do_senador))
+    if id_pessoa is None:
+        return Descarte(FORA_DO_DE_PARA, valor)
+    if valor == 0:
+        return Descarte(VALOR_ZERO, valor)
 
-            return list(csv.DictReader(texto, delimiter=";", quotechar='"'))
+    documento, pessoa_fisica = identificar_fornecedor(linha.cnpj_ou_cpf_do_fornecedor)
+    return Despesa(
+        pessoa_id=id_pessoa,
+        ano=inteiro(linha.ano_da_despesa),
+        mes=inteiro(linha.mes_da_despesa),
+        categoria=linha.categoria or SEM_CATEGORIA,
+        fornecedor=sem_cpf(linha.fornecedor),
+        cnpj_ou_hash=documento,
+        fornecedor_eh_pessoa_fisica=pessoa_fisica,
+        valor_liquido=valor,
+        data_emissao=_data_iso(linha.data_da_despesa),
+        url_documento=None,
+    )
 
 
-def para_linhas(registros: list[dict], mapa_pessoas: dict[str, int]) -> list[dict]:
-    """Converte em linhas de `despesas`, descartando o que ⛔ não liga a um parlamentar.
+def transformar_camara(linhas: list[LinhaDaCotaDaCamara], id_pessoa_por_id_na_camara: dict[str, int]) -> Transformado:
+    """O arquivo da Câmara inteiro, separado entre o que entra e o que fica fora."""
+    return _separar(despesa_da_camara(linha, id_pessoa_por_id_na_camara) for linha in linhas)
 
-    Descarta, e por quê:
 
-    | Caso | Motivo |
-    |---|---|
-    | Sem `ideCadastro` | São lideranças e órgãos (0,4%), ⛔ não pessoas |
-    | Fora do de-para | Deputado que a ingestão de pessoas ⛔ não trouxe |
-    | Valor zero | Linha administrativa sem efeito financeiro |
+def transformar_senado(linhas: list[LinhaDaCotaDoSenado], id_pessoa_por_nome: dict[str, int]) -> Transformado:
+    """O arquivo da CEAPS inteiro, separado entre o que entra e o que fica fora."""
+    return _separar(despesa_do_senado(linha, id_pessoa_por_nome) for linha in linhas)
+
+
+def reconciliar(transformado: Transformado, conjunto: str, ano: int) -> dict:
+    """O total da fonte, o que entrou na base e o que ficou fora, por motivo (regra 5).
+
+    Sai do mesmo resultado que é gravado: fonte = base + motivos por construção, e o
+    `conferir` ainda confere que a base não mudou depois.
     """
-    linhas: list[dict] = []
-
-    for registro in registros:
-        id_camara = (registro.get("ideCadastro") or "").strip()
-        pessoa_id = mapa_pessoas.get(id_camara)
-        if pessoa_id is None:
-            continue
-
-        valor = _decimal(registro.get("vlrLiquido"))
-        if valor == 0:
-            continue
-
-        documento, pessoa_fisica = _identificar_fornecedor(registro.get("txtCNPJCPF"))
-
-        linhas.append(
-            {
-                "pessoa_id": pessoa_id,
-                "ano": _inteiro(registro.get("numAno")),
-                "mes": _inteiro(registro.get("numMes")),
-                "categoria": (registro.get("txtDescricao") or "").strip() or "SEM CATEGORIA",
-                "fornecedor": (registro.get("txtFornecedor") or "").strip() or None,
-                "cnpj_ou_hash": documento,
-                "fornecedor_eh_pessoa_fisica": pessoa_fisica,
-                "valor_liquido": valor,
-                "data_emissao": (registro.get("datEmissao") or "")[:10] or None,
-                "url_documento": (registro.get("urlDocumento") or "").strip() or None,
-            }
-        )
-
-    return linhas
+    motivos: dict[str, float] = {}
+    for descarte in transformado.descartes:
+        motivos[descarte.motivo] = motivos.get(descarte.motivo, 0.0) + descarte.valor
+    return {
+        "conjunto": conjunto,
+        "medida": "VALOR_LIQUIDO",
+        "ano": ano,
+        "total_na_fonte": round(transformado.total_na_fonte, 2),
+        "total_na_base": round(sum(d.valor_liquido for d in transformado.despesas), 2),
+        "total_inferido": 0.0,
+        "motivos": {m: round(v, 2) for m, v in motivos.items() if round(v, 2) != 0},
+    }
 
 
-def conferir_volume(registros: list[dict], ano: int) -> None:
-    """Canário: arquivo muito menor que o medido significa layout mudado."""
-    if len(registros) < MINIMO_ESPERADO:
-        raise RuntimeError(
-            f"Só {len(registros)} linhas em Ano-{ano}.csv — esperado ao menos "
-            f"{MINIMO_ESPERADO}. O layout do arquivo mudou?"
-        )
-
-
-# ═══════════════════════════════════════════════════════════════════
-
-
-def _identificar_fornecedor(bruto: str | None) -> tuple[str | None, bool]:
+def identificar_fornecedor(bruto: str | None) -> tuple[str | None, bool]:
     """Separa CNPJ de CPF e **hasheia o CPF** — a mesma regra de `receitas`.
 
-    🔴 Usa o mesmo hash de `Pessoa.CpfHash`, o que torna os dois lados comparáveis sem
+    RISCO: Usa o mesmo HMAC de `pessoas.cpf_hash`, o que torna os dois lados comparáveis sem
     reverter nenhum deles.
     """
     digitos = "".join(caractere for caractere in (bruto or "") if caractere.isdigit())
-
     if not digitos:
         return None, False
-
     if len(digitos) == 11:
         return hash_de_cpf(digitos), True
-
     return digitos, False
 
 
-# 🔴 Ponto DECIMAL aqui, o oposto do Portal e do TSE. Usar `valor_pt_br` por engano daria
-# um total mil vezes menor, sem erro — o nome importado é o que impede a troca silenciosa.
-_decimal = valor_com_ponto
+def _separar(resultados) -> Transformado:
+    transformado = Transformado()
+    for resultado in resultados:
+        if isinstance(resultado, Descarte):
+            transformado.descartes.append(resultado)
+        else:
+            transformado.despesas.append(resultado)
+    return transformado
 
 
-def _inteiro(valor: str | None) -> int:
-    try:
-        return int(valor or 0)
-    except ValueError:
-        return 0
+def _decimal_com_virgula(bruto: str | None) -> float:
+    """A CEAPS manda `399,44` e também `4000`, sem centavos, na mesma coluna."""
+    return valor_com_ponto((bruto or "").replace(",", "."))
+
+
+def _data_iso(bruto: str | None) -> str | None:
+    """`dd/mm/aaaa` → `aaaa-mm-dd`. Devolve `None` para o que não converte."""
+    partes = (bruto or "").strip().split("/")
+    if len(partes) != 3 or not all(partes):
+        return None
+    dia, mes, ano = partes
+    return f"{ano}-{mes.zfill(2)}-{dia.zfill(2)}"

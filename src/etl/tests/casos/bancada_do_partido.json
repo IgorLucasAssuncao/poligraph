@@ -1,0 +1,18 @@
+{
+  "sobre": "Casos da regra bancada_do_partido (achado #36). Lidos pelos testes da ETL (Python) e da API (C#): as duas implementações têm de dar a mesma resposta.",
+  "casos": [
+    { "partido": "PT", "bancadas": ["Fdr PT-PCdoB-PV", "Governo", "PL"], "esperado": "Fdr PT-PCdoB-PV" },
+    { "partido": "PCdoB", "bancadas": ["Fdr PT-PCdoB-PV", "Governo", "PL"], "esperado": "Fdr PT-PCdoB-PV" },
+    { "partido": "PV", "bancadas": ["Fdr PT-PCdoB-PV", "Governo", "PL"], "esperado": "Fdr PT-PCdoB-PV" },
+    { "partido": "CIDADANIA", "bancadas": ["Fdr PSDB-CIDADAN"], "esperado": "Fdr PSDB-CIDADAN" },
+    { "partido": "PT", "bancadas": ["Fdr PT-PCdoB-PV", "PT"], "esperado": "PT" },
+    { "partido": "NOVO", "bancadas": ["Novo"], "esperado": "Novo" },
+    { "partido": "UNIÃO", "bancadas": ["União"], "esperado": "União" },
+    { "partido": "SOLIDARIEDADE", "bancadas": ["Solidaried"], "esperado": "Solidaried" },
+    { "partido": "REPUBLICANOS", "bancadas": ["Republican"], "esperado": "Republican" },
+    { "partido": "PSDB", "bancadas": ["PSD"], "esperado": null },
+    { "partido": "PSD", "bancadas": ["PSDB"], "esperado": null },
+    { "partido": "PP", "bancadas": ["Bl UniPpFdrPsdbCid...", "Governo"], "esperado": null },
+    { "partido": "", "bancadas": ["PT"], "esperado": null }
+  ]
+}

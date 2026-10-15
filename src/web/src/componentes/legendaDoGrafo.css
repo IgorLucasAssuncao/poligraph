@@ -1,0 +1,10 @@
+/* ═══ LEGENDA DO GRAFO ═════════════════════════════════════════
+   Três frases abaixo do desenho. ATENÇÃO: Não é rodapé: é o que impede a leitura errada da
+   figura, então tem fundo próprio para não ser pulada. */
+.legenda-grafo {
+  margin: 1rem 0 0; padding: .8rem .95rem; max-width: 48rem;
+  background: var(--painel);
+  border-left: 3px solid var(--borda-forte); border-radius: 0 var(--raio) var(--raio) 0;
+  font-size: var(--t-2); line-height: 1.55; color: var(--suave);
+}
+.legenda-grafo strong { color: var(--texto); font-weight: 600; }

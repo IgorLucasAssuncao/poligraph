@@ -1,6 +1,6 @@
 """Comunidades e layout.
 
-🔴 O que estes testes protegem, acima de tudo, é a **reprodutibilidade**. Louvain e o
+RISCO: O que estes testes protegem, acima de tudo, é a **reprodutibilidade**. Louvain e o
 layout de molas são estocásticos: sem semente fixa, duas execuções sobre o mesmo dado
 dão comunidades e posições diferentes. Num TCC isso é fatal — a banca reproduz e não
 bate.
@@ -15,7 +15,7 @@ from poligraph_etl import grafo
 
 @dataclass(frozen=True)
 class Aresta:
-    """⚠️ Espelha o que `arestas_knn` devolve: `ParSimilar`."""
+    """ATENÇÃO: Espelha o que `arestas_knn` devolve: `ParSimilar`."""
 
     pessoa_a: int
     pessoa_b: int
@@ -25,13 +25,15 @@ class Aresta:
 def dois_blocos() -> tuple[list[int], list[Aresta]]:
     """Dois grupos de 4, densos por dentro e ligados por um fio só.
 
-    ⭐ É a estrutura mais simples em que "comunidade" tem resposta certa conhecida —
+    DECISÃO: É a estrutura mais simples em que "comunidade" tem resposta certa conhecida —
     se o algoritmo não separar isto, não separa nada.
+
+    `arestas.append(Aresta(4, 5, 0.10))`: a única ponte entre os dois
     """
     a, b = [1, 2, 3, 4], [5, 6, 7, 8]
     arestas = [Aresta(x, y, 0.95) for i, x in enumerate(a) for y in a[i + 1 :]]
     arestas += [Aresta(x, y, 0.95) for i, x in enumerate(b) for y in b[i + 1 :]]
-    arestas.append(Aresta(4, 5, 0.10))       # a única ponte entre os dois
+    arestas.append(Aresta(4, 5, 0.10))
 
     return a + b, arestas
 
@@ -47,7 +49,7 @@ def test_separa_dois_blocos_evidentes():
 
 
 def test_duas_execucoes_dao_o_mesmo_resultado():
-    """🔴 Sem semente fixa isto falha — e o TCC deixa de ser reproduzível."""
+    """RISCO: Sem semente fixa isto falha — e o TCC deixa de ser reproduzível."""
     pessoas, arestas = dois_blocos()
     g = grafo.montar(pessoas, arestas)
 
@@ -56,24 +58,30 @@ def test_duas_execucoes_dao_o_mesmo_resultado():
 
 
 def test_comunidades_numeradas_por_tamanho():
-    """⚠️ Sem ordem estável, a legenda da tela troca de cor entre execuções."""
+    """ATENÇÃO: Sem ordem estável, a legenda da tela troca de cor entre execuções.
+
+    `Aresta(1, 2, 0.9), Aresta(2, 3, 0.9), Aresta(1, 3, 0.9),`: trio
+
+    `Aresta(4, 5, 0.9),`: dupla
+
+    DECISÃO: 0 é sempre a MAIOR comunidade
+    """
     pessoas = [1, 2, 3, 4, 5]
     arestas = [
-        Aresta(1, 2, 0.9), Aresta(2, 3, 0.9), Aresta(1, 3, 0.9),   # trio
-        Aresta(4, 5, 0.9),                                          # dupla
+        Aresta(1, 2, 0.9), Aresta(2, 3, 0.9), Aresta(1, 3, 0.9),
+        Aresta(4, 5, 0.9),
     ]
 
     comunidades = grafo.detectar_comunidades(grafo.montar(pessoas, arestas))
 
-    # ⭐ 0 é sempre a MAIOR comunidade
     assert comunidades[1] == 0
     assert comunidades[4] == 1
 
 
 def test_deputado_sem_aresta_continua_no_grafo():
-    """🔴 Quem não passou do mínimo da RN-02 com ninguém não pode SUMIR.
+    """RISCO: Quem não passou do mínimo da RN-02 com ninguém não pode SUMIR.
 
-    ⚠️ Construir o grafo a partir das arestas o eliminaria em silêncio — e um deputado
+    ATENÇÃO: Construir o grafo a partir das arestas o eliminaria em silêncio — e um deputado
     ausente do desenho, sem nada registrando o motivo, é exatamente o tipo de omissão
     que ninguém percebe olhando a tela.
     """
@@ -101,7 +109,7 @@ def test_todo_no_recebe_comunidade_e_posicao():
 
 @pytest.mark.parametrize("atributo", ["eixo_x", "eixo_y"])
 def test_posicoes_ficam_num_intervalo_desenhavel(atributo: str):
-    """⚠️ O `spring_layout` normaliza em torno de [-1, 1]. A tela conta com isso."""
+    """ATENÇÃO: O `spring_layout` normaliza em torno de [-1, 1]. A tela conta com isso."""
     pessoas, arestas = dois_blocos()
 
     nos = grafo.calcular_nos(pessoas, arestas, {})
@@ -111,14 +119,17 @@ def test_posicoes_ficam_num_intervalo_desenhavel(atributo: str):
 
 
 # ═══════════════════════════════════════════════════════════════════
-# Componentes principais (SVD) — PL43
+# Componentes principais (SVD) — Pendência 43
 # ═══════════════════════════════════════════════════════════════════
 
 import numpy as np
 
 
 def test_componentes_separam_padroes_opostos():
-    """⭐ Quatro padrões de voto distintos viram quatro cantos."""
+    """DECISÃO: Quatro padrões de voto distintos viram quatro cantos.
+
+    os dois primeiros concordam no eixo 1 e discordam no 2
+    """
     matriz = np.array(
         [[1, 1, 1, -1], [1, 1, -1, -1], [-1, -1, 1, 1], [-1, -1, -1, 1]],
         dtype=float,
@@ -126,15 +137,14 @@ def test_componentes_separam_padroes_opostos():
 
     c = grafo.calcular_componentes(matriz)
 
-    # os dois primeiros concordam no eixo 1 e discordam no 2
     assert np.sign(c[0, 0]) == np.sign(c[1, 0])
     assert np.sign(c[0, 0]) != np.sign(c[2, 0])
 
 
 def test_componentes_sao_reproduziveis():
-    """🔴 O sinal do SVD é arbitrário: `u` e `-u` são igualmente válidos.
+    """RISCO: O sinal do SVD é arbitrário: `u` e `-u` são igualmente válidos.
 
-    ⚠️ Sem a convenção de sinal, o desenho sairia ESPELHADO entre execuções — a
+    ATENÇÃO: Sem a convenção de sinal, o desenho sairia ESPELHADO entre execuções — a
     "esquerda" da figura viraria a "direita" sem nada ter mudado nos dados. Num TCC,
     a banca reproduz e vê outra figura.
     """
@@ -154,7 +164,7 @@ def test_componentes_ficam_no_intervalo_da_tela():
 
 
 def test_ausencia_nao_quebra_o_svd():
-    """⚠️ `nan` vira 0 — o ponto neutro entre -1 e +1. É limitação registrada,
+    """ATENÇÃO: `nan` vira 0 — o ponto neutro entre -1 e +1. É limitação registrada,
     não descuido: o correto seria imputação."""
     matriz = np.array([[1, np.nan, 1], [-1, -1, np.nan], [1, 1, -1]], dtype=float)
 
@@ -164,7 +174,7 @@ def test_ausencia_nao_quebra_o_svd():
 
 
 def test_no_carrega_as_duas_posicoes():
-    """⭐ PL43: molas e componentes convivem, e a tela escolhe."""
+    """DECISÃO: Pendência 43: molas e componentes convivem, e a tela escolhe."""
     pessoas, arestas = dois_blocos()
     matriz = np.random.default_rng(1).choice([-1.0, 1.0], size=(len(pessoas), 25))
 
@@ -176,16 +186,17 @@ def test_no_carrega_as_duas_posicoes():
 
 
 def test_o_segundo_eixo_fica_menor_quando_explica_menos():
-    """🔴 O bug que fez o SVD "ficar esquisito".
+    """RISCO: O bug que fez o SVD "ficar esquisito".
 
-    ⚠️ Normalizar cada eixo pelo próprio máximo dá ao componente 2 a MESMA altura do
+    ATENÇÃO: Normalizar cada eixo pelo próprio máximo dá ao componente 2 a MESMA altura do
     componente 1 na tela — mesmo ele explicando 9,6% da variância contra 34,6%. Ruído
     desenhado do tamanho do sinal.
 
-    ⭐ Com divisor único, a figura fica achatada na proporção em que o segundo eixo
+    DECISÃO: Com divisor único, a figura fica achatada na proporção em que o segundo eixo
     importa menos. É essa a forma verdadeira.
+
+    dado com muito mais variância no primeiro eixo que no segundo
     """
-    # dado com muito mais variância no primeiro eixo que no segundo
     gerador = np.random.default_rng(11)
     principal = gerador.choice([-1.0, 1.0], size=(60, 1))
     matriz = np.hstack([np.tile(principal, (1, 30)), gerador.normal(0, 0.05, (60, 30))])
@@ -202,17 +213,18 @@ def test_o_segundo_eixo_fica_menor_quando_explica_menos():
 
 
 def test_quem_faltou_e_puxado_para_o_centro():
-    """🔴 A limitação que o centro da figura esconde, travada em teste.
+    """RISCO: A limitação que o centro da figura esconde, travada em teste.
 
-    ⚠️ Não é bug: `nan` vira 0, e depois de centrar o zero fica perto da média. Quem
+    ATENÇÃO: Não é bug: `nan` vira 0, e depois de centrar o zero fica perto da média. Quem
     faltou muito cai no meio do desenho — e o centro passa a misturar quem é moderado
     com quem não votou.
 
-    ⭐ O teste existe para que a limitação seja EXPLÍCITA. Se alguém trocar o
+    DECISÃO: O teste existe para que a limitação seja EXPLÍCITA. Se alguém trocar o
     preenchimento por imputação, ele falha e obriga a revisitar o texto da tela.
+
+    20 deputados com posição forte, 5 que faltaram em quase tudo
     """
     gerador = np.random.default_rng(5)
-    # 20 deputados com posição forte, 5 que faltaram em quase tudo
     fortes = gerador.choice([-1.0, 1.0], size=(20, 1)) * np.ones((20, 40))
     faltosos = np.full((5, 40), np.nan)
     faltosos[:, :4] = 1.0

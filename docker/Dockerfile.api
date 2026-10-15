@@ -2,9 +2,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# ⭐ copiar SÓ os .csproj primeiro: o restore vira camada cacheada.
+# copiar SÓ os .csproj primeiro: o restore vira camada cacheada.
 #    Mudou só código? O restore sai do cache e o build economiza minutos.
 COPY ["src/Poligraph.Api/Poligraph.Api.csproj",                       "src/Poligraph.Api/"]
+COPY ["src/Poligraph.Data/Poligraph.Data.csproj",                     "src/Poligraph.Data/"]
 COPY ["src/Poligraph.ServiceDefaults/Poligraph.ServiceDefaults.csproj","src/Poligraph.ServiceDefaults/"]
 RUN dotnet restore "src/Poligraph.Api/Poligraph.Api.csproj"
 
@@ -14,12 +15,16 @@ RUN dotnet publish "src/Poligraph.Api/Poligraph.Api.csproj" \
 
 # ─── runtime ──────────────────────────────────────────────────────────
 # -chiseled: ~100 MB em vez de ~220 MB, e SEM shell.
-# ⚠️ Sem shell, `docker exec ... bash` não funciona. Para depurar, troque
+# ATENÇÃO: Sem shell, `docker exec ... bash` não funciona. Para depurar, troque
 #    temporariamente para mcr.microsoft.com/dotnet/aspnet:10.0
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled AS final
 WORKDIR /app
 COPY --from=build /app .
 
 USER $APP_UID
+# Pendência 30: as chaves do Data Protection ficam num volume persistente montado aqui.
+# Sem a variável, a API se recusa a subir em produção.
+ENV DataProtection__Pasta=/home/app/chaves
+VOLUME ["/home/app/chaves"]
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "Poligraph.Api.dll"]

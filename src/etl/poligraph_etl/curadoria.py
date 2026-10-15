@@ -1,12 +1,15 @@
 """ANÁLISE — candidatas a pergunta do questionário.
 
 Não escreve pergunta: **ordena e instrui**. Escrever a afirmação em linguagem leiga é
-leitura humana de ementa por ementa (PL11), e o que este módulo faz é reduzir o universo
+leitura humana de ementa por ementa (Pendência 11), e o que este módulo faz é reduzir o universo
 de centenas de votações às poucas dezenas que valem a leitura.
 
 ## ENTRADA
 
-Tabelas `votacoes` e `votos` de uma casa e legislatura.
+Tabelas `votacoes`, `votos` e `proposicoes` de uma casa e legislatura.
+
+DECISÃO: A **ementa** vem de `proposicoes`, ligada por `votacoes.proposicao_id`. Sem ela a
+curadoria lê só a descrição da votação, que não diz sobre o que a matéria é.
 
 ## CRITÉRIO
 
@@ -53,6 +56,16 @@ class Candidata:
     nao: int
     polaridade_sugerida: int
 
+    # DECISÃO: A EMENTA — é ela que torna a leitura humana possível.
+    #
+    # RISCO: A `descricao` diz o NÚMERO do projeto e não diz sobre o que ele é:
+    # *"Aprovado o Substitutivo ao Projeto de Lei Complementar nº 80, de 2026, adotado
+    # pelo relator da Comissão de…"*. Escrever pergunta em linguagem leiga a partir
+    # disso é adivinhação — e a Pendência 11 é o maior bloqueio do projeto.
+    #
+    # ATENÇÃO: Nula em 3 das 266 substantivas da 57ª (98,9% têm) — ver achado sobre Pendência 40.
+    ementa: str | None = None
+
     @property
     def divisao(self) -> float:
         """`min(sim, não) / total` — 0,5 é o máximo, e significa casa dividida ao meio."""
@@ -69,18 +82,25 @@ def candidatas(
 
     linhas = conexao.execute(
         """
-        SELECT vt.id, vt.data, vt.descricao,
+        SELECT vt.id, vt.data, vt.descricao, p.ementa,
                count(*) FILTER (WHERE v.valor = 1)  AS sim,
                count(*) FILTER (WHERE v.valor = -1) AS nao
           FROM votacoes vt
           JOIN votos v ON v.votacao_id = vt.id
+          -- RISCO: `AND p.casa = vt.casa` NÃO é redundante com a chave estrangeira.
+          --    A FK garante que o VÍNCULO seja da mesma casa; ligar apenas por `id`
+          --    leria a linha errada assim mesmo, porque as duas fontes numeram no
+          --    mesmo espaço e as faixas se sobrepõem. A curadoria mostraria a ementa
+          --    de um projeto da Câmara ao lado de uma votação do Senado.
+          LEFT JOIN proposicoes p
+                 ON p.id = vt.proposicao_id AND p.casa = vt.casa
          WHERE vt.casa = %s
            AND vt.legislatura = %s
            AND vt.plenario
            AND NOT vt.secreta
            AND vt.categoria = 'SUBSTANTIVA'
            AND v.valor IN (1, -1)
-         GROUP BY vt.id, vt.data, vt.descricao
+         GROUP BY vt.id, vt.data, vt.descricao, p.ementa
         HAVING count(*) >= %s
         """,
         (casa, legislatura, minimo),
@@ -94,8 +114,9 @@ def candidatas(
             sim=sim,
             nao=nao,
             polaridade_sugerida=inferir_polaridade(descricao),
+            ementa=ementa,
         )
-        for vid, data, descricao, sim, nao in linhas
+        for vid, data, descricao, ementa, sim, nao in linhas
     ]
 
     return sorted(achadas, key=lambda c: c.divisao, reverse=True)[:limite]

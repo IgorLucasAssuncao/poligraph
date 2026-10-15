@@ -3,7 +3,7 @@
 > **Status:** v1.4 — 2026-08-26
 > Os dois artefatos do **passo 1** ([01-arquitetura §8](01-arquitetura.md)). Tudo aqui é
 > derivado dos contratos medidos em [`04-contratos.md`](../04-contratos.md).
-> **v1.4:** ✅ §2.4 — PL13 resolvida: **EF Core com migrations**. 🔴 Snake case obrigatório
+> **v1.4:** ✅ §2.4 — Pendência 13 resolvida: **EF Core com migrations**. 🔴 Snake case obrigatório
 > (o ETL Python lê as mesmas tabelas), `HasCheckConstraint` para preservar as regras
 > medidas, e não chamar `Database.Migrate()` na subida por causa do zero-downtime.
 > **v1.3:** §2.3 — o código COMPLETO da autenticação: Program.cs, os três endpoints, o
@@ -53,7 +53,7 @@ o resultado fica errado sem dar erro"* — e esse é o pior modo de falha possí
 >
 > ⚠️ **Isto já custou caro:** o ETL Python inteiro foi escrito no singular e **nunca
 > conseguiu falar com o banco** — 104 testes verdes contra um schema que não existia.
-> Ver [`achados/`](../achados/README.md) e a PL36 em [`PENDENCIAS`](../PENDENCIAS.md).
+> Ver [`achados/`](../achados/README.md) e a Pendência 36 em [`PENDENCIAS`](../PENDENCIAS.md).
 >
 > ⭐ **A fonte canônica do schema é `src/Poligraph.Api/Data/PoligraphDb.cs`**, e
 > `src/etl/tests/test_contrato_schema.py` trava a divergência automaticamente. Este SQL
@@ -70,7 +70,7 @@ CREATE TABLE pessoa (
     nome_exibicao   TEXT NOT NULL,
     data_nascimento DATE,
     sexo            CHAR(1),
-    cpf_hash        VARCHAR(64)                -- ⚠️ NUNCA o CPF em claro (RNF-13)
+    cpf_hash        VARCHAR(64)                -- ⚠️ NUNCA o CPF em claro (RNF-13); HMAC-SHA256 com chave (Pendência 77)
 );
 
 CREATE TABLE pessoa_fonte_id (
@@ -145,7 +145,7 @@ CREATE TABLE proposicao_tema (
 );
 
 -- ═══════════════════════════════════════════════════════════
--- QUESTIONÁRIO  (curadoria manual — PL11)
+-- QUESTIONÁRIO  (curadoria manual — Pendência 11)
 -- ═══════════════════════════════════════════════════════════
 
 CREATE TABLE pergunta (
@@ -334,7 +334,7 @@ CREATE TABLE token_email (
 | `picture`, `locale` | ✅ |
 | ⛔ `refresh_token`, `id_token`, sessão | ⛔ **Único grupo excluído** — o cookie faz o papel |
 
-⭐ **PL28 resolvida por consequência:** com nome e sobrenome no banco, o digest pode saudar
+⭐ **Pendência 28 resolvida por consequência:** com nome e sobrenome no banco, o digest pode saudar
 pelo nome sem depender de decisão prévia.
 
 #### 2.2.2 🔴 A exclusão da LGPD é um `DELETE` só
@@ -567,7 +567,7 @@ using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔴 Sem isto, todo redeploy desloga todo mundo (PL30)
+// 🔴 Sem isto, todo redeploy desloga todo mundo (Pendência 30)
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo("/keys"))
     .SetApplicationName("poligraph");
@@ -742,8 +742,8 @@ lógica de renovação. **O navegador cuida do cookie.**
 
 | Arranjo | Consequência |
 |---|---|
-| ⭐ `poligraph.com.br` + `poligraph.com.br/api` | ✅ Mesma origem: **sem CORS**, `SameSite=Lax` funciona |
-| `poligraph.com.br` + `api.poligraph.com.br` | ⛔ *Cross-site*: exige `SameSite=None`, CORS com `AllowCredentials` e origem explícita |
+| ⭐ `registroaberto.org` + `registroaberto.org/api` | ✅ Mesma origem: **sem CORS**, `SameSite=Lax` funciona |
+| `registroaberto.org` + `api.registroaberto.org` | ⛔ *Cross-site*: exige `SameSite=None`, CORS com `AllowCredentials` e origem explícita |
 
 > 🔑 **O Traefik já roteia por caminho** ([01-arquitetura §2.1.1](01-arquitetura.md)).
 > Mandar `/api/*` para o container da API **elimina uma classe inteira de problema de
@@ -755,7 +755,7 @@ lógica de renovação. **O navegador cuida do cookie.**
 |---|---|---|
 | `Google:ClientId` | ⭐ **Um por ambiente** — `appsettings.Development.json` e env var do Coolify | ⛔ Não — é público |
 | `VITE_GOOGLE_CLIENT_ID` | 🔴 **Build arg** do Dockerfile do front, não env var | ⛔ Não |
-| Chaves do Data Protection | 🔴 Volume `/keys` no Coolify | ✅ Sim (PL30) |
+| Chaves do Data Protection | 🔴 Volume `/keys` no Coolify | ✅ Sim (Pendência 30) |
 | `ConnectionStrings:Postgres` | Variável de ambiente no Coolify | ✅ Sim |
 
 ⛔ **Não existe `Google:ClientSecret`** — este fluxo não usa (02 §3.4.0).
@@ -778,7 +778,7 @@ curl -i http://localhost:5000/api/seguidos                  # → 401
 ⭐ **Esses três comandos provam o mecanismo inteiro** — e viram teste de integração.
 
 ---
-## 2.4 ✅ EF Core e migrations — PL13 resolvida (2026-08-26)
+## 2.4 ✅ EF Core e migrations — Pendência 13 resolvida (2026-08-26)
 
 > **Decisão do autor:** usar **EF Core** com as **migrations do próprio EF**, em vez de
 > script SQL versionado à mão.
@@ -1094,8 +1094,8 @@ O item 6 é o que prova que o princípio da §1 está funcionando.
 
 | # | Pendência |
 |---|---|
-| ~~PL13~~ | ✅ **EF Core migrations** (§2.4) — decisão do autor, 2026-08-26 |
-| **PL14** | Definir a política de retenção de `execucao` (§9.6 dos contratos) |
-| **PL15** | Decidir se `pessoa` guarda `casa` ou se ela fica só em `mandato` |
+| ~~Pendência 13~~ | ✅ **EF Core migrations** (§2.4) — decisão do autor, 2026-08-26 |
+| **Pendência 14** | Definir a política de retenção de `execucao` (§9.6 dos contratos) |
+| **Pendência 15** | Decidir se `pessoa` guarda `casa` ou se ela fica só em `mandato` |
 | **A2** | Escrever e validar as regex de `categoria` |
-| ~~PL28~~ | ✅ Resolvida por consequência — nome e sobrenome estão no banco (§2.2.1) |
+| ~~Pendência 28~~ | ✅ Resolvida por consequência — nome e sobrenome estão no banco (§2.2.1) |

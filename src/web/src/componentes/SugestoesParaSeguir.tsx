@@ -1,50 +1,67 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listarParlamentares, listarSeguidos, type Parlamentar } from '../api';
-import { Avatar } from './Avatar';
-import { BotaoSeguir } from './BotaoSeguir';
+import { AvatarComponent } from './Avatar';
+import { BotaoSeguirComponent } from './BotaoSeguir';
+import { useSessao } from '../sessao';
+import { SUGESTOES_PARA_SEGUIR } from '../constantes';
+import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
-const QUANTOS = 3;
 
 /**
  * "Quem seguir" — o cartão lateral.
  *
- * 🔴 A ordem NÃO é recomendação editorial. São os parlamentares com mais votações
+ * RISCO: A ordem NÃO é recomendação editorial. São os parlamentares com mais votações
  * registradas, ou seja, os que têm mais dado disponível — e isso está escrito na tela.
  *
- * ⚠️ Ordenar por "relevância" num site sobre política seria dar destaque a alguns
+ * ATENÇÃO: Ordenar por "relevância" num site sobre política seria dar destaque a alguns
  * parlamentares por critério nosso, contrariando a RNF-16.
+ *
+ * DECISÃO: Sem conta, as mesmas sugestões: o botão leva a entrar. A lista de seguidos
+ * responderia 401, e por isso não é pedida.
+ *
+ * DECISÃO: A ordem é feita no servidor, e só vem o que a tela mostra — mais os que a
+ * pessoa já segue, que saem daqui. Antes vinha a lista inteira para usar 3.
+ *
+ * DECISÃO: O critério fica à vista: ordem por dado disponível, não por juízo nosso.
  */
-export function SugestoesParaSeguir() {
+export function SugestoesParaSeguirComponent() {
+  const { usuario } = useSessao();
   const [sugestoes, setSugestoes] = useState<Parlamentar[]>([]);
   const [seguidos, setSeguidos] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    Promise.all([listarParlamentares(), listarSeguidos()])
-      .then(([todos, jaSeguidos]) => {
-        const ids = new Set(jaSeguidos.map((p) => p.id));
+    if (!usuario) {
+      listarParlamentares({ ordem: 'VOTACOES', tamanho: SUGESTOES_PARA_SEGUIR })
+        .then((pagina) => setSugestoes(pagina.itens))
+        .catch(() => setSugestoes([]));
+      return;
+    }
+
+    listarSeguidos()
+      .then(async (jaSeguidos) => {
+        const ids = new Set(jaSeguidos.map((p) => p.idPessoa));
+        const pagina = await listarParlamentares({
+          ordem: 'VOTACOES',
+          tamanho: SUGESTOES_PARA_SEGUIR + ids.size,
+        });
         setSeguidos(ids);
-        setSugestoes(
-          todos
-            .filter((p) => !ids.has(p.id))
-            .sort((a, b) => b.nVotacoes - a.nVotacoes)
-            .slice(0, QUANTOS),
-        );
+        setSugestoes(pagina.itens.filter((p) => !ids.has(p.idPessoa)).slice(0, SUGESTOES_PARA_SEGUIR));
       })
       .catch(() => setSugestoes([]));
-  }, []);
+  }, [usuario]);
 
   if (sugestoes.length === 0) return null;
 
   return (
     <section className="cartao-lateral">
-      <h2>Quem seguir</h2>
+      <h2>{T.sugestoes.titulo}</h2>
 
       <ul className="sugestoes">
         {sugestoes.map((p) => (
-          <li key={p.id}>
-            <Link to={`/parlamentar/${p.id}`} className="sugestao-link">
-              <Avatar nome={p.nome} fotoUrl={p.urlFoto} tamanho="medio" />
+          <li key={p.idPessoa}>
+            <Link to={`/parlamentar/${p.idPessoa}`} className="sugestao-link" title={T.sugestoes.dica(p.nome, p.partido, p.uf)}>
+              <AvatarComponent nome={p.nome} fotoUrl={p.urlFoto} tamanho="medio" />
               <span className="sugestao-texto">
                 <strong>{p.nome}</strong>
                 <small>
@@ -54,13 +71,14 @@ export function SugestoesParaSeguir() {
               </span>
             </Link>
 
-            <BotaoSeguir
-              pessoaId={p.id}
-              seguindo={seguidos.has(p.id)}
-              aoAlternar={(id, agora) =>
+            <BotaoSeguirComponent
+              idPessoa={p.idPessoa}
+              seguindo={seguidos.has(p.idPessoa)}
+              aoAlternar={(idPessoa, agora) =>
                 setSeguidos((atual) => {
                   const novo = new Set(atual);
-                  agora ? novo.add(id) : novo.delete(id);
+                  if (agora) novo.add(idPessoa);
+                  else novo.delete(idPessoa);
                   return novo;
                 })
               }
@@ -69,11 +87,10 @@ export function SugestoesParaSeguir() {
         ))}
       </ul>
 
-      {/* ⭐ O critério fica à vista: ordem por dado disponível, não por juízo nosso. */}
-      <p className="criterio">Ordenado por número de votações registradas.</p>
+      <p className="criterio">{T.sugestoes.criterio}</p>
 
-      <Link to="/explorar" className="ver-mais">
-        Ver todos
+      <Link to="/parlamentares" className="ver-mais">
+        {T.sugestoes.verTodos}
       </Link>
     </section>
   );

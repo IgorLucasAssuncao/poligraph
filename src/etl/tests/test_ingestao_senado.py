@@ -118,12 +118,34 @@ def test_o_mapeamento_da_camara_nao_serve():
     """As duas casas exigem normalizações diferentes.
 
     `Votou` não existe na Câmara, e passá-lo pelo normalizador de lá devolveria `None`
-    por acaso — não por decisão. O contrário é pior: `Obstrução` não existe no Senado.
+    por acaso — não por decisão. O contrário também: `Artigo 17` é o presidente da
+    Câmara; o do Senado vem como prefixo `Presidente`.
+
+    ATENÇÃO: O exemplo era `Obstrução`, "que não existe no Senado". Na 57ª não existia; em 2011
+    aparece uma vez (achado #35). Medir uma legislatura e generalizar, de novo.
     """
     from poligraph_etl.normalizacao import normalizar_voto as normalizar_camara
 
-    assert normalizar_camara("Obstrução") is None
-    assert ingestao_senado.eh_sigla_conhecida("Obstrução") is False
+    assert normalizar_camara("Artigo 17") is None
+    assert ingestao_senado.eh_sigla_conhecida("Artigo 17") is False
+
+
+def test_siglas_das_legislaturas_anteriores_sao_conhecidas_e_sem_posicao():
+    """MEDIDO: Achado #35, com a descrição que a própria fonte publica para cada uma."""
+    for sigla in ("REP", "P-OD", "LG", "LA", "Obstrução"):
+        assert ingestao_senado.eh_sigla_conhecida(sigla), sigla
+        assert ingestao_senado.normalizar_voto(sigla) is None, sigla
+
+
+def test_presenca_das_siglas_anteriores():
+    assert ingestao_senado.presenca_do_voto("REP") == "AUSENTE_JUSTIFICADO"
+    assert ingestao_senado.presenca_do_voto("LG") == "AUSENTE_JUSTIFICADO"
+    assert ingestao_senado.presenca_do_voto("P-OD") == "PRESENTE"
+
+
+def test_merc_continua_desconhecida():
+    """A fonte não descreve `MERC`. Sem descrição, não palpite: fica no log."""
+    assert ingestao_senado.eh_sigla_conhecida("MERC") is False
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -204,11 +226,38 @@ def test_senador_entra_sem_cpf():
     assert linhas[0]["fonte"] == "SENADO"
 
 
+def test_foto_do_senado_e_o_endereco_final_em_https():
+    """O endereço publicado vem em `http://` e redireciona (301); o final responde direto."""
+    linhas = ingestao_senado.senadores_para_linhas(
+        [
+            {
+                "CodigoParlamentar": "5672",
+                "NomeParlamentar": "Alan Rick",
+                "UrlFotoParlamentar":
+                    "http://www.senado.leg.br/senadores/img/fotos-oficiais/senador5672.jpg",
+            }
+        ]
+    )
+
+    assert linhas[0]["url_foto"] == "https://legis.senado.leg.br/senadores/fotos-oficiais/5672"
+
+
+def test_senador_que_veio_pelo_voto_tambem_tem_foto():
+    """MEDIDO: 375 de 458 senadores ficavam sem foto: só a lista de exercício a trazia."""
+    [linha] = ingestao_senado.senadores_dos_votos(
+        [votacao(votos=[voto(codigoParlamentar=70, nomeParlamentar="Fulano")])], ja_conhecidos=set()
+    )
+
+    assert linha["url_foto"] == "https://legis.senado.leg.br/senadores/fotos-oficiais/70"
+
+
 def test_usa_o_codigo_parlamentar_nao_o_publico():
     """São dois identificadores diferentes no mesmo objeto: 5672 e 800.
 
     O que aparece em `/votacao` é o `CodigoParlamentar`. Escolher o outro quebra o join
     entre senador e voto sem erro nenhum — todos os votos seriam descartados.
+
+    E é esse mesmo código que o voto traz
     """
     linhas = ingestao_senado.senadores_para_linhas(
         [
@@ -222,7 +271,6 @@ def test_usa_o_codigo_parlamentar_nao_o_publico():
 
     assert linhas[0]["id_externo"] == "5672"
 
-    # E é esse mesmo código que o voto traz
     mapa = {linhas[0]["id_externo"]: 42}
     assert ingestao_senado.votos_para_linhas([votacao()], mapa)[0]["pessoa_id"] == 42
 
@@ -342,3 +390,136 @@ def test_votacao_secreta_tem_placar_zero():
 
     assert linhas[0]["votos_sim"] == 0
     assert linhas[0]["votos_nao"] == 0
+
+
+def test_senador_ja_trazido_pela_lista_nao_e_recriado_pelo_voto():
+    """RISCO: Sem isto, `gravar_pessoas` sobrescreve o nome civil pelo nome parlamentar.
+
+    A lista de exercício traz `NomeCompletoParlamentar`; o voto não traz. Como o
+    upsert faz `SET nome_civil = ...`, o segundo passo regredia o dado — e foi assim
+    que os 104 senadores ficaram sem chave para casar com o TSE.
+    """
+    votacoes = [{"votos": [{"codigoParlamentar": "5540", "nomeParlamentar": "Fulano"}]}]
+
+    assert ingestao_senado.senadores_dos_votos(votacoes, ja_conhecidos={"5540"}) == []
+    assert len(ingestao_senado.senadores_dos_votos(votacoes)) == 1
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Presença — separada da posição
+# ═══════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.parametrize(
+    ("sigla", "presenca"),
+    [
+        ("Sim", "PRESENTE"),
+        ("Não", "PRESENTE"),
+        # Votação secreta e "presente, não registrou voto": presença sem posição.
+        ("Votou", "PRESENTE"),
+        ("P-NRV", "PRESENTE"),
+        ("Presidente (art. 51 RISF)", "PRESENTE"),
+        ("LS", "AUSENTE_JUSTIFICADO"),
+        ("MIS", "AUSENTE_JUSTIFICADO"),
+        ("AP", "AUSENTE_JUSTIFICADO"),
+        ("NCom", "AUSENTE"),
+        ("NA", None),
+        # ATENÇÃO: Sigla nova não vira presença: inflaria o número sem erro.
+        ("XYZ", None),
+    ],
+)
+def test_presenca_pela_sigla(sigla, presenca):
+    from poligraph_etl.ingestao_senado import presenca_do_voto
+
+    assert presenca_do_voto(sigla) == presenca
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Achado #35 — a lacuna da fonte em 2015 e 2016
+# ═══════════════════════════════════════════════════════════════════
+
+
+def test_lacuna_conhecida_passa_com_aviso(caplog):
+    from poligraph_etl.fontes import senado
+
+    with caplog.at_level("WARNING", logger="poligraph"):
+        senado.conferir_volume([{}] * 13, 2016)
+
+    assert "lacuna conhecida" in caplog.text
+
+
+def test_abaixo_do_piso_da_lacuna_continua_estourando():
+    """A lacuna é um piso: o canário só se cala para o volume que foi MEDIDO."""
+    from poligraph_etl.fontes import senado
+
+    with pytest.raises(RuntimeError):
+        senado.conferir_volume([{}] * 5, 2016)
+
+
+def test_ano_sem_lacuna_conhecida_continua_estourando():
+    from poligraph_etl.fontes import senado
+
+    with pytest.raises(RuntimeError):
+        senado.conferir_volume([{}] * 13, 2021)
+
+
+def test_voto_sem_uf_nem_partido_entra_vazio_e_nao_nulo():
+    """MEDIDO: 2002: ausência registrada sem UF (achado #35). As colunas são NOT NULL."""
+    sem_uf = votacao(votos=[voto(siglaUFParlamentar=None, siglaPartidoParlamentar=None, siglaVotoParlamentar="NCom")])
+
+    [linha] = ingestao_senado.votos_para_linhas([sem_uf], {"5672": 42})
+
+    assert linha["uf_no_voto"] == "" and linha["partido_no_voto"] == ""
+
+
+# ═══════════════════════════════════════════════════════════════════
+# Achado #37 — votação de 1998 com data de 2015
+# ═══════════════════════════════════════════════════════════════════
+
+
+def test_votacao_antiga_com_data_recente_fica_fora():
+    """MEDIDO: O registro real: código 1483, matéria de 1998, `dataSessao` 2015-04-01."""
+    antiga = votacao(codigoSessaoVotacao=1483, dataSessao="2015-04-01")
+    atual = votacao(codigoSessaoVotacao=5560, dataSessao="2016-05-11")
+
+    validas, fora = ingestao_senado.separar_fora_de_epoca([antiga, atual])
+
+    assert validas == [atual]
+    assert fora == [antiga]
+
+
+def test_codigo_novo_com_data_antiga_tambem_fica_fora():
+    """MEDIDO: 2002 trouxe o código 5293, que pela sequência é de 2014."""
+    validas, fora = ingestao_senado.separar_fora_de_epoca(
+        [votacao(codigoSessaoVotacao=5293, dataSessao="2002-06-12")]
+    )
+
+    assert validas == []
+    assert len(fora) == 1
+
+
+@pytest.mark.parametrize(
+    ("codigo", "data"),
+    [(21, "2003-02-18"), (2503, "2003-12-17"), (2523, "2004-02-10"), (7105, "2026-06-30")],
+)
+def test_as_pontas_medidas_da_numeracao_ficam_dentro(codigo, data):
+    validas, fora = ingestao_senado.separar_fora_de_epoca(
+        [votacao(codigoSessaoVotacao=codigo, dataSessao=data)]
+    )
+
+    assert len(validas) == 1
+    assert fora == []
+
+
+def test_sem_codigo_segue_para_o_descarte_de_sempre():
+    validas, fora = ingestao_senado.separar_fora_de_epoca([votacao(codigoSessaoVotacao=None)])
+
+    assert len(validas) == 1
+    assert fora == []
+    assert ingestao_senado.votacoes_para_linhas(validas) == []
+
+
+def test_o_id_gravado_e_o_que_se_apaga():
+    [linha] = ingestao_senado.votacoes_para_linhas([votacao(codigoSessaoVotacao=1483)])
+
+    assert linha["id"] == ingestao_senado.id_da_votacao(votacao(codigoSessaoVotacao=1483)) == "SF-1483"

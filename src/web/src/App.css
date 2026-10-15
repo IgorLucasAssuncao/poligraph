@@ -3,24 +3,20 @@
    Ver .claude/skills/design-visual/SKILL.md para o porquê de cada
    escolha. O resumo:
 
-   🔴 A cor não pode sugerir espectro político (RNF-16). Daí um ÚNICO
+   RISCO: A cor não pode sugerir espectro político (RNF-16). Daí um ÚNICO
       tom de realce, teal — nenhum partido brasileiro o reivindica, e
       ele lê como instrumento de medição, não como bandeira.
 
-   ⚠️ Três papéis tipográficos: Archivo levemente EXPANDIDA para
+   ATENÇÃO: Três papéis tipográficos: Archivo levemente EXPANDIDA para
       display (placa institucional, não pôster condensado), IBM Plex
       Sans para corpo, IBM Plex Mono para todo número — porque todo
       número aqui vem com a base junto e precisa alinhar.
 
-   🔴 Fontes auto-hospedadas. O CDN do Google entregaria o IP de todo
+   RISCO: Fontes auto-hospedadas. O CDN do Google entregaria o IP de todo
       visitante em toda visita, contra a postura do resto do projeto.
    ═══════════════════════════════════════════════════════════════ */
 
-@import '@fontsource-variable/archivo/standard.css';
-@import '@fontsource/ibm-plex-sans/400.css';
-@import '@fontsource/ibm-plex-sans/500.css';
-@import '@fontsource/ibm-plex-sans/600.css';
-@import '@fontsource/ibm-plex-sans/700.css';
+@import '@fontsource-variable/public-sans/wght.css';
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
 @import '@fontsource/ibm-plex-mono/600.css';
@@ -35,10 +31,47 @@
   --realce: #0f766e;
   --realce-hover: #115e57;
   --realce-fraco: #e6f2f0;
+  /* Escala do mapa das emendas: areia → ocre. Quente e de uma família só; Não passa pelo
+     vermelho, que lembraria partido (RNF-16). */
+  --mapa-0: #eef0f2;
+  --mapa-1: #fde9b0;
+  --mapa-2: #f9c96b;
+  --mapa-3: #ee9a3a;
+  --mapa-4: #c96a1b;
+  --mapa-5: #8a4210;
+  --mapa-contorno: #ffffff;
   --perigo: #a8321f;
-  /* ⚠️ Texto sobre o realce. No claro o teal é escuro e pede branco; no escuro
+  /* ATENÇÃO: Texto sobre o realce. No claro o teal é escuro e pede branco; no escuro
         ele clareia e branco perderia contraste — daí ser token, não literal. */
-  --sobre-realce: #ffffff;
+    --sobre-realce: #ffffff;
+  /* Contorno de campo e controle: 3:1 contra --fundo e --painel (WCAG 1.4.11). As
+     bordas decorativas continuam em --borda; esta é a que identifica o controle. */
+  --borda-controle: #7d8894;
+  /* A faixa de procedência tem tokens próprios: pintada com --texto ela INVERTE no
+     tema escuro e vira texto claro sobre fundo claro. */
+  --faixa-fundo: #12161b;
+  --faixa-texto: #e6eaee;
+
+  /* Escala tipográfica: 6 passos no lugar dos 40 valores soltos que havia. */
+  --t-1: .8125rem;   /* 13px — rótulo, legenda */
+  --t-2: .9375rem;   /* 15px — texto secundário */
+  --t-3: 1rem;       /* 16px — texto corrido */
+  --t-4: 1.25rem;    /* 20px — título de seção */
+  --t-5: 1.625rem;   /* 26px — título de página, nome em destaque */
+  --t-6: 2.125rem;   /* 34px — número em destaque */
+
+  /* Dois raios: 0 e este. Cápsula e círculo eram a marca de rede social. */
+  --raio: 3px;
+
+  /* Véu do tour. Mais denso no escuro: sobre a página já escura, 60% quase não aparece
+     e o elemento destacado deixa de se separar do resto. */
+  --veu: rgb(12 16 20 / 60%);
+  /* Contorno do destaque do tour. Teal contra o véu claro dá 1,1:1 e some; branco
+     separa. No escuro o véu quase não escurece (a página já é quase preta), então quem
+     separa é o teal, com um brilho em volta. */
+  --anel-tour: #ffffff;
+  --brilho-tour: 0 0 0 0 transparent;
+  --sombra-flutuante: 0 12px 32px rgb(12 16 20 / 22%);
 
   --largura-esq: 17.5rem;
   --largura-centro: 37.5rem;
@@ -49,7 +82,7 @@
      devagar e freia forte, que é como objeto físico se move — o olho lê como
      natural. Linear lê como máquina.
 
-     ⚠️ Duração acima de ~400ms deixa de ser suavidade e vira espera. */
+     ATENÇÃO: Duração acima de ~400ms deixa de ser suavidade e vira espera. */
   --curva: cubic-bezier(.2, 0, 0, 1);              /* padrão — a maior parte */
   --curva-entrada: cubic-bezier(.05, .7, .1, 1);   /* algo que CHEGA: freia longo */
   --curva-saida: cubic-bezier(.3, 0, .8, .15);     /* algo que SAI: acelera e some */
@@ -57,44 +90,109 @@
   --t-curto: 160ms;     /* hover, cor, borda */
   --t-medio: 260ms;     /* troca de tela */
   --t-longo: 380ms;     /* pergunta a pergunta, onde a distância é maior */
-  /* ⚠️ O painel é o único lugar onde passar de 400ms se justifica: não é espera, é o
+  /* ATENÇÃO: O painel é o único lugar onde passar de 400ms se justifica: não é espera, é o
         momento de recompensa, e ele acontece enquanto a pessoa ainda lê o resultado. */
   --t-painel: 420ms;
 
-  --display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
-  --corpo: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display: 'Public Sans Variable', 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --corpo: 'Public Sans Variable', 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --dado: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
   font-family: var(--corpo);
   color: var(--texto);
   background: var(--fundo);
-  font-size: 15px;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
 }
 
+/* ═══ TEMA ═════════════════════════════════════════════════════
+   RISCO: São TRÊS estados, não dois. O padrão é "sistema", e nesse caso nada é
+   carimbado no elemento raiz — só `prefers-color-scheme` separa claro de escuro.
+   Escolher explicitamente carimba `data-tema`, e a escolha precisa vencer o sistema
+   nos DOIS sentidos: escuro sobre SO claro e claro sobre SO escuro.
+
+   ATENÇÃO: Por isso a paleta escura aparece duas vezes, com seletores diferentes:
+   · dentro do `@media`, guardada por `:not([data-tema='claro'])` — senão o SO escuro
+     ignoraria quem pediu claro
+   · fora dele, em `[data-tema='escuro']` — senão a escolha não venceria um SO claro
+
+   Nenhuma cor pode ter a ÚNICA definição dentro do `@media`: no estado sem carimbo
+   ela nunca se aplicaria, e a tela sairia com o texto de um tema sobre o fundo do
+   outro. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-tema='claro']) {
     --fundo: #0b0e11;
     --painel: #161b21;
     --borda: #232a32;
     --borda-forte: #39434e;
     --texto: #e6eaee;
     --suave: #8b96a3;
-    --realce: #4dd4c4;
-    --realce-hover: #7ae3d6;
+    --realce: #6fb3a9;
+    --realce-hover: #8cc4bc;
     --realce-fraco: #0e2724;
+    --mapa-0: #1b2128;
+    --mapa-1: #4a3413;
+    --mapa-2: #7a5018;
+    --mapa-3: #b0701f;
+    --mapa-4: #e0962f;
+    --mapa-5: #ffc766;
+    --mapa-contorno: #0b0e11;
     --perigo: #f0705c;
     --sobre-realce: #06201d;
+    --borda-controle: #6b7784;
+    --faixa-fundo: #1d252d;
+    --faixa-texto: #e6eaee;
+    --veu: rgb(0 0 0 / 72%);
+    --anel-tour: #6fb3a9;
+    --brilho-tour: 0 0 28px 6px rgb(77 212 196 / 32%);
+    --sombra-flutuante: 0 12px 32px rgb(0 0 0 / 60%);
   }
 }
 
+:root[data-tema='escuro'] {
+  --fundo: #0b0e11;
+  --painel: #161b21;
+  --borda: #232a32;
+  --borda-forte: #39434e;
+  --texto: #e6eaee;
+  --suave: #8b96a3;
+  --realce: #6fb3a9;
+  --realce-hover: #8cc4bc;
+  --realce-fraco: #0e2724;
+  --mapa-0: #1b2128;
+  --mapa-1: #4a3413;
+  --mapa-2: #7a5018;
+  --mapa-3: #b0701f;
+  --mapa-4: #e0962f;
+  --mapa-5: #ffc766;
+  --mapa-contorno: #0b0e11;
+  --perigo: #f0705c;
+  --sobre-realce: #06201d;
+    --borda-controle: #6b7784;
+    --faixa-fundo: #1d252d;
+    --faixa-texto: #e6eaee;
+    --veu: rgb(0 0 0 / 72%);
+    --anel-tour: #6fb3a9;
+    --brilho-tour: 0 0 28px 6px rgb(77 212 196 / 32%);
+    --sombra-flutuante: 0 12px 32px rgb(0 0 0 / 60%);
+}
+
+/* ATENÇÃO: `color-scheme` acompanha a escolha: sem isso a barra de rolagem, o `<select>` e o
+   seletor de data continuam pintados pelo SO, e o contraste some. */
+:root[data-tema='escuro'] { color-scheme: dark; }
+:root[data-tema='claro'] { color-scheme: light; }
+
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--fundo); }
+/* ATENÇÃO: O tamanho do texto corrido mora AQUI, e não no :root. No :root ele virava a base do
+   `rem`: com 15 px na raiz, toda a escala saía 6% menor — o "13 px" dos rótulos virava
+   12,2 px, e de 30% a 48% do texto das telas de dado ficava abaixo de 13 px (medido no
+   Edge, 25/09/2026). Com a raiz no padrão do navegador (16 px, ou o que a pessoa escolheu),
+   os tokens valem o que o comentário de cada um diz. */
+body { margin: 0; background: var(--fundo); font-size: var(--t-2); }
 a { color: inherit; text-decoration: none; }
 
 /**
- * ⭐ Resposta tátil em tudo que é clicável, não só nos botões grandes.
+ * DECISÃO: Resposta tátil em tudo que é clicável, não só nos botões grandes.
  *
  * O recuo é minúsculo (2%) e rápido (90ms) de propósito: acima de ~100ms deixa de ser
  * percebido como "o botão respondeu" e vira animação, que atrasa a próxima ação. Abaixo
@@ -113,53 +211,83 @@ button:active:not(:disabled),
 
 button { font: inherit; cursor: pointer; }
 
-/* ⚠️ Display expandida (wdth 114): ocupa a linha com calma, como placa.
+/* ATENÇÃO: Display expandida (wdth 114): ocupa a linha com calma, como placa.
       Condensada seria o reflexo automático de todo título. */
 h1, h2 {
   font-family: var(--display);
-  font-variation-settings: 'wdth' 114;
   line-height: 1.15;
   letter-spacing: -.012em;
 }
 h3 { line-height: 1.25; }
 
-/* ⭐ Todo número deste produto vem com a base junto ("4 de 5"). Algarismo
+/* DECISÃO: Todo número deste produto vem com a base junto ("4 de 5"). Algarismo
       tabular alinha e faz o número parecer medido, não afirmado. */
 strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 
 /* ═══ FOCO ═════════════════════════════════════════════════════ */
-/* 🔴 Um anel só, em tudo. Sem isto o site é inutilizável no teclado. */
+/* RISCO: Um anel só, em tudo. Sem isto o site é inutilizável no teclado. */
 :focus-visible {
-  outline: 2px solid var(--realce);
+  outline: 3px solid var(--realce);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--raio);
 }
 :focus:not(:focus-visible) { outline: none; }
 
 /* ═══ MOLDURA DO SITE ══════════════════════════════════════════ */
 /**
- * ⚠️ Estrutura de serviço público, ⛔ não de rede social: faixa de procedência,
+ * ATENÇÃO: Estrutura de serviço público, não de rede social: faixa de procedência,
  *    cabeçalho de largura total com navegação horizontal, corpo, rodapé.
  *
- * ⭐ Largura total de propósito. A versão centralizada com max-width deixava calha
+ * DECISÃO: Largura total de propósito. A versão centralizada com max-width deixava calha
  *    morta dos dois lados — a assinatura visual do Twitter, que é exatamente o que a
  *    banca levantaria.
  */
 .site { display: flex; flex-direction: column; min-height: 100vh; }
 
-/* ═══ FAIXA DE PROCEDÊNCIA ═════════════════════════════════════ */
-/* ⭐ De onde vem o dado, antes de tudo. Sem isto o site afirma sem creditar. */
-.faixa-procedencia {
-  background: var(--texto); color: var(--fundo);
-  font-family: var(--dado); font-size: .72rem; letter-spacing: .01em;
-}
-.faixa-conteudo {
-  display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
-  padding: .4rem clamp(1rem, 4vw, 3rem);
-}
-.faixa-natureza { opacity: .65; }
-
 /* ═══ CABEÇALHO DO SITE ════════════════════════════════════════ */
+/* Faixa de procedência. NÃO é fixa: rola com a página; o cabeçalho abaixo é que gruda.
+   Cores próprias (--faixa-*) porque --texto inverte no escuro. */
+.faixa-procedencia {
+  display: flex; flex-wrap: wrap; gap: .15rem 1rem;
+  margin: 0; padding: .4rem clamp(1rem, 4vw, 3rem);
+  background: var(--faixa-fundo); color: var(--faixa-texto);
+  font-size: var(--t-1); line-height: 1.4;
+  view-transition-name: faixa;
+}
+.faixa-procedencia strong { font-weight: 600; }
+/* DECISÃO: O seletor de período mora na faixa: o mesmo lugar em todo o site. Cores da faixa,
+   Não do conteúdo — senão vira um controle claro numa tira escura. */
+.faixa-procedencia { align-items: center; }
+.faixa-periodo { margin-left: auto; font-variant-numeric: tabular-nums; opacity: .85; }
+
+/* DECISÃO: Pílula na cor da faixa, não o select nativo com borda branca e fonte de máquina — que
+   destoava da tira e "ficou bem feio" (autor, 2026-10-02). A seta é desenhada com dois
+   gradientes em `currentColor`: acompanha o tema sem imagem. */
+/* DECISÃO: A barra do período, no alto do conteúdo (2026-10-02): na faixa, ficava escondida. */
+/* DECISÃO (2026-10-10): mesma faixa do seletor de período do Governo, sem caixa cinza em volta. */
+.barra-periodo { margin: 0 0 1rem; padding: .9rem 0; border-bottom: 1px solid var(--borda); }
+.barra-periodo-linha { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem .9rem; }
+.barra-periodo-rotulo { font-weight: 700; font-size: var(--t-3); }
+.barra-periodo-ajuda { color: var(--suave); font-size: var(--t-2); }
+/* Período passado: a tela inteira é de outro tempo, e isso precisa ser visto. */
+.barra-periodo-passada { padding-left: .9rem; border-left: 4px solid var(--realce); }
+.barra-periodo-aviso { margin: .5rem 0 0; font-size: var(--t-2); }
+
+.seletor-legislatura {
+  display: inline-flex; align-items: center; gap: .45rem;
+  color: var(--texto); font-size: var(--t-3);
+}
+/* O mesmo controle do seletor de período do Governo: borda, raio de 3px e o período na fonte de dado. */
+.seletor-legislatura select {
+  padding: .35rem .5rem; font: inherit; font-size: var(--t-2); font-family: var(--dado); font-variant-numeric: tabular-nums;
+  color: var(--texto); background: var(--painel); cursor: pointer;
+  border: 1px solid var(--borda-controle); border-radius: var(--raio);
+  transition: border-color var(--t-curto) var(--curva);
+}
+.seletor-legislatura select:hover { border-color: var(--realce); }
+.seletor-legislatura select:focus-visible { outline: 2px solid var(--realce); outline-offset: 1px; }
+.seletor-legislatura option { color: var(--texto); background: var(--fundo); font-weight: 400; }
+
 .cabecalho-site {
   position: sticky; top: 0; z-index: 30;
   background: var(--fundo);
@@ -176,23 +304,23 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   flex-shrink: 0;
 }
 .marca-texto {
-  display: flex; flex-direction: column; line-height: 1.1;
-  font-family: var(--display); font-variation-settings: 'wdth' 118;
-  font-size: 1.2rem; font-weight: 700; letter-spacing: -.022em;
+  display: flex; flex-direction: column; line-height: 1.1; white-space: nowrap;
+  font-family: var(--display);
+  font-size: var(--t-4); font-weight: 700; letter-spacing: -.022em;
 }
 .marca-texto small {
-  font-family: var(--corpo); font-variation-settings: normal;
-  font-size: .68rem; font-weight: 400; letter-spacing: 0;
+  font-family: var(--corpo);
+  font-size: var(--t-1); font-weight: 400; letter-spacing: 0;
   color: var(--suave); margin-top: .12rem;
 }
 
-/* ⚠️ Navegação horizontal com marcador embaixo — o padrão de aba de site
+/* ATENÇÃO: Navegação horizontal com marcador embaixo — o padrão de aba de site
       institucional. O pill vertical era o do Twitter. */
 .nav-principal { display: flex; gap: .25rem; margin-right: auto; overflow-x: auto; }
 .nav-item {
   display: flex; align-items: center; gap: .5rem;
   padding: 0 .85rem; border-bottom: 3px solid transparent;
-  font-size: .93rem; font-weight: 500; color: var(--suave);
+  font-size: var(--t-2); font-weight: 500; color: var(--suave);
   white-space: nowrap;
 }
 .nav-item svg { width: 18px; height: 18px; }
@@ -203,44 +331,41 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 }
 .nav-item.active svg { color: var(--realce); }
 
-.cabecalho-conta { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
 .usuario-mini {
   display: flex; align-items: center; gap: .5rem;
-  padding: .4rem .6rem; border-radius: 6px; min-width: 0;
+  padding: .4rem .6rem; border-radius: var(--raio); min-width: 0;
 }
 .usuario-mini:hover { background: var(--painel); }
 .usuario-mini-nome {
-  font-size: .88rem; font-weight: 500;
+  font-size: var(--t-2); font-weight: 500;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .botao-texto {
   background: none; border: none; color: var(--suave);
-  font-size: .85rem; padding: .4rem .6rem; border-radius: 6px;
+  font-size: var(--t-2); padding: .4rem .6rem; border-radius: var(--raio);
 }
 .botao-texto:hover { color: var(--realce); background: var(--realce-fraco); }
 
 /* ═══ CORPO ════════════════════════════════════════════════════ */
-/* ⭐ minmax(0, 1fr) na central: sem o 0, conteúdo largo (tabela, código) estoura
+/* DECISÃO: minmax(0, 1fr) na central: sem o 0, conteúdo largo (tabela, código) estoura
       a coluna em vez de rolar dentro dela. */
+/* DECISÃO: Uma coluna, e a largura vem da ROTA.
+   Antes era sempre `1fr + 21rem de sugestões`, com a central travada em 52rem — o
+   feed do Twitter. Num monitor de 2560px o grafo desenhava 643 nós em 832px. */
 .corpo {
   flex: 1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--largura-dir);
-  gap: clamp(1rem, 3vw, 2.5rem);
-  padding: 0 clamp(1rem, 4vw, 3rem);
-  align-items: start;
-}
-
-.coluna-central {
-  min-width: 0;
-  /* ⚠️ Teto de medida, não de layout: linha de texto acima de ~75ch fica difícil de
-        ler. A coluna preenche o espaço; o TEXTO é que tem limite. */
-  max-width: 52rem;
-  border-inline: 1px solid var(--borda);
+  width: 100%;
+  margin-inline: auto;
+  padding: 1.5rem clamp(1rem, 4vw, 3rem) 0;
   min-height: 60vh;
 }
 
-.coluna-direita { position: sticky; top: 5.5rem; padding: 1.25rem 0; }
+/* ATENÇÃO: Teto de MEDIDA, não de layout: linha de texto acima de ~75ch fica difícil de ler.
+      Onde o conteúdo é figura e não texto, o teto some. */
+.corpo[data-largura='estreita'] { max-width: 44rem; }
+.corpo[data-largura='media'] { max-width: 60rem; }
+.corpo[data-largura='larga'] { max-width: 76rem; }
+.corpo[data-largura='ampla'] { max-width: 96rem; }
 
 /* ═══ RODAPÉ DO SITE ═══════════════════════════════════════════ */
 .rodape-site {
@@ -255,49 +380,59 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   max-width: 80rem;
 }
 .rodape-site h2 {
-  margin: 0 0 .5rem; font-size: .78rem; font-weight: 600;
-  font-family: var(--dado); font-variation-settings: normal;
+  margin: 0 0 .5rem; font-size: var(--t-1); font-weight: 600;
+  font-family: var(--dado);
   text-transform: uppercase; letter-spacing: .1em; color: var(--suave);
 }
-.rodape-site p { margin: 0; font-size: .86rem; line-height: 1.55; color: var(--suave); }
+.rodape-site p { margin: 0; font-size: var(--t-2); line-height: 1.55; color: var(--suave); }
 .rodape-site a { color: var(--realce); }
 .rodape-site a:hover { text-decoration: underline; }
 
-/* 🔴 RNF-14 — em toda tela, não só na de resultado. */
+/* RISCO: RNF-14 — em toda tela, não só na de resultado. */
 .rodape-aviso {
   border-top: 1px solid var(--borda);
   padding: 1rem clamp(1rem, 4vw, 3rem);
 }
-.rodape-aviso p { margin: 0; font-size: .82rem; color: var(--suave); max-width: 60rem; }
+.rodape-aviso p { margin: 0; font-size: var(--t-2); color: var(--suave); max-width: 60rem; }
 .rodape-aviso strong { color: var(--texto); }
 
 /* ═══ CABEÇALHO DA COLUNA ══════════════════════════════════════ */
-.cabecalho-coluna {
-  position: sticky; top: 0; z-index: 10;
-  display: flex; align-items: center; gap: 1.1rem;
-  padding: .8rem 1rem;
-  background: color-mix(in srgb, var(--fundo) 85%, transparent);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--borda);
+/* ATENÇÃO: NÃO é sticky. Eram duas barras grudadas somando 110px permanentes — 14% de uma
+      janela de 800px, para dizer duas vezes onde a pessoa está. */
+/* ATENÇÃO: quebra a linha. No celular, voltar, "Parlamentar" e "Entenda esta tela" somavam 372 px
+      em 358 px, e o botão, que não encolhe, passava da borda. */
+.cabecalho-pagina {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.1rem;
+  margin-bottom: 1.25rem;
 }
-.cabecalho-coluna h1 { margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: -.01em; }
-.cabecalho-coluna p { margin: .1rem 0 0; font-size: .82rem; color: var(--suave); }
+.cabecalho-pagina h1 {
+  margin: 0; font-family: var(--display);
+  font-size: var(--t-5); font-weight: 700; letter-spacing: -.02em;
+}
+.cabecalho-pagina p { margin: .15rem 0 0; font-size: var(--t-2); color: var(--suave); }
+.cabecalho-pagina-acao { margin-left: auto; flex-shrink: 0; }
 .botao-icone {
   display: grid; place-items: center;
-  width: 2.2rem; height: 2.2rem; border-radius: 50%;
+  width: 2.2rem; height: 2.2rem; border-radius: var(--raio);
   background: none; border: none; color: inherit;
 }
 .botao-icone:hover { background: var(--painel); }
 
 /* ═══ AVATAR ═══════════════════════════════════════════════════ */
-.avatar { border-radius: 50%; flex-shrink: 0; object-fit: cover; }
+.avatar { border-radius: var(--raio); flex-shrink: 0; object-fit: cover; }
 .avatar-iniciais {
+  position: relative; overflow: hidden;
   display: inline-grid; place-items: center;
   color: #fff; font-weight: 700; letter-spacing: .01em;
 }
-.avatar-pequeno { width: 2rem; height: 2rem; font-size: .7rem; }
-.avatar-medio { width: 2.6rem; height: 2.6rem; font-size: .8rem; }
-.avatar-grande { width: 5.25rem; height: 5.25rem; font-size: 1.5rem; }
+/* A foto cobre as iniciais quando chega; se falha, as iniciais ficam. */
+.avatar-foto {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; border-radius: inherit;
+}
+.avatar-pequeno { width: 2rem; height: 2rem; font-size: var(--t-1); }
+.avatar-medio { width: 2.6rem; height: 2.6rem; font-size: var(--t-1); }
+.avatar-grande { width: 5.25rem; height: 5.25rem; font-size: var(--t-5); }
 
 /* ═══ LINHAS DA TIMELINE ═══════════════════════════════════════ */
 .linha {
@@ -311,21 +446,23 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .linha-topo { display: flex; align-items: baseline; gap: .35rem; flex-wrap: wrap; }
 .linha-nome { font-weight: 700; }
 .linha-nome:hover { text-decoration: underline; }
-.linha-meta { color: var(--suave); font-size: .88rem; }
-.linha-detalhe { color: var(--suave); font-size: .88rem; margin-top: .15rem; display: block; }
+.linha-meta { color: var(--suave); font-size: var(--t-2); }
+.linha-detalhe { color: var(--suave); font-size: var(--t-2); margin-top: .15rem; display: block; }
 .linha-acao { align-self: center; }
 
 /* ═══ BOTÕES ═══════════════════════════════════════════════════ */
 .botao-seguir, .botao-seguindo {
-  padding: .38rem .95rem; font-size: .875rem; font-weight: 700;
-  border-radius: 999px; white-space: nowrap;
+  padding: .38rem .95rem; font-size: var(--t-2); font-weight: 700;
+  border-radius: var(--raio); white-space: nowrap;
 }
+/* DECISÃO (2026-10-03): contorno, e não preto cheio. Oito botões cheios na lista lateral do
+      Início chamavam mais atenção que "Compare seu voto", a ação principal da tela. */
 .botao-seguir {
-  background: var(--texto); color: var(--fundo);
-  border: 1px solid var(--texto); min-width: 9.5rem;
+  background: transparent; color: var(--realce);
+  border: 1px solid var(--realce); min-width: 9.5rem;
 }
-.botao-seguir:hover { opacity: .85; }
-/* ⚠️ min-width fixo: o texto do hover é mais longo, e sem isto a linha inteira
+.botao-seguir:hover { background: var(--realce); color: var(--sobre-realce); }
+/* ATENÇÃO: min-width fixo: o texto do hover é mais longo, e sem isto a linha inteira
       da timeline reflui a cada passagem do mouse. */
 .botao-seguindo {
   background: transparent; color: var(--texto);
@@ -337,24 +474,24 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 
 .botao-destaque, .botao-secundario {
   display: inline-block; padding: .6rem 1.25rem;
-  font-weight: 700; font-size: .92rem; border-radius: 999px;
+  font-weight: 700; font-size: var(--t-2); border-radius: var(--raio);
 }
 .botao-destaque { background: var(--realce); color: var(--sobre-realce); border: 1px solid var(--realce); }
 .botao-destaque:hover { background: var(--realce-hover); }
 .botao-secundario { color: var(--texto); border: 1px solid var(--borda-forte); background: transparent; }
 .botao-secundario:hover { background: var(--painel); }
 .botao-perigo {
-  padding: .55rem 1.2rem; font-weight: 700; font-size: .9rem; border-radius: 999px;
+  padding: .55rem 1.2rem; font-weight: 700; font-size: var(--t-2); border-radius: var(--raio);
   background: transparent; color: var(--perigo); border: 1px solid var(--perigo);
 }
 .botao-perigo:hover { background: var(--perigo); color: var(--fundo); }
 
 /* ═══ CARTÃO LATERAL ═══════════════════════════════════════════ */
 .cartao-lateral {
-  background: var(--painel); border-radius: 16px;
+  background: var(--painel); border-radius: var(--raio);
   padding: .9rem 0; margin-bottom: 1rem;
 }
-.cartao-lateral h2 { margin: 0 1rem .7rem; font-size: 1.15rem; font-weight: 800; }
+.cartao-lateral h2 { margin: 0 1rem .7rem; font-size: var(--t-4); font-weight: 800; }
 .sugestoes { list-style: none; margin: 0; padding: 0; }
 .sugestoes li {
   display: flex; align-items: center; gap: .6rem;
@@ -363,34 +500,67 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .sugestoes li:hover { background: var(--borda); }
 .sugestao-link { display: flex; align-items: center; gap: .65rem; flex: 1; min-width: 0; }
 .sugestao-texto { display: flex; flex-direction: column; min-width: 0; }
-.sugestao-texto strong { font-size: .92rem; }
+.sugestao-texto strong { font-size: var(--t-2); }
 .sugestao-texto strong:hover { text-decoration: underline; }
-.sugestao-texto small { color: var(--suave); font-size: .84rem; }
-.criterio { margin: .5rem 1rem 0; font-family: var(--dado); font-size: .72rem; color: var(--suave); }
-.ver-mais { display: block; padding: .7rem 1rem 0; color: var(--realce); font-size: .92rem; }
+.sugestao-texto small { color: var(--suave); font-size: var(--t-2); }
+/* ATENÇÃO: Uma linha cada, com reticências e o nome inteiro no `title`. Com o botão de 9,5rem,
+   sobravam ~4rem para o nome: ele quebrava em três linhas e a sigla do partido era
+   cortada no meio (2026-10-01). */
+.sugestao-texto strong, .sugestao-texto small {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* DECISÃO: Botão menor só aqui: "Deixar de seguir" ainda cabe em 8rem na letra menor, e a
+   linha não reflui no hover. */
+.sugestoes .botao-seguir, .sugestoes .botao-seguindo {
+  min-width: 8rem; padding: .3rem .6rem; font-size: var(--t-1);
+}
+.criterio { margin: .5rem 1rem 0; font-family: var(--dado); font-size: var(--t-1); color: var(--suave); }
+.ver-mais { display: block; padding: .7rem 1rem 0; color: var(--realce); font-size: var(--t-2); }
 .ver-mais:hover { text-decoration: underline; }
 
 /* ═══ PERFIL ═══════════════════════════════════════════════════ */
-.capa-perfil { height: 7rem; background: var(--painel); border-bottom: 1px solid var(--borda); }
-.perfil-cabecalho { padding: 0 1rem 1rem; border-bottom: 1px solid var(--borda); }
+.perfil-cabecalho { padding: 1.25rem 1rem 1rem; border-bottom: 1px solid var(--borda); }
+/* Foto, nome e "Seguir" numa linha: a identidade inteira num olhar. No celular o botão
+   desce para baixo do nome em vez de espremê-lo. */
 .perfil-avatar-linha {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  margin-top: -2.6rem; margin-bottom: .75rem;
+  display: flex; align-items: center; flex-wrap: wrap; gap: .75rem 1rem;
+  margin-bottom: .75rem;
 }
-.perfil-avatar-linha .avatar { border: 4px solid var(--fundo); }
-.perfil-identidade h1 { margin: 0; font-size: 1.35rem; font-weight: 800; letter-spacing: -.01em; }
-.perfil-identidade .nome-civil { margin: .1rem 0 0; color: var(--suave); font-size: .92rem; }
+.perfil-avatar-linha .perfil-identidade { flex: 1 1 12rem; min-width: 0; }
+.perfil-identidade h1 { margin: 0; font-size: var(--t-4); font-weight: 800; letter-spacing: -.01em; }
+.perfil-identidade .nome-civil { margin: .1rem 0 0; color: var(--suave); font-size: var(--t-2); }
 .perfil-chips { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem; }
+.perfil-inativo { margin: .6rem 0 0; color: var(--suave); font-size: var(--t-2); }
+.contas-aviso { margin: 1rem 0 .4rem; font-size: var(--t-1); color: var(--suave); }
+
+/* Os mandatos do parlamentar. Um só vira a linha que diz de quando é a ficha; dois ou
+   mais viram links, e o ativo leva o realce como as outras abas. */
+.mandatos-unico { margin: .6rem 0 0; font-size: var(--t-2); color: var(--suave); }
+.mandatos { margin-top: .75rem; }
+.mandatos-rotulo { display: block; margin-bottom: .35rem; font-size: var(--t-1); color: var(--suave); }
+.mandatos ul { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+.mandatos a {
+  display: flex; flex-direction: column; gap: .1rem;
+  padding: .4rem .7rem;
+  border: 1px solid var(--borda-controle); border-radius: var(--raio);
+  color: var(--texto); text-decoration: none;
+  transition: border-color var(--t-curto) var(--curva), background var(--t-curto) var(--curva);
+}
+.mandatos a:hover { border-color: var(--realce); }
+.mandatos a.ativo { border-color: var(--realce); background: var(--realce-fraco); }
+.mandatos-unico .dado, .mandatos a .dado { font-family: var(--dado); font-size: var(--t-2); font-variant-numeric: tabular-nums; }
+.mandatos-detalhe { font-size: var(--t-1); color: var(--suave); }
+
 /* A casa ganha peso próprio: ela situa o resto, e um chip idêntico ao do partido a
    faria ler como mais um atributo entre outros. Cor NÃO — a paleta é única, e nenhum
    realce pode sugerir espectro político (RNF-16). A distinção é de borda e peso. */
 .chip-casa { border-color: var(--borda-forte); color: var(--texto); font-weight: 600; }
 .chip {
-  padding: .2rem .65rem; border-radius: 4px;
-  font-family: var(--dado); font-size: .78rem;
+  padding: .2rem .65rem; border-radius: var(--raio);
+  font-family: var(--dado); font-size: var(--t-1);
   background: var(--painel); color: var(--suave); border: 1px solid var(--borda);
 }
-.perfil-numeros { display: flex; gap: 1.25rem; margin-top: .75rem; font-size: .9rem; }
+.perfil-numeros { display: flex; gap: 1.25rem; margin-top: .75rem; font-size: var(--t-2); }
 .perfil-numeros strong { color: var(--texto); }
 .perfil-numeros span { color: var(--suave); }
 
@@ -399,22 +569,22 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .aba {
   flex: 1; padding: .95rem .5rem; text-align: center;
   background: none; border: none; color: var(--suave);
-  font-weight: 600; font-size: .93rem; position: relative;
+  font-weight: 600; font-size: var(--t-2); position: relative;
 }
 .aba:hover { background: var(--painel); color: var(--texto); }
 .aba-ativa { color: var(--texto); font-weight: 800; }
 .aba-ativa::after {
   content: ''; position: absolute; inset: auto 0 0;
   height: 4px; width: 3.5rem; margin: 0 auto;
-  background: var(--realce); border-radius: 999px;
+  background: var(--realce); border-radius: var(--raio);
 }
 
 /* ═══ VOTO ═════════════════════════════════════════════════════ */
-/* ⚠️ Selos NEUTROS. Verde/vermelho leriam como acerto/erro (RNF-16). */
+/* ATENÇÃO: Selos NEUTROS. Verde/vermelho leriam como acerto/erro (RNF-16). */
 .selo {
   display: inline-block; min-width: 5.4rem; text-align: center;
-  padding: .14rem .55rem; border-radius: 4px;
-  font-family: var(--dado); font-size: .72rem; font-weight: 500;
+  padding: .14rem .55rem; border-radius: var(--raio);
+  font-family: var(--dado); font-size: var(--t-1); font-weight: 500;
   text-transform: uppercase; letter-spacing: .06em;
   border: 1px solid var(--borda-forte); color: var(--suave);
 }
@@ -423,30 +593,30 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .selo-ausente { opacity: .6; }
 
 /* ═══ FEED ═════════════════════════════════════════════════════ */
-.noticia-trecho { margin: .35rem 0 0; color: var(--suave); font-size: .9rem; }
 
 /* ═══ BUSCA E FILTROS ══════════════════════════════════════════ */
 .filtros { display: flex; gap: .5rem; padding: .8rem 1rem; flex-wrap: wrap; border-bottom: 1px solid var(--borda); }
 .filtros input, .filtros select {
-  font: inherit; font-size: .92rem; padding: .6rem .9rem;
-  border-radius: 999px; border: 1px solid var(--borda);
-  background: var(--painel); color: inherit;
+  font: inherit; font-size: var(--t-2); padding: .6rem .9rem;
+  border-radius: var(--raio); border: 1px solid var(--borda-controle);
+  background: var(--fundo); color: inherit;
 }
 .filtros input { flex: 1; min-width: 11rem; }
+
 .filtros input:focus, .filtros select:focus {
-  outline: none; border-color: var(--realce); background: var(--fundo);
+  border-color: var(--realce); background: var(--fundo);
 }
 
 /* ═══ QUESTIONÁRIO ═════════════════════════════════════════════ */
 .questionario { padding-bottom: 4rem; }
-.progresso { padding: .75rem 1rem; border-bottom: 1px solid var(--borda); font-size: .85rem; color: var(--suave); }
-.barra-progresso { height: 4px; border-radius: 999px; background: var(--borda); margin-top: .45rem; overflow: hidden; }
-/* ⚠️ Mesma curva do resto: a barra e o cartão avançam juntos, senão a barra
+.progresso { padding: .75rem 1rem; border-bottom: 1px solid var(--borda); font-size: var(--t-2); color: var(--suave); }
+.barra-progresso { height: 4px; border-radius: var(--raio); background: var(--borda); margin-top: .45rem; overflow: hidden; }
+/* ATENÇÃO: Mesma curva do resto: a barra e o cartão avançam juntos, senão a barra
       chega antes e a tela parece dessincronizada. */
 .barra-progresso div {
   height: 100%; background: var(--realce);
   transition: width var(--t-longo) var(--curva);
-  /* ⭐ O brilho liga o avanço da barra ao clique que acabou de acontecer — sem ele a
+  /* DECISÃO: O brilho liga o avanço da barra ao clique que acabou de acontecer — sem ele a
         barra cresce sozinha, num canto, e o ganho passa despercebido. */
   box-shadow: 0 0 0 0 var(--realce);
   animation: pulsar-progresso 620ms var(--curva-entrada);
@@ -459,14 +629,14 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 
 /* ═══ AVALIAÇÃO — modal ════════════════════════════════════════ */
 /**
- * ⚠️ Era um bloco no fim da tela de resultado. Quem não rolava até lá nunca via, e a
+ * ATENÇÃO: Era um bloco no fim da tela de resultado. Quem não rolava até lá nunca via, e a
  *    amostra da pesquisa virava "quem tem paciência de rolar" — recorte enviesado.
  */
 .modal-avaliacao {
   width: min(30rem, calc(100vw - 2rem));
   padding: 1.5rem;
   border: 1px solid var(--borda-forte);
-  border-radius: 14px;
+  border-radius: var(--raio);
   background: var(--fundo);
   color: var(--texto);
   box-shadow: 0 12px 40px rgb(0 0 0 / 22%);
@@ -474,19 +644,19 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .modal-avaliacao::backdrop { background: rgb(0 0 0 / 45%); backdrop-filter: blur(2px); }
 
 .modal-avaliacao header { margin-bottom: 1.25rem; }
-.modal-avaliacao h2 { margin: 0 0 .2rem; font-size: 1.25rem; }
+.modal-avaliacao h2 { margin: 0 0 .2rem; font-size: var(--t-4); }
 .modal-avaliacao .ajuda { margin: 0; }
 
 .modal-avaliacao fieldset { border: none; padding: 0; margin: 0 0 1.35rem; }
-.modal-avaliacao legend { font-weight: 600; font-size: .93rem; padding: 0; margin-bottom: .55rem; }
+.modal-avaliacao legend { font-weight: 600; font-size: var(--t-2); padding: 0; margin-bottom: .55rem; }
 
 .opcoes-avaliacao { display: flex; gap: .5rem; }
 .opcoes-avaliacao label { flex: 1; text-align: center; }
 
 .escala, .opcoes-avaliacao { display: flex; flex-wrap: wrap; gap: .35rem; }
 .escala label, .opcoes-avaliacao label {
-  padding: .45rem .7rem; border: 1px solid var(--borda-forte); border-radius: 6px;
-  font-size: .82rem; cursor: pointer;
+  padding: .45rem .7rem; border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  font-size: var(--t-2); cursor: pointer;
   transition: background var(--t-curto) var(--curva), border-color var(--t-curto) var(--curva);
 }
 .escala label:hover, .opcoes-avaliacao label:hover { background: var(--painel); }
@@ -502,52 +672,95 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .avaliacao-pronta p { margin: 0; }
 
 /* ═══ LOGIN ════════════════════════════════════════════════════ */
+/* DECISÃO (2026-10-10, pedido do autor): a marca à esquerda e as informações à direita, as duas
+      no centro da tela e sem rolagem. O tema vai para o canto, e o respiro cabe numa tela de 768 px. */
 .tela-login {
-  min-height: 100vh;
-  display: grid; grid-template-columns: 1fr 1fr;
-  max-width: 68rem; margin: 0 auto; gap: 3rem;
-  align-items: center; padding: 2rem 1.5rem;
+  position: relative; box-sizing: border-box; min-height: 100dvh;
+  display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 3rem;
+  max-width: 68rem; margin: 0 auto; padding: 1.25rem 1.5rem;
 }
-/* ⭐ A coluna da marca é decorativa: some primeiro quando falta espaço. */
-.login-marca { display: grid; place-items: center; color: var(--realce); opacity: .9; }
-.login-conteudo { max-width: 27rem; }
+/* DECISÃO: A coluna da marca é decorativa: some primeiro quando falta espaço. */
+.login-marca { display: grid; place-items: center; }
+.login-conteudo { max-width: 32rem; width: 100%; }
 .login-titulo {
-  margin: 0 0 .75rem; font-size: 2.7rem; font-weight: 700;
-  font-variation-settings: 'wdth' 116;
+  margin: 0 0 .75rem; font-size: var(--t-6); font-weight: 700;
   letter-spacing: -.03em; line-height: 1.06;
 }
-.login-chamada { color: var(--suave); margin: 0 0 1.75rem; font-size: 1.05rem; line-height: 1.5; }
-.o-que-tem { list-style: none; padding: 0; margin: 1.5rem 0; text-align: left; }
-.o-que-tem li { padding: .45rem 0 .45rem 1.5rem; position: relative; font-size: .93rem; color: var(--suave); }
+.login-chamada { color: var(--suave); margin: 0 0 1.1rem; font-size: var(--t-3); line-height: 1.5; }
+.login-chamada strong { color: var(--texto); font-weight: 600; }
+
+/* DECISÃO: O interruptor de tema também aqui: quem chega no escuro e prefere claro não
+      deveria ter de entrar primeiro para poder trocar. */
+.login-topo { position: absolute; top: 1rem; right: 1rem; }
+
+/* DECISÃO: A evidência que sustenta a chamada. "Compare com o voto registrado" é promessa;
+      643 deputados e 463.994 votos é o que a torna verificável — e é o argumento mais
+      forte que esta tela tem para justificar pedir uma conta. */
+.login-base {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 1px; margin: 1.1rem 0 0;
+  background: var(--borda); border: 1px solid var(--borda); border-radius: var(--raio);
+  overflow: hidden;
+}
+.login-base > div { background: var(--fundo); padding: .8rem .9rem; }
+.login-base dt { font-size: var(--t-1); color: var(--suave); }
+.login-base dd {
+  margin: .1rem 0 .15rem;
+  font-family: var(--dado); font-size: var(--t-5); font-weight: 600;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+}
+.login-base small {
+  display: block; font-size: var(--t-1); line-height: 1.4; color: var(--suave);
+  font-variant-numeric: tabular-nums;
+}
+.o-que-tem { list-style: none; padding: 0; margin: 1rem 0; text-align: left; }
+.o-que-tem li { padding: .2rem 0 .2rem 1.5rem; position: relative; font-size: var(--t-2); color: var(--suave); }
 .o-que-tem li::before { content: '—'; position: absolute; left: 0; color: var(--realce); }
-.acao-login { display: flex; min-height: 44px; }
+/* ATENÇÃO: Coluna alinhada à esquerda. Era `display: flex` sem eixo declarado: o botão que o
+   SDK do Google injeta não tem largura própria, e numa linha flex ele encolhia e
+   ficava fora de prumo com o texto acima. A mensagem de erro também ia parar ao lado
+   dele, em vez de abaixo. */
+.acao-login {
+  display: flex; flex-direction: column; align-items: flex-start;
+  gap: .6rem; min-height: 44px;
+}
+.aviso-config {
+  margin: 0; padding: .7rem .85rem;
+  background: var(--painel); border-left: 3px solid var(--perigo); border-radius: 0 var(--raio) var(--raio) 0;
+  font-size: var(--t-2); line-height: 1.5; color: var(--suave);
+}
+.login-opcional { margin: .6rem 0 0; color: var(--suave); font-size: var(--t-2); }
+/* O caminho sem conta, logo abaixo do login: mesma largura de botão, em contorno, para não competir com ele. */
+.botao-sem-conta {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 40px; min-width: 228px;
+  padding: 0 1rem; border: 1px solid var(--realce); border-radius: var(--raio);
+  color: var(--realce); font-size: var(--t-2); font-weight: 600; text-decoration: none;
+}
+.botao-sem-conta:hover { background: var(--realce); color: var(--sobre-realce); }
+.botao-sem-conta:focus-visible { outline: 3px solid var(--realce); outline-offset: 2px; }
+.login-opcional a { color: var(--realce); }
 .aviso-privacidade {
-  font-size: .78rem; color: var(--suave); text-align: left;
-  border-top: 1px solid var(--borda); padding-top: 1rem; line-height: 1.5;
+  font-size: var(--t-1); color: var(--suave);
+  border-top: 1px solid var(--borda); padding-top: .75rem; line-height: 1.5;
 }
 .aviso-privacidade a { color: var(--realce); }
-.aviso-academico { font-size: .8rem; color: var(--suave); margin-top: 1rem; }
+.aviso-academico { font-size: var(--t-1); color: var(--suave); margin: .6rem 0 0; }
 
 /* ═══ CONTA ════════════════════════════════════════════════════ */
 .conta-identidade { display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1rem; border-bottom: 1px solid var(--borda); }
 .conta-secao { padding: 1.25rem 1rem; border-bottom: 1px solid var(--borda); }
-.conta-secao h2 { margin: 0 0 .4rem; font-size: 1.02rem; }
-.confirmacao { border: 1px solid var(--perigo); border-radius: 14px; padding: 1rem; margin-top: .75rem; }
+.conta-secao h2 { margin: 0 0 .4rem; font-size: var(--t-3); }
+.confirmacao { border: 1px solid var(--perigo); border-radius: var(--raio); padding: 1rem; margin-top: .75rem; }
 .confirmacao-acoes { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .75rem; }
 
 /* ═══ ESTADOS ══════════════════════════════════════════════════ */
-.vazio, .carregando { padding: 2rem 1rem; color: var(--suave); text-align: center; font-size: .93rem; }
+.vazio, .carregando { padding: 2rem 1rem; color: var(--suave); text-align: center; font-size: var(--t-2); }
 .erro { color: var(--perigo); padding: 0 1rem; }
-.ajuda { color: var(--suave); font-size: .88rem; }
-.nota-privacidade { color: var(--suave); font-size: .8rem; margin-top: 1rem; }
-.aviso { border-left: 3px solid var(--borda-forte); padding-left: .8rem; color: var(--suave); font-size: .87rem; margin: 1rem; }
-.aviso-config { font-size: .84rem; color: var(--suave); }
+.ajuda { color: var(--suave); font-size: var(--t-2); }
+.nota-privacidade { color: var(--suave); font-size: var(--t-1); margin-top: 1rem; }
+.aviso { border-left: 3px solid var(--borda-forte); padding-left: .8rem; color: var(--suave); font-size: var(--t-2); margin: 1rem; }
+.aviso-config { font-size: var(--t-2); color: var(--suave); }
 .carregando-inicial { display: grid; place-items: center; min-height: 100vh; color: var(--suave); }
-
-.convite { padding: 2rem 1rem; text-align: center; }
-.convite h2 { margin: 0 0 .5rem; font-size: 1.3rem; font-weight: 800; }
-.convite p { color: var(--suave); margin: 0 auto 1.25rem; max-width: 26rem; }
-.convite-acoes { display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; }
 
 /* ═══ BANNER DE CONSENTIMENTO ══════════════════════════════════ */
 .banner-consentimento {
@@ -556,83 +769,250 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   background: var(--fundo); border-top: 1px solid var(--borda-forte);
   box-shadow: 0 -8px 24px rgb(0 0 0 / 12%);
 }
-.banner-consentimento h2 { margin: 0 auto .5rem; font-size: 1.05rem; max-width: 46rem; }
-.banner-consentimento p { margin: .4rem auto; font-size: .88rem; max-width: 46rem; color: var(--suave); }
-/* ⚠️ Mesmo peso nos dois botões, de propósito — LGPD art. 9º §3 */
+.banner-consentimento h2 { margin: 0 auto .5rem; font-size: var(--t-3); max-width: 46rem; }
+.banner-consentimento p { margin: .4rem auto; font-size: var(--t-2); max-width: 46rem; color: var(--suave); }
+/* ATENÇÃO: Mesmo peso nos dois botões, de propósito — LGPD art. 9º §3 */
 .banner-acoes { display: flex; gap: .75rem; margin: 1rem auto .5rem; max-width: 46rem; }
 .banner-acoes button {
-  flex: 0 1 11rem; padding: .6rem 1rem; border-radius: 999px;
+  flex: 0 1 11rem; padding: .6rem 1rem; border-radius: var(--raio);
   border: 1px solid var(--borda-forte); background: transparent; color: inherit; font-weight: 600;
 }
 .banner-acoes button:hover { background: var(--painel); }
-.banner-rodape { font-size: .8rem; }
+.banner-rodape { font-size: var(--t-1); }
 .banner-rodape a { color: var(--realce); }
 
 /* ═══ DOCUMENTO LEGAL ══════════════════════════════════════════ */
-.documento-legal { padding: 1.25rem 1rem 3rem; line-height: 1.65; }
-.documento-legal h1 { font-size: 1.5rem; font-weight: 800; }
-.documento-legal h2 { font-size: 1.05rem; margin-top: 2rem; }
-.documento-legal table { border-collapse: collapse; margin: 1rem 0; width: 100%; font-size: .88rem; }
-.documento-legal td { border: 1px solid var(--borda); padding: .45rem .65rem; }
-.documento-legal li { margin-left: 1.2rem; }
-.documento-legal a { color: var(--realce); }
-.acoes-legais button { margin: .5rem 0; }
+/* ═══ DOCUMENTO LEGAL ══════════════════════════════════════════
+   DECISÃO: Tratado como documento, não como mais uma tela do app: medida de leitura curta,
+      entrelinha alta, hierarquia por tamanho e espaço em vez de peso e cor.
+
+   ATENÇÃO: A numeração das seções vem do CSS, não do texto. Escrita à mão ela sai de
+      ordem na primeira seção inserida no meio — e num documento em que se cita "a
+      seção 5" isso deixa de ser detalhe. */
+.documento-legal {
+  counter-reset: secao;
+  padding: 2.5rem 0 4rem;
+  line-height: 1.7;
+  font-size: var(--t-2);
+}
+.documento-legal > div > p { margin: 0 0 1rem; color: var(--suave); }
+.documento-legal strong { color: var(--texto); font-weight: 600; }
+
+.documento-legal h1 {
+  margin: 0 0 .35rem;
+  font-family: var(--display);
+  font-size: var(--t-6); font-weight: 700; letter-spacing: -.025em;
+}
+
+.documento-legal h2 {
+  counter-increment: secao;
+  display: flex; align-items: baseline; gap: .7rem;
+  margin: 3rem 0 .9rem;
+  font-family: var(--display);
+  font-size: var(--t-4); font-weight: 700; letter-spacing: -.015em;
+}
+.documento-legal h2::before {
+  content: counter(secao);
+  font-family: var(--dado); font-size: var(--t-1); font-weight: 600;
+  color: var(--realce);
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  padding: .1rem .45rem;
+  flex-shrink: 0;
+}
+
+/* A régua entre seções vira só respiro: com o número na frente do título, a linha
+   horizontal a cada bloco fatiava o texto em cartõezinhos. */
+.documento-legal hr { display: none; }
+
+.documento-legal ul, .documento-legal li { margin: 0; padding: 0; }
+.documento-legal li {
+  position: relative;
+  margin: 0 0 .5rem 1.15rem; padding-left: .35rem;
+  list-style: none; color: var(--suave);
+}
+.documento-legal li::before {
+  content: ''; position: absolute; left: -.85rem; top: .62em;
+  width: 4px; height: 4px; border-radius: 50%; background: var(--borda-forte);
+}
+
+.documento-legal table {
+  border-collapse: collapse; margin: 1.25rem 0; width: 100%; font-size: var(--t-2);
+}
+.documento-legal td {
+  border-bottom: 1px solid var(--borda); padding: .6rem .2rem;
+  vertical-align: top;
+}
+/* ATENÇÃO: A primeira coluna é o rótulo do par: sem distingui-la, a tabela de duas colunas
+      lê como duas frases soltas lado a lado. */
+.documento-legal td:first-child { color: var(--texto); font-weight: 500; width: 42%; }
+.documento-legal td:last-child { color: var(--suave); }
+
+.documento-legal a { color: var(--realce); text-decoration: underline; text-underline-offset: 2px; }
+
+/* DECISÃO: O bloco de ação fecha o documento e não compete com ele: fundo próprio, para
+      quem só quer revogar o consentimento achar sem reler nove seções. */
+.acoes-legais {
+  margin-top: 3rem; padding: 1.5rem;
+  background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio);
+}
+.acoes-legais h2 { margin-top: 0 !important; }
+.acoes-legais h2::before { content: none; }
+.acoes-legais p { margin: 0 0 1rem; font-size: var(--t-2); color: var(--suave); }
+.acoes-legais p:last-child { margin: 1rem 0 0; }
+.acoes-legais button {
+  margin: 0; padding: .55rem 1.15rem;
+  background: transparent; color: var(--texto);
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  font-size: var(--t-2); font-weight: 600;
+}
+.acoes-legais button:hover { border-color: var(--realce); color: var(--realce); }
 
 /* ═══ RESULTADO ════════════════════════════════════════════════ */
 /**
- * ⚠️ O primeiro colocado ganha destaque de TAMANHO, ⛔ nunca de cor: a paleta é a
+ * ATENÇÃO: O primeiro colocado ganha destaque de TAMANHO, nunca de cor: a paleta é a
  *    mesma para todo parlamentar (RNF-16).
  */
 .destaque-resultado {
-  padding: 2rem 1.5rem 1.75rem; text-align: center;
+  padding: 1.5rem 1rem 1.25rem; text-align: left;
   border-bottom: 1px solid var(--borda);
-  background: var(--realce-fraco);
+  background: var(--fundo);
 }
 .rotulo-destaque {
-  margin: 0 0 1.25rem; font-family: var(--dado);
-  font-size: .72rem; font-weight: 600;
-  text-transform: uppercase; letter-spacing: .12em; color: var(--realce);
+  margin: 0 0 .75rem;
+  font-size: var(--t-1); font-weight: 600;
+  text-transform: uppercase; letter-spacing: .06em; color: var(--suave);
 }
 .destaque-link { display: block; }
-.destaque-link .avatar { margin: 0 auto .85rem; border: 3px solid var(--fundo); }
-.destaque-link h2 { margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -.02em; }
+.destaque-link .avatar { margin: 0 0 .75rem; }
+.destaque-link h2 { margin: 0; font-size: var(--t-5); font-weight: 800; letter-spacing: -.02em; }
 .destaque-link:hover h2 { text-decoration: underline; }
-.perfil-filiacao { margin: .2rem 0 0; color: var(--suave); font-size: .93rem; }
-.destaque-placar { margin: 1.15rem auto 0; max-width: 22rem; font-size: .97rem; color: var(--suave); }
-.destaque-placar strong { color: var(--texto); font-size: 1.05rem; }
+.perfil-filiacao { margin: .2rem 0 0; color: var(--suave); font-size: var(--t-2); }
+/* O número em destaque, sobre cinza neutro: a medida é o que a tela afirma. */
+.destaque-placar {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: .25rem .75rem;
+  margin: 1rem 0 0; padding: .875rem 1rem;
+  background: var(--painel); border-radius: var(--raio);
+}
+.placar-numero {
+  font-family: var(--dado); font-variant-numeric: tabular-nums;
+  font-size: var(--t-6); font-weight: 500; line-height: 1; letter-spacing: -.02em;
+  color: var(--texto);
+}
+.placar-texto { color: var(--suave); font-size: var(--t-2); max-width: 20rem; }
+.fonte-dado {
+  margin: 0; padding: .6rem 1rem 1rem;
+  font-size: var(--t-1); color: var(--suave);
+  border-bottom: 1px solid var(--borda);
+}
+
+/* Só para leitor de tela: o ✓ e o ✗ são aria-hidden, e sem isto quem ouve
+   receberia a lista de afirmações sem saber quais foram acordo. */
+.sr-apenas {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+/* RISCO: "Concordaram em 14 de 17" não é conferível sem dizer em QUAIS. Fechado por
+   padrão: o número é a resposta, a conta é para quem quiser conferir. */
+.detalhe-conta { margin: 1rem 0 0; max-width: 34rem; text-align: left; }
+.detalhe-conta > summary {
+  cursor: pointer; list-style: none;
+  padding: .45rem .8rem; border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  width: fit-content; margin: 0;
+  font-size: var(--t-2); color: var(--suave);
+  transition: border-color var(--t-curto) var(--curva), color var(--t-curto) var(--curva);
+}
+.detalhe-conta > summary::-webkit-details-marker { display: none; }
+.detalhe-conta > summary:hover { border-color: var(--realce); color: var(--texto); }
+.detalhe-conta > summary:focus-visible { outline: 3px solid var(--realce); outline-offset: 2px; }
+.detalhe-conta[open] > summary { margin-bottom: .9rem; }
+
+.lista-detalhe { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.lista-detalhe li {
+  display: grid; grid-template-columns: 1.1rem 1fr; gap: .55rem; align-items: start;
+  font-size: var(--t-2); line-height: 1.45;
+}
+/* ATENÇÃO: A cor marca acordo com QUEM RESPONDEU, não juízo sobre o parlamentar —
+   e não tem relação com o espectro político (RNF-16). */
+.lista-detalhe .acordo > span:first-child { color: var(--realce); font-weight: 700; }
+.lista-detalhe .desacordo > span:first-child { color: var(--perigo); font-weight: 700; }
+.lista-detalhe .desacordo { color: var(--suave); }
+
+.nota-fora-da-conta { margin: .9rem 0 0; font-size: var(--t-2); }
+
+/* ═══════════════════════════════════════════════════════════════
+   Grafo — teclado e alternativa em texto
+   ═══════════════════════════════════════════════════════════════ */
+
+/* RISCO: O canvas é focável (tabIndex=0). Sem anel de foco, quem navega por teclado
+   perde o cursor dentro do desenho e não sabe que as setas já funcionam. */
+.grafo-tela canvas:focus-visible {
+  outline: 3px solid var(--realce);
+  outline-offset: -3px;
+}
+
+.grafo-lista { margin: 1.25rem 1rem 0; }
+.grafo-lista > summary {
+  cursor: pointer; list-style: none; width: fit-content;
+  padding: .45rem .8rem; border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  font-size: var(--t-2); color: var(--suave);
+  transition: border-color var(--t-curto) var(--curva), color var(--t-curto) var(--curva);
+}
+.grafo-lista > summary::-webkit-details-marker { display: none; }
+.grafo-lista > summary:hover { border-color: var(--realce); color: var(--texto); }
+.grafo-lista > summary:focus-visible { outline: 3px solid var(--realce); outline-offset: 2px; }
+.grafo-lista > .ajuda { margin: .9rem 0; }
+
+.lista-grafo {
+  list-style: none; margin: 0;
+  display: grid; gap: .75rem;
+  /* ATENÇÃO: 643 parlamentares: sem teto a lista empurra o rodapé para longe demais.
+     O contêiner rola, não a página. */
+  max-height: 26rem; overflow-y: auto;
+  border: 1px solid var(--borda); border-radius: var(--raio); padding: .9rem;
+}
+.lista-grafo li { display: grid; gap: .15rem; font-size: var(--t-2); line-height: 1.4; }
+
+.lista-grafo-nome { font-weight: 700; color: var(--texto); justify-self: start; }
+button.lista-grafo-nome {
+  background: none; border: 0; padding: 0; font: inherit; font-weight: 700;
+  color: var(--realce); cursor: pointer; text-align: left;
+}
+button.lista-grafo-nome:hover { text-decoration: underline; }
+button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outline-offset: 2px; }
+
+.lista-grafo-filiacao { color: var(--suave); font-size: var(--t-2); }
+.lista-grafo-vizinhos { color: var(--suave); }
+.lista-grafo-sem-par { color: var(--suave); font-style: italic; }
 
 .titulo-secao {
   margin: 0; padding: 1rem 1rem .6rem;
-  font-size: 1.05rem; font-weight: 800;
+  font-size: var(--t-3); font-weight: 800;
   border-bottom: 1px solid var(--borda);
 }
 .ajuda-espacada { padding: 1rem; margin: 0; border-bottom: 1px solid var(--borda); }
 .resultado-acoes { display: flex; gap: .6rem; flex-wrap: wrap; padding: 1.25rem 1rem 3rem; }
 
-/* ═══ NOTÍCIAS E VOTOS NA TIMELINE ═════════════════════════════ */
-/* ⚠️ Linha sem avatar: o dono do conteúdo já é o perfil da página. */
-.linha-simples { padding-inline: 1rem; }
-.noticia-titulo { display: block; font-weight: 600; font-size: 1rem; margin: .1rem 0 .2rem; }
-.noticia-titulo:hover { text-decoration: underline; }
-.voto-descricao { margin: .45rem 0 .2rem; font-size: .95rem; }
-
 /* ═══ BARRA DE BUSCA ═══════════════════════════════════════════ */
 .barra-busca {
   display: flex; align-items: center; gap: .6rem;
   margin: .75rem 1rem; padding: .1rem .9rem;
-  background: var(--painel); border: 1px solid transparent; border-radius: 999px;
+  background: var(--fundo); border: 1px solid var(--borda-controle); border-radius: var(--raio);
 }
+/* Na ficha a busca fica rente à lista de votos, sem o recuo da página de lista. */
+.barra-busca-votos { margin: .5rem 0 .75rem; }
 .barra-busca:focus-within { background: var(--fundo); border-color: var(--realce); }
 .barra-busca:focus-within .icone-busca { color: var(--realce); }
 .icone-busca { display: grid; place-items: center; color: var(--suave); }
 .icone-busca svg { width: 19px; height: 19px; }
 .barra-busca input {
-  flex: 1; font: inherit; font-size: .95rem; padding: .7rem 0;
+  flex: 1; font: inherit; font-size: var(--t-2); padding: .7rem 0;
   border: none; background: transparent; color: inherit; outline: none;
 }
 
 /* ═══ DOCUMENTO PÚBLICO (sem sessão) ═══════════════════════════ */
-.documento-publico { max-width: 46rem; margin: 0 auto; padding: 0 1rem 3rem; }
+.documento-publico { width: 100%; max-width: 44rem; min-width: 0; box-sizing: border-box; margin: 0 auto; padding: 0 1.25rem 3rem; }
 .cabecalho-publico { padding: 1rem 0; border-bottom: 1px solid var(--borda); }
 .cabecalho-publico .marca-link { display: inline-flex; padding: .4rem .75rem; }
 
@@ -640,10 +1020,10 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 /**
  * Uma marca por parlamentar da base; cheia para quem se posicionou.
  *
- * 🔴 ⛔ Sem direção. As marcas cheias NÃO distinguem Sim de Não — ver
+ * RISCO: Sem direção. As marcas cheias NÃO distinguem Sim de Não — ver
  *    componentes/Painel.tsx. A densidade do bloco é a única informação.
  *
- * ⚠️ Largura fixa e marca de tamanho fixo: é o que faz 300 e 480 marcas
+ * ATENÇÃO: Largura fixa e marca de tamanho fixo: é o que faz 300 e 480 marcas
  *    se diferenciarem a olho. Grid flexível destruiria a comparação.
  */
 .painel-votacao { display: flex; flex-direction: column; align-items: center; gap: .65rem; }
@@ -656,13 +1036,13 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 }
 
 /**
- * ⭐ O painel ENCHE, da esquerda para a direita, como placar de plenário.
+ * DECISÃO: O painel ENCHE, da esquerda para a direita, como placar de plenário.
  *
- * ⚠️ Uma animação de `clip-path` no contêiner, ⛔ não 500 animações de marca com
+ * ATENÇÃO: Uma animação de `clip-path` no contêiner, não 500 animações de marca com
  *    delay escalonado: o efeito visual é o mesmo e o custo é de um elemento em vez de
  *    quinhentos.
  *
- * ⭐ É aqui que mora o momento de recompensa do questionário. A pausa entre uma
+ * DECISÃO: É aqui que mora o momento de recompensa do questionário. A pausa entre uma
  *    pergunta e a seguinte existia e estava VAZIA — a troca parecia abrupta porque não
  *    havia nada acontecendo nela, não porque fosse rápida demais.
  */
@@ -675,7 +1055,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   to   { clip-path: inset(0 0 0 0); }
 }
 
-/* ⚠️ A legenda entra DEPOIS da varredura: o número antes do desenho rouba a atenção
+/* ATENÇÃO: A legenda entra DEPOIS da varredura: o número antes do desenho rouba a atenção
       justamente do que o desenho ia mostrar. */
 .retorno.visivel .painel-legenda {
   animation: surgir-legenda 200ms var(--curva-entrada) var(--t-painel) both;
@@ -691,42 +1071,275 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 }
 .marca-cheia { background: var(--realce); opacity: 1; }
 .painel-legenda {
-  margin: 0; font-family: var(--dado); font-size: .82rem;
+  margin: 0; font-family: var(--dado); font-size: var(--t-2);
   color: var(--suave); letter-spacing: -.01em;
 }
 .painel-legenda strong { color: var(--texto); font-weight: 600; }
 
+/* ═══ SELETOR DE TEMA ══════════════════════════════════════════ */
+/* Três posições, não um interruptor: "sistema" é o padrão e o único que continua
+   acompanhando o SO depois — um botão de alternar não consegue expressá-lo. */
+.seletor-tema {
+  display: flex; gap: 1px; padding: 2px;
+  background: var(--borda); border-radius: var(--raio);
+}
+.seletor-tema button {
+  width: 1.7rem; height: 1.7rem; padding: 0;
+  display: grid; place-items: center;
+  background: none; border: none; border-radius: var(--raio);
+  color: var(--suave);
+}
+.seletor-tema button:hover { color: var(--texto); }
+.seletor-tema button.ativo { background: var(--fundo); color: var(--realce); }
+
+/* ═══ ABAS DE VISTA ════════════════════════════════════════════ */
+/* Lista e grafo são duas formas do MESMO conjunto — abas, não dois itens de menu. */
+.abas-vista {
+  display: flex; gap: 1px; width: fit-content;
+  margin-bottom: 1.25rem; padding: 2px;
+  background: var(--borda); border-radius: var(--raio);
+}
+.abas-vista button {
+  padding: .4rem 1.1rem;
+  background: none; border: none; border-radius: var(--raio);
+  font-size: var(--t-2); font-weight: 600; color: var(--suave);
+}
+.abas-vista button:hover { color: var(--texto); }
+.abas-vista button.ativo { background: var(--fundo); color: var(--realce); }
+
+/* ═══ PAINEL — a página inicial ════════════════════════════════ */
+.painel { display: flex; flex-direction: column; gap: 2.5rem; }
+
+/* DECISÃO: A abertura diz o que o serviço faz antes de mostrar qualquer número. Era um feed
+      vazio: a única tela que não mostrava nada do que o trabalho produz. */
+.painel-abertura { max-width: 44rem; }
+.painel-abertura h1 {
+  margin: 0 0 .6rem;
+  font-family: var(--display);
+  font-size: clamp(1.75rem, 4vw, var(--t-6)); font-weight: 700; letter-spacing: -.03em;
+  line-height: 1.1;
+}
+.painel-abertura p { margin: 0 0 1.25rem; font-size: var(--t-3); color: var(--suave); }
+.painel-abertura strong { color: var(--texto); font-weight: 600; }
+.painel-acoes { display: flex; flex-wrap: wrap; gap: .6rem; }
+
+.painel-secao > h2 {
+  display: flex; align-items: baseline; gap: .6rem;
+  margin: 0 0 .3rem;
+  font-family: var(--display);
+  font-size: var(--t-4); font-weight: 700; letter-spacing: -.02em;
+}
+.painel-secao > h2 small {
+  font-family: var(--dado); font-size: var(--t-1); font-weight: 500;
+  letter-spacing: .05em; color: var(--suave);
+}
+.painel-secao > .ajuda { max-width: 46rem; margin-bottom: 1rem; }
+
+/* ATENÇÃO: Era texto solto na cor de realce, logo abaixo de um canvas de 460px — e sumia.
+   Link discreto funciona dentro de um parágrafo, onde a frase ao redor o sustenta;
+   sozinho sob uma figura grande ele não tem escala para competir com ela.
+
+   DECISÃO: Vira uma FAIXA colada no desenho: a borda contínua diz que é continuação do que
+   está acima, e não um link qualquer no meio da página. */
+.painel-mais {
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+  margin-top: -1px;                     /* encosta na borda do grafo */
+  padding: .85rem 1rem;
+  background: var(--painel);
+  border: 1px solid var(--borda);
+  border-radius: 0 0 var(--raio) var(--raio);
+  color: var(--realce); font-size: var(--t-2); font-weight: 700;
+}
+.painel-mais:hover { background: var(--realce-fraco); }
+
+/* A seta avança no hover — o movimento aponta para onde o clique leva. */
+.painel-mais::after {
+  content: '→';
+  transition: transform var(--t-curto) var(--curva);
+}
+.painel-mais:hover::after { transform: translateX(3px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .painel-mais:hover::after { transform: none; }
+}
+
+/* DECISÃO: Uma coluna por casa, lado a lado: a comparação entre elas É a informação —
+      1.594 votações contra 421, e 0% de sigilo contra 57%. */
+.painel-casas {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1rem; margin-top: 1rem;
+}
+.cartao-casa {
+  padding: 1.1rem 1.25rem;
+  background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio);
+}
+.cartao-casa h3 {
+  margin: 0 0 .9rem;
+  font-family: var(--display);
+  font-size: var(--t-3); font-weight: 700;
+}
+.cartao-casa dl {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: .9rem 1rem; margin: 0;
+}
+.cartao-casa dt {
+  font-size: var(--t-1); color: var(--suave);
+  letter-spacing: .01em;
+}
+.cartao-casa dd {
+  margin: .1rem 0 0;
+  font-family: var(--dado); font-size: var(--t-4); font-weight: 600;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+}
+/* RISCO: O sigilo do Senado muda o que aquela figura pode afirmar. Sem esta ressalva as
+      duas casas leem como comparáveis, e não são. */
+.cartao-casa .cartao-ressalva {
+  margin: 1rem 0 0; padding-top: .8rem;
+  border-top: 1px solid var(--borda);
+  font-size: var(--t-1); line-height: 1.5; color: var(--suave);
+}
+.cartao-casa .cartao-ressalva strong { color: var(--texto); }
+
+/* ═══ BARRA DO GRAFO ═══════════════════════════════════════════ */
+/* O aviso do grafo embutido: a roda rolou a página, e o zoom pede Ctrl. Sobre o desenho,
+   Não empurra nada — aparece e some sem mudar a altura da página. */
+.grafo-aviso-roda {
+  position: absolute; inset: 0; z-index: 2; margin: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--fundo) 70%, transparent);
+  font-size: var(--t-3); font-weight: 600; color: var(--texto);
+  pointer-events: none;
+}
+.grafo-barra {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: .75rem; margin-bottom: 1rem;
+}
+.grafo-contagem {
+  margin: 0; font-family: var(--dado); font-size: var(--t-1); color: var(--suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.progresso-contagem {
+  margin: .5rem 0 0; font-family: var(--dado); font-size: var(--t-1); color: var(--suave);
+}
+
+/* ═══ TRILHO DA DIREITA ════════════════════════════════════════ */
+/* ATENÇÃO: É da PÁGINA inicial, não da moldura. Como coluna do site ele aparecia no grafo
+   também, roubando 20rem de figura para sugerir quem seguir. */
+.painel-com-trilho {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: clamp(1.5rem, 3vw, 3rem);
+  align-items: start;
+}
+.painel-trilho { position: sticky; top: 4.5rem; }
+
+/* ═══ ESQUELETO ════════════════════════════════════════════════ */
+/* RISCO: Forma sem conteúdo. Nunca uma manchete de exemplo: numa ferramenta que credita
+   a procedência de tudo que exibe, inventar veículo e título para ilustrar o layout
+   seria produzir na tela a coisa que o trabalho existe para não fazer.
+
+   DECISÃO: O brilho atravessa da esquerda para a direita, no sentido da leitura. Só tokens:
+   o mesmo desenho funciona nos dois temas. */
+.esqueleto-area { padding: .25rem 0; }
+.esqueleto-lista { display: flex; flex-direction: column; }
+.linha.esqueleto { pointer-events: none; }
+.esqueleto-texto { display: flex; flex-direction: column; gap: 1.5rem; padding: 1rem; }
+.esqueleto-cartoes {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: .75rem; margin-bottom: 1rem;
+}
+.esqueleto-cartao { padding: .9rem; border: 1px solid var(--borda); border-radius: var(--raio); }
+
+.esqueleto-avatar, .esqueleto-barra, .esqueleto-bloco, .mapa-carregando, .grafo-reserva {
+  background-color: var(--painel);
+  background-image: linear-gradient(90deg, transparent 0%, var(--borda) 50%, transparent 100%);
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  background-position: 150% 0;
+}
+.esqueleto-avatar { width: 2.6rem; height: 2.6rem; border-radius: var(--raio); flex-shrink: 0; }
+.esqueleto-avatar-grande { display: block; width: 5.25rem; height: 5.25rem; margin-bottom: 1rem; }
+.esqueleto-ficha { padding: 1.25rem 1rem; border-bottom: 1px solid var(--borda); }
+.esqueleto-barra {
+  display: block; height: .62rem; border-radius: var(--raio); margin-bottom: .5rem;
+}
+.esqueleto-barra.alta { height: .85rem; }
+.esqueleto-bloco { display: block; width: 100%; border-radius: var(--raio); }
+.grafo-reserva { border-radius: var(--raio); }
+
+/* ATENÇÃO: Com `prefers-reduced-motion`, o cinza fica parado: o brilho que atravessa é
+   movimento, e esqueleto que se mexe chama mais atenção que o conteúdo chamaria. */
+@media (prefers-reduced-motion: no-preference) {
+  .esqueleto-avatar, .esqueleto-barra, .esqueleto-bloco, .mapa-carregando, .grafo-reserva {
+    animation: brilhar 1.4s ease-in-out infinite;
+  }
+}
+@keyframes brilhar {
+  from { background-position: 150% 0; }
+  to   { background-position: -50% 0; }
+}
+
+/* Para o leitor de tela: some da tela, fica na árvore de acessibilidade. */
+.so-leitor {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ═══ ALINHAMENTO DE BANCADA ═══════════════════════════════════
+   RISCO: SEM cor semântica, sem seta, sem comparação com média. Governismo alto não
+   é elogio nem acusação, e qualquer um dos três transformaria medição em juízo. A
+   apresentação é a mesma dos demais números do perfil, de propósito. */
+.alinhamento {
+  display: flex; flex-wrap: wrap; gap: 1px;
+  margin: .9rem 0 0; padding: 0;
+  background: var(--borda); border: 1px solid var(--borda); border-radius: var(--raio);
+  overflow: hidden;
+}
+.alinhamento > div { flex: 1 1 11rem; background: var(--fundo); padding: .7rem .85rem; }
+.alinhamento dt {
+  font-size: var(--t-1); color: var(--suave);
+}
+.alinhamento dd {
+  margin: .1rem 0 0;
+  font-family: var(--dado); font-size: var(--t-4); font-weight: 600;
+  font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+}
+/* DECISÃO: A base é parte do número, não nota de rodapé: sem ela o percentual não se lê. */
+.alinhamento small {
+  display: block; font-size: var(--t-1); color: var(--suave);
+  font-family: var(--corpo); font-weight: 400; letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
 
 /* ═══ RESPONSIVO ═══════════════════════════════════════════════ */
-@media (max-width: 1100px) {
-  /* ⭐ A coluna lateral sai primeiro: sugestão é complemento, não o serviço. */
-  .corpo { grid-template-columns: minmax(0, 1fr); }
-  .coluna-direita { display: none; }
-  .coluna-central { max-width: none; }
+@media (max-width: 1000px) {
+  /* DECISÃO: O trilho sai antes de espremer o conteúdo: sugestão é complemento. */
+  .painel-com-trilho { grid-template-columns: minmax(0, 1fr); }
+  .painel-trilho { position: static; }
 }
 
 @media (max-width: 900px) {
   .nav-item span { display: none; }
   .nav-item { padding: 0 .9rem; }
   .nav-item svg { width: 21px; height: 21px; }
-  .marca-texto small { display: none; }
   .usuario-mini-nome { display: none; }
 }
 
 @media (max-width: 860px) {
-  .tela-login { grid-template-columns: 1fr; gap: 1.5rem; }
+  .tela-login { grid-template-columns: 1fr; gap: 0; }
   .login-marca { display: none; }
-  .login-titulo { font-size: 2.1rem; }
+  .login-titulo { font-size: var(--t-6); }
 }
 
 @media (max-width: 700px) {
-  .faixa-natureza { display: none; }
   .cabecalho-conteudo { gap: .5rem; padding: 0 .75rem; }
-  .coluna-central { border: none; }
-  .corpo { padding: 0; }
-  .cabecalho-coluna, .rodape-conteudo { padding-inline: 1rem; }
+  .corpo { padding-inline: 1rem; }
+  .rodape-conteudo { padding-inline: 1rem; }
   .nav-principal { gap: 0; }
   .nav-item { padding: 0 .7rem; }
+  /* ATENÇÃO: Sobra só o interruptor de tema em si: o rótulo do botão já é o ícone. */
+  .painel-casas { grid-template-columns: 1fr; }
 }
 
 /* ═══ QUESTIONÁRIO: CARTÃO POR PERGUNTA ════════════════════════ */
@@ -735,27 +1348,26 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   min-height: 24rem;
   display: flex; flex-direction: column;
 }
-/* ⚠️ A entrada do cartão é feita pela View Transition (ver fim do arquivo), não por
+/* ATENÇÃO: A entrada do cartão é feita pela View Transition (ver fim do arquivo), não por
       keyframe local: keyframe só anima quem CHEGA, e sem a saída do cartão anterior a
       troca lê como pisca-pisca em vez de avanço. */
 
 .rotulo-pergunta {
   margin: 0 0 .6rem; font-family: var(--dado);
-  font-size: .72rem; font-weight: 600;
+  font-size: var(--t-1); font-weight: 600;
   text-transform: uppercase; letter-spacing: .12em; color: var(--realce);
 }
-/* ⭐ A afirmação é o herói da tela: display expandida, no maior corpo do site. */
+/* DECISÃO: A afirmação é o herói da tela: display expandida, no maior corpo do site. */
 .texto-pergunta {
-  margin: 0 0 2rem; font-size: 1.5rem; font-weight: 700;
-  font-variation-settings: 'wdth' 112;
+  margin: 0 0 2rem; font-size: var(--t-5); font-weight: 700;
   letter-spacing: -.018em; line-height: 1.28;
 }
 
 .opcoes-grandes { display: flex; flex-direction: column; gap: .6rem; }
 .opcao-grande {
   padding: 1rem 1.25rem; text-align: left;
-  font-size: 1rem; font-weight: 600;
-  border: 1.5px solid var(--borda-forte); border-radius: 10px;
+  font-size: var(--t-3); font-weight: 600;
+  border: 1.5px solid var(--borda-forte); border-radius: var(--raio);
   background: transparent; color: inherit;
 }
 .opcao-grande:hover:not(:disabled) { border-color: var(--realce); background: var(--realce-fraco); }
@@ -763,7 +1375,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .opcao-grande:disabled { cursor: default; }
 .opcao-grande.opcao-ativa {
   border-color: var(--realce); background: var(--realce); color: var(--sobre-realce);
-  /* ⭐ O pulso é a confirmação do clique: a escolha se firma antes de o cartão sair.
+  /* DECISÃO: O pulso é a confirmação do clique: a escolha se firma antes de o cartão sair.
         Sem ele, o clique e a saída acontecem juntos e a pessoa não vê o que escolheu. */
   animation: fixar 220ms var(--curva) both;
 }
@@ -774,13 +1386,13 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   100% { transform: scale(1); }
 }
 
-/* ⚠️ As não escolhidas recuam em vez de sumir: sumir é perda, recuar é escolha feita. */
+/* ATENÇÃO: As não escolhidas recuam em vez de sumir: sumir é perda, recuar é escolha feita. */
 .opcoes-grandes:has(.opcao-ativa) .opcao-grande:not(.opcao-ativa) {
   opacity: .38;
   transition: opacity var(--t-curto) var(--curva);
 }
 
-/* ⚠️ O painel CHEGA (curva de entrada) e não some deslizando: ele aparece como
+/* ATENÇÃO: O painel CHEGA (curva de entrada) e não some deslizando: ele aparece como
       resposta ao clique e a pergunta seguinte já leva o cartão inteiro embora. */
 .retorno {
   margin-top: auto; padding-top: 1.5rem;
@@ -788,7 +1400,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   transition:
     opacity var(--t-medio) var(--curva-entrada),
     transform var(--t-medio) var(--curva-entrada);
-  font-size: .92rem; color: var(--suave); text-align: center;
+  font-size: var(--t-2); color: var(--suave); text-align: center;
   min-height: 3.5rem;
 }
 .retorno.visivel { opacity: 1; transform: none; }
@@ -796,60 +1408,144 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .voltar-pergunta { align-self: flex-start; margin-top: 1rem; }
 
 .encerramento { padding: 3rem 1.5rem; text-align: center; }
-.encerramento h2 { margin: 0 0 .5rem; font-size: 1.6rem; font-weight: 800; }
+.encerramento h2 { margin: 0 0 .5rem; font-size: var(--t-5); font-weight: 800; }
 .encerramento .ajuda { max-width: 24rem; margin: 0 auto 1.75rem; }
 .encerramento-acoes { display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; }
 
-
 /* ═══ GRAFO ════════════════════════════════════════════════════ */
 /**
- * 🔴 As cores identificam GRUPO e não têm significado político (RNF-16). Paleta
+ * RISCO: As cores identificam GRUPO e não têm significado político (RNF-16). Paleta
  *    categórica de propósito — vermelho→azul seria lido como espectro mesmo sem
  *    nós afirmarmos nada.
  */
 .grafo { border-bottom: 1px solid var(--borda); }
+
+/* ATENÇÃO: Quando a faixa "abrir completo" vem logo abaixo, o desenho perde o canto de baixo
+      para os dois lerem como uma peça só. */
+.painel-secao .grafo { border: 1px solid var(--borda); border-radius: var(--raio) var(--raio) 0 0; }
 .grafo-tela { position: relative; background: var(--painel); }
 .grafo-tela canvas { display: block; cursor: crosshair; }
+
+/* ═══ FERRAMENTAS SOBRE O DESENHO ══════════════════════════════
+   DECISÃO: Recolhidas de propósito. A faixa de controles abaixo do canvas custava altura de
+      figura em toda tela, para ajustes que se mexem uma vez e não se olham mais. */
+.grafo-ferramentas {
+  position: absolute; left: .75rem; top: .75rem; z-index: 4;
+  display: flex; align-items: flex-start; gap: .4rem;
+}
+
+.grafo-ferramenta {
+  width: 2.5rem; height: 2.5rem; padding: 0;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--fundo) 90%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 8%);
+  color: var(--suave);
+}
+.grafo-ferramenta:hover { color: var(--realce); border-color: var(--realce); }
+.grafo-ferramenta.ativo {
+  background: var(--realce); border-color: var(--realce); color: var(--sobre-realce);
+}
+
+.grafo-ajustes { position: relative; }
+
+.grafo-painel {
+  position: absolute; left: 0; top: 2.9rem;
+  width: min(21rem, calc(100vw - 3rem));
+  display: flex; flex-direction: column; gap: .6rem;
+  padding: .8rem .9rem;
+  background: color-mix(in srgb, var(--fundo) 96%, transparent);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 16%);
+}
+.grafo-painel hr { margin: 0; border: none; border-top: 1px solid var(--borda); }
+.grafo-painel-titulo {
+  margin: 0; font-family: var(--dado); font-size: var(--t-1); font-weight: 600;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--suave);
+}
+.grafo-painel-ajuda {
+  margin: 0; font-size: var(--t-1); line-height: 1.45; color: var(--suave);
+}
+.grafo-painel-ajuda strong { color: var(--texto); }
+
+.grafo-painel-faixa { display: flex; flex-direction: column; gap: .35rem; font-size: var(--t-2); }
+.grafo-painel-faixa > span { display: flex; justify-content: space-between; gap: .5rem; }
+.grafo-painel-faixa output {
+  font-family: var(--dado); font-size: var(--t-1); color: var(--suave);
+  font-variant-numeric: tabular-nums;
+}
+.grafo-painel-faixa input { width: 100%; accent-color: var(--realce); }
+
+.grafo-painel-chave {
+  display: flex; align-items: center; gap: .5rem;
+  font-size: var(--t-2); cursor: pointer;
+}
+.grafo-painel-chave input { accent-color: var(--realce); margin: 0; }
 
 .grafo-dica {
   position: absolute; z-index: 5; pointer-events: none;
   display: flex; flex-direction: column; gap: .05rem;
   padding: .5rem .7rem; max-width: 15rem;
   background: var(--fundo); border: 1px solid var(--borda-forte);
-  border-radius: 8px; box-shadow: 0 4px 14px rgb(0 0 0 / 12%);
-  font-size: .84rem;
+  border-radius: var(--raio); box-shadow: 0 4px 14px rgb(0 0 0 / 12%);
+  font-size: var(--t-2);
 }
-.grafo-dica strong { font-size: .9rem; }
+.grafo-dica strong { font-size: var(--t-2); }
 .grafo-dica span { color: var(--suave); }
-.grafo-dica-meta { font-family: var(--dado); font-size: .74rem; }
+.grafo-dica-meta { font-family: var(--dado); font-size: var(--t-1); }
 
-.grafo-controles { padding: .9rem 1rem; border-top: 1px solid var(--borda); }
-.grafo-controles label {
-  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
-  font-size: .88rem; color: var(--suave);
+/* ATENÇÃO: A segunda métrica fica visivelmente em segundo plano: ela existe para a
+      comparação da RF-18, e não é o número que a tela pede para o leitor usar. */
+.grafo-dica-secundaria {
+  font-family: var(--dado); font-size: var(--t-1);
+  color: var(--suave); opacity: .75;
 }
-.grafo-controles input[type='range'] { flex: 1; min-width: 9rem; accent-color: var(--realce); }
-.grafo-controles output {
-  font-family: var(--dado); font-size: .78rem;
-  font-variant-numeric: tabular-nums; white-space: nowrap;
+.grafo-dica-foto {
+  width: 2.4rem; height: 2.4rem; border-radius: var(--raio);
+  object-fit: cover; object-position: 50% 22%;
+  margin-bottom: .25rem;
+}
+
+/* O seletor de casa: duas figuras separadas, nunca uma só — ver `paginas/Grafo`. */
+.grafo-casas {
+  display: flex; gap: .4rem;
+  padding: .75rem 1rem 0;
+}
+
+/* Botão que se lê como link: escolher outro período sem sair da frase que explica por quê. */
+.botao-link {
+  padding: 0; border: 0; background: none; font: inherit;
+  color: var(--realce); text-decoration: underline; cursor: pointer;
+}
+.grafo-casas button {
+  padding: .4rem .85rem;
+  background: transparent; color: var(--suave);
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  font-size: var(--t-2); font-weight: 500;
+}
+.grafo-casas button:hover { color: var(--realce); border-color: var(--realce); }
+.grafo-casas button.ativo {
+  background: var(--realce); border-color: var(--realce); color: var(--sobre-realce);
 }
 
 .grafo-explicacao, .grafo-grupos { padding: 1.25rem 1rem; border-bottom: 1px solid var(--borda); }
-.grafo-explicacao h2, .grafo-grupos h2 { margin: 0 0 .5rem; font-size: 1.1rem; }
-.grafo-explicacao p { margin: 0 0 .6rem; font-size: .92rem; }
+.grafo-explicacao h2, .grafo-grupos h2 { margin: 0 0 .5rem; font-size: var(--t-3); }
+.grafo-explicacao p { margin: 0 0 .6rem; font-size: var(--t-2); }
 .grafo-explicacao p:last-child { margin-bottom: 0; }
 
 .grafo-grupos ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
 .grafo-grupos li { display: flex; align-items: flex-start; gap: .65rem; }
-.grupo-cor { width: .8rem; height: .8rem; border-radius: 3px; margin-top: .3rem; flex-shrink: 0; }
+.grupo-cor { width: .8rem; height: .8rem; border-radius: var(--raio); margin-top: .3rem; flex-shrink: 0; }
 .grupo-corpo { display: flex; flex-direction: column; min-width: 0; }
-.grupo-corpo strong { font-size: .9rem; }
+.grupo-corpo strong { font-size: var(--t-2); }
 .grupo-corpo small {
-  color: var(--suave); font-family: var(--dado); font-size: .74rem;
+  color: var(--suave); font-family: var(--dado); font-size: var(--t-1);
   overflow: hidden; text-overflow: ellipsis;
 }
 
-/* ⚠️ Mesma ordem de `CORES` em TelaDoGrafo.tsx — legenda e desenho têm de bater. */
+/* ATENÇÃO: Mesma ordem de `CORES` em TelaDoGrafo.tsx — legenda e desenho têm de bater. */
 .grupo-cor[data-comunidade='0'] { background: #0f766e; }
 .grupo-cor[data-comunidade='1'] { background: #b45309; }
 .grupo-cor[data-comunidade='2'] { background: #4338ca; }
@@ -859,19 +1555,39 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .grupo-cor[data-comunidade='6'] { background: #4d7c0f; }
 .grupo-cor[data-comunidade='7'] { background: #9f1239; }
 
+/* Os mesmos matizes, mais claros, no tema escuro: três dos tons acima ficavam abaixo de
+   3:1 contra o fundo e a legenda deixava de corresponder ao desenho. Mesma paleta de
+   CORES_ESCURO em grafo/desenho.ts. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='0'] { background: #5fa89e; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='1'] { background: #c9944a; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='2'] { background: #8c93d4; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='3'] { background: #c486bf; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='4'] { background: #6aa7b8; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='5'] { background: #c58a6c; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='6'] { background: #97ad69; }
+  :root:not([data-tema='claro']) .grupo-cor[data-comunidade='7'] { background: #cf8592; }
+}
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='0'] { background: #5fa89e; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='1'] { background: #c9944a; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='2'] { background: #8c93d4; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='3'] { background: #c486bf; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='4'] { background: #6aa7b8; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='5'] { background: #c58a6c; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='6'] { background: #97ad69; }
+:root[data-tema='escuro'] .grupo-cor[data-comunidade='7'] { background: #cf8592; }
+
 /* ═══ TRANSIÇÃO ENTRE TELAS ════════════════════════════════════ */
 /**
  * View Transitions API: o navegador retrata o DOM antes e depois e anima entre os dois.
  *
- * ⭐ Nomear a moldura é o truque todo. Elemento com `view-transition-name` é retratado
+ * DECISÃO: Nomear a moldura é o truque todo. Elemento com `view-transition-name` é retratado
  *    à parte e, se não mudou, fica PARADO. Sem isto o cabeçalho e o rodapé piscariam
  *    junto com o conteúdo a cada clique no menu — que é justamente o defeito que a
  *    transição deveria resolver.
  */
-.faixa-procedencia { view-transition-name: faixa; }
-.cabecalho-site    { view-transition-name: cabecalho; }
-.coluna-direita    { view-transition-name: lateral; }
-.rodape-site       { view-transition-name: rodape; }
+.cabecalho-site { view-transition-name: cabecalho; }
+.rodape-site    { view-transition-name: rodape; }
 
 /* O que sobra — a coluna central — atravessa em fusão curta. */
 ::view-transition-old(root) {
@@ -886,23 +1602,23 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 
 /* ═══ TRANSIÇÃO ENTRE PERGUNTAS ════════════════════════════════ */
 /**
- * ⚠️ Direcional de propósito: a pergunta respondida sai pela ESQUERDA e a próxima
+ * ATENÇÃO: Direcional de propósito: a pergunta respondida sai pela ESQUERDA e a próxima
  *    entra pela DIREITA. Direção é o que transforma um piscar em progresso — a pessoa
  *    vê que avançou, não que a tela recarregou.
  *
- * ⭐ O cartão tem nome próprio, então ele é retratado à parte da coluna e não herda a
+ * DECISÃO: O cartão tem nome próprio, então ele é retratado à parte da coluna e não herda a
  *    fusão vertical de `root`.
  */
 .cartao-pergunta { view-transition-name: cartao; }
 
 /**
- * ⚠️ A saída usa a curva PADRÃO, não a de saída.
+ * ATENÇÃO: A saída usa a curva PADRÃO, não a de saída.
  *
  * `curva-saida` acelera e some — boa para algo que é descartado, e era o que fazia a
  * troca parecer abrupta: o cartão respondido era ARRANCADO da tela. Aqui ele não é
  * descartado, é concluído. A curva padrão o deixa partir sem tranco.
  *
- * ⭐ E a entrada é mais lenta que a saída, de propósito: quem chega merece assentar,
+ * DECISÃO: E a entrada é mais lenta que a saída, de propósito: quem chega merece assentar,
  * quem sai não precisa de cerimônia.
  */
 ::view-transition-old(cartao) {
@@ -917,10 +1633,10 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 
 /* ═══ MENOS MOVIMENTO ══════════════════════════════════════════ */
 /**
- * 🔴 Menos movimento ⛔ NÃO é "nenhuma mudança visual": sumir sem transição confunde
+ * RISCO: Menos movimento NÃO é "nenhuma mudança visual": sumir sem transição confunde
  *    tanto quanto deslizar demais. O que sai é o DESLOCAMENTO — a fusão fica, curta.
  *
- * ⚠️ `transicao.ts` já nem inicia a View Transition nesse caso; isto cobre o resto e
+ * ATENÇÃO: `transicao.ts` já nem inicia a View Transition nesse caso; isto cobre o resto e
  *    o que o navegador anima por conta própria.
  */
 @media (prefers-reduced-motion: reduce) {
@@ -936,15 +1652,25 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
     transition-duration: .01ms !important;
     scroll-behavior: auto !important;
   }
+
+  /* DECISÃO: A exceção: a FUSÃO de opacidade continua. Ela não desloca nada — e cortar seco, sem
+     ela, confunde tanto quanto deslizar demais. Só `opacity`: nenhum movimento volta. */
+  .tour-destaque,
+  .tour-balao,
+  .modal-avaliacao,
+  .grafo-ampliado {
+    transition-property: opacity !important;
+    transition-duration: var(--t-curto) !important;
+  }
 }
 
 /* ═══ TERMO — explicação de jargão sob demanda ═════════════════ */
 /**
- * 🔴 A RNF-29 proíbe jargão na interface. Isto ⛔ NÃO é licença para trazê-lo de
+ * RISCO: A RNF-29 proíbe jargão na interface. Isto NÃO é licença para trazê-lo de
  *    volta — serve ao caso que a RNF-31 admite: termo que é contexto descritivo e
  *    não tem substituto honesto ("legislatura", "partido", "plenário").
  *
- * ⚠️ Abre por clique e por foco, ⛔ nunca só por :hover. Em telefone não existe
+ * ATENÇÃO: Abre por clique e por foco, nunca só por :hover. Em telefone não existe
  *    hover, e a explicação não existiria para metade dos visitantes.
  */
 .termo { position: relative; display: inline-block; }
@@ -957,61 +1683,68 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .termo-gatilho:hover, .termo-gatilho[aria-expanded='true'] { color: var(--realce); }
 
 .termo-balao {
-  position: absolute; z-index: 20; left: 0; top: calc(100% + .4rem);
-  display: block; width: max-content; max-width: min(20rem, 80vw);
+  position: fixed; z-index: 60;
+  display: block; width: max-content; max-width: min(20rem, calc(100vw - 1rem));
   padding: .7rem .85rem;
   background: var(--fundo); color: var(--texto);
-  border: 1px solid var(--borda-forte); border-radius: 10px;
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
   box-shadow: 0 6px 20px rgb(0 0 0 / 16%);
-  font-size: .82rem; font-weight: 400; line-height: 1.5;
+  font-size: var(--t-2); font-weight: 400; line-height: 1.5;
   text-decoration: none; text-align: left;
   white-space: normal;
 }
 .termo-balao strong {
   display: block; margin-bottom: .2rem;
-  font-family: var(--dado); font-size: .68rem;
+  font-family: var(--dado); font-size: var(--t-1);
   text-transform: uppercase; letter-spacing: .09em; color: var(--realce);
 }
 
 /* ═══ GRAFO: NAVEGAÇÃO E AMPLIAÇÃO ═════════════════════════════ */
-.grafo-topo { display: flex; justify-content: flex-end; padding: .75rem 1rem 0; }
 
+/* DECISÃO: Ilha HORIZONTAL, como as ferramentas do topo. A coluna vertical de antes lia como
+      um controle de mapa preso na borda; a ilha lê como barra de aplicativo, que é o
+      que a prancheta é. */
 .grafo-zoom {
-  position: absolute; right: .75rem; bottom: .75rem;
-  display: flex; flex-direction: column; gap: 1px;
-  background: var(--borda-forte); border: 1px solid var(--borda-forte);
-  border-radius: 8px; overflow: hidden;
+  position: absolute; z-index: 4; right: .75rem; bottom: .75rem;
+  display: flex; gap: .1rem; padding: .2rem;
+  background: color-mix(in srgb, var(--fundo) 90%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 8%);
 }
 .grafo-zoom button {
-  width: 2rem; height: 2rem; padding: 0;
-  background: var(--fundo); border: none; color: var(--texto);
-  font-size: .95rem; line-height: 1;
+  width: 2.4rem; height: 2.4rem; padding: 0;
+  display: grid; place-items: center;
+  background: none; border: none; border-radius: var(--raio);
+  color: var(--suave); font-size: var(--t-4); line-height: 1;
 }
-.grafo-zoom button:hover { background: var(--painel); color: var(--realce); }
+.grafo-zoom button:hover { background: var(--realce-fraco); color: var(--realce); }
 
-/* ⭐ O painel de ação aparece SOBRE o desenho, ancorado no canto — as ações do nó
+/* DECISÃO: O painel de ação aparece SOBRE o desenho, ancorado no canto — as ações do nó
       ficam junto do nó, não num menu longe dele. */
+/* ATENÇÃO: Canto INFERIOR esquerdo: o superior é das ferramentas, e as duas caixas
+      ocupando o mesmo ponto se sobrepunham quando um nó era selecionado. */
 .grafo-foco {
-  position: absolute; left: .75rem; top: .75rem;
+  position: absolute; left: .75rem; bottom: .75rem;
   max-width: min(20rem, calc(100% - 6rem));
   padding: .6rem .75rem;
   background: color-mix(in srgb, var(--fundo) 94%, transparent);
   backdrop-filter: blur(8px);
-  border: 1px solid var(--borda-forte); border-radius: 10px;
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
   box-shadow: 0 4px 16px rgb(0 0 0 / 14%);
 }
 .grafo-foco p {
   margin: 0 0 .5rem; display: flex; flex-direction: column; line-height: 1.35;
 }
-.grafo-foco strong { font-size: .92rem; }
-.grafo-foco span { font-size: .78rem; color: var(--suave); font-family: var(--dado); }
+.grafo-foco strong { font-size: var(--t-2); }
+.grafo-foco span { font-size: var(--t-1); color: var(--suave); font-family: var(--dado); }
 
 .grafo-foco-acoes { display: flex; flex-wrap: wrap; gap: .35rem; }
 .grafo-foco-acoes button {
   padding: .3rem .6rem;
   background: transparent; color: var(--texto);
-  border: 1px solid var(--borda-forte); border-radius: 6px;
-  font-size: .78rem; font-weight: 500;
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  font-size: var(--t-1); font-weight: 500;
 }
 .grafo-foco-acoes button:hover { border-color: var(--realce); color: var(--realce); }
 .grafo-foco-acoes button:first-child {
@@ -1020,25 +1753,44 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .grafo-foco-acoes button:first-child:hover { background: var(--realce-hover); color: var(--sobre-realce); }
 
 .grafo-dica strong { display: block; }
-.grafo-ajuda-uso {
-  margin: .6rem 0 0; font-size: .78rem; color: var(--suave);
-}
 
-/* ⚠️ O grafo não se lê numa coluna de 52rem: 655 pontos viram nuvem. */
+/* ATENÇÃO: O grafo não se lê numa coluna de 52rem: 655 pontos viram nuvem. */
+/* DECISÃO: Prancheta: o desenho ocupa a JANELA INTEIRA, sem moldura, sem barra de título e
+      sem canto arredondado. Um grafo de 643 nós não é conteúdo de caixa — é espaço de
+      trabalho, e tudo que não for o desenho tira área dele. */
 .grafo-ampliado {
-  width: min(92vw, 82rem); max-width: none;
-  padding: 0; border: 1px solid var(--borda-forte); border-radius: 14px;
+  width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh;
+  margin: 0; padding: 0; border: none; border-radius: 0;
   background: var(--fundo); color: var(--texto);
-  box-shadow: 0 16px 50px rgb(0 0 0 / 28%);
+  overflow: hidden;
 }
-.grafo-ampliado::backdrop { background: rgb(0 0 0 / 55%); backdrop-filter: blur(3px); }
-.grafo-ampliado header {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
-  padding: 1rem 1.25rem; border-bottom: 1px solid var(--borda);
+.grafo-ampliado::backdrop { background: var(--fundo); }
+
+/* ATENÇÃO: `min-height: 0` nos dois níveis é o que permite o canvas encolher; sem isso o
+      conteúdo empurra a altura e a rolagem volta. */
+.grafo-ampliado .grafo { border-bottom: none; height: 100%; min-height: 0; }
+.grafo-ampliado .grafo-tela { height: 100%; min-height: 0; }
+
+/* DECISÃO: Sair é um gesto de VOLTAR, não de fechar caixa: numa tela sem moldura um "✕"
+      sozinho não diz o que sumiria. Ilha flutuante, como as demais ferramentas. */
+.grafo-voltar {
+  position: absolute; z-index: 6; left: .75rem; bottom: .75rem;
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .6rem 1rem .6rem .8rem;
+  background: color-mix(in srgb, var(--fundo) 90%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 8%);
+  color: var(--texto); font-size: var(--t-2); font-weight: 600;
 }
-.grafo-ampliado h2 { margin: 0; font-size: 1.2rem; }
-.grafo-ampliado .ajuda { margin: .1rem 0 0; }
-.grafo-ampliado .grafo { border-bottom: none; }
+.grafo-voltar:hover { border-color: var(--realce); color: var(--realce); }
+.grafo-voltar span { font-size: var(--t-2); line-height: 1; }
+
+/* Só para leitor de tela: a prancheta perdeu o título visível, não a identificação. */
+.apenas-leitor-de-tela {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
 
 /* ═══ RESULTADO POR CASA ═══════════════════════════════════════ */
 /* Duas seções na mesma tela precisam ler como duas, e não como uma lista longa: a
@@ -1048,44 +1800,63 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .titulo-casa {
   display: flex; flex-direction: column; gap: .15rem;
   margin: 0; padding: 1.25rem 1rem .75rem;
-  font-family: var(--display); font-variation-settings: 'wdth' 114;
-  font-size: 1.35rem; font-weight: 700; letter-spacing: -.02em;
+  font-family: var(--display);
+  font-size: var(--t-4); font-weight: 700; letter-spacing: -.02em;
 }
 /* O denominador da casa fica junto do título: exibir "8 perguntas" ao lado de um
    senador que respondeu 2 afirmaria uma base que ele não tem. */
 .titulo-casa small {
-  font-family: var(--dado); font-size: .74rem; font-weight: 500;
+  font-family: var(--dado); font-size: var(--t-1); font-weight: 500;
   letter-spacing: .04em; color: var(--suave);
 }
 
 .resultado-grafo { border-bottom: 1px solid var(--borda); padding-bottom: 1rem; }
 .resultado-grafo .grafo { border-bottom: none; }
 
-/* ⭐ O "tela cheia" mora SOBRE o desenho, não abaixo dele. Solto na página ele ficava
+/* DECISÃO: O "tela cheia" mora SOBRE o desenho, não abaixo dele. Solto na página ele ficava
       perdido entre os textos explicativos, e ninguém achava. */
 .grafo-ampliar {
   position: absolute; right: .75rem; top: .75rem;
   display: inline-flex; align-items: center; gap: .4rem;
-  padding: .45rem .8rem;
-  background: color-mix(in srgb, var(--fundo) 88%, transparent);
-  backdrop-filter: blur(6px);
-  border: 1px solid var(--borda-forte); border-radius: 8px;
-  color: var(--texto); font-size: .82rem; font-weight: 600;
+  padding: .6rem 1rem;
+  background: color-mix(in srgb, var(--fundo) 90%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 8%);
+  color: var(--texto); font-size: var(--t-2); font-weight: 600;
 }
 .grafo-ampliar:hover { border-color: var(--realce); color: var(--realce); }
-.grafo-ampliar span { font-size: .95rem; line-height: 1; }
+.grafo-ampliar span { font-size: var(--t-2); line-height: 1; }
 
-/* ⚠️ Dentro do modal não faz sentido oferecer tela cheia de novo. */
+/* ATENÇÃO: Dentro do modal não faz sentido oferecer tela cheia de novo. */
 .grafo-ampliado .grafo-ampliar { display: none; }
 
+/* ATENÇÃO: Na prancheta o canto inferior esquerdo é do "Voltar"; o painel de foco sobe para
+      não ficar por baixo dele. */
+.grafo-ampliado .grafo-foco { bottom: auto; top: 3.9rem; }
+
 /* ═══ BUSCA NO GRAFO ═══════════════════════════════════════════ */
-/* ⭐ Com 643 nós, achar alguém passando o mouse é inviável. */
-.grafo-busca { position: relative; margin-bottom: .75rem; }
+/* DECISÃO: Com 643 nós, achar alguém passando o mouse é inviável. */
+.grafo-busca {
+  position: relative;
+  display: flex; align-items: center; gap: .45rem;
+  width: min(19rem, calc(100vw - 6rem));
+  padding: 0 .6rem 0 .75rem; height: 2.5rem;
+  background: color-mix(in srgb, var(--fundo) 94%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--realce); border-radius: var(--raio);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 8%);
+  color: var(--suave);
+}
+.grafo-busca-fechar {
+  padding: 0 .15rem; background: none; border: none;
+  color: var(--suave); font-size: var(--t-1); line-height: 1;
+}
+.grafo-busca-fechar:hover { color: var(--texto); }
 .grafo-busca input {
-  width: 100%; font: inherit; font-size: .9rem;
-  padding: .55rem .85rem;
-  background: var(--painel); color: inherit;
-  border: 1px solid transparent; border-radius: 8px; outline: none;
+  flex: 1; min-width: 0; height: 100%;
+  background: none; border: none; outline: none;
+  color: var(--texto); font: inherit; font-size: var(--t-2);
 }
 .grafo-busca input:focus { background: var(--fundo); border-color: var(--realce); }
 
@@ -1093,63 +1864,43 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   position: absolute; z-index: 15; left: 0; right: 0; top: calc(100% + .25rem);
   list-style: none; margin: 0; padding: .25rem;
   background: var(--fundo); border: 1px solid var(--borda-forte);
-  border-radius: 10px; box-shadow: 0 6px 20px rgb(0 0 0 / 16%);
+  border-radius: var(--raio); box-shadow: 0 6px 20px rgb(0 0 0 / 16%);
 }
 .grafo-sugestoes button {
   display: flex; flex-direction: column; width: 100%; gap: .05rem;
   padding: .45rem .6rem; text-align: left;
-  background: none; border: none; color: inherit; border-radius: 6px;
+  background: none; border: none; color: inherit; border-radius: var(--raio);
 }
 .grafo-sugestoes button:hover { background: var(--realce-fraco); color: var(--realce); }
-.grafo-sugestoes strong { font-size: .88rem; }
-.grafo-sugestoes span { font-size: .76rem; color: var(--suave); font-family: var(--dado); }
+.grafo-sugestoes strong { font-size: var(--t-2); }
+.grafo-sugestoes span { font-size: var(--t-1); color: var(--suave); font-family: var(--dado); }
 
 .grafo-sem-achado {
-  margin: .4rem 0 0; font-size: .8rem; color: var(--suave);
+  position: absolute; left: 0; right: 0; top: calc(100% + .25rem);
+  margin: 0; padding: .5rem .6rem;
+  background: var(--fundo); border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  font-size: var(--t-1); color: var(--suave);
 }
 
-/* ═══ SELETOR DE LAYOUT (PL43) ═════════════════════════════════ */
-/* ⭐ Fica na moldura para dar para comparar os dois sem sair da tela. */
+/* ═══ SELETOR DE LAYOUT (Pendência 43) ═════════════════════════════════ */
+/* DECISÃO: Fica na moldura para dar para comparar os dois sem sair da tela. */
 .grafo-layout-botoes button {
   padding: .35rem .7rem;
   background: var(--fundo); border: none; color: var(--suave);
-  font-size: .76rem; font-weight: 600;
+  font-size: var(--t-1); font-weight: 600;
 }
 .grafo-layout-botoes button:hover { color: var(--texto); }
 .grafo-layout-botoes button.ativo { background: var(--realce); color: var(--sobre-realce); }
 
-/* ⚠️ A explicação acompanha o seletor: trocar de layout sem entender a diferença é o
+/* ATENÇÃO: A explicação acompanha o seletor: trocar de layout sem entender a diferença é o
       caminho mais curto para ler espectro onde não há. */
-.grafo-layout {
-  position: absolute; left: .75rem; bottom: .75rem;
-  max-width: min(24rem, calc(100% - 5rem));
-}
 .grafo-layout-botoes {
   display: flex; gap: 1px; width: fit-content;
   background: var(--borda-forte); border: 1px solid var(--borda-forte);
-  border-radius: 8px; overflow: hidden;
+  border-radius: var(--raio); overflow: hidden;
 }
-.grafo-layout-ajuda {
-  margin: .4rem 0 0; padding: .55rem .7rem;
-  background: color-mix(in srgb, var(--fundo) 92%, transparent);
-  backdrop-filter: blur(6px);
-  border: 1px solid var(--borda); border-radius: 8px;
-  font-size: .76rem; line-height: 1.45; color: var(--suave);
-}
-.grafo-layout-ajuda strong { color: var(--texto); }
 
 /* ═══ GASTOS DE COTA ═══════════════════════════════════════════ */
-.gastos-resumo {
-  padding: 1.75rem 1rem 1.5rem; text-align: center;
-  border-bottom: 1px solid var(--borda);
-}
-.gastos-total {
-  margin: 0 0 .2rem;
-  font-family: var(--display); font-variation-settings: 'wdth' 112;
-  font-size: 2.2rem; font-weight: 700; letter-spacing: -.03em;
-  font-variant-numeric: tabular-nums;
-}
-.gastos-resumo .ajuda { margin: 0; }
 
 .gastos-categorias, .gastos-fornecedores {
   list-style: none; margin: 0; padding: 0;
@@ -1157,40 +1908,333 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .gastos-categorias li, .gastos-fornecedores li {
   display: grid; align-items: center; gap: .75rem;
   padding: .6rem 1rem; border-bottom: 1px solid var(--borda);
-  font-size: .88rem;
+  font-size: var(--t-2);
 }
 .gastos-categorias li { grid-template-columns: minmax(0, 1fr) 6rem auto; }
 .gastos-fornecedores li { grid-template-columns: minmax(0, 1fr) auto; }
 
-.gasto-nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gasto-nome small { color: var(--suave); font-family: var(--dado); font-size: .72rem; }
+.gasto-nome { min-width: 0; overflow-wrap: anywhere; line-height: 1.35; }
+.gasto-nome small { display: block; color: var(--suave); font-family: var(--dado); font-size: var(--t-1); }
 
-/* ⚠️ Proporcional à MAIOR categoria, não ao total: com 15 categorias, proporção do
+/* ATENÇÃO: Proporcional à MAIOR categoria, não ao total: com 15 categorias, proporção do
       total vira fiapo ilegível. */
 .gasto-barra {
-  height: 6px; background: var(--borda); border-radius: 999px; overflow: hidden;
+  height: 6px; background: var(--borda); border-radius: var(--raio); overflow: hidden;
 }
 .gasto-barra span { display: block; height: 100%; background: var(--realce); }
 
 .gasto-valor {
-  font-family: var(--dado); font-size: .84rem;
+  font-family: var(--dado); font-size: var(--t-2);
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 
+/* ═══ GOVERNO FEDERAL ═════════════════════════════════════════ */
+/* Perfil da gestão e o dinheiro do ano. Um tom só (o realce), e nenhuma cor de bom ou
+   ruim (RNF-16). O pago de anos anteriores se distingue por TEXTURA, não por um tom mais
+   claro: listra funciona no tema escuro, em impressão e para quem não distingue cor. */
+
+.gestao {
+  display: grid; gap: .9rem;
+  padding: 1.1rem 1rem; border-bottom: 1px solid var(--borda);
+  background: var(--painel);
+}
+.gestao-pessoas { display: flex; flex-wrap: wrap; gap: 1.5rem 2.5rem; }
+.gestao-pessoa { display: flex; align-items: center; gap: .85rem; min-width: 0; }
+.gestao-papel {
+  margin: 0; font-size: var(--t-1); font-weight: 600; color: var(--suave);
+  text-transform: uppercase; letter-spacing: .05em;
+}
+.gestao-titulo { margin: 0; font-size: var(--t-3); }
+.gestao-nome { margin: .1rem 0 0; font-family: var(--display); font-size: var(--t-4); font-weight: 700; line-height: 1.15; }
+.escala-resultado { margin: 0; padding: .75rem 1rem; font-size: var(--t-2); color: var(--suave); border-bottom: 1px solid var(--borda); }
+.gestao-civil { margin: .15rem 0 0; font-size: var(--t-2); color: var(--suave); }
+.gestao-meta { margin: 0; font-family: var(--dado); font-size: var(--t-1); color: var(--suave); }
+.gestao-coligacao { display: inline; }
+.gestao-coligacao summary { display: inline; cursor: pointer; text-decoration: underline dotted; }
+.gestao-coligacao[open] { display: block; margin-top: .4rem; font-family: var(--corpo); font-size: var(--t-2); }
+
+.governo-barra {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: .75rem; padding: .9rem 1rem; border-bottom: 1px solid var(--borda);
+}
+.governo-escopo { margin: 0; font-size: var(--t-2); color: var(--suave); max-width: 38rem; }
+
+.numeros-do-ano {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 1px; background: var(--borda); border-bottom: 1px solid var(--borda);
+}
+.numero-do-ano { padding: 1rem; background: var(--fundo); }
+.numero-rotulo { margin: 0; font-size: var(--t-2); font-weight: 600; }
+.numero-valor {
+  margin: .3rem 0 .2rem; font-family: var(--dado); font-size: var(--t-5); font-weight: 600;
+  font-variant-numeric: tabular-nums; color: var(--texto);
+}
+.numero-definicao { margin: 0; font-size: var(--t-1); color: var(--suave); }
+
+.governo-secao { padding: 1.25rem 1rem; border-bottom: 1px solid var(--borda); }
+.governo-secao h2 { margin: 0 0 .35rem; font-size: var(--t-4); }
+.governo-secao > .ajuda { margin: 0 0 .75rem; }
+.governo-secao .aviso { margin: .9rem 0 0; }
+
+.legenda-barras {
+  display: flex; align-items: center; gap: .4rem; flex-wrap: wrap;
+  margin: 0 0 .6rem; font-size: var(--t-1); color: var(--suave);
+}
+.amostra { display: inline-block; width: .9rem; height: .7rem; border-radius: 2px; }
+.amostra + .amostra, .legenda-barras .amostra-anteriores { margin-left: .75rem; }
+.amostra-ano, .barra-ano { background: var(--realce); }
+.amostra-anteriores, .barra-anteriores {
+  background: repeating-linear-gradient(135deg, var(--realce) 0 2px, transparent 2px 5px);
+  box-shadow: inset 0 0 0 1px var(--realce);
+}
+
+.barras-areas { list-style: none; margin: 0; padding: 0; }
+.barra-area {
+  display: grid; grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr) auto;
+  align-items: center; gap: .75rem;
+  padding: .45rem 0; font-size: var(--t-2);
+}
+.barra-area-nome small { display: block; font-family: var(--dado); font-size: var(--t-1); color: var(--suave); }
+.barra-area-trilho { display: flex; gap: 2px; height: .75rem; }
+.barra-area-trilho > span { display: block; height: 100%; min-width: 0; }
+.barra-area-trilho > span:last-child { border-radius: 0 4px 4px 0; }
+
+.lista-encargos { list-style: none; margin: 0; padding: 0; }
+.lista-encargos li {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+  padding: .65rem 0; border-bottom: 1px solid var(--borda); font-size: var(--t-2);
+}
+.lista-encargos li:last-child { border-bottom: none; }
+.lista-encargos small { display: block; margin-top: .15rem; font-size: var(--t-1); color: var(--suave); }
+
+@media (max-width: 700px) {
+  .barra-area { grid-template-columns: 1fr auto; }
+  .barra-area-trilho { grid-column: 1 / -1; order: 3; }
+}
+
+/* ═══ FONTES OFICIAIS ═════════════════════════════════════════ */
+/* Todo número leva à fonte. O link é discreto, mas sublinhado: é o que o distingue de
+   texto, e não depende de cor. */
+/* Quebra linha quando precisa: `nowrap` servia ao link curto ("nota fiscal") e estourava a
+   tela do celular com o longo ("tudo o que esta entidade recebeu, no Portal…"). */
+.link-fonte { color: var(--realce); text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.link-fonte:hover { text-decoration-thickness: 2px; }
+.lista-lancamentos { list-style: none; margin: 0; padding: 0; }
+.lista-lancamentos li {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .75rem;
+  padding: .55rem 1rem; border-bottom: 1px solid var(--borda); font-size: var(--t-2);
+}
+.lista-lancamentos .gasto-nome small { display: block; }
+.lancamento-fim { display: grid; justify-items: end; gap: .1rem; font-size: var(--t-1); }
+
+/* ═══ EXPORTAR ═══ */
+.baixar-csv { display: inline-flex; align-items: center; gap: .4rem; font-weight: 400; }
+.baixar-csv .botao-texto { padding: .15rem .35rem; font-size: var(--t-1); color: var(--realce); text-decoration: underline; }
+.baixar-csv .erro { font-size: var(--t-1); margin: 0; }
+
+/* ═══ LISTA PAGINADA ═════════════════════════════════════════ */
+.contagem-lista {
+  margin: 0; padding: .6rem 1rem;
+  font-family: var(--dado); font-size: var(--t-1); color: var(--suave);
+  font-variant-numeric: tabular-nums;
+}
+.carregar-mais { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .4rem .9rem; padding: 1rem; }
+.carregar-mais-resto { font-family: var(--dado); font-size: var(--t-1); color: var(--suave); }
+.carregar-mais .erro { flex-basis: 100%; text-align: center; margin: 0; }
+
+/* ═══ DESTINO DAS EMENDAS ═════════════════════════════════════ */
+/* Quem recebeu, quando foi pago e por qual convênio. */
+
+.lista-favorecidos .gasto-nome small { display: block; }
+.lista-favorecidos .tambem-na-cota { white-space: normal; }
+.lista-favorecidos .fora-da-lista { color: var(--suave); }
+.lista-favorecidos .fora-da-lista .gasto-nome { white-space: normal; }
+
+/* Uma série só: o tom de realce, sem legenda — o título nomeia. Barras finas, 2px de
+   intervalo, ponta arredondada só do lado do valor. */
+/** Cada cartão da aba Cartões num bloco próprio, com o nome em cima: os três não se somam. */
+.cartao-bloco {
+  margin: 1.5rem 0; padding: 1.1rem 1.25rem 1.25rem;
+  border: 1px solid var(--borda-controle); border-top: 4px solid var(--realce); border-radius: var(--raio);
+}
+.cartao-bloco-topo { margin-bottom: .9rem; }
+.cartao-bloco-topo h2 { margin: 0; }
+.cartao-bloco-rotulo {
+  margin: 0 0 .15rem; color: var(--suave); font-size: var(--t-1);
+  font-family: var(--dado); text-transform: uppercase; letter-spacing: .06em;
+}
+.cartao-bloco-o-que-e { margin: .3rem 0 0; color: var(--suave); font-size: var(--t-2); }
+
+/**
+ * Colunas por ano e barra de composição (componentes/Graficos.tsx). Um teal só, em tons: série e
+ * parte se distinguem pelo tom e pela legenda, nunca por cor de partido.
+ */
+.grafico-colunas, .grafico-composicao { margin: .75rem 0 1rem; }
+.grafico-dica {
+  margin: 0 0 .4rem; min-height: 1.3em; color: var(--suave);
+  font-family: var(--dado); font-size: var(--t-1); font-variant-numeric: tabular-nums;
+}
+.grafico-colunas-area { display: flex; align-items: stretch; gap: .5rem; }
+.grafico-colunas-ano { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.grafico-colunas-barras {
+  height: 8rem; display: flex; align-items: flex-end; gap: 2px;
+  border-bottom: 1px solid var(--borda-forte);
+}
+.grafico-colunas-barra {
+  flex: 1; min-width: 0; height: 100%; display: flex; align-items: flex-end;
+  padding: 0; background: none; border: none; border-radius: 0; cursor: pointer;
+}
+.grafico-colunas-barra span {
+  display: block; width: 100%; min-height: 1px; border-radius: var(--raio) var(--raio) 0 0;
+  transition: opacity var(--t-curto) var(--curva), height var(--t-medio) var(--curva-entrada);
+}
+.grafico-colunas-area:hover .grafico-colunas-barra span { opacity: .45; }
+.grafico-colunas-area .grafico-colunas-barra:hover span,
+.grafico-colunas-barra:focus-visible span,
+.grafico-colunas-ano.escolhido .grafico-colunas-barra span { opacity: 1; }
+.grafico-colunas-barra:focus-visible { outline: 3px solid var(--realce); outline-offset: 2px; }
+.grafico-colunas-rotulo {
+  margin-top: .3rem; text-align: center; white-space: nowrap;
+  font-family: var(--dado); font-size: var(--t-1); color: var(--suave);
+}
+.grafico-colunas-ano.escolhido .grafico-colunas-rotulo { color: var(--texto); font-weight: 600; }
+/** O tom pinta a amostra da legenda, a parte da composição e a barra dentro da coluna; nunca o botão da coluna, que ocupa a altura toda. */
+.grafico-amostra.tom-0, .grafico-composicao-parte.tom-0, .grafico-colunas-barra.tom-0 span { background: var(--realce); }
+.grafico-amostra.tom-1, .grafico-composicao-parte.tom-1, .grafico-colunas-barra.tom-1 span { background: color-mix(in srgb, var(--realce) 60%, var(--texto)); }
+.grafico-amostra.tom-2, .grafico-composicao-parte.tom-2, .grafico-colunas-barra.tom-2 span { background: color-mix(in srgb, var(--realce) 30%, var(--texto)); }
+.grafico-amostra.tom-3, .grafico-composicao-parte.tom-3, .grafico-colunas-barra.tom-3 span { background: color-mix(in srgb, var(--realce) 40%, var(--fundo)); }
+.grafico-amostra.tom-4, .grafico-composicao-parte.tom-4, .grafico-colunas-barra.tom-4 span { background: var(--borda-forte); }
+.grafico-legenda { list-style: none; margin: .5rem 0 0; padding: 0; font-size: var(--t-2); }
+.grafico-legenda-series { display: flex; flex-wrap: wrap; gap: .3rem 1rem; color: var(--suave); }
+.grafico-legenda-series li { display: inline-flex; align-items: center; gap: .4rem; }
+.grafico-amostra {
+  display: inline-block; flex: none; width: .8rem; height: .8rem; border-radius: var(--raio);
+  border: 1px solid var(--borda-controle);
+}
+.grafico-composicao-barra {
+  display: flex; gap: 2px; height: 1.5rem; border-radius: var(--raio); overflow: hidden;
+}
+.grafico-composicao-parte {
+  min-width: 3px; padding: 0; border: none; border-radius: 0; cursor: default;
+  transition: opacity var(--t-curto) var(--curva);
+}
+.grafico-composicao:hover .grafico-composicao-parte { opacity: .5; }
+.grafico-composicao .grafico-composicao-parte.em-foco { opacity: 1; }
+.grafico-composicao-parte:focus-visible { outline: 3px solid var(--texto); outline-offset: -3px; opacity: 1; }
+.grafico-composicao-legenda li {
+  display: flex; align-items: baseline; gap: .6rem; padding: .35rem 0; border-bottom: 1px solid var(--borda);
+  transition: background var(--t-curto) var(--curva);
+}
+.grafico-composicao-legenda li.em-foco { background: var(--painel); }
+.grafico-legenda-nome { flex: 1; display: flex; flex-direction: column; }
+.grafico-legenda-nome small, .grafico-legenda-valor small { color: var(--suave); font-size: var(--t-1); }
+.grafico-legenda-valor {
+  display: flex; flex-direction: column; align-items: flex-end;
+  font-family: var(--dado); font-variant-numeric: tabular-nums;
+}
+.grafico-tabela { margin-top: .4rem; font-size: var(--t-2); }
+.grafico-tabela summary { cursor: pointer; color: var(--suave); }
+.grafico-tabela table { margin-top: .4rem; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.grafico-tabela th, .grafico-tabela td { padding: .2rem .8rem .2rem 0; text-align: left; }
+.grafico-tabela td { font-family: var(--dado); }
+
+.grafico-meses { margin: 0; padding: .75rem 1rem 1rem; border-bottom: 1px solid var(--borda); }
+.grafico-meses-dica {
+  margin: 0 0 .4rem; min-height: 1.3em;
+  font-family: var(--dado); font-size: var(--t-1); font-variant-numeric: tabular-nums;
+}
+.grafico-meses-barras {
+  display: flex; align-items: flex-end; gap: 2px; height: 7rem;
+  border-bottom: 1px solid var(--borda-forte);
+}
+.grafico-meses-barra {
+  position: relative; flex: 1; min-width: 0; height: 100%;
+  display: flex; align-items: flex-end;
+  padding: 0; background: none; border: none; border-radius: 0;
+}
+.grafico-meses-barra span {
+  display: block; width: 100%;
+  background: var(--realce); border-radius: 4px 4px 0 0;
+  transition: opacity var(--t-curto) var(--curva);
+}
+/* A virada do ano: é ela que separa o pago no próprio ano do pago depois. */
+.grafico-meses-barra.virada-de-ano::before {
+  content: ''; position: absolute; left: -2px; top: 0; bottom: 0;
+  border-left: 1px dashed var(--borda-forte);
+}
+.grafico-meses-barras:hover .grafico-meses-barra span { opacity: .45; }
+.grafico-meses-barras .grafico-meses-barra:hover span,
+.grafico-meses-barra:focus-visible span { opacity: 1; }
+.grafico-meses-barra:focus-visible { outline: 3px solid var(--realce); outline-offset: 2px; }
+.grafico-meses-eixo {
+  display: flex; justify-content: space-between; margin-top: .3rem;
+  font-family: var(--dado); font-size: var(--t-1); color: var(--suave);
+}
+.grafico-meses-tabela { margin-top: .6rem; font-size: var(--t-2); }
+.grafico-meses-tabela summary { cursor: pointer; color: var(--suave); }
+.grafico-meses-tabela table {
+  margin-top: .5rem; border-collapse: collapse; font-variant-numeric: tabular-nums;
+}
+.grafico-meses-tabela th, .grafico-meses-tabela td { padding: .2rem 1.2rem .2rem 0; text-align: left; }
+.grafico-meses-tabela td:last-child { text-align: right; font-family: var(--dado); }
+
+.lista-convenios { list-style: none; margin: 0; padding: 0; }
+.lista-convenios li {
+  display: grid; gap: .2rem;
+  padding: .7rem 1rem; border-bottom: 1px solid var(--borda);
+}
+.convenio-cabeca {
+  display: flex; justify-content: space-between; align-items: baseline; gap: .75rem;
+  font-size: var(--t-2);
+}
+.convenio-objeto {
+  margin: 0; font-size: var(--t-2);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.convenio-meta { margin: 0; font-family: var(--dado); font-size: var(--t-1); color: var(--suave); }
+
+/* ═══ ORÇAMENTO FEDERAL ════════════════════════════════════════ */
+/* Contexto da legislatura. Sem cor além do realce, e na ordem do código da função:
+   qualquer outra ordem viraria ranking de área (RNF-16). */
+
+.orcamento-barra { padding: .75rem 1rem 0; }
+
+.tabela-rolavel { overflow-x: auto; }
+.tabela-orcamento {
+  width: 100%; border-collapse: collapse;
+  font-size: var(--t-2); font-variant-numeric: tabular-nums;
+}
+.tabela-orcamento th, .tabela-orcamento td {
+  padding: .55rem 1rem; border-bottom: 1px solid var(--borda);
+  text-align: right; white-space: nowrap;
+}
+.tabela-orcamento th[scope='row'], .tabela-orcamento thead th:first-child {
+  text-align: left; white-space: normal; font-weight: 500;
+}
+.tabela-orcamento thead th {
+  font-size: var(--t-1); font-weight: 600; color: var(--suave);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.tabela-orcamento td { font-family: var(--dado); }
+.tabela-orcamento tfoot th, .tabela-orcamento tfoot td {
+  font-weight: 700; border-top: 1px solid var(--borda-forte); border-bottom: none;
+}
+
+.orcamento-sem-razao { font-family: var(--corpo); font-size: var(--t-1); color: var(--suave); }
+
 /* ═══ MODAIS — entrada e saída ═════════════════════════════════ */
-/* 🔴 `<dialog>` não anima sozinho: ele aparece e some no mesmo quadro, e a saída é a
+/* RISCO: `<dialog>` não anima sozinho: ele aparece e some no mesmo quadro, e a saída é a
    pior das duas — o conteúdo desaparece antes de o olho registrar que fechou.
 
-   ⚠️ Animar exige TRÊS peças, e faltando qualquer uma só a entrada funciona:
+   ATENÇÃO: Animar exige TRÊS peças, e faltando qualquer uma só a entrada funciona:
    · `@starting-style` — de onde a animação PARTE quando o elemento passa a existir
    · `allow-discrete` em `display` e `overlay` — sem isso o navegador troca os dois de
      uma vez no fim, e a saída não é vista
    · o estado fechado declarado no seletor base, que é para onde ela VAI
 
-   ⭐ Vale para os três diálogos do projeto de uma vez. */
+   DECISÃO: Vale para os três diálogos do projeto de uma vez. */
 .modal-avaliacao,
-.grafo-ampliado,
-.contas-ampliadas {
+.grafo-ampliado {
   opacity: 0;
   transform: translateY(10px) scale(.985);
   transition:
@@ -1200,26 +2244,23 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
     display var(--t-medio) allow-discrete;
 }
 .modal-avaliacao[open],
-.grafo-ampliado[open],
-.contas-ampliadas[open] {
+.grafo-ampliado[open] {
   opacity: 1;
   transform: none;
-  /* ⭐ Entrada e saída com curvas DIFERENTES: o que chega freia longo, o que sai
+  /* DECISÃO: Entrada e saída com curvas DIFERENTES: o que chega freia longo, o que sai
      acelera e some. É a distinção que faz o movimento ler como físico. */
   transition-timing-function: var(--curva-entrada);
 }
 @starting-style {
   .modal-avaliacao[open],
-  .grafo-ampliado[open],
-  .contas-ampliadas[open] {
+.grafo-ampliado[open] {
     opacity: 0;
     transform: translateY(10px) scale(.985);
   }
 }
 
 .modal-avaliacao::backdrop,
-.grafo-ampliado::backdrop,
-.contas-ampliadas::backdrop {
+.grafo-ampliado::backdrop {
   opacity: 0;
   transition:
     opacity var(--t-medio) var(--curva),
@@ -1227,156 +2268,117 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
     display var(--t-medio) allow-discrete;
 }
 .modal-avaliacao[open]::backdrop,
-.grafo-ampliado[open]::backdrop,
-.contas-ampliadas[open]::backdrop { opacity: 1; }
+.grafo-ampliado[open]::backdrop { opacity: 1; }
 @starting-style {
   .modal-avaliacao[open]::backdrop,
-  .grafo-ampliado[open]::backdrop,
-  .contas-ampliadas[open]::backdrop { opacity: 0; }
+.grafo-ampliado[open]::backdrop { opacity: 0; }
 }
 
-/* ⚠️ Menos movimento ⛔ não é "nenhuma mudança visual": sumir sem transição confunde
+/* DECISÃO: A prancheta SOBE, e é uma entrada mais longa que a dos outros dois.
+   
+   Ela troca a página inteira, não abre uma caixa sobre ela: a mesma transição de 260ms
+   que serve a um diálogo de 30rem lê como um corte seco quando o que se move é a tela
+   toda. Sobe de mais longe, escala de mais baixo e freia por mais tempo — o olho
+   acompanha o desenho crescendo em vez de encontrá-lo já pronto.
+   
+   ATENÇÃO: O fundo entra JUNTO, e mais rápido: se ele chegar depois, a prancheta cresce por
+   cima da página antiga e o quadro fica sujo no meio do caminho. */
+.grafo-ampliado {
+  transform: translateY(22px) scale(.965);
+  transition-duration: var(--t-longo);
+}
+.grafo-ampliado[open] { transform: none; }
+@starting-style {
+  .grafo-ampliado[open] {
+    opacity: 0;
+    transform: translateY(22px) scale(.965);
+  }
+}
+.grafo-ampliado::backdrop { transition-duration: var(--t-medio); }
+
+/* O conteúdo chega com um respiro depois da moldura — primeiro a prancheta existe,
+   depois o que está nela aparece. Sem o atraso, tudo se move ao mesmo tempo e a
+   entrada vira um borrão só. */
+.grafo-ampliado > * {
+  opacity: 0;
+  transition: opacity var(--t-medio) var(--curva-entrada) 90ms;
+}
+.grafo-ampliado[open] > * { opacity: 1; }
+
+/* ATENÇÃO: Menos movimento não é "nenhuma mudança visual": sumir sem transição confunde
    tanto quanto deslizar demais. Sai o deslocamento, fica a fusão curta. */
 @media (prefers-reduced-motion: reduce) {
   .modal-avaliacao,
-  .grafo-ampliado,
-  .contas-ampliadas {
+.grafo-ampliado {
     transform: none;
     transition-duration: var(--t-curto);
   }
   @starting-style {
     .modal-avaliacao[open],
-    .grafo-ampliado[open],
-    .contas-ampliadas[open] { transform: none; }
+.grafo-ampliado[open] { transform: none; }
   }
+
+  .grafo-ampliado > * { transition-delay: 0ms; }
 }
 
 /* ═══ CONTAS DO MANDATO — a faixa fixa do perfil ═══════════════ */
-/* 🔴 Os três totais lado a lado é o ponto TODO da faixa: campanha na casa dos milhões,
+/* RISCO: Os três totais lado a lado é o ponto TODO da faixa: campanha na casa dos milhões,
    emendas na das dezenas de milhões, cota na das centenas de milhares. Essa diferença
    de ordem de grandeza é a informação, e ela só existe quando os três se veem juntos. */
 /* Os três totais de cara no perfil, com régua acima em vez de borda em volta: solta
    entre dois blocos com borda, a faixa lia como uma tira flutuando.
 
-   ⚠️ O botão fica em LINHA PRÓPRIA. Ao lado dos números ele disputava a largura e
-   comprimia a grade de três colunas contra a esquerda — valor em moeda ⛔ não tem para
+   ATENÇÃO: O botão fica em LINHA PRÓPRIA. Ao lado dos números ele disputava a largura e
+   comprimia a grade de três colunas contra a esquerda — valor em moeda não tem para
    onde encolher. */
 .perfil-contas {
   display: flex; flex-direction: column; gap: .9rem;
   margin-top: 1rem; padding-top: .9rem; border-top: 1px solid var(--borda);
 }
-/* Controle de verdade, ⛔ não link de texto: é a única porta para o detalhe, e como
+/* Controle de verdade, não link de texto: é a única porta para o detalhe, e como
    link discreto ela não se anunciava. */
-.botao-contas {
-  width: 100%; padding: .55rem .85rem; border-radius: 8px;
-  border: 1px solid var(--borda-forte); background: var(--fundo);
-  color: var(--texto); font-size: .86rem; font-weight: 600;
-  transition: border-color var(--t-curto) var(--curva),
-              color var(--t-curto) var(--curva);
-}
-.botao-contas:hover { border-color: var(--realce); color: var(--realce); }
 
 .contas-numeros {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem;
 }
+/* MEDIDO: A 390 px, duas colunas quebravam o valor no meio ("R$ 1.830.047," / "00"), 2026-10-03. */
 @media (width <= 30rem) {
-  .contas-numeros, .contas-comparacao { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .contas-numeros { grid-template-columns: minmax(0, 1fr); gap: .9rem; }
 }
 
 /* A mesma comparação repetida no topo do modal: quem abriu clicando nela precisa
    reencontrá-la, senão o modal parece outro assunto. */
-.bloco-conta:first-of-type { border-top: none; }
-.contas-comparacao {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem;
-  padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--borda);
-}
+
 .conta-valor { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
 .conta-rotulo {
-  font-family: var(--dado); font-size: .68rem; font-weight: 600;
+  font-family: var(--dado); font-size: var(--t-1); font-weight: 600;
   text-transform: uppercase; letter-spacing: .1em; color: var(--suave);
 }
 .conta-numero {
-  font-family: var(--display); font-variation-settings: 'wdth' 108;
-  font-size: 1.25rem; font-weight: 700; letter-spacing: -.02em;
+  white-space: nowrap;
+  font-family: var(--display);
+  font-size: var(--t-4); font-weight: 700; letter-spacing: -.02em;
   font-variant-numeric: tabular-nums;
-  /* ⚠️ Valor longo (R$ 163.712.480,00) não pode empurrar as três colunas. */
+  /* ATENÇÃO: Valor longo (R$ 163.712.480,00) não pode empurrar as três colunas. */
   overflow-wrap: anywhere;
 }
-/* ⭐ O travessão do "sem registro" fica DISCRETO: ele não é um valor, e destacá-lo com o
+/* DECISÃO: O travessão do "sem registro" fica DISCRETO: ele não é um valor, e destacá-lo com o
       mesmo peso dos outros dois faria a ausência competir com o dado. */
 .conta-ausente { color: var(--suave); font-weight: 500; }
-.conta-nota { font-size: .74rem; color: var(--suave); }
-
-/* ═══ CONTAS AMPLIADAS — o modal de detalhe ════════════════════ */
-/* ⚠️ Sem `display:flex` no próprio `<dialog>`: o `margin:auto` que o navegador usa para
-   centralizar o modal depende do display padrão, e trocá-lo o desloca na tela. O corpo
-   rolável é resolvido com `max-height` no filho, não com flex no diálogo. */
-.contas-ampliadas {
-  width: min(94vw, 42rem); max-width: none;
-  padding: 0; border: 1px solid var(--borda-forte); border-radius: 14px;
-  background: var(--fundo); color: var(--texto);
-  box-shadow: 0 16px 50px rgb(0 0 0 / 28%);
-}
-.contas-ampliadas::backdrop { background: rgb(0 0 0 / 55%); backdrop-filter: blur(3px); }
-/* O bloco de título ocupa a largura; sem `flex: 1` ele encolhia até o texto e o ✕
-   ficava a meia tela de distância, deixando a barra com um vazio à direita. */
-.contas-ampliadas header {
-  display: flex; align-items: flex-start; gap: 1rem;
-  padding: 1.15rem 1.25rem; border-bottom: 1px solid var(--borda);
-}
-.contas-ampliadas header > div { flex: 1; min-width: 0; }
-.contas-ampliadas h2 {
-  margin: 0;
-  font-family: var(--display); font-variation-settings: 'wdth' 114;
-  font-size: 1.45rem; font-weight: 700; letter-spacing: -.02em;
-}
-.contas-ampliadas .ajuda { margin: .2rem 0 0; }
-.contas-ampliadas .botao-icone { flex-shrink: 0; }
-.contas-corpo { max-height: min(70vh, 44rem); overflow-y: auto; }
-
-/* 🔴 Uma única margem esquerda no modal inteiro.
-   ⚠️ As listas e os títulos são reaproveitados do perfil, onde a coluna é mais estreita
-   e o recuo é 1rem; o cabeçalho e a comparação nascem aqui, com 1,25rem. Misturados, o
-   texto do topo ficava recuado em relação a tudo abaixo — lia como desalinhamento. */
-.contas-corpo .titulo-secao,
-.contas-corpo .ajuda-espacada,
-.contas-corpo .execucao,
-.contas-corpo .gastos-categorias li,
-.contas-corpo .gastos-fornecedores li,
-.contas-corpo .fundos li {
-  padding-inline: 1.25rem;
-}
-
-/* 🔴 As três seções precisam ler como CAPÍTULOS, não como mais três títulos numa
-   rolagem longa: sem peso próprio elas se confundem, e o leitor perde de vista que
-   trocou de dinheiro. Daí a superfície tinta, a régua forte e a display expandida. */
-.bloco-conta { border-top: 2px solid var(--borda-forte); }
-/* ⭐ Gruda no topo da rolagem: numa lista longa é o que impede o leitor de esquecer
-   qual dos três dinheiros está vendo. */
-.cabecalho-bloco {
-  position: sticky; top: 0; z-index: 1;
-  padding: .9rem 1.25rem;
-  background: var(--painel); border-bottom: 1px solid var(--borda);
-}
-.cabecalho-bloco .ajuda { margin: .15rem 0 0; }
-.titulo-bloco {
-  margin: 0;
-  font-family: var(--display); font-variation-settings: 'wdth' 114;
-  font-size: 1.3rem; font-weight: 700; letter-spacing: -.02em;
-}
-/* ⚠️ Dentro do modal a faixa de resumo de cada fonte é MENOR: ela já não é o topo da
-      tela, e o tamanho original competiria com o título do bloco. */
-.bloco-conta .gastos-resumo { padding-top: .5rem; border-bottom: none; }
-.bloco-conta .gastos-total { font-size: 1.7rem; }
+.conta-nota { font-size: var(--t-1); color: var(--suave); }
 
 /* ═══ EMENDAS E FINANCIAMENTO DE CAMPANHA ══════════════════════ */
-/* 🔴 A execução (pago ÷ empenhado) ganha destaque próprio, e não um número miúdo
+/* RISCO: A execução (pago ÷ empenhado) ganha destaque próprio, e não um número miúdo
    ao lado do total: é ela que distingue emenda anunciada de emenda cumprida. */
 .execucao { padding: .9rem 1rem 1rem; border-bottom: 1px solid var(--borda); }
-.execucao-barra { display: block; height: 8px; margin-bottom: .5rem; }
+.execucao-barra { display: flex; height: 8px; margin-bottom: .5rem; }
+.gasto-barra .parte-depois, .amostra-cor.parte-depois { background: color-mix(in srgb, var(--realce) 45%, var(--fundo)); }
+.legenda-execucao { display: flex; flex-wrap: wrap; gap: .3rem 1.25rem; margin: 0; font-size: var(--t-1); color: var(--suave); }
+.amostra-cor { display: inline-block; width: .7rem; height: .7rem; margin-right: .25rem; vertical-align: -1px; border-radius: 1px; background: var(--realce); }
+.amostra-cor.nao-pago { background: var(--borda); }
 .execucao .ajuda { margin: 0; }
 
-/* ⚠️ Os dois fundos lado a lado, cada um com o nome à vista — a diagramação é o
+/* ATENÇÃO: Os dois fundos lado a lado, cada um com o nome à vista — a diagramação é o
    que impede a leitura de "um bloco só de dinheiro público". */
 .fundos {
   list-style: none; margin: 0; padding: 0;
@@ -1388,11 +2390,740 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 }
 .fundos li + li { border-left: 1px solid var(--borda); }
 .fundo-rotulo {
-  font-family: var(--dado); font-size: .72rem; font-weight: 600;
+  font-family: var(--dado); font-size: var(--t-1); font-weight: 600;
   text-transform: uppercase; letter-spacing: .1em; color: var(--suave);
 }
 .fundo-valor {
-  font-family: var(--display); font-variation-settings: 'wdth' 112;
-  font-size: 1.35rem; font-weight: 700; letter-spacing: -.02em;
+  font-family: var(--display);
+  font-size: var(--t-4); font-weight: 700; letter-spacing: -.02em;
   font-variant-numeric: tabular-nums;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tour guiado
+   ═══════════════════════════════════════════════════════════════════
+   O destaque é um retângulo transparente com uma sombra enorme em volta: a sombra é o
+   véu, o buraco é o elemento. Posição por `transform`, que anima na GPU sem refazer o
+   layout. A entrada do balão usa `translate` (propriedade própria), que se soma ao
+   `transform` da posição em vez de sobrescrevê-lo. */
+
+dialog.tour {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%; max-width: none; max-height: none;
+  margin: 0; padding: 0; border: 0;
+  background: transparent; overflow: visible;
+}
+dialog.tour::backdrop { background: transparent; }
+
+.tour-destaque {
+  position: fixed; top: 0; left: 0;
+  border-radius: var(--raio);
+  box-shadow: 0 0 0 3px var(--anel-tour), var(--brilho-tour), 0 0 0 200vmax var(--veu);
+  pointer-events: none;
+  opacity: 0;
+  /* Posição e tamanho vêm do laço do Tour, quadro a quadro; transição aqui brigaria com ele. */
+  transition: opacity var(--t-medio) var(--curva);
+}
+.tour-visivel .tour-destaque { opacity: 1; }
+
+.tour-balao {
+  position: fixed; top: 0; left: 0;
+  width: min(23rem, calc(100vw - 1.5rem));
+  display: grid; gap: .75rem;
+  padding: 1rem 1.125rem;
+  background: var(--fundo); color: var(--texto);
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  box-shadow: var(--sombra-flutuante);
+  opacity: 0;
+  transition: opacity var(--t-medio) var(--curva-entrada);
+}
+.tour-visivel .tour-balao { opacity: 1; }
+
+/* O texto de cada passo entra com uma fusão curta, junto com o balão em movimento: o balão
+   Não some entre um passo e outro, e o texto não pisca para vazio. */
+.tour-conteudo { animation: tour-texto-entra var(--t-medio) var(--curva-entrada); }
+@keyframes tour-texto-entra {
+  from { opacity: 0; translate: 0 4px; }
+}
+.tour-balao h2 { margin: .15rem 0 .35rem; font-size: var(--t-4); line-height: 1.25; }
+.tour-balao p { margin: 0; font-size: var(--t-2); line-height: 1.5; }
+.tour-passo {
+  font-family: var(--dado); font-variant-numeric: tabular-nums;
+  font-size: var(--t-1) !important; color: var(--suave);
+}
+.tour-controles { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.tour-controles .botao-destaque { margin-left: auto; min-width: 7.5rem; }
+
+/* Oferta do primeiro acesso: canto inferior, sem cobrir o conteúdo. */
+/* "Entenda esta tela": texto com a marca de ajuda, no tom de realce e com borda de
+   controle. A borda é o que o separa de um rótulo quando está ao lado de números. */
+.botao-tour {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .3rem .6rem; font-size: var(--t-1); font-weight: 600;
+  color: var(--realce); background: none;
+  border: 1px solid var(--borda-controle); border-radius: var(--raio);
+  cursor: pointer;
+  transition: background var(--t-curto) var(--curva), border-color var(--t-curto) var(--curva);
+}
+.botao-tour:hover { background: var(--realce-fraco); border-color: var(--realce); }
+.botao-tour > span {
+  display: inline-grid; place-items: center; width: 1.1rem; height: 1.1rem;
+  font-family: var(--dado); font-size: var(--t-1);
+  color: var(--fundo); background: var(--realce); border-radius: 50%;
+}
+.perfil-numeros { align-items: center; flex-wrap: wrap; }
+.perfil-numeros .botao-tour { margin-left: auto; }
+.progresso .botao-tour { margin-top: .5rem; }
+.linha-do-tour { padding: .75rem 1rem 0; }
+
+.oferta-tour {
+  position: fixed; z-index: 40;
+  right: clamp(1rem, 3vw, 2rem);
+  bottom: calc(clamp(1rem, 3vw, 2rem) + env(safe-area-inset-bottom, 0px));
+  width: min(22rem, calc(100vw - 2rem));
+  display: grid; gap: .5rem;
+  padding: 1rem 1.125rem;
+  background: var(--fundo); color: var(--texto);
+  border: 1px solid var(--borda-forte); border-top: 3px solid var(--realce);
+  border-radius: var(--raio); box-shadow: var(--sombra-flutuante);
+  animation: oferta-entra var(--t-medio) var(--curva-entrada);
+}
+.oferta-tour h2 { margin: 0; font-size: var(--t-3); }
+.oferta-tour p { margin: 0; font-size: var(--t-2); color: var(--suave); }
+.oferta-tour-acoes { display: flex; gap: .5rem; align-items: center; margin-top: .25rem; }
+@keyframes oferta-entra {
+  from { opacity: 0; translate: 0 12px; }
+}
+
+/* Menos movimento: sai o deslizamento, fica a fusão curta. Some sem transição confunde
+   tanto quanto deslizar demais. */
+@media (prefers-reduced-motion: reduce) {
+  .tour-destaque,
+  .tour-balao {
+    transition: opacity var(--t-curto) linear;
+  }
+  .tour-conteudo { animation: none; }
+  /* A troca de passo com menos movimento: some, troca de lugar invisível, reaparece. */
+  .tour.tour-trocando .tour-destaque,
+  .tour.tour-trocando .tour-balao { opacity: 0; }
+  .oferta-tour { animation: none; }
+}
+
+/* ═══ EMENDAS NO MAPA ══════════════════════════════════════════ */
+/* Um tom só — o realce — em cinco faixas. Mais escuro é mais dinheiro, e só isso:
+   duas cores leriam como lados (RNF-16). Sem pagamento fica só o contorno. */
+
+.sua-cidade { padding: 1rem; border-bottom: 1px solid var(--borda); }
+.sua-cidade label { display: block; font-weight: 700; margin-bottom: .4rem; }
+.sua-cidade-campos { display: flex; flex-wrap: wrap; gap: .5rem; }
+.sua-cidade-campos input {
+  flex: 1 1 14rem; min-width: 0; padding: .5rem .7rem;
+  font: inherit; color: var(--texto); background: var(--painel);
+  border: 1px solid var(--borda-controle); border-radius: var(--raio);
+}
+.sua-cidade-campos input:focus-visible { outline: 2px solid var(--realce); outline-offset: 1px; }
+.sua-cidade-achados { list-style: none; margin: .4rem 0 0; padding: 0; display: grid; gap: .1rem; }
+.sua-cidade .ajuda { margin: .5rem 0 0; font-size: var(--t-1); }
+
+.link-botao {
+  padding: 0; border: 0; background: none; color: var(--realce);
+  font: inherit; text-align: left; text-decoration: underline; text-underline-offset: 2px;
+}
+.link-botao:hover { color: var(--realce-hover); }
+.link-botao[aria-current='true'] { font-weight: 700; }
+
+.mapa-titulo { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.mapa { position: relative; margin: .5rem 0 1rem; }
+.mapa svg { display: block; width: 100%; max-width: 34rem; height: auto; margin: 0 auto; touch-action: manipulation; }
+.mapa-carregando { aspect-ratio: 1; max-width: 34rem; margin: .5rem auto 1rem; background: var(--painel); border-radius: var(--raio); }
+
+/* O rótulo acompanha o mouse; Não recebe o ponteiro, senão o hover piscaria entre ele e a área. */
+.mapa-rotulo {
+  position: absolute; z-index: 2; pointer-events: none;
+  transform: translate(-50%, calc(-100% - 10px));
+  padding: .3rem .55rem; border-radius: var(--raio);
+  background: var(--texto); color: var(--fundo);
+  font-family: var(--dado); font-size: var(--t-1); font-variant-numeric: tabular-nums;
+  white-space: nowrap; box-shadow: var(--sombra-flutuante);
+}
+
+.mapa-area {
+  stroke: var(--mapa-contorno); stroke-width: .6; stroke-linejoin: round; cursor: pointer;
+  transition: fill var(--t-medio) var(--curva), opacity var(--t-curto) var(--curva);
+}
+.mapa-area:hover, .mapa-area:focus-visible { opacity: .8; outline: none; }
+.mapa-area:focus-visible { stroke: var(--texto); stroke-width: 1.5; }
+.mapa-selecionada { stroke: var(--texto); stroke-width: 2; }
+
+.mapa-sem-dado { fill: var(--mapa-0); }
+.mapa-faixa-0 { fill: var(--mapa-0); }
+.mapa-faixa-1 { fill: var(--mapa-1); }
+.mapa-faixa-2 { fill: var(--mapa-2); }
+.mapa-faixa-3 { fill: var(--mapa-3); }
+.mapa-faixa-4 { fill: var(--mapa-4); }
+.mapa-faixa-5 { fill: var(--mapa-5); }
+
+.mapa-legenda {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem 1rem;
+  margin-top: .6rem; font-size: var(--t-1); color: var(--suave); font-variant-numeric: tabular-nums;
+}
+.mapa-legenda-item { display: inline-flex; align-items: center; gap: .35rem; }
+.mapa-amostra { display: inline-block; width: .9rem; height: .9rem; border-radius: 2px; border: 1px solid var(--borda-forte); }
+.mapa-amostra.mapa-faixa-0 { background: var(--mapa-0); }
+.mapa-amostra.mapa-faixa-1 { background: var(--mapa-1); }
+.mapa-amostra.mapa-faixa-2 { background: var(--mapa-2); }
+.mapa-amostra.mapa-faixa-3 { background: var(--mapa-3); }
+.mapa-amostra.mapa-faixa-4 { background: var(--mapa-4); }
+.mapa-amostra.mapa-faixa-5 { background: var(--mapa-5); }
+
+.lista-cidades, .lista-autores { list-style: none; margin: .5rem 0 0; padding: 0; }
+.lista-cidades { counter-reset: cidade; }
+.lista-cidades li, .lista-autores li {
+  display: grid; grid-template-columns: 1fr auto; gap: .1rem .75rem; align-items: baseline;
+  padding: .45rem 0; border-bottom: 1px solid var(--borda);
+}
+.lista-autores .autor-nome { font-weight: 600; }
+.lista-autores .autor-detalhe { grid-column: 1; color: var(--suave); font-size: var(--t-1); }
+.lista-cidades .valor, .lista-autores .valor {
+  grid-column: 2; grid-row: 1; font-family: var(--dado); font-variant-numeric: tabular-nums;
+}
+
+.painel-cidade { background: var(--realce-fraco); }
+.painel-cidade h3 { margin: 1.1rem 0 .2rem; font-size: var(--t-3); }
+.painel-cidade-uf { font-family: var(--dado); font-weight: 400; color: var(--suave); }
+.painel-cidade-total { margin: .4rem 0; }
+.painel-cidade-total .numero-valor { display: inline; font-size: var(--t-4); }
+.painel-cidade-partes { margin: .3rem 0 0; padding-left: 1.1rem; font-size: var(--t-2); color: var(--suave); }
+.painel-cidade-partes strong { color: var(--texto); font-family: var(--dado); }
+
+.seletor-periodo-campos { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; }
+.seletor-periodo-campos button {
+  padding: .4rem .85rem; background: transparent; color: var(--suave);
+  border: 1px solid var(--borda-controle); border-radius: var(--raio); font-size: var(--t-2);
+}
+.seletor-periodo-campos button:hover { color: var(--realce); border-color: var(--realce); }
+.seletor-periodo-campos button.ativo { background: var(--realce); border-color: var(--realce); color: var(--sobre-realce); }
+.seletor-periodo-campos label { display: inline-flex; align-items: center; gap: .35rem; font-size: var(--t-2); color: var(--suave); }
+.seletor-periodo-intervalo { display: inline-flex; flex-wrap: nowrap; align-items: center; gap: .75rem; }
+.seletor-periodo-intervalo select { width: auto; }
+.seletor-periodo-campos select {
+  padding: .35rem .5rem; font: inherit; font-family: var(--dado); font-variant-numeric: tabular-nums;
+  color: var(--texto); background: var(--painel);
+  border: 1px solid var(--borda-controle); border-radius: var(--raio);
+}
+.seletor-periodo-campos select:focus-visible { outline: 2px solid var(--realce); outline-offset: 1px; }
+
+.lista-autores li.autor-com-foto { grid-template-columns: auto 1fr auto; align-items: center; }
+.autor-com-foto .autor-texto { display: grid; gap: .1rem; min-width: 0; }
+.lista-autores li.autor-com-foto .valor { grid-column: 3; grid-row: 1; }
+
+/* ═══ GOVERNO — LINGUAGEM SIMPLES ═══════════════════════════════ */
+
+.cada-cem { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .55rem; }
+.cada-cem li {
+  display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); grid-template-rows: auto auto;
+  column-gap: .75rem; align-items: baseline;
+}
+.cada-cem-parte {
+  grid-row: 1 / span 2; font-family: var(--dado); font-variant-numeric: tabular-nums;
+  font-size: var(--t-4); font-weight: 700; color: var(--texto);
+}
+.cada-cem-nome { display: flex; justify-content: space-between; gap: .75rem; font-weight: 600; }
+.cada-cem-nome small { font-family: var(--dado); font-weight: 400; color: var(--suave); font-size: var(--t-1); }
+.cada-cem-trilho { height: .5rem; background: var(--painel); border-radius: 2px; overflow: hidden; }
+.cada-cem-trilho span { display: block; height: 100%; background: var(--realce); }
+
+.governo-detalhes > summary { cursor: pointer; padding: .2rem 0; }
+.governo-detalhes > summary:focus-visible { outline: 2px solid var(--realce); outline-offset: 2px; }
+.governo-detalhes h3 { margin: 1.2rem 0 .3rem; font-size: var(--t-3); }
+.botoes-csv { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+
+/* ═══ BARRA: TRÊS INTENÇÕES, BUSCA E CONTA ═══════════════════════
+   Uma linha no desktop: marca · navegação · busca · análise · conta. Abaixo de 1180px a navegação
+   desce para uma segunda linha, inteira — três itens com rótulo cabem num telefone, e
+   ícone sem rótulo obrigaria a adivinhar. */
+
+.cabecalho-conteudo {
+  display: grid;
+  grid-template-columns: auto auto minmax(10rem, 1fr) auto auto;
+  grid-template-areas: "marca nav busca analise conta";
+  align-items: stretch;
+  column-gap: clamp(.75rem, 1.6vw, 1.75rem);
+}
+.cabecalho-conteudo .marca-link { grid-area: marca; }
+.cabecalho-conteudo .nav-principal { grid-area: nav; margin-right: 0; min-width: max-content; }
+.cabecalho-conteudo .busca-cabecalho { grid-area: busca; }
+.cabecalho-conteudo .menu-conta { grid-area: conta; }
+.cabecalho-conteudo .interruptor-auditoria { grid-area: analise; align-self: center; }
+
+.busca-cabecalho { position: relative; align-self: center; justify-self: end; width: min(100%, 24rem); }
+.busca-cabecalho input {
+  width: 100%; padding: .5rem .75rem;
+  font: inherit; font-size: var(--t-2); color: var(--texto);
+  background: var(--painel); border: 1px solid var(--borda-controle); border-radius: var(--raio);
+}
+.busca-cabecalho input:focus-visible { outline: 2px solid var(--realce); outline-offset: 1px; }
+.busca-resultados {
+  position: absolute; top: calc(100% + .35rem); right: 0; z-index: 40;
+  width: max(100%, 22rem); max-height: min(70vh, 32rem); overflow-y: auto;
+  padding: .35rem 0; background: var(--fundo);
+  border: 1px solid var(--borda-forte); border-radius: var(--raio); box-shadow: var(--sombra-flutuante);
+}
+.busca-grupo {
+  margin: .35rem .75rem .15rem; font-size: var(--t-1); font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--suave);
+}
+.busca-opcao { display: grid; gap: .05rem; padding: .4rem .75rem; cursor: pointer; }
+.busca-opcao small { color: var(--suave); font-size: var(--t-1); }
+.busca-opcao.ativa { background: var(--realce-fraco); }
+.busca-vazia { margin: .5rem .75rem; color: var(--suave); font-size: var(--t-2); }
+
+.menu-conta { position: relative; display: flex; align-items: center; gap: .5rem; }
+.menu-conta-botao {
+  display: flex; align-items: center; gap: .45rem;
+  padding: .35rem .6rem; background: none; border: 1px solid transparent; border-radius: var(--raio);
+  color: var(--texto); font-size: var(--t-2); font-weight: 500;
+}
+.menu-conta-botao:hover, .menu-conta-botao[aria-expanded='true'] { background: var(--painel); border-color: var(--borda); }
+.menu-conta-seta { color: var(--suave); font-size: var(--t-1); }
+.menu-conta-painel {
+  position: absolute; top: calc(100% + .35rem); right: 0; z-index: 40;
+  display: grid; min-width: 14rem; padding: .35rem;
+  background: var(--fundo); border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  box-shadow: var(--sombra-flutuante);
+}
+.menu-conta-painel > a, .menu-conta-painel > button {
+  display: block; padding: .5rem .65rem; text-align: left;
+  background: none; border: 0; border-radius: var(--raio);
+  color: var(--texto); font-size: var(--t-2); text-decoration: none;
+}
+.menu-conta-painel > a:hover, .menu-conta-painel > button:hover { background: var(--painel); }
+.menu-conta-tema {
+  display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+  padding: .5rem .65rem; border-block: 1px solid var(--borda); margin: .25rem 0;
+  font-size: var(--t-2); color: var(--suave);
+}
+
+/* As abas de Dinheiro público: o marcador embaixo, como a navegação principal. */
+.abas-do-dinheiro {
+  display: flex; gap: .25rem; overflow-x: auto;
+  padding: 0 1rem; border-bottom: 1px solid var(--borda); margin-bottom: 1.5rem;
+}
+.abas-do-dinheiro .aba {
+  padding: .7rem .85rem .6rem; border-bottom: 3px solid transparent;
+  color: var(--suave); font-size: var(--t-2); font-weight: 500; white-space: nowrap; text-decoration: none;
+}
+.abas-do-dinheiro .aba:hover { color: var(--texto); }
+.abas-do-dinheiro .aba.active { color: var(--texto); font-weight: 600; border-bottom-color: var(--realce); }
+
+/* As sanções da entidade: uma por linha, a categoria em destaque e o selo de vigente em contorno. */
+.lista-de-sancoes { list-style: none; margin: .5rem 0; padding: 0; display: grid; gap: .6rem; }
+.lista-de-sancoes li { display: grid; gap: .15rem; padding-bottom: .6rem; border-bottom: 1px solid var(--borda); }
+.lista-de-sancoes small { color: var(--suave); font-size: var(--t-1); }
+.selo-vigente {
+  justify-self: start; padding: 0 .4rem; font: 600 var(--t-1) var(--dado);
+  border: 1px solid var(--texto); border-radius: var(--raio);
+}
+
+/* As abas de Governo federal: um nível abaixo das de Dinheiro público, mais baixas e sem a linha cheia. */
+.abas-do-governo { display: flex; gap: .25rem; overflow-x: auto; margin: -.5rem 0 1.25rem; }
+.abas-do-governo .aba {
+  padding: .35rem .75rem; border: 1px solid var(--borda); border-radius: var(--raio);
+  color: var(--suave); font-size: var(--t-2); white-space: nowrap; text-decoration: none;
+}
+.abas-do-governo .aba:hover { color: var(--texto); border-color: var(--borda-controle); }
+.abas-do-governo .aba.active { color: var(--texto); font-weight: 600; border-color: var(--realce); }
+
+.filtros-entidades { display: grid; gap: .75rem; padding: 1rem; border-bottom: 1px solid var(--borda); }
+.filtros-entidades input {
+  padding: .5rem .75rem; font: inherit; color: var(--texto); background: var(--painel);
+  border: 1px solid var(--borda-controle); border-radius: var(--raio);
+}
+.filtros-entidades input:focus-visible { outline: 2px solid var(--realce); outline-offset: 1px; }
+.numero-valor.numero-texto { font-size: var(--t-4); }
+
+@media (max-width: 1180px) {
+  .cabecalho-conteudo {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: "marca busca analise conta" "nav nav nav nav";
+    column-gap: .75rem; row-gap: 0;
+  }
+  .cabecalho-conteudo .nav-item span { display: inline; }
+  .cabecalho-conteudo .nav-item { padding-block: .45rem .6rem; }
+  .busca-cabecalho { width: 100%; }
+  .busca-resultados { width: min(100vw - 1.5rem, 26rem); }
+}
+
+.faixa-curta { display: none; }
+
+@media (max-width: 560px) {
+  /* A busca vira lupa e, aberta, cobre a linha da marca e da conta (2026-10-03): espremida,
+     ela tinha uns 70 px e mostrava "Busc". */
+  .cabecalho-conteudo { position: relative; }
+  .busca-cabecalho .busca-abrir { display: grid; margin-left: auto; }
+  .busca-cabecalho:not(.expandida) input { display: none; }
+  .cabecalho-conteudo .busca-cabecalho.expandida {
+    grid-area: 1 / 1 / 2 / -1; justify-self: stretch; align-self: center;
+    position: absolute; inset: 0; margin: auto 0; height: fit-content; z-index: 35; width: auto;
+  }
+  .seletor-periodo-intervalo { flex-wrap: wrap; }
+  .busca-cabecalho.expandida .busca-abrir { display: none; }
+  .busca-cabecalho.expandida input { display: block; width: 100%; }
+  .cabecalho-conteudo .interruptor-auditoria { display: none; }
+  .menu-conta .menu-conta-painel > .menu-conta-auditoria { display: block; }
+  .marca-texto { display: none; }
+  .menu-conta-botao .usuario-mini-nome { display: none; }
+
+  /* MEDIDO: Medido em 2026-10-01 a 390 px: a faixa ocupava três linhas (180 px) antes de
+     qualquer conteúdo, e o terceiro destino da navegação ficava cortado, só o ícone na
+     borda. A faixa vira uma linha; a navegação vira três colunas iguais, com o ícone
+     sobre o rótulo, o padrão de barra de abas de aplicativo. Os três continuam com
+     nome: ícone sozinho obrigaria a adivinhar. */
+  .faixa-procedencia { flex-wrap: nowrap; gap: .6rem; white-space: nowrap; overflow: hidden; }
+  .faixa-procedencia .faixa-longa { display: none; }
+  .faixa-procedencia .faixa-curta { display: inline; }
+  /* No celular a faixa é uma linha só: o seletor fica, o texto de procedência encolhe.
+     MEDIDO: A 386 px o seletor terminava em 401 px, cortado (2026-10-02): com ele na faixa,
+     "Câmara e Senado" sai e "Dados públicos" fica. */
+  .faixa-procedencia:has(.faixa-periodo) .faixa-curta { display: none; }
+
+  .cabecalho-conteudo .nav-principal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; min-width: 0; }
+  .cabecalho-conteudo .nav-item {
+    flex-direction: column; justify-content: center; gap: .15rem;
+    padding: .45rem .25rem .35rem; text-align: center;
+    font-size: var(--t-1); white-space: normal; line-height: 1.15;
+  }
+  .cabecalho-conteudo .nav-item svg { width: 20px; height: 20px; }
+}
+
+/* ═══ PERFIL — UMA ABA POR DINHEIRO ═════════════════════════════
+   Frase-resposta, dois blocos lado a lado, o resto em "Ver detalhes" (Shneiderman:
+   visão geral primeiro, detalhe sob demanda). */
+
+.contas-numeros > .conta-valor {
+  padding: .5rem .6rem; margin: -.5rem -.6rem; border-radius: var(--raio);
+  color: inherit; text-decoration: none;
+  transition: background var(--t-curto) var(--curva);
+}
+.contas-numeros > .conta-valor:hover { background: var(--painel); }
+.contas-numeros > .conta-valor:hover .conta-rotulo { color: var(--realce); }
+.contas-numeros > .conta-valor:focus-visible { outline: 2px solid var(--realce); outline-offset: 2px; }
+
+.abas .aba { text-decoration: none; white-space: nowrap; }
+
+.aba-dinheiro { padding: 1.25rem 1rem; display: grid; gap: 1rem; }
+.frase-resposta { margin: 0; font-size: var(--t-3); line-height: 1.55; }
+.aba-dinheiro .execucao { display: grid; gap: .5rem; }
+
+.duas-colunas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+.duas-colunas > div > .titulo-secao:first-child { margin-top: 0; }
+@media (max-width: 900px) {
+  .duas-colunas { grid-template-columns: minmax(0, 1fr); }
+}
+
+.detalhes-da-aba { border-top: 1px solid var(--borda); padding-top: .75rem; }
+.detalhes-da-aba > summary {
+  cursor: pointer; font-weight: 600; color: var(--realce); padding: .25rem 0;
+}
+.detalhes-da-aba > summary:focus-visible { outline: 2px solid var(--realce); outline-offset: 2px; }
+.detalhes-da-aba[open] > summary { margin-bottom: .5rem; }
+
+/* ═══ GOVERNO — período, ano a ano e o sigilo com a base ════════ */
+
+/* A nota que fica: uma linha, sem caixa nem borda — não mais um subtítulo a disputar o olho. */
+.nota-curta { margin: .75rem 0 0; font-size: var(--t-2); color: var(--suave); }
+.ano-andamento { color: var(--suave); font-weight: 400; font-size: var(--t-1); }
+.tabela-orcamento td.coluna-gestao { font-family: var(--corpo); color: var(--suave); }
+
+/* Duas partes do mesmo todo: a aberta e a sigilosa. Tons neutro e de tinta — não vermelho,
+   que leria como acusação (RNF-16). */
+.barra-dividida { display: flex; height: .9rem; margin: .75rem 0 .4rem; border-radius: var(--raio); overflow: hidden; }
+.barra-dividida > span { display: block; min-width: 2px; }
+.parte-aberta { background: var(--borda-forte); }
+.parte-sigilosa { background: var(--texto); }
+.legenda-barras .amostra.parte-aberta { background: var(--borda-forte); }
+.legenda-barras .amostra.parte-sigilosa { background: var(--texto); }
+
+/* ═══ PERFIL — redes; ENTIDADE — o que foi combinado ═══════════ */
+/** Ao trocar um filtro, o dado anterior fica na tela, apagado, até o novo chegar (AtualizandoComponent). */
+.atualizavel { transition: opacity var(--t-curto) var(--curva); }
+.atualizavel[data-atualizando] { opacity: .55; }
+.perfil-links {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem 1.25rem;
+  margin: .5rem 0 0; font-size: var(--t-2);
+}
+.perfil-redes { font-size: var(--t-2); }
+.perfil-redes-rotulo { color: var(--suave); }
+
+.lista-convenios-entidade { list-style: none; margin: .5rem 0 0; padding: 0; }
+.lista-convenios-entidade li { padding: .65rem 0; border-bottom: 1px solid var(--borda); display: grid; gap: .2rem; }
+.convenio-objeto { margin: 0; font-weight: 600; }
+.convenio-detalhe { margin: 0; font-size: var(--t-1); color: var(--suave); }
+.convenio-valores { margin: 0; display: flex; flex-wrap: wrap; gap: .25rem 1rem; font-family: var(--dado); font-size: var(--t-2); font-variant-numeric: tabular-nums; }
+
+/* ═══ MODO ANÁLISE — Pendência 73 ═══════════════════════════════════════ */
+/* DECISÃO: Interruptor com trilho, e não um botão comum: o estado precisa ser lido sem
+   clicar, e `aria-pressed` diz o mesmo ao leitor de tela. */
+.interruptor-auditoria {
+  display: flex; align-items: center; gap: .45rem; flex-shrink: 0;
+  padding: .35rem .6rem; background: none; border: 1px solid transparent; border-radius: var(--raio);
+  color: var(--texto); font-size: var(--t-2); font-weight: 500;
+}
+.interruptor-auditoria:hover { background: var(--painel); border-color: var(--borda); }
+.interruptor-auditoria-trilho {
+  position: relative; width: 1.9rem; height: 1rem;
+  border: 1px solid var(--borda-controle); border-radius: var(--raio); background: var(--fundo);
+  transition: background var(--t-curto) var(--curva), border-color var(--t-curto) var(--curva);
+}
+.interruptor-auditoria-trilho::after {
+  content: ''; position: absolute; top: 1px; left: 1px; width: .75rem; height: .75rem;
+  border-radius: 2px; background: var(--suave);
+  transition: transform var(--t-curto) var(--curva), background var(--t-curto) var(--curva);
+}
+.interruptor-auditoria[aria-pressed='true'] .interruptor-auditoria-trilho { background: var(--realce); border-color: var(--realce); }
+.interruptor-auditoria[aria-pressed='true'] .interruptor-auditoria-trilho::after { transform: translateX(.9rem); background: var(--sobre-realce); }
+@media (max-width: 700px) {
+  .interruptor-auditoria > span:last-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+}
+
+/* RISCO: O número continua parecendo número: mesma fonte, mesmo peso. Só o sublinhado
+   pontilhado e o cursor dizem que ele abre a procedência. */
+.numero-com-procedencia {
+  font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: help;
+  text-decoration: underline dotted var(--realce); text-decoration-thickness: 2px; text-underline-offset: .2em;
+}
+.numero-com-procedencia:hover { color: var(--realce); }
+
+/* DECISÃO: Painel lateral à direita, e não modal no centro: o número que se está conferindo
+   continua visível à esquerda. */
+dialog.painel-procedencia {
+  position: fixed; inset: 0 0 0 auto; margin: 0;
+  width: min(30rem, 100vw); height: 100%; max-height: none;
+  flex-direction: column; overflow: hidden;
+  padding: 0; border: 0; border-left: 1px solid var(--borda-forte);
+  background: var(--fundo); color: var(--texto);
+  box-shadow: var(--sombra-flutuante);
+  transform: translateX(100%);
+  transition:
+    transform var(--t-medio) var(--curva-saida),
+    overlay var(--t-medio) allow-discrete,
+    display var(--t-medio) allow-discrete;
+}
+dialog.painel-procedencia[open] { display: flex; transform: none; transition-timing-function: var(--curva-entrada); }
+/* Uma barra de rolagem só, a do corpo do painel: o diálogo não rola e a página atrás fica parada
+   (2026-10-03: eram três, a da página, a do diálogo e a do corpo). */
+html:has(dialog.painel-procedencia[open]) { overflow: hidden; }
+@starting-style { dialog.painel-procedencia[open] { transform: translateX(100%); } }
+dialog.painel-procedencia::backdrop { background: var(--veu); }
+@media (prefers-reduced-motion: reduce) {
+  dialog.painel-procedencia, dialog.painel-procedencia[open] { transform: none; transition: none; }
+}
+
+.painel-procedencia-topo {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--borda);
+}
+.painel-procedencia-topo h2 { margin: 0; font-size: var(--t-4); }
+.painel-procedencia-sobre {
+  margin: 0 0 .2rem; font-family: var(--dado); font-size: var(--t-1); color: var(--suave);
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.painel-procedencia-topo { flex-shrink: 0; }
+.painel-procedencia-corpo { flex: 1; min-height: 0; padding: 1rem 1.25rem 2rem; overflow-y: auto; }
+.painel-procedencia-corpo h3 { font-size: var(--t-2); margin: 1.25rem 0 .5rem; }
+.painel-procedencia-corpo section:first-child h3 { margin-top: 0; }
+.painel-procedencia .dado { font-family: var(--dado); font-variant-numeric: tabular-nums; }
+
+.lista-cargas { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+.cartao-carga {
+  display: grid; grid-template-columns: 8.5rem 1fr; gap: .35rem .75rem; margin: 0;
+  padding: .75rem; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel);
+  font-size: var(--t-1);
+}
+.cartao-carga dt { color: var(--suave); }
+.cartao-carga dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.cartao-carga-hash { word-break: break-all; }
+@media (max-width: 700px) {
+  .cartao-carga { grid-template-columns: 1fr; }
+  .cartao-carga dd { margin-bottom: .35rem; }
+}
+
+/* ═══ RESULTADO — recorte por estado (U15) e base da conta (U19) ═══ */
+.filtro-do-resultado { margin: 0 0 1.25rem; padding: .75rem 1rem; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel); }
+.filtro-do-resultado label { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; font-size: var(--t-2); font-weight: 600; }
+.filtro-do-resultado select {
+  padding: .35rem .5rem; border: 1px solid var(--borda-controle); border-radius: var(--raio);
+  background: var(--fundo); color: var(--texto); font: inherit; font-weight: 400;
+}
+.filtro-do-resultado .ajuda { margin: .4rem 0 0; }
+.base-da-conta { color: var(--suave); }
+
+/* ═══ LISTA DE PARLAMENTARES — filtros aplicados (U17) ═══════════ */
+/* DECISÃO: Cada filtro aplicado vira um botão que o remove: o select fechado não diz o que
+   está filtrando, e "Nenhum parlamentar encontrado" sem dizer por quê é beco sem saída. */
+.filtros-aplicados { display: flex; flex-wrap: wrap; gap: .4rem; padding: .6rem 1rem; border-bottom: 1px solid var(--borda); }
+.filtro-aplicado {
+  padding: .2rem .55rem; border: 1px solid var(--borda-controle); border-radius: var(--raio);
+  background: var(--realce-fraco); color: var(--texto); font-size: var(--t-1);
+}
+.filtro-aplicado:hover { border-color: var(--realce); }
+.filtro-limpar { padding: .2rem .4rem; background: none; border: 0; color: var(--realce); font-size: var(--t-1); text-decoration: underline; }
+
+/* ═══ CONFERE COM O PORTAL — Pendência 81 ═══════════════════════ */
+.confere-com-o-portal { margin: 1rem 0 1.5rem; padding: .75rem 1.25rem; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel); }
+.confere-com-o-portal > summary { cursor: pointer; font-size: var(--t-2); list-style-position: inside; }
+.confere-com-o-portal .confere-titulo { font-weight: 700; }
+.confere-com-o-portal .confere-abrir { color: var(--realce); text-decoration: underline; }
+.confere-com-o-portal[open] .confere-abrir { display: none; }
+.confere-com-o-portal[open] > summary { margin-bottom: .5rem; }
+.confere-com-o-portal p { margin: .4rem 0; font-size: var(--t-2); }
+.motivos-de-fora { list-style: none; margin: .5rem 0; padding: 0; }
+.motivos-de-fora li { display: flex; justify-content: space-between; gap: 1rem; padding: .3rem 0; border-top: 1px solid var(--borda); font-size: var(--t-2); }
+.confere-com-o-portal .dado { font-family: var(--dado); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ═══ CONSENTIMENTO DE SEGUIR (Pendência 62) ════════════════════ */
+.pedido-consentimento {
+  width: min(28rem, calc(100vw - 2rem)); padding: 1.25rem 1.25rem 1rem;
+  background: var(--fundo); color: var(--texto);
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 22%);
+}
+.pedido-consentimento::backdrop { background: rgb(0 0 0 / 45%); }
+.pedido-consentimento h2 { margin: 0 0 .6rem; font-size: var(--t-4); }
+.pedido-consentimento p { margin: 0 0 .6rem; font-size: var(--t-2); line-height: 1.5; }
+.em-andamento { font-size: var(--t-1); opacity: .8; }
+
+/* O interruptor no menu só aparece no celular; no resto, ele está no cabeçalho. */
+.menu-conta-painel > .menu-conta-auditoria { display: none; }
+
+.filtro-rito { display: flex; align-items: center; gap: .45rem; margin: .5rem 0 0; font-size: var(--t-2); color: var(--suave); cursor: pointer; }
+
+/* O painel da última votação no cartão de cada casa: a assinatura do site já no Início (2026-10-03). */
+.cartao-ultima { margin: 1rem 0 0; padding-top: .8rem; border-top: 1px solid var(--borda); }
+.cartao-ultima figcaption { font-size: var(--t-1); color: var(--suave); margin-bottom: .5rem; }
+
+.cartao-forma { margin: 1rem 0 0; padding-top: .8rem; border-top: 1px solid var(--borda); }
+.cartao-forma-titulo { margin: 0 0 .4rem; font-size: var(--t-1); color: var(--suave); }
+.cartao-forma .barra-dividida { margin: 0 0 .4rem; }
+.cartao-forma .parte-nominal { background: var(--realce); }
+.cartao-forma .parte-simbolica { background: var(--borda-forte); }
+.cartao-forma-legenda { display: flex; flex-wrap: wrap; gap: .25rem 1rem; margin: 0; font-size: var(--t-2); }
+.amostra-cor.amostra-simbolica { background: var(--borda-forte); }
+
+/* Votos da mesma proposição agrupados na ficha (2026-10-03). */
+.grupo-de-votos-conta { margin: .1rem 0 .5rem; font-size: var(--t-1); color: var(--suave); }
+.grupo-de-votos-lista { list-style: none; margin: 0; padding: 0 0 0 .75rem; border-left: 2px solid var(--borda); display: grid; gap: .6rem; }
+.grupo-de-votos-lista li { display: grid; grid-template-columns: auto 1fr; gap: .2rem .75rem; align-items: start; }
+.grupo-de-votos-lista .linha-detalhe { display: block; }
+
+.busca-cabecalho .busca-abrir { display: none; }
+
+/* Opção 1 das arestas (2026-10-03): de longe só os pontos; a dica diz como ver as ligações. */
+.grafo-dica-ligacoes {
+  position: absolute; left: 50%; bottom: .75rem; transform: translateX(-50%); z-index: 3; margin: 0;
+  padding: .3rem .7rem; border-radius: var(--raio);
+  background: color-mix(in srgb, var(--fundo) 88%, transparent); border: 1px solid var(--borda);
+  font-size: var(--t-1); color: var(--suave); pointer-events: none;
+  width: max-content; max-width: min(60%, 24rem); text-align: center;
+}
+
+/* ═══ GRAFO DO DINHEIRO, na aba Emendas da ficha (Pendência 83) ═══
+   DECISÃO: o desenho do vídeo da procedência (plano/10 §1): caixas, linhas finas e o valor escrito
+   na seta, sem preenchimento colorido, para ler como documento. */
+.execucao-cabeca { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.execucao-cabeca .frase-resposta { flex: 1 1 24rem; }
+.execucao-cabeca .botao-secundario { flex-shrink: 0; }
+dialog.grafo-dinheiro {
+  width: min(72rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); padding: 0;
+  border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  background: var(--fundo); color: var(--texto); box-shadow: var(--sombra-flutuante);
+  flex-direction: column; overflow: hidden;
+}
+dialog.grafo-dinheiro[open] { display: flex; }
+dialog.grafo-dinheiro::backdrop { background: var(--veu); }
+html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
+.grafo-dinheiro-topo {
+  flex-shrink: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+  padding: 1rem 1.25rem; border-bottom: 1px solid var(--borda);
+}
+.grafo-dinheiro-topo h2 { margin: 0; font-size: var(--t-4); }
+.grafo-dinheiro-sobre { margin: 0 0 .2rem; font-family: var(--dado); font-size: var(--t-1); color: var(--suave); text-transform: uppercase; letter-spacing: .08em; }
+.grafo-dinheiro-corpo {
+  flex: 1; min-height: 0; overflow: hidden; padding: .75rem 1.25rem 1rem;
+  display: flex; flex-direction: column; gap: .5rem;
+}
+/* O desenho cabe inteiro no modal, sem rolagem: encolhe pela altura disponível (2026-10-03). */
+.grafo-dinheiro-corpo svg { display: block; flex: 1; min-height: 0; width: 100%; height: auto; max-height: calc(100dvh - 12rem); }
+.grafo-dinheiro-corpo .ajuda { margin: 0; flex-shrink: 0; }
+.grafo-dinheiro-coluna { font-family: var(--dado); font-size: 12px; fill: var(--suave); text-transform: uppercase; letter-spacing: .06em; }
+.grafo-dinheiro-caixa rect { fill: var(--fundo); stroke: var(--borda-forte); stroke-width: 1; }
+.grafo-dinheiro-caixa text { font-size: 12.5px; fill: var(--texto); }
+.grafo-dinheiro-resto rect { stroke-dasharray: 4 3; }
+.grafo-dinheiro-resto text { fill: var(--suave); }
+.grafo-dinheiro-detalhe { font-size: 11px; fill: var(--suave); }
+.grafo-dinheiro-centro rect { fill: var(--painel); stroke: var(--texto); stroke-width: 1.5; }
+.grafo-dinheiro-nome { font-size: 14px; font-weight: 700; fill: var(--texto); }
+.grafo-dinheiro-seta line { stroke: var(--suave); stroke-width: 1; }
+.grafo-dinheiro-ponta { fill: var(--suave); }
+.grafo-dinheiro-seta text {
+  font-family: var(--dado); font-size: 11px; fill: var(--texto);
+  paint-order: stroke; stroke: var(--fundo); stroke-width: 4px; stroke-linejoin: round;
+}
+
+.grafo-dinheiro-link { cursor: pointer; }
+.grafo-dinheiro-link:hover rect, .grafo-dinheiro-link:focus-visible rect { stroke: var(--realce); stroke-width: 1.5; }
+.grafo-dinheiro-link:hover text:first-of-type { fill: var(--realce); text-decoration: underline; }
+.grafo-dinheiro-link:focus-visible { outline: none; }
+
+/* ═══ EMENDAS: a página mais curta (2026-10-03) ═══════════════════
+   O mapa e a lista lado a lado no computador, com a lista rolando na altura do mapa; no celular,
+   um embaixo do outro, e a lista de estados mostra os dez primeiros. A busca da cidade e o
+   período dividem a mesma faixa. */
+.mapa-e-lista { display: grid; gap: 1.25rem; align-items: start; }
+@media (min-width: 1100px) {
+  .mapa-e-lista { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+  .mapa-e-lista .lista-ao-lado { max-height: 36rem; overflow-y: auto; }
+  .mapa-e-lista .ver-todos-os-estados { display: none; }
+}
+@media (max-width: 1099px) {
+  .mapa-e-lista:not(.todos-os-estados) .estado-alem-dos-dez { display: none; }
+}
+.emendas-filtros {
+  display: grid; gap: 1rem 2rem; align-items: start;
+  padding: 1rem; border-bottom: 1px solid var(--borda);
+}
+@media (min-width: 1100px) {
+  .emendas-filtros { grid-template-columns: minmax(0, 1fr) auto; }
+  .emendas-filtros .seletor-periodo-campos { flex-wrap: nowrap; }
+}
+/* Os dois lados com a mesma forma: o título em cima e os controles logo abaixo, sem borda própria. */
+.emendas-filtros .sua-cidade { padding: 0; border: 0; }
+.emendas-filtros .governo-barra { padding: 0; border: 0; display: block; }
+.filtro-titulo { margin: 0 0 .4rem; font-weight: 700; }
+/* Campo, botão e lista de ano com a mesma altura, para os controles dos dois lados ficarem na mesma linha. */
+.emendas-filtros input,
+.emendas-filtros button,
+.emendas-filtros select { box-sizing: border-box; height: 2.6rem; padding-block: 0; }
+/* A lista do ano mede o ano escolhido, e não "2026 (em andamento)" nas duas. */
+.emendas-filtros select { field-sizing: content; min-width: 5.5rem; }
+@media (max-width: 1099px) {
+  .emendas-filtros { grid-template-columns: minmax(0, 1fr); }
+}
+.emendas-filtros .sua-cidade label,
+.emendas-filtros .filtro-titulo { line-height: 1.4; margin: 0 0 .4rem; }
+.emendas-escopo { margin: .75rem 1rem .75rem; font-size: var(--t-2); color: var(--suave); }
+
+/* ═══ ABAS INTERNAS: o painel da cidade (2026-10-03) ═══════════════
+   Uma lista por vez; a aba é o título da lista, e a contagem diz o tamanho. */
+.abas-internas { margin: 1.25rem 0 .75rem; overflow-x: auto; }
+.abas-internas .aba { flex: 0 0 auto; padding: .7rem 1rem; }
+.aba-contagem { margin-left: .45rem; font-family: var(--dado); font-weight: 400; font-size: var(--t-1); color: var(--suave); }
+.painel-cidade .abas-internas { border-bottom-color: var(--borda-forte); }
+.painel-cidade .aba:hover { background: var(--fundo); }
+.painel-cidade-aba > .ajuda:first-child { margin-top: 0; }
+
+/* As linhas de um número pequeno, no painel do modo auditoria (plano/10 §3). */
+.lista-linhas-procedencia { list-style: none; margin: 0; padding: 0; font-size: var(--t-2); }
+.lista-linhas-procedencia li { display: flex; justify-content: space-between; gap: 1rem; padding: .4rem 0; border-bottom: 1px solid var(--borda); }
+.linha-procedencia-nome { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+.linha-procedencia-nome small { color: var(--suave); font-size: var(--t-1); }

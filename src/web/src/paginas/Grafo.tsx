@@ -1,140 +1,236 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { AtualizandoComponent } from '../componentes/Atualizando';
+import { useCarga } from '../componentes/useCarga';
 import { useNavigate } from 'react-router-dom';
-import { obterGrafo, type Grafo as DadosDoGrafo, type NoDoGrafo } from '../api';
-import { CabecalhoDaColuna } from '../componentes/Layout';
-import { GrafoAmpliado } from '../componentes/GrafoAmpliado';
-import { TelaDoGrafo } from '../componentes/TelaDoGrafo';
-import { Termo } from '../componentes/Termo';
+import {
+  NOME_DA_CASA,
+  obterGrafo,
+  type Casa,
+  type Grafo as DadosDoGrafo,
+  type NoDoGrafo,
+} from '../api';
+import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
+import { GrafoAmpliadoComponent } from '../componentes/GrafoAmpliado';
+import { LegendaDoGrafoComponent } from '../componentes/LegendaDoGrafo';
+import { TelaDoGrafoComponent } from '../componentes/TelaDoGrafo';
+import { mesCurto, periodoDaLegislatura } from '../formato';
+import { passosDoGrafo } from '../tour';
+import { BlocoComponent, EsqueletoComponent } from '../componentes/Esqueleto';
+import { useLegislaturaDaUrl } from '../componentes/useLegislatura';
+import './grafo.css';
+import { MINIMO_PARA_LISTAR_PARTIDO, PARTIDOS_MOSTRADOS_NO_GRAFO } from '../constantes';
+import { TEXTOS_DO_GRAFO } from '../textos/grafo';
+
+const T = TEXTOS_DO_GRAFO.pagina;
 
 type Grupo = { comunidade: number; quantos: number; partidos: string[] };
+
+type Destaque = { partido?: string; uf?: string };
+
+const CASAS: Casa[] = ['CAMARA', 'SENADO'];
 
 /**
  * O grafo de similaridade de voto (RF-33).
  *
- * ⚠️ Esta tela mostra **só a Câmara**. O Senado ainda não é ingerido, e calar isso
- * faria o leitor concluir que o Congresso inteiro está aqui. Ver PL42.
+ * ## RISCO: Um grafo por casa, nunca um só
+ *
+ * Deputado e senador não votam as mesmas matérias: o par não teria base comum, e o
+ * banco impede a aresta entre casas por restrição. Juntar os dois desenhos produziria
+ * duas nuvens sem ligação nenhuma entre elas, o que sugere oposição onde só há ausência
+ * de dado.
+ *
+ * ATENÇÃO: O seletor é permitido aqui e proibido no questionário (RNF-28): a proibição vale
+ * onde o *usuário* declararia afinidade por uma casa. Aqui ele só escolhe qual figura
+ * olhar.
+ *
+ * `undefined` é "a corrente": a API escolhe, e a tela não adivinha qual é. "Todas" é da
+ * lista — não existe grafo de todas as legislaturas juntas — e aqui vale a corrente.
+ *
+ * ATENÇÃO: Zera antes de buscar: sem isto a tela mostra o grafo da Câmara sob o título do
+ * Senado enquanto a requisição não volta.
+ *
+ * O alinhamento só existe onde a orientação do Governo foi registrada.
+ *
+ * DECISÃO: Estado vazio honesto: acontece antes de o ETL analítico rodar para a casa.
+ *
+ * RISCO: O sigilo do Senado muda o que a figura pode afirmar, e calar isso
+ * faria o leitor comparar as duas casas como se fossem equivalentes.
+ *
+ * O período fica: as duas casas têm as mesmas legislaturas. Se a outra não tem grafo
+ * nele, a tela diz isso e oferece os que tem.
+ *
+ * DECISÃO: A ficha abre no mandato do grafo: no de 2019, o deputado de 2019.
  */
-export function Grafo() {
+export function GrafoComponent() {
   const navegar = useNavigate();
-  const [grafo, setGrafo] = useState<DadosDoGrafo | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
+  const [casa, setCasa] = useState<Casa>('CAMARA');
+  const [escolha, setLegislatura] = useLegislaturaDaUrl();
+  const legislatura = typeof escolha === 'number' ? escolha : undefined;
+  const chave = `${casa}:${legislatura ?? ''}`;
+  const lido = useCarga(['grafo', casa, legislatura ?? null], () => obterGrafo(casa, legislatura));
+  const grafo = lido.dados ?? null;
+  const atualizando = lido.atualizando;
+  const erro = lido.erro ? T.erro : null;
   const [ampliado, setAmpliado] = useState(false);
+  const [destaque, setDestaque] = useState<Destaque>({});
+  const [chaveDoDestaque, setChaveDoDestaque] = useState(chave);
+  if (chaveDoDestaque !== chave) {
+    setChaveDoDestaque(chave);
+    setDestaque({});
+  }
 
-  useEffect(() => {
-    obterGrafo()
-      .then(setGrafo)
-      .catch(() => setErro('Não foi possível carregar o grafo agora.'));
-  }, []);
 
   const grupos = useMemo(() => (grafo ? resumirGrupos(grafo.nos) : []), [grafo]);
+  const membro = NOME_DA_CASA[casa];
 
-  if (erro) {
-    return (
-      <>
-        <CabecalhoDaColuna titulo="Grafo" />
-        <p className="erro">{erro}</p>
-      </>
-    );
-  }
-
-  if (!grafo) {
-    return (
-      <>
-        <CabecalhoDaColuna titulo="Grafo" />
-        <p className="carregando">Carregando…</p>
-      </>
-    );
-  }
-
-  // ⭐ Estado vazio honesto: acontece antes de o ETL analítico rodar.
-  if (grafo.nos.length === 0) {
-    return (
-      <>
-        <CabecalhoDaColuna titulo="Grafo" />
-        <p className="vazio">
-          A análise ainda não rodou para esta legislatura. O grafo aparece depois da
-          próxima execução do ETL.
-        </p>
-      </>
-    );
-  }
+  const passos = useMemo(
+    () =>
+      grafo && grafo.nos.length > 0
+        ? passosDoGrafo({
+            singular: NOME_DA_CASA[casa].singular,
+            plural: NOME_DA_CASA[casa].plural,
+            vizinhosPorNo: grafo.vizinhosPorNo,
+            temAlinhamento: grafo.nos.some((n) => n.governismo !== null),
+          })
+        : null,
+    [grafo, casa],
+  );
 
   return (
     <>
-      <CabecalhoDaColuna
-        titulo="Quem vota com quem"
-        subtitulo={`${grafo.nos.length} deputados · ${grafo.arestas.length} ligações`}
-      />
+      <div className="grafo-barra">
+        <SeletorDeCasaComponent casa={casa} aoTrocar={trocarDeCasa} />
 
-      <TelaDoGrafo
-        grafo={grafo}
-        aoSelecionar={abrirPerfil}
-        aoAmpliar={() => setAmpliado(true)}
-      />
+        {grafo && grafo.nos.length > 0 && (
+          <p className="grafo-contagem">{T.contagem(grafo.nos.length, membro.plural, grafo.arestas.length)}</p>
+        )}
 
-      <GrafoAmpliado
-        grafo={grafo}
-        aberto={ampliado}
-        aoFechar={() => setAmpliado(false)}
-        aoSelecionar={abrirPerfil}
-      />
+        {passos && <BotaoDoTourComponent nome="grafo" passos={passos} />}
+      </div>
 
-      <section className="grafo-explicacao">
-        <h2>Como ler</h2>
-        <p>
-          Cada ponto é um deputado. Dois pontos se ligam quando votaram parecido em pelo
-          menos 20 votações — e quanto mais forte a ligação, mais perto eles ficam. Só
-          entram votações de <Termo nome="plenario" /> da{' '}
-          <Termo nome="legislatura">{grafo.legislatura}ª legislatura</Termo>.
+      {erro && <p className="erro">{erro}</p>}
+      {!erro && !grafo && (
+        <EsqueletoComponent rotulo={T.carregando}>
+          <BlocoComponent altura={520} />
+        </EsqueletoComponent>
+      )}
+
+      {!erro && grafo && grafo.nos.length === 0 && (
+        <p className="vazio">
+          {grafo.legislaturasComGrafo.length > 0 ? (
+            <>
+              {T.semGrafoNoPeriodo(NOME_DA_CASA[casa].nome, periodoDaLegislatura(grafo.legislatura))}
+              {grafo.legislaturasComGrafo.map((l, i) => (
+                <span key={l}>
+                  {i > 0 && ', '}
+                  <button type="button" className="botao-link" onClick={() => setLegislatura(l)}>
+                    {periodoDaLegislatura(l)}
+                  </button>
+                </span>
+              ))}
+              .
+            </>
+          ) : (
+            T.analiseNaoRodou(NOME_DA_CASA[casa].nome)
+          )}
         </p>
-        <p className="ajuda">
-          {/* 🔴 O leitor lê espectro em qualquer eixo, mesmo sem a gente afirmar. */}
-          <strong>A posição não é um espectro.</strong> Não existe “esquerda” à esquerda
-          nem “direita” à direita: o desenho só aproxima quem vota junto. As cores
-          identificam grupos, e o número de cada grupo é apenas um rótulo.
-        </p>
-        {/* ⚠️ PL42 — calar isto faria o leitor concluir que o Congresso está todo aqui. */}
-        <p className="ajuda">
-          Por enquanto o grafo tem <strong>apenas a Câmara dos Deputados</strong>. O
-          Senado ainda não entrou na base.
-        </p>
-      </section>
+      )}
 
-      <section className="grafo-grupos">
-        <h2>Os grupos</h2>
-        <p className="ajuda ajuda-espacada">
-          Cada <Termo nome="comunidade" /> é formado pelo <strong>voto</strong>, não pelo{' '}
-          <Termo nome="partido" /> — e é por isso que um mesmo partido aparece em vários.
-        </p>
+      {!erro && grafo && grafo.nos.length > 0 && (
+        <AtualizandoComponent atualizando={atualizando} chave={lido.chaveDoDado}>
+          <DestaqueDoGrafoComponent grafo={grafo} destaque={destaque} aoTrocar={setDestaque} />
 
-        <ul>
-          {grupos.map((g) => (
-            <li key={g.comunidade}>
-              <span className="grupo-cor" data-comunidade={g.comunidade % 8} />
-              <span className="grupo-corpo">
-                <strong>
-                  Grupo {g.comunidade + 1} · {g.quantos} deputados
-                </strong>
-                <small>{g.partidos.join(' · ')}</small>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+          <TelaDoGrafoComponent
+            grafo={grafo}
+            aoSelecionar={abrirPerfil}
+            aoAmpliar={() => setAmpliado(true)}
+            destaque={destaque}
+          />
+
+          <GrafoAmpliadoComponent
+            grafo={grafo}
+            aberto={ampliado}
+            aoFechar={() => setAmpliado(false)}
+            aoSelecionar={abrirPerfil}
+            titulo={T.tituloDoAmpliado(NOME_DA_CASA[casa].nome)}
+          />
+
+          <LegendaDoGrafoComponent />
+
+          <section className="grafo-explicacao">
+            <h2>{T.deOndeVem}</h2>
+            <p>
+              {T.origem(
+                grafo.legislatura,
+                periodoDaLegislatura(grafo.legislatura),
+                grafo.abertasDesde && grafo.abertasAte
+                  ? { desde: mesCurto(grafo.abertasDesde), ate: mesCurto(grafo.abertasAte) }
+                  : null,
+                membro.plural,
+              )}
+            </p>
+
+            {TEXTOS_DO_GRAFO.lacunasDoAcervo[`${casa}-${grafo.legislatura}`] && (
+              <p className="ajuda">{TEXTOS_DO_GRAFO.lacunasDoAcervo[`${casa}-${grafo.legislatura}`]}</p>
+            )}
+
+            {casa === 'SENADO' && grafo.secretasDePlenario > 0 && (
+              <p className="ajuda">{T.sigiloDoSenado(grafo.votacoesDePlenario, grafo.secretasDePlenario)}</p>
+            )}
+          </section>
+
+          <section className="grafo-grupos" data-tour="grafo-grupos">
+            <h2>{T.osGrupos}</h2>
+            <p className="ajuda ajuda-espacada">{T.gruposAjuda}</p>
+
+            <ul>
+              {grupos.map((g) => (
+                <li key={g.comunidade}>
+                  <span className="grupo-cor" data-comunidade={g.comunidade % 8} />
+                  <span className="grupo-corpo">
+                    <strong>{T.grupo(g.comunidade + 1, g.quantos, membro.plural)}</strong>
+                    <small>{g.partidos.join(' · ')}</small>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </AtualizandoComponent>
+      )}
     </>
   );
 
+  function trocarDeCasa(nova: Casa) {
+    setCasa(nova);
+  }
+
   function abrirPerfil(no: NoDoGrafo) {
-    navegar(`/parlamentar/${no.id}`);
+    const naLegislatura = grafo && grafo.legislaturasComGrafo[0] !== grafo.legislatura
+      ? `?legislatura=${grafo.legislatura}`
+      : '';
+    void navegar(`/parlamentar/${no.idPessoa}${naLegislatura}`);
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
+function SeletorDeCasaComponent({ casa, aoTrocar }: { casa: Casa; aoTrocar: (nova: Casa) => void }) {
+  return (
+    <div className="grafo-casas" data-tour="grafo-casas" role="group" aria-label={T.casaLegislativa}>
+      {CASAS.map((opcao) => (
+        <button
+          key={opcao}
+          type="button"
+          className={casa === opcao ? 'ativo' : ''}
+          aria-pressed={casa === opcao}
+          onClick={() => aoTrocar(opcao)}
+        >
+          {NOME_DA_CASA[opcao].nome}
+        </button>
+      ))}
+    </div>
+  );
+}
 
-/** ⚠️ Só grupos com mais de um deputado: 24 isolados virariam 24 linhas de legenda. */
-const MINIMO_PARA_LISTAR = 2;
 
-const PARTIDOS_MOSTRADOS = 5;
 
 function resumirGrupos(nos: NoDoGrafo[]): Grupo[] {
   const porComunidade = new Map<number, NoDoGrafo[]>();
@@ -147,7 +243,7 @@ function resumirGrupos(nos: NoDoGrafo[]): Grupo[] {
   }
 
   return [...porComunidade.entries()]
-    .filter(([, membros]) => membros.length >= MINIMO_PARA_LISTAR)
+    .filter(([, membros]) => membros.length >= MINIMO_PARA_LISTAR_PARTIDO)
     .map(([comunidade, membros]) => ({
       comunidade,
       quantos: membros.length,
@@ -166,6 +262,70 @@ function partidosMaisComuns(membros: NoDoGrafo[]): string[] {
 
   return [...contagem.entries()]
     .sort((a, b) => b[1] - a[1])
-    .slice(0, PARTIDOS_MOSTRADOS)
+    .slice(0, PARTIDOS_MOSTRADOS_NO_GRAFO)
     .map(([partido]) => partido);
+}
+
+/**
+ * U18: destacar um partido ou um estado sem esconder o resto.
+ *
+ * DECISÃO: Esmaecer, não filtrar: a pergunta é "onde estão os do meu estado na nuvem", e a
+ * nuvem sem os outros perderia a forma que dá sentido à posição. A cor continua a da
+ * comunidade: destacar um partido não pinta o partido (RNF-16).
+ */
+function DestaqueDoGrafoComponent({
+  grafo,
+  destaque,
+  aoTrocar,
+}: {
+  grafo: DadosDoGrafo;
+  destaque: Destaque;
+  aoTrocar: (novo: Destaque) => void;
+}) {
+  const partidos = useMemo(() => [...new Set(grafo.nos.map((n) => n.partido).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR')), [grafo]);
+  const ufs = useMemo(() => [...new Set(grafo.nos.map((n) => n.uf).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR')), [grafo]);
+  const destacados = grafo.nos.filter(
+    (n) => (!destaque.partido || n.partido === destaque.partido) && (!destaque.uf || n.uf === destaque.uf),
+  ).length;
+  const ativo = Boolean(destaque.partido || destaque.uf);
+
+  return (
+    <div className="destaque-do-grafo">
+      <span className="destaque-do-grafo-rotulo">{T.destacar}</span>
+      <select
+        value={destaque.partido ?? ''}
+        onChange={(e) => aoTrocar({ ...destaque, partido: e.target.value || undefined })}
+        aria-label={T.destacarPartido}
+      >
+        <option value="">{T.todosOsPartidos}</option>
+        {partidos.map((p) => (
+          <option key={p} value={p}>
+            {p}
+          </option>
+        ))}
+      </select>
+      <select
+        value={destaque.uf ?? ''}
+        onChange={(e) => aoTrocar({ ...destaque, uf: e.target.value || undefined })}
+        aria-label={T.destacarEstado}
+      >
+        <option value="">{T.todosOsEstados}</option>
+        {ufs.map((u) => (
+          <option key={u} value={u}>
+            {u}
+          </option>
+        ))}
+      </select>
+      {ativo && (
+        <>
+          <span className="destaque-do-grafo-conta" aria-live="polite">
+            {T.emDestaque(destacados, grafo.nos.length)}
+          </span>
+          <button type="button" className="filtro-limpar" onClick={() => aoTrocar({})}>
+            {T.tirarDestaque}
+          </button>
+        </>
+      )}
+    </div>
+  );
 }

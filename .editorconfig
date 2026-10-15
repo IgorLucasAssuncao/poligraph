@@ -173,6 +173,11 @@ dotnet_diagnostic.CA2100.severity = error   # 🔴 SQL por concatenação
 dotnet_diagnostic.CA5350.severity = error   # algoritmo criptográfico fraco
 dotnet_diagnostic.CA5351.severity = error
 
+# ─── ASP.NET Core ──────────────────────────────────────────────
+# 🔴 ASP0016 achou um bug de VERDADE: `MapPost("/logout", SairAsync)` ligou na
+#    sobrecarga `RequestDelegate` e o `IResult` era descartado calado. Vira erro.
+dotnet_diagnostic.ASP0016.severity = error  # 🔴 RequestDelegate descarta o IResult
+
 # ─── EF Core ───────────────────────────────────────────────────
 dotnet_diagnostic.EF1001.severity = warning # uso de API interna do EF
 
@@ -194,3 +199,6 @@ dotnet_diagnostic.CS8618.severity = none    # fixtures inicializam em Initialize
 [**/Migrations/*.cs]
 generated_code = true
 dotnet_analyzer_diagnostic.severity = none
+
+# Chave em todo if, else, for, foreach e while (pedido do autor, 2026-10-03).
+dotnet_diagnostic.IDE0011.severity = warning

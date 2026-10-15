@@ -1,0 +1,166 @@
+{
+  "_leia": [
+    "RISCO: CONTEÚDO CURADO, NÃO DADO DE TESTE. Entra em todo ambiente, produção incluída.",
+    "Origem: docs/plano/06-perguntas-lote-1.md §5. Cada afirmação foi reescrita a partir",
+    "da ementa — o CSV da Câmara não serve como pergunta (RNF-29 proíbe jargão).",
+    "",
+    "ATENÇÃO: POLARIDADE: +1 significa que 'Sim' do parlamentar = concordar com a afirmação.",
+    "Conferida uma a uma contra a descrição REAL da votação no banco, não herdada do",
+    "documento. Todas as 21 começam com 'Aprovado/Aprovada o/a ...', que é o caso +1 da",
+    "regra em plano/06 §2. Nenhuma é 'Mantido o texto' (que seria -1).",
+    "",
+    "A votação 2525122-81 (perda de mandato, REP 2/2025) FICOU DE FORA: é categoria",
+    "AUTORIDADE, e a RN-14 mantém sabatina e representação fora do questionário. Além",
+    "disso é a única que não começa com 'Aprovado' — a descrição é 'Rejeitado o Parecer',",
+    "e o que 'Sim' significou ali precisa de leitura humana."
+  ],
+  "perguntas": [
+    {
+      "id": "q-conta-politico",
+      "votacaoId": "2364109-35",
+      "ordem": 3,
+      "polaridade": 1,
+      "texto": "Bancos que recusarem conta a políticos e seus parentes devem responder por discriminação."
+    },
+    {
+      "id": "q-correios",
+      "votacaoId": "2115253-118",
+      "ordem": 5,
+      "polaridade": 1,
+      "texto": "Órgãos públicos devem ser obrigados a contratar os Correios."
+    },
+    {
+      "id": "q-limite-gastos-flexivel",
+      "votacaoId": "2473389-58",
+      "ordem": 8,
+      "polaridade": 1,
+      "texto": "Essa regra de limite de gastos deve poder ser flexibilizada quando o governo julgar necessário."
+    },
+    {
+      "id": "q-faccao-pena",
+      "votacaoId": "2579832-62",
+      "ordem": 9,
+      "polaridade": 1,
+      "texto": "As penas para integrantes de facções criminosas devem ser endurecidas."
+    },
+    {
+      "id": "q-br319",
+      "votacaoId": "2395883-53",
+      "ordem": 12,
+      "polaridade": 1,
+      "texto": "A rodovia BR-319, que corta a Amazônia, deve ser mantida trafegável como infraestrutura crítica."
+    },
+    {
+      "id": "q-anistia-8jan",
+      "votacaoId": "2358548-89",
+      "ordem": 14,
+      "polaridade": 1,
+      "texto": "Os condenados pelos atos de 8 de janeiro de 2023 devem ser anistiados."
+    },
+    {
+      "id": "q-limite-gastos",
+      "votacaoId": "2357053-47",
+      "ordem": 15,
+      "polaridade": 1,
+      "texto": "O país deve ter uma regra permanente que limite o crescimento dos gastos públicos."
+    },
+    {
+      "id": "q-industria-farmaceutica",
+      "votacaoId": "2252295-120",
+      "ordem": 16,
+      "polaridade": 1,
+      "texto": "O país deve incentivar a indústria nacional de remédios e insumos de saúde."
+    },
+    {
+      "id": "q-mercosul-bolivia",
+      "votacaoId": "2149303-50",
+      "ordem": 19,
+      "polaridade": 1,
+      "texto": "A Bolívia deve ser aceita como membro pleno do Mercosul."
+    },
+    {
+      "id": "q-incentivo-ensino-medio",
+      "votacaoId": "2409076-34",
+      "ordem": 22,
+      "polaridade": 1,
+      "texto": "O governo deve pagar um incentivo em dinheiro para o estudante concluir o ensino médio."
+    },
+    {
+      "id": "q-prazo-determinado",
+      "votacaoId": "575585-92",
+      "ordem": 25,
+      "polaridade": 1,
+      "texto": "Deve ser mais fácil contratar trabalhadores por prazo determinado."
+    },
+    {
+      "id": "q-faixa-fronteira",
+      "votacaoId": "2471177-102",
+      "ordem": 27,
+      "polaridade": 1,
+      "texto": "Ocupações antigas de terras públicas em faixa de fronteira devem ser regularizadas."
+    },
+    {
+      "id": "q-matricula-deficiencia",
+      "votacaoId": "2162802-89",
+      "ordem": 30,
+      "polaridade": 1,
+      "texto": "Escolas que recusarem matrícula de aluno com deficiência devem perder o credenciamento."
+    },
+    {
+      "id": "q-iof",
+      "votacaoId": "2515648-44",
+      "ordem": 32,
+      "polaridade": 1,
+      "texto": "O Congresso deve derrubar o decreto que aumentou o IOF."
+    },
+    {
+      "id": "q-inimputavel-internacao",
+      "votacaoId": "2194861-77",
+      "ordem": 33,
+      "polaridade": 1,
+      "texto": "Pessoas inimputáveis consideradas perigosas devem poder ficar internadas por prazo indeterminado."
+    },
+    {
+      "id": "q-compras-sustentaveis",
+      "votacaoId": "545304-134",
+      "ordem": 34,
+      "polaridade": 1,
+      "texto": "O poder público deve dar preferência a produtos sustentáveis nas suas compras."
+    },
+    {
+      "id": "q-sede-governo",
+      "votacaoId": "2483447-25",
+      "ordem": 36,
+      "polaridade": 1,
+      "texto": "A sede do governo federal deve poder mudar temporariamente para sediar evento internacional."
+    },
+    {
+      "id": "q-licenciamento-autodeclaracao",
+      "votacaoId": "257161-483",
+      "ordem": 38,
+      "polaridade": 1,
+      "texto": "Obras devem poder ser licenciadas por autodeclaração, sem análise prévia do órgão ambiental."
+    },
+    {
+      "id": "q-aproximacao-vitima",
+      "votacaoId": "2413257-116",
+      "ordem": 39,
+      "polaridade": 1,
+      "texto": "Aproximar-se da vítima deve continuar sendo crime, mesmo que ela consinta."
+    },
+    {
+      "id": "q-hediondo-80",
+      "votacaoId": "2351284-38",
+      "ordem": 40,
+      "polaridade": 1,
+      "texto": "Condenados por crimes hediondos devem cumprir ao menos 80% da pena antes de mudar de regime."
+    },
+    {
+      "id": "q-divida-rural",
+      "votacaoId": "2398530-73",
+      "ordem": 41,
+      "polaridade": 1,
+      "texto": "Dívidas de agricultores e pecuaristas devem ser renegociadas com desconto."
+    }
+  ]
+}

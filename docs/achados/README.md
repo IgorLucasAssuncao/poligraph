@@ -1,6 +1,6 @@
 # Achados — o que foi medido
 
-> **Tipo:** índice · **Atualizado em:** 2026-08-27
+> **Tipo:** índice · **Atualizado em:** 2026-08-28
 >
 > ⭐ **Um achado é uma medição datada.** Ele nunca muda: remedir gera achado **novo**, ou
 > uma revisão explícita dentro do mesmo arquivo. É por isso que ele vive separado do
@@ -26,7 +26,7 @@ se mede*.
 
 ---
 
-## Os 25 achados
+## Os 28 achados
 
 ### 🔴 Estruturantes — mudaram a arquitetura
 
@@ -85,6 +85,20 @@ ingestão contra a fonte real.
 | # | Achado | |
 |---|---|---|
 | [**#25**](025-a-metrica-nao-e-onde-mora-a-qualidade.md) | 🔴 A **métrica de afinidade não é onde mora a qualidade** | Concordância, cosseno e Pearson dão o mesmo ranking (ρ ≥ 0,996). O que discrimina é a **escolha das perguntas** |
+| [**#26**](026-a-comunidade-nao-e-partido-nem-bloco.md) | 🔴 A comunidade **não é o partido nem o bloco governista** | ARI 0,272 contra partido e 0,268 contra governo/oposição — e os dois rótulos quase não se sobrepõem entre si (0,058) |
+| [**#27**](027-a-borda-do-grafo-e-falta-de-dado.md) | 🔴 A **borda do desenho é falta de dado**, e o centro é a maioria | Os 10 da borda têm **zero ligações** e 20 votações; o centro tem governismo 81,8% contra 80,7% da Câmara inteira |
+| [**#28**](028-o-senado-nao-publica-orientacao-de-bancada.md) | ⛔ O **Senado não publica orientação de bancada** | O único proxy possível — o voto do Líder do Governo — ⛔ não serve: 96% das votações são anteriores à designação dele |
+| [**#29**](029-o-sobrenome-casa-com-a-instituicao.md) | 🔴 O **sobrenome casa com o nome da instituição** | 94 de 110 menções vieram do método mais fraco e o limiar barrou todas. "Silas **Câmara**" casou 14 vezes com manchete da Agência **Câmara**; "Marco **Brasil**", 4 vezes com a Agência **Brasil** |
+| [**#30**](030-o-destaque-carrega-o-grafo.md) | ⭐ O **peso do destaque quase não importa**, mas incluí-lo importa muito | Entre 0,3 e 1,0 a vizinhança muda 6% a 17%; com peso **zero** sobram **2 dos 10** vizinhos. Na matriz há **422 destaques contra 141 substantivas** |
+| [**#31**](031-a-pec-estava-escondida-como-destaque.md) | 🔴 A **PEC estava escondida como destaque** | "Proposta de **Emenda** à Constituição" casava com o padrão de destaque: **73 votações de PEC** com peso 0,7 e fora da curadoria. O universo do Senado **dobrou**, de 52 para 104 |
+| [**#32**](032-a-rota-que-o-contrato-dizia-nao-existir.md) | 🔴 A **rota que o contrato dizia ⛔ não existir** | `MapPost("/logout", SairAsync)` ligou na sobrecarga `RequestDelegate`: o `IResult` era **descartado** (200 em vez de 204) e a rota sumia do OpenAPI. ⚠️ **O teste de logout passava** — o `SignOutAsync` roda antes do `return` |
+| [**#33**](033-o-destino-da-emenda.md) | 🔴 O **destino da emenda**: três números que inflavam sem erro | O `DO NOTHING` descartava **55 linhas** de emenda; o convênio somado por emenda inventava **R$ 5,4 bi**; o **Banco do Brasil** (R$ 32,57 bi) aparecia como destino |
+| [**#34**](034-a-dotacao-de-2025-sem-a-regra-de-ouro.md) | 🔴 A **dotação de 2025 publicada sem a regra de ouro** | **R$ 228,6 bi** empenhados além da dotação publicada — o valor condicionado na LOA era R$ 228,5 bi. E o arquivo é só do **Executivo** |
+| [**#35**](035-a-57-calibrou-o-etl.md) | 🔴 A **57ª calibrou o ETL** — as outras legislaturas ⛔ cabem nele sem ajuste | A 56ª tem **403** votações "mantido o texto" (57ª/2023: 45); a ingestão de 2003 **quebra**; o Senado tem só **17 e 13** votações em 2015–16; e os **643 deputados** já aparecem hoje com 0 "mais parecidos" |
+| [**#36**](036-o-partido-orienta-como-federacao.md) | 🔴 O **partido orienta como federação**, e a disciplina não via | Nenhum dos **75** deputados do PT tinha disciplina medida: a Câmara publica `Fdr PT-PCdoB-PV`, ⛔ `PT`. Depois da regra nova, 75 de 75 |
+| [**#37**](037-a-votacao-de-1998-datada-de-2015.md) | 🔴 A **votação de 1998 datada de 2015** — o Senado devolve registros antigos com data nova | **38** votações fora de época punham **203** senadores na 55ª; pelo código, que cresce com o tempo desde 2004, elas saem. 2015 fica com **zero** votações |
+| [**#38**](038-a-emenda-sem-autor.md) | A **emenda sem autor** — `S/I` e `-99` no arquivo do Portal, 2014–2020 | **17.810** linhas e **R$ 35,6 bi** empenhados fora da carga; em 2016, **72%** do ano. O código "RELATOR GERAL" está em emendas de comissão, e a de relator vem como "Sem informação" |
+| [**#39**](039-a-amostra-confere.md) | A **amostra confere**: votações sorteadas contra um segundo serviço oficial de cada casa | **49.109** votos de **267** votações, da 51ª à 57ª nas duas casas, e **nenhuma** diferença |
 
 ---
 
@@ -108,6 +122,10 @@ Dependem de fato externo que pode mudar. Estão em
   discovery sobre comissões servirem de reserva
 - [**#5**](005-tse-bloqueia-acesso-automatizado.md) foi revisado quando uma segunda
   medição contradisse a primeira
+- [**#27**](027-a-borda-do-grafo-e-falta-de-dado.md) corrige uma afirmação **da própria
+  interface**: ela dizia que quem faltou a muitas votações cai no centro do desenho, e a
+  medição mostrou que cai na **borda**. A conclusão estava certa pelo motivo errado —
+  que sobrevive até alguém verificar
 
 > 🔴 **A regra metodológica do projeto nasceu disto:** *medir um ano e generalizar foi a
 > origem de quase todos os erros cometidos aqui.* Antes de afirmar um número, meça — e

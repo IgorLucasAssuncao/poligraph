@@ -11,38 +11,67 @@ não por autodeclaração ideológica.
 
 ---
 
-## Estado atual — medido em 2026-08-27
+## Estado atual — medido em 2026-08-29
 
 Tudo abaixo saiu de `count(*)` no banco depois de rodar o ETL contra as fontes reais.
+
+🔴 **"Votos com posição" mudou de 463.994 para 462.867 — e ⛔ NÃO foi a fonte que
+mudou.** A medição de 27/08 contava `valor IS NOT NULL`, que inclui **abstenção**; a de
+hoje conta `valor IN (1,-1)`. A diferença é exatamente o número de abstenções: **1.127**
+na Câmara e **33** no Senado.
+
+⚠️ **⛔ Abstenção ⛔ não é posição** — a RN-03 a transforma em nulo, e a calculadora de
+afinidade a exclui da conta. ⭐ O número certo é o menor, e `/api/panorama` também
+exibia o maior até 29/08.
 
 | Voto — o núcleo | Câmara | Senado |
 |---|---:|---:|
 | **Votações** | 1.594 | 421 — **239 secretas** |
 | **Votos** | 470.727 | 34.101 |
-| **Votos com posição utilizável** | 463.994 (98,6%) | **11.881 (34,8%)** |
+| **Votos com posição utilizável** | 462.867 (98,3%) | **11.848 (34,7%)** |
 | **Parlamentares com voto** | 643 | 104 |
 | **Nós do grafo** | 643 | 104 |
-| **Arestas** | 5.271 | 594 |
+| **Arestas** | 5.259 | 595 |
 | **Comunidades detectadas** | 17 | 24 |
-| **Perguntas curadas ativas** | 21 | 7 |
+| ⭐ **Perguntas curadas no poço** | **41** | **9** |
+| **Proposições com ementa** | 683 | **359** |
+| **Votações com a ementa ligada** | 1.587 (99,6%) | ⭐ **421 (100%)** |
 
 As duas casas geram grafos **independentes**, e nenhuma aresta liga deputado a senador:
 elas não votam as mesmas matérias, então não há denominador para comparar um com o outro
 ([achado #7](docs/achados/007-casas-nao-sao-comparaveis.md)).
 
-No Senado, **56,8% das votações são secretas**, e só 34,8% dos registros de voto são
+⚠️ **O poço ⛔ não é o questionário.** As 50 perguntas curadas são de onde se escolhe; o
+cidadão responde **24** — 8 de abertura da Câmara, as 9 do Senado, e 7 escolhidas contra
+o empate dele. 📐 Medido: 15 perguntas com desempate dirigido valem 25 fixas.
+
+No Senado, **56,8% das votações são secretas**, e só 34,7% dos registros de voto são
 posição utilizável — contra 98,6% na Câmara. O valor mais frequente é `Votou`, que
 registra que houve voto sem revelar qual
 ([achado #17](docs/achados/017-senado-maioria-secreta.md)).
 
 | Dinheiro — o perfil do parlamentar | |
 |---|---|
-| **Despesas de cota** (CEAP) | **773.716** — 2023 a 2026 |
-| **Emendas parlamentares** | 24.810 — **21.358 (86,1%) com autor resolvido** |
+| **Despesas de cota** | **844.279** — 2023 a 2026. CEAP: **767.692** de 642 deputados · CEAPS: **76.587** de **98 senadores** |
+| **Emendas parlamentares** | 24.825 — ⚠️ eram 24.810 em 27/08; o Portal publica novas |
+| **Emendas com autor resolvido** | ⭐ **23.247 (93,6%)** — R$ 70,8 bi |
 | **Autores de emenda** | 793 resolvidos · 158 sem vínculo (comissões e bancadas) |
-| **Receitas de campanha** (TSE) | 22.511, de **642 dos 643** deputados |
+| **Receitas de campanha** (TSE) | **44.171** — 2018 e 2022. **642 dos 643** deputados e **76 dos 104** senadores |
 | **Fundo Especial — o "fundão"** | R$ 907,7 mi · R$ 1.163,4 mi arrecadados no total |
 | **Deputados com `cpf_hash`** | 643 — 100%, e nenhum CPF em claro |
+
+| Notícias — o feed | |
+|---|---|
+| **Coletadas** | 45 — Agência Câmara (20), Agência Senado (15), Agência Brasil (10) |
+| **Menções gravadas** | 110 |
+| 🔴 **Menções exibíveis** (confiança ≥ 0,70) | **16** — as outras 94 vieram de sobrenome solto |
+| **Notícias com alguma menção exibível** | 12 de 45 (27%) |
+
+🔴 **As 94 barradas são o achado, ⛔ não o defeito.** "Silas **Câmara**" casou 14 vezes
+com manchete da Agência **Câmara**; "Marco **Brasil**", 4 vezes com a Agência **Brasil**.
+O sobrenome de um parlamentar é o nome da instituição que a notícia cobre — e o limiar da
+RF-40 barrou **94 de 94 sem barrar nenhuma boa**
+([achado #29](docs/achados/029-o-sobrenome-casa-com-a-instituicao.md)).
 
 ### Cobertura por fonte — e o que falta em cada uma
 
@@ -64,8 +93,8 @@ anos elevou a cobertura a 642. A limitação era parâmetro do comando, não da 
 2015, então um deputado de mandato inteiro sem nenhuma é suspeito. Dos 12 com mais de 600
 votos, a checagem manual achou **um** caso real de nome divergente — `DR. ALLAN GARCES` no
 Portal, *Allan Garcês* na Câmara — resolvido pelo caminho manual da
-[PL45](docs/PENDENCIAS.md). Os demais aparentes foram **ruído de casamento aproximado**:
-senadores homônimos. [PL47](docs/PENDENCIAS.md) segue o resto.
+[Pendência 45](docs/PENDENCIAS.md). Os demais aparentes foram **ruído de casamento aproximado**:
+senadores homônimos. [Pendência 47](docs/PENDENCIAS.md) segue o resto.
 
 | | |
 |---|---|
@@ -74,7 +103,7 @@ senadores homônimos. [PL47](docs/PENDENCIAS.md) segue o resto.
 
 O questionário mistura perguntas das duas casas e o resultado devolve duas listas
 (RNF-28). A página do parlamentar ainda não distingue casa — ver
-[PL42](docs/PENDENCIAS.md).
+[Pendência 42](docs/PENDENCIAS.md).
 **O único deputado sem receita de campanha** é um suplente com 6 votos, que não foi
 candidato a deputado federal em 2022. 642 de 643 é o teto real, não uma falha.
 
@@ -157,7 +186,7 @@ dotnet user-secrets set "PortalTransparencia:Chave" "SUA_CHAVE" --project src/Po
 | `cpf` | Completa `cpf_hash` — chave para conciliar com o TSE | ~4 min |
 | `emendas --anos 2023 2024 2025 2026` | Emendas + reconciliação de autor | ~10 min |
 | `fundo --eleicao 2022` | Financiamento de campanha e fundão | ~2 min |
-| `emendas --resolver 2815=883` | Vincula autor de emenda **à mão** — [PL45](docs/PENDENCIAS.md) | instantâneo |
+| `emendas --resolver 2815=883` | Vincula autor de emenda **à mão** — [Pendência 45](docs/PENDENCIAS.md) | instantâneo |
 | `senado --anos 2023 2024 2025 2026` | Senadores, votações e votos do Senado | ~5 s |
 | `validar --legislatura 57` | Mede discriminação e comunidade × partido | ~2 s |
 
@@ -232,9 +261,9 @@ podman run --rm --network "container:<postgres>" \
 ### Testes
 
 ```bash
-dotnet test                              # 91 — Testcontainers com Postgres real
-cd src/etl && python -m pytest           # 282
-cd src/web && npm test                   # 37
+dotnet test                              # 159 — Testcontainers com Postgres real
+cd src/etl && python -m pytest           # 416
+cd src/web && npm test                   # 97
 ```
 
 ### Com Podman: os dois suítes querem `DOCKER_HOST` DIFERENTE
@@ -246,8 +275,8 @@ Medido em 2026-08-27, no Windows. **A mesma variável, dois formatos incompatív
 | `dotnet test` | `npipe://./pipe/podman-machine-default` | **duas** |
 | `python -m pytest` | `npipe:////./pipe/podman-machine-default` | **quatro** |
 
-**E o formato errado não dá erro claro em nenhum dos dois.** No Python, os 9 testes
-que precisam de Postgres viram **`SKIPPED`** e a suíte fica verde com 273 em vez de 282 —
+**E o formato errado não dá erro claro em nenhum dos dois.** No Python, os 19 testes
+que precisam de Postgres viram **`SKIPPED`** e a suíte fica verde com 397 em vez de 416 —
 a contagem é a **única** pista. No .NET, `TypeInitializationException` no construtor da
 classe de teste.
 **Com Docker Desktop o problema não existe** — o socket padrão é encontrado sozinho,
@@ -306,8 +335,9 @@ flowchart LR
     style PG fill:#f3f5f7,stroke:#5b6673
 ```
 
-**Linha tracejada = ainda não implementado.** Só o coletor de notícias está nesse
-estado: levantado e documentado, mas sem ingerir.
+⭐ **Todos os ramos ingerem.** O coletor de notícias era o último tracejado e saiu do
+papel em 2026-08-29: `etl-noticias` lê três feeds públicos — Agência Câmara, Agência
+Senado e Agência Brasil — e associa cada matéria a quem ela cita.
 **Os dois ramos do ETL respondem perguntas diferentes sobre a mesma pessoa.** O ramo do
 **voto** sustenta o título do TCC — afinidade e grafo. O ramo do **dinheiro** não entra
 em cálculo nenhum de afinidade: ele povoa o perfil, e existe porque o critério do autor foi
@@ -650,7 +680,8 @@ possível cruzar financiador de campanha com fornecedor de gabinete.
 
 src/
   Poligraph.Api/          Minimal API · dono do schema (EF Core)
-  Poligraph.Migrations/   Aplica migrations e carrega a curadoria
+  Poligraph.Api/          Endpoints, Services, Dtos/ (1 por arquivo, por área)
+  Poligraph.Data/         Data/Entidades, Data/Enums, Migrations, curadoria
   Poligraph.AppHost/      Aspire — orquestra o ambiente local
   Poligraph.Tests/        xUnit + Testcontainers
   etl/                    Python — ingestão e análise

@@ -1,29 +1,47 @@
 import { useEffect, useRef, useState } from 'react';
 import { registrarAvaliacao, type ResultadoAfinidade } from '../api';
+import { TEXTOS_DO_QUESTIONARIO } from '../textos/questionario';
+
+const A = TEXTOS_DO_QUESTIONARIO.avaliacao;
 
 /**
  * Avaliação do questionário — o feedback que valida o método.
  *
- * ⚠️ **Modal, não rodapé.** Estava no fim da tela de resultado, depois das duas listas
+ * ATENÇÃO: **Modal, não rodapé.** Estava no fim da tela de resultado, depois das duas listas
  * e do aviso legal: quem não rolava até lá nunca via, e a amostra da pesquisa dependia
  * de quem tem paciência de rolar — que é um recorte enviesado da população.
  *
- * 🔴 Duas decisões que precisam estar visíveis para quem mexer aqui:
+ * RISCO: Duas decisões que precisam estar visíveis para quem mexer aqui:
  *
  * 1. É perguntado DEPOIS do resultado, nunca antes. Perguntar a posição política antes
  *    ancoraria as respostas do questionário no rótulo que a pessoa escolheu para si —
  *    e o instrumento passaria a medir o rótulo, não o voto.
  *
- * 2. O que é enviado ⛔ NÃO carrega a identidade. O servidor grava a autodeclaração
+ * 2. O que é enviado NÃO carrega a identidade. O servidor grava a autodeclaração
  *    sem `usuario_id`, de propósito: assim ela responde "o instrumento acerta?" sem
  *    responder "o que o Fulano pensa?".
+ *
+ * ATENÇÃO: Nunca por cima de outro diálogo (o tour, as contas): dois modais empilhados
+ * tiram da pessoa o controle de qual fechar. Tenta de novo logo depois.
+ *
+ * DECISÃO: O que vier primeiro: o tempo de ler, ou a pessoa ter rolado até o fim dos
+ * resultados das duas casas — aí ela já viu o que veio buscar.
+ *
+ * DECISÃO: "Opcionais" dito antes das perguntas, não depois.
+ *
+ * ATENÇÃO: Dito no lugar onde a pessoa decide responder, não escondido na política.
+ *
+ * RISCO: Recusar precisa ser tão fácil quanto aceitar.
+ *
+ * O primeiro da PRIMEIRA casa devolvida. A avaliação pergunta "acertou?", e a
+ * referência é o parlamentar em destaque no topo da tela — que é esse.
  */
-export function Avaliacao({
+export function AvaliacaoComponent({
   resultado,
   esperaMs = ESPERA,
 }: {
   resultado: ResultadoAfinidade;
-  /** ⭐ Injetável para o teste não precisar de relógio falso — que briga com o
+  /** DECISÃO: Injetável para o teste não precisar de relógio falso — que briga com o
    *  `userEvent` e trava a suíte. */
   esperaMs?: number;
 }) {
@@ -33,37 +51,60 @@ export function Avaliacao({
   const [enviado, setEnviado] = useState(false);
   const [erro, setErro] = useState(false);
 
-  useEffect(() => {
-    // ⚠️ A espera é deliberada: abrir junto com o resultado atropelaria a leitura, e a
-    //    pessoa fecharia o modal sem ter visto o que veio responder.
-    const relogio = setTimeout(() => dialogo.current?.showModal(), esperaMs);
+  const fimDosResultados = useRef<HTMLDivElement>(null);
 
-    return () => clearTimeout(relogio);
+  useEffect(() => {
+    let aberto = false;
+
+    const abrir = () => {
+      if (aberto || !dialogo.current) return;
+      if (document.querySelector('dialog[open]')) {
+        relogio = setTimeout(abrir, 1500);
+        return;
+      }
+      aberto = true;
+      dialogo.current.showModal();
+    };
+
+    let relogio = setTimeout(abrir, esperaMs);
+
+    const alvo = fimDosResultados.current;
+    const observador =
+      alvo && typeof IntersectionObserver !== 'undefined'
+        ? new IntersectionObserver(([entrada]) => entrada.isIntersecting && abrir())
+        : null;
+    if (observador && alvo) observador.observe(alvo);
+
+    return () => {
+      clearTimeout(relogio);
+      observador?.disconnect();
+    };
   }, [esperaMs]);
 
   return (
+    <>
+    <div ref={fimDosResultados} aria-hidden="true" />
     <dialog ref={dialogo} className="modal-avaliacao" onCancel={fechar}>
       {enviado ? (
         <div className="avaliacao-pronta">
-          <p>✓ Obrigado. Sua avaliação ajuda a medir se o método funciona.</p>
+          <p>{A.obrigado}</p>
           <button type="button" className="botao-destaque" onClick={fechar}>
-            Voltar ao resultado
+            {A.voltar}
           </button>
         </div>
       ) : (
         <form method="dialog" onSubmit={(e) => e.preventDefault()}>
           <header>
-            <h2>Ajude a avaliar</h2>
-            {/* ⭐ "Opcionais" dito antes das perguntas, não depois. */}
-            <p className="ajuda">Duas perguntas rápidas e opcionais, para a pesquisa.</p>
+            <h2>{A.titulo}</h2>
+            <p className="ajuda">{A.subtitulo}</p>
           </header>
 
           <fieldset>
-            <legend>O resultado combinou com o que você esperava?</legend>
+            <legend>{A.combinou}</legend>
             <div className="opcoes-avaliacao">
               {[
-                [true, 'Combinou'],
-                [false, 'Não combinou'],
+                [true, A.sim],
+                [false, A.nao],
               ].map(([valor, rotulo]) => (
                 <label
                   key={String(valor)}
@@ -81,7 +122,7 @@ export function Avaliacao({
           </fieldset>
 
           <fieldset>
-            <legend>Como você descreveria sua posição política?</legend>
+            <legend>{A.posicao}</legend>
             <div className="escala">
               {ESCALA.map(([valor, rotulo]) => (
                 <label key={valor} className={posicao === valor ? 'escala-ativa' : ''}>
@@ -92,14 +133,9 @@ export function Avaliacao({
             </div>
           </fieldset>
 
-          {/* ⚠️ Dito no lugar onde a pessoa decide responder, não escondido na política. */}
-          <p className="nota-privacidade">
-            🔒 Estas duas respostas são gravadas{' '}
-            <strong>sem ligação com a sua conta</strong>. Servem para medir se o método
-            acerta, não para montar seu perfil.
-          </p>
+          <p className="nota-privacidade">{A.privacidade}</p>
 
-          {erro && <p className="erro">Não foi possível enviar. Tente de novo.</p>}
+          {erro && <p className="erro">{A.erro}</p>}
 
           <div className="modal-acoes">
             <button
@@ -108,27 +144,23 @@ export function Avaliacao({
               onClick={enviar}
               disabled={acertou === null && posicao === null}
             >
-              Enviar avaliação
+              {A.enviar}
             </button>
-            {/* 🔴 Recusar precisa ser tão fácil quanto aceitar. */}
             <button type="button" className="botao-secundario" onClick={fechar}>
-              Agora não
+              {A.agoraNao}
             </button>
           </div>
         </form>
       )}
     </dialog>
+    </>
   );
-
-  // ═══════════════════════════════════════════════════════════════
 
   function fechar() {
     dialogo.current?.close();
   }
 
   async function enviar() {
-    // O primeiro da PRIMEIRA casa devolvida. A avaliação pergunta "acertou?", e a
-    // referência é o parlamentar em destaque no topo da tela — que é esse.
     const primeiro = resultado.porCasa[0]?.maisProximos[0];
 
     try {
@@ -147,21 +179,18 @@ export function Avaliacao({
   }
 }
 
-/** Milissegundos entre o resultado aparecer e o modal subir. */
-const ESPERA = 2200;
+/**
+ * Milissegundos entre o resultado aparecer e o modal subir, se a pessoa não rolar antes.
+ *
+ * ATENÇÃO: Eram 2,2 s — menos que o tempo de ler o nome do primeiro parlamentar. O pedido de
+ * avaliação chegava antes do valor que ela avaliaria.
+ */
+const ESPERA = 8000;
 
 /**
- * ⚠️ Escala de 7 pontos, com o centro nomeado.
+ * ATENÇÃO: Escala de 7 pontos, com o centro nomeado.
  *
  * Sem um "centro" explícito, quem não se identifica com nenhum lado ou não responde ou
  * escolhe arbitrariamente — e os dois casos sujam a amostra.
  */
-const ESCALA: [number, string][] = [
-  [-3, 'Esquerda'],
-  [-2, 'Centro-esquerda'],
-  [-1, 'Centro-esq. leve'],
-  [0, 'Centro'],
-  [1, 'Centro-dir. leve'],
-  [2, 'Centro-direita'],
-  [3, 'Direita'],
-];
+const ESCALA: [number, string][] = A.escala;

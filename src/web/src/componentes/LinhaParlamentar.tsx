@@ -1,15 +1,15 @@
 import { Link } from 'react-router-dom';
-import { Avatar } from './Avatar';
-import { BotaoSeguir } from './BotaoSeguir';
+import { AvatarComponent } from './Avatar';
+import { BotaoSeguirComponent } from './BotaoSeguir';
 
 /**
  * A linha de parlamentar — unidade visual repetida em toda a timeline.
  *
- * ⚠️ `detalhe` vem formatado pela tela que usa. Na afinidade é "concordaram em X de Y",
- * ⛔ nunca percentual (RF-29).
+ * ATENÇÃO: `detalhe` vem formatado pela tela que usa. Na afinidade é "concordaram em X de Y",
+ * nunca percentual (RF-29).
  */
-export function LinhaParlamentar({
-  id,
+export function LinhaParlamentarComponent({
+  idPessoa,
   nome,
   partido,
   uf,
@@ -17,25 +17,30 @@ export function LinhaParlamentar({
   detalhe,
   seguindo,
   aoAlternarSeguir,
+  legislatura,
 }: {
-  id: number;
+  idPessoa: number;
   nome: string;
   partido: string;
   uf: string;
   fotoUrl?: string | null;
   detalhe?: React.ReactNode;
   seguindo?: boolean;
-  aoAlternarSeguir?: (id: number, seguindoAgora: boolean) => void;
+  aoAlternarSeguir?: (idPessoa: number, seguindoAgora: boolean) => void;
+  /** A ficha abre neste mandato. Sem ela, no mais recente. */
+  legislatura?: number;
 }) {
+  const ficha = `/parlamentar/${idPessoa}${legislatura ? `?legislatura=${legislatura}` : ''}`;
+
   return (
     <article className="linha">
-      <Link to={`/parlamentar/${id}`} aria-label={nome}>
-        <Avatar nome={nome} fotoUrl={fotoUrl} tamanho="medio" />
+      <Link to={ficha} aria-label={nome}>
+        <AvatarComponent nome={nome} fotoUrl={fotoUrl} tamanho="medio" />
       </Link>
 
       <div className="linha-corpo">
         <div className="linha-topo">
-          <Link to={`/parlamentar/${id}`} className="linha-nome">
+          <Link to={ficha} className="linha-nome">
             {nome}
           </Link>
           <span className="linha-meta">
@@ -49,8 +54,8 @@ export function LinhaParlamentar({
 
       {aoAlternarSeguir && (
         <div className="linha-acao">
-          <BotaoSeguir
-            pessoaId={id}
+          <BotaoSeguirComponent
+            idPessoa={idPessoa}
             seguindo={seguindo ?? false}
             aoAlternar={aoAlternarSeguir}
           />

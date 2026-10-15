@@ -135,7 +135,7 @@ var postgres = builder.AddPostgres("postgres")
 var bancoPoligraph = postgres.AddDatabase("poligraph");
 
 // ─── migrations: roda ANTES da API e precisa TERMINAR ─────────────
-var migracoes = builder.AddProject<Projects.Poligraph_Migrations>("migracoes")
+var migracoes = builder.AddProject<Projects.Poligraph_Data>("migracoes")
     .WithReference(bancoPoligraph)
     .WaitFor(postgres);
 
@@ -208,7 +208,7 @@ antigo — e o que o UptimeRobot vai pingar de fora.
 
 | | Local | Produção |
 |---|---|---|
-| Quem dispara | ⭐ O projeto `Poligraph.Migrations`, pelo Aspire | O pipeline, antes do deploy |
+| Quem dispara | ⭐ O projeto `Poligraph.Data`, pelo Aspire | O pipeline, antes do deploy |
 | Como | `Database.MigrateAsync()` | `migration.sql` idempotente |
 | Dados de teste | ✅ Sim, se ainda não existirem | ⛔ **Nunca** |
 | Se falhar | Você vê no dashboard do Aspire | 🔴 **O deploy não acontece** |

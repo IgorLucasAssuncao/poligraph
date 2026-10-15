@@ -266,9 +266,9 @@ uma votação de **janeiro de 2027 ainda pertence à 57ª**. Travado por teste.
 ---
 
 ⛔ **E o FILTRO ainda não está no código** — nenhuma consulta da API filtra por
-legislatura fora do ETL. É a **PL35**.
+legislatura fora do ETL. É a **Pendência 35**.
 
-⏳ **O que ainda não foi decidido** é a **PL44**: quando a 58ª começar, o grafo mostra
+⏳ **O que ainda não foi decidido** é a **Pendência 44**: quando a 58ª começar, o grafo mostra
 qual? As 21 perguntas continuam? Quem respondeu na 57ª mantém o resultado? A 57ª termina
 em **janeiro de 2027**.
 
@@ -383,7 +383,7 @@ custo sem contrapartida.
 "esquerda" à esquerda*. Isso é honesto com o layout de molas — e seria **falso** com SVD,
 onde o eixo teria sim uma ordenação defensável.
 
-⏳ **Decisão em aberto (PL43):** guardar as duas coisas — PCA para o eixo interpretável do
+⏳ **Decisão em aberto (Pendência 43):** guardar as duas coisas — PCA para o eixo interpretável do
 TCC, molas para o desenho — ou ficar só com molas. As colunas já existem; o que falta é a
 escolha.
 
@@ -589,7 +589,7 @@ a frase. Assim a regra do RF-29 não pode ser burlada por engano na tela.
 
 ---
 
-## 5.2 🔵 O que NÃO é gravado hoje — e a decisão adiada (PL34)
+## 5.2 🔵 O que NÃO é gravado hoje — e a decisão adiada (Pendência 34)
 
 > **Nenhuma resposta individual do questionário é salva.** O cálculo acontece em memória,
 > na requisição, e o resultado não é persistido. Fechada a aba, não há registro de que a
@@ -625,7 +625,7 @@ Sem as respostas individuais, duas perguntas ficam sem resposta:
 | Pergunta que não dá para responder | Por que importa |
 |---|---|
 | *"Qual afirmação mais divide os usuários?"* | Mede se o questionário discrimina |
-| ⭐ *"Qual afirmação ninguém entende?"* | 🔴 **Avalia a curadoria** — taxa alta de "não sei" numa pergunta significa que a reescrita falhou (PL11, PL12) |
+| ⭐ *"Qual afirmação ninguém entende?"* | 🔴 **Avalia a curadoria** — taxa alta de "não sei" numa pergunta significa que a reescrita falhou (Pendência 11, Pendência 12) |
 
 ⭐ **O desenho que resolveria isso sem criar perfil:** uma linha por questionário
 respondido, com as respostas e **sem `usuario_id`** — exatamente o padrão já usado na
@@ -634,7 +634,7 @@ respondido, com as respostas e **sem `usuario_id`** — exatamente o padrão já
 Isso permitiria afirmar *"a q7 teve 40% de 'não sei'"*, que é achado forte sobre o método,
 sem permitir *"o Fulano respondeu X na q7"*.
 
-⚠️ **Adiado por decisão do autor (2026-08-26).** Registrado como **PL34** — hoje o sistema
+⚠️ **Adiado por decisão do autor (2026-08-26).** Registrado como **Pendência 34** — hoje o sistema
 não grava, e mudar isso é acréscimo, não correção.
 
 ---
@@ -646,7 +646,7 @@ não grava, e mudar isso é acréscimo, não correção.
 | ~~API4~~ | ✅ **Resolvida** (§4.5): cosseno no grafo, concordância simples na tela |
 | **CT7** | 🔴 Definir o piso de respostas para o `422` — sugestão: **60% do N** |
 | **RQ2** | Métrica de comparação comunidade × partido (ARI? modularidade?) |
-| **PL5** | Biblioteca do grafo no front (D3? Cytoscape? sigma.js?) |
+| **Pendência 5** | Biblioteca do grafo no front (D3? Cytoscape? sigma.js?) |
 | **API7** | Medir o tempo real do job de similaridade |
 | **RQ3** | N final de perguntas |
-| **PL34** | 🔵 **Adiada** — gravar respostas individuais sem vínculo com a conta, para avaliar a curadoria (§5.2.3) |
+| **Pendência 34** | 🔵 **Adiada** — gravar respostas individuais sem vínculo com a conta, para avaliar a curadoria (§5.2.3) |

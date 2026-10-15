@@ -1,17 +1,22 @@
 <!doctype html>
-<!-- ⚠️ pt-BR, não en: o leitor de tela escolhe a voz pelo lang, e um site em português
+<!-- ATENÇÃO: pt-BR, não en: o leitor de tela escolhe a voz pelo lang, e um site em português
      lido com fonemas de inglês fica ininteligível. -->
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- O ícone é a forma da bandeira (losango, esfera e faixa) nas cores do site, teal e branco: o
+         verde-amarelo ficou de fora pela RNF-16, decisão do autor em 2026-10-09. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
+    <link rel="manifest" href="/manifest.webmanifest?v=2" />
+    <meta name="theme-color" content="#0F766E" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
     <meta
       name="description"
       content="Compare sua posição com o voto registrado em plenário dos deputados federais. Ferramenta acadêmica — não é recomendação de voto."
     />
-    <title>poligraph — afinidade por voto registrado</title>
+    <title>Registro Aberto — afinidade por voto registrado</title>
   </head>
   <body>
     <div id="root"></div>

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { comTransicao } from './transicao';
 
 /**
- * ⚠️ `lib.dom` já declara `startViewTransition` como sempre presente, mas o jsdom não
+ * ATENÇÃO: `lib.dom` já declara `startViewTransition` como sempre presente, mas o jsdom não
  * implementa. Este acesso frouxo é o que permite simular os dois mundos — o navegador
  * que tem a API e o que não tem — sem brigar com o tipo.
  */
@@ -13,7 +13,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** ⚠️ jsdom não implementa `matchMedia` — sem isto, toda chamada estoura. */
+/** ATENÇÃO: jsdom não implementa `matchMedia` — sem isto, toda chamada estoura. */
 function preferencia(reduzido: boolean) {
   vi.stubGlobal(
     'matchMedia',
@@ -21,6 +21,14 @@ function preferencia(reduzido: boolean) {
   );
 }
 
+/**
+ * RISCO: O ponto todo: sem a API (Safari < 18, jsdom), a mudança NÃO pode ser perdida.
+ * Uma transição que não anima é aceitável; um clique que não faz nada, não.
+ *
+ * ATENÇÃO: Zerar a animação só no CSS deixaria a View Transition rodar assim mesmo e
+ * bloquear a interação durante o retrato do DOM. Quem pediu menos movimento
+ * não deve pagar essa latência.
+ */
 describe('comTransicao', () => {
   it('aplica a mudança mesmo sem suporte do navegador', () => {
     preferencia(false);
@@ -28,8 +36,6 @@ describe('comTransicao', () => {
 
     comTransicao(mudar);
 
-    // 🔴 O ponto todo: sem a API (Safari < 18, jsdom), a mudança NÃO pode ser perdida.
-    //    Uma transição que não anima é aceitável; um clique que não faz nada, não.
     expect(mudar).toHaveBeenCalledOnce();
   });
 
@@ -48,7 +54,7 @@ describe('comTransicao', () => {
     expect(mudar).toHaveBeenCalledOnce();
   });
 
-  it('🔴 não inicia transição para quem pediu menos movimento', () => {
+  it('RISCO: não inicia transição para quem pediu menos movimento', () => {
     preferencia(true);
     const mudar = vi.fn();
     const iniciar = vi.fn();
@@ -56,9 +62,6 @@ describe('comTransicao', () => {
 
     comTransicao(mudar);
 
-    // ⚠️ Zerar a animação só no CSS deixaria a View Transition rodar assim mesmo e
-    //    bloquear a interação durante o retrato do DOM. Quem pediu menos movimento
-    //    não deve pagar essa latência.
     expect(iniciar).not.toHaveBeenCalled();
     expect(mudar).toHaveBeenCalledOnce();
   });

@@ -1,4 +1,4 @@
-"""🔴 As duas convenções numéricas que convivem no projeto.
+"""RISCO: As duas convenções numéricas que convivem no projeto.
 
 O que estes testes protegem: **`"1.234"` vale 1234 no Portal e 1,234 na CEAP.** Mil
 vezes de diferença, na mesma string, sem exceção nenhuma para avisar. Enquanto cada
@@ -20,9 +20,9 @@ from poligraph_etl.normalizacao import valor_com_ponto, valor_pt_br
     ("bruto", "esperado"),
     [
         ("12.599,10", 12599.10),        # ponto é MILHAR
-        ("- 26.002,00", -26002.00),     # ⚠️ negativo separado do número
+        ("- 26.002,00", -26002.00),     # ATENÇÃO: negativo separado do número
         ("1.234.567,89", 1234567.89),
-        ("3170000,00", 3170000.00),     # ⭐ o TSE não usa separador de milhar
+        ("3170000,00", 3170000.00),     # DECISÃO: o TSE não usa separador de milhar
         ("0,00", 0.0),
         ("", 0.0),
         ("#NULO", 0.0),
@@ -44,7 +44,7 @@ def test_valor_pt_br(bruto, esperado):
     ("bruto", "esperado"),
     [
         ("1234.56", 1234.56),
-        ("-89.90", -89.90),             # ⭐ estorno é caso normal
+        ("-89.90", -89.90),             # DECISÃO: estorno é caso normal
         ("0", 0.0),
         ("", 0.0),
         (None, 0.0),
@@ -56,16 +56,16 @@ def test_valor_com_ponto(bruto, esperado):
 
 
 # ═══════════════════════════════════════════════════════════════════
-# 🔴 A divergência — a razão de as duas existirem com nomes diferentes
+# RISCO: A divergência — a razão de as duas existirem com nomes diferentes
 # ═══════════════════════════════════════════════════════════════════
 
 
 def test_a_mesma_string_vale_mil_vezes_mais_numa_convencao():
-    """🔴 O erro que nenhuma exceção denunciaria.
+    """RISCO: O erro que nenhuma exceção denunciaria.
 
-    ⚠️ `"1.234"` é **mil duzentos e trinta e quatro** para o Portal e **um vírgula
+    ATENÇÃO: `"1.234"` é **mil duzentos e trinta e quatro** para o Portal e **um vírgula
     duzentos e trinta e quatro** para a CEAP. As duas leituras são válidas; só o
-    contexto decide. Por isso as funções ⛔ **não** podem ter nome genérico.
+    contexto decide. Por isso as funções não **não** podem ter nome genérico.
     """
     assert valor_pt_br("1.234") == 1234.0
     assert valor_com_ponto("1.234") == pytest.approx(1.234)
@@ -74,9 +74,9 @@ def test_a_mesma_string_vale_mil_vezes_mais_numa_convencao():
 
 
 def test_valores_sem_ambiguidade_concordam():
-    """⭐ Onde não há separador de milhar, as duas coincidem — e é o caso comum.
+    """DECISÃO: Onde não há separador de milhar, as duas coincidem — e é o caso comum.
 
-    ⚠️ É justamente isso que torna a troca perigosa: ela passa despercebida na maioria
+    ATENÇÃO: É justamente isso que torna a troca perigosa: ela passa despercebida na maioria
     das linhas e explode só nas de valor alto, que são as que importam.
     """
     for texto, esperado in [("500", 500.0), ("0", 0.0), ("42", 42.0)]:
@@ -85,8 +85,8 @@ def test_valores_sem_ambiguidade_concordam():
 
 
 def test_emendas_e_cota_usam_a_fonte_unica():
-    """⚠️ Se um módulo voltar a ter cópia própria, este teste avisa."""
+    """ATENÇÃO: Se um módulo voltar a ter cópia própria, este teste avisa."""
     from poligraph_etl import cota, emendas
 
     assert emendas.valor_brasileiro is valor_pt_br
-    assert cota._decimal is valor_com_ponto
+    assert cota._decimal_com_ponto is valor_com_ponto

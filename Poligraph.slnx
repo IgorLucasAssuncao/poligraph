@@ -1,8 +1,8 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/src/">
     <Project Path="src/Poligraph.Api/Poligraph.Api.csproj" />
     <Project Path="src/Poligraph.AppHost/Poligraph.AppHost.csproj" />
-    <Project Path="src/Poligraph.Migrations/Poligraph.Migrations.csproj" />
+    <Project Path="src/Poligraph.Data/Poligraph.Data.csproj" />
     <Project Path="src/Poligraph.ServiceDefaults/Poligraph.ServiceDefaults.csproj" />
     <Project Path="src/Poligraph.Tests/Poligraph.Tests.csproj" />
   </Folder>

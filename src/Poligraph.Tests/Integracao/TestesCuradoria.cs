@@ -1,6 +1,5 @@
-using Microsoft.EntityFrameworkCore;
-using Poligraph.Api.Data;
-using Poligraph.Migrations;
+﻿using Microsoft.EntityFrameworkCore;
+using Poligraph.Data;
 
 namespace Poligraph.Tests.Integracao;
 
@@ -19,7 +18,7 @@ namespace Poligraph.Tests.Integracao;
 /// (RNF-28).
 /// </para>
 /// </summary>
-public class TestesCuradoria : BaseIntegracao
+public class TestesCuradoria(FixturePostgres postgres) : BaseIntegracao(postgres)
 {
     [SkippableFact]
     public async Task DoisLotes_SaoCarregadosJuntos()
@@ -78,7 +77,7 @@ public class TestesCuradoria : BaseIntegracao
     }
 
     /// <summary>
-    /// Pergunta que sai do arquivo é DESATIVADA, não apagada: apagar levaria junto o
+    /// PerguntaModel que sai do arquivo é DESATIVADA, não apagada: apagar levaria junto o
     /// histórico de quem já respondeu.
     /// </summary>
     [SkippableFact]
@@ -101,22 +100,18 @@ public class TestesCuradoria : BaseIntegracao
         Assert.Equal(2, await Db.Perguntas.CountAsync());
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // PRIVADOS — na ordem de uso
-    // ═══════════════════════════════════════════════════════════════
-
     private async Task SemearVotacoesAsync(params string[] ids)
     {
         foreach (var id in ids)
         {
-            Db.Votacoes.Add(new Votacao
+            Db.Votacoes.Add(new VotacaoModel
             {
                 Id = id,
-                Casa = id.StartsWith("SF-", StringComparison.Ordinal) ? "SENADO" : "CAMARA",
+                Casa = id.StartsWith("SF-", StringComparison.Ordinal) ? TipoCasa.SENADO : TipoCasa.CAMARA,
                 Legislatura = 57,
                 Data = new DateOnly(2025, 6, 1),
                 Descricao = "Aprovado o Projeto, nos termos do parecer.",
-                Categoria = "SUBSTANTIVA",
+                Categoria = TipoCategoriaDeVotacao.SUBSTANTIVA,
                 Plenario = true
             });
         }
