@@ -97,11 +97,17 @@ A interface é avaliada com ferramenta de análise, como parte da pesquisa. **A 
 inclui gravação de sessão**, que registra a navegação e os cliques — inclusive as
 respostas marcadas no questionário, que indicam posição política.
 
-- Nada é coletado antes do aceite.
+- Nada da gravação de sessão é coletado antes do aceite.
 - As gravações podem ser exibidas na apresentação e na defesa do trabalho.
 - A ferramenta é a Microsoft Clarity, com dados em servidores fora do Brasil (art. 33).
 - Gravações ficam 30 dias; dados de clique, 9 meses.
 - Recusar a medição não impede o uso do site.
+
+Separado disso, a Cloudflare, que entrega o site, conta as visitas de forma agregada (Web
+Analytics): páginas vistas, de onde a visita veio, tipo de aparelho e navegador, país e o
+tempo de carregamento das páginas. Não usa cookie, não grava a sessão e não identifica quem
+visita, por isso não depende do aceite. Os dados ficam em servidores da Cloudflare, fora do
+Brasil (art. 33).
 
 ---
 
@@ -124,8 +130,8 @@ A qualquer momento é possível:
 - corrigir dado incorreto;
 - apagar tudo, em uma operação que remove conta, lista de acompanhados e consentimentos;
 - revogar o consentimento de seguir, na página da conta, o que apaga a lista de acompanhados, sem efeito sobre tratamentos já realizados licitamente;
-- saber com quem há compartilhamento: Google, para o login, e a Microsoft, para a
-  medição de uso.
+- saber com quem há compartilhamento: Google, para o login; a Microsoft, para a
+  medição de uso; e a Cloudflare, que entrega o site e conta as visitas.
 
 Para exercer qualquer um deles, escreva para **${CONTATO}**.
 
