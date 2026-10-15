@@ -742,8 +742,8 @@ lógica de renovação. **O navegador cuida do cookie.**
 
 | Arranjo | Consequência |
 |---|---|
-| ⭐ `registroaberto.org` + `registroaberto.org/api` | ✅ Mesma origem: **sem CORS**, `SameSite=Lax` funciona |
-| `registroaberto.org` + `api.registroaberto.org` | ⛔ *Cross-site*: exige `SameSite=None`, CORS com `AllowCredentials` e origem explícita |
+| ⭐ `registroaberto.org.br` + `registroaberto.org.br/api` | ✅ Mesma origem: **sem CORS**, `SameSite=Lax` funciona |
+| `registroaberto.org.br` + `api.registroaberto.org.br` | ⛔ *Cross-site*: exige `SameSite=None`, CORS com `AllowCredentials` e origem explícita |
 
 > 🔑 **O Traefik já roteia por caminho** ([01-arquitetura §2.1.1](01-arquitetura.md)).
 > Mandar `/api/*` para o container da API **elimina uma classe inteira de problema de

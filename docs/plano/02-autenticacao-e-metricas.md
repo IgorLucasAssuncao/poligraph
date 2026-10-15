@@ -260,11 +260,11 @@ como estava escrito aqui antes, não acha mais.
 O campo aceita **só esquema + host (+ porta)**. Nada de caminho, nada de barra no fim:
 
 ```
-✅ https://registroaberto.org
+✅ https://registroaberto.org.br
 ✅ http://localhost
 ✅ http://localhost:5173          ← 🔴 precisa das DUAS linhas de localhost
-⛔ https://registroaberto.org/      ← barra no fim: rejeitado
-⛔ https://registroaberto.org/login ← caminho: rejeitado
+⛔ https://registroaberto.org.br/      ← barra no fim: rejeitado
+⛔ https://registroaberto.org.br/login ← caminho: rejeitado
 ```
 
 ⚠️ **`http://localhost` e `http://localhost:5173` são entradas separadas** — a Google exige
@@ -289,7 +289,7 @@ nada além dos três.**
 | Momento | O que já dá para preencher |
 |---|---|
 | ✅ **Agora** | Projeto, `http://localhost` nas origens, escopos, **Client ID em mãos** |
-| ⏳ Quando houver domínio (Pendência 3) | Acrescentar `https://registroaberto.org` às origens |
+| ⏳ Quando houver domínio (Pendência 3) | Acrescentar `https://registroaberto.org.br` às origens |
 | ⏳ Quando houver política (Pendência 7) | A URL no *Branding* — e só então **Publish** |
 
 ⭐ **O Client ID sai no passo 6 e já serve para desenvolver localmente.** Domínio e política
@@ -317,7 +317,7 @@ Daí as três formas, e a escolha:
 ```
 Projeto: poligraph
 ├── Cliente "poligraph-dev"   → origens: http://localhost, http://localhost:5173
-└── Cliente "poligraph-prod"  → origens: https://registroaberto.org
+└── Cliente "poligraph-prod"  → origens: https://registroaberto.org.br
 ```
 
 ##### ⭐ O ganho real não é organização — é isolamento de verdade
