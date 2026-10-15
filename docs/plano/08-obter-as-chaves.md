@@ -29,9 +29,9 @@ Aceita **só esquema + host (+ porta)**. Sem caminho, sem barra no fim:
 ```
 ✅ http://localhost
 ✅ http://localhost:5173        ← precisa das DUAS linhas
-✅ https://registroaberto.org.br     (quando houver domínio)
+✅ https://registroaberto.org     (quando houver domínio)
 ⛔ http://localhost:5173/       ← barra no fim: rejeitado
-⛔ https://registroaberto.org.br/login
+⛔ https://registroaberto.org/login
 ```
 
 ### 1.2 O que dá para fazer HOJE

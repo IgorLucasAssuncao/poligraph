@@ -109,7 +109,7 @@
       <rect x="20" y="250" width="150" height="110" rx="3" fill="var(--externo)" stroke="var(--borda-forte)"/>
       <text class="t" x="95" y="290" text-anchor="middle">Cidadão</text>
       <text class="s" x="95" y="310" text-anchor="middle">navegador</text>
-      <text class="d" x="95" y="332" text-anchor="middle">registroaberto.org.br</text>
+      <text class="d" x="95" y="332" text-anchor="middle">registroaberto.org</text>
 
       <rect x="215" y="215" width="170" height="180" rx="3" fill="var(--cf)" fill-opacity=".14" stroke="var(--cf)" stroke-width="1.5"/>
       <text class="t" x="300" y="248" text-anchor="middle">Cloudflare</text>
@@ -215,7 +215,7 @@
   <table>
     <thead><tr><th>#</th><th>Onde</th><th>O que acontece</th></tr></thead>
     <tbody>
-      <tr><td>1</td><td>Cidadão</td><td>Digita <code>registroaberto.org.br</code>. O DNS responde com um IP da Cloudflare, não o do VPS.</td></tr>
+      <tr><td>1</td><td>Cidadão</td><td>Digita <code>registroaberto.org</code>. O DNS responde com um IP da Cloudflare, não o do VPS.</td></tr>
       <tr><td>2</td><td>Cloudflare</td><td>Cifra a conexão, entrega do cache o que já tem e barra ataque e robô.</td></tr>
       <tr><td>3</td><td>Firewall do VPS</td><td>Só a porta 443 recebe visitas. A 80 só redireciona para a 443.</td></tr>
       <tr><td>4</td><td>Traefik</td><td>Manda <code>/api/*</code> para a API e o resto para o site.</td></tr>
@@ -484,10 +484,10 @@ Host=NOME;Port=5432;Database=poligraph;Username=poligraph;Password=SENHA</pre>
       <tr><td><code>ConnectionStrings__poligraph</code></td><td>api, migrations</td><td>A do passo 11. Segredo</td></tr>
       <tr><td><code>Google__ClientId</code></td><td>api</td><td>O client ID do Google de produção. Dois sublinhados: com um só, a API não acha o ID e o login fica desligado sem erro</td></tr>
       <tr><td><code>VITE_GOOGLE_CLIENT_ID</code></td><td>web, na montagem</td><td>O mesmo ID. Entra pelo <code>args</code> do compose, porque o Vite grava o valor nos arquivos do site ao montar</td></tr>
-      <tr><td><code>AllowedHosts</code></td><td>api</td><td>Só sem domínio: o endereço de teste do site. Sem ela, vale <code>registroaberto.org.br</code></td></tr>
+      <tr><td><code>AllowedHosts</code></td><td>api</td><td>Só sem domínio: o endereço de teste do site. Sem ela, vale <code>registroaberto.org</code></td></tr>
     </tbody>
   </table>
-  <p>O client ID de produção é um segundo client no mesmo projeto do Google, com a origem <code>https://registroaberto.org.br</code>
+  <p>O client ID de produção é um segundo client no mesmo projeto do Google, com a origem <code>https://registroaberto.org</code>
     e nenhuma de <code>localhost</code>. O <em>client secret</em> que o Google mostra não se usa nem se guarda.</p>
 
   <h3>13. A aplicação</h3>
@@ -498,7 +498,7 @@ Host=NOME;Port=5432;Database=poligraph;Username=poligraph;Password=SENHA</pre>
     <li><code>api</code> sobe só depois de a migration terminar bem, com o volume <code>chaves-da-sessao</code>: sem ele, cada deploy troca as chaves e desloga todo mundo.</li>
     <li><code>web</code> é o site, o único com domínio. O nginx dele manda <code>/api/</code> ao serviço <code>api</code>.</li>
   </ol>
-  <p>No Coolify, o domínio vai só no <code>web</code>, com a porta do nginx: <code>https://registroaberto.org.br:8080</code> (a porta
+  <p>No Coolify, o domínio vai só no <code>web</code>, com a porta do nginx: <code>https://registroaberto.org:8080</code> (a porta
     diz ao Traefik onde o container escuta; o visitante continua na 443). <strong>"Connect to Predefined Network" fica
     desligado</strong>: ligado, o Coolify renomeia os serviços e o site deixa de achar a <code>api</code>. A rede do banco já
     entra pelo próprio compose.</p>

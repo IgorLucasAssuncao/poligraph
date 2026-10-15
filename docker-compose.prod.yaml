@@ -36,7 +36,7 @@ services:
     environment:
       ConnectionStrings__poligraph: ${ConnectionStrings__poligraph}
       Google__ClientId: ${Google__ClientId}
-      AllowedHosts: ${AllowedHosts:-registroaberto.org.br;www.registroaberto.org.br}
+      AllowedHosts: ${AllowedHosts:-registroaberto.org;www.registroaberto.org}
     volumes:
       - chaves-da-sessao:/home/app/chaves
     networks:
