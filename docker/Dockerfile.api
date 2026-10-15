@@ -18,7 +18,11 @@ RUN mkdir -p /chaves
 # -chiseled: ~100 MB em vez de ~220 MB, e SEM shell.
 # ATENÇÃO: Sem shell, `docker exec ... bash` não funciona. Para depurar, troque
 #    temporariamente para mcr.microsoft.com/dotnet/aspnet:10.0
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled AS final
+# ATENÇÃO: a variante -extra traz a ICU e os fusos horários. A chiseled comum roda sem idioma
+#    (DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=true), e a API quebra ao pedir pt-BR, que ela usa para
+#    comparar nomes sem acento ("pt-br is an invalid culture identifier"). MEDIDO no primeiro
+#    deploy, 2026-10-15.
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra AS final
 WORKDIR /app
 COPY --from=build /app .
 
