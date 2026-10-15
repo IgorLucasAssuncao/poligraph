@@ -12,6 +12,10 @@ COPY src/web/ .
 # Sintoma de errar: o botão do Google não aparece, sem erro nenhum.
 ARG VITE_GOOGLE_CLIENT_ID
 ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+# O Clarity, pela mesma regra: sem o ID na montagem, o site sai sem ele, e o banner de
+# consentimento nem pergunta.
+ARG VITE_CLARITY_ID
+ENV VITE_CLARITY_ID=$VITE_CLARITY_ID
 RUN npm run build
 
 # Imagem sem root (auditoria de 2026-10-03): escuta na 8080, como o nginx.conf.

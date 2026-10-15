@@ -7,6 +7,7 @@
 #   ConnectionStrings__poligraph   Host=<container do banco>;Port=5432;Database=...;Username=...;Password=...
 #   Google__ClientId               client ID do Google de produção
 #   VITE_GOOGLE_CLIENT_ID          o mesmo ID; entra na MONTAGEM do site (args), não no container
+#   VITE_CLARITY_ID                ID do projeto no Microsoft Clarity, também na montagem; vazio, sem Clarity
 #   AllowedHosts                   só enquanto não houver domínio: o endereço de teste do site
 #
 # ATENÇÃO: no Coolify, deixar DESLIGADO "Connect to Predefined Network". Ligado, ele renomeia os
@@ -53,6 +54,7 @@ services:
       dockerfile: docker/Dockerfile.web
       args:
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
+        VITE_CLARITY_ID: ${VITE_CLARITY_ID:-}
     depends_on:
       - api
     restart: unless-stopped
