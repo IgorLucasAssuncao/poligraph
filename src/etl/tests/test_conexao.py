@@ -66,7 +66,15 @@ def test_preserva_o_modo_de_ssl():
     """
     resultado = como_dicionario(normalizar(DO_ASPIRE + ";SSL Mode=Require"))
 
-    assert resultado["sslmode"] == "Require"
+    assert resultado["sslmode"] == "require"
+
+
+def test_traduz_o_modo_de_gss_da_producao():
+    """A produção desliga o GSS, que a imagem do .NET não tem; o libpq recebe o modo em minúscula."""
+    resultado = como_dicionario(normalizar(DO_ASPIRE + ";GSS Encryption Mode=Disable"))
+
+    assert resultado["gssencmode"] == "disable"
+    psycopg.conninfo.make_conninfo(**resultado)
 
 
 @pytest.mark.parametrize("senha", ["com espaço", "com'aspa", "com\\barra"])

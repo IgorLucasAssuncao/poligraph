@@ -28,7 +28,13 @@ EQUIVALENTES = {
     "password": "password",
     "ssl mode": "sslmode",
     "sslmode": "sslmode",
+    "gss encryption mode": "gssencmode",
+    "gssencmode": "gssencmode",
 }
+
+MODOS = {"sslmode", "gssencmode"}
+"""ATENÇÃO: O .NET escreve o modo com maiúscula (`Require`, `Disable`), e o libpq só aceita minúscula.
+MEDIDO no primeiro deploy, 2026-10-15: a produção usa `GSS Encryption Mode=Disable`."""
 
 # ATENÇÃO: Existem só no ADO.NET — o libpq não tem equivalente e passá-las adiante quebraria
 #    a conexão. Descartadas em silêncio de propósito: são detalhe do pool do .NET, não
@@ -79,6 +85,9 @@ def normalizar(conexao: str) -> str:
                 "Opção de conexão sem equivalente no psycopg, ignorada: %r", chave
             )
             continue
+
+        if equivalente in MODOS:
+            valor = valor.lower()
 
         partes.append(f"{equivalente}={_escapar(valor)}")
 
