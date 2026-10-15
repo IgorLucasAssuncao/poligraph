@@ -91,10 +91,18 @@ CONF
 }
 
 # Bloqueia por um tempo quem erra o login várias vezes. O padrão do Ubuntu já cobre o sshd.
+# ATENÇÃO: as redes internas do Docker ficam de fora. O Coolify entra no próprio servidor por SSH a
+#   partir de um container (host.docker.internal); quando o login de root foi recusado, em
+#   2026-10-15, o fail2ban bloqueou o container, e o Coolify passou a ver "Connection refused".
 instalar_fail2ban() {
     etapa "5. fail2ban"
     apt-get install -yq fail2ban
-    systemctl enable --now fail2ban
+    cat > /etc/fail2ban/jail.d/redes-internas.local <<'CONF'
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1 172.16.0.0/12 10.0.0.0/8
+CONF
+    systemctl enable fail2ban
+    systemctl restart fail2ban
     fail2ban-client status sshd 2>/dev/null | head -3 || true
 }
 

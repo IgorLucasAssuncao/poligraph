@@ -365,7 +365,13 @@ KbdInteractiveAuthentication no</pre>
   <h3>6. fail2ban</h3>
   <pre>sudo apt install -y fail2ban
 sudo systemctl enable --now fail2ban</pre>
-  <p>Bloqueia por um tempo o endereço que erra o login várias vezes. A configuração padrão do Ubuntu já cobre o SSH.</p>
+  <p>Bloqueia por 10 minutos o endereço que erra o login várias vezes. A configuração padrão do Ubuntu já cobre o SSH.
+    As redes internas do Docker ficam de fora: o Coolify entra no próprio servidor por SSH a partir de um container, e um
+    bloqueio dele derruba os deploys e as tarefas.</p>
+  <pre>printf '[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1 172.16.0.0/12 10.0.0.0/8
+' | sudo tee /etc/fail2ban/jail.d/redes-internas.local
+sudo systemctl restart fail2ban</pre>
 
   <h3>7. Firewall no painel da Hostinger</h3>
   <p>Em Segurança, Firewall: <strong>só a porta 22</strong> (TCP), desde que o túnel da etapa 5 está de pé. Antes dele, eram
@@ -381,7 +387,7 @@ PS&gt; Test-NetConnection IP-do-VPS -Port 8000    # False</pre>
     <tbody>
       <tr><td>Usuário</td><td><code>igor</code>, com sudo e a chave SSH</td><td>Não trabalhar como root</td><td>—</td></tr>
       <tr><td>SSH</td><td>Sem senha; root só por chave</td><td>Chave não se adivinha; o Coolify precisa do root por chave</td><td>Com senha ligada, o servidor fica exposto a força bruta; com <code>PermitRootLogin no</code>, o Coolify perde o servidor</td></tr>
-      <tr><td>fail2ban</td><td>Padrão, cobrindo o SSH</td><td>Bloqueia quem erra o login várias vezes</td><td>—</td></tr>
+      <tr><td>fail2ban</td><td>Padrão, cobrindo o SSH, sem as redes internas do Docker</td><td>Bloqueia quem erra o login várias vezes</td><td>Sem a exceção, um erro de login do Coolify bloqueia o próprio Coolify</td></tr>
       <tr><td>Firewall</td><td>Só a 22, no painel da Hostinger</td><td>Site e painel entram pelo túnel, que sai de dentro</td><td>Reabrir 80 e 443 recria o caminho direto ao VPS, sem a Cloudflare</td></tr>
       <tr><td>Fuso da instância</td><td><code>America/Sao_Paulo</code>, no Coolify</td><td>É por ele que valem os horários do backup e das tarefas agendadas</td><td>Em UTC, "às 3h" roda à meia-noite de Brasília</td></tr>
     </tbody>
@@ -798,6 +804,8 @@ systemctl status cloudflared --no-pager | head -3</pre>
     <tbody>
       <tr><td><code>REMOTE HOST IDENTIFICATION HAS CHANGED</code></td><td>O servidor tem impressão digital nova, por reinstalação. Conferir pelo terminal do navegador e rodar <code>ssh-keygen -R IP</code></td><td>1</td></tr>
       <tr><td>Pede <code>password</code> depois de configurar a chave</td><td>A chave não foi aceita: usuário inexistente, chave não cadastrada nele, ou arquivo de chave com outro nome. <code>ssh -v</code> mostra qual chave foi oferecida</td><td>1</td></tr>
+      <tr><td><code>root@host.docker.internal: Permission denied (publickey,password)</code></td><td>O Coolify não entra no próprio servidor: o SSH estava com <code>PermitRootLogin no</code>. Trocar para <code>prohibit-password</code></td><td>1</td></tr>
+      <tr><td><code>connect to host host.docker.internal port 22: Connection refused</code>, com o SSH de pé</td><td>O fail2ban bloqueou o container do Coolify depois das tentativas recusadas. O bloqueio vence em 10 minutos (<code>fail2ban-client status sshd</code>); a exceção das redes internas evita a repetição</td><td>1</td></tr>
       <tr><td><code>nano</code> e <code>vi</code> não existem no PowerShell</td><td>Gravar com <code>Set-Content -Encoding ascii</code> ou abrir no VS Code; o Bloco de Notas salva como <code>config.txt</code></td><td>2</td></tr>
       <tr><td><code>channel N: open failed: connect failed: Connection refused</code></td><td>O túnel SSH funciona, mas nada escuta naquela porta no VPS: o Coolify não está instalado ou ainda está subindo</td><td>2</td></tr>
       <tr><td>Um <code>traefik-traefik-1</code> no <code>docker ps</code></td><td>O modelo de sistema da Hostinger trouxe um Traefik avulso, que disputa as portas com o do Coolify</td><td>2</td></tr>
