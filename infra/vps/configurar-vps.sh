@@ -6,11 +6,12 @@
 #
 # Uso, como root, no VPS:
 #   bash configurar-vps.sh igor "ssh-ed25519 AAAA... igor-notebook-hostinger"
+#   CLOUDFLARE_TUNNEL_TOKEN=... bash configurar-vps.sh igor     (instala também o túnel)
 #
 # O segundo argumento é opcional: sem ele, o usuário recebe as chaves que o root já tem.
 #
 # O que NÃO está aqui, porque não se faz de dentro da máquina:
-#   - o firewall, que fica no painel da Hostinger (só 22, 80 e 443);
+#   - o firewall, que fica no painel da Hostinger (com o túnel, só a 22);
 #   - o Coolify por dentro: projeto, banco, variáveis e aplicação, feitos no painel;
 #   - o DNS, que fica na Cloudflare.
 #
@@ -114,11 +115,37 @@ instalar_coolify() {
     fi
 }
 
+# Túnel da Cloudflare (P88): o conector abre uma conexão de saída até ela, e as visitas chegam por
+# ele ao Traefik na porta 80, sem as portas 80 e 443 abertas na internet. Fica no sistema, fora do
+# Coolify: se o Coolify cair, o túnel continua. Só roda com CLOUDFLARE_TUNNEL_TOKEN definido; o
+# token é segredo, mostrado uma vez no painel Zero Trust, e não entra em arquivo nenhum.
+instalar_tunel() {
+    etapa "7. Túnel da Cloudflare"
+    if [ -z "${CLOUDFLARE_TUNNEL_TOKEN:-}" ]; then
+        echo "pulado: defina CLOUDFLARE_TUNNEL_TOKEN para instalar"
+        return
+    fi
+    if ! command -v cloudflared >/dev/null; then
+        install -d -m 0755 /usr/share/keyrings
+        curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg -o /usr/share/keyrings/cloudflare-main.gpg
+        echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main' \
+            > /etc/apt/sources.list.d/cloudflared.list
+        apt-get update -q
+        apt-get install -yq cloudflared
+    fi
+    if systemctl is-active --quiet cloudflared; then
+        echo "o serviço já está rodando"
+    else
+        cloudflared service install "$CLOUDFLARE_TUNNEL_TOKEN"
+    fi
+    systemctl --no-pager --lines=0 status cloudflared | head -3
+}
+
 # O que conferir depois, de fora da máquina.
 resumo() {
     etapa "Pronto. Falta conferir de fora:"
     cat <<TEXTO
-- Firewall no painel da Hostinger: entrada só em TCP 22, 80 e 443.
+- Firewall no painel da Hostinger: com o túnel, entrada só em TCP 22; sem ele, 22, 80 e 443.
 - No seu computador:
     Test-NetConnection <IP> -Port 22      # True
     Test-NetConnection <IP> -Port 8000    # False
@@ -136,4 +163,5 @@ instalar_chave
 endurecer_ssh
 instalar_fail2ban
 instalar_coolify
+instalar_tunel
 resumo
