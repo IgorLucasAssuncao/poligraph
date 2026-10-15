@@ -7,7 +7,7 @@
  * responder "consentiu com o quê, exatamente?" — que é a pergunta que a LGPD art. 8º §2
  * joga no colo do controlador, porque o ônus da prova do consentimento é dele.
  */
-export const VERSAO_CONSENTIMENTO = 'v5-2026-10-03';
+export const VERSAO_CONSENTIMENTO = 'v6-2026-10-15';
 
 export const CONTATO = 'igorlucas1217@gmail.com';
 
@@ -19,7 +19,7 @@ export const CONTATO = 'igorlucas1217@gmail.com';
 export const POLITICA_DE_PRIVACIDADE = `
 # Política de Privacidade
 
-**Versão ${VERSAO_CONSENTIMENTO}** · Última atualização: 3 de outubro de 2026.
+**Versão ${VERSAO_CONSENTIMENTO}** · Última atualização: 15 de outubro de 2026.
 
 O Registro Aberto é um trabalho de conclusão de curso. Ele compara as respostas de um
 questionário com o voto registrado em plenário de deputados federais e senadores,
@@ -165,11 +165,9 @@ export const TEXTO_CONSENTIMENTO = {
   titulo: 'Antes de continuar',
 
   corpo: [
-    'Para avaliar a interface deste trabalho acadêmico, a navegação pode ser gravada, incluindo cliques e as respostas marcadas no questionário.',
-    '**Essas respostas indicam posição política.**',
-    'As gravações podem ser exibidas na apresentação e na defesa deste trabalho.',
-    'A ferramenta é a Microsoft Clarity, com dados em servidores fora do Brasil.',
-    'Gravações ficam 30 dias; dados de clique, 9 meses.',
+    'Usamos sua navegação, como cliques e respostas do questionário, para melhorar a ferramenta. Trechos podem aparecer na apresentação e na defesa do projeto.',
+    'As respostas indicam posição política, por isso só gravamos se você aceitar.',
+    'Os dados ficam no Microsoft Clarity, fora do Brasil: gravações por 30 dias, cliques por 9 meses.',
   ],
 
   aceitar: 'Aceitar',

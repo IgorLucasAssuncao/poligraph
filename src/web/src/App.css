@@ -763,18 +763,25 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .carregando-inicial { display: grid; place-items: center; min-height: 100vh; color: var(--suave); }
 
 /* ═══ BANNER DE CONSENTIMENTO ══════════════════════════════════ */
+/* DECISÃO (2026-10-15): cartão central, perto da base, em vez da faixa de largura inteira que
+   subia do rodapé. Entra com o surgir de toda a interface, na duração de troca de tela. */
 .banner-consentimento {
-  position: fixed; inset: auto 0 0 0; z-index: 60;
-  padding: 1.25rem; max-height: 70vh; overflow-y: auto;
-  background: var(--fundo); border-top: 1px solid var(--borda-forte);
-  box-shadow: 0 -8px 24px rgb(0 0 0 / 12%);
+  position: fixed; left: 50%; bottom: 1rem; z-index: 60;
+  width: min(34rem, calc(100% - 2rem)); transform: translateX(-50%);
+  padding: 1.1rem 1.25rem 1rem; max-height: calc(100dvh - 2rem); overflow-y: auto;
+  background: var(--fundo); border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  box-shadow: var(--sombra-flutuante);
+  animation: surgir-banner var(--t-medio) var(--curva) both;
 }
-.banner-consentimento h2 { margin: 0 auto .5rem; font-size: var(--t-3); max-width: 46rem; }
-.banner-consentimento p { margin: .4rem auto; font-size: var(--t-2); max-width: 46rem; color: var(--suave); }
+@keyframes surgir-banner { from { opacity: 0; transform: translate(-50%, 10px); } }
+@keyframes surgir-banner-fusao { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .banner-consentimento { animation-name: surgir-banner-fusao; } }
+.banner-consentimento h2 { margin: 0 0 .5rem; font-size: var(--t-3); }
+.banner-consentimento p { margin: .4rem 0; font-size: var(--t-2); color: var(--suave); }
 /* ATENÇÃO: Mesmo peso nos dois botões, de propósito — LGPD art. 9º §3 */
-.banner-acoes { display: flex; gap: .75rem; margin: 1rem auto .5rem; max-width: 46rem; }
+.banner-acoes { display: flex; gap: .75rem; margin: 1rem 0 .5rem; }
 .banner-acoes button {
-  flex: 0 1 11rem; padding: .6rem 1rem; border-radius: var(--raio);
+  flex: 1 1 0; padding: .6rem 1rem; border-radius: var(--raio);
   border: 1px solid var(--borda-forte); background: transparent; color: inherit; font-weight: 600;
 }
 .banner-acoes button:hover { background: var(--painel); }
