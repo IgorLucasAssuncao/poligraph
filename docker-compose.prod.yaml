@@ -53,6 +53,27 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
+  # Segunda cópia da API (decisão do autor, 2026-10-15): igual à primeira, com o mesmo volume de chaves,
+  # para as duas abrirem o mesmo cookie de sessão. Serviço próprio, e não replicas: o Coolify dá nome
+  # fixo aos containers, e o Docker não aceita nome fixo com réplicas. O nginx do site divide entre as duas.
+  api2:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    environment:
+      ConnectionStrings__poligraph: ${ConnectionStrings__poligraph}
+      Google__ClientId: ${Google__ClientId}
+      AllowedHosts: ${AllowedHosts:-registroaberto.org;www.registroaberto.org}
+    volumes:
+      - chaves-da-sessao:/home/app/chaves
+    networks:
+      - default
+      - coolify
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
   etl:
     build:
       context: .
@@ -80,6 +101,7 @@ services:
         VITE_CLARITY_ID: ${VITE_CLARITY_ID:-}
     depends_on:
       - api
+      - api2
     restart: unless-stopped
 
 volumes:

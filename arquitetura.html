@@ -579,8 +579,8 @@ docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; 
   <p>O <code>docker-compose.prod.yaml</code> monta três serviços a partir dos Dockerfiles de <code>docker/</code>:</p>
   <ol class="passos">
     <li><code>migrations</code> aplica as migrations e as perguntas da curadoria e termina. Roda a cada deploy; sem migration nova, só confere. Termina com <code>Banco: 8319 parlamentares, … perguntas ativas.</code></li>
-    <li><code>api</code> sobe só depois de a migration terminar bem, com o volume <code>chaves-da-sessao</code>.</li>
-    <li><code>web</code> é o site, o único com domínio. O nginx dele manda <code>/api/</code> ao serviço <code>api</code>.</li>
+    <li><code>api</code> e <code>api2</code>, duas cópias iguais da API (decisão do autor, 2026-10-15), sobem só depois de a migration terminar bem, com o mesmo volume <code>chaves-da-sessao</code>: as duas abrem o mesmo cookie de sessão.</li>
+    <li><code>web</code> é o site, o único com domínio. O nginx dele divide o <code>/api/</code> entre as duas cópias e, se uma não responde em 2 segundos, manda para a outra.</li>
     <li><code>etl</code> é a carga de dados, parada (<code>sleep</code>) à espera das tarefas agendadas, com o cache no volume <code>etl-cache</code>.</li>
   </ol>
   <p>O primeiro deploy leva vários minutos, porque o VPS monta o .NET, o site e a migration. Cada deploy processa os três
@@ -618,6 +618,7 @@ docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; 
       <tr><td>Chaves da sessão</td><td><code>/home/app/chaves</code>, do usuário 1654, num volume</td><td>O cookie de sessão é cifrado com elas, que precisam sobreviver ao deploy</td><td>Sem o volume, cada deploy desloga todo mundo; sem o dono certo, a API não grava</td></tr>
       <tr><td>Site</td><td>nginx sem root, porta 8080</td><td>Serve o React e repassa <code>/api/</code> na mesma origem: sem CORS, cookie <code>SameSite=Lax</code></td><td>Mudar a porta exige mudar a porta interna do domínio</td></tr>
       <tr><td>IDs do Google e do Clarity</td><td>Argumentos de montagem (<code>args</code>)</td><td>O Vite grava os valores nos arquivos ao montar</td><td>Como variável comum, chegam tarde: o botão do Google e o Clarity somem, sem erro</td></tr>
+      <tr><td>Duas cópias da API</td><td><code>api</code> e <code>api2</code>, divididas pelo nginx do site</td><td>Uma cópia que cai não derruba a API. Serviços próprios, e não <code>replicas</code>: o Coolify dá nome fixo aos containers, e o Docker não aceita nome fixo com réplicas</td><td>O deploy ainda recria as duas juntas, com segundos fora do ar; cada cópia faz o próprio warmup de cache, o dobro de consultas no banco ao subir</td></tr>
       <tr><td>Rede</td><td>Isolated, mais a rede <code>coolify</code> na API e na migration</td><td>Mantém o nome <code>api</code> que o nginx procura, e alcança o banco</td><td>A rede predefinida renomeia os serviços, e o site não acha a API</td></tr>
       <tr><td><code>AllowedHosts</code></td><td>O domínio com e sem <code>www</code></td><td>A API só responde a visitas endereçadas ao site</td><td>Sem o <code>www</code>, quem entra por ele recebe erro 400</td></tr>
       <tr><td>Cache da ETL</td><td><code>/cache</code>, do usuário <code>etl</code>, no volume <code>etl-cache</code></td><td>Os downloads sobrevivem aos deploys, e a limpeza da rotina segura o tamanho</td><td>Sem o dono certo, a ETL não grava os downloads; sem a limpeza, o disco enche em meses</td></tr>
