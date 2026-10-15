@@ -8,6 +8,11 @@
 #   Google__ClientId               client ID do Google de produção
 #   VITE_GOOGLE_CLIENT_ID          o mesmo ID; entra na MONTAGEM do site (args), não no container
 #   VITE_CLARITY_ID                ID do projeto no Microsoft Clarity, também na montagem; vazio, sem Clarity
+#   POLIGRAPH_CHAVE_CPF            chave do HMAC do CPF, a MESMA do local: os cpf_hash copiados foram feitos com ela
+#
+# A ETL fica parada (sleep) à espera das tarefas agendadas do Coolify, que rodam DENTRO de um
+# container de pé: `python -m poligraph_etl rotina --frequencia semanal` e `... mensal`. Ver
+# infra/vps/coolify-tarefas.md.
 #   AllowedHosts                   só enquanto não houver domínio: o endereço de teste do site
 #
 # ATENÇÃO: no Coolify, deixar DESLIGADO "Connect to Predefined Network". Ligado, ele renomeia os
@@ -48,6 +53,24 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
+  etl:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.etl
+    entrypoint: ["sleep", "infinity"]
+    environment:
+      ConnectionStrings__poligraph: ${ConnectionStrings__poligraph}
+      POLIGRAPH_CHAVE_CPF: ${POLIGRAPH_CHAVE_CPF}
+    volumes:
+      - etl-cache:/cache
+    networks:
+      - default
+      - coolify
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
   web:
     build:
       context: .
@@ -61,6 +84,7 @@ services:
 
 volumes:
   chaves-da-sessao:
+  etl-cache:
 
 networks:
   coolify:

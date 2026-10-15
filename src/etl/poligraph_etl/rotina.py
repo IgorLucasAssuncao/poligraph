@@ -10,6 +10,7 @@ vez que alguém apertou o botão. Este módulo só DECIDE as etapas; quem as exe
 | `mensal` | as da semanal, `cota`, `emendas`, `sedes-brasilapi` (CNPJs novos das emendas), `convenios`, `governo`, `defesa-civil`, `compras-centralizadas`, `viagens`, `compras`, `sancoes`, `populacao`, `analisar` das duas casas, `conferir` |
 | mensal de jan, abr, jul e out | também `municipios`: o cadastro de CNPJ da Receita, gigabytes, uma vez por trimestre |
 | mensal de nov e dez de ano de eleição geral | também `fundo`, `patrimonio` e `redes` da eleição: o TSE fecha a prestação de contas depois do segundo turno |
+| toda rotina, depois do `conferir` | `limpar-cache`: as regras de `limpeza` (2026-10-15) |
 
 DECISÃO (2026-10-03, auditoria das fontes): toda fonte periódica que o site mostra entra aqui, no
 ritmo em que a fonte muda. Fica fora só a malha do IBGE dos mapas, que é arquivo do front
@@ -60,6 +61,9 @@ def etapas(frequencia: str, hoje: date) -> list[Etapa]:
 
     `conferir` fecha toda rotina: ERRO derruba o comando, e o Coolify mostra a tarefa como
     falha. Na mensal ele roda uma vez só, no fim, depois da análise.
+
+    `limpar-cache` vem depois dele: rotina que falhou deixa o cache como estava, para a
+    próxima reaproveitar o que já foi baixado.
     """
     if frequencia not in FREQUENCIAS:
         raise ValueError(f"Frequência desconhecida: {frequencia}. Use {' ou '.join(FREQUENCIAS)}.")
@@ -99,7 +103,7 @@ def etapas(frequencia: str, hoje: date) -> list[Etapa]:
             Etapa("analisar", {"casa": "SENADO"}),
         ]
 
-    lista.append(Etapa("conferir"))
+    lista += [Etapa("conferir"), Etapa("limpar-cache")]
     return lista
 
 

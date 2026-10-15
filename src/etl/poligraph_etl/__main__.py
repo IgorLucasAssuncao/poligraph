@@ -31,7 +31,7 @@ from . import (
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
 from .fontes import brasilapi, camara, portal, receita, senado, tse
-from . import amostra, compras, compras_centralizadas, conferencia, convenentes, defesa_civil, patrimonio, procedencia, redes, rotina, sancoes, viagens
+from . import amostra, compras, compras_centralizadas, conferencia, convenentes, defesa_civil, limpeza, patrimonio, procedencia, redes, rotina, sancoes, viagens
 from .contratos import entrada
 from .contratos.entrada import colunas_da_fonte
 from .contratos.portal import (
@@ -123,6 +123,8 @@ def main(argv: list[str] | None = None) -> int:
                 _reclassificar(conexao)
             elif args.comando == "rotina":
                 _rotina(conexao, args.frequencia)
+            elif args.comando == "limpar-cache":
+                _limpar_cache()
             elif args.comando == "palavras-chave":
                 _palavras_chave(conexao, args.limite)
             elif args.comando == "sedes-brasilapi":
@@ -220,6 +222,7 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     )
     rot = sub.add_parser("rotina", help="a carga agendada (Pendência 64): semanal ou mensal, terminando em conferir")
     rot.add_argument("--frequencia", choices=list(rotina.FREQUENCIAS), required=True)
+    sub.add_parser("limpar-cache", help="apaga do cache o que venceu: downloads com mais de 35 dias, procedência com mais de 180")
     sub.add_parser(
         "rechavear-cpf",
         help="refaz todo hash de CPF com a chave atual: pessoas, cota, campanha e patrimônio",
@@ -2363,9 +2366,31 @@ def _rotina(conexao: psycopg.Connection, frequencia: str) -> None:
     lista = rotina.etapas(frequencia, date.today())
     log.info("Rotina %s: %s", frequencia, " · ".join(str(etapa) for etapa in lista))
 
-    for numero, etapa in enumerate(lista, 1):
-        log.info("Etapa %d de %d: %s", numero, len(lista), etapa)
-        _executar_etapa(conexao, etapa)
+    _travar_rotina(conexao)
+    try:
+        for numero, etapa in enumerate(lista, 1):
+            log.info("Etapa %d de %d: %s", numero, len(lista), etapa)
+            _executar_etapa(conexao, etapa)
+    finally:
+        conexao.execute("SELECT pg_advisory_unlock(%s)", (TRAVA_DA_ROTINA,))
+
+
+TRAVA_DA_ROTINA = 64_2026
+"""Chave da trava do Postgres que impede duas rotinas ao mesmo tempo (Pendência 64)."""
+
+
+def _travar_rotina(conexao: psycopg.Connection) -> None:
+    """Espera a outra rotina terminar, se houver uma rodando.
+
+    DECISÃO (2026-10-15): esperar, e não desistir. A semanal e a mensal caem no mesmo dia algumas
+    vezes por ano; desistindo, a mensal do mês se perderia. A trava é da sessão: cai sozinha se o
+    processo morrer, e a conexão da ETL é autocommit, então nenhuma transação a segura.
+    """
+    if conexao.execute("SELECT pg_try_advisory_lock(%s)", (TRAVA_DA_ROTINA,)).fetchone()[0]:
+        return
+    log.info("Outra rotina está rodando; esperando ela terminar.")
+    conexao.execute("SELECT pg_advisory_lock(%s)", (TRAVA_DA_ROTINA,))
+    log.info("A outra rotina terminou; seguindo.")
 
 
 def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
@@ -2417,8 +2442,16 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
             _analisar(conexao, corrente, casa)
     elif etapa.comando == "conferir":
         _conferir(conexao)
+    elif etapa.comando == "limpar-cache":
+        _limpar_cache()
     else:
         raise ValueError(f"Etapa sem execução: {etapa.comando}")
+
+
+def _limpar_cache() -> None:
+    """Apaga do cache o que venceu, pelas regras de `limpeza`. Não toca no banco."""
+    log.info("Limpando o cache em %s...", CACHE)
+    limpeza.limpar(CACHE, time.time())
 
 
 def _conferir(conexao: psycopg.Connection) -> None:

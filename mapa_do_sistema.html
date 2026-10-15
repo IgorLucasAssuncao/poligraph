@@ -326,7 +326,7 @@ const COMANDOS = [
   { id: 'compras-centralizadas', faz: 'Cartão de compras centralizadas (CPCC), por órgão e mês. O CPF do favorecido, sem máscara na fonte, não é lido.', ritmo: 'mensal', depende: [] },
   { id: 'sancoes', faz: 'Empresas sancionadas no CEIS e no CNEP, pelo CNPJ: retrato do dia, a tabela troca inteira. Pessoa física (CPF sem máscara na fonte) é descartada antes de gravar.', ritmo: 'mensal', depende: [] },
   { id: 'viagens', faz: 'Viagens a serviço do Executivo federal: diárias, passagens, seguro e restituição por órgão, e os destinos por órgão. O identificador do processo liga pagamento, viagem e trecho: o pagamento publicado com órgão "Sigiloso" vai para o órgão da viagem.', ritmo: 'mensal', depende: [] },
-  { id: 'conferir', faz: 'Regras de plausibilidade e o fechamento dos totais. ERRO derruba a rotina.', ritmo: 'semanal', depende: [] },
+  { id: 'conferir', faz: 'Regras de plausibilidade e o fechamento dos totais. ERRO derruba a rotina. Na rotina, vem seguido de limpar-cache, que apaga do cache os downloads com mais de 35 dias e as cópias de procedência com mais de 180, sem tocar no banco.', ritmo: 'semanal', depende: [] },
 ];
 
 /** As tabelas, agrupadas pelo assunto, na ordem em que aparecem à direita. */
@@ -584,7 +584,7 @@ const PORQUE_DA_ETAPA = [
   'Precisam das pessoas e dos votos já gravados: analisar calcula sobre os votos, cpf completa o hash de quem já existe, cota e emendas ligam cada linha a uma pessoa, palavras-chave completa proposições já gravadas.',
   'fundo, patrimonio e redes casam com o TSE pelo hash do CPF. convenios e municipios só procuram os convênios e CNPJs que vieram nas emendas.',
   'sedes-brasilapi completa os CNPJs que municipios não resolveu; populacao grava na tabela de municípios que municipios criou.',
-  'conferir lê o banco inteiro e falha se algum total não fechar com a fonte. Fecha toda carga.',
+  'conferir lê o banco inteiro e falha se algum total não fechar com a fonte. Fecha toda carga; na rotina, só a limpeza do cache vem depois, e a trava do Postgres impede duas rotinas ao mesmo tempo.',
 ];
 
 /** O modelo do banco, extraído do snapshot de migrations do EF (Poligraph.Data/Migrations/PoligraphDbModelSnapshot.cs). */

@@ -575,10 +575,33 @@ docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; 
     <li><code>migrations</code> aplica as migrations e as perguntas da curadoria e termina. Roda a cada deploy; sem migration nova, só confere. Termina com <code>Banco: 8319 parlamentares, … perguntas ativas.</code></li>
     <li><code>api</code> sobe só depois de a migration terminar bem, com o volume <code>chaves-da-sessao</code>.</li>
     <li><code>web</code> é o site, o único com domínio. O nginx dele manda <code>/api/</code> ao serviço <code>api</code>.</li>
+    <li><code>etl</code> é a carga de dados, parada (<code>sleep</code>) à espera das tarefas agendadas, com o cache no volume <code>etl-cache</code>.</li>
   </ol>
   <p>O primeiro deploy leva vários minutos, porque o VPS monta o .NET, o site e a migration. Cada deploy processa os três
     serviços, com alguns segundos sem API: é a escolha para subir rápido (decisão do autor, 2026-10-15). Quando o CI publicar
     as imagens (P23), cada peça vira aplicação própria, sem queda.</p>
+
+  <h3>4. A carga agendada</h3>
+  <p>A rotina já existe na ETL (<code>rotina.py</code>, Pendência 64): o Coolify só a dispara, dentro do serviço
+    <code>etl</code>. Folha com os valores para copiar: <code>infra/vps/coolify-tarefas.md</code>. Na aplicação, Scheduled
+    Tasks:</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Name</th><th>Command</th><th>Frequency</th><th>Serviço</th></tr></thead>
+    <tbody>
+      <tr><td><code>rotina-semanal</code></td><td><code>python -m poligraph_etl rotina --frequencia semanal</code></td><td><code>0 3 * * 1</code>, segunda às 3h</td><td><code>etl</code></td></tr>
+      <tr><td><code>rotina-mensal</code></td><td><code>python -m poligraph_etl rotina --frequencia mensal</code></td><td><code>0 3 2 * *</code>, dia 2 às 3h</td><td><code>etl</code></td></tr>
+    </tbody>
+  </table></div>
+  <ul class="lista">
+    <li>A semanal traz as votações do ano, as simbólicas e as palavras-chave novas. A mensal acrescenta o dinheiro, a
+      população e o grafo; em janeiro, abril, julho e outubro, o cadastro da Receita; depois de eleição geral, o TSE.</li>
+    <li>Toda rotina termina com <code>conferir</code>, que falha se um total não fechar com a fonte, e com
+      <code>limpar-cache</code>: downloads com mais de 35 dias e cópias de procedência com mais de 180 saem do volume, e do
+      cadastro da Receita fica só o mês mais recente.</li>
+    <li>Uma trava do Postgres impede duas rotinas ao mesmo tempo: quando a semanal e a mensal caem juntas, a segunda espera.</li>
+    <li>Precisa de <code>POLIGRAPH_CHAVE_CPF</code>, a mesma do local. Em Notifications, ligar o aviso de falha de tarefa agendada.</li>
+    <li>A primeira mensal, com o cache vazio e o cadastro da Receita, roda à mão, num horário de pouco acesso.</li>
+  </ul>
 
   <h3>Cada configuração da aplicação</h3>
   <div class="tabela"><table>
@@ -591,6 +614,7 @@ docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; 
       <tr><td>IDs do Google e do Clarity</td><td>Argumentos de montagem (<code>args</code>)</td><td>O Vite grava os valores nos arquivos ao montar</td><td>Como variável comum, chegam tarde: o botão do Google e o Clarity somem, sem erro</td></tr>
       <tr><td>Rede</td><td>Isolated, mais a rede <code>coolify</code> na API e na migration</td><td>Mantém o nome <code>api</code> que o nginx procura, e alcança o banco</td><td>A rede predefinida renomeia os serviços, e o site não acha a API</td></tr>
       <tr><td><code>AllowedHosts</code></td><td>O domínio com e sem <code>www</code></td><td>A API só responde a visitas endereçadas ao site</td><td>Sem o <code>www</code>, quem entra por ele recebe erro 400</td></tr>
+      <tr><td>Cache da ETL</td><td><code>/cache</code>, do usuário <code>etl</code>, no volume <code>etl-cache</code></td><td>Os downloads sobrevivem aos deploys, e a limpeza da rotina segura o tamanho</td><td>Sem o dono certo, a ETL não grava os downloads; sem a limpeza, o disco enche em meses</td></tr>
       <tr><td><code>.dockerignore</code></td><td>Exclui <code>.cache</code>, <code>node_modules</code>, <code>bin</code>, <code>obj</code></td><td>Os downloads da ETL têm gigabytes</td><td>Montar no computador do autor estoura a memória</td></tr>
     </tbody>
   </table></div>

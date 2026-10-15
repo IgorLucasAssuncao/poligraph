@@ -16,6 +16,7 @@ def test_semanal_traz_as_votacoes_do_ano_e_confere():
 
     assert _comandos(lista) == [
         "ingerir --anos 2026", "senado --anos 2026", "simbolicas --anos 2026", "palavras-chave", "conferir",
+        "limpar-cache",
     ]
 
 
@@ -42,6 +43,7 @@ def test_mensal_acrescenta_dinheiro_e_grafo_e_confere_uma_vez_no_fim():
         "analisar --casa CAMARA",
         "analisar --casa SENADO",
         "conferir",
+        "limpar-cache",
     ]
 
 
@@ -98,6 +100,7 @@ def test_toda_etapa_tem_execucao_no_main(monkeypatch):
     nomes = (
         "_ingerir", "_senado", "_simbolicas", "_palavras_chave", "_cota", "_emendas", "_sedes_brasilapi", "_convenios",
         "_governo", "_defesa_civil", "_compras_centralizadas", "_viagens", "_compras", "_sancoes", "_municipios", "_fundo", "_patrimonio", "_redes", "_populacao", "_analisar", "_conferir",
+        "_limpar_cache",
     )
     for nome in nomes:
         monkeypatch.setattr(principal, nome, lambda *_, nome=nome: executados.append(nome))
@@ -108,3 +111,47 @@ def test_toda_etapa_tem_execucao_no_main(monkeypatch):
                 principal._executar_etapa(ConexaoFalsa(), etapa)
 
     assert set(executados) == set(nomes)
+
+
+class _ConexaoComTrava:
+    """Registra o SQL da trava e responde se ela estava livre."""
+
+    def __init__(self, livre: bool):
+        self.livre = livre
+        self.comandos: list[str] = []
+
+    def execute(self, sql, *_):
+        self.comandos.append(sql.split("(")[0].replace("SELECT ", ""))
+        return self
+
+    def fetchone(self):
+        return (self.livre,)
+
+
+def test_rotina_espera_a_outra_e_solta_a_trava_mesmo_falhando(monkeypatch):
+    """Duas rotinas ao mesmo tempo gravariam as mesmas tabelas; a segunda espera a primeira."""
+    from poligraph_etl import __main__ as principal
+
+    def falhar(*_):
+        raise RuntimeError("conferir acusou ERRO")
+
+    monkeypatch.setattr(principal.rotina, "etapas", lambda *_: [rotina.Etapa("conferir")])
+    monkeypatch.setattr(principal, "_conferir", falhar)
+    conexao = _ConexaoComTrava(livre=False)
+
+    with pytest.raises(RuntimeError):
+        principal._rotina(conexao, "semanal")
+
+    assert conexao.comandos == ["pg_try_advisory_lock", "pg_advisory_lock", "pg_advisory_unlock"]
+
+
+def test_rotina_com_a_trava_livre_nao_espera(monkeypatch):
+    from poligraph_etl import __main__ as principal
+
+    monkeypatch.setattr(principal.rotina, "etapas", lambda *_: [rotina.Etapa("conferir")])
+    monkeypatch.setattr(principal, "_conferir", lambda *_: None)
+    conexao = _ConexaoComTrava(livre=True)
+
+    principal._rotina(conexao, "semanal")
+
+    assert conexao.comandos == ["pg_try_advisory_lock", "pg_advisory_unlock"]

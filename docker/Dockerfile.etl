@@ -8,7 +8,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/etl/ .
 
-RUN useradd -m etl && chown -R etl /etl
+# ATENÇÃO: /cache nasce na imagem pertencendo ao usuário etl. O volume do cache no compose é criado a
+#    partir dela; sem isso ele seria do root, e a ETL não gravaria os downloads (o mesmo defeito das
+#    chaves da API no primeiro deploy, 2026-10-15).
+RUN useradd -m etl && mkdir -p /cache && chown -R etl /etl /cache
+ENV POLIGRAPH_CACHE=/cache
 USER etl
 
 ENTRYPOINT ["python", "-m", "poligraph_etl"]
