@@ -14,7 +14,10 @@ COPY src/ src/
 RUN dotnet publish "src/Poligraph.Data/Poligraph.Data.csproj" \
     -c Release -o /app --no-restore
 
-FROM mcr.microsoft.com/dotnet/runtime:10.0-noble-chiseled AS final
+# ATENÇÃO: aspnet, não runtime. O Poligraph.Data referencia o ServiceDefaults, que traz o
+#    Microsoft.AspNetCore.App; na base runtime o processo nem abre ("No frameworks were found").
+#    MEDIDO no primeiro deploy no Coolify, 2026-10-15.
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled AS final
 WORKDIR /app
 COPY --from=build /app .
 
