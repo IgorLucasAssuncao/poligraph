@@ -33,7 +33,7 @@
 | novo | Juntar as migrations numa `Inicial` antes do primeiro deploy | Só dá antes de existir banco de produção |
 | **86** | Cache e limite de taxa na Cloudflare para `/api` | Exposição na borda. A API já marca com `Cache-Control: public, max-age=300` todo GET 200 de rota que não exige login (`CacheNoNavegador`). Falta a regra na Cloudflare que guarda essas respostas e o limite de taxa. RISCO: a regra guarda só rota sem login; `seguidos` e `auth/eu` leem o usuário, e guardadas na borda entregariam a lista de quem uma pessoa segue a outra |
 | **87** | Primeira carga de produção: cópia do banco local (decisão do autor, 2026-10-10) | FEITO em parte (2026-10-15): o banco local foi copiado para produção, 8.319 parlamentares e 2.179.300 votos nos dois lados (`infra/vps/restaurar-banco.sh`). RISCO: o dump foi do banco inteiro, contra o passo (3): levou `usuarios`, `segue`, `consentimentos`, `avaliacoes` e `tokens_email` do ambiente local, que precisam ser apagados em produção. Faltam também (6) e (7). Passos: (1) juntar as migrations numa `Inicial` antes; (2) produção na mesma migration que o local; (3) `pg_dump --data-only` só das tabelas de fonte, sem `usuarios`, `segue`, `consentimentos` e `avaliacoes`; (4) mesma `chave-cpf` em produção, ou `rechavear-cpf` depois; (5) `pg_restore` no VPS; (6) `conferir` em produção antes de abrir o site; (7) ligar a rotina periódica da ETL. ATENÇÃO: as cópias dos arquivos de origem (`.cache/procedencia`) não vão no dump; o hash continua conferível baixando de novo da fonte |
-| **88** | Fechar o acesso direto ao VPS, sem passar pela Cloudflare | Exposição na borda. Esconder o IP não basta: com a 443 aberta a todos, quem descobre o endereço pula WAF, cache e limite de taxa. Opções: túnel da Cloudflare (recomendado: 80 e 443 fechadas para a internet) ou firewall só com as faixas da Cloudflare mais Authenticated Origin Pulls no Traefik. Em qualquer caso, o Traefik só responde aos domínios do site. Desenho em `arquitetura.html` |
+| **88** | Fechar o acesso direto ao VPS, sem passar pela Cloudflare | FEITO (2026-10-15): túnel da Cloudflare `registroaberto-vps`, conector no Ubuntu, rotas HTTP para `localhost:80`, domínios do Coolify em `http://`, firewall só com a 22; conferido de fora que 80, 443 e 8000 não respondem. Passo a passo em `arquitetura.html`, etapa 5. Exposição na borda. Esconder o IP não basta: com a 443 aberta a todos, quem descobre o endereço pula WAF, cache e limite de taxa. Opções: túnel da Cloudflare (recomendado: 80 e 443 fechadas para a internet) ou firewall só com as faixas da Cloudflare mais Authenticated Origin Pulls no Traefik. Em qualquer caso, o Traefik só responde aos domínios do site. Desenho em `arquitetura.html` |
 
 ### Abertas: dependem do autor, não de código
 
@@ -192,7 +192,7 @@ questionário ⛔ vira junto: as perguntas são da 57ª.
 | **Pendência 24** | 🔴 Confirmar com o orientador se o TCC precisa de **Comitê de Ética** | [plano/02 §4.5](plano/02-autenticacao-e-metricas.md) |
 | **Pendência 33** | 🔴 **Novo:** os termos do Clarity dizem que ele não deve ser usado em sites dirigidos a menores de 18. No Brasil vota-se aos 16 — decidir junto com a Pendência 24 | [plano/08 §2.2](plano/08-obter-as-chaves.md) |
 | **Pendência 23** | 🔴 CI como **portão** do deploy, ou os dois em paralelo? | [plano/01 §2.1.2](plano/01-arquitetura.md) |
-| **Pendência 3** | Em andamento (2026-10-15): `registroaberto.org` comprado na Hostinger, com os nameservers na Cloudflare. Falta a Cloudflare ativar a zona, o HTTPS e as origens do Google. O e-mail ainda exige SPF/DKIM/DMARC | [plano/01](plano/01-arquitetura.md) |
+| **Pendência 3** | Resolvida em parte (2026-10-15): `registroaberto.org`, comprado na Hostinger, no ar pela Cloudflare. Faltam as origens do Google no client de produção; o e-mail ainda exige SPF/DKIM/DMARC | [plano/01](plano/01-arquitetura.md) |
 | 🔴 **Pendência 11** | **Curar as 15–25 perguntas** — ⚠️ **o maior bloqueio de todos**, detalhado abaixo | [plano/03](plano/03-questionario.md) |
 | 🔴 **RQ3** | **N final de perguntas** — a Pendência 11 não começa sem esta definida | [03-requisitos](03-requisitos.md) |
 
@@ -1367,7 +1367,7 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 | **Pendência 19** | Retenção do Prometheus (ex.: 90 dias) — sem limite ele enche o disco |
 | **Pendência 20** | 🔴 Destino do backup do Postgres — **configurar no primeiro dia**. ⚠️ Com e-mails em claro na base, o backup precisa ser **criptografado** no destino |
 | **Pendência 21** | Grafana público ou só por VPN/túnel |
-| **Pendência 22** | Decidida: painel sem endereço público, aberto por túnel SSH (`infra/vps/ssh-config.exemplo`) |
+| **Pendência 22** | Resolvida (2026-10-15): painel em `painel.registroaberto.org`, pelo túnel da Cloudflare e atrás do Cloudflare Access (só o e-mail do autor); o túnel SSH (`infra/vps/ssh-config.exemplo`) fica de reserva |
 
 ---
 

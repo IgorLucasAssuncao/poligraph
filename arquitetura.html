@@ -4,11 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Arquitetura de produção</title>
-<meta name="description" content="Registro Aberto em produção: o cidadão, a Cloudflare, o VPS da Hostinger e, dentro dele, o site, a API e o banco, que não tem endereço na internet.">
+<meta name="description" content="Registro Aberto em produção, em etapas: o servidor, o Coolify, o banco, a aplicação, o domínio com a Cloudflare e o túnel, o Google, a entrega e os erros que apareceram, com cada configuração e o porquê.">
 <style>
   :root {
     --fundo: #ffffff; --painel: #f3f5f7; --texto: #12161b; --suave: #4d5966;
     --borda: #dde2e7; --borda-forte: #8a96a3; --realce: #0f766e; --sobre-realce: #ffffff;
+    --realce-fraco: #e3f1ef;
     --externo: #e8ecf0; --cf: #f38020; --vps: #1b2430; --sobre-vps: #e8edf2;
     --banco: #336791; --perigo: #a8321f;
     --dado: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
@@ -19,25 +20,30 @@
     :root:not([data-theme="light"]) {
       --fundo: #0b0e11; --painel: #151b22; --texto: #e8edf2; --suave: #a3afbb;
       --borda: #27313c; --borda-forte: #5c6977; --realce: #5eb7ac; --sobre-realce: #0b0e11;
-      --externo: #1c242d; --vps: #10161d; --sobre-vps: #e8edf2;
+      --realce-fraco: #12302d;
+      --externo: #1c242d; --vps: #10161d; --sobre-vps: #e8edf2; --perigo: #f08c77;
     }
   }
   :root[data-theme="dark"] {
     --fundo: #0b0e11; --painel: #151b22; --texto: #e8edf2; --suave: #a3afbb;
     --borda: #27313c; --borda-forte: #5c6977; --realce: #5eb7ac; --sobre-realce: #0b0e11;
-    --externo: #1c242d; --vps: #10161d; --sobre-vps: #e8edf2;
+    --realce-fraco: #12302d;
+    --externo: #1c242d; --vps: #10161d; --sobre-vps: #e8edf2; --perigo: #f08c77;
   }
   * { box-sizing: border-box; }
+  html { scroll-padding-top: 72px; }
   body {
     margin: 0; background: var(--fundo); color: var(--texto);
     font-family: var(--texto-fonte); font-size: 16px; line-height: 1.55;
   }
-  main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
+  main { max-width: 1120px; margin: 0 auto; padding: 24px 16px 64px; }
   h1 { font-size: 34px; line-height: 1.15; margin: 0 0 8px; }
-  h2 { font-size: 20px; margin: 40px 0 12px; }
-  p { margin: 0 0 12px; max-width: 72ch; }
-  .sub { color: var(--suave); font-size: 15px; margin-bottom: 24px; }
-  figure { margin: 0; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel); padding: 16px; overflow-x: auto; }
+  h2 { font-size: 26px; margin: 8px 0 12px; }
+  h3 { font-size: 20px; margin: 32px 0 10px; }
+  p { margin: 0 0 12px; max-width: 74ch; }
+  a { color: var(--realce); }
+  .sub { color: var(--suave); font-size: 15px; margin-bottom: 16px; }
+  figure { margin: 0 0 8px; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel); padding: 16px; overflow-x: auto; }
   figcaption { color: var(--suave); font-size: 13px; margin-top: 8px; }
   svg { display: block; width: 100%; min-width: 760px; height: auto; font-family: var(--texto-fonte); }
   svg .t { fill: var(--texto); font-size: 15px; font-weight: 700; }
@@ -48,6 +54,7 @@
   svg .dv { fill: #a9b6c3; font-size: 11.5px; font-family: var(--dado); }
   svg .rotulo-seta { fill: var(--texto); font-size: 11.5px; font-family: var(--dado); }
   svg .rotulo-seta-vps { fill: #cfd8e1; font-size: 11.5px; font-family: var(--dado); }
+  .tabela { overflow-x: auto; margin: 4px 0 16px; }
   table { border-collapse: collapse; width: 100%; font-size: 15px; }
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--borda); vertical-align: top; }
   th { font-size: 13px; color: var(--suave); font-weight: 600; }
@@ -59,43 +66,68 @@
   .legenda { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 12px; font-size: 13px; color: var(--suave); }
   .legenda span { display: inline-flex; align-items: center; gap: 6px; }
   .amostra { width: 22px; height: 0; border-top: 2px solid var(--realce); }
+  .amostra.tunel { border-top: 3px dashed var(--realce); }
   .amostra.tracejada { border-top: 2px dashed var(--borda-forte); }
-  .amostra.bloqueio { border-top: 2px solid var(--perigo); }
-  ol.passos { margin: 0 0 12px; padding-left: 22px; max-width: 72ch; }
-  ol.passos li { margin: 4px 0; }
+  .amostra.bloqueio { border-top: 2px dashed var(--perigo); }
+  ol.passos, ul.lista { margin: 0 0 12px; padding-left: 22px; max-width: 74ch; }
+  ol.passos li, ul.lista li { margin: 4px 0; }
   pre { margin: 8px 0 14px; padding: 10px 12px; background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio);
-        font-family: var(--dado); font-size: 13px; overflow-x: auto; }
-  .aviso { border-left: 4px solid var(--realce); background: var(--painel); padding: 10px 14px; margin: 12px 0; max-width: 72ch; }
+        font-family: var(--dado); font-size: 13px; overflow-x: auto; line-height: 1.5; }
+  .aviso { border-left: 4px solid var(--realce); background: var(--painel); padding: 10px 14px; margin: 12px 0; max-width: 78ch; }
   .aviso.risco { border-left-color: var(--perigo); }
   .aviso p:last-child { margin-bottom: 0; }
   .rec { font-weight: 700; color: var(--realce); }
-  nav.indice { margin: 0 0 24px; font-size: 14px; }
-  nav.indice a { color: var(--realce); margin-right: 14px; white-space: nowrap; }
-  @media (max-width: 700px) { h1 { font-size: 26px; } main > table { display: block; overflow-x: auto; } }
+  .estado { display: inline-block; font: 600 11px var(--dado); letter-spacing: .04em; padding: 2px 6px; border-radius: var(--raio);
+            border: 1px solid var(--borda-forte); color: var(--suave); vertical-align: middle; margin-left: 6px; }
+  .estado.feito { border-color: var(--realce); color: var(--realce); }
+
+  nav.etapas { position: sticky; top: 0; z-index: 10; background: var(--fundo); border-bottom: 1px solid var(--borda);
+               margin: 0 -16px 24px; padding: 8px 16px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
+  nav.etapas a { flex: 0 0 auto; text-decoration: none; color: var(--texto); font-size: 14px; font-weight: 600;
+                 padding: 6px 10px; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--painel); white-space: nowrap; }
+  nav.etapas a small { display: inline-block; margin-right: 6px; font: 600 11px var(--dado); color: var(--suave); }
+  nav.etapas a:hover { border-color: var(--realce); }
+  nav.etapas a[aria-current="page"] { background: var(--realce); border-color: var(--realce); color: var(--sobre-realce); }
+  nav.etapas a[aria-current="page"] small { color: var(--sobre-realce); }
+  :focus-visible { outline: 3px solid var(--realce); outline-offset: 2px; }
+  .com-abas section.etapa { display: none; }
+  .com-abas section.etapa.ativa { display: block; }
+  .rodape-etapa { display: flex; justify-content: space-between; gap: 12px; margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--borda); }
+  .rodape-etapa a { text-decoration: none; font-weight: 600; }
+  .rodape-etapa a small { display: block; font-size: 12px; font-weight: 400; color: var(--suave); }
+  .rodape-etapa .proxima { text-align: right; margin-left: auto; }
+  @media (max-width: 700px) { h1 { font-size: 26px; } h2 { font-size: 21px; } }
+  @media print {
+    nav.etapas, .rodape-etapa { display: none; }
+    .com-abas section.etapa { display: block; }
+  }
 </style>
 </head>
 <body>
 <main>
   <h1>Arquitetura de produção</h1>
-  <p class="sub">Registro Aberto no ar: do navegador do cidadão até o banco de dados. Desenho macro, a partir do
-    <code>docs/plano/01-arquitetura.md</code> §2.1.</p>
+  <p class="sub">Registro Aberto no ar, em etapas: do navegador do cidadão até o banco de dados, com a configuração exata de cada
+    tela, os comandos e o porquê. Estado conferido em 2026-10-15. Os scripts do servidor estão em <code>infra/vps/</code>.</p>
 
-  <nav class="indice" aria-label="Nesta página">
-    <a href="#visita">O caminho de uma visita</a>
-    <a href="#exposto">O que fica exposto</a>
-    <a href="#desvio">Chamar o VPS direto</a>
-    <a href="#pecas">Traefik e Coolify</a>
-    <a href="#cicd">CI e CD</a>
-    <a href="#segredos">Segredos</a>
-    <a href="#falta">O que falta decidir</a>
-    <a href="#explicacao">Cada configuração, explicada</a>
-    <a href="#roteiro">Roteiro do servidor</a>
+  <nav class="etapas" aria-label="Etapas">
+    <a href="#geral"><small>0</small>Visão geral</a>
+    <a href="#servidor"><small>1</small>Servidor</a>
+    <a href="#coolify"><small>2</small>Coolify</a>
+    <a href="#banco"><small>3</small>Banco</a>
+    <a href="#aplicacao"><small>4</small>Aplicação</a>
+    <a href="#dominio"><small>5</small>Domínio e Cloudflare</a>
+    <a href="#google"><small>6</small>Google e Clarity</a>
+    <a href="#entrega"><small>7</small>Entrega e segredos</a>
+    <a href="#erros"><small>8</small>Erros que apareceram</a>
   </nav>
 
+  <!-- ═══════════════════════════════════════════════════════════ 0 -->
+  <section class="etapa" id="geral" aria-labelledby="titulo-geral">
+  <h2 id="titulo-geral">Visão geral</h2>
   <figure>
-    <svg viewBox="0 0 1080 640" role="img" aria-labelledby="titulo-desenho desc-desenho">
-      <title id="titulo-desenho">Usuário, Cloudflare, VPS da Hostinger e a aplicação</title>
-      <desc id="desc-desenho">O usuário acessa a Cloudflare, que encaminha pela porta 443 ao VPS da Hostinger. No VPS, o firewall deixa passar só 443, 80 e 22; o Traefik encaminha ao site e à API. A API e a carga de dados falam com o banco pela rede interna, e o banco não tem porta na internet.</desc>
+    <svg viewBox="0 0 1080 670" role="img" aria-labelledby="titulo-desenho desc-desenho">
+      <title id="titulo-desenho">Cidadão, Cloudflare, túnel e o VPS da Hostinger</title>
+      <desc id="desc-desenho">O cidadão acessa a Cloudflare. A Cloudflare entrega a visita por um túnel que o próprio VPS abriu até ela; o conector do túnel passa ao Traefik, dentro da máquina, que encaminha ao site ou ao painel do Coolify. O site repassa os pedidos de dados à API, que consulta o banco pela rede interna. O firewall só aceita a porta 22, do SSH do autor; as portas 80 e 443 estão fechadas.</desc>
       <defs>
         <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--realce)"/>
@@ -103,419 +135,209 @@
         <marker id="seta-cinza" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--borda-forte)"/>
         </marker>
-        <marker id="x" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="12" markerHeight="12">
-          <path d="M1,1 L9,9 M9,1 L1,9" stroke="var(--perigo)" stroke-width="2"/>
-        </marker>
       </defs>
 
-      <rect x="20" y="250" width="150" height="110" rx="3" fill="var(--externo)" stroke="var(--borda-forte)"/>
-      <text class="t" x="95" y="290" text-anchor="middle">Cidadão</text>
-      <text class="s" x="95" y="310" text-anchor="middle">navegador</text>
-      <text class="d" x="95" y="332" text-anchor="middle">registroaberto.org</text>
+      <rect x="20" y="230" width="150" height="100" rx="3" fill="var(--externo)" stroke="var(--borda-forte)"/>
+      <text class="t" x="95" y="266" text-anchor="middle">Cidadão</text>
+      <text class="s" x="95" y="286" text-anchor="middle">navegador</text>
+      <text class="d" x="95" y="308" text-anchor="middle">registroaberto.org</text>
 
-      <rect x="215" y="215" width="170" height="180" rx="3" fill="var(--cf)" fill-opacity=".14" stroke="var(--cf)" stroke-width="1.5"/>
-      <text class="t" x="300" y="248" text-anchor="middle">Cloudflare</text>
-      <text class="s" x="300" y="268" text-anchor="middle">a borda; nada roda aqui</text>
-      <text class="d" x="300" y="296" text-anchor="middle">DNS · TLS</text>
-      <text class="d" x="300" y="314" text-anchor="middle">CDN · WAF</text>
-      <text class="d" x="300" y="332" text-anchor="middle">esconde o IP do VPS</text>
-      <text class="d" x="300" y="360" text-anchor="middle">cache e limite</text>
-      <text class="d" x="300" y="376" text-anchor="middle">de taxa: P86</text>
+      <rect x="20" y="440" width="150" height="90" rx="3" fill="var(--externo)" stroke="var(--borda-forte)"/>
+      <text class="t" x="95" y="474" text-anchor="middle">Autor</text>
+      <text class="s" x="95" y="494" text-anchor="middle">SSH com chave</text>
+      <text class="d" x="95" y="514" text-anchor="middle">e túnel do painel</text>
 
-      <path d="M170 305 H 208" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
-      <text class="rotulo-seta" x="189" y="296" text-anchor="middle">https</text>
+      <rect x="215" y="170" width="190" height="230" rx="3" fill="var(--cf)" fill-opacity=".14" stroke="var(--cf)" stroke-width="1.5"/>
+      <text class="t" x="310" y="202" text-anchor="middle">Cloudflare</text>
+      <text class="s" x="310" y="222" text-anchor="middle">a borda; nada roda aqui</text>
+      <text class="d" x="310" y="252" text-anchor="middle">DNS · HTTPS</text>
+      <text class="d" x="310" y="270" text-anchor="middle">cache · WAF</text>
+      <text class="d" x="310" y="288" text-anchor="middle">Access no painel</text>
+      <text class="d" x="310" y="306" text-anchor="middle">esconde o IP do VPS</text>
+      <text class="d" x="310" y="356" text-anchor="middle">cache e limite</text>
+      <text class="d" x="310" y="372" text-anchor="middle">de taxa: P86</text>
 
-      <rect x="430" y="40" width="630" height="580" rx="3" fill="var(--vps)"/>
-      <text class="tv" x="452" y="70">VPS Hostinger KVM 2</text>
-      <text class="sv" x="452" y="90">2 vCPU · 8 GB · São Paulo · Coolify orquestra os containers</text>
+      <path d="M170 280 H 208" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+      <text class="rotulo-seta" x="189" y="271" text-anchor="middle">https</text>
 
-      <rect x="452" y="230" width="22" height="150" rx="3" fill="var(--perigo)" fill-opacity=".85"/>
-      <text class="dv" x="452" y="398">firewall</text>
-      <text class="dv" x="452" y="414">443 · 80 · 22</text>
+      <rect x="440" y="30" width="620" height="610" rx="3" fill="var(--vps)"/>
+      <text class="tv" x="500" y="60">VPS Hostinger KVM 2</text>
+      <text class="sv" x="500" y="80">2 vCPU · 8 GB · São Paulo · Coolify orquestra os containers</text>
 
-      <path d="M385 305 H 445" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
-      <text class="rotulo-seta" x="415" y="296" text-anchor="middle">443</text>
+      <rect x="460" y="160" width="22" height="400" rx="3" fill="var(--perigo)" fill-opacity=".85"/>
+      <text class="dv" x="460" y="580">firewall</text>
+      <text class="dv" x="460" y="596">só a 22</text>
 
-      <rect x="500" y="250" width="140" height="110" rx="3" fill="#24303d" stroke="#5c6977"/>
-      <text class="tv" x="570" y="288" text-anchor="middle">Traefik</text>
-      <text class="sv" x="570" y="308" text-anchor="middle">proxy do Coolify</text>
-      <text class="dv" x="570" y="330" text-anchor="middle">roteia por domínio</text>
-      <text class="dv" x="570" y="346" text-anchor="middle">e abre o HTTPS</text>
-      <path d="M474 305 H 493" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+      <path d="M405 230 H 498" stroke="var(--realce)" stroke-width="3" stroke-dasharray="7 4" fill="none" marker-start="url(#seta)" marker-end="url(#seta)"/>
+      <text class="rotulo-seta" x="433" y="220" text-anchor="middle">túnel</text>
 
-      <rect x="670" y="115" width="370" height="250" rx="3" fill="none" stroke="#5eb7ac" stroke-dasharray="5 4"/>
-      <text class="dv" x="1026" y="135" text-anchor="end">exposto: só o site, pelo Traefik</text>
+      <rect x="505" y="190" width="150" height="80" rx="3" fill="#24303d" stroke="#5eb7ac"/>
+      <text class="tv" x="580" y="220" text-anchor="middle">cloudflared</text>
+      <text class="sv" x="580" y="240" text-anchor="middle">conector do túnel</text>
+      <text class="dv" x="580" y="258" text-anchor="middle">serviço do Ubuntu</text>
 
-      <rect x="690" y="150" width="155" height="95" rx="3" fill="#24303d" stroke="#5eb7ac"/>
-      <text class="tv" x="767" y="183" text-anchor="middle">site</text>
-      <text class="sv" x="767" y="203" text-anchor="middle">nginx + React</text>
-      <text class="dv" x="767" y="225" text-anchor="middle">/ e repassa /api/</text>
+      <path d="M580 270 V 303" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+      <text class="rotulo-seta-vps" x="588" y="292">localhost:80</text>
 
-      <rect x="690" y="260" width="155" height="95" rx="3" fill="#24303d" stroke="#5eb7ac"/>
-      <text class="tv" x="767" y="293" text-anchor="middle">API</text>
-      <text class="sv" x="767" y="313" text-anchor="middle">ASP.NET Core</text>
-      <text class="dv" x="767" y="335" text-anchor="middle">só pelo nginx</text>
+      <rect x="505" y="310" width="150" height="90" rx="3" fill="#24303d" stroke="#5c6977"/>
+      <text class="tv" x="580" y="342" text-anchor="middle">Traefik</text>
+      <text class="sv" x="580" y="362" text-anchor="middle">proxy do Coolify</text>
+      <text class="dv" x="580" y="384" text-anchor="middle">roteia por domínio</text>
 
-      <path d="M640 290 C 665 290 665 200 683 200" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
-      <path d="M767 245 V 254" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+      <rect x="680" y="105" width="360" height="270" rx="3" fill="none" stroke="#5eb7ac" stroke-dasharray="5 4"/>
+      <text class="dv" x="1026" y="123" text-anchor="end">só pelo túnel</text>
 
-      <rect x="870" y="150" width="150" height="95" rx="3" fill="#24303d" stroke="#5c6977"/>
-      <text class="tv" x="945" y="183" text-anchor="middle">painel Coolify</text>
-      <text class="sv" x="945" y="203" text-anchor="middle">deploy e logs</text>
-      <text class="dv" x="945" y="225" text-anchor="middle">só por túnel SSH</text>
+      <rect x="700" y="140" width="150" height="95" rx="3" fill="#24303d" stroke="#5eb7ac"/>
+      <text class="tv" x="775" y="172" text-anchor="middle">site</text>
+      <text class="sv" x="775" y="192" text-anchor="middle">nginx + React</text>
+      <text class="dv" x="775" y="214" text-anchor="middle">/ e repassa /api/</text>
+
+      <rect x="870" y="140" width="150" height="95" rx="3" fill="#24303d" stroke="#5eb7ac"/>
+      <text class="tv" x="945" y="172" text-anchor="middle">painel Coolify</text>
+      <text class="sv" x="945" y="192" text-anchor="middle">subdomínio painel</text>
+      <text class="dv" x="945" y="214" text-anchor="middle">atrás do Access</text>
+
+      <rect x="700" y="260" width="150" height="95" rx="3" fill="#24303d" stroke="#5eb7ac"/>
+      <text class="tv" x="775" y="292" text-anchor="middle">API</text>
+      <text class="sv" x="775" y="312" text-anchor="middle">ASP.NET Core</text>
+      <text class="dv" x="775" y="334" text-anchor="middle">só pelo nginx</text>
 
       <rect x="870" y="260" width="150" height="95" rx="3" fill="#24303d" stroke="#5c6977"/>
-      <text class="tv" x="945" y="293" text-anchor="middle">Grafana</text>
-      <text class="sv" x="945" y="313" text-anchor="middle">métricas</text>
-      <text class="dv" x="945" y="335" text-anchor="middle">acesso: P21</text>
+      <text class="tv" x="945" y="292" text-anchor="middle">Grafana</text>
+      <text class="sv" x="945" y="312" text-anchor="middle">métricas</text>
+      <text class="dv" x="945" y="334" text-anchor="middle">acesso: P21</text>
 
-      <rect x="670" y="395" width="370" height="205" rx="3" fill="none" stroke="#a8321f" stroke-dasharray="5 4"/>
-      <text class="dv" x="1026" y="415" text-anchor="end">rede interna: sem porta na internet</text>
+      <path d="M655 340 C 678 340 676 188 693 188" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+      <path d="M655 325 C 672 325 664 124 690 124 H 945 V 133" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+      <path d="M775 235 V 253" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
 
-      <rect x="690" y="430" width="155" height="150" rx="3" fill="var(--banco)" fill-opacity=".35" stroke="#7aa6d1"/>
-      <text class="tv" x="767" y="470" text-anchor="middle">PostgreSQL</text>
-      <text class="sv" x="767" y="490" text-anchor="middle">postgres:5432</text>
-      <text class="dv" x="767" y="514" text-anchor="middle">só pelo nome do</text>
-      <text class="dv" x="767" y="530" text-anchor="middle">container</text>
-      <text class="dv" x="767" y="560" text-anchor="middle">backup: P20</text>
+      <rect x="680" y="405" width="360" height="205" rx="3" fill="none" stroke="#a8321f" stroke-dasharray="5 4"/>
+      <text class="dv" x="1026" y="423" text-anchor="end">rede interna: sem porta na internet</text>
 
-      <rect x="870" y="430" width="150" height="150" rx="3" fill="#24303d" stroke="#5c6977"/>
-      <text class="tv" x="945" y="470" text-anchor="middle">carga de dados</text>
-      <text class="sv" x="945" y="490" text-anchor="middle">ETL em Python</text>
-      <text class="dv" x="945" y="514" text-anchor="middle">rotina periódica</text>
-      <text class="dv" x="945" y="530" text-anchor="middle">só sai: baixa das</text>
-      <text class="dv" x="945" y="546" text-anchor="middle">fontes oficiais</text>
+      <rect x="700" y="440" width="150" height="150" rx="3" fill="var(--banco)" fill-opacity=".35" stroke="#7aa6d1"/>
+      <text class="tv" x="775" y="478" text-anchor="middle">PostgreSQL 18</text>
+      <text class="sv" x="775" y="498" text-anchor="middle">recurso do Coolify</text>
+      <text class="dv" x="775" y="522" text-anchor="middle">só pelo nome do</text>
+      <text class="dv" x="775" y="538" text-anchor="middle">container</text>
+      <text class="dv" x="775" y="568" text-anchor="middle">backup: P20</text>
 
-      <path d="M767 355 V 423" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
-      <text class="rotulo-seta-vps" x="775" y="382">SQL</text>
-      <path d="M870 505 H 852" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+      <rect x="870" y="440" width="150" height="150" rx="3" fill="#24303d" stroke="#5c6977"/>
+      <text class="tv" x="945" y="478" text-anchor="middle">carga de dados</text>
+      <text class="sv" x="945" y="498" text-anchor="middle">ETL em Python</text>
+      <text class="dv" x="945" y="522" text-anchor="middle">rotina periódica</text>
+      <text class="dv" x="945" y="538" text-anchor="middle">só sai: baixa das</text>
+      <text class="dv" x="945" y="554" text-anchor="middle">fontes oficiais</text>
 
-      <rect x="215" y="480" width="170" height="110" rx="3" fill="var(--externo)" stroke="var(--borda-forte)"/>
-      <text class="t" x="300" y="515" text-anchor="middle">Fontes oficiais</text>
-      <text class="s" x="300" y="537" text-anchor="middle">Câmara · Senado · TSE</text>
-      <text class="s" x="300" y="555" text-anchor="middle">Portal da Transparência</text>
-      <text class="s" x="300" y="573" text-anchor="middle">Receita · IBGE</text>
-      <path d="M945 580 V 612 H 300 V 597" stroke="var(--borda-forte)" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#seta-cinza)"/>
-      <text class="rotulo-seta-vps" x="620" y="606" text-anchor="middle">a carga busca os arquivos (saída)</text>
+      <path d="M775 355 V 433" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+      <text class="rotulo-seta-vps" x="783" y="398">SQL</text>
+      <path d="M870 515 H 857" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
 
-      <path d="M385 375 C 520 470 600 505 683 505" stroke="var(--perigo)" stroke-width="2" stroke-dasharray="4 4" fill="none"/>
-      <circle cx="612" cy="490" r="11" fill="var(--vps)" stroke="var(--perigo)" stroke-width="2"/>
-      <path d="M606 484 L618 496 M618 484 L606 496" stroke="var(--perigo)" stroke-width="2"/>
-      <text class="rotulo-seta-vps" x="560" y="455" text-anchor="middle">sem rota da internet</text>
-      <text class="rotulo-seta-vps" x="560" y="471" text-anchor="middle">para o banco</text>
+      <path d="M405 375 C 430 380 440 410 455 420" stroke="var(--perigo)" stroke-width="2" stroke-dasharray="4 4" fill="none"/>
+      <circle cx="433" cy="398" r="10" fill="var(--fundo)" stroke="var(--perigo)" stroke-width="2"/>
+      <path d="M428 393 L438 403 M438 393 L428 403" stroke="var(--perigo)" stroke-width="2"/>
+      <text class="rotulo-seta" x="330" y="425" text-anchor="middle">80 e 443 fechadas:</text>
+      <text class="rotulo-seta" x="330" y="441" text-anchor="middle">sem caminho direto</text>
+
+      <path d="M170 485 H 453" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
+      <text class="rotulo-seta" x="300" y="476" text-anchor="middle">ssh, porta 22</text>
+
+      <rect x="215" y="550" width="190" height="80" rx="3" fill="var(--externo)" stroke="var(--borda-forte)"/>
+      <text class="t" x="310" y="578" text-anchor="middle">Fontes oficiais</text>
+      <text class="s" x="310" y="598" text-anchor="middle">Câmara · Senado · TSE</text>
+      <text class="s" x="310" y="616" text-anchor="middle">Portal · Receita · IBGE</text>
+      <path d="M945 590 V 655 H 310 V 637" stroke="var(--borda-forte)" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#seta-cinza)"/>
+      <text class="rotulo-seta" x="700" y="650" text-anchor="middle">a carga busca os arquivos (saída)</text>
     </svg>
     <div class="legenda">
       <span><i class="amostra"></i>caminho de uma visita</span>
+      <span><i class="amostra tunel"></i>túnel: conexão aberta de dentro do VPS</span>
       <span><i class="amostra tracejada"></i>a carga de dados buscando os arquivos</span>
       <span><i class="amostra bloqueio"></i>caminho que não existe</span>
-      <span>P20, P21, P22, P86: pendências abertas em <code>docs/PENDENCIAS.md</code></span>
     </div>
-    <figcaption>O banco não é protegido por uma regra de firewall: ele simplesmente não tem endereço na internet. A API e a carga de dados o encontram pelo nome do container, dentro da rede do Docker.</figcaption>
+    <figcaption>Nada da internet entra no VPS por conta própria, exceto o SSH. O site e o painel chegam pelo túnel, que o próprio
+      VPS abriu até a Cloudflare. O banco não tem endereço nem dentro do túnel: só a API e a carga de dados o alcançam, pelo nome
+      do container, na rede do Docker.</figcaption>
   </figure>
 
-  <h2 id="visita">O caminho de uma visita</h2>
+  <h3 id="visita">O caminho de uma visita</h3>
   <p>Uma visita a <code>https://registroaberto.org/parlamentares</code>, e o pedido de dados que a tela faz em seguida.</p>
-  <table>
-    <thead><tr><th>#</th><th>Onde</th><th>O que acontece</th><th>Depende de</th></tr></thead>
+  <div class="tabela"><table>
+    <thead><tr><th>#</th><th>Onde</th><th>O que acontece</th><th>Configurado em</th></tr></thead>
     <tbody>
-      <tr><td>1</td><td>DNS</td><td>O navegador pergunta o IP de <code>registroaberto.org</code>. Com a nuvem laranja, a Cloudflare responde com um IP dela, não o do VPS.</td><td>Nameservers e registros na Cloudflare</td></tr>
-      <tr><td>2</td><td>Cloudflare</td><td>Abre o HTTPS com o certificado dela, entrega do cache o que já tem, barra ataque e robô, e repassa ao VPS em HTTPS, na 443.</td><td>Nuvem laranja, SSL Full (strict)</td></tr>
-      <tr><td>3</td><td>Firewall da Hostinger</td><td>A 443 está liberada. Também a 80, que só serve para mandar ao HTTPS e para o desafio do Let's Encrypt.</td><td>Painel da Hostinger</td></tr>
-      <tr><td>4</td><td>Traefik</td><td>Abre o HTTPS com o certificado do Let's Encrypt, olha o endereço pedido e acha o router do site. Repassa ao container <code>web</code>, porta 8080, pela rede interna do Docker.</td><td>Campo de domínio do <code>web</code> no Coolify</td></tr>
-      <tr><td>5</td><td>nginx, no <code>web</code></td><td><code>/parlamentares</code> não é arquivo: devolve o <code>index.html</code>, e o React monta a tela no navegador.</td><td><code>docker/nginx.conf</code></td></tr>
-      <tr><td>6</td><td>nginx, de novo</td><td>A tela pede <code>/api/parlamentares</code>. O caminho começa com <code>/api/</code>, e o nginx repassa a <code>http://api:8080</code>: o Docker traduz o nome <code>api</code> no IP do container da API.</td><td><code>nginx.conf</code> e o nome do serviço no compose</td></tr>
-      <tr><td>7</td><td>API</td><td>Confere o endereço pedido em <code>AllowedHosts</code>, consulta o banco pelo nome do container, na rede <code>coolify</code>, e devolve o JSON. A resposta volta pelo mesmo caminho.</td><td><code>AllowedHosts</code>, <code>ConnectionStrings__poligraph</code></td></tr>
+      <tr><td>1</td><td>DNS</td><td>O navegador pergunta o IP de <code>registroaberto.org</code>. A Cloudflare responde com um IP dela; o do VPS não aparece em lugar nenhum.</td><td><a href="#dominio">Etapa 5</a></td></tr>
+      <tr><td>2</td><td>Cloudflare</td><td>Abre o HTTPS com o certificado dela, entrega do cache o que já tem e barra ataque e robô.</td><td><a href="#dominio">Etapa 5</a></td></tr>
+      <tr><td>3</td><td>Túnel</td><td>A Cloudflare entrega a visita pela conexão que o <code>cloudflared</code>, dentro do VPS, mantém aberta até ela. O firewall não participa: a conexão saiu de dentro.</td><td><a href="#dominio">Etapa 5</a></td></tr>
+      <tr><td>4</td><td>Traefik</td><td>O <code>cloudflared</code> passa a visita ao Traefik em <code>http://localhost:80</code>. O Traefik olha o endereço pedido e acha a regra do site.</td><td><a href="#aplicacao">Etapa 4</a></td></tr>
+      <tr><td>5</td><td>nginx, no site</td><td><code>/parlamentares</code> não é arquivo: devolve o <code>index.html</code>, e o React monta a tela no navegador.</td><td><code>docker/nginx.conf</code></td></tr>
+      <tr><td>6</td><td>nginx, de novo</td><td>A tela pede <code>/api/parlamentares</code>. O nginx repassa a <code>http://api:8080</code>: o Docker traduz o nome <code>api</code> no container da API.</td><td><code>nginx.conf</code> e o compose</td></tr>
+      <tr><td>7</td><td>API</td><td>Confere o endereço pedido em <code>AllowedHosts</code>, consulta o banco pelo nome do container e devolve o JSON, que volta pelo mesmo caminho.</td><td><a href="#aplicacao">Etapa 4</a></td></tr>
     </tbody>
-  </table>
-  <p>Visita por <code>http://</code> chega na 80: o Traefik responde "vá para <code>https://</code>", e o navegador refaz pelo caminho de cima.</p>
+  </table></div>
+  <p>Visita por <code>http://</code> não chega nem ao túnel: a Cloudflare responde "vá para <code>https://</code>" (Always Use HTTPS).</p>
 
-  <h2 id="exposto">O que fica exposto</h2>
-  <table>
-    <thead><tr><th>Peça</th><th>Na internet?</th><th>Como</th><th></th></tr></thead>
+  <h3 id="exposto">O que fica exposto</h3>
+  <div class="tabela"><table>
+    <thead><tr><th>Peça</th><th>Na internet?</th><th>Como</th></tr></thead>
     <tbody>
-      <tr><td>Site</td><td class="sim">Sim</td><td>Pela Cloudflare, porta 443</td><td></td></tr>
-      <tr><td>API</td><td class="sim">Sim</td><td>Pela Cloudflare, porta 443, caminho <code>/api</code></td><td></td></tr>
-      <tr><td>PostgreSQL</td><td class="nao">Nunca</td><td>Porta 5432 só dentro da rede do Docker</td><td></td></tr>
-      <tr><td>Carga de dados</td><td class="nao">Não</td><td>Não recebe conexão; só sai para baixar das fontes</td><td></td></tr>
-      <tr><td>Painel do Coolify</td><td class="nao">Não</td><td>Sem endereço público; aberto por túnel SSH. Ver abaixo</td><td class="pend">P22</td></tr>
-      <tr><td>Grafana</td><td>A decidir</td><td>Público ou por túnel</td><td class="pend">P21</td></tr>
-      <tr><td>SSH (porta 22)</td><td>Só para o autor</td><td>Direto, sem Cloudflare: só chave, sem senha, root só por chave (o Coolify precisa), com fail2ban. Sem restrição de IP, porque o autor viaja. Ver abaixo</td><td></td></tr>
+      <tr><td>Site e API</td><td class="sim">Sim</td><td>Só pela Cloudflare, pelo túnel. A API, só pelo caminho <code>/api</code> do site</td></tr>
+      <tr><td>Painel do Coolify</td><td class="sim">Sim, trancado</td><td><code>painel.registroaberto.org</code>, pelo túnel, atrás do Cloudflare Access: só o e-mail do autor passa</td></tr>
+      <tr><td>SSH (porta 22)</td><td>Só para o autor</td><td>Direto, sem Cloudflare: só chave, sem senha, com fail2ban. Sem restrição de IP, porque o autor viaja</td></tr>
+      <tr><td>Portas 80, 443 e 8000</td><td class="nao">Fechadas</td><td>Firewall da Hostinger. Quem souber o IP não chega a nada</td></tr>
+      <tr><td>PostgreSQL</td><td class="nao">Nunca</td><td>Porta 5432 só dentro da rede do Docker</td></tr>
+      <tr><td>Carga de dados</td><td class="nao">Não</td><td>Não recebe conexão; só sai para baixar das fontes</td></tr>
+      <tr><td>Grafana</td><td>A decidir</td><td>P21</td></tr>
     </tbody>
-  </table>
+  </table></div>
 
-  <h2 id="desvio">Chamar o VPS direto, sem passar pela Cloudflare</h2>
-  <div class="aviso risco">
-    <p>A Cloudflare esconde o endereço do VPS, mas esconder não é bloquear. Com o firewall aceitando a porta 443 de
-      qualquer lugar, quem descobrir o endereço chama o VPS direto e pula a Cloudflare: sem filtro de ataque, sem cache e
-      sem limite de taxa. O endereço vaza com facilidade: históricos de DNS, e-mail enviado pelo próprio servidor,
-      varreduras que testam os endereços da Hostinger.</p>
-    <p>O banco continua inalcançável em qualquer caso. O risco é para o site e a API.</p>
-  </div>
-  <table>
-    <thead><tr><th>Forma</th><th>Como funciona</th><th>Prós e contras</th></tr></thead>
+  <h3 id="falta">O que está feito e o que falta</h3>
+  <div class="tabela"><table>
+    <thead><tr><th></th><th>Pendência</th><th>Estado</th></tr></thead>
     <tbody>
-      <tr><td><span class="rec">1. Túnel da Cloudflare</span><br><span class="pend">recomendada</span></td>
-        <td>Um programa da Cloudflare dentro do VPS abre uma conexão de saída até ela, e as visitas chegam por esse túnel.
-          As portas 80 e 443 ficam fechadas para a internet inteira.</td>
-        <td>Não existe caminho direto para ninguém, mesmo sabendo o endereço. Gratuito, com suporte pronto no Coolify.
-          Contra: a rota e o certificado passam a depender da Cloudflare.</td></tr>
-      <tr><td>2. Firewall só com os endereços da Cloudflare</td>
-        <td>O firewall da Hostinger aceita a 443 apenas das faixas de IP que a Cloudflare publica.</td>
-        <td>Simples e comum. Contra: a lista muda de vez em quando, e qualquer conta da Cloudflare sai pelos mesmos endereços.</td></tr>
-      <tr><td>3. Certificado de cliente da Cloudflare</td>
-        <td>A Cloudflare apresenta um certificado próprio em cada conexão (Authenticated Origin Pulls), e o Traefik recusa quem não o tiver.</td>
-        <td>Fecha a brecha da forma 2; as duas juntas são a alternativa ao túnel. Contra: mais uma configuração no Traefik.</td></tr>
+      <tr><td class="pend">P3</td><td>Domínio <code>registroaberto.org</code>, na Cloudflare</td><td><span class="estado feito">FEITO</span></td></tr>
+      <tr><td class="pend">P22</td><td>Painel do Coolify: subdomínio atrás do Cloudflare Access; túnel SSH como reserva</td><td><span class="estado feito">FEITO</span></td></tr>
+      <tr><td class="pend">P88</td><td>Fechar o acesso direto ao VPS: túnel da Cloudflare, portas 80 e 443 fechadas</td><td><span class="estado feito">FEITO</span></td></tr>
+      <tr><td class="pend">P87</td><td>Cópia do banco local. Faltam apagar as tabelas de usuários que vieram junto, o <code>conferir</code> em produção e a ETL agendada</td><td><span class="estado">EM PARTE</span></td></tr>
+      <tr><td class="pend">P20</td><td>Backup do banco, para fora do VPS e criptografado</td><td><span class="estado">ABERTA</span></td></tr>
+      <tr><td class="pend">P21</td><td>Como se chega ao Grafana</td><td><span class="estado">ABERTA</span></td></tr>
+      <tr><td class="pend">P23</td><td>Os testes como portão do deploy: o CI publica as imagens no <code>ghcr.io</code> e só então chama o Coolify</td><td><span class="estado">ABERTA</span></td></tr>
+      <tr><td class="pend">P86</td><td>Cache da API e limite de taxa na Cloudflare</td><td><span class="estado">ABERTA</span></td></tr>
     </tbody>
-  </table>
-  <p>Em qualquer forma: o Traefik só responde aos domínios do site. Quem chamar pelo número de IP não é encaminhado a lugar nenhum.
-    O SSH (porta 22) fica aberto a qualquer endereço, porque o autor viaja e um IP fixo o trancaria fora; a proteção vem da chave, como abaixo.</p>
+  </table></div>
+  </section>
 
-  <h2 id="pecas">Traefik e Coolify</h2>
-  <p><strong>Traefik</strong> é a porta de entrada dentro do VPS: todo acesso nas portas 80 e 443 passa por ele, e ele
-    decide pelo endereço pedido para qual container mandar. Hoje só o site tem endereço; a API recebe o que o nginx do site
-    repassa em <code>/api/</code>. Ele também tira e renova o certificado do HTTPS com o Let's Encrypt.</p>
-  <p><strong>Coolify</strong> é o painel que sobe e derruba os containers no VPS: liga o repositório, cria a API, o site e o
-    banco, guarda os segredos e publica cada versão nova. Ele controla o Docker, e só: usuários, SSH, firewall e
-    atualizações do sistema continuam com o autor. O Traefik vem com ele, e as rotas nascem do campo de domínio de cada
-    serviço no painel. Como funciona cada peça está em <a href="#explicacao">Cada configuração, explicada</a>.</p>
-  <p>O passo a passo, do VPS vazio ao painel aberto, está no <a href="#roteiro">Roteiro do servidor</a>, no fim desta página.</p>
-
-  <h3>O painel do Coolify não fica exposto</h3>
-  <p>O painel tem poder total sobre o servidor: sobe e apaga containers, lê todos os segredos e alcança o banco. Quem entrar
-    nele leva tudo. Por isso ele não deve ter endereço na internet.</p>
-  <table>
-    <thead><tr><th>Opção</th><th>Como</th><th>Avaliação</th></tr></thead>
-    <tbody>
-      <tr><td><span class="rec">Sem endereço público</span><br><span class="pend">recomendada</span></td>
-        <td>O painel não ganha domínio. O autor o abre por um túnel SSH e usa no próprio navegador:
-          <pre>ssh coolify</pre>com o atalho do <a href="#roteiro">roteiro</a>, e então <code>http://localhost:8000</code>.</td>
-        <td>O painel não existe para a internet. Só entra quem tem a chave SSH do autor.</td></tr>
-      <tr><td>Atrás do Cloudflare Access</td>
-        <td>Com o túnel da Cloudflare (P88), o painel ganha um endereço que pede login pela Cloudflare (e-mail e código) antes de chegar ao Coolify.</td>
-        <td>Boa, se o túnel for a escolha da P88. Grátis para poucos usuários.</td></tr>
-      <tr><td>Público, com 2FA</td>
-        <td>Endereço aberto, protegido pela senha e pelo segundo fator do próprio Coolify.</td>
-        <td>Funciona, mas fica exposto a qualquer falha do Coolify e a tentativas de senha.</td></tr>
-    </tbody>
-  </table>
-  <p>O deploy automático não depende do painel público: é o CI chamando a API do Coolify com um token, por um caminho próprio e mais restrito.</p>
-
-  <h2 id="cicd">CI e CD</h2>
-  <p><strong>CI</strong> (integração contínua) é conferir: a cada <code>git push</code>, o GitHub Actions baixa o código e
-    verifica se ele presta. Os roteiros já existem em <code>.github/workflows/</code>:</p>
-  <table>
-    <thead><tr><th>Roteiro</th><th>O que confere</th></tr></thead>
-    <tbody>
-      <tr><td>Back (.NET)</td><td>Compila a API, roda os testes de unidade (entre eles o da polaridade dos votos), gera o script da migration e monta as imagens da API e da migration</td></tr>
-      <tr><td>ETL (Python)</td><td>Roda os testes que não precisam de banco e monta a imagem da ETL</td></tr>
-      <tr><td>Front (React)</td><td>Verifica os tipos, roda os testes e monta o site</td></tr>
-    </tbody>
-  </table>
-  <p>Os testes de integração, que sobem um Postgres de verdade, rodam na máquina do autor, não no CI.</p>
-  <p><strong>CD</strong> (entrega contínua) é publicar: o Coolify recebe a versão nova, sobe ao lado da antiga, confere que
-    ela responde, faz o Traefik mandar as visitas para a nova e desliga a antiga. O site não sai do ar.</p>
-  <div class="aviso risco">
-    <p><strong>Do jeito padrão, os dois começam juntos no mesmo push, e o Coolify publica sem esperar os testes (P23).</strong>
-      Neste projeto isso pesa: um erro na polaridade dos votos não aparece na tela, aparece como uma afinidade plausível e errada.</p>
-  </div>
-  <p>O fluxo recomendado, numa fila só:</p>
-  <ol class="passos">
-    <li>O push dispara o CI: testes e montagem das imagens.</li>
-    <li>Só se tudo passou, o CI publica as imagens no registro do GitHub (<code>ghcr.io</code>), com a etiqueta do commit.</li>
-    <li>No fim, o CI chama o Coolify para publicar aquela etiqueta. A publicação automática do Coolify fica desligada.</li>
-    <li>No VPS, a migration do banco roda antes de a API nova subir. A API nunca migra o banco sozinha.</li>
-  </ol>
-  <table>
-    <thead><tr><th></th><th>Coolify monta a imagem</th><th>CI publica no registro <span class="pend">recomendado</span></th></tr></thead>
-    <tbody>
-      <tr><td>Como</td><td>O Coolify baixa o código e roda o Dockerfile no VPS</td><td>O CI monta, publica em <code>ghcr.io</code>, e o Coolify só baixa a imagem pronta</td></tr>
-      <tr><td>A favor</td><td>Nada a configurar além do repositório</td><td>Vai ao ar exatamente a imagem que passou nos testes. O VPS não gasta memória montando. Voltar uma versão é trocar a etiqueta</td></tr>
-      <tr><td>Contra</td><td>A imagem testada e a publicada são montadas em lugares diferentes; a montagem pesa no VPS com o site no ar</td><td>Um passo a mais no CI e um acesso de leitura ao registro no Coolify</td></tr>
-    </tbody>
-  </table>
-
-  <h2 id="segredos">Segredos</h2>
-  <p>Nenhum segredo fica no repositório nem dentro da imagem. Os que o servidor usa ficam no Coolify, cifrados no banco dele,
-    como variáveis de ambiente de cada aplicação. Os que o CI usa ficam nos segredos do GitHub.</p>
-  <table>
-    <thead><tr><th>Onde fica</th><th>Variável</th><th>Quem usa</th><th>Para quê</th></tr></thead>
-    <tbody>
-      <tr><td>Coolify</td><td><code>Google__ClientId</code></td><td>API</td><td>Login com o Google. No ambiente, os dois-pontos da configuração viram dois sublinhados</td></tr>
-      <tr><td>Coolify</td><td><code>DataProtection__Pasta</code></td><td>API</td><td>Pasta das chaves que cifram o cookie de sessão, num <strong>volume persistente</strong>: sem ele, cada deploy troca as chaves e desloga todo mundo. A API não sobe em produção sem essa configuração</td></tr>
-      <tr><td>Coolify</td><td><code>ConnectionStrings__poligraph</code></td><td>API, ETL e migration</td><td>Conexão com o banco, pelo nome interno do container. O Coolify cria o Postgres e gera a senha</td></tr>
-      <tr><td>Coolify</td><td><code>POLIGRAPH_CHAVE_CPF</code></td><td>ETL</td><td>Chave do HMAC do CPF. A mesma do banco local, se o banco for copiado (P87); trocá-la exige o <code>rechavear-cpf</code></td></tr>
-      <tr><td>GitHub</td><td><code>SONAR_TOKEN</code></td><td>CI</td><td>Análise de qualidade do código</td></tr>
-      <tr><td>GitHub</td><td>token de deploy do Coolify</td><td>CI</td><td>Mandar o Coolify publicar só depois dos testes (P23)</td></tr>
-      <tr><td>GitHub e Coolify</td><td>acesso ao <code>ghcr.io</code></td><td>CI publica, Coolify baixa</td><td>As imagens do site, da API, da migration e da ETL</td></tr>
-    </tbody>
-  </table>
-
-  <h2 id="falta">O que falta decidir para subir</h2>
-  <table>
-    <thead><tr><th></th><th>Pendência</th></tr></thead>
-    <tbody>
-      <tr><td class="pend">P3</td><td>Domínio <code>registroaberto.org</code> comprado; falta a Cloudflare ativar a zona, o HTTPS e as origens do Google.</td></tr>
-      <tr><td class="pend">P20</td><td>Para onde vai o backup do banco, criptografado.</td></tr>
-      <tr><td class="pend">P21</td><td>Como se chega ao Grafana.</td></tr>
-      <tr><td class="pend">P22</td><td>Decidido: painel sem endereço público, aberto por túnel SSH.</td></tr>
-      <tr><td class="pend">P23</td><td>Os testes como portão do deploy: o CI publica as imagens no <code>ghcr.io</code> e só então chama o Coolify.</td></tr>
-      <tr><td class="pend">P86</td><td>Cache da API e limite de taxa na Cloudflare.</td></tr>
-      <tr><td class="pend">P87</td><td>Banco copiado em 2026-10-15. Faltam apagar as tabelas de usuários que vieram junto, o <code>conferir</code> em produção e a ETL agendada.</td></tr>
-      <tr><td class="pend">P88</td><td>Fechar o acesso direto ao VPS: túnel da Cloudflare (recomendado) ou firewall com os endereços da Cloudflare e o certificado de cliente.</td></tr>
-    </tbody>
-  </table>
-
-  <h2 id="explicacao">Cada configuração, explicada</h2>
-  <p>O que cada peça faz, por que está assim e o que quebra se mudar, camada por camada, de fora para dentro. A parte de
-    HTTPS e Cloudflare foi escrita antes de o domínio responder (2026-10-15) e se confere quando ele estiver no ar.</p>
-
-  <h3>Domínio e DNS</h3>
-  <table>
-    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
-    <tbody>
-      <tr><td>Domínio</td><td><code>registroaberto.org</code>, comprado na Hostinger</td><td>Quem vende o domínio é o registrador. A Cloudflare não precisa vendê-lo para cuidar do DNS</td><td>Com outro domínio, mudam o <code>AllowedHosts</code> do compose e do <code>appsettings.Production.json</code>, o campo de domínio no Coolify e as origens do Google</td></tr>
-      <tr><td>Nameservers</td><td><code>gemma</code> e <code>paul.ns.cloudflare.com</code>, definidos na Hostinger</td><td>Dizem ao mundo quem responde pelo domínio. Apontar para a Cloudflare é o que faz os registros dela valerem</td><td>Voltando aos da Hostinger, tudo o que está na Cloudflare deixa de valer</td></tr>
-      <tr><td>Registro <code>A</code> <code>@</code></td><td>IP do VPS</td><td>O endereço principal leva ao servidor</td><td>Um IP errado leva a outro lugar; o da compra (<code>2.57.91.91</code>) é a página de estacionamento da Hostinger</td></tr>
-      <tr><td>Registro <code>CNAME</code> <code>www</code></td><td><code>registroaberto.org</code></td><td>O <code>www</code> segue o principal: trocar o IP num lugar troca nos dois</td><td>Sem ele, <code>www.registroaberto.org</code> não abre</td></tr>
-      <tr><td>Nuvem dos registros</td><td>Laranja (Proxied), desde o início</td><td>Põe a Cloudflare na frente: esconde o IP, guarda cache e barra ataque. O desafio do Let's Encrypt passa por ela, pela porta 80</td><td>Cinza (DNS only): o IP do VPS fica público e a Cloudflare não protege nada</td></tr>
-    </tbody>
-  </table>
-
-  <h3>HTTPS e certificados</h3>
-  <table>
-    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
-    <tbody>
-      <tr><td>Certificado do VPS</td><td>Let's Encrypt, tirado e renovado pelo Traefik</td><td>Grátis, automático, vale 90 dias e se renova uns 30 dias antes. O Let's Encrypt prova que o domínio é do servidor visitando <code>/.well-known/acme-challenge/…</code> pela porta 80</td><td>Sem DNS apontando para o VPS, a prova falha; cada falha conta num limite de 5 por hora</td></tr>
-      <tr><td>Porta 80 aberta</td><td>No firewall da Hostinger</td><td>Serve a dois usos: mandar quem chega por <code>http</code> para <code>https</code>, e a prova do Let's Encrypt</td><td>Fechada, a renovação do certificado falha em até 90 dias</td></tr>
-      <tr><td>SSL/TLS da Cloudflare</td><td><strong>Full</strong> até o primeiro certificado; depois <strong>Full (strict)</strong></td><td>A Cloudflare fala com o VPS em HTTPS e confere que o certificado dele é válido</td><td><em>Flexible</em> fala com o VPS em <code>http</code>, o Traefik manda para <code>https</code>, e a visita entra em laço sem fim. <em>Full</em> sem strict aceita qualquer certificado, até um falso: serve só no intervalo em que o Traefik ainda mostra o certificado provisório, que o strict recusaria com erro 526</td></tr>
-      <tr><td>Always Use HTTPS</td><td><strong>Desligado</strong> na Cloudflare</td><td>O Traefik já manda de <code>http</code> para <code>https</code>. Ligado na Cloudflare, ela responde a porta 80 antes de a visita chegar ao VPS, e a prova do Let's Encrypt pode não chegar</td><td>Ligado, a renovação automática pode falhar sem aviso, e o site cai quando o certificado vence</td></tr>
-      <tr><td>TLS mínimo</td><td>1.2</td><td>As versões 1.0 e 1.1 têm falhas conhecidas; todo navegador atual fala 1.2</td><td>Abaixo, aceita conexões fracas; acima (1.3 só), deixa de fora aparelhos antigos</td></tr>
-      <tr><td>HSTS</td><td>Desligado por enquanto</td><td>Manda o navegador nunca mais tentar <code>http</code> naquele domínio, por meses. Bom, mas difícil de desfazer: espera-se uma semana com tudo estável</td><td>Ligado com o HTTPS quebrado, o site fica inacessível para quem já visitou até o prazo vencer</td></tr>
-    </tbody>
-  </table>
-
-  <h3>Traefik</h3>
-  <p>É o container <code>coolify-proxy</code>, o único que escuta nas portas 80 e 443. Não tem arquivo com as rotas do site:
-    ele observa o Docker, e cada container leva nos rótulos (<em>labels</em>) as regras dele. Quem escreve os rótulos é o
-    Coolify, a partir do campo de domínio do serviço.</p>
-  <table>
-    <thead><tr><th>Peça</th><th>No nosso caso</th></tr></thead>
-    <tbody>
-      <tr><td>Entrypoints, as portas em que ele escuta</td><td><code>http</code> na 80 e <code>https</code> na 443</td></tr>
-      <tr><td>Router, a regra de endereço</td><td><code>Host(`registroaberto.org`) || Host(`www.registroaberto.org`)</code>, nascido do campo de domínio do <code>web</code>. A <code>api</code> e a <code>migrations</code> não têm domínio, então não têm router</td></tr>
-      <tr><td>Middleware, um ajuste no caminho</td><td>Mandar de <code>http</code> para <code>https</code>, criado porque o domínio foi cadastrado com <code>https://</code>; comprimir a resposta</td></tr>
-      <tr><td>Service, o destino</td><td>O container <code>web</code>, porta 8080. É o <code>:8080</code> do campo de domínio: a porta dentro do container, não uma porta da internet</td></tr>
-    </tbody>
-  </table>
-  <p>A configuração própria dele (portas e conta do Let's Encrypt) fica em <code>/data/coolify/proxy/</code>, editável pelo
-    Coolify em Servers, localhost, Proxy; os certificados, em <code>acme.json</code>. Nada disso se edita à mão: o Coolify
-    reescreve no próximo deploy. Para ver as regras de verdade:</p>
-  <pre>docker inspect $(docker ps -q --filter "name=web-") --format '{{range $k,$v := .Config.Labels}}{{println $k "=" $v}}{{end}}' | grep traefik</pre>
-
-  <h3>Coolify</h3>
-  <table>
-    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
-    <tbody>
-      <tr><td>O que ele controla</td><td>Docker: containers, imagens, redes, volumes, o Traefik, deploys, backups</td><td>Usuários, SSH, firewall e atualizações do sistema continuam com o autor (<code>infra/vps/configurar-vps.sh</code>)</td><td>—</td></tr>
-      <tr><td>Como ele chega ao servidor</td><td>SSH como root, com chave própria em <code>/root/.ssh/authorized_keys</code></td><td>É assim que ele comanda qualquer servidor, inclusive o dele mesmo</td><td>Com <code>PermitRootLogin no</code>, ele perde o acesso e marca o servidor como inalcançável. O certo é <code>prohibit-password</code></td></tr>
-      <tr><td>O painel</td><td>Sem domínio, só pelo túnel SSH; cadastro desligado; duas etapas no login</td><td>Tem poder total: lê todos os segredos e alcança o banco</td><td>Com endereço público, fica exposto a tentativa de senha e a qualquer falha do próprio Coolify</td></tr>
-      <tr><td>Projeto e ambiente</td><td><code>registro-aberto</code>, <code>production</code></td><td>Agrupam o banco e a aplicação, e as variáveis compartilhadas</td><td>—</td></tr>
-      <tr><td>Shared Variables</td><td>No ambiente, lidas pela aplicação com <code>{{environment.NOME}}</code></td><td>A senha e o client ID ficam num lugar só: trocar uma vez vale para todos</td><td>Um nome digitado diferente (um sublinhado a menos) e a aplicação recebe vazio</td></tr>
-      <tr><td>A aplicação</td><td>Docker Compose do repositório, branch <code>master</code></td><td>Um arquivo junta migration, API e site, e garante o nome <code>api</code> que o nginx procura</td><td>Cada deploy processa os três serviços e a API fica segundos fora; com o CI publicando imagens (P23), viram aplicações separadas</td></tr>
-      <tr><td>Rede da aplicação</td><td>Isolated network only</td><td>Mantém os nomes dos serviços. O banco entra pela rede <code>coolify</code>, declarada no compose só na API e na migration</td><td>A rede predefinida renomeia os serviços para <code>api-&lt;código&gt;</code>, e o site não acha a API</td></tr>
-    </tbody>
-  </table>
-
-  <h3>As imagens</h3>
-  <table>
-    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
-    <tbody>
-      <tr><td>Base da API</td><td><code>aspnet:10.0-noble-chiseled-extra</code></td><td>Enxuta (sem shell, sem pacote extra), com os dados de idioma e fuso. A API compara nomes sem acento com a cultura <code>pt-BR</code></td><td>Na chiseled comum, a API dá erro 500 em toda lista com nomes</td></tr>
-      <tr><td>Base da migration</td><td><code>aspnet:10.0-noble-chiseled</code></td><td>O projeto da migration usa o <code>ServiceDefaults</code>, que traz o ASP.NET Core</td><td>Na base <code>runtime</code>, a migration nem abre, e a API espera para sempre</td></tr>
-      <tr><td>Pasta das chaves da sessão</td><td><code>/home/app/chaves</code>, do usuário 1654, num volume</td><td>A API roda sem privilégios. O cookie de sessão é cifrado com essas chaves, que precisam sobreviver ao deploy</td><td>Sem o volume, cada deploy desloga todo mundo; sem o dono certo, a API não grava as chaves</td></tr>
-      <tr><td>Site</td><td>nginx sem root, na porta 8080</td><td>Serve o React e repassa <code>/api/</code> à API, na mesma origem: sem CORS, e o cookie fica <code>SameSite=Lax</code></td><td>Mudar a porta exige mudar o <code>:8080</code> do campo de domínio</td></tr>
-      <tr><td>Client ID do Google no site</td><td>Argumento de montagem (<code>args</code>)</td><td>O Vite grava o valor nos arquivos ao montar; como variável comum, chegaria tarde</td><td>Sem ele, o botão do Google não aparece, sem erro nenhum</td></tr>
-      <tr><td><code>.dockerignore</code></td><td>Exclui <code>.cache</code>, <code>node_modules</code>, <code>bin</code>, <code>obj</code></td><td>Os downloads da ETL têm gigabytes e não entram em imagem</td><td>Montar no computador do autor estoura a memória</td></tr>
-    </tbody>
-  </table>
-
-  <h3>A API em produção</h3>
-  <table>
-    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
-    <tbody>
-      <tr><td><code>ConnectionStrings__poligraph</code></td><td><code>Host=…;Port=5432;Database=poligraph;Username=poligraph;Password=…</code></td><td>Formato do .NET. A ETL lê a mesma variável e a traduz para o formato do Python</td><td>Um espaço a mais num nome de opção derruba a conexão; opção do Npgsql sem equivalente é ignorada pela ETL com aviso</td></tr>
-      <tr><td><code>AllowedHosts</code></td><td><code>registroaberto.org;www.registroaberto.org</code></td><td>A API só responde a visitas endereçadas ao domínio. Aceitar qualquer endereço permite envenenar o cabeçalho <code>Host</code></td><td>Sem o <code>www</code>, quem entra por ele recebe erro 400</td></tr>
-      <tr><td><code>DataProtection__Pasta</code></td><td>Já vem na imagem</td><td>A pasta das chaves do cookie. A API recusa subir em produção sem ela</td><td>—</td></tr>
-      <tr><td><code>Google__ClientId</code></td><td>Client de produção</td><td>Confere o <code>id_token</code> do login e o descarta; não há segredo do Google no projeto</td><td>Vazio, o login fica desligado; o site continua funcionando sem conta</td></tr>
-    </tbody>
-  </table>
-
-  <h3>O banco</h3>
-  <table>
-    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
-    <tbody>
-      <tr><td>Recurso próprio do Coolify</td><td>Fora do compose</td><td>Um deploy da aplicação não recria o banco, e o backup é dele</td><td>Dentro do compose, refazer a aplicação arriscaria os dados</td></tr>
-      <tr><td>Versão</td><td>Postgres 18, a mesma do local</td><td>A cópia (P87) não volta para versão mais antiga</td><td>Mudar de versão maior exige dump e restore</td></tr>
-      <tr><td>Acesso público</td><td>Desligado</td><td>Sem porta no VPS: só os containers da rede <code>coolify</code> o alcançam</td><td>Ligado, a porta 5432 abre no servidor</td></tr>
-      <tr><td>Usuário</td><td><code>poligraph</code>, dono do banco</td><td>É o usuário criado na instalação do container</td><td>Separar um usuário só de leitura para a API fica como melhoria</td></tr>
-      <tr><td>Backup</td><td>A decidir (P20)</td><td>Hoje não existe cópia fora do container</td><td>—</td></tr>
-    </tbody>
-  </table>
-
-  <h3>Google</h3>
-  <table>
-    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
-    <tbody>
-      <tr><td>Client de produção</td><td>Separado do de desenvolvimento, mesmo projeto</td><td>O de produção não aceita <code>localhost</code>: o ID, que é público, não serve a outro endereço</td><td>—</td></tr>
-      <tr><td>Origens</td><td><code>https://registroaberto.org</code> e <code>https://www.registroaberto.org</code></td><td>O botão só funciona nas páginas servidas desses endereços</td><td>Sem o <code>www</code>, o login falha para quem entra por ele</td></tr>
-      <tr><td>Redirect URI e client secret</td><td>Nenhum</td><td>O botão devolve o <code>id_token</code> na própria página</td><td>—</td></tr>
-      <tr><td>Publicação</td><td>Testing até abrir ao público</td><td>Em Testing, só entram os e-mails cadastrados. Com só <code>openid</code>, <code>email</code> e <code>profile</code>, publicar não exige revisão</td><td>Aberto ao público ainda em Testing, todo visitante vê acesso negado</td></tr>
-    </tbody>
-  </table>
-
-  <h3>O servidor</h3>
-  <table>
-    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
-    <tbody>
-      <tr><td>Usuário</td><td><code>igor</code>, com sudo e a chave SSH</td><td>Não trabalhar como root. A senha dele só serve ao <code>sudo</code></td><td>—</td></tr>
-      <tr><td>SSH</td><td>Sem senha; root só por chave</td><td>Chave não se adivinha; o Coolify precisa do root por chave</td><td>Com senha ligada, o servidor fica exposto a tentativas de força bruta</td></tr>
-      <tr><td>fail2ban</td><td>Padrão, cobrindo o SSH</td><td>Bloqueia por um tempo quem erra o login várias vezes</td><td>—</td></tr>
-      <tr><td>Firewall</td><td>No painel da Hostinger: 22, 80 e 443</td><td>O Docker passa por cima do <code>ufw</code> do sistema; o do painel fica fora da máquina</td><td>Abrir a 8000 expõe o painel do Coolify</td></tr>
-    </tbody>
-  </table>
-
-  <h2 id="roteiro">Roteiro do servidor</h2>
-  <p>Do VPS vazio ao painel do Coolify aberto pelo túnel, na ordem, e como conferir cada passo. Linhas com
-    <code>PS&gt;</code> rodam no PowerShell do computador do autor; as outras, no VPS.</p>
+  <!-- ═══════════════════════════════════════════════════════════ 1 -->
+  <section class="etapa" id="servidor" aria-labelledby="titulo-servidor">
+  <h2 id="titulo-servidor">1. O servidor</h2>
+  <p>VPS KVM 2 da Hostinger (2 vCPU, 8 GB, São Paulo), Ubuntu 24.04. Do sistema recém-instalado ao Coolify de pé, os passos
+    3 a 7 estão em <code>infra/vps/configurar-vps.sh</code>, que pode rodar de novo sem estragar nada:</p>
+  <pre>bash configurar-vps.sh igor "ssh-ed25519 AAAA… igor-notebook-hostinger"
+CLOUDFLARE_TUNNEL_TOKEN='…' bash configurar-vps.sh igor     # inclui o túnel (etapa 5)</pre>
 
   <div class="aviso risco">
-    <p><strong>Reinstalar o sistema do VPS apaga tudo:</strong> usuário, chaves cadastradas, configuração do SSH, fail2ban e o
-      que estiver instalado. E troca a impressão digital do servidor: o SSH do computador passa a recusar a conexão com o aviso
-      <code>REMOTE HOST IDENTIFICATION HAS CHANGED</code>. Depois de reinstalar, o roteiro recomeça do passo 2.</p>
+    <p><strong>Reinstalar o sistema do VPS apaga tudo:</strong> usuário, chaves cadastradas, configuração do SSH, fail2ban, o
+      Coolify e o túnel. E troca a impressão digital do servidor: o SSH do computador passa a recusar a conexão com o aviso
+      <code>REMOTE HOST IDENTIFICATION HAS CHANGED</code>. Depois de reinstalar, recomeçar do passo 2.</p>
   </div>
 
   <h3>1. Chave SSH, no computador do autor</h3>
   <pre>PS&gt; ssh-keygen -t ed25519 -C "igor-notebook-hostinger"</pre>
   <p>Saem dois arquivos em <code>C:\Users\igorl\.ssh\</code>. O <code>.pub</code> é a chave pública: uma linha que começa com
-    <code>ssh-ed25519</code> e pode ser mostrada a qualquer um. O sem extensão é a privada e nunca sai do computador. Uma
-    chave por computador: se um notebook se perder, apaga-se só a linha dele no servidor.</p>
-  <p>Na conexão, o servidor manda um desafio e o computador o assina com a privada; o servidor confere com a pública. A
-    chave privada não trafega pela rede.</p>
+    <code>ssh-ed25519</code> e pode ser mostrada a qualquer um. O sem extensão é a privada e nunca sai do computador. Na conexão,
+    o servidor manda um desafio, o computador o assina com a privada, e o servidor confere com a pública: a privada não trafega.
+    Uma chave por computador: se um notebook se perder, apaga-se só a linha dele no servidor.</p>
 
   <h3>2. Criar ou reinstalar o VPS</h3>
   <p>No hPanel, escolher o sistema e colar a linha inteira do <code>.pub</code> no campo de chave SSH. A Hostinger oferece
-    modelos com o Coolify já instalado. Um modelo com outro aplicativo atrapalha: um Traefik avulso, por exemplo, disputa as
-    portas 80 e 443 com o Traefik que o Coolify traz.</p>
-  <p>Se o servidor já existia, apagar a impressão digital antiga antes de conectar:</p>
-  <pre>PS&gt; ssh-keygen -R IP-do-VPS</pre>
-  <p>E conferir a nova pelo terminal do navegador do hPanel, que não depende do SSH. Ela tem de ser igual à que o SSH mostra
-    na primeira conexão:</p>
-  <pre>ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub</pre>
+    modelos com o Coolify já instalado; um modelo com outro aplicativo atrapalha (um Traefik avulso disputa as portas com o
+    do Coolify). Se o servidor já existia, apagar a impressão digital antiga e conferir a nova pelo terminal do navegador do
+    hPanel, que não depende do SSH:</p>
+  <pre>PS&gt; ssh-keygen -R IP-do-VPS
+ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub</pre>
 
   <h3>3. Primeira entrada, como root</h3>
   <pre>PS&gt; ssh root@IP-do-VPS
 apt update &amp;&amp; apt upgrade -y</pre>
-  <p>Se pedir senha, a chave não foi aceita. Não insistir em senhas: entrar pelo terminal do navegador e colar a linha do
+  <p>Se pedir senha, a chave não foi aceita. Não insistir: entrar pelo terminal do navegador e colar a linha do
     <code>.pub</code> em <code>/root/.ssh/authorized_keys</code>.</p>
 
   <h3>4. Usuário próprio com a mesma chave</h3>
@@ -525,51 +347,96 @@ mkdir -p /home/igor/.ssh
 cp /root/.ssh/authorized_keys /home/igor/.ssh/
 chown -R igor:igor /home/igor/.ssh
 chmod 700 /home/igor/.ssh &amp;&amp; chmod 600 /home/igor/.ssh/authorized_keys</pre>
-  <p>A senha do <code>adduser</code> é a do <code>sudo</code>, não a do SSH. <strong>Conferir numa segunda janela, sem fechar a
-    primeira:</strong> <code>ssh igor@IP-do-VPS</code> entra sem pedir senha, e <code>sudo whoami</code> responde
-    <code>root</code>.</p>
+  <p>A senha do <code>adduser</code> é inventada na hora e serve só ao <code>sudo</code>, não ao SSH. <strong>Conferir numa
+    segunda janela, sem fechar a primeira:</strong> <code>ssh igor@IP-do-VPS</code> entra sem pedir senha, e
+    <code>sudo whoami</code> responde <code>root</code>.</p>
 
-  <h3>5. Desligar o login por senha</h3>
+  <h3>5. SSH sem senha</h3>
   <pre>sudo nano /etc/ssh/sshd_config.d/99-endurecer.conf</pre>
   <pre>PermitRootLogin prohibit-password
 PasswordAuthentication no
 KbdInteractiveAuthentication no</pre>
   <pre>sudo sshd -t &amp;&amp; sudo systemctl restart ssh</pre>
-  <p>O <code>sshd -t</code> recusa arquivo com erro antes de reiniciar. Conferir numa janela nova: <code>ssh igor@…</code>
-    entra sem senha, e nenhuma conta aceita senha pela rede.</p>
-  <p><strong>Root só por chave, e não <code>PermitRootLogin no</code>:</strong> o Coolify comanda o próprio servidor por SSH
-    como root, com uma chave que ele mesmo põe em <code>/root/.ssh/authorized_keys</code>. Com <code>no</code>, ele perde o
-    acesso e marca o servidor como inalcançável. Com <code>prohibit-password</code>, a senha de root não vale pela rede, e a
-    chave dele continua valendo.</p>
-  <p>Os passos 3 a 8 estão em <code>infra/vps/configurar-vps.sh</code>, que pode rodar de novo sem estragar nada.</p>
+  <p>O <code>sshd -t</code> recusa arquivo com erro antes de reiniciar. <strong>Root só por chave, e não
+    <code>PermitRootLogin no</code>:</strong> o Coolify comanda o próprio servidor por SSH como root, com uma chave que ele
+    mesmo põe em <code>/root/.ssh/authorized_keys</code>. Com <code>no</code>, ele perde o acesso e marca o servidor como
+    inalcançável (Coolify, Servers, localhost, Validate).</p>
 
   <h3>6. fail2ban</h3>
   <pre>sudo apt install -y fail2ban
 sudo systemctl enable --now fail2ban</pre>
-  <p>Bloqueia por um tempo o endereço que erra o login várias vezes. A configuração padrão já cobre o SSH.</p>
+  <p>Bloqueia por um tempo o endereço que erra o login várias vezes. A configuração padrão do Ubuntu já cobre o SSH.</p>
 
   <h3>7. Firewall no painel da Hostinger</h3>
-  <p>No hPanel, em Segurança, Firewall: aceitar entrada só em TCP 22, 80 e 443. Usa-se o firewall do <strong>painel</strong>,
-    não o <code>ufw</code> do sistema: o Docker cria regras próprias e passa por cima do <code>ufw</code>, então uma porta
-    publicada por um container fica aberta mesmo com o <code>ufw</code> dizendo que não. O do painel fica fora da máquina.
-    Conferir de fora:</p>
-  <pre>PS&gt; Test-NetConnection IP-do-VPS -Port 22      # TcpTestSucceeded : True
-PS&gt; Test-NetConnection IP-do-VPS -Port 8000    # TcpTestSucceeded : False</pre>
+  <p>Em Segurança, Firewall: <strong>só a porta 22</strong> (TCP), desde que o túnel da etapa 5 está de pé. Antes dele, eram
+    22, 80 e 443. Usa-se o firewall do painel, e não o <code>ufw</code> do sistema: o Docker cria regras próprias e passa por
+    cima do <code>ufw</code>; o do painel fica fora da máquina. Conferir de fora:</p>
+  <pre>PS&gt; Test-NetConnection IP-do-VPS -Port 22      # True
+PS&gt; Test-NetConnection IP-do-VPS -Port 443     # False
+PS&gt; Test-NetConnection IP-do-VPS -Port 8000    # False</pre>
 
-  <h3>8. Coolify</h3>
-  <p>Se o modelo do VPS já o trouxe, conferir que está de pé; se não, instalar:</p>
+  <h3>Cada configuração do servidor</h3>
+  <div class="tabela"><table>
+    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
+    <tbody>
+      <tr><td>Usuário</td><td><code>igor</code>, com sudo e a chave SSH</td><td>Não trabalhar como root</td><td>—</td></tr>
+      <tr><td>SSH</td><td>Sem senha; root só por chave</td><td>Chave não se adivinha; o Coolify precisa do root por chave</td><td>Com senha ligada, o servidor fica exposto a força bruta; com <code>PermitRootLogin no</code>, o Coolify perde o servidor</td></tr>
+      <tr><td>fail2ban</td><td>Padrão, cobrindo o SSH</td><td>Bloqueia quem erra o login várias vezes</td><td>—</td></tr>
+      <tr><td>Firewall</td><td>Só a 22, no painel da Hostinger</td><td>Site e painel entram pelo túnel, que sai de dentro</td><td>Reabrir 80 e 443 recria o caminho direto ao VPS, sem a Cloudflare</td></tr>
+      <tr><td>Fuso da instância</td><td><code>America/Sao_Paulo</code>, no Coolify</td><td>É por ele que valem os horários do backup e das tarefas agendadas</td><td>Em UTC, "às 3h" roda à meia-noite de Brasília</td></tr>
+    </tbody>
+  </table></div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════ 2 -->
+  <section class="etapa" id="coolify" aria-labelledby="titulo-coolify">
+  <h2 id="titulo-coolify">2. O Coolify</h2>
+  <p>O painel que sobe e derruba os containers: liga o repositório, cria o banco e a aplicação, guarda as variáveis e publica
+    cada versão. <strong>Ele controla o Docker, e só:</strong> usuários, SSH, firewall, túnel e atualizações do sistema
+    continuam com o autor. Comanda o próprio servidor por SSH como root, com uma chave dele.</p>
+
+  <h3>1. Instalar</h3>
+  <p>Se o modelo do VPS já o trouxe, conferir; se não, o instalador oficial (instala o Docker se faltar):</p>
   <pre>sudo docker ps
 curl -fsSL https://cdn.coollabs.io/coolify/install.sh | sudo bash</pre>
-  <p>O <code>docker ps</code> tem de listar <code>coolify</code>, <code>coolify-proxy</code> (o Traefik dele),
-    <code>coolify-db</code>, <code>coolify-redis</code> e <code>coolify-realtime</code>. Um Traefik que não seja o
-    <code>coolify-proxy</code> sai antes da instalação: <code>docker compose down</code> na pasta dele, ou
-    <code>docker rm -f</code> com o nome. O endereço <code>http://IP:8000</code> que o instalador mostra não abre, e não deve
-    abrir: a porta foi fechada no passo 7.</p>
+  <p>O <code>docker ps</code> lista <code>coolify</code>, <code>coolify-proxy</code> (o Traefik), <code>coolify-db</code>,
+    <code>coolify-redis</code> e <code>coolify-realtime</code>. Um Traefik que não seja o <code>coolify-proxy</code> sai antes:
+    <code>docker compose down</code> na pasta dele, ou <code>docker rm -f</code>.</p>
 
-  <h3>9. O painel, pelo túnel SSH</h3>
-  <p>O túnel liga uma porta do computador do autor à mesma porta dentro do VPS, por dentro da conexão SSH. Para o servidor, o
-    acesso vem dele mesmo, então o firewall não participa, e só abre o túnel quem tem a chave. Em
-    <code>C:\Users\igorl\.ssh\config</code>:</p>
+  <h3>2. O painel</h3>
+  <p>Hoje o painel tem dois caminhos:</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Caminho</th><th>Como</th><th>Para quê</th></tr></thead>
+    <tbody>
+      <tr><td><span class="rec">painel.registroaberto.org</span></td><td>Pelo túnel da Cloudflare, atrás do Cloudflare Access: antes da tela do Coolify, a Cloudflare pede o e-mail e manda um código</td><td>O uso do dia a dia, de qualquer navegador</td></tr>
+      <tr><td>Túnel SSH</td><td><code>ssh coolify</code> e <code>http://localhost:8000</code></td><td>Reserva: funciona mesmo com a Cloudflare, o Access ou o Traefik fora do ar</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>O domínio do painel</strong>, em Settings, General:</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Campo</th><th>Valor</th></tr></thead>
+    <tbody>
+      <tr><td>URL</td><td><code>http://painel.registroaberto.org</code>. Com <code>http://</code> por causa do túnel: ver a <a href="#dominio">etapa 5</a></td></tr>
+      <tr><td>Name</td><td><code>Coolify</code></td></tr>
+      <tr><td>Instance timezone</td><td><code>America/Sao_Paulo</code></td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>O Cloudflare Access</strong>, em Zero Trust (na primeira vez: nome da equipe <code>registroaberto</code> e plano
+    Free), Access, Applications, Add, Self-hosted:</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Campo</th><th>Valor</th></tr></thead>
+    <tbody>
+      <tr><td>Application name</td><td><code>Painel Coolify</code></td></tr>
+      <tr><td>Session duration</td><td><code>24 hours</code></td></tr>
+      <tr><td>Public hostname</td><td>subdomínio <code>painel</code>, domínio <code>registroaberto.org</code>, caminho vazio</td></tr>
+      <tr><td>Policy</td><td><code>Só o autor</code>: Allow, Include, Emails, o e-mail do autor</td></tr>
+      <tr><td>Login</td><td>One-time PIN (padrão em Settings, Authentication)</td></tr>
+    </tbody>
+  </table></div>
+  <p>Conferir numa janela anônima: aparece primeiro a tela da Cloudflare, e só depois do código, a do Coolify.</p>
+  <p><strong>O túnel SSH</strong>, de reserva, em <code>C:\Users\igorl\.ssh\config</code> (modelo em
+    <code>infra/vps/ssh-config.exemplo</code>; gravar com <code>Set-Content -Encoding ascii</code>, porque o BOM do UTF-8 faz
+    o SSH não entender a primeira linha):</p>
   <pre>Host coolify
     HostName IP-do-VPS
     User igor
@@ -577,120 +444,411 @@ curl -fsSL https://cdn.coollabs.io/coolify/install.sh | sudo bash</pre>
     LocalForward 8000 localhost:8000
     LocalForward 6001 localhost:6001
     LocalForward 6002 localhost:6002</pre>
-  <pre>PS&gt; ssh coolify</pre>
-  <p>Com essa janela aberta, o painel fica em <code>http://localhost:8000</code>. A 6001 leva as atualizações ao vivo do painel
-    (estado do deploy, logs) e a 6002 o terminal dele; só com a 8000, o painel abre mas não se atualiza sozinho.
-    <strong>Criar a conta de administrador logo em seguida</strong>: até ela existir, quem abrir o painel primeiro a cria.</p>
+  <p>A 6001 leva as atualizações ao vivo do painel e a 6002, o terminal dele. As três portas ficam fechadas no firewall: o
+    túnel SSH chega a elas por dentro.</p>
 
-  <h3>10. Proteger o painel</h3>
-  <p>Em Settings: o domínio da instância fica vazio (o painel continua só pelo túnel) e "Registration allowed" desligado. No
-    perfil, a verificação em duas etapas ligada. Em Sources, o GitHub App com acesso só ao repositório <code>poligraph</code>.</p>
+  <h3>3. Proteger o painel</h3>
+  <ul class="lista">
+    <li>Conta de administrador criada logo na primeira abertura: até ela existir, quem abrir o painel primeiro a cria.</li>
+    <li>Settings: "Registration allowed" desligado.</li>
+    <li>Perfil: verificação em duas etapas ligada.</li>
+    <li>Sources: o GitHub App com acesso só ao repositório <code>poligraph</code>.</li>
+  </ul>
 
-  <h3>11. O banco</h3>
-  <p>No projeto <code>registro-aberto</code>, ambiente <code>production</code>: + New, Database, PostgreSQL. A versão é a
-    mesma maior do banco local, hoje a <strong>18</strong> (<code>postgres:18-alpine</code>): o dump do 18 não restaura no 17.
-    Banco <code>poligraph</code>, usuário <code>poligraph</code>, senha gerada pelo Coolify, e <strong>"Make it publicly
-    available" desligado</strong>. Da <em>Postgres URL (internal)</em> sai a connection string no formato do .NET:</p>
-  <pre>postgres://poligraph:SENHA@NOME:5432/poligraph
-Host=NOME;Port=5432;Database=poligraph;Username=poligraph;Password=SENHA</pre>
-  <p>O <code>NOME</code> é o do container na rede <code>coolify</code>, não um IP; é também o que o <code>docker ps</code>
-    mostra para a imagem <code>postgres:18-alpine</code>. O <code>coolify-db</code> que aparece junto é o banco do próprio
-    painel e não se toca. Usuário e banco reais, sem mostrar a senha:</p>
+  <h3>O Traefik, que vem com o Coolify</h3>
+  <p>É o container <code>coolify-proxy</code>. Não tem arquivo com as rotas do site: ele observa o Docker, e cada container leva
+    nos rótulos (<em>labels</em>) a regra dele, escrita pelo Coolify a partir do campo de domínio. O painel é a exceção: a
+    regra dele fica num arquivo em <code>/data/coolify/proxy/dynamic/</code>.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Peça</th><th>No nosso caso</th></tr></thead>
+    <tbody>
+      <tr><td>Entrypoint, a porta em que escuta</td><td>A 80 da máquina, por onde chega o túnel. A 443 continua configurada, mas não recebe nada: está fechada no firewall</td></tr>
+      <tr><td>Router, a regra de endereço</td><td><code>Host(`registroaberto.org`) || Host(`www.registroaberto.org`)</code> no site; <code>painel.registroaberto.org</code> no painel. A API e a migration não têm domínio, então não têm regra</td></tr>
+      <tr><td>Service, o destino</td><td>O container do site, porta 8080: é a "porta interna" do campo de domínio, a de dentro do container</td></tr>
+    </tbody>
+  </table></div>
+  <p>Nada disso se edita à mão: o Coolify reescreve no próximo deploy. Para ver as regras de verdade:</p>
+  <pre>docker inspect $(docker ps -q --filter "name=web-") --format '{{range $k,$v := .Config.Labels}}{{println $k "=" $v}}{{end}}' | grep traefik</pre>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════ 3 -->
+  <section class="etapa" id="banco" aria-labelledby="titulo-banco">
+  <h2 id="titulo-banco">3. O banco</h2>
+
+  <h3>1. Criar</h3>
+  <p>Projeto <code>registro-aberto</code>, ambiente <code>production</code>, + New, Database, PostgreSQL:</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Campo</th><th>Valor</th><th>Por quê</th></tr></thead>
+    <tbody>
+      <tr><td>Imagem</td><td><code>postgres:18-alpine</code></td><td>A mesma versão maior do local: o dump do 18 não restaura no 17</td></tr>
+      <tr><td>Initial database</td><td><code>poligraph</code></td><td>O mesmo nome do local</td></tr>
+      <tr><td>Username</td><td><code>poligraph</code></td><td>Em vez do <code>postgres</code></td></tr>
+      <tr><td>Password</td><td>Gerada pelo Coolify</td><td>Vai do painel para a variável; não passa por chat nem por arquivo</td></tr>
+      <tr><td>Make it publicly available</td><td><strong>Desligado</strong></td><td>Sem porta no VPS: só a rede <code>coolify</code> o alcança</td></tr>
+    </tbody>
+  </table></div>
+  <p>O nome do container (o <code>Host</code> da connection string) aparece na <em>Postgres URL (internal)</em> e no
+    <code>docker ps</code>, ao lado da imagem <code>postgres:18-alpine</code>. O <code>coolify-db</code> que aparece junto é o
+    banco do próprio painel e não se toca. Usuário e banco reais, sem mostrar a senha:</p>
   <pre>docker exec NOME env | grep -E '^POSTGRES_(USER|DB)='</pre>
 
-  <h3>12. A cópia do banco local (P87), antes do primeiro deploy</h3>
-  <p>Com o banco de produção vazio: se a migration rodar antes, as tabelas já existem e o restore entra em conflito. No
-    computador do autor, com o Aspire parado, um Postgres 18 temporário abre o mesmo volume e gera o dump; a senha vem dos
-    user-secrets do AppHost (<code>Parameters:postgres-password</code>), sem aparecer na tela:</p>
+  <h3>2. Copiar o banco local (P87)</h3>
+  <p>Antes do primeiro deploy, com o banco de produção vazio: se a migration rodar antes, as tabelas já existem e o restore entra
+    em conflito. No computador do autor, com o Aspire parado, um Postgres 18 temporário abre o volume do Aspire e gera o dump. A
+    senha vem dos user-secrets do AppHost (<code>Parameters:postgres-password</code>), sem aparecer na tela:</p>
   <pre>PS&gt; podman run -d --name pg-dump-tmp -v &lt;volume do Aspire&gt;:/var/lib/postgresql postgres:18.3
 PS&gt; podman exec -e PGPASSWORD=… pg-dump-tmp pg_dump -U postgres -d poligraph -Fc --no-owner --no-acl -f /tmp/poligraph.dump
 PS&gt; podman cp pg-dump-tmp:/tmp/poligraph.dump C:\Users\igorl\poligraph.dump
 PS&gt; podman rm -f pg-dump-tmp
 PS&gt; scp C:\Users\igorl\poligraph.dump igor@IP-do-VPS:/tmp/</pre>
-  <p>No VPS, <code>infra/vps/restaurar-banco.sh</code> confere o sha256, acha o container, o usuário e o banco, recusa banco
-    que não esteja vazio, restaura, mostra as contagens e apaga o dump. Em 2026-10-15: 3,6 GB no local, dump de 193 MB,
-    8.319 parlamentares e 2.179.300 votos dos dois lados. Depois, apagar a cópia do computador. A
-    <code>POLIGRAPH_CHAVE_CPF</code> da ETL em produção tem de ser a mesma do local: os <code>cpf_hash</code> copiados foram
+  <p>No VPS, <code>infra/vps/restaurar-banco.sh</code> confere o sha256, acha o container, o usuário e o banco, recusa banco que
+    não esteja vazio, restaura, mostra as contagens e apaga o dump. Em 2026-10-15: 3,6 GB no local, dump de 193 MB, 8.319
+    parlamentares e 2.179.300 votos dos dois lados.</p>
+  <div class="aviso risco">
+    <p><strong>O dump foi do banco inteiro</strong>, e a P87 previa só as tabelas das fontes. Vieram também
+      <code>usuarios</code>, <code>segue</code>, <code>consentimentos</code>, <code>avaliacoes</code> e <code>tokens_email</code>
+      do ambiente local. Conferir e apagar em produção (apagar <code>usuarios</code> leva junto as que dependem dela):</p>
+    <pre>docker exec -it NOME psql -U poligraph -d poligraph -tAc "select 'usuarios', count(*) from usuarios union all select 'avaliacoes', count(*) from avaliacoes"
+docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; delete from usuarios;"</pre>
+    <p>Da próxima vez: <code>pg_dump</code> com <code>--exclude-table-data</code> para essas tabelas.</p>
+  </div>
+  <p>A <code>POLIGRAPH_CHAVE_CPF</code> da ETL em produção tem de ser a mesma do local: os <code>cpf_hash</code> copiados foram
     calculados com ela.</p>
 
-  <h3>13. As variáveis</h3>
+  <h3>3. Backup (P20, aberta)</h3>
+  <p>Na aba Backups do banco, o Coolify agenda <code>pg_dump</code> automáticos. Falta decidir o destino fora do VPS (um S3 como
+    o Cloudflare R2); no próprio VPS, o backup morre junto com o servidor.</p>
+
+  <h3>Cada configuração do banco</h3>
+  <div class="tabela"><table>
+    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
+    <tbody>
+      <tr><td>Recurso próprio do Coolify</td><td>Fora do compose</td><td>Um deploy da aplicação não recria o banco, e o backup é dele</td><td>Dentro do compose, refazer a aplicação arriscaria os dados</td></tr>
+      <tr><td>Versão</td><td>Postgres 18</td><td>A mesma do local</td><td>Mudar de versão maior exige dump e restore</td></tr>
+      <tr><td>Acesso público</td><td>Desligado</td><td>Só os containers da rede <code>coolify</code> o alcançam</td><td>Ligado, a porta 5432 abre no servidor</td></tr>
+      <tr><td>Usuário</td><td><code>poligraph</code>, dono do banco</td><td>Criado na instalação do container</td><td>Um usuário só de leitura para a API fica como melhoria</td></tr>
+    </tbody>
+  </table></div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════ 4 -->
+  <section class="etapa" id="aplicacao" aria-labelledby="titulo-aplicacao">
+  <h2 id="titulo-aplicacao">4. A aplicação</h2>
+
+  <h3>1. As variáveis</h3>
   <p>Em <code>production</code>, Shared Variables: um lugar só para o que a API, a migration e o site usam. Na aplicação, cada
     variável aponta para a compartilhada com <code>{{environment.NOME}}</code>. Valor numa linha só, sem espaço nas pontas;
     apagar o antigo inteiro antes de colar o novo.</p>
-  <table>
+  <div class="tabela"><table>
     <thead><tr><th>Variável</th><th>Quem usa</th><th>Valor</th></tr></thead>
     <tbody>
-      <tr><td><code>ConnectionStrings__poligraph</code></td><td>api, migrations</td><td>A do passo 11. Segredo</td></tr>
-      <tr><td><code>Google__ClientId</code></td><td>api</td><td>O client ID do Google de produção. Dois sublinhados: com um só, a API não acha o ID e o login fica desligado sem erro</td></tr>
+      <tr><td><code>ConnectionStrings__poligraph</code></td><td>api, migrations</td><td><code>Host=NOME;Port=5432;Database=poligraph;Username=poligraph;Password=…</code>, montada da <em>Postgres URL (internal)</em>. Segredo</td></tr>
+      <tr><td><code>Google__ClientId</code></td><td>api</td><td>O client ID de produção (<a href="#google">etapa 6</a>). Dois sublinhados: com um só, a API não acha o ID e o login fica desligado sem erro</td></tr>
       <tr><td><code>VITE_GOOGLE_CLIENT_ID</code></td><td>web, na montagem</td><td>O mesmo ID. Entra pelo <code>args</code> do compose, porque o Vite grava o valor nos arquivos do site ao montar</td></tr>
-      <tr><td><code>AllowedHosts</code></td><td>api</td><td>Não se cria com domínio: vale o padrão do compose, <code>registroaberto.org;www.registroaberto.org</code>. Só se usa num endereço de teste</td></tr>
+      <tr><td><code>VITE_CLARITY_ID</code></td><td>web, na montagem</td><td>O ID do projeto no Clarity. Vazio, o site sai sem Clarity</td></tr>
+      <tr><td><code>AllowedHosts</code></td><td>api</td><td>Não se cria: vale o padrão do compose, <code>registroaberto.org;www.registroaberto.org</code></td></tr>
     </tbody>
-  </table>
+  </table></div>
 
-  <h3>14. A aplicação</h3>
+  <h3>2. Criar a aplicação</h3>
   <p>+ New, Public Repository, com o branch no endereço, para o Coolify não supor <code>main</code>:</p>
   <pre>https://github.com/IgorLucasAssuncao/poligraph/tree/master</pre>
-  <p>Build Pack <strong>Docker Compose</strong>, Base directory <code>/</code>, Docker compose location
-    <code>/docker-compose.prod.yaml</code>. O nome da aplicação tem de sair com <code>master</code>, e o campo do compose,
-    preenchido. Os campos de comando (build, start, pre e post-deployment) ficam vazios: o que aparece neles é exemplo em
-    cinza. O compose monta três serviços a partir dos Dockerfiles de <code>docker/</code>:</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Campo</th><th>Valor</th></tr></thead>
+    <tbody>
+      <tr><td>Build Pack</td><td>Docker Compose</td></tr>
+      <tr><td>Base directory</td><td><code>/</code></td></tr>
+      <tr><td>Docker compose location</td><td><code>/docker-compose.prod.yaml</code></td></tr>
+      <tr><td>Comandos (build, start, pre e post-deployment)</td><td>Vazios. O que aparece neles é exemplo em cinza</td></tr>
+      <tr><td>Advanced, rede</td><td><strong>Isolated network only</strong></td></tr>
+      <tr><td>Domains, serviço <code>web</code></td><td><code>http://registroaberto.org</code> e <code>http://www.registroaberto.org</code>, porta interna 8080, sem redirecionamento de protocolo</td></tr>
+      <tr><td>Domains, <code>api</code> e <code>migrations</code></td><td>Vazios</td></tr>
+    </tbody>
+  </table></div>
+  <p>O nome da aplicação tem de sair com <code>master</code>, e o campo do compose, preenchido. Os domínios vão com
+    <code>http://</code> por causa do túnel (<a href="#dominio">etapa 5</a>): com <code>https://</code>, o Traefik manda cada
+    visita de volta para o HTTPS, e o site entra em laço.</p>
+
+  <h3>3. O compose</h3>
+  <p>O <code>docker-compose.prod.yaml</code> monta três serviços a partir dos Dockerfiles de <code>docker/</code>:</p>
   <ol class="passos">
-    <li><code>migrations</code> aplica as migrations e as perguntas da curadoria e termina. Roda a cada deploy; sem migration nova, só confere.</li>
-    <li><code>api</code> sobe só depois de a migration terminar bem, com o volume <code>chaves-da-sessao</code>: sem ele, cada deploy troca as chaves e desloga todo mundo.</li>
+    <li><code>migrations</code> aplica as migrations e as perguntas da curadoria e termina. Roda a cada deploy; sem migration nova, só confere. Termina com <code>Banco: 8319 parlamentares, … perguntas ativas.</code></li>
+    <li><code>api</code> sobe só depois de a migration terminar bem, com o volume <code>chaves-da-sessao</code>.</li>
     <li><code>web</code> é o site, o único com domínio. O nginx dele manda <code>/api/</code> ao serviço <code>api</code>.</li>
   </ol>
-  <p>Em Advanced, a rede fica em <strong>"Isolated network only"</strong>: a opção da rede predefinida renomeia os serviços, e o
-    site deixa de achar a <code>api</code>. A rede do banco já entra pelo próprio compose. Deploy: o primeiro leva vários
-    minutos, porque o VPS monta o .NET, o site e a migration. A migration termina com
-    <code>Banco: 8319 parlamentares, … perguntas ativas.</code></p>
-  <p>Compose processa os três serviços a cada deploy, com alguns segundos sem API. É a escolha para subir rápido
-    (decisão do autor, 2026-10-15); quando o CI publicar as imagens (P23), cada peça vira aplicação própria, sem queda.</p>
+  <p>O primeiro deploy leva vários minutos, porque o VPS monta o .NET, o site e a migration. Cada deploy processa os três
+    serviços, com alguns segundos sem API: é a escolha para subir rápido (decisão do autor, 2026-10-15). Quando o CI publicar
+    as imagens (P23), cada peça vira aplicação própria, sem queda.</p>
 
-  <h3>15. Domínio e HTTPS</h3>
+  <h3>Cada configuração da aplicação</h3>
+  <div class="tabela"><table>
+    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
+    <tbody>
+      <tr><td>Base da API</td><td><code>aspnet:10.0-noble-chiseled-extra</code></td><td>Enxuta, sem shell, com os dados de idioma e fuso. A API compara nomes sem acento com a cultura <code>pt-BR</code></td><td>Na chiseled comum, a API dá erro 500 em toda lista com nomes</td></tr>
+      <tr><td>Base da migration</td><td><code>aspnet:10.0-noble-chiseled</code></td><td>O projeto da migration usa o <code>ServiceDefaults</code>, que traz o ASP.NET Core</td><td>Na base <code>runtime</code>, a migration nem abre, e a API espera para sempre</td></tr>
+      <tr><td>Chaves da sessão</td><td><code>/home/app/chaves</code>, do usuário 1654, num volume</td><td>O cookie de sessão é cifrado com elas, que precisam sobreviver ao deploy</td><td>Sem o volume, cada deploy desloga todo mundo; sem o dono certo, a API não grava</td></tr>
+      <tr><td>Site</td><td>nginx sem root, porta 8080</td><td>Serve o React e repassa <code>/api/</code> na mesma origem: sem CORS, cookie <code>SameSite=Lax</code></td><td>Mudar a porta exige mudar a porta interna do domínio</td></tr>
+      <tr><td>IDs do Google e do Clarity</td><td>Argumentos de montagem (<code>args</code>)</td><td>O Vite grava os valores nos arquivos ao montar</td><td>Como variável comum, chegam tarde: o botão do Google e o Clarity somem, sem erro</td></tr>
+      <tr><td>Rede</td><td>Isolated, mais a rede <code>coolify</code> na API e na migration</td><td>Mantém o nome <code>api</code> que o nginx procura, e alcança o banco</td><td>A rede predefinida renomeia os serviços, e o site não acha a API</td></tr>
+      <tr><td><code>AllowedHosts</code></td><td>O domínio com e sem <code>www</code></td><td>A API só responde a visitas endereçadas ao site</td><td>Sem o <code>www</code>, quem entra por ele recebe erro 400</td></tr>
+      <tr><td><code>.dockerignore</code></td><td>Exclui <code>.cache</code>, <code>node_modules</code>, <code>bin</code>, <code>obj</code></td><td>Os downloads da ETL têm gigabytes</td><td>Montar no computador do autor estoura a memória</td></tr>
+    </tbody>
+  </table></div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════ 5 -->
+  <section class="etapa" id="dominio" aria-labelledby="titulo-dominio">
+  <h2 id="titulo-dominio">5. Domínio, Cloudflare e túnel</h2>
+  <p>Folha com os valores prontos para copiar: <code>infra/vps/cloudflare-tunel.md</code>.</p>
+
+  <h3>1. O domínio</h3>
+  <p><code>registroaberto.org</code>, comprado na Hostinger. Na Cloudflare, "Add a domain" só cria a ficha de DNS: o domínio
+    se compra num registrador. O <code>.org.br</code> exige CNPJ de instituição sem fins lucrativos.</p>
+
+  <h3>2. Ligar à Cloudflare</h3>
   <ol class="passos">
-    <li>Na Cloudflare, Connect a domain: <code>registroaberto.org</code>, plano Free. Registros <code>A @ → IP-do-VPS</code> e
-      <code>CNAME www → registroaberto.org</code>, <strong>Proxied</strong> (nuvem laranja). Apagar o que ela importar da
-      Hostinger: o <code>2.57.91.91</code> é a página de estacionamento. Em SSL/TLS, modo <strong>Full</strong> e
-      <strong>Always Use HTTPS desligado</strong>: o desafio do Let's Encrypt chega pela porta 80 e precisa alcançar o Traefik.</li>
-    <li>Na Hostinger, em Domínios, nameservers personalizados: os dois da Cloudflare.</li>
-    <li>Esperar o registro do <code>.org</code> mostrar os nameservers novos e a Cloudflare marcar o domínio como Active:
-      <pre>PS&gt; nslookup -type=NS registroaberto.org 1.1.1.1
-PS&gt; nslookup registroaberto.org gemma.ns.cloudflare.com</pre></li>
-    <li>No Coolify, só depois do DNS: domínio do <code>web</code>
-      <code>https://registroaberto.org:8080,https://www.registroaberto.org:8080</code> e Deploy. Antes do DNS, cada tentativa
-      do Let's Encrypt falha e conta num limite de 5 por hora.</li>
-    <li>Com o cadeado funcionando: SSL/TLS em <strong>Full (strict)</strong>, Always Use HTTPS continua desligado, TLS
-      mínimo 1.2, HSTS só depois de uma semana estável.</li>
+    <li>Cloudflare, Add a site, <strong>Connect a domain</strong> (não Transfer): <code>registroaberto.org</code>, plano Free.</li>
+    <li>Apagar o que ela importar da Hostinger: o <code>2.57.91.91</code> é a página de estacionamento.</li>
+    <li>Hostinger, Domínios, nameservers personalizados: <code>gemma.ns.cloudflare.com</code> e <code>paul.ns.cloudflare.com</code>.</li>
+    <li>Esperar a Cloudflare marcar o domínio como Active (Overview, "Check nameservers now"). Enquanto não marca, os servidores
+      dela recusam responder pelo domínio, e o Google chama isso de <em>lame delegation</em>.</li>
+  </ol>
+  <pre>PS&gt; nslookup -type=NS registroaberto.org 1.1.1.1
+PS&gt; nslookup registroaberto.org gemma.ns.cloudflare.com</pre>
+
+  <h3>3. O túnel</h3>
+  <p><strong>Criar:</strong> Cloudflare, <strong>Networking, Tunnels</strong> (o nome do menu já mudou algumas vezes; no painel
+    antigo, Zero Trust, Networks), Create a tunnel, Cloudflared, nome <code>registroaberto-vps</code>. ID:
+    <code>2c8176d6-7add-4300-83bc-c1b216fe3257</code>. A tela mostra um token: segredo, não vai para arquivo nem chat.</p>
+  <p><strong>Instalar o conector no VPS</strong>, como serviço do Ubuntu, fora do Coolify: se o Coolify cair, o túnel continua.
+    Linhas curtas, porque o terminal quebra as longas ao colar:</p>
+  <pre>B=https://github.com/cloudflare/cloudflared
+U=$B/releases/latest/download
+curl -fL -o /tmp/cf.deb $U/cloudflared-linux-amd64.deb
+sudo dpkg -i /tmp/cf.deb &amp;&amp; rm /tmp/cf.deb
+T='o-token'
+sudo cloudflared service install "$T"
+systemctl status cloudflared --no-pager | head -3</pre>
+  <p>O túnel fica Healthy no painel. O <code>configurar-vps.sh</code> faz o mesmo com <code>CLOUDFLARE_TUNNEL_TOKEN</code>.</p>
+  <p><strong>As rotas</strong>, no túnel, Published application routes (antes, Public Hostname):</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Subdomain</th><th>Domain</th><th>Path</th><th>Type</th><th>URL</th></tr></thead>
+    <tbody>
+      <tr><td><em>vazio</em></td><td><code>registroaberto.org</code></td><td><em>vazio</em></td><td><strong>HTTP</strong></td><td><code>localhost:80</code></td></tr>
+      <tr><td><code>www</code></td><td><code>registroaberto.org</code></td><td><em>vazio</em></td><td><strong>HTTP</strong></td><td><code>localhost:80</code></td></tr>
+      <tr><td><code>painel</code></td><td><code>registroaberto.org</code></td><td><em>vazio</em></td><td><strong>HTTP</strong></td><td><code>localhost:80</code></td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Os registros DNS</strong>, em DNS, Records. A rota tenta criar o registro, mas recusa se já houver outro com o mesmo
+    nome: apagar o antigo (o <code>A</code> para o IP do VPS) e, se a rota não criar, criar à mão:</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Type</th><th>Name</th><th>Target</th><th>Proxy</th></tr></thead>
+    <tbody>
+      <tr><td>CNAME</td><td><code>@</code></td><td><code>2c8176d6-7add-4300-83bc-c1b216fe3257.cfargotunnel.com</code></td><td>Proxied</td></tr>
+      <tr><td>CNAME</td><td><code>www</code></td><td>o mesmo</td><td>Proxied</td></tr>
+      <tr><td>CNAME</td><td><code>painel</code></td><td>o mesmo</td><td>Proxied</td></tr>
+    </tbody>
+  </table></div>
+  <p>O registro leva a visita ao túnel; a rota diz ao túnel para onde entregar. As duas coisas são necessárias.</p>
+
+  <h3>4. Coolify em <code>http://</code></h3>
+  <p>Domínios do site (<code>http://registroaberto.org</code>, <code>http://www.registroaberto.org</code>) e URL do painel
+    (<code>http://painel.registroaberto.org</code>) com <code>http://</code>, e Deploy da aplicação. O túnel entrega ao Traefik
+    em <code>http</code>, dentro da máquina; com <code>https://</code> no Coolify, o Traefik manda a visita de volta para o
+    HTTPS, que volta pelo túnel em <code>http</code>, sem fim. O visitante continua no <code>https://</code>: quem faz o HTTPS
+    para ele é a Cloudflare.</p>
+
+  <h3>5. SSL/TLS na Cloudflare</h3>
+  <div class="tabela"><table>
+    <thead><tr><th>Opção</th><th>Valor</th><th>Por quê</th></tr></thead>
+    <tbody>
+      <tr><td>Edge Certificates, Always Use HTTPS</td><td><strong>Ligado</strong></td><td>Quem chega por <code>http</code> vai para <code>https</code> na própria Cloudflare</td></tr>
+      <tr><td>Edge Certificates, Minimum TLS Version</td><td>1.2</td><td>1.0 e 1.1 têm falhas conhecidas</td></tr>
+      <tr><td>Overview, modo</td><td>Full (strict)</td><td>Só vale para conexão direta ao VPS, que não existe mais; fica no mais seguro</td></tr>
+      <tr><td>HSTS</td><td>Depois de uma semana estável</td><td>Manda o navegador nunca mais tentar <code>http</code>, por meses; difícil de desfazer</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>6. Fechar as portas</h3>
+  <p>Só depois de o site abrir pelo túnel: firewall da Hostinger só com a 22. Para ter certeza de que as visitas passam pelo
+    túnel antes de fechar, os registros do DNS têm de ser os <code>CNAME</code> para o túnel, e o log do conector não pode ter
+    <code>ERR</code>:</p>
+  <pre>journalctl -u cloudflared --since "10 min ago" --no-pager | grep -iE "error|unable" | tail -5</pre>
+
+  <h3>Cada configuração desta etapa</h3>
+  <div class="tabela"><table>
+    <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>
+    <tbody>
+      <tr><td>Nameservers</td><td>Os da Cloudflare, na Hostinger</td><td>Dizem ao mundo quem responde pelo domínio</td><td>Voltando aos da Hostinger, nada da Cloudflare vale</td></tr>
+      <tr><td>Registros</td><td>CNAME para o túnel, Proxied</td><td>A Cloudflare entrega pelo túnel, sem conhecer o IP</td><td>Um <code>A</code> para o IP manda a Cloudflare ao VPS direto, pela porta fechada: erro 522</td></tr>
+      <tr><td>Túnel</td><td>Conector no Ubuntu, rotas HTTP para <code>localhost:80</code></td><td>O VPS abre a conexão de dentro, e nenhuma porta de entrada fica aberta</td><td>Rota em HTTPS: erro 502 (certificado do Traefik não vale para <code>localhost</code>)</td></tr>
+      <tr><td>Certificado que o visitante vê</td><td>O da Cloudflare (Universal SSL)</td><td>Emitido sozinho quando a zona fica ativa</td><td>Enquanto não sai: <code>ERR_SSL_VERSION_OR_CIPHER_MISMATCH</code></td></tr>
+      <tr><td>Let's Encrypt</td><td>Não se usa mais</td><td>Com o túnel e as portas fechadas, o Traefik nem consegue renovar. O certificado antigo, válido até 2027-01-13, fica sem uso em <code>acme.json</code></td><td>Para voltar a ele, reabrir 80 e 443 e voltar os domínios para <code>https://</code></td></tr>
+    </tbody>
+  </table></div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════ 6 -->
+  <section class="etapa" id="google" aria-labelledby="titulo-google">
+  <h2 id="titulo-google">6. Google e Clarity</h2>
+
+  <h3>Login com o Google</h3>
+  <p>Em <a href="https://console.cloud.google.com/auth/clients">console.cloud.google.com/auth/clients</a> (Google Auth
+    Platform), um segundo client, de produção, no mesmo projeto do de desenvolvimento:</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Onde</th><th>Valor</th><th>Por quê</th></tr></thead>
+    <tbody>
+      <tr><td>Clients, tipo</td><td>Web application, <code>Registro Aberto, produção</code></td><td>O de produção não aceita <code>localhost</code>: o ID, que é público, não serve a outro endereço</td></tr>
+      <tr><td>Authorized JavaScript origins</td><td><code>https://registroaberto.org</code> e <code>https://www.registroaberto.org</code></td><td>Só esquema e host, sem barra no fim</td></tr>
+      <tr><td>Redirect URIs e client secret</td><td>Nenhum; o secret não se guarda</td><td>O botão devolve o <code>id_token</code> na própria página; a API o confere e descarta</td></tr>
+      <tr><td>Branding</td><td>Domínio autorizado <code>registroaberto.org</code>; política em <code>https://registroaberto.org/privacidade</code></td><td>O Google pode pedir prova do domínio por TXT no DNS, que vai na Cloudflare</td></tr>
+      <tr><td>Data Access</td><td>Só <code>openid</code>, <code>email</code>, <code>profile</code></td><td>Sem escopo sensível, publicar não exige revisão</td></tr>
+      <tr><td>Audience</td><td>Testing até abrir ao público, depois Publish</td><td>Em Testing, só entram os e-mails cadastrados; os outros veem acesso negado</td></tr>
+    </tbody>
+  </table></div>
+  <p>O ID vai no Coolify em <code>Google__ClientId</code> e <code>VITE_GOOGLE_CLIENT_ID</code> (<a href="#aplicacao">etapa 4</a>).</p>
+
+  <h3>Clarity</h3>
+  <p>Em <a href="https://clarity.microsoft.com">clarity.microsoft.com</a>: projeto com a URL <code>https://registroaberto.org</code>.
+    O ID são os 10 caracteres em <code>clarity.ms/tag/…</code>, em Settings, Setup; vai em <code>VITE_CLARITY_ID</code>.</p>
+  <div class="aviso risco">
+    <p><strong>Settings, Setup, Advanced, Cookies: desligado.</strong> No padrão, o Clarity grava cookie sem perguntar a
+      visitantes do Brasil (o consentimento obrigatório dele só vale para Europa, Reino Unido e Suíça). Desligado, ele espera o
+      aceite que o banner do site envia. O script não se cola no site: o banner o injeta, e só depois do aceite.</p>
+    <p>Os termos da Microsoft vedam o uso em site voltado a menores de 18 anos (<code>docs/plano/08-obter-as-chaves.md</code> §2.2).
+      Ligar em produção aberta é decisão do autor, junto da Pendência 24.</p>
+  </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════ 7 -->
+  <section class="etapa" id="entrega" aria-labelledby="titulo-entrega">
+  <h2 id="titulo-entrega">7. Entrega e segredos</h2>
+
+  <h3>Hoje</h3>
+  <p>O Coolify baixa o branch <code>master</code> do GitHub e monta as imagens no próprio VPS. Não há registry: as imagens ficam
+    no Docker do servidor. O CI (<code>.github/workflows/</code>) roda em paralelo e não segura o deploy.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Roteiro do CI</th><th>O que confere</th></tr></thead>
+    <tbody>
+      <tr><td>Back (.NET)</td><td>Compila a API, roda os testes de unidade (entre eles o da polaridade dos votos), gera o script da migration e monta as imagens da API e da migration</td></tr>
+      <tr><td>ETL (Python)</td><td>Roda os testes que não precisam de banco e monta a imagem da ETL</td></tr>
+      <tr><td>Front (React)</td><td>Verifica os tipos, roda os testes e monta o site</td></tr>
+    </tbody>
+  </table></div>
+  <div class="aviso risco">
+    <p><strong>O deploy não espera os testes (P23).</strong> Neste projeto isso pesa: um erro na polaridade dos votos não aparece
+      na tela, aparece como uma afinidade plausível e errada.</p>
+  </div>
+
+  <h3>O que vem com a P23</h3>
+  <ol class="passos">
+    <li>O push dispara o CI: testes e montagem das imagens.</li>
+    <li>Só se tudo passou, o CI publica as imagens em <code>ghcr.io/igorlucasassuncao/…</code>, com a etiqueta do commit e <code>:master</code>. O repositório é público, então as imagens também: o VPS baixa sem login.</li>
+    <li>O CI pede o deploy. O painel não é público para o GitHub (está atrás do Access), então o pedido vai por SSH, com uma chave só do CI presa a um único comando, que chama a API do Coolify por dentro.</li>
+    <li>O compose troca <code>build:</code> por <code>image:</code>, e cada peça pode virar aplicação própria, sem queda no deploy.</li>
   </ol>
 
-  <h3>16. Google</h3>
-  <p>Client de produção, separado do de desenvolvimento, no mesmo projeto: origens <code>https://registroaberto.org</code> e
-    <code>https://www.registroaberto.org</code>, sem <code>localhost</code> e sem redirect URI. Branding com o domínio
-    autorizado e a política em <code>https://registroaberto.org/privacidade</code>. Em Testing, só entram os e-mails
-    cadastrados como teste; publicar quando o site abrir ao público.</p>
-
-  <h3>Mensagens que já apareceram</h3>
-  <table>
-    <thead><tr><th>Mensagem</th><th>Quer dizer</th></tr></thead>
+  <h3>Segredos</h3>
+  <p>Nenhum segredo fica no repositório nem dentro da imagem.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Onde fica</th><th>Segredo</th><th>Para quê</th></tr></thead>
     <tbody>
-      <tr><td><code>REMOTE HOST IDENTIFICATION HAS CHANGED</code></td><td>O servidor tem impressão digital nova, por reinstalação. Conferir pelo terminal do navegador e rodar <code>ssh-keygen -R IP</code></td></tr>
-      <tr><td>Pede <code>password</code> depois de configurar a chave</td><td>A chave não foi aceita: usuário inexistente, chave não cadastrada nele, ou chave com outro nome de arquivo (<code>-i</code> ou <code>IdentityFile</code>). <code>ssh -v</code> mostra qual chave foi oferecida</td></tr>
-      <tr><td><code>channel N: open failed: connect failed: Connection refused</code></td><td>O túnel funciona, mas nada escuta naquela porta no VPS: o Coolify não está instalado ou ainda está subindo</td></tr>
-      <tr><td><code>bind: address already in use</code></td><td>A porta já está ocupada no computador do autor. Trocar o lado esquerdo (<code>LocalForward 9000 localhost:8000</code>) e abrir <code>localhost:9000</code></td></tr>
-      <tr><td><code>nano</code> e <code>vi</code> não existem no PowerShell</td><td>Gravar o <code>~/.ssh/config</code> com <code>Set-Content -Encoding ascii</code> ou abrir no VS Code; o Bloco de Notas salva como <code>config.txt</code></td></tr>
-      <tr><td>Um <code>traefik-traefik-1</code> no <code>docker ps</code></td><td>O modelo de sistema da Hostinger trouxe um Traefik avulso, que disputa as portas 80 e 443 com o do Coolify. Sai antes de instalar</td></tr>
-      <tr><td>Aplicação com nome <code>…:main-…</code> e compose vazio</td><td>O Coolify supôs o branch <code>main</code>, que não existe. Recriar com <code>…/tree/master</code> no endereço</td></tr>
-      <tr><td><code>pg_restore: option requires an argument: d</code></td><td>O comando quebrou em duas linhas ao colar. Colar numa linha só</td></tr>
-      <tr><td><code>role "postgres" does not exist</code></td><td>O banco foi criado com outro usuário. Ver os reais com <code>printenv POSTGRES_USER</code> e <code>POSTGRES_DB</code></td></tr>
-      <tr><td><code>No frameworks were found</code>, na migration</td><td>A imagem da migration estava na base <code>runtime</code>, sem o ASP.NET Core que o <code>ServiceDefaults</code> traz. Corrigido: base <code>aspnet</code></td></tr>
-      <tr><td><code>password authentication failed for user "postgres"</code>, com saída 139</td><td>A connection string ainda tinha o usuário e o banco padrão. A saída 139 sumiu com a string certa</td></tr>
-      <tr><td><code>Couldn't set gss encryption mode</code></td><td>Dois espaços dentro do nome da opção. A opção não é necessária e saiu da string</td></tr>
-      <tr><td><code>Access to the path '/home/app/chaves/…' is denied</code></td><td>O volume das chaves nasceu do root. Corrigido na imagem; no volume que já existia, <code>docker run --rm -v VOLUME:/v alpine chown 1654:1654 /v</code></td></tr>
-      <tr><td><code>pt-br is an invalid culture identifier</code>, erro 500 em <code>/api/parlamentares</code></td><td>A imagem chiseled roda sem dados de idioma. Corrigido: base <code>chiseled-extra</code></td></tr>
-      <tr><td>O site não abre com <code>:8080</code> no endereço</td><td>O <code>:8080</code> do campo de domínio é a porta dentro do container, não da internet. No navegador, o endereço vai sem porta</td></tr>
-      <tr><td>Domínio "adicionado" na Cloudflare sem ter sido comprado</td><td>Add a domain só cria a ficha de DNS; o domínio é comprado num registrador. O <code>.org.br</code> exige CNPJ de instituição sem fins lucrativos</td></tr>
+      <tr><td>Coolify, Shared Variables</td><td><code>ConnectionStrings__poligraph</code></td><td>Conexão com o banco; a senha é gerada pelo Coolify</td></tr>
+      <tr><td>Coolify</td><td><code>POLIGRAPH_CHAVE_CPF</code></td><td>Chave do HMAC do CPF, para a ETL. A mesma do local, por causa da cópia; trocá-la exige o <code>rechavear-cpf</code></td></tr>
+      <tr><td>Serviço do Ubuntu</td><td>Token do túnel</td><td>Gravado pelo <code>cloudflared service install</code>; não está no Coolify nem no repositório</td></tr>
+      <tr><td>Volume <code>chaves-da-sessao</code></td><td>Chaves do Data Protection</td><td>Cifram o cookie de sessão</td></tr>
+      <tr><td>Computador do autor</td><td>Chave SSH privada</td><td>Entrar no VPS; nunca sai do computador</td></tr>
+      <tr><td>GitHub</td><td><code>SONAR_TOKEN</code></td><td>Análise de qualidade no CI</td></tr>
     </tbody>
-  </table>
+  </table></div>
+  <p>Os IDs do Google e do Clarity não são segredo: vão dentro do site, à vista de qualquer visitante. O ID do túnel também
+    não: aparece no DNS.</p>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════ 8 -->
+  <section class="etapa" id="erros" aria-labelledby="titulo-erros">
+  <h2 id="titulo-erros">8. Erros que apareceram</h2>
+  <p>Na ordem em que surgiram, de 2026-10-15. A mensagem como aparece na tela, e o que ela quer dizer.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Mensagem</th><th>Quer dizer</th><th>Etapa</th></tr></thead>
+    <tbody>
+      <tr><td><code>REMOTE HOST IDENTIFICATION HAS CHANGED</code></td><td>O servidor tem impressão digital nova, por reinstalação. Conferir pelo terminal do navegador e rodar <code>ssh-keygen -R IP</code></td><td>1</td></tr>
+      <tr><td>Pede <code>password</code> depois de configurar a chave</td><td>A chave não foi aceita: usuário inexistente, chave não cadastrada nele, ou arquivo de chave com outro nome. <code>ssh -v</code> mostra qual chave foi oferecida</td><td>1</td></tr>
+      <tr><td><code>nano</code> e <code>vi</code> não existem no PowerShell</td><td>Gravar com <code>Set-Content -Encoding ascii</code> ou abrir no VS Code; o Bloco de Notas salva como <code>config.txt</code></td><td>2</td></tr>
+      <tr><td><code>channel N: open failed: connect failed: Connection refused</code></td><td>O túnel SSH funciona, mas nada escuta naquela porta no VPS: o Coolify não está instalado ou ainda está subindo</td><td>2</td></tr>
+      <tr><td>Um <code>traefik-traefik-1</code> no <code>docker ps</code></td><td>O modelo de sistema da Hostinger trouxe um Traefik avulso, que disputa as portas com o do Coolify</td><td>2</td></tr>
+      <tr><td>Painel em <code>no available server</code> depois de pôr o domínio</td><td>O Traefik não carregou a regra nova: Servers, localhost, Proxy, Restart Proxy</td><td>2</td></tr>
+      <tr><td><code>pg_restore: option requires an argument: d</code></td><td>O comando quebrou em duas linhas ao colar. Colar numa linha só, ou em pedaços curtos</td><td>3</td></tr>
+      <tr><td><code>role "postgres" does not exist</code></td><td>O banco foi criado com outro usuário. Ver os reais com <code>printenv POSTGRES_USER</code> e <code>POSTGRES_DB</code></td><td>3</td></tr>
+      <tr><td>Aplicação com nome <code>…:main-…</code> e compose vazio</td><td>O Coolify supôs o branch <code>main</code>, que não existe. Recriar com <code>…/tree/master</code> no endereço</td><td>4</td></tr>
+      <tr><td><code>No frameworks were found</code>, na migration</td><td>A imagem estava na base <code>runtime</code>, sem o ASP.NET Core. Corrigido: base <code>aspnet</code></td><td>4</td></tr>
+      <tr><td><code>password authentication failed for user "postgres"</code>, com saída 139</td><td>A connection string ainda tinha o usuário e o banco padrão. A saída 139 sumiu com a string certa</td><td>4</td></tr>
+      <tr><td><code>Couldn't set gss encryption mode</code></td><td>Dois espaços dentro do nome da opção. A opção não é necessária e saiu</td><td>4</td></tr>
+      <tr><td><code>Access to the path '/home/app/chaves/…' is denied</code></td><td>O volume das chaves nasceu do root. Corrigido na imagem; no volume que já existia, <code>docker run --rm -v VOLUME:/v alpine chown 1654:1654 /v</code></td><td>4</td></tr>
+      <tr><td><code>pt-br is an invalid culture identifier</code>, erro 500</td><td>A imagem chiseled roda sem dados de idioma. Corrigido: base <code>chiseled-extra</code></td><td>4</td></tr>
+      <tr><td>O site não abre com <code>:8080</code> no endereço</td><td>O <code>:8080</code> é a porta dentro do container. No navegador, o endereço vai sem porta</td><td>4</td></tr>
+      <tr><td>Barras de rolagem com zoom de 110%</td><td>Entre 1190 e 1290 px o cabeçalho não cabia numa linha e ainda não descia para duas. Corrigido: duas linhas abaixo de 1320 px</td><td>—</td></tr>
+      <tr><td>Domínio "adicionado" na Cloudflare sem ter sido comprado</td><td>Add a domain só cria a ficha de DNS. O <code>.org.br</code> exige CNPJ</td><td>5</td></tr>
+      <tr><td><code>Query refused</code>, <em>lame delegation</em></td><td>O domínio já aponta para a Cloudflare, mas a zona ainda não está ativa na conta</td><td>5</td></tr>
+      <tr><td><code>ERR_SSL_VERSION_OR_CIPHER_MISMATCH</code></td><td>O certificado da Cloudflare para a zona ainda não tinha saído. Espera de minutos a horas</td><td>5</td></tr>
+      <tr><td><code>404 page not found</code>, texto puro</td><td>Resposta do Traefik: nenhuma regra para aquele endereço. O domínio não foi salvo, ou falta o deploy</td><td>5</td></tr>
+      <tr><td><code>Unable to locate package cloudflared</code></td><td>O repositório da Cloudflare não entrou no <code>apt</code>. Instalar pelo <code>.deb</code> oficial</td><td>5</td></tr>
+      <tr><td>Erro 522 depois de fechar as portas</td><td>Os registros ainda eram <code>A</code> para o IP: a Cloudflare ia ao VPS direto, e não pelo túnel. Reabrir as portas, trocar por <code>CNAME</code> do túnel, e só então fechar</td><td>5</td></tr>
+      <tr><td><code>An A, AAAA, or CNAME record with that host already exists</code></td><td>A rota do túnel não cria registro se já houver outro com o mesmo nome: apagar o antigo antes</td><td>5</td></tr>
+      <tr><td>Erro 502, e no log <code>tls: failed to verify certificate … not localhost</code></td><td>A rota do túnel estava em HTTPS. Trocar para HTTP</td><td>5</td></tr>
+      <tr><td>Redirecionamento sem fim (302 para o mesmo endereço)</td><td>Os domínios no Coolify ainda estavam com <code>https://</code>. Trocar para <code>http://</code> e fazer o deploy; o painel, pelo túnel SSH</td><td>5</td></tr>
+    </tbody>
+  </table></div>
+  </section>
 </main>
+
+<script>
+"use strict";
+(function () {
+  var etapas = Array.prototype.slice.call(document.querySelectorAll("section.etapa"));
+  var links = Array.prototype.slice.call(document.querySelectorAll("nav.etapas a"));
+  if (!etapas.length) return;
+  document.documentElement.classList.add("com-abas");
+
+  etapas.forEach(function (secao, i) {
+    var rodape = document.createElement("nav");
+    rodape.className = "rodape-etapa";
+    rodape.setAttribute("aria-label", "Navegação entre etapas");
+    var titulo = function (s) { return s.querySelector("h2").textContent; };
+    if (i > 0) {
+      var a = document.createElement("a");
+      a.href = "#" + etapas[i - 1].id;
+      a.innerHTML = "<small>anterior</small>";
+      a.appendChild(document.createTextNode(titulo(etapas[i - 1])));
+      rodape.appendChild(a);
+    }
+    if (i < etapas.length - 1) {
+      var b = document.createElement("a");
+      b.href = "#" + etapas[i + 1].id;
+      b.className = "proxima";
+      b.innerHTML = "<small>próxima</small>";
+      b.appendChild(document.createTextNode(titulo(etapas[i + 1])));
+      rodape.appendChild(b);
+    }
+    secao.appendChild(rodape);
+  });
+
+  function abrir() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var alvo = id ? document.getElementById(id) : null;
+    var secao = alvo ? alvo.closest("section.etapa") : null;
+    if (!secao) secao = etapas[0];
+    etapas.forEach(function (s) { s.classList.toggle("ativa", s === secao); });
+    links.forEach(function (l) {
+      if (l.getAttribute("href") === "#" + secao.id) l.setAttribute("aria-current", "page");
+      else l.removeAttribute("aria-current");
+    });
+    if (alvo && alvo !== secao) alvo.scrollIntoView();
+    else window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", abrir);
+  abrir();
+})();
+</script>
 </body>
 </html>
