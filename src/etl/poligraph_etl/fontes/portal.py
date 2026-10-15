@@ -36,13 +36,16 @@ CABECALHOS = {"User-Agent": "Mozilla/5.0 (poligraph; TCC)"}
 TENTATIVAS = 4
 ESPERA_ENTRE_TENTATIVAS = 20
 
+REPETIR = (405, 429, 502, 503)
+"""Respostas que o download tenta de novo: o Portal responde 405 quando limita a taxa."""
+
 
 def url(recurso: str) -> str:
     """`emendas-parlamentares/UNICO` → a URL de download, que redireciona para o CDN."""
     return f"{BASE}/{recurso}"
 
 
-def baixar(recurso: str, destino: Path, *, esperar=time.sleep) -> Path:
+def baixar(recurso: str, destino: Path, *, esperar=time.sleep, repetir=REPETIR) -> Path:
     """Baixa em fluxo, com nova tentativa quando o servidor limita a taxa.
 
     ATENÇÃO: Só renomeia no fim: download interrompido não pode virar cache válido.
@@ -57,7 +60,7 @@ def baixar(recurso: str, destino: Path, *, esperar=time.sleep) -> Path:
     for tentativa in range(1, TENTATIVAS + 1):
         log.info("  baixando %s (tentativa %d)", url(recurso), tentativa)
         with requests.get(url(recurso), headers=CABECALHOS, stream=True, timeout=600) as resposta:
-            if resposta.status_code in (405, 429, 502, 503) and tentativa < TENTATIVAS:
+            if resposta.status_code in repetir and tentativa < TENTATIVAS:
                 log.warning("  %d do servidor; nova tentativa em %d s",
                             resposta.status_code, ESPERA_ENTRE_TENTATIVAS * tentativa)
                 esperar(ESPERA_ENTRE_TENTATIVAS * tentativa)
@@ -76,10 +79,13 @@ def baixar(recurso: str, destino: Path, *, esperar=time.sleep) -> Path:
 
 
 TENTATIVAS_DO_403 = 4
-"""Quantas vezes um 403 é tentado de novo antes de o mês contar como não publicado."""
+"""Quantas vezes um 403 ou 405 é tentado de novo antes de o mês contar como não publicado."""
 
 ESPERA_DO_403 = 30
-"""Segundos de espera antes da primeira nova tentativa de um 403; dobra a cada uma."""
+"""Segundos de espera antes da primeira nova tentativa de um 403 ou 405; dobra a cada uma."""
+
+AUSENCIA_OU_LIMITE = (403, 405)
+"""Respostas que tanto podem ser "não publicado" quanto limite de ritmo."""
 
 
 def baixar_publicado(recurso: str, destino: Path, *, esperar=time.sleep) -> Path | None:
@@ -89,19 +95,26 @@ def baixar_publicado(recurso: str, destino: Path, *, esperar=time.sleep) -> Path
     ritmo. MEDIDO (2026-10-10): `cpcc/202102` deu 403 na carga e 200 minutos depois. Tratar o primeiro
     403 como "não publicado" perdia meses calado; agora ele só vale depois de `TENTATIVAS_DO_403`
     tentativas espaçadas. 404 é ausência na hora.
+
+    MEDIDO (2026-10-15, primeira rotina no VPS): do servidor, o CDN do Portal responde 405, e não 403,
+    para o mês que ainda não saiu (`cpdc/202609`); do computador do autor, o mesmo mês dá 403. O 405
+    derrubava a rotina inteira. Agora vale como o 403, e sobe direto do `baixar`, sem as quatro
+    tentativas dele: somadas às daqui, cada mês ausente esperaria uns 11 minutos.
     """
+    repetir = tuple(codigo for codigo in REPETIR if codigo not in AUSENCIA_OU_LIMITE)
     for tentativa in range(1, TENTATIVAS_DO_403 + 1):
         try:
-            return baixar(recurso, destino, esperar=esperar)
+            return baixar(recurso, destino, esperar=esperar, repetir=repetir)
         except requests.HTTPError as erro:
             codigo = erro.response.status_code if erro.response is not None else None
             if codigo == 404:
                 return None
-            if codigo != 403:
+            if codigo not in AUSENCIA_OU_LIMITE:
                 raise
             if tentativa < TENTATIVAS_DO_403:
-                log.warning("  403 em %s; nova tentativa em %d s", recurso, ESPERA_DO_403 * 2 ** (tentativa - 1))
+                log.warning("  %d em %s; nova tentativa em %d s", codigo, recurso, ESPERA_DO_403 * 2 ** (tentativa - 1))
                 esperar(ESPERA_DO_403 * 2 ** (tentativa - 1))
+    log.info("  %s não publicado", recurso)
     return None
 
 

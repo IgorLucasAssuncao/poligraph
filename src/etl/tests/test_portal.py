@@ -101,3 +101,33 @@ def test_403_que_persiste_e_404_sao_mes_nao_publicado(monkeypatch, tmp_path):
     monkeypatch.setattr(portal, "baixar", baixar_com(404))
     assert portal.baixar_publicado("cpdc/202301", tmp_path / "a.zip", esperar=lambda _: None) is None
 
+
+
+def test_405_que_persiste_tambem_e_mes_nao_publicado(monkeypatch, tmp_path):
+    """MEDIDO (2026-10-15): do VPS, o mês que ainda não saiu vem como 405, e derrubava a rotina."""
+    chamadas: list[tuple] = []
+
+    def baixar(recurso, destino, **opcoes):
+        chamadas.append(opcoes["repetir"])
+        resposta = requests.Response()
+        resposta.status_code = 405
+        raise requests.HTTPError(response=resposta)
+
+    monkeypatch.setattr(portal, "baixar", baixar)
+    esperas: list[int] = []
+
+    assert portal.baixar_publicado("cpdc/202609", tmp_path / "a.zip", esperar=esperas.append) is None
+    assert esperas == [portal.ESPERA_DO_403, portal.ESPERA_DO_403 * 2, portal.ESPERA_DO_403 * 4]
+    assert all(405 not in repetir and 403 not in repetir for repetir in chamadas)
+
+
+def test_erro_de_outro_tipo_continua_derrubando(monkeypatch, tmp_path):
+    def baixar(recurso, destino, **_):
+        resposta = requests.Response()
+        resposta.status_code = 500
+        raise requests.HTTPError(response=resposta)
+
+    monkeypatch.setattr(portal, "baixar", baixar)
+
+    with pytest.raises(requests.HTTPError):
+        portal.baixar_publicado("cpdc/202609", tmp_path / "a.zip", esperar=lambda _: None)
