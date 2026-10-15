@@ -70,7 +70,7 @@
   .rec { font-weight: 700; color: var(--realce); }
   nav.indice { margin: 0 0 24px; font-size: 14px; }
   nav.indice a { color: var(--realce); margin-right: 14px; white-space: nowrap; }
-  @media (max-width: 700px) { h1 { font-size: 26px; } }
+  @media (max-width: 700px) { h1 { font-size: 26px; } main > table { display: block; overflow-x: auto; } }
 </style>
 </head>
 <body>
@@ -87,6 +87,7 @@
     <a href="#cicd">CI e CD</a>
     <a href="#segredos">Segredos</a>
     <a href="#falta">O que falta decidir</a>
+    <a href="#roteiro">Roteiro do servidor</a>
   </nav>
 
   <figure>
@@ -270,29 +271,7 @@
   <p><strong>Coolify</strong> é o painel que sobe e derruba os containers no VPS: liga o repositório, cria a API, o site e o
     banco, guarda os segredos e publica cada versão nova. O Traefik vem com ele: não se instala nem se configura à parte, as
     rotas se definem no painel. (O Coolify também aceita o Caddy no lugar do Traefik; o padrão, e o plano, é o Traefik.)</p>
-  <p>Instalação, uma vez, no VPS recém-criado com Ubuntu LTS:</p>
-  <ol class="passos">
-    <li>Entrar no VPS por SSH com o usuário administrador.</li>
-    <li>Rodar o instalador oficial, que instala o Docker se faltar e sobe os containers do Coolify (painel, banco e cache dele, e o Traefik):
-      <pre>curl -fsSL https://cdn.coollabs.io/coolify/install.sh | sudo bash</pre></li>
-    <li>Abrir <code>http://IP-do-VPS:8000</code> e criar a conta de administrador <strong>logo em seguida</strong>: até ela existir, quem abrir o painel primeiro a cria.</li>
-  </ol>
-  <h3>O SSH vem ligado, mas não protegido</h3>
-  <p>O VPS da Hostinger nasce com o SSH aceitando senha e login como root, de qualquer lugar. Antes de instalar o Coolify:</p>
-  <ol class="passos">
-    <li>Gerar uma chave no computador do autor (<code>ssh-keygen -t ed25519</code>) e cadastrar a pública no painel da Hostinger ou no servidor.</li>
-    <li>Criar um usuário próprio com <code>sudo</code>, para não entrar como root.</li>
-    <li>Em <code>/etc/ssh/sshd_config</code>: <code>PasswordAuthentication no</code> e <code>PermitRootLogin no</code>; reiniciar o SSH.
-      Antes, testar numa segunda janela que a chave e o usuário novo entram.</li>
-    <li>Instalar o <code>fail2ban</code>, que bloqueia por um tempo o endereço que erra o login várias vezes.</li>
-  </ol>
-  <p><strong>Sem restrição por IP</strong> (decisão do autor, 2026-10-10): ele viaja, e uma regra presa ao IP de casa o trancaria
-    fora. Se a P88 escolher o túnel da Cloudflare, o SSH também pode passar por ele, com login pela Cloudflare, e a porta 22
-    fecha para a internet inteira, de qualquer lugar do mundo. O terminal no navegador, pelo painel da Hostinger, serve de saída
-    de emergência.</p>
-
-  <p>A Hostinger oferece, ao criar o VPS, modelos de sistema com aplicativos já instalados; vale conferir se o Coolify está
-    entre eles. Depois da instalação, o painel não deve ficar aberto à internet (P22).</p>
+  <p>O passo a passo, do VPS vazio ao painel aberto, está no <a href="#roteiro">Roteiro do servidor</a>, no fim desta página.</p>
 
   <h3>O painel do Coolify não fica exposto</h3>
   <p>O painel tem poder total sobre o servidor: sobe e apaga containers, lê todos os segredos e alcança o banco. Quem entrar
@@ -302,7 +281,7 @@
     <tbody>
       <tr><td><span class="rec">Sem endereço público</span><br><span class="pend">recomendada</span></td>
         <td>O painel não ganha domínio. O autor o abre por um túnel SSH e usa no próprio navegador:
-          <pre>ssh -L 8000:localhost:8000 usuario@IP-do-VPS</pre>e então <code>http://localhost:8000</code>.</td>
+          <pre>ssh coolify</pre>com o atalho do <a href="#roteiro">roteiro</a>, e então <code>http://localhost:8000</code>.</td>
         <td>O painel não existe para a internet. Só entra quem tem a chave SSH do autor.</td></tr>
       <tr><td>Atrás do Cloudflare Access</td>
         <td>Com o túnel da Cloudflare (P88), o painel ganha um endereço que pede login pela Cloudflare (e-mail e código) antes de chegar ao Coolify.</td>
@@ -378,6 +357,111 @@
       <tr><td class="pend">P88</td><td>Fechar o acesso direto ao VPS: túnel da Cloudflare (recomendado) ou firewall com os endereços da Cloudflare e o certificado de cliente.</td></tr>
     </tbody>
   </table>
+
+  <h2 id="roteiro">Roteiro do servidor</h2>
+  <p>Do VPS vazio ao painel do Coolify aberto pelo túnel, na ordem, e como conferir cada passo. Linhas com
+    <code>PS&gt;</code> rodam no PowerShell do computador do autor; as outras, no VPS.</p>
+
+  <div class="aviso risco">
+    <p><strong>Reinstalar o sistema do VPS apaga tudo:</strong> usuário, chaves cadastradas, configuração do SSH, fail2ban e o
+      que estiver instalado. E troca a impressão digital do servidor: o SSH do computador passa a recusar a conexão com o aviso
+      <code>REMOTE HOST IDENTIFICATION HAS CHANGED</code>. Depois de reinstalar, o roteiro recomeça do passo 2.</p>
+  </div>
+
+  <h3>1. Chave SSH, no computador do autor</h3>
+  <pre>PS&gt; ssh-keygen -t ed25519 -C "igor-notebook-hostinger"</pre>
+  <p>Saem dois arquivos em <code>C:\Users\igorl\.ssh\</code>. O <code>.pub</code> é a chave pública: uma linha que começa com
+    <code>ssh-ed25519</code> e pode ser mostrada a qualquer um. O sem extensão é a privada e nunca sai do computador. Uma
+    chave por computador: se um notebook se perder, apaga-se só a linha dele no servidor.</p>
+  <p>Na conexão, o servidor manda um desafio e o computador o assina com a privada; o servidor confere com a pública. A
+    chave privada não trafega pela rede.</p>
+
+  <h3>2. Criar ou reinstalar o VPS</h3>
+  <p>No hPanel, escolher o sistema e colar a linha inteira do <code>.pub</code> no campo de chave SSH. A Hostinger oferece
+    modelos com o Coolify já instalado. Um modelo com outro aplicativo atrapalha: um Traefik avulso, por exemplo, disputa as
+    portas 80 e 443 com o Traefik que o Coolify traz.</p>
+  <p>Se o servidor já existia, apagar a impressão digital antiga antes de conectar:</p>
+  <pre>PS&gt; ssh-keygen -R IP-do-VPS</pre>
+  <p>E conferir a nova pelo terminal do navegador do hPanel, que não depende do SSH. Ela tem de ser igual à que o SSH mostra
+    na primeira conexão:</p>
+  <pre>ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub</pre>
+
+  <h3>3. Primeira entrada, como root</h3>
+  <pre>PS&gt; ssh root@IP-do-VPS
+apt update &amp;&amp; apt upgrade -y</pre>
+  <p>Se pedir senha, a chave não foi aceita. Não insistir em senhas: entrar pelo terminal do navegador e colar a linha do
+    <code>.pub</code> em <code>/root/.ssh/authorized_keys</code>.</p>
+
+  <h3>4. Usuário próprio com a mesma chave</h3>
+  <pre>adduser igor
+usermod -aG sudo igor
+mkdir -p /home/igor/.ssh
+cp /root/.ssh/authorized_keys /home/igor/.ssh/
+chown -R igor:igor /home/igor/.ssh
+chmod 700 /home/igor/.ssh &amp;&amp; chmod 600 /home/igor/.ssh/authorized_keys</pre>
+  <p>A senha do <code>adduser</code> é a do <code>sudo</code>, não a do SSH. <strong>Conferir numa segunda janela, sem fechar a
+    primeira:</strong> <code>ssh igor@IP-do-VPS</code> entra sem pedir senha, e <code>sudo whoami</code> responde
+    <code>root</code>.</p>
+
+  <h3>5. Desligar o login de root e o login por senha</h3>
+  <pre>sudo nano /etc/ssh/sshd_config.d/99-endurecer.conf</pre>
+  <pre>PermitRootLogin no
+PasswordAuthentication no
+KbdInteractiveAuthentication no</pre>
+  <pre>sudo sshd -t &amp;&amp; sudo systemctl restart ssh</pre>
+  <p>O <code>sshd -t</code> recusa arquivo com erro antes de reiniciar. Conferir numa janela nova: <code>ssh igor@…</code>
+    entra e <code>ssh root@…</code> é recusado.</p>
+
+  <h3>6. fail2ban</h3>
+  <pre>sudo apt install -y fail2ban
+sudo systemctl enable --now fail2ban</pre>
+  <p>Bloqueia por um tempo o endereço que erra o login várias vezes. A configuração padrão já cobre o SSH.</p>
+
+  <h3>7. Firewall no painel da Hostinger</h3>
+  <p>No hPanel, em Segurança, Firewall: aceitar entrada só em TCP 22, 80 e 443. Usa-se o firewall do <strong>painel</strong>,
+    não o <code>ufw</code> do sistema: o Docker cria regras próprias e passa por cima do <code>ufw</code>, então uma porta
+    publicada por um container fica aberta mesmo com o <code>ufw</code> dizendo que não. O do painel fica fora da máquina.
+    Conferir de fora:</p>
+  <pre>PS&gt; Test-NetConnection IP-do-VPS -Port 22      # TcpTestSucceeded : True
+PS&gt; Test-NetConnection IP-do-VPS -Port 8000    # TcpTestSucceeded : False</pre>
+
+  <h3>8. Coolify</h3>
+  <p>Se o modelo do VPS já o trouxe, conferir que está de pé; se não, instalar:</p>
+  <pre>sudo docker ps
+curl -fsSL https://cdn.coollabs.io/coolify/install.sh | sudo bash</pre>
+  <p>O <code>docker ps</code> tem de listar <code>coolify</code>, <code>coolify-proxy</code> (o Traefik dele),
+    <code>coolify-db</code>, <code>coolify-redis</code> e <code>coolify-realtime</code>. Um Traefik que não seja o
+    <code>coolify-proxy</code> sai antes da instalação: <code>docker compose down</code> na pasta dele, ou
+    <code>docker rm -f</code> com o nome. O endereço <code>http://IP:8000</code> que o instalador mostra não abre, e não deve
+    abrir: a porta foi fechada no passo 7.</p>
+
+  <h3>9. O painel, pelo túnel SSH</h3>
+  <p>O túnel liga uma porta do computador do autor à mesma porta dentro do VPS, por dentro da conexão SSH. Para o servidor, o
+    acesso vem dele mesmo, então o firewall não participa, e só abre o túnel quem tem a chave. Em
+    <code>C:\Users\igorl\.ssh\config</code>:</p>
+  <pre>Host coolify
+    HostName IP-do-VPS
+    User igor
+    IdentityFile ~/.ssh/id_ed25519
+    LocalForward 8000 localhost:8000
+    LocalForward 6001 localhost:6001
+    LocalForward 6002 localhost:6002</pre>
+  <pre>PS&gt; ssh coolify</pre>
+  <p>Com essa janela aberta, o painel fica em <code>http://localhost:8000</code>. A 6001 leva as atualizações ao vivo do painel
+    (estado do deploy, logs) e a 6002 o terminal dele; só com a 8000, o painel abre mas não se atualiza sozinho.
+    <strong>Criar a conta de administrador logo em seguida</strong>: até ela existir, quem abrir o painel primeiro a cria.</p>
+
+  <h3>Mensagens que já apareceram</h3>
+  <table>
+    <thead><tr><th>Mensagem</th><th>Quer dizer</th></tr></thead>
+    <tbody>
+      <tr><td><code>REMOTE HOST IDENTIFICATION HAS CHANGED</code></td><td>O servidor tem impressão digital nova, por reinstalação. Conferir pelo terminal do navegador e rodar <code>ssh-keygen -R IP</code></td></tr>
+      <tr><td>Pede <code>password</code> depois de configurar a chave</td><td>A chave não foi aceita: usuário inexistente, chave não cadastrada nele, ou chave com outro nome de arquivo (<code>-i</code> ou <code>IdentityFile</code>). <code>ssh -v</code> mostra qual chave foi oferecida</td></tr>
+      <tr><td><code>channel N: open failed: connect failed: Connection refused</code></td><td>O túnel funciona, mas nada escuta naquela porta no VPS: o Coolify não está instalado ou ainda está subindo</td></tr>
+      <tr><td><code>bind: address already in use</code></td><td>A porta já está ocupada no computador do autor. Trocar o lado esquerdo (<code>LocalForward 9000 localhost:8000</code>) e abrir <code>localhost:9000</code></td></tr>
+    </tbody>
+  </table>
+  <p>Depois do painel: banco, API, site e <a href="#segredos">segredos</a> no Coolify, e a cópia do banco local (P87).</p>
 </main>
 </body>
 </html>
