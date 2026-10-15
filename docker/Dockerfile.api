@@ -12,6 +12,7 @@ RUN dotnet restore "src/Poligraph.Api/Poligraph.Api.csproj"
 COPY src/ src/
 RUN dotnet publish "src/Poligraph.Api/Poligraph.Api.csproj" \
     -c Release -o /app --no-restore
+RUN mkdir -p /chaves
 
 # ─── runtime ──────────────────────────────────────────────────────────
 # -chiseled: ~100 MB em vez de ~220 MB, e SEM shell.
@@ -20,6 +21,11 @@ RUN dotnet publish "src/Poligraph.Api/Poligraph.Api.csproj" \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled AS final
 WORKDIR /app
 COPY --from=build /app .
+
+# ATENÇÃO: a pasta nasce na imagem pertencendo ao usuário da API (1654, o APP_UID das imagens
+#    do .NET). Sem isso o volume novo é criado do root, e a API não grava as chaves
+#    ("Access to the path '/home/app/chaves/...' is denied"). MEDIDO no primeiro deploy, 2026-10-15.
+COPY --from=build --chown=1654:1654 /chaves /home/app/chaves
 
 USER $APP_UID
 # Pendência 30: as chaves do Data Protection ficam num volume persistente montado aqui.
