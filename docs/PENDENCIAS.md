@@ -1366,7 +1366,7 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 |---|---|
 | **Pendência 19** | Retenção do Prometheus (ex.: 90 dias) — sem limite ele enche o disco |
 | **Pendência 20** | 🔴 Destino do backup do Postgres. Plano (2026-10-15), adiado pelo autor: bucket `registroaberto-backups` no Cloudflare R2 (Automatic, Standard, regra de apagar com mais de 30 dias); token R2 só desse bucket, Object Read & Write; no Coolify, S3 Storage `Cloudflare R2` (região `auto`) e backup do banco `0 4 * * *`, 14 no S3 e 2 locais; testar a volta restaurando num Postgres temporário. O R2 cifra o que guarda (AES-256); o Coolify não cifra antes de enviar. ⚠️ Com e-mails em claro na base, o backup precisa ser **criptografado** no destino |
-| **Pendência 21** | Grafana público ou só por VPN/túnel |
+| **Pendência 21** | Decidida (2026-10-16): Grafana tudo em um (`grafana/otel-lgtm`) no compose, em `grafana.registroaberto.org`, pelo túnel e atrás do Cloudflare Access; a API manda logs, rastros e métricas, e a ETL, os logs, por OpenTelemetry. Falta subir, pela folha `infra/vps/grafana.md` |
 | **Pendência 22** | Resolvida (2026-10-15): painel em `painel.registroaberto.org`, pelo túnel da Cloudflare e atrás do Cloudflare Access (só o e-mail do autor); o túnel SSH (`infra/vps/ssh-config.exemplo`) fica de reserva |
 
 ---

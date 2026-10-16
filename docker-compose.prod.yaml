@@ -9,6 +9,7 @@
 #   VITE_GOOGLE_CLIENT_ID          o mesmo ID; entra na MONTAGEM do site (args), não no container
 #   VITE_CLARITY_ID                ID do projeto no Microsoft Clarity, também na montagem; vazio, sem Clarity
 #   POLIGRAPH_CHAVE_CPF            chave do HMAC do CPF, a MESMA do local: os cpf_hash copiados foram feitos com ela
+#   GRAFANA_SENHA_ADMIN            senha do usuário admin do Grafana; só vale na primeira subida, depois troca-se no Grafana
 #
 # A ETL fica parada (sleep) à espera das tarefas agendadas do Coolify, que rodam DENTRO de um
 # container de pé: `python -m poligraph_etl rotina --frequencia semanal` e `... mensal`. Ver
@@ -43,6 +44,9 @@ services:
       ConnectionStrings__poligraph: ${ConnectionStrings__poligraph}
       Google__ClientId: ${Google__ClientId}
       AllowedHosts: ${AllowedHosts:-registroaberto.org;www.registroaberto.org}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://observabilidade:4317
+      OTEL_SERVICE_NAME: poligraph-api
+      OTEL_RESOURCE_ATTRIBUTES: service.instance.id=api
     volumes:
       - chaves-da-sessao:/home/app/chaves
     networks:
@@ -64,6 +68,9 @@ services:
       ConnectionStrings__poligraph: ${ConnectionStrings__poligraph}
       Google__ClientId: ${Google__ClientId}
       AllowedHosts: ${AllowedHosts:-registroaberto.org;www.registroaberto.org}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://observabilidade:4317
+      OTEL_SERVICE_NAME: poligraph-api
+      OTEL_RESOURCE_ATTRIBUTES: service.instance.id=api2
     volumes:
       - chaves-da-sessao:/home/app/chaves
     networks:
@@ -82,6 +89,8 @@ services:
     environment:
       ConnectionStrings__poligraph: ${ConnectionStrings__poligraph}
       POLIGRAPH_CHAVE_CPF: ${POLIGRAPH_CHAVE_CPF}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://observabilidade:4318
+      OTEL_SERVICE_NAME: poligraph-etl
     volumes:
       - etl-cache:/cache
     networks:
@@ -90,6 +99,25 @@ services:
     depends_on:
       migrations:
         condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Logs, métricas e rastros da API no Grafana (decisão do autor, 2026-10-16; P21). Imagem tudo em um
+  # da Grafana: Grafana, Loki (logs), Tempo (rastros), Prometheus (métricas) e o coletor OpenTelemetry.
+  # A API já fala OpenTelemetry pelo ServiceDefaults; o envio liga com OTEL_EXPORTER_OTLP_ENDPOINT.
+  # ATENÇÃO: a Grafana descreve a imagem como para desenvolvimento, demonstração e teste. Serve ao
+  #   tamanho deste site; num site grande, cada peça roda separada. Pede ~2 GB, e o teto é esse.
+  # Nenhuma porta sai do container: o Grafana chega pelo túnel, atrás do Cloudflare Access.
+  observabilidade:
+    image: grafana/otel-lgtm:latest
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_SENHA_ADMIN}
+      GF_SERVER_ROOT_URL: https://grafana.registroaberto.org
+      PROMETHEUS_EXTRA_ARGS: "--storage.tsdb.retention.time=30d"
+      LOKI_EXTRA_ARGS: "-store.retention=30d -compactor.retention-enabled=true"
+    volumes:
+      - observabilidade-dados:/data
+    mem_limit: 2g
     restart: unless-stopped
 
   web:
@@ -107,6 +135,7 @@ services:
 volumes:
   chaves-da-sessao:
   etl-cache:
+  observabilidade-dados:
 
 networks:
   coolify:

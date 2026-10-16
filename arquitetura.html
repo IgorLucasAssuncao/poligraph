@@ -247,7 +247,7 @@
       <rect x="870" y="260" width="150" height="95" rx="3" fill="#24303d" stroke="#5c6977"/>
       <text class="tv" x="945" y="292" text-anchor="middle">Grafana</text>
       <text class="sv" x="945" y="312" text-anchor="middle">métricas</text>
-      <text class="dv" x="945" y="334" text-anchor="middle">acesso: P21</text>
+      <text class="dv" x="945" y="334" text-anchor="middle">atrás do Access</text>
 
       <path d="M655 340 C 678 340 676 188 693 188" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
       <path d="M655 325 C 672 325 664 124 690 124 H 945 V 133" stroke="var(--realce)" stroke-width="2" fill="none" marker-end="url(#seta)"/>
@@ -323,12 +323,12 @@
     <thead><tr><th>Peça</th><th>Na internet?</th><th>Como</th></tr></thead>
     <tbody>
       <tr><td>Site e API</td><td class="sim">Sim</td><td>Só pela Cloudflare, pelo túnel. A API, só pelo caminho <code>/api</code> do site</td></tr>
+      <tr><td>Grafana</td><td class="sim">Sim, trancado</td><td><code>grafana.registroaberto.org</code>, pelo túnel, atrás do mesmo Cloudflare Access do painel, e com a senha do Grafana</td></tr>
       <tr><td>Painel do Coolify</td><td class="sim">Sim, trancado</td><td><code>painel.registroaberto.org</code>, pelo túnel, atrás do Cloudflare Access: só o e-mail do autor passa</td></tr>
       <tr><td>SSH (porta 22)</td><td>Só para o autor</td><td>Direto, sem Cloudflare: só chave, sem senha, com fail2ban. Sem restrição de IP, porque o autor viaja</td></tr>
       <tr><td>Portas 80, 443 e 8000</td><td class="nao">Fechadas</td><td>Firewall da Hostinger. Quem souber o IP não chega a nada</td></tr>
       <tr><td>PostgreSQL</td><td class="nao">Nunca</td><td>Porta 5432 só dentro da rede do Docker</td></tr>
       <tr><td>Carga de dados</td><td class="nao">Não</td><td>Não recebe conexão; só sai para baixar das fontes</td></tr>
-      <tr><td>Grafana</td><td>A decidir</td><td>P21</td></tr>
     </tbody>
   </table></div>
 
@@ -341,7 +341,7 @@
       <tr><td class="pend">P88</td><td>Fechar o acesso direto ao VPS: túnel da Cloudflare, portas 80 e 443 fechadas</td><td><span class="estado feito">FEITO</span></td></tr>
       <tr><td class="pend">P87</td><td>Cópia do banco local. Faltam apagar as tabelas de usuários que vieram junto, o <code>conferir</code> em produção e a ETL agendada</td><td><span class="estado">EM PARTE</span></td></tr>
       <tr><td class="pend">P20</td><td>Backup do banco, para fora do VPS e criptografado</td><td><span class="estado">ABERTA</span></td></tr>
-      <tr><td class="pend">P21</td><td>Como se chega ao Grafana</td><td><span class="estado">ABERTA</span></td></tr>
+      <tr><td class="pend">P21</td><td>Grafana: imagem tudo em um no compose, atrás do Access; falta subir pela folha <code>infra/vps/grafana.md</code></td><td><span class="estado">EM PARTE</span></td></tr>
       <tr><td class="pend">P23</td><td>Os testes como portão do deploy: o CI publica as imagens no <code>ghcr.io</code> e só então chama o Coolify</td><td><span class="estado">ABERTA</span></td></tr>
       <tr><td class="pend">P86</td><td>Cache da API e limite de taxa na Cloudflare</td><td><span class="estado">ABERTA</span></td></tr>
     </tbody>
@@ -596,6 +596,7 @@ docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; 
       <tr><td><code>VITE_GOOGLE_CLIENT_ID</code></td><td>web, na montagem</td><td>O mesmo ID. Entra pelo <code>args</code> do compose, porque o Vite grava o valor nos arquivos do site ao montar</td></tr>
       <tr><td><code>VITE_CLARITY_ID</code></td><td>web, na montagem</td><td>O ID do projeto no Clarity. Vazio, o site sai sem Clarity</td></tr>
       <tr><td><code>AllowedHosts</code></td><td>api</td><td>Não se cria: vale o padrão do compose, <code>registroaberto.org;www.registroaberto.org</code></td></tr>
+      <tr><td><code>GRAFANA_SENHA_ADMIN</code></td><td>observabilidade</td><td>A senha do usuário <code>admin</code> do Grafana. Só vale na primeira subida; depois troca-se no próprio Grafana. Segredo</td></tr>
     </tbody>
   </table></div>
 
@@ -625,6 +626,7 @@ docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; 
     <li><code>api</code> e <code>api2</code>, duas cópias iguais da API (decisão do autor, 2026-10-15), sobem só depois de a migration terminar bem, com o mesmo volume <code>chaves-da-sessao</code>: as duas abrem o mesmo cookie de sessão.</li>
     <li><code>web</code> é o site, o único com domínio. O nginx dele divide o <code>/api/</code> entre as duas cópias e, se uma não responde em 2 segundos, manda para a outra.</li>
     <li><code>etl</code> é a carga de dados, parada (<code>sleep</code>) à espera das tarefas agendadas, com o cache no volume <code>etl-cache</code>.</li>
+    <li><code>observabilidade</code> é o Grafana tudo em um (Grafana, Loki, Tempo, Prometheus e o coletor OpenTelemetry), com os logs, rastros e métricas da API e os logs da ETL. Teto de 2 GB de memória; logs e métricas guardados por 30 dias. Passo a passo em <code>infra/vps/grafana.md</code>.</li>
   </ol>
   <p>O primeiro deploy leva vários minutos, porque o VPS monta o .NET, o site e a migration. Cada deploy processa os três
     serviços, com alguns segundos sem API: é a escolha para subir rápido (decisão do autor, 2026-10-15). Quando o CI publicar

@@ -31,7 +31,7 @@ from . import (
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
 from .fontes import brasilapi, camara, portal, receita, senado, tse
-from . import amostra, compras, compras_centralizadas, conferencia, convenentes, defesa_civil, limpeza, patrimonio, procedencia, redes, rotina, sancoes, viagens
+from . import amostra, compras, compras_centralizadas, conferencia, convenentes, defesa_civil, limpeza, patrimonio, procedencia, redes, rotina, sancoes, telemetria, viagens
 from .contratos import entrada
 from .contratos.entrada import colunas_da_fonte
 from .contratos.portal import (
@@ -345,6 +345,7 @@ def _configurar_log() -> None:
         format="%(asctime)s %(levelname)-7s %(message)s",
         stream=sys.stdout,
     )
+    telemetria.ligar_logs(logging.getLogger())
 
 
 def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
