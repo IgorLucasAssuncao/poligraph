@@ -125,7 +125,9 @@ instalar_coolify() {
 
 # Túnel da Cloudflare (P88): o conector abre uma conexão de saída até ela, e as visitas chegam por
 # ele ao Traefik na porta 80, sem as portas 80 e 443 abertas na internet. Fica no sistema, fora do
-# Coolify: se o Coolify cair, o túnel continua. Só roda com CLOUDFLARE_TUNNEL_TOKEN definido; o
+# Coolify: se o Coolify cair, o túnel continua.
+# ATENÇÃO: como serviço do systemd, e nunca "cloudflared tunnel run" no terminal: esse para quando o
+#   SSH fecha, e o site cai com o erro 1033 (2026-10-16). Restart=always o reinicia se cair. Só roda com CLOUDFLARE_TUNNEL_TOKEN definido; o
 # token é segredo, mostrado uma vez no painel Zero Trust, e não entra em arquivo nenhum.
 instalar_tunel() {
     etapa "7. Túnel da Cloudflare"
@@ -141,11 +143,20 @@ instalar_tunel() {
         apt-get update -q
         apt-get install -yq cloudflared
     fi
-    if systemctl is-active --quiet cloudflared; then
-        echo "o serviço já está rodando"
+    if [ -f /etc/systemd/system/cloudflared.service ]; then
+        echo "o serviço já está instalado"
     else
         cloudflared service install "$CLOUDFLARE_TUNNEL_TOKEN"
     fi
+    install -d /etc/systemd/system/cloudflared.service.d
+    cat > /etc/systemd/system/cloudflared.service.d/sempre.conf <<'CONF'
+[Service]
+Restart=always
+RestartSec=5
+CONF
+    systemctl daemon-reload
+    systemctl enable cloudflared
+    systemctl restart cloudflared
     systemctl --no-pager --lines=0 status cloudflared | head -3
 }
 

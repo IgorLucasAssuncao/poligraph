@@ -660,7 +660,17 @@ sudo dpkg -i /tmp/cf.deb &amp;&amp; rm /tmp/cf.deb
 T='o-token'
 sudo cloudflared service install "$T"
 systemctl status cloudflared --no-pager | head -3</pre>
-  <p>O túnel fica Healthy no painel. O <code>configurar-vps.sh</code> faz o mesmo com <code>CLOUDFLARE_TUNNEL_TOKEN</code>.</p>
+  <p><strong>Como serviço do sistema, sempre:</strong> o <code>service install</code> registra o conector no systemd, e ele
+    continua rodando com o SSH fechado e sobe sozinho quando o VPS liga. Rodar <code>cloudflared tunnel run</code> no
+    terminal prende o túnel à sessão: fechado o SSH, o site cai com o erro 1033. Para o sistema reiniciá-lo a cada queda:</p>
+  <pre>sudo mkdir -p /etc/systemd/system/cloudflared.service.d
+printf '[Service]
+Restart=always
+RestartSec=5
+' | sudo tee /etc/systemd/system/cloudflared.service.d/sempre.conf
+sudo systemctl daemon-reload &amp;&amp; sudo systemctl enable cloudflared &amp;&amp; sudo systemctl restart cloudflared
+systemctl is-enabled cloudflared; systemctl is-active cloudflared    # enabled, active</pre>
+  <p>O túnel fica Healthy no painel. O <code>configurar-vps.sh</code> faz tudo isso com <code>CLOUDFLARE_TUNNEL_TOKEN</code>.</p>
   <p><strong>As rotas</strong>, no túnel, Published application routes (antes, Public Hostname):</p>
   <div class="tabela"><table>
     <thead><tr><th>Subdomain</th><th>Domain</th><th>Path</th><th>Type</th><th>URL</th></tr></thead>
@@ -825,6 +835,7 @@ systemctl status cloudflared --no-pager | head -3</pre>
       <tr><td><code>Query refused</code>, <em>lame delegation</em></td><td>O domínio já aponta para a Cloudflare, mas a zona ainda não está ativa na conta</td><td>5</td></tr>
       <tr><td><code>ERR_SSL_VERSION_OR_CIPHER_MISMATCH</code></td><td>O certificado da Cloudflare para a zona ainda não tinha saído. Espera de minutos a horas</td><td>5</td></tr>
       <tr><td><code>404 page not found</code>, texto puro</td><td>Resposta do Traefik: nenhuma regra para aquele endereço. O domínio não foi salvo, ou falta o deploy</td><td>5</td></tr>
+      <tr><td>Erro 1033, <em>Cloudflare Tunnel error</em></td><td>O conector não está rodando. Se <code>systemctl enable cloudflared</code> diz que o serviço não existe, o túnel rodava preso a um terminal: instalar com <code>cloudflared service install</code> e <code>Restart=always</code></td><td>5</td></tr>
       <tr><td><code>Unable to locate package cloudflared</code></td><td>O repositório da Cloudflare não entrou no <code>apt</code>. Instalar pelo <code>.deb</code> oficial</td><td>5</td></tr>
       <tr><td>Erro 522 depois de fechar as portas</td><td>Os registros ainda eram <code>A</code> para o IP: a Cloudflare ia ao VPS direto, e não pelo túnel. Reabrir as portas, trocar por <code>CNAME</code> do túnel, e só então fechar</td><td>5</td></tr>
       <tr><td><code>An A, AAAA, or CNAME record with that host already exists</code></td><td>A rota do túnel não cria registro se já houver outro com o mesmo nome: apagar o antigo antes</td><td>5</td></tr>
