@@ -114,7 +114,9 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_SENHA_ADMIN}
       GF_SERVER_ROOT_URL: https://grafana.registroaberto.org
       PROMETHEUS_EXTRA_ARGS: "--storage.tsdb.retention.time=30d"
-      LOKI_EXTRA_ARGS: "-store.retention=30d -compactor.retention-enabled=true"
+      # ATENÇÃO: com a retenção ligada, o Loki 3 só sobe sabendo onde guardar os pedidos de apagar
+      #   (delete-request-store). Sem isso, "Loki exited before becoming ready" (2026-10-16).
+      LOKI_EXTRA_ARGS: "-store.retention=30d -compactor.retention-enabled=true -compactor.delete-request-store=filesystem"
     volumes:
       - observabilidade-dados:/data
     mem_limit: 2g
