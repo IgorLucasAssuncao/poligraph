@@ -96,6 +96,47 @@
   .rodape-etapa a { text-decoration: none; font-weight: 600; }
   .rodape-etapa a small { display: block; font-size: 12px; font-weight: 400; color: var(--suave); }
   .rodape-etapa .proxima { text-align: right; margin-left: auto; }
+
+  .demo-rede { padding: 12px; }
+  .painel-rede { margin-top: 10px; padding: 10px 12px; background: var(--fundo); border: 1px solid var(--borda); border-radius: var(--raio); font-size: 15px; }
+  .painel-rede h4 { margin: 0 0 6px; font-size: 16px; }
+  .painel-rede p { margin: 0 0 6px; }
+  .painel-rede p:last-child { margin-bottom: 0; }
+  .rn-sub { font-weight: 400; color: var(--suave); font-size: 13px; }
+  .dica-rede { color: var(--suave); }
+  .botoes-rede { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .botao-rede { font: 600 14px var(--texto-fonte); padding: 6px 10px; border: 1px solid var(--borda-forte); border-radius: var(--raio);
+                background: var(--fundo); color: var(--texto); cursor: pointer; }
+  .botao-rede code { font-size: 12px; }
+  .botao-rede:hover { border-color: var(--realce); }
+  .botao-rede[aria-pressed="true"] { background: var(--realce); border-color: var(--realce); color: var(--sobre-realce); }
+  .botao-rede:disabled { opacity: .5; cursor: default; }
+  .rn-vps { fill: var(--painel); stroke: var(--borda-forte); stroke-dasharray: 6 4; }
+  .rn-host { fill: var(--externo); stroke: var(--borda-forte); }
+  .rn-caixa { fill: var(--fundo); stroke: var(--borda-forte); stroke-width: 1.5; transition: opacity 160ms, stroke 160ms; }
+  .rn-caixa.ativa { stroke: var(--realce); stroke-width: 3.5; }
+  .rn-caixa.passou { stroke: var(--realce); stroke-width: 1.5; }
+  .rn-caixa.alcanca { stroke: var(--realce); stroke-width: 2; stroke-dasharray: 5 3; }
+  .rn-caixa.apagada { opacity: .35; }
+  .rn-caixa.erro { stroke: var(--perigo); stroke-width: 3; }
+  .rn-container { cursor: pointer; }
+  .rn-container:focus-visible { outline: none; }
+  .rn-container:focus-visible .rn-caixa { stroke: var(--realce); stroke-width: 3.5; }
+  .rn-t { fill: var(--texto); font: 700 14px var(--texto-fonte); }
+  .rn-s { fill: var(--suave); font: 12px var(--dado); }
+  .erro-texto { fill: var(--perigo); }
+  .rn-rede { stroke-width: 6; stroke-linecap: round; }
+  .rn-rede.app, .rn-liga.app { stroke: var(--realce); }
+  .rn-rede.coolify, .rn-liga.coolify { stroke: #5b8fc4; }
+  .rn-liga { stroke-width: 2; transition: opacity 160ms; }
+  .rn-liga.apagada { opacity: .12; }
+  .rn-seta { stroke: var(--borda-forte); stroke-width: 2; fill: none; }
+  .rn-salto { stroke: var(--borda); stroke-width: 2; fill: none; }
+  .rn-salto.usado { stroke: var(--realce); stroke-width: 3; }
+  .rn-salto.erro { stroke: var(--perigo); stroke-width: 3; stroke-dasharray: 5 4; }
+  .rn-firewall { fill: var(--perigo); opacity: .85; }
+  .rn-x { fill: var(--fundo); stroke: var(--perigo); stroke-width: 2; }
+  .rn-x-traco { stroke: var(--perigo); stroke-width: 2; }
   @media (max-width: 700px) { h1 { font-size: 26px; } h2 { font-size: 21px; } }
   @media print {
     nav.etapas, .rodape-etapa { display: none; }
@@ -119,6 +160,7 @@
     <a href="#google"><small>6</small>Google e Clarity</a>
     <a href="#entrega"><small>7</small>Entrega e segredos</a>
     <a href="#erros"><small>8</small>Erros que apareceram</a>
+    <a href="#rede"><small>9</small>Rede e portas</a>
   </nav>
 
   <!-- ═══════════════════════════════════════════════════════════ 0 -->
@@ -274,6 +316,7 @@
     </tbody>
   </table></div>
   <p>Visita por <code>http://</code> não chega nem ao túnel: a Cloudflare responde "vá para <code>https://</code>" (Always Use HTTPS).</p>
+  <p>Como os containers se encontram por dentro (redes, IPs, portas, o DNS interno), com demonstrações: <a href="#rede">etapa 9, Rede e portas</a>.</p>
 
   <h3 id="exposto">O que fica exposto</h3>
   <div class="tabela"><table>
@@ -844,6 +887,119 @@ systemctl is-enabled cloudflared; systemctl is-active cloudflared    # enabled, 
     </tbody>
   </table></div>
   </section>
+
+  <!-- ═══════════════════════════════════════════════════════════ 9 -->
+  <section class="etapa" id="rede" aria-labelledby="titulo-rede">
+  <h2 id="titulo-rede">9. Rede e portas</h2>
+  <p>Como os containers se encontram dentro do VPS, por que duas cópias da API usam a mesma porta sem conflito, e o que decide
+    se um container ocupa uma porta da máquina. Os IPs abaixo são exemplos: o Docker sorteia os de verdade a cada deploy, e
+    no fim da página estão os comandos para vê-los.</p>
+
+  <h3>A ideia em uma frase</h3>
+  <p>Dentro do VPS, o Docker monta redes de computador <strong>de software</strong>: cada rede é um switch virtual, cada
+    container é como um computador ligado a ela, com <strong>IP próprio</strong>. Uma conexão é sempre IP mais porta; com IPs
+    diferentes, a mesma porta 8080 em dois containers são dois destinos diferentes, como dois apartamentos de número 8080 em
+    prédios diferentes.</p>
+
+  <h3 id="rede-mapa">O mapa das redes</h3>
+  <p>Clique num container para ver as redes dele, os IPs, a porta e com quem ele consegue conversar.</p>
+  <figure class="demo-rede">
+    <svg id="mapa-rede" viewBox="0 0 1000 600" role="img" aria-labelledby="mapa-rede-titulo">
+      <title id="mapa-rede-titulo">As duas redes do Docker dentro do VPS e os containers ligados a cada uma</title>
+    </svg>
+    <div class="painel-rede" id="painel-rede" aria-live="polite">
+      <p class="dica-rede">Nenhum container escolhido. Clique numa caixa do desenho.</p>
+    </div>
+    <figcaption>Linha cheia: o container está ligado àquela rede. Containers na mesma rede conversam; em redes diferentes, não se
+      enxergam. A API e a ETL estão nas duas: na da aplicação, para o site chegar a elas, e na do Coolify, para elas chegarem ao banco.</figcaption>
+  </figure>
+
+  <div class="tabela"><table>
+    <thead><tr><th>Peça da rede</th><th>O que é</th><th>No VPS</th></tr></thead>
+    <tbody>
+      <tr><td>Switch virtual (<em>bridge</em>)</td><td>Cada rede do Docker é um switch de software. Quem está ligado a ele conversa; quem não está, não enxerga</td><td>Duas: a da aplicação, criada pelo compose, e a <code>coolify</code>, onde ficam o banco e o Traefik</td></tr>
+      <tr><td>Placa de rede virtual (<em>veth</em>)</td><td>Cada container ganha uma por rede, com um IP da faixa daquela rede</td><td>A API, ligada às duas redes, tem duas placas e dois IPs</td></tr>
+      <tr><td>DNS interno (<code>127.0.0.11</code>)</td><td>Traduz o nome do serviço no IP do container, como o DNS da internet faz com os domínios</td><td>Por isso o nginx escreve <code>api:8080</code>, e não um número: o IP muda a cada deploy, o nome não</td></tr>
+      <tr><td>Saída para a internet (<em>NAT</em>)</td><td>O container sai "emprestando" o IP do VPS; a resposta volta pelo mesmo caminho</td><td>É assim que a ETL baixa os arquivos das fontes</td></tr>
+      <tr><td>Porta publicada (<code>ports:</code>)</td><td>Liga uma porta da máquina a uma porta do container</td><td>Só o Traefik (80) e o painel do Coolify (8000, 6001, 6002). Nenhum container da aplicação</td></tr>
+    </tbody>
+  </table></div>
+  <p>Quem decide as redes e quem entra em cada uma é o <code>docker-compose.prod.yaml</code>: os serviços com
+    <code>networks: [default, coolify]</code> ficam nas duas, os sem <code>networks</code> só na da aplicação.</p>
+
+  <h3 id="rede-caminho">O caminho de um request</h3>
+  <p>Escolha o que o visitante pede e avance passo a passo. Repare que, nos pedidos à API, as duas cópias se revezam
+    (<em>round robin</em>): rode duas vezes seguidas.</p>
+  <figure class="demo-rede">
+    <div class="botoes-rede" role="group" aria-label="Simulação de um request">
+      <button type="button" class="botao-rede" data-pedido="pagina">Pedir a página /parlamentares</button>
+      <button type="button" class="botao-rede" data-pedido="api">Pedir /api/parlamentares</button>
+      <button type="button" class="botao-rede" id="caminho-proximo" disabled>Próximo passo</button>
+    </div>
+    <svg id="caminho-rede" viewBox="0 0 1000 250" role="img" aria-labelledby="caminho-rede-titulo">
+      <title id="caminho-rede-titulo">Os saltos de um request, do navegador ao banco</title>
+    </svg>
+    <div class="painel-rede" id="caminho-texto" aria-live="polite">
+      <p class="dica-rede">Escolha um dos pedidos acima.</p>
+    </div>
+  </figure>
+
+  <h3 id="rede-dns">O DNS interno</h3>
+  <p>Dentro de um container da rede da aplicação, um nome vira um IP antes de qualquer conexão. Pergunte:</p>
+  <figure class="demo-rede">
+    <div class="botoes-rede" role="group" aria-label="Perguntas ao DNS interno">
+      <button type="button" class="botao-rede" data-dns="api">api</button>
+      <button type="button" class="botao-rede" data-dns="api2">api2</button>
+      <button type="button" class="botao-rede" data-dns="web">web</button>
+      <button type="button" class="botao-rede" data-dns="banco">akl1sa3l… (o banco)</button>
+      <button type="button" class="botao-rede" data-dns="externo">portaldatransparencia.gov.br</button>
+    </div>
+    <svg id="dns-rede" viewBox="0 0 1000 170" role="img" aria-labelledby="dns-rede-titulo">
+      <title id="dns-rede-titulo">A pergunta ao DNS interno do Docker e a resposta</title>
+    </svg>
+    <div class="painel-rede" id="dns-texto" aria-live="polite"><p class="dica-rede">Escolha um nome.</p></div>
+  </figure>
+
+  <h3 id="rede-portas">Publicar uma porta no VPS</h3>
+  <p>Um container só ocupa uma porta da máquina se o compose mandar, com <code>ports:</code>. Experimente:</p>
+  <figure class="demo-rede">
+    <div class="botoes-rede" role="group" aria-label="Simulação de portas publicadas">
+      <button type="button" class="botao-rede" data-porta="publicar">Publicar <code>5000:8080</code> num serviço novo</button>
+      <button type="button" class="botao-rede" data-porta="repetir">Outro serviço, também na 5000</button>
+      <button type="button" class="botao-rede" data-porta="internet">Alguém da internet chama a 5000</button>
+      <button type="button" class="botao-rede" data-porta="limpar">Do começo</button>
+    </div>
+    <svg id="portas-rede" viewBox="0 0 1000 260" role="img" aria-labelledby="portas-rede-titulo">
+      <title id="portas-rede-titulo">As portas da máquina, as dos containers e o firewall</title>
+    </svg>
+    <div class="painel-rede" id="portas-texto" aria-live="polite"><p class="dica-rede">Escolha uma ação.</p></div>
+  </figure>
+  <pre># sem ports: o container só existe na rede interna (todos os da aplicação)
+api:
+  build: …
+
+# com ports: a porta 5000 do VPS passa a levar à 8080 deste container
+servico-novo:
+  ports:
+    - "5000:8080"</pre>
+  <div class="aviso risco">
+    <p><strong>Por que o firewall é o do painel da Hostinger, e não o do Ubuntu:</strong> ao publicar uma porta, o Docker cria
+      regras próprias no sistema que passam por cima do <code>ufw</code>. Um <code>ports:</code> esquecido ficaria aberto para a
+      internet com o <code>ufw</code> dizendo que não. O firewall do painel fica fora da máquina, e o Docker não o alcança.</p>
+  </div>
+
+  <h3 id="rede-comandos">Para ver os de verdade, no VPS</h3>
+  <p>As portas de cada container. Seta (<code>0.0.0.0:80-&gt;80/tcp</code>) quer dizer publicada no VPS; sem seta
+    (<code>8080/tcp</code>), só dentro da rede:</p>
+  <pre>docker ps --format 'table {{.Names}}\t{{.Ports}}'</pre>
+  <p>As redes, e os IPs de um container em cada uma:</p>
+  <pre>docker network ls
+docker inspect $(docker ps -q --filter "name=api-") --format '{{range $rede, $c := .NetworkSettings.Networks}}{{$rede}}: {{$c.IPAddress}}{{"\n"}}{{end}}'</pre>
+  <p>O que o DNS interno responde, de dentro de um container:</p>
+  <pre>docker exec $(docker ps -q --filter "name=etl-") getent hosts api api2</pre>
+  <p>Quem ocupa cada porta da máquina:</p>
+  <pre>sudo ss -tlnp</pre>
+  </section>
 </main>
 
 <script>
@@ -892,6 +1048,283 @@ systemctl is-enabled cloudflared; systemctl is-active cloudflared    # enabled, 
   }
   window.addEventListener("hashchange", abrir);
   abrir();
+})();
+</script>
+<script>
+"use strict";
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, pai, texto) {
+    var e = document.createElementNS(NS, tag);
+    Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+    if (texto !== undefined) e.textContent = texto;
+    if (pai) pai.appendChild(e);
+    return e;
+  }
+  function html(alvo, conteudo) { document.getElementById(alvo).innerHTML = conteudo; }
+
+  var REDE_NOMES = { app: "rede da aplicação", coolify: "rede coolify" };
+  var CONTAINERS = {
+    traefik: { nome: "Traefik", sub: "coolify-proxy", x: 260, y: 230, redes: { app: "10.0.1.2", coolify: "10.0.0.2" },
+      porta: "80, <strong>publicada no VPS</strong>", papel: "Recebe todas as visitas na porta 80 da máquina e manda para o container certo pelo endereço pedido. Está nas duas redes para alcançar o site e o painel." },
+    web: { nome: "web", sub: "nginx do site", x: 375, y: 230, redes: { app: "10.0.1.4" },
+      porta: "8080, só dentro da rede", papel: "Entrega os arquivos do site e repassa o /api/ às duas cópias da API. Não está na rede coolify: não enxerga o banco, e nem precisa." },
+    api: { nome: "api", sub: "cópia 1", x: 490, y: 230, redes: { app: "10.0.1.5", coolify: "10.0.0.5" },
+      porta: "8080, só dentro da rede", papel: "Primeira cópia da API. Na rede da aplicação, recebe o que o nginx repassa; na coolify, alcança o banco." },
+    api2: { nome: "api2", sub: "cópia 2", x: 605, y: 230, redes: { app: "10.0.1.6", coolify: "10.0.0.6" },
+      porta: "8080, só dentro da rede", papel: "Segunda cópia, igual à primeira. Mesma porta 8080, outro IP: não há conflito." },
+    etl: { nome: "etl", sub: "a carga", x: 720, y: 230, redes: { app: "10.0.1.7", coolify: "10.0.0.7" },
+      porta: "nenhuma: não recebe conexão", papel: "Fica parada até a tarefa agendada. Grava no banco pela rede coolify e sai para a internet (NAT) para baixar das fontes." },
+    migrations: { nome: "migrations", sub: "roda e sai", x: 835, y: 230, redes: { app: "10.0.1.8", coolify: "10.0.0.8" },
+      porta: "nenhuma: não recebe conexão", papel: "Aplica as migrations no banco a cada deploy e termina. As APIs só sobem depois dela." },
+    coolify: { nome: "Coolify", sub: "o painel", x: 375, y: 495, redes: { coolify: "10.0.0.4" },
+      porta: "8080 dentro; <strong>publicada como 8000 no VPS</strong>", papel: "O painel. A porta 8000 da máquina leva a ele (pelo túnel SSH); o subdomínio painel chega pelo Traefik." },
+    banco: { nome: "PostgreSQL", sub: "akl1sa3l…", x: 520, y: 495, redes: { coolify: "10.0.0.3" },
+      porta: "5432, só na rede coolify", papel: "O banco. Só quem está na rede coolify chega a ele: as APIs, a ETL, a migration e o Traefik. O site e a internet, não." }
+  };
+  var LARGURA = 100, ALTURA = 85;
+  var mapa = document.getElementById("mapa-rede");
+  if (mapa) {
+    el("rect", { x: 10, y: 10, width: 980, height: 580, rx: 4, class: "rn-vps" }, mapa);
+    el("text", { x: 30, y: 40, class: "rn-t" }, mapa, "VPS · IP público 179.197.73.102");
+    el("text", { x: 30, y: 58, class: "rn-s" }, mapa, "tudo abaixo existe dentro desta máquina");
+
+    var hospedes = [
+      { y: 90, t: "porta 22", s: "SSH (sistema)" },
+      { y: 175, t: "cloudflared", s: "serviço do sistema" },
+      { y: 280, t: "porta 80", s: "publicada: Traefik" },
+      { y: 495, t: "porta 8000", s: "publicada: Coolify" }
+    ];
+    hospedes.forEach(function (h) {
+      el("rect", { x: 30, y: h.y, width: 170, height: 60, rx: 3, class: "rn-host" }, mapa);
+      el("text", { x: 115, y: h.y + 26, "text-anchor": "middle", class: "rn-t" }, mapa, h.t);
+      el("text", { x: 115, y: h.y + 45, "text-anchor": "middle", class: "rn-s" }, mapa, h.s);
+    });
+    el("path", { d: "M115 235 V 273", class: "rn-seta" }, mapa);
+    el("text", { x: 122, y: 260, class: "rn-s" }, mapa, "localhost:80");
+    el("path", { d: "M200 310 H 253", class: "rn-seta" }, mapa);
+    el("path", { d: "M200 525 H 368", class: "rn-seta" }, mapa);
+
+    el("line", { x1: 250, y1: 110, x2: 975, y2: 110, class: "rn-rede app" }, mapa);
+    el("text", { x: 975, y: 98, "text-anchor": "end", class: "rn-s" }, mapa, "rede da aplicação · switch virtual · 10.0.1.0/24");
+    el("line", { x1: 250, y1: 465, x2: 975, y2: 465, class: "rn-rede coolify" }, mapa);
+    el("text", { x: 975, y: 485, "text-anchor": "end", class: "rn-s" }, mapa, "rede coolify · switch virtual · 10.0.0.0/24");
+
+    var ligacoes = [];
+    var caixas = {};
+    Object.keys(CONTAINERS).forEach(function (id) {
+      var c = CONTAINERS[id], cx = c.x + LARGURA / 2;
+      if (c.redes.app) {
+        ligacoes.push({ id: id, rede: "app", e: el("line", { x1: cx, y1: 110, x2: cx, y2: c.y, class: "rn-liga app" }, mapa) });
+        el("text", { x: cx + 5, y: 150, class: "rn-s" }, mapa, c.redes.app);
+      }
+      if (c.redes.coolify) {
+        var acima = c.y < 465;
+        var y1 = acima ? c.y + ALTURA : 465, y2 = acima ? 465 : c.y;
+        ligacoes.push({ id: id, rede: "coolify", e: el("line", { x1: cx, y1: y1, x2: cx, y2: y2, class: "rn-liga coolify" }, mapa) });
+        el("text", { x: cx + 5, y: acima ? 420 : 487, class: "rn-s" }, mapa, c.redes.coolify);
+      }
+      var g = el("g", { class: "rn-container", tabindex: 0, role: "button", "aria-label": c.nome + ", " + c.sub }, mapa);
+      caixas[id] = el("rect", { x: c.x, y: c.y, width: LARGURA, height: ALTURA, rx: 3, class: "rn-caixa" }, g);
+      el("text", { x: cx, y: c.y + 36, "text-anchor": "middle", class: "rn-t" }, g, c.nome);
+      el("text", { x: cx, y: c.y + 56, "text-anchor": "middle", class: "rn-s" }, g, c.sub);
+      el("text", { x: cx, y: c.y + 73, "text-anchor": "middle", class: "rn-s" }, g, ":" + (c.porta.match(/^\d+/) || ["—"])[0]);
+      var escolher = function () { escolherContainer(id); };
+      g.addEventListener("click", escolher);
+      g.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); escolher(); } });
+    });
+
+    var escolhido = null;
+    function alcanca(a, b) {
+      return Object.keys(CONTAINERS[a].redes).some(function (r) { return CONTAINERS[b].redes[r]; });
+    }
+    function escolherContainer(id) {
+      escolhido = escolhido === id ? null : id;
+      Object.keys(caixas).forEach(function (k) {
+        var cl = "rn-caixa";
+        if (escolhido) cl += k === escolhido ? " ativa" : alcanca(escolhido, k) ? " alcanca" : " apagada";
+        caixas[k].setAttribute("class", cl);
+      });
+      ligacoes.forEach(function (l) {
+        var acesa = !escolhido || CONTAINERS[escolhido].redes[l.rede];
+        l.e.setAttribute("class", "rn-liga " + l.rede + (acesa ? "" : " apagada"));
+      });
+      if (!escolhido) { html("painel-rede", '<p class="dica-rede">Nenhum container escolhido. Clique numa caixa do desenho.</p>'); return; }
+      var c = CONTAINERS[escolhido];
+      var redes = Object.keys(c.redes).map(function (r) { return REDE_NOMES[r] + ": <code>" + c.redes[r] + "</code>"; }).join(" · ");
+      var fala = Object.keys(CONTAINERS).filter(function (k) { return k !== escolhido && alcanca(escolhido, k); })
+        .map(function (k) { return CONTAINERS[k].nome; });
+      var nao = Object.keys(CONTAINERS).filter(function (k) { return k !== escolhido && !alcanca(escolhido, k); })
+        .map(function (k) { return CONTAINERS[k].nome; });
+      html("painel-rede",
+        "<h4>" + c.nome + " <span class=\"rn-sub\">" + c.sub + "</span></h4>" +
+        "<p>" + c.papel + "</p>" +
+        "<p><strong>IPs:</strong> " + redes + "</p>" +
+        "<p><strong>Porta:</strong> " + c.porta + "</p>" +
+        "<p><strong>Conversa com:</strong> " + (fala.join(", ") || "ninguém") + "</p>" +
+        (nao.length ? "<p><strong>Não enxerga:</strong> " + nao.join(", ") + "</p>" : ""));
+    }
+  }
+
+  var NOS = [
+    { id: "visitante", t: "Navegador", s: "o visitante", x: 10, y: 95 },
+    { id: "cloudflare", t: "Cloudflare", s: "HTTPS · 443", x: 135, y: 95 },
+    { id: "tunel", t: "Túnel", s: "saída 7844", x: 260, y: 95 },
+    { id: "cloudflared", t: "cloudflared", s: "no VPS", x: 385, y: 95 },
+    { id: "traefik", t: "Traefik", s: "VPS · porta 80", x: 510, y: 95 },
+    { id: "web", t: "web", s: "10.0.1.4:8080", x: 635, y: 95 },
+    { id: "api", t: "api", s: "10.0.1.5:8080", x: 760, y: 30 },
+    { id: "api2", t: "api2", s: "10.0.1.6:8080", x: 760, y: 160 },
+    { id: "banco", t: "banco", s: "10.0.0.3:5432", x: 885, y: 95 }
+  ];
+  var LN = 105, AN = 60;
+  var caminho = document.getElementById("caminho-rede");
+  var noEl = {}, setas = {};
+  function centro(id) { var n = NOS.filter(function (x) { return x.id === id; })[0]; return { x: n.x + LN / 2, y: n.y + AN / 2, n: n }; }
+  if (caminho) {
+    [["visitante", "cloudflare"], ["cloudflare", "tunel"], ["tunel", "cloudflared"], ["cloudflared", "traefik"], ["traefik", "web"],
+     ["web", "api"], ["web", "api2"], ["api", "banco"], ["api2", "banco"]].forEach(function (par) {
+      var a = centro(par[0]), b = centro(par[1]);
+      setas[par.join(">")] = el("line", { x1: a.n.x + LN, y1: a.y, x2: b.n.x, y2: b.y, class: "rn-salto" }, caminho);
+    });
+    NOS.forEach(function (n) {
+      var g = el("g", {}, caminho);
+      noEl[n.id] = el("rect", { x: n.x, y: n.y, width: LN, height: AN, rx: 3, class: "rn-caixa" }, g);
+      el("text", { x: n.x + LN / 2, y: n.y + 26, "text-anchor": "middle", class: "rn-t" }, g, n.t);
+      el("text", { x: n.x + LN / 2, y: n.y + 45, "text-anchor": "middle", class: "rn-s" }, g, n.s);
+    });
+  }
+  var vezDaApi = 0, passos = [], passo = -1;
+  function montarPassos(tipo) {
+    var base = [
+      { no: "visitante", txt: "O navegador quer <code>https://registroaberto.org" + (tipo === "api" ? "/api/parlamentares" : "/parlamentares") + "</code>. O DNS da internet responde com um IP <strong>da Cloudflare</strong>: o do VPS não aparece em lugar nenhum." },
+      { no: "cloudflare", de: "visitante", txt: "A conexão chega à Cloudflare, na porta 443. Ela abre o HTTPS com o certificado dela, confere o cache e a proteção, e vê no DNS que o domínio mora no túnel <code>2c8176d6…</code>." },
+      { no: "tunel", de: "cloudflare", txt: "A Cloudflare <strong>não abre conexão nova</strong> com o VPS: usa uma das que o cloudflared abriu de dentro, saindo pela porta 7844. A visita viaja como um canal dentro dessa conexão." },
+      { no: "cloudflared", de: "tunel", txt: "O cloudflared, serviço do Ubuntu, recebe a visita e a entrega em <code>localhost:80</code>, a porta da própria máquina. Nenhuma porta foi aberta para a internet." },
+      { no: "traefik", de: "cloudflared", txt: "O Traefik escuta a porta 80 do VPS (é o único container com porta publicada). Lê o endereço pedido, <code>registroaberto.org</code>, e acha a regra do site: container <code>web</code>, porta 8080. Pela rede da aplicação, o DNS interno traduz <code>web</code> em <code>10.0.1.4</code>." },
+      { no: "web", de: "traefik", txt: "" }
+    ];
+    if (tipo === "pagina") {
+      base[5].txt = "O nginx, em <code>10.0.1.4:8080</code>, vê que <code>/parlamentares</code> não é arquivo e devolve o <code>index.html</code>. A resposta volta pelo mesmo caminho: nginx → Traefik → cloudflared → túnel → Cloudflare → navegador. O React monta a tela.";
+      base[5].fim = true;
+      return base;
+    }
+    var copia = vezDaApi % 2 === 0 ? "api" : "api2";
+    var ip = copia === "api" ? "10.0.1.5" : "10.0.1.6";
+    vezDaApi++;
+    base[5].txt = "O nginx, em <code>10.0.1.4:8080</code>, vê que o caminho começa com <code>/api/</code> e repassa à lista <code>apis</code>. Em revezamento (round robin), agora é a vez da <strong>" + copia + "</strong>.";
+    base.push({ no: copia, de: "web", txt: "O DNS interno traduz <code>" + copia + "</code> em <code>" + ip + "</code>, e o nginx conecta em <code>" + ip + ":8080</code>. A outra cópia escuta a <strong>mesma porta 8080</strong>, mas em outro IP: não há conflito. A API confere o endereço pedido (AllowedHosts)." });
+    base.push({ no: "banco", de: copia, fim: true, txt: "A " + copia + " consulta o banco <strong>pela outra placa de rede</strong>, a da rede coolify: o nome <code>akl1sa3l…</code> vira <code>10.0.0.3</code>, porta 5432. O JSON volta: banco → " + copia + " → nginx → Traefik → cloudflared → túnel → Cloudflare → navegador." });
+    return base;
+  }
+  function desenharPasso() {
+    var ativos = passos.slice(0, passo + 1).map(function (p) { return p.no; });
+    Object.keys(noEl).forEach(function (id) {
+      var i = ativos.indexOf(id);
+      noEl[id].setAttribute("class", "rn-caixa" + (i === ativos.length - 1 ? " ativa" : i >= 0 ? " passou" : passos.length ? " apagada" : ""));
+    });
+    Object.keys(setas).forEach(function (k) {
+      var usado = passos.slice(1, passo + 1).some(function (p) { return p.de + ">" + p.no === k; });
+      setas[k].setAttribute("class", "rn-salto" + (usado ? " usado" : ""));
+    });
+    var p = passos[passo];
+    html("caminho-texto", "<p><strong>Passo " + (passo + 1) + " de " + passos.length + ".</strong> " + p.txt + "</p>");
+    document.getElementById("caminho-proximo").disabled = !!p.fim;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("[data-pedido]"), function (b) {
+    b.addEventListener("click", function () {
+      passos = montarPassos(b.getAttribute("data-pedido"));
+      passo = 0;
+      desenharPasso();
+    });
+  });
+  var proximo = document.getElementById("caminho-proximo");
+  if (proximo) proximo.addEventListener("click", function () { if (passo < passos.length - 1) { passo++; desenharPasso(); } });
+
+  var dns = document.getElementById("dns-rede");
+  var RESPOSTAS = {
+    api: { ip: "10.0.1.5", txt: "<code>api</code> é um serviço da rede da aplicação: o DNS interno responde na hora com o IP do container. Se ele for recriado num deploy, o IP muda, e a resposta muda junto. Por isso ninguém escreve o número." },
+    api2: { ip: "10.0.1.6", txt: "Outro serviço, outro IP. Os dois ouvem a porta 8080; quem pergunta por nome recebe o endereço certo." },
+    web: { ip: "10.0.1.4", txt: "O site. É o nome que o Traefik usa para entregar as visitas." },
+    banco: { ip: "não encontrado", erro: true, txt: "Perguntando <strong>de dentro do web</strong>, o banco não existe: ele está só na rede coolify, e o web, só na da aplicação. Perguntando de dentro da api, que está nas duas, a resposta seria <code>10.0.0.3</code>. É o isolamento das redes funcionando." },
+    externo: { ip: "IP público do governo", txt: "O DNS interno não conhece esse nome e repassa a pergunta ao DNS de verdade, fora do VPS. A conexão sai pelo IP do VPS (NAT), e a resposta volta pelo mesmo caminho. É assim que a ETL baixa os arquivos." }
+  };
+  function perguntar(nome) {
+    if (!dns) return;
+    while (dns.lastChild && dns.lastChild.nodeName !== "title") dns.removeChild(dns.lastChild);
+    var r = RESPOSTAS[nome];
+    var rotulo = { api: "api", api2: "api2", web: "web", banco: "akl1sa3l…", externo: "portaldatransparencia.gov.br" }[nome];
+    [[20, "container web", "quem pergunta"], [390, "DNS interno", "127.0.0.11"], [760, r.ip, "resposta"]].forEach(function (b, i) {
+      el("rect", { x: b[0], y: 50, width: 220, height: 70, rx: 3, class: "rn-caixa" + (i === 2 ? (r.erro ? " erro" : " ativa") : "") }, dns);
+      el("text", { x: b[0] + 110, y: 82, "text-anchor": "middle", class: "rn-t" }, dns, b[1]);
+      el("text", { x: b[0] + 110, y: 102, "text-anchor": "middle", class: "rn-s" }, dns, b[2]);
+    });
+    el("line", { x1: 240, y1: 85, x2: 383, y2: 85, class: "rn-salto usado" }, dns);
+    el("text", { x: 312, y: 75, "text-anchor": "middle", class: "rn-s" }, dns, "quem é " + rotulo + "?");
+    el("line", { x1: 610, y1: 85, x2: 753, y2: 85, class: "rn-salto usado" + (r.erro ? " erro" : "") }, dns);
+    html("dns-texto", "<p>" + r.txt + "</p>");
+    Array.prototype.forEach.call(document.querySelectorAll("[data-dns]"), function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-dns") === nome));
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("[data-dns]"), function (b) {
+    b.addEventListener("click", function () { perguntar(b.getAttribute("data-dns")); });
+  });
+
+  var portas = document.getElementById("portas-rede");
+  var estado = { publicada: false, conflito: false, internet: false };
+  function desenharPortas() {
+    if (!portas) return;
+    while (portas.lastChild && portas.lastChild.nodeName !== "title") portas.removeChild(portas.lastChild);
+    el("rect", { x: 20, y: 90, width: 140, height: 70, rx: 3, class: "rn-host" }, portas);
+    el("text", { x: 90, y: 122, "text-anchor": "middle", class: "rn-t" }, portas, "Internet");
+    el("text", { x: 90, y: 142, "text-anchor": "middle", class: "rn-s" }, portas, "qualquer pessoa");
+    el("rect", { x: 210, y: 20, width: 22, height: 220, rx: 3, class: "rn-firewall" }, portas);
+    el("text", { x: 221, y: 255, "text-anchor": "middle", class: "rn-s" }, portas, "firewall: só a 22");
+    el("rect", { x: 260, y: 15, width: 720, height: 230, rx: 4, class: "rn-vps" }, portas);
+    el("text", { x: 280, y: 38, class: "rn-t" }, portas, "VPS");
+    var ports = [["22", "SSH"], ["80", "Traefik"], ["8000", "Coolify"], ["5000", estado.publicada ? "novo" : "livre"]];
+    ports.forEach(function (p, i) {
+      var y = 52 + i * 46, ocupada = p[1] !== "livre";
+      el("rect", { x: 280, y: y, width: 190, height: 36, rx: 3, class: "rn-caixa" + (p[0] === "5000" && estado.publicada ? " ativa" : ocupada ? "" : " apagada") }, portas);
+      el("text", { x: 295, y: y + 23, class: "rn-t" }, portas, "porta " + p[0]);
+      el("text", { x: 455, y: y + 23, "text-anchor": "end", class: "rn-s" }, portas, p[1]);
+    });
+    el("rect", { x: 640, y: 55, width: 150, height: 60, rx: 3, class: "rn-caixa" + (estado.publicada ? " ativa" : "") }, portas);
+    el("text", { x: 715, y: 82, "text-anchor": "middle", class: "rn-t" }, portas, "servico-novo");
+    el("text", { x: 715, y: 102, "text-anchor": "middle", class: "rn-s" }, portas, "container · :8080");
+    el("rect", { x: 640, y: 150, width: 150, height: 60, rx: 3, class: "rn-caixa" + (estado.conflito ? " erro" : "") }, portas);
+    el("text", { x: 715, y: 177, "text-anchor": "middle", class: "rn-t" }, portas, "outro-servico");
+    el("text", { x: 715, y: 197, "text-anchor": "middle", class: "rn-s" }, portas, "container · :8080");
+    if (estado.publicada) el("path", { d: "M470 208 C 560 208 560 85 633 85", class: "rn-salto usado" }, portas);
+    if (estado.conflito) {
+      el("path", { d: "M640 180 C 560 180 560 212 477 212", class: "rn-salto erro" }, portas);
+      el("text", { x: 715, y: 230, "text-anchor": "middle", class: "rn-s erro-texto" }, portas, "port is already allocated");
+    }
+    if (estado.internet) {
+      el("path", { d: "M160 125 H 203", class: "rn-salto erro" }, portas);
+      el("circle", { cx: 221, cy: 125, r: 12, class: "rn-x" }, portas);
+      el("path", { d: "M215 119 L227 131 M227 119 L215 131", class: "rn-x-traco" }, portas);
+    }
+  }
+  var TEXTOS_PORTAS = {
+    publicar: "Com <code>ports: - \"5000:8080\"</code>, o Docker liga a porta 5000 <strong>da máquina</strong> à porta 8080 <strong>do container</strong>. A 5000 passa a ter dono. Dentro do VPS, <code>localhost:5000</code> já chega ao container.",
+    repetir: "Um segundo serviço também pede a 5000 da máquina. O Docker recusa ao subir: <code>Bind for 0.0.0.0:5000 failed: port is already allocated</code>. Porta da máquina tem um dono só. Note que os dois containers usam a 8080 por dentro, e isso nunca deu problema: cada um tem o próprio IP.",
+    internet: "Alguém da internet tenta a porta 5000 do VPS. O firewall da Hostinger, fora da máquina, só deixa passar a 22: a conexão para antes de chegar ao VPS. Publicar uma porta não a abre para o mundo; o firewall decide.",
+    limpar: "De volta ao começo: só as portas do sistema (22), do Traefik (80) e do Coolify (8000) estão ocupadas na máquina."
+  };
+  Array.prototype.forEach.call(document.querySelectorAll("[data-porta]"), function (b) {
+    b.addEventListener("click", function () {
+      var acao = b.getAttribute("data-porta");
+      if (acao === "publicar") estado.publicada = true;
+      if (acao === "repetir") { if (!estado.publicada) { html("portas-texto", "<p>Publique primeiro a 5000 no serviço novo, para ver o conflito.</p>"); return; } estado.conflito = true; }
+      if (acao === "internet") estado.internet = true;
+      if (acao === "limpar") estado = { publicada: false, conflito: false, internet: false };
+      desenharPortas();
+      html("portas-texto", "<p>" + TEXTOS_PORTAS[acao] + "</p>");
+    });
+  });
+  desenharPortas();
 })();
 </script>
 </body>
