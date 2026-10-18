@@ -46,6 +46,7 @@ services:
       AllowedHosts: ${AllowedHosts:-registroaberto.org;www.registroaberto.org}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://observabilidade:4317
       OTEL_SERVICE_NAME: poligraph-api
+      Avisos__ChavePublica: ${Avisos__ChavePublica}
       OTEL_RESOURCE_ATTRIBUTES: service.instance.id=api
     volumes:
       - chaves-da-sessao:/home/app/chaves
@@ -70,9 +71,31 @@ services:
       AllowedHosts: ${AllowedHosts:-registroaberto.org;www.registroaberto.org}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://observabilidade:4317
       OTEL_SERVICE_NAME: poligraph-api
+      Avisos__ChavePublica: ${Avisos__ChavePublica}
       OTEL_RESOURCE_ATTRIBUTES: service.instance.id=api2
     volumes:
       - chaves-da-sessao:/home/app/chaves
+    networks:
+      - default
+      - coolify
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Avisos no navegador (Pendência 89): Hangfire sobre o mesmo Postgres, esquema "hangfire". Pode ter
+  # mais de uma cópia: o Hangfire reparte os jobs, e o envio reserva cada aviso no banco antes de mandar.
+  # Sem porta: só fala com o banco e com o serviço de push dos fabricantes (Google, Mozilla, Apple).
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      ConnectionStrings__poligraph: ${ConnectionStrings__poligraph}
+      Avisos__ChavePublica: ${Avisos__ChavePublica}
+      Avisos__ChavePrivada: ${Avisos__ChavePrivada}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://observabilidade:4317
+      OTEL_SERVICE_NAME: poligraph-worker
     networks:
       - default
       - coolify

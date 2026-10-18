@@ -1,0 +1,25 @@
+# O worker dos avisos no navegador (Pendência 89): Hangfire sobre o mesmo Postgres, sem porta aberta.
+# ─── build ────────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# copiar SÓ os .csproj primeiro: o restore vira camada cacheada.
+COPY ["src/Poligraph.Worker/Poligraph.Worker.csproj",                 "src/Poligraph.Worker/"]
+COPY ["src/Poligraph.Api/Poligraph.Api.csproj",                       "src/Poligraph.Api/"]
+COPY ["src/Poligraph.Data/Poligraph.Data.csproj",                     "src/Poligraph.Data/"]
+COPY ["src/Poligraph.ServiceDefaults/Poligraph.ServiceDefaults.csproj","src/Poligraph.ServiceDefaults/"]
+RUN dotnet restore "src/Poligraph.Worker/Poligraph.Worker.csproj"
+
+COPY src/ src/
+RUN dotnet publish "src/Poligraph.Worker/Poligraph.Worker.csproj" \
+    -c Release -o /app --no-restore
+
+# ─── runtime ──────────────────────────────────────────────────────────
+# ATENÇÃO: aspnet, e não runtime: o worker usa o "O que mudou" da API (ServicoNovidades), que vem no
+#    assembly da API, e o ServiceDefaults instrumenta o ASP.NET Core. A variante -extra traz a ICU:
+#    o "O que mudou" ordena nomes com a cultura pt-BR, como a API.
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra AS final
+WORKDIR /app
+COPY --from=build /app .
+USER $APP_UID
+ENTRYPOINT ["dotnet", "Poligraph.Worker.dll"]

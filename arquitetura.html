@@ -597,6 +597,8 @@ docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; 
       <tr><td><code>VITE_CLARITY_ID</code></td><td>web, na montagem</td><td>O ID do projeto no Clarity. Vazio, o site sai sem Clarity</td></tr>
       <tr><td><code>AllowedHosts</code></td><td>api</td><td>Não se cria: vale o padrão do compose, <code>registroaberto.org;www.registroaberto.org</code></td></tr>
       <tr><td><code>GRAFANA_SENHA_ADMIN</code></td><td>observabilidade</td><td>A senha do usuário <code>admin</code> do Grafana. Só vale na primeira subida; depois troca-se no próprio Grafana. Segredo</td></tr>
+      <tr><td><code>Avisos__ChavePublica</code></td><td>api, api2, worker</td><td>A chave pública VAPID dos avisos no navegador (Pendência 89). Não é segredo: a API a entrega ao navegador. Vazia, o site esconde os avisos</td></tr>
+      <tr><td><code>Avisos__ChavePrivada</code></td><td>worker</td><td>A chave privada do mesmo par. Segredo. Sem ela o worker se recusa a subir. Gerar com o comando do passo 5</td></tr>
     </tbody>
   </table></div>
 
@@ -620,12 +622,13 @@ docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; 
     visita de volta para o HTTPS, e o site entra em laço.</p>
 
   <h3>3. O compose</h3>
-  <p>O <code>docker-compose.prod.yaml</code> monta três serviços a partir dos Dockerfiles de <code>docker/</code>:</p>
+  <p>O <code>docker-compose.prod.yaml</code> monta os serviços a partir dos Dockerfiles de <code>docker/</code>:</p>
   <ol class="passos">
     <li><code>migrations</code> aplica as migrations e as perguntas da curadoria e termina. Roda a cada deploy; sem migration nova, só confere. Termina com <code>Banco: 8319 parlamentares, … perguntas ativas.</code></li>
     <li><code>api</code> e <code>api2</code>, duas cópias iguais da API (decisão do autor, 2026-10-15), sobem só depois de a migration terminar bem, com o mesmo volume <code>chaves-da-sessao</code>: as duas abrem o mesmo cookie de sessão.</li>
     <li><code>web</code> é o site, o único com domínio. O nginx dele divide o <code>/api/</code> entre as duas cópias e, se uma não responde em 2 segundos, manda para a outra.</li>
     <li><code>etl</code> é a carga de dados, parada (<code>sleep</code>) à espera das tarefas agendadas, com o cache no volume <code>etl-cache</code>.</li>
+    <li><code>worker</code> manda os avisos no navegador sobre quem a pessoa segue (Pendência 89). Usa o Hangfire, que guarda a fila no mesmo Postgres, no esquema <code>hangfire</code>. Sem porta e sem domínio: fala só com o banco e com o serviço de avisos do fabricante do navegador (Google, Mozilla, Apple). Pode ter mais de uma cópia.</li>
     <li><code>observabilidade</code> é o Grafana tudo em um (Grafana, Loki, Tempo, Prometheus e o coletor OpenTelemetry), com os logs, rastros e métricas da API e os logs da ETL. Teto de 2 GB de memória; logs e métricas guardados por 30 dias. Passo a passo em <code>infra/vps/grafana.md</code>.</li>
   </ol>
   <p>O primeiro deploy leva vários minutos, porque o VPS monta o .NET, o site e a migration. Cada deploy processa os três
@@ -652,7 +655,25 @@ docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; 
     <li>Uma trava do Postgres impede duas rotinas ao mesmo tempo: quando a semanal e a mensal caem juntas, a segunda espera.</li>
     <li>Precisa de <code>POLIGRAPH_CHAVE_CPF</code>, a mesma do local. Em Notifications, ligar o aviso de falha de tarefa agendada.</li>
     <li>A primeira mensal, com o cache vazio e o cadastro da Receita, roda à mão, num horário de pouco acesso.</li>
+    <li>A rotina que passa por todas as etapas grava uma linha em <code>eventos</code>. É assim que o <code>worker</code> sabe que pode avisar: rotina que falhou no meio não grava nada, e ninguém recebe aviso sobre dado pela metade.</li>
   </ul>
+
+  <h3>5. Os avisos no navegador</h3>
+  <p>Quem segue parlamentares pode ligar, no sininho do cabeçalho ou na página da conta, um aviso no navegador quando
+    alguém que segue vota contra o partido ou troca de partido, e quando chegam os gastos do mês (Pendência 89). O caminho:</p>
+  <ol class="passos">
+    <li>A rotina da ETL termina bem e grava <code>ROTINA_SEMANAL</code> ou <code>ROTINA_MENSAL</code> em <code>eventos</code>.</li>
+    <li>O <code>worker</code> olha os eventos pendentes a cada 10 minutos (job recorrente <code>distribuir-avisos</code>), com <code>FOR UPDATE SKIP LOCKED</code>, e abre um job por pessoa inscrita.</li>
+    <li>O job da pessoa calcula o "O que mudou" dos últimos 30 dias, grava as chaves novas em <code>avisos_enviados</code> e só então manda o aviso, cifrado, pelo serviço do fabricante. Duas cópias do worker na mesma pessoa esperam uma pela outra no índice único, e só uma avisa.</li>
+    <li>O aviso diz só quantas novidades há, sem nome: aparece na tela de bloqueio. O clique abre o início do site.</li>
+    <li>Todo dia às 4h (UTC), o job <code>limpar-avisos</code> apaga os avisos enviados e os eventos com mais de 90 dias.</li>
+  </ol>
+  <p>Para gerar o par de chaves, no computador do autor, uma vez por ambiente:</p>
+  <pre>dotnet run --project src/Poligraph.Worker -- gerar-chaves</pre>
+  <p>Ele imprime as duas linhas, <code>Avisos__ChavePublica=…</code> e <code>Avisos__ChavePrivada=…</code>, que vão para as
+    variáveis do Coolify. Trocar o par depois desfaz todas as inscrições: o navegador se inscreveu com a chave pública
+    antiga. O par do desenvolvimento fica no user-secrets do AppHost, nos parâmetros <code>avisos-chave-publica</code> e
+    <code>avisos-chave-privada</code>.</p>
 
   <h3>Cada configuração da aplicação</h3>
   <div class="tabela"><table>
@@ -667,6 +688,8 @@ docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; 
       <tr><td>Rede</td><td>Isolated, mais a rede <code>coolify</code> na API e na migration</td><td>Mantém o nome <code>api</code> que o nginx procura, e alcança o banco</td><td>A rede predefinida renomeia os serviços, e o site não acha a API</td></tr>
       <tr><td><code>AllowedHosts</code></td><td>O domínio com e sem <code>www</code></td><td>A API só responde a visitas endereçadas ao site</td><td>Sem o <code>www</code>, quem entra por ele recebe erro 400</td></tr>
       <tr><td>Cache da ETL</td><td><code>/cache</code>, do usuário <code>etl</code>, no volume <code>etl-cache</code></td><td>Os downloads sobrevivem aos deploys, e a limpeza da rotina segura o tamanho</td><td>Sem o dono certo, a ETL não grava os downloads; sem a limpeza, o disco enche em meses</td></tr>
+      <tr><td>Base do worker</td><td><code>aspnet:10.0-noble-chiseled-extra</code></td><td>O worker usa o "O que mudou" da API, que vem no assembly dela, e ordena nomes com <code>pt-BR</code></td><td>Na base <code>runtime</code>, falta o ASP.NET Core que o <code>ServiceDefaults</code> pede</td></tr>
+      <tr><td>Fila do worker</td><td>Hangfire, esquema <code>hangfire</code> do mesmo banco</td><td>Tarefa recorrente, nova tentativa e divisão do trabalho entre cópias, sem servidor de mensagens. As tabelas são do Hangfire, fora do EF: a única exceção à regra "o EF é dono do schema"</td><td>Apagar o esquema faz o Hangfire recriá-lo ao subir; os jobs recorrentes se registram de novo</td></tr>
       <tr><td><code>.dockerignore</code></td><td>Exclui <code>.cache</code>, <code>node_modules</code>, <code>bin</code>, <code>obj</code></td><td>Os downloads da ETL têm gigabytes</td><td>Montar no computador do autor estoura a memória</td></tr>
     </tbody>
   </table></div>
@@ -840,6 +863,7 @@ systemctl is-enabled cloudflared; systemctl is-active cloudflared    # enabled, 
     <thead><tr><th>Onde fica</th><th>Segredo</th><th>Para quê</th></tr></thead>
     <tbody>
       <tr><td>Coolify, Shared Variables</td><td><code>ConnectionStrings__poligraph</code></td><td>Conexão com o banco; a senha é gerada pelo Coolify</td></tr>
+      <tr><td>Coolify</td><td><code>Avisos__ChavePrivada</code></td><td>Assina os avisos no navegador (VAPID). Gerada pelo próprio worker; trocá-la desfaz as inscrições</td></tr>
       <tr><td>Coolify</td><td><code>POLIGRAPH_CHAVE_CPF</code></td><td>Chave do HMAC do CPF, para a ETL. A mesma do local, por causa da cópia; trocá-la exige o <code>rechavear-cpf</code></td></tr>
       <tr><td>Serviço do Ubuntu</td><td>Token do túnel</td><td>Gravado pelo <code>cloudflared service install</code>; não está no Coolify nem no repositório</td></tr>
       <tr><td>Volume <code>chaves-da-sessao</code></td><td>Chaves do Data Protection</td><td>Cifram o cookie de sessão</td></tr>
