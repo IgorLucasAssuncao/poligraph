@@ -57,17 +57,23 @@ export function useAvisosNoNavegador() {
 
   return { situacao, estado, ocupado, erro, pedindoConsentimento: pendente !== null, ligar, aceitar, recusar, desligar, atualizar };
 
-  async function ligar() {
+  /**
+   * Pede a permissão do navegador e inscreve. Com `aceite`, o consentimento foi dado na própria
+   * pergunta (o convite depois de seguir), e a API grava junto.
+   *
+   * ATENÇÃO: A permissão é pedida antes de qualquer espera: o navegador só a mostra durante o clique.
+   */
+  async function ligar(aceite = false) {
     await executar(async () => {
-      const chave = await obterChaveDosAvisos();
-      if (!chave) return;
       if ((await Notification.requestPermission()) !== 'granted') {
         setSituacao(Notification.permission === 'denied' ? 'bloqueado' : 'desligado');
         return;
       }
+      const chave = await obterChaveDosAvisos();
+      if (!chave) return;
       const inscricao = await inscrever(chave);
       try {
-        await inscreverNavegador(inscricao);
+        await inscreverNavegador(inscricao, aceite);
       } catch (falha) {
         if (falha instanceof ConsentimentoNecessarioError) {
           setPendente(inscricao);

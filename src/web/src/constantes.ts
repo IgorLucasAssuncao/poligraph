@@ -109,3 +109,12 @@ export const ORIENTACAO_NAO = 'Não';
  * quem a pessoa segue, e o servidor não precisa saber o que ela leu.
  */
 export const CHAVE_NOVIDADES_VISTAS = 'poligraph:novidades-vistas';
+
+/**
+ * Se o convite para receber avisos, que aparece depois do primeiro "Seguir", já foi respondido
+ * neste navegador (Pendência 89). Respondido, não volta: quem quiser muda na página da conta.
+ */
+export const CHAVE_CONVITE_DE_AVISOS = 'poligraph:convite-de-avisos';
+
+/** Quantas novidades o "O que mudou" mostra de cada vez (decisão do autor, 2026-10-18). */
+export const NOVIDADES_A_VISTA = 10;

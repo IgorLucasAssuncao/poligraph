@@ -97,7 +97,8 @@ apagada junto.
 
 Quem segue parlamentares pode receber um aviso no navegador quando há novidade sobre eles:
 voto contra a orientação do partido, troca de partido, e os gastos da cota e as emendas pagas
-de cada mês. É opcional, vem desligado, e tem consentimento próprio, separado do de seguir.
+de cada mês. É opcional e vem desligado. O consentimento é pedido à parte do de seguir, na primeira
+vez que você segue alguém.
 
 Ao ligar, o site guarda:
 
@@ -106,9 +107,9 @@ Ao ligar, o site guarda:
 - quais novidades já foram avisadas, para não repetir. Esse registro diz sobre quem você foi
   avisado e é apagado depois de 90 dias.
 
-O aviso sai cifrado do servidor e só o seu navegador consegue ler. O serviço do fabricante
-entrega, mas não vê o conteúdo. O texto nunca traz nome de parlamentar, porque aparece na tela
-de bloqueio: diz só quantas novidades há.
+O aviso sai cifrado do servidor, e só o seu navegador consegue abrir. O serviço do fabricante
+faz a entrega sem acesso ao conteúdo. O texto mostra quantas novidades há, sem nome de
+parlamentar, porque aparece na tela de bloqueio.
 
 Você pode desligar neste navegador, ou revogar o consentimento na página da conta, o que apaga
 todos os navegadores inscritos e o registro do que já foi avisado. Deixar de seguir alguém
@@ -238,11 +239,11 @@ export const TEXTO_CONSENTIMENTO_SEGUIR = {
  * finalidade (art. 8º, §4º). A versão gravada com o aceite é `VERSAO_CONSENTIMENTO`.
  */
 export const TEXTO_CONSENTIMENTO_AVISOS = {
-  titulo: 'Avisos neste navegador',
+  titulo: 'Receber avisos de quem você segue?',
   texto:
     'Avisamos quando alguém que você segue vota contra o partido ou troca de partido, e quando chegam os gastos do mês. ' +
-    'Para isso guardamos o endereço que o seu navegador usa para receber avisos. O aviso não traz nomes, ' +
-    'só quantas novidades há, porque aparece na tela de bloqueio. Você pode desligar quando quiser.',
-  aceitar: 'Concordo e quero receber',
+    'Para isso guardamos o endereço que o seu navegador usa para receber avisos. O aviso mostra quantas novidades há, ' +
+    'sem nomes, porque aparece na tela de bloqueio. Você pode desligar quando quiser, na página da conta.',
+  aceitar: 'Quero receber',
   recusar: 'Agora não',
 };

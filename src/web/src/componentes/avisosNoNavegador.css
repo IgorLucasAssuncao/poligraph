@@ -1,0 +1,5 @@
+/* ═══ AVISOS NO NAVEGADOR — Pendência 89, na página da conta ═════════════ */
+.avisos-navegador { display: grid; gap: .4rem; justify-items: start; }
+.avisos-navegador .ajuda { margin: 0; }
+.avisos-navegador-titulo { margin: 0; font-size: var(--t-2); font-weight: 700; }
+.avisos-navegador-ligado { margin: 0; font-size: var(--t-2); font-weight: 500; }

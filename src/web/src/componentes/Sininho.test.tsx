@@ -111,7 +111,7 @@ describe('sininho', () => {
     expect(screen.getByRole('link', { name: 'Procurar parlamentares' })).toHaveAttribute('href', '/parlamentares');
   });
 
-  it('sem chave no servidor, não oferece avisos no navegador', async () => {
+  it('não liga avisos: isso é do convite ao seguir e da página da conta', async () => {
     renderizar(COM_TROCA);
 
     fireEvent.click(await screen.findByRole('button', { name: /Novidades de quem você segue/ }));

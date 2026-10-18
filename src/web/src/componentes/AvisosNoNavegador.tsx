@@ -2,12 +2,13 @@ import { TEXTO_CONSENTIMENTO_AVISOS } from '../textos-legais';
 import { TEXTOS_DOS_AVISOS } from '../textos/avisos';
 import { PedidoDeConsentimentoComponent } from './PedidoDeConsentimento';
 import { useAvisosNoNavegador } from './useAvisosNoNavegador';
+import './avisosNoNavegador.css';
 
 const T = TEXTOS_DOS_AVISOS.navegador;
 
 /**
- * Liga e desliga os avisos neste navegador (Pendência 89). Aparece no sininho do cabeçalho e na
- * página da conta.
+ * Liga e desliga os avisos neste navegador (Pendência 89), na página da conta. O convite aparece
+ * ao seguir alguém (`ConviteDeAvisos`).
  *
  * DECISÃO: Sem chave no servidor, não aparece nada: oferecer um botão que não funciona é pior que
  * não oferecer. Sem suporte no navegador, diz por quê, e no iPhone o que fazer.

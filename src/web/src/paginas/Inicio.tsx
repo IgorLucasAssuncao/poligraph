@@ -108,8 +108,6 @@ export function InicioComponent() {
 
         <GrafoDaAberturaComponent legislatura={legislatura} />
 
-        {seguidos.length > 0 && <OQueMudouComponent />}
-
         {seguidos.length > 0 && (
           <section className="painel-secao">
             <h2>{T.quemVoceSegue}</h2>
@@ -133,6 +131,7 @@ export function InicioComponent() {
       </div>
 
       <aside className="painel-trilho">
+        {seguidos.length > 0 && <OQueMudouComponent />}
         <SugestoesParaSeguirComponent />
       </aside>
     </div>

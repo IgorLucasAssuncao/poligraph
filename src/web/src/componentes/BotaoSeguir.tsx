@@ -5,6 +5,8 @@ import { useSessao } from '../sessao';
 import { TEXTO_CONSENTIMENTO_SEGUIR } from '../textos-legais';
 import { useEntrar } from './useEntrar';
 import { PedidoDeConsentimentoComponent } from './PedidoDeConsentimento';
+import { ConviteDeAvisosComponent } from './ConviteDeAvisos';
+import { conviteRespondido } from './respostaAoConvite';
 import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
@@ -29,6 +31,9 @@ import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
  *
  * RISCO: Na primeira vez, a API responde 428 e o botão pergunta o consentimento (Pendência 62).
  * Só com o aceite a chamada volta, e a API grava a versão do texto junto.
+ *
+ * DECISÃO (2026-10-18): Seguiu, e o convite para avisos ainda não foi respondido neste navegador? Ele
+ * aparece em seguida (Pendência 89).
  */
 export function BotaoSeguirComponent({
   idPessoa,
@@ -41,6 +46,7 @@ export function BotaoSeguirComponent({
 }) {
   const [ocupado, setOcupado] = useState(false);
   const [perguntando, setPerguntando] = useState(false);
+  const [convidando, setConvidando] = useState(false);
   const { usuario } = useSessao();
   const entrar = useEntrar();
 
@@ -73,6 +79,7 @@ export function BotaoSeguirComponent({
           aoRecusar={() => setPerguntando(false)}
         />
       )}
+      {convidando && <ConviteDeAvisosComponent aoFechar={() => setConvidando(false)} />}
     </>
   );
 
@@ -88,6 +95,7 @@ export function BotaoSeguirComponent({
 
     try {
       await (proximo ? seguir(idPessoa, aceite) : deixarDeSeguir(idPessoa));
+      if (proximo && !conviteRespondido()) setConvidando(true);
     } catch (erro) {
       aoAlternar(idPessoa, !proximo);
       if (erro instanceof ConsentimentoNecessarioError) setPerguntando(true);

@@ -1,16 +1,13 @@
 /* ═══ O QUE MUDOU — Pendência 63 ═══════════════════════════════════════ */
-/* DECISÃO: Uma linha do tempo curta, com a data em mono à esquerda: é o mesmo desenho do
-   resto do site para "quando", e o fato fica no texto, sem selo de cor que o qualifique. */
-.lista-novidades { list-style: none; margin: .75rem 0 0; padding: 0; }
-.lista-novidades li {
-  display: grid; grid-template-columns: 6.5rem 1fr; gap: .15rem 1rem;
-  padding: .7rem 0; border-top: 1px solid var(--borda);
-}
-.novidade-data { grid-row: span 2; font-family: var(--dado); font-size: var(--t-1); color: var(--suave); font-variant-numeric: tabular-nums; }
+/* DECISÃO (2026-10-18): Compacta, com a data em mono sobre o fato, a mesma no "O que mudou" da
+   coluna da direita e no sininho. Em duas colunas ela não cabia em nenhum dos dois lugares. O fato
+   fica no texto, sem selo de cor que o qualifique. */
+.lista-novidades { list-style: none; margin: .5rem 0 0; padding: 0; }
+.lista-novidades li { display: grid; gap: .15rem; padding: .6rem 0; border-top: 1px solid var(--borda); }
+.novidade-data { font-family: var(--dado); font-size: var(--t-1); color: var(--suave); font-variant-numeric: tabular-nums; }
 .novidade-texto { margin: 0; font-size: var(--t-2); }
 .novidade-detalhe { display: block; margin-top: .2rem; color: var(--suave); font-size: var(--t-1); }
 .novidade-fonte { margin: 0; font-size: var(--t-1); color: var(--suave); }
-@media (max-width: 700px) {
-  .lista-novidades li { grid-template-columns: 1fr; }
-  .novidade-data { grid-row: auto; }
-}
+/* A novidade ainda não vista leva o traço de realce à esquerda, o mesmo marcador do item ativo da
+   navegação, e não cor de fundo: o texto continua no contraste de sempre. */
+.lista-novidades li.novidade-nova { box-shadow: inset 3px 0 0 var(--realce); padding-left: .6rem; margin-left: -.6rem; }

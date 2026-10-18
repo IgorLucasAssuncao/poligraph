@@ -34,20 +34,7 @@
 .sininho-titulo { margin: 0; font-size: var(--t-3); font-weight: 700; }
 .sininho-painel .vazio { margin: 0; font-size: var(--t-2); color: var(--suave); }
 
-.sininho-lista { margin: 0; }
-.sininho-lista li { grid-template-columns: 4.5rem 1fr; padding: .55rem 0; }
-.sininho-lista .novidade-data { grid-row: auto; }
-/* A novidade ainda não vista leva o traço de realce à esquerda, o mesmo marcador do item
-   ativo da navegação, e não cor de fundo: o texto continua no contraste de sempre. */
-.sininho-lista li.novidade-nova { box-shadow: inset 3px 0 0 var(--realce); padding-left: .6rem; margin-left: -.6rem; }
-
 .sininho-ver-tudo { justify-self: start; font-size: var(--t-2); }
-
-.avisos-navegador { display: grid; gap: .4rem; justify-items: start; }
-.sininho-painel .avisos-navegador { padding-top: .75rem; border-top: 1px solid var(--borda); }
-.avisos-navegador .ajuda { margin: 0; }
-.avisos-navegador-titulo { margin: 0; font-size: var(--t-2); font-weight: 700; }
-.avisos-navegador-ligado { margin: 0; font-size: var(--t-2); font-weight: 500; }
 
 @media (max-width: 560px) {
   .sininho-painel { position: fixed; top: 3.5rem; right: .75rem; left: .75rem; width: auto; }

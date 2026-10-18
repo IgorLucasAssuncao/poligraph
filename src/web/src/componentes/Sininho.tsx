@@ -5,10 +5,9 @@ import type { Novidades } from '../api';
 import { CHAVE_NOVIDADES_VISTAS } from '../constantes';
 import { useSessao } from '../sessao';
 import { TEXTOS_DOS_AVISOS } from '../textos/avisos';
-import { AvisosNoNavegadorComponent } from './AvisosNoNavegador';
 import { IconeSinoComponent } from './Icones';
 import { montarItens } from './itensDoQueMudou';
-import './oQueMudou.css';
+import { ListaDeNovidadesComponent } from './ListaDeNovidades';
 import './sininho.css';
 
 const T = TEXTOS_DOS_AVISOS.sininho;
@@ -17,8 +16,8 @@ const T = TEXTOS_DOS_AVISOS.sininho;
 const MAXIMO_NO_PAINEL = 5;
 
 /**
- * O sininho do cabeçalho (Pendência 89): as últimas novidades de quem a pessoa segue e o
- * interruptor dos avisos neste navegador. Só aparece para quem entrou.
+ * O sininho do cabeçalho (Pendência 89): as últimas novidades de quem a pessoa segue. Só aparece
+ * para quem entrou. Os avisos no navegador são convidados ao seguir e ficam na página da conta.
  *
  * DECISÃO: A contagem é das novidades que este navegador ainda não mostrou. Some com o painel
  * aberto, e o que estava na lista passa a visto ao fechar. O número vai num selo retangular de raio pequeno, na fonte de dado, como todo número
@@ -119,14 +118,11 @@ export function SininhoComponent() {
           {!erro && segueAlguem && novidades && itens.length === 0 && <p className="vazio">{T.nadaNovo}</p>}
 
           {itens.length > 0 && (
-            <ul className="lista-novidades sininho-lista">
-              {itens.slice(0, MAXIMO_NO_PAINEL).map((item) => (
-                <li key={item.chave} className={vistas.includes(item.chave) ? undefined : 'novidade-nova'}>
-                  <span className="novidade-data">{item.quando}</span>
-                  <p className="novidade-texto">{item.texto}</p>
-                </li>
-              ))}
-            </ul>
+            <ListaDeNovidadesComponent
+              itens={itens.slice(0, MAXIMO_NO_PAINEL)}
+              nova={(chave) => !vistas.includes(chave)}
+              comFonte={false}
+            />
           )}
 
           {segueAlguem && (
@@ -135,7 +131,6 @@ export function SininhoComponent() {
             </Link>
           )}
 
-          <AvisosNoNavegadorComponent />
         </div>
       )}
     </div>

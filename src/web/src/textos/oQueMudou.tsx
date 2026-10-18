@@ -5,12 +5,6 @@ const plural = (n: number, um: string, varios: string) => (n === 1 ? um : varios
 /** O texto da seção "O que mudou" do Início, sobre quem a pessoa segue. */
 export const TEXTOS_DO_QUE_MUDOU = {
   titulo: 'O que mudou',
-  janela: (de: string, ate: string, carga: string | null): ReactNode => (
-    <>
-      Sobre quem você segue. Votos de {de} a {ate}
-      {carga && <>; base atualizada em {carga}</>}.
-    </>
-  ),
   nadaNovo: (carga: string | null) => `Nada novo desde a última atualização${carga ? `, em ${carga}` : ''}.`,
   orgao: { CAMARA: 'Câmara dos Deputados', SENADO: 'Senado Federal' },
   semana: (de: string, ate: string) => `${de} a ${ate}`,

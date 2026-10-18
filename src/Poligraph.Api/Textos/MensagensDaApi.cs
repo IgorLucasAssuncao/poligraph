@@ -24,18 +24,49 @@ public static class MensagensDaApi
         "Os avisos dizem que você segue alguém, e o navegador só é inscrito com o seu consentimento.";
     public const string InscricaoInvalida = "O navegador mandou uma inscrição incompleta.";
 
-    /// <summary>O título do aviso no navegador. Sem nome de parlamentar: o aviso aparece na tela de bloqueio.</summary>
-    public const string TituloDoAviso = "Registro Aberto";
+    /// <summary>
+    /// O aviso no navegador (Pendência 89): diz o tipo do fato e quantos, sem o nome de ninguém, porque
+    /// aparece na tela de bloqueio. Quem foi, a pessoa vê ao abrir o site.
+    /// </summary>
+    /// <param name="contraOPartido">Votos contra a orientação do partido (A2).</param>
+    /// <param name="trocas">Trocas de partido (A3).</param>
+    /// <param name="mesDoResumo">O mês dos gastos e das emendas que chegaram (A4, A5), ou nulo.</param>
+    public static (string Titulo, string Corpo) Aviso(int contraOPartido, int trocas, DateOnly? mesDoResumo) =>
+        (contraOPartido, trocas, mesDoResumo) switch
+        {
+            ( > 0, 0, null) => ("Voto contra o partido", contraOPartido == 1
+                ? "Um parlamentar que você segue votou contra a orientação do próprio partido."
+                : $"Parlamentares que você segue votaram {contraOPartido} vezes contra a orientação do próprio partido."),
+            (0, > 0, null) => ("Troca de partido", trocas == 1
+                ? "Um parlamentar que você segue mudou de partido."
+                : $"{trocas} parlamentares que você segue mudaram de partido."),
+            (0, 0, { } mes) => ($"Gastos de {NomeDoMes(mes)}", $"Saíram os gastos da cota e as emendas pagas em {NomeDoMes(mes)} dos parlamentares que você segue."),
+            _ => ("Novidades de quem você segue", Juntar(contraOPartido, trocas, mesDoResumo)),
+        };
 
-    /// <summary>O corpo do aviso. Só a contagem: quem segue quem não aparece na tela de bloqueio.</summary>
-    public static string CorpoDoAviso(int deVoto, string? mesDoResumo) => (deVoto, mesDoResumo) switch
+    private static readonly string[] Meses =
+        ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+
+    private static string NomeDoMes(DateOnly mes) => Meses[mes.Month - 1];
+
+    private static string Juntar(int contraOPartido, int trocas, DateOnly? mesDoResumo)
     {
-        (0, not null) => $"Os gastos e as emendas de {mesDoResumo} de quem você segue chegaram.",
-        (1, null) => "1 novidade de quem você segue.",
-        (_, null) => $"{deVoto} novidades de quem você segue.",
-        (1, _) => $"1 novidade de quem você segue, e os gastos de {mesDoResumo}.",
-        _ => $"{deVoto} novidades de quem você segue, e os gastos de {mesDoResumo}.",
-    };
+        List<string> partes = [];
+        if (contraOPartido > 0)
+        {
+            partes.Add(contraOPartido == 1 ? "1 voto contra o partido" : $"{contraOPartido} votos contra o partido");
+        }
+        if (trocas > 0)
+        {
+            partes.Add(trocas == 1 ? "1 troca de partido" : $"{trocas} trocas de partido");
+        }
+        if (mesDoResumo is { } mes)
+        {
+            partes.Add($"os gastos de {NomeDoMes(mes)}");
+        }
+        var texto = partes.Count == 1 ? partes[0] : string.Join(", ", partes[..^1]) + " e " + partes[^1];
+        return char.ToUpperInvariant(texto[0]) + texto[1..] + ".";
+    }
 
     public const string PastaDeChavesObrigatoria =
         "DataProtection:Pasta é obrigatória em produção: sem ela, cada deploy troca as chaves e desloga todo mundo.";

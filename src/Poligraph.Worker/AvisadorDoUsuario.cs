@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Services;
 using Poligraph.Api.Textos;
@@ -47,7 +48,8 @@ public class AvisadorDoUsuario(PoligraphDb db, ServicoNovidades novidades, Envia
             return;
         }
 
-        var aviso = new AvisoDto(MensagensDaApi.TituloDoAviso, Corpo(novas), Destino);
+        var (titulo, corpo) = Texto(novas);
+        var aviso = new AvisoDto(titulo, corpo, Destino);
         var entregues = 0;
         foreach (var inscricao in inscricoes)
         {
@@ -72,12 +74,14 @@ public class AvisadorDoUsuario(PoligraphDb db, ServicoNovidades novidades, Envia
         }
     }
 
-    /// <summary>O texto do aviso: quantas novidades de voto e o mês do resumo, sem nome de ninguém.</summary>
-    public static string Corpo(IReadOnlyCollection<string> chaves)
+    /// <summary>O título e o texto do aviso, pelo tipo de cada chave nova: A2, A3 e o mês de A4 e A5.</summary>
+    public static (string Titulo, string Corpo) Texto(IReadOnlyCollection<string> chaves)
     {
-        var deVoto = chaves.Count(c => !ChavesDosAvisos.DoMes(c));
         var mes = chaves.Where(ChavesDosAvisos.DoMes).Select(c => c[3..]).Order(StringComparer.Ordinal).LastOrDefault();
-        return MensagensDaApi.CorpoDoAviso(deVoto, mes is null ? null : $"{mes[5..]}/{mes[..4]}");
+        return MensagensDaApi.Aviso(
+            chaves.Count(c => c.StartsWith("A2:", StringComparison.Ordinal)),
+            chaves.Count(c => c.StartsWith("A3:", StringComparison.Ordinal)),
+            mes is null ? null : new DateOnly(int.Parse(mes[..4], CultureInfo.InvariantCulture), int.Parse(mes[5..], CultureInfo.InvariantCulture), 1));
     }
 
     private Task<bool> ConsentimentoVivoAsync(long idUsuario, CancellationToken ct) =>
