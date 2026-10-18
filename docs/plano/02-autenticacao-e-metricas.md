@@ -1,5 +1,8 @@
 # Autenticação, privacidade e métricas de uso
 
+> 🔄 **2026-10-18:** as notícias e o resumo por e-mail saíram do escopo em 2026-10-02 (Pendência 61), e o
+> título do TCC deixou de citá-las. As passagens sobre notícias abaixo são históricas.
+
 > **Status:** v2.5 — 2026-08-26
 > **v2.5:** §3.2.2.4 — dois Client IDs, um por ambiente. ⭐ Isolamento real, porque a
 > conferência do `aud` rejeita token de dev na produção. 🔴 O Vite congela o Client ID em

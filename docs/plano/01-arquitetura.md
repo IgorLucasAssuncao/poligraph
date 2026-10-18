@@ -1,5 +1,8 @@
 # Plano de implementação — arquitetura macro
 
+> 🔄 **2026-10-18:** as notícias e o resumo por e-mail saíram do escopo em 2026-10-02 (Pendência 61), e o
+> título do TCC deixou de citá-las. As passagens sobre notícias abaixo são históricas.
+
 > **Status:** v1.5 — 2026-08-26
 > **v1.2:** ✅ **DECISÃO — VPS + Coolify** (§3.5). ETL roda em Scheduled Task do Coolify,
 > não no GitHub Actions — com Postgres interno, expor o banco não compensa.

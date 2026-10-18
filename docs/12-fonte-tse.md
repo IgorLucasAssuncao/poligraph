@@ -1,5 +1,8 @@
 # TSE — Dados Abertos Eleitorais
 
+> 🔄 **2026-10-18:** as notícias e o resumo por e-mail saíram do escopo em 2026-10-02 (Pendência 61), e o
+> título do TCC deixou de citá-las. As passagens sobre notícias abaixo são históricas.
+
 > 🔄 **v3.0 — 2026-08-27: O TSE SAIU DO PAPEL.** A prestação de contas de 2022 está
 > **ingerida**: 22.511 receitas de campanha, **642 dos 643** deputados, R$ 907,7 mi de
 > Fundo Especial. O acesso descrito em §2.0 foi **reconferido ao vivo** — `HEAD` continua
