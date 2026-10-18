@@ -1,7 +1,11 @@
 # CLAUDE.md — poligraph
 
-> TCC: **"Arquitetura ETL e Modelagem em Grafos para Recomendação de Notícias e Mensuração
-> de Afinidade Política em Redes Sociais"**
+> TCC: **"Arquitetura ETL e Modelagem em Grafos: Mensuração de Afinidade Política em Redes
+> Sociais e Análise de Dados Financeiros de Políticos"**
+>
+> As notícias saíram do escopo (Pendência 61, 2026-10-02) e o título mudou com elas
+> (2026-10-18). Seguir um parlamentar serve para acompanhar o que ele fez: votos, troca de
+> partido e gastos, na página Seguindo.
 >
 > Afinidade política medida por **comportamento revelado de voto**, não por autodeclaração.
 

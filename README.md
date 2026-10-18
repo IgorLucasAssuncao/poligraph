@@ -1,7 +1,7 @@
 # poligraph
 
-> **Arquitetura ETL e Modelagem em Grafos para Recomendação de Notícias e Mensuração de
-> Afinidade Política em Redes Sociais** — TCC.
+> **Arquitetura ETL e Modelagem em Grafos: Mensuração de Afinidade Política em Redes Sociais
+> e Análise de Dados Financeiros de Políticos** — TCC.
 
 Descobre quais deputados votam como você, comparando suas respostas com o **registro
 nominal de votação** da Câmara. Afinidade medida por **comportamento revelado de voto**,

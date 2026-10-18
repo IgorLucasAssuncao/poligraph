@@ -1,5 +1,9 @@
 # Crawler de notícias — quais páginas, qual linguagem
 
+> 🔄 **Fora do escopo desde 2026-10-02 (Pendência 61).** O coletor e as tabelas de notícias
+> saíram do código, e o título do TCC deixou de citar notícias em 2026-10-18. Este documento
+> fica como registro do que foi medido.
+
 > **Status:** v1.3 — feeds testados ao vivo em **2026-08-22**.
 > **v1.3:** feed agregado é condicional; se existir, é misto (seguidos + temas). Coleta
 > passa a classificar em dois eixos — parlamentar e tema (RF-48), sem custo extra.

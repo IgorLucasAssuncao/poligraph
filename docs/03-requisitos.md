@@ -187,6 +187,13 @@ concentrados em lideranças. **A maior parte do Congresso não terá notícia.**
 
 ### 2.7 ⭐ Seguir parlamentares e receber notícias
 
+> 🔄 **Fora do escopo desde 2026-10-02 (Pendência 61); título trocado em 2026-10-18.** As
+> notícias saíram por falta de tempo hábil, e o título deixou de citá-las. Saem: RF-43, RF-46
+> a RF-49 e o e-mail (RF-49 a RF-53); nenhum e-mail é enviado. Ficam RF-42 e RF-42a, com outro
+> objetivo: seguir um parlamentar é acompanhar o que ele fez, na página Seguindo (votos da
+> semana, votos contra o partido, troca de partido e gastos do mês). O texto abaixo é o
+> histórico da decisão.
+
 Requisito declarado: **o usuário pode seguir um parlamentar e receber notícias dele.**
 É o que fecha o arco do título — *"Recomendação de Notícias em Redes Sociais"* — e o que
 transforma o produto de consulta pontual em algo com retorno.

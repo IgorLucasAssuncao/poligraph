@@ -2,10 +2,14 @@
 
 > ## Título do TCC
 >
-> **Arquitetura ETL e Modelagem em Grafos para Recomendação de Notícias e Mensuração de
-> Afinidade Política em Redes Sociais**
+> **Arquitetura ETL e Modelagem em Grafos: Mensuração de Afinidade Política em Redes Sociais
+> e Análise de Dados Financeiros de Políticos**
 >
-> ⚠️ **O título tem consequências que este documento ainda não refletia** — ver §2.1.
+> 🔄 **Título trocado em 2026-10-18.** O anterior era *"Arquitetura ETL e Modelagem em Grafos
+> para Recomendação de Notícias e Mensuração de Afinidade Política em Redes Sociais"*. As
+> notícias saíram do escopo em 2026-10-02 (Pendência 61), e o perfil financeiro do
+> parlamentar ocupou o lugar delas no título. As passagens abaixo que tratam a recomendação de
+> notícias como exigência do título (§2.1, §2.2 e o corte mínimo em F5b) são históricas.
 
 > **Status:** rascunho (v0.14)
 > **Data:** 2026-08-22
