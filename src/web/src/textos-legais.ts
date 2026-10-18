@@ -9,6 +9,16 @@
  */
 export const VERSAO_CONSENTIMENTO = 'v7-2026-10-18';
 
+/**
+ * A versão do aviso de medição (Clarity), separada da política (2026-10-18).
+ *
+ * DECISÃO: Só incremente quando mudar o que o aviso pede: o `TEXTO_CONSENTIMENTO` ou a parte da
+ * política sobre medição de uso. Usando a versão da política, toda mudança em outro assunto (como os
+ * avisos no navegador, na v7) reabria o aviso para todo mundo, e quem já tinha escolhido o via de
+ * novo sem nada novo para decidir.
+ */
+export const VERSAO_DO_AVISO_DE_MEDICAO = 'v6-2026-10-15';
+
 export const CONTATO = 'igorlucas1217@gmail.com';
 
 /**

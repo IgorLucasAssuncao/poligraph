@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BannerConsentimentoComponent } from './BannerConsentimento';
-import { TEXTO_CONSENTIMENTO, VERSAO_CONSENTIMENTO } from '../textos-legais';
+import { TEXTO_CONSENTIMENTO, VERSAO_DO_AVISO_DE_MEDICAO } from '../textos-legais';
 
 /**
  * ATENÇÃO: Sem ferramenta configurada o banner não aparece — ver o último teste.
@@ -82,7 +82,7 @@ describe('BannerConsentimento', () => {
   it('some depois da escolha', () => {
     localStorage.setItem(
       'poligraph.consentimento',
-      JSON.stringify({ versao: VERSAO_CONSENTIMENTO, aceito: false, em: '2026-08-26' }),
+      JSON.stringify({ versao: VERSAO_DO_AVISO_DE_MEDICAO, aceito: false, em: '2026-08-26' }),
     );
 
     render(<BannerConsentimentoComponent />);
@@ -119,7 +119,7 @@ describe('BannerConsentimento', () => {
   it('não carrega o script se a pessoa recusou', () => {
     localStorage.setItem(
       'poligraph.consentimento',
-      JSON.stringify({ versao: VERSAO_CONSENTIMENTO, aceito: false, em: '2026-08-26' }),
+      JSON.stringify({ versao: VERSAO_DO_AVISO_DE_MEDICAO, aceito: false, em: '2026-08-26' }),
     );
 
     render(<BannerConsentimentoComponent />);

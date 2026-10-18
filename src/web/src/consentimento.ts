@@ -1,4 +1,4 @@
-import { VERSAO_CONSENTIMENTO } from './textos-legais';
+import { VERSAO_DO_AVISO_DE_MEDICAO } from './textos-legais';
 import { CHAVE_CONSENTIMENTO } from './constantes';
 
 export type Escolha = { versao: string; aceito: boolean; em: string };
@@ -20,7 +20,7 @@ export function lerConsentimento(): Escolha | null {
  * reabre (art. 8º §2), e quem espera por ele tem de esperar de novo.
  */
 export function consentimentoDecidido(): boolean {
-  return lerConsentimento()?.versao === VERSAO_CONSENTIMENTO;
+  return lerConsentimento()?.versao === VERSAO_DO_AVISO_DE_MEDICAO;
 }
 
 /** Revoga o consentimento e reabre a escolha. Chamado pela política de privacidade. */

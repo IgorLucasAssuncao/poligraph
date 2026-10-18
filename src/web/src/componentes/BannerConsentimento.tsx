@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TEXTO_CONSENTIMENTO, VERSAO_CONSENTIMENTO } from '../textos-legais';
+import { TEXTO_CONSENTIMENTO, VERSAO_DO_AVISO_DE_MEDICAO } from '../textos-legais';
 import { CHAVE_CONSENTIMENTO, EVENTO_CONSENTIMENTO } from '../constantes';
 import { lerConsentimento, type Escolha } from '../consentimento';
 import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
@@ -31,7 +31,7 @@ export function BannerConsentimentoComponent() {
   const clarityId = import.meta.env.VITE_CLARITY_ID;
   const [escolha, setEscolha] = useState<Escolha | null>(() => {
     const salvo = lerConsentimento();
-    return salvo?.versao === VERSAO_CONSENTIMENTO ? salvo : null;
+    return salvo?.versao === VERSAO_DO_AVISO_DE_MEDICAO ? salvo : null;
   });
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export function BannerConsentimentoComponent() {
 
   function decidir(aceito: boolean) {
     const nova: Escolha = {
-      versao: VERSAO_CONSENTIMENTO,
+      versao: VERSAO_DO_AVISO_DE_MEDICAO,
       aceito,
       em: new Date().toISOString(),
     };

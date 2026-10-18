@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProvedorDoTourComponent } from './Tour';
 import { useTour } from './contextoDoTour';
 import { CHAVE_CONSENTIMENTO, EVENTO_CONSENTIMENTO } from '../constantes';
-import { VERSAO_CONSENTIMENTO } from '../textos-legais';
+import { VERSAO_DO_AVISO_DE_MEDICAO } from '../textos-legais';
 import { PASSOS_DO_SITE, passosDoGrafo, type PassoDoTour } from '../tour';
 import { BotaoDoTourComponent } from './BotaoDoTour';
 
@@ -62,7 +62,7 @@ function renderizarTela() {
 function decidirConsentimento() {
   localStorage.setItem(
     CHAVE_CONSENTIMENTO,
-    JSON.stringify({ versao: VERSAO_CONSENTIMENTO, aceito: false, em: '2026-09-24' }),
+    JSON.stringify({ versao: VERSAO_DO_AVISO_DE_MEDICAO, aceito: false, em: '2026-09-24' }),
   );
 }
 
