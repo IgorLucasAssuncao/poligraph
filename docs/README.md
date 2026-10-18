@@ -1,7 +1,10 @@
 # Documentação do Poligraph
 
-> Índice da documentação do TCC. **Comece pelo discovery.**
-> Atualizado em 2026-08-27.
+> Índice da documentação do TCC *Arquitetura ETL e Modelagem em Grafos: Mensuração de Afinidade
+> Política em Redes Sociais e Análise de Dados Financeiros de Políticos*. Atualizado em 2026-10-18.
+>
+> Para o estado de hoje, comece pelo [mapa do sistema](../mapa_do_sistema.html) e pelas
+> [pendências](PENDENCIAS.md); os documentos abaixo guardam também a história das decisões.
 
 ---
 
@@ -95,7 +98,7 @@ valor — número repetido é número que diverge.
 | [arq/02-cenario-b-camara-tse.md](arq/02-cenario-b-camara-tse.md) | 2 bases — não escolhido |
 | [arq/03-cenario-c-tres-bases.md](arq/03-cenario-c-tres-bases.md) | ✅ **DECIDIDO** — 3 bases, dois grafos independentes |
 | [arq/10-api-e-afinidade.md](arq/10-api-e-afinidade.md) | API REST + motor de afinidade |
-| [arq/20-crawler-noticias.md](arq/20-crawler-noticias.md) | Crawler — quais feeds, qual linguagem |
+| [arq/20-crawler-noticias.md](arq/20-crawler-noticias.md) | Crawler de notícias. Fora do escopo desde 2026-10-02 (Pendência 61), guardado como registro |
 | [arq/30-pagina-do-parlamentar.md](arq/30-pagina-do-parlamentar.md) | Página do parlamentar — perfil da "rede social" |
 
 ---
