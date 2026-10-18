@@ -659,13 +659,14 @@ docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; 
   </ul>
 
   <h3>5. Os avisos no navegador</h3>
-  <p>Quem segue parlamentares pode ligar, no sininho do cabeçalho ou na página da conta, um aviso no navegador quando
-    alguém que segue vota contra o partido ou troca de partido, e quando chegam os gastos do mês (Pendência 89). O caminho:</p>
+  <p>Na primeira vez que alguém segue um parlamentar, o site pergunta se a pessoa quer receber avisos no navegador
+    quando alguém que segue vota contra o partido ou troca de partido, e quando saem os gastos do mês (Pendência 89).
+    Depois, liga e desliga na página da conta. O caminho:</p>
   <ol class="passos">
     <li>A rotina da ETL termina bem e grava <code>ROTINA_SEMANAL</code> ou <code>ROTINA_MENSAL</code> em <code>eventos</code>.</li>
     <li>O <code>worker</code> olha os eventos pendentes a cada 10 minutos (job recorrente <code>distribuir-avisos</code>), com <code>FOR UPDATE SKIP LOCKED</code>, e abre um job por pessoa inscrita.</li>
     <li>O job da pessoa calcula o "O que mudou" dos últimos 30 dias, grava as chaves novas em <code>avisos_enviados</code> e só então manda o aviso, cifrado, pelo serviço do fabricante. Duas cópias do worker na mesma pessoa esperam uma pela outra no índice único, e só uma avisa.</li>
-    <li>O aviso diz só quantas novidades há, sem nome: aparece na tela de bloqueio. O clique abre o início do site.</li>
+    <li>O aviso diz o tipo do fato e quantos, sem nome, porque aparece na tela de bloqueio: "Voto contra o partido", "Troca de partido", "Gastos de setembro". O clique abre o início do site.</li>
     <li>Todo dia às 4h (UTC), o job <code>limpar-avisos</code> apaga os avisos enviados e os eventos com mais de 90 dias.</li>
   </ol>
   <p>Para gerar o par de chaves, no computador do autor, uma vez por ambiente:</p>
