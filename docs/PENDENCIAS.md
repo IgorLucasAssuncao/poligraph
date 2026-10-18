@@ -12,7 +12,7 @@
 
 ---
 
-## Estado em 2026-10-10: o que está aberto
+## Estado em 2026-10-18: o que está aberto
 
 > Pedido do autor (2026-10-09): o produto fica redondo, e só as pendências de arquitetura
 > continuam abertas. Abaixo, a lista curta. O histórico das seções seguintes fica como registro.
@@ -21,18 +21,19 @@
 
 | # | Pendência | Por que é de arquitetura |
 |---|---|---|
-| **3** | Domínio | Bloqueia o login do Google em produção e a política publicada |
-| **19** | Retenção do Prometheus | Configuração da VPS |
+| ✅ ~~3~~ | ~~Domínio~~ | FEITO (2026-10-15): `registroaberto.org`, comprado na Hostinger, DNS na Cloudflare, login do Google funcionando em produção |
+| ✅ ~~19~~ | ~~Retenção do Prometheus~~ | FEITO (2026-10-17): 30 dias, no serviço `observabilidade` do compose |
 | **20** | Destino do backup do Postgres, criptografado | Configuração da VPS; primeiro dia |
-| **21** | Grafana público ou por túnel | Exposição na VPS |
-| **22** | Painel do Coolify: sem endereço público, aberto por túnel SSH (recomendado) | Exposição na VPS. O painel sobe e apaga containers, lê todos os segredos e alcança o banco. Opções: (1) sem domínio, `ssh -L 8000:localhost:8000` com o SSH só por chave, sem root e com fail2ban, aberto a qualquer IP porque o autor viaja (decisão do autor, 2026-10-10) (recomendada); (2) atrás do Cloudflare Access, se a P88 escolher o túnel; (3) público com 2FA, a menos segura. O deploy pelo CI usa a API do Coolify com token e não depende do painel público. Detalhe em `arquitetura.html` |
+| ✅ ~~21~~ | ~~Grafana público ou por túnel~~ | FEITO (2026-10-18): `grafana.registroaberto.org` atrás do Cloudflare Access; conferido de fora que `/login` manda para a tela do Access |
+| ✅ ~~22~~ | ~~Painel do Coolify~~ | FEITO (2026-10-15): `painel.registroaberto.org` atrás do Cloudflare Access, pelo túnel |
 | **23** | CI como portão do deploy | `deploy.yaml` proposto no roteiro de publicação |
 | **57** | Credencial do GitHub e PR | Processo de entrega |
 | **56** | Modelo de `gestoes` para governos sem eleição (Temer) | Muda o schema |
 | **44** | A virada para a 58ª (fev/2027): o que a tela mostra na troca | Muda a regra de legislatura corrente em todas as rotas |
 | novo | Juntar as migrations numa `Inicial` antes do primeiro deploy | Só dá antes de existir banco de produção |
 | **86** | Cache e limite de taxa na Cloudflare para `/api` | Exposição na borda. A API já marca com `Cache-Control: public, max-age=300` todo GET 200 de rota que não exige login (`CacheNoNavegador`). Falta a regra na Cloudflare que guarda essas respostas e o limite de taxa. RISCO: a regra guarda só rota sem login; `seguidos` e `auth/eu` leem o usuário, e guardadas na borda entregariam a lista de quem uma pessoa segue a outra |
-| **87** | Primeira carga de produção: cópia do banco local (decisão do autor, 2026-10-10) | FEITO em parte (2026-10-15): o banco local foi copiado para produção, 8.319 parlamentares e 2.179.300 votos nos dois lados (`infra/vps/restaurar-banco.sh`). RISCO: o dump foi do banco inteiro, contra o passo (3): levou `usuarios`, `segue`, `consentimentos`, `avaliacoes` e `tokens_email` do ambiente local, que precisam ser apagados em produção. Faltam também (6) e (7); o (7) está pronto no código (2026-10-15: serviço `etl` no compose, trava contra duas rotinas, limpeza do cache) e falta cadastrar as tarefas no Coolify, pela folha `infra/vps/coolify-tarefas.md`. Passos: (1) juntar as migrations numa `Inicial` antes; (2) produção na mesma migration que o local; (3) `pg_dump --data-only` só das tabelas de fonte, sem `usuarios`, `segue`, `consentimentos` e `avaliacoes`; (4) mesma `chave-cpf` em produção, ou `rechavear-cpf` depois; (5) `pg_restore` no VPS; (6) `conferir` em produção antes de abrir o site; (7) ligar a rotina periódica da ETL. ATENÇÃO: as cópias dos arquivos de origem (`.cache/procedencia`) não vão no dump; o hash continua conferível baixando de novo da fonte |
+| novo | HSTS na Cloudflare | O redirecionamento para HTTPS já existe; falta o cabeçalho `Strict-Transport-Security` (ausente, conferido em 2026-10-18), que faz o navegador nem tentar `http://` depois da primeira visita. Liga em SSL/TLS, Edge Certificates |
+| ✅ ~~87~~ | ~~Primeira carga de produção~~ | FEITO (2026-10-18): banco local copiado (2026-10-15) e as rotinas semanal e mensal cadastradas no Coolify. DECISÃO do autor (2026-10-18): as tabelas de usuários vindas do banco local (`usuarios`, `segue`, `consentimentos`, `avaliacoes`) ficam em produção. ATENÇÃO: as cópias dos arquivos de origem (`.cache/procedencia`) não vão no dump; o hash continua conferível baixando de novo da fonte |
 | **88** | Fechar o acesso direto ao VPS, sem passar pela Cloudflare | FEITO (2026-10-15): túnel da Cloudflare `registroaberto-vps`, conector no Ubuntu, rotas HTTP para `localhost:80`, domínios do Coolify em `http://`, firewall só com a 22; conferido de fora que 80, 443 e 8000 não respondem. Passo a passo em `arquitetura.html`, etapa 5. Exposição na borda. Esconder o IP não basta: com a 443 aberta a todos, quem descobre o endereço pula WAF, cache e limite de taxa. Opções: túnel da Cloudflare (recomendado: 80 e 443 fechadas para a internet) ou firewall só com as faixas da Cloudflare mais Authenticated Origin Pulls no Traefik. Em qualquer caso, o Traefik só responde aos domínios do site. Desenho em `arquitetura.html` |
 | **89** | Avisar quem segue quando o parlamentar tem novidade: notificação do navegador (escolha do autor, 2026-10-18; fica para depois) | Hoje o "O que mudou" só aparece na página inicial, para quem entra no site. A notificação chega com o site fechado, sem provedor pago. Pede: par de chaves VAPID como segredo (fora do `appsettings.json`), tabela de inscrições do navegador com consentimento próprio e exclusão (LGPD: a inscrição revela quem a pessoa segue), service worker no front, um passo depois da rotina da ETL que manda o aviso, e a política de privacidade em versão nova. ATENÇÃO: no iPhone só funciona com o site instalado na tela inicial. O e-mail ficou de fora: a política promete não mandar |
 
