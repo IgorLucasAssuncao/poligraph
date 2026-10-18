@@ -97,20 +97,23 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
     /// <remarks>
     /// <para>Uma consulta por mandato para a filiação: são poucos por pessoa, e o último voto de cada grupo não se traduz numa consulta só.</para>
     /// <para>A casa entra no agrupamento: a casa é do mandato, não da pessoa.</para>
+    /// <para>RISCO: `Min` e `Max` sobre a navegação (`v.Votacao.Data`) dentro de um `GroupBy` viram, no EF, uma subconsulta por grupo, juntando `votacoes` duas vezes. A junção explícita deixa a data como coluna da consulta, e o EF agrega no próprio `GROUP BY`. MEDIDO em 2026-10-18, Câmara, 57ª, banco local: a mediana de presença foi de 6,9 s para 0,22 s, com o mesmo resultado para os 643 deputados.</para>
     /// </remarks>
     private async Task<List<MandatoDto>> MandatosAsync(long idPessoa, CancellationToken ct)
     {
-        var grupos = await _db.Votos.AsNoTracking()
-            .Where(v => v.PessoaId == idPessoa)
-            .GroupBy(v => new { v.Votacao!.Legislatura, v.Votacao.Casa })
-            .Select(g => new
-            {
-                g.Key.Legislatura,
-                g.Key.Casa,
-                Quantos = g.Count(),
-                Primeiro = g.Min(v => v.Votacao!.Data),
-                Ultimo = g.Max(v => v.Votacao!.Data),
-            })
+        var grupos = await (
+                from v in _db.Votos.AsNoTracking()
+                join vt in _db.Votacoes.AsNoTracking() on v.VotacaoId equals vt.Id
+                where v.PessoaId == idPessoa
+                group vt.Data by new { vt.Legislatura, vt.Casa } into g
+                select new
+                {
+                    g.Key.Legislatura,
+                    g.Key.Casa,
+                    Quantos = g.Count(),
+                    Primeiro = g.Min(),
+                    Ultimo = g.Max(),
+                })
             .OrderByDescending(g => g.Legislatura)
             .ToListAsync(ct);
 
@@ -145,13 +148,13 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
             return null;
         }
 
-        var registros = _db.Votos.AsNoTracking().Where(v =>
-            v.PessoaId == idPessoa && v.Votacao!.Casa == casa && v.Votacao.Legislatura == legislatura && v.Votacao.Plenario);
-
-        var porPresenca = await registros
-            .Where(v => v.Presenca != null)
-            .GroupBy(v => v.Presenca)
-            .Select(g => new { Presenca = g.Key, Quantos = g.Count(), Desde = g.Min(v => v.Votacao!.Data), Ate = g.Max(v => v.Votacao!.Data) })
+        var porPresenca = await (
+                from v in _db.Votos.AsNoTracking()
+                join vt in _db.Votacoes.AsNoTracking() on v.VotacaoId equals vt.Id
+                where v.PessoaId == idPessoa && vt.Casa == casa && vt.Legislatura == legislatura && vt.Plenario
+                      && v.Presenca != null
+                group vt.Data by v.Presenca into g
+                select new { Presenca = g.Key, Quantos = g.Count(), Desde = g.Min(), Ate = g.Max() })
             .ToListAsync(ct);
 
         if (porPresenca.Count == 0)
@@ -188,21 +191,24 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
     /// </summary>
     /// <remarks>
     /// <para>Senado: presentes sobre os registros de cada senador. Câmara: presentes sobre as votações de plenário entre o primeiro e o último voto de cada deputado, que é como a ficha conta.</para>
+    /// <para>RISCO: `Min` e `Max` sobre a navegação (`v.Votacao.Data`) dentro de um `GroupBy` viram, no EF, uma subconsulta por grupo, juntando `votacoes` duas vezes. A junção explícita deixa a data como coluna da consulta, e o EF agrega no próprio `GROUP BY`. MEDIDO em 2026-10-18, Câmara, 57ª, banco local: a mediana de presença foi de 6,9 s para 0,22 s, com o mesmo resultado para os 643 deputados.</para>
     /// </remarks>
     private async Task<double?> MedianaDePresencaAsync(TipoCasa casa, short legislatura, CancellationToken ct) =>
         await _cache.GetOrCreateAsync(("mediana-presenca", casa, legislatura), async entrada =>
         {
             entrada.AbsoluteExpirationRelativeToNow = ValidadeDaLista;
-            var porPessoa = await _db.Votos.AsNoTracking()
-                .Where(v => v.Votacao!.Casa == casa && v.Votacao.Legislatura == legislatura && v.Votacao.Plenario && v.Presenca != null)
-                .GroupBy(v => v.PessoaId)
-                .Select(g => new
-                {
-                    Presentes = g.Count(v => v.Presenca == PresencaNoVoto.PRESENTE),
-                    Registros = g.Count(),
-                    Desde = g.Min(v => v.Votacao!.Data),
-                    Ate = g.Max(v => v.Votacao!.Data),
-                })
+            var porPessoa = await (
+                    from v in _db.Votos.AsNoTracking()
+                    join vt in _db.Votacoes.AsNoTracking() on v.VotacaoId equals vt.Id
+                    where vt.Casa == casa && vt.Legislatura == legislatura && vt.Plenario && v.Presenca != null
+                    group new { v.Presenca, vt.Data } by v.PessoaId into g
+                    select new
+                    {
+                        Presentes = g.Count(x => x.Presenca == PresencaNoVoto.PRESENTE),
+                        Registros = g.Count(),
+                        Desde = g.Min(x => x.Data),
+                        Ate = g.Max(x => x.Data),
+                    })
                 .ToListAsync(ct);
             if (porPessoa.Count == 0)
             {
@@ -417,7 +423,8 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
 
     /// <remarks>
     /// <para>Três consultas agrupadas, e não duas subconsultas por pessoa: a versão anterior contava os votos e buscava o último voto para cada uma das 7.993 linhas do cadastro, 1,2 s por chamada. Agrupado, 260 ms.</para>
-    /// <para>A filiação é a do último dia em que a pessoa votou. Havendo mais de uma votação nesse dia, qualquer uma serve: partido e UF não mudam dentro do dia.</para>
+    /// <para>A filiação é a do último voto da pessoa na legislatura, numa passada só (`ROW_NUMBER` por pessoa, em ordem de data). Havendo mais de uma votação no último dia, qualquer uma serve: partido e UF não mudam dentro do dia.</para>
+    /// <para>MEDIDO em 2026-10-18, 57ª, banco local: a versão anterior buscava o último dia de cada pessoa numa subconsulta e voltava todos os votos desse dia (1.361 linhas para 747 pessoas), em 6,5 s; esta devolve uma linha por pessoa, em 0,5 s, com a mesma filiação para todas.</para>
     /// </remarks>
     private async Task<IReadOnlyList<ParlamentarNaListaDto>> MontarListaAsync(
         short legislatura, CancellationToken ct)
@@ -431,17 +438,13 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
             .Where(c => c.NVotacoes > 0)
             .ToDictionaryAsync(c => c.PessoaId, c => c.NVotacoes, ct);
 
-        var ultimoDia = daLegislatura
+        var filiacoes = await daLegislatura
             .GroupBy(v => v.PessoaId)
-            .Select(g => new { PessoaId = g.Key, Data = g.Max(v => v.Votacao!.Data) });
-
-        var filiacoes = (await (
-                from v in daLegislatura
-                join u in ultimoDia on new { v.PessoaId, v.Votacao!.Data } equals new { u.PessoaId, u.Data }
-                select new { v.PessoaId, v.PartidoNoVoto, v.UfNoVoto, v.Votacao!.Casa })
-            .ToListAsync(ct))
-            .GroupBy(f => f.PessoaId)
-            .ToDictionary(g => g.Key, g => g.First());
+            .Select(g => g
+                .OrderByDescending(v => v.Votacao!.Data)
+                .Select(v => new { v.PessoaId, v.PartidoNoVoto, v.UfNoVoto, v.Votacao!.Casa })
+                .First())
+            .ToDictionaryAsync(f => f.PessoaId, ct);
 
         var ids = contagens.Keys.ToList();
         var pessoas = await _db.Pessoas.AsNoTracking()

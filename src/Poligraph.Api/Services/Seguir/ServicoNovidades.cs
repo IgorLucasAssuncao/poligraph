@@ -233,12 +233,18 @@ public class ServicoNovidades(PoligraphDb db)
             .OrderByDescending(g => g.Total)];
     }
 
+    /// <summary>A casa do voto mais recente de cada pessoa seguida.</summary>
+    /// <remarks>
+    /// <para>Junção explícita com <c>votacoes</c>: o <c>Max</c> sobre a navegação viraria uma subconsulta por grupo (ver <c>ServicoParlamentares.MedianaDePresencaAsync</c>).</para>
+    /// </remarks>
     private async Task<Dictionary<long, TipoCasa?>> CasaDoVotoMaisRecenteAsync(List<long> idsPessoasSeguidas, CancellationToken ct)
     {
-        var porCasa = await _db.Votos.AsNoTracking()
-            .Where(v => idsPessoasSeguidas.Contains(v.PessoaId))
-            .GroupBy(v => new { v.PessoaId, v.Votacao!.Casa })
-            .Select(g => new { g.Key.PessoaId, g.Key.Casa, Ultimo = g.Max(v => v.Votacao!.Data) })
+        var porCasa = await (
+                from v in _db.Votos.AsNoTracking()
+                join vt in _db.Votacoes.AsNoTracking() on v.VotacaoId equals vt.Id
+                where idsPessoasSeguidas.Contains(v.PessoaId)
+                group vt.Data by new { v.PessoaId, vt.Casa } into g
+                select new { g.Key.PessoaId, g.Key.Casa, Ultimo = g.Max() })
             .ToListAsync(ct);
 
         return porCasa
