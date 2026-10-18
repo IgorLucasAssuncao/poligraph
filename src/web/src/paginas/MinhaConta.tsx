@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { excluirConta, revogarConsentimentoDeSeguir } from '../api';
+import { excluirConta, revogarAvisos, revogarConsentimentoDeSeguir } from '../api';
+import { AvisosNoNavegadorComponent } from '../componentes/AvisosNoNavegador';
 import { AvatarComponent } from '../componentes/Avatar';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { useSessao } from '../sessao';
 import { TEXTOS_DA_CONTA } from '../textos/conta';
+import { TEXTOS_DOS_AVISOS } from '../textos/avisos';
 
 const T = TEXTOS_DA_CONTA.conta;
+const A = TEXTOS_DOS_AVISOS.conta;
 
 /**
  * As operações que a pessoa precisa ter sobre a própria conta.
@@ -20,6 +23,7 @@ export function MinhaContaComponent() {
   const [confirmando, setConfirmando] = useState(false);
   const [erro, setErro] = useState(false);
   const [revogado, setRevogado] = useState(false);
+  const [avisosRevogados, setAvisosRevogados] = useState(false);
 
   return (
     <>
@@ -38,6 +42,20 @@ export function MinhaContaComponent() {
         <button type="button" className="botao-secundario" onClick={() => sair().catch(() => setErro(true))}>
           {T.sair}
         </button>
+      </section>
+
+      <section className="conta-secao">
+        {avisosRevogados ? (
+          <p className="ajuda">{A.revogado}</p>
+        ) : (
+          <>
+            <AvisosNoNavegadorComponent />
+            <p className="ajuda">{A.revogarAjuda}</p>
+            <button type="button" className="botao-secundario" onClick={revogarOsAvisos}>
+              {A.revogar}
+            </button>
+          </>
+        )}
       </section>
 
       <section className="conta-secao">
@@ -84,6 +102,15 @@ export function MinhaContaComponent() {
     try {
       await revogarConsentimentoDeSeguir();
       setRevogado(true);
+    } catch {
+      setErro(true);
+    }
+  }
+
+  async function revogarOsAvisos() {
+    try {
+      await revogarAvisos();
+      setAvisosRevogados(true);
     } catch {
       setErro(true);
     }

@@ -5,7 +5,7 @@ import { useState } from 'react';
  *
  * ATENÇÃO: A foto não é guardada no banco nem servida por nós: a URL é da Câmara ou do Senado.
  * Rehospedar imagem de pessoa é outra discussão de licença e de LGPD que este trabalho
- * Não abriu. O que se guarda é a cópia no NAVEGADOR do visitante (`fotos-sw.js`).
+ * Não abriu. O que se guarda é a cópia no NAVEGADOR do visitante (`sw.js`).
  *
  * DECISÃO: As iniciais ficam POR BAIXO e aparecem na hora. A foto da Câmara tem 30–41 KB e a
  * do Senado 170–330 KB (medido em 2026-10-01), para um quadrado de ~42 px: até ela

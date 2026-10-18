@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ConsentimentoNecessarioError, deixarDeSeguir, seguir } from '../api';
 import { useSessao } from '../sessao';
 import { TEXTO_CONSENTIMENTO_SEGUIR } from '../textos-legais';
 import { useEntrar } from './useEntrar';
+import { PedidoDeConsentimentoComponent } from './PedidoDeConsentimento';
 import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
 /**
@@ -64,6 +65,7 @@ export function BotaoSeguirComponent({
       </button>
       {perguntando && (
         <PedidoDeConsentimentoComponent
+          texto={TEXTO_CONSENTIMENTO_SEGUIR}
           aoAceitar={() => {
             setPerguntando(false);
             void executar(true, true);
@@ -93,43 +95,4 @@ export function BotaoSeguirComponent({
       setOcupado(false);
     }
   }
-}
-
-/**
- * O pedido de consentimento, num `<dialog>` modal: foco preso e Esc, como o tour e o painel do
- * modo auditoria. Esc e "Agora não" fecham sem seguir.
- */
-function PedidoDeConsentimentoComponent({ aoAceitar, aoRecusar }: { aoAceitar: () => void; aoRecusar: () => void }) {
-  const dialogo = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const elemento = dialogo.current;
-    if (!elemento || elemento.open) return;
-    if (elemento.showModal) elemento.showModal();
-    else elemento.setAttribute('open', '');
-  }, []);
-
-  return (
-    <dialog
-      ref={dialogo}
-      className="pedido-consentimento"
-      aria-labelledby="titulo-consentimento-seguir"
-      onCancel={aoRecusar}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <h2 id="titulo-consentimento-seguir">{TEXTO_CONSENTIMENTO_SEGUIR.titulo}</h2>
-      <p>{TEXTO_CONSENTIMENTO_SEGUIR.texto}</p>
-      <p className="ajuda">
-        <Link to="/privacidade">{T.seguir.privacidade}</Link>
-      </p>
-      <div className="confirmacao-acoes">
-        <button type="button" className="botao-destaque" onClick={aoAceitar}>
-          {TEXTO_CONSENTIMENTO_SEGUIR.aceitar}
-        </button>
-        <button type="button" className="botao-secundario" onClick={aoRecusar}>
-          {TEXTO_CONSENTIMENTO_SEGUIR.recusar}
-        </button>
-      </div>
-    </dialog>
-  );
 }

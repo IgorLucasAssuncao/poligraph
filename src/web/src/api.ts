@@ -1205,6 +1205,60 @@ export async function obterNovidades(): Promise<Novidades> {
   return buscar<Novidades>(`${BASE}/seguidos/novidades`);
 }
 
+/**
+ * Avisos no navegador (Pendência 89). RISCO: a inscrição diz que a pessoa segue alguém, e tem
+ * consentimento próprio: sem ele vivo na versão do texto, a API responde 428.
+ */
+export type InscricaoDoNavegador = { endereco: string; p256dh: string; auth: string };
+
+export type EstadoDosAvisos = { consentimento: boolean; navegadores: number; esteNavegador: boolean };
+
+/** A chave pública VAPID do servidor; `null` quando o servidor não tem avisos ligados. */
+export async function obterChaveDosAvisos(): Promise<string | null> {
+  return (await buscar<{ chavePublica: string | null }>(`${BASE}/avisos/chave`)).chavePublica;
+}
+
+export async function obterEstadoDosAvisos(endereco: string | null): Promise<EstadoDosAvisos> {
+  const consulta = endereco ? `?endereco=${encodeURIComponent(endereco)}` : '';
+  return buscar<EstadoDosAvisos>(`${BASE}/avisos${consulta}`);
+}
+
+/** Inscreve este navegador. Sem consentimento vivo, {@link ConsentimentoNecessarioError}: a tela pergunta e chama de novo com `aceite`. */
+export async function inscreverNavegador(inscricao: InscricaoDoNavegador, aceite = false): Promise<void> {
+  const consulta = new URLSearchParams({ versao: VERSAO_CONSENTIMENTO });
+  if (aceite) consulta.set('aceite', 'true');
+  const url = `${BASE}/avisos/navegador?${consulta}`;
+  const resposta = await fetch(url, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...CABECALHO_DO_SITE },
+    body: JSON.stringify(inscricao),
+    credentials: 'include',
+  });
+
+  if (resposta.status === 428) throw new ConsentimentoNecessarioError();
+  if (resposta.status === 401) throw new NaoAutenticadoError();
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.falhaEm(url, resposta.status));
+}
+
+/** Tira este navegador da lista. Os outros da pessoa continuam recebendo. */
+export async function tirarNavegador(endereco: string): Promise<void> {
+  const url = `${BASE}/avisos/navegador/saida`;
+  const resposta = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...CABECALHO_DO_SITE },
+    body: JSON.stringify({ endereco }),
+    credentials: 'include',
+  });
+
+  if (resposta.status === 401) throw new NaoAutenticadoError();
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.falhaEm(url, resposta.status));
+}
+
+/** Revoga o consentimento dos avisos; a API apaga os navegadores e o registro do que já foi avisado. */
+export async function revogarAvisos(): Promise<void> {
+  await semCorpo(`${BASE}/avisos/consentimento`, 'DELETE');
+}
+
 /** O número cuja procedência se pede (Pendência 73). O recorte é o mesmo da tela que o mostra. */
 export type ConsultaDeProcedencia = {
   contexto:

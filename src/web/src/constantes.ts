@@ -102,3 +102,10 @@ export const ESTADOS_A_VISTA = 10;
 /** Como a Câmara escreve a orientação de bancada que vale como posição: Sim e Não. */
 export const ORIENTACAO_SIM = 'Sim';
 export const ORIENTACAO_NAO = 'Não';
+
+/**
+ * As novidades que o sininho já mostrou neste navegador (Pendência 89): a contagem do sininho é das
+ * que não estão aqui. Fica no aparelho, e não na conta, de propósito: é uma lista de fatos sobre
+ * quem a pessoa segue, e o servidor não precisa saber o que ela leu.
+ */
+export const CHAVE_NOVIDADES_VISTAS = 'poligraph:novidades-vistas';

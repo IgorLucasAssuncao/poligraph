@@ -1,4 +1,12 @@
 /**
+ * O service worker do site: a cópia das fotos e os avisos no navegador (Pendência 89).
+ *
+ * Avisos: o worker do servidor manda pelo serviço de push do fabricante um JSON cifrado com
+ * `titulo`, `corpo` e `url`. Aqui ele vira notificação, e o clique abre o site no início, onde
+ * está o "O que mudou". O texto nunca traz nome de parlamentar: aparece na tela de bloqueio.
+ *
+ * ATENÇÃO: O `tag` faz um aviso novo substituir o anterior em vez de empilhar.
+ *
  * Cópia das fotos dos parlamentares NO NAVEGADOR do visitante.
  *
  * As fotos vêm da Câmara e do Senado, e não são hospedadas por nós (licença e LGPD).
@@ -58,5 +66,42 @@ async function podar(cache) {
 async function apagarMesesAnteriores(atual) {
   for (const nome of await caches.keys()) {
     if (nome.startsWith(PREFIXO) && nome !== atual) await caches.delete(nome);
+  }
+}
+
+self.addEventListener('push', (evento) => {
+  const aviso = { titulo: 'Registro Aberto', corpo: 'Há novidades de quem você segue.', url: '/', ...lerAviso(evento) };
+
+  evento.waitUntil(
+    self.registration.showNotification(aviso.titulo, {
+      body: aviso.corpo,
+      icon: '/icone-192.png',
+      badge: '/icone-192.png',
+      tag: 'novidades',
+      lang: 'pt-BR',
+      data: { url: aviso.url },
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', (evento) => {
+  evento.notification.close();
+  const destino = new URL(evento.notification.data?.url ?? '/', self.location.origin).href;
+
+  evento.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((janelas) => {
+      const aberta = janelas.find((janela) => new URL(janela.url).origin === self.location.origin);
+      if (aberta) return aberta.navigate(destino).then((janela) => (janela ?? aberta).focus());
+      return self.clients.openWindow(destino);
+    }),
+  );
+});
+
+/** O JSON do aviso, ou nada se o corpo não puder ser lido: aí fica o texto padrão. */
+function lerAviso(evento) {
+  try {
+    return evento.data?.json() ?? {};
+  } catch {
+    return {};
   }
 }

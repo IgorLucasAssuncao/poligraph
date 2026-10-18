@@ -5,6 +5,7 @@ import { BuscaDoCabecalhoComponent } from './BuscaDoCabecalho';
 import { FaixaDeProcedenciaComponent } from './FaixaDeProcedencia';
 import { IconeExplorarComponent, IconeOrcamentoComponent, IconeQuestionarioComponent, IconeVoltarComponent, MarcaComponent } from './Icones';
 import { MenuDaContaComponent } from './MenuDaConta';
+import { SininhoComponent } from './Sininho';
 import { InterruptorDoModoAuditoriaComponent, ProvedorDoModoAuditoriaComponent } from './ModoAuditoria';
 import { ProvedorDoTourComponent } from './Tour';
 import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
@@ -194,7 +195,10 @@ function CabecalhoDoSiteComponent() {
 
         <BuscaDoCabecalhoComponent />
         <InterruptorDoModoAuditoriaComponent />
-        <MenuDaContaComponent />
+        <div className="cabecalho-pessoal">
+          <SininhoComponent />
+          <MenuDaContaComponent />
+        </div>
       </div>
     </header>
   );

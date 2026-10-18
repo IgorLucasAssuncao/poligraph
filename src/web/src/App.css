@@ -2662,7 +2662,7 @@ dialog.tour::backdrop { background: transparent; }
 .cabecalho-conteudo .marca-link { grid-area: marca; }
 .cabecalho-conteudo .nav-principal { grid-area: nav; margin-right: 0; min-width: max-content; }
 .cabecalho-conteudo .busca-cabecalho { grid-area: busca; }
-.cabecalho-conteudo .menu-conta { grid-area: conta; }
+.cabecalho-conteudo .cabecalho-pessoal { grid-area: conta; display: flex; align-items: center; gap: .25rem; }
 .cabecalho-conteudo .interruptor-auditoria { grid-area: analise; align-self: center; }
 
 .busca-cabecalho { position: relative; align-self: center; justify-self: end; width: min(100%, 24rem); }

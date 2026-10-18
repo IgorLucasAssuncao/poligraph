@@ -15,13 +15,14 @@ import { aplicarTema, temaGuardado } from './tema';
 aplicarTema(temaGuardado());
 
 /**
- * DECISÃO: Guarda no navegador as fotos dos parlamentares, que a Câmara manda buscar de novo a
- * cada visita (`no-cache`). Depois do `load`: registrar antes disputaria a banda com
- * a própria página. Sem suporte, as fotos seguem vindo da casa, como antes.
+ * DECISÃO: O service worker guarda no navegador as fotos dos parlamentares, que a Câmara manda
+ * buscar de novo a cada visita (`no-cache`), e mostra os avisos sobre quem a pessoa segue
+ * (Pendência 89). Depois do `load`: registrar antes disputaria a banda com a própria página. Sem
+ * suporte, as fotos seguem vindo da casa, como antes, e os avisos não aparecem.
  */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/fotos-sw.js').catch(() => {});
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
 }
 

@@ -103,3 +103,15 @@ export function IconeGrafoComponent({ className }: Props) {
     </svg>
   );
 }
+
+/** O sino das novidades: o mesmo traço dos outros ícones, com a base reta do painel em vez da boca curva. */
+export function IconeSinoComponent({ className }: Props) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="M6 17V11a6 6 0 0 1 12 0v6" />
+      <path d="M4 17h16" />
+      <path d="M10 20.5h4" />
+      <path d="M12 3v2" />
+    </svg>
+  );
+}
