@@ -588,6 +588,11 @@ namespace Poligraph.Data.Migrations
                     b.HasKey("Id")
                         .HasName("pk_despesas");
 
+                    b.HasIndex("Ano")
+                        .HasDatabaseName("ix_despesa_ano");
+
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("Ano"), new[] { "ValorLiquido" });
+
                     b.HasIndex("CargaId")
                         .HasDatabaseName("ix_despesas_carga_id");
 

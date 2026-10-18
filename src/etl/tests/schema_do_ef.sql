@@ -1170,3 +1170,11 @@ VALUES ('20261010210639_OrigemPorColuna', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+CREATE INDEX ix_despesa_ano ON despesas (ano) INCLUDE (valor_liquido);
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261018212010_IndiceDeDespesaPorAno', '10.0.11');
+
+COMMIT;
+
