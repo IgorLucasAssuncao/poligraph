@@ -1,3 +1,5 @@
+using Aspire.Npgsql.EntityFrameworkCore.PostgreSQL;
+
 namespace Poligraph.Worker;
 
 /// <summary>
@@ -15,4 +17,13 @@ public static class TextosDoWorker
         + "No dev, os parâmetros avisos-chave-publica e avisos-chave-privada do AppHost; em produção, Avisos__ChavePublica e Avisos__ChavePrivada no Coolify.";
 
     public const string FaltaBanco = "ConnectionStrings:poligraph é obrigatória: o Hangfire guarda a fila no mesmo Postgres.";
+
+    /// <summary>
+    /// Desliga a repetição automática que o Aspire põe no EF.
+    /// </summary>
+    /// <remarks>
+    /// <para>MEDIDO no primeiro teste local, 2026-10-18: com a repetição ligada, todo job que abre transação falhava com "the configured execution strategy 'NpgsqlRetryingExecutionStrategy' does not support user-initiated transactions". Os testes de integração não pegaram porque montam o contexto sem ela.</para>
+    /// <para>DECISÃO: quem repete é o Hangfire, o job inteiro, com a transação desfeita. Repetir dentro do job mandaria o aviso de novo a cada tentativa do banco.</para>
+    /// </remarks>
+    public static void SemRepeticaoDoEf(NpgsqlEntityFrameworkCorePostgreSQLSettings configuracao) => configuracao.DisableRetry = true;
 }

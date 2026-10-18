@@ -5,7 +5,6 @@ export const TEXTOS_DOS_AVISOS = {
   sininho: {
     rotulo: (novas: number) => (novas > 0 ? `Novidades de quem você segue, ${novas} ${plural(novas, 'nova', 'novas')}` : 'Novidades de quem você segue'),
     titulo: 'Novidades de quem você segue',
-    base: (carga: string | null) => (carga ? `Base atualizada em ${carga}.` : null),
     nadaNovo: 'Nada novo desde a última atualização.',
     ninguem: 'Você ainda não segue ninguém.',
     procurar: 'Procurar parlamentares',

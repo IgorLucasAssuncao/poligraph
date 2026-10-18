@@ -60,7 +60,7 @@ describe('sininho', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('conta as novidades novas, sem os votos da semana, e zera ao abrir', async () => {
+  it('conta as novidades novas, sem os votos da semana, e passa a visto ao fechar', async () => {
     renderizar(COM_TROCA);
 
     const botao = await screen.findByRole('button', { name: 'Novidades de quem você segue, 1 nova' });
@@ -68,7 +68,30 @@ describe('sininho', () => {
 
     expect(await screen.findByText(/votou pelo/)).toBeInTheDocument();
     expect(screen.queryByText(/votou em/)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Novidades de quem você segue' })).toBeInTheDocument();
+    expect(botao).toHaveAccessibleName('Novidades de quem você segue');
+
+    fireEvent.click(botao);
+    expect(JSON.parse(localStorage.getItem(CHAVE_NOVIDADES_VISTAS)!)).toEqual(['troca-7']);
+    expect(botao).toHaveAccessibleName('Novidades de quem você segue');
+  });
+
+  it('aberto antes de as novidades chegarem, marca o que chegou depois', async () => {
+    let entregar: (n: Novidades) => void = () => {};
+    vi.mocked(obterNovidades).mockReturnValue(new Promise((resolver) => (entregar = resolver)));
+    vi.mocked(listarSeguidos).mockResolvedValue(UM_SEGUIDO);
+    vi.mocked(obterChaveDosAvisos).mockResolvedValue(null);
+    render(
+      <MemoryRouter>
+        <SininhoComponent />
+      </MemoryRouter>,
+    );
+
+    const botao = screen.getByRole('button', { name: 'Novidades de quem você segue' });
+    fireEvent.click(botao);
+    entregar(COM_TROCA);
+    await screen.findByText(/votou pelo/);
+    fireEvent.keyDown(document, { key: 'Escape' });
+
     expect(JSON.parse(localStorage.getItem(CHAVE_NOVIDADES_VISTAS)!)).toEqual(['troca-7']);
   });
 

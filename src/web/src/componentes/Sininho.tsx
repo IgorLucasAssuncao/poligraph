@@ -7,7 +7,7 @@ import { useSessao } from '../sessao';
 import { TEXTOS_DOS_AVISOS } from '../textos/avisos';
 import { AvisosNoNavegadorComponent } from './AvisosNoNavegador';
 import { IconeSinoComponent } from './Icones';
-import { montarItens, ultimaCarga } from './itensDoQueMudou';
+import { montarItens } from './itensDoQueMudou';
 import './oQueMudou.css';
 import './sininho.css';
 
@@ -20,8 +20,8 @@ const MAXIMO_NO_PAINEL = 5;
  * O sininho do cabeçalho (Pendência 89): as últimas novidades de quem a pessoa segue e o
  * interruptor dos avisos neste navegador. Só aparece para quem entrou.
  *
- * DECISÃO: A contagem é das novidades que este navegador ainda não mostrou, e zera ao abrir o
- * painel. O número vai num selo retangular de raio pequeno, na fonte de dado, como todo número
+ * DECISÃO: A contagem é das novidades que este navegador ainda não mostrou. Some com o painel
+ * aberto, e o que estava na lista passa a visto ao fechar. O número vai num selo retangular de raio pequeno, na fonte de dado, como todo número
  * do site; bolinha vermelha seria a linguagem de rede social e leria como alarme.
  *
  * ATENÇÃO: Padrão de revelação, como o menu da conta: botão que abre um painel, Tab e Esc.
@@ -33,7 +33,6 @@ export function SininhoComponent() {
   const { usuario } = useSessao();
   const [novidades, setNovidades] = useState<Novidades | null>(null);
   const [seguidos, setSeguidos] = useState<number | null>(null);
-  const [destaque, setDestaque] = useState<string[]>([]);
   const [erro, setErro] = useState(false);
   const [aberto, setAberto] = useState(false);
   const [vistas, setVistas] = useState<string[]>(lerVistas);
@@ -57,11 +56,17 @@ export function SininhoComponent() {
 
   useEffect(() => {
     if (!aberto) return;
+    const fecharMarcando = () => {
+      setAberto(false);
+      const chaves = itensDoSininho(novidades).map((item) => item.chave);
+      setVistas(chaves);
+      gravarVistas(chaves);
+    };
     const aoClicarFora = (e: MouseEvent) => {
-      if (!caixa.current?.contains(e.target as Node)) setAberto(false);
+      if (!caixa.current?.contains(e.target as Node)) fecharMarcando();
     };
     const aoTeclar = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setAberto(false);
+      if (e.key === 'Escape') fecharMarcando();
     };
     document.addEventListener('mousedown', aoClicarFora);
     document.addEventListener('keydown', aoTeclar);
@@ -69,14 +74,13 @@ export function SininhoComponent() {
       document.removeEventListener('mousedown', aoClicarFora);
       document.removeEventListener('keydown', aoTeclar);
     };
-  }, [aberto]);
+  }, [aberto, novidades]);
 
   if (!usuario) return null;
 
-  const itens = novidades ? montarItens(novidades).filter((item) => !item.chave.startsWith('semana-')) : [];
-  const novas = itens.filter((item) => !vistas.includes(item.chave)).length;
+  const itens = itensDoSininho(novidades);
+  const novas = aberto ? 0 : itens.filter((item) => !vistas.includes(item.chave)).length;
   const segueAlguem = (seguidos ?? 0) > 0;
-  const carga = novidades ? ultimaCarga(novidades) : null;
 
   return (
     <div className="sininho" ref={caixa}>
@@ -99,10 +103,7 @@ export function SininhoComponent() {
 
       {aberto && (
         <div className="sininho-painel" id={id}>
-          <div className="sininho-cabeca">
-            <p className="sininho-titulo">{T.titulo}</p>
-            {T.base(carga) && <p className="ajuda">{T.base(carga)}</p>}
-          </div>
+          <p className="sininho-titulo">{T.titulo}</p>
 
           {erro && <p className="ajuda">{T.erro}</p>}
 
@@ -120,7 +121,7 @@ export function SininhoComponent() {
           {itens.length > 0 && (
             <ul className="lista-novidades sininho-lista">
               {itens.slice(0, MAXIMO_NO_PAINEL).map((item) => (
-                <li key={item.chave} className={destaque.includes(item.chave) ? 'novidade-nova' : undefined}>
+                <li key={item.chave} className={vistas.includes(item.chave) ? undefined : 'novidade-nova'}>
                   <span className="novidade-data">{item.quando}</span>
                   <p className="novidade-texto">{item.texto}</p>
                 </li>
@@ -140,17 +141,22 @@ export function SininhoComponent() {
     </div>
   );
 
+  /** Abre; ao fechar, o que estava na lista passa a visto. Marcar ao abrir perdia as novidades que chegavam depois do clique. */
   function alternar() {
-    if (aberto) {
-      setAberto(false);
+    if (!aberto) {
+      setAberto(true);
       return;
     }
-    setAberto(true);
-    const todas = itens.map((item) => item.chave);
-    setDestaque(todas.filter((chave) => !vistas.includes(chave)));
-    setVistas(todas);
-    gravarVistas(todas);
+    setAberto(false);
+    const chaves = itens.map((item) => item.chave);
+    setVistas(chaves);
+    gravarVistas(chaves);
   }
+}
+
+/** As novidades do sininho: as do "O que mudou", sem os votos da semana, que não avisam (Pendência 89). */
+function itensDoSininho(novidades: Novidades | null) {
+  return novidades ? montarItens(novidades).filter((item) => !item.chave.startsWith('semana-')) : [];
 }
 
 function lerVistas(): string[] {

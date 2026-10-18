@@ -31,8 +31,6 @@
   background: var(--fundo); border: 1px solid var(--borda-forte); border-radius: var(--raio);
   box-shadow: var(--sombra-flutuante);
 }
-.sininho-cabeca { display: grid; gap: .1rem; }
-.sininho-cabeca .ajuda { margin: 0; }
 .sininho-titulo { margin: 0; font-size: var(--t-3); font-weight: 700; }
 .sininho-painel .vazio { margin: 0; font-size: var(--t-2); color: var(--suave); }
 

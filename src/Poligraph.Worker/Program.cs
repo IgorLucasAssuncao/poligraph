@@ -17,6 +17,7 @@ builder.AddServiceDefaults();
 
 builder.AddNpgsqlDbContext<PoligraphDb>(
     connectionName: "poligraph",
+    configureSettings: TextosDoWorker.SemRepeticaoDoEf,
     configureDbContextOptions: opcoes => opcoes.UseSnakeCaseNamingConvention());
 
 builder.Services.AddOptions<OpcoesDosAvisos>()

@@ -71,7 +71,7 @@ export function montarItens(n: Novidades): Item[] {
         reais(g.total),
         mesCurto(mes),
         reais(g.maiorCategoriaValor),
-        minusculas(g.maiorCategoria),
+        minusculas(g.maiorCategoria).replace(/[\s.]+$/, ''),
       ),
       fonte: g.casa ? T.fonteDaCota(ORGAO[g.casa], g.casa === 'SENADO') : T.cotaParlamentar,
     });
