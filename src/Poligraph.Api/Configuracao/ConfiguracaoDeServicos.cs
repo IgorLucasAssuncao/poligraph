@@ -50,6 +50,8 @@ public static class ConfiguracaoDeServicos
         servicos.AddScoped<ServicoBusca>();
         servicos.AddScoped<ServicoProcedencia>();
         servicos.AddScoped<ServicoNovidades>();
+        servicos.AddScoped<ServicoConsentimentos>();
+        servicos.AddScoped<ServicoAvisos>();
         servicos.AddScoped<ServicoReconciliacao>();
 
         return servicos;

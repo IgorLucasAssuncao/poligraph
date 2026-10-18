@@ -154,4 +154,33 @@ def test_rotina_com_a_trava_livre_nao_espera(monkeypatch):
 
     principal._rotina(conexao, "semanal")
 
-    assert conexao.comandos == ["pg_try_advisory_lock", "pg_advisory_unlock"]
+    assert conexao.comandos == ["pg_try_advisory_lock", "INSERT INTO eventos ", "pg_advisory_unlock"]
+
+
+def test_rotina_que_falha_nao_grava_evento(monkeypatch):
+    """Pendência 89: rotina parada no meio não avisa ninguém."""
+    from poligraph_etl import __main__ as principal
+
+    def falhar(*_):
+        raise RuntimeError("cota fora do ar")
+
+    monkeypatch.setattr(principal.rotina, "etapas", lambda *_: [rotina.Etapa("cota")])
+    monkeypatch.setattr(principal, "_cota", falhar)
+    conexao = _ConexaoComTrava(livre=True)
+
+    with pytest.raises(RuntimeError):
+        principal._rotina(conexao, "mensal")
+
+    assert not any(c.startswith("INSERT") for c in conexao.comandos)
+
+
+@pytest.mark.parametrize("frequencia", rotina.FREQUENCIAS)
+def test_evento_da_rotina_passa_pelo_check_do_banco(conexao, frequencia):
+    """O tipo que o Python grava é um dos que o `CHECK` do EF aceita."""
+    from poligraph_etl import __main__ as principal
+
+    principal._avisar_que_terminou(conexao, frequencia)
+
+    tipo = conexao.execute("SELECT tipo FROM eventos ORDER BY id DESC LIMIT 1").fetchone()[0]
+    assert tipo == f"ROTINA_{frequencia.upper()}"
+    conexao.execute("DELETE FROM eventos")

@@ -87,7 +87,8 @@ public static class EndpointsSeguir
     /// <param name="versao">A versão do texto de consentimento que a tela mostra (<c>VERSAO_CONSENTIMENTO</c> do front).</param>
     /// <param name="aceite">Verdadeiro só depois de a pessoa aceitar o texto daquela versão.</param>
     private static async Task<IResult> SeguirAsync(
-        long idPessoa, string? versao, bool? aceite, ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
+        long idPessoa, string? versao, bool? aceite, ClaimsPrincipal principal, PoligraphDb db,
+        ServicoConsentimentos consentimentos, CancellationToken ct)
     {
         if (!await db.Pessoas.AnyAsync(p => p.Id == idPessoa, ct))
         {
@@ -109,7 +110,7 @@ public static class EndpointsSeguir
                 detail: MensagensDaApi.SoSegueQuemEstaEmExercicioDetalhe);
         }
 
-        if (!await ConsentimentoEmDiaAsync(db, idUsuario, versao, aceite == true, ct))
+        if (!await consentimentos.EmDiaAsync(idUsuario, TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES, versao, aceite == true, ct))
         {
             return Results.Problem(
                 statusCode: StatusCodes.Status428PreconditionRequired,
@@ -124,62 +125,23 @@ public static class EndpointsSeguir
     }
 
     /// <summary>
-    /// Há consentimento vivo na versão pedida; ou, com <paramref name="aceite"/>, passa a haver.
-    /// </summary>
-    /// <remarks>
-    /// <para>Versão nova revoga a anterior antes de gravar: o índice único só admite um vivo por finalidade.</para>
-    /// </remarks>
-    private static async Task<bool> ConsentimentoEmDiaAsync(
-        PoligraphDb db, long idUsuario, string? versao, bool aceite, CancellationToken ct)
-    {
-        var vivo = await db.Consentimentos
-            .FirstOrDefaultAsync(c => c.UsuarioId == idUsuario
-                                   && c.Finalidade == TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES
-                                   && c.RevogadoEm == null, ct);
-
-        if (vivo is not null && (versao is null || vivo.Versao == versao))
-        {
-            return true;
-        }
-
-        if (!aceite || string.IsNullOrWhiteSpace(versao) || versao.Length > 40)
-        {
-            return false;
-        }
-
-        if (vivo is not null)
-        {
-            vivo.RevogadoEm = DateTimeOffset.UtcNow;
-            await db.SaveChangesAsync(ct);
-        }
-
-        db.Consentimentos.Add(new ConsentimentoModel
-        {
-            UsuarioId = idUsuario,
-            Finalidade = TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES,
-            Versao = versao,
-        });
-        await db.SaveChangesAsync(ct);
-
-        return true;
-    }
-
-    /// <summary>
     /// Exclusão FÍSICA, e de propósito.
     ///
     /// `segue` é **registro de convicção política** — dado sensível pela LGPD
     /// art. 5º, II. "Deixar de seguir" com exclusão lógica manteria no banco a
     /// informação de que a pessoa seguiu aquele parlamentar, que é exatamente o que ela
-    /// pediu para desfazer. Ver a nota em `ExcluirContaAsync`.
+    /// pediu para desfazer. Ver a nota em `ExcluirContaAsync`. Pelo mesmo motivo saem os avisos
+    /// já enviados sobre o parlamentar (Pendência 89).
     /// </summary>
     private static async Task<IResult> DeixarDeSeguirAsync(
-        long idPessoa, ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
+        long idPessoa, ClaimsPrincipal principal, PoligraphDb db, ServicoAvisos avisos, CancellationToken ct)
     {
         var idUsuario = SessaoDoUsuario.IdDoUsuario(principal);
 
         await db.Segue
             .Where(s => s.UsuarioId == idUsuario && s.PessoaId == idPessoa)
             .ExecuteDeleteAsync(ct);
+        await avisos.EsquecerParlamentarAsync(idUsuario, idPessoa, ct);
 
         return Results.NoContent();
     }
@@ -188,19 +150,16 @@ public static class EndpointsSeguir
     /// Revoga o consentimento de seguir (LGPD art. 8º, §5º) e apaga a lista, que dependia dele.
     /// </summary>
     /// <remarks>
-    /// <para>O consentimento fica com <c>revogado_em</c>, como prova de que existiu e de quando acabou. A lista sai por exclusão física, como em <c>DeixarDeSeguirAsync</c>.</para>
+    /// <para>O consentimento fica com <c>revogado_em</c>, como prova de que existiu e de quando acabou. A lista sai por exclusão física, como em <c>DeixarDeSeguirAsync</c>, e com ela os navegadores inscritos e os avisos enviados: sem ninguém seguido, não há o que avisar.</para>
     /// </remarks>
     private static async Task<IResult> RevogarConsentimentoAsync(
-        ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
+        ClaimsPrincipal principal, PoligraphDb db, ServicoConsentimentos consentimentos, ServicoAvisos avisos, CancellationToken ct)
     {
         var idUsuario = SessaoDoUsuario.IdDoUsuario(principal);
 
         await db.Segue.Where(s => s.UsuarioId == idUsuario).ExecuteDeleteAsync(ct);
-        await db.Consentimentos
-            .Where(c => c.UsuarioId == idUsuario
-                     && c.Finalidade == TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES
-                     && c.RevogadoEm == null)
-            .ExecuteUpdateAsync(s => s.SetProperty(c => c.RevogadoEm, DateTimeOffset.UtcNow), ct);
+        await avisos.ApagarTudoAsync(idUsuario, ct);
+        await consentimentos.RevogarAsync(idUsuario, TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES, ct);
 
         return Results.NoContent();
     }

@@ -3,7 +3,7 @@
 /// <summary>
 /// LGPD — a finalidade específica de um consentimento (RNF-12b).
 ///
-/// Um valor só, e é isso que o torna auditável: consentimento genérico não
+/// Um valor por finalidade, e é isso que o torna auditável: consentimento genérico não
 /// atende ao art. 8º, §4º.
 /// </summary>
 /// <remarks>
@@ -12,4 +12,7 @@
 public enum TipoFinalidadeDeConsentimento
 {
     SEGUIR_PARLAMENTARES,
+
+    /// <summary>Receber no navegador os avisos sobre quem a pessoa segue (Pendência 89).</summary>
+    AVISOS_NO_NAVEGADOR,
 }

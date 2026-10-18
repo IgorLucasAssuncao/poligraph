@@ -151,6 +151,32 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Data.AvisoEnviadoModel", b =>
+                {
+                    b.Property<long>("UsuarioId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("usuario_id");
+
+                    b.Property<string>("Chave")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("chave");
+
+                    b.Property<DateTimeOffset>("EnviadoEm")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("enviado_em")
+                        .HasDefaultValueSql("now()");
+
+                    b.HasKey("UsuarioId", "Chave")
+                        .HasName("pk_avisos_enviados");
+
+                    b.ToTable("avisos_enviados", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_aviso_chave", "chave ~ '^(A2:[^:]+:[0-9]+|A3:[0-9]+:[0-9]{4}-[0-9]{2}-[0-9]{2}|A[45]:[0-9]{4}-[0-9]{2})$'");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Data.CargaModel", b =>
                 {
                     b.Property<long>("Id")
@@ -340,7 +366,7 @@ namespace Poligraph.Data.Migrations
 
                     b.ToTable("consentimentos", null, t =>
                         {
-                            t.HasCheckConstraint("ck_consentimento_finalidade", "finalidade IN ('SEGUIR_PARLAMENTARES')");
+                            t.HasCheckConstraint("ck_consentimento_finalidade", "finalidade IN ('SEGUIR_PARLAMENTARES','AVISOS_NO_NAVEGADOR')");
 
                             t.HasCheckConstraint("ck_consentimento_versao", "length(versao) BETWEEN 1 AND 40");
                         });
@@ -956,6 +982,43 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Data.EventoModel", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criado_em")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<DateTimeOffset?>("ProcessadoEm")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processado_em");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tipo");
+
+                    b.HasKey("Id")
+                        .HasName("pk_eventos");
+
+                    b.HasIndex("CriadoEm")
+                        .HasDatabaseName("ix_evento_pendente")
+                        .HasFilter("processado_em IS NULL");
+
+                    b.ToTable("eventos", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_evento_tipo", "tipo IN ('ROTINA_SEMANAL','ROTINA_MENSAL')");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Data.ExecucaoModel", b =>
                 {
                     b.Property<long>("Id")
@@ -1221,6 +1284,59 @@ namespace Poligraph.Data.Migrations
                             t.HasCheckConstraint("ck_gestao_mandato", "ultimo_ano = primeiro_ano + 3");
 
                             t.HasCheckConstraint("ck_gestao_posse", "primeiro_ano = eleicao + 1");
+                        });
+                });
+
+            modelBuilder.Entity("Poligraph.Data.InscricaoNoNavegadorModel", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Auth")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("auth");
+
+                    b.Property<DateTimeOffset>("CriadaEm")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("criada_em")
+                        .HasDefaultValueSql("now()");
+
+                    b.Property<string>("Endereco")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("endereco");
+
+                    b.Property<string>("P256dh")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("p256dh");
+
+                    b.Property<long>("UsuarioId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("usuario_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_inscricoes_no_navegador");
+
+                    b.HasIndex("Endereco")
+                        .IsUnique()
+                        .HasDatabaseName("ix_inscricoes_no_navegador_endereco");
+
+                    b.HasIndex("UsuarioId")
+                        .HasDatabaseName("ix_inscricoes_no_navegador_usuario_id");
+
+                    b.ToTable("inscricoes_no_navegador", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_inscricao_chaves", "length(p256dh) BETWEEN 80 AND 100 AND length(auth) BETWEEN 16 AND 32");
+
+                            t.HasCheckConstraint("ck_inscricao_endereco", "endereco LIKE 'https://%'");
                         });
                 });
 
@@ -2446,6 +2562,16 @@ namespace Poligraph.Data.Migrations
                     b.Navigation("Pessoa");
                 });
 
+            modelBuilder.Entity("Poligraph.Data.AvisoEnviadoModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.UsuarioModel", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_avisos_enviados_usuarios_usuario_id");
+                });
+
             modelBuilder.Entity("Poligraph.Data.CnpjMunicipioModel", b =>
                 {
                     b.HasOne("Poligraph.Data.CargaModel", null)
@@ -2623,6 +2749,16 @@ namespace Poligraph.Data.Migrations
                         .HasForeignKey("CargaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_gestoes_cargas_carga_id");
+                });
+
+            modelBuilder.Entity("Poligraph.Data.InscricaoNoNavegadorModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.UsuarioModel", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_inscricoes_no_navegador_usuarios_usuario_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.MunicipioModel", b =>

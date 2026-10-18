@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Poligraph.Api.Services;
 using Poligraph.Data;
+using Poligraph.Tests.Fixtures;
 
 namespace Poligraph.Tests.Integracao;
 
@@ -32,7 +33,7 @@ public class TestesNovidades(FixturePostgres postgres) : BaseIntegracao(postgres
     {
         ExigeDocker();
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
-        Db.Cargas.Add(Carga());
+        Db.Cargas.Add(CenarioDeNovidades.Carga());
         await Db.SaveChangesAsync();
         using var cliente = CriarCliente();
         await EntrarAsync(cliente);
@@ -53,7 +54,7 @@ public class TestesNovidades(FixturePostgres postgres) : BaseIntegracao(postgres
     public async Task OsCincoAvisos_NaJanelaDoDado()
     {
         ExigeDocker();
-        var (idPessoa, partidoAntes) = await SemearAsync();
+        var (idPessoa, partidoAntes) = await CenarioDeNovidades.SemearAsync(Db);
         using var cliente = CriarCliente();
         await EntrarAsync(cliente);
         (await cliente.PutAsync($"/api/seguidos/{idPessoa}?versao=v1&aceite=true", null)).EnsureSuccessStatusCode();
@@ -80,99 +81,15 @@ public class TestesNovidades(FixturePostgres postgres) : BaseIntegracao(postgres
         }
 
         var cota = Assert.Single(lidas.GastosNaCota);
-        Assert.Equal((MesFechado.Year, MesFechado.Month), (cota.AnoDaDespesa, cota.Mes));
+        Assert.Equal((CenarioDeNovidades.MesFechado.Year, CenarioDeNovidades.MesFechado.Month), (cota.AnoDaDespesa, cota.Mes));
         Assert.Equal(150m, cota.Total);
         Assert.Equal(("DIVULGAÇÃO", 100m), (cota.MaiorCategoria, cota.MaiorCategoriaValor));
 
         var emenda = Assert.Single(lidas.EmendasPagas);
-        Assert.Equal(MesFechado, emenda.Mes);
+        Assert.Equal(CenarioDeNovidades.MesFechado, emenda.Mes);
         Assert.Equal(800m, emenda.Pago);
         Assert.Equal(("CONSTRUTORA EXEMPLO LTDA", "LINDOESTE (PR)"), (emenda.MaiorDestino, emenda.LugarDoMaiorDestino));
     }
-
-    private static DateOnly MesFechado
-    {
-        get
-        {
-            var hoje = DateTimeOffset.UtcNow;
-            return new DateOnly(hoje.Year, hoje.Month, 1).AddMonths(-1);
-        }
-    }
-
-    private static DateOnly MesAberto => MesFechado.AddMonths(1);
-
-    private async Task<(long PessoaId, string PartidoAntes)> SemearAsync()
-    {
-        await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
-        var corrente = await Db.Votacoes.MaxAsync(v => v.Legislatura);
-        var idPessoa = await Db.Votos.AsNoTracking()
-            .Where(v => v.Votacao!.Legislatura == corrente && v.Votacao.Casa == TipoCasa.CAMARA)
-            .OrderBy(v => v.PessoaId).Select(v => v.PessoaId).FirstAsync();
-        var partidoAntes = await Db.Votos.AsNoTracking()
-            .Where(v => v.PessoaId == idPessoa).OrderByDescending(v => v.Votacao!.Data)
-            .Select(v => v.PartidoNoVoto).FirstAsync();
-
-        Db.Votacoes.AddRange(
-            Votacao("novidade-1", new DateOnly(2030, 1, 10), corrente),
-            Votacao("novidade-2", new DateOnly(2030, 1, 9), corrente));
-        await Db.SaveChangesAsync();
-
-        Db.Votos.AddRange(
-            new VotoModel { VotacaoId = "novidade-1", PessoaId = idPessoa, Valor = 1, PartidoNoVoto = "PT", UfNoVoto = "SP" },
-            new VotoModel { VotacaoId = "novidade-2", PessoaId = idPessoa, Valor = -1, PartidoNoVoto = "PT", UfNoVoto = "SP" });
-        Db.Orientacoes.AddRange(
-            new OrientacaoModel { VotacaoId = "novidade-1", Bancada = "Fdr PT-PCdoB-PV", Orientacao = "Não" },
-            new OrientacaoModel { VotacaoId = "novidade-1", Bancada = "Governo", Orientacao = "Sim" },
-            new OrientacaoModel { VotacaoId = "novidade-2", Bancada = "Fdr PT-PCdoB-PV", Orientacao = "Não" });
-
-        Db.Despesas.AddRange(
-            Despesa(idPessoa, MesFechado, "DIVULGAÇÃO", 100m),
-            Despesa(idPessoa, MesFechado, "COMBUSTÍVEL", 50m),
-            Despesa(idPessoa, MesAberto, "DIVULGAÇÃO", 999m));
-
-        const string codigo = "202512340001";
-        Db.Emendas.AddRange(
-            Emenda(idPessoa, codigo, "LINDOESTE - PR"),
-            Emenda(idPessoa, codigo, "CASCAVEL - PR"));
-        Db.EmendasFavorecidos.AddRange(
-            Favorecido(codigo, MesFechado, "BANCO DO BRASIL SA", 500m, intermediario: true),
-            Favorecido(codigo, MesFechado, "CONSTRUTORA EXEMPLO LTDA", 300m, intermediario: false),
-            Favorecido(codigo, MesAberto, "CONSTRUTORA EXEMPLO LTDA", 999m, intermediario: false));
-        await Db.SaveChangesAsync();
-
-        return (idPessoa, partidoAntes);
-    }
-
-    private static VotacaoModel Votacao(string id, DateOnly data, short legislatura) => new()
-    {
-        Id = id, Casa = TipoCasa.CAMARA, Legislatura = legislatura, Data = data, Descricao = "Aprovado o Projeto",
-        Categoria = TipoCategoriaDeVotacao.SUBSTANTIVA, Plenario = true
-    };
-
-    private static DespesaModel Despesa(long idPessoa, DateOnly mes, string categoria, decimal valor) => new()
-    {
-        PessoaId = idPessoa, Ano = (short)mes.Year, Mes = (short)mes.Month, Categoria = categoria, ValorLiquido = valor
-    };
-
-    private static EmendaModel Emenda(long idPessoa, string codigo, string localidade) => new()
-    {
-        PessoaId = idPessoa, CodigoAutor = "1234", NomeAutor = "FULANO", CodigoEmenda = codigo, Ano = 2025,
-        Localidade = localidade, CodigoAcao = "20XV", CodigoPlanoOrcamentario = "0000",
-        ValorEmpenhado = 1000m, ValorPago = 500m
-    };
-
-    private static EmendaFavorecidoModel Favorecido(string codigo, DateOnly mes, string nome, decimal valor, bool intermediario) => new()
-    {
-        CodigoEmenda = codigo, Competencia = mes, Tipo = TipoFavorecido.PESSOA_JURIDICA,
-        Documento = intermediario ? "00000000000191" : "12345678000190", Nome = nome,
-        Uf = "PR", Municipio = "LINDOESTE", Valor = valor, Intermediario = intermediario
-    };
-
-    private static CargaModel Carga() => new()
-    {
-        Fonte = TipoFonteDeCarga.CAMARA, Url = "https://exemplo/votacoes-2030.csv",
-        Sha256 = new string('c', 64), Bytes = 1, Comando = "teste"
-    };
 
     private HttpClient CriarCliente()
     {

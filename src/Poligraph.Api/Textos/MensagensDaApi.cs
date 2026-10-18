@@ -19,6 +19,23 @@ public static class MensagensDaApi
     public const string FaltaConsentimentoParaSeguir = "Falta o consentimento para seguir.";
     public const string FaltaConsentimentoParaSeguirDetalhe =
         "A lista de quem você segue indica posição política, e só é gravada com o seu consentimento.";
+    public const string FaltaConsentimentoParaAvisos = "Falta o consentimento para receber avisos.";
+    public const string FaltaConsentimentoParaAvisosDetalhe =
+        "Os avisos dizem que você segue alguém, e o navegador só é inscrito com o seu consentimento.";
+    public const string InscricaoInvalida = "O navegador mandou uma inscrição incompleta.";
+
+    /// <summary>O título do aviso no navegador. Sem nome de parlamentar: o aviso aparece na tela de bloqueio.</summary>
+    public const string TituloDoAviso = "Registro Aberto";
+
+    /// <summary>O corpo do aviso. Só a contagem: quem segue quem não aparece na tela de bloqueio.</summary>
+    public static string CorpoDoAviso(int deVoto, string? mesDoResumo) => (deVoto, mesDoResumo) switch
+    {
+        (0, not null) => $"Os gastos e as emendas de {mesDoResumo} de quem você segue chegaram.",
+        (1, null) => "1 novidade de quem você segue.",
+        (_, null) => $"{deVoto} novidades de quem você segue.",
+        (1, _) => $"1 novidade de quem você segue, e os gastos de {mesDoResumo}.",
+        _ => $"{deVoto} novidades de quem você segue, e os gastos de {mesDoResumo}.",
+    };
 
     public const string PastaDeChavesObrigatoria =
         "DataProtection:Pasta é obrigatória em produção: sem ela, cada deploy troca as chaves e desloga todo mundo.";

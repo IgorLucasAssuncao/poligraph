@@ -51,6 +51,9 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<ReconciliacaoModel> Reconciliacoes => Set<ReconciliacaoModel>();
     public DbSet<VotacoesSimbolicasModel> VotacoesSimbolicas => Set<VotacoesSimbolicasModel>();
     public DbSet<ReconciliacaoMotivoModel> ReconciliacaoMotivos => Set<ReconciliacaoMotivoModel>();
+    public DbSet<EventoModel> Eventos => Set<EventoModel>();
+    public DbSet<InscricaoNoNavegadorModel> InscricoesNoNavegador => Set<InscricaoNoNavegadorModel>();
+    public DbSet<AvisoEnviadoModel> AvisosEnviados => Set<AvisoEnviadoModel>();
 
     /// <summary>
     /// <b>Todo enum é gravado como TEXTO.</b>
@@ -84,6 +87,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         ConfigurarReconciliacao(mb);
         ConfigurarVotacoesSimbolicas(mb);
         ConfigurarUsuario(mb);
+        ConfigurarAvisos(mb);
         ConfigurarAvaliacao(mb);
         ConfigurarFuncoes(mb);
     }
@@ -843,9 +847,49 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
                 .IsUnique().HasFilter("revogado_em IS NULL");
             e.ToTable(t =>
             {
-                t.HasCheckConstraint("ck_consentimento_finalidade", "finalidade IN ('SEGUIR_PARLAMENTARES')");
+                t.HasCheckConstraint("ck_consentimento_finalidade", "finalidade IN ('SEGUIR_PARLAMENTARES','AVISOS_NO_NAVEGADOR')");
                 t.HasCheckConstraint("ck_consentimento_versao", "length(versao) BETWEEN 1 AND 40");
             });
+        });
+    }
+
+    /// <summary>Os avisos no navegador (Pendência 89): o evento da ETL, os navegadores inscritos e o que já foi avisado.</summary>
+    /// <remarks>
+    /// <para>O índice parcial em <c>eventos</c> é o que o worker lê: só os pendentes.</para>
+    /// <para>A chave do aviso tem formato fixo (<c>A2:votacao:pessoa</c>, <c>A3:pessoa:data</c>, <c>A4:ano-mes</c>, <c>A5:ano-mes</c>), e o <c>CHECK</c> recusa outro: é pelo formato que deixar de seguir apaga as chaves daquele parlamentar.</para>
+    /// </remarks>
+    private static void ConfigurarAvisos(ModelBuilder mb)
+    {
+        mb.Entity<EventoModel>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.CriadoEm).HasDefaultValueSql("now()");
+            e.HasIndex(x => x.CriadoEm).HasFilter("processado_em IS NULL").HasDatabaseName("ix_evento_pendente");
+            e.ToTable(t => t.HasCheckConstraint("ck_evento_tipo", "tipo IN ('ROTINA_SEMANAL','ROTINA_MENSAL')"));
+        });
+
+        mb.Entity<InscricaoNoNavegadorModel>(e =>
+        {
+            e.ToTable("inscricoes_no_navegador", t =>
+            {
+                t.HasCheckConstraint("ck_inscricao_endereco", "endereco LIKE 'https://%'");
+                t.HasCheckConstraint("ck_inscricao_chaves", "length(p256dh) BETWEEN 80 AND 100 AND length(auth) BETWEEN 16 AND 32");
+            });
+            e.HasKey(x => x.Id);
+            e.HasOne<UsuarioModel>().WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => x.Endereco).IsUnique();
+            e.Property(x => x.Endereco).HasMaxLength(1024);
+            e.Property(x => x.CriadaEm).HasDefaultValueSql("now()");
+        });
+
+        mb.Entity<AvisoEnviadoModel>(e =>
+        {
+            e.ToTable("avisos_enviados", t => t.HasCheckConstraint("ck_aviso_chave",
+                "chave ~ '^(A2:[^:]+:[0-9]+|A3:[0-9]+:[0-9]{4}-[0-9]{2}-[0-9]{2}|A[45]:[0-9]{4}-[0-9]{2})$'"));
+            e.HasKey(x => new { x.UsuarioId, x.Chave });
+            e.HasOne<UsuarioModel>().WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(x => x.Chave).HasMaxLength(80);
+            e.Property(x => x.EnviadoEm).HasDefaultValueSql("now()");
         });
     }
 

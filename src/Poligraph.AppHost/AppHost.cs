@@ -6,6 +6,8 @@ var postgres = builder.AddPostgres("postgres")
 var bancoPoligraph = postgres.AddDatabase("poligraph");
 
 var chaveCpf = builder.AddParameter("chave-cpf", secret: true);
+var avisosChavePublica = builder.AddParameter("avisos-chave-publica");
+var avisosChavePrivada = builder.AddParameter("avisos-chave-privada", secret: true);
 
 var migracoes = builder.AddProject<Projects.Poligraph_Data>("migracoes")
     .WithReference(bancoPoligraph)
@@ -15,7 +17,14 @@ var migracoes = builder.AddProject<Projects.Poligraph_Data>("migracoes")
 var api = builder.AddProject<Projects.Poligraph_Api>("api")
     .WithReference(bancoPoligraph)
     .WaitForCompletion(migracoes)
+    .WithEnvironment("Avisos__ChavePublica", avisosChavePublica)
     .WithExternalHttpEndpoints();
+
+builder.AddProject<Projects.Poligraph_Worker>("worker")
+    .WithReference(bancoPoligraph)
+    .WaitForCompletion(migracoes)
+    .WithEnvironment("Avisos__ChavePublica", avisosChavePublica)
+    .WithEnvironment("Avisos__ChavePrivada", avisosChavePrivada);
 
 builder.AddNpmApp("web", "../web", "dev")
     .WithReference(api)

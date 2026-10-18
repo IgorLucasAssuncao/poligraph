@@ -2372,8 +2372,19 @@ def _rotina(conexao: psycopg.Connection, frequencia: str) -> None:
         for numero, etapa in enumerate(lista, 1):
             log.info("Etapa %d de %d: %s", numero, len(lista), etapa)
             _executar_etapa(conexao, etapa)
+        _avisar_que_terminou(conexao, frequencia)
     finally:
         conexao.execute("SELECT pg_advisory_unlock(%s)", (TRAVA_DA_ROTINA,))
+
+
+def _avisar_que_terminou(conexao: psycopg.Connection, frequencia: str) -> None:
+    """Pendência 89 — grava em `eventos` que a rotina passou por todas as etapas.
+
+    O worker de notificações lê esse registro e avisa quem segue. Só chega aqui a rotina que
+    não falhou: a que parou no meio não grava evento, e ninguém é avisado sobre dado pela metade.
+    """
+    conexao.execute("INSERT INTO eventos (tipo) VALUES (%s)", (f"ROTINA_{frequencia.upper()}",))
+    log.info("Evento ROTINA_%s gravado para o worker de notificações.", frequencia.upper())
 
 
 TRAVA_DA_ROTINA = 64_2026
