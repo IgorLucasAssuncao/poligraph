@@ -190,7 +190,7 @@ concentrados em lideranças. **A maior parte do Congresso não terá notícia.**
 > 🔄 **Fora do escopo desde 2026-10-02 (Pendência 61); título trocado em 2026-10-18.** As
 > notícias saíram por falta de tempo hábil, e o título deixou de citá-las. Saem: RF-43, RF-46
 > a RF-49 e o e-mail (RF-49 a RF-53); nenhum e-mail é enviado. Ficam RF-42 e RF-42a, com outro
-> objetivo: seguir um parlamentar é acompanhar o que ele fez, na página Seguindo (votos da
+> objetivo: seguir um parlamentar é acompanhar o que ele fez, no bloco "O que mudou" da página inicial (votos da
 > semana, votos contra o partido, troca de partido e gastos do mês). O texto abaixo é o
 > histórico da decisão.
 
