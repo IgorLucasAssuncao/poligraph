@@ -452,7 +452,7 @@ export async function listarVotos(
  */
 export async function listarSeguidos(): Promise<Parlamentar[]> {
   const seguidos = await buscar<
-    { idPessoa: number; nome: string; casa: Parlamentar['casa']; partido: string; uf: string }[]
+    { idPessoa: number; nome: string; casa: Parlamentar['casa']; partido: string; uf: string; urlFoto: string | null }[]
   >(`${BASE}/seguidos`);
 
   return seguidos.map((s) => ({ ...s, nVotacoes: 0 }));

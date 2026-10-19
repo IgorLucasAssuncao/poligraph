@@ -20,7 +20,7 @@ vi.mock('../componentes/useLegislatura', () => ({
 }));
 
 vi.mock('../componentes/SugestoesParaSeguir', () => ({ SugestoesParaSeguirComponent: () => null }));
-vi.mock('../componentes/OQueMudou', () => ({ OQueMudouComponent: () => <p>o que mudou</p> }));
+vi.mock('../componentes/NovidadesDosSeguidos', () => ({ NovidadesDosSeguidosComponent: () => <p>novidades de quem você segue</p> }));
 vi.mock('../componentes/BarraDePeriodo', () => ({ BarraDePeriodoComponent: () => null }));
 vi.mock('../componentes/TelaDoGrafo', () => ({
   TelaDoGrafoComponent: ({ grafo }: { grafo: Grafo }) => <p>grafo com {grafo.nos.length} parlamentares</p>,
@@ -110,7 +110,7 @@ describe('a página inicial', () => {
     abrir({ nome: 'Fulana', fotoUrl: null });
 
     expect(await screen.findByRole('heading', { name: T.quemVoceSegue })).toBeDefined();
-    expect(screen.getByText('o que mudou')).toBeDefined();
+    expect(screen.getByText('novidades de quem você segue')).toBeDefined();
     expect(screen.getByText('Ana')).toBeDefined();
     expect(screen.getByText('Bia')).toBeDefined();
   });

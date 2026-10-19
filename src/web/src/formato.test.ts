@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { anosDeCotaDaEmenda, mesCurto, mesesContinuos, partesDeCem, reais, reaisCompacto, semPontosNoFim } from './formato';
+import { anosDeCotaDaEmenda, mesCurto, mesesContinuos, noMeioDaFrase, nomeDaCategoriaDaCota, partesDeCem, reais, reaisCompacto, semPontosNoFim } from './formato';
 
 /**
  * ATENÇÃO: Pular o mês sem pagamento encurtaria a espera no desenho.
@@ -78,5 +78,20 @@ describe('semPontosNoFim', () => {
     expect(semPontosNoFim('a.b.c')).toBe('a.b.c');
     expect(semPontosNoFim('...')).toBe('');
     expect(semPontosNoFim('')).toBe('');
+  });
+});
+
+describe('nome da categoria da cota', () => {
+  it('troca o nome oficial pelo da tabela, com a vírgula e o ponto da fonte', () => {
+    expect(nomeDaCategoriaDaCota('HOSPEDAGEM ,EXCETO DO PARLAMENTAR NO DISTRITO FEDERAL.')).toBe('Hotel fora de Brasília');
+    expect(nomeDaCategoriaDaCota('Divulgação da atividade parlamentar')).toBe('Divulgação do mandato');
+  });
+
+  it('categoria nova sai arrumada, sem ponto no fim e com a vírgula colada', () => {
+    expect(nomeDaCategoriaDaCota('DESPESA NOVA ,DE TESTE.')).toBe('Despesa nova, de teste');
+  });
+
+  it('no meio da frase, só a primeira letra muda', () => {
+    expect(noMeioDaFrase('Hotel fora de Brasília')).toBe('hotel fora de Brasília');
   });
 });

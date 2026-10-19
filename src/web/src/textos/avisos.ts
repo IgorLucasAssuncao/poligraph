@@ -8,7 +8,7 @@ export const TEXTOS_DOS_AVISOS = {
     nadaNovo: 'Nada novo desde a última atualização.',
     ninguem: 'Você ainda não segue ninguém.',
     procurar: 'Procurar parlamentares',
-    verTudo: 'Ver tudo no início',
+    verTudo: 'Ver por parlamentar',
     erro: 'Não foi possível carregar as novidades agora.',
   },
   navegador: {

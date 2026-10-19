@@ -14,7 +14,7 @@ import {
 import { LegendaDoGrafoComponent } from '../componentes/LegendaDoGrafo';
 import { LinhaParlamentarComponent } from '../componentes/LinhaParlamentar';
 import { SugestoesParaSeguirComponent } from '../componentes/SugestoesParaSeguir';
-import { OQueMudouComponent } from '../componentes/OQueMudou';
+import { NovidadesDosSeguidosComponent } from '../componentes/NovidadesDosSeguidos';
 import { TelaDoGrafoComponent } from '../componentes/TelaDoGrafo';
 import { useSessao } from '../sessao';
 import { EsqueletoDePainelComponent } from '../componentes/Esqueleto';
@@ -131,7 +131,7 @@ export function InicioComponent() {
       </div>
 
       <aside className="painel-trilho">
-        {seguidos.length > 0 && <OQueMudouComponent />}
+        {seguidos.length > 0 && <NovidadesDosSeguidosComponent />}
         <SugestoesParaSeguirComponent />
       </aside>
     </div>

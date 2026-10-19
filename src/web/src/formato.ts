@@ -1,3 +1,4 @@
+import { NOMES_DAS_CATEGORIAS_DA_COTA } from './textos/categoriasDaCota';
 /**
  * Formatos de número e data usados em mais de uma tela.
  *
@@ -114,6 +115,20 @@ export function semPontosNoFim(texto: string): string {
 export function minusculas(texto: string): string {
   const min = texto.toLocaleLowerCase('pt-BR');
   return min.charAt(0).toLocaleUpperCase('pt-BR') + min.slice(1);
+}
+
+/**
+ * O nome que a tela mostra para uma categoria da cota (`textos/categoriasDaCota`). Categoria que
+ * ainda não está lá sai do nome oficial arrumado: minúsculas, sem ponto no fim, vírgula e espaço.
+ */
+export function nomeDaCategoriaDaCota(oficial: string): string {
+  const limpo = semPontosNoFim(oficial.trim()).trim();
+  return NOMES_DAS_CATEGORIAS_DA_COTA[limpo.toLocaleUpperCase('pt-BR')] ?? minusculas(limpo).replace(/ *, */g, ', ');
+}
+
+/** Para o meio da frase: só a primeira letra vira minúscula, e "Brasília" continua com maiúscula. */
+export function noMeioDaFrase(texto: string): string {
+  return texto.charAt(0).toLocaleLowerCase('pt-BR') + texto.slice(1);
 }
 
 /**

@@ -1,0 +1,97 @@
+/* ═══ O QUE MUDOU — Pendência 63 ═══════════════════════════════════════ */
+/* DECISÃO (2026-10-18): Compacta, com a data em mono sobre o fato, a mesma no "O que mudou" da
+   coluna da direita e no sininho. Em duas colunas ela não cabia em nenhum dos dois lugares. O fato
+   fica no texto, sem selo de cor que o qualifique. */
+.lista-novidades { list-style: none; margin: .5rem 0 0; padding: 0; }
+.lista-novidades li { display: grid; gap: .15rem; padding: .6rem 0; border-top: 1px solid var(--borda); }
+.novidade-data { font-family: var(--dado); font-size: var(--t-1); color: var(--suave); font-variant-numeric: tabular-nums; }
+.novidade-texto { margin: 0; font-size: var(--t-2); }
+.novidade-detalhe { display: block; margin-top: .2rem; color: var(--suave); font-size: var(--t-1); }
+.novidade-fonte { margin: 0; font-size: var(--t-1); color: var(--suave); }
+/* A novidade ainda não vista leva o traço de realce à esquerda, o mesmo marcador do item ativo da
+   navegação, e não cor de fundo: o texto continua no contraste de sempre. */
+.lista-novidades li.novidade-nova { box-shadow: inset 3px 0 0 var(--realce); padding-left: .6rem; margin-left: -.6rem; }
+
+/* ═══ CARTÃO DO INÍCIO — Pendência 89 ═══════════════════════════════════ */
+/* DECISÃO (2026-10-18): Fechado, e só o cartão na coluna. Sem novidade, ele é neutro como os
+   outros blocos; com novidade, ganha o fundo e o traço de realce, o mesmo tom de "item ativo" do
+   site. Não é vermelho nem pisca: novidade aqui é informação, e não alarme. */
+.novidades-seguidos { padding: 0; }
+.novidades-cartao {
+  display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .15rem .75rem;
+  width: 100%; padding: .85rem 1rem; text-align: left; cursor: pointer;
+  font: inherit; color: var(--texto);
+  background: var(--fundo); border: 1px solid var(--borda); border-radius: var(--raio);
+  transition: background var(--t-curto) var(--curva), border-color var(--t-curto) var(--curva);
+}
+.novidades-cartao:hover { background: var(--painel); border-color: var(--borda-forte); }
+.novidades-cartao-icone { grid-row: span 2; width: 22px; height: 22px; color: var(--suave); }
+.novidades-cartao-texto { display: grid; gap: .1rem; }
+.novidades-cartao-texto strong { font-size: var(--t-3); }
+.novidades-cartao-texto span { font-size: var(--t-2); color: var(--suave); }
+.novidades-cartao-abrir { grid-column: 2; font-size: var(--t-2); font-weight: 600; color: var(--realce); }
+
+.novidades-cartao.com-novas {
+  background: var(--realce-fraco); border-color: var(--realce);
+  box-shadow: inset 4px 0 0 var(--realce);
+}
+.novidades-cartao.com-novas:hover { background: var(--realce-fraco); border-color: var(--realce); filter: brightness(.98); }
+.novidades-cartao.com-novas .novidades-cartao-icone { color: var(--realce); }
+.novidades-cartao.com-novas .novidades-cartao-texto span {
+  color: var(--texto); font-weight: 600; font-family: var(--dado); font-variant-numeric: tabular-nums;
+}
+
+/* ═══ FEED DO MODAL ════════════════════════════════════════════════════ */
+/* DECISÃO do autor (2026-10-18): o modal funciona como o feed de uma rede social: a fila de
+   quem a pessoa segue no topo filtra por parlamentar, o tipo e "Só as novas" refinam, e cada fato é
+   um cartão com quem, de que partido e quando. A cor continua a do site: o escolhido e o novo
+   levam o realce; nada de vermelho de notificação. */
+.feed-pessoas {
+  display: flex; gap: .75rem; overflow-x: auto; padding: .1rem .1rem .6rem;
+  margin: 0 -.1rem .5rem; border-bottom: 1px solid var(--borda); scrollbar-width: thin;
+}
+.feed-pessoa {
+  flex: 0 0 auto; display: grid; justify-items: center; gap: .3rem; width: 4.75rem; padding: .25rem 0;
+  background: none; border: 0; border-radius: var(--raio); color: var(--suave); cursor: pointer; font: inherit;
+}
+.feed-pessoa:hover { color: var(--texto); }
+.feed-pessoa[aria-pressed='true'] { color: var(--texto); }
+.feed-pessoa-foto, .feed-pessoa-todos {
+  display: grid; place-items: center; width: 3rem; height: 3rem; padding: 2px;
+  border: 2px solid var(--borda); border-radius: var(--raio);
+}
+.feed-pessoa-foto .avatar, .feed-pessoa-foto .avatar-iniciais { width: 100%; height: 100%; }
+.feed-pessoa-foto.com-nova { border-color: var(--realce); }
+.feed-pessoa-todos { font-family: var(--dado); font-size: var(--t-2); font-variant-numeric: tabular-nums; color: var(--texto); }
+.feed-pessoa[aria-pressed='true'] .feed-pessoa-foto,
+.feed-pessoa[aria-pressed='true'] .feed-pessoa-todos { border-color: var(--realce); box-shadow: 0 0 0 2px var(--realce-fraco); }
+.feed-pessoa[aria-pressed='true'] .feed-pessoa-nome { font-weight: 700; }
+.feed-pessoa-nome {
+  max-width: 100%; font-size: var(--t-1); line-height: 1.25; text-align: center;
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+
+.feed-filtros { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; margin-bottom: .75rem; }
+.feed-filtros .seletor-periodo-campos { gap: .4rem; }
+.feed-filtros .seletor-periodo-campos button { padding: .3rem .65rem; font-size: var(--t-1); }
+.feed-so-novas { display: inline-flex; align-items: center; gap: .4rem; font-size: var(--t-2); color: var(--texto); cursor: pointer; }
+.feed-so-novas input { accent-color: var(--realce); width: 1rem; height: 1rem; }
+
+.feed { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
+.feed-cartao {
+  display: grid; gap: .35rem; padding: .75rem .9rem;
+  background: var(--fundo); border: 1px solid var(--borda); border-radius: var(--raio);
+}
+.feed-cartao.com-nova { border-color: var(--realce); box-shadow: inset 3px 0 0 var(--realce); }
+.feed-cartao-topo { display: flex; align-items: center; gap: .6rem; }
+.feed-cartao-quem { display: grid; min-width: 0; flex: 1; line-height: 1.25; }
+.feed-cartao-quem a { font-weight: 700; font-size: var(--t-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.feed-cartao-quem span { font-size: var(--t-1); color: var(--suave); }
+.feed-cartao-data { font-family: var(--dado); font-size: var(--t-1); color: var(--suave); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.feed-selo {
+  padding: .05rem .4rem; border-radius: var(--raio);
+  background: var(--realce); color: var(--sobre-realce);
+  font-family: var(--dado); font-size: var(--t-1); font-weight: 600;
+}
+.feed-cartao-texto { margin: 0; font-size: var(--t-2); }
+.feed-cartao-fonte { margin: 0; font-size: var(--t-1); color: var(--suave); }

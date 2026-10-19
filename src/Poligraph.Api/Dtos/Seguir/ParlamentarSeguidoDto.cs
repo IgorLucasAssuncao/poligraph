@@ -3,4 +3,4 @@
 namespace Poligraph.Api.Dtos;
 
 public record ParlamentarSeguidoDto(
-    long IdPessoa, string Nome, TipoCasa? Casa, string Partido, string Uf);
+    long IdPessoa, string Nome, TipoCasa? Casa, string Partido, string Uf, string? UrlFoto);

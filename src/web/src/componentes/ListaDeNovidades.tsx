@@ -1,12 +1,12 @@
 import type { Item } from './itensDoQueMudou';
-import './oQueMudou.css';
+import './novidades.css';
 
 /**
- * A lista de novidades sobre quem a pessoa segue: data em mono e o fato. É a mesma no "O que
- * mudou" do início e no sininho do cabeçalho, para os dois não divergirem.
+ * A lista de novidades sobre quem a pessoa segue: data em mono e o fato. É a mesma no modal por
+ * parlamentar e no sininho do cabeçalho, para os dois não divergirem.
  *
  * DECISÃO (2026-10-18): Compacta, com a data sobre o texto. As duas colunas ocupavam meia tela no
- * início e não cabiam na coluna da direita nem no painel do sininho.
+ * início e não cabiam no modal nem no painel do sininho.
  *
  * `nova`: diz quais ainda não foram vistas neste navegador; essas levam o traço de realce.
  * `comFonte`: a linha do órgão e do link do registro, que o sininho deixa de fora para caber.

@@ -12,7 +12,7 @@ import {
 } from '../api';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { FONTES } from '../fontes';
-import { dataCurta, minusculas, nomeProprio, periodoDaLegislatura, reais, semPontosNoFim } from '../formato';
+import { dataCurta, minusculas, noMeioDaFrase, nomeDaCategoriaDaCota, nomeProprio, periodoDaLegislatura, reais } from '../formato';
 import { BotaoBaixarCsvComponent } from './BotaoBaixarCsv';
 import { BotaoMostrarMaisComponent } from './BotaoMostrarMais';
 import { ConveniosComponent, EmendasUmaAUmaComponent, QuandoFoiPagoComponent, QuemRecebeuComponent } from './DestinoDasEmendas';
@@ -428,7 +428,7 @@ export function AbaCotaComponent({
           </ComProcedenciaComponent>,
           gastos.anoDaDespesa,
           gastos.lancamentos,
-          principal ? semPontosNoFim(minusculas(principal.categoria)) : null,
+          principal ? noMeioDaFrase(nomeDaCategoriaDaCota(principal.categoria)) : null,
         )}
       </p>
 
@@ -438,7 +438,7 @@ export function AbaCotaComponent({
           <ComposicaoComponent
             rotulo={T.cota.emQue}
             formatar={reais}
-            partes={partesComOutros(gastos.porCategoria, (c) => semPontosNoFim(minusculas(c.categoria)), (c) => c.total, T.cota.outrasCategorias)}
+            partes={partesComOutros(gastos.porCategoria, (c) => nomeDaCategoriaDaCota(c.categoria), (c) => c.total, T.cota.outrasCategorias)}
           />
           <details className="detalhes-da-aba">
           <summary>{T.cota.todasAsCategorias(gastos.porCategoria.length)}</summary>
@@ -446,12 +446,12 @@ export function AbaCotaComponent({
             {gastos.porCategoria.map((c) => (
               <LinhaDeValorComponent
                 key={c.categoria}
-                nome={minusculas(c.categoria)}
+                nome={nomeDaCategoriaDaCota(c.categoria)}
                 valor={c.total}
                 maior={maior}
                 procedencia={{
                   consulta: { contexto: 'cota', idPessoa: idPessoa, anoDaDespesa: gastos.anoDaDespesa, categoria: c.categoria },
-                  rotulo: T.cota.rotuloDaCategoria(gastos.anoDaDespesa, minusculas(c.categoria)),
+                  rotulo: T.cota.rotuloDaCategoria(gastos.anoDaDespesa, nomeDaCategoriaDaCota(c.categoria)),
                 }}
               />
             ))}
@@ -512,7 +512,7 @@ function LancamentosDaCotaComponent({ idPessoa, anoDaDespesa, total }: { idPesso
               <span className="gasto-nome">
                 {l.fornecedor ?? T.lancamentos.fornecedorNaoInformado}
                 <small>
-                  {l.data ? dataCurta(l.data) : T.lancamentos.mes(l.mes)} · {minusculas(l.categoria)}
+                  {l.data ? dataCurta(l.data) : T.lancamentos.mes(l.mes)} · {nomeDaCategoriaDaCota(l.categoria)}
                 </small>
               </span>
               <span className="lancamento-fim">

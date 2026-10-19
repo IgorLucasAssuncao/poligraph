@@ -2,17 +2,17 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listarSeguidos, obterNovidades } from '../api';
 import type { Novidades } from '../api';
-import { CHAVE_NOVIDADES_VISTAS } from '../constantes';
 import { useSessao } from '../sessao';
 import { TEXTOS_DOS_AVISOS } from '../textos/avisos';
 import { IconeSinoComponent } from './Icones';
-import { montarItens } from './itensDoQueMudou';
 import { ListaDeNovidadesComponent } from './ListaDeNovidades';
+import { ModalDeNovidadesComponent } from './ModalDeNovidades';
+import { novidadesQueContam, useNovidadesVistas } from './useNovidadesVistas';
 import './sininho.css';
 
 const T = TEXTOS_DOS_AVISOS.sininho;
 
-/** Quantas novidades o painel mostra; o resto fica no "O que mudou" do início. */
+/** Quantas novidades o painel mostra; o resto fica no bloco de novidades do início. */
 const MAXIMO_NO_PAINEL = 5;
 
 /**
@@ -20,13 +20,14 @@ const MAXIMO_NO_PAINEL = 5;
  * para quem entrou. Os avisos no navegador são convidados ao seguir e ficam na página da conta.
  *
  * DECISÃO: A contagem é das novidades que este navegador ainda não mostrou. Some com o painel
- * aberto, e o que estava na lista passa a visto ao fechar. O número vai num selo retangular de raio pequeno, na fonte de dado, como todo número
- * do site; bolinha vermelha seria a linguagem de rede social e leria como alarme.
+ * aberto, e o que estava na lista passa a visto ao fechar. O número vai num selo retangular de
+ * raio pequeno, na fonte de dado, como todo número do site; bolinha vermelha seria a linguagem de
+ * rede social e leria como alarme.
  *
  * ATENÇÃO: Padrão de revelação, como o menu da conta: botão que abre um painel, Tab e Esc.
  *
  * RISCO: O dado diz quem a pessoa segue, então fica fora do cache de leituras, como o
- * "O que mudou" do início.
+ * bloco de novidades do início.
  */
 export function SininhoComponent() {
   const { usuario } = useSessao();
@@ -34,7 +35,8 @@ export function SininhoComponent() {
   const [seguidos, setSeguidos] = useState<number | null>(null);
   const [erro, setErro] = useState(false);
   const [aberto, setAberto] = useState(false);
-  const [vistas, setVistas] = useState<string[]>(lerVistas);
+  const [porParlamentar, setPorParlamentar] = useState(false);
+  const { vistas, marcar } = useNovidadesVistas();
   const caixa = useRef<HTMLDivElement>(null);
   const id = useId();
 
@@ -57,9 +59,7 @@ export function SininhoComponent() {
     if (!aberto) return;
     const fecharMarcando = () => {
       setAberto(false);
-      const chaves = itensDoSininho(novidades).map((item) => item.chave);
-      setVistas(chaves);
-      gravarVistas(chaves);
+      marcar(novidadesQueContam(novidades).map((item) => item.chave));
     };
     const aoClicarFora = (e: MouseEvent) => {
       if (!caixa.current?.contains(e.target as Node)) fecharMarcando();
@@ -73,11 +73,11 @@ export function SininhoComponent() {
       document.removeEventListener('mousedown', aoClicarFora);
       document.removeEventListener('keydown', aoTeclar);
     };
-  }, [aberto, novidades]);
+  }, [aberto, novidades, marcar]);
 
   if (!usuario) return null;
 
-  const itens = itensDoSininho(novidades);
+  const itens = novidadesQueContam(novidades);
   const novas = aberto ? 0 : itens.filter((item) => !vistas.includes(item.chave)).length;
   const segueAlguem = (seguidos ?? 0) > 0;
 
@@ -125,13 +125,33 @@ export function SininhoComponent() {
             />
           )}
 
-          {segueAlguem && (
-            <Link to="/" className="sininho-ver-tudo" onClick={() => setAberto(false)}>
+          {segueAlguem && novidades && (
+            <button
+              type="button"
+              className="botao-link sininho-ver-tudo"
+              aria-haspopup="dialog"
+              onClick={() => {
+                setAberto(false);
+                setPorParlamentar(true);
+              }}
+            >
               {T.verTudo}
-            </Link>
+            </button>
           )}
 
         </div>
+      )}
+
+      {novidades && (
+        <ModalDeNovidadesComponent
+          aberto={porParlamentar}
+          novidades={novidades}
+          vistas={vistas}
+          aoFechar={() => {
+            setPorParlamentar(false);
+            marcar(itens.map((item) => item.chave));
+          }}
+        />
       )}
     </div>
   );
@@ -143,30 +163,6 @@ export function SininhoComponent() {
       return;
     }
     setAberto(false);
-    const chaves = itens.map((item) => item.chave);
-    setVistas(chaves);
-    gravarVistas(chaves);
-  }
-}
-
-/** As novidades do sininho: as do "O que mudou", sem os votos da semana, que não avisam (Pendência 89). */
-function itensDoSininho(novidades: Novidades | null) {
-  return novidades ? montarItens(novidades).filter((item) => !item.chave.startsWith('semana-')) : [];
-}
-
-function lerVistas(): string[] {
-  try {
-    const bruto = localStorage.getItem(CHAVE_NOVIDADES_VISTAS);
-    return bruto ? (JSON.parse(bruto) as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function gravarVistas(chaves: string[]): void {
-  try {
-    localStorage.setItem(CHAVE_NOVIDADES_VISTAS, JSON.stringify(chaves));
-  } catch {
-    return;
+    marcar(itens.map((item) => item.chave));
   }
 }

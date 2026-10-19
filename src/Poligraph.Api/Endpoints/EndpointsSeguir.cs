@@ -46,6 +46,7 @@ public static class EndpointsSeguir
             {
                 s.PessoaId,
                 s.Pessoa!.NomeExibicao,
+                s.Pessoa.UrlFoto,
                 Ultimo = s.Pessoa.Votos
                     .OrderByDescending(v => v.Votacao!.Data)
                     .Select(v => new { v.Votacao!.Casa, v.PartidoNoVoto, v.UfNoVoto })
@@ -55,7 +56,7 @@ public static class EndpointsSeguir
 
         return Results.Ok(seguidos.Select(s => new ParlamentarSeguidoDto(
             s.PessoaId, s.NomeExibicao, s.Ultimo?.Casa,
-            s.Ultimo?.PartidoNoVoto ?? "", s.Ultimo?.UfNoVoto ?? "")));
+            s.Ultimo?.PartidoNoVoto ?? "", s.Ultimo?.UfNoVoto ?? "", s.UrlFoto)));
     }
 
     /// <summary>"O que mudou" sobre quem a pessoa segue (Pendência 63). Sem cache e sem log de nome: lê a tabela <c>segue</c>.</summary>
