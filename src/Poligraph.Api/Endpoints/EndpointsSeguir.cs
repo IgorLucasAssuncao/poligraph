@@ -89,7 +89,7 @@ public static class EndpointsSeguir
     /// <param name="aceite">Verdadeiro só depois de a pessoa aceitar o texto daquela versão.</param>
     private static async Task<IResult> SeguirAsync(
         long idPessoa, string? versao, bool? aceite, ClaimsPrincipal principal, PoligraphDb db,
-        ServicoConsentimentos consentimentos, CancellationToken ct)
+        ServicoConsentimentos consentimentos, ServicoAvisos avisos, CancellationToken ct)
     {
         if (!await db.Pessoas.AnyAsync(p => p.Id == idPessoa, ct))
         {
@@ -121,6 +121,7 @@ public static class EndpointsSeguir
 
         db.Segue.Add(new SegueModel { UsuarioId = idUsuario, PessoaId = idPessoa });
         await db.SaveChangesAsync(ct);
+        await avisos.MarcarParlamentarComoVistoAsync(idUsuario, idPessoa, ct);
 
         return Results.NoContent();
     }

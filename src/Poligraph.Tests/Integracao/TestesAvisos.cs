@@ -87,6 +87,34 @@ public class TestesAvisos(FixturePostgres postgres) : BaseIntegracao(postgres)
         Assert.Contains($"A5:{CenarioDeNovidades.MesFechado:yyyy-MM}", chaves);
     }
 
+    /// <summary>Com os avisos já ligados, seguir alguém novo não traz o passado dele: os fatos dele viram avisados; o resumo do mês, não.</summary>
+    [SkippableFact]
+    public async Task SeguirComAvisosLigados_NaoAvisaOPassadoDoParlamentar()
+    {
+        ExigeDocker();
+        var (idPessoa, _) = await CenarioDeNovidades.SemearAsync(Db);
+        using var cliente = CriarCliente();
+        await EntrarAsync(cliente);
+        (await cliente.PutAsJsonAsync("/api/avisos/navegador?versao=v1&aceite=true", Navegador())).EnsureSuccessStatusCode();
+        Assert.Empty(await ChavesAsync());
+
+        await SeguirAsync(cliente, idPessoa);
+
+        var chaves = await ChavesAsync();
+        Assert.Contains($"A2:novidade-1:{idPessoa}", chaves);
+        Assert.DoesNotContain(chaves, c => c.StartsWith("A4:", StringComparison.Ordinal) || c.StartsWith("A5:", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ChaveDoParlamentar_NaoConfundeIdsParecidos()
+    {
+        Assert.True(ChavesDosAvisos.DoParlamentar("A2:2265603-43:7", 7));
+        Assert.False(ChavesDosAvisos.DoParlamentar("A2:2265603-43:17", 7));
+        Assert.True(ChavesDosAvisos.DoParlamentar("A3:7:2030-01-09", 7));
+        Assert.False(ChavesDosAvisos.DoParlamentar("A3:17:2030-01-09", 7));
+        Assert.False(ChavesDosAvisos.DoParlamentar("A4:2026-09", 7));
+    }
+
     /// <summary>Deixar de seguir não pode deixar rastro de que seguia: saem as chaves do parlamentar, fica o resumo do mês.</summary>
     [SkippableFact]
     public async Task DeixarDeSeguir_ApagaAsChavesDoParlamentar()

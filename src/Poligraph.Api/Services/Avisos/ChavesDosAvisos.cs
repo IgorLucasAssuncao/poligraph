@@ -35,6 +35,11 @@ public static class ChavesDosAvisos
     /// <summary>Se a chave é do resumo do mês (A4 ou A5), e não de um fato de voto.</summary>
     public static bool DoMes(string chave) => chave.StartsWith("A4:", StringComparison.Ordinal) || chave.StartsWith("A5:", StringComparison.Ordinal);
 
+    /// <summary>Se a chave é de um fato do parlamentar (A2 ou A3). As de A4 e A5 são do mês, de todos os seguidos juntos.</summary>
+    public static bool DoParlamentar(string chave, long idPessoa) =>
+        (chave.StartsWith("A2:", StringComparison.Ordinal) && chave.EndsWith(string.Create(CultureInfo.InvariantCulture, $":{idPessoa}"), StringComparison.Ordinal))
+        || chave.StartsWith(string.Create(CultureInfo.InvariantCulture, $"A3:{idPessoa}:"), StringComparison.Ordinal);
+
     /// <summary>Os padrões <c>LIKE</c> das chaves que citam o parlamentar, para apagar quando a pessoa deixa de segui-lo.</summary>
     public static (string DoVoto, string DaTroca) PadroesDoParlamentar(long idPessoa) =>
         (string.Create(CultureInfo.InvariantCulture, $"A2:%:{idPessoa}"), string.Create(CultureInfo.InvariantCulture, $"A3:{idPessoa}:%"));
