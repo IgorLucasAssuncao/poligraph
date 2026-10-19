@@ -31,6 +31,9 @@ public static class EndpointsSeguir
         grupo.MapPut("/{idPessoa:long}", SeguirAsync);
         grupo.MapDelete("/{idPessoa:long}", DeixarDeSeguirAsync);
         grupo.MapDelete("/consentimento", RevogarConsentimentoAsync);
+        grupo.MapGet("/encerrados", EncerradosAsync)
+             .Produces<SeguidosEncerradosDto>();
+        grupo.MapDelete("/encerrados", DispensarEncerradosAsync);
 
         return app;
     }
@@ -71,10 +74,15 @@ public static class EndpointsSeguir
     /// alguém de 2005 guardaria dado sensível (LGPD art. 5º, II) sem nada a acompanhar.
     /// </summary>
     /// <remarks>
-    /// <para>"Em exercício" é ter votado na legislatura corrente, a mesma regra da lista. Quem já é seguido continua na lista e pode deixar de ser seguido.</para>
+    /// <para>"Em exercício" é estar na lista oficial da casa (<c>em_exercicio</c>, decisão do autor de 2026-10-18); sem a lista carregada, ter votado na legislatura corrente. Quem deixa o mandato sai da lista de seguidos pelo worker, com aviso no site.</para>
     /// </remarks>
     private static async Task<bool> EmExercicioAsync(PoligraphDb db, long idPessoa, CancellationToken ct)
     {
+        if (await EmExercicioNaBase.IdsAsync(db, ct) is { } ids)
+        {
+            return ids.Contains(idPessoa);
+        }
+
         var corrente = await Legislaturas.CorrenteAsync(db, ct);
         return await db.Votos.AnyAsync(v => v.PessoaId == idPessoa && v.Votacao!.Legislatura == corrente, ct);
     }
@@ -148,6 +156,45 @@ public static class EndpointsSeguir
         return Results.NoContent();
     }
 
+    /// <summary>Até quantos dias depois da posse a saída conta como virada de legislatura.</summary>
+    public const int DiasDaVirada = 120;
+
+    /// <summary>
+    /// Quem saiu da lista de seguidos por ter deixado o mandato, para o aviso do site (decisão do autor, 2026-10-18).
+    /// </summary>
+    /// <remarks>
+    /// <para>A legislatura nova vai junto quando a saída caiu nos primeiros 120 dias dela: o aviso diz "começou a 58ª legislatura". Fora disso, a saída foi renúncia, cassação ou licença, e o aviso diz só que a pessoa deixou o mandato.</para>
+    /// </remarks>
+    private static async Task<IResult> EncerradosAsync(ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
+    {
+        var idUsuario = SessaoDoUsuario.IdDoUsuario(principal);
+        var encerrados = await db.SeguidosEncerrados.AsNoTracking()
+            .Where(e => e.UsuarioId == idUsuario)
+            .Join(db.Pessoas, e => e.PessoaId, p => p.Id, (e, p) => new { e.PessoaId, p.NomeExibicao, e.EncerradoEm })
+            .OrderBy(e => e.NomeExibicao)
+            .ToListAsync(ct);
+
+        short? nova = null;
+        if (encerrados.Count > 0 && await Legislaturas.CorrenteAsync(db, ct) is { } corrente)
+        {
+            var posse = new DateTimeOffset(Legislaturas.AnoInicial(corrente), 2, 1, 0, 0, 0, TimeSpan.Zero);
+            if (encerrados.Any(e => e.EncerradoEm >= posse && e.EncerradoEm < posse.AddDays(DiasDaVirada)))
+            {
+                nova = corrente;
+            }
+        }
+
+        return Results.Ok(new SeguidosEncerradosDto(nova, [.. encerrados.Select(e => new SeguidoEncerradoDto(e.PessoaId, e.NomeExibicao))]));
+    }
+
+    /// <summary>A pessoa viu o aviso: o registro de quem ela seguia sai, por exclusão física.</summary>
+    private static async Task<IResult> DispensarEncerradosAsync(ClaimsPrincipal principal, PoligraphDb db, CancellationToken ct)
+    {
+        var idUsuario = SessaoDoUsuario.IdDoUsuario(principal);
+        await db.SeguidosEncerrados.Where(e => e.UsuarioId == idUsuario).ExecuteDeleteAsync(ct);
+        return Results.NoContent();
+    }
+
     /// <summary>
     /// Revoga o consentimento de seguir (LGPD art. 8º, §5º) e apaga a lista, que dependia dele.
     /// </summary>
@@ -160,6 +207,7 @@ public static class EndpointsSeguir
         var idUsuario = SessaoDoUsuario.IdDoUsuario(principal);
 
         await db.Segue.Where(s => s.UsuarioId == idUsuario).ExecuteDeleteAsync(ct);
+        await db.SeguidosEncerrados.Where(e => e.UsuarioId == idUsuario).ExecuteDeleteAsync(ct);
         await avisos.ApagarTudoAsync(idUsuario, ct);
         await consentimentos.RevogarAsync(idUsuario, TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES, ct);
 

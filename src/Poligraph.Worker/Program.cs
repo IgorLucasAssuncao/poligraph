@@ -28,6 +28,7 @@ builder.Services.AddOptions<OpcoesDosAvisos>()
 builder.Services.AddScoped<ServicoNovidades>();
 builder.Services.AddScoped<AvisadorDoUsuario>();
 builder.Services.AddScoped<DistribuidorDeAvisos>();
+builder.Services.AddScoped<EncerradorDeSeguidos>();
 builder.Services.AddScoped<LimpezaDosAvisos>();
 builder.Services.AddHttpClient<EnviadorDePush>();
 

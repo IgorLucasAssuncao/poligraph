@@ -4,7 +4,7 @@
   "description": "Afinidade por voto registrado na Câmara e no Senado.",
   "lang": "pt-BR",
   "start_url": "/",
-  "display": "browser",
+  "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#0F766E",
   "icons": [

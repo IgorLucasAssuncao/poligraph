@@ -72,9 +72,11 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
             : filtrados.OrderBy(p => p.Nome, Comparacao.GetStringComparer(CompareOptions.IgnoreCase));
 
         var lista = ordenados.ToList();
+        var emExercicio = await EmExercicioNaBase.IdsAsync(_db, ct);
 
         return new PaginaDeParlamentaresDto(
-            Itens: [.. lista.Skip((pagina - 1) * tamanho).Take(tamanho)],
+            Itens: [.. lista.Skip((pagina - 1) * tamanho).Take(tamanho)
+                .Select(p => p with { EmExercicio = emExercicio?.Contains(p.IdPessoa) ?? p.Legislatura == corrente })],
             Pagina: pagina,
             Tamanho: tamanho,
             Total: lista.Count,
@@ -374,7 +376,20 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
             await PaginaOficialAsync(idPessoa, casa, ct),
             await RedesSociaisAsync(idPessoa, ct),
             legislaturaMostrada,
-            mandatos);
+            mandatos,
+            await EmExercicioAsync(idPessoa, mandatos, ct));
+    }
+
+    /// <summary>Pela lista oficial; sem ela carregada, a regra antiga: votou na legislatura corrente.</summary>
+    private async Task<bool> EmExercicioAsync(long idPessoa, IReadOnlyList<MandatoDto> mandatos, CancellationToken ct)
+    {
+        if (await EmExercicioNaBase.IdsAsync(_db, ct) is { } ids)
+        {
+            return ids.Contains(idPessoa);
+        }
+
+        var corrente = await Legislaturas.CorrenteAsync(_db, ct);
+        return mandatos.Any(m => m.Legislatura == corrente);
     }
 
     /// <summary>Quem votou numa legislatura — sem ela, a corrente —, com a filiação do último voto. Em cache.</summary>

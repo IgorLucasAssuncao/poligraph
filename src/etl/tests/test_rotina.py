@@ -15,7 +15,7 @@ def test_semanal_traz_as_votacoes_do_ano_e_confere():
     lista = rotina.etapas("semanal", date(2026, 10, 5))
 
     assert _comandos(lista) == [
-        "ingerir --anos 2026", "senado --anos 2026", "simbolicas --anos 2026", "palavras-chave", "conferir",
+        "ingerir --anos 2026", "senado --anos 2026", "em-exercicio", "simbolicas --anos 2026", "palavras-chave", "conferir",
         "limpar-cache",
     ]
 
@@ -26,6 +26,7 @@ def test_mensal_acrescenta_dinheiro_e_grafo_e_confere_uma_vez_no_fim():
     assert _comandos(lista) == [
         "ingerir --anos 2026",
         "senado --anos 2026",
+        "em-exercicio",
         "simbolicas --anos 2026",
         "palavras-chave",
         "cota --anos 2026",
@@ -73,7 +74,7 @@ def test_janeiro_e_fevereiro_olham_o_ano_anterior(mes):
     lista = rotina.etapas("mensal", date(2027, mes, 3))
 
     assert lista[0].argumentos["anos"] == [2026, 2027]
-    assert lista[4].argumentos["anos"] == [2026, 2027]
+    assert lista[5].argumentos["anos"] == [2026, 2027]
 
 
 def test_marco_ja_nao_olha():
@@ -99,7 +100,7 @@ def test_toda_etapa_tem_execucao_no_main(monkeypatch):
     executados = []
     nomes = (
         "_ingerir", "_senado", "_simbolicas", "_palavras_chave", "_cota", "_emendas", "_sedes_brasilapi", "_convenios",
-        "_governo", "_defesa_civil", "_compras_centralizadas", "_viagens", "_compras", "_sancoes", "_municipios", "_fundo", "_patrimonio", "_redes", "_populacao", "_analisar", "_conferir",
+        "_governo", "_defesa_civil", "_compras_centralizadas", "_viagens", "_compras", "_sancoes", "_municipios", "_fundo", "_patrimonio", "_redes", "_populacao", "_analisar", "_conferir", "_em_exercicio",
         "_limpar_cache",
     )
     for nome in nomes:

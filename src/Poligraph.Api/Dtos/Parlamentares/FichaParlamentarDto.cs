@@ -47,4 +47,6 @@ public record FichaParlamentarDto(
     /// </summary>
     short? Legislatura,
     /// <summary>Todas as legislaturas em que votou, da mais recente para a mais antiga.</summary>
-    IReadOnlyList<MandatoDto> Mandatos);
+    IReadOnlyList<MandatoDto> Mandatos,
+    /// <summary>Se está na lista oficial de quem está em exercício: só assim pode ser seguido (<see cref="EmExercicioNaBase"/>).</summary>
+    bool EmExercicio);

@@ -32,7 +32,7 @@ from psycopg import sql
 
 from . import procedencia
 from .contratos.banco import (
-    CompraCentralizadaNoCartao, ContratacoesDoOrgao, ContratadoDoGoverno, DestinoDeViagem, Despesa, GastoDaDefesaCivil, SancaoDeEmpresa,
+    CompraCentralizadaNoCartao, ContratacoesDoOrgao, ContratadoDoGoverno, DestinoDeViagem, Despesa, EmExercicio, GastoDaDefesaCivil, SancaoDeEmpresa,
     ViagensDoOrgao,
 )
 from .normalizacao import sem_acento_maiusculo
@@ -802,6 +802,12 @@ def gravar_compras_centralizadas(
 ) -> int:
     """Grava o mês do CPCC, substituindo o que havia dele."""
     conexao.execute("DELETE FROM compras_centralizadas_no_cartao WHERE ano = %s AND mes = %s", (ano, mes))
+    return gravar_contratos(conexao, linhas, carga_id)
+
+
+def gravar_em_exercicio(conexao: psycopg.Connection, casa: str, linhas: Sequence[EmExercicio], carga_id: int | None) -> int:
+    """Troca o retrato da casa: quem saiu da lista oficial não está mais em exercício."""
+    conexao.execute("DELETE FROM em_exercicio WHERE casa = %s", (casa,))
     return gravar_contratos(conexao, linhas, carga_id)
 
 

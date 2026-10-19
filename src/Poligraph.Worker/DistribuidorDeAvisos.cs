@@ -6,16 +6,18 @@ namespace Poligraph.Worker;
 
 /// <summary>
 /// O job recorrente (Pendência 89): pega os eventos pendentes da ETL e abre um job de aviso por
-/// pessoa inscrita. Roda a cada 10 minutos e quase sempre termina sem achar nada.
+/// pessoa inscrita. Roda a cada 10 minutos e quase sempre termina sem achar nada. Antes de
+/// distribuir, tira da lista de seguidos quem deixou o mandato (<see cref="EncerradorDeSeguidos"/>).
 /// </summary>
 /// <remarks>
 /// <para>DECISÃO: um job por pessoa, e não um envio em lote. Com várias cópias do worker, as pessoas se dividem entre elas; uma pessoa cujo navegador falha é tentada de novo sozinha, sem repetir as outras.</para>
 /// <para><c>FOR UPDATE SKIP LOCKED</c>: se duas cópias rodarem ao mesmo tempo, a segunda pula os eventos que a primeira travou. O Hangfire já impede duas execuções do mesmo recorrente; a trava no banco é a segunda garantia, e é a que vale se alguém disparar o job à mão.</para>
 /// </remarks>
-public class DistribuidorDeAvisos(PoligraphDb db, IBackgroundJobClient jobs, ILogger<DistribuidorDeAvisos> log)
+public class DistribuidorDeAvisos(PoligraphDb db, IBackgroundJobClient jobs, EncerradorDeSeguidos encerrador, ILogger<DistribuidorDeAvisos> log)
 {
     private readonly PoligraphDb _db = db;
     private readonly IBackgroundJobClient _jobs = jobs;
+    private readonly EncerradorDeSeguidos _encerrador = encerrador;
     private readonly ILogger<DistribuidorDeAvisos> _log = log;
 
     /// <summary>O nome do job recorrente no Hangfire.</summary>
@@ -36,6 +38,8 @@ public class DistribuidorDeAvisos(PoligraphDb db, IBackgroundJobClient jobs, ILo
             await transacao.CommitAsync(ct);
             return;
         }
+
+        await _encerrador.EncerrarAsync(ct);
 
         var usuarios = await _db.InscricoesNoNavegador
             .Select(i => i.UsuarioId)

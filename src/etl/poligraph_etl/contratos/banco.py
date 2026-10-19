@@ -140,3 +140,14 @@ class CompraCentralizadaNoCartao:
     orgao_superior: str
     valor: float
     transacoes: int
+
+
+@dataclass(frozen=True)
+class EmExercicio:
+    """Uma linha de `em_exercicio` (EmExercicioModel): quem está em exercício, pela lista oficial da casa."""
+
+    TABELA: ClassVar[str] = "em_exercicio"
+
+    pessoa_id: int
+    casa: str
+    legislatura: int | None

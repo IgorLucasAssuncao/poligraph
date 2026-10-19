@@ -54,6 +54,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<EventoModel> Eventos => Set<EventoModel>();
     public DbSet<InscricaoNoNavegadorModel> InscricoesNoNavegador => Set<InscricaoNoNavegadorModel>();
     public DbSet<AvisoEnviadoModel> AvisosEnviados => Set<AvisoEnviadoModel>();
+    public DbSet<EmExercicioModel> EmExercicio => Set<EmExercicioModel>();
+    public DbSet<SeguidoEncerradoModel> SeguidosEncerrados => Set<SeguidoEncerradoModel>();
 
     /// <summary>
     /// <b>Todo enum é gravado como TEXTO.</b>
@@ -853,7 +855,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         });
     }
 
-    /// <summary>Os avisos no navegador (Pendência 89): o evento da ETL, os navegadores inscritos e o que já foi avisado.</summary>
+    /// <summary>Os avisos no navegador (Pendência 89): o evento da ETL, os navegadores inscritos, o que já foi avisado, quem está em exercício e quem saiu da lista de seguidos por ter deixado o mandato.</summary>
     /// <remarks>
     /// <para>O índice parcial em <c>eventos</c> é o que o worker lê: só os pendentes.</para>
     /// <para>A chave do aviso tem formato fixo (<c>A2:votacao:pessoa</c>, <c>A3:pessoa:data</c>, <c>A4:ano-mes</c>, <c>A5:ano-mes</c>), e o <c>CHECK</c> recusa outro: é pelo formato que deixar de seguir apaga as chaves daquele parlamentar.</para>
@@ -880,6 +882,24 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasIndex(x => x.Endereco).IsUnique();
             e.Property(x => x.Endereco).HasMaxLength(1024);
             e.Property(x => x.CriadaEm).HasDefaultValueSql("now()");
+        });
+
+        mb.Entity<EmExercicioModel>(e =>
+        {
+            e.ToTable("em_exercicio", t => t.HasCheckConstraint("ck_em_exercicio_casa", "casa IN ('CAMARA','SENADO')"));
+            e.HasKey(x => x.PessoaId);
+            e.HasOne<PessoaModel>().WithMany().HasForeignKey(x => x.PessoaId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<CargaModel>().WithMany().HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+            e.HasIndex(x => x.Casa);
+        });
+
+        mb.Entity<SeguidoEncerradoModel>(e =>
+        {
+            e.ToTable("seguidos_encerrados");
+            e.HasKey(x => new { x.UsuarioId, x.PessoaId });
+            e.HasOne<UsuarioModel>().WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<PessoaModel>().WithMany().HasForeignKey(x => x.PessoaId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(x => x.EncerradoEm).HasDefaultValueSql("now()");
         });
 
         mb.Entity<AvisoEnviadoModel>(e =>

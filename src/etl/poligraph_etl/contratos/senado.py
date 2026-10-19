@@ -21,3 +21,13 @@ class LinhaDaCotaDoSenado:
     cnpj_ou_cpf_do_fornecedor: str | None = coluna("CNPJ_CPF")
     valor_reembolsado: str | None = coluna("VALOR_REEMBOLSADO")
     data_da_despesa: str | None = coluna("DATA")
+
+
+@dataclass(frozen=True)
+class SenadorEmExercicio:
+    """Um senador de `senador/lista/atual`, já tirado do envelope por `fontes.senado.baixar_senadores`.
+
+    MEDIDO em 2026-10-19: 81 senadores. A lista não traz uma legislatura só: o mandato cobre duas.
+    """
+
+    codigo_no_senado: str | None = coluna("CodigoParlamentar")

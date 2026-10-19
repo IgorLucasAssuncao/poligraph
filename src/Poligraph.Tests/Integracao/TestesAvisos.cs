@@ -345,8 +345,11 @@ public class TestesAvisos(FixturePostgres postgres) : BaseIntegracao(postgres)
         return usuario.Id;
     }
 
-    private DistribuidorDeAvisos Distribuidor(IBackgroundJobClient jobs) =>
-        new(CriarContexto(), jobs, NullLogger<DistribuidorDeAvisos>.Instance);
+    private DistribuidorDeAvisos Distribuidor(IBackgroundJobClient jobs)
+    {
+        var db = CriarContexto();
+        return new(db, jobs, new EncerradorDeSeguidos(db, NullLogger<EncerradorDeSeguidos>.Instance), NullLogger<DistribuidorDeAvisos>.Instance);
+    }
 
     private AvisadorDoUsuario Avisador(PushFalso push)
     {

@@ -22,3 +22,14 @@ class LinhaDaCotaDaCamara:
     valor_liquido: str | None = coluna("vlrLiquido")
     data_de_emissao: str | None = coluna("datEmissao")
     url_do_documento: str | None = coluna("urlDocumento")
+
+
+@dataclass(frozen=True)
+class DeputadoEmExercicio:
+    """Um deputado da lista de quem está em exercício hoje: `dadosabertos.camara.leg.br/api/v2/deputados`.
+
+    MEDIDO em 2026-10-19: 513 itens numa página só com `itens=1000`, todos com `idLegislatura` 57.
+    """
+
+    id_na_camara: str | None = coluna("id")
+    legislatura: str | None = coluna("idLegislatura")

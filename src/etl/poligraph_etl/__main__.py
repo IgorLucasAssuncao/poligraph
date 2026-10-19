@@ -31,7 +31,7 @@ from . import (
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
 from .fontes import brasilapi, camara, portal, receita, senado, tse
-from . import amostra, compras, compras_centralizadas, conferencia, convenentes, defesa_civil, limpeza, patrimonio, procedencia, redes, rotina, sancoes, telemetria, viagens
+from . import amostra, compras, compras_centralizadas, conferencia, convenentes, defesa_civil, em_exercicio, limpeza, patrimonio, procedencia, redes, rotina, sancoes, telemetria, viagens
 from .contratos import entrada
 from .contratos.entrada import colunas_da_fonte
 from .contratos.portal import (
@@ -95,6 +95,8 @@ def main(argv: list[str] | None = None) -> int:
                 _compras(conexao, args.anos)
             elif args.comando == "sancoes":
                 _sancoes(conexao)
+            elif args.comando == "em-exercicio":
+                _em_exercicio(conexao)
             elif args.comando == "compras-centralizadas":
                 _compras_centralizadas(conexao, args.anos)
             elif args.comando == "convenios":
@@ -271,6 +273,7 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     cmp.add_argument("--anos", type=int, nargs="+", default=[2023, 2024, 2025, 2026])
 
     sub.add_parser("sancoes", help="empresas sancionadas no CEIS e no CNEP, pelo CNPJ (Portal)")
+    sub.add_parser("em-exercicio", help="quem está em exercício hoje, pela lista oficial da Câmara e do Senado")
 
     cpcc = sub.add_parser(
         "compras-centralizadas", help="cartão de pagamento de compras centralizadas (CPCC), por órgão e mês (Portal)"
@@ -2412,6 +2415,8 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
         _ingerir(conexao, anos)
     elif etapa.comando == "senado":
         _senado(conexao, anos)
+    elif etapa.comando == "em-exercicio":
+        _em_exercicio(conexao)
     elif etapa.comando == "palavras-chave":
         _palavras_chave(conexao, None)
     elif etapa.comando == "cota":
@@ -2458,6 +2463,29 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
         _limpar_cache()
     else:
         raise ValueError(f"Etapa sem execução: {etapa.comando}")
+
+
+def _em_exercicio(conexao: psycopg.Connection) -> None:
+    """Quem está em exercício hoje, pela lista oficial de cada casa (decisão do autor, 2026-10-18).
+
+    Roda depois de `ingerir` e `senado`, que criam as pessoas. Uma casa com lista curta derruba a
+    carga antes de gravar: o worker tiraria da lista de seguidos de todo mundo quem faltasse.
+    """
+    hoje = f"{date.today():%Y%m%d}"
+
+    deputados = camara.baixar_deputados_em_exercicio()
+    carga = _carga_de_resposta(conexao, "CAMARA", camara.URL_EM_EXERCICIO, deputados,
+                               CACHE / "respostas" / f"deputados-em-exercicio-{hoje}.json")
+    resultado = em_exercicio.da_camara(deputados, _mapa_pessoas(conexao, "CAMARA"))
+    gravadas = persistencia.gravar_em_exercicio(conexao, "CAMARA", resultado.linhas, carga)
+    log.info("  Câmara: %d em exercício gravados, %d sem pessoa no banco ainda", gravadas, resultado.sem_pessoa)
+
+    senadores = senado.baixar_senadores()
+    carga = _carga_de_resposta(conexao, "SENADO", f"{senado.BASE}/senador/lista/atual", senadores,
+                               CACHE / "respostas" / f"senadores-em-exercicio-{hoje}.json")
+    resultado = em_exercicio.do_senado(senadores, _mapa_pessoas(conexao, "SENADO"))
+    gravadas = persistencia.gravar_em_exercicio(conexao, "SENADO", resultado.linhas, carga)
+    log.info("  Senado: %d em exercício gravados, %d sem pessoa no banco ainda", gravadas, resultado.sem_pessoa)
 
 
 def _limpar_cache() -> None:

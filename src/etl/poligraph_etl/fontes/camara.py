@@ -105,6 +105,24 @@ def baixar_com_procedencia(recurso: str, ano: int, destino: Path) -> procedencia
     return procedencia.de_resposta("CAMARA", resposta)
 
 
+URL_EM_EXERCICIO = "https://dadosabertos.camara.leg.br/api/v2/deputados?itens=1000"
+"""Sem `idLegislatura`, a API devolve só quem está em exercício. MEDIDO em 2026-10-19: 513, numa página só."""
+
+
+def baixar_deputados_em_exercicio() -> list[dict]:
+    """Os deputados em exercício hoje, pela API da Câmara.
+
+    RISCO: a resposta é paginada. Com `itens=1000` vem numa página só; se aparecer um link `next`,
+    a Câmara mudou o limite e a lista estaria cortada, então a carga para em vez de gravar meia lista.
+    """
+    resposta = requests.get(URL_EM_EXERCICIO, headers={"Accept": "application/json"}, timeout=120)
+    resposta.raise_for_status()
+    corpo = resposta.json()
+    if any(link.get("rel") == "next" for link in corpo.get("links", [])):
+        raise RuntimeError("A lista de deputados em exercício veio paginada: a Câmara mudou o limite de itens.")
+    return corpo.get("dados") or []
+
+
 def conferir_volume(df: pd.DataFrame, ano: int) -> None:
     """Canário contra regressão de parsing.
 

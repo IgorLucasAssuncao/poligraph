@@ -1225,3 +1225,35 @@ VALUES ('20261018223154_AvisosNoNavegador', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+CREATE TABLE em_exercicio (
+    pessoa_id bigint NOT NULL,
+    casa text NOT NULL,
+    legislatura smallint,
+    carga_id bigint NOT NULL,
+    CONSTRAINT pk_em_exercicio PRIMARY KEY (pessoa_id),
+    CONSTRAINT ck_em_exercicio_casa CHECK (casa IN ('CAMARA','SENADO')),
+    CONSTRAINT fk_em_exercicio_cargas_carga_id FOREIGN KEY (carga_id) REFERENCES cargas (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_em_exercicio_pessoas_pessoa_id FOREIGN KEY (pessoa_id) REFERENCES pessoas (id) ON DELETE CASCADE
+);
+
+CREATE TABLE seguidos_encerrados (
+    usuario_id bigint NOT NULL,
+    pessoa_id bigint NOT NULL,
+    encerrado_em timestamp with time zone NOT NULL DEFAULT (now()),
+    CONSTRAINT pk_seguidos_encerrados PRIMARY KEY (usuario_id, pessoa_id),
+    CONSTRAINT fk_seguidos_encerrados_pessoas_pessoa_id FOREIGN KEY (pessoa_id) REFERENCES pessoas (id) ON DELETE CASCADE,
+    CONSTRAINT fk_seguidos_encerrados_usuarios_usuario_id FOREIGN KEY (usuario_id) REFERENCES usuarios (id) ON DELETE CASCADE
+);
+
+CREATE INDEX ix_em_exercicio_carga_id ON em_exercicio (carga_id);
+
+CREATE INDEX ix_em_exercicio_casa ON em_exercicio (casa);
+
+CREATE INDEX ix_seguidos_encerrados_pessoa_id ON seguidos_encerrados (pessoa_id);
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261019034620_EmExercicioESeguidosEncerrados', '10.0.11');
+
+COMMIT;
+

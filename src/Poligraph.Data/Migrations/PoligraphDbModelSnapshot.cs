@@ -698,6 +698,40 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Data.EmExercicioModel", b =>
+                {
+                    b.Property<long>("PessoaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("pessoa_id");
+
+                    b.Property<long>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
+                    b.Property<string>("Casa")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("casa");
+
+                    b.Property<short?>("Legislatura")
+                        .HasColumnType("smallint")
+                        .HasColumnName("legislatura");
+
+                    b.HasKey("PessoaId")
+                        .HasName("pk_em_exercicio");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_em_exercicio_carga_id");
+
+                    b.HasIndex("Casa")
+                        .HasDatabaseName("ix_em_exercicio_casa");
+
+                    b.ToTable("em_exercicio", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_em_exercicio_casa", "casa IN ('CAMARA','SENADO')");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Data.EmendaConvenioModel", b =>
                 {
                     b.Property<string>("CodigoEmenda")
@@ -2155,6 +2189,31 @@ namespace Poligraph.Data.Migrations
                     b.ToTable("segue", (string)null);
                 });
 
+            modelBuilder.Entity("Poligraph.Data.SeguidoEncerradoModel", b =>
+                {
+                    b.Property<long>("UsuarioId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("usuario_id");
+
+                    b.Property<long>("PessoaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("pessoa_id");
+
+                    b.Property<DateTimeOffset>("EncerradoEm")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("encerrado_em")
+                        .HasDefaultValueSql("now()");
+
+                    b.HasKey("UsuarioId", "PessoaId")
+                        .HasName("pk_seguidos_encerrados");
+
+                    b.HasIndex("PessoaId")
+                        .HasDatabaseName("ix_seguidos_encerrados_pessoa_id");
+
+                    b.ToTable("seguidos_encerrados", (string)null);
+                });
+
             modelBuilder.Entity("Poligraph.Data.SimilaridadeModel", b =>
                 {
                     b.Property<long>("ExecucaoId")
@@ -2671,6 +2730,23 @@ namespace Poligraph.Data.Migrations
                         .HasConstraintName("fk_destinos_de_viagem_cargas_carga_id");
                 });
 
+            modelBuilder.Entity("Poligraph.Data.EmExercicioModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_em_exercicio_cargas_carga_id");
+
+                    b.HasOne("Poligraph.Data.PessoaModel", null)
+                        .WithMany()
+                        .HasForeignKey("PessoaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_em_exercicio_pessoas_pessoa_id");
+                });
+
             modelBuilder.Entity("Poligraph.Data.EmendaConvenioModel", b =>
                 {
                     b.HasOne("Poligraph.Data.CargaModel", null)
@@ -2986,6 +3062,23 @@ namespace Poligraph.Data.Migrations
                     b.Navigation("Pessoa");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Poligraph.Data.SeguidoEncerradoModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.PessoaModel", null)
+                        .WithMany()
+                        .HasForeignKey("PessoaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_seguidos_encerrados_pessoas_pessoa_id");
+
+                    b.HasOne("Poligraph.Data.UsuarioModel", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_seguidos_encerrados_usuarios_usuario_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.SimilaridadeModel", b =>
