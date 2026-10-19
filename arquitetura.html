@@ -670,6 +670,19 @@ docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; 
     <li>O aviso diz o tipo do fato e quantos, sem nome, porque aparece na tela de bloqueio: "Voto contra o partido", "Troca de partido", "Gastos de setembro". O clique abre o início do site.</li>
     <li>Todo dia às 4h (UTC), o job <code>limpar-avisos</code> apaga os avisos enviados e os eventos com mais de 90 dias.</li>
   </ol>
+  <h4>A regra do que é avisado</h4>
+  <div class="tabela"><table>
+    <thead><tr><th>Regra</th><th>Efeito</th></tr></thead>
+    <tbody>
+      <tr><td>Voto contra o partido e troca de partido: só fatos com data nos últimos 30 dias</td><td>Carga que regrava votos desde 2001 não muda nada</td></tr>
+      <tr><td>Cota e emendas: só o último mês fechado, uma chave por mês para todos os seguidos juntos</td><td>500 notas de setembro viram um aviso, "Gastos de setembro", uma vez</td></tr>
+      <tr><td>Cada fato tem uma chave em <code>avisos_enviados</code>, gravada antes do envio</td><td>A mesma chave nunca avisa de novo, mesmo com a Câmara regerando os arquivos toda semana</td></tr>
+      <tr><td>Ao ligar os avisos, tudo o que existe vira avisado; ao seguir alguém com os avisos ligados, o que existe sobre essa pessoa também</td><td>O passado não vira aviso</td></tr>
+      <tr><td>É o que aconteceu, e não o que foi alterado</td><td>Correção de um fato já avisado não avisa de novo; dado com mais de 30 dias de atraso aparece no site sem aviso</td></tr>
+      <tr><td>Um aviso por pessoa a cada carga</td><td>Dez fatos novos chegam juntos, numa notificação</td></tr>
+      <tr><td>Só a rotina agendada que passou pelo <code>conferir</code> grava o evento</td><td>Carga manual ou carga que falhou não avisa ninguém</td></tr>
+    </tbody>
+  </table></div>
   <p>Para gerar o par de chaves, no computador do autor, uma vez por ambiente:</p>
   <pre>dotnet run --project src/Poligraph.Worker -- gerar-chaves</pre>
   <p>Ele imprime as duas linhas, <code>Avisos__ChavePublica=…</code> e <code>Avisos__ChavePrivada=…</code>, que vão para as
