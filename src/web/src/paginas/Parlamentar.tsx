@@ -118,8 +118,7 @@ export function ParlamentarComponent() {
   );
   const legislaturas = useLegislaturas();
   const corrente = legislaturas?.[0]?.numero;
-  const emExercicio =
-    corrente !== undefined && (ficha?.mandatos ?? []).some((m) => m.legislatura === corrente);
+  const emExercicio = ficha?.emExercicio ?? false;
 
   const [seguindo, setSeguindo] = useState(false);
 

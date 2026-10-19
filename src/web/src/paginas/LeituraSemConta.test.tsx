@@ -26,6 +26,7 @@ vi.mock('../api', async (original) => ({
     maisSimilares: [], alinhamento: null, urlFonte: null,
     legislatura: 57,
     mandatos: [{ legislatura: 57, casa: 'CAMARA', anoInicial: 2023, partido: 'PARTIDO-A', uf: 'SP', nRegistrosDeVoto: 0, primeiroVoto: '2023-02-01', ultimoVoto: '2026-12-01' }],
+    emExercicio: true,
   }),
   listarLegislaturas: vi.fn().mockResolvedValue([
     { numero: 57, anoInicial: 2023, anoFinal: 2027, corrente: true, casas: ['CAMARA', 'SENADO'] },
@@ -65,6 +66,7 @@ describe('ficha de quem já saiu', () => {
       ...(await api.obterFicha(1)),
       legislatura: 52,
       mandatos: [{ legislatura: 52, casa: 'CAMARA', anoInicial: 2003, partido: 'PARTIDO-A', uf: 'SP', nRegistrosDeVoto: 9, primeiroVoto: '2003-02-01', ultimoVoto: '2006-12-01' }],
+      emExercicio: false,
     });
     render(
       <MemoryRouter initialEntries={['/parlamentar/1']}>

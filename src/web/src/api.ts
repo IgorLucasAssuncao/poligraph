@@ -36,6 +36,11 @@ export type Parlamentar = {
    * quer dizer que a pessoa já saiu.
    */
   legislatura?: number;
+  /**
+   * Se está na lista oficial de quem está em exercício: só esses podem ser seguidos (decisão do
+   * autor, 2026-10-18). Vem na página da lista; ausente nas listas internas.
+   */
+  emExercicio?: boolean;
 };
 
 /**
@@ -126,6 +131,8 @@ export type Ficha = {
   legislatura: number | null;
   /** Todas as legislaturas em que votou, da mais recente para a mais antiga. */
   mandatos: Mandato[];
+  /** Se está na lista oficial de quem está em exercício: só assim pode ser seguido. */
+  emExercicio: boolean;
 };
 
 /** Uma legislatura em que a pessoa votou. Partido e UF são os do último voto DELA ali. */
@@ -475,6 +482,22 @@ export async function seguir(idPessoa: number, aceite = false): Promise<void> {
   if (resposta.status === 401) throw new NaoAutenticadoError();
   if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.falhaEm(url, resposta.status));
   avisarQueSeguidosMudaram();
+}
+
+/** Quem saiu da lista de seguidos por ter deixado o mandato, para o aviso do site. */
+export type SeguidosEncerrados = {
+  /** A legislatura que começou, quando a saída foi na virada; nula em renúncia, cassação ou licença. */
+  novaLegislatura: number | null;
+  parlamentares: { idPessoa: number; nome: string }[];
+};
+
+export async function obterSeguidosEncerrados(): Promise<SeguidosEncerrados> {
+  return buscar<SeguidosEncerrados>(`${BASE}/seguidos/encerrados`);
+}
+
+/** A pessoa viu o aviso: a API apaga o registro de quem ela seguia. */
+export async function dispensarSeguidosEncerrados(): Promise<void> {
+  await semCorpo(`${BASE}/seguidos/encerrados`, 'DELETE');
 }
 
 /** Revoga o consentimento de seguir; a API apaga a lista junto. */

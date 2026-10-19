@@ -6,6 +6,7 @@ import { FaixaDeProcedenciaComponent } from './FaixaDeProcedencia';
 import { IconeExplorarComponent, IconeOrcamentoComponent, IconeQuestionarioComponent, IconeVoltarComponent, MarcaComponent } from './Icones';
 import { MenuDaContaComponent } from './MenuDaConta';
 import { SininhoComponent } from './Sininho';
+import { AvisoDeSeguidosEncerradosComponent } from './AvisoDeSeguidosEncerrados';
 import { InterruptorDoModoAuditoriaComponent, ProvedorDoModoAuditoriaComponent } from './ModoAuditoria';
 import { ProvedorDoTourComponent } from './Tour';
 import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
@@ -89,6 +90,7 @@ export function LayoutComponent({ children }: { children: React.ReactNode }) {
           <CabecalhoDoSiteComponent />
 
           <main ref={corpo} className="corpo" data-largura={largura}>
+            <AvisoDeSeguidosEncerradosComponent />
             {children}
           </main>
 

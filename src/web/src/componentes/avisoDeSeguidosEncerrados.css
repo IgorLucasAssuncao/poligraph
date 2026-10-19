@@ -1,0 +1,11 @@
+/* ═══ AVISO DE QUEM DEIXOU O MANDATO — decisão do autor, 2026-10-18 ═════ */
+/* DECISÃO: O mesmo tom da novidade (fundo e traço de realce), e não de erro: ninguém fez nada
+   errado, a lista só acompanhou o mandato. Fica no topo da coluna até "Entendi". */
+.aviso-encerrados {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.25rem;
+  margin: 0 0 1.25rem; padding: .85rem 1rem;
+  background: var(--realce-fraco); border: 1px solid var(--realce); border-radius: var(--raio);
+  box-shadow: inset 4px 0 0 var(--realce);
+}
+.aviso-encerrados p { margin: 0; font-size: var(--t-2); max-width: 60ch; }
+.aviso-encerrados-acoes { display: flex; align-items: center; gap: 1rem; font-size: var(--t-2); }

@@ -1,6 +1,6 @@
 const plural = (n: number, um: string, varios: string) => (n === 1 ? um : varios);
 
-/** O texto do sininho do cabeçalho e dos avisos no navegador (Pendência 89). */
+/** O texto do sininho do cabeçalho, dos avisos no navegador e do aviso de quem deixou o mandato (Pendência 89). */
 export const TEXTOS_DOS_AVISOS = {
   sininho: {
     rotulo: (novas: number) => (novas > 0 ? `Novidades de quem você segue, ${novas} ${plural(novas, 'nova', 'novas')}` : 'Novidades de quem você segue'),
@@ -22,6 +22,13 @@ export const TEXTOS_DOS_AVISOS = {
     bloqueado: 'Os avisos estão bloqueados neste navegador. Para liberar, clique no cadeado da barra de endereço e permita as notificações.',
     erro: 'Não foi possível mudar os avisos agora. Tente de novo.',
     ocupado: 'Um momento…',
+  },
+  encerrados: {
+    novaLegislatura: (n: number) => `Começou a ${n}ª legislatura.`,
+    sairam: (nomes: string, quantos: number) =>
+      `${nomes} ${plural(quantos, 'não está mais no mandato e saiu', 'não estão mais no mandato e saíram')} da sua lista de quem você segue.`,
+    procurar: 'Procurar quem seguir',
+    entendi: 'Entendi',
   },
   conta: {
     revogar: 'Revogar o consentimento dos avisos',

@@ -193,7 +193,7 @@ export function ExplorarComponent() {
           legislatura={p.legislatura && p.legislatura !== pagina?.legislaturaCorrente ? p.legislatura : undefined}
           seguindo={seguidos.has(p.idPessoa)}
           aoAlternarSeguir={
-            p.legislatura === pagina?.legislaturaCorrente || seguidos.has(p.idPessoa) ? alternar : undefined
+            p.emExercicio || seguidos.has(p.idPessoa) ? alternar : undefined
           }
         />
       ))}

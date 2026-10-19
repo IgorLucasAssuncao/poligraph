@@ -50,6 +50,7 @@ const FICHA: Ficha = {
   mandatos: [
     { legislatura: 57, casa: 'CAMARA', anoInicial: 2023, partido: 'PARTIDO-A', uf: 'SP', nRegistrosDeVoto: 120, primeiroVoto: '2023-02-01', ultimoVoto: '2026-12-01' },
   ],
+  emExercicio: true,
 };
 
 /**

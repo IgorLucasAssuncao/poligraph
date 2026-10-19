@@ -46,7 +46,7 @@ export function SugestoesParaSeguirComponent() {
           tamanho: SUGESTOES_PARA_SEGUIR + ids.size,
         });
         setSeguidos(ids);
-        setSugestoes(pagina.itens.filter((p) => !ids.has(p.idPessoa)).slice(0, SUGESTOES_PARA_SEGUIR));
+        setSugestoes(pagina.itens.filter((p) => p.emExercicio !== false && !ids.has(p.idPessoa)).slice(0, SUGESTOES_PARA_SEGUIR));
       })
       .catch(() => setSugestoes([]));
   }, [usuario]);
