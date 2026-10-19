@@ -1,9 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { listarSeguidos, obterChaveDosAvisos, obterNovidades } from '../api';
 import type { Novidades, Parlamentar } from '../api';
-import { CHAVE_NOVIDADES_VISTAS } from '../constantes';
+import { CHAVE_NOVIDADES_VISTAS, EVENTO_SEGUIDOS_MUDARAM } from '../constantes';
 import { SininhoComponent } from './Sininho';
 import { deBase64Url } from './useAvisosNoNavegador';
 
@@ -93,6 +93,19 @@ describe('sininho', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
 
     expect(JSON.parse(localStorage.getItem(CHAVE_NOVIDADES_VISTAS)!)).toEqual(['troca-7']);
+  });
+
+  it('deixar de seguir busca de novo, e o fato de quem saiu some', async () => {
+    renderizar(COM_TROCA);
+    await screen.findByRole('button', { name: 'Novidades de quem você segue, 1 nova' });
+
+    vi.mocked(obterNovidades).mockResolvedValue(VAZIAS);
+    vi.mocked(listarSeguidos).mockResolvedValue([]);
+    await act(async () => {
+      window.dispatchEvent(new Event(EVENTO_SEGUIDOS_MUDARAM));
+    });
+
+    expect(await screen.findByRole('button', { name: 'Novidades de quem você segue' })).toBeInTheDocument();
   });
 
   it('o que já foi visto neste navegador não conta', async () => {

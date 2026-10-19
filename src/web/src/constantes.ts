@@ -118,3 +118,9 @@ export const CHAVE_CONVITE_DE_AVISOS = 'poligraph:convite-de-avisos';
 
 /** Quantas novidades o "O que mudou" mostra de cada vez (decisão do autor, 2026-10-18). */
 export const NOVIDADES_A_VISTA = 10;
+
+/**
+ * Avisa a página que a lista de quem a pessoa segue mudou: o sininho e o cartão de novidades buscam
+ * de novo. Disparado pela camada de acesso à API depois de seguir, deixar de seguir ou revogar.
+ */
+export const EVENTO_SEGUIDOS_MUDARAM = 'poligraph:seguidos-mudaram';

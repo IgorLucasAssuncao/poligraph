@@ -1,4 +1,4 @@
-import { BASE_DA_API, CABECALHO_DO_SITE } from './constantes';
+import { BASE_DA_API, CABECALHO_DO_SITE, EVENTO_SEGUIDOS_MUDARAM } from './constantes';
 import { TEXTOS_DA_API } from './textos/api';
 import { VERSAO_CONSENTIMENTO } from './textos-legais';
 
@@ -474,15 +474,27 @@ export async function seguir(idPessoa: number, aceite = false): Promise<void> {
   if (resposta.status === 428) throw new ConsentimentoNecessarioError();
   if (resposta.status === 401) throw new NaoAutenticadoError();
   if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.falhaEm(url, resposta.status));
+  avisarQueSeguidosMudaram();
 }
 
 /** Revoga o consentimento de seguir; a API apaga a lista junto. */
 export async function revogarConsentimentoDeSeguir(): Promise<void> {
   await semCorpo(`${BASE}/seguidos/consentimento`, 'DELETE');
+  avisarQueSeguidosMudaram();
 }
 
 export async function deixarDeSeguir(idPessoa: number): Promise<void> {
   await semCorpo(`${BASE}/seguidos/${idPessoa}`, 'DELETE');
+  avisarQueSeguidosMudaram();
+}
+
+/**
+ * Avisa quem mostra novidades que a lista mudou (Pendência 89). Sem isso, o sininho guardava as
+ * novidades de quando a página abriu, e quem deixava de seguir alguém continuava vendo os fatos dele
+ * até recarregar.
+ */
+function avisarQueSeguidosMudaram(): void {
+  window.dispatchEvent(new Event(EVENTO_SEGUIDOS_MUDARAM));
 }
 
 /**

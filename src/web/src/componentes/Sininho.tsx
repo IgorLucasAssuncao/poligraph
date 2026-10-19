@@ -1,13 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { listarSeguidos, obterNovidades } from '../api';
-import type { Novidades } from '../api';
 import { useSessao } from '../sessao';
 import { TEXTOS_DOS_AVISOS } from '../textos/avisos';
 import { IconeSinoComponent } from './Icones';
 import { ListaDeNovidadesComponent } from './ListaDeNovidades';
 import { ModalDeNovidadesComponent } from './ModalDeNovidades';
 import { novidadesQueContam, useNovidadesVistas } from './useNovidadesVistas';
+import { useNovidades } from './useNovidades';
 import './sininho.css';
 
 const T = TEXTOS_DOS_AVISOS.sininho;
@@ -31,29 +30,12 @@ const MAXIMO_NO_PAINEL = 5;
  */
 export function SininhoComponent() {
   const { usuario } = useSessao();
-  const [novidades, setNovidades] = useState<Novidades | null>(null);
-  const [seguidos, setSeguidos] = useState<number | null>(null);
-  const [erro, setErro] = useState(false);
+  const { novidades, seguidos, erro } = useNovidades(usuario !== null);
   const [aberto, setAberto] = useState(false);
   const [porParlamentar, setPorParlamentar] = useState(false);
   const { vistas, marcar } = useNovidadesVistas();
   const caixa = useRef<HTMLDivElement>(null);
   const id = useId();
-
-  useEffect(() => {
-    if (!usuario) return;
-    let atual = true;
-    Promise.all([obterNovidades(), listarSeguidos()])
-      .then(([n, lista]) => {
-        if (!atual) return;
-        setNovidades(n);
-        setSeguidos(lista.length);
-      })
-      .catch(() => atual && setErro(true));
-    return () => {
-      atual = false;
-    };
-  }, [usuario]);
 
   useEffect(() => {
     if (!aberto) return;

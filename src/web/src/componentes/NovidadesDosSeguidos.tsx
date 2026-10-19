@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
-import { obterNovidades } from '../api';
-import type { Novidades } from '../api';
+import { useState } from 'react';
 import { TEXTOS_DO_QUE_MUDOU as T } from '../textos/oQueMudou';
 import { IconeSinoComponent } from './Icones';
 import { ModalDeNovidadesComponent } from './ModalDeNovidades';
 import { novidadesQueContam, useNovidadesVistas } from './useNovidadesVistas';
+import { useNovidades } from './useNovidades';
 import './novidades.css';
 
 /**
@@ -21,20 +20,9 @@ import './novidades.css';
  * RISCO: O dado diz quem a pessoa segue, então fica fora do cache de leituras.
  */
 export function NovidadesDosSeguidosComponent() {
-  const [novidades, setNovidades] = useState<Novidades | null>(null);
-  const [erro, setErro] = useState(false);
+  const { novidades, erro } = useNovidades(true);
   const [aberto, setAberto] = useState(false);
   const { vistas, marcar } = useNovidadesVistas();
-
-  useEffect(() => {
-    let atual = true;
-    obterNovidades()
-      .then((n) => atual && setNovidades(n))
-      .catch(() => atual && setErro(true));
-    return () => {
-      atual = false;
-    };
-  }, []);
 
   if (erro || !novidades) return null;
 
