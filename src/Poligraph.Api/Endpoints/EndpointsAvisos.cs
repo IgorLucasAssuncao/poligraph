@@ -50,7 +50,7 @@ public static class EndpointsAvisos
     /// <param name="aceite">Verdadeiro só depois de a pessoa aceitar o texto daquela versão.</param>
     private static async Task<IResult> InscreverAsync(
         InscricaoNoNavegadorDto inscricao, string? versao, bool? aceite, ClaimsPrincipal principal,
-        ServicoConsentimentos consentimentos, ServicoAvisos avisos, CancellationToken ct)
+        ServicoConsentimentos consentimentos, ServicoAvisos avisos, PoligraphDb db, CancellationToken ct)
     {
         if (!Valida(inscricao))
         {
@@ -66,7 +66,7 @@ public static class EndpointsAvisos
                 detail: MensagensDaApi.FaltaConsentimentoParaAvisosDetalhe);
         }
 
-        await avisos.InscreverAsync(idUsuario, inscricao, ct);
+        await db.EmTransacaoAsync(c => avisos.InscreverAsync(idUsuario, inscricao, c), ct);
         return Results.NoContent();
     }
 
@@ -80,11 +80,14 @@ public static class EndpointsAvisos
 
     /// <summary>Revoga o consentimento (LGPD art. 8º, §5º) e apaga os navegadores e o histórico de avisos, que dependiam dele.</summary>
     private static async Task<IResult> RevogarAsync(
-        ClaimsPrincipal principal, ServicoConsentimentos consentimentos, ServicoAvisos avisos, CancellationToken ct)
+        ClaimsPrincipal principal, ServicoConsentimentos consentimentos, ServicoAvisos avisos, PoligraphDb db, CancellationToken ct)
     {
         var idUsuario = SessaoDoUsuario.IdDoUsuario(principal);
-        await avisos.ApagarTudoAsync(idUsuario, ct);
-        await consentimentos.RevogarAsync(idUsuario, TipoFinalidadeDeConsentimento.AVISOS_NO_NAVEGADOR, ct);
+        await db.EmTransacaoAsync(async c =>
+        {
+            await avisos.ApagarTudoAsync(idUsuario, c);
+            await consentimentos.RevogarAsync(idUsuario, TipoFinalidadeDeConsentimento.AVISOS_NO_NAVEGADOR, c);
+        }, ct);
         return Results.NoContent();
     }
 

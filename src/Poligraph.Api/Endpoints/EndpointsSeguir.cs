@@ -127,9 +127,12 @@ public static class EndpointsSeguir
                 detail: MensagensDaApi.FaltaConsentimentoParaSeguirDetalhe);
         }
 
-        db.Segue.Add(new SegueModel { UsuarioId = idUsuario, PessoaId = idPessoa });
-        await db.SaveChangesAsync(ct);
-        await avisos.MarcarParlamentarComoVistoAsync(idUsuario, idPessoa, ct);
+        await db.EmTransacaoAsync(async c =>
+        {
+            db.Segue.Add(new SegueModel { UsuarioId = idUsuario, PessoaId = idPessoa });
+            await db.SaveChangesAsync(c);
+            await avisos.MarcarParlamentarComoVistoAsync(idUsuario, idPessoa, c);
+        }, ct);
 
         return Results.NoContent();
     }
@@ -148,10 +151,13 @@ public static class EndpointsSeguir
     {
         var idUsuario = SessaoDoUsuario.IdDoUsuario(principal);
 
-        await db.Segue
-            .Where(s => s.UsuarioId == idUsuario && s.PessoaId == idPessoa)
-            .ExecuteDeleteAsync(ct);
-        await avisos.EsquecerParlamentarAsync(idUsuario, idPessoa, ct);
+        await db.EmTransacaoAsync(async c =>
+        {
+            await db.Segue
+                .Where(s => s.UsuarioId == idUsuario && s.PessoaId == idPessoa)
+                .ExecuteDeleteAsync(c);
+            await avisos.EsquecerParlamentarAsync(idUsuario, idPessoa, c);
+        }, ct);
 
         return Results.NoContent();
     }
@@ -206,10 +212,13 @@ public static class EndpointsSeguir
     {
         var idUsuario = SessaoDoUsuario.IdDoUsuario(principal);
 
-        await db.Segue.Where(s => s.UsuarioId == idUsuario).ExecuteDeleteAsync(ct);
-        await db.SeguidosEncerrados.Where(e => e.UsuarioId == idUsuario).ExecuteDeleteAsync(ct);
-        await avisos.ApagarTudoAsync(idUsuario, ct);
-        await consentimentos.RevogarAsync(idUsuario, TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES, ct);
+        await db.EmTransacaoAsync(async c =>
+        {
+            await db.Segue.Where(s => s.UsuarioId == idUsuario).ExecuteDeleteAsync(c);
+            await db.SeguidosEncerrados.Where(e => e.UsuarioId == idUsuario).ExecuteDeleteAsync(c);
+            await avisos.ApagarTudoAsync(idUsuario, c);
+            await consentimentos.RevogarAsync(idUsuario, TipoFinalidadeDeConsentimento.SEGUIR_PARLAMENTARES, c);
+        }, ct);
 
         return Results.NoContent();
     }
