@@ -5,7 +5,7 @@
 >
 > As notícias saíram do escopo (Pendência 61, 2026-10-02) e o título mudou com elas
 > (2026-10-18). Seguir um parlamentar serve para acompanhar o que ele fez: votos, troca de
-> partido e gastos, no bloco "O que mudou" da página inicial.
+> partido e gastos, em "Novidades de quem você segue", no início e no sininho do cabeçalho.
 >
 > Afinidade política medida por **comportamento revelado de voto**, não por autodeclaração.
 
