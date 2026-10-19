@@ -36,6 +36,34 @@ public class TestesEmExercicio(FixturePostgres postgres) : BaseIntegracao(postgr
         Assert.Null(await EmExercicioNaBase.IdsAsync(Db, CancellationToken.None));
     }
 
+    /// <summary>Licenciado é seguível, mas não completa o mínimo: lista com 490 em exercício e 20 licenciados está cortada.</summary>
+    [SkippableFact]
+    public async Task Licenciados_NaoCompletamOMinimo_MasSaoSeguiveis()
+    {
+        ExigeDocker();
+        var (idPessoa, _) = await CenarioDeNovidades.SemearAsync(Db);
+        await CarregarListaAsync(emExercicio: null, deputados: 490);
+        var carga = await Db.Cargas.Select(c => c.Id).FirstAsync();
+        await Db.Database.ExecuteSqlAsync(
+            $"INSERT INTO pessoas (nome_civil, nome_exibicao) SELECT 'Licenciado ' || g, 'Licenciado ' || g FROM generate_series(1, 20) g");
+        Db.EmExercicio.AddRange((await Db.Pessoas.Where(p => p.NomeCivil.StartsWith("Licenciado ")).Select(p => p.Id).ToListAsync())
+            .Select(id => new EmExercicioModel { PessoaId = id, Casa = TipoCasa.CAMARA, Licenciado = true, CargaId = carga }));
+        await Db.SaveChangesAsync();
+
+        Assert.Null(await EmExercicioNaBase.IdsAsync(Db, CancellationToken.None));
+
+        Db.EmExercicio.Add(new EmExercicioModel { PessoaId = idPessoa, Casa = TipoCasa.CAMARA, Licenciado = true, CargaId = carga });
+        await Db.Database.ExecuteSqlAsync(
+            $"INSERT INTO pessoas (nome_civil, nome_exibicao) SELECT 'Exercicio ' || g, 'Exercicio ' || g FROM generate_series(1, 10) g");
+        Db.EmExercicio.AddRange((await Db.Pessoas.Where(p => p.NomeCivil.StartsWith("Exercicio ")).Select(p => p.Id).ToListAsync())
+            .Select(id => new EmExercicioModel { PessoaId = id, Casa = TipoCasa.CAMARA, CargaId = carga }));
+        await Db.SaveChangesAsync();
+
+        var ids = await EmExercicioNaBase.IdsAsync(Db, CancellationToken.None);
+        Assert.NotNull(ids);
+        Assert.Contains(idPessoa, ids);
+    }
+
     [SkippableFact]
     public async Task ComLista_SoSegueQuemEstaNela_MesmoQueTenhaVotado()
     {

@@ -18,12 +18,15 @@ public static class EmExercicioNaBase
     /// <summary>O Senado tem 81 cadeiras; menos de 78 na lista é carga cortada.</summary>
     public const int MinimoDoSenado = 78;
 
-    /// <summary>Os ids das pessoas em exercício, ou <c>null</c> quando a lista ainda não foi carregada nas duas casas.</summary>
+    /// <summary>
+    /// Os ids de quem pode ser seguido (em exercício ou licenciado), ou <c>null</c> quando a lista ainda
+    /// não foi carregada nas duas casas. O mínimo de cada casa conta só quem está em exercício.
+    /// </summary>
     public static async Task<HashSet<long>?> IdsAsync(PoligraphDb db, CancellationToken ct)
     {
-        var linhas = await db.EmExercicio.AsNoTracking().Select(e => new { e.PessoaId, e.Casa }).ToListAsync(ct);
-        var camara = linhas.Count(l => l.Casa == TipoCasa.CAMARA);
-        var senado = linhas.Count(l => l.Casa == TipoCasa.SENADO);
+        var linhas = await db.EmExercicio.AsNoTracking().Select(e => new { e.PessoaId, e.Casa, e.Licenciado }).ToListAsync(ct);
+        var camara = linhas.Count(l => l.Casa == TipoCasa.CAMARA && !l.Licenciado);
+        var senado = linhas.Count(l => l.Casa == TipoCasa.SENADO && !l.Licenciado);
 
         return camara >= MinimoDaCamara && senado >= MinimoDoSenado ? [.. linhas.Select(l => l.PessoaId)] : null;
     }

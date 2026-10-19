@@ -1257,3 +1257,11 @@ VALUES ('20261019034620_EmExercicioESeguidosEncerrados', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+ALTER TABLE em_exercicio ADD licenciado boolean NOT NULL DEFAULT FALSE;
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261019044317_LicenciadoEmExercicio', '10.0.11');
+
+COMMIT;
+

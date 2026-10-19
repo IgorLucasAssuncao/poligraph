@@ -71,3 +71,44 @@ def test_gravar_troca_o_retrato_so_da_casa(conexao):
     conexao.execute("DELETE FROM em_exercicio")
     conexao.execute("DELETE FROM pessoas WHERE id = ANY(%s)", ([a, b, c],))
     conexao.execute("DELETE FROM cargas WHERE id = %s", (carga,))
+
+
+def test_licenciado_da_camara_e_seguivel_vacancia_e_suplencia_nao():
+    """Decisão do autor (2026-10-19): licenciado continua seguível; quem saiu do mandato, não."""
+    situacoes = {"1": "Licença", "2": "Afastado", "3": "Vacância", "4": "Suplência", "5": "Licença"}
+
+    licenciados = em_exercicio.licenciados_da_camara(situacoes, {"1": 10, "2": 20, "3": 30, "4": 40}, 57)
+
+    assert sorted((l.pessoa_id, l.licenciado, l.legislatura) for l in licenciados) == [(10, True, 57), (20, True, 57)]
+
+
+def _afastado(codigo: str, *causas: tuple[str, str]) -> dict:
+    return {
+        "IdentificacaoParlamentar": {"CodigoParlamentar": codigo},
+        "Mandato": {"Exercicios": {"Exercicio": [{"DataInicio": inicio, "SiglaCausaAfastamento": causa} for inicio, causa in causas]}},
+    }
+
+
+def test_licenciado_do_senado_vale_pelo_ultimo_afastamento():
+    """Licença ou cargo de ministro no último exercício entra; morte, renúncia e retorno do titular, não."""
+    afastados = [
+        _afastado("1", ("2023-02-01", "AFO")),
+        _afastado("2", ("2023-02-01", "LCS"), ("2024-05-01", "REN")),
+        _afastado("3", ("2023-02-01", "FAL")),
+        _afastado("4", ("2023-02-01", "RET"), ("2025-01-10", "LCS")),
+    ]
+
+    licenciados = em_exercicio.licenciados_do_senado(afastados, {"1": 10, "2": 20, "3": 30, "4": 40})
+
+    assert sorted(l.pessoa_id for l in licenciados) == [10, 40]
+
+
+def test_licenciados_nao_contam_para_o_minimo_e_nao_repetem():
+    pessoas = {str(1000 + i): 10 + i for i in range(513)}
+    em_exercicio_hoje = em_exercicio.da_camara(_deputados(513), pessoas).linhas
+    repetido = em_exercicio.licenciados_da_camara({"1000": "Licença"}, pessoas, 57)
+
+    juntos = em_exercicio.juntar(em_exercicio_hoje, repetido)
+
+    assert len(juntos) == 513
+    assert not any(l.licenciado for l in juntos)

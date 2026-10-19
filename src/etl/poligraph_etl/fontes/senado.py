@@ -112,6 +112,20 @@ def baixar_senadores() -> list[dict]:
     ]
 
 
+def baixar_afastados() -> list[dict]:
+    """Os senadores afastados hoje, com o mandato e cada período de exercício.
+
+    `senador/afastados` redireciona para `dados/AfastamentoAtual.json`. MEDIDO em 2026-10-19: 44
+    afastados, com a causa no último exercício: licença com suplente (LCS), cargo de ministro ou
+    secretário (AFO), falecimento (FAL), renúncia (REN) e retorno do titular (RET).
+    """
+    resposta = requests.get(f"{BASE}/senador/afastados", headers=CABECALHOS, timeout=120)
+    resposta.raise_for_status()
+    envelope = resposta.json().get("AfastamentoAtual", {})
+    parlamentares = (envelope.get("Parlamentares") or {}).get("Parlamentar") or []
+    return parlamentares if isinstance(parlamentares, list) else [parlamentares]
+
+
 CEAPS = "https://www.senado.gov.br/transparencia/LAI/verba/despesa_ceaps_{ano}.csv"
 
 # O CSV NAO aceita os CABECALHOS do modulo: eles pedem `application/json`, e o portal da

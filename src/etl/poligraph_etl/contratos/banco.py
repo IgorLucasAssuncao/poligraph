@@ -151,3 +151,4 @@ class EmExercicio:
     pessoa_id: int
     casa: str
     legislatura: int | None
+    licenciado: bool = False

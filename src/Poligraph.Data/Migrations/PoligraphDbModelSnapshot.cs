@@ -717,6 +717,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("smallint")
                         .HasColumnName("legislatura");
 
+                    b.Property<bool>("Licenciado")
+                        .HasColumnType("boolean")
+                        .HasColumnName("licenciado");
+
                     b.HasKey("PessoaId")
                         .HasName("pk_em_exercicio");
 

@@ -2476,16 +2476,41 @@ def _em_exercicio(conexao: psycopg.Connection) -> None:
     deputados = camara.baixar_deputados_em_exercicio()
     carga = _carga_de_resposta(conexao, "CAMARA", camara.URL_EM_EXERCICIO, deputados,
                                CACHE / "respostas" / f"deputados-em-exercicio-{hoje}.json")
-    resultado = em_exercicio.da_camara(deputados, _mapa_pessoas(conexao, "CAMARA"))
-    gravadas = persistencia.gravar_em_exercicio(conexao, "CAMARA", resultado.linhas, carga)
-    log.info("  Câmara: %d em exercício gravados, %d sem pessoa no banco ainda", gravadas, resultado.sem_pessoa)
+    pessoas_da_camara = _mapa_pessoas(conexao, "CAMARA")
+    resultado = em_exercicio.da_camara(deputados, pessoas_da_camara)
+    legislatura = next((linha.legislatura for linha in resultado.linhas if linha.legislatura), None)
+    licenciados = _licenciados_da_camara(conexao, deputados, legislatura, pessoas_da_camara) if legislatura else []
+    gravadas = persistencia.gravar_em_exercicio(conexao, "CAMARA", em_exercicio.juntar(resultado.linhas, licenciados), carga)
+    log.info("  Câmara: %d gravados (%d licenciados), %d sem pessoa no banco ainda",
+             gravadas, len(licenciados), resultado.sem_pessoa)
 
     senadores = senado.baixar_senadores()
     carga = _carga_de_resposta(conexao, "SENADO", f"{senado.BASE}/senador/lista/atual", senadores,
                                CACHE / "respostas" / f"senadores-em-exercicio-{hoje}.json")
-    resultado = em_exercicio.do_senado(senadores, _mapa_pessoas(conexao, "SENADO"))
-    gravadas = persistencia.gravar_em_exercicio(conexao, "SENADO", resultado.linhas, carga)
-    log.info("  Senado: %d em exercício gravados, %d sem pessoa no banco ainda", gravadas, resultado.sem_pessoa)
+    pessoas_do_senado = _mapa_pessoas(conexao, "SENADO")
+    resultado = em_exercicio.do_senado(senadores, pessoas_do_senado)
+    afastados = senado.baixar_afastados()
+    _carga_de_resposta(conexao, "SENADO", f"{senado.BASE}/senador/afastados", afastados,
+                       CACHE / "respostas" / f"senadores-afastados-{hoje}.json")
+    licenciados = em_exercicio.licenciados_do_senado(afastados, pessoas_do_senado)
+    gravadas = persistencia.gravar_em_exercicio(conexao, "SENADO", em_exercicio.juntar(resultado.linhas, licenciados), carga)
+    log.info("  Senado: %d gravados (%d licenciados), %d sem pessoa no banco ainda",
+             gravadas, len(licenciados), resultado.sem_pessoa)
+
+
+def _licenciados_da_camara(conexao: psycopg.Connection, em_exercicio_hoje: list[dict], legislatura: int,
+                           pessoas: dict[str, int]) -> list:
+    """Os licenciados da Câmara: a situação de cada deputado da legislatura que não está em exercício.
+
+    Uma consulta por deputado fora do exercício (MEDIDO em 2026-10-19: 135 na 57ª, ~30 s). A resposta
+    de cada um é guardada em `respostas/`, como a de redes e CPF.
+    """
+    da_legislatura = camara.deputados_da_legislatura(legislatura)
+    fora = {str(d.get("id")) for d in da_legislatura} - {str(d.get("id")) for d in em_exercicio_hoje}
+    situacoes = {id_camara: camara.situacao_do_deputado(id_camara) for id_camara in sorted(fora)}
+    _carga_de_resposta(conexao, "CAMARA", f"{camara.API}/deputados/{{id}}", situacoes,
+                       CACHE / "respostas" / f"situacao-dos-deputados-{date.today():%Y%m%d}.json")
+    return em_exercicio.licenciados_da_camara(situacoes, pessoas, legislatura)
 
 
 def _limpar_cache() -> None:

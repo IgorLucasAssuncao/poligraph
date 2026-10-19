@@ -123,6 +123,35 @@ def baixar_deputados_em_exercicio() -> list[dict]:
     return corpo.get("dados") or []
 
 
+def deputados_da_legislatura(legislatura: int) -> list[dict]:
+    """Todos os que exerceram mandato na legislatura: titulares, suplentes e quem já saiu.
+
+    MEDIDO em 2026-10-19: 648 na 57ª, numa página só com `itens=1000`.
+    """
+    resposta = requests.get(
+        f"{API}/deputados", params={"idLegislatura": legislatura, "itens": 1000},
+        headers={"Accept": "application/json"}, timeout=120,
+    )
+    resposta.raise_for_status()
+    corpo = resposta.json()
+    if any(link.get("rel") == "next" for link in corpo.get("links", [])):
+        raise RuntimeError(f"Os deputados da {legislatura}ª vieram paginados: a Câmara mudou o limite de itens.")
+    return corpo.get("dados") or []
+
+
+def situacao_do_deputado(id_camara: str) -> str | None:
+    """A situação de hoje (`ultimoStatus.situacao`): "Exercício", "Licença", "Vacância", "Suplência"...
+
+    MEDIDO em 2026-10-19, entre os 135 da 57ª fora do exercício: "Suplência" (suplente que saiu),
+    "Vacância" (morte, renúncia, cassação, posse em outro cargo) e "Licença" (9 na carga do mesmo dia).
+    """
+    resposta = requests.get(f"{API}/deputados/{id_camara}", headers={"Accept": "application/json"}, timeout=60)
+    if resposta.status_code == 404:
+        return None
+    resposta.raise_for_status()
+    return ((resposta.json().get("dados") or {}).get("ultimoStatus") or {}).get("situacao")
+
+
 def conferir_volume(df: pd.DataFrame, ano: int) -> None:
     """Canário contra regressão de parsing.
 

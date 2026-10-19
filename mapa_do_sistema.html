@@ -308,7 +308,7 @@ const FONTES = [
 const COMANDOS = [
   { id: 'ingerir', faz: 'Carrega a Câmara: deputados, votações, votos, proposições e orientações; marca como secretas as votações sem nenhuma posição.', ritmo: 'semanal', depende: [] },
   { id: 'senado', faz: 'Carrega o Senado: senadores, votações, votos e matérias.', ritmo: 'semanal', depende: [] },
-  { id: 'em-exercicio', faz: 'A lista oficial de quem está em exercício hoje, da Câmara e do Senado. Trava a carga se vier com menos de 500 deputados ou 78 senadores. O worker usa a lista para tirar da lista de seguidos quem deixou o mandato.', ritmo: 'semanal', depende: ['ingerir', 'senado'] },
+  { id: 'em-exercicio', faz: 'A lista oficial de quem está em exercício hoje, da Câmara e do Senado, mais os licenciados (licença ou cargo de ministro), que também podem ser seguidos. Trava a carga se vier com menos de 500 deputados ou 78 senadores. O worker usa a lista para tirar da lista de seguidos quem deixou o mandato.', ritmo: 'semanal', depende: ['ingerir', 'senado'] },
   { id: 'simbolicas', faz: 'Conta as votações simbólicas por legislatura, para o painel do início.', ritmo: 'semanal', depende: ['ingerir'] },
   { id: 'palavras-chave', faz: 'Completa as palavras-chave das proposições votadas. Retoma de onde parou.', ritmo: 'semanal', depende: ['ingerir', 'senado'] },
   { id: 'analisar', faz: 'Calcula similaridade, comunidades, o grafo e o alinhamento com o governo, de uma casa por vez.', ritmo: 'mensal', depende: ['ingerir', 'senado'] },
