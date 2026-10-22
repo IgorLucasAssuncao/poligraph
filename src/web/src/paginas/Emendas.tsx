@@ -517,7 +517,6 @@ function PainelDaCidadeComponent({
   );
   const dados = carga.dados ?? null;
   const erro = carga.erro;
-  const [aba, setAba] = useState<AbaDaCidade | null>(null);
   const secao = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -532,8 +531,6 @@ function PainelDaCidadeComponent({
 
   const nome = nomeProprio(dados.municipio.nome);
   const emEntidades = dados.recebido - dados.naPropriaCidade;
-  const abas = abasDaCidade(dados);
-  const escolhida = abas.find((a) => a.chave === aba)?.chave ?? abas[0]?.chave;
 
   return (
     <section ref={secao} className="governo-secao painel-cidade" aria-labelledby="cidade-titulo">
@@ -578,20 +575,34 @@ function PainelDaCidadeComponent({
             </li>
           </ul>
 
-          {escolhida && (
-            <>
-              <AbasComponent rotulo={T.cidade.rotuloDasAbas(nome)} abas={abas} escolhida={escolhida} aoEscolher={setAba} />
-              <div className="painel-cidade-aba" role="tabpanel" id={`painel-${escolhida}`} aria-labelledby={`aba-${escolhida}`}>
-                {escolhida === 'parlamentares' && <QuemMandouComponent dados={dados} periodo={periodo} />}
-                {escolhida === 'coletivos' && <ColetivosComponent coletivos={dados.coletivos} />}
-                {escolhida === 'convenios' && <ConveniosDaCidadeComponent dados={dados} periodo={periodo} />}
-                {escolhida === 'recebedores' && <QuemRecebeuComponent dados={dados} periodo={periodo} />}
-              </div>
-            </>
-          )}
+          <ListasDaCidadeComponent dados={dados} periodo={periodo} />
         </>
       )}
     </section>
+  );
+}
+
+/**
+ * As listas da cidade, uma por aba: quem mandou, bancadas, convênios e quem recebeu. O painel da tela de
+ * emendas e a página da cidade (Pendência 90, fase 4) mostram as mesmas.
+ */
+export function ListasDaCidadeComponent({ dados, periodo }: { dados: EmendasDoMunicipio; periodo: Periodo | undefined }) {
+  const [aba, setAba] = useState<AbaDaCidade | null>(null);
+  const nome = nomeProprio(dados.municipio.nome);
+  const abas = abasDaCidade(dados);
+  const escolhida = abas.find((a) => a.chave === aba)?.chave ?? abas[0]?.chave;
+  if (!escolhida) return null;
+
+  return (
+    <>
+      <AbasComponent rotulo={T.cidade.rotuloDasAbas(nome)} abas={abas} escolhida={escolhida} aoEscolher={setAba} />
+      <div className="painel-cidade-aba" role="tabpanel" id={`painel-${escolhida}`} aria-labelledby={`aba-${escolhida}`}>
+        {escolhida === 'parlamentares' && <QuemMandouComponent dados={dados} periodo={periodo} />}
+        {escolhida === 'coletivos' && <ColetivosComponent coletivos={dados.coletivos} />}
+        {escolhida === 'convenios' && <ConveniosDaCidadeComponent dados={dados} periodo={periodo} />}
+        {escolhida === 'recebedores' && <QuemRecebeuComponent dados={dados} periodo={periodo} />}
+      </div>
+    </>
   );
 }
 

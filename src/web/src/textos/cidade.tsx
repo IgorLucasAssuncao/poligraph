@@ -9,7 +9,9 @@ export const TEXTOS_DA_CIDADE = {
     desde ? `em emendas chegaram a quem tem sede aqui, de ${desde} até hoje` : 'Nenhum pagamento de emenda na base',
   naPrefeitura: (valor: string) => `${valor} à prefeitura ou a órgão municipal`,
   emEntidades: (valor: string) => `${valor} a entidades e empresas com sede aqui`,
-  verQuemMandou: 'Ver quem mandou e quem recebeu',
+  verNoMapa: 'Ver no mapa das emendas',
+  quemMandou: 'Quem mandou e quem recebeu',
+  quemMandouAjuda: 'Todos os anos carregados, pelo ano da emenda. Para outro período, use o mapa das emendas.',
   gestoes: 'Quem foi eleito para governar',
   gestoesAjuda:
     'Cada bloco é um mandato municipal: quem o TSE registra como eleito, o governador eleito nos mesmos anos e o que chegou de emenda nesse período, pela data do pagamento.',

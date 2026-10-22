@@ -1,11 +1,12 @@
 import { Link, useParams } from 'react-router-dom';
-import { obterGestoesDaCidade, type EleitoNaGestao, type GestaoDaCidade } from '../api';
+import { obterEmendasDoMunicipio, obterGestoesDaCidade, type EleitoNaGestao, type GestaoDaCidade } from '../api';
 import { EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { useCarga } from '../componentes/useCarga';
 import { nomeProprio, reaisCompacto } from '../formato';
 import { destinoDoPolitico } from '../navegacao';
 import { TEXTOS_DA_CIDADE as T } from '../textos/cidade';
+import { ListasDaCidadeComponent } from './Emendas';
 
 /**
  * A página da cidade: quem foi eleito para governá-la em cada período e quanto de emenda chegou (Pendência 90, fase 4).
@@ -64,7 +65,7 @@ export function CidadeComponent() {
           </ul>
         )}
         <Link className="botao-secundario" to={`/emendas?uf=${municipio.uf}&cidade=${municipio.codigoIbge}`}>
-          {T.verQuemMandou}
+          {T.verNoMapa}
         </Link>
       </header>
 
@@ -104,8 +105,26 @@ export function CidadeComponent() {
         </ul>
       </section>
 
+      <EmendasDaCidadeComponent codigoIbge={municipio.codigoIbge} />
+
       <p className="fonte-dado">{T.fonte}</p>
     </>
+  );
+}
+
+/** Quem mandou e quem recebeu, em todos os anos: as mesmas listas do painel da tela de emendas. */
+function EmendasDaCidadeComponent({ codigoIbge }: { codigoIbge: string }) {
+  const lida = useCarga(['municipio', codigoIbge, undefined, undefined], () => obterEmendasDoMunicipio(codigoIbge, undefined));
+  if (!lida.dados || lida.dados.recebido === 0) return null;
+
+  return (
+    <section className="governo-secao painel-cidade" aria-labelledby="listas-da-cidade">
+      <h2 id="listas-da-cidade" className="titulo-secao">
+        {T.quemMandou}
+      </h2>
+      <p className="ajuda">{T.quemMandouAjuda}</p>
+      <ListasDaCidadeComponent dados={lida.dados} periodo={undefined} />
+    </section>
   );
 }
 
