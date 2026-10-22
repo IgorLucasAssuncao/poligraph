@@ -1,10 +1,10 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { obterEmendasDoMunicipio, obterGestoesDaCidade, type EleitoNaGestao, type GestaoDaCidade } from '../api';
 import { EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { useCarga } from '../componentes/useCarga';
 import { nomeProprio, reaisCompacto } from '../formato';
-import { destinoDoPolitico } from '../navegacao';
+import { destinoDoPolitico, periodoDoEndereco } from '../navegacao';
 import { TEXTOS_DA_CIDADE as T } from '../textos/cidade';
 import { ListasDaCidadeComponent } from './Emendas';
 
@@ -112,9 +112,11 @@ export function CidadeComponent() {
   );
 }
 
-/** Quem mandou e quem recebeu, em todos os anos: as mesmas listas do painel da tela de emendas. */
+/** Quem mandou e quem recebeu: as listas que saíram do painel da tela de emendas, no período que veio no endereço. */
 function EmendasDaCidadeComponent({ codigoIbge }: { codigoIbge: string }) {
-  const lida = useCarga(['municipio', codigoIbge, undefined, undefined], () => obterEmendasDoMunicipio(codigoIbge, undefined));
+  const [parametros] = useSearchParams();
+  const periodo = periodoDoEndereco(parametros.get('de'), parametros.get('ate'));
+  const lida = useCarga(['municipio', codigoIbge, periodo?.primeiroAno, periodo?.ultimoAno], () => obterEmendasDoMunicipio(codigoIbge, periodo));
   if (!lida.dados || lida.dados.recebido === 0) return null;
 
   return (
@@ -122,8 +124,8 @@ function EmendasDaCidadeComponent({ codigoIbge }: { codigoIbge: string }) {
       <h2 id="listas-da-cidade" className="titulo-secao">
         {T.quemMandou}
       </h2>
-      <p className="ajuda">{T.quemMandouAjuda}</p>
-      <ListasDaCidadeComponent dados={lida.dados} periodo={undefined} />
+      <p className="ajuda">{periodo ? T.quemMandouNoPeriodo(periodo.primeiroAno, periodo.ultimoAno) : T.quemMandouAjuda}</p>
+      <ListasDaCidadeComponent dados={lida.dados} periodo={periodo} />
     </section>
   );
 }

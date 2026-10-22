@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EmendasDoMunicipio, MapaDoBrasil, MapaDoEstado } from '../api';
 import { faixaDe, faixasPorQuantil } from '../mapa';
-import { EmendasComponent } from './Emendas';
+import { EmendasComponent, ListasDaCidadeComponent } from './Emendas';
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -98,6 +98,17 @@ const MALHA = {
   arcs: [[[-50, -25], [-49, -25], [-49, -24], [-50, -24], [-50, -25]]],
 };
 
+/** As listas da cidade, que saíram do painel para a página da cidade (Pendência 90, 2026-10-22). */
+function renderizarListas() {
+  return render(
+    <MemoryRouter>
+      <section aria-label="Luiziana">
+        <ListasDaCidadeComponent dados={LUIZIANA} periodo={undefined} />
+      </section>
+    </MemoryRouter>,
+  );
+}
+
 function renderizar(endereco = '/emendas') {
   return render(
     <MemoryRouter initialEntries={[endereco]}>
@@ -189,8 +200,16 @@ describe('Emendas no mapa', () => {
     expect(container.querySelector('.mapa-rotulo')).toHaveTextContent('PR: R$ 2 bi');
   });
 
+  it('o painel da cidade é curto e leva à página da cidade com o período do mapa', async () => {
+    renderizar('/emendas?uf=PR&cidade=4113734&de=2024&ate=2025');
+
+    const painel = await screen.findByRole('region', { name: /Luiziana/ });
+    expect(within(painel).getByRole('link', { name: 'Ver a página da cidade' })).toHaveAttribute('href', '/cidades/4113734?de=2024&ate=2025');
+    expect(within(painel).queryByRole('tab')).not.toBeInTheDocument();
+  });
+
   it('separa deputados e senadores das bancadas, e leva ao perfil', async () => {
-    renderizar('/emendas?uf=PR&cidade=4113734');
+    renderizarListas();
 
     const painel = await screen.findByRole('region', { name: /Luiziana/ });
     const parlamentares = within(painel).getByRole('tabpanel');
@@ -216,7 +235,7 @@ describe('Emendas no mapa', () => {
   });
 
   it('busca a próxima página de parlamentares sob demanda', async () => {
-    renderizar('/emendas?uf=PR&cidade=4113734');
+    renderizarListas();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Mostrar mais 1' }));
 
@@ -274,7 +293,7 @@ describe('faixas do mapa', () => {
  */
 describe('convênios da cidade', () => {
   it('diz o combinado, o liberado e o que ainda falta liberar, e leva à entidade', async () => {
-    renderizar('/emendas?uf=PR&cidade=4113734');
+    renderizarListas();
 
     fireEvent.click(await screen.findByRole('tab', { name: /Convênios/ }));
     const resumo = (await screen.findByText(/R\$\s3 mi combinados, R\$\s1,2 mi já liberados/)).closest('p')!;

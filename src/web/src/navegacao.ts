@@ -1,3 +1,4 @@
+import type { Periodo } from './api';
 import { TEXTOS_DO_SITE } from './textos/site';
 /**
  * A navegação do site, organizada pelas três intenções de quem usa — não pelas fontes de dado.
@@ -36,4 +37,13 @@ export function ehDinheiroPublico(caminho: string): boolean {
 /** A página de quem votou no Congresso é a do parlamentar; a dos outros eleitos, a do político (Pendência 90). */
 export function destinoDoPolitico(politico: { idPessoa: number; parlamentar: boolean }): string {
   return politico.parlamentar ? `/parlamentar/${politico.idPessoa}` : `/politico/${politico.idPessoa}`;
+}
+
+/** O período de `de` e `ate` no endereço; a página da cidade lê o mesmo. */
+export function periodoDoEndereco(deNaUrl: string | null, ateNaUrl: string | null): Periodo | undefined {
+  const inicio = Number(deNaUrl);
+  const fim = Number(ateNaUrl);
+  return Number.isInteger(inicio) && Number.isInteger(fim) && inicio > 0 && fim > 0
+    ? { primeiroAno: inicio, ultimoAno: fim }
+    : undefined;
 }

@@ -469,15 +469,6 @@ export function passosDasEmendas(): PassoDoTour[] {
         'cada um, com os votos, os gastos e o financiamento de campanha.',
       opcional: true,
     },
-    {
-      rota: null,
-      alvo: 'emendas-coletivos',
-      titulo: 'Bancadas e comissões',
-      texto:
-        'Parte das emendas é apresentada pelo grupo de parlamentares de um estado ou por ' +
-        'uma comissão do Congresso. Elas ficam numa aba própria, porque não têm um autor só.',
-      opcional: true,
-    },
   ];
 }
 

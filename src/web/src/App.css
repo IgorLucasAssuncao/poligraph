@@ -3221,3 +3221,4 @@ html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
 .linha-do-tempo-rotulo { font-family: var(--fonte-dado, 'IBM Plex Mono', monospace); font-size: var(--t-3); }
 .linha-do-tempo-marcos { list-style: none; margin: 0; padding: 0; display: grid; gap: .2rem; font-size: var(--t-2); }
 .gestao-contas { display: block; margin-top: .35rem; padding-top: .35rem; border-top: 1px solid var(--borda); }
+.painel-cidade-mais { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; margin: 1rem 0 0; }

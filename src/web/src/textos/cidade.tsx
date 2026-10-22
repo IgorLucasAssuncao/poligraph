@@ -11,7 +11,9 @@ export const TEXTOS_DA_CIDADE = {
   emEntidades: (valor: string) => `${valor} a entidades e empresas com sede aqui`,
   verNoMapa: 'Ver no mapa das emendas',
   quemMandou: 'Quem mandou e quem recebeu',
-  quemMandouAjuda: 'Todos os anos carregados, pelo ano da emenda. Para outro período, use o mapa das emendas.',
+  quemMandouAjuda: 'Todos os anos carregados, pelo ano da emenda. Para outro período, escolha no mapa das emendas.',
+  quemMandouNoPeriodo: (de: number, ate: number) =>
+    `Emendas de ${de === ate ? de : `${de} a ${ate}`}, o período escolhido no mapa. Os blocos de gestão acima usam todos os anos.`,
   gestoes: 'Quem foi eleito para governar',
   gestoesAjuda:
     'Cada bloco é um mandato municipal: quem o TSE registra como eleito, o governador eleito nos mesmos anos e o que chegou de emenda nesse período, pela data do pagamento.',

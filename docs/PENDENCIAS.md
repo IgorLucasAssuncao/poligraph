@@ -232,7 +232,9 @@ Exemplo, Campinas, pago por gestão pelo mês do pagamento:
 4. Os deputados estaduais eleitos pela UF não entram: são 70 a 94 por estado, sem ligação com a cidade.
 
 Na tela de emendas, o painel da cidade fica mais curto: o total, a divisão e "Ver a página da
-cidade". A busca do cabeçalho leva o grupo "Cidades" para a página nova.
+cidade". A busca do cabeçalho leva o grupo "Cidades" para a página nova. FEITO em 2026-10-22, decisão do autor: o painel ficou curto,
+as listas passaram para a página da cidade, e o link leva o período escolhido no mapa (`?de=&ate=`). O
+passo "Bancadas e comissões" saiu do tour da tela de emendas.
 
 API: `GET /api/municipios/{codigoIbge}/gestoes` (gestão, prefeito, vice, governadores e pago por
 `competencia`, separado em prefeitura e entidades); as listas reaproveitam os endpoints de hoje com

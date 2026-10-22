@@ -1,3 +1,4 @@
+import { periodoDoEndereco } from '../navegacao';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AtualizandoComponent } from '../componentes/Atualizando';
 import { useCarga } from '../componentes/useCarga';
@@ -71,6 +72,10 @@ import { TEXTOS_DAS_EMENDAS as T } from '../textos/emendas';
  * A cidade guardada abre UMA vez, na chegada. Reabri-la toda vez que o endereço fica
  * sem estado e sem cidade prendia a pessoa nela: "Ver o Brasil" limpa os dois, e a
  * cidade voltava no mesmo instante.
+ *
+ * Pendência 90 (2026-10-22, decisão do autor): o painel da cidade ficou curto, com o total, a divisão e
+ * o link para a página da cidade, que tem as listas (quem mandou, bancadas, convênios, quem recebeu) e as
+ * gestões. O período do mapa vai junto no link.
  *
  * O painel da cidade fica ABAIXO do mapa: o mapa é por onde se escolhe, e empurrá-lo
  * para baixo a cada escolha obrigava a rolar de volta. Escolhida no mapa ou na lista, a
@@ -539,9 +544,6 @@ function PainelDaCidadeComponent({
           {nome} <span className="painel-cidade-uf">{dados.municipio.uf}</span>
         </h2>
         <div className="painel-cidade-acoes">
-          <Link className="botao-secundario" to={`/cidades/${dados.municipio.codigoIbge}`}>
-            {T.cidade.paginaDaCidade}
-          </Link>
           <button type="button" className="botao-secundario" onClick={aoFechar}>
             {T.cidade.fechar}
           </button>
@@ -575,7 +577,12 @@ function PainelDaCidadeComponent({
             </li>
           </ul>
 
-          <ListasDaCidadeComponent dados={dados} periodo={periodo} />
+          <p className="painel-cidade-mais">
+            <Link className="botao-destaque" to={paginaDaCidade(dados.municipio.codigoIbge, periodo)}>
+              {T.cidade.verAPagina}
+            </Link>{' '}
+            <span className="ajuda">{T.cidade.naPagina}</span>
+          </p>
         </>
       )}
     </section>
@@ -853,12 +860,9 @@ function guardarMinhaCidade(m: Municipio): void {
 }
 
 /** O período do endereço; sem `de` e `ate` válidos, todos os anos. */
-function periodoDoEndereco(deNaUrl: string | null, ateNaUrl: string | null): Periodo | undefined {
-  const inicio = Number(deNaUrl);
-  const fim = Number(ateNaUrl);
-  return Number.isInteger(inicio) && Number.isInteger(fim) && inicio > 0 && fim > 0
-    ? { primeiroAno: inicio, ultimoAno: fim }
-    : undefined;
+/** A página da cidade com o período do mapa: as listas de lá abrem no mesmo recorte. */
+function paginaDaCidade(codigoIbge: string, periodo: Periodo | undefined): string {
+  return periodo ? `/cidades/${codigoIbge}?de=${periodo.primeiroAno}&ate=${periodo.ultimoAno}` : `/cidades/${codigoIbge}`;
 }
 
 function textoDoPeriodo({ primeiroAno, ultimoAno }: Periodo): string {
