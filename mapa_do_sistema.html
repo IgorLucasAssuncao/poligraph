@@ -470,7 +470,7 @@ const ENTRADAS = [
     { arquivo: '…/odsele/consulta_cand/consulta_cand_2018.zip', real: false, linha: {
       ANO_ELEICAO: '2018', DS_CARGO: 'PRESIDENTE', NM_CANDIDATO: 'JAIR MESSIAS BOLSONARO', NM_URNA_CANDIDATO: 'JAIR BOLSONARO',
       SG_PARTIDO: 'PSL', DS_SIT_TOT_TURNO: 'ELEITO' } },
-  ], nota: 'Valores como estão na tabela gestoes; o arquivo tem também o vice e a coligação.' },
+  ], nota: 'Hoje o governo carrega a chapa pelo comando mandatos (presidente, vice e coligação em mandatos); a tabela gestoes não é mais gravada.' },
   { de: 'portal', para: 'defesa-civil', modelos: [
     { arquivo: '…/download-de-dados/cpdc/202405 (202405_CPDC.csv)', real: true, linha: {
       'ANO EXTRATO': '2024', 'MÊS EXTRATO': '05', 'EXECUTOR DESPESA': 'ASSIS BRASIL / AC',
@@ -567,7 +567,7 @@ const SAIDAS = [
   { de: 'sancoes', para: 'sancoes_de_empresas', linha: { cadastro: 'CNEP', codigo_da_sancao: '133076', cnpj: '14286903000195', categoria: 'Multa', inicio: '2022-03-09', fim: null, orgao_sancionador: 'Petróleo Brasileiro S.A.', esfera: 'FEDERAL', valor_da_multa: 137260.07 }, nota: 'MEDIDO em 2026-10-09: das empresas sancionadas, 1.832 receberam emenda, 186 foram pagas pela cota e 2.625 têm contrato federal. A página da entidade mostra a sanção.' },
   { de: 'viagens', para: 'viagens_do_orgao', linha: { ano: 2025, orgao_superior: 'Ministério da Justiça e Segurança Pública', viagens: 174001, urgentes: 40924, nao_realizadas: 1033, diarias: 709202394.92, passagens: 118318049.08, restituicao: 99804.34, seguro: 384519.30, pago_com_orgao_sigiloso: 422584100.51 }, nota: 'Hospedagem não tem valor próprio: a diária a paga. MEDIDO em 2026-10-10: de 2019 a 2026, todo pagamento publicado com órgão "Sigiloso" achou o órgão da viagem (de R$ 133 mi em 2020 a R$ 429 mi em 2025); pago_com_orgao_sigiloso diz quanto veio assim.' },
   { de: 'viagens', para: 'destinos_de_viagem', linha: { ano: 2025, pais: 'Brasil', uf: 'Distrito Federal', cidade: 'Brasília', orgao_superior: 'Ministério da Justiça e Segurança Pública', chegadas: 12183, numero_de_diarias: 315539.50 }, nota: 'Conta chegadas (trechos), não pessoas. O órgão é o da viagem do trecho; trecho sem viagem no arquivo iria para "Sem viagem no arquivo", e em 2019 a 2026 não houve nenhum.' },
-  { de: 'governo', para: 'gestoes', linha: { eleicao: 2018, primeiro_ano: 2019, ultimo_ano: 2022, presidente_nome_de_urna: 'JAIR BOLSONARO', presidente_partido: 'PSL', vice_nome_de_urna: 'GENERAL MOURÃO', coligacao: 'PSL / PRTB' } },
+  { de: 'governo', para: 'mandatos', linha: { cargo: 'PRESIDENTE', ano_eleicao: 2018, primeiro_ano: 2019, ultimo_ano: 2022, nome_de_urna: 'JAIR BOLSONARO', partido: 'PSL', coligacao: 'PSL / PRTB' }, nota: 'A chapa eleita, pelos mandatos (Pendência 56).' },
   { de: 'governo', para: 'orcamento_por_funcao', linha: { ano: 2019, codigo_funcao: '01', funcao: 'Legislativa', dotacao_atualizada: 0.00, empenhado: 756622.86, pago: 631798.93, restos_a_pagar_pagos: 228755.40, gerado_em: '2026-10-02' } },
   { de: 'governo', para: 'encargos_especiais', linha: { ano: 2019, codigo_subfuncao: '122', subfuncao: 'Administração geral', dotacao_atualizada: 2931182385.00, pago: 2285119915.12 } },
   { de: 'governo', para: 'receitas_por_origem', linha: { ano: 2019, categoria: 'Receitas Correntes', origem: 'Contribuições', prevista: 884499486206.00, realizada: 853403750008.27 } },
@@ -641,7 +641,7 @@ const PAPEL = {
   convenios: { papel: 'DIMENSÃO', texto: 'O convênio. Situação e valor liberado são sobrescritos a cada retrato.' },
   cnpjs_municipio: { papel: 'DIMENSÃO', texto: 'A sede de cada CNPJ que recebeu. Sobrescrita quando a empresa muda.' },
   municipios: { papel: 'DIMENSÃO', texto: 'O município. A população guarda só a estimativa mais recente.' },
-  gestoes: { papel: 'DIMENSÃO', texto: 'Presidente e vice de cada eleição: liga ao orçamento pelo ano, sem FK.' },
+  gestoes: { papel: 'FORA DE USO', texto: 'Era o presidente e o vice de cada eleição. Desde 2026-10-22 a chapa sai de mandatos e esta tabela não é gravada nem lida; sai num deploy seguinte (Pendência 56).' },
   orcamento_por_funcao: { papel: 'FATO AGREGADO', texto: 'Grão: ano e função de governo.' },
   encargos_especiais: { papel: 'FATO AGREGADO', texto: 'Grão: ano e subfunção dos Encargos especiais.' },
   receitas_por_origem: { papel: 'FATO AGREGADO', texto: 'Grão: ano, categoria e origem da receita.' },
