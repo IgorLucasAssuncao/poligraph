@@ -158,12 +158,74 @@ da candidatura e a de 2024 não traz CPF.
    partido, patrimônio e redes; quem votou no Congresso vai para `/parlamentar/:id`. Fica para depois: a
    campanha, que a prestação de contas antiga não liga à candidatura): mandato, partido, campanha, patrimônio e redes. Voto, grafo e afinidade só
    para quem tem voto publicado; nos outros, a ficha diz que a casa não publica voto nominal.
-4. **Município na tela de emendas:** prefeito e governador do período de cada emenda, resumo por
+4. **Município, numa página própria** (levantamento de 2026-10-21, a pedido do autor; ainda não implementado). Ver
+   "Levantamento da fase 4" abaixo. Era: **município na tela de emendas:** prefeito e governador do período de cada emenda, resumo por
    gestão e detalhe sob demanda.
 5. **Depois:** contas de estados e municípios pelo SICONFI (Tesouro, API pública e periódica,
    ainda não testada aqui) e transferências da União.
 
 Em toda fase: `mapa_do_sistema.html` e `schema_do_ef.sql` no mesmo commit.
+
+### Levantamento da fase 4 (2026-10-21): a página do município
+
+**A tela de hoje.** A cidade abre em `/emendas?uf=&cidade=`, como um painel ABAIXO do gráfico do Brasil,
+de quatro cartões e do mapa do estado: com a cidade escolhida, ela fica a cerca de três telas do topo.
+O painel já tem o total, a divisão prefeitura e entidades e quatro abas (parlamentares, bancadas,
+convênios, quem recebeu; Campinas: 313, 39, 204 e 229 itens). Pôr gestões e governadores ali faria
+o painel ter cinco assuntos numa coluna só, dentro de uma página cuja pergunta é "para onde foi o
+dinheiro do país".
+
+**O que os dados permitem.** MEDIDO no banco local:
+
+| Medida | Valor |
+|---|---|
+| Pagamentos de emenda com mês (`emendas_favorecidos.competencia`) | ago/2015 a out/2026, R$ 252 bi |
+| Pago a quem tem sede conhecida, por ano | de R$ 2,3 bi (2016) a R$ 43,2 bi (2025) |
+| Dinheiro pago numa cidade e num ano com prefeito eleito conhecido | 94,8% |
+| ... com dois prefeitos no mesmo ano (eleição suplementar) | 0,4% |
+| Municípios com prefeito na base | 5.514 de 5.570 |
+
+Exemplo, Campinas, pago por gestão pelo mês do pagamento:
+
+| Gestão | Prefeito eleito | Governador eleito no período | Chegou |
+|---|---|---|---|
+| 2013–2016 | Jonas Donizette (PSB) | Geraldo Alckmin | R$ 14,8 mi (só desde ago/2015) |
+| 2017–2020 | Jonas Donizette (PSB) | Alckmin, João Doria | R$ 78,9 mi |
+| 2021–2024 | Dário Saadi (Republicanos) | Doria, Tarcísio | R$ 67,2 mi |
+| 2025–2028 | Dário Saadi (Republicanos) | Tarcísio | R$ 75,7 mi (em andamento) |
+
+**Riscos que a página precisa dizer:**
+
+- RISCO: o TSE dá quem foi **eleito**, não quem **exerceu**. Em Campinas, o prefeito eleito em 2000
+  foi assassinado em 2001 e o vice assumiu; o eleito em 2008 foi cassado em 2011. Governador que
+  renuncia para concorrer (Alckmin em 2006) também some. A página tem de dizer "eleito para", e a
+  troca no meio do mandato fica fora até haver fonte periódica de posse.
+- RISCO: atribuir o dinheiro ao prefeito é leitura que a tela não pode sugerir. A emenda é do
+  parlamentar; o prefeito só recebe. O resumo por gestão diz "chegou durante", nunca "conseguiu".
+- ATENÇÃO: a cidade é a da **sede de quem recebeu** (regra do mapa): o pago a entidade com sede
+  aqui pode ser gasto em outra cidade. O resumo por gestão herda a mesma divisão
+  (prefeitura e entidades).
+- ATENÇÃO: o dinheiro começa em ago/2015; as gestões anteriores aparecem sem valor, e a página
+  diz "sem pagamento na base" em vez de R$ 0.
+- Governador por período: mais de um em quatro anos (o mandato estadual começa dois anos antes do
+  municipal). A gestão municipal mostra os dois, cada um com os anos que coincidem.
+
+**Proposta de página: `/cidades/:codigoIbge`.**
+
+1. Cabeçalho: nome, UF, população e o total que chegou, com o período.
+2. Linha do tempo por gestão (o eixo da Pendência 92): um bloco por mandato municipal, com prefeito
+   e vice (link para a ficha), o governador eleito nos anos que coincidem e o valor pago no período,
+   separado em prefeitura e entidades. As gestões sem pagamento aparecem recolhidas.
+3. As listas que hoje estão no painel (parlamentares, bancadas, convênios, quem recebeu), com o
+   filtro de período ligado à gestão escolhida: clicar numa gestão filtra as listas pelos anos dela.
+4. Os deputados estaduais eleitos pela UF não entram: são 70 a 94 por estado, sem ligação com a cidade.
+
+Na tela de emendas, o painel da cidade fica mais curto: o total, a divisão e "Ver a página da
+cidade". A busca do cabeçalho leva o grupo "Cidades" para a página nova.
+
+API: `GET /api/municipios/{codigoIbge}/gestoes` (gestão, prefeito, vice, governadores e pago por
+`competencia`, separado em prefeitura e entidades); as listas reaproveitam os endpoints de hoje com
+`de` e `ate`.
 
 ---
 
