@@ -3210,3 +3210,4 @@ html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
 .compartilhar { display: inline-flex; align-items: center; gap: .5rem; }
 .compartilhar-aviso { font-size: var(--t-1); color: var(--suave); }
 .compartilhar-aviso:empty { display: none; }
+.gestao-fora-do-padrao { display: block; margin-top: .35rem; padding: .35rem .5rem; border-left: 3px solid var(--borda-controle); background: var(--fundo); color: var(--texto); }

@@ -26,6 +26,7 @@ const CAMPINAS: GestoesDaCidade = {
       governadores: [{ governador: eleito(3, 'GOVERNADOR EXEMPLO'), deAno: 2013, ateAno: 2016 }],
       viceGovernadores: [{ governador: eleito(5, 'VICE GOVERNADORA'), deAno: 2013, ateAno: 2016 }],
       recebido: 90_000_000, naPrefeitura: 50_000_000, comPagamento: true,
+      contas: { receita: 1_950_000_000, despesaPaga: 1_900_000_000, anosDeclarados: 3, anosNaGestao: 4, foraDoPadrao: [{ ano: 2015, receitaDeclarada: 11_000_000_000 }] },
     },
     {
       primeiroAno: 2009, ultimoAno: 2012, prefeitos: [eleito(4, 'ANTIGO EXEMPLO')], vices: [], governadores: [],
@@ -64,6 +65,13 @@ describe('Página da cidade', () => {
 
     expect(await screen.findByText(/R\$\s10 mi a órgãos do governo do estado/)).toBeInTheDocument();
     expect(screen.getByText(/R\$\s30 mi a entidades e empresas com sede aqui/)).toBeInTheDocument();
+  });
+
+  it('o ano declarado fora do padrão diz o valor e que ficou fora da soma', async () => {
+    renderizar();
+
+    expect(await screen.findByText(/2015 ficou fora da soma: a prefeitura declarou R\$\s11 bi/)).toBeInTheDocument();
+    expect(screen.getByText(/em 3 dos 4 anos/)).toBeInTheDocument();
   });
 
   it('a gestão sem pagamento fica recolhida e diz por quê', async () => {

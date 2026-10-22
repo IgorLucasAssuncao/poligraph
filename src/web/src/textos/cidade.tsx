@@ -33,6 +33,8 @@ export const TEXTOS_DA_CIDADE = {
   contas: (receita: string, despesa: string) => `A prefeitura arrecadou ${receita} e pagou ${despesa} em despesas`,
   anosDeclarados: (n: number, de: number) =>
     n === de ? 'nos anos da gestão, pelo que declarou ao Tesouro' : `em ${n} dos ${de} anos; os outros ainda não têm declaração na base`,
+  foraDoPadrao: (ano: number, valor: string) =>
+    `${ano} ficou fora da soma: a prefeitura declarou ${valor} de receita, longe dos outros anos dela. Pode ser erro de digitação; confira no Siconfi.`,
   semPagamento: 'Sem pagamento de emenda na base nesses anos (a base começa em agosto de 2015).',
   desdeAgosto: 'só de agosto de 2015 em diante, quando a base começa',
   anteriores: (n: number, de: number, ate: number) =>

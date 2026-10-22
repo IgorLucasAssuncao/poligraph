@@ -211,6 +211,11 @@ function GestaoComponent({ gestao, maior }: { gestao: GestaoDaCidade; maior: num
               {T.anosDeclarados(gestao.contas.anosDeclarados, gestao.contas.anosNaGestao)}
             </small>
           )}
+          {gestao.contas?.foraDoPadrao?.map((f) => (
+            <small key={f.ano} className="gestao-fora-do-padrao" role="note">
+              {T.foraDoPadrao(f.ano, reaisCompacto(f.receitaDeclarada))}
+            </small>
+          ))}
         </div>
       ) : (
         <p className="ajuda">{T.semPagamento}</p>

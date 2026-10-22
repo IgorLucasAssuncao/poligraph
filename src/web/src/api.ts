@@ -1682,7 +1682,14 @@ export type GestaoDaCidade = {
   /** Sem ano na base de pagamentos (antes de ago/2015): a tela diz isso, não R$ 0. */
   comPagamento: boolean;
   /** A receita e a despesa da prefeitura nos anos que ela declarou ao Tesouro (Siconfi); `null` sem nenhum ano declarado na base. */
-  contas?: { receita: number; despesaPaga: number; anosDeclarados: number; anosNaGestao: number } | null;
+  contas?: {
+    receita: number;
+    despesaPaga: number;
+    anosDeclarados: number;
+    anosNaGestao: number;
+    /** Anos fora da soma: receita negativa, ou mais de 10 vezes acima ou abaixo da mediana da cidade. */
+    foraDoPadrao?: { ano: number; receitaDeclarada: number }[] | null;
+  } | null;
 };
 
 /** A página da cidade (Pendência 90, fase 4). */

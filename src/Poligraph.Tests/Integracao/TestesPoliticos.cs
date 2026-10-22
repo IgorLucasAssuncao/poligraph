@@ -97,6 +97,29 @@ public class TestesPoliticos(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.False(cidade.Gestoes[0].ComPagamento);
     }
 
+    /// <summary>Regra 5: o ano declarado 10 vezes fora da mediana da cidade sai da soma e aparece com o valor, para conferir.</summary>
+    [SkippableFact]
+    public async Task Gestoes_AnoDeclaradoForaDoPadrao_SaiDaSomaEApareceComOValor()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        Db.ContasDosMunicipios.AddRange(
+            Contas(2025, 600m), Contas(2026, 650m), Contas(2027, 11_000m), Contas(2028, 700m));
+        await Db.SaveChangesAsync();
+
+        var cidade = await LerAsync<GestoesComContas>($"/api/municipios/{SaoPaulo}/gestoes");
+
+        var contas = cidade.Gestoes[0].Contas!;
+        Assert.Equal((1_950m, 3), (contas.Receita, contas.AnosDeclarados));
+        var fora = Assert.Single(contas.ForaDoPadrao);
+        Assert.Equal((2027, 11_000m), (fora.Ano, fora.ReceitaDeclarada));
+    }
+
+    private static ContasDoMunicipioModel Contas(short ano, decimal receita) => new()
+    {
+        CodigoIbge = SaoPaulo, Ano = ano, ReceitaBruta = receita, Deducoes = 0m, DespesaEmpenhada = receita, DespesaPaga = receita,
+    };
+
     /// <summary>Pendência 92: um ano por linha, do mais recente, com a eleição e os bens do mesmo ano juntos.</summary>
     [SkippableFact]
     public async Task LinhaDoTempo_JuntaOsMarcosPorAno()
@@ -235,6 +258,14 @@ public class TestesPoliticos(FixturePostgres postgres) : BaseIntegracao(postgres
     private sealed record BuscaLida(List<PoliticoLido> Politicos);
 
     private sealed record EleitoLido(long IdPessoa);
+
+    private sealed record ForaLido(int Ano, decimal ReceitaDeclarada);
+
+    private sealed record ContasLidas(decimal Receita, int AnosDeclarados, List<ForaLido> ForaDoPadrao);
+
+    private sealed record GestaoComContas(ContasLidas? Contas);
+
+    private sealed record GestoesComContas(List<GestaoComContas> Gestoes);
 
     private sealed record CampanhaLida(int AnoEleicao, decimal Total);
 

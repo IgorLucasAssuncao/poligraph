@@ -49,6 +49,7 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
             .Where(c => c.CodigoIbge == codigoIbge)
             .Select(c => new { c.Ano, Receita = c.ReceitaBruta - c.Deducoes, c.DespesaPaga })
             .ToListAsync(ct);
+        var medianaDaReceita = Mediana([.. contas.Select(c => c.Receita).Where(r => r > 0)]);
         var governadores = eleitos.Where(e => e.Cargo == TipoCargo.GOVERNADOR).ToList();
         var viceGovernadores = eleitos.Where(e => e.Cargo == TipoCargo.VICE_GOVERNADOR).ToList();
 
@@ -60,7 +61,9 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
             {
                 var (primeiro, ultimo) = g.Key;
                 var anos = porAno.Where(a => a.Ano >= primeiro && a.Ano <= ultimo).ToList();
-                var declarados = contas.Where(c => c.Ano >= primeiro && c.Ano <= ultimo).ToList();
+                var daGestao = contas.Where(c => c.Ano >= primeiro && c.Ano <= ultimo).ToList();
+                var foraDoPadrao = daGestao.Where(c => ForaDoPadrao(c.Receita, medianaDaReceita)).ToList();
+                var declarados = daGestao.Except(foraDoPadrao).ToList();
                 return new GestaoDaCidadeDto(
                     primeiro, ultimo,
                     [.. g.Where(e => e.Cargo == TipoCargo.PREFEITO).Select(e => e.Eleito)],
@@ -69,9 +72,11 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
                     anos.Sum(a => a.Recebido),
                     anos.Sum(a => a.NaPrefeitura),
                     ComPagamento: anos.Count > 0,
-                    Contas: declarados.Count == 0
+                    Contas: daGestao.Count == 0
                         ? null
-                        : new ContasDaGestaoDto(declarados.Sum(c => c.Receita), declarados.Sum(c => c.DespesaPaga), declarados.Count, ultimo - primeiro + 1),
+                        : new ContasDaGestaoDto(
+                            declarados.Sum(c => c.Receita), declarados.Sum(c => c.DespesaPaga), declarados.Count, ultimo - primeiro + 1,
+                            [.. foraDoPadrao.OrderBy(c => c.Ano).Select(c => new AnoForaDoPadraoDto(c.Ano, c.Receita))]),
                     ViceGovernadores: NoPeriodo(viceGovernadores, primeiro, ultimo),
                     NoGovernoDoEstado: anos.Sum(a => a.NoGovernoDoEstado));
             })
@@ -88,6 +93,30 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
             .Where(e => e.PrimeiroAno <= ultimo && e.UltimoAno >= primeiro)
             .OrderBy(e => e.PrimeiroAno)
             .Select(e => new GovernadorNoPeriodoDto(e.Eleito, Math.Max(e.PrimeiroAno, primeiro), Math.Min(e.UltimoAno, ultimo))));
+
+    /// <summary>
+    /// Vezes acima ou abaixo da mediana da própria cidade a partir das quais o ano declarado é tratado como erro de declaração.
+    /// </summary>
+    /// <remarks>
+    /// <para>A mesma régua da regra <c>salto-de-receita-municipal</c> do <c>conferir</c> (ETL, <c>conferencia.py</c>). MEDIDO em 2026-10-22: a mediana de um ano para o seguinte é 1,17 vez, e 30 pares passam de 10 vezes; Varginha (MG) declarou R$ 11,8 bi em 2022, com R$ 646 mi no ano anterior.</para>
+    /// <para>DECISÃO (regra 5 do projeto): o ano fora do padrão sai da soma e aparece com o valor declarado, para a pessoa conferir no Siconfi. Receita negativa também.</para>
+    /// </remarks>
+    private const decimal VezesForaDoPadrao = 10m;
+
+    private static bool ForaDoPadrao(decimal receita, decimal? mediana) =>
+        receita < 0 || (mediana is > 0 && receita > 0 && (receita / mediana >= VezesForaDoPadrao || mediana / receita >= VezesForaDoPadrao));
+
+    private static decimal? Mediana(IReadOnlyList<decimal> valores)
+    {
+        if (valores.Count == 0)
+        {
+            return null;
+        }
+
+        var ordenados = valores.Order().ToList();
+        var meio = ordenados.Count / 2;
+        return ordenados.Count % 2 == 1 ? ordenados[meio] : (ordenados[meio - 1] + ordenados[meio]) / 2;
+    }
 
     /// <summary>Mandatos seguidos da mesma pessoa viram um período só: o governador reeleito aparece uma vez, de ponta a ponta.</summary>
     private static List<GovernadorNoPeriodoDto> Juntar(IEnumerable<GovernadorNoPeriodoDto> periodos)

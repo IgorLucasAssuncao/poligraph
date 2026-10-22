@@ -33,7 +33,12 @@ public record GestaoDaCidadeDto(
 /// <summary>A receita e a despesa da prefeitura nos anos da gestão que ela declarou ao Tesouro (DCA do Siconfi, Pendência 90, fase 5).</summary>
 /// <param name="Receita">Receita bruta menos as deduções (FUNDEB e outras), somada nos anos declarados.</param>
 /// <param name="AnosDeclarados">Quantos anos da gestão têm DCA na base; os outros não entram na soma.</param>
-public record ContasDaGestaoDto(decimal Receita, decimal DespesaPaga, int AnosDeclarados, int AnosNaGestao);
+/// <param name="ForaDoPadrao">Os anos declarados que ficaram fora da soma: receita negativa, ou mais de 10 vezes acima ou abaixo da mediana da cidade.</param>
+public record ContasDaGestaoDto(
+    decimal Receita, decimal DespesaPaga, int AnosDeclarados, int AnosNaGestao, IReadOnlyList<AnoForaDoPadraoDto>? ForaDoPadrao = null);
+
+/// <summary>Um ano em que a prefeitura declarou ao Tesouro uma receita fora do padrão dela, com o valor como veio.</summary>
+public record AnoForaDoPadraoDto(int Ano, decimal ReceitaDeclarada);
 
 /// <summary>Um eleito, com o link que a tela usa: a ficha do parlamentar quando ele votou no Congresso, senão a do político.</summary>
 public record EleitoNaGestaoDto(long IdPessoa, string Nome, string Partido, bool Parlamentar);

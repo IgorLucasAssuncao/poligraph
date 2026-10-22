@@ -235,6 +235,22 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
     /// Uma associação de Curitiba com emenda individual (2025) e de bancada (2026), paga também
     /// pela cota; uma prefeitura que recebeu mais; um empresário individual.
     /// </summary>
+    /// <summary>O link de compartilhar a entidade devolve a prévia com o nome, o valor recebido e a sede, e leva à página dela.</summary>
+    [SkippableFact]
+    public async Task Compartilhar_AEntidade_DizOQueRecebeuEAsede()
+    {
+        ExigeDocker();
+        await SemearAsync();
+
+        using var cliente = new FabricaApi(ConnectionString).CreateClient();
+        var html = await cliente.GetStringAsync($"/api/compartilhar/entidade/{Associacao}");
+
+        Assert.Contains("property=\"og:title\"", html);
+        Assert.Contains("Recebeu R$ 1,3 mil de 2 emendas parlamentares", html);
+        Assert.Contains("Sede em Curitiba – PR", html);
+        Assert.Contains($"/entidades/{Associacao}", html);
+    }
+
     private async Task<long> SemearAsync()
     {
         await Poligraph.Tests.Fixtures.DadosDeTeste.SemearAsync(Db);
