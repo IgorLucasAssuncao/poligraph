@@ -2249,16 +2249,25 @@ def _populacao(conexao: psycopg.Connection) -> None:
     log.info("População %s: %d municípios no arquivo, %d com população na base", ano, len(linhas), com_populacao)
 
 
+ESPERA_DEPOIS_DO_BLOQUEIO = 120
+"""Segundos de pausa depois que o Tesouro bloqueia um município até o fim das tentativas."""
+
+
 def _siconfi(conexao: psycopg.Connection, anos: list[int], municipios: list[str] | None, arquivo: Path | None = None) -> None:
     """As contas anuais das prefeituras, da DCA que cada uma entrega ao Tesouro (Pendência 90, fase 5).
 
-    Uma requisição por município, anexo e ano: a API não responde sem o município. Duas de cada vez:
-    com quatro, o Tesouro respondeu 429 em menos de 3 minutos (MEDIDO em 2026-10-22).
+    Uma requisição por município, anexo e ano: a API não responde sem o município. Uma de cada vez.
+    MEDIDO em 2026-10-22: com quatro, o Tesouro respondeu 429 em menos de 3 minutos; com duas, depois de
+    quatro anos carregados no mesmo dia, o bloqueio passou das oito tentativas e derrubou a carga.
+
+    O progresso vai para `siconfi/dca-{ano}-parcial.json` a cada 100 municípios: rodar de novo continua
+    de onde parou. O município que o Tesouro bloqueia fica para uma segunda rodada, depois de uma pausa;
+    se ainda faltar algum, o comando para e diz quais, sem gravar o ano pela metade.
 
     DECISÃO: a procedência guarda as linhas que entram na conta (as contas de `siconfi.py`), não a
     resposta inteira: o ano inteiro passaria de 800 MB, e o resto do anexo não chega ao banco.
     """
-    from concurrent.futures import ThreadPoolExecutor
+    import requests
 
     from . import siconfi
     from .contratos.siconfi import LinhaDaDca
@@ -2280,16 +2289,52 @@ def _siconfi(conexao: psycopg.Connection, anos: list[int], municipios: list[str]
 
     for ano in anos:
         inicio = time.monotonic()
-        linhas, respostas, sem_declaracao = [], {}, []
-        with ThreadPoolExecutor(max_workers=2) as paralelo:
-            for i, (codigo, linha, guardar) in enumerate(paralelo.map(lambda c: do_municipio(ano, c), codigos), 1):
+        parcial = CACHE / "siconfi" / f"dca-{ano}-parcial.json"
+        feito = json.loads(parcial.read_text(encoding="utf-8")) if parcial.exists() and not municipios else {"respostas": {}, "sem_declaracao": []}
+        respostas: dict = feito["respostas"]
+        sem_declaracao: list = feito["sem_declaracao"]
+        ja = set(respostas) | set(sem_declaracao)
+        if ja:
+            log.info("  %d: retomando, %d municípios já consultados", ano, len(ja))
+
+        def guardar_progresso() -> None:
+            parcial.parent.mkdir(parents=True, exist_ok=True)
+            parcial.write_text(json.dumps({"respostas": respostas, "sem_declaracao": sem_declaracao}, ensure_ascii=False), encoding="utf-8")
+
+        pendentes = [c for c in codigos if c not in ja]
+        for rodada in (1, 2):
+            falharam = []
+            for i, codigo in enumerate(pendentes, 1):
+                try:
+                    _, linha, guardar = do_municipio(ano, codigo)
+                except requests.HTTPError as erro:
+                    log.warning("  %d: %s sem resposta do Tesouro (%s); fica para depois", ano, codigo, erro.response.status_code if erro.response is not None else "?")
+                    falharam.append(codigo)
+                    time.sleep(ESPERA_DEPOIS_DO_BLOQUEIO)
+                    continue
                 if linha is None:
                     sem_declaracao.append(codigo)
                 else:
-                    linhas.append(linha)
                     respostas[codigo] = guardar
+                if i % 100 == 0:
+                    guardar_progresso()
                 if i % 500 == 0:
-                    log.info("  %d: %d de %d municípios consultados (%.0f s)", ano, i, len(codigos), time.monotonic() - inicio)
+                    log.info("  %d: %d de %d municípios consultados (%.0f s)", ano, len(respostas) + len(sem_declaracao), len(codigos), time.monotonic() - inicio)
+            guardar_progresso()
+            pendentes = falharam
+            if not pendentes:
+                break
+        if pendentes:
+            raise SystemExit(
+                f"{ano}: o Tesouro não respondeu para {len(pendentes)} municípios ({', '.join(pendentes[:10])}...). "
+                f"O progresso está em {parcial}; rode de novo para continuar de onde parou.")
+
+        lidas = {c: entrada.ler(LinhaDaDca, g) for c, g in respostas.items()}
+        linhas = [
+            linha for c, l in lidas.items()
+            if (linha := siconfi.contas_para_linha(
+                c, ano, [x for x in l if x.cod_conta == siconfi.CONTA_DA_RECEITA], [x for x in l if x.cod_conta in siconfi.CONTAS_DA_DESPESA]))
+        ]
         carga = _carga_de_resposta(
             conexao, TipoFonteDeCarga.TESOURO, f"{fonte.URL}?an_exercicio={ano}", respostas,
             CACHE / "siconfi" / f"dca-{ano}-{date.today():%Y%m%d}.json",
@@ -2301,6 +2346,7 @@ def _siconfi(conexao: psycopg.Connection, anos: list[int], municipios: list[str]
             else:
                 persistencia.gravar_contas_dos_municipios(conexao, [ano], linhas, carga)
         log.info("  %d: %d municípios com DCA, %d sem declaração, em %.0f s", ano, len(linhas), len(sem_declaracao), time.monotonic() - inicio)
+        parcial.unlink(missing_ok=True)
 
 
 def _siconfi_do_arquivo(conexao: psycopg.Connection, anos: list[int], arquivo: Path) -> None:
