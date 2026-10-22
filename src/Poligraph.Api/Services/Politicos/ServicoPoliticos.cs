@@ -13,7 +13,7 @@ namespace Poligraph.Api.Services;
 /// <para>O índice cabe na memória: MEDIDO em 2026-10-21, 73 mil mandatos de 2000 a 2024. Ele é montado uma vez por <see cref="CacheDeLeitura.Validade"/>, e cada filtro roda sobre ele.</para>
 /// <para>DECISÃO: o mandato mostrado é o mais recente que passa no filtro. Quem foi prefeito e depois deputado aparece como prefeito ao filtrar por município, e como deputado sem filtro.</para>
 /// </remarks>
-public class ServicoPoliticos(PoligraphDb db, CacheDeLeitura leitura)
+public class ServicoPoliticos(PoligraphDb db, CacheDeLeitura leitura, ServicoParlamentares parlamentares)
 {
     public const int ItensPorPagina = 20;
 
@@ -22,6 +22,7 @@ public class ServicoPoliticos(PoligraphDb db, CacheDeLeitura leitura)
 
     private readonly PoligraphDb _db = db;
     private readonly CacheDeLeitura _leitura = leitura;
+    private readonly ServicoParlamentares _parlamentares = parlamentares;
 
     /// <summary>A lista filtrada, do mandato mostrado mais recente ao mais antigo; no mesmo ano, do nível federal ao municipal.</summary>
     public async Task<PaginaDto<PoliticoNaListaDto>> ListarAsync(FiltroDePoliticos filtro, int pagina, CancellationToken ct)
@@ -45,6 +46,25 @@ public class ServicoPoliticos(PoligraphDb db, CacheDeLeitura leitura)
             .ThenBy(p => p.Mandato.Nivel)
             .ThenByDescending(p => p.Mandato.UltimoAno)
             .Take(quantos)];
+
+    /// <summary>A ficha pelos mandatos: quem é, cada mandato e as redes. Nulo para quem não existe ou não tem mandato no TSE, e o endpoint responde 404.</summary>
+    public async Task<FichaDoPoliticoDto?> ObterFichaAsync(IdPessoa idPessoa, CancellationToken ct)
+    {
+        var politico = (await IndiceAsync(ct)).FirstOrDefault(p => p.IdPessoa == idPessoa.Valor);
+        if (politico is null)
+        {
+            return null;
+        }
+
+        var nomeCivil = await _db.Pessoas.AsNoTracking()
+            .Where(p => p.Id == idPessoa.Valor)
+            .Select(p => p.NomeCivil)
+            .FirstOrDefaultAsync(ct);
+
+        return new FichaDoPoliticoDto(
+            politico.IdPessoa, politico.Nome, nomeCivil, politico.UrlFoto, politico.Parlamentar,
+            politico.Mandatos, await _parlamentares.RedesSociaisAsync(idPessoa.Valor, ct));
+    }
 
     private static IEnumerable<PoliticoNaListaDto> Filtrar(IReadOnlyList<PoliticoNoIndice> indice, FiltroDePoliticos filtro)
     {

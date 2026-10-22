@@ -276,8 +276,8 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
                 [.. g.OrderByDescending(l => l.Valor).Select(l => new BemPorTipoDto(l.TipoBem, l.Valor, l.Quantidade))]))]);
     }
 
-    /// <summary>As redes na ordem em que se reconhecem: as grandes primeiro, o site próprio por último.</summary>
-    private async Task<IReadOnlyList<RedeSocialDto>> RedesSociaisAsync(long idPessoa, CancellationToken ct) =>
+    /// <summary>As redes na ordem em que se reconhecem: as grandes primeiro, o site próprio por último. Também a ficha do político (Pendência 90).</summary>
+    public async Task<IReadOnlyList<RedeSocialDto>> RedesSociaisAsync(long idPessoa, CancellationToken ct) =>
         [.. (await _db.RedesSociais.AsNoTracking().Where(r => r.PessoaId == idPessoa).ToListAsync(ct))
             .OrderBy(r => r.Rede)
             .ThenBy(r => r.Url, StringComparer.Ordinal)

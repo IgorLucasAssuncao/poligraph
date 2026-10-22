@@ -647,7 +647,7 @@ function FinanciamentoComponent({ idPessoa, fin }: { idPessoa: number; fin: Fina
  *
  * RISCO: Só tipo e valor: a descrição de cada bem traz endereço, e não chega ao site.
  */
-function PatrimonioDeclaradoComponent({ idPessoa }: { idPessoa: number }) {
+export function PatrimonioDeclaradoComponent({ idPessoa }: { idPessoa: number }) {
   const lidas = useCarga(['patrimonio', idPessoa], () => obterPatrimonio(idPessoa), { manter: 2 });
   const declaracoes = lidas.atualizando ? null : (lidas.dados ?? null);
   const erro = lidas.erro;

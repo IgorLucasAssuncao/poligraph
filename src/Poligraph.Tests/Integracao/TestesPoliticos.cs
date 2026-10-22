@@ -50,6 +50,33 @@ public class TestesPoliticos(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Equal([prefeitoEGovernador], busca.Politicos.Select(p => p.IdPessoa));
     }
 
+    [SkippableFact]
+    public async Task Ficha_TrazOsMandatosDoMaisRecente()
+    {
+        ExigeDocker();
+        var (prefeitoEGovernador, _) = await SemearAsync();
+
+        var ficha = await LerAsync<FichaLida>($"/api/politicos/{prefeitoEGovernador}");
+
+        Assert.Equal(["GOVERNADOR", "PREFEITO"], ficha.Mandatos.Select(m => m.Cargo));
+        Assert.False(ficha.Parlamentar);
+    }
+
+    [SkippableFact]
+    public async Task Ficha_DeQuemNaoTemMandato_Responde404()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var semMandato = new PessoaModel { NomeCivil = "Sem Mandato", NomeExibicao = "Sem Mandato" };
+        Db.Pessoas.Add(semMandato);
+        await Db.SaveChangesAsync();
+
+        using var cliente = new FabricaApi(ConnectionString).CreateClient();
+        var resposta = await cliente.GetAsync($"/api/politicos/{semMandato.Id}");
+
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, resposta.StatusCode);
+    }
+
     /// <summary>RISCO: o banco recusa prefeito sem município; a lista o mostraria sem saber de onde.</summary>
     [SkippableFact]
     public async Task Prefeito_SemMunicipio_ERejeitadoPeloBanco()
@@ -110,4 +137,6 @@ public class TestesPoliticos(FixturePostgres postgres) : BaseIntegracao(postgres
     private sealed record PaginaLida(List<PoliticoLido> Itens, int Total);
 
     private sealed record BuscaLida(List<PoliticoLido> Politicos);
+
+    private sealed record FichaLida(List<MandatoLido> Mandatos, bool Parlamentar);
 }

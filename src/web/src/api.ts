@@ -1661,6 +1661,26 @@ export type FiltroDePoliticos = {
   pagina?: number;
 };
 
+/** A ficha pelos mandatos do TSE (Pendência 90, fase 3). */
+export type FichaDoPolitico = {
+  idPessoa: number;
+  nome: string;
+  nomeCivil: string | null;
+  urlFoto: string | null;
+  parlamentar: boolean;
+  mandatos: MandatoNoTse[];
+  redesSociais: RedeSocial[];
+};
+
+/** `null` quando a pessoa não tem mandato no TSE: a página diz isso em vez de quebrar. */
+export async function obterFichaDoPolitico(idPessoa: number): Promise<FichaDoPolitico | null> {
+  const resposta = await fetch(`${BASE}/politicos/${idPessoa}`, { credentials: 'include' });
+  if (resposta.status === 404) return null;
+  if (resposta.status === 401) throw new NaoAutenticadoError();
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.politico(resposta.status));
+  return resposta.json();
+}
+
 export async function listarPoliticos(filtro: FiltroDePoliticos): Promise<PaginaDe<PoliticoNaLista>> {
   const busca = new URLSearchParams();
   if (filtro.busca) busca.set('busca', filtro.busca);

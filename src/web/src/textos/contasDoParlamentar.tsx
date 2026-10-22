@@ -150,7 +150,7 @@ export const TEXTOS_DAS_CONTAS = {
     carregando: 'Carregando o patrimônio',
     rotulo: 'Patrimônio declarado',
     titulo: 'Patrimônio declarado ao TSE',
-    vazio: 'Nenhuma declaração de bens deste parlamentar ao TSE na base.',
+    vazio: 'Nenhuma declaração de bens desta pessoa ao TSE na base.',
     bens: (quantidade: number) => `${quantidade} bens`,
     rotuloDaProcedencia: (anoDaEleicao: number) => `Bens declarados em ${anoDaEleicao}`,
     resposta: (total: ReactNode, bens: number, anoDaEleicao: number, anterior: { anoDaEleicao: number; total: string } | null): ReactNode => (

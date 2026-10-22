@@ -14,5 +14,6 @@ export const TEXTOS_DA_API = {
     afinidade: (status: number) => `Falha ao calcular afinidade (${status}).`,
     consulta: (url: string, status: number) => `Falha ao consultar ${url} (${status}).`,
     entidade: (status: number) => `Falha ao consultar a entidade (${status}).`,
+    politico: (status: number) => `Falha ao consultar o político (${status}).`,
   },
 } as const;

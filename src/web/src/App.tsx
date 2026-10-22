@@ -25,6 +25,7 @@ const GovernoComponent = lazy(() => import('./paginas/Governo').then((m) => ({ d
 const ComprasDoGovernoComponent = lazy(() => import('./paginas/ComprasDoGoverno').then((m) => ({ default: m.ComprasDoGovernoComponent })));
 const ViagensDoGovernoComponent = lazy(() => import('./paginas/ViagensDoGoverno').then((m) => ({ default: m.ViagensDoGovernoComponent })));
 const ParlamentarComponent = lazy(() => import('./paginas/Parlamentar').then((m) => ({ default: m.ParlamentarComponent })));
+const PoliticoComponent = lazy(() => import('./paginas/Politico').then((m) => ({ default: m.PoliticoComponent })));
 const ParlamentaresComponent = lazy(() => import('./paginas/Parlamentares').then((m) => ({ default: m.ParlamentaresComponent })));
 const PoliticaDePrivacidadeComponent = lazy(() => import('./paginas/PoliticaDePrivacidade').then((m) => ({ default: m.PoliticaDePrivacidadeComponent })));
 const QuestionarioComponent = lazy(() => import('./paginas/Questionario').then((m) => ({ default: m.QuestionarioComponent })));
@@ -90,6 +91,7 @@ function RoteadorComponent() {
         <Route path="/parlamentares" element={<ParlamentaresComponent />} />
         <Route path="/resultado" element={<QuestionarioComponent />} />
         <Route path="/parlamentar/:idPessoa/:aba?" element={<ParlamentarComponent />} />
+        <Route path="/politico/:idPessoa" element={<PoliticoComponent />} />
         <Route path="/governo" element={<GovernoComponent />} />
         <Route path="/governo/cartoes" element={<GovernoComponent secao="cartoes" />} />
         <Route path="/governo/viagens" element={<ViagensDoGovernoComponent />} />
@@ -129,6 +131,7 @@ function LeituraSemContaComponent() {
         <Route path="/parlamentares" element={<ParlamentaresComponent />} />
         <Route path="/resultado" element={<QuestionarioComponent />} />
         <Route path="/parlamentar/:idPessoa/:aba?" element={<ParlamentarComponent />} />
+        <Route path="/politico/:idPessoa" element={<PoliticoComponent />} />
         <Route path="/governo" element={<GovernoComponent />} />
         <Route path="/governo/cartoes" element={<GovernoComponent secao="cartoes" />} />
         <Route path="/governo/viagens" element={<ViagensDoGovernoComponent />} />

@@ -34,8 +34,22 @@ export function descricaoDoMandato(mandato: MandatoNoTse, nomeDoMunicipio: (nome
   return `${cargo}${ente}, ${mandato.primeiroAno}–${mandato.ultimoAno}`;
 }
 
-/** O texto da lista de políticos de todos os cargos (Pendência 90). */
+/** O texto da lista de políticos de todos os cargos e da ficha de cada um (Pendência 90). */
 export const TEXTOS_DOS_POLITICOS = {
+  ficha: {
+    titulo: 'Político',
+    erro: 'Não foi possível carregar esta ficha agora. Tente de novo em instantes.',
+    semMandato: 'Esta pessoa não tem mandato eleito na base do TSE.',
+    verTodos: 'Ver todos os políticos',
+    mandatos: 'Mandatos',
+    quantosMandatos: (n: number) => (n === 1 ? '1 mandato eleito de 2000 a 2024' : `${n} mandatos eleitos de 2000 a 2024`),
+    eleitoEm: (ano: number) => `eleito em ${ano}`,
+    semVoto:
+      'Esta ficha não tem votos nem afinidade: só a Câmara e o Senado publicam o voto de cada parlamentar. Assembleias e câmaras municipais não publicam.',
+    fonte: 'Mandatos: candidaturas eleitas publicadas pelo TSE.',
+    candidaturasNoTse: 'Candidaturas no TSE',
+  },
+
   lista: {
     buscar: 'Buscar político pelo nome',
     placeholder: 'Nome do político',

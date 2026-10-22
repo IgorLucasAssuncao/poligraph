@@ -14,3 +14,10 @@ public record MandatoNoTseDto(
 /// <param name="Parlamentar">Votou na Câmara ou no Senado: a página dele tem votos e afinidade.</param>
 public record PoliticoNaListaDto(
     long IdPessoa, string Nome, string? UrlFoto, MandatoNoTseDto Mandato, int Mandatos, bool Parlamentar);
+
+/// <summary>A ficha de um político pelos mandatos do TSE (Pendência 90, fase 3).</summary>
+/// <param name="Mandatos">Do mais recente ao mais antigo.</param>
+/// <param name="Parlamentar">Votou no Congresso: a ficha completa, com votos e afinidade, é a do parlamentar.</param>
+public record FichaDoPoliticoDto(
+    long IdPessoa, string Nome, string? NomeCivil, string? UrlFoto, bool Parlamentar,
+    IReadOnlyList<MandatoNoTseDto> Mandatos, IReadOnlyList<RedeSocialDto> RedesSociais);
