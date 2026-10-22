@@ -35,7 +35,7 @@ from . import amostra, mandatos, compras, compras_centralizadas, conferencia, co
 from .contratos import entrada
 from .contratos.entrada import colunas_da_fonte
 from .contratos.tse import LinhaDeCandidatura
-from .tipos import TipoCargo
+from .tipos import FonteDaRedeSocial, TipoCargo, TipoCasa, TipoFonteDeCarga, TipoFonteDeIdentificador
 from .contratos.portal import (
     LinhaDeCompra, LinhaDeCompraCentralizadaNoCartao, LinhaDeSancao, LinhaDeTrechoDeViagem, LinhaDeViagem, LinhaDePagamentoDeViagem, LinhaDoCartaoDaDefesaCivil,
 )
@@ -191,7 +191,7 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         help="todas as legislaturas da casa que estão na base",
     )
     analisar.add_argument(
-        "--casa", choices=["CAMARA", "SENADO"], default="CAMARA",
+        "--casa", choices=[TipoCasa.CAMARA, TipoCasa.SENADO], default=TipoCasa.CAMARA,
         help="uma casa por execução — as duas não são comparáveis entre si",
     )
 
@@ -318,7 +318,7 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     curar = sub.add_parser(
         "curar", help="lista votações candidatas a pergunta, das mais divididas"
     )
-    curar.add_argument("--casa", choices=["CAMARA", "SENADO"], default="SENADO")
+    curar.add_argument("--casa", choices=[TipoCasa.CAMARA, TipoCasa.SENADO], default=TipoCasa.SENADO)
     curar.add_argument("--legislatura", type=int, default=57)
     curar.add_argument("--limite", type=int, default=25)
 
@@ -399,7 +399,7 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
     """
     log.info("Ingerindo deputados...")
     caminho = camara.baixar("deputados", anos[0], CACHE / "deputados.csv")
-    carga_dos_deputados = _carga_do_arquivo(conexao, "CAMARA", camara.url_do_arquivo("deputados", anos[0]), caminho)
+    carga_dos_deputados = _carga_do_arquivo(conexao, TipoFonteDeCarga.CAMARA, camara.url_do_arquivo("deputados", anos[0]), caminho)
     deputados = ingestao.deputados_para_linhas(camara.ler_csv(caminho))
     novos = persistencia.gravar_pessoas(conexao, deputados, carga_dos_deputados)
     log.info("  %d deputados no arquivo, %d novos", len(deputados), novos)
@@ -421,7 +421,7 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
 
         votacoes = ingestao.votacoes_para_linhas(df)
         simbolicas = persistencia.gravar_simbolicas(
-            conexao, "CAMARA", ano, ingestao.simbolicas_por_legislatura(df), carga_votacoes
+            conexao, TipoCasa.CAMARA, ano, ingestao.simbolicas_por_legislatura(df), carga_votacoes
         )
         log.info("  %d votações simbólicas contadas (não entram na comparação)", simbolicas)
 
@@ -458,7 +458,7 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
             camara.ler_csv(arquivo_prop).to_dict("records"),
             {v["id"] for v in votacoes},
         )
-        carga_prop = _carga_do_arquivo(conexao, "CAMARA", camara.url_do_arquivo("votacoesProposicoes", ano), arquivo_prop)
+        carga_prop = _carga_do_arquivo(conexao, TipoFonteDeCarga.CAMARA, camara.url_do_arquivo("votacoesProposicoes", ano), arquivo_prop)
         persistencia.gravar_proposicoes(conexao, lista, carga_prop)
         vinculadas = persistencia.vincular_proposicoes(conexao, vinculo, carga_id=carga_prop)
         log.info(
@@ -498,7 +498,7 @@ def _ingerir(conexao: psycopg.Connection, anos: list[int]) -> None:
             len(linhas), len(df_orientacoes), len({l["bancada"] for l in linhas}),
         )
 
-    secretas = persistencia.marcar_secretas_de_fato(conexao, "CAMARA")
+    secretas = persistencia.marcar_secretas_de_fato(conexao, TipoCasa.CAMARA)
     if secretas:
         log.info("  %d votações sem nenhuma posição marcadas como secretas (Pendência 69)", secretas)
 
@@ -582,7 +582,7 @@ def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
     log.info("Ingerindo senadores...")
     em_exercicio = senado.baixar_senadores()
     carga_dos_senadores = _carga_de_resposta(
-        conexao, "SENADO", f"{senado.BASE}/senador/lista/atual", em_exercicio,
+        conexao, TipoFonteDeCarga.SENADO, f"{senado.BASE}/senador/lista/atual", em_exercicio,
         CACHE / "respostas" / f"senadores-{date.today():%Y%m%d}.json",
     )
     senadores = ingestao_senado.senadores_para_linhas(em_exercicio)
@@ -622,7 +622,7 @@ def _senado(conexao: psycopg.Connection, anos: list[int]) -> None:
             log.info("  %d senadores fora da lista de exercício, criados pelo voto",
                      recuperados)
 
-        mapa = _mapa_pessoas(conexao, fonte="SENADO")
+        mapa = _mapa_pessoas(conexao, fonte=TipoFonteDeIdentificador.SENADO)
 
         votacoes = ingestao_senado.votacoes_para_linhas(votacoes_brutas)
         persistencia.gravar_votacoes(conexao, votacoes, carga)
@@ -1109,7 +1109,7 @@ def _redes(conexao: psycopg.Connection, anos: list[int]) -> None:
         if urls is not None:
             consultados.append(pessoa_id)
             respostas_da_camara[id_camara] = urls
-            da_camara.extend(redes.para_linhas(pessoa_id, urls, "CAMARA"))
+            da_camara.extend(redes.para_linhas(pessoa_id, urls, FonteDaRedeSocial.CAMARA))
         if i % 100 == 0:
             log.info("  %d deputados consultados", i)
         time.sleep(0.05)
@@ -1139,11 +1139,11 @@ def _redes(conexao: psycopg.Connection, anos: list[int]) -> None:
     log.info("  TSE: %d senadores e políticos fora do Congresso com rede", len(do_tse))
 
     carga_da_camara = _carga_de_resposta(
-        conexao, "CAMARA", f"{camara.API}/deputados", respostas_da_camara,
+        conexao, TipoFonteDeCarga.CAMARA, f"{camara.API}/deputados", respostas_da_camara,
         CACHE / "respostas" / f"redes-camara-{date.today():%Y%m%d}.json",
     )
     with conexao.transaction():
-        persistencia.gravar_redes(conexao, consultados, da_camara, "CAMARA", carga_da_camara)
+        persistencia.gravar_redes(conexao, consultados, da_camara, FonteDaRedeSocial.CAMARA, carga_da_camara)
         persistencia.gravar_redes(conexao, list(senadores | fora_do_congresso), [l for ls in do_tse.values() for l in ls], "TSE")
 
 
@@ -1772,7 +1772,7 @@ def _cpf_dos_deputados(conexao: psycopg.Connection, todas_as_legislaturas: bool 
             log.info("  %d de %d...", i, len(faltantes))
 
     carga = _carga_de_resposta(
-        conexao, "CAMARA", f"{camara.API}/deputados", consultados,
+        conexao, TipoFonteDeCarga.CAMARA, f"{camara.API}/deputados", consultados,
         CACHE / "respostas" / f"cpf-deputados-{datetime.now():%Y%m%d-%H%M%S}.json",
     )
     for pessoa_id, hash_cpf in achados_com_hash:
@@ -1823,7 +1823,7 @@ def _nome_civil_dos_senadores(conexao: psycopg.Connection) -> int:
         time.sleep(PAUSA_ENTRE_CHAMADAS)
 
     carga = _carga_de_resposta(
-        conexao, "SENADO", f"{senado.BASE}/senador/", respostas,
+        conexao, TipoFonteDeCarga.SENADO, f"{senado.BASE}/senador/", respostas,
         CACHE / "respostas" / f"senadores-detalhe-{datetime.now():%Y%m%d-%H%M%S}.json",
     )
     for pessoa_id, nome in nomes:
@@ -1917,7 +1917,7 @@ def _cota(conexao: psycopg.Connection, anos: list[int]) -> None:
         arquivo = camara.baixar_cota(ano, CACHE / f"cota-{ano}.zip")
         linhas = camara.ler_cota(arquivo)
         camara.conferir_volume_de_cota(linhas, ano)
-        carga = _carga_do_arquivo(conexao, "CAMARA", camara.URL_COTA.format(ano=ano), arquivo)
+        carga = _carga_do_arquivo(conexao, TipoFonteDeCarga.CAMARA, camara.URL_COTA.format(ano=ano), arquivo)
 
         transformado = cota.transformar_camara(linhas, mapa)
         gravadas = persistencia.gravar_despesas(conexao, list(mapa.values()), transformado.despesas, carga)
@@ -1963,7 +1963,7 @@ def _cota_do_senado(conexao: psycopg.Connection, anos: list[int]) -> None:
 
         arquivo = senado.baixar_ceaps(ano, CACHE / f"ceaps-{ano}.csv")
         linhas = senado.ler_ceaps(arquivo)
-        carga = _carga_do_arquivo(conexao, "SENADO", senado.CEAPS.format(ano=ano), arquivo)
+        carga = _carga_do_arquivo(conexao, TipoFonteDeCarga.SENADO, senado.CEAPS.format(ano=ano), arquivo)
 
         transformado = cota.transformar_senado(linhas, por_nome)
         gravadas = persistencia.gravar_despesas(conexao, list(por_nome.values()), transformado.despesas, carga)
@@ -2187,7 +2187,7 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
 
     if linhas:
         carga_das_materias = _carga_de_resposta(
-            conexao, "SENADO", f"{senado.BASE}/materia/", [m for m in materias if m is not None],
+            conexao, TipoFonteDeCarga.SENADO, f"{senado.BASE}/materia/", [m for m in materias if m is not None],
             CACHE / "respostas" / f"materias-{date.today():%Y%m%d-%H%M%S}.json",
         )
         persistencia.gravar_proposicoes(conexao, linhas, carga_das_materias)
@@ -2196,7 +2196,7 @@ def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]
     ligados = persistencia.vincular_proposicoes(
         conexao,
         {v: int(c) for v, c in todas.items() if c.isdigit()},
-        casa="SENADO",
+        casa=TipoCasa.SENADO,
     )
 
     log.info("  %d matérias gravadas, %d votações vinculadas", len(linhas), ligados)
@@ -2208,11 +2208,11 @@ def _simbolicas(conexao: psycopg.Connection, anos: list[int]) -> None:
     for ano in anos:
         arquivo = CACHE / f"votacoes-{ano}.csv"
         if arquivo.exists():
-            carga = _carga_do_arquivo(conexao, "CAMARA", camara.url_do_arquivo("votacoes", ano), arquivo)
+            carga = _carga_do_arquivo(conexao, TipoFonteDeCarga.CAMARA, camara.url_do_arquivo("votacoes", ano), arquivo)
         else:
             arquivo, carga = _baixar_da_camara(conexao, "votacoes", ano)
         total = persistencia.gravar_simbolicas(
-            conexao, "CAMARA", ano, ingestao.simbolicas_por_legislatura(camara.ler_csv(arquivo)), carga
+            conexao, TipoCasa.CAMARA, ano, ingestao.simbolicas_por_legislatura(camara.ler_csv(arquivo)), carga
         )
         log.info("  %d: %d votações simbólicas", ano, total)
 
@@ -2280,11 +2280,11 @@ def _palavras_chave(conexao: psycopg.Connection, limite: int | None) -> None:
 
     def gravar(lote: list[tuple[str, int, str]]) -> None:
         """Cada lote, por casa, vira um arquivo com as respostas, registrado com o hash antes de gravar."""
-        for casa in ("CAMARA", "SENADO"):
+        for casa in (TipoCasa.CAMARA, TipoCasa.SENADO):
             da_casa = [linha for linha in lote if linha[0] == casa]
             if not da_casa:
                 continue
-            url = f"{camara.API}/proposicoes" if casa == "CAMARA" else f"{senado.BASE}/materia/"
+            url = f"{camara.API}/proposicoes" if casa == TipoCasa.CAMARA else f"{senado.BASE}/materia/"
             carga = _carga_de_resposta(
                 conexao, casa, url, [{"id": id_, "palavras_chave": p} for _, id_, p in da_casa],
                 CACHE / "respostas" / f"palavras-chave-{casa.lower()}-{datetime.now():%Y%m%d-%H%M%S-%f}.json",
@@ -2292,7 +2292,7 @@ def _palavras_chave(conexao: psycopg.Connection, limite: int | None) -> None:
             persistencia.gravar_palavras_chave(conexao, da_casa, carga)
 
     for posicao, (casa, id_proposicao) in enumerate(pendentes, 1):
-        if casa == "CAMARA":
+        if casa == TipoCasa.CAMARA:
             palavras = camara.palavras_chave_da_proposicao(id_proposicao)
         else:
             materia = senado.baixar_materia(str(id_proposicao))
@@ -2344,7 +2344,7 @@ def _amostra(conexao: psycopg.Connection, por_grupo: int, semente: int) -> None:
                     (casa, id_votacao),
                 ).fetchall()
             }
-            if casa == "CAMARA":
+            if casa == TipoCasa.CAMARA:
                 brutos = camara.votos_da_votacao(id_votacao)
                 fonte = None if brutos is None else {k: normalizacao.normalizar_voto(v) for k, v in brutos.items()}
             else:
@@ -2555,26 +2555,26 @@ def _em_exercicio(conexao: psycopg.Connection) -> None:
     hoje = f"{date.today():%Y%m%d}"
 
     deputados = camara.baixar_deputados_em_exercicio()
-    carga = _carga_de_resposta(conexao, "CAMARA", camara.URL_EM_EXERCICIO, deputados,
+    carga = _carga_de_resposta(conexao, TipoFonteDeCarga.CAMARA, camara.URL_EM_EXERCICIO, deputados,
                                CACHE / "respostas" / f"deputados-em-exercicio-{hoje}.json")
-    pessoas_da_camara = _mapa_pessoas(conexao, "CAMARA")
+    pessoas_da_camara = _mapa_pessoas(conexao, TipoFonteDeIdentificador.CAMARA)
     resultado = em_exercicio.da_camara(deputados, pessoas_da_camara)
     legislatura = next((linha.legislatura for linha in resultado.linhas if linha.legislatura), None)
     licenciados = _licenciados_da_camara(conexao, deputados, legislatura, pessoas_da_camara) if legislatura else []
-    gravadas = persistencia.gravar_em_exercicio(conexao, "CAMARA", em_exercicio.juntar(resultado.linhas, licenciados), carga)
+    gravadas = persistencia.gravar_em_exercicio(conexao, TipoCasa.CAMARA, em_exercicio.juntar(resultado.linhas, licenciados), carga)
     log.info("  Câmara: %d gravados (%d licenciados), %d sem pessoa no banco ainda",
              gravadas, len(licenciados), resultado.sem_pessoa)
 
     senadores = senado.baixar_senadores()
-    carga = _carga_de_resposta(conexao, "SENADO", f"{senado.BASE}/senador/lista/atual", senadores,
+    carga = _carga_de_resposta(conexao, TipoFonteDeCarga.SENADO, f"{senado.BASE}/senador/lista/atual", senadores,
                                CACHE / "respostas" / f"senadores-em-exercicio-{hoje}.json")
-    pessoas_do_senado = _mapa_pessoas(conexao, "SENADO")
+    pessoas_do_senado = _mapa_pessoas(conexao, TipoFonteDeIdentificador.SENADO)
     resultado = em_exercicio.do_senado(senadores, pessoas_do_senado)
     afastados = senado.baixar_afastados()
-    _carga_de_resposta(conexao, "SENADO", f"{senado.BASE}/senador/afastados", afastados,
+    _carga_de_resposta(conexao, TipoFonteDeCarga.SENADO, f"{senado.BASE}/senador/afastados", afastados,
                        CACHE / "respostas" / f"senadores-afastados-{hoje}.json")
     licenciados = em_exercicio.licenciados_do_senado(afastados, pessoas_do_senado)
-    gravadas = persistencia.gravar_em_exercicio(conexao, "SENADO", em_exercicio.juntar(resultado.linhas, licenciados), carga)
+    gravadas = persistencia.gravar_em_exercicio(conexao, TipoCasa.SENADO, em_exercicio.juntar(resultado.linhas, licenciados), carga)
     log.info("  Senado: %d gravados (%d licenciados), %d sem pessoa no banco ainda",
              gravadas, len(licenciados), resultado.sem_pessoa)
 
@@ -2589,7 +2589,7 @@ def _licenciados_da_camara(conexao: psycopg.Connection, em_exercicio_hoje: list[
     da_legislatura = camara.deputados_da_legislatura(legislatura)
     fora = {str(d.get("id")) for d in da_legislatura} - {str(d.get("id")) for d in em_exercicio_hoje}
     situacoes = {id_camara: camara.situacao_do_deputado(id_camara) for id_camara in sorted(fora)}
-    _carga_de_resposta(conexao, "CAMARA", f"{camara.API}/deputados/{{id}}", situacoes,
+    _carga_de_resposta(conexao, TipoFonteDeCarga.CAMARA, f"{camara.API}/deputados/{{id}}", situacoes,
                        CACHE / "respostas" / f"situacao-dos-deputados-{date.today():%Y%m%d}.json")
     return em_exercicio.licenciados_da_camara(situacoes, pessoas, legislatura)
 
@@ -2812,7 +2812,7 @@ def _votacoes_por_pessoa(matriz, pessoas: list[int], pesos) -> dict[int, int]:
     return {pessoa: int(posicionou[i].sum()) for i, pessoa in enumerate(pessoas)}
 
 
-def _mapa_pessoas(conexao: psycopg.Connection, fonte: str = "CAMARA") -> dict[str, int]:
+def _mapa_pessoas(conexao: psycopg.Connection, fonte: str = TipoFonteDeIdentificador.CAMARA) -> dict[str, int]:
     """`id_externo` -> `pessoa_id`, por fonte.
 
     A fonte é parâmetro porque a mesma pessoa pode ter id nas duas casas: 41 dos 81
@@ -2825,7 +2825,7 @@ def _mapa_pessoas(conexao: psycopg.Connection, fonte: str = "CAMARA") -> dict[st
     return {str(externo): pessoa_id for externo, pessoa_id in linhas}
 
 
-def _montar_matriz(conexao: psycopg.Connection, legislatura: int, casa: str = "CAMARA"):
+def _montar_matriz(conexao: psycopg.Connection, legislatura: int, casa: str = TipoCasa.CAMARA):
     """Monta a matriz pessoa × votação de UMA casa.
 
     Só votações nominais de plenário, e não secretas. Votação de comissão fica de fora:

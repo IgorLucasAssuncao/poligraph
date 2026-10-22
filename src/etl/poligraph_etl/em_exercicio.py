@@ -25,8 +25,9 @@ from .contratos import entrada
 from .contratos.banco import EmExercicio
 from .contratos.camara import DeputadoEmExercicio
 from .contratos.senado import SenadorEmExercicio
+from .tipos import TipoCasa
 
-MINIMO_POR_CASA = {"CAMARA": 500, "SENADO": 78}
+MINIMO_POR_CASA = {TipoCasa.CAMARA: 500, TipoCasa.SENADO: 78}
 """Abaixo disso a lista está cortada: a fonte falhou ou mudou de formato. Conta só quem está em exercício."""
 
 SITUACOES_DE_LICENCA_NA_CAMARA = {"Licença", "Afastado"}
@@ -47,7 +48,7 @@ class Resultado:
 def da_camara(registros: list[dict], pessoa_por_id: dict[str, int]) -> Resultado:
     """Os deputados da lista, com a pessoa do banco e a legislatura que a Câmara informa."""
     deputados = entrada.ler(DeputadoEmExercicio, registros)
-    _conferir_volume("CAMARA", len(deputados))
+    _conferir_volume(TipoCasa.CAMARA, len(deputados))
     linhas, sem_pessoa = [], 0
     for deputado in deputados:
         pessoa = pessoa_por_id.get(deputado.id_na_camara or "")
@@ -55,21 +56,21 @@ def da_camara(registros: list[dict], pessoa_por_id: dict[str, int]) -> Resultado
             sem_pessoa += 1
             continue
         legislatura = int(deputado.legislatura) if deputado.legislatura and deputado.legislatura.isdigit() else None
-        linhas.append(EmExercicio(pessoa_id=pessoa, casa="CAMARA", legislatura=legislatura))
+        linhas.append(EmExercicio(pessoa_id=pessoa, casa=TipoCasa.CAMARA, legislatura=legislatura))
     return Resultado(_sem_repetir(linhas), sem_pessoa)
 
 
 def do_senado(registros: list[dict], pessoa_por_codigo: dict[str, int]) -> Resultado:
     """Os senadores da lista, com a pessoa do banco. O Senado não informa uma legislatura só."""
     senadores = entrada.ler(SenadorEmExercicio, registros)
-    _conferir_volume("SENADO", len(senadores))
+    _conferir_volume(TipoCasa.SENADO, len(senadores))
     linhas, sem_pessoa = [], 0
     for senador in senadores:
         pessoa = pessoa_por_codigo.get(senador.codigo_no_senado or "")
         if pessoa is None:
             sem_pessoa += 1
             continue
-        linhas.append(EmExercicio(pessoa_id=pessoa, casa="SENADO", legislatura=None))
+        linhas.append(EmExercicio(pessoa_id=pessoa, casa=TipoCasa.SENADO, legislatura=None))
     return Resultado(_sem_repetir(linhas), sem_pessoa)
 
 
@@ -77,7 +78,7 @@ def licenciados_da_camara(situacao_por_id: dict[str, str | None], pessoa_por_id:
                           legislatura: int | None) -> list[EmExercicio]:
     """Os deputados da legislatura em licença, a partir da situação de cada um fora do exercício."""
     return [
-        EmExercicio(pessoa_id=pessoa_por_id[id_camara], casa="CAMARA", legislatura=legislatura, licenciado=True)
+        EmExercicio(pessoa_id=pessoa_por_id[id_camara], casa=TipoCasa.CAMARA, legislatura=legislatura, licenciado=True)
         for id_camara, situacao in situacao_por_id.items()
         if situacao in SITUACOES_DE_LICENCA_NA_CAMARA and id_camara in pessoa_por_id
     ]
@@ -89,7 +90,7 @@ def licenciados_do_senado(afastados: list[dict], pessoa_por_codigo: dict[str, in
     for afastado in afastados:
         codigo = str((afastado.get("IdentificacaoParlamentar") or {}).get("CodigoParlamentar") or "")
         if codigo in pessoa_por_codigo and _causa_do_ultimo_afastamento(afastado) in CAUSAS_DE_LICENCA_NO_SENADO:
-            licenciados.append(EmExercicio(pessoa_id=pessoa_por_codigo[codigo], casa="SENADO", legislatura=None, licenciado=True))
+            licenciados.append(EmExercicio(pessoa_id=pessoa_por_codigo[codigo], casa=TipoCasa.SENADO, legislatura=None, licenciado=True))
     return licenciados
 
 

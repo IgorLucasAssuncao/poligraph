@@ -25,11 +25,12 @@ O teto deixa folga para suplentes e não para o dobro: o Senado com 203 era o er
 """
 
 from dataclasses import dataclass
+from .tipos import TipoCasa
 
-CADEIRAS = {"CAMARA": 513, "SENADO": 81}
+CADEIRAS = {TipoCasa.CAMARA: 513, TipoCasa.SENADO: 81}
 
 # Quem votou numa legislatura, contando suplentes e quem assumiu no meio.
-TETO_DE_VOTANTES_NA_LEGISLATURA = {"CAMARA": 700, "SENADO": 125}
+TETO_DE_VOTANTES_NA_LEGISLATURA = {TipoCasa.CAMARA: 700, TipoCasa.SENADO: 125}
 
 # MEDIDO: 82 de 81 acontece de verdade: no Senado, titular e suplente aparecem juntos no dia
 #    da troca (SF-5999, 2019-08-14, Tocantins com 4). Passar de 10% acima é outra coisa.
@@ -119,7 +120,7 @@ def codigo_fora_de_epoca(linhas: list[tuple[int, str, str]]) -> list[Achado]:
         if not codigo.isdigit():
             continue
         if (int(codigo) >= PRIMEIRO_CODIGO_DE_2004) != (int(str(data)[:4]) >= 2004):
-            achados.append(Achado("codigo-fora-de-epoca", "ERRO", "SENADO", legislatura,
+            achados.append(Achado("codigo-fora-de-epoca", "ERRO", TipoCasa.SENADO, legislatura,
                                   f"{votacao} datada de {data}"))
     return achados
 
@@ -127,7 +128,7 @@ def codigo_fora_de_epoca(linhas: list[tuple[int, str, str]]) -> list[Achado]:
 def placar_divergente(linhas: list[tuple[int, str, int, int, int, int]]) -> list[Achado]:
     """`(legislatura, votação, sim gravado, sim contado, não gravado, não contado)`, da Câmara."""
     return [
-        Achado("placar-divergente", "AVISO", "CAMARA", legislatura,
+        Achado("placar-divergente", "AVISO", TipoCasa.CAMARA, legislatura,
                f"{votacao}: placar {sim_g}×{nao_g}, votos contados {sim_c}×{nao_c}")
         for legislatura, votacao, sim_g, sim_c, nao_g, nao_c in linhas
         if (sim_g, nao_g) != (sim_c, nao_c)
@@ -145,7 +146,7 @@ def sem_posicao_nenhuma(linhas: list[tuple[str, int, str]]) -> list[Achado]:
         Achado("sem-posicao-nenhuma", "AVISO", casa, legislatura,
                f"{votacao}: só presença registrada — secreta de fato?")
         for casa, legislatura, votacao in linhas
-        if casa == "CAMARA"
+        if casa == TipoCasa.CAMARA
     ]
 
 
@@ -172,7 +173,7 @@ def sem_partido(linhas: list[tuple[str, int, int, int]]) -> list[Achado]:
 def senadores_demais_por_uf(linhas: list[tuple[int, str, str, int]]) -> list[Achado]:
     """`(legislatura, votação, UF, senadores)`. Mais de 3 é a troca de titular e suplente no dia."""
     return [
-        Achado("senadores-por-uf", "AVISO", "SENADO", legislatura,
+        Achado("senadores-por-uf", "AVISO", TipoCasa.SENADO, legislatura,
                f"{votacao}: {quantos} senadores de {uf}")
         for legislatura, votacao, uf, quantos in linhas
         if uf and quantos > SENADORES_POR_UF

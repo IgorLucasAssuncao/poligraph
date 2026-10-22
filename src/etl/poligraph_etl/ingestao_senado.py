@@ -42,8 +42,9 @@ from collections.abc import Container
 
 from .ingestao import legislatura_da_data
 from .normalizacao import classificar_categoria
+from .tipos import TipoCasa
 
-CASA = "SENADO"
+CASA = TipoCasa.SENADO
 
 # O domínio do voto no Senado, medido em 10.368 registros de 2025.
 #

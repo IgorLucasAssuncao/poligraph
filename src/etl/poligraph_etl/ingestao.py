@@ -54,6 +54,7 @@ from .normalizacao import (
     inteiro_ou_nulo,
     normalizar_voto,
 )
+from .tipos import TipoCasa, TipoFonteDeIdentificador
 
 LEGISLATURA_57_INICIO = date(2023, 2, 1)
 
@@ -106,7 +107,7 @@ def votacoes_para_linhas(df: pd.DataFrame, legislatura: int | None = None) -> li
         linhas.append(
             {
                 "id": registro["id"],
-                "casa": "CAMARA",
+                "casa": TipoCasa.CAMARA,
                 "legislatura": legislatura or legislatura_da_data(str(registro["data"])),
                 "data": registro["data"],
                 "orgao": registro.get("siglaOrgao"),
@@ -223,7 +224,7 @@ def deputados_para_linhas(df: pd.DataFrame) -> list[dict]:
                 "nome_exibicao": registro.get("nome") or nome,
                 "cpf_hash": None,
                 "url_foto": url_da_foto(id_externo),
-                "fonte": "CAMARA",
+                "fonte": TipoFonteDeIdentificador.CAMARA,
                 "id_externo": id_externo,
                 "metodo": "MANUAL",
                 "confianca": 1.0,

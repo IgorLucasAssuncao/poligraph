@@ -28,6 +28,7 @@ desenvolvimento. O comando agendado é `python -m poligraph_etl rotina --frequen
 
 from dataclasses import dataclass, field
 from datetime import date
+from .tipos import TipoCasa
 
 FREQUENCIAS = ("semanal", "mensal")
 
@@ -103,8 +104,8 @@ def etapas(frequencia: str, hoje: date) -> list[Etapa]:
                 Etapa("redes", {"anos": [hoje.year]}),
             ]
         lista += [
-            Etapa("analisar", {"casa": "CAMARA"}),
-            Etapa("analisar", {"casa": "SENADO"}),
+            Etapa("analisar", {"casa": TipoCasa.CAMARA}),
+            Etapa("analisar", {"casa": TipoCasa.SENADO}),
         ]
 
     lista += [Etapa("conferir"), Etapa("limpar-cache")]

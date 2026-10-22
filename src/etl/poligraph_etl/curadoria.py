@@ -41,10 +41,11 @@ from dataclasses import dataclass
 import psycopg
 
 from .normalizacao import inferir_polaridade
+from .tipos import TipoCasa
 
 # Abaixo disto a sessão estava esvaziada e o resultado não representa a casa. O Senado
 # tem 81 cadeiras e mediana de 64 votantes por votação; a Câmara, 513.
-MINIMO_DE_VOTOS = {"SENADO": 40, "CAMARA": 250}
+MINIMO_DE_VOTOS = {TipoCasa.SENADO: 40, TipoCasa.CAMARA: 250}
 
 
 @dataclass(frozen=True)

@@ -36,6 +36,7 @@ from .contratos.banco import (
     ViagensDoOrgao,
 )
 from .normalizacao import sem_acento_maiusculo
+from .tipos import TipoCasa
 
 LOTE = 5_000
 
@@ -153,7 +154,7 @@ def gravar_proposicoes(
 
 
 def vincular_proposicoes(
-    conexao: psycopg.Connection, vinculo: dict[str, int], casa: str = "CAMARA", carga_id: int | None = None
+    conexao: psycopg.Connection, vinculo: dict[str, int], casa: str = TipoCasa.CAMARA, carga_id: int | None = None
 ) -> int:
     """Liga cada votação à sua proposição.
 
@@ -187,7 +188,7 @@ def vincular_proposicoes(
 
 
 def desconectar_proposicoes_ausentes(
-    conexao: psycopg.Connection, votacoes: Sequence[dict], casa: str = "CAMARA"
+    conexao: psycopg.Connection, votacoes: Sequence[dict], casa: str = TipoCasa.CAMARA
 ) -> int:
     """Zera `proposicao_id` que não existe na tabela `proposicoes`, e diz quantos.
 
@@ -376,7 +377,7 @@ def senadores_para_casar(conexao: psycopg.Connection, todas_as_legislaturas: boo
                AND """ + (
                    "EXISTS (SELECT 1 FROM votos v JOIN votacoes t ON t.id = v.votacao_id "
                    "WHERE v.pessoa_id = p.id AND t.casa = 'SENADO')"
-                   if todas_as_legislaturas else na_legislatura_corrente("p.id", "SENADO")
+                   if todas_as_legislaturas else na_legislatura_corrente("p.id", TipoCasa.SENADO)
                ) + """
              ORDER BY p.id
             """

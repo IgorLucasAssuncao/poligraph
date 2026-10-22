@@ -33,6 +33,7 @@ import requests
 from .. import procedencia
 from ..contratos import entrada
 from ..contratos.camara import LinhaDaCotaDaCamara
+from ..tipos import TipoFonteDeCarga
 
 BASE = "https://dadosabertos.camara.leg.br/arquivos"
 
@@ -102,7 +103,7 @@ def baixar_com_procedencia(recurso: str, ano: int, destino: Path) -> procedencia
     resposta.raise_for_status()
     destino.write_bytes(resposta.content)
 
-    return procedencia.de_resposta("CAMARA", resposta)
+    return procedencia.de_resposta(TipoFonteDeCarga.CAMARA, resposta)
 
 
 URL_EM_EXERCICIO = "https://dadosabertos.camara.leg.br/api/v2/deputados?itens=1000"

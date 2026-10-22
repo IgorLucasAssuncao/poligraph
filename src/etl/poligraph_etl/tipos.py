@@ -24,6 +24,32 @@ class TipoCasa(StrEnum):
     SENADO = "SENADO"
 
 
+class TipoFonteDeCarga(StrEnum):
+    """O órgão de onde veio o arquivo de uma carga (`TipoFonteDeCarga` no C#)."""
+
+    CAMARA = "CAMARA"
+    SENADO = "SENADO"
+    TSE = "TSE"
+    PORTAL_TRANSPARENCIA = "PORTAL_TRANSPARENCIA"
+    RECEITA = "RECEITA"
+    IBGE = "IBGE"
+
+
+class TipoFonteDeIdentificador(StrEnum):
+    """De quem é o id em `pessoa_fonte_ids` (`TipoFonteDeIdentificador` no C#)."""
+
+    CAMARA = "CAMARA"
+    SENADO = "SENADO"
+    TSE = "TSE"
+
+
+class FonteDaRedeSocial(StrEnum):
+    """De onde veio o endereço de uma rede social (`FonteDaRedeSocial` no C#)."""
+
+    CAMARA = "CAMARA"
+    TSE = "TSE"
+
+
 class TipoCargo(StrEnum):
     """Os cargos eletivos que a base guarda (`TipoCargo` no C#). Vereador fica fora (Pendência 90)."""
 

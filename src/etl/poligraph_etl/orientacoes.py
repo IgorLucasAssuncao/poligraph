@@ -48,10 +48,11 @@ mérito. Conta como orientação existente e nunca como voto contrário.
 import logging
 import unicodedata
 from collections.abc import Iterable
+from .tipos import TipoCasa
 
 log = logging.getLogger("poligraph")
 
-CASA = "CAMARA"
+CASA = TipoCasa.CAMARA
 
 # ATENÇÃO: A bancada que representa o Governo. É rótulo da própria Câmara, não escolha
 #    nossa — aparece ao lado de `Oposição`, `Minoria` e `Maioria`.

@@ -46,11 +46,12 @@ MEDIDO: Medido em 2026-08-28: das 266 votações substantivas da 57ª, **263 gan
 """
 
 import logging
+from .tipos import TipoCasa
 
 log = logging.getLogger("poligraph")
 
-CASA = "CAMARA"
-CASA_SENADO = "SENADO"
+CASA = TipoCasa.CAMARA
+CASA_SENADO = TipoCasa.SENADO
 
 
 def para_linhas(

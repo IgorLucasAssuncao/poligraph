@@ -36,6 +36,7 @@ import requests
 from .. import procedencia
 from ..contratos import entrada
 from ..contratos.senado import LinhaDaCotaDoSenado
+from ..tipos import TipoFonteDeCarga
 
 log = logging.getLogger("poligraph")
 
@@ -77,7 +78,7 @@ def baixar_votacoes_com_procedencia(ano: int) -> tuple[list[dict], procedencia.B
         timeout=300,
     )
     resposta.raise_for_status()
-    baixado = procedencia.de_resposta("SENADO", resposta)
+    baixado = procedencia.de_resposta(TipoFonteDeCarga.SENADO, resposta)
 
     if not resposta.content.strip():
         return [], baixado

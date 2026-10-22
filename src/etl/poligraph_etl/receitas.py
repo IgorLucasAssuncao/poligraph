@@ -52,6 +52,7 @@ from .normalizacao import (
     sem_cpf,
     valor_pt_br,
 )
+from .tipos import TipoCasa
 
 log = logging.getLogger("poligraph")
 
@@ -66,7 +67,7 @@ CARGO = "DEPUTADO FEDERAL"
 
 # O cargo esperado de cada casa. Serve para NÃO atribuir a um deputado atual a campanha
 # ao Senado que ele perdeu numa eleição anterior: o CPF é o mesmo, o cargo não.
-CARGO_POR_CASA = {"CAMARA": CARGO, "SENADO": "SENADOR"}
+CARGO_POR_CASA = {TipoCasa.CAMARA: CARGO, TipoCasa.SENADO: "SENADOR"}
 CARGOS_ACEITOS = frozenset(CARGO_POR_CASA.values())
 FUNDO_ESPECIAL = "FUNDO ESPECIAL"
 
@@ -238,7 +239,7 @@ def para_linhas(
         if pessoa_id is None:
             continue
 
-        casa = (casa_por_pessoa or {}).get(pessoa_id, "CAMARA")
+        casa = (casa_por_pessoa or {}).get(pessoa_id, TipoCasa.CAMARA)
         if cargo != CARGO_POR_CASA.get(casa, CARGO):
             continue
 
