@@ -1,6 +1,7 @@
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { obterFichaDoPolitico, type MandatoNoTse } from '../api';
 import { AvatarComponent } from '../componentes/Avatar';
+import { BotaoCompartilharComponent } from '../componentes/BotaoCompartilhar';
 import { AbaCampanhaComponent } from '../componentes/ContasDoParlamentar';
 import { useContas } from '../componentes/useContas';
 import { EsqueletoDeFichaComponent } from '../componentes/Esqueleto';
@@ -65,6 +66,9 @@ export function PoliticoComponent() {
           <div className="perfil-identidade">
             <h1>{nome}</h1>
             {nomeCivil && nomeCivil !== nome && <p className="nome-civil">{nomeCivil}</p>}
+          </div>
+          <div className="perfil-acoes">
+            <BotaoCompartilharComponent idPessoa={idPessoa} nome={nome} />
           </div>
         </div>
 

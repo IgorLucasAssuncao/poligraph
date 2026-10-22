@@ -114,6 +114,13 @@ export const TEXTOS_DOS_COMPONENTES = {
     deCadaCem: (parte: number) => `${parte} de cada R$ 100`,
   },
 
+  compartilhar: {
+    rotulo: 'Compartilhar',
+    texto: (nome: string) => `${nome} no Registro Aberto`,
+    copiado: 'Link copiado',
+    semCopiar: (url: string) => `Copie o link: ${url}`,
+  },
+
   mandatos: {
     verOsOutros: (n: number) => (n === 1 ? 'Ver o outro mandato' : `Ver os outros ${n} mandatos`),
     votouDe: 'Votou de ',

@@ -14,6 +14,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: Number(process.env.PORT) || 5173,
-    proxy: { '/api': { target: API, changeOrigin: true } },
+    proxy: {
+      '/api': { target: API, changeOrigin: true },
+      '^/p/[0-9]+$': { target: API, changeOrigin: false, rewrite: (caminho) => caminho.replace(/^\/p\//, '/api/compartilhar/') },
+    },
   },
 });

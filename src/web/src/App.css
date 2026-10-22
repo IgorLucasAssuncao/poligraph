@@ -3204,3 +3204,9 @@ html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
 .menu-ajuda button:hover, .menu-ajuda button:focus-visible { background: var(--painel); outline: none; }
 .menu-ajuda strong { font-size: var(--t-2); }
 .menu-ajuda small { font-size: var(--t-1); color: var(--suave); }
+
+/* Seguir e compartilhar, ao lado do nome na ficha (2026-10-22). */
+.perfil-acoes { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.compartilhar { display: inline-flex; align-items: center; gap: .5rem; }
+.compartilhar-aviso { font-size: var(--t-1); color: var(--suave); }
+.compartilhar-aviso:empty { display: none; }

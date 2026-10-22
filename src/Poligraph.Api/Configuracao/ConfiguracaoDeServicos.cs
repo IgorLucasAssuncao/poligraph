@@ -51,6 +51,7 @@ public static class ConfiguracaoDeServicos
         servicos.AddScoped<ServicoPoliticos>();
         servicos.AddScoped<ServicoGestoesDaCidade>();
         servicos.AddScoped<ServicoLinhaDoTempo>();
+        servicos.AddScoped<ServicoCompartilhamento>();
         servicos.AddScoped<ServicoProcedencia>();
         servicos.AddScoped<ServicoNovidades>();
         servicos.AddScoped<ServicoConsentimentos>();

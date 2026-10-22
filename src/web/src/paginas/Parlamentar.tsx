@@ -17,6 +17,7 @@ import { TourDaTelaComponent } from '../componentes/TourDaTela';
 import { periodoDaLegislatura } from '../formato';
 import { BotaoMostrarMaisComponent } from '../componentes/BotaoMostrarMais';
 import { BotaoSeguirComponent } from '../componentes/BotaoSeguir';
+import { BotaoCompartilharComponent } from '../componentes/BotaoCompartilhar';
 import { AbaCampanhaComponent, AbaCotaComponent, AbaEmendasComponent, FaixaDeContasComponent } from '../componentes/ContasDoParlamentar';
 import { useContas } from '../componentes/useContas';
 import { useLegislaturas } from '../componentes/useLegislatura';
@@ -169,9 +170,12 @@ export function ParlamentarComponent() {
             {ficha.nomeCivil !== ficha.nome && <p className="nome-civil">{ficha.nomeCivil}</p>}
           </div>
 
-          {(seguindo || emExercicio) && (
-            <BotaoSeguirComponent idPessoa={idPessoa} seguindo={seguindo} aoAlternar={(_, agora) => setSeguindo(agora)} />
-          )}
+          <div className="perfil-acoes">
+            {(seguindo || emExercicio) && (
+              <BotaoSeguirComponent idPessoa={idPessoa} seguindo={seguindo} aoAlternar={(_, agora) => setSeguindo(agora)} />
+            )}
+            <BotaoCompartilharComponent idPessoa={idPessoa} nome={ficha.nome} />
+          </div>
         </div>
 
         {!seguindo && !emExercicio && corrente !== undefined && (

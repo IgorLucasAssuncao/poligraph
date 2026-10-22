@@ -135,6 +135,28 @@ public class TestesPoliticos(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Equal((2018, 1000m), (campanha.AnoEleicao, campanha.Total));
     }
 
+    /// <summary>O link de compartilhar devolve a prévia com o nome e leva à ficha; o nome vem escapado.</summary>
+    [SkippableFact]
+    public async Task Compartilhar_DevolveAPreviaComONomeELevaAFicha()
+    {
+        ExigeDocker();
+        var (_, maria) = await SemearAsync();
+        var pessoa = await Db.Pessoas.FindAsync(maria);
+        pessoa!.NomeExibicao = "MARIA <b>EXEMPLO</b>";
+        await Db.SaveChangesAsync();
+
+        using var cliente = new FabricaApi(ConnectionString).CreateClient();
+        var resposta = await cliente.GetAsync($"/api/compartilhar/{maria}");
+        var html = await resposta.Content.ReadAsStringAsync();
+
+        Assert.Equal("text/html", resposta.Content.Headers.ContentType?.MediaType);
+        Assert.Contains("property=\"og:title\"", html);
+        Assert.Contains($"/politico/{maria}", html);
+        Assert.Contains("Prefeito de São Paulo", html);
+        Assert.DoesNotContain("<b>", html);
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, (await cliente.GetAsync("/api/compartilhar/999999")).StatusCode);
+    }
+
     /// <summary>RISCO: o banco recusa prefeito sem município; a lista o mostraria sem saber de onde.</summary>
     [SkippableFact]
     public async Task Prefeito_SemMunicipio_ERejeitadoPeloBanco()
