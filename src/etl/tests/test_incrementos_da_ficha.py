@@ -80,31 +80,31 @@ CPF = "52998224725"
 def test_candidatura_liga_pelo_hash_do_cpf_e_so_do_congresso(tmp_path):
     arquivo = _zip(tmp_path, "cand.zip", {
         "consulta_cand_2022_SP.csv":
-            "SQ_CANDIDATO;CD_CARGO;NR_CPF_CANDIDATO\n"
-            f"111;6;{CPF}\n"
-            f"222;3;{CPF}\n"
-            "333;6;11144477735\n",
+            "SG_UE;SQ_CANDIDATO;CD_CARGO;NR_CPF_CANDIDATO\n"
+            f"SP;111;6;{CPF}\n"
+            f"SP;222;3;{CPF}\n"
+            "SP;333;6;11144477735\n",
     })
 
     ligadas = patrimonio.candidaturas(arquivo, {hash_de_cpf(CPF): 42})
 
-    assert ligadas == {"111": 42}
+    assert ligadas == {("SP", "111"): 42}
 
 
 def test_bens_somam_por_tipo_e_nunca_leem_a_descricao():
     """RISCO: Nenhum pedaço da descrição chega à linha gravada.
     """
     linhas = [
-        {"SQ_CANDIDATO": "111", "DS_TIPO_BEM_CANDIDATO": "Casa", "VR_BEM_CANDIDATO": "300.000,00",
+        {"SG_UE": "SP", "SQ_CANDIDATO": "111", "DS_TIPO_BEM_CANDIDATO": "Casa", "VR_BEM_CANDIDATO": "300.000,00",
          "DS_BEM_CANDIDATO": "CASA NA RUA DAS FLORES, 10"},
-        {"SQ_CANDIDATO": "111", "DS_TIPO_BEM_CANDIDATO": "Casa", "VR_BEM_CANDIDATO": "200.000,00",
+        {"SG_UE": "SP", "SQ_CANDIDATO": "111", "DS_TIPO_BEM_CANDIDATO": "Casa", "VR_BEM_CANDIDATO": "200.000,00",
          "DS_BEM_CANDIDATO": "CASA NA PRAIA"},
-        {"SQ_CANDIDATO": "111", "DS_TIPO_BEM_CANDIDATO": "Veículo", "VR_BEM_CANDIDATO": "50.000,00",
+        {"SG_UE": "SP", "SQ_CANDIDATO": "111", "DS_TIPO_BEM_CANDIDATO": "Veículo", "VR_BEM_CANDIDATO": "50.000,00",
          "DS_BEM_CANDIDATO": "CARRO PLACA ABC1234"},
-        {"SQ_CANDIDATO": "999", "DS_TIPO_BEM_CANDIDATO": "Casa", "VR_BEM_CANDIDATO": "1,00", "DS_BEM_CANDIDATO": "X"},
+        {"SG_UE": "SP", "SQ_CANDIDATO": "999", "DS_TIPO_BEM_CANDIDATO": "Casa", "VR_BEM_CANDIDATO": "1,00", "DS_BEM_CANDIDATO": "X"},
     ]
 
-    saida = patrimonio.bens_para_linhas(linhas, {"111": 42}, 2022)
+    saida = patrimonio.bens_para_linhas(linhas, {("SP", "111"): 42}, 2022)
 
     assert sorted((l["tipo_bem"], l["valor"], l["quantidade"]) for l in saida) == [
         ("Casa", 500_000.0, 2), ("Veículo", 50_000.0, 1)]
@@ -113,13 +113,13 @@ def test_bens_somam_por_tipo_e_nunca_leem_a_descricao():
 
 def test_com_arquivo_brasil_le_so_ele(tmp_path):
     """Somar o BRASIL e os de UF contaria cada bem duas vezes."""
-    cabecalho = "SQ_CANDIDATO;DS_TIPO_BEM_CANDIDATO;VR_BEM_CANDIDATO\n"
+    cabecalho = "SG_UE;SQ_CANDIDATO;DS_TIPO_BEM_CANDIDATO;VR_BEM_CANDIDATO\n"
     arquivo = _zip(tmp_path, "bens.zip", {
-        "bem_candidato_2022_SP.csv": cabecalho + "111;Casa;100,00\n",
-        "bem_candidato_2022_BRASIL.csv": cabecalho + "111;Casa;100,00\n",
+        "bem_candidato_2022_SP.csv": cabecalho + "SP;111;Casa;100,00\n",
+        "bem_candidato_2022_BRASIL.csv": cabecalho + "SP;111;Casa;100,00\n",
     })
 
-    saida = patrimonio.bens_para_linhas(patrimonio.linhas_do_zip(arquivo), {"111": 42}, 2022)
+    saida = patrimonio.bens_para_linhas(patrimonio.linhas_do_zip(arquivo), {("SP", "111"): 42}, 2022)
 
     assert [(l["valor"], l["quantidade"]) for l in saida] == [(100.0, 1)]
 

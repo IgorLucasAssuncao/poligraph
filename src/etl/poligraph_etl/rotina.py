@@ -9,7 +9,8 @@ vez que alguém apertou o botão. Este módulo só DECIDE as etapas; quem as exe
 | `semanal` | `ingerir`, `senado`, `em-exercicio` (a lista oficial de quem está no mandato) e `simbolicas` do ano corrente, `palavras-chave` das novas, `conferir` |
 | `mensal` | as da semanal, `cota`, `emendas`, `sedes-brasilapi` (CNPJs novos das emendas), `convenios`, `governo`, `defesa-civil`, `compras-centralizadas`, `viagens`, `compras`, `sancoes`, `populacao`, `analisar` das duas casas, `conferir` |
 | mensal de jan, abr, jul e out | também `municipios`: o cadastro de CNPJ da Receita, gigabytes, uma vez por trimestre |
-| mensal de nov e dez de ano de eleição geral | também `fundo`, `patrimonio` e `redes` da eleição: o TSE fecha a prestação de contas depois do segundo turno |
+| mensal de nov e dez de ano de eleição geral | também `mandatos`, `fundo`, `patrimonio` e `redes` da eleição: o TSE fecha a prestação de contas depois do segundo turno |
+| mensal de nov e dez de ano de eleição municipal | também `mandatos`, `patrimonio` e `redes` da eleição: os prefeitos e vices eleitos (Pendência 90) |
 | toda rotina, depois do `conferir` | `limpar-cache`: as regras de `limpeza` (2026-10-15) |
 
 DECISÃO (2026-10-03, auditoria das fontes): toda fonte periódica que o site mostra entra aqui, no
@@ -93,9 +94,11 @@ def etapas(frequencia: str, hoje: date) -> list[Etapa]:
         ]
         if hoje.month in MESES_DO_CADASTRO_DA_RECEITA:
             lista.append(Etapa("municipios"))
-        if eh_ano_de_eleicao_geral(hoje.year) and hoje.month in MESES_DEPOIS_DA_ELEICAO:
+        if hoje.year % 2 == 0 and hoje.month in MESES_DEPOIS_DA_ELEICAO:
+            lista.append(Etapa("mandatos", {"eleicoes": [hoje.year]}))
+            if eh_ano_de_eleicao_geral(hoje.year):
+                lista.append(Etapa("fundo", {"eleicao": hoje.year}))
             lista += [
-                Etapa("fundo", {"eleicao": hoje.year}),
                 Etapa("patrimonio", {"anos": [hoje.year]}),
                 Etapa("redes", {"anos": [hoje.year]}),
             ]

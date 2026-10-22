@@ -1378,6 +1378,110 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Poligraph.Data.MandatoModel", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<short>("AnoEleicao")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano_eleicao");
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
+                    b.Property<string>("Cargo")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("cargo");
+
+                    b.Property<string>("CodigoMunicipioIbge")
+                        .HasMaxLength(7)
+                        .HasColumnType("character(7)")
+                        .HasColumnName("codigo_municipio_ibge")
+                        .IsFixedLength();
+
+                    b.Property<string>("CodigoMunicipioTse")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)")
+                        .HasColumnName("codigo_municipio_tse");
+
+                    b.Property<string>("NomeDeUrna")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("nome_de_urna");
+
+                    b.Property<string>("Partido")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("partido");
+
+                    b.Property<long>("PessoaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("pessoa_id");
+
+                    b.Property<short>("PrimeiroAno")
+                        .HasColumnType("smallint")
+                        .HasColumnName("primeiro_ano");
+
+                    b.Property<string>("SqCandidato")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("sq_candidato");
+
+                    b.Property<string>("Uf")
+                        .HasMaxLength(2)
+                        .HasColumnType("character(2)")
+                        .HasColumnName("uf")
+                        .IsFixedLength();
+
+                    b.Property<short>("UltimoAno")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ultimo_ano");
+
+                    b.HasKey("Id")
+                        .HasName("pk_mandatos");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_mandatos_carga_id");
+
+                    b.HasIndex("CodigoMunicipioIbge")
+                        .HasDatabaseName("ix_mandatos_codigo_municipio_ibge");
+
+                    b.HasIndex("PessoaId")
+                        .HasDatabaseName("ix_mandatos_pessoa_id");
+
+                    b.HasIndex("Cargo", "Uf")
+                        .HasDatabaseName("ix_mandatos_cargo_uf");
+
+                    b.HasIndex("AnoEleicao", "Uf", "CodigoMunicipioTse", "Cargo", "SqCandidato")
+                        .IsUnique()
+                        .HasDatabaseName("ix_mandatos_ano_eleicao_uf_codigo_municipio_tse_cargo_sq_candi");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("AnoEleicao", "Uf", "CodigoMunicipioTse", "Cargo", "SqCandidato"), false);
+
+                    b.ToTable("mandatos", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_mandato_anos", "primeiro_ano = ano_eleicao + 1 AND ultimo_ano >= primeiro_ano");
+
+                            t.HasCheckConstraint("ck_mandato_cargo", "cargo IN ('PRESIDENTE','VICE_PRESIDENTE','SENADOR','DEPUTADO_FEDERAL','GOVERNADOR','VICE_GOVERNADOR','DEPUTADO_ESTADUAL','DEPUTADO_DISTRITAL','PREFEITO','VICE_PREFEITO')");
+
+                            t.HasCheckConstraint("ck_mandato_eleicao", "ano_eleicao BETWEEN 1994 AND 2100 AND ano_eleicao % 2 = 0");
+
+                            t.HasCheckConstraint("ck_mandato_ente", "CASE WHEN cargo IN ('PREFEITO','VICE_PREFEITO') THEN uf IS NOT NULL AND codigo_municipio_tse IS NOT NULL WHEN cargo IN ('PRESIDENTE','VICE_PRESIDENTE') THEN uf IS NULL AND codigo_municipio_tse IS NULL AND codigo_municipio_ibge IS NULL ELSE uf IS NOT NULL AND codigo_municipio_tse IS NULL AND codigo_municipio_ibge IS NULL END");
+
+                            t.HasCheckConstraint("ck_mandato_uf", "uf IS NULL OR uf ~ '^[A-Z]{2}$'");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Data.MunicipioModel", b =>
                 {
                     b.Property<string>("CodigoIbge")
@@ -1769,6 +1873,11 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("sexo");
 
+                    b.Property<string>("TituloHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("titulo_hash");
+
                     b.Property<string>("UrlFoto")
                         .HasColumnType("text")
                         .HasColumnName("url_foto");
@@ -1784,6 +1893,10 @@ namespace Poligraph.Data.Migrations
 
                     b.HasIndex("NomeCivilCargaId")
                         .HasDatabaseName("ix_pessoas_nome_civil_carga_id");
+
+                    b.HasIndex("TituloHash")
+                        .HasDatabaseName("ix_pessoas_titulo_hash")
+                        .HasFilter("titulo_hash IS NOT NULL");
 
                     b.ToTable("pessoas", null, t =>
                         {
@@ -2839,6 +2952,28 @@ namespace Poligraph.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_inscricoes_no_navegador_usuarios_usuario_id");
+                });
+
+            modelBuilder.Entity("Poligraph.Data.MandatoModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_mandatos_cargas_carga_id");
+
+                    b.HasOne("Poligraph.Data.MunicipioModel", null)
+                        .WithMany()
+                        .HasForeignKey("CodigoMunicipioIbge")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_mandatos_municipios_codigo_municipio_ibge");
+
+                    b.HasOne("Poligraph.Data.PessoaModel", null)
+                        .WithMany()
+                        .HasForeignKey("PessoaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_mandatos_pessoas_pessoa_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.MunicipioModel", b =>

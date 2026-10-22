@@ -1369,6 +1369,128 @@ def fechar_execucao(conexao: psycopg.Connection, execucao_id: int, sucesso: bool
 
 
 # ═══════════════════════════════════════════════════════════════════
+# Mandatos (Pendência 90)
+# ═══════════════════════════════════════════════════════════════════
+
+
+def municipios_para_ponte(conexao: psycopg.Connection) -> list[tuple[str, str, str]]:
+    """(código do IBGE, nome, UF) de cada município: a ponte do código do TSE."""
+    return [tuple(linha) for linha in conexao.execute("SELECT codigo_ibge, nome, uf FROM municipios").fetchall()]
+
+
+def pessoas_dos_mandatos(conexao: psycopg.Connection) -> dict[tuple, int]:
+    """`mandatos.candidatura` → `pessoas.id`, dos mandatos já gravados.
+
+    É o que liga o eleito à mesma pessoa quando o `cpf_hash` dela foi apagado (`rechavear-cpf`).
+    """
+    return {
+        tuple(linha[:5]): linha[5]
+        for linha in conexao.execute(
+            "SELECT ano_eleicao, uf, codigo_municipio_tse, cargo, sq_candidato, pessoa_id FROM mandatos"
+        ).fetchall()
+    }
+
+
+def candidaturas_dos_mandatos(conexao: psycopg.Connection, ano: int) -> dict[tuple[str, str], int]:
+    """(`SG_UE`, `SQ_CANDIDATO`) → `pessoas.id`, dos eleitos da eleição. A UE é o município do TSE, a UF ou `BR`."""
+    return {
+        (linha[0], linha[1]): linha[2]
+        for linha in conexao.execute(
+            """
+            SELECT coalesce(codigo_municipio_tse, uf, 'BR'), sq_candidato, pessoa_id
+              FROM mandatos WHERE ano_eleicao = %s
+            """,
+            (ano,),
+        ).fetchall()
+    }
+
+
+def pessoas_fora_do_congresso(conexao: psycopg.Connection) -> set[int]:
+    """Quem tem mandato no TSE e nunca votou no Congresso: as redes deles vêm só do TSE."""
+    return {
+        linha[0]
+        for linha in conexao.execute(
+            """
+            SELECT DISTINCT m.pessoa_id FROM mandatos m
+             WHERE NOT EXISTS (SELECT 1 FROM pessoa_fonte_ids f
+                                WHERE f.pessoa_id = m.pessoa_id AND f.fonte IN ('CAMARA', 'SENADO'))
+            """
+        ).fetchall()
+    }
+
+
+def pessoas_por_casa(conexao: psycopg.Connection) -> dict[str, dict[str, int]]:
+    """`cpf_hash` → casa → `pessoas.id`. Quem foi deputado e senador tem uma pessoa em cada casa (achado #18)."""
+    por_casa: dict[str, dict[str, int]] = {}
+    for cpf, fonte, pessoa in conexao.execute(
+        """
+        SELECT p.cpf_hash, f.fonte, min(p.id)
+          FROM pessoas p JOIN pessoa_fonte_ids f ON f.pessoa_id = p.id
+         WHERE p.cpf_hash IS NOT NULL AND f.fonte IN ('CAMARA', 'SENADO')
+         GROUP BY 1, 2
+        """
+    ).fetchall():
+        por_casa.setdefault(cpf, {})[fonte] = pessoa
+    return por_casa
+
+
+def hashes_de_titulos(conexao: psycopg.Connection) -> dict[str, int]:
+    """`titulo_hash` → `pessoas.id`, de quem tem hash do título."""
+    return {
+        linha[0]: linha[1]
+        for linha in conexao.execute("SELECT titulo_hash, id FROM pessoas WHERE titulo_hash IS NOT NULL").fetchall()
+    }
+
+
+def gravar_pessoas_do_tse(conexao: psycopg.Connection, grupos: Sequence[Sequence], cargas: dict[int, int]) -> list[tuple[Sequence, int]]:
+    """Cria uma pessoa por grupo de eleitos (a mesma pessoa em várias eleições) e devolve (grupo, `pessoas.id`).
+
+    Nome, nascimento e sexo vêm da eleição mais recente do grupo; o CPF e o título, do primeiro eleito que
+    os traz. A carga do arquivo da eleição mais recente fica nas três colunas de procedência.
+    """
+    criadas = []
+    with conexao.cursor() as cur:
+        for grupo in grupos:
+            recente = max(grupo, key=lambda e: e.ano_eleicao)
+            cpf = next((e.cpf_hash for e in grupo if e.cpf_hash), None)
+            titulo = next((e.titulo_hash for e in grupo if e.titulo_hash), None)
+            carga_id = cargas.get(recente.ano_eleicao)
+            cur.execute(
+                """
+                INSERT INTO pessoas (nome_civil, nome_exibicao, data_nascimento, sexo, cpf_hash, titulo_hash,
+                                     carga_id, cpf_carga_id, nome_civil_carga_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (recente.nome, recente.nome_de_urna, recente.nascimento, recente.sexo and recente.sexo.value,
+                 cpf, titulo, carga_id, carga_id if cpf else None, carga_id),
+            )
+            criadas.append((grupo, cur.fetchone()[0]))
+    return criadas
+
+
+def completar_hashes(conexao: psycopg.Connection, faltantes: Sequence[dict]) -> int:
+    """Completa `cpf_hash` e `titulo_hash` de quem está sem eles (`id`, `cpf_hash`, `titulo_hash`); nunca troca um que existe."""
+    return _executar_em_lotes(
+        conexao,
+        """
+        UPDATE pessoas
+           SET cpf_hash = COALESCE(cpf_hash, %(cpf_hash)s),
+               titulo_hash = COALESCE(titulo_hash, %(titulo_hash)s)
+         WHERE id = %(id)s
+        """,
+        faltantes,
+    )
+
+
+def gravar_mandatos(conexao: psycopg.Connection, anos: list[int], linhas: Sequence, carga_id: int | None) -> int:
+    """Grava os mandatos, substituindo as eleições que estão entrando."""
+    conexao.execute("DELETE FROM mandatos WHERE ano_eleicao = ANY(%s)", (anos,))
+    return gravar_contratos(conexao, linhas, carga_id)
+
+
+
+# ═══════════════════════════════════════════════════════════════════
 # PRIVADOS
 # ═══════════════════════════════════════════════════════════════════
 
@@ -1506,4 +1628,3 @@ def gravar_convenentes(conexao: psycopg.Connection, linhas: Sequence[dict], carg
         """,
         _com_carga(linhas, carga_id),
     )
-

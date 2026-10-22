@@ -1,6 +1,6 @@
 ﻿namespace Poligraph.Data;
 
-/// <summary>Parlamentar. Identidade própria do projeto, mapeada para os IDs externos.</summary>
+/// <summary>Um político: parlamentar federal ou eleito estadual e municipal (Pendência 90). Identidade própria do projeto, mapeada para os IDs externos; os cargos ficam em <see cref="MandatoModel"/>.</summary>
 public class PessoaModel
 {
     public long Id { get; set; }
@@ -11,6 +11,9 @@ public class PessoaModel
 
     /// <summary> NUNCA o CPF em claro — RNF-13.</summary>
     public string? CpfHash { get; set; }
+
+    /// <summary>HMAC do título de eleitor, com a mesma chave do CPF (Pendência 90). Identifica o eleito entre eleições quando o TSE não publica o CPF, como em 2024. NUNCA o título em claro. Não é único, como o CPF: quem foi deputado e senador tem uma pessoa por casa (achado #18).</summary>
+    public string? TituloHash { get; set; }
 
     /// <summary>
     /// URL da foto oficial, na própria Câmara.

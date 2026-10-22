@@ -10,6 +10,7 @@ namespace Poligraph.Data;
 public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoes)
 {
     public DbSet<PessoaModel> Pessoas => Set<PessoaModel>();
+    public DbSet<MandatoModel> Mandatos => Set<MandatoModel>();
     public DbSet<PessoaFonteIdModel> PessoaFonteIds => Set<PessoaFonteIdModel>();
     public DbSet<VotacaoModel> Votacoes => Set<VotacaoModel>();
     public DbSet<VotoModel> Votos => Set<VotoModel>();
@@ -100,6 +101,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         {
             e.HasKey(x => x.Id);
             e.Property(x => x.CpfHash).HasMaxLength(64);
+            e.Property(x => x.TituloHash).HasMaxLength(64);
+            e.HasIndex(x => x.TituloHash).HasFilter("titulo_hash IS NOT NULL");
             e.ToTable(t => t.HasCheckConstraint(
                 "ck_pessoa_sexo", "sexo IS NULL OR sexo IN ('M','F')"));
 
@@ -117,6 +120,37 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
                 t.HasCheckConstraint("ck_metodo", "metodo IN ('CPF','FUZZY','MANUAL')");
                 t.HasCheckConstraint("ck_confianca",
                     "confianca IS NULL OR (confianca BETWEEN 0 AND 1)");
+            });
+        });
+
+        mb.Entity<MandatoModel>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.SqCandidato).HasMaxLength(20);
+            e.Property(x => x.Uf).HasMaxLength(2).IsFixedLength();
+            e.Property(x => x.CodigoMunicipioTse).HasMaxLength(5);
+            e.Property(x => x.CodigoMunicipioIbge).HasMaxLength(7).IsFixedLength();
+            e.Property(x => x.Partido).HasMaxLength(20);
+            e.Property(x => x.NomeDeUrna).HasMaxLength(120);
+            e.HasIndex(x => new { x.AnoEleicao, x.Uf, x.CodigoMunicipioTse, x.Cargo, x.SqCandidato }).IsUnique().AreNullsDistinct(false);
+            e.HasIndex(x => x.PessoaId);
+            e.HasIndex(x => new { x.Cargo, x.Uf });
+            e.HasIndex(x => x.CodigoMunicipioIbge);
+            e.HasOne<PessoaModel>().WithMany().HasForeignKey(x => x.PessoaId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<MunicipioModel>().WithMany().HasForeignKey(x => x.CodigoMunicipioIbge).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<CargaModel>().WithMany().HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_mandato_cargo",
+                    "cargo IN ('PRESIDENTE','VICE_PRESIDENTE','SENADOR','DEPUTADO_FEDERAL','GOVERNADOR','VICE_GOVERNADOR',"
+                    + "'DEPUTADO_ESTADUAL','DEPUTADO_DISTRITAL','PREFEITO','VICE_PREFEITO')");
+                t.HasCheckConstraint("ck_mandato_eleicao", "ano_eleicao BETWEEN 1994 AND 2100 AND ano_eleicao % 2 = 0");
+                t.HasCheckConstraint("ck_mandato_anos", "primeiro_ano = ano_eleicao + 1 AND ultimo_ano >= primeiro_ano");
+                t.HasCheckConstraint("ck_mandato_uf", "uf IS NULL OR uf ~ '^[A-Z]{2}$'");
+                t.HasCheckConstraint("ck_mandato_ente",
+                    "CASE WHEN cargo IN ('PREFEITO','VICE_PREFEITO') THEN uf IS NOT NULL AND codigo_municipio_tse IS NOT NULL "
+                    + "WHEN cargo IN ('PRESIDENTE','VICE_PRESIDENTE') THEN uf IS NULL AND codigo_municipio_tse IS NULL AND codigo_municipio_ibge IS NULL "
+                    + "ELSE uf IS NOT NULL AND codigo_municipio_tse IS NULL AND codigo_municipio_ibge IS NULL END");
             });
         });
     }

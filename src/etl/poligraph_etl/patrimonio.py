@@ -28,12 +28,13 @@ from collections import defaultdict
 from pathlib import Path
 
 from . import normalizacao
+from .tipos import CARGOS_DO_CONGRESSO, TipoCargo, cargo_do_tse
 
 RECURSO_CANDIDATOS = "consulta_cand/consulta_cand_{ano}.zip"
 RECURSO_BENS = "bem_candidato/bem_candidato_{ano}.zip"
 
-# Os cargos do Congresso no TSE: 5 = senador, 6 = deputado federal.
-CARGOS_DO_CONGRESSO = {"5", "6"}
+Candidatura = tuple[str, str]
+"""(`SG_UE`, `SQ_CANDIDATO`). RISCO: até 2008 o `SQ_CANDIDATO` só é único dentro da UE (`mandatos.candidatura`)."""
 
 
 def membros(zf: zipfile.ZipFile) -> list[str]:
@@ -50,26 +51,30 @@ def linhas_do_zip(arquivo_zip: Path):
                 yield from csv.DictReader(io.TextIOWrapper(bruto, encoding="latin-1", newline=""), delimiter=";")
 
 
-def candidaturas(arquivo_zip: Path, hashes: dict[str, int], cargos: set[str] = CARGOS_DO_CONGRESSO) -> dict[str, int]:
-    """`SQ_CANDIDATO` → `pessoas.id`, para as candidaturas de parlamentar que estão na base.
+def chave(registro: dict) -> Candidatura:
+    return registro.get("SG_UE") or "", registro.get("SQ_CANDIDATO") or ""
+
+
+def candidaturas(arquivo_zip: Path, hashes: dict[str, int], cargos: frozenset[TipoCargo] = CARGOS_DO_CONGRESSO) -> dict[Candidatura, int]:
+    """Candidatura → `pessoas.id`, para as candidaturas de parlamentar que estão na base, eleitas ou não.
 
     RISCO: O CPF vira hash aqui mesmo e não é guardado: só o hash é comparado.
     """
     ligadas = {}
     for r in linhas_do_zip(arquivo_zip):
-        if r.get("CD_CARGO") not in cargos:
+        if cargo_do_tse(r.get("CD_CARGO")) not in cargos:
             continue
-        pessoa = hashes.get(normalizacao.hash_de_cpf(r.get("NR_CPF_CANDIDATO")))
+        pessoa = hashes.get(normalizacao.hash_de_cpf(r.get("NR_CPF_CANDIDATO")) or "")
         if pessoa is not None:
-            ligadas[r["SQ_CANDIDATO"]] = pessoa
+            ligadas[chave(r)] = pessoa
     return ligadas
 
 
-def bens_para_linhas(linhas, candidaturas_ligadas: dict[str, int], ano: int) -> list[dict]:
+def bens_para_linhas(linhas, candidaturas_ligadas: dict[Candidatura, int], ano: int) -> list[dict]:
     """Soma os bens por pessoa e tipo. Não Lê `DS_BEM_CANDIDATO`, que traz endereço."""
     somas: dict[tuple[int, str], list] = defaultdict(lambda: [0.0, 0])
     for r in linhas:
-        pessoa = candidaturas_ligadas.get(r.get("SQ_CANDIDATO"))
+        pessoa = candidaturas_ligadas.get(chave(r))
         if pessoa is None:
             continue
         tipo = (r.get("DS_TIPO_BEM_CANDIDATO") or "").strip() or "Não informado"

@@ -375,6 +375,21 @@ def hash_de_cpf(bruto: str | int | None) -> str | None:
     return hmac.new(_chave_do_cpf(), digitos.encode(), hashlib.sha256).hexdigest()
 
 
+def hash_de_titulo(bruto: str | None) -> str | None:
+    """HMAC-SHA256 do título de eleitor, com a mesma chave do CPF (Pendência 90).
+
+    O título identifica o candidato entre eleições quando o CPF não vem: o TSE parou de publicar o
+    CPF em 2024. É dado pessoal como o CPF e segue a mesma regra: só o hash vai para o banco.
+
+    Tem 12 dígitos em todos os arquivos de 2010 a 2024 (MEDIDO em 2026-10-21); outro tamanho, sentinela
+    negativa ou vazio vira `None`.
+    """
+    texto = (bruto or "").strip()
+    if len(texto) != 12 or not texto.isdigit():
+        return None
+    return hmac.new(_chave_do_cpf(), f"titulo:{texto}".encode(), hashlib.sha256).hexdigest()
+
+
 def _chave_do_cpf() -> bytes:
     """A chave do HMAC do CPF; sem ela, erro explicando onde pôr."""
     chave = os.environ.get(VARIAVEL_DA_CHAVE, "")
@@ -393,8 +408,13 @@ def normalizar_cpf(bruto: str | int | None) -> str | None:
 
     ATENÇÃO: Ler CPF como número é o erro clássico: `01234567890` vira `1234567890` e o
     join com o TSE perde a pessoa em silêncio. Por isso o ETL lê tudo como texto.
+
+    RISCO: O TSE marca o CPF que não publica com número negativo: `-4` (não divulgável; todo o
+    arquivo de 2024) e `-1`. Completado com zeros, `-4` virava `00000000004`, o mesmo hash para
+    todos, e juntou os 11.126 eleitos de 2024 numa pessoa só (MEDIDO em 2026-10-21). Sentinela
+    negativa não é CPF.
     """
-    if bruto is None:
+    if bruto is None or str(bruto).strip().startswith("-"):
         return None
 
     digitos = re.sub(r"\D", "", str(bruto))

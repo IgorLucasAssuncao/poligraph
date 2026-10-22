@@ -60,7 +60,17 @@ def test_tse_depois_da_eleicao_geral():
     assert "fundo --eleicao 2026" in comandos
     assert "patrimonio --anos 2026" in comandos
     assert "redes --anos 2026" in comandos
+    assert "mandatos --eleicoes 2026" in comandos
     assert not any(c.startswith("fundo") for c in _comandos(rotina.etapas("mensal", date(2028, 11, 5))))
+
+
+def test_eleicao_municipal_traz_prefeitos_bens_e_redes():
+    """Pendência 90: nov de 2028 traz os prefeitos e vices eleitos, sem a campanha."""
+    comandos = _comandos(rotina.etapas("mensal", date(2028, 11, 5)))
+
+    assert "mandatos --eleicoes 2028" in comandos
+    assert "patrimonio --anos 2028" in comandos
+    assert not any(c.startswith("mandatos") for c in _comandos(rotina.etapas("mensal", date(2027, 11, 5))))
 
 
 def test_o_governo_em_exercicio_e_o_da_ultima_eleicao_geral():
@@ -100,7 +110,7 @@ def test_toda_etapa_tem_execucao_no_main(monkeypatch):
     executados = []
     nomes = (
         "_ingerir", "_senado", "_simbolicas", "_palavras_chave", "_cota", "_emendas", "_sedes_brasilapi", "_convenios",
-        "_governo", "_defesa_civil", "_compras_centralizadas", "_viagens", "_compras", "_sancoes", "_municipios", "_fundo", "_patrimonio", "_redes", "_populacao", "_analisar", "_conferir", "_em_exercicio",
+        "_governo", "_defesa_civil", "_compras_centralizadas", "_viagens", "_compras", "_sancoes", "_municipios", "_fundo", "_mandatos", "_patrimonio", "_redes", "_populacao", "_analisar", "_conferir", "_em_exercicio",
         "_limpar_cache",
     )
     for nome in nomes:

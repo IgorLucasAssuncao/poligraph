@@ -20,4 +20,13 @@ public static class ExtensoesDeEnums
         TipoCasa.SENADO => TipoFonteDeIdentificador.SENADO,
         _ => throw new ArgumentOutOfRangeException(nameof(casa)),
     };
+
+    /// <summary>O nível de governo do cargo. O distrital é estadual: o DF não tem município.</summary>
+    public static TipoNivel Nivel(this TipoCargo cargo) => cargo switch
+    {
+        TipoCargo.PRESIDENTE or TipoCargo.VICE_PRESIDENTE or TipoCargo.SENADOR or TipoCargo.DEPUTADO_FEDERAL => TipoNivel.FEDERAL,
+        TipoCargo.GOVERNADOR or TipoCargo.VICE_GOVERNADOR or TipoCargo.DEPUTADO_ESTADUAL or TipoCargo.DEPUTADO_DISTRITAL => TipoNivel.ESTADUAL,
+        TipoCargo.PREFEITO or TipoCargo.VICE_PREFEITO => TipoNivel.MUNICIPAL,
+        _ => throw new ArgumentOutOfRangeException(nameof(cargo)),
+    };
 }

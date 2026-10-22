@@ -70,8 +70,9 @@ os testes).
 | `populacao` | População estimada de cada município (IBGE, SIDRA 6579), para o mapa por habitante | — |
 | `sedes-brasilapi` | Sede dos CNPJs que o cadastro não resolveu, pela BrasilAPI (Pendência 71). Retoma de onde parou | `--limite N` |
 | `fundo` | Receitas de campanha, com o fundo eleitoral (TSE) | `--eleicao 2022`; `--arquivo` com o ZIP baixado à mão |
-| `patrimonio` | Bens declarados ao TSE, por tipo | `--anos 2018 2022` |
-| `redes` | Redes sociais: Câmara para deputados, TSE para senadores | `--anos 2018 2022` |
+| `mandatos` | Eleitos do TSE (Pendência 90): deputados estaduais e distritais, governadores, prefeitos e vices, com pessoa nova para quem não é do Congresso. Identidade pelo hash do CPF ou do título de eleitor (o de 2024 não traz CPF) | `--eleicoes 2000 ... 2024` (padrão: todas de 2000 a 2024) |
+| `patrimonio` | Bens declarados ao TSE, por tipo: parlamentares pelo CPF, os outros cargos por `mandatos` | `--anos 2018 2022` |
+| `redes` | Redes sociais: Câmara para deputados, TSE para senadores e para quem só tem mandato no TSE (de 2014 em diante) | `--anos 2018 2020 2022 2024` |
 | `governo` | Quem governa (TSE), orçamento, pago, arrecadação e gasto sigiloso (Portal) | `--anos ...`, `--eleicao` |
 | `defesa-civil` | Cartão da Defesa Civil (CPDC), mês a mês. Mês que o Portal não publicou é pulado e nomeado no log | `--anos ...` |
 | `viagens` | Viagens a serviço do Executivo federal: diárias, passagens, seguro e restituição por órgão, e destinos | `--anos ...` |
@@ -90,7 +91,8 @@ haveria como refazer a carga a partir dele. Fora da pasta, o comando recusa ante
 | `rotina --frequencia semanal` | `ingerir`, `senado` e `simbolicas` do ano, `palavras-chave`, `conferir` |
 | `rotina --frequencia mensal` | A semanal, mais `cota`, `emendas`, `sedes-brasilapi`, `convenios`, `governo`, `defesa-civil`, `compras-centralizadas`, `viagens`, `compras`, `sancoes`, `populacao`, `analisar` das duas casas, `conferir` |
 | mensal de jan, abr, jul e out | Também `municipios`: o cadastro da Receita muda por trimestre e pesa gigabytes |
-| mensal de nov e dez de ano de eleição geral | Também `fundo`, `patrimonio` e `redes` da eleição: o TSE fecha a prestação de contas depois do segundo turno |
+| mensal de nov e dez de ano de eleição geral | Também `mandatos`, `fundo`, `patrimonio` e `redes` da eleição: o TSE fecha a prestação de contas depois do segundo turno |
+| mensal de nov e dez de ano de eleição municipal | Também `mandatos`, `patrimonio` e `redes` da eleição |
 
 A tabela sai de [`poligraph_etl/rotina.py`](poligraph_etl/rotina.py), que só decide as
 etapas; o `__main__` as executa. Em janeiro e fevereiro a rotina inclui o ano anterior. No VPS, as duas são tarefas
@@ -107,7 +109,8 @@ uma etapa, a ordem não importa.
 |---|---|---|
 | 1 | `ingerir`, `senado`, `governo`, `defesa-civil`, `viagens`, `compras`, `sancoes`, `compras-centralizadas` | Nada |
 | 2 | `simbolicas`, `palavras-chave`, `analisar`, `cpf`, `cota`, `emendas` | O voto e o cadastro das duas casas (`simbolicas` só da Câmara) |
-| 3 | `fundo`, `patrimonio`, `redes` | `cpf`: é a chave para casar com o TSE |
+| 3 | `mandatos` | `cpf` e `senado`: liga o eleito ao parlamentar que já está na base |
+| 4 | `fundo`, `patrimonio`, `redes` | `cpf` e `mandatos`: são as chaves para casar com o TSE |
 | 3 | `convenios`, `municipios` | `emendas`: são os CNPJs que eles procuram |
 | 4 | `sedes-brasilapi` | `municipios`: só pergunta o que o cadastro da Receita não resolveu |
 | 4 | `populacao` | `municipios`: grava na linha do município |
@@ -117,7 +120,7 @@ uma etapa, a ordem não importa.
 rodam à mão, quando a pergunta aparece.
 
 ATENÇÃO: dois comandos juntos no mesmo servidor dividem o limite de ritmo dele. `fundo`,
-`patrimonio`, `redes` e `cpf` (Senado) usam o TSE, cujo WAF bloqueia rajada. Na dúvida, um
+`patrimonio`, `redes`, `mandatos` e `cpf` (Senado) usam o TSE, cujo WAF bloqueia rajada. Na dúvida, um
 por servidor; o mapa marca quem divide qual.
 
 | Sem o pré-requisito | O que acontece |
@@ -141,9 +144,10 @@ py -m poligraph_etl analisar --casa CAMARA
 py -m poligraph_etl analisar --casa SENADO
 py -m poligraph_etl cpf
 py -m poligraph_etl cota --anos 2023 2024 2025 2026
+py -m poligraph_etl mandatos
 py -m poligraph_etl fundo --eleicao 2022
-py -m poligraph_etl patrimonio --anos 2018 2022
-py -m poligraph_etl redes --anos 2018 2022
+py -m poligraph_etl patrimonio --anos 2018 2020 2022 2024
+py -m poligraph_etl redes --anos 2018 2020 2022 2024
 py -m poligraph_etl emendas --anos 2023 2024 2025 2026
 py -m poligraph_etl convenios
 py -m poligraph_etl municipios

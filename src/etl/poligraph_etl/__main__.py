@@ -31,9 +31,11 @@ from . import (
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
 from .fontes import brasilapi, camara, portal, receita, senado, tse
-from . import amostra, compras, compras_centralizadas, conferencia, convenentes, defesa_civil, em_exercicio, limpeza, patrimonio, procedencia, redes, rotina, sancoes, telemetria, viagens
+from . import amostra, mandatos, compras, compras_centralizadas, conferencia, convenentes, defesa_civil, em_exercicio, limpeza, patrimonio, procedencia, redes, rotina, sancoes, telemetria, viagens
 from .contratos import entrada
 from .contratos.entrada import colunas_da_fonte
+from .contratos.tse import LinhaDeCandidatura
+from .tipos import TipoCargo
 from .contratos.portal import (
     LinhaDeCompra, LinhaDeCompraCentralizadaNoCartao, LinhaDeSancao, LinhaDeTrechoDeViagem, LinhaDeViagem, LinhaDePagamentoDeViagem, LinhaDoCartaoDaDefesaCivil,
 )
@@ -103,6 +105,8 @@ def main(argv: list[str] | None = None) -> int:
                 _convenios(conexao)
             elif args.comando == "patrimonio":
                 _patrimonio(conexao, args.anos)
+            elif args.comando == "mandatos":
+                _mandatos(conexao, args.eleicoes)
             elif args.comando == "redes":
                 _redes(conexao, args.anos)
             elif args.comando == "municipios":
@@ -234,11 +238,13 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         "convenios",
         help="completa CNPJ do convenente, situação e liberado dos convênios de emenda (Portal)",
     )
+    man = sub.add_parser("mandatos", help="os eleitos de cada eleição (TSE): estaduais, governadores, prefeitos e vices")
+    man.add_argument("--eleicoes", type=int, nargs="+", default=ELEICOES_DOS_MANDATOS)
     pat = sub.add_parser("patrimonio", help="bens declarados ao TSE, por tipo — não a descrição")
     pat.add_argument("--anos", type=int, nargs="+", default=[2018, 2022])
-    red = sub.add_parser("redes", help="redes sociais: Câmara para deputados, TSE para senadores")
-    red.add_argument("--anos", type=int, nargs="+", default=[2018, 2022],
-                     help="eleições do TSE para os senadores; vale a mais recente de cada um")
+    red = sub.add_parser("redes", help="redes sociais: Câmara para deputados, TSE para senadores e para os outros cargos")
+    red.add_argument("--anos", type=int, nargs="+", default=[2018, 2020, 2022, 2024],
+                     help="eleições do TSE; vale a mais recente de cada pessoa")
 
     mun = sub.add_parser(
         "municipios",
@@ -1004,14 +1010,72 @@ def _convenios(conexao: psycopg.Connection) -> None:
         persistencia.gravar_convenentes(conexao, linhas, carga)
 
 
+ELEICOES_DOS_MANDATOS = [2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016, 2018, 2020, 2022, 2024]
+"""As eleições que o TSE publica no layout atual do cadastro de candidatos (MEDIDO em 2026-10-21, de 2010 a 2024)."""
+
+
+def _mandatos(conexao: psycopg.Connection, eleicoes: list[int]) -> None:
+    """Os eleitos de cada eleição viram mandatos, e quem não está no Congresso ganha pessoa (Pendência 90).
+
+    Rode depois de `cpf` e de `municipios`: a pessoa casa pelo `cpf_hash`, e o município do TSE casa pelo
+    nome com a tabela de municípios.
+    """
+    cargas: dict[int, int] = {}
+    por_eleicao: dict[int, list] = {}
+    for ano in eleicoes:
+        url = f"{tse.CDN}/{mandatos.RECURSO.format(ano=ano)}"
+        arquivo = tse.baixar(url, CACHE / f"consulta-cand-{ano}.zip")
+        cargas[ano] = _carga_do_arquivo(conexao, "TSE", url, arquivo)
+        por_eleicao[ano] = mandatos.eleitos(entrada.ler(LinhaDeCandidatura, patrimonio.linhas_do_zip(arquivo)))
+        contagem = Counter(e.cargo.value for e in por_eleicao[ano])
+        log.info("  %d: %d eleitos — %s", ano, len(por_eleicao[ano]), ", ".join(f"{c} {n}" for c, n in sorted(contagem.items())))
+    todos = [e for eleitos_do_ano in por_eleicao.values() for e in eleitos_do_ano]
+
+    identidades = mandatos.Identidades(
+        persistencia.hashes_de_pessoas(conexao),
+        persistencia.hashes_de_titulos(conexao),
+        persistencia.pessoas_dos_mandatos(conexao),
+        persistencia.pessoas_por_casa(conexao),
+    )
+    novas = mandatos.pessoas_novas(todos, identidades)
+    ponte = mandatos.ponte_de_municipios(
+        [e for e in todos if e.codigo_ue], persistencia.municipios_para_ponte(conexao))
+    sem_ibge = sorted({f"{e.nome_ue}-{e.uf} ({e.codigo_ue})" for e in todos if e.codigo_ue and ponte.get(e.codigo_ue) is None})
+    if sem_ibge:
+        log.warning("  %d municípios do TSE sem par no IBGE: %s", len(sem_ibge), ", ".join(sem_ibge))
+
+    with conexao.transaction():
+        for grupo, pessoa in persistencia.gravar_pessoas_do_tse(conexao, novas, cargas):
+            for eleito in grupo:
+                identidades.guardar(eleito, pessoa)
+        faltantes = {}
+        for eleito in todos:
+            pessoa = identidades.pessoa(eleito)
+            if pessoa is not None:
+                identidades.guardar(eleito, pessoa)
+                faltantes.setdefault(pessoa, {"id": pessoa, "cpf_hash": eleito.cpf_hash, "titulo_hash": eleito.titulo_hash})
+        completados = persistencia.completar_hashes(conexao, list(faltantes.values()))
+        for ano, eleitos_do_ano in por_eleicao.items():
+            linhas = mandatos.mandatos_para_linhas(eleitos_do_ano, identidades, ponte)
+            persistencia.gravar_mandatos(conexao, [ano], linhas, cargas[ano])
+            sem_pessoa = Counter(e.cargo.value for e in eleitos_do_ano if identidades.pessoa(e) is None)
+            log.info("  %d: %d mandatos gravados%s", ano, len(linhas),
+                     "; sem pessoa na base: " + ", ".join(f"{c} {n}" for c, n in sorted(sem_pessoa.items())) if sem_pessoa else "")
+    log.info("Mandatos: %d pessoas novas, hashes conferidos em %d pessoas.", len(novas), completados)
+
+
 def _patrimonio(conexao: psycopg.Connection, anos: list[int]) -> None:
-    """Bens declarados ao TSE, por tipo. Rode depois de `cpf`: a ponte é o `cpf_hash`."""
+    """Bens declarados ao TSE, por tipo. Rode depois de `cpf` e de `mandatos`.
+
+    Duas pontes: o `cpf_hash` liga as candidaturas de parlamentar, eleitas ou não; `mandatos` liga os
+    eleitos dos outros cargos, inclusive os de 2024, que vêm sem CPF.
+    """
     hashes = persistencia.hashes_de_pessoas(conexao)
     todas: list[dict] = []
     for ano in anos:
         candidatos = tse.baixar(f"{tse.CDN}/{patrimonio.RECURSO_CANDIDATOS.format(ano=ano)}",
                                 CACHE / f"consulta-cand-{ano}.zip")
-        ligadas = patrimonio.candidaturas(candidatos, hashes)
+        ligadas = {**persistencia.candidaturas_dos_mandatos(conexao, ano), **patrimonio.candidaturas(candidatos, hashes)}
         url_dos_bens = f"{tse.CDN}/{patrimonio.RECURSO_BENS.format(ano=ano)}"
         bens = tse.baixar(url_dos_bens, CACHE / f"bem-candidato-{ano}.zip")
         carga = _carga_do_arquivo(conexao, "TSE", url_dos_bens, bens)
@@ -1028,7 +1092,11 @@ def _patrimonio(conexao: psycopg.Connection, anos: list[int]) -> None:
 
 
 def _redes(conexao: psycopg.Connection, anos: list[int]) -> None:
-    """Redes sociais: a Câmara para deputados, o TSE (candidatura) para senadores.
+    """Redes sociais: a Câmara para deputados, o TSE (candidatura) para senadores e para quem só tem mandato no TSE.
+
+    ATENÇÃO: o arquivo de redes do TSE não traz `SG_UE`, só o `SQ_CANDIDATO`. MEDIDO em 2026-10-21: de 2014 em
+    diante o número é único entre os eleitos da eleição; em 2012 há 4 repetidos, por isso os anos de antes de
+    2014 não entram.
 
     O TSE da eleição MAIS RECENTE de cada senador: por isso os anos vão do último ao primeiro.
     """
@@ -1047,12 +1115,17 @@ def _redes(conexao: psycopg.Connection, anos: list[int]) -> None:
     log.info("  Câmara: %d deputados, %d redes", len(consultados), len(da_camara))
 
     senadores = persistencia.senadores_da_legislatura(conexao)
+    fora_do_congresso = persistencia.pessoas_fora_do_congresso(conexao)
     hashes = {h: p for h, p in persistencia.hashes_de_pessoas(conexao).items() if p in senadores}
     do_tse: dict[int, list[dict]] = {}
-    for ano in sorted(anos, reverse=True):
+    for ano in sorted((a for a in anos if a >= 2014), reverse=True):
         candidatos = tse.baixar(f"{tse.CDN}/{patrimonio.RECURSO_CANDIDATOS.format(ano=ano)}",
                                 CACHE / f"consulta-cand-{ano}.zip")
-        ligadas = patrimonio.candidaturas(candidatos, hashes, {"5"})
+        por_candidatura = {
+            **{c: p for c, p in persistencia.candidaturas_dos_mandatos(conexao, ano).items() if p in fora_do_congresso},
+            **patrimonio.candidaturas(candidatos, hashes, frozenset({TipoCargo.SENADOR})),
+        }
+        ligadas = {sq: pessoa for (_, sq), pessoa in por_candidatura.items()}
         arquivo = tse.baixar(f"{tse.CDN}/{redes.RECURSO_TSE.format(ano=ano)}", CACHE / f"rede-social-{ano}.zip")
         carga_do_ano = _carga_do_arquivo(conexao, "TSE", f"{tse.CDN}/{redes.RECURSO_TSE.format(ano=ano)}", arquivo)
         por_pessoa: dict[int, list[str]] = {}
@@ -1062,7 +1135,7 @@ def _redes(conexao: psycopg.Connection, anos: list[int]) -> None:
                 por_pessoa.setdefault(pessoa, []).append(redes.url_da_linha(linha))
         for pessoa, urls in por_pessoa.items():
             do_tse[pessoa] = [{**linha, "carga_id": carga_do_ano} for linha in redes.para_linhas(pessoa, urls, "TSE")]
-    log.info("  TSE: %d senadores com rede", len(do_tse))
+    log.info("  TSE: %d senadores e políticos fora do Congresso com rede", len(do_tse))
 
     carga_da_camara = _carga_de_resposta(
         conexao, "CAMARA", f"{camara.API}/deputados", respostas_da_camara,
@@ -1070,7 +1143,7 @@ def _redes(conexao: psycopg.Connection, anos: list[int]) -> None:
     )
     with conexao.transaction():
         persistencia.gravar_redes(conexao, consultados, da_camara, "CAMARA", carga_da_camara)
-        persistencia.gravar_redes(conexao, list(senadores), [l for ls in do_tse.values() for l in ls], "TSE")
+        persistencia.gravar_redes(conexao, list(senadores | fora_do_congresso), [l for ls in do_tse.values() for l in ls], "TSE")
 
 
 def _municipios(conexao: psycopg.Connection, diretorio: Path | None) -> None:
@@ -1623,6 +1696,7 @@ def _rechavear_cpf(conexao: psycopg.Connection) -> None:
     | `despesas` | `cnpj_ou_hash` | `cota`, nos anos que estão no banco |
     | `receitas_de_campanha` | `doador_cnpj_ou_hash` | `fundo`, nas eleições que estão no banco |
     | `patrimonios` | a ponte pelo `cpf_hash` | `patrimonio`, nas eleições que estão no banco |
+    | `pessoas` | `titulo_hash`, e o `cpf_hash` de quem não está no Congresso | `mandatos`, que acha a pessoa pela candidatura e devolve os dois |
 
     RISCO: Até o fim, as tabelas misturam as duas chaves e o cruzamento entre elas falha em
     silêncio. Se o comando parar no meio, rode de novo: cada etapa substitui o seu recorte.
@@ -1633,9 +1707,11 @@ def _rechavear_cpf(conexao: psycopg.Connection) -> None:
         "SELECT DISTINCT ano_eleicao FROM receitas_de_campanha ORDER BY 1").fetchall()]
     anos_do_patrimonio = [linha[0] for linha in conexao.execute(
         "SELECT DISTINCT ano_eleicao FROM patrimonios ORDER BY 1").fetchall()]
+    eleicoes_dos_mandatos = [linha[0] for linha in conexao.execute(
+        "SELECT DISTINCT ano_eleicao FROM mandatos ORDER BY 1").fetchall()]
 
     apagados = conexao.execute(
-        "UPDATE pessoas SET cpf_hash = NULL WHERE cpf_hash IS NOT NULL").rowcount
+        "UPDATE pessoas SET cpf_hash = NULL, titulo_hash = NULL WHERE cpf_hash IS NOT NULL OR titulo_hash IS NOT NULL").rowcount
     log.info("cpf_hash apagado de %d pessoas; refazendo com a chave atual.", apagados)
     _cpf(conexao, todas_as_legislaturas=True)
 
@@ -1645,6 +1721,8 @@ def _rechavear_cpf(conexao: psycopg.Connection) -> None:
         _fundo(conexao, eleicao, None)
     if anos_do_patrimonio:
         _patrimonio(conexao, anos_do_patrimonio)
+    if eleicoes_dos_mandatos:
+        _mandatos(conexao, eleicoes_dos_mandatos)
 
     refeitos = conexao.execute("SELECT count(cpf_hash) FROM pessoas").fetchone()[0]
     log.info("Rechaveado: %d de %d pessoas voltaram a ter cpf_hash.", refeitos, apagados)
@@ -2447,6 +2525,8 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
         _municipios(conexao, None)
     elif etapa.comando == "fundo":
         _fundo(conexao, etapa.argumentos["eleicao"], None)
+    elif etapa.comando == "mandatos":
+        _mandatos(conexao, etapa.argumentos["eleicoes"])
     elif etapa.comando == "patrimonio":
         _patrimonio(conexao, anos)
     elif etapa.comando == "redes":

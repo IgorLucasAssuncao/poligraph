@@ -36,6 +36,9 @@
 | ✅ ~~87~~ | ~~Primeira carga de produção~~ | FEITO (2026-10-18): banco local copiado (2026-10-15) e as rotinas semanal e mensal cadastradas no Coolify. DECISÃO do autor (2026-10-18): as tabelas de usuários vindas do banco local (`usuarios`, `segue`, `consentimentos`, `avaliacoes`) ficam em produção. ATENÇÃO: as cópias dos arquivos de origem (`.cache/procedencia`) não vão no dump; o hash continua conferível baixando de novo da fonte |
 | **88** | Fechar o acesso direto ao VPS, sem passar pela Cloudflare | FEITO (2026-10-15): túnel da Cloudflare `registroaberto-vps`, conector no Ubuntu, rotas HTTP para `localhost:80`, domínios do Coolify em `http://`, firewall só com a 22; conferido de fora que 80, 443 e 8000 não respondem. Passo a passo em `arquitetura.html`, etapa 5. Exposição na borda. Esconder o IP não basta: com a 443 aberta a todos, quem descobre o endereço pula WAF, cache e limite de taxa. Opções: túnel da Cloudflare (recomendado: 80 e 443 fechadas para a internet) ou firewall só com as faixas da Cloudflare mais Authenticated Origin Pulls no Traefik. Em qualquer caso, o Traefik só responde aos domínios do site. Desenho em `arquitetura.html` |
 | ✅ ~~89~~ | FEITO (2026-10-19): par VAPID de produção gerado e publicado no Coolify pelo autor. Avisar quem segue quando o parlamentar tem novidade: notificação do navegador. FEITO no código (2026-10-18): tabela `eventos` gravada pela rotina da ETL, `Poligraph.Worker` com Hangfire (esquema `hangfire`, exceção aceita à regra do EF) e Web Push com VAPID, `avisos_enviados` como consumidor idempotente, consentimento `AVISOS_NO_NAVEGADOR`, sininho no cabeçalho, política na `v7-2026-10-18`. REGRA DO QUE É AVISADO (2026-10-18): (1) voto contra o partido e troca de partido: fatos com data nos últimos 30 dias; (2) cota e emendas: só o último mês fechado, uma chave por mês para todos os seguidos juntos (500 notas viram um aviso); (3) cada fato tem uma chave em `avisos_enviados`, gravada antes do envio: a mesma chave nunca avisa de novo, mesmo com a Câmara regerando os arquivos toda semana; (4) o passado não vira aviso: ao ligar os avisos, tudo o que existe vira avisado, e ao seguir alguém com os avisos ligados, o que existe sobre essa pessoa também; (5) é o que aconteceu, e não o que foi alterado: correção de um fato já avisado não avisa de novo, e dado com mais de 30 dias de atraso aparece no site sem aviso; (6) um aviso por pessoa a cada carga, juntando tudo; (7) só a rotina agendada que passou pelo conferir dispara o envio. Falta: gerar o par de produção (`dotnet run --project src/Poligraph.Worker -- gerar-chaves`), pôr `Avisos__ChavePublica` e `Avisos__ChavePrivada` no Coolify, deploy, e conferir um aviso de verdade no navegador. Passo a passo em `arquitetura.html`, etapa 4 (Aplicação), seção 5 | Hoje o "O que mudou" só aparece na página inicial, para quem entra no site. A notificação chega com o site fechado, sem provedor pago. Pede: par de chaves VAPID como segredo (fora do `appsettings.json`), tabela de inscrições do navegador com consentimento próprio e exclusão (LGPD: a inscrição revela quem a pessoa segue), service worker no front, um passo depois da rotina da ETL que manda o aviso, e a política de privacidade em versão nova. ATENÇÃO: no iPhone só funciona com o site instalado na tela inicial. O e-mail ficou de fora: a política promete não mandar. DECISÃO do autor (2026-10-18), o que avisar: A2 (votou contra o partido) e A3 (trocou de partido) depois da carga semanal; A4 (gastos da cota) e A5 (emendas pagas) quando chega um mês fechado; A1 (votos da semana) não, porque há poucas votações nominais; tudo ou nada, sem escolha por tipo. MEDIDO em 2026-10-18, banco local, Câmara, 01/02/2023 a 03/09/2026 (188 semanas, 125 com plenário, 643 deputados): semanas com A2 por deputado, mediana 1, p75 6, p90 17, máximo 63, e 310 deputados nunca votaram contra o partido; 190 deputados tiveram a última troca de partido no período |
+| **90** | Políticos estaduais e municipais: deputados estaduais e distritais, governadores, prefeitos e vices, com página própria, busca por nível e o município na tela de emendas. Plano e medições na seção "Pendência 90" abaixo | Muda o schema: `pessoas` deixa de ser só parlamentar federal e ganha `mandatos` |
+| **91** | Enums nas fontes da ETL (regra nova do `CLAUDE.md`, 2026-10-21). MEDIDO em 2026-10-21: nenhum `Enum` na ETL; literais de domínio `"CAMARA"` 44 vezes, `"SENADO"` 30, `"Sim"` 7, conjuntos de `CD_CARGO` como texto; regex em 6 módulos da ETL (19 usos) e 2 da API (7). Troca por partes, começando pelos módulos da Pendência 90 (TSE, `patrimonio`, mandatos); regex fica só onde o campo é texto livre | Tipagem forte entre contrato, transformação e banco |
+| **92** | Linha do tempo no perfil de cada político (pedido do autor, 2026-10-21). Um eixo por ano com o que a base já tem, cada marco com a fonte: mandatos e partido de cada eleição (`mandatos`, 2000–2024), troca de partido (`votos.partido_no_voto`), legislaturas com voto e presença (`votos`), bens declarados por eleição (`patrimonios`), campanha (`receitas_de_campanha`), cota por ano (`despesas`) e emendas pagas por ano (`emendas`). Quem só tem mandato no TSE fica com mandatos e bens. Depende da ficha genérica (fase 3 da Pendência 90). A medir antes: quantos marcos tem a pessoa média, para decidir entre resumo por ano e detalhe sob demanda | Junta numa tela só o que hoje está espalhado pelas abas |
 
 ### Abertas: dependem do autor, não de código
 
@@ -61,6 +64,99 @@
 | Resultado do questionário de 8 a 10 s para 0,2 s | `e29aa43` |
 | Ficha diz o período em que o parlamentar votou | `de948ea` |
 | ✅ **Pendência 52**: o teste intermitente não reproduziu em 10 rodadas da suíte completa nesta rodada (424 a 442 testes) | — |
+
+---
+
+## Pendência 90: políticos estaduais e municipais (aberta em 2026-10-21)
+
+Pedido do autor (2026-10-21): página para todos os políticos eleitos, além do Congresso, com os
+dados complementados aos poucos nas outras telas. Voto não é requisito: nenhuma assembleia nem
+câmara municipal publica voto nominal (`10-api-camara.md` §3.0.1, testado em 2026-08-23).
+
+### Escopo decidido
+
+| Ponto | Decisão do autor (2026-10-21) |
+|---|---|
+| Cargos | Deputado estadual, deputado distrital, governador, prefeito e vices. Vereador fica fora |
+| Eleições | Todas as que o TSE publica no formato atual, não só as dos mandatos vigentes |
+| Busca | Filtro por nível (federal, estadual, municipal), cargo, UF e município |
+| Emendas | Ao escolher um município: o prefeito e o governador do período de cada emenda, e quanto chegou em cada gestão |
+| Rota | `/politico/:id`, com `/parlamentar/:id` redirecionando (recomendação, a confirmar) |
+| Seguir | Para todos; consentimento e política em versão nova (recomendação, a confirmar) |
+
+### MEDIDO em 2026-10-21, `consulta_cand_{ano}_BRASIL.csv` do TSE
+
+Eleito = `DS_SIT_TOT_TURNO` em ELEITO, ELEITO POR QP ou ELEITO POR MÉDIA, um por `SQ_CANDIDATO`.
+ATENÇÃO: filtrar por "contém ELEITO" pega NÃO ELEITO.
+
+| Eleição | Cargo | Eleitos |
+|---|---|---|
+| 2022 | Deputado estadual | 1.035 |
+| 2022 | Deputado distrital | 24 |
+| 2022 | Governador / vice | 27 / 27 |
+| 2024 | Prefeito / vice | 5.563 / 5.563 |
+| 2024 | Vereador (fora do escopo) | 58.165 |
+
+- CPF: só 2 eleitos de 2022, de todos os cargos, sem CPF. A identidade continua o `cpf_hash`.
+- Tamanho: o arquivo de candidaturas das eleições gerais tem ~5 MB; os municipais, 64 MB (2024),
+  85 MB (2020) e 140 MB (2016). As prestações de contas municipais ainda não foram baixadas.
+- Município: o TSE usa o próprio código (`SG_UE`, 5 dígitos). Os 4 primeiros batem com o TOM da
+  Receita (já em `municipios`) em 4.142 dos 5.569 municípios com prefeito em 2024. RISCO: os outros
+  1.427 (ex.: Tuiuti-SP, TSE 61620, TOM 2955) precisam de outra ponte; casar por nome e UF é a
+  alternativa, a medir, com fila de exceção para o que não casar.
+
+### FEITO em 2026-10-21: fase 1, de 2000 a 2024
+
+Comando `mandatos`, tabela `mandatos` e os enums `TipoCargo`, `TipoNivel`, `TipoSituacaoNoTurno` e
+`TipoSexo` (`poligraph_etl/tipos.py` e `Poligraph.Data/Data/Enums`). Por decisão do autor, de 2000
+em diante.
+
+| Cargo | Mandatos | Pessoas |
+|---|---|---|
+| Prefeito | 39.312 | 28.225 |
+| Vice-prefeito | 22.496 | 20.376 |
+| Deputado estadual | 6.210 | 3.324 |
+| Deputado federal | 3.074 | 1.653 |
+| Senador | 194 | 166 |
+| Governador | 164 | 106 |
+| Deputado distrital | 144 | 89 |
+| Vice-governador | 83 | 75 |
+| Presidente e vice | 8 | 7 |
+
+MEDIDO em 2026-10-21, banco local: 63.225 pessoas (eram 8.319); 9.127 foram prefeitas mais de uma
+vez e 48 governadoras. Patrimônio de 2006 a 2024 e redes de 2014 a 2024 também para os novos cargos.
+
+Achados da carga, cada um com regra no código:
+
+| Achado | Regra |
+|---|---|
+| O TSE não publica CPF em 2024: todo o arquivo vem com `-4`, que virava `00000000004` e juntou os 11.126 eleitos numa pessoa só | `normalizar_cpf` recusa o que começa com `-`; a identidade ganhou `titulo_hash` (HMAC do título de eleitor, prefixo próprio), presente em todos os anos |
+| Até 2008 o `SQ_CANDIDATO` só é único dentro do município: em 2000, 5.585 prefeitos dividem 595 números | Chave da candidatura = ano, UF, município, cargo e número (`UNIQUE ... NULLS NOT DISTINCT`). O patrimônio de 2006 dos parlamentares tinha o mesmo defeito: passou de 608 para 1.042 pessoas |
+| Antes de 2012 o vice vem com situação `#NULO#` | Vice-prefeito só desde 2012 e vice-governador desde 2014. Ligar o vice à chapa do titular fica em aberto |
+| 42 pessoas com o mesmo `cpf_hash`: quem foi deputado e senador tem uma pessoa por casa | `titulo_hash` não é único; o mandato de senador vai para a pessoa do Senado, os outros para a da Câmara. Fundir as duas fica em aberto |
+| Códigos novos nos anos antigos: sexo `-1` e `0`, situação "RENÚNCIA/FALECIMENTO COM SUBSTITUIÇÃO" (2006) | `ValorDesconhecido` derrubou a carga em cada um; acrescentados ao enum |
+| Município do TSE sem par no IBGE: 38 nomes, quase todos de município que mudou de nome (Parati e Paraty, Campos e Campos dos Goytacazes) | Ficam com `codigo_municipio_ibge` nulo e a carga lista. Uma tabela de nomes antigos fecharia o resto |
+| 2012 e 2016 têm mais prefeitos (5.663 e 5.680) que municípios | A medir: provável eleição suplementar |
+| O arquivo de redes do TSE não traz `SG_UE` | Redes só de 2014 em diante, quando o número é único entre os eleitos |
+
+Campanha (`fundo`) dos novos cargos fica para a fase 3: a prestação de contas antiga não traz o número
+da candidatura e a de 2024 não traz CPF.
+
+### Fases
+
+1. ✅ **Pessoas e mandatos:** tabela `mandatos` (pessoa, cargo, UF, município IBGE, eleição, início,
+   fim, partido) com `CHECK` de cargo e de ente e `UNIQUE` por pessoa, cargo, ente e eleição.
+   Comando `mandatos --eleicao ...` lendo só os eleitos. `patrimonio`, `fundo` e `redes` aceitando
+   os novos cargos (hoje filtram 5 e 6).
+2. **Busca por nível** no cabeçalho e na lista, com o cargo e o ente no resultado.
+3. **Ficha genérica:** mandato, partido, campanha, patrimônio e redes. Voto, grafo e afinidade só
+   para quem tem voto publicado; nos outros, a ficha diz que a casa não publica voto nominal.
+4. **Município na tela de emendas:** prefeito e governador do período de cada emenda, resumo por
+   gestão e detalhe sob demanda.
+5. **Depois:** contas de estados e municípios pelo SICONFI (Tesouro, API pública e periódica,
+   ainda não testada aqui) e transferências da União.
+
+Em toda fase: `mapa_do_sistema.html` e `schema_do_ef.sql` no mesmo commit.
 
 ---
 

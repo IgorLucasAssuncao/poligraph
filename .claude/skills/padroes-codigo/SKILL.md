@@ -201,3 +201,69 @@ docs: registra a decisao de nomenclatura
 ```
 
 ⚠️ **Corpo do commit sem acento** — evita problemas de encoding no terminal Windows.
+
+## 7. ETL em Python e enums das fontes (2026-10-21)
+
+| O quê | Padrão | Exemplo |
+|---|---|---|
+| Módulos, funções, variáveis | `snake_case` | `bens_para_linhas`, `hashes_de_pessoas` |
+| Função privada do módulo | prefixo `_` | `_carga_do_arquivo` |
+| Constantes | `MAIUSCULAS` | `MINIMO_VOTACOES_COMUNS` |
+| Enums | `StrEnum` em `poligraph_etl/tipos.py`, nome igual ao enum C# | `TipoCasa.CAMARA` |
+
+O verbo abre o nome e diz o que a função faz: `baixar`, `ler`, `*_para_linhas`, `gravar_*`,
+`calcular_*` (tabela no `CLAUDE.md`). O contrato de entrada traduz o código da fonte para o enum
+e levanta `ValorDesconhecido` para valor novo; transformação e persistência só recebem o enum.
+
+```python
+class TipoCargo(StrEnum):
+    DEPUTADO_FEDERAL = "DEPUTADO_FEDERAL"
+    SENADOR = "SENADOR"
+
+DO_TSE = {"6": TipoCargo.DEPUTADO_FEDERAL, "5": TipoCargo.SENADOR}
+
+def cargo_do_tse(codigo: str) -> TipoCargo:
+    try:
+        return DO_TSE[codigo]
+    except KeyError:
+        raise ValorDesconhecido("CD_CARGO", codigo) from None
+```
+
+Regex só para texto livre. Campo de domínio: enum ou igualdade exata.
+
+### 7.1 Exemplos do próprio código (levantados em 2026-10-21, Pendência 91)
+
+**Literal de domínio que vira enum**
+
+| Hoje | Vira |
+|---|---|
+| `__main__.py:2216` `if casa == "CAMARA":` (44 ocorrências de `"CAMARA"`, 30 de `"SENADO"`) | `if casa is TipoCasa.CAMARA:`, o mesmo `TipoCasa` do C# |
+| `patrimonio.py:36` `CARGOS_DO_CONGRESSO = {"5", "6"}` | `{TipoCargo.SENADOR, TipoCargo.DEPUTADO_FEDERAL}`, com `CD_CARGO` traduzido no contrato |
+| `gestao.py:84` `df["DS_SIT_TOT_TURNO"] == "ELEITO"` | `TipoSituacaoNoTurno.ELEITO`; o contrato traduz também ELEITO POR QP e ELEITO POR MÉDIA, que esta linha não pega |
+| `emendas.py:435` `tipo == "Pessoa Jurídica"` | `TipoFavorecido.PESSOA_JURIDICA`, que já existe no C# |
+
+**Regex que vira comparação simples**
+
+| Hoje | Vira |
+|---|---|
+| `municipios.py:41` `re.fullmatch(r"\d{7}", ibge)` (e `emendas.py:537`) | `len(ibge) == 7 and ibge.isdigit()` |
+| `emendas.py:542` `re.fullmatch(r"[A-Z]{2}", texto)` | `texto in UFS`: a UF é domínio fechado |
+| `normalizacao.py:400` `re.sub(r"\D", "", bruto)` (e `convenentes.py:72`) | `"".join(c for c in bruto if c.isdigit())` |
+
+**Regex que fica, porque o campo é texto livre**
+
+| Onde | Por quê |
+|---|---|
+| `normalizacao.py:515` `_CPF_NO_TEXTO` | Acha CPF no meio de uma descrição para apagar (LGPD) |
+| `emendas.py:74` `_EX_PARLAMENTAR` | Extrai o titular anotado entre parênteses no nome do autor |
+| `redes.py:41-54` | Valida e corta URL digitada à mão no TSE |
+| `normalizacao.py` `_CATEGORIAS` | Classifica a votação pela descrição em texto |
+
+**Verbos já usados do jeito certo**
+
+| Verbo | Exemplo |
+|---|---|
+| `baixar` | `tse.baixar(url, destino)` |
+| `*_para_linhas` | `patrimonio.bens_para_linhas(linhas, candidaturas, ano)` |
+| `gravar_*` | `persistencia.gravar_patrimonios(conexao, anos, linhas)` |
+| `Obter*Async` | `ServicoNovidades.ObterAsync(idUsuario, desde, ct)` |

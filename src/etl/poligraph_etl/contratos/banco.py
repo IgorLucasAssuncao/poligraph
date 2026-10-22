@@ -152,3 +152,22 @@ class EmExercicio:
     casa: str
     legislatura: int | None
     licenciado: bool = False
+
+
+@dataclass(frozen=True)
+class Mandato:
+    """Uma linha de `mandatos` (MandatoModel): um eleito, o cargo, o ente e a eleição (Pendência 90)."""
+
+    TABELA: ClassVar[str] = "mandatos"
+
+    pessoa_id: int
+    cargo: str
+    ano_eleicao: int
+    sq_candidato: str
+    primeiro_ano: int
+    ultimo_ano: int
+    uf: str | None
+    codigo_municipio_tse: str | None
+    codigo_municipio_ibge: str | None
+    partido: str
+    nome_de_urna: str
