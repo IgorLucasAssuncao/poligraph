@@ -71,11 +71,11 @@ export const TEXTOS_DO_SITE = {
 
   busca: {
     abrir: 'Abrir a busca',
-    rotulo: 'Buscar parlamentar, cidade ou entidade',
+    rotulo: 'Buscar político, cidade ou entidade',
     placeholder: 'Nome ou cidade',
     resultados: 'Resultados da busca',
     nada: (termo: string) => `Nada encontrado para “${termo}”.`,
-    grupos: { parlamentar: 'Parlamentares', cidade: 'Cidades', entidade: 'Entidades' },
+    grupos: { parlamentar: 'Parlamentares', politico: 'Outros cargos', cidade: 'Cidades', entidade: 'Entidades' },
     senado: 'Senado',
     camara: 'Câmara',
     ate: (ano: string) => `até ${ano}`,

@@ -63,6 +63,8 @@ export const TEXTOS_DOS_COMPONENTES = {
     listaAjuda: 'Procurar por nome, partido ou estado',
     grafo: 'Grafo',
     grafoAjuda: 'Quem vota com quem',
+    cargos: 'Todos os cargos',
+    cargosAjuda: 'Governadores, prefeitos, deputados estaduais e vices, pelo TSE',
   },
 
   grafoAmpliado: {

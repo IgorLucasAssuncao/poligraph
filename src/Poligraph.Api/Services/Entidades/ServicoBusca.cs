@@ -1,10 +1,10 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Poligraph.Api.Dtos;
 
 namespace Poligraph.Api.Services;
 
 /// <summary>
-/// A busca do cabeçalho: um nome, e a resposta nos três lugares onde ele pode estar.
+/// A busca do cabeçalho: um nome, e a resposta nos quatro lugares onde ele pode estar.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -12,8 +12,10 @@ namespace Poligraph.Api.Services;
 /// as três coisas. A busca responde nos três, cada um no seu grupo, e a pessoa escolhe.
 /// </para>
 /// <para>Cada grupo reusa a busca da própria página: o resultado do cabeçalho é o mesmo que a página daria.</para>
+/// <para>Pendência 90: o quarto grupo são os políticos de fora do Congresso (prefeitos, governadores, deputados estaduais), pelos mandatos do TSE.</para>
 /// </remarks>
-public class ServicoBusca(ServicoParlamentares parlamentares, ServicoMapaDeEmendas mapa, ServicoEntidades entidades)
+public class ServicoBusca(
+    ServicoParlamentares parlamentares, ServicoMapaDeEmendas mapa, ServicoEntidades entidades, ServicoPoliticos politicos)
 {
     public const int PorGrupo = 5;
     public const int TamanhoMinimo = 2;
@@ -24,6 +26,7 @@ public class ServicoBusca(ServicoParlamentares parlamentares, ServicoMapaDeEmend
     private readonly ServicoParlamentares _parlamentares = parlamentares;
     private readonly ServicoMapaDeEmendas _mapa = mapa;
     private readonly ServicoEntidades _entidades = entidades;
+    private readonly ServicoPoliticos _politicos = politicos;
 
     public async Task<BuscaDto> BuscarAsync(string? termo, CancellationToken ct)
     {
@@ -49,6 +52,7 @@ public class ServicoBusca(ServicoParlamentares parlamentares, ServicoMapaDeEmend
             parlamentares,
             [.. (await _mapa.BuscarAsync(busca, ct)).Take(PorGrupo)],
             await _entidades.BuscarAsync(busca, ct),
-            todos.Count > 0 ? todos[0].Legislatura : null);
+            todos.Count > 0 ? todos[0].Legislatura : null,
+            await _politicos.BuscarAsync(busca, PorGrupo, ct));
     }
 }

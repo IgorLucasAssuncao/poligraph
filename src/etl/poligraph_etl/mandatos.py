@@ -138,6 +138,24 @@ class Identidades:
                 or self.por_titulo.get(eleito.titulo_hash or "")
                 or self.por_candidatura.get(candidatura(eleito)))
 
+    def propagar(self, eleitos_de_todas: list[Eleito]) -> None:
+        """Quem já tem pessoa empresta o CPF e o título dele aos outros eleitos, até não sobrar ligação nova.
+
+        RISCO: sem isto, o prefeito de 2020 achado pelo CPF e o de 2024, que só traz o título, viravam duas
+        pessoas quando o título ainda não estava gravado. MEDIDO em 2026-10-21: 5.574 pessoas duplicadas
+        depois de a coluna `titulo_hash` ser recriada vazia.
+        """
+        mudou = True
+        while mudou:
+            mudou = False
+            for eleito in eleitos_de_todas:
+                pessoa = self.pessoa(eleito)
+                if pessoa is None:
+                    continue
+                antes = (len(self.por_cpf), len(self.por_titulo))
+                self.guardar(eleito, pessoa)
+                mudou = mudou or antes != (len(self.por_cpf), len(self.por_titulo))
+
     def guardar(self, eleito: Eleito, pessoa: int) -> None:
         if eleito.cpf_hash:
             self.por_cpf.setdefault(eleito.cpf_hash, pessoa)

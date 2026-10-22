@@ -108,4 +108,5 @@ public record BuscaDto(
     IReadOnlyList<ParlamentarNaListaDto> Parlamentares,
     IReadOnlyList<MunicipioDto> Municipios,
     IReadOnlyList<EntidadeNaListaDto> Entidades,
-    short? LegislaturaCorrente = null);
+    short? LegislaturaCorrente = null,
+    IReadOnlyList<PoliticoNaListaDto>? Politicos = null);

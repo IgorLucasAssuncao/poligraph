@@ -6,9 +6,11 @@ import { useAdiado } from './useAdiado';
 import { nomeProprio, periodoDaLegislatura } from '../formato';
 import { IconeExplorarComponent } from './Icones';
 import { TEXTOS_DO_SITE as T } from '../textos/site';
+import { destinoDoPolitico } from '../navegacao';
+import { descricaoDoMandato } from '../textos/politicos';
 
 /**
- * Uma caixa, três tipos de resposta: parlamentar, cidade e entidade.
+ * Uma caixa, quatro tipos de resposta: parlamentar, político de outro cargo (Pendência 90), cidade e entidade.
  *
  * DECISÃO: Quem chega com um nome não sabe em que página ele está — "São Paulo" é cidade, é parte
  * de nome de entidade e de parlamentar. A busca responde nos três grupos, e a pessoa escolhe.
@@ -148,10 +150,11 @@ export function BuscaDoCabecalhoComponent() {
   );
 }
 
-type Opcao = { grupo: 'parlamentar' | 'cidade' | 'entidade'; rotulo: string; detalhe: string; destino: string };
+type Opcao = { grupo: 'parlamentar' | 'politico' | 'cidade' | 'entidade'; rotulo: string; detalhe: string; destino: string };
 
 const GRUPOS = [
   { grupo: 'parlamentar', titulo: T.busca.grupos.parlamentar },
+  { grupo: 'politico', titulo: T.busca.grupos.politico },
   { grupo: 'cidade', titulo: T.busca.grupos.cidade },
   { grupo: 'entidade', titulo: T.busca.grupos.entidade },
 ] as const;
@@ -175,6 +178,12 @@ function opcoesDa(resposta: Busca): Opcao[] {
         .filter(Boolean)
         .join(' · '),
       destino: `/parlamentar/${p.idPessoa}`,
+    })),
+    ...(resposta.politicos ?? []).map((p) => ({
+      grupo: 'politico' as const,
+      rotulo: nomeProprio(p.nome),
+      detalhe: [descricaoDoMandato(p.mandato, nomeProprio), p.mandato.partido].join(' · '),
+      destino: destinoDoPolitico(p),
     })),
     ...resposta.municipios.map((m) => ({
       grupo: 'cidade' as const,

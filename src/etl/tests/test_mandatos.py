@@ -93,3 +93,17 @@ def test_ponte_casa_pelo_nome_e_pela_grafia_mais_parecida_da_uf():
     municipios = [("3550308", "São Paulo", "SP"), ("2802502", "Graccho Cardoso", "SE")]
 
     assert mandatos.ponte_de_municipios(eleitos, municipios) == {"1": "3550308", "2": "2802502", "3": None}
+
+
+def test_quem_ja_tem_pessoa_empresta_o_titulo_ao_eleito_sem_cpf():
+    """O de 2020 é achado pelo CPF; o de 2024, só com título, tem de cair na mesma pessoa."""
+    eleitos = mandatos.eleitos([
+        _linha(ano_eleicao="2020", sq_candidato="10", cpf="52998224725"),
+        _linha(ano_eleicao="2024", sq_candidato="20"),
+    ])
+    identidades = mandatos.Identidades({hash_de_cpf("52998224725"): 7}, {}, {}, {})
+
+    identidades.propagar(eleitos)
+
+    assert [identidades.pessoa(e) for e in eleitos] == [7, 7]
+    assert mandatos.pessoas_novas(eleitos, identidades) == []

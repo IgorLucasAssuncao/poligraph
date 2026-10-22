@@ -32,3 +32,8 @@ export const ABAS_DO_GOVERNO = [
 export function ehDinheiroPublico(caminho: string): boolean {
   return ABAS_DO_DINHEIRO.some((aba) => caminho === aba.para || caminho.startsWith(`${aba.para}/`));
 }
+
+/** A página de quem votou no Congresso é a do parlamentar; a dos outros eleitos, a do político (Pendência 90). */
+export function destinoDoPolitico(politico: { idPessoa: number; parlamentar: boolean }): string {
+  return politico.parlamentar ? `/parlamentar/${politico.idPessoa}` : `/politico/${politico.idPessoa}`;
+}

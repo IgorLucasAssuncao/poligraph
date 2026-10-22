@@ -2756,6 +2756,27 @@ dialog.tour::backdrop { background: transparent; }
   border: 1px solid var(--borda-controle); border-radius: var(--raio);
 }
 .filtros-entidades input:focus-visible { outline: 2px solid var(--realce); outline-offset: 1px; }
+.filtros-politicos { grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); align-items: end; }
+.filtros-politicos > input, .filtros-politicos > .seletor-periodo-campos { grid-column: 1 / -1; }
+.filtro-politico { display: grid; gap: .25rem; font-size: var(--t-1); color: var(--suave); position: relative; }
+.filtro-politico select {
+  padding: .5rem .75rem; font: inherit; font-size: var(--t-2); color: var(--texto); background: var(--painel);
+  border: 1px solid var(--borda-controle); border-radius: var(--raio);
+}
+.filtro-politico select:focus-visible { outline: 2px solid var(--realce); outline-offset: 1px; }
+.filtro-escolhido {
+  justify-self: start; padding: .5rem .75rem; font: inherit; font-size: var(--t-2); color: var(--texto);
+  background: var(--painel); border: 1px solid var(--realce); border-radius: var(--raio); cursor: pointer;
+}
+.opcoes-cidade {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 5; margin: .25rem 0 0; padding: .25rem 0; list-style: none;
+  background: var(--fundo); border: 1px solid var(--borda-controle); border-radius: var(--raio);
+}
+.opcoes-cidade button {
+  width: 100%; padding: .4rem .75rem; text-align: left; font: inherit; font-size: var(--t-2); color: var(--texto);
+  background: none; border: 0; cursor: pointer;
+}
+.opcoes-cidade button:hover, .opcoes-cidade button:focus-visible { background: var(--painel); }
 .numero-valor.numero-texto { font-size: var(--t-4); }
 
 @media (max-width: 1320px) {

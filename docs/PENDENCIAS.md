@@ -148,7 +148,11 @@ da candidatura e a de 2024 não traz CPF.
    fim, partido) com `CHECK` de cargo e de ente e `UNIQUE` por pessoa, cargo, ente e eleição.
    Comando `mandatos --eleicao ...` lendo só os eleitos. `patrimonio`, `fundo` e `redes` aceitando
    os novos cargos (hoje filtram 5 e 6).
-2. **Busca por nível** no cabeçalho e na lista, com o cargo e o ente no resultado.
+2. ✅ **Busca por nível** no cabeçalho e na lista, com o cargo e o ente no resultado. FEITO em
+   2026-10-21: `GET /api/politicos` (nível, cargo, UF, município do IBGE, nome), a vista "Todos os
+   cargos" em Parlamentares e o grupo "Outros cargos" na busca do cabeçalho. ABERTO: 5.574 pessoas
+   duplicadas no banco local (o mesmo título em duas pessoas, criadas quando `titulo_hash` foi recriado
+   vazio); o código já não gera outras (`Identidades.propagar`), mas as existentes precisam ser fundidas.
 3. **Ficha genérica:** mandato, partido, campanha, patrimônio e redes. Voto, grafo e afinidade só
    para quem tem voto publicado; nos outros, a ficha diz que a casa não publica voto nominal.
 4. **Município na tela de emendas:** prefeito e governador do período de cada emenda, resumo por

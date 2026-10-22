@@ -2,13 +2,15 @@ import { useSearchParams } from 'react-router-dom';
 import { BarraDePeriodoComponent } from '../componentes/BarraDePeriodo';
 import { ExplorarComponent } from './Explorar';
 import { GrafoComponent } from './Grafo';
+import { PoliticosComponent } from './Politicos';
 import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
-type Vista = 'lista' | 'grafo';
+type Vista = 'lista' | 'grafo' | 'cargos';
 
 const VISTAS: { chave: Vista; rotulo: string; ajuda: string }[] = [
   { chave: 'lista', rotulo: T.vistas.lista, ajuda: T.vistas.listaAjuda },
   { chave: 'grafo', rotulo: T.vistas.grafo, ajuda: T.vistas.grafoAjuda },
+  { chave: 'cargos', rotulo: T.vistas.cargos, ajuda: T.vistas.cargosAjuda },
 ];
 
 /**
@@ -29,16 +31,20 @@ const VISTAS: { chave: Vista; rotulo: string; ajuda: string }[] = [
  * alternâncias virariam cinco toques no botão de voltar.
  * O período fica: a escolha vale para as duas vistas.
  *
+ * Pendência 90: a terceira vista, "Todos os cargos", lista governadores, prefeitos, deputados
+ * estaduais e vices pelo TSE. Ela não tem legislatura, e o seletor de período some nela.
+ *
  * Sem montar as duas e esconder uma: o grafo mede o contêiner para
  * dimensionar o canvas, e num contêiner oculto ele nasceria com altura zero.
  */
 export function ParlamentaresComponent() {
   const [parametros, definirParametros] = useSearchParams();
-  const vista: Vista = parametros.get('vista') === 'grafo' ? 'grafo' : 'lista';
+  const pedida = parametros.get('vista');
+  const vista: Vista = pedida === 'grafo' || pedida === 'cargos' ? pedida : 'lista';
 
   return (
     <>
-      <BarraDePeriodoComponent comTodas={vista === 'lista'} />
+      {vista !== 'cargos' && <BarraDePeriodoComponent comTodas={vista === 'lista'} />}
 
       <div className="abas-vista" data-tour="vistas" role="tablist" aria-label={T.vistas.rotulo}>
         {VISTAS.map((opcao) => (
@@ -66,7 +72,9 @@ export function ParlamentaresComponent() {
         ))}
       </div>
 
-      {vista === 'lista' ? <ExplorarComponent /> : <GrafoComponent />}
+      {vista === 'lista' && <ExplorarComponent />}
+      {vista === 'grafo' && <GrafoComponent />}
+      {vista === 'cargos' && <PoliticosComponent />}
     </>
   );
 }

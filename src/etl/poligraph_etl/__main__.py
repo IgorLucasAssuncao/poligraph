@@ -1037,6 +1037,7 @@ def _mandatos(conexao: psycopg.Connection, eleicoes: list[int]) -> None:
         persistencia.pessoas_dos_mandatos(conexao),
         persistencia.pessoas_por_casa(conexao),
     )
+    identidades.propagar(todos)
     novas = mandatos.pessoas_novas(todos, identidades)
     ponte = mandatos.ponte_de_municipios(
         [e for e in todos if e.codigo_ue], persistencia.municipios_para_ponte(conexao))

@@ -1610,7 +1610,68 @@ export type Busca = {
   entidades: EntidadeNaLista[];
   /** Quem tem outra `legislatura` já saiu. Os em exercício vêm primeiro. */
   legislaturaCorrente?: number | null;
+  /** Governadores, prefeitos, deputados estaduais e vices: quem tem mandato no TSE e nunca votou no Congresso. */
+  politicos?: PoliticoNaLista[];
 };
+
+/** Os cargos eletivos da base, os mesmos tokens de `TipoCargo` no C# e em `tipos.py`. */
+export type Cargo =
+  | 'PRESIDENTE'
+  | 'VICE_PRESIDENTE'
+  | 'SENADOR'
+  | 'DEPUTADO_FEDERAL'
+  | 'GOVERNADOR'
+  | 'VICE_GOVERNADOR'
+  | 'DEPUTADO_ESTADUAL'
+  | 'DEPUTADO_DISTRITAL'
+  | 'PREFEITO'
+  | 'VICE_PREFEITO';
+
+export type Nivel = 'FEDERAL' | 'ESTADUAL' | 'MUNICIPAL';
+
+/** Um mandato do TSE. `municipio` só nos cargos municipais, e nulo quando o município do TSE não casou com o IBGE. */
+export type MandatoNoTse = {
+  cargo: Cargo;
+  nivel: Nivel;
+  anoEleicao: number;
+  primeiroAno: number;
+  ultimoAno: number;
+  uf: string | null;
+  municipio: Municipio | null;
+  partido: string;
+};
+
+/** Um político na lista: `mandato` é o mais recente entre os que passam no filtro. */
+export type PoliticoNaLista = {
+  idPessoa: number;
+  nome: string;
+  urlFoto: string | null;
+  mandato: MandatoNoTse;
+  mandatos: number;
+  /** Votou na Câmara ou no Senado: a página dele é a do parlamentar. */
+  parlamentar: boolean;
+};
+
+export type FiltroDePoliticos = {
+  busca?: string;
+  nivel?: Nivel | null;
+  cargo?: Cargo | null;
+  uf?: string | null;
+  municipio?: string | null;
+  pagina?: number;
+};
+
+export async function listarPoliticos(filtro: FiltroDePoliticos): Promise<PaginaDe<PoliticoNaLista>> {
+  const busca = new URLSearchParams();
+  if (filtro.busca) busca.set('busca', filtro.busca);
+  if (filtro.nivel) busca.set('nivel', filtro.nivel);
+  if (filtro.cargo) busca.set('cargo', filtro.cargo);
+  if (filtro.uf) busca.set('uf', filtro.uf);
+  if (filtro.municipio) busca.set('municipio', filtro.municipio);
+  if (filtro.pagina) busca.set('pagina', String(filtro.pagina));
+  const texto = busca.toString();
+  return buscar<PaginaDe<PoliticoNaLista>>(`${BASE}/politicos${texto ? `?${texto}` : ''}`);
+}
 
 export async function listarEntidades(filtro: {
   busca?: string;
