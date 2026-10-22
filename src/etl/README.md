@@ -61,7 +61,8 @@ os testes).
 
 | Comando | O que faz | Argumentos |
 |---|---|---|
-| `cpf` | Completa o `cpf_hash` (Câmara pela API, Senado pelo TSE). Grava o hash, nunca o CPF | — |
+| `cpf` | Completa o `cpf_hash` (Câmara pela API, Senado pelo TSE). Grava o hash, nunca o CPF. No fim, funde quem foi deputado e senador (mesmo CPF) | — |
+| `fundir-pessoas` | Só a fusão do fim do `cpf`: uma pessoa para quem tem o mesmo `cpf_hash` na Câmara e no Senado | — |
 | `rechavear-cpf` | Refaz todo hash de CPF com a chave atual: pessoas, cota, campanha e patrimônio | — |
 | `cota` | Cota parlamentar: CEAP da Câmara e CEAPS do Senado | `--anos ...` |
 | `emendas` | Emendas, favorecidos e convênios (download público do Portal) | `--anos ...`; `--resolver CODIGO=ID_NA_CAMARA` vincula um autor à mão |

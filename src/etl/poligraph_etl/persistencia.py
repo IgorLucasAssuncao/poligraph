@@ -1426,6 +1426,82 @@ def gravar_contas_dos_municipios(conexao: psycopg.Connection, anos: Sequence[int
     return gravar_contratos(conexao, linhas, carga_id)
 
 
+def pares_do_mesmo_cpf(conexao: psycopg.Connection) -> list[tuple[int, int]]:
+    """(fica, sai) para cada pessoa da Câmara e do Senado com o mesmo `cpf_hash`: fica o id menor.
+
+    É o deputado que virou senador, ou o contrário. A Câmara e o Senado criam a pessoa cada um pelo
+    seu código, e o CPF só chega depois, pelo comando `cpf` (achado #18, Pendência 90).
+    """
+    return [
+        (linha[0], linha[1])
+        for linha in conexao.execute(
+            """
+            SELECT min(p.id) OVER (PARTITION BY p.cpf_hash), p.id
+              FROM pessoas p
+             WHERE p.cpf_hash IN (SELECT cpf_hash FROM pessoas WHERE cpf_hash IS NOT NULL GROUP BY 1 HAVING count(*) > 1)
+            """
+        ).fetchall()
+        if linha[0] != linha[1]
+    ]
+
+
+TABELAS_DA_PESSOA = (
+    "votos", "despesas", "emendas", "autores_de_emenda", "receitas_de_campanha", "patrimonios", "redes_sociais",
+    "mandatos", "pessoa_fonte_ids", "nos_metrica", "segue", "seguidos_encerrados", "em_exercicio",
+)
+"""As tabelas com `pessoa_id`. As de par (`similaridades`, `arestas_grafo`) têm tratamento próprio em `fundir_pessoas`."""
+
+CHAVE_SEM_A_PESSOA = {
+    "votos": ["votacao_id"], "patrimonios": ["ano_eleicao", "tipo_bem"], "redes_sociais": ["url"],
+    "nos_metrica": ["execucao_id"], "segue": ["usuario_id"], "seguidos_encerrados": ["usuario_id"], "em_exercicio": [],
+}
+"""O resto da chave primária de cada tabela que tem a pessoa na chave: a linha da pessoa que sai e que já existe na que fica é apagada, não movida."""
+
+
+def fundir_pessoas(conexao: psycopg.Connection, pares: Sequence[tuple[int, int]]) -> int:
+    """Junta cada pessoa que sai na que fica, em todas as tabelas, e apaga a que sai. Devolve quantas saíram.
+
+    DECISÃO (autor, 2026-10-22): uma pessoa só para quem foi deputado e senador. A linha que
+    colide com a chave da pessoa que fica é a mesma informação vinda duas vezes (o patrimônio
+    ligado pelo mesmo CPF às duas), e sai. Nas tabelas de par, a ordem `pessoa_a < pessoa_b`
+    é refeita depois da troca.
+    """
+    for fica, sai in pares:
+        for tabela in TABELAS_DA_PESSOA:
+            chave = CHAVE_SEM_A_PESSOA.get(tabela)
+            if chave is not None:
+                condicao = " AND ".join([f"k.{c} = t.{c}" for c in chave] + ["k.pessoa_id = %(fica)s"])
+                conexao.execute(
+                    f"DELETE FROM {tabela} t WHERE t.pessoa_id = %(sai)s AND EXISTS (SELECT 1 FROM {tabela} k WHERE {condicao})",
+                    {"fica": fica, "sai": sai})
+            conexao.execute(f"UPDATE {tabela} SET pessoa_id = %(fica)s WHERE pessoa_id = %(sai)s", {"fica": fica, "sai": sai})
+        for tabela, resto in (("similaridades", "metrica"), ("arestas_grafo", "tipo")):
+            conexao.execute(
+                f"""
+                DELETE FROM {tabela} t
+                 WHERE (t.pessoa_a = %(sai)s OR t.pessoa_b = %(sai)s)
+                   AND (EXISTS (SELECT 1 FROM {tabela} k
+                                 WHERE k.execucao_id = t.execucao_id AND k.{resto} = t.{resto}
+                                   AND k.pessoa_a = least(CASE WHEN t.pessoa_a = %(sai)s THEN %(fica)s ELSE t.pessoa_a END,
+                                                          CASE WHEN t.pessoa_b = %(sai)s THEN %(fica)s ELSE t.pessoa_b END)
+                                   AND k.pessoa_b = greatest(CASE WHEN t.pessoa_a = %(sai)s THEN %(fica)s ELSE t.pessoa_a END,
+                                                             CASE WHEN t.pessoa_b = %(sai)s THEN %(fica)s ELSE t.pessoa_b END))
+                        OR %(fica)s IN (t.pessoa_a, t.pessoa_b))
+                """, {"fica": fica, "sai": sai})
+            conexao.execute(
+                f"""
+                UPDATE {tabela} SET
+                  pessoa_a = least(CASE WHEN pessoa_a = %(sai)s THEN %(fica)s ELSE pessoa_a END, CASE WHEN pessoa_b = %(sai)s THEN %(fica)s ELSE pessoa_b END),
+                  pessoa_b = greatest(CASE WHEN pessoa_a = %(sai)s THEN %(fica)s ELSE pessoa_a END, CASE WHEN pessoa_b = %(sai)s THEN %(fica)s ELSE pessoa_b END)
+                 WHERE pessoa_a = %(sai)s OR pessoa_b = %(sai)s
+                """, {"fica": fica, "sai": sai})
+        conexao.execute(
+            "UPDATE pessoas f SET titulo_hash = coalesce(f.titulo_hash, s.titulo_hash) FROM pessoas s WHERE f.id = %s AND s.id = %s",
+            (fica, sai))
+        conexao.execute("DELETE FROM pessoas WHERE id = %s", (sai,))
+    return len(pares)
+
+
 def pessoas_por_casa(conexao: psycopg.Connection) -> dict[str, dict[str, int]]:
     """`cpf_hash` → casa → `pessoas.id`. Quem foi deputado e senador tem uma pessoa em cada casa (achado #18)."""
     por_casa: dict[str, dict[str, int]] = {}

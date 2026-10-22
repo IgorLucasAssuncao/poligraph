@@ -158,7 +158,9 @@ prestação de contas municipal ainda não foi baixada nem medida.
    cargos" em Parlamentares e o grupo "Outros cargos" na busca do cabeçalho. Achado na conferência: 5.536
    pessoas duplicadas (o mesmo título em duas pessoas, criadas quando `titulo_hash` foi recriado vazio),
    fundidas no banco local com autorização do autor; o código já não gera outras (`Identidades.propagar`).
-   Ficam 38 títulos em duas pessoas, todas do Congresso (deputado e senador). Base: 57.689 pessoas.
+   Ficam 38 títulos em duas pessoas, todas do Congresso (deputado e senador). Base: 57.689 pessoas. FEITO em 2026-10-22, decisão do autor: as 42 pessoas com o mesmo CPF na Câmara e no Senado
+   foram fundidas (`fundir-pessoas`; o `cpf` faz o mesmo no fim, para não voltar). Fica o id menor; o
+   bem declarado repetido sai. Base: 57.647 pessoas.
 3. ✅ **Ficha genérica** (FEITO em 2026-10-21: `/politico/:id` e `GET /api/politicos/{id}`, com mandatos,
    partido, patrimônio e redes; quem votou no Congresso vai para `/parlamentar/:id`. Fica para depois: a
    campanha, que a prestação de contas antiga não liga à candidatura): mandato, partido, campanha, patrimônio e redes. Voto, grafo e afinidade só

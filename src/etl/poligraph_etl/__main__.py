@@ -125,6 +125,8 @@ def main(argv: list[str] | None = None) -> int:
                 _simbolicas(conexao, args.anos)
             elif args.comando == "populacao":
                 _populacao(conexao)
+            elif args.comando == "fundir-pessoas":
+                _fundir_pessoas(conexao)
             elif args.comando == "siconfi":
                 _siconfi(conexao, args.anos, args.municipios)
             elif args.comando == "reclassificar":
@@ -220,6 +222,7 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         help="conta as votações simbólicas da Câmara a partir dos arquivos de votações do cache",
     )
     sim.add_argument("--anos", type=int, nargs="+", required=True)
+    sub.add_parser("fundir-pessoas", help="junta numa pessoa só quem foi deputado e senador (mesmo cpf_hash); o cpf já faz isso no fim")
     sic = sub.add_parser("siconfi", help="contas anuais das prefeituras (DCA do Tesouro, Siconfi): receita e despesa")
     sic.add_argument("--anos", type=int, nargs="+", default=[date.today().year - 1])
     sic.add_argument("--municipios", nargs="+", help="códigos do IBGE; sem isto, todos os municípios da base")
@@ -1688,6 +1691,14 @@ def _cpf(conexao: psycopg.Connection, todas_as_legislaturas: bool = False) -> No
     _cpf_dos_deputados(conexao, todas_as_legislaturas)
     _nome_civil_dos_senadores(conexao)
     _cpf_dos_senadores(conexao, todas_as_legislaturas)
+    _fundir_pessoas(conexao)
+
+
+def _fundir_pessoas(conexao: psycopg.Connection) -> None:
+    """Uma pessoa só para quem foi deputado e senador: a Câmara e o Senado criam cada um a sua, e o CPF as junta."""
+    with conexao.transaction():
+        fundidas = persistencia.fundir_pessoas(conexao, persistencia.pares_do_mesmo_cpf(conexao))
+    log.info("Pessoas fundidas pelo CPF (deputado e senador): %d.", fundidas)
 
 
 def _rechavear_cpf(conexao: psycopg.Connection) -> None:
