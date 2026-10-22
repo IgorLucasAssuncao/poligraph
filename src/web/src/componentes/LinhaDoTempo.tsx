@@ -62,6 +62,6 @@ function MarcoComponent({ marco, abas }: { marco: Marco; abas?: string }) {
     case 'GASTOU_NA_COTA':
       return comLink(T.cota(valor), '/cota');
     case 'EMENDAS_PAGAS':
-      return comLink(T.emendas(valor), '/emendas');
+      return comLink(T.emendas(valor, reaisCompacto(marco.pago ?? 0)), '/emendas');
   }
 }

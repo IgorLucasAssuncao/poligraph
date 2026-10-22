@@ -1721,7 +1721,10 @@ export type Marco = {
   partido?: string | null;
   partidoAnterior?: string | null;
   quantidade?: number | null;
+  /** Bens, cota ou, nas emendas, o empenhado. */
   valor?: number | null;
+  /** Só nas emendas: o pago. */
+  pago?: number | null;
 };
 
 /** A linha do tempo, do ano mais recente ao mais antigo (Pendência 92). */

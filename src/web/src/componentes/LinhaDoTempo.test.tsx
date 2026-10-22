@@ -13,7 +13,7 @@ const api = await import('../api');
 beforeEach(() => {
   vi.mocked(api.obterLinhaDoTempo).mockResolvedValue({
     anos: [
-      { ano: 2024, marcos: [{ tipo: 'TROCOU_DE_PARTIDO', partido: 'ABC', partidoAnterior: 'XYZ' }, { tipo: 'GASTOU_NA_COTA', valor: 500_000 }] },
+      { ano: 2024, marcos: [{ tipo: 'TROCOU_DE_PARTIDO', partido: 'ABC', partidoAnterior: 'XYZ' }, { tipo: 'GASTOU_NA_COTA', valor: 500_000 }, { tipo: 'EMENDAS_PAGAS', valor: 3_000_000, pago: 1_000_000 }] },
       { ano: 2022, marcos: [{ tipo: 'DECLAROU_BENS', valor: 1_000_000, quantidade: 3 }] },
     ],
   });
@@ -30,5 +30,6 @@ describe('Linha do tempo', () => {
     expect(await screen.findByText('Passou a votar pelo ABC; antes, XYZ')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /da cota parlamentar/ })).toHaveAttribute('href', '/parlamentar/7/cota');
     expect(screen.getByText(/em 3 bens ao TSE/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /R\$\s3 mi empenhados, R\$\s1 mi pagos/ })).toHaveAttribute('href', '/parlamentar/7/emendas');
   });
 });

@@ -39,8 +39,9 @@ import { ConfereComOPortalComponent } from '../componentes/ConfereComOPortal';
 import { ColunasPorAnoComponent } from '../componentes/Graficos';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { AbasComponent, NumeroComponent, OpcoesComponent, type Aba } from '../componentes/Dados';
-import { CHAVE_MINHA_CIDADE, CIDADES_POR_VEZ, ESTADOS_A_VISTA, ITENS_POR_PAGINA_DA_CIDADE } from '../constantes';
+import { CIDADES_POR_VEZ, ESTADOS_A_VISTA, ITENS_POR_PAGINA_DA_CIDADE } from '../constantes';
 import { TEXTOS_DAS_EMENDAS as T } from '../textos/emendas';
+import { guardarMinhaCidade, lerMinhaCidade } from '../minhaCidade';
 
 /**
  * Para onde foi o dinheiro de emenda, no mapa — e quem o mandou para a sua cidade.
@@ -767,7 +768,7 @@ function QuemRecebeuComponent({ dados, periodo }: { dados: EmendasDoMunicipio; p
  * ATENÇÃO: A localização vira código IBGE DENTRO do navegador, contra a malha do próprio site:
  * latitude e longitude não saem da página.
  */
-function SuaCidadeComponent({ aoEscolher }: { aoEscolher: (m: Municipio) => void }) {
+export function SuaCidadeComponent({ aoEscolher }: { aoEscolher: (m: Municipio) => void }) {
   const [busca, setBusca] = useState('');
   const [situacao, setSituacao] = useState<string | null>(null);
   const buscando = busca.trim().length >= 2;
@@ -844,27 +845,6 @@ function SuaCidadeComponent({ aoEscolher }: { aoEscolher: (m: Municipio) => void
   );
 }
 
-
-function lerMinhaCidade(): Municipio | null {
-  try {
-    const bruto = localStorage.getItem(CHAVE_MINHA_CIDADE);
-    const lida = bruto ? (JSON.parse(bruto) as Municipio) : null;
-    return lida && /^\d{7}$/.test(lida.codigoIbge) && /^[A-Z]{2}$/.test(lida.uf) ? lida : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Sem armazenamento, a escolha vale só para esta visita.
- */
-function guardarMinhaCidade(m: Municipio): void {
-  try {
-    localStorage.setItem(CHAVE_MINHA_CIDADE, JSON.stringify(m));
-  } catch {
-    return;
-  }
-}
 
 /** O período do endereço; sem `de` e `ate` válidos, todos os anos. */
 /** A página da cidade com o período do mapa: as listas de lá abrem no mesmo recorte. */

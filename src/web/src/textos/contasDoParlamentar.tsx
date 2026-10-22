@@ -8,7 +8,7 @@ const plural = (n: number, um: string, varios: string) => (n === 1 ? um : varios
 export const TEXTOS_DAS_CONTAS = {
   faixa: {
     noMandato: (periodo: string) => `No mandato de ${periodo}: o ano mais recente de cada um dentro dele.`,
-    maisRecente: 'O valor mais recente de cada um. Os anos são diferentes.',
+    maisRecente: 'Cada número é do ano mais recente com dado na base: a campanha é da última eleição, as emendas e a cota, do último ano com registro. Por isso os anos não coincidem.',
     rotulo: 'Contas do mandato',
     campanha: (anoDaEleicao?: number | null) => (anoDaEleicao ? `Campanha de ${anoDaEleicao}` : 'Campanha'),
     campanhaNota: 'arrecadado na eleição',

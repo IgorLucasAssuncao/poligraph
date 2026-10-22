@@ -11,6 +11,7 @@ namespace Poligraph.Api.Services;
 /// <remarks>
 /// <para>MEDIDO em 2026-10-22, banco local: a mediana é de 2 marcos para quem só tem mandato no TSE e de 12 (em 7 anos) para parlamentar, com máximo de 41. Cabe numa lista só, sem detalhe sob demanda.</para>
 /// <para>DECISÃO: cada marco é um resumo do ano, e a tela leva à aba que o detalha. Nenhum número novo: são os mesmos totais das abas.</para>
+/// <para>As emendas trazem o empenhado, o mesmo número do cartão "Emendas de {ano}" do topo da ficha, e o pago ao lado (avaliação heurística U24, 2026-10-22: a linha do tempo mostrava só o pago, e a ficha só o empenhado).</para>
 /// <para>A troca de partido sai do partido registrado em cada voto, na ordem das votações. É o mesmo critério do aviso "trocou de partido" (Pendência 63).</para>
 /// </remarks>
 public class ServicoLinhaDoTempo(PoligraphDb db, CacheDeLeitura leitura)
@@ -76,9 +77,10 @@ public class ServicoLinhaDoTempo(PoligraphDb db, CacheDeLeitura leitura)
         var emendas = await _db.Emendas.AsNoTracking()
             .Where(e => e.PessoaId == idPessoa)
             .GroupBy(e => e.Ano)
-            .Select(g => new { Ano = g.Key, Valor = g.Sum(e => e.ValorPago) })
+            .Select(g => new { Ano = g.Key, Empenhado = g.Sum(e => e.ValorEmpenhado), Pago = g.Sum(e => e.ValorPago) })
             .ToListAsync(ct);
-        marcos.AddRange(emendas.Where(e => e.Valor > 0).Select(e => ((int)e.Ano, new MarcoDto(TipoDeMarco.EMENDAS_PAGAS, Valor: e.Valor))));
+        marcos.AddRange(emendas.Where(e => e.Empenhado > 0 || e.Pago > 0)
+            .Select(e => ((int)e.Ano, new MarcoDto(TipoDeMarco.EMENDAS_PAGAS, Valor: e.Empenhado, Pago: e.Pago))));
 
         return new LinhaDoTempoDto([.. marcos
             .GroupBy(m => m.Ano)

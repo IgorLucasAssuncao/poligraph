@@ -13,12 +13,13 @@ export const TEXTOS_DO_SITE = {
   voltar: 'Voltar',
   navegacao: 'Navegação principal',
   destinos: {
-    parlamentares: 'Parlamentares',
+    parlamentares: 'Políticos',
     compare: 'Compare seu voto',
     dinheiro: 'Dinheiro público',
   },
   abasDoDinheiro: {
     emendas: 'Emendas por cidade',
+    cidades: 'Cidades',
     entidades: 'Entidades',
     governo: 'Governo federal',
   },

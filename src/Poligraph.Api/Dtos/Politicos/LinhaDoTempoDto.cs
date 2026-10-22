@@ -24,11 +24,13 @@ public enum TipoDeMarco
 /// <param name="Partido">O partido novo em <see cref="TipoDeMarco.TROCOU_DE_PARTIDO"/>.</param>
 /// <param name="PartidoAnterior">Em <see cref="TipoDeMarco.TROCOU_DE_PARTIDO"/>.</param>
 /// <param name="Quantidade">Votações com registro em <see cref="TipoDeMarco.VOTOU"/>; bens em <see cref="TipoDeMarco.DECLAROU_BENS"/>.</param>
-/// <param name="Valor">Em reais: bens, cota ou emendas pagas.</param>
+/// <param name="Valor">Em reais: bens, cota ou, nas emendas, o empenhado.</param>
+/// <param name="Pago">Só nas emendas: o pago das emendas apresentadas no ano.</param>
 public record MarcoDto(
     TipoDeMarco Tipo,
     MandatoNoTseDto? Mandato = null,
     string? Partido = null,
     string? PartidoAnterior = null,
     int? Quantidade = null,
-    decimal? Valor = null);
+    decimal? Valor = null,
+    decimal? Pago = null);

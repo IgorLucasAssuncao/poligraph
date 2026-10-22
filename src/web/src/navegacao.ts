@@ -14,6 +14,7 @@ import { TEXTOS_DO_SITE } from './textos/site';
  */
 export const ABAS_DO_DINHEIRO = [
   { para: '/emendas', rotulo: TEXTOS_DO_SITE.abasDoDinheiro.emendas },
+  { para: '/cidades', rotulo: TEXTOS_DO_SITE.abasDoDinheiro.cidades },
   { para: '/entidades', rotulo: TEXTOS_DO_SITE.abasDoDinheiro.entidades },
   { para: '/governo', rotulo: TEXTOS_DO_SITE.abasDoDinheiro.governo },
 ] as const;

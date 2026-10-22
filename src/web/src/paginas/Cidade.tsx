@@ -1,5 +1,6 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { obterEmendasDoMunicipio, obterGestoesDaCidade, type EleitoNaGestao, type GestaoDaCidade } from '../api';
+import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
 import { BotaoCompartilharComponent } from '../componentes/BotaoCompartilhar';
 import { EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
@@ -52,6 +53,7 @@ export function CidadeComponent() {
 
   return (
     <>
+      <AbasDoDinheiroComponent />
       <CabecalhoDaColunaComponent
         titulo={`${nomeProprio(municipio.nome)} – ${municipio.uf}`}
         comVoltar
