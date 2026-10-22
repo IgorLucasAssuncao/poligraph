@@ -2318,8 +2318,10 @@ def _siconfi(conexao: psycopg.Connection, anos: list[int], municipios: list[str]
                     respostas[codigo] = guardar
                 if i % 100 == 0:
                     guardar_progresso()
-                if i % 500 == 0:
-                    log.info("  %d: %d de %d municípios consultados (%.0f s)", ano, len(respostas) + len(sem_declaracao), len(codigos), time.monotonic() - inicio)
+                if i % 100 == 0:
+                    log.info("  %d: %d de %d municípios consultados (%.0f s); recusas do Tesouro até aqui: %s",
+                             ano, len(respostas) + len(sem_declaracao), len(codigos), time.monotonic() - inicio,
+                             ", ".join(f"{n} de {codigo}" for codigo, n in sorted(fonte.RECUSAS.items())) or "nenhuma")
             guardar_progresso()
             pendentes = falharam
             if not pendentes:
@@ -2345,7 +2347,8 @@ def _siconfi(conexao: psycopg.Connection, anos: list[int], municipios: list[str]
                 persistencia.gravar_contratos(conexao, linhas, carga)
             else:
                 persistencia.gravar_contas_dos_municipios(conexao, [ano], linhas, carga)
-        log.info("  %d: %d municípios com DCA, %d sem declaração, em %.0f s", ano, len(linhas), len(sem_declaracao), time.monotonic() - inicio)
+        log.info("  %d: %d municípios com DCA, %d sem declaração, em %.0f s; recusas do Tesouro: %s", ano, len(linhas), len(sem_declaracao),
+                 time.monotonic() - inicio, ", ".join(f"{n} de {codigo}" for codigo, n in sorted(fonte.RECUSAS.items())) or "nenhuma")
         parcial.unlink(missing_ok=True)
 
 

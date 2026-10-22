@@ -24,6 +24,9 @@ CABECALHOS = {"User-Agent": "poligraph-etl/1.0 (TCC; dados abertos)"}
 _SESSAO = requests.Session()
 """Uma conexão reaproveitada para todas as consultas. MEDIDO em 2026-10-22: 0,77 s por consulta, contra 0,95 s abrindo uma conexão TLS nova a cada uma."""
 _SESSAO.headers.update(CABECALHOS)
+
+RECUSAS: dict[int, int] = {}
+"""Quantas respostas de recusa (429 e 5xx) o Tesouro deu, por código HTTP: a carga as conta e escreve no log de progresso."""
 TENTATIVAS = 8
 """Com espera de 2, 4, 8... até 256 s. MEDIDO em 2026-10-22: quatro consultas em paralelo levaram 429 em menos de 3 minutos."""
 
@@ -38,6 +41,7 @@ def consultar(ano: int, anexo: str, codigo_ibge: str) -> list[dict]:
     for tentativa in range(TENTATIVAS):
         resposta = _SESSAO.get(URL, params=parametros, timeout=60)
         if resposta.status_code == 429 or resposta.status_code >= 500:
+            RECUSAS[resposta.status_code] = RECUSAS.get(resposta.status_code, 0) + 1
             time.sleep(2 ** tentativa)
             continue
         resposta.raise_for_status()
