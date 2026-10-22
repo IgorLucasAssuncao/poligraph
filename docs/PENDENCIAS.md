@@ -212,6 +212,12 @@ Exemplo, Campinas, pago por gestão pelo mês do pagamento:
 | 2021–2024 | Dário Saadi (Republicanos) | Doria, Tarcísio | R$ 67,2 mi |
 | 2025–2028 | Dário Saadi (Republicanos) | Tarcísio | R$ 75,7 mi (em andamento) |
 
+**Quem exerceu de fato (decisão do autor, 2026-10-22): fica fora.** Cassação, impeachment, renúncia e morte
+não têm fonte periódica nacional: o TSE dá só o eleito, e posse e afastamento saem nos diários oficiais de
+cada ente, em texto livre (o Querido Diário, dos municipais, respondeu 503 no teste e cobre parte dos
+municípios). A página mostra o vice eleito em cada gestão, que é quem assume, e diz "eleito". Caso que
+motivou: Rio de Janeiro, Witzel afastado em 2020 e cassado em 2021, com o vice Cláudio Castro no governo.
+
 **Riscos que a página precisa dizer:**
 
 - RISCO: o TSE dá quem foi **eleito**, não quem **exerceu**. Em Campinas, o prefeito eleito em 2000
