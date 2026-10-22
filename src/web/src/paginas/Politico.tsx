@@ -1,7 +1,8 @@
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { obterFichaDoPolitico, type MandatoNoTse } from '../api';
 import { AvatarComponent } from '../componentes/Avatar';
-import { PatrimonioDeclaradoComponent } from '../componentes/ContasDoParlamentar';
+import { AbaCampanhaComponent } from '../componentes/ContasDoParlamentar';
+import { useContas } from '../componentes/useContas';
 import { EsqueletoDeFichaComponent } from '../componentes/Esqueleto';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { LinhaDoTempoComponent } from '../componentes/LinhaDoTempo';
@@ -95,10 +96,16 @@ export function PoliticoComponent() {
         </p>
       </section>
 
-      <PatrimonioDeclaradoComponent idPessoa={idPessoa} />
+      <CampanhaDoPoliticoComponent idPessoa={idPessoa} />
       <LinhaDoTempoComponent idPessoa={idPessoa} />
     </>
   );
+}
+
+/** A campanha da eleição mais recente e os bens declarados: a mesma aba da ficha do parlamentar, ligada pela candidatura eleita (Pendência 90). */
+function CampanhaDoPoliticoComponent({ idPessoa }: { idPessoa: number }) {
+  const { contas, erro } = useContas(idPessoa);
+  return <AbaCampanhaComponent idPessoa={idPessoa} contas={contas} erro={erro} />;
 }
 
 /** Um mandato: o cargo com o ente e os anos, o partido e a eleição. */

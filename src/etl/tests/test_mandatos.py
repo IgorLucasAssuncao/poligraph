@@ -107,3 +107,19 @@ def test_quem_ja_tem_pessoa_empresta_o_titulo_ao_eleito_sem_cpf():
 
     assert [identidades.pessoa(e) for e in eleitos] == [7, 7]
     assert mandatos.pessoas_novas(eleitos, identidades) == []
+
+
+def test_campanha_de_governador_liga_pela_candidatura_eleita_sem_filtro_de_cargo():
+    """Pendência 90: governador não é cargo do Congresso, e entra pela candidatura do mandato."""
+    from poligraph_etl import receitas
+
+    registros = [
+        {"SG_UE": "SP", "SQ_CANDIDATO": "250001", "DS_CARGO": "GOVERNADOR", "NR_CPF_CANDIDATO": "-4",
+         "VR_RECEITA": "1000,00", "DS_FONTE_RECEITA": "FUNDO ESPECIAL", "NR_CPF_CNPJ_DOADOR": "", "NM_DOADOR": "Partido"},
+        {"SG_UE": "SP", "SQ_CANDIDATO": "999", "DS_CARGO": "GOVERNADOR", "NR_CPF_CANDIDATO": "-4",
+         "VR_RECEITA": "5,00", "DS_FONTE_RECEITA": "OUTROS", "NR_CPF_CNPJ_DOADOR": "", "NM_DOADOR": "X"},
+    ]
+
+    linhas = receitas.para_linhas(registros, {}, 2022, por_candidatura={("SP", "250001"): 7})
+
+    assert [(l["pessoa_id"], l["valor"]) for l in linhas] == [(7, 1000.0)]

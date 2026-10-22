@@ -142,6 +142,11 @@ Achados da carga, cada um com regra no código:
 Campanha (`fundo`) dos novos cargos fica para a fase 3: a prestação de contas antiga não traz o número
 da candidatura e a de 2024 não traz CPF.
 
+FEITO em 2026-10-22: a campanha de governadores, deputados estaduais e distritais e vices de 2018 e 2022
+liga pela candidatura eleita (`SG_UE` e `SQ_CANDIDATO`, os dois no arquivo de receitas): 1.006 e 1.075
+candidaturas. A ficha do político mostra a mesma aba de campanha do parlamentar. Prefeitos ficam fora: a
+prestação de contas municipal ainda não foi baixada nem medida.
+
 ### Fases
 
 1. ✅ **Pessoas e mandatos:** tabela `mandatos` (pessoa, cargo, UF, município IBGE, eleição, início,

@@ -314,7 +314,7 @@ const COMANDOS = [
   { id: 'analisar', faz: 'Calcula similaridade, comunidades, o grafo e o alinhamento com o governo, de uma casa por vez.', ritmo: 'mensal', depende: ['ingerir', 'senado'] },
   { id: 'cpf', faz: 'Completa o hash do CPF de cada parlamentar: a chave para casar com o TSE.', ritmo: 'manual', depende: ['ingerir', 'senado'] },
   { id: 'mandatos', faz: 'Os eleitos do TSE de 2000 a 2024: deputados estaduais e distritais, governadores, prefeitos e vices, além do Congresso. Quem não é do Congresso ganha pessoa nova, ligada entre eleições pelo hash do CPF ou do título de eleitor (o arquivo de 2024 não traz CPF). Valor de cargo, situação ou sexo que o enum não conhece derruba a carga.', ritmo: 'pós-eleição', depende: ['cpf', 'senado'] },
-  { id: 'fundo', faz: 'Receitas de campanha da eleição, com fundo eleitoral.', ritmo: 'pós-eleição', depende: ['cpf'] },
+  { id: 'fundo', faz: 'Receitas de campanha da eleição, com fundo eleitoral: parlamentares pelo hash do CPF, governadores, deputados estaduais e vices pela candidatura eleita (mandatos, desde 2018).', ritmo: 'pós-eleição', depende: ['cpf', 'mandatos'] },
   { id: 'patrimonio', faz: 'Bens declarados ao TSE, somados por tipo: parlamentares pelo hash do CPF, os outros cargos pelos mandatos.', ritmo: 'pós-eleição', depende: ['cpf', 'mandatos'] },
   { id: 'redes', faz: 'Redes sociais: Câmara para deputados, TSE para senadores e para quem só tem mandato no TSE.', ritmo: 'pós-eleição', depende: ['cpf', 'mandatos'] },
   { id: 'cota', faz: 'Cota parlamentar das duas casas, com a reconciliação do total.', ritmo: 'mensal', depende: ['ingerir', 'senado'] },

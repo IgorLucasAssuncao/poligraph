@@ -208,8 +208,13 @@ def para_linhas(
     hashes_conhecidos: dict[str, int],
     ano_eleicao: int,
     casa_por_pessoa: dict[int, str] | None = None,
+    por_candidatura: dict[tuple[str, str], int] | None = None,
 ) -> list[dict]:
-    """Converte em linhas de `receitas_de_campanha`, guardando só quem casa por CPF.
+    """Converte em linhas de `receitas_de_campanha`, guardando só quem casa por CPF ou pela candidatura eleita.
+
+    `por_candidatura` é (`SG_UE`, `SQ_CANDIDATO`) → pessoa, dos mandatos de quem não é do Congresso
+    (Pendência 90): governador, deputado estadual e vices. A candidatura já diz o cargo, e o filtro de
+    cargo e de casa não vale para ela.
 
     Descarta, e por quê:
 
@@ -230,18 +235,20 @@ def para_linhas(
     linhas: list[dict] = []
 
     for registro in registros:
-        cargo = _texto(registro.get("DS_CARGO")).upper()
-        if cargo not in CARGOS_ACEITOS:
-            continue
-
-        chave = hash_de_cpf(registro.get("NR_CPF_CANDIDATO")) or ""
-        pessoa_id = hashes_conhecidos.get(chave)
+        pessoa_id = (por_candidatura or {}).get((registro.get("SG_UE") or "", registro.get("SQ_CANDIDATO") or ""))
         if pessoa_id is None:
-            continue
+            cargo = _texto(registro.get("DS_CARGO")).upper()
+            if cargo not in CARGOS_ACEITOS:
+                continue
 
-        casa = (casa_por_pessoa or {}).get(pessoa_id, TipoCasa.CAMARA)
-        if cargo != CARGO_POR_CASA.get(casa, CARGO):
-            continue
+            chave = hash_de_cpf(registro.get("NR_CPF_CANDIDATO")) or ""
+            pessoa_id = hashes_conhecidos.get(chave)
+            if pessoa_id is None:
+                continue
+
+            casa = (casa_por_pessoa or {}).get(pessoa_id, TipoCasa.CAMARA)
+            if cargo != CARGO_POR_CASA.get(casa, CARGO):
+                continue
 
         valor = valor_pt_br(registro.get("VR_RECEITA"))
         if valor == 0:
