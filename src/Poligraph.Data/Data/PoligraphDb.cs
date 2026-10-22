@@ -34,7 +34,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<SancaoDeEmpresaModel> SancoesDeEmpresas => Set<SancaoDeEmpresaModel>();
     public DbSet<CompraCentralizadaNoCartaoModel> ComprasCentralizadasNoCartao => Set<CompraCentralizadaNoCartaoModel>();
     public DbSet<ReceitaPorOrigemModel> ReceitasPorOrigem => Set<ReceitaPorOrigemModel>();
-    public DbSet<GestaoModel> Gestoes => Set<GestaoModel>();
     public DbSet<MunicipioModel> Municipios => Set<MunicipioModel>();
     public DbSet<ContasDoMunicipioModel> ContasDosMunicipios => Set<ContasDoMunicipioModel>();
     public DbSet<CnpjMunicipioModel> CnpjsMunicipio => Set<CnpjMunicipioModel>();
@@ -237,8 +236,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<MunicipioModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.PopulacaoCargaId).OnDelete(DeleteBehavior.Restrict);
-        mb.Entity<GestaoModel>().HasOne<CargaModel>().WithMany()
-            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<PessoaModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<ProposicaoModel>().HasOne<CargaModel>().WithMany()
@@ -740,18 +737,6 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasKey(x => new { x.Ano, x.Categoria, x.Origem });
             e.Property(x => x.Prevista).HasPrecision(18, 2);
             e.Property(x => x.Realizada).HasPrecision(18, 2);
-        });
-
-        mb.Entity<GestaoModel>(e =>
-        {
-            e.ToTable("gestoes", t =>
-            {
-                t.HasCheckConstraint("ck_gestao_mandato", "ultimo_ano = primeiro_ano + 3");
-                t.HasCheckConstraint("ck_gestao_posse", "primeiro_ano = eleicao + 1");
-            });
-
-            e.HasKey(x => x.Eleicao);
-            e.Property(x => x.Eleicao).ValueGeneratedNever();
         });
 
         mb.Entity<MunicipioModel>(e =>

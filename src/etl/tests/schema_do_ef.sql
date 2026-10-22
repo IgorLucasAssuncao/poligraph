@@ -1356,3 +1356,11 @@ VALUES ('20261022153733_ColigacaoDoMandato', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+DROP TABLE gestoes;
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261022162714_ApagarGestoes', '10.0.11');
+
+COMMIT;
+

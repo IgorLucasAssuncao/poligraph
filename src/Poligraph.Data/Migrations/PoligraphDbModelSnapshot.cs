@@ -1307,72 +1307,6 @@ namespace Poligraph.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Poligraph.Data.GestaoModel", b =>
-                {
-                    b.Property<short>("Eleicao")
-                        .HasColumnType("smallint")
-                        .HasColumnName("eleicao");
-
-                    b.Property<long?>("CargaId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("carga_id");
-
-                    b.Property<string>("Coligacao")
-                        .HasColumnType("text")
-                        .HasColumnName("coligacao");
-
-                    b.Property<string>("PresidenteNome")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("presidente_nome");
-
-                    b.Property<string>("PresidenteNomeDeUrna")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("presidente_nome_de_urna");
-
-                    b.Property<string>("PresidentePartido")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("presidente_partido");
-
-                    b.Property<short>("PrimeiroAno")
-                        .HasColumnType("smallint")
-                        .HasColumnName("primeiro_ano");
-
-                    b.Property<short>("UltimoAno")
-                        .HasColumnType("smallint")
-                        .HasColumnName("ultimo_ano");
-
-                    b.Property<string>("ViceNome")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("vice_nome");
-
-                    b.Property<string>("ViceNomeDeUrna")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("vice_nome_de_urna");
-
-                    b.Property<string>("VicePartido")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("vice_partido");
-
-                    b.HasKey("Eleicao")
-                        .HasName("pk_gestoes");
-
-                    b.HasIndex("CargaId")
-                        .HasDatabaseName("ix_gestoes_carga_id");
-
-                    b.ToTable("gestoes", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_gestao_mandato", "ultimo_ano = primeiro_ano + 3");
-
-                            t.HasCheckConstraint("ck_gestao_posse", "primeiro_ano = eleicao + 1");
-                        });
-                });
-
             modelBuilder.Entity("Poligraph.Data.InscricaoNoNavegadorModel", b =>
                 {
                     b.Property<long>("Id")
@@ -3001,15 +2935,6 @@ namespace Poligraph.Data.Migrations
                         .HasForeignKey("CargaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_gastos_sigilosos_cargas_carga_id");
-                });
-
-            modelBuilder.Entity("Poligraph.Data.GestaoModel", b =>
-                {
-                    b.HasOne("Poligraph.Data.CargaModel", null)
-                        .WithMany()
-                        .HasForeignKey("CargaId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .HasConstraintName("fk_gestoes_cargas_carga_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.InscricaoNoNavegadorModel", b =>

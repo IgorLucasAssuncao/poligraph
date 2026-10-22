@@ -128,7 +128,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         var esperadas = new[]
         {
             "arestas_grafo", "autores_de_emenda", "avaliacoes", "avisos_enviados", "cargas", "cnpjs_municipio", "compras_centralizadas_no_cartao", "consentimentos", "contas_dos_municipios", "contratacoes_do_orgao", "contratados_do_governo", "convenios", "destinos_de_viagem",
-            "despesas", "em_exercicio", "emendas", "emendas_convenios", "emendas_favorecidos", "encargos_especiais", "eventos", "execucoes", "gastos_da_defesa_civil", "gastos_sigilosos", "gestoes", "inscricoes_no_navegador",
+            "despesas", "em_exercicio", "emendas", "emendas_convenios", "emendas_favorecidos", "encargos_especiais", "eventos", "execucoes", "gastos_da_defesa_civil", "gastos_sigilosos", "inscricoes_no_navegador",
             "mandatos", "municipios", "orcamento_por_funcao", "patrimonios", "viagens_do_orgao",
             "nos_metrica", "orientacoes", "perguntas", "pessoa_fonte_ids",
             "pessoas",
