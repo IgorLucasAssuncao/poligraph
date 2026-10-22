@@ -163,6 +163,24 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
             Convenios: ResumoDosConvenios(cidade.Convenios, 1));
     }
 
+    /// <summary>O pago a quem tem sede na cidade, pelo ano do pagamento (`competencia`), com a parte da prefeitura. A regra do mapa, sem recorte de período.</summary>
+    /// <remarks>
+    /// <para>O ano é o do pagamento, não o da emenda: é o que diz em que gestão o dinheiro chegou (Pendência 90, fase 4).</para>
+    /// </remarks>
+    public async Task<IReadOnlyList<PagoNoAnoDto>> PagoPorAnoNaCidadeAsync(string codigoIbge, CancellationToken ct) =>
+        [.. (await NoMapa(_db.EmendasFavorecidos.AsNoTracking())
+                .Where(p => p.CodigoIbge == codigoIbge)
+                .GroupBy(p => p.Competencia.Year)
+                .Select(g => new
+                {
+                    Ano = g.Key,
+                    Recebido = g.Sum(p => p.Valor),
+                    NaPrefeitura = g.Where(p => NaturezasDaCidade.Contains(p.NaturezaJuridica)).Sum(p => p.Valor),
+                })
+                .ToListAsync(ct))
+            .OrderBy(a => a.Ano)
+            .Select(a => new PagoNoAnoDto(a.Ano, a.Recebido, a.NaPrefeitura))];
+
     /// <summary>Os convênios da cidade, em páginas. A primeira é a do painel.</summary>
     public async Task<ConveniosDaCidadeDto?> ListarConveniosAsync(
         CodigoIbge codigoIbge, Periodo<AnoDaEmenda> periodoPedido, int pagina, CancellationToken ct) =>
@@ -283,6 +301,7 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
             NomeDoFavorecido = f.Nome,
             NaturezaJuridica = f.NaturezaJuridica,
             Valor = f.Valor,
+            Competencia = f.Competencia,
             CodigoIbge = m.CodigoIbge,
             Nome = m.Nome,
             Uf = m.Uf
@@ -420,6 +439,7 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
         public string? NomeDoFavorecido { get; init; }
         public string? NaturezaJuridica { get; init; }
         public decimal Valor { get; init; }
+        public DateOnly Competencia { get; init; }
         public required string CodigoIbge { get; init; }
         public required string Nome { get; init; }
         public required string Uf { get; init; }

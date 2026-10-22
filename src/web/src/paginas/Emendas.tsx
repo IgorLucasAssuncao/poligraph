@@ -541,9 +541,14 @@ function PainelDaCidadeComponent({
         <h2 id="cidade-titulo">
           {nome} <span className="painel-cidade-uf">{dados.municipio.uf}</span>
         </h2>
-        <button type="button" className="botao-secundario" onClick={aoFechar}>
-          {T.cidade.fechar}
-        </button>
+        <div className="painel-cidade-acoes">
+          <Link className="botao-secundario" to={`/cidades/${dados.municipio.codigoIbge}`}>
+            {T.cidade.paginaDaCidade}
+          </Link>
+          <button type="button" className="botao-secundario" onClick={aoFechar}>
+            {T.cidade.fechar}
+          </button>
+        </div>
       </div>
 
       {dados.recebido === 0 ? (

@@ -80,6 +80,7 @@ export const TEXTOS_DAS_EMENDAS = {
     erro: 'Não foi possível carregar essa cidade.',
     carregando: 'Carregando a cidade',
     fechar: 'Fechar',
+    paginaDaCidade: 'Prefeitos e gestões',
     vazio: (periodo: string, nome: string) =>
       `Nenhum pagamento das emendas de ${periodo} chegou a quem tem sede em ${nome}.`,
     rotuloDaProcedencia: (periodo: string, nome: string) => `Emendas de ${periodo} com sede em ${nome}`,

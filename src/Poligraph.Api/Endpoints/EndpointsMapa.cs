@@ -15,6 +15,10 @@ public static class EndpointsMapa
            .WithTags("Mapa")
            .Produces<EmendasDoMunicipioDto>()
            .Produces(StatusCodes.Status404NotFound);
+        app.MapGet("/api/municipios/{codigoIbge}/gestoes", ObterGestoesAsync)
+           .WithTags("Mapa")
+           .Produces<GestoesDaCidadeDto>()
+           .Produces(StatusCodes.Status404NotFound);
         app.MapGet("/api/municipios/{codigoIbge}/emendas/parlamentares", ListarParlamentaresAsync)
            .WithTags("Mapa")
            .Produces<PaginaDto<ParlamentarQueMandouDto>>()
@@ -52,6 +56,10 @@ public static class EndpointsMapa
         await servico.ObterMunicipioAsync(codigoIbge, periodoDasEmendas, ct) is { } municipio
             ? Results.Ok(municipio)
             : Results.NotFound();
+
+    /// <summary>A página da cidade: prefeitos e governadores eleitos por gestão, e o pago em cada uma pelo ano do pagamento.</summary>
+    private static async Task<IResult> ObterGestoesAsync(CodigoIbge codigoIbge, ServicoGestoesDaCidade servico, CancellationToken ct) =>
+        await servico.ObterAsync(codigoIbge, ct) is { } gestoes ? Results.Ok(gestoes) : Results.NotFound();
 
     /// <summary>Os deputados e senadores que mandaram dinheiro para a cidade, em páginas.</summary>
     private static async Task<IResult> ListarParlamentaresAsync(

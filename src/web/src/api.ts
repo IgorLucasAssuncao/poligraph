@@ -1661,6 +1661,41 @@ export type FiltroDePoliticos = {
   pagina?: number;
 };
 
+/** Um eleito na gestão; `parlamentar` decide qual ficha abre. */
+export type EleitoNaGestao = { idPessoa: number; nome: string; partido: string; parlamentar: boolean };
+
+/** Um mandato municipal: os eleitos, os governadores eleitos nos anos que coincidem e o pago nesses anos. */
+export type GestaoDaCidade = {
+  primeiroAno: number;
+  ultimoAno: number;
+  prefeitos: EleitoNaGestao[];
+  vices: EleitoNaGestao[];
+  governadores: { governador: EleitoNaGestao; deAno: number; ateAno: number }[];
+  recebido: number;
+  naPrefeitura: number;
+  /** Sem ano na base de pagamentos (antes de ago/2015): a tela diz isso, não R$ 0. */
+  comPagamento: boolean;
+};
+
+/** A página da cidade (Pendência 90, fase 4). */
+export type GestoesDaCidade = {
+  municipio: Municipio;
+  populacao: number | null;
+  recebido: number;
+  naPrefeitura: number;
+  gestoes: GestaoDaCidade[];
+  porAno: { ano: number; recebido: number; naPrefeitura: number }[];
+};
+
+/** `null` quando o código não é município. */
+export async function obterGestoesDaCidade(codigoIbge: string): Promise<GestoesDaCidade | null> {
+  const resposta = await fetch(`${BASE}/municipios/${codigoIbge}/gestoes`, { credentials: 'include' });
+  if (resposta.status === 404) return null;
+  if (resposta.status === 401) throw new NaoAutenticadoError();
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.cidade(resposta.status));
+  return resposta.json();
+}
+
 /** A ficha pelos mandatos do TSE (Pendência 90, fase 3). */
 export type FichaDoPolitico = {
   idPessoa: number;

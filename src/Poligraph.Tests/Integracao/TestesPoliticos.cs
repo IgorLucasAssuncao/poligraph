@@ -77,6 +77,26 @@ public class TestesPoliticos(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Equal(System.Net.HttpStatusCode.NotFound, resposta.StatusCode);
     }
 
+    /// <summary>Cada gestão municipal traz o governador eleito nos anos que coincidem, e o reeleito aparece uma vez só.</summary>
+    [SkippableFact]
+    public async Task Gestoes_DaCidade_TrazemOsEleitosDoPeriodo()
+    {
+        ExigeDocker();
+        var (joao, maria) = await SemearAsync();
+        Db.Mandatos.AddRange(
+            Mandato(joao, TipoCargo.GOVERNADOR, 2022, "SP", null, null, "4"));
+        await Db.SaveChangesAsync();
+
+        var cidade = await LerAsync<GestoesLidas>($"/api/municipios/{SaoPaulo}/gestoes");
+
+        Assert.Equal([2025, 2017], cidade.Gestoes.Select(g => g.PrimeiroAno));
+        Assert.Equal([maria], cidade.Gestoes[0].Prefeitos.Select(p => p.IdPessoa));
+        var governadores = cidade.Gestoes[0].Governadores;
+        Assert.Single(governadores);
+        Assert.Equal((joao, 2025, 2026), (governadores[0].Governador.IdPessoa, governadores[0].DeAno, governadores[0].AteAno));
+        Assert.False(cidade.Gestoes[0].ComPagamento);
+    }
+
     /// <summary>RISCO: o banco recusa prefeito sem município; a lista o mostraria sem saber de onde.</summary>
     [SkippableFact]
     public async Task Prefeito_SemMunicipio_ERejeitadoPeloBanco()
@@ -137,6 +157,14 @@ public class TestesPoliticos(FixturePostgres postgres) : BaseIntegracao(postgres
     private sealed record PaginaLida(List<PoliticoLido> Itens, int Total);
 
     private sealed record BuscaLida(List<PoliticoLido> Politicos);
+
+    private sealed record EleitoLido(long IdPessoa);
+
+    private sealed record GovernadorLido(EleitoLido Governador, int DeAno, int AteAno);
+
+    private sealed record GestaoLida(int PrimeiroAno, List<EleitoLido> Prefeitos, List<GovernadorLido> Governadores, bool ComPagamento);
+
+    private sealed record GestoesLidas(List<GestaoLida> Gestoes);
 
     private sealed record FichaLida(List<MandatoLido> Mandatos, bool Parlamentar);
 }

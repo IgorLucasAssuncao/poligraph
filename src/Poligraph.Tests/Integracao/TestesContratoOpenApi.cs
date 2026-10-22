@@ -60,6 +60,7 @@ public class TestesContratoOpenApi(FixturePostgres postgres) : BaseIntegracao(po
         "/api/mapa/emendas/{uf}",
         "/api/municipios",
         "/api/municipios/{codigoIbge}/emendas",
+        "/api/municipios/{codigoIbge}/gestoes",
         "/api/municipios/{codigoIbge}/emendas/parlamentares",
         "/api/municipios/{codigoIbge}/emendas/favorecidos",
         "/api/municipios/{codigoIbge}/emendas/convenios",
