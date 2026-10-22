@@ -1,4 +1,4 @@
-namespace Poligraph.Data;
+﻿namespace Poligraph.Data;
 
 /// <summary>
 /// As contas anuais de uma prefeitura, da Declaração de Contas Anuais (DCA) que o município entrega ao Tesouro pelo Siconfi (Pendência 90, fase 5).
@@ -16,6 +16,9 @@ public class ContasDoMunicipioModel
     public decimal ReceitaBruta { get; set; }
 
     /// <summary>Deduções da receita (FUNDEB e outras): a receita do município é a bruta menos estas.</summary>
+    /// <remarks>
+    /// <para>MEDIDO em 2026-10-22: 20 municípios declararam a dedução de 2024 com sinal negativo (FUNDEB, transferências constitucionais). Entra como veio, sem `CHECK` de sinal: trocar o sinal seria corrigir a declaração do município sem regra escrita.</para>
+    /// </remarks>
     public decimal Deducoes { get; set; }
 
     public decimal DespesaEmpenhada { get; set; }

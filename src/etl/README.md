@@ -68,7 +68,7 @@ os testes).
 | `emendas` | Emendas, favorecidos e convênios (download público do Portal) | `--anos ...`; `--resolver CODIGO=ID_NA_CAMARA` vincula um autor à mão |
 | `convenios` | Completa o CNPJ do convenente dos convênios de emenda | — |
 | `municipios` | Sede de quem recebeu emenda, pelo cadastro da Receita (~6 GB) | `--diretorio` com os `Estabelecimentos*.zip` já baixados |
-| `siconfi` | Contas anuais das prefeituras (DCA do Tesouro, Siconfi): receita e despesa por município e ano. Cerca de 5.570 consultas por anexo e ano | `--anos 2024`; `--municipios 3509502 ...` |
+| `siconfi` | Contas anuais das prefeituras (DCA do Tesouro, Siconfi): receita e despesa por município e ano. Cerca de 5.570 consultas por anexo e ano | `--anos 2024`; `--municipios 3509502 ...`; `--arquivo siconfi/dca-2024-....json` regrava o ano da resposta guardada |
 | `populacao` | População estimada de cada município (IBGE, SIDRA 6579), para o mapa por habitante | — |
 | `sedes-brasilapi` | Sede dos CNPJs que o cadastro não resolveu, pela BrasilAPI (Pendência 71). Retoma de onde parou | `--limite N` |
 | `fundo` | Receitas de campanha, com o fundo eleitoral (TSE). Parlamentares pelo CPF; governadores, deputados estaduais e vices pela candidatura de `mandatos` (2018, 2022 e a municipal de 2024: o layout antigo não traz o número da candidatura) | `--eleicao 2022`; `--arquivo` com o ZIP baixado à mão |

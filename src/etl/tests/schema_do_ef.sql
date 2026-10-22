@@ -1338,3 +1338,13 @@ VALUES ('20261022131551_ContasDosMunicipios', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+ALTER TABLE contas_dos_municipios DROP CONSTRAINT ck_contas_municipio_receita;
+
+ALTER TABLE contas_dos_municipios ADD CONSTRAINT ck_contas_municipio_receita CHECK (receita_bruta >= 0);
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261022144144_DeducaoComSinal', '10.0.11');
+
+COMMIT;
+

@@ -128,7 +128,7 @@ def main(argv: list[str] | None = None) -> int:
             elif args.comando == "fundir-pessoas":
                 _fundir_pessoas(conexao)
             elif args.comando == "siconfi":
-                _siconfi(conexao, args.anos, args.municipios)
+                _siconfi(conexao, args.anos, args.municipios, args.arquivo)
             elif args.comando == "reclassificar":
                 _reclassificar(conexao)
             elif args.comando == "rotina":
@@ -226,6 +226,7 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     sic = sub.add_parser("siconfi", help="contas anuais das prefeituras (DCA do Tesouro, Siconfi): receita e despesa")
     sic.add_argument("--anos", type=int, nargs="+", default=[date.today().year - 1])
     sic.add_argument("--municipios", nargs="+", help="códigos do IBGE; sem isto, todos os municípios da base")
+    sic.add_argument("--arquivo", type=Path, help="regrava um ano a partir da resposta guardada em siconfi/, sem consultar o Tesouro de novo")
     sub.add_parser(
         "populacao",
         help="população estimada de cada município (IBGE, SIDRA 6579), para o mapa por habitante",
@@ -2257,7 +2258,7 @@ def _populacao(conexao: psycopg.Connection) -> None:
     log.info("População %s: %d municípios no arquivo, %d com população na base", ano, len(linhas), com_populacao)
 
 
-def _siconfi(conexao: psycopg.Connection, anos: list[int], municipios: list[str] | None) -> None:
+def _siconfi(conexao: psycopg.Connection, anos: list[int], municipios: list[str] | None, arquivo: Path | None = None) -> None:
     """As contas anuais das prefeituras, da DCA que cada uma entrega ao Tesouro (Pendência 90, fase 5).
 
     Uma requisição por município, anexo e ano: a API não responde sem o município. Duas de cada vez:
@@ -2272,8 +2273,11 @@ def _siconfi(conexao: psycopg.Connection, anos: list[int], municipios: list[str]
     from .contratos.siconfi import LinhaDaDca
     from .fontes import siconfi as fonte
 
-    codigos = municipios or [linha[0] for linha in conexao.execute("SELECT codigo_ibge FROM municipios ORDER BY 1").fetchall()]
     usadas = {siconfi.CONTA_DA_RECEITA} | siconfi.CONTAS_DA_DESPESA
+    if arquivo is not None:
+        _siconfi_do_arquivo(conexao, anos, arquivo)
+        return
+    codigos = municipios or [linha[0] for linha in conexao.execute("SELECT codigo_ibge FROM municipios ORDER BY 1").fetchall()]
 
     def do_municipio(ano: int, codigo: str):
         receitas = fonte.consultar(ano, fonte.ANEXO_DE_RECEITAS, codigo)
@@ -2306,6 +2310,33 @@ def _siconfi(conexao: psycopg.Connection, anos: list[int], municipios: list[str]
             else:
                 persistencia.gravar_contas_dos_municipios(conexao, [ano], linhas, carga)
         log.info("  %d: %d municípios com DCA, %d sem declaração, em %.0f s", ano, len(linhas), len(sem_declaracao), time.monotonic() - inicio)
+
+
+def _siconfi_do_arquivo(conexao: psycopg.Connection, anos: list[int], arquivo: Path) -> None:
+    """Regrava um ano da DCA a partir da resposta guardada pelo `siconfi`, sem as 11 mil consultas ao Tesouro.
+
+    O arquivo é o que o `siconfi` grava em `siconfi/dca-{ano}-{data}.json`: as linhas usadas, por município.
+    MEDIDO em 2026-10-22: a carga de 2024 levou 77 minutos e caiu na gravação; com o arquivo, segundos.
+    """
+    from . import siconfi
+    from .contratos.siconfi import LinhaDaDca
+    from .fontes import siconfi as fonte
+
+    if len(anos) != 1:
+        raise SystemExit("Com --arquivo, um ano só: o arquivo é de um ano.")
+    ano = anos[0]
+    carga = _carga_do_arquivo(conexao, TipoFonteDeCarga.TESOURO, f"{fonte.URL}?an_exercicio={ano}", arquivo)
+    respostas = json.loads(arquivo.read_text(encoding="utf-8"))
+    linhas = []
+    for codigo, guardadas in respostas.items():
+        lidas = entrada.ler(LinhaDaDca, guardadas)
+        receitas = [l for l in lidas if l.cod_conta == siconfi.CONTA_DA_RECEITA]
+        despesas = [l for l in lidas if l.cod_conta in siconfi.CONTAS_DA_DESPESA]
+        if (linha := siconfi.contas_para_linha(codigo, ano, receitas, despesas)) is not None:
+            linhas.append(linha)
+    with conexao.transaction():
+        persistencia.gravar_contas_dos_municipios(conexao, [ano], linhas, carga)
+    log.info("  %d: %d municípios com DCA, do arquivo %s", ano, len(linhas), arquivo.name)
 
 
 def _reclassificar(conexao: psycopg.Connection) -> None:

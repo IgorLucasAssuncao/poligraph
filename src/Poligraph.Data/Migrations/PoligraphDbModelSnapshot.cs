@@ -416,7 +416,7 @@ namespace Poligraph.Data.Migrations
 
                             t.HasCheckConstraint("ck_contas_municipio_despesa", "despesa_empenhada >= 0 AND despesa_paga >= 0");
 
-                            t.HasCheckConstraint("ck_contas_municipio_receita", "receita_bruta >= 0 AND deducoes >= 0");
+                            t.HasCheckConstraint("ck_contas_municipio_receita", "receita_bruta >= 0");
                         });
                 });
 
