@@ -19,6 +19,16 @@ public static class TextosDoCompartilhamento
     public static string DescricaoDoPolitico(TipoCargo cargo, string partido, string? uf, string? municipio) =>
         $"{NomeDoCargo(cargo)}{(municipio is null ? "" : $" de {municipio}")} ({Partido(partido, uf)}). Mandatos, bens declarados e campanha, pelos dados do TSE.";
 
+    public static string DescricaoDaCidade(string recebido, int? desde, string? prefeito) =>
+        (desde is null ? "Sem pagamento de emenda na base." : $"{recebido} em emendas chegaram a quem tem sede aqui, de {desde} até hoje.")
+        + (prefeito is null ? "" : $" Prefeito eleito: {prefeito}.")
+        + " Quem foi eleito em cada gestão, quem mandou o dinheiro e quem recebeu.";
+
+    public static string DescricaoDaEntidade(string recebido, int emendas, string? sede) =>
+        $"Recebeu {recebido} de {emendas} {(emendas == 1 ? "emenda" : "emendas")} parlamentares"
+        + (sede is null ? "." : $". Sede em {sede}.")
+        + " Quem mandou o dinheiro, os convênios e o que mais a base tem sobre ela.";
+
     private static string Partido(string partido, string? uf) => uf is { Length: > 0 } ? $"{partido}-{uf}" : partido;
 
     private static string NomeDoCargo(TipoCargo cargo) => cargo switch

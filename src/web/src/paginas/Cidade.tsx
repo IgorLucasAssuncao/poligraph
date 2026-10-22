@@ -1,5 +1,6 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { obterEmendasDoMunicipio, obterGestoesDaCidade, type EleitoNaGestao, type GestaoDaCidade } from '../api';
+import { BotaoCompartilharComponent } from '../componentes/BotaoCompartilhar';
 import { EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { useCarga } from '../componentes/useCarga';
@@ -51,7 +52,11 @@ export function CidadeComponent() {
 
   return (
     <>
-      <CabecalhoDaColunaComponent titulo={`${nomeProprio(municipio.nome)} – ${municipio.uf}`} comVoltar />
+      <CabecalhoDaColunaComponent
+        titulo={`${nomeProprio(municipio.nome)} – ${municipio.uf}`}
+        comVoltar
+        acao={<BotaoCompartilharComponent caminho={`/c/${municipio.codigoIbge}`} nome={`${nomeProprio(municipio.nome)} – ${municipio.uf}`} />}
+      />
 
       <header className="cidade-cabecalho">
         {dados.populacao && <p className="ajuda">{T.habitantes(dados.populacao)}</p>}

@@ -1,4 +1,5 @@
 import { useCarga } from '../componentes/useCarga';
+import { BotaoCompartilharComponent } from '../componentes/BotaoCompartilhar';
 import { Link, useParams } from 'react-router-dom';
 import {
   type SancaoDaEntidade,
@@ -54,7 +55,12 @@ function PaginaDaEntidadeComponent({ dados }: { dados: DadosDaEntidade }) {
 
   return (
     <>
-      <CabecalhoDaColunaComponent titulo={nomeProprio(dados.nome)} subtitulo={dados.naturezaJuridica ?? undefined} comVoltar />
+      <CabecalhoDaColunaComponent
+        titulo={nomeProprio(dados.nome)}
+        subtitulo={dados.naturezaJuridica ?? undefined}
+        comVoltar
+        acao={<BotaoCompartilharComponent caminho={`/e/${dados.cnpj}`} nome={nomeProprio(dados.nome)} />}
+      />
 
       {dados.emendas > 0 && (
         <>

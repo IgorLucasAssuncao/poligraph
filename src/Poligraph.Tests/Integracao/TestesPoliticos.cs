@@ -157,6 +157,22 @@ public class TestesPoliticos(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Equal(System.Net.HttpStatusCode.NotFound, (await cliente.GetAsync("/api/compartilhar/999999")).StatusCode);
     }
 
+    /// <summary>A prévia da cidade diz o prefeito eleito mais recente e leva à página da cidade; CNPJ sem página dá 404.</summary>
+    [SkippableFact]
+    public async Task Compartilhar_ACidade_TrazOPrefeitoELevaAPaginaDaCidade()
+    {
+        ExigeDocker();
+        await SemearAsync();
+
+        using var cliente = new FabricaApi(ConnectionString).CreateClient();
+        var html = await cliente.GetStringAsync($"/api/compartilhar/cidade/{SaoPaulo}");
+
+        Assert.Contains("São Paulo – SP", html);
+        Assert.Contains("Prefeito eleito: Maria Exemplo", html);
+        Assert.Contains($"/cidades/{SaoPaulo}", html);
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, (await cliente.GetAsync("/api/compartilhar/entidade/11222333000181")).StatusCode);
+    }
+
     /// <summary>RISCO: o banco recusa prefeito sem município; a lista o mostraria sem saber de onde.</summary>
     [SkippableFact]
     public async Task Prefeito_SemMunicipio_ERejeitadoPeloBanco()

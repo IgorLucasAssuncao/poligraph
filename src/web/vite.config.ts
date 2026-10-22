@@ -17,6 +17,8 @@ export default defineConfig({
     proxy: {
       '/api': { target: API, changeOrigin: true },
       '^/p/[0-9]+$': { target: API, changeOrigin: false, rewrite: (caminho) => caminho.replace(/^\/p\//, '/api/compartilhar/') },
+      '^/c/[0-9]{7}$': { target: API, changeOrigin: false, rewrite: (caminho) => caminho.replace(/^\/c\//, '/api/compartilhar/cidade/') },
+      '^/e/[0-9]{14}$': { target: API, changeOrigin: false, rewrite: (caminho) => caminho.replace(/^\/e\//, '/api/compartilhar/entidade/') },
     },
   },
 });

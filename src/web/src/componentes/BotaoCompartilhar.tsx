@@ -5,13 +5,14 @@ import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 const AVISO_MS = 2500;
 
 /**
- * "Compartilhar" na ficha: o link curto `/p/{id}`, que mostra a foto e o nome na prévia (decisão do autor, 2026-10-22).
+ * "Compartilhar": o link curto que mostra a prévia (decisão do autor, 2026-10-22). `/p/{id}` na ficha, com a foto e o
+ * nome; `/c/{ibge}` na cidade e `/e/{cnpj}` na entidade, com prévia de texto.
  *
  * No celular abre o compartilhamento do sistema (`navigator.share`), que oferece WhatsApp e as redes. Sem ele,
  * copia o link e diz isso. A prévia sai do servidor (`/api/compartilhar`), porque quem a monta não roda o
  * JavaScript do site; o link leva à ficha.
  */
-export function BotaoCompartilharComponent({ idPessoa, nome }: { idPessoa: number; nome: string }) {
+export function BotaoCompartilharComponent({ caminho, nome }: { caminho: string; nome: string }) {
   const [aviso, setAviso] = useState<string | null>(null);
 
   useEffect(() => {
@@ -21,7 +22,7 @@ export function BotaoCompartilharComponent({ idPessoa, nome }: { idPessoa: numbe
   }, [aviso]);
 
   const compartilhar = async () => {
-    const url = `${window.location.origin}/p/${idPessoa}`;
+    const url = `${window.location.origin}${caminho}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: nome, text: T.compartilhar.texto(nome), url });

@@ -68,7 +68,7 @@ export function PoliticoComponent() {
             {nomeCivil && nomeCivil !== nome && <p className="nome-civil">{nomeCivil}</p>}
           </div>
           <div className="perfil-acoes">
-            <BotaoCompartilharComponent idPessoa={idPessoa} nome={nome} />
+            <BotaoCompartilharComponent caminho={`/p/${idPessoa}`} nome={nome} />
           </div>
         </div>
 

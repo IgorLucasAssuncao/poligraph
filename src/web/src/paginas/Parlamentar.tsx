@@ -174,7 +174,7 @@ export function ParlamentarComponent() {
             {(seguindo || emExercicio) && (
               <BotaoSeguirComponent idPessoa={idPessoa} seguindo={seguindo} aoAlternar={(_, agora) => setSeguindo(agora)} />
             )}
-            <BotaoCompartilharComponent idPessoa={idPessoa} nome={ficha.nome} />
+            <BotaoCompartilharComponent caminho={`/p/${idPessoa}`} nome={ficha.nome} />
           </div>
         </div>
 
