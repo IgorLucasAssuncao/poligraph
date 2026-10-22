@@ -2,16 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  OFERTA_DO_TOUR,
   PASSOS_DA_AUDITORIA,
   PASSOS_DO_SITE,
   marcarTourVisto,
-  tourJaVisto,
   type NomeDoTour,
   type PassoDoTour,
 } from '../tour';
-import { EVENTO_CONSENTIMENTO } from '../constantes';
-import { consentimentoDecidido } from '../consentimento';
 import { ContextoDoTour, type TourDaTela } from './contextoDoTour';
 import { TEXTOS_DO_SITE as T } from '../textos/site';
 
@@ -44,17 +40,17 @@ const ESPERA_ALVO_MS = 3000;
  * fecha com Esc e é anunciado como diálogo pelos leitores de tela. As bibliotecas
  * avaliadas falhavam justamente nisso — botões sem nome, sem teclado, sem foco preso.
  *
- * Há um tour do site e um por tela. A tela anuncia o seu com `registrar`, e o provedor
- * oferece um de cada vez, sempre o do site primeiro: duas ofertas juntas obrigariam a
- * pessoa a decidir duas coisas ao mesmo tempo. Depois que um tour fecha ou uma oferta é
- * recusada, nenhuma outra aparece na mesma página — a do grafo logo depois de terminar
- * o tour do site leria como insistência.
+ * Há um tour do site e um por tela. A tela anuncia o seu com `registrar`, e o "?" do
+ * cabeçalho (`AjudaComponent`) o oferece junto com o do site.
+ *
+ * DECISÃO (autor, 2026-10-22): nenhum tour se oferece sozinho. Antes, cada página nova
+ * abria uma oferta no primeiro acesso, e a pessoa tinha de dispensar uma a cada tela.
+ * O único que ainda abre sem pedido é o da auditoria, na primeira vez que ela é ligada:
+ * aí a pessoa acabou de pedir uma coisa nova.
  */
 export function ProvedorDoTourComponent({ children }: { children: ReactNode }) {
-  const { pathname } = useLocation();
   const [aberto, setAberto] = useState<{ nome: NomeDoTour; passos: PassoDoTour[] } | null>(null);
   const [tela, setTela] = useState<TourDaTela | null>(null);
-  const [silencioEm, setSilencioEm] = useState<string | null>(null);
 
   const telaAtual = useRef(tela);
   useEffect(() => {
@@ -75,21 +71,8 @@ export function ProvedorDoTourComponent({ children }: { children: ReactNode }) {
     return () => setTela((atual) => (atual === nova ? null : atual));
   }, []);
 
-  const contexto = useMemo(() => ({ iniciar, registrar }), [iniciar, registrar]);
-
-  const encerrar = (nome: NomeDoTour) => {
-    marcarTourVisto(nome);
-    setSilencioEm(pathname);
-  };
-
-  const ofertar: NomeDoTour | null =
-    aberto || silencioEm === pathname
-      ? null
-      : !tourJaVisto('site')
-        ? 'site'
-        : tela && !tourJaVisto(tela.nome)
-          ? tela.nome
-          : null;
+  const daTela = tela?.nome ?? null;
+  const contexto = useMemo(() => ({ iniciar, registrar, daTela }), [iniciar, registrar, daTela]);
 
   return (
     <ContextoDoTour.Provider value={contexto}>
@@ -99,65 +82,12 @@ export function ProvedorDoTourComponent({ children }: { children: ReactNode }) {
           key={aberto.nome}
           passos={aberto.passos}
           aoFechar={() => {
-            encerrar(aberto.nome);
+            marcarTourVisto(aberto.nome);
             setAberto(null);
           }}
         />
       )}
-      {ofertar && (
-        <OfertaDoTourComponent
-          key={ofertar}
-          nome={ofertar}
-          aoAceitar={() => iniciar(ofertar)}
-          aoRecusar={() => encerrar(ofertar)}
-        />
-      )}
     </ContextoDoTour.Provider>
-  );
-}
-
-/**
- * A oferta espera a resposta ao banner de consentimento, pelo mesmo motivo por que
- * as ofertas não se somam: uma decisão por vez.
- */
-function OfertaDoTourComponent({
-  nome,
-  aoAceitar,
-  aoRecusar,
-}: {
-  nome: NomeDoTour;
-  aoAceitar: () => void;
-  aoRecusar: () => void;
-}) {
-  const [visivel, setVisivel] = useState(false);
-
-  useEffect(() => {
-    const decidir = () => {
-      if (consentimentoDecidido()) setVisivel(true);
-    };
-    decidir();
-    window.addEventListener(EVENTO_CONSENTIMENTO, decidir);
-
-    return () => window.removeEventListener(EVENTO_CONSENTIMENTO, decidir);
-  }, []);
-
-  if (!visivel) return null;
-
-  const { titulo, texto } = OFERTA_DO_TOUR[nome];
-
-  return (
-    <section className="oferta-tour" aria-labelledby="oferta-tour-titulo">
-      <h2 id="oferta-tour-titulo">{titulo}</h2>
-      <p>{texto}</p>
-      <div className="oferta-tour-acoes">
-        <button type="button" className="botao-destaque" onClick={aoAceitar}>
-          {nome === 'site' ? T.tour.verComoFunciona : T.tour.verOTour}
-        </button>
-        <button type="button" className="botao-texto" onClick={aoRecusar}>
-          {T.tour.agoraNao}
-        </button>
-      </div>
-    </section>
   );
 }
 

@@ -1,12 +1,13 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProvedorDoTourComponent } from './Tour';
 import { useTour } from './contextoDoTour';
-import { CHAVE_CONSENTIMENTO, EVENTO_CONSENTIMENTO } from '../constantes';
+import { CHAVE_CONSENTIMENTO } from '../constantes';
 import { VERSAO_DO_AVISO_DE_MEDICAO } from '../textos-legais';
 import { PASSOS_DO_SITE, passosDoGrafo, type PassoDoTour } from '../tour';
-import { BotaoDoTourComponent } from './BotaoDoTour';
+import { TourDaTelaComponent } from './TourDaTela';
+import { AjudaComponent } from './Ajuda';
 
 function BotaoDeAbrir() {
   const { iniciar } = useTour();
@@ -51,7 +52,8 @@ function renderizarTela() {
   return render(
     <MemoryRouter initialEntries={['/parlamentares']}>
       <ProvedorDoTourComponent>
-        <BotaoDoTourComponent nome="grafo" passos={PASSOS_DA_TELA} />
+        <AjudaComponent />
+        <TourDaTelaComponent nome="grafo" passos={PASSOS_DA_TELA} />
         <div data-tour="um">um</div>
         <div data-tour="dois">dois</div>
       </ProvedorDoTourComponent>
@@ -81,39 +83,14 @@ describe('Tour guiado', () => {
 
   afterEach(() => vi.restoreAllMocks());
 
-  describe('oferta do primeiro acesso', () => {
-    it('espera o banner de consentimento ser respondido', () => {
-      renderizar();
-
-      expect(screen.queryByText('Primeira vez por aqui?')).toBeNull();
-
-      act(() => {
-        decidirConsentimento();
-        window.dispatchEvent(new Event(EVENTO_CONSENTIMENTO));
-      });
-
-      expect(screen.getByText('Primeira vez por aqui?')).toBeDefined();
-    });
-
-    it('"Agora não" some e não pergunta de novo', () => {
+  describe('nada se oferece sozinho', () => {
+    it('nem o do site nem o da tela abrem ou aparecem sem pedido, mesmo no primeiro acesso', () => {
       decidirConsentimento();
-      const { unmount } = renderizar();
+      renderizarTela();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Agora não' }));
-      expect(screen.queryByText('Primeira vez por aqui?')).toBeNull();
-
-      unmount();
-      renderizar();
-      expect(screen.queryByText('Primeira vez por aqui?')).toBeNull();
-    });
-
-    it('não aparece para quem já viu o tour', () => {
-      decidirConsentimento();
-      localStorage.setItem('poligraph:tour-visto', '1');
-
-      renderizar();
-
-      expect(screen.queryByText('Primeira vez por aqui?')).toBeNull();
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.queryByText('Como ler o grafo')).toBeNull();
+      expect(screen.queryByText('Como o site funciona')).toBeNull();
     });
   });
 
@@ -171,44 +148,36 @@ describe('Tour guiado', () => {
   });
 
   describe('tour de tela', () => {
-    it('"Entenda esta tela" abre o tour da própria tela', async () => {
+    it('o "?" do cabeçalho oferece o da tela e o do site, e abre o da tela', async () => {
       renderizarTela();
 
-      fireEvent.click(screen.getByRole('button', { name: /Entenda esta tela/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Ajuda: como ler esta tela' }));
+      expect(screen.getByRole('menuitem', { name: /Como o site funciona/ })).toBeDefined();
+      fireEvent.click(screen.getByRole('menuitem', { name: /Como ler o grafo/ }));
 
       expect(await screen.findByText('Passo 1 de 2')).toBeDefined();
       expect(screen.getByRole('heading', { name: 'Primeiro da tela' })).toBeDefined();
     });
 
-    it('a oferta da tela espera a do site ser respondida', () => {
-      decidirConsentimento();
-      renderizarTela();
+    it('sem tour na tela, o "?" abre direto o do site', async () => {
+      render(
+        <MemoryRouter initialEntries={['/']}>
+          <ProvedorDoTourComponent>
+            <AjudaComponent />
+            <Alvos />
+          </ProvedorDoTourComponent>
+        </MemoryRouter>,
+      );
 
-      expect(screen.getByText('Primeira vez por aqui?')).toBeDefined();
-      expect(screen.queryByText('Como ler o grafo')).toBeNull();
-    });
+      fireEvent.click(screen.getByRole('button', { name: 'Como o site funciona' }));
 
-    it('recusada a do site, a da tela não aparece na mesma página', () => {
-      decidirConsentimento();
-      renderizarTela();
-
-      fireEvent.click(screen.getByRole('button', { name: 'Agora não' }));
-
-      expect(screen.queryByText('Como ler o grafo')).toBeNull();
-    });
-
-    it('quem já viu o do site recebe a oferta da tela', () => {
-      decidirConsentimento();
-      localStorage.setItem('poligraph:tour-visto', '1');
-
-      renderizarTela();
-
-      expect(screen.getByText('Como ler o grafo')).toBeDefined();
+      expect(await screen.findByText(`Passo 1 de ${PASSOS_DO_SITE.length}`)).toBeDefined();
     });
 
     it('cada tour lembra o seu: ver o da tela não marca o do site', async () => {
       renderizarTela();
-      fireEvent.click(screen.getByRole('button', { name: /Entenda esta tela/ }));
+      fireEvent.click(screen.getByRole('button', { name: 'Ajuda: como ler esta tela' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: /Como ler o grafo/ }));
       await screen.findByText('Passo 1 de 2');
 
       fireEvent.click(screen.getByRole('button', { name: 'Pular' }));
@@ -267,14 +236,16 @@ describe('passos opcionais ausentes', () => {
     render(
       <MemoryRouter initialEntries={['/x']}>
         <ProvedorDoTourComponent>
-          <BotaoDoTourComponent nome="grafo" passos={passos} />
+          <AjudaComponent />
+          <TourDaTelaComponent nome="grafo" passos={passos} />
           <div data-tour="um">um</div>
           <div data-tour="dois">dois</div>
         </ProvedorDoTourComponent>
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Entenda esta tela/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ajuda: como ler esta tela' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Como ler o grafo/ }));
     expect(await screen.findByText('Passo 1 de 2')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Próximo' }));

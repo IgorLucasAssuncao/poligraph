@@ -2468,46 +2468,7 @@ dialog.tour::backdrop { background: transparent; }
 .tour-controles { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
 .tour-controles .botao-destaque { margin-left: auto; min-width: 7.5rem; }
 
-/* Oferta do primeiro acesso: canto inferior, sem cobrir o conteúdo. */
-/* "Entenda esta tela": texto com a marca de ajuda, no tom de realce e com borda de
-   controle. A borda é o que o separa de um rótulo quando está ao lado de números. */
-.botao-tour {
-  display: inline-flex; align-items: center; gap: .4rem;
-  padding: .3rem .6rem; font-size: var(--t-1); font-weight: 600;
-  color: var(--realce); background: none;
-  border: 1px solid var(--borda-controle); border-radius: var(--raio);
-  cursor: pointer;
-  transition: background var(--t-curto) var(--curva), border-color var(--t-curto) var(--curva);
-}
-.botao-tour:hover { background: var(--realce-fraco); border-color: var(--realce); }
-.botao-tour > span {
-  display: inline-grid; place-items: center; width: 1.1rem; height: 1.1rem;
-  font-family: var(--dado); font-size: var(--t-1);
-  color: var(--fundo); background: var(--realce); border-radius: 50%;
-}
 .perfil-numeros { align-items: center; flex-wrap: wrap; }
-.perfil-numeros .botao-tour { margin-left: auto; }
-.progresso .botao-tour { margin-top: .5rem; }
-.linha-do-tour { padding: .75rem 1rem 0; }
-
-.oferta-tour {
-  position: fixed; z-index: 40;
-  right: clamp(1rem, 3vw, 2rem);
-  bottom: calc(clamp(1rem, 3vw, 2rem) + env(safe-area-inset-bottom, 0px));
-  width: min(22rem, calc(100vw - 2rem));
-  display: grid; gap: .5rem;
-  padding: 1rem 1.125rem;
-  background: var(--fundo); color: var(--texto);
-  border: 1px solid var(--borda-forte); border-top: 3px solid var(--realce);
-  border-radius: var(--raio); box-shadow: var(--sombra-flutuante);
-  animation: oferta-entra var(--t-medio) var(--curva-entrada);
-}
-.oferta-tour h2 { margin: 0; font-size: var(--t-3); }
-.oferta-tour p { margin: 0; font-size: var(--t-2); color: var(--suave); }
-.oferta-tour-acoes { display: flex; gap: .5rem; align-items: center; margin-top: .25rem; }
-@keyframes oferta-entra {
-  from { opacity: 0; translate: 0 12px; }
-}
 
 /* Menos movimento: sai o deslizamento, fica a fusão curta. Some sem transição confunde
    tanto quanto deslizar demais. */
@@ -2520,7 +2481,6 @@ dialog.tour::backdrop { background: transparent; }
   /* A troca de passo com menos movimento: some, troca de lugar invisível, reaparece. */
   .tour.tour-trocando .tour-destaque,
   .tour.tour-trocando .tour-balao { opacity: 0; }
-  .oferta-tour { animation: none; }
 }
 
 /* ═══ EMENDAS NO MAPA ══════════════════════════════════════════ */
@@ -2670,7 +2630,7 @@ dialog.tour::backdrop { background: transparent; }
 .cabecalho-conteudo .nav-principal { grid-area: nav; margin-right: 0; min-width: max-content; }
 .cabecalho-conteudo .busca-cabecalho { grid-area: busca; }
 .cabecalho-conteudo .cabecalho-pessoal { grid-area: conta; display: flex; align-items: center; gap: .25rem; }
-.cabecalho-conteudo .interruptor-auditoria { grid-area: analise; align-self: center; }
+.cabecalho-conteudo .cabecalho-ferramentas { grid-area: analise; align-self: center; display: flex; align-items: center; gap: .25rem; }
 
 .busca-cabecalho { position: relative; align-self: center; justify-self: end; width: min(100%, 24rem); }
 .busca-cabecalho input {
@@ -3222,3 +3182,25 @@ html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
 .linha-do-tempo-marcos { list-style: none; margin: 0; padding: 0; display: grid; gap: .2rem; font-size: var(--t-2); }
 .gestao-contas { display: block; margin-top: .35rem; padding-top: .35rem; border-top: 1px solid var(--borda); }
 .painel-cidade-mais { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; margin: 1rem 0 0; }
+
+/* Ajuda do cabeçalho (decisão do autor, 2026-10-22): o "?" ao lado da auditoria abre os tours. */
+.ajuda-cabecalho { position: relative; }
+.botao-ajuda {
+  width: 2rem; height: 2rem; display: inline-grid; place-items: center; padding: 0;
+  font: inherit; font-weight: 700; font-size: var(--t-2); color: var(--texto); background: none;
+  border: 1px solid var(--borda-controle); border-radius: var(--raio); cursor: pointer;
+}
+.botao-ajuda:hover, .botao-ajuda[aria-expanded="true"] { border-color: var(--realce); color: var(--realce); }
+.botao-ajuda:focus-visible { outline: 3px solid var(--realce); outline-offset: 2px; }
+.menu-ajuda {
+  position: absolute; right: 0; top: calc(100% + .4rem); z-index: 40; width: min(20rem, 100vw - 2rem);
+  display: grid; padding: .25rem; background: var(--fundo); border: 1px solid var(--borda-controle); border-radius: var(--raio);
+  box-shadow: 0 6px 24px rgb(0 0 0 / .18);
+}
+.menu-ajuda button {
+  display: grid; gap: .15rem; text-align: left; padding: .6rem .75rem; font: inherit; color: var(--texto);
+  background: none; border: 0; border-radius: var(--raio); cursor: pointer;
+}
+.menu-ajuda button:hover, .menu-ajuda button:focus-visible { background: var(--painel); outline: none; }
+.menu-ajuda strong { font-size: var(--t-2); }
+.menu-ajuda small { font-size: var(--t-1); color: var(--suave); }

@@ -170,8 +170,12 @@ tanto quanto deslizar demais. Sai o deslocamento, fica a fusão curta.
 ### Tour guiado **(2026-09)**
 
 `componentes/Tour.tsx`, sobre `<dialog>` nativo (foco preso, Esc, papel de diálogo), sem
-biblioteca: as quatro mais usadas falharam em auditoria de acessibilidade. Oferecido no
-primeiro acesso depois do banner de consentimento; "Como funciona" no cabeçalho reabre.
+biblioteca: as quatro mais usadas falharam em auditoria de acessibilidade.
+
+🔴 **(2026-10-22, decisão do autor) Nenhum tour se oferece sozinho.** A ajuda mora num lugar
+só: o "?" do cabeçalho, ao lado da auditoria (`componentes/Ajuda.tsx`). Na tela com tour, ele
+abre um menu com "como ler esta tela" e "como o site funciona"; nas outras, abre o do site. A
+exceção é o tour da auditoria, que abre na primeira vez que ela é ligada.
 
 | Movimento | Token |
 |---|---|
@@ -183,13 +187,11 @@ primeiro acesso depois do banner de consentimento; "Como funciona" no cabeçalho
 Marque o alvo com `data-tour="<nome>"` e acrescente o passo em `tour.ts`. Passo cujo
 alvo não aparece é pulado.
 
-**Um tour por tela, além do do site:** `grafo`, `ficha`, `questionario`, `resultado`. A
-tela monta `<BotaoDoTour nome passos>` ("Entenda esta tela"), que anuncia o tour ao
-provedor. Regras:
+**Um tour por tela, além do do site:** `grafo`, `ficha`, `questionario`, `resultado`,
+`emendas`, `governo`. A tela monta `<TourDaTelaComponent nome passos>`, que só anuncia o tour
+ao provedor, sem desenhar nada. Regras:
 
 - ⭐ O do site fica curto (onde cada coisa está); **como ler** cada tela vai no tour dela.
-- 🔴 Uma oferta por vez, sempre a do site primeiro, e nenhuma na mesma página depois de
-  um tour fechar ou de uma oferta ser recusada.
 - 🔴 Número no texto do passo vem do dado: o `k` do grafo chega em `vizinhosPorNo`, da
   tabela `execucoes`. Sem isso, o texto afirmaria um número que o método já não usa.
 - ⚠️ Cada página com tour tem um teste que procura todos os alvos dela: um alvo que

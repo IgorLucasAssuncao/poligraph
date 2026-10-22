@@ -24,11 +24,11 @@ export type PassoDoTour = {
 
 export type NomeDoTour = 'site' | 'auditoria' | 'grafo' | 'ficha' | 'questionario' | 'resultado' | 'emendas' | 'governo';
 
-/** Como a oferta do primeiro acesso apresenta cada tour. */
-export const OFERTA_DO_TOUR: Record<NomeDoTour, { titulo: string; texto: string }> = {
+/** Como o menu de ajuda (o "?" do cabeçalho) apresenta cada tour. */
+export const APRESENTACAO_DO_TOUR: Record<NomeDoTour, { titulo: string; texto: string }> = {
   site: {
-    titulo: 'Primeira vez por aqui?',
-    texto: 'Um tour de um minuto mostra de onde vêm os dados e como o resultado é calculado.',
+    titulo: 'Como o site funciona',
+    texto: 'Um minuto: de onde vêm os dados e como o resultado é calculado.',
   },
   auditoria: {
     titulo: 'O modo auditoria',

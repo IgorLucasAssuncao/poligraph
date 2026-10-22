@@ -21,7 +21,6 @@ export const TEXTOS_DOS_COMPONENTES = {
     preparando: 'Preparando…',
     erro: 'Não foi possível baixar. Tente de novo.',
   },
-  entendaEstaTela: ' Entenda esta tela',
   linkDeFonte: ' (abre o site oficial em nova aba)',
   novaAba: ' (abre em nova aba)',
   abasDoDinheiro: 'Dinheiro público',

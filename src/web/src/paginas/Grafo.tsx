@@ -9,7 +9,7 @@ import {
   type Grafo as DadosDoGrafo,
   type NoDoGrafo,
 } from '../api';
-import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
+import { TourDaTelaComponent } from '../componentes/TourDaTela';
 import { GrafoAmpliadoComponent } from '../componentes/GrafoAmpliado';
 import { LegendaDoGrafoComponent } from '../componentes/LegendaDoGrafo';
 import { TelaDoGrafoComponent } from '../componentes/TelaDoGrafo';
@@ -105,7 +105,7 @@ export function GrafoComponent() {
           <p className="grafo-contagem">{T.contagem(grafo.nos.length, membro.plural, grafo.arestas.length)}</p>
         )}
 
-        {passos && <BotaoDoTourComponent nome="grafo" passos={passos} />}
+        {passos && <TourDaTelaComponent nome="grafo" passos={passos} />}
       </div>
 
       {erro && <p className="erro">{erro}</p>}

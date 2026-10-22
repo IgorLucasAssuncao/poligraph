@@ -18,7 +18,7 @@ import {
 import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
 import { AbasDoGovernoComponent } from '../componentes/AbasDoGoverno';
 import { BotaoBaixarCsvComponent } from '../componentes/BotaoBaixarCsv';
-import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
+import { TourDaTelaComponent } from '../componentes/TourDaTela';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { SeletorDePeriodoComponent } from '../componentes/SeletorDePeriodo';
 import { atalhosDasGestoes } from '../componentes/atalhosDasGestoes';
@@ -77,7 +77,7 @@ export function GovernoComponent({ secao = 'orcamento' }: { secao?: 'orcamento' 
       <CabecalhoDaColunaComponent
         titulo={T.titulo}
         subtitulo={T.subtitulo}
-        acao={<BotaoDoTourComponent nome="governo" passos={passos} />}
+        acao={<TourDaTelaComponent nome="governo" passos={passos} />}
       />
       <AbasDoGovernoComponent busca={parametros.toString() ? `?${parametros.toString()}` : ''} />
 

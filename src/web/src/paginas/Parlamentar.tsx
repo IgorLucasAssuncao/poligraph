@@ -13,7 +13,7 @@ import {
   type VotoNaFicha,
 } from '../api';
 import { AvatarComponent } from '../componentes/Avatar';
-import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
+import { TourDaTelaComponent } from '../componentes/TourDaTela';
 import { periodoDaLegislatura } from '../formato';
 import { BotaoMostrarMaisComponent } from '../componentes/BotaoMostrarMais';
 import { BotaoSeguirComponent } from '../componentes/BotaoSeguir';
@@ -154,7 +154,7 @@ export function ParlamentarComponent() {
 
   return (
     <>
-      <CabecalhoDaColunaComponent titulo={T.titulo} comVoltar acao={<BotaoDoTourComponent nome="ficha" passos={PASSOS_DA_FICHA} />} />
+      <CabecalhoDaColunaComponent titulo={T.titulo} comVoltar acao={<TourDaTelaComponent nome="ficha" passos={PASSOS_DA_FICHA} />} />
 
       <header className="perfil-cabecalho">
         <div className="perfil-avatar-linha">

@@ -12,7 +12,7 @@ import {
 } from '../api';
 import { AvaliacaoComponent } from './Avaliacao';
 import { AvatarComponent } from './Avatar';
-import { BotaoDoTourComponent } from './BotaoDoTour';
+import { TourDaTelaComponent } from './TourDaTela';
 import { CabecalhoDaColunaComponent } from './Layout';
 import { GrafoAmpliadoComponent } from './GrafoAmpliado';
 import { LinhaParlamentarComponent } from './LinhaParlamentar';
@@ -83,9 +83,7 @@ export function ResultadoComponent({
         subtitulo={T.respondidas(resultado.totalPerguntasRespondidas)}
       />
 
-      <div className="linha-do-tour">
-        <BotaoDoTourComponent nome="resultado" passos={PASSOS_DO_RESULTADO} />
-      </div>
+      <TourDaTelaComponent nome="resultado" passos={PASSOS_DO_RESULTADO} />
 
       <p className="ajuda ajuda-espacada">{T.explicacao}</p>
 

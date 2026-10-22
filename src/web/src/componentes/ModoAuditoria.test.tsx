@@ -79,7 +79,7 @@ describe('o modo auditoria', () => {
 describe('o tour do modo auditoria', () => {
   function comTour(iniciar: (nome?: string) => void) {
     return render(
-      <ContextoDoTour.Provider value={{ iniciar, registrar: () => () => {} }}>
+      <ContextoDoTour.Provider value={{ iniciar, registrar: () => () => {}, daTela: null }}>
         <ProvedorDoModoAuditoriaComponent>
           <InterruptorDoModoAuditoriaComponent />
         </ProvedorDoModoAuditoriaComponent>

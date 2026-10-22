@@ -10,7 +10,7 @@ import {
 } from '../api';
 import { PainelComponent } from '../componentes/Painel';
 import { ResultadoComponent } from '../componentes/Resultado';
-import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
+import { TourDaTelaComponent } from '../componentes/TourDaTela';
 import { passosDoQuestionario } from '../tour';
 import { comTransicao } from '../transicao';
 import { EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
@@ -159,7 +159,7 @@ export function QuestionarioComponent() {
           {acabou ? T.respondidas(opinadas, perguntas.length) : T.pergunta(indice + 1, previstas)}
         </p>
 
-        <BotaoDoTourComponent nome="questionario" passos={PASSOS_DO_QUESTIONARIO} />
+        <TourDaTelaComponent nome="questionario" passos={PASSOS_DO_QUESTIONARIO} />
       </div>
 
       {acabou && aguardandoDesempate ? (

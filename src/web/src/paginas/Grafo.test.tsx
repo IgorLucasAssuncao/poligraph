@@ -56,17 +56,17 @@ describe('o tour do grafo', () => {
         <GrafoComponent />
       </MemoryRouter>,
     );
-    await screen.findByRole('button', { name: /Entenda esta tela/ });
-
     const passos = passosDoGrafo({
       singular: 'deputado',
       plural: 'deputados',
       vizinhosPorNo: 10,
       temAlinhamento: true,
     });
-    for (const passo of passos) {
-      expect(document.querySelector(`[data-tour="${passo.alvo}"]`), passo.alvo).not.toBeNull();
-    }
+    await vi.waitFor(() => {
+      for (const passo of passos) {
+        expect(document.querySelector(`[data-tour="${passo.alvo}"]`), passo.alvo).not.toBeNull();
+      }
+    });
   });
 });
 

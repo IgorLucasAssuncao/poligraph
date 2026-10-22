@@ -21,7 +21,7 @@ import {
 import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
 import { ColetivosComponent, LinhaDoParlamentarComponent } from '../componentes/AutoresDaEmenda';
 import { BotaoBaixarCsvComponent } from '../componentes/BotaoBaixarCsv';
-import { BotaoDoTourComponent } from '../componentes/BotaoDoTour';
+import { TourDaTelaComponent } from '../componentes/TourDaTela';
 import { BotaoMostrarMaisComponent } from '../componentes/BotaoMostrarMais';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
@@ -129,7 +129,7 @@ export function EmendasComponent() {
       <CabecalhoDaColunaComponent
         titulo={T.titulo}
         subtitulo={T.subtitulo}
-        acao={<BotaoDoTourComponent nome="emendas" passos={passos} />}
+        acao={<TourDaTelaComponent nome="emendas" passos={passos} />}
       />
 
 

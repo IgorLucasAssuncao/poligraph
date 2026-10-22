@@ -123,10 +123,12 @@ export const TEXTOS_DO_SITE = {
     scriptFalhou: 'Falha ao carregar o Google.',
   },
 
+  ajuda: {
+    rotulo: 'Como o site funciona',
+    rotuloComTela: 'Ajuda: como ler esta tela',
+  },
+
   tour: {
-    verComoFunciona: 'Ver como funciona',
-    verOTour: 'Ver o tour',
-    agoraNao: 'Agora não',
     passo: (numero: number, total: number) => `Passo ${numero} de ${total}`,
     pular: 'Pular',
     anterior: 'Anterior',

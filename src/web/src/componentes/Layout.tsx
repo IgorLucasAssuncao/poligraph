@@ -7,6 +7,7 @@ import { IconeExplorarComponent, IconeOrcamentoComponent, IconeQuestionarioCompo
 import { MenuDaContaComponent } from './MenuDaConta';
 import { SininhoComponent } from './Sininho';
 import { AvisoDeSeguidosEncerradosComponent } from './AvisoDeSeguidosEncerrados';
+import { AjudaComponent } from './Ajuda';
 import { InterruptorDoModoAuditoriaComponent, ProvedorDoModoAuditoriaComponent } from './ModoAuditoria';
 import { ProvedorDoTourComponent } from './Tour';
 import { useLegislaturaDaUrl, useLegislaturas } from './useLegislatura';
@@ -196,7 +197,10 @@ function CabecalhoDoSiteComponent() {
         </nav>
 
         <BuscaDoCabecalhoComponent />
-        <InterruptorDoModoAuditoriaComponent />
+        <div className="cabecalho-ferramentas">
+          <InterruptorDoModoAuditoriaComponent />
+          <AjudaComponent />
+        </div>
         <div className="cabecalho-pessoal">
           <SininhoComponent />
           <MenuDaContaComponent />
