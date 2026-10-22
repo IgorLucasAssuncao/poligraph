@@ -115,6 +115,7 @@ export const TEXTOS_DOS_COMPONENTES = {
   },
 
   mandatos: {
+    verOsOutros: (n: number) => (n === 1 ? 'Ver o outro mandato' : `Ver os outros ${n} mandatos`),
     votouDe: 'Votou de ',
     ate: ' a ',
     naLegislatura: ' · legislatura ',

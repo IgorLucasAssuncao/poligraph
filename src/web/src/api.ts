@@ -1462,6 +1462,8 @@ export type EmendasDoMunicipio = {
   anosDisponiveis: number[];
   recebido: number;
   naPropriaCidade: number;
+  /** O que foi a órgão do governo do estado com sede aqui (a capital): não é dinheiro da cidade. */
+  noGovernoDoEstado?: number;
   deParlamentares: number;
   parlamentares: PaginaDe<ParlamentarQueMandou>;
   coletivos: ColetivoQueMandou[];
@@ -1675,6 +1677,7 @@ export type GestaoDaCidade = {
   viceGovernadores?: { governador: EleitoNaGestao; deAno: number; ateAno: number }[] | null;
   recebido: number;
   naPrefeitura: number;
+  noGovernoDoEstado?: number;
   /** Sem ano na base de pagamentos (antes de ago/2015): a tela diz isso, não R$ 0. */
   comPagamento: boolean;
   /** A receita e a despesa da prefeitura nos anos que ela declarou ao Tesouro (Siconfi); `null` sem nenhum ano declarado na base. */
@@ -1687,8 +1690,9 @@ export type GestoesDaCidade = {
   populacao: number | null;
   recebido: number;
   naPrefeitura: number;
+  noGovernoDoEstado?: number;
   gestoes: GestaoDaCidade[];
-  porAno: { ano: number; recebido: number; naPrefeitura: number }[];
+  porAno: { ano: number; recebido: number; naPrefeitura: number; noGovernoDoEstado?: number }[];
 };
 
 /** `null` quando o código não é município. */

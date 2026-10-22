@@ -39,6 +39,7 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
 
     /// <summary>As naturezas jurídicas da administração municipal: nelas a sede é a própria cidade.</summary>
     private static readonly string[] NaturezasDaCidade = [.. VocabularioDasFontes.NaturezasDaCidade];
+    private static readonly string[] NaturezasDoEstado = [.. VocabularioDasFontes.NaturezasDoEstado];
 
     private readonly PoligraphDb _db = db;
     private readonly IMemoryCache _cache = cache;
@@ -160,7 +161,8 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
             Parlamentares: Paginar(cidade.Parlamentares, 1),
             Coletivos: cidade.Coletivos,
             Favorecidos: Paginar(cidade.Favorecidos, 1),
-            Convenios: ResumoDosConvenios(cidade.Convenios, 1));
+            Convenios: ResumoDosConvenios(cidade.Convenios, 1),
+            NoGovernoDoEstado: cidade.NoGovernoDoEstado);
     }
 
     /// <summary>O pago a quem tem sede na cidade, pelo ano do pagamento (`competencia`), com a parte da prefeitura. A regra do mapa, sem recorte de período.</summary>
@@ -176,10 +178,11 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
                     Ano = g.Key,
                     Recebido = g.Sum(p => p.Valor),
                     NaPrefeitura = g.Where(p => NaturezasDaCidade.Contains(p.NaturezaJuridica)).Sum(p => p.Valor),
+                    NoGovernoDoEstado = g.Where(p => NaturezasDoEstado.Contains(p.NaturezaJuridica)).Sum(p => p.Valor),
                 })
                 .ToListAsync(ct))
             .OrderBy(a => a.Ano)
-            .Select(a => new PagoNoAnoDto(a.Ano, a.Recebido, a.NaPrefeitura))];
+            .Select(a => new PagoNoAnoDto(a.Ano, a.Recebido, a.NaPrefeitura, a.NoGovernoDoEstado))];
 
     /// <summary>Os convênios da cidade, em páginas. A primeira é a do painel.</summary>
     public async Task<ConveniosDaCidadeDto?> ListarConveniosAsync(
@@ -374,6 +377,9 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
         var naPropriaCidade = await naCidade
             .Where(p => NaturezasDaCidade.Contains(p.NaturezaJuridica))
             .SumAsync(p => p.Valor, ct);
+        var noGovernoDoEstado = await naCidade
+            .Where(p => NaturezasDoEstado.Contains(p.NaturezaJuridica))
+            .SumAsync(p => p.Valor, ct);
 
         var (parlamentares, coletivos) = await _autores.AgruparAsync([.. porEmenda.Select(e => (e.Codigo, e.Recebido))], ct);
         var convenios = await ConveniosDaCidadeAsync(municipio.CodigoIbge, prefixosDoCodigoDaEmenda, ct);
@@ -384,7 +390,8 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
             [.. favorecidos.Select(f =>
                 new FavorecidoDaEmendaDto(
                     TextoSemCpf.Limpar(f.Nome), f.NaturezaJuridica, municipio.Uf, municipio.Nome, f.Recebido,
-                    FavorecidoDaEmendaDto.CnpjPublico(f.Cnpj, f.NaturezaJuridica)))]);
+                    FavorecidoDaEmendaDto.CnpjPublico(f.Cnpj, f.NaturezaJuridica)))],
+            noGovernoDoEstado);
     }
 
     /// <summary>
@@ -429,7 +436,8 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
         IReadOnlyList<ParlamentarQueMandouDto> Parlamentares,
         IReadOnlyList<ColetivoQueMandouDto> Coletivos,
         IReadOnlyList<ConvenioDaCidadeDto> Convenios,
-        IReadOnlyList<FavorecidoDaEmendaDto> Favorecidos);
+        IReadOnlyList<FavorecidoDaEmendaDto> Favorecidos,
+        decimal NoGovernoDoEstado);
 
     /// <summary>Projeção do EF para o pagamento com a sede já ligada ao município.</summary>
     private sealed class PagamentoLocalizado

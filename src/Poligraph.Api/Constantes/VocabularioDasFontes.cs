@@ -1,4 +1,4 @@
-namespace Poligraph.Api.Constantes;
+﻿namespace Poligraph.Api.Constantes;
 
 /// <summary>
 /// Os textos como as fontes oficiais os escrevem e que o código compara: natureza jurídica da
@@ -36,6 +36,26 @@ public static class VocabularioDasFontes
         "Autarquia Municipal",
         "Fundação Pública de Direito Público Municipal",
         "Fundação Pública de Direito Privado Municipal",
+    ];
+
+    /// <summary>
+    /// As naturezas do governo do estado: a sede é a capital, e o dinheiro não é da cidade.
+    /// </summary>
+    /// <remarks>
+    /// <para>MEDIDO em 2026-10-22, base inteira: R$ 18,5 bi pagos a elas, a maior parte em fundo (R$ 7,2 bi), órgão (R$ 5,7 bi) e o próprio estado (R$ 4,4 bi). No Rio de Janeiro capital, R$ 221 mi, que a página da cidade somava às entidades com sede ali.</para>
+    /// <para>Por igualdade exata: os nomes são os da Receita, como em <see cref="NaturezasDaCidade"/>.</para>
+    /// </remarks>
+    public static readonly IReadOnlyList<string> NaturezasDoEstado =
+    [
+        EstadoOuDistritoFederal,
+        "Fundo Público da Administração Direta Estadual ou do Distrito Federal",
+        "Órgão Público do Poder Executivo Estadual ou do Distrito Federal",
+        "Autarquia Estadual ou do Distrito Federal",
+        "Fundação Pública de Direito Público Estadual ou do Distrito Federal",
+        "Fundação Pública de Direito Privado Estadual ou do Distrito Federal",
+        "Órgão Público Autônomo Estadual ou do Distrito Federal",
+        "Órgão Público do Poder Judiciário Estadual",
+        "Órgão Público do Poder Legislativo Estadual ou do Distrito Federal",
     ];
 
     /// <summary>O começo das naturezas sem fins lucrativos.</summary>

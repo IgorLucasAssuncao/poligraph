@@ -72,12 +72,14 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
                     Contas: declarados.Count == 0
                         ? null
                         : new ContasDaGestaoDto(declarados.Sum(c => c.Receita), declarados.Sum(c => c.DespesaPaga), declarados.Count, ultimo - primeiro + 1),
-                    ViceGovernadores: NoPeriodo(viceGovernadores, primeiro, ultimo));
+                    ViceGovernadores: NoPeriodo(viceGovernadores, primeiro, ultimo),
+                    NoGovernoDoEstado: anos.Sum(a => a.NoGovernoDoEstado));
             })
             .ToList();
 
         return new GestoesDaCidadeDto(
-            municipio.Dto, municipio.Populacao, porAno.Sum(a => a.Recebido), porAno.Sum(a => a.NaPrefeitura), gestoes, porAno);
+            municipio.Dto, municipio.Populacao, porAno.Sum(a => a.Recebido), porAno.Sum(a => a.NaPrefeitura), gestoes, porAno,
+            porAno.Sum(a => a.NoGovernoDoEstado));
     }
 
     /// <summary>Os eleitos para o estado cujo mandato cruza a gestão municipal, com os anos que coincidem.</summary>

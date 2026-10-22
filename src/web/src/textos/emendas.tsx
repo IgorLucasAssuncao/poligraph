@@ -91,6 +91,7 @@ export const TEXTOS_DAS_EMENDAS = {
       </>
     ),
     naPrefeitura: ' à prefeitura ou a órgão municipal',
+    noGovernoDoEstado: ' a órgãos do governo do estado, que têm sede na capital e não são da cidade',
     emEntidades: ' a entidades e empresas com sede aqui, que podem ter aplicado em outra cidade',
     rotuloDasAbas: (nome: string) => `O dinheiro de ${nome}`,
     abaParlamentares: 'Deputados e senadores',

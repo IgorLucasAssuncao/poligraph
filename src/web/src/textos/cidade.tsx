@@ -8,6 +8,7 @@ export const TEXTOS_DA_CIDADE = {
   chegou: (desde: number | null) =>
     desde ? `em emendas chegaram a quem tem sede aqui, de ${desde} até hoje` : 'Nenhum pagamento de emenda na base',
   naPrefeitura: (valor: string) => `${valor} à prefeitura ou a órgão municipal`,
+  noGovernoDoEstado: (valor: string) => `${valor} a órgãos do governo do estado, que têm sede na capital`,
   emEntidades: (valor: string) => `${valor} a entidades e empresas com sede aqui`,
   verNoMapa: 'Ver no mapa das emendas',
   quemMandou: 'Quem mandou e quem recebeu',
@@ -27,7 +28,8 @@ export const TEXTOS_DA_CIDADE = {
   viceGovernador: 'Vice-governador',
   semGovernador: 'Governador eleito antes de 1998, fora da base',
   chegouNaGestao: (valor: string) => `${valor} chegaram nesses anos`,
-  partes: (prefeitura: string, entidades: string) => `${prefeitura} à prefeitura · ${entidades} a entidades`,
+  partes: (prefeitura: string, entidades: string, estado: string | null) =>
+    `${prefeitura} à prefeitura · ${estado ? `${estado} ao governo do estado · ` : ''}${entidades} a entidades`,
   contas: (receita: string, despesa: string) => `A prefeitura arrecadou ${receita} e pagou ${despesa} em despesas`,
   anosDeclarados: (n: number, de: number) =>
     n === de ? 'nos anos da gestão, pelo que declarou ao Tesouro' : `em ${n} dos ${de} anos, os que estão declarados ao Tesouro na base`,

@@ -61,7 +61,8 @@ export function CidadeComponent() {
         {dados.recebido > 0 && (
           <ul className="painel-cidade-partes">
             <li>{T.naPrefeitura(reaisCompacto(dados.naPrefeitura))}</li>
-            <li>{T.emEntidades(reaisCompacto(dados.recebido - dados.naPrefeitura))}</li>
+            {(dados.noGovernoDoEstado ?? 0) > 0 && <li>{T.noGovernoDoEstado(reaisCompacto(dados.noGovernoDoEstado ?? 0))}</li>}
+            <li>{T.emEntidades(reaisCompacto(dados.recebido - dados.naPrefeitura - (dados.noGovernoDoEstado ?? 0)))}</li>
           </ul>
         )}
         <Link className="botao-secundario" to={`/emendas?uf=${municipio.uf}&cidade=${municipio.codigoIbge}`}>
@@ -191,7 +192,13 @@ function GestaoComponent({ gestao, maior }: { gestao: GestaoDaCidade; maior: num
           <span className="gestao-barra" aria-hidden="true">
             <span style={{ width: `${(100 * gestao.recebido) / maior}%` }} />
           </span>
-          <small>{T.partes(reaisCompacto(gestao.naPrefeitura), reaisCompacto(gestao.recebido - gestao.naPrefeitura))}</small>
+          <small>
+            {T.partes(
+              reaisCompacto(gestao.naPrefeitura),
+              reaisCompacto(gestao.recebido - gestao.naPrefeitura - (gestao.noGovernoDoEstado ?? 0)),
+              (gestao.noGovernoDoEstado ?? 0) > 0 ? reaisCompacto(gestao.noGovernoDoEstado ?? 0) : null,
+            )}
+          </small>
           {gestao.primeiroAno < ANO_DO_PRIMEIRO_PAGAMENTO && <small>{T.desdeAgosto}</small>}
           {gestao.contas && (
             <small className="gestao-contas">

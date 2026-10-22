@@ -14,6 +14,8 @@
 /// casos a sede é a cidade. O resto foi a entidades com sede nela, que podem ter aplicado o
 /// dinheiro em outro lugar.
 /// </para>
+/// <para><see cref="NoGovernoDoEstado"/> é o que foi a órgão do governo do estado com sede aqui, a capital: separado
+/// das entidades, porque não é dinheiro da cidade (2026-10-22).</para>
 /// <para>As listas longas vêm na primeira página; o resto, pelos endpoints de página.</para>
 /// </remarks>
 public record EmendasDoMunicipioDto(
@@ -26,7 +28,8 @@ public record EmendasDoMunicipioDto(
     PaginaDto<ParlamentarQueMandouDto> Parlamentares,
     IReadOnlyList<ColetivoQueMandouDto> Coletivos,
     PaginaDto<FavorecidoDaEmendaDto> Favorecidos,
-    ConveniosDaCidadeDto Convenios);
+    ConveniosDaCidadeDto Convenios,
+    decimal NoGovernoDoEstado = 0);
 
 /// <summary>
 /// Os convênios assinados por quem tem sede na cidade, com dinheiro das emendas do período.

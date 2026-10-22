@@ -10,7 +10,8 @@ public record GestoesDaCidadeDto(
     decimal Recebido,
     decimal NaPrefeitura,
     IReadOnlyList<GestaoDaCidadeDto> Gestoes,
-    IReadOnlyList<PagoNoAnoDto> PorAno);
+    IReadOnlyList<PagoNoAnoDto> PorAno,
+    decimal NoGovernoDoEstado = 0);
 
 /// <summary>Um mandato municipal: os eleitos, os governadores eleitos nos anos que coincidem e o que chegou nesses anos.</summary>
 /// <param name="Prefeitos">Em geral um; dois quando houve eleição suplementar para o mesmo período.</param>
@@ -26,7 +27,8 @@ public record GestaoDaCidadeDto(
     decimal NaPrefeitura,
     bool ComPagamento,
     ContasDaGestaoDto? Contas = null,
-    IReadOnlyList<GovernadorNoPeriodoDto>? ViceGovernadores = null);
+    IReadOnlyList<GovernadorNoPeriodoDto>? ViceGovernadores = null,
+    decimal NoGovernoDoEstado = 0);
 
 /// <summary>A receita e a despesa da prefeitura nos anos da gestão que ela declarou ao Tesouro (DCA do Siconfi, Pendência 90, fase 5).</summary>
 /// <param name="Receita">Receita bruta menos as deduções (FUNDEB e outras), somada nos anos declarados.</param>
@@ -40,4 +42,4 @@ public record EleitoNaGestaoDto(long IdPessoa, string Nome, string Partido, bool
 public record GovernadorNoPeriodoDto(EleitoNaGestaoDto Governador, short DeAno, short AteAno);
 
 /// <summary>O pago num ano, e a parte que foi para a prefeitura ou órgão municipal.</summary>
-public record PagoNoAnoDto(int Ano, decimal Recebido, decimal NaPrefeitura);
+public record PagoNoAnoDto(int Ano, decimal Recebido, decimal NaPrefeitura, decimal NoGovernoDoEstado = 0);

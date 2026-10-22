@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Mandato } from '../api';
 import { mesCurto, periodoDaLegislatura } from '../formato';
@@ -17,6 +18,10 @@ import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
  * na 57ª, 122 dos 643 deputados pararam de votar mais de 90 dias antes da última votação da casa e
  * 142 começaram depois de março de 2023; "Votou em 2023–2027" estava errado para eles.
  *
+ * DECISÃO (2026-10-22): com mais de MANDATOS_A_VISTA, os mais antigos ficam recolhidos atrás de "ver
+ * as outras N". Quem foi deputado e senador (Pendência 90, pessoas fundidas) tinha sete cartões antes das
+ * abas. O mandato aberto na ficha aparece sempre, mesmo que seja antigo.
+ *
  * ATENÇÃO: "Mandatos" dizia errado no Senado: o mandato de senador tem oito anos e cobre
  * duas legislaturas, e a lista mostrava um mandato só como dois.
  */
@@ -30,6 +35,7 @@ export function MandatosDoParlamentarComponent({
   /** O endereço da aba aberta, sem a busca: o mandato troca e a aba fica. */
   caminho: string;
 }) {
+  const [todos, setTodos] = useState(false);
   if (mandatos.length === 0) return null;
 
   if (mandatos.length === 1) {
@@ -54,6 +60,8 @@ export function MandatosDoParlamentarComponent({
       </span>
       <ul>
         {mandatos.map((m, i) => {
+          const recolhido = !todos && i >= MANDATOS_A_VISTA && m.legislatura !== atual;
+          if (recolhido) return null;
           const ativo = m.legislatura === atual;
           const destino = i === 0 ? caminho : `${caminho}?legislatura=${m.legislatura}`;
 
@@ -77,6 +85,14 @@ export function MandatosDoParlamentarComponent({
           );
         })}
       </ul>
+      {!todos && mandatos.length > MANDATOS_A_VISTA && (
+        <button type="button" className="botao-texto mandatos-mais" onClick={() => setTodos(true)}>
+          {T.mandatos.verOsOutros(mandatos.filter((m, i) => i >= MANDATOS_A_VISTA && m.legislatura !== atual).length)}
+        </button>
+      )}
     </nav>
   );
 }
+
+/** Quantos mandatos aparecem antes de "ver os outros": os mais recentes. */
+const MANDATOS_A_VISTA = 3;

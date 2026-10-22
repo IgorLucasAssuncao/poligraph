@@ -18,6 +18,7 @@ const CAMPINAS: GestoesDaCidade = {
   populacao: 1_189_761,
   recebido: 90_000_000,
   naPrefeitura: 50_000_000,
+  noGovernoDoEstado: 10_000_000,
   porAno: [{ ano: 2015, recebido: 10_000_000, naPrefeitura: 5_000_000 }],
   gestoes: [
     {
@@ -56,6 +57,13 @@ describe('Página da cidade', () => {
     expect(screen.getByRole('link', { name: 'Vice Exemplo' })).toHaveAttribute('href', '/politico/2');
     expect(screen.getByText(/só de agosto de 2015 em diante/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Vice Governadora' })).toHaveAttribute('href', '/politico/5');
+  });
+
+  it('separa o governo do estado, que tem sede na capital, das entidades', async () => {
+    renderizar();
+
+    expect(await screen.findByText(/R\$\s10 mi a órgãos do governo do estado/)).toBeInTheDocument();
+    expect(screen.getByText(/R\$\s30 mi a entidades e empresas com sede aqui/)).toBeInTheDocument();
   });
 
   it('a gestão sem pagamento fica recolhida e diz por quê', async () => {

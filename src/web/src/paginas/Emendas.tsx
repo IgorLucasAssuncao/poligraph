@@ -535,7 +535,8 @@ function PainelDaCidadeComponent({
   if (!dados) return <EsqueletoDeTextoComponent rotulo={T.cidade.carregando} />;
 
   const nome = nomeProprio(dados.municipio.nome);
-  const emEntidades = dados.recebido - dados.naPropriaCidade;
+  const noEstado = dados.noGovernoDoEstado ?? 0;
+  const emEntidades = dados.recebido - dados.naPropriaCidade - noEstado;
 
   return (
     <section ref={secao} className="governo-secao painel-cidade" aria-labelledby="cidade-titulo">
@@ -571,6 +572,12 @@ function PainelDaCidadeComponent({
               <strong>{reaisCompacto(dados.naPropriaCidade)}</strong>
               {T.cidade.naPrefeitura}
             </li>
+            {noEstado > 0 && (
+              <li>
+                <strong>{reaisCompacto(noEstado)}</strong>
+                {T.cidade.noGovernoDoEstado}
+              </li>
+            )}
             <li>
               <strong>{reaisCompacto(emEntidades)}</strong>
               {T.cidade.emEntidades}
