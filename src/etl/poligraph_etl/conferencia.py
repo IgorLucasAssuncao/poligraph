@@ -55,6 +55,8 @@ TETO_DE_PATRIMONIO = 500_000_000
 # MEDIDO: o maior salto entre 2018 e 2022, entre quem declarou mais de R$ 100 mil, foi de 14 vezes.
 SALTO_DE_PATRIMONIO = 50
 PATRIMONIO_MINIMO_DO_SALTO = 10_000_000
+SALTO_DE_RECEITA_MUNICIPAL = 10
+"""Vezes de um ano para o seguinte, para cima ou para baixo, a partir das quais a receita da prefeitura é conferida."""
 
 # Pendência 81. Um real de folga: a reconciliação arredonda cada motivo para centavos.
 TOLERANCIA_DA_RECONCILIACAO = 1.0
@@ -205,6 +207,32 @@ def salto_de_patrimonio(linhas: list[tuple[str, int, float, int, float]]) -> lis
     ]
 
 
+def salto_de_receita_municipal(linhas: list[tuple[str, str, int, float, int, float]]) -> list[Achado]:
+    """`(município, UF, ano, receita, ano seguinte, receita)`. Multiplicar ou dividir por `SALTO_DE_RECEITA_MUNICIPAL` é AVISO.
+
+    MEDIDO em 2026-10-22, 2021 a 2024: em 16.638 pares de anos seguidos, a mediana é 1,17 vez (17% a mais) e
+    só 41 pares passam de 10 vezes para cima ou para baixo. Exemplos: Varginha (MG), R$ 646 mi em 2021 e
+    R$ 11,8 bi em 2022; Ventania (PR), R$ 40,5 mi e R$ 0. A DCA é declarada pelo município, e o aviso aponta
+    a declaração para conferir no Siconfi.
+    """
+    return [
+        Achado("salto-de-receita-municipal", "AVISO", "TESOURO", None,
+               f"{municipio}-{uf}: R$ {antes / 1e6:,.1f} mi em {ano_antes} → R$ {depois / 1e6:,.1f} mi em {ano_depois}")
+        for municipio, uf, ano_antes, antes, ano_depois, depois in linhas
+        if antes > 0 and depois > 0 and (depois / antes >= SALTO_DE_RECEITA_MUNICIPAL or antes / depois >= SALTO_DE_RECEITA_MUNICIPAL)
+    ]
+
+
+def receita_municipal_negativa(linhas: list[tuple[str, str, int, float]]) -> list[Achado]:
+    """`(município, UF, ano, receita bruta menos deduções)`. Negativa é AVISO: a dedução declarada passou da receita."""
+    return [
+        Achado("receita-municipal-negativa", "AVISO", "TESOURO", None,
+               f"{municipio}-{uf}, {ano}: receita líquida de R$ {receita / 1e6:,.1f} mi")
+        for municipio, uf, ano, receita in linhas
+        if receita < 0
+    ]
+
+
 def reconciliacao_nao_fecha(linhas: list[tuple[str, str, int, float]]) -> list[Achado]:
     """`(conjunto, medida, ano, resíduo)`. Fonte − base − motivos acima de R$ 1 é ERRO: diferença sem justificativa."""
     return [
@@ -315,6 +343,16 @@ CONSULTAS = {
                END, 0)::float
           FROM reconciliacoes r
     """,
+    "salto_de_receita_municipal": """
+        SELECT m.nome, m.uf, a.ano, (a.receita_bruta - a.deducoes)::float, b.ano, (b.receita_bruta - b.deducoes)::float
+          FROM contas_dos_municipios a
+          JOIN contas_dos_municipios b ON b.codigo_ibge = a.codigo_ibge AND b.ano = a.ano + 1
+          JOIN municipios m ON m.codigo_ibge = a.codigo_ibge
+    """,
+    "receita_municipal_negativa": """
+        SELECT m.nome, m.uf, c.ano, (c.receita_bruta - c.deducoes)::float
+          FROM contas_dos_municipios c JOIN municipios m ON m.codigo_ibge = c.codigo_ibge
+    """,
     "salto_de_patrimonio": """
         SELECT p.nome_exibicao, a.ano_eleicao, a.valor, b.ano_eleicao, b.valor
           FROM (SELECT pessoa_id, ano_eleicao, sum(valor)::float AS valor
@@ -338,6 +376,8 @@ REGRAS = {
     "senadores_demais_por_uf": senadores_demais_por_uf,
     "patrimonio_acima_do_teto": patrimonio_acima_do_teto,
     "salto_de_patrimonio": salto_de_patrimonio,
+    "salto_de_receita_municipal": salto_de_receita_municipal,
+    "receita_municipal_negativa": receita_municipal_negativa,
     "reconciliacao_nao_fecha": reconciliacao_nao_fecha,
     "base_mudou_depois_da_reconciliacao": base_mudou_depois_da_reconciliacao,
 }

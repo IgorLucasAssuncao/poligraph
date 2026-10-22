@@ -135,3 +135,19 @@ def test_conferir_roda_toda_regra_com_a_consulta_dela():
 
     assert conferencia.conferir(executar) == []
     assert len(vistas) == len(conferencia.REGRAS) == len(conferencia.CONSULTAS)
+
+
+def test_receita_da_prefeitura_que_salta_dez_vezes_ou_fica_negativa_e_aviso():
+    """MEDIDO em 2026-10-22: Varginha, R$ 646 mi em 2021 e R$ 11,8 bi em 2022; a mediana é 1,17 vez."""
+    from poligraph_etl import conferencia
+
+    saltos = conferencia.salto_de_receita_municipal([
+        ("Varginha", "MG", 2021, 646e6, 2022, 11_782e6),
+        ("Campinas", "SP", 2021, 7_000e6, 2022, 7_123e6),
+        ("Ventania", "PR", 2021, 40.5e6, 2022, 3e6),
+    ])
+    negativas = conferencia.receita_municipal_negativa([("Guajeru", "BA", 2022, -11.2e6), ("Campinas", "SP", 2022, 7e9)])
+
+    assert [a.detalhe.split(":")[0] for a in saltos] == ["Varginha-MG", "Ventania-PR"]
+    assert all(a.severidade == "AVISO" for a in saltos + negativas)
+    assert [a.detalhe.split(",")[0] for a in negativas] == ["Guajeru-BA"]
