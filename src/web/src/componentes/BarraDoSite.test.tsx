@@ -74,7 +74,7 @@ describe('busca do cabeçalho', () => {
     fireEvent.keyDown(campo, { key: 'ArrowDown' });
     fireEvent.keyDown(campo, { key: 'Enter' });
 
-    expect(screen.getByTestId('endereco')).toHaveTextContent('/emendas?uf=SP&cidade=3550308');
+    expect(screen.getByTestId('endereco')).toHaveTextContent('/cidades/3550308');
   });
 
   it('termo de uma letra não busca', () => {

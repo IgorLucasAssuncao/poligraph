@@ -3210,3 +3210,4 @@ html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
 .cidade-como-ler { margin: 1.25rem 0 .25rem; font-size: var(--t-2); }
 .gestao-governador { display: block; }
 .gestao-anos small { margin-top: .15rem; }
+.gestao-nota { display: block; margin-top: .15rem; }

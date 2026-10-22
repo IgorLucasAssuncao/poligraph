@@ -103,7 +103,13 @@ export function PoliticoComponent() {
 function ItemDeMandatoComponent({ mandato }: { mandato: MandatoNoTse }) {
   return (
     <li>
-      <span className="autor-nome">{descricaoDoMandato(mandato, nomeProprio)}</span>
+      <span className="autor-nome">
+        {mandato.municipio ? (
+          <Link to={`/cidades/${mandato.municipio.codigoIbge}`}>{descricaoDoMandato(mandato, nomeProprio)}</Link>
+        ) : (
+          descricaoDoMandato(mandato, nomeProprio)
+        )}
+      </span>
       <span className="autor-detalhe">{[mandato.partido, T.eleitoEm(mandato.anoEleicao)].join(' · ')}</span>
     </li>
   );

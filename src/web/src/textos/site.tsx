@@ -79,7 +79,7 @@ export const TEXTOS_DO_SITE = {
     senado: 'Senado',
     camara: 'Câmara',
     ate: (ano: string) => `até ${ano}`,
-    emendasDaCidade: 'emendas recebidas na cidade',
+    emendasDaCidade: 'prefeitos, governadores e emendas da cidade',
   },
 
   faixa: {

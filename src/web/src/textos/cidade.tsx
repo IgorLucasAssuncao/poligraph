@@ -17,6 +17,7 @@ export const TEXTOS_DA_CIDADE = {
   emAndamento: 'em andamento',
   prefeito: 'Prefeito eleito',
   prefeitos: 'Prefeitos eleitos',
+  doisEleitos: 'Mais de um eleito para o mesmo período: houve eleição suplementar.',
   vice: 'Vice',
   governador: 'Governador eleito',
   semGovernador: 'Governador eleito antes de 2002, fora da base',

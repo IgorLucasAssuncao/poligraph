@@ -189,7 +189,7 @@ function opcoesDa(resposta: Busca): Opcao[] {
       grupo: 'cidade' as const,
       rotulo: `${nomeProprio(m.nome)} – ${m.uf}`,
       detalhe: T.busca.emendasDaCidade,
-      destino: `/emendas?uf=${m.uf}&cidade=${m.codigoIbge}`,
+      destino: `/cidades/${m.codigoIbge}`,
     })),
     ...resposta.entidades.map((e) => ({
       grupo: 'entidade' as const,

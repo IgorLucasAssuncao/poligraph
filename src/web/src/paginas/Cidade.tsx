@@ -128,6 +128,7 @@ function GestaoComponent({ gestao, maior }: { gestao: GestaoDaCidade; maior: num
         <dt>{gestao.prefeitos.length > 1 ? T.prefeitos : T.prefeito}</dt>
         <dd>
           <ListaDeEleitosComponent eleitos={gestao.prefeitos} />
+          {gestao.prefeitos.length > 1 && <small className="gestao-nota">{T.doisEleitos}</small>}
         </dd>
         {gestao.vices.length > 0 && (
           <>
