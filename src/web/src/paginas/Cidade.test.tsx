@@ -73,10 +73,10 @@ describe('Página da cidade', () => {
     expect(screen.getByText('Governador eleito antes de 1998, fora da base')).toBeInTheDocument();
   });
 
-  it('diz que eleito não é quem governou e que o valor não é mérito do prefeito', async () => {
+  it('diz que a troca no meio do mandato não aparece e que a emenda é de quem a apresentou', async () => {
     renderizar();
 
-    expect(await screen.findByText(/não quem governou de fato/)).toBeInTheDocument();
-    expect(screen.getByText(/não o que o prefeito conseguiu/)).toBeInTheDocument();
+    expect(await screen.findByText(/a troca não aparece aqui/)).toBeInTheDocument();
+    expect(screen.getByText(/A emenda é do deputado ou do senador que a apresentou/)).toBeInTheDocument();
   });
 });

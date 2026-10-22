@@ -70,6 +70,6 @@ export const TEXTOS_DOS_POLITICOS = {
     outrosMandatos: (n: number) => (n > 1 ? `${n} mandatos na base` : ''),
     fonte: 'Fonte: candidaturas eleitas publicadas pelo TSE, eleições de 1998 a 2024.',
     viceAntes:
-      'Vices aparecem a partir de 2012 (prefeitura) e 2014 (governo): antes disso, o TSE não marca o vice como eleito.',
+      'Vice-prefeitos aparecem desde 2000 e vices de governador e de presidente, desde 2002. Até 2010 o TSE não marca o vice como eleito, e a base o acha pela chapa do titular. Em 2000, por exemplo, são 4.736 vice-prefeitos para 5.585 prefeitos.',
   },
 };

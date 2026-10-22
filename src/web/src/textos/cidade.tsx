@@ -32,14 +32,14 @@ export const TEXTOS_DA_CIDADE = {
     `${prefeitura} à prefeitura · ${estado ? `${estado} ao governo do estado · ` : ''}${entidades} a entidades`,
   contas: (receita: string, despesa: string) => `A prefeitura arrecadou ${receita} e pagou ${despesa} em despesas`,
   anosDeclarados: (n: number, de: number) =>
-    n === de ? 'nos anos da gestão, pelo que declarou ao Tesouro' : `em ${n} dos ${de} anos, os que estão declarados ao Tesouro na base`,
+    n === de ? 'nos anos da gestão, pelo que declarou ao Tesouro' : `em ${n} dos ${de} anos; os outros ainda não têm declaração na base`,
   semPagamento: 'Sem pagamento de emenda na base nesses anos (a base começa em agosto de 2015).',
   desdeAgosto: 'só de agosto de 2015 em diante, quando a base começa',
   anteriores: (n: number, de: number, ate: number) =>
     `${n === 1 ? 'Gestão' : `${n} gestões`} de ${de} a ${ate}, sem pagamento de emenda na base`,
   avisos: [
-    'O TSE informa quem foi eleito, não quem governou de fato: cassação, impeachment, morte ou renúncia no meio do mandato não aparecem aqui. Quando o titular sai, quem assume é o vice, que aparece em cada bloco.',
-    'A emenda é do deputado ou senador que a apresentou. O valor mostra o que chegou durante cada gestão, não o que o prefeito conseguiu.',
+    'O TSE registra quem foi eleito. Se o prefeito ou o governador saiu no meio do mandato, por cassação, impeachment, morte ou renúncia, a troca não aparece aqui. Quem assume é o vice, que está em cada bloco.',
+    'A emenda é do deputado ou do senador que a apresentou. O valor de cada bloco é o que chegou à cidade durante aquela gestão.',
     'A cidade é a da sede de quem recebeu: entidade com sede aqui pode ter aplicado o dinheiro em outra cidade.',
   ],
   fonte:
