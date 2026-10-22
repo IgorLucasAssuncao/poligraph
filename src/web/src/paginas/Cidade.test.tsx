@@ -23,6 +23,7 @@ const CAMPINAS: GestoesDaCidade = {
     {
       primeiroAno: 2013, ultimoAno: 2016, prefeitos: [eleito(1, 'JONAS EXEMPLO', true)], vices: [eleito(2, 'VICE EXEMPLO')],
       governadores: [{ governador: eleito(3, 'GOVERNADOR EXEMPLO'), deAno: 2013, ateAno: 2016 }],
+      viceGovernadores: [{ governador: eleito(5, 'VICE GOVERNADORA'), deAno: 2013, ateAno: 2016 }],
       recebido: 90_000_000, naPrefeitura: 50_000_000, comPagamento: true,
     },
     {
@@ -54,6 +55,7 @@ describe('Página da cidade', () => {
     expect(await screen.findByRole('link', { name: 'Jonas Exemplo' })).toHaveAttribute('href', '/parlamentar/1');
     expect(screen.getByRole('link', { name: 'Vice Exemplo' })).toHaveAttribute('href', '/politico/2');
     expect(screen.getByText(/só de agosto de 2015 em diante/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Vice Governadora' })).toHaveAttribute('href', '/politico/5');
   });
 
   it('a gestão sem pagamento fica recolhida e diz por quê', async () => {

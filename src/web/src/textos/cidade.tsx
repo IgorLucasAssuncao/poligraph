@@ -24,6 +24,7 @@ export const TEXTOS_DA_CIDADE = {
   doisEleitos: 'Mais de um eleito para o mesmo período: houve eleição suplementar.',
   vice: 'Vice',
   governador: 'Governador eleito',
+  viceGovernador: 'Vice-governador',
   semGovernador: 'Governador eleito antes de 1998, fora da base',
   chegouNaGestao: (valor: string) => `${valor} chegaram nesses anos`,
   partes: (prefeitura: string, entidades: string) => `${prefeitura} à prefeitura · ${entidades} a entidades`,
@@ -35,7 +36,7 @@ export const TEXTOS_DA_CIDADE = {
   anteriores: (n: number, de: number, ate: number) =>
     `${n === 1 ? 'Gestão' : `${n} gestões`} de ${de} a ${ate}, sem pagamento de emenda na base`,
   avisos: [
-    'O TSE informa quem foi eleito, não quem governou de fato: cassação, morte ou renúncia no meio do mandato não aparecem aqui.',
+    'O TSE informa quem foi eleito, não quem governou de fato: cassação, impeachment, morte ou renúncia no meio do mandato não aparecem aqui. Quando o titular sai, quem assume é o vice, que aparece em cada bloco.',
     'A emenda é do deputado ou senador que a apresentou. O valor mostra o que chegou durante cada gestão, não o que o prefeito conseguiu.',
     'A cidade é a da sede de quem recebeu: entidade com sede aqui pode ter aplicado o dinheiro em outra cidade.',
   ],

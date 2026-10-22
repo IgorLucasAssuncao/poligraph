@@ -1671,6 +1671,8 @@ export type GestaoDaCidade = {
   prefeitos: EleitoNaGestao[];
   vices: EleitoNaGestao[];
   governadores: { governador: EleitoNaGestao; deAno: number; ateAno: number }[];
+  /** O vice eleito com cada governador, desde 2014: quem assume no afastamento, que a base não registra. */
+  viceGovernadores?: { governador: EleitoNaGestao; deAno: number; ateAno: number }[] | null;
   recebido: number;
   naPrefeitura: number;
   /** Sem ano na base de pagamentos (antes de ago/2015): a tela diz isso, não R$ 0. */

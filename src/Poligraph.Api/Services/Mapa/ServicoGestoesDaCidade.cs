@@ -10,6 +10,7 @@ namespace Poligraph.Api.Services;
 /// </summary>
 /// <remarks>
 /// <para>RISCO: o TSE dá quem foi eleito, não quem exerceu. Prefeito cassado, morto ou que renunciou continua na gestão para a qual foi eleito; a tela diz "eleito".</para>
+/// <para>DECISÃO (autor, 2026-10-22): o vice eleito fica à vista, porque é quem assume no afastamento. No Rio, Witzel foi afastado em 2020 e cassado em 2021, e o vice Cláudio Castro governou. Quem exerceu de fato não tem fonte periódica nacional.</para>
 /// <para>As contas da prefeitura (Siconfi) entram só nos anos declarados, e a gestão diz quantos foram: somar 2 de 4 anos como se fossem os 4 seria um número menor e errado.</para>
 /// <para>DECISÃO: o dinheiro entra na gestão pelo ano do pagamento. A emenda é do parlamentar, e a tela diz "chegou durante", nunca "conseguiu".</para>
 /// </remarks>
@@ -37,12 +38,10 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
         var uf = municipio.Dto.Uf;
         var eleitos = await _db.Mandatos.AsNoTracking()
             .Where(m => (m.CodigoMunicipioIbge == codigoIbge && (m.Cargo == TipoCargo.PREFEITO || m.Cargo == TipoCargo.VICE_PREFEITO))
-                     || (m.Uf == uf && m.Cargo == TipoCargo.GOVERNADOR))
-            .Join(_db.Pessoas.AsNoTracking(), m => m.PessoaId, p => p.Id, (m, p) => new
-            {
+                     || (m.Uf == uf && (m.Cargo == TipoCargo.GOVERNADOR || m.Cargo == TipoCargo.VICE_GOVERNADOR)))
+            .Join(_db.Pessoas.AsNoTracking(), m => m.PessoaId, p => p.Id, (m, p) => new EleitoComAnos(
                 m.Cargo, m.PrimeiroAno, m.UltimoAno,
-                Eleito = new EleitoNaGestaoDto(p.Id, p.NomeExibicao, m.Partido, _db.Votos.Any(v => v.PessoaId == p.Id)),
-            })
+                new EleitoNaGestaoDto(p.Id, p.NomeExibicao, m.Partido, _db.Votos.Any(v => v.PessoaId == p.Id))))
             .ToListAsync(ct);
 
         var porAno = await _mapa.PagoPorAnoNaCidadeAsync(codigoIbge, ct);
@@ -51,6 +50,7 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
             .Select(c => new { c.Ano, Receita = c.ReceitaBruta - c.Deducoes, c.DespesaPaga })
             .ToListAsync(ct);
         var governadores = eleitos.Where(e => e.Cargo == TipoCargo.GOVERNADOR).ToList();
+        var viceGovernadores = eleitos.Where(e => e.Cargo == TipoCargo.VICE_GOVERNADOR).ToList();
 
         var gestoes = eleitos
             .Where(e => e.Cargo is TipoCargo.PREFEITO or TipoCargo.VICE_PREFEITO)
@@ -65,22 +65,27 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
                     primeiro, ultimo,
                     [.. g.Where(e => e.Cargo == TipoCargo.PREFEITO).Select(e => e.Eleito)],
                     [.. g.Where(e => e.Cargo == TipoCargo.VICE_PREFEITO).Select(e => e.Eleito)],
-                    Juntar(governadores
-                        .Where(e => e.PrimeiroAno <= ultimo && e.UltimoAno >= primeiro)
-                        .OrderBy(e => e.PrimeiroAno)
-                        .Select(e => new GovernadorNoPeriodoDto(e.Eleito, Math.Max(e.PrimeiroAno, primeiro), Math.Min(e.UltimoAno, ultimo)))),
+                    NoPeriodo(governadores, primeiro, ultimo),
                     anos.Sum(a => a.Recebido),
                     anos.Sum(a => a.NaPrefeitura),
                     ComPagamento: anos.Count > 0,
                     Contas: declarados.Count == 0
                         ? null
-                        : new ContasDaGestaoDto(declarados.Sum(c => c.Receita), declarados.Sum(c => c.DespesaPaga), declarados.Count, ultimo - primeiro + 1));
+                        : new ContasDaGestaoDto(declarados.Sum(c => c.Receita), declarados.Sum(c => c.DespesaPaga), declarados.Count, ultimo - primeiro + 1),
+                    ViceGovernadores: NoPeriodo(viceGovernadores, primeiro, ultimo));
             })
             .ToList();
 
         return new GestoesDaCidadeDto(
             municipio.Dto, municipio.Populacao, porAno.Sum(a => a.Recebido), porAno.Sum(a => a.NaPrefeitura), gestoes, porAno);
     }
+
+    /// <summary>Os eleitos para o estado cujo mandato cruza a gestão municipal, com os anos que coincidem.</summary>
+    private static List<GovernadorNoPeriodoDto> NoPeriodo(IEnumerable<EleitoComAnos> eleitos, short primeiro, short ultimo) =>
+        Juntar(eleitos
+            .Where(e => e.PrimeiroAno <= ultimo && e.UltimoAno >= primeiro)
+            .OrderBy(e => e.PrimeiroAno)
+            .Select(e => new GovernadorNoPeriodoDto(e.Eleito, Math.Max(e.PrimeiroAno, primeiro), Math.Min(e.UltimoAno, ultimo))));
 
     /// <summary>Mandatos seguidos da mesma pessoa viram um período só: o governador reeleito aparece uma vez, de ponta a ponta.</summary>
     private static List<GovernadorNoPeriodoDto> Juntar(IEnumerable<GovernadorNoPeriodoDto> periodos)
@@ -100,4 +105,6 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
 
         return juntos;
     }
+
+    private sealed record EleitoComAnos(TipoCargo Cargo, short PrimeiroAno, short UltimoAno, EleitoNaGestaoDto Eleito);
 }

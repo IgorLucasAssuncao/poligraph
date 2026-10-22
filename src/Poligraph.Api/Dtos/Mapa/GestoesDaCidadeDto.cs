@@ -14,6 +14,7 @@ public record GestoesDaCidadeDto(
 
 /// <summary>Um mandato municipal: os eleitos, os governadores eleitos nos anos que coincidem e o que chegou nesses anos.</summary>
 /// <param name="Prefeitos">Em geral um; dois quando houve eleição suplementar para o mesmo período.</param>
+/// <param name="ViceGovernadores">O vice eleito com cada governador, desde 2014 (antes o TSE não marca o vice como eleito). Fica à vista porque é quem assume na cassação, no impeachment ou na renúncia, que a base não registra.</param>
 /// <param name="ComPagamento">Algum ano da gestão está na base de pagamentos (desde ago/2015). Sem isso, a tela diz "sem pagamento na base", não R$ 0.</param>
 public record GestaoDaCidadeDto(
     short PrimeiroAno,
@@ -24,7 +25,8 @@ public record GestaoDaCidadeDto(
     decimal Recebido,
     decimal NaPrefeitura,
     bool ComPagamento,
-    ContasDaGestaoDto? Contas = null);
+    ContasDaGestaoDto? Contas = null,
+    IReadOnlyList<GovernadorNoPeriodoDto>? ViceGovernadores = null);
 
 /// <summary>A receita e a despesa da prefeitura nos anos da gestão que ela declarou ao Tesouro (DCA do Siconfi, Pendência 90, fase 5).</summary>
 /// <param name="Receita">Receita bruta menos as deduções (FUNDEB e outras), somada nos anos declarados.</param>

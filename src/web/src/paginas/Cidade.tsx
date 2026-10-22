@@ -170,6 +170,19 @@ function GestaoComponent({ gestao, maior }: { gestao: GestaoDaCidade; maior: num
                 </span>
               ))}
         </dd>
+        {(gestao.viceGovernadores ?? []).length > 0 && (
+          <>
+            <dt>{T.viceGovernador}</dt>
+            <dd>
+              {(gestao.viceGovernadores ?? []).map((g) => (
+                <span key={`${g.governador.idPessoa}-${g.deAno}`} className="gestao-governador">
+                  <LinkDoEleitoComponent eleito={g.governador} />{' '}
+                  {(gestao.viceGovernadores ?? []).length > 1 && <small>{g.deAno}–{g.ateAno}</small>}
+                </span>
+              ))}
+            </dd>
+          </>
+        )}
       </dl>
 
       {gestao.comPagamento ? (
