@@ -23,6 +23,7 @@ import { useLegislaturas } from '../componentes/useLegislatura';
 import { BotaoBaixarCsvComponent } from '../componentes/BotaoBaixarCsv';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
+import { LinhaDoTempoComponent } from '../componentes/LinhaDoTempo';
 import { MandatosDoParlamentarComponent } from '../componentes/MandatosDoParlamentar';
 import { RedesDoParlamentarComponent } from '../componentes/RedesDoParlamentar';
 import { baixarCsv, buscarTodas } from '../exportar';
@@ -56,13 +57,14 @@ const PASSOS_DA_FICHA = passosDaFicha();
  *
  * DECISÃO: `votos` é o padrão porque é o núcleo do trabalho e sempre tem conteúdo.
  */
-type Aba = 'votos' | 'emendas' | 'cota' | 'campanha';
+type Aba = 'votos' | 'emendas' | 'cota' | 'campanha' | 'linha-do-tempo';
 
 const ABAS: [Aba, string][] = [
   ['votos', T.abas.votos],
   ['emendas', T.abas.emendas],
   ['cota', T.abas.cota],
   ['campanha', T.abas.campanha],
+  ['linha-do-tempo', T.abas.linhaDoTempo],
 ];
 
 /**
@@ -260,6 +262,7 @@ export function ParlamentarComponent() {
       {aba === 'cota' && (
         <AbaCotaComponent idPessoa={idPessoa} contas={contas} erro={erroDasContas} legislatura={ficha?.legislatura} />
       )}
+      {aba === 'linha-do-tempo' && <LinhaDoTempoComponent idPessoa={idPessoa} abas={base} />}
       {aba === 'campanha' && <AbaCampanhaComponent idPessoa={idPessoa} contas={contas} erro={erroDasContas} />}
       {aba === 'votos' && (
         <>

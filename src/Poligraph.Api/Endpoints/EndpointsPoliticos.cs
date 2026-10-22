@@ -14,6 +14,10 @@ public static class EndpointsPoliticos
            .WithTags("Politicos")
            .Produces<FichaDoPoliticoDto>()
            .Produces(StatusCodes.Status404NotFound);
+        app.MapGet("/api/politicos/{idPessoa}/linha-do-tempo", ObterLinhaDoTempoAsync)
+           .WithTags("Politicos")
+           .Produces<LinhaDoTempoDto>()
+           .Produces(StatusCodes.Status404NotFound);
 
         return app;
     }
@@ -28,4 +32,8 @@ public static class EndpointsPoliticos
     /// <summary>A ficha pelos mandatos do TSE. Quem não tem mandato: 404.</summary>
     private static async Task<IResult> ObterFichaAsync(IdPessoa idPessoa, ServicoPoliticos servico, CancellationToken ct) =>
         await servico.ObterFichaAsync(idPessoa, ct) is { } ficha ? Results.Ok(ficha) : Results.NotFound();
+
+    /// <summary>A linha do tempo da pessoa, parlamentar ou não. Pessoa que não existe: 404.</summary>
+    private static async Task<IResult> ObterLinhaDoTempoAsync(IdPessoa idPessoa, ServicoLinhaDoTempo servico, CancellationToken ct) =>
+        await servico.ObterAsync(idPessoa, ct) is { } linha ? Results.Ok(linha) : Results.NotFound();
 }

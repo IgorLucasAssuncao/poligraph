@@ -1696,6 +1696,25 @@ export async function obterGestoesDaCidade(codigoIbge: string): Promise<GestoesD
   return resposta.json();
 }
 
+export type TipoDeMarco = 'ELEITO' | 'TROCOU_DE_PARTIDO' | 'VOTOU' | 'DECLAROU_BENS' | 'GASTOU_NA_COTA' | 'EMENDAS_PAGAS';
+
+/** Um marco da linha do tempo; só os campos do tipo vêm preenchidos. */
+export type Marco = {
+  tipo: TipoDeMarco;
+  mandato?: MandatoNoTse | null;
+  partido?: string | null;
+  partidoAnterior?: string | null;
+  quantidade?: number | null;
+  valor?: number | null;
+};
+
+/** A linha do tempo, do ano mais recente ao mais antigo (Pendência 92). */
+export type LinhaDoTempo = { anos: { ano: number; marcos: Marco[] }[] };
+
+export async function obterLinhaDoTempo(idPessoa: number): Promise<LinhaDoTempo> {
+  return buscar<LinhaDoTempo>(`${BASE}/politicos/${idPessoa}/linha-do-tempo`);
+}
+
 /** A ficha pelos mandatos do TSE (Pendência 90, fase 3). */
 export type FichaDoPolitico = {
   idPessoa: number;

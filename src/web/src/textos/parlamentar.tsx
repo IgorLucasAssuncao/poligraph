@@ -10,6 +10,7 @@ export const TEXTOS_DA_FICHA = {
     emendas: 'Emendas',
     cota: 'Cota',
     campanha: 'Campanha',
+    linhaDoTempo: 'Linha do tempo',
   },
   rotuloDasAbas: 'Seções do perfil',
   foraDoMandato: (periodo: string) =>

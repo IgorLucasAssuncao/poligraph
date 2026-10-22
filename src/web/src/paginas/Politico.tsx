@@ -4,6 +4,7 @@ import { AvatarComponent } from '../componentes/Avatar';
 import { PatrimonioDeclaradoComponent } from '../componentes/ContasDoParlamentar';
 import { EsqueletoDeFichaComponent } from '../componentes/Esqueleto';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
+import { LinhaDoTempoComponent } from '../componentes/LinhaDoTempo';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { RedesDoParlamentarComponent } from '../componentes/RedesDoParlamentar';
 import { useCarga } from '../componentes/useCarga';
@@ -95,6 +96,7 @@ export function PoliticoComponent() {
       </section>
 
       <PatrimonioDeclaradoComponent idPessoa={idPessoa} />
+      <LinhaDoTempoComponent idPessoa={idPessoa} />
     </>
   );
 }

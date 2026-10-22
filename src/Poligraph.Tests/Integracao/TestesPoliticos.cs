@@ -97,6 +97,22 @@ public class TestesPoliticos(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.False(cidade.Gestoes[0].ComPagamento);
     }
 
+    /// <summary>Pendência 92: um ano por linha, do mais recente, com a eleição e os bens do mesmo ano juntos.</summary>
+    [SkippableFact]
+    public async Task LinhaDoTempo_JuntaOsMarcosPorAno()
+    {
+        ExigeDocker();
+        var (joao, _) = await SemearAsync();
+        Db.Patrimonios.Add(new PatrimonioModel { PessoaId = joao, AnoEleicao = 2018, TipoBem = "Casa", Valor = 500m, Quantidade = 1 });
+        await Db.SaveChangesAsync();
+
+        var linha = await LerAsync<LinhaLida>($"/api/politicos/{joao}/linha-do-tempo");
+
+        Assert.Equal([2018, 2016], linha.Anos.Select(a => a.Ano));
+        Assert.Equal(["ELEITO", "DECLAROU_BENS"], linha.Anos[0].Marcos.Select(m => m.Tipo));
+        Assert.Equal(500m, linha.Anos[0].Marcos[1].Valor);
+    }
+
     /// <summary>RISCO: o banco recusa prefeito sem município; a lista o mostraria sem saber de onde.</summary>
     [SkippableFact]
     public async Task Prefeito_SemMunicipio_ERejeitadoPeloBanco()
@@ -159,6 +175,12 @@ public class TestesPoliticos(FixturePostgres postgres) : BaseIntegracao(postgres
     private sealed record BuscaLida(List<PoliticoLido> Politicos);
 
     private sealed record EleitoLido(long IdPessoa);
+
+    private sealed record MarcoLido(string Tipo, decimal? Valor);
+
+    private sealed record AnoLido(int Ano, List<MarcoLido> Marcos);
+
+    private sealed record LinhaLida(List<AnoLido> Anos);
 
     private sealed record GovernadorLido(EleitoLido Governador, int DeAno, int AteAno);
 
