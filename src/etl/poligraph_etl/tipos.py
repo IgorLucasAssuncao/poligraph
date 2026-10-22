@@ -70,6 +70,12 @@ CARGOS_DO_CONGRESSO = frozenset({TipoCargo.SENADOR, TipoCargo.DEPUTADO_FEDERAL})
 """Os cargos cuja pessoa nasce da Câmara e do Senado, e não do TSE."""
 CARGOS_MUNICIPAIS = frozenset({TipoCargo.PREFEITO, TipoCargo.VICE_PREFEITO})
 CARGOS_NACIONAIS = frozenset({TipoCargo.PRESIDENTE, TipoCargo.VICE_PRESIDENTE})
+TITULAR_DO_VICE = {
+    TipoCargo.VICE_PRESIDENTE: TipoCargo.PRESIDENTE,
+    TipoCargo.VICE_GOVERNADOR: TipoCargo.GOVERNADOR,
+    TipoCargo.VICE_PREFEITO: TipoCargo.PREFEITO,
+}
+"""O titular da chapa de cada vice: os dois dividem o número de candidato."""
 
 _CARGO_DO_TSE: dict[str, TipoCargo | None] = {
     "1": TipoCargo.PRESIDENTE,

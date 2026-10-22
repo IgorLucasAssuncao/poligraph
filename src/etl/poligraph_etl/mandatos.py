@@ -26,7 +26,7 @@ from . import normalizacao
 from .contratos.banco import Mandato
 from .contratos.tse import LinhaDeCandidatura
 from .tipos import (
-    CARGOS_DO_CONGRESSO, CARGOS_MUNICIPAIS, CARGOS_NACIONAIS, ELEITOS, TipoCargo, TipoCasa, TipoSexo,
+    CARGOS_DO_CONGRESSO, CARGOS_MUNICIPAIS, CARGOS_NACIONAIS, ELEITOS, TITULAR_DO_VICE, TipoCargo, TipoSituacaoNoTurno, TipoCasa, TipoSexo,
     anos_do_mandato, cargo_do_tse, sexo_do_tse, situacao_do_tse,
 )
 
@@ -54,6 +54,7 @@ class Eleito:
     nascimento: date | None
     sexo: TipoSexo | None
     partido: str
+    coligacao: str | None = None
 
 
 def eleitos(linhas: list[LinhaDeCandidatura]) -> list[Eleito]:
@@ -61,30 +62,80 @@ def eleitos(linhas: list[LinhaDeCandidatura]) -> list[Eleito]:
 
     ATENÇÃO: no segundo turno o eleito aparece duas vezes, `2º TURNO` na linha do primeiro e `ELEITO` na do
     segundo; fica a de eleito.
+
+    RISCO: até 2010 (prefeito e governador, até 2012 e 2014) o TSE publica o vice com situação `#NULO#`.
+    O vice da chapa eleita é o que divide com o titular eleito, na mesma eleição e na mesma UE, o número
+    de candidato ou a coligação (`SQ_COLIGACAO`). MEDIDO em 2026-10-22: de 2002 em diante o vice tem o
+    número do titular; em 1998 e 2000, outro número e a mesma coligação. Numa coligação há um titular
+    só por UE, então a coligação também identifica a chapa. As colunas estão em todos os anos.
+    Só o vice sem resultado (`#NULO#`) entra assim: o substituído ou com registro negado da mesma chapa
+    não foi eleito (MEDIDO: sem essa trava, 2012 teria 6.003 vice-prefeitos para 5.665 prefeitos). E só
+    quando o ente ainda não tem vice eleito e a chapa aponta um candidato só: na dúvida, fica fora.
     """
+    titulares: dict[tuple, tuple] = {}
+    vices: list[tuple[LinhaDeCandidatura, TipoCargo]] = []
     vistos: dict[tuple, Eleito] = {}
     for linha in linhas:
         cargo = cargo_do_tse(linha.cargo)
-        if cargo is None or situacao_do_tse(linha.situacao) not in ELEITOS:
+        if cargo is None:
             continue
-        municipal = cargo in CARGOS_MUNICIPAIS
-        eleito = Eleito(
-            ano_eleicao=int(linha.ano_eleicao or 0),
-            sq_candidato=linha.sq_candidato or "",
-            cargo=cargo,
-            uf=None if cargo in CARGOS_NACIONAIS else linha.uf,
-            codigo_ue=linha.codigo_ue if municipal else None,
-            nome_ue=linha.nome_ue if municipal else None,
-            nome=linha.nome or "",
-            nome_de_urna=linha.nome_de_urna or linha.nome or "",
-            cpf_hash=normalizacao.hash_de_cpf(linha.cpf),
-            titulo_hash=normalizacao.hash_de_titulo(linha.titulo),
-            nascimento=_data(linha.nascimento),
-            sexo=sexo_do_tse(linha.genero),
-            partido=linha.partido or "",
-        )
+        situacao = situacao_do_tse(linha.situacao)
+        if cargo in TITULAR_DO_VICE and situacao is TipoSituacaoNoTurno.SEM_RESULTADO:
+            vices.append((linha, cargo))
+            continue
+        if situacao not in ELEITOS:
+            continue
+        eleito = _eleito(linha, cargo)
         vistos[candidatura(eleito)] = eleito
+        if cargo in TITULAR_DO_VICE.values():
+            for chave in _chapas(linha, cargo):
+                titulares[chave] = candidatura(eleito)
+    com_vice_eleito = {
+        (e.ano_eleicao, e.uf if e.cargo is not TipoCargo.VICE_PREFEITO else e.codigo_ue, TITULAR_DO_VICE[e.cargo])
+        for e in vistos.values() if e.cargo in TITULAR_DO_VICE
+    }
+    por_titular: dict[tuple, list[tuple[LinhaDeCandidatura, TipoCargo]]] = {}
+    for linha, cargo in vices:
+        chave = next((c for c in _chapas(linha, TITULAR_DO_VICE[cargo]) if c in titulares), None)
+        if chave is not None:
+            por_titular.setdefault(titulares[chave], []).append((linha, cargo))
+    for titular, candidatos in por_titular.items():
+        linha, cargo = candidatos[0]
+        eleito = _eleito(linha, cargo)
+        ja_tem = (eleito.ano_eleicao, eleito.uf if cargo is not TipoCargo.VICE_PREFEITO else eleito.codigo_ue, TITULAR_DO_VICE[cargo])
+        if len({c[0].sq_candidato for c in candidatos}) == 1 and ja_tem not in com_vice_eleito:
+            vistos.setdefault(candidatura(eleito), eleito)
     return list(vistos.values())
+
+
+def _chapas(linha: LinhaDeCandidatura, cargo_do_titular: TipoCargo) -> list[tuple]:
+    """As chaves da chapa: eleição, UE e cargo do titular, com o número de candidato ou com a coligação."""
+    base = (linha.ano_eleicao, linha.codigo_ue, cargo_do_titular)
+    chaves = [(*base, "numero", linha.numero)]
+    if linha.sq_coligacao and not linha.sq_coligacao.startswith("-"):
+        chaves.append((*base, "coligacao", linha.sq_coligacao))
+    return chaves
+
+
+def _eleito(linha: LinhaDeCandidatura, cargo: TipoCargo) -> Eleito:
+    municipal = cargo in CARGOS_MUNICIPAIS
+    coligacao = (linha.coligacao or "").strip()
+    return Eleito(
+        ano_eleicao=int(linha.ano_eleicao or 0),
+        sq_candidato=linha.sq_candidato or "",
+        cargo=cargo,
+        uf=None if cargo in CARGOS_NACIONAIS else linha.uf,
+        codigo_ue=linha.codigo_ue if municipal else None,
+        nome_ue=linha.nome_ue if municipal else None,
+        nome=linha.nome or "",
+        nome_de_urna=linha.nome_de_urna or linha.nome or "",
+        cpf_hash=normalizacao.hash_de_cpf(linha.cpf),
+        titulo_hash=normalizacao.hash_de_titulo(linha.titulo),
+        nascimento=_data(linha.nascimento),
+        sexo=sexo_do_tse(linha.genero),
+        partido=linha.partido or "",
+        coligacao=None if coligacao.startswith("#") or not coligacao else coligacao,
+    )
 
 
 def candidatura(eleito: Eleito) -> tuple[int, str | None, str | None, str, str]:
@@ -183,6 +234,7 @@ def mandatos_para_linhas(eleitos_da_eleicao: list[Eleito], identidades: Identida
             codigo_municipio_ibge=ponte.get(eleito.codigo_ue) if eleito.codigo_ue else None,
             partido=eleito.partido,
             nome_de_urna=eleito.nome_de_urna,
+            coligacao=eleito.coligacao,
         ))
     return linhas
 

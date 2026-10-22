@@ -26,7 +26,7 @@ import requests
 
 from . import conexao as conexao_mod
 from . import (
-    arrecadacao, comparacao, cota, curadoria, emendas, gestao, grafo, ingestao,
+    arrecadacao, comparacao, cota, curadoria, emendas, grafo, ingestao,
     ingestao_senado, municipios, normalizacao, orcamento, orientacoes,
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
@@ -904,7 +904,10 @@ def _reais(valor: float) -> str:
 
 
 def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None:
-    """O perfil do governo federal: quem governa, quanto gastou e de onde veio o dinheiro.
+    """O perfil do governo federal: a chapa eleita, quanto gastou e de onde veio o dinheiro.
+
+    A chapa sai de `mandatos` (Pendência 56): este comando carrega os eleitos da eleição pelo `mandatos`,
+    e a tabela `gestoes` deixou de ser gravada.
 
     É **contexto** da legislatura, não medida de afinidade, e não liga a parlamentar.
 
@@ -912,18 +915,7 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
     leva a data nos do ano corrente e não nos fechados — os meses de execução são 48
     arquivos de ~10 MB, e rebaixá-los todo dia seria meio gigabyte por nada.
     """
-    zip_tse = tse.baixar(
-        f"{tse.CDN}/{gestao.RECURSO.format(eleicao=eleicao)}",
-        CACHE / f"consulta-cand-{eleicao}.zip",
-    )
-    gestao_eleita = gestao.eleitos(gestao.ler(zip_tse, eleicao))
-    carga_da_gestao = _carga_do_arquivo(
-        conexao, "TSE", f"{tse.CDN}/{gestao.RECURSO.format(eleicao=eleicao)}", zip_tse
-    )
-    log.info("  gestão %d–%d: %s (%s) e %s (%s)",
-             gestao_eleita["primeiro_ano"], gestao_eleita["ultimo_ano"],
-             gestao_eleita["presidente_nome_de_urna"], gestao_eleita["presidente_partido"],
-             gestao_eleita["vice_nome_de_urna"], gestao_eleita["vice_partido"])
+    _mandatos(conexao, [eleicao])
 
     funcoes: list[dict] = []
     encargos: list[dict] = []
@@ -994,7 +986,6 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
         ))
 
     with conexao.transaction():
-        persistencia.gravar_gestao(conexao, gestao_eleita, carga_da_gestao)
         persistencia.gravar_orcamento(conexao, anos, funcoes)
         persistencia.gravar_encargos(conexao, anos, encargos)
         persistencia.gravar_arrecadacao(conexao, anos, receitas_do_periodo)

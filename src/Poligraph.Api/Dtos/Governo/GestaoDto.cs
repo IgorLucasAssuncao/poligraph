@@ -6,7 +6,7 @@ public record GestaoDto(
     int PrimeiroAno,
     int UltimoAno,
     PessoaDaGestaoDto Presidente,
-    PessoaDaGestaoDto Vice,
+    PessoaDaGestaoDto? Vice,
     string? Coligacao);
 
 /// <summary>Nome civil, nome de urna e partido na eleição.</summary>

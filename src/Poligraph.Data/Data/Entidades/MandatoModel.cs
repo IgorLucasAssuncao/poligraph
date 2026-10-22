@@ -38,6 +38,9 @@ public class MandatoModel
 
     public required string NomeDeUrna { get; set; }
 
+    /// <summary>Os partidos da coligação da chapa (<c>DS_COMPOSICAO_COLIGACAO</c>); nulo para partido isolado sem composição ou "#NULO".</summary>
+    public string? Coligacao { get; set; }
+
     /// <summary>O arquivo de candidatos do TSE que gravou a linha.</summary>
     public long? CargaId { get; set; }
 }

@@ -653,7 +653,7 @@ function PerfilDaGestaoComponent({ gestao }: { gestao: Gestao }) {
       </h2>
       <div className="gestao-pessoas">
         <PessoaDaGestaoCartaoComponent papel={G.presidente} pessoa={gestao.presidente} />
-        <PessoaDaGestaoCartaoComponent papel={G.vice} pessoa={gestao.vice} />
+        {gestao.vice && <PessoaDaGestaoCartaoComponent papel={G.vice} pessoa={gestao.vice} />}
       </div>
       <div className="gestao-meta">
         {G.eleitosEm(gestao.anoDaEleicao)}

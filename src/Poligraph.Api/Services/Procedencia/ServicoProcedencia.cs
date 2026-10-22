@@ -331,15 +331,25 @@ public class ServicoProcedencia(PoligraphDb db)
                 .Select(m => new LinhaDaProcedenciaDto(m.Nome, m.Uf + " · " + m.Populacao + " habitantes", null, null, null)));
     }
 
+    /// <summary>A chapa eleita do período, dos <c>mandatos</c> do TSE (Pendência 56: a tabela <c>gestoes</c> deixou de ser lida).</summary>
     private Recorte Gestoes(Periodo<AnoDoOrcamento> periodo)
     {
         var (primeiro, ultimo) = (periodo.Primeiro.GetValueOrDefault().Valor, periodo.Ultimo.GetValueOrDefault().Valor);
-        var gestoes = _db.Gestoes.AsNoTracking().Where(g => g.PrimeiroAno <= ultimo && g.UltimoAno >= primeiro);
-        return new(
-            TextosDaProcedencia.Gestoes(periodo),
-            gestoes.Select(g => g.CargaId),
-            gestoes.OrderBy(g => g.PrimeiroAno)
-                .Select(g => new LinhaDaProcedenciaDto(g.PresidenteNome, g.ViceNome, null, null, null)));
+        var chapa = _db.Mandatos.AsNoTracking()
+            .Where(m => (m.Cargo == TipoCargo.PRESIDENTE || m.Cargo == TipoCargo.VICE_PRESIDENTE)
+                     && m.PrimeiroAno <= ultimo && m.UltimoAno >= primeiro);
+        var presidentes =
+            from m in chapa.Where(m => m.Cargo == TipoCargo.PRESIDENTE)
+            join p in _db.Pessoas.AsNoTracking() on m.PessoaId equals p.Id
+            orderby m.PrimeiroAno
+            select new LinhaDaProcedenciaDto(
+                p.NomeCivil,
+                (from v in chapa
+                 join pv in _db.Pessoas.AsNoTracking() on v.PessoaId equals pv.Id
+                 where v.Cargo == TipoCargo.VICE_PRESIDENTE && v.AnoEleicao == m.AnoEleicao
+                 select pv.NomeCivil).FirstOrDefault(),
+                null, null, null);
+        return new(TextosDaProcedencia.Gestoes(periodo), chapa.Where(m => m.Cargo == TipoCargo.PRESIDENTE).Select(m => m.CargaId), presidentes);
     }
 
     private Recorte Painel(TipoCasa casa, Legislatura legislatura)

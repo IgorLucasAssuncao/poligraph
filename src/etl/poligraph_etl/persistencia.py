@@ -1127,32 +1127,6 @@ def gravar_cnpjs_municipio(
     )
 
 
-def gravar_gestao(conexao: psycopg.Connection, gestao: dict, carga_id: int | None = None) -> None:
-    """Grava presidente e vice de uma eleição, substituindo a linha dela."""
-    conexao.execute(
-        """
-        INSERT INTO gestoes (eleicao, primeiro_ano, ultimo_ano, presidente_nome,
-                             presidente_nome_de_urna, presidente_partido, vice_nome,
-                             vice_nome_de_urna, vice_partido, coligacao, carga_id)
-        VALUES (%(eleicao)s, %(primeiro_ano)s, %(ultimo_ano)s, %(presidente_nome)s,
-                %(presidente_nome_de_urna)s, %(presidente_partido)s, %(vice_nome)s,
-                %(vice_nome_de_urna)s, %(vice_partido)s, %(coligacao)s, %(carga_id)s)
-        ON CONFLICT (eleicao) DO UPDATE SET
-            primeiro_ano = EXCLUDED.primeiro_ano,
-            ultimo_ano = EXCLUDED.ultimo_ano,
-            presidente_nome = EXCLUDED.presidente_nome,
-            presidente_nome_de_urna = EXCLUDED.presidente_nome_de_urna,
-            presidente_partido = EXCLUDED.presidente_partido,
-            vice_nome = EXCLUDED.vice_nome,
-            vice_nome_de_urna = EXCLUDED.vice_nome_de_urna,
-            vice_partido = EXCLUDED.vice_partido,
-            coligacao = EXCLUDED.coligacao,
-            carga_id = COALESCE(EXCLUDED.carga_id, gestoes.carga_id)
-        """,
-        {"carga_id": carga_id, **gestao},
-    )
-
-
 def registrar_autores(conexao: psycopg.Connection, autores: dict[str, str], carga_id: int | None = None) -> int:
     """Registra os códigos de autor vistos, sem resolver o vínculo.
 

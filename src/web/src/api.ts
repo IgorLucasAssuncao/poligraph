@@ -923,7 +923,8 @@ export type Gestao = {
   primeiroAno: number;
   ultimoAno: number;
   presidente: PessoaDaGestao;
-  vice: PessoaDaGestao;
+  /** Nulo quando o TSE não publica o vice da chapa. */
+  vice: PessoaDaGestao | null;
   coligacao: string | null;
 };
 

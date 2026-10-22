@@ -291,12 +291,8 @@ public class TestesProcedencia(FixturePostgres postgres) : BaseIntegracao(postgr
         });
         var pessoa = new PessoaModel { NomeCivil = "Ana", NomeExibicao = "Ana", CargaId = carga.Id };
         Db.Pessoas.Add(pessoa);
-        Db.Gestoes.Add(new GestaoModel
-        {
-            Eleicao = 2022, PrimeiroAno = 2023, UltimoAno = 2026, PresidenteNome = "P", PresidenteNomeDeUrna = "P", PresidentePartido = "X",
-            ViceNome = "V", ViceNomeDeUrna = "V", VicePartido = "Y", CargaId = carga.Id,
-        });
         await Db.SaveChangesAsync();
+        await Fixtures.DadosDeTeste.SemearChapaAsync(Db, 2022, ("P", "P", "X"), ("V", "V", "Y"), carga.Id);
         Db.RedesSociais.Add(new RedeSocialModel
         {
             PessoaId = pessoa.Id, Url = "https://instagram.com/ana", Rede = TipoRedeSocial.INSTAGRAM, Fonte = FonteDaRedeSocial.CAMARA, CargaId = carga.Id,

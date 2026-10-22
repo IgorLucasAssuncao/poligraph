@@ -1459,6 +1459,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("character varying(5)")
                         .HasColumnName("codigo_municipio_tse");
 
+                    b.Property<string>("Coligacao")
+                        .HasColumnType("text")
+                        .HasColumnName("coligacao");
+
                     b.Property<string>("NomeDeUrna")
                         .IsRequired()
                         .HasMaxLength(120)

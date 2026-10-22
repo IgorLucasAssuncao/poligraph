@@ -9,7 +9,8 @@ from .entrada import coluna
 class LinhaDeCandidatura:
     """Uma candidatura: `consulta_cand/consulta_cand_{ano}.zip`, um CSV por UF e às vezes um `BRASIL`.
 
-    CSV com ponto e vírgula, latin-1. O mesmo layout de 2010 a 2024 (MEDIDO em 2026-10-21).
+    CSV com ponto e vírgula, latin-1. O mesmo layout de 1998 a 2024 (MEDIDO em 2026-10-21 e, para o número e a
+    coligação, em 2026-10-22).
 
     RISCO: `cpf` e `titulo` chegam em claro e viram hash na transformação; nunca são gravados (LGPD).
     """
@@ -28,3 +29,6 @@ class LinhaDeCandidatura:
     nascimento: str | None = coluna("DT_NASCIMENTO")
     genero: str | None = coluna("CD_GENERO")
     partido: str | None = coluna("SG_PARTIDO")
+    numero: str | None = coluna("NR_CANDIDATO")
+    sq_coligacao: str | None = coluna("SQ_COLIGACAO")
+    coligacao: str | None = coluna("DS_COMPOSICAO_COLIGACAO")

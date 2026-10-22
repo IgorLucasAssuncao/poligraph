@@ -15,7 +15,7 @@ TITULO = "012345678901"
 def _linha(**campos) -> LinhaDeCandidatura:
     padrao = dict(ano_eleicao="2024", sq_candidato="1", cargo="11", situacao="ELEITO", uf="SP", codigo_ue="71072",
                   nome_ue="SÃO PAULO", nome="FULANO", nome_de_urna="FULANO", cpf="-4", titulo=TITULO,
-                  nascimento="01/02/1970", genero="2", partido="XYZ")
+                  nascimento="01/02/1970", genero="2", partido="XYZ", numero="10", coligacao="XYZ / ABC", sq_coligacao="-1")
     return LinhaDeCandidatura(**(padrao | campos))
 
 
@@ -123,3 +123,27 @@ def test_campanha_de_governador_liga_pela_candidatura_eleita_sem_filtro_de_cargo
     linhas = receitas.para_linhas(registros, {}, 2022, por_candidatura={("SP", "250001"): 7})
 
     assert [(l["pessoa_id"], l["valor"]) for l in linhas] == [(7, 1000.0)]
+
+
+def test_vice_com_situacao_nula_entra_pela_chapa_do_titular_eleito():
+    """RISCO: até 2010 o vice vem `#NULO#`; o da chapa eleita divide o número com o titular eleito."""
+    eleitos = mandatos.eleitos([
+        _linha(ano_eleicao="2008", sq_candidato="1", cargo="11", numero="15", titulo="111111111111"),
+        _linha(ano_eleicao="2008", sq_candidato="2", cargo="12", situacao="#NULO#", numero="15", titulo="222222222222"),
+        _linha(ano_eleicao="2008", sq_candidato="3", cargo="12", situacao="#NULO#", numero="45", titulo="333333333333"),
+        _linha(ano_eleicao="2008", sq_candidato="4", cargo="11", situacao="NÃO ELEITO", numero="45", titulo="444444444444"),
+    ])
+
+    assert sorted((e.cargo.value, e.sq_candidato) for e in eleitos) == [("PREFEITO", "1"), ("VICE_PREFEITO", "2")]
+    assert eleitos[0].coligacao == "XYZ / ABC"
+
+
+def test_vice_de_2000_entra_pela_coligacao_quando_o_numero_e_outro():
+    """MEDIDO em 2026-10-22: em 1998 e 2000 o vice tem outro número e a mesma coligação do titular."""
+    eleitos = mandatos.eleitos([
+        _linha(ano_eleicao="2000", sq_candidato="93", cargo="11", numero="11", sq_coligacao="1", titulo="111111111111"),
+        _linha(ano_eleicao="2000", sq_candidato="94", cargo="12", situacao="#NULO#", numero="251", sq_coligacao="1", titulo="222222222222"),
+        _linha(ano_eleicao="2000", sq_candidato="92", cargo="12", situacao="#NULO#", numero="151", sq_coligacao="2", titulo="333333333333"),
+    ])
+
+    assert sorted(e.sq_candidato for e in eleitos) == ["93", "94"]

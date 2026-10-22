@@ -171,6 +171,7 @@ class Mandato:
     codigo_municipio_ibge: str | None
     partido: str
     nome_de_urna: str
+    coligacao: str | None
 
 
 @dataclass(frozen=True)

@@ -212,4 +212,25 @@ public static class DadosDeTeste
             Ordem = ordem,
             Ativa = true
         };
+
+    /// <summary>A chapa presidencial eleita, como o TSE a deixa em <c>mandatos</c>: presidente e vice, cada um com a sua pessoa (Pendência 56).</summary>
+    public static async Task SemearChapaAsync(
+        PoligraphDb db, short eleicao, (string Civil, string Urna, string Partido) presidente, (string Civil, string Urna, string Partido) vice,
+        long? cargaId = null)
+    {
+        foreach (var (cargo, quem, sq) in new[] { (TipoCargo.PRESIDENTE, presidente, "p"), (TipoCargo.VICE_PRESIDENTE, vice, "v") })
+        {
+            var pessoa = new PessoaModel { NomeCivil = quem.Civil, NomeExibicao = quem.Urna };
+            db.Pessoas.Add(pessoa);
+            await db.SaveChangesAsync();
+            db.Mandatos.Add(new MandatoModel
+            {
+                PessoaId = pessoa.Id, Cargo = cargo, AnoEleicao = eleicao, SqCandidato = $"{sq}{eleicao}",
+                PrimeiroAno = (short)(eleicao + 1), UltimoAno = (short)(eleicao + 4),
+                Partido = quem.Partido, NomeDeUrna = quem.Urna, CargaId = cargaId,
+            });
+        }
+
+        await db.SaveChangesAsync();
+    }
 }

@@ -1348,3 +1348,11 @@ VALUES ('20261022144144_DeducaoComSinal', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+ALTER TABLE mandatos ADD coligacao text;
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261022153733_ColigacaoDoMandato', '10.0.11');
+
+COMMIT;
+

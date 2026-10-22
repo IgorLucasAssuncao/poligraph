@@ -62,12 +62,7 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
     {
         ExigeDocker();
         await SemearAsync();
-        Db.Gestoes.Add(new GestaoModel
-        {
-            Eleicao = 2018, PrimeiroAno = 2019, UltimoAno = 2022,
-            PresidenteNome = "PRESIDENTE ANTERIOR", PresidenteNomeDeUrna = "ANTERIOR", PresidentePartido = "XYZ",
-            ViceNome = "VICE ANTERIOR", ViceNomeDeUrna = "VICE", VicePartido = "XYZ"
-        });
+        await Fixtures.DadosDeTeste.SemearChapaAsync(Db, 2018, ("PRESIDENTE ANTERIOR", "ANTERIOR", "XYZ"), ("VICE ANTERIOR", "VICE", "XYZ"));
         Db.OrcamentoPorFuncao.Add(Funcao(2022, "10", "Saúde", pago: 100m, restos: 0m, acima: 0m, new DateOnly(2023, 1, 20)));
         await Db.SaveChangesAsync();
 
@@ -329,12 +324,8 @@ public class TestesEndpointGoverno(FixturePostgres postgres) : BaseIntegracao(po
     {
         var gerado = new DateOnly(2026, 9, 22);
 
-        Db.Gestoes.Add(new GestaoModel
-        {
-            Eleicao = 2022, PrimeiroAno = 2023, UltimoAno = 2026,
-            PresidenteNome = "LUIZ INÁCIO LULA DA SILVA", PresidenteNomeDeUrna = "LULA", PresidentePartido = "PT",
-            ViceNome = "GERALDO JOSÉ RODRIGUES ALCKMIN FILHO", ViceNomeDeUrna = "GERALDO ALCKMIN", VicePartido = "PSB"
-        });
+        await Fixtures.DadosDeTeste.SemearChapaAsync(
+            Db, 2022, ("LUIZ INÁCIO LULA DA SILVA", "LULA", "PT"), ("GERALDO JOSÉ RODRIGUES ALCKMIN FILHO", "GERALDO ALCKMIN", "PSB"));
 
         Db.OrcamentoPorFuncao.AddRange(
             Funcao(2025, "09", "Previdência social", pago: 1_100m, restos: 60m, acima: 130m, gerado),
