@@ -24,7 +24,7 @@ export const TEXTOS_DA_CIDADE = {
   doisEleitos: 'Mais de um eleito para o mesmo período: houve eleição suplementar.',
   vice: 'Vice',
   governador: 'Governador eleito',
-  semGovernador: 'Governador eleito antes de 2002, fora da base',
+  semGovernador: 'Governador eleito antes de 1998, fora da base',
   chegouNaGestao: (valor: string) => `${valor} chegaram nesses anos`,
   partes: (prefeitura: string, entidades: string) => `${prefeitura} à prefeitura · ${entidades} a entidades`,
   contas: (receita: string, despesa: string) => `A prefeitura arrecadou ${receita} e pagou ${despesa} em despesas`,
@@ -40,5 +40,5 @@ export const TEXTOS_DA_CIDADE = {
     'A cidade é a da sede de quem recebeu: entidade com sede aqui pode ter aplicado o dinheiro em outra cidade.',
   ],
   fonte:
-    'Fontes: candidaturas eleitas do TSE, de 2000 a 2024; pagamentos de emendas do Portal da Transparência; contas da prefeitura declaradas ao Tesouro Nacional (Siconfi, DCA).',
+    'Fontes: candidaturas eleitas do TSE, de 1998 a 2024; pagamentos de emendas do Portal da Transparência; contas da prefeitura declaradas ao Tesouro Nacional (Siconfi, DCA).',
 };

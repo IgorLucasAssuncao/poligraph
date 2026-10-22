@@ -42,7 +42,7 @@ export const TEXTOS_DOS_POLITICOS = {
     semMandato: 'Esta pessoa não tem mandato eleito na base do TSE.',
     verTodos: 'Ver todos os políticos',
     mandatos: 'Mandatos',
-    quantosMandatos: (n: number) => (n === 1 ? '1 mandato eleito de 2000 a 2024' : `${n} mandatos eleitos de 2000 a 2024`),
+    quantosMandatos: (n: number) => (n === 1 ? '1 mandato eleito de 1998 a 2024' : `${n} mandatos eleitos de 1998 a 2024`),
     eleitoEm: (ano: number) => `eleito em ${ano}`,
     semVoto:
       'Esta ficha não tem votos nem afinidade: só a Câmara e o Senado publicam o voto de cada parlamentar. Assembleias e câmaras municipais não publicam.',
@@ -68,7 +68,7 @@ export const TEXTOS_DOS_POLITICOS = {
     quantos: (n: number) => `${n.toLocaleString('pt-BR')} ${n === 1 ? 'político' : 'políticos'} com mandato nos filtros escolhidos`,
     nenhum: 'Ninguém com mandato nesses filtros. Tente outro cargo ou outro estado.',
     outrosMandatos: (n: number) => (n > 1 ? `${n} mandatos na base` : ''),
-    fonte: 'Fonte: candidaturas eleitas publicadas pelo TSE, eleições de 2000 a 2024.',
+    fonte: 'Fonte: candidaturas eleitas publicadas pelo TSE, eleições de 1998 a 2024.',
     viceAntes:
       'Vices aparecem a partir de 2012 (prefeitura) e 2014 (governo): antes disso, o TSE não marca o vice como eleito.',
   },

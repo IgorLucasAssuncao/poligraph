@@ -137,7 +137,7 @@ _SITUACAO_DO_TSE: dict[str, TipoSituacaoNoTurno] = {
     "RENÚNCIA/FALECIMENTO/CASSAÇÃO ANTES DA ELEIÇÃO": TipoSituacaoNoTurno.FORA_DA_DISPUTA,
     "RENÚNCIA/FALECIMENTO/CASSAÇÃO APÓS A ELEIÇÃO": TipoSituacaoNoTurno.FORA_DA_DISPUTA,
 }
-"""MEDIDO em 2026-10-21 nos arquivos de 2000 a 2024. `MÉDIA` é a grafia de 2010 para eleito por média."""
+"""MEDIDO em 2026-10-21 nos arquivos de 1998 a 2024. `MÉDIA` é a grafia de 2010 para eleito por média."""
 
 
 def situacao_do_tse(texto: str | None) -> TipoSituacaoNoTurno:

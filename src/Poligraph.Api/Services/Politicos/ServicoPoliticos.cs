@@ -10,7 +10,7 @@ namespace Poligraph.Api.Services;
 /// Os políticos eleitos que o TSE publica, de todos os cargos da base: a lista com filtro por nível, cargo, UF e município (Pendência 90, fase 2).
 /// </summary>
 /// <remarks>
-/// <para>O índice cabe na memória: MEDIDO em 2026-10-21, 73 mil mandatos de 2000 a 2024. Ele é montado uma vez por <see cref="CacheDeLeitura.Validade"/>, e cada filtro roda sobre ele.</para>
+/// <para>O índice cabe na memória: MEDIDO em 2026-10-21, 73 mil mandatos de 2000 a 2024 (1998 entrou depois, com mais 1.599). Ele é montado uma vez por <see cref="CacheDeLeitura.Validade"/>, e cada filtro roda sobre ele.</para>
 /// <para>DECISÃO: o mandato mostrado é o mais recente que passa no filtro. Quem foi prefeito e depois deputado aparece como prefeito ao filtrar por município, e como deputado sem filtro.</para>
 /// </remarks>
 public class ServicoPoliticos(PoligraphDb db, CacheDeLeitura leitura, ServicoParlamentares parlamentares)

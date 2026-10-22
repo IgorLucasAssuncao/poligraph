@@ -107,6 +107,11 @@ ATENÇÃO: filtrar por "contém ELEITO" pega NÃO ELEITO.
 
 ### FEITO em 2026-10-21: fase 1, de 2000 a 2024
 
+ACRÉSCIMO (2026-10-22, decisão do autor): a eleição geral de 1998 também entrou, para os governadores
+de 1999 a 2002 aparecerem nas gestões municipais de 2001 a 2004. 1.632 eleitos, 1.599 mandatos e 333
+pessoas novas; nenhum valor de domínio desconhecido. Vice-governador de 1998 fica fora, pelo mesmo
+`#NULO#` dos anos até 2010.
+
 Comando `mandatos`, tabela `mandatos` e os enums `TipoCargo`, `TipoNivel`, `TipoSituacaoNoTurno` e
 `TipoSexo` (`poligraph_etl/tipos.py` e `Poligraph.Data/Data/Enums`). Por decisão do autor, de 2000
 em diante.

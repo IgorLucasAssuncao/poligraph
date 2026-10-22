@@ -1018,7 +1018,7 @@ def _convenios(conexao: psycopg.Connection) -> None:
         persistencia.gravar_convenentes(conexao, linhas, carga)
 
 
-ELEICOES_DOS_MANDATOS = [2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016, 2018, 2020, 2022, 2024]
+ELEICOES_DOS_MANDATOS = [1998, 2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016, 2018, 2020, 2022, 2024]
 """As eleições que o TSE publica no layout atual do cadastro de candidatos (MEDIDO em 2026-10-21, de 2010 a 2024)."""
 
 

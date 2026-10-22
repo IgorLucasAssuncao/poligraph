@@ -60,7 +60,7 @@ describe('Página da cidade', () => {
     renderizar();
 
     expect(await screen.findByText('Gestão de 2009 a 2012, sem pagamento de emenda na base')).toBeInTheDocument();
-    expect(screen.getByText('Governador eleito antes de 2002, fora da base')).toBeInTheDocument();
+    expect(screen.getByText('Governador eleito antes de 1998, fora da base')).toBeInTheDocument();
   });
 
   it('diz que eleito não é quem governou e que o valor não é mérito do prefeito', async () => {
