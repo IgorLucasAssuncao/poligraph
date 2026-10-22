@@ -178,6 +178,12 @@ function GestaoComponent({ gestao, maior }: { gestao: GestaoDaCidade; maior: num
           </span>
           <small>{T.partes(reaisCompacto(gestao.naPrefeitura), reaisCompacto(gestao.recebido - gestao.naPrefeitura))}</small>
           {gestao.primeiroAno < ANO_DO_PRIMEIRO_PAGAMENTO && <small>{T.desdeAgosto}</small>}
+          {gestao.contas && (
+            <small className="gestao-contas">
+              {T.contas(reaisCompacto(gestao.contas.receita), reaisCompacto(gestao.contas.despesaPaga))}{' '}
+              {T.anosDeclarados(gestao.contas.anosDeclarados, gestao.contas.anosNaGestao)}
+            </small>
+          )}
         </div>
       ) : (
         <p className="ajuda">{T.semPagamento}</p>

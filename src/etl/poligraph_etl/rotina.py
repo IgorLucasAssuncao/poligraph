@@ -11,6 +11,7 @@ vez que alguém apertou o botão. Este módulo só DECIDE as etapas; quem as exe
 | mensal de jan, abr, jul e out | também `municipios`: o cadastro de CNPJ da Receita, gigabytes, uma vez por trimestre |
 | mensal de nov e dez de ano de eleição geral | também `mandatos`, `fundo`, `patrimonio` e `redes` da eleição: o TSE fecha a prestação de contas depois do segundo turno |
 | mensal de nov e dez de ano de eleição municipal | também `mandatos`, `patrimonio` e `redes` da eleição: os prefeitos e vices eleitos (Pendência 90) |
+| mensal de maio | também `siconfi` do ano anterior: o município declara a DCA ao Tesouro até 30 de abril (Pendência 90, fase 5) |
 | toda rotina, depois do `conferir` | `limpar-cache`: as regras de `limpeza` (2026-10-15) |
 
 DECISÃO (2026-10-03, auditoria das fontes): toda fonte periódica que o site mostra entra aqui, no
@@ -95,6 +96,8 @@ def etapas(frequencia: str, hoje: date) -> list[Etapa]:
         ]
         if hoje.month in MESES_DO_CADASTRO_DA_RECEITA:
             lista.append(Etapa("municipios"))
+        if hoje.month == MES_DA_DCA:
+            lista.append(Etapa("siconfi", {"anos": [hoje.year - 1]}))
         if hoje.year % 2 == 0 and hoje.month in MESES_DEPOIS_DA_ELEICAO:
             lista.append(Etapa("mandatos", {"eleicoes": [hoje.year]}))
             if eh_ano_de_eleicao_geral(hoje.year):
@@ -110,6 +113,10 @@ def etapas(frequencia: str, hoje: date) -> list[Etapa]:
 
     lista += [Etapa("conferir"), Etapa("limpar-cache")]
     return lista
+
+
+MES_DA_DCA = 5
+"""Maio: o prazo da Declaração de Contas Anuais ao Tesouro é 30 de abril (LC 101/2000, art. 51, § 1º, I)."""
 
 
 def anos_com_dado_novo(hoje: date) -> list[int]:

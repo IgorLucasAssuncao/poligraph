@@ -67,6 +67,7 @@ os testes).
 | `emendas` | Emendas, favorecidos e convênios (download público do Portal) | `--anos ...`; `--resolver CODIGO=ID_NA_CAMARA` vincula um autor à mão |
 | `convenios` | Completa o CNPJ do convenente dos convênios de emenda | — |
 | `municipios` | Sede de quem recebeu emenda, pelo cadastro da Receita (~6 GB) | `--diretorio` com os `Estabelecimentos*.zip` já baixados |
+| `siconfi` | Contas anuais das prefeituras (DCA do Tesouro, Siconfi): receita e despesa por município e ano. Cerca de 5.570 consultas por anexo e ano | `--anos 2024`; `--municipios 3509502 ...` |
 | `populacao` | População estimada de cada município (IBGE, SIDRA 6579), para o mapa por habitante | — |
 | `sedes-brasilapi` | Sede dos CNPJs que o cadastro não resolveu, pela BrasilAPI (Pendência 71). Retoma de onde parou | `--limite N` |
 | `fundo` | Receitas de campanha, com o fundo eleitoral (TSE). Parlamentares pelo CPF; governadores, deputados estaduais e vices pela candidatura de `mandatos` (2018 e 2022: o layout antigo não traz o número da candidatura) | `--eleicao 2022`; `--arquivo` com o ZIP baixado à mão |
@@ -90,6 +91,7 @@ haveria como refazer a carga a partir dele. Fora da pasta, o comando recusa ante
 |---|---|
 | `rotina --frequencia semanal` | `ingerir`, `senado` e `simbolicas` do ano, `palavras-chave`, `conferir` |
 | `rotina --frequencia mensal` | A semanal, mais `cota`, `emendas`, `sedes-brasilapi`, `convenios`, `governo`, `defesa-civil`, `compras-centralizadas`, `viagens`, `compras`, `sancoes`, `populacao`, `analisar` das duas casas, `conferir` |
+| mensal de maio | Também `siconfi` do ano anterior: a DCA vence em 30 de abril |
 | mensal de jan, abr, jul e out | Também `municipios`: o cadastro da Receita muda por trimestre e pesa gigabytes |
 | mensal de nov e dez de ano de eleição geral | Também `mandatos`, `fundo`, `patrimonio` e `redes` da eleição: o TSE fecha a prestação de contas depois do segundo turno |
 | mensal de nov e dez de ano de eleição municipal | Também `mandatos`, `patrimonio` e `redes` da eleição |

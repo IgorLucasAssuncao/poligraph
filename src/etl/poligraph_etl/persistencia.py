@@ -1420,6 +1420,12 @@ def pessoas_fora_do_congresso(conexao: psycopg.Connection) -> set[int]:
     }
 
 
+def gravar_contas_dos_municipios(conexao: psycopg.Connection, anos: Sequence[int], linhas: Sequence, carga_id: int) -> int:
+    """Troca as contas dos anos que entraram. Município que não declarou o ano fica sem linha."""
+    conexao.execute("DELETE FROM contas_dos_municipios WHERE ano = ANY(%s)", (list(anos),))
+    return gravar_contratos(conexao, linhas, carga_id)
+
+
 def pessoas_por_casa(conexao: psycopg.Connection) -> dict[str, dict[str, int]]:
     """`cpf_hash` → casa → `pessoas.id`. Quem foi deputado e senador tem uma pessoa em cada casa (achado #18)."""
     por_casa: dict[str, dict[str, int]] = {}

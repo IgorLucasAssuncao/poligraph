@@ -171,3 +171,17 @@ class Mandato:
     codigo_municipio_ibge: str | None
     partido: str
     nome_de_urna: str
+
+
+@dataclass(frozen=True)
+class ContasDoMunicipio:
+    """Uma linha de `contas_dos_municipios` (ContasDoMunicipioModel): a DCA de uma prefeitura num ano (Pendência 90, fase 5)."""
+
+    TABELA: ClassVar[str] = "contas_dos_municipios"
+
+    codigo_ibge: str
+    ano: int
+    receita_bruta: float
+    deducoes: float
+    despesa_empenhada: float
+    despesa_paga: float

@@ -23,7 +23,13 @@ public record GestaoDaCidadeDto(
     IReadOnlyList<GovernadorNoPeriodoDto> Governadores,
     decimal Recebido,
     decimal NaPrefeitura,
-    bool ComPagamento);
+    bool ComPagamento,
+    ContasDaGestaoDto? Contas = null);
+
+/// <summary>A receita e a despesa da prefeitura nos anos da gestão que ela declarou ao Tesouro (DCA do Siconfi, Pendência 90, fase 5).</summary>
+/// <param name="Receita">Receita bruta menos as deduções (FUNDEB e outras), somada nos anos declarados.</param>
+/// <param name="AnosDeclarados">Quantos anos da gestão têm DCA na base; os outros não entram na soma.</param>
+public record ContasDaGestaoDto(decimal Receita, decimal DespesaPaga, int AnosDeclarados, int AnosNaGestao);
 
 /// <summary>Um eleito, com o link que a tela usa: a ficha do parlamentar quando ele votou no Congresso, senão a do político.</summary>
 public record EleitoNaGestaoDto(long IdPessoa, string Nome, string Partido, bool Parlamentar);

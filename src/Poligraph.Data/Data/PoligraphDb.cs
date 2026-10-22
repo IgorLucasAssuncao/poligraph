@@ -36,6 +36,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<ReceitaPorOrigemModel> ReceitasPorOrigem => Set<ReceitaPorOrigemModel>();
     public DbSet<GestaoModel> Gestoes => Set<GestaoModel>();
     public DbSet<MunicipioModel> Municipios => Set<MunicipioModel>();
+    public DbSet<ContasDoMunicipioModel> ContasDosMunicipios => Set<ContasDoMunicipioModel>();
     public DbSet<CnpjMunicipioModel> CnpjsMunicipio => Set<CnpjMunicipioModel>();
     public DbSet<ExecucaoModel> Execucoes => Set<ExecucaoModel>();
     public DbSet<SimilaridadeModel> Similaridades => Set<SimilaridadeModel>();
@@ -175,10 +176,24 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.ToTable(t =>
             {
                 t.HasCheckConstraint("ck_carga_fonte",
-                    "fonte IN ('CAMARA','SENADO','TSE','PORTAL_TRANSPARENCIA','RECEITA','IBGE')");
+                    "fonte IN ('CAMARA','SENADO','TSE','PORTAL_TRANSPARENCIA','RECEITA','IBGE','TESOURO')");
                 t.HasCheckConstraint("ck_carga_sha256", "sha256 ~ '^[0-9a-f]{64}$'");
                 t.HasCheckConstraint("ck_carga_bytes", "bytes >= 0");
                 t.HasCheckConstraint("ck_carga_url", "url <> ''");
+            });
+        });
+
+        mb.Entity<ContasDoMunicipioModel>(e =>
+        {
+            e.HasKey(x => new { x.CodigoIbge, x.Ano });
+            e.Property(x => x.CodigoIbge).HasMaxLength(7).IsFixedLength();
+            e.HasOne<MunicipioModel>().WithMany().HasForeignKey(x => x.CodigoIbge).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<CargaModel>().WithMany().HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_contas_municipio_ano", "ano BETWEEN 2000 AND 2100");
+                t.HasCheckConstraint("ck_contas_municipio_receita", "receita_bruta >= 0 AND deducoes >= 0");
+                t.HasCheckConstraint("ck_contas_municipio_despesa", "despesa_empenhada >= 0 AND despesa_paga >= 0");
             });
         });
 

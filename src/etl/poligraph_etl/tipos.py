@@ -33,6 +33,7 @@ class TipoFonteDeCarga(StrEnum):
     PORTAL_TRANSPARENCIA = "PORTAL_TRANSPARENCIA"
     RECEITA = "RECEITA"
     IBGE = "IBGE"
+    TESOURO = "TESOURO"
 
 
 class TipoFonteDeIdentificador(StrEnum):

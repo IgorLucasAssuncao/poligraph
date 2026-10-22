@@ -25,6 +25,9 @@ export const TEXTOS_DA_CIDADE = {
   semGovernador: 'Governador eleito antes de 2002, fora da base',
   chegouNaGestao: (valor: string) => `${valor} chegaram nesses anos`,
   partes: (prefeitura: string, entidades: string) => `${prefeitura} à prefeitura · ${entidades} a entidades`,
+  contas: (receita: string, despesa: string) => `A prefeitura arrecadou ${receita} e pagou ${despesa} em despesas`,
+  anosDeclarados: (n: number, de: number) =>
+    n === de ? 'nos anos da gestão, pelo que declarou ao Tesouro' : `em ${n} dos ${de} anos, os que estão declarados ao Tesouro na base`,
   semPagamento: 'Sem pagamento de emenda na base nesses anos (a base começa em agosto de 2015).',
   desdeAgosto: 'só de agosto de 2015 em diante, quando a base começa',
   anteriores: (n: number, de: number, ate: number) =>
@@ -34,5 +37,6 @@ export const TEXTOS_DA_CIDADE = {
     'A emenda é do deputado ou senador que a apresentou. O valor mostra o que chegou durante cada gestão, não o que o prefeito conseguiu.',
     'A cidade é a da sede de quem recebeu: entidade com sede aqui pode ter aplicado o dinheiro em outra cidade.',
   ],
-  fonte: 'Fontes: candidaturas eleitas do TSE, de 2000 a 2024; pagamentos de emendas do Portal da Transparência.',
+  fonte:
+    'Fontes: candidaturas eleitas do TSE, de 2000 a 2024; pagamentos de emendas do Portal da Transparência; contas da prefeitura declaradas ao Tesouro Nacional (Siconfi, DCA).',
 };

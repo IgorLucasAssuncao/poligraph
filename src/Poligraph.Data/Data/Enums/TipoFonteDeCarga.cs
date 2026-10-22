@@ -1,4 +1,4 @@
-namespace Poligraph.Data;
+﻿namespace Poligraph.Data;
 
 /// <summary>
 /// O órgão que publicou o arquivo de uma carga (Pendência 72).
@@ -17,4 +17,7 @@ public enum TipoFonteDeCarga
     PORTAL_TRANSPARENCIA,
     RECEITA,
     IBGE,
+
+    /// <summary>Secretaria do Tesouro Nacional, pelo Siconfi: as contas anuais de estados e municípios (Pendência 90, fase 5).</summary>
+    TESOURO,
 }

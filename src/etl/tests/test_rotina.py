@@ -110,14 +110,14 @@ def test_toda_etapa_tem_execucao_no_main(monkeypatch):
     executados = []
     nomes = (
         "_ingerir", "_senado", "_simbolicas", "_palavras_chave", "_cota", "_emendas", "_sedes_brasilapi", "_convenios",
-        "_governo", "_defesa_civil", "_compras_centralizadas", "_viagens", "_compras", "_sancoes", "_municipios", "_fundo", "_mandatos", "_patrimonio", "_redes", "_populacao", "_analisar", "_conferir", "_em_exercicio",
+        "_governo", "_defesa_civil", "_compras_centralizadas", "_viagens", "_compras", "_sancoes", "_municipios", "_fundo", "_mandatos", "_siconfi", "_patrimonio", "_redes", "_populacao", "_analisar", "_conferir", "_em_exercicio",
         "_limpar_cache",
     )
     for nome in nomes:
         monkeypatch.setattr(principal, nome, lambda *_, nome=nome: executados.append(nome))
 
     for frequencia in rotina.FREQUENCIAS:
-        for dia in (date(2026, 10, 5), date(2026, 11, 5)):
+        for dia in (date(2026, 10, 5), date(2026, 11, 5), date(2027, 5, 5)):
             for etapa in rotina.etapas(frequencia, dia):
                 principal._executar_etapa(ConexaoFalsa(), etapa)
 
@@ -195,3 +195,9 @@ def test_evento_da_rotina_passa_pelo_check_do_banco(conexao, frequencia):
     tipo = conexao.execute("SELECT tipo FROM eventos ORDER BY id DESC LIMIT 1").fetchone()[0]
     assert tipo == f"ROTINA_{frequencia.upper()}"
     conexao.execute("DELETE FROM eventos")
+
+
+def test_maio_traz_as_contas_das_prefeituras_do_ano_anterior():
+    """Pendência 90, fase 5: a DCA vence em 30 de abril."""
+    assert "siconfi --anos 2026" in _comandos(rotina.etapas("mensal", date(2027, 5, 5)))
+    assert not any(c.startswith("siconfi") for c in _comandos(rotina.etapas("mensal", date(2027, 6, 5))))

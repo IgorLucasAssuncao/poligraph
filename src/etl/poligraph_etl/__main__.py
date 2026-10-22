@@ -125,6 +125,8 @@ def main(argv: list[str] | None = None) -> int:
                 _simbolicas(conexao, args.anos)
             elif args.comando == "populacao":
                 _populacao(conexao)
+            elif args.comando == "siconfi":
+                _siconfi(conexao, args.anos, args.municipios)
             elif args.comando == "reclassificar":
                 _reclassificar(conexao)
             elif args.comando == "rotina":
@@ -218,6 +220,9 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         help="conta as votações simbólicas da Câmara a partir dos arquivos de votações do cache",
     )
     sim.add_argument("--anos", type=int, nargs="+", required=True)
+    sic = sub.add_parser("siconfi", help="contas anuais das prefeituras (DCA do Tesouro, Siconfi): receita e despesa")
+    sic.add_argument("--anos", type=int, nargs="+", default=[date.today().year - 1])
+    sic.add_argument("--municipios", nargs="+", help="códigos do IBGE; sem isto, todos os municípios da base")
     sub.add_parser(
         "populacao",
         help="população estimada de cada município (IBGE, SIDRA 6579), para o mapa por habitante",
@@ -2237,6 +2242,57 @@ def _populacao(conexao: psycopg.Connection) -> None:
     log.info("População %s: %d municípios no arquivo, %d com população na base", ano, len(linhas), com_populacao)
 
 
+def _siconfi(conexao: psycopg.Connection, anos: list[int], municipios: list[str] | None) -> None:
+    """As contas anuais das prefeituras, da DCA que cada uma entrega ao Tesouro (Pendência 90, fase 5).
+
+    Uma requisição por município, anexo e ano: a API não responde sem o município. Duas de cada vez:
+    com quatro, o Tesouro respondeu 429 em menos de 3 minutos (MEDIDO em 2026-10-22).
+
+    DECISÃO: a procedência guarda as linhas que entram na conta (as contas de `siconfi.py`), não a
+    resposta inteira: o ano inteiro passaria de 800 MB, e o resto do anexo não chega ao banco.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    from . import siconfi
+    from .contratos.siconfi import LinhaDaDca
+    from .fontes import siconfi as fonte
+
+    codigos = municipios or [linha[0] for linha in conexao.execute("SELECT codigo_ibge FROM municipios ORDER BY 1").fetchall()]
+    usadas = {siconfi.CONTA_DA_RECEITA} | siconfi.CONTAS_DA_DESPESA
+
+    def do_municipio(ano: int, codigo: str):
+        receitas = fonte.consultar(ano, fonte.ANEXO_DE_RECEITAS, codigo)
+        despesas = fonte.consultar(ano, fonte.ANEXO_DE_DESPESAS, codigo) if receitas else []
+        lidas_r = entrada.ler(LinhaDaDca, receitas)
+        lidas_d = entrada.ler(LinhaDaDca, despesas)
+        guardar = [r for r in receitas + despesas if r.get("cod_conta") in usadas]
+        return codigo, siconfi.contas_para_linha(codigo, ano, lidas_r, lidas_d), guardar
+
+    for ano in anos:
+        inicio = time.monotonic()
+        linhas, respostas, sem_declaracao = [], {}, []
+        with ThreadPoolExecutor(max_workers=2) as paralelo:
+            for i, (codigo, linha, guardar) in enumerate(paralelo.map(lambda c: do_municipio(ano, c), codigos), 1):
+                if linha is None:
+                    sem_declaracao.append(codigo)
+                else:
+                    linhas.append(linha)
+                    respostas[codigo] = guardar
+                if i % 500 == 0:
+                    log.info("  %d: %d de %d municípios consultados (%.0f s)", ano, i, len(codigos), time.monotonic() - inicio)
+        carga = _carga_de_resposta(
+            conexao, TipoFonteDeCarga.TESOURO, f"{fonte.URL}?an_exercicio={ano}", respostas,
+            CACHE / "siconfi" / f"dca-{ano}-{date.today():%Y%m%d}.json",
+        )
+        with conexao.transaction():
+            if municipios:
+                conexao.execute("DELETE FROM contas_dos_municipios WHERE ano = %s AND codigo_ibge = ANY(%s)", (ano, codigos))
+                persistencia.gravar_contratos(conexao, linhas, carga)
+            else:
+                persistencia.gravar_contas_dos_municipios(conexao, [ano], linhas, carga)
+        log.info("  %d: %d municípios com DCA, %d sem declaração, em %.0f s", ano, len(linhas), len(sem_declaracao), time.monotonic() - inicio)
+
+
 def _reclassificar(conexao: psycopg.Connection) -> None:
     """A2 — aplica a regra de categoria atual a toda votação gravada, sem baixar nada.
 
@@ -2531,6 +2587,8 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
         _municipios(conexao, None)
     elif etapa.comando == "fundo":
         _fundo(conexao, etapa.argumentos["eleicao"], None)
+    elif etapa.comando == "siconfi":
+        _siconfi(conexao, etapa.argumentos["anos"], None)
     elif etapa.comando == "mandatos":
         _mandatos(conexao, etapa.argumentos["eleicoes"])
     elif etapa.comando == "patrimonio":

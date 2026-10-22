@@ -166,7 +166,11 @@ prestação de contas municipal ainda não foi baixada nem medida.
 4. **Município, numa página própria** (levantamento de 2026-10-21, a pedido do autor; ainda não implementado). Ver
    "Levantamento da fase 4" abaixo. Era: **município na tela de emendas:** prefeito e governador do período de cada emenda, resumo por
    gestão e detalhe sob demanda.
-5. **Depois:** contas de estados e municípios pelo SICONFI (Tesouro, API pública e periódica,
+5. ✅ **Contas das prefeituras pelo SICONFI** (FEITO em 2026-10-22: comando `siconfi`, tabela `contas_dos_municipios`,
+   receita e despesa paga em cada gestão da página da cidade, com quantos anos estão declarados. MEDIDO: a API só
+   responde por município, e quatro consultas em paralelo levam 429; duas por vez. RISCO: a base legal citada
+   no modo auditoria, LC 101/2000 art. 51, pede conferência do autor. Ficam fora: as contas dos estados e as
+   transferências da União). Era: **Depois:** contas de estados e municípios pelo SICONFI (Tesouro, API pública e periódica,
    ainda não testada aqui) e transferências da União.
 
 Em toda fase: `mapa_do_sistema.html` e `schema_do_ef.sql` no mesmo commit.

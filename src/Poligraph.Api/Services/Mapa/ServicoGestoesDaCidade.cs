@@ -10,6 +10,7 @@ namespace Poligraph.Api.Services;
 /// </summary>
 /// <remarks>
 /// <para>RISCO: o TSE dá quem foi eleito, não quem exerceu. Prefeito cassado, morto ou que renunciou continua na gestão para a qual foi eleito; a tela diz "eleito".</para>
+/// <para>As contas da prefeitura (Siconfi) entram só nos anos declarados, e a gestão diz quantos foram: somar 2 de 4 anos como se fossem os 4 seria um número menor e errado.</para>
 /// <para>DECISÃO: o dinheiro entra na gestão pelo ano do pagamento. A emenda é do parlamentar, e a tela diz "chegou durante", nunca "conseguiu".</para>
 /// </remarks>
 public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, CacheDeLeitura leitura)
@@ -45,6 +46,10 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
             .ToListAsync(ct);
 
         var porAno = await _mapa.PagoPorAnoNaCidadeAsync(codigoIbge, ct);
+        var contas = await _db.ContasDosMunicipios.AsNoTracking()
+            .Where(c => c.CodigoIbge == codigoIbge)
+            .Select(c => new { c.Ano, Receita = c.ReceitaBruta - c.Deducoes, c.DespesaPaga })
+            .ToListAsync(ct);
         var governadores = eleitos.Where(e => e.Cargo == TipoCargo.GOVERNADOR).ToList();
 
         var gestoes = eleitos
@@ -55,6 +60,7 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
             {
                 var (primeiro, ultimo) = g.Key;
                 var anos = porAno.Where(a => a.Ano >= primeiro && a.Ano <= ultimo).ToList();
+                var declarados = contas.Where(c => c.Ano >= primeiro && c.Ano <= ultimo).ToList();
                 return new GestaoDaCidadeDto(
                     primeiro, ultimo,
                     [.. g.Where(e => e.Cargo == TipoCargo.PREFEITO).Select(e => e.Eleito)],
@@ -65,7 +71,10 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
                         .Select(e => new GovernadorNoPeriodoDto(e.Eleito, Math.Max(e.PrimeiroAno, primeiro), Math.Min(e.UltimoAno, ultimo)))),
                     anos.Sum(a => a.Recebido),
                     anos.Sum(a => a.NaPrefeitura),
-                    ComPagamento: anos.Count > 0);
+                    ComPagamento: anos.Count > 0,
+                    Contas: declarados.Count == 0
+                        ? null
+                        : new ContasDaGestaoDto(declarados.Sum(c => c.Receita), declarados.Sum(c => c.DespesaPaga), declarados.Count, ultimo - primeiro + 1));
             })
             .ToList();
 

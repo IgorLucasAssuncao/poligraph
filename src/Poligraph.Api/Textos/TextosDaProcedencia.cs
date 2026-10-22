@@ -112,6 +112,7 @@ public static class TextosDaProcedencia
         TipoFonteDeCarga.TSE => "Tribunal Superior Eleitoral",
         TipoFonteDeCarga.PORTAL_TRANSPARENCIA => "Controladoria-Geral da União, Portal da Transparência",
         TipoFonteDeCarga.RECEITA => "Receita Federal",
+        TipoFonteDeCarga.TESOURO => "Secretaria do Tesouro Nacional, Siconfi",
         _ => "IBGE"
     };
 
@@ -134,6 +135,8 @@ public static class TextosDaProcedencia
             "Lei Complementar 101/2000, art. 48-A, incluído pela Lei Complementar 131/2009 (Lei da Transparência)",
         TipoFonteDeCarga.IBGE =>
             "Lei 8.443/1992, art. 102: a estimativa anual da população por município",
+        TipoFonteDeCarga.TESOURO =>
+            "Lei Complementar 101/2000, art. 51: a consolidação das contas dos entes pelo Poder Executivo da União",
         _ => "Decreto 8.777/2016 (Política de Dados Abertos do Executivo federal)"
     };
 

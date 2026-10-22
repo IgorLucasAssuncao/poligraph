@@ -1310,3 +1310,31 @@ VALUES ('20261021232232_Mandatos', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+ALTER TABLE cargas DROP CONSTRAINT ck_carga_fonte;
+
+CREATE TABLE contas_dos_municipios (
+    codigo_ibge character(7) NOT NULL,
+    ano smallint NOT NULL,
+    receita_bruta numeric NOT NULL,
+    deducoes numeric NOT NULL,
+    despesa_empenhada numeric NOT NULL,
+    despesa_paga numeric NOT NULL,
+    carga_id bigint,
+    CONSTRAINT pk_contas_dos_municipios PRIMARY KEY (codigo_ibge, ano),
+    CONSTRAINT ck_contas_municipio_ano CHECK (ano BETWEEN 2000 AND 2100),
+    CONSTRAINT ck_contas_municipio_despesa CHECK (despesa_empenhada >= 0 AND despesa_paga >= 0),
+    CONSTRAINT ck_contas_municipio_receita CHECK (receita_bruta >= 0 AND deducoes >= 0),
+    CONSTRAINT fk_contas_dos_municipios_cargas_carga_id FOREIGN KEY (carga_id) REFERENCES cargas (id) ON DELETE RESTRICT,
+    CONSTRAINT fk_contas_dos_municipios_municipios_codigo_ibge FOREIGN KEY (codigo_ibge) REFERENCES municipios (codigo_ibge) ON DELETE CASCADE
+);
+
+ALTER TABLE cargas ADD CONSTRAINT ck_carga_fonte CHECK (fonte IN ('CAMARA','SENADO','TSE','PORTAL_TRANSPARENCIA','RECEITA','IBGE','TESOURO'));
+
+CREATE INDEX ix_contas_dos_municipios_carga_id ON contas_dos_municipios (carga_id);
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261022131551_ContasDosMunicipios', '10.0.11');
+
+COMMIT;
+

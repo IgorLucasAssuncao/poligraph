@@ -20,7 +20,9 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-FONTES = ("CAMARA", "SENADO", "TSE", "PORTAL_TRANSPARENCIA", "RECEITA", "IBGE")
+from .tipos import TipoFonteDeCarga
+
+FONTES = tuple(TipoFonteDeCarga)
 
 LIMITE_PARA_GUARDAR = 600 * 1024 * 1024
 """Acima disto o arquivo não é copiado para `procedencia/`: fica o hash e a URL.

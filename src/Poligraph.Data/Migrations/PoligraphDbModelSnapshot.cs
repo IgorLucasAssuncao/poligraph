@@ -238,7 +238,7 @@ namespace Poligraph.Data.Migrations
                         {
                             t.HasCheckConstraint("ck_carga_bytes", "bytes >= 0");
 
-                            t.HasCheckConstraint("ck_carga_fonte", "fonte IN ('CAMARA','SENADO','TSE','PORTAL_TRANSPARENCIA','RECEITA','IBGE')");
+                            t.HasCheckConstraint("ck_carga_fonte", "fonte IN ('CAMARA','SENADO','TSE','PORTAL_TRANSPARENCIA','RECEITA','IBGE','TESOURO')");
 
                             t.HasCheckConstraint("ck_carga_sha256", "sha256 ~ '^[0-9a-f]{64}$'");
 
@@ -369,6 +369,54 @@ namespace Poligraph.Data.Migrations
                             t.HasCheckConstraint("ck_consentimento_finalidade", "finalidade IN ('SEGUIR_PARLAMENTARES','AVISOS_NO_NAVEGADOR')");
 
                             t.HasCheckConstraint("ck_consentimento_versao", "length(versao) BETWEEN 1 AND 40");
+                        });
+                });
+
+            modelBuilder.Entity("Poligraph.Data.ContasDoMunicipioModel", b =>
+                {
+                    b.Property<string>("CodigoIbge")
+                        .HasMaxLength(7)
+                        .HasColumnType("character(7)")
+                        .HasColumnName("codigo_ibge")
+                        .IsFixedLength();
+
+                    b.Property<short>("Ano")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano");
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
+                    b.Property<decimal>("Deducoes")
+                        .HasColumnType("numeric")
+                        .HasColumnName("deducoes");
+
+                    b.Property<decimal>("DespesaEmpenhada")
+                        .HasColumnType("numeric")
+                        .HasColumnName("despesa_empenhada");
+
+                    b.Property<decimal>("DespesaPaga")
+                        .HasColumnType("numeric")
+                        .HasColumnName("despesa_paga");
+
+                    b.Property<decimal>("ReceitaBruta")
+                        .HasColumnType("numeric")
+                        .HasColumnName("receita_bruta");
+
+                    b.HasKey("CodigoIbge", "Ano")
+                        .HasName("pk_contas_dos_municipios");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_contas_dos_municipios_carga_id");
+
+                    b.ToTable("contas_dos_municipios", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_contas_municipio_ano", "ano BETWEEN 2000 AND 2100");
+
+                            t.HasCheckConstraint("ck_contas_municipio_despesa", "despesa_empenhada >= 0 AND despesa_paga >= 0");
+
+                            t.HasCheckConstraint("ck_contas_municipio_receita", "receita_bruta >= 0 AND deducoes >= 0");
                         });
                 });
 
@@ -2785,6 +2833,22 @@ namespace Poligraph.Data.Migrations
                         .HasConstraintName("fk_consentimentos_usuarios_usuario_id");
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("Poligraph.Data.ContasDoMunicipioModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_contas_dos_municipios_cargas_carga_id");
+
+                    b.HasOne("Poligraph.Data.MunicipioModel", null)
+                        .WithMany()
+                        .HasForeignKey("CodigoIbge")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_contas_dos_municipios_municipios_codigo_ibge");
                 });
 
             modelBuilder.Entity("Poligraph.Data.ContratacoesDoOrgaoModel", b =>
