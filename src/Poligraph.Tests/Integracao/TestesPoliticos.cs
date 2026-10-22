@@ -113,6 +113,28 @@ public class TestesPoliticos(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Equal(500m, linha.Anos[0].Marcos[1].Valor);
     }
 
+    /// <summary>RISCO: o senador eleito em 2018 está na 57ª, e a campanha dele é a de 2018, não a de 2022.</summary>
+    [SkippableFact]
+    public async Task Campanha_DoSenador_EaDaEleicaoDoMandato()
+    {
+        ExigeDocker();
+        var (joao, _) = await SemearAsync();
+        Db.Mandatos.Add(new MandatoModel
+        {
+            PessoaId = joao, Cargo = TipoCargo.SENADOR, AnoEleicao = 2018, SqCandidato = "s", PrimeiroAno = 2019, UltimoAno = 2026,
+            Uf = "SP", Partido = "XYZ", NomeDeUrna = "EXEMPLO",
+        });
+        Db.ReceitasDeCampanha.Add(new ReceitaDeCampanhaModel
+        {
+            PessoaId = joao, AnoEleicao = 2018, FonteReceita = "FUNDO ESPECIAL", Valor = 1000m, DoadorEhPessoaFisica = false,
+        });
+        await Db.SaveChangesAsync();
+
+        var campanha = await LerAsync<CampanhaLida>($"/api/parlamentares/{joao}/financiamento?legislatura=57");
+
+        Assert.Equal((2018, 1000m), (campanha.AnoEleicao, campanha.Total));
+    }
+
     /// <summary>RISCO: o banco recusa prefeito sem município; a lista o mostraria sem saber de onde.</summary>
     [SkippableFact]
     public async Task Prefeito_SemMunicipio_ERejeitadoPeloBanco()
@@ -175,6 +197,8 @@ public class TestesPoliticos(FixturePostgres postgres) : BaseIntegracao(postgres
     private sealed record BuscaLida(List<PoliticoLido> Politicos);
 
     private sealed record EleitoLido(long IdPessoa);
+
+    private sealed record CampanhaLida(int AnoEleicao, decimal Total);
 
     private sealed record MarcoLido(string Tipo, decimal? Valor);
 

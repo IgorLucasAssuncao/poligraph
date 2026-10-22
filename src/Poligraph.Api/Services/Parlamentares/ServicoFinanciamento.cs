@@ -24,7 +24,7 @@ public class ServicoFinanciamento(PoligraphDb db)
     {
         var legislatura = legislaturaPedida?.Numero;
         var anoDaEleicao = anoDaEleicaoPedido?.Valor ?? (legislatura is { } l
-            ? Legislaturas.EleicaoDoMandato(l)
+            ? await EleicaoDoMandatoAsync(idPessoa.Valor, l, ct)
             : await _db.ReceitasDeCampanha.AsNoTracking()
                 .Where(r => r.PessoaId == idPessoa.Valor)
                 .MaxAsync(r => (int?)r.AnoEleicao, ct));
@@ -74,5 +74,20 @@ public class ServicoFinanciamento(PoligraphDb db)
                 new ReceitaPorFonteDto(f.Fonte, f.Total, f.Lancamentos))],
             MaioresDoadores: [.. doadores.Select(d =>
                 new DoadorDoParlamentarDto(TextoSemCpf.Limpar(d.Doador!), d.Total, d.DoadorEhPessoaFisica))]);
+    }
+
+    /// <summary>A eleição que deu o mandato da pessoa nesta legislatura, pelos mandatos do TSE; sem mandato na base, a eleição anterior à legislatura.</summary>
+    /// <remarks>
+    /// <para>RISCO: o senador tem oito anos de mandato, e a legislatura, quatro. Pela regra só da legislatura, a ficha da 57ª de um senador eleito em 2018 procurava a campanha de 2022, que não houve, e dizia "sem registro". MEDIDO em 2026-10-22: Ciro Nogueira.</para>
+    /// </remarks>
+    private async Task<int> EleicaoDoMandatoAsync(long idPessoa, short legislatura, CancellationToken ct)
+    {
+        var inicio = (short)Legislaturas.AnoInicial(legislatura);
+        var doTse = await _db.Mandatos.AsNoTracking()
+            .Where(m => m.PessoaId == idPessoa
+                     && (m.Cargo == TipoCargo.SENADOR || m.Cargo == TipoCargo.DEPUTADO_FEDERAL)
+                     && m.PrimeiroAno <= inicio && m.UltimoAno >= inicio)
+            .MaxAsync(m => (short?)m.AnoEleicao, ct);
+        return doTse ?? Legislaturas.EleicaoDoMandato(legislatura);
     }
 }
