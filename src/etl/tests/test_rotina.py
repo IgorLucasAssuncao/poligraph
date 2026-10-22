@@ -54,18 +54,18 @@ def test_cadastro_da_receita_so_uma_vez_por_trimestre():
 
 
 def test_tse_depois_da_eleicao_geral():
-    """Nov e dez de 2026 trazem campanha, bens e redes da eleição; nov de 2028 não."""
+    """Nov e dez de 2026 trazem campanha, bens e redes da eleição; nov de 2028 também, a dos prefeitos."""
     comandos = _comandos(rotina.etapas("mensal", date(2026, 11, 5)))
 
     assert "fundo --eleicao 2026" in comandos
     assert "patrimonio --anos 2026" in comandos
     assert "redes --anos 2026" in comandos
     assert "mandatos --eleicoes 2026" in comandos
-    assert not any(c.startswith("fundo") for c in _comandos(rotina.etapas("mensal", date(2028, 11, 5))))
+    assert "fundo --eleicao 2028" in _comandos(rotina.etapas("mensal", date(2028, 11, 5)))
 
 
 def test_eleicao_municipal_traz_prefeitos_bens_e_redes():
-    """Pendência 90: nov de 2028 traz os prefeitos e vices eleitos, sem a campanha."""
+    """Pendência 90: nov de 2028 traz os prefeitos e vices eleitos e a campanha deles."""
     comandos = _comandos(rotina.etapas("mensal", date(2028, 11, 5)))
 
     assert "mandatos --eleicoes 2028" in comandos

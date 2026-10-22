@@ -2068,19 +2068,23 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
         todas.extend(linhas)
 
         if linhas:
-            log.info("  %s — %d linhas de parlamentar em exercício", nome, len(linhas))
+            log.info("  %s — %d linhas de quem está na base", nome, len(linhas))
 
     gravadas = persistencia.gravar_receitas(conexao, eleicao, todas, carga)
     resumo = receitas.resumir(todas)
 
     log.info(
-        "Eleição %d: %d receitas gravadas, %d parlamentares",
+        "Eleição %d: %d receitas gravadas, %d pessoas",
         eleicao, gravadas, int(resumo["parlamentares"]),
     )
     log.info(
         "  total R$ %.2f · fundo especial (FEFC) R$ %.2f",
         resumo["total"], resumo["fundo_especial"],
     )
+
+    if eleicao % 4 == 0:
+        log.info("  eleição municipal: a conferência contra os deputados da legislatura não vale aqui")
+        return
 
     legislatura = ingestao.legislatura_da_data(f"{eleicao + 1}-03-01")
     da_legislatura = {

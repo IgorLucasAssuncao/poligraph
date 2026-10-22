@@ -71,7 +71,7 @@ os testes).
 | `siconfi` | Contas anuais das prefeituras (DCA do Tesouro, Siconfi): receita e despesa por município e ano. Cerca de 5.570 consultas por anexo e ano | `--anos 2024`; `--municipios 3509502 ...` |
 | `populacao` | População estimada de cada município (IBGE, SIDRA 6579), para o mapa por habitante | — |
 | `sedes-brasilapi` | Sede dos CNPJs que o cadastro não resolveu, pela BrasilAPI (Pendência 71). Retoma de onde parou | `--limite N` |
-| `fundo` | Receitas de campanha, com o fundo eleitoral (TSE). Parlamentares pelo CPF; governadores, deputados estaduais e vices pela candidatura de `mandatos` (2018 e 2022: o layout antigo não traz o número da candidatura) | `--eleicao 2022`; `--arquivo` com o ZIP baixado à mão |
+| `fundo` | Receitas de campanha, com o fundo eleitoral (TSE). Parlamentares pelo CPF; governadores, deputados estaduais e vices pela candidatura de `mandatos` (2018, 2022 e a municipal de 2024: o layout antigo não traz o número da candidatura) | `--eleicao 2022`; `--arquivo` com o ZIP baixado à mão |
 | `mandatos` | Eleitos do TSE (Pendência 90): deputados estaduais e distritais, governadores, prefeitos e vices, com pessoa nova para quem não é do Congresso. Identidade pelo hash do CPF ou do título de eleitor (o de 2024 não traz CPF) | `--eleicoes 2000 ... 2024` (padrão: 1998 e todas de 2000 a 2024) |
 | `patrimonio` | Bens declarados ao TSE, por tipo: parlamentares pelo CPF, os outros cargos por `mandatos` | `--anos 2018 2022` |
 | `redes` | Redes sociais: Câmara para deputados, TSE para senadores e para quem só tem mandato no TSE (de 2014 em diante) | `--anos 2018 2020 2022 2024` |
@@ -95,7 +95,7 @@ haveria como refazer a carga a partir dele. Fora da pasta, o comando recusa ante
 | mensal de maio | Também `siconfi` do ano anterior: a DCA vence em 30 de abril |
 | mensal de jan, abr, jul e out | Também `municipios`: o cadastro da Receita muda por trimestre e pesa gigabytes |
 | mensal de nov e dez de ano de eleição geral | Também `mandatos`, `fundo`, `patrimonio` e `redes` da eleição: o TSE fecha a prestação de contas depois do segundo turno |
-| mensal de nov e dez de ano de eleição municipal | Também `mandatos`, `patrimonio` e `redes` da eleição |
+| mensal de nov e dez de ano de eleição municipal | Também `mandatos`, `fundo`, `patrimonio` e `redes` da eleição |
 
 A tabela sai de [`poligraph_etl/rotina.py`](poligraph_etl/rotina.py), que só decide as
 etapas; o `__main__` as executa. Em janeiro e fevereiro a rotina inclui o ano anterior. No VPS, as duas são tarefas

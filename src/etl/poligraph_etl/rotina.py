@@ -10,7 +10,7 @@ vez que alguém apertou o botão. Este módulo só DECIDE as etapas; quem as exe
 | `mensal` | as da semanal, `cota`, `emendas`, `sedes-brasilapi` (CNPJs novos das emendas), `convenios`, `governo`, `defesa-civil`, `compras-centralizadas`, `viagens`, `compras`, `sancoes`, `populacao`, `analisar` das duas casas, `conferir` |
 | mensal de jan, abr, jul e out | também `municipios`: o cadastro de CNPJ da Receita, gigabytes, uma vez por trimestre |
 | mensal de nov e dez de ano de eleição geral | também `mandatos`, `fundo`, `patrimonio` e `redes` da eleição: o TSE fecha a prestação de contas depois do segundo turno |
-| mensal de nov e dez de ano de eleição municipal | também `mandatos`, `patrimonio` e `redes` da eleição: os prefeitos e vices eleitos (Pendência 90) |
+| mensal de nov e dez de ano de eleição municipal | também `mandatos`, `fundo`, `patrimonio` e `redes` da eleição: os prefeitos e vices eleitos, e a campanha deles (Pendência 90) |
 | mensal de maio | também `siconfi` do ano anterior: o município declara a DCA ao Tesouro até 30 de abril (Pendência 90, fase 5) |
 | toda rotina, depois do `conferir` | `limpar-cache`: as regras de `limpeza` (2026-10-15) |
 
@@ -100,8 +100,7 @@ def etapas(frequencia: str, hoje: date) -> list[Etapa]:
             lista.append(Etapa("siconfi", {"anos": [hoje.year - 1]}))
         if hoje.year % 2 == 0 and hoje.month in MESES_DEPOIS_DA_ELEICAO:
             lista.append(Etapa("mandatos", {"eleicoes": [hoje.year]}))
-            if eh_ano_de_eleicao_geral(hoje.year):
-                lista.append(Etapa("fundo", {"eleicao": hoje.year}))
+            lista.append(Etapa("fundo", {"eleicao": hoje.year}))
             lista += [
                 Etapa("patrimonio", {"anos": [hoje.year]}),
                 Etapa("redes", {"anos": [hoje.year]}),

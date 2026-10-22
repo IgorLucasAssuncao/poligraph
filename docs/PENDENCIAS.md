@@ -149,8 +149,10 @@ da candidatura e a de 2024 não traz CPF.
 
 FEITO em 2026-10-22: a campanha de governadores, deputados estaduais e distritais e vices de 2018 e 2022
 liga pela candidatura eleita (`SG_UE` e `SQ_CANDIDATO`, os dois no arquivo de receitas): 1.006 e 1.075
-candidaturas. A ficha do político mostra a mesma aba de campanha do parlamentar. Prefeitos ficam fora: a
-prestação de contas municipal ainda não foi baixada nem medida.
+candidaturas. A ficha do político mostra a mesma aba de campanha do parlamentar. Prefeitos: FEITO em 2026-10-22
+para 2024 (76.221 receitas de 5.514 prefeitos e vices, R$ 1,47 bi; arquivo de 1,36 GB) e 2020. LIMITE: o prefeito
+que também votou no Congresso fica sem a campanha municipal de 2024 (a ligação pela candidatura é só de quem
+não é do Congresso, e 2024 não traz CPF). A de 2016 está em outro endereço do TSE, ainda não procurado.
 
 ### Fases
 
