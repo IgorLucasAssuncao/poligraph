@@ -3,7 +3,7 @@ export const TEXTOS_DA_CIDADE = {
   lista: {
     titulo: 'Cidades',
     subtitulo: 'Quem foi eleito para governar cada cidade e quanto de emenda chegou em cada gestão',
-    suaCidade: 'Sua cidade:',
+    suaCidade: 'Abrir de novo a última que você escolheu:',
     oQueTem:
       'A página de cada cidade mostra os prefeitos, vices e governadores eleitos em cada gestão, o que chegou de emenda, as contas da prefeitura declaradas ao Tesouro e quem mandou e quem recebeu o dinheiro.',
   },
