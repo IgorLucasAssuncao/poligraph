@@ -26,7 +26,7 @@ _SESSAO = requests.Session()
 _SESSAO.headers.update(CABECALHOS)
 
 RECUSAS: dict[int, int] = {}
-"""Quantas respostas de recusa (429 e 5xx) o Tesouro deu, por código HTTP: a carga as conta e escreve no log de progresso."""
+"""Quantas recusas o Tesouro deu, por código HTTP (429, 5xx), e 0 para tempo esgotado ou conexão caída: a carga as conta e escreve no log de progresso."""
 TENTATIVAS = 8
 """Com espera de 2, 4, 8... até 256 s. MEDIDO em 2026-10-22: quatro consultas em paralelo levaram 429 em menos de 3 minutos."""
 
@@ -34,12 +34,20 @@ TENTATIVAS = 8
 def consultar(ano: int, anexo: str, codigo_ibge: str) -> list[dict]:
     """As linhas da DCA de um município num ano e anexo. Lista vazia quando ele não declarou.
 
-    O Tesouro limita o ritmo com 429 e às vezes cai com 5xx: tenta de novo com espera crescente
-    antes de desistir, como `portal.baixar_publicado`.
+    O Tesouro limita o ritmo com 429, às vezes cai com 5xx e às vezes não responde em 60 s: tenta de
+    novo com espera crescente antes de desistir, como `portal.baixar_publicado`. MEDIDO em 2026-10-22: o
+    tempo esgotado derrubou a carga de 2021 aos 5.000 municípios; ele conta em `RECUSAS` com o código 0.
     """
     parametros = {"an_exercicio": ano, "no_anexo": anexo, "id_ente": codigo_ibge}
     for tentativa in range(TENTATIVAS):
-        resposta = _SESSAO.get(URL, params=parametros, timeout=60)
+        try:
+            resposta = _SESSAO.get(URL, params=parametros, timeout=60)
+        except (requests.Timeout, requests.ConnectionError):
+            RECUSAS[0] = RECUSAS.get(0, 0) + 1
+            if tentativa == TENTATIVAS - 1:
+                raise
+            time.sleep(2 ** tentativa)
+            continue
         if resposta.status_code == 429 or resposta.status_code >= 500:
             RECUSAS[resposta.status_code] = RECUSAS.get(resposta.status_code, 0) + 1
             time.sleep(2 ** tentativa)

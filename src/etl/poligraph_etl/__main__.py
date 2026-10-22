@@ -2249,6 +2249,11 @@ def _populacao(conexao: psycopg.Connection) -> None:
     log.info("População %s: %d municípios no arquivo, %d com população na base", ano, len(linhas), com_populacao)
 
 
+def _recusas(contagem: dict[int, int]) -> str:
+    """"3 de 429, 1 sem resposta": as recusas do Tesouro para o log."""
+    return ", ".join(f"{n} {'sem resposta' if codigo == 0 else f'de {codigo}'}" for codigo, n in sorted(contagem.items())) or "nenhuma"
+
+
 ESPERA_DEPOIS_DO_BLOQUEIO = 120
 """Segundos de pausa depois que o Tesouro bloqueia um município até o fim das tentativas."""
 
@@ -2307,8 +2312,8 @@ def _siconfi(conexao: psycopg.Connection, anos: list[int], municipios: list[str]
             for i, codigo in enumerate(pendentes, 1):
                 try:
                     _, linha, guardar = do_municipio(ano, codigo)
-                except requests.HTTPError as erro:
-                    log.warning("  %d: %s sem resposta do Tesouro (%s); fica para depois", ano, codigo, erro.response.status_code if erro.response is not None else "?")
+                except requests.RequestException as erro:
+                    log.warning("  %d: %s sem resposta do Tesouro (%s); fica para depois", ano, codigo, type(erro).__name__)
                     falharam.append(codigo)
                     time.sleep(ESPERA_DEPOIS_DO_BLOQUEIO)
                     continue
@@ -2321,7 +2326,7 @@ def _siconfi(conexao: psycopg.Connection, anos: list[int], municipios: list[str]
                 if i % 100 == 0:
                     log.info("  %d: %d de %d municípios consultados (%.0f s); recusas do Tesouro até aqui: %s",
                              ano, len(respostas) + len(sem_declaracao), len(codigos), time.monotonic() - inicio,
-                             ", ".join(f"{n} de {codigo}" for codigo, n in sorted(fonte.RECUSAS.items())) or "nenhuma")
+                             _recusas(fonte.RECUSAS))
             guardar_progresso()
             pendentes = falharam
             if not pendentes:
@@ -2348,7 +2353,7 @@ def _siconfi(conexao: psycopg.Connection, anos: list[int], municipios: list[str]
             else:
                 persistencia.gravar_contas_dos_municipios(conexao, [ano], linhas, carga)
         log.info("  %d: %d municípios com DCA, %d sem declaração, em %.0f s; recusas do Tesouro: %s", ano, len(linhas), len(sem_declaracao),
-                 time.monotonic() - inicio, ", ".join(f"{n} de {codigo}" for codigo, n in sorted(fonte.RECUSAS.items())) or "nenhuma")
+                 time.monotonic() - inicio, _recusas(fonte.RECUSAS))
         parcial.unlink(missing_ok=True)
 
 
