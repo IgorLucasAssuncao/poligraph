@@ -189,7 +189,9 @@ export const TEXTOS_DO_GOVERNO = {
   },
 
   gestao: {
-    titulo: (de: number, ate: number) => `Quem governou de ${de} a ${ate}`,
+    titulo: (de: number, ate: number) => `Eleitos para governar de ${de} a ${ate}`,
+    aviso:
+      'O TSE informa a chapa eleita. Se o presidente sai no meio do mandato, por impeachment, renúncia ou morte, quem assume é o vice, e a troca não aparece aqui.',
     presidente: 'Presidente',
     vice: 'Vice-presidente',
     eleitosEm: (ano: number) => `Eleitos em ${ano}`,

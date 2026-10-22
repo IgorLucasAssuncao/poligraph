@@ -124,7 +124,7 @@ describe('Governo federal', () => {
     expect(screen.getByText('Luiz Inácio Lula da Silva · PT')).toBeDefined();
     expect(screen.getByText('Geraldo Alckmin')).toBeDefined();
     expect(screen.getByText(/Eleitos em 2022/)).toBeDefined();
-    expect(screen.getByRole('heading', { name: 'Quem governou de 2023 a 2026' })).toBeDefined();
+    expect(screen.getByRole('heading', { name: 'Eleitos para governar de 2023 a 2026' })).toBeDefined();
   });
 
   it('mostra a emissão de dívida fora da arrecadação', async () => {
@@ -232,7 +232,7 @@ describe('Governo federal', () => {
     renderizar();
 
     const numeros = await screen.findByRole('region', { name: '2025 em números' });
-    const gestao = screen.getByRole('region', { name: 'Quem governou de 2023 a 2026' });
+    const gestao = screen.getByRole('region', { name: 'Eleitos para governar de 2023 a 2026' });
 
     expect(numeros.compareDocumentPosition(gestao) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

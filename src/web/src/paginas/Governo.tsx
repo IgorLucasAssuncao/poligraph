@@ -489,7 +489,7 @@ function maiuscula(texto: string): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
-/** Quem governou — depois dos números, e sem foto. */
+/** A chapa eleita — depois dos números, e sem foto. "Eleitos", e não "quem governou": a Pendência 56 decidiu que a gestão é a da eleição (2026-10-22). */
 /**
  * A parte sigilosa do cartão do órgão, em porcento.
  *
@@ -667,6 +667,7 @@ function PerfilDaGestaoComponent({ gestao }: { gestao: Gestao }) {
           </>
         )}
       </div>
+      <p className="nota-curta">{G.aviso}</p>
     </section>
   );
 }
