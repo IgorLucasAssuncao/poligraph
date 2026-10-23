@@ -39,6 +39,7 @@ import { CIDADES_POR_VEZ, ESTADOS_A_VISTA, ITENS_POR_PAGINA_DA_CIDADE } from '..
 import { TEXTOS_DAS_EMENDAS as T } from '../textos/emendas';
 import { guardarMinhaCidade, lerMinhaCidade } from '../minhaCidade';
 import { SuaCidadeComponent } from '../componentes/SuaCidade';
+import { CaminhosDasEmendasComponent } from '../componentes/CaminhosDasEmendas';
 
 /**
  * Para onde foi o dinheiro de emenda, no mapa — e quem o mandou para a sua cidade.
@@ -195,6 +196,8 @@ export function EmendasComponent() {
               {painel}
             </>
           )}
+
+          <CaminhosDasEmendasComponent periodo={periodo} textoDoPeriodo={textoDoPeriodo(brasil.periodo)} />
 
           <p className="fonte-dado">
             {T.fontes} <LinkDeFonteComponent href={FONTES.emendas.url}>{FONTES.emendas.nome}</LinkDeFonteComponent>;{' '}

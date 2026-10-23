@@ -9,6 +9,7 @@ public static class EndpointsMapa
     public static IEndpointRouteBuilder MapearMapa(this IEndpointRouteBuilder app)
     {
         app.MapGet("/api/mapa/emendas", ObterBrasilAsync).WithTags("Mapa").Produces<MapaDoBrasilDto>();
+        app.MapGet("/api/mapa/emendas/caminhos", ObterCaminhosAsync).WithTags("Mapa").Produces<CaminhosDasEmendasDto>();
         app.MapGet("/api/mapa/emendas/{uf}", ObterEstadoAsync).WithTags("Mapa").Produces<MapaDoEstadoDto>();
         app.MapGet("/api/municipios", BuscarAsync).WithTags("Mapa").Produces<IReadOnlyList<MunicipioDto>>();
         app.MapGet("/api/municipios/{codigoIbge}/emendas", ObterMunicipioAsync)
@@ -39,6 +40,11 @@ public static class EndpointsMapa
     private static async Task<IResult> ObterBrasilAsync(
         ServicoMapaDeEmendas servico, CancellationToken ct, Periodo<AnoDaEmenda> periodoDasEmendas) =>
         Results.Ok(await servico.ObterBrasilAsync(periodoDasEmendas, ct));
+
+    /// <summary>O pago em emendas pelos caminhos do dinheiro: tipo, área e quem recebeu. O gráfico de fitas da página de emendas.</summary>
+    private static async Task<IResult> ObterCaminhosAsync(
+        ServicoMapaDeEmendas servico, CancellationToken ct, Periodo<AnoDaEmenda> periodoDasEmendas) =>
+        Results.Ok(await servico.ObterCaminhosAsync(periodoDasEmendas, ct));
 
     /// <summary>O dinheiro de emenda por município de uma UF.</summary>
     private static async Task<IResult> ObterEstadoAsync(

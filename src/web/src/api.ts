@@ -1523,6 +1523,20 @@ export async function obterMapaDoBrasil(periodo?: Periodo): Promise<MapaDoBrasil
   return buscar<MapaDoBrasil>(comPeriodo(`${BASE}/mapa/emendas`, periodo));
 }
 
+/** Quem recebeu o pagamento de emenda, em grupos que se leem de longe. `VIA_BANCO` é a transferência especial, repassada por banco. */
+export type GrupoDoRecebedor =
+  | 'MUNICIPIO' | 'ESTADO' | 'SEM_FINS_LUCRATIVOS' | 'EMPRESA' | 'OUTRO' | 'VIA_BANCO' | 'ORGAO_FEDERAL' | 'PESSOA' | 'SEM_INFORMACAO';
+
+/** Um caminho do dinheiro: o tipo e a área como o Portal escreve, o grupo de quem recebeu e o valor pago. */
+export type CaminhoDaEmenda = { tipo: string | null; area: string | null; recebedor: GrupoDoRecebedor; valor: number };
+
+/** O pago em emendas do período pelos caminhos: a soma é o mesmo "pago em emendas" do mapa. */
+export type CaminhosDasEmendas = { periodo: Periodo; total: number; caminhos: CaminhoDaEmenda[] };
+
+export async function obterCaminhosDasEmendas(periodo?: Periodo): Promise<CaminhosDasEmendas> {
+  return buscar<CaminhosDasEmendas>(comPeriodo(`${BASE}/mapa/emendas/caminhos`, periodo));
+}
+
 /** Um total de emendas num ano, comparado com o Portal: fonte, base e o que ficou fora, por motivo (Pendência 81). */
 export type Reconciliacao = {
   /**

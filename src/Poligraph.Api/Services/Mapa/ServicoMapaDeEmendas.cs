@@ -93,6 +93,61 @@ public class ServicoMapaDeEmendas(PoligraphDb db, ServicoAutoresDeEmenda autores
         }) ?? new MapaDoBrasilDto(periodoMostrado, anosDaEmendaCarregados, 0, 0, 0, 0, []);
     }
 
+    /// <summary>
+    /// O pago do período pelos caminhos do dinheiro: tipo da emenda, área e grupo de quem recebeu. Para o gráfico de fitas.
+    /// </summary>
+    /// <remarks>
+    /// <para>Mesmos pagamentos e mesmo recorte do <see cref="ObterBrasilAsync"/>: a soma fecha com o "pago em emendas" do mapa.</para>
+    /// <para>MEDIDO em 2026-10-23: todo pagamento da base liga a uma emenda carregada (R$ 252,2 bi em cinco tipos). Sem emenda, tipo e área vêm nulos, e a tela diz "sem tipo".</para>
+    /// </remarks>
+    public async Task<CaminhosDasEmendasDto> ObterCaminhosAsync(Periodo<AnoDaEmenda> periodoPedido, CancellationToken ct)
+    {
+        var (periodoMostrado, _, prefixos) = await PeriodoAsync(periodoPedido, ct);
+        if (prefixos.Length == 0)
+        {
+            return new CaminhosDasEmendasDto(periodoMostrado, 0, []);
+        }
+
+        return await _leitura.ObterAsync($"mapa:caminhos:{periodoMostrado.PrimeiroAno}-{periodoMostrado.UltimoAno}", async () =>
+        {
+            var emendas = _db.Emendas.AsNoTracking()
+                .GroupBy(e => e.CodigoEmenda)
+                .Select(g => new { Codigo = g.Key, Tipo = g.Max(e => e.Tipo), Funcao = g.Max(e => e.Funcao) });
+
+            var somas = await (
+                    from f in DoPeriodo(prefixos)
+                    join e in emendas on f.CodigoEmenda equals e.Codigo into daEmenda
+                    from e in daEmenda.DefaultIfEmpty()
+                    group f.Valor by new { e.Tipo, e.Funcao, Favorecido = f.Tipo, f.Intermediario, f.NaturezaJuridica } into g
+                    select new { g.Key.Tipo, g.Key.Funcao, g.Key.Favorecido, g.Key.Intermediario, g.Key.NaturezaJuridica, Valor = g.Sum() })
+                .ToListAsync(ct);
+
+            List<CaminhoDaEmendaDto> caminhos = [.. somas
+                .GroupBy(s => (s.Tipo, s.Funcao, Recebedor: GrupoDoRecebedorDe(s.Favorecido, s.Intermediario, s.NaturezaJuridica)))
+                .Select(g => new CaminhoDaEmendaDto(g.Key.Tipo, g.Key.Funcao, g.Key.Recebedor, g.Sum(s => s.Valor)))
+                .Where(c => c.Valor > 0)
+                .OrderByDescending(c => c.Valor)];
+            return new CaminhosDasEmendasDto(periodoMostrado, caminhos.Sum(c => c.Valor), caminhos);
+        });
+    }
+
+    /// <summary>O grupo de quem recebeu: o banco da transferência especial, o órgão federal, a pessoa, ou o grupo da natureza jurídica, como na lista de entidades.</summary>
+    public static GrupoDoRecebedor GrupoDoRecebedorDe(TipoFavorecido favorecido, bool intermediario, string? naturezaJuridica) =>
+        intermediario ? GrupoDoRecebedor.VIA_BANCO : favorecido switch
+        {
+            TipoFavorecido.PESSOA => GrupoDoRecebedor.PESSOA,
+            TipoFavorecido.UNIDADE_GESTORA => GrupoDoRecebedor.ORGAO_FEDERAL,
+            TipoFavorecido.SEM_INFORMACAO => GrupoDoRecebedor.SEM_INFORMACAO,
+            _ => ServicoEntidades.GrupoDe(naturezaJuridica) switch
+            {
+                GrupoDeEntidade.MUNICIPIO => GrupoDoRecebedor.MUNICIPIO,
+                GrupoDeEntidade.ESTADO => GrupoDoRecebedor.ESTADO,
+                GrupoDeEntidade.SEM_FINS_LUCRATIVOS => GrupoDoRecebedor.SEM_FINS_LUCRATIVOS,
+                GrupoDeEntidade.EMPRESA => GrupoDoRecebedor.EMPRESA,
+                _ => GrupoDoRecebedor.OUTRO,
+            },
+        };
+
     /// <summary>O recebido de cada ano da emenda carregado, para o gráfico de colunas da página.</summary>
     private async Task<IReadOnlyList<RecebidoNoAnoDaEmendaDto>> PorAnoAsync(IReadOnlyList<int> anosDaEmendaCarregados, CancellationToken ct)
     {

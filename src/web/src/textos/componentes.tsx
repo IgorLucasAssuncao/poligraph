@@ -115,6 +115,11 @@ export const TEXTOS_DOS_COMPONENTES = {
     deCadaCem: (parte: number) => `${parte} de cada R$ 100`,
   },
 
+  fitas: {
+    fita: (de: string, para: string, valor: string) => `${de} → ${para}: ${valor}`,
+    caixa: (nome: string, valor: string) => `${nome}: ${valor}`,
+  },
+
   compartilhar: {
     rotulo: 'Compartilhar',
     texto: (nome: string) => `${nome} no Registro Aberto`,

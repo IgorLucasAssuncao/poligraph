@@ -1,3 +1,4 @@
+import type { GrupoDoRecebedor } from '../api';
 import type { ReactNode } from 'react';
 import { TermoComponent } from '../componentes/Termo';
 
@@ -5,6 +6,42 @@ const plural = (n: number, um: string, varios: string) => (n === 1 ? um : varios
 
 /** O texto da página Emendas por cidade: filtros, números, mapas e o painel da cidade. */
 export const TEXTOS_DAS_EMENDAS = {
+  caminhos: {
+    titulo: 'Por onde o dinheiro passou',
+    ajuda:
+      'Cada fita é dinheiro pago. Da esquerda para a direita: o tipo da emenda, a área do gasto e quem recebeu. A largura é o valor, e as três colunas somam o mesmo total.',
+    rotulo: (total: string, periodo: string) => `Gráfico de fitas: ${total} pagos em emendas de ${periodo}, por tipo, área e quem recebeu`,
+    colunas: ['Tipo da emenda', 'Área do gasto', 'Quem recebeu'],
+    total: (valor: string, periodo: string) => `${valor} pagos em emendas de ${periodo}, o mesmo total do mapa.`,
+    outrasAreas: (n: number) => `Outras ${n} áreas`,
+    semTipo: 'Sem tipo',
+    semArea: 'Sem área',
+    erro: 'Não foi possível carregar os caminhos do dinheiro agora.',
+    carregando: 'Carregando os caminhos do dinheiro',
+    verTabela: 'Ver os caminhos em tabela',
+    maisNoCsv: (n: number) => `e mais ${n} caminhos menores, todos no arquivo para baixar`,
+    cabecalho: ['Tipo da emenda', 'Área do gasto', 'Quem recebeu', 'Pago (R$)'],
+    arquivo: (periodo: string) => `caminhos-das-emendas-${periodo}.csv`,
+    /** O tipo como o Portal escreve, encurtado para caber na coluna. O que não está aqui aparece como veio. */
+    tipos: {
+      'Emenda Individual - Transferências com Finalidade Definida': 'Individual, com finalidade definida',
+      'Emenda Individual - Transferências Especiais': 'Individual, transferência especial',
+      'Emenda de Bancada': 'De bancada',
+      'Emenda de Comissão': 'De comissão',
+      'Emenda de Relator': 'De relator',
+    } as Record<string, string>,
+    recebedores: {
+      MUNICIPIO: 'Prefeituras e órgãos municipais',
+      ESTADO: 'Governos estaduais',
+      SEM_FINS_LUCRATIVOS: 'Entidades sem fins lucrativos',
+      EMPRESA: 'Empresas',
+      OUTRO: 'Consórcios e outros',
+      VIA_BANCO: 'Repassado por banco',
+      ORGAO_FEDERAL: 'Órgãos federais',
+      PESSOA: 'Pessoas físicas',
+      SEM_INFORMACAO: 'Sem informação',
+    } as Record<GrupoDoRecebedor, string>,
+  },
   titulo: 'Emendas por cidade',
   subtitulo: 'Para onde foi o dinheiro de emenda parlamentar',
   erro: 'Não foi possível carregar o mapa das emendas agora.',

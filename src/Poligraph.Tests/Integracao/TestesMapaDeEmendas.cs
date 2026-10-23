@@ -39,6 +39,25 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
         Assert.Equal(("PR", "41", 1_000m, 2), (parana.Uf, parana.CodigoUf, parana.Recebido, parana.Municipios));
     }
 
+    /// <summary>O gráfico de fitas fecha com o "pago em emendas" do mapa, e o banco, a pessoa e o sem informação têm caminho próprio.</summary>
+    [SkippableFact]
+    public async Task Caminhos_FechamComORecebidoDoMapa()
+    {
+        ExigeDocker();
+        await SemearAsync();
+
+        var mapa = await LerAsync<BrasilLido>("/api/mapa/emendas?de=2025&ate=2025");
+        var caminhos = await LerAsync<CaminhosLidos>("/api/mapa/emendas/caminhos?de=2025&ate=2025");
+
+        Assert.Equal(mapa.Recebido, caminhos.Total);
+        Assert.Equal(caminhos.Total, caminhos.Caminhos.Sum(c => c.Valor));
+        var porRecebedor = caminhos.Caminhos.GroupBy(c => c.Recebedor).ToDictionary(g => g.Key, g => g.Sum(c => c.Valor));
+        Assert.Equal(500m, porRecebedor["VIA_BANCO"]);
+        Assert.Equal(50m, porRecebedor["PESSOA"]);
+        Assert.Equal(10m, porRecebedor["SEM_INFORMACAO"]);
+        Assert.True(porRecebedor["MUNICIPIO"] > 0);
+    }
+
     /// <summary>Sem período, todos os anos: a emenda de 2026 entra na conta.</summary>
     [SkippableFact]
     public async Task Brasil_SemPeriodo_SomaTodosOsAnos()
@@ -247,6 +266,10 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
     }
 
     private record PeriodoLido(int PrimeiroAno, int UltimoAno);
+
+    private record CaminhosLidos(PeriodoLido Periodo, decimal Total, IReadOnlyList<CaminhoLido> Caminhos);
+
+    private record CaminhoLido(string? Tipo, string? Area, string Recebedor, decimal Valor);
 
     private record BrasilLido(
         PeriodoLido Periodo, decimal Recebido, decimal NoMapa, decimal ViaIntermediario, decimal SemSede,
