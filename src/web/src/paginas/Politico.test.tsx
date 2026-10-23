@@ -46,7 +46,7 @@ describe('Ficha do político', () => {
 
     expect(await screen.findByRole('heading', { name: 'João Exemplo' })).toBeInTheDocument();
     expect(screen.getByText('Governador de SP, 2019–2022')).toBeInTheDocument();
-    expect(screen.getByText('Prefeito de São Paulo – SP, 2017–2020')).toBeInTheDocument();
+    expect(screen.getByText('Prefeito, São Paulo – SP, 2017–2020')).toBeInTheDocument();
     expect(screen.getByText(/só a Câmara e o Senado publicam o voto/)).toBeInTheDocument();
   });
 

@@ -57,7 +57,7 @@ export const TEXTOS_DOS_COMPONENTES = {
   },
 
   vistas: {
-    rotulo: 'Como ver os parlamentares',
+    rotulo: 'Como ver os políticos',
     lista: 'Lista',
     listaAjuda: 'Procurar por nome, partido ou estado',
     grafo: 'Grafo',

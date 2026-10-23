@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { buscarMunicipios, listarPoliticos, type Cargo, type Nivel, type PoliticoNaLista } from '../api';
 import { AtualizandoComponent } from '../componentes/Atualizando';
+import { AvatarComponent } from '../componentes/Avatar';
 import { BotaoMostrarMaisComponent } from '../componentes/BotaoMostrarMais';
 import { EsqueletoDeListaComponent } from '../componentes/Esqueleto';
 import { useAdiado } from '../componentes/useAdiado';
@@ -164,14 +165,17 @@ export function PoliticosComponent() {
 /** Uma linha da lista: o nome leva à página da pessoa, a do parlamentar quando ela votou no Congresso. */
 function ItemDePoliticoComponent({ politico }: { politico: PoliticoNaLista }) {
   return (
-    <li>
-      <Link className="autor-nome" to={destinoDoPolitico(politico)}>
-        {nomeProprio(politico.nome)}
-      </Link>
-      <span className="autor-detalhe">
-        {[descricaoDoMandato(politico.mandato, nomeProprio), politico.mandato.partido, T.outrosMandatos(politico.mandatos)]
-          .filter(Boolean)
-          .join(' · ')}
+    <li className="autor-com-foto">
+      <AvatarComponent nome={politico.nome} fotoUrl={politico.urlFoto} tamanho="pequeno" />
+      <span className="autor-texto">
+        <Link className="autor-nome" to={destinoDoPolitico(politico)}>
+          {nomeProprio(politico.nome)}
+        </Link>
+        <span className="autor-detalhe">
+          {[descricaoDoMandato(politico.mandato, nomeProprio), politico.mandato.partido, T.outrosMandatos(politico.mandatos)]
+            .filter(Boolean)
+            .join(' · ')}
+        </span>
       </span>
     </li>
   );

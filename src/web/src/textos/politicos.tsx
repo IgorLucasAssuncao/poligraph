@@ -22,7 +22,10 @@ export const CARGOS_DO_NIVEL: Record<Nivel, Cargo[]> = {
 };
 
 /**
- * "Prefeito de Campinas – SP, 2025–2028", "Governador de SP", "Deputado estadual por SP": o ente que o cargo tem.
+ * "Prefeito, Campinas – SP, 2025–2028", "Governador de SP", "Deputado estadual por SP": o ente que o cargo tem.
+ *
+ * ATENÇÃO: a cidade vem depois da vírgula, sem preposição: "de" errava em "Prefeito de Rio de Janeiro", e acertar
+ * "do Rio", "do Recife" e "de São Paulo" pede uma tabela que a base não tem.
  *
  * O mandato que ainda não começou diz quando começa: o eleito de 2026 toma posse em 2027, e "2027–2030" sozinho
  * parece mandato em curso.
@@ -30,7 +33,7 @@ export const CARGOS_DO_NIVEL: Record<Nivel, Cargo[]> = {
 export function descricaoDoMandato(mandato: MandatoNoTse, nomeDoMunicipio: (nome: string) => string): string {
   const cargo = NOMES_DOS_CARGOS[mandato.cargo];
   const ente = mandato.municipio
-    ? ` de ${nomeDoMunicipio(mandato.municipio.nome)} – ${mandato.municipio.uf}`
+    ? `, ${nomeDoMunicipio(mandato.municipio.nome)} – ${mandato.municipio.uf}`
     : !mandato.uf
       ? ''
       : mandato.cargo === 'GOVERNADOR' || mandato.cargo === 'VICE_GOVERNADOR' || mandato.nivel === 'MUNICIPAL'
@@ -54,6 +57,8 @@ export const TEXTOS_DOS_POLITICOS = {
     mandatos: 'Mandatos',
     quantosMandatos: (n: number) => (n === 1 ? '1 mandato eleito de 1998 a 2026' : `${n} mandatos eleitos de 1998 a 2026`),
     eleitoEm: (ano: number) => `eleito em ${ano}`,
+    semVotoAindaNoCongresso: (posse: number) =>
+      `Eleito para o Congresso, com posse em ${posse}. Os votos e a afinidade aparecem aqui quando a Câmara ou o Senado publicarem os primeiros votos do mandato.`,
     semVoto:
       'Esta ficha não tem votos nem afinidade: só a Câmara e o Senado publicam o voto de cada parlamentar. Assembleias e câmaras municipais não publicam.',
     fonte: 'Mandatos: candidaturas eleitas publicadas pelo TSE.',

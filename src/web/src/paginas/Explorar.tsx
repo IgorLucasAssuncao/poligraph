@@ -228,7 +228,8 @@ export function ExplorarComponent() {
     const votacoes = T.votosComPosicao(p.nVotacoes, NA_CASA[p.casa]);
     const corrente = pagina?.legislaturaCorrente;
     if (typeof escolha === 'number') return votacoes;
-    if (!p.legislatura || !corrente || p.legislatura === corrente) return votacoes;
+    if (!p.legislatura || !corrente) return votacoes;
+    if (p.legislatura === corrente) return p.emExercicio === false ? T.foraDoExercicio(votacoes) : votacoes;
 
     const quem = p.casa === 'SENADO' ? T.exSenador : T.exDeputado;
     return T.exParlamentar(quem, periodoDaLegislatura(p.legislatura), votacoes);

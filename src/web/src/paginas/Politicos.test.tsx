@@ -44,7 +44,7 @@ describe('Lista de políticos de todos os cargos', () => {
   it('diz o cargo e o ente, e leva o parlamentar à página dele', async () => {
     renderizar();
 
-    expect(await screen.findByText(/Prefeito de Campinas – SP, 2025–2028/)).toBeInTheDocument();
+    expect(await screen.findByText(/Prefeito, Campinas – SP, 2025–2028/)).toBeInTheDocument();
     expect(screen.getByText(/Senador por PR, 2023–2030/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Maria Exemplo' })).toHaveAttribute('href', '/politico/7');
     expect(screen.getByRole('link', { name: 'Fulano de Tal' })).toHaveAttribute('href', '/parlamentar/42');
@@ -52,7 +52,7 @@ describe('Lista de políticos de todos os cargos', () => {
 
   it('o nível limita os cargos oferecidos e vai para a consulta', async () => {
     renderizar();
-    await screen.findByText(/Prefeito de Campinas/);
+    await screen.findByText(/Prefeito, Campinas/);
 
     fireEvent.click(screen.getByRole('button', { name: 'Estadual' }));
 
@@ -64,7 +64,7 @@ describe('Lista de políticos de todos os cargos', () => {
 
   it('a cidade só se escolhe com o estado', async () => {
     renderizar();
-    await screen.findByText(/Prefeito de Campinas/);
+    await screen.findByText(/Prefeito, Campinas/);
 
     expect(screen.getByText('Escolha o estado para filtrar por cidade')).toBeInTheDocument();
     expect(screen.queryByLabelText('Cidade')).not.toBeInTheDocument();

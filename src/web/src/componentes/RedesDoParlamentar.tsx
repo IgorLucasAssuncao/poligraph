@@ -18,6 +18,7 @@ export function RedesDoParlamentarComponent({ redes }: { redes: RedeSocial[] }) 
   if (seguras.length === 0) return null;
 
   const daCamara = seguras.every((r) => r.fonte === 'CAMARA');
+  const repetidas = new Set(seguras.map((r) => r.rede).filter((rede, i, todas) => rede !== 'OUTRA' && todas.indexOf(rede) !== i));
 
   return (
     <span className="perfil-redes">
@@ -26,7 +27,7 @@ export function RedesDoParlamentarComponent({ redes }: { redes: RedeSocial[] }) 
         <span key={r.url}>
           {i > 0 && ' · '}
           <a href={r.url} target="_blank" rel="noopener noreferrer nofollow">
-            {rotulo(r)}
+            {rotulo(r, repetidas.has(r.rede))}
             <span className="sr-apenas">{T.novaAba}</span>
           </a>
         </span>
@@ -45,8 +46,15 @@ const NOME: Record<TipoRedeSocial, string> = {
   OUTRA: 'Site',
 };
 
-/** "Site" sozinho não diz qual: a rede sem nome conhecido mostra o domínio. */
-function rotulo(r: RedeSocial): string {
-  if (r.rede !== 'OUTRA') return NOME[r.rede];
-  return r.url.replace(/^https?:\/\//i, '').replace(/^www\./, '').split('/')[0];
+/**
+ * "Site" sozinho não diz qual: a rede sem nome conhecido mostra o domínio.
+ *
+ * Duas contas da mesma rede levam o perfil entre parênteses: "Facebook (CarmenZanottoLages) · Facebook (CarmenZanottoSC)".
+ * Antes eram "Facebook · Facebook", e parecia erro.
+ */
+function rotulo(r: RedeSocial, repetida: boolean): string {
+  if (r.rede === 'OUTRA') return r.url.replace(/^https?:\/\//i, '').replace(/^www\./, '').split('/')[0];
+  if (!repetida) return NOME[r.rede];
+  const perfil = r.url.replace(/^https?:\/\/[^/]+\/?/i, '').split(/[?#]/)[0].replace(/\/+$/, '');
+  return perfil ? `${NOME[r.rede]} (${perfil})` : NOME[r.rede];
 }

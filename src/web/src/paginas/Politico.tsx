@@ -53,6 +53,7 @@ export function PoliticoComponent() {
   if (ficha.parlamentar) return <Navigate to={`/parlamentar/${idPessoa}`} replace />;
 
   const [atual] = ficha.mandatos;
+  const noCongresso = ficha.mandatos.find((m) => m.cargo === 'DEPUTADO_FEDERAL' || m.cargo === 'SENADOR');
   const nome = nomeProprio(ficha.nome);
   const nomeCivil = ficha.nomeCivil ? nomeProprio(ficha.nomeCivil) : null;
 
@@ -83,7 +84,7 @@ export function PoliticoComponent() {
         </div>
 
         <p className="ajuda" role="note">
-          {T.semVoto}
+          {noCongresso ? T.semVotoAindaNoCongresso(noCongresso.primeiroAno) : T.semVoto}
         </p>
       </header>
 

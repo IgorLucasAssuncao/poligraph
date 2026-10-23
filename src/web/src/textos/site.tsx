@@ -85,8 +85,8 @@ export const TEXTOS_DO_SITE = {
 
   faixa: {
     dadosPublicos: 'Dados públicos',
-    longa: 'Registro nominal de votação da Câmara dos Deputados e do Senado Federal',
-    curta: 'Câmara e Senado',
+    longa: 'Votos da Câmara e do Senado, eleitos do TSE e dinheiro público',
+    curta: 'Votos, eleitos e dinheiro',
     perguntasDa: (legislatura: number) => `Perguntas da ${legislatura}ª legislatura`,
     todos: 'Todos os períodos',
     legislatura: (numero: number, periodo: string) => `${numero}ª legislatura · ${periodo}`,

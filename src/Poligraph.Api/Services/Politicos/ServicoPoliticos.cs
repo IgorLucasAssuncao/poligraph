@@ -24,13 +24,15 @@ public class ServicoPoliticos(PoligraphDb db, CacheDeLeitura leitura, ServicoPar
     private readonly CacheDeLeitura _leitura = leitura;
     private readonly ServicoParlamentares _parlamentares = parlamentares;
 
-    /// <summary>A lista filtrada, do mandato mostrado mais recente ao mais antigo; no mesmo ano, do nível federal ao municipal.</summary>
+    /// <summary>A lista filtrada, do mandato mostrado mais recente ao mais antigo; no mesmo ano, do nível federal ao municipal, e o titular antes do vice.</summary>
+    /// <remarks>ATENÇÃO: sem o cargo no desempate, a busca "paes" trazia o vice-prefeito Arthur Paes Landim antes do prefeito Eduardo Paes, pela ordem alfabética.</remarks>
     public async Task<PaginaDto<PoliticoNaListaDto>> ListarAsync(FiltroDePoliticos filtro, int pagina, CancellationToken ct)
     {
         pagina = Math.Max(pagina, 1);
         var filtrados = Filtrar(await IndiceAsync(ct), filtro)
             .OrderByDescending(p => p.Mandato.UltimoAno)
             .ThenBy(p => p.Mandato.Nivel)
+            .ThenBy(p => p.Mandato.Cargo)
             .ToList();
 
         return new PaginaDto<PoliticoNaListaDto>(
