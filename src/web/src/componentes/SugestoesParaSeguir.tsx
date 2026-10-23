@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { nomeDePessoa } from '../formato';
 import { Link } from 'react-router-dom';
 import { listarParlamentares, listarSeguidos, type Parlamentar } from '../api';
 import { AvatarComponent } from './Avatar';
@@ -61,9 +62,9 @@ export function SugestoesParaSeguirComponent() {
         {sugestoes.map((p) => (
           <li key={p.idPessoa}>
             <Link to={`/parlamentar/${p.idPessoa}`} className="sugestao-link" title={T.sugestoes.dica(p.nome, p.partido, p.uf)}>
-              <AvatarComponent nome={p.nome} fotoUrl={p.urlFoto} tamanho="medio" />
+              <AvatarComponent nome={nomeDePessoa(p.nome)} fotoUrl={p.urlFoto} tamanho="medio" />
               <span className="sugestao-texto">
-                <strong>{p.nome}</strong>
+                <strong>{nomeDePessoa(p.nome)}</strong>
                 <small>
                   {p.partido}
                   {p.uf && ` · ${p.uf}`}

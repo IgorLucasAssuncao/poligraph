@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { Casa, Novidades } from '../api';
-import { dataCurta, mesCurto, noMeioDaFrase, nomeDaCategoriaDaCota, reais } from '../formato';
+import { dataCurta, mesCurto, noMeioDaFrase, nomeDaCategoriaDaCota, nomeDePessoa, reais } from '../formato';
 import { LinkDeFonteComponent } from './LinkDeFonte';
 import { TEXTOS_DO_QUE_MUDOU as T } from '../textos/oQueMudou';
 
@@ -30,7 +30,7 @@ const ORGAO: Record<Casa, string> = T.orgao;
  */
 export function montarItens(n: Novidades, comNome = true): Item[] {
   const ficha = (id: number, nome: string, aba = '') =>
-    comNome ? <Link to={`/parlamentar/${id}${aba}`}>{nome}</Link> : null;
+    comNome ? <Link to={`/parlamentar/${id}${aba}`}>{nomeDePessoa(nome)}</Link> : null;
   const itens: Item[] = [];
 
   for (const v of n.votosNaSemana) {

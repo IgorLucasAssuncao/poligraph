@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { nomeDePessoa } from '../formato';
 import { AvatarComponent } from './Avatar';
 import { BotaoSeguirComponent } from './BotaoSeguir';
 
@@ -31,17 +32,18 @@ export function LinhaParlamentarComponent({
   legislatura?: number;
 }) {
   const ficha = `/parlamentar/${idPessoa}${legislatura ? `?legislatura=${legislatura}` : ''}`;
+  const exibido = nomeDePessoa(nome);
 
   return (
     <article className="linha">
-      <Link to={ficha} aria-label={nome}>
-        <AvatarComponent nome={nome} fotoUrl={fotoUrl} tamanho="medio" />
+      <Link to={ficha} aria-label={exibido}>
+        <AvatarComponent nome={exibido} fotoUrl={fotoUrl} tamanho="medio" />
       </Link>
 
       <div className="linha-corpo">
         <div className="linha-topo">
           <Link to={ficha} className="linha-nome">
-            {nome}
+            {exibido}
           </Link>
           <span className="linha-meta">
             {partido}

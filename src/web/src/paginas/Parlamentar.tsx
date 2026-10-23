@@ -14,7 +14,7 @@ import {
 } from '../api';
 import { AvatarComponent } from '../componentes/Avatar';
 import { TourDaTelaComponent } from '../componentes/TourDaTela';
-import { periodoDaLegislatura } from '../formato';
+import { nomeDePessoa, periodoDaLegislatura } from '../formato';
 import { BotaoMostrarMaisComponent } from '../componentes/BotaoMostrarMais';
 import { BotaoSeguirComponent } from '../componentes/BotaoSeguir';
 import { BotaoCompartilharComponent } from '../componentes/BotaoCompartilhar';
@@ -160,22 +160,22 @@ export function ParlamentarComponent() {
 
       <header className="perfil-cabecalho">
         <div className="perfil-avatar-linha">
-          <AvatarComponent nome={ficha.nome} fotoUrl={ficha.urlFoto} tamanho="grande" />
+          <AvatarComponent nome={nomeDePessoa(ficha.nome)} fotoUrl={ficha.urlFoto} tamanho="grande" />
 
           <div className="perfil-identidade">
             <h1>
-              <ComProcedenciaComponent consulta={{ contexto: 'parlamentar', idPessoa }} rotulo={ficha.nome}>
-                {ficha.nome}
+              <ComProcedenciaComponent consulta={{ contexto: 'parlamentar', idPessoa }} rotulo={nomeDePessoa(ficha.nome)}>
+                {nomeDePessoa(ficha.nome)}
               </ComProcedenciaComponent>
             </h1>
-            {ficha.nomeCivil !== ficha.nome && <p className="nome-civil">{ficha.nomeCivil}</p>}
+            {ficha.nomeCivil && nomeDePessoa(ficha.nomeCivil) !== nomeDePessoa(ficha.nome) && <p className="nome-civil">{nomeDePessoa(ficha.nomeCivil)}</p>}
           </div>
 
           <div className="perfil-acoes">
             {(seguindo || emExercicio) && (
               <BotaoSeguirComponent idPessoa={idPessoa} seguindo={seguindo} aoAlternar={(_, agora) => setSeguindo(agora)} />
             )}
-            <BotaoCompartilharComponent caminho={`/p/${idPessoa}`} nome={ficha.nome} />
+            <BotaoCompartilharComponent caminho={`/p/${idPessoa}`} nome={nomeDePessoa(ficha.nome)} />
           </div>
         </div>
 

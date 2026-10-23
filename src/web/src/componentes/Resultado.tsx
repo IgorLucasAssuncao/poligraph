@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { nomeDePessoa } from '../formato';
 import { Link } from 'react-router-dom';
 import { useCarga } from './useCarga';
 import {
@@ -320,9 +321,9 @@ function DestaqueComponent({
       <p className="rotulo-destaque">{T.destaque.rotulo}</p>
 
       <Link to={`/parlamentar/${parlamentar.idPessoa}`} className="destaque-link">
-        <AvatarComponent nome={parlamentar.nome} tamanho="grande" />
+        <AvatarComponent nome={nomeDePessoa(parlamentar.nome)} tamanho="grande" />
 
-        <h2>{parlamentar.nome}</h2>
+        <h2>{nomeDePessoa(parlamentar.nome)}</h2>
         <p className="perfil-filiacao">
           {parlamentar.partido}
           {parlamentar.uf && ` · ${parlamentar.uf}`}

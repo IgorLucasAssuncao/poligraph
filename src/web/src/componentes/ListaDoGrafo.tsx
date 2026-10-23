@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { nomeDePessoa } from '../formato';
 import type { ArestaDoGrafo, NoDoGrafo } from '../api';
 import { VIZINHOS_NA_LISTA_DO_GRAFO } from '../constantes';
 import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
@@ -96,10 +97,10 @@ export function ListaDoGrafoComponent({
           <li key={no.idPessoa}>
             {aoSelecionar ? (
               <button type="button" className="lista-grafo-nome" onClick={() => aoSelecionar(no)}>
-                {no.nome}
+                {nomeDePessoa(no.nome)}
               </button>
             ) : (
-              <span className="lista-grafo-nome">{no.nome}</span>
+              <span className="lista-grafo-nome">{nomeDePessoa(no.nome)}</span>
             )}
 
             <span className="lista-grafo-filiacao">

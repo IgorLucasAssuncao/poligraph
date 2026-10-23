@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { nomeDePessoa } from '../formato';
 import type { KeyboardEvent } from 'react';
 import type { ArestaDoGrafo, Grafo, NoDoGrafo } from '../api';
 import { ListaDoGrafoComponent } from './ListaDoGrafo';
@@ -728,7 +729,7 @@ export function TelaDoGrafoComponent({
         {(fixado || isolado) && (
           <div className="grafo-foco">
             <p>
-              <strong>{(isolado ?? fixado)!.nome}</strong>
+              <strong>{nomeDePessoa((isolado ?? fixado)!.nome)}</strong>
               <span>
                 {(isolado ?? fixado)!.partido}
                 {vizinhos && T.tela.ligacoes(vizinhos.size - 1)}
@@ -929,7 +930,7 @@ function BuscaComponent({
                   setAberta(false);
                 }}
               >
-                <strong>{no.nome}</strong>
+                <strong>{nomeDePessoa(no.nome)}</strong>
                 <span>
                   {no.partido}
                   {no.uf && ` · ${no.uf}`}
@@ -1025,8 +1026,8 @@ function DicaComponent({
 
     return (
       <div className="grafo-dica" style={estilo}>
-        <strong>{a?.nome}</strong>
-        <strong>{b?.nome}</strong>
+        <strong>{a && nomeDePessoa(a.nome)}</strong>
+        <strong>{b && nomeDePessoa(b.nome)}</strong>
 
         <span className="grafo-dica-meta">
           {T.dica.aresta(Math.round(alvo.aresta.peso * 100), alvo.aresta.votacoesComuns)}
@@ -1046,7 +1047,7 @@ function DicaComponent({
   return (
     <div className="grafo-dica" style={estilo}>
       {no.urlFoto && <img src={no.urlFoto} alt="" className="grafo-dica-foto" loading="lazy" />}
-      <strong>{no.nome}</strong>
+      <strong>{nomeDePessoa(no.nome)}</strong>
       <span>
         {no.partido}
         {no.uf && ` · ${no.uf}`}

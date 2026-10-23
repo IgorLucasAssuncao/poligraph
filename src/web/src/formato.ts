@@ -82,6 +82,16 @@ export function nomeProprio(texto: string): string {
 }
 
 /**
+ * O nome da pessoa para a tela: o que vem todo em caixa alta vira nome próprio; o resto fica como a fonte publicou.
+ *
+ * ATENÇÃO: `nomeProprio` direto estragaria "ACM Neto" e "JHC". MEDIDO em 2026-10-23: 6.956 das 7.889 pessoas da Câmara
+ * (as de legislaturas antigas) e todas as do TSE vêm em caixa alta, e a ficha mostrava "EDUARDO PAES".
+ */
+export function nomeDePessoa(texto: string): string {
+  return texto === texto.toLocaleUpperCase('pt-BR') ? nomeProprio(texto) : texto;
+}
+
+/**
  * Reparte 100 entre os valores, em inteiros que somam exatamente 100.
  *
  * DECISÃO: Pelo maior resto: arredondar cada parte sozinha dá 99 ou 101, e a tela diria "de

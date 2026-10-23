@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { nomeDePessoa } from '../formato';
 import { Link } from 'react-router-dom';
 import { listarSeguidos } from '../api';
 import type { Novidades, Parlamentar } from '../api';
@@ -98,10 +99,10 @@ export function ModalDeNovidadesComponent({
                 onClick={() => escolherPessoa(p.idPessoa)}
               >
                 <span className={p.temNova ? 'feed-pessoa-foto com-nova' : 'feed-pessoa-foto'}>
-                  <AvatarComponent nome={p.nome} fotoUrl={p.urlFoto} />
+                  <AvatarComponent nome={nomeDePessoa(p.nome)} fotoUrl={p.urlFoto} />
                 </span>
                 <span className="feed-pessoa-nome">
-                  {p.nome}
+                  {nomeDePessoa(p.nome)}
                   {p.temNova && <span className="so-leitor">, {T.modal.temNova}</span>}
                 </span>
               </button>
@@ -130,10 +131,10 @@ export function ModalDeNovidadesComponent({
                 return (
                   <li key={item.chave} className={nova(item) ? 'feed-cartao com-nova' : 'feed-cartao'}>
                     <header className="feed-cartao-topo">
-                      <AvatarComponent nome={item.nome} fotoUrl={quem?.urlFoto} tamanho="pequeno" />
+                      <AvatarComponent nome={nomeDePessoa(item.nome)} fotoUrl={quem?.urlFoto} tamanho="pequeno" />
                       <div className="feed-cartao-quem">
                         <Link to={`/parlamentar/${item.idPessoa}`} onClick={aoFechar}>
-                          {item.nome}
+                          {nomeDePessoa(item.nome)}
                         </Link>
                         {quem && quem.partido && (
                           <span>

@@ -28,7 +28,7 @@ public class ServicoCompartilhamento(
         {
             var casa = ficha.Casa == Poligraph.Data.TipoCasa.SENADO ? TextosDoCompartilhamento.Senador : TextosDoCompartilhamento.Deputado;
             return Pagina(
-                origem, $"/parlamentar/{ficha.IdPessoa}", ficha.Nome,
+                origem, $"/parlamentar/{ficha.IdPessoa}", Capitalizado(ficha.Nome),
                 TextosDoCompartilhamento.DescricaoDoParlamentar(casa, ficha.Partido, ficha.Uf), ficha.UrlFoto);
         }
 
@@ -40,7 +40,7 @@ public class ServicoCompartilhamento(
 
         var mandato = politico.Mandatos[0];
         return Pagina(
-            origem, $"/politico/{politico.IdPessoa}", politico.Nome,
+            origem, $"/politico/{politico.IdPessoa}", Capitalizado(politico.Nome),
             TextosDoCompartilhamento.DescricaoDoPolitico(mandato.Cargo, mandato.Partido, mandato.Uf, mandato.Municipio?.Nome),
             politico.UrlFoto);
     }
@@ -73,7 +73,7 @@ public class ServicoCompartilhamento(
         }
 
         return Pagina(
-            origem, $"/entidades/{entidade.Cnpj}", entidade.Nome,
+            origem, $"/entidades/{entidade.Cnpj}", Capitalizado(entidade.Nome),
             TextosDoCompartilhamento.DescricaoDaEntidade(
                 ValorCompacto(entidade.Recebido), entidade.Emendas,
                 entidade.Sede is null ? null : $"{Capitalizado(entidade.Sede.Nome)} – {entidade.Sede.Uf}"),
