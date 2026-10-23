@@ -3,7 +3,6 @@ import { MemoryRouter } from 'react-router-dom';
 import { CHAVE_MINHA_CIDADE } from '../constantes';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Grafo, Panorama, Parlamentar } from '../api';
-import { periodoDaLegislatura } from '../formato';
 import { ContextoDaSessao, type Sessao } from '../sessao';
 import { TEXTOS_DO_INICIO as T } from '../textos/inicio';
 import { InicioComponent } from './Inicio';
@@ -69,28 +68,29 @@ describe('a página inicial', () => {
     vi.mocked(api.obterGrafo).mockReset();
   });
 
-  it('mostra a base de cada casa e o grafo da Câmara', async () => {
-    vi.mocked(api.obterPanorama).mockResolvedValue(PANORAMA);
+  it('mostra a base numa linha, com a conta que a produziu, e o grafo da Câmara', async () => {
+    vi.mocked(api.obterPanorama).mockResolvedValue({ ...PANORAMA, dinheiro: { primeiroAno: 2023, ultimoAno: 2026, cota: 1_000_000, emendasPagas: 2_000_000_000 } });
     vi.mocked(api.obterGrafo).mockResolvedValue({ nos: [{ idPessoa: 1 }], legislatura: 57 } as unknown as Grafo);
 
     abrir();
 
     expect(screen.getByRole('heading', { level: 1, name: T.titulo })).toBeDefined();
-    expect(await screen.findByText('513')).toBeDefined();
-    expect(screen.getByText('1.123')).toBeDefined();
+    expect(await screen.findByText(/470\.727 votos com posição na Câmara e no Senado/)).toBeDefined();
+    expect(screen.getByRole('link', { name: T.comoMedimos })).toHaveAttribute('href', '/metodologia');
     expect(await screen.findByText('grafo com 1 parlamentares')).toBeDefined();
   });
 
-  it('abre as outras portas do site, e a cidade guardada abre direto', async () => {
+  it('abre com as duas entradas e a busca, e a cidade guardada abre direto', async () => {
     vi.mocked(api.obterPanorama).mockResolvedValue(PANORAMA);
     vi.mocked(api.obterGrafo).mockResolvedValue({ nos: [], legislatura: 57 } as unknown as Grafo);
     localStorage.setItem(CHAVE_MINHA_CIDADE, JSON.stringify({ codigoIbge: '3304557', nome: 'Rio de Janeiro', uf: 'RJ' }));
 
     abrir();
 
+    expect(screen.getByRole('link', { name: T.entradas.voto.comecar })).toHaveAttribute('href', '/resultado');
     expect(screen.getByRole('link', { name: /Abrir Rio de Janeiro – RJ/ })).toHaveAttribute('href', '/cidades/3304557');
-    expect(screen.getByRole('link', { name: /Procurar um político/ })).toHaveAttribute('href', '/parlamentares?vista=cargos');
-    expect(screen.getByRole('link', { name: /Ver as emendas/ })).toHaveAttribute('href', '/emendas');
+    expect(screen.getByLabelText('Sua cidade')).toBeDefined();
+    expect(screen.getByText(T.entradas.busca)).toBeDefined();
     localStorage.removeItem(CHAVE_MINHA_CIDADE);
   });
 
@@ -103,17 +103,6 @@ describe('a página inicial', () => {
     expect(await screen.findByText(T.base.vazio)).toBeDefined();
     await waitFor(() => expect(api.obterGrafo).toHaveBeenCalled());
     await waitFor(() => expect(container.querySelector('.grafo-reserva')).toBeNull());
-  });
-
-  it('legislatura sem grafo diz qual período ficou sem desenho', async () => {
-    mockLegislaturaDaUrl.valor = 55;
-    vi.mocked(api.obterPanorama).mockRejectedValue(new Error('fora'));
-    vi.mocked(api.obterGrafo).mockRejectedValue(new Error('fora'));
-
-    abrir();
-
-    expect(await screen.findByText(T.grafo.semGrafo(periodoDaLegislatura(55)))).toBeDefined();
-    expect(api.obterPanorama).toHaveBeenCalledWith(55);
   });
 
   it('com conta, lista quem a pessoa segue e tira quem ela deixa de seguir', async () => {

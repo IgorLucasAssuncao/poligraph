@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { ComoODecidiuComponent } from './Inicio';
+import { ComoODecidiuComponent } from '../componentes/BaseDoCongresso';
 
 /** O plenário decide mais por votação simbólica do que por nominal, e o Início diz isso (2026-10-03). */
 describe('como o plenário decidiu', () => {

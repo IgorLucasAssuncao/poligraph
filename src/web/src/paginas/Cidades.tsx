@@ -4,7 +4,7 @@ import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { nomeProprio } from '../formato';
 import { guardarMinhaCidade, lerMinhaCidade } from '../minhaCidade';
 import { TEXTOS_DA_CIDADE } from '../textos/cidade';
-import { SuaCidadeComponent } from './Emendas';
+import { SuaCidadeComponent } from '../componentes/SuaCidade';
 
 const T = TEXTOS_DA_CIDADE.lista;
 

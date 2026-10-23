@@ -4,7 +4,21 @@ import { TermoComponent } from '../componentes/Termo';
 
 /** O texto da página inicial: a abertura, a base por casa, o grafo e quem a pessoa segue. */
 export const TEXTOS_DO_INICIO = {
-  titulo: 'Quem vota como você',
+  titulo: 'Quem vota como você e o que chega à sua cidade',
+  subtitulo: 'Os votos da Câmara e do Senado, os eleitos do TSE e o dinheiro público, cada número com a fonte.',
+  entradas: {
+    voto: { titulo: 'Compare seu voto', comecar: 'Começar as perguntas' },
+    cidade: {
+      titulo: 'Sua cidade',
+      texto: 'Quem foi eleito para governar, o que chegou de emenda e o que a prefeitura arrecadou e gastou.',
+      abrirGuardada: (nome: string, uf: string) => `Abrir ${nome} – ${uf}`,
+    },
+    busca: 'Ou procure pelo nome um político, uma cidade ou uma entidade:',
+  },
+  numeros: (periodo: string, votos: string, cota: string | null, emendas: string | null) =>
+    `Na legislatura de ${periodo}: ${votos} votos com posição na Câmara e no Senado` +
+    (cota && emendas ? `, ${cota} gastos da cota parlamentar e ${emendas} pagos em emendas.` : '.'),
+  comoMedimos: 'Como cada número foi medido',
   abertura: (perguntas: number | null, ativas: number, corrente: number | undefined): ReactNode => (
     <>
       A afinidade sai do <strong>voto registrado em plenário</strong> de cada parlamentar.
@@ -19,26 +33,8 @@ export const TEXTOS_DO_INICIO = {
     </>
   ),
   compare: 'Compare seu voto',
-  portas: {
-    titulo: 'Também no site',
-    cidade: {
-      titulo: 'Sua cidade',
-      texto: 'Quem foi eleito para governar, o que chegou de emenda e o que a prefeitura arrecadou e gastou.',
-      abrir: 'Escolher a cidade',
-      abrirGuardada: (nome: string, uf: string) => `Abrir ${nome} – ${uf}`,
-    },
-    politicos: {
-      titulo: 'Todos os políticos',
-      texto: 'Prefeitos, governadores, deputados estaduais e vices eleitos desde 1998, com campanha e bens declarados.',
-      abrir: 'Procurar um político',
-    },
-    dinheiro: {
-      titulo: 'Dinheiro público',
-      texto: 'Para onde foram as emendas dos parlamentares, quem recebeu e como o governo federal gasta.',
-      abrir: 'Ver as emendas',
-    },
-  },
-  verParlamentares: 'Ver os parlamentares',
+
+  verParlamentares: 'Ver os políticos',
   carregandoABase: 'Carregando o tamanho da base',
   quemVoceSegue: 'Quem você segue',
   privacidade: (

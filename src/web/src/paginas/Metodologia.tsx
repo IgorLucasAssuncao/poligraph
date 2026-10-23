@@ -1,5 +1,6 @@
 import { useCarga } from '../componentes/useCarga';
-import { NOME_DA_CASA, obterMetodologia, type CasaNaMetodologia, type Metodologia as DadosDaMetodologia } from '../api';
+import { BaseComponent } from '../componentes/BaseDoCongresso';
+import { NOME_DA_CASA, obterMetodologia, obterPanorama, type CasaNaMetodologia, type Metodologia as DadosDaMetodologia } from '../api';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { FONTES } from '../fontes';
 import { EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
@@ -51,6 +52,7 @@ function ConteudoComponent({ dados }: { dados: DadosDaMetodologia }) {
         ))}
       </ul>
       <p>{T.dados.dinheiro}</p>
+      <BaseDaLegislaturaComponent />
 
       <h2>{T.questionario.titulo}</h2>
       <p>{T.questionario.oferecidas(oferecidas, q.perguntasDaCamara, q.perguntasDoSenado)}</p>
@@ -151,4 +153,14 @@ function TabelaDoGrafoComponent({ casas }: { casas: CasaNaMetodologia[] }) {
       </table>
     </div>
   );
+}
+
+/**
+ * O tamanho da base em cada casa, na legislatura corrente: votações nominais e simbólicas, secretas, grupos de voto.
+ *
+ * DECISÃO (autor, 2026-10-23): veio da página inicial. É o detalhe de quem confere o método; lá ficou uma linha com os números.
+ */
+function BaseDaLegislaturaComponent() {
+  const { dados } = useCarga(['panorama', null], () => obterPanorama());
+  return dados ? <BaseComponent panorama={dados} /> : null;
 }

@@ -2,10 +2,8 @@ import { periodoDoEndereco } from '../navegacao';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AtualizandoComponent } from '../componentes/Atualizando';
 import { useCarga } from '../componentes/useCarga';
-import { useAdiado } from '../componentes/useAdiado';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
-  buscarMunicipios,
   listarConveniosDaCidade,
   listarFavorecidosDoMunicipio,
   listarParlamentaresDoMunicipio,
@@ -15,7 +13,6 @@ import {
   type EmendasDoMunicipio,
   type MapaDoBrasil,
   type MapaDoEstado,
-  type Municipio,
   type Periodo,
 } from '../api';
 import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
@@ -31,7 +28,6 @@ import { usePaginas } from '../componentes/usePaginas';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { FONTES } from '../fontes';
 import { minusculas, nomeProprio, reais, reaisCompacto } from '../formato';
-import { areaQueContem } from '../mapa';
 import { passosDasEmendas } from '../tour';
 import { BlocoComponent, EsqueletoComponent, EsqueletoDePainelComponent, EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
 import { UFS } from '../ufs';
@@ -42,6 +38,7 @@ import { AbasComponent, NumeroComponent, OpcoesComponent, type Aba } from '../co
 import { CIDADES_POR_VEZ, ESTADOS_A_VISTA, ITENS_POR_PAGINA_DA_CIDADE } from '../constantes';
 import { TEXTOS_DAS_EMENDAS as T } from '../textos/emendas';
 import { guardarMinhaCidade, lerMinhaCidade } from '../minhaCidade';
+import { SuaCidadeComponent } from '../componentes/SuaCidade';
 
 /**
  * Para onde foi o dinheiro de emenda, no mapa — e quem o mandou para a sua cidade.
@@ -762,88 +759,6 @@ function QuemRecebeuComponent({ dados, periodo }: { dados: EmendasDoMunicipio; p
   );
 }
 
-/**
- * A busca da cidade e o atalho pela localização.
- *
- * ATENÇÃO: A localização vira código IBGE DENTRO do navegador, contra a malha do próprio site:
- * latitude e longitude não saem da página.
- */
-export function SuaCidadeComponent({ aoEscolher }: { aoEscolher: (m: Municipio) => void }) {
-  const [busca, setBusca] = useState('');
-  const [situacao, setSituacao] = useState<string | null>(null);
-  const buscando = busca.trim().length >= 2;
-  const adiada = useAdiado(busca, 250);
-  const lidos = useCarga(['municipios', adiada], () => buscarMunicipios(adiada), { ativo: adiada.trim().length >= 2 });
-  const achados: Municipio[] = lidos.erro ? [] : (lidos.dados ?? []);
-
-  const escolher = (m: Municipio) => {
-    setBusca('');
-    setSituacao(null);
-    aoEscolher(m);
-  };
-
-  const localizar = () => {
-    if (!navigator.geolocation) {
-      setSituacao(T.suaCidade.semLocalizacao);
-      return;
-    }
-    setSituacao(T.suaCidade.localizando);
-    navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
-        const ponto: [number, number] = [coords.longitude, coords.latitude];
-        const codigoUf = await areaQueContem('brasil', ponto);
-        const codigoIbge = codigoUf ? await areaQueContem(codigoUf, ponto) : null;
-        const sigla = UFS.find(([c]) => c === codigoUf)?.[1];
-        if (!codigoIbge || !sigla) {
-          setSituacao(T.suaCidade.foraDoBrasil);
-          return;
-        }
-        const dados = await obterEmendasDoMunicipio(codigoIbge).catch(() => null);
-        escolher(dados ? dados.municipio : { codigoIbge, nome: '', uf: sigla });
-      },
-      () => setSituacao(T.suaCidade.naoPermitida),
-      { maximumAge: 600_000, timeout: 15_000 },
-    );
-  };
-
-  return (
-    <div className="sua-cidade" data-tour="emendas-cidade">
-      <label htmlFor="busca-cidade">{T.suaCidade.titulo}</label>
-      <div className="sua-cidade-campos">
-        <input
-          id="busca-cidade"
-          type="search"
-          value={busca}
-          placeholder={T.suaCidade.placeholder}
-          autoComplete="off"
-          onChange={(e) => setBusca(e.target.value)}
-        />
-        <button type="button" className="botao-secundario" onClick={localizar}>
-          {T.suaCidade.usarLocalizacao}
-        </button>
-      </div>
-
-      {buscando && achados.length > 0 && (
-        <ul className="sua-cidade-achados" aria-label={T.suaCidade.encontradas}>
-          {achados.map((m) => (
-            <li key={m.codigoIbge}>
-              <button type="button" className="link-botao" onClick={() => escolher(m)}>
-                {nomeProprio(m.nome)} – {m.uf}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {situacao && (
-        <p className="ajuda" role="status">
-          {situacao}
-        </p>
-      )}
-      <p className="nota-curta">{T.suaCidade.nota}</p>
-    </div>
-  );
-}
 
 
 /** O período do endereço; sem `de` e `ate` válidos, todos os anos. */
