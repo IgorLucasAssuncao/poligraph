@@ -1039,7 +1039,7 @@ def _mandatos(conexao: psycopg.Connection, eleicoes: list[int]) -> None:
         persistencia.pessoas_por_casa(conexao),
     )
     identidades.propagar(todos)
-    novas = mandatos.pessoas_novas(todos, identidades)
+    novas = mandatos.pessoas_novas(todos, identidades, date.today().year)
     ponte = mandatos.ponte_de_municipios(
         [e for e in todos if e.codigo_ue], persistencia.municipios_para_ponte(conexao))
     sem_ibge = sorted({f"{e.nome_ue}-{e.uf} ({e.codigo_ue})" for e in todos if e.codigo_ue and ponte.get(e.codigo_ue) is None})
@@ -1103,6 +1103,10 @@ def _redes(conexao: psycopg.Connection, anos: list[int]) -> None:
     2014 não entram.
 
     O TSE da eleição MAIS RECENTE de cada senador: por isso os anos vão do último ao primeiro.
+
+    RISCO: só troca as redes do TSE de quem tem rede nos arquivos lidos. Antes trocava as de todo senador e de todo
+    político fora do Congresso, e `redes --anos 2026` (a etapa da rotina pós-eleição) apagou as redes de quem não
+    concorreu em 2026: MEDIDO em 2026-10-23, Andrezinho Ceciliano ficou sem as redes de 2022 e de 2024.
     """
     consultados: list[int] = []
     da_camara: list[dict] = []
@@ -1147,7 +1151,7 @@ def _redes(conexao: psycopg.Connection, anos: list[int]) -> None:
     )
     with conexao.transaction():
         persistencia.gravar_redes(conexao, consultados, da_camara, FonteDaRedeSocial.CAMARA, carga_da_camara)
-        persistencia.gravar_redes(conexao, list(senadores | fora_do_congresso), [l for ls in do_tse.values() for l in ls], "TSE")
+        persistencia.gravar_redes(conexao, list(do_tse), [l for ls in do_tse.values() for l in ls], "TSE")
 
 
 def _municipios(conexao: psycopg.Connection, diretorio: Path | None) -> None:

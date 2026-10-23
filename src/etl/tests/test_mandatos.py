@@ -79,9 +79,19 @@ def test_titulo_liga_a_mesma_pessoa_entre_eleicoes_e_o_congresso_nao_cria_pessoa
     ])
     identidades = mandatos.Identidades({}, {}, {}, {})
 
-    grupos = mandatos.pessoas_novas(eleitos, identidades)
+    grupos = mandatos.pessoas_novas(eleitos, identidades, 2026)
 
     assert [sorted(e.ano_eleicao for e in g) for g in grupos] == [[2020, 2024]]
+
+
+def test_eleito_para_o_congresso_ganha_pessoa_antes_da_posse_e_so_entao():
+    eleitos = mandatos.eleitos([
+        _linha(ano_eleicao="2026", sq_candidato="40", cargo="6", titulo="888888888888", codigo_ue="SP"),
+    ])
+    identidades = mandatos.Identidades({}, {}, {}, {})
+
+    assert len(mandatos.pessoas_novas(eleitos, identidades, 2026)) == 1
+    assert mandatos.pessoas_novas(eleitos, identidades, 2027) == []
 
 
 def test_ponte_casa_pelo_nome_e_pela_grafia_mais_parecida_da_uf():
@@ -106,7 +116,7 @@ def test_quem_ja_tem_pessoa_empresta_o_titulo_ao_eleito_sem_cpf():
     identidades.propagar(eleitos)
 
     assert [identidades.pessoa(e) for e in eleitos] == [7, 7]
-    assert mandatos.pessoas_novas(eleitos, identidades) == []
+    assert mandatos.pessoas_novas(eleitos, identidades, 2026) == []
 
 
 def test_campanha_de_governador_liga_pela_candidatura_eleita_sem_filtro_de_cargo():

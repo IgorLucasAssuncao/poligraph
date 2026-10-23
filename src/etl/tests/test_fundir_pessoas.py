@@ -54,3 +54,12 @@ def test_mesmo_titulo_tambem_junta(duas_casas):
     duas_casas.execute("UPDATE pessoas SET cpf_hash = NULL WHERE id = 2")
 
     assert persistencia.pares_do_mesmo_cpf(duas_casas) == [(2, 3)]
+
+
+def test_a_que_fica_sem_foto_herda_a_da_que_sai(duas_casas):
+    """O eleito de 2026 criado pelo TSE antes da posse fica, e a foto é a da Câmara."""
+    duas_casas.execute("UPDATE pessoas SET url_foto = 'https://www.camara.leg.br/foto.jpg' WHERE id = 2")
+
+    persistencia.fundir_pessoas(duas_casas, [(1, 2)])
+
+    assert duas_casas.execute("SELECT url_foto FROM pessoas WHERE id = 1").fetchone()[0] == "https://www.camara.leg.br/foto.jpg"

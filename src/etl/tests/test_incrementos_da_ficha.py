@@ -33,6 +33,8 @@ def _zip(tmp_path, nome, arquivos: dict[str, str]):
         # RISCO: Outro esquema vira link que executa script: recusado.
         ("javascript:alert(1)", None),
         ("fulano no instagram", None),
+        ("@pedroluis.longo", None),
+        ("https://@fulano", None),
         ("", None),
         (None, None),
     ],
@@ -63,6 +65,30 @@ def test_para_linhas_sem_repetir_e_sem_invalido():
 
     assert [(l["url"], l["rede"]) for l in linhas] == [("https://x.com/a", "X"), ("https://instagram.com/a", "INSTAGRAM")]
     assert {l["pessoa_id"] for l in linhas} == {7}
+
+
+@pytest.mark.parametrize(
+    "urls, fica",
+    [
+        (["https://www.instagram.com/albertopmourao/", "https://www.instagram.com/albertopmourao"], "https://www.instagram.com/albertopmourao/"),
+        (["https://instagram.com/helio.leite?igshid=YmM=", "https://www.instagram.com/helio.leite"], "https://www.instagram.com/helio.leite"),
+        (["https://twitter.com/albertomourao", "https://x.com/albertomourao?t=aVkc&s=09"], "https://twitter.com/albertomourao"),
+        (["https://m.facebook.com/fulano/", "https://www.facebook.com/Fulano"], "https://m.facebook.com/fulano/"),
+    ],
+)
+def test_o_mesmo_perfil_escrito_de_outro_jeito_fica_uma_vez(urls, fica):
+    assert [l["url"] for l in redes.para_linhas(7, urls, "TSE")] == [fica]
+
+
+def test_perfis_diferentes_da_mesma_rede_ficam_os_dois():
+    urls = [
+        "https://www.facebook.com/CarmenZanottoLages",
+        "https://www.facebook.com/CarmenZanottoSC",
+        "https://www.facebook.com/profile.php?id=1",
+        "https://www.facebook.com/profile.php?id=2",
+    ]
+
+    assert len(redes.para_linhas(7, urls, "TSE")) == 4
 
 
 def test_coluna_do_endereco_muda_de_nome_entre_arquivos():

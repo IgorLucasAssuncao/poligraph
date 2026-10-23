@@ -1461,6 +1461,10 @@ def fundir_pessoas(conexao: psycopg.Connection, pares: Sequence[tuple[int, int]]
     colide com a chave da pessoa que fica é a mesma informação vinda duas vezes (o patrimônio
     ligado pelo mesmo CPF às duas), e sai. Nas tabelas de par, a ordem `pessoa_a < pessoa_b`
     é refeita depois da troca.
+
+    A foto vem da que sai quando a que fica não tem: o eleito de 2026 criado pelo TSE antes da posse fica (id menor), e a
+    foto é a da Câmara. Nome e foto voltam a ser os da casa na carga seguinte dela, pelo id da fonte, que passou para a
+    pessoa que fica.
     """
     for fica, sai in pares:
         for tabela in TABELAS_DA_PESSOA:
@@ -1492,7 +1496,11 @@ def fundir_pessoas(conexao: psycopg.Connection, pares: Sequence[tuple[int, int]]
                  WHERE pessoa_a = %(sai)s OR pessoa_b = %(sai)s
                 """, {"fica": fica, "sai": sai})
         conexao.execute(
-            "UPDATE pessoas f SET titulo_hash = coalesce(f.titulo_hash, s.titulo_hash) FROM pessoas s WHERE f.id = %s AND s.id = %s",
+            """
+            UPDATE pessoas f SET titulo_hash = coalesce(f.titulo_hash, s.titulo_hash), url_foto = coalesce(f.url_foto, s.url_foto)
+              FROM pessoas s
+             WHERE f.id = %s AND s.id = %s
+            """,
             (fica, sai))
         conexao.execute("DELETE FROM pessoas WHERE id = %s", (sai,))
     return len(pares)

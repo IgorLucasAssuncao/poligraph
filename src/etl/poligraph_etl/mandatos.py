@@ -239,17 +239,25 @@ def mandatos_para_linhas(eleitos_da_eleicao: list[Eleito], identidades: Identida
     return linhas
 
 
-def pessoas_novas(eleitos_de_todas: list[Eleito], identidades: Identidades) -> list[list[Eleito]]:
+def pessoas_novas(eleitos_de_todas: list[Eleito], identidades: Identidades, ano_atual: int) -> list[list[Eleito]]:
     """Os grupos de eleitos que precisam de pessoa nova, um grupo por pessoa.
 
-    Fica fora quem já tem pessoa, quem é do Congresso e quem não traz CPF nem título. Dois eleitos são
-    a mesma pessoa quando dividem o CPF ou o título: o de 2020 tem os dois, o de 2024 só o título.
+    Fica fora quem já tem pessoa e quem não traz CPF nem título. Dois eleitos são a mesma pessoa quando dividem
+    o CPF ou o título: o de 2020 tem os dois, o de 2024 só o título.
+
+    DECISÃO (2026-10-23): o eleito para o Congresso ganha pessoa só antes da posse, para ter perfil desde a eleição.
+    Na posse, a Câmara ou o Senado cria a dela, o `cpf` grava o hash e a fusão junta as duas (`pares_do_mesmo_cpf`).
+
+    RISCO: o eleito antigo fica fora. MEDIDO em 2026-10-23: 5.683 das 7.889 pessoas da Câmara não têm `cpf_hash`, a
+    história da casa de antes da base de votos; o deputado de 1998 criado pelo TSE seria uma segunda pessoa que
+    nenhuma fusão junta.
     """
     grupo_de: dict[str, int] = {}
     grupos: list[list[Eleito]] = []
     for eleito in sorted(eleitos_de_todas, key=lambda e: e.ano_eleicao):
         chaves = _chaves(eleito)
-        if eleito.cargo in CARGOS_DO_CONGRESSO or not chaves or identidades.pessoa(eleito) is not None:
+        antes_da_posse = anos_do_mandato(eleito.cargo, eleito.ano_eleicao)[0] > ano_atual
+        if (eleito.cargo in CARGOS_DO_CONGRESSO and not antes_da_posse) or not chaves or identidades.pessoa(eleito) is not None:
             continue
         existentes = sorted({grupo_de[c] for c in chaves if c in grupo_de})
         if existentes:
