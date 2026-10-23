@@ -1,5 +1,6 @@
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { obterFichaDoPolitico, type MandatoNoTse } from '../api';
+import type { ReactNode } from 'react';
+import { obterFichaDoPolitico, type Cargo, type MandatoNoTse } from '../api';
 import { AvatarComponent } from '../componentes/Avatar';
 import { BotaoCompartilharComponent } from '../componentes/BotaoCompartilhar';
 import { AbaCampanhaComponent } from '../componentes/ContasDoParlamentar';
@@ -83,9 +84,11 @@ export function PoliticoComponent() {
           <RedesDoParlamentarComponent redes={ficha.redesSociais} />
         </div>
 
-        <p className="ajuda" role="note">
-          {noCongresso ? T.semVotoAindaNoCongresso(noCongresso.primeiroAno) : T.semVoto}
-        </p>
+        {noCongresso && (
+          <p className="ajuda" role="note">
+            {T.semVotoAindaNoCongresso(noCongresso.primeiroAno)}
+          </p>
+        )}
       </header>
 
       <section className="aba-dinheiro" aria-label={T.mandatos}>
@@ -101,6 +104,8 @@ export function PoliticoComponent() {
         </p>
       </section>
 
+      {!noCongresso && <FaltasDaFichaComponent mandatos={ficha.mandatos} />}
+
       <CampanhaDoPoliticoComponent idPessoa={idPessoa} />
       <LinhaDoTempoComponent idPessoa={idPessoa} />
     </>
@@ -111,6 +116,52 @@ export function PoliticoComponent() {
 function CampanhaDoPoliticoComponent({ idPessoa }: { idPessoa: number }) {
   const { contas, erro } = useContas(idPessoa);
   return <AbaCampanhaComponent idPessoa={idPessoa} contas={contas} erro={erro} />;
+}
+
+const CARGOS_DO_LEGISLATIVO: Cargo[] = ['DEPUTADO_ESTADUAL', 'DEPUTADO_DISTRITAL'];
+
+/**
+ * O que a ficha não mostra, e por quê, pelo cargo: o deputado estadual não tem voto nem gasto de gabinete na base; o prefeito tem
+ * as contas na página da cidade.
+ *
+ * DECISÃO (autor, 2026-10-23): a falta se explica na página. Sem a frase, a ficha curta lê como defeito do site.
+ *
+ * Quem teve os dois tipos de cargo (deputado estadual e depois prefeito) lê os dois blocos.
+ */
+function FaltasDaFichaComponent({ mandatos }: { mandatos: MandatoNoTse[] }) {
+  const F = TEXTOS_DOS_POLITICOS.faltas;
+  const legislativo = mandatos.some((m) => CARGOS_DO_LEGISLATIVO.includes(m.cargo));
+  const executivo = mandatos.filter((m) => !CARGOS_DO_LEGISLATIVO.includes(m.cargo));
+  const cidade = executivo.find((m) => m.municipio)?.municipio;
+  const noEstado = executivo.some((m) => !m.municipio);
+
+  const itens: ReactNode[] = [];
+  if (legislativo) itens.push(F.legislativo.votos, F.legislativo.gastos, F.legislativo.emendas);
+  if (executivo.length > 0) {
+    if (!legislativo) itens.push(F.executivo.votos);
+    if (cidade) {
+      itens.push(
+        <>
+          {F.executivo.contasDaCidade} <Link to={`/cidades/${cidade.codigoIbge}`}>{F.executivo.verACidade(nomeProprio(cidade.nome))}</Link>
+        </>,
+      );
+    }
+    if (noEstado) itens.push(F.executivo.contasDoEstado);
+    if (!legislativo) itens.push(F.executivo.emendas);
+  }
+
+  return (
+    <section className="aba-dinheiro" aria-labelledby="faltas-titulo">
+      <h2 id="faltas-titulo" className="titulo-secao">
+        {F.titulo}
+      </h2>
+      <ul className="faltas-da-ficha">
+        {itens.map((item, i) => (
+          <li key={i}>{item}</li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 /** Um mandato: o cargo com o ente e os anos, o partido e a eleição. */

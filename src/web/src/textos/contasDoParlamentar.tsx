@@ -123,7 +123,8 @@ export const TEXTOS_DAS_CONTAS = {
   },
 
   campanha: {
-    vazio: 'Nenhuma receita de campanha desta pessoa na base. A prestação de contas de uma eleição chega ao TSE depois do segundo turno.',
+    vazio:
+      'Nenhuma receita de campanha desta pessoa na base. A base tem as campanhas de 2018 a 2024 de todos os cargos, e as de 2010 e 2014 só de deputados federais e senadores. A de 2026 chega quando o TSE fechar a prestação de contas, depois do segundo turno.',
     rotulo: 'Campanha',
     rotuloDaProcedencia: (anoDaEleicao: number) => `Campanha de ${anoDaEleicao}`,
     resposta: (total: ReactNode, anoDaEleicao: number, publico: string, porcento: string): ReactNode => (
@@ -150,7 +151,8 @@ export const TEXTOS_DAS_CONTAS = {
     carregando: 'Carregando o patrimônio',
     rotulo: 'Patrimônio declarado',
     titulo: 'Patrimônio declarado ao TSE',
-    vazio: 'Nenhuma declaração de bens desta pessoa ao TSE na base.',
+    vazio:
+      'Nenhuma declaração de bens desta pessoa ao TSE na base, que tem as eleições de 2006 a 2026. Fica assim quem declarou não ter bens e quem só se candidatou antes de 2006.',
     bens: (quantidade: number) => `${quantidade} bens`,
     rotuloDaProcedencia: (anoDaEleicao: number) => `Bens declarados em ${anoDaEleicao}`,
     resposta: (total: ReactNode, bens: number, anoDaEleicao: number, anterior: { anoDaEleicao: number; total: string } | null): ReactNode => (

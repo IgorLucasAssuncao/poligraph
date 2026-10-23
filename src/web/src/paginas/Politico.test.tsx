@@ -47,7 +47,22 @@ describe('Ficha do político', () => {
     expect(await screen.findByRole('heading', { name: 'João Exemplo' })).toBeInTheDocument();
     expect(screen.getByText('Governador de SP, 2019–2022')).toBeInTheDocument();
     expect(screen.getByText('Prefeito, São Paulo – SP, 2017–2020')).toBeInTheDocument();
-    expect(screen.getByText(/só a Câmara e o Senado publicam o voto/)).toBeInTheDocument();
+    expect(screen.getByText(/prefeito e governador não votam projetos/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver a página de São Paulo' })).toHaveAttribute('href', '/cidades/3550308');
+    expect(screen.getByText(/contas do governo do estado ainda não estão na base/)).toBeInTheDocument();
+  });
+
+  it('o deputado estadual lê por que não há voto, gasto de gabinete nem emenda', async () => {
+    vi.mocked(api.obterFichaDoPolitico).mockResolvedValue({
+      ...PREFEITO_E_GOVERNADOR,
+      mandatos: [{ cargo: 'DEPUTADO_ESTADUAL', nivel: 'ESTADUAL', anoEleicao: 2022, primeiroAno: 2023, ultimoAno: 2026, uf: 'RJ', municipio: null, partido: 'XYZ' }],
+    });
+    renderizar();
+
+    expect(await screen.findByText(/cada assembleia publica as votações do seu jeito/)).toBeInTheDocument();
+    expect(screen.getByText(/em 27 formatos diferentes/)).toBeInTheDocument();
+    expect(screen.getByText(/emendas ao orçamento do estado não têm um portal nacional/)).toBeInTheDocument();
+    expect(screen.queryByText(/prefeito e governador não votam/)).not.toBeInTheDocument();
   });
 
   it('quem votou no Congresso vai para a ficha do parlamentar', async () => {

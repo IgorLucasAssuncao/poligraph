@@ -59,10 +59,29 @@ export const TEXTOS_DOS_POLITICOS = {
     eleitoEm: (ano: number) => `eleito em ${ano}`,
     semVotoAindaNoCongresso: (posse: number) =>
       `Eleito para o Congresso, com posse em ${posse}. Os votos e a afinidade aparecem aqui quando a Câmara ou o Senado publicarem os primeiros votos do mandato.`,
-    semVoto:
-      'Esta ficha não tem votos nem afinidade: só a Câmara e o Senado publicam o voto de cada parlamentar. Assembleias e câmaras municipais não publicam.',
     fonte: 'Mandatos: candidaturas eleitas publicadas pelo TSE.',
     candidaturasNoTse: 'Candidaturas no TSE',
+  },
+
+  faltas: {
+    titulo: 'O que esta ficha não tem, e por quê',
+    legislativo: {
+      votos:
+        'Votos e afinidade: cada assembleia publica as votações do seu jeito, e algumas não publicam o voto de cada deputado. Sem uma fonte nacional, a comparação com o seu voto não teria a mesma régua da Câmara e do Senado.',
+      gastos:
+        'Gastos do gabinete: a verba de cada deputado estadual sai no portal da assembleia, em 27 formatos diferentes. O site só usa fonte que recarrega igual todo mês, como a cota da Câmara e do Senado.',
+      emendas:
+        'Emendas: as emendas ao orçamento do estado não têm um portal nacional. O Portal da Transparência traz só as emendas ao orçamento federal.',
+    },
+    executivo: {
+      votos: 'Votos e afinidade: prefeito e governador não votam projetos; quem vota é a câmara municipal ou a assembleia.',
+      contasDaCidade: 'Contas: o que a prefeitura arrecadou e gastou em cada gestão está na página da cidade.',
+      verACidade: (cidade: string) => `Ver a página de ${cidade}`,
+      contasDoEstado:
+        'Contas: as contas do governo do estado ainda não estão na base. A base tem as das prefeituras, declaradas ao Tesouro.',
+      emendas:
+        'Emendas: quem apresenta emenda é o deputado ou o senador. O que chegou de emenda federal a cada cidade está na página da cidade.',
+    },
   },
 
   lista: {

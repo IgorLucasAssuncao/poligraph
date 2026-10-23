@@ -23,3 +23,7 @@
 .voto-orientacao em {
   font-style: normal; font-weight: 600; color: var(--texto);
 }
+
+/* O que a ficha do político não tem, e por quê. */
+.faltas-da-ficha { margin: .4rem 0 0; padding-left: 1.1rem; color: var(--suave); font-size: var(--t-2); }
+.faltas-da-ficha li { margin: .35rem 0; }
