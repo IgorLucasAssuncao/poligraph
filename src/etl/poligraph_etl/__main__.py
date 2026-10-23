@@ -1062,7 +1062,9 @@ def _mandatos(conexao: psycopg.Connection, eleicoes: list[int]) -> None:
             sem_pessoa = Counter(e.cargo.value for e in eleitos_do_ano if identidades.pessoa(e) is None)
             log.info("  %d: %d mandatos gravados%s", ano, len(linhas),
                      "; sem pessoa na base: " + ", ".join(f"{c} {n}" for c, n in sorted(sem_pessoa.items())) if sem_pessoa else "")
-    log.info("Mandatos: %d pessoas novas, hashes conferidos em %d pessoas.", len(novas), completados)
+        apagadas = persistencia.apagar_pessoas_sem_vinculo(conexao)
+    log.info("Mandatos: %d pessoas novas, hashes conferidos em %d pessoas, %d pessoas sem vínculo apagadas.",
+             len(novas), completados, apagadas)
 
 
 def _patrimonio(conexao: psycopg.Connection, anos: list[int]) -> None:
@@ -1687,7 +1689,7 @@ def _cpf(conexao: psycopg.Connection, todas_as_legislaturas: bool = False) -> No
 
 
 def _fundir_pessoas(conexao: psycopg.Connection) -> None:
-    """Uma pessoa só para quem foi deputado e senador: a Câmara e o Senado criam cada um a sua, e o CPF as junta."""
+    """Uma pessoa só para quem tem o mesmo CPF ou o mesmo título de eleitor: o deputado que virou senador, o parlamentar que virou prefeito."""
     with conexao.transaction():
         fundidas = persistencia.fundir_pessoas(conexao, persistencia.pares_do_mesmo_cpf(conexao))
     log.info("Pessoas fundidas pelo CPF (deputado e senador): %d.", fundidas)

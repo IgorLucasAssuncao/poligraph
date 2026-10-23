@@ -12,6 +12,7 @@ namespace Poligraph.Api.Services;
 /// <para>RISCO: o TSE dá quem foi eleito, não quem exerceu. Prefeito cassado, morto ou que renunciou continua na gestão para a qual foi eleito; a tela diz "eleito".</para>
 /// <para>DECISÃO (autor, 2026-10-22): o vice eleito fica à vista, porque é quem assume no afastamento. No Rio, Witzel foi afastado em 2020 e cassado em 2021, e o vice Cláudio Castro governou. Quem exerceu de fato não tem fonte periódica nacional.</para>
 /// <para>As contas da prefeitura (Siconfi) entram só nos anos declarados, e a gestão diz quantos foram: somar 2 de 4 anos como se fossem os 4 seria um número menor e errado.</para>
+/// <para>A mesma pessoa eleita duas vezes para a mesma gestão (eleição normal e suplementar no mesmo ano) aparece uma vez. MEDIDO em 2026-10-23: 83 casos, todos na mesma cidade.</para>
 /// <para>DECISÃO: o dinheiro entra na gestão pelo ano do pagamento. A emenda é do parlamentar, e a tela diz "chegou durante", nunca "conseguiu".</para>
 /// </remarks>
 public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, CacheDeLeitura leitura)
@@ -66,8 +67,8 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
                 var declarados = daGestao.Except(foraDoPadrao).ToList();
                 return new GestaoDaCidadeDto(
                     primeiro, ultimo,
-                    [.. g.Where(e => e.Cargo == TipoCargo.PREFEITO).Select(e => e.Eleito)],
-                    [.. g.Where(e => e.Cargo == TipoCargo.VICE_PREFEITO).Select(e => e.Eleito)],
+                    [.. g.Where(e => e.Cargo == TipoCargo.PREFEITO).Select(e => e.Eleito).DistinctBy(e => e.IdPessoa)],
+                    [.. g.Where(e => e.Cargo == TipoCargo.VICE_PREFEITO).Select(e => e.Eleito).DistinctBy(e => e.IdPessoa)],
                     NoPeriodo(governadores, primeiro, ultimo),
                     anos.Sum(a => a.Recebido),
                     anos.Sum(a => a.NaPrefeitura),

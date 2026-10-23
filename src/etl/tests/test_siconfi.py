@@ -38,7 +38,10 @@ def test_regravar_do_arquivo_guardado_monta_as_mesmas_contas(conexao, tmp_path, 
 
     from poligraph_etl import __main__ as principal
 
-    conexao.execute("TRUNCATE contas_dos_municipios, municipios, cargas CASCADE")
+    conexao.execute(
+        "TRUNCATE contas_dos_municipios, municipios, cargas "
+        "CASCADE"
+    )
     conexao.execute("INSERT INTO municipios (codigo_ibge, codigo_tom, nome, uf) VALUES ('3509502', '6291', 'Campinas', 'SP')")
     monkeypatch.setattr(principal, "CACHE", tmp_path)
     arquivo = tmp_path / "siconfi" / "dca-2024-20261022.json"

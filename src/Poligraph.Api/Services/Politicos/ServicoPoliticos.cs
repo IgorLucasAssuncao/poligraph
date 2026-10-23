@@ -119,6 +119,7 @@ public class ServicoPoliticos(PoligraphDb db, CacheDeLeitura leitura, ServicoPar
             {
                 var pessoa = pessoas[g.Key];
                 List<MandatoNoTseDto> daPessoa = [.. g
+                    .DistinctBy(m => (m.Cargo, m.AnoEleicao, m.Uf, m.CodigoMunicipioIbge))
                     .OrderByDescending(m => m.UltimoAno)
                     .ThenBy(m => m.Cargo)
                     .Select(m => new MandatoNoTseDto(

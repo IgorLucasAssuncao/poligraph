@@ -1401,22 +1401,44 @@ def gravar_contas_dos_municipios(conexao: psycopg.Connection, anos: Sequence[int
 
 
 def pares_do_mesmo_cpf(conexao: psycopg.Connection) -> list[tuple[int, int]]:
-    """(fica, sai) para cada pessoa da Câmara e do Senado com o mesmo `cpf_hash`: fica o id menor.
+    """(fica, sai) para cada par de pessoas com o mesmo `cpf_hash` ou o mesmo `titulo_hash`: fica o id menor.
 
-    É o deputado que virou senador, ou o contrário. A Câmara e o Senado criam a pessoa cada um pelo
-    seu código, e o CPF só chega depois, pelo comando `cpf` (achado #18, Pendência 90).
+    É o deputado que virou senador, ou o contrário: a Câmara e o Senado criam a pessoa cada um pelo seu
+    código, e o CPF só chega depois, pelo comando `cpf` (achado #18, Pendência 90). Pelo título, é o
+    parlamentar que depois foi eleito prefeito numa eleição sem CPF no arquivo (MEDIDO em 2026-10-23: um
+    caso, deputado federal em 1998 e prefeito em 2024).
     """
-    return [
-        (linha[0], linha[1])
-        for linha in conexao.execute(
-            """
-            SELECT min(p.id) OVER (PARTITION BY p.cpf_hash), p.id
-              FROM pessoas p
-             WHERE p.cpf_hash IN (SELECT cpf_hash FROM pessoas WHERE cpf_hash IS NOT NULL GROUP BY 1 HAVING count(*) > 1)
-            """
-        ).fetchall()
-        if linha[0] != linha[1]
-    ]
+    pares = set()
+    for coluna in ("cpf_hash", "titulo_hash"):
+        pares.update(
+            (linha[0], linha[1])
+            for linha in conexao.execute(
+                f"""
+                SELECT min(p.id) OVER (PARTITION BY p.{coluna}), p.id
+                  FROM pessoas p
+                 WHERE p.{coluna} IN (SELECT {coluna} FROM pessoas WHERE {coluna} IS NOT NULL GROUP BY 1 HAVING count(*) > 1)
+                """
+            ).fetchall()
+            if linha[0] != linha[1]
+        )
+    return sorted(pares)
+
+
+def apagar_pessoas_sem_vinculo(conexao: psycopg.Connection) -> int:
+    """Apaga a pessoa sem mandato, sem id da Câmara ou do Senado e sem nada nas outras tabelas. Devolve quantas.
+
+    Ela sobra quando uma recarga de `mandatos` deixa de achar o eleito que a criou. MEDIDO em 2026-10-23: 6.891
+    pessoas assim, da primeira versão da regra dos vices pela chapa, sem bem, campanha, rede, voto nem seguidor.
+    """
+    condicoes = " AND ".join(f"NOT EXISTS (SELECT 1 FROM {tabela} t WHERE t.pessoa_id = p.id)" for tabela in TABELAS_DA_PESSOA)
+    return conexao.execute(
+        f"""
+        DELETE FROM pessoas p
+         WHERE {condicoes}
+           AND NOT EXISTS (SELECT 1 FROM similaridades t WHERE p.id IN (t.pessoa_a, t.pessoa_b))
+           AND NOT EXISTS (SELECT 1 FROM arestas_grafo t WHERE p.id IN (t.pessoa_a, t.pessoa_b))
+        """
+    ).rowcount
 
 
 TABELAS_DA_PESSOA = (

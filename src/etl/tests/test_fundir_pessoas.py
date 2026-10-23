@@ -39,3 +39,18 @@ def test_fica_o_id_menor_com_os_votos_das_duas_casas_e_o_bem_repetido_sai(duas_c
     assert sorted(duas_casas.execute("SELECT fonte FROM pessoa_fonte_ids WHERE pessoa_id = 1").fetchall()) == [("CAMARA",), ("SENADO",)]
     assert duas_casas.execute("SELECT ano_eleicao, valor FROM patrimonios ORDER BY 1").fetchall() == [(2018, 10), (2022, 20)]
     assert persistencia.pares_do_mesmo_cpf(duas_casas) == []
+
+
+def test_pessoa_sem_vinculo_e_apagada_e_a_com_dado_fica(duas_casas):
+    """A órfã de uma recarga de `mandatos` sai; quem tem voto, bem ou id de casa fica."""
+    duas_casas.execute("INSERT INTO pessoas (nome_civil, nome_exibicao) VALUES ('Órfã', 'Órfã')")
+
+    assert persistencia.apagar_pessoas_sem_vinculo(duas_casas) == 1
+    assert duas_casas.execute("SELECT count(*) FROM pessoas").fetchone()[0] == 3
+
+
+def test_mesmo_titulo_tambem_junta(duas_casas):
+    duas_casas.execute("UPDATE pessoas SET titulo_hash = 't1' WHERE id IN (2, 3)")
+    duas_casas.execute("UPDATE pessoas SET cpf_hash = NULL WHERE id = 2")
+
+    assert persistencia.pares_do_mesmo_cpf(duas_casas) == [(2, 3)]

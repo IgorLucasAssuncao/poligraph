@@ -38,7 +38,7 @@ public class ServicoLinhaDoTempo(PoligraphDb db, CacheDeLeitura leitura)
                 from mu in municipios.DefaultIfEmpty()
                 select new { m.Cargo, m.AnoEleicao, m.PrimeiroAno, m.UltimoAno, m.Uf, m.Partido, Municipio = mu })
             .ToListAsync(ct);
-        marcos.AddRange(mandatos.Select(m => ((int)m.AnoEleicao, new MarcoDto(TipoDeMarco.ELEITO, Mandato: new MandatoNoTseDto(
+        marcos.AddRange(mandatos.DistinctBy(m => (m.Cargo, m.AnoEleicao, m.Uf, m.Municipio?.CodigoIbge)).Select(m => ((int)m.AnoEleicao, new MarcoDto(TipoDeMarco.ELEITO, Mandato: new MandatoNoTseDto(
             m.Cargo, m.Cargo.Nivel(), m.AnoEleicao, m.PrimeiroAno, m.UltimoAno, m.Uf,
             m.Municipio is null ? null : new MunicipioDto(m.Municipio.CodigoIbge, m.Municipio.Nome, m.Municipio.Uf),
             m.Partido)))));
