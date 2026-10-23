@@ -371,7 +371,7 @@ describe('contas — campanha', () => {
     });
 
     await abrirAba('Campanha');
-    await screen.findByText(/Nenhuma receita de campanha registrada/);
+    await screen.findByText(/Nenhuma receita de campanha desta pessoa/);
 
     expect(await tela()).not.toMatch(/NaN/);
   });

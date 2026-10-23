@@ -21,7 +21,12 @@ export const CARGOS_DO_NIVEL: Record<Nivel, Cargo[]> = {
   MUNICIPAL: ['PREFEITO', 'VICE_PREFEITO'],
 };
 
-/** "Prefeito de Campinas – SP, 2025–2028", "Governador de SP", "Deputado estadual por SP": o ente que o cargo tem. */
+/**
+ * "Prefeito de Campinas – SP, 2025–2028", "Governador de SP", "Deputado estadual por SP": o ente que o cargo tem.
+ *
+ * O mandato que ainda não começou diz quando começa: o eleito de 2026 toma posse em 2027, e "2027–2030" sozinho
+ * parece mandato em curso.
+ */
 export function descricaoDoMandato(mandato: MandatoNoTse, nomeDoMunicipio: (nome: string) => string): string {
   const cargo = NOMES_DOS_CARGOS[mandato.cargo];
   const ente = mandato.municipio
@@ -31,18 +36,23 @@ export function descricaoDoMandato(mandato: MandatoNoTse, nomeDoMunicipio: (nome
       : mandato.cargo === 'GOVERNADOR' || mandato.cargo === 'VICE_GOVERNADOR' || mandato.nivel === 'MUNICIPAL'
         ? ` de ${mandato.uf}`
         : ` por ${mandato.uf}`;
-  return `${cargo}${ente}, ${mandato.primeiroAno}–${mandato.ultimoAno}`;
+  const periodo = `${mandato.primeiroAno}–${mandato.ultimoAno}`;
+  return mandato.primeiroAno > new Date().getFullYear() ? `${cargo}${ente}, ${periodo}, posse em ${mandato.primeiroAno}` : `${cargo}${ente}, ${periodo}`;
 }
 
 /** O texto da lista de políticos de todos os cargos e da ficha de cada um (Pendência 90). */
 export const TEXTOS_DOS_POLITICOS = {
+  naFichaDoParlamentar: {
+    rotulo: 'Eleito também, pelo TSE: ',
+    eMais: (n: number) => (n === 1 ? ' e mais 1, na linha do tempo' : ` e mais ${n}, na linha do tempo`),
+  },
   ficha: {
     titulo: 'Político',
     erro: 'Não foi possível carregar esta ficha agora. Tente de novo em instantes.',
     semMandato: 'Esta pessoa não tem mandato eleito na base do TSE.',
     verTodos: 'Ver todos os políticos',
     mandatos: 'Mandatos',
-    quantosMandatos: (n: number) => (n === 1 ? '1 mandato eleito de 1998 a 2024' : `${n} mandatos eleitos de 1998 a 2024`),
+    quantosMandatos: (n: number) => (n === 1 ? '1 mandato eleito de 1998 a 2026' : `${n} mandatos eleitos de 1998 a 2026`),
     eleitoEm: (ano: number) => `eleito em ${ano}`,
     semVoto:
       'Esta ficha não tem votos nem afinidade: só a Câmara e o Senado publicam o voto de cada parlamentar. Assembleias e câmaras municipais não publicam.',
@@ -68,7 +78,7 @@ export const TEXTOS_DOS_POLITICOS = {
     quantos: (n: number) => `${n.toLocaleString('pt-BR')} ${n === 1 ? 'político' : 'políticos'} com mandato nos filtros escolhidos`,
     nenhum: 'Ninguém com mandato nesses filtros. Tente outro cargo ou outro estado.',
     outrosMandatos: (n: number) => (n > 1 ? `${n} mandatos na base` : ''),
-    fonte: 'Fonte: candidaturas eleitas publicadas pelo TSE, eleições de 1998 a 2024.',
+    fonte: 'Fonte: candidaturas eleitas publicadas pelo TSE, eleições de 1998 a 2026.',
     viceAntes:
       'Vice-prefeitos aparecem desde 2000 e vices de governador e de presidente, desde 2002. Até 2010 o TSE não marca o vice como eleito, e a base o acha pela chapa do titular. Em 2000, por exemplo, são 4.736 vice-prefeitos para 5.585 prefeitos.',
   },

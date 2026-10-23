@@ -26,6 +26,7 @@ import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { LinhaDoTempoComponent } from '../componentes/LinhaDoTempo';
 import { MandatosDoParlamentarComponent } from '../componentes/MandatosDoParlamentar';
+import { CargosNoTseComponent } from '../componentes/CargosNoTse';
 import { RedesDoParlamentarComponent } from '../componentes/RedesDoParlamentar';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { usePaginas } from '../componentes/usePaginas';
@@ -201,6 +202,7 @@ export function ParlamentarComponent() {
         </div>
 
         <MandatosDoParlamentarComponent mandatos={ficha.mandatos ?? []} atual={ficha.legislatura} caminho={pathname} />
+        <CargosNoTseComponent idPessoa={ficha.idPessoa} />
 
         <div className="perfil-links">
           <LinkDeFonteComponent href={ficha.urlFonte}>

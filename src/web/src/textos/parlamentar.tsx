@@ -14,7 +14,7 @@ export const TEXTOS_DA_FICHA = {
   },
   rotuloDasAbas: 'Seções do perfil',
   foraDoMandato: (periodo: string) =>
-    `Fora do mandato. Só é possível seguir quem está em exercício na legislatura atual (${periodo}).`,
+    `Fora do Congresso. Só é possível seguir quem está em exercício na legislatura atual (${periodo}).`,
   senador: 'Senador',
   deputado: 'Deputado',
   paginaNoSenado: 'Página oficial no Senado',

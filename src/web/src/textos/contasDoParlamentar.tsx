@@ -123,7 +123,7 @@ export const TEXTOS_DAS_CONTAS = {
   },
 
   campanha: {
-    vazio: 'Nenhuma receita de campanha registrada para este parlamentar na base.',
+    vazio: 'Nenhuma receita de campanha desta pessoa na base. A prestação de contas de uma eleição chega ao TSE depois do segundo turno.',
     rotulo: 'Campanha',
     rotuloDaProcedencia: (anoDaEleicao: number) => `Campanha de ${anoDaEleicao}`,
     resposta: (total: ReactNode, anoDaEleicao: number, publico: string, porcento: string): ReactNode => (
