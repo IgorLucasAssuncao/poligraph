@@ -304,4 +304,32 @@ describe('comparar gestões', () => {
     expect(within(screen.getByRole('rowheader', { name: '2023' }).closest('tr')!).getByText('Lula')).toBeDefined();
     expect(screen.getByText(/sem correção pela inflação/)).toBeDefined();
   });
+
+  it('o impeachment de 2016 divide a chapa: cada parte diz a troca, a fonte e que 2016 conta nas duas', async () => {
+    const troca = { motivo: 'IMPEACHMENT' as const, afastamento: '2016-05-12', posse: '2016-08-31', urlDaFonte: 'https://www.lexml.gov.br/urn/x' };
+    const dilma = { nome: 'DILMA VANA ROUSSEFF', nomeDeUrna: 'DILMA', partido: 'PT' };
+    const temer = { nome: 'MICHEL MIGUEL ELIAS TEMER LULIA', nomeDeUrna: 'MICHEL TEMER', partido: 'PMDB' };
+    const gestoes = [
+      { anoDaEleicao: 2014, primeiroAno: 2015, ultimoAno: 2016, presidente: dilma, vice: temer, coligacao: null, ate: '2016-05-12', sucessao: troca },
+      { anoDaEleicao: 2014, primeiroAno: 2016, ultimoAno: 2018, presidente: temer, vice: null, coligacao: null, desde: '2016-05-12', sucessao: troca },
+    ];
+    vi.mocked(api.obterGoverno).mockResolvedValue({
+      ...DE_2025,
+      gestoes,
+      gestoesDisponiveis: gestoes,
+      periodo: { primeiroAno: 2016, ultimoAno: 2017 },
+      porAno: [
+        { anoDoOrcamento: 2016, arrecadou: 1.3e12, gastou: 1.6e12, pegouEmprestado: 0.9e12, fechado: true },
+        { anoDoOrcamento: 2017, arrecadou: 1.4e12, gastou: 1.7e12, pegouEmprestado: 0.9e12, fechado: true },
+      ],
+    });
+    renderizar();
+
+    expect(await screen.findByRole('heading', { name: 'Governou de 2015 a 12/05/2016' })).toBeDefined();
+    expect(screen.getByRole('heading', { name: 'Governou de 12/05/2016 a 2018' })).toBeDefined();
+    expect(screen.getByText(/Saiu da Presidência em 12\/05\/2016/)).toBeDefined();
+    expect(screen.getByText(/Assumiu a Presidência de forma interina em 12\/05\/2016 e tomou posse em 31\/08\/2016/)).toBeDefined();
+    expect(screen.getAllByText(/os números de 2016 contam para as duas gestões/)).toHaveLength(2);
+    expect(within(screen.getByRole('rowheader', { name: '2016' }).closest('tr')!).getByText('Dilma e Michel Temer')).toBeDefined();
+  });
 });

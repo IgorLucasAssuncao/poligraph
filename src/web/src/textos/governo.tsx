@@ -190,6 +190,15 @@ export const TEXTOS_DO_GOVERNO = {
 
   gestao: {
     titulo: (de: number, ate: number) => `Eleitos para governar de ${de} a ${ate}`,
+    tituloAte: (de: number, ate: string) => `Governou de ${de} a ${ate}`,
+    tituloDesde: (desde: string, ate: number) => `Governou de ${desde} a ${ate}`,
+    saiu: (afastamento: string, posse: string) =>
+      `Saiu da Presidência em ${afastamento}, com a abertura do processo de impeachment no Senado, e perdeu o mandato em ${posse}.`,
+    assumiu: (afastamento: string, posse: string) =>
+      `Era vice na chapa eleita. Assumiu a Presidência de forma interina em ${afastamento} e tomou posse em ${posse}, com o impeachment.`,
+    anoDividido: (ano: number) =>
+      `O orçamento é anual: os números de ${ano} contam para as duas gestões, porque o dado do Portal não separa o antes e o depois da troca.`,
+    fonteDaTroca: 'Resolução nº 35/2016 do Senado',
     aviso:
       'O TSE informa a chapa eleita. Se o presidente sai no meio do mandato, por impeachment, renúncia ou morte, quem assume é o vice, e a troca não aparece aqui.',
     presidente: 'Presidente',

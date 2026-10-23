@@ -112,7 +112,7 @@ export function GovernoComponent({ secao = 'orcamento' }: { secao?: 'orcamento' 
               <CadaCemReaisComponent dados={dados} />
               <DeOndeVeioComponent arrecadacao={dados.arrecadacao} />
               {dados.gestoes.map((g) => (
-                <PerfilDaGestaoComponent key={g.anoDaEleicao} gestao={g} />
+                <PerfilDaGestaoComponent key={`${g.anoDaEleicao}-${g.primeiroAno}-${g.presidente.nomeDeUrna}`} gestao={g} />
               ))}
               <DetalhesComponent dados={dados} />
             </>
@@ -172,8 +172,8 @@ function totalDoEncargo(encargos: Encargo[], grupo: GrupoDeEncargo): number {
  * delas — a pergunta de quem desconfia (persona do empresário, rodada 2).
  */
 function gestaoDoAno(dados: DadosDoGoverno, anoDoOrcamento: number): string {
-  const g = dados.gestoesDisponiveis.find((x) => x.primeiroAno <= anoDoOrcamento && x.ultimoAno >= anoDoOrcamento);
-  return g ? nomeProprio(g.presidente.nomeDeUrna) : T.semGestao;
+  const doAno = dados.gestoesDisponiveis.filter((x) => x.primeiroAno <= anoDoOrcamento && x.ultimoAno >= anoDoOrcamento);
+  return doAno.length > 0 ? doAno.map((g) => nomeProprio(g.presidente.nomeDeUrna)).join(' e ') : T.semGestao;
 }
 
 function textoDoPeriodo({ primeiroAno, ultimoAno }: Periodo): string {
@@ -639,18 +639,35 @@ function ComprasCentralizadasComponent({
   );
 }
 
+/**
+ * A chapa eleita, ou cada parte dela quando o vice assumiu no meio do mandato.
+ *
+ * DECISÃO (autor, 2026-10-23): o impeachment de 2016 divide a chapa de 2014 em duas gestões, com as datas e a fonte
+ * (`SucessoesNaPresidencia`, na API). A frase diz que o ano da troca entra nas duas, porque o orçamento é anual.
+ */
 function PerfilDaGestaoComponent({ gestao }: { gestao: Gestao }) {
   const G = T.gestao;
+  const id = `gestao-${gestao.anoDaEleicao}-${gestao.primeiroAno}`;
+  const titulo = gestao.ate
+    ? G.tituloAte(gestao.primeiroAno, dataCurta(gestao.ate))
+    : gestao.desde
+      ? G.tituloDesde(dataCurta(gestao.desde), gestao.ultimoAno)
+      : G.titulo(gestao.primeiroAno, gestao.ultimoAno);
+  const troca = gestao.sucessao;
   return (
-    <section className="gestao" aria-labelledby={`gestao-${gestao.anoDaEleicao}`}>
-      <h2 id={`gestao-${gestao.anoDaEleicao}`} className="gestao-titulo">
-        <ComProcedenciaComponent
-          consulta={{ contexto: 'gestoes', de: gestao.primeiroAno, ate: gestao.ultimoAno }}
-          rotulo={G.titulo(gestao.primeiroAno, gestao.ultimoAno)}
-        >
-          {G.titulo(gestao.primeiroAno, gestao.ultimoAno)}
+    <section className="gestao" aria-labelledby={id}>
+      <h2 id={id} className="gestao-titulo">
+        <ComProcedenciaComponent consulta={{ contexto: 'gestoes', de: gestao.primeiroAno, ate: gestao.ultimoAno }} rotulo={titulo}>
+          {titulo}
         </ComProcedenciaComponent>
       </h2>
+      {troca && (
+        <p className="nota-curta">
+          {gestao.ate ? G.saiu(dataCurta(troca.afastamento), dataCurta(troca.posse)) : G.assumiu(dataCurta(troca.afastamento), dataCurta(troca.posse))}{' '}
+          {G.anoDividido(Number(troca.afastamento.slice(0, 4)))}{' '}
+          <LinkDeFonteComponent href={troca.urlDaFonte}>{G.fonteDaTroca}</LinkDeFonteComponent>
+        </p>
+      )}
       <div className="gestao-pessoas">
         <PessoaDaGestaoCartaoComponent papel={G.presidente} pessoa={gestao.presidente} />
         {gestao.vice && <PessoaDaGestaoCartaoComponent papel={G.vice} pessoa={gestao.vice} />}

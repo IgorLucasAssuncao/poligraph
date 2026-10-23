@@ -926,9 +926,15 @@ export type Gestao = {
   primeiroAno: number;
   ultimoAno: number;
   presidente: PessoaDaGestao;
-  /** Nulo quando o TSE não publica o vice da chapa. */
+  /** Nulo quando o TSE não publica o vice da chapa, e na parte do mandato em que o vice virou presidente. */
   vice: PessoaDaGestao | null;
   coligacao: string | null;
+  /** O dia em que a gestão começou, quando foi no meio do ano: o vice que assumiu. */
+  desde?: string | null;
+  /** O dia em que a gestão terminou, quando foi no meio do ano: o titular afastado. */
+  ate?: string | null;
+  /** A troca de presidente no mandato, que o TSE não registra. A API a escreve à mão, com a fonte (impeachment de 2016). */
+  sucessao?: { motivo: 'IMPEACHMENT'; afastamento: string; posse: string; urlDaFonte: string } | null;
 };
 
 export type OrigemDaReceita = { origem: string; prevista: number; realizada: number };

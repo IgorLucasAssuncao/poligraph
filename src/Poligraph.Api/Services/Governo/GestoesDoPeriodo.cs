@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
 
@@ -30,14 +30,36 @@ public static class GestoesDoPeriodo
         return [.. eleitos
             .Where(e => e.Cargo == TipoCargo.PRESIDENTE)
             .OrderBy(e => e.PrimeiroAno)
-            .Select(presidente =>
+            .SelectMany(presidente =>
             {
                 var vice = eleitos.FirstOrDefault(e => e.Cargo == TipoCargo.VICE_PRESIDENTE && e.AnoEleicao == presidente.AnoEleicao);
-                return (new GestaoDto(
-                    presidente.AnoEleicao, presidente.PrimeiroAno, presidente.UltimoAno,
-                    new PessoaDaGestaoDto(presidente.NomeCivil, presidente.NomeDeUrna, presidente.Partido),
-                    vice is null ? null : new PessoaDaGestaoDto(vice.NomeCivil, vice.NomeDeUrna, vice.Partido),
-                    presidente.Coligacao), presidente.CargaId);
-            })];
+                var titular = new PessoaDaGestaoDto(presidente.NomeCivil, presidente.NomeDeUrna, presidente.Partido);
+                var doVice = vice is null ? null : new PessoaDaGestaoDto(vice.NomeCivil, vice.NomeDeUrna, vice.Partido);
+                var chapa = new GestaoDto(
+                    presidente.AnoEleicao, presidente.PrimeiroAno, presidente.UltimoAno, titular, doVice, presidente.Coligacao);
+                return Dividida(chapa, SucessoesNaPresidencia.DaEleicao(presidente.AnoEleicao))
+                    .Select(g => (g, presidente.CargaId));
+            })
+            .Where(c => c.g.PrimeiroAno <= ultimoAno && c.g.UltimoAno >= primeiroAno)];
+    }
+
+    /// <summary>A chapa inteira, ou as duas gestões dela quando o vice assumiu no meio do mandato (<see cref="SucessoesNaPresidencia"/>).</summary>
+    /// <remarks>O titular vai até o afastamento; o vice assume nesse dia, sem vice, até o fim do mandato. As duas levam a troca.</remarks>
+    public static IReadOnlyList<GestaoDto> Dividida(GestaoDto chapa, SucessoesNaPresidencia.Sucessao? sucessao)
+    {
+        if (sucessao is null || chapa.Vice is null)
+        {
+            return [chapa];
+        }
+
+        var troca = new SucessaoDto(sucessao.Motivo, sucessao.Afastamento, sucessao.Posse, sucessao.UrlDaFonte);
+        return
+        [
+            chapa with { UltimoAno = sucessao.Afastamento.Year, Ate = sucessao.Afastamento, Sucessao = troca },
+            chapa with
+            {
+                PrimeiroAno = sucessao.Afastamento.Year, Presidente = chapa.Vice, Vice = null, Desde = sucessao.Afastamento, Sucessao = troca,
+            },
+        ];
     }
 }

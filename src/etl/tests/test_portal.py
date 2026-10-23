@@ -45,6 +45,17 @@ def test_405_e_limite_de_taxa_e_tenta_de_novo(tmp_path):
     assert esperas == [portal.ESPERA_ENTRE_TENTATIVAS]
 
 
+def test_a_espera_dobra_a_cada_tentativa(tmp_path):
+    """MEDIDO em 2026-10-23: o Portal ficou uns 3 minutos em 405; esperas fixas desistiam antes."""
+    esperas: list[int] = []
+    respostas = iter([Resposta(405)] * 4 + [Resposta(200, b"zip")])
+
+    with mock.patch.object(portal.requests, "get", side_effect=lambda *a, **k: next(respostas)):
+        portal.baixar("orcamento-despesa/2015", tmp_path / "o.zip", esperar=esperas.append)
+
+    assert esperas == [20, 40, 80, 160]
+
+
 def test_desiste_depois_das_tentativas_sem_deixar_cache(tmp_path):
     """ATENÇÃO: Download que falhou não pode virar cache válido na próxima execução."""
     with mock.patch.object(portal.requests, "get", side_effect=lambda *a, **k: Resposta(405)):

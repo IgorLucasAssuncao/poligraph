@@ -53,4 +53,8 @@ public static class FontesOficiais
     /// </remarks>
     public static string PessoaJuridica(string cnpj) =>
         $"https://portaldatransparencia.gov.br/busca/pessoa-juridica/{cnpj}";
+
+    /// <summary>A Resolução nº 35/2016 do Senado, que encerrou o impeachment de 2016, no LexML.</summary>
+    /// <remarks><para>Conferido em 2026-10-23: 200, com o título "Resolução do Senado Federal nº 35 de 31/08/2016".</para></remarks>
+    public const string ImpeachmentDe2016 = "https://www.lexml.gov.br/urn/urn:lex:br:senado.federal:resolucao:2016-08-31;35";
 }

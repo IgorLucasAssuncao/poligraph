@@ -33,8 +33,13 @@ BASE = "https://portaldatransparencia.gov.br/download-de-dados"
 
 CABECALHOS = {"User-Agent": "Mozilla/5.0 (poligraph; TCC)"}
 
-TENTATIVAS = 4
+TENTATIVAS = 5
 ESPERA_ENTRE_TENTATIVAS = 20
+"""Segundos antes da primeira nova tentativa; dobra a cada uma (20, 40, 80, 160: uns 5 minutos).
+
+MEDIDO em 2026-10-23: depois dos 26 arquivos do governo de 2014 (orçamento, 12 meses de execução e 12 de cartão), o Portal
+respondeu 405 por uns 3 minutos. As esperas de 20, 40 e 60 s desistiam antes de ele liberar.
+"""
 
 REPETIR = (405, 429, 502, 503)
 """Respostas que o download tenta de novo: o Portal responde 405 quando limita a taxa."""
@@ -61,9 +66,9 @@ def baixar(recurso: str, destino: Path, *, esperar=time.sleep, repetir=REPETIR) 
         log.info("  baixando %s (tentativa %d)", url(recurso), tentativa)
         with requests.get(url(recurso), headers=CABECALHOS, stream=True, timeout=600) as resposta:
             if resposta.status_code in repetir and tentativa < TENTATIVAS:
-                log.warning("  %d do servidor; nova tentativa em %d s",
-                            resposta.status_code, ESPERA_ENTRE_TENTATIVAS * tentativa)
-                esperar(ESPERA_ENTRE_TENTATIVAS * tentativa)
+                espera = ESPERA_ENTRE_TENTATIVAS * 2 ** (tentativa - 1)
+                log.warning("  %d do servidor; nova tentativa em %d s", resposta.status_code, espera)
+                esperar(espera)
                 continue
             resposta.raise_for_status()
 

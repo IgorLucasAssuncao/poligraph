@@ -4,7 +4,7 @@ using Poligraph.Api.Services;
 namespace Poligraph.Tests.Unidade;
 
 /// <summary>
-/// O cache de leitura: calcula uma vez por hora, e não guarda o "não achei".
+/// O cache de leitura: calcula uma vez por dia, e não guarda o "não achei".
 /// </summary>
 public class TestesCacheDeLeitura
 {
