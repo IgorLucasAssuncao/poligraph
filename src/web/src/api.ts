@@ -177,6 +177,7 @@ export type ParlamentarAfim = {
   nome: string;
   partido: string;
   uf: string;
+  urlFoto?: string | null;
   /** DECISÃO: acordos e comparáveis, nunca percentual — a frase "X de Y" é montada aqui */
   acordos: number;
   comparaveis: number;

@@ -155,7 +155,7 @@ function SecaoDaCasaComponent({
   textos: Map<string, string>;
 }) {
   const [primeiro, ...demais] = casa.maisProximos;
-  const grafo = useGrafo(casa.posicaoNoGrafo !== null, casa.casa);
+  const { grafo, carregando: grafoCarregando } = useGrafo(casa.posicaoNoGrafo !== null, casa.casa);
   const [ampliado, setAmpliado] = useState(false);
 
   const nome = NOME_DA_CASA[casa.casa];
@@ -189,6 +189,13 @@ function SecaoDaCasaComponent({
         {' · '}
         <Link to="/metodologia">{T.casa.comoCalculamos}</Link>
       </p>
+
+      {grafoCarregando && (
+        <div className="resultado-grafo" aria-busy="true">
+          <h3 className="titulo-secao">{T.casa.ondeVoceCaiu}</h3>
+          <div className="grafo-reserva" style={{ height: 320 }} aria-hidden="true" />
+        </div>
+      )}
 
       {grafo && casa.posicaoNoGrafo && (
         <div className="resultado-grafo" data-tour="resultado-grafo">
@@ -243,10 +250,14 @@ function SecaoDaCasaComponent({
  * nós e milhares de arestas por casa.
  *
  * Falhar em buscar o grafo omite o desenho, nunca a tela: as listas são o resultado, e o grafo é ilustração.
+ *
+ * ATENÇÃO (2026-10-23): enquanto carrega, a seção já ocupa a altura do desenho. O grafo da Câmara é a maior resposta do site;
+ * chegando depois, ele entrava acima das listas e empurrava a página uns 540 px com a pessoa lendo.
  */
-function useGrafo(precisa: boolean, casa: ResultadoPorCasa['casa']): Grafo | null {
+function useGrafo(precisa: boolean, casa: ResultadoPorCasa['casa']): { grafo: Grafo | null; carregando: boolean } {
   const lido = useCarga(['grafo', casa, null], () => obterGrafo(casa), { ativo: precisa, manter: 2 });
-  return precisa && !lido.atualizando ? (lido.dados ?? null) : null;
+  const grafo = precisa && !lido.atualizando ? (lido.dados ?? null) : null;
+  return { grafo, carregando: precisa && !grafo && !lido.erro };
 }
 
 /**
@@ -321,7 +332,7 @@ function DestaqueComponent({
       <p className="rotulo-destaque">{T.destaque.rotulo}</p>
 
       <Link to={`/parlamentar/${parlamentar.idPessoa}`} className="destaque-link">
-        <AvatarComponent nome={nomeDePessoa(parlamentar.nome)} tamanho="grande" />
+        <AvatarComponent nome={nomeDePessoa(parlamentar.nome)} fotoUrl={parlamentar.urlFoto} tamanho="grande" />
 
         <h2>{nomeDePessoa(parlamentar.nome)}</h2>
         <p className="perfil-filiacao">
@@ -355,6 +366,7 @@ function LinhaAfimComponent({ parlamentar, respondidasNaCasa }: { parlamentar: P
       nome={parlamentar.nome}
       partido={parlamentar.partido}
       uf={parlamentar.uf}
+      fotoUrl={parlamentar.urlFoto}
       detalhe={T.linha.concordaram(parlamentar.acordos, parlamentar.comparaveis, respondidasNaCasa)}
     />
   );

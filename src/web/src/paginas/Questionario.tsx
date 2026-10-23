@@ -230,6 +230,9 @@ export function QuestionarioComponent() {
 /**
  * DECISÃO: O retorno é o painel: comparecimento, NUNCA a direção do voto.
  *
+ * ATENÇÃO (2026-10-23): o realce de passagem do mouse só acende depois que o mouse se mexe nesta pergunta. Quem respondia
+ * rápido via a pergunta seguinte entrar com o "Concordo" já realçado sob o cursor parado, e lia como resposta marcada.
+ *
  * ATENÇÃO: Sem placar registrado, calar. "0 deputados se posicionaram" seria falso:
  * o que falta é o dado, não o comparecimento.
  */
@@ -246,8 +249,9 @@ function CartaoDePerguntaComponent({
   aoResponder: (id: string, valor: Resposta) => void;
   aoVoltar?: () => void;
 }) {
+  const [mexeu, setMexeu] = useState(false);
   return (
-    <div className="cartao-pergunta" data-tour="pergunta">
+    <div className={`cartao-pergunta${mexeu ? ' mouse-mexeu' : ''}`} data-tour="pergunta" onPointerMove={() => mexeu || setMexeu(true)}>
       <p className="rotulo-pergunta">{T.voceConcorda}</p>
       <h2 className="texto-pergunta">{pergunta.texto}</h2>
 

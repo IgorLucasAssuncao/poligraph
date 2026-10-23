@@ -200,11 +200,11 @@ public class ServicoAfinidade(PoligraphDb db, CacheDeLeitura leitura)
     /// <para>MEDIDO (2026-10-09, base local): calculada a cada envio, a consulta do último voto lia 1,1 milhão de votos e levava cerca de 4 s por casa; o resultado do questionário saía em 8 a 10 s. A ficha só muda quando a ETL roda, e é a mesma para todo visitante.</para>
     /// <para>Partido e UF são os do último voto naquela casa e legislatura: a sigla de então, como no grafo.</para>
     /// </remarks>
-    private Task<Dictionary<long, (string Nome, string Partido, string Uf)>> FichasAsync(
+    private Task<Dictionary<long, (string Nome, string Partido, string Uf, string? UrlFoto)>> FichasAsync(
         TipoCasa casa, short legislatura, CancellationToken ct) =>
         _leitura.ObterAsync(("fichas-da-afinidade", casa, legislatura), () => CalcularFichasAsync(casa, legislatura, ct));
 
-    private async Task<Dictionary<long, (string Nome, string Partido, string Uf)>> CalcularFichasAsync(
+    private async Task<Dictionary<long, (string Nome, string Partido, string Uf, string? UrlFoto)>> CalcularFichasAsync(
         TipoCasa casa, short legislatura, CancellationToken ct)
     {
         var ultimos = await _db.Votos.AsNoTracking()
@@ -212,11 +212,11 @@ public class ServicoAfinidade(PoligraphDb db, CacheDeLeitura leitura)
             .GroupBy(v => v.PessoaId)
             .Select(g => g
                 .OrderByDescending(v => v.Votacao!.Data)
-                .Select(v => new { v.PessoaId, v.Pessoa!.NomeExibicao, v.PartidoNoVoto, v.UfNoVoto })
+                .Select(v => new { v.PessoaId, v.Pessoa!.NomeExibicao, v.PartidoNoVoto, v.UfNoVoto, v.Pessoa.UrlFoto })
                 .First())
             .ToListAsync(ct);
 
-        return ultimos.ToDictionary(u => u.PessoaId, u => (u.NomeExibicao, u.PartidoNoVoto, u.UfNoVoto));
+        return ultimos.ToDictionary(u => u.PessoaId, u => (u.NomeExibicao, u.PartidoNoVoto, u.UfNoVoto, u.UrlFoto));
     }
 
     /// <summary>
@@ -226,7 +226,7 @@ public class ServicoAfinidade(PoligraphDb db, CacheDeLeitura leitura)
     /// </summary>
     private static List<ParlamentarAfimDto> Montar(
         IOrderedEnumerable<ResultadoAfinidade> ordenados,
-        Dictionary<long, (string Nome, string Partido, string Uf)> fichas,
+        Dictionary<long, (string Nome, string Partido, string Uf, string? UrlFoto)> fichas,
         IReadOnlyList<RespostaCidadao> respostas,
         Dictionary<long, Dictionary<string, PosicaoParlamentar>> votosPorPessoa) =>
         ordenados
@@ -240,7 +240,7 @@ public class ServicoAfinidade(PoligraphDb db, CacheDeLeitura leitura)
 
                 return new ParlamentarAfimDto(
                     r.PessoaId, ficha.Nome ?? "", ficha.Partido ?? "", ficha.Uf ?? "",
-                    r.Acordos, r.Comparaveis, detalhe.Acordou, detalhe.Discordou);
+                    r.Acordos, r.Comparaveis, detalhe.Acordou, detalhe.Discordou, ficha.UrlFoto);
             })
             .ToList();
 

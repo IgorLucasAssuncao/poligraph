@@ -1411,6 +1411,9 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .texto-pergunta {
   margin: 0 0 2rem; font-size: var(--t-5); font-weight: 700;
   letter-spacing: -.018em; line-height: 1.28;
+  /* Três linhas reservadas: os botões ficam no mesmo lugar em toda pergunta. Colados ao texto, subiam e desciam uma linha
+     conforme a pergunta, e quem respondia rápido clicava no vazio (MEDIDO em 2026-10-23: 340 px e 373 px). */
+  min-height: calc(3 * 1.28em);
 }
 
 .opcoes-grandes { display: flex; flex-direction: column; gap: .6rem; }
@@ -1420,7 +1423,8 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   border: 1.5px solid var(--borda-forte); border-radius: var(--raio);
   background: transparent; color: inherit;
 }
-.opcao-grande:hover:not(:disabled) { border-color: var(--realce); background: var(--realce-fraco); }
+.cartao-pergunta.mouse-mexeu .opcao-grande:hover:not(:disabled),
+.opcao-grande:focus-visible { border-color: var(--realce); background: var(--realce-fraco); }
 
 .opcao-grande:disabled { cursor: default; }
 .opcao-grande.opcao-ativa {
@@ -3061,12 +3065,14 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 .busca-cabecalho .busca-abrir { display: none; }
 
 /* Opção 1 das arestas (2026-10-03): de longe só os pontos; a dica diz como ver as ligações. */
+/* No canto inferior esquerdo, longe dos botões de zoom: centralizada, ela passava por baixo deles no grafo estreito do
+   resultado (2026-10-23). O canto é do painel de foco, mas a dica some quando há um ponto em foco. */
 .grafo-dica-ligacoes {
-  position: absolute; left: 50%; bottom: .75rem; transform: translateX(-50%); z-index: 3; margin: 0;
+  position: absolute; left: .75rem; bottom: .75rem; z-index: 3; margin: 0;
   padding: .3rem .7rem; border-radius: var(--raio);
   background: color-mix(in srgb, var(--fundo) 88%, transparent); border: 1px solid var(--borda);
   font-size: var(--t-1); color: var(--suave); pointer-events: none;
-  width: max-content; max-width: min(60%, 24rem); text-align: center;
+  width: max-content; max-width: min(calc(100% - 13rem), 24rem); text-align: left;
 }
 
 /* ═══ GRAFO DO DINHEIRO, na aba Emendas da ficha (Pendência 83) ═══
