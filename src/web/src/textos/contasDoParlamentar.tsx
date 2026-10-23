@@ -123,6 +123,13 @@ export const TEXTOS_DAS_CONTAS = {
     verTodos: (total: number) => `Ver os ${total} lançamentos`,
   },
 
+  fitasDasEmendas: {
+    titulo: 'Por onde passou o dinheiro dessas emendas',
+    ajuda: (total: string, ano: number) =>
+      `${total} pagos a quem recebeu as emendas de ${ano}. Cada fita vai do tipo da emenda, pela área do gasto, até quem recebeu; a largura é o valor.`,
+    rotulo: (total: string, ano: number) => `Gráfico de fitas: ${total} das emendas de ${ano}, por tipo, área e quem recebeu`,
+  },
+
   campanha: {
     vazio:
       'Nenhuma receita de campanha desta pessoa na base. A base tem as campanhas das eleições gerais de 2010 a 2022 e das municipais de 2020 e 2024. A de 2026 chega quando o TSE fechar a prestação de contas, depois do segundo turno.',

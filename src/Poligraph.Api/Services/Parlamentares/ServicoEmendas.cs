@@ -133,7 +133,7 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
         {
             return new EmendasDoParlamentarDto(
                 0, 0, 0, 0, 0, [], [], new FavorecidosDaEmendaDto(0, 0, 0, 0, null, 0, []), [],
-                new ConveniosDaEmendaDto(0, []), new CidadesDaEmendaDto(0, []));
+                new ConveniosDaEmendaDto(0, []), new CidadesDaEmendaDto(0, []), []);
         }
 
         var doAno = EmendasDoAno(idPessoa, anoDaEmenda.Value);
@@ -191,7 +191,34 @@ public class ServicoEmendas(PoligraphDb db, CacheDeLeitura leitura)
             Favorecidos: await FavorecidosAsync(idPessoa, anoDaEmenda.Value, codigos, ct),
             PagamentosPorMes: await PagamentosPorMesAsync(codigos, ct),
             Convenios: await ConveniosAsync(codigos, ct),
-            Cidades: await CidadesAsync(codigos, ct));
+            Cidades: await CidadesAsync(codigos, ct),
+            Caminhos: await CaminhosAsync(codigos, ct));
+    }
+
+    /// <summary>Os pagamentos das emendas do ano pelos caminhos: tipo, área e grupo de quem recebeu. O gráfico de fitas da aba.</summary>
+    /// <remarks>
+    /// <para>Os mesmos pagamentos de <see cref="FavorecidosAsync"/>: a soma fecha com o "quem recebeu" da ficha. A campanha fica de fora: o dinheiro dela não vira emenda, e uma fita ligando os dois afirmaria o que a fonte não diz.</para>
+    /// </remarks>
+    private async Task<IReadOnlyList<CaminhoDaEmendaDto>> CaminhosAsync(IQueryable<string> codigos, CancellationToken ct)
+    {
+        var emendas = _db.Emendas.AsNoTracking()
+            .Where(e => codigos.Contains(e.CodigoEmenda))
+            .GroupBy(e => e.CodigoEmenda)
+            .Select(g => new { Codigo = g.Key, Tipo = g.Max(e => e.Tipo), Funcao = g.Max(e => e.Funcao) });
+
+        var somas = await (
+                from f in _db.EmendasFavorecidos.AsNoTracking().Where(f => codigos.Contains(f.CodigoEmenda))
+                join e in emendas on f.CodigoEmenda equals e.Codigo into daEmenda
+                from e in daEmenda.DefaultIfEmpty()
+                group f.Valor by new { e.Tipo, e.Funcao, Favorecido = f.Tipo, f.Intermediario, f.NaturezaJuridica } into g
+                select new { g.Key.Tipo, g.Key.Funcao, g.Key.Favorecido, g.Key.Intermediario, g.Key.NaturezaJuridica, Valor = g.Sum() })
+            .ToListAsync(ct);
+
+        return [.. somas
+            .GroupBy(s => (s.Tipo, s.Funcao, Recebedor: ServicoMapaDeEmendas.GrupoDoRecebedorDe(s.Favorecido, s.Intermediario, s.NaturezaJuridica)))
+            .Select(g => new CaminhoDaEmendaDto(g.Key.Tipo, g.Key.Funcao, g.Key.Recebedor, g.Sum(s => s.Valor)))
+            .Where(c => c.Valor > 0)
+            .OrderByDescending(c => c.Valor)];
     }
 
     /// <summary>O ano pedido; sem ele, o último ano fechado com emenda do parlamentar.</summary>

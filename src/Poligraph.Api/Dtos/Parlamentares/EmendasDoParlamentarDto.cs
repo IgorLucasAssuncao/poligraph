@@ -26,7 +26,8 @@ public record EmendasDoParlamentarDto(
     FavorecidosDaEmendaDto Favorecidos,
     IReadOnlyList<PagamentoPorMesDto> PagamentosPorMes,
     ConveniosDaEmendaDto Convenios,
-    CidadesDaEmendaDto Cidades);
+    CidadesDaEmendaDto Cidades,
+    IReadOnlyList<CaminhoDaEmendaDto> Caminhos);
 
 /// <summary>
 /// As cidades que receberam, pela sede de quem recebeu — CNPJ → TOM → IBGE, chave forte.

@@ -66,9 +66,13 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
             });
         await Db.SaveChangesAsync();
 
-        var favorecidos = (await LerAsync(idPessoa)).Favorecidos;
+        var emendas = await LerAsync(idPessoa);
+        var favorecidos = emendas.Favorecidos;
 
         Assert.Equal(960m, favorecidos.Recebido);
+        Assert.Equal(favorecidos.Recebido, emendas.Caminhos!.Sum(c => c.Valor));
+        var porRecebedor = emendas.Caminhos!.GroupBy(c => c.Recebedor).ToDictionary(g => g.Key, g => g.Sum(c => c.Valor));
+        Assert.Equal((500m, 50m, 10m, 400m), (porRecebedor["VIA_BANCO"], porRecebedor["PESSOA"], porRecebedor["SEM_INFORMACAO"], porRecebedor["EMPRESA"]));
         Assert.Equal(500m, favorecidos.ViaIntermediario);
         Assert.Equal(50m, favorecidos.APessoas);
         Assert.Equal(10m, favorecidos.SemIdentificacao);
@@ -257,9 +261,12 @@ public class TestesDestinoDasEmendas(FixturePostgres postgres) : BaseIntegracao(
 
     private record CidadesLidas(int Quantidade, IReadOnlyList<CidadeLida> Maiores);
 
+    private record CaminhoLido(string? Tipo, string? Area, string Recebedor, decimal Valor);
+
     private record EmendasLidas(
         int Quantidade, decimal Empenhado, FavorecidosLidos Favorecidos,
-        IReadOnlyList<MesLido> PagamentosPorMes, ConveniosLidos Convenios, CidadesLidas Cidades);
+        IReadOnlyList<MesLido> PagamentosPorMes, ConveniosLidos Convenios, CidadesLidas Cidades,
+        IReadOnlyList<CaminhoLido>? Caminhos = null);
 
     private async Task<long> SemearEmendaAsync()
     {

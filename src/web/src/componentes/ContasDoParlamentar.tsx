@@ -6,13 +6,14 @@ import {
   listarLancamentos,
   obterGastos,
   obterPatrimonio,
+  type CaminhoDaEmenda,
   type CidadesDaEmenda,
   type DeclaracaoDeBens,
   type FinanciamentoDeCampanha,
 } from '../api';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { FONTES } from '../fontes';
-import { dataCurta, minusculas, noMeioDaFrase, nomeDaCategoriaDaCota, nomeProprio, periodoDaLegislatura, reais } from '../formato';
+import { dataCurta, minusculas, noMeioDaFrase, nomeDaCategoriaDaCota, nomeProprio, periodoDaLegislatura, reais, reaisCompacto } from '../formato';
 import { BotaoBaixarCsvComponent } from './BotaoBaixarCsv';
 import { BotaoMostrarMaisComponent } from './BotaoMostrarMais';
 import { ConveniosComponent, EmendasUmaAUmaComponent, QuandoFoiPagoComponent, QuemRecebeuComponent } from './DestinoDasEmendas';
@@ -25,6 +26,9 @@ import { LinhaDeValorComponent, OpcoesComponent } from './Dados';
 import { ComposicaoComponent } from './Graficos';
 import { partesComOutros } from './partesComOutros';
 import { GrafoDoDinheiroComponent } from './GrafoDoDinheiro';
+import { GraficoDeFitasComponent } from './GraficoDeFitas';
+import { fitasDasEmendas } from './fitasDasEmendas';
+import { TEXTOS_DAS_EMENDAS } from '../textos/emendas';
 import { LOCALIDADE_MULTIPLA, LOCALIDADE_NACIONAL, SUFIXO_DE_ESTADO, TIPOS_DE_BEM_A_VISTA } from '../constantes';
 import { TEXTOS_DAS_CONTAS as T } from '../textos/contasDoParlamentar';
 
@@ -218,6 +222,10 @@ export function AbaEmendasComponent({
           </span>
         </p>
       </div>
+
+      {emendas.caminhos && emendas.caminhos.length > 0 && (
+        <FitasDasEmendasDoAnoComponent caminhos={emendas.caminhos} total={emendas.favorecidos.recebido} anoDaEmenda={emendas.anoDaEmenda} />
+      )}
 
       <div className="duas-colunas">
         <div>
@@ -761,4 +769,31 @@ function quandoFoi(data: string | null, mes: number, anoDaDespesa: number | null
   const ano = Number(data.slice(0, 4));
   if (anoDaDespesa == null || Math.abs(ano - anoDaDespesa) <= 1) return dataCurta(data);
   return T.lancamentos.dataImpossivel(mes, `${data.slice(8, 10)}/${data.slice(5, 7)}/${data.slice(0, 4)}`);
+}
+
+/**
+ * Os pagamentos das emendas do ano em fitas: tipo, área e quem recebeu. As mesmas colunas da página de emendas.
+ *
+ * DECISÃO (autor, 2026-10-23): a campanha não entra nas fitas. O dinheiro dela não vira emenda; o grafo do dinheiro mostra os
+ * dois lados, cada um com o seu ano, e diz isso.
+ */
+function FitasDasEmendasDoAnoComponent({ caminhos, total, anoDaEmenda }: { caminhos: CaminhoDaEmenda[]; total: number; anoDaEmenda: number }) {
+  const F = T.fitasDasEmendas;
+  const { nos, fitas } = fitasDasEmendas(caminhos);
+  return (
+    <section className="fitas-da-ficha" aria-labelledby="fitas-da-ficha-titulo">
+      <h3 id="fitas-da-ficha-titulo" className="titulo-secao">
+        {F.titulo}
+      </h3>
+      <p className="ajuda">{F.ajuda(reaisCompacto(total), anoDaEmenda)}</p>
+      <GraficoDeFitasComponent
+        rotulo={F.rotulo(reaisCompacto(total), anoDaEmenda)}
+        colunas={TEXTOS_DAS_EMENDAS.caminhos.colunas}
+        nos={nos}
+        fitas={fitas}
+        formatar={reaisCompacto}
+        altura={380}
+      />
+    </section>
+  );
 }

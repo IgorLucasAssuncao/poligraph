@@ -1,17 +1,15 @@
-import { obterCaminhosDasEmendas, type CaminhoDaEmenda, type Periodo } from '../api';
+import { obterCaminhosDasEmendas, type Periodo } from '../api';
 import { baixarCsv } from '../exportar';
 import { reaisCompacto } from '../formato';
 import { TEXTOS_DAS_EMENDAS } from '../textos/emendas';
 import { BotaoBaixarCsvComponent } from './BotaoBaixarCsv';
 import { EsqueletoDeTextoComponent } from './Esqueleto';
 import { GraficoDeFitasComponent } from './GraficoDeFitas';
-import { montarColunas } from './colunasDasFitas';
+import { fitasDasEmendas, rotuloDoTipo } from './fitasDasEmendas';
 import { useCarga } from './useCarga';
 
 const T = TEXTOS_DAS_EMENDAS.caminhos;
 
-/** Quantas áreas ganham caixa própria; as outras se juntam numa só, que diz quantas são. */
-const AREAS_A_VISTA = 7;
 /** Quantos caminhos a tabela mostra; o arquivo leva todos. */
 const CAMINHOS_NA_TABELA = 20;
 
@@ -30,7 +28,7 @@ export function CaminhosDasEmendasComponent({ periodo, textoDoPeriodo }: { perio
   if (!lida.dados) return <EsqueletoDeTextoComponent rotulo={T.carregando} />;
   if (lida.dados.caminhos.length === 0) return null;
 
-  const { nos, fitas } = montarFitas(lida.dados.caminhos);
+  const { nos, fitas } = fitasDasEmendas(lida.dados.caminhos);
   const total = reaisCompacto(lida.dados.total);
   const ordenados = [...lida.dados.caminhos].sort((a, b) => b.valor - a.valor);
 
@@ -86,17 +84,4 @@ export function CaminhosDasEmendasComponent({ periodo, textoDoPeriodo }: { perio
       </details>
     </section>
   );
-}
-
-function rotuloDoTipo(tipo: string | null): string {
-  return tipo ? (T.tipos[tipo] ?? tipo) : T.semTipo;
-}
-
-/** As três colunas: tipo → área → quem recebeu. As áreas menores se juntam numa caixa, e cada coluna soma o mesmo total. */
-function montarFitas(caminhos: CaminhoDaEmenda[]) {
-  return montarColunas(caminhos, (c) => c.valor, [
-    { chave: (c) => c.tipo ?? '', rotulo: (tipo) => rotuloDoTipo(tipo || null) },
-    { chave: (c) => c.area ?? T.semArea, rotulo: (area) => area, aVista: AREAS_A_VISTA, resto: T.outrasAreas },
-    { chave: (c) => c.recebedor, rotulo: (r) => T.recebedores[r as CaminhoDaEmenda['recebedor']] },
-  ]);
 }

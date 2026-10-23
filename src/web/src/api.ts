@@ -787,6 +787,8 @@ export type EmendasDoParlamentar = {
   pagamentosPorMes: PagamentoPorMes[];
   convenios: ConveniosDaEmenda;
   cidades: CidadesDaEmenda;
+  /** Os pagamentos das emendas do ano por tipo, área e quem recebeu; somam o mesmo que `favorecidos.recebido`. */
+  caminhos?: CaminhoDaEmenda[];
 };
 
 /** As cidades que receberam, pela sede de quem recebeu — não pela localidade declarada. */

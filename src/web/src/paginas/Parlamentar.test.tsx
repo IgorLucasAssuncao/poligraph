@@ -323,6 +323,20 @@ describe('contas — quem recebeu a emenda', () => {
 
     expect(await tela()).toMatch(/financiado por 23 emendas/);
   });
+
+  it('as fitas das emendas do ano fecham com o que quem recebeu recebeu', async () => {
+    vi.mocked(api.obterEmendas).mockResolvedValue({
+      ...EMENDAS,
+      caminhos: [
+        { tipo: 'Emenda Individual - Transferências com Finalidade Definida', area: 'Saúde', recebedor: 'EMPRESA', valor: 500_000 },
+        { tipo: 'Emenda Individual - Transferências Especiais', area: 'Encargos Especiais', recebedor: 'VIA_BANCO', valor: 200_000 },
+      ],
+    });
+    await abrirAba('Emendas');
+
+    expect(await screen.findByRole('heading', { name: 'Por onde passou o dinheiro dessas emendas' })).toBeDefined();
+    expect(screen.getByRole('img', { name: /R\$ 700 mil das emendas de 2025, por tipo, área e quem recebeu/ })).toBeDefined();
+  });
 });
 
 /**
