@@ -463,3 +463,15 @@ def test_layout_antigo_sai_com_os_nomes_do_atual(tmp_path):
     assert (registro["DS_CARGO"], registro["VR_RECEITA"], registro["DS_FONTE_RECEITA"]) == (
         "Deputado Federal", "1000,50", "FUNDO PARTIDARIO")
 
+
+def test_layout_antigo_traz_a_candidatura_com_a_uf_como_ue():
+    """Sem o sequencial e a UE, o governador e o deputado estadual de 2010 e 2014 não casavam pela candidatura."""
+    registro = receitas.traduzir_layout_antigo({"Sequencial Candidato": "250000001234", "UF": "GO", "Cargo": "Governador"})
+
+    assert (registro["SG_UE"], registro["SQ_CANDIDATO"]) == ("GO", "250000001234")
+    linhas = receitas.para_linhas(
+        [{**registro, "VR_RECEITA": "10,00", "NR_CPF_CNPJ_DOADOR": "12345678000190"}], {}, 2014,
+        por_candidatura={("GO", "250000001234"): 7},
+    )
+    assert [l["pessoa_id"] for l in linhas] == [7]
+

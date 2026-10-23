@@ -137,6 +137,7 @@ COLUNAS_ANTIGAS = {
     "Fonte recurso": "DS_FONTE_RECEITA",
     "Tipo receita": "DS_ORIGEM_RECEITA",
     "Nome do doador": "NM_DOADOR",
+    "Sequencial Candidato": "SQ_CANDIDATO",
 }
 """Pendência 53. MEDIDO em 2026-10-02: as prestações de contas de 2014 e de 2010 têm as nove
 colunas que este módulo usa, com o nome por extenso. A de 2006 é outra, sem o CPF do
@@ -146,11 +147,16 @@ candidato, e fica fora."""
 def traduzir_layout_antigo(registro: dict) -> dict:
     """Uma linha do layout antigo com os nomes de coluna do atual, e a fonte no vocabulário de hoje.
 
+    A UE da candidatura é a UF, ou `BR` para presidente: o layout antigo só existe em eleição geral, e sem ela a
+    ponte pela candidatura (`por_candidatura`) não casava. MEDIDO em 2026-10-23: em 2010 e 2014, nenhum governador
+    nem deputado estadual com campanha, e os senadores sem `cpf_hash` de fora.
+
     ATENÇÃO: A fonte importa para a tela: o site reconhece os fundos por `FUNDO PARTIDARIO` e
     `FUNDO ESPECIAL`. Em 2010 o arquivo traz "Fundo Partidáo", com a codificação quebrada; o
     começo da palavra basta para reconhecer.
     """
     traduzido = {novo: registro.get(antigo) for antigo, novo in COLUNAS_ANTIGAS.items()}
+    traduzido["SG_UE"] = traduzido.get("SG_UF")
     traduzido["DS_FONTE_RECEITA"] = _fonte_no_vocabulario_atual(traduzido.get("DS_FONTE_RECEITA"))
     return traduzido
 
@@ -212,9 +218,12 @@ def para_linhas(
 ) -> list[dict]:
     """Converte em linhas de `receitas_de_campanha`, guardando só quem casa por CPF ou pela candidatura eleita.
 
-    `por_candidatura` é (`SG_UE`, `SQ_CANDIDATO`) → pessoa, dos mandatos de quem não é do Congresso
-    (Pendência 90): governador, deputado estadual e vices. A candidatura já diz o cargo, e o filtro de
-    cargo e de casa não vale para ela.
+    `por_candidatura` é (`SG_UE`, `SQ_CANDIDATO`) → pessoa, de todos os mandatos da eleição (Pendência 90). A
+    candidatura já diz o cargo, e o filtro de cargo e de casa não vale para ela.
+
+    RISCO: antes, só os mandatos de quem nunca esteve no Congresso. O ex-parlamentar eleito governador ou prefeito caía
+    no CPF, que aceita só o cargo da casa dele: MEDIDO em 2026-10-23, 8 dos 27 governadores de 2022 sem campanha
+    (Caiado, Ratinho Junior, Fátima Bezerra), e os senadores de 2010 e 2014 sem `cpf_hash` com 33% e 23%.
 
     Descarta, e por quê:
 

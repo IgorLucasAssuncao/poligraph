@@ -2053,11 +2053,8 @@ def _fundo(conexao: psycopg.Connection, eleicao: int, arquivo: Path | None) -> N
     )
 
     casas = persistencia.casa_por_pessoa(conexao)
-    fora_do_congresso = persistencia.pessoas_fora_do_congresso(conexao)
-    por_candidatura = {
-        c: p for c, p in persistencia.candidaturas_dos_mandatos(conexao, eleicao).items() if p in fora_do_congresso
-    }
-    log.info("  %d candidaturas eleitas de fora do Congresso (Pendência 90)", len(por_candidatura))
+    por_candidatura = persistencia.candidaturas_dos_mandatos(conexao, eleicao)
+    log.info("  %d candidaturas eleitas (Pendência 90)", len(por_candidatura))
 
     todas: list[dict] = []
     for nome in nomes:

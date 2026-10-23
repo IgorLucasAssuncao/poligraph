@@ -125,7 +125,7 @@ export const TEXTOS_DAS_CONTAS = {
 
   campanha: {
     vazio:
-      'Nenhuma receita de campanha desta pessoa na base. A base tem as campanhas de 2018 a 2024 de todos os cargos, e as de 2010 e 2014 só de deputados federais e senadores. A de 2026 chega quando o TSE fechar a prestação de contas, depois do segundo turno.',
+      'Nenhuma receita de campanha desta pessoa na base. A base tem as campanhas das eleições gerais de 2010 a 2022 e das municipais de 2020 e 2024. A de 2026 chega quando o TSE fechar a prestação de contas, depois do segundo turno.',
     rotulo: 'Campanha',
     rotuloDaProcedencia: (anoDaEleicao: number) => `Campanha de ${anoDaEleicao}`,
     resposta: (total: ReactNode, anoDaEleicao: number, publico: string, porcento: string): ReactNode => (
