@@ -512,7 +512,7 @@ function LancamentosDaCotaComponent({ idPessoa, anoDaDespesa, total }: { idPesso
               <span className="gasto-nome">
                 {l.fornecedor ?? T.lancamentos.fornecedorNaoInformado}
                 <small>
-                  {l.data ? dataCurta(l.data) : T.lancamentos.mes(l.mes)} · {nomeDaCategoriaDaCota(l.categoria)}
+                  {quandoFoi(l.data, l.mes, anoDaDespesa)} · {nomeDaCategoriaDaCota(l.categoria)}
                 </small>
               </span>
               <span className="lancamento-fim">
@@ -748,4 +748,17 @@ function SeletorDeAnoDaCotaComponent({
       aoEscolher={aoEscolher}
     />
   );
+}
+
+/**
+ * A data da nota, ou o mês quando a data falta ou é impossível.
+ *
+ * MEDIDO em 2026-10-23: 56 lançamentos da cota com a data da nota fora de qualquer ano possível, de 10/10/0023 a 08/05/5201.
+ * O valor e o mês vêm de outras colunas e estão certos; a data errada fica à vista, como a Câmara publicou (regra 5).
+ */
+function quandoFoi(data: string | null, mes: number, anoDaDespesa: number | null): string {
+  if (!data) return T.lancamentos.mes(mes);
+  const ano = Number(data.slice(0, 4));
+  if (anoDaDespesa == null || Math.abs(ano - anoDaDespesa) <= 1) return dataCurta(data);
+  return T.lancamentos.dataImpossivel(mes, `${data.slice(8, 10)}/${data.slice(5, 7)}/${data.slice(0, 4)}`);
 }

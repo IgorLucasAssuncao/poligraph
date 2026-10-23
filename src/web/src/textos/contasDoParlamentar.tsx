@@ -118,6 +118,7 @@ export const TEXTOS_DAS_CONTAS = {
     colunas: ['Data', 'Mês', 'Categoria', 'Fornecedor', 'Valor', 'Documento fiscal'],
     fornecedorNaoInformado: 'Fornecedor não informado',
     mes: (mes: number) => `mês ${mes}`,
+    dataImpossivel: (mes: number, publicada: string) => `mês ${mes} (a Câmara publicou a data da nota como ${publicada})`,
     notaFiscal: 'nota fiscal',
     verTodos: (total: number) => `Ver os ${total} lançamentos`,
   },
