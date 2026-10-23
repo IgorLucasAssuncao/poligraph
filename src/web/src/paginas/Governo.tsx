@@ -1,4 +1,5 @@
 import { useMemo, type ReactNode } from 'react';
+import { GraficoDeFitasComponent, type Fita, type NoDasFitas } from '../componentes/GraficoDeFitas';
 import { AtualizandoComponent } from '../componentes/Atualizando';
 import { useCarga } from '../componentes/useCarga';
 import { useSearchParams } from 'react-router-dom';
@@ -111,6 +112,7 @@ export function GovernoComponent({ secao = 'orcamento' }: { secao?: 'orcamento' 
               )}
               <CadaCemReaisComponent dados={dados} />
               <DeOndeVeioComponent arrecadacao={dados.arrecadacao} />
+              <FitasDoGovernoComponent dados={dados} />
               {dados.gestoes.map((g) => (
                 <PerfilDaGestaoComponent key={`${g.anoDaEleicao}-${g.primeiroAno}-${g.presidente.nomeDeUrna}`} gestao={g} />
               ))}
@@ -316,6 +318,113 @@ function CadaCemReaisComponent({ dados }: { dados: DadosDoGoverno }) {
 }
 
 /** As origens do Portal em três grupos que se reconhecem. */
+/** Quantas áreas e quantas origens ganham caixa própria; as outras se juntam numa só, que diz quantas são. */
+const AREAS_NAS_FITAS = 8;
+const ORIGENS_NAS_FITAS = 5;
+
+/**
+ * O caminho do dinheiro em fitas, em dois desenhos que não se ligam: para onde foi o gasto e de onde veio a arrecadação.
+ *
+ * DECISÃO (autor, 2026-10-23): dois desenhos, e não um. As regras da página continuam: sem saldo entre o que entrou e o que
+ * saiu, empréstimo fora da arrecadação e rolagem fora do gasto. Um desenho único ligaria o imposto a um gasto, e a fonte não
+ * marca destino para o imposto.
+ *
+ * O gasto é o mesmo da lista "de cada R$ 100": as áreas (pago e restos a pagar pagos), os repasses, os juros e os outros
+ * encargos. A arrecadação é a mesma de "de onde veio": as receitas correntes, por origem. O que falta para fechar com o
+ * arrecadado vira caixa própria; a origem negativa (estorno), que fita não desenha, é dita com o valor.
+ *
+ * Os avisos da rolagem e do empréstimo ficam nas seções de cima, uma vez só.
+ */
+function FitasDoGovernoComponent({ dados }: { dados: DadosDoGoverno }) {
+  const F = T.fitas;
+  const C = T.cadaCem;
+  const { areas, encargos } = dados.despesa;
+
+  const porArea = areas
+    .map((a) => ({ nome: a.nome, valor: a.pago + a.restosAPagarPagos }))
+    .filter((a) => a.valor > 0)
+    .sort((a, b) => b.valor - a.valor);
+  const areasAVista = porArea.length > AREAS_NAS_FITAS + 1 ? porArea.slice(0, AREAS_NAS_FITAS) : porArea;
+  const restoDasAreas = porArea.slice(areasAVista.length);
+  const naAreas = porArea.reduce((s, a) => s + a.valor, 0);
+  const encargosNasFitas = [
+    { id: 'repasses', rotulo: C.repasses, valor: totalDoEncargo(encargos, 'TRANSFERENCIAS') },
+    { id: 'juros', rotulo: C.juros, valor: totalDoEncargo(encargos, 'SERVICO_DA_DIVIDA') },
+    { id: 'outros', rotulo: F.outrosEncargos, valor: totalDoEncargo(encargos, 'OUTROS') },
+  ].filter((e) => e.valor > 0);
+  const gastou = naAreas + encargosNasFitas.reduce((s, e) => s + e.valor, 0);
+
+  const nosDoGasto: NoDasFitas[] = [
+    { id: 'gastou', rotulo: F.gastou, coluna: 0 },
+    { id: 'areas', rotulo: F.areasDoGoverno, coluna: 1 },
+    ...encargosNasFitas.map((e) => ({ id: e.id, rotulo: e.rotulo, coluna: 2 })),
+    ...areasAVista.map((a) => ({ id: `area:${a.nome}`, rotulo: a.nome, coluna: 2 })),
+    ...(restoDasAreas.length > 0 ? [{ id: 'area:resto', rotulo: F.outrasAreas(restoDasAreas.length), coluna: 2 }] : []),
+  ];
+  const fitasDoGasto: Fita[] = [
+    { de: 'gastou', para: 'areas', valor: naAreas },
+    ...encargosNasFitas.map((e) => ({ de: 'gastou', para: e.id, valor: e.valor })),
+    ...areasAVista.map((a) => ({ de: 'areas', para: `area:${a.nome}`, valor: a.valor })),
+    ...(restoDasAreas.length > 0 ? [{ de: 'areas', para: 'area:resto', valor: restoDasAreas.reduce((s, a) => s + a.valor, 0) }] : []),
+  ].filter((f) => f.valor > 0);
+
+  const origens = dados.arrecadacao.porOrigem.filter((o) => o.realizada > 0).sort((a, b) => b.realizada - a.realizada);
+  const origensAVista = origens.length > ORIGENS_NAS_FITAS + 1 ? origens.slice(0, ORIGENS_NAS_FITAS) : origens;
+  const restoDasOrigens = origens.slice(origensAVista.length);
+  const nosDaArrecadacao: NoDasFitas[] = [
+    ...origensAVista.map((o) => ({ id: `origem:${o.origem}`, rotulo: o.origem, coluna: 0 })),
+    ...(restoDasOrigens.length > 0 ? [{ id: 'origem:resto', rotulo: F.outrasOrigens(restoDasOrigens.length), coluna: 0 }] : []),
+    { id: 'arrecadou', rotulo: F.arrecadou, coluna: 1 },
+  ];
+  const fitasDaArrecadacao: Fita[] = [
+    ...origensAVista.map((o) => ({ de: `origem:${o.origem}`, para: 'arrecadou', valor: o.realizada })),
+    ...(restoDasOrigens.length > 0
+      ? [{ de: 'origem:resto', para: 'arrecadou', valor: restoDasOrigens.reduce((s, o) => s + o.realizada, 0) }]
+      : []),
+  ];
+  const diferenca = dados.arrecadacao.arrecadado - origens.reduce((s, o) => s + o.realizada, 0);
+  if (diferenca > 0.5) {
+    nosDaArrecadacao.splice(nosDaArrecadacao.length - 1, 0, { id: 'origem:demais', rotulo: F.demais, coluna: 0 });
+    fitasDaArrecadacao.push({ de: 'origem:demais', para: 'arrecadou', valor: diferenca });
+  }
+
+  if (gastou <= 0 && origens.length === 0) return null;
+
+  return (
+    <section className="governo-secao" aria-labelledby="fitas-do-governo">
+      <h2 id="fitas-do-governo">{F.titulo}</h2>
+      <p className="ajuda">{F.ajuda}</p>
+      {gastou > 0 && (
+        <>
+          <h3 className="titulo-secao">{F.paraOndeFoi}</h3>
+          <GraficoDeFitasComponent
+            rotulo={F.rotuloDoGasto(reaisCompacto(gastou))}
+            colunas={F.colunasDoGasto}
+            nos={nosDoGasto}
+            fitas={fitasDoGasto}
+            formatar={reaisCompacto}
+            altura={440}
+          />
+        </>
+      )}
+      {origens.length > 0 && (
+        <>
+          <h3 className="titulo-secao">{F.deOndeVeio}</h3>
+          <GraficoDeFitasComponent
+            rotulo={F.rotuloDaArrecadacao(reaisCompacto(dados.arrecadacao.arrecadado))}
+            colunas={F.colunasDaArrecadacao}
+            nos={nosDaArrecadacao}
+            fitas={fitasDaArrecadacao}
+            formatar={reaisCompacto}
+            altura={300}
+          />
+          {diferenca < -0.5 && <p className="nota-curta">{F.negativas(reaisCompacto(-diferenca))}</p>}
+        </>
+      )}
+    </section>
+  );
+}
+
 function DeOndeVeioComponent({ arrecadacao }: { arrecadacao: Arrecadacao }) {
   const D = T.deOndeVeio;
   const realizadaNaOrigem = (origem: string) => arrecadacao.porOrigem.find((o) => o.origem === origem)?.realizada ?? 0;

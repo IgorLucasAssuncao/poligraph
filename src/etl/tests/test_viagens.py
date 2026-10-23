@@ -32,7 +32,8 @@ def trecho(pais: str, uf: str, cidade: str, diarias: str = "1,50", identificador
 @pytest.mark.parametrize(
     ("bruto", "tipo"),
     [("DIÁRIAS", "DIARIAS"), ("DIRIAS", "DIARIAS"), ("PASSAGEM", "PASSAGENS"), ("RESTITUIÇÃO", "RESTITUICAO"),
-     ("RESTITUIO", "RESTITUICAO"), ("Serviço correlato: seguro", "SEGURO"), ("Servio correlato: seguro", "SEGURO")],
+     ("RESTITUIO", "RESTITUICAO"), ("Serviço correlato: seguro", "SEGURO"), ("Servio correlato: seguro", "SEGURO"),
+     ("Taxa de agenciamento", "PASSAGENS")],
 )
 def test_tipo_reconhece_a_grafia_quebrada_do_arquivo(bruto, tipo):
     """MEDIDO (2026-10-09): o arquivo de 2026 traz as duas grafias de cada tipo acentuado."""

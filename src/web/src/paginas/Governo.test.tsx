@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import { reaisCompacto } from '../formato';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AreaDaDespesa, Governo as DadosDoGoverno } from '../api';
@@ -303,6 +304,22 @@ describe('comparar gestões', () => {
     expect(within(linha2022).getByText('Jair Bolsonaro')).toBeDefined();
     expect(within(screen.getByRole('rowheader', { name: '2023' }).closest('tr')!).getByText('Lula')).toBeDefined();
     expect(screen.getByText(/sem correção pela inflação/)).toBeDefined();
+  });
+
+  it('o caminho do dinheiro vem em dois desenhos separados, e o gasto fecha com a lista de cada R$ 100', async () => {
+    renderizar();
+
+    expect(await screen.findByRole('heading', { name: 'O caminho do dinheiro, em fitas' })).toBeDefined();
+    expect(screen.getByRole('heading', { name: 'Para onde foi' })).toBeDefined();
+    expect(screen.getByRole('heading', { name: 'De onde veio' })).toBeDefined();
+    const caixa = (nome: string) =>
+      [...document.querySelectorAll('.fitas-caixa title')].map((t) => (t.textContent ?? '').replace(/ /g, ' ')).find((t) => t.startsWith(`${nome}:`));
+    const { areas, encargos } = DE_2025.despesa;
+    const gastou =
+      areas.reduce((s, a) => s + a.pago + a.restosAPagarPagos, 0) +
+      encargos.filter((e) => e.grupo !== 'REFINANCIAMENTO').reduce((s, e) => s + e.pago + e.restosAPagarPagos, 0);
+    expect(caixa('Gastou')).toBe(`Gastou: ${reaisCompacto(gastou).replace(/ /g, ' ')}`);
+    expect(caixa('Arrecadou')).toBe(`Arrecadou: ${reaisCompacto(DE_2025.arrecadacao.arrecadado).replace(/ /g, ' ')}`);
   });
 
   it('o impeachment de 2016 divide a chapa: cada parte diz a troca, a fonte e que 2016 conta nas duas', async () => {

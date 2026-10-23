@@ -52,8 +52,14 @@ RECURSO = "viagens/{ano}"
 
 MEMBROS = {"pagamento": "Pagamento", "viagem": "Viagem", "trecho": "Trecho"}
 
-TIPOS = (("DIARIAS", "DI"), ("PASSAGENS", "PASSAG"), ("RESTITUICAO", "RESTITU"), ("SEGURO", "SERVI"))
-"""O começo de cada tipo, sem acento: o arquivo também traz o tipo com a letra acentuada faltando."""
+TIPOS = (
+    ("DIARIAS", "DI"), ("PASSAGENS", "PASSAG"), ("PASSAGENS", "TAXA DE AGENCIAMENTO"), ("RESTITUICAO", "RESTITU"), ("SEGURO", "SERVI"),
+)
+"""O começo de cada tipo, sem acento: o arquivo também traz o tipo com a letra acentuada faltando.
+
+DECISÃO (2026-10-23): a taxa de agenciamento, que só aparece nos anos antigos, é o que se paga à agência para emitir a
+passagem, e soma com as passagens. MEDIDO: R$ 22 mil em 2015, contra R$ 372 mi de passagens. O total do ano não muda.
+"""
 
 BRASIL = "Brasil"
 

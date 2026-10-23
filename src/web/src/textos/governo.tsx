@@ -71,6 +71,26 @@ export const TEXTOS_DO_GOVERNO = {
     ),
   },
 
+  fitas: {
+    titulo: 'O caminho do dinheiro, em fitas',
+    ajuda:
+      'Dois desenhos separados, porque o imposto não tem destino marcado: ele se mistura no caixa do Tesouro. Em cada um, a largura da fita é o valor, e as colunas somam o mesmo total.',
+    paraOndeFoi: 'Para onde foi',
+    deOndeVeio: 'De onde veio',
+    gastou: 'Gastou',
+    areasDoGoverno: 'Áreas do governo',
+    arrecadou: 'Arrecadou',
+    outrosEncargos: 'Outros encargos',
+    demais: 'Demais receitas correntes',
+    negativas: (valor: string) => `As origens com valor negativo no ano, ${valor} em estornos e ajustes, não cabem em fita e ficam fora do desenho; o total arrecadado já as desconta.`,
+    outrasAreas: (n: number) => `Outras ${n} áreas`,
+    outrasOrigens: (n: number) => `Outras ${n} origens`,
+    colunasDoGasto: ['Gastou', 'Em quê', 'Em qual área'] as const,
+    colunasDaArrecadacao: ['De onde', 'Arrecadou'] as const,
+    rotuloDoGasto: (total: string) => `Gráfico de fitas: ${total} gastos, pelas áreas do governo, os repasses e os juros da dívida`,
+    rotuloDaArrecadacao: (total: string) => `Gráfico de fitas: ${total} arrecadados, por origem`,
+  },
+
   deOndeVeio: {
     titulo: 'De onde veio o dinheiro',
     origemDosImpostos: 'Impostos, Taxas e Contribuições de Melhoria',
