@@ -87,6 +87,7 @@ export const TEXTOS_DOS_COMPONENTES = {
       'A mesma informação do desenho, em texto: cada parlamentar seguido de quem mais votou junto com ele. A ordem desta ' +
       'lista não é política: quem aparece primeiro é apenas quem tem mais ligações.',
     comparaveis: (votacoes: number) => ` · ${votacoes} votações comparáveis`,
+    grupo: (numero: number) => ` · grupo ${numero}`,
     semLigacoes: 'sem ligações: precisa de ao menos 20 votações em comum com alguém',
     votaJuntoCom: (nomes: string) => `vota junto com ${nomes}`,
   },

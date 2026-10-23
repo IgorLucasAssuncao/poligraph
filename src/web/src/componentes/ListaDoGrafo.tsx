@@ -36,6 +36,9 @@ import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
  * desenho aparece solto na borda sem explicação nenhuma.
  *
  * Quem tem mais ligações primeiro — a mesma regra que dita o tamanho do ponto.
+ *
+ * WCAG 1.4.1 (avaliação heurística U28, 2026-10-22): no desenho, o grupo de voto é só a cor. Aqui ele vai em
+ * texto, com o mesmo número da legenda, para quem não distingue as cores.
  */
 export function ListaDoGrafoComponent({
   nos,
@@ -102,6 +105,7 @@ export function ListaDoGrafoComponent({
             <span className="lista-grafo-filiacao">
               {no.partido}
               {no.uf && ` · ${no.uf}`}
+              {no.comunidade != null && T.listaDoGrafo.grupo(no.comunidade + 1)}
               {T.listaDoGrafo.comparaveis(no.nVotacoes)}
             </span>
 

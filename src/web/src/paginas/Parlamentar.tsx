@@ -569,7 +569,8 @@ function AbaSimilaresComponent({ similares }: { similares: Ficha['maisSimilares'
           idPessoa={s.idPessoa}
           nome={s.nome}
           partido={s.partido}
-          uf=""
+          uf={s.uf ?? ''}
+          fotoUrl={s.urlFoto ?? null}
           detalhe={T.similares.detalhe(Math.round(s.valor * s.comuns), s.comuns)}
         />
       ))}

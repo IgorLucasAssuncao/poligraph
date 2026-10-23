@@ -79,6 +79,9 @@ export type Similar = {
   idPessoa: number;
   nome: string;
   partido: string;
+  /** A foto oficial, a mesma das outras listas (avaliação heurística U27). */
+  urlFoto?: string | null;
+  uf?: string;
   valor: number;
   comuns: number;
 };

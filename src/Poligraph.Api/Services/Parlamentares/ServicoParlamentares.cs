@@ -648,9 +648,10 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
             {
                 p.Id,
                 p.NomeExibicao,
-                Partido = p.Votos
+                p.UrlFoto,
+                Ultimo = p.Votos
                     .OrderByDescending(v => v.Votacao!.Data)
-                    .Select(v => v.PartidoNoVoto)
+                    .Select(v => new { v.PartidoNoVoto, v.UfNoVoto })
                     .FirstOrDefault()
             })
             .ToDictionaryAsync(p => p.Id, ct);
@@ -658,9 +659,11 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
         return [.. pares.Select(p => new SimilarNaFichaDto(
             p.Outro,
             fichas.GetValueOrDefault(p.Outro)?.NomeExibicao ?? "",
-            fichas.GetValueOrDefault(p.Outro)?.Partido ?? "",
+            fichas.GetValueOrDefault(p.Outro)?.Ultimo?.PartidoNoVoto ?? "",
             p.Valor,
-            p.NVotacoesComuns))];
+            p.NVotacoesComuns,
+            fichas.GetValueOrDefault(p.Outro)?.UrlFoto,
+            fichas.GetValueOrDefault(p.Outro)?.Ultimo?.UfNoVoto ?? ""))];
     }
 
     /// <summary>
