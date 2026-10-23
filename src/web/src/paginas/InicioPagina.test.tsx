@@ -12,6 +12,7 @@ vi.mock('../api', async (original) => ({
   obterPanorama: vi.fn(),
   listarSeguidos: vi.fn(),
   obterGrafo: vi.fn(),
+  obterGestoesDaCidade: vi.fn(),
 }));
 
 vi.mock('../componentes/useLegislatura', () => ({
@@ -78,6 +79,37 @@ describe('a página inicial', () => {
     expect(await screen.findByText(/470\.727 votos com posição na Câmara e no Senado/)).toBeDefined();
     expect(screen.getByRole('link', { name: T.comoMedimos })).toHaveAttribute('href', '/metodologia');
     expect(await screen.findByText('grafo com 1 parlamentares')).toBeDefined();
+  });
+
+  it('a cidade guardada diz o prefeito eleito da gestão de agora e o que chegou de emenda neste ano', async () => {
+    const ano = new Date().getFullYear();
+    vi.mocked(api.obterPanorama).mockResolvedValue(PANORAMA);
+    vi.mocked(api.obterGrafo).mockResolvedValue({ nos: [], legislatura: 57 } as unknown as Grafo);
+    vi.mocked(api.obterGestoesDaCidade).mockResolvedValue({
+      municipio: { codigoIbge: '3304557', nome: 'Rio de Janeiro', uf: 'RJ' }, populacao: null, recebido: 0, naPrefeitura: 0,
+      porAno: [{ ano, recebido: 6_600_000, naPrefeitura: 0 }],
+      gestoes: [{
+        primeiroAno: ano - 1, ultimoAno: ano + 2, vices: [], governadores: [], recebido: 0, naPrefeitura: 0, comPagamento: true,
+        prefeitos: [{ idPessoa: 1888, nome: 'EDUARDO PAES', partido: 'PSD', parlamentar: true }],
+      }],
+    });
+    localStorage.setItem(CHAVE_MINHA_CIDADE, JSON.stringify({ codigoIbge: '3304557', nome: 'Rio de Janeiro', uf: 'RJ' }));
+
+    abrir();
+
+    expect(await screen.findByRole('link', { name: 'Eduardo Paes' })).toHaveAttribute('href', '/parlamentar/1888');
+    expect(screen.getByText(/R\$ 6,6 mi em emendas chegaram a quem tem sede aqui/)).toBeDefined();
+    localStorage.removeItem(CHAVE_MINHA_CIDADE);
+  });
+
+  it('mostra o painel da última votação aberta de cada casa, sem direção', async () => {
+    vi.mocked(api.obterPanorama).mockResolvedValue(PANORAMA);
+    vi.mocked(api.obterGrafo).mockResolvedValue({ nos: [], legislatura: 57 } as unknown as Grafo);
+
+    abrir();
+
+    expect(await screen.findByRole('heading', { name: T.ultimas.titulo })).toBeDefined();
+    expect(screen.getByText(/Câmara dos Deputados · 30\/09\/2026 · PL 1\/2026/)).toBeDefined();
   });
 
   it('abre com as duas entradas e a busca, e a cidade guardada abre direto', async () => {

@@ -1210,6 +1210,14 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .busca-no-inicio p { margin: 0; font-size: var(--t-2); color: var(--suave); }
 .busca-no-inicio .busca-cabecalho { justify-self: stretch; width: 100%; }
 .numeros-da-base { margin: 1.5rem 0 0; font-size: var(--t-2); color: var(--suave); }
+.ultimas-votacoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; margin-top: .75rem; }
+.ultimas-votacoes .cartao-ultima {
+  margin: 0; padding: 1rem 1.25rem;
+  background: var(--painel); border: 1px solid var(--borda-controle); border-radius: var(--raio);
+}
+.cidade-guardada { display: grid; gap: .2rem; font-size: var(--t-2); }
+.cidade-guardada p { margin: 0; color: var(--suave); }
+.cidade-guardada a { color: var(--realce); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 
 .cartao-casa {
   padding: 1.1rem 1.25rem;

@@ -15,6 +15,17 @@ export const TEXTOS_DO_INICIO = {
     },
     busca: 'Ou procure pelo nome um político, uma cidade ou uma entidade:',
   },
+  suaCidade: {
+    prefeito: (varios: boolean) => (varios ? 'Prefeitos eleitos' : 'Prefeito eleito'),
+    gestao: (de: number, ate: number) => `${de}–${ate}`,
+    chegou: (valor: string, ano: number) => `${valor} em emendas chegaram a quem tem sede aqui em ${ano}`,
+    semPagamento: (ano: number) => `Nenhum pagamento de emenda a quem tem sede aqui em ${ano}`,
+  },
+  ultimas: {
+    titulo: 'As últimas votações abertas',
+    ajuda: 'Cada traço é uma cadeira: cheio é quem se posicionou, vazado é quem faltou. O painel não mostra como cada um votou.',
+    legenda: (casa: string, data: string, materia: string | null) => `${casa} · ${data}${materia ? ` · ${materia}` : ''}`,
+  },
   numeros: (periodo: string, votos: string, cota: string | null, emendas: string | null) =>
     `Na legislatura de ${periodo}: ${votos} votos com posição na Câmara e no Senado` +
     (cota && emendas ? `, ${cota} gastos da cota parlamentar e ${emendas} pagos em emendas.` : '.'),

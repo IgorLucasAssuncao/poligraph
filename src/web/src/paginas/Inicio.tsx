@@ -3,9 +3,12 @@ import { useCarga } from '../componentes/useCarga';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   listarSeguidos,
+  NOME_DA_CASA,
+  obterGestoesDaCidade,
   obterGrafo,
   obterPanorama,
   type Grafo as DadosDoGrafo,
+  type Municipio,
   type Panorama,
   type Parlamentar,
 } from '../api';
@@ -17,7 +20,9 @@ import { TelaDoGrafoComponent } from '../componentes/TelaDoGrafo';
 import { useSessao } from '../sessao';
 import { EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
 import { useLegislaturas } from '../componentes/useLegislatura';
-import { nomeProprio, periodoDaLegislatura, reaisCompacto } from '../formato';
+import { dataCurta, nomeDePessoa, nomeProprio, periodoDaLegislatura, reaisCompacto } from '../formato';
+import { destinoDoPolitico } from '../navegacao';
+import { PainelComponent } from '../componentes/Painel';
 import { TEXTOS_DO_INICIO as T } from '../textos/inicio';
 import { guardarMinhaCidade, lerMinhaCidade } from '../minhaCidade';
 import { BuscaDoCabecalhoComponent } from '../componentes/BuscaDoCabecalho';
@@ -106,13 +111,7 @@ export function InicioComponent() {
             <article className="entrada-do-inicio">
               <h2>{T.entradas.cidade.titulo}</h2>
               <p>{T.entradas.cidade.texto}</p>
-              {guardada && (
-                <p>
-                  <Link to={`/cidades/${guardada.codigoIbge}`}>
-                    {T.entradas.cidade.abrirGuardada(nomeProprio(guardada.nome), guardada.uf)} →
-                  </Link>
-                </p>
-              )}
+              {guardada && <CidadeGuardadaComponent cidade={guardada} />}
               <SuaCidadeComponent
                 aoEscolher={(m) => {
                   guardarMinhaCidade(m);
@@ -127,6 +126,8 @@ export function InicioComponent() {
             <BuscaDoCabecalhoComponent />
           </div>
         </section>
+
+        {panorama && <UltimasVotacoesComponent panorama={panorama} />}
 
         {panorama ? (
           <NumerosDaBaseComponent panorama={panorama} />
@@ -162,6 +163,73 @@ export function InicioComponent() {
         <SugestoesParaSeguirComponent />
       </aside>
     </div>
+  );
+}
+
+/**
+ * A cidade guardada neste navegador, em uma linha: quem foi eleito prefeito para a gestão de agora e quanto de emenda chegou
+ * neste ano. O link abre a página da cidade.
+ *
+ * A chave é a da página da cidade (`gestoes`): quem clica chega com o dado já lido.
+ *
+ * ATENÇÃO: "Prefeito eleito", como na página da cidade: o TSE registra quem foi eleito, não quem assumiu depois.
+ */
+function CidadeGuardadaComponent({ cidade }: { cidade: Municipio }) {
+  const lida = useCarga(['gestoes', cidade.codigoIbge], () => obterGestoesDaCidade(cidade.codigoIbge));
+  const ano = new Date().getFullYear();
+  const gestoes = lida.dados?.gestoes ?? [];
+  const atual = gestoes.find((g) => g.primeiroAno <= ano && ano <= g.ultimoAno) ?? gestoes[0];
+  const doAno = lida.dados?.porAno.find((a) => a.ano === ano);
+
+  return (
+    <div className="cidade-guardada">
+      <Link to={`/cidades/${cidade.codigoIbge}`} className="cidade-guardada-nome">
+        {T.entradas.cidade.abrirGuardada(nomeProprio(cidade.nome), cidade.uf)} →
+      </Link>
+      {atual && atual.prefeitos.length > 0 && (
+        <p>
+          {T.suaCidade.prefeito(atual.prefeitos.length > 1)}{' '}
+          {atual.prefeitos.map((p, i) => (
+            <span key={p.idPessoa}>
+              {i > 0 && ', '}
+              <Link to={destinoDoPolitico(p)}>{nomeDePessoa(p.nome)}</Link> ({p.partido})
+            </span>
+          ))}
+          , {T.suaCidade.gestao(atual.primeiroAno, atual.ultimoAno)}
+        </p>
+      )}
+      {lida.dados && (
+        <p>{doAno && doAno.recebido > 0 ? T.suaCidade.chegou(reaisCompacto(doAno.recebido), ano) : T.suaCidade.semPagamento(ano)}</p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A última votação aberta de cada casa, no painel: um traço por cadeira, cheio para quem se posicionou.
+ *
+ * DECISÃO (autor, 2026-10-23): o painel é a assinatura do site (skill `design-visual`, seção 2) e saiu do início junto com
+ * a base por casa. Voltou sozinho, sem os números da base.
+ *
+ * ATENÇÃO: nunca mostra direção. Cheio é comparecimento, não "Sim".
+ */
+function UltimasVotacoesComponent({ panorama }: { panorama: Panorama }) {
+  const comUltima = panorama.porCasa.filter((c) => c.ultima);
+  if (comUltima.length === 0) return null;
+
+  return (
+    <section className="painel-secao" aria-labelledby="ultimas-titulo">
+      <h2 id="ultimas-titulo">{T.ultimas.titulo}</h2>
+      <p className="ajuda">{T.ultimas.ajuda}</p>
+      <div className="ultimas-votacoes">
+        {comUltima.map((c) => (
+          <figure key={c.casa} className="cartao-ultima">
+            <figcaption>{T.ultimas.legenda(NOME_DA_CASA[c.casa].nome, dataCurta(c.ultima!.data), c.ultima!.materia)}</figcaption>
+            <PainelComponent posicionados={c.ultima!.posicionados} total={c.ultima!.cadeiras} />
+          </figure>
+        ))}
+      </div>
+    </section>
   );
 }
 
