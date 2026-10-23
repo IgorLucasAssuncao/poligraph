@@ -3259,12 +3259,16 @@ html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
 
 /* ═══ GRÁFICO DE FITAS (Sankey) ═════════════════════════════════ */
 /* Uma cor só (RNF-16): a fita diz que o dinheiro passou. A caixa realçada acende as fitas dela e apaga as outras. */
-.grafico-de-fitas { display: block; width: 100%; height: auto; margin: .75rem 0; overflow: visible; }
+.grafico-de-fitas-caixa { width: 100%; overflow-x: auto; margin: .75rem 0; }
+.grafico-de-fitas { display: block; overflow: visible; }
 .grafico-de-fitas .fita { fill: none; stroke: var(--realce); stroke-opacity: .28; transition: stroke-opacity var(--t-curto) var(--curva); }
 .grafico-de-fitas .fita:hover { stroke-opacity: .55; }
 .grafico-de-fitas .fita-apagada { stroke-opacity: .07; }
 .grafico-de-fitas .fitas-caixa { fill: var(--texto); }
-.grafico-de-fitas .fitas-rotulo { fill: var(--texto); font-size: 13px; font-weight: 600; }
+.grafico-de-fitas .fitas-rotulo {
+  fill: var(--texto); font-size: 13px; font-weight: 600;
+  paint-order: stroke; stroke: var(--fundo); stroke-width: 3px; stroke-linejoin: round;
+}
 .grafico-de-fitas .fitas-valor { fill: var(--suave); font-family: var(--dado); font-weight: 400; }
 .grafico-de-fitas .fitas-coluna { fill: var(--suave); font-size: 12px; text-transform: none; letter-spacing: .02em; }
 .grafico-de-fitas g:hover .fitas-caixa { fill: var(--realce); }
