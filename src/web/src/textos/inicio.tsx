@@ -13,7 +13,12 @@ export const TEXTOS_DO_INICIO = {
       texto: 'Quem foi eleito para governar, o que chegou de emenda e o que a prefeitura arrecadou e gastou. A cidade escolhida fica guardada só neste navegador.',
       abrirGuardada: (nome: string, uf: string) => `Abrir ${nome} – ${uf}`,
     },
-    busca: 'Ou procure pelo nome um político, uma cidade ou uma entidade:',
+    busca: (
+      <>
+        Ou procure pelo nome um <TermoComponent nome="politico">político</TermoComponent>, uma{' '}
+        <TermoComponent nome="cidade">cidade</TermoComponent> ou uma <TermoComponent nome="entidade">entidade</TermoComponent>
+      </>
+    ),
   },
   suaCidade: {
     prefeito: (varios: boolean) => (varios ? 'Prefeitos eleitos' : 'Prefeito eleito'),

@@ -10,6 +10,26 @@
  * deputado de mandatos diferentes, ajuda.
  */
 export const GLOSSARIO = {
+  politico: {
+    rotulo: 'político',
+    explicacao:
+      ' Quem foi eleito pelo voto, de 1998 a 2026: presidente, senador, deputado federal, governador, deputado ' +
+      'estadual, prefeito e os vices. Do Congresso, o site mostra como cada um votou. Dos outros cargos, mostra os ' +
+      'mandatos, a campanha e os bens declarados, porque as assembleias e as câmaras municipais não publicam o voto de cada um.',
+  },
+  cidade: {
+    rotulo: 'cidade',
+    explicacao:
+      ' Um dos municípios do Brasil. A página dela mostra quem foi eleito para governar em cada gestão, as emendas ' +
+      'que chegaram a quem tem sede lá e o que a prefeitura arrecadou e gastou, pelo que ela declarou ao Tesouro.',
+  },
+  entidade: {
+    rotulo: 'entidade',
+    explicacao:
+      ' Uma organização com CNPJ que recebeu dinheiro de emenda: prefeitura, fundo de saúde, hospital, associação ' +
+      'ou empresa. A página dela mostra quanto recebeu, de quais parlamentares, e se tem contrato com o governo federal ' +
+      'ou sanção por irregularidade.',
+  },
   legislatura: {
     rotulo: 'legislatura',
     explicacao:

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { CHAVE_MINHA_CIDADE } from '../constantes';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -122,7 +122,9 @@ describe('a página inicial', () => {
     expect(screen.getByRole('link', { name: T.entradas.voto.comecar })).toHaveAttribute('href', '/resultado');
     expect(screen.getByRole('link', { name: /Abrir Rio de Janeiro – RJ/ })).toHaveAttribute('href', '/cidades/3304557');
     expect(screen.getByLabelText('Sua cidade')).toBeDefined();
-    expect(screen.getByText(T.entradas.busca)).toBeDefined();
+    expect(screen.getByRole('heading', { name: /Ou procure pelo nome um político, uma cidade ou uma entidade/ })).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'entidade' }));
+    expect(screen.getByRole('tooltip').textContent).toMatch(/organização com CNPJ que recebeu dinheiro de emenda/);
     localStorage.removeItem(CHAVE_MINHA_CIDADE);
   });
 

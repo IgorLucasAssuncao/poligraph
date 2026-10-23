@@ -122,7 +122,7 @@ export function InicioComponent() {
           </div>
 
           <div className="busca-no-inicio">
-            <p>{T.entradas.busca}</p>
+            <h2 className="busca-no-inicio-titulo">{T.entradas.busca}</h2>
             <BuscaDoCabecalhoComponent />
           </div>
         </section>

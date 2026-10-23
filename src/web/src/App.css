@@ -1207,7 +1207,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   background: var(--fundo); border: 1px solid var(--borda-controle); border-radius: var(--raio);
 }
 .busca-no-inicio { display: grid; gap: .35rem; margin-top: 1rem; }
-.busca-no-inicio p { margin: 0; font-size: var(--t-2); color: var(--suave); }
+.busca-no-inicio-titulo { margin: 0; font-size: var(--t-3); font-weight: 700; color: var(--texto); }
 .busca-no-inicio .busca-cabecalho { justify-self: stretch; width: 100%; }
 .numeros-da-base { margin: 1.5rem 0 0; font-size: var(--t-2); color: var(--suave); }
 .ultimas-votacoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; margin-top: .75rem; }
