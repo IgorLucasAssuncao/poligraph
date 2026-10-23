@@ -1180,7 +1180,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .inicio-abertura > p { max-width: 44rem; }
 .entradas-do-inicio {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
-  gap: 1rem; margin-top: 1.25rem; align-items: start;
+  gap: 1rem; margin-top: 1.25rem;
 }
 .entrada-do-inicio {
   display: flex; flex-direction: column; gap: .5rem;
@@ -1189,14 +1189,27 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 .entrada-do-inicio h2 { margin: 0; font-size: var(--t-4); font-weight: 700; }
 .entrada-do-inicio > p { margin: 0; font-size: var(--t-2); }
-.entrada-do-inicio .painel-acoes { margin-top: auto; padding-top: .4rem; }
-.entrada-do-inicio .sua-cidade { padding: 0; border-bottom: 0; margin-top: auto; }
-.entrada-do-inicio .sua-cidade label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.busca-no-inicio { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-top: 1.25rem; }
-.busca-no-inicio p { margin: 0; font-size: var(--t-2); color: var(--suave); }
-.busca-no-inicio .busca-cabecalho { justify-self: auto; width: min(100%, 28rem); }
-.numeros-da-base { margin: 1.5rem 0 0; font-size: var(--t-2); color: var(--suave); }
 .entrada-do-inicio > p a, .numeros-da-base a { color: var(--realce); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+/* A fileira de ação mora no fundo dos dois cartões, na mesma linha e com a mesma altura. */
+.entrada-do-inicio .painel-acoes, .entrada-do-inicio .sua-cidade { margin-top: auto; padding-top: .5rem; }
+.entrada-do-inicio .painel-acoes > *, .entrada-do-inicio .sua-cidade-campos > * { min-height: 2.6rem; box-sizing: border-box; }
+.entrada-do-inicio .painel-acoes > * { display: inline-flex; align-items: center; }
+.entrada-do-inicio .sua-cidade { position: relative; padding: .5rem 0 0; border-bottom: 0; }
+.entrada-do-inicio .sua-cidade label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.entrada-do-inicio .sua-cidade-campos { flex-wrap: nowrap; }
+.entrada-do-inicio .sua-cidade-campos input { flex: 1 1 auto; }
+.entrada-do-inicio .sua-cidade-campos button { flex: 0 0 auto; }
+.entrada-do-inicio .sua-cidade .nota-curta { display: none; }
+/* A lista de cidades abre por cima, como menu: no fluxo, ela esticava o cartão e empurrava o do questionário. */
+.entrada-do-inicio .sua-cidade-achados {
+  position: absolute; left: 0; right: 0; top: calc(100% + .25rem); z-index: 20;
+  max-height: 18rem; overflow-y: auto; margin: 0; padding: .35rem .5rem;
+  background: var(--fundo); border: 1px solid var(--borda-controle); border-radius: var(--raio);
+}
+.busca-no-inicio { display: grid; gap: .35rem; margin-top: 1rem; }
+.busca-no-inicio p { margin: 0; font-size: var(--t-2); color: var(--suave); }
+.busca-no-inicio .busca-cabecalho { justify-self: stretch; width: 100%; }
+.numeros-da-base { margin: 1.5rem 0 0; font-size: var(--t-2); color: var(--suave); }
 
 .cartao-casa {
   padding: 1.1rem 1.25rem;

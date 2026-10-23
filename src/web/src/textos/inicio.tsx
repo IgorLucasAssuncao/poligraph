@@ -10,7 +10,7 @@ export const TEXTOS_DO_INICIO = {
     voto: { titulo: 'Compare seu voto', comecar: 'Começar as perguntas' },
     cidade: {
       titulo: 'Sua cidade',
-      texto: 'Quem foi eleito para governar, o que chegou de emenda e o que a prefeitura arrecadou e gastou.',
+      texto: 'Quem foi eleito para governar, o que chegou de emenda e o que a prefeitura arrecadou e gastou. A cidade escolhida fica guardada só neste navegador.',
       abrirGuardada: (nome: string, uf: string) => `Abrir ${nome} – ${uf}`,
     },
     busca: 'Ou procure pelo nome um político, uma cidade ou uma entidade:',
