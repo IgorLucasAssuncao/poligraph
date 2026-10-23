@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { CHAVE_MINHA_CIDADE } from '../constantes';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Grafo, Panorama, Parlamentar } from '../api';
 import { periodoDaLegislatura } from '../formato';
@@ -78,6 +79,19 @@ describe('a página inicial', () => {
     expect(await screen.findByText('513')).toBeDefined();
     expect(screen.getByText('1.123')).toBeDefined();
     expect(await screen.findByText('grafo com 1 parlamentares')).toBeDefined();
+  });
+
+  it('abre as outras portas do site, e a cidade guardada abre direto', async () => {
+    vi.mocked(api.obterPanorama).mockResolvedValue(PANORAMA);
+    vi.mocked(api.obterGrafo).mockResolvedValue({ nos: [], legislatura: 57 } as unknown as Grafo);
+    localStorage.setItem(CHAVE_MINHA_CIDADE, JSON.stringify({ codigoIbge: '3304557', nome: 'Rio de Janeiro', uf: 'RJ' }));
+
+    abrir();
+
+    expect(screen.getByRole('link', { name: /Abrir Rio de Janeiro – RJ/ })).toHaveAttribute('href', '/cidades/3304557');
+    expect(screen.getByRole('link', { name: /Procurar um político/ })).toHaveAttribute('href', '/parlamentares?vista=cargos');
+    expect(screen.getByRole('link', { name: /Ver as emendas/ })).toHaveAttribute('href', '/emendas');
+    localStorage.removeItem(CHAVE_MINHA_CIDADE);
   });
 
   it('base vazia diz isso, e o grafo vazio some sem legislatura pedida', async () => {

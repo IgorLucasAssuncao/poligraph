@@ -1176,6 +1176,21 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
   gap: 1rem; margin-top: 1rem;
 }
+.portas-do-site {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem; margin: 1rem 0 0; padding: 0; list-style: none;
+}
+.porta-do-site {
+  display: flex; flex-direction: column; gap: .4rem; height: 100%;
+  padding: 1.1rem 1.25rem; color: var(--texto); text-decoration: none;
+  background: var(--painel); border: 1px solid var(--borda-controle); border-radius: var(--raio);
+  transition: border-color var(--t-curto) var(--curva);
+}
+.porta-do-site:hover { border-color: var(--realce); }
+.porta-do-site h3 { margin: 0; font-size: var(--t-3); font-weight: 700; }
+.porta-do-site p { margin: 0; flex: 1; font-size: var(--t-2); color: var(--suave); }
+.porta-do-site-abrir { font-size: var(--t-2); font-weight: 600; color: var(--realce); }
+
 .cartao-casa {
   padding: 1.1rem 1.25rem;
   background: var(--painel); border: 1px solid var(--borda); border-radius: var(--raio);

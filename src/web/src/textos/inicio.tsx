@@ -19,6 +19,25 @@ export const TEXTOS_DO_INICIO = {
     </>
   ),
   compare: 'Compare seu voto',
+  portas: {
+    titulo: 'Também no site',
+    cidade: {
+      titulo: 'Sua cidade',
+      texto: 'Quem foi eleito para governar, o que chegou de emenda e o que a prefeitura arrecadou e gastou.',
+      abrir: 'Escolher a cidade',
+      abrirGuardada: (nome: string, uf: string) => `Abrir ${nome} – ${uf}`,
+    },
+    politicos: {
+      titulo: 'Todos os políticos',
+      texto: 'Prefeitos, governadores, deputados estaduais e vices eleitos desde 1998, com campanha e bens declarados.',
+      abrir: 'Procurar um político',
+    },
+    dinheiro: {
+      titulo: 'Dinheiro público',
+      texto: 'Para onde foram as emendas dos parlamentares, quem recebeu e como o governo federal gasta.',
+      abrir: 'Ver as emendas',
+    },
+  },
   verParlamentares: 'Ver os parlamentares',
   carregandoABase: 'Carregando o tamanho da base',
   quemVoceSegue: 'Quem você segue',

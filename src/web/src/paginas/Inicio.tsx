@@ -24,6 +24,7 @@ import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { dataCurta, periodoDaLegislatura } from '../formato';
 import { PainelComponent } from '../componentes/Painel';
 import { TEXTOS_DO_INICIO as T } from '../textos/inicio';
+import { lerMinhaCidade } from '../minhaCidade';
 
 /**
  * A porta de entrada.
@@ -98,6 +99,8 @@ export function InicioComponent() {
           </div>
         </section>
 
+        <PortasDoSiteComponent />
+
         <BarraDePeriodoComponent />
 
         {panorama ? (
@@ -135,6 +138,47 @@ export function InicioComponent() {
         <SugestoesParaSeguirComponent />
       </aside>
     </div>
+  );
+}
+
+/**
+ * As outras entradas do site, logo abaixo da abertura: a cidade, todos os cargos e o dinheiro público.
+ *
+ * DECISÃO (autor, 2026-10-23): a página inicial falava só do voto no Congresso, e as cidades, os 62 mil políticos do TSE e
+ * as emendas ficavam atrás do menu. O questionário continua sendo a primeira ação; as portas vêm depois dele.
+ *
+ * A cidade guardada neste navegador (`minhaCidade`) abre direto; sem ela, a porta leva à lista de cidades.
+ */
+function PortasDoSiteComponent() {
+  const P = T.portas;
+  const guardada = lerMinhaCidade();
+  const portas = [
+    {
+      chave: 'cidade',
+      destino: guardada ? `/cidades/${guardada.codigoIbge}` : '/cidades',
+      titulo: P.cidade.titulo,
+      texto: P.cidade.texto,
+      abrir: guardada ? P.cidade.abrirGuardada(guardada.nome, guardada.uf) : P.cidade.abrir,
+    },
+    { chave: 'politicos', destino: '/parlamentares?vista=cargos', ...P.politicos },
+    { chave: 'dinheiro', destino: '/emendas', ...P.dinheiro },
+  ];
+
+  return (
+    <section className="painel-secao" aria-labelledby="portas-titulo">
+      <h2 id="portas-titulo">{P.titulo}</h2>
+      <ul className="portas-do-site">
+        {portas.map((p) => (
+          <li key={p.chave}>
+            <Link to={p.destino} className="porta-do-site">
+              <h3>{p.titulo}</h3>
+              <p>{p.texto}</p>
+              <span className="porta-do-site-abrir">{p.abrir} →</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
