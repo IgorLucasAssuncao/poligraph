@@ -9,6 +9,7 @@ import { nomeProprio, reaisCompacto } from '../formato';
 import { destinoDoPolitico, periodoDoEndereco } from '../navegacao';
 import { TEXTOS_DA_CIDADE as T } from '../textos/cidade';
 import { ListasDaCidadeComponent } from './Emendas';
+import { CaminhosDaCidadeComponent } from '../componentes/CaminhosDaCidade';
 
 /**
  * A página da cidade: quem foi eleito para governá-la em cada período e quanto de emenda chegou (Pendência 90, fase 4).
@@ -133,6 +134,7 @@ function EmendasDaCidadeComponent({ codigoIbge }: { codigoIbge: string }) {
         {T.quemMandou}
       </h2>
       <p className="ajuda">{periodo ? T.quemMandouNoPeriodo(periodo.primeiroAno, periodo.ultimoAno) : T.quemMandouAjuda}</p>
+      <CaminhosDaCidadeComponent codigoIbge={codigoIbge} periodo={periodo} />
       <ListasDaCidadeComponent dados={lida.dados} periodo={periodo} />
     </section>
   );

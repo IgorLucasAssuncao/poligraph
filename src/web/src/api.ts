@@ -1533,6 +1533,21 @@ export type CaminhoDaEmenda = { tipo: string | null; area: string | null; recebe
 /** O pago em emendas do período pelos caminhos: a soma é o mesmo "pago em emendas" do mapa. */
 export type CaminhosDasEmendas = { periodo: Periodo; total: number; caminhos: CaminhoDaEmenda[] };
 
+/** Um caminho na cidade: o autor da emenda como o Portal escreve (`coletivo` para bancada, comissão e relator), a área, quem recebeu e o valor. */
+export type CaminhoNaCidade = { quemMandou: string | null; coletivo: boolean; area: string | null; recebedor: GrupoDoRecebedor; valor: number };
+
+/** O pago a quem tem sede na cidade, pelos caminhos; `null` quando o código não é município. */
+export async function obterCaminhosDaCidade(
+  codigoIbge: string,
+  periodo?: Periodo,
+): Promise<{ periodo: Periodo; total: number; caminhos: CaminhoNaCidade[] } | null> {
+  const resposta = await fetch(comPeriodo(`${BASE}/municipios/${codigoIbge}/emendas/caminhos`, periodo), { credentials: 'include' });
+  if (resposta.status === 404) return null;
+  if (resposta.status === 401) throw new NaoAutenticadoError();
+  if (!resposta.ok) throw new Error(TEXTOS_DA_API.erros.cidade(resposta.status));
+  return resposta.json();
+}
+
 export async function obterCaminhosDasEmendas(periodo?: Periodo): Promise<CaminhosDasEmendas> {
   return buscar<CaminhosDasEmendas>(comPeriodo(`${BASE}/mapa/emendas/caminhos`, periodo));
 }

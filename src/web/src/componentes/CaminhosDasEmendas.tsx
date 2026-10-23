@@ -4,7 +4,8 @@ import { reaisCompacto } from '../formato';
 import { TEXTOS_DAS_EMENDAS } from '../textos/emendas';
 import { BotaoBaixarCsvComponent } from './BotaoBaixarCsv';
 import { EsqueletoDeTextoComponent } from './Esqueleto';
-import { GraficoDeFitasComponent, type Fita, type NoDasFitas } from './GraficoDeFitas';
+import { GraficoDeFitasComponent } from './GraficoDeFitas';
+import { montarColunas } from './colunasDasFitas';
 import { useCarga } from './useCarga';
 
 const T = TEXTOS_DAS_EMENDAS.caminhos;
@@ -92,39 +93,10 @@ function rotuloDoTipo(tipo: string | null): string {
 }
 
 /** As três colunas: tipo → área → quem recebeu. As áreas menores se juntam numa caixa, e cada coluna soma o mesmo total. */
-function montarFitas(caminhos: CaminhoDaEmenda[]): { nos: NoDasFitas[]; fitas: Fita[] } {
-  const porArea = new Map<string, number>();
-  for (const c of caminhos) {
-    const area = c.area ?? T.semArea;
-    porArea.set(area, (porArea.get(area) ?? 0) + c.valor);
-  }
-  const areas = [...porArea.entries()].sort((a, b) => b[1] - a[1]);
-  const aVista = new Set(areas.slice(0, AREAS_A_VISTA).map(([a]) => a));
-  const outras = areas.length - aVista.size;
-  const areaDe = (c: CaminhoDaEmenda) => {
-    const area = c.area ?? T.semArea;
-    return aVista.has(area) ? area : T.outrasAreas(outras);
-  };
-
-  const nos = new Map<string, NoDasFitas>();
-  const somas = new Map<string, Fita>();
-  const somar = (de: string, para: string, valor: number) => {
-    const chave = `${de}→${para}`;
-    const fita = somas.get(chave) ?? { de, para, valor: 0 };
-    fita.valor += valor;
-    somas.set(chave, fita);
-  };
-
-  for (const c of caminhos) {
-    const tipo = `tipo:${c.tipo ?? ''}`;
-    const area = `area:${areaDe(c)}`;
-    const recebedor = `recebedor:${c.recebedor}`;
-    nos.set(tipo, { id: tipo, rotulo: rotuloDoTipo(c.tipo), coluna: 0 });
-    nos.set(area, { id: area, rotulo: areaDe(c), coluna: 1 });
-    nos.set(recebedor, { id: recebedor, rotulo: T.recebedores[c.recebedor], coluna: 2 });
-    somar(tipo, area, c.valor);
-    somar(area, recebedor, c.valor);
-  }
-
-  return { nos: [...nos.values()], fitas: [...somas.values()] };
+function montarFitas(caminhos: CaminhoDaEmenda[]) {
+  return montarColunas(caminhos, (c) => c.valor, [
+    { chave: (c) => c.tipo ?? '', rotulo: (tipo) => rotuloDoTipo(tipo || null) },
+    { chave: (c) => c.area ?? T.semArea, rotulo: (area) => area, aVista: AREAS_A_VISTA, resto: T.outrasAreas },
+    { chave: (c) => c.recebedor, rotulo: (r) => T.recebedores[r as CaminhoDaEmenda['recebedor']] },
+  ]);
 }

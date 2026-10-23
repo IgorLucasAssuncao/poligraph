@@ -1,4 +1,4 @@
-namespace Poligraph.Api.Dtos;
+﻿namespace Poligraph.Api.Dtos;
 
 /// <summary>
 /// O pago em emendas no período, dividido pelos caminhos que o dinheiro fez: o tipo da emenda, a área e quem recebeu.
@@ -10,6 +10,14 @@ public record CaminhosDasEmendasDto(PeriodoDto Periodo, decimal Total, IReadOnly
 
 /// <summary>Um caminho: o tipo da emenda e a área (função) como o Portal escreve, o grupo de quem recebeu e o valor pago.</summary>
 public record CaminhoDaEmendaDto(string? Tipo, string? Area, GrupoDoRecebedor Recebedor, decimal Valor);
+
+/// <summary>
+/// O pago a quem tem sede na cidade, pelos caminhos: quem mandou, a área e quem recebeu. A soma é o "quem mandou e quem recebeu" da página.
+/// </summary>
+public record CaminhosDaCidadeDto(PeriodoDto Periodo, decimal Total, IReadOnlyList<CaminhoNaCidadeDto> Caminhos);
+
+/// <summary>Um caminho na cidade: o autor da emenda (o parlamentar, ou a bancada e a comissão), a área, o grupo de quem recebeu e o valor.</summary>
+public record CaminhoNaCidadeDto(string? QuemMandou, bool Coletivo, string? Area, GrupoDoRecebedor Recebedor, decimal Valor);
 
 /// <summary>Quem recebeu o pagamento da emenda, em grupos que se leem de longe.</summary>
 public enum GrupoDoRecebedor

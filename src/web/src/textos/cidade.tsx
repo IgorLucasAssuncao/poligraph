@@ -19,6 +19,18 @@ export const TEXTOS_DA_CIDADE = {
   emEntidades: (valor: string) => `${valor} a entidades e empresas com sede aqui`,
   verNoMapa: 'Ver no mapa das emendas',
   quemMandou: 'Quem mandou e quem recebeu',
+  caminhos: {
+    ajuda: (total: string) =>
+      `${total} chegaram a quem tem sede aqui. Cada fita é dinheiro pago: de quem mandou a emenda, pela área do gasto, até quem recebeu. A largura é o valor.`,
+    rotulo: (total: string) => `Gráfico de fitas: ${total} em emendas, de quem mandou até quem recebeu na cidade`,
+    colunas: ['Quem mandou', 'Área do gasto', 'Quem recebeu'] as const,
+    outrosAutores: (n: number) => `Outros ${n} autores`,
+    outrasAreas: (n: number) => `Outras ${n} áreas`,
+    semAutor: 'Autor não identificado',
+    semArea: 'Sem área',
+    erro: 'Não foi possível carregar os caminhos do dinheiro agora.',
+    carregando: 'Carregando os caminhos do dinheiro',
+  },
   quemMandouAjuda: 'Todos os anos carregados, pelo ano da emenda. Para outro período, escolha no mapa das emendas.',
   quemMandouNoPeriodo: (de: number, ate: number) =>
     `Emendas de ${de === ate ? de : `${de} a ${ate}`}, o período escolhido no mapa. Os blocos de gestão acima usam todos os anos.`,

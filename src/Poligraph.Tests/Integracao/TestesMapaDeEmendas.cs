@@ -145,6 +145,35 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
         Assert.Empty(cidade.Coletivos);
     }
 
+    /// <summary>As fitas da cidade fecham com o "quem mandou e quem recebeu" da página, e a prefeitura tem o grupo dela.</summary>
+    [SkippableFact]
+    public async Task Municipio_CaminhosFechamComORecebidoDaCidade()
+    {
+        ExigeDocker();
+        await SemearAsync();
+
+        var cidade = await LerAsync<MunicipioLido>($"/api/municipios/{Luiziana}/emendas?de=2025&ate=2025");
+        var caminhos = await LerAsync<CaminhosDaCidadeLidos>($"/api/municipios/{Luiziana}/emendas/caminhos?de=2025&ate=2025");
+
+        Assert.Equal(cidade.Recebido, caminhos.Total);
+        Assert.Equal(caminhos.Total, caminhos.Caminhos.Sum(c => c.Valor));
+        Assert.Equal(cidade.NaPropriaCidade, caminhos.Caminhos.Where(c => c.Recebedor == "MUNICIPIO").Sum(c => c.Valor));
+        Assert.All(caminhos.Caminhos, c => Assert.Equal("FULANO DE TAL", c.QuemMandou));
+    }
+
+    /// <summary>Código que não é município responde 404, como a página da cidade.</summary>
+    [SkippableFact]
+    public async Task Municipio_CaminhosDeCodigoQueNaoEhMunicipio_Responde404()
+    {
+        ExigeDocker();
+        await SemearAsync();
+
+        using var cliente = CriarCliente();
+        var resposta = await cliente.GetAsync("/api/municipios/9999999/emendas/caminhos");
+
+        Assert.Equal(HttpStatusCode.NotFound, resposta.StatusCode);
+    }
+
     /// <summary>
     /// A emenda de bancada não é de uma pessoa: vai para a lista dos coletivos, e não aparece
     /// como se fosse um deputado.
@@ -270,6 +299,10 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
     private record CaminhosLidos(PeriodoLido Periodo, decimal Total, IReadOnlyList<CaminhoLido> Caminhos);
 
     private record CaminhoLido(string? Tipo, string? Area, string Recebedor, decimal Valor);
+
+    private record CaminhosDaCidadeLidos(PeriodoLido Periodo, decimal Total, IReadOnlyList<CaminhoNaCidadeLido> Caminhos);
+
+    private record CaminhoNaCidadeLido(string? QuemMandou, bool Coletivo, string? Area, string Recebedor, decimal Valor);
 
     private record BrasilLido(
         PeriodoLido Periodo, decimal Recebido, decimal NoMapa, decimal ViaIntermediario, decimal SemSede,

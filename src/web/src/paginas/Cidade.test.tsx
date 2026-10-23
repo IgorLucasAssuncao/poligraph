@@ -7,6 +7,7 @@ import { CidadeComponent } from './Cidade';
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
   obterGestoesDaCidade: vi.fn(),
+  obterCaminhosDaCidade: vi.fn().mockResolvedValue(null),
 }));
 
 const api = await import('../api');

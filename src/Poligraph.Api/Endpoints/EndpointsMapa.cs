@@ -20,6 +20,10 @@ public static class EndpointsMapa
            .WithTags("Mapa")
            .Produces<GestoesDaCidadeDto>()
            .Produces(StatusCodes.Status404NotFound);
+        app.MapGet("/api/municipios/{codigoIbge}/emendas/caminhos", ObterCaminhosDaCidadeAsync)
+           .WithTags("Mapa")
+           .Produces<CaminhosDaCidadeDto>()
+           .Produces(StatusCodes.Status404NotFound);
         app.MapGet("/api/municipios/{codigoIbge}/emendas/parlamentares", ListarParlamentaresAsync)
            .WithTags("Mapa")
            .Produces<PaginaDto<ParlamentarQueMandouDto>>()
@@ -45,6 +49,13 @@ public static class EndpointsMapa
     private static async Task<IResult> ObterCaminhosAsync(
         ServicoMapaDeEmendas servico, CancellationToken ct, Periodo<AnoDaEmenda> periodoDasEmendas) =>
         Results.Ok(await servico.ObterCaminhosAsync(periodoDasEmendas, ct));
+
+    /// <summary>O pago na cidade pelos caminhos: quem mandou, a área e quem recebeu. O gráfico de fitas da página da cidade.</summary>
+    private static async Task<IResult> ObterCaminhosDaCidadeAsync(
+        CodigoIbge codigoIbge, ServicoMapaDeEmendas servico, CancellationToken ct, Periodo<AnoDaEmenda> periodoDasEmendas) =>
+        await servico.ObterCaminhosDaCidadeAsync(codigoIbge, periodoDasEmendas, ct) is { } caminhos
+            ? Results.Ok(caminhos)
+            : Results.NotFound();
 
     /// <summary>O dinheiro de emenda por município de uma UF.</summary>
     private static async Task<IResult> ObterEstadoAsync(

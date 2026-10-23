@@ -131,6 +131,55 @@ public class ServicoMapaDeEmendas(PoligraphDb db, ServicoAutoresDeEmenda autores
         });
     }
 
+    /// <summary>
+    /// O pago a quem tem sede na cidade, pelos caminhos: quem mandou, a área e quem recebeu. Para o gráfico de fitas da página da cidade.
+    /// </summary>
+    /// <remarks>
+    /// <para>Os mesmos pagamentos e o mesmo período de <see cref="ObterMunicipioAsync"/>: o total fecha com o "quem mandou e quem recebeu" da página.</para>
+    /// <para>Quem mandou é o autor da emenda como o Portal o escreve. A emenda de bancada, comissão ou relator é do coletivo, não de uma pessoa.</para>
+    /// </remarks>
+    public async Task<CaminhosDaCidadeDto?> ObterCaminhosDaCidadeAsync(
+        CodigoIbge codigoIbge, Periodo<AnoDaEmenda> periodoPedido, CancellationToken ct)
+    {
+        if ((await MunicipiosAsync(ct)).All(m => m.CodigoIbge != codigoIbge.Digitos))
+        {
+            return null;
+        }
+
+        var (periodoMostrado, _, prefixos) = await PeriodoAsync(periodoPedido, ct);
+        if (prefixos.Length == 0)
+        {
+            return new CaminhosDaCidadeDto(periodoMostrado, 0, []);
+        }
+
+        return await _leitura.ObterAsync(
+            $"mapa:cidade:caminhos:{codigoIbge.Digitos}:{periodoMostrado.PrimeiroAno}-{periodoMostrado.UltimoAno}", async () =>
+        {
+            var emendas = _db.Emendas.AsNoTracking()
+                .GroupBy(e => e.CodigoEmenda)
+                .Select(g => new { Codigo = g.Key, Autor = g.Max(e => e.NomeAutor), Tipo = g.Max(e => e.Tipo), Funcao = g.Max(e => e.Funcao) });
+
+            var somas = await (
+                    from p in NoMapa(DoPeriodo(prefixos)).Where(p => p.CodigoIbge == codigoIbge.Digitos)
+                    join e in emendas on p.CodigoEmenda equals e.Codigo into daEmenda
+                    from e in daEmenda.DefaultIfEmpty()
+                    group p.Valor by new { e.Autor, e.Tipo, e.Funcao, p.NaturezaJuridica } into g
+                    select new { g.Key.Autor, g.Key.Tipo, g.Key.Funcao, g.Key.NaturezaJuridica, Valor = g.Sum() })
+                .ToListAsync(ct);
+
+            List<CaminhoNaCidadeDto> caminhos = [.. somas
+                .GroupBy(s => (
+                    s.Autor,
+                    Coletivo: ServicoAutoresDeEmenda.ColetivoDe(s.Tipo) is not null,
+                    s.Funcao,
+                    Recebedor: GrupoDoRecebedorDe(TipoFavorecido.PESSOA_JURIDICA, false, s.NaturezaJuridica)))
+                .Select(g => new CaminhoNaCidadeDto(g.Key.Autor, g.Key.Coletivo, g.Key.Funcao, g.Key.Recebedor, g.Sum(s => s.Valor)))
+                .Where(c => c.Valor > 0)
+                .OrderByDescending(c => c.Valor)];
+            return new CaminhosDaCidadeDto(periodoMostrado, caminhos.Sum(c => c.Valor), caminhos);
+        });
+    }
+
     /// <summary>O grupo de quem recebeu: o banco da transferência especial, o órgão federal, a pessoa, ou o grupo da natureza jurídica, como na lista de entidades.</summary>
     public static GrupoDoRecebedor GrupoDoRecebedorDe(TipoFavorecido favorecido, bool intermediario, string? naturezaJuridica) =>
         intermediario ? GrupoDoRecebedor.VIA_BANCO : favorecido switch
