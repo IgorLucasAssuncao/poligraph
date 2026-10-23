@@ -39,6 +39,14 @@ def test_pessoa_fisica_nunca_passa():
     assert "73554405868" not in repr(sancoes.para_empresas(linhas, ["", ""]))
 
 
+def test_empresa_individual_sai_sem_o_cpf_do_dono_no_nome():
+    linhas = entrada.ler(LinhaDeSancao, [sancao(**{"NOME DO SANCIONADO": "FULANA PEREIRA 529.982.247-25"})])
+
+    [empresa] = sancoes.para_empresas(linhas, [""])
+
+    assert empresa.nome == "FULANA PEREIRA"
+
+
 def test_esfera_vazia_vira_nula():
     [empresa] = sancoes.para_empresas(entrada.ler(LinhaDeSancao, [sancao(**{"ESFERA ÓRGÃO SANCIONADOR": ""})]))
 

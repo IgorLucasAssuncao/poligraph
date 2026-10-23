@@ -1715,3 +1715,36 @@ def gravar_convenentes(conexao: psycopg.Connection, linhas: Sequence[dict], carg
         """,
         _com_carga(linhas, carga_id),
     )
+
+
+COLUNAS_DE_TEXTO_LIVRE = (
+    ("contratados_do_governo", "nome"), ("sancoes_de_empresas", "nome"), ("proposicoes", "ementa"),
+    ("despesas", "fornecedor"), ("emendas_favorecidos", "nome"), ("receitas_de_campanha", "doador"),
+    ("convenios", "convenente"), ("convenios", "objeto"), ("votacoes", "descricao"),
+)
+"""As colunas de texto que vêm da fonte e podem trazer CPF: nome de MEI, ementa que cita a pessoa."""
+
+
+def gravar_texto_sem_cpf(conexao: psycopg.Connection) -> dict[str, int]:
+    """Passa `sem_cpf` no texto já gravado e devolve quantas linhas mudaram em cada coluna. Rodar de novo não muda nada.
+
+    RISCO: regra 3. MEDIDO em 2026-10-23: 1.614 contratados do governo, 77 sanções e uma ementa gravados com CPF, porque
+    só a cota e as receitas passavam por `sem_cpf`. As cargas agora limpam na entrada; isto limpa o que entrou antes.
+    """
+    from .normalizacao import sem_cpf
+
+    mudadas: dict[str, int] = {}
+    for tabela, coluna in COLUNAS_DE_TEXTO_LIVRE:
+        aceita_nulo = conexao.execute(
+            "SELECT is_nullable = 'YES' FROM information_schema.columns WHERE table_name = %s AND column_name = %s",
+            (tabela, coluna),
+        ).fetchone()[0]
+        linhas = conexao.execute(
+            rf"SELECT ctid, {coluna} FROM {tabela} WHERE {coluna} ~ '\d{{3}}\.?\d{{3}}\.?\d{{3}}-?\d{{2}}'"
+        ).fetchall()
+        trocas = [(sem_cpf(texto) or (None if aceita_nulo else ""), ctid) for ctid, texto in linhas]
+        trocas = [(novo, ctid) for (novo, ctid), (_, texto) in zip(trocas, linhas) if novo != texto]
+        with conexao.cursor() as cur:
+            cur.executemany(f"UPDATE {tabela} SET {coluna} = %s WHERE ctid = %s", trocas)
+        mudadas[f"{tabela}.{coluna}"] = len(trocas)
+    return mudadas

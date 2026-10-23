@@ -33,7 +33,7 @@ from collections.abc import Iterable
 
 from .contratos.banco import ContratacoesDoOrgao, ContratadoDoGoverno
 from .contratos.portal import LinhaDeCompra
-from .normalizacao import valor_pt_br
+from .normalizacao import sem_cpf, valor_pt_br
 
 RECURSO = "compras/{ano}{mes:02d}"
 
@@ -91,7 +91,11 @@ def por_orgao(ano: int, mes: int, linhas: Iterable[LinhaDeCompra]) -> list[Contr
 
 
 def contratados(ano: int, linhas: Iterable[LinhaDeCompra]) -> list[ContratadoDoGoverno]:
-    """As empresas do ano, com o nome mais frequente do CNPJ: o mesmo CNPJ vem grafado de mais de um jeito."""
+    """As empresas do ano, com o nome mais frequente do CNPJ: o mesmo CNPJ vem grafado de mais de um jeito.
+
+    RISCO: o nome do MEI traz o CPF do dono, e sai sem ele (`sem_cpf`). MEDIDO em 2026-10-23: 1.614 contratados gravados
+    com 11 dígitos no nome, e 16 com o CPF pontuado.
+    """
     somas: dict[str, list] = defaultdict(lambda: [0, 0.0])
     nomes: dict[str, Counter] = defaultdict(Counter)
     for linha in linhas:
@@ -100,7 +104,7 @@ def contratados(ano: int, linhas: Iterable[LinhaDeCompra]) -> list[ContratadoDoG
             continue
         somas[cnpj][0] += 1
         somas[cnpj][1] += valor_do_contrato(linha)[0]
-        nomes[cnpj][(linha.nome_do_contratado or "").strip()] += 1
+        nomes[cnpj][sem_cpf(linha.nome_do_contratado) or ""] += 1
     return [
         ContratadoDoGoverno(ano=ano, cnpj=cnpj, nome=nomes[cnpj].most_common(1)[0][0], contratos=contratos,
                             valor=round(valor, 2))

@@ -330,6 +330,7 @@ const COMANDOS = [
   { id: 'compras-centralizadas', faz: 'Cartão de compras centralizadas (CPCC), por órgão e mês. O CPF do favorecido, sem máscara na fonte, não é lido.', ritmo: 'mensal', depende: [] },
   { id: 'sancoes', faz: 'Empresas sancionadas no CEIS e no CNEP, pelo CNPJ: retrato do dia, a tabela troca inteira. Pessoa física (CPF sem máscara na fonte) é descartada antes de gravar.', ritmo: 'mensal', depende: [] },
   { id: 'viagens', faz: 'Viagens a serviço do Executivo federal: diárias, passagens, seguro e restituição por órgão, e os destinos por órgão. O identificador do processo liga pagamento, viagem e trecho: o pagamento publicado com órgão "Sigiloso" vai para o órgão da viagem.', ritmo: 'mensal', depende: [] },
+  { id: 'tirar-cpf', faz: 'Tira o CPF do texto já gravado: nome de MEI nos contratados do governo e nas sanções, ementa que cita a pessoa (regra 3). As cargas já limpam na entrada; este comando limpa o que entrou antes.', ritmo: 'manual', depende: [] },
   { id: 'conferir', faz: 'Regras de plausibilidade e o fechamento dos totais. ERRO derruba a rotina. Na rotina, vem seguido de limpar-cache, que apaga do cache os downloads com mais de 35 dias e as cópias de procedência com mais de 180, sem tocar no banco. Passando tudo, a rotina grava em eventos (ROTINA_SEMANAL ou ROTINA_MENSAL), e o worker de avisos avisa quem segue.', ritmo: 'semanal', depende: [] },
 ];
 

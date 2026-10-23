@@ -135,6 +135,8 @@ def main(argv: list[str] | None = None) -> int:
                 _rotina(conexao, args.frequencia)
             elif args.comando == "limpar-cache":
                 _limpar_cache()
+            elif args.comando == "tirar-cpf":
+                _tirar_cpf(conexao)
             elif args.comando == "palavras-chave":
                 _palavras_chave(conexao, args.limite)
             elif args.comando == "sedes-brasilapi":
@@ -237,6 +239,7 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     )
     rot = sub.add_parser("rotina", help="a carga agendada (Pendência 64): semanal ou mensal, terminando em conferir")
     rot.add_argument("--frequencia", choices=list(rotina.FREQUENCIAS), required=True)
+    sub.add_parser("tirar-cpf", help="tira o CPF do texto já gravado: nome de MEI, ementa (regra 3); rodar de novo não muda nada")
     sub.add_parser("limpar-cache", help="apaga do cache o que venceu: downloads com mais de 35 dias, procedência com mais de 180")
     sub.add_parser(
         "rechavear-cpf",
@@ -2750,6 +2753,13 @@ def _licenciados_da_camara(conexao: psycopg.Connection, em_exercicio_hoje: list[
     _carga_de_resposta(conexao, TipoFonteDeCarga.CAMARA, f"{camara.API}/deputados/{{id}}", situacoes,
                        CACHE / "respostas" / f"situacao-dos-deputados-{date.today():%Y%m%d}.json")
     return em_exercicio.licenciados_da_camara(situacoes, pessoas, legislatura)
+
+
+def _tirar_cpf(conexao: psycopg.Connection) -> None:
+    """O CPF que entrou no texto antes de toda carga passar por `sem_cpf` (regra 3)."""
+    with conexao.transaction():
+        mudadas = persistencia.gravar_texto_sem_cpf(conexao)
+    log.info("Texto sem CPF: %s", ", ".join(f"{coluna} {n}" for coluna, n in mudadas.items() if n) or "nada a mudar")
 
 
 def _limpar_cache() -> None:

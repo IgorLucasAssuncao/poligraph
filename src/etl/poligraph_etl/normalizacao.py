@@ -532,7 +532,7 @@ def sem_acento(texto: str) -> str:
     )
 
 
-_CPF_NO_TEXTO = re.compile(r"(?<!\d)\d{3}\.?\d{3}\.?\d{3}-?\d{2}(?!\d)")
+_CPF_NO_TEXTO = re.compile(r"(?:\bCPF\s*(?:N[º°O.]?\s*)?:?\s*)?(?<!\d)\d{3}\.?\d{3}\.?\d{3}-?\d{2}(?!\d)", re.IGNORECASE)
 
 
 def sem_cpf(texto: str | None) -> str | None:
@@ -542,10 +542,11 @@ def sem_cpf(texto: str | None) -> str | None:
     publica o fornecedor da cota. MEDIDO: Medido em 2026-09-25: 3.310 lançamentos, R$ 9,70 mi,
     gravados com o CPF em claro — e a ficha os mostrava.
 
-    Casa exatamente 11 dígitos, com ou sem pontuação: os 14 de um CNPJ não são cortados.
+    Casa exatamente 11 dígitos, com ou sem pontuação: os 14 de um CNPJ não são cortados. O rótulo antes do número
+    ("CPF", "CPF:", "CPF nº") sai junto, e a vírgula que sobra antes de um parêntese também.
     """
     if texto is None:
         return None
-    limpo = re.sub(r"\s{2,}", " ", _CPF_NO_TEXTO.sub(" ", texto)).strip(" -/")
+    limpo = re.sub(r"[\s,;-]+\)", ")", re.sub(r"\s{2,}", " ", _CPF_NO_TEXTO.sub(" ", texto))).strip(" -/:")
     return limpo or None
 

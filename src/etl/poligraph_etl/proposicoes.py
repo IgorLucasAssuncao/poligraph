@@ -46,6 +46,7 @@ MEDIDO: Medido em 2026-08-28: das 266 votações substantivas da 57ª, **263 gan
 """
 
 import logging
+from .normalizacao import sem_cpf
 from .tipos import TipoCasa
 
 log = logging.getLogger("poligraph")
@@ -102,7 +103,7 @@ def para_linhas(
             "sigla_tipo": _texto(registro.get("proposicao_siglaTipo")) or None,
             "numero": _inteiro_ou_nulo(registro.get("proposicao_numero")),
             "ano": _inteiro_ou_nulo(registro.get("proposicao_ano")),
-            "ementa": _texto(registro.get("proposicao_ementa")) or None,
+            "ementa": sem_cpf(_texto(registro.get("proposicao_ementa"))) or None,
             "url_inteiro_teor": None,
         }
 
@@ -132,7 +133,7 @@ def do_senado(materias, vinculo_bruto: dict[str, str]) -> tuple[list[dict], dict
             continue
 
         codigo = _inteiro_ou_nulo(materia.get("codigo"))
-        ementa = _texto(materia.get("ementa"))
+        ementa = sem_cpf(_texto(materia.get("ementa")))
         if codigo is None or not ementa:
             continue
 

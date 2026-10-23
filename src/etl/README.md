@@ -62,6 +62,7 @@ os testes).
 | Comando | O que faz | Argumentos |
 |---|---|---|
 | `cpf` | Completa o `cpf_hash` (Câmara pela API, Senado pelo TSE). Grava o hash, nunca o CPF. No fim, funde quem foi deputado e senador (mesmo CPF) | — |
+| `tirar-cpf` | Passa `sem_cpf` no texto já gravado (nome de MEI nos contratados e nas sanções, ementa que cita a pessoa). Rodar de novo não muda nada; as cargas já limpam na entrada | — |
 | `fundir-pessoas` | Só a fusão do fim do `cpf`: uma pessoa para quem tem o mesmo `cpf_hash` ou o mesmo `titulo_hash` (o deputado que virou senador, o parlamentar eleito prefeito em 2024) | — |
 | `rechavear-cpf` | Refaz todo hash de CPF com a chave atual: pessoas, cota, campanha e patrimônio | — |
 | `cota` | Cota parlamentar: CEAP da Câmara e CEAPS do Senado | `--anos ...` |

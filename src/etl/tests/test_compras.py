@@ -73,6 +73,16 @@ def test_contratado_so_com_cnpj_e_com_o_nome_mais_frequente():
     ]
 
 
+def test_nome_do_mei_sai_sem_o_cpf_do_dono():
+    """O nome empresarial do MEI é o nome do dono e o CPF: só o nome chega ao banco (regra 3)."""
+    linhas = entrada.ler(LinhaDeCompra, [
+        compra(**{"Nome Contratado": "FULANO DE TAL 52998224725"}),
+        compra(**{"Código Contratado": "98765432000110", "Nome Contratado": "BELTRANO SILVA - CPF 529.982.247-25"}),
+    ])
+
+    assert sorted(c.nome for c in compras.contratados(2025, linhas)) == ["BELTRANO SILVA", "FULANO DE TAL"]
+
+
 def _zip(destino, ano, mes, linhas):
     texto = io.StringIO()
     escritor = csv.DictWriter(texto, fieldnames=list(linhas[0]), delimiter=";", quoting=csv.QUOTE_ALL)

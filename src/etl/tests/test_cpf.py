@@ -89,6 +89,10 @@ def test_a_cota_usa_o_mesmo_hash_das_pessoas():
         ("EMPRESA 12345678000190", "EMPRESA 12345678000190"),
         ("12345678900", None),
         (None, None),
+        ("BELTRANO SILVA - CPF 123.456.789-00", "BELTRANO SILVA"),
+        ("CPF: 12345678900", None),
+        ("Fulano (Deputado Federal pelo Rio de Janeiro, CPF no 123.456.789-00), por mim decretada",
+         "Fulano (Deputado Federal pelo Rio de Janeiro), por mim decretada"),
     ],
 )
 def test_sem_cpf_tira_o_cpf_do_nome_de_mei(bruto, limpo):
@@ -136,3 +140,19 @@ def test_cpf_vazio_nao_exige_chave(monkeypatch):
     monkeypatch.delenv("POLIGRAPH_CHAVE_CPF")
 
     assert hash_de_cpf(None) is None
+
+
+def test_texto_ja_gravado_perde_o_cpf_e_a_segunda_passada_nao_muda_nada(conexao):
+    from poligraph_etl import persistencia
+
+    conexao.execute(
+        "TRUNCATE contratados_do_governo, sancoes_de_empresas "
+        "RESTART IDENTITY CASCADE"
+    )
+    conexao.execute(
+        "INSERT INTO contratados_do_governo (ano, cnpj, nome, contratos, valor) VALUES "
+        "(2025, '12345678000190', 'FULANO DE TAL 12345678900', 1, 10), (2025, '98765432000110', 'EMPRESA LTDA', 1, 10)")
+
+    assert persistencia.gravar_texto_sem_cpf(conexao)["contratados_do_governo.nome"] == 1
+    assert [r[0] for r in conexao.execute("SELECT nome FROM contratados_do_governo ORDER BY cnpj")] == ["FULANO DE TAL", "EMPRESA LTDA"]
+    assert sum(persistencia.gravar_texto_sem_cpf(conexao).values()) == 0
