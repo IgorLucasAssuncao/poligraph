@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Api.Tipos;
@@ -17,8 +17,6 @@ public class ServicoPoliticos(PoligraphDb db, CacheDeLeitura leitura, ServicoPar
 {
     public const int ItensPorPagina = 20;
 
-    private static readonly CompareInfo Comparacao = CultureInfo.GetCultureInfo("pt-BR").CompareInfo;
-    private const CompareOptions SemCaixaNemAcento = CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace;
 
     private readonly PoligraphDb _db = db;
     private readonly CacheDeLeitura _leitura = leitura;
@@ -41,13 +39,16 @@ public class ServicoPoliticos(PoligraphDb db, CacheDeLeitura leitura, ServicoPar
     }
 
     /// <summary>Os primeiros pelo nome, para a busca do cabeçalho: quem começa com o termo, depois o nível mais alto e o mandato mais recente. Parlamentares ficam fora: o cabeçalho já tem o grupo deles.</summary>
-    public async Task<IReadOnlyList<PoliticoNaListaDto>> BuscarAsync(string busca, int quantos, CancellationToken ct) =>
-        [.. Filtrar(await IndiceAsync(ct), new FiltroDePoliticos(busca, null, null, null, null))
+    public async Task<IReadOnlyList<PoliticoNaListaDto>> BuscarAsync(string busca, int quantos, CancellationToken ct)
+    {
+        var chave = ChaveDeBusca.De(busca.Trim());
+        return [.. Filtrar(await IndiceAsync(ct), new FiltroDePoliticos(busca, null, null, null, null))
             .Where(p => !p.Parlamentar)
-            .OrderBy(p => Comparacao.IsPrefix(p.Nome, busca, SemCaixaNemAcento) ? 0 : 1)
+            .OrderBy(p => ChaveDeBusca.De(p.Nome).StartsWith(chave, StringComparison.Ordinal) ? 0 : 1)
             .ThenBy(p => p.Mandato.Nivel)
             .ThenByDescending(p => p.Mandato.UltimoAno)
             .Take(quantos)];
+    }
 
     /// <summary>A ficha pelos mandatos: quem é, cada mandato e as redes. Nulo para quem não existe ou não tem mandato no TSE, e o endpoint responde 404.</summary>
     public async Task<FichaDoPoliticoDto?> ObterFichaAsync(IdPessoa idPessoa, CancellationToken ct)
@@ -70,10 +71,10 @@ public class ServicoPoliticos(PoligraphDb db, CacheDeLeitura leitura, ServicoPar
 
     private static IEnumerable<PoliticoNaListaDto> Filtrar(IReadOnlyList<PoliticoNoIndice> indice, FiltroDePoliticos filtro)
     {
-        var busca = filtro.Busca?.Trim();
+        var busca = string.IsNullOrWhiteSpace(filtro.Busca) ? null : ChaveDeBusca.De(filtro.Busca.Trim());
         foreach (var politico in indice)
         {
-            if (!string.IsNullOrEmpty(busca) && Comparacao.IndexOf(politico.Nome, busca, SemCaixaNemAcento) < 0)
+            if (!string.IsNullOrEmpty(busca) && !politico.Chave.Contains(busca, StringComparison.Ordinal))
             {
                 continue;
             }
@@ -128,14 +129,15 @@ public class ServicoPoliticos(PoligraphDb db, CacheDeLeitura leitura, ServicoPar
                         m.Cargo, m.Cargo.Nivel(), m.AnoEleicao, m.PrimeiroAno, m.UltimoAno, m.Uf,
                         m.CodigoMunicipioIbge is null ? null : municipios.GetValueOrDefault(m.CodigoMunicipioIbge),
                         m.Partido))];
-                return new PoliticoNoIndice(pessoa.Id, pessoa.NomeExibicao, pessoa.UrlFoto, daPessoa, pessoa.Parlamentar);
+                return new PoliticoNoIndice(pessoa.Id, pessoa.NomeExibicao, pessoa.UrlFoto, daPessoa, pessoa.Parlamentar, ChaveDeBusca.De(pessoa.NomeExibicao));
             })
             .OrderByDescending(p => p.Mandatos[0].UltimoAno)
             .ThenBy(p => p.Nome, nome)];
     }
 
+    /// <summary>Um político no índice, com a <see cref="ChaveDeBusca"/> do nome calculada uma vez.</summary>
     private sealed record PoliticoNoIndice(
-        long IdPessoa, string Nome, string? UrlFoto, IReadOnlyList<MandatoNoTseDto> Mandatos, bool Parlamentar);
+        long IdPessoa, string Nome, string? UrlFoto, IReadOnlyList<MandatoNoTseDto> Mandatos, bool Parlamentar, string Chave);
 }
 
 /// <summary>Os filtros da lista de políticos; nulo é "todos".</summary>

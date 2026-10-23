@@ -103,6 +103,6 @@ public class TestesCacheDeLeitura
     }
 
     [Fact]
-    public void Validade_EDeUmaHora() =>
-        Assert.Equal(TimeSpan.FromHours(1), CacheDeLeitura.Validade);
+    public void Validade_EDeUmDia() =>
+        Assert.Equal(TimeSpan.FromDays(1), CacheDeLeitura.Validade);
 }

@@ -1,6 +1,5 @@
 ﻿using System.Globalization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
 using Poligraph.Api.Tipos;
@@ -24,17 +23,14 @@ namespace Poligraph.Api.Services;
 /// <para>Todos os anos carregados: a página de uma entidade responde "o que ela recebeu", não "o que recebeu num ano".</para>
 /// </remarks>
 public class ServicoEntidades(
-    PoligraphDb db, IMemoryCache cache, ServicoAutoresDeEmenda autores, ServicoParlamentares parlamentares)
+    PoligraphDb db, CacheDeLeitura leitura, ServicoAutoresDeEmenda autores, ServicoParlamentares parlamentares)
 {
     public const int ItensPorPagina = 20;
     public const int ResultadosDaBusca = 5;
 
-    private static readonly TimeSpan Validade = CacheDeLeitura.Validade;
-    private static readonly CompareInfo Comparacao = CultureInfo.GetCultureInfo("pt-BR").CompareInfo;
-    private const CompareOptions SemCaixaNemAcento = CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace;
 
     private readonly PoligraphDb _db = db;
-    private readonly IMemoryCache _cache = cache;
+    private readonly CacheDeLeitura _leitura = leitura;
     private readonly ServicoAutoresDeEmenda _autores = autores;
     private readonly ServicoParlamentares _parlamentares = parlamentares;
 
@@ -44,7 +40,7 @@ public class ServicoEntidades(
     {
         pagina = Math.Max(pagina, 1);
 
-        var filtradas = Filtrar(await IndiceAsync(ct), busca)
+        var filtradas = Filtrar(await IndiceComChavesAsync(ct), busca)
             .Where(e => grupo is null || e.Grupo == grupo)
             .ToList();
 
@@ -55,7 +51,7 @@ public class ServicoEntidades(
 
     /// <summary>Os primeiros resultados para a busca do cabeçalho.</summary>
     public async Task<IReadOnlyList<EntidadeNaListaDto>> BuscarAsync(string busca, CancellationToken ct) =>
-        [.. Filtrar(await IndiceAsync(ct), busca).Take(ResultadosDaBusca)];
+        [.. Filtrar(await IndiceComChavesAsync(ct), busca).Take(ResultadosDaBusca)];
 
     /// <summary>A página da entidade. Nulo para CNPJ sem emenda, sem contrato federal e sem sanção, e o endpoint responde 404.</summary>
     /// <remarks>
@@ -165,8 +161,9 @@ public class ServicoEntidades(
     /// <remarks>
     /// <para>Quem começa pelo termo vem antes de quem só o contém; dentro de cada parte, o maior recebedor primeiro.</para>
     /// </remarks>
-    private static IEnumerable<EntidadeNaListaDto> Filtrar(IReadOnlyList<EntidadeNaListaDto> indice, string? busca)
+    private static IEnumerable<EntidadeNaListaDto> Filtrar(IndiceDeEntidades comChaves, string? busca)
     {
+        var indice = comChaves.Itens;
         if (string.IsNullOrWhiteSpace(busca))
         {
             return indice;
@@ -179,19 +176,35 @@ public class ServicoEntidades(
             return indice.Where(e => e.Cnpj.StartsWith(digitos, StringComparison.Ordinal));
         }
 
+        var chave = ChaveDeBusca.De(termo);
+        var chaves = comChaves.Chaves;
         return indice
-            .Select(e => new { Entidade = e, Posicao = Comparacao.IndexOf(e.Nome, termo, SemCaixaNemAcento) })
+            .Select((e, i) => new { Entidade = e, Posicao = chaves[i].IndexOf(chave, StringComparison.Ordinal) })
             .Where(e => e.Posicao >= 0)
             .OrderBy(e => e.Posicao == 0 ? 0 : 1)
             .ThenByDescending(e => e.Entidade.Recebido)
             .Select(e => e.Entidade);
     }
 
-    /// <summary>Todas as pessoas jurídicas que receberam emenda, com a sede. Em cache: ~31 mil linhas.</summary>
-    private async Task<IReadOnlyList<EntidadeNaListaDto>> IndiceAsync(CancellationToken ct) =>
-        await _cache.GetOrCreateAsync("entidades:indice", async entrada =>
+    /// <summary>A <see cref="ChaveDeBusca"/> do nome de cada entidade, na ordem do índice, calculada uma vez por índice.</summary>
+    /// <remarks>ATENÇÃO: presa à instância do índice, e não a uma entrada de cache própria: com validades separadas, as chaves
+    /// de um índice antigo ficariam alinhadas com as linhas do novo, e a busca acharia a entidade errada.</remarks>
+    /// <summary>Todas as pessoas jurídicas que receberam emenda, com a sede e a <see cref="ChaveDeBusca"/> de cada nome. Em cache: ~31 mil linhas.</summary>
+    /// <remarks>ATENÇÃO: a chave mora no mesmo objeto guardado: numa entrada de cache própria, com validade própria, as chaves
+    /// de um índice antigo ficariam alinhadas com as linhas do novo, e a busca acharia a entidade errada.</remarks>
+    private async Task<IndiceDeEntidades> IndiceComChavesAsync(CancellationToken ct) =>
+        await _leitura.ObterAsync("entidades:indice", async () =>
         {
-            entrada.AbsoluteExpirationRelativeToNow = Validade;
+            var itens = await CalcularIndiceAsync(ct);
+            return new IndiceDeEntidades(itens, [.. itens.Select(e => ChaveDeBusca.De(e.Nome))]);
+        });
+
+    private async Task<IReadOnlyList<EntidadeNaListaDto>> IndiceAsync(CancellationToken ct) => (await IndiceComChavesAsync(ct)).Itens;
+
+    private sealed record IndiceDeEntidades(IReadOnlyList<EntidadeNaListaDto> Itens, string[] Chaves);
+
+    private async Task<IReadOnlyList<EntidadeNaListaDto>> CalcularIndiceAsync(CancellationToken ct)
+    {
 
             var recebidos = await _db.EmendasFavorecidos.AsNoTracking()
                 .Where(f => f.Tipo == TipoFavorecido.PESSOA_JURIDICA && !f.Intermediario && f.Documento != null)
@@ -218,7 +231,7 @@ public class ServicoEntidades(
                     r.Cnpj, TextoSemCpf.Limpar(r.Nome ?? r.Cnpj), r.Natureza, GrupoDe(r.Natureza),
                     sedes.GetValueOrDefault(r.Cnpj), r.Recebido, r.Emendas))
                 .OrderByDescending(e => e.Recebido)];
-        }) ?? [];
+    }
 
     /// <summary>A entidade calculada inteira uma vez e guardada: as páginas das listas leem daqui.</summary>
     private async Task<(EntidadeNaListaDto Lista, DetalheDaEntidade Detalhe)?> CalculadaAsync(string cnpj, CancellationToken ct)
@@ -229,9 +242,8 @@ public class ServicoEntidades(
             return null;
         }
 
-        var detalhe = await _cache.GetOrCreateAsync($"entidades:{cnpj}", async entrada =>
+        var detalhe = await _leitura.ObterAsync($"entidades:{cnpj}", async () =>
         {
-            entrada.AbsoluteExpirationRelativeToNow = Validade;
             return await DetalharAsync(cnpj, ct);
         });
 

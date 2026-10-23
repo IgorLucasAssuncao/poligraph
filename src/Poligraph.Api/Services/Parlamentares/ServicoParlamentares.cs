@@ -2,7 +2,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
 using Poligraph.Api.Tipos;
@@ -10,7 +9,7 @@ using Poligraph.Api.Tipos;
 namespace Poligraph.Api.Services;
 
 /// <summary>Lista e ficha do parlamentar — quem ele é, como votou e com quem se parece.</summary>
-public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, CacheDeLeitura leitura)
+public partial class ServicoParlamentares(PoligraphDb db, CacheDeLeitura leitura)
 {
     public const int TamanhoPadrao = 30;
     public const int TamanhoMaximo = 100;
@@ -29,16 +28,10 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
     /// <summary>Tempo máximo de uma expressão regular rodada na API, em milissegundos.</summary>
     private const int TempoMaximoDaExpressao = 100;
 
-    /// <summary>
-    /// Quanto a lista da legislatura fica em memória. Ela só muda quando o ETL roda, e
-    /// montá-la custa ~260 ms: sem o cache, cada tecla da busca pagaria esse preço.
-    /// </summary>
-    private static readonly TimeSpan ValidadeDaLista = CacheDeLeitura.Validade;
 
     private static readonly CompareInfo Comparacao = CultureInfo.GetCultureInfo("pt-BR").CompareInfo;
 
     private readonly PoligraphDb _db = db;
-    private readonly IMemoryCache _cache = cache;
     private readonly CacheDeLeitura _leitura = leitura;
 
     /// <summary>RF-34 — busca por nome, partido e UF, em páginas.</summary>
@@ -196,9 +189,8 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
     /// <para>RISCO: `Min` e `Max` sobre a navegação (`v.Votacao.Data`) dentro de um `GroupBy` viram, no EF, uma subconsulta por grupo, juntando `votacoes` duas vezes. A junção explícita deixa a data como coluna da consulta, e o EF agrega no próprio `GROUP BY`. MEDIDO em 2026-10-18, Câmara, 57ª, banco local: a mediana de presença foi de 6,9 s para 0,22 s, com o mesmo resultado para os 643 deputados.</para>
     /// </remarks>
     private async Task<double?> MedianaDePresencaAsync(TipoCasa casa, short legislatura, CancellationToken ct) =>
-        await _cache.GetOrCreateAsync(("mediana-presenca", casa, legislatura), async entrada =>
+        await _leitura.ObterAsync(("mediana-presenca", casa, legislatura), async () =>
         {
-            entrada.AbsoluteExpirationRelativeToNow = ValidadeDaLista;
             var porPessoa = await (
                     from v in _db.Votos.AsNoTracking()
                     join vt in _db.Votacoes.AsNoTracking() on v.VotacaoId equals vt.Id
@@ -401,9 +393,8 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
             return [];
         }
 
-        return await _cache.GetOrCreateAsync(("parlamentares", legislatura.Value), entrada =>
+        return await _leitura.ObterAsync(("parlamentares", legislatura.Value), () =>
         {
-            entrada.AbsoluteExpirationRelativeToNow = ValidadeDaLista;
             return MontarListaAsync(legislatura.Value, ct);
         }) ?? [];
     }
@@ -424,9 +415,8 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
 
         foreach (var legislatura in legislaturas)
         {
-            var daLegislatura = await _cache.GetOrCreateAsync(("parlamentares", legislatura), entrada =>
+            var daLegislatura = await _leitura.ObterAsync(("parlamentares", legislatura), () =>
             {
-                entrada.AbsoluteExpirationRelativeToNow = ValidadeDaLista;
                 return MontarListaAsync(legislatura, ct);
             }) ?? [];
 
@@ -721,9 +711,8 @@ public partial class ServicoParlamentares(PoligraphDb db, IMemoryCache cache, Ca
 
     /// <summary>A mediana de governismo e de disciplina de quem está no grafo. Em cache, por execução.</summary>
     private async Task<(double?, double?)> MedianasDaCasaAsync(long execucaoId, CancellationToken ct) =>
-        await _cache.GetOrCreateAsync(("medianas", execucaoId), async entrada =>
+        await _leitura.ObterAsync(("medianas", execucaoId), async () =>
         {
-            entrada.AbsoluteExpirationRelativeToNow = ValidadeDaLista;
             var nos = await _db.NosMetrica.AsNoTracking()
                 .Where(n => n.ExecucaoId == execucaoId)
                 .Select(n => new { n.Governismo, n.Disciplina })

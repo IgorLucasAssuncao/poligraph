@@ -4,7 +4,7 @@ using Poligraph.Api.Textos;
 namespace Poligraph.Api.Services;
 
 /// <summary>
-/// Calcula as respostas mais pesadas na subida da API e de hora em hora, para nenhum
+/// Calcula as respostas mais pesadas na subida da API e uma vez por <see cref="CacheDeLeitura.Validade"/>, para nenhum
 /// visitante pagar a consulta a frio.
 /// </summary>
 /// <remarks>
@@ -54,6 +54,7 @@ public sealed class AquecedorDeCache(
             await servicos.GetRequiredService<ServicoMetodologia>().ObterAsync(ct);
             await servicos.GetRequiredService<ServicoGoverno>().ObterAsync(default, ct);
             await servicos.GetRequiredService<ServicoMapaDeEmendas>().ObterBrasilAsync(default, ct);
+            await servicos.GetRequiredService<ServicoBusca>().BuscarAsync("aquecer", ct);
 
             if (_logger.IsEnabled(LogLevel.Information))
             {

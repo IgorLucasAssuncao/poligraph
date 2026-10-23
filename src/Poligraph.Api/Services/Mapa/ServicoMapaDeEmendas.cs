@@ -1,6 +1,5 @@
 ﻿using System.Globalization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
 using Poligraph.Api.Tipos;
@@ -22,7 +21,7 @@ namespace Poligraph.Api.Services;
 /// "quem mandou dinheiro para a minha cidade" se responde pela legislatura, não por um ano.
 /// </para>
 /// </remarks>
-public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAutoresDeEmenda autores, CacheDeLeitura leitura)
+public class ServicoMapaDeEmendas(PoligraphDb db, ServicoAutoresDeEmenda autores, CacheDeLeitura leitura)
 {
     public const int ItensPorPagina = 10;
 
@@ -31,10 +30,6 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
 
     private const int ResultadosDaBusca = 10;
 
-    private static readonly TimeSpan ValidadeDosMunicipios = CacheDeLeitura.Validade;
-
-    /// <summary>O dado só muda quando o ETL roda; 10 minutos bastam para as páginas de uma visita.</summary>
-    private static readonly TimeSpan ValidadeDaCidade = CacheDeLeitura.Validade;
     private static readonly CompareInfo Comparacao = CultureInfo.GetCultureInfo("pt-BR").CompareInfo;
 
     /// <summary>As naturezas jurídicas da administração municipal: nelas a sede é a própria cidade.</summary>
@@ -42,7 +37,6 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
     private static readonly string[] NaturezasDoEstado = [.. VocabularioDasFontes.NaturezasDoEstado];
 
     private readonly PoligraphDb _db = db;
-    private readonly IMemoryCache _cache = cache;
     private readonly ServicoAutoresDeEmenda _autores = autores;
     private readonly CacheDeLeitura _leitura = leitura;
 
@@ -54,9 +48,8 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
             return new MapaDoBrasilDto(periodoMostrado, anosDaEmendaCarregados, 0, 0, 0, 0, []);
         }
 
-        return await _cache.GetOrCreateAsync($"mapa:brasil:{periodoMostrado.PrimeiroAno}-{periodoMostrado.UltimoAno}", async entrada =>
+        return await _leitura.ObterAsync($"mapa:brasil:{periodoMostrado.PrimeiroAno}-{periodoMostrado.UltimoAno}", async () =>
         {
-            entrada.AbsoluteExpirationRelativeToNow = ValidadeDaCidade;
 
             var doPeriodo = DoPeriodo(prefixosDoCodigoDaEmenda);
             var totais = await doPeriodo
@@ -243,9 +236,8 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
 
     /// <summary>Os anos das emendas que têm pagamento registrado. Em cache: é a mesma lista em toda chamada.</summary>
     private async Task<IReadOnlyList<int>> AnosAsync(CancellationToken ct) =>
-        await _cache.GetOrCreateAsync("mapa:anos", async entrada =>
+        await _leitura.ObterAsync("mapa:anos", async () =>
         {
-            entrada.AbsoluteExpirationRelativeToNow = ValidadeDaCidade;
             var prefixosDoCodigoDaEmenda = await _db.EmendasFavorecidos.AsNoTracking()
                 .Select(f => f.CodigoEmenda.Substring(0, 4))
                 .Distinct()
@@ -311,9 +303,8 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
         };
 
     private async Task<IReadOnlyList<MunicipioDto>> MunicipiosAsync(CancellationToken ct) =>
-        await _cache.GetOrCreateAsync("municipios", async entrada =>
+        await _leitura.ObterAsync("municipios", async () =>
         {
-            entrada.AbsoluteExpirationRelativeToNow = ValidadeDosMunicipios;
             return (IReadOnlyList<MunicipioDto>)await _db.Municipios.AsNoTracking()
                 .Select(m => new MunicipioDto(m.CodigoIbge, m.Nome, m.Uf))
                 .ToListAsync(ct);
@@ -321,9 +312,8 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
 
     /// <summary>A população estimada de cada município (IBGE) e o ano da estimativa. Em cache, como os municípios.</summary>
     private async Task<(IReadOnlyDictionary<string, int>, int?)> PopulacoesAsync(CancellationToken ct) =>
-        await _cache.GetOrCreateAsync("populacoes", async entrada =>
+        await _leitura.ObterAsync("populacoes", async () =>
         {
-            entrada.AbsoluteExpirationRelativeToNow = ValidadeDosMunicipios;
             var linhas = await _db.Municipios.AsNoTracking()
                 .Where(m => m.Populacao != null)
                 .Select(m => new { m.CodigoIbge, Populacao = m.Populacao!.Value, m.PopulacaoAno })
@@ -345,9 +335,8 @@ public class ServicoMapaDeEmendas(PoligraphDb db, IMemoryCache cache, ServicoAut
 
         var (periodoMostrado, anosDaEmendaCarregados, prefixosDoCodigoDaEmenda) = await PeriodoAsync(periodoPedido, ct);
 
-        return await _cache.GetOrCreateAsync($"mapa:cidade:{codigoIbge}:{periodoMostrado.PrimeiroAno}-{periodoMostrado.UltimoAno}", async entrada =>
+        return await _leitura.ObterAsync($"mapa:cidade:{codigoIbge}:{periodoMostrado.PrimeiroAno}-{periodoMostrado.UltimoAno}", async () =>
         {
-            entrada.AbsoluteExpirationRelativeToNow = ValidadeDaCidade;
             return await CalcularCidadeAsync(municipio, periodoMostrado, anosDaEmendaCarregados, prefixosDoCodigoDaEmenda, ct);
         });
     }
