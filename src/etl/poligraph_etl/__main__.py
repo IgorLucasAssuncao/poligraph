@@ -250,9 +250,9 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
     man = sub.add_parser("mandatos", help="os eleitos de cada eleição (TSE): estaduais, governadores, prefeitos e vices")
     man.add_argument("--eleicoes", type=int, nargs="+", default=ELEICOES_DOS_MANDATOS)
     pat = sub.add_parser("patrimonio", help="bens declarados ao TSE, por tipo — não a descrição")
-    pat.add_argument("--anos", type=int, nargs="+", default=[2018, 2022])
+    pat.add_argument("--anos", type=int, nargs="+", default=[2018, 2022, 2026])
     red = sub.add_parser("redes", help="redes sociais: Câmara para deputados, TSE para senadores e para os outros cargos")
-    red.add_argument("--anos", type=int, nargs="+", default=[2018, 2020, 2022, 2024],
+    red.add_argument("--anos", type=int, nargs="+", default=[2018, 2020, 2022, 2024, 2026],
                      help="eleições do TSE; vale a mais recente de cada pessoa")
 
     mun = sub.add_parser(
@@ -1010,8 +1010,9 @@ def _convenios(conexao: psycopg.Connection) -> None:
         persistencia.gravar_convenentes(conexao, linhas, carga)
 
 
-ELEICOES_DOS_MANDATOS = [1998, 2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016, 2018, 2020, 2022, 2024]
-"""As eleições que o TSE publica no layout atual do cadastro de candidatos (MEDIDO em 2026-10-21, de 2010 a 2024)."""
+ELEICOES_DOS_MANDATOS = [1998, 2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014, 2016, 2018, 2020, 2022, 2024, 2026]
+"""As eleições que o TSE publica no layout atual do cadastro de candidatos (MEDIDO em 2026-10-21, de 2010 a 2024; 2026 em
+2026-10-23, com o primeiro turno apurado)."""
 
 
 def _mandatos(conexao: psycopg.Connection, eleicoes: list[int]) -> None:

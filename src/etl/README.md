@@ -72,9 +72,9 @@ os testes).
 | `populacao` | População estimada de cada município (IBGE, SIDRA 6579), para o mapa por habitante | — |
 | `sedes-brasilapi` | Sede dos CNPJs que o cadastro não resolveu, pela BrasilAPI (Pendência 71). Retoma de onde parou | `--limite N` |
 | `fundo` | Receitas de campanha, com o fundo eleitoral (TSE). Parlamentares pelo CPF; governadores, deputados estaduais e vices pela candidatura de `mandatos` (2018, 2022 e a municipal de 2024: o layout antigo não traz o número da candidatura) | `--eleicao 2022`; `--arquivo` com o ZIP baixado à mão |
-| `mandatos` | Eleitos do TSE (Pendência 90): deputados estaduais e distritais, governadores, prefeitos e vices, com pessoa nova para quem não é do Congresso. Identidade pelo hash do CPF ou do título de eleitor (o de 2024 não traz CPF). No fim, funde quem tem o mesmo hash e apaga a pessoa que ficou sem vínculo em tabela nenhuma | `--eleicoes 2000 ... 2024` (padrão: 1998 e todas de 2000 a 2024) |
-| `patrimonio` | Bens declarados ao TSE, por tipo: parlamentares pelo CPF, os outros cargos por `mandatos` | `--anos 2018 2022` |
-| `redes` | Redes sociais: Câmara para deputados, TSE para senadores e para quem só tem mandato no TSE (de 2014 em diante) | `--anos 2018 2020 2022 2024` |
+| `mandatos` | Eleitos do TSE (Pendência 90): deputados estaduais e distritais, governadores, prefeitos e vices, com pessoa nova para quem não é do Congresso. Identidade pelo hash do CPF ou do título de eleitor (o de 2024 não traz CPF). No fim, funde quem tem o mesmo hash e apaga a pessoa que ficou sem vínculo em tabela nenhuma | `--eleicoes 2000 ... 2024` (padrão: 1998 e todas de 2000 a 2026) |
+| `patrimonio` | Bens declarados ao TSE, por tipo: parlamentares pelo CPF, os outros cargos por `mandatos` | `--anos 2018 2022 2026` |
+| `redes` | Redes sociais: Câmara para deputados, TSE para senadores e para quem só tem mandato no TSE (de 2014 em diante) | `--anos 2018 2020 2022 2024 2026` |
 | `governo` | Quem governa (TSE), orçamento, pago, arrecadação e gasto sigiloso (Portal) | `--anos ...`, `--eleicao` |
 | `defesa-civil` | Cartão da Defesa Civil (CPDC), mês a mês. Mês que o Portal não publicou é pulado e nomeado no log | `--anos ...` |
 | `viagens` | Viagens a serviço do Executivo federal: diárias, passagens, seguro e restituição por órgão, e destinos | `--anos ...` |

@@ -17,6 +17,7 @@ MEDIDO: [`docs/12-fonte-tse.md §2.0`](../../../../docs/12-fonte-tse.md)
 """
 
 import logging
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 import requests
@@ -87,11 +88,11 @@ def existe(url: str) -> bool:
 def baixar(url: str, destino: Path) -> Path:
     """Baixa em fluxo — são **396 MB**, que não cabem em memória.
 
-    Não rebaixa se o destino já existe: o arquivo de uma eleição passada nunca muda.
+    Com o destino em cache, só rebaixa se o TSE publicou versão mais nova (`mudou_desde`).
 
     Só renomeia no fim: download interrompido não pode virar cache válido.
     """
-    if destino.exists() and destino.stat().st_size > 0:
+    if destino.exists() and destino.stat().st_size > 0 and not mudou_desde(url, destino):
         log.info("  já em cache: %s (%.0f MB)", destino.name,
                  destino.stat().st_size / 1e6)
         return destino
@@ -117,3 +118,33 @@ def baixar(url: str, destino: Path) -> Path:
     log.info("  %s — %.0f MB", destino.name, destino.stat().st_size / 1e6)
 
     return destino
+
+
+def mudou_desde(url: str, arquivo: Path) -> bool:
+    """O TSE publicou o arquivo depois do cache, ou com outro tamanho? Lê só os headers de um `GET` em fluxo.
+
+    RISCO: o arquivo da eleição em andamento muda. MEDIDO em 2026-10-23: o `consulta_cand_2026` em cache desde
+    21/10 tinha 20 governadores eleitos, e o publicado no dia 23, 21; o de 2024 também foi republicado no dia 23.
+    Sem esta conferência, a rotina de novembro leria o arquivo de antes do segundo turno.
+
+    ATENÇÃO: sem resposta do TSE, fica o cache, e o log diz. `GET`, nunca `HEAD` (ver o topo do módulo).
+    """
+    try:
+        with requests.get(url, headers=CABECALHOS, stream=True, timeout=60) as resposta:
+            publicado = resposta.headers.get("Last-Modified")
+            tamanho = resposta.headers.get("Content-Length")
+            if resposta.status_code != 200:
+                log.warning("  o TSE respondeu %d ao conferir %s; fica o cache", resposta.status_code, arquivo.name)
+                return False
+    except requests.RequestException as erro:
+        log.warning("  sem resposta do TSE ao conferir %s (%s); fica o cache", arquivo.name, erro)
+        return False
+
+    local = arquivo.stat()
+    if tamanho is not None and tamanho.isdigit() and int(tamanho) != local.st_size:
+        log.info("  o TSE publicou outra versão de %s: %s bytes, o cache tem %d", arquivo.name, tamanho, local.st_size)
+        return True
+    if publicado is not None and parsedate_to_datetime(publicado).timestamp() > local.st_mtime:
+        log.info("  o TSE publicou %s em %s, depois do cache", arquivo.name, publicado)
+        return True
+    return False

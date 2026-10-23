@@ -52,5 +52,5 @@ export const TEXTOS_DA_CIDADE = {
     'A cidade é a da sede de quem recebeu: entidade com sede aqui pode ter aplicado o dinheiro em outra cidade.',
   ],
   fonte:
-    'Fontes: candidaturas eleitas do TSE, de 1998 a 2024; pagamentos de emendas do Portal da Transparência; contas da prefeitura declaradas ao Tesouro Nacional (Siconfi, DCA).',
+    'Fontes: candidaturas eleitas do TSE, de 1998 a 2026; pagamentos de emendas do Portal da Transparência; contas da prefeitura declaradas ao Tesouro Nacional (Siconfi, DCA).',
 };

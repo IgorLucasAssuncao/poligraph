@@ -15,7 +15,7 @@ const T = TEXTOS_DOS_POLITICOS.lista;
 const NIVEIS: (Nivel | null)[] = [null, 'FEDERAL', 'ESTADUAL', 'MUNICIPAL'];
 
 /**
- * Todo político eleito que o TSE publica, de 1998 a 2024: presidente, governadores, prefeitos, deputados e vices (Pendência 90).
+ * Todo político eleito que o TSE publica, de 1998 a 2026: presidente, governadores, prefeitos, deputados e vices (Pendência 90).
  *
  * DECISÃO: Os filtros descem do nível ao município. O cargo só oferece os do nível escolhido, e a
  * cidade só aparece com o estado escolhido: são 5.570 municípios, e a lista sem estado não caberia.
