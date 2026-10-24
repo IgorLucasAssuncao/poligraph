@@ -115,7 +115,7 @@ export const TEXTOS_DOS_COMPONENTES = {
     verTabela: 'Ver como tabela',
     governouDe: (nome: string, de: number, ate: number) => (de === ate ? `${nome}, ${de}` : `${nome}, de ${de} a ${ate}`),
     ano: 'Ano',
-    deCadaCem: (parte: number) => `${parte} de cada R$ 100`,
+    deCadaCem: (parte: number, valor = 1) => (parte === 0 && valor > 0 ? 'menos de 1 de cada R$ 100' : `${parte} de cada R$ 100`),
   },
 
   fitas: {

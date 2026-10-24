@@ -594,14 +594,14 @@ function FinanciamentoComponent({ idPessoa, fin }: { idPessoa: number; fin: Fina
       <div className="duas-colunas">
         <div>
           <h3 className="titulo-secao">{T.campanha.osDoisFundos}</h3>
-          <ul className="fundos">
+          <ul className="gastos-fornecedores">
             <li>
-              <span className="fundo-rotulo">{T.campanha.fundoEspecial}</span>
-              <span className="fundo-valor">{reais(fin.fundoEspecial)}</span>
+              <span className="gasto-nome">{T.campanha.fundoEspecial}</span>
+              <span className="gasto-valor">{reais(fin.fundoEspecial)}</span>
             </li>
             <li>
-              <span className="fundo-rotulo">{T.campanha.fundoPartidario}</span>
-              <span className="fundo-valor">{reais(fin.fundoPartidario)}</span>
+              <span className="gasto-nome">{T.campanha.fundoPartidario}</span>
+              <span className="gasto-valor">{reais(fin.fundoPartidario)}</span>
             </li>
           </ul>
         </div>
@@ -625,14 +625,14 @@ function FinanciamentoComponent({ idPessoa, fin }: { idPessoa: number; fin: Fina
       <ComposicaoComponent
         rotulo={T.campanha.deOndeVeio}
         formatar={reais}
-        partes={partesComOutros(fin.porFonte, (f) => minusculas(f.fonte), (f) => f.total, T.campanha.outrasFontes)}
+        partes={partesComOutros(fin.porFonte, (f) => nomeDaFonte(f.fonte), (f) => f.total, T.campanha.outrasFontes)}
       />
 
       <details className="detalhes-da-aba">
         <summary>{T.campanha.verDetalhes}</summary>
         <ul className="gastos-categorias">
           {fin.porFonte.map((f) => (
-            <LinhaDeValorComponent key={f.fonte} nome={minusculas(f.fonte)} valor={f.total} maior={maior} />
+            <LinhaDeValorComponent key={f.fonte} nome={nomeDaFonte(f.fonte)} valor={f.total} maior={maior} />
           ))}
         </ul>
       </details>
@@ -807,4 +807,9 @@ function FitasDasEmendasDoAnoComponent({ caminhos, total, anoDaEmenda }: { camin
       />
     </section>
   );
+}
+
+/** O nome de uma fonte de receita do TSE para a tela; a que o mapa não conhece sai em minúsculas, como vem. */
+function nomeDaFonte(fonte: string): string {
+  return T.campanha.fontes[fonte] ?? minusculas(fonte);
 }

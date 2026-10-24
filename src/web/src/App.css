@@ -2514,24 +2514,6 @@ dialog.modal[open]::backdrop { opacity: 0; }
 
 /* ATENÇÃO: Os dois fundos lado a lado, cada um com o nome à vista — a diagramação é o
    que impede a leitura de "um bloco só de dinheiro público". */
-.fundos {
-  list-style: none; margin: 0; padding: 0;
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-}
-.fundos li {
-  padding: 1rem; border-bottom: 1px solid var(--borda);
-  display: flex; flex-direction: column; gap: .3rem;
-}
-.fundos li + li { border-left: 1px solid var(--borda); }
-.fundo-rotulo {
-  font-family: var(--dado); font-size: var(--t-1); font-weight: 600;
-  text-transform: uppercase; letter-spacing: .1em; color: var(--suave);
-}
-.fundo-valor {
-  font-family: var(--display);
-  font-size: var(--t-4); font-weight: 700; letter-spacing: -.02em;
-  font-variant-numeric: tabular-nums;
-}
 
 /* ═══════════════════════════════════════════════════════════════════
    Tour guiado

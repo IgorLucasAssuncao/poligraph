@@ -149,6 +149,14 @@ export const TEXTOS_DAS_CONTAS = {
     pessoaFisica: 'pessoa física',
     verDetalhes: 'Ver detalhes: todas as fontes de receita',
     deOndeVeio: 'De onde veio',
+    /** As fontes de receita como o TSE as classifica, pelo nome que se lê; o código vem sem acento. */
+    fontes: {
+      'FUNDO ESPECIAL': 'Fundo Especial',
+      'FUNDO PARTIDARIO': 'Fundo Partidário',
+      'OUTROS RECURSOS': 'Outros recursos',
+      'NAO ESPECIFICADO': 'Fonte não especificada pelo TSE',
+      'NAO INFORMADO': 'Fonte não informada',
+    } as Record<string, string>,
     outrasFontes: 'outras fontes',
     fonte: 'Prestação de contas eleitorais publicada pelo TSE.',
     conjuntoNoTse: 'Conjunto de dados no TSE',

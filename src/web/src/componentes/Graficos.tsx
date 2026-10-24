@@ -211,7 +211,7 @@ export function ComposicaoComponent({
               type="button"
               className={`grafico-composicao-parte tom-${i}${emFoco === i ? ' em-foco' : ''}`}
               style={{ flexGrow: positivas[i] / Math.max(total, 1) }}
-              aria-label={`${p.nome}: ${formatar(p.valor)}, ${T.deCadaCem(cem[i])}`}
+              aria-label={`${p.nome}: ${formatar(p.valor)}, ${T.deCadaCem(cem[i], p.valor)}`}
               onMouseEnter={() => setEmFoco(i)}
               onFocus={() => setEmFoco(i)}
               onBlur={() => setEmFoco(null)}
@@ -233,7 +233,7 @@ export function ComposicaoComponent({
             </span>
             <span className="grafico-legenda-valor">
               {formatar(p.valor)}
-              <small>{T.deCadaCem(cem[i])}</small>
+              <small>{T.deCadaCem(cem[i], p.valor)}</small>
             </span>
           </li>
         ))}

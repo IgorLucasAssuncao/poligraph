@@ -353,7 +353,7 @@ describe('contas — campanha', () => {
   it('RISCO: os dois fundos aparecem SEPARADOS e nomeados', async () => {
     await abrirAba('Campanha');
 
-    await screen.findByText('Fundo Partidário');
+    await screen.findAllByText('Fundo Partidário');
     const texto = await tela();
 
     expect(texto).toMatch(/R\$\s*3\.000\.000,00/);
