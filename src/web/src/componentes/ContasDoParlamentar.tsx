@@ -591,24 +591,23 @@ function FinanciamentoComponent({ idPessoa, fin }: { idPessoa: number; fin: Fina
         )}
       </p>
 
-      <div className="duas-colunas">
-        <div>
-          <h3 className="titulo-secao">{T.campanha.osDoisFundos}</h3>
-          <ul className="gastos-fornecedores">
-            <li>
-              <span className="gasto-nome">{T.campanha.fundoEspecial}</span>
-              <span className="gasto-valor">{reais(fin.fundoEspecial)}</span>
-            </li>
-            <li>
-              <span className="gasto-nome">{T.campanha.fundoPartidario}</span>
-              <span className="gasto-valor">{reais(fin.fundoPartidario)}</span>
-            </li>
-          </ul>
-        </div>
-        <div>
+      <h3 className="titulo-secao">{T.campanha.deOndeVeio}</h3>
+      <ComposicaoComponent
+        rotulo={T.campanha.deOndeVeio}
+        formatar={reais}
+        partes={partesComOutros(fin.porFonte, (f) => nomeDaFonte(f.fonte), (f) => f.total, T.campanha.outrasFontes).map((p) =>
+          p.nome === nomeDaFonte(FONTE_OUTROS_RECURSOS) ? { ...p, termo: 'outrosRecursos' as const } : p,
+        )}
+      />
+
+      {fin.repassesDosFundos.length > 0 && <RepassesDosFundosComponent fin={fin} />}
+
+      {fin.doacoesForaDosFundos.length > 0 && (
+        <>
           <h3 className="titulo-secao">{T.campanha.maioresDoadores}</h3>
+          <p className="ajuda">{T.campanha.doacoesAjuda}</p>
           <ul className="gastos-fornecedores">
-            {fin.maioresDoadores.map((d) => (
+            {fin.doacoesForaDosFundos.map((d) => (
               <li key={d.nome}>
                 <span className="gasto-nome">
                   {nomeProprio(d.nome)}
@@ -618,15 +617,8 @@ function FinanciamentoComponent({ idPessoa, fin }: { idPessoa: number; fin: Fina
               </li>
             ))}
           </ul>
-        </div>
-      </div>
-
-      <h3 className="titulo-secao">{T.campanha.deOndeVeio}</h3>
-      <ComposicaoComponent
-        rotulo={T.campanha.deOndeVeio}
-        formatar={reais}
-        partes={partesComOutros(fin.porFonte, (f) => nomeDaFonte(f.fonte), (f) => f.total, T.campanha.outrasFontes)}
-      />
+        </>
+      )}
 
       <details className="detalhes-da-aba">
         <summary>{T.campanha.verDetalhes}</summary>
@@ -645,6 +637,57 @@ function FinanciamentoComponent({ idPessoa, fin }: { idPessoa: number; fin: Fina
   );
 }
 
+
+/** A fonte do TSE para o dinheiro que não saiu dos dois fundos. */
+const FONTE_OUTROS_RECURSOS = 'OUTROS RECURSOS';
+
+/**
+ * Quem entregou o dinheiro dos fundos, numa tabela de doador por fundo.
+ *
+ * DECISÃO (2026-10-24): no lugar da lista dos dois fundos ao lado dos maiores doadores. Lado a lado, as linhas não se
+ * correspondiam: a Direção Nacional entregou parte de cada fundo, e quem lia esperava que ela fosse um deles, ou somava tudo.
+ */
+function RepassesDosFundosComponent({ fin }: { fin: FinanciamentoDeCampanha }) {
+  return (
+    <>
+      <h3 className="titulo-secao">{T.campanha.quemRepassou}</h3>
+      <p className="ajuda">{T.campanha.quemRepassouAjuda}</p>
+      <div className="tabela-rolavel">
+        <table className="tabela-orcamento tabela-repasses">
+          <caption className="sr-apenas">{T.campanha.legendaDosRepasses}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{T.campanha.quemRepassouColuna}</th>
+              <th scope="col">{T.campanha.fundoEspecial}</th>
+              <th scope="col">{T.campanha.fundoPartidario}</th>
+              <th scope="col">{T.campanha.totalDosRepasses}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {fin.repassesDosFundos.map((r) => (
+              <tr key={r.nome}>
+                <th scope="row">{nomeProprio(r.nome)}</th>
+                <td data-rotulo={T.campanha.rotulosDosRepasses.fundoEspecial}>{reais(r.fundoEspecial)}</td>
+                <td data-rotulo={T.campanha.rotulosDosRepasses.fundoPartidario}>{reais(r.fundoPartidario)}</td>
+                <td data-rotulo={T.campanha.totalDosRepasses}>{reais(r.fundoEspecial + r.fundoPartidario)}</td>
+              </tr>
+            ))}
+          </tbody>
+          {fin.repassesDosFundos.length > 1 && (
+            <tfoot>
+              <tr>
+                <th scope="row">{T.campanha.somaDosRepasses}</th>
+                <td data-rotulo={T.campanha.rotulosDosRepasses.fundoEspecial}>{reais(fin.fundoEspecial)}</td>
+                <td data-rotulo={T.campanha.rotulosDosRepasses.fundoPartidario}>{reais(fin.fundoPartidario)}</td>
+                <td data-rotulo={T.campanha.totalDosRepasses}>{reais(fin.fundoEspecial + fin.fundoPartidario)}</td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
+    </>
+  );
+}
 
 /**
  * O que o parlamentar declarou ter ao se candidatar — a última declaração, e a anterior ao lado.

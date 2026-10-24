@@ -1197,7 +1197,19 @@ export type FinanciamentoDeCampanha = {
   fundoEspecial: number;
   fundoPartidario: number;
   porFonte: ReceitaPorFonte[];
+  /** Todo o dinheiro por doador, os fundos inclusive: o desenho de onde veio e para onde foi fecha com o total por ela. */
   maioresDoadores: DoadorDoParlamentar[];
+  /** Quem entregou o dinheiro dos dois fundos, e quanto de cada um: as linhas fecham com `fundoEspecial` e `fundoPartidario`. */
+  repassesDosFundos: RepasseDosFundos[];
+  /** O dinheiro que não veio dos fundos, por doador. */
+  doacoesForaDosFundos: DoadorDoParlamentar[];
+};
+
+/** Quem repassou dinheiro dos fundos à campanha: em geral as direções do partido, às vezes outra campanha. */
+export type RepasseDosFundos = {
+  nome: string;
+  fundoEspecial: number;
+  fundoPartidario: number;
 };
 
 /** Com `legislatura`, a eleição que deu ESTE mandato, e nenhuma outra. */

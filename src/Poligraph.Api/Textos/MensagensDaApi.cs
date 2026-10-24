@@ -8,6 +8,8 @@ public static class MensagensDaApi
 {
     public const string TituloDaDocumentacao = "Registro Aberto — API";
 
+    public const string DoadorNaoInformado = "Repasse sem o nome de quem entregou";
+
     public const string SaudeWorkerDePe = "O worker dos avisos está de pé.";
     public const string SaudeWorkerSemFila = "A fila de tarefas (schema hangfire) não existe: o worker nunca subiu neste banco.";
     public const string SaudeWorkerSemServidor = "Nenhum worker registrado na fila: os avisos não estão saindo.";

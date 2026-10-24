@@ -461,6 +461,45 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
     }
 
     /// <summary>
+    /// Quem repassou os fundos fecha com os fundos, linha a linha por fundo, e os doadores da aba ficam só com o dinheiro
+    /// de fora deles. A Direção Nacional que entrega parte de cada fundo não pode aparecer como doadora a mais.
+    /// </summary>
+    [SkippableFact]
+    public async Task Financiamento_RepassesFechamComOsFundos_EDoacoesFicamForaDeles()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        var idPessoa = await SemearReceitasAsync();
+        Db.ReceitasDeCampanha.AddRange(
+            new ReceitaDeCampanhaModel
+            {
+                PessoaId = idPessoa, AnoEleicao = 2022,
+                FonteReceita = ReceitaDeCampanhaModel.FonteFundoEspecial,
+                Doador = "DIRECAO ESTADUAL", DoadorCnpjOuHash = "12345678000288",
+                Valor = 400_000m
+            },
+            new ReceitaDeCampanhaModel
+            {
+                PessoaId = idPessoa, AnoEleicao = 2022,
+                FonteReceita = ReceitaDeCampanhaModel.FonteFundoPartidario,
+                Doador = "DIRECAO ESTADUAL", DoadorCnpjOuHash = "12345678000288",
+                Valor = 50_000m
+            });
+        await Db.SaveChangesAsync();
+        using var cliente = CriarCliente();
+
+        var fin = await cliente.GetFromJsonAsync<FinanciamentoComRepassesLido>($"{Rota}/{idPessoa}/financiamento");
+
+        Assert.Equal(fin!.FundoEspecial, fin.RepassesDosFundos.Sum(r => r.FundoEspecial));
+        Assert.Equal(fin.FundoPartidario, fin.RepassesDosFundos.Sum(r => r.FundoPartidario));
+        var estadual = Assert.Single(fin.RepassesDosFundos, r => r.Nome == "DIRECAO ESTADUAL");
+        Assert.Equal((400_000m, 50_000m), (estadual.FundoEspecial, estadual.FundoPartidario));
+        var doacao = Assert.Single(fin.DoacoesForaDosFundos);
+        Assert.Equal(("JOSE DA SILVA", 50_000m), (doacao.Nome, doacao.Total));
+        Assert.Equal(fin.Total, fin.MaioresDoadores.Sum(d => d.Total));
+    }
+
+    /// <summary>
     /// RNF-13 — o documento do doador pessoa física NUNCA sai da API.
     /// </summary>
     [SkippableFact]
@@ -501,6 +540,15 @@ public class TestesEndpointParlamentares(FixturePostgres postgres) : BaseIntegra
         IReadOnlyList<DestinoLido> PorDestino);
 
     private record FonteLida(string Fonte, decimal Total, int Lancamentos);
+
+    private record DoadorLido(string Nome, decimal Total, bool PessoaFisica);
+
+    private record RepasseLido(string Nome, decimal FundoEspecial, decimal FundoPartidario);
+
+    private record FinanciamentoComRepassesLido(
+        decimal Total, decimal FundoEspecial, decimal FundoPartidario,
+        IReadOnlyList<DoadorLido> MaioresDoadores, IReadOnlyList<RepasseLido> RepassesDosFundos,
+        IReadOnlyList<DoadorLido> DoacoesForaDosFundos);
 
     private record FinanciamentoLido(
         int AnoEleicao, decimal Total, decimal FundoEspecial, decimal FundoPartidario,

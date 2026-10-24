@@ -150,7 +150,16 @@ const CAMPANHA: FinanciamentoDeCampanha = {
     { fonte: 'FUNDO PARTIDARIO', total: 200_000, lancamentos: 1 },
     { fonte: 'OUTROS RECURSOS', total: 50_000, lancamentos: 9 },
   ],
-  maioresDoadores: [{ nome: 'Jose da Silva', total: 50_000, pessoaFisica: true }],
+  maioresDoadores: [
+    { nome: 'Direção Nacional', total: 2_800_000, pessoaFisica: false },
+    { nome: 'Direção Estadual/Distrital', total: 400_000, pessoaFisica: false },
+    { nome: 'Jose da Silva', total: 50_000, pessoaFisica: true },
+  ],
+  repassesDosFundos: [
+    { nome: 'Direção Nacional', fundoEspecial: 2_700_000, fundoPartidario: 100_000 },
+    { nome: 'Direção Estadual/Distrital', fundoEspecial: 300_000, fundoPartidario: 100_000 },
+  ],
+  doacoesForaDosFundos: [{ nome: 'Jose da Silva', total: 50_000, pessoaFisica: true }],
 };
 
 function renderizar() {
@@ -379,10 +388,29 @@ describe('contas — campanha', () => {
     expect(texto).not.toMatch(/cpf|cnpj/i);
   });
 
+  it('DECISÃO: quem repassou os fundos sai numa tabela por fundo, com o total igual aos fundos', async () => {
+    await abrirAba('Campanha');
+
+    const tabela = await screen.findByRole('table', { name: 'Quanto cada um repassou de cada fundo' });
+    const nacional = within(tabela).getByRole('row', { name: /Direção Nacional/ });
+    expect(nacional.textContent).toMatch(/R\$\s*2\.700\.000,00.*R\$\s*100\.000,00.*R\$\s*2\.800\.000,00/);
+    const total = within(tabela).getByRole('row', { name: /^Soma dos repasses/ });
+    expect(total.textContent).toMatch(/R\$\s*3\.000\.000,00.*R\$\s*200\.000,00.*R\$\s*3\.200\.000,00/);
+  });
+
+  it('DECISÃO: os doadores da aba são só o dinheiro de fora dos fundos, sem repetir o partido', async () => {
+    await abrirAba('Campanha');
+
+    const titulo = await screen.findByRole('heading', { name: 'Maiores doadores' });
+    const lista = titulo.nextElementSibling?.nextElementSibling as HTMLElement;
+    expect(lista.textContent).toMatch(/Jose da Silva/);
+    expect(lista.textContent).not.toMatch(/Direção/);
+  });
+
   it('DECISÃO: estado vazio é honesto', async () => {
     vi.mocked(api.obterFinanciamento).mockResolvedValue({
       anoEleicao: 0, total: 0, fundoEspecial: 0, fundoPartidario: 0,
-      porFonte: [], maioresDoadores: [],
+      porFonte: [], maioresDoadores: [], repassesDosFundos: [], doacoesForaDosFundos: [],
     });
 
     await abrirAba('Campanha');

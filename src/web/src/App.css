@@ -3439,3 +3439,13 @@ a.gestao-filtro { color: var(--realce); }
   margin-left: .5rem; padding: .05rem .4rem; border: 1px solid var(--borda-forte); border-radius: var(--raio);
   font-size: var(--t-1); color: var(--suave);
 }
+
+/* Quem repassou os fundos (2026-10-24): no celular, cada linha vira um bloco, com o nome da coluna ao lado do valor. */
+@media (max-width: 560px) {
+  .tabela-repasses thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .tabela-repasses tr { display: block; padding: .5rem 0; border-bottom: 1px solid var(--borda); }
+  .tabela-repasses th[scope='row'] { display: block; padding: 0 0 .25rem; border: 0; }
+  .tabela-repasses td { display: flex; justify-content: space-between; gap: 1rem; padding: .1rem 0; border: 0; text-align: right; }
+  .tabela-repasses tfoot th, .tabela-repasses tfoot td { border: 0; }
+  .tabela-repasses td::before { content: attr(data-rotulo); font-family: var(--corpo); color: var(--suave); text-align: left; }
+}

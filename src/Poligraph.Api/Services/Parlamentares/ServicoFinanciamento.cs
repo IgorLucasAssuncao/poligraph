@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Data;
+using Poligraph.Api.Textos;
 using Poligraph.Api.Tipos;
 
 namespace Poligraph.Api.Services;
@@ -31,7 +32,7 @@ public class ServicoFinanciamento(PoligraphDb db)
 
         if (anoDaEleicao is null)
         {
-            return new FinanciamentoDeCampanhaDto(0, 0, 0, 0, [], []);
+            return new FinanciamentoDeCampanhaDto(0, 0, 0, 0, [], [], [], []);
         }
 
         var daEleicao = _db.ReceitasDeCampanha.AsNoTracking()
@@ -61,6 +62,34 @@ public class ServicoFinanciamento(PoligraphDb db)
             .Take(ItensNaFicha)
             .ToListAsync(ct);
 
+        var repasses = await daEleicao
+            .Where(r => r.FonteReceita == ReceitaDeCampanhaModel.FonteFundoEspecial
+                     || r.FonteReceita == ReceitaDeCampanhaModel.FonteFundoPartidario)
+            .GroupBy(r => r.Doador)
+            .Select(g => new
+            {
+                Doador = g.Key,
+                FundoEspecial = g.Where(r => r.FonteReceita == ReceitaDeCampanhaModel.FonteFundoEspecial).Sum(r => r.Valor),
+                FundoPartidario = g.Where(r => r.FonteReceita == ReceitaDeCampanhaModel.FonteFundoPartidario).Sum(r => r.Valor)
+            })
+            .OrderByDescending(d => d.FundoEspecial + d.FundoPartidario)
+            .ToListAsync(ct);
+
+        var foraDosFundos = await daEleicao
+            .Where(r => r.Doador != null
+                     && r.FonteReceita != ReceitaDeCampanhaModel.FonteFundoEspecial
+                     && r.FonteReceita != ReceitaDeCampanhaModel.FonteFundoPartidario)
+            .GroupBy(r => new { r.Doador, r.DoadorEhPessoaFisica })
+            .Select(g => new
+            {
+                g.Key.Doador,
+                g.Key.DoadorEhPessoaFisica,
+                Total = g.Sum(r => r.Valor)
+            })
+            .OrderByDescending(d => d.Total)
+            .Take(ItensNaFicha)
+            .ToListAsync(ct);
+
         return new FinanciamentoDeCampanhaDto(
             AnoEleicao: anoDaEleicao.Value,
             Total: fontes.Sum(f => f.Total),
@@ -73,6 +102,10 @@ public class ServicoFinanciamento(PoligraphDb db)
             PorFonte: [.. fontes.Select(f =>
                 new ReceitaPorFonteDto(f.Fonte, f.Total, f.Lancamentos))],
             MaioresDoadores: [.. doadores.Select(d =>
+                new DoadorDoParlamentarDto(TextoSemCpf.Limpar(d.Doador!), d.Total, d.DoadorEhPessoaFisica))],
+            RepassesDosFundos: [.. repasses.Select(r =>
+                new RepasseDosFundosDto(r.Doador is null ? MensagensDaApi.DoadorNaoInformado : TextoSemCpf.Limpar(r.Doador), r.FundoEspecial, r.FundoPartidario))],
+            DoacoesForaDosFundos: [.. foraDosFundos.Select(d =>
                 new DoadorDoParlamentarDto(TextoSemCpf.Limpar(d.Doador!), d.Total, d.DoadorEhPessoaFisica))]);
     }
 

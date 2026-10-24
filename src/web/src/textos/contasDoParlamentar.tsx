@@ -142,7 +142,16 @@ export const TEXTOS_DAS_CONTAS = {
         partido o ano inteiro.
       </>
     ),
-    osDoisFundos: 'Os dois fundos',
+    quemRepassou: 'Quem repassou os fundos',
+    quemRepassouAjuda:
+      'O dinheiro dos dois fundos chega ao candidato pelo partido, e às vezes por outra campanha. Cada linha diz quanto veio de cada fundo, e o total fecha com os fundos do gráfico acima.',
+    legendaDosRepasses: 'Quanto cada um repassou de cada fundo',
+    quemRepassouColuna: 'Quem repassou',
+    /** Os nomes das colunas ao lado de cada valor, no celular, onde a tabela vira um bloco por linha. */
+    rotulosDosRepasses: { fundoEspecial: 'Fundo Especial', fundoPartidario: 'Fundo Partidário' },
+    totalDosRepasses: 'Total',
+    somaDosRepasses: 'Soma dos repasses',
+    doacoesAjuda: 'O dinheiro que não veio dos fundos públicos.',
     fundoEspecial: <TermoComponent nome="fundao">Fundo Especial</TermoComponent>,
     fundoPartidario: 'Fundo Partidário',
     maioresDoadores: 'Maiores doadores',

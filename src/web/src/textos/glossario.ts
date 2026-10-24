@@ -140,6 +140,13 @@ export const GLOSSARIO = {
       'e apelidado de "fundão". O Fundo Partidário é outro: paga as despesas do partido o ' +
       'ano inteiro. Por isso os dois aparecem em linhas separadas.',
   },
+  outrosRecursos: {
+    rotulo: 'Outros recursos',
+    explicacao:
+      ' Todo dinheiro da campanha que não saiu dos dois fundos públicos: doações de pessoas, dinheiro do próprio ' +
+      'candidato, vaquinha pela internet, venda de bens e eventos, e repasses de outras campanhas feitos com esse ' +
+      'dinheiro. Doação de empresa entrava aqui até 2014; desde 2015 ela é proibida.',
+  },
   emenda: {
     rotulo: 'emenda parlamentar',
     explicacao:

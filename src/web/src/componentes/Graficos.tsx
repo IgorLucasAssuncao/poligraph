@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { TEXTOS_DOS_COMPONENTES } from '../textos/componentes';
+import type { GLOSSARIO } from '../textos/glossario';
+import { TermoComponent } from './Termo';
 import { faixasDosGovernantes } from './governantes';
 
 const T = TEXTOS_DOS_COMPONENTES.graficos;
@@ -175,7 +177,13 @@ function semMouse(): boolean {
 }
 
 /** Uma parte do todo na barra de composição. */
-export type ParteDoTodo = { nome: string; valor: number; definicao?: string };
+export type ParteDoTodo = {
+  nome: string;
+  valor: number;
+  definicao?: string;
+  /** O verbete do glossário que explica a parte, num balão ao lado do nome. */
+  termo?: keyof typeof GLOSSARIO;
+};
 
 /**
  * Uma barra só, dividida nas partes de um total: diárias, passagens e o resto.
@@ -228,7 +236,7 @@ export function ComposicaoComponent({
           >
             <span className={`grafico-amostra tom-${i}`} aria-hidden="true" />
             <span className="grafico-legenda-nome">
-              {p.nome}
+              {p.termo ? <TermoComponent nome={p.termo}>{p.nome}</TermoComponent> : p.nome}
               {p.definicao && <small>{p.definicao}</small>}
             </span>
             <span className="grafico-legenda-valor">
