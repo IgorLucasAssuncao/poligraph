@@ -4,7 +4,7 @@ import { obterLinhaDoTempo, type Marco } from '../api';
 import { nomeProprio, reaisCompacto } from '../formato';
 import { TEXTOS_DA_LINHA_DO_TEMPO as T } from '../textos/linhaDoTempo';
 import { NOMES_DOS_CARGOS, descricaoDoMandato } from '../textos/politicos';
-import { anosComCiclos, ciclosDaLinha } from './ciclosDaLinhaDoTempo';
+import { anosComCiclos, ciclosDaLinha, raiasDosCiclos } from './ciclosDaLinhaDoTempo';
 import { EsqueletoDeTextoComponent } from './Esqueleto';
 import { useCarga } from './useCarga';
 
@@ -40,6 +40,7 @@ export function LinhaDoTempoComponent({ idPessoa, abas }: { idPessoa: number; ab
   const passo = vao > 24 ? 4 : vao > 12 ? 2 : 1;
   const maisMarcos = Math.max(...comDado.map((a) => a.marcos.length), 1);
   const ciclos = ciclosDaLinha(lida.dados).filter((c) => c.mandato.primeiroAno <= ultimo);
+  const { raias, total: totalDeRaias } = raiasDosCiclos(ciclos, ultimo);
 
   return (
     <section className="aba-dinheiro" aria-labelledby="linha-do-tempo-titulo">
@@ -49,7 +50,7 @@ export function LinhaDoTempoComponent({ idPessoa, abas }: { idPessoa: number; ab
       <p className="ajuda">{T.ajuda}</p>
 
       <div className="linha-horizontal">
-        <div className="linha-horizontal-faixas" aria-hidden="true">
+        <div className="linha-horizontal-faixas" aria-hidden="true" style={{ '--raias': totalDeRaias } as React.CSSProperties}>
           {ciclos.map((c) => {
             const fim = Math.min(c.mandato.ultimoAno, ultimo);
             return (
@@ -59,6 +60,7 @@ export function LinhaDoTempoComponent({ idPessoa, abas }: { idPessoa: number; ab
                 style={{
                   left: `${((c.mandato.primeiroAno - primeiro) / vao) * 100}%`,
                   width: `${((fim - c.mandato.primeiroAno + 1) / vao) * 100}%`,
+                  top: `calc(${raias.get(c) ?? 0} * var(--altura-da-raia))`,
                 }}
                 title={descricaoDoMandato(c.mandato, nomeProprio)}
               >

@@ -52,3 +52,24 @@ export function ciclosDaLinha(linha: LinhaDoTempo): Ciclo[] {
     .sort((a, b) => a.primeiroAno - b.primeiroAno)
     .map((mandato, ordem) => ({ mandato, ordem }));
 }
+
+/**
+ * A raia de cada mandato na faixa de cima da linha: o que cruza outro desce para a raia seguinte. Quem deixou um cargo para
+ * assumir outro no meio do mandato (o deputado estadual eleito prefeito) tem dois mandatos nos mesmos anos.
+ */
+export function raiasDosCiclos(ciclos: Ciclo[], ultimoAno: number): { raias: Map<Ciclo, number>; total: number } {
+  const fimDaRaia: number[] = [];
+  const raias = new Map<Ciclo, number>();
+  for (const c of [...ciclos].sort((a, b) => a.mandato.primeiroAno - b.mandato.primeiroAno)) {
+    const fim = Math.min(c.mandato.ultimoAno, ultimoAno);
+    let raia = fimDaRaia.findIndex((f) => f < c.mandato.primeiroAno);
+    if (raia === -1) {
+      raia = fimDaRaia.length;
+      fimDaRaia.push(fim);
+    } else {
+      fimDaRaia[raia] = fim;
+    }
+    raias.set(c, raia);
+  }
+  return { raias, total: Math.max(fimDaRaia.length, 1) };
+}

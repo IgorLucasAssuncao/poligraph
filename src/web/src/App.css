@@ -3336,9 +3336,9 @@ dialog.grafo-dinheiro::backdrop { background: var(--veu); }
 .linha-do-tempo-marcos { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; font-size: var(--t-2); }
 /* A linha do tempo numa linha horizontal (2026-10-24, pedido do autor): mandatos em faixas acima do eixo e um nó por ano com dado. */
 .linha-horizontal { position: relative; margin: 1rem 0 .5rem; padding: 0 .25rem; }
-.linha-horizontal-faixas { position: relative; height: 1.6rem; }
+.linha-horizontal-faixas { --altura-da-raia: 1.7rem; position: relative; height: calc(var(--raias, 1) * var(--altura-da-raia)); }
 .linha-horizontal-faixa {
-  position: absolute; top: 0; bottom: 0; display: flex; align-items: center; padding: 0 .35rem; box-sizing: border-box;
+  position: absolute; height: calc(var(--altura-da-raia) - 2px); display: flex; align-items: center; padding: 0 .35rem; box-sizing: border-box;
   font-size: var(--t-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--texto);
   border-left: 2px solid var(--borda-forte); border-right: 2px solid var(--borda-forte); border-radius: var(--raio) var(--raio) 0 0;
 }

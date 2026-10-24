@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LinhaDoTempo, MandatoNoTse } from '../api';
-import { anosComCiclos } from './ciclosDaLinhaDoTempo';
+import { anosComCiclos, raiasDosCiclos } from './ciclosDaLinhaDoTempo';
 
 const mandato = (cargo: MandatoNoTse['cargo'], primeiroAno: number, ultimoAno: number): MandatoNoTse => ({
   cargo, nivel: 'FEDERAL', anoEleicao: primeiroAno - 1, primeiroAno, ultimoAno, uf: 'RJ', municipio: null, partido: 'X',
@@ -29,5 +29,16 @@ describe('ciclos da linha do tempo', () => {
     const linha: LinhaDoTempo = { anos: [{ ano: 2022, marcos: [{ tipo: 'ELEITO', mandato: mandato('PRESIDENTE', 2023, 2026) }] }] };
 
     expect(anosComCiclos(linha, 2025).map((a) => a.ano)).toEqual([2022, 2023]);
+  });
+
+  it('mandatos que se cruzam vão para raias diferentes, e o seguinte volta à primeira', () => {
+    const estadual = { mandato: mandato('DEPUTADO_ESTADUAL', 2019, 2022), ordem: 0 };
+    const prefeito = { mandato: mandato('PREFEITO', 2021, 2024), ordem: 1 };
+    const federal = { mandato: mandato('DEPUTADO_FEDERAL', 2025, 2028), ordem: 2 };
+
+    const { raias, total } = raiasDosCiclos([estadual, prefeito, federal], 2026);
+
+    expect([raias.get(estadual), raias.get(prefeito), raias.get(federal)]).toEqual([0, 1, 0]);
+    expect(total).toBe(2);
   });
 });

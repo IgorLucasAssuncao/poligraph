@@ -70,6 +70,15 @@ const ABAS: [Aba, string][] = [
 ];
 
 /**
+ * As abas com um cargo do TSE aberto (prefeito, presidente): só as que o cargo tem. Como vota, emendas e cota são do mandato
+ * no Congresso, e somem; a linha do tempo é da pessoa, e fica (pedido do autor, 2026-10-24).
+ */
+const ABAS_DO_CARGO: ['campanha' | 'linha-do-tempo', string][] = [
+  ['campanha', T.abas.campanha],
+  ['linha-do-tempo', T.abas.linhaDoTempo],
+];
+
+/**
  * O perfil do parlamentar — a página mais parecida com "rede social" do site.
  *
  * Votou na legislatura corrente — a regra de seguir, a mesma da API.
@@ -240,7 +249,29 @@ export function ParlamentarComponent() {
       </header>
 
       {cargoAberto ? (
-        <PerfilDoCargoComponent idPessoa={ficha.idPessoa} mandato={cargoAberto} />
+        <>
+          <nav className="abas" aria-label={T.rotuloDasAbas}>
+            {ABAS_DO_CARGO.map(([chave, rotulo]) => {
+              const ativa = (aba === 'linha-do-tempo') === (chave === 'linha-do-tempo');
+              return (
+                <Link
+                  key={chave}
+                  to={`${chave === 'linha-do-tempo' ? `${base}/linha-do-tempo` : base}?eleicao=${cargoAberto.anoEleicao}&cargo=${cargoAberto.cargo}`}
+                  className={`aba ${ativa ? 'aba-ativa' : ''}`}
+                  aria-current={ativa ? 'page' : undefined}
+                  replace
+                >
+                  {rotulo}
+                </Link>
+              );
+            })}
+          </nav>
+          {aba === 'linha-do-tempo' ? (
+            <LinhaDoTempoComponent idPessoa={idPessoa} abas={base} />
+          ) : (
+            <PerfilDoCargoComponent idPessoa={ficha.idPessoa} mandato={cargoAberto} />
+          )}
+        </>
       ) : (
 
       <AtualizandoComponent

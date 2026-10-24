@@ -923,6 +923,28 @@ describe('os mandatos na ficha', () => {
     expect(within(mandatos).getAllByRole('link')).toHaveLength(3);
   });
 
+  it('com um cargo do TSE aberto, só as abas do cargo, e a linha do tempo não depende do cartão', async () => {
+    vi.mocked(api.obterFichaDoPolitico).mockResolvedValueOnce({
+      idPessoa: 1, nome: 'ANA RIBEIRO', nomeCivil: null, urlFoto: null, parlamentar: true, redesSociais: [],
+      mandatos: [
+        { cargo: 'PREFEITO', nivel: 'MUNICIPAL', anoEleicao: 2024, primeiroAno: 2025, ultimoAno: 2028, uf: 'SP', municipio: { codigoIbge: '3550308', nome: 'SÃO PAULO', uf: 'SP' }, partido: 'XYZ' },
+      ],
+    });
+    vi.mocked(api.obterFicha).mockResolvedValue(DOIS_MANDATOS);
+    render(
+      <MemoryRouter initialEntries={['/parlamentar/1?eleicao=2024&cargo=PREFEITO']}>
+        <Routes>
+          <Route path="/parlamentar/:idPessoa/:aba?" element={<ParlamentarComponent />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    const linha = await screen.findByRole('link', { name: 'Linha do tempo' });
+    expect(linha).toHaveAttribute('href', '/parlamentar/1/linha-do-tempo?eleicao=2024&cargo=PREFEITO');
+    const abas = within(screen.getByRole('navigation', { name: 'Seções do perfil' })).getAllByRole('link').map((a) => a.textContent);
+    expect(abas).toEqual(['Campanha', 'Linha do tempo']);
+  });
+
   it('escolher um mandato pede a ficha daquela legislatura', async () => {
     vi.mocked(api.obterFicha).mockResolvedValue(DOIS_MANDATOS);
     renderizar();
