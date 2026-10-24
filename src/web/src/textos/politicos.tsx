@@ -47,7 +47,8 @@ export function descricaoDoMandato(mandato: MandatoNoTse, nomeDoMunicipio: (nome
 export const TEXTOS_DOS_POLITICOS = {
   naFichaDoParlamentar: {
     rotulo: 'Eleito também, pelo TSE: ',
-    eMais: (n: number) => (n === 1 ? ' e mais 1, na linha do tempo' : ` e mais ${n}, na linha do tempo`),
+    eMais: (n: number) => (n === 1 ? ' e mais 1, na lista abaixo' : ` e mais ${n}, na lista abaixo`),
+    verTodos: (n: number) => (n === 1 ? 'Ver o mandato eleito, pelo TSE' : `Ver os ${n} mandatos eleitos, pelo TSE`),
   },
   ficha: {
     titulo: 'Político',

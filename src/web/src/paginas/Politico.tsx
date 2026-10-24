@@ -8,12 +8,11 @@ import { useContas } from '../componentes/useContas';
 import { EsqueletoDeFichaComponent } from '../componentes/Esqueleto';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { LinhaDoTempoComponent } from '../componentes/LinhaDoTempo';
-import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
+import { ListaDeMandatosComponent } from '../componentes/ListaDeMandatos';
 import { RedesDoParlamentarComponent } from '../componentes/RedesDoParlamentar';
 import { useCarga } from '../componentes/useCarga';
-import { FONTES } from '../fontes';
 import { nomeProprio } from '../formato';
-import { NOMES_DOS_CARGOS, TEXTOS_DOS_POLITICOS, descricaoDoMandato } from '../textos/politicos';
+import { NOMES_DOS_CARGOS, TEXTOS_DOS_POLITICOS } from '../textos/politicos';
 import './parlamentar.css';
 
 const T = TEXTOS_DOS_POLITICOS.ficha;
@@ -93,15 +92,7 @@ export function PoliticoComponent() {
 
       <section className="aba-dinheiro" aria-label={T.mandatos}>
         <h2 className="titulo-secao">{T.mandatos}</h2>
-        <p className="ajuda">{T.quantosMandatos(ficha.mandatos.length)}</p>
-        <ol className="lista-autores lista-entidades">
-          {ficha.mandatos.map((m) => (
-            <ItemDeMandatoComponent key={`${m.anoEleicao}-${m.cargo}`} mandato={m} />
-          ))}
-        </ol>
-        <p className="nota-curta">
-          {T.fonte} <LinkDeFonteComponent href={FONTES.candidatos.url}>{T.candidaturasNoTse}</LinkDeFonteComponent>
-        </p>
+        <ListaDeMandatosComponent mandatos={ficha.mandatos} />
       </section>
 
       {!noCongresso && <FaltasDaFichaComponent mandatos={ficha.mandatos} />}
@@ -162,39 +153,4 @@ function FaltasDaFichaComponent({ mandatos }: { mandatos: MandatoNoTse[] }) {
       </ul>
     </section>
   );
-}
-
-/** Um mandato: o cargo com o ente e os anos, o partido e a eleição. */
-function ItemDeMandatoComponent({ mandato }: { mandato: MandatoNoTse }) {
-  return (
-    <li>
-      <span className="autor-nome">
-        {mandato.municipio ? (
-          <Link to={`/cidades/${mandato.municipio.codigoIbge}`}>{descricaoDoMandato(mandato, nomeProprio)}</Link>
-        ) : (
-          descricaoDoMandato(mandato, nomeProprio)
-        )}
-      </span>
-      <span className="autor-detalhe">
-        {[mandato.partido, T.eleitoEm(mandato.anoEleicao)].join(' · ')} ·{' '}
-        <Link to={outrosDoCargo(mandato)}>{T.outrosDoCargo}</Link>
-      </span>
-    </li>
-  );
-}
-
-/**
- * Os outros eleitos do mesmo cargo e do mesmo lugar, na lista de todos os cargos já filtrada.
- *
- * ATENÇÃO (2026-10-23): a ficha de quem não é do Congresso tinha um link só, e era beco: dali não se chegava aos colegas da
- * mesma assembleia ou da mesma prefeitura sem voltar à lista e filtrar de novo.
- */
-function outrosDoCargo(mandato: MandatoNoTse): string {
-  const filtro = new URLSearchParams({ vista: 'cargos', cargo: mandato.cargo });
-  if (mandato.uf) filtro.set('uf', mandato.uf);
-  if (mandato.municipio) {
-    filtro.set('municipio', mandato.municipio.codigoIbge);
-    filtro.set('cidade', mandato.municipio.nome);
-  }
-  return `/parlamentares?${filtro.toString()}`;
 }
