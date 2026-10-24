@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSessao } from '../sessao';
 import { TEXTOS_DOS_AVISOS } from '../textos/avisos';
@@ -27,6 +27,11 @@ const MAXIMO_NO_PAINEL = 5;
  *
  * RISCO: O dado diz quem a pessoa segue, então fica fora do cache de leituras, como o
  * bloco de novidades do início.
+ *
+ * RISCO: O Esc e o clique fora são ouvidos com `useLayoutEffect`, que troca o ouvinte na mesma atualização em que as
+ * novidades aparecem. Com `useEffect`, a troca vinha depois da tela: quem fechava o painel logo que a lista surgia acionava
+ * o ouvinte antigo, que ainda via as novidades vazias, e nada ficava visto (o teste "aberto antes de as novidades chegarem"
+ * falhava de vez em quando na suíte cheia, 2026-10-24).
  */
 export function SininhoComponent() {
   const { usuario } = useSessao();
@@ -37,7 +42,7 @@ export function SininhoComponent() {
   const caixa = useRef<HTMLDivElement>(null);
   const id = useId();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!aberto) return;
     const fecharMarcando = () => {
       setAberto(false);
