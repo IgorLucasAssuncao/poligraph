@@ -85,7 +85,7 @@ export const TEXTOS_DO_GOVERNO = {
     negativas: (valor: string) => `As origens com valor negativo no ano, ${valor} em estornos e ajustes, não cabem em fita e ficam fora do desenho; o total arrecadado já as desconta.`,
     outrasAreas: (n: number) => `Outras ${n} áreas`,
     outrasOrigens: (n: number) => `Outras ${n} origens`,
-    colunasDoGasto: ['Gastou', 'Em quê', 'Em qual área'] as const,
+    colunasDoGasto: ['Gastou', 'Nas áreas do governo', 'Para onde foi'] as const,
     colunasDaArrecadacao: ['De onde', 'Arrecadou'] as const,
     rotuloDoGasto: (total: string) => `Gráfico de fitas: ${total} gastos, pelas áreas do governo, os repasses e os juros da dívida`,
     rotuloDaArrecadacao: (total: string) => `Gráfico de fitas: ${total} arrecadados, por origem`,

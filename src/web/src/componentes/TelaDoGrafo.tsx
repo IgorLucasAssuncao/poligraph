@@ -66,6 +66,9 @@ const EXPLICACAO: Record<Layout, { rotulo: string; titulo: string; texto: string
 
 type Alvo = { tipo: 'no'; no: NoDoGrafo } | { tipo: 'aresta'; aresta: ArestaDoGrafo };
 
+/** O alto das barras de ferramentas, em cima e embaixo do desenho: o quadro reserva espaço para elas não cobrirem pontos. */
+const FOLGA_DAS_FERRAMENTAS = 140;
+
 /**
  * O grafo desenhado, navegável (RF-33).
  *
@@ -303,6 +306,25 @@ export function TelaDoGrafoComponent({
 
   const porId = useMemo(() => new Map(posicionados.map((n) => [n.idPessoa, n])), [posicionados]);
 
+  /**
+   * Altura sobre largura do agrupamento, pelas posições originais: arrastar um ponto não muda o tamanho do quadro.
+   *
+   * MEDIDO (2026-10-23): a Câmara se espalha numa faixa larga e baixa. Com a altura fixa em 62% da largura, o quadro de
+   * 1270 × 787 px tinha os pontos em uns 250 px no meio, e a primeira tela mostrava quase só fundo vazio. Sem o 1% de cada
+   * ponta: poucos deputados afastados (eixo vertical de -0,84 a 0,93, com 98% entre -0,17 e 0,14) esticavam a conta.
+   */
+  const proporcao = useMemo(() => {
+    const comPosicao = grafo.nos.filter((n) => n.eixoX !== null && n.eixoY !== null);
+    if (comPosicao.length < 2 || layout === 'alinhamento') return 0.62;
+    const faixa = (valores: number[]) => {
+      const ordenados = [...valores].sort((a, b) => a - b);
+      const ponta = Math.floor(ordenados.length * 0.01);
+      return ordenados[ordenados.length - 1 - ponta] - ordenados[ponta];
+    };
+    const largura = faixa(comPosicao.map((n) => n.eixoX as number));
+    return largura > 0 ? faixa(comPosicao.map((n) => n.eixoY as number)) / largura : 0.62;
+  }, [grafo.nos, layout]);
+
   useEffect(() => setLimiar(limiarInicial(grafo.arestas)), [grafo.arestas]);
 
   const arestasDoLimiar = useMemo(
@@ -384,13 +406,13 @@ export function TelaDoGrafoComponent({
         largura: width,
         altura: preencher
           ? Math.max(240, Math.round(height))
-          : (altura ?? Math.max(420, Math.round(width * 0.62))),
+          : (altura ?? Math.round(Math.min(width * 0.62, Math.max(420, width * proporcao * 1.15 + FOLGA_DAS_FERRAMENTAS)))),
       });
     });
 
     observador.observe(pai);
     return () => observador.disconnect();
-  }, [altura, preencher]);
+  }, [altura, preencher, proporcao]);
 
   const eixos = useMemo(
     () => (comEixos ? rotulosDoEixo(posicionados, layout) : null),

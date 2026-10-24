@@ -14,6 +14,10 @@ export type AnoNoGrafico = { ano: number; valores: number[]; nota?: string };
  * num ano o escolhe como período. A tabela com os mesmos números fica recolhida logo abaixo, para
  * quem quer conferir e para o leitor de tela.
  *
+ * DECISÃO (2026-10-23): com uma série só, o valor fica escrito em cima de cada coluna, e todo ano tem rótulo. Antes, o número
+ * só aparecia com o mouse, e metade dos anos ficava sem nome mesmo com espaço. Com várias séries lado a lado, os valores
+ * se encavalariam: ficam no balão e na tabela. Na tela estreita, um ano sim, um não, e os valores somem.
+ *
  * ATENÇÃO: as séries se distinguem por tom do mesmo teal, nunca por cor de partido (RNF-16).
  * Valor negativo vira coluna vazia; o número aparece no balão e na tabela.
  */
@@ -41,6 +45,7 @@ export function ColunasPorAnoComponent({
   const maior = Math.max(...anos.flatMap((a) => a.valores), 1);
   const focado = emFoco && anos.find((a) => a.ano === emFoco.ano);
   const pulaRotulo = anos.length > 10;
+  const comValor = series.length === 1;
 
   return (
     <figure className="grafico-colunas" aria-label={rotulo}>
@@ -70,12 +75,26 @@ export function ColunasPorAnoComponent({
                   onBlur={() => setEmFoco(null)}
                   onClick={aoEscolher ? () => aoEscolher(a.ano) : undefined}
                 >
-                  <span style={{ height: `${(Math.max(valor, 0) / maior) * 100}%` }} />
+                  {comValor && (
+                    <small className="grafico-colunas-valor" aria-hidden="true">
+                      {formatar(valor)}
+                    </small>
+                  )}
+                  <span
+                    style={{
+                      height: comValor
+                        ? `calc((100% - 1.1rem) * ${Math.max(valor, 0) / maior})`
+                        : `${(Math.max(valor, 0) / maior) * 100}%`,
+                    }}
+                  />
                 </button>
               ))}
             </div>
-            <span className="grafico-colunas-rotulo" aria-hidden="true">
-              {pulaRotulo && i % 2 === 1 && i !== anos.length - 1 ? '' : a.ano}
+            <span
+              className={`grafico-colunas-rotulo${pulaRotulo && i % 2 === 1 && i !== anos.length - 1 ? ' rotulo-secundario' : ''}`}
+              aria-hidden="true"
+            >
+              {a.ano}
             </span>
           </div>
         ))}

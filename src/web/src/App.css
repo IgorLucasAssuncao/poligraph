@@ -31,6 +31,11 @@
   --realce: #0f766e;
   --realce-hover: #115e57;
   --realce-fraco: #e6f2f0;
+  /* A opacidade da fita do gráfico de fitas. No escuro, maior: a 28% sobre o fundo quase preto, a fita virava cinza. */
+  --fita-opacidade: .28;
+  /* As séries 2 e 3 dos gráficos de colunas e de composição. No escuro, o tom misturado com o texto claro ficava pálido e igual. */
+  --serie-1: color-mix(in srgb, var(--realce) 60%, var(--texto));
+  --serie-2: color-mix(in srgb, var(--realce) 30%, var(--texto));
   /* Escala do mapa das emendas: areia → ocre. Quente e de uma família só; Não passa pelo
      vermelho, que lembraria partido (RNF-16). */
   --mapa-0: #eef0f2;
@@ -130,6 +135,9 @@
     --realce: #6fb3a9;
     --realce-hover: #8cc4bc;
     --realce-fraco: #0e2724;
+    --fita-opacidade: .45;
+    --serie-1: #c9d3dc;
+    --serie-2: color-mix(in srgb, var(--realce) 55%, var(--fundo));
     --mapa-0: #1b2128;
     --mapa-1: #4a3413;
     --mapa-2: #7a5018;
@@ -159,6 +167,9 @@
   --realce: #6fb3a9;
   --realce-hover: #8cc4bc;
   --realce-fraco: #0e2724;
+  --fita-opacidade: .45;
+  --serie-1: #c9d3dc;
+  --serie-2: color-mix(in srgb, var(--realce) 55%, var(--fundo));
   --mapa-0: #1b2128;
   --mapa-1: #4a3413;
   --mapa-2: #7a5018;
@@ -2136,7 +2147,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   border-bottom: 1px solid var(--borda-forte);
 }
 .grafico-colunas-barra {
-  flex: 1; min-width: 0; height: 100%; display: flex; align-items: flex-end;
+  flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch;
   padding: 0; background: none; border: none; border-radius: 0; cursor: pointer;
 }
 .grafico-colunas-barra span {
@@ -2153,10 +2164,18 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   font-family: var(--dado); font-size: var(--t-1); color: var(--suave);
 }
 .grafico-colunas-ano.escolhido .grafico-colunas-rotulo { color: var(--texto); font-weight: 600; }
+.grafico-colunas-valor {
+  display: block; height: 1.1rem; line-height: 1.1rem; overflow: hidden; text-align: center; white-space: nowrap;
+  font-family: var(--dado); font-size: 11px; font-variant-numeric: tabular-nums; color: var(--suave);
+}
+@media (max-width: 700px) {
+  .grafico-colunas-rotulo.rotulo-secundario { visibility: hidden; }
+  .grafico-colunas-valor { visibility: hidden; }
+}
 /** O tom pinta a amostra da legenda, a parte da composição e a barra dentro da coluna; nunca o botão da coluna, que ocupa a altura toda. */
 .grafico-amostra.tom-0, .grafico-composicao-parte.tom-0, .grafico-colunas-barra.tom-0 span { background: var(--realce); }
-.grafico-amostra.tom-1, .grafico-composicao-parte.tom-1, .grafico-colunas-barra.tom-1 span { background: color-mix(in srgb, var(--realce) 60%, var(--texto)); }
-.grafico-amostra.tom-2, .grafico-composicao-parte.tom-2, .grafico-colunas-barra.tom-2 span { background: color-mix(in srgb, var(--realce) 30%, var(--texto)); }
+.grafico-amostra.tom-1, .grafico-composicao-parte.tom-1, .grafico-colunas-barra.tom-1 span { background: var(--serie-1); }
+.grafico-amostra.tom-2, .grafico-composicao-parte.tom-2, .grafico-colunas-barra.tom-2 span { background: var(--serie-2); }
 .grafico-amostra.tom-3, .grafico-composicao-parte.tom-3, .grafico-colunas-barra.tom-3 span { background: color-mix(in srgb, var(--realce) 40%, var(--fundo)); }
 .grafico-amostra.tom-4, .grafico-composicao-parte.tom-4, .grafico-colunas-barra.tom-4 span { background: var(--borda-forte); }
 .grafico-legenda { list-style: none; margin: .5rem 0 0; padding: 0; font-size: var(--t-2); }
@@ -3267,8 +3286,8 @@ html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
 /* Uma cor só (RNF-16): a fita diz que o dinheiro passou. A caixa realçada acende as fitas dela e apaga as outras. */
 .grafico-de-fitas-caixa { width: 100%; overflow-x: auto; margin: .75rem 0; }
 .grafico-de-fitas { display: block; overflow: visible; }
-.grafico-de-fitas .fita { fill: none; stroke: var(--realce); stroke-opacity: .28; transition: stroke-opacity var(--t-curto) var(--curva); }
-.grafico-de-fitas .fita:hover { stroke-opacity: .55; }
+.grafico-de-fitas .fita { fill: none; stroke: var(--realce); stroke-opacity: var(--fita-opacidade); transition: stroke-opacity var(--t-curto) var(--curva); }
+.grafico-de-fitas .fita:hover { stroke-opacity: calc(var(--fita-opacidade) + .3); }
 .grafico-de-fitas .fita-apagada { stroke-opacity: .07; }
 .grafico-de-fitas .fitas-caixa { fill: var(--texto); }
 .grafico-de-fitas .fitas-rotulo {
