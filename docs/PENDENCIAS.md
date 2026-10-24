@@ -1604,6 +1604,22 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 
 ## 🟢 Incrementos e refinamentos
 
+### Todos os mandatos na página do político e na ficha (pedido do autor, 2026-10-23)
+
+Mostrar todos os mandatos da pessoa, inclusive fora do Congresso: o presidente que foi deputado, o governador que virou deputado
+ou senador. A ficha já diz "Eleito também, pelo TSE: Presidente, 2019–2022" (Bolsonaro, `/parlamentar/1060`). Falta pôr os cargos
+numa linha do tempo de mandatos única, na ficha e na página do político.
+
+MEDIDO (2026-10-23), buracos na tabela `mandatos` que precisam fechar antes:
+
+| Eleição | Na base | Na fonte (TSE, `consulta_cand`) | Causa provável |
+|---|---|---|---|
+| 2006, presidente | 0 | 0 com ELEITO: as 8 linhas vêm `#NULO#`, sem 2º turno | A fonte não marca o eleito; precisa de outra fonte periódica do TSE (resultado por turno) |
+| 1998, senador | 10 | 27 eleitos | Senador antigo sem `pessoa`: `pessoas_novas` só cria pessoa de cargo do Congresso antes da posse |
+| 2002, senador | 38 | 54 eleitos | A mesma |
+| 2006, senador | 18 | 27 eleitos | A mesma |
+
+
 <details>
 <summary><b>Crawler</b> — N1, N3, N4, N5, N6, N7, N8, N9, N11</summary>
 
