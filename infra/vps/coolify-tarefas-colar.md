@@ -67,6 +67,12 @@ Container name / Service:
 etl
 ```
 
+Timeout (segundos, 6 horas):
+
+```
+21600
+```
+
 ---
 
 ## Tarefa 2: rotina mensal
@@ -96,6 +102,24 @@ Container name / Service:
 ```
 etl
 ```
+
+Timeout (segundos, 6 horas):
+
+```
+21600
+```
+
+---
+
+## Por que 6 horas nas duas
+
+O timeout só serve para matar tarefa travada; folga não custa nada, e a tarefa morta no meio não
+grava o evento, então ninguém é avisado. 1500 s não bastou. Medido nas cargas da máquina do autor
+(2026-10): só `emendas` chegou a 26 min, `redes` a 58 e o `siconfi` passa de uma hora. A mensal
+de maio (siconfi) e a de novembro e dezembro de ano de eleição (mandatos, fundo, patrimônio e redes)
+são as mais longas. A semanal precisa do mesmo valor: quando cai no dia da mensal, espera a mensal
+acabar, e o tempo de espera conta. Depois da primeira de cada, ver o "Concluído em" no log e
+deixar o timeout em pelo menos o dobro.
 
 ---
 

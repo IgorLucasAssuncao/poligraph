@@ -642,10 +642,10 @@ docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; 
     <code>etl</code>. Explicação em <code>infra/vps/coolify-tarefas.md</code>; valores prontos para colar em <code>infra/vps/coolify-tarefas-colar.md</code>. Na aplicação, Scheduled
     Tasks:</p>
   <div class="tabela"><table>
-    <thead><tr><th>Name</th><th>Command</th><th>Frequency</th><th>Serviço</th></tr></thead>
+    <thead><tr><th>Name</th><th>Command</th><th>Frequency</th><th>Serviço</th><th>Timeout</th></tr></thead>
     <tbody>
-      <tr><td><code>rotina-semanal</code></td><td><code>python -m poligraph_etl rotina --frequencia semanal</code></td><td><code>0 3 * * 1</code>, segunda às 3h</td><td><code>etl</code></td></tr>
-      <tr><td><code>rotina-mensal</code></td><td><code>python -m poligraph_etl rotina --frequencia mensal</code></td><td><code>0 3 2 * *</code>, dia 2 às 3h</td><td><code>etl</code></td></tr>
+      <tr><td><code>rotina-semanal</code></td><td><code>python -m poligraph_etl rotina --frequencia semanal</code></td><td><code>0 3 * * 1</code>, segunda às 3h</td><td><code>etl</code></td><td><code>21600</code>, 6 horas</td></tr>
+      <tr><td><code>rotina-mensal</code></td><td><code>python -m poligraph_etl rotina --frequencia mensal</code></td><td><code>0 3 2 * *</code>, dia 2 às 3h</td><td><code>etl</code></td><td><code>21600</code>, 6 horas</td></tr>
     </tbody>
   </table></div>
   <ul class="lista">
@@ -654,7 +654,7 @@ docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; 
     <li>Toda rotina termina com <code>conferir</code>, que falha se um total não fechar com a fonte, e com
       <code>limpar-cache</code>: downloads com mais de 35 dias e cópias de procedência com mais de 180 saem do volume, e do
       cadastro da Receita fica só o mês mais recente.</li>
-    <li>Uma trava do Postgres impede duas rotinas ao mesmo tempo: quando a semanal e a mensal caem juntas, a segunda espera.</li>
+    <li>Uma trava do Postgres impede duas rotinas ao mesmo tempo: quando a semanal e a mensal caem juntas, a segunda espera. Por isso o timeout é o mesmo nas duas: a espera conta no tempo da semanal. 1500 s não bastou; as mensais de maio (siconfi) e de depois da eleição passam de uma hora.</li>
     <li>Precisa de <code>POLIGRAPH_CHAVE_CPF</code>, a mesma do local. Em Notifications, ligar o aviso de falha de tarefa agendada.</li>
     <li>A primeira mensal, com o cache vazio e o cadastro da Receita, roda à mão, num horário de pouco acesso.</li>
     <li>A rotina que passa por todas as etapas grava uma linha em <code>eventos</code>. É assim que o <code>worker</code> sabe que pode avisar: rotina que falhou no meio não grava nada, e ninguém recebe aviso sobre dado pela metade.</li>
