@@ -344,10 +344,18 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 /* Dinheiro público com a seta que abre as seções (2026-10-23). */
 .nav-com-menu { position: relative; display: flex; align-items: stretch; }
 .nav-menu-botao {
-  align-self: center; padding: .3rem .35rem; margin-left: -.5rem; background: none; border: 1px solid transparent;
-  border-radius: var(--raio); color: var(--suave); font-size: var(--t-1); line-height: 1;
+  display: flex; align-items: center; justify-content: center; align-self: stretch;
+  width: 2rem; padding: 0; margin-left: -.35rem; background: none; border: none; border-bottom: 3px solid transparent;
+  color: inherit; cursor: pointer;
 }
-.nav-menu-botao:hover, .nav-menu-botao[aria-expanded='true'] { color: var(--texto); background: var(--painel); border-color: var(--borda); }
+.nav-menu-botao svg { width: 18px; height: 18px; transition: transform var(--t-curto) var(--curva); }
+.nav-menu-botao[aria-expanded='true'] svg { transform: rotate(180deg); }
+.nav-com-menu { color: var(--suave); }
+.nav-com-menu:hover { color: var(--texto); background: var(--painel); }
+.nav-com-menu:hover .nav-item { background: none; }
+.nav-com-menu:has(.nav-item.active) { color: var(--texto); }
+.nav-com-menu:has(.nav-item.active) .nav-menu-botao { border-bottom-color: var(--realce); }
+.nav-menu-botao:focus-visible { outline: 2px solid var(--realce); outline-offset: -2px; }
 .nav-menu-painel { left: 0; right: auto; }
 .menu-conta-painel > a.nav-menu-subitem { padding-left: 1.4rem; color: var(--suave); }
 

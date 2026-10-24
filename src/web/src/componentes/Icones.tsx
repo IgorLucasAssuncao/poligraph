@@ -115,3 +115,12 @@ export function IconeSinoComponent({ className }: Props) {
     </svg>
   );
 }
+
+/** Seta para baixo: o menu que abre embaixo do item. */
+export function IconeAbrirComponent({ className }: Props) {
+  return (
+    <svg {...base} className={className} aria-hidden="true">
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}

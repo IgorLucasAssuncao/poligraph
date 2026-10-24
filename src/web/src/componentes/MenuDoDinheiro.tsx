@@ -2,6 +2,7 @@ import { useCallback, useId, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ABAS_DO_DINHEIRO, ABAS_DO_GOVERNO } from '../navegacao';
 import { TEXTOS_DO_SITE as T } from '../textos/site';
+import { IconeAbrirComponent } from './Icones';
 import { useFecharAoSair } from './useFecharAoSair';
 
 /**
@@ -32,7 +33,7 @@ export function MenuDoDinheiroComponent({ children }: { children: ReactNode }) {
         aria-label={T.menuDoDinheiro.abrir}
         onClick={() => setAberto((a) => !a)}
       >
-        <span aria-hidden="true">▾</span>
+        <IconeAbrirComponent />
       </button>
 
       {aberto && (
