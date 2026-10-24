@@ -19,6 +19,8 @@ import os
 import re
 import unicodedata
 
+from .tipos import TipoCategoriaDeVotacao, digitos as so_os_digitos
+
 # ═══════════════════════════════════════════════════════════════════
 # RN-03 — domínio fechado do voto
 # ═══════════════════════════════════════════════════════════════════
@@ -167,20 +169,20 @@ def classificar_categoria(descricao: str | None) -> str:
     que DESTAQUE, o outro é a decisão de NÃO ser destaque.
     """
     if not descricao:
-        return "SUBSTANTIVA"
+        return TipoCategoriaDeVotacao.SUBSTANTIVA
 
     texto = sem_acento(descricao.lower())
 
     for categoria, padrao in _CATEGORIAS:
         if re.search(padrao, texto):
             if categoria == "DESTAQUE_FORTE":
-                return "DESTAQUE"
+                return TipoCategoriaDeVotacao.DESTAQUE
             if categoria == "MERITO":
-                return "SUBSTANTIVA"
+                return TipoCategoriaDeVotacao.SUBSTANTIVA
 
-            return categoria
+            return TipoCategoriaDeVotacao(categoria)
 
-    return "SUBSTANTIVA"
+    return TipoCategoriaDeVotacao.SUBSTANTIVA
 
 
 # RISCO: O que RECONHECEMOS como voto de mérito, para separar "é substantiva" de "não
@@ -256,7 +258,7 @@ def divergencias_de_destaque(votacoes) -> list[tuple[str, str, str]]:
         abertura = votacao.get("abertura")
         if sigla_do_objeto(abertura) != "DTQ":
             continue
-        if votacao.get("categoria") == "DESTAQUE":
+        if votacao.get("categoria") == TipoCategoriaDeVotacao.DESTAQUE:
             continue
 
         divergentes.append((votacao.get("id"), votacao.get("categoria"), abertura))
@@ -417,7 +419,7 @@ def normalizar_cpf(bruto: str | int | None) -> str | None:
     if bruto is None or str(bruto).strip().startswith("-"):
         return None
 
-    digitos = re.sub(r"\D", "", str(bruto))
+    digitos = so_os_digitos(str(bruto))
     if not digitos:
         return None
 

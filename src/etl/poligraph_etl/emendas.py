@@ -50,6 +50,7 @@ from collections.abc import Iterable
 import pandas as pd
 
 from . import normalizacao
+from .tipos import UFS, TipoFavorecido, favorecido_do_portal, so_digitos
 
 log = logging.getLogger("poligraph")
 
@@ -403,10 +404,10 @@ def _numerar_inferidas(inferidas: list[dict]) -> None:
 # ═══════════════════════════════════════════════════════════════════
 
 # RISCO: Os valores do CHECK `ck_favorecido_tipo`. O contrato com o EF é conferido em teste.
-PESSOA_JURIDICA = "PESSOA_JURIDICA"
-UNIDADE_GESTORA = "UNIDADE_GESTORA"
-PESSOA = "PESSOA"
-SEM_INFORMACAO_TIPO = "SEM_INFORMACAO"
+PESSOA_JURIDICA = TipoFavorecido.PESSOA_JURIDICA
+UNIDADE_GESTORA = TipoFavorecido.UNIDADE_GESTORA
+PESSOA = TipoFavorecido.PESSOA
+SEM_INFORMACAO_TIPO = TipoFavorecido.SEM_INFORMACAO
 TIPOS_DE_FAVORECIDO = (PESSOA_JURIDICA, UNIDADE_GESTORA, PESSOA, SEM_INFORMACAO_TIPO)
 
 # RISCO: Natureza jurídica que traz nome de pessoa dentro da razão social. O CNPJ de um
@@ -427,14 +428,14 @@ def classificar_favorecido(tipo: str, documento: str, natureza: str) -> str:
     Uma categoria nova no Portal não derruba a carga, e não grava identificação que pode
     ser de pessoa.
     """
-    tipo = tipo.strip()
+    doPortal = favorecido_do_portal(tipo)
     documento = documento.strip()
 
-    if tipo in ("Pessoa Fisica", "Pessoa Física") or tipo.startswith("Inscrição Gen"):
+    if doPortal is TipoFavorecido.PESSOA:
         return PESSOA
-    if tipo == "Pessoa Jurídica" and re.fullmatch(r"\d{14}", documento):
+    if doPortal is TipoFavorecido.PESSOA_JURIDICA and so_digitos(documento, 14):
         return PESSOA if natureza.strip() in NATUREZAS_DE_PESSOA else PESSOA_JURIDICA
-    if tipo == "Unidade Gestora" and re.fullmatch(r"\d{6}", documento):
+    if doPortal is TipoFavorecido.UNIDADE_GESTORA and so_digitos(documento, 6):
         return UNIDADE_GESTORA
 
     return SEM_INFORMACAO_TIPO
@@ -534,12 +535,12 @@ def _texto(bruto: str | None) -> str | None:
 def _ibge(bruto: str | None) -> str | None:
     """Sete dígitos ou nada. O Portal escreve "Sem informação" quando o destino não é município."""
     texto = (bruto or "").strip()
-    return texto if re.fullmatch(r"\d{7}", texto) else None
+    return texto if so_digitos(texto, 7) else None
 
 
 def _uf(bruto: str | None) -> str | None:
     texto = (bruto or "").strip().upper()
-    return texto if re.fullmatch(r"[A-Z]{2}", texto) else None
+    return texto if texto in UFS else None
 
 
 def _competencia(bruto: str) -> str:

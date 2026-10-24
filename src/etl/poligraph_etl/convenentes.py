@@ -18,7 +18,6 @@ ATENÇÃO: O retrato não sai todo dia: `ultimo_retrato` procura para trás a pa
 
 import csv
 import io
-import re
 import zipfile
 from datetime import date, timedelta
 from pathlib import Path
@@ -27,6 +26,7 @@ import requests
 
 from . import normalizacao
 from .fontes import portal
+from .tipos import digitos
 
 RECURSO = "convenios/{data}"
 CDN = "https://dadosabertos-download.cgu.gov.br/PortalDaTransparencia/saida/convenios/{data}_Convenios.zip"
@@ -69,7 +69,7 @@ def ler(arquivo_zip: Path, numeros: set[str]) -> list[dict]:
                 numero = (r.get("NÚMERO CONVÊNIO") or "").strip()
                 if numero not in numeros:
                     continue
-                codigo = re.sub(r"\D", "", r.get("CÓDIGO CONVENENTE") or "")
+                codigo = digitos(r.get("CÓDIGO CONVENENTE"))
                 linhas[numero] = {
                     "numero": numero,
                     "cnpj_convenente": codigo if len(codigo) == 14 else None,

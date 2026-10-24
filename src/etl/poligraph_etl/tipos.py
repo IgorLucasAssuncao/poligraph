@@ -211,3 +211,66 @@ def gasto_com_divida(grupo: str | None, elemento: str | None) -> TipoGastoComDiv
         return _DIVIDA_DO_ORCAMENTO[(grupo, elemento or "")]
     except KeyError:
         raise ValorDesconhecido("CÓDIGO ELEMENTO DE DESPESA", f"{grupo}/{elemento}") from None
+
+
+class TipoFavorecido(StrEnum):
+    """Quem recebeu um pagamento de emenda, como `ck_favorecido_identificacao` o entende (`TipoFavorecido` no C#)."""
+
+    PESSOA_JURIDICA = "PESSOA_JURIDICA"
+    UNIDADE_GESTORA = "UNIDADE_GESTORA"
+    PESSOA = "PESSOA"
+    SEM_INFORMACAO = "SEM_INFORMACAO"
+
+
+_FAVORECIDO_DO_PORTAL = {
+    "Pessoa Física": TipoFavorecido.PESSOA,
+    "Pessoa Fisica": TipoFavorecido.PESSOA,
+    "Pessoa Jurídica": TipoFavorecido.PESSOA_JURIDICA,
+    "Unidade Gestora": TipoFavorecido.UNIDADE_GESTORA,
+}
+"""O `Tipo Favorecido` do Portal. "Inscrição Genérica" é pessoa: o Portal a usa para o CPF que não publica."""
+
+
+def favorecido_do_portal(tipo: str | None) -> TipoFavorecido | None:
+    """O tipo do favorecido pelo rótulo do Portal; `None` para o rótulo que o mapa não conhece.
+
+    DECISÃO: rótulo desconhecido não derruba a carga aqui, ao contrário dos outros enums: o pagamento entra como
+    `SEM_INFORMACAO`, sem identificação, porque uma categoria nova pode ser de pessoa (`emendas.classificar_favorecido`).
+    """
+    texto = (tipo or "").strip()
+    if texto.startswith("Inscrição Gen"):
+        return TipoFavorecido.PESSOA
+    return _FAVORECIDO_DO_PORTAL.get(texto)
+
+
+def so_digitos(texto: str | None, tamanho: int) -> bool:
+    """Se o texto é um código numérico de `tamanho` dígitos (CNPJ, código do IBGE, unidade gestora)."""
+    return texto is not None and len(texto) == tamanho and texto.isdigit()
+
+
+def digitos(texto: str | None) -> str:
+    """Só os dígitos do texto: o CNPJ ou o CPF com a máscara tirada."""
+    return "".join(c for c in (texto or "") if c.isdigit())
+
+
+UFS = frozenset({
+    "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR",
+    "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO",
+})
+"""As 27 unidades da federação: domínio fechado, comparado por igualdade, e não por regex."""
+
+
+class TipoCategoriaDeVotacao(StrEnum):
+    """O que a votação decide, e o peso dela no grafo (`TipoCategoriaDeVotacao` no C#)."""
+
+    PROCEDIMENTAL = "PROCEDIMENTAL"
+    DESTAQUE = "DESTAQUE"
+    SUBSTANTIVA = "SUBSTANTIVA"
+    AUTORIDADE = "AUTORIDADE"
+
+
+class TipoMetrica(StrEnum):
+    """A medida de parecença entre dois parlamentares (`TipoMetrica` no C#)."""
+
+    CONCORDANCIA = "CONCORDANCIA"
+    COSSENO = "COSSENO"

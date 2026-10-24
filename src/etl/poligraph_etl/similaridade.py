@@ -29,16 +29,18 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from .tipos import TipoCategoriaDeVotacao, TipoMetrica
+
 # ═══════════════════════════════════════════════════════════════════
 # Pesos medidos no discovery
 # ═══════════════════════════════════════════════════════════════════
 
 # Nem toda votação diz o mesmo sobre uma pessoa.
 PESO_CATEGORIA = {
-    "SUBSTANTIVA": 1.0,    # mérito da matéria — o sinal mais forte
-    "DESTAQUE": 0.7,       # mérito, mas de um trecho
-    "AUTORIDADE": 0.3,     # voto em pessoa, não em política
-    "PROCEDIMENTAL": 0.0,  # Não fora da matriz: mede obstrução, não posição
+    TipoCategoriaDeVotacao.SUBSTANTIVA: 1.0,    # mérito da matéria — o sinal mais forte
+    TipoCategoriaDeVotacao.DESTAQUE: 0.7,       # mérito, mas de um trecho
+    TipoCategoriaDeVotacao.AUTORIDADE: 0.3,     # voto em pessoa, não em política
+    TipoCategoriaDeVotacao.PROCEDIMENTAL: 0.0,  # Não fora da matriz: mede obstrução, não posição
 }
 
 # DECISÃO: Não é arbitrário: vem da correlação medida de posição entre anos dentro da
@@ -58,8 +60,8 @@ def parametros() -> dict:
     return {
         "minimo_votacoes_comuns": MINIMO_VOTACOES_COMUNS,
         "razao_recencia": RAZAO_RECENCIA,
-        "peso_destaque": PESO_CATEGORIA["DESTAQUE"],
-        "peso_autoridade": PESO_CATEGORIA["AUTORIDADE"],
+        "peso_destaque": PESO_CATEGORIA[TipoCategoriaDeVotacao.DESTAQUE],
+        "peso_autoridade": PESO_CATEGORIA[TipoCategoriaDeVotacao.AUTORIDADE],
     }
 
 
@@ -123,13 +125,13 @@ def calcular_pares(
     matriz: np.ndarray,
     pessoas: list[int],
     pesos: np.ndarray,
-    metrica: str = "CONCORDANCIA",
+    metrica: TipoMetrica = TipoMetrica.CONCORDANCIA,
 ) -> list[ParSimilar]:
     """Todos os pares da MESMA casa que atendem ao mínimo da RN-02.
 
     ATENÇÃO: `pessoa_a < pessoa_b` sempre — invariante I3, e o banco tem CHECK para isso.
     """
-    funcao = concordancia_simples if metrica == "CONCORDANCIA" else cosseno
+    funcao = concordancia_simples if metrica is TipoMetrica.CONCORDANCIA else cosseno
     pares: list[ParSimilar] = []
 
     for i in range(len(pessoas)):

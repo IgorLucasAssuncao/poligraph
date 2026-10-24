@@ -36,7 +36,7 @@ from .contratos import entrada
 from .contratos.entrada import colunas_da_fonte
 from .contratos.tse import LinhaDeCandidatura, LinhaDeVotacao
 from .contratos.bcb import LinhaDaSerie
-from .tipos import FonteDaRedeSocial, TipoCargo, TipoCasa, TipoFonteDeCarga, TipoFonteDeIdentificador
+from .tipos import FonteDaRedeSocial, TipoCargo, TipoCasa, TipoFonteDeCarga, TipoFonteDeIdentificador, TipoMetrica
 from .contratos.portal import (
     LinhaDeCompra, LinhaDeCompraCentralizadaNoCartao, LinhaDeSancao, LinhaDeTrechoDeViagem, LinhaDeViagem, LinhaDePagamentoDeViagem, LinhaDoCartaoDaDefesaCivil,
 )
@@ -711,12 +711,12 @@ def _analisar(conexao: psycopg.Connection, legislatura: int, casa: str) -> None:
         similaridade.parametros(),
     )
     try:
-        for metrica in ("CONCORDANCIA", "COSSENO"):
+        for metrica in TipoMetrica:
             pares = similaridade.calcular_pares(matriz, pessoas, pesos, metrica)
             persistencia.gravar_similaridades(conexao, execucao_id, pares)
             log.info("  %s: %d pares acima do mínimo", metrica, len(pares))
 
-            if metrica == "CONCORDANCIA":
+            if metrica is TipoMetrica.CONCORDANCIA:
                 arestas = similaridade.arestas_knn(pares)
                 gravadas = persistencia.gravar_arestas(conexao, execucao_id, arestas)
                 log.info("  grafo kNN: %d arestas gravadas", gravadas)

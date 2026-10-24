@@ -24,8 +24,9 @@ prefeitura ou um fundo municipal, e a sede é a cidade. Fundo estadual tem sede 
 capital; empresa, onde foi aberta. A tela diz isso.
 """
 
-import re
 from datetime import date
+
+from .tipos import so_digitos
 
 
 def municipios_para_linhas(tabela: list[dict]) -> list[dict]:
@@ -38,7 +39,7 @@ def municipios_para_linhas(tabela: list[dict]) -> list[dict]:
     for r in tabela:
         ibge = r["CÓDIGO DO MUNICÍPIO - IBGE"].strip()
         tom = r["CÓDIGO DO MUNICÍPIO - TOM"].strip().zfill(4)
-        if not re.fullmatch(r"\d{7}", ibge) or not re.fullmatch(r"\d{4}", tom):
+        if not so_digitos(ibge, 7) or not so_digitos(tom, 4):
             continue
         linhas.append({
             "codigo_ibge": ibge,
