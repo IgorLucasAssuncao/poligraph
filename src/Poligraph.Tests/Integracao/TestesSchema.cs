@@ -127,13 +127,13 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
 
         var esperadas = new[]
         {
-            "arestas_grafo", "autores_de_emenda", "avaliacoes", "avisos_enviados", "cargas", "cnpjs_municipio", "compras_centralizadas_no_cartao", "consentimentos", "contas_dos_municipios", "contratacoes_do_orgao", "contratados_do_governo", "convenios", "destinos_de_viagem",
+            "arestas_grafo", "autores_de_emenda", "avaliacoes", "avisos_enviados", "cargas", "cnpjs_municipio", "compras_centralizadas_no_cartao", "consentimentos", "contas_dos_municipios", "contratacoes_do_orgao", "contratados_do_governo", "convenios", "destinos_de_viagem", "divida_federal",
             "despesas", "em_exercicio", "emendas", "emendas_convenios", "emendas_favorecidos", "encargos_especiais", "eventos", "execucoes", "gastos_da_defesa_civil", "gastos_sigilosos", "inscricoes_no_navegador",
             "mandatos", "municipios", "orcamento_por_funcao", "patrimonios", "viagens_do_orgao",
             "nos_metrica", "orientacoes", "perguntas", "pessoa_fonte_ids",
             "pessoas",
             "proposicoes", "receitas_de_campanha", "receitas_por_origem", "reconciliacao_motivos", "reconciliacoes",
-            "redes_sociais", "sancoes_de_empresas", "segue", "seguidos_encerrados", "similaridades",
+            "redes_sociais", "sancoes_de_empresas", "segue", "seguidos_encerrados", "selic_por_ano", "similaridades",
             "usuarios", "votacoes", "votacoes_simbolicas", "votos",
         };
 
