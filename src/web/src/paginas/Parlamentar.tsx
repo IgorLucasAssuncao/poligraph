@@ -4,6 +4,7 @@ import { useCarga } from '../componentes/useCarga';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import {
   listarVotos,
+  obterFichaDoPolitico,
   obterFicha,
   type Alinhamento,
   type Ficha,
@@ -25,7 +26,6 @@ import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { LinhaDoTempoComponent } from '../componentes/LinhaDoTempo';
 import { MandatosDoParlamentarComponent } from '../componentes/MandatosDoParlamentar';
-import { CargosNoTseComponent } from '../componentes/CargosNoTse';
 import { RedesDoParlamentarComponent } from '../componentes/RedesDoParlamentar';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { usePaginas } from '../componentes/usePaginas';
@@ -121,6 +121,7 @@ export function ParlamentarComponent() {
   const legislaturas = useLegislaturas();
   const corrente = legislaturas?.[0]?.numero;
   const emExercicio = ficha?.emExercicio ?? false;
+  const doTse = useCarga(['politico', idPessoa], () => obterFichaDoPolitico(idPessoa));
 
   const seguindo = useSeguidos().ids.has(idPessoa);
 
@@ -189,8 +190,12 @@ export function ParlamentarComponent() {
           {ficha.uf && <span className="chip">{ficha.uf}</span>}
         </div>
 
-        <MandatosDoParlamentarComponent mandatos={ficha.mandatos ?? []} atual={ficha.legislatura} caminho={pathname} />
-        <CargosNoTseComponent idPessoa={ficha.idPessoa} />
+        <MandatosDoParlamentarComponent
+          mandatos={ficha.mandatos ?? []}
+          doTse={doTse.dados?.mandatos ?? []}
+          atual={ficha.legislatura}
+          caminho={pathname}
+        />
 
         <div className="perfil-links">
           <LinkDeFonteComponent href={ficha.urlFonte}>

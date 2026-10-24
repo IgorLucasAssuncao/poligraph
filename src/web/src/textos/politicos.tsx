@@ -45,11 +45,6 @@ export function descricaoDoMandato(mandato: MandatoNoTse, nomeDoMunicipio: (nome
 
 /** O texto da lista de políticos de todos os cargos e da ficha de cada um (Pendência 90). */
 export const TEXTOS_DOS_POLITICOS = {
-  naFichaDoParlamentar: {
-    rotulo: 'Eleito também, pelo TSE: ',
-    eMais: (n: number) => (n === 1 ? ' e mais 1, na lista abaixo' : ` e mais ${n}, na lista abaixo`),
-    verTodos: (n: number) => (n === 1 ? 'Ver o mandato eleito, pelo TSE' : `Ver os ${n} mandatos eleitos, pelo TSE`),
-  },
   ficha: {
     titulo: 'Político',
     erro: 'Não foi possível carregar esta ficha agora. Tente de novo em instantes.',

@@ -45,21 +45,17 @@ public static class EndpointsSeguir
 
         var seguidos = await db.Segue.AsNoTracking()
             .Where(s => s.UsuarioId == idUsuario)
-            .Select(s => new
-            {
-                s.PessoaId,
-                s.Pessoa!.NomeExibicao,
-                s.Pessoa.UrlFoto,
-                Ultimo = s.Pessoa.Votos
-                    .OrderByDescending(v => v.Votacao!.Data)
-                    .Select(v => new { v.Votacao!.Casa, v.PartidoNoVoto, v.UfNoVoto })
-                    .FirstOrDefault()
-            })
+            .Select(s => new { s.PessoaId, s.Pessoa!.NomeExibicao, s.Pessoa.UrlFoto })
             .ToListAsync(ct);
+        var ultimos = await UltimoVoto.DasPessoasAsync(db, [.. seguidos.Select(s => s.PessoaId)], null, ct);
 
-        return Results.Ok(seguidos.Select(s => new ParlamentarSeguidoDto(
-            s.PessoaId, s.NomeExibicao, s.Ultimo?.Casa,
-            s.Ultimo?.PartidoNoVoto ?? "", s.Ultimo?.UfNoVoto ?? "", s.UrlFoto)));
+        return Results.Ok(seguidos.Select(s =>
+        {
+            var temVoto = ultimos.TryGetValue(s.PessoaId, out var ultimo);
+            return new ParlamentarSeguidoDto(
+                s.PessoaId, s.NomeExibicao, temVoto ? ultimo.Casa : null,
+                temVoto ? ultimo.Partido : "", temVoto ? ultimo.Uf : "", s.UrlFoto);
+        }));
     }
 
     /// <summary>"O que mudou" sobre quem a pessoa segue (Pendência 63). Sem cache e sem log de nome: lê a tabela <c>segue</c>.</summary>

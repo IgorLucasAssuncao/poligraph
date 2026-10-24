@@ -18,6 +18,7 @@ vi.mock('../sessao', () => ({
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
   obterFicha: vi.fn(),
+  obterFichaDoPolitico: vi.fn().mockResolvedValue(null),
   listarVotos: vi.fn(),
   listarLancamentos: vi.fn(),
   listarConvenios: vi.fn(),
@@ -881,7 +882,7 @@ describe('os mandatos na ficha', () => {
     await renderizarCom(FICHA);
 
     expect(screen.getByText('2023–2027')).toBeDefined();
-    expect(screen.queryByRole('navigation', { name: 'Legislaturas em que votou' })).toBeNull();
+    expect(screen.queryByRole('navigation', { name: 'Mandatos' })).toBeNull();
   });
 
   it('quem saiu antes do fim mostra o período em que votou, não a legislatura inteira', async () => {
@@ -897,7 +898,7 @@ describe('os mandatos na ficha', () => {
   it('com dois, cada mandato é um link, com a sigla de então', async () => {
     await renderizarCom(DOIS_MANDATOS);
 
-    const mandatos = screen.getByRole('navigation', { name: 'Legislaturas em que votou' });
+    const mandatos = screen.getByRole('navigation', { name: 'Mandatos' });
     const links = within(mandatos).getAllByRole('link');
 
     expect(links).toHaveLength(2);
@@ -906,12 +907,28 @@ describe('os mandatos na ficha', () => {
     expect(within(mandatos).getByText(/PARTIDO-B/)).toBeDefined();
   });
 
+  it('o presidente que foi deputado tem um cartão de presidente, que leva ao governo federal do mandato', async () => {
+    vi.mocked(api.obterFichaDoPolitico).mockResolvedValueOnce({
+      idPessoa: 1, nome: 'ANA RIBEIRO', nomeCivil: null, urlFoto: null, parlamentar: true, redesSociais: [],
+      mandatos: [
+        { cargo: 'PRESIDENTE', nivel: 'FEDERAL', anoEleicao: 2026, primeiroAno: 2027, ultimoAno: 2030, uf: null, municipio: null, partido: 'XYZ' },
+        { cargo: 'DEPUTADO_FEDERAL', nivel: 'FEDERAL', anoEleicao: 2022, primeiroAno: 2023, ultimoAno: 2026, uf: 'SP', municipio: null, partido: 'XYZ' },
+      ],
+    });
+    await renderizarCom(DOIS_MANDATOS);
+
+    const mandatos = await screen.findByRole('navigation', { name: 'Mandatos' });
+    const presidente = await within(mandatos).findByRole('link', { name: /Presidente/ });
+    expect(presidente).toHaveAttribute('href', '/governo?de=2027&ate=2030');
+    expect(within(mandatos).getAllByRole('link')).toHaveLength(3);
+  });
+
   it('escolher um mandato pede a ficha daquela legislatura', async () => {
     vi.mocked(api.obterFicha).mockResolvedValue(DOIS_MANDATOS);
     renderizar();
     await screen.findAllByRole('heading', { name: /Ana Ribeiro/ });
 
-    await userEvent.click(within(screen.getByRole('navigation', { name: 'Legislaturas em que votou' })).getByText('2019–2023'));
+    await userEvent.click(within(screen.getByRole('navigation', { name: 'Mandatos' })).getByText('2019–2023'));
 
     await waitFor(() => expect(vi.mocked(api.obterFicha)).toHaveBeenLastCalledWith(1, 56));
   });

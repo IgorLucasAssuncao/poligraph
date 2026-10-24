@@ -1,45 +1,61 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { Mandato } from '../api';
-import { mesCurto, periodoDaLegislatura } from '../formato';
+import type { Mandato, MandatoNoTse } from '../api';
+import { mesCurto, nomeProprio, periodoDaLegislatura } from '../formato';
 import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
+import { NOMES_DOS_CARGOS } from '../textos/politicos';
+
+/** Quantos cartões aparecem antes de "ver todos": os mais recentes, e o aberto na ficha sempre. */
+const MANDATOS_A_VISTA = 4;
+
+/** Um cartão: a legislatura em que votou, que troca a ficha, ou o cargo do TSE fora do Congresso, que leva aonde ele se lê. */
+type Cartao =
+  | { tipo: 'voto'; chave: string; inicio: number; mandato: Mandato; indice: number }
+  | { tipo: 'tse'; chave: string; inicio: number; mandato: MandatoNoTse };
 
 /**
- * Os mandatos do parlamentar, e qual deles a ficha está mostrando.
+ * Os mandatos da pessoa num só lugar, do mais recente: as legislaturas em que votou no Congresso e os cargos que o TSE
+ * registra fora dele (presidente, governador, prefeito).
  *
- * DECISÃO: Um mandato só não vira seletor: vira a linha que diz de quando é o que está na tela.
- * Com dois ou mais, cada um é um link — `?legislatura=` no endereço, para o "voltar" do
- * navegador e o link compartilhado continuarem valendo.
+ * DECISÃO (autor, 2026-10-24): um cartão por mandato. O de legislatura troca o que a ficha mostra (`?legislatura=` no
+ * endereço, para o "voltar" e o link compartilhado); o de presidente leva ao Governo federal do mandato, o de prefeito à
+ * cidade, e os outros aos eleitos do mesmo cargo. Antes, os cargos do TSE ficavam numa linha e numa seta recolhida embaixo.
  *
- * ATENÇÃO: Partido e UF são os do último voto DAQUELE mandato: quem trocou de partido aparece
- * com a sigla de então, não com a de hoje.
+ * ATENÇÃO: Partido e UF da legislatura são os do último voto DAQUELE mandato: quem trocou de partido aparece com a sigla de
+ * então. O período é o do primeiro ao último voto, e não o da legislatura. MEDIDO (2026-10-09): na 57ª, 122 dos 643 deputados
+ * pararam de votar mais de 90 dias antes da última votação da casa.
  *
- * ATENÇÃO: O período é o do primeiro ao último voto, e não o da legislatura. MEDIDO (2026-10-09):
- * na 57ª, 122 dos 643 deputados pararam de votar mais de 90 dias antes da última votação da casa e
- * 142 começaram depois de março de 2023; "Votou em 2023–2027" estava errado para eles.
- *
- * DECISÃO (2026-10-22): com mais de MANDATOS_A_VISTA, os mais antigos ficam recolhidos atrás de "ver
- * as outras N". Quem foi deputado e senador (Pendência 90, pessoas fundidas) tinha sete cartões antes das
- * abas. O mandato aberto na ficha aparece sempre, mesmo que seja antigo.
- *
- * ATENÇÃO: "Mandatos" dizia errado no Senado: o mandato de senador tem oito anos e cobre
- * duas legislaturas, e a lista mostrava um mandato só como dois.
+ * ATENÇÃO: O mandato de deputado ou senador do TSE já aparece pela legislatura em que votou, e não vira um segundo cartão.
+ * No Senado, um mandato cobre duas legislaturas.
  */
 export function MandatosDoParlamentarComponent({
   mandatos,
+  doTse = [],
   atual,
   caminho,
 }: {
   mandatos: Mandato[];
+  /** Os mandatos do TSE; os do Congresso que têm voto já estão em `mandatos`. */
+  doTse?: MandatoNoTse[];
   atual: number | null;
   /** O endereço da aba aberta, sem a busca: o mandato troca e a aba fica. */
   caminho: string;
 }) {
   const [todos, setTodos] = useState(false);
-  if (mandatos.length === 0) return null;
 
-  if (mandatos.length === 1) {
-    const [unico] = mandatos;
+  const cobertos = (m: MandatoNoTse) =>
+    mandatos.some((v) => v.anoInicial <= m.ultimoAno && v.anoInicial + 3 >= m.primeiroAno && (m.cargo === 'SENADOR') === (v.casa === 'SENADO'));
+  const cartoes: Cartao[] = [
+    ...mandatos.map((m, indice): Cartao => ({ tipo: 'voto', chave: `v-${m.legislatura}-${m.casa}`, inicio: m.anoInicial, mandato: m, indice })),
+    ...doTse
+      .filter((m) => !((m.cargo === 'DEPUTADO_FEDERAL' || m.cargo === 'SENADOR') && cobertos(m)))
+      .map((m): Cartao => ({ tipo: 'tse', chave: `t-${m.anoEleicao}-${m.cargo}`, inicio: m.primeiroAno, mandato: m })),
+  ].sort((a, b) => b.inicio - a.inicio);
+
+  if (cartoes.length === 0) return null;
+
+  if (cartoes.length === 1 && cartoes[0].tipo === 'voto') {
+    const unico = cartoes[0].mandato;
     return (
       <p className="mandatos-unico">
         {T.mandatos.votouDe}
@@ -52,6 +68,10 @@ export function MandatosDoParlamentarComponent({
     );
   }
 
+  const aberto = (c: Cartao) => c.tipo === 'voto' && c.mandato.legislatura === atual;
+  const visiveis = todos ? cartoes : cartoes.filter((c, i) => i < MANDATOS_A_VISTA || aberto(c));
+  const escondidos = cartoes.length - visiveis.length;
+
   return (
     <nav className="mandatos" aria-label={T.mandatos.rotulo}>
       <span className="mandatos-rotulo">
@@ -59,40 +79,59 @@ export function MandatosDoParlamentarComponent({
         {mandatos.some((m) => m.casa === 'SENADO') && <small>{T.mandatos.senadoCobreDuas}</small>}
       </span>
       <ul>
-        {mandatos.map((m, i) => {
-          const recolhido = !todos && i >= MANDATOS_A_VISTA && m.legislatura !== atual;
-          if (recolhido) return null;
-          const ativo = m.legislatura === atual;
-          const destino = i === 0 ? caminho : `${caminho}?legislatura=${m.legislatura}`;
-
-          return (
-            <li key={`${m.legislatura}-${m.casa}`}>
-              <Link
-                to={destino}
-                replace
-                className={ativo ? 'ativo' : ''}
-                aria-current={ativo ? 'true' : undefined}
-              >
-                <span className="dado">{periodoDaLegislatura(m.legislatura)}</span>
-                <span className="mandatos-detalhe">
-                  {m.casa === 'SENADO' ? T.mandatos.senado : T.mandatos.camara}
-                  {m.partido && ` · ${m.partido}`}
-                  {m.uf && `-${m.uf}`}
-                  {` · ${mesCurto(m.primeiroVoto)}${T.mandatos.ate}${mesCurto(m.ultimoVoto)}`}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
+        {visiveis.map((c) => (
+          <li key={c.chave}>{c.tipo === 'voto' ? cartaoDeVoto(c, atual, caminho) : cartaoDoTse(c.mandato)}</li>
+        ))}
       </ul>
-      {!todos && mandatos.length > MANDATOS_A_VISTA && (
-        <button type="button" className="botao-texto mandatos-mais" onClick={() => setTodos(true)}>
-          {T.mandatos.verOsOutros(mandatos.filter((m, i) => i >= MANDATOS_A_VISTA && m.legislatura !== atual).length)}
+      {escondidos > 0 && (
+        <button type="button" className="botao-secundario mandatos-mais" onClick={() => setTodos(true)}>
+          {T.mandatos.verTodos(cartoes.length)}
         </button>
       )}
     </nav>
   );
 }
 
-/** Quantos mandatos aparecem antes de "ver os outros": os mais recentes. */
-const MANDATOS_A_VISTA = 3;
+function cartaoDeVoto(c: Extract<Cartao, { tipo: 'voto' }>, atual: number | null, caminho: string) {
+  const m = c.mandato;
+  const ativo = m.legislatura === atual;
+  return (
+    <Link
+      to={c.indice === 0 ? caminho : `${caminho}?legislatura=${m.legislatura}`}
+      replace
+      className={ativo ? 'ativo' : ''}
+      aria-current={ativo ? 'true' : undefined}
+    >
+      <span className="mandatos-cargo">{m.casa === 'SENADO' ? T.mandatos.senador : T.mandatos.deputado}</span>
+      <span className="dado">{periodoDaLegislatura(m.legislatura)}</span>
+      <span className="mandatos-detalhe">
+        {m.casa === 'SENADO' ? T.mandatos.senado : T.mandatos.camara}
+        {m.partido && ` · ${m.partido}`}
+        {m.uf && `-${m.uf}`}
+        {` · ${mesCurto(m.primeiroVoto)}${T.mandatos.ate}${mesCurto(m.ultimoVoto)}`}
+      </span>
+    </Link>
+  );
+}
+
+function cartaoDoTse(m: MandatoNoTse) {
+  return (
+    <Link to={destinoDoCargo(m)} className="mandatos-tse">
+      <span className="mandatos-cargo">{NOMES_DOS_CARGOS[m.cargo]}</span>
+      <span className="dado">{`${m.primeiroAno}–${m.ultimoAno}`}</span>
+      <span className="mandatos-detalhe">
+        {[m.municipio ? `${nomeProprio(m.municipio.nome)} – ${m.municipio.uf}` : m.uf, m.partido].filter(Boolean).join(' · ')}
+        {T.mandatos.eleitoEm(m.anoEleicao)}
+      </span>
+    </Link>
+  );
+}
+
+/** Aonde o cargo se lê: o Governo federal do mandato, a página da cidade, ou os eleitos do mesmo cargo e lugar. */
+function destinoDoCargo(m: MandatoNoTse): string {
+  if (m.cargo === 'PRESIDENTE' || m.cargo === 'VICE_PRESIDENTE') return `/governo?de=${m.primeiroAno}&ate=${m.ultimoAno}`;
+  if (m.municipio) return `/cidades/${m.municipio.codigoIbge}`;
+  const filtro = new URLSearchParams({ vista: 'cargos', cargo: m.cargo });
+  if (m.uf) filtro.set('uf', m.uf);
+  return `/parlamentares?${filtro.toString()}`;
+}

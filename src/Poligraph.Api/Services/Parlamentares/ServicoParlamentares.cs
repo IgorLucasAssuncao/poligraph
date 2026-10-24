@@ -636,26 +636,18 @@ public partial class ServicoParlamentares(PoligraphDb db, CacheDeLeitura leitura
         var ids = pares.Select(p => p.Outro).ToList();
         var fichas = await _db.Pessoas.AsNoTracking()
             .Where(p => ids.Contains(p.Id))
-            .Select(p => new
-            {
-                p.Id,
-                p.NomeExibicao,
-                p.UrlFoto,
-                Ultimo = p.Votos
-                    .OrderByDescending(v => v.Votacao!.Data)
-                    .Select(v => new { v.PartidoNoVoto, v.UfNoVoto })
-                    .FirstOrDefault()
-            })
+            .Select(p => new { p.Id, p.NomeExibicao, p.UrlFoto })
             .ToDictionaryAsync(p => p.Id, ct);
+        var ultimos = await UltimoVoto.DasPessoasAsync(_db, ids, legislatura, ct);
 
         return [.. pares.Select(p => new SimilarNaFichaDto(
             p.Outro,
             fichas.GetValueOrDefault(p.Outro)?.NomeExibicao ?? "",
-            fichas.GetValueOrDefault(p.Outro)?.Ultimo?.PartidoNoVoto ?? "",
+            ultimos.TryGetValue(p.Outro, out var ultimo) ? ultimo.Partido : "",
             p.Valor,
             p.NVotacoesComuns,
             fichas.GetValueOrDefault(p.Outro)?.UrlFoto,
-            fichas.GetValueOrDefault(p.Outro)?.Ultimo?.UfNoVoto ?? ""))];
+            ultimos.TryGetValue(p.Outro, out var doUltimo) ? doUltimo.Uf : ""))];
     }
 
     /// <summary>
