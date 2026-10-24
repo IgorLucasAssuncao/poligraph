@@ -924,6 +924,7 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
     encargos: list[dict] = []
     receitas_do_periodo: list[dict] = []
     sigilosos: list[dict] = []
+    contas_do_orcamento: list[tuple[dict, int]] = []
 
     for ano in anos:
         sufixo = f"-{date.today():%Y%m%d}" if ano >= date.today().year else ""
@@ -950,9 +951,11 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
             linha["restos_a_pagar_pagos"] = round(restos["por_subfuncao"].get(linha["codigo_subfuncao"], 0.0), 2)
 
         pago_anual = sum(linha["pago"] for linha in do_ano)
-        if restos["meses"] == 12 and abs(restos["pago"] - pago_anual) > 1e9:
-            log.warning("  %d: pago mensal R$ %.1f bi ≠ anual R$ %.1f bi — os arquivos divergem",
-                        ano, restos["pago"] / 1e9, pago_anual / 1e9)
+        if restos["meses"] == 12:
+            conta = orcamento.reconciliar_mensal_e_anual(ano, restos["pago"], pago_anual)
+            contas_do_orcamento.append((conta, carga_orcamento))
+            log.info("  %d: pago mensal %s, anual %s — diferença guardada na reconciliação",
+                     ano, _reais(restos["pago"]), _reais(pago_anual))
 
         log.info("  %d: %d funções; restos a pagar pagos R$ %.1f bi (%d meses)",
                  ano, len(do_ano), sum(restos["por_funcao"].values()) / 1e9, restos["meses"])
@@ -993,6 +996,8 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
         persistencia.gravar_encargos(conexao, anos, encargos)
         persistencia.gravar_arrecadacao(conexao, anos, receitas_do_periodo)
         persistencia.gravar_sigilosos(conexao, anos, sigilosos)
+        for conta, carga in contas_do_orcamento:
+            persistencia.gravar_reconciliacoes(conexao, [conta], carga)
 
 
 def _convenios(conexao: psycopg.Connection) -> None:

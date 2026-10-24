@@ -12,13 +12,14 @@ public class ReconciliacaoModel
 {
     public long Id { get; set; }
 
-    /// <summary><c>EMENDAS</c> (por ano da emenda), <c>PAGAMENTOS</c> (por ano do pagamento), <c>PAGO_X_RECEBIDO</c> (por ano da emenda), <c>COTA_CAMARA</c> ou <c>COTA_SENADO</c>.</summary>
+    /// <summary><c>EMENDAS</c> (por ano da emenda), <c>PAGAMENTOS</c> (por ano do pagamento), <c>PAGO_X_RECEBIDO</c> (por ano da emenda), <c>COTA_CAMARA</c>, <c>COTA_SENADO</c> ou <c>GOVERNO_FEDERAL</c> (por ano do exercício).</summary>
     /// <remarks>
     /// <para><c>PAGO_X_RECEBIDO</c> cruza dois arquivos do Portal sobre as mesmas emendas da base: a fonte é o pago do arquivo de emendas (no ano e nos seguintes), a base é o recebido pelos favorecidos no arquivo de pagamentos. O Portal não faz os dois baterem; os motivos dizem, emenda a emenda somada, quanto foi pago sem recebedor publicado e quanto foi recebido acima do pago (este com valor negativo).</para>
+    /// <para><c>GOVERNO_FEDERAL</c> cruza dois arquivos do Portal sobre o mesmo pago do exercício: a fonte é a soma dos 12 arquivos mensais de execução, a base é o arquivo anual, que é o gravado em <c>orcamento_por_funcao</c>. O motivo <c>MENSAL_DIFERENTE_DO_ANUAL</c> é o mensal menos o anual, positivo ou negativo.</para>
     /// </remarks>
     public required string Conjunto { get; set; }
 
-    /// <summary><c>EMPENHADO</c> e <c>PAGO</c> nas emendas; <c>RECEBIDO</c> nos pagamentos; <c>PAGO</c> no cruzamento; <c>VALOR_LIQUIDO</c> na cota.</summary>
+    /// <summary><c>EMPENHADO</c> e <c>PAGO</c> nas emendas; <c>RECEBIDO</c> nos pagamentos; <c>PAGO</c> no cruzamento e no orçamento federal; <c>VALOR_LIQUIDO</c> na cota.</summary>
     public required string Medida { get; set; }
 
     public short Ano { get; set; }

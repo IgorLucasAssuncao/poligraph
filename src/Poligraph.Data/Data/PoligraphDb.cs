@@ -304,11 +304,12 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.ToTable(t =>
             {
                 t.HasCheckConstraint("ck_reconciliacao_conjunto",
-                    "conjunto IN ('EMENDAS','PAGAMENTOS','PAGO_X_RECEBIDO','COTA_CAMARA','COTA_SENADO')");
+                    "conjunto IN ('EMENDAS','PAGAMENTOS','PAGO_X_RECEBIDO','COTA_CAMARA','COTA_SENADO','GOVERNO_FEDERAL')");
                 t.HasCheckConstraint("ck_reconciliacao_medida",
                     "(conjunto = 'EMENDAS' AND medida IN ('EMPENHADO','PAGO')) OR (conjunto = 'PAGAMENTOS' AND medida = 'RECEBIDO')"
                     + " OR (conjunto = 'PAGO_X_RECEBIDO' AND medida = 'PAGO')"
-                    + " OR (conjunto IN ('COTA_CAMARA','COTA_SENADO') AND medida = 'VALOR_LIQUIDO')");
+                    + " OR (conjunto IN ('COTA_CAMARA','COTA_SENADO') AND medida = 'VALOR_LIQUIDO')"
+                    + " OR (conjunto = 'GOVERNO_FEDERAL' AND medida = 'PAGO')");
             });
         });
 
@@ -320,7 +321,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.ToTable(t => t.HasCheckConstraint("ck_reconciliacao_motivo",
                 "motivo IN ('RELATOR_SEM_AUTOR','COMISSAO_SEM_AUTOR','BANCADA_SEM_AUTOR_E_SEM_UF','INDIVIDUAL_SEM_AUTOR',"
                 + "'OUTRA_SEM_AUTOR','INCOERENTE','PAGAMENTO_SEM_CODIGO_DE_EMENDA','EMENDA_DE_ANO_NAO_CARREGADO','EMENDA_FORA_DA_BASE',"
-                + "'SEM_PARLAMENTAR','FORA_DO_DE_PARA','PAGO_SEM_RECEBEDOR','RECEBIDO_ACIMA_DO_PAGO')"));
+                + "'SEM_PARLAMENTAR','FORA_DO_DE_PARA','PAGO_SEM_RECEBEDOR','RECEBIDO_ACIMA_DO_PAGO','MENSAL_DIFERENTE_DO_ANUAL')"));
         });
     }
 

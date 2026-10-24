@@ -46,6 +46,18 @@ export const TEXTOS_DO_GOVERNO = {
     rotuloDaProcedencia: (numero: string, periodo: string) => `${numero}, ${periodo}`,
   },
 
+  conferencia: {
+    titulo: 'Confere com o Portal da Transparência:',
+    resumo: (valor: string, ano: number, deCadaMil: string) =>
+      `o Portal publica o pago do ano em dois arquivos que não batem. A maior diferença do período é de ${valor} em ${ano}, ${deCadaMil} a cada R$ 1.000.`,
+    verDetalhe: 'Ver o detalhe',
+    explicacao:
+      'O pago sai do arquivo anual do orçamento, que diz a área de cada gasto. Os 12 arquivos mensais de execução somam um pouco diferente, e o Portal não explica a diferença. Ela fica aqui, ano a ano, sem correção.',
+    ano: (ano: number, anual: string) => `${ano}, de ${anual} no anual`,
+    diferenca: (diferenca: number, valor: string) =>
+      diferenca === 0 ? 'igual nos mensais' : `${valor} a ${diferenca > 0 ? 'mais' : 'menos'} nos mensais`,
+  },
+
   anoAAno: {
     titulo: 'Ano a ano',
     nota: 'Em reais de cada ano, sem correção pela inflação: anos mais recentes parecem maiores só por isso.',

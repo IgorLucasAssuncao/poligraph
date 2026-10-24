@@ -131,6 +131,19 @@ def test_restos_a_pagar_somam_os_meses():
     assert ano["pago"] == pytest.approx(12.0)
 
 
+def test_mensal_e_anual_viram_reconciliacao_que_fecha():
+    """MEDIDO: 2014, o mensal R$ 7,77 bi acima do anual; 2022, R$ 2,38 bi abaixo. A diferença vai como motivo, com sinal."""
+    acima = orcamento.reconciliar_mensal_e_anual(2014, 2_112_574_000_000.0, 2_104_800_000_000.0)
+    abaixo = orcamento.reconciliar_mensal_e_anual(2022, 3_924_910_000_000.0, 3_927_288_000_000.0)
+
+    assert (acima["conjunto"], acima["medida"]) == ("GOVERNO_FEDERAL", "PAGO")
+    assert acima["motivos"] == {orcamento.MENSAL_DIFERENTE_DO_ANUAL: pytest.approx(7_774_000_000.0)}
+    assert abaixo["motivos"] == {orcamento.MENSAL_DIFERENTE_DO_ANUAL: pytest.approx(-2_378_000_000.0)}
+    for conta in (acima, abaixo):
+        assert conta["total_na_fonte"] == pytest.approx(conta["total_na_base"] + sum(conta["motivos"].values()))
+    assert orcamento.reconciliar_mensal_e_anual(2023, 10.0, 10.0)["motivos"] == {}
+
+
 # ═══════════════════════════════════════════════════════════════════
 # RISCO: Limite de taxa não é "mês não publicado"
 # ═══════════════════════════════════════════════════════════════════

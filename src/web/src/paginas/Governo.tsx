@@ -33,6 +33,7 @@ import { LinhaDeValorComponent, NumeroComponent } from '../componentes/Dados';
 import { ColunasPorAnoComponent, ComposicaoComponent } from '../componentes/Graficos';
 import { partesComOutros } from '../componentes/partesComOutros';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
+import { ConfereOrcamentoComOPortalComponent } from '../componentes/ConfereOrcamentoComOPortal';
 import { AREAS_DO_ORCAMENTO_NOMEADAS } from '../constantes';
 import { TEXTOS_DO_GOVERNO as T } from '../textos/governo';
 
@@ -104,6 +105,7 @@ export function GovernoComponent({ secao = 'orcamento' }: { secao?: 'orcamento' 
           {secao === 'orcamento' ? (
             <>
               <ResumoComponent dados={dados} />
+              <ConfereOrcamentoComOPortalComponent periodo={dados.periodo} />
               {dados.porAno.length > 1 && (
                 <AnoAAnoComponent
                   dados={dados}

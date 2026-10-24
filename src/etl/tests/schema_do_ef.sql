@@ -1364,3 +1364,21 @@ VALUES ('20261022162714_ApagarGestoes', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+ALTER TABLE reconciliacoes DROP CONSTRAINT ck_reconciliacao_conjunto;
+
+ALTER TABLE reconciliacoes DROP CONSTRAINT ck_reconciliacao_medida;
+
+ALTER TABLE reconciliacao_motivos DROP CONSTRAINT ck_reconciliacao_motivo;
+
+ALTER TABLE reconciliacoes ADD CONSTRAINT ck_reconciliacao_conjunto CHECK (conjunto IN ('EMENDAS','PAGAMENTOS','PAGO_X_RECEBIDO','COTA_CAMARA','COTA_SENADO','GOVERNO_FEDERAL'));
+
+ALTER TABLE reconciliacoes ADD CONSTRAINT ck_reconciliacao_medida CHECK ((conjunto = 'EMENDAS' AND medida IN ('EMPENHADO','PAGO')) OR (conjunto = 'PAGAMENTOS' AND medida = 'RECEBIDO') OR (conjunto = 'PAGO_X_RECEBIDO' AND medida = 'PAGO') OR (conjunto IN ('COTA_CAMARA','COTA_SENADO') AND medida = 'VALOR_LIQUIDO') OR (conjunto = 'GOVERNO_FEDERAL' AND medida = 'PAGO'));
+
+ALTER TABLE reconciliacao_motivos ADD CONSTRAINT ck_reconciliacao_motivo CHECK (motivo IN ('RELATOR_SEM_AUTOR','COMISSAO_SEM_AUTOR','BANCADA_SEM_AUTOR_E_SEM_UF','INDIVIDUAL_SEM_AUTOR','OUTRA_SEM_AUTOR','INCOERENTE','PAGAMENTO_SEM_CODIGO_DE_EMENDA','EMENDA_DE_ANO_NAO_CARREGADO','EMENDA_FORA_DA_BASE','SEM_PARLAMENTAR','FORA_DO_DE_PARA','PAGO_SEM_RECEBEDOR','RECEBIDO_ACIMA_DO_PAGO','MENSAL_DIFERENTE_DO_ANUAL'));
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261024020456_ReconciliacaoDoGovernoFederal', '10.0.11');
+
+COMMIT;
+

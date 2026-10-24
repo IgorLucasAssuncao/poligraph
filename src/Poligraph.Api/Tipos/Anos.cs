@@ -90,7 +90,7 @@ public readonly record struct AnoDoOrcamento(int Valor) : IAno<AnoDoOrcamento>
 
 /// <summary>
 /// O ano de uma linha da tabela <c>reconciliacoes</c>: o ano da fonte reconciliada, que é o da emenda
-/// nas emendas e o da despesa na cota.
+/// nas emendas, o da despesa na cota e o do exercício no orçamento federal.
 /// </summary>
 public readonly record struct AnoDaReconciliacao(int Valor) : IAno<AnoDaReconciliacao>
 {

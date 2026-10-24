@@ -1560,8 +1560,9 @@ export type Reconciliacao = {
   /**
    * `EMENDAS` e `PAGO_X_RECEBIDO` são por ano da emenda; `PAGAMENTOS`, por ano do pagamento; a cota, por ano da despesa.
    * `PAGO_X_RECEBIDO` cruza o pago do arquivo de emendas com o recebido do arquivo de pagamentos.
+   * `GOVERNO_FEDERAL` cruza o pago dos 12 arquivos mensais de execução (a fonte) com o do arquivo anual (a base).
    */
-  conjunto: 'EMENDAS' | 'PAGAMENTOS' | 'PAGO_X_RECEBIDO' | 'COTA_CAMARA' | 'COTA_SENADO';
+  conjunto: 'EMENDAS' | 'PAGAMENTOS' | 'PAGO_X_RECEBIDO' | 'COTA_CAMARA' | 'COTA_SENADO' | 'GOVERNO_FEDERAL';
   medida: 'EMPENHADO' | 'PAGO' | 'RECEBIDO' | 'VALOR_LIQUIDO';
   anoDaFonte: number;
   totalNaFonte: number;

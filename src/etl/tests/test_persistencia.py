@@ -489,3 +489,18 @@ def test_cpf_e_nome_civil_guardam_a_origem(conexao):
 
     assert conexao.execute(
         "SELECT carga_id, cpf_carga_id, nome_civil_carga_id FROM pessoas").fetchone() == (cadastro, tse, tse)
+
+
+def test_reconciliacao_do_governo_federal_cabe_no_banco(conexao):
+    """O conjunto e o motivo novos passam pelos CHECK e pelo tamanho das colunas, com a diferença negativa de 2022."""
+    from poligraph_etl import orcamento
+
+    conta = orcamento.reconciliar_mensal_e_anual(2022, 3_924_910_000_000.0, 3_927_288_000_000.0)
+    persistencia.gravar_reconciliacoes(conexao, [conta], None)
+
+    linha = conexao.execute(
+        "SELECT r.conjunto, r.medida, m.motivo, m.valor FROM reconciliacoes r"
+        " JOIN reconciliacao_motivos m ON m.reconciliacao_id = r.id WHERE r.ano = 2022"
+    ).fetchone()
+    assert linha[:3] == ("GOVERNO_FEDERAL", "PAGO", "MENSAL_DIFERENTE_DO_ANUAL")
+    assert float(linha[3]) == pytest.approx(-2_378_000_000.0)

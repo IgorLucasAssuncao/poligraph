@@ -335,6 +335,8 @@ CONSULTAS = {
                    WHEN r.conjunto = 'PAGO_X_RECEBIDO'
                        THEN (SELECT sum(f.valor) FROM emendas_favorecidos f
                               WHERE f.codigo_emenda IN (SELECT codigo_emenda FROM emendas e WHERE e.ano = r.ano))
+                   WHEN r.conjunto = 'GOVERNO_FEDERAL'
+                       THEN (SELECT sum(o.pago) FROM orcamento_por_funcao o WHERE o.ano = r.ano)
                    WHEN r.conjunto IN ('COTA_CAMARA', 'COTA_SENADO')
                        THEN (SELECT sum(d.valor_liquido) FROM despesas d JOIN cargas c ON c.id = d.carga_id
                               WHERE d.ano = r.ano AND c.fonte = substring(r.conjunto FROM 6))

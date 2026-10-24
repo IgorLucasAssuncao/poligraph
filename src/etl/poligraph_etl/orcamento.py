@@ -194,3 +194,31 @@ def somar_meses(meses: list[dict]) -> dict:
                 total[chave][codigo] = total[chave].get(codigo, 0.0) + valor
         total["pago"] += mes["pago"]
     return total
+
+
+MENSAL_DIFERENTE_DO_ANUAL = "MENSAL_DIFERENTE_DO_ANUAL"
+
+
+def reconciliar_mensal_e_anual(ano: int, pago_mensal: float, pago_anual: float) -> dict:
+    """O pago do ano pelos 12 arquivos mensais de execução contra o pago do arquivo anual, que é o da base (regra 5).
+
+    Os dois arquivos são do Portal e falam do mesmo pago do exercício, mas não batem. MEDIDO (2026-10-23, 2014 a 2025): o
+    mensal passa o anual em R$ 7,77 bi em 2014 (0,37%) e fica R$ 2,38 bi abaixo em 2022 (0,06%); nos outros anos a
+    diferença fica abaixo de R$ 1 bi. A base grava o anual, que é o que tem a função e a dotação.
+
+    | Motivo | Valor | O que é |
+    |---|---|---|
+    | `MENSAL_DIFERENTE_DO_ANUAL` | positivo ou negativo | O mensal menos o anual: quanto um arquivo do Portal difere do outro |
+
+    A conta fecha por construção: mensal = anual + diferença.
+    """
+    diferenca = round(pago_mensal - pago_anual, 2)
+    return {
+        "conjunto": "GOVERNO_FEDERAL",
+        "medida": "PAGO",
+        "ano": ano,
+        "total_na_fonte": round(pago_mensal, 2),
+        "total_na_base": round(pago_anual, 2),
+        "total_inferido": 0.0,
+        "motivos": {MENSAL_DIFERENTE_DO_ANUAL: diferenca} if diferenca != 0 else {},
+    }
