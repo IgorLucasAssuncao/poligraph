@@ -1777,3 +1777,29 @@ def gravar_selic(conexao: psycopg.Connection, linhas: Sequence, carga_id: int) -
     """Troca a Selic dos anos que vieram na série."""
     conexao.execute("DELETE FROM selic_por_ano WHERE ano = ANY(%s)", ([linha.ano for linha in linhas],))
     return gravar_contratos(conexao, linhas, carga_id)
+
+
+def deputados_com_homonimo_no_senado(conexao: psycopg.Connection) -> list[tuple[str, int]]:
+    """(id da Câmara, `pessoas.id`) do deputado sem `cpf_hash` com o mesmo nome de exibição de alguém do Senado.
+
+    RISCO: o deputado antigo que virou senador era duas pessoas, uma de cada casa, e nenhuma fusão juntava: a da Câmara não
+    tinha CPF. MEDIDO em 2026-10-24: 180 pares pelo nome, 84 com a pessoa da Câmara sem CPF (Collor, Renan Calheiros).
+    O nome só escolhe a quem pedir o CPF; quem junta é a fusão, pelo CPF igual. Homônimo de verdade continua separado.
+    """
+    do_senado = {
+        sem_acento_maiusculo(linha[0])
+        for linha in conexao.execute(
+            "SELECT p.nome_exibicao FROM pessoas p JOIN pessoa_fonte_ids f ON f.pessoa_id = p.id AND f.fonte = 'SENADO'"
+        ).fetchall()
+    }
+    return [
+        (str(linha[0]), linha[1])
+        for linha in conexao.execute(
+            """
+            SELECT f.id_externo, p.id, p.nome_exibicao
+              FROM pessoas p JOIN pessoa_fonte_ids f ON f.pessoa_id = p.id AND f.fonte = 'CAMARA'
+             WHERE p.cpf_hash IS NULL
+            """
+        ).fetchall()
+        if sem_acento_maiusculo(linha[2]) in do_senado
+    ]

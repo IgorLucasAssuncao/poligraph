@@ -1809,7 +1809,8 @@ def _cpf_dos_deputados(conexao: psycopg.Connection, todas_as_legislaturas: bool 
 
     RISCO: Perda grande significa layout mudado ou bloqueio — não "alguns sem CPF".
     """
-    faltantes = persistencia.pessoas_sem_cpf(conexao, todas_as_legislaturas)
+    faltantes = list(dict.fromkeys(
+        persistencia.pessoas_sem_cpf(conexao, todas_as_legislaturas) + persistencia.deputados_com_homonimo_no_senado(conexao)))
     if not faltantes:
         log.info("Todos os deputados com voto já têm cpf_hash.")
         return
@@ -1842,7 +1843,7 @@ def _cpf_dos_deputados(conexao: psycopg.Connection, todas_as_legislaturas: bool 
 
     if achados < len(faltantes) * 0.8:
         log.warning(
-            "  ATENÇÃO: Menos de 80%% dos deputados tinham CPF. A API mudou ou está limitando?"
+            "  ATENÇÃO: Menos de 80% dos deputados tinham CPF. A API mudou ou está limitando?"
         )
 
 
