@@ -25,6 +25,9 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
     private readonly CacheDeLeitura _leitura = leitura;
     private readonly ServicoQuestionario _questionario = questionario;
 
+    /// <summary>A parte mínima das votações de uma casa, numa legislatura, que precisa ter voto nominal para ela entrar no seletor.</summary>
+    public const double FracaoMinimaComVoto = 0.1;
+
     /// <remarks>
     /// <para>Base vazia devolve panorama vazio, não erro: é o estado do primeiro dia, e a tela tem um texto próprio para ele.</para>
     /// <para>Casa sem nenhuma votação ingerida fica fora — a tela não deve anunciar uma casa que ainda não entrou na base.</para>
@@ -33,6 +36,10 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
         _leitura.ObterAsync(("panorama", legislatura?.Numero), () => CalcularAsync(legislatura?.Numero, ct));
 
     /// <summary>As legislaturas que a base tem, da mais recente para a mais antiga.</summary>
+    /// <remarks>
+    /// <para>A casa entra na legislatura quando ao menos <see cref="FracaoMinimaComVoto"/> das votações dela têm voto nominal.</para>
+    /// <para>MEDIDO (2026-10-24): a Câmara tem 1.548 votações na 51ª e só 7 com voto nominal na fonte (0,5%). Oferecida no seletor, a 51ª abria um grafo vazio. A pior das outras é a 54ª da Câmara, com 50%.</para>
+    /// </remarks>
     public Task<IReadOnlyList<LegislaturaDto>> LegislaturasAsync(CancellationToken ct) =>
         _leitura.ObterAsync("legislaturas", () => CalcularLegislaturasAsync(ct));
 
@@ -84,10 +91,20 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
 
     private async Task<IReadOnlyList<LegislaturaDto>> CalcularLegislaturasAsync(CancellationToken ct)
     {
-        var pares = await _db.Votacoes.AsNoTracking()
-            .Select(v => new { v.Legislatura, v.Casa })
-            .Distinct()
+        var contagens = await _db.Votacoes.AsNoTracking()
+            .GroupBy(v => new { v.Legislatura, v.Casa })
+            .Select(g => new
+            {
+                g.Key.Legislatura,
+                g.Key.Casa,
+                Total = g.Count(),
+                ComVoto = g.Count(v => _db.Votos.Any(o => o.VotacaoId == v.Id)),
+            })
             .ToListAsync(ct);
+        var pares = contagens
+            .Where(c => c.ComVoto >= c.Total * FracaoMinimaComVoto)
+            .Select(c => new { c.Legislatura, c.Casa })
+            .ToList();
 
         if (pares.Count == 0)
         {

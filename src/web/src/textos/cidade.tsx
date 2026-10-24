@@ -50,8 +50,12 @@ export const TEXTOS_DA_CIDADE = {
   partes: (prefeitura: string, entidades: string, estado: string | null) =>
     `${prefeitura} à prefeitura · ${estado ? `${estado} ao governo do estado · ` : ''}${entidades} a entidades`,
   contas: (receita: string, despesa: string) => `A prefeitura arrecadou ${receita} e pagou ${despesa} em despesas`,
-  anosDeclarados: (n: number, de: number) =>
-    n === de ? 'nos anos da gestão, pelo que declarou ao Tesouro' : `em ${n} dos ${de} anos; os outros ainda não têm declaração na base`,
+  anosDeclarados: (n: number, de: number, foraDaSoma = 0) =>
+    n === de
+      ? 'nos anos da gestão, pelo que declarou ao Tesouro'
+      : n + foraDaSoma === de
+        ? `em ${n} dos ${de} anos`
+        : `em ${n} dos ${de} anos; ${de - n - foraDaSoma === 1 ? 'outro ainda não tem' : 'os outros ainda não têm'} declaração na base`,
   foraDoPadrao: (ano: number, valor: string) =>
     `${ano} ficou fora da soma: a prefeitura declarou ${valor} de receita, longe dos outros anos dela. Pode ser erro de digitação; confira no Siconfi.`,
   semPagamento: 'Sem pagamento de emenda na base nesses anos (a base começa em agosto de 2015).',

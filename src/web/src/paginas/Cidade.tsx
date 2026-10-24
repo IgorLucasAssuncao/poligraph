@@ -212,7 +212,7 @@ function GestaoComponent({ gestao, maior }: { gestao: GestaoDaCidade; maior: num
           {gestao.contas && (
             <small className="gestao-contas">
               {T.contas(reaisCompacto(gestao.contas.receita), reaisCompacto(gestao.contas.despesaPaga))}{' '}
-              {T.anosDeclarados(gestao.contas.anosDeclarados, gestao.contas.anosNaGestao)}
+              {T.anosDeclarados(gestao.contas.anosDeclarados, gestao.contas.anosNaGestao, gestao.contas.foraDoPadrao?.length ?? 0)}
             </small>
           )}
           {gestao.contas?.foraDoPadrao?.map((f) => (

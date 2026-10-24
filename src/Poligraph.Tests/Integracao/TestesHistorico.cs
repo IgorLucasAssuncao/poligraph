@@ -138,6 +138,29 @@ public class TestesHistorico(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Equal(["CAMARA"], legislaturas[1].Casas);
     }
 
+    /// <summary>MEDIDO: a Câmara tem 1.548 votações na 51ª e 7 com voto nominal; oferecida, a legislatura abria um grafo vazio.</summary>
+    [SkippableFact]
+    public async Task Legislaturas_CasaQuaseSemVotoNominal_FicaForaDoSeletor()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        await SemearExDeputadoAsync();
+        for (var i = 0; i < 20; i++)
+        {
+            Db.Votacoes.Add(new VotacaoModel
+            {
+                Id = $"7777777-{i}", Casa = TipoCasa.SENADO, Legislatura = Anterior,
+                Data = new DateOnly(2021, 6, 1), Descricao = "Votação sem voto nominal publicado",
+                Categoria = TipoCategoriaDeVotacao.SUBSTANTIVA, Plenario = true
+            });
+        }
+        await Db.SaveChangesAsync();
+
+        var legislaturas = await ObterAsync<List<LegislaturaLida>>("/api/legislaturas");
+
+        Assert.Equal(["CAMARA"], legislaturas.Single(l => l.Numero == Anterior).Casas);
+    }
+
     [SkippableFact]
     public async Task Panorama_DeUmaLegislatura_ContaSoAsVotacoesDela()
     {
