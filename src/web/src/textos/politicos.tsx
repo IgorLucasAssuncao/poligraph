@@ -76,7 +76,10 @@ export const TEXTOS_DOS_POLITICOS = {
         'Emendas: as emendas ao orçamento do estado não têm um portal nacional. O Portal da Transparência traz só as emendas ao orçamento federal.',
     },
     executivo: {
-      votos: 'Votos e afinidade: prefeito e governador não votam projetos; quem vota é a câmara municipal ou a assembleia.',
+      votos:
+        'Votos e afinidade: presidente, governador e prefeito não votam projetos; quem vota é o Congresso, a assembleia ou a câmara municipal.',
+      contasDoGoverno: 'Contas: o que o governo federal arrecadou e gastou no mandato está em Governo federal.',
+      verOGoverno: (de: number, ate: number) => `Ver o governo federal de ${de} a ${ate}`,
       contasDaCidade: 'Contas: o que a prefeitura arrecadou e gastou em cada gestão está na página da cidade.',
       verACidade: (cidade: string) => `Ver a página de ${cidade}`,
       contasDoEstado:

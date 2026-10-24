@@ -34,7 +34,7 @@ from .fontes import brasilapi, camara, portal, receita, senado, tse
 from . import amostra, mandatos, compras, compras_centralizadas, conferencia, convenentes, defesa_civil, em_exercicio, limpeza, patrimonio, procedencia, redes, rotina, sancoes, telemetria, viagens
 from .contratos import entrada
 from .contratos.entrada import colunas_da_fonte
-from .contratos.tse import LinhaDeCandidatura
+from .contratos.tse import LinhaDeCandidatura, LinhaDeVotacao
 from .tipos import FonteDaRedeSocial, TipoCargo, TipoCasa, TipoFonteDeCarga, TipoFonteDeIdentificador
 from .contratos.portal import (
     LinhaDeCompra, LinhaDeCompraCentralizadaNoCartao, LinhaDeSancao, LinhaDeTrechoDeViagem, LinhaDeViagem, LinhaDePagamentoDeViagem, LinhaDoCartaoDaDefesaCivil,
@@ -1035,7 +1035,17 @@ def _mandatos(conexao: psycopg.Connection, eleicoes: list[int]) -> None:
         url = f"{tse.CDN}/{mandatos.RECURSO.format(ano=ano)}"
         arquivo = tse.baixar(url, CACHE / f"consulta-cand-{ano}.zip")
         cargas[ano] = _carga_do_arquivo(conexao, "TSE", url, arquivo)
-        por_eleicao[ano] = mandatos.eleitos(entrada.ler(LinhaDeCandidatura, patrimonio.linhas_do_zip(arquivo)))
+        candidaturas = entrada.ler(LinhaDeCandidatura, patrimonio.linhas_do_zip(arquivo))
+        por_eleicao[ano] = mandatos.eleitos(candidaturas)
+        if ano % 4 == 2 and not any(e.cargo is TipoCargo.PRESIDENTE for e in por_eleicao[ano]):
+            url_da_votacao = f"{tse.CDN}/{mandatos.RECURSO_DA_VOTACAO.format(ano=ano)}"
+            votacao = tse.baixar(url_da_votacao, CACHE / f"votacao-munzona-{ano}.zip")
+            _carga_do_arquivo(conexao, "TSE", url_da_votacao, votacao)
+            presidente = mandatos.presidente_pelos_votos(
+                entrada.ler(LinhaDeVotacao, patrimonio.linhas_do_zip(votacao)))
+            if presidente:
+                por_eleicao[ano] = mandatos.eleitos(candidaturas, frozenset({presidente}))
+                log.warning("  %d: o TSE não marca o presidente eleito; pelos votos do último turno, SQ %s", ano, presidente)
         contagem = Counter(e.cargo.value for e in por_eleicao[ano])
         log.info("  %d: %d eleitos — %s", ano, len(por_eleicao[ano]), ", ".join(f"{c} {n}" for c, n in sorted(contagem.items())))
     todos = [e for eleitos_do_ano in por_eleicao.values() for e in eleitos_do_ano]
@@ -1046,6 +1056,11 @@ def _mandatos(conexao: psycopg.Connection, eleicoes: list[int]) -> None:
         persistencia.pessoas_dos_mandatos(conexao),
         persistencia.pessoas_por_casa(conexao),
     )
+    pelo_voto = mandatos.senadores_pelo_voto(
+        [e for e in todos if identidades.pessoa(e) is None],
+        [mandatos.SenadorNaBase(*linha) for linha in persistencia.senadores_com_voto(conexao)])
+    identidades.por_candidatura.update(pelo_voto)
+    log.info("  %d senadores eleitos ligados pelo voto no Senado (UF, período e nome)", len(pelo_voto))
     identidades.propagar(todos)
     novas = mandatos.pessoas_novas(todos, identidades, date.today().year)
     ponte = mandatos.ponte_de_municipios(
@@ -1074,6 +1089,7 @@ def _mandatos(conexao: psycopg.Connection, eleicoes: list[int]) -> None:
         apagadas = persistencia.apagar_pessoas_sem_vinculo(conexao)
     log.info("Mandatos: %d pessoas novas, hashes conferidos em %d pessoas, %d pessoas sem vínculo apagadas.",
              len(novas), completados, apagadas)
+    _fundir_pessoas(conexao)
 
 
 def _patrimonio(conexao: psycopg.Connection, anos: list[int]) -> None:

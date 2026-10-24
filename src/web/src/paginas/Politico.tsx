@@ -124,7 +124,8 @@ function FaltasDaFichaComponent({ mandatos }: { mandatos: MandatoNoTse[] }) {
   const legislativo = mandatos.some((m) => CARGOS_DO_LEGISLATIVO.includes(m.cargo));
   const executivo = mandatos.filter((m) => !CARGOS_DO_LEGISLATIVO.includes(m.cargo));
   const cidade = executivo.find((m) => m.municipio)?.municipio;
-  const noEstado = executivo.some((m) => !m.municipio);
+  const noEstado = executivo.some((m) => m.nivel === 'ESTADUAL');
+  const federal = executivo.filter((m) => m.nivel === 'FEDERAL');
 
   const itens: ReactNode[] = [];
   if (legislativo) itens.push(F.legislativo.votos, F.legislativo.gastos, F.legislativo.emendas);
@@ -134,6 +135,15 @@ function FaltasDaFichaComponent({ mandatos }: { mandatos: MandatoNoTse[] }) {
       itens.push(
         <>
           {F.executivo.contasDaCidade} <Link to={`/cidades/${cidade.codigoIbge}`}>{F.executivo.verACidade(nomeProprio(cidade.nome))}</Link>
+        </>,
+      );
+    }
+    if (federal.length > 0) {
+      const de = Math.min(...federal.map((m) => m.primeiroAno));
+      const ate = Math.max(...federal.map((m) => m.ultimoAno));
+      itens.push(
+        <>
+          {F.executivo.contasDoGoverno} <Link to={`/governo?de=${de}&ate=${ate}`}>{F.executivo.verOGoverno(de, ate)}</Link>
         </>,
       );
     }

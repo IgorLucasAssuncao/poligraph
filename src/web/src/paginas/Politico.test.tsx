@@ -47,7 +47,7 @@ describe('Ficha do político', () => {
     expect(await screen.findByRole('heading', { name: 'João Exemplo' })).toBeInTheDocument();
     expect(screen.getByText('Governador de SP, 2019–2022')).toBeInTheDocument();
     expect(screen.getByText('Prefeito, São Paulo – SP, 2017–2020')).toBeInTheDocument();
-    expect(screen.getByText(/prefeito e governador não votam projetos/)).toBeInTheDocument();
+    expect(screen.getByText(/presidente, governador e prefeito não votam projetos/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Ver a página de São Paulo' })).toHaveAttribute('href', '/cidades/3550308');
     expect(screen.getByText(/contas do governo do estado ainda não estão na base/)).toBeInTheDocument();
   });
@@ -63,6 +63,17 @@ describe('Ficha do político', () => {
     expect(screen.getByText(/em 27 formatos diferentes/)).toBeInTheDocument();
     expect(screen.getByText(/emendas ao orçamento do estado não têm um portal nacional/)).toBeInTheDocument();
     expect(screen.queryByText(/prefeito e governador não votam/)).not.toBeInTheDocument();
+  });
+
+  it('o presidente leva às contas do governo federal do mandato, e não às do estado', async () => {
+    vi.mocked(api.obterFichaDoPolitico).mockResolvedValue({
+      ...PREFEITO_E_GOVERNADOR,
+      mandatos: [{ cargo: 'PRESIDENTE', nivel: 'FEDERAL', anoEleicao: 2006, primeiroAno: 2007, ultimoAno: 2010, uf: null, municipio: null, partido: 'PT' }],
+    });
+    renderizar();
+
+    expect(await screen.findByRole('link', { name: 'Ver o governo federal de 2007 a 2010' })).toHaveAttribute('href', '/governo?de=2007&ate=2010');
+    expect(screen.queryByText(/contas do governo do estado/)).not.toBeInTheDocument();
   });
 
   it('quem votou no Congresso vai para a ficha do parlamentar', async () => {

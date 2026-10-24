@@ -157,3 +157,60 @@ def test_vice_de_2000_entra_pela_coligacao_quando_o_numero_e_outro():
     ])
 
     assert sorted(e.sq_candidato for e in eleitos) == ["93", "94"]
+
+
+def test_presidente_que_a_fonte_nao_marca_sai_dos_votos_do_ultimo_turno_e_traz_o_vice():
+    """MEDIDO: em 2006 o TSE publica as candidaturas a presidente com `#NULO#` e o 2º turno do arquivo de votação também."""
+    from poligraph_etl.contratos.tse import LinhaDeVotacao
+
+    votos = [
+        LinhaDeVotacao(turno="1", cargo="1", sq_candidato="23", votos="46000"),
+        LinhaDeVotacao(turno="1", cargo="1", sq_candidato="25", votos="39000"),
+        LinhaDeVotacao(turno="2", cargo="1", sq_candidato="23", votos="58000"),
+        LinhaDeVotacao(turno="2", cargo="1", sq_candidato="25", votos="37000"),
+        LinhaDeVotacao(turno="2", cargo="3", sq_candidato="99", votos="90000"),
+    ]
+    sq = mandatos.presidente_pelos_votos(votos)
+    assert sq == "23"
+
+    chapa = dict(ano_eleicao="2006", uf="BR", codigo_ue="BR", situacao="#NULO#", numero="13", sq_coligacao="23")
+    linhas = [
+        _linha(**chapa, sq_candidato="23", cargo="1", titulo="111111111111"),
+        _linha(**chapa, sq_candidato="24", cargo="2", titulo="222222222222"),
+        _linha(**(chapa | {"numero": "45", "sq_coligacao": "25"}), sq_candidato="25", cargo="1", titulo="333333333333"),
+    ]
+    assert mandatos.eleitos(linhas) == []
+    eleitos = mandatos.eleitos(linhas, frozenset({sq}))
+    assert sorted((e.cargo, e.sq_candidato) for e in eleitos) == [(TipoCargo.PRESIDENTE, "23"), (TipoCargo.VICE_PRESIDENTE, "24")]
+
+
+def test_senador_sem_cpf_casa_pela_uf_pelo_periodo_e_pelo_nome_parlamentar():
+    """MEDIDO: o nome civil do Senado é o parlamentar; 55 dos 56 senadores de 1998 a 2014 casam assim, com um candidato só."""
+    simon = mandatos._eleito(
+        _linha(ano_eleicao="1998", sq_candidato="7", cargo="5", uf="RS", codigo_ue="RS", nome="PEDRO JORGE SIMON",
+               nome_de_urna="SIMON", titulo="444444444444"),
+        TipoCargo.SENADOR,
+    )
+    senadores = [
+        mandatos.SenadorNaBase(1, "Pedro Simon", "RS", 1999, 2014),
+        mandatos.SenadorNaBase(2, "Pedro Simon", "SP", 1999, 2006),
+        mandatos.SenadorNaBase(3, "Paulo Paim", "RS", 2003, 2026),
+    ]
+    assert mandatos.senadores_pelo_voto([simon], senadores) == {mandatos.candidatura(simon): 1}
+
+    homonimo = senadores + [mandatos.SenadorNaBase(4, "Pedro Simon", "RS", 2001, 2002)]
+    assert mandatos.senadores_pelo_voto([simon], homonimo) == {}
+    fora_do_periodo = [mandatos.SenadorNaBase(1, "Pedro Simon", "RS", 2015, 2022)]
+    assert mandatos.senadores_pelo_voto([simon], fora_do_periodo) == {}
+
+
+def test_so_o_primeiro_turno_sem_maioria_nao_elege_ninguem():
+    """RISCO: antes do 2º turno de 2026, o mais votado do 1º virava presidente eleito."""
+    from poligraph_etl.contratos.tse import LinhaDeVotacao
+
+    sem_maioria = [LinhaDeVotacao(turno="1", cargo="1", sq_candidato="1", votos="45"),
+                   LinhaDeVotacao(turno="1", cargo="1", sq_candidato="2", votos="40"),
+                   LinhaDeVotacao(turno="1", cargo="1", sq_candidato="3", votos="15")]
+    assert mandatos.presidente_pelos_votos(sem_maioria) is None
+    com_maioria = sem_maioria[:1] + [LinhaDeVotacao(turno="1", cargo="1", sq_candidato="2", votos="10")]
+    assert mandatos.presidente_pelos_votos(com_maioria) == "1"

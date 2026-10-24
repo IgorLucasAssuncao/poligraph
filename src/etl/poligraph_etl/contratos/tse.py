@@ -32,3 +32,17 @@ class LinhaDeCandidatura:
     numero: str | None = coluna("NR_CANDIDATO")
     sq_coligacao: str | None = coluna("SQ_COLIGACAO")
     coligacao: str | None = coluna("DS_COMPOSICAO_COLIGACAO")
+
+
+@dataclass(frozen=True)
+class LinhaDeVotacao:
+    """Os votos de um candidato numa zona: `votacao_candidato_munzona/votacao_candidato_munzona_{ano}.zip`.
+
+    CSV com ponto e vírgula, latin-1, um por UF e um `BRASIL`. Só serve para achar o presidente que o cadastro de
+    candidatos não marca como eleito (`mandatos.presidente_pelos_votos`).
+    """
+
+    turno: str | None = coluna("NR_TURNO")
+    cargo: str | None = coluna("CD_CARGO")
+    sq_candidato: str | None = coluna("SQ_CANDIDATO")
+    votos: str | None = coluna("QT_VOTOS_NOMINAIS")

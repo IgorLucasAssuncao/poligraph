@@ -2956,6 +2956,9 @@ dialog.tour::backdrop { background: transparent; }
 }
 .perfil-redes { font-size: var(--t-2); }
 .perfil-redes-rotulo { color: var(--suave); }
+.perfil-redes-outras { display: inline; }
+.perfil-redes-outras > summary { display: inline; margin-left: .4rem; color: var(--realce); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.perfil-redes-outras[open] > summary { display: none; }
 
 .lista-convenios-entidade { list-style: none; margin: .5rem 0 0; padding: 0; }
 .lista-convenios-entidade li { padding: .65rem 0; border-bottom: 1px solid var(--borda); display: grid; gap: .2rem; }

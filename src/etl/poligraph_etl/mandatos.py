@@ -18,19 +18,21 @@ pelo nome exato; os outros diferem na grafia (Assú e Açu, Camacã e Camacan) e
 parecido da mesma UF. O que não casar fica sem código do IBGE e o comando lista.
 """
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from difflib import SequenceMatcher
 
 from . import normalizacao
 from .contratos.banco import Mandato
-from .contratos.tse import LinhaDeCandidatura
+from .contratos.tse import LinhaDeCandidatura, LinhaDeVotacao
 from .tipos import (
     CARGOS_DO_CONGRESSO, CARGOS_MUNICIPAIS, CARGOS_NACIONAIS, ELEITOS, TITULAR_DO_VICE, TipoCargo, TipoSituacaoNoTurno, TipoCasa, TipoSexo,
     anos_do_mandato, cargo_do_tse, sexo_do_tse, situacao_do_tse,
 )
 
 RECURSO = "consulta_cand/consulta_cand_{ano}.zip"
+RECURSO_DA_VOTACAO = "votacao_candidato_munzona/votacao_candidato_munzona_{ano}.zip"
 
 SEMELHANCA_MINIMA = 0.85
 """Abaixo disto o nome do TSE não é dado como o mesmo município. MEDIDO em 2026-10-21: a pior grafia
@@ -57,8 +59,11 @@ class Eleito:
     coligacao: str | None = None
 
 
-def eleitos(linhas: list[LinhaDeCandidatura]) -> list[Eleito]:
+def eleitos(linhas: list[LinhaDeCandidatura], eleitos_pelos_votos: frozenset[str] = frozenset()) -> list[Eleito]:
     """Os eleitos nos cargos do escopo, um por candidatura.
+
+    `eleitos_pelos_votos` são os `SQ_CANDIDATO` de presidente que a fonte não marca como eleitos e os votos
+    elegem (`presidente_pelos_votos`); a linha deles conta como `ELEITO`.
 
     ATENÇÃO: no segundo turno o eleito aparece duas vezes, `2º TURNO` na linha do primeiro e `ELEITO` na do
     segundo; fica a de eleito.
@@ -80,6 +85,8 @@ def eleitos(linhas: list[LinhaDeCandidatura]) -> list[Eleito]:
         if cargo is None:
             continue
         situacao = situacao_do_tse(linha.situacao)
+        if cargo is TipoCargo.PRESIDENTE and linha.sq_candidato in eleitos_pelos_votos:
+            situacao = TipoSituacaoNoTurno.ELEITO
         if cargo in TITULAR_DO_VICE and situacao is TipoSituacaoNoTurno.SEM_RESULTADO:
             vices.append((linha, cargo))
             continue
@@ -304,3 +311,73 @@ def _data(texto: str | None) -> date | None:
         return date(int(partes[2]), int(partes[1]), int(partes[0]))
     except ValueError:
         return None
+
+
+def presidente_pelos_votos(linhas: Iterable[LinhaDeVotacao]) -> str | None:
+    """O `SQ_CANDIDATO` do presidente eleito pelos votos: o mais votado no último turno (Constituição, art. 77).
+
+    RISCO: em 2006 o TSE não marca o eleito em nenhum dos dois arquivos. No cadastro de candidatos as 8 candidaturas a
+    presidente vêm `#NULO#` e o 2º turno não aparece; no de votação, o 2º turno vem `#NULO`. Os votos estão lá e batem com o
+    resultado oficial (MEDIDO em 2026-10-24: Lula 58.295.042, Alckmin 37.543.178). A regra é a da Constituição, escrita
+    aqui, e só entra quando o cadastro não traz presidente eleito.
+
+    RISCO: com só o 1º turno apurado e ninguém com mais da metade dos votos, não há eleito: devolve `None`. Sem a trava, a
+    carga de 2026 antes do 2º turno elegeria o mais votado do 1º (aconteceu em 2026-10-24, parada antes de gravar).
+    """
+    por_turno: dict[int, dict[str, int]] = {}
+    for linha in linhas:
+        if cargo_do_tse(linha.cargo) is not TipoCargo.PRESIDENTE or not linha.sq_candidato:
+            continue
+        votos = por_turno.setdefault(int(linha.turno or 0), {})
+        votos[linha.sq_candidato] = votos.get(linha.sq_candidato, 0) + int(linha.votos or 0)
+    if not por_turno:
+        return None
+    turno = max(por_turno)
+    ultimo = por_turno[turno]
+    mais_votado = max(ultimo, key=lambda sq: ultimo[sq])
+    if turno == 1 and ultimo[mais_votado] * 2 <= sum(ultimo.values()):
+        return None
+    return mais_votado
+
+
+@dataclass(frozen=True)
+class SenadorNaBase:
+    """Quem votou no Senado: a pessoa, o nome parlamentar, a UF do voto e os anos em que votou por ela."""
+
+    pessoa_id: int
+    nome: str
+    uf: str
+    primeiro_ano: int
+    ultimo_ano: int
+
+
+def senadores_pelo_voto(eleitos_sem_pessoa: list[Eleito], senadores: list[SenadorNaBase]) -> dict[tuple, int]:
+    """Candidatura de senador eleito → a pessoa do Senado, para quem o CPF não liga.
+
+    RISCO: o Senado não publica CPF, e o nome civil da base é o nome parlamentar ("Alvaro Dias", "Pedro Simon"): o
+    `cpf` não casa ninguém de antes de 2010. MEDIDO em 2026-10-24: 56 senadores eleitos de 1998 a 2014 ficavam sem mandato.
+
+    DECISÃO: casa quando o senador votou pela mesma UF durante o mandato e todas as palavras do nome parlamentar estão no
+    nome civil ou no de urna do TSE. Mais de um candidato é ambiguidade, e fica de fora. MEDIDO em 2026-10-24: 55 de 56
+    casam com um só; o outro (Luiz Estevão, cassado em 2000) não tem voto na base.
+    """
+    ligados: dict[tuple, int] = {}
+    for eleito in eleitos_sem_pessoa:
+        if eleito.cargo is not TipoCargo.SENADOR:
+            continue
+        primeiro, ultimo = anos_do_mandato(eleito.cargo, eleito.ano_eleicao)
+        do_tse = _palavras(eleito.nome) | _palavras(eleito.nome_de_urna)
+        achados = {
+            s.pessoa_id
+            for s in senadores
+            if s.uf == eleito.uf and s.primeiro_ano <= ultimo and s.ultimo_ano >= primeiro
+            and _palavras(s.nome) and _palavras(s.nome) <= do_tse
+        }
+        if len(achados) == 1:
+            ligados[candidatura(eleito)] = achados.pop()
+    return ligados
+
+
+def _palavras(nome: str | None) -> set[str]:
+    """As palavras de um nome que identificam: sem acento, sem ponto e sem as de duas letras ("de", "da", "do")."""
+    return {p for p in normalizacao.sem_acento_maiusculo((nome or "").replace(".", " ")).split() if len(p) > 2}

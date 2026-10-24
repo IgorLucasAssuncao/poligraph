@@ -143,6 +143,7 @@ export const TEXTOS_DOS_COMPONENTES = {
   redes: {
     daCamara: 'Redes',
     doTse: 'Redes declaradas ao TSE',
+    outras: (n: number) => (n === 1 ? 'ver a outra' : `ver as outras ${n}`),
     nomes: {
       INSTAGRAM: 'Instagram',
       FACEBOOK: 'Facebook',

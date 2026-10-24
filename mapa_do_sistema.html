@@ -471,7 +471,10 @@ const ENTRADAS = [
     { arquivo: '…/odsele/consulta_cand/consulta_cand_2018.zip', real: false, linha: {
       ANO_ELEICAO: '2018', DS_CARGO: 'PRESIDENTE', NM_CANDIDATO: 'JAIR MESSIAS BOLSONARO', NM_URNA_CANDIDATO: 'JAIR BOLSONARO',
       SG_PARTIDO: 'PSL', DS_SIT_TOT_TURNO: 'ELEITO' } },
-  ], nota: 'O governo carrega a chapa pelo comando mandatos (presidente, vice e coligação em mandatos).' },
+    { arquivo: '…/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2006.zip', real: true, linha: {
+      NR_TURNO: '2', CD_CARGO: '1', SQ_CANDIDATO: '23', DS_SIT_TOT_TURNO: '#NULO', QT_VOTOS_NOMINAIS: '…' },
+      nota: 'Só quando o cadastro não marca o presidente eleito (2006): o mais votado do último turno, com maioria no 1º turno (Constituição, art. 77).' },
+  ], nota: 'O governo carrega a chapa pelo comando mandatos (presidente, vice e coligação em mandatos). O senador que o CPF não liga casa com quem votou no Senado pela mesma UF no período, pelo nome.' },
   { de: 'portal', para: 'defesa-civil', modelos: [
     { arquivo: '…/download-de-dados/cpdc/202405 (202405_CPDC.csv)', real: true, linha: {
       'ANO EXTRATO': '2024', 'MÊS EXTRATO': '05', 'EXECUTOR DESPESA': 'ASSIS BRASIL / AC',

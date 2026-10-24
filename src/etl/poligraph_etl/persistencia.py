@@ -1748,3 +1748,32 @@ def gravar_texto_sem_cpf(conexao: psycopg.Connection) -> dict[str, int]:
             cur.executemany(f"UPDATE {tabela} SET {coluna} = %s WHERE ctid = %s", trocas)
         mudadas[f"{tabela}.{coluna}"] = len(trocas)
     return mudadas
+
+
+def senadores_com_voto(conexao: psycopg.Connection) -> list[tuple[int, str, str, int, int]]:
+    """`(pessoa_id, nome, uf, primeiro_ano, ultimo_ano)` de quem votou no Senado, por UF do voto: a ponte dos senadores que o CPF não liga."""
+    return [
+        tuple(linha)
+        for linha in conexao.execute(
+            """
+            SELECT v.pessoa_id, p.nome_exibicao, v.uf_no_voto, min(extract(year FROM t.data))::int, max(extract(year FROM t.data))::int
+              FROM votos v
+              JOIN votacoes t ON t.id = v.votacao_id
+              JOIN pessoas p ON p.id = v.pessoa_id
+             WHERE t.casa = 'SENADO'
+             GROUP BY 1, 2, 3
+            """
+        ).fetchall()
+    ]
+
+
+def gravar_divida_federal(conexao: psycopg.Connection, anos: Sequence[int], linhas_por_carga: Sequence[tuple[Sequence, int]]) -> int:
+    """Troca o pago da dívida dos anos que entraram; cada ano leva a carga do arquivo dele."""
+    conexao.execute("DELETE FROM divida_federal WHERE ano = ANY(%s)", (list(anos),))
+    return sum(gravar_contratos(conexao, linhas, carga) for linhas, carga in linhas_por_carga)
+
+
+def gravar_selic(conexao: psycopg.Connection, linhas: Sequence, carga_id: int) -> int:
+    """Troca a Selic dos anos que vieram na série."""
+    conexao.execute("DELETE FROM selic_por_ano WHERE ano = ANY(%s)", ([linha.ano for linha in linhas],))
+    return gravar_contratos(conexao, linhas, carga_id)
