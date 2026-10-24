@@ -43,7 +43,8 @@ FONTES_PYTHON = sorted(
 )
 
 # ATENÇÃO: `FROM data` aparece em `EXTRACT(YEAR FROM data)` — é coluna, não tabela.
-NAO_SAO_TABELAS = {"data"}
+NAO_SAO_TABELAS = {"data", "pg_class"}
+"""`pg_class` é o catálogo do Postgres, lido pelo teste do `ANALYZE`; não é esquema do EF."""
 
 PADRAO_TEMPORARIA = re.compile(r"CREATE TEMP TABLE (?:IF NOT EXISTS )?(\w+)", re.IGNORECASE)
 """DECISÃO (2026-10-10): tabela `TEMP` criada no próprio código não é esquema. Ela vive só na conexão,

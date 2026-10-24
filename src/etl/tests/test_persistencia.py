@@ -504,3 +504,12 @@ def test_reconciliacao_do_governo_federal_cabe_no_banco(conexao):
     ).fetchone()
     assert linha[:3] == ("GOVERNO_FEDERAL", "PAGO", "MENSAL_DIFERENTE_DO_ANUAL")
     assert float(linha[3]) == pytest.approx(-2_378_000_000.0)
+
+
+def test_estatisticas_sao_refeitas_depois_da_carga(conexao):
+    """Sem o ANALYZE, a tabela recém-gravada fica sem estatística e o planejador a estima com uma linha."""
+    persistencia.gravar_pessoas(conexao, [_pessoa(str(204500 + i), f"Pessoa {i}") for i in range(30)], None)
+
+    persistencia.atualizar_estatisticas(conexao)
+
+    assert conexao.execute("SELECT reltuples FROM pg_class WHERE relname = 'pessoas'").fetchone()[0] == 30

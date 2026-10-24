@@ -45,6 +45,9 @@ log = logging.getLogger("poligraph")
 
 CACHE = Path(os.environ.get("POLIGRAPH_CACHE", ".cache"))
 
+COMANDOS_QUE_SO_LEEM = {"conferir", "limpar-cache", "amostra", "validar"}
+"""Os que não gravam no banco: depois deles, o `ANALYZE` não tem o que refazer."""
+
 # ATENÇÃO: Segundos entre chamadas na busca de CPF — são centenas contra serviço público.
 PAUSA_ENTRE_CHAMADAS = 0.15
 
@@ -151,6 +154,8 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 for legislatura in _legislaturas_a_analisar(conexao, args):
                     _analisar(conexao, legislatura, args.casa)
+            if args.comando not in COMANDOS_QUE_SO_LEEM:
+                persistencia.atualizar_estatisticas(conexao)
     except Exception:
         log.exception("ETL falhou")
         return 1

@@ -453,6 +453,17 @@ def registrar_carga(conexao: psycopg.Connection, baixado, comando: str) -> int:
     ).fetchone()[0]
 
 
+def atualizar_estatisticas(conexao: psycopg.Connection) -> None:
+    """Refaz as estatísticas do planejador em todas as tabelas, depois de uma carga.
+
+    MEDIDO: 2026-10-24, depois de um `wsl --shutdown`, 46 de 63 tabelas estavam sem estatística: a parada brusca
+    zera a contagem de mudanças que dispara o autoanalyze, e ele não volta sozinho. Sem estatística, o planejador
+    estimou 1 linha em `arestas_grafo` e a consulta do grafo levou 173 s em vez de 0,4. O `ANALYZE` do banco
+    inteiro leva uns 6 s.
+    """
+    conexao.execute("ANALYZE")
+
+
 @functools.cache
 def _versao_do_codigo() -> str:
     """Calculada uma vez por execução: são dezenas de arquivos lidos."""
