@@ -25,7 +25,8 @@ public class ServicoAutoresDeEmenda(PoligraphDb db, ServicoParlamentares parlame
     /// <summary>Agrupa o recebido de cada emenda pelo autor dela.</summary>
     /// <remarks>
     /// <para>O autor sai da própria emenda, pelo código. Uma emenda ocupa várias linhas, mas o autor é o mesmo em todas: basta uma.</para>
-    /// <para>Partido, casa, UF e foto vêm da lista da legislatura, a mesma da página de parlamentares.</para>
+    /// <para>Partido, casa, UF e foto vêm da lista de todas as legislaturas, com o último mandato de cada um, a mesma da página de parlamentares.</para>
+    /// <para>MEDIDO (2026-10-24): com só a legislatura corrente, quem mandou emenda num mandato anterior (Alexis Fonteyne, 56ª, R$ 14,2 mi em Campinas) saía sem partido nem foto, e a tela dizia "Sem página neste site" para quem tem ficha.</para>
     /// </remarks>
     public async Task<(IReadOnlyList<ParlamentarQueMandouDto> Parlamentares, IReadOnlyList<ColetivoQueMandouDto> Coletivos)> AgruparAsync(
         IReadOnlyList<(string Codigo, decimal Recebido)> porEmenda, CancellationToken ct)
@@ -38,7 +39,7 @@ public class ServicoAutoresDeEmenda(PoligraphDb db, ServicoParlamentares parlame
             .GroupBy(e => e.CodigoEmenda)
             .ToDictionary(g => g.Key, g => g.First());
 
-        var pessoas = (await _parlamentares.ParlamentaresDaLegislaturaAsync(ct)).ToDictionary(p => p.IdPessoa);
+        var pessoas = (await _parlamentares.ParlamentaresDeTodasAsync(ct)).ToDictionary(p => p.IdPessoa);
         var comAutor = porEmenda.Where(e => autores.ContainsKey(e.Codigo)).ToList();
 
         var individuais = comAutor

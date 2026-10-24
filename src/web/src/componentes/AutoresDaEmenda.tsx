@@ -29,7 +29,9 @@ export function LinhaDoParlamentarComponent({ parlamentar: p }: { parlamentar: P
           <span className="autor-nome">{nomeProprio(p.nome)}</span>
         )}
         <span className="autor-detalhe">
-          {detalhe || T.autores.semPagina} · {T.autores.emendas(p.emendas)}
+          {detalhe || (p.idPessoa ? '' : T.autores.semPagina)}
+          {(detalhe || !p.idPessoa) && ' · '}
+          {T.autores.emendas(p.emendas)}
         </span>
       </span>
       <span className="valor">{reaisCompacto(p.recebido)}</span>
