@@ -1,4 +1,5 @@
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { listaDaPagina } from '../navegacao';
 import { ehDinheiroPublico } from '../navegacao';
 import { useSessao } from '../sessao';
 import { BuscaDoCabecalhoComponent } from './BuscaDoCabecalho';
@@ -108,6 +109,9 @@ export function LayoutComponent({ children }: { children: React.ReactNode }) {
  * ATENÇÃO: A maioria não precisa: o item aceso da navegação já diz onde a pessoa está.
  * Sobra para as telas que a navegação não alcança — o perfil de um parlamentar, que
  * tem nome próprio e um caminho de volta.
+ *
+ * ATENÇÃO (2026-10-23): quem chega por um link compartilhado não tem para onde voltar dentro do site, e o "voltar" do
+ * histórico o levava para fora. Sem histórico, o botão leva à lista de onde a página costuma ser aberta (`listaDaPagina`).
  */
 export function CabecalhoDaColunaComponent({
   titulo,
@@ -122,6 +126,9 @@ export function CabecalhoDaColunaComponent({
   acao?: React.ReactNode;
 }) {
   const navegar = useNavigate();
+  const { pathname } = useLocation();
+  /** O React Router guarda a posição no histórico do site; 0 é a primeira página da visita. */
+  const temDeOndeVoltar = ((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0;
 
   return (
     <header className="cabecalho-pagina">
@@ -129,7 +136,7 @@ export function CabecalhoDaColunaComponent({
         <button
           type="button"
           className="botao-icone"
-          onClick={() => void navegar(-1)}
+          onClick={() => void (temDeOndeVoltar ? navegar(-1) : navegar(listaDaPagina(pathname)))}
           aria-label={T.voltar}
         >
           <IconeVoltarComponent />

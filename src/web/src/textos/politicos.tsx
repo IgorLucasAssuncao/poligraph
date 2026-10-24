@@ -57,6 +57,7 @@ export const TEXTOS_DOS_POLITICOS = {
     mandatos: 'Mandatos',
     quantosMandatos: (n: number) => (n === 1 ? '1 mandato eleito de 1998 a 2026' : `${n} mandatos eleitos de 1998 a 2026`),
     eleitoEm: (ano: number) => `eleito em ${ano}`,
+    outrosDoCargo: 'ver os outros eleitos',
     semVotoAindaNoCongresso: (posse: number) =>
       `Eleito para o Congresso, com posse em ${posse}. Os votos e a afinidade aparecem aqui quando a Câmara ou o Senado publicarem os primeiros votos do mandato.`,
     fonte: 'Mandatos: candidaturas eleitas publicadas pelo TSE.',

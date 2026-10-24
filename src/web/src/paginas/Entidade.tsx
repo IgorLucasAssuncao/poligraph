@@ -83,7 +83,7 @@ function PaginaDaEntidadeComponent({ dados }: { dados: DadosDaEntidade }) {
               definicao={T.entidade.sedeDefinicao}
             >
               {dados.sede ? (
-                <Link to={`/emendas?uf=${dados.sede.uf}&cidade=${dados.sede.codigoIbge}`}>
+                <Link to={`/cidades/${dados.sede.codigoIbge}`}>
                   {nomeProprio(dados.sede.nome)} – {dados.sede.uf}
                 </Link>
               ) : (

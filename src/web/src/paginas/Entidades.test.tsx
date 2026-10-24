@@ -129,7 +129,7 @@ describe('Entidade', () => {
     renderizar('/entidades/11222333000144');
 
     expect(await screen.findByRole('link', { name: /Portal da Transparência/ })).toHaveAttribute('href', COMPLETA.urlFonte);
-    expect(screen.getByRole('link', { name: 'Curitiba – PR' })).toHaveAttribute('href', '/emendas?uf=PR&cidade=4106902');
+    expect(screen.getByRole('link', { name: 'Curitiba – PR' })).toHaveAttribute('href', '/cidades/4106902');
   });
 
   it('CNPJ que não recebeu emenda diz isso', async () => {

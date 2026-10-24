@@ -48,3 +48,12 @@ export function periodoDoEndereco(deNaUrl: string | null, ateNaUrl: string | nul
     ? { primeiroAno: inicio, ultimoAno: fim }
     : undefined;
 }
+
+/** A lista de onde uma página de detalhe costuma ser aberta: o destino do "voltar" de quem chegou por link, sem histórico no site. */
+export function listaDaPagina(pathname: string): string {
+  if (pathname.startsWith('/parlamentar/')) return '/parlamentares';
+  if (pathname.startsWith('/politico/')) return '/parlamentares?vista=cargos';
+  if (pathname.startsWith('/cidades/')) return '/cidades';
+  if (pathname.startsWith('/entidades/')) return '/entidades';
+  return '/';
+}

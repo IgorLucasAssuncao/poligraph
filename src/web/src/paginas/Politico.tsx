@@ -175,7 +175,26 @@ function ItemDeMandatoComponent({ mandato }: { mandato: MandatoNoTse }) {
           descricaoDoMandato(mandato, nomeProprio)
         )}
       </span>
-      <span className="autor-detalhe">{[mandato.partido, T.eleitoEm(mandato.anoEleicao)].join(' · ')}</span>
+      <span className="autor-detalhe">
+        {[mandato.partido, T.eleitoEm(mandato.anoEleicao)].join(' · ')} ·{' '}
+        <Link to={outrosDoCargo(mandato)}>{T.outrosDoCargo}</Link>
+      </span>
     </li>
   );
+}
+
+/**
+ * Os outros eleitos do mesmo cargo e do mesmo lugar, na lista de todos os cargos já filtrada.
+ *
+ * ATENÇÃO (2026-10-23): a ficha de quem não é do Congresso tinha um link só, e era beco: dali não se chegava aos colegas da
+ * mesma assembleia ou da mesma prefeitura sem voltar à lista e filtrar de novo.
+ */
+function outrosDoCargo(mandato: MandatoNoTse): string {
+  const filtro = new URLSearchParams({ vista: 'cargos', cargo: mandato.cargo });
+  if (mandato.uf) filtro.set('uf', mandato.uf);
+  if (mandato.municipio) {
+    filtro.set('municipio', mandato.municipio.codigoIbge);
+    filtro.set('cidade', mandato.municipio.nome);
+  }
+  return `/parlamentares?${filtro.toString()}`;
 }
