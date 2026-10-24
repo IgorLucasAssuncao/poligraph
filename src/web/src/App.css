@@ -3332,13 +3332,27 @@ dialog.grafo-dinheiro::backdrop { background: var(--veu); }
 .gestao-nota { display: block; margin-top: .15rem; }
 
 /* Linha do tempo (Pendência 92) */
-.linha-do-tempo { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--borda); }
-.linha-do-tempo-ano { display: grid; grid-template-columns: 4rem minmax(0, 1fr); gap: .75rem; padding: .5rem 0 .5rem .75rem; position: relative; }
-.linha-do-tempo-ano::before {
-  content: ''; position: absolute; left: -5px; top: .85rem; width: 8px; height: 8px; background: var(--realce); border-radius: var(--raio);
+.linha-do-tempo {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: .5rem;
 }
-.linha-do-tempo-rotulo { font-family: var(--fonte-dado, 'IBM Plex Mono', monospace); font-size: var(--t-3); }
-.linha-do-tempo-marcos { list-style: none; margin: 0; padding: 0; display: grid; gap: .2rem; font-size: var(--t-2); }
+.linha-do-tempo-ano {
+  display: flex; flex-direction: column; gap: .3rem; padding: .55rem .65rem; min-width: 0;
+  border: 1px solid var(--borda); border-top: 3px solid var(--borda); border-radius: var(--raio);
+}
+/* O mandato em curso (2026-10-24): dois tons que se alternam entre um mandato e o seguinte, como nos gráficos do governo. */
+.linha-do-tempo-ano.ciclo-0 { background: color-mix(in srgb, var(--texto) 7%, transparent); border-top-color: var(--suave); }
+.linha-do-tempo-ano.ciclo-1 { background: color-mix(in srgb, var(--realce) 12%, transparent); border-top-color: var(--realce); }
+.linha-do-tempo-ano.ciclo-inicio { border-left-width: 3px; }
+.linha-do-tempo-ano.ciclo-fim { border-right-width: 3px; }
+.linha-do-tempo-ano.ciclo-0.ciclo-inicio, .linha-do-tempo-ano.ciclo-0.ciclo-fim { border-left-color: var(--borda-forte); border-right-color: var(--borda-forte); }
+.linha-do-tempo-ano.ciclo-1.ciclo-inicio, .linha-do-tempo-ano.ciclo-1.ciclo-fim { border-left-color: var(--realce); border-right-color: var(--realce); }
+.linha-do-tempo-rotulo { font-family: var(--dado); font-size: var(--t-3); font-weight: 600; }
+.linha-do-tempo-ciclo { font-size: var(--t-1); color: var(--suave); }
+.linha-do-tempo-marcos { list-style: none; margin: 0; padding: 0; display: grid; gap: .3rem; font-size: var(--t-1); }
+@media (max-width: 480px) {
+  .linha-do-tempo { grid-template-columns: 1fr 1fr; }
+}
 .gestao-contas { display: block; margin-top: .35rem; padding-top: .35rem; border-top: 1px solid var(--borda); }
 .painel-cidade-mais { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; margin: 1rem 0 0; }
 

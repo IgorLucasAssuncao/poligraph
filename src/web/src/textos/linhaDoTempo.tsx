@@ -3,7 +3,10 @@ import type { ReactNode } from 'react';
 /** O texto da linha do tempo (Pendência 92). */
 export const TEXTOS_DA_LINHA_DO_TEMPO = {
   titulo: 'Linha do tempo',
-  ajuda: 'Um ano por linha, com o que a base tem daquele ano. Cada total é o mesmo das outras seções do perfil.',
+  ajuda:
+    'Do ano mais antigo ao mais recente, com o que a base tem de cada um. O fundo de cada ano mostra o mandato em curso, e cada total é o mesmo das outras seções do perfil.',
+  inicio: 'Início · ',
+  fim: 'Fim · ',
   carregando: 'Carregando a linha do tempo',
   erro: 'Não foi possível carregar a linha do tempo agora. Tente de novo em instantes.',
   vazio: 'Ainda não há nada desta pessoa com data na base.',

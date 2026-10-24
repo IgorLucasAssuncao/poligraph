@@ -2,12 +2,17 @@ import { Link } from 'react-router-dom';
 import { obterLinhaDoTempo, type Marco } from '../api';
 import { nomeProprio, reaisCompacto } from '../formato';
 import { TEXTOS_DA_LINHA_DO_TEMPO as T } from '../textos/linhaDoTempo';
-import { descricaoDoMandato } from '../textos/politicos';
+import { NOMES_DOS_CARGOS, descricaoDoMandato } from '../textos/politicos';
+import { anosComCiclos } from './ciclosDaLinhaDoTempo';
 import { EsqueletoDeTextoComponent } from './Esqueleto';
 import { useCarga } from './useCarga';
 
 /**
- * A linha do tempo da pessoa: um ano por linha, do mais recente, com o que a base tem daquele ano (Pendência 92).
+ * A linha do tempo da pessoa, do ano mais antigo ao mais recente, com o que a base tem de cada ano (Pendência 92).
+ *
+ * DECISÃO (autor, 2026-10-24): da esquerda para a direita, um cartão por ano, quebrando em linhas como um calendário: cabe na
+ * tela sem rolagem lateral. O mandato em curso pinta o fundo dos anos dele, em dois tons que se alternam entre um mandato e o
+ * seguinte, e o primeiro e o último ano dizem "início" e "fim".
  *
  * DECISÃO: Cada marco é o resumo que a aba já mostra, e leva a ela. A linha junta; não traz número novo.
  *
@@ -28,9 +33,15 @@ export function LinhaDoTempoComponent({ idPessoa, abas }: { idPessoa: number; ab
       </h2>
       <p className="ajuda">{T.ajuda}</p>
       <ol className="linha-do-tempo">
-        {lida.dados.anos.map(({ ano, marcos }) => (
-          <li key={ano} className="linha-do-tempo-ano">
+        {anosComCiclos(lida.dados, new Date().getFullYear()).map(({ ano, marcos, ciclo, inicio, fim }) => (
+          <li key={ano} className={`linha-do-tempo-ano${ciclo ? ` ciclo-${ciclo.ordem % 2}` : ''}${inicio ? ' ciclo-inicio' : ''}${fim ? ' ciclo-fim' : ''}`}>
             <span className="linha-do-tempo-rotulo">{ano}</span>
+            {ciclo && (
+              <span className="linha-do-tempo-ciclo">
+                {inicio ? T.inicio : fim ? T.fim : ''}
+                {NOMES_DOS_CARGOS[ciclo.mandato.cargo]}
+              </span>
+            )}
             <ul className="linha-do-tempo-marcos">
               {marcos.map((m, i) => (
                 <li key={`${m.tipo}-${i}`}>
