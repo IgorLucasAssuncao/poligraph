@@ -90,8 +90,8 @@ function ConteudoComponent({ dados }: { dados: DadosDaMetodologia }) {
 
       <h2>{T.limites.titulo}</h2>
       <ul>
-        {T.limites.itens.map((item) => (
-          <li key={item}>{item}</li>
+        {T.limites.itens.map((item, i) => (
+          <li key={i}>{item}</li>
         ))}
       </ul>
     </>

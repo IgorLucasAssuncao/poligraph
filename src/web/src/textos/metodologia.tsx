@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { FONTES } from '../fontes';
 
@@ -40,7 +41,8 @@ export const TEXTOS_DA_METODOLOGIA = {
         O dinheiro vem de outras fontes oficiais: a cota parlamentar, da Câmara e do Senado; as emendas, do{' '}
         <LinkDeFonteComponent href={FONTES.emendas.url}>Portal da Transparência</LinkDeFonteComponent>; o financiamento de
         campanha, do <LinkDeFonteComponent href={FONTES.prestacaoDeContas.url}>TSE</LinkDeFonteComponent>. Cada item no
-        site tem um link <span aria-hidden="true">↗</span> para a página oficial onde pode ser conferido.
+        site tem um link <span aria-hidden="true">↗</span> para a página oficial onde pode ser conferido. Ele aparece na ficha de
+        cada parlamentar e em <Link to="/emendas">Dinheiro público</Link>.
       </>
     ),
   },
@@ -50,7 +52,8 @@ export const TEXTOS_DA_METODOLOGIA = {
     oferecidas: (oferecidas: number, camara: number, senado: number): ReactNode => (
       <>
         Cada pergunta é uma afirmação sobre uma votação que aconteceu em plenário. Você responde <strong>{oferecidas}</strong>
-        : <strong>{camara}</strong> da Câmara e <strong>{senado}</strong> do Senado.
+        : <strong>{camara}</strong> da Câmara e <strong>{senado}</strong> do Senado.{' '}
+        <Link to="/resultado">Começar as perguntas</Link>
       </>
     ),
     abertura: (abertura: number, desempate: number): ReactNode => (
@@ -91,7 +94,8 @@ export const TEXTOS_DA_METODOLOGIA = {
     base: 'O resultado é em quantas delas vocês votaram igual, sempre com a base: "8 de 11", nunca um percentual solto.',
     casas: (exibidos: number): ReactNode => (
       <>
-        Deputados e senadores são comparados separadamente, porque não votam as mesmas matérias. A tela mostra os{' '}
+        Deputados e senadores são comparados separadamente, porque não votam as mesmas matérias. O{' '}
+        <Link to="/resultado">resultado</Link> mostra os{' '}
         <strong>{exibidos}</strong> mais próximos e os mais distantes de cada casa.
       </>
     ),
@@ -110,9 +114,12 @@ export const TEXTOS_DA_METODOLOGIA = {
 
   grafo: {
     titulo: 'O grafo',
-    abertura:
-      'Dois parlamentares ficam perto quando votaram igual muitas vezes. A comparação entre eles usa a legislatura ' +
-      'inteira, com estes pesos:',
+    abertura: (
+      <>
+        No <Link to="/parlamentares?vista=grafo">grafo dos parlamentares</Link>, dois ficam perto quando votaram igual
+        muitas vezes. A comparação entre eles usa a legislatura inteira, com estes pesos:
+      </>
+    ),
     rito: 'Voto de rito (requerimento, adiamento) pesa zero: ele mede tática de obstrução.',
     grupos:
       'Os grupos, que dão a cor aos pontos, são encontrados pelo algoritmo de Louvain sobre as ligações. Saem só do ' +
@@ -135,7 +142,10 @@ export const TEXTOS_DA_METODOLOGIA = {
       'Só votações de plenário, e só da legislatura corrente.',
       'Sua posição vale sobre as perguntas que você respondeu; a de cada parlamentar, sobre a legislatura inteira. A sua é bem menos precisa.',
       'Emenda só aparece na ficha quando o código do autor foi ligado a um parlamentar: emenda de bancada e de comissão não tem autor pessoa.',
-      'Os dados de orçamento do governo cobrem o Poder Executivo federal. Em 2025, a dotação publicada deixa de fora a parcela condicionada à regra de ouro.',
+      <>
+        Os dados de orçamento do <Link to="/governo">governo federal</Link> cobrem o Poder Executivo federal. Em 2025, a dotação
+        publicada deixa de fora a parcela condicionada à regra de ouro.
+      </>,
     ],
   },
 
