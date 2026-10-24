@@ -1604,47 +1604,20 @@ e errado. Ver [00-discovery §7](00-discovery.md) e o teste API3.
 
 ## 🟢 Incrementos e refinamentos
 
-### Todos os mandatos na página do político e na ficha (pedido do autor, 2026-10-23)
+### Todos os mandatos na página do político e na ficha (pedido do autor, 2026-10-23) — FEITO em 2026-10-24
 
-Mostrar todos os mandatos da pessoa, inclusive fora do Congresso: o presidente que foi deputado, o governador que virou deputado
-ou senador. A ficha já diz "Eleito também, pelo TSE: Presidente, 2019–2022" (Bolsonaro, `/parlamentar/1060`). Falta pôr os cargos
-numa linha do tempo de mandatos única, na ficha e na página do político.
+FEITO: a ficha do parlamentar mostra todos os mandatos do TSE na mesma lista da página do político (`c04d76d`). Os senadores
+de 1998 a 2014 ligam pelo voto no Senado (UF, período e nome; 54 ligados, nenhum ambíguo) e Lula 2006 entra pelos votos do
+2º turno (`a958869`). O deputado que virou senador era duas pessoas; o CPF da Câmara juntou 23 (`1868b93`).
 
-MEDIDO (2026-10-23), buracos na tabela `mandatos` que precisam fechar antes:
+Ficou de fora, por limite da fonte:
 
-| Eleição | Na base | Na fonte (TSE, `consulta_cand`) | Causa provável |
-|---|---|---|---|
-| 2006, presidente | 0 | 0 com ELEITO: as 8 linhas vêm `#NULO#`, sem 2º turno | A fonte não marca o eleito; precisa de outra fonte periódica do TSE (resultado por turno) |
-| 1998, senador | 10 | 27 eleitos | Senador antigo sem `pessoa`: `pessoas_novas` só cria pessoa de cargo do Congresso antes da posse |
-| 2002, senador | 38 | 54 eleitos | A mesma |
-| 2006, senador | 18 | 27 eleitos | A mesma |
-
-
-<details>
-<summary><b>Crawler</b> — N1, N3, N4, N5, N6, N7, N8, N9, N11</summary>
-
-Feed da Agência Câmara (N1), casamento nome→parlamentar (N3), `robots.txt` (N4), limiar de
-dedup (N5), cobertura da Agência Senado (N6), retenção (N7), redundância (N8), estado
-vazio (N9), lista final de feeds (N11).
-</details>
-
-<details>
-<summary><b>Página do parlamentar</b> — PP2 a PP6</summary>
-
-Assimetria da página de senador (PP2), ✅ ~~apresentação de patrimônio (PP3)~~, ✅ ~~links de rede
-social (PP4)~~, parlamentar com poucos votos (PP5), perfil temático por relatoria (PP6).
-</details>
-
-<details>
-<summary><b>Fontes e escopo</b> — B6, C5, TS5, Pendência 5, Pendência 14, Pendência 15, Pendência 17, A5</summary>
-
-Base dos Dados como atalho (B6, TS5), *fuzzy match*
-(C5), biblioteca do grafo (Pendência 5), retenção de `execucao` (Pendência 14), `casa` em `pessoa` (Pendência 15),
-*cold start* do Postgres (Pendência 17 — **já não se aplica**, o banco é container próprio),
-reescrever objetivos se escolher o Cenário A (A5 — **já não se aplica**, a D3 escolheu o C).
-</details>
-
----
+| O quê | Por quê |
+|---|---|
+| Vice-presidente de 1998 (Marco Maciel) | O cadastro de 1998 publica os vices com nome `#NULO#`, e o da chapa eleita nem aparece |
+| Luiz Estevão, senador eleito em 1998 | Cassado em 2000, não tem voto na base para ligar |
+| 29 deputados antigos com homônimo no Senado | A API da Câmara não publica o CPF deles; a fusão espera o CPF |
+| Mandatos de 2026 com o 2º turno | Rodar `mandatos --eleicoes 2026` depois que o TSE publicar a totalização do 2º turno (25/10) |
 
 ## ⏳ Fatos com prazo de validade — lista separada
 
