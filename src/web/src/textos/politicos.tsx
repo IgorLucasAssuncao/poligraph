@@ -45,6 +45,13 @@ export function descricaoDoMandato(mandato: MandatoNoTse, nomeDoMunicipio: (nome
 
 /** O texto da lista de políticos de todos os cargos e da ficha de cada um (Pendência 90). */
 export const TEXTOS_DOS_POLITICOS = {
+  perfilDoCargo: {
+    eleito: (ano: number, partido: string) => `Eleito em ${ano}${partido ? `, pelo ${partido}` : ''}.`,
+    semVoto: 'Neste cargo não há voto nem cota de gabinete na base.',
+    verOGoverno: (de: number, ate: number) => `Ver o governo federal de ${de} a ${ate}`,
+    verACidade: (cidade: string) => `Ver a página de ${cidade}`,
+    verOsOutros: 'Ver os outros eleitos para o cargo',
+  },
   ficha: {
     titulo: 'Político',
     erro: 'Não foi possível carregar esta ficha agora. Tente de novo em instantes.',

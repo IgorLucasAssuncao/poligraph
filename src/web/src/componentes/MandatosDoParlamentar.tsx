@@ -18,8 +18,8 @@ type Cartao =
  * registra fora dele (presidente, governador, prefeito).
  *
  * DECISÃO (autor, 2026-10-24): um cartão por mandato. O de legislatura troca o que a ficha mostra (`?legislatura=` no
- * endereço, para o "voltar" e o link compartilhado); o de presidente leva ao Governo federal do mandato, o de prefeito à
- * cidade, e os outros aos eleitos do mesmo cargo. Antes, os cargos do TSE ficavam numa linha e numa seta recolhida embaixo.
+ * endereço, para o "voltar" e o link compartilhado); o de cargo fora do Congresso abre o perfil daquele mandato
+ * (`?eleicao=&cargo=`, ver `PerfilDoCargoComponent`). Antes, os cargos do TSE ficavam numa linha e numa seta recolhida embaixo.
  *
  * ATENÇÃO: Partido e UF da legislatura são os do último voto DAQUELE mandato: quem trocou de partido aparece com a sigla de
  * então. O período é o do primeiro ao último voto, e não o da legislatura. MEDIDO (2026-10-09): na 57ª, 122 dos 643 deputados
@@ -33,6 +33,7 @@ export function MandatosDoParlamentarComponent({
   doTse = [],
   atual,
   caminho,
+  cargoAberto,
 }: {
   mandatos: Mandato[];
   /** Os mandatos do TSE; os do Congresso que têm voto já estão em `mandatos`. */
@@ -40,6 +41,8 @@ export function MandatosDoParlamentarComponent({
   atual: number | null;
   /** O endereço da aba aberta, sem a busca: o mandato troca e a aba fica. */
   caminho: string;
+  /** O cargo do TSE aberto na ficha, quando o cartão dele foi escolhido. */
+  cargoAberto?: MandatoNoTse;
 }) {
   const [todos, setTodos] = useState(false);
 
@@ -68,7 +71,8 @@ export function MandatosDoParlamentarComponent({
     );
   }
 
-  const aberto = (c: Cartao) => c.tipo === 'voto' && c.mandato.legislatura === atual;
+  const aberto = (c: Cartao) =>
+    c.tipo === 'voto' ? c.mandato.legislatura === atual : c.mandato.anoEleicao === cargoAberto?.anoEleicao && c.mandato.cargo === cargoAberto?.cargo;
   const visiveis = todos ? cartoes : cartoes.filter((c, i) => i < MANDATOS_A_VISTA || aberto(c));
   const escondidos = cartoes.length - visiveis.length;
 
@@ -80,7 +84,7 @@ export function MandatosDoParlamentarComponent({
       </span>
       <ul>
         {visiveis.map((c) => (
-          <li key={c.chave}>{c.tipo === 'voto' ? cartaoDeVoto(c, atual, caminho) : cartaoDoTse(c.mandato)}</li>
+          <li key={c.chave}>{c.tipo === 'voto' ? cartaoDeVoto(c, atual, caminho) : cartaoDoTse(c.mandato, caminho, aberto(c))}</li>
         ))}
       </ul>
       {escondidos > 0 && (
@@ -114,9 +118,14 @@ function cartaoDeVoto(c: Extract<Cartao, { tipo: 'voto' }>, atual: number | null
   );
 }
 
-function cartaoDoTse(m: MandatoNoTse) {
+function cartaoDoTse(m: MandatoNoTse, caminho: string, ativo: boolean) {
   return (
-    <Link to={destinoDoCargo(m)} className="mandatos-tse">
+    <Link
+      to={`${caminho}?eleicao=${m.anoEleicao}&cargo=${m.cargo}`}
+      replace
+      className={`mandatos-tse${ativo ? ' ativo' : ''}`}
+      aria-current={ativo ? 'true' : undefined}
+    >
       <span className="mandatos-cargo">{NOMES_DOS_CARGOS[m.cargo]}</span>
       <span className="dado">{`${m.primeiroAno}–${m.ultimoAno}`}</span>
       <span className="mandatos-detalhe">
@@ -125,13 +134,4 @@ function cartaoDoTse(m: MandatoNoTse) {
       </span>
     </Link>
   );
-}
-
-/** Aonde o cargo se lê: o Governo federal do mandato, a página da cidade, ou os eleitos do mesmo cargo e lugar. */
-function destinoDoCargo(m: MandatoNoTse): string {
-  if (m.cargo === 'PRESIDENTE' || m.cargo === 'VICE_PRESIDENTE') return `/governo?de=${m.primeiroAno}&ate=${m.ultimoAno}`;
-  if (m.municipio) return `/cidades/${m.municipio.codigoIbge}`;
-  const filtro = new URLSearchParams({ vista: 'cargos', cargo: m.cargo });
-  if (m.uf) filtro.set('uf', m.uf);
-  return `/parlamentares?${filtro.toString()}`;
 }

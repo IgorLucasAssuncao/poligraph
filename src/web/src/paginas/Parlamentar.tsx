@@ -26,6 +26,7 @@ import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { LinhaDoTempoComponent } from '../componentes/LinhaDoTempo';
 import { MandatosDoParlamentarComponent } from '../componentes/MandatosDoParlamentar';
+import { PerfilDoCargoComponent } from '../componentes/PerfilDoCargo';
 import { RedesDoParlamentarComponent } from '../componentes/RedesDoParlamentar';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { usePaginas } from '../componentes/usePaginas';
@@ -108,6 +109,8 @@ export function ParlamentarComponent() {
   const { pathname } = useLocation();
   const [busca] = useSearchParams();
   const legislaturaPedida = Number(busca.get('legislatura')) || undefined;
+  const eleicaoPedida = Number(busca.get('eleicao')) || undefined;
+  const cargoPedido = busca.get('cargo');
   const lida = useCarga(['ficha', idPessoa, legislaturaPedida ?? null], () => obterFicha(idPessoa, legislaturaPedida), {
     manter: 2,
   });
@@ -122,6 +125,9 @@ export function ParlamentarComponent() {
   const corrente = legislaturas?.[0]?.numero;
   const emExercicio = ficha?.emExercicio ?? false;
   const doTse = useCarga(['politico', idPessoa], () => obterFichaDoPolitico(idPessoa));
+  const cargoAberto = eleicaoPedida
+    ? doTse.dados?.mandatos.find((m) => m.anoEleicao === eleicaoPedida && m.cargo === cargoPedido)
+    : undefined;
 
   const seguindo = useSeguidos().ids.has(idPessoa);
 
@@ -193,7 +199,8 @@ export function ParlamentarComponent() {
         <MandatosDoParlamentarComponent
           mandatos={ficha.mandatos ?? []}
           doTse={doTse.dados?.mandatos ?? []}
-          atual={ficha.legislatura}
+          atual={cargoAberto ? null : ficha.legislatura}
+          cargoAberto={cargoAberto}
           caminho={pathname}
         />
 
@@ -204,6 +211,8 @@ export function ParlamentarComponent() {
           <RedesDoParlamentarComponent redes={ficha.redesSociais ?? []} />
         </div>
 
+        {!cargoAberto && (
+        <>
         <div className="perfil-numeros atualizavel" data-atualizando={atualizando || undefined} data-tour="ficha-votacoes">
           <span>
             <ComProcedenciaComponent
@@ -226,7 +235,13 @@ export function ParlamentarComponent() {
           sufixo={legislaturaPedida ? `?legislatura=${legislaturaPedida}` : ''}
           mandatoPassado={ficha.legislatura && corrente && ficha.legislatura !== corrente ? ficha.legislatura : null}
         />
+        </>
+        )}
       </header>
+
+      {cargoAberto ? (
+        <PerfilDoCargoComponent idPessoa={ficha.idPessoa} mandato={cargoAberto} />
+      ) : (
 
       <AtualizandoComponent
         atualizando={atualizando || contasAtualizando}
@@ -284,6 +299,7 @@ export function ParlamentarComponent() {
         </>
       )}
       </AtualizandoComponent>
+      )}
     </>
   );
 

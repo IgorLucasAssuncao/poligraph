@@ -1197,6 +1197,11 @@ export type FinanciamentoDeCampanha = {
 };
 
 /** Com `legislatura`, a eleição que deu ESTE mandato, e nenhuma outra. */
+/** A campanha de uma eleição pelo ano, para o mandato fora do Congresso de quem também foi parlamentar. */
+export async function obterFinanciamentoDaEleicao(idPessoa: number, anoDaEleicao: number): Promise<FinanciamentoDeCampanha> {
+  return buscar<FinanciamentoDeCampanha>(`${BASE}/parlamentares/${idPessoa}/financiamento?anoDaEleicao=${anoDaEleicao}`);
+}
+
 export async function obterFinanciamento(
   idPessoa: number,
   legislatura?: number | null,

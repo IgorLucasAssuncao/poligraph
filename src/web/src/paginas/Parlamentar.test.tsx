@@ -907,7 +907,7 @@ describe('os mandatos na ficha', () => {
     expect(within(mandatos).getByText(/PARTIDO-B/)).toBeDefined();
   });
 
-  it('o presidente que foi deputado tem um cartão de presidente, que leva ao governo federal do mandato', async () => {
+  it('o presidente que foi deputado tem um cartão de presidente, que abre o perfil daquele mandato', async () => {
     vi.mocked(api.obterFichaDoPolitico).mockResolvedValueOnce({
       idPessoa: 1, nome: 'ANA RIBEIRO', nomeCivil: null, urlFoto: null, parlamentar: true, redesSociais: [],
       mandatos: [
@@ -919,7 +919,7 @@ describe('os mandatos na ficha', () => {
 
     const mandatos = await screen.findByRole('navigation', { name: 'Mandatos' });
     const presidente = await within(mandatos).findByRole('link', { name: /Presidente/ });
-    expect(presidente).toHaveAttribute('href', '/governo?de=2027&ate=2030');
+    expect(presidente).toHaveAttribute('href', '/parlamentar/1?eleicao=2026&cargo=PRESIDENTE');
     expect(within(mandatos).getAllByRole('link')).toHaveLength(3);
   });
 

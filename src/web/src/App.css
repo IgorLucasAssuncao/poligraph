@@ -581,6 +581,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .mandatos-unico .dado, .mandatos a .dado { font-family: var(--dado); font-size: var(--t-2); font-variant-numeric: tabular-nums; }
 .mandatos-detalhe { font-size: var(--t-1); color: var(--suave); }
 .mandatos-cargo { font-size: var(--t-2); font-weight: 600; }
+.perfil-do-cargo .ajuda a { color: var(--realce); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 .mandatos-mais { margin-top: .5rem; }
 @media (max-width: 480px) {
   .mandatos ul { display: grid; grid-template-columns: 1fr 1fr; }
