@@ -238,7 +238,7 @@ namespace Poligraph.Data.Migrations
                         {
                             t.HasCheckConstraint("ck_carga_bytes", "bytes >= 0");
 
-                            t.HasCheckConstraint("ck_carga_fonte", "fonte IN ('CAMARA','SENADO','TSE','PORTAL_TRANSPARENCIA','RECEITA','IBGE','TESOURO')");
+                            t.HasCheckConstraint("ck_carga_fonte", "fonte IN ('CAMARA','SENADO','TSE','PORTAL_TRANSPARENCIA','RECEITA','IBGE','TESOURO','BANCO_CENTRAL')");
 
                             t.HasCheckConstraint("ck_carga_sha256", "sha256 ~ '^[0-9a-f]{64}$'");
 
@@ -743,6 +743,49 @@ namespace Poligraph.Data.Migrations
                             t.HasCheckConstraint("ck_destino_chegadas", "chegadas > 0");
 
                             t.HasCheckConstraint("ck_destino_uf_no_brasil", "(pais = 'Brasil') = (uf IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Poligraph.Data.DividaFederalModel", b =>
+                {
+                    b.Property<short>("Ano")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano");
+
+                    b.Property<decimal>("AmortizacaoPaga")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("amortizacao_paga");
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
+                    b.Property<DateOnly>("GeradoEm")
+                        .HasColumnType("date")
+                        .HasColumnName("gerado_em");
+
+                    b.Property<decimal>("JurosPagos")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("juros_pagos");
+
+                    b.Property<decimal>("RefinanciamentoPago")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)")
+                        .HasColumnName("refinanciamento_pago");
+
+                    b.HasKey("Ano")
+                        .HasName("pk_divida_federal");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_divida_federal_carga_id");
+
+                    b.ToTable("divida_federal", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_divida_ano", "ano BETWEEN 2000 AND 2100");
+
+                            t.HasCheckConstraint("ck_divida_valores", "juros_pagos >= 0 AND amortizacao_paga >= 0 AND refinanciamento_pago >= 0");
                         });
                 });
 
@@ -2317,6 +2360,41 @@ namespace Poligraph.Data.Migrations
                     b.ToTable("seguidos_encerrados", (string)null);
                 });
 
+            modelBuilder.Entity("Poligraph.Data.SelicDoAnoModel", b =>
+                {
+                    b.Property<short>("Ano")
+                        .HasColumnType("smallint")
+                        .HasColumnName("ano");
+
+                    b.Property<long?>("CargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("carga_id");
+
+                    b.Property<short>("Meses")
+                        .HasColumnType("smallint")
+                        .HasColumnName("meses");
+
+                    b.Property<decimal>("TaxaNoAno")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("numeric(9,4)")
+                        .HasColumnName("taxa_no_ano");
+
+                    b.HasKey("Ano")
+                        .HasName("pk_selic_por_ano");
+
+                    b.HasIndex("CargaId")
+                        .HasDatabaseName("ix_selic_por_ano_carga_id");
+
+                    b.ToTable("selic_por_ano", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_selic_ano", "ano BETWEEN 1986 AND 2100");
+
+                            t.HasCheckConstraint("ck_selic_meses", "meses BETWEEN 1 AND 12");
+
+                            t.HasCheckConstraint("ck_selic_taxa", "taxa_no_ano > -100 AND taxa_no_ano < 1000");
+                        });
+                });
+
             modelBuilder.Entity("Poligraph.Data.SimilaridadeModel", b =>
                 {
                     b.Property<long>("ExecucaoId")
@@ -2849,6 +2927,15 @@ namespace Poligraph.Data.Migrations
                         .HasConstraintName("fk_destinos_de_viagem_cargas_carga_id");
                 });
 
+            modelBuilder.Entity("Poligraph.Data.DividaFederalModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_divida_federal_cargas_carga_id");
+                });
+
             modelBuilder.Entity("Poligraph.Data.EmExercicioModel", b =>
                 {
                     b.HasOne("Poligraph.Data.CargaModel", null)
@@ -3211,6 +3298,15 @@ namespace Poligraph.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_seguidos_encerrados_usuarios_usuario_id");
+                });
+
+            modelBuilder.Entity("Poligraph.Data.SelicDoAnoModel", b =>
+                {
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("CargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_selic_por_ano_cargas_carga_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.SimilaridadeModel", b =>

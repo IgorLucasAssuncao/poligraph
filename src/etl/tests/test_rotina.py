@@ -34,6 +34,7 @@ def test_mensal_acrescenta_dinheiro_e_grafo_e_confere_uma_vez_no_fim():
         "sedes-brasilapi",
         "convenios",
         "governo --anos 2026 --eleicao 2022",
+        "selic",
         "defesa-civil --anos 2026",
         "compras-centralizadas --anos 2026",
         "viagens --anos 2026",
@@ -110,7 +111,7 @@ def test_toda_etapa_tem_execucao_no_main(monkeypatch):
     executados = []
     nomes = (
         "_ingerir", "_senado", "_simbolicas", "_palavras_chave", "_cota", "_emendas", "_sedes_brasilapi", "_convenios",
-        "_governo", "_defesa_civil", "_compras_centralizadas", "_viagens", "_compras", "_sancoes", "_municipios", "_fundo", "_mandatos", "_siconfi", "_patrimonio", "_redes", "_populacao", "_analisar", "_conferir", "_em_exercicio",
+        "_governo", "_selic", "_defesa_civil", "_compras_centralizadas", "_viagens", "_compras", "_sancoes", "_municipios", "_fundo", "_mandatos", "_siconfi", "_patrimonio", "_redes", "_populacao", "_analisar", "_conferir", "_em_exercicio",
         "_limpar_cache",
     )
     for nome in nomes:

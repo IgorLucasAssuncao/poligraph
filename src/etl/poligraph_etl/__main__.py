@@ -30,11 +30,12 @@ from . import (
     ingestao_senado, municipios, normalizacao, orcamento, orientacoes,
     persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
 )
-from .fontes import brasilapi, camara, portal, receita, senado, tse
-from . import amostra, mandatos, compras, compras_centralizadas, conferencia, convenentes, defesa_civil, em_exercicio, limpeza, patrimonio, procedencia, redes, rotina, sancoes, telemetria, viagens
+from .fontes import bcb, brasilapi, camara, portal, receita, senado, tse
+from . import amostra, mandatos, selic, compras, compras_centralizadas, conferencia, convenentes, defesa_civil, em_exercicio, limpeza, patrimonio, procedencia, redes, rotina, sancoes, telemetria, viagens
 from .contratos import entrada
 from .contratos.entrada import colunas_da_fonte
 from .contratos.tse import LinhaDeCandidatura, LinhaDeVotacao
+from .contratos.bcb import LinhaDaSerie
 from .tipos import FonteDaRedeSocial, TipoCargo, TipoCasa, TipoFonteDeCarga, TipoFonteDeIdentificador
 from .contratos.portal import (
     LinhaDeCompra, LinhaDeCompraCentralizadaNoCartao, LinhaDeSancao, LinhaDeTrechoDeViagem, LinhaDeViagem, LinhaDePagamentoDeViagem, LinhaDoCartaoDaDefesaCivil,
@@ -107,6 +108,8 @@ def main(argv: list[str] | None = None) -> int:
                 _patrimonio(conexao, args.anos)
             elif args.comando == "mandatos":
                 _mandatos(conexao, args.eleicoes)
+            elif args.comando == "selic":
+                _selic(conexao, args.desde)
             elif args.comando == "redes":
                 _redes(conexao, args.anos)
             elif args.comando == "municipios":
@@ -250,6 +253,8 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         "convenios",
         help="completa CNPJ do convenente, situação e liberado dos convênios de emenda (Portal)",
     )
+    sel = sub.add_parser("selic", help="a Selic de cada ano (Banco Central, SGS 4390), ao lado dos juros da dívida federal")
+    sel.add_argument("--desde", type=int, default=selic.DESDE)
     man = sub.add_parser("mandatos", help="os eleitos de cada eleição (TSE): estaduais, governadores, prefeitos e vices")
     man.add_argument("--eleicoes", type=int, nargs="+", default=ELEICOES_DOS_MANDATOS)
     pat = sub.add_parser("patrimonio", help="bens declarados ao TSE, por tipo — não a descrição")
@@ -925,6 +930,7 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
     receitas_do_periodo: list[dict] = []
     sigilosos: list[dict] = []
     contas_do_orcamento: list[tuple[dict, int]] = []
+    divida: list[tuple[list, int]] = []
 
     for ano in anos:
         sufixo = f"-{date.today():%Y%m%d}" if ano >= date.today().year else ""
@@ -939,6 +945,7 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
         )
         do_ano = [{**l, "carga_id": carga_orcamento} for l in orcamento.para_linhas(tabela, portal.gerado_em(arquivo, membro))]
         encargos_do_ano = [{**l, "carga_id": carga_orcamento} for l in orcamento.encargos_para_linhas(tabela)]
+        divida.append((orcamento.divida_para_linhas(tabela, portal.gerado_em(arquivo, membro)), carga_orcamento))
 
         restos = _restos_a_pagar_do_ano(ano)
         carga_das_acoes = _carga_de_varios(
@@ -994,6 +1001,7 @@ def _governo(conexao: psycopg.Connection, anos: list[int], eleicao: int) -> None
     with conexao.transaction():
         persistencia.gravar_orcamento(conexao, anos, funcoes)
         persistencia.gravar_encargos(conexao, anos, encargos)
+        persistencia.gravar_divida_federal(conexao, anos, divida)
         persistencia.gravar_arrecadacao(conexao, anos, receitas_do_periodo)
         persistencia.gravar_sigilosos(conexao, anos, sigilosos)
         for conta, carga in contas_do_orcamento:
@@ -1090,6 +1098,19 @@ def _mandatos(conexao: psycopg.Connection, eleicoes: list[int]) -> None:
     log.info("Mandatos: %d pessoas novas, hashes conferidos em %d pessoas, %d pessoas sem vínculo apagadas.",
              len(novas), completados, apagadas)
     _fundir_pessoas(conexao)
+
+
+def _selic(conexao: psycopg.Connection, desde: int) -> None:
+    """A Selic de cada ano desde `desde`, capitalizada dos meses da série 4390 do Banco Central."""
+    registros = bcb.baixar_serie(selic.SERIE_DA_SELIC_NO_MES, desde)
+    carga = _carga_de_resposta(
+        conexao, TipoFonteDeCarga.BANCO_CENTRAL, bcb.url(selic.SERIE_DA_SELIC_NO_MES, desde), registros,
+        CACHE / f"selic-{date.today():%Y%m%d}.json",
+    )
+    linhas = selic.selic_para_linhas(entrada.ler(LinhaDaSerie, registros))
+    with conexao.transaction():
+        persistencia.gravar_selic(conexao, linhas, carga)
+    log.info("Selic: %d anos, de %d a %d; o último com %d meses.", len(linhas), linhas[0].ano, linhas[-1].ano, linhas[-1].meses)
 
 
 def _patrimonio(conexao: psycopg.Connection, anos: list[int]) -> None:
@@ -2692,6 +2713,8 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
         _convenios(conexao)
     elif etapa.comando == "governo":
         _governo(conexao, anos, etapa.argumentos["eleicao"])
+    elif etapa.comando == "selic":
+        _selic(conexao, selic.DESDE)
     elif etapa.comando == "defesa-civil":
         _defesa_civil(conexao, anos)
     elif etapa.comando == "viagens":

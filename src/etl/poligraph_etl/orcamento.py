@@ -43,6 +43,8 @@ from datetime import date
 import pandas as pd
 
 from . import normalizacao
+from .contratos.banco import DividaFederal
+from .tipos import TipoGastoComDivida, gasto_com_divida
 
 RECURSO = "orcamento-despesa/{ano}"
 
@@ -222,3 +224,29 @@ def reconciliar_mensal_e_anual(ano: int, pago_mensal: float, pago_anual: float) 
         "total_inferido": 0.0,
         "motivos": {MENSAL_DIFERENTE_DO_ANUAL: diferenca} if diferenca != 0 else {},
     }
+
+
+def divida_para_linhas(df: pd.DataFrame, gerado_em: date) -> list[DividaFederal]:
+    """O pago da dívida por ano: juros (grupo 2), amortização e refinanciamento (grupo 6), pelo elemento de despesa.
+
+    ATENÇÃO: "Realizado" é o pago no exercício, como em `para_linhas`. A soma das três partes é o que a função 28 paga em
+    dívida; o resto da função são repasses a estados e municípios e outros encargos.
+    """
+    tipos = [gasto_com_divida(g, e) for g, e in zip(df["CÓDIGO GRUPO DE DESPESA"], df["CÓDIGO ELEMENTO DE DESPESA"])]
+    base = pd.DataFrame({
+        "ano": df["EXERCÍCIO"].astype(int),
+        "tipo": tipos,
+        "pago": df["ORÇAMENTO REALIZADO (R$)"].map(normalizacao.valor_pt_br),
+    })
+    base = base[base["tipo"].notna()]
+    somas = base.groupby(["ano", "tipo"])["pago"].sum()
+    return [
+        DividaFederal(
+            ano=int(ano),
+            juros_pagos=round(float(somas.get((ano, TipoGastoComDivida.JUROS), 0.0)), 2),
+            amortizacao_paga=round(float(somas.get((ano, TipoGastoComDivida.AMORTIZACAO), 0.0)), 2),
+            refinanciamento_pago=round(float(somas.get((ano, TipoGastoComDivida.REFINANCIAMENTO), 0.0)), 2),
+            gerado_em=gerado_em,
+        )
+        for ano in sorted(base["ano"].unique())
+    ]

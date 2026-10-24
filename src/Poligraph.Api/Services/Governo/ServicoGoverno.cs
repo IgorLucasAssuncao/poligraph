@@ -82,6 +82,8 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
         var sigilosos = await _db.GastosSigilosos.AsNoTracking().Where(g => anosMostradosParaConsulta.Contains(g.Ano)).ToListAsync(ct);
         var comprasCentralizadas = await _db.ComprasCentralizadasNoCartao.AsNoTracking().Where(c => anosMostradosParaConsulta.Contains(c.Ano)).ToListAsync(ct);
         var defesaCivil = await _db.GastosDaDefesaCivil.AsNoTracking().Where(g => anosMostradosParaConsulta.Contains(g.Ano)).ToListAsync(ct);
+        var divida = await _db.DividaFederal.AsNoTracking().Where(d => anosMostradosParaConsulta.Contains(d.Ano)).OrderBy(d => d.Ano).ToListAsync(ct);
+        var selic = await _db.SelicPorAno.AsNoTracking().Where(s => anosMostradosParaConsulta.Contains(s.Ano)).ToDictionaryAsync(s => s.Ano, ct);
 
         var emAndamento = anosMostrados.LastOrDefault(a => !AnoFechado(a.Ano, a.GeradoEm))?.Ano;
 
@@ -107,7 +109,10 @@ public class ServicoGoverno(PoligraphDb db, CacheDeLeitura leitura)
                     doAno.EmissaoDeDivida,
                     AnoFechado(a.Ano, a.GeradoEm));
             })],
-            GestoesDisponiveis: await GestoesDoPeriodo.ListarAsync(_db, anosDoOrcamentoCarregados[0].Ano, anosDoOrcamentoCarregados[^1].Ano, ct));
+            GestoesDisponiveis: await GestoesDoPeriodo.ListarAsync(_db, anosDoOrcamentoCarregados[0].Ano, anosDoOrcamentoCarregados[^1].Ano, ct),
+            Divida: [.. divida.Select(d => new DividaNoAnoDto(
+                d.Ano, d.JurosPagos, d.AmortizacaoPaga, d.RefinanciamentoPago,
+                selic.GetValueOrDefault(d.Ano)?.TaxaNoAno, selic.GetValueOrDefault(d.Ano)?.Meses))]);
     }
 
     /// <summary>O que se gastou de fato: as áreas, os repasses e a dívida paga — não a rolagem.</summary>

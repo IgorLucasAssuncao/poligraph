@@ -46,6 +46,28 @@ export const TEXTOS_DO_GOVERNO = {
     rotuloDaProcedencia: (numero: string, periodo: string) => `${numero}, ${periodo}`,
   },
 
+  divida: {
+    titulo: 'Juros da dívida e a Selic',
+    ajuda:
+      'Quanto o governo federal pagou de juros da dívida em cada ano, e a taxa Selic do mesmo ano. O fundo de cada coluna diz quem governava.',
+    jurosTitulo: 'Juros pagos por ano',
+    jurosRotulo: 'Juros e encargos da dívida pagos pelo governo federal, por ano',
+    juros: 'Juros pagos',
+    selicTitulo: 'Selic no ano',
+    selicRotulo: 'Taxa Selic acumulada em cada ano',
+    selic: 'Selic',
+    porcento: (valor: number) => `${valor.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`,
+    emAndamento: 'em andamento',
+    meses: (n: number) => `${n} meses`,
+    legenda: 'Juros, amortização, refinanciamento e empréstimo de cada ano, com a Selic',
+    colunas: ['Ano', 'Governo', 'Selic', 'Juros pagos', 'Amortização', 'Refinanciamento', 'Pegou emprestado'],
+    ressalva:
+      'O juro pago num ano não acompanha a Selic daquele ano: parte da dívida tem juro fixo ou corrigido pela inflação, e cada título paga o juro quando vence. Por isso os dois gráficos ficam lado a lado, sem conta entre eles. Refinanciamento é a rolagem: título novo que paga o velho.',
+    fontes: 'Fontes:',
+    fonteOrcamento: 'orçamento da despesa (grupos 2 e 6)',
+    fonteSelic: 'Selic do Banco Central',
+  },
+
   conferencia: {
     titulo: 'Confere com o Portal da Transparência:',
     resumo: (valor: string, ano: number, deCadaMil: string) =>

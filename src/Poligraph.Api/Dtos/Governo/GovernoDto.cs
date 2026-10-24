@@ -30,10 +30,18 @@ public record GovernoDto(
     DefesaCivilDto? DefesaCivil,
     ComprasCentralizadasDto? ComprasCentralizadas,
     IReadOnlyList<GovernoNoAnoDto> PorAno,
-    IReadOnlyList<GestaoDto> GestoesDisponiveis);
+    IReadOnlyList<GestaoDto> GestoesDisponiveis,
+    IReadOnlyList<DividaNoAnoDto>? Divida = null);
 
 /// <summary>Os três números de um ano, lado a lado com os dos outros.</summary>
 /// <remarks>
 /// <para><see cref="Gastou"/> é o que se pagou nas áreas, nos repasses a estados e municípios e na dívida — não a rolagem, que é dívida paga com dívida.</para>
 /// </remarks>
 public record GovernoNoAnoDto(int AnoDoOrcamento, decimal Arrecadou, decimal Gastou, decimal PegouEmprestado, bool Fechado);
+
+/// <summary>O que se pagou da dívida num ano, com a Selic do mesmo ano ao lado.</summary>
+/// <remarks>
+/// <para><see cref="Selic"/> é a taxa dos meses publicados capitalizada, em %; nula se a carga da Selic não trouxe o ano. <see cref="MesesDaSelic"/> diz quantos meses.</para>
+/// <para>RISCO: o juro pago num ano não acompanha a Selic do mesmo ano: parte da dívida é prefixada ou corrigida pela inflação, e o título paga juro no vencimento. A tela põe os dois lado a lado e diz isso.</para>
+/// </remarks>
+public record DividaNoAnoDto(int Ano, decimal JurosPagos, decimal AmortizacaoPaga, decimal RefinanciamentoPago, decimal? Selic, short? MesesDaSelic);

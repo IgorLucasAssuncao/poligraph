@@ -34,6 +34,7 @@ class TipoFonteDeCarga(StrEnum):
     RECEITA = "RECEITA"
     IBGE = "IBGE"
     TESOURO = "TESOURO"
+    BANCO_CENTRAL = "BANCO_CENTRAL"
 
 
 class TipoFonteDeIdentificador(StrEnum):
@@ -170,3 +171,43 @@ def sexo_do_tse(codigo: str | None) -> TipoSexo | None:
         return _SEXO_DO_TSE[codigo or ""]
     except KeyError:
         raise ValorDesconhecido("CD_GENERO", codigo) from None
+
+
+class TipoGastoComDivida(StrEnum):
+    """O que um pagamento da dívida é, pelo grupo e pelo elemento de despesa do orçamento federal."""
+
+    JUROS = "JUROS"
+    AMORTIZACAO = "AMORTIZACAO"
+    REFINANCIAMENTO = "REFINANCIAMENTO"
+
+
+_GRUPOS_DA_DIVIDA = {"2", "6"}
+"""O grupo 2 (juros e encargos) e o 6 (amortização e refinanciamento). Os outros grupos não são dívida."""
+
+_DIVIDA_DO_ORCAMENTO = {
+    ("2", "00"): TipoGastoComDivida.JUROS,
+    ("2", "21"): TipoGastoComDivida.JUROS,
+    ("2", "22"): TipoGastoComDivida.JUROS,
+    ("2", "23"): TipoGastoComDivida.JUROS,
+    ("2", "24"): TipoGastoComDivida.JUROS,
+    ("2", "26"): TipoGastoComDivida.JUROS,
+    ("2", "92"): TipoGastoComDivida.JUROS,
+    ("6", "00"): TipoGastoComDivida.AMORTIZACAO,
+    ("6", "26"): TipoGastoComDivida.AMORTIZACAO,
+    ("6", "71"): TipoGastoComDivida.AMORTIZACAO,
+    ("6", "72"): TipoGastoComDivida.AMORTIZACAO,
+    ("6", "92"): TipoGastoComDivida.AMORTIZACAO,
+    ("6", "76"): TipoGastoComDivida.REFINANCIAMENTO,
+    ("6", "77"): TipoGastoComDivida.REFINANCIAMENTO,
+}
+"""MEDIDO em 2026-10-24: os elementos dos grupos 2 e 6 nos arquivos de 2014 a 2026. 76 e 77 são o principal refinanciado."""
+
+
+def gasto_com_divida(grupo: str | None, elemento: str | None) -> TipoGastoComDivida | None:
+    """O tipo do pagamento da dívida; `None` fora dos grupos 2 e 6. Elemento novo nesses grupos derruba a carga."""
+    if grupo not in _GRUPOS_DA_DIVIDA:
+        return None
+    try:
+        return _DIVIDA_DO_ORCAMENTO[(grupo, elemento or "")]
+    except KeyError:
+        raise ValorDesconhecido("CÓDIGO ELEMENTO DE DESPESA", f"{grupo}/{elemento}") from None

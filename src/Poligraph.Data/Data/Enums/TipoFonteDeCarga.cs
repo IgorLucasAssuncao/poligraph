@@ -20,4 +20,7 @@ public enum TipoFonteDeCarga
 
     /// <summary>Secretaria do Tesouro Nacional, pelo Siconfi: as contas anuais de estados e municípios (Pendência 90, fase 5).</summary>
     TESOURO,
+
+    /// <summary>Banco Central do Brasil, pelo SGS: a taxa Selic de cada mês, para os juros da dívida federal.</summary>
+    BANCO_CENTRAL,
 }

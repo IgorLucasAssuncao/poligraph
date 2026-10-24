@@ -34,6 +34,7 @@ import { ColunasPorAnoComponent, ComposicaoComponent } from '../componentes/Graf
 import { partesComOutros } from '../componentes/partesComOutros';
 import { ComProcedenciaComponent } from '../componentes/ModoAuditoria';
 import { ConfereOrcamentoComOPortalComponent } from '../componentes/ConfereOrcamentoComOPortal';
+import { JurosDaDividaComponent } from '../componentes/JurosDaDivida';
 import { AREAS_DO_ORCAMENTO_NOMEADAS } from '../constantes';
 import { TEXTOS_DO_GOVERNO as T } from '../textos/governo';
 
@@ -115,6 +116,7 @@ export function GovernoComponent({ secao = 'orcamento' }: { secao?: 'orcamento' 
               <CadaCemReaisComponent dados={dados} />
               <DeOndeVeioComponent arrecadacao={dados.arrecadacao} />
               <FitasDoGovernoComponent dados={dados} />
+              <JurosDaDividaComponent dados={dados} />
               {dados.gestoes.map((g) => (
                 <PerfilDaGestaoComponent key={`${g.anoDaEleicao}-${g.primeiroAno}-${g.presidente.nomeDeUrna}`} gestao={g} />
               ))}

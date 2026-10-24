@@ -1009,9 +1009,24 @@ export type Governo = {
   porAno: GovernoNoAno[];
   /** Todas as gestões com dado, qualquer que seja o período: os atalhos do seletor. */
   gestoesDisponiveis: Gestao[];
+  /** O pago da dívida e a Selic de cada ano do período; vazio enquanto a carga não rodou. */
+  divida?: DividaNoAno[];
 };
 
 /** `gastou` não inclui a rolagem da dívida, que é dívida paga com dívida nova. */
+/**
+ * O que o governo federal pagou da dívida num ano, com a Selic do mesmo ano. `selic` é em %, capitalizada dos meses publicados;
+ * nula sem carga da Selic. `mesesDaSelic` abaixo de 12 é o ano em andamento.
+ */
+export type DividaNoAno = {
+  ano: number;
+  jurosPagos: number;
+  amortizacaoPaga: number;
+  refinanciamentoPago: number;
+  selic: number | null;
+  mesesDaSelic: number | null;
+};
+
 export type GovernoNoAno = { anoDoOrcamento: number; arrecadou: number; gastou: number; pegouEmprestado: number; fechado: boolean };
 
 /**

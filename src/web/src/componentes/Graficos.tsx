@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { TEXTOS_DOS_COMPONENTES } from '../textos/componentes';
+import { faixasDosGovernantes } from './governantes';
 
 const T = TEXTOS_DOS_COMPONENTES.graficos;
 
@@ -20,6 +21,10 @@ export type AnoNoGrafico = { ano: number; valores: number[]; nota?: string };
  *
  * ATENÇÃO: as séries se distinguem por tom do mesmo teal, nunca por cor de partido (RNF-16).
  * Valor negativo vira coluna vazia; o número aparece no balão e na tabela.
+ *
+ * DECISÃO (autor, 2026-10-24): com `governantes`, quem governava cada ano fica no fundo das colunas, numa faixa com o nome
+ * embaixo. As faixas alternam dois tons neutros, para separar uma gestão da vizinha: cor forte por governante leria como cor de
+ * partido (RNF-16).
  */
 export function ColunasPorAnoComponent({
   rotulo,
@@ -29,6 +34,7 @@ export function ColunasPorAnoComponent({
   anoEscolhido,
   aoEscolher,
   tabela,
+  governantes,
 }: {
   /** O nome do gráfico para o leitor de tela. */
   rotulo: string;
@@ -40,12 +46,16 @@ export function ColunasPorAnoComponent({
   aoEscolher?: (ano: number) => void;
   /** Uma tabela própria no lugar da que o gráfico monta, quando ela tem colunas a mais. */
   tabela?: ReactNode;
+  /** Quem governava cada ano, pelo ano. Anos seguidos do mesmo nome viram uma faixa. */
+  governantes?: ReadonlyMap<number, string>;
 }) {
   const [emFoco, setEmFoco] = useState<{ ano: number; serie: number } | null>(null);
   const maior = Math.max(...anos.flatMap((a) => a.valores), 1);
   const focado = emFoco && anos.find((a) => a.ano === emFoco.ano);
   const pulaRotulo = anos.length > 10;
   const comValor = series.length === 1;
+  const faixas = governantes ? faixasDosGovernantes(anos.map((a) => a.ano), governantes) : [];
+  const faixaDoAno = new Map(faixas.flatMap((f, i) => f.anos.map((ano) => [ano, i % 2] as const)));
 
   return (
     <figure className="grafico-colunas" aria-label={rotulo}>
@@ -60,11 +70,15 @@ export function ColunasPorAnoComponent({
               ? T.dicaComEscolha
               : T.dica}
       </p>
-      <div className="grafico-colunas-area" onMouseLeave={() => setEmFoco(null)}>
+      <div
+        className="grafico-colunas-area"
+        style={{ '--anos': anos.length } as React.CSSProperties}
+        onMouseLeave={() => setEmFoco(null)}
+      >
         {anos.map((a, i) => (
           <div
             key={a.ano}
-            className={`grafico-colunas-ano${anoEscolhido === a.ano ? ' escolhido' : ''}`}
+            className={`grafico-colunas-ano${anoEscolhido === a.ano ? ' escolhido' : ''}${faixaDoAno.has(a.ano) ? ` faixa-${faixaDoAno.get(a.ano)}` : ''}`}
           >
             <div className="grafico-colunas-barras">
               {a.valores.map((valor, serie) => (
@@ -103,6 +117,21 @@ export function ColunasPorAnoComponent({
           </div>
         ))}
       </div>
+
+      {faixas.length > 0 && (
+        <div className="grafico-colunas-governantes" style={{ '--anos': anos.length } as React.CSSProperties}>
+          {faixas.map((f, i) => (
+            <span
+              key={`${f.nome}-${f.anos[0]}`}
+              className={`faixa-${i % 2}`}
+              style={{ gridColumn: `${f.inicio + 1} / span ${f.anos.length}` }}
+              title={T.governouDe(f.nome, f.anos[0], f.anos[f.anos.length - 1])}
+            >
+              {f.nome}
+            </span>
+          ))}
+        </div>
+      )}
 
       {series.length > 1 && <LegendaComponent nomes={series} />}
 

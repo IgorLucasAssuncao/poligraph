@@ -2170,8 +2170,22 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
   margin: 0 0 .4rem; min-height: 1.3em; color: var(--suave);
   font-family: var(--dado); font-size: var(--t-1); font-variant-numeric: tabular-nums;
 }
-.grafico-colunas-area { display: flex; align-items: stretch; gap: .5rem; }
-.grafico-colunas-ano { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.grafico-colunas-area { display: grid; grid-template-columns: repeat(var(--anos, 1), minmax(0, 1fr)); align-items: stretch; gap: .5rem; }
+.grafico-colunas-ano { min-width: 0; display: flex; flex-direction: column; }
+/* Quem governava cada ano (2026-10-24): uma faixa de fundo por gestão, em dois tons neutros que se alternam, e o nome embaixo. */
+.grafico-colunas-ano.faixa-0 .grafico-colunas-barras { background: color-mix(in srgb, var(--texto) 4%, transparent); }
+.grafico-colunas-ano.faixa-1 .grafico-colunas-barras { background: color-mix(in srgb, var(--realce) 12%, transparent); }
+.subtitulo-grafico { margin: 1.25rem 0 .25rem; font-size: var(--t-3); font-weight: 600; }
+.grafico-colunas-governantes {
+  display: grid; grid-template-columns: repeat(var(--anos, 1), minmax(0, 1fr)); gap: .5rem; margin-top: .35rem;
+  font-size: var(--t-1); color: var(--suave);
+}
+.grafico-colunas-governantes > span {
+  padding: .2rem .3rem; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border-top: 2px solid var(--borda-forte); border-radius: 0 0 var(--raio) var(--raio);
+}
+.grafico-colunas-governantes > span.faixa-0 { background: color-mix(in srgb, var(--texto) 4%, transparent); }
+.grafico-colunas-governantes > span.faixa-1 { background: color-mix(in srgb, var(--realce) 12%, transparent); border-top-color: var(--realce); }
 .grafico-colunas-barras {
   height: 8rem; display: flex; align-items: flex-end; gap: 2px;
   border-bottom: 1px solid var(--borda-forte);

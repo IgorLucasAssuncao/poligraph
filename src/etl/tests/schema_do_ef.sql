@@ -1382,3 +1382,42 @@ VALUES ('20261024020456_ReconciliacaoDoGovernoFederal', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+ALTER TABLE cargas DROP CONSTRAINT ck_carga_fonte;
+
+CREATE TABLE divida_federal (
+    ano smallint NOT NULL,
+    juros_pagos numeric(18,2) NOT NULL,
+    amortizacao_paga numeric(18,2) NOT NULL,
+    refinanciamento_pago numeric(18,2) NOT NULL,
+    gerado_em date NOT NULL,
+    carga_id bigint,
+    CONSTRAINT pk_divida_federal PRIMARY KEY (ano),
+    CONSTRAINT ck_divida_ano CHECK (ano BETWEEN 2000 AND 2100),
+    CONSTRAINT ck_divida_valores CHECK (juros_pagos >= 0 AND amortizacao_paga >= 0 AND refinanciamento_pago >= 0),
+    CONSTRAINT fk_divida_federal_cargas_carga_id FOREIGN KEY (carga_id) REFERENCES cargas (id) ON DELETE RESTRICT
+);
+
+CREATE TABLE selic_por_ano (
+    ano smallint NOT NULL,
+    taxa_no_ano numeric(9,4) NOT NULL,
+    meses smallint NOT NULL,
+    carga_id bigint,
+    CONSTRAINT pk_selic_por_ano PRIMARY KEY (ano),
+    CONSTRAINT ck_selic_ano CHECK (ano BETWEEN 1986 AND 2100),
+    CONSTRAINT ck_selic_meses CHECK (meses BETWEEN 1 AND 12),
+    CONSTRAINT ck_selic_taxa CHECK (taxa_no_ano > -100 AND taxa_no_ano < 1000),
+    CONSTRAINT fk_selic_por_ano_cargas_carga_id FOREIGN KEY (carga_id) REFERENCES cargas (id) ON DELETE RESTRICT
+);
+
+ALTER TABLE cargas ADD CONSTRAINT ck_carga_fonte CHECK (fonte IN ('CAMARA','SENADO','TSE','PORTAL_TRANSPARENCIA','RECEITA','IBGE','TESOURO','BANCO_CENTRAL'));
+
+CREATE INDEX ix_divida_federal_carga_id ON divida_federal (carga_id);
+
+CREATE INDEX ix_selic_por_ano_carga_id ON selic_por_ano (carga_id);
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261024134431_DividaFederalESelic', '10.0.11');
+
+COMMIT;
+

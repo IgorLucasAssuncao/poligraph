@@ -25,6 +25,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
     public DbSet<EmendaConvenioModel> EmendasConvenios => Set<EmendaConvenioModel>();
     public DbSet<OrcamentoPorFuncaoModel> OrcamentoPorFuncao => Set<OrcamentoPorFuncaoModel>();
     public DbSet<EncargoEspecialModel> EncargosEspeciais => Set<EncargoEspecialModel>();
+    public DbSet<DividaFederalModel> DividaFederal => Set<DividaFederalModel>();
+    public DbSet<SelicDoAnoModel> SelicPorAno => Set<SelicDoAnoModel>();
     public DbSet<GastoSigilosoModel> GastosSigilosos => Set<GastoSigilosoModel>();
     public DbSet<GastoDaDefesaCivilModel> GastosDaDefesaCivil => Set<GastoDaDefesaCivilModel>();
     public DbSet<ViagensDoOrgaoModel> ViagensDoOrgao => Set<ViagensDoOrgaoModel>();
@@ -175,7 +177,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.ToTable(t =>
             {
                 t.HasCheckConstraint("ck_carga_fonte",
-                    "fonte IN ('CAMARA','SENADO','TSE','PORTAL_TRANSPARENCIA','RECEITA','IBGE','TESOURO')");
+                    "fonte IN ('CAMARA','SENADO','TSE','PORTAL_TRANSPARENCIA','RECEITA','IBGE','TESOURO','BANCO_CENTRAL')");
                 t.HasCheckConstraint("ck_carga_sha256", "sha256 ~ '^[0-9a-f]{64}$'");
                 t.HasCheckConstraint("ck_carga_bytes", "bytes >= 0");
                 t.HasCheckConstraint("ck_carga_url", "url <> ''");
@@ -247,6 +249,10 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         mb.Entity<OrcamentoPorFuncaoModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<EncargoEspecialModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<DividaFederalModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<SelicDoAnoModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<ReceitaPorOrigemModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.CargaId).OnDelete(DeleteBehavior.Restrict);
@@ -606,6 +612,33 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.Property(x => x.Empenhado).HasPrecision(18, 2);
             e.Property(x => x.Pago).HasPrecision(18, 2);
             e.Property(x => x.RestosAPagarPagos).HasPrecision(18, 2);
+        });
+
+        mb.Entity<DividaFederalModel>(e =>
+        {
+            e.ToTable("divida_federal", t =>
+            {
+                t.HasCheckConstraint("ck_divida_valores", "juros_pagos >= 0 AND amortizacao_paga >= 0 AND refinanciamento_pago >= 0");
+                t.HasCheckConstraint("ck_divida_ano", "ano BETWEEN 2000 AND 2100");
+            });
+            e.HasKey(x => x.Ano);
+            e.Property(x => x.Ano).ValueGeneratedNever();
+            e.Property(x => x.JurosPagos).HasPrecision(18, 2);
+            e.Property(x => x.AmortizacaoPaga).HasPrecision(18, 2);
+            e.Property(x => x.RefinanciamentoPago).HasPrecision(18, 2);
+        });
+
+        mb.Entity<SelicDoAnoModel>(e =>
+        {
+            e.ToTable("selic_por_ano", t =>
+            {
+                t.HasCheckConstraint("ck_selic_meses", "meses BETWEEN 1 AND 12");
+                t.HasCheckConstraint("ck_selic_taxa", "taxa_no_ano > -100 AND taxa_no_ano < 1000");
+                t.HasCheckConstraint("ck_selic_ano", "ano BETWEEN 1986 AND 2100");
+            });
+            e.HasKey(x => x.Ano);
+            e.Property(x => x.Ano).ValueGeneratedNever();
+            e.Property(x => x.TaxaNoAno).HasPrecision(9, 4);
         });
 
         mb.Entity<GastoSigilosoModel>(e =>

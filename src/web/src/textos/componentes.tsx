@@ -113,6 +113,7 @@ export const TEXTOS_DOS_COMPONENTES = {
     dicaNoToque: 'Toque num ano para ver o valor.',
     dicaComEscolhaNoToque: 'Toque num ano para ver o valor e ficar só com ele.',
     verTabela: 'Ver como tabela',
+    governouDe: (nome: string, de: number, ate: number) => (de === ate ? `${nome}, ${de}` : `${nome}, de ${de} a ${ate}`),
     ano: 'Ano',
     deCadaCem: (parte: number) => `${parte} de cada R$ 100`,
   },

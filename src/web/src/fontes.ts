@@ -18,6 +18,10 @@ export const FONTES = {
     nome: 'Portal da Transparência — emendas parlamentares',
     url: 'https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares',
   },
+  selic: {
+    nome: 'Banco Central — taxa Selic acumulada no mês (SGS 4390)',
+    url: 'https://www3.bcb.gov.br/sgspub/consultarvalores/telaCvsSelecionarSeries.paint?codigoSerie=4390',
+  },
   orcamento: {
     nome: 'Portal da Transparência — orçamento da despesa',
     url: 'https://portaldatransparencia.gov.br/download-de-dados/orcamento-despesa',

@@ -181,3 +181,26 @@ def test_mes_nao_publicado_encerra_a_soma(monkeypatch):
     monkeypatch.setattr(principal.portal, "baixar", baixar)
 
     assert principal._restos_a_pagar_do_ano(2025)["meses"] == 0
+
+
+def test_divida_separa_juros_amortizacao_e_refinanciamento_pelo_elemento():
+    """MEDIDO (2025): 354,3 bi de juros, 353,6 bi de amortização e 1,41 tri de refinanciamento, pelo grupo e pelo elemento."""
+    df = pd.DataFrame([
+        linha(**{"CÓDIGO GRUPO DE DESPESA": "2", "CÓDIGO ELEMENTO DE DESPESA": "23", "ORÇAMENTO REALIZADO (R$)": "100,00"}),
+        linha(**{"CÓDIGO GRUPO DE DESPESA": "2", "CÓDIGO ELEMENTO DE DESPESA": "21", "ORÇAMENTO REALIZADO (R$)": "5,00"}),
+        linha(**{"CÓDIGO GRUPO DE DESPESA": "6", "CÓDIGO ELEMENTO DE DESPESA": "72", "ORÇAMENTO REALIZADO (R$)": "70,00"}),
+        linha(**{"CÓDIGO GRUPO DE DESPESA": "6", "CÓDIGO ELEMENTO DE DESPESA": "76", "ORÇAMENTO REALIZADO (R$)": "400,00"}),
+        linha(**{"CÓDIGO GRUPO DE DESPESA": "3", "CÓDIGO ELEMENTO DE DESPESA": "39", "ORÇAMENTO REALIZADO (R$)": "999,00"}),
+    ], dtype=str)
+
+    [ano] = orcamento.divida_para_linhas(df, date(2026, 1, 5))
+
+    assert (ano.ano, ano.juros_pagos, ano.amortizacao_paga, ano.refinanciamento_pago) == (2025, 105.0, 70.0, 400.0)
+
+
+def test_elemento_novo_nos_grupos_da_divida_derruba_a_carga():
+    from poligraph_etl.tipos import ValorDesconhecido, gasto_com_divida
+
+    assert gasto_com_divida("3", "39") is None
+    with pytest.raises(ValorDesconhecido):
+        gasto_com_divida("6", "99")

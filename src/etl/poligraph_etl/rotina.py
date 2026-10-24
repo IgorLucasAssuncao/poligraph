@@ -87,6 +87,7 @@ def etapas(frequencia: str, hoje: date) -> list[Etapa]:
             Etapa("sedes-brasilapi"),
             Etapa("convenios"),
             Etapa("governo", {"anos": anos, "eleicao": ultima_eleicao_geral(hoje)}),
+            Etapa("selic"),
             Etapa("defesa-civil", {"anos": anos}),
             Etapa("compras-centralizadas", {"anos": anos}),
             Etapa("viagens", {"anos": anos}),

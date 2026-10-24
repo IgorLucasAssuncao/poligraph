@@ -12,6 +12,7 @@ import types
 import typing
 import zipfile
 from dataclasses import fields, is_dataclass
+from datetime import date
 
 import pytest
 
@@ -32,6 +33,7 @@ TIPOS_DO_BANCO = {
     float: {"numeric", "real", "double precision"},
     str: {"text", "character varying", "character", "date"},
     bool: {"boolean"},
+    date: {"date"},
 }
 
 

@@ -6,6 +6,7 @@ Os campos têm o nome das colunas que o EF cria (`UseSnakeCaseNamingConvention`)
 """
 
 from dataclasses import dataclass
+from datetime import date
 from typing import ClassVar
 
 
@@ -186,3 +187,27 @@ class ContasDoMunicipio:
     deducoes: float
     despesa_empenhada: float
     despesa_paga: float
+
+
+@dataclass(frozen=True)
+class DividaFederal:
+    """Uma linha de `divida_federal` (DividaFederalModel): o pago da dívida federal num ano, em três partes."""
+
+    TABELA: ClassVar[str] = "divida_federal"
+
+    ano: int
+    juros_pagos: float
+    amortizacao_paga: float
+    refinanciamento_pago: float
+    gerado_em: date
+
+
+@dataclass(frozen=True)
+class SelicDoAno:
+    """Uma linha de `selic_por_ano` (SelicDoAnoModel): a Selic capitalizada dos meses publicados do ano."""
+
+    TABELA: ClassVar[str] = "selic_por_ano"
+
+    ano: int
+    taxa_no_ano: float
+    meses: int
