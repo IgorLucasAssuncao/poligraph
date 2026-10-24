@@ -4,7 +4,8 @@
 #   powershell -ExecutionPolicy Bypass -File infra/vps/gerar-dump.ps1
 #
 # Os dados de usuário não vão: as tabelas deles entram vazias (--exclude-table-data), e o resto
-# vai inteiro, com o esquema e a __EFMigrationsHistory. No fim, mostra o sha256 e os comandos de
+# vai inteiro, com o esquema e a __EFMigrationsHistory. O schema hangfire, a fila de tarefas da API, fica de fora:
+# a produção tem a dela, e o restore batia nas tabelas que já existiam (2026-10-24). No fim, mostra o sha256 e os comandos de
 # envio e de restauração, já com o sha256 preenchido.
 
 $ErrorActionPreference = 'Stop'
@@ -17,7 +18,7 @@ $container = podman ps --format '{{.Names}}' | Where-Object { $_ -like 'postgres
 if (-not $container) { throw 'Nenhum container postgres-* rodando: ligue o Aspire.' }
 Write-Host "== Container $container"
 
-$opcoes = @('-U', 'postgres', '-d', 'poligraph', '-Fc', '--no-owner', '--no-acl', '-f', '/tmp/poligraph.dump')
+$opcoes = @('-U', 'postgres', '-d', 'poligraph', '-Fc', '--no-owner', '--no-acl', '--exclude-schema=hangfire', '-f', '/tmp/poligraph.dump')
 $opcoes += $tabelasDeUsuario | ForEach-Object { "--exclude-table-data=$_" }
 
 Write-Host '== Gerando o dump (alguns minutos)'
