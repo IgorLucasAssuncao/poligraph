@@ -356,8 +356,11 @@ function desenharNos(
   }
 
   ctx.globalAlpha = 1;
-  desenharNomesSemColisao(ctx, nomes, escuro);
+  const cidadao = lugarDoCidadao(t, quadro);
+  desenharNomesSemColisao(ctx, nomes, escuro, cidadao ? [caixaDoCidadao(cidadao)] : []);
 }
+
+type Caixa = { x0: number; y0: number; x1: number; y1: number };
 
 type NomeCandidato = {
   no: NoDoGrafo;
@@ -382,8 +385,9 @@ function desenharNomesSemColisao(
   ctx: CanvasRenderingContext2D,
   nomes: NomeCandidato[],
   escuro: boolean,
+  reservados: Caixa[],
 ) {
-  const ocupados: { x0: number; y0: number; x1: number; y1: number }[] = [];
+  const ocupados: Caixa[] = [...reservados];
   const ordem = [...nomes].sort(
     (a, b) => Number(b.destacado) - Number(a.destacado) || b.grau - a.grau,
   );
@@ -496,11 +500,9 @@ function desenharCidadao(
   quadro: Quadro,
   escuro: boolean,
 ) {
-  if (!quadro.cidadao) return;
-
-  const p = paraTela(quadro.cidadao.eixoX, quadro.cidadao.eixoY, t, quadro.camera);
-
-  const raio = Math.max(9, Math.min(22, 10 * Math.pow(quadro.camera.escala, 0.4)));
+  const lugar = lugarDoCidadao(t, quadro);
+  if (!lugar) return;
+  const { p, raio } = lugar;
 
   ctx.beginPath();
   ctx.moveTo(p.x, p.y - raio);
@@ -518,4 +520,22 @@ function desenharCidadao(
   ctx.fillStyle = escuro ? '#e6eaee' : '#12161b';
   ctx.textAlign = 'center';
   ctx.fillText(T.eixos.voce, p.x, p.y + raio + 13);
+}
+
+/** Onde o losango do cidadão fica na tela, e o tamanho dele: o desenho e a reserva dos nomes usam o mesmo. */
+function lugarDoCidadao(t: Tamanho, quadro: Quadro): { p: { x: number; y: number }; raio: number } | null {
+  if (!quadro.cidadao) return null;
+  return {
+    p: paraTela(quadro.cidadao.eixoX, quadro.cidadao.eixoY, t, quadro.camera),
+    raio: Math.max(9, Math.min(22, 10 * Math.pow(quadro.camera.escala, 0.4))),
+  };
+}
+
+/**
+ * O losango e o "você" embaixo dele, com folga: nenhum nome de parlamentar cai em cima (antes, o do vizinho mais próximo
+ * ficava atrás do losango, que é desenhado por último).
+ */
+function caixaDoCidadao({ p, raio }: { p: { x: number; y: number }; raio: number }): Caixa {
+  const metade = Math.max(raio, 16) + 3;
+  return { x0: p.x - metade, y0: p.y - raio - 3, x1: p.x + metade, y1: p.y + raio + 17 };
 }
