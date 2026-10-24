@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LinhaDoTempoComponent } from './LinhaDoTempo';
@@ -20,7 +21,7 @@ beforeEach(() => {
 });
 
 describe('Linha do tempo', () => {
-  it('um ano por linha, e na ficha do parlamentar o marco leva à aba', async () => {
+  it('abre no ano mais recente, o marco leva à aba, e o nó de outro ano mostra o dele', async () => {
     render(
       <MemoryRouter>
         <LinhaDoTempoComponent idPessoa={7} abas="/parlamentar/7" />
@@ -29,7 +30,14 @@ describe('Linha do tempo', () => {
 
     expect(await screen.findByText('Passou a votar pelo ABC; antes, XYZ')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /da cota parlamentar/ })).toHaveAttribute('href', '/parlamentar/7/cota');
-    expect(screen.getByText(/em 3 bens ao TSE/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /R\$\s3 mi empenhados, R\$\s1 mi pagos/ })).toHaveAttribute('href', '/parlamentar/7/emendas');
+    expect(screen.queryByText(/em 3 bens ao TSE/)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: '2022, 1 registro' }));
+    expect(screen.getByText(/em 3 bens ao TSE/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '‹ Anterior' })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Seguinte ›' }));
+    expect(screen.getByText('Passou a votar pelo ABC; antes, XYZ')).toBeInTheDocument();
   });
 });

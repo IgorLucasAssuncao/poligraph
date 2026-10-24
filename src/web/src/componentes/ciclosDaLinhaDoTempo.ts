@@ -20,12 +20,7 @@ export type AnoComCiclo = {
  * vale o que começou por último.
  */
 export function anosComCiclos(linha: LinhaDoTempo, anoAtual: number): AnoComCiclo[] {
-  const mandatos = linha.anos
-    .flatMap((a) => a.marcos)
-    .filter((m) => m.tipo === 'ELEITO' && m.mandato)
-    .map((m) => m.mandato as MandatoNoTse)
-    .sort((a, b) => a.primeiroAno - b.primeiroAno);
-  const ciclos: Ciclo[] = mandatos.map((mandato, ordem) => ({ mandato, ordem }));
+  const ciclos = ciclosDaLinha(linha);
 
   const porAno = new Map(linha.anos.map((a) => [a.ano, a.marcos]));
   for (const c of ciclos) {
@@ -46,4 +41,14 @@ export function anosComCiclos(linha: LinhaDoTempo, anoAtual: number): AnoComCicl
         fim: ciclo?.mandato.ultimoAno === ano,
       };
     });
+}
+
+/** Os mandatos da linha, pelos marcos "Eleito", do mais antigo; a ordem faz o tom alternar entre um e o seguinte. */
+export function ciclosDaLinha(linha: LinhaDoTempo): Ciclo[] {
+  return linha.anos
+    .flatMap((a) => a.marcos)
+    .filter((m) => m.tipo === 'ELEITO' && m.mandato)
+    .map((m) => m.mandato as MandatoNoTse)
+    .sort((a, b) => a.primeiroAno - b.primeiroAno)
+    .map((mandato, ordem) => ({ mandato, ordem }));
 }

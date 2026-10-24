@@ -4,7 +4,10 @@ import type { ReactNode } from 'react';
 export const TEXTOS_DA_LINHA_DO_TEMPO = {
   titulo: 'Linha do tempo',
   ajuda:
-    'Do ano mais antigo ao mais recente, com o que a base tem de cada um. O fundo de cada ano mostra o mandato em curso, e cada total é o mesmo das outras seções do perfil.',
+    'Do ano mais antigo, à esquerda, ao mais recente, à direita. As faixas são os mandatos, e cada ponto é um ano com dado: escolha um para ver o que a base tem dele.',
+  ponto: (ano: number, marcos: number) => `${ano}, ${marcos} ${marcos === 1 ? 'registro' : 'registros'}`,
+  anterior: '‹ Anterior',
+  seguinte: 'Seguinte ›',
   inicio: 'Início · ',
   fim: 'Fim · ',
   carregando: 'Carregando a linha do tempo',
