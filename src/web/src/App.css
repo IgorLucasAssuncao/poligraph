@@ -3252,7 +3252,7 @@ dialog.grafo-dinheiro::backdrop { background: var(--veu); }
 /* Barra de abas que rola de lado: a ponta some no fundo, e quem lê vê que tem mais. Só onde o navegador liga a rolagem
    à animação; nos outros, a barra rola sem o esfumado. */
 @supports (animation-timeline: scroll()) {
-  .abas-do-dinheiro, .abas-do-governo, .grafico-de-fitas-caixa {
+  .abas-do-dinheiro, .abas-do-governo {
     animation: pontas-das-abas linear both;
     animation-timeline: scroll(self inline);
   }
@@ -3341,7 +3341,6 @@ dialog.grafo-dinheiro::backdrop { background: var(--veu); }
 /* ═══ GRÁFICO DE FITAS (Sankey) ═════════════════════════════════ */
 /* Uma cor só (RNF-16): a fita diz que o dinheiro passou. A caixa realçada acende as fitas dela e apaga as outras. */
 .grafico-de-fitas-caixa { width: 100%; overflow-x: auto; margin: .75rem 0; contain: inline-size; }
-.grafico-de-fitas-arraste { margin-bottom: 0; }
 .grafico-de-fitas { display: block; overflow: visible; }
 .grafico-de-fitas .fita { fill: none; stroke: var(--realce); stroke-opacity: var(--fita-opacidade); transition: stroke-opacity var(--t-curto) var(--curva); }
 .grafico-de-fitas .fita:hover { stroke-opacity: calc(var(--fita-opacidade) + .3); }
@@ -3352,6 +3351,10 @@ dialog.grafo-dinheiro::backdrop { background: var(--veu); }
   paint-order: stroke; stroke: var(--fundo); stroke-width: 3px; stroke-linejoin: round;
 }
 .grafico-de-fitas .fitas-valor { fill: var(--suave); font-family: var(--dado); font-weight: 400; }
-.grafico-de-fitas .fitas-coluna { fill: var(--suave); font-size: 12px; text-transform: none; letter-spacing: .02em; }
+.grafico-de-fitas .fitas-coluna {
+  fill: var(--suave); font-size: 12px; text-transform: none; letter-spacing: .02em;
+  paint-order: stroke; stroke: var(--fundo); stroke-width: 3px; stroke-linejoin: round;
+}
+.grafico-de-fitas .fitas-guia { stroke: var(--texto); stroke-width: 1.25; opacity: .7; }
 .grafico-de-fitas g:hover .fitas-caixa { fill: var(--realce); }
 @media (prefers-reduced-motion: reduce) { .grafico-de-fitas .fita { transition: none; } }

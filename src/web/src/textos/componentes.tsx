@@ -120,7 +120,6 @@ export const TEXTOS_DOS_COMPONENTES = {
   fitas: {
     fita: (de: string, para: string, valor: string) => `${de} → ${para}: ${valor}`,
     caixa: (nome: string, valor: string) => `${nome}: ${valor}`,
-    arraste: 'O gráfico não cabe na tela: arraste para o lado para ver as outras colunas.',
   },
 
   compartilhar: {
