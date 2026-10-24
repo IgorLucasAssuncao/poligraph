@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { useAbaAtivaAVista } from './useAbaAtivaAVista';
 import { ABAS_DO_DINHEIRO } from '../navegacao';
 import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
@@ -10,8 +11,10 @@ import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
  * endereço próprio, então o link compartilhado e o "voltar" do navegador continuam valendo.
  */
 export function AbasDoDinheiroComponent() {
+  const barra = useAbaAtivaAVista<HTMLElement>();
+
   return (
-    <nav className="abas-do-dinheiro" aria-label={T.abasDoDinheiro}>
+    <nav ref={barra} className="abas-do-dinheiro" aria-label={T.abasDoDinheiro}>
       {ABAS_DO_DINHEIRO.map((aba) => (
         <NavLink key={aba.para} to={aba.para} className="aba" viewTransition>
           {aba.rotulo}

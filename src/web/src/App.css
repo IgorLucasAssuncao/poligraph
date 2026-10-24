@@ -578,7 +578,10 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .perfil-numeros span { color: var(--suave); }
 
 /* ═══ ABAS ═════════════════════════════════════════════════════ */
-.abas { display: flex; border-bottom: 1px solid var(--borda); }
+.abas { display: flex; border-bottom: 1px solid var(--borda); overflow-x: auto; scrollbar-width: none; }
+@media (max-width: 480px) {
+  .abas .aba { padding-inline: .25rem; font-size: var(--t-1); }
+}
 .aba {
   flex: 1; padding: .95rem .5rem; text-align: center;
   background: none; border: none; color: var(--suave);
@@ -613,6 +616,10 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   font: inherit; font-size: var(--t-2); padding: .6rem .9rem;
   border-radius: var(--raio); border: 1px solid var(--borda-controle);
   background: var(--fundo); color: inherit;
+}
+.filtros select { max-width: 100%; text-overflow: ellipsis; }
+@media (max-width: 480px) {
+  .filtros select { flex: 1 1 calc(50% - .25rem); min-width: 0; padding-inline: .5rem; font-size: var(--t-1); }
 }
 .filtros input { flex: 1; min-width: 11rem; }
 
@@ -1213,6 +1220,10 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .entrada-do-inicio .sua-cidade-campos input { flex: 1 1 auto; }
 .entrada-do-inicio .sua-cidade-campos button { flex: 0 0 auto; }
 .entrada-do-inicio .sua-cidade .nota-curta { display: none; }
+@media (max-width: 480px) {
+  .entrada-do-inicio .sua-cidade-campos { flex-wrap: wrap; }
+  .entrada-do-inicio .sua-cidade-campos input { flex-basis: 100%; }
+}
 /* A lista de cidades abre por cima, como menu: no fluxo, ela esticava o cartão e empurrava o do questionário. */
 .entrada-do-inicio .sua-cidade-achados {
   position: absolute; left: 0; right: 0; top: calc(100% + .25rem); z-index: 20;
@@ -2654,6 +2665,11 @@ dialog.tour::backdrop { background: transparent; }
   border: 1px solid var(--borda-controle); border-radius: var(--raio);
 }
 .seletor-periodo-campos select:focus-visible { outline: 2px solid var(--realce); outline-offset: 1px; }
+/* No celular, os mandatos cabem dois por linha: um por linha, o período empurrava o dado para a segunda tela. */
+@media (max-width: 480px) {
+  .seletor-periodo-campos { gap: .4rem .5rem; }
+  .seletor-periodo-campos button { padding: .35rem .55rem; font-size: var(--t-1); }
+}
 
 .lista-autores li.autor-com-foto { grid-template-columns: auto 1fr auto; align-items: center; }
 .autor-com-foto .autor-texto { display: grid; gap: .1rem; min-width: 0; }
@@ -3208,6 +3224,26 @@ dialog.grafo-dinheiro::backdrop { background: var(--veu); }
 .painel-cidade .aba:hover { background: var(--fundo); }
 .painel-cidade-aba > .ajuda:first-child { margin-top: 0; }
 
+/* No celular, as abas de uma lista quebram em duas colunas: rolando de lado, metade sumia (2026-10-23, 710 px em 326). */
+@media (max-width: 480px) {
+  .abas-internas { display: grid; grid-template-columns: 1fr 1fr; overflow-x: visible; }
+  .abas-internas .aba { padding: .6rem .4rem; white-space: normal; }
+}
+
+/* Barra de abas que rola de lado: a ponta some no fundo, e quem lê vê que tem mais. Só onde o navegador liga a rolagem
+   à animação; nos outros, a barra rola sem o esfumado. */
+@supports (animation-timeline: scroll()) {
+  .abas-do-dinheiro, .abas-do-governo, .grafico-de-fitas-caixa {
+    animation: pontas-das-abas linear both;
+    animation-timeline: scroll(self inline);
+  }
+}
+@keyframes pontas-das-abas {
+  0% { mask-image: linear-gradient(to right, #000 82%, transparent); }
+  8%, 92% { mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent); }
+  100% { mask-image: linear-gradient(to right, transparent, #000 18%); }
+}
+
 /* As linhas de um número pequeno, no painel do modo auditoria (plano/10 §3). */
 .lista-linhas-procedencia { list-style: none; margin: 0; padding: 0; font-size: var(--t-2); }
 .lista-linhas-procedencia li { display: flex; justify-content: space-between; gap: 1rem; padding: .4rem 0; border-bottom: 1px solid var(--borda); }
@@ -3286,6 +3322,7 @@ dialog.grafo-dinheiro::backdrop { background: var(--veu); }
 /* ═══ GRÁFICO DE FITAS (Sankey) ═════════════════════════════════ */
 /* Uma cor só (RNF-16): a fita diz que o dinheiro passou. A caixa realçada acende as fitas dela e apaga as outras. */
 .grafico-de-fitas-caixa { width: 100%; overflow-x: auto; margin: .75rem 0; }
+.grafico-de-fitas-arraste { margin-bottom: 0; }
 .grafico-de-fitas { display: block; overflow: visible; }
 .grafico-de-fitas .fita { fill: none; stroke: var(--realce); stroke-opacity: var(--fita-opacidade); transition: stroke-opacity var(--t-curto) var(--curva); }
 .grafico-de-fitas .fita:hover { stroke-opacity: calc(var(--fita-opacidade) + .3); }

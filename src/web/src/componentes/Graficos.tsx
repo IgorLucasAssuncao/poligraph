@@ -52,9 +52,13 @@ export function ColunasPorAnoComponent({
       <p className="grafico-dica" aria-live="polite">
         {focado && emFoco
           ? `${focado.ano}${series.length > 1 ? ` · ${series[emFoco.serie]}` : ''}: ${formatar(focado.valores[emFoco.serie])}${focado.nota ? ` · ${focado.nota}` : ''}`
-          : aoEscolher
-            ? T.dicaComEscolha
-            : T.dica}
+          : semMouse()
+            ? aoEscolher
+              ? T.dicaComEscolhaNoToque
+              : T.dicaNoToque
+            : aoEscolher
+              ? T.dicaComEscolha
+              : T.dica}
       </p>
       <div className="grafico-colunas-area" onMouseLeave={() => setEmFoco(null)}>
         {anos.map((a, i) => (
@@ -134,6 +138,11 @@ export function ColunasPorAnoComponent({
       </details>
     </figure>
   );
+}
+
+/** Se a tela é de toque, sem mouse para passar por cima: a dica fala em tocar. */
+function semMouse(): boolean {
+  return window.matchMedia?.('(hover: none)').matches ?? false;
 }
 
 /** Uma parte do todo na barra de composição. */

@@ -110,6 +110,8 @@ export const TEXTOS_DOS_COMPONENTES = {
   graficos: {
     dica: 'Passe o mouse ou use Tab para ver o valor de cada ano.',
     dicaComEscolha: 'Passe o mouse para ver o valor. Clique num ano para ver só ele.',
+    dicaNoToque: 'Toque num ano para ver o valor.',
+    dicaComEscolhaNoToque: 'Toque num ano para ver o valor e ficar só com ele.',
     verTabela: 'Ver como tabela',
     ano: 'Ano',
     deCadaCem: (parte: number) => `${parte} de cada R$ 100`,
@@ -118,6 +120,7 @@ export const TEXTOS_DOS_COMPONENTES = {
   fitas: {
     fita: (de: string, para: string, valor: string) => `${de} → ${para}: ${valor}`,
     caixa: (nome: string, valor: string) => `${nome}: ${valor}`,
+    arraste: 'O gráfico não cabe na tela: arraste para o lado para ver as outras colunas.',
   },
 
   compartilhar: {

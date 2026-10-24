@@ -60,15 +60,15 @@ export function GraficoDeFitasComponent({
 }) {
   const [realce, setRealce] = useState<string | null>(null);
   const caixa = useRef<HTMLDivElement>(null);
-  const [LARGURA, setLargura] = useState(LARGURA_INICIAL);
+  const [medida, setMedida] = useState(LARGURA_INICIAL);
+  const LARGURA = Math.max(LARGURA_MINIMA, medida);
+  const rolaDeLado = medida < LARGURA_MINIMA;
 
   useEffect(() => {
     const elemento = caixa.current;
     if (!elemento || typeof ResizeObserver === "undefined") return;
     const observador = new ResizeObserver(([entrada]) =>
-      setLargura(
-        Math.max(LARGURA_MINIMA, Math.round(entrada.contentRect.width)),
-      ),
+      setMedida(Math.round(entrada.contentRect.width)),
     );
     observador.observe(elemento);
     return () => observador.disconnect();
@@ -119,81 +119,86 @@ export function GraficoDeFitasComponent({
     (l.target as No).id === realce;
 
   return (
-    <div ref={caixa} className="grafico-de-fitas-caixa">
-      <svg
-        className="grafico-de-fitas"
-        viewBox={`0 0 ${LARGURA} ${altura}`}
-        width={LARGURA}
-        height={altura}
-        role="img"
-        aria-label={rotulo}
-      >
-        {colunas.map((titulo, i) => (
-          <text
-            key={titulo}
-            className="fitas-coluna"
-            x={i === ultima ? LARGURA - MARGEM.direita : xDaColuna(i)}
-            y={14}
-            textAnchor={i === ultima ? "end" : "start"}
-          >
-            {titulo}
-          </text>
-        ))}
-
-        <g className="fitas-ligacoes">
-          {desenho.links.map((l, i) => (
-            <path
-              key={i}
-              d={caminho(l) ?? undefined}
-              className={ligada(l) ? "fita" : "fita fita-apagada"}
-              strokeWidth={Math.max(1, l.width ?? 0)}
+    <>
+      {rolaDeLado && (
+        <p className="nota-curta grafico-de-fitas-arraste">{T.arraste}</p>
+      )}
+      <div ref={caixa} className="grafico-de-fitas-caixa">
+        <svg
+          className="grafico-de-fitas"
+          viewBox={`0 0 ${LARGURA} ${altura}`}
+          width={LARGURA}
+          height={altura}
+          role="img"
+          aria-label={rotulo}
+        >
+          {colunas.map((titulo, i) => (
+            <text
+              key={titulo}
+              className="fitas-coluna"
+              x={i === ultima ? LARGURA - MARGEM.direita : xDaColuna(i)}
+              y={14}
+              textAnchor={i === ultima ? "end" : "start"}
             >
-              <title>
-                {T.fita(
-                  (l.source as No).rotulo,
-                  (l.target as No).rotulo,
-                  formatar(l.value),
-                )}
-              </title>
-            </path>
+              {titulo}
+            </text>
           ))}
-        </g>
 
-        <g className="fitas-caixas">
-          {desenho.nodes.map((n) => {
-            const naDireita = n.coluna === ultima;
-            return (
-              <g
-                key={n.id}
-                onMouseEnter={() => setRealce(n.id)}
-                onMouseLeave={() => setRealce(null)}
+          <g className="fitas-ligacoes">
+            {desenho.links.map((l, i) => (
+              <path
+                key={i}
+                d={caminho(l) ?? undefined}
+                className={ligada(l) ? "fita" : "fita fita-apagada"}
+                strokeWidth={Math.max(1, l.width ?? 0)}
               >
-                <rect
-                  x={n.x0}
-                  y={n.y0}
-                  width={(n.x1 ?? 0) - (n.x0 ?? 0)}
-                  height={Math.max(1, (n.y1 ?? 0) - (n.y0 ?? 0))}
-                  className="fitas-caixa"
+                <title>
+                  {T.fita(
+                    (l.source as No).rotulo,
+                    (l.target as No).rotulo,
+                    formatar(l.value),
+                  )}
+                </title>
+              </path>
+            ))}
+          </g>
+
+          <g className="fitas-caixas">
+            {desenho.nodes.map((n) => {
+              const naDireita = n.coluna === ultima;
+              return (
+                <g
+                  key={n.id}
+                  onMouseEnter={() => setRealce(n.id)}
+                  onMouseLeave={() => setRealce(null)}
                 >
-                  <title>{T.caixa(n.rotulo, formatar(n.value ?? 0))}</title>
-                </rect>
-                <text
-                  className="fitas-rotulo"
-                  x={naDireita ? (n.x0 ?? 0) - 6 : (n.x1 ?? 0) + 6}
-                  y={((n.y0 ?? 0) + (n.y1 ?? 0)) / 2}
-                  dy="0.35em"
-                  textAnchor={naDireita ? "end" : "start"}
-                >
-                  {n.rotulo}{" "}
-                  <tspan className="fitas-valor">
-                    {formatar(n.value ?? 0)}
-                  </tspan>
-                </text>
-              </g>
-            );
-          })}
-        </g>
-      </svg>
-    </div>
+                  <rect
+                    x={n.x0}
+                    y={n.y0}
+                    width={(n.x1 ?? 0) - (n.x0 ?? 0)}
+                    height={Math.max(1, (n.y1 ?? 0) - (n.y0 ?? 0))}
+                    className="fitas-caixa"
+                  >
+                    <title>{T.caixa(n.rotulo, formatar(n.value ?? 0))}</title>
+                  </rect>
+                  <text
+                    className="fitas-rotulo"
+                    x={naDireita ? (n.x0 ?? 0) - 6 : (n.x1 ?? 0) + 6}
+                    y={((n.y0 ?? 0) + (n.y1 ?? 0)) / 2}
+                    dy="0.35em"
+                    textAnchor={naDireita ? "end" : "start"}
+                  >
+                    {n.rotulo}{" "}
+                    <tspan className="fitas-valor">
+                      {formatar(n.value ?? 0)}
+                    </tspan>
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        </svg>
+      </div>
+    </>
   );
 }

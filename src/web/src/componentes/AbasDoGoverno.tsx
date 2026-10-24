@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { useAbaAtivaAVista } from './useAbaAtivaAVista';
 import { ABAS_DO_GOVERNO } from '../navegacao';
 import { TEXTOS_DO_SITE as T } from '../textos/site';
 
@@ -7,8 +8,10 @@ import { TEXTOS_DO_SITE as T } from '../textos/site';
  * período escolhido vai junto na busca, para trocar de aba sem perder o recorte.
  */
 export function AbasDoGovernoComponent({ busca }: { busca: string }) {
+  const barra = useAbaAtivaAVista<HTMLElement>();
+
   return (
-    <nav className="abas-do-governo" aria-label={T.abasDoGoverno.rotulo} data-tour="governo-abas">
+    <nav ref={barra} className="abas-do-governo" aria-label={T.abasDoGoverno.rotulo} data-tour="governo-abas">
       {ABAS_DO_GOVERNO.map((aba) => (
         <NavLink key={aba.para} to={`${aba.para}${busca}`} end={aba.fim} className="aba" viewTransition>
           {aba.rotulo}
