@@ -8,6 +8,21 @@ public static class MensagensDaApi
 {
     public const string TituloDaDocumentacao = "Registro Aberto — API";
 
+    public const string SaudeWorkerDePe = "O worker dos avisos está de pé.";
+    public const string SaudeWorkerSemFila = "A fila de tarefas (schema hangfire) não existe: o worker nunca subiu neste banco.";
+    public const string SaudeWorkerSemServidor = "Nenhum worker registrado na fila: os avisos não estão saindo.";
+
+    public static string SaudeWorkerParado(TimeSpan semBatida) =>
+        $"O worker dos avisos não dá sinal há {Math.Round(semBatida.TotalMinutes)} min.";
+
+    public const string SaudeRotinaNenhuma = "Nenhuma rotina da ETL terminou neste banco ainda.";
+
+    public static string SaudeRotinaEmDia(TimeSpan desde) =>
+        $"A última rotina da ETL terminou há {Math.Round(desde.TotalHours)} h.";
+
+    public static string SaudeRotinaAtrasada(TimeSpan desde) =>
+        $"A última rotina da ETL terminou há {Math.Round(desde.TotalDays)} dias: a semanal atrasou.";
+
     public const string RespostasInsuficientes = "Responda mais perguntas para que o resultado tenha significado.";
     public const string SemBaseComparavel = "Nenhum parlamentar votou o suficiente nas perguntas respondidas.";
 

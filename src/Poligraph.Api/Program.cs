@@ -14,6 +14,7 @@ builder.AddNpgsqlDbContext<PoligraphDb>(
 
 builder.AdicionarAutenticacao();
 builder.Services.AdicionarServicos();
+builder.Services.AdicionarSaude();
 
 var app = builder.Build();
 

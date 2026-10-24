@@ -703,6 +703,23 @@ PS&gt; ssh -t -o ClearAllForwardings=yes coolify "sudo bash /tmp/restaurar-banco
     antiga. O par do desenvolvimento fica no user-secrets do AppHost, nos parâmetros <code>avisos-chave-publica</code> e
     <code>avisos-chave-privada</code>.</p>
 
+  <h3>6. A saúde dos serviços</h3>
+  <p>A API tem três rotas de saúde, mapeadas pelo <code>ServiceDefaults</code> do Aspire em todo ambiente. O nginx só repassa
+    <code>/api/</code>, então elas não chegam à internet:</p>
+  <table>
+    <thead><tr><th>Rota</th><th>Confere</th><th>Quem usa</th></tr></thead>
+    <tbody>
+      <tr><td><code>/alive</code></td><td>O processo responde</td><td>Quem quiser saber se a API travou</td></tr>
+      <tr><td><code>/health</code></td><td>A API e o banco (<code>PoligraphDb</code>, que o <code>AddNpgsqlDbContext</code> registra)</td><td>O <code>HEALTHCHECK</code> da imagem, e por ele o Coolify</td></tr>
+      <tr><td><code>/health/componentes</code></td><td>Tudo, em JSON: o banco, o worker (a batida em <code>hangfire.server</code> com menos de 2 min) e a rotina da ETL (um evento com menos de 8 dias)</td><td>Quem está no servidor</td></tr>
+    </tbody>
+  </table>
+  <p>O worker e a rotina dão Degraded, nunca Unhealthy, e ficam fora do <code>/health</code>: o site funciona sem os avisos e com o
+    dado da semana anterior, e um worker parado não deve marcar a API como fora do ar. A imagem chiseled não tem shell nem
+    <code>curl</code>; a sonda é o <code>wget</code> do BusyBox, estático, em <code>/saude/wget</code>. O <code>Host</code> da sonda é
+    <code>localhost</code>, que a API acrescenta ao <code>AllowedHosts</code>. O <code>web</code> tem o dele, que pede a página inicial
+    ao nginx. Para ver os componentes no VPS:</p>
+  <pre>sudo docker exec NOME-DA-API /saude/wget -q -O - http://localhost:8080/health/componentes</pre>
   <h3>Cada configuração da aplicação</h3>
   <div class="tabela"><table>
     <thead><tr><th>Configuração</th><th>Valor</th><th>Por quê</th><th>Se mudar</th></tr></thead>

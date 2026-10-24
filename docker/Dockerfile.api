@@ -14,6 +14,11 @@ RUN dotnet publish "src/Poligraph.Api/Poligraph.Api.csproj" \
     -c Release -o /app --no-restore
 RUN mkdir -p /chaves
 
+# ─── sonda de saúde ───────────────────────────────────────────────────
+# A chiseled não tem shell nem curl, e o health check do container precisa de um programa que faça o
+# GET. O wget do BusyBox é estático: roda sem libc e sem shell (testado na chiseled em 2026-10-24).
+FROM busybox:1.37.0-musl AS saude
+
 # ─── runtime ──────────────────────────────────────────────────────────
 # -chiseled: ~100 MB em vez de ~220 MB, e SEM shell.
 # ATENÇÃO: Sem shell, `docker exec ... bash` não funciona. Para depurar, troque
@@ -25,6 +30,7 @@ RUN mkdir -p /chaves
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra AS final
 WORKDIR /app
 COPY --from=build /app .
+COPY --from=saude /bin/wget /saude/wget
 
 # ATENÇÃO: a pasta nasce na imagem pertencendo ao usuário da API (1654, o APP_UID das imagens
 #    do .NET). Sem isso o volume novo é criado do root, e a API não grava as chaves
@@ -37,4 +43,7 @@ USER $APP_UID
 ENV DataProtection__Pasta=/home/app/chaves
 VOLUME ["/home/app/chaves"]
 EXPOSE 8080
+# O /health cobre a API e o banco; o worker e a ETL ficam no /health/componentes, para não marcarem a
+# API como fora do ar. O Host é localhost: a API o acrescenta ao AllowedHosts (ConfiguracaoDeSaude).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3     CMD ["/saude/wget", "-q", "-O", "/dev/null", "-T", "4", "http://localhost:8080/health"]
 ENTRYPOINT ["dotnet", "Poligraph.Api.dll"]
