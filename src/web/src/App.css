@@ -368,7 +368,9 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   width: 100%;
   margin-inline: auto;
   padding: 1.5rem clamp(1rem, 4vw, 3rem) 0;
-  min-height: 60vh;
+  /* A janela inteira: com 60vh, o rodapé aparecia no meio da tela enquanto os dados carregavam e saltava para baixo quando
+     chegavam. MEDIDO em 2026-10-23: era o único salto de layout das páginas, até 0,24 (ruim acima de 0,25). */
+  min-height: 100vh;
 }
 
 /* ATENÇÃO: Teto de MEDIDA, não de layout: linha de texto acima de ~75ch fica difícil de ler.
@@ -2977,7 +2979,10 @@ dialog.painel-procedencia {
 dialog.painel-procedencia[open] { display: flex; transform: none; transition-timing-function: var(--curva-entrada); }
 /* Uma barra de rolagem só, a do corpo do painel: o diálogo não rola e a página atrás fica parada
    (2026-10-03: eram três, a da página, a do diálogo e a do corpo). */
-html:has(dialog.painel-procedencia[open]) { overflow: hidden; }
+/* Todo diálogo modal trava a página por trás: só a procedência e o grafo do dinheiro travavam, e o grafo ampliado, o modal
+   e o consentimento deixavam a roda rolar a página escondida (2026-10-23). O tour fica de fora: ele rola a página até o
+   alvo de cada passo. */
+html:has(dialog[open]:modal:not(.tour)) { overflow: hidden; }
 @starting-style { dialog.painel-procedencia[open] { transform: translateX(100%); } }
 dialog.painel-procedencia::backdrop { background: var(--veu); }
 @media (prefers-reduced-motion: reduce) {
@@ -3126,7 +3131,6 @@ dialog.grafo-dinheiro {
 }
 dialog.grafo-dinheiro[open] { display: flex; }
 dialog.grafo-dinheiro::backdrop { background: var(--veu); }
-html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
 .grafo-dinheiro-topo {
   flex-shrink: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
   padding: 1rem 1.25rem; border-bottom: 1px solid var(--borda);
@@ -3161,18 +3165,15 @@ html:has(dialog.grafo-dinheiro[open]) { overflow: hidden; }
 .grafo-dinheiro-link:focus-visible { outline: none; }
 
 /* ═══ EMENDAS: a página mais curta (2026-10-03) ═══════════════════
-   O mapa e a lista lado a lado no computador, com a lista rolando na altura do mapa; no celular,
-   um embaixo do outro, e a lista de estados mostra os dez primeiros. A busca da cidade e o
-   período dividem a mesma faixa. */
+   O mapa e a lista lado a lado no computador; no celular, um embaixo do outro. Nos dois, a lista de estados mostra os dez
+   primeiros e "ver todos" abre o resto na própria página. A busca da cidade e o período dividem a mesma faixa.
+   ATENÇÃO (2026-10-23): no computador a lista rolava dentro da altura do mapa, uma rolagem dentro da rolagem da página
+   que prendia a roda do mouse. Os dez maiores cabem ao lado do mapa. */
 .mapa-e-lista { display: grid; gap: 1.25rem; align-items: start; }
 @media (min-width: 1100px) {
   .mapa-e-lista { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
-  .mapa-e-lista .lista-ao-lado { max-height: 36rem; overflow-y: auto; }
-  .mapa-e-lista .ver-todos-os-estados { display: none; }
 }
-@media (max-width: 1099px) {
-  .mapa-e-lista:not(.todos-os-estados) .estado-alem-dos-dez { display: none; }
-}
+.mapa-e-lista:not(.todos-os-estados) .estado-alem-dos-dez { display: none; }
 .emendas-filtros {
   display: grid; gap: 1rem 2rem; align-items: start;
   padding: 1rem; border-bottom: 1px solid var(--borda);

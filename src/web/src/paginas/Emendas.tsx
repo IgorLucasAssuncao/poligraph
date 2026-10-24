@@ -342,12 +342,12 @@ function MapaDoPaisComponent({ brasil, aoEscolher }: { brasil: MapaDoBrasil; aoE
             ))}
           </tbody>
         </table>
+        {ordenadas.length > ESTADOS_A_VISTA && !todosOsEstados && (
+          <button type="button" className="botao-secundario ver-todos-os-estados" onClick={() => setTodosOsEstados(true)}>
+            {T.pais.verTodos(ordenadas.length)}
+          </button>
+        )}
       </div>
-      {ordenadas.length > ESTADOS_A_VISTA && !todosOsEstados && (
-        <button type="button" className="botao-secundario ver-todos-os-estados" onClick={() => setTodosOsEstados(true)}>
-          {T.pais.verTodos(ordenadas.length)}
-        </button>
-      )}
       </div>
 
       <BotaoBaixarCsvComponent
