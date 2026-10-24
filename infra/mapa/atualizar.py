@@ -15,7 +15,7 @@ tabela ou rota chega a ele no mesmo commit. A parte que dá para ler do código 
 a regra não depender de memória.
 
 ATENÇÃO: tabela nova precisa de lugar em `GRUPOS_DO_MODELO` e `PAPEL`, e rota nova em
-`GRUPOS_DE_ROTAS`; o script avisa o que ficou sem grupo.
+`GRUPOS_DE_ROTAS`; o script falha e diz o que ficou sem grupo.
 """
 
 import json
@@ -65,11 +65,16 @@ def principal() -> None:
     MAPA.write_text(html, encoding="utf-8", newline="\n")
 
     print(f"Mapa atualizado: {len(modelo)} tabelas, {len(rotas)} rotas.")
+    sem_lugar = []
     for constante, nomes in (("GRUPOS_DO_MODELO", [t["tabela"] for t in modelo]),
-                             ("PAPEL", [t["tabela"] for t in modelo])):
+                             ("PAPEL", [t["tabela"] for t in modelo]),
+                             ("GRUPOS_DE_ROTAS", sorted({r["arquivo"] for r in rotas}))):
         faltam = sem_grupo(html, constante, nomes)
         if faltam:
-            print(f"ATENÇÃO: sem lugar em {constante}: {', '.join(faltam)}")
+            sem_lugar.append(f"sem lugar em {constante}: {', '.join(faltam)}")
+    if sem_lugar:
+        raise SystemExit("O mapa não desenha nó sem lugar, e para de desenhar no primeiro."
+                         + QUEBRA + QUEBRA.join(sem_lugar))
 
 
 if __name__ == "__main__":
