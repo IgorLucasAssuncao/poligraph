@@ -48,6 +48,12 @@ jobs:
         working-directory: .
         run: docker build -f docker/Dockerfile.web -t poligraph-web:ci .
 
+      # O nginx só lê a configuração ao subir: a regex sem aspas de 2026-10-24 passou pelo build
+      # e derrubou o web em produção. Os upstreams api e api2 precisam resolver para o -t passar.
+      - name: Configuração do nginx
+        working-directory: .
+        run: docker run --rm --add-host api:127.0.0.1 --add-host api2:127.0.0.1 poligraph-web:ci nginx -t
+
   qualidade:
     name: Qualidade
     runs-on: ubuntu-latest
