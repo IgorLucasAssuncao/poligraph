@@ -5,6 +5,7 @@ import type { Busca } from '../api';
 import { ehDinheiroPublico } from '../navegacao';
 import { BuscaDoCabecalhoComponent } from './BuscaDoCabecalho';
 import { MenuDaContaComponent } from './MenuDaConta';
+import { MenuDoDinheiroComponent } from './MenuDoDinheiro';
 
 vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
@@ -122,5 +123,34 @@ describe('Dinheiro público', () => {
     ['/emendasx', false],
   ])('%s acende o item: %s', (caminho, esperado) => {
     expect(ehDinheiroPublico(caminho)).toBe(esperado);
+  });
+});
+
+describe('menu de Dinheiro público', () => {
+  it('a seta abre as seções, com as do governo, e o clique leva direto e fecha', () => {
+    renderizar(
+      <MenuDoDinheiroComponent>
+        <a href="/emendas">Dinheiro público</a>
+      </MenuDoDinheiroComponent>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver as seções de Dinheiro público' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Cartões do governo federal' }));
+
+    expect(screen.getByTestId('endereco')).toHaveTextContent('/governo/cartoes');
+    expect(screen.queryByRole('link', { name: 'Cidades' })).not.toBeInTheDocument();
+  });
+
+  it('fecha com Esc', () => {
+    renderizar(
+      <MenuDoDinheiroComponent>
+        <a href="/emendas">Dinheiro público</a>
+      </MenuDoDinheiroComponent>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ver as seções de Dinheiro público' }));
+    expect(screen.getByRole('link', { name: 'Entidades' })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('link', { name: 'Entidades' })).not.toBeInTheDocument();
   });
 });

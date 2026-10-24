@@ -1,7 +1,8 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSessao } from '../sessao';
 import { useEntrar } from './useEntrar';
+import { useFecharAoSair } from './useFecharAoSair';
 import { AvatarComponent } from './Avatar';
 import { useTour } from './contextoDoTour';
 import { SeletorDeTemaComponent } from './SeletorDeTema';
@@ -32,21 +33,8 @@ export function MenuDaContaComponent() {
   const caixa = useRef<HTMLDivElement>(null);
   const id = useId();
 
-  useEffect(() => {
-    if (!aberto) return;
-    const aoClicarFora = (e: MouseEvent) => {
-      if (!caixa.current?.contains(e.target as Node)) setAberto(false);
-    };
-    const aoTeclar = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setAberto(false);
-    };
-    document.addEventListener('mousedown', aoClicarFora);
-    document.addEventListener('keydown', aoTeclar);
-    return () => {
-      document.removeEventListener('mousedown', aoClicarFora);
-      document.removeEventListener('keydown', aoTeclar);
-    };
-  }, [aberto]);
+  const fechar = useCallback(() => setAberto(false), []);
+  useFecharAoSair(aberto, caixa, fechar);
 
   const primeiroNome = usuario?.nome?.split(' ')[0] ?? T.menu.conta;
   const auditoria = useModoAuditoria();

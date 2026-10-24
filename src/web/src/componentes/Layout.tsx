@@ -6,6 +6,7 @@ import { BuscaDoCabecalhoComponent } from './BuscaDoCabecalho';
 import { FaixaDeProcedenciaComponent } from './FaixaDeProcedencia';
 import { IconeExplorarComponent, IconeOrcamentoComponent, IconeQuestionarioComponent, IconeVoltarComponent, MarcaComponent } from './Icones';
 import { MenuDaContaComponent } from './MenuDaConta';
+import { MenuDoDinheiroComponent } from './MenuDoDinheiro';
 import { SininhoComponent } from './Sininho';
 import { AvisoDeSeguidosEncerradosComponent } from './AvisoDeSeguidosEncerrados';
 import { AjudaComponent } from './Ajuda';
@@ -188,19 +189,22 @@ function CabecalhoDoSiteComponent() {
         </Link>
 
         <nav className="nav-principal" aria-label={T.navegacao}>
-          {DESTINOS.map((destino) => (
-            <NavLink
-              key={destino.para}
-              to={destino.para === '/parlamentares' ? comPeriodo(destino.para) : destino.para}
-              className={({ isActive }) =>
-                `nav-item ${isActive || (destino.para === '/emendas' && ehDinheiroPublico(pathname)) ? 'active' : ''}`
-              }
-              viewTransition
-            >
-              {destino.icone}
-              <span>{destino.rotulo}</span>
-            </NavLink>
-          ))}
+          {DESTINOS.map((destino) => {
+            const item = (
+              <NavLink
+                key={destino.para}
+                to={destino.para === '/parlamentares' ? comPeriodo(destino.para) : destino.para}
+                className={({ isActive }) =>
+                  `nav-item ${isActive || (destino.para === '/emendas' && ehDinheiroPublico(pathname)) ? 'active' : ''}`
+                }
+                viewTransition
+              >
+                {destino.icone}
+                <span>{destino.rotulo}</span>
+              </NavLink>
+            );
+            return destino.para === '/emendas' ? <MenuDoDinheiroComponent key={destino.para}>{item}</MenuDoDinheiroComponent> : item;
+          })}
         </nav>
 
         <BuscaDoCabecalhoComponent />

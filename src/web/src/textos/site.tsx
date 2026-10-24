@@ -17,6 +17,10 @@ export const TEXTOS_DO_SITE = {
     compare: 'Compare seu voto',
     dinheiro: 'Dinheiro público',
   },
+  menuDoDinheiro: {
+    abrir: 'Ver as seções de Dinheiro público',
+    doGoverno: (aba: string) => `${aba} do governo federal`,
+  },
   abasDoDinheiro: {
     emendas: 'Emendas por cidade',
     cidades: 'Cidades',

@@ -341,6 +341,15 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   border-bottom-color: var(--realce);
 }
 .nav-item.active svg { color: var(--realce); }
+/* Dinheiro público com a seta que abre as seções (2026-10-23). */
+.nav-com-menu { position: relative; display: flex; align-items: stretch; }
+.nav-menu-botao {
+  align-self: center; padding: .3rem .35rem; margin-left: -.5rem; background: none; border: 1px solid transparent;
+  border-radius: var(--raio); color: var(--suave); font-size: var(--t-1); line-height: 1;
+}
+.nav-menu-botao:hover, .nav-menu-botao[aria-expanded='true'] { color: var(--texto); background: var(--painel); border-color: var(--borda); }
+.nav-menu-painel { left: 0; right: auto; }
+.menu-conta-painel > a.nav-menu-subitem { padding-left: 1.4rem; color: var(--suave); }
 
 .usuario-mini {
   display: flex; align-items: center; gap: .5rem;
@@ -2719,7 +2728,7 @@ dialog.tour::backdrop { background: transparent; }
   column-gap: clamp(.75rem, 1.6vw, 1.75rem);
 }
 .cabecalho-conteudo .marca-link { grid-area: marca; }
-.cabecalho-conteudo .nav-principal { grid-area: nav; margin-right: 0; min-width: max-content; }
+.cabecalho-conteudo .nav-principal { grid-area: nav; margin-right: 0; min-width: max-content; overflow: visible; }
 .cabecalho-conteudo .busca-cabecalho { grid-area: busca; }
 .cabecalho-conteudo .cabecalho-pessoal { grid-area: conta; display: flex; align-items: center; gap: .25rem; }
 .cabecalho-conteudo .cabecalho-ferramentas { grid-area: analise; align-self: center; display: flex; align-items: center; gap: .25rem; }
@@ -2879,6 +2888,8 @@ dialog.tour::backdrop { background: transparent; }
   .faixa-procedencia:has(.faixa-periodo) .faixa-curta { display: none; }
 
   .cabecalho-conteudo .nav-principal { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; min-width: 0; }
+  .nav-menu-botao { display: none; }
+  .nav-com-menu > .nav-item { flex: 1; }
   .cabecalho-conteudo .nav-item {
     flex-direction: column; justify-content: center; gap: .15rem;
     padding: .45rem .25rem .35rem; text-align: center;
