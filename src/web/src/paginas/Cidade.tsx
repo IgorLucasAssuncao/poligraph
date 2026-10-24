@@ -1,4 +1,5 @@
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { obterEmendasDoMunicipio, obterGestoesDaCidade, type EleitoNaGestao, type GestaoDaCidade } from '../api';
 import { AbasDoDinheiroComponent } from '../componentes/AbasDoDinheiro';
 import { BotaoCompartilharComponent } from '../componentes/BotaoCompartilhar';
@@ -124,21 +125,41 @@ export function CidadeComponent() {
 /** Quem mandou e quem recebeu: as listas que saíram do painel da tela de emendas, no período que veio no endereço. */
 function EmendasDaCidadeComponent({ codigoIbge }: { codigoIbge: string }) {
   const [parametros] = useSearchParams();
+  const { hash, pathname } = useLocation();
   const periodo = periodoDoEndereco(parametros.get('de'), parametros.get('ate'));
   const lida = useCarga(['municipio', codigoIbge, periodo?.primeiroAno, periodo?.ultimoAno], () => obterEmendasDoMunicipio(codigoIbge, periodo));
+  const pronto = Boolean(lida.dados);
+
+  useEffect(() => {
+    if (pronto && hash === `#${ID_DAS_LISTAS}`) document.getElementById(ID_DAS_LISTAS)?.scrollIntoView({ block: 'start' });
+  }, [pronto, hash, periodo?.primeiroAno, periodo?.ultimoAno]);
+
   if (!lida.dados || lida.dados.recebido === 0) return null;
 
   return (
     <section className="governo-secao painel-cidade" aria-labelledby="listas-da-cidade">
-      <h2 id="listas-da-cidade" className="titulo-secao">
+      <h2 id={ID_DAS_LISTAS} className="titulo-secao">
         {T.quemMandou}
       </h2>
-      <p className="ajuda">{periodo ? T.quemMandouNoPeriodo(periodo.primeiroAno, periodo.ultimoAno) : T.quemMandouAjuda}</p>
+      <p className="ajuda">
+        {periodo ? T.quemMandouNoPeriodo(periodo.primeiroAno, periodo.ultimoAno) : T.quemMandouAjuda}
+        {periodo && (
+          <>
+            {' '}
+            <Link to={{ pathname, hash: ID_DAS_LISTAS }} replace>
+              {T.verTodosOsAnos}
+            </Link>
+          </>
+        )}
+      </p>
       <CaminhosDaCidadeComponent codigoIbge={codigoIbge} periodo={periodo} />
       <ListasDaCidadeComponent dados={lida.dados} periodo={periodo} />
     </section>
   );
 }
+
+/** A seção das listas, alvo do link de cada gestão. */
+const ID_DAS_LISTAS = 'listas-da-cidade';
 
 /** O ano em que começa a base de pagamentos de emenda (ago/2015, `emendas_favorecidos.competencia`). */
 const ANO_DO_PRIMEIRO_PAGAMENTO = 2015;
@@ -147,9 +168,13 @@ const ANO_DO_PRIMEIRO_PAGAMENTO = 2015;
 function GestaoComponent({ gestao, maior }: { gestao: GestaoDaCidade; maior: number }) {
   const anoAtual = new Date().getFullYear();
   const emAndamento = gestao.primeiroAno <= anoAtual && anoAtual <= gestao.ultimoAno;
+  const [parametros] = useSearchParams();
+  const de = Math.max(gestao.primeiroAno, ANO_DO_PRIMEIRO_PAGAMENTO);
+  const ate = Math.min(gestao.ultimoAno, anoAtual);
+  const filtrada = Number(parametros.get('de')) === de && Number(parametros.get('ate')) === ate;
 
   return (
-    <li className="gestao-da-cidade">
+    <li className={`gestao-da-cidade${filtrada ? ' gestao-filtrada' : ''}`}>
       <p className="gestao-anos">
         {gestao.primeiroAno}–{gestao.ultimoAno}
         {emAndamento && <small>{T.emAndamento}</small>}
@@ -209,6 +234,13 @@ function GestaoComponent({ gestao, maior }: { gestao: GestaoDaCidade; maior: num
             )}
           </small>
           {gestao.primeiroAno < ANO_DO_PRIMEIRO_PAGAMENTO && <small>{T.desdeAgosto}</small>}
+          {filtrada ? (
+            <small className="gestao-filtro">{T.gestaoNasListas}</small>
+          ) : (
+            <Link className="gestao-filtro" to={`?de=${de}&ate=${ate}#${ID_DAS_LISTAS}`} replace>
+              {T.verListasDaGestao}
+            </Link>
+          )}
           {gestao.contas && (
             <small className="gestao-contas">
               {T.contas(reaisCompacto(gestao.contas.receita), reaisCompacto(gestao.contas.despesaPaga))}{' '}

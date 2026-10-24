@@ -3376,6 +3376,11 @@ dialog.grafo-dinheiro::backdrop { background: var(--veu); }
   .linha-horizontal-faixa { font-size: 10px; padding: 0 .15rem; }
   .linha-horizontal-ponto { --tamanho: 10px; }
 }
+#listas-da-cidade { scroll-margin-top: 8rem; }
+#listas-da-cidade + .ajuda a { color: var(--realce); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.gestao-filtro { display: inline-block; margin-top: .35rem; font-size: var(--t-1); font-weight: 600; }
+a.gestao-filtro { color: var(--realce); }
+.gestao-da-cidade.gestao-filtrada { outline: 2px solid var(--realce); outline-offset: 2px; border-radius: var(--raio); }
 .gestao-contas { display: block; margin-top: .35rem; padding-top: .35rem; border-top: 1px solid var(--borda); }
 .painel-cidade-mais { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; margin: 1rem 0 0; }
 

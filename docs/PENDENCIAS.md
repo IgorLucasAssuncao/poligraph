@@ -172,7 +172,9 @@ não é do Congresso, e 2024 não traz CPF). A de 2016 está em outro endereço 
    partido, patrimônio e redes; quem votou no Congresso vai para `/parlamentar/:id`. Fica para depois: a
    campanha, que a prestação de contas antiga não liga à candidatura): mandato, partido, campanha, patrimônio e redes. Voto, grafo e afinidade só
    para quem tem voto publicado; nos outros, a ficha diz que a casa não publica voto nominal.
-4. **Município, numa página própria** (levantamento de 2026-10-21, a pedido do autor; ainda não implementado). Ver
+4. ✅ **Município, numa página própria** (FEITO: `/cidades/:codigoIbge` com as gestões, prefeito, vice e governadores, o
+   pago por gestão, as contas do Siconfi e as listas; em 2026-10-24, cada gestão filtra as listas pelos anos dela, com
+   "Ver todos os anos" para voltar). Ver
    "Levantamento da fase 4" abaixo. Era: **município na tela de emendas:** prefeito e governador do período de cada emenda, resumo por
    gestão e detalhe sob demanda.
 5. ✅ **Contas das prefeituras pelo SICONFI** (FEITO em 2026-10-22: comando `siconfi`, tabela `contas_dos_municipios`,

@@ -33,7 +33,7 @@ export const TEXTOS_DA_CIDADE = {
   },
   quemMandouAjuda: 'Todos os anos carregados, pelo ano da emenda. Para outro período, escolha no mapa das emendas.',
   quemMandouNoPeriodo: (de: number, ate: number) =>
-    `Emendas de ${de === ate ? de : `${de} a ${ate}`}, o período escolhido no mapa. Os blocos de gestão acima usam todos os anos.`,
+    `Só as emendas de ${de === ate ? de : `${de} a ${ate}`}. Os blocos de gestão acima continuam com todos os anos.`,
   gestoes: 'Quem foi eleito para governar',
   gestoesAjuda:
     'Cada bloco é um mandato municipal: quem o TSE registra como eleito, o governador eleito nos mesmos anos e o que chegou de emenda nesse período, pela data do pagamento.',
@@ -47,6 +47,9 @@ export const TEXTOS_DA_CIDADE = {
   viceGovernador: 'Vice-governador',
   semGovernador: 'Governador eleito antes de 1998, fora da base',
   chegouNaGestao: (valor: string) => `${valor} chegaram nesses anos`,
+  verListasDaGestao: 'Ver quem mandou nesta gestão',
+  gestaoNasListas: 'As listas abaixo estão nesta gestão',
+  verTodosOsAnos: 'Ver todos os anos',
   partes: (prefeitura: string, entidades: string, estado: string | null) =>
     `${prefeitura} à prefeitura · ${estado ? `${estado} ao governo do estado · ` : ''}${entidades} a entidades`,
   contas: (receita: string, despesa: string) => `A prefeitura arrecadou ${receita} e pagou ${despesa} em despesas`,
