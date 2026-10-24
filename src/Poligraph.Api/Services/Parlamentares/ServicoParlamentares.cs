@@ -335,6 +335,16 @@ public partial class ServicoParlamentares(PoligraphDb db, CacheDeLeitura leitura
     public Task<IReadOnlyList<ParlamentarNaListaDto>> ParlamentaresDeTodasAsync(CancellationToken ct) =>
         ListaComAnterioresAsync(ct);
 
+    /// <summary>A mediana de presença de cada casa em cada legislatura da base, para a primeira ficha de cada uma não pagar a conta.</summary>
+    public async Task AquecerMedianasAsync(CancellationToken ct)
+    {
+        var pares = await _db.Votacoes.AsNoTracking().Select(v => new { v.Casa, v.Legislatura }).Distinct().ToListAsync(ct);
+        foreach (var par in pares)
+        {
+            await MedianaDePresencaAsync(par.Casa, par.Legislatura, ct);
+        }
+    }
+
     /// <remarks>
     /// <para>Pendência 80 (2026-10-03): "votos com posição" é Sim ou Não, como no painel e na afinidade. A ficha contava a abstenção junto, e a lista também.</para>
     /// </remarks>
