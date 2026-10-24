@@ -12,6 +12,7 @@ vi.mock('../api', async (original) => ({
   obterNovidades: vi.fn(),
   listarSeguidos: vi.fn(),
 }));
+vi.mock('../sessao', () => ({ useSessao: () => ({ usuario: { nome: 'Ana' } }) }));
 
 const SEGUIDOS = [
   { idPessoa: 7, nome: 'Ana Ribeiro', casa: 'CAMARA', partido: 'PP', uf: 'SP', nVotacoes: 0, urlFoto: null },

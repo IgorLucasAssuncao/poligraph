@@ -1,13 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { nomeDePessoa } from '../formato';
 import { Link } from 'react-router-dom';
-import { listarParlamentares, listarSeguidos, type Parlamentar } from '../api';
+import { listarParlamentares } from '../api';
 import { AvatarComponent } from './Avatar';
 import { BotaoSeguirComponent } from './BotaoSeguir';
 import { useSessao } from '../sessao';
+import { useCarga } from './useCarga';
+import { marcarSeguido, useSeguidos } from './useSeguidos';
 import { SUGESTOES_PARA_SEGUIR } from '../constantes';
 import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
 
+const SEM_NINGUEM: ReadonlySet<number> = new Set();
 
 /**
  * "Quem seguir" — o cartão lateral.
@@ -25,32 +28,25 @@ import { TEXTOS_DOS_COMPONENTES as T } from '../textos/componentes';
  * pessoa já segue, que saem daqui. Antes vinha a lista inteira para usar 3.
  *
  * DECISÃO: O critério fica à vista: ordem por dado disponível, não por juízo nosso.
+ *
+ * ATENÇÃO: Sai quem a pessoa já seguia quando o cartão abriu. Quem ela segue por aqui fica, com "Seguindo": sumir no
+ * clique levaria junto o convite de avisos que o botão abre.
  */
 export function SugestoesParaSeguirComponent() {
   const { usuario } = useSessao();
-  const [sugestoes, setSugestoes] = useState<Parlamentar[]>([]);
-  const [seguidos, setSeguidos] = useState<Set<number>>(new Set());
+  const seguidos = useSeguidos();
+  const [jaSeguia, setJaSeguia] = useState<ReadonlySet<number> | null>(null);
+  if (usuario && seguidos.lista && jaSeguia === null) setJaSeguia(seguidos.ids);
+  const fora = usuario ? jaSeguia : SEM_NINGUEM;
 
-  useEffect(() => {
-    if (!usuario) {
-      listarParlamentares({ ordem: 'VOTACOES', tamanho: SUGESTOES_PARA_SEGUIR })
-        .then((pagina) => setSugestoes(pagina.itens))
-        .catch(() => setSugestoes([]));
-      return;
-    }
-
-    listarSeguidos()
-      .then(async (jaSeguidos) => {
-        const ids = new Set(jaSeguidos.map((p) => p.idPessoa));
-        const pagina = await listarParlamentares({
-          ordem: 'VOTACOES',
-          tamanho: SUGESTOES_PARA_SEGUIR + ids.size,
-        });
-        setSeguidos(ids);
-        setSugestoes(pagina.itens.filter((p) => p.emExercicio !== false && !ids.has(p.idPessoa)).slice(0, SUGESTOES_PARA_SEGUIR));
-      })
-      .catch(() => setSugestoes([]));
-  }, [usuario]);
+  const lida = useCarga(
+    ['sugestoes-para-seguir', fora?.size ?? null],
+    () => listarParlamentares({ ordem: 'VOTACOES', tamanho: SUGESTOES_PARA_SEGUIR + (fora?.size ?? 0) }),
+    { ativo: fora !== null },
+  );
+  const sugestoes = (lida.dados?.itens ?? [])
+    .filter((p) => !usuario || (p.emExercicio !== false && !fora?.has(p.idPessoa)))
+    .slice(0, SUGESTOES_PARA_SEGUIR);
 
   if (sugestoes.length === 0) return null;
 
@@ -74,15 +70,8 @@ export function SugestoesParaSeguirComponent() {
 
             <BotaoSeguirComponent
               idPessoa={p.idPessoa}
-              seguindo={seguidos.has(p.idPessoa)}
-              aoAlternar={(idPessoa, agora) =>
-                setSeguidos((atual) => {
-                  const novo = new Set(atual);
-                  if (agora) novo.add(idPessoa);
-                  else novo.delete(idPessoa);
-                  return novo;
-                })
-              }
+              seguindo={seguidos.ids.has(p.idPessoa)}
+              aoAlternar={marcarSeguido}
             />
           </li>
         ))}

@@ -3,7 +3,6 @@ import { AtualizandoComponent } from '../componentes/Atualizando';
 import { useCarga } from '../componentes/useCarga';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import {
-  listarSeguidos,
   listarVotos,
   obterFicha,
   type Alinhamento,
@@ -33,7 +32,7 @@ import { usePaginas } from '../componentes/usePaginas';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { LinhaParlamentarComponent } from '../componentes/LinhaParlamentar';
 import { TermoComponent } from '../componentes/Termo';
-import { useSessao } from '../sessao';
+import { marcarSeguido, useSeguidos } from '../componentes/useSeguidos';
 import { passosDaFicha } from '../tour';
 import { EsqueletoDeFichaComponent, EsqueletoDeListaComponent } from '../componentes/Esqueleto';
 import { IconeExplorarComponent } from '../componentes/Icones';
@@ -109,7 +108,6 @@ export function ParlamentarComponent() {
   const { pathname } = useLocation();
   const [busca] = useSearchParams();
   const legislaturaPedida = Number(busca.get('legislatura')) || undefined;
-  const { usuario } = useSessao();
   const lida = useCarga(['ficha', idPessoa, legislaturaPedida ?? null], () => obterFicha(idPessoa, legislaturaPedida), {
     manter: 2,
   });
@@ -124,17 +122,7 @@ export function ParlamentarComponent() {
   const corrente = legislaturas?.[0]?.numero;
   const emExercicio = ficha?.emExercicio ?? false;
 
-  const [seguindo, setSeguindo] = useState(false);
-
-  useEffect(() => {
-    let atual = true;
-    (usuario ? listarSeguidos() : Promise.resolve([]))
-      .then((seguidos) => atual && setSeguindo(seguidos.some((s) => s.idPessoa === idPessoa)))
-      .catch(() => atual && setSeguindo(false));
-    return () => {
-      atual = false;
-    };
-  }, [idPessoa, usuario]);
+  const seguindo = useSeguidos().ids.has(idPessoa);
 
   if (erro) {
     return (
@@ -173,7 +161,7 @@ export function ParlamentarComponent() {
 
           <div className="perfil-acoes">
             {(seguindo || emExercicio) && (
-              <BotaoSeguirComponent idPessoa={idPessoa} seguindo={seguindo} aoAlternar={(_, agora) => setSeguindo(agora)} />
+              <BotaoSeguirComponent idPessoa={idPessoa} seguindo={seguindo} aoAlternar={marcarSeguido} />
             )}
             <BotaoCompartilharComponent caminho={`/p/${idPessoa}`} nome={nomeDePessoa(ficha.nome)} />
           </div>

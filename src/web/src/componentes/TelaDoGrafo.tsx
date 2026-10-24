@@ -267,6 +267,11 @@ export function TelaDoGrafoComponent({
   const [camera, setCamera] = useState<Camera>({ escala: 1, x: 0, y: 0 });
   const cameraAutomatica = useRef<Camera | null>(null);
   const [limiar, setLimiar] = useState(() => limiarInicial(grafo.arestas));
+  const [limiarFeitoPara, setLimiarFeitoPara] = useState(grafo.arestas);
+  if (limiarFeitoPara !== grafo.arestas) {
+    setLimiarFeitoPara(grafo.arestas);
+    setLimiar(limiarInicial(grafo.arestas));
+  }
   const [alvo, setAlvo] = useState<Alvo | null>(null);
   const [fixado, setFixado] = useState<NoDoGrafo | null>(null);
 
@@ -324,8 +329,6 @@ export function TelaDoGrafoComponent({
     const largura = faixa(comPosicao.map((n) => n.eixoX as number));
     return largura > 0 ? faixa(comPosicao.map((n) => n.eixoY as number)) / largura : 0.62;
   }, [grafo.nos, layout]);
-
-  useEffect(() => setLimiar(limiarInicial(grafo.arestas)), [grafo.arestas]);
 
   const arestasDoLimiar = useMemo(
     () => grafo.arestas.filter((a) => a.peso >= limiar),

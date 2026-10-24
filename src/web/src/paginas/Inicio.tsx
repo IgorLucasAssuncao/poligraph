@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useCarga } from '../componentes/useCarga';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  listarSeguidos,
   NOME_DA_CASA,
   obterGestoesDaCidade,
   obterGrafo,
@@ -10,14 +9,13 @@ import {
   type Grafo as DadosDoGrafo,
   type Municipio,
   type Panorama,
-  type Parlamentar,
 } from '../api';
 import { LegendaDoGrafoComponent } from '../componentes/LegendaDoGrafo';
 import { LinhaParlamentarComponent } from '../componentes/LinhaParlamentar';
 import { SugestoesParaSeguirComponent } from '../componentes/SugestoesParaSeguir';
 import { NovidadesDosSeguidosComponent } from '../componentes/NovidadesDosSeguidos';
 import { TelaDoGrafoComponent } from '../componentes/TelaDoGrafo';
-import { useSessao } from '../sessao';
+import { marcarSeguido, useSeguidos } from '../componentes/useSeguidos';
 import { EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
 import { useLegislaturas } from '../componentes/useLegislatura';
 import { dataCurta, nomeDePessoa, nomeProprio, periodoDaLegislatura, reaisCompacto } from '../formato';
@@ -66,20 +64,13 @@ import { SuaCidadeComponent } from '../componentes/SuaCidade';
  * (RNF-16).
  */
 export function InicioComponent() {
-  const { usuario } = useSessao();
   const navegar = useNavigate();
-  const [seguidos, setSeguidos] = useState<Parlamentar[]>([]);
+  const seguidos = useSeguidos().lista ?? [];
   const legislaturas = useLegislaturas();
   const corrente = legislaturas?.find((l) => l.corrente)?.numero;
   const lido = useCarga(['panorama', null], () => obterPanorama());
   const panorama = lido.dados ?? null;
   const guardada = lerMinhaCidade();
-
-  useEffect(() => {
-    if (!usuario) return;
-
-    listarSeguidos().then(setSeguidos).catch(() => setSeguidos([]));
-  }, [usuario]);
 
   return (
     <div className="painel-com-trilho">
@@ -149,7 +140,7 @@ export function InicioComponent() {
                 uf={p.uf}
                 fotoUrl={p.urlFoto}
                 seguindo
-                aoAlternarSeguir={(idPessoa) => setSeguidos((l) => l.filter((x) => x.idPessoa !== idPessoa))}
+                aoAlternarSeguir={marcarSeguido}
               />
             ))}
 

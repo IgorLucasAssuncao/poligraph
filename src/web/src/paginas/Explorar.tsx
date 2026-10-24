@@ -1,17 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { AtualizandoComponent } from '../componentes/Atualizando';
 import { useLista } from '../componentes/useCarga';
 import { useAdiado } from '../componentes/useAdiado';
 import {
   listarParlamentares,
-  listarSeguidos,
   type Casa,
   type Parlamentar,
 } from '../api';
 import { periodoDaLegislatura } from '../formato';
 import { IconeExplorarComponent } from '../componentes/Icones';
 import { LinhaParlamentarComponent } from '../componentes/LinhaParlamentar';
-import { useSessao } from '../sessao';
+import { marcarSeguido, useSeguidos } from '../componentes/useSeguidos';
 import { EsqueletoDeListaComponent } from '../componentes/Esqueleto';
 import { useLegislaturaDaUrl } from '../componentes/useLegislatura';
 import { PARLAMENTARES_POR_PAGINA } from '../constantes';
@@ -68,16 +67,7 @@ export function ExplorarComponent() {
   const [casa, setCasa] = useState<Casa | ''>('');
   const [ordem, setOrdem] = useState<'NOME' | 'VOTACOES'>('NOME');
   const [escolha] = useLegislaturaDaUrl();
-  const [seguidos, setSeguidos] = useState<Set<number>>(new Set());
-
-  const { usuario } = useSessao();
-
-  useEffect(() => {
-    if (!usuario) return;
-    listarSeguidos()
-      .then((s) => setSeguidos(new Set(s.map((p) => p.idPessoa))))
-      .catch(() => setSeguidos(new Set()));
-  }, [usuario]);
+  const seguidos = useSeguidos().ids;
 
   const filtroAdiado = useAdiado(JSON.stringify(filtro()), 300);
   const consulta = useLista(['parlamentares', filtroAdiado], (numero) =>
@@ -193,7 +183,7 @@ export function ExplorarComponent() {
           legislatura={p.legislatura && p.legislatura !== pagina?.legislaturaCorrente ? p.legislatura : undefined}
           seguindo={seguidos.has(p.idPessoa)}
           aoAlternarSeguir={
-            p.emExercicio || seguidos.has(p.idPessoa) ? alternar : undefined
+            p.emExercicio || seguidos.has(p.idPessoa) ? marcarSeguido : undefined
           }
         />
       ))}
@@ -233,14 +223,5 @@ export function ExplorarComponent() {
 
     const quem = p.casa === 'SENADO' ? T.exSenador : T.exDeputado;
     return T.exParlamentar(quem, periodoDaLegislatura(p.legislatura), votacoes);
-  }
-
-  function alternar(idPessoa: number, seguindoAgora: boolean) {
-    setSeguidos((atual) => {
-      const novo = new Set(atual);
-      if (seguindoAgora) novo.add(idPessoa);
-      else novo.delete(idPessoa);
-      return novo;
-    });
   }
 }

@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { nomeDePessoa } from '../formato';
 import { Link } from 'react-router-dom';
-import { listarSeguidos } from '../api';
 import type { Novidades, Parlamentar } from '../api';
 import { NOVIDADES_A_VISTA } from '../constantes';
 import { TEXTOS_DO_QUE_MUDOU as T } from '../textos/oQueMudou';
@@ -12,6 +11,7 @@ import type { Opcao } from './Dados';
 import { montarItens, ultimaCarga } from './itensDoQueMudou';
 import type { Item, TipoDeNovidade } from './itensDoQueMudou';
 import { ModalComponent } from './Modal';
+import { useSeguidos } from './useSeguidos';
 
 type FiltroDeTipo = TipoDeNovidade | 'todos';
 
@@ -44,22 +44,11 @@ export function ModalDeNovidadesComponent({
   novidades: Novidades;
   vistas: string[];
 }) {
-  const [seguidos, setSeguidos] = useState<Parlamentar[]>([]);
+  const seguidos = useSeguidos().lista ?? [];
   const [pessoa, setPessoa] = useState<number | null>(null);
   const [tipo, setTipo] = useState<FiltroDeTipo>('todos');
   const [soNovas, setSoNovas] = useState(false);
   const [aVista, setAVista] = useState(NOVIDADES_A_VISTA);
-
-  useEffect(() => {
-    if (!aberto) return;
-    let atual = true;
-    listarSeguidos()
-      .then((lista) => atual && setSeguidos(lista))
-      .catch(() => atual && setSeguidos([]));
-    return () => {
-      atual = false;
-    };
-  }, [aberto]);
 
   const itens = montarItens(novidades, false);
   const nova = (item: Item) => item.tipo !== 'semana' && !vistas.includes(item.chave);
