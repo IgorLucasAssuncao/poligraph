@@ -544,25 +544,33 @@ curl -fsSL https://cdn.coollabs.io/coolify/install.sh | sudo bash</pre>
   <pre>docker exec NOME env | grep -E '^POSTGRES_(USER|DB)='</pre>
 
   <h3>2. Copiar o banco local (P87)</h3>
-  <p>Antes do primeiro deploy, com o banco de produção vazio: se a migration rodar antes, as tabelas já existem e o restore entra
-    em conflito. No computador do autor, com o Aspire parado, um Postgres 18 temporário abre o volume do Aspire e gera o dump. A
-    senha vem dos user-secrets do AppHost (<code>Parameters:postgres-password</code>), sem aparecer na tela:</p>
-  <pre>PS&gt; podman run -d --name pg-dump-tmp -v &lt;volume do Aspire&gt;:/var/lib/postgresql postgres:18.3
-PS&gt; podman exec -e PGPASSWORD=… pg-dump-tmp pg_dump -U postgres -d poligraph -Fc --no-owner --no-acl -f /tmp/poligraph.dump
-PS&gt; podman cp pg-dump-tmp:/tmp/poligraph.dump C:\Users\igorl\poligraph.dump
-PS&gt; podman rm -f pg-dump-tmp
-PS&gt; scp C:\Users\igorl\poligraph.dump igor@IP-do-VPS:/tmp/</pre>
-  <p>No VPS, <code>infra/vps/restaurar-banco.sh</code> confere o sha256, acha o container, o usuário e o banco, recusa banco que
-    não esteja vazio, restaura, mostra as contagens e apaga o dump. Em 2026-10-15: 3,6 GB no local, dump de 193 MB, 8.319
-    parlamentares e 2.179.300 votos dos dois lados.</p>
-  <div class="aviso risco">
-    <p><strong>O dump foi do banco inteiro</strong>, e a P87 previa só as tabelas das fontes. Vieram também
-      <code>usuarios</code>, <code>segue</code>, <code>consentimentos</code>, <code>avaliacoes</code> e <code>tokens_email</code>
-      do ambiente local. Conferir e apagar em produção (apagar <code>usuarios</code> leva junto as que dependem dela):</p>
-    <pre>docker exec -it NOME psql -U poligraph -d poligraph -tAc "select 'usuarios', count(*) from usuarios union all select 'avaliacoes', count(*) from avaliacoes"
-docker exec -it NOME psql -U poligraph -d poligraph -c "delete from avaliacoes; delete from usuarios;"</pre>
-    <p>Da próxima vez: <code>pg_dump</code> com <code>--exclude-table-data</code> para essas tabelas.</p>
-  </div>
+  <p>Para não rodar as cargas no servidor: o banco local vai inteiro, com o esquema e a <code>__EFMigrationsHistory</code>, e as
+    tabelas de usuário vão vazias (<code>--exclude-table-data</code>). No computador do autor, com o Aspire ligado e nenhuma carga
+    rodando, na pasta do projeto:</p>
+  <pre>PS&gt; powershell -ExecutionPolicy Bypass -File infra/vps/gerar-dump.ps1</pre>
+  <p>Ele gera <code>C:\Users\igorl\poligraph.dump</code>, mostra o sha256 e imprime os comandos abaixo já com o sha256 no lugar.
+    A senha do Postgres local é lida dentro do container e não aparece. <code>ClearAllForwardings</code> evita que o atalho
+    <code>coolify</code> tente abrir as portas do túnel do painel de novo, se ele já estiver aberto noutra janela.</p>
+  <pre>PS&gt; scp -o ClearAllForwardings=yes "C:\Users\igorl\poligraph.dump" infra/vps/restaurar-banco.sh coolify:/tmp/
+PS&gt; ssh -t -o ClearAllForwardings=yes coolify "sudo bash /tmp/restaurar-banco.sh /tmp/poligraph.dump SHA256 --substituir"</pre>
+  <p>No VPS, <code>infra/vps/restaurar-banco.sh</code> confere o sha256, acha o container, o usuário e o banco, copia o dump para
+    dentro do container antes de apagar qualquer coisa, restaura, roda o <code>ANALYZE</code> (o dump não leva as estatísticas, e
+    sem elas a consulta do grafo levou 173 s em vez de 0,4), mostra as contagens e apaga o dump. Banco com tabelas pede o nome
+    do banco digitado antes de apagar. Os três modos:</p>
+  <table>
+    <thead><tr><th>Modo</th><th>Quando</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td>sem modo</td><td>Primeira vez, banco vazio</td><td>Restaura; recusa banco com tabelas</td></tr>
+      <tr><td><code>--substituir</code></td><td>Produção sem usuário de verdade</td><td>Apaga o schema <code>public</code> inteiro e restaura</td></tr>
+      <tr><td><code>--preservar-usuarios</code></td><td>Produção com contas</td><td>Guarda contas, consentimentos, inscrições, avisos, avaliações e quem cada conta segue no schema <code>guardado</code>; restaura; devolve tudo</td></tr>
+    </tbody>
+  </table>
+  <p>No <code>--preservar-usuarios</code>, quem a conta segue volta pelo id da pessoa na fonte (<code>pessoa_fonte_ids</code>), não pelo
+    id do banco: as fusões de deputado com senador mudam o id. O seguido que não se acha fica em <code>guardado.segue</code> e o
+    script diz quantos. Testado em 2026-10-24 num Postgres 18.3 descartável, com três seguidos que viraram duas pessoas e um sem
+    par. Pare a aplicação no Coolify antes dos dois modos que apagam: durante o restore, ela fica sem banco.</p>
+  <p>Em 2026-10-15: 3,6 GB no local, dump de 193 MB, 8.319 parlamentares e 2.179.300 votos dos dois lados. Em 2026-10-24: 4,2 GB no
+    local, dump de 224 MB.</p>
   <p>A <code>POLIGRAPH_CHAVE_CPF</code> da ETL em produção tem de ser a mesma do local: os <code>cpf_hash</code> copiados foram
     calculados com ela.</p>
 
