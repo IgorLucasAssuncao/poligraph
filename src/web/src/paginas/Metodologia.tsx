@@ -1,4 +1,5 @@
 import { useCarga } from '../componentes/useCarga';
+import { useLegislaturas } from '../componentes/useLegislatura';
 import { BaseComponent } from '../componentes/BaseDoCongresso';
 import { NOME_DA_CASA, obterMetodologia, obterPanorama, type CasaNaMetodologia, type Metodologia as DadosDaMetodologia } from '../api';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
@@ -36,6 +37,7 @@ function ConteudoComponent({ dados }: { dados: DadosDaMetodologia }) {
   const { questionario: q, afinidade, casas } = dados;
   const oferecidas = q.perguntasDaCamara + q.perguntasDoSenado;
   const legislatura = casas[0]?.legislatura;
+  const maisAntiga = useLegislaturas()?.at(-1);
 
   return (
     <>
@@ -90,6 +92,7 @@ function ConteudoComponent({ dados }: { dados: DadosDaMetodologia }) {
 
       <h2>{T.limites.titulo}</h2>
       <ul>
+        <li>{T.limites.historico(maisAntiga)}</li>
         {T.limites.itens.map((item, i) => (
           <li key={i}>{item}</li>
         ))}

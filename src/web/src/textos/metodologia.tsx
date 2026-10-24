@@ -138,8 +138,16 @@ export const TEXTOS_DA_METODOLOGIA = {
 
   limites: {
     titulo: 'Limites conhecidos',
+    historico: (maisAntiga: { numero: number; anoInicial: number } | undefined): ReactNode =>
+      maisAntiga ? (
+        <>
+          A comparação com o seu voto usa só votações de plenário da legislatura corrente. O grafo e a ficha de cada parlamentar
+          mostram também as anteriores, da {maisAntiga.numero}ª legislatura ({maisAntiga.anoInicial}) em diante.
+        </>
+      ) : (
+        'A comparação com o seu voto usa só votações de plenário da legislatura corrente.'
+      ),
     itens: [
-      'Só votações de plenário, e só da legislatura corrente.',
       'Sua posição vale sobre as perguntas que você respondeu; a de cada parlamentar, sobre a legislatura inteira. A sua é bem menos precisa.',
       'Emenda só aparece na ficha quando o código do autor foi ligado a um parlamentar: emenda de bancada e de comissão não tem autor pessoa.',
       <>
