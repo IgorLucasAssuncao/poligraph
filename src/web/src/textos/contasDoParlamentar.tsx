@@ -163,19 +163,21 @@ export const TEXTOS_DAS_CONTAS = {
       'Nenhuma declaração de bens desta pessoa ao TSE na base, que tem as eleições de 2006 a 2026. Fica assim quem declarou não ter bens e quem só se candidatou antes de 2006.',
     bens: (quantidade: number) => `${quantidade} bens`,
     rotuloDaProcedencia: (anoDaEleicao: number) => `Bens declarados em ${anoDaEleicao}`,
-    resposta: (total: ReactNode, bens: number, anoDaEleicao: number, anterior: { anoDaEleicao: number; total: string } | null): ReactNode => (
+    resposta: (total: ReactNode, bens: number, anoDaEleicao: number, anterior: { anoDaEleicao: number; total: ReactNode } | null): ReactNode => (
       <>
         Declarou {total} em {bens} {plural(bens, 'bem', 'bens')} ao se candidatar em {anoDaEleicao}.
         {anterior && (
           <>
             {' '}
-            Em {anterior.anoDaEleicao}, tinha declarado <strong>{anterior.total}</strong>.
+            Em {anterior.anoDaEleicao}, tinha declarado {anterior.total}.
           </>
         )}
       </>
     ),
     verOsOutros: (quantos: number) => `Ver os outros ${quantos} tipos de bem`,
     nota: 'O valor é o que o próprio candidato declarou ao TSE, sem avaliação de mercado.',
+    foraDoPadrao: (anos: number[]) =>
+      `Valor fora do padrão em ${anos.join(' e ')}: pode ser erro de digitação na declaração. Os bens aparecem como o candidato declarou ao TSE, e o site não confere esses valores.`,
     declaracoesNoTse: 'Declarações no TSE',
   },
 

@@ -26,6 +26,7 @@ public enum TipoDeMarco
 /// <param name="Quantidade">Votações com registro em <see cref="TipoDeMarco.VOTOU"/>; bens em <see cref="TipoDeMarco.DECLAROU_BENS"/>.</param>
 /// <param name="Valor">Em reais: bens, cota ou, nas emendas, o empenhado.</param>
 /// <param name="Pago">Só nas emendas: o pago das emendas apresentadas no ano.</param>
+/// <param name="ForaDoPadrao">Só nos bens: o total salta fora do padrão da pessoa, provável erro de digitação na fonte.</param>
 public record MarcoDto(
     TipoDeMarco Tipo,
     MandatoNoTseDto? Mandato = null,
@@ -33,4 +34,5 @@ public record MarcoDto(
     string? PartidoAnterior = null,
     int? Quantidade = null,
     decimal? Valor = null,
-    decimal? Pago = null);
+    decimal? Pago = null,
+    bool ForaDoPadrao = false);

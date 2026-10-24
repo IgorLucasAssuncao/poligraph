@@ -257,15 +257,17 @@ public partial class ServicoParlamentares(PoligraphDb db, CacheDeLeitura leitura
         }
 
         var linhas = await _db.Patrimonios.AsNoTracking().Where(p => p.PessoaId == idPessoa.Valor).ToListAsync(ct);
+        var porAno = linhas.GroupBy(l => (int)l.AnoEleicao).ToList();
+        var foraDoPadrao = BensForaDoPadrao.CalcularAnos(porAno.Select(g => (g.Key, g.Sum(l => l.Valor))));
 
-        return new PatrimonioDoParlamentarDto([.. linhas
-            .GroupBy(l => l.AnoEleicao)
+        return new PatrimonioDoParlamentarDto([.. porAno
             .OrderByDescending(g => g.Key)
             .Select(g => new DeclaracaoDeBensDto(
                 g.Key,
                 g.Sum(l => l.Valor),
                 g.Sum(l => l.Quantidade),
-                [.. g.OrderByDescending(l => l.Valor).Select(l => new BemPorTipoDto(l.TipoBem, l.Valor, l.Quantidade))]))]);
+                [.. g.OrderByDescending(l => l.Valor).Select(l => new BemPorTipoDto(l.TipoBem, l.Valor, l.Quantidade))],
+                foraDoPadrao.Contains(g.Key)))]);
     }
 
     /// <summary>As redes na ordem em que se reconhecem: as grandes primeiro, o site próprio por último. Também a ficha do político (Pendência 90).</summary>

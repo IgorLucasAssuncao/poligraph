@@ -58,7 +58,14 @@ function MarcoComponent({ marco, abas }: { marco: Marco; abas?: string }) {
     case 'VOTOU':
       return comLink(T.votou(marco.quantidade ?? 0), '');
     case 'DECLAROU_BENS':
-      return <>{T.bens(valor, marco.quantidade ?? 0)}</>;
+      return marco.foraDoPadrao ? (
+        <>
+          {T.bens(<strong className="numero-fora-do-padrao">{valor}</strong>, marco.quantidade ?? 0)}
+          <small className="aviso-fora-do-padrao">{T.bensForaDoPadrao}</small>
+        </>
+      ) : (
+        <>{T.bens(valor, marco.quantidade ?? 0)}</>
+      );
     case 'GASTOU_NA_COTA':
       return comLink(T.cota(valor), '/cota');
     case 'EMENDAS_PAGAS':

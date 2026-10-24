@@ -673,6 +673,7 @@ export function PatrimonioDeclaradoComponent({ idPessoa }: { idPessoa: number })
   }
 
   const [ultima, anterior] = declaracoes;
+  const foraDoPadrao = [anterior, ultima].flatMap((d) => (d?.foraDoPadrao ? [d.anoEleicao] : []));
   const maior = ultima.porTipo[0]?.valor || 1;
   const linha = (t: DeclaracaoDeBens['porTipo'][number]) => (
     <LinhaDeValorComponent
@@ -697,13 +698,23 @@ export function PatrimonioDeclaradoComponent({ idPessoa }: { idPessoa: number })
             consulta={{ contexto: 'patrimonio', idPessoa: idPessoa, anoDaEleicao: ultima.anoEleicao }}
             rotulo={T.patrimonio.rotuloDaProcedencia(ultima.anoEleicao)}
           >
-            <strong>{reais(ultima.total)}</strong>
+            <strong className={ultima.foraDoPadrao ? 'numero-fora-do-padrao' : undefined}>{reais(ultima.total)}</strong>
           </ComProcedenciaComponent>,
           ultima.bens,
           ultima.anoEleicao,
-          anterior ? { anoDaEleicao: anterior.anoEleicao, total: reais(anterior.total) } : null,
+          anterior
+            ? {
+                anoDaEleicao: anterior.anoEleicao,
+                total: <strong className={anterior.foraDoPadrao ? 'numero-fora-do-padrao' : undefined}>{reais(anterior.total)}</strong>,
+              }
+            : null,
         )}
       </p>
+      {foraDoPadrao.length > 0 && (
+        <p className="aviso-fora-do-padrao" role="note">
+          {T.patrimonio.foraDoPadrao(foraDoPadrao)}
+        </p>
+      )}
 
       <ul className="gastos-categorias">{ultima.porTipo.slice(0, TIPOS_DE_BEM_A_VISTA).map(linha)}</ul>
 

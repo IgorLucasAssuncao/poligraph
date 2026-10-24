@@ -1766,6 +1766,8 @@ export type Marco = {
   valor?: number | null;
   /** Só nas emendas: o pago. */
   pago?: number | null;
+  /** Só nos bens: o total salta fora do padrão da pessoa, provável erro de digitação na fonte. */
+  foraDoPadrao?: boolean;
 };
 
 /** A linha do tempo, do ano mais recente ao mais antigo (Pendência 92). */
@@ -1865,6 +1867,8 @@ export type DeclaracaoDeBens = {
   total: number;
   bens: number;
   porTipo: { tipo: string; valor: number; quantidade: number }[];
+  /** O total salta fora do padrão da pessoa: provável erro de digitação na fonte, mostrado como veio. */
+  foraDoPadrao?: boolean;
 };
 
 export async function obterPatrimonio(idPessoa: number): Promise<DeclaracaoDeBens[]> {

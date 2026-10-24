@@ -776,6 +776,14 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 /* ═══ ESTADOS ══════════════════════════════════════════════════ */
 .vazio, .carregando { padding: 2rem 1rem; color: var(--suave); text-align: center; font-size: var(--t-2); }
 .erro { color: var(--perigo); padding: 0 1rem; }
+
+/* Bem declarado fora do padrão da pessoa (2026-10-23, decisão do autor): o número em vermelho, como veio, e o aviso ao lado. */
+.numero-fora-do-padrao { color: var(--perigo); }
+.aviso-fora-do-padrao {
+  margin: .5rem 0; padding: .5rem .75rem; border-left: 3px solid var(--perigo);
+  background: color-mix(in srgb, var(--perigo) 8%, transparent); font-size: var(--t-2); color: var(--texto);
+}
+small.aviso-fora-do-padrao { display: block; margin: .3rem 0 0; padding: .3rem .6rem; font-size: var(--t-1); }
 .ajuda { color: var(--suave); font-size: var(--t-2); }
 .nota-privacidade { color: var(--suave); font-size: var(--t-1); margin-top: 1rem; }
 .aviso { border-left: 3px solid var(--borda-forte); padding-left: .8rem; color: var(--suave); font-size: var(--t-2); margin: 1rem; }

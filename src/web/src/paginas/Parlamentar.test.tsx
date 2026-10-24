@@ -793,6 +793,19 @@ describe('redes e patrimônio', () => {
     expect(frase.textContent).toMatch(/Em 2018, tinha declarado R\$\s*400\.000,00/);
     expect(frase.textContent).not.toMatch(/%/);
     expect(screen.getByText(/sem avaliação de mercado/)).toBeInTheDocument();
+    expect(screen.queryByRole('note')).not.toBeInTheDocument();
+  });
+
+  it('a declaração fora do padrão aparece como veio, em vermelho, com o aviso de que o site não confere', async () => {
+    vi.mocked(api.obterPatrimonio).mockResolvedValue([
+      { anoEleicao: 2026, total: 400_000_000, bens: 1, porTipo: [{ tipo: 'Casa', valor: 400_000_000, quantidade: 1 }], foraDoPadrao: true },
+      { anoEleicao: 2022, total: 315_000, bens: 1, porTipo: [{ tipo: 'Casa', valor: 315_000, quantidade: 1 }] },
+    ]);
+    await abrirAba('Campanha');
+
+    const frase = (await screen.findByText(/Declarou/)).closest('p')!;
+    expect(frase.querySelector('.numero-fora-do-padrao')?.textContent).toMatch(/400\.000\.000,00/);
+    expect(screen.getByRole('note')).toHaveTextContent(/fora do padrão em 2026.*não confere/);
   });
 });
 

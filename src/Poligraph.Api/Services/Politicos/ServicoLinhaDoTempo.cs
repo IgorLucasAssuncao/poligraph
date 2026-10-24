@@ -65,7 +65,9 @@ public class ServicoLinhaDoTempo(PoligraphDb db, CacheDeLeitura leitura)
             .GroupBy(p => p.AnoEleicao)
             .Select(g => new { Ano = g.Key, Valor = g.Sum(p => p.Valor), Quantidade = g.Sum(p => p.Quantidade) })
             .ToListAsync(ct);
-        marcos.AddRange(bens.Select(b => ((int)b.Ano, new MarcoDto(TipoDeMarco.DECLAROU_BENS, Quantidade: b.Quantidade, Valor: b.Valor))));
+        var bensForaDoPadrao = BensForaDoPadrao.CalcularAnos(bens.Select(b => ((int)b.Ano, b.Valor)));
+        marcos.AddRange(bens.Select(b => ((int)b.Ano, new MarcoDto(
+            TipoDeMarco.DECLAROU_BENS, Quantidade: b.Quantidade, Valor: b.Valor, ForaDoPadrao: bensForaDoPadrao.Contains(b.Ano)))));
 
         var cota = await _db.Despesas.AsNoTracking()
             .Where(d => d.PessoaId == idPessoa)

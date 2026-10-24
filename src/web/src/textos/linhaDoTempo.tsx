@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 /** O texto da linha do tempo (Pendência 92). */
 export const TEXTOS_DA_LINHA_DO_TEMPO = {
   titulo: 'Linha do tempo',
@@ -8,7 +10,12 @@ export const TEXTOS_DA_LINHA_DO_TEMPO = {
   eleito: (mandato: string, partido: string) => `Eleito: ${mandato}${partido ? ` (${partido})` : ''}`,
   trocou: (de: string, para: string) => `Passou a votar pelo ${para}; antes, ${de}`,
   votou: (n: number) => `Votou em ${n.toLocaleString('pt-BR')} ${n === 1 ? 'votação' : 'votações'}`,
-  bens: (valor: string, n: number) => `Declarou ${valor} em ${n.toLocaleString('pt-BR')} ${n === 1 ? 'bem' : 'bens'} ao TSE`,
+  bens: (valor: ReactNode, n: number): ReactNode => (
+    <>
+      Declarou {valor} em {n.toLocaleString('pt-BR')} {n === 1 ? 'bem' : 'bens'} ao TSE
+    </>
+  ),
+  bensForaDoPadrao: 'Valor fora do padrão, pode ser erro de digitação. O site não confere os valores declarados.',
   cota: (valor: string) => `Gastou ${valor} da cota parlamentar`,
   emendas: (empenhado: string, pago: string) => `Emendas apresentadas neste ano: ${empenhado} empenhados, ${pago} pagos até hoje`,
   fontes:
