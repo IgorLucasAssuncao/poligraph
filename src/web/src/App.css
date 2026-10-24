@@ -2978,11 +2978,27 @@ dialog.tour::backdrop { background: transparent; }
   display: flex; flex-wrap: wrap; align-items: baseline; gap: .35rem 1.25rem;
   margin: .5rem 0 0; font-size: var(--t-2);
 }
-.perfil-redes { font-size: var(--t-2); }
-.perfil-redes-rotulo { color: var(--suave); }
-.perfil-redes-outras { display: inline; }
-.perfil-redes-outras > summary { display: inline; margin-left: .4rem; color: var(--realce); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
-.perfil-redes-outras[open] > summary { display: none; }
+.perfil-redes { font-size: var(--t-2); margin-top: .5rem; }
+.perfil-redes-rotulo { display: block; margin-bottom: .3rem; font-size: var(--t-1); color: var(--suave); }
+.redes { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+/* Uma etiqueta por rede, com o fundo claro no tom dela (2026-10-24, pedido do autor). */
+.rede {
+  display: inline-block; padding: .2rem .55rem; border-radius: 999px; font-size: var(--t-1); font-weight: 500;
+  color: var(--texto); text-decoration: none; background: color-mix(in srgb, var(--tom-da-rede, var(--suave)) 16%, var(--fundo));
+  border: 1px solid color-mix(in srgb, var(--tom-da-rede, var(--suave)) 35%, var(--fundo));
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rede:hover { border-color: var(--tom-da-rede, var(--realce)); }
+.rede-instagram { --tom-da-rede: #c13584; }
+.rede-facebook { --tom-da-rede: #1877f2; }
+.rede-x { --tom-da-rede: #6b7280; }
+.rede-youtube { --tom-da-rede: #e62117; }
+.rede-tiktok { --tom-da-rede: #25c2c9; }
+.rede-linkedin { --tom-da-rede: #0a66c2; }
+.rede-outra { --tom-da-rede: var(--realce); }
+.perfil-redes-outras { margin-top: .35rem; }
+.perfil-redes-outras > summary { cursor: pointer; color: var(--realce); font-size: var(--t-1); font-weight: 600; }
+.perfil-redes-outras[open] > summary { margin-bottom: .35rem; }
 
 .lista-convenios-entidade { list-style: none; margin: .5rem 0 0; padding: 0; }
 .lista-convenios-entidade li { padding: .65rem 0; border-bottom: 1px solid var(--borda); display: grid; gap: .2rem; }

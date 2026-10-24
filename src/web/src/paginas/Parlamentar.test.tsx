@@ -783,7 +783,7 @@ describe('redes e patrimônio', () => {
     expect(link).toHaveAttribute('href', 'https://instagram.com/ana');
     expect(link.getAttribute('rel')).toContain('nofollow');
     expect(document.querySelector('a[href^="javascript"]')).toBeNull();
-    expect(screen.getByText(/^Redes:/)).toBeInTheDocument();
+    expect(screen.getByText('Redes')).toBeInTheDocument();
   });
 
   it('o patrimônio mostra a última declaração e a anterior, sem porcentagem', async () => {

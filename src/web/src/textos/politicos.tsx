@@ -61,7 +61,7 @@ export const TEXTOS_DOS_POLITICOS = {
   },
 
   faltas: {
-    titulo: 'O que esta ficha não tem, e por quê',
+    titulo: 'O que esta ficha não tem',
     legislativo: {
       votos:
         'Votos e afinidade: cada assembleia publica as votações do seu jeito, e algumas não publicam o voto de cada deputado. Sem uma fonte nacional, a comparação com o seu voto não teria a mesma régua da Câmara e do Senado.',
