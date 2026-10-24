@@ -2186,6 +2186,10 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 }
 .grafico-colunas-governantes > span.faixa-0 { background: color-mix(in srgb, var(--texto) 4%, transparent); }
 .grafico-colunas-governantes > span.faixa-1 { background: color-mix(in srgb, var(--realce) 12%, transparent); border-top-color: var(--realce); }
+@media (max-width: 480px) {
+  .grafico-colunas-governantes { gap: .25rem; font-size: 11px; }
+  .grafico-colunas-governantes > span { padding-inline: 0; text-overflow: clip; }
+}
 .grafico-colunas-barras {
   height: 8rem; display: flex; align-items: flex-end; gap: 2px;
   border-bottom: 1px solid var(--borda-forte);
