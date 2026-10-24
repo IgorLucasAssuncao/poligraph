@@ -93,7 +93,7 @@ function RoteadorComponent() {
         <Route path="/parlamentares" element={<ParlamentaresComponent />} />
         <Route path="/resultado" element={<QuestionarioComponent />} />
         <Route path="/parlamentar/:idPessoa/:aba?" element={<ParlamentarComponent />} />
-        <Route path="/politico/:idPessoa" element={<PoliticoComponent />} />
+        <Route path="/politico/:idPessoa/:aba?" element={<PoliticoComponent />} />
         <Route path="/cidades" element={<CidadesComponent />} />
         <Route path="/cidades/:codigoIbge" element={<CidadeComponent />} />
         <Route path="/governo" element={<GovernoComponent />} />
@@ -135,7 +135,7 @@ function LeituraSemContaComponent() {
         <Route path="/parlamentares" element={<ParlamentaresComponent />} />
         <Route path="/resultado" element={<QuestionarioComponent />} />
         <Route path="/parlamentar/:idPessoa/:aba?" element={<ParlamentarComponent />} />
-        <Route path="/politico/:idPessoa" element={<PoliticoComponent />} />
+        <Route path="/politico/:idPessoa/:aba?" element={<PoliticoComponent />} />
         <Route path="/cidades" element={<CidadesComponent />} />
         <Route path="/cidades/:codigoIbge" element={<CidadeComponent />} />
         <Route path="/governo" element={<GovernoComponent />} />

@@ -1,14 +1,14 @@
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { obterFichaDoPolitico, type Cargo, type MandatoNoTse } from '../api';
 import { AvatarComponent } from '../componentes/Avatar';
 import { BotaoCompartilharComponent } from '../componentes/BotaoCompartilhar';
-import { AbaCampanhaComponent } from '../componentes/ContasDoParlamentar';
-import { useContas } from '../componentes/useContas';
 import { EsqueletoDeFichaComponent } from '../componentes/Esqueleto';
 import { CabecalhoDaColunaComponent } from '../componentes/Layout';
 import { LinhaDoTempoComponent } from '../componentes/LinhaDoTempo';
 import { ListaDeMandatosComponent } from '../componentes/ListaDeMandatos';
+import { MandatosDoParlamentarComponent } from '../componentes/MandatosDoParlamentar';
+import { PerfilDoCargoComponent } from '../componentes/PerfilDoCargo';
 import { RedesDoParlamentarComponent } from '../componentes/RedesDoParlamentar';
 import { useCarga } from '../componentes/useCarga';
 import { nomeProprio } from '../formato';
@@ -16,6 +16,10 @@ import { NOMES_DOS_CARGOS, TEXTOS_DOS_POLITICOS } from '../textos/politicos';
 import './parlamentar.css';
 
 const T = TEXTOS_DOS_POLITICOS.ficha;
+
+/** As abas da ficha do político, como as da ficha do parlamentar: cada uma é um endereço (`/politico/:id/:aba`). */
+const ABAS = ['campanha', 'linha-do-tempo', 'cargos'] as const;
+type Aba = (typeof ABAS)[number];
 
 /**
  * A ficha de quem tem mandato no TSE e nunca votou no Congresso: governador, prefeito, deputado estadual e vices (Pendência 90, fase 3).
@@ -25,9 +29,19 @@ const T = TEXTOS_DOS_POLITICOS.ficha;
  *
  * A ficha diz por que não há voto: as assembleias e as câmaras não publicam o voto nominal. Sem a
  * frase, a falta leria como defeito do site.
+ *
+ * DECISÃO (autor, 2026-10-24): em abas, como a ficha do parlamentar. Os mandatos ficam no topo em cartões; o cartão escolhido
+ * (`?eleicao=&cargo=`) decide de que eleição é a campanha. A aba Cargos tem a lista com os outros eleitos de cada cargo e o
+ * que a ficha não tem.
  */
 export function PoliticoComponent() {
-  const idPessoa = Number(useParams().idPessoa);
+  const { idPessoa: idNaUrl, aba: abaNaUrl } = useParams();
+  const idPessoa = Number(idNaUrl);
+  const aba: Aba = ABAS.includes(abaNaUrl as Aba) ? (abaNaUrl as Aba) : 'campanha';
+  const { pathname } = useLocation();
+  const [busca] = useSearchParams();
+  const eleicaoPedida = Number(busca.get('eleicao')) || undefined;
+  const cargoPedido = busca.get('cargo');
   const lida = useCarga(['politico', idPessoa], () => obterFichaDoPolitico(idPessoa));
   const ficha = lida.dados;
 
@@ -53,6 +67,9 @@ export function PoliticoComponent() {
   if (ficha.parlamentar) return <Navigate to={`/parlamentar/${idPessoa}`} replace />;
 
   const [atual] = ficha.mandatos;
+  const aberto = ficha.mandatos.find((m) => m.anoEleicao === eleicaoPedida && m.cargo === cargoPedido) ?? atual;
+  const base = `/politico/${idPessoa}`;
+  const sufixo = eleicaoPedida ? `?eleicao=${eleicaoPedida}&cargo=${cargoPedido}` : '';
   const noCongresso = ficha.mandatos.find((m) => m.cargo === 'DEPUTADO_FEDERAL' || m.cargo === 'SENADOR');
   const nome = nomeProprio(ficha.nome);
   const nomeCivil = ficha.nomeCivil ? nomeProprio(ficha.nomeCivil) : null;
@@ -83,6 +100,14 @@ export function PoliticoComponent() {
           <RedesDoParlamentarComponent redes={ficha.redesSociais} />
         </div>
 
+        <MandatosDoParlamentarComponent
+          mandatos={[]}
+          doTse={ficha.mandatos}
+          atual={null}
+          caminho={pathname}
+          cargoAberto={aberto}
+        />
+
         {noCongresso && (
           <p className="ajuda" role="note">
             {T.semVotoAindaNoCongresso(noCongresso.primeiroAno)}
@@ -90,23 +115,33 @@ export function PoliticoComponent() {
         )}
       </header>
 
-      <section className="aba-dinheiro" aria-label={T.mandatos}>
-        <h2 className="titulo-secao">{T.mandatos}</h2>
-        <ListaDeMandatosComponent mandatos={ficha.mandatos} />
-      </section>
+      <nav className="abas" aria-label={T.rotuloDasAbas}>
+        {ABAS.map((chave) => (
+          <Link
+            key={chave}
+            to={`${chave === 'campanha' ? base : `${base}/${chave}`}${sufixo}`}
+            className={`aba ${aba === chave ? 'aba-ativa' : ''}`}
+            aria-current={aba === chave ? 'page' : undefined}
+            replace
+          >
+            {T.abas[chave]}
+          </Link>
+        ))}
+      </nav>
 
-      {!noCongresso && <FaltasDaFichaComponent mandatos={ficha.mandatos} />}
-
-      <CampanhaDoPoliticoComponent idPessoa={idPessoa} />
-      <LinhaDoTempoComponent idPessoa={idPessoa} />
+      {aba === 'campanha' && <PerfilDoCargoComponent key={`${aberto.anoEleicao}-${aberto.cargo}`} idPessoa={idPessoa} mandato={aberto} />}
+      {aba === 'linha-do-tempo' && <LinhaDoTempoComponent idPessoa={idPessoa} />}
+      {aba === 'cargos' && (
+        <>
+          <section className="aba-dinheiro" aria-label={T.mandatos}>
+            <h2 className="titulo-secao">{T.mandatos}</h2>
+            <ListaDeMandatosComponent mandatos={ficha.mandatos} />
+          </section>
+          {!noCongresso && <FaltasDaFichaComponent mandatos={ficha.mandatos} />}
+        </>
+      )}
     </>
   );
-}
-
-/** A campanha da eleição mais recente e os bens declarados: a mesma aba da ficha do parlamentar, ligada pela candidatura eleita (Pendência 90). */
-function CampanhaDoPoliticoComponent({ idPessoa }: { idPessoa: number }) {
-  const { contas, erro } = useContas(idPessoa);
-  return <AbaCampanhaComponent idPessoa={idPessoa} contas={contas} erro={erro} />;
 }
 
 const CARGOS_DO_LEGISLATIVO: Cargo[] = ['DEPUTADO_ESTADUAL', 'DEPUTADO_DISTRITAL'];

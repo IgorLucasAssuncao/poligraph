@@ -65,6 +65,8 @@ export const TEXTOS_DOS_POLITICOS = {
       `Eleito para o Congresso, com posse em ${posse}. Os votos e a afinidade aparecem aqui quando a Câmara ou o Senado publicarem os primeiros votos do mandato.`,
     fonte: 'Mandatos: candidaturas eleitas publicadas pelo TSE.',
     candidaturasNoTse: 'Candidaturas no TSE',
+    rotuloDasAbas: 'Seções da ficha',
+    abas: { campanha: 'Campanha', 'linha-do-tempo': 'Linha do tempo', cargos: 'Cargos' },
   },
 
   faltas: {

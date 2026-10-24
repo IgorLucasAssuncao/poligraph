@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FichaDoPolitico } from '../api';
@@ -8,6 +8,7 @@ vi.mock('../api', async (original) => ({
   ...(await original<typeof import('../api')>()),
   obterFichaDoPolitico: vi.fn(),
   obterPatrimonio: vi.fn(),
+  obterFinanciamentoDaEleicao: vi.fn().mockRejectedValue(new Error('sem campanha no teste')),
 }));
 
 const api = await import('../api');
@@ -23,11 +24,11 @@ const PREFEITO_E_GOVERNADOR: FichaDoPolitico = {
   ],
 };
 
-function renderizar() {
+function renderizar(endereco = '/politico/7/cargos') {
   return render(
-    <MemoryRouter initialEntries={['/politico/7']}>
+    <MemoryRouter initialEntries={[endereco]}>
       <Routes>
-        <Route path="/politico/:idPessoa" element={<PoliticoComponent />} />
+        <Route path="/politico/:idPessoa/:aba?" element={<PoliticoComponent />} />
         <Route path="/parlamentar/:idPessoa" element={<p>ficha do parlamentar</p>} />
       </Routes>
     </MemoryRouter>,
@@ -88,5 +89,16 @@ describe('Ficha do político', () => {
     renderizar();
 
     expect(await screen.findByText(/não tem mandato eleito/)).toBeInTheDocument();
+  });
+
+  it('abre na campanha do mandato mais recente, com os mandatos em cartões que escolhem a eleição', async () => {
+    renderizar('/politico/7');
+
+    const mandatos = await screen.findByRole('navigation', { name: 'Mandatos' });
+    const cartoes = within(mandatos).getAllByRole('link');
+    expect(cartoes).toHaveLength(2);
+    expect(cartoes[0]).toHaveAttribute('aria-current', 'true');
+    expect(cartoes[1].getAttribute('href')).toBe('/politico/7?eleicao=2016&cargo=PREFEITO');
+    expect(screen.getByRole('link', { name: 'Campanha' })).toHaveAttribute('aria-current', 'page');
   });
 });
