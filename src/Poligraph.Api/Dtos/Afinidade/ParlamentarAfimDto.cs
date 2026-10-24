@@ -25,4 +25,5 @@ public record ParlamentarAfimDto(
     int Comparaveis,
     IReadOnlyList<string> Acordou,
     IReadOnlyList<string> Discordou,
-    string? UrlFoto = null);
+    string? UrlFoto = null,
+    bool? EmExercicio = null);

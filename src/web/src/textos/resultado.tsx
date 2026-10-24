@@ -28,6 +28,8 @@ export const TEXTOS_DO_RESULTADO = {
   casa: {
     titulo: (nomeNoPlural: string) => `Os ${nomeNoPlural} mais próximos de você`,
     perguntasDaCasa: (quantas: number) => `${quantas} ${plural(quantas, 'pergunta', 'perguntas')} desta casa`,
+    daLegislatura: (numero: number, periodo: string) => `Votações da ${numero}ª legislatura (${periodo})`,
+    foraDoMandato: 'fora do mandato hoje',
     escala: (comparados: number, nomeNoPlural: string, acordos: number, comparaveis: number): ReactNode => (
       <>
         Entre os <strong>{comparados}</strong> {nomeNoPlural} comparados com você, o do meio da lista votou como você em{' '}

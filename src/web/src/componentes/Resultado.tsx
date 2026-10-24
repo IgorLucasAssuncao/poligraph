@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { nomeDePessoa } from '../formato';
+import { nomeDePessoa, periodoDaLegislatura } from '../formato';
 import { Link } from 'react-router-dom';
 import { useCarga } from './useCarga';
 import {
@@ -166,7 +166,11 @@ function SecaoDaCasaComponent({
     <section className="casa-resultado">
       <h2 className="titulo-casa">
         {T.casa.titulo(nome.plural)}
-        <small>{T.casa.perguntasDaCasa(casa.perguntasRespondidas)}</small>
+        <small>
+          {T.casa.perguntasDaCasa(casa.perguntasRespondidas)}
+          {casa.legislatura &&
+            ` · ${T.casa.daLegislatura(casa.legislatura, periodoDaLegislatura(casa.legislatura))}`}
+        </small>
       </h2>
 
       {primeiro && (
@@ -338,6 +342,7 @@ function DestaqueComponent({
         <p className="perfil-filiacao">
           {parlamentar.partido}
           {parlamentar.uf && ` · ${parlamentar.uf}`}
+          {parlamentar.emExercicio === false && <span className="fora-do-mandato">{T.casa.foraDoMandato}</span>}
         </p>
       </Link>
 
@@ -367,7 +372,11 @@ function LinhaAfimComponent({ parlamentar, respondidasNaCasa }: { parlamentar: P
       partido={parlamentar.partido}
       uf={parlamentar.uf}
       fotoUrl={parlamentar.urlFoto}
-      detalhe={T.linha.concordaram(parlamentar.acordos, parlamentar.comparaveis, respondidasNaCasa)}
+      detalhe={
+        parlamentar.emExercicio === false
+          ? `${T.linha.concordaram(parlamentar.acordos, parlamentar.comparaveis, respondidasNaCasa)} · ${T.casa.foraDoMandato}`
+          : T.linha.concordaram(parlamentar.acordos, parlamentar.comparaveis, respondidasNaCasa)
+      }
     />
   );
 }

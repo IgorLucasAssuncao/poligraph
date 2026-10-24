@@ -161,6 +161,36 @@ public class TestesHistorico(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Equal(["CAMARA"], legislaturas.Single(l => l.Numero == Anterior).Casas);
     }
 
+    /// <summary>Pendência 44: a legislatura nova só vira a padrão com análise concluída e votações suficientes; até lá, fica a anterior.</summary>
+    [SkippableFact]
+    public async Task Legislaturas_ANovaSemAnalise_NaoViraAPadrao()
+    {
+        ExigeDocker();
+        await SemearAsync();
+        await SemearExDeputadoAsync();
+        var votante = await Db.Votos.AsNoTracking().Select(v => v.PessoaId).FirstAsync();
+        for (var i = 0; i < Legislaturas.VotacoesParaVirar; i++)
+        {
+            Db.Votacoes.Add(new VotacaoModel
+            {
+                Id = $"6666666-{i}", Casa = TipoCasa.CAMARA, Legislatura = Anterior,
+                Data = new DateOnly(2021, 3, 1).AddDays(i), Descricao = "Votação da legislatura anterior",
+                Categoria = TipoCategoriaDeVotacao.SUBSTANTIVA, Plenario = true
+            });
+            Db.Votos.Add(new VotoModel { VotacaoId = $"6666666-{i}", PessoaId = votante, Valor = 1, PartidoNoVoto = "P", UfNoVoto = "AC" });
+        }
+        Db.Execucoes.Add(new ExecucaoModel
+        {
+            Casa = TipoCasa.CAMARA, Legislatura = Anterior, K = 10, VersaoCarga = "teste", Status = TipoStatusDaExecucao.CONCLUIDA
+        });
+        await Db.SaveChangesAsync();
+
+        var legislaturas = await ObterAsync<List<LegislaturaLida>>("/api/legislaturas");
+
+        Assert.Equal(Anterior, legislaturas.Single(l => l.Corrente).Numero);
+        Assert.Equal(2, legislaturas.Count);
+    }
+
     [SkippableFact]
     public async Task Panorama_DeUmaLegislatura_ContaSoAsVotacoesDela()
     {

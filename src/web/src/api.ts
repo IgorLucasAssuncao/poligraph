@@ -178,6 +178,8 @@ export type ParlamentarAfim = {
   partido: string;
   uf: string;
   urlFoto?: string | null;
+  /** Se está em exercício hoje, pela lista oficial; nulo quando a lista não está carregada. */
+  emExercicio?: boolean | null;
   /** DECISÃO: acordos e comparáveis, nunca percentual — a frase "X de Y" é montada aqui */
   acordos: number;
   comparaveis: number;
@@ -224,6 +226,8 @@ export type ResultadoPorCasa = {
    * lista concordou. Sem ela, "8 de 11" Não diz se é muito.
    */
   escala: { comparados: number; medianoAcordos: number; medianoComparaveis: number };
+  /** A legislatura das perguntas da casa: o resultado compara com quem votou nela. */
+  legislatura?: number | null;
 };
 
 /**

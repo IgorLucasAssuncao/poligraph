@@ -3433,3 +3433,9 @@ a.gestao-filtro { color: var(--realce); }
 .grafico-de-fitas .fitas-guia { stroke: var(--texto); stroke-width: 1.25; opacity: .7; }
 .grafico-de-fitas g:hover .fitas-caixa { fill: var(--realce); }
 @media (prefers-reduced-motion: reduce) { .grafico-de-fitas .fita { transition: none; } }
+
+/* Quem não está mais em exercício, no resultado do questionário (Pendência 44, 2026-10-24). */
+.fora-do-mandato {
+  margin-left: .5rem; padding: .05rem .4rem; border: 1px solid var(--borda-forte); border-radius: var(--raio);
+  font-size: var(--t-1); color: var(--suave);
+}

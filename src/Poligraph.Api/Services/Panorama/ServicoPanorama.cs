@@ -111,7 +111,7 @@ public class ServicoPanorama(PoligraphDb db, CacheDeLeitura leitura, ServicoQues
             return [];
         }
 
-        var corrente = pares.Max(p => p.Legislatura);
+        var corrente = await Legislaturas.CorrenteAsync(_db, ct) ?? pares.Max(p => p.Legislatura);
 
         return [.. pares
             .GroupBy(p => p.Legislatura)

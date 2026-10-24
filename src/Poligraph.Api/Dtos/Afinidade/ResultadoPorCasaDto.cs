@@ -23,4 +23,5 @@ public record ResultadoPorCasaDto(
     IReadOnlyList<ParlamentarAfimDto> MaisProximos,
     IReadOnlyList<ParlamentarAfimDto> MaisDistantes,
     PosicaoDoCidadaoDto? PosicaoNoGrafo,
-    EscalaDaCasaDto Escala);
+    EscalaDaCasaDto Escala,
+    short? Legislatura = null);

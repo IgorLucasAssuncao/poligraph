@@ -38,6 +38,7 @@ public class ServicoAfinidade(PoligraphDb db, CacheDeLeitura leitura)
         var casaDaPergunta = await CasaDasPerguntasAsync(opinadas, ct);
         var votosPorPessoa = await CarregarVotosAsync(opinadas, ct);
 
+        var emExercicio = await EmExercicioNaBase.IdsAsync(_db, ct);
         var porCasa = new List<ResultadoPorCasaDto>();
         foreach (var casa in casaDaPergunta.Values.Distinct().OrderBy(c => c))
         {
@@ -70,11 +71,12 @@ public class ServicoAfinidade(PoligraphDb db, CacheDeLeitura leitura)
                 Casa: casa,
                 PerguntasRespondidas: daCasa.Count,
                 MaisProximos: Montar(
-                    listados.OrderByDescending(r => r.Proporcao), fichas, daCasa, votosPorPessoa),
+                    listados.OrderByDescending(r => r.Proporcao), fichas, daCasa, votosPorPessoa, emExercicio),
                 MaisDistantes: Montar(
-                    listados.OrderBy(r => r.Proporcao), fichas, daCasa, votosPorPessoa),
+                    listados.OrderBy(r => r.Proporcao), fichas, daCasa, votosPorPessoa, emExercicio),
                 PosicaoNoGrafo: await PosicionarAsync(casa, legislatura.Value, resultados, daCasa, ct),
-                Escala: Escala(listados)));
+                Escala: Escala(listados),
+                Legislatura: legislatura));
         }
 
         if (porCasa.Count == 0)
@@ -228,7 +230,8 @@ public class ServicoAfinidade(PoligraphDb db, CacheDeLeitura leitura)
         IOrderedEnumerable<ResultadoAfinidade> ordenados,
         Dictionary<long, (string Nome, string Partido, string Uf, string? UrlFoto)> fichas,
         IReadOnlyList<RespostaCidadao> respostas,
-        Dictionary<long, Dictionary<string, PosicaoParlamentar>> votosPorPessoa) =>
+        Dictionary<long, Dictionary<string, PosicaoParlamentar>> votosPorPessoa,
+        HashSet<long>? emExercicio) =>
         ordenados
             .Take(QuantidadeExibida)
             .Select(r =>
@@ -240,7 +243,8 @@ public class ServicoAfinidade(PoligraphDb db, CacheDeLeitura leitura)
 
                 return new ParlamentarAfimDto(
                     r.PessoaId, ficha.Nome ?? "", ficha.Partido ?? "", ficha.Uf ?? "",
-                    r.Acordos, r.Comparaveis, detalhe.Acordou, detalhe.Discordou, ficha.UrlFoto);
+                    r.Acordos, r.Comparaveis, detalhe.Acordou, detalhe.Discordou, ficha.UrlFoto,
+                    emExercicio?.Contains(r.PessoaId));
             })
             .ToList();
 

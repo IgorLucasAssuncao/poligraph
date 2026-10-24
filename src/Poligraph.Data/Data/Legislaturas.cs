@@ -46,16 +46,54 @@ public static class Legislaturas
     /// <summary>A eleição que deu o mandato: a do ano anterior à posse.</summary>
     public static int EleicaoDoMandato(short legislatura) => AnoInicial(legislatura) - 1;
 
+    /// <summary>Quantas votações nominais de plenário, com voto registrado, a legislatura nova precisa para virar a padrão.</summary>
+    public const int VotacoesParaVirar = 50;
+
     /// <summary>
-    /// A legislatura corrente: a maior que existe em <c>votacoes</c>.
+    /// A legislatura corrente: a maior que já está pronta para ser a padrão do site.
     ///
     /// <para>
     /// Devolve <c>null</c> em base sem votação — antes do primeiro ETL. Inventar 57
     /// aqui esconderia uma base vazia atrás de um número que parece certo.
     /// </para>
     /// </summary>
-    public static async Task<short?> CorrenteAsync(PoligraphDb db, CancellationToken ct) =>
-        await db.Votacoes.AsNoTracking().MaxAsync(votacao => (short?)votacao.Legislatura, ct);
+    /// <remarks>
+    /// <para>
+    /// DECISÃO (autor, 2026-10-24, Pendência 44): a legislatura nova só vira a padrão quando tem análise concluída e ao menos
+    /// <see cref="VotacoesParaVirar"/> votações nominais de plenário com voto. Antes disso, a anterior continua padrão e a nova
+    /// aparece no seletor. Pelo primeiro voto, a 58ª abriria em fevereiro de 2027 com o grafo vazio por semanas.
+    /// </para>
+    /// <para>Base sem nenhuma legislatura pronta (antes da primeira análise) fica com a maior, como antes.</para>
+    /// </remarks>
+    public static async Task<short?> CorrenteAsync(PoligraphDb db, CancellationToken ct)
+    {
+        var existentes = await db.Votacoes.AsNoTracking()
+            .Select(votacao => votacao.Legislatura)
+            .Distinct()
+            .OrderByDescending(legislatura => legislatura)
+            .ToListAsync(ct);
+        if (existentes.Count == 0)
+        {
+            return null;
+        }
+
+        foreach (var legislatura in existentes)
+        {
+            if (await ProntaAsync(db, legislatura, ct))
+            {
+                return legislatura;
+            }
+        }
+
+        return existentes[0];
+    }
+
+    private static async Task<bool> ProntaAsync(PoligraphDb db, short legislatura, CancellationToken ct) =>
+        await db.Execucoes.AsNoTracking().AnyAsync(e => e.Legislatura == legislatura && e.Status == TipoStatusDaExecucao.CONCLUIDA, ct)
+        && await db.Votacoes.AsNoTracking()
+            .Where(v => v.Legislatura == legislatura && v.Plenario && db.Votos.Any(o => o.VotacaoId == v.Id))
+            .Take(VotacoesParaVirar)
+            .CountAsync(ct) >= VotacoesParaVirar;
 
     /// <summary>
     /// As legislaturas das perguntas <b>ativas</b> — o denominador do painel sai daqui.
