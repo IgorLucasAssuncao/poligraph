@@ -42,7 +42,7 @@ export const TEXTOS_DA_FICHA = {
     baixarEncontrados: 'Baixar os encontrados (CSV)',
     baixarTodos: 'Baixar todos (CSV)',
     arquivo: (pessoa: number) => `votos-${pessoa}.csv`,
-    colunas: ['Votação', 'Data', 'Voto', 'Orientação do Governo', 'Matéria', 'Descrição', 'Categoria', 'Proposição', 'Registro'],
+    colunas: ['Votação', 'Data', 'Voto', 'Orientação do Governo', 'Matéria', 'Descrição', 'Categoria', 'Proposição', 'Registro', 'Texto integral'],
     rito: (
       <>
         <TermoComponent nome="procedimental">Questão de rito</TermoComponent>: votou o andamento da proposta, como urgência ou
@@ -63,6 +63,7 @@ export const TEXTOS_DA_FICHA = {
     votacoesNaProposicao: (quantas: number) => `${quantas} votações nesta proposição`,
     proposicao: 'proposição',
     registro: 'registro da votação',
+    inteiroTeor: 'ler o projeto',
     abstencao: <TermoComponent nome="abstencao">Abstenção</TermoComponent>,
   },
 

@@ -151,7 +151,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
                     "cargo IN ('PRESIDENTE','VICE_PRESIDENTE','SENADOR','DEPUTADO_FEDERAL','GOVERNADOR','VICE_GOVERNADOR',"
                     + "'DEPUTADO_ESTADUAL','DEPUTADO_DISTRITAL','PREFEITO','VICE_PREFEITO')");
                 t.HasCheckConstraint("ck_mandato_eleicao", "ano_eleicao BETWEEN 1994 AND 2100 AND ano_eleicao % 2 = 0");
-                t.HasCheckConstraint("ck_mandato_anos", "primeiro_ano = ano_eleicao + 1 AND ultimo_ano >= primeiro_ano");
+                t.HasCheckConstraint("ck_mandato_anos", "primeiro_ano BETWEEN ano_eleicao + 1 AND ultimo_ano");
                 t.HasCheckConstraint("ck_mandato_uf", "uf IS NULL OR uf ~ '^[A-Z]{2}$'");
                 t.HasCheckConstraint("ck_mandato_ente",
                     "CASE WHEN cargo IN ('PREFEITO','VICE_PREFEITO') THEN uf IS NOT NULL AND codigo_municipio_tse IS NOT NULL "
@@ -232,6 +232,8 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             .HasForeignKey(x => x.NomeCivilCargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<ProposicaoModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.PalavrasChaveCargaId).OnDelete(DeleteBehavior.Restrict);
+        mb.Entity<ProposicaoModel>().HasOne<CargaModel>().WithMany()
+            .HasForeignKey(x => x.UrlInteiroTeorCargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<VotacaoModel>().HasOne<CargaModel>().WithMany()
             .HasForeignKey(x => x.ProposicaoCargaId).OnDelete(DeleteBehavior.Restrict);
         mb.Entity<ConvenioModel>().HasOne<CargaModel>().WithMany()
@@ -374,7 +376,12 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
         {
             e.HasKey(x => new { x.Casa, x.Id });
             e.Property(x => x.Id).ValueGeneratedNever();
-            e.ToTable(t => t.HasCheckConstraint("ck_proposicao_ano", "ano IS NULL OR ano <> 0"));
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_proposicao_ano", "ano IS NULL OR ano <> 0");
+                t.HasCheckConstraint("ck_proposicao_inteiro_teor",
+                    "url_inteiro_teor IS NULL OR url_inteiro_teor = '' OR url_inteiro_teor ~ '^https://[^[:space:]]+$'");
+            });
         });
     }
 

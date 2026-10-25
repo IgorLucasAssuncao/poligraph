@@ -13,7 +13,7 @@ TITULO = "012345678901"
 
 
 def _linha(**campos) -> LinhaDeCandidatura:
-    padrao = dict(ano_eleicao="2024", sq_candidato="1", cargo="11", situacao="ELEITO", uf="SP", codigo_ue="71072",
+    padrao = dict(ano_eleicao="2024", tipo_de_eleicao="2", data_da_eleicao="06/10/2024", sq_candidato="1", cargo="11", situacao="ELEITO", uf="SP", codigo_ue="71072",
                   nome_ue="SÃO PAULO", nome="FULANO", nome_de_urna="FULANO", cpf="-4", titulo=TITULO,
                   nascimento="01/02/1970", genero="2", partido="XYZ", numero="10", coligacao="XYZ / ABC", sq_coligacao="-1")
     return LinhaDeCandidatura(**(padrao | campos))
@@ -120,6 +120,26 @@ def test_ponte_acha_acu_pela_grafia_do_tse():
     eleitos = mandatos.eleitos([_linha(sq_candidato="1", codigo_ue="16039", nome_ue="ASSÚ", uf="RN", titulo="111111111111")])
 
     assert mandatos.ponte_de_municipios(eleitos, [("2400208", "Açu", "RN")]) == {"16039": "2400208"}
+
+
+def test_eleito_em_suplementar_comeca_no_ano_dela():
+    """Itatiaia: a eleição de 2020 foi anulada, e a suplementar de março de 2022 elegeu o prefeito (2026-10-24)."""
+    eleitos = mandatos.eleitos([
+        _linha(ano_eleicao="2020", tipo_de_eleicao="1", data_da_eleicao="13/03/2022", sq_candidato="7", codigo_ue="58998"),
+        _linha(ano_eleicao="2020", sq_candidato="8", codigo_ue="58999", titulo="999999999999", data_da_eleicao="15/11/2020"),
+    ])
+    identidades = mandatos.Identidades({}, {}, {mandatos.candidatura(e): i for i, e in enumerate(eleitos, 1)}, {})
+
+    anos = {m.sq_candidato: (m.primeiro_ano, m.ultimo_ano) for m in mandatos.mandatos_para_linhas(eleitos, identidades, {})}
+
+    assert anos == {"7": (2022, 2024), "8": (2021, 2024)}
+
+
+def test_tipo_de_eleicao_desconhecido_derruba_a_carga():
+    from poligraph_etl.tipos import ValorDesconhecido
+
+    with pytest.raises(ValorDesconhecido):
+        mandatos.eleitos([_linha(tipo_de_eleicao="9")])
 
 
 def test_quem_ja_tem_pessoa_empresta_o_titulo_ao_eleito_sem_cpf():

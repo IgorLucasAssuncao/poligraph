@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Poligraph.Api.Dtos;
 using Poligraph.Api.Tipos;
 using Poligraph.Data;
@@ -41,7 +41,7 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
             .Where(m => (m.CodigoMunicipioIbge == codigoIbge && (m.Cargo == TipoCargo.PREFEITO || m.Cargo == TipoCargo.VICE_PREFEITO))
                      || (m.Uf == uf && (m.Cargo == TipoCargo.GOVERNADOR || m.Cargo == TipoCargo.VICE_GOVERNADOR)))
             .Join(_db.Pessoas.AsNoTracking(), m => m.PessoaId, p => p.Id, (m, p) => new EleitoComAnos(
-                m.Cargo, m.PrimeiroAno, m.UltimoAno,
+                m.Cargo, m.AnoEleicao, m.PrimeiroAno, m.UltimoAno,
                 new EleitoNaGestaoDto(p.Id, p.NomeExibicao, m.Partido, _db.Votos.Any(v => v.PessoaId == p.Id))))
             .ToListAsync(ct);
 
@@ -54,21 +54,22 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
         var governadores = eleitos.Where(e => e.Cargo == TipoCargo.GOVERNADOR).ToList();
         var viceGovernadores = eleitos.Where(e => e.Cargo == TipoCargo.VICE_GOVERNADOR).ToList();
 
-        var gestoes = eleitos
-            .Where(e => e.Cargo is TipoCargo.PREFEITO or TipoCargo.VICE_PREFEITO)
-            .GroupBy(e => (e.PrimeiroAno, e.UltimoAno))
-            .OrderByDescending(g => g.Key.PrimeiroAno)
-            .Select(g =>
+        var municipais = eleitos.Where(e => e.Cargo is TipoCargo.PREFEITO or TipoCargo.VICE_PREFEITO).ToList();
+        var ciclos = await CiclosDaCidadeAsync(municipais, ct);
+
+        var gestoes = ciclos
+            .Select(anoEleicao =>
             {
-                var (primeiro, ultimo) = g.Key;
+                var g = municipais.Where(e => e.AnoEleicao == anoEleicao).ToList();
+                var (primeiro, ultimo) = ((short)(anoEleicao + 1), (short)(anoEleicao + 4));
                 var anos = porAno.Where(a => a.Ano >= primeiro && a.Ano <= ultimo).ToList();
                 var daGestao = contas.Where(c => c.Ano >= primeiro && c.Ano <= ultimo).ToList();
                 var foraDoPadrao = daGestao.Where(c => ForaDoPadrao(c.Receita, medianaDaReceita)).ToList();
                 var declarados = daGestao.Except(foraDoPadrao).ToList();
                 return new GestaoDaCidadeDto(
                     primeiro, ultimo,
-                    [.. g.Where(e => e.Cargo == TipoCargo.PREFEITO).Select(e => e.Eleito).DistinctBy(e => e.IdPessoa)],
-                    [.. g.Where(e => e.Cargo == TipoCargo.VICE_PREFEITO).Select(e => e.Eleito).DistinctBy(e => e.IdPessoa)],
+                    [.. g.Where(e => e.Cargo == TipoCargo.PREFEITO).Select(e => ComInicio(e, primeiro)).DistinctBy(e => e.IdPessoa)],
+                    [.. g.Where(e => e.Cargo == TipoCargo.VICE_PREFEITO).Select(e => ComInicio(e, primeiro)).DistinctBy(e => e.IdPessoa)],
                     NoPeriodo(governadores, primeiro, ultimo),
                     anos.Sum(a => a.Recebido),
                     anos.Sum(a => a.NaPrefeitura),
@@ -87,6 +88,35 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
             municipio.Dto, municipio.Populacao, porAno.Sum(a => a.Recebido), porAno.Sum(a => a.NaPrefeitura), gestoes, porAno,
             porAno.Sum(a => a.NoGovernoDoEstado));
     }
+
+    /// <summary>
+    /// As eleições municipais da cidade, da mais recente: as que elegeram alguém, e as que a base tem e a cidade não, entre a
+    /// primeira dela e a última da base.
+    /// </summary>
+    /// <remarks>
+    /// <para>DECISÃO (2026-10-24): a gestão sem eleito aparece, e a tela diz que o TSE não registra o eleito. MEDIDO no mesmo
+    /// dia: 18 cidades em 2024 e 5 em 2020 tiveram a eleição anulada, e o vencedor da suplementar não está nos arquivos abertos
+    /// do TSE. Antes da primeira eleição da cidade não: ela pode não existir ainda.</para>
+    /// </remarks>
+    private async Task<List<short>> CiclosDaCidadeAsync(List<EleitoComAnos> municipais, CancellationToken ct)
+    {
+        if (municipais.Count == 0)
+        {
+            return [];
+        }
+
+        var primeira = municipais.Min(e => e.AnoEleicao);
+        var daBase = await _db.Mandatos.AsNoTracking()
+            .Where(m => m.Cargo == TipoCargo.PREFEITO && m.AnoEleicao >= primeira)
+            .Select(m => m.AnoEleicao)
+            .Distinct()
+            .ToListAsync(ct);
+        return [.. daBase.Union(municipais.Select(e => e.AnoEleicao)).OrderDescending()];
+    }
+
+    /// <summary>O eleito com o ano em que começou, quando não foi o primeiro da gestão.</summary>
+    private static EleitoNaGestaoDto ComInicio(EleitoComAnos eleito, short primeiroDaGestao) =>
+        eleito.PrimeiroAno > primeiroDaGestao ? eleito.Eleito with { DesdeAno = eleito.PrimeiroAno } : eleito.Eleito;
 
     /// <summary>Os eleitos para o estado cujo mandato cruza a gestão municipal, com os anos que coincidem.</summary>
     private static List<GovernadorNoPeriodoDto> NoPeriodo(IEnumerable<EleitoComAnos> eleitos, short primeiro, short ultimo) =>
@@ -138,5 +168,5 @@ public class ServicoGestoesDaCidade(PoligraphDb db, ServicoMapaDeEmendas mapa, C
         return juntos;
     }
 
-    private sealed record EleitoComAnos(TipoCargo Cargo, short PrimeiroAno, short UltimoAno, EleitoNaGestaoDto Eleito);
+    private sealed record EleitoComAnos(TipoCargo Cargo, short AnoEleicao, short PrimeiroAno, short UltimoAno, EleitoNaGestaoDto Eleito);
 }

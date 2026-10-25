@@ -592,14 +592,16 @@ public partial class ServicoParlamentares(PoligraphDb db, CacheDeLeitura leitura
                     + v.Votacao.Proposicao.Numero + "/" + v.Votacao.Proposicao.Ano,
                 v.Votacao.Categoria,
                 v.Votacao.Casa,
-                v.Votacao.ProposicaoId
+                v.Votacao.ProposicaoId,
+                v.Votacao.Proposicao.UrlInteiroTeor
             })
             .ToListAsync(ct);
 
         return [.. votos.Select(v => new VotoNaFichaDto(
             v.VotacaoId, v.Data, v.Descricao, v.Valor, v.Orientacao, v.Ementa, v.Materia, v.Categoria,
             FontesOficiais.Proposicao(v.Casa, v.ProposicaoId),
-            FontesOficiais.RegistroDaVotacao(v.Casa, v.VotacaoId)))];
+            FontesOficiais.RegistroDaVotacao(v.Casa, v.VotacaoId),
+            string.IsNullOrEmpty(v.UrlInteiroTeor) ? null : v.UrlInteiroTeor))];
     }
 
     /// <summary>

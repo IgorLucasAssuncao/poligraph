@@ -29,6 +29,10 @@ public class ProposicaoModel
     public int? Numero { get; set; }
     public short? Ano { get; set; }
     public string? Ementa { get; set; }
+    /// <summary>
+    /// O texto integral da proposição (o PDF), do arquivo anual de proposições da Câmara. Nulo é "ainda não procurada";
+    /// vazio é "procurada, e a casa não publica o texto". O Senado fica nulo: o serviço de textos dele foi trocado em 2026.
+    /// </summary>
     public string? UrlInteiroTeor { get; set; }
 
     /// <summary>
@@ -46,4 +50,7 @@ public class ProposicaoModel
 
     /// <summary>As respostas da API da Câmara de onde vieram as palavras-chave.</summary>
     public long? PalavrasChaveCargaId { get; set; }
+
+    /// <summary>O arquivo de proposições da Câmara de onde veio o endereço do texto integral.</summary>
+    public long? UrlInteiroTeorCargaId { get; set; }
 }

@@ -197,3 +197,18 @@ def test_materia_repetida_grava_uma_vez():
     linhas, _ = proposicoes.do_senado([materia(), materia()], {"SF-1": "171682"})
 
     assert len(linhas) == 1
+
+
+def test_inteiro_teor_so_das_pendentes_e_vazio_quando_nao_e_https():
+    from poligraph_etl.contratos.camara import LinhaDeProposicaoDaCamara
+
+    linhas = [
+        LinhaDeProposicaoDaCamara("10", "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=1"),
+        LinhaDeProposicaoDaCamara("20", None),
+        LinhaDeProposicaoDaCamara("30", "javascript:alert(1)"),
+        LinhaDeProposicaoDaCamara("40", "https://outra.proposicao/que-ninguem-votou"),
+    ]
+
+    assert sorted(proposicoes.inteiro_teor_para_linhas(linhas, {10, 20, 30})) == [
+        (10, "https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=1"), (20, ""), (30, ""),
+    ]

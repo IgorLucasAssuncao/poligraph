@@ -16,6 +16,8 @@ class LinhaDeCandidatura:
     """
 
     ano_eleicao: str | None = coluna("ANO_ELEICAO")
+    tipo_de_eleicao: str | None = coluna("CD_TIPO_ELEICAO")
+    data_da_eleicao: str | None = coluna("DT_ELEICAO")
     sq_candidato: str | None = coluna("SQ_CANDIDATO")
     cargo: str | None = coluna("CD_CARGO")
     situacao: str | None = coluna("DS_SIT_TOT_TURNO")

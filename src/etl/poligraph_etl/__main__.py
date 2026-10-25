@@ -33,7 +33,8 @@ from . import (
 from .fontes import bcb, brasilapi, camara, portal, receita, senado, tse
 from . import amostra, mandatos, selic, compras, compras_centralizadas, conferencia, convenentes, defesa_civil, em_exercicio, limpeza, patrimonio, procedencia, redes, rotina, sancoes, telemetria, viagens
 from .contratos import entrada
-from .contratos.entrada import colunas_da_fonte
+from .contratos.camara import LinhaDeProposicaoDaCamara
+from .contratos.entrada import colunas_da_fonte, ler_tabela
 from .contratos.tse import LinhaDeCandidatura, LinhaDeVotacao
 from .contratos.bcb import LinhaDaSerie
 from .tipos import FonteDaRedeSocial, TipoCargo, TipoCasa, TipoFonteDeCarga, TipoFonteDeIdentificador, TipoMetrica
@@ -145,6 +146,8 @@ def main(argv: list[str] | None = None) -> int:
                 _tirar_cpf(conexao)
             elif args.comando == "palavras-chave":
                 _palavras_chave(conexao, args.limite)
+            elif args.comando == "inteiro-teor":
+                _inteiro_teor(conexao)
             elif args.comando == "sedes-brasilapi":
                 _sedes_brasilapi(conexao, args.limite)
             elif args.comando == "amostra":
@@ -216,6 +219,9 @@ def _argumentos(argv: list[str] | None) -> argparse.Namespace:
         "palavras-chave", help="palavras-chave das proposições votadas que ainda não têm (Pendência 70)"
     )
     pal.add_argument("--limite", type=int, default=None, help="no máximo tantas, para ir por partes")
+    sub.add_parser(
+        "inteiro-teor", help="endereço do texto integral das proposições votadas da Câmara, pelo arquivo anual de proposições"
+    )
     sed = sub.add_parser(
         "sedes-brasilapi", help="município da sede dos CNPJs de emenda que faltam, pela BrasilAPI (Pendência 71)"
     )
@@ -2470,6 +2476,32 @@ def _reclassificar(conexao: psycopg.Connection) -> None:
         log.info("  %s %dª: %d de %s para %s", casa, legislatura, n, antiga, nova)
 
 
+def _inteiro_teor(conexao: psycopg.Connection) -> None:
+    """O endereço do texto integral das proposições da Câmara que ainda não o têm, um arquivo de proposições por ano.
+
+    MEDIDO em 2026-10-24: 4.894 proposições votadas, de 39 anos (1988 a 2026); o arquivo de 2024 tem 53 MB. Só os anos com
+    proposição pendente são baixados, e a que o arquivo não traz fica vazia, para não ser procurada de novo.
+    """
+    pendentes = persistencia.proposicoes_sem_inteiro_teor(conexao)
+    log.info("Inteiro teor: %d proposições pendentes em %d anos", sum(map(len, pendentes.values())), len(pendentes))
+    achadas = vazias = 0
+    for ano, ids in sorted(pendentes.items()):
+        try:
+            arquivo, carga = _baixar_da_camara(conexao, "proposicoes", ano)
+        except requests.HTTPError as erro:
+            if erro.response is None or erro.response.status_code != 404:
+                raise
+            log.warning("  %d sem arquivo de proposições (404)", ano)
+            continue
+        linhas = proposicoes.inteiro_teor_para_linhas(ler_tabela(LinhaDeProposicaoDaCamara, camara.ler_csv(arquivo)), ids)
+        lidas = {id_proposicao for id_proposicao, _ in linhas}
+        linhas += [(id_proposicao, "") for id_proposicao in ids - lidas]
+        persistencia.gravar_inteiro_teor(conexao, linhas, carga)
+        achadas += sum(1 for _, url in linhas if url)
+        vazias += sum(1 for _, url in linhas if not url)
+    log.info("  %d com texto integral, %d sem texto publicado", achadas, vazias)
+
+
 def _palavras_chave(conexao: psycopg.Connection, limite: int | None) -> None:
     """Pendência 70 — busca as palavras-chave das proposições votadas que ainda não as têm.
 
@@ -2705,6 +2737,8 @@ def _executar_etapa(conexao: psycopg.Connection, etapa: rotina.Etapa) -> None:
         _em_exercicio(conexao)
     elif etapa.comando == "palavras-chave":
         _palavras_chave(conexao, None)
+    elif etapa.comando == "inteiro-teor":
+        _inteiro_teor(conexao)
     elif etapa.comando == "cota":
         _cota(conexao, anos)
     elif etapa.comando == "emendas":

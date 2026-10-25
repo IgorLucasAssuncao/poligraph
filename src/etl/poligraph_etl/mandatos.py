@@ -28,7 +28,7 @@ from .contratos.banco import Mandato
 from .contratos.tse import LinhaDeCandidatura, LinhaDeVotacao
 from .tipos import (
     CARGOS_DO_CONGRESSO, CARGOS_MUNICIPAIS, CARGOS_NACIONAIS, ELEITOS, TITULAR_DO_VICE, TipoCargo, TipoSituacaoNoTurno, TipoCasa, TipoSexo,
-    anos_do_mandato, cargo_do_tse, data_plausivel, sexo_do_tse, situacao_do_tse,
+    TipoDeEleicao, anos_do_mandato, cargo_do_tse, data_plausivel, sexo_do_tse, situacao_do_tse, tipo_de_eleicao_do_tse,
 )
 
 RECURSO = "consulta_cand/consulta_cand_{ano}.zip"
@@ -57,6 +57,7 @@ class Eleito:
     sexo: TipoSexo | None
     partido: str
     coligacao: str | None = None
+    ano_da_suplementar: int | None = None
 
 
 def eleitos(linhas: list[LinhaDeCandidatura], eleitos_pelos_votos: frozenset[str] = frozenset()) -> list[Eleito]:
@@ -142,7 +143,16 @@ def _eleito(linha: LinhaDeCandidatura, cargo: TipoCargo) -> Eleito:
         sexo=sexo_do_tse(linha.genero),
         partido=linha.partido or "",
         coligacao=None if coligacao.startswith("#") or not coligacao else coligacao,
+        ano_da_suplementar=_ano_da_suplementar(linha),
     )
+
+
+def _ano_da_suplementar(linha: LinhaDeCandidatura) -> int | None:
+    """O ano da eleição suplementar em que a candidatura foi eleita, ou `None` se a eleição foi a ordinária."""
+    if tipo_de_eleicao_do_tse(linha.tipo_de_eleicao) is not TipoDeEleicao.SUPLEMENTAR:
+        return None
+    data = _data(linha.data_da_eleicao)
+    return data.year if data else None
 
 
 def candidatura(eleito: Eleito) -> tuple[int, str | None, str | None, str, str]:
@@ -232,13 +242,19 @@ class Identidades:
 
 
 def mandatos_para_linhas(eleitos_da_eleicao: list[Eleito], identidades: Identidades, ponte: dict[str, str | None]) -> list[Mandato]:
-    """Os mandatos de quem tem pessoa na base."""
+    """Os mandatos de quem tem pessoa na base.
+
+    O eleito numa suplementar começa no ano dela, e não no ano seguinte ao da eleição anulada. MEDIDO em 2026-10-24:
+    Itatiaia (RJ) mostrava o eleito na suplementar de março de 2022 como prefeito desde 2021.
+    """
     linhas = []
     for eleito in eleitos_da_eleicao:
         pessoa = identidades.pessoa(eleito)
         if pessoa is None:
             continue
         primeiro, ultimo = anos_do_mandato(eleito.cargo, eleito.ano_eleicao)
+        if eleito.ano_da_suplementar:
+            primeiro = min(max(primeiro, eleito.ano_da_suplementar), ultimo)
         linhas.append(Mandato(
             pessoa_id=pessoa,
             cargo=eleito.cargo.value,

@@ -41,3 +41,14 @@ class DeputadoEmExercicio:
 
     id_na_camara: str | None = coluna("id")
     legislatura: str | None = coluna("idLegislatura")
+
+
+@dataclass(frozen=True)
+class LinhaDeProposicaoDaCamara:
+    """Uma proposição do arquivo anual da Câmara: `dadosabertos.camara.leg.br/arquivos/proposicoes/csv/proposicoes-{ano}.csv`.
+
+    Só o endereço do texto integral: ementa e tipo já vêm do arquivo das votações.
+    """
+
+    id_proposicao: str | None = coluna("id")
+    url_inteiro_teor: str | None = coluna("urlInteiroTeor")

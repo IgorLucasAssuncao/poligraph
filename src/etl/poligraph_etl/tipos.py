@@ -428,3 +428,24 @@ def data_plausivel(data, ate_o_ano: int):
     if data is None or not (1900 <= data.year <= ate_o_ano):
         return None
     return data
+
+
+class TipoDeEleicao(StrEnum):
+    """Ordinária ou suplementar (`CD_TIPO_ELEICAO`). A suplementar refaz a eleição anulada, no arquivo do ciclo original."""
+
+    ORDINARIA = "ORDINARIA"
+    SUPLEMENTAR = "SUPLEMENTAR"
+
+
+_TIPO_DE_ELEICAO = {"0": TipoDeEleicao.ORDINARIA, "2": TipoDeEleicao.ORDINARIA, "1": TipoDeEleicao.SUPLEMENTAR}
+"""MEDIDO em 2026-10-24, arquivos de candidatos de 1998 a 2026: "2" ordinária, "1" suplementar e "0" ordinária só em 2006."""
+
+
+def tipo_de_eleicao_do_tse(codigo: str | None) -> TipoDeEleicao:
+    """O tipo da eleição pelo código do TSE; vazio é ordinária, como nos arquivos sem a coluna preenchida."""
+    if not codigo:
+        return TipoDeEleicao.ORDINARIA
+    try:
+        return _TIPO_DE_ELEICAO[codigo.strip()]
+    except KeyError:
+        raise ValorDesconhecido("CD_TIPO_ELEICAO", codigo) from None

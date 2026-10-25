@@ -1495,3 +1495,27 @@ VALUES ('20261025014031_TextosDaAuditoria', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+ALTER TABLE proposicoes ADD url_inteiro_teor_carga_id bigint;
+
+CREATE INDEX ix_proposicoes_url_inteiro_teor_carga_id ON proposicoes (url_inteiro_teor_carga_id);
+
+ALTER TABLE proposicoes ADD CONSTRAINT ck_proposicao_inteiro_teor CHECK (url_inteiro_teor IS NULL OR url_inteiro_teor = '' OR url_inteiro_teor ~ '^https://[^[:space:]]+$');
+
+ALTER TABLE proposicoes ADD CONSTRAINT fk_proposicoes_cargas_url_inteiro_teor_carga_id FOREIGN KEY (url_inteiro_teor_carga_id) REFERENCES cargas (id) ON DELETE RESTRICT;
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261025022611_InteiroTeorDaProposicao', '10.0.11');
+
+COMMIT;
+
+START TRANSACTION;
+ALTER TABLE mandatos DROP CONSTRAINT ck_mandato_anos;
+
+ALTER TABLE mandatos ADD CONSTRAINT ck_mandato_anos CHECK (primeiro_ano BETWEEN ano_eleicao + 1 AND ultimo_ano);
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261025023432_MandatoDeSuplementar', '10.0.11');
+
+COMMIT;
+

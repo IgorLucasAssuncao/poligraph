@@ -43,6 +43,10 @@ export const TEXTOS_DA_CIDADE = {
   prefeitos: 'Prefeitos eleitos',
   doisEleitos: 'Mais de um eleito para o mesmo período: houve eleição suplementar.',
   vice: 'Vice',
+  desdeASuplementar: (ano: number) => `desde ${ano}, eleito em eleição suplementar`,
+  /** MEDIDO em 2026-10-24: 18 cidades em 2024 e 5 em 2020, com a eleição anulada e o resultado da suplementar fora dos arquivos abertos. */
+  semEleitoNoTse:
+    'O TSE não registra prefeito eleito para estes anos. Isso acontece quando a eleição é anulada e o resultado da nova eleição ainda não está nos dados abertos.',
   /**
    * DECISÃO (2026-10-24): o aviso, e não a substituição, porque nenhuma fonte aberta e periódica diz quem assumiu.
    * Medidas: Receita, Transferegov, Wikidata, Siconfi, SIMEC, Tribunais de Contas e Querido Diário (Fuad Noman, BH).

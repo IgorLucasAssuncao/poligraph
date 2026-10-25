@@ -184,6 +184,7 @@ function GestaoComponent({ gestao, maior }: { gestao: GestaoDaCidade; maior: num
         <dl className="gestao-eleitos">
           <dt>{gestao.prefeitos.length > 1 ? T.prefeitos : T.prefeito}</dt>
           <dd>
+            {gestao.prefeitos.length === 0 && <span className="gestao-sem-eleito">{T.semEleitoNoTse}</span>}
             <ListaDeEleitosComponent eleitos={gestao.prefeitos} />
             {gestao.prefeitos.length > 1 && <small className="gestao-nota">{T.doisEleitos}</small>}
           </dd>
@@ -280,6 +281,7 @@ function LinkDoEleitoComponent({ eleito }: { eleito: EleitoNaGestao }) {
   return (
     <>
       <Link to={destinoDoPolitico(eleito)}>{nomeProprio(eleito.nome)}</Link> <small>{eleito.partido}</small>
+      {eleito.desdeAno != null && <small>{T.desdeASuplementar(eleito.desdeAno)}</small>}
     </>
   );
 }

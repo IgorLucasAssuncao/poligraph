@@ -1499,7 +1499,7 @@ namespace Poligraph.Data.Migrations
 
                     b.ToTable("mandatos", null, t =>
                         {
-                            t.HasCheckConstraint("ck_mandato_anos", "primeiro_ano = ano_eleicao + 1 AND ultimo_ano >= primeiro_ano");
+                            t.HasCheckConstraint("ck_mandato_anos", "primeiro_ano BETWEEN ano_eleicao + 1 AND ultimo_ano");
 
                             t.HasCheckConstraint("ck_mandato_cargo", "cargo IN ('PRESIDENTE','VICE_PRESIDENTE','SENADOR','DEPUTADO_FEDERAL','GOVERNADOR','VICE_GOVERNADOR','DEPUTADO_ESTADUAL','DEPUTADO_DISTRITAL','PREFEITO','VICE_PREFEITO')");
 
@@ -1979,6 +1979,10 @@ namespace Poligraph.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("url_inteiro_teor");
 
+                    b.Property<long?>("UrlInteiroTeorCargaId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("url_inteiro_teor_carga_id");
+
                     b.HasKey("Casa", "Id")
                         .HasName("ak_proposicoes_casa_id");
 
@@ -1988,9 +1992,14 @@ namespace Poligraph.Data.Migrations
                     b.HasIndex("PalavrasChaveCargaId")
                         .HasDatabaseName("ix_proposicoes_palavras_chave_carga_id");
 
+                    b.HasIndex("UrlInteiroTeorCargaId")
+                        .HasDatabaseName("ix_proposicoes_url_inteiro_teor_carga_id");
+
                     b.ToTable("proposicoes", null, t =>
                         {
                             t.HasCheckConstraint("ck_proposicao_ano", "ano IS NULL OR ano <> 0");
+
+                            t.HasCheckConstraint("ck_proposicao_inteiro_teor", "url_inteiro_teor IS NULL OR url_inteiro_teor = '' OR url_inteiro_teor ~ '^https://[^[:space:]]+$'");
                         });
                 });
 
@@ -3195,6 +3204,12 @@ namespace Poligraph.Data.Migrations
                         .HasForeignKey("PalavrasChaveCargaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_proposicoes_cargas_palavras_chave_carga_id");
+
+                    b.HasOne("Poligraph.Data.CargaModel", null)
+                        .WithMany()
+                        .HasForeignKey("UrlInteiroTeorCargaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_proposicoes_cargas_url_inteiro_teor_carga_id");
                 });
 
             modelBuilder.Entity("Poligraph.Data.ReceitaDeCampanhaModel", b =>

@@ -50,6 +50,7 @@ os testes).
 | `senado` | Senado: senadores, votações, votos e matérias | `--anos ...` (padrão: 2023 a 2026) |
 | `simbolicas` | Conta as votações simbólicas da Câmara a partir dos arquivos de votação do cache, para o painel do início | `--anos ...` |
 | `palavras-chave` | Palavras-chave das proposições votadas que ainda não têm (Pendência 70). Retoma de onde parou | `--limite N` |
+| `inteiro-teor` | Endereço do texto integral das proposições votadas da Câmara, pelo `proposicoes-{ano}.csv`; só os anos com pendente | — |
 | `analisar` | Similaridade, comunidades, grafo e alinhamento de uma casa | `--casa CAMARA\|SENADO`, `--legislatura 56 57` ou `--todas`; sem nada, a corrente |
 | `curar` | Lista votações candidatas a pergunta do questionário, das mais divididas | `--casa`, `--legislatura`, `--limite` |
 | `validar` | Mede o questionário e comunidade × partido. Só lê | `--legislatura`, `--divisao-minima` |
@@ -91,7 +92,7 @@ haveria como refazer a carga a partir dele. Fora da pasta, o comando recusa ante
 
 | Comando | O que faz |
 |---|---|
-| `rotina --frequencia semanal` | `ingerir`, `senado` e `simbolicas` do ano, `palavras-chave`, `conferir` |
+| `rotina --frequencia semanal` | `ingerir`, `senado` e `simbolicas` do ano, `palavras-chave`, `inteiro-teor`, `conferir` |
 | `rotina --frequencia mensal` | A semanal, mais `cota`, `emendas`, `sedes-brasilapi`, `convenios`, `governo`, `defesa-civil`, `compras-centralizadas`, `viagens`, `compras`, `sancoes`, `populacao`, `analisar` das duas casas, `conferir` |
 | mensal de maio | Também `siconfi` do ano anterior: a DCA vence em 30 de abril |
 | mensal de jan, abr, jul e out | Também `municipios`: o cadastro da Receita muda por trimestre e pesa gigabytes |
@@ -112,7 +113,7 @@ uma etapa, a ordem não importa.
 | Etapa | Comandos | Espera |
 |---|---|---|
 | 1 | `ingerir`, `senado`, `governo`, `defesa-civil`, `viagens`, `compras`, `sancoes`, `compras-centralizadas` | Nada |
-| 2 | `simbolicas`, `palavras-chave`, `analisar`, `cpf`, `cota`, `emendas` | O voto e o cadastro das duas casas (`simbolicas` só da Câmara) |
+| 2 | `simbolicas`, `palavras-chave`, `inteiro-teor`, `analisar`, `cpf`, `cota`, `emendas` | O voto e o cadastro das duas casas (`simbolicas` só da Câmara) |
 | 3 | `mandatos` | `cpf` e `senado`: liga o eleito ao parlamentar que já está na base |
 | 4 | `fundo`, `patrimonio`, `redes` | `cpf` e `mandatos`: são as chaves para casar com o TSE |
 | 3 | `convenios`, `municipios` | `emendas`: são os CNPJs que eles procuram |
@@ -144,6 +145,7 @@ py -m poligraph_etl senado --anos 2023 2024 2025 2026
 py -m poligraph_etl governo --anos 2023 2024 2025 2026 --eleicao 2022
 py -m poligraph_etl simbolicas --anos 2023 2024 2025 2026
 py -m poligraph_etl palavras-chave
+py -m poligraph_etl inteiro-teor
 py -m poligraph_etl analisar --casa CAMARA
 py -m poligraph_etl analisar --casa SENADO
 py -m poligraph_etl cpf

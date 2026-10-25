@@ -60,4 +60,6 @@ public record VotoNaFichaDto(
     /// <summary>A ficha de tramitação da proposição, na casa. Nula sem proposição ligada.</summary>
     string? UrlProposicao,
     /// <summary>O registro nominal da votação, com o voto de cada um. Só na Câmara.</summary>
-    string? UrlRegistro);
+    string? UrlRegistro,
+    /// <summary>O texto integral da proposição votada (o PDF da Câmara). Nulo no Senado e sem texto publicado.</summary>
+    string? UrlInteiroTeor = null);

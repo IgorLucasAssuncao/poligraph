@@ -156,6 +156,23 @@ def do_senado(materias, vinculo_bruto: dict[str, str]) -> tuple[list[dict], dict
     return list(proposicoes.values()), vinculo
 
 
+def inteiro_teor_para_linhas(linhas, pendentes: set[int]) -> list[tuple[int, str]]:
+    """(id, endereço do texto integral) das proposições pendentes que estão no arquivo do ano.
+
+    Endereço vazio, ou que não é `https://` sem espaço, vira "" e não `None`: quer dizer "consultada, e a Câmara não publica
+    o texto", e a próxima rotina não baixa o ano de novo por ela. MEDIDO em 2026-10-24, nos arquivos de 1995, 2010 e 2024:
+    todos `https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=…`.
+    """
+    achadas: dict[int, str] = {}
+    for linha in linhas:
+        id_proposicao = _inteiro_ou_nulo(linha.id_proposicao)
+        if id_proposicao not in pendentes:
+            continue
+        url = (linha.url_inteiro_teor or "").strip()
+        achadas[id_proposicao] = url if url.startswith("https://") and not any(c.isspace() for c in url) else ""
+    return list(achadas.items())
+
+
 def _texto(valor) -> str:
     """ATENÇÃO: Colapsa espaço: a ementa vem com quebra de linha DENTRO do campo."""
     return "" if valor is None else " ".join(str(valor).split())

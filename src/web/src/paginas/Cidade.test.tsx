@@ -52,6 +52,23 @@ beforeEach(() => {
 });
 
 describe('Página da cidade', () => {
+  it('a gestão sem eleito no TSE diz por quê, e o eleito em suplementar diz desde quando', async () => {
+    vi.mocked(api.obterGestoesDaCidade).mockResolvedValue({
+      ...CAMPINAS,
+      gestoes: [
+        { primeiroAno: 2025, ultimoAno: 2028, prefeitos: [], vices: [], governadores: [], recebido: 0, naPrefeitura: 0, comPagamento: false },
+        {
+          primeiroAno: 2021, ultimoAno: 2024, prefeitos: [{ ...eleito(6, 'IRINEU EXEMPLO'), desdeAno: 2022 }], vices: [], governadores: [],
+          recebido: 0, naPrefeitura: 0, comPagamento: false,
+        },
+      ],
+    });
+    renderizar();
+
+    expect(await screen.findByText(/O TSE não registra prefeito eleito para estes anos/)).toBeInTheDocument();
+    expect(screen.getByText('desde 2022, eleito em eleição suplementar')).toBeInTheDocument();
+  });
+
   it('liga cada eleito à ficha certa e diz que a base começa em 2015', async () => {
     renderizar();
 

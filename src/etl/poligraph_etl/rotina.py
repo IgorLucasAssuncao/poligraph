@@ -6,7 +6,7 @@ vez que alguém apertou o botão. Este módulo só DECIDE as etapas; quem as exe
 
 | Frequência | Etapas |
 |---|---|
-| `semanal` | `ingerir`, `senado`, `em-exercicio` (a lista oficial de quem está no mandato) e `simbolicas` do ano corrente, `palavras-chave` das novas, `conferir` |
+| `semanal` | `ingerir`, `senado`, `em-exercicio` (a lista oficial de quem está no mandato) e `simbolicas` do ano corrente, `palavras-chave` e `inteiro-teor` das novas, `conferir` |
 | `mensal` | as da semanal, `cota`, `emendas`, `sedes-brasilapi` (CNPJs novos das emendas), `convenios`, `governo`, `defesa-civil`, `compras-centralizadas`, `viagens`, `compras`, `sancoes`, `populacao`, `analisar` das duas casas, `conferir` |
 | mensal de jan, abr, jul e out | também `municipios`: o cadastro de CNPJ da Receita, gigabytes, uma vez por trimestre |
 | mensal de nov e dez de ano de eleição geral | também `mandatos`, `fundo`, `patrimonio` e `redes` da eleição: o TSE fecha a prestação de contas depois do segundo turno |
@@ -78,6 +78,7 @@ def etapas(frequencia: str, hoje: date) -> list[Etapa]:
         Etapa("em-exercicio"),
         Etapa("simbolicas", {"anos": anos}),
         Etapa("palavras-chave"),
+        Etapa("inteiro-teor"),
     ]
 
     if frequencia == "mensal":

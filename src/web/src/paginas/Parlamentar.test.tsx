@@ -748,6 +748,20 @@ describe('fontes oficiais', () => {
     expect(screen.getByRole('link', { name: /registro da votação/ }).getAttribute('href')).toMatch(/votacoes\/1-1/);
   });
 
+  it('o voto com texto integral leva a ler o projeto, e o sem texto não mostra o link', async () => {
+    await renderizarCom({
+      ...FICHA,
+      votosRecentes: [
+        { ...voto('v1', 1, null), urlInteiroTeor: 'https://www.camara.leg.br/proposicoesWeb/prop_mostrarintegra?codteor=2845541' },
+        { ...voto('v2', -1, null), urlInteiroTeor: null },
+      ],
+    });
+
+    const links = screen.getAllByRole('link', { name: /ler o projeto/ });
+    expect(links).toHaveLength(1);
+    expect(links[0].getAttribute('href')).toMatch(/codteor=2845541/);
+  });
+
   it('o convênio leva ao Portal', async () => {
     await abrirAba('Emendas');
 

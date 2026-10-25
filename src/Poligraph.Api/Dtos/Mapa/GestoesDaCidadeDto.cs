@@ -1,4 +1,4 @@
-namespace Poligraph.Api.Dtos;
+﻿namespace Poligraph.Api.Dtos;
 
 /// <summary>A página da cidade (Pendência 90, fase 4): quem foi eleito para governá-la em cada período e quanto de emenda chegou.</summary>
 /// <param name="Recebido">Todo o pago a quem tem sede na cidade, na base inteira.</param>
@@ -41,7 +41,8 @@ public record ContasDaGestaoDto(
 public record AnoForaDoPadraoDto(int Ano, decimal ReceitaDeclarada);
 
 /// <summary>Um eleito, com o link que a tela usa: a ficha do parlamentar quando ele votou no Congresso, senão a do político.</summary>
-public record EleitoNaGestaoDto(long IdPessoa, string Nome, string Partido, bool Parlamentar);
+/// <param name="DesdeAno">O ano em que começou, quando não foi o primeiro da gestão: o eleito numa eleição suplementar.</param>
+public record EleitoNaGestaoDto(long IdPessoa, string Nome, string Partido, bool Parlamentar, short? DesdeAno = null);
 
 /// <summary>Um governador eleito e os anos do mandato dele que caem dentro da gestão municipal.</summary>
 public record GovernadorNoPeriodoDto(EleitoNaGestaoDto Governador, short DeAno, short AteAno);

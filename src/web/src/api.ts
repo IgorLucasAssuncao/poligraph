@@ -73,6 +73,12 @@ export type VotoNaFicha = {
   urlProposicao: string | null;
   /** O registro nominal da votação, com o voto de cada um. Só na Câmara. */
   urlRegistro: string | null;
+  /**
+   * O texto integral da proposição (o PDF da Câmara). Nulo no Senado e sem texto publicado.
+   *
+   * RISCO: opcional, como os campos novos da campanha: a resposta guardada de antes do deploy chega sem ele.
+   */
+  urlInteiroTeor?: string | null;
 };
 
 export type Similar = {
@@ -1748,7 +1754,14 @@ export type FiltroDePoliticos = {
 };
 
 /** Um eleito na gestão; `parlamentar` decide qual ficha abre. */
-export type EleitoNaGestao = { idPessoa: number; nome: string; partido: string; parlamentar: boolean };
+export type EleitoNaGestao = {
+  idPessoa: number;
+  nome: string;
+  partido: string;
+  parlamentar: boolean;
+  /** O ano em que começou, quando não foi o primeiro da gestão: o eleito numa eleição suplementar. */
+  desdeAno?: number | null;
+};
 
 /** Um mandato municipal: os eleitos, os governadores eleitos nos anos que coincidem e o pago nesses anos. */
 export type GestaoDaCidade = {

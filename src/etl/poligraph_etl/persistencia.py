@@ -623,6 +623,29 @@ def gravar_palavras_chave(
     return len(linhas)
 
 
+def proposicoes_sem_inteiro_teor(conexao: psycopg.Connection) -> dict[int, set[int]]:
+    """Ano → ids das proposições da Câmara que ainda não foram procuradas no arquivo de proposições do ano."""
+    pendentes: dict[int, set[int]] = {}
+    for ano, id_proposicao in conexao.execute(
+        "SELECT ano, id FROM proposicoes WHERE casa = %s AND url_inteiro_teor IS NULL AND ano IS NOT NULL",
+        (TipoCasa.CAMARA,),
+    ).fetchall():
+        pendentes.setdefault(ano, set()).add(id_proposicao)
+    return pendentes
+
+
+def gravar_inteiro_teor(conexao: psycopg.Connection, linhas: Sequence[tuple[int, str]], carga_id: int | None) -> int:
+    """Grava `(id, endereço)` das proposições da Câmara. Vazio quer dizer procurada e sem texto publicado."""
+    if not linhas:
+        return 0
+    with conexao.cursor() as cursor:
+        cursor.executemany(
+            "UPDATE proposicoes SET url_inteiro_teor = %s, url_inteiro_teor_carga_id = %s WHERE casa = %s AND id = %s",
+            [(url, carga_id, TipoCasa.CAMARA, id_proposicao) for id_proposicao, url in linhas],
+        )
+    return len(linhas)
+
+
 def marcar_secretas_de_fato(conexao: psycopg.Connection, casa: str) -> int:
     """Pendência 69 — marca `secreta` na votação que tem votos e nenhum com posição.
 

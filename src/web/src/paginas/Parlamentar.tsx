@@ -495,7 +495,7 @@ function ListaDeVotosComponent({
               [...T.votos.colunas],
               todos.map((v) => [
                 v.votacaoId, v.data, rotuloDoVoto(v.valor), v.orientacaoDoGoverno, v.materia,
-                v.descricao, v.categoria, v.urlProposicao, v.urlRegistro,
+                v.descricao, v.categoria, v.urlProposicao, v.urlRegistro, v.urlInteiroTeor ?? null,
               ]),
             );
           }}
@@ -818,7 +818,7 @@ function SeloDoVotoComponent({ voto: v }: { voto: VotoNaFicha }) {
   );
 }
 
-/** Data, orientação do Governo e os links da proposição e do registro. */
+/** Data, orientação do Governo e os links da proposição, do texto integral e do registro. */
 function DetalheDoVotoComponent({ voto: v }: { voto: VotoNaFicha }) {
   return (
     <span className="linha-detalhe">
@@ -828,6 +828,12 @@ function DetalheDoVotoComponent({ voto: v }: { voto: VotoNaFicha }) {
         <>
           {' · '}
           <LinkDeFonteComponent href={v.urlProposicao}>{T.votos.proposicao}</LinkDeFonteComponent>
+        </>
+      )}
+      {v.urlInteiroTeor && (
+        <>
+          {' · '}
+          <LinkDeFonteComponent href={v.urlInteiroTeor}>{T.votos.inteiroTeor}</LinkDeFonteComponent>
         </>
       )}
       {v.urlRegistro && (
