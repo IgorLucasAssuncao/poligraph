@@ -1,7 +1,7 @@
 import { useCarga } from '../componentes/useCarga';
 import { useLegislaturas } from '../componentes/useLegislatura';
 import { BaseComponent } from '../componentes/BaseDoCongresso';
-import { NOME_DA_CASA, obterMetodologia, obterPanorama, type CasaNaMetodologia, type Metodologia as DadosDaMetodologia } from '../api';
+import { NOME_DA_CASA, obterMetodologia, obterPanorama, type CasaNaMetodologia, type Metodologia as DadosDaMetodologia, type Panorama } from '../api';
 import { LinkDeFonteComponent } from '../componentes/LinkDeFonte';
 import { FONTES } from '../fontes';
 import { EsqueletoDeTextoComponent } from '../componentes/Esqueleto';
@@ -20,6 +20,8 @@ import { TEXTOS_DA_METODOLOGIA as T } from '../textos/metodologia';
  */
 export function MetodologiaComponent() {
   const { dados, erro } = useCarga(['metodologia'], obterMetodologia);
+  const panorama = useCarga(['panorama', null], () => obterPanorama());
+  const pronto = dados && (panorama.dados || panorama.erro);
 
   return (
     <article className="documento-legal metodologia">
@@ -27,13 +29,17 @@ export function MetodologiaComponent() {
       <p className="ajuda">{T.abertura}</p>
 
       {erro && <p className="erro">{T.erro}</p>}
-      {!erro && !dados && <EsqueletoDeTextoComponent rotulo={T.carregando} paragrafos={3} />}
-      {dados && <ConteudoComponent dados={dados} />}
+      {!erro && !pronto && <EsqueletoDeTextoComponent rotulo={T.carregando} paragrafos={3} />}
+      {dados && pronto && <ConteudoComponent dados={dados} panorama={panorama.dados ?? null} />}
     </article>
   );
 }
 
-function ConteudoComponent({ dados }: { dados: DadosDaMetodologia }) {
+/**
+ * DECISÃO (2026-10-24): espera o panorama junto com a metodologia. Desenhado à parte, o bloco da base (759 px no tablet)
+ * entrava no meio da página depois do resto e empurrava "O questionário": CLS de 0,155 a 768 px.
+ */
+function ConteudoComponent({ dados, panorama }: { dados: DadosDaMetodologia; panorama: Panorama | null }) {
   const { questionario: q, afinidade, casas } = dados;
   const oferecidas = q.perguntasDaCamara + q.perguntasDoSenado;
   const legislatura = casas[0]?.legislatura;
@@ -54,7 +60,7 @@ function ConteudoComponent({ dados }: { dados: DadosDaMetodologia }) {
         ))}
       </ul>
       <p>{T.dados.dinheiro}</p>
-      <BaseDaLegislaturaComponent />
+      {panorama && <BaseComponent panorama={panorama} />}
 
       <h2>{T.questionario.titulo}</h2>
       <p>{T.questionario.oferecidas(oferecidas, q.perguntasDaCamara, q.perguntasDoSenado)}</p>
@@ -156,14 +162,4 @@ function TabelaDoGrafoComponent({ casas }: { casas: CasaNaMetodologia[] }) {
       </table>
     </div>
   );
-}
-
-/**
- * O tamanho da base em cada casa, na legislatura corrente: votações nominais e simbólicas, secretas, grupos de voto.
- *
- * DECISÃO (autor, 2026-10-23): veio da página inicial. É o detalhe de quem confere o método; lá ficou uma linha com os números.
- */
-function BaseDaLegislaturaComponent() {
-  const { dados } = useCarga(['panorama', null], () => obterPanorama());
-  return dados ? <BaseComponent panorama={dados} /> : null;
 }

@@ -369,6 +369,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .botao-texto {
+  min-height: 24px;
   background: none; border: none; color: var(--suave);
   font-size: var(--t-2); padding: .4rem .6rem; border-radius: var(--raio);
 }
@@ -474,7 +475,7 @@ strong, .selo, .chip, .criterio { font-variant-numeric: tabular-nums; }
 .linha:hover { background: var(--painel); }
 .linha-corpo { flex: 1; min-width: 0; }
 .linha-topo { display: flex; align-items: baseline; gap: .35rem; flex-wrap: wrap; }
-.linha-nome { font-weight: 700; }
+.linha-nome { font-weight: 700; min-height: 24px; }
 .linha-nome:hover { text-decoration: underline; }
 .linha-meta { color: var(--suave); font-size: var(--t-2); }
 .linha-detalhe { color: var(--suave); font-size: var(--t-2); margin-top: .15rem; display: block; }
@@ -2130,7 +2131,7 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
    texto, e não depende de cor. */
 /* Quebra linha quando precisa: `nowrap` servia ao link curto ("nota fiscal") e estourava a
    tela do celular com o longo ("tudo o que esta entidade recebeu, no Portal…"). */
-.link-fonte { color: var(--realce); text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.link-fonte { color: var(--realce); text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; min-height: 24px; }
 .link-fonte:hover { text-decoration-thickness: 2px; }
 .lista-lancamentos { list-style: none; margin: 0; padding: 0; }
 .lista-lancamentos li {
@@ -2669,7 +2670,7 @@ dialog.tour::backdrop { background: transparent; }
   display: grid; grid-template-columns: 1fr auto; gap: .1rem .75rem; align-items: baseline;
   padding: .45rem 0; border-bottom: 1px solid var(--borda);
 }
-.lista-autores .autor-nome { font-weight: 600; }
+.lista-autores .autor-nome { font-weight: 600; min-height: 24px; }
 .lista-autores .autor-detalhe { grid-column: 1; color: var(--suave); font-size: var(--t-1); }
 .lista-cidades .valor, .lista-autores .valor {
   grid-column: 2; grid-row: 1; font-family: var(--dado); font-variant-numeric: tabular-nums;
@@ -3125,7 +3126,7 @@ dialog.painel-procedencia::backdrop { background: var(--veu); }
 .confere-com-o-portal[open] > summary { margin-bottom: .5rem; }
 .confere-com-o-portal p { margin: .4rem 0; font-size: var(--t-2); }
 .motivos-de-fora { list-style: none; margin: .5rem 0; padding: 0; }
-.motivos-de-fora li { display: flex; justify-content: space-between; gap: 1rem; padding: .3rem 0; border-top: 1px solid var(--borda); font-size: var(--t-2); }
+.motivos-de-fora li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem; padding: .3rem 0; border-top: 1px solid var(--borda); font-size: var(--t-2); }
 .confere-com-o-portal .dado { font-family: var(--dado); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ═══ CONSENTIMENTO DE SEGUIR (Pendência 62) ════════════════════ */
@@ -3458,3 +3459,9 @@ a.gestao-filtro { color: var(--realce); }
   .tabela-repasses tfoot th, .tabela-repasses tfoot td { border: 0; }
   .tabela-repasses td::before { content: attr(data-rotulo); font-family: var(--corpo); color: var(--suave); text-align: left; }
 }
+
+/* Alvos de toque (2026-10-24): o mínimo de 24 px da WCAG 2.2 (2.5.8). Os nomes e o link de fonte em bloco tinham
+   22 px e ganham altura mínima, que no link no meio da frase não vale. A caixa de seleção já fica dentro do rótulo, que
+   é o alvo, e cresce para ser vista. O balão de termo no meio da frase fica como está: alvo dentro de texto corrido é a
+   exceção da própria regra. */
+label > input[type='checkbox'], label > input[type='radio'] { width: 1.125rem; height: 1.125rem; flex-shrink: 0; }
