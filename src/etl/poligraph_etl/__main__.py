@@ -24,20 +24,22 @@ import numpy as np
 import psycopg
 import requests
 
-from . import conexao as conexao_mod
-from . import (
-    arrecadacao, comparacao, cota, curadoria, emendas, grafo, ingestao,
-    ingestao_senado, municipios, normalizacao, orcamento, orientacoes,
-    persistencia, proposicoes, receitas, sigilo, similaridade, validacao,
-)
+from .nucleo import conexao as conexao_mod
+from .analise import comparacao, curadoria, grafo, similaridade, validacao
+from .cidades import municipios
+from .congresso import cota, em_exercicio, ingestao, ingestao_senado, orientacoes, proposicoes
+from .eleicoes import mandatos, patrimonio, receitas, redes
+from .emendas import convenentes, emendas
 from .fontes import bcb, brasilapi, camara, portal, receita, senado, tse
-from . import amostra, mandatos, selic, compras, compras_centralizadas, conferencia, convenentes, defesa_civil, em_exercicio, limpeza, patrimonio, procedencia, redes, rotina, sancoes, telemetria, viagens
+from .governo import arrecadacao, compras, compras_centralizadas, defesa_civil, orcamento, sancoes, selic, sigilo, viagens
+from .nucleo import limpeza, normalizacao, persistencia, procedencia, rotina, telemetria
+from .qualidade import amostra, conferencia
 from .contratos import entrada
 from .contratos.camara import LinhaDeProposicaoDaCamara
 from .contratos.entrada import colunas_da_fonte, ler_tabela
 from .contratos.tse import LinhaDeCandidatura, LinhaDeVotacao
 from .contratos.bcb import LinhaDaSerie
-from .tipos import FonteDaRedeSocial, TipoCargo, TipoCasa, TipoFonteDeCarga, TipoFonteDeIdentificador, TipoMetrica
+from .nucleo.tipos import FonteDaRedeSocial, TipoCargo, TipoCasa, TipoFonteDeCarga, TipoFonteDeIdentificador, TipoMetrica
 from .contratos.portal import (
     LinhaDeCompra, LinhaDeCompraCentralizadaNoCartao, LinhaDeSancao, LinhaDeTrechoDeViagem, LinhaDeViagem, LinhaDePagamentoDeViagem, LinhaDoCartaoDaDefesaCivil,
 )
@@ -2335,7 +2337,7 @@ def _siconfi(conexao: psycopg.Connection, anos: list[int], municipios: list[str]
     """
     import requests
 
-    from . import siconfi
+    from .cidades import siconfi
     from .contratos.siconfi import LinhaDaDca
     from .fontes import siconfi as fonte
 
@@ -2424,7 +2426,7 @@ def _siconfi_do_arquivo(conexao: psycopg.Connection, anos: list[int], arquivo: P
     O arquivo é o que o `siconfi` grava em `siconfi/dca-{ano}-{data}.json`: as linhas usadas, por município.
     MEDIDO em 2026-10-22: a carga de 2024 levou 77 minutos e caiu na gravação; com o arquivo, segundos.
     """
-    from . import siconfi
+    from .cidades import siconfi
     from .contratos.siconfi import LinhaDaDca
     from .fontes import siconfi as fonte
 
@@ -2452,7 +2454,7 @@ def _reclassificar(conexao: psycopg.Connection) -> None:
     legislaturas que o log lista. Pergunta do questionário que mudasse de categoria
     derruba o comando: a curadoria escolheu a votação pela categoria antiga.
     """
-    from .normalizacao import classificar_categoria
+    from .nucleo.normalizacao import classificar_categoria
 
     votacoes = conexao.execute("SELECT id, casa, legislatura, categoria, descricao FROM votacoes").fetchall()
     perguntas = {linha[0] for linha in conexao.execute("SELECT votacao_id FROM perguntas WHERE ativa").fetchall()}

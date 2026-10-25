@@ -101,7 +101,7 @@ Estrutura **Tier 2 sem MediatR**: `Api`, `Data`, `Tests`, `AppHost`.
 ### Tipagem das fontes
 
 - **Valor fechado de fonte vira enum** nos dois lados: `StrEnum` no Python
-  (`poligraph_etl/tipos.py`), com o mesmo nome e os mesmos valores do enum C# em
+  (`poligraph_etl/nucleo/tipos.py`), com o mesmo nome e os mesmos valores do enum C# em
   `Poligraph.Data/Data/Enums` quando ele existir. O código da fonte (`CD_CARGO`,
   `DS_SIT_TOT_TURNO`, a casa) é traduzido para o enum **no contrato de entrada**; dali em diante
   só o enum circula. ⛔ String literal de domínio (`"CAMARA"`, `"5"`, `"ELEITO"`) fora do contrato.

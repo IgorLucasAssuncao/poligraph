@@ -1,0 +1,331 @@
+"""Financiamento de campanha — o fundão (FEFC) e o resto.
+
+## ENTRADA
+
+| | |
+|---|---|
+| Fonte | `cdn.tse.jus.br/.../prestacao_de_contas_eleitorais_candidatos_{ano}.zip` |
+| Tamanho | **396 MB**, lidos em fluxo — nunca em memória |
+| Formato | CSV `;`, aspas, **Latin-1** — a única fonte do projeto assim |
+| Recorte | O arquivo **consolidado**, nunca ele *mais* os estaduais |
+| Sentinelas | `#NULO`, `#NE`, `-1` chegam como **texto** |
+
+## TRATAMENTO
+
+1. Descarta cargo não ≠ `DEPUTADO FEDERAL`
+2. **Hasheia o CPF do candidato** e casa contra `pessoas.cpf_hash` — quem não casa sai
+3. Descarta valor zero, que violaria `ck_receita_valor`
+4. Separa CNPJ (legível) de CPF do doador (**hasheado**); `00000000000` vira `NULL`
+5. Normaliza `DS_FONTE_RECEITA` para caixa alta
+
+## SAÍDA
+
+| | |
+|---|---|
+| Tabela | `receitas_de_campanha` |
+| Chave de ligação | `pessoa_id`, via **hash de CPF** |
+| Constraint do banco | `ck_receita_valor` (`valor <> 0`) · FK `CASCADE` |
+| Idempotência | `DELETE` por `ano_eleicao` antes do `INSERT` |
+
+---
+
+RISCO: `FUNDO ESPECIAL` e `FUNDO PARTIDARIO` são fundos **diferentes**, e este módulo não
+os soma: o primeiro é o "fundão" eleitoral de 2017, o segundo custeia o partido o ano
+inteiro. Somá-los é decisão de quem analisa.
+
+RISCO: O CPF em claro existe **só em memória**, durante a leitura — RNF-13.
+
+MEDIDO: [`docs/14-fontes-de-gasto.md §3`](../../../docs/14-fontes-de-gasto.md) ·
+[achado #23](../../../docs/achados/023-consolidado-do-tse-e-o-unico-com-df.md)
+"""
+
+import csv
+import io
+import logging
+import zipfile
+from pathlib import Path
+
+from ..nucleo.normalizacao import (
+    hash_de_cpf,
+    normalizar_cpf,
+    sem_acento_maiusculo,
+    sem_cpf,
+    valor_pt_br,
+)
+from ..nucleo.tipos import TipoCasa, origem_da_receita
+
+log = logging.getLogger("poligraph")
+
+PREFIXO = "receitas_candidatos_{ano}_"
+
+# Fragmento, não o nome inteiro: a posição do ano no arquivo estadual ainda não foi
+# medida, e prender o filtro a uma das duas grafias plausíveis deixaria a outra passar.
+IGNORAR = "doador_originario"
+
+CONSOLIDADO = "_BRASIL"
+CARGO = "DEPUTADO FEDERAL"
+
+# O cargo esperado de cada casa. Serve para NÃO atribuir a um deputado atual a campanha
+# ao Senado que ele perdeu numa eleição anterior: o CPF é o mesmo, o cargo não.
+CARGO_POR_CASA = {TipoCasa.CAMARA: CARGO, TipoCasa.SENADO: "SENADOR"}
+CARGOS_ACEITOS = frozenset(CARGO_POR_CASA.values())
+FUNDO_ESPECIAL = "FUNDO ESPECIAL"
+
+# Sentinelas do TSE para campo ausente. Chegam como TEXTO, não como vazio.
+NULOS = {"#NULO", "#NULO#", "#NE", "#NE#", "-1", ""}
+
+
+def nomes_de_receita(caminho: Path, ano: int) -> list[str]:
+    """Os CSVs de receita a ler — o consolidado, se existir; senão, os estaduais.
+
+    RISCO: não **Nunca os dois, e nunca só os estaduais.** Medido no ZIP de 2022: são **26**
+    arquivos estaduais mais um `_BRASIL`, e o consolidado **repete** os estaduais linha
+    por linha (SP: 17.609 × 17.609). Só ele traz o **Distrito Federal**, que não tem
+    arquivo próprio. Ler os dois dobra tudo; ler só os estaduais perdia R$ 17,2 milhões
+    e 10 parlamentares, em silêncio.
+    """
+    prefixo = PREFIXO.format(ano=ano)
+
+    with zipfile.ZipFile(caminho) as pacote:
+        todos = pacote.namelist()
+
+    candidatos = [
+        nome
+        for nome in todos
+        if nome.startswith(prefixo)
+        and IGNORAR not in nome
+        and nome.lower().endswith((".csv", ".txt"))
+    ]
+    if not candidatos:
+        candidatos = [nome for nome in todos if nome.lower().endswith(ARQUIVO_DE_2010.lower())]
+
+    consolidado = [nome for nome in candidatos if CONSOLIDADO.lower() in nome.lower()]
+
+    return consolidado or sorted(candidatos)
+
+
+def ler_receitas(caminho: Path, nome_interno: str):
+    """Itera as linhas de um CSV de dentro do ZIP, sem carregar tudo em memória.
+
+    O layout antigo (2014 e 2010) vem com as colunas por extenso, e sai daqui com os nomes do
+    atual (`traduzir_layout_antigo`): o resto do módulo lê um layout só.
+
+    ATENÇÃO: **Latin-1**, a única fonte do projeto assim — lida como UTF-8, estoura na primeira
+    linha acentuada de um arquivo de 396 MB. `errors="replace"` porque uma linha
+    malformada não pode derrubar a ingestão inteira.
+    """
+    with zipfile.ZipFile(caminho) as pacote, pacote.open(nome_interno) as fluxo:
+        texto = io.TextIOWrapper(fluxo, encoding="latin-1", errors="replace")
+
+        leitor = csv.DictReader(texto, delimiter=";", quotechar='"')
+        if "Valor receita" in (leitor.fieldnames or []):
+            yield from (traduzir_layout_antigo(registro) for registro in leitor)
+        else:
+            yield from leitor
+
+
+ARQUIVO_DE_2010 = "ReceitasCandidatos.txt"
+"""Em 2010 não há o prefixo `receitas_candidatos_`: é um arquivo por UF, em `candidato/{UF}/`."""
+
+COLUNAS_ANTIGAS = {
+    "Cargo": "DS_CARGO",
+    "Nome candidato": "NM_CANDIDATO",
+    "CPF do candidato": "NR_CPF_CANDIDATO",
+    "UF": "SG_UF",
+    "Valor receita": "VR_RECEITA",
+    "CPF/CNPJ do doador": "NR_CPF_CNPJ_DOADOR",
+    "Fonte recurso": "DS_FONTE_RECEITA",
+    "Tipo receita": "DS_ORIGEM_RECEITA",
+    "Nome do doador": "NM_DOADOR",
+    "Sequencial Candidato": "SQ_CANDIDATO",
+}
+"""Pendência 53. MEDIDO em 2026-10-02: as prestações de contas de 2014 e de 2010 têm as nove
+colunas que este módulo usa, com o nome por extenso. A de 2006 é outra, sem o CPF do
+candidato, e fica fora."""
+
+
+def traduzir_layout_antigo(registro: dict) -> dict:
+    """Uma linha do layout antigo com os nomes de coluna do atual, e a fonte no vocabulário de hoje.
+
+    A UE da candidatura é a UF, ou `BR` para presidente: o layout antigo só existe em eleição geral, e sem ela a
+    ponte pela candidatura (`por_candidatura`) não casava. MEDIDO em 2026-10-23: em 2010 e 2014, nenhum governador
+    nem deputado estadual com campanha, e os senadores sem `cpf_hash` de fora.
+
+    ATENÇÃO: A fonte importa para a tela: o site reconhece os fundos por `FUNDO PARTIDARIO` e
+    `FUNDO ESPECIAL`. Em 2010 o arquivo traz "Fundo Partidáo", com a codificação quebrada; o
+    começo da palavra basta para reconhecer.
+    """
+    traduzido = {novo: registro.get(antigo) for antigo, novo in COLUNAS_ANTIGAS.items()}
+    traduzido["SG_UE"] = traduzido.get("SG_UF")
+    traduzido["DS_FONTE_RECEITA"] = _fonte_no_vocabulario_atual(traduzido.get("DS_FONTE_RECEITA"))
+    return traduzido
+
+
+def _fonte_no_vocabulario_atual(bruto: str | None) -> str:
+    fonte = sem_acento_maiusculo(bruto)
+    if fonte.startswith("FUNDO PARTID"):
+        return "FUNDO PARTIDARIO"
+    if fonte.startswith("OUTROS RECURSOS"):
+        return "OUTROS RECURSOS"
+    return fonte or "NAO INFORMADA"
+
+
+CARGO_SENADOR = "SENADOR"
+
+
+def cpf_de_senadores(caminho: Path, ano: int) -> dict[tuple[str, str], str | None]:
+    """`(nome civil normalizado, UF)` -> CPF do candidato a Senador daquela eleição.
+
+    RISCO: O CPF em claro existe só dentro deste dicionário, em memória; quem chama hasheia
+    antes de gravar. RNF-13.
+
+    ATENÇÃO: **A chave inclui a UF de propósito.** Dois candidatos a Senador com o mesmo nome
+    civil em estados diferentes são pessoas diferentes, e casar só por nome atribuiria o
+    financiamento de campanha de um a outro — número plausível e errado, sem erro.
+
+    Não Chave com mais de um CPF vira `None`, nunca "o primeiro". Ambiguidade não
+    resolvida tem de chegar a quem chama como ambiguidade.
+    """
+    achados: dict[tuple[str, str], set[str]] = {}
+
+    for interno in nomes_de_receita(caminho, ano):
+        for registro in ler_receitas(caminho, interno):
+            if not (_texto(registro.get("DS_CARGO")) or "").upper().startswith(
+                CARGO_SENADOR
+            ):
+                continue
+
+            nome = sem_acento_maiusculo(registro.get("NM_CANDIDATO"))
+            uf = (_texto(registro.get("SG_UF")) or "").upper()
+            cpf = normalizar_cpf(registro.get("NR_CPF_CANDIDATO"))
+            if not nome or not uf or not cpf:
+                continue
+
+            achados.setdefault((nome, uf), set()).add(cpf)
+
+    return {
+        chave: (next(iter(cpfs)) if len(cpfs) == 1 else None)
+        for chave, cpfs in achados.items()
+    }
+
+
+def para_linhas(
+    registros,
+    hashes_conhecidos: dict[str, int],
+    ano_eleicao: int,
+    casa_por_pessoa: dict[int, str] | None = None,
+    por_candidatura: dict[tuple[str, str], int] | None = None,
+) -> list[dict]:
+    """Converte em linhas de `receitas_de_campanha`, guardando só quem casa por CPF ou pela candidatura eleita.
+
+    `por_candidatura` é (`SG_UE`, `SQ_CANDIDATO`) → pessoa, de todos os mandatos da eleição (Pendência 90). A
+    candidatura já diz o cargo, e o filtro de cargo e de casa não vale para ela.
+
+    RISCO: antes, só os mandatos de quem nunca esteve no Congresso. O ex-parlamentar eleito governador ou prefeito caía
+    no CPF, que aceita só o cargo da casa dele: MEDIDO em 2026-10-23, 8 dos 27 governadores de 2022 sem campanha
+    (Caiado, Ratinho Junior, Fátima Bezerra), e os senadores de 2010 e 2014 sem `cpf_hash` com 33% e 23%.
+
+    Descarta, e por quê:
+
+    | Caso | Motivo |
+    |---|---|
+    | Cargo não ≠ deputado federal | Vereador, prefeito e senador não estão em `pessoas` |
+    | CPF fora do de-para | Candidato que não se elegeu, ou de outra legislatura |
+    | Valor zero | DECISÃO: Viola `ck_receita_valor`, e o lote inteiro seria recusado |
+
+    RISCO: O CPF em claro do candidato existe só dentro deste laço; o que sai já é hash.
+
+    Filtro barato primeiro: descarta ~85% das linhas (Presidente, Deputado
+    Estadual, Governador) antes de hashear CPF de um arquivo de 396 MB.
+
+    Sem `casa_por_pessoa`, só a Câmara entra — que é o comportamento de antes de o
+    Senado ter cpf_hash.
+    """
+    linhas: list[dict] = []
+
+    for registro in registros:
+        pessoa_id = (por_candidatura or {}).get((registro.get("SG_UE") or "", registro.get("SQ_CANDIDATO") or ""))
+        if pessoa_id is None:
+            cargo = _texto(registro.get("DS_CARGO")).upper()
+            if cargo not in CARGOS_ACEITOS:
+                continue
+
+            chave = hash_de_cpf(registro.get("NR_CPF_CANDIDATO")) or ""
+            pessoa_id = hashes_conhecidos.get(chave)
+            if pessoa_id is None:
+                continue
+
+            casa = (casa_por_pessoa or {}).get(pessoa_id, TipoCasa.CAMARA)
+            if cargo != CARGO_POR_CASA.get(casa, CARGO):
+                continue
+
+        valor = valor_pt_br(registro.get("VR_RECEITA"))
+        if valor == 0:
+            continue
+
+        documento, pessoa_fisica = identificar_doador(registro.get("NR_CPF_CNPJ_DOADOR"))
+
+        linhas.append(
+            {
+                "pessoa_id": pessoa_id,
+                "ano_eleicao": ano_eleicao,
+                "fonte_receita": _texto(registro.get("DS_FONTE_RECEITA")).upper()
+                or "NAO INFORMADA",
+                "origem_receita": origem_da_receita(_texto(registro.get("DS_ORIGEM_RECEITA"))),
+                "doador": sem_cpf(_texto(registro.get("NM_DOADOR")) or None),
+                "doador_cnpj_ou_hash": documento,
+                "doador_eh_pessoa_fisica": pessoa_fisica,
+                "valor": valor,
+            }
+        )
+
+    return linhas
+
+
+def identificar_doador(bruto: str | None) -> tuple[str | None, bool]:
+    """Separa CNPJ de CPF e **hasheia o CPF** — a mesma regra de `cota`.
+
+    RISCO: CNPJ fica legível de propósito: é dado público de empresa, e é ele que permite
+    cruzar quem financiou a campanha com quem recebeu verba de gabinete depois.
+
+    ATENÇÃO: `00000000000` (doação sem doador identificado) vira `None`. Hasheá-lo daria um
+    valor **constante** em milhares de linhas, que casaria todas entre si e inventaria um
+    doador comum inexistente.
+    """
+    digitos = "".join(caractere for caractere in (bruto or "") if caractere.isdigit())
+
+    if not digitos or set(digitos) == {"0"}:
+        return None, False
+
+    if len(digitos) == 11:
+        return hash_de_cpf(digitos), True
+
+    return digitos, False
+
+
+def resumir(linhas: list[dict]) -> dict[str, float]:
+    """Canário de ingestão, e a resposta que o TCC cita.
+
+    ATENÇÃO: Separa o fundão do resto de propósito: um total único esconderia justamente a
+    distinção que dá sentido ao dado.
+    """
+    fundao = sum(
+        linha["valor"] for linha in linhas if linha["fonte_receita"] == FUNDO_ESPECIAL
+    )
+
+    return {
+        "linhas": float(len(linhas)),
+        "total": sum(linha["valor"] for linha in linhas),
+        "fundo_especial": fundao,
+        "parlamentares": float(len({linha["pessoa_id"] for linha in linhas})),
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════
+
+
+def _texto(bruto: str | None) -> str:
+    """Trata a sentinela do TSE. Sem isto, `#NULO` viraria o nome do doador na ficha."""
+    valor = (bruto or "").strip()
+
+    return "" if valor.upper() in NULOS else valor

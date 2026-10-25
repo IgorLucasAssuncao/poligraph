@@ -8,6 +8,24 @@ O mesmo conteúdo, desenhado: [`mapa_do_sistema.html`](../../mapa_do_sistema.htm
 repositório. Mostra fontes, comandos por etapa e tabelas, com exemplo do que trafega em cada
 conexão, além do modelo do banco e das rotas da API.
 
+## Onde está cada coisa
+
+O pacote é dividido por contexto, e `tests/` repete a mesma divisão (`tests/<contexto>/test_<módulo>.py`).
+
+| Pasta | O que tem |
+|---|---|
+| `__main__.py` | O orquestrador: a linha de comando e a ordem de cada carga |
+| `fontes/` | Baixar: um módulo por fonte oficial (Câmara, Senado, TSE, Portal, Receita, IBGE, BrasilAPI, Siconfi, Banco Central) |
+| `contratos/` | As colunas lidas de cada fonte (`entrada`) e as linhas gravadas em cada tabela (`banco`) |
+| `nucleo/` | Conexão, gravação no banco (`persistencia`), procedência, telemetria, rotina, limpeza do cache, enums (`tipos`) e normalização |
+| `congresso/` | Votações, votos, orientação de bancada, proposições, quem está em exercício e a cota parlamentar |
+| `analise/` | Similaridade, grafo e comunidades, comparação com o partido, curadoria e validação do questionário |
+| `qualidade/` | A conferência do banco e as amostras contra um segundo canal oficial |
+| `eleicoes/` | O que vem do TSE: mandatos, patrimônio, receitas de campanha, redes sociais |
+| `emendas/` | Emendas parlamentares e convênios |
+| `cidades/` | Municípios, a malha do mapa e as contas das prefeituras |
+| `governo/` | Orçamento, arrecadação, compras, cartões, viagens, sanções, sigilo e Selic |
+
 Ajuda de qualquer comando, direto do código:
 
 ```bash
@@ -99,7 +117,7 @@ haveria como refazer a carga a partir dele. Fora da pasta, o comando recusa ante
 | mensal de nov e dez de ano de eleição geral | Também `mandatos`, `fundo`, `patrimonio` e `redes` da eleição: o TSE fecha a prestação de contas depois do segundo turno |
 | mensal de nov e dez de ano de eleição municipal | Também `mandatos`, `fundo`, `patrimonio` e `redes` da eleição |
 
-A tabela sai de [`poligraph_etl/rotina.py`](poligraph_etl/rotina.py), que só decide as
+A tabela sai de [`poligraph_etl/nucleo/rotina.py`](poligraph_etl/nucleo/rotina.py), que só decide as
 etapas; o `__main__` as executa. Em janeiro e fevereiro a rotina inclui o ano anterior. No VPS, as duas são tarefas
 agendadas do Coolify ([`docs/plano/05 §2.3`](../../docs/plano/05-cicd-e-deploy.md)).
 

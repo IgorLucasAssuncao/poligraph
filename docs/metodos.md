@@ -220,8 +220,8 @@ velha** — todos foram medidos contra o banco em execução, não estimados.
 
 | Medida | Implementação |
 |---|---|
-| Concordância, cosseno, peso | `src/etl/poligraph_etl/similaridade.py` |
-| ARI, modularidade | `src/etl/poligraph_etl/comparacao.py` |
-| Componentes, comunidades, layout | `src/etl/poligraph_etl/grafo.py` |
-| Divisão, curva de discriminação | `src/etl/poligraph_etl/validacao.py` |
+| Concordância, cosseno, peso | `src/etl/poligraph_etl/analise/similaridade.py` |
+| ARI, modularidade | `src/etl/poligraph_etl/analise/comparacao.py` |
+| Componentes, comunidades, layout | `src/etl/poligraph_etl/analise/grafo.py` |
+| Divisão, curva de discriminação | `src/etl/poligraph_etl/analise/validacao.py` |
 | Afinidade do cidadão | `src/Poligraph.Api/Services/CalculadoraAfinidade.cs` |

@@ -30,10 +30,10 @@ from pathlib import Path
 import pandas as pd
 import requests
 
-from .. import procedencia
+from ..nucleo import procedencia
 from ..contratos import entrada
 from ..contratos.camara import LinhaDaCotaDaCamara
-from ..tipos import TipoFonteDeCarga
+from ..nucleo.tipos import TipoFonteDeCarga
 
 BASE = "https://dadosabertos.camara.leg.br/arquivos"
 

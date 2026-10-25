@@ -33,10 +33,10 @@ from pathlib import Path
 
 import requests
 
-from .. import procedencia
+from ..nucleo import procedencia
 from ..contratos import entrada
 from ..contratos.senado import LinhaDaCotaDoSenado
-from ..tipos import TipoFonteDeCarga
+from ..nucleo.tipos import TipoFonteDeCarga
 
 log = logging.getLogger("poligraph")
 

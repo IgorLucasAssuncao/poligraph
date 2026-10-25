@@ -304,7 +304,7 @@ def test_o_nome_dos_fundos_e_o_mesmo_dos_dois_lados():
 
     DECISÃO: E os dois fundos precisam continuar DIFERENTES entre si.
     """
-    from poligraph_etl import receitas
+    from poligraph_etl.eleicoes import receitas
 
     do_ef = constantes_do_ef()
 
@@ -352,7 +352,7 @@ def test_o_tipo_de_favorecido_respeita_o_check():
     ATENÇÃO: Um valor a mais no Python derruba o lote no banco; um a menos deixa um tipo que o
     banco aceita e o ETL nunca grava — e a tela, que agrupa por ele, mostra zero.
     """
-    from poligraph_etl import emendas
+    from poligraph_etl.emendas import emendas
 
     fonte = CONTEXTO.read_text(encoding="utf-8")
     achado = re.search(r'"ck_favorecido_tipo",\s*"tipo IN \(([^)]*)\)', fonte)
