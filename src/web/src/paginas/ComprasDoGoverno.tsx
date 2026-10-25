@@ -108,7 +108,7 @@ export function ComprasDoGovernoComponent() {
             titulo={T.contratados}
             linhas={dados.contratados.map((c) => ({
               chave: c.cnpj,
-              nome: <Link to={`/entidades/${c.cnpj}`}>{nomeProprio(c.nome)}</Link>,
+              nome: <Link to={`/entidades/${c.cnpj}`}>{c.nome.trim() ? nomeProprio(c.nome) : T.semNome}</Link>,
               valor: c.valor,
               contratos: c.contratos,
             }))}

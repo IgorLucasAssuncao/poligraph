@@ -105,8 +105,12 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.Property(x => x.CpfHash).HasMaxLength(64);
             e.Property(x => x.TituloHash).HasMaxLength(64);
             e.HasIndex(x => x.TituloHash).HasFilter("titulo_hash IS NOT NULL");
-            e.ToTable(t => t.HasCheckConstraint(
-                "ck_pessoa_sexo", "sexo IS NULL OR sexo IN ('M','F')"));
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_pessoa_sexo", "sexo IS NULL OR sexo IN ('M','F')");
+                t.HasCheckConstraint("ck_pessoa_nascimento",
+                    "data_nascimento IS NULL OR data_nascimento BETWEEN '1900-01-01' AND '2100-12-31'");
+            });
 
             e.HasQueryFilter(x => x.ExcluidoEm == null);
         });
@@ -429,7 +433,15 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.Property(x => x.Valor).HasPrecision(14, 2);
             e.Property(x => x.DoadorCnpjOuHash).HasMaxLength(64);
 
-            e.ToTable(t => t.HasCheckConstraint("ck_receita_valor", "valor <> 0"));
+            e.ToTable(t =>
+            {
+                t.HasCheckConstraint("ck_receita_valor", "valor <> 0");
+                t.HasCheckConstraint("ck_receita_origem", "origem_receita IS NULL OR origem_receita IN ("
+                    + "'Recursos de partido político','Recursos de pessoas físicas','Recursos de pessoas jurídicas',"
+                    + "'Recursos próprios','Recursos de outros candidatos','Recursos de financiamento coletivo',"
+                    + "'Doações pela internet','Comercialização de bens ou realização de eventos',"
+                    + "'Rendimentos de aplicações financeiras','Recursos de origens não identificadas')");
+            });
         });
 
         mb.Entity<EmendaModel>(e =>
@@ -780,6 +792,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
                 t.HasCheckConstraint("ck_municipio_ibge", "codigo_ibge ~ '^[0-9]{7}$'");
                 t.HasCheckConstraint("ck_municipio_tom", "codigo_tom ~ '^[0-9]{4}$'");
                 t.HasCheckConstraint("ck_municipio_uf", "uf ~ '^[A-Z]{2}$'");
+                t.HasCheckConstraint("ck_municipio_nome", "nome <> ''");
                 t.HasCheckConstraint("ck_municipio_populacao",
                     "(populacao IS NULL AND populacao_ano IS NULL) OR (populacao > 0 AND populacao_ano BETWEEN 2000 AND 2100)");
             });

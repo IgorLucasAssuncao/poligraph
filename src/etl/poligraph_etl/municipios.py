@@ -44,10 +44,23 @@ def municipios_para_linhas(tabela: list[dict]) -> list[dict]:
         linhas.append({
             "codigo_ibge": ibge,
             "codigo_tom": tom,
-            "nome": r["MUNICÍPIO - IBGE"].strip(),
+            "nome": r["MUNICÍPIO - IBGE"].strip() or nome_pelo_tom(r["MUNICÍPIO - TOM"]),
             "uf": r["UF"].strip().upper(),
         })
     return linhas
+
+
+def nome_pelo_tom(nome_tom: str | None) -> str:
+    """O nome do município pela coluna do TOM, quando a do IBGE vem vazia, com as palavras capitalizadas.
+
+    MEDIDO em 2026-10-24: Coronel Sapucaia (MS, 5003157) vinha com "MUNICÍPIO - IBGE" vazio e "CORONEL SAPUCAIA" no
+    TOM. Sem nome, a carga de mandatos não ligava a cidade do TSE à do IBGE, e a cidade ficava sem nenhum prefeito.
+    """
+    palavras = " ".join((nome_tom or "").split()).lower().split(" ")
+    return " ".join(p if p in _PARTICULAS and i else p.capitalize() for i, p in enumerate(palavras))
+
+
+_PARTICULAS = {"de", "da", "do", "das", "dos", "e"}
 
 
 def sedes_para_linhas(sedes: dict[str, str], tom_para_ibge: dict[str, str], pasta: str) -> list[dict]:

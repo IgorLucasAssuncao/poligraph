@@ -1568,6 +1568,8 @@ namespace Poligraph.Data.Migrations
                         {
                             t.HasCheckConstraint("ck_municipio_ibge", "codigo_ibge ~ '^[0-9]{7}$'");
 
+                            t.HasCheckConstraint("ck_municipio_nome", "nome <> ''");
+
                             t.HasCheckConstraint("ck_municipio_populacao", "(populacao IS NULL AND populacao_ano IS NULL) OR (populacao > 0 AND populacao_ano BETWEEN 2000 AND 2100)");
 
                             t.HasCheckConstraint("ck_municipio_tom", "codigo_tom ~ '^[0-9]{4}$'");
@@ -1929,6 +1931,8 @@ namespace Poligraph.Data.Migrations
 
                     b.ToTable("pessoas", null, t =>
                         {
+                            t.HasCheckConstraint("ck_pessoa_nascimento", "data_nascimento IS NULL OR data_nascimento BETWEEN '1900-01-01' AND '2100-12-31'");
+
                             t.HasCheckConstraint("ck_pessoa_sexo", "sexo IS NULL OR sexo IN ('M','F')");
                         });
                 });
@@ -2049,6 +2053,8 @@ namespace Poligraph.Data.Migrations
 
                     b.ToTable("receitas_de_campanha", null, t =>
                         {
+                            t.HasCheckConstraint("ck_receita_origem", "origem_receita IS NULL OR origem_receita IN ('Recursos de partido político','Recursos de pessoas físicas','Recursos de pessoas jurídicas','Recursos próprios','Recursos de outros candidatos','Recursos de financiamento coletivo','Doações pela internet','Comercialização de bens ou realização de eventos','Rendimentos de aplicações financeiras','Recursos de origens não identificadas')");
+
                             t.HasCheckConstraint("ck_receita_valor", "valor <> 0");
                         });
                 });

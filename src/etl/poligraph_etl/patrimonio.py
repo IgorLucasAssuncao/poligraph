@@ -28,7 +28,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from . import normalizacao
-from .tipos import CARGOS_DO_CONGRESSO, TipoCargo, cargo_do_tse
+from .tipos import CARGOS_DO_CONGRESSO, TipoCargo, cargo_do_tse, tipo_de_bem
 
 RECURSO_CANDIDATOS = "consulta_cand/consulta_cand_{ano}.zip"
 RECURSO_BENS = "bem_candidato/bem_candidato_{ano}.zip"
@@ -77,7 +77,7 @@ def bens_para_linhas(linhas, candidaturas_ligadas: dict[Candidatura, int], ano: 
         pessoa = candidaturas_ligadas.get(chave(r))
         if pessoa is None:
             continue
-        tipo = (r.get("DS_TIPO_BEM_CANDIDATO") or "").strip() or "Não informado"
+        tipo = tipo_de_bem(r.get("DS_TIPO_BEM_CANDIDATO"))
         soma = somas[(pessoa, tipo)]
         soma[0] += normalizacao.valor_pt_br(r.get("VR_BEM_CANDIDATO"))
         soma[1] += 1

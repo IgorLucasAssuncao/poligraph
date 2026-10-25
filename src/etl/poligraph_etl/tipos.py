@@ -357,3 +357,74 @@ class TipoRede(StrEnum):
     TIKTOK = "TIKTOK"
     LINKEDIN = "LINKEDIN"
     OUTRA = "OUTRA"
+
+
+class TipoOrigemDaReceita(StrEnum):
+    """De onde veio uma receita de campanha (`DS_ORIGEM_RECEITA`), com a grafia que a tela mostra.
+
+    MEDIDO em 2026-10-24, receitas de 2010 a 2024: 17 grafias para estas 10 origens. O TSE escreve a mesma origem em
+    caixa alta em alguns anos, chamou "outros candidatos" de "outros candidatos/comitês" e tem três rótulos de
+    comercialização, um deles o nome da própria coluna ("Descrição das doações relativas à comercialização").
+    """
+
+    PARTIDO = "Recursos de partido político"
+    PESSOAS_FISICAS = "Recursos de pessoas físicas"
+    PESSOAS_JURIDICAS = "Recursos de pessoas jurídicas"
+    PROPRIOS = "Recursos próprios"
+    OUTROS_CANDIDATOS = "Recursos de outros candidatos"
+    FINANCIAMENTO_COLETIVO = "Recursos de financiamento coletivo"
+    DOACOES_PELA_INTERNET = "Doações pela internet"
+    COMERCIALIZACAO = "Comercialização de bens ou realização de eventos"
+    RENDIMENTOS = "Rendimentos de aplicações financeiras"
+    NAO_IDENTIFICADA = "Recursos de origens não identificadas"
+
+
+_ORIGEM_DA_RECEITA = {
+    "RECURSOS DE PARTIDO POLITICO": TipoOrigemDaReceita.PARTIDO,
+    "RECURSOS DE PESSOAS FISICAS": TipoOrigemDaReceita.PESSOAS_FISICAS,
+    "RECURSOS DE PESSOAS JURIDICAS": TipoOrigemDaReceita.PESSOAS_JURIDICAS,
+    "RECURSOS PROPRIOS": TipoOrigemDaReceita.PROPRIOS,
+    "RECURSOS DE OUTROS CANDIDATOS": TipoOrigemDaReceita.OUTROS_CANDIDATOS,
+    "RECURSOS DE OUTROS CANDIDATOS/COMITES": TipoOrigemDaReceita.OUTROS_CANDIDATOS,
+    "RECURSOS DE FINANCIAMENTO COLETIVO": TipoOrigemDaReceita.FINANCIAMENTO_COLETIVO,
+    "DOACOES PELA INTERNET": TipoOrigemDaReceita.DOACOES_PELA_INTERNET,
+    "COMERCIALIZACAO DE BENS OU REALIZACAO DE EVENTOS": TipoOrigemDaReceita.COMERCIALIZACAO,
+    "COMERCIALIZACAO DE BENS COM OR": TipoOrigemDaReceita.COMERCIALIZACAO,
+    "COMERCIALIZACAO DE BENS COM FEFC": TipoOrigemDaReceita.COMERCIALIZACAO,
+    "DESCRICAO DAS DOACOES RELATIVAS A COMERCIALIZACAO": TipoOrigemDaReceita.COMERCIALIZACAO,
+    "RENDIMENTOS DE APLICACOES FINANCEIRAS": TipoOrigemDaReceita.RENDIMENTOS,
+    "RECURSOS DE ORIGENS NAO IDENTIFICADAS": TipoOrigemDaReceita.NAO_IDENTIFICADA,
+}
+
+
+def origem_da_receita(texto: str | None) -> TipoOrigemDaReceita | None:
+    """A origem pelo texto do TSE, sem acento nem caixa; vazio é `None`. A fonte da receita (fundo ou não) fica em
+    `fonte_receita`, por isso as três comercializações viram uma só."""
+    chave = _sem_acento_maiusculo(texto)
+    if not chave:
+        return None
+    try:
+        return _ORIGEM_DA_RECEITA[chave]
+    except KeyError:
+        raise ValorDesconhecido("DS_ORIGEM_RECEITA", texto) from None
+
+
+def tipo_de_bem(texto: str | None) -> str:
+    """O tipo do bem declarado, com a grafia da maioria dos anos.
+
+    O TSE escreve "OUTROS BENS E DIREITOS" em caixa alta em parte das declarações e "Outros bens e direitos" no resto
+    (MEDIDO em 2026-10-24: 4.221 e 12.608 bens; os outros 54 tipos vêm numa grafia só). Texto todo em caixa alta vira
+    a primeira letra maiúscula e o resto minúsculo, como os outros tipos.
+    """
+    limpo = " ".join((texto or "").split())
+    if not limpo:
+        return "Não informado"
+    return limpo[0] + limpo[1:].lower() if limpo.isupper() else limpo
+
+
+def data_plausivel(data, ate_o_ano: int):
+    """A data, se o ano fica entre 1900 e `ate_o_ano`; senão `None`. MEDIDO em 2026-10-24: 10 datas de nascimento do
+    TSE com ano 0049, 0922, 1653 ou 7197, erro de digitação."""
+    if data is None or not (1900 <= data.year <= ate_o_ano):
+        return None
+    return data

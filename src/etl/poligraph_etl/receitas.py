@@ -52,7 +52,7 @@ from .normalizacao import (
     sem_cpf,
     valor_pt_br,
 )
-from .tipos import TipoCasa
+from .tipos import TipoCasa, origem_da_receita
 
 log = logging.getLogger("poligraph")
 
@@ -271,7 +271,7 @@ def para_linhas(
                 "ano_eleicao": ano_eleicao,
                 "fonte_receita": _texto(registro.get("DS_FONTE_RECEITA")).upper()
                 or "NAO INFORMADA",
-                "origem_receita": _texto(registro.get("DS_ORIGEM_RECEITA")) or None,
+                "origem_receita": origem_da_receita(_texto(registro.get("DS_ORIGEM_RECEITA"))),
                 "doador": sem_cpf(_texto(registro.get("NM_DOADOR")) or None),
                 "doador_cnpj_ou_hash": documento,
                 "doador_eh_pessoa_fisica": pessoa_fisica,

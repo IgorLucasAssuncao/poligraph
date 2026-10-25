@@ -1433,3 +1433,65 @@ VALUES ('20261025010555_OrientacaoFechada', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+UPDATE receitas_de_campanha SET origem_receita = CASE upper(origem_receita)
+    WHEN 'RECURSOS DE PARTIDO POLÍTICO' THEN 'Recursos de partido político'
+    WHEN 'RECURSOS DE PESSOAS FÍSICAS' THEN 'Recursos de pessoas físicas'
+    WHEN 'RECURSOS DE PESSOAS JURÍDICAS' THEN 'Recursos de pessoas jurídicas'
+    WHEN 'RECURSOS PRÓPRIOS' THEN 'Recursos próprios'
+    WHEN 'RECURSOS DE OUTROS CANDIDATOS' THEN 'Recursos de outros candidatos'
+    WHEN 'RECURSOS DE OUTROS CANDIDATOS/COMITÊS' THEN 'Recursos de outros candidatos'
+    WHEN 'RECURSOS DE FINANCIAMENTO COLETIVO' THEN 'Recursos de financiamento coletivo'
+    WHEN 'DOAÇÕES PELA INTERNET' THEN 'Doações pela internet'
+    WHEN 'COMERCIALIZAÇÃO DE BENS OU REALIZAÇÃO DE EVENTOS' THEN 'Comercialização de bens ou realização de eventos'
+    WHEN 'COMERCIALIZAÇÃO DE BENS COM OR' THEN 'Comercialização de bens ou realização de eventos'
+    WHEN 'COMERCIALIZAÇÃO DE BENS COM FEFC' THEN 'Comercialização de bens ou realização de eventos'
+    WHEN 'DESCRIÇÃO DAS DOAÇÕES RELATIVAS À COMERCIALIZAÇÃO' THEN 'Comercialização de bens ou realização de eventos'
+    WHEN 'RENDIMENTOS DE APLICAÇÕES FINANCEIRAS' THEN 'Rendimentos de aplicações financeiras'
+    WHEN 'RECURSOS DE ORIGENS NÃO IDENTIFICADAS' THEN 'Recursos de origens não identificadas'
+    ELSE origem_receita END
+WHERE origem_receita IS NOT NULL;
+UPDATE patrimonios SET tipo_bem = 'Outros bens e direitos' WHERE tipo_bem = 'OUTROS BENS E DIREITOS';
+UPDATE pessoas SET data_nascimento = NULL
+    WHERE data_nascimento < '1900-01-01' OR data_nascimento > '2100-12-31';
+UPDATE municipios SET nome = 'Coronel Sapucaia' WHERE codigo_ibge = '5003157' AND nome = '';
+
+UPDATE pessoas SET nome_civil = btrim(regexp_replace(nome_civil, '[[:space:]]+', ' ', 'g')) WHERE nome_civil <> btrim(regexp_replace(nome_civil, '[[:space:]]+', ' ', 'g'));
+
+UPDATE pessoas SET nome_exibicao = btrim(regexp_replace(nome_exibicao, '[[:space:]]+', ' ', 'g')) WHERE nome_exibicao <> btrim(regexp_replace(nome_exibicao, '[[:space:]]+', ' ', 'g'));
+
+UPDATE mandatos SET nome_de_urna = btrim(regexp_replace(nome_de_urna, '[[:space:]]+', ' ', 'g')) WHERE nome_de_urna <> btrim(regexp_replace(nome_de_urna, '[[:space:]]+', ' ', 'g'));
+
+UPDATE mandatos SET coligacao = btrim(regexp_replace(coligacao, '[[:space:]]+', ' ', 'g')) WHERE coligacao <> btrim(regexp_replace(coligacao, '[[:space:]]+', ' ', 'g'));
+
+UPDATE contratados_do_governo SET nome = btrim(regexp_replace(nome, '[[:space:]]+', ' ', 'g')) WHERE nome <> btrim(regexp_replace(nome, '[[:space:]]+', ' ', 'g'));
+
+UPDATE convenios SET convenente = btrim(regexp_replace(convenente, '[[:space:]]+', ' ', 'g')) WHERE convenente <> btrim(regexp_replace(convenente, '[[:space:]]+', ' ', 'g'));
+
+UPDATE convenios SET objeto = btrim(regexp_replace(objeto, '[[:space:]]+', ' ', 'g')) WHERE objeto <> btrim(regexp_replace(objeto, '[[:space:]]+', ' ', 'g'));
+
+UPDATE despesas SET categoria = btrim(regexp_replace(categoria, '[[:space:]]+', ' ', 'g')) WHERE categoria <> btrim(regexp_replace(categoria, '[[:space:]]+', ' ', 'g'));
+
+UPDATE despesas SET fornecedor = btrim(regexp_replace(fornecedor, '[[:space:]]+', ' ', 'g')) WHERE fornecedor <> btrim(regexp_replace(fornecedor, '[[:space:]]+', ' ', 'g'));
+
+UPDATE emendas_favorecidos SET nome = btrim(regexp_replace(nome, '[[:space:]]+', ' ', 'g')) WHERE nome <> btrim(regexp_replace(nome, '[[:space:]]+', ' ', 'g'));
+
+UPDATE sancoes_de_empresas SET nome = btrim(regexp_replace(nome, '[[:space:]]+', ' ', 'g')) WHERE nome <> btrim(regexp_replace(nome, '[[:space:]]+', ' ', 'g'));
+
+UPDATE sancoes_de_empresas SET fundamentacao_legal = btrim(regexp_replace(fundamentacao_legal, '[[:space:]]+', ' ', 'g')) WHERE fundamentacao_legal <> btrim(regexp_replace(fundamentacao_legal, '[[:space:]]+', ' ', 'g'));
+
+UPDATE votacoes SET descricao = btrim(regexp_replace(descricao, '[[:space:]]+', ' ', 'g')) WHERE descricao <> btrim(regexp_replace(descricao, '[[:space:]]+', ' ', 'g'));
+
+UPDATE receitas_de_campanha SET doador = btrim(regexp_replace(doador, '[[:space:]]+', ' ', 'g')) WHERE doador <> btrim(regexp_replace(doador, '[[:space:]]+', ' ', 'g'));
+
+ALTER TABLE receitas_de_campanha ADD CONSTRAINT ck_receita_origem CHECK (origem_receita IS NULL OR origem_receita IN ('Recursos de partido político','Recursos de pessoas físicas','Recursos de pessoas jurídicas','Recursos próprios','Recursos de outros candidatos','Recursos de financiamento coletivo','Doações pela internet','Comercialização de bens ou realização de eventos','Rendimentos de aplicações financeiras','Recursos de origens não identificadas'));
+
+ALTER TABLE pessoas ADD CONSTRAINT ck_pessoa_nascimento CHECK (data_nascimento IS NULL OR data_nascimento BETWEEN '1900-01-01' AND '2100-12-31');
+
+ALTER TABLE municipios ADD CONSTRAINT ck_municipio_nome CHECK (nome <> '');
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261025014031_TextosDaAuditoria', '10.0.11');
+
+COMMIT;
+

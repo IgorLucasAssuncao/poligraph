@@ -9,6 +9,8 @@ export const TEXTOS_DAS_ENTIDADES = {
   entidade: {
     erro: 'Não foi possível carregar esta entidade agora.',
     carregando: 'Carregando a entidade',
+    /** Sem nome no Portal (43 empresas contratadas, MEDIDO em 2026-10-24); o CNPJ continua na página. */
+    semNome: 'Nome não publicado pelo Portal',
     naoRecebeu: (
       <>
         Este CNPJ não recebeu dinheiro de emenda nos anos carregados. <Link to="/entidades">Ver todas as entidades</Link>

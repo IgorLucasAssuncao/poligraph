@@ -218,3 +218,46 @@ def test_plenario_pela_sigla_exata():
     from poligraph_etl.contratos.camara import eh_plenario
 
     assert eh_plenario("PLEN") and not eh_plenario("PLEN2") and not eh_plenario(None)
+
+
+def test_origem_da_receita_junta_as_grafias_do_tse():
+    from poligraph_etl.tipos import TipoOrigemDaReceita, ValorDesconhecido, origem_da_receita
+
+    assert origem_da_receita("RECURSOS DE PARTIDO POLÍTICO") is TipoOrigemDaReceita.PARTIDO
+    assert origem_da_receita("Recursos de partido político") is TipoOrigemDaReceita.PARTIDO
+    assert origem_da_receita("Recursos de outros candidatos/comitês") is TipoOrigemDaReceita.OUTROS_CANDIDATOS
+    assert origem_da_receita("Descrição das doações relativas à comercialização") is TipoOrigemDaReceita.COMERCIALIZACAO
+    assert origem_da_receita("") is None
+    with pytest.raises(ValorDesconhecido):
+        origem_da_receita("Recursos de bitcoin")
+
+
+def test_tipo_de_bem_em_caixa_alta_ganha_a_grafia_dos_outros_anos():
+    from poligraph_etl.tipos import tipo_de_bem
+
+    assert tipo_de_bem("OUTROS BENS E DIREITOS") == "Outros bens e direitos"
+    assert tipo_de_bem("VGBL - Vida Gerador de Benefício Livre") == "VGBL - Vida Gerador de Benefício Livre"
+    assert tipo_de_bem("  ") == "Não informado"
+
+
+def test_data_de_nascimento_impossivel_vira_nula():
+    from datetime import date
+    from poligraph_etl.tipos import data_plausivel
+
+    assert data_plausivel(date(7197, 4, 17), 2008) is None
+    assert data_plausivel(date(49, 7, 13), 2008) is None
+    assert data_plausivel(date(1960, 1, 1), 2008) == date(1960, 1, 1)
+
+
+def test_municipio_sem_nome_do_ibge_usa_o_do_tom():
+    from poligraph_etl.municipios import municipios_para_linhas
+
+    linhas = municipios_para_linhas([{
+        "CÓDIGO DO MUNICÍPIO - IBGE": "5003157", "CÓDIGO DO MUNICÍPIO - TOM": "9997",
+        "MUNICÍPIO - IBGE": "", "MUNICÍPIO - TOM": "CORONEL SAPUCAIA", "UF": "MS",
+    }, {
+        "CÓDIGO DO MUNICÍPIO - IBGE": "3550308", "CÓDIGO DO MUNICÍPIO - TOM": "7107",
+        "MUNICÍPIO - IBGE": "", "MUNICÍPIO - TOM": "SAO JOAO DA BOA VISTA", "UF": "SP",
+    }])
+
+    assert [l["nome"] for l in linhas] == ["Coronel Sapucaia", "Sao Joao da Boa Vista"]

@@ -49,6 +49,8 @@ export const TEXTOS_DAS_COMPRAS = {
   porModalidade: 'Por modalidade de compra',
   porOrgao: 'Por órgão',
   contratados: 'Empresas com mais dinheiro em contrato',
+  /** MEDIDO em 2026-10-24: 43 empresas contratadas vêm do Portal com o nome vazio, todas com CNPJ. */
+  semNome: 'Nome não publicado pelo Portal',
   contratos: (n: string) => `${n} contratos`,
   rotuloDaProcedencia: (periodo: string) => `Contratos publicados, ${periodo}`,
   fonte: 'Compras e contratos',

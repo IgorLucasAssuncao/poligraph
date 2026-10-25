@@ -28,7 +28,7 @@ from .contratos.banco import Mandato
 from .contratos.tse import LinhaDeCandidatura, LinhaDeVotacao
 from .tipos import (
     CARGOS_DO_CONGRESSO, CARGOS_MUNICIPAIS, CARGOS_NACIONAIS, ELEITOS, TITULAR_DO_VICE, TipoCargo, TipoSituacaoNoTurno, TipoCasa, TipoSexo,
-    anos_do_mandato, cargo_do_tse, sexo_do_tse, situacao_do_tse,
+    anos_do_mandato, cargo_do_tse, data_plausivel, sexo_do_tse, situacao_do_tse,
 )
 
 RECURSO = "consulta_cand/consulta_cand_{ano}.zip"
@@ -138,7 +138,7 @@ def _eleito(linha: LinhaDeCandidatura, cargo: TipoCargo) -> Eleito:
         nome_de_urna=linha.nome_de_urna or linha.nome or "",
         cpf_hash=normalizacao.hash_de_cpf(linha.cpf),
         titulo_hash=normalizacao.hash_de_titulo(linha.titulo),
-        nascimento=_data(linha.nascimento),
+        nascimento=data_plausivel(_data(linha.nascimento), int(linha.ano_eleicao or 0) - 16),
         sexo=sexo_do_tse(linha.genero),
         partido=linha.partido or "",
         coligacao=None if coligacao.startswith("#") or not coligacao else coligacao,
@@ -155,10 +155,19 @@ def candidatura(eleito: Eleito) -> tuple[int, str | None, str | None, str, str]:
     return eleito.ano_eleicao, eleito.uf, eleito.codigo_ue, eleito.cargo.value, eleito.sq_candidato
 
 
+GRAFIAS_DO_TSE = {("ASSU", "RN"): "ACU"}
+"""O nome do município no TSE → o do IBGE, quando os dois escrevem a mesma cidade de outro jeito e a semelhança não
+alcança. MEDIDO em 2026-10-24: "ASSÚ" no TSE e "Açu" no IBGE (semelhança de 0,57), a única de 2000 a 2024."""
+
+
 def ponte_de_municipios(eleitos_municipais: list[Eleito], municipios: list[tuple[str, str, str]]) -> dict[str, str | None]:
     """`SG_UE` do TSE → código do IBGE, pelo nome e pela UF. `municipios` é (ibge, nome, uf).
 
     O nome exato primeiro; depois o mais parecido da mesma UF, se for o único acima de `SEMELHANCA_MINIMA`.
+
+    RISCO: o município muda de nome e o código do TSE fica (Embu virou Embu das Artes; Parati, Paraty). A ponte tenta a
+    eleição mais recente primeiro e só dá o código por resolvido quando acha o par. MEDIDO em 2026-10-24: antes ela usava
+    o nome da primeira eleição da lista, a de 2000, e cerca de 105 prefeitos e vices por eleição ficavam sem cidade.
     """
     por_nome = {(_nome(nome), uf): ibge for ibge, nome, uf in municipios}
     por_uf: dict[str, list[tuple[str, str]]] = {}
@@ -166,10 +175,11 @@ def ponte_de_municipios(eleitos_municipais: list[Eleito], municipios: list[tuple
         por_uf.setdefault(uf, []).append((_nome(nome), ibge))
 
     ponte: dict[str, str | None] = {}
-    for eleito in eleitos_municipais:
-        if eleito.codigo_ue in ponte:
+    for eleito in sorted(eleitos_municipais, key=lambda e: e.ano_eleicao, reverse=True):
+        if ponte.get(eleito.codigo_ue or ""):
             continue
         nome = _nome(eleito.nome_ue)
+        nome = GRAFIAS_DO_TSE.get((nome, eleito.uf or ""), nome)
         ibge = por_nome.get((nome, eleito.uf))
         if ibge is None:
             ibge = _mais_parecido(nome, por_uf.get(eleito.uf or "", []))

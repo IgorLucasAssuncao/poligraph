@@ -52,14 +52,15 @@ export function EntidadeComponent() {
 
 function PaginaDaEntidadeComponent({ dados }: { dados: DadosDaEntidade }) {
   const maiorAno = Math.max(...dados.porAno.map((a) => a.recebido), 1);
+  const nome = dados.nome.trim() ? nomeProprio(dados.nome) : T.entidade.semNome;
 
   return (
     <>
       <CabecalhoDaColunaComponent
-        titulo={nomeProprio(dados.nome)}
+        titulo={nome}
         subtitulo={dados.naturezaJuridica ?? undefined}
         comVoltar
-        acao={<BotaoCompartilharComponent caminho={`/e/${dados.cnpj}`} nome={nomeProprio(dados.nome)} />}
+        acao={<BotaoCompartilharComponent caminho={`/e/${dados.cnpj}`} nome={nome} />}
       />
 
       {dados.emendas > 0 && (
@@ -73,7 +74,7 @@ function PaginaDaEntidadeComponent({ dados }: { dados: DadosDaEntidade }) {
                 dados.porAno[dados.porAno.length - 1]?.anoDaEmenda ?? T.entidade.semAno,
               )}
             >
-              <ComProcedenciaComponent consulta={{ contexto: 'entidade', cnpj: dados.cnpj }} rotulo={T.entidade.rotuloDaProcedencia(nomeProprio(dados.nome))}>
+              <ComProcedenciaComponent consulta={{ contexto: 'entidade', cnpj: dados.cnpj }} rotulo={T.entidade.rotuloDaProcedencia(nome)}>
                 {reaisCompacto(dados.recebido)}
               </ComProcedenciaComponent>
             </NumeroComponent>

@@ -471,12 +471,29 @@ def _versao_do_codigo() -> str:
 
 
 def _com_carga(linhas: Sequence[dict], carga_id: int | None) -> list[dict]:
-    """As linhas com o `carga_id` da carga de onde saíram (Pendência 72).
+    """As linhas com o `carga_id` da carga de onde saíram (Pendência 72), e os textos de exibição com um espaço só.
 
     A linha que já traz o seu `carga_id` o mantém: o patrimônio grava várias eleições numa
     chamada, cada uma de um arquivo.
     """
-    return [{"carga_id": carga_id, **linha} for linha in linhas]
+    return [{"carga_id": carga_id, **{k: _um_espaco(k, v) for k, v in linha.items()}} for linha in linhas]
+
+
+CAMPOS_DE_EXIBICAO = frozenset({
+    "nome", "nome_civil", "nome_exibicao", "nome_de_urna", "descricao", "convenente", "objeto", "categoria",
+    "fundamentacao_legal", "coligacao", "fornecedor", "doador",
+})
+"""Os campos de texto que a tela mostra, gravados com um espaço só entre as palavras.
+
+MEDIDO em 2026-10-24: 116 nomes de político ("DR  NELSON SALOME"), 1.119 empresas contratadas, 2.134 descrições de
+votação e a categoria "LOCOMOÇÃO, ALIMENTAÇÃO E  HOSPEDAGEM" da cota tinham espaço duplo, como a fonte publica.
+"""
+
+
+def _um_espaco(campo: str, valor):
+    if campo in CAMPOS_DE_EXIBICAO and isinstance(valor, str):
+        return " ".join(valor.split())
+    return valor
 
 
 def gravar_simbolicas(
@@ -845,7 +862,7 @@ def gravar_contratos(conexao: psycopg.Connection, linhas: Sequence, carga_id: in
     campos = [campo.name for campo in fields(contrato)]
     return _copiar(
         conexao, contrato.TABELA, [*campos, "carga_id"],
-        ((*(getattr(linha, campo) for campo in campos), carga_id) for linha in linhas),
+        ((*(_um_espaco(campo, getattr(linha, campo)) for campo in campos), carga_id) for linha in linhas),
     )
 
 
@@ -1560,7 +1577,8 @@ def gravar_pessoas_do_tse(conexao: psycopg.Connection, grupos: Sequence[Sequence
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
-                (recente.nome, recente.nome_de_urna, recente.nascimento, recente.sexo and recente.sexo.value,
+                (_um_espaco("nome", recente.nome), _um_espaco("nome", recente.nome_de_urna), recente.nascimento,
+                 recente.sexo and recente.sexo.value,
                  cpf, titulo, carga_id, carga_id if cpf else None, carga_id),
             )
             criadas.append((grupo, cur.fetchone()[0]))

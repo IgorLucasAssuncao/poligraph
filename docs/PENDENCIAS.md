@@ -40,6 +40,33 @@
 | ✅ ~~91~~ | Enums nas fontes da ETL (regra nova do `CLAUDE.md`, 2026-10-21). MEDIDO em 2026-10-21: nenhum `Enum` na ETL; literais de domínio `"CAMARA"` 44 vezes, `"SENADO"` 30, `"Sim"` 7, conjuntos de `CD_CARGO` como texto; regex em 6 módulos da ETL (19 usos) e 2 da API (7). Troca por partes, começando pelos módulos da Pendência 90 (TSE, `patrimonio`, mandatos); regex fica só onde o campo é texto livre AVANÇO (2026-10-22): os 63 literais `"CAMARA"` e `"SENADO"` da ETL viraram enum (`TipoCasa`, `TipoFonteDeCarga`, `TipoFonteDeIdentificador`, `FonteDaRedeSocial`, os mesmos do C#), conforme o que cada um é: casa, fonte da carga, dono do id ou fonte da rede. AVANÇO (2026-10-24): `procedencia.FONTES` já é `TipoFonteDeCarga`; viraram enum o tipo do favorecido (`TipoFavorecido`, com a regra escrita de que rótulo novo vira `SEM_INFORMACAO`), a categoria da votação (`TipoCategoriaDeVotacao`) e a métrica (`TipoMetrica`); as regex de campo de domínio viraram `so_digitos`, `digitos` e `UFS` (emendas, convênios, municípios, normalização). Ficam as regex de texto livre (CPF no texto, URL de rede, categoria pela descrição, titular entre parênteses) e cinco literais de fonte para a próxima rodada: a orientação "Sim", o órgão "PLEN", o contratado "Sigiloso", a viagem urgente "SIM" e a rede "OUTRA" | | Tipagem forte entre contrato, transformação e banco FEITO (2026-10-24): os últimos literais viraram enum ou constante de contrato: `TipoOrientacao` (com `ck_orientacao_valor` no banco), `TipoSituacaoDaViagem` e `sim_ou_nao` na viagem urgente (sai o `startswith("NAO")`), `TipoRede`, `ORGAO_DO_PLENARIO` e `NOME_SIGILOSO`. Achado no caminho: 6.725 orientações gravadas com o texto "nan", a célula vazia do CSV que o `_limpo` do contrato transformava em texto; a migration `OrientacaoFechada` as apaga e o `_limpo` passou a tratar o `NaN` |
 | ✅ ~~92~~ | **Resolvida (2026-10-22)** — linha do tempo: aba "Linha do tempo" na ficha do parlamentar e seção na ficha do político, `GET /api/politicos/{id}/linha-do-tempo`. Marcos: eleito, troca de partido (pelo partido do voto), votou, bens, cota e emendas pagas, cada um com o total da aba que o detalha. MEDIDO: mediana de 2 marcos (político) e 12 (parlamentar, em 7 anos), máximo 41: cabe numa lista por ano. Limite visto: quem foi deputado e senador tem a linha partida em duas pessoas (os 38 casos da Pendência 90) | — |
 
+### Auditoria do banco, coluna por coluna (2026-10-24)
+
+50 tabelas e 394 colunas: nulos, vazios, marcadores (`nan`, `#NULO#`), espaço sobrando, grafias do mesmo valor, negativos e
+datas. Script em `scratchpad/auditoria.py` da sessão; o resultado decidiu o que se corrige.
+
+| Achado | Medido | Feito |
+|---|---|---|
+| Orientação com o texto "nan" | 6.725 linhas | Apagadas; `ck_orientacao_valor`; o contrato trata o `NaN` |
+| Coronel Sapucaia (MS) sem nome | A Receita trouxe só a coluna do TOM | Nome pela coluna do TOM; `ck_municipio_nome` |
+| Ponte TSE → IBGE pelo nome da eleição de 2000 | ~105 prefeitos e vices por eleição sem cidade (Embu das Artes, Paraty, Jaboatão…) | A ponte tenta a eleição mais recente; sobram 2 por eleição |
+| "ASSÚ" no TSE, "Açu" no IBGE | Semelhança 0,57 | Par em `GRAFIAS_DO_TSE` |
+| Origem da receita em 17 grafias | 10 origens de verdade | `TipoOrigemDaReceita`; `ck_receita_origem` |
+| "OUTROS BENS E DIREITOS" | 4.221 bens | Grafia dos outros anos |
+| Espaço duplo em nome e descrição | 116 políticos, 1.119 contratados, 2.134 votações | Um espaço só na gravação e na migration `TextosDaAuditoria` |
+| Data de nascimento impossível | 10 (anos 0049 a 7197) | Nula; `ck_pessoa_nascimento` |
+| Contratado sem nome | 43, todos com CNPJ | "Nome não publicado pelo Portal" na lista e na entidade |
+| Nota da cota com data impossível | 44, R$ 35 mil | Fica: a tela já mostra o mês e diz que a data da nota é impossível |
+
+Abertos:
+
+| Achado | Medido | O que falta |
+|---|---|---|
+| Município sem prefeito eleito no arquivo de candidatos | 5 em 2020 e 18 em 2024, fora Fernando de Noronha (Itaguaí, Tucuruí, Iporá, Macedônia…) | Eleição anulada ou suplementar com situação `#NULO`: o vencedor só sai do arquivo de votação, como o presidente. Decisão do autor |
+| Boa Esperança do Norte (MT) | Município novo, fora da tabela da Receita | Entra quando a Receita publicar |
+| `proposicoes.url_inteiro_teor` | Vazia nas 7.452 | Preencher pela API da Câmara ou remover |
+| Produção | A migration corrige os nomes, não os mandatos | Rodar `python -m poligraph_etl mandatos` uma vez no serviço `etl` depois do deploy |
+
 ### Abertas: dependem do autor, não de código
 
 | # | O que falta |

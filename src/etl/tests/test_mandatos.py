@@ -105,6 +105,23 @@ def test_ponte_casa_pelo_nome_e_pela_grafia_mais_parecida_da_uf():
     assert mandatos.ponte_de_municipios(eleitos, municipios) == {"1": "3550308", "2": "2802502", "3": None}
 
 
+def test_ponte_acha_o_municipio_que_mudou_de_nome_pelo_nome_mais_recente():
+    """Embu virou Embu das Artes e o código do TSE ficou: o nome de 2000 não pode valer para 2024 (2026-10-24)."""
+    eleitos = mandatos.eleitos([
+        _linha(ano_eleicao="2000", sq_candidato="1", codigo_ue="64017", nome_ue="EMBU", titulo="111111111111"),
+        _linha(ano_eleicao="2024", sq_candidato="2", codigo_ue="64017", nome_ue="EMBU DAS ARTES", titulo="222222222222"),
+    ])
+    municipios = [("3515004", "Embu das Artes", "SP"), ("3515103", "Embu-Guaçu", "SP")]
+
+    assert mandatos.ponte_de_municipios(eleitos, municipios) == {"64017": "3515004"}
+
+
+def test_ponte_acha_acu_pela_grafia_do_tse():
+    eleitos = mandatos.eleitos([_linha(sq_candidato="1", codigo_ue="16039", nome_ue="ASSÚ", uf="RN", titulo="111111111111")])
+
+    assert mandatos.ponte_de_municipios(eleitos, [("2400208", "Açu", "RN")]) == {"16039": "2400208"}
+
+
 def test_quem_ja_tem_pessoa_empresta_o_titulo_ao_eleito_sem_cpf():
     """O de 2020 é achado pelo CPF; o de 2024, só com título, tem de cair na mesma pessoa."""
     eleitos = mandatos.eleitos([

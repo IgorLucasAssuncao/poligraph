@@ -513,3 +513,10 @@ def test_estatisticas_sao_refeitas_depois_da_carga(conexao):
     persistencia.atualizar_estatisticas(conexao)
 
     assert conexao.execute("SELECT reltuples FROM pg_class WHERE relname = 'pessoas'").fetchone()[0] == 30
+
+
+def test_nome_e_gravado_com_um_espaco_so(conexao):
+    """A fonte publica "DR  NELSON SALOME"; a tela mostrava o espaço duplo (2026-10-24)."""
+    persistencia.gravar_pessoas(conexao, [{**_pessoa("204600", "Nelson"), "nome_civil": "DR  NELSON  SALOME", "nome_exibicao": "DR  NELSON"}], None)
+
+    assert conexao.execute("SELECT nome_civil, nome_exibicao FROM pessoas").fetchone() == ("DR NELSON SALOME", "DR NELSON")
