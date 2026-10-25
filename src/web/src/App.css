@@ -1045,10 +1045,12 @@ button.lista-grafo-nome:focus-visible { outline: 3px solid var(--realce); outlin
 .lista-grafo-vizinhos { color: var(--suave); }
 .lista-grafo-sem-par { color: var(--suave); font-style: italic; }
 
+/* Título de seção (2026-10-24): uma faixa em --painel marca onde cada seção começa, e o texto dele fica na mesma
+   linha do texto que vem embaixo. Rente à borda, como na ficha, o recuo é o mesmo 1rem do conteúdo dela. */
 .titulo-secao {
-  margin: 0; padding: 1rem 1rem .6rem;
+  margin: 0; padding: .6rem 1rem;
   font-size: var(--t-3); font-weight: 800;
-  border-bottom: 1px solid var(--borda);
+  background: var(--painel); border-bottom: 1px solid var(--borda);
 }
 .ajuda-espacada { padding: 1rem; margin: 0; border-bottom: 1px solid var(--borda); }
 .resultado-acoes { display: flex; gap: .6rem; flex-wrap: wrap; padding: 1.25rem 1rem 3rem; }
@@ -2934,6 +2936,12 @@ dialog.tour::backdrop { background: transparent; }
 
 .duas-colunas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
 .duas-colunas > div > .titulo-secao:first-child { margin-top: 0; }
+/* Dentro de seção que já tem 1rem de recuo, a faixa ocupa a largura dela e o texto alinha com o conteúdo, em vez de
+   somar o recuo dela ao da seção (16px à frente do texto, medido em 2026-10-24). Nas duas colunas, a faixa avança
+   meio rem de cada lado, para as duas não se encostarem no meio. */
+.aba-dinheiro .titulo-secao, .governo-secao .titulo-secao { margin-inline: -1rem; }
+.aba-dinheiro :is(.ajuda-espacada, .carregar-mais), .governo-secao :is(.ajuda-espacada, .carregar-mais) { padding-inline: 0; }
+.aba-dinheiro .duas-colunas .titulo-secao, .governo-secao .duas-colunas .titulo-secao { margin-inline: -.5rem; padding-inline: .5rem; }
 @media (max-width: 900px) {
   .duas-colunas { grid-template-columns: minmax(0, 1fr); }
 }
