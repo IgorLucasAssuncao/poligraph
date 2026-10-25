@@ -70,11 +70,11 @@ Formato, armadilhas e o que fica de fora de cada uma estão no
 | Parte | Tecnologia | Papel |
 |---|---|---|
 | `src/etl` | Python (pandas, scipy, networkx) | Baixa, transforma e carrega as fontes; calcula similaridade, grafo e comunidades |
-| `src/Poligraph.Data` | EF Core, PostgreSQL | Dono do schema e das migrations; aplica as migrations ao subir |
-| `src/Poligraph.Api` | ASP.NET Core Minimal API, .NET 10 | Lê o banco e serve o site; login com Google |
-| `src/Poligraph.Worker` | .NET, Hangfire | Avisos no navegador para quem segue, depois de cada carga |
+| `src/api/Poligraph.Data` | EF Core, PostgreSQL | Dono do schema e das migrations; aplica as migrations ao subir |
+| `src/api/Poligraph.Api` | ASP.NET Core Minimal API, .NET 10 | Lê o banco e serve o site; login com Google |
+| `src/api/Poligraph.Worker` | .NET, Hangfire | Avisos no navegador para quem segue, depois de cada carga |
 | `src/web` | React, Vite | O site |
-| `src/Poligraph.AppHost` | Aspire 13 | Sobe tudo no desenvolvimento |
+| `src/api/Poligraph.AppHost` | Aspire 13 | Sobe tudo no desenvolvimento |
 
 Produção: VPS com Coolify, atrás de um túnel da Cloudflare; passo a passo em
 [`arquitetura.html`](arquitetura.html).
@@ -84,7 +84,7 @@ Produção: VPS com Coolify, atrás de um túnel da Cloudflare; passo a passo em
 Precisa de .NET 10, Node 24, Python 3.13 e Docker ou Podman.
 
 ```bash
-dotnet run --project src/Poligraph.AppHost
+dotnet run --project src/api/Poligraph.AppHost
 ```
 
 O painel do Aspire sobe o Postgres, aplica as migrations e liga a API, o worker e o site. As
@@ -95,9 +95,9 @@ Os segredos ficam no user-secrets do AppHost e da API, nunca em `appsettings.jso
 
 | Segredo | Para quê | Como |
 |---|---|---|
-| `Google:ClientId` | Login | `dotnet user-secrets set "Google:ClientId" "…" --project src/Poligraph.Api` |
-| `Parameters:chave-cpf` | Hash do CPF (HMAC) | `dotnet user-secrets set "Parameters:chave-cpf" "…" --project src/Poligraph.AppHost` |
-| `Parameters:avisos-chave-publica` e `Parameters:avisos-chave-privada` | Avisos no navegador | O par sai de `dotnet run --project src/Poligraph.Worker -- gerar-chaves` |
+| `Google:ClientId` | Login | `dotnet user-secrets set "Google:ClientId" "…" --project src/api/Poligraph.Api` |
+| `Parameters:chave-cpf` | Hash do CPF (HMAC) | `dotnet user-secrets set "Parameters:chave-cpf" "…" --project src/api/Poligraph.AppHost` |
+| `Parameters:avisos-chave-publica` e `Parameters:avisos-chave-privada` | Avisos no navegador | O par sai de `dotnet run --project src/api/Poligraph.Worker -- gerar-chaves` |
 
 Sem o `Google:ClientId`, o site funciona e só o login fica desligado. A conta é opcional: só
 seguir e a própria conta pedem login.
@@ -122,7 +122,7 @@ mudança no cálculo de afinidade entra sem ele.
   casar as fontes.
 - Nenhum token nem senha no banco. A sessão é um cookie cifrado.
 
-Detalhe na [política de privacidade](src/web/src/textos-legais.ts) publicada no site.
+Detalhe na [política de privacidade](src/web/src/nucleo/textos-legais.ts) publicada no site.
 
 ## Documentação
 

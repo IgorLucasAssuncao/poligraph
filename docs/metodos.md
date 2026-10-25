@@ -224,4 +224,4 @@ velha** — todos foram medidos contra o banco em execução, não estimados.
 | ARI, modularidade | `src/etl/poligraph_etl/analise/comparacao.py` |
 | Componentes, comunidades, layout | `src/etl/poligraph_etl/analise/grafo.py` |
 | Divisão, curva de discriminação | `src/etl/poligraph_etl/analise/validacao.py` |
-| Afinidade do cidadão | `src/Poligraph.Api/Services/CalculadoraAfinidade.cs` |
+| Afinidade do cidadão | `src/api/Poligraph.Api/Services/Afinidade/CalculadoraAfinidade.cs` |

@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pytest
 
-_DATA = Path(__file__).resolve().parents[2] / "Poligraph.Data" / "Data"
+_DATA = Path(__file__).resolve().parents[2] / "api" / "Poligraph.Data" / "Data"
 
 CONTEXTO = _DATA / "PoligraphDb.cs"
 

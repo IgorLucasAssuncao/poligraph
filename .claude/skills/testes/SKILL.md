@@ -54,19 +54,19 @@ passam mesmo com o código errado.
 ## 2. Estrutura
 
 ```
-src/Poligraph.Tests/
-├── Unidade/
-│   ├── TestesPolaridade.cs          🔴 API3
-│   ├── TestesNormalizacaoVoto.cs    Sim/Nao/Abstencao/Obstrucao → 1/-1/0
-│   ├── TestesCategoria.cs           regex de PROCEDIMENTAL/DESTAQUE/... (A2)
-│   └── TestesCpf.cs                 CPF com zero à esquerda
-├── Integracao/
-│   ├── BaseIntegracao.cs            Testcontainers
-│   ├── TestesSchema.cs              os CHECK rejeitam mesmo?
-│   ├── TestesIdempotencia.cs        recarga não duplica (RF-09)
-│   └── TestesEndpoints.cs           WebApplicationFactory
+src/api/Poligraph.Tests/
+├── Fixtures/          BaseIntegracao, FabricaApi, FixturePostgres, DadosDeTeste
+├── Afinidade/         🔴 TestesPolaridade (API3), o endpoint, o desempate, a bancada
+├── Parlamentares/     ficha, legislatura, presença, histórico, redes e patrimônio
+├── Politicos/ Grafo/ Emendas/ Governo/ Metodologia/ Panorama/ Procedencia/
+├── Autenticacao/ Saude/ Seguir/
+├── Comum/             o que corta a API inteira: cache, OpenAPI, schema, CPF, tipos da URL
 └── Poligraph.Tests.csproj
 ```
+
+As pastas são as de `Poligraph.Api/Services`. O namespace é um só, `Poligraph.Tests`, como o
+`Poligraph.Api.Services` da API. Unitário (sem banco) leva `[Trait("Tipo", "Unidade")]` na classe:
+é o filtro do CI.
 
 ### 2.1 Pacotes
 
@@ -198,8 +198,8 @@ e o bug de polaridade passaria com 95% de cobertura.
 
 ```bash
 dotnet test                                    # tudo
-dotnet test --filter FullyQualifiedName~Unidade    # rápido, sem Docker
-dotnet test --filter FullyQualifiedName~Integracao # precisa de Docker rodando
+dotnet test --filter Tipo=Unidade     # rápido, sem Docker
+dotnet test --filter Tipo!=Unidade    # integração: precisa de Docker rodando
 ```
 
 ⚠️ **A integração exige Docker de pé** — local e no CI. O runner do GitHub Actions já
@@ -228,7 +228,7 @@ máquina qualquer.
 `MSB3021`. ⭐ Rodar no container resolve os dois de uma vez, sem parar o ambiente:
 
 ```bash
-podman run --rm --network host   -v "$PWD:/repo:ro"   -v "/run/user/1000/podman/podman.sock:/var/run/docker.sock"   -e DOCKER_HOST=unix:///var/run/docker.sock   -e TESTCONTAINERS_RYUK_DISABLED=true   mcr.microsoft.com/dotnet/sdk:10.0   bash -lc 'cp -r /repo /work && cd /work && rm -rf src/*/bin src/*/obj && dotnet test src/Poligraph.Tests'
+podman run --rm --network host   -v "$PWD:/repo:ro"   -v "/run/user/1000/podman/podman.sock:/var/run/docker.sock"   -e DOCKER_HOST=unix:///var/run/docker.sock   -e TESTCONTAINERS_RYUK_DISABLED=true   mcr.microsoft.com/dotnet/sdk:10.0   bash -lc 'cp -r /repo /work && cd /work && rm -rf src/*/bin src/*/obj && dotnet test src/api/Poligraph.Tests'
 ```
 
 📐 Cada pedaço resolve um problema medido, ⛔ nenhum é decoração:
@@ -250,8 +250,8 @@ compartilharem um `obj/`, gerando `CS0579 Duplicar atributo`.
 ## 7. No CI
 
 ```yaml
-- run: dotnet test --filter FullyQualifiedName~Unidade     # sempre, rápido
-- run: dotnet test --filter FullyQualifiedName~Integracao  # sempre, mais lento
+- run: dotnet test --filter Tipo=Unidade    # sempre, rápido
+- run: dotnet test --filter Tipo!=Unidade   # sempre, mais lento
 ```
 
 🔴 **O job que roda a polaridade não pode ser opcional.** É o teste que separa um número

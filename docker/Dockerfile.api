@@ -4,13 +4,13 @@ WORKDIR /src
 
 # copiar SÓ os .csproj primeiro: o restore vira camada cacheada.
 #    Mudou só código? O restore sai do cache e o build economiza minutos.
-COPY ["src/Poligraph.Api/Poligraph.Api.csproj",                       "src/Poligraph.Api/"]
-COPY ["src/Poligraph.Data/Poligraph.Data.csproj",                     "src/Poligraph.Data/"]
-COPY ["src/Poligraph.ServiceDefaults/Poligraph.ServiceDefaults.csproj","src/Poligraph.ServiceDefaults/"]
-RUN dotnet restore "src/Poligraph.Api/Poligraph.Api.csproj"
+COPY ["src/api/Poligraph.Api/Poligraph.Api.csproj",                       "src/api/Poligraph.Api/"]
+COPY ["src/api/Poligraph.Data/Poligraph.Data.csproj",                     "src/api/Poligraph.Data/"]
+COPY ["src/api/Poligraph.ServiceDefaults/Poligraph.ServiceDefaults.csproj","src/api/Poligraph.ServiceDefaults/"]
+RUN dotnet restore "src/api/Poligraph.Api/Poligraph.Api.csproj"
 
-COPY src/ src/
-RUN dotnet publish "src/Poligraph.Api/Poligraph.Api.csproj" \
+COPY src/api/ src/api/
+RUN dotnet publish "src/api/Poligraph.Api/Poligraph.Api.csproj" \
     -c Release -o /app --no-restore
 RUN mkdir -p /chaves
 

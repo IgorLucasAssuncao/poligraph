@@ -3,7 +3,7 @@ import json
 import re
 from pathlib import Path
 
-SNAPSHOT = Path(__file__).resolve().parents[2] / 'src' / 'Poligraph.Data' / 'Migrations' / 'PoligraphDbModelSnapshot.cs'
+SNAPSHOT = Path(__file__).resolve().parents[2] / 'src' / 'api' / 'Poligraph.Data' / 'Migrations' / 'PoligraphDbModelSnapshot.cs'
 SAIDA = Path(__file__).with_name('modelo_do_banco.json')
 
 texto = open(SNAPSHOT, encoding='utf-8-sig').read()

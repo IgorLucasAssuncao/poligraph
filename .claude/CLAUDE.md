@@ -158,12 +158,12 @@ Estrutura **Tier 2 sem MediatR**: `Api`, `Data`, `Tests`, `AppHost`.
 ## Comandos
 
 ```bash
-dotnet run --project src/Poligraph.AppHost                 # sobe tudo (Aspire)
-dotnet ef migrations add <Nome> -p src/Poligraph.Data      # nunca na API
-dotnet ef migrations script -p src/Poligraph.Data -o src/etl/tests/schema_do_ef.sql
+dotnet run --project src/api/Poligraph.AppHost                 # sobe tudo (Aspire)
+dotnet ef migrations add <Nome> -p src/api/Poligraph.Data      # nunca na API
+dotnet ef migrations script -p src/api/Poligraph.Data -o src/etl/tests/schema_do_ef.sql
 py infra/mapa/atualizar.py                                 # sincroniza o mapa
 dotnet test                                                # inclui a polaridade
-dotnet build src/Poligraph.Tests -o src/Poligraph.Tests/bin/avulso && dotnet test src/Poligraph.Tests/bin/avulso/Poligraph.Tests.dll  # com a API ligada: dentro do repo, para a curadoria achar a raiz
+dotnet build src/api/Poligraph.Tests -o src/api/Poligraph.Tests/bin/avulso && dotnet test src/api/Poligraph.Tests/bin/avulso/Poligraph.Tests.dll  # com a API ligada: dentro do repo, para a curadoria achar a raiz
 cd src/etl && py -m pytest -q                              # ETL, com Postgres real
 cd src/web && npx vitest run && npx tsc -b && npm run lint # front
 ```

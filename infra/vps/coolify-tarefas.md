@@ -26,7 +26,7 @@ Depois do deploy, a aplicação tem quatro serviços: `migrations`, `api`, `etl`
 Para ver o valor local sem mostrar os outros segredos:
 
 ```powershell
-dotnet user-secrets list --project src/Poligraph.AppHost | Select-String "chave-cpf"
+dotnet user-secrets list --project src/api/Poligraph.AppHost | Select-String "chave-cpf"
 ```
 
 Copiar do terminal direto para o Coolify. Não colar em chat nem em arquivo.

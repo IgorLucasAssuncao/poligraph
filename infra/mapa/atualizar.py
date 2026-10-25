@@ -7,7 +7,7 @@ Uso, da raiz do repositório:
 | Parte do mapa | De onde sai | Como |
 |---|---|---|
 | `const MODELO` (tabelas, colunas, CHECK, FK) | snapshot das migrations do EF | `modelo_do_banco.py`, automático |
-| `const ROTAS` (rota, proteção, tabelas lidas e gravadas, código) | `src/Poligraph.Api` | `rotas_da_api.py`, automático |
+| `const ROTAS` (rota, proteção, tabelas lidas e gravadas, código) | `src/api/Poligraph.Api` | `rotas_da_api.py`, automático |
 | Fontes, comandos, etapas, entradas e saídas da ETL | conhecimento da fonte | à mão, no próprio HTML |
 
 DECISÃO (autor, 2026-10-09): o mapa é o documento central, e toda mudança de fonte, comando,

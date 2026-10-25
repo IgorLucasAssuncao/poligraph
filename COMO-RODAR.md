@@ -20,7 +20,7 @@
 ## Subir tudo
 
 ```bash
-dotnet run --project src/Poligraph.AppHost
+dotnet run --project src/api/Poligraph.AppHost
 ```
 
 ⭐ **Um comando sobe TUDO:** Postgres, migrations, API **e o front**.
@@ -60,7 +60,7 @@ igual a produção.
 ### Se quiser ligar o login
 
 1. `src/web/.env.example` → copie para `.env.local` e preencha
-2. `src/Poligraph.Api/appsettings.Example.json` → copie o bloco `Google` para
+2. `src/api/Poligraph.Api/appsettings.Example.json` → copie o bloco `Google` para
    `appsettings.Development.json`
 3. Como obter o Client ID: `docs/plano/02-autenticacao-e-metricas.md` §3.2.2
 

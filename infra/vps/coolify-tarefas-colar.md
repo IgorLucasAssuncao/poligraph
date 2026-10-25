@@ -18,7 +18,7 @@ Value: a chave do computador do autor, tirada com o comando abaixo, no PowerShel
 projeto. O valor é o que vem depois de `= `. Não colar em chat nem em arquivo.
 
 ```powershell
-dotnet user-secrets list --project src/Poligraph.AppHost | Select-String "chave-cpf"
+dotnet user-secrets list --project src/api/Poligraph.AppHost | Select-String "chave-cpf"
 ```
 
 **Aplicação → Environment Variables**

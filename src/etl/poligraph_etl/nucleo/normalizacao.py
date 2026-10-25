@@ -399,7 +399,7 @@ def _chave_do_cpf() -> bytes:
         raise RuntimeError(
             f"Defina {VARIAVEL_DA_CHAVE} com pelo menos 32 caracteres aleatórios: no "
             "desenvolvimento, `dotnet user-secrets set Parameters:chave-cpf <valor> "
-            "--project src/Poligraph.AppHost`; em produção, a variável do contêiner da ETL. "
+            "--project src/api/Poligraph.AppHost`; em produção, a variável do contêiner da ETL. "
             "Sem a chave o CPF não é gravado (Pendência 77)."
         )
     return chave.encode()

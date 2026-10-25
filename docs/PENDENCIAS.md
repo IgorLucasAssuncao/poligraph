@@ -1320,8 +1320,8 @@ sobrescreve. A procedência de cada vínculo é auditável — o que importa par
 ### ✅ Pendência 35 (resolvida) — a legislatura não era filtrada em consulta nenhuma
 
 > ✅ **Resolvida em 2026-08-27.** O que está abaixo é o registro do problema; a
-> solução está em [`Legislaturas.cs`](../src/Poligraph.Api/Data/Legislaturas.cs) e em
-> [`TestesLegislatura.cs`](../src/Poligraph.Tests/Integracao/TestesLegislatura.cs).
+> solução está em [`Legislaturas.cs`](../src/api/Poligraph.Data/Data/Legislaturas.cs) e em
+> [`TestesLegislatura.cs`](../src/api/Poligraph.Tests/Parlamentares/TestesLegislatura.cs).
 >
 > ⭐ **A decisão de desenho:** a legislatura é **derivada do dado**, ⛔ nunca configurada —
 > dado repetido em `appsettings` seria mais uma coisa a esquecer de virar na posse da 58ª,

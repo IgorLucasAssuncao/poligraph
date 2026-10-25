@@ -5,7 +5,7 @@ import os
 import re
 from pathlib import Path
 
-API = str(Path(__file__).resolve().parents[2] / 'src' / 'Poligraph.Api')
+API = str(Path(__file__).resolve().parents[2] / 'src' / 'api' / 'Poligraph.Api')
 SAIDA = Path(__file__).with_name('rotas.json')
 
 contexto = open(os.path.join(API, '..', 'Poligraph.Data', 'Data', 'PoligraphDb.cs'), encoding='utf-8-sig').read()

@@ -5,7 +5,7 @@ on:
   push:
     branches: [master]
     paths:
-      - 'src/Poligraph.*/**'
+      - 'src/api/**'
       - 'Poligraph.slnx'
       - '.editorconfig'
       - 'docker/Dockerfile.api'
@@ -13,7 +13,7 @@ on:
       - '.github/workflows/poligraph_back_ci.yaml'
   pull_request:
     paths:
-      - 'src/Poligraph.*/**'
+      - 'src/api/**'
       - 'Poligraph.slnx'
       - '.editorconfig'
       - 'docker/Dockerfile.api'
@@ -52,22 +52,22 @@ jobs:
       # Só os unitários. Os de integração sobem um Postgres por classe e rodam
       # localmente com `dotnet test` sem filtro.
       - name: Testes unitários
-        run: dotnet test --no-build -c Release --filter "FullyQualifiedName~Unidade"
+        run: dotnet test --no-build -c Release --filter "Tipo=Unidade"
 
       - name: Instalar dotnet-ef
         run: dotnet tool install --global dotnet-ef
 
       # Gera e VALIDA o script. Não aplica: quem aplica é um container dentro do VPS.
       - name: Migration gera script válido
-        run: dotnet ef migrations script --idempotent -p src/Poligraph.Data -o migration.sql
+        run: dotnet ef migrations script --idempotent -p src/api/Poligraph.Data -o migration.sql
 
       # Os testes da ETL criam o banco com este script. Migration nova sem o script
       # regerado faria a ETL testar contra o schema velho, sem erro nenhum.
       - name: Schema dos testes da ETL em dia com as migrations
         run: |
-          dotnet ef migrations script -p src/Poligraph.Data -o schema_gerado.sql
+          dotnet ef migrations script -p src/api/Poligraph.Data -o schema_gerado.sql
           diff <(tr -d '\r' < schema_gerado.sql) <(tr -d '\r' < src/etl/tests/schema_do_ef.sql) \
-            || { echo "::error::src/etl/tests/schema_do_ef.sql desatualizado. Rode: dotnet ef migrations script -p src/Poligraph.Data -o src/etl/tests/schema_do_ef.sql"; exit 1; }
+            || { echo "::error::src/etl/tests/schema_do_ef.sql desatualizado. Rode: dotnet ef migrations script -p src/api/Poligraph.Data -o src/etl/tests/schema_do_ef.sql"; exit 1; }
 
       - uses: actions/upload-artifact@v4
         with:
@@ -147,7 +147,7 @@ jobs:
       - name: Analisar
         if: env.SONAR_TOKEN != ''
         run: |
-          dotnet-sonarscanner begin /k:"$SONAR_PROJETO" /o:"$SONAR_ORG" /d:sonar.token="$SONAR_TOKEN" /d:sonar.scanner.scanAll=false /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" /d:sonar.exclusions="**/bin/**,**/obj/**,**/TestResults/**,src/Poligraph.Data/Migrations/**,src/Poligraph.Data/curadoria/**,src/Poligraph.ServiceDefaults/**" /d:sonar.coverage.exclusions="src/Poligraph.Api/Dtos/**,src/Poligraph.Api/Configuracao/**,src/Poligraph.Api/Program.cs,src/Poligraph.Data/Data/Entidades/**,src/Poligraph.Data/Data/Enums/**,src/Poligraph.Data/Program.cs,src/Poligraph.AppHost/**"
+          dotnet-sonarscanner begin /k:"$SONAR_PROJETO" /o:"$SONAR_ORG" /d:sonar.token="$SONAR_TOKEN" /d:sonar.scanner.scanAll=false /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" /d:sonar.exclusions="**/bin/**,**/obj/**,**/TestResults/**,src/api/Poligraph.Data/Migrations/**,src/api/Poligraph.Data/curadoria/**,src/api/Poligraph.ServiceDefaults/**" /d:sonar.coverage.exclusions="src/api/Poligraph.Api/Dtos/**,src/api/Poligraph.Api/Configuracao/**,src/api/Poligraph.Api/Program.cs,src/api/Poligraph.Data/Data/Entidades/**,src/api/Poligraph.Data/Data/Enums/**,src/api/Poligraph.Data/Program.cs,src/api/Poligraph.AppHost/**"
 
           dotnet build -c Release
           dotnet test --no-build -c Release --collect:"XPlat Code Coverage;Format=opencover"

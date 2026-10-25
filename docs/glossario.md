@@ -11,7 +11,7 @@
 emenda vira pagamento) estão em [`fluxos-das-casas.md`](fluxos-das-casas.md).
 
 📐 **Este documento é para quem constrói.** O glossário que o **cidadão** vê é outro:
-`src/web/src/componentes/Termo.tsx`, com verbetes que aparecem sublinhados na própria
+`src/web/src/comum/componentes/Termo.tsx`, com verbetes que aparecem sublinhados na própria
 tela. A coluna *No produto?* diz quais dos dois o termo tem.
 
 ---

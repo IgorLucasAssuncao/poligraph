@@ -697,7 +697,7 @@ PS&gt; ssh -t -o ClearAllForwardings=yes coolify "sudo bash /tmp/restaurar-banco
     </tbody>
   </table></div>
   <p>Para gerar o par de chaves, no computador do autor, uma vez por ambiente:</p>
-  <pre>dotnet run --project src/Poligraph.Worker -- gerar-chaves</pre>
+  <pre>dotnet run --project src/api/Poligraph.Worker -- gerar-chaves</pre>
   <p>Ele imprime as duas linhas, <code>Avisos__ChavePublica=…</code> e <code>Avisos__ChavePrivada=…</code>, que vão para as
     variáveis do Coolify. Trocar o par depois desfaz todas as inscrições: o navegador se inscreveu com a chave pública
     antiga. O par do desenvolvimento fica no user-secrets do AppHost, nos parâmetros <code>avisos-chave-publica</code> e

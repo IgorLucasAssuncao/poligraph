@@ -6,12 +6,12 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Não copia mais a API: com a dependência invertida, Data não depende dela.
-COPY ["src/Poligraph.Data/Poligraph.Data.csproj",                        "src/Poligraph.Data/"]
-COPY ["src/Poligraph.ServiceDefaults/Poligraph.ServiceDefaults.csproj", "src/Poligraph.ServiceDefaults/"]
-RUN dotnet restore "src/Poligraph.Data/Poligraph.Data.csproj"
+COPY ["src/api/Poligraph.Data/Poligraph.Data.csproj",                        "src/api/Poligraph.Data/"]
+COPY ["src/api/Poligraph.ServiceDefaults/Poligraph.ServiceDefaults.csproj", "src/api/Poligraph.ServiceDefaults/"]
+RUN dotnet restore "src/api/Poligraph.Data/Poligraph.Data.csproj"
 
-COPY src/ src/
-RUN dotnet publish "src/Poligraph.Data/Poligraph.Data.csproj" \
+COPY src/api/ src/api/
+RUN dotnet publish "src/api/Poligraph.Data/Poligraph.Data.csproj" \
     -c Release -o /app --no-restore
 
 # ATENÇÃO: aspnet, não runtime. O Poligraph.Data referencia o ServiceDefaults, que traz o

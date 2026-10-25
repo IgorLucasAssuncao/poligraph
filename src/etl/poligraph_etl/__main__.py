@@ -2208,7 +2208,7 @@ def _curar(conexao: psycopg.Connection, casa: str, legislatura: int, limite: int
 
     log.info("")
     log.info("A afirmacao em linguagem leiga e a polaridade FINAL sao leitura humana.")
-    log.info("Formato: src/Poligraph.Migrations/curadoria/perguntas-lote-1.json")
+    log.info("Formato: src/api/Poligraph.Data/curadoria/perguntas-lote-1.json")
 
 
 def _materias_do_senado(conexao: psycopg.Connection, votacoes_brutas: list[dict]) -> None:

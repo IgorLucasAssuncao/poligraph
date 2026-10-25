@@ -20,11 +20,11 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # ⭐ copiar SÓ os .csproj primeiro: o restore vira camada cacheada
-COPY ["src/Poligraph.Api/Poligraph.Api.csproj", "src/Poligraph.Api/"]
-RUN dotnet restore "src/Poligraph.Api/Poligraph.Api.csproj"
+COPY ["src/api/Poligraph.Api/Poligraph.Api.csproj", "src/api/Poligraph.Api/"]
+RUN dotnet restore "src/api/Poligraph.Api/Poligraph.Api.csproj"
 
 COPY . .
-RUN dotnet publish "src/Poligraph.Api/Poligraph.Api.csproj" \
+RUN dotnet publish "src/api/Poligraph.Api/Poligraph.Api.csproj" \
     -c Release -o /app --no-restore
 
 # ─── runtime ──────────────────────────────────────────────────────────

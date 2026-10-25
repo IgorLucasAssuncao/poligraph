@@ -39,7 +39,7 @@ py -m poligraph_etl cota --help
 
 | Forma | Quando | Como |
 |---|---|---|
-| **Botões do Aspire** | O dia a dia: sobe tudo e cada comando vira um botão `etl-*` no painel | `dotnet run --project src/Poligraph.AppHost`, e clicar no recurso |
+| **Botões do Aspire** | O dia a dia: sobe tudo e cada comando vira um botão `etl-*` no painel | `dotnet run --project src/api/Poligraph.AppHost`, e clicar no recurso |
 | **Linha de comando** | Rodar com argumentos que o botão não tem, ou depurar | `cd src/etl` e `py -m poligraph_etl <comando> [argumentos]` |
 
 Na linha de comando, o ambiente precisa de:
@@ -231,7 +231,7 @@ gerado das migrations. A ETL nunca cria tabela, e o teste também não. Depois d
 nova, da raiz do repositório:
 
 ```bash
-dotnet ef migrations script -p src/Poligraph.Data -o src/etl/tests/schema_do_ef.sql
+dotnet ef migrations script -p src/api/Poligraph.Data -o src/etl/tests/schema_do_ef.sql
 ```
 
 ATENÇÃO: o CI do back gera o script de novo e compara com o arquivo versionado. Migration sem
