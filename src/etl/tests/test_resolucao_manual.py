@@ -20,7 +20,7 @@ outro, **em silêncio**, porque a chave estrangeira aceita qualquer id que exist
 
 import pytest
 
-from poligraph_etl.__main__ import pares_de_resolucao
+from poligraph_etl.comandos.emendas import pares_de_resolucao
 
 
 def test_converte_o_par():

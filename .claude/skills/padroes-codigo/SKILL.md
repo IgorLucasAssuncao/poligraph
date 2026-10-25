@@ -207,7 +207,7 @@ docs: registra a decisao de nomenclatura
 | O quê | Padrão | Exemplo |
 |---|---|---|
 | Módulos, funções, variáveis | `snake_case` | `bens_para_linhas`, `hashes_de_pessoas` |
-| Função privada do módulo | prefixo `_` | `_carga_do_arquivo` |
+| Função privada do módulo | prefixo `_` | `_montar_matriz` |
 | Constantes | `MAIUSCULAS` | `MINIMO_VOTACOES_COMUNS` |
 | Enums | `StrEnum` em `poligraph_etl/nucleo/tipos.py`, nome igual ao enum C# | `TipoCasa.CAMARA` |
 

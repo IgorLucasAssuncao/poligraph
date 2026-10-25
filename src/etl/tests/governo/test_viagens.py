@@ -6,7 +6,7 @@ import zipfile
 
 import pytest
 
-from poligraph_etl import __main__ as etl
+from poligraph_etl.comandos import comum, governo as comandos_do_governo
 from poligraph_etl.governo import viagens
 from poligraph_etl.contratos import entrada
 from poligraph_etl.contratos.banco import DestinoDeViagem, ViagensDoOrgao
@@ -144,10 +144,10 @@ def test_comando_grava_o_ano_nas_duas_tabelas(conexao, tmp_path, monkeypatch):
             arquivo.writestr(viagens.membro(2024, "trecho"), _csv([trecho("França", "", "Paris", "3,00", "5")]))
         return destino
 
-    monkeypatch.setattr(etl, "CACHE", tmp_path)
+    monkeypatch.setattr(comum, "CACHE", tmp_path)
     monkeypatch.setattr(portal, "baixar", baixar)
 
-    etl._viagens(conexao, [2024])
+    comandos_do_governo.rodar_viagens(conexao, [2024])
 
     assert conexao.execute(
         "SELECT orgao_superior, viagens, urgentes, diarias::float, carga_id IS NOT NULL FROM viagens_do_orgao"

@@ -7,7 +7,7 @@ deputados sem emenda, **zero** tinham o nome esperando um casamento mais frouxo,
 **correto** — o problema era outro, e eram dois.
 """
 
-from poligraph_etl.__main__ import _desempatar
+from poligraph_etl.comandos.emendas import _desempatar
 from poligraph_etl.emendas.emendas import autor_original
 
 # ═══════════════════════════════════════════════════════════════════
@@ -103,7 +103,7 @@ def test_tres_candidatos_com_dois_votantes():
 # As emendas de 2014 a 2022: o desempate pela legislatura da emenda
 # ═══════════════════════════════════════════════════════════════════
 
-from poligraph_etl.__main__ import votantes_do_mandato  # noqa: E402
+from poligraph_etl.comandos.emendas import votantes_do_mandato  # noqa: E402
 
 VOTANTES = {55: {1, 2}, 56: {3}, 57: {4, 5}}
 

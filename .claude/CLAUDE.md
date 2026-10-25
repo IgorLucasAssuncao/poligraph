@@ -129,7 +129,8 @@ Estrutura **Tier 2 sem MediatR**: `Api`, `Data`, `Tests`, `AppHost`.
 
 | Precisa de | Use |
 |---|---|
-| Registrar de onde veio a linha | `_carga_do_arquivo` (ou `_carga_de_varios`, `_carga_de_resposta`); toda linha leva `carga_id` |
+| Registrar de onde veio a linha | `comandos/comum.py`: `carga_do_arquivo` (ou `carga_de_varios`, `carga_de_resposta`); toda linha leva `carga_id` |
+| Comando novo da ETL | `rodar_<comando>` em `comandos/<contexto>.py`, o argumento em `__main__.py` e, se for agendado, o ramo em `orquestracao._executar_etapa` |
 | Baixar do TSE | `tse.baixar` (receita de headers do WAF); ler o `_BRASIL` quando houver, senão os de UF, nunca os dois |
 | Leitura pesada na API | `CacheDeLeitura` (`_leitura.ObterAsync`), aquecida no `AquecedorDeCache` |
 | Grafo e métricas | `ExecucaoVigente`, com casa **e** legislatura (Pendência 54); período por `Legislaturas` |

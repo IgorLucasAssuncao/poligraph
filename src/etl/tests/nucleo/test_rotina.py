@@ -100,7 +100,8 @@ def test_frequencia_desconhecida_e_recusada():
 
 def test_toda_etapa_tem_execucao_no_main(monkeypatch):
     """Uma etapa nova em `rotina` sem o ramo em `_executar_etapa` só falharia no VPS, no dia agendado."""
-    from poligraph_etl import __main__ as principal
+    from poligraph_etl import comandos
+    from poligraph_etl.comandos import orquestracao
 
     class ConexaoFalsa:
         def execute(self, *_):
@@ -111,19 +112,25 @@ def test_toda_etapa_tem_execucao_no_main(monkeypatch):
 
     executados = []
     nomes = (
-        "_ingerir", "_senado", "_simbolicas", "_palavras_chave", "_inteiro_teor", "_cota", "_emendas", "_sedes_brasilapi", "_convenios",
-        "_governo", "_selic", "_defesa_civil", "_compras_centralizadas", "_viagens", "_compras", "_sancoes", "_municipios", "_fundo", "_mandatos", "_siconfi", "_patrimonio", "_redes", "_populacao", "_analisar", "_conferir", "_em_exercicio",
-        "_limpar_cache",
+        ("congresso", "rodar_ingerir"), ("congresso", "rodar_senado"), ("congresso", "rodar_simbolicas"),
+        ("congresso", "rodar_palavras_chave"), ("congresso", "rodar_inteiro_teor"), ("congresso", "rodar_cota"),
+        ("congresso", "rodar_em_exercicio"), ("emendas", "rodar_emendas"), ("emendas", "rodar_convenios"),
+        ("cidades", "rodar_sedes_brasilapi"), ("cidades", "rodar_municipios"), ("cidades", "rodar_siconfi"),
+        ("cidades", "rodar_populacao"), ("governo", "rodar_governo"), ("governo", "rodar_selic"),
+        ("governo", "rodar_defesa_civil"), ("governo", "rodar_compras_centralizadas"), ("governo", "rodar_viagens"),
+        ("governo", "rodar_compras"), ("governo", "rodar_sancoes"), ("eleicoes", "rodar_fundo"),
+        ("eleicoes", "rodar_mandatos"), ("eleicoes", "rodar_patrimonio"), ("eleicoes", "rodar_redes"),
+        ("analise", "rodar_analisar"), ("qualidade", "rodar_conferir"), ("orquestracao", "rodar_limpar_cache"),
     )
-    for nome in nomes:
-        monkeypatch.setattr(principal, nome, lambda *_, nome=nome: executados.append(nome))
+    for modulo, nome in nomes:
+        monkeypatch.setattr(getattr(comandos, modulo), nome, lambda *_, nome=nome: executados.append(nome))
 
     for frequencia in rotina.FREQUENCIAS:
         for dia in (date(2026, 10, 5), date(2026, 11, 5), date(2027, 5, 5)):
             for etapa in rotina.etapas(frequencia, dia):
-                principal._executar_etapa(ConexaoFalsa(), etapa)
+                orquestracao._executar_etapa(ConexaoFalsa(), etapa)
 
-    assert set(executados) == set(nomes)
+    assert set(executados) == {nome for _, nome in nomes}
 
 
 class _ConexaoComTrava:
@@ -143,46 +150,46 @@ class _ConexaoComTrava:
 
 def test_rotina_espera_a_outra_e_solta_a_trava_mesmo_falhando(monkeypatch):
     """Duas rotinas ao mesmo tempo gravariam as mesmas tabelas; a segunda espera a primeira."""
-    from poligraph_etl import __main__ as principal
+    from poligraph_etl.comandos import orquestracao as principal, qualidade, congresso
 
     def falhar(*_):
         raise RuntimeError("conferir acusou ERRO")
 
     monkeypatch.setattr(principal.rotina, "etapas", lambda *_: [rotina.Etapa("conferir")])
-    monkeypatch.setattr(principal, "_conferir", falhar)
+    monkeypatch.setattr(qualidade, "rodar_conferir", falhar)
     conexao = _ConexaoComTrava(livre=False)
 
     with pytest.raises(RuntimeError):
-        principal._rotina(conexao, "semanal")
+        principal.rodar_rotina(conexao, "semanal")
 
     assert conexao.comandos == ["pg_try_advisory_lock", "pg_advisory_lock", "pg_advisory_unlock"]
 
 
 def test_rotina_com_a_trava_livre_nao_espera(monkeypatch):
-    from poligraph_etl import __main__ as principal
+    from poligraph_etl.comandos import orquestracao as principal, qualidade, congresso
 
     monkeypatch.setattr(principal.rotina, "etapas", lambda *_: [rotina.Etapa("conferir")])
-    monkeypatch.setattr(principal, "_conferir", lambda *_: None)
+    monkeypatch.setattr(qualidade, "rodar_conferir", lambda *_: None)
     conexao = _ConexaoComTrava(livre=True)
 
-    principal._rotina(conexao, "semanal")
+    principal.rodar_rotina(conexao, "semanal")
 
     assert conexao.comandos == ["pg_try_advisory_lock", "INSERT INTO eventos ", "pg_advisory_unlock"]
 
 
 def test_rotina_que_falha_nao_grava_evento(monkeypatch):
     """Pendência 89: rotina parada no meio não avisa ninguém."""
-    from poligraph_etl import __main__ as principal
+    from poligraph_etl.comandos import orquestracao as principal, qualidade, congresso
 
     def falhar(*_):
         raise RuntimeError("cota fora do ar")
 
     monkeypatch.setattr(principal.rotina, "etapas", lambda *_: [rotina.Etapa("cota")])
-    monkeypatch.setattr(principal, "_cota", falhar)
+    monkeypatch.setattr(congresso, "rodar_cota", falhar)
     conexao = _ConexaoComTrava(livre=True)
 
     with pytest.raises(RuntimeError):
-        principal._rotina(conexao, "mensal")
+        principal.rodar_rotina(conexao, "mensal")
 
     assert not any(c.startswith("INSERT") for c in conexao.comandos)
 
@@ -190,7 +197,7 @@ def test_rotina_que_falha_nao_grava_evento(monkeypatch):
 @pytest.mark.parametrize("frequencia", rotina.FREQUENCIAS)
 def test_evento_da_rotina_passa_pelo_check_do_banco(conexao, frequencia):
     """O tipo que o Python grava é um dos que o `CHECK` do EF aceita."""
-    from poligraph_etl import __main__ as principal
+    from poligraph_etl.comandos import orquestracao as principal, qualidade, congresso
 
     principal._avisar_que_terminou(conexao, frequencia)
 

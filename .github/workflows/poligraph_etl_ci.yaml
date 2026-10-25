@@ -86,4 +86,4 @@ jobs:
             -Dsonar.python.version=3.13
             -Dsonar.python.coverage.reportPaths=src/etl/coverage.xml
             -Dsonar.exclusions=**/__pycache__/**,**/.cache/**,**/*.egg-info/**
-            -Dsonar.coverage.exclusions=src/etl/poligraph_etl/__init__.py,src/etl/poligraph_etl/__main__.py
+            -Dsonar.coverage.exclusions=src/etl/poligraph_etl/__init__.py,src/etl/poligraph_etl/__main__.py,src/etl/poligraph_etl/comandos/**

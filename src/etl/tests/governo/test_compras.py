@@ -7,7 +7,7 @@ import zipfile
 import pytest
 import requests
 
-from poligraph_etl import __main__ as etl
+from poligraph_etl.comandos import comum, governo as comandos_do_governo
 from poligraph_etl.governo import compras
 from poligraph_etl.contratos import entrada
 from poligraph_etl.contratos.banco import ContratacoesDoOrgao, ContratadoDoGoverno
@@ -105,11 +105,11 @@ def test_comando_grava_o_ano_e_pula_o_mes_que_falta(conexao, tmp_path, monkeypat
             raise requests.HTTPError(response=resposta)
         return _zip(destino, ano, mes, [compra()])
 
-    monkeypatch.setattr(etl, "CACHE", tmp_path)
+    monkeypatch.setattr(comum, "CACHE", tmp_path)
     monkeypatch.setattr(portal, "baixar", baixar)
     monkeypatch.setattr(portal, "ESPERA_DO_403", 0)
 
-    etl._compras(conexao, [2024])
+    comandos_do_governo.rodar_compras(conexao, [2024])
 
     assert conexao.execute(
         "SELECT mes, contratos, valor::float, carga_id IS NOT NULL FROM contratacoes_do_orgao"

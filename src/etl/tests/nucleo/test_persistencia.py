@@ -250,7 +250,7 @@ def test_matriz_de_uma_casa_ignora_o_voto_da_outra(conexao):
 
     Cada matriz tem só o voto da própria casa, e o valor é o daquela casa
     """
-    from poligraph_etl.__main__ import _montar_matriz
+    from poligraph_etl.comandos.analise import _montar_matriz
 
     persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Ana Ribeiro")])
     pessoa_id = conexao.execute("SELECT id FROM pessoas LIMIT 1").fetchone()[0]
@@ -285,7 +285,7 @@ def test_quem_so_vota_numa_casa_nao_entra_na_matriz_da_outra(conexao):
     A consequência não seria erro: seria o kNN comparando quem não tem uma votação em
     comum sequer, e o grafo do Senado nascendo com vizinhos falsos.
     """
-    from poligraph_etl.__main__ import _montar_matriz
+    from poligraph_etl.comandos.analise import _montar_matriz
 
     persistencia.gravar_pessoas(conexao, [_pessoa("204528", "Só Deputada")])
     deputada = conexao.execute("SELECT id FROM pessoas LIMIT 1").fetchone()[0]
@@ -364,7 +364,7 @@ def test_legislatura_corrente_e_a_maior_da_base(conexao):
 
 def test_legislatura_com_pouco_dado_fica_sem_grafo(conexao, caplog):
     """Abaixo de `VOTACOES_MINIMAS_PARA_GRAFO` não se abre execução: a tela não a oferece."""
-    from poligraph_etl.__main__ import VOTACOES_MINIMAS_PARA_GRAFO, _analisar
+    from poligraph_etl.comandos.analise import VOTACOES_MINIMAS_PARA_GRAFO, rodar_analisar as _analisar
 
     antiga, atual = _com_historico(conexao)
     persistencia.gravar_votos(conexao, [_voto("2200000-1", atual, -1)])

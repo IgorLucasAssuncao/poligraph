@@ -7,7 +7,7 @@ import zipfile
 import pytest
 import requests
 
-from poligraph_etl import __main__ as etl
+from poligraph_etl.comandos import comum, governo as comandos_do_governo
 from poligraph_etl.governo import defesa_civil
 from poligraph_etl.contratos import entrada
 from poligraph_etl.contratos.banco import GastoDaDefesaCivil
@@ -101,11 +101,11 @@ def test_comando_grava_os_meses_publicados_e_pula_o_que_falta(conexao, tmp_path,
             raise requests.HTTPError(response=resposta)
         return _zip_do_mes(destino, ano, mes, [transacao(**{"ANO EXTRATO": str(ano), "MÊS EXTRATO": f"{mes:02d}"})])
 
-    monkeypatch.setattr(etl, "CACHE", tmp_path)
+    monkeypatch.setattr(comum, "CACHE", tmp_path)
     monkeypatch.setattr(portal, "baixar", baixar)
     monkeypatch.setattr(portal, "ESPERA_DO_403", 0)
 
-    etl._defesa_civil(conexao, [2024])
+    comandos_do_governo.rodar_defesa_civil(conexao, [2024])
 
     meses = conexao.execute(
         "SELECT mes, valor::float, transacoes, carga_id IS NOT NULL FROM gastos_da_defesa_civil ORDER BY mes"

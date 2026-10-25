@@ -14,7 +14,8 @@ O pacote é dividido por contexto, e `tests/` repete a mesma divisão (`tests/<c
 
 | Pasta | O que tem |
 |---|---|
-| `__main__.py` | O orquestrador: a linha de comando e a ordem de cada carga |
+| `__main__.py` | A linha de comando: os argumentos de cada comando e o despacho para `comandos/` |
+| `comandos/` | O que cada comando faz, um módulo por contexto: `rodar_<comando>` baixa, transforma e grava; `comum` tem o cache e a procedência de cada arquivo, e `orquestracao` a rotina, o `rechavear-cpf` e a limpeza do cache |
 | `fontes/` | Baixar: um módulo por fonte oficial (Câmara, Senado, TSE, Portal, Receita, IBGE, BrasilAPI, Siconfi, Banco Central) |
 | `contratos/` | As colunas lidas de cada fonte (`entrada`) e as linhas gravadas em cada tabela (`banco`) |
 | `nucleo/` | Conexão, gravação no banco (`persistencia`), procedência, telemetria, rotina, limpeza do cache, enums (`tipos`) e normalização |
@@ -118,7 +119,7 @@ haveria como refazer a carga a partir dele. Fora da pasta, o comando recusa ante
 | mensal de nov e dez de ano de eleição municipal | Também `mandatos`, `fundo`, `patrimonio` e `redes` da eleição |
 
 A tabela sai de [`poligraph_etl/nucleo/rotina.py`](poligraph_etl/nucleo/rotina.py), que só decide as
-etapas; o `__main__` as executa. Em janeiro e fevereiro a rotina inclui o ano anterior. No VPS, as duas são tarefas
+etapas; `comandos/orquestracao.py` as executa. Em janeiro e fevereiro a rotina inclui o ano anterior. No VPS, as duas são tarefas
 agendadas do Coolify ([`docs/plano/05 §2.3`](../../docs/plano/05-cicd-e-deploy.md)).
 
 ---

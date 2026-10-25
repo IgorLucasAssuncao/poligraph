@@ -204,14 +204,14 @@ def test_de_arquivo_recusa_pasta_no_lugar_de_arquivo(tmp_path):
 
 def test_linha_que_soma_varios_arquivos_aponta_para_um_indice_deles(limpo, tmp_path, monkeypatch):
     """O gasto sigiloso de um ano junta 12 extratos: cada um entra com o hash, e o índice lista todos."""
-    from poligraph_etl import __main__ as principal
+    from poligraph_etl.comandos import comum as principal
 
     monkeypatch.setattr(principal, "CACHE", tmp_path)
     janeiro, fevereiro = tmp_path / "cpgf-202501.zip", tmp_path / "cpgf-202502.zip"
     janeiro.write_bytes(b"janeiro")
     fevereiro.write_bytes(b"fevereiro")
 
-    carga = principal._carga_de_varios(
+    carga = principal.carga_de_varios(
         limpo, "PORTAL_TRANSPARENCIA", "https://portal/cpgf/2025*",
         [("https://portal/cpgf/202501", janeiro), ("https://portal/cpgf/202502", fevereiro)],
         tmp_path / "indices" / "cpgf-2025.json",
@@ -225,6 +225,6 @@ def test_linha_que_soma_varios_arquivos_aponta_para_um_indice_deles(limpo, tmp_p
 
 
 def test_sem_arquivo_nao_ha_carga(limpo, tmp_path):
-    from poligraph_etl import __main__ as principal
+    from poligraph_etl.comandos import comum as principal
 
-    assert principal._carga_de_varios(limpo, "PORTAL_TRANSPARENCIA", "u", [], tmp_path / "i.json") is None
+    assert principal.carga_de_varios(limpo, "PORTAL_TRANSPARENCIA", "u", [], tmp_path / "i.json") is None

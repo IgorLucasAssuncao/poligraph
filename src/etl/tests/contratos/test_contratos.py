@@ -16,7 +16,7 @@ from datetime import date
 
 import pytest
 
-from poligraph_etl import __main__ as etl
+from poligraph_etl.comandos import comum, congresso
 from poligraph_etl.nucleo import persistencia
 from poligraph_etl.contratos import banco, camara as contratos_da_camara, portal as contratos_do_portal, senado as contratos_do_senado
 from poligraph_etl.contratos.entrada import colunas_da_fonte
@@ -130,12 +130,12 @@ def test_cota_da_camara_grava_as_despesas_e_fecha_com_a_fonte(conexao, limpar, t
     }
     lideranca = {**nota, "txNomeParlamentar": "LID.GOV-CD", "ideCadastro": "", "vlrLiquido": "40.00"}
 
-    monkeypatch.setattr(etl, "CACHE", tmp_path)
+    monkeypatch.setattr(comum, "CACHE", tmp_path)
     monkeypatch.setattr(camara, "MINIMO_DE_COTA", 1)
     monkeypatch.setattr(camara, "baixar_cota", lambda ano, destino: _zip_da_cota(destino, [nota, lideranca]))
     monkeypatch.setattr(senado, "baixar_ceaps", lambda ano, destino: pytest.fail("sem senador na base, a CEAPS não é lida"))
 
-    etl._cota(conexao, [2025])
+    congresso.rodar_cota(conexao, [2025])
 
     despesas = conexao.execute(
         "SELECT pessoa_id, ano, mes, categoria, cnpj_ou_hash, valor_liquido, data_emissao::text, carga_id IS NOT NULL FROM despesas"
@@ -153,7 +153,7 @@ def test_cota_da_camara_grava_as_despesas_e_fecha_com_a_fonte(conexao, limpar, t
 @pytest.mark.integracao
 def test_cota_sem_de_para_recusa_em_vez_de_descartar_tudo(conexao, limpar):
     with pytest.raises(RuntimeError, match="ingerir"):
-        etl._cota(conexao, [2025])
+        congresso.rodar_cota(conexao, [2025])
 
 
 def test_ler_tabela_da_o_mesmo_que_ler_registro_a_registro():

@@ -161,7 +161,7 @@ def test_limite_de_taxa_derruba_a_carga_em_vez_de_encurtar_o_ano(monkeypatch):
     """MEDIDO: Aconteceu na primeira carga: o 405 esgotou as tentativas em maio de 2026, e o
     ano foi gravado com 4 meses como se fosse o ano até agora.
     """
-    from poligraph_etl import __main__ as principal
+    from poligraph_etl.comandos import governo as principal
 
     def baixar(recurso, destino):
         raise _erro_http(405)
@@ -173,7 +173,7 @@ def test_limite_de_taxa_derruba_a_carga_em_vez_de_encurtar_o_ano(monkeypatch):
 
 
 def test_mes_nao_publicado_encerra_a_soma(monkeypatch):
-    from poligraph_etl import __main__ as principal
+    from poligraph_etl.comandos import governo as principal
 
     def baixar(recurso, destino):
         raise _erro_http(404)

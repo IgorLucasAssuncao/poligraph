@@ -24,7 +24,7 @@ MEDIDO: [achado #19](../../../docs/achados/019-csv-reconstruido-toda-madrugada.m
 """
 
 import functools
-from dataclasses import asdict, dataclass, fields
+from dataclasses import dataclass, fields
 from typing import Iterable, Sequence
 
 import psycopg

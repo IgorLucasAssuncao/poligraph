@@ -7,7 +7,7 @@ import zipfile
 import pytest
 import requests
 
-from poligraph_etl import __main__ as etl
+from poligraph_etl.comandos import comum, governo as comandos_do_governo
 from poligraph_etl.governo import sancoes
 from poligraph_etl.contratos import entrada
 from poligraph_etl.contratos.portal import LinhaDeSancao
@@ -81,10 +81,10 @@ def test_comando_troca_o_retrato_e_volta_um_dia_se_o_de_hoje_nao_saiu(conexao, t
             linha.pop("VALOR DA MULTA")
         return _zip(destino, sancoes.membro(cadastro, data), [linha])
 
-    monkeypatch.setattr(etl, "CACHE", tmp_path)
+    monkeypatch.setattr(comum, "CACHE", tmp_path)
     monkeypatch.setattr(portal, "baixar", baixar)
 
-    etl._sancoes(conexao)
+    comandos_do_governo.rodar_sancoes(conexao)
 
     assert len(pedidos) == 4
     assert conexao.execute(
