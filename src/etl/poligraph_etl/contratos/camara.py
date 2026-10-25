@@ -4,6 +4,14 @@ from dataclasses import dataclass
 
 from .entrada import coluna
 
+ORGAO_DO_PLENARIO = "PLEN"
+"""A `siglaOrgao` do plenário nas votações da Câmara; as outras siglas são comissões."""
+
+
+def eh_plenario(sigla_do_orgao: object) -> bool:
+    """Se a votação da Câmara foi no plenário, pela sigla do órgão, por igualdade exata."""
+    return sigla_do_orgao == ORGAO_DO_PLENARIO
+
 
 @dataclass(frozen=True)
 class LinhaDaCotaDaCamara:

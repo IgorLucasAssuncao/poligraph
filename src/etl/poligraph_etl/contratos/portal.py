@@ -37,6 +37,10 @@ class LinhaDePagamentoDeViagem:
     valor: str | None = coluna("Valor")
 
 
+NOME_SIGILOSO = "Sigiloso"
+"""O que o Portal escreve no nome do contratado, do portador do cartão e do órgão da viagem protegidos por sigilo."""
+
+
 @dataclass(frozen=True)
 class LinhaDeViagem:
     """Uma viagem a serviço: membro `AAAA_Viagem.csv`.

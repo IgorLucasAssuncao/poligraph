@@ -16,13 +16,15 @@ para script. O banco recusa também (`ck_rede_url`).
 
 import re
 
+from .tipos import TipoRede
+
 TIPOS = [
-    ("INSTAGRAM", ("instagram.com",)),
-    ("FACEBOOK", ("facebook.com", "fb.com")),
-    ("X", ("twitter.com", "x.com")),
-    ("YOUTUBE", ("youtube.com", "youtu.be")),
-    ("TIKTOK", ("tiktok.com",)),
-    ("LINKEDIN", ("linkedin.com",)),
+    (TipoRede.INSTAGRAM, ("instagram.com",)),
+    (TipoRede.FACEBOOK, ("facebook.com", "fb.com")),
+    (TipoRede.X, ("twitter.com", "x.com")),
+    (TipoRede.YOUTUBE, ("youtube.com", "youtu.be")),
+    (TipoRede.TIKTOK, ("tiktok.com",)),
+    (TipoRede.LINKEDIN, ("linkedin.com",)),
 ]
 
 RECURSO_TSE = "consulta_cand/rede_social_candidato_{ano}.zip"
@@ -52,14 +54,14 @@ def normalizar(bruto: str | None) -> str | None:
     return f"{esquema.lower()}://{dominio.lower()}" + (f"/{caminho}" if caminho else "")
 
 
-def tipo(url: str) -> str:
+def tipo(url: str) -> TipoRede:
     """A rede pelo domínio. Casa o domínio inteiro: `max.com` não é o X."""
     dominio = re.sub(r"^https?://", "", url, flags=re.I).split("/")[0].lower()
     dominio = dominio.removeprefix("www.").removeprefix("m.").removeprefix("mobile.")
     for nome, dominios in TIPOS:
         if any(dominio == d or dominio.endswith("." + d) for d in dominios):
             return nome
-    return "OUTRA"
+    return TipoRede.OUTRA
 
 
 def conta(url: str) -> str:
@@ -70,7 +72,7 @@ def conta(url: str) -> str:
     `profile.php` do Facebook, que traz o id do perfil nela.
     """
     rede = tipo(url)
-    if rede == "OUTRA":
+    if rede is TipoRede.OUTRA:
         return url.lower().rstrip("/")
     resto = re.sub(r"^https?://", "", url, flags=re.I).partition("/")[2]
     caminho, _, consulta = resto.split("#")[0].partition("?")

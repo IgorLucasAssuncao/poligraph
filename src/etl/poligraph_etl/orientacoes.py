@@ -48,7 +48,7 @@ mérito. Conta como orientação existente e nunca como voto contrário.
 import logging
 import unicodedata
 from collections.abc import Iterable
-from .tipos import TipoCasa
+from .tipos import POSICOES_DE_ORIENTACAO, TipoCasa, TipoOrientacao, orientacao_da_camara
 
 log = logging.getLogger("poligraph")
 
@@ -61,7 +61,7 @@ BANCADA_DO_GOVERNO = "Governo"
 # DECISÃO: Orientações que exprimem POSIÇÃO. `Obstrução` e `Liberado` existem e são gravadas,
 #    mas não entram na conta de alinhamento: obstrução é tática de quórum e liberado
 #    é ausência de orientação.
-POSICOES = {"Sim", "Não"}
+POSICOES = POSICOES_DE_ORIENTACAO
 
 
 def para_linhas(registros, votacoes_conhecidas: set[str]) -> list[dict]:
@@ -84,7 +84,7 @@ def para_linhas(registros, votacoes_conhecidas: set[str]) -> list[dict]:
     for registro in registros:
         votacao_id = _texto(registro.get("idVotacao"))
         bancada = _texto(registro.get("siglaBancada"))
-        orientacao = _texto(registro.get("orientacao"))
+        orientacao = orientacao_da_camara(registro.get("orientacao"))
 
         if not votacao_id or not bancada or not orientacao:
             continue
@@ -135,7 +135,7 @@ def alinhamento(
             continue
 
         comparaveis += 1
-        if (valor == 1) == (orientacao == "Sim"):
+        if (valor == 1) == (orientacao == TipoOrientacao.SIM):
             seguiu += 1
 
     return seguiu, comparaveis
@@ -210,7 +210,7 @@ def disciplina(
             continue
 
         comparaveis += 1
-        if (valor == 1) == (orientacao == "Sim"):
+        if (valor == 1) == (orientacao == TipoOrientacao.SIM):
             seguiu += 1
 
     return seguiu, comparaveis

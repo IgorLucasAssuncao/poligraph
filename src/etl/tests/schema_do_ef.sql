@@ -1421,3 +1421,15 @@ VALUES ('20261024134431_DividaFederalESelic', '10.0.11');
 
 COMMIT;
 
+START TRANSACTION;
+ALTER TABLE orientacoes DROP CONSTRAINT ck_orientacao_nao_vazia;
+
+DELETE FROM orientacoes WHERE orientacao NOT IN ('Sim','Não','Obstrução','Liberado','Abstenção');
+
+ALTER TABLE orientacoes ADD CONSTRAINT ck_orientacao_valor CHECK (orientacao IN ('Sim','Não','Obstrução','Liberado','Abstenção'));
+
+INSERT INTO "__EFMigrationsHistory" (migration_id, product_version)
+VALUES ('20261025010555_OrientacaoFechada', '10.0.11');
+
+COMMIT;
+

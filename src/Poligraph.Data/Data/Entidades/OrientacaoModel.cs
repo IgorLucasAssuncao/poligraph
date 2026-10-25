@@ -30,13 +30,13 @@ public class OrientacaoModel
     public required string Bancada { get; set; }
 
     /// <summary>
-    /// Sim | Não | Obstrução | Liberado | Abstenção.
-    ///
-    /// NÃO é enum: a Câmara publica string vazia em 24% das linhas e o conjunto
-    /// não é fechado por contrato nenhum. Fechá-lo num tipo faria a ingestão inteira
-    /// estourar no dia em que aparecer um valor novo — e o dado é ANUAL, então isso
-    /// seria descoberto meses depois.
+    /// Sim | Não | Obstrução | Liberado | Abstenção, com o texto que a Câmara publica.
     /// </summary>
+    /// <remarks>
+    /// <para>DECISÃO (2026-10-24): valor fechado, pela regra do <c>CLAUDE.md</c>: a ETL traduz para <c>TipoOrientacao</c> e
+    /// derruba a carga com valor novo, e o banco o confere em <c>ck_orientacao_valor</c>. Antes, texto livre deixou
+    /// entrar 6.725 linhas com "nan", a célula vazia do CSV. A célula vazia (24% das linhas) é descartada.</para>
+    /// </remarks>
     public required string Orientacao { get; set; }
 
     /// <summary>A carga de onde a linha saiu (Pendência 72). Nula nas linhas gravadas antes dela.</summary>

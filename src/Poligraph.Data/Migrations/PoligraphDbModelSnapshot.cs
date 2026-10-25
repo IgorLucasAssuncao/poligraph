@@ -1729,7 +1729,7 @@ namespace Poligraph.Data.Migrations
 
                     b.ToTable("orientacoes", null, t =>
                         {
-                            t.HasCheckConstraint("ck_orientacao_nao_vazia", "orientacao <> ''");
+                            t.HasCheckConstraint("ck_orientacao_valor", "orientacao IN ('Sim','Não','Obstrução','Liberado','Abstenção')");
                         });
                 });
 

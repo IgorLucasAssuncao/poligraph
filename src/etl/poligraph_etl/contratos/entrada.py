@@ -62,6 +62,12 @@ def ler_tabela(contrato: type[Contrato], tabela) -> list[Contrato]:
 
 
 def _limpo(valor: object) -> str | None:
-    """Texto sem espaço nas pontas; vazio vira `None`."""
-    texto = "" if valor is None else str(valor).strip()
+    """Texto sem espaço nas pontas; vazio vira `None`.
+
+    RISCO: a célula vazia lida pelo pandas chega como `float('nan')`, e `str(nan)` é o texto "nan". Foi assim que 6.725
+    orientações da Câmara entraram no banco com "nan" (MEDIDO em 2026-10-24).
+    """
+    if valor is None or (isinstance(valor, float) and valor != valor):
+        return None
+    texto = str(valor).strip()
     return texto or None

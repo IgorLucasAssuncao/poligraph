@@ -35,13 +35,14 @@ deixa a coluna de fora.
 import pandas as pd
 
 from . import normalizacao
+from .contratos.portal import NOME_SIGILOSO
 
 RECURSO_DO_CARTAO = "cpgf/{ano}{mes:02d}"
 
 COLUNAS_DO_CARTAO = ["NOME ÓRGÃO SUPERIOR", "NOME PORTADOR", "VALOR TRANSAÇÃO"]
 
 # O Portal escreve "Sigiloso" no nome do portador e do favorecido da transação protegida.
-MARCA_DO_CARTAO = "Sigiloso"
+MARCA_DO_CARTAO = NOME_SIGILOSO
 
 COLUNAS_DA_ACAO = ["Nome Órgão Superior", "Código Ação", "Nome Ação"]
 

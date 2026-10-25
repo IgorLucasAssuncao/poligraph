@@ -45,7 +45,8 @@ from collections.abc import Iterable
 
 from .contratos.banco import DestinoDeViagem, ViagensDoOrgao
 from .contratos.entrada import LayoutMudou
-from .contratos.portal import LinhaDePagamentoDeViagem, LinhaDeTrechoDeViagem, LinhaDeViagem
+from .contratos.portal import NOME_SIGILOSO, LinhaDePagamentoDeViagem, LinhaDeTrechoDeViagem, LinhaDeViagem
+from .tipos import TipoSituacaoDaViagem, sim_ou_nao, situacao_da_viagem
 from .normalizacao import sem_acento_maiusculo, valor_pt_br
 
 RECURSO = "viagens/{ano}"
@@ -63,7 +64,7 @@ passagem, e soma com as passagens. MEDIDO: R$ 22 mil em 2015, contra R$ 372 mi d
 
 BRASIL = "Brasil"
 
-SIGILOSO = "Sigiloso"
+SIGILOSO = NOME_SIGILOSO
 
 SEM_VIAGEM = "Sem viagem no arquivo"
 
@@ -111,8 +112,8 @@ def por_orgao(
     for viagem in viagens:
         conta = contagens[_orgao(viagem.orgao_superior)]
         conta[0] += 1
-        conta[1] += sem_acento_maiusculo(viagem.urgente) == "SIM"
-        conta[2] += sem_acento_maiusculo(viagem.situacao).startswith("NAO")
+        conta[1] += sim_ou_nao("Viagem Urgente", viagem.urgente)
+        conta[2] += situacao_da_viagem(viagem.situacao) is TipoSituacaoDaViagem.NAO_REALIZADA
 
     return [
         ViagensDoOrgao(

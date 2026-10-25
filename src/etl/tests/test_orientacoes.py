@@ -35,6 +35,20 @@ def test_orientacao_vazia_e_descartada():
     assert linhas == []
 
 
+def test_orientacao_nan_do_pandas_e_descartada_e_nao_vira_texto():
+    """A célula vazia do CSV chega como `float('nan')`. MEDIDO em 2026-10-24: 6.725 linhas gravadas com o texto "nan"."""
+    linhas = orientacoes.para_linhas([linha(orientacao=float("nan"))], CONHECIDAS)
+
+    assert linhas == []
+
+
+def test_orientacao_que_o_enum_nao_conhece_derruba_a_carga():
+    from poligraph_etl.tipos import ValorDesconhecido
+
+    with pytest.raises(ValorDesconhecido):
+        orientacoes.para_linhas([linha(orientacao="Talvez")], CONHECIDAS)
+
+
 def test_votacao_fora_da_base_e_descartada():
     """Orientação sem votação não mede o alinhamento de ninguém."""
     linhas = orientacoes.para_linhas([linha(votacao="999-1")], CONHECIDAS)

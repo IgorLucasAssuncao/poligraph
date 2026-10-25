@@ -829,7 +829,7 @@ public class PoligraphDb(DbContextOptions<PoligraphDb> opcoes) : DbContext(opcoe
             e.HasOne(x => x.Votacao).WithMany()
                 .HasForeignKey(x => x.VotacaoId).OnDelete(DeleteBehavior.Cascade);
             e.ToTable(t => t.HasCheckConstraint(
-                "ck_orientacao_nao_vazia", "orientacao <> ''"));
+                "ck_orientacao_valor", "orientacao IN ('Sim','Não','Obstrução','Liberado','Abstenção')"));
         });
 
         mb.Entity<SimilaridadeModel>(e =>

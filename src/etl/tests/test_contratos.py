@@ -186,3 +186,35 @@ def test_ler_tabela_sem_a_coluna_derruba_a_carga():
 
     with pytest.raises(LayoutMudou, match="Nome"):
         ler_tabela(Linha, pd.DataFrame({"Outra": ["a"]}, dtype=str))
+
+
+def test_celula_vazia_do_pandas_vira_none_e_nao_o_texto_nan():
+    """`str(float('nan'))` é "nan": sem a conferência, o contrato gravava o texto no banco (2026-10-24)."""
+    from poligraph_etl.contratos.entrada import ler
+    from poligraph_etl.contratos.portal import LinhaDeViagem
+
+    viagem = ler(LinhaDeViagem, [{
+        "Identificador do processo de viagem": "1", "Nome do órgão superior": float("nan"),
+        "Situação": "Realizada", "Viagem Urgente": "SIM",
+    }])[0]
+
+    assert viagem.orgao_superior is None
+
+
+def test_situacao_e_urgencia_da_viagem_pelo_valor_exato():
+    from poligraph_etl.tipos import TipoSituacaoDaViagem, ValorDesconhecido, sim_ou_nao, situacao_da_viagem
+
+    assert situacao_da_viagem("Não realizada") is TipoSituacaoDaViagem.NAO_REALIZADA
+    assert situacao_da_viagem("Realizada") is TipoSituacaoDaViagem.REALIZADA
+    assert situacao_da_viagem("Sem informação") is TipoSituacaoDaViagem.SEM_INFORMACAO
+    assert (sim_ou_nao("Viagem Urgente", "SIM"), sim_ou_nao("Viagem Urgente", "NÃO")) == (True, False)
+    with pytest.raises(ValorDesconhecido):
+        situacao_da_viagem("Não realizada por chuva")
+    with pytest.raises(ValorDesconhecido):
+        sim_ou_nao("Viagem Urgente", "TALVEZ")
+
+
+def test_plenario_pela_sigla_exata():
+    from poligraph_etl.contratos.camara import eh_plenario
+
+    assert eh_plenario("PLEN") and not eh_plenario("PLEN2") and not eh_plenario(None)

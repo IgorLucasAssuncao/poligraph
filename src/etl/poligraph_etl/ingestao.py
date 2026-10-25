@@ -54,6 +54,7 @@ from .normalizacao import (
     inteiro_ou_nulo,
     normalizar_voto,
 )
+from .contratos.camara import eh_plenario
 from .tipos import TipoCasa, TipoFonteDeIdentificador
 
 LEGISLATURA_57_INICIO = date(2023, 2, 1)
@@ -117,7 +118,7 @@ def votacoes_para_linhas(df: pd.DataFrame, legislatura: int | None = None) -> li
                 ),
                 "categoria": classificar_categoria(descricao),
                 "secreta": False,
-                "plenario": registro.get("siglaOrgao") == "PLEN",
+                "plenario": eh_plenario(registro.get("siglaOrgao")),
                 "votos_sim": sim,
                 "votos_nao": nao,
             }
@@ -138,7 +139,7 @@ def simbolicas_por_legislatura(df: pd.DataFrame) -> list[dict]:
         total = inteiro(registro.get("votosSim")) + inteiro(registro.get("votosNao")) + inteiro(registro.get("votosOutros"))
         if total != 0:
             continue
-        chave = (legislatura_da_data(str(registro["data"])), registro.get("siglaOrgao") == "PLEN")
+        chave = (legislatura_da_data(str(registro["data"])), eh_plenario(registro.get("siglaOrgao")))
         contagem[chave] = contagem.get(chave, 0) + 1
     return [
         {"legislatura": legislatura, "plenario": plenario, "quantidade": quantidade}

@@ -32,7 +32,7 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable
 
 from .contratos.banco import ContratacoesDoOrgao, ContratadoDoGoverno
-from .contratos.portal import LinhaDeCompra
+from .contratos.portal import NOME_SIGILOSO, LinhaDeCompra
 from .normalizacao import sem_cpf, valor_pt_br
 
 RECURSO = "compras/{ano}{mes:02d}"
@@ -52,7 +52,7 @@ def membro(ano: int, mes: int) -> str:
 
 def eh_sigiloso(linha: LinhaDeCompra) -> bool:
     """Contratado e objeto protegidos: o Portal escreve `-11` no código e `Sigiloso` no nome."""
-    return linha.codigo_do_contratado == CONTRATADO_SIGILOSO or (linha.nome_do_contratado or "") == "Sigiloso"
+    return linha.codigo_do_contratado == CONTRATADO_SIGILOSO or (linha.nome_do_contratado or "") == NOME_SIGILOSO
 
 
 def valor_do_contrato(linha: LinhaDeCompra) -> tuple[float, float]:

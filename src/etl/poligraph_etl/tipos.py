@@ -7,6 +7,7 @@ circula. Valor que a fonte manda e o enum não conhece derruba a carga com `Valo
 Os nomes e os valores são os mesmos dos enums C# em `Poligraph.Data/Data/Enums`.
 """
 
+import unicodedata
 from enum import StrEnum
 
 
@@ -274,3 +275,85 @@ class TipoMetrica(StrEnum):
 
     CONCORDANCIA = "CONCORDANCIA"
     COSSENO = "COSSENO"
+
+
+class TipoOrientacao(StrEnum):
+    """A orientação de uma bancada numa votação da Câmara, com o texto que o arquivo publica.
+
+    DECISÃO (2026-10-24): enum, pela regra do `CLAUDE.md`, e não texto livre como dizia o `OrientacaoModel`. MEDIDO no
+    banco no mesmo dia: só estes cinco valores, mais 6.725 linhas com o texto "nan", que eram a célula vazia do CSV.
+    """
+
+    SIM = "Sim"
+    NAO = "Não"
+    OBSTRUCAO = "Obstrução"
+    LIBERADO = "Liberado"
+    ABSTENCAO = "Abstenção"
+
+
+POSICOES_DE_ORIENTACAO = frozenset({TipoOrientacao.SIM, TipoOrientacao.NAO})
+"""As orientações que exprimem posição. Obstrução é tática de quórum, e liberado é ausência de orientação."""
+
+
+def orientacao_da_camara(texto: object) -> TipoOrientacao | None:
+    """A orientação pelo texto do arquivo; `None` para a célula vazia, que o pandas entrega como `NaN`."""
+    if not isinstance(texto, str) or not texto.strip():
+        return None
+    try:
+        return TipoOrientacao(" ".join(texto.split()))
+    except ValueError:
+        raise ValorDesconhecido("orientacao", texto) from None
+
+
+class TipoSituacaoDaViagem(StrEnum):
+    """A situação de uma viagem a serviço no Portal da Transparência (`Situação`)."""
+
+    REALIZADA = "REALIZADA"
+    NAO_REALIZADA = "NAO_REALIZADA"
+    SEM_INFORMACAO = "SEM_INFORMACAO"
+
+
+_SITUACAO_DA_VIAGEM = {
+    "REALIZADA": TipoSituacaoDaViagem.REALIZADA,
+    "NAO REALIZADA": TipoSituacaoDaViagem.NAO_REALIZADA,
+    "SEM INFORMACAO": TipoSituacaoDaViagem.SEM_INFORMACAO,
+}
+"""MEDIDO em 2026-10-24, viagens de 2014 a 2026: 11.444.775 realizadas, 261.264 não realizadas e 5 sem informação."""
+
+
+def situacao_da_viagem(texto: str | None) -> TipoSituacaoDaViagem:
+    """A situação pelo texto do Portal, sem acento e em maiúsculas; vazio é sem informação."""
+    chave = _sem_acento_maiusculo(texto)
+    if not chave:
+        return TipoSituacaoDaViagem.SEM_INFORMACAO
+    try:
+        return _SITUACAO_DA_VIAGEM[chave]
+    except KeyError:
+        raise ValorDesconhecido("Situação", texto) from None
+
+
+def sim_ou_nao(campo: str, texto: str | None) -> bool:
+    """O campo de sim ou não do Portal ("SIM", "NÃO"); vazio é não. MEDIDO em 2026-10-24 na `Viagem Urgente`: só os dois."""
+    chave = _sem_acento_maiusculo(texto)
+    if chave in ("", "NAO"):
+        return False
+    if chave == "SIM":
+        return True
+    raise ValorDesconhecido(campo, texto)
+
+
+def _sem_acento_maiusculo(texto: str | None) -> str:
+    sem_acento = unicodedata.normalize("NFKD", texto or "").encode("ascii", "ignore").decode("ascii")
+    return " ".join(sem_acento.upper().split())
+
+
+class TipoRede(StrEnum):
+    """A rede social de um endereço, pelo domínio, com os valores de `ck_rede_tipo`."""
+
+    INSTAGRAM = "INSTAGRAM"
+    FACEBOOK = "FACEBOOK"
+    X = "X"
+    YOUTUBE = "YOUTUBE"
+    TIKTOK = "TIKTOK"
+    LINKEDIN = "LINKEDIN"
+    OUTRA = "OUTRA"
