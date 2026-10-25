@@ -26,27 +26,28 @@ as emendas que destinou e quem as recebeu, e o financiamento da campanha.
 | **Seguir** | Acompanhar parlamentares, com o sininho do cabeçalho e avisos opcionais no navegador |
 | **Modo Auditoria** | Clicar num número e ver de que arquivo oficial ele saiu, com o hash do arquivo |
 
-## A base — medido em 2026-10-18
+## A base — medido em 2026-10-25
 
-No banco local, cópia do de produção de 2026-10-15. A 57ª legislatura vai até 31 de janeiro
-de 2027: os números da legislatura corrente ainda crescem.
+No banco local, o mesmo que foi para a produção em 2026-10-25. A 57ª legislatura vai até 31 de
+janeiro de 2027: os números da legislatura corrente ainda crescem.
 
 | 57ª legislatura (2023–2027) | Câmara | Senado |
 |---|---:|---:|
-| Votações de plenário | 1.125 | 423 |
-| Votos individuais | 471.978 | 34.263 |
-| Parlamentares com voto | 643 | 104 |
+| Votações de plenário | 1.128 | 426 |
+| Votos individuais nessas votações | 456.837 | 34.506 |
+| Parlamentares com voto | 644 | 106 |
 | Perguntas ativas no questionário | 40 | 9 |
 
 | Toda a base | Total |
 |---|---:|
-| Votações, de 2001 a 2026 | 12.436 |
-| Votos individuais | 2.179.300 |
-| Pessoas (deputados e senadores de todas as legislaturas) | 8.319 |
-| Despesas de cota, de 2009 a 2026 | 5.600.360 |
+| Votações, de 2001 a 2026 | 12.442 |
+| Votos individuais | 2.180.837 |
+| Parlamentares com voto, de todas as legislaturas | 2.594 |
+| Pessoas, com os eleitos do TSE (prefeitos e vices, deputados estaduais, governadores) | 62.630 |
+| Despesas de cota, de 2009 a 2026 | 5.603.490 |
 | Emendas, de 2015 a 2026 | 78.074 |
-| Receitas de campanha | 193.301 |
-| Arquivos baixados com procedência registrada | 1.740 |
+| Receitas de campanha | 735.347 |
+| Arquivos baixados com procedência registrada | 3.539 |
 
 ## Fontes
 

@@ -346,6 +346,9 @@ coisas diferentes:**
 | **Modularidade da comunidade** | A divisão por voto descreve o grafo? | **0,558** |
 | **Modularidade do partido** | E a divisão por partido? | **0,288** |
 
+> Medido em 2026-08. Os valores vigentes, remedidos em 2026-10-25, estão em
+> [`metodos.md` §5 e §6](../metodos.md#5-índice-de-rand-ajustado-ari).
+
 ⚠️ Sozinha, a modularidade não compara nada — mede a qualidade de UMA partição. Sozinho,
 o ARI diz que duas partições diferem, mas ⛔ não diz qual descreve melhor.
 

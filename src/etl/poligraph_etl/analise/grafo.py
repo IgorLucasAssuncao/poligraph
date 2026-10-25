@@ -225,7 +225,7 @@ def _normalizar(coordenadas: np.ndarray) -> np.ndarray:
     """Reescala para [-1, 1] com um divisor ÚNICO para os dois eixos.
 
     RISCO: **A primeira versão dividia cada eixo pelo próprio máximo, e isso mentia.**
-    O componente 2 explica 9,6% da variância contra 34,6% do componente 1 — mas,
+    O componente 2 explica 9,6% da variância contra 34,5% do componente 1 (MEDIDO 2026-10-25) — mas,
     normalizado à parte, ele ocupava a MESMA altura na tela. O resultado parecia uma
     nuvem bidimensional quando o dado é quase unidimensional: ruído desenhado do mesmo
     tamanho que sinal.

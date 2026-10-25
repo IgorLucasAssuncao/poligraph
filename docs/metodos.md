@@ -1,6 +1,7 @@
 # Métodos e medidas — o que cada número significa
 
-> **Tipo:** referência · **Atualizado em:** 2026-08-27
+> **Tipo:** referência · **Atualizado em:** 2026-10-25 (ARI, modularidade, divisão e SVD remedidos
+> na Câmara, 57ª, execução 35 de 2026-10-19; o `r` de Pearson é de 2026-08)
 >
 > ⭐ **Para que este documento existe:** a fundamentação teórica vai citar estes números.
 > Cada medida precisa ser uma unidade com nome, intervalo, leitura e valor medido — não
@@ -123,10 +124,10 @@ justamente quem vota ao contrário.
 | **O que mede** | Quanto duas divisões dos mesmos elementos coincidem |
 | **Intervalo** | −1 a +1 |
 | **Como ler** | 🔴 **0 = coincidência ao acaso** · 1 = partições idênticas · negativo = pior que o acaso |
-| **Medido** | **0,277** — comunidade de voto × partido |
+| **Medido** | **0,306** — comunidade de voto × partido (Câmara, 57ª, 2026-10-25; era 0,277 em 2026-08) |
 
 🔴 **"Ajustado" é a palavra que importa.** O Rand simples sobe só por haver muitos grupos:
-com 25 partidos e 17 comunidades, quase todo par de deputados cai em grupos diferentes nas
+com 22 partidos e 19 comunidades, quase todo par de deputados cai em grupos diferentes nas
 duas partições, e isso contaria como concordância. O ajuste desconta o esperado do acaso.
 
 ⚠️ Por isso **0 não significa "nenhuma coincidência"** — significa "nada além do que o
@@ -144,7 +145,7 @@ combinatória contra 30 MB de dependência.
 | **O que mede** | Quanto das arestas fica **dentro** dos grupos, descontado o esperado num grafo aleatório de mesmos graus |
 | **Intervalo** | ≈ −0,5 a +1 |
 | **Como ler** | Alto = a divisão explica a estrutura do grafo |
-| **Medido** | **0,558** (comunidade de voto) × **0,288** (partido) |
+| **Medido** | **0,556** (comunidade de voto) × **0,289** (partido), 2026-10-25 |
 
 ⭐ **É o que Louvain maximiza** para encontrar as comunidades — por isso o número de
 comunidades não é escolhido por nós.
@@ -155,7 +156,7 @@ comunidades não é escolhido por nós.
 - Modularidade sozinha mede a qualidade de **uma** partição, ⛔ não compara nada
 
 ⭐ Juntas sustentam a afirmação: *as comunidades de voto descrevem a estrutura quase duas
-vezes melhor que os partidos, e coincidem com eles apenas em 0,277.*
+vezes melhor que os partidos, e coincidem com eles apenas em 0,306.*
 
 ---
 
@@ -171,14 +172,14 @@ vezes melhor que os partidos, e coincidem com eles apenas em 0,277.*
 ⭐ **É a medida de quanto uma pergunta INFORMA.** Votação em que 95% votaram igual não
 separa ninguém: a pessoa responde e o ranking não muda.
 
-**Medido na legislatura 57** (1.121 votações com ≥ 100 posicionados):
+**Medido na legislatura 57, em 2026-10-25** (1.126 votações com ≥ 100 posicionados):
 
 | | |
 |---|---|
-| Divisão média | **0,227** — a Câmara concorda muito |
-| Muito divididas (≥ 0,40) | 76 |
-| Divididas (≥ 0,25) | 590 |
-| Quase unânimes (< 0,05) | 159 |
+| Divisão média | **0,226** — a Câmara concorda muito |
+| Muito divididas (≥ 0,40) | 77 |
+| Divididas (≥ 0,25) | 591 |
+| Quase unânimes (< 0,05) | 161 |
 
 ---
 
@@ -188,7 +189,7 @@ separa ninguém: a pessoa responde e o ranking não muda.
 |---|---|
 | **O que mede** | Quanto de toda a variação do voto uma componente sozinha captura |
 | **Intervalo** | 0 a 100% |
-| **Medido** | 1ª: **34,6%** · 2ª: **9,6%** · 3ª: 3,0% |
+| **Medido** | Câmara: 1ª **34,5%** · 2ª **9,6%** · 3ª 3,0% · Senado: 29,4% · 14,4% · 5,5% (2026-10-25) |
 
 ⭐ **A primeira explica 3,6× mais que a segunda.** É afirmação de TCC: o comportamento de
 voto da Câmara é **quase unidimensional**.

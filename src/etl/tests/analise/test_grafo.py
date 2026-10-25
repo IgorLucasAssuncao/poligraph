@@ -189,7 +189,7 @@ def test_o_segundo_eixo_fica_menor_quando_explica_menos():
     """RISCO: O bug que fez o SVD "ficar esquisito".
 
     ATENÇÃO: Normalizar cada eixo pelo próprio máximo dá ao componente 2 a MESMA altura do
-    componente 1 na tela — mesmo ele explicando 9,6% da variância contra 34,6%. Ruído
+    componente 1 na tela — mesmo ele explicando 9,6% da variância contra 34,5%. Ruído
     desenhado do tamanho do sinal.
 
     DECISÃO: Com divisor único, a figura fica achatada na proporção em que o segundo eixo
