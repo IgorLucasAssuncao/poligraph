@@ -407,6 +407,16 @@ describe('contas — campanha', () => {
     expect(lista.textContent).not.toMatch(/Direção/);
   });
 
+  it('RISCO: a resposta guardada de antes do deploy, sem os repasses, não quebra a aba', async () => {
+    const { repassesDosFundos: _r, doacoesForaDosFundos: _d, ...antiga } = CAMPANHA;
+    vi.mocked(api.obterFinanciamento).mockResolvedValue(antiga);
+
+    await abrirAba('Campanha');
+
+    expect(await tela()).toMatch(/Juntos, os dois fundos somam/);
+    expect(screen.queryByRole('table', { name: 'Quanto cada um repassou de cada fundo' })).toBeNull();
+  });
+
   it('DECISÃO: estado vazio é honesto', async () => {
     vi.mocked(api.obterFinanciamento).mockResolvedValue({
       anoEleicao: 0, total: 0, fundoEspecial: 0, fundoPartidario: 0,

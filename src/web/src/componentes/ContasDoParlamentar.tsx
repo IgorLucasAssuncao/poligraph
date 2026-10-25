@@ -10,6 +10,7 @@ import {
   type CidadesDaEmenda,
   type DeclaracaoDeBens,
   type FinanciamentoDeCampanha,
+  type RepasseDosFundos,
 } from '../api';
 import { baixarCsv, buscarTodas } from '../exportar';
 import { FONTES } from '../fontes';
@@ -574,6 +575,8 @@ function FinanciamentoComponent({ idPessoa, fin }: { idPessoa: number; fin: Fina
 
   const publico = fin.fundoEspecial + fin.fundoPartidario;
   const maior = fin.porFonte[0]?.total ?? 1;
+  const repasses = fin.repassesDosFundos ?? [];
+  const doacoes = fin.doacoesForaDosFundos ?? [];
 
   return (
     <section className="aba-dinheiro" aria-label={T.campanha.rotulo}>
@@ -600,14 +603,14 @@ function FinanciamentoComponent({ idPessoa, fin }: { idPessoa: number; fin: Fina
         )}
       />
 
-      {fin.repassesDosFundos.length > 0 && <RepassesDosFundosComponent fin={fin} />}
+      {repasses.length > 0 && <RepassesDosFundosComponent fin={fin} repasses={repasses} />}
 
-      {fin.doacoesForaDosFundos.length > 0 && (
+      {doacoes.length > 0 && (
         <>
           <h3 className="titulo-secao">{T.campanha.maioresDoadores}</h3>
           <p className="ajuda">{T.campanha.doacoesAjuda}</p>
           <ul className="gastos-fornecedores">
-            {fin.doacoesForaDosFundos.map((d) => (
+            {doacoes.map((d) => (
               <li key={d.nome}>
                 <span className="gasto-nome">
                   {nomeProprio(d.nome)}
@@ -647,7 +650,7 @@ const FONTE_OUTROS_RECURSOS = 'OUTROS RECURSOS';
  * DECISÃO (2026-10-24): no lugar da lista dos dois fundos ao lado dos maiores doadores. Lado a lado, as linhas não se
  * correspondiam: a Direção Nacional entregou parte de cada fundo, e quem lia esperava que ela fosse um deles, ou somava tudo.
  */
-function RepassesDosFundosComponent({ fin }: { fin: FinanciamentoDeCampanha }) {
+function RepassesDosFundosComponent({ fin, repasses }: { fin: FinanciamentoDeCampanha; repasses: RepasseDosFundos[] }) {
   return (
     <>
       <h3 className="titulo-secao">{T.campanha.quemRepassou}</h3>
@@ -664,7 +667,7 @@ function RepassesDosFundosComponent({ fin }: { fin: FinanciamentoDeCampanha }) {
             </tr>
           </thead>
           <tbody>
-            {fin.repassesDosFundos.map((r) => (
+            {repasses.map((r) => (
               <tr key={r.nome}>
                 <th scope="row">{nomeProprio(r.nome)}</th>
                 <td data-rotulo={T.campanha.rotulosDosRepasses.fundoEspecial}>{reais(r.fundoEspecial)}</td>
@@ -673,7 +676,7 @@ function RepassesDosFundosComponent({ fin }: { fin: FinanciamentoDeCampanha }) {
               </tr>
             ))}
           </tbody>
-          {fin.repassesDosFundos.length > 1 && (
+          {repasses.length > 1 && (
             <tfoot>
               <tr>
                 <th scope="row">{T.campanha.somaDosRepasses}</th>
