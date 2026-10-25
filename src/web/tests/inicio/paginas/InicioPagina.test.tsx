@@ -1,0 +1,154 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { CHAVE_MINHA_CIDADE } from '../../../src/nucleo/constantes';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Grafo, Panorama, Parlamentar } from '../../../src/nucleo/api';
+import { ContextoDaSessao, type Sessao } from '../../../src/nucleo/sessao';
+import { TEXTOS_DO_INICIO as T } from '../../../src/inicio/textos/inicio';
+import { InicioComponent } from '../../../src/inicio/paginas/Inicio';
+
+vi.mock('../../../src/nucleo/api', async (original) => ({
+  ...(await original<typeof import('../../../src/nucleo/api')>()),
+  obterPanorama: vi.fn(),
+  listarSeguidos: vi.fn(),
+  obterGrafo: vi.fn(),
+  obterGestoesDaCidade: vi.fn(),
+}));
+
+vi.mock('../../../src/parlamentares/componentes/useLegislatura', () => ({
+  useLegislaturaDaUrl: () => [mockLegislaturaDaUrl.valor, vi.fn()],
+  useLegislaturas: () => [{ numero: 57, corrente: true, anoInicial: 2023, anoFinal: 2027 }],
+}));
+
+vi.mock('../../../src/seguir/componentes/SugestoesParaSeguir', () => ({ SugestoesParaSeguirComponent: () => null }));
+vi.mock('../../../src/seguir/componentes/NovidadesDosSeguidos', () => ({ NovidadesDosSeguidosComponent: () => <p>novidades de quem você segue</p> }));
+vi.mock('../../../src/parlamentares/componentes/BarraDePeriodo', () => ({ BarraDePeriodoComponent: () => null }));
+vi.mock('../../../src/grafo/componentes/TelaDoGrafo', () => ({
+  TelaDoGrafoComponent: ({ grafo }: { grafo: Grafo }) => <p>grafo com {grafo.nos.length} parlamentares</p>,
+}));
+
+/** A legislatura que a URL pede, trocada por teste. */
+const mockLegislaturaDaUrl: { valor: number | 'todas' | undefined } = { valor: undefined };
+
+const api = await import('../../../src/nucleo/api');
+
+const PANORAMA: Panorama = {
+  legislatura: 57,
+  perguntasAtivas: 49,
+  perguntasNoQuestionario: 24,
+  dinheiro: null,
+  porCasa: [
+    {
+      casa: 'CAMARA', parlamentares: 513, votacoes: 1123, votacoesSemVotoNominal: 4, votacoesSecretas: 2,
+      votosComPosicao: 470727, comunidades: 4, ligacoes: 10, votacoesSimbolicas: 300,
+      ultima: { data: '2026-09-30', materia: 'PL 1/2026', ementa: null, posicionados: 480, cadeiras: 513 },
+    },
+  ],
+};
+
+function parlamentar(idPessoa: number, nome: string): Parlamentar {
+  return { idPessoa, nome, casa: 'CAMARA', partido: 'P', uf: 'PR', nVotacoes: 10, urlFoto: null };
+}
+
+function abrir(usuario: Sessao['usuario'] = null) {
+  const sessao: Sessao = { usuario, carregando: false, leituraPublica: true, entrou: vi.fn(), sair: vi.fn() };
+  return render(
+    <MemoryRouter>
+      <ContextoDaSessao.Provider value={sessao}>
+        <InicioComponent />
+      </ContextoDaSessao.Provider>
+    </MemoryRouter>,
+  );
+}
+
+describe('a página inicial', () => {
+  beforeEach(() => {
+    mockLegislaturaDaUrl.valor = undefined;
+    vi.mocked(api.obterPanorama).mockReset();
+    vi.mocked(api.listarSeguidos).mockReset();
+    vi.mocked(api.obterGrafo).mockReset();
+  });
+
+  it('mostra a base numa linha, com a conta que a produziu, e o grafo da Câmara', async () => {
+    vi.mocked(api.obterPanorama).mockResolvedValue({ ...PANORAMA, dinheiro: { primeiroAno: 2023, ultimoAno: 2026, cota: 1_000_000, emendasPagas: 2_000_000_000 } });
+    vi.mocked(api.obterGrafo).mockResolvedValue({ nos: [{ idPessoa: 1 }], legislatura: 57 } as unknown as Grafo);
+
+    abrir();
+
+    expect(screen.getByRole('heading', { level: 1, name: T.titulo })).toBeDefined();
+    expect(await screen.findByText(/470\.727 votos com posição na Câmara e no Senado/)).toBeDefined();
+    expect(screen.getByRole('link', { name: T.comoMedimos })).toHaveAttribute('href', '/metodologia');
+    expect(await screen.findByText('grafo com 1 parlamentares')).toBeDefined();
+  });
+
+  it('a cidade guardada diz o prefeito eleito da gestão de agora e o que chegou de emenda neste ano', async () => {
+    const ano = new Date().getFullYear();
+    vi.mocked(api.obterPanorama).mockResolvedValue(PANORAMA);
+    vi.mocked(api.obterGrafo).mockResolvedValue({ nos: [], legislatura: 57 } as unknown as Grafo);
+    vi.mocked(api.obterGestoesDaCidade).mockResolvedValue({
+      municipio: { codigoIbge: '3304557', nome: 'Rio de Janeiro', uf: 'RJ' }, populacao: null, recebido: 0, naPrefeitura: 0,
+      porAno: [{ ano, recebido: 6_600_000, naPrefeitura: 0 }],
+      gestoes: [{
+        primeiroAno: ano - 1, ultimoAno: ano + 2, vices: [], governadores: [], recebido: 0, naPrefeitura: 0, comPagamento: true,
+        prefeitos: [{ idPessoa: 1888, nome: 'EDUARDO PAES', partido: 'PSD', parlamentar: true }],
+      }],
+    });
+    localStorage.setItem(CHAVE_MINHA_CIDADE, JSON.stringify({ codigoIbge: '3304557', nome: 'Rio de Janeiro', uf: 'RJ' }));
+
+    abrir();
+
+    expect(await screen.findByRole('link', { name: 'Eduardo Paes' })).toHaveAttribute('href', '/parlamentar/1888');
+    expect(screen.getByText(/R\$ 6,6 mi em emendas chegaram a quem tem sede aqui/)).toBeDefined();
+    localStorage.removeItem(CHAVE_MINHA_CIDADE);
+  });
+
+  it('mostra o painel da última votação aberta de cada casa, sem direção', async () => {
+    vi.mocked(api.obterPanorama).mockResolvedValue(PANORAMA);
+    vi.mocked(api.obterGrafo).mockResolvedValue({ nos: [], legislatura: 57 } as unknown as Grafo);
+
+    abrir();
+
+    expect(await screen.findByRole('heading', { name: T.ultimas.titulo })).toBeDefined();
+    expect(screen.getByText(/Câmara dos Deputados · 30\/09\/2026 · PL 1\/2026/)).toBeDefined();
+  });
+
+  it('abre com as duas entradas e a busca, e a cidade guardada abre direto', async () => {
+    vi.mocked(api.obterPanorama).mockResolvedValue(PANORAMA);
+    vi.mocked(api.obterGrafo).mockResolvedValue({ nos: [], legislatura: 57 } as unknown as Grafo);
+    localStorage.setItem(CHAVE_MINHA_CIDADE, JSON.stringify({ codigoIbge: '3304557', nome: 'Rio de Janeiro', uf: 'RJ' }));
+
+    abrir();
+
+    expect(screen.getByRole('link', { name: T.entradas.voto.comecar })).toHaveAttribute('href', '/resultado');
+    expect(screen.getByRole('link', { name: /Abrir Rio de Janeiro – RJ/ })).toHaveAttribute('href', '/cidades/3304557');
+    expect(screen.getByLabelText('Sua cidade')).toBeDefined();
+    expect(screen.getByRole('heading', { name: /Ou procure pelo nome um político, uma cidade ou uma entidade/ })).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'entidade' }));
+    expect(screen.getByRole('tooltip').textContent).toMatch(/organização com CNPJ que recebeu dinheiro de emenda/);
+    localStorage.removeItem(CHAVE_MINHA_CIDADE);
+  });
+
+  it('base vazia diz isso, e o grafo vazio some sem legislatura pedida', async () => {
+    vi.mocked(api.obterPanorama).mockResolvedValue({ ...PANORAMA, legislatura: null, porCasa: [] });
+    vi.mocked(api.obterGrafo).mockResolvedValue({ nos: [], legislatura: 57 } as unknown as Grafo);
+
+    const { container } = abrir();
+
+    expect(await screen.findByText(T.base.vazio)).toBeDefined();
+    await waitFor(() => expect(api.obterGrafo).toHaveBeenCalled());
+    await waitFor(() => expect(container.querySelector('.grafo-reserva')).toBeNull());
+  });
+
+  it('com conta, lista quem a pessoa segue e tira quem ela deixa de seguir', async () => {
+    vi.mocked(api.obterPanorama).mockResolvedValue(PANORAMA);
+    vi.mocked(api.obterGrafo).mockResolvedValue({ nos: [], legislatura: 57 } as unknown as Grafo);
+    vi.mocked(api.listarSeguidos).mockResolvedValue([parlamentar(1, 'Ana'), parlamentar(2, 'Bia')]);
+
+    abrir({ nome: 'Fulana', fotoUrl: null });
+
+    expect(await screen.findByRole('heading', { name: T.quemVoceSegue })).toBeDefined();
+    expect(screen.getByText('novidades de quem você segue')).toBeDefined();
+    expect(screen.getByText('Ana')).toBeDefined();
+    expect(screen.getByText('Bia')).toBeDefined();
+  });
+});

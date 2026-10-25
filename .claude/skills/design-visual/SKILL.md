@@ -158,7 +158,7 @@ deveria resolver.
 que transforma um piscar em progresso. ⚠️ Keyframe local só anima quem chega — sem a
 saída da anterior a troca lê como pisca-pisca. Por isso passa por `comTransicao()`.
 
-🔴 **`prefers-reduced-motion` é respeitado no JS, não só no CSS** (`transicao.ts`).
+🔴 **`prefers-reduced-motion` é respeitado no JS, não só no CSS** (`nucleo/transicao.ts`).
 Zerar a animação no CSS ainda deixaria a View Transition rodar e bloquear a interação
 durante o retrato do DOM.
 
@@ -169,11 +169,11 @@ tanto quanto deslizar demais. Sai o deslocamento, fica a fusão curta.
 
 ### Tour guiado **(2026-09)**
 
-`componentes/Tour.tsx`, sobre `<dialog>` nativo (foco preso, Esc, papel de diálogo), sem
+`site/componentes/Tour.tsx`, sobre `<dialog>` nativo (foco preso, Esc, papel de diálogo), sem
 biblioteca: as quatro mais usadas falharam em auditoria de acessibilidade.
 
 🔴 **(2026-10-22, decisão do autor) Nenhum tour se oferece sozinho.** A ajuda mora num lugar
-só: o "?" do cabeçalho, ao lado da auditoria (`componentes/Ajuda.tsx`). Na tela com tour, ele
+só: o "?" do cabeçalho, ao lado da auditoria (`site/componentes/Ajuda.tsx`). Na tela com tour, ele
 abre um menu com "como ler esta tela" e "como o site funciona"; nas outras, abre o do site. A
 exceção é o tour da auditoria, que abre na primeira vez que ela é ligada.
 
@@ -184,7 +184,7 @@ exceção é o tour da auditoria, que abre na primeira vez que ela é ligada.
 | Balão some / aparece | `--t-toque` na saída, `--t-medio` na entrada |
 | Rolagem da página | sem animação — animar deixaria o destaque atrasado |
 
-Marque o alvo com `data-tour="<nome>"` e acrescente o passo em `tour.ts`. Passo cujo
+Marque o alvo com `data-tour="<nome>"` e acrescente o passo em `nucleo/tour.ts`. Passo cujo
 alvo não aparece é pulado.
 
 **Um tour por tela, além do do site:** `grafo`, `ficha`, `questionario`, `resultado`,
@@ -204,7 +204,7 @@ ao provedor, sem desenhar nada. Regras:
 - Item com fonte oficial (voto, emenda, convênio, nota fiscal, página do parlamentar) usa
   `<LinkDeFonte>`: abre em nova aba, diz isso ao leitor de tela, `noopener noreferrer`.
 - 🔴 A URL de item sai da API, de `FontesOficiais` — ⛔ montada no front. A de conjunto de
-  dados sai de `fontes.ts`. Os dois só levam endereço aberto e conferido.
+  dados sai de `nucleo/fontes.ts`. Os dois só levam endereço aberto e conferido.
 - Lista longa ⛔ corta calada: `usePaginas` + `BotaoMostrarMais`, que diz quantos faltam.
 - Tabela e lista que alguém levaria para a planilha ganham `BotaoBaixarCsv` — da lista
   INTEIRA, ⛔ da página na tela.

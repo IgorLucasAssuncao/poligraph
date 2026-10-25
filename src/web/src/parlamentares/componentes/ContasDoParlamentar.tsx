@@ -1,0 +1,861 @@
+import { useState } from 'react';
+import { AtualizandoComponent } from '../../comum/componentes/Atualizando';
+import { useCarga } from '../../comum/componentes/useCarga';
+import { Link } from 'react-router-dom';
+import {
+  listarLancamentos,
+  obterGastos,
+  obterPatrimonio,
+  type CaminhoDaEmenda,
+  type CidadesDaEmenda,
+  type DeclaracaoDeBens,
+  type FinanciamentoDeCampanha,
+  type RepasseDosFundos,
+} from '../../nucleo/api';
+import { baixarCsv, buscarTodas } from '../../nucleo/exportar';
+import { FONTES } from '../../nucleo/fontes';
+import { dataCurta, minusculas, noMeioDaFrase, nomeDaCategoriaDaCota, nomeProprio, periodoDaLegislatura, reais, reaisCompacto } from '../../nucleo/formato';
+import { BotaoBaixarCsvComponent } from '../../comum/componentes/BotaoBaixarCsv';
+import { BotaoMostrarMaisComponent } from '../../comum/componentes/BotaoMostrarMais';
+import { ConveniosComponent, EmendasUmaAUmaComponent, QuandoFoiPagoComponent, QuemRecebeuComponent } from '../../emendas/componentes/DestinoDasEmendas';
+import { LinkDeFonteComponent } from '../../comum/componentes/LinkDeFonte';
+import { ComProcedenciaComponent } from '../../comum/componentes/ModoAuditoria';
+import { NENHUM, useAVista, usePaginas } from '../../comum/componentes/usePaginas';
+import type { Contas } from './useContas';
+import { EsqueletoDePainelComponent, EsqueletoDeTextoComponent } from '../../comum/componentes/Esqueleto';
+import { LinhaDeValorComponent, OpcoesComponent } from '../../comum/componentes/Dados';
+import { ComposicaoComponent } from '../../comum/componentes/Graficos';
+import { partesComOutros } from '../../comum/componentes/partesComOutros';
+import { GrafoDoDinheiroComponent } from './GrafoDoDinheiro';
+import { GraficoDeFitasComponent } from '../../comum/componentes/GraficoDeFitas';
+import { fitasDasEmendas } from '../../emendas/componentes/fitasDasEmendas';
+import { TEXTOS_DAS_EMENDAS } from '../../emendas/textos/emendas';
+import { LOCALIDADE_MULTIPLA, LOCALIDADE_NACIONAL, SUFIXO_DE_ESTADO, TIPOS_DE_BEM_A_VISTA } from '../../nucleo/constantes';
+import { TEXTOS_DAS_CONTAS as T } from '../textos/contasDoParlamentar';
+
+/**
+ * O dinheiro do parlamentar, em três abas — campanha, emendas e cota.
+ *
+ * ## Por que abas, e não o modal
+ *
+ * O modal "Ver as contas" empilhava as três fontes numa rolagem só: 13 blocos com o mesmo
+ * peso, sem endereço para compartilhar, e no telefone uma rolagem dentro de outra. Cada
+ * aba agora responde UMA pergunta, na ordem de Shneiderman — visão geral primeiro, detalhe
+ * sob demanda:
+ *
+ * 1. uma frase-resposta, com o número que importa;
+ * 2. dois blocos, os que respondem "para onde" e "para quem";
+ * 3. o resto em "Ver detalhes", fechado.
+ *
+ * ATENÇÃO: O argumento antigo para o modal — ver campanha e cota juntas, para cruzar doador e
+ * fornecedor — agora é feito pelo DADO, pelo CNPJ, na página da entidade. Medido em
+ * 2026-09-25: 3 CNPJs em comum entre cota e campanha; o olho não achava isso numa rolagem.
+ */
+
+/**
+ * Os três números do topo, cada um levando à sua aba.
+ *
+ * DECISÃO: Silêncio enquanto carrega e no erro: a faixa é contexto, não o conteúdo principal.
+ *
+ * ATENÇÃO: Os três vêm de anos diferentes — a eleição, e o ano mais recente de emenda e
+ * de cota. Lado a lado, sem o ano no rótulo, liam como comparáveis (2026-10-01).
+ */
+export function FaixaDeContasComponent({
+  contas,
+  base,
+  sufixo = '',
+  mandatoPassado = null,
+}: {
+  contas: Contas | null;
+  base: string;
+  /** O `?legislatura=` da ficha: o número leva à aba no MESMO mandato. */
+  sufixo?: string;
+  /** A legislatura do mandato aberto, quando não é a corrente — a frase diz de qual. */
+  mandatoPassado?: number | null;
+}) {
+  if (!contas) return null;
+
+  const { gastos, emendas, fin } = contas;
+  const temAlgo = (fin?.total ?? 0) > 0 || (emendas?.quantidade ?? 0) > 0 || (gastos?.lancamentos ?? 0) > 0;
+  if (!temAlgo) return null;
+
+  return (
+    <>
+      <p className="contas-aviso">
+        {mandatoPassado ? T.faixa.noMandato(periodoDaLegislatura(mandatoPassado)) : T.faixa.maisRecente}
+      </p>
+      <nav className="perfil-contas contas-numeros" data-tour="ficha-contas" aria-label={T.faixa.rotulo}>
+        <ValorDaContaComponent
+          para={`${base}/campanha${sufixo}`}
+          rotulo={T.faixa.campanha(fin?.anoEleicao)}
+          valor={fin?.total}
+          nota={T.faixa.campanhaNota}
+        />
+        <ValorDaContaComponent
+          para={`${base}/emendas${sufixo}`}
+          rotulo={T.faixa.emendas(emendas?.anoDaEmenda)}
+          valor={emendas?.empenhado}
+          nota={T.faixa.emendasNota}
+        />
+        <ValorDaContaComponent
+          para={`${base}/cota${sufixo}`}
+          rotulo={T.faixa.cota(gastos?.anoDaDespesa)}
+          valor={gastos?.total}
+          nota={T.faixa.cotaNota}
+        />
+      </nav>
+    </>
+  );
+}
+
+/**
+ * RISCO: **Ausente não é zero.** `R$ 0,00` afirmaria que o parlamentar não recebeu nada; o que se
+ * sabe é que a base não tem. O travessão diz isso sem mentir.
+ */
+function ValorDaContaComponent({ para, rotulo, valor, nota }: { para: string; rotulo: string; valor?: number; nota?: string }) {
+  const tem = valor !== undefined && valor > 0;
+
+  return (
+    <Link className="conta-valor" to={para}>
+      <span className="conta-rotulo">
+        {rotulo}
+        {T.faixa.seta}
+      </span>
+      <span className={`conta-numero ${tem ? '' : 'conta-ausente'}`}>{tem ? reais(valor) : T.faixa.ausente}</span>
+      <span className="conta-nota">{tem ? nota : T.faixa.semRegistro}</span>
+    </Link>
+  );
+}
+
+/** O que ainda não chegou, ou não existe na base, dito do mesmo jeito nas três abas. */
+function CarregandoComponent({ contas, erro }: { contas: Contas | null; erro: boolean }) {
+  if (erro) return <p className="erro">{T.carregando.erro}</p>;
+  if (!contas) return <EsqueletoDePainelComponent rotulo={T.carregando.rotulo} />;
+  return null;
+}
+
+/**
+ * RISCO: **Empenhado e pago, sempre juntos.** Empenhar é reservar; pagar é o dinheiro sair. Só
+ * o empenhado deixaria concluir que o dinheiro chegou — o que quem anuncia emenda gostaria.
+ *
+ * Emendas
+ */
+export function AbaEmendasComponent({
+  idPessoa,
+  contas,
+  erro,
+  nome,
+  descricao,
+}: {
+  idPessoa: number;
+  contas: Contas | null;
+  erro: boolean;
+  /** Para o centro do grafo do dinheiro. */
+  nome: string;
+  descricao: string;
+}) {
+  const [grafoAberto, setGrafoAberto] = useState(false);
+  const emendas = contas?.emendas;
+  if (!emendas) return <CarregandoComponent contas={contas} erro={erro} />;
+
+  if (emendas.quantidade === 0) {
+    return (
+      <section className="aba-dinheiro">
+        <p className="vazio">{T.emendas.vazio}</p>
+      </section>
+    );
+  }
+
+  const pagoTotal = emendas.pago + (emendas.pagoDepois ?? 0);
+  const fracao = (valor: number) => (emendas.empenhado > 0 ? Math.min(valor / emendas.empenhado, 1) : 0);
+  const maiorDestino = emendas.porDestino[0]?.empenhado ?? 1;
+
+  return (
+    <section className="aba-dinheiro" aria-label={T.emendas.rotulo}>
+      <GrafoDoDinheiroComponent
+        aberto={grafoAberto}
+        aoFechar={() => setGrafoAberto(false)}
+        nome={nome}
+        descricao={descricao}
+        campanha={contas?.fin ?? null}
+        emendas={emendas}
+      />
+      <div className="execucao">
+        <div className="execucao-cabeca">
+          <p className="frase-resposta">
+            {T.emendas.resposta(
+              <ComProcedenciaComponent
+                consulta={{ contexto: 'emendas', idPessoa: idPessoa, anoDaEmenda: emendas.anoDaEmenda }}
+                rotulo={T.emendas.rotuloDaProcedencia(emendas.anoDaEmenda)}
+              >
+                <strong>{reais(pagoTotal)}</strong>
+              </ComProcedenciaComponent>,
+              reais(emendas.empenhado),
+              emendas.quantidade,
+              emendas.anoDaEmenda,
+              (fracao(pagoTotal) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 }),
+            )}
+          </p>
+          <button type="button" className="botao-secundario" onClick={() => setGrafoAberto(true)}>
+            {T.emendas.verOGrafo}
+          </button>
+        </div>
+        <span className="gasto-barra execucao-barra" aria-hidden="true">
+          <span style={{ width: `${fracao(emendas.pago) * 100}%` }} />
+          {emendas.pagoDepois > 0 && (
+            <span className="parte-depois" style={{ width: `${fracao(emendas.pagoDepois) * 100}%` }} />
+          )}
+        </span>
+        <p className="legenda-execucao">
+          <span>
+            <span className="amostra-cor" aria-hidden="true" />
+            {T.emendas.pagoNoAno(emendas.anoDaEmenda, reais(emendas.pago))}
+          </span>
+          {emendas.pagoDepois > 0 && (
+            <span>
+              <span className="amostra-cor parte-depois" aria-hidden="true" />
+              {T.emendas.pagoDepois(reais(emendas.pagoDepois))}
+            </span>
+          )}
+          <span>
+            <span className="amostra-cor nao-pago" aria-hidden="true" />
+            {T.emendas.naoPago(reais(Math.max(emendas.empenhado - pagoTotal, 0)))}
+          </span>
+        </p>
+      </div>
+
+      {emendas.caminhos && emendas.caminhos.length > 0 && (
+        <FitasDasEmendasDoAnoComponent caminhos={emendas.caminhos} total={emendas.favorecidos.recebido} anoDaEmenda={emendas.anoDaEmenda} />
+      )}
+
+      <div className="duas-colunas">
+        <div>
+          <CidadesQueReceberamComponent cidades={emendas.cidades} />
+        </div>
+        <div>
+          <QuemRecebeuComponent
+            idPessoa={idPessoa}
+            favorecidos={emendas.favorecidos}
+            anoDaEmenda={emendas.anoDaEmenda}
+            pagoNasEmendas={emendas.pago + emendas.pagoDepois}
+          />
+        </div>
+      </div>
+
+      <details className="detalhes-da-aba">
+        <summary>{T.emendas.verDetalhes}</summary>
+
+        {emendas.porFuncao.length > 0 && (
+          <>
+            <h3 className="titulo-secao">{T.emendas.emQue}</h3>
+            <ul className="gastos-fornecedores">
+              {emendas.porFuncao.map((f) => (
+                <li key={f.funcao}>
+                  <span className="gasto-nome">{f.funcao}</span>
+                  <span className="gasto-valor">{reais(f.empenhado)}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        <h3 className="titulo-secao">{T.emendas.localDeclarado}</h3>
+        <p className="ajuda">{T.emendas.localDeclaradoAjuda}</p>
+        {emendas.porDestino.length > 1 && (
+          <ComposicaoComponent
+            rotulo={T.emendas.localDeclarado}
+            formatar={reais}
+            partes={partesComOutros(emendas.porDestino, (d) => d.localidade, (d) => d.empenhado, T.emendas.outrosDestinos, emendas.empenhado)}
+          />
+        )}
+        <ul className="gastos-categorias">
+          {emendas.porDestino.map((d) => (
+            <LinhaDeValorComponent key={d.localidade} nome={<DestinoComponent localidade={d.localidade} />} valor={d.empenhado} maior={maiorDestino} />
+          ))}
+        </ul>
+
+        <QuandoFoiPagoComponent meses={emendas.pagamentosPorMes} anoDaEmenda={emendas.anoDaEmenda} />
+        <ConveniosComponent idPessoa={idPessoa} convenios={emendas.convenios} anoDaEmenda={emendas.anoDaEmenda} />
+        <EmendasUmaAUmaComponent idPessoa={idPessoa} anoDaEmenda={emendas.anoDaEmenda} total={emendas.quantidade} />
+      </details>
+
+      <p className="ajuda ajuda-espacada">{T.emendas.fonte}</p>
+    </section>
+  );
+}
+
+/**
+ * Pela sede de quem recebeu — CNPJ → IBGE —, e cada cidade leva ao mapa.
+ *
+ * ATENÇÃO: A API manda só as maiores. O botão diz quantas abre, e não "faltam N": o total de
+ * cidades é maior que a lista.
+ */
+function CidadesQueReceberamComponent({ cidades }: { cidades: CidadesDaEmenda }) {
+  const lista = useAVista({
+    itens: cidades.maiores,
+    restantes: 0,
+    proximos: 0,
+    carregando: false,
+    erro: false,
+    carregarMais: () => {},
+  });
+  if (cidades.quantidade === 0) return null;
+
+  const maior = cidades.maiores[0]?.recebido ?? 1;
+
+  return (
+    <>
+      <h3 className="titulo-secao">{T.cidades.titulo}</h3>
+      <p className="ajuda ajuda-espacada">{T.cidades.quantas(cidades.quantidade, cidades.maiores.length)}</p>
+      <ul className="gastos-categorias">
+        {lista.itens.map((c) => (
+          <LinhaDeValorComponent
+            key={c.municipio.codigoIbge}
+            nome={
+              <Link to={`/emendas?uf=${c.municipio.uf}&cidade=${c.municipio.codigoIbge}`}>
+                {nomeProprio(c.municipio.nome)} – {c.municipio.uf}
+              </Link>
+            }
+            valor={c.recebido}
+            maior={maior}
+          />
+        ))}
+      </ul>
+      <BotaoMostrarMaisComponent {...lista} aoClicar={lista.carregarMais} rotulo={T.cidades.verAsMaiores(cidades.maiores.length)} />
+    </>
+  );
+}
+
+/**
+ * O destino DECLARADO — quatro coisas diferentes na mesma coluna.
+ *
+ * RISCO: `MÚLTIPLO` não é um lugar: é o aviso de que a emenda se reparte, e o Portal não diz onde.
+ */
+function DestinoComponent({ localidade }: { localidade: string }) {
+  if (localidade === LOCALIDADE_MULTIPLA) {
+    return (
+      <>
+        {T.destino.multiplo}
+        <small>{T.destino.multiploNota}</small>
+      </>
+    );
+  }
+
+  if (localidade === LOCALIDADE_NACIONAL) {
+    return (
+      <>
+        {T.destino.nacional}
+        <small>{T.destino.nacionalNota}</small>
+      </>
+    );
+  }
+
+  if (SUFIXO_DE_ESTADO.test(localidade)) {
+    return (
+      <>
+        {minusculas(localidade.replace(SUFIXO_DE_ESTADO, ''))}
+        <small>{T.destino.estadoInteiro}</small>
+      </>
+    );
+  }
+
+  return <>{localidade}</>;
+}
+
+/**
+ * A cota parlamentar (CEAP e CEAPS).
+ *
+ * RISCO: Todo valor tem o documento fiscal a um clique, na Câmara — sem isso a tela seria uma
+ * afirmação sobre gasto público sem como conferir. Fica em "Ver detalhes": são centenas.
+ *
+ * Cota
+ *
+ * RISCO: RNF-13: o documento de pessoa física é hasheado; a tela diz que é pessoa.
+ */
+export function AbaCotaComponent({
+  idPessoa,
+  contas,
+  erro,
+  legislatura,
+}: {
+  idPessoa: number;
+  contas: Contas | null;
+  erro: boolean;
+  legislatura?: number | null;
+}) {
+  const [anoEscolhido, setAnoEscolhido] = useState<number | null>(null);
+  const doAno = useCarga(
+    ['gastos-do-ano', idPessoa, legislatura ?? null, anoEscolhido],
+    () => obterGastos(idPessoa, legislatura, anoEscolhido ?? undefined),
+    { ativo: anoEscolhido !== null, manter: 3 },
+  );
+  const padrao = contas?.gastos;
+  const gastos = anoEscolhido === null ? padrao : (doAno.dados ?? padrao);
+  const trocandoDeAno = anoEscolhido !== null && (doAno.atualizando || doAno.dados === undefined);
+
+  if (!padrao) return <CarregandoComponent contas={contas} erro={erro} />;
+
+  const escolher = (anoDaDespesa: number) =>
+    setAnoEscolhido(anoDaDespesa === padrao.anoDaDespesa ? null : anoDaDespesa);
+
+  const seletor = legislatura ? (
+    <SeletorDeAnoDaCotaComponent legislatura={legislatura} anoDaDespesa={anoEscolhido ?? padrao.anoDaDespesa} aoEscolher={escolher} />
+  ) : null;
+
+  if (!gastos) {
+    return (
+      <section className="aba-dinheiro" aria-label={T.cota.rotulo}>
+        {seletor}
+        <EsqueletoDeTextoComponent rotulo={T.cota.carregandoOAno} />
+      </section>
+    );
+  }
+
+  if (gastos.lancamentos === 0) {
+    return (
+      <section className="aba-dinheiro">
+        {seletor}
+        <p className="vazio">{T.cota.vazio(anoEscolhido)}</p>
+      </section>
+    );
+  }
+
+  const maior = gastos.porCategoria[0]?.total ?? 1;
+  const principal = gastos.porCategoria[0];
+
+  return (
+    <section className="aba-dinheiro" aria-label={T.cota.rotulo}>
+      {seletor}
+      <AtualizandoComponent atualizando={trocandoDeAno} chave={String(gastos.anoDaDespesa)}>
+      <p className="frase-resposta">
+        {T.cota.resposta(
+          <ComProcedenciaComponent
+            consulta={{ contexto: 'cota', idPessoa: idPessoa, anoDaDespesa: gastos.anoDaDespesa }}
+            rotulo={T.cota.rotuloDaProcedencia(gastos.anoDaDespesa)}
+          >
+            <strong>{reais(gastos.total)}</strong>
+          </ComProcedenciaComponent>,
+          gastos.anoDaDespesa,
+          gastos.lancamentos,
+          principal ? noMeioDaFrase(nomeDaCategoriaDaCota(principal.categoria)) : null,
+        )}
+      </p>
+
+      <div className="duas-colunas">
+        <div>
+          <h3 className="titulo-secao">{T.cota.emQue}</h3>
+          <ComposicaoComponent
+            rotulo={T.cota.emQue}
+            formatar={reais}
+            partes={partesComOutros(gastos.porCategoria, (c) => nomeDaCategoriaDaCota(c.categoria), (c) => c.total, T.cota.outrasCategorias)}
+          />
+          <details className="detalhes-da-aba">
+          <summary>{T.cota.todasAsCategorias(gastos.porCategoria.length)}</summary>
+          <ul className="gastos-categorias">
+            {gastos.porCategoria.map((c) => (
+              <LinhaDeValorComponent
+                key={c.categoria}
+                nome={nomeDaCategoriaDaCota(c.categoria)}
+                valor={c.total}
+                maior={maior}
+                procedencia={{
+                  consulta: { contexto: 'cota', idPessoa: idPessoa, anoDaDespesa: gastos.anoDaDespesa, categoria: c.categoria },
+                  rotulo: T.cota.rotuloDaCategoria(gastos.anoDaDespesa, nomeDaCategoriaDaCota(c.categoria)),
+                }}
+              />
+            ))}
+          </ul>
+          </details>
+        </div>
+        <div>
+          <h3 className="titulo-secao">{T.cota.quemRecebeu}</h3>
+          <ul className="gastos-fornecedores">
+            {gastos.maioresFornecedores.map((f) => (
+              <li key={f.nome}>
+                <span className="gasto-nome">
+                  {nomeProprio(f.nome)}
+                  {f.pessoaFisica && <small>{T.cota.pessoaFisica}</small>}
+                </span>
+                <span className="gasto-valor">{reais(f.total)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <details className="detalhes-da-aba">
+        <summary>{T.cota.verDetalhes}</summary>
+        <LancamentosDaCotaComponent idPessoa={idPessoa} anoDaDespesa={gastos.anoDaDespesa} total={gastos.lancamentos} />
+      </details>
+
+      <p className="ajuda ajuda-espacada">{T.cota.fonte}</p>
+      </AtualizandoComponent>
+    </section>
+  );
+}
+
+/** Os lançamentos, nota por nota — o caminho de volta de cada soma à fonte. */
+function LancamentosDaCotaComponent({ idPessoa, anoDaDespesa, total }: { idPessoa: number; anoDaDespesa: number; total: number }) {
+  const lista = usePaginas(NENHUM, total, 20, (pagina) => listarLancamentos(idPessoa, anoDaDespesa, pagina, 20));
+
+  return (
+    <>
+      <h3 className="titulo-secao">
+        {T.lancamentos.titulo}{' '}
+        <BotaoBaixarCsvComponent
+          rotulo={T.lancamentos.baixar}
+          montar={async () => {
+            const todas = await buscarTodas((pagina) => listarLancamentos(idPessoa, anoDaDespesa, pagina, 100));
+            baixarCsv(
+              T.lancamentos.arquivo(idPessoa, anoDaDespesa),
+              [...T.lancamentos.colunas],
+              todas.map((l) => [l.data, l.mes, l.categoria, l.fornecedor, l.valor, l.urlDocumento]),
+            );
+          }}
+        />
+      </h3>
+      {lista.itens.length > 0 && (
+        <ul className="lista-lancamentos">
+          {lista.itens.map((l, i) => (
+            <li key={i}>
+              <span className="gasto-nome">
+                {l.fornecedor ?? T.lancamentos.fornecedorNaoInformado}
+                <small>
+                  {quandoFoi(l.data, l.mes, anoDaDespesa)} · {nomeDaCategoriaDaCota(l.categoria)}
+                </small>
+              </span>
+              <span className="lancamento-fim">
+                <span className="gasto-valor">{reais(l.valor)}</span>
+                <LinkDeFonteComponent href={l.urlDocumento}>{T.lancamentos.notaFiscal}</LinkDeFonteComponent>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <BotaoMostrarMaisComponent
+        {...lista}
+        rotulo={lista.itens.length === 0 ? T.lancamentos.verTodos(total) : undefined}
+        aoClicar={lista.carregarMais}
+      />
+    </>
+  );
+}
+
+/**
+ * O financiamento da campanha que elegeu o parlamentar (TSE).
+ *
+ * RISCO: O Fundo Especial e o Fundo Partidário aparecem SEPARADOS. A soma dos dois é dita como
+ * soma, e não substitui os dois: somá-los como "dinheiro público" é uma afirmação.
+ *
+ * Campanha
+ */
+export function AbaCampanhaComponent({ idPessoa, contas, erro }: { idPessoa: number; contas: Contas | null; erro: boolean }) {
+  const fin = contas?.fin;
+  if (!fin) return <CarregandoComponent contas={contas} erro={erro} />;
+
+  return (
+    <>
+      <FinanciamentoComponent idPessoa={idPessoa} fin={fin} />
+      <PatrimonioDeclaradoComponent idPessoa={idPessoa} />
+    </>
+  );
+}
+
+/**
+ * RISCO: RNF-13: o documento de pessoa física é hasheado no banco.
+ */
+function FinanciamentoComponent({ idPessoa, fin }: { idPessoa: number; fin: FinanciamentoDeCampanha }) {
+  if (fin.total === 0) {
+    return (
+      <section className="aba-dinheiro">
+        <p className="vazio">{T.campanha.vazio}</p>
+      </section>
+    );
+  }
+
+  const publico = fin.fundoEspecial + fin.fundoPartidario;
+  const maior = fin.porFonte[0]?.total ?? 1;
+  const repasses = fin.repassesDosFundos ?? [];
+  const doacoes = fin.doacoesForaDosFundos ?? [];
+
+  return (
+    <section className="aba-dinheiro" aria-label={T.campanha.rotulo}>
+      <p className="frase-resposta">
+        {T.campanha.resposta(
+          <ComProcedenciaComponent
+            consulta={{ contexto: 'campanha', idPessoa: idPessoa, anoDaEleicao: fin.anoEleicao }}
+            rotulo={T.campanha.rotuloDaProcedencia(fin.anoEleicao)}
+          >
+            <strong>{reais(fin.total)}</strong>
+          </ComProcedenciaComponent>,
+          fin.anoEleicao,
+          reais(publico),
+          ((publico / fin.total) * 100).toLocaleString('pt-BR', { maximumFractionDigits: 0 }),
+        )}
+      </p>
+
+      <h3 className="titulo-secao">{T.campanha.deOndeVeio}</h3>
+      <ComposicaoComponent
+        rotulo={T.campanha.deOndeVeio}
+        formatar={reais}
+        partes={partesComOutros(fin.porFonte, (f) => nomeDaFonte(f.fonte), (f) => f.total, T.campanha.outrasFontes).map((p) =>
+          p.nome === nomeDaFonte(FONTE_OUTROS_RECURSOS) ? { ...p, termo: 'outrosRecursos' as const } : p,
+        )}
+      />
+
+      {repasses.length > 0 && <RepassesDosFundosComponent fin={fin} repasses={repasses} />}
+
+      {doacoes.length > 0 && (
+        <>
+          <h3 className="titulo-secao">{T.campanha.maioresDoadores}</h3>
+          <p className="ajuda">{T.campanha.doacoesAjuda}</p>
+          <ul className="gastos-fornecedores">
+            {doacoes.map((d) => (
+              <li key={d.nome}>
+                <span className="gasto-nome">
+                  {nomeProprio(d.nome)}
+                  {d.pessoaFisica && <small>{T.campanha.pessoaFisica}</small>}
+                </span>
+                <span className="gasto-valor">{reais(d.total)}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      <details className="detalhes-da-aba">
+        <summary>{T.campanha.verDetalhes}</summary>
+        <ul className="gastos-categorias">
+          {fin.porFonte.map((f) => (
+            <LinhaDeValorComponent key={f.fonte} nome={nomeDaFonte(f.fonte)} valor={f.total} maior={maior} />
+          ))}
+        </ul>
+      </details>
+
+      <p className="ajuda ajuda-espacada">
+        {T.campanha.fonte}{' '}
+        <LinkDeFonteComponent href={FONTES.prestacaoDeContas.url}>{T.campanha.conjuntoNoTse}</LinkDeFonteComponent>
+      </p>
+    </section>
+  );
+}
+
+
+/** A fonte do TSE para o dinheiro que não saiu dos dois fundos. */
+const FONTE_OUTROS_RECURSOS = 'OUTROS RECURSOS';
+
+/**
+ * Quem entregou o dinheiro dos fundos, numa tabela de doador por fundo.
+ *
+ * DECISÃO (2026-10-24): no lugar da lista dos dois fundos ao lado dos maiores doadores. Lado a lado, as linhas não se
+ * correspondiam: a Direção Nacional entregou parte de cada fundo, e quem lia esperava que ela fosse um deles, ou somava tudo.
+ */
+function RepassesDosFundosComponent({ fin, repasses }: { fin: FinanciamentoDeCampanha; repasses: RepasseDosFundos[] }) {
+  return (
+    <>
+      <h3 className="titulo-secao">{T.campanha.quemRepassou}</h3>
+      <p className="ajuda">{T.campanha.quemRepassouAjuda}</p>
+      <div className="tabela-rolavel">
+        <table className="tabela-orcamento tabela-repasses">
+          <caption className="sr-apenas">{T.campanha.legendaDosRepasses}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{T.campanha.quemRepassouColuna}</th>
+              <th scope="col">{T.campanha.fundoEspecial}</th>
+              <th scope="col">{T.campanha.fundoPartidario}</th>
+              <th scope="col">{T.campanha.totalDosRepasses}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {repasses.map((r) => (
+              <tr key={r.nome}>
+                <th scope="row">{nomeProprio(r.nome)}</th>
+                <td data-rotulo={T.campanha.rotulosDosRepasses.fundoEspecial}>{reais(r.fundoEspecial)}</td>
+                <td data-rotulo={T.campanha.rotulosDosRepasses.fundoPartidario}>{reais(r.fundoPartidario)}</td>
+                <td data-rotulo={T.campanha.totalDosRepasses}>{reais(r.fundoEspecial + r.fundoPartidario)}</td>
+              </tr>
+            ))}
+          </tbody>
+          {repasses.length > 1 && (
+            <tfoot>
+              <tr>
+                <th scope="row">{T.campanha.somaDosRepasses}</th>
+                <td data-rotulo={T.campanha.rotulosDosRepasses.fundoEspecial}>{reais(fin.fundoEspecial)}</td>
+                <td data-rotulo={T.campanha.rotulosDosRepasses.fundoPartidario}>{reais(fin.fundoPartidario)}</td>
+                <td data-rotulo={T.campanha.totalDosRepasses}>{reais(fin.fundoEspecial + fin.fundoPartidario)}</td>
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
+    </>
+  );
+}
+
+/**
+ * O que o parlamentar declarou ter ao se candidatar — a última declaração, e a anterior ao lado.
+ *
+ * ATENÇÃO: As duas candidaturas aparecem como dois números, não como variação percentual: "cresceu
+ * 300%" lê como acusação, e a declaração é do próprio candidato, pelo valor que ele deu ao
+ * bem — não uma avaliação de mercado (RNF-16).
+ *
+ * RISCO: Só tipo e valor: a descrição de cada bem traz endereço, e não chega ao site.
+ */
+export function PatrimonioDeclaradoComponent({ idPessoa }: { idPessoa: number }) {
+  const lidas = useCarga(['patrimonio', idPessoa], () => obterPatrimonio(idPessoa), { manter: 2 });
+  const declaracoes = lidas.atualizando ? null : (lidas.dados ?? null);
+  const erro = lidas.erro;
+
+  if (erro) return <p className="erro">{T.patrimonio.erro}</p>;
+  if (!declaracoes) return <EsqueletoDeTextoComponent rotulo={T.patrimonio.carregando} paragrafos={1} />;
+
+  if (declaracoes.length === 0) {
+    return (
+      <section className="aba-dinheiro" aria-label={T.patrimonio.rotulo}>
+        <h2 className="titulo-secao">{T.patrimonio.titulo}</h2>
+        <p className="vazio">{T.patrimonio.vazio}</p>
+      </section>
+    );
+  }
+
+  const [ultima, anterior] = declaracoes;
+  const foraDoPadrao = [anterior, ultima].flatMap((d) => (d?.foraDoPadrao ? [d.anoEleicao] : []));
+  const maior = ultima.porTipo[0]?.valor || 1;
+  const linha = (t: DeclaracaoDeBens['porTipo'][number]) => (
+    <LinhaDeValorComponent
+      key={t.tipo}
+      nome={
+        <>
+          {t.tipo}
+          {t.quantidade > 1 && <small>{T.patrimonio.bens(t.quantidade)}</small>}
+        </>
+      }
+      valor={t.valor}
+      maior={maior}
+    />
+  );
+
+  return (
+    <section className="aba-dinheiro" aria-label={T.patrimonio.rotulo}>
+      <h2 className="titulo-secao">{T.patrimonio.titulo}</h2>
+      <p className="frase-resposta">
+        {T.patrimonio.resposta(
+          <ComProcedenciaComponent
+            consulta={{ contexto: 'patrimonio', idPessoa: idPessoa, anoDaEleicao: ultima.anoEleicao }}
+            rotulo={T.patrimonio.rotuloDaProcedencia(ultima.anoEleicao)}
+          >
+            <strong className={ultima.foraDoPadrao ? 'numero-fora-do-padrao' : undefined}>{reais(ultima.total)}</strong>
+          </ComProcedenciaComponent>,
+          ultima.bens,
+          ultima.anoEleicao,
+          anterior
+            ? {
+                anoDaEleicao: anterior.anoEleicao,
+                total: <strong className={anterior.foraDoPadrao ? 'numero-fora-do-padrao' : undefined}>{reais(anterior.total)}</strong>,
+              }
+            : null,
+        )}
+      </p>
+      {foraDoPadrao.length > 0 && (
+        <p className="aviso-fora-do-padrao" role="note">
+          {T.patrimonio.foraDoPadrao(foraDoPadrao)}
+        </p>
+      )}
+
+      <ul className="gastos-categorias">{ultima.porTipo.slice(0, TIPOS_DE_BEM_A_VISTA).map(linha)}</ul>
+
+      {ultima.porTipo.length > TIPOS_DE_BEM_A_VISTA && (
+        <details className="detalhes-da-aba">
+          <summary>{T.patrimonio.verOsOutros(ultima.porTipo.length - TIPOS_DE_BEM_A_VISTA)}</summary>
+          <ul className="gastos-categorias">{ultima.porTipo.slice(TIPOS_DE_BEM_A_VISTA).map(linha)}</ul>
+        </details>
+      )}
+
+      <p className="nota-curta">
+        {T.patrimonio.nota}{' '}
+        <LinkDeFonteComponent href={FONTES.candidatos.url}>{T.patrimonio.declaracoesNoTse}</LinkDeFonteComponent>
+      </p>
+    </section>
+  );
+}
+
+
+/**
+ * Os quatro anos de cota do mandato, como botões. O ano corrente diz que está em andamento:
+ * comparar o total dele com o de um ano fechado leria como queda.
+ */
+function SeletorDeAnoDaCotaComponent({
+  legislatura,
+  anoDaDespesa,
+  aoEscolher,
+}: {
+  legislatura: number;
+  anoDaDespesa: number;
+  aoEscolher: (anoDaDespesa: number) => void;
+}) {
+  const posse = Number(periodoDaLegislatura(legislatura).slice(0, 4));
+  const atual = new Date().getFullYear();
+  const anos = [posse, posse + 1, posse + 2, posse + 3].filter((a) => a <= atual);
+
+  return (
+    <OpcoesComponent
+      rotulo={T.cota.anoDaCota}
+      opcoes={anos.map((a) => ({
+        valor: a,
+        rotulo: (
+          <>
+            {a}
+            {a === atual && <span className="em-andamento">{T.cota.emAndamento}</span>}
+          </>
+        ),
+      }))}
+      escolhida={anoDaDespesa}
+      aoEscolher={aoEscolher}
+    />
+  );
+}
+
+/**
+ * A data da nota, ou o mês quando a data falta ou é impossível.
+ *
+ * MEDIDO em 2026-10-23: 56 lançamentos da cota com a data da nota fora de qualquer ano possível, de 10/10/0023 a 08/05/5201.
+ * O valor e o mês vêm de outras colunas e estão certos; a data errada fica à vista, como a Câmara publicou (regra 5).
+ */
+function quandoFoi(data: string | null, mes: number, anoDaDespesa: number | null): string {
+  if (!data) return T.lancamentos.mes(mes);
+  const ano = Number(data.slice(0, 4));
+  if (anoDaDespesa == null || Math.abs(ano - anoDaDespesa) <= 1) return dataCurta(data);
+  return T.lancamentos.dataImpossivel(mes, `${data.slice(8, 10)}/${data.slice(5, 7)}/${data.slice(0, 4)}`);
+}
+
+/**
+ * Os pagamentos das emendas do ano em fitas: tipo, área e quem recebeu. As mesmas colunas da página de emendas.
+ *
+ * DECISÃO (autor, 2026-10-23): a campanha não entra nas fitas. O dinheiro dela não vira emenda; o grafo do dinheiro mostra os
+ * dois lados, cada um com o seu ano, e diz isso.
+ */
+function FitasDasEmendasDoAnoComponent({ caminhos, total, anoDaEmenda }: { caminhos: CaminhoDaEmenda[]; total: number; anoDaEmenda: number }) {
+  const F = T.fitasDasEmendas;
+  const { nos, fitas } = fitasDasEmendas(caminhos);
+  return (
+    <section className="fitas-da-ficha" aria-labelledby="fitas-da-ficha-titulo">
+      <h3 id="fitas-da-ficha-titulo" className="titulo-secao">
+        {F.titulo}
+      </h3>
+      <p className="ajuda">{F.ajuda(reaisCompacto(total), anoDaEmenda)}</p>
+      <GraficoDeFitasComponent
+        rotulo={F.rotulo(reaisCompacto(total), anoDaEmenda)}
+        colunas={TEXTOS_DAS_EMENDAS.caminhos.colunas}
+        nos={nos}
+        fitas={fitas}
+        formatar={reaisCompacto}
+        altura={380}
+      />
+    </section>
+  );
+}
+
+/** O nome de uma fonte de receita do TSE para a tela; a que o mapa não conhece sai em minúsculas, como vem. */
+function nomeDaFonte(fonte: string): string {
+  return T.campanha.fontes[fonte] ?? minusculas(fonte);
+}

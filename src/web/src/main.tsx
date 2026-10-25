@@ -3,8 +3,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import AppComponent from './App.tsx';
-import { clienteDeConsultas } from './consultas';
-import { aplicarTema, temaGuardado } from './tema';
+import { clienteDeConsultas } from './nucleo/consultas';
+import { aplicarTema, temaGuardado } from './nucleo/tema';
 
 /**
  * RISCO: ANTES do primeiro render, nunca dentro de um efeito.

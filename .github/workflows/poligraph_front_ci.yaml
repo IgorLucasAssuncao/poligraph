@@ -93,8 +93,8 @@ jobs:
             -Dsonar.projectKey=IgorLucasAssuncao_poligraph_front
             -Dsonar.organization=igorlucasassuncao
             -Dsonar.sources=src/web/src
-            -Dsonar.tests=src/web/src
+            -Dsonar.tests=src/web/tests
             -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx
             -Dsonar.javascript.lcov.reportPaths=src/web/coverage/lcov.info
             -Dsonar.exclusions=**/node_modules/**,src/web/dist/**,src/web/coverage/**,src/web/public/**
-            -Dsonar.coverage.exclusions=src/web/src/main.tsx,src/web/src/textos-legais.ts
+            -Dsonar.coverage.exclusions=src/web/src/main.tsx,src/web/src/nucleo/textos-legais.ts

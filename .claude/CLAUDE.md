@@ -135,7 +135,7 @@ Estrutura **Tier 2 sem MediatR**: `Api`, `Data`, `Tests`, `AppHost`.
 | Grafo e métricas | `ExecucaoVigente`, com casa **e** legislatura (Pendência 54); período por `Legislaturas` |
 | Quem está em exercício | `EmExercicioNaBase` |
 | Texto que o usuário lê, vindo da API | `Textos/MensagensDaApi.cs` |
-| Número e moeda no front | `formato.ts`; UF por `ufs.ts` |
+| Número e moeda no front | `nucleo/formato.ts`; UF por `nucleo/ufs.ts` |
 | Arquivo novo na API | Pasta do assunto em `Endpoints/`, `Services/<Assunto>/` e `Dtos/<Assunto>/` |
 
 ### Código, em todas as linguagens
@@ -147,10 +147,11 @@ Estrutura **Tier 2 sem MediatR**: `Api`, `Data`, `Tests`, `AppHost`.
 | Comentário | Só o equivalente ao `summary`: `///` no C#, `/** */` na declaração TS, docstring no Python. ⛔ dentro de corpo ou no fim da linha |
 | Marcadores | `RISCO:` · `ATENÇÃO:` · `DECISÃO:` · `MEDIDO:` (com data) · `FEITO:`. ⛔ emoji no código |
 | C# | `_camelCase` em campo privado; públicos no topo, privados na ordem de uso; chave em todo `if`/`for`; ⛔ `[SuppressMessage]` |
-| Front | Todo componente React termina em `Component`; padrão repetido vira componente (`componentes/Dados.tsx`); texto em `textos/*`, constante em `constantes.ts` |
-| Leitura da API no front | `useCarga` ou `useLista` (`componentes/useCarga.ts`, sobre o TanStack Query), ⛔ `useEffect` com `fetch`. Dado que troca com filtro vai dentro de `AtualizandoComponent`. Dado da pessoa (quem ela segue) fica fora do cache |
+| Front | Todo componente React termina em `Component`; padrão repetido vira componente (`comum/componentes/Dados.tsx`); texto em `<contexto>/textos/*`, constante em `nucleo/constantes.ts` |
+| Leitura da API no front | `useCarga` ou `useLista` (`comum/componentes/useCarga.ts`, sobre o TanStack Query), ⛔ `useEffect` com `fetch`. Dado que troca com filtro vai dentro de `AtualizandoComponent`. Dado da pessoa (quem ela segue) fica fora do cache |
 | Texto de tela | Fala com gente: sem antítese em série, sem travessão no meio da frase, sem CAIXA ALTA de ênfase |
 | Checagem do front | `npx tsc -b` (`tsc -p .` não checa nada) |
+| Pastas do front | `src/<contexto>/{paginas,componentes,textos}` (inicio, parlamentares, politicos, grafo, questionario, emendas, governo, cidades, seguir, conta, institucional), `comum/` para o genérico, `site/` para a casca, `nucleo/` para api, formato e sessão; testes em `tests/`, na mesma estrutura |
 
 ---
 

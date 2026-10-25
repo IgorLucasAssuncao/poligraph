@@ -1,36 +1,36 @@
 import { lazy, Suspense } from 'react';
 import type { ReactNode } from 'react';
 import { BrowserRouter, Link, Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
-import { destinoSeguro } from './componentes/useEntrar';
-import { BannerConsentimentoComponent } from './componentes/BannerConsentimento';
-import { LayoutComponent } from './componentes/Layout';
-import { ProvedorDeSessaoComponent } from './componentes/ProvedorDeSessao';
-import { EsqueletoDeTextoComponent } from './componentes/Esqueleto';
-import { useSessao } from './sessao';
+import { destinoSeguro } from './conta/componentes/useEntrar';
+import { BannerConsentimentoComponent } from './site/componentes/BannerConsentimento';
+import { LayoutComponent } from './site/componentes/Layout';
+import { ProvedorDeSessaoComponent } from './site/componentes/ProvedorDeSessao';
+import { EsqueletoDeTextoComponent } from './comum/componentes/Esqueleto';
+import { useSessao } from './nucleo/sessao';
 import './App.css';
-import { TEXTOS_DO_SITE as T } from './textos/site';
+import { TEXTOS_DO_SITE as T } from './site/textos/site';
 
 /**
  * Cada página vem num pacote próprio, baixado na primeira visita a ela (auditoria de 2026-10-03:
  * o pacote único tinha 507 KB, e quem abria só a ficha baixava também o grafo, o mapa e o governo).
  */
-const InicioComponent = lazy(() => import('./paginas/Inicio').then((m) => ({ default: m.InicioComponent })));
-const LoginComponent = lazy(() => import('./paginas/Login').then((m) => ({ default: m.LoginComponent })));
-const MetodologiaComponent = lazy(() => import('./paginas/Metodologia').then((m) => ({ default: m.MetodologiaComponent })));
-const MinhaContaComponent = lazy(() => import('./paginas/MinhaConta').then((m) => ({ default: m.MinhaContaComponent })));
-const EmendasComponent = lazy(() => import('./paginas/Emendas').then((m) => ({ default: m.EmendasComponent })));
-const EntidadeComponent = lazy(() => import('./paginas/Entidade').then((m) => ({ default: m.EntidadeComponent })));
-const EntidadesComponent = lazy(() => import('./paginas/Entidades').then((m) => ({ default: m.EntidadesComponent })));
-const GovernoComponent = lazy(() => import('./paginas/Governo').then((m) => ({ default: m.GovernoComponent })));
-const ComprasDoGovernoComponent = lazy(() => import('./paginas/ComprasDoGoverno').then((m) => ({ default: m.ComprasDoGovernoComponent })));
-const ViagensDoGovernoComponent = lazy(() => import('./paginas/ViagensDoGoverno').then((m) => ({ default: m.ViagensDoGovernoComponent })));
-const ParlamentarComponent = lazy(() => import('./paginas/Parlamentar').then((m) => ({ default: m.ParlamentarComponent })));
-const CidadesComponent = lazy(() => import('./paginas/Cidades').then((m) => ({ default: m.CidadesComponent })));
-const CidadeComponent = lazy(() => import('./paginas/Cidade').then((m) => ({ default: m.CidadeComponent })));
-const PoliticoComponent = lazy(() => import('./paginas/Politico').then((m) => ({ default: m.PoliticoComponent })));
-const ParlamentaresComponent = lazy(() => import('./paginas/Parlamentares').then((m) => ({ default: m.ParlamentaresComponent })));
-const PoliticaDePrivacidadeComponent = lazy(() => import('./paginas/PoliticaDePrivacidade').then((m) => ({ default: m.PoliticaDePrivacidadeComponent })));
-const QuestionarioComponent = lazy(() => import('./paginas/Questionario').then((m) => ({ default: m.QuestionarioComponent })));
+const InicioComponent = lazy(() => import('./inicio/paginas/Inicio').then((m) => ({ default: m.InicioComponent })));
+const LoginComponent = lazy(() => import('./conta/paginas/Login').then((m) => ({ default: m.LoginComponent })));
+const MetodologiaComponent = lazy(() => import('./institucional/paginas/Metodologia').then((m) => ({ default: m.MetodologiaComponent })));
+const MinhaContaComponent = lazy(() => import('./conta/paginas/MinhaConta').then((m) => ({ default: m.MinhaContaComponent })));
+const EmendasComponent = lazy(() => import('./emendas/paginas/Emendas').then((m) => ({ default: m.EmendasComponent })));
+const EntidadeComponent = lazy(() => import('./emendas/paginas/Entidade').then((m) => ({ default: m.EntidadeComponent })));
+const EntidadesComponent = lazy(() => import('./emendas/paginas/Entidades').then((m) => ({ default: m.EntidadesComponent })));
+const GovernoComponent = lazy(() => import('./governo/paginas/Governo').then((m) => ({ default: m.GovernoComponent })));
+const ComprasDoGovernoComponent = lazy(() => import('./governo/paginas/ComprasDoGoverno').then((m) => ({ default: m.ComprasDoGovernoComponent })));
+const ViagensDoGovernoComponent = lazy(() => import('./governo/paginas/ViagensDoGoverno').then((m) => ({ default: m.ViagensDoGovernoComponent })));
+const ParlamentarComponent = lazy(() => import('./parlamentares/paginas/Parlamentar').then((m) => ({ default: m.ParlamentarComponent })));
+const CidadesComponent = lazy(() => import('./cidades/paginas/Cidades').then((m) => ({ default: m.CidadesComponent })));
+const CidadeComponent = lazy(() => import('./cidades/paginas/Cidade').then((m) => ({ default: m.CidadeComponent })));
+const PoliticoComponent = lazy(() => import('./politicos/paginas/Politico').then((m) => ({ default: m.PoliticoComponent })));
+const ParlamentaresComponent = lazy(() => import('./parlamentares/paginas/Parlamentares').then((m) => ({ default: m.ParlamentaresComponent })));
+const PoliticaDePrivacidadeComponent = lazy(() => import('./institucional/paginas/PoliticaDePrivacidade').then((m) => ({ default: m.PoliticaDePrivacidadeComponent })));
+const QuestionarioComponent = lazy(() => import('./questionario/paginas/Questionario').then((m) => ({ default: m.QuestionarioComponent })));
 
 export default function AppComponent() {
   return (
