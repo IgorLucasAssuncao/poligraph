@@ -62,10 +62,10 @@ Abertos:
 
 | Achado | Medido | O que falta |
 |---|---|---|
-| Município sem prefeito eleito no arquivo de candidatos | 5 em 2020 e 18 em 2024, fora Fernando de Noronha (Itaguaí, Tucuruí, Iporá, Macedônia…) | Eleição anulada ou suplementar com situação `#NULO`: o vencedor só sai do arquivo de votação, como o presidente. Decisão do autor |
+| Município sem prefeito eleito no TSE | 5 em 2020 e 18 em 2024, fora Fernando de Noronha (Itaguaí, Tucuruí, Iporá, Macedônia…) | MEDIDO em 2026-10-25: nem o arquivo de votação traz o vencedor (o eleito anulado sai dele, e as suplementares de 2025 não estão em arquivo aberto nenhum). FEITO: a cidade mostra o ciclo com o motivo, e o eleito em suplementar começa no ano dela (538 mandatos). Fica aberto até o TSE publicar |
 | Boa Esperança do Norte (MT) | Município novo, fora da tabela da Receita | Entra quando a Receita publicar |
-| `proposicoes.url_inteiro_teor` | Vazia nas 7.452 | Preencher pela API da Câmara ou remover |
-| Produção | A migration corrige os nomes, não os mandatos | Rodar `python -m poligraph_etl mandatos` uma vez no serviço `etl` depois do deploy |
+| `proposicoes.url_inteiro_teor` | Vazia nas 7.452 | FEITO na Câmara (comando `inteiro-teor`, 4.891 de 4.894; "ler o projeto" ao lado do voto). Aberto no Senado: o serviço de textos foi trocado por `/processo/documento` em 2026 |
+| Produção | As migrations corrigem os nomes, não os mandatos nem o texto integral | Depois do deploy, no serviço `etl`: `python -m poligraph_etl mandatos` e `python -m poligraph_etl inteiro-teor` |
 
 ### Abertas: dependem do autor, não de código
 
