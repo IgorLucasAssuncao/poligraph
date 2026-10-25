@@ -98,7 +98,7 @@ export type Similar = {
  * ATENÇÃO: Cada proporção vem com a BASE. 80% sobre 15 votações e 80% sobre 900 são
  * afirmações de força muito diferente, e a tela nunca mostra uma sem a outra.
  *
- * Não Nulo no Senado inteiro: lá não existe orientação de bancada publicada.
+ * Nulo no Senado inteiro: lá não existe orientação de bancada publicada.
  */
 export type Alinhamento = {
   governismo: number | null;
@@ -346,7 +346,7 @@ export type PanoramaDaCasa = {
   parlamentares: number;
   /** Só as com voto nominal — as que o cálculo usa (Pendência 68). */
   votacoes: number;
-  /** Registradas pela casa sem a lista de quem votou como. Não Entram em `votacoes`. */
+  /** Registradas pela casa sem a lista de quem votou como. Não entram em `votacoes`. */
   votacoesSemVotoNominal: number;
   /** RISCO: O sigilo do Senado é achado do trabalho, não detalhe: 239 de 421. */
   votacoesSecretas: number;
@@ -553,7 +553,7 @@ export async function obterPerguntas(): Promise<{ perguntas: Pergunta[]; total: 
  * DECISÃO: Medido: 8 de base + 7 escolhidas assim deixam 6 parlamentares empatados no topo;
  * as 15 melhores fixas deixam 14, e 8 + 7 sorteadas deixam 16.
  *
- * Não Devolve `[]` — nunca erro — quando não há mais candidatas. Falhar aqui
+ * Devolve `[]` — nunca erro — quando não há mais candidatas. Falhar aqui
  * impediria de concluir um questionário que já está válido.
  */
 export async function obterDesempate(
@@ -673,7 +673,7 @@ export type NoDoGrafo = {
    * sinal do eixo é arbitrário, e uma legenda fixa dizendo "à esquerda ficam os
    * governistas" ficaria errada em silêncio se uma reexecução espelhasse a figura.
    *
-   * Não Nulo no Senado.
+   * Nulo no Senado.
    */
   governismo: number | null;
 };

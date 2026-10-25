@@ -87,7 +87,7 @@ export type Quadro = {
   cidadao?: { eixoX: number; eixoY: number } | null;
   camera: Camera;
   comFotos: boolean;
-  /** Não Nulo quando os eixos estão desligados ou a casa não os nomeia. */
+  /** Nulo quando os eixos estão desligados ou a casa não os nomeia. */
   eixos: RotulosDoEixo | null;
   /** Repinta quando uma foto termina de baixar. */
   aoChegarFoto: () => void;

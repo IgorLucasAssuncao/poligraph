@@ -36,7 +36,7 @@
   /* As séries 2 e 3 dos gráficos de colunas e de composição. No escuro, o tom misturado com o texto claro ficava pálido e igual. */
   --serie-1: color-mix(in srgb, var(--realce) 60%, var(--texto));
   --serie-2: color-mix(in srgb, var(--realce) 30%, var(--texto));
-  /* Escala do mapa das emendas: areia → ocre. Quente e de uma família só; Não passa pelo
+  /* Escala do mapa das emendas: areia → ocre. Quente e de uma família só; não passa pelo
      vermelho, que lembraria partido (RNF-16). */
   --mapa-0: #eef0f2;
   --mapa-1: #fde9b0;
@@ -2625,7 +2625,7 @@ dialog.tour::backdrop { background: transparent; }
 .mapa svg { display: block; width: 100%; max-width: 34rem; height: auto; margin: 0 auto; touch-action: manipulation; }
 .mapa-carregando { aspect-ratio: 1; max-width: 34rem; margin: .5rem auto 1rem; background: var(--painel); border-radius: var(--raio); }
 
-/* O rótulo acompanha o mouse; Não recebe o ponteiro, senão o hover piscaria entre ele e a área. */
+/* O rótulo acompanha o mouse; não recebe o ponteiro, senão o hover piscaria entre ele e a área. */
 .mapa-rotulo {
   position: absolute; z-index: 2; pointer-events: none;
   transform: translate(-50%, calc(-100% - 10px));

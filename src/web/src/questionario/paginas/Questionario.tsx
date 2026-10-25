@@ -53,7 +53,7 @@ const PASSOS_DO_QUESTIONARIO = passosDoQuestionario();
  * lê e responde a pergunta que está na tela, as próximas já chegaram. Buscar depois
  * mostraria "Carregando…" no meio do questionário.
  *
- * Não Falha não interrompe: `obterDesempate` devolve `[]`, o questionário termina
+ * Falha não interrompe: `obterDesempate` devolve `[]`, o questionário termina
  * com as de abertura, e o mínimo do servidor decide se dá para calcular.
  *
  * ATENÇÃO: O denominador é o TOTAL declarado pelo servidor, não `perguntas.length`:

@@ -87,7 +87,7 @@ def autor_original(nome_autor: str | None) -> str | None:
     MEDIDO: Medido em 2026-08-29: **14** autores pendentes trazem o padrão, e em **12** o nome
     extraído casa com exatamente um deputado da 57ª — 229 emendas, R$ 656 mi.
 
-    Não Devolve `None` quando não há o padrão, e quem chama segue com o nome original.
+    Devolve `None` quando não há o padrão, e quem chama segue com o nome original.
     """
     if not nome_autor:
         return None

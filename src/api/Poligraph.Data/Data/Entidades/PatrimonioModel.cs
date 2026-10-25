@@ -6,7 +6,7 @@
 /// <remarks>
 /// <para>
 /// RISCO: Só o TIPO e o VALOR. A descrição de cada bem é texto livre e traz endereço ("prédio
-/// comercial situado à rua…"): Não entra no banco. Minimização (LGPD): a pergunta da tela é
+/// comercial situado à rua…"): não entra no banco. Minimização (LGPD): a pergunta da tela é
 /// quanto, e em quê, não onde.
 /// </para>
 /// <para>

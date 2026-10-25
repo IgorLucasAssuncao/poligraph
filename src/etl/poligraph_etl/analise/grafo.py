@@ -177,7 +177,7 @@ def calcular_componentes(matriz: np.ndarray) -> np.ndarray:
 
     Correlação entre distância do centro e número de votações: **r = 0,566**.
 
-    Não É limitação do método, não bug. A literatura de *ideal point estimation*
+    É limitação do método, não bug. A literatura de *ideal point estimation*
     (W-NOMINATE e sucessores) trata ausência com imputação justamente por isso. Aqui o
     zero é o ponto neutro entre −1 e +1: mantém a conta honesta sem inventar voto, ao
     preço de confundir ausência com moderação.

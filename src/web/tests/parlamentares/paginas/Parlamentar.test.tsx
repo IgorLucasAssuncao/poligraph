@@ -566,7 +566,7 @@ describe('a ementa na lista de votos', () => {
  *
  * ATENÇÃO: A ementa não some: vira contexto, para dizer sobre QUE projeto era o rito.
  *
- * Não Voto de rito não é escondido — ele existe e é público. Mas pesa ZERO na
+ * Voto de rito não é escondido — ele existe e é público. Mas pesa ZERO na
  * afinidade, e a tela precisa dizer isso antes do enunciado, não depois.
  *
  * DECISÃO: No voto de mérito a ordem é a oposta: a ementa manda.

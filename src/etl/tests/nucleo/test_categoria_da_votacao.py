@@ -11,7 +11,7 @@ A categoria decide **duas coisas**, e as duas em silêncio:
 
 ATENÇÃO: E ela é decidida por **regex na descrição**, não por campo da fonte.
 
-## Não Foi verificado se a fonte dá o tipo, e NÃO dá
+## Foi verificado se a fonte dá o tipo, e NÃO dá
 
 MEDIDO: Medido em 2026-08-29 contra `votacoesObjetos-{ano}.csv`, que tem
 `proposicao_siglaTipo`:
@@ -23,7 +23,7 @@ MEDIDO: Medido em 2026-08-29 contra `votacoesObjetos-{ano}.csv`, que tem
 | RISCO: A combinação `PRL, RPD` | **69×** como PROCEDIMENTAL e **18×** como SUBSTANTIVA |
 
 DECISÃO: `votacoesObjetos` lista **tudo que estava em pauta na sessão**, não o que aquela
-votação decidiu. Não Ele não discrimina, e por isso o regex fica.
+votação decidiu. Ele não discrimina, e por isso o regex fica.
 
 DECISÃO: **A mitigação é o canário**, não a esperança: `descricoes_nao_reconhecidas` acusa
 frase que nenhum padrão alcança, do mesmo jeito que `siglas_desconhecidas` protege o
@@ -142,7 +142,7 @@ def test_canario_acusa_frase_que_ninguem_reconhece():
     ATENÇÃO: Se a fonte mudar a redação, tudo vira `SUBSTANTIVA` e nada avisa. O canário
     não impede — ele **conta**, como `siglas_desconhecidas` faz com o voto do Senado.
 
-    `"Resultado. Sim: 182; Não: 182; Abstenção: 2.",`: Não não diz o que foi votado
+    `"Resultado. Sim: 182; Não: 182; Abstenção: 2.",`: não diz o que foi votado
 
     `"Aprovado o Projeto de Lei nº 1.",`: reconhecida
 
@@ -186,7 +186,7 @@ def test_extrai_a_sigla_do_objeto():
 
 
 def test_sem_sigla_devolve_nulo():
-    """Não É o caso mais COMUM — 682 de 996 —, e não é erro."""
+    """É o caso mais COMUM — 682 de 996 —, e não é erro."""
     assert sigla_do_objeto("Votação em turno único.") is None
     assert sigla_do_objeto(None) is None
     assert sigla_do_objeto("") is None

@@ -133,7 +133,7 @@ const FOLGA_DAS_FERRAMENTAS = 140;
  * "esquerda = governo" faria a figura mentir sobre si mesma no dia em que uma
  * reexecução a espelhasse.
  *
- * Não Nulo no Senado: sem orientação de bancada, o eixo não tem nome — e desenhar a
+ * Nulo no Senado: sem orientação de bancada, o eixo não tem nome — e desenhar a
  * linha com rótulo inventado seria pior que não desenhar.
  *
  * O canvas não tem seletor de CSS: sem isto, trocar o tema deixava o grafo com as cores
@@ -164,7 +164,7 @@ const FOLGA_DAS_FERRAMENTAS = 140;
  * `ListaDoGrafo`. Aqui o objetivo é outro e mais modesto: quem não usa mouse
  * conseguir operar os mesmos controles que o mouse tem.
  *
- * Não Só intercepta as teclas que usa. Tab, Shift+Tab e Escape seguem para o navegador
+ * Só intercepta as teclas que usa. Tab, Shift+Tab e Escape seguem para o navegador
  * — prender o foco dentro de um canvas seria pior do que não tê-lo.
  *
  * ATENÇÃO: Só depois de saber que a tecla É nossa: prevenir antes tiraria a rolagem da

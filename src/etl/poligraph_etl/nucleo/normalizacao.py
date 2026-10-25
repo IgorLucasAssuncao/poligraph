@@ -120,7 +120,7 @@ votar um dispositivo isolado é destaque, mesmo quando a frase termina em
 MEDIDO: `suprimid…` e `restabelecido o texto` vieram da 55ª (achado #35): até 2016
 a Câmara descrevia o destaque supressivo pelo RESULTADO — "Suprimido o
 artigo", "Suprimida expressão", "Suprimidos o texto" (sic) — e tudo caía
-no default SUBSTANTIVA. Conferido: Não muda nenhuma votação da 57ª.
+no default SUBSTANTIVA. Conferido: não muda nenhuma votação da 57ª.
 
 **MERITO**
 
@@ -222,7 +222,7 @@ _SIGLA_DA_ABERTURA = re.compile(r"^vota[çc][ãa]o\s+d[oa]\s+([A-Z]{2,5})\b", re
 def sigla_do_objeto(abertura: str | None) -> str | None:
     """A sigla do objeto votado, se a descrição da abertura a declarar.
 
-    Não Devolve `None` quando não há sigla — que é o caso mais comum, e não é erro.
+    Devolve `None` quando não há sigla — que é o caso mais comum, e não é erro.
 
     ATENÇÃO: `isinstance`, não só `not abertura`: célula vazia chega como NaN, que é float e
     é verdadeiro. Na 57ª toda votação nominal tem abertura; em 2003 não , e o
@@ -260,7 +260,7 @@ def divergencias_de_destaque(votacoes) -> list[tuple[str, str, str]]:
 
     > *"Votação do **DTQ 2** (PL): Destaque de Emenda de Plenário n. 2. (161, II)."*
 
-    Não Voto num **destaque de emenda**, não no projeto. A pergunta foi removida.
+    Voto num **destaque de emenda**, não no projeto. A pergunta foi removida.
 
     ATENÇÃO: Devolve `(id, nossa_categoria, abertura)` para leitura humana — não **não corrige
     sozinho**: 14 das 18 divergências são "Destaque de Preferência", que é dispositivo de

@@ -186,7 +186,7 @@ function textoDoPeriodo({ primeiroAno, ultimoAno }: Periodo): string {
   return primeiroAno === ultimoAno ? String(primeiroAno) : `${primeiroAno} a ${ultimoAno}`;
 }
 
-/** Três números. Não Há um quarto que os junte: o saldo pediria regras fiscais que estes dados não seguem. */
+/** Três números. Não há um quarto que os junte: o saldo pediria regras fiscais que estes dados não seguem. */
 function ResumoComponent({ dados }: { dados: DadosDoGoverno }) {
   const gastou = dados.porAno.reduce((soma, a) => soma + a.gastou, 0);
   const { primeiroAno, ultimoAno } = dados.periodo;

@@ -525,7 +525,7 @@ function ListaDeVotosComponent({
  * DECISÃO: Então a ordem se inverte: no voto de rito a manchete é o que foi de fato votado
  * (*"Rejeitado o Requerimento"*), e a ementa vira contexto — *"sobre PLP 68/2024: …"*.
  *
- * Não Voto de rito não é escondido. Ele existe, é público, e some-lo seria editar o
+ * Voto de rito não é escondido. Ele existe, é público, e some-lo seria editar o
  * histórico. ATENÇÃO: Mas ele **pesa zero** na afinidade, e a tela diz isso.
  *
  * ATENÇÃO: A outra metade continua visível: no voto de mérito ela identifica QUAL
@@ -566,7 +566,7 @@ function LinhaDoVotoComponent({ voto }: { voto: VotoNaFicha }) {
  * Escrito de forma neutra: *"o Governo pediu Não"* e, quando divergiu, *"votou
  * diferente"*, sem adjetivo.
  *
- * Não Silenciosa quando não há o que dizer: o Governo não orientou, orientou obstrução
+ * Silenciosa quando não há o que dizer: o Governo não orientou, orientou obstrução
  * ou liberou, ou é o Senado. ATENÇÃO: Uma marca de "sem orientação" em quase toda linha viraria
  * ruído e esconderia as linhas que importam.
  *

@@ -81,7 +81,7 @@ function renderizar() {
 /**
  * O período do grafo (achado #35): vem da faixa do topo, pelo endereço.
  *
- * DECISÃO: "Todas" é da lista: Não existe grafo de todas juntas, e vale a corrente.
+ * DECISÃO: "Todas" é da lista: não existe grafo de todas juntas, e vale a corrente.
  *
  * MEDIDO: A 55ª do Senado: a legislatura é 2015–2019, e as abertas vão de 2016 a 2018 (achado #37).
  */

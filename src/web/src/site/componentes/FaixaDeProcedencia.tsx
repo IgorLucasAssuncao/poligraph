@@ -37,7 +37,7 @@ export function FaixaDeProcedenciaComponent() {
 }
 
 /**
- * DECISÃO: "Todos os períodos" só na lista: Não existe grafo nem painel de todas juntas.
+ * DECISÃO: "Todos os períodos" só na lista: não existe grafo nem painel de todas juntas.
  */
 function PeriodoDaFaixaComponent({ pathname }: { pathname: string }) {
   const [parametros] = useSearchParams();

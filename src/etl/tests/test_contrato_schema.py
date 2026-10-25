@@ -143,7 +143,7 @@ def test_o_parser_de_tabelas_nao_ficou_cego():
     o que **é** continua dentro. Sem ele, apagar o corpo do padrão deixaria o contrato
     verde e inútil.
 
-    Não O que não é tabela
+    O que não é tabela
 
     RISCO: O caso que não **não** é coberto pelo `(?!\\.)`: comparação sem alias. Aqui
     `valor_pago` é COLUNA, e sem o `(?<!DISTINCT )` o parser a acusaria de tabela

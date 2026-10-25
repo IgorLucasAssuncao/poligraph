@@ -34,7 +34,7 @@ def test_extrai_o_nome_de_quem_apresentou():
 
 
 def test_nome_comum_nao_e_tocado():
-    """Não Quem não tem o padrão segue pelo caminho normal."""
+    """Quem não tem o padrão segue pelo caminho normal."""
     assert autor_original("LAZARO BOTELHO") is None
 
 
@@ -44,7 +44,7 @@ def test_ausencia_de_nome_nao_estoura():
 
 
 def test_o_padrao_e_da_fonte_nao_uma_adivinhacao():
-    """DECISÃO: não Não é similaridade: o Portal escreve o rótulo com a base legal junto.
+    """DECISÃO: não é similaridade: o Portal escreve o rótulo com a base legal junto.
 
     ATENÇÃO: Por isso a extração exige o literal `EX-PARLAMENTAR` — parêntese com qualquer
     outra coisa dentro não vira palpite.

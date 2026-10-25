@@ -11,7 +11,7 @@ errado reaparece como número plausível na tela.
 | Vem de | `fontes/camara.ler_csv` — já validado no volume, nunca lido por linha |
 | `votacoes-{ano}` | Uma linha por votação, nominal **ou não** |
 | `votacoesVotos-{ano}` | Uma linha por voto individual |
-| `deputados` | ATENÇÃO: não **Não é anual**, e não **não tem coluna `id`** — ele vive na `uri` |
+| `deputados` | ATENÇÃO: **não é anual** e **não tem coluna `id`** — ele vive na `uri` |
 
 ## TRATAMENTO
 

@@ -4,7 +4,7 @@ RISCO: O Aspire injeta `ConnectionStrings__poligraph` no formato do Npgsql:
 
     Host=localhost;Port=5432;Database=poligraph;Username=postgres;Password=...
 
-Não E o `psycopg` não fala esse dialeto. Ele espera o formato do libpq (`host=... dbname=...`)
+E o `psycopg` não fala esse dialeto. Ele espera o formato do libpq (`host=... dbname=...`)
 ou uma URI `postgresql://`. Entregar o primeiro ao segundo dá
 `ProgrammingError: invalid connection option "Host"` — o ETL nem chega a abrir conexão.
 

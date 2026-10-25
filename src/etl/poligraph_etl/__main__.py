@@ -1658,7 +1658,7 @@ def pares_de_resolucao(entradas: list[str]) -> list[tuple[str, str]]:
     | Quando foi registrado | `43` = Allan Garcês |
     | RISCO: Hoje | `43` = **André Ferreira** · Allan Garcês virou o **31** |
 
-    `pessoas.id` é `BIGSERIAL` e é **reatribuído** quando a base é recarregada. Não Um
+    `pessoas.id` é `BIGSERIAL` e é **reatribuído** quando a base é recarregada. Um
     comando anotado no dia anterior colocaria as emendas de um parlamentar na ficha de
     outro — **em silêncio**, porque a FK aceita qualquer id que exista.
 
@@ -2855,7 +2855,7 @@ def _limpar_cache() -> None:
 
 
 def _conferir(conexao: psycopg.Connection) -> None:
-    """Pendência 66 — confere o banco inteiro. Não Escreve nada; falha se alguma regra der ERRO.
+    """Pendência 66 — confere o banco inteiro. Não escreve nada; falha se alguma regra der ERRO.
 
     DECISÃO: Feito para rodar no fim de toda carga: os 203 senadores da 55ª (achado #37) teriam
     aparecido aqui no dia, não por acaso semanas depois.

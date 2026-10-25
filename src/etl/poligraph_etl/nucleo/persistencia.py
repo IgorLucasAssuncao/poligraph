@@ -244,7 +244,7 @@ def desconectar_proposicoes_ausentes(
 # desfaria o desempate da Pendência 47, e a notícia de hoje casaria com ex-parlamentar.
 #
 # DECISÃO: A corrente é a MAIOR legislatura em `votacoes` — a mesma regra de
-#    `Legislaturas.CorrenteAsync` na API. Não Configurada em lugar nenhum.
+#    `Legislaturas.CorrenteAsync` na API. Não é configurada em lugar nenhum.
 _NA_LEGISLATURA_CORRENTE = """EXISTS (
                      SELECT 1 FROM votos v
                       JOIN votacoes t ON t.id = v.votacao_id

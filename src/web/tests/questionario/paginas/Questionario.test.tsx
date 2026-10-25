@@ -57,7 +57,7 @@ function renderizar() {
  * isso a barra andaria para trás quando as de desempate chegassem: quem via
  * "Pergunta 2 de 2" passaria a ver "Pergunta 3 de 3" tendo avançado.
  *
- * Não Falha no desempate não pode travar o questionário: `obterDesempate` devolve
+ * Falha no desempate não pode travar o questionário: `obterDesempate` devolve
  * `[]`, e comparar o índice com o TOTAL previsto (3) em vez de com a lista carregada
  * (2) deixaria o cidadão numa tela sem pergunta e sem encerramento.
  *

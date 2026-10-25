@@ -117,7 +117,7 @@ def do_senado(materias, vinculo_bruto: dict[str, str]) -> tuple[list[dict], dict
     CSV; aqui vêm duas coisas separadas: as matérias já baixadas de `/materia/{codigo}`
     e o de-para `votacao_id -> codigo_materia` extraído da listagem de votações.
 
-    Não Matéria sem código ou sem ementa é descartada: gravar linha sem ementa não
+    Matéria sem código ou sem ementa é descartada: gravar linha sem ementa não
     resolve nada — a ficha continuaria mostrando o número.
 
     MEDIDO: Medido em 2026-08-29: 421 votações do Senado apontam para **359 matérias

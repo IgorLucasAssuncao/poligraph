@@ -37,7 +37,7 @@ public class TestesEntidades(FixturePostgres postgres) : BaseIntegracao(postgres
         Assert.Equal("CURITIBA", semFins.Itens[0].Sede!.Nome);
     }
 
-    /// <summary>RISCO: O CNPJ de empresário individual é de uma pessoa: Não entra na lista.</summary>
+    /// <summary>RISCO: O CNPJ de empresário individual é de uma pessoa: não entra na lista.</summary>
     [SkippableFact]
     public async Task Lista_DeixaDeForaEmpresarioIndividual()
     {

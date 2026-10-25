@@ -164,7 +164,7 @@ def test_cnpj_do_doador_fica_legivel(conhecidos):
 def test_cpf_do_doador_vira_hash(conhecidos):
     """RISCO: RNF-13 — e o **mesmo** hash da cota, para que os dois lados se comparem.
 
-    Não E o CPF em claro não sobrou em canto nenhum da linha
+    E o CPF em claro não sobrou em canto nenhum da linha
     """
     from poligraph_etl.congresso.cota import identificar_fornecedor
 

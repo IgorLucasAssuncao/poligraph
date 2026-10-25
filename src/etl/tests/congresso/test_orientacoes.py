@@ -164,7 +164,7 @@ def test_devolve_o_par_e_nunca_a_proporcao():
 
 
 def test_bancada_inexistente_devolve_base_zero():
-    """Não Quem não tem partido conhecido fica sem disciplina, não com disciplina zero."""
+    """Quem não tem partido conhecido fica sem disciplina, não com disciplina zero."""
     seguiu, base = orientacoes.alinhamento({"a": 1}, {"a": {"Governo": "Sim"}}, "")
 
     assert (seguiu, base) == (0, 0)

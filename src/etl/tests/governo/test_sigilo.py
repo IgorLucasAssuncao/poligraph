@@ -24,7 +24,7 @@ def test_cartao_separa_o_sigiloso_do_total_por_orgao():
 
 
 def test_cpf_do_portador_nao_e_lido():
-    """RISCO: O arquivo traz o CPF mascarado do portador; Não é coluna que o ETL peça."""
+    """RISCO: O arquivo traz o CPF mascarado do portador; não é coluna que o ETL peça."""
     assert not any("CPF" in c for c in sigilo.COLUNAS_DO_CARTAO)
 
 

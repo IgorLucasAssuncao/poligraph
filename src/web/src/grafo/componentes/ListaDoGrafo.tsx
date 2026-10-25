@@ -29,8 +29,8 @@ import { TEXTOS_DOS_COMPONENTES as T } from '../../comum/textos/componentes';
  * número é, em média, METADE do que a lista de parlamentares mostra para a
  * mesma pessoa — Sargento Fahur aparece com 1.134 lá e 559 aqui. Os dois
  * estão certos e contam coisas diferentes: lá é votação registrada, aqui
- * são as que entram na comparação (Não fora as procedimentais, que pesam
- * zero). Não Com a mesma palavra nos dois lugares o leitor conclui que um
+ * são as que entram na comparação (fora as procedimentais, que pesam
+ * zero). Com a mesma palavra nos dois lugares o leitor conclui que um
  * deles erra.
  *
  * ATENÇÃO: Achado #27: quem votou pouco demais não tem par comparável, e no

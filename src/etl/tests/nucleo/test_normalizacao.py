@@ -216,7 +216,7 @@ def test_destacado_no_particípio_tambem_e_destaque():
 def test_a_excecao_do_ressalvados_sobrevive_a_correcao():
     """ATENÇÃO: A guarda de "ressalvados os destaques" continua valendo.
 
-    Não Ampliar o padrão não pode reintroduzir o erro que a exceção corrigiu — eram 69
+    Ampliar o padrão não pode reintroduzir o erro que a exceção corrigiu — eram 69
     votações de mérito classificadas como destaque.
     """
     assert classificar_categoria(

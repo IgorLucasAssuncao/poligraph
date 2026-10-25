@@ -126,7 +126,7 @@ describe('ferramentas sobre o desenho', () => {
  *
  * Sem orientação de bancada publicada, o eixo do governismo não teria coordenada.
  *
- * Não Com uma opção só, o seletor inteiro some: um botão que não escolhe nada.
+ * Com uma opção só, o seletor inteiro some: um botão que não escolhe nada.
  *
  * DECISÃO: Mas a explicação fica, porque ela é que importa.
  *
@@ -254,7 +254,7 @@ describe('o desenho', () => {
  * ATENÇÃO: O rótulo precisa DIZER que as teclas existem. Um canvas focável cujas teclas
  * ninguém anuncia é o mesmo que não ter teclado.
  *
- * Não Tab e Escape seguem para o navegador. Prender o foco dentro de um canvas seria
+ * Tab e Escape seguem para o navegador. Prender o foco dentro de um canvas seria
  * pior do que não tê-lo — a pessoa ficaria sem saída.
  *
  * RISCO: O canvas com `role="img"` anuncia "Grafo de 3 parlamentares" e acaba ali. Esta
@@ -333,7 +333,7 @@ describe('acessibilidade do grafo', () => {
  * votações registradas** lá e **559** aqui.
  *
  * Os dois estão certos e contam coisas diferentes — lá é votação registrada, aqui são
- * as que entram na comparação, fora as procedimentais, que pesam zero. Não Com a mesma
+ * as que entram na comparação, fora as procedimentais, que pesam zero. Com a mesma
  * palavra nos dois lugares não há como conciliar, e o leitor conclui que um erra.
  */
 describe('os dois números de "votações" não podem usar a mesma palavra', () => {

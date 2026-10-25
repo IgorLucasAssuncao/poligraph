@@ -14,7 +14,7 @@ Era `pessoas.id`. **Virou o id NA CÂMARA**, depois de o defeito se materializar
 registrava `--resolver 4511=43` para o Allan Garcês, e depois de uma reingestão o `43`
 passou a ser **André Ferreira** — `pessoas.id` é `BIGSERIAL` e é reatribuído.
 
-Não O comando anotado no dia anterior colocaria as emendas de um parlamentar na ficha de
+O comando anotado no dia anterior colocaria as emendas de um parlamentar na ficha de
 outro, **em silêncio**, porque a chave estrangeira aceita qualquer id que exista.
 """
 

@@ -71,7 +71,7 @@ function renderizar() {
  *
  * 5 respondidas na casa - 3 comparáveis = 2 fora
  *
- * Não O leitor de tela não recebe o ✓ e o ✗ — eles são `aria-hidden`. Sem o rótulo
+ * O leitor de tela não recebe o ✓ e o ✗ — eles são `aria-hidden`. Sem o rótulo
  * textual, quem ouve receberia a lista de afirmações sem saber quais foram acordo.
  *
  * RF-28 — ver de quem você discorda é parte do método

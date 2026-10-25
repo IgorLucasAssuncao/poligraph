@@ -71,7 +71,7 @@ def candidaturas(arquivo_zip: Path, hashes: dict[str, int], cargos: frozenset[Ti
 
 
 def bens_para_linhas(linhas, candidaturas_ligadas: dict[Candidatura, int], ano: int) -> list[dict]:
-    """Soma os bens por pessoa e tipo. Não Lê `DS_BEM_CANDIDATO`, que traz endereço."""
+    """Soma os bens por pessoa e tipo. Não lê `DS_BEM_CANDIDATO`, que traz endereço."""
     somas: dict[tuple[int, str], list] = defaultdict(lambda: [0.0, 0])
     for r in linhas:
         pessoa = candidaturas_ligadas.get(chave(r))

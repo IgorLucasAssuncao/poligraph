@@ -183,7 +183,7 @@ def cpf_de_senadores(caminho: Path, ano: int) -> dict[tuple[str, str], str | Non
     civil em estados diferentes são pessoas diferentes, e casar só por nome atribuiria o
     financiamento de campanha de um a outro — número plausível e errado, sem erro.
 
-    Não Chave com mais de um CPF vira `None`, nunca "o primeiro". Ambiguidade não
+    Chave com mais de um CPF vira `None`, nunca "o primeiro". Ambiguidade não
     resolvida tem de chegar a quem chama como ambiguidade.
     """
     achados: dict[tuple[str, str], set[str]] = {}

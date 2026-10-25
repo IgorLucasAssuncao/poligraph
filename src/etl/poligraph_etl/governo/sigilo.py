@@ -28,7 +28,7 @@ comum, e esse gasto não entra aqui. A tela diz isso.
 ATENÇÃO: No cartão o ano é o do **extrato**: a data da compra é justamente o que o sigilo
 esconde.
 
-RISCO: O arquivo do cartão traz o CPF do portador, mascarado. Não É lido: `COLUNAS_DO_CARTAO`
+RISCO: O arquivo do cartão traz o CPF do portador, mascarado. Não é lido: `COLUNAS_DO_CARTAO`
 deixa a coluna de fora.
 """
 

@@ -111,7 +111,7 @@ def para_linhas(df: pd.DataFrame, gerado_em: date) -> list[dict]:
 # Encargos especiais — dívida e transferências, separadas por subfunção
 # ═══════════════════════════════════════════════════════════════════
 
-# RISCO: "Encargos especiais" Não é área de serviço: é 60% da dotação de 2023 a 2025, e junta
+# RISCO: "Encargos especiais" não é área de serviço: é 60% da dotação de 2023 a 2025, e junta
 #    coisas que não se leem juntas — pagar juros, rolar a dívida, repassar o FPM. A
 #    subfunção separa as três. Em 2025, pago: refinanciamento R$ 1.412 bi, serviço da
 #    dívida R$ 607 bi, transferências R$ 588 bi, outros R$ 230 bi.
