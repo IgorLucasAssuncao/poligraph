@@ -46,37 +46,55 @@ from ..nucleo.tipos import TipoCasa
 
 CASA = TipoCasa.SENADO
 
-# O domínio do voto no Senado, medido em 10.368 registros de 2025.
-#
-# `Votou` é o valor MAIS COMUM e significa votação secreta: o Senado registra que o
-# parlamentar votou, mas não como. Mapeá-lo para qualquer posição inventaria opinião —
-# é o equivalente senatorial da inversão de polaridade, e igualmente invisível na tela.
-#
-# Tudo que não é posição vira None, que significa "fora do cálculo", nunca "discordou".
 _VOTOS = {
     "sim": 1,
     "não": -1,
     "nao": -1,
     "abstenção": 0,
     "abstencao": 0,
-    "votou": None,        # votação secreta — 3.774 de 10.368 em 2025
-    "p-nrv": None,        # presente, não registrou voto
-    "ap": None,           # ausência justificada
-    "mis": None,          # em missão oficial
-    "ls": None,           # licença saúde
-    "lp": None,           # licença particular
-    "ncom": None,         # não compareceu
-    "na": None,           # não aplicável
-    "lap": None,          # licença paternidade ou ao adotante
-    # MEDIDO: Siglas das legislaturas anteriores (achado #35), com a descrição que a própria
-    #    fonte publica. ATENÇÃO: `MERC` não entra: vem sem descrição, e fica no log.
-    "rep": None,          # "Representação em solenidade internac./nac./reg." — 2003 a 2011
-    "p-od": None,         # "Presente – Obstrução Declarada" — obstrução não é posição
+    "votou": None,
+    "p-nrv": None,
+    "ap": None,
+    "mis": None,
+    "ls": None,
+    "lp": None,
+    "ncom": None,
+    "na": None,
+    "lap": None,
+    "rep": None,
+    "p-od": None,
     "obstrução": None,
     "obstrucao": None,
-    "lg": None,           # "Licença à gestante" — 59 votos em 2020
-    "la": None,           # "Licença à adotante" — 57 votos em 2006
+    "lg": None,
+    "la": None,
 }
+"""O domínio do voto no Senado, medido em 10.368 registros de 2025.
+
+`Votou` é o valor MAIS COMUM e significa votação secreta: o Senado registra que o
+parlamentar votou, mas não como. Mapeá-lo para qualquer posição inventaria opinião —
+é o equivalente senatorial da inversão de polaridade, e igualmente invisível na tela.
+
+Tudo que não é posição vira None, que significa "fora do cálculo", nunca "discordou".
+
+| Sigla | O que é |
+|---|---|
+| `votou` | votação secreta — 3.774 de 10.368 em 2025 |
+| `p-nrv` | presente, não registrou voto |
+| `ap` | ausência justificada |
+| `mis` | em missão oficial |
+| `ls` | licença saúde |
+| `lp` | licença particular |
+| `ncom` | não compareceu |
+| `na` | não aplicável |
+| `lap` | licença paternidade ou ao adotante |
+| `rep` | "Representação em solenidade internac./nac./reg." — 2003 a 2011 |
+| `p-od` | "Presente – Obstrução Declarada" — obstrução não é posição |
+| `lg` | "Licença à gestante" — 59 votos em 2020 |
+| `la` | "Licença à adotante" — 57 votos em 2006 |
+
+MEDIDO: `rep`, `p-od`, `lg` e `la` são siglas das legislaturas anteriores (achado #35), com a
+descrição que a própria fonte publica. ATENÇÃO: `MERC` não entra: vem sem descrição, e fica no log.
+"""
 
 # MEDIDO: Desde 2004, o `codigoSessaoVotacao` cresce com a data — medido em 2026-10-02, ano a
 #    ano de 2004 a 2026: 2004 começa em 2523, 2014 termina em 5329, 2026 vai a 7105, sem

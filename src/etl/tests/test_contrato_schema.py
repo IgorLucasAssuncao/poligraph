@@ -51,14 +51,15 @@ PADRAO_TEMPORARIA = re.compile(r"CREATE TEMP TABLE (?:IF NOT EXISTS )?(\w+)", re
 serve de entrada para o `COPY` com `ON CONFLICT` (votos) e some sozinha; o esquema continua do EF."""
 
 PADRAO_TABELA = re.compile(
-    # ATENÇÃO: `(?<!DISTINCT )` — em `e.pessoa_id IS DISTINCT FROM a.pessoa_id` o `FROM`
-    #    não introduz tabela nenhuma; é operador de comparação.
-    # ATENÇÃO: `(?!\.)` — `FROM a.pessoa_id` é referência a ALIAS. Sem isto o parser acusava
-    #    uma tabela chamada `a`, que ninguém jamais criaria.
     r"(?<!DISTINCT )"
     r"\b(?:FROM|INTO|UPDATE|JOIN|CREATE\s+TABLE|REFERENCES|TRUNCATE)\s+"
     r"([a-z_][a-z0-9_]*)\b(?!\.)"
 )
+r"""ATENÇÃO: `(?<!DISTINCT )`: em `e.pessoa_id IS DISTINCT FROM a.pessoa_id` o `FROM` não introduz tabela
+nenhuma; é operador de comparação.
+
+ATENÇÃO: `(?!\.)`: `FROM a.pessoa_id` é referência a ALIAS. Sem isto o parser acusava uma tabela chamada
+`a`, que ninguém jamais criaria."""
 
 # ATENÇÃO: `TRUNCATE a, b, c` só teria a primeira capturada pelo padrão acima. Esta segunda
 #    passada pega o resto da lista.

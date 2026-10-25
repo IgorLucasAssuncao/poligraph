@@ -85,8 +85,7 @@ def test_a_cota_usa_o_mesmo_hash_das_pessoas():
         ("FULANO DE TAL 123.456.789-00", "FULANO DE TAL"),
         ("12345678900 FULANO DE TAL", "FULANO DE TAL"),
         ("POSTO EXEMPLO LTDA", "POSTO EXEMPLO LTDA"),
-        # DECISÃO: Os 14 dígitos de um CNPJ não são um CPF: ficam.
-        ("EMPRESA 12345678000190", "EMPRESA 12345678000190"),
+        pytest.param("EMPRESA 12345678000190", "EMPRESA 12345678000190", id="DECISÃO: Os 14 dígitos de um CNPJ não são um CPF: ficam."),
         ("12345678900", None),
         (None, None),
         ("BELTRANO SILVA - CPF 123.456.789-00", "BELTRANO SILVA"),

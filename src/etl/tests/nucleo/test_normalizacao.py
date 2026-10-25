@@ -130,7 +130,7 @@ def test_cpf_preserva_zero_a_esquerda():
         (None, None),
         ("", None),
         ("abc", None),
-        ("123456789012", None),   # 12 dígitos: não é CPF
+        pytest.param("123456789012", None, id="12 dígitos: não é CPF"),
     ],
 )
 def test_cpf(bruto, esperado):

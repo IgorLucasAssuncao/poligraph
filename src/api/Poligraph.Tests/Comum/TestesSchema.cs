@@ -119,6 +119,11 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
     /// Derivar a lista esperada do próprio modelo tornaria o teste vazio: ele
     /// concordaria com qualquer renomeação. A lista escrita à mão é o ponto.
     /// </para>
+    ///
+    /// <para>
+    /// A ordenação é feita no C#, não no <c>ORDER BY</c>: a ordem do Postgres depende do
+    /// collation do container. O teste afirma QUAIS tabelas existem, não em que ordem o banco as lista.
+    /// </para>
     /// </summary>
     [SkippableFact]
     public async Task NomesDeTabela_SaoOsQueOEtlPythonLe()
@@ -144,16 +149,10 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
                 """)
             .ToListAsync();
 
-        // A ordenação é feita aqui, não no `ORDER BY`: a ordem do Postgres depende
-        // do collation do container, e `nos_metrica` vem antes ou depois de
-        // `orcamento_por_funcao` conforme a regra de intercalação. O teste afirma QUAIS
-        // tabelas existem, não em que ordem o banco as lista.
         Assert.Equal(
             esperadas.Order(StringComparer.Ordinal),
             noBanco.Order(StringComparer.Ordinal));
     }
-
-    // Domínios fechados de texto
 
     /// <summary>
     /// <b>SQL cru, e não o EF, de propósito.</b>
@@ -170,6 +169,12 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
     /// que o teste precisa exercitar é justamente esse. Passar pelo EF testaria o
     /// compilador; passar por SQL testa a restrição.
     /// </para>
+    ///
+    /// <para>
+    /// O SQL é montado com os valores de <c>[InlineData]</c> deste arquivo, nunca com entrada externa.
+    /// O teste confere QUAL restrição barrou: sem isso, um NOT NULL acidental em outra coluna o faria
+    /// passar por um motivo que não é o que ele afirma.
+    /// </para>
     /// </summary>
     [SkippableTheory]
     [InlineData("casa", "'ASSEMBLEIA'", "ck_votacao_casa")]
@@ -184,17 +189,9 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
             ? $"'fora-dominio', {valor}, 57, DATE '2025-01-01', 'SUBSTANTIVA', true, false"
             : $"'fora-dominio', 'CAMARA', 57, DATE '2025-01-01', {valor}, true, false";
 
-        // EF1002 suprimido: a interpolação é o OBJETO do teste. `colunas` e `valores`
-        // vêm de [InlineData] neste arquivo, nunca de entrada externa, e o que se
-        // verifica é qual CHECK do banco barra o INSERT.
-#pragma warning disable EF1002
-        var erro = await Assert.ThrowsAsync<PostgresException>(() =>
-            Db.Database.ExecuteSqlRawAsync(
-                $"INSERT INTO votacoes ({colunas}) VALUES ({valores})"));
-#pragma warning restore EF1002
+        var sql = $"INSERT INTO votacoes ({colunas}) VALUES ({valores})";
+        var erro = await Assert.ThrowsAsync<PostgresException>(() => Db.Database.ExecuteSqlRawAsync(sql));
 
-        // Confere QUAL restrição barrou. Sem isto, um NOT NULL acidental em outra
-        // coluna faria o teste passar por um motivo que não é o que ele afirma.
         Assert.Equal(restricao, erro.ConstraintName);
     }
 
@@ -212,11 +209,8 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
     {
         ExigeDocker();
 
-#pragma warning disable EF1002
-        var erro = await Assert.ThrowsAsync<PostgresException>(() =>
-            Db.Database.ExecuteSqlRawAsync(
-                $"INSERT INTO cargas (fonte, url, sha256, bytes, comando) VALUES ({fonte}, 'https://exemplo', {sha256}, 1, 'teste')"));
-#pragma warning restore EF1002
+        var sql = $"INSERT INTO cargas (fonte, url, sha256, bytes, comando) VALUES ({fonte}, 'https://exemplo', {sha256}, 1, 'teste')";
+        var erro = await Assert.ThrowsAsync<PostgresException>(() => Db.Database.ExecuteSqlRawAsync(sql));
 
         Assert.Equal(restricao, erro.ConstraintName);
     }
@@ -289,6 +283,8 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
     /// Se a convenção de <c>ConfigureConventions</c> sumir, o EF grava o ordinal, a
     /// restrição recusa <c>0</c> e o ETL Python continua gravando <c>'CAMARA'</c> na
     /// mesma coluna. Este teste falha antes disso chegar em produção.
+    /// O alias <c>Value</c> da consulta não é enfeite: <c>SqlQuery&lt;T&gt;</c> de tipo escalar procura
+    /// uma coluna com esse nome exato.
     /// </summary>
     [SkippableFact]
     public async Task Enum_ChegaAoBancoComoTexto_NaoComoOrdinal()
@@ -303,8 +299,6 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         await Db.SaveChangesAsync();
 
         var gravado = await Db.Database
-            // O alias `Value` não é enfeite: `SqlQuery<T>` de tipo escalar procura
-            // uma coluna com esse nome exato.
             .SqlQuery<string>($"""
                 SELECT casa || '/' || categoria AS "Value"
                   FROM votacoes WHERE id = 'enum-texto'
@@ -323,8 +317,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
     }
 
-    // LGPD art. 18 — a exclusão precisa ser UM delete
-
+    /// <summary>LGPD art. 18: a exclusão precisa ser UM delete. É para isso que os CASCADE existem.</summary>
     [SkippableFact]
     public async Task ExcluirUsuario_LevaSegueEConsentimento()
     {
@@ -342,7 +335,6 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         });
         await Db.SaveChangesAsync();
 
-        // um DELETE só — é para isso que os CASCADE existem
         Db.Usuarios.Remove(usuario);
         await Db.SaveChangesAsync();
 
@@ -350,14 +342,15 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         Assert.Empty(await Db.Consentimentos.Where(c => c.UsuarioId == usuario.Id).ToListAsync());
     }
 
-    // O oposto do CASCADE: apagar parlamentar que alguém segue não pode
-    // ser possível. Por isso `SegueModel PessoaModel` é RESTRICT.
-    // São DUAS camadas de proteção, e as duas são testadas — porque a
-    // primeira pode ser contornada e a segunda não.
-
     /// <summary>
-    /// Camada 1 — o *change tracker* do EF barra antes de chegar ao banco.
-    /// Esta proteção **some** se a exclusão for feita por SQL direto ou `ExecuteDelete`.
+    /// O oposto do CASCADE: apagar parlamentar que alguém segue não pode ser possível, por isso
+    /// <c>SegueModel → PessoaModel</c> é RESTRICT. São duas camadas, e as duas são testadas, porque a
+    /// primeira pode ser contornada e a segunda não.
+    ///
+    /// <para>
+    /// Camada 1: o *change tracker* do EF barra antes de chegar ao banco, desde que o vínculo esteja
+    /// carregado. Esta proteção **some** se a exclusão for feita por SQL direto ou `ExecuteDelete`.
+    /// </para>
     /// </summary>
     [SkippableFact]
     public async Task ExcluirParlamentarSeguido_EFBarraAntesDeIrAoBanco()
@@ -366,14 +359,15 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         var pessoa = await CriarParlamentarSeguidoAsync("sub-ef");
 
         var alvo = await Db.Pessoas.Include(p => p.Votos).FirstAsync(p => p.Id == pessoa);
-        await Db.Segue.Where(s => s.PessoaId == pessoa).LoadAsync();   // rastreia o vínculo
+        await Db.Segue.Where(s => s.PessoaId == pessoa).LoadAsync();
 
         Assert.Throws<InvalidOperationException>(() => Db.Pessoas.Remove(alvo));
     }
 
     /// <summary>
     /// Camada 2 — a que realmente importa: o Postgres rejeita, mesmo sem o EF saber
-    /// do vínculo. É esta que protege contra `DELETE` escrito à mão e contra o ETL Python.
+    /// do vínculo. É esta que protege contra `DELETE` escrito à mão e contra o ETL Python. O teste
+    /// usa um contexto novo, cujo change tracker não conhece nenhum <c>SegueModel</c>.
     /// </summary>
     [SkippableFact]
     public async Task ExcluirParlamentarSeguido_BancoRejeitaMesmoSemOEFSaber()
@@ -381,7 +375,6 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         ExigeDocker();
         var pessoa = await CriarParlamentarSeguidoAsync("sub-banco");
 
-        // contexto novo: o change tracker não conhece nenhum `SegueModel`
         await using var outro = CriarContexto();
         var alvo = await outro.Pessoas.FirstAsync(p => p.Id == pessoa);
         outro.Pessoas.Remove(alvo);
@@ -390,8 +383,7 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
         Assert.Contains("fk_segue_pessoas_pessoa_id", erro.InnerException?.Message ?? "");
     }
 
-    // Um consentimento vivo por finalidade
-
+    /// <summary>Um consentimento vivo por finalidade.</summary>
     [SkippableFact]
     public async Task Consentimento_DoisVivosParaAMesmaFinalidade_ERejeitado()
     {
@@ -413,8 +405,6 @@ public class TestesSchema(FixturePostgres postgres) : BaseIntegracao(postgres)
 
         await Assert.ThrowsAsync<DbUpdateException>(() => Db.SaveChangesAsync());
     }
-
-    // PRIVADOS — na ordem de uso
 
     private async Task<(long, long)> CriarDuasPessoasAsync()
     {

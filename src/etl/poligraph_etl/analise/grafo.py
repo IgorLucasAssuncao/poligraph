@@ -44,15 +44,17 @@ ITERACOES_LAYOUT = 120
 
 @dataclass(frozen=True)
 class NoDoGrafo:
+    """Um parlamentar no grafo: a comunidade do Louvain e as duas posições, a das molas e a dos componentes."""
+
     pessoa_id: int
     comunidade: int
     eixo_x: float
     eixo_y: float
     n_votacoes: int
 
-    # DECISÃO: Pendência 43: as duas posições convivem. Molas para desenhar, componentes para o eixo
-    #    interpretável do TCC. A tela escolhe qual mostrar; o banco guarda as duas.
     componente_1: float = 0.0
+    """DECISÃO: Pendência 43: as duas posições convivem. Molas para desenhar, componentes para o eixo
+    interpretável do TCC. A tela escolhe qual mostrar; o banco guarda as duas."""
     componente_2: float = 0.0
 
 

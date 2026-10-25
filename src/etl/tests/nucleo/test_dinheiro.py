@@ -19,10 +19,10 @@ from poligraph_etl.nucleo.normalizacao import valor_com_ponto, valor_pt_br
 @pytest.mark.parametrize(
     ("bruto", "esperado"),
     [
-        ("12.599,10", 12599.10),        # ponto é MILHAR
-        ("- 26.002,00", -26002.00),     # ATENÇÃO: negativo separado do número
+        pytest.param("12.599,10", 12599.10, id="ponto é MILHAR"),
+        pytest.param("- 26.002,00", -26002.00, id="ATENÇÃO: negativo separado do número"),
         ("1.234.567,89", 1234567.89),
-        ("3170000,00", 3170000.00),     # DECISÃO: o TSE não usa separador de milhar
+        pytest.param("3170000,00", 3170000.00, id="DECISÃO: o TSE não usa separador de milhar"),
         ("0,00", 0.0),
         ("", 0.0),
         ("#NULO", 0.0),
@@ -44,7 +44,7 @@ def test_valor_pt_br(bruto, esperado):
     ("bruto", "esperado"),
     [
         ("1234.56", 1234.56),
-        ("-89.90", -89.90),             # DECISÃO: estorno é caso normal
+        pytest.param("-89.90", -89.90, id="DECISÃO: estorno é caso normal"),
         ("0", 0.0),
         ("", 0.0),
         (None, 0.0),

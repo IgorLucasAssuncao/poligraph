@@ -50,6 +50,8 @@ MINIMO_DE_VOTOS = {TipoCasa.SENADO: 40, TipoCasa.CAMARA: 250}
 
 @dataclass(frozen=True)
 class Candidata:
+    """Uma votação que pode virar pergunta do questionário, com o placar e a polaridade sugerida."""
+
     votacao_id: str
     data: str
     descricao: str
@@ -57,15 +59,16 @@ class Candidata:
     nao: int
     polaridade_sugerida: int
 
-    # DECISÃO: A EMENTA — é ela que torna a leitura humana possível.
-    #
-    # RISCO: A `descricao` diz o NÚMERO do projeto e não diz sobre o que ele é:
-    # *"Aprovado o Substitutivo ao Projeto de Lei Complementar nº 80, de 2026, adotado
-    # pelo relator da Comissão de…"*. Escrever pergunta em linguagem leiga a partir
-    # disso é adivinhação — e a Pendência 11 é o maior bloqueio do projeto.
-    #
-    # ATENÇÃO: Nula em 3 das 266 substantivas da 57ª (98,9% têm) — ver achado sobre Pendência 40.
     ementa: str | None = None
+    """DECISÃO: A EMENTA — é ela que torna a leitura humana possível.
+
+    RISCO: A `descricao` diz o NÚMERO do projeto e não diz sobre o que ele é:
+    *"Aprovado o Substitutivo ao Projeto de Lei Complementar nº 80, de 2026, adotado
+    pelo relator da Comissão de…"*. Escrever pergunta em linguagem leiga a partir
+    disso é adivinhação — e a Pendência 11 é o maior bloqueio do projeto.
+
+    ATENÇÃO: Nula em 3 das 266 substantivas da 57ª (98,9% têm) — ver achado sobre Pendência 40.
+    """
 
     @property
     def divisao(self) -> float:

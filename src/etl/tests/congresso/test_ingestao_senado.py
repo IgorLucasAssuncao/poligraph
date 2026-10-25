@@ -415,8 +415,7 @@ def test_senador_ja_trazido_pela_lista_nao_e_recriado_pelo_voto():
     [
         ("Sim", "PRESENTE"),
         ("Não", "PRESENTE"),
-        # Votação secreta e "presente, não registrou voto": presença sem posição.
-        ("Votou", "PRESENTE"),
+        pytest.param("Votou", "PRESENTE", id="Votação secreta e 'presente, não registrou voto': presença sem posição."),
         ("P-NRV", "PRESENTE"),
         ("Presidente (art. 51 RISF)", "PRESENTE"),
         ("LS", "AUSENTE_JUSTIFICADO"),
@@ -424,8 +423,7 @@ def test_senador_ja_trazido_pela_lista_nao_e_recriado_pelo_voto():
         ("AP", "AUSENTE_JUSTIFICADO"),
         ("NCom", "AUSENTE"),
         ("NA", None),
-        # ATENÇÃO: Sigla nova não vira presença: inflaria o número sem erro.
-        ("XYZ", None),
+        pytest.param("XYZ", None, id="ATENÇÃO: Sigla nova não vira presença: inflaria o número sem erro."),
     ],
 )
 def test_presenca_pela_sigla(sigla, presenca):

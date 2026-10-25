@@ -28,6 +28,8 @@ log = logging.getLogger("poligraph")
 
 @dataclass(frozen=True)
 class Comparacao:
+    """A comunidade que o grafo achou contra o partido de cada um: ARI e a modularidade das duas partições."""
+
     ari: float
     """−1 a 1. **0 = coincidência ao acaso**, 1 = partições idênticas."""
 

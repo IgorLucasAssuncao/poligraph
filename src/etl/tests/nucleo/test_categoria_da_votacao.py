@@ -40,11 +40,11 @@ from poligraph_etl.nucleo.normalizacao import (
 )
 
 # DECISÃO: Todas são frases REAIS, tiradas do banco com a legislatura 57 ingerida.
-CASOS = [
-    # ── rito ────────────────────────────────────────────────────────
+CASOS_DO_RITO = [
     ("Rejeitado o Requerimento de Retirada de Pauta.", "PROCEDIMENTAL"),
     ("Aprovado o Requerimento de Urgência (Art. 155 do RICD).", "PROCEDIMENTAL"),
-    # ── destaque, sinal forte ───────────────────────────────────────
+]
+CASOS_DE_DESTAQUE_FORTE = [
     ("Mantido o texto. Sim: 281; Não: 148; Total: 429.", "DESTAQUE"),
     ("Rejeitada a matéria destacada.", "DESTAQUE"),
     (
@@ -57,12 +57,14 @@ CASOS = [
         "de 2022, destacada.",
         "DESTAQUE",
     ),
-    # ── destaque, sinal fraco: "emenda" solto ───────────────────────
+]
+CASOS_DE_DESTAQUE_FRACO = [
     ("Rejeitadas as Emendas de Plenário. Sim: 2; não: 413.", "DESTAQUE"),
     ("Aprovada a Emenda do Senado Federal nº 1. Sim: 242; Não: 117.", "DESTAQUE"),
     ("Aprovada a Emenda. Sim: 214; Não: 107.", "DESTAQUE"),
     ("Aprovadas as Emendas de Redação nºs 1, 2 e 4.", "DESTAQUE"),
-    # ── mérito ──────────────────────────────────────────────────────
+]
+CASOS_DE_MERITO = [
     ("Aprovado o Projeto de Lei nº 3.181, de 2025, ressalvados os destaques.", "SUBSTANTIVA"),
     ("Aprovado o Substitutivo Reformulado ao PL nº 5.122, ressalvado o destaque.", "SUBSTANTIVA"),
     ("Aprovada a Subemenda Substitutiva Global ao Projeto de Lei nº 1.112.", "SUBSTANTIVA"),
@@ -77,6 +79,7 @@ CASOS = [
     ),
     ("Aprovado o parecer da CCJ à Sustação de Andamento de Ação Penal nº 2.", "SUBSTANTIVA"),
 ]
+CASOS = [*CASOS_DO_RITO, *CASOS_DE_DESTAQUE_FORTE, *CASOS_DE_DESTAQUE_FRACO, *CASOS_DE_MERITO]
 
 
 @pytest.mark.parametrize("descricao,esperado", CASOS)
@@ -221,7 +224,6 @@ def test_concordancia_nao_vira_divergencia():
 @pytest.mark.parametrize(
     "descricao",
     [
-        # MEDIDO: Frases REAIS de 2011 a 2016: o destaque supressivo descrito pelo resultado.
         "Suprimido o artigo: Sim: 156; não: 220; abstenção: 04; total: 380.",
         "Suprimida expressão. Sim: 8; não: 344; total: 352.",
         "Suprimidos o texto. Sim: 36; Não: 392; Total: 428.",
@@ -229,6 +231,7 @@ def test_concordancia_nao_vira_divergencia():
     ],
 )
 def test_destaque_supressivo_antigo_e_destaque(descricao):
+    """MEDIDO: Frases REAIS de 2011 a 2016: o destaque supressivo descrito pelo resultado."""
     assert classificar_categoria(descricao) == "DESTAQUE"
 
 

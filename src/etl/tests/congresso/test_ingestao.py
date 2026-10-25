@@ -216,14 +216,14 @@ def test_deputados_do_formato_real_da_camara_viram_linhas():
 @pytest.mark.parametrize(
     ("data", "esperada"),
     [
-        ("2023-02-01", 57),   # primeiro dia da 57ª
+        pytest.param("2023-02-01", 57, id="primeiro dia da 57ª"),
         ("2025-07-16", 57),
         ("2026-12-31", 57),
-        ("2027-01-31", 57),   # ATENÇÃO: janeiro de 2027 ainda é a 57ª
-        ("2027-02-01", 58),   # RISCO: a posse é em 1º de FEVEREIRO
+        pytest.param("2027-01-31", 57, id="ATENÇÃO: janeiro de 2027 ainda é a 57ª"),
+        pytest.param("2027-02-01", 58, id="RISCO: a posse é em 1º de FEVEREIRO"),
         ("2030-12-01", 58),
         ("2031-02-01", 59),
-        ("2019-02-01", 56),   # retroage também
+        pytest.param("2019-02-01", 56, id="retroage também"),
     ],
 )
 def test_legislatura_sai_da_data(data: str, esperada: int):

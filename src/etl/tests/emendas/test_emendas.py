@@ -242,9 +242,9 @@ def test_pago_e_recebido_soma_a_emenda_antes_de_juntar(conexao):
 @pytest.mark.parametrize(
     ("bruto", "esperado"),
     [
-        ("12.599,10", 12599.10),        # ponto é MILHAR
-        ("- 26.002,00", -26002.00),     # negativo separado do número
-        ("211398,90", 211398.90),       # o arquivo não tem separador de milhar
+        pytest.param("12.599,10", 12599.10, id="ponto é MILHAR"),
+        pytest.param("- 26.002,00", -26002.00, id="negativo separado do número"),
+        pytest.param("211398,90", 211398.90, id="o arquivo não tem separador de milhar"),
         ("0,00", 0.0),
         ("1.234.567,89", 1234567.89),
         ("", 0.0),

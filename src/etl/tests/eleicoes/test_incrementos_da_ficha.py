@@ -29,10 +29,8 @@ def _zip(tmp_path, nome, arquivos: dict[str, str]):
         ("https://www.instagram.com/fulano", "https://www.instagram.com/fulano"),
         ("instagram.com/fulano", "https://instagram.com/fulano"),
         ("  https://x.com/fulano  ", "https://x.com/fulano"),
-        # O TSE publica em caixa alta; o caminho diferencia maiúsculas e fica como veio.
-        ("HTTPS://YOUTUBE.COM/RogerioCarvalho13", "https://youtube.com/RogerioCarvalho13"),
-        # RISCO: Outro esquema vira link que executa script: recusado.
-        ("javascript:alert(1)", None),
+        pytest.param("HTTPS://YOUTUBE.COM/RogerioCarvalho13", "https://youtube.com/RogerioCarvalho13", id="O TSE publica em caixa alta; o caminho diferencia maiúsculas e fica como veio."),
+        pytest.param("javascript:alert(1)", None, id="RISCO: Outro esquema vira link que executa script: recusado."),
         ("fulano no instagram", None),
         ("@pedroluis.longo", None),
         ("https://@fulano", None),
@@ -51,8 +49,7 @@ def test_normalizar_so_aceita_http(bruto, esperado):
         ("https://m.facebook.com/a", "FACEBOOK"),
         ("https://twitter.com/a", "X"),
         ("https://x.com/a", "X"),
-        # ATENÇÃO: Domínio inteiro: "max.com" termina em "x.com", mas não é o X.
-        ("https://max.com/a", "OUTRA"),
+        pytest.param("https://max.com/a", "OUTRA", id="ATENÇÃO: Domínio inteiro: 'max.com' termina em 'x.com', mas não é o X."),
         ("https://youtu.be/a", "YOUTUBE"),
         ("https://fulano.com.br", "OUTRA"),
     ],

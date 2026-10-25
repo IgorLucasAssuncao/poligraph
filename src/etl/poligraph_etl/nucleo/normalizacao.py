@@ -37,7 +37,7 @@ _VOTOS = {
     "abstencao": 0,
     "obstrução": None,
     "obstrucao": None,
-    "artigo 17": None,      # o presidente da sessão só vota em desempate
+    "artigo 17": None,
     "branco": None,
 }
 
@@ -68,8 +68,6 @@ def normalizar_voto(bruto) -> int | None:
 # RF-15 — categoria da votação
 # ═══════════════════════════════════════════════════════════════════
 
-# A ordem importa: a primeira que casar vence. PROCEDIMENTAL vem primeiro
-# porque "Requerimento de urgência para o Projeto..." contém as duas coisas.
 _CATEGORIAS: list[tuple[str, str]] = [
     (
         "PROCEDIMENTAL",
@@ -79,21 +77,6 @@ _CATEGORIAS: list[tuple[str, str]] = [
     ),
     (
         "DESTAQUE_FORTE",
-        # RISCO: Sinal INEQUÍVOCO de recorte. Avaliado ANTES do mérito, porque a mesma
-        #    frase costuma citar as duas coisas.
-        #
-        # ATENÇÃO: Os dois lookbehind são obrigatórios e **fixos** — `re` não aceita
-        #    lookbehind de tamanho variável. "Ressalvad**o o** destaque" (singular)
-        #    aparecia em **38 votações** da 57ª e só o plural estava coberto.
-        #
-        # ATENÇÃO: `destacad[oa]s?` é a forma do SENADO. `votacao nominal do §/art.` também:
-        #    votar um dispositivo isolado é destaque, mesmo quando a frase termina em
-        #    "…à Proposta de Emenda à Constituição".
-        #
-        # MEDIDO: `suprimid…` e `restabelecido o texto` vieram da 55ª (achado #35): até 2016
-        #    a Câmara descrevia o destaque supressivo pelo RESULTADO — "Suprimido o
-        #    artigo", "Suprimida expressão", "Suprimidos o texto" (sic) — e tudo caía
-        #    no default SUBSTANTIVA. Conferido: Não muda nenhuma votação da 57ª.
         r"(?<!ressalvados os )(?<!ressalvado o )destaques?"
         r"|destacad[oa]s?"
         r"|mantido o texto|suprimid[oa]s?\b|restabelecid[oa] o texto"
@@ -101,20 +84,6 @@ _CATEGORIAS: list[tuple[str, str]] = [
     ),
     (
         "MERITO",
-        # RISCO: O que é voto de MÉRITO mesmo contendo a palavra "emenda".
-        #
-        # MEDIDO: Medido em 2026-08-29, na legislatura 57 — cada linha é um defeito que
-        #    existia, e todos silenciosos: a votação entrava na matriz com peso 0,7 em
-        #    vez de 1,0 **e** ficava fora do universo de curadoria (RN-04).
-        #
-        # | Padrão | O que estava errado |
-        # |---|---|
-        # | RISCO: `proposta de emenda` | **73 votações de PEC** viravam DESTAQUE por conterem "emenda" — o voto mais substantivo que existe |
-        # | `ressalvad… destaque` | O destaque foi citado para dizer que NÃO estava em jogo |
-        # | `subemenda substitutiva global` | A subemenda global **troca o texto inteiro**; não é recorte |
-        # | `emendas do senado` | O mérito das mudanças da outra casa. ATENÇÃO: **Plural** — "a Emenda do Senado nº 1" é destaque |
-        # ATENÇÃO: `pec n` também: "Votação, em segundo turno, da PEC nº 72/2023" não
-        #    escreve o nome por extenso.
         r"proposta de emenda|\bpec n"
         r"|ressalvad[oa]s? [oa]s? destaques?"
         r"|subemenda substitutiva global"
@@ -122,27 +91,72 @@ _CATEGORIAS: list[tuple[str, str]] = [
     ),
     (
         "DESTAQUE",
-        # ATENÇÃO: Sinal FRACO, avaliado por último: "emenda" solto casa com coisa demais —
-        #    inclusive com "Proposta de **Emenda** à Constituição". Só chega aqui o que
-        #    não foi resgatado pelo mérito acima.
-        #
-        # DECISÃO: Mas ele NÃO pode sair: "Rejeitadas as Emendas de Plenário" e "Aprovada a
-        #    Emenda." são destaques de verdade, e nenhum padrão mais específico os
-        #    alcança.
         r"emenda|subemenda",
     ),
     (
         "AUTORIDADE",
-        # MEDIDO: A amostra de 60 votações de plenário (semente 0.2026, A2, 2026-10-03) achou 4
-        #    sabatinas do Senado como SUBSTANTIVA, todas sem "mensagem" nem "indicação":
-        #    "Escolha do Sr. ... para exercer o cargo de Diretor da ANP", "Votação do Sr. ...
-        #    para exercer o cargo de Ministro do STJ", "Ofício nº 1, de 2026 - ... (CNJ)".
         r"indicacao|mensagem|autoridade|embaixador|nomeacao|prisao preventiva"
         r"|perda do mandato|representacao|decoro"
         r"|escolha d[oa] (sr|sra|senhor|senhora|dr|dra)\b|votacao d[oa] (sr|sra|senhor|senhora|dr|dra)\b"
         r"|para exercer o cargo de|\b(oficio|ofs) n",
     ),
 ]
+"""A ordem importa: a primeira que casar vence. PROCEDIMENTAL vem primeiro porque
+"Requerimento de urgência para o Projeto..." contém as duas coisas.
+
+**DESTAQUE_FORTE**
+
+RISCO: Sinal INEQUÍVOCO de recorte. Avaliado ANTES do mérito, porque a mesma
+frase costuma citar as duas coisas.
+
+ATENÇÃO: Os dois lookbehind são obrigatórios e **fixos** — `re` não aceita
+lookbehind de tamanho variável. "Ressalvad**o o** destaque" (singular)
+aparecia em **38 votações** da 57ª e só o plural estava coberto.
+
+ATENÇÃO: `destacad[oa]s?` é a forma do SENADO. `votacao nominal do §/art.` também:
+votar um dispositivo isolado é destaque, mesmo quando a frase termina em
+"…à Proposta de Emenda à Constituição".
+
+MEDIDO: `suprimid…` e `restabelecido o texto` vieram da 55ª (achado #35): até 2016
+a Câmara descrevia o destaque supressivo pelo RESULTADO — "Suprimido o
+artigo", "Suprimida expressão", "Suprimidos o texto" (sic) — e tudo caía
+no default SUBSTANTIVA. Conferido: Não muda nenhuma votação da 57ª.
+
+**MERITO**
+
+RISCO: O que é voto de MÉRITO mesmo contendo a palavra "emenda".
+
+MEDIDO: Medido em 2026-08-29, na legislatura 57 — cada linha é um defeito que
+existia, e todos silenciosos: a votação entrava na matriz com peso 0,7 em
+vez de 1,0 **e** ficava fora do universo de curadoria (RN-04).
+
+| Padrão | O que estava errado |
+|---|---|
+| RISCO: `proposta de emenda` | **73 votações de PEC** viravam DESTAQUE por conterem "emenda" — o voto mais substantivo que existe |
+| `ressalvad… destaque` | O destaque foi citado para dizer que NÃO estava em jogo |
+| `subemenda substitutiva global` | A subemenda global **troca o texto inteiro**; não é recorte |
+| `emendas do senado` | O mérito das mudanças da outra casa. ATENÇÃO: **Plural** — "a Emenda do Senado nº 1" é destaque |
+
+ATENÇÃO: `pec n` também: "Votação, em segundo turno, da PEC nº 72/2023" não
+escreve o nome por extenso.
+
+**DESTAQUE**
+
+ATENÇÃO: Sinal FRACO, avaliado por último: "emenda" solto casa com coisa demais —
+inclusive com "Proposta de **Emenda** à Constituição". Só chega aqui o que
+não foi resgatado pelo mérito acima.
+
+DECISÃO: Mas ele NÃO pode sair: "Rejeitadas as Emendas de Plenário" e "Aprovada a
+Emenda." são destaques de verdade, e nenhum padrão mais específico os
+alcança.
+
+**AUTORIDADE**
+
+MEDIDO: A amostra de 60 votações de plenário (semente 0.2026, A2, 2026-10-03) achou 4
+sabatinas do Senado como SUBSTANTIVA, todas sem "mensagem" nem "indicação":
+"Escolha do Sr. ... para exercer o cargo de Diretor da ANP", "Votação do Sr. ...
+para exercer o cargo de Ministro do STJ", "Ofício nº 1, de 2026 - ... (CNJ)".
+"""
 
 
 def classificar_categoria(descricao: str | None) -> str:

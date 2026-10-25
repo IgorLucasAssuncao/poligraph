@@ -285,11 +285,8 @@ public class TestesMapaDeEmendas(FixturePostgres postgres) : BaseIntegracao(post
     {
         ExigeDocker();
 
-#pragma warning disable EF1002
-        var erro = await Assert.ThrowsAsync<PostgresException>(() =>
-            Db.Database.ExecuteSqlRawAsync(
-                $"INSERT INTO municipios (codigo_ibge, codigo_tom, nome, uf) VALUES ({codigos}, 'X', 'PR')"));
-#pragma warning restore EF1002
+        var sql = $"INSERT INTO municipios (codigo_ibge, codigo_tom, nome, uf) VALUES ({codigos}, 'X', 'PR')";
+        var erro = await Assert.ThrowsAsync<PostgresException>(() => Db.Database.ExecuteSqlRawAsync(sql));
 
         Assert.Equal(restricao, erro.ConstraintName);
     }

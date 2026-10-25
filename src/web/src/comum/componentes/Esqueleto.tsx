@@ -13,7 +13,7 @@ import { TEXTOS_DO_SITE as T } from '../../site/textos/site';
  * número, inventar nome, valor ou manchete para ilustrar o layout seria produzir na tela
  * o que o trabalho existe para não fazer. As barras mostram a forma sem afirmar nada.
  *
- * ♿ O leitor de tela não vê cinza: `role="status"` com o texto escondido diz o que está
+ * O leitor de tela não vê cinza: `role="status"` com o texto escondido diz o que está
  * vindo, e o resto é `aria-hidden`.
  */
 export function EsqueletoComponent({ rotulo, children }: { rotulo: string; children: ReactNode }) {

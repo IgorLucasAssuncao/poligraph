@@ -35,13 +35,21 @@ from ..nucleo.tipos import TipoCategoriaDeVotacao, TipoMetrica
 # Pesos medidos no discovery
 # ═══════════════════════════════════════════════════════════════════
 
-# Nem toda votação diz o mesmo sobre uma pessoa.
 PESO_CATEGORIA = {
-    TipoCategoriaDeVotacao.SUBSTANTIVA: 1.0,    # mérito da matéria — o sinal mais forte
-    TipoCategoriaDeVotacao.DESTAQUE: 0.7,       # mérito, mas de um trecho
-    TipoCategoriaDeVotacao.AUTORIDADE: 0.3,     # voto em pessoa, não em política
-    TipoCategoriaDeVotacao.PROCEDIMENTAL: 0.0,  # Não fora da matriz: mede obstrução, não posição
+    TipoCategoriaDeVotacao.SUBSTANTIVA: 1.0,
+    TipoCategoriaDeVotacao.DESTAQUE: 0.7,
+    TipoCategoriaDeVotacao.AUTORIDADE: 0.3,
+    TipoCategoriaDeVotacao.PROCEDIMENTAL: 0.0,
 }
+"""Nem toda votação diz o mesmo sobre uma pessoa.
+
+| Categoria | Peso | Por quê |
+|---|---|---|
+| SUBSTANTIVA | 1,0 | Mérito da matéria: o sinal mais forte |
+| DESTAQUE | 0,7 | Mérito, mas de um trecho |
+| AUTORIDADE | 0,3 | Voto em pessoa, não em política |
+| PROCEDIMENTAL | 0,0 | Sai da conta (`_mascara_comum`): mede obstrução, não posição |
+"""
 
 # DECISÃO: Não é arbitrário: vem da correlação medida de posição entre anos dentro da
 #    legislatura (r = 0,862). Discovery §7.4.1.
@@ -67,6 +75,8 @@ def parametros() -> dict:
 
 @dataclass(frozen=True)
 class ParSimilar:
+    """Um par de parlamentares, a métrica, o valor e quantas votações os dois tiveram em comum."""
+
     pessoa_a: int
     pessoa_b: int
     metrica: str
