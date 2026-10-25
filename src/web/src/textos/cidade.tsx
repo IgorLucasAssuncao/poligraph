@@ -43,6 +43,11 @@ export const TEXTOS_DA_CIDADE = {
   prefeitos: 'Prefeitos eleitos',
   doisEleitos: 'Mais de um eleito para o mesmo período: houve eleição suplementar.',
   vice: 'Vice',
+  /**
+   * DECISÃO (2026-10-24): o aviso, e não a substituição, porque nenhuma fonte aberta e periódica diz quem assumiu.
+   * Medidas: Receita, Transferegov, Wikidata, Siconfi, SIMEC, Tribunais de Contas e Querido Diário (Fuad Noman, BH).
+   */
+  substituicoes: 'Quem assumiu depois da eleição, por morte, renúncia ou afastamento, não aparece aqui: o TSE só registra quem foi eleito.',
   governador: 'Governador eleito',
   viceGovernador: 'Vice-governador',
   semGovernador: 'Governador eleito antes de 1998, fora da base',

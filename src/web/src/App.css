@@ -3339,6 +3339,7 @@ dialog.grafo-dinheiro::backdrop { background: var(--veu); }
 .gestao-governador { display: block; }
 .gestao-anos small { margin-top: .15rem; }
 .gestao-nota { display: block; margin-top: .15rem; }
+.gestao-aviso { margin: .5rem 0 0; font-size: var(--t-1); color: var(--suave); }
 
 /* Linha do tempo (Pendência 92) */
 .linha-do-tempo-marcos { list-style: none; margin: 0; padding: 0; display: grid; gap: .35rem; font-size: var(--t-2); }

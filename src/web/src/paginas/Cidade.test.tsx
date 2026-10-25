@@ -82,6 +82,13 @@ describe('Página da cidade', () => {
     expect(screen.getByText('Governador eleito antes de 1998, fora da base')).toBeInTheDocument();
   });
 
+  it('cada bloco de gestão avisa que a substituição depois da eleição não consta do TSE', async () => {
+    renderizar();
+
+    const avisos = await screen.findAllByText(/Quem assumiu depois da eleição, por morte, renúncia ou afastamento, não aparece aqui/);
+    expect(avisos.length).toBe(document.querySelectorAll('.gestao-da-cidade').length);
+  });
+
   it('diz que a troca no meio do mandato não aparece e que a emenda é de quem a apresentou', async () => {
     renderizar();
 

@@ -180,45 +180,48 @@ function GestaoComponent({ gestao, maior }: { gestao: GestaoDaCidade; maior: num
         {emAndamento && <small>{T.emAndamento}</small>}
       </p>
 
-      <dl className="gestao-eleitos">
-        <dt>{gestao.prefeitos.length > 1 ? T.prefeitos : T.prefeito}</dt>
-        <dd>
-          <ListaDeEleitosComponent eleitos={gestao.prefeitos} />
-          {gestao.prefeitos.length > 1 && <small className="gestao-nota">{T.doisEleitos}</small>}
-        </dd>
-        {gestao.vices.length > 0 && (
-          <>
-            <dt>{T.vice}</dt>
-            <dd>
-              <ListaDeEleitosComponent eleitos={gestao.vices} />
-            </dd>
-          </>
-        )}
-        <dt>{T.governador}</dt>
-        <dd>
-          {gestao.governadores.length === 0
-            ? T.semGovernador
-            : gestao.governadores.map((g) => (
-                <span key={`${g.governador.idPessoa}-${g.deAno}`} className="gestao-governador">
-                  <LinkDoEleitoComponent eleito={g.governador} />{' '}
-                  {gestao.governadores.length > 1 && <small>{g.deAno}–{g.ateAno}</small>}
-                </span>
-              ))}
-        </dd>
-        {(gestao.viceGovernadores ?? []).length > 0 && (
-          <>
-            <dt>{T.viceGovernador}</dt>
-            <dd>
-              {(gestao.viceGovernadores ?? []).map((g) => (
-                <span key={`${g.governador.idPessoa}-${g.deAno}`} className="gestao-governador">
-                  <LinkDoEleitoComponent eleito={g.governador} />{' '}
-                  {(gestao.viceGovernadores ?? []).length > 1 && <small>{g.deAno}–{g.ateAno}</small>}
-                </span>
-              ))}
-            </dd>
-          </>
-        )}
-      </dl>
+      <div className="gestao-quem">
+        <dl className="gestao-eleitos">
+          <dt>{gestao.prefeitos.length > 1 ? T.prefeitos : T.prefeito}</dt>
+          <dd>
+            <ListaDeEleitosComponent eleitos={gestao.prefeitos} />
+            {gestao.prefeitos.length > 1 && <small className="gestao-nota">{T.doisEleitos}</small>}
+          </dd>
+          {gestao.vices.length > 0 && (
+            <>
+              <dt>{T.vice}</dt>
+              <dd>
+                <ListaDeEleitosComponent eleitos={gestao.vices} />
+              </dd>
+            </>
+          )}
+          <dt>{T.governador}</dt>
+          <dd>
+            {gestao.governadores.length === 0
+              ? T.semGovernador
+              : gestao.governadores.map((g) => (
+                  <span key={`${g.governador.idPessoa}-${g.deAno}`} className="gestao-governador">
+                    <LinkDoEleitoComponent eleito={g.governador} />{' '}
+                    {gestao.governadores.length > 1 && <small>{g.deAno}–{g.ateAno}</small>}
+                  </span>
+                ))}
+          </dd>
+          {(gestao.viceGovernadores ?? []).length > 0 && (
+            <>
+              <dt>{T.viceGovernador}</dt>
+              <dd>
+                {(gestao.viceGovernadores ?? []).map((g) => (
+                  <span key={`${g.governador.idPessoa}-${g.deAno}`} className="gestao-governador">
+                    <LinkDoEleitoComponent eleito={g.governador} />{' '}
+                    {(gestao.viceGovernadores ?? []).length > 1 && <small>{g.deAno}–{g.ateAno}</small>}
+                  </span>
+                ))}
+              </dd>
+            </>
+          )}
+        </dl>
+        <p className="gestao-aviso">{T.substituicoes}</p>
+      </div>
 
       {gestao.comPagamento ? (
         <div className="gestao-dinheiro">
